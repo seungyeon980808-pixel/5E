@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PhysicsExamDrawer Web</title>
+
+  <!-- ===== FONTS (IBM Plex Sans KR / Mono) ===== -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
+  <div class="app">
+    <!-- ----- LEFT: tools / templates (placeholder in 1A) ----- -->
+    <aside class="panel panel-left">
+      <div class="panel-title">도구</div>
+      <p class="placeholder">Phase 1A — 비어 있음<br />(도형 0개)</p>
+    </aside>
+
+    <!-- ----- CENTER: canvas (the only working panel in 1A) ----- -->
+    <main class="panel panel-center">
+      <div class="canvas-toolbar">
+        <button id="btn-shuffle" type="button" class="btn">
+          점 좌표 바꾸기 (data-as-truth 증명)
+        </button>
+        <span class="hint">
+          휠 = 줌(커서 기준) · 가운데버튼/Space+드래그 = 팬
+        </span>
+        <span id="zoom-readout" class="zoom-readout">zoom 1.00×</span>
+      </div>
+
+      <div class="canvas-wrap">
+        <!-- viewBox is the single coordinate authority (DESIGN 1-2) -->
+        <svg
+          id="canvas"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <!-- render.js paints state.objects into this group -->
+          <g id="scene"></g>
+        </svg>
+      </div>
+    </main>
+
+    <!-- ----- RIGHT: inspector (placeholder in 1A) ----- -->
+    <aside class="panel panel-right">
+      <div class="panel-title">인스펙터</div>
+      <p class="placeholder">선택된 오브젝트 없음</p>
+    </aside>
+  </div>
+
+  <!-- ===== FOOTER: version + date ===== -->
+  <footer class="app-footer">
+    PhysicsExamDrawer Web · <strong>v0.1.0</strong> · 2026-06-16
+  </footer>
+
+  <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
