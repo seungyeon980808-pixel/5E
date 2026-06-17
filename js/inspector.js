@@ -177,6 +177,46 @@ export function initInspector(state) {
   widthRow.appendChild(widthSpan);
   sec1Body.appendChild(widthRow);
 
+  // Arrow head control (line objects only)
+  const arrowRow = document.createElement("div");
+  arrowRow.className = "insp-row";
+  const arrowLbl = document.createElement("label");
+  arrowLbl.className = "insp-field-label";
+  arrowLbl.textContent = "화살표";
+  const arrowBtns = document.createElement("div");
+  arrowBtns.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+  const ARROW_OPTIONS = [
+    { label: "없음", value: "none"   },
+    { label: "끝",   value: "end"    },
+    { label: "양끝", value: "both"   },
+    { label: "중앙", value: "center" },
+  ];
+  const _arrowBtnEls = {};
+  ARROW_OPTIONS.forEach(({ label, value }) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.style.cssText = "padding:2px 7px;font-size:11px;cursor:pointer;border:1px solid #d0d7de;border-radius:4px;background:#f6f8fa;color:#0d1117;";
+    btn.addEventListener("click", () => {
+      const s = state.get();
+      const ids = s.selectedIds || [];
+      if (ids.length !== 1) return;
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const o = s2.objects.find((o) => o.id === ids[0]);
+        if (o && o.type === "line") {
+          o.arrowHead = value;
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
+      });
+    });
+    _arrowBtnEls[value] = btn;
+    arrowBtns.appendChild(btn);
+  });
+  arrowRow.appendChild(arrowLbl);
+  arrowRow.appendChild(arrowBtns);
+  sec1Body.appendChild(arrowRow);
+
   let _widthSnap = null;
   widthRange.addEventListener("mousedown", () => { _widthSnap = snapBefore(); });
   widthRange.addEventListener("input", () => {
@@ -390,6 +430,7 @@ export function initInspector(state) {
       sec2.style.display = "none";
       sec3.style.display = "none";
       sec4.style.display = "none";
+      arrowRow.style.display = "none";
       return;
     }
 
@@ -407,6 +448,7 @@ export function initInspector(state) {
       sec2.style.display = "";
       sec3.style.display = "none";
       sec4.style.display = "none";
+      arrowRow.style.display = "none";
 
       if (_dragging) return;
 
@@ -430,6 +472,7 @@ export function initInspector(state) {
       sec2.style.display = "";
       sec3.style.display = "none";
       sec4.style.display = "none";
+      arrowRow.style.display = "none";
 
       if (_dragging) return;
 
@@ -459,6 +502,18 @@ export function initInspector(state) {
 
     sec1.style.display = "";
     sec2.style.display = "";
+
+    // Arrow head (line only)
+    const isLine = obj.type === "line";
+    arrowRow.style.display = isLine ? "" : "none";
+    if (isLine) {
+      const ah = obj.arrowHead ?? "none";
+      Object.entries(_arrowBtnEls).forEach(([val, btn]) => {
+        btn.style.background = val === ah ? "#0969da" : "#f6f8fa";
+        btn.style.color      = val === ah ? "#ffffff" : "#0d1117";
+        btn.style.border     = val === ah ? "1px solid #0969da" : "1px solid #d0d7de";
+      });
+    }
 
     // Section 1
     strokeCP.setValue(obj.strokeLevel ?? 0);

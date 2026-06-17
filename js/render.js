@@ -51,7 +51,30 @@ export function render(state) {
 
   // ----- selection outline (blue dashed bbox; world space so it tracks zoom/pan) -----
   const _selIds = state.selectedIds || [];
+
+  // For a grouped multi-selection, draw ONE combined green rect instead of per-member outlines.
+  const _groupMembers = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
+  const _firstMember = _groupMembers[0];
+  const _allSameGroup = _selIds.length > 1 && _firstMember && _firstMember.groupId &&
+    _groupMembers.every((o) => o.groupId === _firstMember.groupId);
+  if (_allSameGroup) {
+    const _gbox = combinedGroupBBox(_groupMembers, scene);
+    if (_gbox) {
+      const _grect = document.createElementNS(SVG_NS, "rect");
+      _grect.setAttribute("x", _gbox.x);
+      _grect.setAttribute("y", _gbox.y);
+      _grect.setAttribute("width", _gbox.w);
+      _grect.setAttribute("height", _gbox.h);
+      _grect.setAttribute("fill", "none");
+      _grect.setAttribute("stroke-width", "0.4");
+      _grect.setAttribute("stroke-dasharray", "1.2 1.2");
+      _grect.style.stroke = "#2f9e44";
+      scene.appendChild(_grect);
+    }
+  }
+
   for (const _sid of _selIds) {
+    if (_allSameGroup) continue; // combined rect already drawn above
     const sel = state.objects.find((o) => o.id === _sid);
     if (!sel) continue;
     const _selColor = (state.targetedId === _sid) ? "#e67700"
@@ -144,7 +167,7 @@ export function render(state) {
         // it emits the same 8 white squares the resize logic listens for.
         renderHandles(
           { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
-          scene, getZoom(), "V"
+          scene, getZoom(), state.activeTool
         );
       }
     }
@@ -281,18 +304,88 @@ function renderTriangle(obj) {
   return el;
 }
 
+/* ----- arrowhead: filled triangle pointing in (dirX, dirY), tip at (tipX, tipY) ----- */
+function makeArrowHead(tipX, tipY, dirX, dirY, strokeWidth, color) {
+  const length     = strokeWidth * 4.5;
+  const halfWidth  = strokeWidth * 1.8;
+  const notchDepth = length * 0.3;
+
+  const perpX = -dirY, perpY = dirX;
+
+  const baseX = tipX - dirX * length;
+  const baseY = tipY - dirY * length;
+
+  const leftX  = baseX + perpX * halfWidth;
+  const leftY  = baseY + perpY * halfWidth;
+  const rightX = baseX - perpX * halfWidth;
+  const rightY = baseY - perpY * halfWidth;
+
+  const notchX = tipX - dirX * (length - notchDepth);
+  const notchY = tipY - dirY * (length - notchDepth);
+
+  const poly = document.createElementNS(SVG_NS, "polygon");
+  poly.setAttribute("points", `${tipX},${tipY} ${leftX},${leftY} ${notchX},${notchY} ${rightX},${rightY}`);
+  poly.setAttribute("fill", color);
+  poly.setAttribute("stroke", "none");
+  return poly;
+}
+
 /* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1→p2, no fill ----- */
 function renderLine(obj) {
+  const arrowHead = obj.arrowHead ?? "none";
+  const sw = obj.strokeWidth;
+  const color = grayHex(obj.strokeLevel);
+
+  const dx = obj.p2.x - obj.p1.x;
+  const dy = obj.p2.y - obj.p1.y;
+  const L = Math.sqrt(dx * dx + dy * dy);
+
+  let lx1 = obj.p1.x, ly1 = obj.p1.y;
+  let lx2 = obj.p2.x, ly2 = obj.p2.y;
+  let nx = 0, ny = 0;
+
+  if (L > 0) {
+    nx = dx / L; ny = dy / L;
+    const arrowLen = sw * 4.5 * 0.7; // retract to notch: length - notchDepth (length * 0.3)
+    if (arrowHead === "end") {
+      lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
+    } else if (arrowHead === "both") {
+      lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
+      lx1 += nx * arrowLen; ly1 += ny * arrowLen;
+    }
+    // "center" and "none": no adjustment
+  }
+
   const el = document.createElementNS(SVG_NS, "line");
-  el.setAttribute("x1", obj.p1.x);
-  el.setAttribute("y1", obj.p1.y);
-  el.setAttribute("x2", obj.p2.x);
-  el.setAttribute("y2", obj.p2.y);
+  el.setAttribute("x1", lx1);
+  el.setAttribute("y1", ly1);
+  el.setAttribute("x2", lx2);
+  el.setAttribute("y2", ly2);
   // strokeLevel 0 = black (DESIGN 2-2). stroke-width is in world units.
-  el.setAttribute("stroke", grayHex(obj.strokeLevel));
-  el.setAttribute("stroke-width", obj.strokeWidth);
-  if (obj.id) el.dataset.id = obj.id;
-  return el;
+  el.setAttribute("stroke", color);
+  el.setAttribute("stroke-width", sw);
+
+  if (arrowHead === "none" || L === 0) {
+    if (obj.id) el.dataset.id = obj.id;
+    return el;
+  }
+
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  g.appendChild(el);
+
+  if (arrowHead === "end") {
+    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
+  } else if (arrowHead === "both") {
+    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
+    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
+  } else if (arrowHead === "center") {
+    const mx = (obj.p1.x + obj.p2.x) / 2;
+    const my = (obj.p1.y + obj.p2.y) / 2;
+    g.appendChild(makeArrowHead(mx, my, nx, ny, sw, color));
+  }
+
+  return g;
 }
 
 /* ----- polyline: many connected points, black stroke, no fill (click-to-click) ----- */
@@ -389,7 +482,21 @@ function grayHex(level = 0) {
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 function singleObjBBox(o, scene) {
   if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle") {
-    return { x: o.x, y: o.y, w: o.w, h: o.h };
+    const deg = o.rotation || 0;
+    if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+    const corners = [
+      rotPt(o.x,       o.y,       cx, cy, deg),
+      rotPt(o.x + o.w, o.y,       cx, cy, deg),
+      rotPt(o.x + o.w, o.y + o.h, cx, cy, deg),
+      rotPt(o.x,       o.y + o.h, cx, cy, deg),
+    ];
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const p of corners) {
+      if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+      if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+    }
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (o.type === "text") {
     const el = scene.querySelector(`[data-id="${o.id}"]`);

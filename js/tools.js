@@ -565,6 +565,7 @@ function makeLine(a, b) {
     rotation: 0,
     strokeLevel: 0,        // 0 = black (DESIGN 2-2)
     strokeWidth: DEFAULT_STROKE_WIDTH,
+    arrowHead: "none",
     locked: false,
     layerId: 1,
     order: 0,              // assigned on commit (z-order within layer)
