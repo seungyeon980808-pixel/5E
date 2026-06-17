@@ -13,7 +13,10 @@
 // we can distinguish "click on already-selected → move allowed" from "click
 // selects a new object → just select, no move this press."
 
-import { screenToWorld } from "./viewport.js?v=0.8.0";
+import { screenToWorld } from "./viewport.js?v=0.9.1";
+
+/* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
+function isMutable(o) { return o && !o.locked; }
 
 /* ----- rotate point (px,py) about center (cx,cy) by deg degrees ----- */
 function rotPt(px, py, cx, cy, deg) {
@@ -394,7 +397,8 @@ export function initTransform(svg, state) {
       state.update((s2) => {
         s2.undoStack.push(snap);
         s2.redoStack = [];
-        s2.objects = s2.objects.filter((o) => !selectedIds.includes(o.id));
+        // locked objects are never deleted; remove only selected + mutable ones
+        s2.objects = s2.objects.filter((o) => !(selectedIds.includes(o.id) && isMutable(o)));
         s2.selectedIds = [];
       });
       return;
@@ -413,7 +417,7 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!o || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
             o[flipAxis] = !(o[flipAxis] ?? false);
             changed = true;
           });
@@ -432,7 +436,7 @@ export function initTransform(svg, state) {
         if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
         ids.forEach(id => {
           const obj = s2.objects.find((o) => o.id === id);
-          if (!obj) return;
+          if (!isMutable(obj)) return; // locked objects are not nudged
           const orig = JSON.parse(JSON.stringify(obj));
           applyDelta(obj, orig, dx, dy);
         });
@@ -451,7 +455,7 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!o || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -465,7 +469,7 @@ export function initTransform(svg, state) {
         // Process from highest index downward to avoid index collision
         const indices = ids
           .map(id => s2.objects.findIndex(o => o.id === id))
-          .filter(idx => idx >= 0)
+          .filter(idx => idx >= 0 && isMutable(s2.objects[idx])) // skip locked
           .sort((a, b) => b - a);
         let moved = false;
         indices.forEach(idx => {
@@ -489,7 +493,7 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!o || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });
@@ -503,7 +507,7 @@ export function initTransform(svg, state) {
         // Process from lowest index upward to avoid index collision
         const indices = ids
           .map(id => s2.objects.findIndex(o => o.id === id))
-          .filter(idx => idx >= 0)
+          .filter(idx => idx >= 0 && isMutable(s2.objects[idx])) // skip locked
           .sort((a, b) => a - b);
         let moved = false;
         indices.forEach(idx => {
@@ -521,7 +525,7 @@ export function initTransform(svg, state) {
       if (!selectedIds.length) return;
       const triangleIds = selectedIds.filter(id => {
         const o = s.objects.find(ob => ob.id === id);
-        return o && o.type === "triangle";
+        return isMutable(o) && o.type === "triangle"; // skip locked
       });
       if (!triangleIds.length) return;
       e.preventDefault();
@@ -529,7 +533,7 @@ export function initTransform(svg, state) {
       state.update((s2) => {
         triangleIds.forEach(id => {
           const o = s2.objects.find((o) => o.id === id);
-          if (!o || o.type !== "triangle") return;
+          if (!isMutable(o) || o.type !== "triangle") return;
           o.flipY = !(o.flipY ?? false);
         });
         s2.undoStack.push(snap);
@@ -546,7 +550,7 @@ export function initTransform(svg, state) {
         const ids = s2.selectedIds || [];
         ids.forEach(id => {
           const o = s2.objects.find((o) => o.id === id);
-          if (!o || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+          if (!o) return; // all types lockable; lock toggle still runs on locked (to unlock)
           o.locked = !(o.locked ?? false);
         });
         s2.undoStack.push(snap);
@@ -561,7 +565,10 @@ export function initTransform(svg, state) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const groupId = Date.now().toString();
-        const memberIds = [...(s2.selectedIds || [])];
+        // locked objects are excluded from the group; need ≥2 mutable members left
+        const memberIds = (s2.selectedIds || []).filter(id =>
+          isMutable(s2.objects.find((o) => o.id === id)));
+        if (memberIds.length < 2) return;
         memberIds.forEach(id => {
           const o = s2.objects.find((o) => o.id === id);
           if (o) o.groupId = groupId;

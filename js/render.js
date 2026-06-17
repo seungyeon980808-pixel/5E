@@ -8,7 +8,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom } from "./viewport.js?v=0.8.0";
+import { getZoom } from "./viewport.js?v=0.9.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
