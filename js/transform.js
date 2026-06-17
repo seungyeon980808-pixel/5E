@@ -105,8 +105,9 @@ let _groupHandle    = null;
 let _groupBox0      = null;  // combined bbox at drag start
 let _groupMemberIds = [];
 let _groupOrigObjs  = {};    // id → deep clone at drag start
+let _groupRotating  = false; // whole-group rotation about combined-bbox center
 
-/* rotation-drag state */
+/* rotation-drag state (also reused for whole-group rotation: _rotPivot, _rotStartAngle) */
 let _rotating        = false;
 let _rotObjId        = null;
 let _rotOrigObj      = null;
@@ -637,30 +638,47 @@ export function initTransform(svg, state) {
     const s0 = state.get();
     const selectedIds0 = s0.selectedIds || [];
 
-    // Whole-group resize (green state): every selected object shares one groupId
-    // and handles are drawn on the combined bbox (render id "__group__"). Uniform
-    // scale, aspect FORCED (DESIGN 6-2). Only the select tool (V) resizes a group;
+    // Whole-group handle drag (green state): every selected object shares one
+    // groupId and handles are drawn on the combined bbox (render id "__group__").
+    //  - V tool       → uniform resize, aspect FORCED (DESIGN 6-2).
+    //  - rotate tool  → rotate ALL members about the combined-bbox center.
     // targeted (orange) already returned above so it can never reach here.
-    if (hLabel && activeTool === "V" && selectedIds0.length > 1) {
+    if (hLabel && (activeTool === "V" || activeTool === "rotate") && selectedIds0.length > 1) {
       const gFirst = s0.objects.find((o) => o.id === selectedIds0[0]);
       const gGid = gFirst && gFirst.groupId &&
         selectedIds0.every((id) => s0.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
         ? gFirst.groupId : null;
       if (gGid) {
         const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
-        if (members.some((o) => o.locked)) return; // a locked member blocks group resize
+        if (members.some((o) => o.locked)) return; // a locked member blocks the gesture
         const box0 = groupBBox(members, svg);
         if (box0) {
-          _groupResizing    = true;
-          _groupHandle      = hLabel;
-          _groupBox0        = box0;
-          _groupMemberIds   = members.map((o) => o.id);
-          _groupOrigObjs    = {};
-          members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
-          _handleStartWorld = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
-          _pendingSnapshot  = JSON.parse(JSON.stringify(s0.objects));
-          _didMove          = false;
-          e.preventDefault();
+          if (activeTool === "rotate") {
+            // Group rotation only on corner handles (matches single-object rotate).
+            const isCorner = ["nw", "ne", "se", "sw"].includes(hLabel);
+            if (!isCorner) return;
+            _groupRotating  = true;
+            _groupMemberIds = members.map((o) => o.id);
+            _groupOrigObjs  = {};
+            members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
+            _rotPivot       = { x: box0.x + box0.w / 2, y: box0.y + box0.h / 2 };
+            const mouse     = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
+            _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+            _pendingSnapshot = JSON.parse(JSON.stringify(s0.objects));
+            _didMove        = false;
+            e.preventDefault();
+          } else {
+            _groupResizing    = true;
+            _groupHandle      = hLabel;
+            _groupBox0        = box0;
+            _groupMemberIds   = members.map((o) => o.id);
+            _groupOrigObjs    = {};
+            members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
+            _handleStartWorld = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
+            _pendingSnapshot  = JSON.parse(JSON.stringify(s0.objects));
+            _didMove          = false;
+            e.preventDefault();
+          }
         }
         return; // never falls through to move-start
       }
@@ -771,6 +789,48 @@ export function initTransform(svg, state) {
       return;
     }
 
+    // --- whole-group rotation: rotate every member about the group bbox center ---
+    if (_groupRotating) {
+      const vb = state.get().viewBox;
+      const mouse = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const curAngle = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+      let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
+      // Ctrl = snap to 15-degree increments (same rule as single-object rotation).
+      // Aspect lock does NOT apply: rotation never distorts a shape.
+      if (e.ctrlKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
+
+      const rad = deltaDeg * (Math.PI / 180);
+      const cosT = Math.cos(rad), sinT = Math.sin(rad);
+      const px = _rotPivot.x, py = _rotPivot.y;
+      const rot = (x, y) => ({
+        x: px + cosT * (x - px) - sinT * (y - py),
+        y: py + sinT * (x - px) + cosT * (y - py),
+      });
+
+      state.update((s) => {
+        _groupMemberIds.forEach((id) => {
+          const obj = s.objects.find((o) => o.id === id);
+          const orig = _groupOrigObjs[id];
+          if (!obj || !orig) return;
+          if (orig.type === "line") {
+            obj.p1 = rot(orig.p1.x, orig.p1.y);
+            obj.p2 = rot(orig.p2.x, orig.p2.y);
+          } else if (orig.type === "polyline" || orig.type === "curve") {
+            obj.points = orig.points.map((p) => rot(p.x, p.y));
+          } else {
+            // box-type (rect/ellipse/triangle/text): rotate center about pivot,
+            // and bump the member's own rotation field by the same delta.
+            const c = rot(orig.x + orig.w / 2, orig.y + orig.h / 2);
+            obj.x = c.x - orig.w / 2;
+            obj.y = c.y - orig.h / 2;
+            obj.rotation = (orig.rotation || 0) + deltaDeg;
+          }
+        });
+      });
+      if (!_didMove && Math.abs(deltaDeg) > 0.1) _didMove = true;
+      return;
+    }
+
     if (_groupResizing) {
       const vb = state.get().viewBox;
       const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
@@ -832,6 +892,24 @@ export function initTransform(svg, state) {
       _rotObjId = _rotOrigObj = _rotPivot = _rotPendingSnap = null;
       _rotStartAngle = 0;
       _rotDidMove = false;
+      return;
+    }
+
+    if (_groupRotating) {
+      _groupRotating = false;
+      if (_didMove && _pendingSnapshot) {
+        const snap = _pendingSnapshot;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _groupMemberIds  = [];
+      _groupOrigObjs   = {};
+      _rotPivot        = null;
+      _rotStartAngle   = 0;
+      _pendingSnapshot = null;
+      _didMove         = false;
       return;
     }
 
