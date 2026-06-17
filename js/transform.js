@@ -99,6 +99,13 @@ let _handleId         = null;
 let _handleOrigObj    = null;
 let _handleStartWorld = null;
 
+/* whole-group resize state (DESIGN 6-2: uniform scale, aspect FORCED) */
+let _groupResizing  = false;
+let _groupHandle    = null;
+let _groupBox0      = null;  // combined bbox at drag start
+let _groupMemberIds = [];
+let _groupOrigObjs  = {};    // id → deep clone at drag start
+
 /* rotation-drag state */
 let _rotating        = false;
 let _rotObjId        = null;
@@ -200,6 +207,113 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
   obj.y = y;
   obj.w = w;
   obj.h = h;
+}
+
+/* ----- world bbox of one object (text uses its rendered <text> box) ----- */
+function objWorldBBox(o, svg) {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle") {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  if (o.type === "text") {
+    const el = svg.querySelector(`[data-id="${o.id}"]`);
+    if (el) {
+      try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+      catch (_) { /* not laid out */ }
+    }
+    return null;
+  }
+  if (o.type === "line") {
+    return {
+      x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
+      w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
+    };
+  }
+  if (o.type === "polyline" || o.type === "curve") {
+    const pts = o.points || [];
+    if (!pts.length) return null;
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const p of pts) { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; }
+    return { x: a, y: b, w: c - a, h: d - b };
+  }
+  return null;
+}
+
+/* ----- union bbox of several objects (matches render's combinedGroupBBox) ----- */
+function groupBBox(objs, svg) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const o of objs) {
+    const b = objWorldBBox(o, svg);
+    if (!b) continue;
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.w > maxX) maxX = b.x + b.w;
+    if (b.y + b.h > maxY) maxY = b.y + b.h;
+  }
+  if (!isFinite(minX)) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/* ----- whole-group resize: uniform scale about the opposite corner -----
+ * Recomputes the new combined box with the SAME per-handle math as the single
+ * object path, but aspect ratio is FORCED unconditionally (DESIGN 6-2, Shift-
+ * independent). Every member is then remapped by the box0 → newBox affine, so
+ * the relative layout the grouping preserves is kept intact. */
+function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
+  const ratio = box0.w / box0.h;
+  let { x, y, w, h } = box0;
+
+  switch (handle) {
+    case "n":  y += dy; h -= dy; break;
+    case "s":  h += dy;          break;
+    case "w":  x += dx; w -= dx; break;
+    case "e":  w += dx;          break;
+    case "nw": y += dy; h -= dy; x += dx; w -= dx; break;
+    case "ne": y += dy; h -= dy;           w += dx; break;
+    case "se": h += dy;           w += dx;          break;
+    case "sw": h += dy; x += dx; w -= dx;           break;
+  }
+
+  // Forced aspect lock. Reference axis fixed by handle type (never flips mid-drag).
+  if (ratio > 0 && isFinite(ratio)) {
+    if (handle === "n" || handle === "s") {
+      w = h * ratio;
+      if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - w;
+    } else {
+      h = w / ratio;
+      if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - h;
+    }
+  }
+
+  // Clamp to a minimum group size, keeping the anchored edge fixed and ratio intact.
+  if (w < MIN_SIZE) {
+    if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - MIN_SIZE;
+    w = MIN_SIZE; if (ratio > 0 && isFinite(ratio)) h = w / ratio;
+  }
+  if (h < MIN_SIZE) {
+    if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - MIN_SIZE;
+    h = MIN_SIZE; if (ratio > 0 && isFinite(ratio)) w = h * ratio;
+  }
+
+  const sx = w / box0.w, sy = h / box0.h;
+  const mapPt = (px, py) => ({ x: x + (px - box0.x) * sx, y: y + (py - box0.y) * sy });
+
+  for (const obj of objs) {
+    const orig = origObjs[obj.id];
+    if (!orig) continue;
+    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
+    } else if (orig.type === "text") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y;
+      obj.fontSize = orig.fontSize * sx; // sx == sy under forced ratio
+    } else if (orig.type === "line") {
+      obj.p1 = mapPt(orig.p1.x, orig.p1.y);
+      obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+    } else if (orig.type === "polyline" || orig.type === "curve") {
+      obj.points = orig.points.map((p) => mapPt(p.x, p.y));
+    }
+  }
 }
 
 /* ===== PUBLIC: wire all event listeners ===== */
@@ -522,6 +636,36 @@ export function initTransform(svg, state) {
     const hObjId = e.target.dataset && e.target.dataset.id;
     const s0 = state.get();
     const selectedIds0 = s0.selectedIds || [];
+
+    // Whole-group resize (green state): every selected object shares one groupId
+    // and handles are drawn on the combined bbox (render id "__group__"). Uniform
+    // scale, aspect FORCED (DESIGN 6-2). Only the select tool (V) resizes a group;
+    // targeted (orange) already returned above so it can never reach here.
+    if (hLabel && activeTool === "V" && selectedIds0.length > 1) {
+      const gFirst = s0.objects.find((o) => o.id === selectedIds0[0]);
+      const gGid = gFirst && gFirst.groupId &&
+        selectedIds0.every((id) => s0.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
+        ? gFirst.groupId : null;
+      if (gGid) {
+        const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+        if (members.some((o) => o.locked)) return; // a locked member blocks group resize
+        const box0 = groupBBox(members, svg);
+        if (box0) {
+          _groupResizing    = true;
+          _groupHandle      = hLabel;
+          _groupBox0        = box0;
+          _groupMemberIds   = members.map((o) => o.id);
+          _groupOrigObjs    = {};
+          members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
+          _handleStartWorld = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
+          _pendingSnapshot  = JSON.parse(JSON.stringify(s0.objects));
+          _didMove          = false;
+          e.preventDefault();
+        }
+        return; // never falls through to move-start
+      }
+    }
+
     if (hLabel && hObjId && selectedIds0.length === 1 && selectedIds0.includes(hObjId)) {
       const s = s0;
       const obj = s.objects.find((o) => o.id === selectedIds0[0]);
@@ -627,6 +771,19 @@ export function initTransform(svg, state) {
       return;
     }
 
+    if (_groupResizing) {
+      const vb = state.get().viewBox;
+      const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const dx = cur.x - _handleStartWorld.x;
+      const dy = cur.y - _handleStartWorld.y;
+      state.update((s) => {
+        const live = _groupMemberIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+        applyGroupResize(live, _groupOrigObjs, _groupBox0, _groupHandle, dx, dy);
+      });
+      if (!_didMove && Math.hypot(dx, dy) > MOVE_THRESHOLD) _didMove = true;
+      return;
+    }
+
     if (_handleDragging) {
       const vb = state.get().viewBox;
       const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
@@ -675,6 +832,25 @@ export function initTransform(svg, state) {
       _rotObjId = _rotOrigObj = _rotPivot = _rotPendingSnap = null;
       _rotStartAngle = 0;
       _rotDidMove = false;
+      return;
+    }
+
+    if (_groupResizing) {
+      _groupResizing = false;
+      if (_didMove && _pendingSnapshot) {
+        const snap = _pendingSnapshot;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _groupHandle      = null;
+      _groupBox0        = null;
+      _groupMemberIds   = [];
+      _groupOrigObjs    = {};
+      _handleStartWorld = null;
+      _pendingSnapshot  = null;
+      _didMove = false;
       return;
     }
 

@@ -129,6 +129,25 @@ export function render(state) {
     if (handleSel && !state.targetedId) {
       renderHandles(handleSel, scene, getZoom(), state.activeTool);
     }
+  } else if (_selIds.length > 1 && !state.targetedId) {
+    // Whole-group selection (green): every selected object shares one groupId.
+    // Draw 8 resize handles on the COMBINED bbox so the group scales as a unit
+    // (DESIGN 6-2). Targeted (orange) is excluded above, so it never gets handles.
+    const _members = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
+    const _first = _members[0];
+    const _sharedGid = _first && _first.groupId &&
+      _members.every((o) => o.groupId === _first.groupId) ? _first.groupId : null;
+    if (_sharedGid) {
+      const _box = combinedGroupBBox(_members, scene);
+      if (_box) {
+        // Reuse renderHandles via a synthetic axis-aligned rect (id "__group__"):
+        // it emits the same 8 white squares the resize logic listens for.
+        renderHandles(
+          { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
+          scene, getZoom(), "V"
+        );
+      }
+    }
   }
 
   // ----- live drag preview (ephemeral; not in state.objects yet) -----
@@ -367,6 +386,50 @@ function grayHex(level = 0) {
 }
 
 /* ----- selection handles: 7-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
+/* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
+function singleObjBBox(o, scene) {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle") {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  if (o.type === "text") {
+    const el = scene.querySelector(`[data-id="${o.id}"]`);
+    if (el) {
+      try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+      catch (_) { /* not laid out yet */ }
+    }
+    return null;
+  }
+  if (o.type === "line") {
+    return {
+      x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
+      w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
+    };
+  }
+  if (o.type === "polyline" || o.type === "curve") {
+    const pts = o.points || [];
+    if (!pts.length) return null;
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const p of pts) { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; }
+    return { x: a, y: b, w: c - a, h: d - b };
+  }
+  return null;
+}
+
+/* ----- union bbox of several objects (for whole-group resize handles) ----- */
+function combinedGroupBBox(members, scene) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const o of members) {
+    const b = singleObjBBox(o, scene);
+    if (!b) continue;
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.w > maxX) maxX = b.x + b.w;
+    if (b.y + b.h > maxY) maxY = b.y + b.h;
+  }
+  if (!isFinite(minX)) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
 function renderHandles(sel, scene, zoom, activeTool) {
   const half = 10 / zoom;
   const sw   = 0.5 / zoom;
