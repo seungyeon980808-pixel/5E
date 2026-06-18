@@ -8,7 +8,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom } from "./viewport.js?v=0.11.0";
+import { getZoom } from "./viewport.js?v=0.11.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -111,10 +111,25 @@ export function render(state) {
       ln.setAttribute("stroke-dasharray", "1.2 1.2");
       ln.style.stroke = _selColor;
       scene.appendChild(ln);
+    } else if (sel.type === "polyline" && sel.closed === true) {
+      // Closed polyline takes branch-A (face) treatment: a dashed bbox rect guide,
+      // matching rect/ellipse/triangle. Points are world-true so the box is axis-aligned.
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4"); // world units
+        box.setAttribute("stroke-dasharray", "1.2 1.2");
+        box.style.stroke = _selColor;
+        scene.appendChild(box);
+      }
     } else if (sel.type === "polyline") {
-      // Guide is a dashed copy of the path; closed polylines close their guide too.
-      const _closed = sel.closed === true;
-      const pl = document.createElementNS(SVG_NS, _closed ? "polygon" : "polyline");
+      // Open polyline: guide is a dashed copy of the path.
+      const pl = document.createElementNS(SVG_NS, "polyline");
       pl.setAttribute("points", sel.points.map((p) => `${p.x},${p.y}`).join(" "));
       pl.setAttribute("fill", "none");
       pl.setAttribute("stroke-width", "0.4"); // world units
@@ -758,11 +773,21 @@ function renderHandles(sel, scene, zoom, activeTool) {
     g.appendChild(r);
   };
 
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle") {
-    const { x, y, w, h } = sel;
+  const _closedPoly = sel.type === "polyline" && sel.closed === true;
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || _closedPoly) {
+    // Closed polyline reuses branch-A handles on its (axis-aligned) points bbox;
+    // it has no x/y/w/h or rotation field, so derive the box and pin deg to 0.
+    let x, y, w, h, deg;
+    if (_closedPoly) {
+      const bb = singleObjBBox(sel, scene);
+      ({ x, y, w, h } = bb);
+      deg = 0;
+    } else {
+      ({ x, y, w, h } = sel);
+      deg = sel.rotation || 0;
+    }
     const cx = x + w / 2, cy = y + h / 2;
     const rx = x + w, by = y + h;
-    const deg = sel.rotation || 0;
 
     // Compute rotated world positions for all 8 handle anchor points
     const hNW = rotPt(x,  y,  cx, cy, deg);

@@ -13,10 +13,48 @@
 // we can distinguish "click on already-selected → move allowed" from "click
 // selects a new object → just select, no move this press."
 
-import { screenToWorld } from "./viewport.js?v=0.11.0";
+import { screenToWorld } from "./viewport.js?v=0.11.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
+
+/* ----- closed polyline: branch-B storage (points) + branch-A (face) interaction -----
+ * Transforms are BAKED into the point coordinates (no rotation field), so the
+ * points stay world-true. These helpers derive its branch-A bbox and bake ops. */
+function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === true; }
+
+function polyBBox(points) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function polyCenter(points) {
+  const b = polyBBox(points);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+}
+
+/* rotate every point about its bbox center by deg (baked into coords) */
+function rotatePolyPoints(o, deg) {
+  const c = polyCenter(o.points);
+  const r = (deg * Math.PI) / 180, cos = Math.cos(r), sin = Math.sin(r);
+  o.points = o.points.map((p) => ({
+    x: c.x + (p.x - c.x) * cos - (p.y - c.y) * sin,
+    y: c.y + (p.x - c.x) * sin + (p.y - c.y) * cos,
+  }));
+}
+
+/* mirror every point about its bbox center along one axis (baked into coords) */
+function flipPolyPoints(o, axis) {
+  const c = polyCenter(o.points);
+  o.points = o.points.map((p) => ({
+    x: axis === "flipX" ? 2 * c.x - p.x : p.x,
+    y: axis === "flipY" ? 2 * c.y - p.y : p.y,
+  }));
+}
 
 /* ----- rotate point (px,py) about center (cx,cy) by deg degrees ----- */
 function rotPt(px, py, cx, cy, deg) {
@@ -151,7 +189,9 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
     }
     return;
   }
-  if (obj.type === "polyline" || obj.type === "curve") {
+  // Open polyline & curve: per-vertex endpoint handles (branch B). A CLOSED
+  // polyline instead falls through to branch-A bbox resize below.
+  if (obj.type === "curve" || (obj.type === "polyline" && obj.closed !== true)) {
     const i = parseInt(handle.slice(1), 10);
     obj.points = orig.points.map((p, j) =>
       j === i ? { x: p.x + dx, y: p.y + dy } : { x: p.x, y: p.y }
@@ -159,9 +199,13 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
     return;
   }
 
-  // Branch A: bounding box resize (rect / ellipse / triangle)
-  const ratio = orig.w / orig.h;
-  let { x, y, w, h } = orig;
+  // Branch A: bounding box resize (rect / ellipse / triangle / closed polyline).
+  // A closed polyline has no x/y/w/h — derive its box from the point cloud, run
+  // the SAME per-handle math, then scale ALL points about the anchored corner.
+  const isPoly = isClosedPoly(obj);
+  const box0 = isPoly ? polyBBox(orig.points) : orig;
+  const ratio = box0.w / box0.h;
+  let { x, y, w, h } = box0;
 
   switch (handle) {
     case "n":  y += dy; h -= dy; break;
@@ -186,25 +230,37 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
       // height is the driver → snap w to follow h
       w = h * ratio;
       if (handle === "w" || handle === "nw" || handle === "sw") {
-        x = orig.x + orig.w - w;
+        x = box0.x + box0.w - w;
       }
     } else {
       // width is the driver → snap h to follow w
       h = w / ratio;
       if (handle === "n" || handle === "nw" || handle === "ne") {
-        y = orig.y + orig.h - h;
+        y = box0.y + box0.h - h;
       }
     }
   }
 
   // Clamp to minimum size; keep the anchored edge fixed
   if (w < MIN_SIZE) {
-    if (handle === "w" || handle === "nw" || handle === "sw") x = orig.x + orig.w - MIN_SIZE;
+    if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - MIN_SIZE;
     w = MIN_SIZE;
   }
   if (h < MIN_SIZE) {
-    if (handle === "n" || handle === "nw" || handle === "ne") y = orig.y + orig.h - MIN_SIZE;
+    if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - MIN_SIZE;
     h = MIN_SIZE;
+  }
+
+  // Closed polyline: scale ALL points about the anchor — p' = anchor + (p - anchor) * (sx, sy).
+  // The box0 → new-box affine does exactly that (the anchored edge stays fixed).
+  if (isPoly) {
+    const sx = box0.w ? w / box0.w : 1;
+    const sy = box0.h ? h / box0.h : 1;
+    obj.points = orig.points.map((p) => ({
+      x: x + (p.x - box0.x) * sx,
+      y: y + (p.y - box0.y) * sy,
+    }));
+    return;
   }
 
   obj.x = x;
@@ -417,7 +473,9 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o)) return;
+            if (isClosedPoly(o)) { flipPolyPoints(o, flipAxis); changed = true; return; }
+            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
             o[flipAxis] = !(o[flipAxis] ?? false);
             changed = true;
           });
@@ -455,7 +513,9 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o)) return;
+            if (isClosedPoly(o)) { rotatePolyPoints(o, 5); changed = true; return; }
+            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -493,7 +553,9 @@ export function initTransform(svg, state) {
           let changed = false;
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
-            if (!isMutable(o) || !["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!isMutable(o)) return;
+            if (isClosedPoly(o)) { rotatePolyPoints(o, -5); changed = true; return; }
+            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });
@@ -701,7 +763,9 @@ export function initTransform(svg, state) {
           _rotating       = true;
           _rotObjId       = obj.id;
           _rotOrigObj     = JSON.parse(JSON.stringify(obj));
-          _rotPivot       = getRotPivot(obj, hLabel);
+          // Closed polyline rotates about its bbox CENTER (points are baked,
+          // there is no rotation field / opposite-corner pivot to track).
+          _rotPivot       = isClosedPoly(obj) ? polyCenter(obj.points) : getRotPivot(obj, hLabel);
           const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
           _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
           _rotPendingSnap = JSON.parse(JSON.stringify(s.objects));
@@ -775,6 +839,23 @@ export function initTransform(svg, state) {
       let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
       // Ctrl = snap to 15-degree increments (applied to the accumulated delta)
       if (e.ctrlKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
+
+      // Closed polyline: bake the rotation into every point about the bbox center.
+      if (isClosedPoly(_rotOrigObj)) {
+        const rad = deltaDeg * (Math.PI / 180);
+        const cosP = Math.cos(rad), sinP = Math.sin(rad);
+        const px = _rotPivot.x, py = _rotPivot.y;
+        state.update((s) => {
+          const obj = s.objects.find((o) => o.id === _rotObjId);
+          if (!obj) return;
+          obj.points = _rotOrigObj.points.map((p) => ({
+            x: px + cosP * (p.x - px) - sinP * (p.y - py),
+            y: py + sinP * (p.x - px) + cosP * (p.y - py),
+          }));
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
 
       // Normalize: rotating by δ about pivot P ≡ rotating by δ about center C + translation.
       // new_center = rotate(orig_center, pivot, δ); stored (x,y) = new_center − (w/2, h/2).

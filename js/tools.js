@@ -11,12 +11,17 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld } from "./viewport.js?v=0.11.0";
+import { screenToWorld, getZoom } from "./viewport.js?v=0.11.1";
 
 // Default look until the inspector exists (DESIGN §3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.5; // world units (≈0.5mm on the 100mm artboard)
 const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
+const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
+
+// A closed polyline keeps branch-B storage (point array) but takes branch-A
+// (face) interaction — selectable by interior, ratio-resizable, rotatable.
+function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === true; }
 
 let _svg = null;
 let _state = null;
@@ -429,6 +434,14 @@ function hitTest(objects, p, tol = 0) {
       for (let k = 0; k < pts.length - 1; k++) {
         if (segDist(p.x, p.y, pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y) <= margin) return o.id;
       }
+      // A CLOSED polyline behaves like a face: also test the closing edge AND
+      // the interior (ray casting), so an inside click selects it too — the
+      // outline still selects via the segment loop above. Open polyline: edges only.
+      if (isClosedPoly(o) && pts.length >= 3) {
+        const last = pts[pts.length - 1], first = pts[0];
+        if (segDist(p.x, p.y, last.x, last.y, first.x, first.y) <= margin) return o.id;
+        if (pointInPolygon(p.x, p.y, pts)) return o.id;
+      }
       continue;
     }
 
@@ -533,6 +546,18 @@ function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
   const hasNeg = d1 < 0 || d2 < 0 || d3 < 0;
   const hasPos = d1 > 0 || d2 > 0 || d3 > 0;
   return !(hasNeg && hasPos);
+}
+
+/* ----- point-in-polygon via ray casting (for closed-polyline interior hits) ----- */
+function pointInPolygon(px, py, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].x, yi = pts[i].y, xj = pts[j].x, yj = pts[j].y;
+    const intersect = (yi > py) !== (yj > py) &&
+      px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
 }
 
 /* ----- shortest distance from point (px,py) to segment (ax,ay)-(bx,by) ----- */
@@ -730,6 +755,12 @@ function _commitText() {
   const anchor = _textAnchor; // capture before removeTextEditor nulls it
   _removeTextEditor();
 
+  // WYSIWYG: the editor shows TEXT_EDITOR_PX on screen; store the SAME on-screen
+  // size as WORLD units so the committed text renders identically. fontSize is in
+  // world units (mm), so screen px ÷ zoom; otherwise 14 is read as 14mm and the
+  // text balloons by the zoom factor (Bug 3).
+  const worldFontSize = TEXT_EDITOR_PX / getZoom();
+
   _state.update((s) => {
     if (val.trim()) {
       s.objects.push({
@@ -738,7 +769,7 @@ function _commitText() {
         x: anchor.x,
         y: anchor.y,
         text: val,
-        fontSize: 14,
+        fontSize: worldFontSize,
         rotation: 0,
         locked: false,
         layerId: s.activeLayerId,
