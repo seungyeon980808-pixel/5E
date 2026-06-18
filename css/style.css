@@ -199,6 +199,20 @@ body {
   color: var(--text-secondary);
 }
 
+/* project I/O buttons (left of the canvas toolbar; theme-driven, subtle) */
+.topbar-btn {
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.topbar-btn:hover { background: var(--btn-tool-hover); }
+
 .zoom-readout {
   margin-left: auto;
   font-family: "IBM Plex Mono", monospace;

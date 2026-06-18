@@ -8,7 +8,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom } from "./viewport.js?v=0.12.0";
+import { getZoom } from "./viewport.js?v=0.13.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -196,7 +196,7 @@ export function render(state) {
     }
   }
 
-  // ----- selection handles (DESIGN 5-2: fixed 7 CSS px = 7/zoom world units) -----
+  // ----- selection handles (DESIGN 5-2: fixed 10 CSS px = 10/zoom world units) -----
   if (_selIds.length === 1) {
     const handleSel = state.objects.find((o) => o.id === _selIds[0]);
     if (handleSel && !state.targetedId) {
@@ -739,7 +739,7 @@ function makeFillPattern(obj) {
   return pat;
 }
 
-/* ----- selection handles: 7-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
+/* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 function singleObjBBox(o, scene) {
   if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle") {
@@ -799,7 +799,7 @@ function combinedGroupBBox(members, scene) {
 }
 
 function renderHandles(sel, scene, zoom, activeTool) {
-  const half = 6 / zoom;
+  const half = 5 / zoom;   // resize square is half*2 = 10 CSS px (DESIGN 5-2 base size)
   const sw   = 0.5 / zoom;
 
   const g = document.createElementNS(SVG_NS, "g");

@@ -7,12 +7,13 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.12.1";
-import { render } from "./render.js?v=0.12.1";
-import { initViewport, getZoom, screenToWorld } from "./viewport.js?v=0.12.1";
-import { initTools } from "./tools.js?v=0.12.1";
-import { initTransform } from "./transform.js?v=0.12.1";
-import { initInspector } from "./inspector.js?v=0.12.1";
+import { state } from "./state.js?v=0.13.1";
+import { render } from "./render.js?v=0.13.1";
+import { initViewport, getZoom, screenToWorld } from "./viewport.js?v=0.13.1";
+import { initTools } from "./tools.js?v=0.13.1";
+import { initTransform } from "./transform.js?v=0.13.1";
+import { initInspector } from "./inspector.js?v=0.13.1";
+import { initProjectIO } from "./project-io.js?v=0.13.1";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -65,6 +66,9 @@ initTransform(svg, state);
 
 /* ----- inspector: right-panel controls wired to selected object ----- */
 initInspector(state);
+
+/* ----- project I/O: top-bar 저장/열기 buttons (editable JSON source) ----- */
+initProjectIO(state);
 
 /* ----- initial paint ----- */
 applyViewBox(state.get());

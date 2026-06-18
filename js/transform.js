@@ -13,7 +13,7 @@
 // we can distinguish "click on already-selected → move allowed" from "click
 // selects a new object → just select, no move this press."
 
-import { screenToWorld } from "./viewport.js?v=0.12.0";
+import { screenToWorld } from "./viewport.js?v=0.13.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -85,7 +85,7 @@ function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));
 }
 
-function rebuildGroups(s) {
+export function rebuildGroups(s) {
   const map = {};
   s.objects.forEach(o => {
     if (o.groupId) {
