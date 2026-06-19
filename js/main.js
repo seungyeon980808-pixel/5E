@@ -1,19 +1,20 @@
-/* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
+﻿/* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
 //   1. write state.viewBox onto the SVG (the only coordinate authority);
 //   2. subscribe render to the store so data changes auto-repaint;
-//   3. init viewport (wheel zoom / drag pan) → it mutates viewBox via update;
+//   3. init viewport (wheel zoom / drag pan) ??it mutates viewBox via update;
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.13.1";
-import { render } from "./render.js?v=0.13.1";
-import { initViewport, getZoom, screenToWorld } from "./viewport.js?v=0.13.1";
-import { initTools } from "./tools.js?v=0.13.1";
-import { initTransform } from "./transform.js?v=0.13.1";
-import { initInspector } from "./inspector.js?v=0.13.1";
-import { initProjectIO } from "./project-io.js?v=0.13.1";
+import { state } from "./state.js?v=0.16.3";
+import { render } from "./render.js?v=0.16.3";
+import { initViewport, getZoom, screenToWorld } from "./viewport.js?v=0.16.3";
+import { initTools } from "./tools.js?v=0.16.3";
+import { initTransform } from "./transform.js?v=0.16.3";
+import { initInspector } from "./inspector.js?v=0.16.3";
+import { initProjectIO } from "./project-io.js?v=0.16.3";
+import { initExportDialog } from "./export-dialog.js?v=0.16.3";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -26,8 +27,8 @@ const zoomReadout = document.getElementById("zoom-readout");
 
   const btn = document.getElementById("theme-toggle");
   function syncIcon() {
-    // show the action's target: ☀ = switch to light, 🌙 = switch to dark
-    if (btn) btn.textContent = root.getAttribute("data-theme") === "dark" ? "☀" : "🌙";
+    // show the action's target: ? = switch to light, ?뙔 = switch to dark
+    if (btn) btn.textContent = root.getAttribute("data-theme") === "dark" ? "?" : "?뙔";
   }
   syncIcon();
 
@@ -58,7 +59,7 @@ state.subscribe(applyViewBox);
 // state.update(), which already fires the applyViewBox + render subscribers.
 initViewport(svg, state, () => {});
 
-/* ----- tools: V/R selection + rectangle drawing (mouse → store.update) ----- */
+/* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
 
 /* ----- transform: body-drag move + Undo/Redo (must come after initTools) ----- */
@@ -67,8 +68,11 @@ initTransform(svg, state);
 /* ----- inspector: right-panel controls wired to selected object ----- */
 initInspector(state);
 
-/* ----- project I/O: top-bar 저장/열기 buttons (editable JSON source) ----- */
+/* ----- project I/O: top-bar ????닿린 buttons (editable JSON source) ----- */
 initProjectIO(state);
+
+/* ----- export dialog: ?뚯씪 dropdown ???대?吏濡??대낫?닿린 (PNG/SVG) ----- */
+initExportDialog(state);
 
 /* ----- initial paint ----- */
 applyViewBox(state.get());
@@ -84,9 +88,9 @@ window.phyDraw = {
 };
 
 /* ===== COORD DEBUG OVERLAY (press "d" to toggle) ===== */
-// Proves pointer→world mapping live. Compares the app's screenToWorld with a
-// fresh getScreenCTM round-trip; "Δscreen" is how far the mapped point lands
-// from the real pointer pixel — must read ~0 at any zoom/pan. Off by default.
+// Proves pointer?뭮orld mapping live. Compares the app's screenToWorld with a
+// fresh getScreenCTM round-trip; "?screen" is how far the mapped point lands
+// from the real pointer pixel ??must read ~0 at any zoom/pan. Off by default.
 (function initCoordDebug() {
   const box = document.createElement("div");
   box.id = "coord-debug";
@@ -110,24 +114,24 @@ window.phyDraw = {
     const vb = state.get().viewBox;
     const r = svg.getBoundingClientRect();
     const w = screenToWorld(svg, vb, e.clientX, e.clientY); // app's single helper
-    // independent round-trip: world → back to screen via the SAME CTM
+    // independent round-trip: world ??back to screen via the SAME CTM
     const m = svg.getScreenCTM();
     const back = { x: m.a * w.x + m.c * w.y + m.e, y: m.b * w.x + m.d * w.y + m.f };
     const f = (n) => n.toFixed(2);
     box.textContent =
       `client   ${f(e.clientX)}, ${f(e.clientY)}\n` +
-      `svg rect ${f(r.left)},${f(r.top)}  ${f(r.width)}×${f(r.height)}  ar=${f(r.width / r.height)}\n` +
-      `viewBox  ${f(vb.x)},${f(vb.y)}  ${f(vb.w)}×${f(vb.h)}  ar=${f(vb.w / vb.h)}\n` +
+      `svg rect ${f(r.left)},${f(r.top)}  ${f(r.width)}횞${f(r.height)}  ar=${f(r.width / r.height)}\n` +
+      `viewBox  ${f(vb.x)},${f(vb.y)}  ${f(vb.w)}횞${f(vb.h)}  ar=${f(vb.w / vb.h)}\n` +
       `world    ${f(w.x)}, ${f(w.y)}\n` +
-      `Δscreen  ${f(back.x - e.clientX)}, ${f(back.y - e.clientY)}  (should be ~0)`;
+      `?screen  ${f(back.x - e.clientX)}, ${f(back.y - e.clientY)}  (should be ~0)`;
   });
 })();
 
 console.info(
   "[PhysicsExamDrawer v0.10.0] Pick R (or press R), drag on the canvas to draw a\n" +
-    "Press 'd' to toggle the live coord-debug overlay (pointer↔world mapping).\n" +
+    "Press 'd' to toggle the live coord-debug overlay (pointer?봶orld mapping).\n" +
     "rectangle. Verify with:\n" +
     "  phyDraw.objects()        // array of committed rect objects\n" +
     "  phyDraw.state.get().activeTool   // 'V' after each draw (auto-return)\n" +
-    "Wheel = zoom, Space/middle-drag = pan — shapes stay anchored in world space."
+    "Wheel = zoom, Space/middle-drag = pan ??shapes stay anchored in world space."
 );

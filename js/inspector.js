@@ -32,6 +32,9 @@ function makeColorPicker(onInput, onStart, onCommit) {
   const palette = document.createElement("div");
   palette.className = "cp-palette";
 
+  // Slider + numeric box live on one row (number is right-aligned next to the bar).
+  const barRow = document.createElement("div");
+  barRow.className = "cp-bar-row";
   const barWrap = document.createElement("div");
   barWrap.className = "cp-bar-wrap";
   const bar = document.createElement("div");
@@ -41,11 +44,24 @@ function makeColorPicker(onInput, onStart, onCommit) {
   barWrap.appendChild(bar);
   barWrap.appendChild(handle);
 
+  // Numeric level input. Shown value = "darkness" 0..255 (0 = white, 255 = black),
+  // which is the inverse of the internal grayscale level (0 = black, 255 = white)
+  // used by the renderer — so saved-file/render semantics stay untouched.
+  const numInput = document.createElement("input");
+  numInput.type = "number";
+  numInput.min = "0";
+  numInput.max = "255";
+  numInput.step = "1";
+  numInput.className = "cp-num-input";
+
+  barRow.appendChild(barWrap);
+  barRow.appendChild(numInput);
+
   const preview = document.createElement("div");
   preview.className = "cp-preview";
 
   root.appendChild(palette);
-  root.appendChild(barWrap);
+  root.appendChild(barRow);
   root.appendChild(preview);
 
   let _level = 0;
@@ -55,8 +71,22 @@ function makeColorPicker(onInput, onStart, onCommit) {
     const pct = (1 - _level / 255) * 100; // left=white=255, right=black=0
     handle.style.left = `${pct}%`;
     preview.style.background = levelToHex(_level);
+    // Don't clobber the field while the user is typing in it.
+    if (document.activeElement !== numInput) numInput.value = 255 - _level;
     if (fire && onInput) onInput(_level);
   }
+
+  // Numeric box: type a darkness value (0=white..255=black), apply on Enter/blur.
+  numInput.addEventListener("focus", () => { if (onStart) onStart(); });
+  function applyNum() {
+    const raw = parseInt(numInput.value, 10);
+    if (!isFinite(raw)) return;
+    const darkness = Math.max(0, Math.min(255, raw));
+    numInput.value = darkness;           // reflect clamped/parsed value
+    setLevel(255 - darkness, true);      // darkness → internal level, render + fire
+  }
+  numInput.addEventListener("keydown", (e) => { if (e.key === "Enter") numInput.blur(); });
+  numInput.addEventListener("change", () => { applyNum(); if (onCommit) onCommit(); });
 
   function levelFromX(e) {
     const rect = bar.getBoundingClientRect();
@@ -128,6 +158,13 @@ export function initInspector(state) {
   const contentEl = document.getElementById("inspector-content");
   if (!emptyEl || !contentEl) return;
 
+  // Click-to-select-all: focusing any number input selects its value so a typed
+  // digit replaces the old value instead of inserting into it.
+  contentEl.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "INPUT" && t.type === "number") t.select();
+  });
+
   // Wire left-edge resize handle
   const resizeHandle = document.getElementById("inspector-resize");
   const panelRight = document.querySelector(".panel-right");
@@ -164,11 +201,6 @@ export function initInspector(state) {
   /* ---- Section 1: 선 ---- */
   const sec1Body = document.createElement("div");
   sec1Body.className = "insp-body";
-
-  const strokeColorLbl = document.createElement("div");
-  strokeColorLbl.className = "insp-field-label";
-  strokeColorLbl.textContent = "선 색";
-  sec1Body.appendChild(strokeColorLbl);
 
   let _strokeSnap = null;
   const strokeCP = makeColorPicker(
@@ -223,6 +255,17 @@ export function initInspector(state) {
   arrowLbl.textContent = "화살표";
   const arrowBtns = document.createElement("div");
   arrowBtns.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+  // 40×24 inline-SVG previews: horizontal line + barbed arrowhead(s).
+  const ARROW_ICONS = {
+    none:   '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>',
+    end:    '<line x1="4" y1="12" x2="30" y2="12" stroke="#888" stroke-width="1.5"/>' +
+            '<polygon points="30,8 36,12 30,16" fill="#888"/>',
+    center: '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
+            '<polygon points="14,8 20,12 14,16" fill="#888"/>',
+    both:   '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
+            '<polygon points="10,8 4,12 10,16" fill="#888"/>' +
+            '<polygon points="30,8 36,12 30,16" fill="#888"/>',
+  };
   const ARROW_OPTIONS = [
     { label: "없음", value: "none"   },
     { label: "끝",   value: "end"    },
@@ -232,8 +275,9 @@ export function initInspector(state) {
   const _arrowBtnEls = {};
   ARROW_OPTIONS.forEach(({ label, value }) => {
     const btn = document.createElement("button");
-    btn.textContent = label;
-    btn.style.cssText = "padding:2px 6px;font-size:10px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+    btn.title = label;
+    btn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[value]}</svg>`;
+    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -264,11 +308,19 @@ export function initInspector(state) {
   dashLbl.textContent = "선 종류";
   const dashBtns = document.createElement("div");
   dashBtns.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+  // 40×24 inline-SVG line previews, keyed by preset label (constant left untouched).
+  const DASH_ICONS = {
+    "실선":  '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2"/>',
+    "점선1": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="4 3"/>',
+    "점선2": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="8 3"/>',
+    "점선3": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="2 2"/>',
+  };
   const _dashBtnEls = [];
   DASH_PRESETS.forEach((preset) => {
     const btn = document.createElement("button");
-    btn.textContent = preset.label;
-    btn.style.cssText = "padding:2px 6px;font-size:10px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+    btn.title = preset.label;
+    btn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${DASH_ICONS[preset.label] || ""}</svg>`;
+    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -473,6 +525,36 @@ export function initInspector(state) {
   groupDiv.appendChild(ungroupBtn);
   contentEl.appendChild(groupDiv);
 
+  // ---- 묶기 button: shown for an ungrouped multi-selection (ids>1 && !allInGroup) ----
+  const groupBtnDiv = document.createElement("div");
+  groupBtnDiv.className = "insp-body";
+  groupBtnDiv.style.cssText = "padding: 6px 8px;";
+  groupBtnDiv.style.display = "none";
+  const groupBtn = document.createElement("button");
+  groupBtn.textContent = "묶기";
+  groupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;width:100%;";
+  groupBtn.addEventListener("click", () => {
+    // Mirrors the G-key group-creation logic in transform.js.
+    const s = state.get();
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const groupId = Date.now().toString();
+      // locked objects are excluded; need ≥2 mutable members left to form a group
+      const memberIds = (s2.selectedIds || []).filter(id =>
+        !(s2.objects.find((o) => o.id === id)?.locked));
+      if (memberIds.length < 2) return;
+      memberIds.forEach(id => {
+        const o = s2.objects.find((o) => o.id === id);
+        if (o) o.groupId = groupId;
+      });
+      s2.groups.push({ id: groupId, memberIds });
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
+  groupBtnDiv.appendChild(groupBtn);
+  contentEl.appendChild(groupBtnDiv);
+
   const sec1 = makeSection("선", sec1Body);
   contentEl.appendChild(sec1);
 
@@ -490,12 +572,7 @@ export function initInspector(state) {
   fnLbl.textContent = "채우기 없음";
   fnRow.appendChild(fnCb);
   fnRow.appendChild(fnLbl);
-  sec2Body.appendChild(fnRow);
-
-  const fillColorLbl = document.createElement("div");
-  fillColorLbl.className = "insp-field-label";
-  fillColorLbl.textContent = "채우기 색";
-  sec2Body.appendChild(fillColorLbl);
+  // fnRow is moved into the "면" section header row below (not appended to body).
 
   let _fillSnap = null;
   const fillCP = makeColorPicker(
@@ -524,6 +601,20 @@ export function initInspector(state) {
   fsLbl.textContent = "채우기 종류";
   const fsBtns = document.createElement("div");
   fsBtns.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+  // 18×18 inline-SVG glyphs (drawn inside a 28×28 button).
+  const FILL_STYLE_ICONS = {
+    solid: '<rect width="18" height="18" fill="#888" rx="1"/>',
+    dots:  '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<circle cx="5" cy="5" r="1.5" fill="#888"/><circle cx="13" cy="5" r="1.5" fill="#888"/>' +
+           '<circle cx="5" cy="13" r="1.5" fill="#888"/><circle cx="13" cy="13" r="1.5" fill="#888"/>',
+    cross: '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<line x1="4" y1="4" x2="14" y2="14" stroke="#888" stroke-width="1.5"/>' +
+           '<line x1="14" y1="4" x2="4" y2="14" stroke="#888" stroke-width="1.5"/>',
+    hatch: '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<line x1="0" y1="9" x2="9" y2="0" stroke="#888" stroke-width="1"/>' +
+           '<line x1="4" y1="14" x2="14" y2="4" stroke="#888" stroke-width="1"/>' +
+           '<line x1="9" y1="18" x2="18" y2="9" stroke="#888" stroke-width="1"/>',
+  };
   const FILL_STYLE_OPTIONS = [
     { label: "색",   value: "solid" },
     { label: "도트", value: "dots"  },
@@ -533,8 +624,9 @@ export function initInspector(state) {
   const _fillStyleBtnEls = {};
   FILL_STYLE_OPTIONS.forEach(({ label, value }) => {
     const btn = document.createElement("button");
-    btn.textContent = label;
-    btn.style.cssText = "padding:2px 6px;font-size:10px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+    btn.title = label;
+    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18">${FILL_STYLE_ICONS[value]}</svg>`;
+    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -584,14 +676,23 @@ export function initInspector(state) {
     });
   });
 
-  const sec2 = makeSection("채우기", sec2Body);
+  const sec2 = makeSection("면", sec2Body);
+  // Place 채우기 없음 on the right side of the "면" header row (saves a row).
+  // stopPropagation keeps clicks here from toggling the <details> open/closed.
+  const sec2Summary = sec2.querySelector(".insp-summary");
+  fnRow.style.marginLeft = "auto";
+  fnRow.addEventListener("click", (e) => e.stopPropagation());
+  sec2Summary.appendChild(fnRow);
   contentEl.appendChild(sec2);
 
   /* ---- Section 3: 크기·위치 (shapes only, single selection only) ---- */
   const sec3Body = document.createElement("div");
   sec3Body.className = "insp-body";
+  sec3Body.style.padding = "6px 6px"; // narrower than default for a compact section
 
-  function makePosRow(label, prop, step) {
+  // negate=true → inspector shows/accepts math convention (Y up) while the stored
+  // value stays in SVG convention (Y down). Display = -internal, internal = -input.
+  function makePosRow(label, prop, step, negate = false) {
     const row = document.createElement("div");
     row.className = "insp-row";
     const lbl = document.createElement("label");
@@ -615,7 +716,7 @@ export function initInspector(state) {
         if (!o) return;
         s2.undoStack.push(snap);
         s2.redoStack = [];
-        o[prop] = val;
+        o[prop] = negate ? -val : val;
       });
     }
 
@@ -627,21 +728,22 @@ export function initInspector(state) {
   }
 
   const xF   = makePosRow("X",     "x",        "0.1");
-  const yF   = makePosRow("Y",     "y",        "0.1");
+  const yF   = makePosRow("Y",     "y",        "0.1", true); // math Y (up = positive)
   const wF   = makePosRow("W",     "w",        "0.1");
   const hF   = makePosRow("H",     "h",        "0.1");
   const rotF = makePosRow("회전 °", "rotation", "1");
 
   sec3Body.appendChild(rotF.el);
 
+  // X/Y on one row, W/H on the next — compact pairs, left-aligned (not stretched).
   const xyPair = document.createElement("div");
-  xyPair.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:4px;";
+  xyPair.style.cssText = "display:flex;gap:10px;";
   xyPair.appendChild(xF.el);
   xyPair.appendChild(yF.el);
   sec3Body.appendChild(xyPair);
 
   const whPair = document.createElement("div");
-  whPair.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:4px;";
+  whPair.style.cssText = "display:flex;gap:10px;";
   whPair.appendChild(wF.el);
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
@@ -684,6 +786,93 @@ export function initInspector(state) {
   const sec4 = makeSection("보호", sec4Body);
   contentEl.appendChild(sec4);
 
+  /* ---- Section: 아트보드 (shown in the no-selection / empty state) ---- *
+   * Lets the user set the page size. Changing it ONLY moves the artboard
+   * boundary — objects keep their exact world coordinates. The artboard stays
+   * centered on origin: render.js derives x=-w/2, y=-h/2 from state.artboard,
+   * so it re-centers automatically. Max 100×100, min 10×10 (clamped here). */
+  const AB_MIN = 10, AB_MAX = 100;
+
+  const abBody = document.createElement("div");
+  abBody.className = "insp-body";
+
+  // Click-to-select-all for the artboard number inputs (mirrors contentEl above;
+  // emptyEl/abSection live outside contentEl so they need their own handler).
+  abBody.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "INPUT" && t.type === "number") t.select();
+  });
+
+  function makeArtboardRow(labelText) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.style.minWidth = "44px";
+    lbl.textContent = labelText;
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = String(AB_MIN);
+    inp.max = String(AB_MAX);
+    inp.step = "1";
+    inp.className = "insp-input";
+    const unit = document.createElement("span");
+    unit.className = "insp-unit";
+    unit.textContent = "mm";
+    row.appendChild(lbl);
+    row.appendChild(inp);
+    row.appendChild(unit);
+    return { el: row, inp };
+  }
+
+  const abW = makeArtboardRow("너비(W)");
+  const abH = makeArtboardRow("높이(H)");
+  abBody.appendChild(abW.el);
+  abBody.appendChild(abH.el);
+
+  // Apply new size through the store so render() re-runs. Objects untouched.
+  function applyArtboard(w, h) {
+    const cw = Math.max(AB_MIN, Math.min(AB_MAX, Math.round(w)));
+    const ch = Math.max(AB_MIN, Math.min(AB_MAX, Math.round(h)));
+    state.update((s2) => { s2.artboard = { w: cw, h: ch }; });
+  }
+
+  function commitArtboard() {
+    const s = state.get();
+    const w = parseFloat(abW.inp.value);
+    const h = parseFloat(abH.inp.value);
+    applyArtboard(isFinite(w) ? w : s.artboard.w, isFinite(h) ? h : s.artboard.h);
+  }
+
+  [abW.inp, abH.inp].forEach((inp) => {
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") inp.blur(); });
+    inp.addEventListener("blur", commitArtboard);
+  });
+
+  // Preset buttons: just set w,h and apply the same way.
+  const abPresets = document.createElement("div");
+  abPresets.className = "insp-ab-presets";
+  [[90, 60], [100, 100], [100, 60], [60, 90]].forEach(([w, h]) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "insp-ab-preset";
+    btn.textContent = `${w}×${h}`;
+    btn.addEventListener("click", () => applyArtboard(w, h));
+    abPresets.appendChild(btn);
+  });
+  abBody.appendChild(abPresets);
+
+  const abSection = makeSection("아트보드", abBody);
+  const _abRoot = emptyEl.parentElement;
+  if (_abRoot) _abRoot.appendChild(abSection);
+
+  // Refresh inputs from state (skip while the user is typing in one).
+  function refreshArtboard(s) {
+    if (document.activeElement === abW.inp || document.activeElement === abH.inp) return;
+    abW.inp.value = s.artboard.w;
+    abH.inp.value = s.artboard.h;
+  }
+
   /* ---- Section: 레이어 (always visible — lives outside contentEl) ---- */
   const layerDetails = document.createElement("details");
   layerDetails.open = true;
@@ -708,14 +897,7 @@ export function initInspector(state) {
     if (layerBody.contains(document.activeElement)) return; // don't clobber inline name edit
     layerBody.innerHTML = "";
 
-    // Caption: top row is front-most. Matches the 3 → 2 → 1 list order below.
-    const caption = document.createElement("div");
-    caption.textContent = "위 행이 앞(전면)에 그려집니다.";
-    caption.style.cssText =
-      "font-size:11px;color:#8a8a8a;padding:0 8px 4px;user-select:none;";
-    layerBody.appendChild(caption);
-
-    // Bordered box holding the layer rows.
+    // Bordered box holding the layer rows (top row = front-most, 3 → 2 → 1).
     const listBox = document.createElement("div");
     listBox.style.cssText =
       "border:1px solid #d0d7de;border-radius:4px;overflow:hidden;";
@@ -806,11 +988,15 @@ export function initInspector(state) {
     if (ids.length === 0) {
       emptyEl.style.display = "";
       contentEl.style.display = "none";
+      abSection.style.display = "";   // 아트보드 section lives in the empty state
+      refreshArtboard(s);
       return;
     }
 
     emptyEl.style.display = "none";
     contentEl.style.display = "";
+    abSection.style.display = "none"; // hidden whenever something is selected
+    groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
 
     // Targeted state: only show ungroup button, hide everything else
     if (s.targetedId) {
@@ -844,7 +1030,7 @@ export function initInspector(state) {
       groupDiv.style.display = "";
       sec1.style.display = "";
       sec2.style.display = allLineFamily ? "none" : ""; // no fill for line family
-      sec3.style.display = "none";
+      sec3.style.display = ""; // group: show combined bbox center + shared rotation
       sec4.style.display = "none";
       arrowRow.style.display = "none";
       dashRow.style.display = "none";
@@ -863,13 +1049,53 @@ export function initInspector(state) {
       fillCP.setValue(firstObj.fillLevel ?? 255);
       fillCP.setDisabled(_fn);
       syncFillStyle(firstObj);
+
+      // Section 3 — combined bbox center (X/Y), combined size (W/H), shared rotation.
+      let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
+      const gRots = [];
+      ids.forEach((id) => {
+        const o = s.objects.find((o) => o.id === id);
+        if (!o) return;
+        let bx, by, bw, bh;
+        if (o.type === "line") {
+          bx = Math.min(o.p1.x, o.p2.x); by = Math.min(o.p1.y, o.p2.y);
+          bw = Math.abs(o.p2.x - o.p1.x); bh = Math.abs(o.p2.y - o.p1.y);
+        } else if ((o.type === "polyline" || o.type === "curve") && o.points && o.points.length) {
+          let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+          o.points.forEach((p) => { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; });
+          bx = a; by = b; bw = c - a; bh = d - b;
+        } else {
+          bx = o.x ?? 0; by = o.y ?? 0; bw = o.w ?? 0; bh = o.h ?? 0;
+        }
+        if (bx < gMinX) gMinX = bx;
+        if (by < gMinY) gMinY = by;
+        if (bx + bw > gMaxX) gMaxX = bx + bw;
+        if (by + bh > gMaxY) gMaxY = by + bh;
+        if (typeof o.rotation === "number") gRots.push(o.rotation);
+      });
+      if (isFinite(gMinX)) {
+        const cx = (gMinX + gMaxX) / 2, cy = (gMinY + gMaxY) / 2;
+        xF.inp.value = cx.toFixed(2);
+        yF.inp.value = (-cy).toFixed(2); // SVG Y down → math Y up
+        wF.inp.value = (gMaxX - gMinX).toFixed(2);
+        hF.inp.value = (gMaxY - gMinY).toFixed(2);
+      }
+      // shared rotation: common value if all equal, else average (0 when none)
+      let gSharedRot = 0;
+      if (gRots.length) {
+        gSharedRot = gRots.every((r) => r === gRots[0])
+          ? gRots[0]
+          : gRots.reduce((a, b) => a + b, 0) / gRots.length;
+      }
+      rotF.inp.value = gSharedRot.toFixed(1);
       return;
     }
 
     groupDiv.style.display = "none";
 
     if (ids.length > 1) {
-      // Multi-selection (no shared group): only stroke/fill sections visible
+      // Multi-selection (no shared group): stroke/fill sections + 묶기 button
+      groupBtnDiv.style.display = ""; // ids>1 && !allInGroup (allInGroup returned above)
       sec1.style.display = "";
       sec2.style.display = allLineFamily ? "none" : ""; // no fill for line family
       sec3.style.display = "none";
@@ -960,7 +1186,7 @@ export function initInspector(state) {
     sec3.style.display = isShape ? "" : "none";
     if (isShape) {
       xF.inp.value   = (obj.x        ?? 0).toFixed(2);
-      yF.inp.value   = (obj.y        ?? 0).toFixed(2);
+      yF.inp.value   = (-(obj.y      ?? 0)).toFixed(2); // SVG Y down → math Y up
       wF.inp.value   = (obj.w        ?? 0).toFixed(2);
       hF.inp.value   = (obj.h        ?? 0).toFixed(2);
       rotF.inp.value = (obj.rotation ?? 0).toFixed(1);

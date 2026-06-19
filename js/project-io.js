@@ -10,10 +10,14 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.13.1";
+import { rebuildGroups } from "./transform.js?v=0.16.3";
 
 // Schema version of the saved file. Distinct from the app UI version.
-const SCHEMA_VERSION = "0.13";
+// 0.14 adds `artboard` (page size). Older files without it default to 90×60.
+const SCHEMA_VERSION = "0.14";
+
+// Default artboard size for files saved before the artboard field existed.
+const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
 // Default download filename for a saved project.
 const DEFAULT_FILENAME = "physics_drawing.json";
@@ -32,6 +36,8 @@ function serialize(s) {
     version: SCHEMA_VERSION,
     objects: s.objects,
     layers: s.layers,
+    // artboard: page size (single source of truth for export/render dimensions).
+    artboard: s.artboard,
     // groups omitted on purpose — derived from obj.groupId on load.
   };
 }
@@ -57,6 +63,11 @@ function applyLoaded(state, data) {
     // Replace the persistent drawing data.
     s.objects = data.objects;
     s.layers = data.layers;
+    // Restore artboard; older files (no artboard field) default to 90×60.
+    s.artboard = (data.artboard && typeof data.artboard.w === "number"
+                  && typeof data.artboard.h === "number")
+      ? { w: data.artboard.w, h: data.artboard.h }
+      : { ...DEFAULT_ARTBOARD };
     // Groups are derived from groupId — rebuild rather than trust the file.
     rebuildGroups(s);
 

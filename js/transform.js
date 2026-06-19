@@ -1,19 +1,19 @@
-/* ===== TRANSFORM (DESIGN §3 select-tool MOVE + snapshot-based Undo/Redo) ===== */
+﻿/* ===== TRANSFORM (DESIGN 짠3 select-tool MOVE + snapshot-based Undo/Redo) ===== */
 //
 // Owns two concerns:
 //   1. Body-drag MOVE of the selected object (V tool only).
 //   2. Snapshot-based Undo/Redo engine (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y).
 //
-// Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN §9).
+// Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN 짠9).
 // Snapshot is captured at drag start; committed only if the pointer crossed a
-// distance threshold — so a plain click never creates a useless undo entry.
+// distance threshold ??so a plain click never creates a useless undo entry.
 //
 // Coordination with tools.js: tools.js updates selectedIds on mousedown (bubble
 // phase). We use a capture-phase listener to read the PRE-click selectedIds, so
-// we can distinguish "click on already-selected → move allowed" from "click
-// selects a new object → just select, no move this press."
+// we can distinguish "click on already-selected ??move allowed" from "click
+// selects a new object ??just select, no move this press."
 
-import { screenToWorld } from "./viewport.js?v=0.13.1";
+import { screenToWorld } from "./viewport.js?v=0.16.3";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -129,7 +129,7 @@ const MOVE_THRESHOLD = 0.01; // world units; below this = plain click, not a dra
 let _moving = false;
 let _moveObjIds = [];
 let _moveStartWorld = null; // world coords of the mousedown that started the drag
-let _moveOrigObjs = {};     // map from id → deep clone of the object's geometry at drag start
+let _moveOrigObjs = {};     // map from id ??deep clone of the object's geometry at drag start
 let _pendingSnapshot = null; // full objects clone for undo; committed only if moved
 let _didMove = false;        // true once the threshold is crossed
 let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
@@ -146,7 +146,7 @@ let _groupResizing  = false;
 let _groupHandle    = null;
 let _groupBox0      = null;  // combined bbox at drag start
 let _groupMemberIds = [];
-let _groupOrigObjs  = {};    // id → deep clone at drag start
+let _groupOrigObjs  = {};    // id ??deep clone at drag start
 let _groupRotating  = false; // whole-group rotation about combined-bbox center
 
 /* rotation-drag state (also reused for whole-group rotation: _rotPivot, _rotStartAngle) */
@@ -201,7 +201,7 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
   }
 
   // Branch A: bounding box resize (rect / ellipse / triangle / closed polyline / closed curve).
-  // Closed polyline and closed curve have no x/y/w/h — derive the box from the point cloud,
+  // Closed polyline and closed curve have no x/y/w/h ??derive the box from the point cloud,
   // run the SAME per-handle math, then scale ALL points about the anchored corner.
   const isPoly  = isClosedPoly(obj);
   const isCurve = isClosedCurve(obj);
@@ -221,21 +221,21 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
   }
 
   // Shift = keep original aspect ratio (DESIGN 4-1). Grouped objects ALWAYS keep
-  // ratio, Shift-independent and forced (DESIGN 6-2) — breaking a group's ratio
+  // ratio, Shift-independent and forced (DESIGN 6-2) ??breaking a group's ratio
   // would distort the relative layout the grouping is meant to preserve.
   // Reference axis is fixed by HANDLE TYPE (not by live dx-vs-dy), so it never
-  // flips mid-drag on a diagonal where dx ≈ dy — which used to cause size jumps.
-  //   vertical edges (n/s) → height drives:  w = h * ratio
-  //   everything else (e/w + all corners)   → width drives:  h = w / ratio
+  // flips mid-drag on a diagonal where dx ??dy ??which used to cause size jumps.
+  //   vertical edges (n/s) ??height drives:  w = h * ratio
+  //   everything else (e/w + all corners)   ??width drives:  h = w / ratio
   if ((shiftKey || obj.groupId) && ratio > 0 && isFinite(ratio)) {
     if (handle === "n" || handle === "s") {
-      // height is the driver → snap w to follow h
+      // height is the driver ??snap w to follow h
       w = h * ratio;
       if (handle === "w" || handle === "nw" || handle === "sw") {
         x = box0.x + box0.w - w;
       }
     } else {
-      // width is the driver → snap h to follow w
+      // width is the driver ??snap h to follow w
       h = w / ratio;
       if (handle === "n" || handle === "nw" || handle === "ne") {
         y = box0.y + box0.h - h;
@@ -254,7 +254,7 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey) {
   }
 
   // Closed polyline / closed curve: scale ALL points about the anchor.
-  // p' = anchor + (p - anchor) * (sx, sy) — the box0 → new-box affine.
+  // p' = anchor + (p - anchor) * (sx, sy) ??the box0 ??new-box affine.
   if (isPoly || isCurve) {
     const sx = box0.w ? w / box0.w : 1;
     const sy = box0.h ? h / box0.h : 1;
@@ -318,7 +318,7 @@ function groupBBox(objs, svg) {
 /* ----- whole-group resize: uniform scale about the opposite corner -----
  * Recomputes the new combined box with the SAME per-handle math as the single
  * object path, but aspect ratio is FORCED unconditionally (DESIGN 6-2, Shift-
- * independent). Every member is then remapped by the box0 → newBox affine, so
+ * independent). Every member is then remapped by the box0 ??newBox affine, so
  * the relative layout the grouping preserves is kept intact. */
 function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   const ratio = box0.w / box0.h;
@@ -408,7 +408,7 @@ export function initTransform(svg, state) {
     const s = state.get();
     const selectedIds = s.selectedIds || [];
 
-    // Ctrl+C — copy selected objects into module-level clipboard
+    // Ctrl+C ??copy selected objects into module-level clipboard
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && !e.shiftKey) {
       if (!selectedIds.length) return;
       _clipboard = selectedIds
@@ -418,7 +418,7 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // Ctrl+V — paste clipboard at original position + (1, 1) world unit offset
+    // Ctrl+V ??paste clipboard at original position + (1, 1) world unit offset
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && !e.shiftKey) {
       if (!_clipboard || !_clipboard.length) return;
       e.preventDefault();
@@ -447,7 +447,7 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // Delete — remove all selected objects with undo snapshot
+    // Delete ??remove all selected objects with undo snapshot
     if (e.key === "Delete") {
       if (!selectedIds.length) return;
       e.preventDefault();
@@ -504,12 +504,51 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // PageUp — bring selected objects forward one step in z-order
+    // PageUp ??bring selected objects forward one step in z-order
     if (e.key === "PageUp") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
         const snap = JSON.parse(JSON.stringify(s.objects));
+        // Whole-group rotation: when every selected object shares one groupId,
+        // rotate all members about the COMBINED bbox center (group pivot) instead
+        // of each object spinning about its own center.
+        const gFirst = s.objects.find((o) => o.id === selectedIds[0]);
+        const gGid = selectedIds.length > 1 && gFirst && gFirst.groupId &&
+          selectedIds.every((id) => s.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
+          ? gFirst.groupId : null;
+        if (gGid) {
+          const members = selectedIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+          if (members.some((o) => o.locked)) return; // a locked member blocks the gesture
+          const box0 = groupBBox(members, svg);
+          if (box0) {
+            const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
+            const r = (5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const rot = (x, y) => ({
+              x: px + cosT * (x - px) - sinT * (y - py),
+              y: py + sinT * (x - px) + cosT * (y - py),
+            });
+            state.update((s2) => {
+              members.forEach((m) => {
+                const obj = s2.objects.find((o) => o.id === m.id);
+                if (!obj) return;
+                if (obj.type === "line") {
+                  obj.p1 = rot(obj.p1.x, obj.p1.y);
+                  obj.p2 = rot(obj.p2.x, obj.p2.y);
+                } else if (obj.type === "polyline" || obj.type === "curve") {
+                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                } else {
+                  const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
+                  obj.x = c.x - obj.w / 2;
+                  obj.y = c.y - obj.h / 2;
+                  obj.rotation = (obj.rotation || 0) + 5;
+                }
+              });
+              s2.undoStack.push(snap); s2.redoStack = [];
+            });
+          }
+          return;
+        }
         state.update((s2) => {
           const ids = s2.selectedIds || [];
           let changed = false;
@@ -544,12 +583,51 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // PageDown — send selected objects backward one step in z-order
+    // PageDown ??send selected objects backward one step in z-order
     if (e.key === "PageDown") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
         const snap = JSON.parse(JSON.stringify(s.objects));
+        // Whole-group rotation: when every selected object shares one groupId,
+        // rotate all members about the COMBINED bbox center (group pivot) instead
+        // of each object spinning about its own center.
+        const gFirst = s.objects.find((o) => o.id === selectedIds[0]);
+        const gGid = selectedIds.length > 1 && gFirst && gFirst.groupId &&
+          selectedIds.every((id) => s.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
+          ? gFirst.groupId : null;
+        if (gGid) {
+          const members = selectedIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+          if (members.some((o) => o.locked)) return; // a locked member blocks the gesture
+          const box0 = groupBBox(members, svg);
+          if (box0) {
+            const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
+            const r = (-5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const rot = (x, y) => ({
+              x: px + cosT * (x - px) - sinT * (y - py),
+              y: py + sinT * (x - px) + cosT * (y - py),
+            });
+            state.update((s2) => {
+              members.forEach((m) => {
+                const obj = s2.objects.find((o) => o.id === m.id);
+                if (!obj) return;
+                if (obj.type === "line") {
+                  obj.p1 = rot(obj.p1.x, obj.p1.y);
+                  obj.p2 = rot(obj.p2.x, obj.p2.y);
+                } else if (obj.type === "polyline" || obj.type === "curve") {
+                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                } else {
+                  const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
+                  obj.x = c.x - obj.w / 2;
+                  obj.y = c.y - obj.h / 2;
+                  obj.rotation = (obj.rotation || 0) - 5;
+                }
+              });
+              s2.undoStack.push(snap); s2.redoStack = [];
+            });
+          }
+          return;
+        }
         state.update((s2) => {
           const ids = s2.selectedIds || [];
           let changed = false;
@@ -584,7 +662,7 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // F — toggle flipY on selected triangle(s)
+    // F ??toggle flipY on selected triangle(s)
     if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "f") {
       if (!selectedIds.length) return;
       const triangleIds = selectedIds.filter(id => {
@@ -605,7 +683,7 @@ export function initTransform(svg, state) {
       });
     }
 
-    // K — toggle locked on all selected shape-based objects (V tool only)
+    // K ??toggle locked on all selected shape-based objects (V tool only)
     if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "k") {
       if (!selectedIds.length || s.activeTool !== "V") return;
       e.preventDefault();
@@ -622,14 +700,14 @@ export function initTransform(svg, state) {
       });
     }
 
-    // G — group selected objects (V tool, ≥2 selected)
+    // G ??group selected objects (V tool, ?? selected)
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === "g") {
       if (s.activeTool !== "V" || selectedIds.length < 2) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const groupId = Date.now().toString();
-        // locked objects are excluded from the group; need ≥2 mutable members left
+        // locked objects are excluded from the group; need ?? mutable members left
         const memberIds = (s2.selectedIds || []).filter(id =>
           isMutable(s2.objects.find((o) => o.id === id)));
         if (memberIds.length < 2) return;
@@ -644,7 +722,7 @@ export function initTransform(svg, state) {
       return;
     }
 
-    // Shift+G — ungroup (V tool, all selected objects share the same groupId)
+    // Shift+G ??ungroup (V tool, all selected objects share the same groupId)
     if (!e.ctrlKey && !e.metaKey && e.shiftKey && e.key.toLowerCase() === "g") {
       if (s.activeTool !== "V" || !selectedIds.length) return;
       const _refId = s.targetedId || selectedIds[0];
@@ -700,7 +778,7 @@ export function initTransform(svg, state) {
     const activeTool = state.get().activeTool;
     if (activeTool !== "V" && activeTool !== "rotate") return;
 
-    // Targeted state: block all transforms; only Shift+G / inspector "개체 풀기" allowed
+    // Targeted state: block all transforms; only Shift+G / inspector "媛쒖껜 ?湲? allowed
     if (state.get().targetedId) return;
 
     // Handle drag: only active when exactly one object is selected
@@ -711,8 +789,8 @@ export function initTransform(svg, state) {
 
     // Whole-group handle drag (green state): every selected object shares one
     // groupId and handles are drawn on the combined bbox (render id "__group__").
-    //  - V tool       → uniform resize, aspect FORCED (DESIGN 6-2).
-    //  - rotate tool  → rotate ALL members about the combined-bbox center.
+    //  - V tool       ??uniform resize, aspect FORCED (DESIGN 6-2).
+    //  - rotate tool  ??rotate ALL members about the combined-bbox center.
     // targeted (orange) already returned above so it can never reach here.
     if (hLabel && (activeTool === "V" || activeTool === "rotate") && selectedIds0.length > 1) {
       const gFirst = s0.objects.find((o) => o.id === selectedIds0[0]);
@@ -859,8 +937,8 @@ export function initTransform(svg, state) {
         return;
       }
 
-      // Normalize: rotating by δ about pivot P ≡ rotating by δ about center C + translation.
-      // new_center = rotate(orig_center, pivot, δ); stored (x,y) = new_center − (w/2, h/2).
+      // Normalize: rotating by 灌 about pivot P ??rotating by 灌 about center C + translation.
+      // new_center = rotate(orig_center, pivot, 灌); stored (x,y) = new_center ??(w/2, h/2).
       const { x: x0, y: y0, w, h, rotation: a0 } = _rotOrigObj;
       const cx0 = x0 + w / 2, cy0 = y0 + h / 2;
       const deltaRad = deltaDeg * (Math.PI / 180);

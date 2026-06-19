@@ -1,9 +1,9 @@
-/* ===== TOOLS (DESIGN §3 tool selection + the rectangle draw pipeline) ===== */
+﻿/* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
 //
 // Two responsibilities, both routed through the store so data stays the truth:
-//   1. Tool selection — V (select) / R (rectangle), via buttons or keyboard.
+//   1. Tool selection ??V (select) / R (rectangle), via buttons or keyboard.
 //      The armed tool lives in state.activeTool.
-//   2. Rectangle drawing — mouse down→drag→up while R is armed. The drag builds
+//   2. Rectangle drawing ??mouse down?뭗rag?뭫p while R is armed. The drag builds
 //      a `draft` rect (live preview via state.draft); mouse-up commits it into
 //      state.objects, then auto-returns to V (DESIGN 4-3).
 //
@@ -11,16 +11,16 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom } from "./viewport.js?v=0.13.1";
+import { screenToWorld, getZoom } from "./viewport.js?v=0.16.3";
 
-// Default look until the inspector exists (DESIGN §3-2: border only, hollow).
-const DEFAULT_STROKE_WIDTH = 0.5; // world units (≈0.5mm on the 100mm artboard)
+// Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
+const DEFAULT_STROKE_WIDTH = 0.5; // world units (??.5mm on the 100mm artboard)
 const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
 
 // A closed polyline keeps branch-B storage (point array) but takes branch-A
-// (face) interaction — selectable by interior, ratio-resizable, rotatable.
+// (face) interaction ??selectable by interior, ratio-resizable, rotatable.
 function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === true; }
 // A closed curve follows the SAME pattern: branch-B storage (anchor array) +
 // branch-A (face) interaction. The gap is closed with a smooth curved span.
@@ -89,12 +89,12 @@ function setupKeyboard() {
   });
 }
 
-/* ===== SHAPE DRAWING (rect / ellipse / triangle — one shared pipeline) ===== */
+/* ===== SHAPE DRAWING (rect / ellipse / triangle ??one shared pipeline) ===== */
 
-// Armed tool → object type. Size-based shapes (rect/ellipse/triangle) draw
-// through the SAME down→drag→up flow; only the stored geometry differs
+// Armed tool ??object type. Size-based shapes (rect/ellipse/triangle) draw
+// through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
 // (makeShape branches on type). Line (L) and polyline (P) are click-to-click
-// instead — see setupClickDrawing below.
+// instead ??see setupClickDrawing below.
 const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle" };
 
 let drawing = false;
@@ -120,7 +120,7 @@ function setupDrawing() {
     // A click on a selection handle means "manipulate the selected object",
     // NOT "change selection". Handles can sit OUTSIDE the shape outline
     // (ellipse/triangle corners), where hitTest finds empty space and would
-    // wrongly clear selectedIds — breaking transform.js's handle-drag guard.
+    // wrongly clear selectedIds ??breaking transform.js's handle-drag guard.
     const tgt = e.target;
     if (tgt && tgt.dataset && tgt.dataset.handle) return;
     const vb = _state.get().viewBox;
@@ -158,7 +158,7 @@ function setupDrawing() {
             s.targetedId = hitId;
             s.selectedIds = [hitId];
           } else if (s.targetedId === hitId) {
-            // Already targeting this member — preserve targeted state
+            // Already targeting this member ??preserve targeted state
             s.selectedIds = [hitId];
           } else {
             const _grp = s.groups.find((g) => g.id === _hitObj.groupId);
@@ -177,7 +177,7 @@ function setupDrawing() {
       _marqueeEl.setAttribute("fill", "rgba(9,105,218,0.08)");
       _marqueeEl.setAttribute("stroke", "#0969da");
       _marqueeEl.setAttribute("stroke-width", "0.3");
-      _marqueeEl.setAttribute("stroke-dasharray", "1.5 1");
+      _marqueeEl.setAttribute("stroke-dasharray", "0.7 0.5");
       _marqueeEl.setAttribute("pointer-events", "none");
       _marqueeEl.setAttribute("x", p.x);
       _marqueeEl.setAttribute("y", p.y);
@@ -205,7 +205,18 @@ function setupDrawing() {
   window.addEventListener("mousemove", (e) => {
     if (!drawing) return;
     const vb = _state.get().viewBox;
-    const cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    // Shift = aspect-ratio lock: force w === h (perfect square / circle) using the
+    // larger of the two extents, preserving the drag direction on each axis.
+    if (e.shiftKey && (drawType === "rect" || drawType === "ellipse")) {
+      const dx = cur.x - startWorld.x;
+      const dy = cur.y - startWorld.y;
+      const size = Math.max(Math.abs(dx), Math.abs(dy));
+      cur = {
+        x: startWorld.x + (dx < 0 ? -size : size),
+        y: startWorld.y + (dy < 0 ? -size : size),
+      };
+    }
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, cur); });
   });
 
@@ -231,7 +242,7 @@ function setupDrawing() {
     });
   });
 
-  // Marquee drag — update the dashed selection rect while dragging empty space.
+  // Marquee drag ??update the dashed selection rect while dragging empty space.
   window.addEventListener("mousemove", (e) => {
     if (!_marqueeStart) return;
     const vb = _state.get().viewBox;
@@ -246,7 +257,7 @@ function setupDrawing() {
     _marqueeEl.setAttribute("height", rh);
   });
 
-  // Marquee drag — commit or cancel on mouse-up.
+  // Marquee drag ??commit or cancel on mouse-up.
   window.addEventListener("mouseup", (e) => {
     if (!_marqueeStart) return;
     const vb = _state.get().viewBox;
@@ -257,7 +268,7 @@ function setupDrawing() {
 
     const dist = Math.hypot(cur.x - start.x, cur.y - start.y);
     if (dist < 2) {
-      // Plain empty-click — clear selection.
+      // Plain empty-click ??clear selection.
       _state.update((s) => { s.selectedIds = []; s.targetedId = null; });
       return;
     }
@@ -286,16 +297,16 @@ function setupDrawing() {
   // before mouseup, so the browser never fires click/dblclick on it.
 }
 
-/* ===== CLICK-TO-CLICK DRAWING (line L + polyline P — one shared mechanism) ===== */
+/* ===== CLICK-TO-CLICK DRAWING (line L + polyline P ??one shared mechanism) ===== */
 //
 // Both place vertices by CLICKING (no button hold). A running point list
 // (draftPoints) is built one click at a time; a live SOLID rubber-band preview
 // (state.draft, rendered as a polyline) runs from the last placed vertex to the
 // mouse. The only difference between the tools is when they finish:
-//   • LINE (L): the 2-point case — the 2nd click commits and finishes.
-//   • POLYLINE (P): many points — double-click or Enter finishes (≥2 points).
+//   ??LINE (L): the 2-point case ??the 2nd click commits and finishes.
+//   ??POLYLINE (P): many points ??double-click or Enter finishes (?? points).
 // ESC cancels the whole draft (nothing committed). All clicks convert to world
-// coords through the SHARED screenToWorld helper — no new coordinate math.
+// coords through the SHARED screenToWorld helper ??no new coordinate math.
 const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve" };
 
 let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C") while drafting, else null
@@ -321,7 +332,19 @@ function setupClickDrawing() {
   window.addEventListener("mousemove", (e) => {
     if (!clickTool) return;
     const vb = _state.get().viewBox;
-    mouseWorld = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    // Ctrl = 15° angle snap (line / polyline): snap the angle from the last placed
+    // vertex to the nearest 15° increment, then place the endpoint at the same distance.
+    if (e.ctrlKey && (clickTool === "L" || clickTool === "P") && draftPoints.length > 0) {
+      const anchor = draftPoints[draftPoints.length - 1];
+      const dx = cur.x - anchor.x;
+      const dy = cur.y - anchor.y;
+      const dist = Math.hypot(dx, dy);
+      const step = Math.PI / 12; // 15 degrees in radians
+      const snapped = Math.round(Math.atan2(dy, dx) / step) * step;
+      cur = { x: anchor.x + Math.cos(snapped) * dist, y: anchor.y + Math.sin(snapped) * dist };
+    }
+    mouseWorld = cur;
     updateDraftPreview();
   });
 
@@ -356,7 +379,7 @@ function commitLine() {
   else resetClickDraft();
 }
 
-// POLYLINE / CURVE: needs ≥2 vertices; otherwise the draft is discarded.
+// POLYLINE / CURVE: needs ?? vertices; otherwise the draft is discarded.
 function finishPolyline() {
   if (draftPoints.length < 2) { resetClickDraft(); return; }
   const shape = clickTool === "C" ? makeCurve(draftPoints) : makePolyline(draftPoints);
@@ -438,7 +461,7 @@ function hitTest(objects, p, tol = 0) {
         if (segDist(p.x, p.y, pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y) <= margin) return o.id;
       }
       // A CLOSED polyline behaves like a face: also test the closing edge AND
-      // the interior (ray casting), so an inside click selects it too — the
+      // the interior (ray casting), so an inside click selects it too ??the
       // outline still selects via the segment loop above. Open polyline: edges only.
       if (isClosedPoly(o) && pts.length >= 3) {
         const last = pts[pts.length - 1], first = pts[0];
@@ -457,7 +480,7 @@ function hitTest(objects, p, tol = 0) {
       }
       const SAMPLES = 12;
       // A CLOSED curve behaves like a face: sample EVERY span (incl. the closing
-      // last→first span) finely into a polygon approximation, then accept an
+      // last?뭚irst span) finely into a polygon approximation, then accept an
       // interior click via point-in-polygon. The on-curve outline still hits too.
       if (isClosedCurve(o) && pts.length >= 3) {
         const poly = [];
@@ -691,7 +714,7 @@ function makeCurve(points) {
   };
 }
 
-/* ----- Catmull-Rom cubic Bezier control points for segment i → i+1 ----- */
+/* ----- Catmull-Rom cubic Bezier control points for segment i ??i+1 ----- */
 function curveBezierSeg(pts, i) {
   const n = pts.length;
   const p0 = pts[Math.max(i - 1, 0)];
@@ -706,8 +729,8 @@ function curveBezierSeg(pts, i) {
   };
 }
 
-/* ----- closed-curve Bezier control points for span i → i+1 (indices wrap) ----- */
-// The closing span (last → first) is span i = n-1; neighbors wrap modulo n so the
+/* ----- closed-curve Bezier control points for span i ??i+1 (indices wrap) ----- */
+// The closing span (last ??first) is span i = n-1; neighbors wrap modulo n so the
 // whole loop stays smooth, mirroring render's catmullRomClosedPath.
 function curveBezierSegClosed(pts, i) {
   const n = pts.length;
@@ -723,7 +746,7 @@ function curveBezierSegClosed(pts, i) {
   };
 }
 
-/* ----- evaluate cubic Bezier at parameter t ∈ [0,1] ----- */
+/* ----- evaluate cubic Bezier at parameter t ??[0,1] ----- */
 function evalBezier(seg, t) {
   const u = 1 - t;
   return {
@@ -750,7 +773,7 @@ function setupTextTool() {
     e.preventDefault();
 
     // If an editor is already open (e.g. clicked canvas a second time while T
-    // is still active — unusual path), commit it and return.  The blur will
+    // is still active ??unusual path), commit it and return.  The blur will
     // have already fired before mousedown so usually this guard won't trigger.
     if (_textEditor) { _commitText(); return; }
 
@@ -778,7 +801,7 @@ function setupTextTool() {
         ke.preventDefault();
         _commitText();
       }
-      // Shift+Enter falls through → native newline in textarea
+      // Shift+Enter falls through ??native newline in textarea
     });
 
     _textEditor.addEventListener("blur", () => {
@@ -803,7 +826,7 @@ function _commitText() {
 
   // WYSIWYG: the editor shows TEXT_EDITOR_PX on screen; store the SAME on-screen
   // size as WORLD units so the committed text renders identically. fontSize is in
-  // world units (mm), so screen px ÷ zoom; otherwise 14 is read as 14mm and the
+  // world units (mm), so screen px 첨 zoom; otherwise 14 is read as 14mm and the
   // text balloons by the zoom factor (Bug 3).
   const worldFontSize = TEXT_EDITOR_PX / getZoom();
 

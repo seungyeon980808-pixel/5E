@@ -13,7 +13,7 @@
 
 .panel-right {
   width: var(--panel-right-w);
-  min-width: 200px;
+  min-width: 150px;
   max-width: 480px;
   flex-shrink: 0;
   border-left: 1px solid var(--insp-border);
@@ -123,11 +123,10 @@ details[open] > .insp-summary::before {
   text-align: right;
 }
 
-/* 크기·위치 number fields: fixed-width, pushed to the right of the label */
+/* 크기·위치 number fields: fixed 64px, sit tight next to the label (left-aligned) */
 .insp-input {
   flex: 0 0 auto;
-  width: 72px;
-  margin-left: auto;
+  width: 64px;
   font-size: 11px;
   color: var(--insp-text);
   background: var(--insp-field-bg);
@@ -172,6 +171,30 @@ details[open] > .insp-summary::before {
   flex-shrink: 0;
 }
 
+/* ----- 아트보드 preset buttons (2×2 grid, full labels) ----- */
+.insp-ab-presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.insp-ab-preset {
+  min-width: 0;
+  padding: 5px 6px;
+  font-size: 11px;
+  font-family: "IBM Plex Mono", monospace;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+}
+
+.insp-ab-preset:hover {
+  border-color: var(--insp-accent);
+}
+
 /* ----- Color picker ----- */
 .cp-root {
   display: flex;
@@ -198,18 +221,47 @@ details[open] > .insp-summary::before {
   outline-offset: 1px;
 }
 
+/* Slider + numeric level box share one row */
+.cp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .cp-bar-wrap {
   position: relative;
   height: 14px;
+  flex: 1;
+  min-width: 0;
 }
 
 .cp-bar {
   position: absolute;
   inset: 0;
   border-radius: var(--insp-radius);
+  /* LEFT = white (level 0 / lightest) → RIGHT = black (level 255 / darkest) */
   background: linear-gradient(to right, #ffffff, #000000);
   border: 1px solid var(--insp-border);
   cursor: crosshair;
+}
+
+/* Numeric level box (0 = white, 255 = black), 48px, right-aligned next to slider */
+.cp-num-input {
+  width: 48px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 11px;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  padding: 2px 4px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.cp-num-input:focus {
+  outline: none;
+  border-color: var(--insp-accent);
 }
 
 .cp-handle {

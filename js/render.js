@@ -1,18 +1,17 @@
-/* ===== RENDER (DESIGN 1-1: SVG is a projection of state.objects) ===== */
+﻿/* ===== RENDER (DESIGN 1-1: SVG is a projection of state.objects) ===== */
 //
 // render(state) repaints the <g id="scene"> from data. It is registered as a
-// store subscriber in main.js, so ANY state.update() repaints automatically —
-// no caller ever invokes render() by hand. That is the data-as-truth proof.
+// store subscriber in main.js, so ANY state.update() repaints automatically ??// no caller ever invokes render() by hand. That is the data-as-truth proof.
 //
 // Each object carries its own world coordinates (x/y/w/h in viewBox units), so
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom } from "./viewport.js?v=0.13.1";
+import { getZoom } from "./viewport.js?v=0.16.3";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-/* rotation-zone cursor: clockwise circular arrow (20×20, 24×24 viewBox) */
+/* rotation-zone cursor: clockwise circular arrow (20횞20, 24횞24 viewBox) */
 const ROT_CURSOR = (() => {
   const svg =
     "<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'>" +
@@ -31,7 +30,7 @@ export function render(state) {
   scene.replaceChildren();
 
   // ----- per-object fill patterns: regenerated every render into a fresh <defs> -----
-  // (matches the wipe-and-rebuild model — each object's pattern carries its own
+  // (matches the wipe-and-rebuild model ??each object's pattern carries its own
   // fillLevel as the mark color, so different levels never collide).
   const defs = document.createElementNS(SVG_NS, "defs");
   scene.appendChild(defs);
@@ -40,12 +39,14 @@ export function render(state) {
     if (pat) defs.appendChild(pat);
   }
 
-  // ----- artboard: 90mm × 65mm world-space rect, non-interactive, always first -----
+  // ----- artboard: world-space rect from state.artboard (single source of truth),
+  // centered on origin, non-interactive, always first. 1 world unit = 1 mm. -----
+  const { w: _abW, h: _abH } = state.artboard;
   const artboard = document.createElementNS(SVG_NS, "rect");
-  artboard.setAttribute("x", "-45");
-  artboard.setAttribute("y", "-32.5");
-  artboard.setAttribute("width", "90");
-  artboard.setAttribute("height", "65");
+  artboard.setAttribute("x", -_abW / 2);
+  artboard.setAttribute("y", -_abH / 2);
+  artboard.setAttribute("width", _abW);
+  artboard.setAttribute("height", _abH);
   artboard.setAttribute("fill", "#ffffff");
   artboard.setAttribute("stroke", "#d0d7de");
   artboard.setAttribute("stroke-width", "1");
@@ -84,7 +85,7 @@ export function render(state) {
       _grect.setAttribute("height", _gbox.h);
       _grect.setAttribute("fill", "none");
       _grect.setAttribute("stroke-width", "0.4");
-      _grect.setAttribute("stroke-dasharray", "1.2 1.2");
+      _grect.setAttribute("stroke-dasharray", "0.6 0.6");
       _grect.style.stroke = "#2f9e44";
       scene.appendChild(_grect);
     }
@@ -108,7 +109,7 @@ export function render(state) {
       ln.setAttribute("x2", sel.p2.x);
       ln.setAttribute("y2", sel.p2.y);
       ln.setAttribute("stroke-width", "0.4"); // world units
-      ln.setAttribute("stroke-dasharray", "1.2 1.2");
+      ln.setAttribute("stroke-dasharray", "0.6 0.6");
       ln.style.stroke = _selColor;
       scene.appendChild(ln);
     } else if (sel.type === "polyline" && sel.closed === true) {
@@ -123,7 +124,7 @@ export function render(state) {
         box.setAttribute("height", bb.h);
         box.setAttribute("fill", "none");
         box.setAttribute("stroke-width", "0.4"); // world units
-        box.setAttribute("stroke-dasharray", "1.2 1.2");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
         scene.appendChild(box);
       }
@@ -133,7 +134,7 @@ export function render(state) {
       pl.setAttribute("points", sel.points.map((p) => `${p.x},${p.y}`).join(" "));
       pl.setAttribute("fill", "none");
       pl.setAttribute("stroke-width", "0.4"); // world units
-      pl.setAttribute("stroke-dasharray", "1.2 1.2");
+      pl.setAttribute("stroke-dasharray", "0.6 0.6");
       pl.style.stroke = _selColor;
       scene.appendChild(pl);
     } else if (sel.type === "curve" && sel.closed === true) {
@@ -147,7 +148,7 @@ export function render(state) {
         box.setAttribute("height", bb.h);
         box.setAttribute("fill", "none");
         box.setAttribute("stroke-width", "0.4");
-        box.setAttribute("stroke-dasharray", "1.2 1.2");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
         scene.appendChild(box);
       }
@@ -157,7 +158,7 @@ export function render(state) {
       cv.setAttribute("d", catmullRomPath(sel.points));
       cv.setAttribute("fill", "none");
       cv.setAttribute("stroke-width", "0.4"); // world units
-      cv.setAttribute("stroke-dasharray", "1.2 1.2");
+      cv.setAttribute("stroke-dasharray", "0.6 0.6");
       cv.style.stroke = _selColor;
       scene.appendChild(cv);
     } else if (sel.type === "text") {
@@ -173,7 +174,7 @@ export function render(state) {
           box.setAttribute("height", bb.height);
           box.setAttribute("fill", "none");
           box.setAttribute("stroke-width", "0.4");
-          box.setAttribute("stroke-dasharray", "1.2 1.2");
+          box.setAttribute("stroke-dasharray", "0.6 0.6");
           box.style.stroke = _selColor;
           scene.appendChild(box);
         } catch (_) { /* not laid out yet */ }
@@ -186,7 +187,7 @@ export function render(state) {
       box.setAttribute("height", sel.h);
       box.setAttribute("fill", "none");
       box.setAttribute("stroke-width", "0.4"); // world units
-      box.setAttribute("stroke-dasharray", "1.2 1.2");
+      box.setAttribute("stroke-dasharray", "0.6 0.6");
       box.style.stroke = _selColor;
       if (sel.rotation) {
         const cx = sel.x + sel.w / 2, cy = sel.y + sel.h / 2;
@@ -220,6 +221,16 @@ export function render(state) {
           scene, getZoom(), state.activeTool
         );
       }
+    } else {
+      // Plain multi-selection (no shared groupId): still draw the 8 handles on the
+      // combined bbox so an ad-hoc selection scales/rotates as a unit.
+      const _box = combinedGroupBBox(_members, scene);
+      if (_box) {
+        renderHandles(
+          { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
+          scene, getZoom(), state.activeTool
+        );
+      }
     }
   }
 
@@ -229,8 +240,8 @@ export function render(state) {
 
     // For size-based shapes (ellipse/triangle) the bbox differs from the shape
     // outline, so draw a dashed rectangle guide spanning the drag bounds first.
-    // (rect's own preview already IS that rectangle; the line has no bbox — it
-    // shows its own solid preview below — so both skip the duplicate guide.)
+    // (rect's own preview already IS that rectangle; the line has no bbox ??it
+    // shows its own solid preview below ??so both skip the duplicate guide.)
     if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve") {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
@@ -240,13 +251,13 @@ export function render(state) {
       box.setAttribute("fill", "none");
       box.style.stroke = "var(--c-main, #0969da)";
       box.setAttribute("stroke-width", d.strokeWidth);
-      box.setAttribute("stroke-dasharray", "1.2 1.2"); // world-unit dashes
+      box.setAttribute("stroke-dasharray", "0.6 0.6"); // world-unit dashes
       scene.appendChild(box);
     }
 
     // The actual shape outline that will be committed, drawn inside the guide.
     // Render it SOLID exactly as the real shape will look (black stroke, same
-    // stroke-width from renderObject) — no dashing — so the preview matches.
+    // stroke-width from renderObject) ??no dashing ??so the preview matches.
     const el = renderObject(d);
     if (el) {
       scene.appendChild(el);
@@ -255,7 +266,9 @@ export function render(state) {
 }
 
 /* ----- per-object dispatch (one branch per shape type) ----- */
-function renderObject(obj) {
+// Exported so SVG export reuses the exact same per-object node builders
+// (no duplicated shape-drawing code; DESIGN 1-1 projection stays single-source).
+export function renderObject(obj) {
   switch (obj.type) {
     case "rect":
       return renderRect(obj);
@@ -284,7 +297,7 @@ function renderRect(obj) {
   r.setAttribute("width", obj.w);
   r.setAttribute("height", obj.h);
 
-  // Fill: transparent (none) / solid gray / pattern url — still clicks (DESIGN 5-3).
+  // Fill: transparent (none) / solid gray / pattern url ??still clicks (DESIGN 5-3).
   r.setAttribute("fill", resolveFill(obj));
   // strokeLevel 0 = black (DESIGN 2-2). stroke-width is in world units.
   r.setAttribute("stroke", grayHex(obj.strokeLevel));
@@ -299,7 +312,7 @@ function renderRect(obj) {
   return r;
 }
 
-/* ----- ellipse: size-based shape; bbox (x/y/w/h) → cx/cy + rx/ry ----- */
+/* ----- ellipse: size-based shape; bbox (x/y/w/h) ??cx/cy + rx/ry ----- */
 function renderEllipse(obj) {
   const el = document.createElementNS(SVG_NS, "ellipse");
   el.setAttribute("cx", obj.x + obj.w / 2);
@@ -307,7 +320,7 @@ function renderEllipse(obj) {
   el.setAttribute("rx", obj.w / 2);
   el.setAttribute("ry", obj.h / 2);
 
-  // Fill: transparent (none) / solid gray / pattern url — still clicks (DESIGN 5-3).
+  // Fill: transparent (none) / solid gray / pattern url ??still clicks (DESIGN 5-3).
   el.setAttribute("fill", resolveFill(obj));
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth);
@@ -321,7 +334,7 @@ function renderEllipse(obj) {
   return el;
 }
 
-/* ----- triangle: right-angle corner determined by flipX × flipY ----- */
+/* ----- triangle: right-angle corner determined by flipX 횞 flipY ----- */
 // flipX false / flipY false: bottom-left   flipX true  / flipY false: bottom-right
 // flipX false / flipY true:  top-left      flipX true  / flipY true:  top-right
 function renderTriangle(obj) {
@@ -340,7 +353,7 @@ function renderTriangle(obj) {
   }
   el.setAttribute("points", pts);
 
-  // Fill: transparent (none) / solid gray / pattern url — still clicks (DESIGN 5-3).
+  // Fill: transparent (none) / solid gray / pattern url ??still clicks (DESIGN 5-3).
   el.setAttribute("fill", resolveFill(obj));
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth);
@@ -381,7 +394,7 @@ function makeArrowHead(tipX, tipY, dirX, dirY, strokeWidth, color) {
 }
 
 /* ----- dashes (line/polyline/curve): SVG stroke-dasharray in world units (mm) ----- */
-// Solid = dashLength 0 (or gap 0) → no dasharray attribute set at all (DESIGN: presets).
+// Solid = dashLength 0 (or gap 0) ??no dasharray attribute set at all (DESIGN: presets).
 function applyDash(el, obj) {
   const dl = obj.dashLength ?? 0;
   const dg = obj.dashGap ?? 0;
@@ -414,7 +427,7 @@ function polylineMidpoint(pts) {
   return null;
 }
 
-/* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1→p2, no fill ----- */
+/* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
 function renderLine(obj) {
   const arrowHead = obj.arrowHead ?? "none";
   const sw = obj.strokeWidth;
@@ -553,7 +566,7 @@ function renderPolyline(obj) {
   return g;
 }
 
-/* ----- Catmull-Rom spline → SVG cubic Bezier path string ----- */
+/* ----- Catmull-Rom spline ??SVG cubic Bezier path string ----- */
 // Passes through every anchor point. 2-point degenerate case = straight line.
 function catmullRomPath(pts) {
   if (!pts || pts.length < 2) return "";
@@ -576,7 +589,7 @@ function catmullRomPath(pts) {
   return d;
 }
 
-/* ----- Catmull-Rom spline closed loop → SVG cubic Bezier path string + Z ----- */
+/* ----- Catmull-Rom spline closed loop ??SVG cubic Bezier path string + Z ----- */
 function catmullRomClosedPath(pts) {
   if (!pts || pts.length < 3) return "";
   const n = pts.length;
@@ -640,7 +653,7 @@ function renderText(obj) {
       const ts = document.createElementNS(SVG_NS, "tspan");
       ts.setAttribute("x", obj.x);
       ts.setAttribute("dy", i === 0 ? "0" : obj.fontSize * 1.4);
-      ts.textContent = line || " "; // non-breaking space keeps empty lines tall
+      ts.textContent = line || "혻"; // non-breaking space keeps empty lines tall
       el.appendChild(ts);
     });
   }
@@ -655,14 +668,14 @@ function rotPt(px, py, cx, cy, deg) {
   return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
 }
 
-/* ----- grayscale level (0–255) → hex; 0 = black, 255 = white (DESIGN 7-2) ----- */
+/* ----- grayscale level (0??55) ??hex; 0 = black, 255 = white (DESIGN 7-2) ----- */
 function grayHex(level = 0) {
   const v = Math.max(0, Math.min(255, Math.round(level)));
   const h = v.toString(16).padStart(2, "0");
   return `#${h}${h}${h}`;
 }
 
-/* ===== FILL PATTERNS (grayscale only — mark color = grayHex(obj.fillLevel)) ===== */
+/* ===== FILL PATTERNS (grayscale only ??mark color = grayHex(obj.fillLevel)) ===== */
 // Tile size / dot radius / mark stroke are fixed world-unit (mm) values, cheap to
 // tune. Patterns are per-object (id = pat_{obj.id}) and rebuilt every render, so a
 // different fillLevel per object never collides.
@@ -679,9 +692,9 @@ function isFillable(obj) {
 }
 
 /* ----- resolve an object's fill attribute (DESIGN 5-3: empty still clickable) ----- */
-//   fillNone            → "transparent"
-//   fillStyle "solid"   → grayHex(fillLevel)
-//   otherwise (pattern) → url(#pat_{id})
+//   fillNone            ??"transparent"
+//   fillStyle "solid"   ??grayHex(fillLevel)
+//   otherwise (pattern) ??url(#pat_{id})
 function resolveFill(obj) {
   if (obj.fillNone) return "transparent";
   const style = obj.fillStyle ?? "solid";
@@ -692,7 +705,7 @@ function resolveFill(obj) {
 /* ----- build a <pattern> for one object, or null when it needs no pattern ----- */
 // Each tile starts with a fill="transparent" base rect so the empty area between
 // marks still captures clicks (DESIGN 5-3), exactly like a transparent solid fill.
-function makeFillPattern(obj) {
+export function makeFillPattern(obj) {
   const style = obj.fillStyle ?? "solid";
   if (!obj.id || obj.fillNone || style === "solid" || !isFillable(obj)) return null;
 
@@ -726,11 +739,11 @@ function makeFillPattern(obj) {
     c.setAttribute("fill", mark);
     pat.appendChild(c);
   } else if (style === "cross") {
-    const m = PAT_TILE / 2, d = PAT_TILE * 0.22; // ✕ arm half-length
+    const m = PAT_TILE / 2, d = PAT_TILE * 0.22; // ??arm half-length
     line(m - d, m - d, m + d, m + d);
     line(m - d, m + d, m + d, m - d);
   } else if (style === "hatch") {
-    // 45° parallel lines. The main anti-diagonal tiles seamlessly; the two
+    // 45째 parallel lines. The main anti-diagonal tiles seamlessly; the two
     // half-corner segments fill the seams so the lines read as continuous.
     line(0, PAT_TILE, PAT_TILE, 0);
     line(-PAT_TILE / 2, PAT_TILE / 2, PAT_TILE / 2, -PAT_TILE / 2);
@@ -853,7 +866,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
       makeHandle(hE.x,  hE.y,  "e");
       makeHandle(hS.x,  hS.y,  "s");
       makeHandle(hW.x,  hW.y,  "w");
-      // corner handles: blue circles + 90° arc indicators
+      // corner handles: blue circles + 90째 arc indicators
       const makeArc = (px, py, startDeg, endDeg) => {
         const R = rotOuter;
         const s = startDeg * Math.PI / 180;

@@ -42,8 +42,8 @@
   --c-text: var(--text-primary);
   --c-border: var(--border);
 
-  --panel-left-w: 200px;
-  --panel-right-w: 260px;
+  --panel-left-w: 130px;
+  --panel-right-w: 160px;
   --footer-h: 28px;
 }
 
@@ -91,7 +91,7 @@ body {
   overflow: auto;
 }
 
-.panel-left { border-right: 1px solid var(--c-border); }
+.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; }
 .panel-right { border-left: 1px solid var(--c-border); }
 
 .panel-title {
@@ -110,7 +110,7 @@ body {
 /* ===== LEFT PANEL: tool buttons (DESIGN §3) ===== */
 .tool-list {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
 }
 
@@ -212,6 +212,151 @@ body {
   cursor: pointer;
 }
 .topbar-btn:hover { background: var(--btn-tool-hover); }
+
+/* ===== FILE MENU (파일 ▾ dropdown in the canvas toolbar) ===== */
+.file-menu {
+  position: relative;
+}
+
+.file-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+.file-menu-list[hidden] { display: none; }
+
+.file-menu-item {
+  font-family: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.file-menu-item:hover { background: var(--btn-tool-hover); }
+
+.file-menu-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--border);
+}
+
+/* ===== EXPORT MODAL (이미지로 내보내기) ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.modal-label {
+  font-size: 12px;
+  color: var(--text-label);
+}
+
+.modal-input {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+}
+.modal-input:focus { border-color: var(--accent); }
+
+/* segmented control: format (PNG/SVG) + resolution (DPI) */
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.seg-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.seg-btn:hover { color: var(--text-primary); }
+.seg-btn.is-active {
+  color: #fff;
+  background: var(--accent);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.modal-btn {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.modal-btn:hover { background: var(--btn-tool-hover); }
+.modal-btn-primary {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.modal-btn-primary:hover { background: var(--accent-hover); }
 
 .zoom-readout {
   margin-left: auto;

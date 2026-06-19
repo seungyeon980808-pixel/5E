@@ -14,9 +14,15 @@ export const state = createStore({
   // objects: array of { id, type, ...props } — the real drawing data.
   objects: [],
 
+  // artboard: the page region, single source of truth for its size (DESIGN 1-1).
+  // 1 world unit = 1 mm. Centered on world origin, so it spans
+  // x ∈ [-w/2, +w/2], y ∈ [-h/2, +h/2] (origin derived as -w/2, -h/2).
+  // Default 90×60. Max size is 100×100 (size-adjust UI lands later; not enforced yet).
+  artboard: { w: 90, h: 60 },
+
   // viewBox: world-space rectangle currently shown (x, y, w, h).
-  // Initial view: 90×65 artboard centered at origin with ~10mm margin on each side.
-  viewBox: { x: -55, y: -42.5, w: 110, h: 85 },
+  // Initial view: 90×60 artboard centered at origin with ~10mm margin on each side.
+  viewBox: { x: -55, y: -40, w: 110, h: 80 },
 
   // activeTool: which tool is armed. "V" = select, "R" = rectangle (DESIGN §3).
   // Drawing auto-returns to "V" right after a shape lands (DESIGN 4-3).
