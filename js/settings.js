@@ -17,12 +17,12 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.38.0";
+} from "./state.js?v=0.39.0";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
 const FACTORY_DEFAULTS = {
-  strokeWidth: 0.5,      // mm
+  strokeWidth: 0.2,      // mm
   strokeLevel: 0,        // 0 = black
   fillLevel: 214,
   textSizeMm: DEFAULT_TEXT_SIZE_MM,  // matches DEFAULT_TEXT_SIZE_MM
@@ -103,7 +103,7 @@ function buildModal() {
           <label class="modal-field" for="defaults-stroke-width">
             <span class="modal-label">기본 선 굵기 (mm)</span>
             <input type="number" id="defaults-stroke-width" class="modal-input"
-                   step="0.1" min="0" autocomplete="off" />
+                   step="0.1" min="0.1" max="0.5" autocomplete="off" />
           </label>
 
           <label class="modal-field" for="defaults-stroke-level">

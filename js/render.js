@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.38.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.38.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.39.0";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.39.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -526,6 +526,7 @@ function renderRect(obj) {
   // strokeLevel 0 = black (DESIGN 2-2). stroke-width is in world units.
   r.setAttribute("stroke", grayHex(obj.strokeLevel));
   r.setAttribute("stroke-width", obj.strokeWidth);
+  applyDash(r, obj);
 
   if (obj.rotation) {
     const cx = obj.x + obj.w / 2;
@@ -548,6 +549,7 @@ function renderEllipse(obj) {
   el.setAttribute("fill", resolveFill(obj));
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth);
+  applyDash(el, obj);
 
   if (obj.rotation) {
     const cx = obj.x + obj.w / 2;
@@ -581,6 +583,7 @@ function renderTriangle(obj) {
   el.setAttribute("fill", resolveFill(obj));
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth);
+  applyDash(el, obj);
 
   if (obj.rotation) {
     const cx = obj.x + obj.w / 2;
@@ -654,7 +657,7 @@ function polylineMidpoint(pts) {
 /* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
 function renderLine(obj) {
   const arrowHead = obj.arrowHead ?? "none";
-  const sw = obj.strokeWidth;
+  const sw = obj.strokeWidth ?? 0.2;
   const color = grayHex(obj.strokeLevel);
 
   const dx = obj.p2.x - obj.p1.x;
@@ -670,6 +673,8 @@ function renderLine(obj) {
     const arrowLen = sw * 4.5 * 0.7; // retract to notch: length - notchDepth (length * 0.3)
     if (arrowHead === "end") {
       lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
+    } else if (arrowHead === "start") {
+      lx1 += nx * arrowLen; ly1 += ny * arrowLen;
     } else if (arrowHead === "both") {
       lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
       lx1 += nx * arrowLen; ly1 += ny * arrowLen;
@@ -698,10 +703,12 @@ function renderLine(obj) {
 
   if (arrowHead === "end") {
     g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
+  } else if (arrowHead === "start") {
+    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
   } else if (arrowHead === "both") {
     g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
     g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
-  } else if (arrowHead === "center") {
+  } else if (arrowHead === "center") { // legacy project compatibility
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     g.appendChild(makeArrowHead(mx, my, nx, ny, sw, color));
@@ -718,7 +725,7 @@ function renderLine(obj) {
 //   center = 50% path-length point, pointing along travel direction
 // The arrow-bearing END SEGMENT is retracted by the arrow length, like renderLine.
 function renderPolyline(obj) {
-  const sw = obj.strokeWidth;
+  const sw = obj.strokeWidth ?? 0.2;
   const color = grayHex(obj.strokeLevel);
   const pts = obj.points || [];
   const n = pts.length;
@@ -755,7 +762,7 @@ function renderPolyline(obj) {
   if ((arrowHead === "end" || arrowHead === "both") && endDir) {
     draw[n - 1] = { x: pts[n - 1].x - endDir.x * arrowLen, y: pts[n - 1].y - endDir.y * arrowLen };
   }
-  if (arrowHead === "both" && startDir) {
+  if ((arrowHead === "start" || arrowHead === "both") && startDir) {
     draw[0] = { x: pts[0].x + startDir.x * arrowLen, y: pts[0].y + startDir.y * arrowLen };
   }
 
@@ -779,10 +786,10 @@ function renderPolyline(obj) {
   if ((arrowHead === "end" || arrowHead === "both") && endDir) {
     g.appendChild(makeArrowHead(pts[n - 1].x, pts[n - 1].y, endDir.x, endDir.y, sw, color));
   }
-  if (arrowHead === "both" && startDir) {
+  if ((arrowHead === "start" || arrowHead === "both") && startDir) {
     g.appendChild(makeArrowHead(pts[0].x, pts[0].y, -startDir.x, -startDir.y, sw, color));
   }
-  if (arrowHead === "center") {
+  if (arrowHead === "center") { // legacy project compatibility
     const m = polylineMidpoint(pts);
     if (m) g.appendChild(makeArrowHead(m.x, m.y, m.dx, m.dy, sw, color));
   }

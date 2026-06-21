@@ -1,18 +1,19 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.38.0";
-import { openFontModalForSelection } from "./tools.js?v=0.38.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.39.0";
+import { openFontModalForSelection } from "./tools.js?v=0.39.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
 // Branch-B "line family": share arrow + dash controls; fill section is hidden for them.
 const LINE_TYPES = ["line", "polyline", "curve"];
+const DASH_TYPES = [...SHAPE_TYPES, ...LINE_TYPES];
 // Dash presets (world units / mm). 실선 = (0,0) = solid (no dasharray).
 const DASH_PRESETS = [
   { label: "실선",  dashLength: 0, dashGap: 0 },
-  { label: "점선1", dashLength: 2, dashGap: 2 },
-  { label: "점선2", dashLength: 5, dashGap: 3 },
-  { label: "점선3", dashLength: 1, dashGap: 3 },
+  { label: "점선1", dashLength: 0.2, dashGap: 0.2 },
+  { label: "점선2", dashLength: 0.5, dashGap: 0.3 },
+  { label: "점선3", dashLength: 1.0, dashGap: 0.3 },
 ];
 
 // True while user is dragging a color picker bar — suppresses populate() re-entry.
@@ -232,17 +233,17 @@ export function initInspector(state) {
   const widthRange = document.createElement("input");
   widthRange.type = "range";
   widthRange.min = "0.1";
-  widthRange.max = "5";
+  widthRange.max = "0.5";
   widthRange.step = "0.1";
   widthRange.className = "insp-range";
   const widthNum = document.createElement("input");
   widthNum.type = "number";
   widthNum.min = "0.1";
-  widthNum.max = "5";
+  widthNum.max = "0.5";
   widthNum.step = "0.1";
   widthNum.style.cssText = "width:40px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
   const widthUnit = document.createElement("span");
-  widthUnit.textContent = "pt";
+  widthUnit.textContent = "mm";
   widthUnit.className = "insp-unit";
   widthRow.appendChild(widthLbl);
   widthRow.appendChild(widthRange);
@@ -263,42 +264,34 @@ export function initInspector(state) {
     none:   '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>',
     end:    '<line x1="4" y1="12" x2="30" y2="12" stroke="#888" stroke-width="1.5"/>' +
             '<polygon points="30,8 36,12 30,16" fill="#888"/>',
+    start:  '<line x1="10" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
+            '<polygon points="10,8 4,12 10,16" fill="#888"/>',
     center: '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
             '<polygon points="14,8 20,12 14,16" fill="#888"/>',
     both:   '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
             '<polygon points="10,8 4,12 10,16" fill="#888"/>' +
             '<polygon points="30,8 36,12 30,16" fill="#888"/>',
   };
-  const ARROW_OPTIONS = [
-    { label: "없음", value: "none"   },
-    { label: "끝",   value: "end"    },
-    { label: "양끝", value: "both"   },
-    { label: "중앙", value: "center" },
-  ];
-  const _arrowBtnEls = {};
-  ARROW_OPTIONS.forEach(({ label, value }) => {
-    const btn = document.createElement("button");
-    btn.title = label;
-    btn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[value]}</svg>`;
-    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
-    btn.addEventListener("click", () => {
-      const s = state.get();
-      const ids = s.selectedIds || [];
-      if (ids.length !== 1) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      state.update((s2) => {
-        const o = s2.objects.find((o) => o.id === ids[0]);
-        // Same single arrowHead field for line AND polyline (curve excluded this round).
-        if (o && (o.type === "line" || o.type === "polyline")) {
-          o.arrowHead = value;
-          s2.undoStack.push(snap);
-          s2.redoStack = [];
-        }
-      });
+  const ARROW_CYCLE = ["end", "start", "both", "none"];
+  const ARROW_LABELS = { end: "정방향", start: "역방향", both: "양끝", none: "없음" };
+  const arrowBtn = document.createElement("button");
+  arrowBtn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+  arrowBtn.addEventListener("click", () => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (o && (o.type === "line" || o.type === "polyline")) {
+        const current = ARROW_CYCLE.includes(o.arrowHead) ? o.arrowHead : "none";
+        o.arrowHead = ARROW_CYCLE[(ARROW_CYCLE.indexOf(current) + 1) % ARROW_CYCLE.length];
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      }
     });
-    _arrowBtnEls[value] = btn;
-    arrowBtns.appendChild(btn);
   });
+  arrowBtns.appendChild(arrowBtn);
   arrowRow.appendChild(arrowLbl);
   arrowRow.appendChild(arrowBtns);
   sec1Body.appendChild(arrowRow);
@@ -331,7 +324,7 @@ export function initInspector(state) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (o && LINE_TYPES.includes(o.type)) {
+        if (o && DASH_TYPES.includes(o.type)) {
           o.dashLength = preset.dashLength;
           o.dashGap = preset.dashGap;
           s2.undoStack.push(snap);
@@ -355,15 +348,15 @@ export function initInspector(state) {
     lbl.textContent = labelText;
     const range = document.createElement("input");
     range.type = "range";
-    range.min = "0.5";
-    range.max = "10";
-    range.step = "0.5";
+    range.min = "0.2";
+    range.max = "1.5";
+    range.step = "0.1";
     range.className = "insp-range";
     const num = document.createElement("input");
     num.type = "number";
-    num.min = "0.5";
-    num.max = "10";
-    num.step = "0.5";
+    num.min = "0.2";
+    num.max = "1.5";
+    num.step = "0.1";
     num.style.cssText = "width:40px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
     const unit = document.createElement("span");
     unit.textContent = "mm";
@@ -379,7 +372,7 @@ export function initInspector(state) {
       if (ids.length !== 1) return;
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (o && LINE_TYPES.includes(o.type)) o[prop] = val;
+        if (o && DASH_TYPES.includes(o.type)) o[prop] = val;
       });
     }
 
@@ -397,7 +390,7 @@ export function initInspector(state) {
     num.addEventListener("input", () => {
       const raw = parseFloat(num.value);
       if (!isFinite(raw)) return;
-      const val = Math.min(10, Math.max(0.5, raw));
+      const val = Math.min(1.5, Math.max(0.2, Math.round(raw * 10) / 10));
       range.value = val;
       apply(val);
     });
@@ -485,7 +478,7 @@ export function initInspector(state) {
   widthNum.addEventListener("input", () => {
     const raw = parseFloat(widthNum.value);
     if (!isFinite(raw)) return;
-    const val = Math.min(5, Math.max(0.1, raw));
+    const val = Math.min(0.5, Math.max(0.1, Math.round(raw * 10) / 10));
     widthRange.value = val;
     const s = state.get();
     const ids = s.selectedIds || [];
@@ -1210,7 +1203,7 @@ export function initInspector(state) {
       if (_dragging) return;
 
       strokeCP.setValue(firstObj.strokeLevel ?? 0);
-      const _sw = firstObj.strokeWidth ?? 1;
+      const _sw = firstObj.strokeWidth ?? 0.2;
       widthRange.value = _sw;
       widthNum.value =_sw.toFixed(1);
 
@@ -1281,7 +1274,7 @@ export function initInspector(state) {
       if (!firstObj) return;
 
       strokeCP.setValue(firstObj.strokeLevel ?? 0);
-      const sw = firstObj.strokeWidth ?? 1;
+      const sw = firstObj.strokeWidth ?? 0.2;
       widthRange.value = sw;
       widthNum.value =sw.toFixed(1);
 
@@ -1342,16 +1335,16 @@ export function initInspector(state) {
     arrowRow.style.display = showArrow ? "" : "none";
     if (showArrow) {
       const ah = obj.arrowHead ?? "none";
-      Object.entries(_arrowBtnEls).forEach(([val, btn]) => {
-        btn.style.background = val === ah ? "#4a9eff" : "#1e1f22";
-        btn.style.color      = val === ah ? "#ffffff" : "#dcddde";
-        btn.style.border     = val === ah ? "1px solid #4a9eff" : "1px solid #3a3c41";
-      });
+      const displayArrow = ARROW_CYCLE.includes(ah) ? ah : "none";
+      arrowBtn.title = ARROW_LABELS[displayArrow];
+      arrowBtn.setAttribute("aria-label", `화살표 방향: ${ARROW_LABELS[displayArrow]}`);
+      arrowBtn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[displayArrow]}</svg>`;
     }
 
-    // Dash presets + sliders: all line family (line/polyline/curve).
-    dashRow.style.display = isLineFamily ? "" : "none";
-    if (isLineFamily) {
+    // Dash presets + sliders: lines and size-based shape outlines.
+    const supportsDash = DASH_TYPES.includes(obj.type);
+    dashRow.style.display = supportsDash ? "" : "none";
+    if (supportsDash) {
       syncDashControls(obj);
     } else {
       dashSliders.style.display = "none";
@@ -1359,7 +1352,7 @@ export function initInspector(state) {
 
     // Section 1
     strokeCP.setValue(obj.strokeLevel ?? 0);
-    const sw = obj.strokeWidth ?? 1;
+    const sw = obj.strokeWidth ?? 0.2;
     widthRange.value = sw;
     widthNum.value =sw.toFixed(1);
 

@@ -4,7 +4,7 @@ const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 1600;
 const MAX_LINES = 12;
 let idCounter = 0;
-const OBJECTIFY_STROKE_WIDTH = 1;
+const OBJECTIFY_STROKE_WIDTH = 0.2;
 
 function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));

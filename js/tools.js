@@ -11,14 +11,14 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.38.0";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.39.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.38.0";
+} from "./state.js?v=0.39.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
-const DEFAULT_STROKE_WIDTH = 0.5; // world units (??.5mm on the 100mm artboard)
+const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
@@ -697,6 +697,8 @@ function makeShape(type, a, b) {
     fillLevel: 214,
     fillNone: false,
     fillStyle: "solid",   // "solid" | "dots" | "cross" | "hatch"
+    dashLength: 0,
+    dashGap: 0,
     locked: false,
     positionLocked: false,
     layerId: 1,
@@ -718,7 +720,7 @@ function makeLine(a, b) {
     strokeLevel: 0,        // 0 = black (DESIGN 2-2)
     strokeWidth: DEFAULT_STROKE_WIDTH,
     // ----- branch-B common line props (arrow + dashes) -----
-    arrowHead: "none",     // "none" | "end" | "both" | "center"
+    arrowHead: "none",     // "none" | "end" | "start" | "both"
     dashLength: 0,         // world units (mm); 0 = solid (no dasharray)
     dashGap: 0,            // world units (mm); 0 = solid
     locked: false,
@@ -740,7 +742,7 @@ function makePolyline(points) {
     strokeLevel: 0,        // 0 = black (DESIGN 2-2)
     strokeWidth: DEFAULT_STROKE_WIDTH,
     // ----- branch-B common line props (arrow + dashes) -----
-    arrowHead: "none",     // "none" | "end" | "both" | "center"
+    arrowHead: "none",     // "none" | "end" | "start" | "both"
     dashLength: 0,         // world units (mm); 0 = solid (no dasharray)
     dashGap: 0,            // world units (mm); 0 = solid
     // ----- closed-fill props: a closed polyline behaves like a fillable shape -----
