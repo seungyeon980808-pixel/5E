@@ -11,11 +11,11 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.33.0";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.33.1";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.33.0";
+} from "./state.js?v=0.33.1";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.5; // world units (??.5mm on the 100mm artboard)
@@ -117,6 +117,17 @@ let spaceHeld = false; // mirror viewport's Space-pan so we never draw while pan
 
 let _marqueeStart = null; // world {x,y} of marquee drag start, or null
 let _marqueeEl = null;    // temporary SVG <rect> shown during marquee drag
+
+function constrainShapeEnd(type, start, end, shiftHeld) {
+  if (!shiftHeld || (type !== "rect" && type !== "ellipse")) return end;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const size = Math.max(Math.abs(dx), Math.abs(dy));
+  return {
+    x: start.x + (dx < 0 ? -size : size),
+    y: start.y + (dy < 0 ? -size : size),
+  };
+}
 
 function setupDrawing() {
   // track Space locally so a Space+drag pans (viewport) instead of drawing.
@@ -228,18 +239,10 @@ function setupDrawing() {
   window.addEventListener("mousemove", (e) => {
     if (!drawing) return;
     const vb = _state.get().viewBox;
-    let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
     // Shift = aspect-ratio lock: force w === h (perfect square / circle) using the
     // larger of the two extents, preserving the drag direction on each axis.
-    if (e.shiftKey && (drawType === "rect" || drawType === "ellipse")) {
-      const dx = cur.x - startWorld.x;
-      const dy = cur.y - startWorld.y;
-      const size = Math.max(Math.abs(dx), Math.abs(dy));
-      cur = {
-        x: startWorld.x + (dx < 0 ? -size : size),
-        y: startWorld.y + (dy < 0 ? -size : size),
-      };
-    }
+    const cur = constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, cur); });
   });
 
@@ -247,7 +250,8 @@ function setupDrawing() {
     if (!drawing) return;
     drawing = false;
     const vb = _state.get().viewBox;
-    const cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const cur = constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     const shape = makeShape(drawType, startWorld, cur);
     startWorld = null;
     drawType = null;

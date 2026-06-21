@@ -9,7 +9,7 @@
  * A multi-selection contributes one combined rotation-applied bbox.
  */
 
-import { rotPt, singleObjBBox } from "./render.js?v=0.33.0";
+import { rotPt, singleObjBBox } from "./render.js?v=0.33.1";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
