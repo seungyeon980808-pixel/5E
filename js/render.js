@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.44.0";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.44.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.44.1";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.44.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -1291,21 +1291,26 @@ export function circuitBodyPolygon(obj) {
 /* ----- per-element BODY drawers (dispatch on obj.element). Step 1: resistor only;
  * add new keys here for future elements — the skeleton (leads + label) is shared. */
 const CIRCUIT_ELEMENTS = {
-  // resistor: an axis-aligned rectangle centered on the midpoint, rotated by the
-  // p1→p2 angle so a tilted placement tilts the box too. Transparent fill.
+  // resistor: a zig-zag (sawtooth) along the p1→p2 axis — the Korean exam standard.
+  // 6 alternating peaks; the first/last points sit on the axis so the leads meet it
+  // cleanly. ux/uy (axis) and px/py (perp) already encode the tilt, so the points
+  // come out rotated with no transform needed. No fill.
   resistor(g, geo, sw, color) {
-    const { mid, ux, uy, half } = geo;
-    const ang = Math.atan2(uy, ux) * 180 / Math.PI;
-    const rect = document.createElementNS(SVG_NS, "rect");
-    rect.setAttribute("x", mid.x - half);
-    rect.setAttribute("y", mid.y - CIRCUIT_BODY_HALF_H);
-    rect.setAttribute("width", half * 2);
-    rect.setAttribute("height", CIRCUIT_BODY_HALF_H * 2);
-    rect.setAttribute("fill", "transparent");
-    rect.setAttribute("stroke", color);
-    rect.setAttribute("stroke-width", sw);
-    rect.setAttribute("transform", `rotate(${ang} ${mid.x} ${mid.y})`);
-    g.appendChild(rect);
+    const { mid, ux, uy, px, py, half } = geo;
+    const amp = half * 0.35;                              // peak amplitude, perp to axis
+    const ts   = [0, 1/12, 3/12, 5/12, 7/12, 9/12, 11/12, 1];
+    const offs = [0,  amp, -amp,  amp, -amp,  amp, -amp,  0]; // alternating peaks
+    const pts = ts.map((t, i) => {
+      const a = (2 * t - 1) * half;                       // axis coord: -half … +half
+      const o = offs[i];
+      return `${mid.x + ux * a + px * o},${mid.y + uy * a + py * o}`;
+    }).join(" ");
+    const poly = document.createElementNS(SVG_NS, "polyline");
+    poly.setAttribute("points", pts);
+    poly.setAttribute("fill", "none");
+    poly.setAttribute("stroke", color);
+    poly.setAttribute("stroke-width", sw);
+    g.appendChild(poly);
   },
 };
 
