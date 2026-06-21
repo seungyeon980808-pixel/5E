@@ -175,6 +175,12 @@ body {
   cursor: pointer;
 }
 .advanced-tool-btn:hover { background: var(--btn-tool-hover); }
+/* active = signature blue (mirrors state.activeTool, e.g. the 각도 호 ARC tool) */
+.advanced-tool-btn.is-active {
+  color: #fff;
+  background: var(--btn-tool-active);
+  border-color: var(--btn-tool-active);
+}
 
 .tool-btn {
   display: flex;

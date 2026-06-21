@@ -11,11 +11,11 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.42.1";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.43.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.42.1";
+} from "./state.js?v=0.43.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -74,13 +74,15 @@ function setActiveTool(tool) {
 
 /* ----- left-panel buttons (data-tool="V" / "R") ----- */
 function setupButtons() {
-  document.querySelectorAll(".tool-btn").forEach((btn) => {
+  // [data-tool] covers the .tool-btn grid AND the 각도 호 library button (which
+  // arms the two-click ARC placement tool instead of dropping a default arc).
+  document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.addEventListener("click", () => setActiveTool(btn.dataset.tool));
   });
 }
 
 function syncButtons(activeTool) {
-  document.querySelectorAll(".tool-btn").forEach((btn) => {
+  document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.tool === activeTool);
   });
 }
@@ -433,6 +435,7 @@ function setupClickDrawing() {
     if (e.button !== 0) return;                  // left button only
     if (spaceHeld) return;                        // Space+click = pan, not draw
     const tool = _state.get().activeTool;
+    if (tool === "ARC") { handleArcClick(e); return; } // two-click anglearc placement
     if (!CLICK_TOOLS[tool]) return;               // only L / P place points
     const vb = _state.get().viewBox;
     let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
@@ -500,6 +503,7 @@ function snapAngle(anchor, cur) {
 // the mouse. For curve, renders as a smooth curve preview so it matches the result.
 function updateDraftPreview() {
   if (!clickTool || draftPoints.length === 0) return;
+  if (clickTool === "ARC") { updateArcPreview(); return; }
   const pts = mouseWorld ? [...draftPoints, mouseWorld] : draftPoints.slice();
   _state.update((s) => { s.draft = clickTool === "C" ? makeCurve(pts) : makePolyline(pts); });
 }
@@ -509,6 +513,69 @@ function commitLine() {
   const line = makeLine(draftPoints[0], draftPoints[1]);
   if (isCommittable(line)) commitClickShape(line);
   else resetClickDraft();
+}
+
+/* ===== ANGLE ARC (ARC): two-click placement, mirroring the line tool ===== */
+//
+// Reuses the SAME click-to-click locals (draftPoints / mouseWorld / clickTool)
+// and the SAME store commit path as the line tool — no new interaction machinery.
+//   * Click 1 → vertex (x,y).
+//   * Move    → live preview (vertex + rubber-band radius + arc; see render.js).
+//   * Click 2 → start point: radius = dist(vertex,pt2), startAngle = atan2
+//               direction vertex→pt2 in MATH convention (+Y up, like the inspector).
+// sweepAngle defaults to 60°, refined afterward via the inspector/handles (no
+// third click). Commit auto-selects the arc and returns to V; switching tools or
+// ESC mid-gesture discards the draft (handled by setActiveTool / the ESC keydown).
+function handleArcClick(e) {
+  const vb = _state.get().viewBox;
+  const cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+  draftPoints.push(cur);
+  clickTool = "ARC";
+  mouseWorld = cur;
+  if (draftPoints.length >= 2) { commitArc(); return; }
+  updateArcPreview();
+}
+
+// Build an anglearc draft from the vertex and a point on its start radius. Mirrors
+// the template's anglearc shape (templates.js) so the inspector works post-commit.
+function makeAngleArcDraft(vertex, point) {
+  const dx = point.x - vertex.x, dy = point.y - vertex.y;
+  const radius = Math.hypot(dx, dy);
+  // Math convention (+Y up): world y grows downward, so negate dy for atan2.
+  const startAngle = Math.atan2(-dy, dx) * 180 / Math.PI;
+  return {
+    id: null,                 // assigned on commit
+    type: "anglearc",
+    x: vertex.x,              // arc vertex
+    y: vertex.y,
+    radius,
+    startAngle,               // math convention (CCW positive, +Y up)
+    sweepAngle: 60,           // default opening (deg); refined via inspector/handles
+    label: "θ",
+    showLabel: true,
+    strokeLevel: 0,           // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,                 // assigned on commit
+  };
+}
+
+// Live preview: vertex + rubber-band radius + arc, driven by the floating mouse.
+function updateArcPreview() {
+  if (draftPoints.length === 0) return;
+  const v = draftPoints[0];
+  const m = mouseWorld || v;
+  _state.update((s) => { s.draft = makeAngleArcDraft(v, m); });
+}
+
+// Click 2 commits the arc through the shared store path (or discards a zero-radius
+// placement, exactly like a zero-length line is discarded).
+function commitArc() {
+  const arc = makeAngleArcDraft(draftPoints[0], draftPoints[1]);
+  if ((arc.radius || 0) < MIN_SIZE) { resetClickDraft(); return; }
+  commitClickShape(arc);
 }
 
 // POLYLINE / CURVE: needs ?? vertices; otherwise the draft is discarded.

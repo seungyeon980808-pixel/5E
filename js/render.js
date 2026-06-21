@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.42.1";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.42.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.43.0";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.43.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -280,6 +280,42 @@ export function render(state) {
           scene.appendChild(box);
         } catch (_) { /* not laid out yet */ }
       }
+    } else if (sel.type === "anglearc") {
+      // EDIT-TIME GUIDE: the arc's TWO bounding radii (vertex → each arc end),
+      // drawn as dashed lines in the SAME visual family as the selection box.
+      // Projection only — lives in this overlay (never in renderObject), so it
+      // shows only while selected and is excluded from SVG/PNG export like handles.
+      const r = sel.radius || 0;
+      const a0 = (sel.startAngle || 0) * Math.PI / 180;
+      const a1 = ((sel.startAngle || 0) + (sel.sweepAngle ?? 0)) * Math.PI / 180;
+      for (const rad of [a0, a1]) {
+        const ray = document.createElementNS(SVG_NS, "line");
+        ray.setAttribute("x1", sel.x);
+        ray.setAttribute("y1", sel.y);
+        ray.setAttribute("x2", sel.x + r * Math.cos(rad));
+        ray.setAttribute("y2", sel.y - r * Math.sin(rad)); // +Y up → SVG y down
+        ray.setAttribute("fill", "none");
+        ray.setAttribute("stroke-width", "0.4"); // world units, matches the box
+        ray.setAttribute("stroke-dasharray", "0.6 0.6");
+        ray.style.stroke = _selColor;
+        ray.setAttribute("pointer-events", "none");
+        scene.appendChild(ray);
+      }
+      // Dashed bbox guide (vertex-centered square of radius r), matching the
+      // branch-A selection boxes so the arc reads as a normal selected object.
+      const _bb = singleObjBBox(sel, scene);
+      if (_bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", _bb.x);
+        box.setAttribute("y", _bb.y);
+        box.setAttribute("width", _bb.w);
+        box.setAttribute("height", _bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        scene.appendChild(box);
+      }
     } else {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", sel.x);
@@ -346,7 +382,7 @@ export function render(state) {
     // outline, so draw a dashed rectangle guide spanning the drag bounds first.
     // (rect's own preview already IS that rectangle; the line has no bbox ??it
     // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve") {
+    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc") {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -357,6 +393,26 @@ export function render(state) {
       box.setAttribute("stroke-width", d.strokeWidth);
       box.setAttribute("stroke-dasharray", "0.6 0.6"); // world-unit dashes
       scene.appendChild(box);
+    }
+
+    // anglearc preview: a blue dashed rubber-band radius from the vertex to the
+    // start point, showing the vertex + radius while the arc (below) previews the
+    // sweep. Projection only — the committed arc carries no radius line.
+    if (d.type === "anglearc") {
+      const rad = (d.startAngle || 0) * Math.PI / 180;
+      const ex = d.x + (d.radius || 0) * Math.cos(rad);
+      const ey = d.y - (d.radius || 0) * Math.sin(rad); // +Y up → SVG y down
+      const guide = document.createElementNS(SVG_NS, "line");
+      guide.setAttribute("x1", d.x);
+      guide.setAttribute("y1", d.y);
+      guide.setAttribute("x2", ex);
+      guide.setAttribute("y2", ey);
+      guide.setAttribute("fill", "none");
+      guide.style.stroke = "var(--c-main, #0969da)";
+      guide.setAttribute("stroke-width", "0.3");
+      guide.setAttribute("stroke-dasharray", "0.6 0.6");
+      guide.setAttribute("pointer-events", "none");
+      scene.appendChild(guide);
     }
 
     // The actual shape outline that will be committed, drawn inside the guide.
