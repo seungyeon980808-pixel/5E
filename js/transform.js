@@ -13,7 +13,8 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld } from "./viewport.js?v=0.31.8";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.32.0";
+import { resolveSnap } from "./snap.js?v=0.32.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -1101,8 +1102,21 @@ export function initTransform(svg, state) {
     if (!_moving) return;
     const vb = state.get().viewBox;
     const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
-    const dx = cur.x - _moveStartWorld.x;
-    const dy = cur.y - _moveStartWorld.y;
+    const rawDx = cur.x - _moveStartWorld.x;
+    const rawDy = cur.y - _moveStartWorld.y;
+
+    /* ----- SNAP HOOK (see snap.js): adjust the move delta for object snapping.
+     * Alt bypasses snapping; Ctrl enables magnet attach; align is always on. ----- */
+    const snapped = resolveSnap(
+      _moveObjIds,
+      _moveOrigObjs,
+      { dx: rawDx, dy: rawDy },
+      { alt: e.altKey, ctrl: e.ctrlKey || e.metaKey },
+      getRenderScale(),
+      state,
+      svg,
+    );
+    const dx = snapped.dx, dy = snapped.dy;
 
     state.update((s) => {
       _moveObjIds.forEach(id => {

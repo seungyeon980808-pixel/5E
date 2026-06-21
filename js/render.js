@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.31.8";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.31.8";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.32.0";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.32.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -993,7 +993,7 @@ export function makeFillPattern(obj) {
 
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
-function singleObjBBox(o, scene) {
+export function singleObjBBox(o, scene) {
   if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
