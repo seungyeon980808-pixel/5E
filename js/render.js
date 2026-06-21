@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.43.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.43.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.44.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.44.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -199,8 +199,9 @@ export function render(state) {
                     : sel.locked   ? "#e53e3e"
                     : sel.positionLocked ? "#8b5cf6"
                     : "var(--c-main, #0969da)";
-    if (sel.type === "line") {
-      // A line has no bbox; its selection guide is a dashed copy of the segment.
+    if (sel.type === "line" || sel.type === "circuit") {
+      // Line/circuit have no bbox; the selection guide is a dashed copy of the
+      // p1–p2 segment (circuit's leads + body sit on this axis).
       const ln = document.createElementNS(SVG_NS, "line");
       ln.setAttribute("x1", sel.p1.x);
       ln.setAttribute("y1", sel.p1.y);
@@ -382,7 +383,7 @@ export function render(state) {
     // outline, so draw a dashed rectangle guide spanning the drag bounds first.
     // (rect's own preview already IS that rectangle; the line has no bbox ??it
     // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc") {
+    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "circuit") {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -624,6 +625,8 @@ export function renderObject(obj) {
       return renderAxes(obj);
     case "anglearc":
       return renderAngleArc(obj);
+    case "circuit":
+      return renderCircuit(obj);
     default:
       return null;
   }
@@ -1243,6 +1246,121 @@ function renderAngleArc(obj) {
   return g;
 }
 
+/* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
+ *
+ * CORE INVARIANT — symmetric leads: the element BODY is always centered on the
+ * midpoint of p1–p2 and is a FIXED world size (CIRCUIT_BODY_MM along the axis), so
+ * the two leads (terminal → body edge) are ALWAYS equal by construction. Lead
+ * lengths are NOT stored; they are derived here. If |p1–p2| < CIRCUIT_BODY_MM the
+ * body fills the whole span and the leads are zero-length (clamped, never negative).
+ *
+ * Geometry is single-source via circuitGeom(); renderCircuit draws the shared
+ * skeleton (leads + label) and dispatches the BODY by `element` through
+ * CIRCUIT_ELEMENTS, so Steps 2–3 add elements by adding cases only. */
+const CIRCUIT_BODY_HALF_H = CIRCUIT_BODY_MM * 0.2; // body box half-height (perp to axis)
+
+// Derive all projection geometry from the two stored terminals. `half` is the
+// body half-length along the axis (clamped so it never exceeds the span).
+function circuitGeom(obj) {
+  const p1 = obj.p1, p2 = obj.p2;
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const L = Math.hypot(dx, dy) || 0.0001;
+  const ux = dx / L, uy = dy / L;       // unit vector along p1→p2
+  const px = -uy, py = ux;              // unit vector perpendicular to the axis
+  const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  const half = Math.min(CIRCUIT_BODY_MM, L) / 2;
+  const bodyStart = { x: mid.x - ux * half, y: mid.y - uy * half };
+  const bodyEnd   = { x: mid.x + ux * half, y: mid.y + uy * half };
+  return { p1, p2, dx, dy, L, ux, uy, px, py, mid, half, bodyStart, bodyEnd };
+}
+
+// World-space 4-corner polygon of the element body box (for hit-testing). Shared
+// with tools.js so the clickable box matches exactly what renderCircuit draws.
+export function circuitBodyPolygon(obj) {
+  const g = circuitGeom(obj);
+  const { mid, ux, uy, px, py, half } = g;
+  const hh = CIRCUIT_BODY_HALF_H;
+  return [
+    { x: mid.x - ux * half - px * hh, y: mid.y - uy * half - py * hh },
+    { x: mid.x + ux * half - px * hh, y: mid.y + uy * half - py * hh },
+    { x: mid.x + ux * half + px * hh, y: mid.y + uy * half + py * hh },
+    { x: mid.x - ux * half + px * hh, y: mid.y - uy * half + py * hh },
+  ];
+}
+
+/* ----- per-element BODY drawers (dispatch on obj.element). Step 1: resistor only;
+ * add new keys here for future elements — the skeleton (leads + label) is shared. */
+const CIRCUIT_ELEMENTS = {
+  // resistor: an axis-aligned rectangle centered on the midpoint, rotated by the
+  // p1→p2 angle so a tilted placement tilts the box too. Transparent fill.
+  resistor(g, geo, sw, color) {
+    const { mid, ux, uy, half } = geo;
+    const ang = Math.atan2(uy, ux) * 180 / Math.PI;
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", mid.x - half);
+    rect.setAttribute("y", mid.y - CIRCUIT_BODY_HALF_H);
+    rect.setAttribute("width", half * 2);
+    rect.setAttribute("height", CIRCUIT_BODY_HALF_H * 2);
+    rect.setAttribute("fill", "transparent");
+    rect.setAttribute("stroke", color);
+    rect.setAttribute("stroke-width", sw);
+    rect.setAttribute("transform", `rotate(${ang} ${mid.x} ${mid.y})`);
+    g.appendChild(rect);
+  },
+};
+
+function renderCircuit(obj) {
+  const sw = obj.strokeWidth ?? 0.2;
+  const color = grayHex(obj.strokeLevel);
+  const geo = circuitGeom(obj);
+  const { p1, p2, ux, uy, px, py, mid, half, bodyStart, bodyEnd, L } = geo;
+
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+
+  const seg = (a, b) => {
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", a.x); l.setAttribute("y1", a.y);
+    l.setAttribute("x2", b.x); l.setAttribute("y2", b.y);
+    l.setAttribute("stroke", color);
+    l.setAttribute("stroke-width", sw);
+    return l;
+  };
+
+  // Shared skeleton — leads: terminal → body edge. Equal by construction; drawn
+  // only when there is leftover wire (clamped to zero-length when the body fills
+  // the whole span, so no overlapping/negative wire).
+  if (L > CIRCUIT_BODY_MM) {
+    g.appendChild(seg(p1, bodyStart));
+    g.appendChild(seg(bodyEnd, p2));
+  }
+
+  // BODY — dispatch on element (resistor only in Step 1).
+  (CIRCUIT_ELEMENTS[obj.element] || CIRCUIT_ELEMENTS.resistor)(g, geo, sw, color);
+
+  // Shared skeleton — label: a single text just above the box (only if non-empty),
+  // using the world-unit text convention (DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT).
+  if ((obj.label ?? "") !== "") {
+    const size = DEFAULT_TEXT_SIZE_MM;
+    // Offset along the perpendicular toward screen-up (smaller y) so the label
+    // sits "above" the box regardless of the placement tilt.
+    const sign = py <= 0 ? 1 : -1;
+    const off = CIRCUIT_BODY_HALF_H + size * 0.6;
+    const t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("x", mid.x + px * off * sign);
+    t.setAttribute("y", mid.y + py * off * sign);
+    t.setAttribute("font-size", size);
+    t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+    t.setAttribute("fill", color);
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("dominant-baseline", "middle");
+    t.textContent = obj.label;
+    g.appendChild(t);
+  }
+
+  return g;
+}
+
 /* ----- rotate point (px,py) about center (cx,cy) by deg degrees (SVG clockwise) ----- */
 export function rotPt(px, py, cx, cy, deg) {
   const r = (deg * Math.PI) / 180;
@@ -1397,7 +1515,7 @@ export function singleObjBBox(o, scene) {
     }
     return null;
   }
-  if (o.type === "line") {
+  if (o.type === "line" || o.type === "circuit") {
     return {
       x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
       w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
@@ -1538,7 +1656,9 @@ function renderHandles(sel, scene, zoom, activeTool) {
       makeHandle(hSW.x, hSW.y, "sw");
       makeHandle(hW.x,  hW.y,  "w");
     }
-  } else if (sel.type === "line") {
+  } else if (sel.type === "line" || sel.type === "circuit") {
+    // Circuit reuses the line's two endpoint handles: drag p1/p2 to move a
+    // terminal; the body stays centered automatically (derived geometry).
     makeHandle(sel.p1.x, sel.p1.y, "p0", true);
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {

@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.43.0";
-import { resolveSnap } from "./snap.js?v=0.43.0";
-import { setSnapPreview } from "./render.js?v=0.43.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.44.0";
+import { resolveSnap } from "./snap.js?v=0.44.0";
+import { setSnapPreview } from "./render.js?v=0.44.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -181,7 +181,7 @@ function clipboardBBox(objs) {
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text") {
       acc(o.x, o.y);
-    } else if (o.type === "line") {
+    } else if (o.type === "line" || o.type === "circuit") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
     } else if (o.type === "polyline" || o.type === "curve") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
@@ -199,7 +199,8 @@ function applyDelta(obj, orig, dx, dy) {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
-  } else if (obj.type === "line") {
+  } else if (obj.type === "line" || obj.type === "circuit") {
+    // Circuit moves by translating BOTH terminals; the body stays centered (derived).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
   } else if (obj.type === "polyline" || obj.type === "curve") {
@@ -211,7 +212,7 @@ const MIN_SIZE = 0.3; // world units; minimum w or h after resize
 
 /* ----- apply one handle drag delta to an object ----- */
 function objectCenter(obj) {
-  if (obj.type === "line") {
+  if (obj.type === "line" || obj.type === "circuit") {
     return { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
   }
   if (obj.type === "polyline" || obj.type === "curve") return polyCenter(obj.points);
@@ -258,8 +259,9 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
     obj.y = orig.y;
     return;
   }
-  // Branch B: endpoint handles (line / polyline / curve)
-  if (obj.type === "line") {
+  // Branch B: endpoint handles (line / circuit / polyline / curve). Circuit reuses
+  // the line's p0/p1 terminal drag; the body re-centers automatically at render.
+  if (obj.type === "line" || obj.type === "circuit") {
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
       obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;

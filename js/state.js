@@ -7,7 +7,7 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=0.43.0";
+import { createStore } from "./store.js?v=0.44.0";
 
 /* ===== TEXT FONT OPTIONS (single source for inspector + font modal) =====
  * `css` is used verbatim as both the SVG <text> font-family AND the editor
@@ -28,6 +28,12 @@ export const DEFAULT_TEXT_FONT = TEXT_FONTS[0].css;
 // creation via the true render scale (see tools.js setupTextTool).
 export const DEFAULT_TEXT_SIZE_PX = 14;
 export const DEFAULT_TEXT_SIZE_MM = 3.7;  // fixed world size (mm), zoom-independent (mirrors PyQt PX_PER_MM)
+
+// Circuit element body length along the p1→p2 axis (mm). FIXED world constant
+// (same pattern as DEFAULT_TEXT_SIZE_MM): the body is always this size, so the
+// two leads — the leftover wire from each terminal to the centered body — are
+// equal by construction. Lead lengths are NEVER stored; they're derived at render.
+export const CIRCUIT_BODY_MM = 8;
 
 // Font style presets (font-weight × font-style) for the 글꼴 설정 modal.
 export const TEXT_STYLES = [

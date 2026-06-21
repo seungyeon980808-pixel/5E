@@ -1,7 +1,7 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.43.0";
-import { openFontModalForSelection } from "./tools.js?v=0.43.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.44.0";
+import { openFontModalForSelection } from "./tools.js?v=0.44.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1531,14 +1531,16 @@ export function initInspector(state) {
     // anglearc (X/Y + radius/startAngle/sweepAngle in math convention, CCW +).
     const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes";
     const isArc = obj.type === "anglearc";
-    sec3.style.display = (isShape || isArc) ? "" : "none";
+    const isCircuit = obj.type === "circuit";
+    sec3.style.display = (isShape || isArc || isCircuit) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
-    // radius + start/sweep angle.
-    whPair.style.display  = isArc ? "none" : "flex";
-    rotF.el.style.display = isArc ? "none" : "";
+    // radius + start/sweep angle; circuit (two terminals) shows ONLY the 라벨 row.
+    xyPair.style.display  = isCircuit ? "none" : "flex";
+    whPair.style.display  = (isArc || isCircuit) ? "none" : "flex";
+    rotF.el.style.display = (isArc || isCircuit) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
     arcPair.style.display = isArc ? "flex" : "none";
-    labelRow.style.display = isArc ? "" : "none";
+    labelRow.style.display = (isArc || isCircuit) ? "" : "none";
     if (isShape) {
       xF.inp.value   = (obj.x        ?? 0).toFixed(2);
       yF.inp.value   = (-(obj.y      ?? 0)).toFixed(2); // SVG Y down → math Y up
@@ -1552,6 +1554,9 @@ export function initInspector(state) {
       radF.inp.value  = (obj.radius     ?? 0).toFixed(2);
       saF.inp.value   = (obj.startAngle ?? 0).toFixed(1);
       swF.inp.value   = (obj.sweepAngle ?? 0).toFixed(1);
+      labelInp.value  = obj.label ?? "";
+    }
+    if (isCircuit && document.activeElement !== labelInp) {
       labelInp.value  = obj.label ?? "";
     }
 

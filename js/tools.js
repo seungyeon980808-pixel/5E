@@ -11,11 +11,14 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.43.0";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.44.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.43.0";
+} from "./state.js?v=0.44.0";
+// Single-source circuit body geometry: hit-testing reuses the SAME polygon the
+// renderer draws, so the clickable box and the visible box can never diverge.
+import { circuitBodyPolygon } from "./render.js?v=0.44.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -423,9 +426,9 @@ function pickSelectableObject(state, p, tol, lineTol) {
 //   ??POLYLINE (P): many points ??double-click or Enter finishes (?? points).
 // ESC cancels the whole draft (nothing committed). All clicks convert to world
 // coords through the SHARED screenToWorld helper ??no new coordinate math.
-const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve" };
+const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve", CIRCUIT: "circuit" };
 
-let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C") while drafting, else null
+let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C"/"CIRCUIT") while drafting, else null
 let draftPoints = [];     // world-space vertices placed so far
 let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
 
@@ -442,13 +445,14 @@ function setupClickDrawing() {
     // Apply the SAME Ctrl angle snap used for the live preview so the COMMITTED
     // endpoint is identical to what the preview showed (no last-pixel drift —
     // a horizontal preview commits an exactly horizontal line). See snapAngle.
-    if (e.ctrlKey && (tool === "L" || tool === "P") && draftPoints.length > 0) {
+    if (e.ctrlKey && (tool === "L" || tool === "P" || tool === "CIRCUIT") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     }
     draftPoints.push(cur);
     clickTool = tool;
 
     if (tool === "L" && draftPoints.length === 2) { commitLine(); return; }
+    if (tool === "CIRCUIT" && draftPoints.length === 2) { commitCircuit(); return; } // two-click, like line
     updateDraftPreview();                         // refresh the committed-segments preview
   });
 
@@ -457,9 +461,9 @@ function setupClickDrawing() {
     if (!clickTool) return;
     const vb = _state.get().viewBox;
     let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-    // Ctrl = 15° angle snap (line / polyline). The preview uses the SAME shared
-    // snapAngle helper as the commit path above, so they can never diverge.
-    if (e.ctrlKey && (clickTool === "L" || clickTool === "P") && draftPoints.length > 0) {
+    // Ctrl = 15° angle snap (line / polyline / circuit). The preview uses the SAME
+    // shared snapAngle helper as the commit path above, so they can never diverge.
+    if (e.ctrlKey && (clickTool === "L" || clickTool === "P" || clickTool === "CIRCUIT") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     }
     mouseWorld = cur;
@@ -504,6 +508,12 @@ function snapAngle(anchor, cur) {
 function updateDraftPreview() {
   if (!clickTool || draftPoints.length === 0) return;
   if (clickTool === "ARC") { updateArcPreview(); return; }
+  if (clickTool === "CIRCUIT") {
+    // Live preview: leads + body, rebuilt from p1 and the floating mouse (p2).
+    const end = mouseWorld || draftPoints[0];
+    _state.update((s) => { s.draft = makeCircuit(draftPoints[0], end); });
+    return;
+  }
   const pts = mouseWorld ? [...draftPoints, mouseWorld] : draftPoints.slice();
   _state.update((s) => { s.draft = clickTool === "C" ? makeCurve(pts) : makePolyline(pts); });
 }
@@ -512,6 +522,15 @@ function updateDraftPreview() {
 function commitLine() {
   const line = makeLine(draftPoints[0], draftPoints[1]);
   if (isCommittable(line)) commitClickShape(line);
+  else resetClickDraft();
+}
+
+// CIRCUIT: exactly two clicks, mirroring the line tool. Commit one circuit object
+// (undoable, auto-selected, returns to V via commitClickShape) or cancel a
+// zero-length placement.
+function commitCircuit() {
+  const circ = makeCircuit(draftPoints[0], draftPoints[1]);
+  if (isCommittable(circ)) commitClickShape(circ);
   else resetClickDraft();
 }
 
@@ -617,7 +636,7 @@ function resetClickDraft() {
 /* ----- commit gate: ignore stray clicks that drew nothing ----- */
 // Size-based shapes need a non-trivial box; a line needs a non-trivial length.
 function isCommittable(shape) {
-  if (shape.type === "line") {
+  if (shape.type === "line" || shape.type === "circuit") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   return shape.w >= MIN_SIZE && shape.h >= MIN_SIZE;
@@ -635,7 +654,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
         o.type !== "text" && o.type !== "image" && o.type !== "axes" &&
-        o.type !== "anglearc") continue;
+        o.type !== "anglearc" && o.type !== "circuit") continue;
 
     if (o.type === "text") {
       // Use the rendered SVG element's getBBox for an accurate hit area.
@@ -652,10 +671,19 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     // slack already converted to world units (tol = tolerancePx / currentZoom),
     // so the band stays visually constant at any zoom (DESIGN-style tolerance).
     const margin = (o.strokeWidth || 0) / 2 +
-      ((o.type === "line" || o.type === "polyline" || o.type === "curve") ? lineTol : tol);
+      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "circuit") ? lineTol : tol);
 
     if (o.type === "line") {
       if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "circuit") {
+      // Reuse the line hit-test along the p1→p2 axis (covers both leads and the
+      // body's center line), plus the body box polygon for clicks on its off-axis
+      // area. circuitBodyPolygon() is the SAME geometry the renderer draws.
+      if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
+      if (pointInPolygon(p.x, p.y, circuitBodyPolygon(o))) return o.id;
       continue;
     }
 
@@ -773,7 +801,7 @@ function getObjectBBox(o) {
     const r = o.radius || 0;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
-  if (o.type === "line") {
+  if (o.type === "line" || o.type === "circuit") {
     return {
       x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
       w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
@@ -888,6 +916,26 @@ function makeLine(a, b) {
     positionLocked: false,
     layerId: 1,
     order: 0,              // assigned on commit (z-order within layer)
+  };
+}
+
+/* ----- build a circuit element from two terminals (branch B, same family as line) ----- */
+// Two endpoints (p1/p2), one label, one element kind. Leads + body geometry are
+// PROJECTION (derived at render time from p1/p2), never stored — see render.js.
+function makeCircuit(a, b) {
+  return {
+    id: null,                 // assigned on commit
+    type: "circuit",
+    element: "resistor",      // Step 1: resistor only (render dispatches on this)
+    p1: { x: a.x, y: a.y },   // left terminal
+    p2: { x: b.x, y: b.y },   // right terminal
+    label: "",                // single optional text label (empty allowed)
+    strokeLevel: 0,           // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,                 // assigned on commit (z-order within layer)
   };
 }
 
