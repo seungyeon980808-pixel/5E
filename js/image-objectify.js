@@ -3,18 +3,160 @@
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 1600;
 let idCounter = 0;
+const OBJECTIFY_STROKE_WIDTH = 0.5;
 
 function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));
 }
 
-function detectLineSegments(canvas, threshold, minLength) {
+function buildDarkMask(canvas, threshold) {
   const { width, height } = canvas;
   const rgba = canvas.getContext("2d").getImageData(0, 0, width, height).data;
   const dark = new Uint8Array(width * height);
   for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
     dark[p] = (rgba[i] * 0.299 + rgba[i + 1] * 0.587 + rgba[i + 2] * 0.114) < threshold ? 1 : 0;
   }
+  return dark;
+}
+
+function detectClosedShapes(dark, width, height, minLength) {
+  const labels = new Uint32Array(width * height);
+  const queue = new Int32Array(width * height);
+  const shapes = [];
+  const minimumSize = Math.max(12, minLength * 0.6);
+  let componentId = 0;
+
+  for (let start = 0; start < dark.length; start += 1) {
+    if (dark[start] || labels[start]) continue;
+    componentId += 1;
+    let head = 0, tail = 0;
+    let minX = width, minY = height, maxX = 0, maxY = 0;
+    let touchesEdge = false;
+    labels[start] = componentId;
+    queue[tail++] = start;
+    while (head < tail) {
+      const index = queue[head++];
+      const x = index % width, y = (index / width) | 0;
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) touchesEdge = true;
+      if (x > 0 && !dark[index - 1] && !labels[index - 1]) {
+        labels[index - 1] = componentId; queue[tail++] = index - 1;
+      }
+      if (x < width - 1 && !dark[index + 1] && !labels[index + 1]) {
+        labels[index + 1] = componentId; queue[tail++] = index + 1;
+      }
+      if (y > 0 && !dark[index - width] && !labels[index - width]) {
+        labels[index - width] = componentId; queue[tail++] = index - width;
+      }
+      if (y < height - 1 && !dark[index + width] && !labels[index + width]) {
+        labels[index + width] = componentId; queue[tail++] = index + width;
+      }
+    }
+    const w = maxX - minX + 1, h = maxY - minY + 1;
+    if (touchesEdge || w < minimumSize || h < minimumSize || tail < minimumSize * minimumSize * 0.35) continue;
+
+    const fillRatio = tail / (w * h);
+    let type = null;
+    if (fillRatio >= 0.86) {
+      type = "rect";
+    } else if (fillRatio >= 0.68 && fillRatio <= 0.86) {
+      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      const rx = w / 2, ry = h / 2;
+      let expected = 0, mismatch = 0;
+      const step = Math.max(1, Math.ceil(Math.max(w, h) / 160));
+      for (let y = minY; y <= maxY; y += step) {
+        for (let x = minX; x <= maxX; x += step) {
+          const insideEllipse = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
+          const insideRegion = labels[y * width + x] === componentId;
+          if (insideEllipse) expected += 1;
+          if (insideEllipse !== insideRegion) mismatch += 1;
+        }
+      }
+      if (expected && mismatch / expected <= 0.18) type = "ellipse";
+    }
+    if (type) shapes.push({ type, x: minX, y: minY, w, h });
+  }
+  return shapes;
+}
+
+function maskShapes(dark, width, height, shapes) {
+  const masked = dark.slice();
+  for (const shape of shapes) {
+    const padding = Math.max(3, Math.round(Math.min(shape.w, shape.h) * 0.04));
+    const left = Math.max(0, shape.x - padding), top = Math.max(0, shape.y - padding);
+    const right = Math.min(width - 1, shape.x + shape.w - 1 + padding);
+    const bottom = Math.min(height - 1, shape.y + shape.h - 1 + padding);
+    if (shape.type === "rect") {
+      for (let y = top; y <= bottom; y += 1) {
+        if (y <= shape.y + padding || y >= shape.y + shape.h - 1 - padding) {
+          masked.fill(0, y * width + left, y * width + right + 1);
+        } else {
+          masked.fill(0, y * width + left, y * width + Math.min(right + 1, shape.x + padding + 1));
+          masked.fill(0, y * width + Math.max(left, shape.x + shape.w - 1 - padding), y * width + right + 1);
+        }
+      }
+    } else {
+      const cx = shape.x + (shape.w - 1) / 2, cy = shape.y + (shape.h - 1) / 2;
+      const rx = Math.max(1, shape.w / 2), ry = Math.max(1, shape.h / 2);
+      const band = padding / Math.min(rx, ry);
+      for (let y = top; y <= bottom; y += 1) {
+        for (let x = left; x <= right; x += 1) {
+          const radius = Math.sqrt(((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2);
+          if (Math.abs(radius - 1) <= band) masked[y * width + x] = 0;
+        }
+      }
+    }
+  }
+  return masked;
+}
+
+function mergeLineSegments(segments, minLength) {
+  const normalized = segments.map((line) => {
+    const rawAngle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
+    const angle = (rawAngle + Math.PI) % Math.PI;
+    const ux = Math.cos(angle), uy = Math.sin(angle);
+    const offset = -uy * line.x1 + ux * line.y1;
+    const a = ux * line.x1 + uy * line.y1, b = ux * line.x2 + uy * line.y2;
+    return { ...line, angle, ux, uy, offset, start: Math.min(a, b), end: Math.max(a, b) };
+  }).sort((a, b) => (b.end - b.start) - (a.end - a.start));
+  const merged = [];
+  const angleTolerance = 10 * Math.PI / 180;
+  const maxGap = Math.max(12, minLength * 0.5);
+  for (const line of normalized) {
+    let target = null;
+    let projectedStart = 0, projectedEnd = 0;
+    for (const other of merged) {
+      let angleDistance = Math.abs(other.angle - line.angle) % Math.PI;
+      angleDistance = Math.min(angleDistance, Math.PI - angleDistance);
+      if (angleDistance > angleTolerance) continue;
+      const midX = (line.x1 + line.x2) / 2, midY = (line.y1 + line.y2) / 2;
+      if (Math.abs(-other.uy * midX + other.ux * midY - other.offset) > 10) continue;
+      const a = other.ux * line.x1 + other.uy * line.y1;
+      const b = other.ux * line.x2 + other.uy * line.y2;
+      const start = Math.min(a, b), end = Math.max(a, b);
+      if (start > other.end + maxGap || end < other.start - maxGap) continue;
+      target = other;
+      projectedStart = start;
+      projectedEnd = end;
+      break;
+    }
+    if (!target) {
+      merged.push({ ...line });
+      continue;
+    }
+    target.start = Math.min(target.start, projectedStart);
+    target.end = Math.max(target.end, projectedEnd);
+  }
+  return merged.map((line) => ({
+    x1: line.ux * line.start - line.uy * line.offset,
+    y1: line.uy * line.start + line.ux * line.offset,
+    x2: line.ux * line.end - line.uy * line.offset,
+    y2: line.uy * line.end + line.ux * line.offset,
+  })).filter((line) => Math.hypot(line.x2 - line.x1, line.y2 - line.y1) >= minLength);
+}
+
+function detectLineSegments(dark, width, height, minLength) {
 
   const edges = [];
   const sampleStep = Math.max(1, Math.ceil(Math.sqrt((width * height) / 250000)));
@@ -56,11 +198,11 @@ function detectLineSegments(canvas, threshold, minLength) {
 
   const accepted = [];
   for (const peak of peaks) {
-    if (accepted.length >= 120) break;
+    if (accepted.length >= 60) break;
     if (accepted.some((other) => {
       const thetaDistance = Math.abs(other.t - peak.t);
-      if (thetaDistance <= 4) return Math.abs(other.rho - peak.rho) <= 10;
-      return thetaDistance >= thetaCount - 4 && Math.abs(other.rho + peak.rho) <= 10;
+      if (thetaDistance <= 8) return Math.abs(other.rho - peak.rho) <= 14;
+      return thetaDistance >= thetaCount - 8 && Math.abs(other.rho + peak.rho) <= 14;
     })) continue;
     const { cos, sin } = trig[peak.t];
     const alongX = -sin, alongY = cos;
@@ -85,12 +227,20 @@ function detectLineSegments(canvas, threshold, minLength) {
           x2: cos * peak.rho + alongX * runEnd,
           y2: sin * peak.rho + alongY * runEnd,
         });
-        if (accepted.length >= 120) break;
+        if (accepted.length >= 60) break;
       }
       if (i < projected.length) runStart = projected[i];
     }
   }
-  return accepted;
+  return mergeLineSegments(accepted, minLength);
+}
+
+function detectObjects(canvas, threshold, minLength) {
+  const { width, height } = canvas;
+  const dark = buildDarkMask(canvas, threshold);
+  const shapes = detectClosedShapes(dark, width, height, minLength);
+  const segments = detectLineSegments(maskShapes(dark, width, height, shapes), width, height, minLength);
+  return { shapes, segments };
 }
 
 function buildModal() {
@@ -102,7 +252,7 @@ function buildModal() {
       <h2 class="modal-title" id="objectify-title">이미지 객체화</h2>
       <p class="objectify-description">흑백 선 그림에서 직선 후보를 찾아 편집 가능한 초안으로 만듭니다. 완벽한 복원이 아닌 따라 그리기용 결과입니다.</p>
       <input id="objectify-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden />
-      <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일을 선택하거나 여기에 끌어 놓으세요.</div>
+      <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일 선택, 끌어 놓기 또는 Ctrl+V 붙여넣기</div>
       <canvas id="objectify-preview" class="objectify-preview" width="560" height="240" hidden></canvas>
       <div class="objectify-controls">
         <label class="modal-field">
@@ -144,6 +294,7 @@ export function initImageObjectify(state) {
   let sourceCanvas = null;
   let sourceDataUrl = null;
   let segments = [];
+  let shapes = [];
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
@@ -151,6 +302,7 @@ export function initImageObjectify(state) {
   };
   const invalidate = () => {
     segments = [];
+    shapes = [];
     insertButton.disabled = true;
   };
   const close = () => { overlay.hidden = true; };
@@ -164,6 +316,12 @@ export function initImageObjectify(state) {
     if (showSegments) {
       ctx.strokeStyle = "#e53935";
       ctx.lineWidth = Math.max(1, sourceCanvas.width / 700);
+      for (const shape of shapes) {
+        ctx.beginPath();
+        if (shape.type === "rect") ctx.rect(shape.x, shape.y, shape.w, shape.h);
+        else ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       for (const line of segments) {
         ctx.beginPath();
         ctx.moveTo(line.x1, line.y1);
@@ -207,10 +365,10 @@ export function initImageObjectify(state) {
     setStatus("직선 후보를 찾는 중입니다...");
     try {
       const minimum = Math.max(5, Number(minLength.value) || 30);
-      segments = detectLineSegments(sourceCanvas, Number(threshold.value), minimum);
+      ({ shapes, segments } = detectObjects(sourceCanvas, Number(threshold.value), minimum));
       drawPreview(true);
-      insertButton.disabled = segments.length === 0;
-      setStatus(segments.length ? `직선 후보 ${segments.length}개를 찾았습니다.` : "조건에 맞는 직선을 찾지 못했습니다. 설정을 조정해 보세요.", segments.length === 0);
+      insertButton.disabled = shapes.length + segments.length === 0;
+      setStatus(shapes.length + segments.length ? `도형 ${shapes.length}개, 직선 ${segments.length}개를 찾았습니다.` : "조건에 맞는 도형을 찾지 못했습니다. 설정을 조정해 보세요.", shapes.length + segments.length === 0);
     } catch (error) {
       invalidate();
       setStatus(`추출 중 오류가 발생했습니다: ${error.message || error}`, true);
@@ -218,7 +376,7 @@ export function initImageObjectify(state) {
   }
 
   function insertObjects() {
-    if (!sourceCanvas || segments.length === 0) return;
+    if (!sourceCanvas || shapes.length + segments.length === 0) return;
     const artboard = state.get().artboard;
     const scale = Math.min((artboard.w * 0.9) / sourceCanvas.width, (artboard.h * 0.9) / sourceCanvas.height);
     const fitted = {
@@ -232,7 +390,7 @@ export function initImageObjectify(state) {
     state.update((s) => {
       const snapshot = cloneObjects(s.objects);
       const layerId = s.activeLayerId;
-      const addedLines = [];
+      const addedIds = [];
       if (reference.checked) {
         s.objects.push({
           id: `obj_${stamp}_ref${++idCounter}`,
@@ -242,23 +400,37 @@ export function initImageObjectify(state) {
           layerId, order: s.objects.length,
         });
       }
+      for (const shape of shapes) {
+        const object = {
+          id: `obj_${stamp}_${shape.type}${++idCounter}`,
+          type: shape.type,
+          x: fitted.x + shape.x * scale, y: fitted.y + shape.y * scale,
+          w: shape.w * scale, h: shape.h * scale,
+          rotation: 0, strokeLevel: 0, strokeWidth: OBJECTIFY_STROKE_WIDTH,
+          fillLevel: 214, fillNone: true, fillStyle: "solid",
+          locked: false, positionLocked: false,
+          layerId, order: s.objects.length,
+        };
+        s.objects.push(object);
+        addedIds.push(object.id);
+      }
       for (const segment of segments) {
         const line = {
           id: `obj_${stamp}_line${++idCounter}`,
           type: "line",
           p1: { x: fitted.x + segment.x1 * scale, y: fitted.y + segment.y1 * scale },
           p2: { x: fitted.x + segment.x2 * scale, y: fitted.y + segment.y2 * scale },
-          strokeLevel: 0, strokeWidth: 0.5,
+          strokeLevel: 0, strokeWidth: OBJECTIFY_STROKE_WIDTH,
           arrowHead: "none", dashLength: 0, dashGap: 0,
           layerId, order: s.objects.length,
           rotation: 0, locked: false, positionLocked: false,
         };
         s.objects.push(line);
-        addedLines.push(line.id);
+        addedIds.push(line.id);
       }
       s.undoStack.push(snapshot);
       s.redoStack = [];
-      s.selectedIds = addedLines;
+      s.selectedIds = addedIds;
       s.targetedId = null;
       s.activeTool = "V";
     });
@@ -272,6 +444,21 @@ export function initImageObjectify(state) {
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });
+  document.addEventListener("keydown", (event) => {
+    if (!overlay.hidden && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
+      event.stopPropagation();
+    }
+  }, true);
+  document.addEventListener("paste", (event) => {
+    if (overlay.hidden) return;
+    const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
+    if (!imageItem) return;
+    const imageFile = imageItem.getAsFile();
+    if (!imageFile) return;
+    event.preventDefault();
+    event.stopPropagation();
+    loadFile(imageFile);
+  }, true);
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
