@@ -9,13 +9,17 @@
  * A multi-selection contributes one combined rotation-applied bbox.
  */
 
-import { rotPt, singleObjBBox } from "./render.js?v=0.34.0";
+import { rotPt, singleObjBBox } from "./render.js?v=0.34.1";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
 const SHAPE_TYPES = new Set(["rect", "ellipse", "triangle"]);
 const EDGE_TARGET_TYPES = new Set(["rect", "triangle"]);
 const CIRCLE_RATIO_EPSILON = 1e-3;
+
+function isValidPoint(point) {
+  return point && Number.isFinite(point.x) && Number.isFinite(point.y);
+}
 
 /* ===== SNAP GEOMETRY: rotation-applied corners and edge midpoints ===== */
 function shapeCandidatePoints(obj, dx = 0, dy = 0, rotation = obj.rotation || 0) {
@@ -79,10 +83,11 @@ function closestTangentCandidate(moveObjIds, origObjs, raw, state, maxDistance) 
   const circle = circleGeometry(origObjs[moveObjIds[0]], raw.dx, raw.dy);
   if (!circle) return null;
 
+  const moving = new Set(moveObjIds);
   let best = null;
   let bestDistance = maxDistance;
   for (const target of state.get().objects) {
-    if (target.id === moveObjIds[0] || !EDGE_TARGET_TYPES.has(target.type)) continue;
+    if (!target?.id || moving.has(target.id) || !EDGE_TARGET_TYPES.has(target.type)) continue;
     for (const [a, b] of targetEdgeSegments(target)) {
       const edgeX = b.x - a.x, edgeY = b.y - a.y;
       const length = Math.hypot(edgeX, edgeY);
@@ -104,6 +109,8 @@ function closestTangentCandidate(moveObjIds, origObjs, raw, state, maxDistance) 
           distance,
           dx: raw.dx + correction * normal.x,
           dy: raw.dy + correction * normal.y,
+          target,
+          targetPoint: contactPoint,
           contactPoint,
         };
       }
@@ -138,7 +145,7 @@ function closestPair(moveObjIds, draggedPoints, state, maxDistance) {
   let best = null;
   let bestDistance = maxDistance;
   for (const target of state.get().objects) {
-    if (moving.has(target.id) || !SHAPE_TYPES.has(target.type)) continue;
+    if (!target?.id || moving.has(target.id) || !SHAPE_TYPES.has(target.type)) continue;
     const targetPoints = shapeCandidatePoints(target);
     for (let draggedIndex = 0; draggedIndex < draggedPoints.length; draggedIndex += 1) {
       for (const targetPoint of targetPoints) {
@@ -168,13 +175,18 @@ export function resolveSnap(moveObjIds, origObjs, raw, mods, zoom, state, scene)
   const previewDistance = PREVIEW_PX / scale;
   const pair = closestPair(moveObjIds, draggedPoints, state, previewDistance);
   const tangent = closestTangentCandidate(moveObjIds, origObjs, raw, state, previewDistance);
-  const preferTangent = tangent && (!pair || tangent.distance <= pair.distance + 1 / scale);
+  const validPair = pair && pair.target && !moveObjIds.includes(pair.target.id)
+    && isValidPoint(pair.draggedPoint) && isValidPoint(pair.targetPoint);
+  const validTangent = tangent && tangent.target && !moveObjIds.includes(tangent.target.id)
+    && isValidPoint(tangent.targetPoint) && isValidPoint(tangent.contactPoint);
+  const preferTangent = validTangent
+    && (!validPair || tangent.distance <= pair.distance + 1 / scale);
   if (preferTangent) {
     const preview = { from: tangent.contactPoint, to: tangent.contactPoint };
     if (tangent.distance > ATTACH_PX / scale) return { ...unsnapped, preview };
     return { dx: tangent.dx, dy: tangent.dy, preview, rotation: null };
   }
-  if (!pair) return unsnapped;
+  if (!validPair) return unsnapped;
 
   const preview = { from: pair.draggedPoint, to: pair.targetPoint };
   if (pair.distance > ATTACH_PX / scale) return { ...unsnapped, preview };
@@ -184,7 +196,7 @@ export function resolveSnap(moveObjIds, origObjs, raw, mods, zoom, state, scene)
     moveObjIds, origObjs, raw.dx, raw.dy, scene, rotation,
   );
   const attachPoint = rotatedPoints?.[pair.draggedIndex];
-  if (!attachPoint) return { ...unsnapped, preview };
+  if (!isValidPoint(attachPoint)) return unsnapped;
 
   return {
     dx: raw.dx + pair.targetPoint.x - attachPoint.x,

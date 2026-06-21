@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.34.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.34.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.34.1";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.34.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -16,7 +16,11 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 let snapPreview = null;
 
 export function setSnapPreview(preview) {
-  snapPreview = preview;
+  const validPoint = (point) => point
+    && Number.isFinite(point.x) && Number.isFinite(point.y);
+  snapPreview = preview && validPoint(preview.from) && validPoint(preview.to)
+    ? preview
+    : null;
 }
 
 /* rotation-zone cursor: clockwise circular arrow (20횞20, 24횞24 viewBox) */

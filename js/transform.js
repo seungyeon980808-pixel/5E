@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.34.0";
-import { resolveSnap } from "./snap.js?v=0.34.0";
-import { setSnapPreview } from "./render.js?v=0.34.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.34.1";
+import { resolveSnap } from "./snap.js?v=0.34.1";
+import { setSnapPreview } from "./render.js?v=0.34.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -1108,6 +1108,7 @@ export function initTransform(svg, state) {
     const rawDy = cur.y - _moveStartWorld.y;
 
     /* ===== SNAP RESOLVE HOOK: Shift-only preview/attach before applyDelta ===== */
+    if (!e.shiftKey) setSnapPreview(null);
     const snapped = resolveSnap(
       _moveObjIds,
       _moveOrigObjs,
