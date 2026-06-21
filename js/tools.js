@@ -11,18 +11,18 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.4";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.5";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.40.4";
+} from "./state.js?v=0.40.5";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
-const BASIC_LINE_PICK_PX = 28; // screen-space proximity for plain solid lines
+const BASIC_LINE_MIN_HIT_WIDTH_PX = 24;
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
 const TEXT_LINE_HEIGHT = 1.4; // matches .text-editor-overlay line-height AND renderText() tspan dy
 // A textarea centers its glyphs in the line box, so the first line sits half a
@@ -155,9 +155,12 @@ function setupDrawing() {
       return;
     }
     const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
-    const pickTol = BASIC_LINE_PICK_PX / getRenderScale();
-    const lineId = nearestBasicLine(s.objects, p, pickTol, (o) => isObjectSelectable(s, o));
-    _svg.style.cursor = lineId === null ? "" : "grab";
+    const worldUnitsPerPx = s.viewBox.w / _svg.getBoundingClientRect().width;
+    const tol = HIT_TOL_PX * worldUnitsPerPx;
+    const lineTol = LINE_HIT_TOL_PX / getRenderScale();
+    const hitId = pickSelectableObject(s, p, tol, lineTol);
+    const hit = hitId === null ? null : s.objects.find((o) => o.id === hitId);
+    _svg.style.cursor = isBasicLine(hit) ? "grab" : "";
   });
 
   _svg.addEventListener("pointerleave", () => { _svg.style.cursor = ""; });
@@ -182,17 +185,15 @@ function setupDrawing() {
     const worldUnitsPerPx = vb.w / _svg.getBoundingClientRect().width;
     const tol = HIT_TOL_PX * worldUnitsPerPx;
     const lineTol = LINE_HIT_TOL_PX / getRenderScale();
-    const basicLineTol = BASIC_LINE_PICK_PX / getRenderScale();
     const shiftHeld = e.shiftKey;
     let hitId = null;
     _state.update((s) => {
-      hitId = hitTest(s.objects, p, tol, lineTol);
-      if (hitId !== null) {
-        const _hlObj = s.objects.find((o) => o.id === hitId);
-        if (!isObjectSelectable(s, _hlObj)) hitId = null;
-      }
-      if (hitId === null && _at === "V") {
-        hitId = nearestBasicLine(s.objects, p, basicLineTol, (o) => isObjectSelectable(s, o));
+      hitId = _at === "V"
+        ? pickSelectableObject(s, p, tol, lineTol)
+        : hitTest(s.objects, p, tol, lineTol);
+      if (_at !== "V" && hitId !== null) {
+        const hit = s.objects.find((o) => o.id === hitId);
+        if (!isObjectSelectable(s, hit)) hitId = null;
       }
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
@@ -386,19 +387,39 @@ function isBasicLine(obj) {
   return mode === "solid" && arrowHead === "none" && !dashed;
 }
 
-function nearestBasicLine(objects, p, tolerance, isSelectable = () => true) {
+function basicLineHitThreshold(line, renderScale) {
+  const visibleStrokePx = (line.strokeWidth ?? 0) * renderScale;
+  const hitWidthPx = Math.max(visibleStrokePx * 3, BASIC_LINE_MIN_HIT_WIDTH_PX);
+  return hitWidthPx / 2 / renderScale;
+}
+
+function nearestBasicLine(objects, p, renderScale, isSelectable = () => true) {
   let nearestId = null;
-  let nearestDistance = tolerance;
+  let nearestDistance = Infinity;
   for (let i = objects.length - 1; i >= 0; i--) {
     const line = objects[i];
     if (!isBasicLine(line) || !isSelectable(line)) continue;
     const distance = segDist(p.x, p.y, line.p1.x, line.p1.y, line.p2.x, line.p2.y);
-    if (distance < nearestDistance) {
+    if (distance <= basicLineHitThreshold(line, renderScale) && distance < nearestDistance) {
       nearestDistance = distance;
       nearestId = line.id;
     }
   }
   return nearestId;
+}
+
+function pickSelectableObject(state, p, tol, lineTol) {
+  const selectableNonBasic = state.objects.filter((o) =>
+    !isBasicLine(o) && isObjectSelectable(state, o)
+  );
+  const hitId = hitTest(selectableNonBasic, p, tol, lineTol);
+  if (hitId !== null) return hitId;
+  return nearestBasicLine(
+    state.objects,
+    p,
+    getRenderScale(),
+    (o) => isObjectSelectable(state, o)
+  );
 }
 
 /* ===== CLICK-TO-CLICK DRAWING (line L + polyline P ??one shared mechanism) ===== */
