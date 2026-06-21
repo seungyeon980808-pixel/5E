@@ -1,7 +1,7 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.40.0";
-import { openFontModalForSelection } from "./tools.js?v=0.40.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.40.1";
+import { openFontModalForSelection } from "./tools.js?v=0.40.1";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -272,6 +272,11 @@ export function initInspector(state) {
             '<polygon points="10,8 4,12 10,16" fill="#888"/>' +
             '<polygon points="30,8 36,12 30,16" fill="#888"/>',
   };
+  const MIDDLE_LEFT_ICON = '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
+    '<polygon points="26,8 20,12 26,16" fill="#888"/>';
+  const lengthIcon = (variant) => ARROW_ICONS.both +
+    ((variant === "leftBar" || variant === "bothBars") ? '<line x1="4" y1="6" x2="4" y2="18" stroke="#888" stroke-width="1.5"/>' : '') +
+    ((variant === "rightBar" || variant === "bothBars") ? '<line x1="36" y1="6" x2="36" y2="18" stroke="#888" stroke-width="1.5"/>' : '');
   const ARROW_CYCLE = ["end", "start", "both", "none"];
   const ARROW_LABELS = { end: "정방향", start: "역방향", both: "양끝", none: "없음" };
   const arrowBtn = document.createElement("button");
@@ -286,7 +291,6 @@ export function initInspector(state) {
       if (o && (o.type === "line" || o.type === "polyline")) {
         const current = ARROW_CYCLE.includes(o.arrowHead) ? o.arrowHead : "none";
         o.arrowHead = ARROW_CYCLE[(ARROW_CYCLE.indexOf(current) + 1) % ARROW_CYCLE.length];
-        if (o.type === "line") o.lineStyle = "arrow";
         s2.undoStack.push(snap);
         s2.redoStack = [];
       }
@@ -297,7 +301,7 @@ export function initInspector(state) {
   arrowRow.appendChild(arrowBtns);
   sec1Body.appendChild(arrowRow);
 
-  // Straight-line rendering mode. Endpoint direction remains a separate cycle.
+  // Straight-line mode dials. Re-clicking the active mode advances its variant.
   const lineModeRow = document.createElement("div");
   lineModeRow.className = "insp-row";
   const lineModeLbl = document.createElement("label");
@@ -309,7 +313,7 @@ export function initInspector(state) {
     { value: "solid", label: "Solid", icon: ARROW_ICONS.none },
     { value: "arrow", label: "Arrow", icon: ARROW_ICONS.end },
     { value: "middleArrow", label: "Middle arrow", icon: ARROW_ICONS.center },
-    { value: "dimensionArrow", label: "Dimension", icon: ARROW_ICONS.both },
+    { value: "lengthArrow", label: "Length arrow", icon: ARROW_ICONS.both },
   ];
   const lineModeBtnEls = {};
   LINE_MODES.forEach(({ value, label, icon }) => {
@@ -326,10 +330,31 @@ export function initInspector(state) {
       state.update((s2) => {
         const o = s2.objects.find((item) => item.id === ids[0]);
         if (!o || o.type !== "line") return;
-        o.lineStyle = value;
-        if (value === "arrow" && !ARROW_CYCLE.includes(o.arrowHead)) o.arrowHead = "end";
-        if (value === "arrow" && o.arrowHead === "none") o.arrowHead = "end";
-        if (value === "dimensionArrow" && o.dimensionLabel == null) o.dimensionLabel = "d";
+        const oldMode = o.lineMode
+          ?? (o.lineStyle === "dimensionArrow" ? "lengthArrow" : o.lineStyle)
+          ?? (o.arrowHead === "center" ? "middleArrow" : (o.arrowHead ?? "none") === "none" ? "solid" : "arrow");
+        if (value === "arrow") {
+          const cycle = ["right", "left", "both"];
+          const current = cycle.includes(o.arrowVariant)
+            ? o.arrowVariant
+            : ({ end: "right", start: "left", both: "both" }[o.arrowHead] || "right");
+          o.arrowVariant = oldMode === value ? cycle[(cycle.indexOf(current) + 1) % cycle.length] : "right";
+          o.arrowHead = { right: "end", left: "start", both: "both" }[o.arrowVariant];
+        } else if (value === "middleArrow") {
+          const current = o.arrowVariant === "left" ? "left" : "right";
+          o.arrowVariant = oldMode === value && current === "right" ? "left" : "right";
+          o.arrowHead = "none";
+        } else if (value === "lengthArrow") {
+          const cycle = ["basic", "rightBar", "leftBar", "bothBars"];
+          const current = cycle.includes(o.dimensionVariant) ? o.dimensionVariant : "basic";
+          o.dimensionVariant = oldMode === value ? cycle[(cycle.indexOf(current) + 1) % cycle.length] : "basic";
+          o.dimensionLabel ??= "d";
+          o.arrowHead = "none";
+        } else {
+          o.arrowHead = "none";
+        }
+        o.lineMode = value;
+        o.lineStyle = value === "lengthArrow" ? "dimensionArrow" : value;
         s2.undoStack.push(snap);
         s2.redoStack = [];
       });
@@ -1401,19 +1426,26 @@ export function initInspector(state) {
     }
 
     lineModeRow.style.display = isStraightLine ? "" : "none";
-    let lineMode = obj.lineStyle
+    let lineMode = obj.lineMode ?? obj.lineStyle
       ?? (obj.arrowHead === "center" ? "middleArrow" : (obj.arrowHead ?? "none") === "none" ? "solid" : "arrow");
+    if (lineMode === "dimensionArrow") lineMode = "lengthArrow";
     if (!lineModeBtnEls[lineMode]) lineMode = "solid";
     Object.entries(lineModeBtnEls).forEach(([value, btn]) => {
       const active = value === lineMode;
       btn.style.background = active ? "#4a9eff" : "#1e1f22";
       btn.style.borderColor = active ? "#4a9eff" : "#3a3c41";
     });
-    dimensionLabelRow.style.display = isStraightLine && lineMode === "dimensionArrow" ? "" : "none";
+    const arrowIcon = ({ right: ARROW_ICONS.end, left: ARROW_ICONS.start, both: ARROW_ICONS.both })[obj.arrowVariant]
+      || ({ end: ARROW_ICONS.end, start: ARROW_ICONS.start, both: ARROW_ICONS.both })[obj.arrowHead]
+      || ARROW_ICONS.end;
+    lineModeBtnEls.arrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${arrowIcon}</svg>`;
+    lineModeBtnEls.middleArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${obj.arrowVariant === "left" ? MIDDLE_LEFT_ICON : ARROW_ICONS.center}</svg>`;
+    lineModeBtnEls.lengthArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${lengthIcon(obj.dimensionVariant || "basic")}</svg>`;
+    dimensionLabelRow.style.display = isStraightLine && lineMode === "lengthArrow" ? "" : "none";
     if (document.activeElement !== dimensionLabelInp) dimensionLabelInp.value = obj.dimensionLabel ?? "d";
 
     // Arrow head: open line + open polyline (closed polyline = filled shape, no arrow).
-    const showArrow = (obj.type === "line" && lineMode === "arrow") || (obj.type === "polyline" && !isClosedPoly);
+    const showArrow = obj.type === "polyline" && !isClosedPoly;
     arrowRow.style.display = showArrow ? "" : "none";
     if (showArrow) {
       const ah = obj.arrowHead ?? "none";

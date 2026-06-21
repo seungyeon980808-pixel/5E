@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.40.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.40.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.40.1";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.40.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -658,10 +658,13 @@ function polylineMidpoint(pts) {
 function renderLine(obj) {
   const savedArrowHead = obj.arrowHead ?? "none";
   // Files created before lineStyle used arrowHead="center" for midpoint arrows.
-  let lineStyle = obj.lineStyle
+  let lineStyle = obj.lineMode ?? obj.lineStyle
     ?? (savedArrowHead === "center" ? "middleArrow" : savedArrowHead === "none" ? "solid" : "arrow");
-  if (!["solid", "arrow", "middleArrow", "dimensionArrow"].includes(lineStyle)) lineStyle = "solid";
-  const arrowHead = lineStyle === "arrow" ? savedArrowHead : "none";
+  if (lineStyle === "dimensionArrow") lineStyle = "lengthArrow";
+  if (!["solid", "arrow", "middleArrow", "lengthArrow"].includes(lineStyle)) lineStyle = "solid";
+  const arrowHead = lineStyle === "arrow"
+    ? ({ right: "end", left: "start", both: "both" }[obj.arrowVariant] || savedArrowHead)
+    : "none";
   const sw = obj.strokeWidth ?? 0.2;
   const color = grayHex(obj.strokeLevel);
 
@@ -683,7 +686,7 @@ function renderLine(obj) {
     } else if (arrowHead === "both") {
       lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
       lx1 += nx * arrowLen; ly1 += ny * arrowLen;
-    } else if (lineStyle === "dimensionArrow") {
+    } else if (lineStyle === "lengthArrow") {
       lx2 -= nx * arrowLen; ly2 -= ny * arrowLen;
       lx1 += nx * arrowLen; ly1 += ny * arrowLen;
     }
@@ -719,10 +722,28 @@ function renderLine(obj) {
   } else if (lineStyle === "middleArrow") {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
-    g.appendChild(makeArrowHead(mx, my, nx, ny, sw, color));
-  } else if (lineStyle === "dimensionArrow") {
+    const direction = obj.arrowVariant === "left" ? -1 : 1;
+    g.appendChild(makeArrowHead(mx, my, nx * direction, ny * direction, sw, color));
+  } else if (lineStyle === "lengthArrow") {
     g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
     g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
+
+    const dimensionVariant = ["basic", "rightBar", "leftBar", "bothBars"].includes(obj.dimensionVariant)
+      ? obj.dimensionVariant
+      : "basic";
+    const capHalf = Math.max(sw * 4, 1.2);
+    const addCap = (point) => {
+      const cap = document.createElementNS(SVG_NS, "line");
+      cap.setAttribute("x1", point.x - ny * capHalf);
+      cap.setAttribute("y1", point.y + nx * capHalf);
+      cap.setAttribute("x2", point.x + ny * capHalf);
+      cap.setAttribute("y2", point.y - nx * capHalf);
+      cap.setAttribute("stroke", color);
+      cap.setAttribute("stroke-width", sw);
+      g.appendChild(cap);
+    };
+    if (dimensionVariant === "leftBar" || dimensionVariant === "bothBars") addCap(obj.p1);
+    if (dimensionVariant === "rightBar" || dimensionVariant === "bothBars") addCap(obj.p2);
 
     const label = document.createElementNS(SVG_NS, "text");
     const mx = (obj.p1.x + obj.p2.x) / 2;
