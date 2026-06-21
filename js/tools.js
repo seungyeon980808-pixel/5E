@@ -11,17 +11,18 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.3";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.4";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.40.3";
+} from "./state.js?v=0.40.4";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
-const LINE_HIT_TOL_PX = 20; // screen-space slop for line-family segments
+const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
+const BASIC_LINE_PICK_PX = 28; // screen-space proximity for plain solid lines
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
 const TEXT_LINE_HEIGHT = 1.4; // matches .text-editor-overlay line-height AND renderText() tspan dy
 // A textarea centers its glyphs in the line box, so the first line sits half a
@@ -147,6 +148,20 @@ function setupDrawing() {
   window.addEventListener("keydown", (e) => { if (e.code === "Space") spaceHeld = true; });
   window.addEventListener("keyup", (e) => { if (e.code === "Space") spaceHeld = false; });
 
+  _svg.addEventListener("pointermove", (e) => {
+    const s = _state.get();
+    if (spaceHeld || s.activeTool !== "V" || e.target?.dataset?.handle) {
+      _svg.style.cursor = "";
+      return;
+    }
+    const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
+    const pickTol = BASIC_LINE_PICK_PX / getRenderScale();
+    const lineId = nearestBasicLine(s.objects, p, pickTol, (o) => isObjectSelectable(s, o));
+    _svg.style.cursor = lineId === null ? "" : "grab";
+  });
+
+  _svg.addEventListener("pointerleave", () => { _svg.style.cursor = ""; });
+
   // V (select): click hit-tests committed rects by world bbox, topmost wins.
   // Clicking empty space clears the selection.
   _svg.addEventListener("mousedown", (e) => {
@@ -167,17 +182,17 @@ function setupDrawing() {
     const worldUnitsPerPx = vb.w / _svg.getBoundingClientRect().width;
     const tol = HIT_TOL_PX * worldUnitsPerPx;
     const lineTol = LINE_HIT_TOL_PX / getRenderScale();
+    const basicLineTol = BASIC_LINE_PICK_PX / getRenderScale();
     const shiftHeld = e.shiftKey;
     let hitId = null;
     _state.update((s) => {
       hitId = hitTest(s.objects, p, tol, lineTol);
       if (hitId !== null) {
         const _hlObj = s.objects.find((o) => o.id === hitId);
-        const _hlLayerId = _hlObj ? (_hlObj.layerId ?? 1) : 1;
-        const _hlLayer = (s.layers || []).find(l => l.id === _hlLayerId);
-        if (!_hlLayer || _hlLayer.visible === false || _hlLayerId !== s.activeLayerId) {
-          hitId = null;
-        }
+        if (!isObjectSelectable(s, _hlObj)) hitId = null;
+      }
+      if (hitId === null && _at === "V") {
+        hitId = nearestBasicLine(s.objects, p, basicLineTol, (o) => isObjectSelectable(s, o));
       }
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
@@ -354,6 +369,36 @@ function setupDrawing() {
   // handler above (e.detail >= 2). A dblclick listener can't be used here: every
   // mousedown re-renders (scene.replaceChildren) and detaches the clicked node
   // before mouseup, so the browser never fires click/dblclick on it.
+}
+
+function isObjectSelectable(state, obj) {
+  if (!obj) return false;
+  const layerId = obj.layerId ?? 1;
+  const layer = (state.layers || []).find((item) => item.id === layerId);
+  return !!layer && layer.visible !== false && layerId === state.activeLayerId;
+}
+
+function isBasicLine(obj) {
+  if (!obj || obj.type !== "line") return false;
+  const arrowHead = obj.arrowHead ?? "none";
+  const mode = obj.lineMode ?? obj.lineStyle ?? (arrowHead === "none" ? "solid" : "arrow");
+  const dashed = (obj.dashLength ?? 0) > 0 && (obj.dashGap ?? 0) > 0;
+  return mode === "solid" && arrowHead === "none" && !dashed;
+}
+
+function nearestBasicLine(objects, p, tolerance, isSelectable = () => true) {
+  let nearestId = null;
+  let nearestDistance = tolerance;
+  for (let i = objects.length - 1; i >= 0; i--) {
+    const line = objects[i];
+    if (!isBasicLine(line) || !isSelectable(line)) continue;
+    const distance = segDist(p.x, p.y, line.p1.x, line.p1.y, line.p2.x, line.p2.y);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestId = line.id;
+    }
+  }
+  return nearestId;
 }
 
 /* ===== CLICK-TO-CLICK DRAWING (line L + polyline P ??one shared mechanism) ===== */
