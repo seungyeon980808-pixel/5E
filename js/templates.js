@@ -1,40 +1,48 @@
-/* ===== TEMPLATES (symbol library — the reusable foundation, DESIGN 1-1) ===== */
+/* ===== TEMPLATES (the SINGLE object registry — DESIGN 1-1) ===== */
 //
-// This is the standard path every future library symbol follows: a definition
-// lives here, the left-panel library shows a button for it, and clicking that
-// button calls instantiate() to drop ONE data object onto the canvas via the
-// store — exactly like drawing or importing, so it lands on the undo stack and
-// auto-selects. SVG stays a pure projection of state.objects (data-as-truth).
+// One registry is the source of truth for EVERY library object. The left panel is
+// rendered FROM this registry (no hardcoded buttons in index.html), and each entry
+// only POINTS AT the existing creation path — it never re-implements geometry.
 //
-// Two KINDS of symbol are distinguished in the registry so the structure is
-// ready for both, even though only the first is used now:
-//   * "atomic"    — ONE indivisible data object (e.g. axes, circuit symbols).
-//                   Selection/move/rotate/resize act on the single object.
-//   * "composite" — SEVERAL primitives bundled as a group (e.g. lens, pulley).
-//                   NOT implemented yet — see the placeholder below.
+// Every entry carries:
+//   label     — Korean button text ("볼록렌즈")
+//   category  — "공통" | "회로" | "광학" | "역학" (drives panel grouping)
+//   keywords  — search hints for a future symbol search (filled plausibly)
+//   kind      — "atomic" : ONE object dropped immediately at view center
+//               "shape"  : arms an existing placement tool; the user draws on canvas
+//   create    — wiring to the EXISTING pipeline (NO new geometry here):
+//                 atomic → { } plus a make(at) that returns the object data
+//                 shape  → { tool, element? | kind? } recorded before arming the tool
+//
+// Two creation pipelines are preserved EXACTLY as before:
+//   * atomic  → instantiate() pushes make()'s object through the store.
+//   * shape   → armSymbol() (tools.js) records the variant (_circuitElement /
+//               _opticsKind) then arms CIRCUIT / OPTICS / ARC, which build the
+//               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
+//               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.44.1";
+import { state } from "./state.js?v=1.1.0";
+import { armSymbol } from "./tools.js?v=1.1.0";
+import { renderObject } from "./render.js?v=1.1.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
 // Monotonic suffix so two instantiations within the same millisecond differ.
 let _tplIdCounter = 0;
 
-/* ===== SYMBOL REGISTRY =====
- * Keyed by symbolId. Each entry:
- *   { kind, label, make(atCanvasPoint) -> objectData | objectData[] }
- * For "atomic" make() returns ONE object (no id/order/layerId — instantiate
- * assigns those). For "composite" make() will return several primitives plus a
- * group; left unimplemented for now. */
+/* ===== SYMBOL REGISTRY (keyed by symbolId — the UNIQUE per-object id) ===== */
 export const TEMPLATES = {
-  /* ----- AXES: first atomic symbol (single type:"axes" object) -----
-   * Carries x/y/w/h/rotation so it rides the existing size-based transform path
-   * (move/rotate/resize) with no new logic. The origin (axis intersection) sits
-   * at the bbox center; ticks and labels are computed by the renderer, never
-   * stored as separate objects (mirrors how text is one box, not per-glyph). */
+  /* ----- 공통: axes + angle arc ----- */
+
+  /* AXES — atomic (single type:"axes" object). Carries x/y/w/h/rotation so it
+   * rides the existing size-based transform path with no new logic. Ticks/labels
+   * are computed by the renderer, never stored as separate objects. */
   axes: {
     kind: "atomic",
+    category: "공통",
     label: "좌표축",
+    keywords: ["좌표축", "axes", "축", "xy", "그래프", "graph"],
+    create: {},
     make(at) {
       const w = 44, h = 34; // default extent (mm); resizable afterwards
       return {
@@ -56,16 +64,15 @@ export const TEMPLATES = {
     },
   },
 
-  /* ----- ANGLE ARC: second atomic symbol (single type:"anglearc" object) -----
-   * The angle θ. Geometry lives in data: a vertex (x,y) plus a radius and a
-   * start/sweep angle pair in MATH convention (CCW positive, +Y up — matching
-   * the inspector). The renderer projects ONE arc + its label from these fields;
-   * it does NOT draw the two rays (the user draws those with the line tool).
-   * Rides the existing single-object transform path: move → x/y, rotate →
-   * startAngle, resize → radius (see transform.js). */
+  /* ANGLE ARC — shape (arms the two-click ARC tool in tools.js). The placement
+   * tool owns the geometry (makeAngleArcDraft): click 1 = vertex, click 2 = start
+   * point. make() below is kept for reference; the button never calls it. */
   anglearc: {
-    kind: "atomic",
+    kind: "shape",
+    category: "공통",
     label: "각도 호",
+    keywords: ["각도", "호", "angle", "arc", "세타", "theta", "θ"],
+    create: { tool: "ARC" },
     make(at) {
       return {
         type: "anglearc",
@@ -84,20 +91,41 @@ export const TEMPLATES = {
     },
   },
 
-  /* ----- COMPOSITE PLACEHOLDER (not implemented yet) -----
-   * When composites land, an entry like this returns several primitive objects
-   * plus a group descriptor; instantiate() will push them together and select
-   * the group. Kept here only to fix the structure future symbols follow.
-   *
-   * lens: {
-   *   kind: "composite",
-   *   label: "볼록 렌즈",
-   *   make(at) { return [ ...primitives ]; },  // + group wiring
-   * },
-   */
+  /* ----- 회로: circuit elements — each arms the two-click CIRCUIT tool with a
+   * specific element (tools.js makeCircuit reads _circuitElement). ----- */
+  resistor:  { kind: "shape", category: "회로", label: "저항",     keywords: ["저항", "resistor", "옴", "ohm", "R"],            create: { tool: "CIRCUIT", element: "resistor" } },
+  dc_source: { kind: "shape", category: "회로", label: "전지",     keywords: ["전지", "전원", "직류", "dc", "battery", "source"], create: { tool: "CIRCUIT", element: "dc_source" } },
+  ac_source: { kind: "shape", category: "회로", label: "교류전원", keywords: ["교류", "ac", "전원", "source", "sine"],          create: { tool: "CIRCUIT", element: "ac_source" } },
+  capacitor: { kind: "shape", category: "회로", label: "축전기",   keywords: ["축전기", "콘덴서", "capacitor", "condenser", "C"], create: { tool: "CIRCUIT", element: "capacitor" } },
+  inductor:  { kind: "shape", category: "회로", label: "코일",     keywords: ["코일", "인덕터", "inductor", "coil", "L"],        create: { tool: "CIRCUIT", element: "inductor" } },
+  unknown:   { kind: "shape", category: "회로", label: "미지소자", keywords: ["미지", "소자", "unknown", "box", "element"],      create: { tool: "CIRCUIT", element: "unknown" } },
+  diode:     { kind: "shape", category: "회로", label: "다이오드", keywords: ["다이오드", "diode", "정류"],                      create: { tool: "CIRCUIT", element: "diode" } },
+  lamp:      { kind: "shape", category: "회로", label: "전구",     keywords: ["전구", "램프", "lamp", "bulb", "light"],          create: { tool: "CIRCUIT", element: "lamp" } },
+  ammeter:   { kind: "shape", category: "회로", label: "전류계",   keywords: ["전류계", "ammeter", "A", "전류"],                 create: { tool: "CIRCUIT", element: "ammeter" } },
+  voltmeter: { kind: "shape", category: "회로", label: "전압계",   keywords: ["전압계", "voltmeter", "V", "전압"],               create: { tool: "CIRCUIT", element: "voltmeter" } },
+
+  /* ----- 광학: lenses / mirrors / object / screen / point source — each arms the
+   * OPTICS tool (rect-style size-drag) with a specific kind (tools.js makeShape
+   * reads _opticsKind). ----- */
+  convex_lens:    { kind: "shape", category: "광학", label: "볼록렌즈", keywords: ["볼록", "렌즈", "convex", "lens"],            create: { tool: "OPTICS", kind: "convex_lens" } },
+  concave_lens:   { kind: "shape", category: "광학", label: "오목렌즈", keywords: ["오목", "렌즈", "concave", "lens"],           create: { tool: "OPTICS", kind: "concave_lens" } },
+  convex_mirror:  { kind: "shape", category: "광학", label: "볼록거울", keywords: ["볼록", "거울", "convex", "mirror"],          create: { tool: "OPTICS", kind: "convex_mirror" } },
+  concave_mirror: { kind: "shape", category: "광학", label: "오목거울", keywords: ["오목", "거울", "concave", "mirror"],         create: { tool: "OPTICS", kind: "concave_mirror" } },
+  plane_mirror:   { kind: "shape", category: "광학", label: "평면거울", keywords: ["평면", "거울", "plane", "mirror"],           create: { tool: "OPTICS", kind: "plane_mirror" } },
+  object_arrow:   { kind: "shape", category: "광학", label: "물체",     keywords: ["물체", "화살표", "object", "arrow"],         create: { tool: "OPTICS", kind: "object_arrow" } },
+  screen:         { kind: "shape", category: "광학", label: "스크린",   keywords: ["스크린", "screen", "벽"],                    create: { tool: "OPTICS", kind: "screen" } },
+  point_light:    { kind: "shape", category: "광학", label: "점광원",   keywords: ["점광원", "광원", "point", "light", "source"], create: { tool: "OPTICS", kind: "point_light" } },
+
+  /* ----- 역학: pulley / supports / pivot / node / magnet — also arm the OPTICS
+   * size-drag tool with a specific kind. ----- */
+  pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "OPTICS", kind: "pulley" } },
+  support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
+  pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
+  node:        { kind: "shape", category: "역학", label: "마디",     keywords: ["마디", "연결점", "node", "joint"],      create: { tool: "OPTICS", kind: "node" } },
+  bar_magnet:  { kind: "shape", category: "역학", label: "막대자석", keywords: ["막대자석", "자석", "magnet", "NS"],      create: { tool: "OPTICS", kind: "bar_magnet" } },
 };
 
-/* ===== INSTANTIATE: the single entry point the left panel calls ===== */
+/* ===== INSTANTIATE: atomic creation entry point ===== */
 // atomic → push ONE object through the store (undo snapshot + auto-select),
 // exactly like drawing a shape (tools.js) or importing an image (project-io.js).
 export function instantiate(symbolId, atCanvasPoint) {
@@ -106,9 +134,9 @@ export function instantiate(symbolId, atCanvasPoint) {
     console.warn(`[templates] unknown symbol: ${symbolId}`);
     return;
   }
-  if (def.kind === "composite") {
-    // Reserved path — composites are not implemented yet.
-    console.warn(`[templates] composite "${symbolId}" not implemented yet`);
+  if (def.kind !== "atomic") {
+    // Non-atomic symbols arm a placement tool instead (see onSymbolClick).
+    console.warn(`[templates] "${symbolId}" is not atomic — use the placement tool`);
     return;
   }
 
@@ -130,18 +158,192 @@ export function instantiate(symbolId, atCanvasPoint) {
   });
 }
 
-/* ===== WIRE THE LEFT-PANEL LIBRARY ===== */
-// Each library button carries data-template="<symbolId>". Clicking it drops the
-// symbol at the current view center (world coords derived from the viewBox).
-export function initTemplates(svg) {
-  const panel = document.getElementById("tool-list");
-  if (!panel) return;
-  panel.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-template]");
-    if (!btn) return;
-    const symbolId = btn.dataset.template;
+/* ===== RENDER THE LEFT-PANEL LIBRARY FROM THE REGISTRY ===== */
+// Categories are rendered as collapsible sections (same markup as the hardcoded
+// 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
+// button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
+const CATEGORY_ORDER = ["공통", "회로", "광학", "역학"];
+
+/* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
+ *
+ * Each button shows a mini SVG preview built by calling the object's EXISTING
+ * render function (renderObject) on a representative data object, then flattening
+ * it to a single currentColor silhouette. Because the geometry comes straight from
+ * the renderer, any future edit to a shape updates its icon automatically. No icon
+ * is hand-drawn here — we only choose representative sizes + a clean data variant. */
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ICON_PX = 16;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
+const ICON_STROKE_PX = 1.1;  // target on-screen stroke weight (≈ the base-tool icons)
+
+// Representative bounding boxes (world mm) per OPTICS kind — only drives the icon's
+// aspect ratio; the viewBox auto-fits afterwards. fillNone keeps shapes hollow.
+const OPTICS_ICON_BOX = {
+  convex_lens:    { w: 13, h: 22 },
+  concave_lens:   { w: 13, h: 22 },
+  convex_mirror:  { w: 12, h: 22 },
+  concave_mirror: { w: 12, h: 22 },
+  plane_mirror:   { w: 10, h: 22 },
+  screen:         { w: 10, h: 22 },
+  object_arrow:   { w: 12, h: 22 },
+  point_light:    { w: 18, h: 18 },
+  node:           { w: 16, h: 16 },
+  pivot:          { w: 18, h: 18 },
+  pulley:         { w: 18, h: 18 },
+  support_tri:    { w: 20, h: 14 },
+  bar_magnet:     { w: 26, h: 12 },
+};
+
+// Build the data object that the REAL renderer turns into the icon.
+function iconSampleObject(id, def) {
+  // axes + anglearc carry a make() → reuse the real geometry verbatim.
+  if (typeof def.make === "function") {
+    const o = def.make({ x: 0, y: 0 });
+    if (o.type === "axes") {          // strip ticks/labels so the silhouette stays clean
+      o.showTicks = false;
+      o.labelX = "";
+      o.labelY = "";
+    }
+    return o;
+  }
+  const c = def.create || {};
+  if (c.tool === "CIRCUIT") {
+    // horizontal two-terminal element, 16mm span (8mm body + equal leads).
+    return {
+      type: "circuit", element: c.element,
+      p1: { x: -8, y: 0 }, p2: { x: 8, y: 0 },
+      strokeLevel: 0, strokeWidth: 0.5, label: "",
+    };
+  }
+  if (c.tool === "OPTICS") {
+    const b = OPTICS_ICON_BOX[c.kind] || { w: 18, h: 22 };
+    return {
+      type: "optics", kind: c.kind,
+      x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
+      strokeLevel: 0, strokeWidth: 0.6, showLabel: false, fillNone: true,
+    };
+  }
+  return null;
+}
+
+// Flatten any rendered element tree to one currentColor silhouette (so it inherits
+// the button's text color and turns white on the active/blue state).
+function monochrome(node) {
+  if (node.nodeType !== 1) return;
+  const stroke = node.getAttribute("stroke");
+  if (stroke && stroke !== "none" && stroke !== "transparent") node.setAttribute("stroke", "currentColor");
+  const fill = node.getAttribute("fill");
+  if (fill && fill !== "none" && fill !== "transparent") node.setAttribute("fill", "currentColor");
+  for (const child of node.children) monochrome(child);
+}
+
+// Force a uniform stroke-width across the tree (in world units) — normalizes the
+// on-screen weight regardless of how big the sample object is.
+function setStrokeWidth(node, sw) {
+  if (node.nodeType !== 1) return;
+  if (node.hasAttribute("stroke-width")) node.setAttribute("stroke-width", sw);
+  for (const child of node.children) setStrokeWidth(child, sw);
+}
+
+function buildSymbolIcon(id, def) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", "tool-ico");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  const obj = iconSampleObject(id, def);
+  if (!obj) return svg;
+  const el = renderObject(obj);   // EXISTING renderer — icon stays in sync with the real shape
+  if (!el) return svg;
+  monochrome(el);
+  svg.appendChild(el);
+  return svg;                     // viewBox + stroke set after it goes live (needs getBBox)
+}
+
+// viewBox needs the svg LIVE in the DOM (getBBox). Fit it to the content and give
+// every icon the same on-screen stroke weight.
+function sizeIconViewBox(svg) {
+  const g = svg.firstElementChild;
+  if (!g) return;
+  let bb;
+  try { bb = g.getBBox(); } catch { return; }
+  if (!bb || (bb.width <= 0 && bb.height <= 0)) return;
+  const pad = Math.max(bb.width, bb.height) * 0.14 + 0.6;
+  const vbW = bb.width + pad * 2, vbH = bb.height + pad * 2;
+  svg.setAttribute("viewBox", `${bb.x - pad} ${bb.y - pad} ${vbW} ${vbH}`);
+  const scale = ICON_PX / Math.max(vbW, vbH);   // uniform-fit (preserveAspectRatio meet)
+  setStrokeWidth(g, ICON_STROKE_PX / scale);
+}
+
+function renderPanel() {
+  const host = document.getElementById("symbol-sections");
+  if (!host) return;
+  host.replaceChildren();
+
+  const pending = []; // icon svgs to size once they are live in the DOM
+
+  for (const cat of CATEGORY_ORDER) {
+    const ids = Object.keys(TEMPLATES).filter((id) => TEMPLATES[id].category === cat);
+    if (!ids.length) continue;
+
+    const section = document.createElement("div");
+    section.className = "tool-section";
+
+    const header = document.createElement("div");
+    header.className = "tool-section-header";
+    header.innerHTML = `${cat} <span class="toggle-icon">▾</span>`;
+
+    const body = document.createElement("div");
+    body.className = "tool-section-body";   // 3-col icon grid (same as 공통 도구)
+
+    for (const id of ids) {
+      const def = TEMPLATES[id];
+      const btn = document.createElement("button");
+      btn.className = "tool-btn";             // square icon button (reuses active styling)
+      btn.type = "button";
+      btn.dataset.symbol = id;               // UNIQUE per-object id — drives the single-highlight fix
+      btn.title = def.label;                 // name on hover ONLY (tooltip), never inside the button
+
+      const kbd = document.createElement("kbd");
+      const icon = buildSymbolIcon(id, def);
+      kbd.appendChild(icon);
+      btn.appendChild(kbd);
+      body.appendChild(btn);
+      pending.push(icon);
+    }
+
+    section.appendChild(header);
+    section.appendChild(body);
+    host.appendChild(section);
+  }
+
+  // Now that the sections are live, fit each icon's viewBox to its content.
+  for (const svg of pending) sizeIconViewBox(svg);
+}
+
+/* ----- click → creation (functionally identical to the old per-button wiring) ----- */
+function onSymbolClick(symbolId) {
+  const def = TEMPLATES[symbolId];
+  if (!def) return;
+  if (def.kind === "atomic") {
+    // Drop one object at the current view center, like before.
     const vb = state.get().viewBox;
     const center = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 };
     instantiate(symbolId, center);
+  } else {
+    // shape → record the variant + arm the shared placement tool (tools.js).
+    const c = def.create || {};
+    armSymbol(symbolId, c.tool, c.element ?? c.kind);
+  }
+}
+
+/* ===== WIRE THE LEFT-PANEL LIBRARY ===== */
+export function initTemplates(svg) {
+  renderPanel();
+  const panel = document.getElementById("tool-list");
+  if (!panel) return;
+  panel.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-symbol]");
+    if (!btn) return;
+    onSymbolClick(btn.dataset.symbol);
   });
 }

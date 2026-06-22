@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.44.1";
-import { resolveSnap } from "./snap.js?v=0.44.1";
-import { setSnapPreview } from "./render.js?v=0.44.1";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.1.0";
+import { resolveSnap } from "./snap.js?v=1.1.0";
+import { setSnapPreview } from "./render.js?v=1.1.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -174,7 +174,7 @@ function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   for (const o of objs) {
-    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes") {
+    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
       acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
@@ -195,7 +195,7 @@ function clipboardBBox(objs) {
 function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
       obj.type === "triangle" || obj.type === "text" || obj.type === "image" ||
-      obj.type === "axes" || obj.type === "anglearc") {
+      obj.type === "axes" || obj.type === "anglearc" || obj.type === "optics") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
@@ -363,7 +363,7 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 
 /* ----- world bbox of one object (text uses its rendered <text> box) ----- */
 function objWorldBBox(o, svg) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -456,7 +456,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   for (const obj of objs) {
     const orig = origObjs[obj.id];
     if (!orig) continue;
-    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "axes") {
+    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "axes" || orig.type === "optics") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
     } else if (orig.type === "anglearc") {
@@ -670,7 +670,7 @@ export function initTransform(svg, state) {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, 5); changed = true; return; }
-            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!["rect", "ellipse", "triangle", "optics"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -755,7 +755,7 @@ export function initTransform(svg, state) {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, -5); changed = true; return; }
-            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!["rect", "ellipse", "triangle", "optics"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });

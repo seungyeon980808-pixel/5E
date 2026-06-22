@@ -1,7 +1,7 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.44.1";
-import { openFontModalForSelection } from "./tools.js?v=0.44.1";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=1.1.0";
+import { openFontModalForSelection } from "./tools.js?v=1.1.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1011,6 +1011,96 @@ export function initInspector(state) {
   labelRow.appendChild(labelInp);
   sec3Body.appendChild(labelRow);
 
+  // optics-only: show/hide toggle for the label (like the anglearc label visibility).
+  const showLabelRow = document.createElement("div");
+  showLabelRow.className = "insp-row";
+  const showLabelCb = document.createElement("input");
+  showLabelCb.type = "checkbox";
+  showLabelCb.className = "insp-cb";
+  const showLabelLbl = document.createElement("label");
+  showLabelLbl.className = "insp-field-label";
+  showLabelLbl.textContent = "라벨 표시";
+  showLabelRow.appendChild(showLabelCb);
+  showLabelRow.appendChild(showLabelLbl);
+  sec3Body.appendChild(showLabelRow);
+  showLabelCb.addEventListener("change", () => {
+    const s = state.get();
+    if (!(s.selectedIds || []).length) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const val = showLabelCb.checked;
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
+      if (!o || o.locked) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      o.showLabel = val;
+    });
+  });
+
+  // capacitor-only: plate separation 간격 (world mm).
+  const gapRow = document.createElement("div");
+  gapRow.className = "insp-row";
+  const gapLbl = document.createElement("label");
+  gapLbl.className = "insp-field-label";
+  gapLbl.textContent = "간격";
+  const gapInp = document.createElement("input");
+  gapInp.type = "number";
+  gapInp.step = "0.1";
+  gapInp.min = "0.1";
+  gapInp.className = "insp-input";
+  function commitGap() {
+    const val = parseFloat(gapInp.value);
+    if (!isFinite(val) || val <= 0) return;
+    const s = state.get();
+    if (!(s.selectedIds || []).length) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
+      if (!o || o.locked) return;
+      if (o.gap === val) return; // no-op → no undo entry
+      s2.undoStack.push(snap); s2.redoStack = [];
+      o.gap = val;
+    });
+  }
+  gapInp.addEventListener("keydown", (e) => { if (e.key === "Enter") gapInp.blur(); });
+  gapInp.addEventListener("blur", commitGap);
+  gapRow.appendChild(gapLbl);
+  gapRow.appendChild(gapInp);
+  sec3Body.appendChild(gapRow);
+
+  // diode-only: two terminal labels (단자1 / 단자2) replacing the single 라벨 row.
+  function makeTermRow(labelText, idx) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.textContent = labelText;
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.className = "insp-input";
+    function commit() {
+      const s = state.get();
+      if (!(s.selectedIds || []).length) return;
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
+        if (!o || o.locked) return;
+        const cur = Array.isArray(o.terminalLabels) ? o.terminalLabels.slice() : ["", ""];
+        if ((cur[idx] ?? "") === inp.value) return; // no-op → no undo entry
+        cur[idx] = inp.value;
+        s2.undoStack.push(snap); s2.redoStack = [];
+        o.terminalLabels = cur;
+      });
+    }
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") inp.blur(); });
+    inp.addEventListener("blur", commit);
+    row.appendChild(lbl);
+    row.appendChild(inp);
+    sec3Body.appendChild(row);
+    return { el: row, inp };
+  }
+  const term1 = makeTermRow("단자1", 0);
+  const term2 = makeTermRow("단자2", 1);
+
   const sec3 = makeSection("크기·위치", sec3Body);
   contentEl.appendChild(sec3);
 
@@ -1336,6 +1426,12 @@ export function initInspector(state) {
       rotF.el.style.display = "";
       radF.el.style.display = "none";
       arcPair.style.display = "none";
+      // Per-object symbol rows never apply to a group; keep them hidden.
+      labelRow.style.display = "none";
+      showLabelRow.style.display = "none";
+      gapRow.style.display = "none";
+      term1.el.style.display = "none";
+      term2.el.style.display = "none";
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
@@ -1529,18 +1625,30 @@ export function initInspector(state) {
 
     // Section 3 — shape types + axes (size-based: X/Y/W/H/rotation), plus the
     // anglearc (X/Y + radius/startAngle/sweepAngle in math convention, CCW +).
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes";
+    // Optics is a branch-A box (X/Y/W/H/rotation), like rect + axes.
+    const isOptics = obj.type === "optics";
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics;
     const isArc = obj.type === "anglearc";
     const isCircuit = obj.type === "circuit";
+    // Circuit element variants: capacitor adds 간격; diode swaps the single 라벨 for
+    // two terminal labels. Everything else uses the single 라벨 row.
+    const circElem = isCircuit ? obj.element : null;
+    const isCap = circElem === "capacitor";
+    const isDiode = circElem === "diode";
     sec3.style.display = (isShape || isArc || isCircuit) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
-    // radius + start/sweep angle; circuit (two terminals) shows ONLY the 라벨 row.
+    // radius + start/sweep angle; circuit (two terminals) hides the box rows.
     xyPair.style.display  = isCircuit ? "none" : "flex";
     whPair.style.display  = (isArc || isCircuit) ? "none" : "flex";
     rotF.el.style.display = (isArc || isCircuit) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
     arcPair.style.display = isArc ? "flex" : "none";
-    labelRow.style.display = (isArc || isCircuit) ? "" : "none";
+    // Single 라벨 row: arc, optics, and all circuits EXCEPT diode (which uses 단자1/2).
+    labelRow.style.display = (isArc || isOptics || (isCircuit && !isDiode)) ? "" : "none";
+    showLabelRow.style.display = isOptics ? "" : "none";
+    gapRow.style.display = isCap ? "" : "none";
+    term1.el.style.display = isDiode ? "" : "none";
+    term2.el.style.display = isDiode ? "" : "none";
     if (isShape) {
       xF.inp.value   = (obj.x        ?? 0).toFixed(2);
       yF.inp.value   = (-(obj.y      ?? 0)).toFixed(2); // SVG Y down → math Y up
@@ -1556,8 +1664,17 @@ export function initInspector(state) {
       swF.inp.value   = (obj.sweepAngle ?? 0).toFixed(1);
       labelInp.value  = obj.label ?? "";
     }
-    if (isCircuit && document.activeElement !== labelInp) {
+    if ((isCircuit && !isDiode || isOptics) && document.activeElement !== labelInp) {
       labelInp.value  = obj.label ?? "";
+    }
+    if (isOptics) showLabelCb.checked = !!obj.showLabel;
+    if (isCap && document.activeElement !== gapInp) {
+      gapInp.value = (obj.gap ?? 2).toFixed(1);
+    }
+    if (isDiode) {
+      const tl = Array.isArray(obj.terminalLabels) ? obj.terminalLabels : ["", ""];
+      if (document.activeElement !== term1.inp) term1.inp.value = tl[0] ?? "";
+      if (document.activeElement !== term2.inp) term2.inp.value = tl[1] ?? "";
     }
 
     // Section 4
@@ -1574,6 +1691,10 @@ export function initInspector(state) {
     saF.inp.disabled = !!obj.locked;
     swF.inp.disabled = !!obj.locked;
     labelInp.disabled = !!obj.locked;
+    showLabelCb.disabled = !!obj.locked;
+    gapInp.disabled = !!obj.locked;
+    term1.inp.disabled = !!obj.locked;
+    term2.inp.disabled = !!obj.locked;
   }
 
   state.subscribe(populate);

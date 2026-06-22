@@ -54,17 +54,11 @@
             </button>
           </div>
         </div>
-        <div class="tool-section">
-          <div class="tool-section-header">기호 <span class="toggle-icon">▾</span></div>
-          <div class="tool-section-body tool-section-body-wide">
-            <!-- template library: click → templates.js instantiate(symbolId, center) -->
-            <button class="advanced-tool-btn" type="button" data-template="axes" title="좌표축 추가">좌표축</button>
-            <!-- 각도 호: arms the two-click placement tool (tools.js ARC), not a default-arc drop -->
-            <button class="advanced-tool-btn" type="button" data-tool="ARC" title="각도 호(θ): 꼭짓점 클릭 → 시작점 클릭">각도 호</button>
-            <!-- 저항: arms the two-click circuit placement tool (tools.js CIRCUIT, element=resistor) -->
-            <button class="advanced-tool-btn" type="button" data-tool="CIRCUIT" title="저항(회로 소자): 단자1 클릭 → 단자2 클릭">저항</button>
-          </div>
-        </div>
+        <!-- ===== SYMBOL LIBRARY: generated from templates.js TEMPLATES =====
+             initTemplates() fills this with one collapsible .tool-section per
+             category (공통 / 회로 / 광학 / 역학). Each generated button carries a
+             UNIQUE data-symbol="<symbolId>". Do NOT hardcode symbol buttons here. -->
+        <div id="symbol-sections"></div>
         <div class="tool-section">
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
@@ -172,11 +166,11 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    PhysicsExamDrawer Web · <strong>v0.44.1</strong> · 2026-06-21
+    PhysicsExamDrawer Web · <strong>v1.1.0</strong> · 2026-06-22
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script type="module" src="js/main.js?v=0.44.1"></script>
+  <script type="module" src="js/main.js?v=1.1.0"></script>
 </body>
 </html>

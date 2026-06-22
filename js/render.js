@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.44.1";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.44.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=1.1.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=1.1.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -627,6 +627,8 @@ export function renderObject(obj) {
       return renderAngleArc(obj);
     case "circuit":
       return renderCircuit(obj);
+    case "optics":
+      return renderOptics(obj);
     default:
       return null;
   }
@@ -1288,8 +1290,53 @@ export function circuitBodyPolygon(obj) {
   ];
 }
 
-/* ----- per-element BODY drawers (dispatch on obj.element). Step 1: resistor only;
- * add new keys here for future elements — the skeleton (leads + label) is shared. */
+/* ----- shared circuit body helpers (projection-only, reused by every element) ----- */
+const CIRCUIT_CIRCLE_R = CIRCUIT_BODY_MM * 0.32;   // circle-body radius (ac/unknown/lamp/meters)
+const CIRCUIT_CAP_GAP_DEFAULT = 2;                 // capacitor plate gap default (mm); mirrors tools.js makeCircuit
+
+// Point at axis-offset `a` (along p1→p2) and perp-offset `o`, in world coords.
+function circuitPt(geo, a, o) {
+  return { x: geo.mid.x + geo.ux * a + geo.px * o, y: geo.mid.y + geo.uy * a + geo.py * o };
+}
+// A plain world-space stroke segment between two {x,y} points.
+function cLine(a, b, sw, color) {
+  const l = document.createElementNS(SVG_NS, "line");
+  l.setAttribute("x1", a.x); l.setAttribute("y1", a.y);
+  l.setAttribute("x2", b.x); l.setAttribute("y2", b.y);
+  l.setAttribute("stroke", color); l.setAttribute("stroke-width", sw);
+  return l;
+}
+// A centered glyph (shared by circle-body elements + diode terminal labels + optics label).
+function cText(g, x, y, text, size, color) {
+  const t = document.createElementNS(SVG_NS, "text");
+  t.setAttribute("x", x); t.setAttribute("y", y);
+  t.setAttribute("font-size", size);
+  t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+  t.setAttribute("fill", color);
+  t.setAttribute("text-anchor", "middle");
+  t.setAttribute("dominant-baseline", "central");
+  t.textContent = text;
+  g.appendChild(t);
+}
+// Circle body + short connectors from circle edge to the lead ends (ac/unknown/lamp/meters).
+function circuitCircleBody(g, geo, sw, color) {
+  const r = CIRCUIT_CIRCLE_R;
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", geo.mid.x); c.setAttribute("cy", geo.mid.y);
+  c.setAttribute("r", r);
+  c.setAttribute("fill", "none");
+  c.setAttribute("stroke", color);
+  c.setAttribute("stroke-width", sw);
+  g.appendChild(c);
+  if (geo.half > r) {
+    g.appendChild(cLine(circuitPt(geo, -geo.half, 0), circuitPt(geo, -r, 0), sw, color));
+    g.appendChild(cLine(circuitPt(geo, r, 0), circuitPt(geo, geo.half, 0), sw, color));
+  }
+}
+
+/* ----- per-element BODY drawers (dispatch on obj.element). The shared skeleton
+ * (leads + label) lives in renderCircuit; each drawer paints ONLY the body in the
+ * geo's axis/perp frame, so it rotates with the placement and stays centered. */
 const CIRCUIT_ELEMENTS = {
   // resistor: a zig-zag (sawtooth) along the p1→p2 axis — the Korean exam standard.
   // 6 alternating peaks; the first/last points sit on the axis so the leads meet it
@@ -1311,6 +1358,118 @@ const CIRCUIT_ELEMENTS = {
     poly.setAttribute("stroke", color);
     poly.setAttribute("stroke-width", sw);
     g.appendChild(poly);
+  },
+
+  // dc_source: long(+) & short(−) bars ⟂ axis with a small gap at center.
+  dc_source(g, geo, sw, color) {
+    const H = CIRCUIT_BODY_HALF_H, half = geo.half;
+    const d = half * 0.18;                                         // half-gap between the bars
+    g.appendChild(cLine(circuitPt(geo, -half, 0), circuitPt(geo, -d, 0), sw, color));              // lead → long bar
+    g.appendChild(cLine(circuitPt(geo, d, 0), circuitPt(geo, half, 0), sw, color));                // short bar → lead
+    g.appendChild(cLine(circuitPt(geo, -d, -H), circuitPt(geo, -d, H), sw, color));                // long (+)
+    g.appendChild(cLine(circuitPt(geo, d, -H * 0.5), circuitPt(geo, d, H * 0.5), sw, color));       // short (−)
+  },
+
+  // ac_source: circle body with a sine wave (∿) inside.
+  ac_source(g, geo, sw, color) {
+    circuitCircleBody(g, geo, sw, color);
+    const aMax = CIRCUIT_CIRCLE_R * 0.7, amp = CIRCUIT_CIRCLE_R * 0.45, N = 24;
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const a = -aMax + (2 * aMax) * (i / N);
+      const o = Math.sin((a / aMax) * Math.PI) * amp;
+      const p = circuitPt(geo, a, o);
+      pts.push(`${p.x},${p.y}`);
+    }
+    const wave = document.createElementNS(SVG_NS, "polyline");
+    wave.setAttribute("points", pts.join(" "));
+    wave.setAttribute("fill", "none");
+    wave.setAttribute("stroke", color);
+    wave.setAttribute("stroke-width", sw);
+    g.appendChild(wave);
+  },
+
+  // capacitor: two EQUAL parallel bars ⟂ axis, separated by obj.gap (world mm).
+  capacitor(g, geo, sw, color, obj) {
+    const H = CIRCUIT_BODY_HALF_H;
+    const half = geo.half;
+    let gap = (obj && Number.isFinite(obj.gap)) ? obj.gap : CIRCUIT_CAP_GAP_DEFAULT;
+    gap = Math.min(gap, half * 1.6);                              // keep plates inside the body span
+    const d = gap / 2;
+    g.appendChild(cLine(circuitPt(geo, -half, 0), circuitPt(geo, -d, 0), sw, color));   // lead → plate
+    g.appendChild(cLine(circuitPt(geo, d, 0), circuitPt(geo, half, 0), sw, color));      // plate → lead
+    g.appendChild(cLine(circuitPt(geo, -d, -H), circuitPt(geo, -d, H), sw, color));      // plate 1
+    g.appendChild(cLine(circuitPt(geo, d, -H), circuitPt(geo, d, H), sw, color));        // plate 2
+  },
+
+  // inductor: 4 semicircle bumps along the axis (bulging to perp+).
+  inductor(g, geo, sw, color) {
+    const half = geo.half, bumps = 4;
+    const R = (2 * half) / bumps / 2;                             // bump radius
+    const pts = [];
+    for (let b = 0; b < bumps; b++) {
+      const ac = -half + R * (2 * b + 1);                         // bump center along axis
+      const steps = 10;
+      for (let s = (b === 0 ? 0 : 1); s <= steps; s++) {
+        const th = Math.PI * (s / steps);                        // 0 → π semicircle
+        const p = circuitPt(geo, ac - R * Math.cos(th), R * Math.sin(th));
+        pts.push(`${p.x},${p.y}`);
+      }
+    }
+    const coil = document.createElementNS(SVG_NS, "polyline");
+    coil.setAttribute("points", pts.join(" "));
+    coil.setAttribute("fill", "none");
+    coil.setAttribute("stroke", color);
+    coil.setAttribute("stroke-width", sw);
+    g.appendChild(coil);
+  },
+
+  // unknown: circle body with a "?" inside.
+  unknown(g, geo, sw, color) {
+    circuitCircleBody(g, geo, sw, color);
+    cText(g, geo.mid.x, geo.mid.y, "?", CIRCUIT_CIRCLE_R * 1.2, color);
+  },
+
+  // diode: filled triangle along axis + cathode bar at the tip; two terminal labels.
+  diode(g, geo, sw, color, obj) {
+    const H = CIRCUIT_BODY_HALF_H, half = geo.half;
+    const triHalf = half * 0.6;
+    g.appendChild(cLine(circuitPt(geo, -half, 0), circuitPt(geo, -triHalf, 0), sw, color)); // lead → base
+    g.appendChild(cLine(circuitPt(geo, triHalf, 0), circuitPt(geo, half, 0), sw, color));   // bar → lead
+    const b1 = circuitPt(geo, -triHalf, -H), b2 = circuitPt(geo, -triHalf, H), apex = circuitPt(geo, triHalf, 0);
+    const tri = document.createElementNS(SVG_NS, "polygon");
+    tri.setAttribute("points", `${b1.x},${b1.y} ${b2.x},${b2.y} ${apex.x},${apex.y}`);
+    tri.setAttribute("fill", color);
+    tri.setAttribute("stroke", color);
+    tri.setAttribute("stroke-width", sw);
+    g.appendChild(tri);
+    g.appendChild(cLine(circuitPt(geo, triHalf, -H), circuitPt(geo, triHalf, H), sw, color)); // cathode bar
+    const tl = (obj && obj.terminalLabels) || ["", ""];
+    const size = DEFAULT_TEXT_SIZE_MM * 0.8;
+    const sign = geo.py <= 0 ? 1 : -1;                            // perpendicular toward screen-up
+    const off = H + size * 0.7;
+    if ((tl[0] ?? "") !== "") cText(g, geo.p1.x + geo.px * off * sign, geo.p1.y + geo.py * off * sign, tl[0], size, color);
+    if ((tl[1] ?? "") !== "") cText(g, geo.p2.x + geo.px * off * sign, geo.p2.y + geo.py * off * sign, tl[1], size, color);
+  },
+
+  // lamp: circle body with an ✕ inside.
+  lamp(g, geo, sw, color) {
+    circuitCircleBody(g, geo, sw, color);
+    const d = CIRCUIT_CIRCLE_R * 0.6;
+    g.appendChild(cLine(circuitPt(geo, -d, -d), circuitPt(geo, d, d), sw, color));
+    g.appendChild(cLine(circuitPt(geo, -d, d), circuitPt(geo, d, -d), sw, color));
+  },
+
+  // ammeter: circle body with "A" inside.
+  ammeter(g, geo, sw, color) {
+    circuitCircleBody(g, geo, sw, color);
+    cText(g, geo.mid.x, geo.mid.y, "A", CIRCUIT_CIRCLE_R * 1.2, color);
+  },
+
+  // voltmeter: circle body with "V" inside.
+  voltmeter(g, geo, sw, color) {
+    circuitCircleBody(g, geo, sw, color);
+    cText(g, geo.mid.x, geo.mid.y, "V", CIRCUIT_CIRCLE_R * 1.2, color);
   },
 };
 
@@ -1340,8 +1499,9 @@ function renderCircuit(obj) {
     g.appendChild(seg(bodyEnd, p2));
   }
 
-  // BODY — dispatch on element (resistor only in Step 1).
-  (CIRCUIT_ELEMENTS[obj.element] || CIRCUIT_ELEMENTS.resistor)(g, geo, sw, color);
+  // BODY — dispatch on element; obj is passed for element-specific fields
+  // (capacitor.gap, diode.terminalLabels). All body geometry is derived here.
+  (CIRCUIT_ELEMENTS[obj.element] || CIRCUIT_ELEMENTS.resistor)(g, geo, sw, color, obj);
 
   // Shared skeleton — label: a single text just above the box (only if non-empty),
   // using the world-unit text convention (DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT).
@@ -1363,6 +1523,201 @@ function renderCircuit(obj) {
     g.appendChild(t);
   }
 
+  return g;
+}
+
+/* ===== OPTICS: branch-A box symbol (x/y/w/h/rotation), kind-dispatched =====
+ *
+ * Reuses the rect/ellipse interaction skeleton wholesale (creation, selection,
+ * resize, rotate, hit-test) — only the render differs. Every symbol is drawn as
+ * a PROJECTION from the bounding box and is symmetric about the box's horizontal
+ * axis (the optical axis). A transparent body rect makes the whole box one
+ * click/drag target (like renderAxes). Rotation is one group transform about the
+ * box center, matching renderRect. */
+
+// A stroke segment in the optics box (optional thicker `width`).
+function oLine(g, x1, y1, x2, y2, sw, color, width) {
+  const l = document.createElementNS(SVG_NS, "line");
+  l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+  l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+  l.setAttribute("stroke", color); l.setAttribute("stroke-width", width || sw);
+  g.appendChild(l);
+}
+// A quadratic-arc stroke (lens/mirror curves).
+function oQuad(g, x0, y0, cx, cy, x1, y1, sw, color) {
+  const p = document.createElementNS(SVG_NS, "path");
+  p.setAttribute("d", `M ${x0} ${y0} Q ${cx} ${cy} ${x1} ${y1}`);
+  p.setAttribute("fill", "none");
+  p.setAttribute("stroke", color); p.setAttribute("stroke-width", sw);
+  g.appendChild(p);
+}
+// Point on a quadratic Bézier at parameter t (for mirror hatch placement).
+function quadPt(x0, y0, cx, cy, x1, y1, t) {
+  const u = 1 - t;
+  return { x: u * u * x0 + 2 * u * t * cx + t * t * x1, y: u * u * y0 + 2 * u * t * cy + t * t * y1 };
+}
+// Filled dot (point light / node / pivot center / pulley axle).
+function oDot(g, cx, cy, r, color) {
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+  c.setAttribute("fill", color);
+  g.appendChild(c);
+}
+// Short 45° hatch ticks along a vertical line x=X, on side `sign` (mirror backing/screen).
+function hatchVLine(g, X, top, bottom, sign, sw, color) {
+  const n = 6, len = Math.min((bottom - top) * 0.12, 2) + 0.4;
+  for (let i = 1; i <= n; i++) {
+    const y = top + (bottom - top) * (i / (n + 1));
+    oLine(g, X, y, X + sign * len, y - len, sw, color);
+  }
+}
+// Mirror = vertical arc bowing `sign` in x + hatch ticks on the back (bulge) side.
+function drawMirror(g, obj, sw, color, sign) {
+  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+  const top = obj.y, bottom = obj.y + obj.h;
+  const cpx = cx + obj.w * 0.32 * sign;
+  oQuad(g, cx, top, cpx, cy, cx, bottom, sw, color);
+  const n = 6, len = Math.min(obj.h * 0.12, 2) + 0.4;
+  for (let i = 1; i <= n; i++) {
+    const p = quadPt(cx, top, cpx, cy, cx, bottom, i / (n + 1));
+    oLine(g, p.x, p.y, p.x + sign * len, p.y - len, sw, color);
+  }
+}
+
+const OPTICS_KINDS = {
+  // convex_lens: two outward-bowed arcs meeting top & bottom + outward ↕ arrowheads.
+  convex_lens(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const top = obj.y, bottom = obj.y + obj.h, bow = obj.w * 0.5;
+    oQuad(g, cx, top, cx - bow, cy, cx, bottom, sw, color);   // left bulge
+    oQuad(g, cx, top, cx + bow, cy, cx, bottom, sw, color);   // right bulge
+    const aSW = Math.max(sw * 2.5, 0.5);
+    g.appendChild(makeArrowHead(cx, top, 0, -1, aSW, color));      // ↑ out
+    g.appendChild(makeArrowHead(cx, bottom, 0, 1, aSW, color));    // ↓ out
+  },
+  // concave_lens: ")(" inward arcs with flat caps (thin middle) + inward ↕ arrowheads.
+  concave_lens(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const left = obj.x, right = obj.x + obj.w, top = obj.y, bottom = obj.y + obj.h;
+    const bow = obj.w * 0.32;
+    oLine(g, left, top, right, top, sw, color);                   // top cap
+    oLine(g, left, bottom, right, bottom, sw, color);             // bottom cap
+    oQuad(g, left, top, left + bow, cy, left, bottom, sw, color);    // ")" bulge right
+    oQuad(g, right, top, right - bow, cy, right, bottom, sw, color); // "(" bulge left
+    const aSW = Math.max(sw * 2.5, 0.5);
+    g.appendChild(makeArrowHead(cx, top, 0, 1, aSW, color));       // ↓ in
+    g.appendChild(makeArrowHead(cx, bottom, 0, -1, aSW, color));   // ↑ in
+  },
+  // convex_mirror: arc bowing right + hatch ticks on the back (right) side.
+  convex_mirror(g, obj, sw, color) { drawMirror(g, obj, sw, color, 1); },
+  // concave_mirror: arc bowing left + hatch ticks on the back (left) side.
+  concave_mirror(g, obj, sw, color) { drawMirror(g, obj, sw, color, -1); },
+  // object_arrow: thick UP arrow spanning h at the box center x.
+  object_arrow(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, top = obj.y, bottom = obj.y + obj.h;
+    oLine(g, cx, bottom, cx, top, sw, color, Math.max(sw * 2.5, 0.5));
+    g.appendChild(makeArrowHead(cx, top, 0, -1, Math.max(sw * 3, 0.7), color));
+  },
+  // pulley: circle (dia = min(w,h)) + small center axle dot. No rope.
+  pulley(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const r = Math.min(obj.w, obj.h) / 2;
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+    c.setAttribute("fill", resolveFill(obj));
+    c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+    g.appendChild(c);
+    oDot(g, cx, cy, Math.max(r * 0.12, 0.4), color);
+  },
+  // plane_mirror: vertical straight line + back-side hatch ticks.
+  plane_mirror(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, top = obj.y, bottom = obj.y + obj.h;
+    oLine(g, cx, top, cx, bottom, sw, color);
+    hatchVLine(g, cx, top, bottom, 1, sw, color);
+  },
+  // point_light: small filled circle + short radial rays.
+  point_light(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const m = Math.min(obj.w, obj.h);
+    oDot(g, cx, cy, m * 0.16, color);
+    const rIn = m * 0.26, rOut = m * 0.48;
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4;
+      oLine(g, cx + Math.cos(a) * rIn, cy + Math.sin(a) * rIn,
+               cx + Math.cos(a) * rOut, cy + Math.sin(a) * rOut, sw, color);
+    }
+  },
+  // node: small filled circle only (wire junction).
+  node(g, obj, sw, color) {
+    oDot(g, obj.x + obj.w / 2, obj.y + obj.h / 2, Math.min(obj.w, obj.h) * 0.22, color);
+  },
+  // support_tri: small upward triangle (a stand/support base).
+  support_tri(g, obj, sw, color) {
+    const left = obj.x, right = obj.x + obj.w, top = obj.y, bottom = obj.y + obj.h, cx = obj.x + obj.w / 2;
+    const tri = document.createElementNS(SVG_NS, "polygon");
+    tri.setAttribute("points", `${cx},${top} ${left},${bottom} ${right},${bottom}`);
+    tri.setAttribute("fill", resolveFill(obj));
+    tri.setAttribute("stroke", color); tri.setAttribute("stroke-width", sw);
+    g.appendChild(tri);
+  },
+  // pivot: small ⊙ (outline circle + center dot) = rotation axis.
+  pivot(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2, r = Math.min(obj.w, obj.h) * 0.3;
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+    c.setAttribute("fill", "none"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+    g.appendChild(c);
+    oDot(g, cx, cy, Math.max(r * 0.28, 0.4), color);
+  },
+  // screen: a thick vertical bar with hatch ticks on one side (projection screen).
+  screen(g, obj, sw, color) {
+    const cx = obj.x + obj.w / 2, top = obj.y, bottom = obj.y + obj.h;
+    oLine(g, cx, top, cx, bottom, sw, color, Math.max(sw * 3, 0.8));
+    hatchVLine(g, cx, top, bottom, 1, sw, color);
+  },
+  // bar_magnet: rectangle split into two halves labelled "N" and "S".
+  bar_magnet(g, obj, sw, color) {
+    const left = obj.x, top = obj.y, cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2, bottom = obj.y + obj.h;
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", obj.x); rect.setAttribute("y", obj.y);
+    rect.setAttribute("width", obj.w); rect.setAttribute("height", obj.h);
+    rect.setAttribute("fill", resolveFill(obj));
+    rect.setAttribute("stroke", color); rect.setAttribute("stroke-width", sw);
+    g.appendChild(rect);
+    oLine(g, cx, top, cx, bottom, sw, color);                    // divider
+    const size = Math.min(obj.w * 0.4, obj.h * 0.6);
+    cText(g, left + obj.w * 0.25, cy, "N", size, color);
+    cText(g, left + obj.w * 0.75, cy, "S", size, color);
+  },
+};
+
+function renderOptics(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+
+  // Transparent body over the whole bbox: the symbol behaves as ONE click/drag
+  // target (mirrors renderAxes), so a hollow lens/mirror is grabbable anywhere.
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", obj.x); body.setAttribute("y", obj.y);
+  body.setAttribute("width", obj.w); body.setAttribute("height", obj.h);
+  body.setAttribute("fill", "transparent");
+  g.appendChild(body);
+
+  (OPTICS_KINDS[obj.kind] || OPTICS_KINDS.convex_lens)(g, obj, sw, color);
+
+  // Optional label below the bbox (toggled by showLabel, like the anglearc label).
+  if (obj.showLabel && (obj.label ?? "") !== "") {
+    const size = DEFAULT_TEXT_SIZE_MM;
+    cText(g, obj.x + obj.w / 2, obj.y + obj.h + size * 0.8, obj.label, size, color);
+  }
+
+  const rot = obj.rotation ?? 0;
+  if (rot) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
+  }
   return g;
 }
 
@@ -1422,6 +1777,7 @@ const PAT_STROKE = 0.35; // cross/hatch mark stroke width (mm)
 // rect/ellipse/triangle always; a polyline or curve only once it is closed.
 function isFillable(obj) {
   return obj.type === "rect" || obj.type === "ellipse" || obj.type === "triangle"
+      || obj.type === "optics"
       || (obj.type === "polyline" && obj.closed === true)
       || (obj.type === "curve"    && obj.closed === true);
 }
@@ -1490,7 +1846,7 @@ export function makeFillPattern(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -1587,7 +1943,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedPoly  = sel.type === "polyline" && sel.closed === true;
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || _anglearc || _closedPoly || _closedCurve) {
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || _anglearc || _closedPoly || _closedCurve) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).

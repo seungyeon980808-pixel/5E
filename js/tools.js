@@ -11,14 +11,14 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.44.1";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=1.1.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.44.1";
+} from "./state.js?v=1.1.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.44.1";
+import { circuitBodyPolygon } from "./render.js?v=1.1.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -44,6 +44,24 @@ function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true;
 let _svg = null;
 let _state = null;
 let _idCounter = 0;
+
+// Which circuit element / optics kind the next placement creates. Set via
+// armSymbol() when a left-panel symbol button is clicked; the placement pipelines
+// read these so a single CIRCUIT/OPTICS tool covers every variant.
+let _circuitElement = "resistor";
+let _opticsKind = "convex_lens";
+const CIRCUIT_CAP_GAP_DEFAULT = 2; // capacitor plate gap default (mm); mirrors render.js
+
+// The UNIQUE id (data-symbol) of the library symbol currently armed, or null when
+// a plain drawing tool is active. Drives single-button highlight in syncButtons:
+// many symbols share ONE placement tool (CIRCUIT/OPTICS/ARC) but each button has a
+// unique data-symbol, so exactly one highlights — fixing the old all-CIRCUIT /
+// all-OPTICS multi-highlight where every button matching data-tool lit up.
+let _activeSymbolId = null;
+// Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
+// one of these is active, _activeSymbolId names WHICH symbol armed it; any other
+// tool (incl. auto-return to V after a commit) means no symbol is armed.
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -75,18 +93,41 @@ function setActiveTool(tool) {
   });
 }
 
-/* ----- left-panel buttons (data-tool="V" / "R") ----- */
+/* ----- left-panel buttons (the plain V/R/O/Y/L/P/C/T/rotate drawing tools) ----- */
+// These map ONE button to ONE tool via data-tool. Library symbol buttons are NOT
+// wired here — they carry data-symbol and are handled by templates.js, which calls
+// armSymbol() below to record the variant and arm the shared placement tool.
 function setupButtons() {
-  // [data-tool] covers the .tool-btn grid AND the 각도 호 library button (which
-  // arms the two-click ARC placement tool instead of dropping a default arc).
   document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.addEventListener("click", () => setActiveTool(btn.dataset.tool));
   });
 }
 
+/* ----- arm a library symbol (called by templates.js for "shape"-kind symbols) -----
+ * Records the concrete variant (the EXACT thing the old per-element/per-kind
+ * buttons did) then arms the shared placement tool. syncButtons runs explicitly so
+ * the highlight updates even when the armed tool is unchanged (e.g. 저항 → 전지,
+ * both on CIRCUIT, where setActiveTool early-returns and fires no subscriber). */
+export function armSymbol(symbolId, tool, variant) {
+  if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
+  if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
+  _activeSymbolId = symbolId;
+  setActiveTool(tool);
+  syncButtons(_state.get().activeTool);
+}
+
 function syncButtons(activeTool) {
+  // A library symbol stays armed only while its placement tool is active; any plain
+  // tool (or the auto-return to V after a commit) clears the symbol highlight.
+  if (!SYMBOL_TOOLS.has(activeTool)) _activeSymbolId = null;
+  // Plain tool buttons: one button ↔ one tool (unchanged behavior).
   document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.tool === activeTool);
+  });
+  // Symbol buttons share a placement tool but each has a UNIQUE data-symbol, so
+  // exactly one highlights — keyed on the armed symbol id, not the shared tool.
+  document.querySelectorAll("[data-symbol]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.symbol === _activeSymbolId);
   });
 }
 
@@ -115,7 +156,7 @@ function setupKeyboard() {
 // through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
 // (makeShape branches on type). Line (L) and polyline (P) are click-to-click
 // instead ??see setupClickDrawing below.
-const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle" };
+const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics" };
 
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
@@ -654,7 +695,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
         o.type !== "text" && o.type !== "image" && o.type !== "axes" &&
-        o.type !== "anglearc" && o.type !== "circuit") continue;
+        o.type !== "anglearc" && o.type !== "circuit" && o.type !== "optics") continue;
 
     if (o.type === "text") {
       // Use the rendered SVG element's getBBox for an accurate hit area.
@@ -748,9 +789,9 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "axes") {
-      // box == actual shape: outward-grown bbox containment (axes selects as one
-      // indivisible object via its bounding box)
+    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+      // box == actual shape: outward-grown bbox containment (axes/optics select as
+      // one indivisible object via the bounding box; same as rect)
       if (p.x >= o.x - margin && p.x <= o.x + o.w + margin &&
           p.y >= o.y - margin && p.y <= o.y + o.h + margin) return o.id;
       continue;
@@ -794,7 +835,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -890,6 +931,14 @@ function makeShape(type, a, b) {
     order: 0,              // assigned on commit (z-order within layer)
   };
   if (type === "triangle") shape.flipX = b.x < a.x;
+  // Optics (branch A): reuse the size-drag box wholesale; only kind + label fields
+  // are added. Default fillNone so lenses/mirrors drop as clean outlines.
+  if (type === "optics") {
+    shape.kind = _opticsKind || "convex_lens";
+    shape.label = "";
+    shape.showLabel = false;
+    shape.fillNone = true;
+  }
   return shape;
 }
 
@@ -923,10 +972,11 @@ function makeLine(a, b) {
 // Two endpoints (p1/p2), one label, one element kind. Leads + body geometry are
 // PROJECTION (derived at render time from p1/p2), never stored — see render.js.
 function makeCircuit(a, b) {
-  return {
+  const element = _circuitElement || "resistor";
+  const obj = {
     id: null,                 // assigned on commit
     type: "circuit",
-    element: "resistor",      // Step 1: resistor only (render dispatches on this)
+    element,                  // render dispatches the body on this
     p1: { x: a.x, y: a.y },   // left terminal
     p2: { x: b.x, y: b.y },   // right terminal
     label: "",                // single optional text label (empty allowed)
@@ -937,6 +987,10 @@ function makeCircuit(a, b) {
     layerId: 1,
     order: 0,                 // assigned on commit (z-order within layer)
   };
+  // Element-specific data fields (only the relevant element carries each).
+  if (element === "capacitor") obj.gap = CIRCUIT_CAP_GAP_DEFAULT; // plate separation (world mm)
+  if (element === "diode") obj.terminalLabels = ["", ""];          // 단자1 / 단자2
+  return obj;
 }
 
 /* ----- build a polyline from a list of world points (click-to-click) ----- */
