@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.16.0";
-import { resolveSnap } from "./snap.js?v=0.16.0";
-import { setSnapPreview } from "./render.js?v=0.16.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.16.1";
+import { resolveSnap } from "./snap.js?v=0.16.1";
+import { setSnapPreview } from "./render.js?v=0.16.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -164,8 +164,63 @@ let _rotDidMove      = false;
 
 /* clipboard, mouse position, and arrow-key hold tracking */
 let _clipboard = null;
+let _propertyClipboard = null;
 let _lastMouseWorld = null; // latest pointer world coord (set on first mousemove); null until then
 const _arrowKeysHeld = new Set();
+
+function isEditingFieldTarget(target) {
+  if (!target) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+    target.isContentEditable ||
+    target.closest?.("#inspector, .text-editor-overlay, .font-modal-overlay, .text-ctx-menu");
+}
+
+function lineAngleDeg(obj) {
+  return Math.atan2(obj.p2.y - obj.p1.y, obj.p2.x - obj.p1.x) * 180 / Math.PI;
+}
+
+function objectAngleDeg(obj) {
+  if (!obj) return null;
+  if ((obj.type === "line" || obj.type === "circuit") && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if (typeof obj.rotation === "number") return obj.rotation;
+  return null;
+}
+
+function unitForAngle(deg) {
+  const rad = (deg * Math.PI) / 180;
+  let x = Math.cos(rad), y = Math.sin(rad);
+  const n = ((deg % 360) + 360) % 360;
+  if (Math.abs(n - 0) < 1e-9 || Math.abs(n - 180) < 1e-9) y = 0;
+  if (Math.abs(n - 90) < 1e-9 || Math.abs(n - 270) < 1e-9) x = 0;
+  return { x, y };
+}
+
+function applyAngleDeg(obj, deg) {
+  if (!obj || obj.locked || obj.positionLocked) return false;
+  if ((obj.type === "line" || obj.type === "circuit") && obj.p1 && obj.p2) {
+    const mx = (obj.p1.x + obj.p2.x) / 2;
+    const my = (obj.p1.y + obj.p2.y) / 2;
+    const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
+    const u = unitForAngle(deg);
+    const hx = (u.x * len) / 2;
+    const hy = (u.y * len) / 2;
+    const nextP1 = { x: mx - hx, y: my - hy };
+    const nextP2 = { x: mx + hx, y: my + hy };
+    const changed = Math.abs(nextP1.x - obj.p1.x) > 1e-9 || Math.abs(nextP1.y - obj.p1.y) > 1e-9 ||
+      Math.abs(nextP2.x - obj.p2.x) > 1e-9 || Math.abs(nextP2.y - obj.p2.y) > 1e-9;
+    if (!changed) return false;
+    obj.p1 = nextP1;
+    obj.p2 = nextP2;
+    return true;
+  }
+  if (typeof obj.rotation === "number") {
+    if (Math.abs((obj.rotation ?? 0) - deg) <= 1e-9) return false;
+    obj.rotation = deg;
+    return true;
+  }
+  return false;
+}
 
 /* ----- axis-aligned bbox of a set of (clipboard) objects, in world units -----
  * Text uses its anchor point as a zero-size box (the clone isn't rendered, so
@@ -505,10 +560,38 @@ export function initTransform(svg, state) {
   /* -- Keyboard shortcuts: Delete, Arrow nudge, Ctrl+C/V, PageUp/Down, F (flipY) -- */
   window.addEventListener("keydown", (e) => {
     const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (isEditingFieldTarget(t)) return;
 
     const s = state.get();
     const selectedIds = s.selectedIds || [];
+
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "c") {
+      if (selectedIds.length !== 1) return;
+      const obj = s.objects.find((o) => o.id === selectedIds[0]);
+      const value = objectAngleDeg(obj);
+      if (value == null || !isFinite(value)) return;
+      e.preventDefault();
+      _propertyClipboard = { kind: "angle", value };
+      return;
+    }
+
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "v") {
+      if (!_propertyClipboard || _propertyClipboard.kind !== "angle" || !selectedIds.length) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        let changed = false;
+        (s2.selectedIds || []).forEach((id) => {
+          const obj = s2.objects.find((o) => o.id === id);
+          if (applyAngleDeg(obj, _propertyClipboard.value)) changed = true;
+        });
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
+      });
+      return;
+    }
 
     // Ctrl+C ??copy selected objects into module-level clipboard
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && !e.shiftKey) {

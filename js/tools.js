@@ -11,14 +11,14 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.16.0";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.16.1";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.16.0";
+} from "./state.js?v=0.16.1";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.16.0";
+import { circuitBodyPolygon } from "./render.js?v=0.16.1";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -135,6 +135,7 @@ function syncButtons(activeTool) {
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
+    if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     const key = e.key.toLowerCase();
@@ -938,6 +939,10 @@ function makeShape(type, a, b) {
     shape.label = "";
     shape.showLabel = false;
     shape.fillNone = true;
+    if (shape.kind === "object_arrow") {
+      shape.dashLength = 0;
+      shape.dashGap = 0;
+    }
     // Center dashed-line option: convex/concave lenses only (default off).
     if (shape.kind === "convex_lens" || shape.kind === "concave_lens") {
       shape.centerLine = "none";
@@ -1122,7 +1127,7 @@ function setupTextTool() {
       x: anchor.x, y: anchor.y, text: "",
       fontSize: worldFontSize, fontFamily: DEFAULT_TEXT_FONT,
       fontWeight: "normal", fontStyle: "normal",
-      underline: false, strikeout: false, rotation: 0,
+      italic: false, underline: false, strikeout: false, rotation: 0,
       editingId: null,
     }, _sc.x, _sc.y, "");
   });
@@ -1144,7 +1149,8 @@ function startEditingTextObject(objId, clickPt = null) {
     fontSize: o.fontSize,
     fontFamily: o.fontFamily || DEFAULT_TEXT_FONT,
     fontWeight: o.fontWeight || "normal",
-    fontStyle: o.fontStyle || "normal",
+    fontStyle: o.italic === true ? "italic" : "normal",
+    italic: o.italic === true,
     underline: !!o.underline, strikeout: !!o.strikeout,
     rotation: o.rotation ?? 0,
     editingId: o.id,
@@ -1317,7 +1323,7 @@ function _syncEditorFont() {
   _textEditor.style.fontSize   = (dt.fontSize * getRenderScale()) + "px";
   _textEditor.style.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
   _textEditor.style.fontWeight = dt.fontWeight || "normal";
-  _textEditor.style.fontStyle  = dt.fontStyle  || "normal";
+  _textEditor.style.fontStyle  = dt.italic === true ? "italic" : "normal";
   const deco = [];
   if (dt.underline) deco.push("underline");
   if (dt.strikeout) deco.push("line-through");
@@ -1383,7 +1389,8 @@ function _commitText() {
         o.fontSize = dt.fontSize;
         o.fontFamily = dt.fontFamily;
         o.fontWeight = dt.fontWeight;
-        o.fontStyle = dt.fontStyle;
+        o.fontStyle = dt.italic === true ? "italic" : "normal";
+        o.italic = dt.italic === true;
         o.underline = dt.underline;
         o.strikeout = dt.strikeout;
       }
@@ -1397,8 +1404,8 @@ function _commitText() {
         type: "text",
         x: dt.x, y: dt.y, text: val,
         fontSize: dt.fontSize, fontFamily: dt.fontFamily,
-        fontWeight: dt.fontWeight, fontStyle: dt.fontStyle,
-        underline: dt.underline, strikeout: dt.strikeout,
+        fontWeight: dt.fontWeight, fontStyle: dt.italic === true ? "italic" : "normal",
+        italic: dt.italic === true, underline: dt.underline, strikeout: dt.strikeout,
         rotation: 0, locked: false, positionLocked: false,
         layerId: s.activeLayerId, order: s.objects.length,
       });
@@ -1708,7 +1715,7 @@ function _buildFontModal() {
   _fmFamily.addEventListener("change", () => { _fmWork.fontFamily = _fmFamily.value; _refreshFontPreview(); });
   _fmStyle.addEventListener("change", () => {
     const st = TEXT_STYLES[parseInt(_fmStyle.value, 10)] || TEXT_STYLES[0];
-    _fmWork.fontWeight = st.fontWeight; _fmWork.fontStyle = st.fontStyle; _refreshFontPreview();
+    _fmWork.fontWeight = st.fontWeight; _fmWork.fontStyle = st.fontStyle; _fmWork.italic = st.fontStyle === "italic"; _refreshFontPreview();
   });
   _fmSizeList.addEventListener("change", () => {
     _fmSizeInput.value = _fmSizeList.value;
@@ -1735,7 +1742,7 @@ function _refreshFontPreview() {
   if (!_fmPreview || !_fmWork) return;
   _fmPreview.style.fontFamily = _fmWork.fontFamily;
   _fmPreview.style.fontWeight = _fmWork.fontWeight;
-  _fmPreview.style.fontStyle  = _fmWork.fontStyle;
+  _fmPreview.style.fontStyle  = _fmWork.italic === true ? "italic" : "normal";
   _fmPreview.style.fontSize   = _fmWork.pt + "pt";
   const deco = [];
   if (_fmWork.underline) deco.push("underline");
@@ -1756,7 +1763,8 @@ function _openFontModal(target) {
   _fmWork = {
     fontFamily: src.fontFamily || DEFAULT_TEXT_FONT,
     fontWeight: src.fontWeight || "normal",
-    fontStyle:  src.fontStyle  || "normal",
+    fontStyle:  src.italic === true ? "italic" : "normal",
+    italic:     src.italic === true,
     underline:  !!src.underline,
     strikeout:  !!src.strikeout,
     pt: Math.round(mmToPt(src.fontSize) * 10) / 10,
@@ -1788,7 +1796,8 @@ function _applyFontModal() {
   const fields = {
     fontFamily: w.fontFamily,
     fontWeight: w.fontWeight,
-    fontStyle:  w.fontStyle,
+    fontStyle:  w.italic === true ? "italic" : "normal",
+    italic:     w.italic === true,
     underline:  w.underline,
     strikeout:  w.strikeout,
     fontSize:   ptToMm(w.pt),

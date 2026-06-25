@@ -1,13 +1,16 @@
 ﻿/* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.16.0";
-import { openFontModalForSelection } from "./tools.js?v=0.16.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.16.1";
+import { openFontModalForSelection } from "./tools.js?v=0.16.1";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
 // Branch-B "line family": share arrow + dash controls; fill section is hidden for them.
 const LINE_TYPES = ["line", "polyline", "curve"];
 const DASH_TYPES = [...SHAPE_TYPES, ...LINE_TYPES];
+function supportsDash(obj) {
+  return !!obj && (DASH_TYPES.includes(obj.type) || (obj.type === "optics" && obj.kind === "object_arrow"));
+}
 // Dash presets (world units / mm). 실선 = (0,0) = solid (no dasharray).
 const DASH_PRESETS = [
   { label: "실선",  dashLength: 0, dashGap: 0 },
@@ -419,7 +422,7 @@ export function initInspector(state) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (o && DASH_TYPES.includes(o.type)) {
+        if (supportsDash(o)) {
           o.dashLength = preset.dashLength;
           o.dashGap = preset.dashGap;
           o.partialDash = false; // selecting a normal dash preset exits 부분 점선 mode
@@ -496,7 +499,7 @@ export function initInspector(state) {
       if (ids.length !== 1) return;
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (o && DASH_TYPES.includes(o.type)) o[prop] = val;
+        if (supportsDash(o)) o[prop] = val;
       });
     }
 
@@ -872,6 +875,18 @@ export function initInspector(state) {
   fontSizeRow.appendChild(fontSizeUnit);
   secTextBody.appendChild(fontSizeRow);
 
+  const italicRow = document.createElement("div");
+  italicRow.className = "insp-row";
+  const italicCb = document.createElement("input");
+  italicCb.type = "checkbox";
+  italicCb.className = "insp-cb";
+  const italicLbl = document.createElement("label");
+  italicLbl.className = "insp-field-label";
+  italicLbl.textContent = "기울임";
+  italicRow.appendChild(italicCb);
+  italicRow.appendChild(italicLbl);
+  secTextBody.appendChild(italicRow);
+
   function applyTextProp(prop, value) {
     const s = state.get();
     const ids = s.selectedIds || [];
@@ -886,6 +901,21 @@ export function initInspector(state) {
     });
   }
   fontFamSel.addEventListener("change", () => applyTextProp("fontFamily", fontFamSel.value));
+  italicCb.addEventListener("change", () => {
+    const val = italicCb.checked;
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (!o || o.type !== "text") return;
+      o.italic = val;
+      o.fontStyle = val ? "italic" : "normal";
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
   fontSizeNum.addEventListener("change", () => {
     const v = parseFloat(fontSizeNum.value); // entered in pt → store mm
     if (isFinite(v) && v > 0) applyTextProp("fontSize", ptToMm(v));
@@ -1828,6 +1858,7 @@ export function initInspector(state) {
     secText.style.display = isText ? "" : "none";
     if (isText) {
       fontFamSel.value = obj.fontFamily || DEFAULT_TEXT_FONT;
+      italicCb.checked = obj.italic === true;
       if (document.activeElement !== fontSizeNum) {
         // Stored fontSize is world-unit mm; the field shows points.
         fontSizeNum.value = Math.round(mmToPt(obj.fontSize ?? 0) * 10) / 10;
@@ -1887,9 +1918,9 @@ export function initInspector(state) {
     }
 
     // Dash presets + sliders: lines and size-based shape outlines.
-    const supportsDash = DASH_TYPES.includes(obj.type);
-    dashRow.style.display = supportsDash ? "" : "none";
-    if (supportsDash) {
+    const canDash = supportsDash(obj);
+    dashRow.style.display = canDash ? "" : "none";
+    if (canDash) {
       syncDashControls(obj);
     } else {
       dashSliders.style.display = "none";

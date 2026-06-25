@@ -7,8 +7,8 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.16.0";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.16.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.16.1";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.16.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -749,6 +749,10 @@ function applyDash(el, obj) {
   if (dl > 0 && dg > 0) el.setAttribute("stroke-dasharray", `${dl} ${dg}`);
 }
 
+function textFontStyle(obj) {
+  return obj.italic === true ? "italic" : "normal";
+}
+
 /* ----- point + travel direction at 50% of a polyline's total path length ----- */
 // Used by polyline "center" arrowhead: visually natural midpoint of the whole path.
 function polylineMidpoint(pts) {
@@ -1074,7 +1078,7 @@ function renderText(obj) {
   el.setAttribute("font-family", obj.fontFamily || DEFAULT_TEXT_FONT);
   // Style fields — safe defaults so old text objects (without them) still render.
   el.setAttribute("font-weight", obj.fontWeight || "normal");
-  el.setAttribute("font-style", obj.fontStyle || "normal");
+  el.setAttribute("font-style", textFontStyle(obj));
   const deco = [];
   if (obj.underline) deco.push("underline");
   if (obj.strikeout) deco.push("line-through");
@@ -1682,8 +1686,20 @@ const OPTICS_KINDS = {
   // object_arrow: thick UP arrow spanning h at the box center x.
   object_arrow(g, obj, sw, color) {
     const cx = obj.x + obj.w / 2, top = obj.y, bottom = obj.y + obj.h;
-    oLine(g, cx, bottom, cx, top, sw, color, Math.max(sw * 2.5, 0.5));
-    g.appendChild(makeArrowHead(cx, top, 0, -1, Math.max(sw * 3, 0.7), color));
+    const bodyWidth = Math.max(sw * 2.5, 0.5);
+    const headSw = Math.max(sw * 3, 0.7);
+    const arrowLen = headSw * 4.5 * 0.7;
+    const shaftTop = Math.min(bottom, top + arrowLen);
+    const shaft = document.createElementNS(SVG_NS, "line");
+    shaft.setAttribute("x1", cx);
+    shaft.setAttribute("y1", bottom);
+    shaft.setAttribute("x2", cx);
+    shaft.setAttribute("y2", shaftTop);
+    shaft.setAttribute("stroke", color);
+    shaft.setAttribute("stroke-width", bodyWidth);
+    applyDash(shaft, obj);
+    g.appendChild(shaft);
+    g.appendChild(makeArrowHead(cx, top, 0, -1, headSw, color));
   },
   // pulley: circle (dia = min(w,h)) + small center axle dot. No rope.
   pulley(g, obj, sw, color) {
