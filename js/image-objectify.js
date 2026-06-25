@@ -1,5 +1,7 @@
 /* ===== IMAGE OBJECTIFY (local image -> editable line rough draft) ===== */
 
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.16.2";
+
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 1600;
 const MAX_LINES = 12;
@@ -587,17 +589,17 @@ export function initImageObjectify(state) {
       const layerId = s.activeLayerId;
       const addedIds = [];
       if (reference.checked) {
-        s.objects.push({
+        s.objects.push(applyNewObjectStyleDefaults({
           id: `obj_${stamp}_ref${++idCounter}`,
           type: "image", src: sourceDataUrl,
           x: fitted.x, y: fitted.y, w: fitted.w, h: fitted.h,
           opacity: 0.28, rotation: 0, locked: true, positionLocked: true,
           layerId, order: s.objects.length,
-        });
+        }));
       }
       for (const shape of shapes) {
         if (shape.type === "polyline") {
-          const object = {
+          const object = applyNewObjectStyleDefaults({
             id: `obj_${stamp}_polyline${++idCounter}`,
             type: "polyline",
             points: shape.points.map((point) => ({
@@ -610,12 +612,12 @@ export function initImageObjectify(state) {
             fillLevel: 214, fillNone: true, fillStyle: "solid",
             rotation: 0, locked: false, positionLocked: false,
             layerId, order: s.objects.length,
-          };
+          });
           s.objects.push(object);
           addedIds.push(object.id);
           continue;
         }
-        const object = {
+        const object = applyNewObjectStyleDefaults({
           id: `obj_${stamp}_${shape.type}${++idCounter}`,
           type: shape.type,
           x: fitted.x + shape.x * scale, y: fitted.y + shape.y * scale,
@@ -624,12 +626,12 @@ export function initImageObjectify(state) {
           fillLevel: 214, fillNone: true, fillStyle: "solid",
           locked: false, positionLocked: false,
           layerId, order: s.objects.length,
-        };
+        });
         s.objects.push(object);
         addedIds.push(object.id);
       }
       for (const segment of segments) {
-        const line = {
+        const line = applyNewObjectStyleDefaults({
           id: `obj_${stamp}_line${++idCounter}`,
           type: "line",
           p1: { x: fitted.x + segment.x1 * scale, y: fitted.y + segment.y1 * scale },
@@ -638,7 +640,7 @@ export function initImageObjectify(state) {
           arrowHead: "none", dashLength: 0, dashGap: 0,
           layerId, order: s.objects.length,
           rotation: 0, locked: false, positionLocked: false,
-        };
+        });
         s.objects.push(line);
         addedIds.push(line.id);
       }

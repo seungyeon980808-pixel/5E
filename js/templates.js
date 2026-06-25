@@ -21,9 +21,10 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.16.1";
-import { armSymbol } from "./tools.js?v=0.16.1";
-import { renderObject } from "./render.js?v=0.16.1";
+import { state } from "./state.js?v=0.16.2";
+import { armSymbol } from "./tools.js?v=0.16.2";
+import { renderObject } from "./render.js?v=0.16.2";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.16.2";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -142,7 +143,7 @@ export function instantiate(symbolId, atCanvasPoint) {
   }
 
   const at = atCanvasPoint || { x: 0, y: 0 };
-  const obj = def.make(at);
+  const obj = applyNewObjectStyleDefaults(def.make(at));
 
   state.update((s) => {
     // Snapshot pre-creation objects so a single Ctrl+Z removes this symbol.

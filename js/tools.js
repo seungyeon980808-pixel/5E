@@ -11,14 +11,15 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.16.1";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.16.2";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.16.1";
+} from "./state.js?v=0.16.2";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.16.1";
+import { circuitBodyPolygon } from "./render.js?v=0.16.2";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.16.2";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -604,7 +605,7 @@ function makeAngleArcDraft(vertex, point) {
   const radius = Math.hypot(dx, dy);
   // Math convention (+Y up): world y grows downward, so negate dy for atan2.
   const startAngle = Math.atan2(-dy, dx) * 180 / Math.PI;
-  return {
+  return applyNewObjectStyleDefaults({
     id: null,                 // assigned on commit
     type: "anglearc",
     x: vertex.x,              // arc vertex
@@ -620,7 +621,7 @@ function makeAngleArcDraft(vertex, point) {
     positionLocked: false,
     layerId: 1,
     order: 0,                 // assigned on commit
-  };
+  });
 }
 
 // Live preview: vertex + rubber-band radius + arc, driven by the floating mouse.
@@ -948,13 +949,13 @@ function makeShape(type, a, b) {
       shape.centerLine = "none";
     }
   }
-  return shape;
+  return applyNewObjectStyleDefaults(shape);
 }
 
 /* ----- build an endpoint-based line from two world points (DESIGN 2-1 branch B) ----- */
 // A line is defined by TWO endpoints (p1/p2), not x/y/w/h, and has no fill.
 function makeLine(a, b) {
-  return {
+  return applyNewObjectStyleDefaults({
     id: null, // assigned on commit
     type: "line",
     p1: { x: a.x, y: a.y },
@@ -974,7 +975,7 @@ function makeLine(a, b) {
     positionLocked: false,
     layerId: 1,
     order: 0,              // assigned on commit (z-order within layer)
-  };
+  });
 }
 
 /* ----- build a circuit element from two terminals (branch B, same family as line) ----- */
@@ -999,14 +1000,14 @@ function makeCircuit(a, b) {
   // Element-specific data fields (only the relevant element carries each).
   if (element === "capacitor") obj.gap = CIRCUIT_CAP_GAP_DEFAULT; // plate separation (world mm)
   if (element === "diode") obj.terminalLabels = ["", ""];          // 단자1 / 단자2
-  return obj;
+  return applyNewObjectStyleDefaults(obj);
 }
 
 /* ----- build a polyline from a list of world points (click-to-click) ----- */
 // Many vertices, connected in order; no fill. Used both for the live preview
 // (placed points + floating mouse) and the committed object.
 function makePolyline(points) {
-  return {
+  return applyNewObjectStyleDefaults({
     id: null, // assigned on commit
     type: "polyline",
     points: points.map((p) => ({ x: p.x, y: p.y })),
@@ -1026,12 +1027,12 @@ function makePolyline(points) {
     positionLocked: false,
     layerId: 1,
     order: 0,              // assigned on commit (z-order within layer)
-  };
+  });
 }
 
 /* ----- build a curve from a list of world points (click-to-click, Catmull-Rom) ----- */
 function makeCurve(points) {
-  return {
+  return applyNewObjectStyleDefaults({
     id: null,
     type: "curve",
     points: points.map((p) => ({ x: p.x, y: p.y })),
@@ -1051,7 +1052,7 @@ function makeCurve(points) {
     positionLocked: false,
     layerId: 1,
     order: 0,
-  };
+  });
 }
 
 /* ----- Catmull-Rom cubic Bezier control points for segment i ??i+1 ----- */
@@ -1128,6 +1129,7 @@ function setupTextTool() {
       fontSize: worldFontSize, fontFamily: DEFAULT_TEXT_FONT,
       fontWeight: "normal", fontStyle: "normal",
       italic: false, underline: false, strikeout: false, rotation: 0,
+      styleMode: "exam",
       editingId: null,
     }, _sc.x, _sc.y, "");
   });
@@ -1153,6 +1155,7 @@ function startEditingTextObject(objId, clickPt = null) {
     italic: o.italic === true,
     underline: !!o.underline, strikeout: !!o.strikeout,
     rotation: o.rotation ?? 0,
+    styleMode: o.styleMode || "free",
     editingId: o.id,
   }, sc.x, sc.y, o.text || "", clickPt);
 }
@@ -1393,6 +1396,7 @@ function _commitText() {
         o.italic = dt.italic === true;
         o.underline = dt.underline;
         o.strikeout = dt.strikeout;
+        o.styleMode = dt.styleMode || o.styleMode || "free";
       }
     } else if ((val || "").trim()) {
       // New text built from the SAME draft data shown while typing.
@@ -1406,6 +1410,7 @@ function _commitText() {
         fontSize: dt.fontSize, fontFamily: dt.fontFamily,
         fontWeight: dt.fontWeight, fontStyle: dt.italic === true ? "italic" : "normal",
         italic: dt.italic === true, underline: dt.underline, strikeout: dt.strikeout,
+        styleMode: dt.styleMode || "exam",
         rotation: 0, locked: false, positionLocked: false,
         layerId: s.activeLayerId, order: s.objects.length,
       });

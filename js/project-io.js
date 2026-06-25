@@ -10,8 +10,9 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.16.1";
-import { screenToWorld } from "./viewport.js?v=0.16.1";
+import { rebuildGroups } from "./transform.js?v=0.16.2";
+import { screenToWorld } from "./viewport.js?v=0.16.2";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.16.2";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -36,6 +37,7 @@ function migrate(data) {
         ...obj,
         positionLocked: obj.positionLocked ?? false,
       };
+      migrateObjectStyleMode(next);
       if (next.type === "text") {
         next.italic = next.italic ?? false;
       }
@@ -189,7 +191,7 @@ function readImageFile(file, dropPos, state) {
       const y = Math.min(Math.max(center.y - h / 2, minY), artboardH / 2 - h);
       let objectId;
       state.update((s) => {
-        const newObj = {
+        const newObj = applyNewObjectStyleDefaults({
           id: `obj_${Date.now().toString(36)}_img${++_imgIdCounter}`,
           type: "image",
           src,
@@ -202,7 +204,7 @@ function readImageFile(file, dropPos, state) {
           positionLocked: false,
           layerId: s.activeLayerId,
           order: s.objects.length,
-        };
+        });
         objectId = newObj.id;
         s.objects.push(newObj);
         s.selectedIds = [newObj.id];

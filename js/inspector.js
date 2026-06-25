@@ -1,7 +1,12 @@
 ﻿/* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.16.1";
-import { openFontModalForSelection } from "./tools.js?v=0.16.1";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.16.2";
+import { openFontModalForSelection } from "./tools.js?v=0.16.2";
+import {
+  getObjectStyleMode,
+  prepareObjectStyleModeSwitch,
+  resolveObjectStyle,
+} from "./style-mode.js?v=0.16.2";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -142,6 +147,7 @@ function makeColorPicker(onInput, onStart, onCommit) {
     setDisabled(flag) {
       root.style.opacity = flag ? "0.4" : "";
       root.style.pointerEvents = flag ? "none" : "";
+      numInput.disabled = !!flag;
     },
   };
 }
@@ -203,6 +209,72 @@ export function initInspector(state) {
   function pushSnap(snap) {
     if (!snap) return;
     state.update((s) => { s.undoStack.push(snap); s.redoStack = []; });
+  }
+
+  /* ---- Object style mode ---- */
+  const styleModeBody = document.createElement("div");
+  styleModeBody.className = "insp-body";
+  const styleModeBtns = document.createElement("div");
+  styleModeBtns.className = "insp-style-mode";
+  const styleModeHelp = document.createElement("div");
+  styleModeHelp.className = "insp-help";
+  styleModeHelp.textContent = "평가원 형태에서는 수능형 비율과 스타일이 자동 적용됩니다.";
+  const styleModeButtonEls = {};
+  [
+    { mode: "exam", label: "평가원 형태" },
+    { mode: "free", label: "자유 설정" },
+  ].forEach(({ mode, label }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = label;
+    btn.title = mode === "exam" ? styleModeHelp.textContent : label;
+    btn.addEventListener("click", () => {
+      const s = state.get();
+      const ids = s.selectedIds || [];
+      if (!ids.length) return;
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      let changed = false;
+      state.update((s2) => {
+        (s2.selectedIds || []).forEach((id) => {
+          const o = s2.objects.find((item) => item.id === id);
+          if (!o || o.locked) return;
+          changed = prepareObjectStyleModeSwitch(o, mode) || changed;
+        });
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
+      });
+    });
+    styleModeButtonEls[mode] = btn;
+    styleModeBtns.appendChild(btn);
+  });
+  styleModeBody.appendChild(styleModeBtns);
+  styleModeBody.appendChild(styleModeHelp);
+  const styleModeSection = makeSection("개체 설정", styleModeBody);
+  contentEl.appendChild(styleModeSection);
+
+  function syncStyleModeSelector(objects) {
+    const editable = objects.filter((o) => o && !o.locked);
+    styleModeSection.style.display = objects.length ? "" : "none";
+    const modes = editable.map((o) => getObjectStyleMode(o));
+    const active = modes.length && modes.every((mode) => mode === modes[0]) ? modes[0] : null;
+    Object.entries(styleModeButtonEls).forEach(([mode, btn]) => {
+      btn.disabled = editable.length === 0;
+      btn.classList.toggle("is-active", active === mode);
+      btn.classList.toggle("is-mixed", !active && modes.length > 0);
+    });
+    styleModeHelp.style.display = active === "exam" || !active ? "" : "none";
+  }
+
+  function styleLockedForSelection(objects) {
+    return objects.length > 0 && objects.some((o) => getObjectStyleMode(o) === "exam");
+  }
+
+  function setButtonDisabled(btn, disabled) {
+    btn.disabled = !!disabled;
+    btn.style.opacity = disabled ? "0.45" : "";
+    btn.style.cursor = disabled ? "default" : "pointer";
   }
 
   /* ---- Section 1: 선 ---- */
@@ -1669,14 +1741,43 @@ export function initInspector(state) {
     }
   }
 
+  function setStyleControlsDisabled(disabled, fillNone = false, locked = false) {
+    strokeCP.setDisabled(disabled);
+    widthRange.disabled = disabled;
+    widthNum.disabled = disabled;
+    [
+      arrowBtn,
+      partialDashBtn,
+      flipBtn,
+      ...Object.values(lineModeBtnEls),
+      ..._dashBtnEls,
+      ...Object.values(_fillStyleBtnEls),
+    ].forEach((btn) => setButtonDisabled(btn, disabled));
+    dashLenSlider.range.disabled = disabled;
+    dashLenSlider.num.disabled = disabled;
+    dashGapSlider.range.disabled = disabled;
+    dashGapSlider.num.disabled = disabled;
+    ratioRange.disabled = disabled;
+    ratioNum.disabled = disabled;
+    fillCP.setDisabled(disabled || fillNone);
+    fnCb.disabled = disabled;
+    fontFamSel.disabled = disabled;
+    fontSizeNum.disabled = disabled;
+    italicCb.disabled = disabled;
+    fontDlgBtn.disabled = disabled;
+    centerLineSel.disabled = disabled || locked;
+  }
+
   /* ---- Subscribe: populate controls on every state change ---- */
   function populate(s) {
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
+    const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
 
     if (ids.length === 0) {
       emptyEl.style.display = "";
       contentEl.style.display = "none";
+      styleModeSection.style.display = "none";
       abSection.style.display = "";   // 아트보드 section lives in the empty state
       refreshArtboard(s);
       return;
@@ -1684,6 +1785,7 @@ export function initInspector(state) {
 
     emptyEl.style.display = "none";
     contentEl.style.display = "";
+    syncStyleModeSelector(selectedObjects);
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
@@ -1691,6 +1793,7 @@ export function initInspector(state) {
     // Targeted state: only show ungroup button, hide everything else
     if (s.targetedId) {
       groupDiv.style.display = "";
+      styleModeSection.style.display = "none";
       sec1.style.display = "none";
       sec2.style.display = "none";
       sec3.style.display = "none";
@@ -1749,6 +1852,7 @@ export function initInspector(state) {
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
+      const groupStyleDisabled = styleLockedForSelection(selectedObjects);
       xF.inp.disabled = groupHasLocked || groupHasPositionLocked;
       yF.inp.disabled = groupHasLocked || groupHasPositionLocked;
       wF.inp.disabled = groupHasLocked;
@@ -1757,16 +1861,17 @@ export function initInspector(state) {
 
       if (_dragging) return;
 
-      strokeCP.setValue(firstObj.strokeLevel ?? 0);
-      const _sw = firstObj.strokeWidth ?? 0.2;
+      const firstStyleObj = resolveObjectStyle(firstObj);
+      strokeCP.setValue(firstStyleObj.strokeLevel ?? 0);
+      const _sw = firstStyleObj.strokeWidth ?? 0.2;
       widthRange.value = _sw;
       widthNum.value =_sw.toFixed(1);
 
-      const _fn = !!(firstObj.fillNone);
+      const _fn = !!(firstStyleObj.fillNone);
       fnCb.checked = _fn;
-      fillCP.setValue(firstObj.fillLevel ?? 255);
-      fillCP.setDisabled(_fn);
-      syncFillStyle(firstObj);
+      fillCP.setValue(firstStyleObj.fillLevel ?? 255);
+      syncFillStyle(firstStyleObj);
+      setStyleControlsDisabled(groupStyleDisabled, _fn, groupHasLocked);
 
       // Section 3 — combined bbox center (X/Y), combined size (W/H), shared rotation.
       let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
@@ -1829,16 +1934,18 @@ export function initInspector(state) {
 
       if (!firstObj) return;
 
-      strokeCP.setValue(firstObj.strokeLevel ?? 0);
-      const sw = firstObj.strokeWidth ?? 0.2;
+      const multiStyleDisabled = styleLockedForSelection(selectedObjects);
+      const firstStyleObj = resolveObjectStyle(firstObj);
+      strokeCP.setValue(firstStyleObj.strokeLevel ?? 0);
+      const sw = firstStyleObj.strokeWidth ?? 0.2;
       widthRange.value = sw;
       widthNum.value =sw.toFixed(1);
 
-      const fn = !!(firstObj.fillNone);
+      const fn = !!(firstStyleObj.fillNone);
       fnCb.checked = fn;
-      fillCP.setValue(firstObj.fillLevel ?? 255);
-      fillCP.setDisabled(fn);
-      syncFillStyle(firstObj);
+      fillCP.setValue(firstStyleObj.fillLevel ?? 255);
+      syncFillStyle(firstStyleObj);
+      setStyleControlsDisabled(multiStyleDisabled, fn, false);
       return;
     }
 
@@ -1852,16 +1959,18 @@ export function initInspector(state) {
 
     if (_dragging) return; // skip during color picker drag to avoid handle jump
 
+    const styleObj = resolveObjectStyle(obj);
+    const styleDisabled = getObjectStyleMode(obj) === "exam";
     const isText = obj.type === "text";
     // Text has no stroke/fill controls; it gets its own 글꼴 section instead.
     sec1.style.display = isText ? "none" : "";
     secText.style.display = isText ? "" : "none";
     if (isText) {
-      fontFamSel.value = obj.fontFamily || DEFAULT_TEXT_FONT;
-      italicCb.checked = obj.italic === true;
+      fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
+      italicCb.checked = styleObj.italic === true;
       if (document.activeElement !== fontSizeNum) {
         // Stored fontSize is world-unit mm; the field shows points.
-        fontSizeNum.value = Math.round(mmToPt(obj.fontSize ?? 0) * 10) / 10;
+        fontSizeNum.value = Math.round(mmToPt(styleObj.fontSize ?? 0) * 10) / 10;
       }
     }
     const isLineFamily = LINE_TYPES.includes(obj.type);
@@ -1921,24 +2030,23 @@ export function initInspector(state) {
     const canDash = supportsDash(obj);
     dashRow.style.display = canDash ? "" : "none";
     if (canDash) {
-      syncDashControls(obj);
+      syncDashControls(styleObj);
     } else {
       dashSliders.style.display = "none";
       partialControls.style.display = "none";
     }
 
     // Section 1
-    strokeCP.setValue(obj.strokeLevel ?? 0);
-    const sw = obj.strokeWidth ?? 0.2;
+    strokeCP.setValue(styleObj.strokeLevel ?? 0);
+    const sw = styleObj.strokeWidth ?? 0.2;
     widthRange.value = sw;
     widthNum.value =sw.toFixed(1);
 
     // Section 2
-    const fn = !!(obj.fillNone);
+    const fn = !!(styleObj.fillNone);
     fnCb.checked = fn;
-    fillCP.setValue(obj.fillLevel ?? 255);
-    fillCP.setDisabled(fn);
-    syncFillStyle(obj);
+    fillCP.setValue(styleObj.fillLevel ?? 255);
+    syncFillStyle(styleObj);
 
     // Section 3 — shape types + axes (size-based: X/Y/W/H/rotation), plus the
     // anglearc (X/Y + radius/startAngle/sweepAngle in math convention, CCW +).
@@ -1995,7 +2103,7 @@ export function initInspector(state) {
       labelInp.value  = obj.label ?? "";
     }
     if (isOptics) showLabelCb.checked = !!obj.showLabel;
-    if (isLens) centerLineSel.value = obj.centerLine || "none";
+    if (isLens) centerLineSel.value = styleObj.centerLine || "none";
     if (isCap && document.activeElement !== gapInp) {
       gapInp.value = (obj.gap ?? 2).toFixed(1);
     }
@@ -2038,6 +2146,7 @@ export function initInspector(state) {
     tickInp.disabled = !!obj.locked;
     centerLineSel.disabled = !!obj.locked;
     Object.values(axisVarBtns).forEach((btn) => { btn.disabled = !!obj.locked; });
+    setStyleControlsDisabled(styleDisabled, fn, !!obj.locked);
   }
 
   state.subscribe(populate);

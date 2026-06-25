@@ -7,8 +7,9 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.16.1";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.16.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.16.2";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.16.2";
+import { resolveObjectStyle } from "./style-mode.js?v=0.16.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -604,6 +605,7 @@ function makeHitTwin(obj) {
 // Exported so SVG export reuses the exact same per-object node builders
 // (no duplicated shape-drawing code; DESIGN 1-1 projection stays single-source).
 export function renderObject(obj) {
+  obj = resolveObjectStyle(obj);
   switch (obj.type) {
     case "rect":
       return renderRect(obj);
@@ -1210,7 +1212,7 @@ function renderAxes(obj) {
     t.setAttribute("y", ly);
     t.setAttribute("font-size", labelSize);
     t.setAttribute("font-style", "italic");
-    t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+    t.setAttribute("font-family", obj.fontFamily || DEFAULT_TEXT_FONT);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("dominant-baseline", baseline);
@@ -1286,7 +1288,7 @@ function renderAngleArc(obj) {
     t.setAttribute("y", vy - lr * Math.sin(rad));
     t.setAttribute("font-size", labelSize);
     t.setAttribute("font-style", "italic");
-    t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+    t.setAttribute("font-family", obj.fontFamily || DEFAULT_TEXT_FONT);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
@@ -1356,11 +1358,11 @@ function cLine(a, b, sw, color) {
   return l;
 }
 // A centered glyph (shared by circle-body elements + diode terminal labels + optics label).
-function cText(g, x, y, text, size, color) {
+function cText(g, x, y, text, size, color, fontFamily = DEFAULT_TEXT_FONT) {
   const t = document.createElementNS(SVG_NS, "text");
   t.setAttribute("x", x); t.setAttribute("y", y);
   t.setAttribute("font-size", size);
-  t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+  t.setAttribute("font-family", fontFamily);
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
   t.setAttribute("dominant-baseline", "central");
@@ -1564,7 +1566,7 @@ function renderCircuit(obj) {
     t.setAttribute("x", mid.x + px * off * sign);
     t.setAttribute("y", mid.y + py * off * sign);
     t.setAttribute("font-size", size);
-    t.setAttribute("font-family", DEFAULT_TEXT_FONT);
+    t.setAttribute("font-family", obj.fontFamily || DEFAULT_TEXT_FONT);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
@@ -1793,7 +1795,7 @@ function renderOptics(obj) {
   // Optional label below the bbox (toggled by showLabel, like the anglearc label).
   if (obj.showLabel && (obj.label ?? "") !== "") {
     const size = DEFAULT_TEXT_SIZE_MM;
-    cText(g, obj.x + obj.w / 2, obj.y + obj.h + size * 0.8, obj.label, size, color);
+    cText(g, obj.x + obj.w / 2, obj.y + obj.h + size * 0.8, obj.label, size, color, obj.fontFamily || DEFAULT_TEXT_FONT);
   }
 
   const rot = obj.rotation ?? 0;
@@ -1880,6 +1882,7 @@ function resolveFill(obj) {
 // Each tile starts with a fill="transparent" base rect so the empty area between
 // marks still captures clicks (DESIGN 5-3), exactly like a transparent solid fill.
 export function makeFillPattern(obj) {
+  obj = resolveObjectStyle(obj);
   const style = obj.fillStyle ?? "solid";
   if (!obj.id || obj.fillNone || style === "solid" || !isFillable(obj)) return null;
 
