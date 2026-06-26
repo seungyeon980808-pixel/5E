@@ -778,6 +778,47 @@ body {
   overflow: hidden;
 }
 
+/* ===== FORMULA EDITOR (inline: source <input> + insertion palette) ===== */
+.formula-editor {
+  position: absolute;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--bg-panel, #2b2d31);
+  border: 1px solid var(--accent, #0969da);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.formula-input {
+  min-width: 220px;
+  padding: 5px 7px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: #dcddde;
+  background: #1e1f22;
+  border: 1px solid #3a3c41;
+  border-radius: 4px;
+  outline: none;
+}
+.formula-input:focus { border-color: var(--accent, #0969da); }
+.formula-palette { display: flex; flex-direction: column; gap: 3px; }
+.formula-palette-row { display: flex; flex-wrap: wrap; gap: 3px; }
+.formula-palette-btn {
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 13px;
+  line-height: 1;
+  color: #dcddde;
+  background: #1e1f22;
+  border: 1px solid #3a3c41;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.formula-palette-btn:hover { background: #34363c; border-color: var(--accent, #0969da); }
+
 /* ===== TEXT CONTEXT MENU (right-click on text / draft) ===== */
 .text-ctx-menu {
   position: fixed;

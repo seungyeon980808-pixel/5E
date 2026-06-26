@@ -1,4 +1,4 @@
-﻿/* ===== RENDER (DESIGN 1-1: SVG is a projection of state.objects) ===== */
+/* ===== RENDER (DESIGN 1-1: SVG is a projection of state.objects) ===== */
 //
 // render(state) repaints the <g id="scene"> from data. It is registered as a
 // store subscriber in main.js, so ANY state.update() repaints automatically ??// no caller ever invokes render() by hand. That is the data-as-truth proof.
@@ -7,9 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.16.4";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.16.4";
-import { resolveObjectStyle } from "./style-mode.js?v=0.16.4";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.17.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.17.0";
+import { renderFormula } from "./formula.js?v=0.17.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -78,6 +79,9 @@ export function render(state) {
     // The object being re-edited is drawn by the draftText preview instead, so
     // skip its committed render to avoid double text while editing.
     if (_editingId && obj.id === _editingId) continue;
+    // A formula being re-edited is replaced by its inline editor overlay; skip
+    // its committed render so the old glyphs don't show behind the input.
+    if (state.editingFormulaId && obj.id === state.editingFormulaId) continue;
     const _layerId = obj.layerId ?? 1;
     const _layer = (state.layers || []).find(l => l.id === _layerId);
     if (_layer && _layer.visible === false) continue;
@@ -264,8 +268,9 @@ export function render(state) {
       cv.style.stroke = _selColor;
       cv.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
       scene.appendChild(cv);
-    } else if (sel.type === "text") {
-      // getBBox() on the already-rendered <text> element gives the exact visual bounds.
+    } else if (sel.type === "text" || sel.type === "formula") {
+      // getBBox() on the already-rendered element gives the exact visual bounds.
+      // (formula's <g> includes a transparent body rect spanning its whole box.)
       const textEl = scene.querySelector(`[data-id="${sel.id}"]`);
       if (textEl) {
         try {
@@ -621,6 +626,8 @@ export function renderObject(obj) {
       return renderCurve(obj);
     case "text":
       return renderText(obj);
+    case "formula":
+      return renderFormula(obj);
     case "image":
       return renderImage(obj);
     case "axes":
@@ -1954,7 +1961,7 @@ export function singleObjBBox(o, scene) {
     const r = o.radius || 0;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
-  if (o.type === "text") {
+  if (o.type === "text" || o.type === "formula") {
     const el = scene.querySelector(`[data-id="${o.id}"]`);
     if (el) {
       try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }

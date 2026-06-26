@@ -1,4 +1,4 @@
-﻿/* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
+/* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
 //
 // Two responsibilities, both routed through the store so data stays the truth:
 //   1. Tool selection ??V (select) / R (rectangle), via buttons or keyboard.
@@ -11,15 +11,16 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.16.4";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.16.4";
+} from "./state.js?v=0.17.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.16.4";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.16.4";
+import { circuitBodyPolygon } from "./render.js?v=0.17.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.0";
+import { measureFormula, fontOf } from "./formula.js?v=0.17.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -77,6 +78,7 @@ export function initTools(svg, state) {
   setupTextClickToEdit();
   setupTextEditShortcuts();
   setupTextContextMenu();
+  setupFormulaTool();
 
   // Keep the tool buttons in sync with state.activeTool on every change.
   state.subscribe((s) => syncButtons(s.activeTool));
@@ -88,6 +90,7 @@ function setActiveTool(tool) {
   if (_state.get().activeTool === tool) return;
   clearClickLocals(); // arming another tool discards any in-progress click draft
   cancelActiveTextEditor(); // discard any in-progress text edit
+  cancelActiveFormulaEditor(); // discard any in-progress formula edit
   _state.update((s) => {
     s.activeTool = tool;
     s.draft = null; // arming another tool discards any unfinished draft
@@ -149,6 +152,7 @@ function setupKeyboard() {
     else if (key === "p") setActiveTool("P");
     else if (key === "c") setActiveTool("C");
     else if (key === "t") setActiveTool("T");
+    else if (key === "f") setActiveTool("FX");
   });
 }
 
@@ -271,6 +275,10 @@ function setupDrawing() {
       if (_ho && _ho.type === "text") {
         if (_textEditor) return; // already editing (e.g. opened by click-to-edit on press #1)
         startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
+      }
+      if (_ho && _ho.type === "formula") {
+        if (_fxInput) return; // already editing
+        openFormulaEditor({ objId: hitId }); return;
       }
     }
     if (hitId === null && _at === "V") {
@@ -696,10 +704,10 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     const o = objects[i];
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
-        o.type !== "text" && o.type !== "image" && o.type !== "axes" &&
+        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "axes" &&
         o.type !== "anglearc" && o.type !== "circuit" && o.type !== "optics") continue;
 
-    if (o.type === "text") {
+    if (o.type === "text" || o.type === "formula") {
       // Use the rendered SVG element's getBBox for an accurate hit area.
       const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
       if (!svgEl) continue;
@@ -860,7 +868,7 @@ function getObjectBBox(o) {
     }
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
-  if (o.type === "text") {
+  if (o.type === "text" || o.type === "formula") {
     const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
     if (!svgEl) return null;
     try { const bb = svgEl.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
@@ -1424,6 +1432,214 @@ function cancelActiveTextEditor() {
   if (!_textEditor && !_state.get().draftText) return;
   _textCancelled = true;
   _cancelText();
+}
+
+/* ===== FORMULA TOOL + INLINE EDITOR =====
+ *
+ * A formula is authored as a one-line brace-syntax string (see formula.js). The
+ * editor is deliberately separate from the multi-line text overlay: a single
+ * <input> plus a compact insertion palette, floated over the canvas at the
+ * formula's screen position. Enter commits, ESC cancels. The committed object is
+ * rendered as real SVG by renderObject → the editor never needs a live preview.
+ *
+ *   FX tool click → new formula at the click point.
+ *   Double-click a formula (V tool) → re-edit it in place.
+ *
+ * Palette buttons insert templates with the caret dropped INSIDE the first {}
+ * (mousedown-preventDefault keeps the input focused so the click never blurs it). */
+let _fxInput = null;    // the live <input>, or null when idle
+let _fxBox = null;      // the floating container (input + palette)
+let _fxObjId = null;    // id of the formula being edited, or null for a new one
+let _fxAnchor = null;   // world {x,y} top-left anchor of the formula
+let _fxCancelled = false;
+
+function setupFormulaTool() {
+  _svg.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if (spaceHeld) return;
+    if (_state.get().activeTool !== "FX") return;
+    e.preventDefault();
+    if (_fxInput) { commitFormulaEditor(); return; }
+    const world = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
+    openFormulaEditor({ world });
+  });
+}
+
+// Greek glyphs offered in the palette (inserted literally; the parser passes any
+// non-ASCII letter through as text, so glyphs render as-is — names work too).
+const FX_GREEK = ["π", "λ", "θ", "ω", "α", "β", "μ", "ρ", "φ", "Δ", "Σ", "Ω"];
+const FX_ROMAN = ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ"];
+
+function _fxInsert(text, caretOffset) {
+  if (!_fxInput) return;
+  const inp = _fxInput;
+  const start = inp.selectionStart ?? inp.value.length;
+  const end = inp.selectionEnd ?? inp.value.length;
+  inp.value = inp.value.slice(0, start) + text + inp.value.slice(end);
+  const pos = start + (caretOffset == null ? text.length : caretOffset);
+  inp.setSelectionRange(pos, pos);
+  inp.focus();
+}
+
+function _fxPaletteButton(label, onClick, title) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "formula-palette-btn";
+  b.textContent = label;
+  if (title) b.title = title;
+  // Keep the input focused: a normal click would blur it (committing on blur).
+  b.addEventListener("mousedown", (e) => { e.preventDefault(); });
+  b.addEventListener("click", (e) => { e.preventDefault(); onClick(); });
+  return b;
+}
+
+function _buildFormulaPalette() {
+  const pal = document.createElement("div");
+  pal.className = "formula-palette";
+
+  const row1 = document.createElement("div");
+  row1.className = "formula-palette-row";
+  // "frac{" = 5 chars → caret lands inside the FIRST {}. vec{ = 4, sqrt{ = 5.
+  row1.appendChild(_fxPaletteButton("a∕b", () => _fxInsert("frac{}{}", 5), "분수 frac{}{}"));
+  row1.appendChild(_fxPaletteButton("√", () => _fxInsert("sqrt{}", 5), "근호 sqrt{}"));
+  row1.appendChild(_fxPaletteButton("v⃗", () => _fxInsert("vec{}", 4), "벡터 vec{}"));
+  row1.appendChild(_fxPaletteButton("x_n", () => _fxInsert("_{}", 2), "아래첨자 _{}"));
+  row1.appendChild(_fxPaletteButton("xⁿ", () => _fxInsert("^{}", 2), "위첨자 ^{}"));
+  pal.appendChild(row1);
+
+  const row2 = document.createElement("div");
+  row2.className = "formula-palette-row";
+  for (const g of FX_GREEK) row2.appendChild(_fxPaletteButton(g, () => _fxInsert(g)));
+  pal.appendChild(row2);
+
+  const row3 = document.createElement("div");
+  row3.className = "formula-palette-row";
+  for (const r of FX_ROMAN) row3.appendChild(_fxPaletteButton(r, () => _fxInsert(r)));
+  pal.appendChild(row3);
+
+  return pal;
+}
+
+function openFormulaEditor({ objId = null, world = null }) {
+  // Close any editor already open (commit it first).
+  if (_fxInput) commitFormulaEditor();
+
+  const s = _state.get();
+  let source = "", x, y;
+  if (objId) {
+    const o = s.objects.find((obj) => obj.id === objId);
+    if (!o) return;
+    source = o.source || ""; x = o.x; y = o.y;
+  } else if (world) {
+    x = world.x; y = world.y;
+  } else return;
+
+  _fxObjId = objId;
+  _fxAnchor = { x, y };
+  _fxCancelled = false;
+
+  // Hide the object being edited so its committed glyphs don't show behind the input.
+  if (objId) _state.update((st) => { st.editingFormulaId = objId; });
+
+  const sc = worldToScreen(_svg, s.viewBox, x, y);
+  const wrap = _svg.closest(".canvas-wrap");
+  const wr = wrap.getBoundingClientRect();
+
+  _fxBox = document.createElement("div");
+  _fxBox.className = "formula-editor";
+  _fxBox.style.left = (sc.x - wr.left) + "px";
+  _fxBox.style.top = (sc.y - wr.top) + "px";
+
+  _fxInput = document.createElement("input");
+  _fxInput.type = "text";
+  _fxInput.className = "formula-input";
+  _fxInput.spellcheck = false;
+  _fxInput.setAttribute("autocomplete", "off");
+  _fxInput.placeholder = "frac{T_0}{4}, vec{F}, sqrt{2} …";
+  _fxInput.value = source;
+  _fxBox.appendChild(_fxInput);
+  _fxBox.appendChild(_buildFormulaPalette());
+
+  wrap.appendChild(_fxBox);
+  _fxInput.focus();
+  _fxInput.setSelectionRange(source.length, source.length);
+
+  _fxInput.addEventListener("keydown", (ke) => {
+    ke.stopPropagation(); // don't trigger tool shortcuts while typing
+    if (ke.key === "Enter") { ke.preventDefault(); commitFormulaEditor(); }
+    else if (ke.key === "Escape") { ke.preventDefault(); _fxCancelled = true; teardownFormulaEditor(); }
+  });
+  // Clicking outside (not on a palette button — those preventDefault) commits.
+  _fxInput.addEventListener("blur", () => {
+    // Defer so a palette-button mousedown (which refocuses) cancels the commit.
+    setTimeout(() => { if (_fxInput && document.activeElement !== _fxInput) commitFormulaEditor(); }, 0);
+  });
+}
+
+function teardownFormulaEditor() {
+  if (_fxBox && _fxBox.parentElement) _fxBox.remove();
+  _fxBox = null;
+  _fxInput = null;
+  const editingId = _fxObjId;
+  _fxObjId = null;
+  _fxAnchor = null;
+  if (_state.get().editingFormulaId === editingId) {
+    _state.update((st) => { st.editingFormulaId = null; });
+  }
+}
+
+function commitFormulaEditor() {
+  if (!_fxInput) return;
+  if (_fxCancelled) { teardownFormulaEditor(); return; }
+
+  const src = _fxInput.value.trim();
+  const objId = _fxObjId;
+  const anchor = _fxAnchor;
+  teardownFormulaEditor(); // remove DOM + clear editingFormulaId before the store update
+
+  _state.update((s) => {
+    if (objId) {
+      // Re-edit: update the SAME object. Empty source keeps the original (prefer
+      // restore over delete), mirroring the text editor's re-edit semantics.
+      const o = s.objects.find((x) => x.id === objId);
+      if (o && src) {
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        s.undoStack.push(snap);
+        s.redoStack = [];
+        o.source = src;
+        const m = measureFormula(src, o.fontSize, fontOf(o));
+        o.w = m.w; o.h = m.h;
+      }
+    } else if (src) {
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      s.undoStack.push(snap);
+      s.redoStack = [];
+      const fontSize = DEFAULT_TEXT_SIZE_MM;
+      const fontFamily = DEFAULT_TEXT_FONT;
+      const m = measureFormula(src, fontSize, { family: fontFamily, weight: "normal", style: "normal" });
+      const id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
+      s.objects.push(applyNewObjectStyleDefaults({
+        id,
+        type: "formula",
+        x: anchor.x, y: anchor.y,
+        source: src,
+        fontSize, fontFamily, fontWeight: "normal", italic: false,
+        w: m.w, h: m.h,
+        rotation: 0, locked: false, positionLocked: false,
+        styleMode: "exam",
+        layerId: s.activeLayerId, order: s.objects.length,
+      }));
+      s.selectedIds = [id];
+      s.targetedId = null;
+    }
+    s.activeTool = "V"; // auto-return to select (mirrors the text/new-shape flow)
+  });
+}
+
+function cancelActiveFormulaEditor() {
+  if (!_fxInput) return;
+  _fxCancelled = true;
+  teardownFormulaEditor();
 }
 
 /* ----- CLICK-AGAIN-TO-EDIT: a no-drag click on an ALREADY-selected sole text

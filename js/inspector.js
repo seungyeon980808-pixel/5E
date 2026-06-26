@@ -1,12 +1,12 @@
-﻿/* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
+/* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.16.4";
-import { openFontModalForSelection } from "./tools.js?v=0.16.4";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.17.0";
+import { openFontModalForSelection } from "./tools.js?v=0.17.0";
 import {
   getObjectStyleMode,
   prepareObjectStyleModeSwitch,
   resolveObjectStyle,
-} from "./style-mode.js?v=0.16.4";
+} from "./style-mode.js?v=0.17.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -967,7 +967,7 @@ export function initInspector(state) {
     const snap = JSON.parse(JSON.stringify(s.objects));
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
-      if (!o || o.type !== "text") return;
+      if (!o || (o.type !== "text" && o.type !== "formula")) return;
       o[prop] = value;
       s2.undoStack.push(snap);
       s2.redoStack = [];
@@ -982,7 +982,7 @@ export function initInspector(state) {
     const snap = JSON.parse(JSON.stringify(s.objects));
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
-      if (!o || o.type !== "text") return;
+      if (!o || (o.type !== "text" && o.type !== "formula")) return;
       o.italic = val;
       o.fontStyle = val ? "italic" : "normal";
       s2.undoStack.push(snap);
@@ -1962,7 +1962,8 @@ export function initInspector(state) {
 
     const styleObj = resolveObjectStyle(obj);
     const styleDisabled = getObjectStyleMode(obj) === "exam";
-    const isText = obj.type === "text";
+    // Formula shares the text font controls (family + size apply to its glyphs).
+    const isText = obj.type === "text" || obj.type === "formula";
     // Text has no stroke/fill controls; it gets its own 글꼴 section instead.
     sec1.style.display = isText ? "none" : "";
     secText.style.display = isText ? "" : "none";

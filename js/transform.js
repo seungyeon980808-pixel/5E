@@ -1,4 +1,4 @@
-﻿/* ===== TRANSFORM (DESIGN 짠3 select-tool MOVE + snapshot-based Undo/Redo) ===== */
+/* ===== TRANSFORM (DESIGN 짠3 select-tool MOVE + snapshot-based Undo/Redo) ===== */
 //
 // Owns two concerns:
 //   1. Body-drag MOVE of the selected object (V tool only).
@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.16.4";
-import { resolveSnap } from "./snap.js?v=0.16.4";
-import { setSnapPreview } from "./render.js?v=0.16.4";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.17.0";
+import { resolveSnap } from "./snap.js?v=0.17.0";
+import { setSnapPreview } from "./render.js?v=0.17.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -234,7 +234,7 @@ function clipboardBBox(objs) {
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
-    } else if (o.type === "text") {
+    } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
     } else if (o.type === "line" || o.type === "circuit") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
@@ -249,7 +249,8 @@ function clipboardBBox(objs) {
 /* ----- set object position from original + delta (avoids float drift) ----- */
 function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
-      obj.type === "triangle" || obj.type === "text" || obj.type === "image" ||
+      obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
+      obj.type === "image" ||
       obj.type === "axes" || obj.type === "anglearc" || obj.type === "optics") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     obj.x = orig.x + dx;

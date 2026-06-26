@@ -1,4 +1,4 @@
-﻿/* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
+/* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
 //   1. write state.viewBox onto the SVG (the only coordinate authority);
@@ -7,19 +7,19 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.16.4";
-import { render } from "./render.js?v=0.16.4";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.16.4";
-import { initTools } from "./tools.js?v=0.16.4";
-import { initTransform, undo, redo } from "./transform.js?v=0.16.4";
-import { initInspector } from "./inspector.js?v=0.16.4";
-import { initProjectIO } from "./project-io.js?v=0.16.4";
-import { initExportDialog } from "./export-dialog.js?v=0.16.4";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.16.4";
-import { initSettings } from "./settings.js?v=0.16.4";
-import { initImageObjectify } from "./image-objectify.js?v=0.16.4";
-import { initTemplates } from "./templates.js?v=0.16.4";
-import { initObjectSearch } from "./search.js?v=0.16.4";
+import { state } from "./state.js?v=0.17.0";
+import { render } from "./render.js?v=0.17.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.17.0";
+import { initTools } from "./tools.js?v=0.17.0";
+import { initTransform, undo, redo } from "./transform.js?v=0.17.0";
+import { initInspector } from "./inspector.js?v=0.17.0";
+import { initProjectIO } from "./project-io.js?v=0.17.0";
+import { initExportDialog } from "./export-dialog.js?v=0.17.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.17.0";
+import { initSettings } from "./settings.js?v=0.17.0";
+import { initImageObjectify } from "./image-objectify.js?v=0.17.0";
+import { initTemplates } from "./templates.js?v=0.17.0";
+import { initObjectSearch } from "./search.js?v=0.17.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -239,7 +239,7 @@ window.phyDraw = {
 })();
 
 console.info(
-  "[PhysicsExamDrawer v0.16.4] Pick R (or press R), drag on the canvas to draw a\n" +
+  "[PhysicsExamDrawer v0.17.0] Pick R (or press R), drag on the canvas to draw a\n" +
     "Press 'd' to toggle the live coord-debug overlay (pointer?봶orld mapping).\n" +
     "rectangle. Verify with:\n" +
     "  phyDraw.objects()        // array of committed rect objects\n" +
