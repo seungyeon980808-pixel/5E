@@ -17,7 +17,8 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.17.6";
+} from "./state.js?v=0.17.7";
+import { registerTopMenu } from "./top-menu.js?v=0.17.7";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -45,40 +46,11 @@ function saveDefaults(d) {
   localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
 }
 
-/* ----- dropdown: open on click, close on outside-click / Escape ----- */
+/* ----- dropdown: registered with the shared top-menu (exclusive with 파일) ----- */
 function initSettingsMenu() {
   const btn = document.getElementById("settings-menu-btn");
   const list = document.getElementById("settings-menu-list");
-  if (!btn || !list) return;
-
-  function close() {
-    list.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
-  }
-  function open() {
-    list.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
-  }
-
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (list.hidden) open();
-    else close();
-  });
-
-  // Any item click dismisses the menu.
-  list.addEventListener("click", () => close());
-
-  // Click anywhere outside the menu closes it.
-  document.addEventListener("click", (e) => {
-    if (list.hidden) return;
-    if (!list.contains(e.target) && e.target !== btn) close();
-  });
-
-  // Escape closes it.
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
+  registerTopMenu("settings", btn, list);
 }
 
 /* ----- modal markup, built once and appended to <body> ----- */
@@ -87,8 +59,12 @@ function buildModal() {
   overlay.className = "modal-overlay";
   overlay.id = "defaults-overlay";
   overlay.hidden = true;
+  // f.css can contain double quotes (e.g. '"신명중명조", ...'); escaping keeps the
+  // value attribute intact so the option value matches the stored default exactly
+  // (otherwise the default font option breaks and the preview can't resolve it).
+  const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
   const fontOptions = TEXT_FONTS
-    .map((f) => `<option value="${f.css}">${f.label}</option>`)
+    .map((f) => `<option value="${escAttr(f.css)}">${f.label}</option>`)
     .join("");
   const styleOptions = TEXT_STYLES
     .map((s, i) => `<option value="${i}">${s.label}</option>`)

@@ -11,44 +11,35 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg } from "./svg-export.js?v=0.17.6";
+import { exportPng, exportSvg } from "./svg-export.js?v=0.17.7";
+import { registerTopMenu } from "./top-menu.js?v=0.17.7";
 
 const DEFAULT_NAME = "physics_drawing";
 
-/* ----- dropdown: open on click, close on outside-click / Escape ----- */
+/* ----- dropdown: exclusive with 설정 (shared top-menu) + hover descriptions ----- */
+const DEFAULT_FILE_DESC = "파일 작업을 선택하세요.";
 function initFileMenu() {
   const btn = document.getElementById("file-menu-btn");
   const list = document.getElementById("file-menu-list");
+  const desc = document.getElementById("file-menu-desc");
   if (!btn || !list) return;
 
-  function close() {
-    list.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
+  // Bottom description area: reflect the hovered / keyboard-focused item; fall
+  // back to the default prompt when nothing is hovered or focused.
+  const reset = () => { if (desc) desc.textContent = DEFAULT_FILE_DESC; };
+  if (desc) {
+    list.querySelectorAll(".file-menu-item").forEach((item) => {
+      const text = item.getAttribute("data-desc");
+      const show = () => { if (text) desc.textContent = text; };
+      item.addEventListener("mouseenter", show);
+      item.addEventListener("focus", show);
+      item.addEventListener("mouseleave", reset);
+      item.addEventListener("blur", reset);
+    });
   }
-  function open() {
-    list.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
-  }
 
-  btn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (list.hidden) open();
-    else close();
-  });
-
-  // Any item click (save/open/export) dismisses the menu.
-  list.addEventListener("click", () => close());
-
-  // Click anywhere outside the menu closes it.
-  document.addEventListener("click", (e) => {
-    if (list.hidden) return;
-    if (!list.contains(e.target) && e.target !== btn) close();
-  });
-
-  // Escape closes it.
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
+  // Reset the description each time the menu opens (nothing hovered yet).
+  registerTopMenu("file", btn, list, { onOpen: reset });
 }
 
 /* ----- modal markup, built once and appended to <body> ----- */

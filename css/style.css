@@ -376,10 +376,17 @@ body {
 }
 .file-menu-item:hover { background: var(--btn-tool-hover); }
 
-.file-menu-divider {
-  height: 1px;
-  margin: 4px 6px;
-  background: var(--border);
+/* Bottom description area: compact, muted, themed via vars (dark/light safe). */
+.file-menu-desc {
+  margin-top: 4px;
+  padding: 7px 10px 6px;
+  border-top: 1px solid var(--border);
+  max-width: 220px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: normal;
+  word-break: keep-all;
 }
 
 /* ===== EXPORT MODAL (이미지로 내보내기) ===== */

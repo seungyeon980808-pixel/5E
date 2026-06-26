@@ -83,11 +83,15 @@
           <button id="file-menu-btn" class="topbar-btn" type="button"
                   aria-haspopup="true" aria-expanded="false" title="파일">파일 ▾</button>
           <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
-            <button id="project-save" class="file-menu-item" type="button" role="menuitem">프로젝트 저장</button>
-            <button id="project-open" class="file-menu-item" type="button" role="menuitem">프로젝트 불러오기</button>
-            <button id="image-import" class="file-menu-item" type="button" role="menuitem">이미지 불러오기</button>
-            <div class="file-menu-divider" role="separator"></div>
-            <button id="image-export" class="file-menu-item" type="button" role="menuitem">이미지로 내보내기</button>
+            <button id="project-save" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장</button>
+            <button id="project-open" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="저장해 둔 프로젝트 파일을 열어 이어서 편집합니다.">프로젝트 불러오기</button>
+            <button id="image-import" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="JPG, PNG 등의 이미지 파일을 캔버스에 불러와 배치합니다.">이미지 불러오기</button>
+            <button id="image-export" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기</button>
+            <div id="file-menu-desc" class="file-menu-desc">파일 작업을 선택하세요.</div>
           </div>
         </div>
         <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
@@ -173,11 +177,11 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.17.6</strong> · 2026-06-26
+    5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.17.7</strong> · 2026-06-26
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script type="module" src="js/main.js?v=0.17.6"></script>
+  <script type="module" src="js/main.js?v=0.17.7"></script>
 </body>
 </html>
