@@ -6,7 +6,7 @@ export const OBJECT_STYLE_MODES = {
 export const KICE_EXAM_STYLE = {
   strokeWidth: 0.2,
   helperStrokeWidth: 0.12,
-  fontFamily: '"Noto Serif KR", "Batang", "Times New Roman", serif',
+  fontFamily: '"신명중명조", "바탕", serif',
   dashLength: 0.45,
   dashGap: 0.3,
   arrowStrokeScale: 1,

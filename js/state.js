@@ -7,13 +7,13 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=0.16.3";
+import { createStore } from "./store.js?v=0.16.4";
 
 /* ===== TEXT FONT OPTIONS (single source for inspector + font modal) =====
  * `css` is used verbatim as both the SVG <text> font-family AND the editor
  * caret font, so draft and committed text always resolve the same font. */
 export const TEXT_FONTS = [
-  { label: "Noto Serif KR",    css: '"Noto Serif KR", "Batang", "Times New Roman", serif' },
+  { label: "신명중명조",        css: '"신명중명조", "바탕", serif' },
   { label: "IBM Plex Sans KR", css: "'IBM Plex Sans KR', sans-serif" },
   { label: "Noto Sans KR",     css: "'Noto Sans KR', sans-serif" },
   { label: "맑은 고딕",         css: "'Malgun Gothic', sans-serif" },

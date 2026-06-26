@@ -17,7 +17,7 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.16.3";
+} from "./state.js?v=0.16.4";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
