@@ -11,16 +11,16 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.1";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.2";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.17.1";
+} from "./state.js?v=0.17.2";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.17.1";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.1";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.1";
+import { circuitBodyPolygon } from "./render.js?v=0.17.2";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.2";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.2";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1116,7 +1116,10 @@ let _textEditor = null;     // the live capture <textarea>/<input>, or null
 let _textBox = null;        // unified floating text/formula editor container
 let _textPreview = null;
 let _textFormulaPanel = null;
-let _textDirectInput = null;
+let _textFontSelect = null;
+let _textSizeInput = null;
+let _textItalicInput = null;
+let _textBoldInput = null;
 let _textFormulaMode = false;
 let _textAnchor = null;     // world-space {x,y} of the text origin
 let _textCancelled = false; // set by ESC so blur doesn't double-commit
@@ -1247,6 +1250,12 @@ function _caretIndexFromPoint(clientX, clientY) {
 }
 
 const FORMULA_SYMBOLS = ["θ", "λ", "Δ", "μ", "π", "→", "←", "±", "×", "₀", "₁", "₂", "₃", "²", "³", "Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ"];
+const EDITOR_FONT_OPTIONS = [
+  { label: "평가원 명조", css: TEXT_FONTS[0]?.css || DEFAULT_TEXT_FONT },
+  { label: "기본 명조", css: "serif" },
+  { label: "수식", css: "'Times New Roman', serif" },
+  { label: "고딕", css: "'Malgun Gothic', sans-serif" },
+];
 
 function normalizeFormulaSource(src) {
   return String(src || "")
@@ -1280,118 +1289,139 @@ function _syncDraftFromUnifiedEditor() {
     s.draftText.rawSource = raw;
     s.draftText.contentMode = looksLikeFormula(raw) ? "formula" : "plain";
   });
-  if (_textDirectInput && document.activeElement !== _textDirectInput) _textDirectInput.value = raw;
   _refreshUnifiedPreview();
 }
 
-function _insertIntoUnifiedText(value) {
+function _insertIntoUnifiedText(value, cursorOffset = null) {
   if (!_textEditor) return;
   const start = _textEditor.selectionStart ?? _textEditor.value.length;
   const end = _textEditor.selectionEnd ?? _textEditor.value.length;
   _textEditor.value = _textEditor.value.slice(0, start) + value + _textEditor.value.slice(end);
-  const pos = start + value.length;
+  const pos = start + (cursorOffset == null ? value.length : cursorOffset);
   _textEditor.setSelectionRange(pos, pos);
   _textFormulaMode = true;
   _syncDraftFromUnifiedEditor();
   _textEditor.focus();
 }
 
-function _makeFormulaMini(fields, build) {
-  const box = document.createElement("div");
-  box.className = "formula-mini";
-  const inputs = {};
-  for (const name of fields) {
-    const label = document.createElement("label");
-    label.textContent = name;
-    const input = document.createElement("input");
-    input.type = "text";
-    input.spellcheck = false;
-    label.appendChild(input);
-    box.appendChild(label);
-    inputs[name] = input;
-  }
-  const button = document.createElement("button");
-  button.type = "button";
-  button.textContent = "삽입";
-  button.addEventListener("click", () => {
-    const values = Object.fromEntries(Object.entries(inputs).map(([k, input]) => [k, input.value.trim()]));
-    _insertIntoUnifiedText(build(values));
-    box.remove();
-  });
-  box.appendChild(button);
-  return box;
-}
-
-function _openFormulaMini(kind, host) {
-  host.querySelector(".formula-mini")?.remove();
-  if (kind === "frac") host.appendChild(_makeFormulaMini(["분자", "분모"], (v) => `frac{${v["분자"] || ""}}{${v["분모"] || ""}}`));
-  if (kind === "vec") host.appendChild(_makeFormulaMini(["기호"], (v) => `vec{${v["기호"] || "F"}}`));
-  if (kind === "sqrt") host.appendChild(_makeFormulaMini(["내용"], (v) => `sqrt{${v["내용"] || ""}}`));
+function _insertFormulaTemplate(template) {
+  const firstEmpty = template.indexOf("{}");
+  _insertIntoUnifiedText(template, firstEmpty >= 0 ? firstEmpty + 1 : null);
 }
 
 function _buildUnifiedFormulaPanel() {
   const panel = document.createElement("div");
   panel.className = "unified-formula-panel";
-  const tabs = document.createElement("div");
-  tabs.className = "formula-tabs";
-  const clickTab = document.createElement("button");
-  clickTab.type = "button"; clickTab.className = "formula-tab is-active"; clickTab.textContent = "클릭 입력";
-  const directTab = document.createElement("button");
-  directTab.type = "button"; directTab.className = "formula-tab"; directTab.textContent = "직접 입력";
-  tabs.append(clickTab, directTab);
-
-  const clickBody = document.createElement("div");
-  clickBody.className = "formula-tab-body";
   const structure = document.createElement("div");
   structure.className = "formula-palette-row";
   [
-    ["분수", () => _openFormulaMini("frac", clickBody)],
-    ["벡터", () => _openFormulaMini("vec", clickBody)],
-    ["루트", () => _openFormulaMini("sqrt", clickBody)],
+    ["분수", () => _insertFormulaTemplate("frac{}{}")],
+    ["벡터", () => _insertFormulaTemplate("vec{}")],
+    ["루트", () => _insertFormulaTemplate("sqrt{}")],
     ["아래첨자", () => _insertIntoUnifiedText("₀")],
     ["위첨자", () => _insertIntoUnifiedText("²")],
   ].forEach(([label, fn]) => structure.appendChild(_fxPaletteButton(label, fn)));
+
   const symbols = document.createElement("div");
   symbols.className = "formula-palette-row";
   FORMULA_SYMBOLS.forEach((sym) => symbols.appendChild(_fxPaletteButton(sym, () => _insertIntoUnifiedText(sym))));
-  clickBody.append(structure, symbols);
-
-  const directBody = document.createElement("div");
-  directBody.className = "formula-tab-body";
-  directBody.hidden = true;
-  _textDirectInput = document.createElement("textarea");
-  _textDirectInput.className = "formula-direct-input";
-  _textDirectInput.rows = 3;
-  _textDirectInput.spellcheck = false;
-  _textDirectInput.value = _textValue();
-  const apply = document.createElement("button");
-  apply.type = "button";
-  apply.className = "formula-apply-btn";
-  apply.textContent = "적용";
-  apply.addEventListener("click", () => {
-    _textEditor.value = _textDirectInput.value;
-    _textFormulaMode = true;
-    _syncDraftFromUnifiedEditor();
-    _textEditor.focus();
-  });
-  _textDirectInput.addEventListener("input", () => {
-    _textEditor.value = _textDirectInput.value;
-    _textFormulaMode = true;
-    _syncDraftFromUnifiedEditor();
-  });
-  directBody.append(_textDirectInput, apply);
-
-  function show(direct) {
-    clickTab.classList.toggle("is-active", !direct);
-    directTab.classList.toggle("is-active", direct);
-    clickBody.hidden = direct;
-    directBody.hidden = !direct;
-    if (direct) _textDirectInput.focus();
-  }
-  clickTab.addEventListener("click", () => show(false));
-  directTab.addEventListener("click", () => show(true));
-  panel.append(tabs, clickBody, directBody);
+  panel.append(structure, symbols);
   return panel;
+}
+
+function _buildUnifiedStyleControls() {
+  const controls = document.createElement("div");
+  controls.className = "unified-style-controls";
+
+  const fontLabel = document.createElement("label");
+  fontLabel.textContent = "글꼴";
+  _textFontSelect = document.createElement("select");
+  _textFontSelect.className = "unified-style-select";
+  EDITOR_FONT_OPTIONS.forEach((font) => {
+    const opt = document.createElement("option");
+    opt.value = font.css;
+    opt.textContent = font.label;
+    _textFontSelect.appendChild(opt);
+  });
+  fontLabel.appendChild(_textFontSelect);
+
+  const sizeLabel = document.createElement("label");
+  sizeLabel.textContent = "크기";
+  _textSizeInput = document.createElement("select");
+  _textSizeInput.className = "unified-style-size";
+  TEXT_SIZE_PRESETS.forEach((pt) => {
+    const opt = document.createElement("option");
+    opt.value = String(pt);
+    opt.textContent = String(pt);
+    _textSizeInput.appendChild(opt);
+  });
+  sizeLabel.appendChild(_textSizeInput);
+
+  _textItalicInput = document.createElement("button");
+  _textItalicInput.type = "button";
+  _textItalicInput.className = "unified-style-toggle";
+  _textItalicInput.textContent = "기울임";
+
+  _textBoldInput = document.createElement("button");
+  _textBoldInput.type = "button";
+  _textBoldInput.className = "unified-style-toggle";
+  _textBoldInput.textContent = "굵게";
+
+  controls.append(fontLabel, sizeLabel, _textItalicInput, _textBoldInput);
+  controls.addEventListener("mousedown", (e) => e.stopPropagation());
+
+  const applyStyle = () => {
+    _state.update((s) => {
+      if (!s.draftText) return;
+      s.draftText.fontFamily = _textFontSelect.value || DEFAULT_TEXT_FONT;
+      s.draftText.fontSize = ptToMm(Math.max(1, parseFloat(_textSizeInput.value) || mmToPt(DEFAULT_TEXT_SIZE_MM)));
+      s.draftText.italic = _textItalicInput.getAttribute("aria-pressed") === "true";
+      s.draftText.fontStyle = s.draftText.italic ? "italic" : "normal";
+      s.draftText.fontWeight = _textBoldInput.getAttribute("aria-pressed") === "true" ? "bold" : "normal";
+    });
+    _syncEditorFont();
+    _refreshUnifiedPreview();
+  };
+  _textFontSelect.addEventListener("change", applyStyle);
+  _textSizeInput.addEventListener("change", applyStyle);
+  _textItalicInput.addEventListener("click", () => {
+    _textItalicInput.setAttribute("aria-pressed", _textItalicInput.getAttribute("aria-pressed") !== "true");
+    applyStyle();
+  });
+  _textBoldInput.addEventListener("click", () => {
+    _textBoldInput.setAttribute("aria-pressed", _textBoldInput.getAttribute("aria-pressed") !== "true");
+    applyStyle();
+  });
+  return controls;
+}
+
+function _syncUnifiedStyleControls() {
+  const dt = _state.get().draftText;
+  if (!dt) return;
+  if (_textFontSelect) {
+    const value = dt.fontFamily || DEFAULT_TEXT_FONT;
+    const hasOption = Array.from(_textFontSelect.options).some((opt) => opt.value === value);
+    if (!hasOption) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = "현재 글꼴";
+      _textFontSelect.appendChild(opt);
+    }
+    _textFontSelect.value = value;
+  }
+  if (_textSizeInput) {
+    const pt = String(Math.round(mmToPt(dt.fontSize || DEFAULT_TEXT_SIZE_MM) * 10) / 10);
+    const hasOption = Array.from(_textSizeInput.options).some((opt) => opt.value === pt);
+    if (!hasOption) {
+      const opt = document.createElement("option");
+      opt.value = pt;
+      opt.textContent = pt;
+      _textSizeInput.appendChild(opt);
+    }
+    _textSizeInput.value = pt;
+  }
+  if (_textItalicInput) _textItalicInput.setAttribute("aria-pressed", dt.italic === true ? "true" : "false");
+  if (_textBoldInput) _textBoldInput.setAttribute("aria-pressed", (dt.fontWeight || "normal") === "bold" ? "true" : "false");
 }
 
 function _refreshUnifiedPreview() {
@@ -1399,32 +1429,66 @@ function _refreshUnifiedPreview() {
   const raw = _textValue();
   _textPreview.replaceChildren();
   if (!raw) return;
+  const dt = _state.get().draftText || {};
   if (!looksLikeFormula(raw)) {
     const plain = document.createElement("div");
     plain.className = "plain-preview";
+    plain.style.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
+    plain.style.fontSize = `${Math.max(10, mmToPt(dt.fontSize || DEFAULT_TEXT_SIZE_MM))}pt`;
+    plain.style.fontStyle = dt.italic === true ? "italic" : "normal";
+    plain.style.fontWeight = dt.fontWeight || "normal";
     plain.textContent = raw;
     _textPreview.appendChild(plain);
     return;
   }
-  const dt = _state.get().draftText || {};
-  const src = normalizeFormulaSource(raw);
-  const font = {
-    family: dt.fontFamily || DEFAULT_TEXT_FONT,
-    weight: dt.fontWeight || "normal",
-    style: dt.italic ? "italic" : "normal",
-  };
-  const m = measureFormula(src, dt.fontSize || DEFAULT_TEXT_SIZE_MM, font);
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("class", "formula-preview-svg");
-  svg.setAttribute("viewBox", `0 0 ${Math.max(m.w, 1)} ${Math.max(m.h, 1)}`);
-  svg.appendChild(renderFormula({
-    x: 0, y: 0, source: src,
-    fontSize: dt.fontSize || DEFAULT_TEXT_SIZE_MM,
-    fontFamily: dt.fontFamily || DEFAULT_TEXT_FONT,
-    fontWeight: dt.fontWeight || "normal",
-    italic: dt.italic === true,
-  }));
-  _textPreview.appendChild(svg);
+  try {
+    const src = normalizeFormulaSource(raw);
+    const font = {
+      family: dt.fontFamily || DEFAULT_TEXT_FONT,
+      weight: dt.fontWeight || "normal",
+      style: dt.italic ? "italic" : "normal",
+    };
+    const m = measureFormula(src, dt.fontSize || DEFAULT_TEXT_SIZE_MM, font);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("class", "formula-preview-svg");
+    svg.setAttribute("viewBox", `0 0 ${Math.max(m.w, 1)} ${Math.max(m.h, 1)}`);
+    svg.appendChild(renderFormula({
+      x: 0, y: 0, source: src,
+      fontSize: dt.fontSize || DEFAULT_TEXT_SIZE_MM,
+      fontFamily: dt.fontFamily || DEFAULT_TEXT_FONT,
+      fontWeight: dt.fontWeight || "normal",
+      italic: dt.italic === true,
+    }));
+    _textPreview.appendChild(svg);
+  } catch (err) {
+    const msg = document.createElement("div");
+    msg.className = "formula-preview-error";
+    msg.textContent = "수식을 미리볼 수 없습니다.";
+    _textPreview.appendChild(msg);
+  }
+}
+
+function _enableUnifiedEditorDrag(header) {
+  let drag = null;
+  header.addEventListener("mousedown", (e) => {
+    if (!_textBox || e.button !== 0) return;
+    e.preventDefault();
+    drag = {
+      x: e.clientX,
+      y: e.clientY,
+      left: parseFloat(_textBox.style.left) || 0,
+      top: parseFloat(_textBox.style.top) || 0,
+    };
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!drag || !_textBox) return;
+    const wrap = _svg.closest(".canvas-wrap");
+    const maxLeft = Math.max(0, wrap.clientWidth - _textBox.offsetWidth);
+    const maxTop = Math.max(0, wrap.clientHeight - _textBox.offsetHeight);
+    _textBox.style.left = Math.min(maxLeft, Math.max(0, drag.left + e.clientX - drag.x)) + "px";
+    _textBox.style.top = Math.min(maxTop, Math.max(0, drag.top + e.clientY - drag.y)) + "px";
+  });
+  window.addEventListener("mouseup", () => { drag = null; });
 }
 
 function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
@@ -1445,6 +1509,16 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
   const title = document.createElement("div");
   title.className = "unified-editor-title";
   title.textContent = "텍스트 입력";
+  _enableUnifiedEditorDrag(title);
+
+  const previewLabel = document.createElement("div");
+  previewLabel.className = "unified-preview-label";
+  previewLabel.textContent = "미리보기";
+  _textPreview = document.createElement("div");
+  _textPreview.className = "unified-preview";
+
+  const styleControls = _buildUnifiedStyleControls();
+
   const row = document.createElement("div");
   row.className = "unified-editor-row";
   _textEditor = document.createElement("input");
@@ -1453,24 +1527,9 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
   _textEditor.spellcheck = false;
   _textEditor.setAttribute("autocomplete", "off");
   _textEditor.value = draft.contentMode === "formula" ? (draft.source || draft.text || "") : (draft.text || prefill || "");
-  const formulaBtn = document.createElement("button");
-  formulaBtn.type = "button";
-  formulaBtn.className = "unified-formula-toggle";
-  formulaBtn.textContent = "수식";
-  formulaBtn.addEventListener("click", () => {
-    _textFormulaMode = true;
-    _textFormulaPanel.hidden = !_textFormulaPanel.hidden;
-    _syncDraftFromUnifiedEditor();
-  });
-  row.append(_textEditor, formulaBtn);
+  row.append(_textEditor);
 
-  const previewLabel = document.createElement("div");
-  previewLabel.className = "unified-preview-label";
-  previewLabel.textContent = "미리보기";
-  _textPreview = document.createElement("div");
-  _textPreview.className = "unified-preview";
   _textFormulaPanel = _buildUnifiedFormulaPanel();
-  _textFormulaPanel.hidden = !_textFormulaMode;
 
   const actions = document.createElement("div");
   actions.className = "unified-editor-actions";
@@ -1482,8 +1541,10 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
   ok.addEventListener("click", () => _commitText());
   actions.append(cancel, ok);
 
-  _textBox.append(title, row, previewLabel, _textPreview, _textFormulaPanel, actions);
+  _textBox.append(title, previewLabel, _textPreview, styleControls, row, _textFormulaPanel, actions);
   wrap.appendChild(_textBox);
+  _syncUnifiedStyleControls();
+  _syncEditorFont();
   _textEditor.focus();
   _textEditor.setSelectionRange(_textEditor.value.length, _textEditor.value.length);
   _textEditor.addEventListener("input", _syncDraftFromUnifiedEditor);
@@ -1633,7 +1694,10 @@ function _removeTextEditor() {
   }
   _textPreview = null;
   _textFormulaPanel = null;
-  _textDirectInput = null;
+  _textFontSelect = null;
+  _textSizeInput = null;
+  _textItalicInput = null;
+  _textBoldInput = null;
   if (_textEditor) {
     const el = _textEditor;
     _textEditor = null; // null first to prevent blur re-entrancy

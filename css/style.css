@@ -799,9 +799,9 @@ body {
   z-index: 220;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  width: min(360px, calc(100% - 24px));
-  padding: 10px;
+  gap: 6px;
+  width: min(330px, calc(100% - 24px));
+  padding: 8px;
   color: var(--text-primary);
   background: var(--bg-panel);
   border: 1px solid var(--border);
@@ -814,14 +814,20 @@ body {
   font-weight: 600;
   color: var(--text-label);
 }
+.unified-editor-title {
+  margin: -8px -8px 0;
+  padding: 8px;
+  cursor: move;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+}
 .unified-editor-row {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 .unified-text-input,
-.formula-direct-input,
-.formula-mini input {
+.unified-style-controls select {
   min-width: 0;
   color: var(--text-primary);
   background: var(--bg-canvas);
@@ -836,16 +842,13 @@ body {
   font: 13px/1.2 "IBM Plex Sans KR", sans-serif;
 }
 .unified-text-input:focus,
-.formula-direct-input:focus,
-.formula-mini input:focus {
+.unified-style-controls select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.22);
 }
-.unified-formula-toggle,
 .unified-editor-btn,
-.formula-tab,
-.formula-apply-btn,
-.formula-mini button {
+.unified-style-toggle,
+.formula-palette-btn {
   height: 30px;
   padding: 0 10px;
   color: var(--text-primary);
@@ -855,18 +858,16 @@ body {
   font: 12px/1 "IBM Plex Sans KR", sans-serif;
   cursor: pointer;
 }
-.unified-formula-toggle:hover,
 .unified-editor-btn:hover,
-.formula-tab:hover,
-.formula-apply-btn:hover,
-.formula-mini button:hover {
+.unified-style-toggle:hover,
+.formula-palette-btn:hover {
   background: var(--btn-tool-hover);
 }
 .unified-preview {
-  min-height: 44px;
-  max-height: 92px;
+  min-height: 40px;
+  max-height: 76px;
   overflow: auto;
-  padding: 8px;
+  padding: 6px 8px;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -879,67 +880,48 @@ body {
 }
 .formula-preview-svg {
   display: block;
-  width: 100%;
-  max-width: 260px;
-  height: 44px;
+  width: auto;
+  max-width: 100%;
+  height: 40px;
   overflow: visible;
 }
-.unified-formula-panel {
+.formula-preview-error {
+  color: #b42318;
+  font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
+}
+.unified-style-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 62px auto auto;
+  align-items: end;
+  gap: 6px;
+}
+.unified-style-controls label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-top: 2px;
-}
-.formula-tabs {
-  display: inline-flex;
-  align-self: flex-start;
   gap: 3px;
-  padding: 2px;
-  background: var(--bg-canvas);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
 }
-.formula-tab {
-  height: 24px;
-  border-color: transparent;
+.unified-style-controls select {
+  height: 28px;
+  padding: 0 6px;
+  font: 12px/1 "IBM Plex Sans KR", sans-serif;
 }
-.formula-tab.is-active {
+.unified-style-toggle {
+  height: 28px;
+  align-self: end;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.unified-style-toggle[aria-pressed="true"] {
   color: #fff;
   background: var(--c-main);
   border-color: var(--c-main);
 }
-.formula-tab-body {
+.unified-formula-panel {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-.formula-direct-input {
-  width: 100%;
-  padding: 7px;
-  resize: vertical;
-  font: 12px/1.35 "IBM Plex Mono", monospace;
-}
-.formula-mini {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: 5px;
-  padding: 6px;
-  background: var(--bg-canvas);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-.formula-mini label {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-.formula-mini input {
-  width: 74px;
-  height: 26px;
-  padding: 0 6px;
+  gap: 4px;
 }
 .unified-editor-actions {
   display: flex;

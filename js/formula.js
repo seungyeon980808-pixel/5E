@@ -22,7 +22,7 @@
  * source degrades to literal text rather than blanking the canvas.
  */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.17.1";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.17.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 // Glyph + rule ink. Mirrors renderText(), which always paints #0d1117 (text has
@@ -210,19 +210,20 @@ function rule(g, x1, y1, x2, y2, F) {
   ln.setAttribute("x1", x1); ln.setAttribute("y1", y1);
   ln.setAttribute("x2", x2); ln.setAttribute("y2", y2);
   ln.setAttribute("stroke", INK);
-  ln.setAttribute("stroke-width", F * 0.06);
+  ln.setAttribute("stroke-width", Math.max(F * 0.035, 0.08));
   ln.setAttribute("stroke-linecap", "round");
   g.appendChild(ln);
 }
 
 function layoutFrac(node, F, font) {
-  const num = layout(node.num, F, font);
-  const den = layout(node.den, F, font);
-  const pad = F * 0.14;
+  const partF = F * 0.88;
+  const num = layout(node.num, partF, font);
+  const den = layout(node.den, partF, font);
+  const pad = F * 0.08;
   const inner = Math.max(num.w, den.w);
   const w = inner + 2 * pad;
-  const axis = F * 0.30;  // fraction bar sits this far above the baseline
-  const gap = F * 0.14;   // clearance between bar and num/den
+  const axis = F * 0.22;  // fraction bar sits this far above the baseline
+  const gap = F * 0.08;   // compact clearance for small diagram labels
   const barRel = -axis;
   const numBaseRel = barRel - gap - num.descent;
   const denBaseRel = barRel + gap + den.ascent;
@@ -231,7 +232,7 @@ function layoutFrac(node, F, font) {
   return {
     w, ascent, descent,
     draw(g, x, baseY) {
-      rule(g, x, baseY + barRel, x + w, baseY + barRel, F);
+      rule(g, x + pad * 0.45, baseY + barRel, x + w - pad * 0.45, baseY + barRel, F);
       num.draw(g, x + pad + (inner - num.w) / 2, baseY + numBaseRel);
       den.draw(g, x + pad + (inner - den.w) / 2, baseY + denBaseRel);
     },
@@ -240,23 +241,26 @@ function layoutFrac(node, F, font) {
 
 function layoutVec(node, F, font) {
   const body = layout(node.body, F, font);
-  const w = body.w;
-  const gap = F * 0.06;
+  const overhang = Math.min(F * 0.05, Math.max(body.w * 0.08, F * 0.02));
+  const w = Math.max(body.w + overhang * 2, F * 0.32);
+  const gap = F * 0.025;
   const arrowRel = -(body.ascent + gap);
-  const ascent = body.ascent + gap + F * 0.16;
+  const ascent = body.ascent + gap + F * 0.10;
   return {
     w, ascent, descent: body.descent,
     draw(g, x, baseY) {
-      body.draw(g, x, baseY);
+      body.draw(g, x + (w - body.w) / 2, baseY);
       const y = baseY + arrowRel;
-      const head = F * 0.16;
+      const head = F * 0.10;
+      const start = x + overhang * 0.35;
+      const end = x + w - overhang * 0.35;
       const p = el("path");
       p.setAttribute("d",
-        `M ${x} ${y} L ${x + w} ${y} ` +
-        `M ${x + w - head} ${y - head * 0.7} L ${x + w} ${y} L ${x + w - head} ${y + head * 0.7}`);
+        `M ${start} ${y} L ${end} ${y} ` +
+        `M ${end - head} ${y - head * 0.55} L ${end} ${y} L ${end - head} ${y + head * 0.55}`);
       p.setAttribute("fill", "none");
       p.setAttribute("stroke", INK);
-      p.setAttribute("stroke-width", F * 0.05);
+      p.setAttribute("stroke-width", Math.max(F * 0.032, 0.07));
       p.setAttribute("stroke-linecap", "round");
       p.setAttribute("stroke-linejoin", "round");
       g.appendChild(p);
