@@ -1,10 +1,10 @@
-/* ===== TRANSFORM (DESIGN 짠3 select-tool MOVE + snapshot-based Undo/Redo) ===== */
+/* ===== TRANSFORM (DESIGN 吏? select-tool MOVE + snapshot-based Undo/Redo) ===== */
 //
 // Owns two concerns:
 //   1. Body-drag MOVE of the selected object (V tool only).
 //   2. Snapshot-based Undo/Redo engine (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y).
 //
-// Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN 짠9).
+// Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN 吏?).
 // Snapshot is captured at drag start; committed only if the pointer crossed a
 // distance threshold ??so a plain click never creates a useless undo entry.
 //
@@ -13,9 +13,9 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.17.7";
-import { resolveSnap } from "./snap.js?v=0.17.7";
-import { setSnapPreview } from "./render.js?v=0.17.7";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.17.8";
+import { resolveSnap } from "./snap.js?v=0.17.8";
+import { setSnapPreview } from "./render.js?v=0.17.8";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -229,10 +229,13 @@ function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   for (const o of objs) {
-    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
+      acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
+    } else if (o.type === "rightangle") {
+      const r = (o.size || 0) * 1.6;
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
@@ -251,7 +254,8 @@ function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
       obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
       obj.type === "image" ||
-      obj.type === "axes" || obj.type === "anglearc" || obj.type === "optics") {
+      obj.type === "axes" || obj.type === "anglearc" || obj.type === "rightangle" ||
+      obj.type === "optics" || obj.type === "apparatus") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
@@ -293,7 +297,7 @@ function snapLineEndpoint(anchor, point) {
 }
 
 function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
-  // anglearc: a single-DOF symbol — resizing scales the RADIUS, vertex anchored.
+  // anglearc: a single-DOF symbol ??resizing scales the RADIUS, vertex anchored.
   // Reuse the SAME per-handle box math on the arc's vertex-centered square bbox,
   // then map the resulting box size back to a radius (avg half-extent so every
   // handle, edge or corner, responds monotonically). Aspect lock is irrelevant.
@@ -311,7 +315,25 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
       case "sw": h += dy; w -= dx; break;
     }
     obj.radius = Math.max(MIN_SIZE, (w + h) / 4);
-    obj.x = orig.x; // vertex stays put — the circle grows/shrinks about it
+    obj.x = orig.x; // vertex stays put ??the circle grows/shrinks about it
+    obj.y = orig.y;
+    return;
+  }
+  if (obj.type === "rightangle") {
+    const s0 = orig.size || 0;
+    let w = 2 * s0, h = 2 * s0;
+    switch (handle) {
+      case "n":  h -= dy; break;
+      case "s":  h += dy; break;
+      case "w":  w -= dx; break;
+      case "e":  w += dx; break;
+      case "nw": h -= dy; w -= dx; break;
+      case "ne": h -= dy; w += dx; break;
+      case "se": h += dy; w += dx; break;
+      case "sw": h += dy; w -= dx; break;
+    }
+    obj.size = Math.max(MIN_SIZE, (w + h) / 4);
+    obj.x = orig.x;
     obj.y = orig.y;
     return;
   }
@@ -419,11 +441,15 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 
 /* ----- world bbox of one object (text uses its rendered <text> box) ----- */
 function objWorldBBox(o, svg) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
     const r = o.radius || 0;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "rightangle") {
+    const r = (o.size || 0) * 1.6;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "text") {
@@ -512,12 +538,15 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   for (const obj of objs) {
     const orig = origObjs[obj.id];
     if (!orig) continue;
-    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "axes" || orig.type === "optics") {
+    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "axes" || orig.type === "optics" || orig.type === "apparatus") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
     } else if (orig.type === "anglearc") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.radius = orig.radius * sx; // forced ratio: sx == sy
+    } else if (orig.type === "rightangle") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.size = orig.size * sx;
     } else if (orig.type === "text") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y;
@@ -734,7 +763,11 @@ export function initTransform(svg, state) {
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
-                  obj.startAngle = (obj.startAngle || 0) - 5; // screen-CW = math −
+                  obj.startAngle = (obj.startAngle || 0) - 5;
+                } else if (obj.type === "rightangle") {
+                  const c = rot(obj.x, obj.y);
+                  obj.x = c.x; obj.y = c.y;
+                  obj.angle = (obj.angle || 0) + 5;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
@@ -754,7 +787,8 @@ export function initTransform(svg, state) {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, 5); changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "optics"].includes(o.type)) return;
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
+            if (!["rect", "ellipse", "triangle", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -839,7 +873,8 @@ export function initTransform(svg, state) {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, -5); changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "optics"].includes(o.type)) return;
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
+            if (!["rect", "ellipse", "triangle", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });
@@ -982,7 +1017,7 @@ export function initTransform(svg, state) {
     const activeTool = state.get().activeTool;
     if (activeTool !== "V" && activeTool !== "rotate") return;
 
-    // Targeted state: block all transforms; only Shift+G / inspector "媛쒖껜 ?湲? allowed
+    // Targeted state: block all transforms; only Shift+G / inspector "揶쏆뮇猿???疫? allowed
     if (state.get().targetedId) return;
 
     // Handle drag: only active when exactly one object is selected
@@ -1164,8 +1199,18 @@ export function initTransform(svg, state) {
         return;
       }
 
-      // Normalize: rotating by 灌 about pivot P ??rotating by 灌 about center C + translation.
-      // new_center = rotate(orig_center, pivot, 灌); stored (x,y) = new_center ??(w/2, h/2).
+      if (_rotOrigObj.type === "rightangle") {
+        state.update((s) => {
+          const obj = s.objects.find((o) => o.id === _rotObjId);
+          if (!obj) return;
+          obj.angle = (_rotOrigObj.angle || 0) + deltaDeg;
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
+
+      // Normalize: rotating by ??about pivot P ??rotating by ??about center C + translation.
+      // new_center = rotate(orig_center, pivot, ??; stored (x,y) = new_center ??(w/2, h/2).
       const { x: x0, y: y0, w, h, rotation: a0 } = _rotOrigObj;
       const cx0 = x0 + w / 2, cy0 = y0 + h / 2;
       const deltaRad = deltaDeg * (Math.PI / 180);

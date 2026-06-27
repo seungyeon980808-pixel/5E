@@ -10,9 +10,9 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.17.7";
-import { screenToWorld } from "./viewport.js?v=0.17.7";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.17.7";
+import { rebuildGroups } from "./transform.js?v=0.17.8";
+import { screenToWorld } from "./viewport.js?v=0.17.8";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.17.8";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -48,6 +48,33 @@ function migrate(data) {
       if (next.type === "optics" && next.kind === "object_arrow") {
         next.dashLength = next.dashLength ?? 0;
         next.dashGap = next.dashGap ?? 0;
+      }
+      if (next.type === "anglearc") {
+        next.radius = next.radius ?? 14;
+        next.startAngle = next.startAngle ?? 0;
+        next.sweepAngle = next.sweepAngle ?? 60;
+      }
+      if (next.type === "rightangle") {
+        next.size = next.size ?? 6;
+        next.angle = next.angle ?? 0;
+        next.orientation = next.orientation ?? 1;
+      }
+      if (next.type === "apparatus") {
+        next.kind = next.kind ?? "wire";
+        next.x = next.x ?? 0;
+        next.y = next.y ?? 0;
+        next.w = next.w ?? 20;
+        next.h = next.h ?? 12;
+        next.rotation = next.rotation ?? 0;
+        if (next.kind === "wire") {
+          next.length = next.length ?? next.w ?? 24;
+          next.angle = next.angle ?? 0;
+          next.gap = next.gap ?? 1.2;
+        }
+        if (next.kind === "compass") next.needleAngle = next.needleAngle ?? -90;
+        if (next.kind === "pulley") next.variant = next.variant ?? "basic";
+        if (next.kind === "clamp") next.flipped = next.flipped ?? false;
+        if (next.kind === "scale") next.displayText = next.displayText ?? "0.99 N";
       }
       return next;
     }),

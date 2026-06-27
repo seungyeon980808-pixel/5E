@@ -11,16 +11,16 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.7";
+import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.8";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.17.7";
+} from "./state.js?v=0.17.8";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.17.7";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.7";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.7";
+import { circuitBodyPolygon } from "./render.js?v=0.17.8";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.8";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.8";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -52,6 +52,7 @@ let _idCounter = 0;
 // read these so a single CIRCUIT/OPTICS tool covers every variant.
 let _circuitElement = "resistor";
 let _opticsKind = "convex_lens";
+let _apparatusKind = "wire";
 const CIRCUIT_CAP_GAP_DEFAULT = 2; // capacitor plate gap default (mm); mirrors render.js
 
 // The UNIQUE id (data-symbol) of the library symbol currently armed, or null when
@@ -63,7 +64,7 @@ let _activeSymbolId = null;
 // Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
-const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC"]);
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "RIGHTANGLE"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -114,6 +115,7 @@ function setupButtons() {
 export function armSymbol(symbolId, tool, variant) {
   if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
+  if (tool === "APPARATUS") _apparatusKind = variant || "wire";
   _activeSymbolId = symbolId;
   setActiveTool(tool);
   syncButtons(_state.get().activeTool);
@@ -148,10 +150,21 @@ function setupKeyboard() {
     else if (key === "o") setActiveTool("O");
     else if (key === "y") setActiveTool("Y");
     else if (key === "l") setActiveTool("L");
-    else if (key === "p") setActiveTool("P");
+    // P previously armed polyline; assignment is now reserved for 점/Point.
+    else if (key === "p") activateSymbolShortcut("node", "P");
+    else if (key === "x") activateSymbolShortcut("axes", "X");
+    else if (key === "a") activateSymbolShortcut("anglearc", "A");
+    else if (key === "g" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+G");
+    else if (key === "g") activateSymbolShortcut("anglearc", "G");
     else if (key === "c") setActiveTool("C");
     else if (key === "t") setActiveTool("T");
   });
+}
+
+function activateSymbolShortcut(symbolId, shortcutLabel) {
+  const btn = document.querySelector(`[data-symbol="${symbolId}"]`);
+  if (btn) btn.click();
+  else console.warn(`[tools] shortcut ${shortcutLabel} could not find ${symbolId}`);
 }
 
 /* ===== SHAPE DRAWING (rect / ellipse / triangle ??one shared pipeline) ===== */
@@ -160,7 +173,7 @@ function setupKeyboard() {
 // through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
 // (makeShape branches on type). Line (L) and polyline (P) are click-to-click
 // instead ??see setupClickDrawing below.
-const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics" };
+const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus" };
 
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
@@ -487,7 +500,8 @@ function setupClickDrawing() {
     if (e.button !== 0) return;                  // left button only
     if (spaceHeld) return;                        // Space+click = pan, not draw
     const tool = _state.get().activeTool;
-    if (tool === "ARC") { handleArcClick(e); return; } // two-click anglearc placement
+    if (tool === "ARC") { handleArcClick(e); return; }
+    if (tool === "RIGHTANGLE") { handleRightAngleClick(e); return; }
     if (!CLICK_TOOLS[tool]) return;               // only L / P place points
     const vb = _state.get().viewBox;
     let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
@@ -512,7 +526,7 @@ function setupClickDrawing() {
     let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
     // Ctrl = 15° angle snap (line / polyline / circuit / arc). The preview uses the SAME
     // shared snapAngle helper as the commit path above, so they can never diverge.
-    if (e.ctrlKey && (clickTool === "L" || clickTool === "P" || clickTool === "CIRCUIT" || clickTool === "ARC") && draftPoints.length > 0) {
+    if (e.ctrlKey && (clickTool === "L" || clickTool === "P" || clickTool === "CIRCUIT" || clickTool === "ARC" || clickTool === "RIGHTANGLE") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     }
     mouseWorld = cur;
@@ -557,6 +571,7 @@ function snapAngle(anchor, cur) {
 function updateDraftPreview() {
   if (!clickTool || draftPoints.length === 0) return;
   if (clickTool === "ARC") { updateArcPreview(); return; }
+  if (clickTool === "RIGHTANGLE") { updateRightAnglePreview(); return; }
   if (clickTool === "CIRCUIT") {
     // Live preview: leads + body, rebuilt from p1 and the floating mouse (p2).
     const end = mouseWorld || draftPoints[0];
@@ -597,21 +612,43 @@ function commitCircuit() {
 function handleArcClick(e) {
   const vb = _state.get().viewBox;
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
+  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
   draftPoints.push(cur);
   clickTool = "ARC";
   mouseWorld = cur;
-  if (draftPoints.length >= 2) { commitArc(); return; }
+  if (draftPoints.length >= 3) { commitArc(); return; }
   updateArcPreview();
+}
+
+function mathAngleDeg(center, point) {
+  return Math.atan2(-(point.y - center.y), point.x - center.x) * 180 / Math.PI;
+}
+
+function snappedDeg(deg) {
+  return Math.round(deg / 15) * 15;
+}
+
+function normalizeSweep(deg) {
+  let v = deg;
+  while (v <= -180) v += 360;
+  while (v > 180) v -= 360;
+  return v;
 }
 
 // Build an anglearc draft from the vertex and a point on its start radius. Mirrors
 // the template's anglearc shape (templates.js) so the inspector works post-commit.
-function makeAngleArcDraft(vertex, point) {
+function makeAngleArcDraft(vertex, point, sweepPoint = null, ctrlKey = false) {
   const dx = point.x - vertex.x, dy = point.y - vertex.y;
   const radius = Math.hypot(dx, dy);
   // Math convention (+Y up): world y grows downward, so negate dy for atan2.
-  const startAngle = Math.atan2(-dy, dx) * 180 / Math.PI;
+  let startAngle = mathAngleDeg(vertex, point);
+  if (ctrlKey) startAngle = snappedDeg(startAngle);
+  let sweepAngle = 60;
+  if (sweepPoint) {
+    let endAngle = mathAngleDeg(vertex, sweepPoint);
+    if (ctrlKey) endAngle = snappedDeg(endAngle);
+    sweepAngle = normalizeSweep(endAngle - startAngle);
+  }
   return applyNewObjectStyleDefaults({
     id: null,                 // assigned on commit
     type: "anglearc",
@@ -619,7 +656,7 @@ function makeAngleArcDraft(vertex, point) {
     y: vertex.y,
     radius,
     startAngle,               // math convention (CCW positive, +Y up)
-    sweepAngle: 60,           // default opening (deg); refined via inspector/handles
+    sweepAngle,
     label: "θ",
     showLabel: true,
     strokeLevel: 0,           // 0 = black (DESIGN 2-2)
@@ -635,16 +672,71 @@ function makeAngleArcDraft(vertex, point) {
 function updateArcPreview() {
   if (draftPoints.length === 0) return;
   const v = draftPoints[0];
-  const m = mouseWorld || v;
-  _state.update((s) => { s.draft = makeAngleArcDraft(v, m); });
+  const start = draftPoints[1] || mouseWorld || v;
+  const sweep = draftPoints.length >= 2 ? (mouseWorld || start) : null;
+  _state.update((s) => { s.draft = makeAngleArcDraft(v, start, sweep); });
 }
 
 // Click 2 commits the arc through the shared store path (or discards a zero-radius
 // placement, exactly like a zero-length line is discarded).
 function commitArc() {
-  const arc = makeAngleArcDraft(draftPoints[0], draftPoints[1]);
+  const arc = makeAngleArcDraft(draftPoints[0], draftPoints[1], draftPoints[2]);
   if ((arc.radius || 0) < MIN_SIZE) { resetClickDraft(); return; }
   commitClickShape(arc);
+}
+
+function handleRightAngleClick(e) {
+  const vb = _state.get().viewBox;
+  let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
+  draftPoints.push(cur);
+  clickTool = "RIGHTANGLE";
+  mouseWorld = cur;
+  if (draftPoints.length >= 3) { commitRightAngle(); return; }
+  updateRightAnglePreview();
+}
+
+function makeRightAngleDraft(vertex, firstPoint, sidePoint = null, ctrlKey = false) {
+  const dx = firstPoint.x - vertex.x, dy = firstPoint.y - vertex.y;
+  const size = Math.max(MIN_SIZE, Math.hypot(dx, dy));
+  let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  if (ctrlKey) angle = snappedDeg(angle);
+  let orientation = 1;
+  if (sidePoint) {
+    const rad = angle * Math.PI / 180;
+    const ax = Math.cos(rad), ay = Math.sin(rad);
+    const bx = sidePoint.x - vertex.x, by = sidePoint.y - vertex.y;
+    orientation = (ax * by - ay * bx) >= 0 ? 1 : -1;
+  }
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "rightangle",
+    x: vertex.x,
+    y: vertex.y,
+    size,
+    angle,
+    orientation,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+function updateRightAnglePreview() {
+  if (draftPoints.length === 0) return;
+  const v = draftPoints[0];
+  const first = draftPoints[1] || mouseWorld || v;
+  const side = draftPoints.length >= 2 ? (mouseWorld || first) : null;
+  _state.update((s) => { s.draft = makeRightAngleDraft(v, first, side); });
+}
+
+function commitRightAngle() {
+  const marker = makeRightAngleDraft(draftPoints[0], draftPoints[1], draftPoints[2]);
+  if ((marker.size || 0) < MIN_SIZE) { resetClickDraft(); return; }
+  commitClickShape(marker);
 }
 
 // POLYLINE / CURVE: needs ?? vertices; otherwise the draft is discarded.
@@ -689,6 +781,7 @@ function isCommittable(shape) {
   if (shape.type === "line" || shape.type === "circuit") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
+  if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
   return shape.w >= MIN_SIZE && shape.h >= MIN_SIZE;
 }
 
@@ -704,7 +797,8 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
         o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "axes" &&
-        o.type !== "anglearc" && o.type !== "circuit" && o.type !== "optics") continue;
+        o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
+        o.type !== "optics" && o.type !== "apparatus") continue;
 
     if (o.type === "text" || o.type === "formula") {
       // Use the rendered SVG element's getBBox for an accurate hit area.
@@ -798,7 +892,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       // box == actual shape: outward-grown bbox containment (axes/optics select as
       // one indivisible object via the bounding box; same as rect)
       if (p.x >= o.x - margin && p.x <= o.x + o.w + margin &&
@@ -810,6 +904,13 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       // Selects as ONE indivisible object via its vertex-centered square bbox
       // (the transparent pie-sector body also makes the wedge a drag target).
       const r = o.radius || 0;
+      if (p.x >= o.x - r - margin && p.x <= o.x + r + margin &&
+          p.y >= o.y - r - margin && p.y <= o.y + r + margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "rightangle") {
+      const r = (o.size || 0) * 1.6;
       if (p.x >= o.x - r - margin && p.x <= o.x + r + margin &&
           p.y >= o.y - r - margin && p.y <= o.y + r + margin) return o.id;
       continue;
@@ -844,11 +945,15 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
     const r = o.radius || 0;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "rightangle") {
+    const r = (o.size || 0) * 1.6;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "line" || o.type === "circuit") {
@@ -954,6 +1059,38 @@ function makeShape(type, a, b) {
     // Center dashed-line option: convex/concave lenses only (default off).
     if (shape.kind === "convex_lens" || shape.kind === "concave_lens") {
       shape.centerLine = "none";
+    }
+  }
+  if (type === "apparatus") {
+    shape.kind = _apparatusKind || "wire";
+    shape.fillNone = true;
+    shape.label = "";
+    if (shape.kind === "wire") {
+      shape.length = Math.max(shape.w, 18);
+      shape.gap = 1.2;
+      shape.angle = 0;
+      shape.w = Math.max(shape.w, shape.length);
+      shape.h = Math.max(shape.h, 4);
+      shape.rotation = 0;
+    } else if (shape.kind === "compass") {
+      const size = Math.max(shape.w, shape.h, 12);
+      shape.w = size;
+      shape.h = size;
+      shape.needleAngle = -90;
+    } else if (shape.kind === "pulley") {
+      const size = Math.max(shape.w, shape.h, 14);
+      shape.w = size;
+      shape.h = size;
+      shape.variant = "basic";
+    } else if (shape.kind === "clamp") {
+      const size = Math.max(shape.w, shape.h, 20);
+      shape.w = size * 0.8;
+      shape.h = size;
+      shape.flipped = false;
+    } else if (shape.kind === "scale") {
+      shape.w = Math.max(shape.w, 24);
+      shape.h = Math.max(shape.h, 16);
+      shape.displayText = "0.99 N";
     }
   }
   return applyNewObjectStyleDefaults(shape);

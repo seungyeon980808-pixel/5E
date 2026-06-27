@@ -21,10 +21,10 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.17.7";
-import { armSymbol } from "./tools.js?v=0.17.7";
-import { renderObject } from "./render.js?v=0.17.7";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.7";
+import { state } from "./state.js?v=0.17.8";
+import { armSymbol } from "./tools.js?v=0.17.8";
+import { renderObject } from "./render.js?v=0.17.8";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.8";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -95,6 +95,33 @@ export const TEMPLATES = {
 
   /* ----- 회로: circuit elements — each arms the two-click CIRCUIT tool with a
    * specific element (tools.js makeCircuit reads _circuitElement). ----- */
+  rightangle: {
+    kind: "shape",
+    category: "공통",
+    label: "직각 표시",
+    keywords: ["직각", "right angle", "90", "marker"],
+    create: { tool: "RIGHTANGLE" },
+    make(at) {
+      return {
+        type: "rightangle",
+        x: at.x,
+        y: at.y,
+        size: 6,
+        angle: 0,
+        orientation: 1,
+        strokeLevel: 0,
+        strokeWidth: DEFAULT_STROKE_WIDTH,
+        locked: false,
+        positionLocked: false,
+      };
+    },
+  },
+
+  wire: { kind: "shape", category: "전자기학", label: "도선", keywords: ["도선", "전선", "wire", "conductor"], create: { tool: "APPARATUS", kind: "wire" } },
+  compass: { kind: "shape", category: "전자기학", label: "나침반", keywords: ["나침반", "compass", "needle", "magnetic"], create: { tool: "APPARATUS", kind: "compass" } },
+  clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
+  scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
+
   resistor:  { kind: "shape", category: "회로", label: "저항",     keywords: ["저항", "resistor", "옴", "ohm", "R"],            create: { tool: "CIRCUIT", element: "resistor" } },
   dc_source: { kind: "shape", category: "회로", label: "전지",     keywords: ["전지", "전원", "직류", "dc", "battery", "source"], create: { tool: "CIRCUIT", element: "dc_source" } },
   ac_source: { kind: "shape", category: "회로", label: "교류전원", keywords: ["교류", "ac", "전원", "source", "sine"],          create: { tool: "CIRCUIT", element: "ac_source" } },
@@ -120,7 +147,7 @@ export const TEMPLATES = {
 
   /* ----- 역학: pulley / supports / pivot / node / magnet — also arm the OPTICS
    * size-drag tool with a specific kind. ----- */
-  pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "OPTICS", kind: "pulley" } },
+  pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "APPARATUS", kind: "pulley" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
@@ -164,7 +191,7 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "회로", "광학", "역학"];
+const CATEGORY_ORDER = ["공통", "회로", "전자기학", "광학", "역학"];
 
 /* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
  *
@@ -177,6 +204,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_PX = 16;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
 const ICON_STROKE_PX = 1.1;  // target on-screen stroke weight (≈ the base-tool icons)
 const CIRCUIT_PALETTE_LABELS = { resistor: "R", inductor: "L", capacitor: "C", voltmeter: "V", ammeter: "A" };
+const SHORTCUT_LABELS = { axes: "X", anglearc: "A / G", rightangle: "Shift+G" };
 
 // Representative bounding boxes (world mm) per OPTICS kind — only drives the icon's
 // aspect ratio; the viewBox auto-fits afterwards. fillNone keeps shapes hollow.
@@ -196,6 +224,14 @@ const OPTICS_ICON_BOX = {
   bar_magnet:     { w: 26, h: 12 },
 };
 
+const APPARATUS_ICON_BOX = {
+  wire: { w: 26, h: 6 },
+  compass: { w: 18, h: 18 },
+  pulley: { w: 18, h: 18 },
+  clamp: { w: 18, h: 24 },
+  scale: { w: 26, h: 18 },
+};
+
 // Build the data object that the REAL renderer turns into the icon.
 function iconSampleObject(id, def) {
   // axes + anglearc carry a make() → reuse the real geometry verbatim.
@@ -205,6 +241,10 @@ function iconSampleObject(id, def) {
       o.showTicks = false;
       o.labelX = "";
       o.labelY = "";
+    }
+    if (o.type === "anglearc") {
+      o.label = "θ";
+      o.showLabel = true;
     }
     return o;
   }
@@ -224,6 +264,20 @@ function iconSampleObject(id, def) {
       x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
       strokeLevel: 0, strokeWidth: 0.6, showLabel: false, fillNone: true,
     };
+  }
+  if (c.tool === "APPARATUS") {
+    const b = APPARATUS_ICON_BOX[c.kind] || { w: 20, h: 16 };
+    const sample = {
+      type: "apparatus", kind: c.kind,
+      x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
+      strokeLevel: 0, strokeWidth: 0.6, fillNone: true,
+    };
+    if (c.kind === "wire") Object.assign(sample, { length: 24, gap: 1.4, angle: -18 });
+    if (c.kind === "compass") sample.needleAngle = -90;
+    if (c.kind === "pulley") sample.variant = "basic";
+    if (c.kind === "clamp") sample.flipped = false;
+    if (c.kind === "scale") sample.displayText = "0.99 N";
+    return sample;
   }
   return null;
 }
@@ -252,6 +306,15 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
   svg.setAttribute("class", "tool-ico");
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+  if (id === "anglearc") {
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>' +
+      '<text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text>';
+    return svg;
+  }
 
   const obj = iconSampleObject(id, def);
   if (!obj) return svg;
@@ -283,7 +346,7 @@ function makeSymbolButton(id, def, pending) {
   btn.className = "tool-btn";             // square icon button (reuses active styling)
   btn.type = "button";
   btn.dataset.symbol = id;               // UNIQUE per-object id — drives the single-highlight fix
-  btn.title = def.label;                 // name on hover ONLY (tooltip), never inside the button
+  btn.title = SHORTCUT_LABELS[id] ? `${def.label} (${SHORTCUT_LABELS[id]})` : def.label;
 
   const kbd = document.createElement("kbd");
   const label = CIRCUIT_PALETTE_LABELS[id];

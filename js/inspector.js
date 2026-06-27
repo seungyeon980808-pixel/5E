@@ -1,12 +1,12 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.17.7";
-import { openFontModalForSelection } from "./tools.js?v=0.17.7";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.17.8";
+import { openFontModalForSelection } from "./tools.js?v=0.17.8";
 import {
   getObjectStyleMode,
   prepareObjectStyleModeSwitch,
   resolveObjectStyle,
-} from "./style-mode.js?v=0.17.7";
+} from "./style-mode.js?v=0.17.8";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1173,6 +1173,10 @@ export function initInspector(state) {
         s2.undoStack.push(snap);
         s2.redoStack = [];
         o[prop] = next;
+        if (o.type === "apparatus" && o.kind === "wire") {
+          if (prop === "length") o.w = Math.max(next, 1);
+          if (prop === "gap") o.h = Math.max(next * 3, 3);
+        }
       });
     }
 
@@ -1485,6 +1489,121 @@ export function initInspector(state) {
   }
   const term1 = makeTermRow("단자1", 0);
   const term2 = makeTermRow("단자2", 1);
+
+  const raSizeF = makePosRow("크기", "size", "0.1");
+  const raAngleF = makePosRow("각도", "angle", "1");
+  const raDirRow = document.createElement("div");
+  raDirRow.className = "insp-row";
+  const raDirLbl = document.createElement("label");
+  raDirLbl.className = "insp-field-label";
+  raDirLbl.textContent = "방향";
+  const raDirSel = document.createElement("select");
+  raDirSel.className = "insp-input";
+  [["1", "시계반대"], ["-1", "시계"]].forEach(([value, label]) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    raDirSel.appendChild(opt);
+  });
+  raDirRow.appendChild(raDirLbl);
+  raDirRow.appendChild(raDirSel);
+  sec3Body.appendChild(raSizeF.el);
+  sec3Body.appendChild(raAngleF.el);
+  sec3Body.appendChild(raDirRow);
+
+  function commitSelectedObject(apply) {
+    const s = state.get();
+    if (!(s.selectedIds || []).length) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((item) => item.id === (s2.selectedIds || [])[0]);
+      if (!o || o.locked) return;
+      if (!apply(o)) return;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  }
+  raDirSel.addEventListener("change", () => {
+    const next = parseInt(raDirSel.value, 10) || 1;
+    commitSelectedObject((o) => {
+      if (o.type !== "rightangle" || (o.orientation ?? 1) === next) return false;
+      o.orientation = next;
+      return true;
+    });
+  });
+
+  const appLengthF = makePosRow("길이", "length", "0.1");
+  const appAngleF = makePosRow("각도", "angle", "1");
+  const appGapF = makePosRow("간격", "gap", "0.1");
+  const appNeedleF = makePosRow("방향각", "needleAngle", "1");
+  sec3Body.appendChild(appLengthF.el);
+  sec3Body.appendChild(appAngleF.el);
+  sec3Body.appendChild(appGapF.el);
+  sec3Body.appendChild(appNeedleF.el);
+
+  const pulleyVariantRow = document.createElement("div");
+  pulleyVariantRow.className = "insp-row";
+  const pulleyVariantLbl = document.createElement("label");
+  pulleyVariantLbl.className = "insp-field-label";
+  pulleyVariantLbl.textContent = "형태";
+  const pulleyVariantSel = document.createElement("select");
+  pulleyVariantSel.className = "insp-input";
+  [["basic", "기본형"], ["simple", "단순형"]].forEach(([value, label]) => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+    pulleyVariantSel.appendChild(opt);
+  });
+  pulleyVariantRow.appendChild(pulleyVariantLbl);
+  pulleyVariantRow.appendChild(pulleyVariantSel);
+  sec3Body.appendChild(pulleyVariantRow);
+  pulleyVariantSel.addEventListener("change", () => {
+    commitSelectedObject((o) => {
+      if (o.type !== "apparatus" || o.kind !== "pulley" || (o.variant || "basic") === pulleyVariantSel.value) return false;
+      o.variant = pulleyVariantSel.value;
+      return true;
+    });
+  });
+
+  const clampFlipRow = document.createElement("div");
+  clampFlipRow.className = "insp-row";
+  const clampFlipCb = document.createElement("input");
+  clampFlipCb.type = "checkbox";
+  clampFlipCb.className = "insp-cb";
+  const clampFlipLbl = document.createElement("label");
+  clampFlipLbl.className = "insp-field-label";
+  clampFlipLbl.textContent = "좌우 반전";
+  clampFlipRow.appendChild(clampFlipCb);
+  clampFlipRow.appendChild(clampFlipLbl);
+  sec3Body.appendChild(clampFlipRow);
+  clampFlipCb.addEventListener("change", () => {
+    const next = clampFlipCb.checked;
+    commitSelectedObject((o) => {
+      if (o.type !== "apparatus" || o.kind !== "clamp" || !!o.flipped === next) return false;
+      o.flipped = next;
+      return true;
+    });
+  });
+
+  const scaleTextRow = document.createElement("div");
+  scaleTextRow.className = "insp-row";
+  const scaleTextLbl = document.createElement("label");
+  scaleTextLbl.className = "insp-field-label";
+  scaleTextLbl.textContent = "표시값";
+  const scaleTextInp = document.createElement("input");
+  scaleTextInp.type = "text";
+  scaleTextInp.className = "insp-input";
+  scaleTextRow.appendChild(scaleTextLbl);
+  scaleTextRow.appendChild(scaleTextInp);
+  sec3Body.appendChild(scaleTextRow);
+  scaleTextInp.addEventListener("keydown", (e) => { if (e.key === "Enter") scaleTextInp.blur(); });
+  scaleTextInp.addEventListener("blur", () => {
+    commitSelectedObject((o) => {
+      if (o.type !== "apparatus" || o.kind !== "scale" || (o.displayText ?? "") === scaleTextInp.value) return false;
+      o.displayText = scaleTextInp.value;
+      return true;
+    });
+  });
 
   const sec3 = makeSection("크기·위치", sec3Body);
   contentEl.appendChild(sec3);
@@ -1854,6 +1973,16 @@ export function initInspector(state) {
       axisLabelXRow.row.style.display = "none";
       axisLabelYRow.row.style.display = "none";
       tickRow.style.display = "none";
+      raSizeF.el.style.display = "none";
+      raAngleF.el.style.display = "none";
+      raDirRow.style.display = "none";
+      appLengthF.el.style.display = "none";
+      appAngleF.el.style.display = "none";
+      appGapF.el.style.display = "none";
+      appNeedleF.el.style.display = "none";
+      pulleyVariantRow.style.display = "none";
+      clampFlipRow.style.display = "none";
+      scaleTextRow.style.display = "none";
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
@@ -2058,8 +2187,11 @@ export function initInspector(state) {
     // anglearc (X/Y + radius/startAngle/sweepAngle in math convention, CCW +).
     // Optics is a branch-A box (X/Y/W/H/rotation), like rect + axes.
     const isOptics = obj.type === "optics";
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics;
+    const isApparatus = obj.type === "apparatus";
+    const appKind = isApparatus ? (obj.kind || "wire") : null;
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus;
     const isArc = obj.type === "anglearc";
+    const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";
     // Circuit element variants: capacitor adds 간격; diode swaps the single 라벨 for
     // two terminal labels. Everything else uses the single 라벨 row.
@@ -2069,14 +2201,24 @@ export function initInspector(state) {
     const hasCircuitHeight = isCircuit && CIRCUIT_HEIGHT_ELEMENTS.has(circElem);
     const isAxes = obj.type === "axes";
     const axisVariant = isAxes ? (obj.axisVariant || "cross") : null;
-    sec3.style.display = (isShape || isArc || isCircuit) ? "" : "none";
+    sec3.style.display = (isShape || isArc || isRightAngle || isCircuit) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
     // radius + start/sweep angle; circuit (two terminals) hides the box rows.
     xyPair.style.display  = isCircuit ? "none" : "flex";
-    whPair.style.display  = (isArc || isCircuit) ? "none" : "flex";
-    rotF.el.style.display = (isArc || isCircuit) ? "none" : "";
+    whPair.style.display  = (isArc || isRightAngle || isCircuit) ? "none" : "flex";
+    rotF.el.style.display = (isArc || isRightAngle || isCircuit) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
     arcPair.style.display = isArc ? "flex" : "none";
+    raSizeF.el.style.display = isRightAngle ? "" : "none";
+    raAngleF.el.style.display = isRightAngle ? "" : "none";
+    raDirRow.style.display = isRightAngle ? "" : "none";
+    appLengthF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
+    appAngleF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
+    appGapF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
+    appNeedleF.el.style.display = isApparatus && appKind === "compass" ? "" : "none";
+    pulleyVariantRow.style.display = isApparatus && appKind === "pulley" ? "" : "none";
+    clampFlipRow.style.display = isApparatus && appKind === "clamp" ? "" : "none";
+    scaleTextRow.style.display = isApparatus && appKind === "scale" ? "" : "none";
     // Single 라벨 row: arc, optics, and all circuits EXCEPT diode (which uses 단자1/2).
     labelRow.style.display = (isArc || isOptics || (isCircuit && !isDiode)) ? "" : "none";
     showLabelRow.style.display = isOptics ? "" : "none";
@@ -2106,6 +2248,24 @@ export function initInspector(state) {
       saF.inp.value   = (obj.startAngle ?? 0).toFixed(1);
       swF.inp.value   = (obj.sweepAngle ?? 0).toFixed(1);
       labelInp.value  = obj.label ?? "";
+    }
+    if (isRightAngle) {
+      xF.inp.value = (obj.x ?? 0).toFixed(2);
+      yF.inp.value = (-(obj.y ?? 0)).toFixed(2);
+      raSizeF.inp.value = (obj.size ?? 0).toFixed(2);
+      raAngleF.inp.value = (obj.angle ?? 0).toFixed(1);
+      raDirSel.value = String((obj.orientation ?? 1) >= 0 ? 1 : -1);
+    }
+    if (isApparatus) {
+      if (appKind === "wire") {
+        if (document.activeElement !== appLengthF.inp) appLengthF.inp.value = (obj.length ?? obj.w ?? 0).toFixed(2);
+        if (document.activeElement !== appAngleF.inp) appAngleF.inp.value = (obj.angle ?? 0).toFixed(1);
+        if (document.activeElement !== appGapF.inp) appGapF.inp.value = (obj.gap ?? 1.2).toFixed(2);
+      }
+      if (appKind === "compass" && document.activeElement !== appNeedleF.inp) appNeedleF.inp.value = (obj.needleAngle ?? -90).toFixed(1);
+      if (appKind === "pulley") pulleyVariantSel.value = obj.variant || "basic";
+      if (appKind === "clamp") clampFlipCb.checked = !!obj.flipped;
+      if (appKind === "scale" && document.activeElement !== scaleTextInp) scaleTextInp.value = obj.displayText ?? "0.99 N";
     }
     if ((isCircuit && !isDiode || isOptics) && document.activeElement !== labelInp) {
       labelInp.value  = obj.label ?? "";
@@ -2158,6 +2318,16 @@ export function initInspector(state) {
     axisLabelYRow.inp.disabled = !!obj.locked;
     tickInp.disabled = !!obj.locked;
     centerLineSel.disabled = !!obj.locked;
+    raSizeF.inp.disabled = !!obj.locked;
+    raAngleF.inp.disabled = !!obj.locked;
+    raDirSel.disabled = !!obj.locked;
+    appLengthF.inp.disabled = !!obj.locked;
+    appAngleF.inp.disabled = !!obj.locked;
+    appGapF.inp.disabled = !!obj.locked;
+    appNeedleF.inp.disabled = !!obj.locked;
+    pulleyVariantSel.disabled = !!obj.locked;
+    clampFlipCb.disabled = !!obj.locked;
+    scaleTextInp.disabled = !!obj.locked;
     Object.values(axisVarBtns).forEach((btn) => { btn.disabled = !!obj.locked; });
     setStyleControlsDisabled(styleDisabled, fn, !!obj.locked);
   }

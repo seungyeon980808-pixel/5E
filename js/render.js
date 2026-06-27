@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.17.7";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.7";
-import { resolveObjectStyle } from "./style-mode.js?v=0.17.7";
-import { renderFormula } from "./formula.js?v=0.17.7";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.17.8";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.8";
+import { resolveObjectStyle } from "./style-mode.js?v=0.17.8";
+import { renderFormula } from "./formula.js?v=0.17.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -156,6 +156,20 @@ export function render(state) {
       if (topEnd > vb.y) addDragZone(guide.position, vb.y, guide.position, topEnd);
       if (bottomStart < vb.y + vb.h) {
         addDragZone(guide.position, bottomStart, guide.position, vb.y + vb.h);
+      }
+    } else if (sel.type === "rightangle") {
+      const _bb = singleObjBBox(sel, scene);
+      if (_bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", _bb.x);
+        box.setAttribute("y", _bb.y);
+        box.setAttribute("width", _bb.w);
+        box.setAttribute("height", _bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        scene.appendChild(box);
       }
     } else {
       const leftEnd = Math.min(-_abW / 2, vb.x + vb.w);
@@ -389,7 +403,7 @@ export function render(state) {
     // outline, so draw a dashed rectangle guide spanning the drag bounds first.
     // (rect's own preview already IS that rectangle; the line has no bbox ??it
     // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "circuit") {
+    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit") {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -591,15 +605,42 @@ function makeHitTwin(obj) {
   } else if (obj.type === "curve" && obj.closed !== true) {
     twin = document.createElementNS(SVG_NS, "path");
     twin.setAttribute("d", catmullRomPath(obj.points || []));
+  } else if (obj.type === "rect" || obj.type === "ellipse" || obj.type === "triangle" ||
+             obj.type === "image" || obj.type === "axes" || obj.type === "optics" ||
+             obj.type === "apparatus") {
+    twin = document.createElementNS(SVG_NS, "rect");
+    twin.setAttribute("x", obj.x);
+    twin.setAttribute("y", obj.y);
+    twin.setAttribute("width", obj.w);
+    twin.setAttribute("height", obj.h);
+    if (obj.rotation) {
+      const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+      twin.setAttribute("transform", `rotate(${obj.rotation} ${cx} ${cy})`);
+    }
+  } else if (obj.type === "anglearc") {
+    const r = obj.radius || 0;
+    twin = document.createElementNS(SVG_NS, "rect");
+    twin.setAttribute("x", obj.x - r);
+    twin.setAttribute("y", obj.y - r);
+    twin.setAttribute("width", r * 2);
+    twin.setAttribute("height", r * 2);
+  } else if (obj.type === "rightangle") {
+    const r = (obj.size || 0) * 1.6;
+    twin = document.createElementNS(SVG_NS, "rect");
+    twin.setAttribute("x", obj.x - r);
+    twin.setAttribute("y", obj.y - r);
+    twin.setAttribute("width", r * 2);
+    twin.setAttribute("height", r * 2);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
   }
-  twin.setAttribute("fill", "none");
+  const isRectTwin = twin.tagName.toLowerCase() === "rect";
+  twin.setAttribute("fill", isRectTwin ? "transparent" : "none");
   twin.setAttribute("stroke", "transparent");
   twin.setAttribute("stroke-width", HIT_PX / getZoom()); // zoom-invariant screen px
   twin.setAttribute("stroke-linecap", "round");
   twin.setAttribute("stroke-linejoin", "round");
-  twin.setAttribute("pointer-events", "stroke"); // hittable even though transparent
+  twin.setAttribute("pointer-events", isRectTwin ? "all" : "stroke");
   twin.style.cursor = "pointer";
   if (obj.id) twin.dataset.id = obj.id;
   twin.dataset.ui = "hit-twin";
@@ -634,10 +675,14 @@ export function renderObject(obj) {
       return renderAxes(obj);
     case "anglearc":
       return renderAngleArc(obj);
+    case "rightangle":
+      return renderRightAngle(obj);
     case "circuit":
       return renderCircuit(obj);
     case "optics":
       return renderOptics(obj);
+    case "apparatus":
+      return renderApparatus(obj);
     default:
       return null;
   }
@@ -1306,6 +1351,175 @@ function renderAngleArc(obj) {
   return g;
 }
 
+function renderRightAngle(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+  const size = Math.max(obj.size || 4, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const side = (obj.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy * side, vy = ux * side;
+  const p0 = { x: obj.x, y: obj.y };
+  const p1 = { x: p0.x + ux * size, y: p0.y + uy * size };
+  const p2 = { x: p1.x + vx * size, y: p1.y + vy * size };
+  const p3 = { x: p0.x + vx * size, y: p0.y + vy * size };
+
+  const body = document.createElementNS(SVG_NS, "polygon");
+  body.setAttribute("points", `${p0.x},${p0.y} ${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+  body.setAttribute("fill", "transparent");
+  body.setAttribute("stroke", "none");
+  g.appendChild(body);
+
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", color);
+  path.setAttribute("stroke-width", sw);
+  g.appendChild(path);
+  return g;
+}
+
+function renderApparatus(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", obj.x);
+  body.setAttribute("y", obj.y);
+  body.setAttribute("width", obj.w);
+  body.setAttribute("height", obj.h);
+  body.setAttribute("fill", "transparent");
+  g.appendChild(body);
+
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+  const kind = obj.kind || "wire";
+  if (kind === "wire") drawWire(g, obj, sw, color);
+  else if (kind === "compass") drawCompass(g, obj, sw, color);
+  else if (kind === "pulley") drawPulley(g, obj, sw, color);
+  else if (kind === "clamp") drawClamp(g, obj, sw, color);
+  else if (kind === "scale") drawScale(g, obj, sw, color);
+
+  const rot = obj.rotation ?? 0;
+  if (rot) {
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
+  }
+  return g;
+}
+
+function drawWire(g, obj, sw, color) {
+  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+  const length = Math.max(obj.length || obj.w || 20, 1);
+  const gap = Math.max(obj.gap || 1.2, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const px = -uy, py = ux;
+  for (const off of [-gap / 2, gap / 2]) {
+    oLine(g,
+      cx - ux * length / 2 + px * off, cy - uy * length / 2 + py * off,
+      cx + ux * length / 2 + px * off, cy + uy * length / 2 + py * off,
+      sw, color);
+  }
+}
+
+function drawCompass(g, obj, sw, color) {
+  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+  const r = Math.min(obj.w, obj.h) / 2 * 0.86;
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+  c.setAttribute("fill", "none"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+  g.appendChild(c);
+  const deg = obj.needleAngle ?? -90;
+  const rad = deg * Math.PI / 180;
+  const ux = Math.cos(rad), uy = Math.sin(rad);
+  const tip = { x: cx + ux * r * 0.7, y: cy + uy * r * 0.7 };
+  const tail = { x: cx - ux * r * 0.45, y: cy - uy * r * 0.45 };
+  oLine(g, tail.x, tail.y, tip.x, tip.y, sw, color);
+  g.appendChild(makeArrowHead(tip.x, tip.y, ux, uy, sw, color));
+  oDot(g, cx, cy, Math.max(r * 0.08, 0.35), color);
+}
+
+function drawPulley(g, obj, sw, color) {
+  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+  const r = Math.min(obj.w, obj.h) * 0.36;
+  const variant = obj.variant || "basic";
+  const outer = document.createElementNS(SVG_NS, "circle");
+  outer.setAttribute("cx", cx); outer.setAttribute("cy", cy); outer.setAttribute("r", r);
+  outer.setAttribute("fill", "none"); outer.setAttribute("stroke", color); outer.setAttribute("stroke-width", sw);
+  g.appendChild(outer);
+  if (variant !== "simple") {
+    const inner = document.createElementNS(SVG_NS, "circle");
+    inner.setAttribute("cx", cx); inner.setAttribute("cy", cy); inner.setAttribute("r", r * 0.72);
+    inner.setAttribute("fill", "none"); inner.setAttribute("stroke", color); inner.setAttribute("stroke-width", sw * 0.8);
+    g.appendChild(inner);
+    oLine(g, cx, obj.y + obj.h * 0.08, cx, cy - r, sw, color);
+    oLine(g, cx - r * 0.38, obj.y + obj.h * 0.2, cx + r * 0.38, obj.y + obj.h * 0.2, sw, color);
+  } else {
+    oLine(g, cx, obj.y + obj.h * 0.12, cx, cy - r, sw, color);
+  }
+  oDot(g, cx, cy, Math.max(r * 0.11, 0.35), color);
+}
+
+function drawClamp(g, obj, sw, color) {
+  const left = obj.x, top = obj.y, w = obj.w, h = obj.h;
+  const dir = obj.flipped ? -1 : 1;
+  const standX = left + (obj.flipped ? w * 0.72 : w * 0.28);
+  const rodY = top + h * 0.36;
+  const rodEnd = standX + dir * w * 0.45;
+  oLine(g, standX, top + h * 0.08, standX, top + h * 0.92, sw, color);
+  oLine(g, standX, rodY, rodEnd, rodY, sw, color);
+  const bw = w * 0.18, bh = h * 0.14;
+  const block = document.createElementNS(SVG_NS, "rect");
+  block.setAttribute("x", standX - bw / 2);
+  block.setAttribute("y", rodY - bh / 2);
+  block.setAttribute("width", bw);
+  block.setAttribute("height", bh);
+  block.setAttribute("fill", "none");
+  block.setAttribute("stroke", color);
+  block.setAttribute("stroke-width", sw);
+  g.appendChild(block);
+  oDot(g, standX - dir * bw * 0.65, rodY, Math.max(bh * 0.18, 0.35), color);
+  oLine(g, standX - w * 0.18, top + h * 0.92, standX + w * 0.18, top + h * 0.92, sw, color);
+}
+
+function drawScale(g, obj, sw, color) {
+  const x = obj.x, y = obj.y, w = obj.w, h = obj.h;
+  const top = y + h * 0.12;
+  const platform = document.createElementNS(SVG_NS, "rect");
+  platform.setAttribute("x", x + w * 0.18);
+  platform.setAttribute("y", top);
+  platform.setAttribute("width", w * 0.64);
+  platform.setAttribute("height", h * 0.18);
+  platform.setAttribute("fill", "none");
+  platform.setAttribute("stroke", color);
+  platform.setAttribute("stroke-width", sw);
+  g.appendChild(platform);
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", x + w * 0.08);
+  body.setAttribute("y", y + h * 0.34);
+  body.setAttribute("width", w * 0.84);
+  body.setAttribute("height", h * 0.5);
+  body.setAttribute("rx", Math.min(w, h) * 0.04);
+  body.setAttribute("fill", "none");
+  body.setAttribute("stroke", color);
+  body.setAttribute("stroke-width", sw);
+  g.appendChild(body);
+  const display = document.createElementNS(SVG_NS, "rect");
+  display.setAttribute("x", x + w * 0.18);
+  display.setAttribute("y", y + h * 0.48);
+  display.setAttribute("width", w * 0.42);
+  display.setAttribute("height", h * 0.18);
+  display.setAttribute("fill", "none");
+  display.setAttribute("stroke", color);
+  display.setAttribute("stroke-width", sw * 0.8);
+  g.appendChild(display);
+  cText(g, x + w * 0.39, y + h * 0.57, obj.displayText || "0.99 N", Math.min(w * 0.11, h * 0.13), color, obj.fontFamily || DEFAULT_TEXT_FONT);
+  oDot(g, x + w * 0.7, y + h * 0.56, h * 0.045, color);
+  oDot(g, x + w * 0.8, y + h * 0.56, h * 0.045, color);
+}
+
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *
  * CORE INVARIANT — symmetric leads: the element BODY is always centered on the
@@ -1951,7 +2165,7 @@ export function makeFillPattern(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -1971,6 +2185,10 @@ export function singleObjBBox(o, scene) {
   // anglearc has no x/y/w/h — its box is the vertex-centered square of radius r.
   if (o.type === "anglearc") {
     const r = o.radius || 0;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "rightangle") {
+    const r = (o.size || 0) * 1.6;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "text" || o.type === "formula") {
@@ -2048,12 +2266,13 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedPoly  = sel.type === "polyline" && sel.closed === true;
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || _anglearc || _closedPoly || _closedCurve) {
+  const _rightangle = sel.type === "rightangle";
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).
     let x, y, w, h, deg;
-    if (_closedPoly || _closedCurve || _anglearc) {
+    if (_closedPoly || _closedCurve || _anglearc || _rightangle) {
       const bb = singleObjBBox(sel, scene);
       ({ x, y, w, h } = bb);
       deg = 0;
