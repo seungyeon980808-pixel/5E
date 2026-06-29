@@ -53,6 +53,13 @@ let _idCounter = 0;
 let _circuitElement = "resistor";
 let _opticsKind = "convex_lens";
 let _apparatusKind = "wire";
+const APPARATUS_TEMPLATE_IDS = {
+  wire: "E001",
+  compass: "E002",
+  pulley: "M001",
+  clamp: "M004",
+  scale: "M003",
+};
 const CIRCUIT_CAP_GAP_DEFAULT = 2; // capacitor plate gap default (mm); mirrors render.js
 
 // The UNIQUE id (data-symbol) of the library symbol currently armed, or null when
@@ -1063,6 +1070,7 @@ function makeShape(type, a, b) {
   }
   if (type === "apparatus") {
     shape.kind = _apparatusKind || "wire";
+    shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
     shape.fillNone = true;
     shape.label = "";
     if (shape.kind === "wire") {
@@ -1076,20 +1084,24 @@ function makeShape(type, a, b) {
       const size = Math.max(shape.w, shape.h, 12);
       shape.w = size;
       shape.h = size;
+      shape.lockAspect = true;
       shape.needleAngle = -90;
     } else if (shape.kind === "pulley") {
-      const size = Math.max(shape.w, shape.h, 14);
-      shape.w = size;
+      const size = Math.max(shape.w, shape.h, 18);
+      shape.w = size * 1.18;
       shape.h = size;
+      shape.lockAspect = true;
       shape.variant = "basic";
     } else if (shape.kind === "clamp") {
       const size = Math.max(shape.w, shape.h, 20);
-      shape.w = size * 0.8;
+      shape.w = size * 0.7;
       shape.h = size;
+      shape.lockAspect = true;
       shape.flipped = false;
     } else if (shape.kind === "scale") {
-      shape.w = Math.max(shape.w, 24);
-      shape.h = Math.max(shape.h, 16);
+      shape.w = Math.max(shape.w, 26);
+      shape.h = Math.max(shape.h, 13);
+      shape.lockAspect = true;
       shape.displayText = "0.99 N";
     }
   }

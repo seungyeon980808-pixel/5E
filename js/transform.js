@@ -386,7 +386,7 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // flips mid-drag on a diagonal where dx ??dy ??which used to cause size jumps.
   //   vertical edges (n/s) ??height drives:  w = h * ratio
   //   everything else (e/w + all corners)   ??width drives:  h = w / ratio
-  if ((shiftKey || obj.groupId) && ratio > 0 && isFinite(ratio)) {
+  if ((shiftKey || obj.groupId || obj.lockAspect) && ratio > 0 && isFinite(ratio)) {
     if (handle === "n" || handle === "s") {
       // height is the driver ??snap w to follow h
       w = h * ratio;
@@ -428,6 +428,14 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   obj.y = y;
   obj.w = w;
   obj.h = h;
+  if (obj.type === "apparatus" && (obj.kind || "wire") === "wire") {
+    obj.length = Math.max(MIN_SIZE, w);
+    obj.h = Math.max(obj.h, (obj.gap || 1.2) + swSafe(obj));
+  }
+}
+
+function swSafe(obj) {
+  return Math.max(Number(obj.strokeWidth) || 0.2, 0.2);
 }
 
 /* positionLocked resize uses the original center as its fixed anchor. */

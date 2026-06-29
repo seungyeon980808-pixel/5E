@@ -1412,21 +1412,27 @@ function renderApparatus(obj) {
 function drawWire(g, obj, sw, color) {
   const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
   const length = Math.max(obj.length || obj.w || 20, 1);
-  const gap = Math.max(obj.gap || 1.2, 0.1);
+  const gap = Math.max(obj.gap || Math.max(sw * 4, 1.2), 0.1);
   const angle = (obj.angle || 0) * Math.PI / 180;
   const ux = Math.cos(angle), uy = Math.sin(angle);
   const px = -uy, py = ux;
+  const cap = "butt";
   for (const off of [-gap / 2, gap / 2]) {
-    oLine(g,
-      cx - ux * length / 2 + px * off, cy - uy * length / 2 + py * off,
-      cx + ux * length / 2 + px * off, cy + uy * length / 2 + py * off,
-      sw, color);
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", cx - ux * length / 2 + px * off);
+    l.setAttribute("y1", cy - uy * length / 2 + py * off);
+    l.setAttribute("x2", cx + ux * length / 2 + px * off);
+    l.setAttribute("y2", cy + uy * length / 2 + py * off);
+    l.setAttribute("stroke", color);
+    l.setAttribute("stroke-width", sw);
+    l.setAttribute("stroke-linecap", cap);
+    g.appendChild(l);
   }
 }
 
 function drawCompass(g, obj, sw, color) {
   const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
-  const r = Math.min(obj.w, obj.h) / 2 * 0.86;
+  const r = Math.min(obj.w, obj.h) / 2 * 0.88;
   const c = document.createElementNS(SVG_NS, "circle");
   c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
   c.setAttribute("fill", "none"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
@@ -1434,90 +1440,160 @@ function drawCompass(g, obj, sw, color) {
   const deg = obj.needleAngle ?? -90;
   const rad = deg * Math.PI / 180;
   const ux = Math.cos(rad), uy = Math.sin(rad);
-  const tip = { x: cx + ux * r * 0.7, y: cy + uy * r * 0.7 };
-  const tail = { x: cx - ux * r * 0.45, y: cy - uy * r * 0.45 };
-  oLine(g, tail.x, tail.y, tip.x, tip.y, sw, color);
-  g.appendChild(makeArrowHead(tip.x, tip.y, ux, uy, sw, color));
-  oDot(g, cx, cy, Math.max(r * 0.08, 0.35), color);
+  const tip = { x: cx + ux * r * 0.72, y: cy + uy * r * 0.72 };
+  const tail = { x: cx - ux * r * 0.42, y: cy - uy * r * 0.42 };
+  const px = -uy, py = ux;
+  const headBack = r * 0.38;
+  const headHalf = r * 0.18;
+  const base = { x: tip.x - ux * headBack, y: tip.y - uy * headBack };
+  const needle = document.createElementNS(SVG_NS, "polygon");
+  needle.setAttribute("points",
+    `${tip.x},${tip.y} ${base.x + px * headHalf},${base.y + py * headHalf} ${tail.x},${tail.y} ${base.x - px * headHalf},${base.y - py * headHalf}`);
+  needle.setAttribute("fill", color);
+  needle.setAttribute("stroke", color);
+  needle.setAttribute("stroke-width", sw * 0.6);
+  g.appendChild(needle);
 }
 
 function drawPulley(g, obj, sw, color) {
-  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
-  const r = Math.min(obj.w, obj.h) * 0.36;
+  const cx = obj.x + obj.w * 0.38, cy = obj.y + obj.h * 0.38;
+  const r = Math.min(obj.w, obj.h) * 0.34;
   const variant = obj.variant || "basic";
   const outer = document.createElementNS(SVG_NS, "circle");
   outer.setAttribute("cx", cx); outer.setAttribute("cy", cy); outer.setAttribute("r", r);
   outer.setAttribute("fill", "none"); outer.setAttribute("stroke", color); outer.setAttribute("stroke-width", sw);
   g.appendChild(outer);
+  const inner = document.createElementNS(SVG_NS, "circle");
+  inner.setAttribute("cx", cx); inner.setAttribute("cy", cy); inner.setAttribute("r", r * 0.72);
+  inner.setAttribute("fill", "none"); inner.setAttribute("stroke", color); inner.setAttribute("stroke-width", sw * 0.85);
+  g.appendChild(inner);
+  const axleR = Math.max(r * 0.17, 0.45);
+  const axle = document.createElementNS(SVG_NS, "circle");
+  axle.setAttribute("cx", cx); axle.setAttribute("cy", cy); axle.setAttribute("r", axleR);
+  axle.setAttribute("fill", "#b8b8b8");
+  axle.setAttribute("stroke", color);
+  axle.setAttribute("stroke-width", sw * 0.8);
+  g.appendChild(axle);
   if (variant !== "simple") {
-    const inner = document.createElementNS(SVG_NS, "circle");
-    inner.setAttribute("cx", cx); inner.setAttribute("cy", cy); inner.setAttribute("r", r * 0.72);
-    inner.setAttribute("fill", "none"); inner.setAttribute("stroke", color); inner.setAttribute("stroke-width", sw * 0.8);
-    g.appendChild(inner);
-    oLine(g, cx, obj.y + obj.h * 0.08, cx, cy - r, sw, color);
-    oLine(g, cx - r * 0.38, obj.y + obj.h * 0.2, cx + r * 0.38, obj.y + obj.h * 0.2, sw, color);
-  } else {
-    oLine(g, cx, obj.y + obj.h * 0.12, cx, cy - r, sw, color);
+    const armAngle = Math.PI / 4;
+    const ux = Math.cos(armAngle), uy = Math.sin(armAngle);
+    const px = -uy, py = ux;
+    const start = { x: cx + ux * axleR * 0.7, y: cy + uy * axleR * 0.7 };
+    const end = { x: obj.x + obj.w * 0.82, y: obj.y + obj.h * 0.78 };
+    const half = Math.max(r * 0.13, sw * 2);
+    const arm = document.createElementNS(SVG_NS, "polygon");
+    arm.setAttribute("points",
+      `${start.x + px * half},${start.y + py * half} ${end.x + px * half},${end.y + py * half} ${end.x - px * half},${end.y - py * half} ${start.x - px * half},${start.y - py * half}`);
+    arm.setAttribute("fill", "white");
+    arm.setAttribute("stroke", color);
+    arm.setAttribute("stroke-width", sw);
+    g.appendChild(arm);
+    const boltR = Math.max(r * 0.16, 0.45);
+    const bolt = document.createElementNS(SVG_NS, "circle");
+    bolt.setAttribute("cx", end.x);
+    bolt.setAttribute("cy", end.y);
+    bolt.setAttribute("r", boltR);
+    bolt.setAttribute("fill", "#b8b8b8");
+    bolt.setAttribute("stroke", color);
+    bolt.setAttribute("stroke-width", sw * 0.8);
+    g.appendChild(bolt);
   }
-  oDot(g, cx, cy, Math.max(r * 0.11, 0.35), color);
 }
 
 function drawClamp(g, obj, sw, color) {
   const left = obj.x, top = obj.y, w = obj.w, h = obj.h;
   const dir = obj.flipped ? -1 : 1;
-  const standX = left + (obj.flipped ? w * 0.72 : w * 0.28);
-  const rodY = top + h * 0.36;
-  const rodEnd = standX + dir * w * 0.45;
-  oLine(g, standX, top + h * 0.08, standX, top + h * 0.92, sw, color);
-  oLine(g, standX, rodY, rodEnd, rodY, sw, color);
-  const bw = w * 0.18, bh = h * 0.14;
+  const standX = left + (obj.flipped ? w * 0.64 : w * 0.64);
+  const rodY = top + h * 0.18;
+  const rodStart = standX - dir * w * 0.5;
+  const rodEnd = standX + dir * w * 0.22;
+  const tubeW = Math.max(w * 0.055, sw * 2.8);
+  const tubeFill = "#e6e6e6";
+  const vRod = document.createElementNS(SVG_NS, "rect");
+  vRod.setAttribute("x", standX - tubeW / 2);
+  vRod.setAttribute("y", top + h * 0.08);
+  vRod.setAttribute("width", tubeW);
+  vRod.setAttribute("height", h * 0.72);
+  vRod.setAttribute("fill", tubeFill);
+  vRod.setAttribute("stroke", color);
+  vRod.setAttribute("stroke-width", sw);
+  g.appendChild(vRod);
+  const hRod = document.createElementNS(SVG_NS, "rect");
+  hRod.setAttribute("x", Math.min(rodStart, rodEnd));
+  hRod.setAttribute("y", rodY - tubeW / 2);
+  hRod.setAttribute("width", Math.abs(rodEnd - rodStart));
+  hRod.setAttribute("height", tubeW);
+  hRod.setAttribute("fill", tubeFill);
+  hRod.setAttribute("stroke", color);
+  hRod.setAttribute("stroke-width", sw);
+  g.appendChild(hRod);
+  const bw = w * 0.17, bh = h * 0.08;
   const block = document.createElementNS(SVG_NS, "rect");
   block.setAttribute("x", standX - bw / 2);
   block.setAttribute("y", rodY - bh / 2);
   block.setAttribute("width", bw);
   block.setAttribute("height", bh);
-  block.setAttribute("fill", "none");
+  block.setAttribute("fill", "#d9d9d9");
   block.setAttribute("stroke", color);
   block.setAttribute("stroke-width", sw);
   g.appendChild(block);
-  oDot(g, standX - dir * bw * 0.65, rodY, Math.max(bh * 0.18, 0.35), color);
-  oLine(g, standX - w * 0.18, top + h * 0.92, standX + w * 0.18, top + h * 0.92, sw, color);
+  const knob = document.createElementNS(SVG_NS, "circle");
+  knob.setAttribute("cx", standX);
+  knob.setAttribute("cy", rodY);
+  knob.setAttribute("r", Math.max(bh * 0.3, 0.45));
+  knob.setAttribute("fill", "#f2f2f2");
+  knob.setAttribute("stroke", color);
+  knob.setAttribute("stroke-width", sw);
+  g.appendChild(knob);
+  oDot(g, standX, rodY, Math.max(bh * 0.14, 0.2), color);
+  const baseY = top + h * 0.88;
+  const base = document.createElementNS(SVG_NS, "path");
+  base.setAttribute("d",
+    `M ${left + w * 0.42} ${baseY} L ${left + w * 0.86} ${baseY} L ${left + w * 0.86} ${baseY + h * 0.07} L ${left + w * 0.68} ${baseY + h * 0.07} L ${left + w * 0.66} ${baseY + h * 0.04} L ${left + w * 0.52} ${baseY + h * 0.04} L ${left + w * 0.5} ${baseY + h * 0.07} L ${left + w * 0.42} ${baseY + h * 0.07} Z`);
+  base.setAttribute("fill", "#ededed");
+  base.setAttribute("stroke", color);
+  base.setAttribute("stroke-width", sw);
+  g.appendChild(base);
 }
 
 function drawScale(g, obj, sw, color) {
   const x = obj.x, y = obj.y, w = obj.w, h = obj.h;
-  const top = y + h * 0.12;
+  const top = y + h * 0.08;
   const platform = document.createElementNS(SVG_NS, "rect");
-  platform.setAttribute("x", x + w * 0.18);
+  platform.setAttribute("x", x + w * 0.25);
   platform.setAttribute("y", top);
-  platform.setAttribute("width", w * 0.64);
-  platform.setAttribute("height", h * 0.18);
+  platform.setAttribute("width", w * 0.5);
+  platform.setAttribute("height", h * 0.12);
   platform.setAttribute("fill", "none");
   platform.setAttribute("stroke", color);
   platform.setAttribute("stroke-width", sw);
   g.appendChild(platform);
+  oLine(g, x + w * 0.32, top + h * 0.16, x + w * 0.68, top + h * 0.16, sw, color);
   const body = document.createElementNS(SVG_NS, "rect");
   body.setAttribute("x", x + w * 0.08);
-  body.setAttribute("y", y + h * 0.34);
+  body.setAttribute("y", y + h * 0.28);
   body.setAttribute("width", w * 0.84);
-  body.setAttribute("height", h * 0.5);
-  body.setAttribute("rx", Math.min(w, h) * 0.04);
+  body.setAttribute("height", h * 0.55);
+  body.setAttribute("rx", Math.min(w, h) * 0.07);
   body.setAttribute("fill", "none");
   body.setAttribute("stroke", color);
   body.setAttribute("stroke-width", sw);
   g.appendChild(body);
   const display = document.createElementNS(SVG_NS, "rect");
-  display.setAttribute("x", x + w * 0.18);
-  display.setAttribute("y", y + h * 0.48);
-  display.setAttribute("width", w * 0.42);
-  display.setAttribute("height", h * 0.18);
+  display.setAttribute("x", x + w * 0.13);
+  display.setAttribute("y", y + h * 0.43);
+  display.setAttribute("width", w * 0.48);
+  display.setAttribute("height", h * 0.25);
+  display.setAttribute("rx", Math.min(w, h) * 0.035);
   display.setAttribute("fill", "none");
   display.setAttribute("stroke", color);
   display.setAttribute("stroke-width", sw * 0.8);
   g.appendChild(display);
-  cText(g, x + w * 0.39, y + h * 0.57, obj.displayText || "0.99 N", Math.min(w * 0.11, h * 0.13), color, obj.fontFamily || DEFAULT_TEXT_FONT);
-  oDot(g, x + w * 0.7, y + h * 0.56, h * 0.045, color);
-  oDot(g, x + w * 0.8, y + h * 0.56, h * 0.045, color);
+  cText(g, x + w * 0.37, y + h * 0.555, obj.displayText || "0.99 N", Math.min(w * 0.105, h * 0.21), color, obj.fontFamily || DEFAULT_TEXT_FONT);
+  oDot(g, x + w * 0.72, y + h * 0.55, h * 0.07, color);
+  oDot(g, x + w * 0.83, y + h * 0.55, h * 0.07, color);
+  oLine(g, x + w * 0.18, y + h * 0.86, x + w * 0.32, y + h * 0.86, sw, color);
+  oLine(g, x + w * 0.68, y + h * 0.86, x + w * 0.82, y + h * 0.86, sw, color);
 }
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====

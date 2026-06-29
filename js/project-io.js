@@ -23,6 +23,13 @@ const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
 // Default download filename for a saved project.
 const DEFAULT_FILENAME = "physics_drawing.json";
+const APPARATUS_TEMPLATE_IDS = {
+  wire: "E001",
+  compass: "E002",
+  pulley: "M001",
+  clamp: "M004",
+  scale: "M003",
+};
 
 /* ----- migrate: bring an older saved file up to the current schema ----- */
 // Currently only "0.13" exists, so this is a pass-through. As the schema
@@ -61,6 +68,7 @@ function migrate(data) {
       }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";
+        next.templateId = next.templateId ?? APPARATUS_TEMPLATE_IDS[next.kind] ?? null;
         next.x = next.x ?? 0;
         next.y = next.y ?? 0;
         next.w = next.w ?? 20;
@@ -72,6 +80,9 @@ function migrate(data) {
           next.gap = next.gap ?? 1.2;
         }
         if (next.kind === "compass") next.needleAngle = next.needleAngle ?? -90;
+        if (next.kind === "compass" || next.kind === "pulley" || next.kind === "clamp" || next.kind === "scale") {
+          next.lockAspect = next.lockAspect ?? true;
+        }
         if (next.kind === "pulley") next.variant = next.variant ?? "basic";
         if (next.kind === "clamp") next.flipped = next.flipped ?? false;
         if (next.kind === "scale") next.displayText = next.displayText ?? "0.99 N";
