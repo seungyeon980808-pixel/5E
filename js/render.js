@@ -1412,22 +1412,19 @@ function renderApparatus(obj) {
 function drawWire(g, obj, sw, color) {
   const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
   const length = Math.max(obj.length || obj.w || 20, 1);
-  const gap = Math.max(obj.gap || Math.max(sw * 4, 1.2), 0.1);
+  const thickness = Math.max(obj.thickness ?? obj.gap ?? Math.max(sw * 6, 1.8), sw * 2.5, 0.2);
   const angle = (obj.angle || 0) * Math.PI / 180;
-  const ux = Math.cos(angle), uy = Math.sin(angle);
-  const px = -uy, py = ux;
-  const cap = "butt";
-  for (const off of [-gap / 2, gap / 2]) {
-    const l = document.createElementNS(SVG_NS, "line");
-    l.setAttribute("x1", cx - ux * length / 2 + px * off);
-    l.setAttribute("y1", cy - uy * length / 2 + py * off);
-    l.setAttribute("x2", cx + ux * length / 2 + px * off);
-    l.setAttribute("y2", cy + uy * length / 2 + py * off);
-    l.setAttribute("stroke", color);
-    l.setAttribute("stroke-width", sw);
-    l.setAttribute("stroke-linecap", cap);
-    g.appendChild(l);
-  }
+  const wire = document.createElementNS(SVG_NS, "rect");
+  wire.setAttribute("x", cx - length / 2);
+  wire.setAttribute("y", cy - thickness / 2);
+  wire.setAttribute("width", length);
+  wire.setAttribute("height", thickness);
+  wire.setAttribute("rx", thickness / 2);
+  wire.setAttribute("fill", "#e6e6e6");
+  wire.setAttribute("stroke", color);
+  wire.setAttribute("stroke-width", sw);
+  wire.setAttribute("transform", `rotate(${angle * 180 / Math.PI} ${cx} ${cy})`);
+  g.appendChild(wire);
 }
 
 function drawCompass(g, obj, sw, color) {
@@ -1440,19 +1437,19 @@ function drawCompass(g, obj, sw, color) {
   const deg = obj.needleAngle ?? -90;
   const rad = deg * Math.PI / 180;
   const ux = Math.cos(rad), uy = Math.sin(rad);
-  const tip = { x: cx + ux * r * 0.72, y: cy + uy * r * 0.72 };
-  const tail = { x: cx - ux * r * 0.42, y: cy - uy * r * 0.42 };
   const px = -uy, py = ux;
-  const headBack = r * 0.38;
-  const headHalf = r * 0.18;
-  const base = { x: tip.x - ux * headBack, y: tip.y - uy * headBack };
+  const tip = { x: cx + ux * r * 0.72, y: cy + uy * r * 0.72 };
+  const tail = { x: cx - ux * r * 0.72, y: cy - uy * r * 0.72 };
+  const half = r * 0.13;
   const needle = document.createElementNS(SVG_NS, "polygon");
   needle.setAttribute("points",
-    `${tip.x},${tip.y} ${base.x + px * headHalf},${base.y + py * headHalf} ${tail.x},${tail.y} ${base.x - px * headHalf},${base.y - py * headHalf}`);
-  needle.setAttribute("fill", color);
+    `${tip.x},${tip.y} ${cx + px * half},${cy + py * half} ${tail.x},${tail.y} ${cx - px * half},${cy - py * half}`);
+  needle.setAttribute("fill", "#d9d9d9");
   needle.setAttribute("stroke", color);
-  needle.setAttribute("stroke-width", sw * 0.6);
+  needle.setAttribute("stroke-width", sw);
   g.appendChild(needle);
+  oLine(g, cx - px * half * 0.8, cy - py * half * 0.8, cx + px * half * 0.8, cy + py * half * 0.8, sw * 0.7, color);
+  oDot(g, cx, cy, Math.max(r * 0.08, sw * 1.2), color);
 }
 
 function drawPulley(g, obj, sw, color) {
@@ -1467,7 +1464,7 @@ function drawPulley(g, obj, sw, color) {
   inner.setAttribute("cx", cx); inner.setAttribute("cy", cy); inner.setAttribute("r", r * 0.72);
   inner.setAttribute("fill", "none"); inner.setAttribute("stroke", color); inner.setAttribute("stroke-width", sw * 0.85);
   g.appendChild(inner);
-  const axleR = Math.max(r * 0.17, 0.45);
+  const axleR = Math.max(r * 0.24, 0.65);
   const axle = document.createElementNS(SVG_NS, "circle");
   axle.setAttribute("cx", cx); axle.setAttribute("cy", cy); axle.setAttribute("r", axleR);
   axle.setAttribute("fill", "#b8b8b8");
@@ -1513,7 +1510,7 @@ function drawClamp(g, obj, sw, color) {
   vRod.setAttribute("x", standX - tubeW / 2);
   vRod.setAttribute("y", top + h * 0.08);
   vRod.setAttribute("width", tubeW);
-  vRod.setAttribute("height", h * 0.72);
+  vRod.setAttribute("height", h * 0.82);
   vRod.setAttribute("fill", tubeFill);
   vRod.setAttribute("stroke", color);
   vRod.setAttribute("stroke-width", sw);
@@ -1546,10 +1543,10 @@ function drawClamp(g, obj, sw, color) {
   knob.setAttribute("stroke-width", sw);
   g.appendChild(knob);
   oDot(g, standX, rodY, Math.max(bh * 0.14, 0.2), color);
-  const baseY = top + h * 0.88;
+  const baseY = top + h * 0.86;
   const base = document.createElementNS(SVG_NS, "path");
   base.setAttribute("d",
-    `M ${left + w * 0.42} ${baseY} L ${left + w * 0.86} ${baseY} L ${left + w * 0.86} ${baseY + h * 0.07} L ${left + w * 0.68} ${baseY + h * 0.07} L ${left + w * 0.66} ${baseY + h * 0.04} L ${left + w * 0.52} ${baseY + h * 0.04} L ${left + w * 0.5} ${baseY + h * 0.07} L ${left + w * 0.42} ${baseY + h * 0.07} Z`);
+    `M ${left + w * 0.40} ${baseY} L ${left + w * 0.88} ${baseY} L ${left + w * 0.88} ${baseY + h * 0.08} L ${left + w * 0.68} ${baseY + h * 0.08} L ${left + w * 0.66} ${baseY + h * 0.045} L ${left + w * 0.52} ${baseY + h * 0.045} L ${left + w * 0.50} ${baseY + h * 0.08} L ${left + w * 0.40} ${baseY + h * 0.08} Z`);
   base.setAttribute("fill", "#ededed");
   base.setAttribute("stroke", color);
   base.setAttribute("stroke-width", sw);
@@ -1575,7 +1572,7 @@ function drawScale(g, obj, sw, color) {
   body.setAttribute("width", w * 0.84);
   body.setAttribute("height", h * 0.55);
   body.setAttribute("rx", Math.min(w, h) * 0.07);
-  body.setAttribute("fill", "none");
+  body.setAttribute("fill", "#e6e6e6");
   body.setAttribute("stroke", color);
   body.setAttribute("stroke-width", sw);
   g.appendChild(body);
@@ -1592,8 +1589,15 @@ function drawScale(g, obj, sw, color) {
   cText(g, x + w * 0.37, y + h * 0.555, obj.displayText || "0.99 N", Math.min(w * 0.105, h * 0.21), color, obj.fontFamily || DEFAULT_TEXT_FONT);
   oDot(g, x + w * 0.72, y + h * 0.55, h * 0.07, color);
   oDot(g, x + w * 0.83, y + h * 0.55, h * 0.07, color);
-  oLine(g, x + w * 0.18, y + h * 0.86, x + w * 0.32, y + h * 0.86, sw, color);
-  oLine(g, x + w * 0.68, y + h * 0.86, x + w * 0.82, y + h * 0.86, sw, color);
+  const footY = y + h * 0.83;
+  const feet = document.createElementNS(SVG_NS, "path");
+  feet.setAttribute("d",
+    `M ${x + w * 0.18} ${footY} L ${x + w * 0.32} ${footY} L ${x + w * 0.32} ${y + h * 0.88} L ${x + w * 0.16} ${y + h * 0.88} Q ${x + w * 0.14} ${y + h * 0.88} ${x + w * 0.18} ${footY} Z ` +
+    `M ${x + w * 0.68} ${footY} L ${x + w * 0.82} ${footY} Q ${x + w * 0.86} ${y + h * 0.88} ${x + w * 0.84} ${y + h * 0.88} L ${x + w * 0.68} ${y + h * 0.88} Z`);
+  feet.setAttribute("fill", "#e6e6e6");
+  feet.setAttribute("stroke", color);
+  feet.setAttribute("stroke-width", sw);
+  g.appendChild(feet);
 }
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====

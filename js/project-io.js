@@ -77,7 +77,8 @@ function migrate(data) {
         if (next.kind === "wire") {
           next.length = next.length ?? next.w ?? 24;
           next.angle = next.angle ?? 0;
-          next.gap = next.gap ?? 1.2;
+          next.thickness = next.thickness ?? next.gap ?? 1.8;
+          next.gap = next.gap ?? next.thickness;
         }
         if (next.kind === "compass") next.needleAngle = next.needleAngle ?? -90;
         if (next.kind === "compass" || next.kind === "pulley" || next.kind === "clamp" || next.kind === "scale") {

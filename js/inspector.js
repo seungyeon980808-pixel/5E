@@ -1175,7 +1175,10 @@ export function initInspector(state) {
         o[prop] = next;
         if (o.type === "apparatus" && o.kind === "wire") {
           if (prop === "length") o.w = Math.max(next, 1);
-          if (prop === "gap") o.h = Math.max(next * 3, 3);
+          if (prop === "thickness") {
+            o.gap = next;
+            o.h = Math.max(next * 3, 3);
+          }
         }
       });
     }
@@ -1534,11 +1537,11 @@ export function initInspector(state) {
 
   const appLengthF = makePosRow("길이", "length", "0.1");
   const appAngleF = makePosRow("각도", "angle", "1");
-  const appGapF = makePosRow("간격", "gap", "0.1");
+  const appThicknessF = makePosRow("굵기", "thickness", "0.1");
   const appNeedleF = makePosRow("방향각", "needleAngle", "1");
   sec3Body.appendChild(appLengthF.el);
   sec3Body.appendChild(appAngleF.el);
-  sec3Body.appendChild(appGapF.el);
+  sec3Body.appendChild(appThicknessF.el);
   sec3Body.appendChild(appNeedleF.el);
 
   const pulleyVariantRow = document.createElement("div");
@@ -1978,7 +1981,7 @@ export function initInspector(state) {
       raDirRow.style.display = "none";
       appLengthF.el.style.display = "none";
       appAngleF.el.style.display = "none";
-      appGapF.el.style.display = "none";
+      appThicknessF.el.style.display = "none";
       appNeedleF.el.style.display = "none";
       pulleyVariantRow.style.display = "none";
       clampFlipRow.style.display = "none";
@@ -2214,7 +2217,7 @@ export function initInspector(state) {
     raDirRow.style.display = isRightAngle ? "" : "none";
     appLengthF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
     appAngleF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
-    appGapF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
+    appThicknessF.el.style.display = isApparatus && appKind === "wire" ? "" : "none";
     appNeedleF.el.style.display = isApparatus && appKind === "compass" ? "" : "none";
     pulleyVariantRow.style.display = isApparatus && appKind === "pulley" ? "" : "none";
     clampFlipRow.style.display = isApparatus && appKind === "clamp" ? "" : "none";
@@ -2260,7 +2263,7 @@ export function initInspector(state) {
       if (appKind === "wire") {
         if (document.activeElement !== appLengthF.inp) appLengthF.inp.value = (obj.length ?? obj.w ?? 0).toFixed(2);
         if (document.activeElement !== appAngleF.inp) appAngleF.inp.value = (obj.angle ?? 0).toFixed(1);
-        if (document.activeElement !== appGapF.inp) appGapF.inp.value = (obj.gap ?? 1.2).toFixed(2);
+        if (document.activeElement !== appThicknessF.inp) appThicknessF.inp.value = (obj.thickness ?? obj.gap ?? 1.8).toFixed(2);
       }
       if (appKind === "compass" && document.activeElement !== appNeedleF.inp) appNeedleF.inp.value = (obj.needleAngle ?? -90).toFixed(1);
       if (appKind === "pulley") pulleyVariantSel.value = obj.variant || "basic";
@@ -2323,7 +2326,7 @@ export function initInspector(state) {
     raDirSel.disabled = !!obj.locked;
     appLengthF.inp.disabled = !!obj.locked;
     appAngleF.inp.disabled = !!obj.locked;
-    appGapF.inp.disabled = !!obj.locked;
+    appThicknessF.inp.disabled = !!obj.locked;
     appNeedleF.inp.disabled = !!obj.locked;
     pulleyVariantSel.disabled = !!obj.locked;
     clampFlipCb.disabled = !!obj.locked;

@@ -1075,10 +1075,11 @@ function makeShape(type, a, b) {
     shape.label = "";
     if (shape.kind === "wire") {
       shape.length = Math.max(shape.w, 18);
-      shape.gap = 1.2;
+      shape.thickness = 1.8;
+      shape.gap = shape.thickness;
       shape.angle = 0;
       shape.w = Math.max(shape.w, shape.length);
-      shape.h = Math.max(shape.h, 4);
+      shape.h = Math.max(shape.h, shape.thickness * 3);
       shape.rotation = 0;
     } else if (shape.kind === "compass") {
       const size = Math.max(shape.w, shape.h, 12);
