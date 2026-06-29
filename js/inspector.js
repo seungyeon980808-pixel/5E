@@ -1,12 +1,12 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.17.10";
-import { openFontModalForSelection } from "./tools.js?v=0.17.10";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.18.0";
+import { openFontModalForSelection } from "./tools.js?v=0.18.0";
 import {
   getObjectStyleMode,
   prepareObjectStyleModeSwitch,
   resolveObjectStyle,
-} from "./style-mode.js?v=0.17.10";
+} from "./style-mode.js?v=0.18.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -723,6 +723,72 @@ export function initInspector(state) {
       }
     });
   });
+
+  // ---- 경사면처리 toggle (single polyline only): rounds interior joints at render. ----
+  const roundRow = document.createElement("div");
+  roundRow.className = "insp-row";
+  const roundCb = document.createElement("input");
+  roundCb.type = "checkbox";
+  roundCb.className = "insp-cb";
+  const roundLbl = document.createElement("label");
+  roundLbl.className = "insp-field-label";
+  roundLbl.textContent = "경사면처리";
+  roundRow.appendChild(roundCb);
+  roundRow.appendChild(roundLbl);
+  sec1Body.appendChild(roundRow);
+
+  roundCb.addEventListener("change", () => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = snapBefore();
+    const val = roundCb.checked;
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (o && o.type === "polyline") {
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+        o.rounded = val;
+      }
+    });
+  });
+
+  // ---- 곡률 반경 (corner radius, world-unit mm): active only when 경사면처리 is on. ----
+  const radiusRow = document.createElement("div");
+  radiusRow.className = "insp-row";
+  const radiusLbl = document.createElement("label");
+  radiusLbl.className = "insp-field-label";
+  radiusLbl.textContent = "곡률 반경";
+  const radiusInp = document.createElement("input");
+  radiusInp.type = "number";
+  radiusInp.step = "1";
+  radiusInp.min = "0";
+  radiusInp.className = "insp-input";
+  const radiusUnit = document.createElement("span");
+  radiusUnit.className = "insp-unit";
+  radiusUnit.textContent = "mm";
+  radiusRow.appendChild(radiusLbl);
+  radiusRow.appendChild(radiusInp);
+  radiusRow.appendChild(radiusUnit);
+  sec1Body.appendChild(radiusRow);
+
+  function commitRadius() {
+    const val = parseFloat(radiusInp.value);
+    if (!isFinite(val)) return;
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (!o || o.type !== "polyline" || o.locked) return;
+      o.cornerRadius = Math.max(0, val);
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  }
+  radiusInp.addEventListener("keydown", (e) => { if (e.key === "Enter") radiusInp.blur(); });
+  radiusInp.addEventListener("blur", commitRadius);
 
   // Highlight the active preset button (or none, for a custom slider value).
   function syncDashControls(obj) {
@@ -1930,6 +1996,8 @@ export function initInspector(state) {
       dashSliders.style.display = "none";
       partialControls.style.display = "none";
       closeRow.style.display = "none";
+      roundRow.style.display = "none";
+      radiusRow.style.display = "none";
       angleRow.style.display = "none";
       return;
     }
@@ -1959,6 +2027,8 @@ export function initInspector(state) {
       dashSliders.style.display = "none";
       partialControls.style.display = "none";
       closeRow.style.display = "none";
+      roundRow.style.display = "none";
+      radiusRow.style.display = "none";
       angleRow.style.display = "none";
       // A group always uses the box rows (W/H + rotation); never the arc rows,
       // even if the prior single selection was an anglearc.
@@ -2065,6 +2135,8 @@ export function initInspector(state) {
       dashSliders.style.display = "none";
       partialControls.style.display = "none";
       closeRow.style.display = "none";
+      roundRow.style.display = "none";
+      radiusRow.style.display = "none";
       angleRow.style.display = "none";
 
       if (_dragging) return;
@@ -2125,6 +2197,17 @@ export function initInspector(state) {
     const showClose  = isPolyline || isCurve;
     closeRow.style.display = showClose ? "" : "none";
     if (showClose) closeCb.checked = obj.closed === true;
+
+    // 경사면처리 + 곡률 반경: single polyline only (open or closed).
+    roundRow.style.display = isPolyline ? "" : "none";
+    radiusRow.style.display = isPolyline ? "" : "none";
+    if (isPolyline) {
+      const isRounded = obj.rounded === true;
+      roundCb.checked = isRounded;
+      radiusInp.disabled = !isRounded;
+      radiusRow.style.opacity = isRounded ? "" : "0.5";
+      if (document.activeElement !== radiusInp) radiusInp.value = obj.cornerRadius ?? 12;
+    }
 
     // 각도: straight line only. Skip while the field is focused so typing isn't clobbered.
     const isStraightLine = obj.type === "line";

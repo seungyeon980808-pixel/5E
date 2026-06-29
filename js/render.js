@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.17.10";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.10";
-import { resolveObjectStyle } from "./style-mode.js?v=0.17.10";
-import { renderFormula } from "./formula.js?v=0.17.10";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.18.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.18.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.18.0";
+import { renderFormula } from "./formula.js?v=0.18.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -974,6 +974,55 @@ function renderLine(obj) {
   return g;
 }
 
+/* ----- rounded corners (경사면처리): per-vertex quadratic fillet path ----- */
+// Projection only — NEVER mutates points[]. Each interior vertex V becomes a
+// quadratic Bezier whose CONTROL point is V itself, so straight slope/flat
+// segments stay perfectly straight and only the joints round off (this is a
+// per-vertex fillet, NOT a spline through all points). The back-off distance is
+// clamped to half of each adjacent segment so neighbouring roundings can't
+// overlap. Open path: P0 and Pn are left sharp (arrowhead direction unaffected).
+function roundedPolylinePath(pts, radius, closed) {
+  const P = pts || [];
+  const n = P.length;
+  if (n < 2) return "";
+  const r = Math.max(0, radius || 0);
+  const dist = (a, b) => Math.hypot(b.x - a.x, b.y - a.y);
+  // point on segment V→T, `off` world units away from V (toward T)
+  const backoff = (V, T, off) => {
+    const L = dist(V, T);
+    if (L === 0) return { x: V.x, y: V.y }; // zero-length segment: no movement
+    return { x: V.x + ((T.x - V.x) / L) * off, y: V.y + ((T.y - V.y) / L) * off };
+  };
+
+  if (closed) {
+    if (n < 3) return ""; // nothing to round below a triangle
+    let d = "";
+    for (let i = 0; i < n; i++) {
+      const V = P[i];
+      const A = P[(i - 1 + n) % n];
+      const B = P[(i + 1) % n];
+      const off = Math.min(r, 0.5 * dist(A, V), 0.5 * dist(V, B));
+      const p1 = backoff(V, A, off);
+      const p2 = backoff(V, B, off);
+      d += i === 0 ? `M ${p1.x} ${p1.y}` : ` L ${p1.x} ${p1.y}`;
+      d += ` Q ${V.x} ${V.y} ${p2.x} ${p2.y}`;
+    }
+    return d + " Z"; // Z draws the straight remainder of the wrap-around edge
+  }
+
+  let d = `M ${P[0].x} ${P[0].y}`;
+  for (let i = 1; i < n - 1; i++) {
+    const V = P[i];
+    const A = P[i - 1];
+    const B = P[i + 1];
+    const off = Math.min(r, 0.5 * dist(A, V), 0.5 * dist(V, B));
+    const p1 = backoff(V, A, off);
+    const p2 = backoff(V, B, off);
+    d += ` L ${p1.x} ${p1.y} Q ${V.x} ${V.y} ${p2.x} ${p2.y}`;
+  }
+  return d + ` L ${P[n - 1].x} ${P[n - 1].y}`;
+}
+
 /* ----- polyline: many connected points, black stroke, no fill (click-to-click) ----- */
 // Arrowheads use the SAME single arrowHead field + makeArrowHead() as renderLine
 // (one setting for the whole line, no per-segment array):
@@ -990,6 +1039,17 @@ function renderPolyline(obj) {
   // ----- closed polyline: a filled <polygon> (fillable like rect/ellipse/triangle) -----
   // Arrowheads don't apply to a closed shape; it just takes the shared fill + dash.
   if (obj.closed === true) {
+    // 경사면처리 on: a filled <path> with rounded joints (keeps the same fill).
+    if (obj.rounded === true && n >= 3) {
+      const path = document.createElementNS(SVG_NS, "path");
+      path.setAttribute("d", roundedPolylinePath(pts, obj.cornerRadius ?? 12, true));
+      path.setAttribute("fill", resolveFill(obj));
+      path.setAttribute("stroke", color);
+      path.setAttribute("stroke-width", sw);
+      applyDash(path, obj);
+      if (obj.id) path.dataset.id = obj.id;
+      return path;
+    }
     const poly = document.createElementNS(SVG_NS, "polygon");
     poly.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
     poly.setAttribute("fill", resolveFill(obj));
@@ -1023,8 +1083,16 @@ function renderPolyline(obj) {
     draw[0] = { x: pts[0].x + startDir.x * arrowLen, y: pts[0].y + startDir.y * arrowLen };
   }
 
-  const el = document.createElementNS(SVG_NS, "polyline");
-  el.setAttribute("points", draw.map((p) => `${p.x},${p.y}`).join(" "));
+  // 경사면처리 on: a <path> with rounded joints (sharp endpoints keep the
+  // arrowhead direction intact); otherwise the plain <polyline>.
+  let el;
+  if (obj.rounded === true && n >= 3) {
+    el = document.createElementNS(SVG_NS, "path");
+    el.setAttribute("d", roundedPolylinePath(draw, obj.cornerRadius ?? 12, false));
+  } else {
+    el = document.createElementNS(SVG_NS, "polyline");
+    el.setAttribute("points", draw.map((p) => `${p.x},${p.y}`).join(" "));
+  }
   el.setAttribute("fill", "none");
   // strokeLevel 0 = black (DESIGN 2-2). stroke-width is in world units.
   el.setAttribute("stroke", color);
