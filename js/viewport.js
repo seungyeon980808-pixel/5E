@@ -57,20 +57,63 @@ export function getRenderScale() {
 let centerLocked = false;
 export function setCenterLocked(val) { centerLocked = val; }
 
+/* ===== ZOOM LIMITS (easy-to-tune) =====================================
+ * MAX_ZOOM        — maximum zoom-IN factor (readout ×). 50 = 5000%.
+ * MIN_ARTBOARD_VIEWPORT_RATIO — at maximum zoom-OUT the artboard must still
+ *   cover at least this fraction of the viewport on BOTH axes. 0.5 = 50%.
+ * ===================================================================== */
+const MAX_ZOOM = 50;
+const MIN_ARTBOARD_VIEWPORT_RATIO = 0.5;
+
+// Allowed range for the viewBox WIDTH (vb.w), given the current SVG box + artboard.
+// Smaller vb.w = more zoomed in; larger vb.w = more zoomed out.
+//   - minW caps zoom-IN at MAX_ZOOM   (readout zoom = rect.width / vb.w ≤ MAX_ZOOM)
+//   - maxW caps zoom-OUT so the artboard's displayed size stays ≥ 50% of the
+//     viewport on both axes. Render scale (px per world unit, honouring meet
+//     letterboxing) = min(rect.w/vb.w, rect.h/vb.h); during uniform zoom the
+//     vb aspect ratio is fixed, so that scale is K/vb.w with K constant.
+function zoomWidthBounds(svg, s) {
+  const rect = svg.getBoundingClientRect();
+  const vb = s.viewBox;
+  const ab = s.artboard;
+  const K = Math.min(rect.width, (rect.height * vb.w) / vb.h);
+  const minScale = Math.max(
+    (MIN_ARTBOARD_VIEWPORT_RATIO * rect.width) / ab.w,
+    (MIN_ARTBOARD_VIEWPORT_RATIO * rect.height) / ab.h
+  );
+  const maxW = K / minScale;            // zoom-out limit
+  let minW = rect.width / MAX_ZOOM;     // zoom-in limit
+  if (minW > maxW) minW = maxW;         // degenerate (tiny viewport): respect zoom-out
+  return { minW, maxW };
+}
+
 /* ----- setup: wire wheel-zoom + drag-pan onto the SVG element ----- */
+// Pan bound: the VIEWPORT CENTER point (center of the viewBox) must stay inside
+// the artboard rectangle [-abW/2, abW/2] × [-abH/2, abH/2] — i.e. no artboard
+// corner may cross past the viewport center. Applies in every mode. This still
+// allows the artboard to sit partly off-screen, but never almost entirely out of
+// view (which would leave the viewport center on empty/dark space).
 function clampViewBox(s) {
   const vb = s.viewBox;
   const abW = s.artboard.w, abH = s.artboard.h;
-  // Allow panning up to one artboard-width/height beyond each edge — generous
-  // working margin, but a HARD wall so accumulation always stops.
-  const marginX = abW, marginY = abH;
-  const minX = -abW/2 - marginX;
-  const maxX =  abW/2 + marginX - vb.w;
-  const minY = -abH/2 - marginY;
-  const maxY =  abH/2 + marginY - vb.h;
-  // If the view is larger than the allowed span, center on origin instead.
-  vb.x = (minX <= maxX) ? Math.min(maxX, Math.max(minX, vb.x)) : -vb.w/2;
-  vb.y = (minY <= maxY) ? Math.min(maxY, Math.max(minY, vb.y)) : -vb.h/2;
+  const cx = vb.x + vb.w / 2;
+  const cy = vb.y + vb.h / 2;
+  const clampedCx = Math.min(abW / 2, Math.max(-abW / 2, cx));
+  const clampedCy = Math.min(abH / 2, Math.max(-abH / 2, cy));
+  vb.x = clampedCx - vb.w / 2;
+  vb.y = clampedCy - vb.h / 2;
+}
+
+// Clamp the current zoom (vb.w/vb.h) into [minW, maxW], scaling uniformly.
+function clampZoom(svg, s) {
+  const vb = s.viewBox;
+  const { minW, maxW } = zoomWidthBounds(svg, s);
+  const clampedW = Math.min(maxW, Math.max(minW, vb.w));
+  if (clampedW !== vb.w) {
+    const k = clampedW / vb.w;
+    vb.w *= k;
+    vb.h *= k;
+  }
 }
 
 export function initViewport(svg, state, onChange) {
@@ -121,10 +164,8 @@ export function initViewport(svg, state, onChange) {
       state.update((s) => {
         const vb = s.viewBox;
         const factor = Math.pow(ZOOM_STEP, e.deltaY);
-        const _abMax = Math.max(s.artboard.w, s.artboard.h);
-        const MIN_W = _abMax * 0.1;
-        const MAX_W = _abMax * 2.5;
-        const clampedW = Math.min(MAX_W, Math.max(MIN_W, vb.w * factor));
+        const { minW, maxW } = zoomWidthBounds(svg, s);
+        const clampedW = Math.min(maxW, Math.max(minW, vb.w * factor));
         const k = clampedW / vb.w;
         const newW = vb.w * k;
         const newH = vb.h * k;
@@ -208,6 +249,20 @@ export function initViewport(svg, state, onChange) {
   // suppress middle-click autoscroll / context menu on the canvas
   svg.addEventListener("auxclick", (e) => {
     if (e.button === 1) e.preventDefault();
+  });
+
+  /* --- window resize: zoom bounds depend on viewport size, so re-clamp both
+         the zoom level and the pan offset whenever the SVG box changes. --- */
+  window.addEventListener("resize", () => {
+    state.update((s) => {
+      clampZoom(svg, s);
+      if (centerLocked) {
+        s.viewBox.x = -s.viewBox.w / 2;
+        s.viewBox.y = -s.viewBox.h / 2;
+      }
+      clampViewBox(s);
+    });
+    commit();
   });
 }
 

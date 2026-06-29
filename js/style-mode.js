@@ -1,80 +1,26 @@
-export const OBJECT_STYLE_MODES = {
-  exam: "exam",
-  free: "free",
-};
+/* ===== OBJECT STYLE (free styling only) =====
+//
+// The legacy "평가원 형태 / 자유 설정" object mode was removed in v0.22.0. Objects
+// no longer carry a styleMode field and never have 수능형 비율/스타일 auto-applied —
+// every object is styled purely from its own properties ("자유 설정").
+//
+// These helpers remain as thin shims so existing call sites stay stable and so old
+// saved files (which still contain a styleMode field) keep loading without error. */
 
-export const KICE_EXAM_STYLE = {
-  strokeWidth: 0.2,
-  helperStrokeWidth: 0.12,
-  fontFamily: '"신명중명조", "바탕", serif',
-  dashLength: 0.45,
-  dashGap: 0.3,
-  arrowStrokeScale: 1,
-  objectArrowStrokeScale: 0.9,
-  lensCenterLine: "full",
-};
-
-export function getObjectStyleMode(obj) {
-  return obj && obj.styleMode === OBJECT_STYLE_MODES.exam
-    ? OBJECT_STYLE_MODES.exam
-    : OBJECT_STYLE_MODES.free;
-}
-
-export function getExamPresetForObject(obj) {
-  const preset = {
-    strokeWidth: KICE_EXAM_STYLE.strokeWidth,
-    fontFamily: KICE_EXAM_STYLE.fontFamily,
-  };
-  if (!obj) return preset;
-
-  if (supportsDashPreset(obj)) {
-    preset.dashLength = (obj.dashLength ?? 0) > 0 ? KICE_EXAM_STYLE.dashLength : 0;
-    preset.dashGap = (obj.dashGap ?? 0) > 0 ? KICE_EXAM_STYLE.dashGap : 0;
-  }
-  if (obj.type === "optics" && (obj.kind === "convex_lens" || obj.kind === "concave_lens")) {
-    preset.centerLine = (obj.centerLine || "none") === "none" ? "none" : KICE_EXAM_STYLE.lensCenterLine;
-  }
-  if (obj.type === "optics" && obj.kind === "object_arrow") {
-    preset.strokeWidth = KICE_EXAM_STYLE.strokeWidth * KICE_EXAM_STYLE.objectArrowStrokeScale;
-  }
-  return preset;
-}
-
+// Render-time resolution is now identity: the object's own props are authoritative.
 export function resolveObjectStyle(obj) {
-  if (!obj || getObjectStyleMode(obj) !== OBJECT_STYLE_MODES.exam) return obj;
-  return { ...obj, ...getExamPresetForObject(obj), _sourceObject: obj };
-}
-
-export function applyNewObjectStyleDefaults(obj, mode = OBJECT_STYLE_MODES.exam) {
-  if (!obj) return obj;
-  obj.styleMode = mode === OBJECT_STYLE_MODES.free ? OBJECT_STYLE_MODES.free : OBJECT_STYLE_MODES.exam;
   return obj;
 }
 
+// New objects carry no style mode. Kept as a no-op for call sites that wrap object
+// creation; intentionally does not write a styleMode field anymore.
+export function applyNewObjectStyleDefaults(obj) {
+  return obj;
+}
+
+// Old saved files may still contain a styleMode field — strip it on load so the
+// dead field never dangles in current state.
 export function migrateObjectStyleMode(obj) {
-  if (!obj) return obj;
-  if (obj.styleMode !== OBJECT_STYLE_MODES.exam && obj.styleMode !== OBJECT_STYLE_MODES.free) {
-    obj.styleMode = OBJECT_STYLE_MODES.free;
-  }
+  if (obj && "styleMode" in obj) delete obj.styleMode;
   return obj;
-}
-
-export function prepareObjectStyleModeSwitch(obj, nextMode) {
-  if (!obj) return false;
-  const mode = nextMode === OBJECT_STYLE_MODES.exam ? OBJECT_STYLE_MODES.exam : OBJECT_STYLE_MODES.free;
-  if (getObjectStyleMode(obj) === mode) return false;
-  if (mode === OBJECT_STYLE_MODES.exam) {
-    obj._freeStyleInitialized = true;
-  }
-  if (mode === OBJECT_STYLE_MODES.free && !obj._freeStyleInitialized) {
-    Object.assign(obj, getExamPresetForObject(obj));
-    obj._freeStyleInitialized = true;
-  }
-  obj.styleMode = mode;
-  return true;
-}
-
-function supportsDashPreset(obj) {
-  return ["rect", "ellipse", "triangle", "line", "polyline", "curve"].includes(obj.type)
-    || (obj.type === "optics" && obj.kind === "object_arrow");
 }

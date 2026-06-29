@@ -1,12 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.21.0";
-import { openFontModalForSelection } from "./tools.js?v=0.21.0";
-import {
-  getObjectStyleMode,
-  prepareObjectStyleModeSwitch,
-  resolveObjectStyle,
-} from "./style-mode.js?v=0.21.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.22.0";
+import { openFontModalForSelection } from "./tools.js?v=0.22.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.22.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -212,66 +208,7 @@ export function initInspector(state) {
     state.update((s) => { s.undoStack.push(snap); s.redoStack = []; });
   }
 
-  /* ---- Object style mode ---- */
-  const styleModeBody = document.createElement("div");
-  styleModeBody.className = "insp-body";
-  const styleModeBtns = document.createElement("div");
-  styleModeBtns.className = "insp-style-mode";
-  const styleModeHelp = document.createElement("div");
-  styleModeHelp.className = "insp-help";
-  styleModeHelp.textContent = "평가원 형태에서는 수능형 비율과 스타일이 자동 적용됩니다.";
-  const styleModeButtonEls = {};
-  [
-    { mode: "exam", label: "평가원 형태" },
-    { mode: "free", label: "자유 설정" },
-  ].forEach(({ mode, label }) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = label;
-    btn.title = mode === "exam" ? styleModeHelp.textContent : label;
-    btn.addEventListener("click", () => {
-      const s = state.get();
-      const ids = s.selectedIds || [];
-      if (!ids.length) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      let changed = false;
-      state.update((s2) => {
-        (s2.selectedIds || []).forEach((id) => {
-          const o = s2.objects.find((item) => item.id === id);
-          if (!o || o.locked) return;
-          changed = prepareObjectStyleModeSwitch(o, mode) || changed;
-        });
-        if (changed) {
-          s2.undoStack.push(snap);
-          s2.redoStack = [];
-        }
-      });
-    });
-    styleModeButtonEls[mode] = btn;
-    styleModeBtns.appendChild(btn);
-  });
-  styleModeBody.appendChild(styleModeBtns);
-  styleModeBody.appendChild(styleModeHelp);
-  const styleModeSection = makeSection("개체 설정", styleModeBody);
-  contentEl.appendChild(styleModeSection);
-
-  function syncStyleModeSelector(objects) {
-    const editable = objects.filter((o) => o && !o.locked);
-    styleModeSection.style.display = objects.length ? "" : "none";
-    const modes = editable.map((o) => getObjectStyleMode(o));
-    const active = modes.length && modes.every((mode) => mode === modes[0]) ? modes[0] : null;
-    Object.entries(styleModeButtonEls).forEach(([mode, btn]) => {
-      btn.disabled = editable.length === 0;
-      btn.classList.toggle("is-active", active === mode);
-      btn.classList.toggle("is-mixed", !active && modes.length > 0);
-    });
-    styleModeHelp.style.display = active === "exam" || !active ? "" : "none";
-  }
-
-  function styleLockedForSelection(objects) {
-    const editable = objects.filter((o) => o && !o.locked);
-    return editable.length > 0 && editable.some((o) => getObjectStyleMode(o) === "exam");
-  }
+  // (평가원/자유 설정 object-style mode removed in v0.22.0 — objects are always free.)
 
   function setButtonDisabled(btn, disabled) {
     btn.disabled = !!disabled;
@@ -1999,7 +1936,6 @@ export function initInspector(state) {
     if (ids.length === 0) {
       emptyEl.style.display = "";
       contentEl.style.display = "none";
-      styleModeSection.style.display = "none";
       abSection.style.display = "";   // 아트보드 section lives in the empty state
       refreshArtboard(s);
       return;
@@ -2007,7 +1943,6 @@ export function initInspector(state) {
 
     emptyEl.style.display = "none";
     contentEl.style.display = "";
-    syncStyleModeSelector(selectedObjects);
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
@@ -2015,7 +1950,6 @@ export function initInspector(state) {
     // Targeted state: only show ungroup button, hide everything else
     if (s.targetedId) {
       groupDiv.style.display = "";
-      styleModeSection.style.display = "none";
       sec1.style.display = "none";
       sec2.style.display = "none";
       sec3.style.display = "none";
@@ -2088,7 +2022,7 @@ export function initInspector(state) {
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
-      const groupStyleDisabled = styleLockedForSelection(selectedObjects);
+      const groupStyleDisabled = false; // style mode removed — never disabled by mode
       xF.inp.disabled = groupHasLocked || groupHasPositionLocked;
       yF.inp.disabled = groupHasLocked || groupHasPositionLocked;
       wF.inp.disabled = groupHasLocked;
@@ -2172,7 +2106,7 @@ export function initInspector(state) {
 
       if (!firstObj) return;
 
-      const multiStyleDisabled = styleLockedForSelection(selectedObjects);
+      const multiStyleDisabled = false; // style mode removed — never disabled by mode
       const firstStyleObj = resolveObjectStyle(firstObj);
       strokeCP.setValue(firstStyleObj.strokeLevel ?? 0);
       const sw = firstStyleObj.strokeWidth ?? 0.2;
@@ -2198,7 +2132,7 @@ export function initInspector(state) {
     if (_dragging) return; // skip during color picker drag to avoid handle jump
 
     const styleObj = resolveObjectStyle(obj);
-    const styleDisabled = getObjectStyleMode(obj) === "exam";
+    const styleDisabled = false; // style mode removed — never disabled by mode
     // Formula shares the text font controls (family + size apply to its glyphs).
     const isText = obj.type === "text" || obj.type === "formula";
     // Text has no stroke/fill controls; it gets its own 글꼴 section instead.

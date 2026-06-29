@@ -109,38 +109,6 @@ details[open] > .insp-summary::before {
   gap: 5px;
 }
 
-.insp-style-mode {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-}
-
-.insp-style-mode button {
-  min-width: 0;
-  padding: 6px 4px;
-  border: 1px solid var(--insp-border);
-  border-radius: var(--insp-radius);
-  background: var(--insp-field-bg);
-  color: var(--insp-text);
-  font: 500 11px/1.2 "IBM Plex Sans KR", sans-serif;
-  cursor: pointer;
-}
-
-.insp-style-mode button.is-active {
-  border-color: var(--insp-accent);
-  background: var(--insp-accent);
-  color: #fff;
-}
-
-.insp-style-mode button.is-mixed {
-  border-style: dashed;
-}
-
-.insp-style-mode button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
 .insp-help {
   color: var(--insp-label);
   font-size: 10px;

@@ -11,17 +11,17 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.21.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.22.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.21.0";
+} from "./state.js?v=0.22.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.21.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.21.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.21.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.21.0";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.22.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.22.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.22.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.22.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1412,7 +1412,6 @@ function setupTextTool() {
       fontSize: worldFontSize, fontFamily: DEFAULT_TEXT_FONT,
       fontWeight: "normal", fontStyle: "normal",
       italic: false, underline: false, strikeout: false, rotation: 0,
-      styleMode: "exam",
       editingId: null,
       editingType: null,
     }, _sc.x, _sc.y, "");
@@ -1442,7 +1441,6 @@ function startEditingTextObject(objId, clickPt = null) {
     italic: o.italic === true,
     underline: !!o.underline, strikeout: !!o.strikeout,
     rotation: o.rotation ?? 0,
-    styleMode: o.styleMode || "free",
     editingId: o.id,
     editingType: o.type,
   }, sc.x, sc.y, o.text || "", clickPt);
@@ -2045,7 +2043,6 @@ function _commitText() {
         o.italic = dt.italic === true;
         o.underline = dt.underline;
         o.strikeout = dt.strikeout;
-        o.styleMode = dt.styleMode || o.styleMode || "free";
       }
     } else if (rawSource) {
       // New text built from the SAME draft data shown while typing.
@@ -2059,7 +2056,6 @@ function _commitText() {
         fontSize: dt.fontSize, fontFamily: dt.fontFamily,
         fontWeight: dt.fontWeight, fontStyle: dt.italic === true ? "italic" : "normal",
         italic: dt.italic === true, underline: dt.underline, strikeout: dt.strikeout,
-        styleMode: dt.styleMode || "exam",
         rotation: 0, locked: false, positionLocked: false,
         layerId: s.activeLayerId, order: s.objects.length,
       };
@@ -2291,7 +2287,6 @@ function commitFormulaEditor() {
         fontSize, fontFamily, fontWeight: "normal", italic: false,
         w: m.w, h: m.h,
         rotation: 0, locked: false, positionLocked: false,
-        styleMode: "exam",
         layerId: s.activeLayerId, order: s.objects.length,
       }));
       s.selectedIds = [id];
