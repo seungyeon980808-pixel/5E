@@ -11,17 +11,17 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.19.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.20.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.19.0";
+} from "./state.js?v=0.20.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.19.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.19.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.19.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.19.0";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.20.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.20.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.20.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.20.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -144,7 +144,7 @@ function syncButtons(activeTool) {
   });
 }
 
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P / C / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
@@ -158,8 +158,8 @@ function setupKeyboard() {
     else if (key === "o") setActiveTool("O");
     else if (key === "y") setActiveTool("Y");
     else if (key === "l") setActiveTool("L");
-    // P previously armed polyline; assignment is now reserved for 점/Point.
-    else if (key === "p") activateSymbolShortcut("node", "P");
+    else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
+    else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
     else if (key === "x") activateSymbolShortcut("axes", "X");
     else if (key === "a") activateSymbolShortcut("anglearc", "A");
     else if (key === "g" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+G");
@@ -1167,6 +1167,9 @@ function makeShape(type, a, b) {
     shape.label = "";
     shape.showLabel = false;
     shape.fillNone = true;
+    // node (점) carries an always-upright text label (Feature G); labelPos picks
+    // the side (above/below). Old node objects without these default to no label.
+    if (shape.kind === "node") shape.labelPos = "above";
     if (shape.kind === "object_arrow") {
       shape.dashLength = 0;
       shape.dashGap = 0;

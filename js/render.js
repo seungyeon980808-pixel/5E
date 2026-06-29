@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.19.0";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.19.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.19.0";
-import { renderFormula } from "./formula.js?v=0.19.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.20.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.20.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.20.0";
+import { renderFormula } from "./formula.js?v=0.20.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -2214,6 +2214,23 @@ function renderOptics(obj) {
   if (rot) {
     const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
     g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
+  }
+
+  // Node label (Feature G): a horizontal text above/below the dot that must NEVER
+  // rotate with the object. Rendered in an un-rotated wrapper OUTSIDE g's rotate
+  // transform; the dot sits at the rotation center, so its position is unaffected.
+  if (obj.kind === "node" && (obj.label ?? "") !== "") {
+    const wrap = document.createElementNS(SVG_NS, "g");
+    if (obj.id) { wrap.dataset.id = obj.id; delete g.dataset.id; }
+    wrap.appendChild(g);
+    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+    const dotR = Math.min(obj.w, obj.h) * 0.22;
+    const size = DEFAULT_TEXT_SIZE_MM;
+    const ly = (obj.labelPos ?? "above") === "below"
+      ? cy + dotR + size * 0.7
+      : cy - dotR - size * 0.7;
+    cText(wrap, cx, ly, obj.label, size, color, obj.fontFamily || DEFAULT_TEXT_FONT);
+    return wrap;
   }
   return g;
 }

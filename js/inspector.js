@@ -1,12 +1,12 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.19.0";
-import { openFontModalForSelection } from "./tools.js?v=0.19.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, mmToPt, ptToMm } from "./state.js?v=0.20.0";
+import { openFontModalForSelection } from "./tools.js?v=0.20.0";
 import {
   getObjectStyleMode,
   prepareObjectStyleModeSwitch,
   resolveObjectStyle,
-} from "./style-mode.js?v=0.19.0";
+} from "./style-mode.js?v=0.20.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1346,6 +1346,35 @@ export function initInspector(state) {
     });
   });
 
+  // node-only: label side (above/below). The label itself reuses labelRow above.
+  const labelPosRow = document.createElement("div");
+  labelPosRow.className = "insp-row";
+  const labelPosLbl = document.createElement("label");
+  labelPosLbl.className = "insp-field-label";
+  labelPosLbl.textContent = "라벨 위치";
+  const labelPosSel = document.createElement("select");
+  labelPosSel.className = "insp-input";
+  [["above", "위 (above)"], ["below", "아래 (below)"]].forEach(([val, text]) => {
+    const opt = document.createElement("option");
+    opt.value = val; opt.textContent = text;
+    labelPosSel.appendChild(opt);
+  });
+  labelPosRow.appendChild(labelPosLbl);
+  labelPosRow.appendChild(labelPosSel);
+  sec3Body.appendChild(labelPosRow);
+  labelPosSel.addEventListener("change", () => {
+    const s = state.get();
+    if (!(s.selectedIds || []).length) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const val = labelPosSel.value === "below" ? "below" : "above";
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
+      if (!o || o.locked) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      o.labelPos = val;
+    });
+  });
+
   // capacitor-only: plate separation 간격 (world mm).
   const gapRow = document.createElement("div");
   gapRow.className = "insp-row";
@@ -2306,8 +2335,11 @@ export function initInspector(state) {
     clampFlipRow.style.display = isApparatus && appKind === "clamp" ? "" : "none";
     scaleTextRow.style.display = isApparatus && appKind === "scale" ? "" : "none";
     // Single 라벨 row: arc, optics, and all circuits EXCEPT diode (which uses 단자1/2).
+    const isNode = isOptics && obj.kind === "node";
     labelRow.style.display = (isArc || isOptics || (isCircuit && !isDiode)) ? "" : "none";
-    showLabelRow.style.display = isOptics ? "" : "none";
+    // node uses a label-position dropdown instead of the show/hide toggle.
+    showLabelRow.style.display = (isOptics && !isNode) ? "" : "none";
+    labelPosRow.style.display = isNode ? "" : "none";
     gapRow.style.display = isCap ? "" : "none";
     circuitHeightF.el.style.display = hasCircuitHeight ? "" : "none";
     term1.el.style.display = isDiode ? "" : "none";
@@ -2357,6 +2389,7 @@ export function initInspector(state) {
       labelInp.value  = obj.label ?? "";
     }
     if (isOptics) showLabelCb.checked = !!obj.showLabel;
+    if (isNode) labelPosSel.value = (obj.labelPos === "below") ? "below" : "above";
     if (isLens) centerLineSel.value = styleObj.centerLine || "none";
     if (isCap && document.activeElement !== gapInp) {
       gapInp.value = (obj.gap ?? 2).toFixed(1);
@@ -2396,6 +2429,7 @@ export function initInspector(state) {
     swF.inp.disabled = !!obj.locked;
     labelInp.disabled = !!obj.locked;
     showLabelCb.disabled = !!obj.locked;
+    labelPosSel.disabled = !!obj.locked;
     gapInp.disabled = !!obj.locked;
     circuitHeightF.inp.disabled = !!obj.locked;
     term1.inp.disabled = !!obj.locked;

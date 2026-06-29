@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints } from "./render.js?v=0.19.0";
+import { rotPt, singleObjBBox, curveSamplePoints } from "./render.js?v=0.20.0";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
@@ -30,7 +30,10 @@ const LINE_LIKE_TYPES = new Set(["line", "circuit", "polyline", "curve"]);
 function isSnapTargetEligible(obj, snapshot) {
   const layerId = obj.layerId ?? 1;
   const layer = (snapshot.layers || []).find((item) => item.id === layerId);
-  return !!layer && layer.visible !== false && layerId === snapshot.activeLayerId;
+  // Visible layers only — hidden layers are excluded, but any VISIBLE layer is a
+  // valid snap target (Features C/D/G), not just the active one. (The picker is
+  // active-layer-only; snapping deliberately reaches every visible layer.)
+  return !!layer && layer.visible !== false;
 }
 
 /* Optical object head = top-center tip of the up-arrow, rotation applied about the
@@ -125,40 +128,10 @@ export function resolveEndpointSnap(point, excludeIds, scale, state) {
   if (!isValidPoint(point)) return null;
   const safeScale = scale > 0 ? scale : 1;
   const exclude = excludeIds instanceof Set ? excludeIds : new Set(excludeIds || []);
-  const previewDist = PREVIEW_PX / safeScale;
-  const attachDist = ATTACH_PX / safeScale;
-  const eps = 0.5 / safeScale;
-
-  let best = null; // { x, y, distance, rank }
-  const consider = (x, y, distance, rank) => {
-    if (!Number.isFinite(x) || !Number.isFinite(y) || distance > previewDist) return;
-    if (!best || distance < best.distance - eps
-        || (Math.abs(distance - best.distance) <= eps && rank < best.rank)) {
-      best = { x, y, distance, rank };
-    }
-  };
-
-  // rank 0: high-priority vertices/endpoints/heads (measured at the head, written
-  // at the attach point which is offset into optical heads — Feature B).
-  for (const t of collectPrioritySnapPoints(state, exclude)) {
-    consider(t.attachX ?? t.x, t.attachY ?? t.y, Math.hypot(t.x - point.x, t.y - point.y), 0);
-  }
-
-  // rank 1 (straight edges) + rank 2 (curved surfaces) of every other eligible object.
-  const snapshot = state.get();
-  for (const obj of snapshot.objects) {
-    if (!obj?.id || exclude.has(obj.id) || !isSnapTargetEligible(obj, snapshot)) continue;
-    for (const [a, b] of straightEdgesOf(obj)) {
-      const q = nearestOnSegment(point, a, b);
-      consider(q.x, q.y, Math.hypot(q.x - point.x, q.y - point.y), 1);
-    }
-    const c = curvedSurfaceNearest(obj, point);
-    if (c) consider(c.x, c.y, Math.hypot(c.x - point.x, c.y - point.y), 2);
-  }
-
-  if (!best) return null;
+  const best = nearestSnapPoint(point, exclude, state, 0.5 / safeScale);
+  if (!best || best.distance > PREVIEW_PX / safeScale) return null;
   const target = { x: best.x, y: best.y };
-  const attach = best.distance <= attachDist;
+  const attach = best.distance <= ATTACH_PX / safeScale;
   return {
     target,
     attach,
@@ -166,6 +139,41 @@ export function resolveEndpointSnap(point, excludeIds, scale, state) {
       ? { from: target, to: target }
       : { from: { x: point.x, y: point.y }, to: target },
   };
+}
+
+/* nearestSnapPoint: THE shared nearest-snap-candidate helper (GLOBAL PRINCIPLE).
+ * Returns { x, y, distance, rank, targetStroke } for the closest edge/curve/vertex
+ * to `point`, or null. Rank breaks near-ties (eps): 0 = vertex/endpoint/optical
+ * head, 1 = straight edge, 2 = curved surface. `targetStroke` is the snapped
+ * object's strokeWidth (undefined for vertices). No threshold filtering — callers
+ * (resolveEndpointSnap C, optic-tip A, node G) apply their own preview/attach cuts. */
+function nearestSnapPoint(point, exclude, state, eps = 0) {
+  if (!isValidPoint(point)) return null;
+  const snapshot = state.get();
+  let best = null;
+  const consider = (x, y, distance, rank, stroke) => {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    if (!best || distance < best.distance - eps
+        || (Math.abs(distance - best.distance) <= eps && rank < best.rank)) {
+      best = { x, y, distance, rank, targetStroke: stroke };
+    }
+  };
+  // rank 0: high-priority vertices/endpoints/heads (measured at the head, written
+  // at the attach point which is offset into optical heads — Feature B).
+  for (const t of collectPrioritySnapPoints(state, exclude)) {
+    consider(t.attachX ?? t.x, t.attachY ?? t.y, Math.hypot(t.x - point.x, t.y - point.y), 0, undefined);
+  }
+  // rank 1 (straight edges) + rank 2 (curved surfaces) of every other eligible object.
+  for (const obj of snapshot.objects) {
+    if (!obj?.id || exclude.has(obj.id) || !isSnapTargetEligible(obj, snapshot)) continue;
+    for (const [a, b] of straightEdgesOf(obj)) {
+      const q = nearestOnSegment(point, a, b);
+      consider(q.x, q.y, Math.hypot(q.x - point.x, q.y - point.y), 1, obj.strokeWidth);
+    }
+    const c = curvedSurfaceNearest(obj, point);
+    if (c) consider(c.x, c.y, Math.hypot(c.x - point.x, c.y - point.y), 2, obj.strokeWidth);
+  }
+  return best;
 }
 
 /* ----- Feature C geometry: nearest point on edges / curved surfaces ----- */
@@ -532,6 +540,140 @@ function closestPair(moveObjIds, draggedPoints, state, maxDistance) {
   return best;
 }
 
+/* ===== Feature A: a MOVING optics object_arrow snaps its ARROWHEAD TIP onto a
+ * straight edge / curved surface. The tip is seated `overlap` INTO the target
+ * (overlap = 0.5*targetLine.strokeWidth + 1) along the approach normal so light
+ * originates exactly at the surface. Whole-object translate; no rotation. */
+function resolveOpticTipSnap(moveObjIds, origObjs, raw, scale, state) {
+  if (moveObjIds.length !== 1) return null;
+  const obj = origObjs[moveObjIds[0]];
+  if (!obj || obj.type !== "optics" || obj.kind !== "object_arrow") return null;
+  const { head } = opticalObjectHead(obj);
+  const tip = { x: head.x + raw.dx, y: head.y + raw.dy };
+  const best = nearestSnapPoint(tip, new Set(moveObjIds), state, 0.5 / scale);
+  if (!best || best.distance > PREVIEW_PX / scale) return null;
+  const surface = { x: best.x, y: best.y };
+  if (best.distance > ATTACH_PX / scale) {
+    return { dx: raw.dx, dy: raw.dy, rotation: null, preview: { from: surface, to: surface } };
+  }
+  const overlap = 0.5 * (best.targetStroke ?? 0.2) + 1;
+  const ndx = surface.x - tip.x, ndy = surface.y - tip.y;
+  const len = Math.hypot(ndx, ndy);
+  const attach = len > 0
+    ? { x: surface.x + (ndx / len) * overlap, y: surface.y + (ndy / len) * overlap }
+    : surface;
+  return {
+    dx: raw.dx + (attach.x - tip.x),
+    dy: raw.dy + (attach.y - tip.y),
+    rotation: null,
+    preview: { from: surface, to: surface },
+  };
+}
+
+/* ===== Feature G: a MOVING node (점) snaps its dot CENTER to the nearest point on
+ * any straight edge / curved surface (vertex priority). Single point, so this is
+ * nearest-point snapping (no tangency, no overlap). Whole-object translate. */
+function resolveNodeSnap(moveObjIds, origObjs, raw, scale, state) {
+  if (moveObjIds.length !== 1) return null;
+  const obj = origObjs[moveObjIds[0]];
+  if (!obj || obj.type !== "optics" || obj.kind !== "node") return null;
+  const center = { x: obj.x + obj.w / 2 + raw.dx, y: obj.y + obj.h / 2 + raw.dy };
+  const best = nearestSnapPoint(center, new Set(moveObjIds), state, 0.5 / scale);
+  if (!best || best.distance > PREVIEW_PX / scale) return null;
+  const surface = { x: best.x, y: best.y };
+  if (best.distance > ATTACH_PX / scale) {
+    return { dx: raw.dx, dy: raw.dy, rotation: null, preview: { from: surface, to: surface } };
+  }
+  return {
+    dx: raw.dx + (surface.x - center.x),
+    dy: raw.dy + (surface.y - center.y),
+    rotation: null,
+    preview: { from: surface, to: surface },
+  };
+}
+
+/* ===== Feature D: a MOVING line snaps TANGENT to a circle/ellipse/curve by
+ * TRANSLATING the whole line perpendicular to itself (both endpoints move equally,
+ * angle preserved) until it rests against the curve on the near side. The contact
+ * (tangent) point is the red dot. ===== */
+
+/* Tangent translation of a line (unit normal n) to an ellipse, solved in the
+ * ellipse's local (unrotated, centered) frame via the support distance. Returns
+ * { shift, distance, contact } where shift is the signed move along n. */
+function ellipseTangent(obj, p1, nx, ny) {
+  const w = Math.abs(obj.w), h = Math.abs(obj.h);
+  if (!w || !h) return null;
+  const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
+  const a = w / 2, b = h / 2;
+  const rot = (obj.rotation || 0) * Math.PI / 180;
+  const c = Math.cos(rot), s = Math.sin(rot);
+  // world normal → local frame (rotate by -rot)
+  const lnx = nx * c + ny * s;
+  const lny = -nx * s + ny * c;
+  const R = Math.hypot(a * lnx, b * lny); // support distance of unit normal
+  if (R === 0) return null;
+  const sdist = (cx - p1.x) * nx + (cy - p1.y) * ny; // signed center→line distance (world)
+  const sign = sdist >= 0 ? 1 : -1;
+  const shift = sdist - sign * R;
+  // tangent point in local frame (support point on the sign side) → world
+  const lxc = (sign * a * a * lnx) / R, lyc = (sign * b * b * lny) / R;
+  const contact = { x: cx + lxc * c - lyc * s, y: cy + lxc * s + lyc * c };
+  return { shift, distance: Math.abs(shift), contact };
+}
+
+/* Tangent translation of a line to a curve, approximated on its hit-test polygon:
+ * rest the line against the extreme sample point on the near side. */
+function curveTangent(obj, p1, nx, ny) {
+  const pts = curveSamplePoints(obj);
+  if (!Array.isArray(pts) || pts.length < 2) return null;
+  let minE = Infinity, maxE = -Infinity, minPt = null, maxPt = null;
+  for (const pt of pts) {
+    if (!isValidPoint(pt)) continue;
+    const e = (pt.x - p1.x) * nx + (pt.y - p1.y) * ny;
+    if (e < minE) { minE = e; minPt = pt; }
+    if (e > maxE) { maxE = e; maxPt = pt; }
+  }
+  if (!minPt || !maxPt) return null;
+  return Math.abs(minE) <= Math.abs(maxE)
+    ? { shift: minE, distance: Math.abs(minE), contact: { x: minPt.x, y: minPt.y } }
+    : { shift: maxE, distance: Math.abs(maxE), contact: { x: maxPt.x, y: maxPt.y } };
+}
+
+function resolveLineTangentSnap(moveObjIds, origObjs, raw, scale, state) {
+  if (moveObjIds.length !== 1) return null;
+  const obj = origObjs[moveObjIds[0]];
+  if (!obj || (obj.type !== "line" && obj.type !== "circuit")) return null;
+  if (!isValidPoint(obj.p1) || !isValidPoint(obj.p2)) return null;
+  const p1 = { x: obj.p1.x + raw.dx, y: obj.p1.y + raw.dy };
+  const p2 = { x: obj.p2.x + raw.dx, y: obj.p2.y + raw.dy };
+  const dirx = p2.x - p1.x, diry = p2.y - p1.y;
+  const L = Math.hypot(dirx, diry);
+  if (L === 0) return null;
+  const ux = dirx / L, uy = diry / L;       // unit direction
+  const nx = -uy, ny = ux;                   // unit normal
+  // contact must lie within the segment span (translation along n leaves it fixed)
+  const within = (pt) => {
+    const along = (pt.x - p1.x) * ux + (pt.y - p1.y) * uy;
+    return along >= 0 && along <= L;
+  };
+  const snapshot = state.get();
+  const exclude = new Set(moveObjIds);
+  const previewDist = PREVIEW_PX / scale;
+  let best = null;
+  for (const t of snapshot.objects) {
+    if (!t?.id || exclude.has(t.id) || !isSnapTargetEligible(t, snapshot)) continue;
+    let cand = null;
+    if (t.type === "ellipse") cand = ellipseTangent(t, p1, nx, ny);
+    else if (t.type === "curve") cand = curveTangent(t, p1, nx, ny);
+    if (!cand || !within(cand.contact)) continue;
+    if (cand.distance <= previewDist && (!best || cand.distance < best.distance)) best = cand;
+  }
+  if (!best) return null;
+  const preview = { from: best.contact, to: best.contact };
+  if (best.distance > ATTACH_PX / scale) return { dx: raw.dx, dy: raw.dy, rotation: null, preview };
+  return { dx: raw.dx + nx * best.shift, dy: raw.dy + ny * best.shift, rotation: null, preview };
+}
+
 /* ===== SNAP RESOLVER: raw, preview-only, or magnetic attach =====
  * Returns { dx, dy, preview, rotation }. rotation is null unless attached.
  */
@@ -544,6 +686,15 @@ export function resolveSnap(moveObjIds, origObjs, raw, mods, zoom, state, scene)
   /* Priority 1+2: line-like endpoints and the optical object head win first. */
   const priority = resolvePriorityMove(moveObjIds, origObjs, raw, scale, state);
   if (priority) return priority;
+
+  /* Feature A/G/D: optics-tip, node-center, and line-tangent move snaps. Each is
+   * type-specific and mutually exclusive, so order is incidental. */
+  const opticTip = resolveOpticTipSnap(moveObjIds, origObjs, raw, scale, state);
+  if (opticTip) return opticTip;
+  const nodeSnap = resolveNodeSnap(moveObjIds, origObjs, raw, scale, state);
+  if (nodeSnap) return nodeSnap;
+  const lineTangent = resolveLineTangentSnap(moveObjIds, origObjs, raw, scale, state);
+  if (lineTangent) return lineTangent;
 
   const draggedPoints = draggedCandidatePoints(moveObjIds, origObjs, raw.dx, raw.dy, scene);
   if (!draggedPoints) return unsnapped;

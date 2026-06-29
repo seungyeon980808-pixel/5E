@@ -13,10 +13,10 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.19.0";
-import { resolveSnap, resolveEndpointSnap } from "./snap.js?v=0.19.0";
-import { setSnapPreview } from "./render.js?v=0.19.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.19.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.20.0";
+import { resolveSnap, resolveEndpointSnap } from "./snap.js?v=0.20.0";
+import { setSnapPreview } from "./render.js?v=0.20.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.20.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -379,8 +379,16 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // polyline or closed curve instead falls through to branch-A bbox resize below.
   if ((obj.type === "curve" && !obj.closed) || (obj.type === "polyline" && obj.closed !== true)) {
     const i = parseInt(handle.slice(1), 10);
+    let dragged = { x: orig.points[i].x + dx, y: orig.points[i].y + dy };
+    // Ctrl angle-constraint (Feature B): snap the dragged vertex so its segment to
+    // the PREVIOUS neighbor (i-1) — or the NEXT neighbor (i+1) for vertex 0 — falls
+    // on a 15° increment. Reuses the SAME helper/key/increment as the line handle.
+    if (ctrlKey && orig.points.length > 1) {
+      const anchor = orig.points[i === 0 ? 1 : i - 1];
+      if (anchor) dragged = snapLineEndpoint(anchor, dragged);
+    }
     obj.points = orig.points.map((p, j) =>
-      j === i ? { x: p.x + dx, y: p.y + dy } : { x: p.x, y: p.y }
+      j === i ? dragged : { x: p.x, y: p.y }
     );
     return;
   }
