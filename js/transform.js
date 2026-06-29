@@ -13,9 +13,10 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.17.8";
-import { resolveSnap } from "./snap.js?v=0.17.8";
-import { setSnapPreview } from "./render.js?v=0.17.8";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.17.9";
+import { resolveSnap } from "./snap.js?v=0.17.9";
+import { setSnapPreview } from "./render.js?v=0.17.9";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.17.9";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -1117,18 +1118,13 @@ export function initTransform(svg, state) {
     const s = state.get();
     const selectedIds = s.selectedIds || [];
 
-    // Find the clicked object by traversing up from the event target
-    let el = e.target;
-    let clickedId = null;
-    while (el && el !== svg) {
-      if (el.dataset && el.dataset.id) { clickedId = el.dataset.id; break; }
-      el = el.parentElement;
-    }
+    const pickedObj = pickSelectableObjectFromEvent(svg, s, e);
+    const clickedId = pickedObj?.id || null;
 
     // Allow move only if the clicked object is in the current selection
     if (!clickedId || !selectedIds.includes(clickedId)) return;
 
-    const obj = s.objects.find((o) => o.id === clickedId);
+    const obj = pickedObj || s.objects.find((o) => o.id === clickedId);
     if (!obj) return;
     const vb = s.viewBox;
     _moveStartWorld = screenToWorld(svg, vb, e.clientX, e.clientY);
@@ -1162,6 +1158,7 @@ export function initTransform(svg, state) {
     _pendingSnapshot = JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
     _didMove = false;
 
+    svg.style.cursor = "grabbing";
     e.preventDefault(); // suppress text-selection highlight during drag
   });
 
@@ -1446,6 +1443,7 @@ export function initTransform(svg, state) {
     _moveOrigObjs = {};
     _pendingSnapshot = null;
     _didMove = false;
+    svg.style.cursor = "";
   };
   window.addEventListener("pointerup", finishGesture);
   window.addEventListener("mouseup", finishGesture);
@@ -1484,5 +1482,6 @@ export function initTransform(svg, state) {
     _rotObjId = _rotOrigObj = _rotPivot = _rotPendingSnap = null;
     _pendingSnapshot = null;
     _didMove = _rotDidMove = false;
+    svg.style.cursor = "";
   });
 }

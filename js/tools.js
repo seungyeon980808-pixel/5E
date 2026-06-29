@@ -11,16 +11,16 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getZoom, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.8";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.17.9";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt,
-} from "./state.js?v=0.17.8";
+} from "./state.js?v=0.17.9";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon } from "./render.js?v=0.17.8";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.8";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.8";
+import { circuitBodyPolygon } from "./render.js?v=0.17.9";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.17.9";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.17.9";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -218,6 +218,34 @@ function setupDrawing() {
   window.addEventListener("keydown", (e) => { if (e.code === "Space") spaceHeld = true; });
   window.addEventListener("keyup", (e) => { if (e.code === "Space") spaceHeld = false; });
 
+  _svg.addEventListener("pointermove", (e) => {
+    if (e.buttons & 1) return;
+    const s = _state.get();
+    const activeTool = s.activeTool;
+    if (activeTool !== "V" && activeTool !== "rotate") {
+      _svg.style.cursor = "";
+      return;
+    }
+    if (spaceHeld) {
+      _svg.style.cursor = "";
+      return;
+    }
+    if (e.target?.dataset?.handle) return;
+    const picked = pickSelectableObjectFromEvent(_svg, s, e);
+    if (!picked) {
+      _svg.style.cursor = activeTool === "V" ? "default" : "";
+      return;
+    }
+    const isSelected = (s.selectedIds || []).includes(picked.id);
+    _svg.style.cursor = activeTool === "V" && isSelected && isPositionMovableForCursor(picked)
+      ? "grab"
+      : "pointer";
+  });
+
+  _svg.addEventListener("pointerleave", () => {
+    _svg.style.cursor = "";
+  });
+
   // HOVER CURSOR is now driven by the open-path hit twin (render.js): each twin
   // carries cursor:pointer over the SAME fat transparent band that drives click
   // selection and grab/move, so hover and click share one element. The old
@@ -237,23 +265,11 @@ function setupDrawing() {
     // wrongly clear selectedIds ??breaking transform.js's handle-drag guard.
     const tgt = e.target;
     if (tgt && tgt.dataset && tgt.dataset.handle) return;
-    const vb = _state.get().viewBox;
-    const p = screenToWorld(_svg, vb, e.clientX, e.clientY);
-    // Convert a few CSS px of edge tolerance into world units (DESIGN-style
-    // tolerance) so thin strokes are easy to hit.
-    const worldUnitsPerPx = vb.w / _svg.getBoundingClientRect().width;
-    const tol = HIT_TOL_PX * worldUnitsPerPx;
-    const lineTol = LINE_HIT_TOL_PX / getRenderScale();
+    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
     const shiftHeld = e.shiftKey;
     let hitId = null;
     _state.update((s) => {
-      hitId = _at === "V"
-        ? pickSelectableObject(s, p, tol, lineTol)
-        : hitTest(s.objects, p, tol, lineTol);
-      if (_at !== "V" && hitId !== null) {
-        const hit = s.objects.find((o) => o.id === hitId);
-        if (!isObjectSelectable(s, hit)) hitId = null;
-      }
+      hitId = pickSelectableObjectAtPoint(s, p);
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
         // V: defer selection to mouseup so marquee can run
@@ -442,6 +458,10 @@ function isObjectSelectable(state, obj) {
   return !!layer && layer.visible !== false && layerId === state.activeLayerId;
 }
 
+function isPositionMovableForCursor(obj) {
+  return obj && !obj.locked && !obj.positionLocked;
+}
+
 function isBasicLine(obj) {
   if (!obj || obj.type !== "line") return false;
   const arrowHead = obj.arrowHead ?? "none";
@@ -483,6 +503,26 @@ function pickSelectableObject(state, p, tol, lineTol) {
     getRenderScale(),
     (o) => isObjectSelectable(state, o)
   );
+}
+
+export function pickTolerances() {
+  const scale = getRenderScale() || 1;
+  return {
+    tol: HIT_TOL_PX / scale,
+    lineTol: LINE_HIT_TOL_PX / scale,
+  };
+}
+
+export function pickSelectableObjectAtPoint(state, p) {
+  const { tol, lineTol } = pickTolerances();
+  return pickSelectableObject(state, p, tol, lineTol);
+}
+
+export function pickSelectableObjectFromEvent(svg, state, event) {
+  if (!svg || !state || !event) return null;
+  const p = screenToWorld(svg, state.viewBox, event.clientX, event.clientY);
+  const id = pickSelectableObjectAtPoint(state, p);
+  return id ? state.objects.find((o) => o.id === id) || null : null;
 }
 
 /* ===== CLICK-TO-CLICK DRAWING (line L + polyline P ??one shared mechanism) ===== */
@@ -902,8 +942,9 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       // box == actual shape: outward-grown bbox containment (axes/optics select as
       // one indivisible object via the bounding box; same as rect)
-      if (p.x >= o.x - margin && p.x <= o.x + o.w + margin &&
-          p.y >= o.y - margin && p.y <= o.y + o.h + margin) return o.id;
+      const q = localPointForSizeObject(o, p);
+      if (q.x >= o.x - margin && q.x <= o.x + o.w + margin &&
+          q.y >= o.y - margin && q.y <= o.y + o.h + margin) return o.id;
       continue;
     }
 
@@ -928,22 +969,21 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       const rx = o.w / 2 + margin, ry = o.h / 2 + margin;
       if (rx <= 0 || ry <= 0) continue;
       const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
-      const nx = (p.x - cx) / rx, ny = (p.y - cy) / ry;
+      const q = localPointForSizeObject(o, p);
+      const nx = (q.x - cx) / rx, ny = (q.y - cy) / ry;
       if (nx * nx + ny * ny <= 1) return o.id;
       continue;
     }
 
     if (o.type === "triangle") {
-      // vertices (DESIGN render order): bottom-left, bottom-right, top-left
-      const ax = o.x,       ay = o.y + o.h;
-      const bx = o.x + o.w, by = o.y + o.h;
-      const cx = o.x,       cy = o.y;
-      if (pointInTriangle(p.x, p.y, ax, ay, bx, by, cx, cy)) return o.id;
+      const q = localPointForSizeObject(o, p);
+      const [a, b, c] = triangleVertices(o);
+      if (pointInTriangle(q.x, q.y, a.x, a.y, b.x, b.y, c.x, c.y)) return o.id;
       // hollow shapes also accept a click within margin of any edge
       if (o.fillNone && (
-          segDist(p.x, p.y, ax, ay, bx, by) <= margin ||
-          segDist(p.x, p.y, bx, by, cx, cy) <= margin ||
-          segDist(p.x, p.y, cx, cy, ax, ay) <= margin)) return o.id;
+          segDist(q.x, q.y, a.x, a.y, b.x, b.y) <= margin ||
+          segDist(q.x, q.y, b.x, b.y, c.x, c.y) <= margin ||
+          segDist(q.x, q.y, c.x, c.y, a.x, a.y) <= margin)) return o.id;
       continue;
     }
   }
@@ -992,6 +1032,53 @@ function getObjectBBox(o) {
 function bboxIntersects(a, b) {
   return a.x <= b.x + b.w && a.x + a.w >= b.x &&
          a.y <= b.y + b.h && a.y + a.h >= b.y;
+}
+
+function localPointForSizeObject(o, p) {
+  const deg = o.rotation || 0;
+  if (!deg) return p;
+  const cx = o.x + o.w / 2;
+  const cy = o.y + o.h / 2;
+  const rad = -deg * Math.PI / 180;
+  const dx = p.x - cx;
+  const dy = p.y - cy;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    x: cx + dx * cos - dy * sin,
+    y: cy + dx * sin + dy * cos,
+  };
+}
+
+function triangleVertices(o) {
+  const flipX = o.flipX ?? false;
+  const flipY = o.flipY ?? false;
+  if (!flipX && !flipY) {
+    return [
+      { x: o.x, y: o.y + o.h },
+      { x: o.x + o.w, y: o.y + o.h },
+      { x: o.x, y: o.y },
+    ];
+  }
+  if (flipX && !flipY) {
+    return [
+      { x: o.x + o.w, y: o.y + o.h },
+      { x: o.x, y: o.y + o.h },
+      { x: o.x + o.w, y: o.y },
+    ];
+  }
+  if (!flipX && flipY) {
+    return [
+      { x: o.x, y: o.y },
+      { x: o.x + o.w, y: o.y },
+      { x: o.x, y: o.y + o.h },
+    ];
+  }
+  return [
+    { x: o.x + o.w, y: o.y },
+    { x: o.x, y: o.y },
+    { x: o.x + o.w, y: o.y + o.h },
+  ];
 }
 
 /* ----- point-in-triangle via consistent sign of edge cross products ----- */
@@ -2226,10 +2313,8 @@ function setupTextClickToEdit() {
     const o = s.objects.find((x) => x.id === ids[0]);
     if (!o || (o.type !== "text" && o.type !== "formula")) return;    // ...and it must be a text/formula object
     // The click must actually land on THAT text (not empty space / another shape).
-    const vb = s.viewBox;
-    const tol = (HIT_TOL_PX * vb.w) / _svg.getBoundingClientRect().width;
-    const p = screenToWorld(_svg, vb, e.clientX, e.clientY);
-    if (hitTest(s.objects, p, tol) !== o.id) return;
+    const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
+    if (pickSelectableObjectAtPoint(s, p) !== o.id) return;
     _editClickId = o.id;
     _editClickStart = { x: e.clientX, y: e.clientY };
   }, true); // capture = true
@@ -2330,8 +2415,7 @@ function setupTextContextMenu() {
       target = { kind: "draft", id: s.draftText.editingId || null };
     } else {
       const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
-      const tol = HIT_TOL_PX / getZoom();
-      const hitId = hitTest(s.objects, p, tol);
+      const hitId = pickSelectableObjectAtPoint(s, p);
       const hitObj = hitId ? s.objects.find((o) => o.id === hitId) : null;
       let obj = (hitObj && (hitObj.type === "text" || hitObj.type === "formula")) ? hitObj : null;
       if (!obj && (s.selectedIds || []).length === 1) {

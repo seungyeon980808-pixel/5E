@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.17.8";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.8";
-import { resolveObjectStyle } from "./style-mode.js?v=0.17.8";
-import { renderFormula } from "./formula.js?v=0.17.8";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.17.9";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM } from "./state.js?v=0.17.9";
+import { resolveObjectStyle } from "./style-mode.js?v=0.17.9";
+import { renderFormula } from "./formula.js?v=0.17.9";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -641,7 +641,6 @@ function makeHitTwin(obj) {
   twin.setAttribute("stroke-linecap", "round");
   twin.setAttribute("stroke-linejoin", "round");
   twin.setAttribute("pointer-events", isRectTwin ? "all" : "stroke");
-  twin.style.cursor = "pointer";
   if (obj.id) twin.dataset.id = obj.id;
   twin.dataset.ui = "hit-twin";
   return twin;
