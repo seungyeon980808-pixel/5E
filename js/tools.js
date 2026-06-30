@@ -11,17 +11,17 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.28.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.29.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
-} from "./state.js?v=0.28.0";
+} from "./state.js?v=0.29.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.28.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.28.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.28.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.28.0";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.29.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.29.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.29.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.29.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -83,6 +83,7 @@ export function initTools(svg, state) {
   setupKeyboard();
   setupDrawing();
   setupClickDrawing();
+  setupFreeDraw();
   setupTextTool();
   setupTextClickToEdit();
   setupTextEditShortcuts();
@@ -166,6 +167,7 @@ function setupKeyboard() {
     else if (key === "g") activateSymbolShortcut("anglearc", "G");
     else if (key === "c") setActiveTool("C");
     else if (key === "t") setActiveTool("T");
+    else if (key === "f") setActiveTool("F");              // 자유그리기 (free-draw)
   });
 }
 
@@ -541,6 +543,113 @@ const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve", CIRCUIT: "circuit" }
 let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C"/"CIRCUIT") while drafting, else null
 let draftPoints = [];     // world-space vertices placed so far
 let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
+
+/* ===== FREE-DRAW TOOL (F): freehand drag → simplified+smoothed closed curve =====
+ * Captures a freehand pointer drag as raw world points, previews them live as an
+ * open curve, then on release simplifies them (Ramer–Douglas–Peucker) and stores
+ * them as a CLOSED curve object — reusing the closed-curve fill/render/hit infra.
+ * The Catmull-Rom closed renderer smooths the anchors AND the end→start wrap, so
+ * the shape closes cleanly. Default fill = opaque WHITE, default no stroke
+ * (borderless; main use = covering parts of an imported image). Fill/stroke stay
+ * editable in the inspector; it exports, undoes in one step, and round-trips via
+ * project-io exactly like any other curve. */
+let _fdActive = false;    // a free-draw drag is in progress
+let _fdRaw = null;        // raw captured world points during the drag
+const FD_MIN_STEP = 0.3;  // min world-mm movement to record a new raw point
+const FD_RDP_EPS  = 0.6;  // RDP simplification tolerance (world mm)
+
+// perpendicular distance from point p to the segment a→b (world units).
+function fdPerpDist(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  if (len2 === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  const t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+  const cx = a.x + t * dx, cy = a.y + t * dy;
+  return Math.hypot(p.x - cx, p.y - cy);
+}
+
+// Ramer–Douglas–Peucker: drop points that lie within eps of the kept polyline.
+function simplifyRDP(points, eps) {
+  if (points.length < 3) return points.slice();
+  let maxD = 0, idx = 0;
+  const a = points[0], b = points[points.length - 1];
+  for (let i = 1; i < points.length - 1; i++) {
+    const d = fdPerpDist(points[i], a, b);
+    if (d > maxD) { maxD = d; idx = i; }
+  }
+  if (maxD > eps) {
+    const left = simplifyRDP(points.slice(0, idx + 1), eps);
+    const right = simplifyRDP(points.slice(idx), eps);
+    return left.slice(0, -1).concat(right);
+  }
+  return [a, b];
+}
+
+function setupFreeDraw() {
+  _svg.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    if (spaceHeld) return;
+    if (_state.get().activeTool !== "F") return;
+    e.preventDefault();
+    _fdActive = true;
+    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
+    _fdRaw = [p];
+    try { _svg.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+
+  _svg.addEventListener("pointermove", (e) => {
+    if (!_fdActive) return;
+    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
+    const last = _fdRaw[_fdRaw.length - 1];
+    if (last && Math.hypot(p.x - last.x, p.y - last.y) < FD_MIN_STEP) return;
+    _fdRaw.push(p);
+    // Live preview: an OPEN curve with a thin visible stroke so the path is seen
+    // while drawing (the committed object is closed + borderless white).
+    _state.update((s) => {
+      s.draft = {
+        type: "curve", points: _fdRaw.slice(), closed: false, rotation: 0,
+        strokeLevel: 0, strokeWidth: 0.3, fillNone: true, dashLength: 0, dashGap: 0,
+      };
+    });
+  });
+
+  window.addEventListener("pointerup", (e) => {
+    if (!_fdActive) return;
+    _fdActive = false;
+    try { _svg.releasePointerCapture(e.pointerId); } catch (_) {}
+    const raw = _fdRaw || [];
+    _fdRaw = null;
+    const simplified = simplifyRDP(raw, FD_RDP_EPS);
+    _state.update((s) => {
+      s.draft = null;
+      if (simplified.length < 3) return; // need 3+ anchors for a closed fillable curve
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      const obj = {
+        id: `obj_${Date.now().toString(36)}_${++_idCounter}`,
+        type: "curve",
+        points: simplified,
+        closed: true,
+        rotation: 0,
+        strokeLevel: 0,
+        strokeWidth: 0,      // borderless by default (no stroke)
+        fillLevel: 255,      // opaque white fill
+        fillNone: false,
+        fillStyle: "solid",
+        dashLength: 0,
+        dashGap: 0,
+        locked: false,
+        positionLocked: false,
+        layerId: s.activeLayerId,
+        order: s.objects.length,
+      };
+      s.objects.push(obj);
+      s.undoStack.push(snap);
+      s.redoStack = [];
+      s.selectedIds = [obj.id];
+      s.activeTool = "V"; // auto-return to select right after drawing (DESIGN 4-3)
+    });
+  });
+}
 
 function setupClickDrawing() {
   // Each click appends a vertex. Line auto-commits at 2 points; polyline keeps going.
