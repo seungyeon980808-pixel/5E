@@ -7,10 +7,17 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.32.1";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, CIRCUIT_BODY_MM, TOOL_LABEL_FONT_FAMILY } from "./state.js?v=0.32.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.32.1";
-import { renderFormula } from "./formula.js?v=0.32.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.32.2";
+import {
+  DEFAULT_TEXT_FONT,
+  DEFAULT_TEXT_SIZE_MM,
+  CIRCUIT_BODY_MM,
+  TOOL_LABEL_FONT_FAMILY,
+  VARIABLE_LABEL_FONT_STYLE,
+  CALLOUT_LABEL_FONT_STYLE,
+} from "./state.js?v=0.32.2";
+import { resolveObjectStyle } from "./style-mode.js?v=0.32.2";
+import { renderFormula } from "./formula.js?v=0.32.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -691,17 +698,16 @@ export function renderObject(obj) {
  * node, or null when there's no label text. */
 // Physics/tool labels use the HWP equation font first, then system serif
 // fallbacks. Variable labels stay italic by caller choice; callout text is normal.
-const LABEL_FONT = TOOL_LABEL_FONT_FAMILY;
 function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, options = {}) {
   const s = String(text ?? "");
   if (!s) return null;
-  const italic = options.italic !== false;
+  const fontStyle = options.fontStyle || (options.italic === false ? CALLOUT_LABEL_FONT_STYLE : VARIABLE_LABEL_FONT_STYLE);
   const t = document.createElementNS(SVG_NS, "text");
   t.setAttribute("x", x);
   t.setAttribute("y", y);
   t.setAttribute("font-size", sizeMm);
-  t.setAttribute("font-family", LABEL_FONT);
-  t.setAttribute("font-style", italic ? "italic" : "normal");
+  t.setAttribute("font-family", TOOL_LABEL_FONT_FAMILY);
+  t.setAttribute("font-style", fontStyle);
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
   t.setAttribute("dominant-baseline", "central");
@@ -1034,8 +1040,8 @@ function renderLine(obj) {
     // Match the straight-line external label (makeUprightLabel): italic serif /
     // 신명조 stack so a dimension label (e.g. "Q") reads identically to a line
     // variable label (e.g. "H"). Style only — geometry/behavior unchanged.
-    label.setAttribute("font-family", LABEL_FONT);
-    label.setAttribute("font-style", "italic");
+    label.setAttribute("font-family", TOOL_LABEL_FONT_FAMILY);
+    label.setAttribute("font-style", VARIABLE_LABEL_FONT_STYLE);
     label.setAttribute("text-anchor", "middle");
     label.setAttribute("dominant-baseline", "central");
     label.setAttribute("paint-order", "stroke");
@@ -1472,7 +1478,7 @@ function renderAxes(obj) {
     t.setAttribute("x", lx);
     t.setAttribute("y", ly);
     t.setAttribute("font-size", labelSize);
-    t.setAttribute("font-style", "italic");
+    t.setAttribute("font-style", VARIABLE_LABEL_FONT_STYLE);
     t.setAttribute("font-family", TOOL_LABEL_FONT_FAMILY);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", anchor);
@@ -1548,7 +1554,7 @@ function renderAngleArc(obj) {
     t.setAttribute("x", vx + lr * Math.cos(rad));
     t.setAttribute("y", vy - lr * Math.sin(rad));
     t.setAttribute("font-size", labelSize);
-    t.setAttribute("font-style", "italic");
+    t.setAttribute("font-style", VARIABLE_LABEL_FONT_STYLE);
     t.setAttribute("font-family", TOOL_LABEL_FONT_FAMILY);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", "middle");
@@ -1596,7 +1602,7 @@ function renderLabeler(obj) {
   g.appendChild(line);
 
   // Upright (non-rotating) callout text at p2 in the tool label font.
-  const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, { italic: false });
+  const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, { fontStyle: CALLOUT_LABEL_FONT_STYLE });
   if (lbl) g.appendChild(lbl);
 
   return g;
@@ -1922,11 +1928,12 @@ function cLine(a, b, sw, color) {
   return l;
 }
 // A centered glyph (shared by circle-body elements + diode terminal labels + optics label).
-function cText(g, x, y, text, size, color, fontFamily = TOOL_LABEL_FONT_FAMILY) {
+function cText(g, x, y, text, size, color, fontFamily = TOOL_LABEL_FONT_FAMILY, fontStyle = VARIABLE_LABEL_FONT_STYLE) {
   const t = document.createElementNS(SVG_NS, "text");
   t.setAttribute("x", x); t.setAttribute("y", y);
   t.setAttribute("font-size", size);
   t.setAttribute("font-family", fontFamily);
+  t.setAttribute("font-style", fontStyle);
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
   t.setAttribute("dominant-baseline", "central");
@@ -2131,6 +2138,7 @@ function renderCircuit(obj) {
     t.setAttribute("y", mid.y + py * off * sign);
     t.setAttribute("font-size", size);
     t.setAttribute("font-family", TOOL_LABEL_FONT_FAMILY);
+    t.setAttribute("font-style", VARIABLE_LABEL_FONT_STYLE);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
