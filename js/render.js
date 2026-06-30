@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.35.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -21,9 +21,9 @@ import {
   OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
-} from "./state.js?v=0.35.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.35.1";
-import { renderFormula } from "./formula.js?v=0.35.1";
+} from "./state.js?v=0.36.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.0";
+import { renderFormula } from "./formula.js?v=0.36.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -710,7 +710,13 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   t.setAttribute("x", x);
   t.setAttribute("y", y);
   t.setAttribute("font-size", sizeMm);
-  applyObjectLabelFont(t, options.labelType, options.labelKind === "callout" || options.italic === false ? "label" : "quantity");
+  // An explicit fontFamily (e.g. the labeler's Dotum-first normal text) overrides
+  // the labelType-based 물리량/라벨 font policy; otherwise fall back to it.
+  if (options.fontFamily) {
+    applySvgTextFont(t, { family: options.fontFamily, style: options.fontStyle || "normal", letterSpacing: "normal" });
+  } else {
+    applyObjectLabelFont(t, options.labelType, options.labelKind === "callout" || options.italic === false ? "label" : "quantity");
+  }
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
   t.setAttribute("dominant-baseline", "central");
@@ -1688,10 +1694,14 @@ function renderLabeler(obj) {
     g.appendChild(line);
   }
 
-  // Upright (non-rotating) callout text at p2. Default is the 라벨(Shin Myeongjo
-  // normal) callout font; if the labeler's labelType is set to 물리량 it renders as
-  // Times italic instead. labelKind "callout" makes "label" the fallback default.
-  const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, { labelKind: "callout", labelType: obj.labelType });
+  // Upright (non-rotating) callout text at p2. The labeler is an editable text
+  // object: its default style is Dotum-first NORMAL text (not 물리량 italic). A
+  // per-object fontFamily (set in the inspector 글씨체 control) overrides the
+  // default; if absent, fall back to the system Dotum stack.
+  const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
+    fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+    fontStyle: "normal",
+  });
   if (lbl) g.appendChild(lbl);
 
   return g;

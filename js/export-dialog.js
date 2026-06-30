@@ -11,11 +11,13 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg } from "./svg-export.js?v=0.35.1";
-import { registerTopMenu } from "./top-menu.js?v=0.35.1";
-import { screenToWorld } from "./viewport.js?v=0.35.1";
+import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.36.0";
+import { registerTopMenu } from "./top-menu.js?v=0.36.0";
+import { screenToWorld } from "./viewport.js?v=0.36.0";
 
-const DEFAULT_NAME = "physics_drawing";
+// Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
+// recomputed each time the modal opens so it reflects the actual export time.
+const defaultNameBase = () => formatExportTimestamp();
 
 /* ----- dropdown: exclusive with 설정 (shared top-menu) + hover descriptions ----- */
 const DEFAULT_FILE_DESC = "파일 작업을 선택하세요.";
@@ -56,7 +58,7 @@ function buildModal() {
       <label class="modal-field" for="export-filename">
         <span class="modal-label">파일 이름</span>
         <input type="text" id="export-filename" class="modal-input"
-               value="${DEFAULT_NAME}" autocomplete="off" spellcheck="false" />
+               value="${defaultNameBase()}" autocomplete="off" spellcheck="false" />
       </label>
 
       <div class="modal-field">
@@ -213,6 +215,10 @@ export function initExportDialog(state, svg) {
 
   function showModal() {
     overlay.hidden = false;
+    // Refresh the default name to the current minute each time the dialog opens
+    // (unless the user has typed a custom name this session is fine to overwrite —
+    // the field is always reset to the live timestamp on open).
+    filenameInput.value = defaultNameBase();
     filenameInput.focus();
     filenameInput.select();
   }
@@ -253,7 +259,7 @@ export function initExportDialog(state, svg) {
 
   // Export the current settings, optionally cropped to a world-coord rectangle.
   function doExport(bounds) {
-    const name = (filenameInput.value || "").trim() || DEFAULT_NAME;
+    const name = (filenameInput.value || "").trim() || defaultNameBase();
     const format = segValue(formatGroup, "data-format");
     if (format === "svg") {
       exportSvg(state, `${name}.svg`, bounds);

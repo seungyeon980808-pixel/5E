@@ -11,19 +11,19 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.35.1";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   isEquationFontFamily, resolveTextFontStyle, resolveTextLetterSpacing,
-} from "./state.js?v=0.35.1";
+} from "./state.js?v=0.36.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.35.1";
-import { resolveEndpointSnap } from "./snap.js?v=0.35.1";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.35.1";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.35.1";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -321,7 +321,10 @@ function setupDrawing() {
         startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
       }
       if (_ho && _ho.type === "labeler") {
-        _openLabelerEditor(hitId, { selectAll: true }); return;
+        openLabelerTextEditor(hitId); return;
+      }
+      if (_ho && _ho.type === "anglearc") {
+        openAngleArcLabelEditor(hitId); return;
       }
     }
     if (hitId === null && _at === "V") {
@@ -1008,6 +1011,7 @@ function makeLabelerDraft(anchor, labelPt) {
     p2: { x: labelPt.x, y: labelPt.y },// label position
     text: "㉠",                        // circled-letter preset (changeable in inspector)
     labelType: "label",
+    fontFamily: DEFAULT_TEXT_FONT,     // Dotum-first normal text (callout default)
     labelSize: DEFAULT_TEXT_SIZE_MM,   // mm; settable in inspector
     strokeLevel: 0,                    // 0 = black (DESIGN 2-2)
     strokeWidth: DEFAULT_STROKE_WIDTH,
@@ -1044,7 +1048,7 @@ function commitLabeler() {
   // Two-click placement is preserved; right after committing, open the multiline
   // text editor (like the text tool) so the user types the label content directly.
   _state.update((s) => { s.selectedIds = lab.id ? [lab.id] : []; s.targetedId = null; });
-  if (lab.id) _openLabelerEditor(lab.id, { selectAll: true });
+  if (lab.id) openLabelerTextEditor(lab.id);
 }
 
 /* ===== LABELER TEXT EDITOR (멀티라인 직접 입력) ============================
@@ -1053,36 +1057,77 @@ function commitLabeler() {
  * 확인) commits; Esc (or 취소) closes without changes. Korean / symbols / simple
  * formula-like strings (m, h, Q, mgh) all type directly. Opened on creation and
  * on double-click of an existing labeler (and from the inspector "편집" button). */
-let _labelerEditorBox = null;
-let _labelerEditorTextarea = null;
-let _labelerEditorObjId = null;
+let _smallEditorBox = null;
+let _smallEditorTextarea = null;
+let _smallEditorObjId = null;
+let _smallEditorType = "labeler";
+let _smallEditorField = "text";
 
-function _closeLabelerEditor() {
-  if (_labelerEditorBox && _labelerEditorBox.parentElement) _labelerEditorBox.remove();
-  _labelerEditorBox = null;
-  _labelerEditorTextarea = null;
-  _labelerEditorObjId = null;
+function _closeSmallEditor() {
+  if (_smallEditorBox && _smallEditorBox.parentElement) _smallEditorBox.remove();
+  _smallEditorBox = null;
+  _smallEditorTextarea = null;
+  _smallEditorObjId = null;
 }
 
+// Public entry points. Both reuse the SAME small floating editor; only the target
+// object type + field (and title) differ. The labeler edits obj.text; the angle
+// arc edits obj.label (its θ symbol → any text/formula-like string).
 export function openLabelerTextEditor(objId) {
-  _openLabelerEditor(objId, { selectAll: true });
+  _openSmallTextEditor(objId, { type: "labeler", field: "text", title: "라벨 텍스트 입력", selectAll: true });
+}
+export function openAngleArcLabelEditor(objId) {
+  _openSmallTextEditor(objId, { type: "anglearc", field: "label", title: "각도 라벨/기호 입력", selectAll: true });
 }
 
-function _openLabelerEditor(objId, { selectAll = false } = {}) {
+/* Insert a quick character (Roman numeral / circled consonant) into the labeler.
+ * If the small editor is open, insert at the caret of its textarea (working copy);
+ * otherwise append to the currently-selected labeler's committed text (one undo). */
+export function insertLabelerChar(ch) {
+  const s = String(ch ?? "");
+  if (!s) return;
+  if (_smallEditorTextarea) {
+    const ta = _smallEditorTextarea;
+    const start = ta.selectionStart ?? ta.value.length;
+    const end = ta.selectionEnd ?? ta.value.length;
+    ta.value = ta.value.slice(0, start) + s + ta.value.slice(end);
+    const caret = start + s.length;
+    ta.setSelectionRange(caret, caret);
+    ta.focus();
+    return;
+  }
+  const st = _state.get();
+  const id = (st.selectedIds || [])[0];
+  if (!id) return;
+  const o = st.objects.find((x) => x.id === id);
+  if (!o || o.type !== "labeler" || o.locked) return;
+  const snap = JSON.parse(JSON.stringify(st.objects));
+  _state.update((s2) => {
+    const obj = s2.objects.find((x) => x.id === id);
+    if (!obj || obj.type !== "labeler" || obj.locked) return;
+    obj.text = (obj.text ?? "") + s;
+    s2.undoStack.push(snap);
+    s2.redoStack = [];
+  });
+}
+
+function _openSmallTextEditor(objId, { type = "labeler", field = "text", title = "텍스트 입력", selectAll = false } = {}) {
   const s = _state.get();
   const o = s.objects.find((x) => x.id === objId);
-  if (!o || o.type !== "labeler") return;
-  _closeLabelerEditor();
-  _labelerEditorObjId = objId;
+  if (!o || o.type !== type) return;
+  _closeSmallEditor();
+  _smallEditorObjId = objId;
+  _smallEditorType = type;
+  _smallEditorField = field;
 
   const wrap = _svg.closest(".canvas-wrap");
   const box = document.createElement("div");
   box.className = "unified-text-editor labeler-text-editor";
-  _labelerEditorBox = box;
+  _smallEditorBox = box;
 
-  const title = document.createElement("div");
-  title.className = "unified-editor-title";
-  title.textContent = "라벨 텍스트 입력";
+  const titleEl = document.createElement("div");
+  titleEl.className = "unified-editor-title";
+  titleEl.textContent = title;
 
   const hint = document.createElement("div");
   hint.className = "unified-preview-label";
@@ -1092,8 +1137,8 @@ function _openLabelerEditor(objId, { selectAll = false } = {}) {
   ta.className = "unified-text-input labeler-text-input";
   ta.spellcheck = false;
   ta.setAttribute("autocomplete", "off");
-  ta.value = o.text ?? "";
-  _labelerEditorTextarea = ta;
+  ta.value = o[field] ?? "";
+  _smallEditorTextarea = ta;
 
   const actions = document.createElement("div");
   actions.className = "unified-editor-actions";
@@ -1105,31 +1150,33 @@ function _openLabelerEditor(objId, { selectAll = false } = {}) {
 
   const commit = () => {
     const val = String(ta.value ?? "");
-    const id = _labelerEditorObjId;
-    _closeLabelerEditor();
+    const id = _smallEditorObjId;
+    const ty = _smallEditorType;
+    const fld = _smallEditorField;
+    _closeSmallEditor();
     _state.update((st) => {
       const obj = st.objects.find((x) => x.id === id);
-      if (!obj || obj.type !== "labeler") return;
-      if ((obj.text ?? "") === val) return;
+      if (!obj || obj.type !== ty) return;
+      if ((obj[fld] ?? "") === val) return;
       const snap = JSON.parse(JSON.stringify(st.objects));
-      obj.text = val;
+      obj[fld] = val;
       st.undoStack.push(snap);
       st.redoStack = [];
     });
   };
 
   ok.addEventListener("click", commit);
-  cancel.addEventListener("click", _closeLabelerEditor);
+  cancel.addEventListener("click", _closeSmallEditor);
   // Keep canvas shortcuts/marquee from reacting while interacting with the editor.
   box.addEventListener("mousedown", (e) => e.stopPropagation());
   ta.addEventListener("keydown", (ke) => {
     ke.stopPropagation();                                   // shield window shortcuts
-    if (ke.key === "Escape") { ke.preventDefault(); _closeLabelerEditor(); }
+    if (ke.key === "Escape") { ke.preventDefault(); _closeSmallEditor(); }
     else if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) { ke.preventDefault(); commit(); }
     // plain Enter → newline (native textarea behavior, multiline)
   });
 
-  box.append(title, hint, ta, actions);
+  box.append(titleEl, hint, ta, actions);
   wrap.appendChild(box);
   const left = Math.max(0, Math.round((wrap.clientWidth - box.offsetWidth) / 2));
   const top = Math.max(0, Math.round((wrap.clientHeight - box.offsetHeight) / 2));

@@ -10,10 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.35.1";
-import { screenToWorld } from "./viewport.js?v=0.35.1";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.35.1";
-import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.35.1";
+import { rebuildGroups } from "./transform.js?v=0.36.0";
+import { screenToWorld } from "./viewport.js?v=0.36.0";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.0";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "./state.js?v=0.36.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -85,6 +85,9 @@ function migrate(data) {
         next.p1 = next.p1 ?? { x: 0, y: 0 };
         next.p2 = next.p2 ?? { x: next.p1.x + 12, y: next.p1.y - 6 };
         next.text = next.text ?? "㉠";
+        // Older files lack fontFamily → default to the Dotum-first normal stack
+        // (render.js falls back to the same default when this is absent).
+        next.fontFamily = next.fontFamily ?? DEFAULT_TEXT_FONT;
         next.labelSize = next.labelSize ?? DEFAULT_TEXT_SIZE_MM;
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;

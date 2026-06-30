@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.35.1";
-import { openFontModalForSelection, openLabelerTextEditor } from "./tools.js?v=0.35.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.35.1";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.36.0";
+import { openFontModalForSelection, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./tools.js?v=0.36.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -173,12 +173,12 @@ export function initInspector(state) {
    * A "라벨 크기" number input in points; stores obj.labelSize in world mm.
    * `applies(o)` guards which selected object types accept the edit (line vs box).
    * Returns { row, num } so callers can append it and sync its value in populate(). */
-  function makeLabelSizeRow(applies) {
+  function makeLabelSizeRow(applies, labelText = "라벨 크기") {
     const row = document.createElement("div");
     row.className = "insp-row";
     const lbl = document.createElement("label");
     lbl.className = "insp-field-label";
-    lbl.textContent = "라벨 크기";
+    lbl.textContent = labelText;
     const num = document.createElement("input");
     num.type = "number";
     num.min = String(MIN_TEXT_PT);
@@ -1447,6 +1447,27 @@ export function initInspector(state) {
   const objectLabelTypeRow = makeLabelTypeRow((o) => o.type === "anglearc" || o.type === "optics" || o.type === "circuit");
   sec3Body.appendChild(objectLabelTypeRow.row);
 
+  // anglearc-only: 라벨 편집 button. Opens the SAME small text editor the labeler
+  // uses (writes obj.label), so θ can be changed to α/β/A/㉠/Ⅰ/m/h and simple
+  // formula-like symbols. The inline 라벨 input above still works for quick edits.
+  const arcLabelEditRow = document.createElement("div");
+  arcLabelEditRow.className = "insp-row";
+  const arcLabelEditLbl = document.createElement("label");
+  arcLabelEditLbl.className = "insp-field-label";
+  arcLabelEditLbl.textContent = "";
+  const arcLabelEditBtn = document.createElement("button");
+  arcLabelEditBtn.type = "button";
+  arcLabelEditBtn.textContent = "라벨 편집...";
+  arcLabelEditBtn.title = "각도 라벨/기호 입력기 열기";
+  arcLabelEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+  arcLabelEditBtn.addEventListener("click", () => {
+    const id = (state.get().selectedIds || [])[0];
+    if (id) openAngleArcLabelEditor(id);
+  });
+  arcLabelEditRow.appendChild(arcLabelEditLbl);
+  arcLabelEditRow.appendChild(arcLabelEditBtn);
+  sec3Body.appendChild(arcLabelEditRow);
+
   // optics-only: show/hide toggle for the label (like the anglearc label visibility).
   const showLabelRow = document.createElement("div");
   showLabelRow.className = "insp-row";
@@ -1501,69 +1522,87 @@ export function initInspector(state) {
     });
   });
 
-  // labeler-only: 이름(라벨 텍스트). Stored as obj.text (own schema, independent
-  // of shape/line obj.label). Direct character input — single-line quick edit in
-  // the inspector, plus a "편집" button that opens the multiline text editor
-  // (Enter 줄바꿈 · Ctrl+Enter 확인). Circled-letter presets remain available as a
-  // datalist convenience but are no longer required.
-  const labelerTextRow = document.createElement("div");
-  labelerTextRow.className = "insp-row";
-  const labelerTextLbl = document.createElement("label");
-  labelerTextLbl.className = "insp-field-label";
-  labelerTextLbl.textContent = "이름";
-  const labelerTextWrap = document.createElement("div");
-  labelerTextWrap.style.cssText = "display:flex;gap:4px;flex:1;min-width:0;";
-  const labelerTextInp = document.createElement("input");
-  labelerTextInp.type = "text";
-  labelerTextInp.maxLength = 120;
-  labelerTextInp.className = "insp-input";
-  labelerTextInp.setAttribute("list", "labeler-preset-list");
-  const labelerPresetList = document.createElement("datalist");
-  labelerPresetList.id = "labeler-preset-list";
-  LABELER_PRESETS.forEach((preset) => {
-    const opt = document.createElement("option");
-    opt.value = preset;
-    labelerPresetList.appendChild(opt);
-  });
+  // labeler-only: an editable text/callout object. Its text (obj.text) is edited
+  // by double-clicking the labeler or via the "텍스트 편집" button below — NOT an
+  // inline 이름 field, and it has no 물리량/라벨 종류 selector (its default style is
+  // Dotum-first NORMAL text). The inspector instead exposes useful text controls:
+  // 글씨체 (font family), 글씨 크기 (size), and quick-character insert buttons.
+  const labelerEditRow = document.createElement("div");
+  labelerEditRow.className = "insp-row";
+  const labelerEditLbl = document.createElement("label");
+  labelerEditLbl.className = "insp-field-label";
+  labelerEditLbl.textContent = "텍스트";
   const labelerEditBtn = document.createElement("button");
   labelerEditBtn.type = "button";
-  labelerEditBtn.textContent = "편집";
-  labelerEditBtn.title = "여러 줄 텍스트 입력기 열기";
-  labelerEditBtn.style.cssText = "flex:0 0 auto;padding:4px 8px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
-  labelerTextWrap.appendChild(labelerTextInp);
-  labelerTextWrap.appendChild(labelerEditBtn);
-  labelerTextRow.appendChild(labelerTextLbl);
-  labelerTextRow.appendChild(labelerTextWrap);
-  labelerTextRow.appendChild(labelerPresetList);
-  sec3Body.appendChild(labelerTextRow);
-  function commitLabelerText() {
-    const s = state.get();
-    const id = (s.selectedIds || [])[0];
-    if (!id) return;
-    const val = labelerTextInp.value;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    state.update((s2) => {
-      const o = s2.objects.find((it) => it.id === id);
-      if (!o || o.type !== "labeler" || o.locked) return;
-      if ((o.text ?? "") === val) return;
-      o.text = val;
-      s2.undoStack.push(snap);
-      s2.redoStack = [];
-    });
-  }
-  labelerTextInp.addEventListener("change", commitLabelerText);
-  labelerTextInp.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") { e.preventDefault(); commitLabelerText(); labelerTextInp.blur(); }
-  });
+  labelerEditBtn.textContent = "텍스트 편집...";
+  labelerEditBtn.title = "여러 줄 텍스트 입력기 열기 (Enter 줄바꿈 · Ctrl+Enter 확인)";
+  labelerEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
   labelerEditBtn.addEventListener("click", () => {
     const id = (state.get().selectedIds || [])[0];
     if (id) openLabelerTextEditor(id);
   });
-  // labeler label type (물리량/라벨); default 라벨 — explanatory callout text.
-  const labelerLabelTypeRow = makeLabelTypeRow((o) => o.type === "labeler", "label");
-  sec3Body.appendChild(labelerLabelTypeRow.row);
-  const labelerSizeRow = makeLabelSizeRow((o) => o.type === "labeler");
+  labelerEditRow.appendChild(labelerEditLbl);
+  labelerEditRow.appendChild(labelerEditBtn);
+  sec3Body.appendChild(labelerEditRow);
+
+  // 글씨체: reuse the shared TEXT_FONTS presets → obj.fontFamily (default Dotum).
+  const labelerFontRow = document.createElement("div");
+  labelerFontRow.className = "insp-row";
+  const labelerFontLbl = document.createElement("label");
+  labelerFontLbl.className = "insp-field-label";
+  labelerFontLbl.textContent = "글씨체";
+  const labelerFontSel = document.createElement("select");
+  labelerFontSel.style.cssText = "flex:1;min-width:0;font-size:12px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;background:#1e1f22;color:#dcddde;";
+  TEXT_FONTS.forEach((f) => {
+    const opt = document.createElement("option");
+    opt.value = f.css;
+    opt.textContent = f.label;
+    labelerFontSel.appendChild(opt);
+  });
+  labelerFontRow.appendChild(labelerFontLbl);
+  labelerFontRow.appendChild(labelerFontSel);
+  sec3Body.appendChild(labelerFontRow);
+  labelerFontSel.addEventListener("change", () => {
+    const s = state.get();
+    const id = (s.selectedIds || [])[0];
+    if (!id) return;
+    const val = labelerFontSel.value || DEFAULT_TEXT_FONT;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === id);
+      if (!o || o.type !== "labeler" || o.locked) return;
+      if ((o.fontFamily ?? DEFAULT_TEXT_FONT) === val) return;
+      o.fontFamily = val;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
+
+  // 글씨 크기 (per-labeler font size; stored as obj.labelSize in world mm).
+  const labelerSizeRow = makeLabelSizeRow((o) => o.type === "labeler", "글씨 크기");
   sec3Body.appendChild(labelerSizeRow.row);
+
+  // 자주 쓰는 문자: quick-insert buttons. Roman numerals + circled Korean
+  // consonants. Inserts at the editor caret if open, else appends to obj.text.
+  const labelerCharsRow = document.createElement("div");
+  labelerCharsRow.className = "insp-row";
+  const labelerCharsLbl = document.createElement("label");
+  labelerCharsLbl.className = "insp-field-label";
+  labelerCharsLbl.textContent = "자주 쓰는 문자";
+  const labelerCharsWrap = document.createElement("div");
+  labelerCharsWrap.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0;";
+  ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", ...LABELER_PRESETS].forEach((ch) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = ch;
+    btn.title = `${ch} 삽입`;
+    btn.style.cssText = "min-width:24px;height:24px;padding:0 4px;font-size:13px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+    btn.addEventListener("click", () => insertLabelerChar(ch));
+    labelerCharsWrap.appendChild(btn);
+  });
+  labelerCharsRow.appendChild(labelerCharsLbl);
+  labelerCharsRow.appendChild(labelerCharsWrap);
+  sec3Body.appendChild(labelerCharsRow);
 
   /* ---- rect/ellipse upright label (Group 3): text input + position dropdown ----
    * Writes obj.label / obj.labelPos. The label renders screen-upright, excluded
@@ -2633,16 +2672,17 @@ export function initInspector(state) {
     // node uses a label-position dropdown instead of the show/hide toggle.
     showLabelRow.style.display = (isOptics && !isNode) ? "" : "none";
     labelPosRow.style.display = isNode ? "" : "none";
-    labelerTextRow.style.display = isLabeler ? "" : "none";
-    labelerLabelTypeRow.row.style.display = isLabeler ? "" : "none";
+    labelerEditRow.style.display = isLabeler ? "" : "none";
+    labelerFontRow.style.display = isLabeler ? "" : "none";
     labelerSizeRow.row.style.display = isLabeler ? "" : "none";
+    labelerCharsRow.style.display = isLabeler ? "" : "none";
     if (isLabeler) {
-      if (document.activeElement !== labelerTextInp) labelerTextInp.value = obj.text ?? "";
-      labelerLabelTypeRow.sync(obj);
+      labelerFontSel.value = obj.fontFamily || DEFAULT_TEXT_FONT;
       if (document.activeElement !== labelerSizeRow.num) {
         labelerSizeRow.num.value = Math.round(mmToPt(obj.labelSize || DEFAULT_TEXT_SIZE_MM));
       }
     }
+    arcLabelEditRow.style.display = isArc ? "" : "none";
 
     // Group-3 box upright label: rect/ellipse only (text + center/above/below).
     const isBoxLabelType = obj.type === "rect" || obj.type === "ellipse";
@@ -2751,9 +2791,9 @@ export function initInspector(state) {
     saF.inp.disabled = !!obj.locked;
     swF.inp.disabled = !!obj.locked;
     labelInp.disabled = !!obj.locked;
-    labelerTextInp.disabled = !!obj.locked;
+    arcLabelEditBtn.disabled = !!obj.locked;
     labelerEditBtn.disabled = !!obj.locked;
-    labelerLabelTypeRow.sel.disabled = !!obj.locked;
+    labelerFontSel.disabled = !!obj.locked;
     showLabelCb.disabled = !!obj.locked;
     labelPosSel.disabled = !!obj.locked;
     boxLabelInp.disabled = !!obj.locked;

@@ -18,10 +18,24 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=0.35.1";
+import { renderObject, makeFillPattern } from "./render.js?v=0.36.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
+
+/* ----- default export filename: local date/time to the minute (YYYYMMDD_HHmm) -----
+ * Shared by the export dialog and the save fallbacks so the timestamp format is
+ * defined once. Example: new Date(2026,5,30,21,40) → "20260630_2140". */
+export function formatExportTimestamp(date = new Date()) {
+  const p = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}${p(date.getMonth() + 1)}${p(date.getDate())}` +
+    `_${p(date.getHours())}${p(date.getMinutes())}`;
+}
+// Full default filename with extension, e.g. getDefaultExportFilename("png").
+export function getDefaultExportFilename(ext) {
+  const e = String(ext || "").replace(/^\./, "");
+  return e ? `${formatExportTimestamp()}.${e}` : formatExportTimestamp();
+}
 
 /* ----- NO font embedding: text uses the system gothic stack by NAME ----- */
 // The default font is a system stack (돋움 / Apple SD Gothic Neo / Malgun Gothic),
@@ -136,7 +150,7 @@ export function buildExportSvg(s, bounds = null) {
 /* ----- exportSvg: serialize the export SVG and trigger a download ----- */
 // `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
 export async function exportSvg(state, filename, bounds = null) {
-  const name = filename || "physics_drawing.svg";
+  const name = filename || getDefaultExportFilename("svg");
   // Ask for the save location first, while still inside the user gesture.
   const handle = await pickSaveHandle(name, { mime: "image/svg+xml", ext: ".svg", description: "SVG 이미지" });
   if (handle === null) return; // user cancelled the save dialog
@@ -156,7 +170,7 @@ export async function exportSvg(state, filename, bounds = null) {
 /* ----- exportPng: rasterize the export SVG at a DPI onto a white canvas ----- */
 // `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
 export async function exportPng(state, filename, dpi, bounds = null) {
-  const name = filename || "physics_drawing.png";
+  const name = filename || getDefaultExportFilename("png");
   // Ask for the save location first, while still inside the user gesture (before
   // the async rasterization below, which would otherwise lose the activation).
   const handle = await pickSaveHandle(name, { mime: "image/png", ext: ".png", description: "PNG 이미지" });
