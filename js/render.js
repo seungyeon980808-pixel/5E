@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.7";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.8";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -23,10 +23,10 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "./state.js?v=0.36.7";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.7";
-import { renderFormula } from "./formula.js?v=0.36.7";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.7";
+} from "./state.js?v=0.36.8";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.8";
+import { renderFormula } from "./formula.js?v=0.36.8";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -716,7 +716,7 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   // An explicit fontFamily (e.g. the labeler's Dotum-first normal text) overrides
   // the labelType-based 물리량/라벨 font policy; otherwise fall back to it.
   if (options.fontFamily) {
-    applySvgTextFont(t, { family: options.fontFamily, style: options.fontStyle || "normal", letterSpacing: "normal" });
+    applySvgTextFont(t, { family: options.fontFamily, style: options.fontStyle || "normal", weight: options.fontWeight || "normal", letterSpacing: "normal" });
   } else {
     applyObjectLabelFont(t, options.labelType, options.labelKind === "callout" || options.italic === false ? "label" : "quantity");
   }
@@ -729,6 +729,35 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   t.setAttribute("stroke", "white");
   t.setAttribute("stroke-width", sizeMm * 0.16);
   t.setAttribute("stroke-linejoin", "round");
+
+  // Styled-run path (labeler with palette-inserted \uad6c\uac04/\ubb3c\ub9ac\ub7c9 symbols): render each
+  // run in its OWN font (Times upright / Times italic) inside centered per-line
+  // tspans, so the label matches the editor preview. Text-anchor:middle + the halo
+  // stay on the parent <text>, inherited by the child run tspans. Gated by the
+  // caller on hasStyledTextRuns; plain labels keep the roman-serif auto path below.
+  if (options.styled && Array.isArray(options.runs) && options.runs.length) {
+    const runLines = textRunLines(options.runs);
+    const lineHeight = sizeMm * 1.2;
+    runLines.forEach((line, i) => {
+      const ts = document.createElementNS(SVG_NS, "tspan");
+      ts.setAttribute("x", x);
+      ts.setAttribute("dy", runLines.length === 1 ? 0
+        : (i === 0 ? -lineHeight * (runLines.length - 1) / 2 : lineHeight));
+      if (!line.length) {
+        ts.textContent = "\u00a0";
+      } else {
+        line.forEach((run) => {
+          const rs = document.createElementNS(SVG_NS, "tspan");
+          applySvgTextRunStyle(rs, run.style);
+          rs.textContent = run.text;
+          ts.appendChild(rs);
+        });
+      }
+      t.appendChild(ts);
+    });
+    return t;
+  }
+
   const lines = s.split("\n");
   if (lines.length === 1) {
     fillTextWithRomanRuns(t, lines[0]);
@@ -1769,9 +1798,16 @@ function renderLabeler(obj) {
   // object: its default style is Dotum-first NORMAL text (not 물리량 italic). A
   // per-object fontFamily (set in the inspector 글씨체 control) overrides the
   // default; if absent, fall back to the system Dotum stack.
+  // 팔레트로 삽입한 구간(Times 정체)·물리량(Times 이탤릭) styled run이 있으면 런 단위로
+  // 렌더한다(편집기 미리보기와 일치). 없으면 기존 일반 텍스트(구간 I/II/III 세리프 자동)
+  // 경로를 그대로 사용해 예전 라벨과 100% 동일하게 그린다.
+  const styled = hasStyledTextRuns(obj);
   const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
     fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
-    fontStyle: "normal",
+    fontStyle: obj.italic === true ? "italic" : "normal",
+    fontWeight: obj.fontWeight || "normal",
+    styled,
+    runs: styled ? normalizeTextRuns(obj) : null,
   });
   if (lbl) g.appendChild(lbl);
 

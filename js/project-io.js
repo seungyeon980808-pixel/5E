@@ -10,10 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.36.7";
-import { screenToWorld } from "./viewport.js?v=0.36.7";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.7";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.36.7";
+import { rebuildGroups } from "./transform.js?v=0.36.8";
+import { screenToWorld } from "./viewport.js?v=0.36.8";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.8";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.36.8";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -98,6 +98,12 @@ function migrate(data) {
         next.labelSize = next.labelSize ?? DEFAULT_TEXT_SIZE_MM;
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;
+        // styled 심볼 run(구간/물리량)이 저장돼 있으면 정규화해 복원한다. 없으면 그대로
+        // 두어(예전 라벨) 렌더가 일반 텍스트 경로를 타게 한다 — 하위 호환.
+        if (Array.isArray(next.textRuns) && next.textRuns.length) {
+          next.textRuns = normalizeTextRuns(next);
+          next.text = next.text ?? textRunsToText(next.textRuns);
+        }
       }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";

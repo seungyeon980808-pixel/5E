@@ -11,22 +11,22 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.7";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.8";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
-  TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
+  TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.36.7";
+} from "./state.js?v=0.36.8";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.7";
-import { resolveEndpointSnap } from "./snap.js?v=0.36.7";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.7";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.7";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.7";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.8";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.8";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.8";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.8";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.8";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1076,8 +1076,33 @@ function _closeSmallEditor() {
 // Public entry points. Both reuse the SAME small floating editor; only the target
 // object type + field (and title) differ. The labeler edits obj.text; the angle
 // arc edits obj.label (its θ symbol → any text/formula-like string).
+// 라벨러 입력기 = 텍스트 입력기(_openUnifiedTextEditor)와 "완전히 동일한" 편집 UI를
+// 사용한다. 커밋 대상만 다르다(라벨러 객체의 text/textRuns/fontFamily/labelSize).
+// 라벨은 수식이 아니므로 plainOnly로 열어 수식 패널을 숨기고, 심볼 팔레트(구간 I/II/III·
+// 물리량 m/v/F/a/t)는 텍스트 도구와 똑같이 styled run으로 삽입된다.
 export function openLabelerTextEditor(objId) {
-  _openSmallTextEditor(objId, { type: "labeler", field: "text", title: "라벨 텍스트 입력", selectAll: true });
+  if (_textEditor) _commitText();
+  const s = _state.get();
+  const o = s.objects.find((x) => x.id === objId);
+  if (!o || o.type !== "labeler") return;
+  const size = o.labelSize || DEFAULT_TEXT_SIZE_MM;
+  const anchor = o.p2 || o.p1 || { x: o.x || 0, y: o.y || 0 };
+  _openUnifiedTextEditor({
+    x: anchor.x, y: anchor.y,
+    text: o.text || "",
+    source: o.text || "",
+    contentMode: "plain",
+    fontSize: size,
+    fontFamily: o.fontFamily || DEFAULT_TEXT_FONT,
+    fontWeight: o.fontWeight || "normal",
+    fontStyle: o.italic === true ? "italic" : "normal",
+    italic: o.italic === true,
+    textRuns: normalizeTextRuns(o),
+    underline: false, strikeout: false,
+    rotation: o.rotation ?? 0,
+    editingId: o.id,
+    editingType: "labeler",
+  }, 0, 0, o.text || "", { plainOnly: true, title: "라벨 텍스트 입력" });
 }
 export function openAngleArcLabelEditor(objId) {
   _openSmallTextEditor(objId, { type: "anglearc", field: "label", title: "각도 라벨/기호 입력", selectAll: true });
@@ -1919,6 +1944,7 @@ let _textSizeInput = null;
 let _textItalicInput = null;
 let _textBoldInput = null;
 let _textFormulaMode = false;
+let _textPlainOnly = false; // true for labeler edits: never treat content as formula
 let _textAnchor = null;     // world-space {x,y} of the text origin
 let _textCancelled = false; // set by ESC so blur doesn't double-commit
 let _textSelection = { start: 0, end: 0 };
@@ -2078,6 +2104,9 @@ function normalizeFormulaSource(src) {
 }
 
 function looksLikeFormula(src) {
+  // 라벨러(plainOnly) 세션은 절대 수식으로 승격하지 않는다 → 미리보기·커밋이 항상
+  // 일반 텍스트(+styled run) 경로를 타서 라벨의 "mgh" 같은 문자열이 수식이 되지 않는다.
+  if (_textPlainOnly) return false;
   const value = String(src || "");
   return _textFormulaMode || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
 }
@@ -2580,7 +2609,10 @@ function _centerUnifiedEditor(wrap) {
   _textBox.style.top = top + "px";
 }
 
-function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
+function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
+  // plainOnly = 라벨러처럼 "절대 수식이 아닌" 편집기. 수식 패널을 숨기고 looksLikeFormula를
+  // 강제로 false로 만들어 미리보기·커밋이 항상 일반 텍스트(+styled run) 경로를 타게 한다.
+  _textPlainOnly = !!opts.plainOnly;
   _textAnchor = { x: draft.x, y: draft.y };
   draft.nativeEditor = true;
   if (draft.editingType === "formula") _state.update((s) => { s.editingFormulaId = draft.editingId; });
@@ -2594,7 +2626,7 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
 
   const title = document.createElement("div");
   title.className = "unified-editor-title";
-  title.textContent = "텍스트 입력";
+  title.textContent = opts.title || "텍스트 입력";
   _enableUnifiedEditorDrag(title);
 
   const previewLabel = document.createElement("div");
@@ -2625,7 +2657,9 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
   hint.className = "unified-editor-hint";
   hint.textContent = "Enter 줄바꿈 · Ctrl+Enter 확인";
 
-  _textFormulaPanel = _buildUnifiedFormulaPanel();
+  // 라벨은 수식이 될 수 없으므로 수식 패널을 만들지 않는다. 심볼 팔레트(구간/물리량)는
+  // 텍스트 도구와 동일하게 항상 포함한다.
+  _textFormulaPanel = _textPlainOnly ? null : _buildUnifiedFormulaPanel();
   const symbolPanel = _buildSymbolPalette();
 
   const actions = document.createElement("div");
@@ -2638,7 +2672,9 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill) {
   ok.addEventListener("click", () => _commitText());
   actions.append(cancel, ok);
 
-  _textBox.append(title, previewLabel, _textPreview, styleControls, row, hint, symbolPanel, _textFormulaPanel, actions);
+  _textBox.append(title, previewLabel, _textPreview, styleControls, row, hint, symbolPanel);
+  if (_textFormulaPanel) _textBox.append(_textFormulaPanel);
+  _textBox.append(actions);
   _textBox.addEventListener("keydown", (ke) => {
     if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) {
       ke.preventDefault();
@@ -2757,11 +2793,10 @@ function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
   });
 }
 
-// True when an element lives inside the text context menu or the font modal.
+// True when an element lives inside the unified text/label editor or its menu.
 function _elInTextUI(el) {
   return (_textBox && _textBox.contains(el)) ||
-    (_ctxMenu && _ctxMenu.contains(el)) ||
-    (_fontModal && _fontModal.contains(el));
+    (_ctxMenu && _ctxMenu.contains(el));
 }
 
 // Keep the capture textarea's caret sized/styled to the draft (on-screen px).
@@ -2831,6 +2866,7 @@ function _removeTextEditor() {
     if (el.parentElement) el.remove();
   }
   _textAnchor = null;
+  _textPlainOnly = false;
   const editingId = _state.get().editingFormulaId;
   if (editingId) _state.update((s) => { s.editingFormulaId = null; });
 }
@@ -2847,14 +2883,31 @@ function _commitText() {
   const dt = _state.get().draftText;
   const val = dt ? (dt.text ?? _textEditor.value) : _textEditor.value;
   const rawSource = String(val || "").trim();
-  const formulaMode = dt && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
+  const isLabeler = dt && dt.editingType === "labeler";
+  const formulaMode = !isLabeler && dt && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
   const normalizedSource = normalizeFormulaSource(rawSource);
   const fromTool = _state.get().activeTool === "T"; // new-text path
   _removeTextEditor();
   if (!dt) return;
 
   _state.update((s) => {
-    if (dt.editingId) {
+    if (isLabeler) {
+      // 라벨러 커밋 대상: 기존 라벨러 객체(항상 editingId 존재, 새로 만들지 않음).
+      // text(호환용) + textRuns(styled 심볼 보존) + fontFamily + labelSize(mm) 갱신.
+      // 빈 문자열이면 원본 유지(삭제보다 복원 선호). 한 번의 undo 엔트리.
+      const o = s.objects.find((x) => x.id === dt.editingId);
+      if (o && o.type === "labeler" && rawSource) {
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        s.undoStack.push(snap);
+        s.redoStack = [];
+        o.text = val;
+        o.textRuns = normalizeTextRuns(dt);
+        o.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
+        o.labelSize = dt.fontSize;
+        o.fontWeight = dt.fontWeight || "normal";
+        o.italic = resolveTextFontStyle(dt) === "italic";
+      }
+    } else if (dt.editingId) {
       // Re-edit: update the SAME object (id preserved). Empty text → keep the
       // original unchanged (prefer restore over delete). One undo entry.
       const o = s.objects.find((x) => x.id === dt.editingId);
@@ -3220,7 +3273,6 @@ function setupTextEditShortcuts() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (_textEditor) return;                                   // already editing
-    if (_fontModal && !_fontModal.hidden) return;              // modal owns keys
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key !== "F2" && e.key !== "Enter") return;
@@ -3237,7 +3289,6 @@ function setupTextEditShortcuts() {
 /* ===== TEXT CONTEXT MENU (right-click): 텍스트 수정 / 글꼴 설정... ===== */
 let _ctxMenu = null;          // the floating action menu element (built lazily)
 let _ctxEditItem = null;
-let _ctxFontItem = null;
 let _ctxTarget = null;        // { kind: "object"|"draft", id }
 let _rightMouseDown = false;  // true during a right-click so blur doesn't commit the draft
 
@@ -3257,18 +3308,9 @@ function _buildCtxMenu() {
     if (id) startEditingTextObject(id);
   });
 
-  _ctxFontItem = document.createElement("button");
-  _ctxFontItem.type = "button";
-  _ctxFontItem.className = "text-ctx-item";
-  _ctxFontItem.textContent = "글꼴 설정...";
-  _ctxFontItem.addEventListener("click", () => {
-    const target = _ctxTarget;
-    _closeCtxMenu();
-    if (target) _openFontModal(target);
-  });
-
+  // 예전의 별도 "글꼴 설정..." 항목은 제거됐다. 글꼴/크기/굵게/기울임/심볼 컨트롤이
+  // 이제 통합 텍스트/라벨 편집기 안에 모두 들어 있어 별도 팝업이 필요 없다.
   _ctxMenu.appendChild(_ctxEditItem);
-  _ctxMenu.appendChild(_ctxFontItem);
   document.body.appendChild(_ctxMenu);
   // Clicks inside the menu shouldn't close it via the window handler.
   _ctxMenu.addEventListener("mousedown", (e) => e.stopPropagation());
@@ -3324,246 +3366,4 @@ function setupTextContextMenu() {
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && _ctxMenu && !_ctxMenu.hidden) _closeCtxMenu();
   });
-}
-
-/* ===== FONT SETTINGS MODAL (글꼴 설정) =====
- * Windows-style font dialog: family / style / size / effects + live preview.
- * Edits a WORKING COPY; only 확인 applies. Object edits = one undo entry; draft
- * edits flow into the committed text. Size is shown in points (stored fontSize
- * stays world-unit mm; converted via ptToMm/mmToPt). */
-let _fontModal = null;        // overlay element (built lazily)
-let _fmFamily = null, _fmStyle = null, _fmSizeInput = null, _fmSizeList = null;
-let _fmUnderline = null, _fmStrikeout = null, _fmPreview = null;
-let _fmTarget = null;         // { kind, id }
-let _fmWork = null;           // working copy: { fontFamily, fontWeight, fontStyle, underline, strikeout, pt }
-
-function _buildFontModal() {
-  if (_fontModal) return;
-  _fontModal = document.createElement("div");
-  _fontModal.className = "font-modal-overlay";
-  _fontModal.hidden = true;
-
-  const box = document.createElement("div");
-  box.className = "font-modal";
-
-  const header = document.createElement("div");
-  header.className = "font-modal-header";
-  header.textContent = "글꼴 설정";
-  box.appendChild(header);
-
-  const body = document.createElement("div");
-  body.className = "font-modal-body";
-
-  // family column
-  const famCol = document.createElement("div");
-  famCol.className = "fm-col";
-  const famLbl = document.createElement("label");
-  famLbl.className = "fm-label"; famLbl.textContent = "글꼴";
-  _fmFamily = document.createElement("select");
-  _fmFamily.className = "fm-list"; _fmFamily.size = 7;
-  TEXT_FONTS.forEach((f) => {
-    const opt = document.createElement("option");
-    opt.value = f.css; opt.textContent = f.label;
-    _fmFamily.appendChild(opt);
-  });
-  famCol.appendChild(famLbl); famCol.appendChild(_fmFamily);
-
-  // style column
-  const styCol = document.createElement("div");
-  styCol.className = "fm-col";
-  const styLbl = document.createElement("label");
-  styLbl.className = "fm-label"; styLbl.textContent = "글꼴 스타일";
-  _fmStyle = document.createElement("select");
-  _fmStyle.className = "fm-list"; _fmStyle.size = 7;
-  TEXT_STYLES.forEach((st, i) => {
-    const opt = document.createElement("option");
-    opt.value = String(i); opt.textContent = st.label;
-    _fmStyle.appendChild(opt);
-  });
-  styCol.appendChild(styLbl); styCol.appendChild(_fmStyle);
-
-  // size column
-  const szCol = document.createElement("div");
-  szCol.className = "fm-col fm-col-size";
-  const szLbl = document.createElement("label");
-  szLbl.className = "fm-label"; szLbl.textContent = "크기";
-  _fmSizeInput = document.createElement("input");
-  _fmSizeInput.type = "number"; _fmSizeInput.min = String(MIN_TEXT_PT); _fmSizeInput.max = "400"; _fmSizeInput.step = "1";
-  _fmSizeInput.className = "fm-size-input";
-  _fmSizeList = document.createElement("select");
-  _fmSizeList.className = "fm-list"; _fmSizeList.size = 6;
-  TEXT_SIZE_PRESETS.forEach((pt) => {
-    const opt = document.createElement("option");
-    opt.value = String(pt); opt.textContent = String(pt);
-    _fmSizeList.appendChild(opt);
-  });
-  szCol.appendChild(szLbl); szCol.appendChild(_fmSizeInput); szCol.appendChild(_fmSizeList);
-
-  body.appendChild(famCol); body.appendChild(styCol); body.appendChild(szCol);
-  box.appendChild(body);
-
-  // effects
-  const fx = document.createElement("div");
-  fx.className = "fm-effects";
-  const fxLbl = document.createElement("span");
-  fxLbl.className = "fm-label"; fxLbl.textContent = "효과";
-  const strikeLbl = document.createElement("label");
-  _fmStrikeout = document.createElement("input"); _fmStrikeout.type = "checkbox";
-  strikeLbl.appendChild(_fmStrikeout); strikeLbl.appendChild(document.createTextNode(" 취소선"));
-  const underLbl = document.createElement("label");
-  _fmUnderline = document.createElement("input"); _fmUnderline.type = "checkbox";
-  underLbl.appendChild(_fmUnderline); underLbl.appendChild(document.createTextNode(" 밑줄"));
-  fx.appendChild(fxLbl); fx.appendChild(strikeLbl); fx.appendChild(underLbl);
-  box.appendChild(fx);
-
-  // preview
-  const pvWrap = document.createElement("div");
-  pvWrap.className = "fm-preview-wrap";
-  const pvLbl = document.createElement("div");
-  pvLbl.className = "fm-label"; pvLbl.textContent = "미리보기";
-  _fmPreview = document.createElement("div");
-  _fmPreview.className = "fm-preview";
-  _fmPreview.textContent = "AaBbYyZz 가나다라";
-  pvWrap.appendChild(pvLbl); pvWrap.appendChild(_fmPreview);
-  box.appendChild(pvWrap);
-
-  // footer buttons
-  const footer = document.createElement("div");
-  footer.className = "font-modal-footer";
-  const okBtn = document.createElement("button");
-  okBtn.type = "button"; okBtn.className = "fm-btn fm-ok"; okBtn.textContent = "확인";
-  const cancelBtn = document.createElement("button");
-  cancelBtn.type = "button"; cancelBtn.className = "fm-btn fm-cancel"; cancelBtn.textContent = "취소";
-  footer.appendChild(okBtn); footer.appendChild(cancelBtn);
-  box.appendChild(footer);
-
-  _fontModal.appendChild(box);
-  document.body.appendChild(_fontModal);
-
-  // wiring — preview-only until 확인
-  _fmFamily.addEventListener("change", () => { _fmWork.fontFamily = _fmFamily.value; _refreshFontPreview(); });
-  _fmStyle.addEventListener("change", () => {
-    const st = TEXT_STYLES[parseInt(_fmStyle.value, 10)] || TEXT_STYLES[0];
-    _fmWork.fontWeight = st.fontWeight; _fmWork.fontStyle = st.fontStyle; _fmWork.italic = st.fontStyle === "italic"; _refreshFontPreview();
-  });
-  _fmSizeList.addEventListener("change", () => {
-    _fmSizeInput.value = _fmSizeList.value;
-    _fmWork.pt = parseFloat(_fmSizeList.value) || _fmWork.pt; _refreshFontPreview();
-  });
-  _fmSizeInput.addEventListener("input", () => {
-    const v = parseFloat(_fmSizeInput.value);
-    if (isFinite(v) && v > 0) { _fmWork.pt = v; _refreshFontPreview(); }
-  });
-  _fmUnderline.addEventListener("change", () => { _fmWork.underline = _fmUnderline.checked; _refreshFontPreview(); });
-  _fmStrikeout.addEventListener("change", () => { _fmWork.strikeout = _fmStrikeout.checked; _refreshFontPreview(); });
-
-  okBtn.addEventListener("click", _applyFontModal);
-  cancelBtn.addEventListener("click", _closeFontModal);
-  _fontModal.addEventListener("mousedown", (e) => { if (e.target === _fontModal) _closeFontModal(); });
-  // Keyboard: Escape cancels, Enter applies (Phase 4.9).
-  _fontModal.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { e.preventDefault(); _closeFontModal(); }
-    else if (e.key === "Enter") { e.preventDefault(); _applyFontModal(); }
-  });
-}
-
-function _refreshFontPreview() {
-  if (!_fmPreview || !_fmWork) return;
-  _fmPreview.style.fontFamily = _fmWork.fontFamily;
-  _fmPreview.style.fontWeight = _fmWork.fontWeight;
-  _fmPreview.style.fontStyle  = _fmWork.italic === true ? "italic" : "normal";
-  _fmPreview.style.fontSize   = _fmWork.pt + "pt";
-  const deco = [];
-  if (_fmWork.underline) deco.push("underline");
-  if (_fmWork.strikeout) deco.push("line-through");
-  _fmPreview.style.textDecoration = deco.join(" ") || "none";
-}
-
-function _openFontModal(target) {
-  _buildFontModal();
-  _fmTarget = target;
-
-  const s = _state.get();
-  const src = target.kind === "object"
-    ? s.objects.find((o) => o.id === target.id)
-    : s.draftText;
-  if (!src) return;
-
-  _fmWork = {
-    fontFamily: src.fontFamily || DEFAULT_TEXT_FONT,
-    fontWeight: src.fontWeight || "normal",
-    fontStyle:  src.italic === true ? "italic" : "normal",
-    italic:     src.italic === true,
-    underline:  !!src.underline,
-    strikeout:  !!src.strikeout,
-    pt: Math.round(mmToPt(src.fontSize) * 10) / 10,
-  };
-
-  _fmFamily.value = _fmWork.fontFamily;
-  const styleIdx = TEXT_STYLES.findIndex((st) => st.fontWeight === _fmWork.fontWeight && st.fontStyle === _fmWork.fontStyle);
-  _fmStyle.value = String(styleIdx < 0 ? 0 : styleIdx);
-  _fmSizeInput.value = _fmWork.pt;
-  _fmSizeList.value = String(_fmWork.pt); // no-op if pt isn't a preset
-  _fmUnderline.checked = _fmWork.underline;
-  _fmStrikeout.checked = _fmWork.strikeout;
-  _refreshFontPreview();
-
-  _fontModal.hidden = false;
-  _fmFamily.focus();
-}
-
-function _closeFontModal() {
-  if (_fontModal) _fontModal.hidden = true;
-  _fmTarget = null;
-  _fmWork = null;
-  if (_textEditor) _textEditor.focus(); // resume draft editing if still open
-}
-
-function _applyFontModal() {
-  if (!_fmTarget || !_fmWork) { _closeFontModal(); return; }
-  const w = _fmWork;
-  const fields = {
-    fontFamily: w.fontFamily,
-    fontWeight: w.fontWeight,
-    fontStyle:  w.italic === true ? "italic" : "normal",
-    italic:     w.italic === true,
-    underline:  w.underline,
-    strikeout:  w.strikeout,
-    fontSize:   ptToMm(Math.max(MIN_TEXT_PT, w.pt)),
-  };
-  if (_fmTarget.kind === "object") {
-    _state.update((s) => {
-      const o = s.objects.find((x) => x.id === _fmTarget.id);
-      if (!o || (o.type !== "text" && o.type !== "formula")) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      s.undoStack.push(snap);
-      s.redoStack = [];
-      Object.assign(o, fields);
-      if (o.type === "text") {
-        o.textRuns = (o.text ?? "") ? [{ text: o.text, style: normalizeTextRunStyle(fields, o) }] : [];
-      }
-    });
-  } else {
-    _state.update((s) => {
-      if (!s.draftText) return;
-      Object.assign(s.draftText, fields);
-      if (s.draftText.text != null) {
-        s.draftText.textRuns = s.draftText.text ? [{ text: s.draftText.text, style: normalizeTextRunStyle(fields, s.draftText) }] : [];
-      }
-    });
-    _syncEditorFont();
-    _refreshUnifiedPreview();
-  }
-  _closeFontModal();
-}
-
-// Open the font modal for the current selection / active draft. Used by the
-// inspector "글꼴 설정..." button so both UIs share one modal + one field set.
-export function openFontModalForSelection() {
-  const s = _state.get();
-  if (s.draftText) { _openFontModal({ kind: "draft", id: s.draftText.editingId || null }); return; }
-  const ids = s.selectedIds || [];
-  if (ids.length !== 1) return;
-  const o = s.objects.find((x) => x.id === ids[0]);
-  if (o && (o.type === "text" || o.type === "formula")) _openFontModal({ kind: "object", id: o.id });
 }

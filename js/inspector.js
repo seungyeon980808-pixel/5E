@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.36.7";
-import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.36.7";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.7";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.36.8";
+import { openAngleArcLabelEditor } from "./tools.js?v=0.36.8";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.8";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1187,17 +1187,8 @@ export function initInspector(state) {
   });
   fontSizeNum.addEventListener("keydown", (e) => { if (e.key === "Enter") fontSizeNum.blur(); });
 
-  // 글꼴 설정... — opens the same modal the right-click menu uses (shared fields).
-  const fontDlgRow = document.createElement("div");
-  fontDlgRow.className = "insp-row";
-  const fontDlgBtn = document.createElement("button");
-  fontDlgBtn.type = "button";
-  fontDlgBtn.textContent = "글꼴 설정...";
-  fontDlgBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;width:100%;";
-  fontDlgBtn.addEventListener("click", () => openFontModalForSelection());
-  fontDlgRow.appendChild(fontDlgBtn);
-  secTextBody.appendChild(fontDlgRow);
-
+  // 예전의 "글꼴 설정..." 버튼(별도 모달)은 제거됐다. 글꼴/크기/굵게/기울임과 심볼
+  // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
   const secText = makeSection("글꼴", secTextBody);
   contentEl.appendChild(secText);
 
@@ -2289,7 +2280,6 @@ export function initInspector(state) {
     fontFamSel.disabled = disabled;
     fontSizeNum.disabled = disabled;
     italicCb.disabled = disabled;
-    fontDlgBtn.disabled = disabled;
     centerLineSel.disabled = disabled || locked;
   }
 

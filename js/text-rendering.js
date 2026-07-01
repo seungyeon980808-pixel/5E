@@ -1,7 +1,7 @@
 import {
   ROMAN_NUMERAL_FONT_FAMILY,
   splitRomanRuns,
-} from "./state.js?v=0.36.7";
+} from "./state.js?v=0.36.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
