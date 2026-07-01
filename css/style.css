@@ -994,15 +994,6 @@ textarea.unified-text-input {
   flex-direction: column;
   gap: 6px;
 }
-.unified-style-apply-row {
-  display: flex;
-  justify-content: flex-end;
-}
-.unified-apply-selected {
-  height: 28px;
-  padding: 0 10px;
-  font-weight: 600;
-}
 .unified-formula-panel {
   display: flex;
   flex-direction: column;

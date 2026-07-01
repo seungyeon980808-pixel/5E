@@ -11,21 +11,22 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.6";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.7";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
-} from "./state.js?v=0.36.6";
+  hasStyledTextRuns,
+} from "./state.js?v=0.36.7";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.6";
-import { resolveEndpointSnap } from "./snap.js?v=0.36.6";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.6";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.6";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.6";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.7";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.7";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.7";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.7";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.7";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -2132,32 +2133,6 @@ function _currentUnifiedStyle() {
   };
 }
 
-function _mergeTextRuns(runs, fallback) {
-  return normalizeTextRuns({ ...fallback, textRuns: runs });
-}
-
-function _applyStyleToRuns(runs, start, end, patch, fallback) {
-  const normalized = normalizeTextRuns({ ...fallback, textRuns: runs });
-  const styled = [];
-  let pos = 0;
-  for (const run of normalized) {
-    const text = String(run.text ?? "");
-    const next = pos + text.length;
-    const before = Math.max(0, Math.min(text.length, start - pos));
-    const after = Math.max(0, Math.min(text.length, end - pos));
-    if (before > 0) styled.push({ text: text.slice(0, before), style: run.style });
-    if (after > before) {
-      styled.push({
-        text: text.slice(before, after),
-        style: normalizeTextRunStyle({ ...run.style, ...patch }, fallback),
-      });
-    }
-    if (after < text.length) styled.push({ text: text.slice(after), style: run.style });
-    pos = next;
-  }
-  return _mergeTextRuns(styled, fallback);
-}
-
 function _syncDraftRunsToText(draft, raw) {
   if (!draft) return;
   const current = textRunsToText(draft.textRuns || []);
@@ -2178,7 +2153,9 @@ function _setDraftWholeTextStyle(draft, style) {
   draft.textRuns = text ? [{ text, style: normalizeTextRunStyle(style, draft) }] : [];
 }
 
-function _applyUnifiedStyleToDraft(selection = _textSelection) {
+// 글꼴/크기/굵게/기울임을 항상 "전체 텍스트"에 적용한다. 부분(선택 글자) 서식은
+// 이번 작업 범위에서 제외되었다(신뢰할 수 없어 제거).
+function _applyUnifiedStyleToDraft() {
   const style = _currentUnifiedStyle();
   _state.update((s) => {
     const dt = s.draftText;
@@ -2189,13 +2166,7 @@ function _applyUnifiedStyleToDraft(selection = _textSelection) {
     dt.rawSource = raw;
     dt.contentMode = looksLikeFormula(raw) ? "formula" : "plain";
     _syncDraftRunsToText(dt, raw);
-    const start = selection?.start ?? 0;
-    const end = selection?.end ?? start;
-    if (end > start) {
-      dt.textRuns = _applyStyleToRuns(dt.textRuns, start, end, style, dt);
-    } else {
-      _setDraftWholeTextStyle(dt, style);
-    }
+    _setDraftWholeTextStyle(dt, style);
   });
   _syncEditorFont();
   _refreshUnifiedPreview();
@@ -2303,7 +2274,7 @@ function _buildUnifiedStyleControls() {
   controls.addEventListener("pointerdown", captureBeforeFocusSteal);
   controls.addEventListener("mousedown", captureBeforeFocusSteal);
 
-  const applyStyle = () => _applyUnifiedStyleToDraft(_textSelection);
+  const applyStyle = () => _applyUnifiedStyleToDraft();
   _textFontSelect.addEventListener("change", applyStyle);
   _textSizeInput.addEventListener("change", applyStyle);
   _textItalicInput.addEventListener("click", () => {
@@ -2315,22 +2286,12 @@ function _buildUnifiedStyleControls() {
     applyStyle();
   });
 
-  // Reliable fallback (task requirement 6): even if a native dropdown destroys the
-  // textarea selection, this <button> keeps its own mousedown from stealing focus
-  // (preventDefault), so the cached range styles exactly the picked characters.
+  // 부분(선택 글자) 서식은 이번 작업에서 제외한다. 예전 "선택 글자에 적용" 버튼은
+  // 실제로는 전체 글자에 적용되어 신뢰할 수 없었으므로 UI에서 제거했다. 글꼴/크기/
+  // 굵게/기울임 컨트롤은 전체 텍스트에 일관되게 적용된다(_applyUnifiedStyleToDraft).
   const wrapper = document.createElement("div");
   wrapper.className = "unified-style-block";
-  const applyRow = document.createElement("div");
-  applyRow.className = "unified-style-apply-row";
-  const applyBtn = document.createElement("button");
-  applyBtn.type = "button";
-  applyBtn.className = "unified-editor-btn unified-apply-selected";
-  applyBtn.textContent = "선택 글자에 적용";
-  applyBtn.addEventListener("pointerdown", captureBeforeFocusSteal);
-  applyBtn.addEventListener("mousedown", captureBeforeFocusSteal);
-  applyBtn.addEventListener("click", () => _applyUnifiedStyleToDraft(_textSelection));
-  applyRow.appendChild(applyBtn);
-  wrapper.append(controls, applyRow);
+  wrapper.append(controls);
 
   if (_TEXT_STYLE_DEBUG) {
     _textDebugEl = document.createElement("pre");
@@ -2409,10 +2370,11 @@ function _refreshUnifiedPreview() {
     plain.style.fontStyle = resolveTextFontStyle(dt);
     plain.style.fontWeight = dt.fontWeight || "normal";
     plain.style.letterSpacing = resolveTextLetterSpacing(dt) || "";
-    if (Array.isArray(dt.textRuns) && dt.textRuns.length) {
+    // 미리보기도 커밋 렌더와 동일하게: 다중 런(실제 서식)만 런 단위로, 그 외에는
+    // 일반 텍스트 경로로 "구간 I/II/III" 세리프 처리를 적용한다.
+    if (hasStyledTextRuns(dt)) {
       appendHtmlStyledTextRuns(plain, dt);
     } else {
-      // Legacy plain text still mirrors the old roman-numeral fallback.
       fillHtmlWithRomanRuns(plain, raw);
     }
     _textPreview.appendChild(plain);

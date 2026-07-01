@@ -7,7 +7,7 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=0.36.6";
+import { createStore } from "./store.js?v=0.36.7";
 
 export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif';
 export const EQUATION_FONT_FAMILY = '"HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
@@ -22,19 +22,19 @@ export const OBJECT_LABEL_QUANTITY_FONT_FAMILY = '"Times New Roman", "Cambria Ma
 // 일반 텍스트 도구(돋움)와도 분리 — 객체 라벨 "라벨" 종류 전용.
 export const OBJECT_LABEL_TEXT_FONT_FAMILY = '"신명중명조", "Shin Myeongjo", "SMMyungJo", "Batang", "바탕", serif';
 
-// ASCII I/II/III roman-numeral labels render with the same serif run used by
-// labeler text. Scope is deliberately narrow: no Unicode roman numerals and no
-// arbitrary uppercase words.
-export const ROMAN_NUMERAL_FONT_FAMILY = OBJECT_LABEL_TEXT_FONT_FAMILY;
+// 구간 번호(section/region markers)로 쓰인 ASCII I/II/III만 세리프(Times New Roman
+// 정체)로 렌더링한다. 물리량 라벨은 labelType 기반(applyObjectLabelFont)으로 따로
+// 처리하므로 여기서 건드리지 않는다.
+export const ROMAN_NUMERAL_FONT_FAMILY = '"Times New Roman", "Batang", "바탕", serif';
 
-function isRomanToken(tok) {
-  return /^(?:I|II|III)$/.test(tok);
-}
+// "구간"(with optional spaces) 뒤에 붙은 I / II / III 만 매칭한다. 라틴 단어 경계
+// (뒤가 라틴 글자면 미매칭)로 "구간 Info" 같은 영어 단어는 제외된다.
+const SECTION_ROMAN_RE = /구간(\s*)(I{1,3})(?![A-Za-z])/g;
 
-// 텍스트를 "로마 숫자 런"과 "일반 런"으로 쪼갠다. 로마 숫자 토큰 후보는
-// (1) 유니코드 로마 숫자 연속, (2) 라틴 단어 경계로 끊긴 대문자 로마 문자열.
-// 라틴 글자와 붙어 있는 I(예: "In")는 하나의 라틴 단어로 묶여 로마 숫자로 오인되지
-// 않는다. 반환: [{ text, roman }] 런 배열(인접 동종 런은 합쳐짐).
+// 텍스트를 "구간 로마 숫자 런"과 "일반 런"으로 쪼갠다. 로마 숫자 런이 되는 것은
+// "구간 I", "마찰구간 II", "마찰 구간 III"처럼 구간 번호로 쓰인 I/II/III 뿐이다.
+// 홀로 선 I, 영어 단어 속 I, 물리량 라벨은 여기서 변환되지 않는다.
+// 반환: [{ text, roman }] 런 배열(인접 동종 런은 합쳐짐).
 export function splitRomanRuns(text) {
   const s = String(text ?? "");
   const runs = [];
@@ -44,12 +44,15 @@ export function splitRomanRuns(text) {
     if (prev && prev.roman === roman) prev.text += str;
     else runs.push({ text: str, roman });
   };
-  const re = /[A-Za-z]+/g;
+  SECTION_ROMAN_RE.lastIndex = 0;
   let last = 0, m;
-  while ((m = re.exec(s))) {
-    if (m.index > last) push(s.slice(last, m.index), false);
-    push(m[0], isRomanToken(m[0]));
-    last = m.index + m[0].length;
+  while ((m = SECTION_ROMAN_RE.exec(s))) {
+    // 로마 토큰은 "구간" + 공백 뒤에서 시작한다. 그 앞(한글 "구간"과 간격 포함)은
+    // 일반 텍스트 글꼴을 유지한다.
+    const romanStart = m.index + "구간".length + m[1].length;
+    if (romanStart > last) push(s.slice(last, romanStart), false);
+    push(m[2], true);
+    last = romanStart + m[2].length;
   }
   if (last < s.length) push(s.slice(last), false);
   return runs;
@@ -138,6 +141,15 @@ export function normalizeTextRuns(obj = {}) {
     out.push({ text: String(obj.text ?? ""), style: textRunStyleFromObject(obj) });
   }
   return out;
+}
+
+// 텍스트 객체가 "실제 사용자 서식이 담긴 여러 런"을 가지는지 여부. 런이 하나뿐이면
+// 그것은 객체 레벨 글꼴 필드(fontFamily/italic/…)를 그대로 복제한 것이라, 일반(plain)
+// 렌더 경로와 시각적으로 동일하다. 그리고 그 일반 경로가 "구간 I/II/III" 세리프 처리를
+// 담당한다. 선택 글자 서식이 제거되어 새 객체는 다중 런을 만들지 않으며, 오직 예전 저장
+// 파일만 다중 런을 가질 수 있다. 그런 경우에만 명시적 런을 보존한다.
+export function hasStyledTextRuns(obj = {}) {
+  return Array.isArray(obj.textRuns) && obj.textRuns.length > 1;
 }
 
 export function textRunsToText(runs = []) {

@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.6";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.7";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -22,10 +22,11 @@ import {
   resolveTextFontStyle,
   resolveTextLetterSpacing,
   normalizeTextRuns,
-} from "./state.js?v=0.36.6";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.6";
-import { renderFormula } from "./formula.js?v=0.36.6";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.6";
+  hasStyledTextRuns,
+} from "./state.js?v=0.36.7";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.7";
+import { renderFormula } from "./formula.js?v=0.36.7";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.7";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -1477,7 +1478,9 @@ function renderText(obj) {
   const rot = obj.rotation ?? 0;
   if (rot) el.setAttribute("transform", `rotate(${rot},${obj.x},${obj.y})`);
 
-  if (Array.isArray(obj.textRuns) && obj.textRuns.length) {
+  // 다중 런(실제 사용자 서식)일 때만 런 단위로 그린다. 단일/빈 런은 일반 텍스트로
+  // 취급해 "구간 I/II/III" 세리프(section-marker) 처리를 적용한다. (hasStyledTextRuns)
+  if (hasStyledTextRuns(obj)) {
     appendStyledTextRuns(el, obj);
   } else {
     const lines = (obj.text || "").split("\n");

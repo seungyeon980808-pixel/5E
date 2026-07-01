@@ -1,7 +1,7 @@
 import {
   ROMAN_NUMERAL_FONT_FAMILY,
   splitRomanRuns,
-} from "./state.js?v=0.36.6";
+} from "./state.js?v=0.36.7";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -9,11 +9,13 @@ function applyRomanRunStyle(el) {
   if (el.namespaceURI === SVG_NS) {
     el.setAttribute("font-family", ROMAN_NUMERAL_FONT_FAMILY);
     el.setAttribute("font-style", "normal");
+    el.setAttribute("font-weight", "normal");
     el.setAttribute("letter-spacing", "normal");
     return;
   }
   el.style.fontFamily = ROMAN_NUMERAL_FONT_FAMILY;
   el.style.fontStyle = "normal";
+  el.style.fontWeight = "normal";
   el.style.letterSpacing = "normal";
 }
 
