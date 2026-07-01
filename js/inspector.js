@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.36.8";
-import { openAngleArcLabelEditor } from "./tools.js?v=0.36.8";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.8";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.37.0";
+import { openAngleArcLabelEditor } from "./tools.js?v=0.37.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -2063,6 +2063,136 @@ export function initInspector(state) {
   const sec4 = makeSection("보호", sec4Body);
   contentEl.appendChild(sec4);
 
+  /* ---- Section: 이미지 (single image object only) ----
+   * Controls for a pasted image object (배경/편집 모드). opacity/lock/remove work
+   * even on a locked background image (they are how the user manages it); 비율 고정
+   * is edit-mode only. No erase/cutout controls in this pass (cutouts is future data). */
+  const imgBody = document.createElement("div");
+  imgBody.className = "insp-body";
+
+  // opacity slider (0–1) with a % readout.
+  const imgOpacityRow = document.createElement("div");
+  imgOpacityRow.className = "insp-row";
+  const imgOpacityLbl = document.createElement("label");
+  imgOpacityLbl.className = "insp-field-label";
+  imgOpacityLbl.textContent = "투명도";
+  const imgOpacityRange = document.createElement("input");
+  imgOpacityRange.type = "range";
+  imgOpacityRange.min = "0";
+  imgOpacityRange.max = "1";
+  imgOpacityRange.step = "0.01";
+  imgOpacityRange.className = "insp-range";
+  imgOpacityRange.style.flex = "1";
+  const imgOpacityOut = document.createElement("span");
+  imgOpacityOut.className = "insp-unit";
+  imgOpacityOut.style.minWidth = "38px";
+  imgOpacityOut.style.textAlign = "right";
+  imgOpacityRow.appendChild(imgOpacityLbl);
+  imgOpacityRow.appendChild(imgOpacityRange);
+  imgOpacityRow.appendChild(imgOpacityOut);
+  imgBody.appendChild(imgOpacityRow);
+
+  // 비율 고정 (edit-mode images; controls proportional resize — transform.js).
+  const imgAspectRow = document.createElement("div");
+  imgAspectRow.className = "insp-row";
+  const imgAspectCb = document.createElement("input");
+  imgAspectCb.type = "checkbox";
+  imgAspectCb.className = "insp-cb";
+  const imgAspectLbl = document.createElement("label");
+  imgAspectLbl.className = "insp-field-label";
+  imgAspectLbl.textContent = "비율 고정";
+  imgAspectRow.appendChild(imgAspectCb);
+  imgAspectRow.appendChild(imgAspectLbl);
+  imgBody.appendChild(imgAspectRow);
+
+  // 잠금 (lock/unlock) — mirrors obj.locked; usable on a locked background image.
+  const imgLockRow = document.createElement("div");
+  imgLockRow.className = "insp-row";
+  const imgLockCb = document.createElement("input");
+  imgLockCb.type = "checkbox";
+  imgLockCb.className = "insp-cb";
+  const imgLockLbl = document.createElement("label");
+  imgLockLbl.className = "insp-field-label";
+  imgLockLbl.textContent = "잠금";
+  imgLockRow.appendChild(imgLockCb);
+  imgLockRow.appendChild(imgLockLbl);
+  imgBody.appendChild(imgLockRow);
+
+  // Export note for background images (exportable:false by default).
+  const imgExportNote = document.createElement("p");
+  imgExportNote.className = "objectify-status";
+  imgExportNote.style.margin = "4px 0 6px";
+  imgExportNote.textContent = "배경 이미지는 기본적으로 내보내기에서 제외됩니다.";
+  imgBody.appendChild(imgExportNote);
+
+  // remove button (label switches to 배경 이미지 제거 for background mode).
+  const imgRemoveRow = document.createElement("div");
+  imgRemoveRow.className = "insp-row";
+  const imgRemoveBtn = document.createElement("button");
+  imgRemoveBtn.type = "button";
+  imgRemoveBtn.className = "modal-btn";
+  imgRemoveBtn.style.width = "100%";
+  imgRemoveBtn.textContent = "이미지 제거";
+  imgRemoveRow.appendChild(imgRemoveBtn);
+  imgBody.appendChild(imgRemoveRow);
+
+  const imageSection = makeSection("이미지", imgBody);
+  contentEl.insertBefore(imageSection, sec3);
+
+  // ---- image mutators: operate on the single selected image, ignoring `locked`
+  // (opacity/lock/remove are exactly how a locked background image is managed). ----
+  function selectedImage(s) {
+    const o = s.objects.find((x) => x.id === (s.selectedIds || [])[0]);
+    return o && o.type === "image" ? o : null;
+  }
+  function mutateImage(apply) {
+    const s = state.get();
+    const cur = selectedImage(s);
+    if (!cur) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = selectedImage(s2);
+      if (!o || !apply(s2, o)) return;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  }
+
+  // opacity: one undo per drag (snapshot on press, live-apply on input, push on release).
+  let _imgOpacitySnap = null;
+  const applyImageOpacityLive = (val) => {
+    const v = Math.max(0, Math.min(1, val));
+    state.update((s2) => {
+      const o = selectedImage(s2);
+      if (o) o.opacity = v;
+    });
+  };
+  imgOpacityRange.addEventListener("pointerdown", () => { _imgOpacitySnap = snapBefore(); });
+  imgOpacityRange.addEventListener("input", () => {
+    imgOpacityOut.textContent = `${Math.round(Number(imgOpacityRange.value) * 100)}%`;
+    applyImageOpacityLive(Number(imgOpacityRange.value));
+  });
+  imgOpacityRange.addEventListener("change", () => {
+    if (_imgOpacitySnap) { pushSnap(_imgOpacitySnap); _imgOpacitySnap = null; }
+  });
+
+  imgAspectCb.addEventListener("change", () => {
+    const val = imgAspectCb.checked;
+    mutateImage((s2, o) => { if (o.aspectLocked === val) return false; o.aspectLocked = val; return true; });
+  });
+  imgLockCb.addEventListener("change", () => {
+    const val = imgLockCb.checked;
+    mutateImage((s2, o) => { if (o.locked === val) return false; o.locked = val; return true; });
+  });
+  imgRemoveBtn.addEventListener("click", () => {
+    mutateImage((s2, o) => {
+      s2.objects = s2.objects.filter((x) => x.id !== o.id);
+      s2.selectedIds = [];
+      s2.targetedId = null;
+      return true;
+    });
+  });
+
   /* ---- Section: 아트보드 (shown in the no-selection / empty state) ---- *
    * Lets the user set the page size. Changing it ONLY moves the artboard
    * boundary — objects keep their exact world coordinates. The artboard stays
@@ -2302,6 +2432,7 @@ export function initInspector(state) {
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
+    imageSection.style.display = "none"; // shown only for a single image object (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
     // line (set in the single-selection branch); hidden in every other case.
     boxLabelRow.style.display = "none";
@@ -2506,9 +2637,27 @@ export function initInspector(state) {
     const styleDisabled = false; // style mode removed — never disabled by mode
     // Formula shares the text font controls (family + size apply to its glyphs).
     const isText = obj.type === "text" || obj.type === "formula";
-    // Text has no stroke/fill controls; it gets its own 글꼴 section instead.
-    sec1.style.display = isText ? "none" : "";
+    // Images have neither stroke/fill nor a 글꼴 section; they get their own 이미지
+    // section (opacity/비율 고정/잠금/제거) instead.
+    const isImage = obj.type === "image";
+    // Text/image have no stroke/fill controls; text gets 글꼴, image gets 이미지.
+    sec1.style.display = (isText || isImage) ? "none" : "";
     secText.style.display = isText ? "" : "none";
+    imageSection.style.display = isImage ? "" : "none";
+    if (isImage) {
+      const isBg = obj.mode === "background";
+      if (document.activeElement !== imgOpacityRange) {
+        imgOpacityRange.value = obj.opacity ?? 1;
+        imgOpacityOut.textContent = `${Math.round((obj.opacity ?? 1) * 100)}%`;
+      }
+      // 비율 고정 is meaningful for edit-mode resize; hide it for background images
+      // (locked, not freely resized).
+      imgAspectRow.style.display = isBg ? "none" : "";
+      imgAspectCb.checked = obj.aspectLocked !== false;
+      imgLockCb.checked = !!obj.locked;
+      imgExportNote.style.display = (obj.exportable === false) ? "" : "none";
+      imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거";
+    }
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       italicCb.checked = styleObj.italic === true;
@@ -2642,7 +2791,7 @@ export function initInspector(state) {
     const hasCircuitHeight = isCircuit && CIRCUIT_HEIGHT_ELEMENTS.has(circElem);
     const isAxes = obj.type === "axes";
     const axisVariant = isAxes ? (obj.axisVariant || "cross") : null;
-    sec3.style.display = (isShape || isArc || isRightAngle || isCircuit || isLabeler) ? "" : "none";
+    sec3.style.display = (isShape || isImage || isArc || isRightAngle || isCircuit || isLabeler) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
     // radius + start/sweep angle; circuit (two terminals) hides the box rows.
     xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "flex";
@@ -2710,7 +2859,7 @@ export function initInspector(state) {
     // lens-only center dashed-line row.
     const isLens = isOptics && (obj.kind === "convex_lens" || obj.kind === "concave_lens");
     centerLineRow.style.display = isLens ? "" : "none";
-    if (isShape) {
+    if (isShape || isImage) {
       xF.inp.value   = (obj.x        ?? 0).toFixed(2);
       yF.inp.value   = (-(obj.y      ?? 0)).toFixed(2); // SVG Y down → math Y up
       wF.inp.value   = (obj.w        ?? 0).toFixed(2);

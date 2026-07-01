@@ -7,20 +7,21 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.36.8";
-import { render } from "./render.js?v=0.36.8";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.36.8";
-import { initTools } from "./tools.js?v=0.36.8";
-import { initTransform, undo, redo } from "./transform.js?v=0.36.8";
-import { initInspector } from "./inspector.js?v=0.36.8";
-import { initProjectIO } from "./project-io.js?v=0.36.8";
-import { initExportDialog } from "./export-dialog.js?v=0.36.8";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.36.8";
-import { initSettings } from "./settings.js?v=0.36.8";
-import { initImageObjectify } from "./image-objectify.js?v=0.36.8";
-import { initImageImportMock } from "./image-import-mock.js?v=0.36.8";
-import { initTemplates } from "./templates.js?v=0.36.8";
-import { initObjectSearch } from "./search.js?v=0.36.8";
+import { state } from "./state.js?v=0.37.0";
+import { render } from "./render.js?v=0.37.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.37.0";
+import { initTools } from "./tools.js?v=0.37.0";
+import { initTransform, undo, redo } from "./transform.js?v=0.37.0";
+import { initInspector } from "./inspector.js?v=0.37.0";
+import { initProjectIO } from "./project-io.js?v=0.37.0";
+import { initExportDialog } from "./export-dialog.js?v=0.37.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.37.0";
+import { initSettings } from "./settings.js?v=0.37.0";
+import { initImageObjectify } from "./image-objectify.js?v=0.37.0";
+import { initImageImportMock } from "./image-import-mock.js?v=0.37.0";
+import { initImagePaste } from "./image-paste.js?v=0.37.0";
+import { initTemplates } from "./templates.js?v=0.37.0";
+import { initObjectSearch } from "./search.js?v=0.37.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -142,6 +143,9 @@ initImageObjectify(state);
 /* ----- advanced: local mock JSON → editable objects (image-to-object Phase 1) ----- */
 initImageImportMock(state);
 
+/* ----- clipboard image paste: Ctrl+V → 배경/편집 모드 선택 → image object ----- */
+initImagePaste(state, svg);
+
 /* ----- template library: 기호 패널 클릭 → 캔버스에 심볼 instantiate ----- */
 initTemplates(svg);
 
@@ -246,7 +250,7 @@ window.phyDraw = {
 })();
 
 console.info(
-  "[시범공개] [5E v0.36.8] Pick R (or press R), drag on the canvas to draw a\n" +
+  "[시범공개] [5E v0.37.0] Pick R (or press R), drag on the canvas to draw a\n" +
     "Press 'd' to toggle the live coord-debug overlay (pointer?봶orld mapping).\n" +
     "rectangle. Verify with:\n" +
     "  phyDraw.objects()        // array of committed rect objects\n" +

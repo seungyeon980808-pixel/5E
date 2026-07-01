@@ -13,10 +13,10 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.36.8";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.36.8";
-import { setSnapPreview } from "./render.js?v=0.36.8";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.36.8";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.37.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.37.0";
+import { setSnapPreview } from "./render.js?v=0.37.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.37.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -168,6 +168,17 @@ let _clipboard = null;
 let _propertyClipboard = null;
 let _lastMouseWorld = null; // latest pointer world coord (set on first mousemove); null until then
 const _arrowKeysHeld = new Set();
+
+/* External modules (image-paste.js) share this same clipboard/mouse state so a
+ * single Ctrl+V never double-handles: object paste wins when internal objects are
+ * copied; only when NOTHING is copied does the system-clipboard image path run.
+ * The image paste also reuses the exact paste-target (last mouse world) as objects. */
+export function hasInternalClipboard() {
+  return !!(_clipboard && _clipboard.length);
+}
+export function getLastMouseWorld() {
+  return _lastMouseWorld ? { ...(_lastMouseWorld) } : null;
+}
 
 function isEditingFieldTarget(target) {
   if (!target) return false;
@@ -444,7 +455,11 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // flips mid-drag on a diagonal where dx ??dy ??which used to cause size jumps.
   //   vertical edges (n/s) ??height drives:  w = h * ratio
   //   everything else (e/w + all corners)   ??width drives:  h = w / ratio
-  if ((shiftKey || obj.groupId || obj.lockAspect) && ratio > 0 && isFinite(ratio)) {
+  // Image objects carry their own `aspectLocked` flag (비율 고정, ON by default):
+  // when true they keep ratio like a grouped object; when false they resize freely
+  // unless Shift (which still forces ratio for every object type).
+  const imageAspectLock = obj.type === "image" && obj.aspectLocked !== false;
+  if ((shiftKey || obj.groupId || obj.lockAspect || imageAspectLock) && ratio > 0 && isFinite(ratio)) {
     if (handle === "n" || handle === "s") {
       // height is the driver ??snap w to follow h
       w = h * ratio;

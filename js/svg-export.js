@@ -18,7 +18,7 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=0.36.8";
+import { renderObject, makeFillPattern } from "./render.js?v=0.37.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -44,6 +44,9 @@ export function getDefaultExportFilename(ext) {
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
 function isHidden(s, obj) {
+  // Background-mode tracing images are marked exportable:false and must never
+  // appear in the final SVG/PNG (they exist only as an on-canvas drawing aid).
+  if (obj.type === "image" && obj.exportable === false) return true;
   const layer = (s.layers || []).find((l) => l.id === (obj.layerId ?? 1));
   return layer && layer.visible === false;
 }
