@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.5";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.6";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -22,10 +22,10 @@ import {
   resolveTextFontStyle,
   resolveTextLetterSpacing,
   normalizeTextRuns,
-} from "./state.js?v=0.36.5";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.5";
-import { renderFormula } from "./formula.js?v=0.36.5";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.5";
+} from "./state.js?v=0.36.6";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.6";
+import { renderFormula } from "./formula.js?v=0.36.6";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.36.6";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -768,12 +768,14 @@ function withBoxLabel(shapeEl, obj) {
   // turns. The text node itself is appended OUTSIDE the rotation group, so the
   // glyph stays upright.
   const anchor = rotPt(cx + lx, cy + ly, cx, cy, obj.rotation || 0);
-  // Rectangle internal labels (A, B, C …) are object NAMES, not physics variables:
-  // force the 라벨(신명중명조 정체) policy so every rectangle label shares one regular,
-  // upright style and NEVER inherits the 물리량 italic. `italic:false` also pins the
-  // font-style fallback to normal. Ellipse keeps its per-object labelType choice.
+  // Rectangle labels honor the object's labelType like every other shape, but with
+  // a "label"(신명중명조 정체·upright) FALLBACK: block names (A, B, C …) created without
+  // an explicit type default to regular/upright and never inherit the 물리량 italic.
+  // A rect whose labelType is explicitly "quantity"(물리량) still renders as Times New
+  // Roman italic. `italic:false` only pins that fallback — it does not override an
+  // explicit "quantity". Ellipse keeps its own "quantity" fallback.
   const labelOpts = obj.type === "rect"
-    ? { labelType: "label", italic: false }
+    ? { labelType: obj.labelType, italic: false }
     : { labelType: obj.labelType };
   const lbl = makeUprightLabel(obj.label, anchor.x, anchor.y, grayHex(obj.strokeLevel), size, labelOpts);
   if (!lbl) return shapeEl;

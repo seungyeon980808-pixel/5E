@@ -11,21 +11,21 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.5";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.6";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
-} from "./state.js?v=0.36.5";
+} from "./state.js?v=0.36.6";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.5";
-import { resolveEndpointSnap } from "./snap.js?v=0.36.5";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.5";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.5";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.5";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.6";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.6";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.6";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.6";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.36.6";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1683,6 +1683,10 @@ function makeShape(type, a, b) {
     order: 0,              // assigned on commit (z-order within layer)
   };
   if (type === "triangle") shape.flipX = b.x < a.x;
+  // Rectangle internal labels are typically block NAMES (A, B, C …), so a new rect
+  // defaults to the "label"(정체·upright) type. The user can still switch it to
+  // "물리량"(quantity) in the inspector to render the label as Times New Roman italic.
+  if (type === "rect") shape.labelType = "label";
   // Optics (branch A): reuse the size-drag box wholesale; only kind + label fields
   // are added. Default fillNone so lenses/mirrors drop as clean outlines.
   if (type === "optics") {

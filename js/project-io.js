@@ -10,10 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.36.5";
-import { screenToWorld } from "./viewport.js?v=0.36.5";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.5";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.36.5";
+import { rebuildGroups } from "./transform.js?v=0.36.6";
+import { screenToWorld } from "./viewport.js?v=0.36.6";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.6";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.36.6";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -52,7 +52,10 @@ function migrate(data) {
         positionLocked: obj.positionLocked ?? false,
       };
       if (LABEL_CAPABLE_TYPES.has(next.type)) {
-        next.labelType = normalizeLabelType(next.labelType, next.type === "labeler" ? "label" : "quantity");
+        // labeler(콜아웃)·rect(블록 이름) default to "label"(정체); every other
+        // label-capable shape defaults to "quantity"(물리량·italic). An explicit
+        // labelType is always preserved, so a rect set to 물리량 reloads as italic.
+        next.labelType = normalizeLabelType(next.labelType, (next.type === "labeler" || next.type === "rect") ? "label" : "quantity");
       }
       migrateObjectStyleMode(next);
       if (next.type === "text") {
