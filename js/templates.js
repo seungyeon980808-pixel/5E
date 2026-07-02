@@ -21,10 +21,11 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.36.2";
-import { armSymbol } from "./tools.js?v=0.36.2";
-import { renderObject } from "./render.js?v=0.36.2";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.2";
+import { state } from "./state.js?v=0.36.3";
+import { armSymbol } from "./tools.js?v=0.36.3";
+import { renderObject } from "./render.js?v=0.36.3";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.3";
+import { makeBuiltInSvgAssetObject } from "./svg-assets.js?v=0.36.3";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -279,6 +280,10 @@ function iconSampleObject(id, def) {
     };
   }
   if (c.tool === "APPARATUS") {
+    if (c.kind === "pulley" || c.kind === "clamp") {
+      const assetSample = makeBuiltInSvgAssetObject(c.kind, { x: -10, y: -10 });
+      if (assetSample) return assetSample;
+    }
     const b = APPARATUS_ICON_BOX[c.kind] || { w: 20, h: 16 };
     const sample = {
       type: "apparatus", kind: c.kind,

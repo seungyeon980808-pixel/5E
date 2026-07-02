@@ -11,19 +11,20 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.2";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.3";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   isEquationFontFamily, resolveTextFontStyle, resolveTextLetterSpacing,
-} from "./state.js?v=0.36.2";
+} from "./state.js?v=0.36.3";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.2";
-import { resolveEndpointSnap } from "./snap.js?v=0.36.2";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.2";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.2";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.3";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.3";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.3";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.3";
+import { makeBuiltInSvgAssetObject } from "./svg-assets.js?v=0.36.3";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1671,6 +1672,9 @@ function makeShape(type, a, b) {
   }
   if (type === "apparatus") {
     shape.kind = _apparatusKind || "wire";
+    if (shape.kind === "pulley" || shape.kind === "clamp") {
+      return applyNewObjectStyleDefaults(makeBuiltInSvgAssetObject(shape.kind, shape));
+    }
     shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
     shape.fillNone = true;
     shape.label = "";
