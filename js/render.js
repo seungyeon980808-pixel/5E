@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.7";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.37.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -21,9 +21,9 @@ import {
   OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
-} from "./state.js?v=0.36.7";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.7";
-import { renderFormula } from "./formula.js?v=0.36.7";
+} from "./state.js?v=0.37.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
+import { renderFormula } from "./formula.js?v=0.37.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -217,9 +217,9 @@ export function render(state) {
                     : sel.locked   ? "#e53e3e"
                     : sel.positionLocked ? "#8b5cf6"
                     : "var(--c-main, #0969da)";
-    if (sel.type === "line" || sel.type === "circuit") {
-      // Line/circuit have no bbox; the selection guide is a dashed copy of the
-      // p1–p2 segment (circuit's leads + body sit on this axis).
+    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum") {
+      // Line/circuit/pendulum have no bbox; the selection guide is a dashed copy
+      // of the p1–p2 segment (pendulum: pivot → real bob, i.e. the string axis).
       const ln = document.createElementNS(SVG_NS, "line");
       ln.setAttribute("x1", sel.p1.x);
       ln.setAttribute("y1", sel.p1.y);
@@ -402,7 +402,7 @@ export function render(state) {
     // outline, so draw a dashed rectangle guide spanning the drag bounds first.
     // (rect's own preview already IS that rectangle; the line has no bbox ??it
     // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit" && d.type !== "labeler") {
+    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit" && d.type !== "labeler" && d.type !== "pendulum") {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -605,7 +605,7 @@ function makeHitTwin(obj) {
     twin = document.createElementNS(SVG_NS, "path");
     twin.setAttribute("d", catmullRomPath(obj.points || []));
   } else if (obj.type === "rect" || obj.type === "ellipse" || obj.type === "triangle" ||
-             obj.type === "image" || obj.type === "svgAsset" || obj.type === "axes" || obj.type === "optics" ||
+             obj.type === "image" || obj.type === "axes" || obj.type === "optics" ||
              obj.type === "apparatus") {
     twin = document.createElementNS(SVG_NS, "rect");
     twin.setAttribute("x", obj.x);
@@ -677,8 +677,6 @@ export function renderObject(obj) {
       return renderFormula(obj);
     case "image":
       return renderImage(obj);
-    case "svgAsset":
-      return renderSvgAsset(obj);
     case "axes":
       return renderAxes(obj);
     case "anglearc":
@@ -693,6 +691,8 @@ export function renderObject(obj) {
       return renderOptics(obj);
     case "apparatus":
       return renderApparatus(obj);
+    case "pendulum":
+      return renderPendulum(obj);
     default:
       return null;
   }
@@ -1450,37 +1450,6 @@ function renderImage(obj) {
   return el;
 }
 
-/* ----- svgAsset: sanitized external SVG kept as one indivisible object. ----- */
-function renderSvgAsset(obj) {
-  const el = document.createElementNS(SVG_NS, "svg");
-  el.setAttribute("x", obj.x);
-  el.setAttribute("y", obj.y);
-  el.setAttribute("width", obj.w);
-  el.setAttribute("height", obj.h);
-  el.setAttribute("viewBox", obj.svgViewBox || "0 0 1 1");
-  el.setAttribute("preserveAspectRatio", obj.lockedAspectRatio === false ? "none" : "xMidYMid meet");
-  el.setAttribute("overflow", "visible");
-  el.setAttribute("fill", "none");
-  if (obj.id) el.dataset.id = obj.id;
-  const rot = obj.rotation ?? 0;
-  if (rot !== 0) {
-    const cx = obj.x + obj.w / 2;
-    const cy = obj.y + obj.h / 2;
-    el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
-  }
-  if (obj.svgContent) {
-    try {
-      el.innerHTML = obj.svgContent;
-      Array.from(el.querySelectorAll("*")).forEach((node) => {
-        node.setAttribute("pointer-events", "none");
-      });
-    } catch (_) {
-      el.replaceChildren();
-    }
-  }
-  return el;
-}
-
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
  * drawn in a SINGLE pass into one <g>. Ticks/labels are PROJECTIONS computed
  * here from the data (x/y/w/h/showTicks/tickSpacing/label*), never stored as
@@ -2234,6 +2203,117 @@ const CIRCUIT_ELEMENTS = {
   },
 };
 
+/* ===== SIMPLE PENDULUM (native object; pivot = p1, bob center = p2) =====
+ * Data (see tools.js makePendulum): p1 (pivot/support), p2 (bob center),
+ * bobRadius, showCenterGhost, showSymmetricGhost, showLengthLabel, lengthLabel.
+ * All secondary geometry (ghost bobs, the vertical normal) is PROJECTION —
+ * derived here from p1/p2, never stored — so move/rotate/endpoint-drag stay
+ * correct with no extra bookkeeping (mirrors circuit's leads/body). */
+export function pendulumGeometry(obj) {
+  const pivot = obj.p1 || { x: 0, y: 0 };
+  const bob = obj.p2 || pivot;
+  const L = Math.hypot(bob.x - pivot.x, bob.y - pivot.y);
+  const radius = pendulumBobRadius(obj, L);
+  // Center ghost: straight down the vertical normal (SVG +y = downward), same L.
+  const centerBob = { x: pivot.x, y: pivot.y + L };
+  // Symmetric ghost: mirror the real bob across the vertical line through pivot
+  // (same length, same angle from vertical, opposite side).
+  const symBob = { x: 2 * pivot.x - bob.x, y: bob.y };
+  return { pivot, bob, L, radius, centerBob, symBob };
+}
+
+// Bob radius scales with the pendulum length, clamped to a sensible mm range so
+// short pendulums stay visible and long ones don't grow an oversized bob. An
+// explicit stored bobRadius (e.g. after a future manual edit) always wins.
+export function pendulumBobRadius(obj, L = null) {
+  if (typeof obj.bobRadius === "number" && obj.bobRadius > 0) return obj.bobRadius;
+  const len = L == null ? Math.hypot((obj.p2?.x ?? 0) - (obj.p1?.x ?? 0), (obj.p2?.y ?? 0) - (obj.p1?.y ?? 0)) : L;
+  return Math.max(2, Math.min(8, len * 0.16));
+}
+
+function renderPendulum(obj) {
+  const sw = obj.strokeWidth ?? 0.2;
+  const color = grayHex(obj.strokeLevel);
+  const { pivot, bob, L, radius, centerBob, symBob } = pendulumGeometry(obj);
+
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+
+  const mkLine = (a, b, dashed) => {
+    const ln = document.createElementNS(SVG_NS, "line");
+    ln.setAttribute("x1", a.x); ln.setAttribute("y1", a.y);
+    ln.setAttribute("x2", b.x); ln.setAttribute("y2", b.y);
+    ln.setAttribute("stroke", color);
+    ln.setAttribute("stroke-width", sw);
+    if (dashed) ln.setAttribute("stroke-dasharray", `${sw * 4} ${sw * 3}`);
+    return ln;
+  };
+  const mkCircle = (c, r, ghost) => {
+    const ci = document.createElementNS(SVG_NS, "circle");
+    ci.setAttribute("cx", c.x); ci.setAttribute("cy", c.y); ci.setAttribute("r", r);
+    ci.setAttribute("fill", ghost ? "none" : "#d9d9d9");
+    ci.setAttribute("stroke", color);
+    ci.setAttribute("stroke-width", sw);
+    if (ghost) ci.setAttribute("stroke-dasharray", `${sw * 4} ${sw * 3}`);
+    return ci;
+  };
+
+  // ----- ghost pendulums (behind the real one): dashed string + hollow bob -----
+  if (obj.showCenterGhost !== false && L > 0) {
+    g.appendChild(mkLine(pivot, centerBob, true));
+    g.appendChild(mkCircle(centerBob, radius, true));
+  }
+  if (obj.showSymmetricGhost !== false && L > 0) {
+    g.appendChild(mkLine(pivot, symBob, true));
+    g.appendChild(mkCircle(symBob, radius, true));
+  }
+
+  // ----- real pendulum: solid string, then the filled bob on top -----
+  g.appendChild(mkLine(pivot, bob, false));
+  g.appendChild(mkCircle(bob, radius, false));
+  // small central dot inside the bob (matches the exam-style reference)
+  const dot = document.createElementNS(SVG_NS, "circle");
+  dot.setAttribute("cx", bob.x); dot.setAttribute("cy", bob.y);
+  dot.setAttribute("r", Math.max(sw * 1.2, radius * 0.12));
+  dot.setAttribute("fill", color);
+  g.appendChild(dot);
+
+  // ----- top pivot/support: a short ceiling bar with hatch marks -----
+  const barHalf = Math.max(radius * 0.9, 3);
+  const bar = document.createElementNS(SVG_NS, "line");
+  bar.setAttribute("x1", pivot.x - barHalf); bar.setAttribute("y1", pivot.y);
+  bar.setAttribute("x2", pivot.x + barHalf); bar.setAttribute("y2", pivot.y);
+  bar.setAttribute("stroke", color);
+  bar.setAttribute("stroke-width", sw * 1.4);
+  g.appendChild(bar);
+  const hatchN = 5;
+  const hatch = Math.max(barHalf * 0.5, 1.4);
+  for (let i = 0; i < hatchN; i++) {
+    const hx = pivot.x - barHalf + (2 * barHalf) * (i / (hatchN - 1));
+    const hl = document.createElementNS(SVG_NS, "line");
+    hl.setAttribute("x1", hx); hl.setAttribute("y1", pivot.y);
+    hl.setAttribute("x2", hx - hatch * 0.7); hl.setAttribute("y2", pivot.y - hatch);
+    hl.setAttribute("stroke", color);
+    hl.setAttribute("stroke-width", sw);
+    g.appendChild(hl);
+  }
+
+  // ----- optional length label near the real string (physics-quantity style) -----
+  if (obj.showLengthLabel !== false && String(obj.lengthLabel ?? "") && L > 0) {
+    const mx = (pivot.x + bob.x) / 2, my = (pivot.y + bob.y) / 2;
+    const dx = bob.x - pivot.x, dy = bob.y - pivot.y;
+    const len = Math.hypot(dx, dy) || 1;
+    let nx = -dy / len, ny = dx / len;      // string normal
+    if (nx > 0) { nx = -nx; ny = -ny; }     // default to the left of the string
+    const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+    const off = size * 0.9;
+    const lbl = makeUprightLabel(obj.lengthLabel, mx + nx * off, my + ny * off, color, size, { labelType: "quantity" });
+    if (lbl) g.appendChild(lbl);
+  }
+
+  return g;
+}
+
 function renderCircuit(obj) {
   const sw = obj.strokeWidth ?? 0.2;
   const color = grayHex(obj.strokeLevel);
@@ -2667,7 +2747,7 @@ export function makeFillPattern(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -2714,6 +2794,9 @@ export function singleObjBBox(o, scene) {
     const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
+  if (o.type === "pendulum") {
+    return pendulumBBox(o);
+  }
   if (o.type === "polyline" || o.type === "curve") {
     const pts = o.points || [];
     if (!pts.length) return null;
@@ -2722,6 +2805,25 @@ export function singleObjBBox(o, scene) {
     return { x: a, y: b, w: c - a, h: d - b };
   }
   return null;
+}
+
+/* Axis-aligned bbox spanning the pivot, the real bob, and any visible ghost bobs
+ * (each grown by its radius). Shared by render (guides/marker) + tools (marquee)
+ * + transform (group bbox) so the selectable region matches what's drawn. */
+export function pendulumBBox(o) {
+  const { pivot, bob, radius, centerBob, symBob } = pendulumGeometry(o);
+  const pts = [pivot];
+  const bobs = [bob];
+  if (o.showCenterGhost !== false) bobs.push(centerBob);
+  if (o.showSymmetricGhost !== false) bobs.push(symBob);
+  let minX = pivot.x, minY = pivot.y, maxX = pivot.x, maxY = pivot.y;
+  for (const b of bobs) {
+    if (b.x - radius < minX) minX = b.x - radius;
+    if (b.y - radius < minY) minY = b.y - radius;
+    if (b.x + radius > maxX) maxX = b.x + radius;
+    if (b.y + radius > maxY) maxY = b.y + radius;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
 /* ----- union bbox of several objects (for whole-group resize handles) ----- */
@@ -2776,7 +2878,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
   const _rightangle = sel.type === "rightangle";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).
@@ -2887,9 +2989,9 @@ function renderHandles(sel, scene, zoom, activeTool) {
         makeArc(hx, hy, base, base + 90);
       }
     }
-  } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler") {
-    // Circuit + labeler reuse the line's two endpoint handles: drag p1/p2 to move
-    // an endpoint. For the labeler, p0 = leader anchor, p1 = label position.
+  } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum") {
+    // Circuit + labeler + pendulum reuse the line's two endpoint handles: drag
+    // p1/p2 to move an endpoint. For the pendulum, p0 = pivot, p1 = real bob.
     makeHandle(sel.p1.x, sel.p1.y, "p0", true);
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {

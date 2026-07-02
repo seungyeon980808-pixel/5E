@@ -296,13 +296,6 @@ body {
   margin-right: 4px;
 }
 
-/* Branch badge: TEMPORARY marker so it's obvious this is the object-dev branch (footer only) */
-.branch-badge {
-  color: #e36209;
-  font-weight: 700;
-  margin-left: 6px;
-}
-
 .btn {
   font-family: inherit;
   font-size: 12px;

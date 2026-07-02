@@ -21,11 +21,10 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.36.7";
-import { armSymbol } from "./tools.js?v=0.36.7";
-import { renderObject } from "./render.js?v=0.36.7";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.7";
-import { makeBuiltInSvgAssetObject } from "./svg-assets.js?v=0.36.7";
+import { state } from "./state.js?v=0.37.0";
+import { armSymbol } from "./tools.js?v=0.37.0";
+import { renderObject } from "./render.js?v=0.37.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -162,6 +161,7 @@ export const TEMPLATES = {
   /* ----- 역학: pulley / supports / pivot / node / magnet — also arm the OPTICS
    * size-drag tool with a specific kind. ----- */
   pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "APPARATUS", kind: "pulley" } },
+  pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
@@ -280,10 +280,6 @@ function iconSampleObject(id, def) {
     };
   }
   if (c.tool === "APPARATUS") {
-    if (c.kind === "pulley" || c.kind === "clamp") {
-      const assetSample = makeBuiltInSvgAssetObject(c.kind, { x: -10, y: -10 });
-      if (assetSample) return assetSample;
-    }
     const b = APPARATUS_ICON_BOX[c.kind] || { w: 20, h: 16 };
     const sample = {
       type: "apparatus", kind: c.kind,
@@ -341,6 +337,16 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
       '<circle cx="3" cy="17" r="1.4" fill="currentColor"/>' +
       '<text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text>';
+    return svg;
+  }
+
+  if (id === "pendulum") {
+    // Clean silhouette: support bar at top, string, filled bob (matches the object).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<line x1="5" y1="3.5" x2="15" y2="3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<line x1="10" y1="3.5" x2="14" y2="13" stroke="currentColor" stroke-width="1.1"/>' +
+      '<circle cx="14" cy="14" r="3" fill="currentColor" stroke="none"/>';
     return svg;
   }
 

@@ -50,7 +50,7 @@ API-based image-to-object conversion is planned but not currently available. No 
 
 ## Development status
 
-Current displayed version: `v0.36.6`.
+Current displayed version: `v0.36.1`.
 
 ## Screenshot
 

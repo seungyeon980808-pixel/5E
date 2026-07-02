@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.36.7";
-import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.36.7";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.7";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.37.0";
+import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.37.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1400,33 +1400,6 @@ export function initInspector(state) {
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
 
-  const svgAspectRow = document.createElement("div");
-  svgAspectRow.className = "insp-row";
-  const svgAspectCb = document.createElement("input");
-  svgAspectCb.type = "checkbox";
-  svgAspectCb.className = "insp-cb";
-  const svgAspectLbl = document.createElement("label");
-  svgAspectLbl.className = "insp-field-label";
-  svgAspectLbl.textContent = "비율 고정";
-  svgAspectRow.appendChild(svgAspectCb);
-  svgAspectRow.appendChild(svgAspectLbl);
-  sec3Body.appendChild(svgAspectRow);
-  svgAspectCb.addEventListener("change", () => {
-    const s = state.get();
-    const id = (s.selectedIds || [])[0];
-    if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    const val = svgAspectCb.checked;
-    state.update((s2) => {
-      const o = s2.objects.find((item) => item.id === id);
-      if (!o || o.type !== "svgAsset" || o.locked) return;
-      o.lockedAspectRatio = val;
-      o.lockAspect = val;
-      s2.undoStack.push(snap);
-      s2.redoStack = [];
-    });
-  });
-
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
@@ -2097,6 +2070,74 @@ export function initInspector(state) {
   const sec4 = makeSection("보호", sec4Body);
   contentEl.appendChild(sec4);
 
+  /* ---- Section: 진자 (pendulum-only display options) ----
+   * 중앙잔상 / 대칭잔상 / 길이표시 toggles + the 길이라벨 text (rendered as a physics
+   * quantity label — see render.js renderPendulum, which reuses makeUprightLabel
+   * with labelType "quantity", exactly like line/dimension labels). */
+  const secPendBody = document.createElement("div");
+
+  function makePendCheckbox(labelText, prop) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "insp-cb";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.textContent = labelText;
+    row.appendChild(cb);
+    row.appendChild(lbl);
+    secPendBody.appendChild(row);
+    cb.addEventListener("change", () => {
+      const s = state.get();
+      if (!(s.selectedIds || []).length) return;
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      const val = cb.checked;
+      state.update((s2) => {
+        const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
+        if (!o || o.type !== "pendulum" || o.locked) return;
+        s2.undoStack.push(snap); s2.redoStack = [];
+        o[prop] = val;
+      });
+    });
+    return { row, cb };
+  }
+
+  const pendCenterCb = makePendCheckbox("중앙잔상", "showCenterGhost");
+  const pendSymCb    = makePendCheckbox("대칭잔상", "showSymmetricGhost");
+  const pendLenCb    = makePendCheckbox("길이표시", "showLengthLabel");
+
+  const pendLabelRow = document.createElement("div");
+  pendLabelRow.className = "insp-row";
+  const pendLabelLbl = document.createElement("label");
+  pendLabelLbl.className = "insp-field-label";
+  pendLabelLbl.textContent = "길이라벨";
+  const pendLabelInp = document.createElement("input");
+  pendLabelInp.type = "text";
+  pendLabelInp.className = "insp-input";
+  pendLabelRow.appendChild(pendLabelLbl);
+  pendLabelRow.appendChild(pendLabelInp);
+  secPendBody.appendChild(pendLabelRow);
+  function commitPendLabel() {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const val = pendLabelInp.value;
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== "pendulum" || o.locked) return;
+      if ((o.lengthLabel ?? "") === val) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      o.lengthLabel = val;
+    });
+  }
+  pendLabelInp.addEventListener("input", commitPendLabel);
+  pendLabelInp.addEventListener("change", commitPendLabel);
+
+  const secPend = makeSection("진자", secPendBody);
+  contentEl.appendChild(secPend);
+
   /* ---- Section: 아트보드 (shown in the no-selection / empty state) ---- *
    * Lets the user set the page size. Changing it ONLY moves the artboard
    * boundary — objects keep their exact world coordinates. The artboard stays
@@ -2337,6 +2378,7 @@ export function initInspector(state) {
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
+    secPend.style.display = "none"; // shown only for a single pendulum (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
     // line (set in the single-selection branch); hidden in every other case.
     boxLabelRow.style.display = "none";
@@ -2425,7 +2467,6 @@ export function initInspector(state) {
       pulleyVariantRow.style.display = "none";
       clampFlipRow.style.display = "none";
       scaleTextRow.style.display = "none";
-      svgAspectRow.style.display = "none";
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
@@ -2664,9 +2705,8 @@ export function initInspector(state) {
     // Optics is a branch-A box (X/Y/W/H/rotation), like rect + axes.
     const isOptics = obj.type === "optics";
     const isApparatus = obj.type === "apparatus";
-    const isSvgAsset = obj.type === "svgAsset";
     const appKind = isApparatus ? (obj.kind || "wire") : null;
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset;
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus;
     const isArc = obj.type === "anglearc";
     const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";
@@ -2697,7 +2737,6 @@ export function initInspector(state) {
     pulleyVariantRow.style.display = isApparatus && appKind === "pulley" ? "" : "none";
     clampFlipRow.style.display = isApparatus && appKind === "clamp" ? "" : "none";
     scaleTextRow.style.display = isApparatus && appKind === "scale" ? "" : "none";
-    svgAspectRow.style.display = isSvgAsset ? "" : "none";
     // Single 라벨 row: arc, optics, and all circuits EXCEPT diode (which uses 단자1/2).
     const isNode = isOptics && obj.kind === "node";
     const showObjectLabel = isArc || isOptics || (isCircuit && !isDiode);
@@ -2719,6 +2758,23 @@ export function initInspector(state) {
       }
     }
     arcLabelEditRow.style.display = isArc ? "" : "none";
+
+    // 진자 section: pendulum-only display toggles + length label. The label input is
+    // shown/enabled only while 길이표시 is on (mirrors the dimension-label pattern).
+    const isPendulum = obj.type === "pendulum";
+    secPend.style.display = isPendulum ? "" : "none";
+    if (isPendulum) {
+      pendCenterCb.cb.checked = obj.showCenterGhost !== false;
+      pendSymCb.cb.checked = obj.showSymmetricGhost !== false;
+      pendLenCb.cb.checked = obj.showLengthLabel !== false;
+      const lenOn = obj.showLengthLabel !== false;
+      pendLabelRow.style.display = lenOn ? "" : "none";
+      if (document.activeElement !== pendLabelInp) pendLabelInp.value = obj.lengthLabel ?? "";
+      pendCenterCb.cb.disabled = !!obj.locked;
+      pendSymCb.cb.disabled = !!obj.locked;
+      pendLenCb.cb.disabled = !!obj.locked;
+      pendLabelInp.disabled = !!obj.locked;
+    }
 
     // Group-3 box upright label: rect/ellipse only (text + center/above/below).
     const isBoxLabelType = obj.type === "rect" || obj.type === "ellipse";
@@ -2780,9 +2836,6 @@ export function initInspector(state) {
       if (appKind === "pulley") pulleyVariantSel.value = obj.variant || "basic";
       if (appKind === "clamp") clampFlipCb.checked = !!obj.flipped;
       if (appKind === "scale" && document.activeElement !== scaleTextInp) scaleTextInp.value = obj.displayText ?? "0.99 N";
-    }
-    if (isSvgAsset) {
-      svgAspectCb.checked = obj.lockedAspectRatio !== false;
     }
     if ((isCircuit && !isDiode || isOptics) && document.activeElement !== labelInp) {
       labelInp.value  = obj.label ?? "";
@@ -2864,7 +2917,6 @@ export function initInspector(state) {
     pulleyVariantSel.disabled = !!obj.locked;
     clampFlipCb.disabled = !!obj.locked;
     scaleTextInp.disabled = !!obj.locked;
-    svgAspectCb.disabled = !!obj.locked;
     Object.values(axisVarBtns).forEach((btn) => { btn.disabled = !!obj.locked; });
     setStyleControlsDisabled(styleDisabled, fn, !!obj.locked);
   }

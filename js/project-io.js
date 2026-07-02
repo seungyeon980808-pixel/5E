@@ -10,11 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.36.7";
-import { screenToWorld } from "./viewport.js?v=0.36.7";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.7";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "./state.js?v=0.36.7";
-import { builtInSvgAsset } from "./svg-assets.js?v=0.36.7";
+import { rebuildGroups } from "./transform.js?v=0.37.0";
+import { screenToWorld } from "./viewport.js?v=0.37.0";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.37.0";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "./state.js?v=0.37.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -93,20 +92,18 @@ function migrate(data) {
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;
       }
-      if (next.type === "svgAsset") {
-        const builtIn = next.assetKind ? builtInSvgAsset(next.assetKind) : null;
-        next.x = next.x ?? 0;
-        next.y = next.y ?? 0;
-        next.w = next.w ?? 20;
-        next.h = next.h ?? 20;
-        next.rotation = next.rotation ?? 0;
-        next.lockedAspectRatio = next.lockedAspectRatio ?? true;
-        next.lockAspect = next.lockAspect ?? next.lockedAspectRatio;
-        next.svgViewBox = next.svgViewBox ?? "0 0 1 1";
-        next.svgContent = next.svgContent ?? "";
-        next.snapAnchors = Array.isArray(next.snapAnchors)
-          ? next.snapAnchors
-          : (Array.isArray(builtIn?.snapAnchors) ? builtIn.snapAnchors.map((anchor) => ({ ...anchor })) : []);
+      if (next.type === "pendulum") {
+        // Older/partial files: backfill every editable option so render + inspector
+        // have a complete object. bobRadius omitted → derived from length at render.
+        next.p1 = next.p1 ?? { x: 0, y: 0 };
+        next.p2 = next.p2 ?? { x: next.p1.x, y: next.p1.y + 30 };
+        next.showCenterGhost = next.showCenterGhost ?? true;
+        next.showSymmetricGhost = next.showSymmetricGhost ?? true;
+        next.showLengthLabel = next.showLengthLabel ?? true;
+        next.lengthLabel = next.lengthLabel ?? "L_B";
+        next.labelType = "quantity";
+        next.strokeLevel = next.strokeLevel ?? 0;
+        next.strokeWidth = next.strokeWidth ?? 0.2;
       }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";
@@ -225,217 +222,6 @@ function openProject(state, file) {
   reader.readAsText(file);
 }
 
-const SVG_ALLOWED_TAGS = new Set(["svg", "g", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "title", "desc"]);
-const SVG_ALLOWED_ATTRS = new Set([
-  "id", "class", "d", "x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry",
-  "width", "height", "points", "viewBox", "transform", "fill", "fill-opacity", "fill-rule",
-  "stroke", "stroke-opacity", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-miterlimit",
-  "stroke-dasharray", "stroke-dashoffset", "opacity", "display", "visibility", "clip-rule", "style",
-]);
-const SVG_LENGTH_RE = /^\s*([-+]?\d*\.?\d+(?:e[-+]?\d+)?)/i;
-
-function parseSvgLength(value, fallback = 0) {
-  const match = String(value ?? "").match(SVG_LENGTH_RE);
-  return match ? parseFloat(match[1]) : fallback;
-}
-
-function parseViewBox(root) {
-  const raw = root.getAttribute("viewBox");
-  if (raw) {
-    const nums = raw.trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
-    if (nums.length === 4 && nums[2] > 0 && nums[3] > 0) {
-      return { x: nums[0], y: nums[1], w: nums[2], h: nums[3], text: nums.join(" ") };
-    }
-  }
-  const w = parseSvgLength(root.getAttribute("width"), 100);
-  const h = parseSvgLength(root.getAttribute("height"), 100);
-  return { x: 0, y: 0, w: Math.max(1, w), h: Math.max(1, h), text: `0 0 ${Math.max(1, w)} ${Math.max(1, h)}` };
-}
-
-function styleValue(style, prop) {
-  const match = String(style || "").match(new RegExp(`${prop}\\s*:\\s*([^;]+)`, "i"));
-  return match ? match[1].trim() : "";
-}
-
-function isWhitePaint(value) {
-  const v = String(value || "").trim().toLowerCase().replace(/\s+/g, "");
-  return v === "white" || v === "#fff" || v === "#ffffff" || v === "rgb(255,255,255)" || v === "rgba(255,255,255,1)";
-}
-
-function elementFill(el) {
-  return el.getAttribute("fill") || styleValue(el.getAttribute("style"), "fill");
-}
-
-function numberAttr(el, name, fallback = 0) {
-  return parseSvgLength(el.getAttribute(name), fallback);
-}
-
-function coversViewBoxRect(el, vb) {
-  const xRaw = el.getAttribute("x");
-  const yRaw = el.getAttribute("y");
-  const wRaw = el.getAttribute("width");
-  const hRaw = el.getAttribute("height");
-  if (String(wRaw).trim() === "100%" && String(hRaw).trim() === "100%") return true;
-  const x = numberAttr(el, "x", 0);
-  const y = numberAttr(el, "y", 0);
-  const w = numberAttr(el, "width", 0);
-  const h = numberAttr(el, "height", 0);
-  const eps = Math.max(vb.w, vb.h, 1) * 0.002;
-  const xOk = Math.abs(x - vb.x) <= eps || (!xRaw && Math.abs(vb.x) <= eps);
-  const yOk = Math.abs(y - vb.y) <= eps || (!yRaw && Math.abs(vb.y) <= eps);
-  return xOk && yOk && Math.abs(w - vb.w) <= eps && Math.abs(h - vb.h) <= eps;
-}
-
-function pathLooksLikeViewBoxRect(el, vb) {
-  const d = String(el.getAttribute("d") || "");
-  const tokens = d.match(/[a-zA-Z]|[-+]?\d*\.?\d+(?:e[-+]?\d+)?/gi) || [];
-  let cmd = "";
-  let x = 0, y = 0;
-  const pts = [];
-  const isCmd = (token) => /^[a-zA-Z]$/.test(token);
-  for (let i = 0; i < tokens.length;) {
-    if (isCmd(tokens[i])) cmd = tokens[i++];
-    const c = cmd;
-    if (c === "M" || c === "L") {
-      while (i + 1 < tokens.length && !isCmd(tokens[i])) {
-        x = Number(tokens[i++]); y = Number(tokens[i++]);
-        if (Number.isFinite(x) && Number.isFinite(y)) pts.push({ x, y });
-        if (c === "M") cmd = "L";
-      }
-    } else if (c === "m" || c === "l") {
-      while (i + 1 < tokens.length && !isCmd(tokens[i])) {
-        x += Number(tokens[i++]); y += Number(tokens[i++]);
-        if (Number.isFinite(x) && Number.isFinite(y)) pts.push({ x, y });
-        if (c === "m") cmd = "l";
-      }
-    } else if (c === "H") {
-      while (i < tokens.length && !isCmd(tokens[i])) { x = Number(tokens[i++]); if (Number.isFinite(x)) pts.push({ x, y }); }
-    } else if (c === "h") {
-      while (i < tokens.length && !isCmd(tokens[i])) { x += Number(tokens[i++]); if (Number.isFinite(x)) pts.push({ x, y }); }
-    } else if (c === "V") {
-      while (i < tokens.length && !isCmd(tokens[i])) { y = Number(tokens[i++]); if (Number.isFinite(y)) pts.push({ x, y }); }
-    } else if (c === "v") {
-      while (i < tokens.length && !isCmd(tokens[i])) { y += Number(tokens[i++]); if (Number.isFinite(y)) pts.push({ x, y }); }
-    } else {
-      i++;
-    }
-  }
-  if (pts.length < 4) return false;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-  for (const p of pts) {
-    minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
-    maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
-  }
-  const eps = Math.max(vb.w, vb.h, 1) * 0.002;
-  return Math.abs(minX - vb.x) <= eps && Math.abs(minY - vb.y) <= eps &&
-    Math.abs((maxX - minX) - vb.w) <= eps && Math.abs((maxY - minY) - vb.h) <= eps;
-}
-
-function removeObviousSvgBackgrounds(root, vb) {
-  for (const el of Array.from(root.querySelectorAll("rect,path"))) {
-    if (!isWhitePaint(elementFill(el))) continue;
-    const tag = el.tagName.toLowerCase();
-    const isBackground = tag === "rect" ? coversViewBoxRect(el, vb) : pathLooksLikeViewBoxRect(el, vb);
-    if (isBackground) el.remove();
-  }
-}
-
-function sanitizeSvgStyle(value) {
-  return String(value || "")
-    .split(";")
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .filter((part) => !/url\s*\(|@import|expression\s*\(/i.test(part))
-    .join("; ");
-}
-
-function sanitizeSvgMarkup(source) {
-  const doc = new DOMParser().parseFromString(source, "image/svg+xml");
-  const parseError = doc.querySelector("parsererror");
-  const root = doc.documentElement;
-  if (parseError || !root || root.tagName.toLowerCase() !== "svg") {
-    throw new Error("SVG 파일 형식이 올바르지 않습니다.");
-  }
-  const vb = parseViewBox(root);
-  Array.from(root.querySelectorAll("script,foreignObject,iframe,image,style,link,metadata,use")).forEach((el) => el.remove());
-  Array.from(root.querySelectorAll("*")).forEach((el) => {
-    const tag = el.tagName.toLowerCase();
-    if (!SVG_ALLOWED_TAGS.has(tag)) {
-      el.remove();
-      return;
-    }
-    Array.from(el.attributes).forEach((attr) => {
-      const name = attr.name;
-      const lower = name.toLowerCase();
-      const value = attr.value || "";
-      if (lower.startsWith("on") || lower.includes(":")) {
-        el.removeAttribute(name);
-        return;
-      }
-      if (!SVG_ALLOWED_ATTRS.has(name) && !SVG_ALLOWED_ATTRS.has(lower)) {
-        el.removeAttribute(name);
-        return;
-      }
-      if (/url\s*\(|javascript:|data:/i.test(value) && lower !== "d") {
-        el.removeAttribute(name);
-        return;
-      }
-      if (lower === "style") {
-        const safeStyle = sanitizeSvgStyle(value);
-        if (safeStyle) el.setAttribute(name, safeStyle);
-        else el.removeAttribute(name);
-      }
-    });
-  });
-  removeObviousSvgBackgrounds(root, vb);
-  return { svgViewBox: vb.text, svgContent: root.innerHTML, viewBox: vb };
-}
-
-function readSvgFile(file, dropPos, state) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    try {
-      const { svgViewBox, svgContent, viewBox } = sanitizeSvgMarkup(String(reader.result || ""));
-      const { w: artboardW, h: artboardH } = state.get().artboard;
-      const scale = Math.min((artboardW * 0.45) / viewBox.w, (artboardH * 0.45) / viewBox.h, 1);
-      const w = Math.max(1, viewBox.w * scale);
-      const h = Math.max(1, viewBox.h * scale);
-      const center = dropPos || { x: 0, y: 0 };
-      const minX = -artboardW / 2;
-      const minY = -artboardH / 2;
-      const x = Math.min(Math.max(center.x - w / 2, minX), artboardW / 2 - w);
-      const y = Math.min(Math.max(center.y - h / 2, minY), artboardH / 2 - h);
-      state.update((s) => {
-        const snap = JSON.parse(JSON.stringify(s.objects));
-        const id = `obj_${Date.now().toString(36)}_svg${++_imgIdCounter}`;
-        s.objects.push(applyNewObjectStyleDefaults({
-          id,
-          type: "svgAsset",
-          x, y, w, h,
-          rotation: 0,
-          lockedAspectRatio: true,
-          lockAspect: true,
-          svgViewBox,
-          svgContent,
-          locked: false,
-          positionLocked: false,
-          layerId: s.activeLayerId,
-          order: s.objects.length,
-        }));
-        s.undoStack.push(snap);
-        s.redoStack = [];
-        s.selectedIds = [id];
-        s.targetedId = null;
-        s.activeTool = "V";
-      });
-    } catch (err) {
-      alert("SVG를 삽입할 수 없습니다.\n" + (err && err.message ? err.message : err));
-    }
-  };
-  reader.onerror = () => alert("SVG 파일을 읽는 중 오류가 발생했습니다.");
-  reader.readAsText(file);
-}
-
 /* ----- image import: file-picker + drag-and-drop helper ----- */
 let _imgIdCounter = 0;
 let _placement = null;
@@ -519,7 +305,6 @@ export function initProjectIO(state, svg) {
   const saveBtn = document.getElementById("project-save");
   const openBtn = document.getElementById("project-open");
   const imageImportBtn = document.getElementById("image-import");
-  const svgImportBtn = document.getElementById("svg-import");
 
   _placementHint = document.createElement("div");
   _placementHint.className = "image-placement-hint";
@@ -554,21 +339,6 @@ export function initProjectIO(state, svg) {
     fileInput.value = "";
   });
 
-  // Hidden file input for SVG asset import.
-  const svgInput = document.createElement("input");
-  svgInput.type = "file";
-  svgInput.accept = ".svg,image/svg+xml";
-  svgInput.style.display = "none";
-  document.body.appendChild(svgInput);
-
-  if (svgImportBtn) svgImportBtn.addEventListener("click", () => svgInput.click());
-
-  svgInput.addEventListener("change", () => {
-    const file = svgInput.files && svgInput.files[0];
-    if (file) readSvgFile(file, null, state);
-    svgInput.value = "";
-  });
-
   // Hidden file input for image import.
   const imageInput = document.createElement("input");
   imageInput.type = "file";
@@ -590,13 +360,9 @@ export function initProjectIO(state, svg) {
     svg.addEventListener("drop", (e) => {
       e.preventDefault();
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith("image/")) return;
       const vb = state.get().viewBox;
       const pos = screenToWorld(svg, vb, e.clientX, e.clientY);
-      if (file && (file.type === "image/svg+xml" || /\.svg$/i.test(file.name || ""))) {
-        readSvgFile(file, pos, state);
-        return;
-      }
-      if (!file || !file.type.startsWith("image/")) return;
       readImageFile(file, pos, state);
     });
   }

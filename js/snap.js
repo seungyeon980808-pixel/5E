@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints } from "./render.js?v=0.36.7";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.37.0";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
@@ -52,42 +52,6 @@ function opticalObjectHead(obj) {
   return { head, attach: head };
 }
 
-function parseSvgViewBox(text) {
-  const nums = String(text || "0 0 1 1").trim().split(/[\s,]+/).map(Number).filter(Number.isFinite);
-  if (nums.length === 4 && nums[2] > 0 && nums[3] > 0) {
-    return { x: nums[0], y: nums[1], w: nums[2], h: nums[3] };
-  }
-  return { x: 0, y: 0, w: 1, h: 1 };
-}
-
-function svgAssetAnchorPoints(obj) {
-  const anchors = Array.isArray(obj.snapAnchors) ? obj.snapAnchors : [];
-  if (!anchors.length || !Number.isFinite(obj.x) || !Number.isFinite(obj.y) || !obj.w || !obj.h) return [];
-  const vb = parseSvgViewBox(obj.svgViewBox);
-  let sx = obj.w / vb.w;
-  let sy = obj.h / vb.h;
-  let ox = obj.x - vb.x * sx;
-  let oy = obj.y - vb.y * sy;
-  if (obj.lockedAspectRatio !== false) {
-    const scale = Math.min(sx, sy);
-    ox = obj.x + (obj.w - vb.w * scale) / 2 - vb.x * scale;
-    oy = obj.y + (obj.h - vb.h * scale) / 2 - vb.y * scale;
-    sx = scale;
-    sy = scale;
-  }
-  const cx = obj.x + obj.w / 2;
-  const cy = obj.y + obj.h / 2;
-  const rot = obj.rotation || 0;
-  return anchors
-    .map((anchor) => {
-      if (!Number.isFinite(anchor?.x) || !Number.isFinite(anchor?.y)) return null;
-      const raw = { x: ox + anchor.x * sx, y: oy + anchor.y * sy };
-      const point = rot ? rotPt(raw.x, raw.y, cx, cy, rot) : raw;
-      return { point, key: anchor.key || anchor.id || "anchor" };
-    })
-    .filter(Boolean);
-}
-
 /* attach defaults to p; pass a different attach point to offset where a snapped
  * endpoint is WRITTEN while still measuring distance to p (used for optical heads). */
 function makeSnapPoint(p, type, objectId, pointKey, priority, attach) {
@@ -121,9 +85,17 @@ export function collectPrioritySnapPoints(state, excludeIds) {
     } else if (obj.type === "optics" && obj.kind === "object_arrow") {
       const { head, attach } = opticalObjectHead(obj);
       points.push(makeSnapPoint(head, "optical-object-head", obj.id, "head", 1, attach));
-    } else if (obj.type === "svgAsset") {
-      for (const anchor of svgAssetAnchorPoints(obj)) {
-        points.push(makeSnapPoint(anchor.point, "svg-asset-anchor", obj.id, anchor.key, 0));
+    } else if (obj.type === "pendulum") {
+      // Minimal anchors: pivot, real bob center, and the two ghost bob centers
+      // when those ghosts are visible (all derived from p1/p2 at render time).
+      const geo = pendulumGeometry(obj);
+      if (isValidPoint(geo.pivot)) points.push(makeSnapPoint(geo.pivot, "line-endpoint", obj.id, "pivot", 0));
+      if (isValidPoint(geo.bob)) points.push(makeSnapPoint(geo.bob, "line-endpoint", obj.id, "bob", 0));
+      if (obj.showCenterGhost !== false && isValidPoint(geo.centerBob)) {
+        points.push(makeSnapPoint(geo.centerBob, "line-endpoint", obj.id, "centerGhost", 0));
+      }
+      if (obj.showSymmetricGhost !== false && isValidPoint(geo.symBob)) {
+        points.push(makeSnapPoint(geo.symBob, "line-endpoint", obj.id, "symGhost", 0));
       }
     }
   }
