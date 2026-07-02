@@ -4,8 +4,8 @@ const BUILT_IN_SVG_ASSETS = {
   pulley: {
     templateId: "M001",
     viewBox: "0 0 220 220",
-    defaultWidth: 24,
-    defaultHeight: 24,
+    defaultWidth: 6,
+    defaultHeight: 6,
     content: `
       <g fill-rule="evenodd" clip-rule="evenodd" stroke="#111" stroke-linecap="round" stroke-linejoin="round">
         <path d="M107 28c37.8 0 68.5 30.7 68.5 68.5S144.8 165 107 165 38.5 134.3 38.5 96.5 69.2 28 107 28Z" fill="#D8D8D8" stroke-width="7"/>
