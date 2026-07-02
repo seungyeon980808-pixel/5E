@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.37.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.38.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,14 +19,14 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.37.0";
+} from "./state.js?v=0.38.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.37.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.37.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.37.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.37.0";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.38.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.38.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.38.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.38.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.38.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -444,6 +444,7 @@ function setupDrawing() {
       s.targetedId = null;
       s.selectedIds = s.objects
         .filter((o) => {
+          if (isBackgroundUnrecognized(o)) return false; // unrecognized bg = not marquee-selectable
           const _mLayerId = o.layerId ?? 1;
           const _mLayer = (s.layers || []).find(l => l.id === _mLayerId);
           if (!_mLayer || _mLayer.visible === false || _mLayerId !== s.activeLayerId) return false;
@@ -469,8 +470,18 @@ function setupDrawing() {
   // before mouseup, so the browser never fires click/dblclick on it.
 }
 
+// A background-mode image that has NOT been recognized as an object is entirely
+// unreachable via canvas interaction (click AND marquee) — it acts as if absent
+// for selection purposes, while still rendering normally. This is deliberately
+// INDEPENDENT of `locked` (DESIGN 6-3): once recognized it becomes a normal
+// object and `locked` resumes its usual "protected but selectable" meaning.
+function isBackgroundUnrecognized(obj) {
+  return !!obj && obj.mode === "background" && obj.recognized !== true;
+}
+
 function isObjectSelectable(state, obj) {
   if (!obj) return false;
+  if (isBackgroundUnrecognized(obj)) return false;
   const layerId = obj.layerId ?? 1;
   const layer = (state.layers || []).find((item) => item.id === layerId);
   return !!layer && layer.visible !== false && layerId === state.activeLayerId;

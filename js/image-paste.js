@@ -14,7 +14,7 @@
 // Scope note: `cutouts:[]` is prepared as future data only. No erase/cutout
 // editing, SVG mask/clipPath, or transparent cutout rendering happens here. */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=0.37.0";
+import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=0.38.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg"]);
 let _idCounter = 0;
@@ -113,6 +113,10 @@ function insertBackgroundImage(state, src, size) {
       x, y, w: fitted.w, h: fitted.h,
       rotation: 0,
       mode: "background",
+      // recognized:false → excluded from click/marquee selection (tools.js).
+      // Toggled to true via the persistent 배경 이미지 inspector section, after
+      // which the image behaves like any normal object. Independent of `locked`.
+      recognized: false,
       opacity: 0.35,
       aspectLocked: true,
       exportable: false,
@@ -122,9 +126,10 @@ function insertBackgroundImage(state, src, size) {
       order: 0,
       cutouts: [],
     });
-    // Select it so its inspector controls (opacity/unlock/remove) are reachable
-    // immediately — a locked backmost image is otherwise hard to click.
-    s.selectedIds = [id];
+    // Do NOT select it: an unrecognized background image is unselectable by
+    // design (tools.js). Its opacity/인식/제거 controls live in the always-on
+    // 배경 이미지 inspector section, so it needs no canvas selection to manage.
+    s.selectedIds = [];
     s.targetedId = null;
     s.activeTool = "V";
   });

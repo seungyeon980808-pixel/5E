@@ -304,3 +304,41 @@ details[open] > .insp-summary::before {
   border-radius: var(--insp-radius);
   border: 1px solid var(--insp-border);
 }
+
+/* ===== 배경 이미지 섹션 (always-on list of background-mode images) ===== */
+/* One row per background image: thumbnail + a controls column (투명도 slider,
+   객체로 인식/배경으로 되돌리기 toggle, 배경 이미지 제거). Pinned at the top of
+   the inspector via insertBefore in inspector.js. */
+.insp-bg-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+.insp-bg-row + .insp-bg-row {
+  border-top: 1px solid var(--insp-border);
+}
+.insp-bg-thumb {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  background: var(--insp-field-bg);
+}
+.insp-bg-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.insp-bg-btns {
+  display: flex;
+  gap: 4px;
+}
+.insp-bg-btns .modal-btn {
+  flex: 1;
+  min-width: 0;
+}

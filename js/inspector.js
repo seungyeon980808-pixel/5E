@@ -1,8 +1,9 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.37.0";
-import { openAngleArcLabelEditor } from "./tools.js?v=0.37.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.38.0";
+import { openAngleArcLabelEditor } from "./tools.js?v=0.38.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.38.0";
+import { startRectErase, startPathErase, clearCutouts } from "./image-cutout.js?v=0.38.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -2105,6 +2106,41 @@ export function initInspector(state) {
   imgAspectRow.appendChild(imgAspectLbl);
   imgBody.appendChild(imgAspectRow);
 
+  // ---- 이미지 오려내기 (edit-mode images only): erase unwanted regions to transparent.
+  // Rect/freeform cutouts + a clear button. Data lives in obj.cutouts (local
+  // fractions); the gesture itself is owned by image-cutout.js. Shown only for a
+  // single edit-mode image (toggled in the update pass below). ----
+  const imgCutoutBlock = document.createElement("div");
+  imgCutoutBlock.className = "insp-body";
+  imgCutoutBlock.style.cssText = "padding:0;margin:2px 0 4px;display:flex;flex-direction:column;gap:4px;";
+
+  const imgRectEraseBtn = document.createElement("button");
+  imgRectEraseBtn.type = "button";
+  imgRectEraseBtn.className = "modal-btn";
+  imgRectEraseBtn.style.width = "100%";
+  imgRectEraseBtn.textContent = "사각형 영역 지우기";
+
+  const imgPathEraseBtn = document.createElement("button");
+  imgPathEraseBtn.type = "button";
+  imgPathEraseBtn.className = "modal-btn";
+  imgPathEraseBtn.style.width = "100%";
+  imgPathEraseBtn.textContent = "자유 영역 지우기";
+
+  const imgClearCutBtn = document.createElement("button");
+  imgClearCutBtn.type = "button";
+  imgClearCutBtn.className = "modal-btn";
+  imgClearCutBtn.style.width = "100%";
+  imgClearCutBtn.textContent = "지운 영역 초기화";
+
+  imgCutoutBlock.appendChild(imgRectEraseBtn);
+  imgCutoutBlock.appendChild(imgPathEraseBtn);
+  imgCutoutBlock.appendChild(imgClearCutBtn);
+  imgBody.appendChild(imgCutoutBlock);
+
+  imgRectEraseBtn.addEventListener("click", () => startRectErase());
+  imgPathEraseBtn.addEventListener("click", () => startPathErase());
+  imgClearCutBtn.addEventListener("click", () => clearCutouts());
+
   // 잠금 (lock/unlock) — mirrors obj.locked; usable on a locked background image.
   const imgLockRow = document.createElement("div");
   imgLockRow.className = "insp-row";
@@ -2300,6 +2336,139 @@ export function initInspector(state) {
   const _inspectorRoot = emptyEl.parentElement;
   if (_inspectorRoot) _inspectorRoot.appendChild(layerDetails);
 
+  /* ---- Section: 배경 이미지 (always visible when ≥1 background image exists) ----
+   * Pinned at the VERY TOP of the inspector, OUTSIDE contentEl, so it shows
+   * regardless of the current selection (even when nothing is selected). One row
+   * per background image: thumbnail · 투명도 slider (same live-apply + single-undo
+   * logic as the 이미지 section) · 객체로 인식 / 배경으로 되돌리기 toggle · 배경
+   * 이미지 제거. An unrecognized background is unselectable on canvas, so this is
+   * the only place to manage it. */
+  const bgSection = document.createElement("details");
+  bgSection.open = true;
+  bgSection.className = "insp-section insp-bg-section";
+  const bgSummary = document.createElement("summary");
+  bgSummary.className = "insp-summary";
+  bgSummary.textContent = "배경 이미지";
+  bgSection.appendChild(bgSummary);
+  const bgBody = document.createElement("div");
+  bgBody.className = "insp-body";
+  bgSection.appendChild(bgBody);
+  bgSection.style.display = "none"; // toggled on by renderBgSection when one exists
+  if (_inspectorRoot) _inspectorRoot.insertBefore(bgSection, _inspectorRoot.firstChild);
+
+  // Snapshot that does NOT depend on selection: snapBefore() returns null when
+  // nothing is selected, but bg controls act with no canvas selection at all.
+  function snapObjectsAlways() { return JSON.parse(JSON.stringify(state.get().objects)); }
+
+  // While a row's 투명도 slider is mid-drag we skip rebuilding the list so the
+  // live drag isn't clobbered (mirror of the renderLayerPanel activeElement guard).
+  let _bgOpacityDragId = null;
+
+  function renderBgSection(s) {
+    const bgImages = (s.objects || []).filter((o) => o.type === "image" && o.mode === "background");
+    bgSection.style.display = bgImages.length ? "" : "none";
+    if (bgImages.length === 0) { bgBody.innerHTML = ""; return; }
+    if (_bgOpacityDragId) return; // don't clobber a slider mid-drag
+    bgBody.innerHTML = "";
+
+    for (const img of bgImages) {
+      const id = img.id;
+
+      const row = document.createElement("div");
+      row.className = "insp-bg-row";
+
+      const thumb = document.createElement("img");
+      thumb.className = "insp-bg-thumb";
+      thumb.src = img.src;
+      thumb.alt = "";
+      row.appendChild(thumb);
+
+      const col = document.createElement("div");
+      col.className = "insp-bg-col";
+
+      // 투명도 slider (reuses the 이미지 section's live-apply + single-undo pattern)
+      const opRow = document.createElement("div");
+      opRow.className = "insp-row";
+      const opLbl = document.createElement("label");
+      opLbl.className = "insp-field-label";
+      opLbl.textContent = "투명도";
+      const opRange = document.createElement("input");
+      opRange.type = "range";
+      opRange.min = "0"; opRange.max = "1"; opRange.step = "0.01";
+      opRange.className = "insp-range";
+      opRange.style.flex = "1";
+      opRange.value = img.opacity ?? 1;
+      const opOut = document.createElement("span");
+      opOut.className = "insp-unit";
+      opOut.style.minWidth = "38px";
+      opOut.style.textAlign = "right";
+      opOut.textContent = `${Math.round((img.opacity ?? 1) * 100)}%`;
+      opRow.appendChild(opLbl);
+      opRow.appendChild(opRange);
+      opRow.appendChild(opOut);
+      col.appendChild(opRow);
+
+      let _opSnap = null;
+      opRange.addEventListener("pointerdown", () => { _opSnap = snapObjectsAlways(); _bgOpacityDragId = id; });
+      opRange.addEventListener("input", () => {
+        const v = Math.max(0, Math.min(1, Number(opRange.value)));
+        opOut.textContent = `${Math.round(v * 100)}%`;
+        state.update((s2) => { const o = s2.objects.find((x) => x.id === id); if (o) o.opacity = v; });
+      });
+      opRange.addEventListener("change", () => {
+        _bgOpacityDragId = null;
+        if (_opSnap) { pushSnap(_opSnap); _opSnap = null; }
+      });
+
+      // 인식 토글 + 제거 buttons
+      const btnRow = document.createElement("div");
+      btnRow.className = "insp-bg-btns";
+
+      const recBtn = document.createElement("button");
+      recBtn.type = "button";
+      recBtn.className = "modal-btn";
+      recBtn.textContent = img.recognized === true ? "배경으로 되돌리기" : "객체로 인식";
+      recBtn.addEventListener("click", () => {
+        const snap = snapObjectsAlways();
+        state.update((s2) => {
+          const o = s2.objects.find((x) => x.id === id);
+          if (!o) return;
+          const next = !(o.recognized === true);
+          o.recognized = next;
+          // 배경으로 되돌리기 → unselectable again: drop it from any live selection.
+          if (!next) {
+            s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== id);
+            if (s2.targetedId === id) s2.targetedId = null;
+          }
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        });
+      });
+
+      const rmBtn = document.createElement("button");
+      rmBtn.type = "button";
+      rmBtn.className = "modal-btn";
+      rmBtn.textContent = "배경 이미지 제거";
+      rmBtn.addEventListener("click", () => {
+        const snap = snapObjectsAlways();
+        state.update((s2) => {
+          s2.objects = s2.objects.filter((x) => x.id !== id);
+          s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== id);
+          if (s2.targetedId === id) s2.targetedId = null;
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        });
+      });
+
+      btnRow.appendChild(recBtn);
+      btnRow.appendChild(rmBtn);
+      col.appendChild(btnRow);
+
+      row.appendChild(col);
+      bgBody.appendChild(row);
+    }
+  }
+
   function renderLayerPanel(s) {
     if (layerBody.contains(document.activeElement)) return; // don't clobber inline name edit
     layerBody.innerHTML = "";
@@ -2415,6 +2584,7 @@ export function initInspector(state) {
 
   /* ---- Subscribe: populate controls on every state change ---- */
   function populate(s) {
+    renderBgSection(s);
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
@@ -2657,6 +2827,11 @@ export function initInspector(state) {
       imgLockCb.checked = !!obj.locked;
       imgExportNote.style.display = (obj.exportable === false) ? "" : "none";
       imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거";
+      // Cutout editing: edit-mode images only (never background). "지운 영역 초기화"
+      // appears only when the image actually has one or more cutouts.
+      const hasCutouts = Array.isArray(obj.cutouts) && obj.cutouts.length > 0;
+      imgCutoutBlock.style.display = isBg ? "none" : "";
+      imgClearCutBtn.style.display = (!isBg && hasCutouts) ? "" : "none";
     }
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;

@@ -1320,3 +1320,22 @@ textarea.unified-text-input {
 }
 .modal-confirm-btn:hover { background: var(--accent-hover); }
 .app-footer strong { color: var(--c-sub); font-weight: 500; }
+
+/* ===== IMAGE CUTOUT: erase-mode instruction banner (edit-mode image 오려내기) ===== */
+/* Fixed top-center hint shown while dragging a rect/freeform erase region. It is a
+   transient editing aid only — never part of state.objects and never exported. */
+.cutout-instruction {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  padding: 8px 16px;
+  background: rgba(9, 105, 218, 0.95);
+  color: #fff;
+  font: 13px/1.4 "IBM Plex Sans KR", sans-serif;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+}

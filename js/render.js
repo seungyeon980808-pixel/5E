@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.37.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.38.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -23,10 +23,10 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "./state.js?v=0.37.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
-import { renderFormula } from "./formula.js?v=0.37.0";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.37.0";
+} from "./state.js?v=0.38.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.38.0";
+import { renderFormula } from "./formula.js?v=0.38.0";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.38.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -1538,14 +1538,78 @@ function renderImage(obj) {
   el.setAttribute("href", obj.src);
   el.setAttribute("preserveAspectRatio", "none");
   if (obj.opacity != null) el.setAttribute("opacity", obj.opacity);
-  if (obj.id) el.dataset.id = obj.id;
   const rot = obj.rotation ?? 0;
-  if (rot !== 0) {
-    const cx = obj.x + obj.w / 2;
-    const cy = obj.y + obj.h / 2;
-    el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+  const cx = obj.x + obj.w / 2;
+  const cy = obj.y + obj.h / 2;
+
+  // ----- no erased regions → identical to the original plain <image> path -----
+  const cutouts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
+  if (cutouts.length === 0) {
+    if (obj.id) el.dataset.id = obj.id;
+    if (rot !== 0) el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+    return el;
   }
-  return el;
+
+  // ----- cutouts present → wrap the <image> in a <g> that carries its OWN <defs>
+  // + <mask>, so the mask travels with the object node itself (works identically
+  // in the live render AND standalone SVG export — both call renderObject). The
+  // mask uses maskContentUnits="objectBoundingBox" so cutout fractions [0..1] map
+  // to the image box automatically through move/resize/rotate (the group holds the
+  // rotation; the mask lives in the pre-rotation box space). White = keep,
+  // black = erased/transparent. Opacity on the <image> still multiplies. -----
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  if (rot !== 0) g.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+
+  const defs = document.createElementNS(SVG_NS, "defs");
+  const maskId = `imgmask_${obj.id}`; // obj ids are unique → no cross-image collision
+  const mask = document.createElementNS(SVG_NS, "mask");
+  mask.setAttribute("id", maskId);
+  mask.setAttribute("maskUnits", "objectBoundingBox");
+  mask.setAttribute("maskContentUnits", "objectBoundingBox");
+
+  const base = document.createElementNS(SVG_NS, "rect"); // whole image visible
+  base.setAttribute("x", "0"); base.setAttribute("y", "0");
+  base.setAttribute("width", "1"); base.setAttribute("height", "1");
+  base.setAttribute("fill", "#ffffff");
+  mask.appendChild(base);
+
+  for (const cut of cutouts) {
+    if (cut && cut.type === "rect") {
+      const r = document.createElementNS(SVG_NS, "rect");
+      r.setAttribute("x", cut.x); r.setAttribute("y", cut.y);
+      r.setAttribute("width", cut.w); r.setAttribute("height", cut.h);
+      r.setAttribute("fill", "#000000");
+      mask.appendChild(r);
+    } else if (cut && cut.type === "path") {
+      const pts = Array.isArray(cut.points) ? cut.points : [];
+      if (pts.length === 0) continue;
+      const bw = cut.brushWidth || 0.03;
+      if (pts.length === 1) {
+        // a single tap → a round dot of the brush radius
+        const c = document.createElementNS(SVG_NS, "circle");
+        c.setAttribute("cx", pts[0].x); c.setAttribute("cy", pts[0].y);
+        c.setAttribute("r", bw / 2);
+        c.setAttribute("fill", "#000000");
+        mask.appendChild(c);
+      } else {
+        const poly = document.createElementNS(SVG_NS, "polyline");
+        poly.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
+        poly.setAttribute("fill", "none");
+        poly.setAttribute("stroke", "#000000");
+        poly.setAttribute("stroke-width", bw);
+        poly.setAttribute("stroke-linecap", "round");
+        poly.setAttribute("stroke-linejoin", "round");
+        mask.appendChild(poly);
+      }
+    }
+  }
+  defs.appendChild(mask);
+  g.appendChild(defs);
+
+  el.setAttribute("mask", `url(#${maskId})`);
+  g.appendChild(el);
+  return g;
 }
 
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
