@@ -24,6 +24,7 @@ import { circuitBodyPolygon, setSnapPreview, pendulumGeometry, pendulumBobRadius
 import { resolveEndpointSnap } from "./snap.js?v=0.37.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.0";
 import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.37.0";
+import { getSvgAsset } from "./svg-assets.js";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -56,6 +57,7 @@ let _idCounter = 0;
 let _circuitElement = "resistor";
 let _opticsKind = "convex_lens";
 let _apparatusKind = "wire";
+let _svgAssetId = "pulley";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -74,7 +76,7 @@ let _activeSymbolId = null;
 // Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
-const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "RIGHTANGLE", "LABELER", "PENDULUM"]);
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -128,6 +130,7 @@ export function armSymbol(symbolId, tool, variant) {
   if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
+  if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
   _activeSymbolId = symbolId;
   setActiveTool(tool);
   syncButtons(_state.get().activeTool);
@@ -186,7 +189,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
 // (makeShape branches on type). Line (L) and polyline (P) are click-to-click
 // instead ??see setupClickDrawing below.
-const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", PENDULUM: "pendulum" };
+const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum" };
 
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
@@ -197,6 +200,20 @@ let _marqueeStart = null; // world {x,y} of marquee drag start, or null
 let _marqueeEl = null;    // temporary SVG <rect> shown during marquee drag
 
 function constrainShapeEnd(type, start, end, shiftHeld) {
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    const ratio = asset ? asset.defaultWidth / asset.defaultHeight : 1;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    let w = Math.abs(dx);
+    let h = Math.abs(dy);
+    if (w / Math.max(h, MIN_SIZE) > ratio) w = h * ratio;
+    else h = w / ratio;
+    return {
+      x: start.x + (dx < 0 ? -w : w),
+      y: start.y + (dy < 0 ? -h : h),
+    };
+  }
   if (!shiftHeld || (type !== "rect" && type !== "ellipse")) return end;
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -1332,7 +1349,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     const o = objects[i];
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
-        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "axes" &&
+        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" &&
         o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
         o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler" &&
         o.type !== "pendulum") continue;
@@ -1441,7 +1458,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       // box == actual shape: outward-grown bbox containment (axes/optics select as
       // one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
@@ -1507,7 +1524,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -1722,6 +1739,16 @@ function makeShape(type, a, b) {
       shape.h = Math.max(shape.h, 13);
       shape.lockAspect = true;
       shape.displayText = "0.99 N";
+    }
+  }
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    if (asset) {
+      shape.assetId = asset.id;
+      shape.name = asset.name;
+      shape.lockAspect = true;
+      shape.fillNone = true;
+      shape.strokeWidth = 0;
     }
   }
   return applyNewObjectStyleDefaults(shape);

@@ -2706,7 +2706,8 @@ export function initInspector(state) {
     const isOptics = obj.type === "optics";
     const isApparatus = obj.type === "apparatus";
     const appKind = isApparatus ? (obj.kind || "wire") : null;
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus;
+    const isSvgAsset = obj.type === "svgAsset";
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset;
     const isArc = obj.type === "anglearc";
     const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";

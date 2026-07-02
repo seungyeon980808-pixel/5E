@@ -105,6 +105,15 @@ function migrate(data) {
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;
       }
+      if (next.type === "svgAsset") {
+        next.assetId = next.assetId ?? "pulley";
+        next.x = next.x ?? 0;
+        next.y = next.y ?? 0;
+        next.w = next.w ?? 43;
+        next.h = next.h ?? 38;
+        next.rotation = next.rotation ?? 0;
+        next.lockAspect = next.lockAspect ?? true;
+      }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";
         next.templateId = next.templateId ?? APPARATUS_TEMPLATE_IDS[next.kind] ?? null;

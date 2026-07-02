@@ -25,6 +25,7 @@ import { state } from "./state.js?v=0.37.0";
 import { armSymbol } from "./tools.js?v=0.37.0";
 import { renderObject } from "./render.js?v=0.37.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.0";
+import { getSvgAsset } from "./svg-assets.js";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -160,7 +161,13 @@ export const TEMPLATES = {
 
   /* ----- 역학: pulley / supports / pivot / node / magnet — also arm the OPTICS
    * size-drag tool with a specific kind. ----- */
-  pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "APPARATUS", kind: "pulley" } },
+  pulley: {
+    kind: "shape",
+    category: "역학",
+    label: "도르래",
+    keywords: ["도르래", "pulley", "활차"],
+    create: { tool: "SVGASSET", kind: "pulley" },
+  },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
@@ -347,6 +354,13 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<line x1="5" y1="3.5" x2="15" y2="3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
       '<line x1="10" y1="3.5" x2="14" y2="13" stroke="currentColor" stroke-width="1.1"/>' +
       '<circle cx="14" cy="14" r="3" fill="currentColor" stroke="none"/>';
+    return svg;
+  }
+
+  if (id === "pulley") {
+    const asset = getSvgAsset("pulley");
+    svg.setAttribute("viewBox", "0 0 172 152");
+    svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="172" height="152" preserveAspectRatio="xMidYMid meet"/>`;
     return svg;
   }
 

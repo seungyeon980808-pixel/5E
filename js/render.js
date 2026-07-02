@@ -24,6 +24,7 @@ import {
 } from "./state.js?v=0.37.0";
 import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
 import { renderFormula } from "./formula.js?v=0.37.0";
+import { getSvgAsset } from "./svg-assets.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -605,7 +606,7 @@ function makeHitTwin(obj) {
     twin = document.createElementNS(SVG_NS, "path");
     twin.setAttribute("d", catmullRomPath(obj.points || []));
   } else if (obj.type === "rect" || obj.type === "ellipse" || obj.type === "triangle" ||
-             obj.type === "image" || obj.type === "axes" || obj.type === "optics" ||
+             obj.type === "image" || obj.type === "svgAsset" || obj.type === "axes" || obj.type === "optics" ||
              obj.type === "apparatus") {
     twin = document.createElementNS(SVG_NS, "rect");
     twin.setAttribute("x", obj.x);
@@ -677,6 +678,8 @@ export function renderObject(obj) {
       return renderFormula(obj);
     case "image":
       return renderImage(obj);
+    case "svgAsset":
+      return renderSvgAsset(obj);
     case "axes":
       return renderAxes(obj);
     case "anglearc":
@@ -1448,6 +1451,39 @@ function renderImage(obj) {
     el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
   }
   return el;
+}
+
+/* ----- svgAsset: one selectable, image-like built-in SVG asset ----- */
+function renderSvgAsset(obj) {
+  const asset = getSvgAsset(obj.assetId);
+  const href = obj.src || asset?.dataUri || "";
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", obj.x);
+  body.setAttribute("y", obj.y);
+  body.setAttribute("width", obj.w);
+  body.setAttribute("height", obj.h);
+  body.setAttribute("fill", "transparent");
+  g.appendChild(body);
+
+  const image = document.createElementNS(SVG_NS, "image");
+  image.setAttribute("x", obj.x);
+  image.setAttribute("y", obj.y);
+  image.setAttribute("width", obj.w);
+  image.setAttribute("height", obj.h);
+  image.setAttribute("href", href);
+  image.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  g.appendChild(image);
+
+  const rot = obj.rotation ?? 0;
+  if (rot !== 0) {
+    const cx = obj.x + obj.w / 2;
+    const cy = obj.y + obj.h / 2;
+    g.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+  }
+  return g;
 }
 
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
@@ -2747,7 +2783,7 @@ export function makeFillPattern(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -2878,7 +2914,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
   const _rightangle = sel.type === "rightangle";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).
