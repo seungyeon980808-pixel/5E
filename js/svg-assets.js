@@ -6,6 +6,15 @@ const BUILT_IN_SVG_ASSETS = {
     viewBox: "0 0 220 220",
     defaultWidth: 6,
     defaultHeight: 6,
+    snapAnchors: [
+      { key: "wheel-center", x: 107, y: 96.5 },
+      { key: "axle-center", x: 107, y: 96.5 },
+      { key: "handle-end-hole-center", x: 171.5, y: 163.5 },
+      { key: "wheel-contact-top", x: 107, y: 28 },
+      { key: "wheel-contact-left", x: 38.5, y: 96.5 },
+      { key: "wheel-contact-right", x: 175.5, y: 96.5 },
+      { key: "wheel-contact-bottom", x: 107, y: 165 },
+    ],
     content: `
       <g fill-rule="evenodd" clip-rule="evenodd" stroke="#111" stroke-linecap="round" stroke-linejoin="round">
         <path d="M107 28c37.8 0 68.5 30.7 68.5 68.5S144.8 165 107 165 38.5 134.3 38.5 96.5 69.2 28 107 28Z" fill="#D8D8D8" stroke-width="7"/>
@@ -23,6 +32,12 @@ const BUILT_IN_SVG_ASSETS = {
     viewBox: "0 0 850 1440",
     defaultWidth: 40 * 850 / 1440,
     defaultHeight: 40,
+    snapAnchors: [
+      { key: "base-center", x: 526, y: 1274 },
+      { key: "vertical-rod-top", x: 524.5, y: 118 },
+      { key: "clamp-jaw-tip", x: 90, y: 241 },
+      { key: "clamp-jaw-center", x: 412, y: 251 },
+    ],
     content: `
       <g fill-rule="evenodd" clip-rule="evenodd" stroke="#111" stroke-linejoin="round">
         <path d="M509 118h31v1120h-31z" fill="#D7D7D7" stroke-width="6"/>
@@ -69,6 +84,7 @@ export function makeBuiltInSvgAssetObject(kind, box = {}) {
     lockAspect: true,
     svgViewBox: asset.viewBox,
     svgContent: asset.content.trim(),
+    snapAnchors: Array.isArray(asset.snapAnchors) ? asset.snapAnchors.map((anchor) => ({ ...anchor })) : [],
     locked: false,
     positionLocked: false,
     layerId: 1,

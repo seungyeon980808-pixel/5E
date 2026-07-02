@@ -10,10 +10,11 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.36.5";
-import { screenToWorld } from "./viewport.js?v=0.36.5";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.5";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "./state.js?v=0.36.5";
+import { rebuildGroups } from "./transform.js?v=0.36.6";
+import { screenToWorld } from "./viewport.js?v=0.36.6";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.36.6";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "./state.js?v=0.36.6";
+import { builtInSvgAsset } from "./svg-assets.js?v=0.36.6";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -93,6 +94,7 @@ function migrate(data) {
         next.strokeWidth = next.strokeWidth ?? 0.2;
       }
       if (next.type === "svgAsset") {
+        const builtIn = next.assetKind ? builtInSvgAsset(next.assetKind) : null;
         next.x = next.x ?? 0;
         next.y = next.y ?? 0;
         next.w = next.w ?? 20;
@@ -102,6 +104,9 @@ function migrate(data) {
         next.lockAspect = next.lockAspect ?? next.lockedAspectRatio;
         next.svgViewBox = next.svgViewBox ?? "0 0 1 1";
         next.svgContent = next.svgContent ?? "";
+        next.snapAnchors = Array.isArray(next.snapAnchors)
+          ? next.snapAnchors
+          : (Array.isArray(builtIn?.snapAnchors) ? builtIn.snapAnchors.map((anchor) => ({ ...anchor })) : []);
       }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";

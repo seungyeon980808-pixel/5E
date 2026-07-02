@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.5";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.6";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -21,9 +21,9 @@ import {
   OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
-} from "./state.js?v=0.36.5";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.5";
-import { renderFormula } from "./formula.js?v=0.36.5";
+} from "./state.js?v=0.36.6";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.6";
+import { renderFormula } from "./formula.js?v=0.36.6";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
