@@ -11,19 +11,19 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.1";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.36.2";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_STYLES, TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY,
   isEquationFontFamily, resolveTextFontStyle, resolveTextLetterSpacing,
-} from "./state.js?v=0.36.1";
+} from "./state.js?v=0.36.2";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.1";
-import { resolveEndpointSnap } from "./snap.js?v=0.36.1";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.1";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.1";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.36.2";
+import { resolveEndpointSnap } from "./snap.js?v=0.36.2";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.36.2";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.36.2";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -1332,7 +1332,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     const o = objects[i];
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
-        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "axes" &&
+        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" &&
         o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
         o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler") continue;
 
@@ -1428,7 +1428,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       // box == actual shape: outward-grown bbox containment (axes/optics select as
       // one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
@@ -1494,7 +1494,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {

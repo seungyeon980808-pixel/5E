@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.36.1";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.36.2";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -21,9 +21,9 @@ import {
   OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
-} from "./state.js?v=0.36.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.1";
-import { renderFormula } from "./formula.js?v=0.36.1";
+} from "./state.js?v=0.36.2";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.2";
+import { renderFormula } from "./formula.js?v=0.36.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -605,7 +605,7 @@ function makeHitTwin(obj) {
     twin = document.createElementNS(SVG_NS, "path");
     twin.setAttribute("d", catmullRomPath(obj.points || []));
   } else if (obj.type === "rect" || obj.type === "ellipse" || obj.type === "triangle" ||
-             obj.type === "image" || obj.type === "axes" || obj.type === "optics" ||
+             obj.type === "image" || obj.type === "svgAsset" || obj.type === "axes" || obj.type === "optics" ||
              obj.type === "apparatus") {
     twin = document.createElementNS(SVG_NS, "rect");
     twin.setAttribute("x", obj.x);
@@ -677,6 +677,8 @@ export function renderObject(obj) {
       return renderFormula(obj);
     case "image":
       return renderImage(obj);
+    case "svgAsset":
+      return renderSvgAsset(obj);
     case "axes":
       return renderAxes(obj);
     case "anglearc":
@@ -1444,6 +1446,37 @@ function renderImage(obj) {
     const cx = obj.x + obj.w / 2;
     const cy = obj.y + obj.h / 2;
     el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+  }
+  return el;
+}
+
+/* ----- svgAsset: sanitized external SVG kept as one indivisible object. ----- */
+function renderSvgAsset(obj) {
+  const el = document.createElementNS(SVG_NS, "svg");
+  el.setAttribute("x", obj.x);
+  el.setAttribute("y", obj.y);
+  el.setAttribute("width", obj.w);
+  el.setAttribute("height", obj.h);
+  el.setAttribute("viewBox", obj.svgViewBox || "0 0 1 1");
+  el.setAttribute("preserveAspectRatio", obj.lockedAspectRatio === false ? "none" : "xMidYMid meet");
+  el.setAttribute("overflow", "visible");
+  el.setAttribute("fill", "none");
+  if (obj.id) el.dataset.id = obj.id;
+  const rot = obj.rotation ?? 0;
+  if (rot !== 0) {
+    const cx = obj.x + obj.w / 2;
+    const cy = obj.y + obj.h / 2;
+    el.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
+  }
+  if (obj.svgContent) {
+    try {
+      el.innerHTML = obj.svgContent;
+      Array.from(el.querySelectorAll("*")).forEach((node) => {
+        node.setAttribute("pointer-events", "none");
+      });
+    } catch (_) {
+      el.replaceChildren();
+    }
   }
   return el;
 }
@@ -2634,7 +2667,7 @@ export function makeFillPattern(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -2743,7 +2776,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
   const _rightangle = sel.type === "rightangle";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).

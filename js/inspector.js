@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.36.1";
-import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.36.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.36.1";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.36.2";
+import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.36.2";
+import { resolveObjectStyle } from "./style-mode.js?v=0.36.2";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1400,6 +1400,33 @@ export function initInspector(state) {
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
 
+  const svgAspectRow = document.createElement("div");
+  svgAspectRow.className = "insp-row";
+  const svgAspectCb = document.createElement("input");
+  svgAspectCb.type = "checkbox";
+  svgAspectCb.className = "insp-cb";
+  const svgAspectLbl = document.createElement("label");
+  svgAspectLbl.className = "insp-field-label";
+  svgAspectLbl.textContent = "비율 고정";
+  svgAspectRow.appendChild(svgAspectCb);
+  svgAspectRow.appendChild(svgAspectLbl);
+  sec3Body.appendChild(svgAspectRow);
+  svgAspectCb.addEventListener("change", () => {
+    const s = state.get();
+    const id = (s.selectedIds || [])[0];
+    if (!id) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const val = svgAspectCb.checked;
+    state.update((s2) => {
+      const o = s2.objects.find((item) => item.id === id);
+      if (!o || o.type !== "svgAsset" || o.locked) return;
+      o.lockedAspectRatio = val;
+      o.lockAspect = val;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
+
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
@@ -2398,6 +2425,7 @@ export function initInspector(state) {
       pulleyVariantRow.style.display = "none";
       clampFlipRow.style.display = "none";
       scaleTextRow.style.display = "none";
+      svgAspectRow.style.display = "none";
 
       const groupHasLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.locked);
       const groupHasPositionLocked = ids.some((id) => s.objects.find((o) => o.id === id)?.positionLocked);
@@ -2636,8 +2664,9 @@ export function initInspector(state) {
     // Optics is a branch-A box (X/Y/W/H/rotation), like rect + axes.
     const isOptics = obj.type === "optics";
     const isApparatus = obj.type === "apparatus";
+    const isSvgAsset = obj.type === "svgAsset";
     const appKind = isApparatus ? (obj.kind || "wire") : null;
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus;
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset;
     const isArc = obj.type === "anglearc";
     const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";
@@ -2668,6 +2697,7 @@ export function initInspector(state) {
     pulleyVariantRow.style.display = isApparatus && appKind === "pulley" ? "" : "none";
     clampFlipRow.style.display = isApparatus && appKind === "clamp" ? "" : "none";
     scaleTextRow.style.display = isApparatus && appKind === "scale" ? "" : "none";
+    svgAspectRow.style.display = isSvgAsset ? "" : "none";
     // Single 라벨 row: arc, optics, and all circuits EXCEPT diode (which uses 단자1/2).
     const isNode = isOptics && obj.kind === "node";
     const showObjectLabel = isArc || isOptics || (isCircuit && !isDiode);
@@ -2751,6 +2781,9 @@ export function initInspector(state) {
       if (appKind === "clamp") clampFlipCb.checked = !!obj.flipped;
       if (appKind === "scale" && document.activeElement !== scaleTextInp) scaleTextInp.value = obj.displayText ?? "0.99 N";
     }
+    if (isSvgAsset) {
+      svgAspectCb.checked = obj.lockedAspectRatio !== false;
+    }
     if ((isCircuit && !isDiode || isOptics) && document.activeElement !== labelInp) {
       labelInp.value  = obj.label ?? "";
     }
@@ -2831,6 +2864,7 @@ export function initInspector(state) {
     pulleyVariantSel.disabled = !!obj.locked;
     clampFlipCb.disabled = !!obj.locked;
     scaleTextInp.disabled = !!obj.locked;
+    svgAspectCb.disabled = !!obj.locked;
     Object.values(axisVarBtns).forEach((btn) => { btn.disabled = !!obj.locked; });
     setStyleControlsDisabled(styleDisabled, fn, !!obj.locked);
   }
