@@ -21,10 +21,11 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.39.0";
-import { armSymbol } from "./tools.js?v=0.39.0";
-import { renderObject } from "./render.js?v=0.39.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.39.0";
+import { state } from "./state.js?v=0.40.0";
+import { armSymbol } from "./tools.js?v=0.40.0";
+import { renderObject } from "./render.js?v=0.40.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.40.0";
+import { getSvgAsset } from "./svg-assets.js";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -160,7 +161,21 @@ export const TEMPLATES = {
 
   /* ----- 역학: pulley / supports / pivot / node / magnet — also arm the OPTICS
    * size-drag tool with a specific kind. ----- */
-  pulley:      { kind: "shape", category: "역학", label: "도르래",   keywords: ["도르래", "pulley", "활차"],             create: { tool: "APPARATUS", kind: "pulley" } },
+  pulley: {
+    kind: "shape",
+    category: "역학",
+    label: "도르래",
+    keywords: ["도르래", "pulley", "활차"],
+    create: { tool: "SVGASSET", kind: "pulley" },
+  },
+  cart: {
+    kind: "shape",
+    category: "역학",
+    label: "역학 수레",
+    keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
+    create: { tool: "SVGASSET", kind: "cart" },
+  },
+  pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
@@ -336,6 +351,34 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
       '<circle cx="3" cy="17" r="1.4" fill="currentColor"/>' +
       '<text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text>';
+    return svg;
+  }
+
+  if (id === "pendulum") {
+    // Clean silhouette: support bar at top, string, filled bob (matches the object).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<line x1="5" y1="3.5" x2="15" y2="3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
+      '<line x1="10" y1="3.5" x2="14" y2="13" stroke="currentColor" stroke-width="1.1"/>' +
+      '<circle cx="14" cy="14" r="3" fill="currentColor" stroke="none"/>';
+    return svg;
+  }
+
+  if (id === "pulley") {
+    const asset = getSvgAsset("pulley");
+    svg.setAttribute("viewBox", "0 0 172 152");
+    svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="172" height="152" preserveAspectRatio="xMidYMid meet"/>`;
+    return svg;
+  }
+
+  if (id === "cart") {
+    svg.setAttribute("viewBox", "0 0 24 20");
+    svg.innerHTML =
+      '<path d="M4 6.5 H19 V12.5 H4 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<path d="M4 6.5 V4.5 H6.5 M19 6.5 V4.5 H16.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="8" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+      '<circle cx="16" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+      '<path d="M10.2 15 H13.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>';
     return svg;
   }
 

@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.39.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,14 +19,15 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.39.0";
+} from "./state.js?v=0.40.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.39.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.39.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.39.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.39.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.39.0";
+import { circuitBodyPolygon, setSnapPreview, pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render.js?v=0.40.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.40.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.40.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.40.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.40.0";
+import { getSvgAsset } from "./svg-assets.js";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -59,6 +60,7 @@ let _idCounter = 0;
 let _circuitElement = "resistor";
 let _opticsKind = "convex_lens";
 let _apparatusKind = "wire";
+let _svgAssetId = "pulley";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -77,7 +79,7 @@ let _activeSymbolId = null;
 // Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
-const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "RIGHTANGLE", "LABELER"]);
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -131,6 +133,7 @@ export function armSymbol(symbolId, tool, variant) {
   if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
+  if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
   _activeSymbolId = symbolId;
   setActiveTool(tool);
   syncButtons(_state.get().activeTool);
@@ -189,7 +192,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
 // (makeShape branches on type). Line (L) and polyline (P) are click-to-click
 // instead ??see setupClickDrawing below.
-const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus" };
+const SHAPE_TYPE = { R: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum" };
 
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
@@ -200,6 +203,20 @@ let _marqueeStart = null; // world {x,y} of marquee drag start, or null
 let _marqueeEl = null;    // temporary SVG <rect> shown during marquee drag
 
 function constrainShapeEnd(type, start, end, shiftHeld) {
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    const ratio = asset ? asset.defaultWidth / asset.defaultHeight : 1;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    let w = Math.abs(dx);
+    let h = Math.abs(dy);
+    if (w / Math.max(h, MIN_SIZE) > ratio) w = h * ratio;
+    else h = w / ratio;
+    return {
+      x: start.x + (dx < 0 ? -w : w),
+      y: start.y + (dy < 0 ? -h : h),
+    };
+  }
   if (!shiftHeld || (type !== "rect" && type !== "ellipse")) return end;
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -1396,7 +1413,7 @@ function resetClickDraft() {
 /* ----- commit gate: ignore stray clicks that drew nothing ----- */
 // Size-based shapes need a non-trivial box; a line needs a non-trivial length.
 function isCommittable(shape) {
-  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler") {
+  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -1414,9 +1431,10 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     const o = objects[i];
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
         o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
-        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "axes" &&
+        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" &&
         o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
-        o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler") continue;
+        o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler" &&
+        o.type !== "pendulum") continue;
 
     if (o.type === "text" || o.type === "formula") {
       // Use the rendered SVG element's getBBox for an accurate hit area.
@@ -1433,7 +1451,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     // slack already converted to world units (tol = tolerancePx / currentZoom),
     // so the band stays visually constant at any zoom (DESIGN-style tolerance).
     const margin = (o.strokeWidth || 0) / 2 +
-      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "circuit") ? lineTol : tol);
+      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "circuit" || o.type === "pendulum") ? lineTol : tol);
 
     if (o.type === "line") {
       if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
@@ -1446,6 +1464,18 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       // area. circuitBodyPolygon() is the SAME geometry the renderer draws.
       if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
       if (pointInPolygon(p.x, p.y, circuitBodyPolygon(o))) return o.id;
+      continue;
+    }
+
+    if (o.type === "pendulum") {
+      // Clickable = the real string segment, the real bob disk, and (when shown)
+      // each ghost string/bob — the SAME geometry the renderer draws.
+      const geo = pendulumGeometry(o);
+      const onString = (a, b) => segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin;
+      const inBob = (c) => Math.hypot(p.x - c.x, p.y - c.y) <= geo.radius + margin;
+      if (onString(geo.pivot, geo.bob) || inBob(geo.bob)) return o.id;
+      if (o.showCenterGhost !== false && (onString(geo.pivot, geo.centerBob) || inBob(geo.centerBob))) return o.id;
+      if (o.showSymmetricGhost !== false && (onString(geo.pivot, geo.symBob) || inBob(geo.symBob))) return o.id;
       continue;
     }
 
@@ -1510,7 +1540,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       // box == actual shape: outward-grown bbox containment (axes/optics select as
       // one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
@@ -1576,7 +1606,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -1592,6 +1622,9 @@ function getObjectBBox(o) {
       x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
       w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
     };
+  }
+  if (o.type === "pendulum") {
+    return pendulumBBox(o);
   }
   if (o.type === "labeler") {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
@@ -1709,6 +1742,7 @@ function segDist(px, py, ax, ay, bx, by) {
 // `type` is "rect" | "ellipse" | "triangle"; all share this identical structure.
 function makeShape(type, a, b) {
   if (type === "line") return makeLine(a, b);
+  if (type === "pendulum") return makePendulum(a, b);
   const shape = {
     id: null, // assigned on commit
     type,
@@ -1793,6 +1827,16 @@ function makeShape(type, a, b) {
       shape.displayText = "0.99 N";
     }
   }
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    if (asset) {
+      shape.assetId = asset.id;
+      shape.name = asset.name;
+      shape.lockAspect = true;
+      shape.fillNone = true;
+      shape.strokeWidth = 0;
+    }
+  }
   return applyNewObjectStyleDefaults(shape);
 }
 
@@ -1819,6 +1863,32 @@ function makeLine(a, b) {
     positionLocked: false,
     layerId: 1,
     order: 0,              // assigned on commit (z-order within layer)
+  });
+}
+
+/* ----- build a simple pendulum from a drag (branch B, same family as line) -----
+ * drag start (a) = pivot / top support; drag end (b) = real bob center. All other
+ * geometry (ghost bobs, vertical normal) is derived at render (see render.js
+ * pendulumGeometry), never stored. bobRadius is seeded from the length so the bob
+ * scales sensibly; it is then a stored, editable property. */
+function makePendulum(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,                     // assigned on commit
+    type: "pendulum",
+    p1: { x: a.x, y: a.y },       // pivot / top support
+    p2: { x: b.x, y: b.y },       // real bob center
+    bobRadius: pendulumBobRadius({ p1: a, p2: b }),
+    showCenterGhost: true,        // 중앙잔상 (vertical normal, directly below pivot)
+    showSymmetricGhost: true,     // 대칭잔상 (mirror across the vertical normal)
+    showLengthLabel: true,        // 길이표시
+    lengthLabel: "L_B",           // physics-quantity label near the real string
+    labelType: "quantity",
+    strokeLevel: 0,               // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,                     // assigned on commit (z-order within layer)
   });
 }
 

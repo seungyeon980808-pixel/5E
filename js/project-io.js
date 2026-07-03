@@ -10,10 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.39.0";
-import { screenToWorld } from "./viewport.js?v=0.39.0";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.39.0";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.39.0";
+import { rebuildGroups } from "./transform.js?v=0.40.0";
+import { screenToWorld } from "./viewport.js?v=0.40.0";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.40.0";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.40.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -119,6 +119,28 @@ function migrate(data) {
         next.locked = oldBackgroundLocked ? false : (next.locked ?? false);
         if (next.imageSelectionLocked) next.positionLocked = false;
         next.recognized = next.recognized === true;
+      }
+      if (next.type === "pendulum") {
+        // Older/partial files: backfill every editable option so render + inspector
+        // have a complete object. bobRadius omitted → derived from length at render.
+        next.p1 = next.p1 ?? { x: 0, y: 0 };
+        next.p2 = next.p2 ?? { x: next.p1.x, y: next.p1.y + 30 };
+        next.showCenterGhost = next.showCenterGhost ?? true;
+        next.showSymmetricGhost = next.showSymmetricGhost ?? true;
+        next.showLengthLabel = next.showLengthLabel ?? true;
+        next.lengthLabel = next.lengthLabel ?? "L_B";
+        next.labelType = "quantity";
+        next.strokeLevel = next.strokeLevel ?? 0;
+        next.strokeWidth = next.strokeWidth ?? 0.2;
+      }
+      if (next.type === "svgAsset") {
+        next.assetId = next.assetId ?? "pulley";
+        next.x = next.x ?? 0;
+        next.y = next.y ?? 0;
+        next.w = next.w ?? 43;
+        next.h = next.h ?? 38;
+        next.rotation = next.rotation ?? 0;
+        next.lockAspect = next.lockAspect ?? true;
       }
       if (next.type === "apparatus") {
         next.kind = next.kind ?? "wire";

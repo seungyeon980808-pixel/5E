@@ -13,11 +13,11 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.39.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.39.0";
-import { setSnapPreview } from "./render.js?v=0.39.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.39.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.39.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.40.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.40.0";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.40.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.40.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.40.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -202,7 +202,7 @@ function lineAngleDeg(obj) {
 
 function objectAngleDeg(obj) {
   if (!obj) return null;
-  if ((obj.type === "line" || obj.type === "circuit") && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") && obj.p1 && obj.p2) return lineAngleDeg(obj);
   if (typeof obj.rotation === "number") return obj.rotation;
   return null;
 }
@@ -218,7 +218,7 @@ function unitForAngle(deg) {
 
 function applyAngleDeg(obj, deg) {
   if (!obj || obj.locked || obj.positionLocked) return false;
-  if ((obj.type === "line" || obj.type === "circuit") && obj.p1 && obj.p2) {
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") && obj.p1 && obj.p2) {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
@@ -249,7 +249,7 @@ function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   for (const o of objs) {
-    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
       acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
@@ -259,7 +259,7 @@ function clipboardBBox(objs) {
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
-    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler") {
+    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
     } else if (o.type === "polyline" || o.type === "curve") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
@@ -273,14 +273,15 @@ function clipboardBBox(objs) {
 function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
       obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
-      obj.type === "image" ||
+      obj.type === "image" || obj.type === "svgAsset" ||
       obj.type === "axes" || obj.type === "anglearc" || obj.type === "rightangle" ||
       obj.type === "optics" || obj.type === "apparatus") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
-  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler") {
-    // Circuit/labeler move by translating BOTH endpoints (labeler: anchor + label).
+  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+    // Circuit/labeler/pendulum move by translating BOTH endpoints (pendulum:
+    // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
   } else if (obj.type === "polyline" || obj.type === "curve") {
@@ -290,7 +291,7 @@ function applyDelta(obj, orig, dx, dy) {
 
 /* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
 function handleEndpointPoint(obj, handle) {
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
     return handle === "p0" ? obj.p1 : obj.p2;
   }
   if ((obj.type === "polyline" || obj.type === "curve")
@@ -303,7 +304,7 @@ function handleEndpointPoint(obj, handle) {
 
 function setHandleEndpointPoint(obj, handle, pt) {
   const next = { x: pt.x, y: pt.y };
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
     if (handle === "p0") obj.p1 = next; else obj.p2 = next;
     return;
   }
@@ -316,7 +317,7 @@ function setHandleEndpointPoint(obj, handle, pt) {
 /* The FIXED (non-dragged) endpoint of a line/circuit, for the 6c radial-center
  * test. Only defined for the two-endpoint line family. */
 function otherEndpointPoint(obj, handle) {
-  if (obj.type === "line" || obj.type === "circuit") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") {
     return handle === "p0" ? obj.p2 : obj.p1;
   }
   return null;
@@ -340,7 +341,7 @@ const MIN_SIZE = 0.3; // world units; minimum w or h after resize
 
 /* ----- apply one handle drag delta to an object ----- */
 function objectCenter(obj) {
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
     return { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
   }
   if (obj.type === "polyline" || obj.type === "curve") return polyCenter(obj.points);
@@ -408,7 +409,7 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // Branch B: endpoint handles (line / circuit / labeler / polyline / curve).
   // Circuit reuses the line's p0/p1 terminal drag (body re-centers at render);
   // labeler treats p0 = leader anchor, p1 = label position (drag to reshape).
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
       obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
@@ -530,7 +531,7 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 
 /* ----- world bbox of one object (text uses its rendered <text> box) ----- */
 function objWorldBBox(o, svg) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -554,6 +555,9 @@ function objWorldBBox(o, svg) {
       x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
       w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
     };
+  }
+  if (o.type === "pendulum") {
+    return pendulumBBox(o);
   }
   if (o.type === "polyline" || o.type === "curve") {
     const pts = o.points || [];
@@ -627,7 +631,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   for (const obj of objs) {
     const orig = origObjs[obj.id];
     if (!orig) continue;
-    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "axes" || orig.type === "optics" || orig.type === "apparatus") {
+    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "svgAsset" || orig.type === "axes" || orig.type === "optics" || orig.type === "apparatus") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
     } else if (orig.type === "anglearc") {
@@ -643,6 +647,10 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
     } else if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+    } else if (orig.type === "pendulum") {
+      obj.p1 = mapPt(orig.p1.x, orig.p1.y);
+      obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+      if (typeof orig.bobRadius === "number") obj.bobRadius = orig.bobRadius * sx; // sx == sy (forced ratio)
     } else if (orig.type === "polyline" || orig.type === "curve") {
       obj.points = orig.points.map((p) => mapPt(p.x, p.y));
     }
@@ -877,7 +885,7 @@ export function initTransform(svg, state) {
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, 5); changed = true; return; }
             if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "optics", "apparatus"].includes(o.type)) return;
+            if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -963,7 +971,7 @@ export function initTransform(svg, state) {
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, -5); changed = true; return; }
             if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "optics", "apparatus"].includes(o.type)) return;
+            if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });

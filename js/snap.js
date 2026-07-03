@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints } from "./render.js?v=0.39.0";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.40.0";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
@@ -85,6 +85,18 @@ export function collectPrioritySnapPoints(state, excludeIds) {
     } else if (obj.type === "optics" && obj.kind === "object_arrow") {
       const { head, attach } = opticalObjectHead(obj);
       points.push(makeSnapPoint(head, "optical-object-head", obj.id, "head", 1, attach));
+    } else if (obj.type === "pendulum") {
+      // Minimal anchors: pivot, real bob center, and the two ghost bob centers
+      // when those ghosts are visible (all derived from p1/p2 at render time).
+      const geo = pendulumGeometry(obj);
+      if (isValidPoint(geo.pivot)) points.push(makeSnapPoint(geo.pivot, "line-endpoint", obj.id, "pivot", 0));
+      if (isValidPoint(geo.bob)) points.push(makeSnapPoint(geo.bob, "line-endpoint", obj.id, "bob", 0));
+      if (obj.showCenterGhost !== false && isValidPoint(geo.centerBob)) {
+        points.push(makeSnapPoint(geo.centerBob, "line-endpoint", obj.id, "centerGhost", 0));
+      }
+      if (obj.showSymmetricGhost !== false && isValidPoint(geo.symBob)) {
+        points.push(makeSnapPoint(geo.symBob, "line-endpoint", obj.id, "symGhost", 0));
+      }
     }
   }
   return points;
