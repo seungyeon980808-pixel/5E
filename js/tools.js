@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.40.1";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,14 +19,14 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.40.0";
+} from "./state.js?v=0.40.1";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview, pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render.js?v=0.40.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.40.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.40.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.40.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.40.0";
+import { circuitBodyPolygon, setSnapPreview, pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render.js?v=0.40.1";
+import { resolveEndpointSnap } from "./snap.js?v=0.40.1";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.40.1";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.40.1";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.40.1";
 import { getSvgAsset } from "./svg-assets.js";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).

@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.40.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.40.1";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -23,11 +23,11 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "./state.js?v=0.40.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.40.0";
-import { renderFormula } from "./formula.js?v=0.40.0";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.40.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.40.0";
+} from "./state.js?v=0.40.1";
+import { resolveObjectStyle } from "./style-mode.js?v=0.40.1";
+import { renderFormula } from "./formula.js?v=0.40.1";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.40.1";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.40.1";
 import { getSvgAsset } from "./svg-assets.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";

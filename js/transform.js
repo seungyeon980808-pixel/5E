@@ -13,11 +13,11 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.40.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.40.0";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.40.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.40.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.40.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.40.1";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.40.1";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.40.1";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.40.1";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.40.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -852,7 +852,7 @@ export function initTransform(svg, state) {
               members.forEach((m) => {
                 const obj = s2.objects.find((o) => o.id === m.id);
                 if (!obj) return;
-                if (obj.type === "line") {
+                if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
                 } else if (obj.type === "polyline" || obj.type === "curve") {
@@ -865,6 +865,10 @@ export function initTransform(svg, state) {
                   const c = rot(obj.x, obj.y);
                   obj.x = c.x; obj.y = c.y;
                   obj.angle = (obj.angle || 0) + 5;
+                } else if (obj.type === "text") {
+                  const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
+                  obj.x = c.x; obj.y = c.y;
+                  obj.rotation = (obj.rotation || 0) + 5;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
@@ -942,7 +946,7 @@ export function initTransform(svg, state) {
               members.forEach((m) => {
                 const obj = s2.objects.find((o) => o.id === m.id);
                 if (!obj) return;
-                if (obj.type === "line") {
+                if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
                 } else if (obj.type === "polyline" || obj.type === "curve") {
@@ -951,6 +955,14 @@ export function initTransform(svg, state) {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
                   obj.startAngle = (obj.startAngle || 0) + 5; // screen-CCW = math +
+                } else if (obj.type === "rightangle") {
+                  const c = rot(obj.x, obj.y);
+                  obj.x = c.x; obj.y = c.y;
+                  obj.angle = (obj.angle || 0) - 5;
+                } else if (obj.type === "text") {
+                  const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
+                  obj.x = c.x; obj.y = c.y;
+                  obj.rotation = (obj.rotation || 0) - 5;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
@@ -1371,7 +1383,7 @@ export function initTransform(svg, state) {
           const memberRot = orig.positionLocked
             ? (x, y) => rotPt(x, y, memberCenter.x, memberCenter.y, deltaDeg)
             : rot;
-          if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
+          if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler" || orig.type === "pendulum") {
             obj.p1 = memberRot(orig.p1.x, orig.p1.y);
             obj.p2 = memberRot(orig.p2.x, orig.p2.y);
           } else if (orig.type === "polyline" || orig.type === "curve") {
@@ -1382,9 +1394,22 @@ export function initTransform(svg, state) {
             const c = orig.positionLocked ? memberCenter : rot(memberCenter.x, memberCenter.y);
             obj.x = c.x; obj.y = c.y;
             obj.startAngle = (orig.startAngle || 0) - deltaDeg;
+          } else if (orig.type === "rightangle") {
+            // vertex rotates about the pivot; spin lives in angle (no w/h on this type,
+            // so the box branch below would NaN it).
+            const c = orig.positionLocked ? memberCenter : rot(orig.x, orig.y);
+            obj.x = c.x; obj.y = c.y;
+            obj.angle = (orig.angle || 0) + deltaDeg;
+          } else if (orig.type === "text") {
+            // text rotates about its top-left anchor (renderText), not a center box,
+            // and has no w/h — orbit the anchor and put the spin into rotation.
+            const c = orig.positionLocked ? { x: orig.x, y: orig.y } : rot(orig.x, orig.y);
+            obj.x = c.x; obj.y = c.y;
+            obj.rotation = (orig.rotation || 0) + deltaDeg;
           } else {
-            // box-type (rect/ellipse/triangle/text): rotate center about pivot,
-            // and bump the member's own rotation field by the same delta.
+            // box-type (rect/ellipse/triangle/formula/image/svgAsset/optics/apparatus/
+            // axes — all carry w/h): rotate center about pivot, and bump the member's
+            // own rotation field by the same delta.
             const c = orig.positionLocked ? memberCenter : rot(memberCenter.x, memberCenter.y);
             obj.x = c.x - orig.w / 2;
             obj.y = c.y - orig.h / 2;
