@@ -21,10 +21,10 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.37.0";
-import { armSymbol } from "./tools.js?v=0.37.0";
-import { renderObject } from "./render.js?v=0.37.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.0";
+import { state } from "./state.js?v=0.37.1";
+import { armSymbol } from "./tools.js?v=0.37.1";
+import { renderObject } from "./render.js?v=0.37.1";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.37.1";
 import { getSvgAsset } from "./svg-assets.js";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
@@ -167,6 +167,13 @@ export const TEMPLATES = {
     label: "도르래",
     keywords: ["도르래", "pulley", "활차"],
     create: { tool: "SVGASSET", kind: "pulley" },
+  },
+  cart: {
+    kind: "shape",
+    category: "역학",
+    label: "역학 수레",
+    keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
+    create: { tool: "SVGASSET", kind: "cart" },
   },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
@@ -361,6 +368,17 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     const asset = getSvgAsset("pulley");
     svg.setAttribute("viewBox", "0 0 172 152");
     svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="172" height="152" preserveAspectRatio="xMidYMid meet"/>`;
+    return svg;
+  }
+
+  if (id === "cart") {
+    svg.setAttribute("viewBox", "0 0 24 20");
+    svg.innerHTML =
+      '<path d="M4 6.5 H19 V12.5 H4 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
+      '<path d="M4 6.5 V4.5 H6.5 M19 6.5 V4.5 H16.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<circle cx="8" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+      '<circle cx="16" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
+      '<path d="M10.2 15 H13.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>';
     return svg;
   }
 

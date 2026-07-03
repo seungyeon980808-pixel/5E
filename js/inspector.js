@@ -1,8 +1,8 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.37.0";
-import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.37.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.37.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "./state.js?v=0.37.1";
+import { openFontModalForSelection, openAngleArcLabelEditor } from "./tools.js?v=0.37.1";
+import { resolveObjectStyle } from "./style-mode.js?v=0.37.1";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -1400,6 +1400,32 @@ export function initInspector(state) {
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
 
+  const lockAspectRow = document.createElement("div");
+  lockAspectRow.className = "insp-row";
+  const lockAspectCb = document.createElement("input");
+  lockAspectCb.type = "checkbox";
+  lockAspectCb.className = "insp-cb";
+  const lockAspectLbl = document.createElement("label");
+  lockAspectLbl.className = "insp-field-label";
+  lockAspectLbl.textContent = "비율고정";
+  lockAspectRow.appendChild(lockAspectCb);
+  lockAspectRow.appendChild(lockAspectLbl);
+  sec3Body.appendChild(lockAspectRow);
+  lockAspectCb.addEventListener("change", () => {
+    const s = state.get();
+    const id = (s.selectedIds || [])[0];
+    if (!id) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const val = lockAspectCb.checked;
+    state.update((s2) => {
+      const o = s2.objects.find((item) => item.id === id);
+      if (!o || o.type !== "svgAsset" || o.locked) return;
+      o.lockAspect = val;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
+
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
@@ -2394,6 +2420,7 @@ export function initInspector(state) {
     objectLabelTypeRow.row.style.display = "none";
     axisLabelTypeRow.row.style.display = "none";
     terminalLabelTypeRow.row.style.display = "none";
+    lockAspectRow.style.display = "none";
 
     // Targeted state: only show ungroup button, hide everything else
     if (s.targetedId) {
@@ -2725,6 +2752,7 @@ export function initInspector(state) {
     // radius + start/sweep angle; circuit (two terminals) hides the box rows.
     xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "flex";
     whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "flex";
+    lockAspectRow.style.display = isSvgAsset ? "flex" : "none";
     rotF.el.style.display = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
     arcPair.style.display = isArc ? "flex" : "none";
@@ -2812,6 +2840,7 @@ export function initInspector(state) {
       hF.inp.value   = (obj.h        ?? 0).toFixed(2);
       rotF.inp.value = (obj.rotation ?? 0).toFixed(1);
     }
+    if (isSvgAsset) lockAspectCb.checked = obj.lockAspect !== false;
     if (isArc) {
       xF.inp.value    = (obj.x          ?? 0).toFixed(2);
       yF.inp.value    = (-(obj.y        ?? 0)).toFixed(2); // SVG Y down → math Y up
@@ -2879,6 +2908,7 @@ export function initInspector(state) {
     yF.inp.disabled = !!(obj.locked || obj.positionLocked);
     wF.inp.disabled = !!obj.locked;
     hF.inp.disabled = !!obj.locked;
+    lockAspectCb.disabled = !!obj.locked;
     rotF.inp.disabled = !!obj.locked;
     radF.inp.disabled = !!obj.locked;
     saF.inp.disabled = !!obj.locked;
