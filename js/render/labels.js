@@ -7,7 +7,7 @@ import {
   applySvgTextFont,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.41.0";
+} from "./core.js?v=0.42.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -15,7 +15,7 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=0.41.0";
+} from "../state.js?v=0.42.0";
 
 function applySvgTextRunStyle(t, style = {}) {
   applySvgTextFont(t, {
