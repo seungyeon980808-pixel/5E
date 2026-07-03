@@ -16,8 +16,110 @@
 
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/inspector.css" />
+  <style>
+    .branch-warning-banner {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      max-width: calc(100vw - 24px);
+      padding: 10px 14px;
+      color: #ecfeff;
+      font-family: "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.25;
+      background: linear-gradient(135deg, #035d6f 0%, #0891b2 50%, #0f766e 100%);
+      border: 3px solid #67e8f9;
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(8, 145, 178, 0.45);
+      transform: translateX(-50%);
+    }
+
+    .branch-warning-text {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+    }
+
+    .branch-warning-copy {
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      color: #083344;
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      background: #cffafe;
+      border: 2px solid #ffffff;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    }
+
+    .branch-warning-copy:focus-visible {
+      outline: 3px solid #ffffff;
+      outline-offset: 3px;
+    }
+
+    .branch-copy-status {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      padding: 4px 8px;
+      color: #ecfeff;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      background: rgba(8, 51, 68, 0.96);
+      border: 1px solid #67e8f9;
+      border-radius: 6px;
+      opacity: 0;
+      transform: translateY(-3px);
+      transition: opacity 120ms ease, transform 120ms ease;
+      pointer-events: none;
+    }
+
+    .branch-copy-status.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 720px) {
+      .branch-warning-banner {
+        top: 8px;
+        font-size: 13px;
+      }
+
+      .branch-warning-text {
+        white-space: normal;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="branch-warning-banner" role="status" aria-label="현재 로컬 브랜치 경고">
+    <div class="branch-warning-text">
+      <span>[BRANCH: work-dev]</span>
+      <span>기능 개발 브랜치</span>
+      <span>PORT 8000</span>
+    </div>
+    <button
+      id="branch-command-copy"
+      class="branch-warning-copy"
+      type="button"
+      title="로컬 서버 명령 복사"
+      aria-label="로컬 서버 명령 복사"
+      data-command="cd C:\Users\user\Desktop\project\51_5E\5E_work_dev; git status --short --branch; python -m http.server 8000"
+    >⧉</button>
+    <span id="branch-copy-status" class="branch-copy-status" aria-live="polite">서버 실행 명령 복사됨</span>
+  </div>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
@@ -181,11 +283,55 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.38.0</strong> · 2026-07-02
+    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.39.0</strong> · 2026-07-03
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script type="module" src="js/main.js?v=0.38.0"></script>
+  <script>
+    (() => {
+      const copyButton = document.getElementById("branch-command-copy");
+      const status = document.getElementById("branch-copy-status");
+      if (!copyButton || !status) return;
+
+      const fallbackCopy = (text) => {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.setAttribute("readonly", "");
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        textArea.setSelectionRange(0, textArea.value.length);
+        const copied = document.execCommand("copy");
+        textArea.remove();
+        if (!copied) throw new Error("Fallback copy failed");
+      };
+
+      const showStatus = () => {
+        status.classList.add("is-visible");
+        window.clearTimeout(showStatus.timer);
+        showStatus.timer = window.setTimeout(() => {
+          status.classList.remove("is-visible");
+        }, 1600);
+      };
+
+      copyButton.addEventListener("click", async () => {
+        const command = copyButton.dataset.command || "";
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(command);
+          } else {
+            fallbackCopy(command);
+          }
+          showStatus();
+        } catch (error) {
+          fallbackCopy(command);
+          showStatus();
+        }
+      });
+    })();
+  </script>
+  <script type="module" src="js/main.js?v=0.39.0"></script>
 </body>
 </html>

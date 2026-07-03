@@ -5,7 +5,7 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=0.38.0";
+} from "./templates.js?v=0.39.0";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

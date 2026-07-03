@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "./viewport.js?v=0.38.0";
+import { getZoom, getRenderScale } from "./viewport.js?v=0.39.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -23,12 +23,18 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "./state.js?v=0.38.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.38.0";
-import { renderFormula } from "./formula.js?v=0.38.0";
-import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.38.0";
+} from "./state.js?v=0.39.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.39.0";
+import { renderFormula } from "./formula.js?v=0.39.0";
+import { fillSvgTextWithRomanRuns } from "./text-rendering.js?v=0.39.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.39.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
+
+function renderObjectById(state, id) {
+  if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
+  return state.objects.find((o) => o.id === id) || null;
+}
 
 /* ===== SNAP PREVIEW STATE: transient render data, never persisted ===== */
 let snapPreview = null;
@@ -105,17 +111,28 @@ export function render(state) {
     if (!el) continue;
     const _isActive = _layerId === state.activeLayerId;
     if (!_isActive) el.setAttribute("opacity", "0.5");
+    if (isLockedTracingImage(obj)) el.setAttribute("pointer-events", "none");
     if (!_isActive) el.setAttribute("pointer-events", "none");
     scene.appendChild(el);
     // Open-path hit twin: only on the active layer (other layers stay non-interactive).
     // The twin width is HIT_PX / getZoom(), so a zoom/viewBox change recomputes it via
     // the store subscribe → render path (main.js: state.subscribe(render)).
-    if (_isActive) {
+    if (_isActive && !isLockedTracingImage(obj)) {
       const twin = makeHitTwin(obj);
       if (twin) {
         el.setAttribute("pointer-events", "none"); // only the twin receives events
         scene.appendChild(twin);
       }
+    }
+  }
+
+  // Temporary pasted-image cleanup session. It is rendered but not committed:
+  // no data-id, no picking, no export/save until Ctrl+Enter creates an object.
+  if (state.imageEditSession) {
+    const temp = renderImage({ ...state.imageEditSession, id: IMAGE_EDIT_SESSION_ID, opacity: 1 });
+    if (temp) {
+      temp.dataset.ui = "image-edit-session";
+      scene.appendChild(temp);
     }
   }
 
@@ -188,7 +205,7 @@ export function render(state) {
   const _selIds = state.selectedIds || [];
 
   // For a grouped multi-selection, draw ONE combined green rect instead of per-member outlines.
-  const _groupMembers = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
+  const _groupMembers = _selIds.map((id) => renderObjectById(state, id)).filter(Boolean);
   const _firstMember = _groupMembers[0];
   const _allSameGroup = _selIds.length > 1 && _firstMember && _firstMember.groupId &&
     _groupMembers.every((o) => o.groupId === _firstMember.groupId);
@@ -209,7 +226,7 @@ export function render(state) {
   }
 
   for (const _sid of _selIds) {
-    const sel = state.objects.find((o) => o.id === _sid);
+    const sel = renderObjectById(state, _sid);
     if (!sel) continue;
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
@@ -359,7 +376,7 @@ export function render(state) {
 
   // ----- selection handles (DESIGN 5-2: fixed 10 CSS px = 10/zoom world units) -----
   if (_selIds.length === 1) {
-    const handleSel = state.objects.find((o) => o.id === _selIds[0]);
+    const handleSel = renderObjectById(state, _selIds[0]);
     if (handleSel && !state.targetedId) {
       renderHandles(handleSel, scene, getZoom(), state.activeTool);
     }
@@ -592,6 +609,10 @@ function renderGrid(state) {
  * fill, so they get no twin. Twins exist only in the editor render() — export builds
  * from renderObject(), so they never reach SVG/PNG output or the export viewBox. */
 const HIT_PX = 12; // constant on-screen hit width (px), mirroring the handle/zoom pattern
+
+function isLockedTracingImage(obj) {
+  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
+}
 
 function makeHitTwin(obj) {
   let twin = null;
@@ -1581,9 +1602,9 @@ function renderImage(obj) {
       r.setAttribute("width", cut.w); r.setAttribute("height", cut.h);
       r.setAttribute("fill", "#000000");
       mask.appendChild(r);
-    } else if (cut && cut.type === "path") {
+    } else if (cut && (cut.type === "path" || cut.type === "lasso")) {
       const pts = Array.isArray(cut.points) ? cut.points : [];
-      if (pts.length === 0) continue;
+      if (pts.length < 3) continue;
       const bw = cut.brushWidth || 0.03;
       if (pts.length === 1) {
         // a single tap → a round dot of the brush radius
@@ -1593,9 +1614,9 @@ function renderImage(obj) {
         c.setAttribute("fill", "#000000");
         mask.appendChild(c);
       } else {
-        const poly = document.createElementNS(SVG_NS, "polyline");
+        const poly = document.createElementNS(SVG_NS, "polygon");
         poly.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
-        poly.setAttribute("fill", "none");
+        poly.setAttribute("fill", "#000000");
         poly.setAttribute("stroke", "#000000");
         poly.setAttribute("stroke-width", bw);
         poly.setAttribute("stroke-linecap", "round");

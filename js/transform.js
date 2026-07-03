@@ -13,14 +13,22 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.38.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.38.0";
-import { setSnapPreview } from "./render.js?v=0.38.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.38.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.39.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.39.0";
+import { setSnapPreview } from "./render.js?v=0.39.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.39.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.39.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
+function objectById(s, id) {
+  if (id === IMAGE_EDIT_SESSION_ID) return s.imageEditSession || null;
+  return s.objects.find((o) => o.id === id) || null;
+}
+function isTempImageId(id) {
+  return id === IMAGE_EDIT_SESSION_ID;
+}
 
 /* ----- closed polyline: branch-B storage (points) + branch-A (face) interaction -----
  * Transforms are BAKED into the point coordinates (no rotation field), so the
@@ -1155,7 +1163,7 @@ export function initTransform(svg, state) {
 
     if (hLabel && hObjId && selectedIds0.length === 1 && selectedIds0.includes(hObjId)) {
       const s = s0;
-      const obj = s.objects.find((o) => o.id === selectedIds0[0]);
+      const obj = objectById(s, selectedIds0[0]);
       if (obj) {
         if (!isMutable(obj)) return;
         const isCorner = ["nw", "ne", "se", "sw"].includes(hLabel);
@@ -1170,14 +1178,14 @@ export function initTransform(svg, state) {
             ? objectCenter(obj) : getRotPivot(obj, hLabel);
           const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
           _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
-          _rotPendingSnap = JSON.parse(JSON.stringify(s.objects));
+          _rotPendingSnap = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
           _rotDidMove     = false;
         } else {
           _handleDragging   = true;
           _handleId         = hLabel;
           _handleOrigObj    = JSON.parse(JSON.stringify(obj));
           _handleStartWorld = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
-          _pendingSnapshot  = JSON.parse(JSON.stringify(s.objects));
+          _pendingSnapshot  = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
           _didMove = false;
         }
         e.preventDefault();
@@ -1201,16 +1209,16 @@ export function initTransform(svg, state) {
     const vb = s.viewBox;
     _moveStartWorld = screenToWorld(svg, vb, e.clientX, e.clientY);
     // Expand to all group members when selected objects share a group
-    const _firstMoveObj = s.objects.find((o) => o.id === selectedIds[0]);
+    const _firstMoveObj = objectById(s, selectedIds[0]);
     const _sharedGid = _firstMoveObj?.groupId &&
-      selectedIds.every(id => s.objects.find((o) => o.id === id)?.groupId === _firstMoveObj.groupId)
+      selectedIds.every(id => objectById(s, id)?.groupId === _firstMoveObj.groupId)
       ? _firstMoveObj.groupId : null;
     let _moveIds = [...selectedIds];
     if (_sharedGid) {
       const _mgrp = s.groups.find((g) => g.id === _sharedGid);
       if (_mgrp) _moveIds = [..._mgrp.memberIds];
     }
-    const _moveObjs = _moveIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+    const _moveObjs = _moveIds.map(id => objectById(s, id)).filter(Boolean);
     if (_moveObjs.some((o) => !isPositionMovable(o))) {
       _moving = false;
       _moveObjIds = [];
@@ -1224,10 +1232,10 @@ export function initTransform(svg, state) {
     _moveObjIds = _moveIds;
     _moveOrigObjs = {};
     _moveIds.forEach(id => {
-      const o = s.objects.find((o) => o.id === id);
+      const o = objectById(s, id);
       if (o) _moveOrigObjs[id] = JSON.parse(JSON.stringify(o));
     });
-    _pendingSnapshot = JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
+    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
     _didMove = false;
 
     svg.style.cursor = "grabbing";
@@ -1252,7 +1260,7 @@ export function initTransform(svg, state) {
         const cosP = Math.cos(rad), sinP = Math.sin(rad);
         const px = _rotPivot.x, py = _rotPivot.y;
         state.update((s) => {
-          const obj = s.objects.find((o) => o.id === _rotObjId);
+          const obj = objectById(s, _rotObjId);
           if (!obj) return;
           obj.points = _rotOrigObj.points.map((p) => ({
             x: px + cosP * (p.x - px) - sinP * (p.y - py),
@@ -1276,7 +1284,7 @@ export function initTransform(svg, state) {
           y: py + sinP * (p.x - px) + cosP * (p.y - py),
         });
         state.update((s) => {
-          const obj = s.objects.find((o) => o.id === _rotObjId);
+          const obj = objectById(s, _rotObjId);
           if (!obj) return;
           obj.p1 = rp(_rotOrigObj.p1);
           obj.p2 = rp(_rotOrigObj.p2);
@@ -1290,7 +1298,7 @@ export function initTransform(svg, state) {
       // DECREASE, so subtract to make the arc follow the mouse.
       if (_rotOrigObj.type === "anglearc") {
         state.update((s) => {
-          const obj = s.objects.find((o) => o.id === _rotObjId);
+          const obj = objectById(s, _rotObjId);
           if (!obj) return;
           obj.startAngle = (_rotOrigObj.startAngle || 0) - deltaDeg;
         });
@@ -1300,7 +1308,7 @@ export function initTransform(svg, state) {
 
       if (_rotOrigObj.type === "rightangle") {
         state.update((s) => {
-          const obj = s.objects.find((o) => o.id === _rotObjId);
+          const obj = objectById(s, _rotObjId);
           if (!obj) return;
           obj.angle = (_rotOrigObj.angle || 0) + deltaDeg;
         });
@@ -1318,7 +1326,7 @@ export function initTransform(svg, state) {
       const newCy = _rotPivot.y + sinT * (cx0 - _rotPivot.x) + cosT * (cy0 - _rotPivot.y);
 
       state.update((s) => {
-        const obj = s.objects.find((o) => o.id === _rotObjId);
+        const obj = objectById(s, _rotObjId);
         if (!obj) return;
         obj.x = newCx - w / 2;
         obj.y = newCy - h / 2;
@@ -1403,7 +1411,7 @@ export function initTransform(svg, state) {
        * dragged endpoint moves; the opposite endpoint stays fixed. ===== */
       if (!e.shiftKey) setSnapPreview(null);
       state.update((s) => {
-        const obj = s.objects.find((o) => o.id === _handleOrigObj.id);
+        const obj = objectById(s, _handleOrigObj.id);
         if (!obj) return;
         applyHandleDelta(obj, _handleOrigObj, _handleId, dx, dy, e.shiftKey, e.ctrlKey);
         let preview = null;
@@ -1454,7 +1462,7 @@ export function initTransform(svg, state) {
     setSnapPreview(snapped.preview);
     state.update((s) => {
       _moveObjIds.forEach(id => {
-        const obj = s.objects.find((o) => o.id === id);
+        const obj = objectById(s, id);
         const orig = _moveOrigObjs[id];
         if (!obj || !orig) return;
         applyDelta(obj, orig, dx, dy);
@@ -1576,7 +1584,7 @@ export function initTransform(svg, state) {
     const rawDy = _lastMouseWorld && _moveStartWorld ? _lastMouseWorld.y - _moveStartWorld.y : 0;
     state.update((s) => {
       _moveObjIds.forEach((id) => {
-        const obj = s.objects.find((o) => o.id === id);
+        const obj = objectById(s, id);
         const orig = _moveOrigObjs[id];
         if (!obj || !orig) return;
         applyDelta(obj, orig, rawDx, rawDy);

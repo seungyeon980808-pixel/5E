@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.38.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.39.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,14 +19,14 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.38.0";
+} from "./state.js?v=0.39.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.38.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.38.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.38.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.38.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.38.0";
+import { circuitBodyPolygon, setSnapPreview } from "./render.js?v=0.39.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.39.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.39.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.39.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.39.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -444,6 +444,7 @@ function setupDrawing() {
       s.targetedId = null;
       s.selectedIds = s.objects
         .filter((o) => {
+          if (isLockedTracingImage(o)) return false;
           if (isBackgroundUnrecognized(o)) return false; // unrecognized bg = not marquee-selectable
           const _mLayerId = o.layerId ?? 1;
           const _mLayer = (s.layers || []).find(l => l.id === _mLayerId);
@@ -476,11 +477,17 @@ function setupDrawing() {
 // INDEPENDENT of `locked` (DESIGN 6-3): once recognized it becomes a normal
 // object and `locked` resumes its usual "protected but selectable" meaning.
 function isBackgroundUnrecognized(obj) {
-  return !!obj && obj.mode === "background" && obj.recognized !== true;
+  return !!obj && obj.type === "image" && obj.mode === "background" && obj.locked === true;
+}
+
+function isLockedTracingImage(obj) {
+  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
 function isObjectSelectable(state, obj) {
   if (!obj) return false;
+  if (obj.id === "image-edit-session") return !!state.imageEditSession;
+  if (isLockedTracingImage(obj)) return false;
   if (isBackgroundUnrecognized(obj)) return false;
   const layerId = obj.layerId ?? 1;
   const layer = (state.layers || []).find((item) => item.id === layerId);
@@ -521,13 +528,16 @@ function nearestBasicLine(objects, p, renderScale, isSelectable = () => true) {
 }
 
 function pickSelectableObject(state, p, tol, lineTol) {
-  const selectableNonBasic = state.objects.filter((o) =>
+  const objects = state.imageEditSession
+    ? [...state.objects, { ...state.imageEditSession, id: "image-edit-session" }]
+    : state.objects;
+  const selectableNonBasic = objects.filter((o) =>
     !isBasicLine(o) && isObjectSelectable(state, o)
   );
   const hitId = hitTest(selectableNonBasic, p, tol, lineTol);
   if (hitId !== null) return hitId;
   return nearestBasicLine(
-    state.objects,
+    objects,
     p,
     getRenderScale(),
     (o) => isObjectSelectable(state, o)
@@ -551,6 +561,7 @@ export function pickSelectableObjectFromEvent(svg, state, event) {
   if (!svg || !state || !event) return null;
   const p = screenToWorld(svg, state.viewBox, event.clientX, event.clientY);
   const id = pickSelectableObjectAtPoint(state, p);
+  if (id === "image-edit-session") return state.imageEditSession ? { ...state.imageEditSession, id } : null;
   return id ? state.objects.find((o) => o.id === id) || null : null;
 }
 

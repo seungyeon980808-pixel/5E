@@ -10,10 +10,10 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.38.0";
-import { screenToWorld } from "./viewport.js?v=0.38.0";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.38.0";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.38.0";
+import { rebuildGroups } from "./transform.js?v=0.39.0";
+import { screenToWorld } from "./viewport.js?v=0.39.0";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.39.0";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.39.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -106,17 +106,18 @@ function migrate(data) {
         }
       }
       if (next.type === "image") {
-        // Image workflow fields (clipboard paste modes). Older files predating them
-        // load as normal editable images: edit mode, fully opaque, ratio-locked,
-        // exportable, no cutouts. An explicit saved value always wins.
+        // Image workflow fields. Older background-mode files are kept visible and
+        // manageable, but their old non-interactive background flag maps to the
+        // explicit image-only selection lock.
+        const oldBackgroundLocked = next.mode === "background" && next.locked === true && next.recognized !== true;
         next.mode = next.mode === "background" ? "background" : "edit";
         next.opacity = typeof next.opacity === "number" ? next.opacity : 1;
         next.aspectLocked = next.aspectLocked ?? true;
         next.exportable = next.exportable ?? true;
         next.cutouts = Array.isArray(next.cutouts) ? next.cutouts : [];
-        next.locked = next.locked ?? false;
-        // recognized: only meaningful for background images (edit images ignore it).
-        // Defaults false so a saved background loads back as unselectable-until-recognized.
+        next.imageSelectionLocked = next.imageSelectionLocked ?? oldBackgroundLocked;
+        next.locked = oldBackgroundLocked ? false : (next.locked ?? false);
+        if (next.imageSelectionLocked) next.positionLocked = false;
         next.recognized = next.recognized === true;
       }
       if (next.type === "apparatus") {
@@ -296,8 +297,14 @@ function readImageFile(file, dropPos, state) {
           w,
           h,
           rotation: 0,
+          mode: "edit",
+          opacity: 1,
+          aspectLocked: true,
+          exportable: true,
+          cutouts: [],
           locked: false,
           positionLocked: false,
+          imageSelectionLocked: false,
           layerId: s.activeLayerId,
           order: s.objects.length,
         });

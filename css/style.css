@@ -626,6 +626,72 @@ body {
 }
 .modal-btn-primary:hover { background: var(--accent-hover); }
 
+.modal-image-paste {
+  width: min(640px, calc(100vw - 40px));
+  padding: 24px 28px;
+}
+.modal-image-paste,
+.modal-image-paste * {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  letter-spacing: 0;
+}
+.image-paste-guide {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.image-paste-guide strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.image-paste-guide p {
+  margin: 0;
+}
+.image-paste-actions {
+  gap: 10px;
+}
+.image-paste-actions .modal-btn {
+  min-width: 92px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border-color: var(--border);
+  white-space: nowrap;
+}
+.image-paste-actions .modal-btn-primary {
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border-color: var(--border);
+}
+.image-paste-actions .modal-btn:hover,
+.image-paste-actions .modal-btn:focus-visible {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.image-edit-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.image-edit-tool-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+.image-edit-tool-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 /* ===== IMAGE OBJECTIFY ===== */
 .modal-objectify { width: 620px; }
 .objectify-description,

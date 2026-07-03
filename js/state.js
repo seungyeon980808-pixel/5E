@@ -7,7 +7,7 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=0.38.0";
+import { createStore } from "./store.js?v=0.39.0";
 
 export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif';
 export const EQUATION_FONT_FAMILY = '"HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif';
@@ -269,6 +269,10 @@ export const state = createStore({
   // share one browser layout. Never exported or saved; commit creates the real
   // text object and ESC discards the draft.
   draftText: null,
+
+  // imageEditSession: transient pre-insertion cleanup for pasted images.
+  // Never saved/exported; Ctrl+Enter commits it as one normal image object.
+  imageEditSession: null,
 
   // editingFormulaId: id of the formula object currently open in the inline
   // formula editor (tools.js), or null. Transient — never saved/exported; render

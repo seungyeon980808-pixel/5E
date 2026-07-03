@@ -19,13 +19,9 @@
 // (they read obj.cutouts). Temporary drag UI is drawn on the SVG root (not in
 // state.objects), so it is never selectable and never exported. */
 
-import { screenToWorld } from "./viewport.js?v=0.38.0";
+import { screenToWorld } from "./viewport.js?v=0.39.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-
-// Default freeform brush thickness as a fraction of the image box (objectBoundingBox
-// stroke length). ~3% erases small text/marks cleanly without swallowing the image.
-export const DEFAULT_BRUSH_WIDTH = 0.03;
 
 let _state = null;
 let _svg = null;
@@ -38,21 +34,17 @@ let _dragging = false;     // a drag gesture is in progress
 let _rectStart = null;     // {x,y} fraction of the rect drag start
 let _rectPending = null;   // {x,y,w,h} committed-on-Enter rect (fractions)
 let _pathPoints = null;    // [{x,y}] fractions accumulated for the freeform stroke
+let _commitInFlight = false;
+export const IMAGE_EDIT_SESSION_ID = "image-edit-session";
 
 // transient DOM: instruction banner + SVG preview element (both never exported)
 let _banner = null;
 let _preview = null;
 
-/* ----- image lookup helpers ----- */
-function selectedImageId(s) {
-  const ids = s.selectedIds || [];
-  if (ids.length !== 1) return null;
-  const o = s.objects.find((x) => x.id === ids[0]);
-  return o && o.type === "image" && o.mode === "edit" ? o.id : null;
-}
-function imageById(s, id) {
-  const o = s.objects.find((x) => x.id === id);
-  return o && o.type === "image" ? o : null;
+/* ----- temporary session lookup helpers ----- */
+function sessionObj(s = _state?.get()) {
+  const o = s && s.imageEditSession;
+  return o && o.type === "image" && o.mode === "edit-session" ? o : null;
 }
 
 /* ----- world <-> local-fraction conversion (origin = top-left, pre-rotation) ----- */
@@ -82,6 +74,32 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 // diagonal — mirror that here so the on-canvas preview thickness matches the mask.
 function brushWorldWidth(obj, frac) {
   return frac * Math.sqrt((obj.w * obj.w + obj.h * obj.h) / 2);
+}
+
+export function startImageEditSession(state, src, placement) {
+  state.update((s) => {
+    s.imageEditSession = {
+      id: IMAGE_EDIT_SESSION_ID,
+      type: "image",
+      mode: "edit-session",
+      src,
+      x: placement.x,
+      y: placement.y,
+      w: placement.w,
+      h: placement.h,
+      rotation: 0,
+      aspectLocked: true,
+      exportable: true,
+      locked: false,
+      positionLocked: false,
+      layerId: s.activeLayerId,
+      order: s.objects.length,
+      cutouts: [],
+    };
+    s.selectedIds = [IMAGE_EDIT_SESSION_ID];
+    s.targetedId = null;
+    s.activeTool = "V";
+  });
 }
 
 /* ----- instruction banner (fixed overlay; never part of state/export) ----- */
@@ -129,38 +147,39 @@ function drawPathPreview(obj, ptsFrac) {
   const el = ensurePreview("polyline");
   el.setAttribute("points", world.map((p) => `${p.x},${p.y}`).join(" "));
   el.setAttribute("fill", "none");
-  el.setAttribute("stroke", "rgba(9,105,218,0.55)");
-  el.setAttribute("stroke-width", brushWorldWidth(obj, DEFAULT_BRUSH_WIDTH));
+  el.setAttribute("stroke", "rgba(9,105,218,0.85)");
+  el.setAttribute("stroke-width", "0.3");
+  el.setAttribute("stroke-dasharray", "0.7 0.5");
   el.setAttribute("stroke-linecap", "round");
   el.setAttribute("stroke-linejoin", "round");
 }
 
-/* ----- undo-aware mutation of the selected image's cutouts ----- */
+/* ----- mutation of the temporary image session's cutouts ----- */
 function pushCutout(cutout) {
-  const s = _state.get();
-  const snap = JSON.parse(JSON.stringify(s.objects));
   _state.update((s2) => {
-    const o = imageById(s2, _imageId);
+    const o = sessionObj(s2);
     if (!o) return;
     if (!Array.isArray(o.cutouts)) o.cutouts = [];
     o.cutouts.push(cutout);
-    s2.undoStack.push(snap);
-    s2.redoStack = [];
   });
 }
 
 /* ----- enter / exit erase mode ----- */
 function enterMode(mode) {
   const s = _state.get();
-  const id = selectedImageId(s);
-  if (!id) return; // guarded by the inspector, but stay safe
+  if (!sessionObj(s)) return; // guarded by the inspector, but stay safe
   exitMode(); // clear any prior session first
   _mode = mode;
-  _imageId = id;
+  _imageId = IMAGE_EDIT_SESSION_ID;
   _dragging = false;
   _rectStart = null;
   _rectPending = null;
   _pathPoints = null;
+  queueMicrotask(() => {
+    if (_mode === mode) showBanner(mode === "rect"
+      ? "사각형으로 지울 영역을 드래그하세요. Ctrl+Enter로 이미지 삽입"
+      : "자유 영역을 둘러싸세요. 마우스를 놓으면 닫힌 영역이 지워집니다");
+  });
   showBanner(mode === "rect"
     ? "지울 영역을 드래그하십시오. Enter 확정, Esc 취소"
     : "지울 부분을 드래그하십시오. Enter 확정, Esc 취소");
@@ -180,39 +199,147 @@ function exitMode() {
 export function startRectErase() { enterMode("rect"); }
 export function startPathErase() { enterMode("path"); }
 export function clearCutouts() {
-  const s = _state.get();
-  const id = selectedImageId(s);
-  if (!id) return;
-  const o = imageById(s, id);
+  const o = sessionObj();
   if (!o || !Array.isArray(o.cutouts) || o.cutouts.length === 0) return;
-  const snap = JSON.parse(JSON.stringify(s.objects));
   _state.update((s2) => {
-    const t = imageById(s2, id);
+    const t = sessionObj(s2);
     if (!t) return;
     t.cutouts = [];
-    s2.undoStack.push(snap);
-    s2.redoStack = [];
   });
 }
 export function isErasing() { return _mode !== null; }
+export function hasImageEditSession() { return !!sessionObj(); }
+export function cancelImageEditSession() {
+  exitMode();
+  _state.update((s) => { s.imageEditSession = null; });
+}
+
+function loadRaster(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Unable to decode image"));
+    img.src = src;
+  });
+}
+
+async function renderSessionToDataUrl(session) {
+  const img = await loadRaster(session.src);
+  const canvas = document.createElement("canvas");
+  canvas.width = img.naturalWidth || img.width || 1;
+  canvas.height = img.naturalHeight || img.height || 1;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-out";
+  for (const cut of session.cutouts || []) {
+    if (cut.type === "rect") {
+      ctx.fillRect(cut.x * canvas.width, cut.y * canvas.height, cut.w * canvas.width, cut.h * canvas.height);
+    } else if (cut.type === "lasso" || cut.type === "path") {
+      const pts = Array.isArray(cut.points) ? cut.points : [];
+      if (pts.length < 3) continue;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x * canvas.width, pts[0].y * canvas.height);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * canvas.width, pts[i].y * canvas.height);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+  return canvas.toDataURL("image/png");
+}
+
+async function commitImageEditSession() {
+  if (_commitInFlight) return;
+  const session = sessionObj();
+  if (!session) return;
+  _commitInFlight = true;
+  exitMode();
+  try {
+    const src = await renderSessionToDataUrl(session);
+    const id = `obj_${Date.now().toString(36)}_imgedit${++_idCounter}`;
+    const snap = JSON.parse(JSON.stringify(_state.get().objects));
+    _state.update((s) => {
+      const cur = sessionObj(s);
+      if (!cur) return;
+      s.objects.push({
+        id,
+        type: "image",
+        src,
+        x: cur.x,
+        y: cur.y,
+        w: cur.w,
+        h: cur.h,
+        rotation: cur.rotation || 0,
+        mode: "edit",
+        aspectLocked: true,
+        exportable: true,
+        locked: false,
+        positionLocked: false,
+        layerId: cur.layerId ?? s.activeLayerId,
+        order: s.objects.length,
+        cutouts: [],
+      });
+      s.imageEditSession = null;
+      s.selectedIds = [id];
+      s.targetedId = null;
+      s.activeTool = "V";
+      s.undoStack.push(snap);
+      s.redoStack = [];
+    });
+  } finally {
+    _commitInFlight = false;
+  }
+}
 
 /* ----- commit helpers ----- */
 function commitRect() {
-  if (!_rectPending) { exitMode(); return; }
+  if (!_rectPending) { clearPreview(); return; }
   const r = _rectPending;
   if (r.w > 0.001 && r.h > 0.001) {
     pushCutout({ id: `cut_${Date.now().toString(36)}_${++_idCounter}`, type: "rect",
       x: r.x, y: r.y, w: r.w, h: r.h });
   }
-  exitMode();
+  _dragging = false;
+  _rectStart = null;
+  _rectPending = null;
+  clearPreview();
+}
+function smoothClosedLassoPoints(points) {
+  if (points.length < 3) return points;
+  const first = points[0];
+  const last = points[points.length - 1];
+  const dx = first.x - last.x;
+  const dy = first.y - last.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 0.04) return points;
+  const prev = points[points.length - 2] || last;
+  const next = points[1] || first;
+  const control = {
+    x: (last.x + first.x) / 2 + ((last.x - prev.x) + (first.x - next.x)) * 0.25,
+    y: (last.y + first.y) / 2 + ((last.y - prev.y) + (first.y - next.y)) * 0.25,
+  };
+  const closed = points.slice();
+  const steps = Math.max(3, Math.min(12, Math.ceil(dist / 0.03)));
+  for (let i = 1; i < steps; i++) {
+    const t = i / steps;
+    const mt = 1 - t;
+    closed.push({
+      x: mt * mt * last.x + 2 * mt * t * control.x + t * t * first.x,
+      y: mt * mt * last.y + 2 * mt * t * control.y + t * t * first.y,
+    });
+  }
+  return closed;
 }
 function commitPath() {
   const pts = _pathPoints || [];
-  if (pts.length >= 1) {
-    pushCutout({ id: `cut_${Date.now().toString(36)}_${++_idCounter}`, type: "path",
-      points: pts.map((p) => ({ x: p.x, y: p.y })), brushWidth: DEFAULT_BRUSH_WIDTH });
+  if (pts.length >= 3) {
+    pushCutout({ id: `cut_${Date.now().toString(36)}_${++_idCounter}`, type: "lasso",
+      points: smoothClosedLassoPoints(pts).map((p) => ({ x: p.x, y: p.y })) });
   }
-  exitMode();
+  _dragging = false;
+  _pathPoints = null;
+  clearPreview();
 }
 
 /* ===== init: capture-phase mouse/key interception (preempts select/draw/move) ===== */
@@ -220,13 +347,19 @@ export function initImageCutout(state, svg) {
   _state = state;
   _svg = svg;
 
+  document.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.(".image-edit-tool-btn");
+    if (!btn || !sessionObj()) return;
+    const label = btn.textContent || "";
+    if (label.includes("사각형")) enterMode("rect");
+    else if (label.includes("자유")) enterMode("path");
+  }, true);
+
   // If the selected image changes or is deleted mid-gesture, cancel safely so the
   // mode can never get stuck on a stale object (interaction-safety requirement).
   state.subscribe((s) => {
     if (!_mode) return;
-    const o = imageById(s, _imageId);
-    const stillSelected = (s.selectedIds || []).length === 1 && (s.selectedIds || [])[0] === _imageId;
-    if (!o || !stillSelected) exitMode();
+    if (!sessionObj(s)) exitMode();
   });
 
   const worldAt = (e) => screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
@@ -237,7 +370,7 @@ export function initImageCutout(state, svg) {
     if (e.button !== 0) return;         // let middle/right (pan) through
     e.preventDefault();
     e.stopPropagation();
-    const obj = imageById(_state.get(), _imageId);
+    const obj = sessionObj();
     if (!obj) { exitMode(); return; }
     const w0 = worldAt(e);
     const f = worldToFraction(obj, w0.x, w0.y);
@@ -255,7 +388,7 @@ export function initImageCutout(state, svg) {
   window.addEventListener("mousemove", (e) => {
     if (!_mode || !_dragging) return;
     e.stopPropagation();
-    const obj = imageById(_state.get(), _imageId);
+    const obj = sessionObj();
     if (!obj) { exitMode(); return; }
     const w = worldAt(e);
     const f = worldToFraction(obj, w.x, w.y);
@@ -276,9 +409,8 @@ export function initImageCutout(state, svg) {
     if (!_mode || !_dragging) return;
     e.stopPropagation();
     _dragging = false;
-    // Freeform commits on release (spec 4). Rectangle keeps its preview so Enter
-    // confirms / Esc cancels / a fresh drag redefines it (spec 3).
-    if (_mode === "path") commitPath();
+    if (_mode === "rect") commitRect();
+    else if (_mode === "path") commitPath();
   }, true);
 
   // Enter 확정 / Esc 취소. Also swallow bare tool-shortcut keys so erase mode can
@@ -286,7 +418,7 @@ export function initImageCutout(state, svg) {
   window.addEventListener("keydown", (e) => {
     if (!_mode) return;
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); exitMode(); return; }
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
       e.preventDefault(); e.stopPropagation();
       if (_mode === "rect") commitRect(); else commitPath();
       return;
@@ -294,6 +426,21 @@ export function initImageCutout(state, svg) {
     // let modifier combos (Ctrl+Z, etc.) pass; block plain single keys.
     if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
       e.preventDefault(); e.stopPropagation();
+    }
+  }, true);
+
+  window.addEventListener("keydown", (e) => {
+    if (!sessionObj()) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      commitImageEditSession();
+      return;
+    }
+    if (e.key === "Escape" && !_mode) {
+      e.preventDefault();
+      e.stopPropagation();
+      cancelImageEditSession();
     }
   }, true);
 }

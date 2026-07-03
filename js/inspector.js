@@ -1,9 +1,9 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.38.0";
-import { openAngleArcLabelEditor } from "./tools.js?v=0.38.0";
-import { resolveObjectStyle } from "./style-mode.js?v=0.38.0";
-import { startRectErase, startPathErase, clearCutouts } from "./image-cutout.js?v=0.38.0";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.39.0";
+import { openAngleArcLabelEditor } from "./tools.js?v=0.39.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.39.0";
+import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "./image-cutout.js?v=0.39.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -2140,6 +2140,12 @@ export function initInspector(state) {
   imgRectEraseBtn.addEventListener("click", () => startRectErase());
   imgPathEraseBtn.addEventListener("click", () => startPathErase());
   imgClearCutBtn.addEventListener("click", () => clearCutouts());
+  imgCutoutBlock.addEventListener("click", (e) => {
+    const btn = e.target?.closest?.("button");
+    if (btn === imgRectEraseBtn) startRectErase();
+    else if (btn === imgPathEraseBtn) startPathErase();
+    else if (btn === imgClearCutBtn) clearCutouts();
+  });
 
   // 잠금 (lock/unlock) — mirrors obj.locked; usable on a locked background image.
   const imgLockRow = document.createElement("div");
@@ -2175,9 +2181,38 @@ export function initInspector(state) {
   const imageSection = makeSection("이미지", imgBody);
   contentEl.insertBefore(imageSection, sec3);
 
+  imageSection.querySelector("summary").textContent = "이미지";
+  imgOpacityLbl.textContent = "투명도";
+  imgAspectLbl.textContent = "비율 고정";
+  imgLockLbl.textContent = "잠금";
+  imgExportNote.textContent = "배경 이미지는 완성 이미지 저장/내보내기에서 제외됩니다.";
+  imgRemoveBtn.textContent = "이미지 제거";
+  imgClearCutBtn.textContent = "지운 영역 초기화";
+  imgRectEraseBtn.className = "modal-btn image-edit-tool-btn";
+  imgRectEraseBtn.innerHTML = `<span class="image-edit-tool-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false">
+      <rect x="5" y="6" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3 2"></rect>
+    </svg>
+  </span><span>사각형 영역 지우기</span>`;
+  imgPathEraseBtn.className = "modal-btn image-edit-tool-btn";
+  imgPathEraseBtn.innerHTML = `<span class="image-edit-tool-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" focusable="false">
+      <path d="M6.2 8.4 C8.3 5.6 13.4 4.8 16.8 6.7 C20.1 8.6 18.7 13.3 16.1 15.6 C13.4 18 7.8 18.6 5.4 15.2 C3.8 12.9 4.6 10.4 6.2 8.4 Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 2"></path>
+    </svg>
+  </span><span>자유 영역 지우기</span>`;
+  imgRectEraseBtn.onclick = async () => {
+    const mod = await import("./image-cutout.js?v=0.39.0");
+    mod.startRectErase();
+  };
+  imgPathEraseBtn.onclick = async () => {
+    const mod = await import("./image-cutout.js?v=0.39.0");
+    mod.startPathErase();
+  };
+
   // ---- image mutators: operate on the single selected image, ignoring `locked`
   // (opacity/lock/remove are exactly how a locked background image is managed). ----
   function selectedImage(s) {
+    if (s.imageEditSession && (s.selectedIds || [])[0] === "image-edit-session") return s.imageEditSession;
     const o = s.objects.find((x) => x.id === (s.selectedIds || [])[0]);
     return o && o.type === "image" ? o : null;
   }
@@ -2214,13 +2249,31 @@ export function initInspector(state) {
 
   imgAspectCb.addEventListener("change", () => {
     const val = imgAspectCb.checked;
+    if (state.get().imageEditSession) {
+      state.update((s2) => {
+        if (s2.imageEditSession) s2.imageEditSession.aspectLocked = val;
+      });
+      return;
+    }
     mutateImage((s2, o) => { if (o.aspectLocked === val) return false; o.aspectLocked = val; return true; });
   });
   imgLockCb.addEventListener("change", () => {
     const val = imgLockCb.checked;
-    mutateImage((s2, o) => { if (o.locked === val) return false; o.locked = val; return true; });
+    mutateImage((s2, o) => {
+      if (o.locked === val) return false;
+      o.locked = val;
+      if (val && o.mode === "background") {
+        s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== o.id);
+        if (s2.targetedId === o.id) s2.targetedId = null;
+      }
+      return true;
+    });
   });
   imgRemoveBtn.addEventListener("click", () => {
+    if (state.get().imageEditSession) {
+      cancelImageEditSession();
+      return;
+    }
     mutateImage((s2, o) => {
       s2.objects = s2.objects.filter((x) => x.id !== o.id);
       s2.selectedIds = [];
@@ -2348,23 +2401,186 @@ export function initInspector(state) {
   bgSection.className = "insp-section insp-bg-section";
   const bgSummary = document.createElement("summary");
   bgSummary.className = "insp-summary";
-  bgSummary.textContent = "배경 이미지";
+  bgSummary.textContent = "이미지";
   bgSection.appendChild(bgSummary);
   const bgBody = document.createElement("div");
   bgBody.className = "insp-body";
   bgSection.appendChild(bgBody);
-  bgSection.style.display = "none"; // toggled on by renderBgSection when one exists
+  bgSection.style.display = "";
   if (_inspectorRoot) _inspectorRoot.insertBefore(bgSection, _inspectorRoot.firstChild);
 
   // Snapshot that does NOT depend on selection: snapBefore() returns null when
   // nothing is selected, but bg controls act with no canvas selection at all.
   function snapObjectsAlways() { return JSON.parse(JSON.stringify(state.get().objects)); }
 
-  // While a row's 투명도 slider is mid-drag we skip rebuilding the list so the
-  // live drag isn't clobbered (mirror of the renderLayerPanel activeElement guard).
+  let _managedImageId = null;
   let _bgOpacityDragId = null;
 
+  function imageLabel(obj, index) {
+    return obj.name || obj.label || `이미지 ${index + 1}`;
+  }
+
+  function renderGlobalImagePanel(s) {
+    const images = (s.objects || []).filter((o) => o.type === "image");
+    bgSection.style.display = "";
+    if (_bgOpacityDragId) return;
+    bgBody.innerHTML = "";
+
+    if (!images.length) {
+      const empty = document.createElement("div");
+      empty.className = "objectify-status";
+      empty.style.margin = "0";
+      empty.textContent = "이미지 없음";
+      bgBody.appendChild(empty);
+      _managedImageId = null;
+      return;
+    }
+
+    const selectedImage = images.find((img) => (s.selectedIds || []).includes(img.id));
+    if (selectedImage) _managedImageId = selectedImage.id;
+    if (!_managedImageId || !images.some((img) => img.id === _managedImageId)) {
+      _managedImageId = (selectedImage || images[0]).id;
+    }
+    const img = images.find((item) => item.id === _managedImageId) || images[0];
+    const id = img.id;
+    const selectionLocked = !!(img.imageSelectionLocked === true || (img.mode === "background" && img.locked === true));
+
+    const selectRow = document.createElement("div");
+    selectRow.className = "insp-row";
+    const selectLbl = document.createElement("label");
+    selectLbl.className = "insp-field-label";
+    selectLbl.textContent = "이미지 선택";
+    const select = document.createElement("select");
+    select.className = "insp-input";
+    select.style.flex = "1";
+    images.forEach((image, index) => {
+      const opt = document.createElement("option");
+      opt.value = image.id;
+      opt.textContent = imageLabel(image, index);
+      select.appendChild(opt);
+    });
+    select.value = id;
+    select.addEventListener("change", () => {
+      _managedImageId = select.value;
+      state.update((s2) => {
+        const o = s2.objects.find((x) => x.id === _managedImageId);
+        if (!o) return;
+        if (o.imageSelectionLocked === true || (o.mode === "background" && o.locked === true)) {
+          s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== o.id);
+        } else {
+          s2.selectedIds = [o.id];
+          s2.targetedId = null;
+          s2.activeTool = "V";
+        }
+      });
+    });
+    selectRow.appendChild(selectLbl);
+    selectRow.appendChild(select);
+    bgBody.appendChild(selectRow);
+
+    const opRow = document.createElement("div");
+    opRow.className = "insp-row";
+    const opLbl = document.createElement("label");
+    opLbl.className = "insp-field-label";
+    opLbl.textContent = "투명도";
+    const opRange = document.createElement("input");
+    opRange.type = "range";
+    opRange.min = "0";
+    opRange.max = "1";
+    opRange.step = "0.01";
+    opRange.className = "insp-range";
+    opRange.style.flex = "1";
+    opRange.value = img.opacity ?? 1;
+    const opOut = document.createElement("span");
+    opOut.className = "insp-unit";
+    opOut.style.minWidth = "38px";
+    opOut.style.textAlign = "right";
+    opOut.textContent = `${Math.round((img.opacity ?? 1) * 100)}%`;
+    opRow.appendChild(opLbl);
+    opRow.appendChild(opRange);
+    opRow.appendChild(opOut);
+    bgBody.appendChild(opRow);
+
+    let _opSnap = null;
+    opRange.addEventListener("pointerdown", () => { _opSnap = snapObjectsAlways(); _bgOpacityDragId = id; });
+    opRange.addEventListener("input", () => {
+      const v = Math.max(0, Math.min(1, Number(opRange.value)));
+      opOut.textContent = `${Math.round(v * 100)}%`;
+      state.update((s2) => {
+        const o = s2.objects.find((x) => x.id === id);
+        if (o) o.opacity = v;
+      });
+    });
+    opRange.addEventListener("change", () => {
+      _bgOpacityDragId = null;
+      if (_opSnap) { pushSnap(_opSnap); _opSnap = null; }
+    });
+
+    const selectionLockRow = document.createElement("div");
+    selectionLockRow.className = "insp-row";
+    const selectionLockCb = document.createElement("input");
+    selectionLockCb.type = "checkbox";
+    selectionLockCb.className = "insp-cb";
+    selectionLockCb.checked = selectionLocked;
+    const selectionLockLbl = document.createElement("label");
+    selectionLockLbl.className = "insp-field-label";
+    selectionLockLbl.textContent = "선택금지";
+    selectionLockRow.appendChild(selectionLockCb);
+    selectionLockRow.appendChild(selectionLockLbl);
+    bgBody.appendChild(selectionLockRow);
+    selectionLockCb.addEventListener("change", () => {
+      const snap = snapObjectsAlways();
+      const locked = selectionLockCb.checked;
+      state.update((s2) => {
+        const o = s2.objects.find((x) => x.id === id);
+        if (!o) return;
+        o.imageSelectionLocked = locked;
+        if (locked) {
+          o.positionLocked = false;
+          s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== id);
+          if (s2.targetedId === id) s2.targetedId = null;
+        } else {
+          if (o.mode === "background" && o.locked === true) o.locked = false;
+          s2.selectedIds = [id];
+          s2.targetedId = null;
+          s2.activeTool = "V";
+        }
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+    });
+
+    const posLockRow = document.createElement("div");
+    posLockRow.className = "insp-row";
+    posLockRow.style.opacity = selectionLocked ? "0.45" : "";
+    const posLockCb = document.createElement("input");
+    posLockCb.type = "checkbox";
+    posLockCb.className = "insp-cb";
+    posLockCb.checked = !!img.positionLocked;
+    posLockCb.disabled = selectionLocked;
+    const posLockLbl = document.createElement("label");
+    posLockLbl.className = "insp-field-label";
+    posLockLbl.textContent = "위치고정";
+    posLockRow.appendChild(posLockCb);
+    posLockRow.appendChild(posLockLbl);
+    bgBody.appendChild(posLockRow);
+    posLockCb.addEventListener("change", () => {
+      if (posLockCb.disabled) return;
+      const snap = snapObjectsAlways();
+      const locked = posLockCb.checked;
+      state.update((s2) => {
+        const o = s2.objects.find((x) => x.id === id);
+        if (!o || o.imageSelectionLocked === true) return;
+        o.positionLocked = locked;
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+    });
+  }
+
   function renderBgSection(s) {
+    renderGlobalImagePanel(s);
+    return;
     const bgImages = (s.objects || []).filter((o) => o.type === "image" && o.mode === "background");
     bgSection.style.display = bgImages.length ? "" : "none";
     if (bgImages.length === 0) { bgBody.innerHTML = ""; return; }
@@ -2407,6 +2623,7 @@ export function initInspector(state) {
       opRow.appendChild(opRange);
       opRow.appendChild(opOut);
       col.appendChild(opRow);
+      opLbl.textContent = "투명도";
 
       let _opSnap = null;
       opRange.addEventListener("pointerdown", () => { _opSnap = snapObjectsAlways(); _bgOpacityDragId = id; });
@@ -2421,12 +2638,42 @@ export function initInspector(state) {
       });
 
       // 인식 토글 + 제거 buttons
+      const lockRow = document.createElement("div");
+      lockRow.className = "insp-row";
+      const lockCb = document.createElement("input");
+      lockCb.type = "checkbox";
+      lockCb.className = "insp-cb";
+      lockCb.checked = !!img.locked;
+      const lockLbl = document.createElement("label");
+      lockLbl.className = "insp-field-label";
+      lockLbl.textContent = "잠금";
+      lockRow.appendChild(lockCb);
+      lockRow.appendChild(lockLbl);
+      col.appendChild(lockRow);
+      lockLbl.textContent = "잠금";
+      lockCb.addEventListener("change", () => {
+        const snap = snapObjectsAlways();
+        const locked = lockCb.checked;
+        state.update((s2) => {
+          const o = s2.objects.find((x) => x.id === id);
+          if (!o || o.locked === locked) return;
+          o.locked = locked;
+          if (locked) {
+            s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== id);
+            if (s2.targetedId === id) s2.targetedId = null;
+          }
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        });
+      });
+
       const btnRow = document.createElement("div");
       btnRow.className = "insp-bg-btns";
 
       const recBtn = document.createElement("button");
       recBtn.type = "button";
       recBtn.className = "modal-btn";
+      queueMicrotask(() => { recBtn.textContent = img.recognized === true ? "배경으로 되돌리기" : "객체로 인식"; });
       recBtn.textContent = img.recognized === true ? "배경으로 되돌리기" : "객체로 인식";
       recBtn.addEventListener("click", () => {
         const snap = snapObjectsAlways();
@@ -2448,6 +2695,7 @@ export function initInspector(state) {
       const rmBtn = document.createElement("button");
       rmBtn.type = "button";
       rmBtn.className = "modal-btn";
+      queueMicrotask(() => { rmBtn.textContent = "배경 이미지 제거"; });
       rmBtn.textContent = "배경 이미지 제거";
       rmBtn.addEventListener("click", () => {
         const snap = snapObjectsAlways();
@@ -2589,6 +2837,30 @@ export function initInspector(state) {
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
 
+    if (s.imageEditSession) {
+      emptyEl.style.display = "none";
+      contentEl.style.display = "";
+      abSection.style.display = "none";
+      groupDiv.style.display = "none";
+      sec1.style.display = "none";
+      sec2.style.display = "none";
+      sec3.style.display = "none";
+      sec4.style.display = "none";
+      secText.style.display = "none";
+      imageSection.style.display = "none";
+      imageSection.open = true;
+      imgOpacityRow.style.display = "none";
+      imgAspectRow.style.display = "";
+      imgAspectCb.checked = s.imageEditSession.aspectLocked !== false;
+      imgLockRow.style.display = "none";
+      imgExportNote.style.display = "none";
+      imgCutoutBlock.style.display = "";
+      imgClearCutBtn.style.display = (s.imageEditSession.cutouts || []).length ? "" : "none";
+      queueMicrotask(() => { imgRemoveBtn.textContent = "이미지 삭제"; });
+      imgRemoveBtn.textContent = "이미지 편집 취소";
+      return;
+    }
+
     if (ids.length === 0) {
       emptyEl.style.display = "";
       contentEl.style.display = "none";
@@ -2602,7 +2874,7 @@ export function initInspector(state) {
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
-    imageSection.style.display = "none"; // shown only for a single image object (set below)
+    imageSection.style.display = "none";
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
     // line (set in the single-selection branch); hidden in every other case.
     boxLabelRow.style.display = "none";
@@ -2813,9 +3085,12 @@ export function initInspector(state) {
     // Text/image have no stroke/fill controls; text gets 글꼴, image gets 이미지.
     sec1.style.display = (isText || isImage) ? "none" : "";
     secText.style.display = isText ? "" : "none";
-    imageSection.style.display = isImage ? "" : "none";
+    imageSection.style.display = "none";
     if (isImage) {
+      imageSection.open = true;
       const isBg = obj.mode === "background";
+      imgOpacityRow.style.display = isBg ? "" : "none";
+      imgLockRow.style.display = "";
       if (document.activeElement !== imgOpacityRange) {
         imgOpacityRange.value = obj.opacity ?? 1;
         imgOpacityOut.textContent = `${Math.round((obj.opacity ?? 1) * 100)}%`;
@@ -2826,12 +3101,12 @@ export function initInspector(state) {
       imgAspectCb.checked = obj.aspectLocked !== false;
       imgLockCb.checked = !!obj.locked;
       imgExportNote.style.display = (obj.exportable === false) ? "" : "none";
+      queueMicrotask(() => { imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거"; });
       imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거";
       // Cutout editing: edit-mode images only (never background). "지운 영역 초기화"
       // appears only when the image actually has one or more cutouts.
-      const hasCutouts = Array.isArray(obj.cutouts) && obj.cutouts.length > 0;
-      imgCutoutBlock.style.display = isBg ? "none" : "";
-      imgClearCutBtn.style.display = (!isBg && hasCutouts) ? "" : "none";
+      imgCutoutBlock.style.display = "none";
+      imgClearCutBtn.style.display = "none";
     }
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;

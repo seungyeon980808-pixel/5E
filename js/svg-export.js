@@ -18,7 +18,7 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=0.38.0";
+import { renderObject, makeFillPattern } from "./render.js?v=0.39.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -43,10 +43,13 @@ export function getDefaultExportFilename(ext) {
 // font installed on the exporting machine — no @font-face, no base64 inlining.
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
-function isHidden(s, obj) {
-  // Background-mode tracing images are marked exportable:false and must never
-  // appear in the final SVG/PNG (they exist only as an on-canvas drawing aid).
-  if (obj.type === "image" && obj.exportable === false) return true;
+function isReferenceImage(obj) {
+  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
+}
+
+function isHidden(s, obj, options = {}) {
+  if (obj.type === "image" && options.includeReferenceImages === false && isReferenceImage(obj)) return true;
+  if (obj.type !== "image" && obj.exportable === false) return true;
   const layer = (s.layers || []).find((l) => l.id === (obj.layerId ?? 1));
   return layer && layer.visible === false;
 }
@@ -105,7 +108,7 @@ function exportRegion(s, bounds) {
 /* ----- build the standalone export <svg> for the current state ----- */
 // Background stays transparent here; PNG export adds its own white rect.
 // `bounds` (optional) = a world-coordinate {x,y,w,h} rectangle to crop to.
-export function buildExportSvg(s, bounds = null) {
+export function buildExportSvg(s, bounds = null, options = {}) {
   const { x, y, w, h } = exportRegion(s, bounds);
 
   const svg = document.createElementNS(SVG_NS, "svg");
@@ -130,7 +133,7 @@ export function buildExportSvg(s, bounds = null) {
   defs.appendChild(clip);
 
   for (const obj of s.objects) {
-    if (isHidden(s, obj)) continue;
+    if (isHidden(s, obj, options)) continue;
     const pat = makeFillPattern(obj);
     if (pat) defs.appendChild(pat);
   }
@@ -141,7 +144,7 @@ export function buildExportSvg(s, bounds = null) {
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("clip-path", "url(#artboard-clip)");
   for (const obj of s.objects) {
-    if (isHidden(s, obj)) continue;
+    if (isHidden(s, obj, options)) continue;
     const el = renderObject(obj);
     if (el) g.appendChild(el);
   }
@@ -152,12 +155,12 @@ export function buildExportSvg(s, bounds = null) {
 
 /* ----- exportSvg: serialize the export SVG and trigger a download ----- */
 // `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
-export async function exportSvg(state, filename, bounds = null) {
+export async function exportSvg(state, filename, bounds = null, options = {}) {
   const name = filename || getDefaultExportFilename("svg");
   // Ask for the save location first, while still inside the user gesture.
   const handle = await pickSaveHandle(name, { mime: "image/svg+xml", ext: ".svg", description: "SVG 이미지" });
   if (handle === null) return; // user cancelled the save dialog
-  const svg = buildExportSvg(state.get(), bounds);
+  const svg = buildExportSvg(state.get(), bounds, options);
   const source = new XMLSerializer().serializeToString(svg);
   // XML prolog keeps the file valid as a standalone .svg document.
   const doc = `<?xml version="1.0" encoding="UTF-8"?>\n${source}`;
@@ -172,7 +175,7 @@ export async function exportSvg(state, filename, bounds = null) {
 
 /* ----- exportPng: rasterize the export SVG at a DPI onto a white canvas ----- */
 // `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
-export async function exportPng(state, filename, dpi, bounds = null) {
+export async function exportPng(state, filename, dpi, bounds = null, options = {}) {
   const name = filename || getDefaultExportFilename("png");
   // Ask for the save location first, while still inside the user gesture (before
   // the async rasterization below, which would otherwise lose the activation).
@@ -186,7 +189,7 @@ export async function exportPng(state, filename, dpi, bounds = null) {
   const pixelW = Math.round((w / MM_PER_INCH) * dpi);
   const pixelH = Math.round((h / MM_PER_INCH) * dpi);
 
-  const svg = buildExportSvg(s, bounds);
+  const svg = buildExportSvg(s, bounds, options);
 
   // White background first (PNG with white bg is standard for print/hwp).
   const bg = document.createElementNS(SVG_NS, "rect");

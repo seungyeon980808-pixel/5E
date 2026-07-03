@@ -11,9 +11,9 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.38.0";
-import { registerTopMenu } from "./top-menu.js?v=0.38.0";
-import { screenToWorld } from "./viewport.js?v=0.38.0";
+import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.39.0";
+import { registerTopMenu } from "./top-menu.js?v=0.39.0";
+import { screenToWorld } from "./viewport.js?v=0.39.0";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -77,6 +77,11 @@ function buildModal() {
           <button type="button" class="seg-btn" data-dpi="400">400 dpi</button>
         </div>
       </div>
+
+      <label class="modal-field modal-field-row" for="export-include-reference-images">
+        <input type="checkbox" id="export-include-reference-images" checked />
+        <span class="modal-label">배경/참고 이미지 포함</span>
+      </label>
 
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="export-cancel">취소</button>
@@ -212,6 +217,7 @@ export function initExportDialog(state, svg) {
   const dpiGroup = overlay.querySelector("#export-dpi");
   const dpiField = overlay.querySelector("#export-dpi-field");
   const filenameInput = overlay.querySelector("#export-filename");
+  const includeReferenceImagesInput = overlay.querySelector("#export-include-reference-images");
 
   function showModal() {
     overlay.hidden = false;
@@ -261,11 +267,12 @@ export function initExportDialog(state, svg) {
   function doExport(bounds) {
     const name = (filenameInput.value || "").trim() || defaultNameBase();
     const format = segValue(formatGroup, "data-format");
+    const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
     if (format === "svg") {
-      exportSvg(state, `${name}.svg`, bounds);
+      exportSvg(state, `${name}.svg`, bounds, options);
     } else {
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
-      exportPng(state, `${name}.png`, dpi, bounds);
+      exportPng(state, `${name}.png`, dpi, bounds, options);
     }
   }
 
