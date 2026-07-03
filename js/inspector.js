@@ -1,9 +1,9 @@
 /* ===== INSPECTOR (right panel — shows/edits selected object properties) ===== */
 
-import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.40.1";
-import { openAngleArcLabelEditor } from "./tools.js?v=0.40.1";
-import { resolveObjectStyle } from "./style-mode.js?v=0.40.1";
-import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "./image-cutout.js?v=0.40.1";
+import { TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt, ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES, normalizeTextRunStyle } from "./state.js?v=0.41.0";
+import { openAngleArcLabelEditor } from "./tools.js?v=0.41.0";
+import { resolveObjectStyle } from "./style-mode.js?v=0.41.0";
+import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "./image-cutout.js?v=0.41.0";
 
 const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
@@ -2227,11 +2227,11 @@ export function initInspector(state) {
     </svg>
   </span><span>자유 영역 지우기</span>`;
   imgRectEraseBtn.onclick = async () => {
-    const mod = await import("./image-cutout.js?v=0.40.1");
+    const mod = await import("./image-cutout.js?v=0.41.0");
     mod.startRectErase();
   };
   imgPathEraseBtn.onclick = async () => {
-    const mod = await import("./image-cutout.js?v=0.40.1");
+    const mod = await import("./image-cutout.js?v=0.41.0");
     mod.startPathErase();
   };
 
