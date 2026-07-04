@@ -11,10 +11,10 @@ import {
   catmullRomClosedPath,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.44.3";
-import { withBoxLabel, withLineLabel } from "./labels.js?v=0.44.3";
-import { resolveFill } from "./fill.js?v=0.44.3";
-import { getSvgAsset } from "../svg-assets.js?v=0.44.3";
+} from "./core.js?v=0.44.4";
+import { withBoxLabel, withLineLabel } from "./labels.js?v=0.44.4";
+import { resolveFill } from "./fill.js?v=0.44.4";
+import { getSvgAsset } from "../svg-assets.js?v=0.44.4";
 
 /* ----- rect: size-based shape (DESIGN 2-1 branch A) ----- */
 function renderRect(obj) {

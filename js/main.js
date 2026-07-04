@@ -7,22 +7,22 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.44.3";
-import { render } from "./render.js?v=0.44.3";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.44.3";
-import { initTools } from "./tools.js?v=0.44.3";
-import { initTransform, undo, redo } from "./transform.js?v=0.44.3";
-import { initInspector } from "./inspector.js?v=0.44.3";
-import { initProjectIO } from "./project-io.js?v=0.44.3";
-import { initExportDialog } from "./export-dialog.js?v=0.44.3";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.44.3";
-import { initSettings } from "./settings.js?v=0.44.3";
-import { initImageObjectify } from "./image-objectify.js?v=0.44.3";
-import { initImageImportMock } from "./image-import-mock.js?v=0.44.3";
-import { initImagePaste } from "./image-paste.js?v=0.44.3";
-import { initImageCutout } from "./image-cutout.js?v=0.44.3";
-import { initTemplates } from "./templates.js?v=0.44.3";
-import { initObjectSearch } from "./search.js?v=0.44.3";
+import { state } from "./state.js?v=0.44.4";
+import { render } from "./render.js?v=0.44.4";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.44.4";
+import { initTools } from "./tools.js?v=0.44.4";
+import { initTransform, undo, redo } from "./transform.js?v=0.44.4";
+import { initInspector } from "./inspector.js?v=0.44.4";
+import { initProjectIO } from "./project-io.js?v=0.44.4";
+import { initExportDialog } from "./export-dialog.js?v=0.44.4";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.44.4";
+import { initSettings } from "./settings.js?v=0.44.4";
+import { initImageObjectify } from "./image-objectify.js?v=0.44.4";
+import { initImageImportMock } from "./image-import-mock.js?v=0.44.4";
+import { initImagePaste } from "./image-paste.js?v=0.44.4";
+import { initImageCutout } from "./image-cutout.js?v=0.44.4";
+import { initTemplates } from "./templates.js?v=0.44.4";
+import { initObjectSearch } from "./search.js?v=0.44.4";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -263,7 +263,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v0.44.3] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v0.44.4] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +
