@@ -1,6 +1,6 @@
 /* ===== GEOMETRY (pure math helpers) ===== */
 //
-// MOVE-ONLY extraction from tools.js (v0.43.0). Every function here is PURE:
+// MOVE-ONLY extraction from tools.js (v0.44.0). Every function here is PURE:
 // no module-level state, no DOM/SVG access — safe to import from anywhere.
 
 function snapLineEnd(start, end, ctrlHeld) {

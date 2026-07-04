@@ -1,5 +1,5 @@
 /* ===== INSPECTOR SECTION — 그룹 (개체 풀기 / 묶기 buttons) =====
- * Extracted verbatim from initInspector() in js/inspector.js (v0.43.0
+ * Extracted verbatim from initInspector() in js/inspector.js (v0.44.0
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
