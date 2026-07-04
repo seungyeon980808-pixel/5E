@@ -1,440 +1,43 @@
-/* ===== IMAGE OBJECTIFY (local image -> editable line rough draft) ===== */
+/* ===== IMAGE OBJECTIFY (PNG → 분리된 편집 객체 삽입 UI) =====
+//
+// 인수인계서(5E_인수인계서_v2) 2단계 구현: 서로 떨어져 있는 잉크 덩어리를 각각
+// 개별 오브젝트로 분리해 기존 타입(polyline/text/group)으로만 삽입한다.
+// 알고리즘 본체는 image-vectorize.js (데모 exam_figure_editor_demo.html 이식본).
+//
+// 스키마 매핑 (스키마 변경 금지 원칙):
+//  - 윤곽 루프 1개 → closed polyline (검정 채움, strokeWidth 0)
+//  - 구멍 루프     → closed polyline (흰색 채움) — 같은 컴포넌트의 바깥 루프 위에 쌓임
+//  - 글자 판정 덩어리 → 옵션: 남기기(polyline) / 지우기 / 텍스트 객체 대체(A,B,C…)
+//  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
+// 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.42.0";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.42.0";
+import { vectorizeImage } from "./image-vectorize.js?v=0.42.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
-const MAX_PROCESS_DIMENSION = 1600;
-const MAX_LINES = 12;
+const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
+const ARTBOARD_FIT_RATIO = 0.8;     // 인수인계서 §3: 아트보드 폭 80%에 맞춰 중앙 배치
 let idCounter = 0;
-const OBJECTIFY_STROKE_WIDTH = 0.2;
 
-function cloneObjects(objects) {
-  return JSON.parse(JSON.stringify(objects));
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+function round3(value) {
+  return Math.round(value * 1000) / 1000;
+}
+// 0→A, 1→B, … 25→Z, 26→AA … (재라벨링 자리표시용 순번 라벨)
+function sequenceLabel(index) {
+  let label = "";
+  let n = index;
+  do {
+    label = String.fromCharCode(65 + (n % 26)) + label;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return label;
 }
 
-function buildDarkMask(canvas, threshold) {
-  const { width, height } = canvas;
-  const rgba = canvas.getContext("2d").getImageData(0, 0, width, height).data;
-  const dark = new Uint8Array(width * height);
-  for (let i = 0, p = 0; i < rgba.length; i += 4, p += 1) {
-    dark[p] = (rgba[i] * 0.299 + rgba[i + 1] * 0.587 + rgba[i + 2] * 0.114) < threshold ? 1 : 0;
-  }
-  return dark;
-}
-
-function cross(a, b, c) {
-  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
-}
-
-function convexHull(points) {
-  const sorted = points.slice().sort((a, b) => a.x - b.x || a.y - b.y);
-  if (sorted.length <= 3) return sorted;
-  const lower = [];
-  for (const point of sorted) {
-    while (lower.length >= 2 && cross(lower.at(-2), lower.at(-1), point) <= 0) lower.pop();
-    lower.push(point);
-  }
-  const upper = [];
-  for (let i = sorted.length - 1; i >= 0; i -= 1) {
-    const point = sorted[i];
-    while (upper.length >= 2 && cross(upper.at(-2), upper.at(-1), point) <= 0) upper.pop();
-    upper.push(point);
-  }
-  lower.pop();
-  upper.pop();
-  return lower.concat(upper);
-}
-
-function pointLineDistance(point, a, b) {
-  const dx = b.x - a.x, dy = b.y - a.y;
-  if (dx === 0 && dy === 0) return Math.hypot(point.x - a.x, point.y - a.y);
-  return Math.abs(dy * point.x - dx * point.y + b.x * a.y - b.y * a.x) / Math.hypot(dx, dy);
-}
-
-function pointSegmentDistance(point, a, b) {
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const lengthSquared = dx * dx + dy * dy;
-  if (!lengthSquared) return Math.hypot(point.x - a.x, point.y - a.y);
-  const t = Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared));
-  return Math.hypot(point.x - (a.x + t * dx), point.y - (a.y + t * dy));
-}
-
-function simplifyPolyline(points, tolerance) {
-  if (points.length <= 3) return points;
-  let farthest = 0, index = -1;
-  for (let i = 1; i < points.length - 1; i += 1) {
-    const distance = pointLineDistance(points[i], points[0], points.at(-1));
-    if (distance > farthest) { farthest = distance; index = i; }
-  }
-  if (farthest <= tolerance) return [points[0], points.at(-1)];
-  const left = simplifyPolyline(points.slice(0, index + 1), tolerance);
-  const right = simplifyPolyline(points.slice(index), tolerance);
-  return left.slice(0, -1).concat(right);
-}
-
-function polygonArea(points) {
-  let area = 0;
-  for (let i = 0; i < points.length; i += 1) {
-    const next = points[(i + 1) % points.length];
-    area += points[i].x * next.y - next.x * points[i].y;
-  }
-  return Math.abs(area) / 2;
-}
-
-function detectOuterFrame(dark, width, height, minLength) {
-  let minX = width, minY = height, maxX = -1, maxY = -1;
-  for (let index = 0; index < dark.length; index += 1) {
-    if (!dark[index]) continue;
-    const x = index % width, y = (index / width) | 0;
-    minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-    minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-  }
-  const w = maxX - minX + 1, h = maxY - minY + 1;
-  if (maxX < 0 || w < minLength || h < minLength) return null;
-  const band = Math.max(2, Math.round(Math.min(w, h) * 0.012));
-  let top = 0, bottom = 0, left = 0, right = 0;
-  for (let x = minX; x <= maxX; x += 1) {
-    for (let d = 0; d <= band; d += 1) {
-      if (dark[(minY + d) * width + x]) { top += 1; break; }
-    }
-    for (let d = 0; d <= band; d += 1) {
-      if (dark[(maxY - d) * width + x]) { bottom += 1; break; }
-    }
-  }
-  for (let y = minY; y <= maxY; y += 1) {
-    for (let d = 0; d <= band; d += 1) {
-      if (dark[y * width + minX + d]) { left += 1; break; }
-    }
-    for (let d = 0; d <= band; d += 1) {
-      if (dark[y * width + maxX - d]) { right += 1; break; }
-    }
-  }
-  if (Math.min(top / w, bottom / w, left / h, right / h) < 0.65) return null;
-  return { type: "rect", x: minX, y: minY, w, h, area: w * h };
-}
-
-function consolidateFragmentedEllipse(shapes, dark, width, height) {
-  const fragments = shapes.filter((shape) => shape.type === "polyline");
-  if (fragments.length < 3) return shapes;
-  const minX = Math.min(...fragments.map((shape) => shape.x));
-  const minY = Math.min(...fragments.map((shape) => shape.y));
-  const maxX = Math.max(...fragments.map((shape) => shape.x + shape.w - 1));
-  const maxY = Math.max(...fragments.map((shape) => shape.y + shape.h - 1));
-  const w = maxX - minX + 1, h = maxY - minY + 1;
-  if (w < 12 || h < 12) return shapes;
-  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-  const rx = w / 2, ry = h / 2;
-  const band = Math.max(3, Math.round(Math.min(w, h) * 0.035));
-  let supported = 0;
-  const samples = 96;
-  for (let i = 0; i < samples; i += 1) {
-    const angle = i * Math.PI * 2 / samples;
-    const x = Math.round(cx + rx * Math.cos(angle));
-    const y = Math.round(cy + ry * Math.sin(angle));
-    let hit = false;
-    for (let dy = -band; dy <= band && !hit; dy += 1) {
-      for (let dx = -band; dx <= band; dx += 1) {
-        const sx = x + dx, sy = y + dy;
-        if (sx >= 0 && sx < width && sy >= 0 && sy < height && dark[sy * width + sx]) {
-          hit = true;
-          break;
-        }
-      }
-    }
-    if (hit) supported += 1;
-  }
-  if (supported / samples < 0.68) return shapes;
-  const fragmentSet = new Set(fragments);
-  return shapes.filter((shape) => !fragmentSet.has(shape)).concat({
-    type: "ellipse", x: minX, y: minY, w, h,
-    area: fragments.reduce((sum, shape) => sum + shape.area, 0),
-  });
-}
-
-function detectClosedShapes(dark, width, height, minLength) {
-  const labels = new Uint32Array(width * height);
-  const queue = new Int32Array(width * height);
-  const shapes = [];
-  const minimumSize = Math.max(12, minLength * 0.6);
-  let componentId = 0;
-
-  for (let start = 0; start < dark.length; start += 1) {
-    if (dark[start] || labels[start]) continue;
-    componentId += 1;
-    let head = 0, tail = 0;
-    let minX = width, minY = height, maxX = 0, maxY = 0;
-    let touchesEdge = false;
-    const boundary = [];
-    labels[start] = componentId;
-    queue[tail++] = start;
-    while (head < tail) {
-      const index = queue[head++];
-      const x = index % width, y = (index / width) | 0;
-      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
-      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
-      if (x === 0 || y === 0 || x === width - 1 || y === height - 1) touchesEdge = true;
-      if (x === 0 || y === 0 || x === width - 1 || y === height - 1 ||
-          dark[index - 1] || dark[index + 1] || dark[index - width] || dark[index + width]) {
-        boundary.push({ x, y });
-      }
-      if (x > 0 && !dark[index - 1] && !labels[index - 1]) {
-        labels[index - 1] = componentId; queue[tail++] = index - 1;
-      }
-      if (x < width - 1 && !dark[index + 1] && !labels[index + 1]) {
-        labels[index + 1] = componentId; queue[tail++] = index + 1;
-      }
-      if (y > 0 && !dark[index - width] && !labels[index - width]) {
-        labels[index - width] = componentId; queue[tail++] = index - width;
-      }
-      if (y < height - 1 && !dark[index + width] && !labels[index + width]) {
-        labels[index + width] = componentId; queue[tail++] = index + width;
-      }
-    }
-    const w = maxX - minX + 1, h = maxY - minY + 1;
-    if (touchesEdge || w < minimumSize || h < minimumSize || tail < minimumSize * minimumSize * 0.35) continue;
-
-    const fillRatio = tail / (w * h);
-    let type = null;
-    if (fillRatio >= 0.86) {
-      type = "rect";
-    } else if (fillRatio >= 0.68 && fillRatio <= 0.86) {
-      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-      const rx = w / 2, ry = h / 2;
-      let expected = 0, mismatch = 0;
-      const step = Math.max(1, Math.ceil(Math.max(w, h) / 160));
-      for (let y = minY; y <= maxY; y += step) {
-        for (let x = minX; x <= maxX; x += step) {
-          const insideEllipse = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
-          const insideRegion = labels[y * width + x] === componentId;
-          if (insideEllipse) expected += 1;
-          if (insideEllipse !== insideRegion) mismatch += 1;
-        }
-      }
-      if (expected && mismatch / expected <= 0.18) type = "ellipse";
-    }
-    if (type) {
-      shapes.push({ type, x: minX, y: minY, w, h, area: tail });
-      continue;
-    }
-
-    // A large, compact non-elliptic enclosure is one editable polygon, not a
-    // collection of line fragments. The hull intentionally drops raster noise.
-    if (fillRatio >= 0.32 && boundary.length >= 3) {
-      const hull = convexHull(boundary);
-      const hullArea = polygonArea(hull);
-      const solidity = hullArea ? tail / hullArea : 0;
-      const tolerance = Math.max(2, Math.min(w, h) * 0.025);
-      const simplified = simplifyPolyline(hull.concat(hull[0]), tolerance).slice(0, -1);
-      if (solidity >= 0.82 && simplified.length >= 3 && simplified.length <= 16) {
-        shapes.push({ type: "polyline", points: simplified, x: minX, y: minY, w, h, area: tail });
-      }
-    }
-  }
-  return shapes.sort((a, b) => b.area - a.area).slice(0, 16);
-}
-
-function maskShapes(dark, width, height, shapes) {
-  const masked = dark.slice();
-  for (const shape of shapes) {
-    const padding = Math.max(3, Math.round(Math.min(shape.w, shape.h) * 0.04));
-    const left = Math.max(0, shape.x - padding), top = Math.max(0, shape.y - padding);
-    const right = Math.min(width - 1, shape.x + shape.w - 1 + padding);
-    const bottom = Math.min(height - 1, shape.y + shape.h - 1 + padding);
-    if (shape.type === "rect" || shape.type === "polyline") {
-      if (shape.type === "polyline") {
-        const edges = shape.points.map((point, index) => [point, shape.points[(index + 1) % shape.points.length]]);
-        for (let y = top; y <= bottom; y += 1) {
-          for (let x = left; x <= right; x += 1) {
-            if (edges.some(([a, b]) => pointSegmentDistance({ x, y }, a, b) <= padding)) {
-              masked[y * width + x] = 0;
-            }
-          }
-        }
-        continue;
-      }
-      for (let y = top; y <= bottom; y += 1) {
-        if (y <= shape.y + padding || y >= shape.y + shape.h - 1 - padding) {
-          masked.fill(0, y * width + left, y * width + right + 1);
-        } else {
-          masked.fill(0, y * width + left, y * width + Math.min(right + 1, shape.x + padding + 1));
-          masked.fill(0, y * width + Math.max(left, shape.x + shape.w - 1 - padding), y * width + right + 1);
-        }
-      }
-    } else {
-      const cx = shape.x + (shape.w - 1) / 2, cy = shape.y + (shape.h - 1) / 2;
-      const rx = Math.max(1, shape.w / 2), ry = Math.max(1, shape.h / 2);
-      const band = padding / Math.min(rx, ry);
-      for (let y = top; y <= bottom; y += 1) {
-        for (let x = left; x <= right; x += 1) {
-          const radius = Math.sqrt(((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2);
-          if (Math.abs(radius - 1) <= band) masked[y * width + x] = 0;
-        }
-      }
-    }
-  }
-  return masked;
-}
-
-function mergeLineSegments(segments, minLength) {
-  const normalized = segments.map((line) => {
-    const rawAngle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
-    const angle = (rawAngle + Math.PI) % Math.PI;
-    const ux = Math.cos(angle), uy = Math.sin(angle);
-    const offset = -uy * line.x1 + ux * line.y1;
-    const a = ux * line.x1 + uy * line.y1, b = ux * line.x2 + uy * line.y2;
-    return { ...line, angle, ux, uy, offset, start: Math.min(a, b), end: Math.max(a, b) };
-  }).sort((a, b) => (b.end - b.start) - (a.end - a.start));
-  const merged = [];
-  const angleTolerance = 12 * Math.PI / 180;
-  const maxGap = Math.max(20, minLength);
-  for (const line of normalized) {
-    let target = null;
-    let projectedStart = 0, projectedEnd = 0;
-    for (const other of merged) {
-      let angleDistance = Math.abs(other.angle - line.angle) % Math.PI;
-      angleDistance = Math.min(angleDistance, Math.PI - angleDistance);
-      if (angleDistance > angleTolerance) continue;
-      const midX = (line.x1 + line.x2) / 2, midY = (line.y1 + line.y2) / 2;
-      if (Math.abs(-other.uy * midX + other.ux * midY - other.offset) > Math.max(10, minLength * 0.12)) continue;
-      const a = other.ux * line.x1 + other.uy * line.y1;
-      const b = other.ux * line.x2 + other.uy * line.y2;
-      const start = Math.min(a, b), end = Math.max(a, b);
-      if (start > other.end + maxGap || end < other.start - maxGap) continue;
-      target = other;
-      projectedStart = start;
-      projectedEnd = end;
-      break;
-    }
-    if (!target) {
-      merged.push({ ...line });
-      continue;
-    }
-    target.start = Math.min(target.start, projectedStart);
-    target.end = Math.max(target.end, projectedEnd);
-  }
-  return merged.map((line) => ({
-    x1: line.ux * line.start - line.uy * line.offset,
-    y1: line.uy * line.start + line.ux * line.offset,
-    x2: line.ux * line.end - line.uy * line.offset,
-    y2: line.uy * line.end + line.ux * line.offset,
-    votes: line.votes || 0,
-  })).filter((line) => Math.hypot(line.x2 - line.x1, line.y2 - line.y1) >= minLength);
-}
-
-function detectLineSegments(dark, width, height, minLength) {
-
-  const edges = [];
-  const sampleStep = Math.max(1, Math.ceil(Math.sqrt((width * height) / 250000)));
-  for (let y = 1; y < height - 1; y += sampleStep) {
-    for (let x = 1; x < width - 1; x += sampleStep) {
-      const p = y * width + x;
-      if (!dark[p]) continue;
-      if (!dark[p - 1] || !dark[p + 1] || !dark[p - width] || !dark[p + width]) edges.push({ x, y });
-    }
-  }
-  if (edges.length < 2) return [];
-
-  const thetaCount = 90;
-  const diagonal = Math.ceil(Math.hypot(width, height));
-  const rhoCount = diagonal * 2 + 1;
-  const accumulator = new Uint32Array(thetaCount * rhoCount);
-  const trig = Array.from({ length: thetaCount }, (_, i) => {
-    const angle = i * 2 * Math.PI / 180;
-    return { cos: Math.cos(angle), sin: Math.sin(angle) };
-  });
-  const pointStride = Math.max(1, Math.ceil(edges.length / 20000));
-  for (let p = 0; p < edges.length; p += pointStride) {
-    const point = edges[p];
-    for (let t = 0; t < thetaCount; t += 1) {
-      const rho = Math.round(point.x * trig[t].cos + point.y * trig[t].sin) + diagonal;
-      accumulator[t * rhoCount + rho] += 1;
-    }
-  }
-
-  const voteFloor = Math.max(20, Math.round(minLength / Math.max(1, sampleStep * 1.5)));
-  const peaks = [];
-  for (let t = 0; t < thetaCount; t += 1) {
-    for (let rho = 0; rho < rhoCount; rho += 1) {
-      const votes = accumulator[t * rhoCount + rho];
-      if (votes >= voteFloor) peaks.push({ t, rho: rho - diagonal, votes });
-    }
-  }
-  peaks.sort((a, b) => b.votes - a.votes);
-
-  const accepted = [];
-  for (const peak of peaks) {
-    if (accepted.length >= 60) break;
-    if (accepted.some((other) => {
-      const thetaDistance = Math.abs(other.t - peak.t);
-      if (thetaDistance <= 8) return Math.abs(other.rho - peak.rho) <= 14;
-      return thetaDistance >= thetaCount - 8 && Math.abs(other.rho + peak.rho) <= 14;
-    })) continue;
-    const { cos, sin } = trig[peak.t];
-    const alongX = -sin, alongY = cos;
-    const projected = [];
-    for (const point of edges) {
-      if (Math.abs(point.x * cos + point.y * sin - peak.rho) <= Math.max(2, sampleStep * 1.5)) {
-        projected.push(point.x * alongX + point.y * alongY);
-      }
-    }
-    projected.sort((a, b) => a - b);
-    if (projected.length < 2) continue;
-    const maxGap = Math.max(6, minLength * 0.2);
-    let runStart = projected[0];
-    for (let i = 1; i <= projected.length; i += 1) {
-      if (i < projected.length && projected[i] - projected[i - 1] <= maxGap) continue;
-      const runEnd = projected[i - 1];
-      if (runEnd - runStart >= minLength) {
-        accepted.push({
-          t: peak.t, rho: peak.rho,
-          votes: peak.votes,
-          x1: cos * peak.rho + alongX * runStart,
-          y1: sin * peak.rho + alongY * runStart,
-          x2: cos * peak.rho + alongX * runEnd,
-          y2: sin * peak.rho + alongY * runEnd,
-        });
-        if (accepted.length >= 60) break;
-      }
-      if (i < projected.length) runStart = projected[i];
-    }
-  }
-  return mergeLineSegments(accepted, minLength);
-}
-
-function detectObjects(canvas, threshold, minLength) {
-  const { width, height } = canvas;
-  const effectiveMinLength = Math.max(minLength, Math.hypot(width, height) * 0.045);
-  const dark = buildDarkMask(canvas, threshold);
-  const outerFrame = detectOuterFrame(dark, width, height, effectiveMinLength);
-  let shapes = detectClosedShapes(dark, width, height, effectiveMinLength);
-  if (outerFrame) {
-    const edgeTolerance = Math.max(5, Math.min(outerFrame.w, outerFrame.h) * 0.04);
-    shapes = shapes.filter((shape) => {
-      const sameFrame = Math.abs(shape.x - outerFrame.x) <= edgeTolerance &&
-        Math.abs(shape.y - outerFrame.y) <= edgeTolerance &&
-        Math.abs(shape.x + shape.w - outerFrame.x - outerFrame.w) <= edgeTolerance &&
-        Math.abs(shape.y + shape.h - outerFrame.y - outerFrame.h) <= edgeTolerance;
-      if (sameFrame) return false;
-      if (shape.type !== "polyline") return true;
-      const touchesFrame = shape.x - outerFrame.x <= edgeTolerance ||
-        shape.y - outerFrame.y <= edgeTolerance ||
-        outerFrame.x + outerFrame.w - shape.x - shape.w <= edgeTolerance ||
-        outerFrame.y + outerFrame.h - shape.y - shape.h <= edgeTolerance;
-      return !touchesFrame;
-    });
-    shapes.unshift(outerFrame);
-  }
-  shapes = consolidateFragmentedEllipse(shapes, dark, width, height);
-  const segments = detectLineSegments(maskShapes(dark, width, height, shapes), width, height, effectiveMinLength)
-    .sort((a, b) => {
-      const scoreA = Math.hypot(a.x2 - a.x1, a.y2 - a.y1) * (1 + Math.log1p(a.votes));
-      const scoreB = Math.hypot(b.x2 - b.x1, b.y2 - b.y1) * (1 + Math.log1p(b.votes));
-      return scoreB - scoreA;
-    })
-    .slice(0, MAX_LINES);
-  return { shapes, segments };
-}
-
+/* ===== 모달 DOM ===== */
 function buildModal() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -442,25 +45,46 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-objectify" role="dialog" aria-modal="true" aria-labelledby="objectify-title">
       <h2 class="modal-title" id="objectify-title">이미지 객체화</h2>
-      <p class="objectify-description">흑백 선 그림에서 직선 후보를 찾아 편집 가능한 초안으로 만듭니다. 완벽한 복원이 아닌 따라 그리기용 결과입니다.</p>
+      <p class="objectify-description">떨어져 있는 잉크 덩어리를 각각 편집 가능한 객체로 분리합니다. 흰 배경은 벡터화 과정에서 자동으로 제거(투명)됩니다. 붙어 있는 도형은 한 덩어리가 되며, 삽입 후 지우개·삭제로 마무리하세요.</p>
       <input id="objectify-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden />
       <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일 선택, 끌어 놓기 또는 Ctrl+V 붙여넣기</div>
-      <canvas id="objectify-preview" class="objectify-preview" width="560" height="240" hidden></canvas>
-      <div class="objectify-controls">
+      <canvas id="objectify-preview" class="objectify-preview" width="560" height="240" hidden style="cursor:pointer;"></canvas>
+      <p class="objectify-description" id="objectify-legend" hidden>
+        <span style="color:#0969da;">■ 도형</span>&nbsp;
+        <span style="color:#e35d6a;">■ 글자 추정</span>&nbsp;·&nbsp;미리보기에서 덩어리를 클릭하면 제외/포함이 전환됩니다.
+      </p>
+      <div class="objectify-controls" style="grid-template-columns:1fr 1fr;">
         <label class="modal-field">
-          <span class="modal-label">임계값</span>
-          <span class="objectify-range-row"><input id="objectify-threshold" type="range" min="0" max="255" value="180" /><output class="objectify-range-value">180</output></span>
+          <span class="modal-label">오브젝트 묶음 거리</span>
+          <span class="objectify-range-row"><input id="objectify-dilate" type="range" min="1" max="9" step="1" value="3" /><output class="objectify-range-value" id="objectify-dilate-value">3px</output></span>
         </label>
         <label class="modal-field">
-          <span class="modal-label">최소 선 길이 (px)</span>
-          <input id="objectify-min-length" class="modal-input" type="number" min="20" max="1000" step="1" value="60" />
+          <span class="modal-label">최소 오브젝트 크기</span>
+          <span class="objectify-range-row"><input id="objectify-minarea" type="range" min="5" max="400" step="1" value="25" /><output class="objectify-range-value" id="objectify-minarea-value">25px²</output></span>
+        </label>
+        <label class="modal-field">
+          <span class="modal-label">글자 판정 크기 기준</span>
+          <span class="objectify-range-row"><input id="objectify-textsize" type="range" min="8" max="60" step="1" value="22" /><output class="objectify-range-value" id="objectify-textsize-value">22px</output></span>
+        </label>
+        <label class="modal-field">
+          <span class="modal-label">곡선 단순화 정도</span>
+          <span class="objectify-range-row"><input id="objectify-eps" type="range" min="0" max="40" step="1" value="12" /><output class="objectify-range-value" id="objectify-eps-value">1.2</output></span>
         </label>
       </div>
-      <label class="modal-field modal-field-row"><input id="objectify-reference" type="checkbox" checked /><span class="modal-label">원본 이미지를 반투명 배경으로 함께 삽입</span></label>
+      <div class="modal-field">
+        <span class="modal-label">글자(라벨) 처리</span>
+        <span style="display:flex;gap:14px;flex-wrap:wrap;">
+          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="keep" checked /><span class="modal-label" style="font-weight:normal;">남기기 (글자 모양 그대로)</span></label>
+          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="remove" /><span class="modal-label" style="font-weight:normal;">지우기</span></label>
+          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="replace" /><span class="modal-label" style="font-weight:normal;">텍스트 객체로 대체 (A, B, C…)</span></label>
+        </span>
+      </div>
+      <label class="modal-field modal-field-row"><input id="objectify-removegrid" type="checkbox" /><span class="modal-label">격자·눈금선 제거 (그래프·도표용)</span></label>
+      <label class="modal-field modal-field-row"><input id="objectify-reference" type="checkbox" /><span class="modal-label">원본 이미지를 반투명 배경으로 함께 삽입</span></label>
       <p id="objectify-status" class="objectify-status" role="status">이미지를 선택하세요.</p>
       <div class="modal-actions">
         <button id="objectify-cancel" type="button" class="modal-btn">취소</button>
-        <button id="objectify-extract" type="button" class="modal-btn" disabled>도형 추출</button>
+        <button id="objectify-analyze" type="button" class="modal-btn" disabled>다시 분석</button>
         <button id="objectify-insert" type="button" class="modal-btn modal-btn-primary" disabled>객체로 삽입</button>
       </div>
     </div>`;
@@ -468,6 +92,7 @@ function buildModal() {
   return overlay;
 }
 
+/* ===== init ===== */
 export function initImageObjectify(state) {
   const openButton = document.getElementById("image-objectify-open");
   if (!openButton) return;
@@ -476,59 +101,127 @@ export function initImageObjectify(state) {
   const fileInput = overlay.querySelector("#objectify-file");
   const dropzone = overlay.querySelector("#objectify-dropzone");
   const preview = overlay.querySelector("#objectify-preview");
-  const threshold = overlay.querySelector("#objectify-threshold");
-  const thresholdOutput = overlay.querySelector(".objectify-range-value");
-  const minLength = overlay.querySelector("#objectify-min-length");
-  const reference = overlay.querySelector("#objectify-reference");
+  const legend = overlay.querySelector("#objectify-legend");
   const status = overlay.querySelector("#objectify-status");
-  const extractButton = overlay.querySelector("#objectify-extract");
+  const analyzeButton = overlay.querySelector("#objectify-analyze");
   const insertButton = overlay.querySelector("#objectify-insert");
-  let sourceCanvas = null;
-  let sourceDataUrl = null;
-  let segments = [];
-  let shapes = [];
+  const removeGridInput = overlay.querySelector("#objectify-removegrid");
+  const referenceInput = overlay.querySelector("#objectify-reference");
+  const sliders = {
+    dilate: overlay.querySelector("#objectify-dilate"),
+    minarea: overlay.querySelector("#objectify-minarea"),
+    textsize: overlay.querySelector("#objectify-textsize"),
+    eps: overlay.querySelector("#objectify-eps"),
+  };
+
+  let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
+  let sourceDataUrl = null;  // 참고 이미지 삽입용 원본 dataURL
+  let analysis = null;       // vectorizeImage 결과
+  let previewPaths = [];     // 컴포넌트별 Path2D 캐시
+  let excluded = new Set();  // 미리보기에서 제외한 컴포넌트 index
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
     status.classList.toggle("is-error", isError);
   };
-  const invalidate = () => {
-    segments = [];
-    shapes = [];
-    insertButton.disabled = true;
-  };
   const close = () => { overlay.hidden = true; };
 
-  function drawPreview(showSegments = false) {
-    if (!sourceCanvas) return;
-    const ctx = preview.getContext("2d");
-    preview.width = sourceCanvas.width;
-    preview.height = sourceCanvas.height;
-    ctx.drawImage(sourceCanvas, 0, 0);
-    if (showSegments) {
-      ctx.strokeStyle = "#e53935";
-      ctx.lineWidth = Math.max(1, sourceCanvas.width / 700);
-      for (const shape of shapes) {
-        ctx.beginPath();
-        if (shape.type === "rect") ctx.rect(shape.x, shape.y, shape.w, shape.h);
-        else if (shape.type === "ellipse") ctx.ellipse(shape.x + shape.w / 2, shape.y + shape.h / 2, shape.w / 2, shape.h / 2, 0, 0, Math.PI * 2);
-        else {
-          ctx.moveTo(shape.points[0].x, shape.points[0].y);
-          for (const point of shape.points.slice(1)) ctx.lineTo(point.x, point.y);
-          ctx.closePath();
-        }
-        ctx.stroke();
-      }
-      for (const line of segments) {
-        ctx.beginPath();
-        ctx.moveTo(line.x1, line.y1);
-        ctx.lineTo(line.x2, line.y2);
-        ctx.stroke();
-      }
-    }
-    preview.hidden = false;
+  function currentOptions() {
+    return {
+      dilateRadius: Number(sliders.dilate.value),
+      minArea: Number(sliders.minarea.value),
+      textSizePx: Number(sliders.textsize.value),
+      epsilon: Number(sliders.eps.value) / 10,
+      removeGrid: removeGridInput.checked,
+    };
   }
 
+  /* ----- 미리보기: 원본 흐리게 + 컴포넌트 채움 오버레이 ----- */
+  function drawPreview() {
+    if (!sourceCanvas || !analysis) return;
+    preview.width = sourceCanvas.width;
+    preview.height = sourceCanvas.height;
+    const ctx = preview.getContext("2d");
+    ctx.drawImage(sourceCanvas, 0, 0);
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillRect(0, 0, preview.width, preview.height);
+    analysis.components.forEach((comp, index) => {
+      const path = previewPaths[index];
+      if (!path) return;
+      if (excluded.has(index)) {
+        ctx.globalAlpha = 0.22;
+        ctx.fillStyle = "#6e7781";
+      } else {
+        ctx.globalAlpha = 0.62;
+        ctx.fillStyle = comp.isText ? "#e35d6a" : "#0969da";
+      }
+      ctx.fill(path, "evenodd");
+      ctx.globalAlpha = 1;
+      if (excluded.has(index)) {
+        const [x0, y0, x1, y1] = comp.bbox;
+        ctx.strokeStyle = "#6e7781";
+        ctx.setLineDash([4, 3]);
+        ctx.strokeRect(x0 - 1.5, y0 - 1.5, x1 - x0 + 3, y1 - y0 + 3);
+        ctx.setLineDash([]);
+      }
+    });
+    preview.hidden = false;
+    legend.hidden = false;
+  }
+
+  function updateResultStatus() {
+    if (!analysis) return;
+    const total = analysis.components.length;
+    const textCount = analysis.components.filter((c) => c.isText).length;
+    const parts = [`오브젝트 ${total}개 (글자 추정 ${textCount}개)`];
+    if (excluded.size) parts.push(`제외 ${excluded.size}개`);
+    setStatus(total ? parts.join(" · ") : "조건에 맞는 오브젝트를 찾지 못했습니다. 설정을 조정해 보세요.", total === 0);
+    insertButton.disabled = total - excluded.size === 0;
+  }
+
+  /* ----- 분석 실행 ----- */
+  function analyze() {
+    if (!sourceCanvas) return;
+    analyzeButton.disabled = true;
+    insertButton.disabled = true;
+    setStatus("이미지를 분석하는 중입니다...");
+    // 상태 메시지가 먼저 그려지도록 파이프라인은 살짝 미뤄 실행.
+    // (rAF는 백그라운드 탭에서 멈추므로 setTimeout 사용)
+    setTimeout(() => {
+      try {
+        const ctx = sourceCanvas.getContext("2d");
+        const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        analysis = vectorizeImage(imageData, currentOptions());
+        excluded = new Set();
+        previewPaths = analysis.components.map((comp) => {
+          const path = new Path2D();
+          for (const loop of comp.loops) {
+            path.moveTo(loop.points[0][0], loop.points[0][1]);
+            for (let i = 1; i < loop.points.length; i += 1) path.lineTo(loop.points[i][0], loop.points[i][1]);
+            path.closePath();
+          }
+          return path;
+        });
+        drawPreview();
+        updateResultStatus();
+      } catch (error) {
+        analysis = null;
+        previewPaths = [];
+        setStatus(`분석 중 오류가 발생했습니다: ${error.message || error}`, true);
+      } finally {
+        analyzeButton.disabled = !sourceCanvas;
+      }
+    }, 20);
+  }
+
+  let analyzeTimer = 0;
+  function scheduleAnalyze() {
+    if (!sourceCanvas) return;
+    clearTimeout(analyzeTimer);
+    analyzeTimer = setTimeout(analyze, 250);
+  }
+
+  /* ----- 파일 로드 ----- */
   function loadFile(file) {
     if (!file || !ACCEPTED_TYPES.has(file.type)) {
       setStatus("PNG, JPG, JPEG 또는 브라우저가 지원하는 WEBP 파일을 선택해 주세요.", true);
@@ -544,106 +237,136 @@ export function initImageObjectify(state) {
         sourceCanvas = document.createElement("canvas");
         sourceCanvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
         sourceCanvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        sourceCanvas.getContext("2d").drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
+        const ctx = sourceCanvas.getContext("2d");
+        ctx.fillStyle = "#fff"; // 투명 PNG 대비: 흰 배경 먼저 채움
+        ctx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
+        ctx.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
         sourceDataUrl = reader.result;
-        invalidate();
-        drawPreview();
-        extractButton.disabled = false;
-        setStatus("이미지가 준비되었습니다. 도형 추출을 실행하세요.");
+        analysis = null;
+        excluded = new Set();
+        analyzeButton.disabled = false;
+        analyze();
       };
       image.src = reader.result;
     };
     reader.readAsDataURL(file);
   }
 
-  function extract() {
-    if (!sourceCanvas) return;
-    extractButton.disabled = true;
-    setStatus("직선 후보를 찾는 중입니다...");
-    try {
-      const minimum = Math.max(20, Number(minLength.value) || 60);
-      ({ shapes, segments } = detectObjects(sourceCanvas, Number(threshold.value), minimum));
-      drawPreview(true);
-      insertButton.disabled = shapes.length + segments.length === 0;
-      setStatus(shapes.length + segments.length ? `도형 ${shapes.length}개, 직선 ${segments.length}개를 찾았습니다.` : "조건에 맞는 도형을 찾지 못했습니다. 설정을 조정해 보세요.", shapes.length + segments.length === 0);
-    } catch (error) {
-      invalidate();
-      setStatus(`추출 중 오류가 발생했습니다: ${error.message || error}`, true);
-    } finally { extractButton.disabled = false; }
-  }
+  /* ----- 미리보기 클릭 → 컴포넌트 제외/포함 토글 ----- */
+  preview.addEventListener("click", (event) => {
+    if (!analysis) return;
+    const rect = preview.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * (preview.width / rect.width);
+    const y = (event.clientY - rect.top) * (preview.height / rect.height);
+    let hitIndex = -1;
+    let hitArea = Infinity;
+    analysis.components.forEach((comp, index) => {
+      const [x0, y0, x1, y1] = comp.bbox;
+      if (x < x0 - 2 || x > x1 + 2 || y < y0 - 2 || y > y1 + 2) return;
+      if (comp.area < hitArea) { hitArea = comp.area; hitIndex = index; }
+    });
+    if (hitIndex < 0) return;
+    if (excluded.has(hitIndex)) excluded.delete(hitIndex);
+    else excluded.add(hitIndex);
+    drawPreview();
+    updateResultStatus();
+  });
 
+  /* ===== 삽입: 이미지 px → world mm 매핑 + 스토어 액션 (Undo 1스텝) ===== */
   function insertObjects() {
-    if (!sourceCanvas || shapes.length + segments.length === 0) return;
+    if (!analysis) return;
+    const comps = analysis.components.filter((_, index) => !excluded.has(index));
+    if (!comps.length) return;
+    const textMode = overlay.querySelector('input[name="objectify-textmode"]:checked').value;
+
     const artboard = state.get().artboard;
-    const scale = Math.min((artboard.w * 0.9) / sourceCanvas.width, (artboard.h * 0.9) / sourceCanvas.height);
-    const fitted = {
-      w: sourceCanvas.width * scale,
-      h: sourceCanvas.height * scale,
-    };
-    fitted.x = -fitted.w / 2;
-    fitted.y = -fitted.h / 2;
+    const scale = Math.min(
+      (artboard.w * ARTBOARD_FIT_RATIO) / analysis.width,
+      (artboard.h * ARTBOARD_FIT_RATIO) / analysis.height,
+    );
+    const ox = -(analysis.width * scale) / 2;  // 아트보드 중심(월드 원점)에 배치
+    const oy = -(analysis.height * scale) / 2;
+    const X = (v) => round3(ox + v * scale);
+    const Y = (v) => round3(oy + v * scale);
     const stamp = Date.now().toString(36);
 
+    // 텍스트 대체용 순번 라벨: 읽기 순서(위→아래, 왼→오른)로 A, B, C…
+    const replacedLabels = new Map();
+    if (textMode === "replace") {
+      comps.filter((c) => c.isText)
+        .sort((a, b) => (a.bbox[1] - b.bbox[1]) || (a.bbox[0] - b.bbox[0]))
+        .forEach((comp, index) => replacedLabels.set(comp, sequenceLabel(index)));
+    }
+
     state.update((s) => {
-      const snapshot = cloneObjects(s.objects);
+      const snapshot = clone(s.objects);
       const layerId = s.activeLayerId;
       const addedIds = [];
-      if (reference.checked) {
+
+      if (referenceInput.checked && sourceDataUrl) {
         s.objects.push(applyNewObjectStyleDefaults({
           id: `obj_${stamp}_ref${++idCounter}`,
           type: "image", src: sourceDataUrl,
-          x: fitted.x, y: fitted.y, w: fitted.w, h: fitted.h,
+          x: ox, y: oy, w: round3(analysis.width * scale), h: round3(analysis.height * scale),
           opacity: 0.28, rotation: 0, locked: true, positionLocked: true,
+          aspectLocked: true, exportable: false, imageSelectionLocked: true,
+          mode: "edit", cutouts: [], recognized: true,
           layerId, order: s.objects.length,
         }));
       }
-      for (const shape of shapes) {
-        if (shape.type === "polyline") {
-          const object = applyNewObjectStyleDefaults({
-            id: `obj_${stamp}_polyline${++idCounter}`,
-            type: "polyline",
-            points: shape.points.map((point) => ({
-              x: fitted.x + point.x * scale,
-              y: fitted.y + point.y * scale,
-            })),
-            closed: true,
-            strokeLevel: 0, strokeWidth: OBJECTIFY_STROKE_WIDTH,
-            arrowHead: "none", dashLength: 0, dashGap: 0,
-            fillLevel: 214, fillNone: true, fillStyle: "solid",
+
+      for (const comp of comps) {
+        if (comp.isText && textMode === "remove") continue;
+        if (comp.isText && textMode === "replace") {
+          const [bx0, by0, , by1] = comp.bbox;
+          const fontSize = Math.min(12, Math.max(2.5, round3((by1 - by0) * scale)));
+          const textObject = applyNewObjectStyleDefaults({
+            id: `obj_${stamp}_vectext${++idCounter}`,
+            type: "text",
+            x: X(bx0), y: Y(by0),
+            text: replacedLabels.get(comp) || "A",
+            fontSize, fontFamily: DEFAULT_TEXT_FONT,
+            fontWeight: "normal", fontStyle: "normal",
+            italic: false, letterSpacing: null,
+            underline: false, strikeout: false,
             rotation: 0, locked: false, positionLocked: false,
             layerId, order: s.objects.length,
           });
-          s.objects.push(object);
-          addedIds.push(object.id);
+          s.objects.push(textObject);
+          addedIds.push(textObject.id);
           continue;
         }
-        const object = applyNewObjectStyleDefaults({
-          id: `obj_${stamp}_${shape.type}${++idCounter}`,
-          type: shape.type,
-          x: fitted.x + shape.x * scale, y: fitted.y + shape.y * scale,
-          w: shape.w * scale, h: shape.h * scale,
-          rotation: 0, strokeLevel: 0, strokeWidth: OBJECTIFY_STROKE_WIDTH,
-          fillLevel: 214, fillNone: true, fillStyle: "solid",
-          locked: false, positionLocked: false,
-          layerId, order: s.objects.length,
-        });
-        s.objects.push(object);
-        addedIds.push(object.id);
+        for (const loop of comp.loops) {
+          const polyline = applyNewObjectStyleDefaults({
+            id: `obj_${stamp}_vec${++idCounter}`,
+            type: "polyline",
+            points: loop.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
+            rotation: 0,
+            strokeLevel: 0, strokeWidth: 0, // 채움 폴리곤 — 테두리 없음 (자유곡선 F 관례)
+            arrowHead: "none", dashLength: 0, dashGap: 0,
+            closed: true,
+            fillLevel: loop.isHole ? 255 : 0, // 바깥=검정, 구멍=배경색(흰) 위에 쌓기
+            fillNone: false, fillStyle: "solid",
+            rounded: false, cornerRadius: 10,
+            locked: false, positionLocked: false,
+            layerId, order: s.objects.length,
+          });
+          s.objects.push(polyline);
+          addedIds.push(polyline.id);
+        }
       }
-      for (const segment of segments) {
-        const line = applyNewObjectStyleDefaults({
-          id: `obj_${stamp}_line${++idCounter}`,
-          type: "line",
-          p1: { x: fitted.x + segment.x1 * scale, y: fitted.y + segment.y1 * scale },
-          p2: { x: fitted.x + segment.x2 * scale, y: fitted.y + segment.y2 * scale },
-          strokeLevel: 0, strokeWidth: OBJECTIFY_STROKE_WIDTH,
-          arrowHead: "none", dashLength: 0, dashGap: 0,
-          layerId, order: s.objects.length,
-          rotation: 0, locked: false, positionLocked: false,
-        });
-        s.objects.push(line);
-        addedIds.push(line.id);
+
+      // 삽입물 전체를 하나의 그룹으로 (참고 이미지는 제외).
+      // undo/redo는 rebuildGroups가 obj.groupId에서 재구성하므로 안전.
+      if (addedIds.length >= 2) {
+        const groupId = `grp_${stamp}_vec`;
+        for (const id of addedIds) {
+          const obj = s.objects.find((o) => o.id === id);
+          if (obj) obj.groupId = groupId;
+        }
+        s.groups.push({ id: groupId, memberIds: [...addedIds] });
       }
+
       s.undoStack.push(snapshot);
       s.redoStack = [];
       s.selectedIds = addedIds;
@@ -653,6 +376,7 @@ export function initImageObjectify(state) {
     close();
   }
 
+  /* ===== 이벤트 배선 ===== */
   openButton.addEventListener("click", () => {
     overlay.hidden = false;
     dropzone.focus();
@@ -675,6 +399,7 @@ export function initImageObjectify(state) {
     event.stopPropagation();
     loadFile(imageFile);
   }, true);
+
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
@@ -687,8 +412,18 @@ export function initImageObjectify(state) {
     dropzone.addEventListener(type, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragover"); });
   }
   dropzone.addEventListener("drop", (event) => loadFile(event.dataTransfer.files?.[0]));
-  threshold.addEventListener("input", () => { thresholdOutput.value = threshold.value; invalidate(); if (sourceCanvas) drawPreview(); });
-  minLength.addEventListener("input", () => { invalidate(); if (sourceCanvas) drawPreview(); });
-  extractButton.addEventListener("click", extract);
+
+  // 슬라이더 값 표시 + 자동 재분석 (250ms 디바운스)
+  const sliderUnits = { dilate: "px", minarea: "px²", textsize: "px", eps: "" };
+  for (const [name, input] of Object.entries(sliders)) {
+    const output = overlay.querySelector(`#objectify-${name}-value`);
+    input.addEventListener("input", () => {
+      const value = name === "eps" ? (Number(input.value) / 10).toFixed(1) : input.value;
+      output.textContent = value + sliderUnits[name];
+      scheduleAnalyze();
+    });
+  }
+  removeGridInput.addEventListener("change", scheduleAnalyze);
+  analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
 }
