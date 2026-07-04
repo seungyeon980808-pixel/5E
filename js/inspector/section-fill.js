@@ -1,9 +1,9 @@
 /* ===== INSPECTOR SECTION — 면 (fill color / fill style) =====
- * Extracted verbatim from initInspector() in js/inspector.js (v0.42.0
+ * Extracted verbatim from initInspector() in js/inspector.js (v0.43.0
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection } from "./widgets.js?v=0.42.0";
+import { makeColorPicker, makeSection } from "./widgets.js?v=0.43.0";
 
 export function buildFillSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;

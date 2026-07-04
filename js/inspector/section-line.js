@@ -1,9 +1,9 @@
 /* ===== INSPECTOR SECTION — 선 (stroke / arrows / dash / angle) =====
- * Extracted verbatim from initInspector() in js/inspector.js (v0.42.0
+ * Extracted verbatim from initInspector() in js/inspector.js (v0.43.0
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.42.0";
+import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.43.0";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;

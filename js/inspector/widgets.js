@@ -1,5 +1,5 @@
 /* ===== INSPECTOR — shared widgets & constants =====
- * Extracted verbatim from js/inspector.js (v0.42.0 split): reusable color
+ * Extracted verbatim from js/inspector.js (v0.43.0 split): reusable color
  * picker / collapsible section builders + module-level constants shared by
  * the section builders (js/inspector/section-*.js) and populate(). */
 
