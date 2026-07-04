@@ -21,11 +21,11 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.44.0";
-import { armSymbol } from "./tools.js?v=0.44.0";
-import { renderObject } from "./render.js?v=0.44.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.44.0";
-import { getSvgAsset } from "./svg-assets.js?v=0.44.0";
+import { state } from "./state.js?v=0.44.1";
+import { armSymbol } from "./tools.js?v=0.44.1";
+import { renderObject } from "./render.js?v=0.44.1";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.44.1";
+import { getSvgAsset } from "./svg-assets.js?v=0.44.1";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -364,14 +364,10 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
-  if (id === "pulley") {
-    const asset = getSvgAsset("pulley");
-    svg.setAttribute("viewBox", "0 0 172 152");
-    svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="172" height="152" preserveAspectRatio="xMidYMid meet"/>`;
-    return svg;
-  }
-
   if (id === "cart") {
+    // Hand-drawn override: the real cart asset is too busy for a 16px monochrome
+    // silhouette. Most SVG assets DON'T need an override (see the generic
+    // svgAsset fallback below) — only add one here if the auto icon looks bad.
     svg.setAttribute("viewBox", "0 0 24 20");
     svg.innerHTML =
       '<path d="M4 6.5 H19 V12.5 H4 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
@@ -379,6 +375,17 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<circle cx="8" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
       '<circle cx="16" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
       '<path d="M10.2 15 H13.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>';
+    return svg;
+  }
+
+  // Generic svgAsset icon: any new SVG_ASSETS entry (see js/svg-assets.js) whose
+  // TEMPLATES id matches an asset id renders its OWN artwork as the button icon
+  // automatically — no per-asset branch needed here unless it looks bad (add a
+  // hand-drawn override above, like "cart", only when that happens).
+  const asset = getSvgAsset(id);
+  if (asset) {
+    svg.setAttribute("viewBox", `0 0 ${asset.naturalWidth} ${asset.naturalHeight}`);
+    svg.innerHTML = `<image href="${asset.dataUri}" x="0" y="0" width="${asset.naturalWidth}" height="${asset.naturalHeight}" preserveAspectRatio="xMidYMid meet"/>`;
     return svg;
   }
 

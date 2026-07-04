@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=0.44.0";
-import { makeSection } from "./widgets.js?v=0.44.0";
+import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=0.44.1";
+import { makeSection } from "./widgets.js?v=0.44.1";
 
 export function buildImageSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -146,11 +146,11 @@ export function buildImageSection(ctx) {
     </svg>
   </span><span>자유 영역 지우기</span>`;
   imgRectEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=0.44.0");
+    const mod = await import("../image-cutout.js?v=0.44.1");
     mod.startRectErase();
   };
   imgPathEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=0.44.0");
+    const mod = await import("../image-cutout.js?v=0.44.1");
     mod.startPathErase();
   };
 
