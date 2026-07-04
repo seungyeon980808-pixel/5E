@@ -7,22 +7,22 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.44.1";
-import { render } from "./render.js?v=0.44.1";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.44.1";
-import { initTools } from "./tools.js?v=0.44.1";
-import { initTransform, undo, redo } from "./transform.js?v=0.44.1";
-import { initInspector } from "./inspector.js?v=0.44.1";
-import { initProjectIO } from "./project-io.js?v=0.44.1";
-import { initExportDialog } from "./export-dialog.js?v=0.44.1";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.44.1";
-import { initSettings } from "./settings.js?v=0.44.1";
-import { initImageObjectify } from "./image-objectify.js?v=0.44.1";
-import { initImageImportMock } from "./image-import-mock.js?v=0.44.1";
-import { initImagePaste } from "./image-paste.js?v=0.44.1";
-import { initImageCutout } from "./image-cutout.js?v=0.44.1";
-import { initTemplates } from "./templates.js?v=0.44.1";
-import { initObjectSearch } from "./search.js?v=0.44.1";
+import { state } from "./state.js?v=0.44.2";
+import { render } from "./render.js?v=0.44.2";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.44.2";
+import { initTools } from "./tools.js?v=0.44.2";
+import { initTransform, undo, redo } from "./transform.js?v=0.44.2";
+import { initInspector } from "./inspector.js?v=0.44.2";
+import { initProjectIO } from "./project-io.js?v=0.44.2";
+import { initExportDialog } from "./export-dialog.js?v=0.44.2";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.44.2";
+import { initSettings } from "./settings.js?v=0.44.2";
+import { initImageObjectify } from "./image-objectify.js?v=0.44.2";
+import { initImageImportMock } from "./image-import-mock.js?v=0.44.2";
+import { initImagePaste } from "./image-paste.js?v=0.44.2";
+import { initImageCutout } from "./image-cutout.js?v=0.44.2";
+import { initTemplates } from "./templates.js?v=0.44.2";
+import { initObjectSearch } from "./search.js?v=0.44.2";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -204,60 +204,70 @@ initObjectSearch();
 applyViewBox(state.get());
 render(state.get());
 
-/* ===== DEBUG HANDLE (console verification) ===== */
-// Inspect the live data: `phyDraw.objects()` lists committed shapes.
-window.phyDraw = {
-  state,
-  objects: () => state.get().objects,
-  selected: () => state.get().objects.find((o) => o.id === state.get().selectedId) || null,
-  zoom: getZoom,
-};
+/* ===== DEV DEBUG GATE =====
+ * Dev-only: flip to true LOCALLY to expose window.phyDraw, the coord-debug
+ * overlay (key "d"), and the console usage banner below. Must be false for
+ * shipped builds — same gating convention as _TEXT_STYLE_DEBUG in
+ * text-editor.js. Previously these ran unconditionally (reachable by any end
+ * user pressing "d"); Day 5 QA gated them behind this flag. */
+const _APP_DEBUG_ENABLED = false;
 
-/* ===== COORD DEBUG OVERLAY (press "d" to toggle) ===== */
-// Proves pointer?뭮orld mapping live. Compares the app's screenToWorld with a
-// fresh getScreenCTM round-trip; "?screen" is how far the mapped point lands
-// from the real pointer pixel ??must read ~0 at any zoom/pan. Off by default.
-(function initCoordDebug() {
-  const box = document.createElement("div");
-  box.id = "coord-debug";
-  box.style.cssText =
-    "position:fixed;left:8px;bottom:8px;z-index:9999;display:none;" +
-    "font:11px/1.45 'IBM Plex Mono',monospace;white-space:pre;" +
-    "background:rgba(13,17,23,.88);color:#7ee787;padding:8px 10px;" +
-    "border-radius:6px;pointer-events:none;max-width:46ch;";
-  document.body.appendChild(box);
+if (_APP_DEBUG_ENABLED) {
+  /* ----- DEBUG HANDLE (console verification) ----- */
+  // Inspect the live data: `phyDraw.objects()` lists committed shapes.
+  window.phyDraw = {
+    state,
+    objects: () => state.get().objects,
+    selected: () => state.get().objects.find((o) => o.id === state.get().selectedId) || null,
+    zoom: getZoom,
+  };
 
-  window.addEventListener("keydown", (e) => {
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    if (e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      box.style.display = box.style.display === "none" ? "block" : "none";
-    }
-  });
+  /* ----- COORD DEBUG OVERLAY (press "d" to toggle) -----
+   * Proves pointer?뭮orld mapping live. Compares the app's screenToWorld with a
+   * fresh getScreenCTM round-trip; "?screen" is how far the mapped point lands
+   * from the real pointer pixel ??must read ~0 at any zoom/pan. */
+  (function initCoordDebug() {
+    const box = document.createElement("div");
+    box.id = "coord-debug";
+    box.style.cssText =
+      "position:fixed;left:8px;bottom:8px;z-index:9999;display:none;" +
+      "font:11px/1.45 'IBM Plex Mono',monospace;white-space:pre;" +
+      "background:rgba(13,17,23,.88);color:#7ee787;padding:8px 10px;" +
+      "border-radius:6px;pointer-events:none;max-width:46ch;";
+    document.body.appendChild(box);
 
-  window.addEventListener("mousemove", (e) => {
-    if (box.style.display === "none") return;
-    const vb = state.get().viewBox;
-    const r = svg.getBoundingClientRect();
-    const w = screenToWorld(svg, vb, e.clientX, e.clientY); // app's single helper
-    // independent round-trip: world ??back to screen via the SAME CTM
-    const m = svg.getScreenCTM();
-    const back = { x: m.a * w.x + m.c * w.y + m.e, y: m.b * w.x + m.d * w.y + m.f };
-    const f = (n) => n.toFixed(2);
-    box.textContent =
-      `client   ${f(e.clientX)}, ${f(e.clientY)}\n` +
-      `svg rect ${f(r.left)},${f(r.top)}  ${f(r.width)}횞${f(r.height)}  ar=${f(r.width / r.height)}\n` +
-      `viewBox  ${f(vb.x)},${f(vb.y)}  ${f(vb.w)}횞${f(vb.h)}  ar=${f(vb.w / vb.h)}\n` +
-      `world    ${f(w.x)}, ${f(w.y)}\n` +
-      `?screen  ${f(back.x - e.clientX)}, ${f(back.y - e.clientY)}  (should be ~0)`;
-  });
-})();
+    window.addEventListener("keydown", (e) => {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        box.style.display = box.style.display === "none" ? "block" : "none";
+      }
+    });
 
-console.info(
-  "[시범공개] [5E v0.44.1] Pick R (or press R), drag on the canvas to draw a\n" +
-    "Press 'd' to toggle the live coord-debug overlay (pointer?봶orld mapping).\n" +
-    "rectangle. Verify with:\n" +
-    "  phyDraw.objects()        // array of committed rect objects\n" +
-    "  phyDraw.state.get().activeTool   // 'V' after each draw (auto-return)\n" +
-    "Wheel = zoom, Space/middle-drag = pan ??shapes stay anchored in world space."
-);
+    window.addEventListener("mousemove", (e) => {
+      if (box.style.display === "none") return;
+      const vb = state.get().viewBox;
+      const r = svg.getBoundingClientRect();
+      const w = screenToWorld(svg, vb, e.clientX, e.clientY); // app's single helper
+      // independent round-trip: world ??back to screen via the SAME CTM
+      const m = svg.getScreenCTM();
+      const back = { x: m.a * w.x + m.c * w.y + m.e, y: m.b * w.x + m.d * w.y + m.f };
+      const f = (n) => n.toFixed(2);
+      box.textContent =
+        `client   ${f(e.clientX)}, ${f(e.clientY)}\n` +
+        `svg rect ${f(r.left)},${f(r.top)}  ${f(r.width)}횞${f(r.height)}  ar=${f(r.width / r.height)}\n` +
+        `viewBox  ${f(vb.x)},${f(vb.y)}  ${f(vb.w)}횞${f(vb.h)}  ar=${f(vb.w / vb.h)}\n` +
+        `world    ${f(w.x)}, ${f(w.y)}\n` +
+        `?screen  ${f(back.x - e.clientX)}, ${f(back.y - e.clientY)}  (should be ~0)`;
+    });
+  })();
+
+  console.info(
+    "[시범공개] [5E v0.44.2] Press S (or click the toolbar button) to arm the\n" +
+      "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
+      "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
+      "  phyDraw.objects()        // array of committed shape objects\n" +
+      "  phyDraw.state.get().activeTool   // 'V' after each draw (auto-return)\n" +
+      "Wheel = zoom, Space/middle-drag = pan ??shapes stay anchored in world space."
+  );
+}
