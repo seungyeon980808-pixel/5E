@@ -695,7 +695,8 @@ body {
 /* ===== IMAGE OBJECTIFY ===== */
 .modal-objectify { width: 620px; }
 .objectify-description,
-.objectify-status {
+.objectify-status,
+.defaults-notice {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;

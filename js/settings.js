@@ -17,8 +17,8 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.44.2";
-import { registerTopMenu } from "./top-menu.js?v=0.44.2";
+} from "./state.js?v=0.44.3";
+import { registerTopMenu } from "./top-menu.js?v=0.44.3";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -73,6 +73,8 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
       <h2 class="modal-title" id="defaults-title">기본값 설정</h2>
+      <p class="defaults-notice">이 값들은 저장은 되지만 아직 새 도형 생성·격자 표시에는
+        반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
 
       <div class="defaults-body">
         <div class="defaults-fields">
