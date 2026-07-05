@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=0.44.4";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.44.4";
-import { renderText } from "./labels.js?v=0.44.4";
-import { makeFillPattern } from "./fill.js?v=0.44.4";
+import { getZoom, getRenderScale } from "../viewport.js?v=0.45.0";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.45.0";
+import { renderText } from "./labels.js?v=0.45.0";
+import { makeFillPattern } from "./fill.js?v=0.45.0";
 import {
   renderRect,
   renderEllipse,
@@ -20,15 +20,15 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=0.44.4";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.44.4";
-import { renderCircuit } from "./circuit.js?v=0.44.4";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.44.4";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.44.4";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.44.4";
-import { resolveObjectStyle } from "../style-mode.js?v=0.44.4";
-import { renderFormula } from "../formula.js?v=0.44.4";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.44.4";
+} from "./shapes.js?v=0.45.0";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.45.0";
+import { renderCircuit } from "./circuit.js?v=0.45.0";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.45.0";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.45.0";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.45.0";
+import { resolveObjectStyle } from "../style-mode.js?v=0.45.0";
+import { renderFormula } from "../formula.js?v=0.45.0";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.45.0";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;

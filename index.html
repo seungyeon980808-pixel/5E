@@ -125,6 +125,13 @@
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
     <aside class="panel panel-left">
       <div class="tool-list" id="tool-list">
+        <!-- 오브젝트 검색 진입점: 원래 Ctrl+F로만 열리던 검색 모달을 눈에 보이는 버튼으로도 노출 -->
+        <button class="object-search-trigger" type="button" id="object-search-trigger"
+                title="오브젝트 검색 (Ctrl+F)" aria-label="오브젝트 검색 (Ctrl+F)">
+          <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
+          <span class="search-trigger-label">검색</span>
+          <kbd class="search-trigger-hint">Ctrl F</kbd>
+        </button>
         <div class="tool-section">
           <div class="tool-section-header">공통 도구 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body">
@@ -283,7 +290,7 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.44.4</strong> · 2026-07-04
+    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.45.0</strong> · 2026-07-05
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
@@ -332,6 +339,6 @@
       });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.44.4"></script>
+  <script type="module" src="js/main.js?v=0.45.0"></script>
 </body>
 </html>

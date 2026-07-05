@@ -5,7 +5,7 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=0.44.4";
+} from "./templates.js?v=0.45.0";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -153,4 +153,9 @@ export function initObjectSearch() {
     if (overlay.hidden) open();
     else input.focus();
   }, true);
+
+  // Visible entry point: the same modal that Ctrl+F opens, now reachable by a
+  // toolbar button (the shortcut alone was undiscoverable). Optional-chained so
+  // the search still works if the button markup is ever absent.
+  document.getElementById("object-search-trigger")?.addEventListener("click", open);
 }

@@ -181,6 +181,39 @@ body {
   display: none;
 }
 
+/* ===== OBJECT SEARCH TRIGGER (좌측 패널 상단 검색 진입 버튼) ===== */
+.object-search-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 8px;
+  margin-bottom: 6px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--c-sub);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.object-search-trigger:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+.search-trigger-ico { width: 15px; height: 15px; flex: none; }
+/* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
+.search-trigger-label { flex: 1 1 auto; text-align: left; white-space: nowrap; }
+.search-trigger-hint {
+  flex: none;
+  margin-left: auto;
+  font-size: 10px;
+  color: var(--c-sub);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: inherit;
+}
+
 .tool-section-body-wide { grid-template-columns: 1fr; }
 .advanced-tool-btn {
   width: 100%;

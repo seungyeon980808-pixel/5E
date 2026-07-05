@@ -5,15 +5,15 @@
 // LIVE rendered SVG element (getBBox), so this module keeps its own _svg
 // reference, assigned by initPick(svg) from initTools.
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.44.4";
-import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.44.4";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.45.0";
+import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.45.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=0.44.4";
+import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=0.45.0";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
-} from "./geometry.js?v=0.44.4";
+} from "./geometry.js?v=0.45.0";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
