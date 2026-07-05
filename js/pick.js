@@ -134,8 +134,8 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
   for (let i = objects.length - 1; i >= 0; i--) {
     const o = objects[i];
     if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
-        o.type !== "line" && o.type !== "polyline" && o.type !== "curve" &&
-        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" &&
+        o.type !== "line" && o.type !== "polyline" && o.type !== "curve" && o.type !== "funcgraph" &&
+        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" && o.type !== "coordplane" &&
         o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
         o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler" &&
         o.type !== "pendulum") continue;
@@ -155,7 +155,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     // slack already converted to world units (tol = tolerancePx / currentZoom),
     // so the band stays visually constant at any zoom (DESIGN-style tolerance).
     const margin = (o.strokeWidth || 0) / 2 +
-      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "circuit" || o.type === "pendulum") ? lineTol : tol);
+      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "funcgraph" || o.type === "circuit" || o.type === "pendulum") ? lineTol : tol);
 
     if (o.type === "line") {
       if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
@@ -200,7 +200,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "curve") {
+    if (o.type === "curve" || o.type === "funcgraph") {
       const pts = o.points || [];
       if (pts.length < 2) continue;
       if (pts.length === 2) {
@@ -244,9 +244,9 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
-      // box == actual shape: outward-grown bbox containment (axes/optics select as
-      // one indivisible object via the bounding box; same as rect)
+    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+      // box == actual shape: outward-grown bbox containment (axes/coordplane/optics
+      // select as one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
       if (q.x >= o.x - margin && q.x <= o.x + o.w + margin &&
           q.y >= o.y - margin && q.y <= o.y + o.h + margin) return o.id;
@@ -310,7 +310,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -337,7 +337,7 @@ function getObjectBBox(o) {
     const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
-  if (o.type === "polyline" || o.type === "curve") {
+  if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
     const pts = o.points || [];
     if (!pts.length) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -390,7 +390,7 @@ function objectStrokeSegments(o) {
     for (let k = 0; k < pts.length - 1; k++) segs.push([pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y]);
     return segs;
   }
-  if (o.type === "curve") {
+  if (o.type === "curve" || o.type === "funcgraph") {
     const pts = o.points || [];
     if (pts.length < 2) return segs;
     if (pts.length === 2) { segs.push([pts[0].x, pts[0].y, pts[1].x, pts[1].y]); return segs; }
@@ -409,7 +409,8 @@ function marqueeHitsObject(o, selRect) {
   if (!bb || !bboxIntersects(bb, selRect)) return false;          // 빠른 배제
   const isStroke = o.type === "line"
     || (o.type === "polyline" && !o.closed)
-    || (o.type === "curve" && !o.closed);
+    || (o.type === "curve" && !o.closed)
+    || o.type === "funcgraph"; // formula-driven open stroke — same as an open curve
   if (!isStroke) return true;                                     // 채움/박스/닫힌도형 = bbox로 충분
   return objectStrokeSegments(o).some((s) => segIntersectsRect(s[0], s[1], s[2], s[3], selRect));
 }

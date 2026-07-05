@@ -17,7 +17,9 @@ import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToT
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
-const SCHEMA_VERSION = "0.15";
+// 0.16 adds coordplane + funcgraph (함수 그래프); older files simply lack both types,
+// so their backfill target is 0 — loading an old file stays a no-op for them.
+const SCHEMA_VERSION = "0.16";
 
 // Default artboard size for files saved before the artboard field existed.
 const DEFAULT_ARTBOARD = { w: 90, h: 60 };
@@ -32,7 +34,7 @@ const APPARATUS_TEMPLATE_IDS = {
   scale: "M003",
 };
 
-const LABEL_CAPABLE_TYPES = new Set(["rect", "ellipse", "line", "axes", "anglearc", "labeler", "circuit", "optics"]);
+const LABEL_CAPABLE_TYPES = new Set(["rect", "ellipse", "line", "axes", "coordplane", "anglearc", "labeler", "circuit", "optics"]);
 
 function normalizeLabelType(value, fallback = "quantity") {
   return value === "quantity" || value === "label" ? value : fallback;
@@ -163,6 +165,40 @@ function migrate(data) {
         if (next.kind === "pulley") next.variant = next.variant ?? "basic";
         if (next.kind === "clamp") next.flipped = next.flipped ?? false;
         if (next.kind === "scale") next.displayText = next.displayText ?? "0.99 N";
+      }
+      if (next.type === "coordplane") {
+        // 좌표평면(§3-1): 박스 + 표시 범위 + 격자/눈금/숫자라벨. labelType은 위
+        // LABEL_CAPABLE_TYPES 경로에서 정규화된다(기본 "quantity").
+        next.x = next.x ?? 0; next.y = next.y ?? 0;
+        next.w = next.w ?? 60; next.h = next.h ?? 48;
+        next.rotation = next.rotation ?? 0;
+        next.xMin = next.xMin ?? -5; next.xMax = next.xMax ?? 5;
+        next.yMin = next.yMin ?? -5; next.yMax = next.yMax ?? 5;
+        next.gridStepX = next.gridStepX ?? 1; next.gridStepY = next.gridStepY ?? 1;
+        next.showAxisLines = next.showAxisLines ?? true;
+        next.showGrid = next.showGrid ?? false;
+        next.showTicks = next.showTicks ?? true;
+        next.showTickLabels = next.showTickLabels ?? false;
+        next.tickLabelSize = next.tickLabelSize ?? 2.6;
+        next.labelX = next.labelX ?? "x"; next.labelY = next.labelY ?? "y";
+        next.exportable = next.exportable ?? true;
+        next.strokeLevel = next.strokeLevel ?? 0;
+        next.strokeWidth = next.strokeWidth ?? 0.2;
+      }
+      if (next.type === "funcgraph") {
+        // 함수 그래프(§3-2): points[]는 월드 mm로 구운 캐시(렌더 실체). planeId는
+        // 쓰기 경로(재샘플·평행이동)에서만 참조. 열린 스트로크(closed:false 고정).
+        next.expr = next.expr ?? "";
+        next.domainMin = next.domainMin ?? -5;
+        next.domainMax = next.domainMax ?? 5;
+        next.planeId = next.planeId ?? null;
+        next.points = Array.isArray(next.points) ? next.points : [];
+        next.closed = false;
+        next.strokeLevel = next.strokeLevel ?? 0;
+        next.strokeWidth = next.strokeWidth ?? 0.2;
+        next.dashLength = next.dashLength ?? 0;
+        next.dashGap = next.dashGap ?? 0;
+        next.labelShow = next.labelShow ?? false;
       }
       return next;
     }),

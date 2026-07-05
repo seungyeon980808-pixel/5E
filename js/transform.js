@@ -249,7 +249,7 @@ function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   for (const o of objs) {
-    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
       acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
@@ -261,7 +261,7 @@ function clipboardBBox(objs) {
       acc(o.x, o.y);
     } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
-    } else if (o.type === "polyline" || o.type === "curve") {
+    } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
     }
   }
@@ -274,9 +274,11 @@ function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
       obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
       obj.type === "image" || obj.type === "svgAsset" ||
-      obj.type === "axes" || obj.type === "anglearc" || obj.type === "rightangle" ||
+      obj.type === "axes" || obj.type === "coordplane" || obj.type === "anglearc" || obj.type === "rightangle" ||
       obj.type === "optics" || obj.type === "apparatus") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
+    // coordplane moves by its box (x,y); dependent funcgraphs are re-offset by the
+    // caller (step 5 재샘플 결합) — the plane itself just translates here.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
   } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
@@ -284,7 +286,7 @@ function applyDelta(obj, orig, dx, dy) {
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
-  } else if (obj.type === "polyline" || obj.type === "curve") {
+  } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
     obj.points = orig.points.map((p) => ({ x: p.x + dx, y: p.y + dy }));
   }
 }
@@ -344,7 +346,7 @@ function objectCenter(obj) {
   if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
     return { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
   }
-  if (obj.type === "polyline" || obj.type === "curve") return polyCenter(obj.points);
+  if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") return polyCenter(obj.points);
   return { x: obj.x + (obj.w || 0) / 2, y: obj.y + (obj.h || 0) / 2 };
 }
 
@@ -531,7 +533,7 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 
 /* ----- world bbox of one object (text uses its rendered <text> box) ----- */
 function objWorldBBox(o, svg) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "optics" || o.type === "apparatus") {
+  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -559,7 +561,7 @@ function objWorldBBox(o, svg) {
   if (o.type === "pendulum") {
     return pendulumBBox(o);
   }
-  if (o.type === "polyline" || o.type === "curve") {
+  if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
     const pts = o.points || [];
     if (!pts.length) return null;
     let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
@@ -631,7 +633,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   for (const obj of objs) {
     const orig = origObjs[obj.id];
     if (!orig) continue;
-    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "svgAsset" || orig.type === "axes" || orig.type === "optics" || orig.type === "apparatus") {
+    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "svgAsset" || orig.type === "axes" || orig.type === "coordplane" || orig.type === "optics" || orig.type === "apparatus") {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
     } else if (orig.type === "anglearc") {
@@ -651,7 +653,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
       if (typeof orig.bobRadius === "number") obj.bobRadius = orig.bobRadius * sx; // sx == sy (forced ratio)
-    } else if (orig.type === "polyline" || orig.type === "curve") {
+    } else if (orig.type === "polyline" || orig.type === "curve" || orig.type === "funcgraph") {
       obj.points = orig.points.map((p) => mapPt(p.x, p.y));
     }
     if (orig.positionLocked) {

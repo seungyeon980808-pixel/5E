@@ -68,6 +68,44 @@ export const TEMPLATES = {
     },
   },
 
+  /* COORDPLANE — atomic (single type:"coordplane" object). A full math coordinate
+   * system: box + display range + grid/ticks/numeric labels, all projected by the
+   * renderer from the data (기획서 §3-1). Rides the existing size-based transform
+   * path (x/y/w/h/rotation) like `axes`. `funcgraph`s reference it by planeId. */
+  coordplane: {
+    kind: "atomic",
+    category: "함수",
+    label: "좌표평면",
+    keywords: ["좌표평면", "좌표계", "그래프", "graph", "plane", "함수", "xy", "격자", "grid"],
+    create: {},
+    make(at) {
+      const w = 60, h = 48; // default extent (mm); resizable afterwards
+      return {
+        type: "coordplane",
+        x: at.x - w / 2,
+        y: at.y - h / 2,
+        w,
+        h,
+        rotation: 0,
+        xMin: -5, xMax: 5,              // display range (math units)
+        yMin: -5, yMax: 5,
+        gridStepX: 1, gridStepY: 1,     // grid/tick spacing (math units)
+        showAxisLines: true,
+        showGrid: false,
+        showTicks: true,
+        showTickLabels: false,          // numeric labels — coordplane-only feature
+        tickLabelSize: 2.6,             // mm
+        labelX: "x", labelY: "y",
+        labelType: "quantity",
+        exportable: true,               // 요구 6: 평면 출력 on/off
+        strokeLevel: 0,                 // 0 = black (DESIGN 2-2)
+        strokeWidth: DEFAULT_STROKE_WIDTH,
+        locked: false,
+        positionLocked: false,
+      };
+    },
+  },
+
   /* ANGLE ARC — shape (arms the two-click ARC tool in tools.js). The placement
    * tool owns the geometry (makeAngleArcDraft): click 1 = vertex, click 2 = start
    * point. make() below is kept for reference; the button never calls it. */
@@ -219,7 +257,7 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "회로", "전자기학", "광학", "역학"];
+const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학"];
 
 /* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
  *
@@ -267,6 +305,13 @@ function iconSampleObject(id, def) {
     const o = def.make({ x: 0, y: 0 });
     if (o.type === "axes") {          // strip ticks/labels so the silhouette stays clean
       o.showTicks = false;
+      o.labelX = "";
+      o.labelY = "";
+    }
+    if (o.type === "coordplane") {    // clean cross-axes silhouette for the 16px icon
+      o.showTicks = false;
+      o.showTickLabels = false;
+      o.showGrid = false;
       o.labelX = "";
       o.labelY = "";
     }
