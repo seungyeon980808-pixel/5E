@@ -39,16 +39,57 @@ export function pointInPolygon(px, py, poly) {
 }
 
 export function isCuttable(o) {
-  return o && (o.type === "line" || o.type === "polyline" || o.type === "curve");
+  return o && (o.type === "line" || o.type === "polyline" || o.type === "curve"
+    || o.type === "ellipse" || o.type === "rect" || o.type === "triangle");
 }
-// 객체 → 점 배열(월드). line은 [p1,p2], polyline/curve는 points.
+// 네이티브 도형(원/상자/삼각형)은 항상 닫힘; polyline/curve는 o.closed.
+function objClosed(o) {
+  return o.type === "ellipse" || o.type === "rect" || o.type === "triangle" || !!o.closed;
+}
+function rotatePt(px, py, cx, cy, deg) {
+  if (!deg) return { x: px, y: py };
+  const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = px - cx, dy = py - cy;
+  return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c };
+}
+// 원/상자/삼각형 → 닫힌 다각형 점 배열(회전 반영). 직선 칼이 볼록 도형을 항상 2점서
+// 지나므로 깔끔히 두 조각으로 갈린다. 자른 조각은 닫힌 polyline로 방출된다.
+function ellipsePolygon(o, n = 48) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, rx = o.w / 2, ry = o.h / 2;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    pts.push(rotatePt(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cx, cy, o.rotation || 0));
+  }
+  return pts;
+}
+function rectPolygon(o) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, d = o.rotation || 0;
+  return [[o.x, o.y], [o.x + o.w, o.y], [o.x + o.w, o.y + o.h], [o.x, o.y + o.h]]
+    .map(([x, y]) => rotatePt(x, y, cx, cy, d));
+}
+function trianglePolygon(o) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, d = o.rotation || 0;
+  const fx = !!o.flipX, fy = !!o.flipY;
+  let v;
+  if (!fx && !fy) v = [[o.x, o.y + o.h], [o.x + o.w, o.y + o.h], [o.x, o.y]];
+  else if (fx && !fy) v = [[o.x + o.w, o.y + o.h], [o.x, o.y + o.h], [o.x + o.w, o.y]];
+  else if (!fx && fy) v = [[o.x, o.y], [o.x + o.w, o.y], [o.x, o.y + o.h]];
+  else v = [[o.x + o.w, o.y], [o.x, o.y], [o.x + o.w, o.y + o.h]];
+  return v.map(([x, y]) => rotatePt(x, y, cx, cy, d));
+}
+// 객체 → 점 배열(월드). line은 [p1,p2], polyline/curve는 points, 도형은 다각형화.
 function objPoints(o) {
   if (o.type === "line") return [{ x: o.p1.x, y: o.p1.y }, { x: o.p2.x, y: o.p2.y }];
   if (o.type === "polyline" || o.type === "curve") return (o.points || []).map((p) => ({ x: p.x, y: p.y }));
+  if (o.type === "ellipse") return ellipsePolygon(o);
+  if (o.type === "rect") return rectPolygon(o);
+  if (o.type === "triangle") return trianglePolygon(o);
   return null;
 }
 // 분할 조각(점 배열) → 원본 스타일을 물려받은 새 객체. line도 3점 이상이면 polyline로.
 function makePiece(o, pts, closed) {
+  const nativeShape = o.type === "ellipse" || o.type === "rect" || o.type === "triangle";
   const base = JSON.parse(JSON.stringify(o));
   delete base.id; delete base.groupId;
   const P = pts.map((p) => ({ x: round3(p.x), y: round3(p.y) }));
@@ -56,10 +97,22 @@ function makePiece(o, pts, closed) {
     base.p1 = P[0]; base.p2 = P[1];
     return base;
   }
-  if (o.type === "line") { base.type = "polyline"; base.arrowHead = "none"; }
+  // line·네이티브 도형 조각은 polyline로(반쪽 타원은 타원이 아니므로). 도형의
+  // 위치/크기/회전 필드는 버리고 절대 점 좌표만 사용. fill/stroke는 원본 상속.
+  if (o.type === "line" || nativeShape) {
+    base.type = "polyline";
+    base.arrowHead = base.arrowHead ?? "none";
+    base.rounded = base.rounded ?? false;
+    base.cornerRadius = base.cornerRadius ?? 10;
+    base.dashLength = base.dashLength ?? 0;
+    base.dashGap = base.dashGap ?? 0;
+    delete base.x; delete base.y; delete base.w; delete base.h;
+    delete base.flipX; delete base.flipY;
+    base.rotation = 0;
+  }
   base.points = P;
   base.closed = !!closed;
-  if (base.type === "polyline" || base.type === "curve") base.fillNone = closed ? base.fillNone : true;
+  if ((base.type === "polyline" || base.type === "curve") && !closed) base.fillNone = true;
   return base;
 }
 // 연속 중복점 제거(0길이 세그먼트 방지).
@@ -74,7 +127,7 @@ export function cutScissors(o, point) {
   if (!isCuttable(o)) return null;
   const pts = objPoints(o);
   if (pts.length < 2) return null;
-  const closed = !!o.closed;
+  const closed = objClosed(o);
   const segCount = closed ? pts.length : pts.length - 1;
   let best = { d: Infinity, seg: -1, pt: null };
   for (let i = 0; i < segCount; i++) {
@@ -121,6 +174,15 @@ function splitOpenAtCrossings(o, pts, crossings) {
   return pieces.map((p) => dedupe(p)).filter((p) => p.length >= 2).map((p) => makePiece(o, p, false));
 }
 
+// 같은 점의 중복 교차 제거 — 칼이 다각형 꼭짓점을 정확히 지날 때(축정렬 절단 등)
+// 인접 두 세그먼트가 같은 점을 각각 교차로 잡아 개수가 부풀려지는 것 방지.
+function dedupeCrossings(crossings) {
+  const out = [];
+  for (const c of crossings) {
+    if (!out.some((d) => dist2(d.pt.x, d.pt.y, c.pt.x, c.pt.y) < 1e-4)) out.push(c);
+  }
+  return out;
+}
 // 경로 세그먼트들과 절단 기하(칼=선분, 올가미=폴리곤)의 교차점 목록.
 function pathCrossings(pts, closed, hitSeg) {
   const crossings = [];
@@ -137,9 +199,9 @@ export function cutKnife(o, a, b) {
   if (!isCuttable(o)) return null;
   const pts = objPoints(o);
   if (pts.length < 2) return null;
-  const closed = !!o.closed;
+  const closed = objClosed(o);
   const hitSeg = (s0, s1) => { const X = segSegIntersect(s0, s1, a, b); return X ? [X] : []; };
-  const crossings = pathCrossings(pts, closed, hitSeg);
+  const crossings = dedupeCrossings(pathCrossings(pts, closed, hitSeg));
   if (!crossings.length) return null;
   if (closed) {
     if (crossings.length !== 2) return null; // 2교차만 두 링으로 분할(그 외는 원본 유지)
@@ -168,7 +230,7 @@ export function cutLasso(o, poly) {
   if (!isCuttable(o) || !poly || poly.length < 3) return null;
   const pts = objPoints(o);
   if (pts.length < 2) return null;
-  const closed = !!o.closed;
+  const closed = objClosed(o);
   const hitSeg = (s0, s1) => {
     const xs = [];
     for (let j = 0, k = poly.length - 1; j < poly.length; k = j++) {
@@ -198,7 +260,7 @@ export function distanceToObject(o, point) {
   if (!isCuttable(o)) return Infinity;
   const pts = objPoints(o);
   if (!pts || pts.length < 2) return Infinity;
-  const closed = !!o.closed;
+  const closed = objClosed(o);
   const N = closed ? pts.length : pts.length - 1;
   let best = Infinity;
   for (let i = 0; i < N; i++) {

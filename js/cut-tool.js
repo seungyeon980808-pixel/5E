@@ -12,18 +12,34 @@
 
 import { screenToWorld } from "./viewport.js?v=0.46.0";
 import { cutObject, isCuttable, distanceToObject } from "./cut-geometry.js?v=0.46.0";
+import { snapLineEnd } from "./geometry.js?v=0.46.0";
+import { getObjectBBox } from "./pick.js?v=0.46.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MODE_HINT = {
-  scissors: "가위: 선을 클릭하면 그 지점에서 둘로 나뉩니다.",
-  knife: "칼: 직선을 그으면 지나가는 선·도형이 잘립니다.",
+  scissors: "가위: 대상에 가까이 가면 가위가 닫힙니다. 클릭하면 그 지점에서 둘로.",
+  knife: "칼: 드래그로 직선을 긋습니다(Ctrl=각도 스냅). 닫힌 도형은 2점 통과 시 잘림.",
   lasso: "올가미: 영역을 감싸면 경계에서 잘려 그 부분이 분리됩니다.",
+};
+
+// 커스텀 커서(정지 이미지 2상태). 액션 지점(칼끝/가윗날)을 좌상단에 두고 hotspot 고정.
+function cursorCss(inner, hx, hy) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 26 26' fill='none' stroke='%23111' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>${inner}</svg>`;
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}") ${hx} ${hy}, crosshair`;
+}
+const CURSOR = {
+  scissorsOpen: cursorCss(`<line x1='3' y1='3' x2='15' y2='12'/><line x1='3' y1='9' x2='15' y2='15'/><circle cx='18.5' cy='11' r='2.7'/><circle cx='18.5' cy='17' r='2.7'/>`, 3, 3),
+  scissorsClosed: cursorCss(`<line x1='3' y1='5' x2='15' y2='13'/><line x1='3' y1='7' x2='15' y2='14.5'/><circle cx='18.5' cy='12' r='2.7'/><circle cx='18.5' cy='16.5' r='2.7'/>`, 3, 6),
+  knifeClosed: cursorCss(`<rect x='11' y='11' width='11' height='5' rx='2' transform='rotate(35 16 13)'/>`, 3, 3),
+  knifeOpen: cursorCss(`<path d='M3 3 L14 11 L11 14 Z' fill='%23111'/><rect x='12' y='12' width='11' height='5' rx='2' transform='rotate(35 17 14)'/>`, 3, 3),
 };
 
 let _state, _svg, _panel, _hintEl;
 let _mode = "scissors";
 let _drawing = null;     // 드래그 중: { pts:[{x,y}...] }
 let _overlay = null;     // 임시 미리보기 SVG 요소
+let _bboxLayer = null;   // 전체 오브젝트 bbox 표시 <g>
+let _bboxRaf = 0;
 let _space = false;
 let _idc = 0;
 
@@ -69,6 +85,7 @@ function setMode(mode) {
   _hintEl.textContent = MODE_HINT[mode];
   clearOverlay();
   _drawing = null;
+  if (isActive()) setCursor(idleCursor());
 }
 
 function isActive() { return _state.get().activeTool === "CUT"; }
@@ -76,12 +93,58 @@ function isActive() { return _state.get().activeTool === "CUT"; }
 function syncUI(tool) {
   const on = tool === "CUT";
   _panel.hidden = !on;
-  _svg.style.cursor = on ? "crosshair" : "";
-  if (!on) { clearOverlay(); _drawing = null; }
+  setCursor(on ? idleCursor() : "");
+  if (on) scheduleBBoxes();
+  else { clearOverlay(); clearBBoxes(); _drawing = null; }
 }
 
 function worldPos(e) { return screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY); }
 function worldPerPx() { return _state.get().viewBox.w / (_svg.getBoundingClientRect().width || 1); }
+
+/* ----- 커서(정지 2상태): 가위 열림/닫힘, 칼 닫힘/열림 ----- */
+function setCursor(css) { _svg.style.cursor = css; }
+function idleCursor() {
+  if (_mode === "scissors") return CURSOR.scissorsOpen;
+  if (_mode === "knife") return CURSOR.knifeClosed;
+  return "crosshair"; // lasso
+}
+// 가위: 자를 수 있는 대상 근처면 닫힌 가위, 아니면 열린 가위.
+function updateScissorsCursor(e) {
+  const p = worldPos(e);
+  const tol = 12 * worldPerPx();
+  let near = false;
+  for (const o of _state.get().objects) {
+    if (isCuttable(o) && distanceToObject(o, p) < tol) { near = true; break; }
+  }
+  setCursor(near ? CURSOR.scissorsClosed : CURSOR.scissorsOpen);
+}
+
+/* ----- 전체 오브젝트 bbox 표시(자르기 도구일 때) ----- */
+function clearBBoxes() { if (_bboxLayer) { _bboxLayer.remove(); _bboxLayer = null; } }
+function drawBBoxes() {
+  clearBBoxes();
+  if (!isActive()) return;
+  const layer = document.createElementNS(SVG_NS, "g");
+  layer.setAttribute("pointer-events", "none");
+  const sw = worldPerPx() * 0.8;
+  for (const o of _state.get().objects) {
+    let bb; try { bb = getObjectBBox(o); } catch (_) { bb = null; }
+    if (!bb || bb.w <= 0 || bb.h <= 0) continue;
+    const r = document.createElementNS(SVG_NS, "rect");
+    r.setAttribute("x", bb.x); r.setAttribute("y", bb.y);
+    r.setAttribute("width", bb.w); r.setAttribute("height", bb.h);
+    r.setAttribute("fill", "none");
+    r.setAttribute("stroke", isCuttable(o) ? "#0969da" : "#adb5bd");
+    r.setAttribute("stroke-width", sw);
+    r.setAttribute("stroke-dasharray", `${sw * 3} ${sw * 2}`);
+    r.setAttribute("opacity", "0.55");
+    layer.appendChild(r);
+  }
+  _bboxLayer = layer;
+  _svg.appendChild(layer);
+}
+// setTimeout (rAF는 비활성 탭·헤드리스에서 안 fired) — 렌더가 오버레이를 지운 뒤 재그림.
+function scheduleBBoxes() { clearTimeout(_bboxRaf); _bboxRaf = setTimeout(drawBBoxes, 0); }
 
 /* ----- 임시 미리보기(칼=빨간 선, 올가미=보라 폐곡선) ----- */
 function clearOverlay() { if (_overlay) { _overlay.remove(); _overlay = null; } }
@@ -115,22 +178,29 @@ function onDown(e) {
   if (!isActive() || e.button !== 0 || _space) return;
   const p = worldPos(e);
   if (_mode === "scissors") { applyCut({ mode: "scissors", point: p }); return; }
+  if (_mode === "knife") setCursor(CURSOR.knifeOpen);   // 칼날 나옴
   _drawing = { pts: [p] };
   renderOverlay();
 }
 function onMove(e) {
-  if (!_drawing) return;
-  const p = worldPos(e);
-  if (_mode === "knife") _drawing.pts[1] = p; else _drawing.pts.push(p);
-  renderOverlay();
+  if (_drawing) {
+    let p = worldPos(e);
+    if (_mode === "knife") { if (e.ctrlKey) p = snapLineEnd(_drawing.pts[0], p, true); _drawing.pts[1] = p; }
+    else _drawing.pts.push(p);
+    renderOverlay();
+    return;
+  }
+  if (isActive() && _mode === "scissors") updateScissorsCursor(e); // 근접에 따라 가위 열림/닫힘
 }
 function onUp(e) {
   if (!_drawing) return;
   if (e && typeof e.clientX === "number") {       // 마우스업 위치를 최종점으로 반영
-    const p = worldPos(e);
-    if (_mode === "knife") _drawing.pts[1] = p; else _drawing.pts.push(p);
+    let p = worldPos(e);
+    if (_mode === "knife") { if (e.ctrlKey) p = snapLineEnd(_drawing.pts[0], p, true); _drawing.pts[1] = p; }
+    else _drawing.pts.push(p);
   }
   const pts = _drawing.pts; _drawing = null; clearOverlay();
+  if (isActive()) setCursor(idleCursor());        // 칼날 닫힘 복귀
   if (_mode === "knife" && pts.length >= 2) applyCut({ mode: "knife", a: pts[0], b: pts[1] });
   else if (_mode === "lasso" && pts.length >= 3) applyCut({ mode: "lasso", poly: pts });
 }
