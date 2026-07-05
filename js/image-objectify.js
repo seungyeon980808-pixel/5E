@@ -83,7 +83,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-objectify" role="dialog" aria-modal="true" aria-labelledby="objectify-title">
       <h2 class="modal-title" id="objectify-title">이미지 객체화</h2>
-      <p class="objectify-description">떨어져 있는 잉크 덩어리를 각각 편집 가능한 객체로 분리합니다. 흰 배경은 벡터화 과정에서 자동으로 제거(투명)됩니다. 붙어 있는 도형은 한 덩어리가 되며, 삽입 후 지우개·삭제로 마무리하세요.</p>
+      <p class="objectify-description">떨어져 있는 잉크 덩어리를 각각 편집 가능한 객체로 분리합니다. 흰 배경은 자동으로 제거(투명)됩니다. 붙어 있는 덩어리는 아래 <b>‘✂ 분리 자르기’</b>로 경계를 그어 직접 나눌 수 있습니다.</p>
       <input id="objectify-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden />
       <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일 선택, 끌어 놓기 또는 Ctrl+V 붙여넣기</div>
       <canvas id="objectify-preview" class="objectify-preview" width="560" height="240" hidden style="cursor:pointer;"></canvas>
@@ -91,6 +91,12 @@ function buildModal() {
         <span style="color:#0969da;">■ 도형</span>&nbsp;
         <span style="color:#e35d6a;">■ 글자 추정</span>&nbsp;·&nbsp;미리보기에서 덩어리를 클릭하면 제외/포함이 전환됩니다.
       </p>
+      <div id="objectify-cut-row" class="objectify-controls" hidden style="grid-template-columns:auto auto 1fr auto;align-items:center;gap:12px;">
+        <button id="objectify-cut-toggle" type="button" class="modal-btn">✂ 분리 자르기</button>
+        <label class="modal-label" style="font-weight:normal;margin:0;white-space:nowrap;">브러시 <input id="objectify-cut-width" type="range" min="2" max="20" step="1" value="7" style="vertical-align:middle;width:80px;" /><output id="objectify-cut-width-value">7px</output></label>
+        <span class="modal-label" id="objectify-cut-hint" style="font-weight:normal;color:#6e7781;margin:0;">붙은 덩어리를 나누려면 '분리 자르기'를 켜고 경계 위를 드래그하세요.</span>
+        <button id="objectify-cut-clear" type="button" class="modal-btn" disabled>자른 선 지우기</button>
+      </div>
       <div class="objectify-controls" style="grid-template-columns:1fr 1fr;">
         <label class="modal-field">
           <span class="modal-label">오브젝트 묶음 거리</span>
@@ -155,11 +161,20 @@ export function initImageObjectify(state) {
     eps: overlay.querySelector("#objectify-eps"),
   };
 
+  const cutRow = overlay.querySelector("#objectify-cut-row");
+  const cutToggle = overlay.querySelector("#objectify-cut-toggle");
+  const cutWidthInput = overlay.querySelector("#objectify-cut-width");
+  const cutWidthValue = overlay.querySelector("#objectify-cut-width-value");
+  const cutClearButton = overlay.querySelector("#objectify-cut-clear");
+
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
   let sourceDataUrl = null;  // 참고 이미지 삽입용 원본 dataURL
   let analysis = null;       // vectorizeImage 결과
   let previewPaths = [];     // 컴포넌트별 Path2D 캐시
   let excluded = new Set();  // 미리보기에서 제외한 컴포넌트 index
+  let cutMode = false;       // 분리 브러시(자르기) 모드
+  let cutStrokes = [];       // 사용자가 그은 절단선 [{ points:[[x,y]...], width }]
+  let drawingCut = null;     // 현재 드래그 중인 절단선
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
@@ -176,6 +191,46 @@ export function initImageObjectify(state) {
       removeGrid: removeGridInput.checked,
       preserveGrayLevels: grayLevelsInput.checked,
     };
+  }
+
+  // 분리 브러시: 사용자가 그은 절단선들을 sourceCanvas 해상도의 cutMask(1=자름)로
+  // 래스터화. 원본은 불변, 분석 마스크에만 적용된다.
+  function buildCutMask() {
+    if (!sourceCanvas || !cutStrokes.length) return null;
+    const c = document.createElement("canvas");
+    c.width = sourceCanvas.width; c.height = sourceCanvas.height;
+    const cx = c.getContext("2d");
+    cx.strokeStyle = "#000"; cx.fillStyle = "#000"; cx.lineCap = "round"; cx.lineJoin = "round";
+    for (const st of cutStrokes) {
+      if (st.points.length === 1) {
+        cx.beginPath(); cx.arc(st.points[0][0], st.points[0][1], st.width / 2, 0, Math.PI * 2); cx.fill();
+        continue;
+      }
+      cx.lineWidth = st.width;
+      cx.beginPath();
+      cx.moveTo(st.points[0][0], st.points[0][1]);
+      for (let i = 1; i < st.points.length; i += 1) cx.lineTo(st.points[i][0], st.points[i][1]);
+      cx.stroke();
+    }
+    const d = cx.getImageData(0, 0, c.width, c.height).data;
+    const mask = new Uint8Array(c.width * c.height);
+    for (let i = 0; i < mask.length; i += 1) if (d[i * 4 + 3] > 0) mask[i] = 1;
+    return mask;
+  }
+
+  // 절단선을 미리보기에 빨간 선으로 그린다.
+  function drawCutStroke(ctx, st) {
+    ctx.strokeStyle = "rgba(224,49,49,0.9)";
+    ctx.fillStyle = "rgba(224,49,49,0.9)";
+    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = st.width;
+    if (st.points.length === 1) {
+      ctx.beginPath(); ctx.arc(st.points[0][0], st.points[0][1], st.width / 2, 0, Math.PI * 2); ctx.fill();
+      return;
+    }
+    ctx.beginPath();
+    ctx.moveTo(st.points[0][0], st.points[0][1]);
+    for (let i = 1; i < st.points.length; i += 1) ctx.lineTo(st.points[i][0], st.points[i][1]);
+    ctx.stroke();
   }
 
   /* ----- 미리보기: 원본 흐리게 + 컴포넌트 채움 오버레이 ----- */
@@ -207,8 +262,12 @@ export function initImageObjectify(state) {
         ctx.setLineDash([]);
       }
     });
+    // 분리 브러시: 확정된 절단선 + 드래그 중인 선을 빨갛게 표시.
+    for (const st of cutStrokes) drawCutStroke(ctx, st);
+    if (drawingCut) drawCutStroke(ctx, drawingCut);
     preview.hidden = false;
     legend.hidden = false;
+    cutRow.hidden = false;
   }
 
   function updateResultStatus() {
@@ -233,7 +292,7 @@ export function initImageObjectify(state) {
       try {
         const ctx = sourceCanvas.getContext("2d");
         const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        analysis = vectorizeImage(imageData, currentOptions());
+        analysis = vectorizeImage(imageData, { ...currentOptions(), cutMask: buildCutMask() });
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
@@ -291,6 +350,7 @@ export function initImageObjectify(state) {
         sourceDataUrl = reader.result;
         analysis = null;
         excluded = new Set();
+        cutStrokes = []; drawingCut = null; cutClearButton.disabled = true; setCutMode(false); // 새 이미지 → 절단 초기화
         analyzeButton.disabled = false;
         analyze();
       };
@@ -299,9 +359,18 @@ export function initImageObjectify(state) {
     reader.readAsDataURL(file);
   }
 
-  /* ----- 미리보기 클릭 → 컴포넌트 제외/포함 토글 ----- */
+  /* ----- 미리보기 좌표 → 이미지 px ----- */
+  function previewPointerPos(event) {
+    const rect = preview.getBoundingClientRect();
+    return [
+      (event.clientX - rect.left) * (preview.width / rect.width),
+      (event.clientY - rect.top) * (preview.height / rect.height),
+    ];
+  }
+
+  /* ----- 미리보기 클릭 → 컴포넌트 제외/포함 토글 (자르기 모드에선 비활성) ----- */
   preview.addEventListener("click", (event) => {
-    if (!analysis) return;
+    if (!analysis || cutMode) return;
     const rect = preview.getBoundingClientRect();
     const x = (event.clientX - rect.left) * (preview.width / rect.width);
     const y = (event.clientY - rect.top) * (preview.height / rect.height);
@@ -318,6 +387,34 @@ export function initImageObjectify(state) {
     drawPreview();
     updateResultStatus();
   });
+
+  /* ----- 분리 브러시: 미리보기에 절단선 드래그 ----- */
+  function setCutMode(on) {
+    cutMode = on;
+    cutToggle.classList.toggle("modal-btn-primary", on);
+    cutToggle.textContent = on ? "✂ 자르기 켜짐 (끄기)" : "✂ 분리 자르기";
+    preview.style.cursor = on ? "crosshair" : "pointer";
+  }
+  preview.addEventListener("mousedown", (event) => {
+    if (!cutMode || !analysis || event.button !== 0) return;
+    event.preventDefault();
+    drawingCut = { points: [previewPointerPos(event)], width: Number(cutWidthInput.value) };
+    drawPreview();
+  });
+  preview.addEventListener("mousemove", (event) => {
+    if (!drawingCut) return;
+    drawingCut.points.push(previewPointerPos(event));
+    drawPreview();
+  });
+  function finishCut() {
+    if (!drawingCut) return;
+    cutStrokes.push(drawingCut);
+    drawingCut = null;
+    cutClearButton.disabled = false;
+    analyze();                 // 절단 반영해 재분석
+  }
+  preview.addEventListener("mouseup", finishCut);
+  preview.addEventListener("mouseleave", finishCut);
 
   /* ===== 삽입: 이미지 px → world mm 매핑 + 스토어 액션 (Undo 1스텝) ===== */
   function insertObjects() {
@@ -459,17 +556,9 @@ export function initImageObjectify(state) {
         }
       }
 
-      // 삽입물 전체를 하나의 그룹으로 (참고 이미지는 제외).
-      // undo/redo는 rebuildGroups가 obj.groupId에서 재구성하므로 안전.
-      if (addedIds.length >= 2) {
-        const groupId = `grp_${stamp}_vec`;
-        for (const id of addedIds) {
-          const obj = s.objects.find((o) => o.id === id);
-          if (obj) obj.groupId = groupId;
-        }
-        s.groups.push({ id: groupId, memberIds: [...addedIds] });
-      }
-
+      // 그룹으로 묶지 않는다(사용자 요구): 객체화의 목적이 '각각 분리'이므로 삽입
+      // 직후 그룹은 오히려 방해. 다중 선택 상태만 남겨 원하면 바로 함께 옮기되, 빈
+      // 곳 클릭 후 하나를 누르면 그 객체만 선택된다.
       s.undoStack.push(snapshot);
       s.redoStack = [];
       s.selectedIds = addedIds;
@@ -530,4 +619,14 @@ export function initImageObjectify(state) {
   grayLevelsInput.addEventListener("change", scheduleAnalyze);
   analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
+
+  // 분리 브러시 컨트롤
+  cutToggle.addEventListener("click", () => setCutMode(!cutMode));
+  cutWidthInput.addEventListener("input", () => { cutWidthValue.textContent = cutWidthInput.value + "px"; });
+  cutClearButton.addEventListener("click", () => {
+    if (!cutStrokes.length) return;
+    cutStrokes = [];
+    cutClearButton.disabled = true;
+    analyze();
+  });
 }

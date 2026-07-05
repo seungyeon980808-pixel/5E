@@ -877,12 +877,14 @@ function measureLoopFillLevel(pts, isHole, level, gray, classMap, labels, label,
 
 // 기존(단일 Otsu) 경로 — preserveGrayLevels:false 및 다단계 폴백 시 그대로 사용.
 function vectorizeSingleLevel(imageData, options) {
-  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid } = options;
+  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask } = options;
   const { width: w, height: h } = imageData;
   const { mask: rawMask, gray } = binarize(imageData);
   let mask = rawMask;
   if (removeGrid) mask = removeGridLines(mask, w, h);
+  if (cutMask) { mask = mask.slice(); for (let i = 0; i < w * h; i += 1) if (cutMask[i]) mask[i] = 0; } // 분리 브러시: 절단선 제거
   const grouped = dilate(mask, w, h, dilateRadius);
+  if (cutMask) for (let i = 0; i < w * h; i += 1) if (cutMask[i]) grouped[i] = 0; // dilate가 메운 절단선 재확보
   const { labels, comps } = connectedComponents(grouped, w, h);
 
   const components = [];
@@ -924,13 +926,14 @@ function vectorizeSingleLevel(imageData, options) {
 // 파이프라인을 레벨마다 재실행(누적 마스크: classMap<=level). 밝은 레벨을
 // 먼저 push해 order를 낮게 주고, 어두운 레벨은 나중에 push해 위에 쌓는다.
 function vectorizeMultiLevel(imageData, options) {
-  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid } = options;
+  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask } = options;
   const { width: w, height: h } = imageData;
   const { gray } = binarize(imageData);
   const { classMap, classes } = computeGrayLevels(gray, w, h);
   if (classes.length < 2) return null; // 톤이 사실상 단일 — 단일-Otsu로 폴백
 
   const lightestIdx = classes.length - 1;
+  if (cutMask) { for (let i = 0; i < w * h; i += 1) if (cutMask[i]) classMap[i] = lightestIdx; } // 분리 브러시: 절단선 → 배경
   if (removeGrid) {
     const inkMask = new Uint8Array(w * h);
     for (let i = 0; i < w * h; i += 1) inkMask[i] = classMap[i] < lightestIdx ? 1 : 0;
@@ -945,6 +948,7 @@ function vectorizeMultiLevel(imageData, options) {
     const mask = new Uint8Array(w * h);
     for (let i = 0; i < w * h; i += 1) mask[i] = classMap[i] <= level ? 1 : 0;
     const grouped = dilate(mask, w, h, dilateRadius);
+    if (cutMask) for (let i = 0; i < w * h; i += 1) if (cutMask[i]) grouped[i] = 0; // 분리 브러시: dilate 메움 재확보
     const { labels, comps } = connectedComponents(grouped, w, h);
 
     for (const c of comps) {
@@ -1007,8 +1011,9 @@ export function vectorizeImage(imageData, options = {}) {
     epsilon = 1.2,
     removeGrid = false,
     preserveGrayLevels = true,
+    cutMask = null,               // 분리 브러시: 사용자가 그은 절단선 픽셀(1=자름)
   } = options;
-  const pipelineOptions = { dilateRadius, minArea, textSizePx, epsilon, removeGrid };
+  const pipelineOptions = { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask };
   if (preserveGrayLevels) {
     const multi = vectorizeMultiLevel(imageData, pipelineOptions);
     if (multi) return multi;
