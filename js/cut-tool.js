@@ -32,9 +32,10 @@ function injectStyles() {
   const st = document.createElement("style");
   st.id = "cut-tool-styles";
   st.textContent = `
-    #cut-tool-panel { position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:60;
+    #cut-tool-panel { position:fixed; top:110px; left:50%; transform:translateX(-50%); z-index:60;
       display:flex; align-items:center; gap:8px; padding:7px 12px; background:#fff; border:1px solid #d0d7de;
       border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.12); font-family:"IBM Plex Sans KR",sans-serif; }
+    #cut-tool-panel[hidden] { display:none; }   /* [hidden]이 ID의 display:flex를 이기도록(우선순위) */
     #cut-tool-panel .cut-tool-title { font-weight:700; color:#0d1117; margin-right:2px; }
     #cut-tool-panel .cut-tab { border:1px solid #d0d7de; background:#f6f8fa; color:#0d1117; border-radius:7px;
       padding:5px 12px; cursor:pointer; font-size:14px; }
