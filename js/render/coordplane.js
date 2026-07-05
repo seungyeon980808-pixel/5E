@@ -235,8 +235,8 @@ function renderCoordplane(obj) {
   };
   if (obj.showAxisLines && obj.showAxisLabels !== false) {
     if (variant === "quadrant") {
-      // L자(1사분면, 평가원): x는 x축 화살표 오른쪽(축 높이), y는 y축 화살표 왼쪽.
-      if (xAxisVisible) addName(obj.labelX, right + nameSize * 0.4, worldY0, "start", "middle");
+      // L자(1사분면, 평가원): x는 x축 화살표 바로 오른쪽(축 높이), y는 y축 화살표 왼쪽.
+      if (xAxisVisible) addName(obj.labelX, right + nameSize * 0.22, worldY0 - nameSize * 0.05, "start", "middle");
       if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 - nameSize * 0.5, top + nameSize, "end", "auto");
     } else {
       if (xAxisVisible) addName(obj.labelX, right, worldY0 - nameSize * 0.5, "end", "auto");
