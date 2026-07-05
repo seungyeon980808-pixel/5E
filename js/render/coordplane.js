@@ -18,8 +18,8 @@ import {
   applyObjectLabelFont,
   catmullRomPath,
   applyDash,
-} from "./core.js?v=0.46.0";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.46.0";
+} from "./core.js?v=0.47.0";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.47.0";
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
