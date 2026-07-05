@@ -79,6 +79,7 @@ function buildModal() {
           <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="replace" /><span class="modal-label" style="font-weight:normal;">텍스트 객체로 대체 (A, B, C…)</span></label>
         </span>
       </div>
+      <label class="modal-field modal-field-row"><input id="objectify-graylevels" type="checkbox" checked /><span class="modal-label">회색 단계 보존 (흰/회색/검정 다단계 인식)</span></label>
       <label class="modal-field modal-field-row"><input id="objectify-removegrid" type="checkbox" /><span class="modal-label">격자·눈금선 제거 (그래프·도표용)</span></label>
       <label class="modal-field modal-field-row"><input id="objectify-reference" type="checkbox" /><span class="modal-label">원본 이미지를 반투명 배경으로 함께 삽입</span></label>
       <p id="objectify-status" class="objectify-status" role="status">이미지를 선택하세요.</p>
@@ -106,6 +107,7 @@ export function initImageObjectify(state) {
   const analyzeButton = overlay.querySelector("#objectify-analyze");
   const insertButton = overlay.querySelector("#objectify-insert");
   const removeGridInput = overlay.querySelector("#objectify-removegrid");
+  const grayLevelsInput = overlay.querySelector("#objectify-graylevels");
   const referenceInput = overlay.querySelector("#objectify-reference");
   const sliders = {
     dilate: overlay.querySelector("#objectify-dilate"),
@@ -133,6 +135,7 @@ export function initImageObjectify(state) {
       textSizePx: Number(sliders.textsize.value),
       epsilon: Number(sliders.eps.value) / 10,
       removeGrid: removeGridInput.checked,
+      preserveGrayLevels: grayLevelsInput.checked,
     };
   }
 
@@ -195,6 +198,11 @@ export function initImageObjectify(state) {
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
+          if (comp.ellipse) {
+            const e = comp.ellipse;
+            path.ellipse(e.cx, e.cy, e.rx, e.ry, (e.rotationDeg || 0) * Math.PI / 180, 0, Math.PI * 2);
+            return path;
+          }
           for (const loop of comp.loops) {
             path.moveTo(loop.points[0][0], loop.points[0][1]);
             for (let i = 1; i < loop.points.length; i += 1) path.lineTo(loop.points[i][0], loop.points[i][1]);
@@ -336,23 +344,49 @@ export function initImageObjectify(state) {
           addedIds.push(textObject.id);
           continue;
         }
-        for (const loop of comp.loops) {
-          const polyline = applyNewObjectStyleDefaults({
-            id: `obj_${stamp}_vec${++idCounter}`,
-            type: "polyline",
-            points: loop.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
-            rotation: 0,
-            strokeLevel: 0, strokeWidth: 0, // 채움 폴리곤 — 테두리 없음 (자유곡선 F 관례)
-            arrowHead: "none", dashLength: 0, dashGap: 0,
-            closed: true,
-            fillLevel: loop.isHole ? 255 : 0, // 바깥=검정, 구멍=배경색(흰) 위에 쌓기
-            fillNone: false, fillStyle: "solid",
-            rounded: false, cornerRadius: 10,
+        // §2-2: 원/링 → 네이티브 ellipse 1객체 (px → world mm 환산).
+        if (comp.ellipse) {
+          const e = comp.ellipse;
+          const cxW = ox + e.cx * scale, cyW = oy + e.cy * scale;
+          const wW = e.rx * 2 * scale, hW = e.ry * 2 * scale;
+          const ellipseObject = applyNewObjectStyleDefaults({
+            id: `obj_${stamp}_vecel${++idCounter}`,
+            type: "ellipse",
+            x: round3(cxW - wW / 2), y: round3(cyW - hW / 2),
+            w: round3(wW), h: round3(hW),
+            rotation: round3(e.rotationDeg || 0),
+            strokeLevel: e.strokeLevel, strokeWidth: round3(e.strokeWidthPx * scale),
+            fillLevel: e.fillLevel, fillNone: false, fillStyle: "solid",
+            dashLength: 0, dashGap: 0,
+            labelType: "quantity",
             locked: false, positionLocked: false,
             layerId, order: s.objects.length,
           });
-          s.objects.push(polyline);
-          addedIds.push(polyline.id);
+          s.objects.push(ellipseObject);
+          addedIds.push(ellipseObject.id);
+          continue;
+        }
+        for (const loop of comp.loops) {
+          // 채움 폴리곤 — 테두리 없음 (자유곡선 F 관례). 회색 단계 보존 시
+          // loop.fillLevel = 실측 그레이 중앙값(§2-1); 폴백은 바깥=검정, 구멍=흰.
+          const base = {
+            id: `obj_${stamp}_vec${++idCounter}`,
+            points: loop.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
+            rotation: 0,
+            strokeLevel: 0, strokeWidth: 0,
+            dashLength: 0, dashGap: 0,
+            closed: true,
+            fillLevel: loop.fillLevel !== undefined ? loop.fillLevel : (loop.isHole ? 255 : 0),
+            fillNone: false, fillStyle: "solid",
+            locked: false, positionLocked: false,
+            layerId, order: s.objects.length,
+          };
+          // §2-3: 곡선 스팬 포함 루프 → closed curve, 전 직선 → closed polyline.
+          const shape = loop.curved
+            ? applyNewObjectStyleDefaults({ ...base, type: "curve" })
+            : applyNewObjectStyleDefaults({ ...base, type: "polyline", arrowHead: "none", rounded: false, cornerRadius: 10 });
+          s.objects.push(shape);
+          addedIds.push(shape.id);
         }
       }
 
@@ -424,6 +458,7 @@ export function initImageObjectify(state) {
     });
   }
   removeGridInput.addEventListener("change", scheduleAnalyze);
+  grayLevelsInput.addEventListener("change", scheduleAnalyze);
   analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
 }
