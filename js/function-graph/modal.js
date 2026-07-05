@@ -10,12 +10,12 @@
  * Confirm commits through insertFunctionGraph with the dragged domain. Built once,
  * lazily, appended to <body>; reuses the shared .modal-overlay CSS. */
 
-import { state } from "../state.js?v=0.48.2";
-import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.48.2";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.48.2";
-import { sampleFunctionPoints } from "./sampler.js?v=0.48.2";
-import { insertFunctionGraph } from "./insert.js?v=0.48.2";
-import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.48.2";
+import { state } from "../state.js?v=0.48.3";
+import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.48.3";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.48.3";
+import { sampleFunctionPoints } from "./sampler.js?v=0.48.3";
+import { insertFunctionGraph } from "./insert.js?v=0.48.3";
+import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.48.3";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
