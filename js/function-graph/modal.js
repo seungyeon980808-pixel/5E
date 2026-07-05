@@ -6,11 +6,11 @@
  * Confirm commits through insertFunctionGraph (same path the prompt used). Built
  * once, lazily, and appended to <body>; reuses the shared .modal-overlay CSS. */
 
-import { state } from "../state.js?v=0.47.0";
-import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.47.0";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.47.0";
-import { sampleFunctionPoints } from "./sampler.js?v=0.47.0";
-import { insertFunctionGraph } from "./insert.js?v=0.47.0";
+import { state } from "../state.js?v=0.48.0";
+import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.48.0";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.48.0";
+import { sampleFunctionPoints } from "./sampler.js?v=0.48.0";
+import { insertFunctionGraph } from "./insert.js?v=0.48.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
