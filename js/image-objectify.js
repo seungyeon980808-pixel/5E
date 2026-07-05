@@ -91,7 +91,9 @@ function injectObjectifyStyles() {
     .objectify-stage canvas { position:absolute; top:0; left:0; transform-origin:0 0; }
     .objectify-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
     .objectify-tools .modal-btn.is-active { background:#0969da; color:#fff; border-color:#0969da; }
-    .modal-objectify .objectify-dropzone { flex:1 1 auto; display:flex; align-items:center; justify-content:center; }
+    .modal-objectify .objectify-dropzone { position:absolute; inset:0; margin:0; z-index:3; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px; background:#22272e; color:#adbac7; border:2px dashed #444c56; border-radius:8px; cursor:pointer; }
+    .objectify-stage.has-image .objectify-dropzone { display:none; }
+    .objectify-stage.is-dragover .objectify-dropzone { display:flex; background:#2d333b; border-color:#0969da; }
   `;
   document.head.appendChild(style);
 }
@@ -108,9 +110,9 @@ function buildModal() {
       <input id="objectify-file" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp" hidden />
       <div class="objectify-body">
         <div class="objectify-left">
-          <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일 선택, 끌어 놓기 또는 Ctrl+V 붙여넣기</div>
-          <div id="objectify-stage" class="objectify-stage" hidden>
+          <div id="objectify-stage" class="objectify-stage">
             <canvas id="objectify-preview" width="560" height="240"></canvas>
+            <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기</div>
           </div>
           <div id="objectify-tools" class="objectify-tools" hidden>
             <button id="objectify-cut-toggle" type="button" class="modal-btn">✂ 자르기</button>
@@ -358,10 +360,9 @@ export function initImageObjectify(state) {
     for (const st of cutStrokes) drawBrushStroke(ctx, st, "rgba(224,49,49,0.9)");
     for (const st of groupStrokes) drawBrushStroke(ctx, st, "rgba(130,80,223,0.85)");
     if (drawingStroke) drawBrushStroke(ctx, drawingStroke, brushMode === "cut" ? "rgba(224,49,49,0.9)" : "rgba(130,80,223,0.85)");
-    stage.hidden = false;
+    stage.classList.add("has-image");   // 이미지 있음 → 안내 오버레이 숨김(미리보기와 통합)
     tools.hidden = false;
     legend.hidden = false;
-    dropzone.hidden = true;
   }
 
   function updateResultStatus() {
@@ -740,13 +741,14 @@ export function initImageObjectify(state) {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
   });
   fileInput.addEventListener("change", () => { loadFile(fileInput.files?.[0]); fileInput.value = ""; });
+  // 드래그/드롭은 stage 전체에 — 이미지가 이미 있어도 새 파일을 떨궈 교체할 수 있다.
   for (const type of ["dragenter", "dragover"]) {
-    dropzone.addEventListener(type, (event) => { event.preventDefault(); dropzone.classList.add("is-dragover"); });
+    stage.addEventListener(type, (event) => { event.preventDefault(); stage.classList.add("is-dragover"); });
   }
   for (const type of ["dragleave", "drop"]) {
-    dropzone.addEventListener(type, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragover"); });
+    stage.addEventListener(type, (event) => { event.preventDefault(); stage.classList.remove("is-dragover"); });
   }
-  dropzone.addEventListener("drop", (event) => loadFile(event.dataTransfer.files?.[0]));
+  stage.addEventListener("drop", (event) => loadFile(event.dataTransfer.files?.[0]));
 
   // 슬라이더 값 표시 + 자동 재분석 (250ms 디바운스)
   const sliderUnits = { dilate: "px", minarea: "px²", textsize: "px", eps: "" };
