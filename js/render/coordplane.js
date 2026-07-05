@@ -99,6 +99,12 @@ function renderCoordplane(obj) {
   const xAxisLeft   = bothSides ? left   : (yAxisVisible ? worldX0 : left);
   const yAxisBottom = bothSides ? bottom : (xAxisVisible ? worldY0 : bottom);
 
+  // Grid/ticks/numbers at the exact box edge read as a terminal "bar" ⊢ and crowd
+  // the arrow; skip them so the GRID stops one cell short of the range (평가원:
+  // 범위 [-5,5] → 격자 [-4,4]) and the axis ends cleanly with just the arrow.
+  const atEdgeX = (v) => Math.abs(v - xMin) < 1e-6 || Math.abs(v - xMax) < 1e-6;
+  const atEdgeY = (v) => Math.abs(v - yMin) < 1e-6 || Math.abs(v - yMax) < 1e-6;
+
   // ----- GRID (light, dashed — 평가원 style). Clipped to the positive quadrant for
   //       L자/직선 so it never bleeds into the negative side (버그 수정). -----
   if (obj.showGrid) {
@@ -116,7 +122,7 @@ function renderCoordplane(obj) {
     };
     if (gx.kEnd - gx.kStart <= GRID_MAX_LINES) {
       for (let k = gx.kStart; k <= gx.kEnd; k++) {
-        if (!bothSides && k < 0) continue;                 // 양의 구역만(L자/직선)
+        if ((!bothSides && k < 0) || atEdgeX(k * gx.step)) continue; // 양의 구역만 + 한 칸 짧게
         const vx = worldXFromMathX(P, k * gx.step);
         if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
         addGrid(vx, top, vx, yAxisBottom);                 // clip to +y quadrant for L자/직선
@@ -124,7 +130,7 @@ function renderCoordplane(obj) {
     }
     if (hasYArm && gy.kEnd - gy.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
       for (let k = gy.kStart; k <= gy.kEnd; k++) {
-        if (!bothSides && k < 0) continue;
+        if ((!bothSides && k < 0) || atEdgeY(k * gy.step)) continue;
         const vy = worldYFromMathY(P, k * gy.step);
         if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
         addGrid(xAxisLeft, vy, right, vy);                 // clip to +x quadrant for L자
@@ -145,11 +151,6 @@ function renderCoordplane(obj) {
       appendArrow(g, worldX0, top, 0, -1, headSw, color);
     }
   }
-
-  // Skip ticks/numbers sitting exactly on the box edge — they read as a terminal
-  // "bar" ⊢ at the axis end (평가원 axes end cleanly with just the arrow).
-  const atEdgeX = (v) => Math.abs(v - xMin) < 1e-6 || Math.abs(v - xMax) < 1e-6;
-  const atEdgeY = (v) => Math.abs(v - yMin) < 1e-6 || Math.abs(v - yMax) < 1e-6;
 
   // ----- TICK MARKS on the visible axes (skip the origin + box-edge ends) -----
   const tHalf = sw * 4;

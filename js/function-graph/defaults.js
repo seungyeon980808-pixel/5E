@@ -10,10 +10,10 @@ const DEFAULT_STROKE_WIDTH = 0.2; // world mm — matches templates.js/tools.js 
 function makeDefaultCoordplane(at) {
   const xMin = -5, xMax = 5, yMin = -5, yMax = 5;
   // Box derived from a target cell size so cells are SQUARE (unitX === unitY).
-  // 6mm/unit → 60×60, fits the 90×60 artboard height; lockAspect keeps it square.
-  const cellMm = 6;
-  const w = cellMm * (xMax - xMin); // 60
-  const h = cellMm * (yMax - yMin); // 60
+  // 4.8mm/unit → 48×48 (20% smaller cells); lockAspect keeps it square on resize.
+  const cellMm = 4.8;
+  const w = cellMm * (xMax - xMin); // 48
+  const h = cellMm * (yMax - yMin); // 48
   return {
     type: "coordplane",
     x: at.x - w / 2,
