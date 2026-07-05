@@ -196,7 +196,7 @@ function willUngroupSelection() {
   return true;
 }
 
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / K(자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
@@ -222,6 +222,7 @@ function setupKeyboard() {
       if (!willUngroupSelection()) activateSymbolShortcut("rightangle", "Shift+G");
     }
     else if (key === "c") setActiveTool("C");
+    else if (key === "k") setActiveTool("CUT");           // 자르기(가위/칼) — 도구 안 서브모드는 1/2 (cut-tool.js)
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
     else if (key === "t") setActiveTool("T");
     else if (key === "f") {
@@ -297,6 +298,7 @@ function setupDrawing() {
     if (e.buttons & 1) return;
     const s = _state.get();
     const activeTool = s.activeTool;
+    if (activeTool === "CUT") return; // 자르기 도구의 커서(가위/칼)는 cut-tool.js가 전담 — 여기서 지우지 않는다
     if (activeTool !== "V" && activeTool !== "rotate") {
       _svg.style.cursor = "";
       return;

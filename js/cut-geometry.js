@@ -1,12 +1,12 @@
-/* ===== CUT GEOMETRY — 삽입 후 자르기(가위/칼/올가미) 분할 수학 =====
+/* ===== CUT GEOMETRY — 삽입 후 자르기(가위/칼) 분할 수학 =====
 //
 // 순수 함수 모듈 (DOM/스토어 접근 없음) — Node 단위 테스트 가능. cut-tool.js가
 // 이 함수들을 써서 캔버스 객체를 나눈다. 자르기 대상은 획 계열(line/polyline/
 // curve)뿐 — 이들은 점 배열로 다뤄 분할 후 같은 타입의 새 객체들로 방출한다.
 //
 //   · 가위(scissors): 클릭 지점에서 경로를 둘로 (닫힌 경로는 그 지점에서 열림)
-//   · 칼(knife):      직선 a→b와의 교차점마다 경로 분할 (닫힌 2교차 = 두 링)
-//   · 올가미(lasso):  올가미 폴리곤 경계와의 교차점마다 경로 분할 (안/밖 조각 독립)
+//   · 칼(knife):      직선 a→b와의 교차점마다 경로 분할 (닫힌 도형은 2교차서 두 호로)
+// 모든 조각은 열린 경로로 방출한다 — 자르기가 합성 변(닫는 변)을 만들지 않도록.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
 function round3(v) { return Math.round(v * 1000) / 1000; }
@@ -29,15 +29,6 @@ function segSegIntersect(a, b, c, d) {
   if (t < 0 || t > 1 || u < 0 || u > 1) return null;
   return { x: a.x + rx * t, y: a.y + ry * t, t, u };
 }
-export function pointInPolygon(px, py, poly) {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const xi = poly[i].x, yi = poly[i].y, xj = poly[j].x, yj = poly[j].y;
-    if (((yi > py) !== (yj > py)) && (px < (xj - xi) * (py - yi) / (yj - yi) + xi)) inside = !inside;
-  }
-  return inside;
-}
-
 export function isCuttable(o) {
   return o && (o.type === "line" || o.type === "polyline" || o.type === "curve"
     || o.type === "ellipse" || o.type === "rect" || o.type === "triangle");
@@ -204,53 +195,25 @@ export function cutKnife(o, a, b) {
   const crossings = dedupeCrossings(pathCrossings(pts, closed, hitSeg));
   if (!crossings.length) return null;
   if (closed) {
-    if (crossings.length !== 2) return null; // 2교차만 두 링으로 분할(그 외는 원본 유지)
+    if (crossings.length !== 2) return null; // 2교차만 두 조각으로 분할(그 외는 원본 유지)
     crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
     const [c0, c1] = crossings;
-    const ringA = [c0.pt];
-    for (let k = c0.seg + 1; k <= c1.seg; k++) ringA.push(pts[k]);
-    ringA.push(c1.pt);
-    const ringB = [c1.pt];
+    // 닫힌 도형을 두 교차점에서 자르면 두 "호(arc)"가 된다. 자동으로 닫지 않는다
+    // (닫으면 합성 현(弦)이 그어져 사용자 의도와 다름) → 열린 조각으로 방출.
+    const arcA = [c0.pt];
+    for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
+    arcA.push(c1.pt);
+    const arcB = [c1.pt];
     for (let k = (c1.seg + 1) % pts.length; k !== (c0.seg + 1) % pts.length; k = (k + 1) % pts.length) {
-      ringB.push(pts[k]);
-      if (ringB.length > pts.length + 2) break;
+      arcB.push(pts[k]);
+      if (arcB.length > pts.length + 2) break;
     }
-    ringB.push(c0.pt);
-    const A = dedupe(ringA), B = dedupe(ringB);
+    arcB.push(c0.pt);
+    const A = dedupe(arcA), B = dedupe(arcB);
     const out = [];
-    if (A.length >= 3) out.push(makePiece(o, A, true));
-    if (B.length >= 3) out.push(makePiece(o, B, true));
+    if (A.length >= 2) out.push(makePiece(o, A, false));
+    if (B.length >= 2) out.push(makePiece(o, B, false));
     return out.length >= 2 ? out : null;
-  }
-  return splitOpenAtCrossings(o, pts, crossings);
-}
-
-/* ----- 올가미: 폴리곤 경계와의 교차점마다 분할 (안/밖 조각이 독립 객체로) ----- */
-export function cutLasso(o, poly) {
-  if (!isCuttable(o) || !poly || poly.length < 3) return null;
-  const pts = objPoints(o);
-  if (pts.length < 2) return null;
-  const closed = objClosed(o);
-  const hitSeg = (s0, s1) => {
-    const xs = [];
-    for (let j = 0, k = poly.length - 1; j < poly.length; k = j++) {
-      const X = segSegIntersect(s0, s1, poly[k], poly[j]);
-      if (X) xs.push(X);
-    }
-    xs.sort((u, v) => u.t - v.t);
-    return xs;
-  };
-  const crossings = pathCrossings(pts, closed, hitSeg);
-  if (!crossings.length) return null;
-  if (closed) {
-    // 닫힌 경로: 올가미 경계에서 열어 조각들로(2교차면 열린 조각 2개).
-    // 시작점을 첫 교차 이후로 회전시켜 열린 경로로 만든 뒤 동일 분할.
-    crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
-    const rotated = [];
-    for (let k = 0; k < pts.length; k++) rotated.push(pts[k]);
-    rotated.push(pts[0]);                       // 닫힘을 명시적 마지막 세그먼트로
-    const openCrossings = crossings.map((c) => ({ ...c }));
-    return splitOpenAtCrossings(o, rotated, openCrossings);
   }
   return splitOpenAtCrossings(o, pts, crossings);
 }
@@ -276,6 +239,5 @@ export function distanceToObject(o, point) {
 export function cutObject(o, mode, geom) {
   if (mode === "scissors") return cutScissors(o, geom.point);
   if (mode === "knife") return cutKnife(o, geom.a, geom.b);
-  if (mode === "lasso") return cutLasso(o, geom.poly);
   return null;
 }

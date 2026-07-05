@@ -404,15 +404,87 @@ function objectStrokeSegments(o) {
   }
   return segs;
 }
+// 로컬 점을 오브젝트 중심 기준 deg만큼 월드로 회전(=localPointForSizeObject의 역방향).
+function rotWorldPoint(x, y, cx, cy, deg) {
+  if (!deg) return { x, y };
+  const r = (deg * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = x - cx, dy = y - cy;
+  return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c };
+}
+function pointsBBox(poly) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of poly) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+// 축정렬 bbox가 곧 도형인 박스 계열(회전 없을 때만) — 회전되면 다각형으로 처리.
+const BOX_FACE_TYPES = new Set(["rect", "image", "svgAsset", "axes", "coordplane", "optics", "apparatus"]);
+// 면(face) 도형의 월드 경계 다각형(회전 반영) — 마퀴가 클릭과 같은 기하를 보게 한다.
+// bbox 근사가 틀리는 경우(원·삼각형의 빈 모서리, 오목 닫힌도형, 회전 박스)만 대상.
+// bbox가 곧 도형인 축정렬 박스, 그 외 비-면 타입(anglearc·circuit 등)은 null → 호출자가 bbox 유지.
+function faceBoundaryPolygon(o) {
+  const deg = o.rotation || 0;
+  if (o.type === "ellipse") {
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2, rx = o.w / 2, ry = o.h / 2;
+    if (rx <= 0 || ry <= 0) return null;
+    const N = 40, out = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      out.push(rotWorldPoint(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cx, cy, deg));
+    }
+    return out;
+  }
+  if (o.type === "triangle") {
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+    return triangleVertices(o).map((v) => rotWorldPoint(v.x, v.y, cx, cy, deg));
+  }
+  if (BOX_FACE_TYPES.has(o.type)) {
+    if (!deg) return null;                       // 축정렬 박스는 bbox가 정확 → 다각형화 불필요
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+    return [[o.x, o.y], [o.x + o.w, o.y], [o.x + o.w, o.y + o.h], [o.x, o.y + o.h]]
+      .map(([x, y]) => rotWorldPoint(x, y, cx, cy, deg));
+  }
+  if (o.type === "polyline" && o.closed) {        // 점이 이미 월드(회전 굽힘) — 그대로
+    const pts = o.points || [];
+    return pts.length >= 3 ? pts.map((p) => ({ x: p.x, y: p.y })) : null;
+  }
+  if (o.type === "curve" && o.closed) {           // 닫힌 커브: hitTest와 동일 샘플링
+    const pts = o.points || [];
+    if (pts.length < 3) return null;
+    const SAMPLES = 12, out = [];
+    for (let k = 0; k < pts.length; k++) {
+      const seg = curveBezierSegClosed(pts, k);
+      out.push({ x: seg.sx, y: seg.sy });
+      for (let s = 1; s <= SAMPLES; s++) out.push(evalBezier(seg, s / SAMPLES));
+    }
+    return out;
+  }
+  return null;
+}
 function marqueeHitsObject(o, selRect) {
-  const bb = getObjectBBox(o);
-  if (!bb || !bboxIntersects(bb, selRect)) return false;          // 빠른 배제
   const isStroke = o.type === "line"
     || (o.type === "polyline" && !o.closed)
     || (o.type === "curve" && !o.closed)
     || o.type === "funcgraph"; // formula-driven open stroke — same as an open curve
-  if (!isStroke) return true;                                     // 채움/박스/닫힌도형 = bbox로 충분
-  return objectStrokeSegments(o).some((s) => segIntersectsRect(s[0], s[1], s[2], s[3], selRect));
+  if (isStroke) {
+    const bb = getObjectBBox(o);
+    if (!bb || !bboxIntersects(bb, selRect)) return false;        // 빠른 배제
+    return objectStrokeSegments(o).some((s) => segIntersectsRect(s[0], s[1], s[2], s[3], selRect));
+  }
+  // 면(face) 도형: 클릭과 동일하게 경계 다각형 기준으로 판정(회전·오목·빈 모서리까지 정확).
+  const poly = faceBoundaryPolygon(o);
+  if (!poly) {                                                    // 다각형화 불가 → 기존 bbox 판정 유지
+    const bb = getObjectBBox(o);
+    return !!bb && bboxIntersects(bb, selRect);
+  }
+  if (!bboxIntersects(pointsBBox(poly), selRect)) return false;   // 빠른 배제(회전 반영 bbox)
+  for (let i = 0; i < poly.length; i++) {                         // ① 경계가 사각형과 만남(끝점 포함)
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    if (segIntersectsRect(a.x, a.y, b.x, b.y, selRect)) return true;
+  }
+  return pointInPolygon(selRect.x, selRect.y, poly);              // ② 드래그 사각형이 도형 내부에 통째로
 }
 
 export {
