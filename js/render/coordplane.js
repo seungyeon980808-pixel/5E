@@ -22,7 +22,7 @@ import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
-const GRID_LEVEL = 200;        // light gray (0=black … 255=white); dashed → reads lighter
+const GRID_LEVEL = 135;        // medium gray (0=black … 255=white) — 평가원 dashed grid
 const GRID_MAX_LINES = 160;    // per axis; beyond this the grid is skipped
 
 /* ----- simple filled-triangle arrowhead (평가원 style, no notch) ----- */
@@ -146,13 +146,18 @@ function renderCoordplane(obj) {
     }
   }
 
-  // ----- TICK MARKS on the visible axes (skip the origin) -----
+  // Skip ticks/numbers sitting exactly on the box edge — they read as a terminal
+  // "bar" ⊢ at the axis end (평가원 axes end cleanly with just the arrow).
+  const atEdgeX = (v) => Math.abs(v - xMin) < 1e-6 || Math.abs(v - xMax) < 1e-6;
+  const atEdgeY = (v) => Math.abs(v - yMin) < 1e-6 || Math.abs(v - yMax) < 1e-6;
+
+  // ----- TICK MARKS on the visible axes (skip the origin + box-edge ends) -----
   const tHalf = sw * 4;
   if (obj.showTicks) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0 || (!bothSides && k < 0)) continue;
+        if (k === 0 || (!bothSides && k < 0) || atEdgeX(k * tr.step)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addLine(vx, worldY0 - tHalf, vx, worldY0 + tHalf, color, sw);
       }
@@ -160,7 +165,7 @@ function renderCoordplane(obj) {
     if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0 || (!bothSides && k < 0)) continue;
+        if (k === 0 || (!bothSides && k < 0) || atEdgeY(k * tr.step)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addLine(worldX0 - tHalf, vy, worldX0 + tHalf, vy, color, sw);
       }
@@ -186,7 +191,7 @@ function renderCoordplane(obj) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0 || (!bothSides && k < 0)) continue;
+        if (k === 0 || (!bothSides && k < 0) || atEdgeX(k * tr.step)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), vx, worldY0 + tHalf + numSize * 1.05, "middle", "hanging");
       }
@@ -194,7 +199,7 @@ function renderCoordplane(obj) {
     if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0 || (!bothSides && k < 0)) continue;
+        if (k === 0 || (!bothSides && k < 0) || atEdgeY(k * tr.step)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), worldX0 - tHalf - numSize * 0.5, vy, "end", "middle");
       }

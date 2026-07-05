@@ -9,11 +9,11 @@ const DEFAULT_STROKE_WIDTH = 0.2; // world mm — matches templates.js/tools.js 
 
 function makeDefaultCoordplane(at) {
   const xMin = -5, xMax = 5, yMin = -5, yMax = 5;
-  // Box derived from a target cell size so cells are SQUARE (unitX === unitY) and
-  // comfortably large — 8mm per unit. lockAspect keeps them square while resizing.
-  const cellMm = 8;
-  const w = cellMm * (xMax - xMin); // 80
-  const h = cellMm * (yMax - yMin); // 80
+  // Box derived from a target cell size so cells are SQUARE (unitX === unitY).
+  // 6mm/unit → 60×60, fits the 90×60 artboard height; lockAspect keeps it square.
+  const cellMm = 6;
+  const w = cellMm * (xMax - xMin); // 60
+  const h = cellMm * (yMax - yMin); // 60
   return {
     type: "coordplane",
     x: at.x - w / 2,
@@ -27,7 +27,7 @@ function makeDefaultCoordplane(at) {
     yMin, yMax,
     gridStepX: 1, gridStepY: 1,     // grid/tick spacing (math units)
     showAxisLines: true,
-    showGrid: false,
+    showGrid: true,                 // 평가원 양식: 격자 기본 on (미리보기·결과 동일)
     showTicks: true,
     showTickLabels: false,          // numeric labels — coordplane-only feature
     tickLabelSize: 2.6,             // mm
