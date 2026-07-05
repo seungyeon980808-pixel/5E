@@ -614,6 +614,7 @@ const SMOOTH_STRAIGHT_MAX = 3.0;   // 직선 스팬 최대 수직거리 sagitta(
 const SMOOTH_AXIS_DEG = 3;         // 수평/수직 스냅 허용 각
 const SMOOTH_RESAMPLE_PX = 3;      // 곡선 스팬 재샘플 간격
 const SMOOTH_GUARD_PX = 1.5;       // 코너 가드 앵커 거리
+const SMOOTH_INTERSECT_MAX = 4;    // 인접 직선 교점이 원시 코너에서 이보다 멀면 발산으로 간주(삐침 방지)
 
 function segLen(a, b) { return Math.hypot(b[0] - a[0], b[1] - a[1]); }
 
@@ -742,7 +743,12 @@ function lineIntersect(L1, L2, fallback) {
   if (Math.abs(denom) < 1e-6) return fallback.slice();
   const wx = p2[0] - p1[0], wy = p2[1] - p1[1];
   const t = (wx * d2[1] - wy * d2[0]) / denom;
-  return [p1[0] + d1[0] * t, p1[1] + d1[1] * t];
+  const ix = p1[0] + d1[0] * t, iy = p1[1] + d1[1] * t;
+  // 삐침 가드: 거의 평행한 두 직선(예각 획 끝·붓글씨 삐침)의 교점은 원시 코너에서
+  // 수십~수백 px 밖으로 발산한다. 그럴 땐 교점을 버리고 원시 코너점을 쓴다. 정상
+  // 코너(사각·삼각)의 교점은 원시 코너에서 1~2px 내라 영향 0.
+  if (Math.hypot(ix - fallback[0], iy - fallback[1]) > SMOOTH_INTERSECT_MAX) return fallback.slice();
+  return [ix, iy];
 }
 
 function resampleClosed(pts, step) {
