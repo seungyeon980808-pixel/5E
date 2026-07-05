@@ -1,0 +1,196 @@
+/* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위/칼/올가미) =====
+//
+// activeTool === "CUT" 일 때만 동작한다. tools.js의 기존 포인터 핸들러는 모두
+// activeTool을 V/rotate/도형 등으로 게이트하므로 "CUT"에선 no-op → tools.js를
+// 건드리지 않고 이 파일 + 툴바 버튼(data-tool="CUT") + main.js init 만으로 완결.
+//
+//   · 가위: 선을 클릭 → 그 지점에서 둘로
+//   · 칼:   직선 드래그 → 지나가는 객체를 교차점서 분할
+//   · 올가미: 자유 드래그로 영역 → 그 안 부분 분리
+// 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
+// 스토어 교체(Undo 1스텝)만 담당. */
+
+import { screenToWorld } from "./viewport.js?v=0.46.0";
+import { cutObject, isCuttable, distanceToObject } from "./cut-geometry.js?v=0.46.0";
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MODE_HINT = {
+  scissors: "가위: 선을 클릭하면 그 지점에서 둘로 나뉩니다.",
+  knife: "칼: 직선을 그으면 지나가는 선·도형이 잘립니다.",
+  lasso: "올가미: 영역을 감싸면 경계에서 잘려 그 부분이 분리됩니다.",
+};
+
+let _state, _svg, _panel, _hintEl;
+let _mode = "scissors";
+let _drawing = null;     // 드래그 중: { pts:[{x,y}...] }
+let _overlay = null;     // 임시 미리보기 SVG 요소
+let _space = false;
+let _idc = 0;
+
+function injectStyles() {
+  if (document.getElementById("cut-tool-styles")) return;
+  const st = document.createElement("style");
+  st.id = "cut-tool-styles";
+  st.textContent = `
+    #cut-tool-panel { position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:60;
+      display:flex; align-items:center; gap:8px; padding:7px 12px; background:#fff; border:1px solid #d0d7de;
+      border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.12); font-family:"IBM Plex Sans KR",sans-serif; }
+    #cut-tool-panel .cut-tool-title { font-weight:700; color:#0d1117; margin-right:2px; }
+    #cut-tool-panel .cut-tab { border:1px solid #d0d7de; background:#f6f8fa; color:#0d1117; border-radius:7px;
+      padding:5px 12px; cursor:pointer; font-size:14px; }
+    #cut-tool-panel .cut-tab.is-active { background:#0969da; color:#fff; border-color:#0969da; }
+    #cut-tool-panel #cut-tool-hint { color:#6e7781; font-size:13px; margin-left:4px; }
+  `;
+  document.head.appendChild(st);
+}
+
+function buildPanel() {
+  injectStyles();
+  _panel = document.createElement("div");
+  _panel.id = "cut-tool-panel";
+  _panel.hidden = true;
+  _panel.innerHTML = `
+    <span class="cut-tool-title">✂ 자르기</span>
+    <button type="button" class="cut-tab is-active" data-cutmode="scissors">가위</button>
+    <button type="button" class="cut-tab" data-cutmode="knife">칼</button>
+    <button type="button" class="cut-tab" data-cutmode="lasso">올가미</button>
+    <span id="cut-tool-hint">${MODE_HINT.scissors}</span>`;
+  document.body.appendChild(_panel);
+  _hintEl = _panel.querySelector("#cut-tool-hint");
+  _panel.querySelectorAll(".cut-tab").forEach((btn) => {
+    btn.addEventListener("click", () => setMode(btn.dataset.cutmode));
+  });
+}
+
+function setMode(mode) {
+  _mode = mode;
+  _panel.querySelectorAll(".cut-tab").forEach((b) => b.classList.toggle("is-active", b.dataset.cutmode === mode));
+  _hintEl.textContent = MODE_HINT[mode];
+  clearOverlay();
+  _drawing = null;
+}
+
+function isActive() { return _state.get().activeTool === "CUT"; }
+
+function syncUI(tool) {
+  const on = tool === "CUT";
+  _panel.hidden = !on;
+  _svg.style.cursor = on ? "crosshair" : "";
+  if (!on) { clearOverlay(); _drawing = null; }
+}
+
+function worldPos(e) { return screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY); }
+function worldPerPx() { return _state.get().viewBox.w / (_svg.getBoundingClientRect().width || 1); }
+
+/* ----- 임시 미리보기(칼=빨간 선, 올가미=보라 폐곡선) ----- */
+function clearOverlay() { if (_overlay) { _overlay.remove(); _overlay = null; } }
+function renderOverlay() {
+  clearOverlay();
+  if (!_drawing) return;
+  const pts = _drawing.pts;
+  const sw = worldPerPx() * 1.6;
+  if (_mode === "knife" && pts.length >= 2) {
+    _overlay = document.createElementNS(SVG_NS, "line");
+    _overlay.setAttribute("x1", pts[0].x); _overlay.setAttribute("y1", pts[0].y);
+    _overlay.setAttribute("x2", pts[1].x); _overlay.setAttribute("y2", pts[1].y);
+    _overlay.setAttribute("stroke", "#e0313c");
+  } else if (_mode === "lasso" && pts.length >= 2) {
+    _overlay = document.createElementNS(SVG_NS, "polygon");
+    _overlay.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
+    _overlay.setAttribute("stroke", "#8250df");
+    _overlay.setAttribute("fill", "rgba(130,80,223,0.10)");
+  }
+  if (_overlay) {
+    _overlay.setAttribute("stroke-width", sw);
+    _overlay.setAttribute("stroke-dasharray", `${sw * 3} ${sw * 2}`);
+    if (_mode === "knife") _overlay.setAttribute("fill", "none");
+    _overlay.setAttribute("pointer-events", "none");
+    _svg.appendChild(_overlay);
+  }
+}
+
+/* ----- 포인터: 가위=클릭 즉시, 칼=직선 드래그, 올가미=자유 드래그 ----- */
+function onDown(e) {
+  if (!isActive() || e.button !== 0 || _space) return;
+  const p = worldPos(e);
+  if (_mode === "scissors") { applyCut({ mode: "scissors", point: p }); return; }
+  _drawing = { pts: [p] };
+  renderOverlay();
+}
+function onMove(e) {
+  if (!_drawing) return;
+  const p = worldPos(e);
+  if (_mode === "knife") _drawing.pts[1] = p; else _drawing.pts.push(p);
+  renderOverlay();
+}
+function onUp(e) {
+  if (!_drawing) return;
+  if (e && typeof e.clientX === "number") {       // 마우스업 위치를 최종점으로 반영
+    const p = worldPos(e);
+    if (_mode === "knife") _drawing.pts[1] = p; else _drawing.pts.push(p);
+  }
+  const pts = _drawing.pts; _drawing = null; clearOverlay();
+  if (_mode === "knife" && pts.length >= 2) applyCut({ mode: "knife", a: pts[0], b: pts[1] });
+  else if (_mode === "lasso" && pts.length >= 3) applyCut({ mode: "lasso", poly: pts });
+}
+
+/* ----- 실제 자르기: 대상 판정 → 조각으로 교체 (Undo 1스텝) ----- */
+function applyCut(geom) {
+  const objs = _state.get().objects;
+  const results = [];
+  if (geom.mode === "scissors") {
+    const tol = 12 * worldPerPx();
+    let target = null, bestD = tol;
+    for (const o of objs) {
+      if (!isCuttable(o)) continue;
+      const d = distanceToObject(o, geom.point);
+      if (d < bestD) { bestD = d; target = o; }
+    }
+    if (!target) return;
+    const pieces = cutObject(target, "scissors", geom);
+    if (pieces && pieces.length) results.push({ id: target.id, pieces });
+  } else {
+    for (const o of objs) {
+      if (!isCuttable(o)) continue;
+      const pieces = cutObject(o, geom.mode, geom);
+      if (pieces && pieces.length) results.push({ id: o.id, pieces });
+    }
+  }
+  if (!results.length) return;
+
+  const stamp = Date.now().toString(36);
+  _state.update((s) => {
+    const snapshot = JSON.parse(JSON.stringify(s.objects));
+    const map = new Map(results.map((r) => [r.id, r.pieces]));
+    const out = [];
+    const addedIds = [];
+    for (const o of s.objects) {
+      const pieces = map.get(o.id);
+      if (!pieces) { out.push(o); continue; }
+      for (const piece of pieces) {
+        piece.id = `obj_${stamp}_cut${++_idc}`;
+        piece.layerId = o.layerId;
+        piece.order = o.order;
+        out.push(piece);
+        addedIds.push(piece.id);
+      }
+    }
+    s.objects = out;
+    s.undoStack.push(snapshot);
+    s.redoStack = [];
+    s.selectedIds = addedIds;
+    s.targetedId = null;
+  });
+}
+
+export function initCutTool(svg, state) {
+  _state = state; _svg = svg;
+  buildPanel();
+  state.subscribe((s) => syncUI(s.activeTool));
+  syncUI(state.get().activeTool);
+  svg.addEventListener("mousedown", onDown);
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+  window.addEventListener("keydown", (e) => { if (e.code === "Space") _space = true; });
+  window.addEventListener("keyup", (e) => { if (e.code === "Space") _space = false; });
+}

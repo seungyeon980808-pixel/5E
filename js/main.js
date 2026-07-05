@@ -11,6 +11,7 @@ import { state } from "./state.js?v=0.46.0";
 import { render } from "./render.js?v=0.46.0";
 import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.46.0";
 import { initTools } from "./tools.js?v=0.46.0";
+import { initCutTool } from "./cut-tool.js?v=0.46.0";
 import { initTransform, undo, redo } from "./transform.js?v=0.46.0";
 import { initInspector } from "./inspector.js?v=0.46.0";
 import { initProjectIO } from "./project-io.js?v=0.46.0";
@@ -103,6 +104,9 @@ initViewport(svg, state, () => {});
 
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
+
+/* ----- cut tool: 생성 후 캔버스에서 객체 자르기(가위/칼/올가미) ----- */
+initCutTool(svg, state);
 
 /* ----- transform: body-drag move + Undo/Redo (must come after initTools) ----- */
 initTransform(svg, state);
