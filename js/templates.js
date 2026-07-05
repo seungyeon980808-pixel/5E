@@ -21,13 +21,13 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.48.5";
-import { armSymbol } from "./tools.js?v=0.48.5";
-import { renderObject } from "./render.js?v=0.48.5";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.48.5";
-import { getSvgAsset } from "./svg-assets.js?v=0.48.5";
-import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.48.5";
-import { openFunctionModal } from "./function-graph/modal.js?v=0.48.5";
+import { state } from "./state.js?v=0.48.6";
+import { armSymbol } from "./tools.js?v=0.48.6";
+import { renderObject } from "./render.js?v=0.48.6";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.48.6";
+import { getSvgAsset } from "./svg-assets.js?v=0.48.6";
+import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.48.6";
+import { openFunctionModal } from "./function-graph/modal.js?v=0.48.6";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
