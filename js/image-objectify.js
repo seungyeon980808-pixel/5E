@@ -37,6 +37,44 @@ function sequenceLabel(index) {
   return label;
 }
 
+// §2-4(C5): 글자 판정 bbox를 원본에서 크롭해 흰 배경을 투명화한 PNG dataURL로.
+// 회색조 잉크는 RGB=(0,0,0) 고정 + alpha=255-gray → 흰 배경 위 원본을 정확히
+// 재현(무손실). 유채색만 흰 배경 기준 un-premultiply로 색·알파 복원. 반환은
+// { dataUrl, x0, y0, w, h }(x0/y0/w/h는 패딩 포함 이미지 px), 축소 시 null.
+function makeTextCropDataUrl(sourceCanvas, bbox) {
+  const pad = 1;
+  const x0 = Math.max(0, Math.floor(bbox[0]) - pad);
+  const y0 = Math.max(0, Math.floor(bbox[1]) - pad);
+  const x1 = Math.min(sourceCanvas.width, Math.ceil(bbox[2]) + pad);
+  const y1 = Math.min(sourceCanvas.height, Math.ceil(bbox[3]) + pad);
+  const cw = x1 - x0, ch = y1 - y0;
+  if (cw < 1 || ch < 1) return null;
+  const src = sourceCanvas.getContext("2d").getImageData(x0, y0, cw, ch);
+  const d = src.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    const chromatic = Math.max(Math.abs(r - g), Math.abs(g - b), Math.abs(r - b)) > 16;
+    if (!chromatic) {
+      const gray = (r * 0.299 + g * 0.587 + b * 0.114) | 0;
+      d[i] = 0; d[i + 1] = 0; d[i + 2] = 0; d[i + 3] = 255 - gray;
+    } else {
+      const a = 255 - Math.min(r, g, b);           // 흰 배경 위 잉크량
+      if (a <= 0) { d[i + 3] = 0; }
+      else {
+        const inv = 255 / a;                        // un-premultiply over white
+        d[i]     = Math.max(0, Math.min(255, (r - (255 - a)) * inv));
+        d[i + 1] = Math.max(0, Math.min(255, (g - (255 - a)) * inv));
+        d[i + 2] = Math.max(0, Math.min(255, (b - (255 - a)) * inv));
+        d[i + 3] = a;
+      }
+    }
+  }
+  const oc = document.createElement("canvas");
+  oc.width = cw; oc.height = ch;
+  oc.getContext("2d").putImageData(src, 0, 0);
+  return { dataUrl: oc.toDataURL("image/png"), x0, y0, w: cw, h: ch };
+}
+
 /* ===== 모달 DOM ===== */
 function buildModal() {
   const overlay = document.createElement("div");
@@ -74,7 +112,8 @@ function buildModal() {
       <div class="modal-field">
         <span class="modal-label">글자(라벨) 처리</span>
         <span style="display:flex;gap:14px;flex-wrap:wrap;">
-          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="keep" checked /><span class="modal-label" style="font-weight:normal;">남기기 (글자 모양 그대로)</span></label>
+          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="image" checked /><span class="modal-label" style="font-weight:normal;">원본 이미지로 유지 (권장)</span></label>
+          <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="keep" /><span class="modal-label" style="font-weight:normal;">남기기 (글자 모양 그대로)</span></label>
           <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="remove" /><span class="modal-label" style="font-weight:normal;">지우기</span></label>
           <label class="modal-field-row" style="margin:0;"><input type="radio" name="objectify-textmode" value="replace" /><span class="modal-label" style="font-weight:normal;">텍스트 객체로 대체 (A, B, C…)</span></label>
         </span>
@@ -306,6 +345,16 @@ export function initImageObjectify(state) {
         .forEach((comp, index) => replacedLabels.set(comp, sequenceLabel(index)));
     }
 
+    // §2-4: "원본 이미지로 유지" — 글자 판정 컴포넌트를 원본 크롭 PNG로 미리 생성.
+    const textCrops = new Map();
+    if (textMode === "image" && sourceCanvas) {
+      for (const comp of comps) {
+        if (!comp.isText) continue;
+        const crop = makeTextCropDataUrl(sourceCanvas, comp.bbox);
+        if (crop) textCrops.set(comp, crop);
+      }
+    }
+
     state.update((s) => {
       const snapshot = clone(s.objects);
       const layerId = s.activeLayerId;
@@ -325,6 +374,26 @@ export function initImageObjectify(state) {
 
       for (const comp of comps) {
         if (comp.isText && textMode === "remove") continue;
+        // §2-4(C5): 원본 크롭 이미지로 유지 (기본·권장, 무손실). 크롭 실패 시 폴백.
+        if (comp.isText && textMode === "image") {
+          const crop = textCrops.get(comp);
+          if (crop) {
+            const imgObj = applyNewObjectStyleDefaults({
+              id: `obj_${stamp}_vecimg${++idCounter}`,
+              type: "image", src: crop.dataUrl,
+              x: X(crop.x0), y: Y(crop.y0),
+              w: round3(crop.w * scale), h: round3(crop.h * scale),
+              rotation: 0, mode: "edit", opacity: 1,
+              aspectLocked: true, exportable: true,
+              locked: false, positionLocked: false, imageSelectionLocked: false,
+              cutouts: [], layerId, order: s.objects.length,
+            });
+            s.objects.push(imgObj);
+            addedIds.push(imgObj.id);
+            continue;
+          }
+          // 크롭 실패(초소형) 시 아래 폴리곤 벡터화로 폴백.
+        }
         if (comp.isText && textMode === "replace") {
           const [bx0, by0, , by1] = comp.bbox;
           const fontSize = Math.min(12, Math.max(2.5, round3((by1 - by0) * scale)));
