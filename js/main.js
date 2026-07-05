@@ -208,6 +208,18 @@ initObjectSearch();
 applyViewBox(state.get());
 render(state.get());
 
+// 수식 글꼴(Latin Modern)은 웹폰트라, 로딩 전에는 폴백 메트릭으로 글자 폭이 측정된다.
+// formula.js는 canvas measureText로 레이아웃을 잡으므로(export 픽셀 일치 보증), 정자·
+// 이탤릭 두 페이스를 시작 시 "명시적으로" 미리 로드한 뒤 1회 다시 그려 측정값과 실제
+// 렌더를 일치시킨다. lazy 로딩(빈 캔버스엔 수식이 없어 다운로드가 안 됨)에 기대면 첫
+// 수식이 폴백 폭으로 측정되므로, ready가 아니라 load로 강제해야 한다.
+if (document.fonts && document.fonts.load) {
+  Promise.all([
+    document.fonts.load('16px "Latin Modern Roman"'),
+    document.fonts.load('italic 16px "Latin Modern Roman"'),
+  ]).then(() => render(state.get())).catch(() => {});
+}
+
 /* ===== DEV DEBUG GATE =====
  * Dev-only: flip to true LOCALLY to expose window.phyDraw, the coord-debug
  * overlay (key "d"), and the console usage banner below. Must be false for

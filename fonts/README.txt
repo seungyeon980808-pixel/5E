@@ -31,3 +31,19 @@ woff2가 없으면 글꼴 체인 "HamchoromBatang", serif 의 fallback(serif)으
 TTF만 가지고 있다면 woff2로 변환해서 넣으면 됩니다 (예시):
     pip install fonttools brotli
     fonttools ttLib.woff2 compress -o HamchoromBatang.woff2 HamchoromBatang.ttf
+
+
+Latin Modern (수식 글꼴) — 이미 포함됨
+=====================================================
+이 폴더에 아래 두 파일이 함께 들어 있습니다 (수식/formula 전용 글꼴):
+
+    lmroman10-regular.otf   (정자)
+    lmroman10-italic.otf    (이탤릭 — 물리량·변수)
+
+- 출처: Latin Modern (GUST e-foundry). LaTeX 기본 수식체 Computer Modern의
+  오픈타입판. 상업적 사용·웹 임베딩 허용 (GUST Font License).
+- 등록: css/style.css 의 @font-face "Latin Modern Roman" (정자 + 이탤릭).
+- 사용처: state.js 의 EQUATION_FONT_FAMILY = "수식" 글꼴 옵션. 이 파일이 없으면
+  자동으로 뒤쪽 fallback(Times New Roman/serif)으로 그려집니다.
+- 내보내기: PNG는 브라우저가 글자를 픽셀로 구워 넣으므로 어디서 열어도 동일합니다.
+  (SVG는 폰트를 이름으로만 싣기에, 여는 PC에 이 글꼴이 없으면 대체됩니다.)
