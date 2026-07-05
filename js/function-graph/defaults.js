@@ -16,6 +16,7 @@ function makeDefaultCoordplane(at) {
     w,
     h,
     rotation: 0,
+    axisVariant: "cross",           // 형태: "cross"(십자) | "quadrant"(L자) | "single"(직선)
     xMin: -5, xMax: 5,              // display range (math units)
     yMin: -5, yMax: 5,
     gridStepX: 1, gridStepY: 1,     // grid/tick spacing (math units)

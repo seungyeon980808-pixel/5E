@@ -50,6 +50,32 @@ export function buildCoordplaneSection(ctx) {
   }
   function sep(text) { const s = document.createElement("span"); s.textContent = text; s.className = "insp-unit"; return s; }
 
+  // ---- 형태: 십자(cross) / L자(quadrant) / 직선(single) — 옛 좌표축과 동일 ----
+  const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
+  const variantRow = document.createElement("div");
+  variantRow.className = "insp-row";
+  const variantLbl = document.createElement("label");
+  variantLbl.className = "insp-field-label";
+  variantLbl.textContent = "형태";
+  variantRow.appendChild(variantLbl);
+  const variantBtns = {};
+  VARIANTS.forEach(([val, text]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = text;
+    b.style.cssText = "font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 8px;margin-left:3px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+    b.addEventListener("click", () => {
+      commitSelectedObject((o) => {
+        if (!applies(o) || o.axisVariant === val) return false;
+        o.axisVariant = val;
+        return true;
+      });
+    });
+    variantBtns[val] = b;
+    variantRow.appendChild(b);
+  });
+  body.appendChild(variantRow);
+
   // ---- range: x [min ~ max], y [min ~ max] ----
   const xMinInp = makeNum("xMin", { step: "any" });
   const xMaxInp = makeNum("xMax", { step: "any" });
@@ -149,6 +175,14 @@ export function buildCoordplaneSection(ctx) {
     if (document.activeElement !== labelYRow.inp) labelYRow.inp.value = obj.labelY ?? "";
     labelTypeRow.sync(obj);
     exportCb.cb.checked = obj.exportable !== false;
+
+    const av = obj.axisVariant || "cross";
+    Object.entries(variantBtns).forEach(([val, b]) => {
+      const on = val === av;
+      b.style.background = on ? "#4a9eff" : "#1e1f22";
+      b.style.borderColor = on ? "#4a9eff" : "#3a3c41";
+      b.disabled = !!obj.locked;
+    });
 
     const locked = !!obj.locked;
     [xMinInp, xMaxInp, yMinInp, yMaxInp, gridXInp, gridYInp, tickSizeInp,

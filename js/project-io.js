@@ -172,6 +172,7 @@ function migrate(data) {
         next.x = next.x ?? 0; next.y = next.y ?? 0;
         next.w = next.w ?? 60; next.h = next.h ?? 48;
         next.rotation = next.rotation ?? 0;
+        next.axisVariant = next.axisVariant ?? "cross"; // 십자/L자/직선
         next.xMin = next.xMin ?? -5; next.xMax = next.xMax ?? 5;
         next.yMin = next.yMin ?? -5; next.yMax = next.yMax ?? 5;
         next.gridStepX = next.gridStepX ?? 1; next.gridStepY = next.gridStepY ?? 1;

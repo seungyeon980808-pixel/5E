@@ -27,7 +27,7 @@ import { renderObject } from "./render.js?v=0.47.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.47.0";
 import { getSvgAsset } from "./svg-assets.js?v=0.47.0";
 import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.47.0";
-import { insertFunctionGraph } from "./function-graph/insert.js?v=0.47.0";
+import { openFunctionModal } from "./function-graph/modal.js?v=0.47.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -528,19 +528,6 @@ function renderPanel() {
   for (const svg of pending) sizeIconViewBox(svg);
 }
 
-/* ----- funcgraph 입력 (INTERIM) — a prompt() stands in for the §10-④ 모달 -----
- * TODO(step 4): replace this with the modal (수식 입력 + 실시간 미리보기 + 정의역
- * 드래그). The commit path (insertFunctionGraph) stays the same — the modal will
- * just collect expr + domain, then call it. */
-function openFunctionInputInterim() {
-  const input = window.prompt("함수식을 입력하세요 (예: sin(x), x^2-3*x+1, log(x))", "sin(x)");
-  if (input == null) return;            // cancelled
-  const expr = input.trim();
-  if (!expr) return;
-  const res = insertFunctionGraph(state, expr);
-  if (!res.ok) window.alert(`함수를 그릴 수 없습니다: ${res.error}`);
-}
-
 /* ----- click → creation (functionally identical to the old per-button wiring) ----- */
 export function activateTemplate(symbolId) {
   const def = TEMPLATES[symbolId];
@@ -551,8 +538,8 @@ export function activateTemplate(symbolId) {
     const center = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 };
     instantiate(symbolId, center);
   } else if (def.kind === "funcinput") {
-    // 함수 입력: open the formula input (interim prompt → insert).
-    openFunctionInputInterim();
+    // 함수 입력: open the formula modal (input + live preview + confirm).
+    openFunctionModal();
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};

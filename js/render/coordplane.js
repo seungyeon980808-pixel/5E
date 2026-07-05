@@ -78,19 +78,30 @@ function renderCoordplane(obj) {
   const xAxisVisible = yMin <= 0 && 0 <= yMax;   // horizontal axis at y=0 crosses the box?
   const yAxisVisible = xMin <= 0 && 0 <= xMax;   // vertical axis at x=0 crosses the box?
 
+  // ----- axis variant (형태): 십자(cross) / L자(quadrant) / 직선(single) — renderAxes와 동일 -----
+  const variant = obj.axisVariant || "cross";
+  const hasYArm   = variant !== "single";   // draw the vertical axis + its ticks/labels at all?
+  const bothSides = variant === "cross";    // negative-side arms/ticks/labels/grid too?
+  // Positive-only forms start each axis at the origin; fall back to the box edge
+  // when 0 is outside the perpendicular range so the line never begins off-canvas.
+  const xAxisLeft   = bothSides ? left   : (yAxisVisible ? worldX0 : left);
+  const yAxisBottom = bothSides ? bottom : (xAxisVisible ? worldY0 : bottom);
+
   // ----- GRID (light) — vertical at each gridStepX, horizontal at each gridStepY.
   if (obj.showGrid) {
     const gx = tickRange(xMin, xMax, obj.gridStepX || 1);
     const gy = tickRange(yMin, yMax, obj.gridStepY || 1);
     if (gx.kEnd - gx.kStart <= GRID_MAX_LINES) {
       for (let k = gx.kStart; k <= gx.kEnd; k++) {
+        if (!bothSides && k < 0) continue;                 // 양의 구역만(L자/직선)
         const vx = worldXFromMathX(P, k * gx.step);
         if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
         addLine(vx, top, vx, bottom, gridColor, sw * 0.6);
       }
     }
-    if (gy.kEnd - gy.kStart <= GRID_MAX_LINES) {
+    if (hasYArm && gy.kEnd - gy.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
       for (let k = gy.kStart; k <= gy.kEnd; k++) {
+        if (!bothSides && k < 0) continue;
         const vy = worldYFromMathY(P, k * gy.step);
         if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
         addLine(left, vy, right, vy, gridColor, sw * 0.6);
@@ -103,11 +114,11 @@ function renderCoordplane(obj) {
   const head = headSw * 4.5;
   if (obj.showAxisLines) {
     if (xAxisVisible) {
-      addLine(left, worldY0, right - head * 0.6, worldY0, color, sw);      // X axis → +X right
+      addLine(xAxisLeft, worldY0, right - head * 0.6, worldY0, color, sw); // X axis → +X right
       g.appendChild(makeArrowHead(right, worldY0, 1, 0, headSw, color));
     }
-    if (yAxisVisible) {
-      addLine(worldX0, bottom, worldX0, top + head * 0.6, color, sw);      // Y axis → +Y up
+    if (hasYArm && yAxisVisible) {
+      addLine(worldX0, yAxisBottom, worldX0, top + head * 0.6, color, sw); // Y axis → +Y up
       g.appendChild(makeArrowHead(worldX0, top, 0, -1, headSw, color));
     }
   }
@@ -118,15 +129,15 @@ function renderCoordplane(obj) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0) continue;
+        if (k === 0 || (!bothSides && k < 0)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addLine(vx, worldY0 - tHalf, vx, worldY0 + tHalf, color, sw);
       }
     }
-    if (yAxisVisible) {
+    if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0) continue;
+        if (k === 0 || (!bothSides && k < 0)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addLine(worldX0 - tHalf, vy, worldX0 + tHalf, vy, color, sw);
       }
@@ -152,15 +163,15 @@ function renderCoordplane(obj) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0) continue;
+        if (k === 0 || (!bothSides && k < 0)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), vx, worldY0 + tHalf + numSize * 1.05, "middle", "hanging");
       }
     }
-    if (yAxisVisible) {
+    if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
       for (let k = tr.kStart; k <= tr.kEnd; k++) {
-        if (k === 0) continue;
+        if (k === 0 || (!bothSides && k < 0)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), worldX0 - tHalf - numSize * 0.5, vy, "end", "middle");
       }
@@ -184,7 +195,7 @@ function renderCoordplane(obj) {
   };
   if (obj.showAxisLines) {
     if (xAxisVisible) addName(obj.labelX, right, worldY0 - nameSize * 0.5, "end", "auto");
-    if (yAxisVisible) addName(obj.labelY, worldX0 + nameSize * 0.6, top, "start", "hanging");
+    if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 + nameSize * 0.6, top, "start", "hanging");
   }
 
   // ----- rotation: whole plane turns about its bbox center -----
