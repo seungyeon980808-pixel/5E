@@ -170,8 +170,9 @@ function migrate(data) {
         // 좌표평면(§3-1): 박스 + 표시 범위 + 격자/눈금/숫자라벨. labelType은 위
         // LABEL_CAPABLE_TYPES 경로에서 정규화된다(기본 "quantity").
         next.x = next.x ?? 0; next.y = next.y ?? 0;
-        next.w = next.w ?? 60; next.h = next.h ?? 48;
+        next.w = next.w ?? 80; next.h = next.h ?? 80;
         next.rotation = next.rotation ?? 0;
+        next.lockAspect = next.lockAspect ?? true;      // square cells on resize
         next.axisVariant = next.axisVariant ?? "cross"; // 십자/L자/직선
         next.xMin = next.xMin ?? -5; next.xMax = next.xMax ?? 5;
         next.yMin = next.yMin ?? -5; next.yMax = next.yMax ?? 5;

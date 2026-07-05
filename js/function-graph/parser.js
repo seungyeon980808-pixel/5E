@@ -170,11 +170,44 @@ function evalNode(node, x) {
   }
 }
 
+/* ===== IMPLICIT MULTIPLICATION =====
+ * Insert a `*` between a value-ENDER and a value-STARTER so casual notation works:
+ *   sin(5x) → sin(5*x),  2(x+1) → 2*(x+1),  5x^2 → 5*x^2,  5sin(x) → 5*sin(x),
+ *   x(x-1) → x*(x-1),  (x+1)(x-1) → (x+1)*(x-1).
+ * A function NAME is NOT a value-ender (it must be followed by `(`), so `sin(`
+ * stays a call, never `sin*(`. Functions still REQUIRE parentheses — write
+ * sin(5x), not sin5x (that stays a clear error rather than a silent wrong guess). */
+function isValueEnder(tk) {
+  if (!tk) return false;
+  if (tk.t === "num") return true;
+  if (tk.t === "op" && tk.v === ")") return true;
+  // a variable(x) or constant(pi/e) ends a value; a function name does NOT.
+  if (tk.t === "id") return tk.v === "x" || Object.prototype.hasOwnProperty.call(CONSTS, tk.v);
+  return false;
+}
+function isValueStarter(tk) {
+  if (!tk) return false;
+  if (tk.t === "num") return true;
+  if (tk.t === "op" && tk.v === "(") return true;
+  if (tk.t === "id") return true; // variable, constant, or function name all begin a value
+  return false;
+}
+function insertImplicitMul(tokens) {
+  const out = [];
+  for (let i = 0; i < tokens.length; i++) {
+    out.push(tokens[i]);
+    if (isValueEnder(tokens[i]) && isValueStarter(tokens[i + 1])) {
+      out.push({ t: "op", v: "*" });
+    }
+  }
+  return out;
+}
+
 /* ===== PUBLIC: compile(expr) → fn(x) ===== */
 // Throws on a syntax/whitelist error (caller shows the message). The returned
 // evaluator is pure and reusable — parse once, sample many.
 function compile(expr) {
-  const ast = parse(tokenize(expr));
+  const ast = parse(insertImplicitMul(tokenize(expr)));
   return (x) => evalNode(ast, x);
 }
 

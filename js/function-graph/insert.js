@@ -11,9 +11,10 @@ import { makeDefaultCoordplane } from "./defaults.js?v=0.48.0";
 
 let _fgCounter = 0;
 
-// insertFunctionGraph(state, expr) → { ok, error }
-// error is a user-facing message (bad formula / empty domain) when ok is false.
-function insertFunctionGraph(state, expr) {
+// insertFunctionGraph(state, expr, domain?) → { ok, error }
+// domain = { min, max } (math x) limits where the curve is generated; defaults to
+// the plane's full x-range. error is a user-facing message when ok is false.
+function insertFunctionGraph(state, expr, domain) {
   const s = state.get();
   const selId = (s.selectedIds || [])[0];
   const selected = selId ? s.objects.find((o) => o.id === selId) : null;
@@ -28,8 +29,10 @@ function insertFunctionGraph(state, expr) {
     plane = newPlane;
   }
 
-  // MVP domain = the plane's full x-range (기획서 §10-④ 모달에서 드래그로 좁힘).
-  const domainMin = plane.xMin, domainMax = plane.xMax;
+  // Domain = the modal's dragged range, else the plane's full x-range. Clamped to
+  // the plane so the curve never generates outside the visible box.
+  const domainMin = domain ? Math.max(plane.xMin, Math.min(domain.min, domain.max)) : plane.xMin;
+  const domainMax = domain ? Math.min(plane.xMax, Math.max(domain.min, domain.max)) : plane.xMax;
   const { points, error } = sampleFunctionPoints(expr, domainMin, domainMax, plane);
   if (error) return { ok: false, error };
   if (points.length < 2) return { ok: false, error: "정의역 안에서 그릴 수 있는 점이 없습니다" };

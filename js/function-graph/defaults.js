@@ -8,7 +8,12 @@
 const DEFAULT_STROKE_WIDTH = 0.2; // world mm — matches templates.js/tools.js shapes
 
 function makeDefaultCoordplane(at) {
-  const w = 60, h = 48; // default extent (mm); resizable afterwards
+  const xMin = -5, xMax = 5, yMin = -5, yMax = 5;
+  // Box derived from a target cell size so cells are SQUARE (unitX === unitY) and
+  // comfortably large — 8mm per unit. lockAspect keeps them square while resizing.
+  const cellMm = 8;
+  const w = cellMm * (xMax - xMin); // 80
+  const h = cellMm * (yMax - yMin); // 80
   return {
     type: "coordplane",
     x: at.x - w / 2,
@@ -16,9 +21,10 @@ function makeDefaultCoordplane(at) {
     w,
     h,
     rotation: 0,
+    lockAspect: true,               // resize keeps the box square → cells stay square
     axisVariant: "cross",           // 형태: "cross"(십자) | "quadrant"(L자) | "single"(직선)
-    xMin: -5, xMax: 5,              // display range (math units)
-    yMin: -5, yMax: 5,
+    xMin, xMax,                     // display range (math units)
+    yMin, yMax,
     gridStepX: 1, gridStepY: 1,     // grid/tick spacing (math units)
     showAxisLines: true,
     showGrid: false,
