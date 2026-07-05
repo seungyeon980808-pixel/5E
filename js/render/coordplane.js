@@ -13,7 +13,6 @@
 import {
   SVG_NS,
   grayHex,
-  makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
   catmullRomPath,
@@ -23,8 +22,21 @@ import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
-const GRID_LEVEL = 205;        // light gray (0=black … 255=white)
+const GRID_LEVEL = 200;        // light gray (0=black … 255=white); dashed → reads lighter
 const GRID_MAX_LINES = 160;    // per axis; beyond this the grid is skipped
+
+/* ----- simple filled-triangle arrowhead (평가원 style, no notch) ----- */
+function appendArrow(g, tipX, tipY, dirX, dirY, sw, color) {
+  const len = sw * 4.6, half = sw * 1.7;
+  const bx = tipX - dirX * len, by = tipY - dirY * len;
+  const px = -dirY, py = dirX; // unit perpendicular
+  const poly = document.createElementNS(SVG_NS, "polygon");
+  poly.setAttribute("points",
+    `${tipX},${tipY} ${bx + px * half},${by + py * half} ${bx - px * half},${by - py * half}`);
+  poly.setAttribute("fill", color);
+  poly.setAttribute("stroke", "none");
+  g.appendChild(poly);
+}
 
 /* ----- format a tick value: kill float noise, trim trailing zeros ----- */
 function fmtTick(v) {
@@ -87,16 +99,27 @@ function renderCoordplane(obj) {
   const xAxisLeft   = bothSides ? left   : (yAxisVisible ? worldX0 : left);
   const yAxisBottom = bothSides ? bottom : (xAxisVisible ? worldY0 : bottom);
 
-  // ----- GRID (light) — vertical at each gridStepX, horizontal at each gridStepY.
+  // ----- GRID (light, dashed — 평가원 style). Clipped to the positive quadrant for
+  //       L자/직선 so it never bleeds into the negative side (버그 수정). -----
   if (obj.showGrid) {
     const gx = tickRange(xMin, xMax, obj.gridStepX || 1);
     const gy = tickRange(yMin, yMax, obj.gridStepY || 1);
+    const gdash = Math.max(sw * 4, 0.7);
+    const addGrid = (x1, y1, x2, y2) => {
+      const l = document.createElementNS(SVG_NS, "line");
+      l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+      l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+      l.setAttribute("stroke", gridColor);
+      l.setAttribute("stroke-width", sw * 0.5);
+      l.setAttribute("stroke-dasharray", `${gdash} ${gdash * 0.7}`);
+      g.appendChild(l);
+    };
     if (gx.kEnd - gx.kStart <= GRID_MAX_LINES) {
       for (let k = gx.kStart; k <= gx.kEnd; k++) {
         if (!bothSides && k < 0) continue;                 // 양의 구역만(L자/직선)
         const vx = worldXFromMathX(P, k * gx.step);
         if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
-        addLine(vx, top, vx, bottom, gridColor, sw * 0.6);
+        addGrid(vx, top, vx, yAxisBottom);                 // clip to +y quadrant for L자/직선
       }
     }
     if (hasYArm && gy.kEnd - gy.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
@@ -104,7 +127,7 @@ function renderCoordplane(obj) {
         if (!bothSides && k < 0) continue;
         const vy = worldYFromMathY(P, k * gy.step);
         if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
-        addLine(left, vy, right, vy, gridColor, sw * 0.6);
+        addGrid(xAxisLeft, vy, right, vy);                 // clip to +x quadrant for L자
       }
     }
   }
@@ -115,11 +138,11 @@ function renderCoordplane(obj) {
   if (obj.showAxisLines) {
     if (xAxisVisible) {
       addLine(xAxisLeft, worldY0, right - head * 0.6, worldY0, color, sw); // X axis → +X right
-      g.appendChild(makeArrowHead(right, worldY0, 1, 0, headSw, color));
+      appendArrow(g, right, worldY0, 1, 0, headSw, color);
     }
     if (hasYArm && yAxisVisible) {
       addLine(worldX0, yAxisBottom, worldX0, top + head * 0.6, color, sw); // Y axis → +Y up
-      g.appendChild(makeArrowHead(worldX0, top, 0, -1, headSw, color));
+      appendArrow(g, worldX0, top, 0, -1, headSw, color);
     }
   }
 
@@ -194,8 +217,14 @@ function renderCoordplane(obj) {
     g.appendChild(t);
   };
   if (obj.showAxisLines) {
-    if (xAxisVisible) addName(obj.labelX, right, worldY0 - nameSize * 0.5, "end", "auto");
-    if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 + nameSize * 0.6, top, "start", "hanging");
+    if (variant === "quadrant") {
+      // L자(1사분면): 조작변인은 x축 하단, 종속변인은 y축 좌측 (평가원 실험그래프 관례).
+      if (xAxisVisible) addName(obj.labelX, right, worldY0 + nameSize * 1.15, "end", "hanging");
+      if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 - nameSize * 0.5, top + nameSize, "end", "auto");
+    } else {
+      if (xAxisVisible) addName(obj.labelX, right, worldY0 - nameSize * 0.5, "end", "auto");
+      if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 + nameSize * 0.6, top, "start", "hanging");
+    }
   }
 
   // ----- rotation: whole plane turns about its bbox center -----

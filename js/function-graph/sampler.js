@@ -12,8 +12,8 @@ import { compile } from "./parser.js?v=0.48.1";
 import { worldXFromMathX, worldYFromMathY } from "./coords.js?v=0.48.1";
 import { simplifyRDP } from "../geometry.js?v=0.48.1";
 
-const DEFAULT_SAMPLES = 300;   // evenly across the domain before simplification
-const DEFAULT_EPS_MM = 0.4;    // RDP tolerance (world mm); ~80–150 pts survive
+const DEFAULT_SAMPLES = 900;   // evenly across the domain before simplification
+const DEFAULT_EPS_MM = 0.07;   // RDP tolerance (world mm); ~5× denser → smooth curve
 
 /* ----- sample expr over [domainMin, domainMax] → { points, error } -----
  * error is a user-facing string when the formula won't compile / the domain is
