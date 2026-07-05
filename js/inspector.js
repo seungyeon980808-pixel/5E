@@ -21,6 +21,7 @@ import { buildProtectSection } from "./inspector/section-protect.js?v=0.46.0";
 import { buildImageSection } from "./inspector/section-image.js?v=0.46.0";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=0.46.0";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=0.46.0";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=0.46.0";
 import { buildArtboardSection } from "./inspector/section-artboard.js?v=0.46.0";
 import { buildLayersSection } from "./inspector/section-layers.js?v=0.46.0";
 import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=0.46.0";
@@ -99,6 +100,7 @@ export function initInspector(state) {
   } = buildImageSection(ctx);
   const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp } = buildPendulumSection(ctx);
   const { secCoord, syncCoordplane } = buildCoordplaneSection(ctx);
+  const { secFunc, syncFuncgraph } = buildFuncgraphSection(ctx);
   const { abSection, refreshArtboard } = buildArtboardSection(ctx);
   const { layerDetails, renderLayerPanel } = buildLayersSection(ctx);
   const { bgSection, renderBgSection } = buildGlobalImageSection(ctx);
@@ -117,6 +119,7 @@ export function initInspector(state) {
   contentEl.insertBefore(imageSection, sec3);
   contentEl.appendChild(secPend);
   contentEl.appendChild(secCoord);
+  contentEl.appendChild(secFunc);
   if (root) root.appendChild(abSection);
   if (root) root.appendChild(layerDetails);
   if (root) root.insertBefore(bgSection, root.firstChild);
@@ -194,6 +197,7 @@ export function initInspector(state) {
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secCoord.style.display = "none"; // shown only for a single coordplane (set below)
+    secFunc.style.display = "none"; // shown only for a single funcgraph (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
     // line (set in the single-selection branch); hidden in every other case.
     boxLabelRow.style.display = "none";
@@ -624,6 +628,11 @@ export function initInspector(state) {
     const isCoordplane = obj.type === "coordplane";
     secCoord.style.display = isCoordplane ? "" : "none";
     if (isCoordplane) syncCoordplane(obj);
+
+    // 함수 그래프 section: formula / domain / 곡선으로 변환.
+    const isFuncgraph = obj.type === "funcgraph";
+    secFunc.style.display = isFuncgraph ? "" : "none";
+    if (isFuncgraph) syncFuncgraph(obj);
 
     // Group-3 box upright label: rect/ellipse only (text + center/above/below).
     const isBoxLabelType = obj.type === "rect" || obj.type === "ellipse";

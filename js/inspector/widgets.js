@@ -10,7 +10,7 @@ export const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacit
 export const LINE_TYPES = ["line", "polyline", "curve"];
 export const DASH_TYPES = [...SHAPE_TYPES, ...LINE_TYPES];
 export function supportsDash(obj) {
-  return !!obj && (DASH_TYPES.includes(obj.type) || (obj.type === "optics" && obj.kind === "object_arrow"));
+  return !!obj && (DASH_TYPES.includes(obj.type) || obj.type === "funcgraph" || (obj.type === "optics" && obj.kind === "object_arrow"));
 }
 // Dash presets (world units / mm). 실선 = (0,0) = solid (no dasharray).
 export const DASH_PRESETS = [

@@ -26,6 +26,8 @@ import { armSymbol } from "./tools.js?v=0.46.0";
 import { renderObject } from "./render.js?v=0.46.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.46.0";
 import { getSvgAsset } from "./svg-assets.js?v=0.46.0";
+import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.46.0";
+import { insertFunctionGraph } from "./function-graph/insert.js?v=0.46.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -79,31 +81,21 @@ export const TEMPLATES = {
     keywords: ["좌표평면", "좌표계", "그래프", "graph", "plane", "함수", "xy", "격자", "grid"],
     create: {},
     make(at) {
-      const w = 60, h = 48; // default extent (mm); resizable afterwards
-      return {
-        type: "coordplane",
-        x: at.x - w / 2,
-        y: at.y - h / 2,
-        w,
-        h,
-        rotation: 0,
-        xMin: -5, xMax: 5,              // display range (math units)
-        yMin: -5, yMax: 5,
-        gridStepX: 1, gridStepY: 1,     // grid/tick spacing (math units)
-        showAxisLines: true,
-        showGrid: false,
-        showTicks: true,
-        showTickLabels: false,          // numeric labels — coordplane-only feature
-        tickLabelSize: 2.6,             // mm
-        labelX: "x", labelY: "y",
-        labelType: "quantity",
-        exportable: true,               // 요구 6: 평면 출력 on/off
-        strokeLevel: 0,                 // 0 = black (DESIGN 2-2)
-        strokeWidth: DEFAULT_STROKE_WIDTH,
-        locked: false,
-        positionLocked: false,
-      };
+      // Schema lives in function-graph/defaults.js (shared with the graph inserter).
+      return makeDefaultCoordplane(at);
     },
+  },
+
+  /* FUNCGRAPH — "함수 입력". kind "funcinput": clicking opens the formula input
+   * (interim prompt now; §10-④ 모달 later) instead of arming a tool or dropping an
+   * atomic object. The insert path (function-graph/insert.js) creates the funcgraph
+   * on the selected coordplane, or a fresh plane if none is selected. */
+  funcgraph: {
+    kind: "funcinput",
+    category: "함수",
+    label: "함수 입력",
+    keywords: ["함수", "그래프", "수식", "function", "graph", "sin", "cos", "log", "y=f(x)", "지수", "로그", "삼각"],
+    create: {},
   },
 
   /* ANGLE ARC — shape (arms the two-click ARC tool in tools.js). The placement
@@ -389,6 +381,15 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
+  if (id === "funcgraph") {
+    // A curve rising over a small L-shaped axis pair (represents "함수 입력").
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<path d="M3.5 3 L3.5 16.5 L17 16.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="M4 14 Q9 3.5 17 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>';
+    return svg;
+  }
+
   if (id === "labeler") {
     // A short leader line from a graph anchor up to an upright circled letter.
     svg.setAttribute("viewBox", "0 0 20 20");
@@ -527,6 +528,19 @@ function renderPanel() {
   for (const svg of pending) sizeIconViewBox(svg);
 }
 
+/* ----- funcgraph 입력 (INTERIM) — a prompt() stands in for the §10-④ 모달 -----
+ * TODO(step 4): replace this with the modal (수식 입력 + 실시간 미리보기 + 정의역
+ * 드래그). The commit path (insertFunctionGraph) stays the same — the modal will
+ * just collect expr + domain, then call it. */
+function openFunctionInputInterim() {
+  const input = window.prompt("함수식을 입력하세요 (예: sin(x), x^2-3*x+1, log(x))", "sin(x)");
+  if (input == null) return;            // cancelled
+  const expr = input.trim();
+  if (!expr) return;
+  const res = insertFunctionGraph(state, expr);
+  if (!res.ok) window.alert(`함수를 그릴 수 없습니다: ${res.error}`);
+}
+
 /* ----- click → creation (functionally identical to the old per-button wiring) ----- */
 export function activateTemplate(symbolId) {
   const def = TEMPLATES[symbolId];
@@ -536,6 +550,9 @@ export function activateTemplate(symbolId) {
     const vb = state.get().viewBox;
     const center = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 };
     instantiate(symbolId, center);
+  } else if (def.kind === "funcinput") {
+    // 함수 입력: open the formula input (interim prompt → insert).
+    openFunctionInputInterim();
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};
