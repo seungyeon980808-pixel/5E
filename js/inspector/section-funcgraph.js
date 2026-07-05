@@ -5,8 +5,8 @@
  * shared 선 section (sec1). Interim expr entry is a prompt() — the §10-④ 모달 will
  * replace it. Mount + show/hide live in js/inspector.js. */
 
-import { makeSection } from "./widgets.js?v=0.48.1";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.48.1";
+import { makeSection } from "./widgets.js?v=0.48.2";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.48.2";
 
 const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
 const BTN_CSS = "font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:3px 8px;background:#1e1f22;color:#dcddde;cursor:pointer;";

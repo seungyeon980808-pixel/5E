@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.48.1";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.48.2";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
