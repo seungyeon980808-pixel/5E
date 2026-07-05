@@ -7,23 +7,23 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.48.7";
-import { render } from "./render.js?v=0.48.7";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.48.7";
-import { initTools } from "./tools.js?v=0.48.7";
-import { initCutTool } from "./cut-tool.js?v=0.48.7";
-import { initTransform, undo, redo } from "./transform.js?v=0.48.7";
-import { initInspector } from "./inspector.js?v=0.48.7";
-import { initProjectIO } from "./project-io.js?v=0.48.7";
-import { initExportDialog } from "./export-dialog.js?v=0.48.7";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.48.7";
-import { initSettings } from "./settings.js?v=0.48.7";
-import { initImageObjectify } from "./image-objectify.js?v=0.48.7";
-import { initImageImportMock } from "./image-import-mock.js?v=0.48.7";
-import { initImagePaste } from "./image-paste.js?v=0.48.7";
-import { initImageCutout } from "./image-cutout.js?v=0.48.7";
-import { initTemplates } from "./templates.js?v=0.48.7";
-import { initObjectSearch } from "./search.js?v=0.48.7";
+import { state } from "./state.js?v=0.49.0";
+import { render } from "./render.js?v=0.49.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.49.0";
+import { initTools } from "./tools.js?v=0.49.0";
+import { initCutTool } from "./cut-tool.js?v=0.49.0";
+import { initTransform, undo, redo } from "./transform.js?v=0.49.0";
+import { initInspector } from "./inspector.js?v=0.49.0";
+import { initProjectIO } from "./project-io.js?v=0.49.0";
+import { initExportDialog } from "./export-dialog.js?v=0.49.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.49.0";
+import { initSettings } from "./settings.js?v=0.49.0";
+import { initImageObjectify } from "./image-objectify.js?v=0.49.0";
+import { initImageImportMock } from "./image-import-mock.js?v=0.49.0";
+import { initImagePaste } from "./image-paste.js?v=0.49.0";
+import { initImageCutout } from "./image-cutout.js?v=0.49.0";
+import { initTemplates } from "./templates.js?v=0.49.0";
+import { initObjectSearch } from "./search.js?v=0.49.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -208,6 +208,18 @@ initObjectSearch();
 applyViewBox(state.get());
 render(state.get());
 
+// 수식 글꼴(Latin Modern)은 웹폰트라, 로딩 전에는 폴백 메트릭으로 글자 폭이 측정된다.
+// formula.js는 canvas measureText로 레이아웃을 잡으므로(export 픽셀 일치 보증), 정자·
+// 이탤릭 두 페이스를 시작 시 "명시적으로" 미리 로드한 뒤 1회 다시 그려 측정값과 실제
+// 렌더를 일치시킨다. lazy 로딩(빈 캔버스엔 수식이 없어 다운로드가 안 됨)에 기대면 첫
+// 수식이 폴백 폭으로 측정되므로, ready가 아니라 load로 강제해야 한다.
+if (document.fonts && document.fonts.load) {
+  Promise.all([
+    document.fonts.load('16px "Latin Modern Roman"'),
+    document.fonts.load('italic 16px "Latin Modern Roman"'),
+  ]).then(() => render(state.get())).catch(() => {});
+}
+
 /* ===== DEV DEBUG GATE =====
  * Dev-only: flip to true LOCALLY to expose window.phyDraw, the coord-debug
  * overlay (key "d"), and the console usage banner below. Must be false for
@@ -267,7 +279,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v0.48.7] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v0.49.0] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +
