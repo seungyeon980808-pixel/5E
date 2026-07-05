@@ -6,25 +6,25 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=0.48.4";
-import { resolveObjectStyle } from "./style-mode.js?v=0.48.4";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=0.48.5";
+import { resolveObjectStyle } from "./style-mode.js?v=0.48.5";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
-} from "./inspector/widgets.js?v=0.48.4";
-import { createInspectorContext } from "./inspector/context.js?v=0.48.4";
-import { buildLineSection } from "./inspector/section-line.js?v=0.48.4";
-import { buildGroupSection } from "./inspector/section-group.js?v=0.48.4";
-import { buildTextSection } from "./inspector/section-text.js?v=0.48.4";
-import { buildFillSection } from "./inspector/section-fill.js?v=0.48.4";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=0.48.4";
-import { buildProtectSection } from "./inspector/section-protect.js?v=0.48.4";
-import { buildImageSection } from "./inspector/section-image.js?v=0.48.4";
-import { buildPendulumSection } from "./inspector/section-pendulum.js?v=0.48.4";
-import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=0.48.4";
-import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=0.48.4";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=0.48.4";
-import { buildLayersSection } from "./inspector/section-layers.js?v=0.48.4";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=0.48.4";
+} from "./inspector/widgets.js?v=0.48.5";
+import { createInspectorContext } from "./inspector/context.js?v=0.48.5";
+import { buildLineSection } from "./inspector/section-line.js?v=0.48.5";
+import { buildGroupSection } from "./inspector/section-group.js?v=0.48.5";
+import { buildTextSection } from "./inspector/section-text.js?v=0.48.5";
+import { buildFillSection } from "./inspector/section-fill.js?v=0.48.5";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=0.48.5";
+import { buildProtectSection } from "./inspector/section-protect.js?v=0.48.5";
+import { buildImageSection } from "./inspector/section-image.js?v=0.48.5";
+import { buildPendulumSection } from "./inspector/section-pendulum.js?v=0.48.5";
+import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=0.48.5";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=0.48.5";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=0.48.5";
+import { buildLayersSection } from "./inspector/section-layers.js?v=0.48.5";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=0.48.5";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {

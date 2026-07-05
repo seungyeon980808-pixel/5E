@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.48.4";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.48.5";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,29 +19,29 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.48.4";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.48.4";
-import { resolveEndpointSnap } from "./snap.js?v=0.48.4";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.48.4";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.48.4";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.48.4";
-import { getSvgAsset } from "./svg-assets.js?v=0.48.4";
+} from "./state.js?v=0.48.5";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.48.5";
+import { resolveEndpointSnap } from "./snap.js?v=0.48.5";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.48.5";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.48.5";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.48.5";
+import { getSvgAsset } from "./svg-assets.js?v=0.48.5";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   simplifyRDP, bboxIntersects,
-} from "./geometry.js?v=0.48.4";
+} from "./geometry.js?v=0.48.5";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=0.48.4";
+} from "./pick.js?v=0.48.5";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.48.4";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.48.5";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -50,11 +50,11 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=0.48.4";
+} from "./text-editor.js?v=0.48.5";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.48.4";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.48.5";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
