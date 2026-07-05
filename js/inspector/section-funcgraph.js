@@ -5,7 +5,7 @@
  * shared 선 section (sec1). Interim expr entry is a prompt() — the §10-④ 모달 will
  * replace it. Mount + show/hide live in js/inspector.js. */
 
-import { makeSection } from "./widgets.js?v=0.48.4";
+import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.48.4";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.48.4";
 
 const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
@@ -121,6 +121,30 @@ export function buildFuncgraphSection(ctx) {
   domRow.appendChild(domMax);
   body.appendChild(domRow);
 
+  // ---- 선 종류 (실선/점선) — 여러 함수 구분용(§12-3) ----
+  const dashRow = document.createElement("div");
+  dashRow.className = "insp-row";
+  const dashLbl = document.createElement("label");
+  dashLbl.className = "insp-field-label";
+  dashLbl.textContent = "선 종류";
+  dashRow.appendChild(dashLbl);
+  const dashBtns = [];
+  DASH_PRESETS.forEach((preset) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = preset.label;
+    b.style.cssText = BTN_CSS + "margin-left:3px;padding:2px 6px;";
+    b.addEventListener("click", () => commit((o) => {
+      if (o.type !== "funcgraph") return false;
+      o.dashLength = preset.dashLength;
+      o.dashGap = preset.dashGap;
+      return true;
+    }));
+    dashBtns.push({ btn: b, preset });
+    dashRow.appendChild(b);
+  });
+  body.appendChild(dashRow);
+
   // ---- 곡선으로 변환 (§3-2): funcgraph → plain open curve (one-way) ----
   const convRow = document.createElement("div");
   convRow.className = "insp-row";
@@ -150,6 +174,13 @@ export function buildFuncgraphSection(ctx) {
     exprVal.title = obj.expr || "";
     if (document.activeElement !== domMin) domMin.value = obj.domainMin ?? "";
     if (document.activeElement !== domMax) domMax.value = obj.domainMax ?? "";
+    const dl = obj.dashLength ?? 0, dg = obj.dashGap ?? 0;
+    dashBtns.forEach(({ btn, preset }) => {
+      const on = Math.abs(preset.dashLength - dl) < 1e-6 && Math.abs(preset.dashGap - dg) < 1e-6;
+      btn.style.background = on ? "#4a9eff" : "#1e1f22";
+      btn.style.borderColor = on ? "#4a9eff" : "#3a3c41";
+      btn.disabled = !!obj.locked;
+    });
     const locked = !!obj.locked;
     exprBtn.disabled = locked;
     domMin.disabled = locked;

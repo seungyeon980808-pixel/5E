@@ -105,19 +105,30 @@ function renderCoordplane(obj) {
   const atEdgeX = (v) => Math.abs(v - xMin) < 1e-6 || Math.abs(v - xMax) < 1e-6;
   const atEdgeY = (v) => Math.abs(v - yMin) < 1e-6 || Math.abs(v - yMax) < 1e-6;
 
-  // ----- GRID (light, dashed — 평가원 style). Clipped to the positive quadrant for
-  //       L자/직선 so it never bleeds into the negative side (버그 수정). -----
+  // ----- GRID (light, dashed — 평가원 style) -----
+  // Every grid line spans the SAME grid rectangle so the ends line up cleanly
+  // (no dashes poking into the one-cell axis margin, #3). The rectangle is bounded
+  // by the outermost drawn grid lines; the origin sides (L자/직선) are the axes.
   if (obj.showGrid) {
     const gx = tickRange(xMin, xMax, obj.gridStepX || 1);
     const gy = tickRange(yMin, yMax, obj.gridStepY || 1);
-    const gdash = Math.max(sw * 4, 0.7);
+    // outermost non-edge grid multiples (one cell inside the range)
+    let gXhi = gx.kEnd * gx.step; if (atEdgeX(gXhi)) gXhi -= gx.step;
+    let gXlo = gx.kStart * gx.step; if (atEdgeX(gXlo)) gXlo += gx.step;
+    let gYhi = gy.kEnd * gy.step; if (atEdgeY(gYhi)) gYhi -= gy.step;
+    let gYlo = gy.kStart * gy.step; if (atEdgeY(gYlo)) gYlo += gy.step;
+    const rectTop   = worldYFromMathY(P, gYhi);
+    const rectBot   = bothSides ? worldYFromMathY(P, gYlo) : worldY0; // origin side = x-axis
+    const rectLeft  = bothSides ? worldXFromMathX(P, gXlo) : worldX0; // origin side = y-axis
+    const rectRight = worldXFromMathX(P, gXhi);
+    const gdash = Math.max(sw * 3.5, 0.7);
     const addGrid = (x1, y1, x2, y2) => {
       const l = document.createElementNS(SVG_NS, "line");
       l.setAttribute("x1", x1); l.setAttribute("y1", y1);
       l.setAttribute("x2", x2); l.setAttribute("y2", y2);
       l.setAttribute("stroke", gridColor);
       l.setAttribute("stroke-width", sw * 0.5);
-      l.setAttribute("stroke-dasharray", `${gdash} ${gdash * 0.7}`);
+      l.setAttribute("stroke-dasharray", `${gdash} ${gdash * 0.85}`);
       g.appendChild(l);
     };
     if (gx.kEnd - gx.kStart <= GRID_MAX_LINES) {
@@ -125,7 +136,7 @@ function renderCoordplane(obj) {
         if ((!bothSides && k < 0) || atEdgeX(k * gx.step)) continue; // 양의 구역만 + 한 칸 짧게
         const vx = worldXFromMathX(P, k * gx.step);
         if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
-        addGrid(vx, top, vx, yAxisBottom);                 // clip to +y quadrant for L자/직선
+        addGrid(vx, rectTop, vx, rectBot);
       }
     }
     if (hasYArm && gy.kEnd - gy.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
@@ -133,7 +144,7 @@ function renderCoordplane(obj) {
         if ((!bothSides && k < 0) || atEdgeY(k * gy.step)) continue;
         const vy = worldYFromMathY(P, k * gy.step);
         if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
-        addGrid(xAxisLeft, vy, right, vy);                 // clip to +x quadrant for L자
+        addGrid(rectLeft, vy, rectRight, vy);
       }
     }
   }
@@ -207,8 +218,8 @@ function renderCoordplane(obj) {
     }
   }
 
-  // ----- AXIS NAME LABELS (x / y) near each arrow tip (equation font) -----
-  const nameSize = Math.max(sw * 14, 3);
+  // ----- AXIS NAME LABELS (x / y) + ORIGIN (O) — equation font, toggleable -----
+  const nameSize = obj.axisLabelSize ? Math.max(obj.axisLabelSize, 1) : Math.max(sw * 14, 3);
   const addName = (text, lx, ly, anchor, baseline) => {
     if (!text) return;
     const t = document.createElementNS(SVG_NS, "text");
@@ -222,7 +233,7 @@ function renderCoordplane(obj) {
     fillTextWithRomanRuns(t, text);
     g.appendChild(t);
   };
-  if (obj.showAxisLines) {
+  if (obj.showAxisLines && obj.showAxisLabels !== false) {
     if (variant === "quadrant") {
       // L자(1사분면): 조작변인은 x축 하단, 종속변인은 y축 좌측 (평가원 실험그래프 관례).
       if (xAxisVisible) addName(obj.labelX, right, worldY0 + nameSize * 1.15, "end", "hanging");
@@ -231,6 +242,10 @@ function renderCoordplane(obj) {
       if (xAxisVisible) addName(obj.labelX, right, worldY0 - nameSize * 0.5, "end", "auto");
       if (hasYArm && yAxisVisible) addName(obj.labelY, worldX0 + nameSize * 0.6, top, "start", "hanging");
     }
+  }
+  // Origin "O" — below-left of the origin, only when the origin is on-screen (평가원).
+  if (obj.showOrigin && xAxisVisible && yAxisVisible) {
+    addName("O", worldX0 - nameSize * 0.35, worldY0 + nameSize * 0.35, "end", "hanging");
   }
 
   // ----- rotation: whole plane turns about its bbox center -----

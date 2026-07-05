@@ -153,6 +153,15 @@ export function buildCoordplaneSection(ctx) {
   const labelTypeRow = makeLabelTypeRow(applies, "quantity");
   body.appendChild(labelTypeRow.row);
 
+  // ---- 축 이름/원점 표시 + 이름 크기 (요구: on/off + 크기조정) ----
+  const axisLabelsCb = checkbox("축 이름 표시", "showAxisLabels");
+  const axisLabelSizeInp = makeNum("axisLabelSize", { step: "0.1" });
+  const axisLabelSizeRow = numRow("이름 크기", [axisLabelSizeInp]);
+  const alsUnit = document.createElement("span");
+  alsUnit.textContent = "mm"; alsUnit.className = "insp-unit";
+  axisLabelSizeRow.appendChild(alsUnit);
+  const originCb = checkbox("원점 O 표시", "showOrigin");
+
   // ---- export on/off (요구 6) ----
   const exportCb = checkbox("내보내기 포함", "exportable");
 
@@ -174,6 +183,10 @@ export function buildCoordplaneSection(ctx) {
     if (document.activeElement !== labelXRow.inp) labelXRow.inp.value = obj.labelX ?? "";
     if (document.activeElement !== labelYRow.inp) labelYRow.inp.value = obj.labelY ?? "";
     labelTypeRow.sync(obj);
+    axisLabelsCb.cb.checked = obj.showAxisLabels !== false;
+    axisLabelSizeRow.style.display = obj.showAxisLabels !== false ? "" : "none";
+    setNum(axisLabelSizeInp, obj.axisLabelSize ?? 3.5);
+    originCb.cb.checked = obj.showOrigin !== false;
     exportCb.cb.checked = obj.exportable !== false;
 
     const av = obj.axisVariant || "cross";
@@ -186,8 +199,9 @@ export function buildCoordplaneSection(ctx) {
 
     const locked = !!obj.locked;
     [xMinInp, xMaxInp, yMinInp, yMaxInp, gridXInp, gridYInp, tickSizeInp,
-     labelXRow.inp, labelYRow.inp, labelTypeRow.sel,
-     axisLinesCb.cb, gridCb.cb, ticksCb.cb, tickLabelsCb.cb, exportCb.cb].forEach((el) => { el.disabled = locked; });
+     labelXRow.inp, labelYRow.inp, labelTypeRow.sel, axisLabelSizeInp,
+     axisLinesCb.cb, gridCb.cb, ticksCb.cb, tickLabelsCb.cb,
+     axisLabelsCb.cb, originCb.cb, exportCb.cb].forEach((el) => { el.disabled = locked; });
   }
 
   return { secCoord, syncCoordplane: sync };

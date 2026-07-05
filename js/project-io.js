@@ -183,6 +183,9 @@ function migrate(data) {
         next.showTickLabels = next.showTickLabels ?? false;
         next.tickLabelSize = next.tickLabelSize ?? 2.6;
         next.labelX = next.labelX ?? "x"; next.labelY = next.labelY ?? "y";
+        next.showAxisLabels = next.showAxisLabels ?? true;
+        next.axisLabelSize = next.axisLabelSize ?? 3.5;
+        next.showOrigin = next.showOrigin ?? true;
         next.exportable = next.exportable ?? true;
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;

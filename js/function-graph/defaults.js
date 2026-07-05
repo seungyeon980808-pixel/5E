@@ -32,6 +32,9 @@ function makeDefaultCoordplane(at) {
     showTickLabels: false,          // numeric labels — coordplane-only feature
     tickLabelSize: 2.6,             // mm
     labelX: "x", labelY: "y",
+    showAxisLabels: true,           // 축 이름(x/y) on/off
+    axisLabelSize: 3.5,             // 축 이름 글자 크기 (mm)
+    showOrigin: true,               // 원점 "O" 표시 (평가원)
     labelType: "quantity",
     exportable: true,               // 요구 6: 평면 출력 on/off
     strokeLevel: 0,                 // 0 = black (DESIGN 2-2)
