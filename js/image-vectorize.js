@@ -825,6 +825,342 @@ function smoothLoop(pts) {
   return cleaned.length >= 3 ? { points: cleaned, curved: true } : { points: pts, curved: false };
 }
 
+/* ===== 8d. STROKE EXTRACTION (§2-5) — 선을 면 아닌 line/curve로 =====
+//
+// 얇은(획) 컴포넌트는 윤곽 폴리곤(면 2장)이 아니라 중심선(스켈레톤)을 뽑아
+// line/polyline/curve + strokeWidth로 방출한다. 핵심:
+//   · 거리변환(DT)으로 국소 반폭 실측 → maxDT가 작고(얇음) 스켈레톤이 길면(가늘고
+//     긺) 획으로 판정, 아니면 면으로 남긴다(기존 파이프라인).
+//   · Guo-Hall 세선화(대각선에 강함) → 스켈레톤 → 그래프(끝점·교차점·경로) 후
+//     코너 tangle 수축·재병합.
+//   · 곧은 경로 → line, 꺾임 → polyline, 매끈 → curve. 닫힌 루프(상자 테두리) →
+//     닫힌 polyline/curve 1개(fillNone) — "면 2장" 구조적 소멸.
+//   · strokeWidth = 2×평균 DT(커버리지 반영), strokeLevel = 잉크 하위 10퍼센타일
+//     (열화 방어). 진하면(≤160) 검정으로 스냅 → "분명한 선이 흐려지는" 문제 방어.
+//   · 사전 패스는 Otsu 잉크 합집합에서 수행 → 획 코어가 회색 레벨로 조각나도(F1)
+//     온전한 한 획으로 추출. 원/링은 §2-2 ellipse가 낫기에 stroke로 가로채지 않음. */
+
+const STROKE_HALFWIDTH_MAX = 4.5;  // 이 반폭(px) 초과 = 면(획 아님)
+const STROKE_ELONGATION = 4.0;     // 스켈레톤 길이 ≥ 4×maxDT 라야 획
+const STROKE_SPUR_FACTOR = 2.0;    // 이보다 짧은 끝가지(스퍼)는 세선화 잡티로 제거
+const STROKE_DARK_PCTL = 0.1;      // strokeLevel = 잉크 하위 10퍼센타일(진한 쪽)
+const STROKE_INK_SNAP = 160;       // 측정 명도 ≤이면 검정(0)으로 스냅
+
+// 배경까지의 근사 유클리드 거리(2-pass chamfer, 1·√2). 잉크=거리, 배경=0.
+function distanceTransform(mask, w, h) {
+  const INF = 1e9, D1 = 1, D2 = Math.SQRT2;
+  const dt = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i += 1) dt[i] = mask[i] ? INF : 0;
+  for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) {
+    const i = y * w + x; if (dt[i] === 0) continue;
+    let m = dt[i];
+    if (x > 0) m = Math.min(m, dt[i - 1] + D1);
+    if (y > 0) m = Math.min(m, dt[i - w] + D1);
+    if (x > 0 && y > 0) m = Math.min(m, dt[i - w - 1] + D2);
+    if (x < w - 1 && y > 0) m = Math.min(m, dt[i - w + 1] + D2);
+    dt[i] = m;
+  }
+  for (let y = h - 1; y >= 0; y -= 1) for (let x = w - 1; x >= 0; x -= 1) {
+    const i = y * w + x; if (dt[i] === 0) continue;
+    let m = dt[i];
+    if (x < w - 1) m = Math.min(m, dt[i + 1] + D1);
+    if (y < h - 1) m = Math.min(m, dt[i + w] + D1);
+    if (x < w - 1 && y < h - 1) m = Math.min(m, dt[i + w + 1] + D2);
+    if (x > 0 && y < h - 1) m = Math.min(m, dt[i + w - 1] + D2);
+    dt[i] = m;
+  }
+  return dt;
+}
+
+// Guo-Hall 병렬 세선화 → 1px 스켈레톤. Zhang-Suen과 달리 대각선을 2px 리본으로
+// 남기지 않아 AA/스캔 대각선에서 깔끔하다(스켈레톤 폭발 방지).
+function guoHallThin(mask, w, h) {
+  const img = mask.slice();
+  const P = (x, y) => (x < 0 || x >= w || y < 0 || y >= h) ? 0 : img[y * w + x];
+  const toClear = [];
+  let changed = true, iter = 0;
+  while (changed && iter < 300) {
+    changed = false; iter += 1;
+    for (let parity = 0; parity < 2; parity += 1) {
+      toClear.length = 0;
+      for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) {
+        if (!img[y * w + x]) continue;
+        const p2 = P(x, y - 1), p3 = P(x + 1, y - 1), p4 = P(x + 1, y), p5 = P(x + 1, y + 1),
+              p6 = P(x, y + 1), p7 = P(x - 1, y + 1), p8 = P(x - 1, y), p9 = P(x - 1, y - 1);
+        const C = (!p2 && (p3 || p4) ? 1 : 0) + (!p4 && (p5 || p6) ? 1 : 0)
+                + (!p6 && (p7 || p8) ? 1 : 0) + (!p8 && (p9 || p2) ? 1 : 0);
+        if (C !== 1) continue;
+        const N1 = (p9 || p2 ? 1 : 0) + (p3 || p4 ? 1 : 0) + (p5 || p6 ? 1 : 0) + (p7 || p8 ? 1 : 0);
+        const N2 = (p2 || p3 ? 1 : 0) + (p4 || p5 ? 1 : 0) + (p6 || p7 ? 1 : 0) + (p8 || p9 ? 1 : 0);
+        const N = Math.min(N1, N2);
+        if (N < 2 || N > 3) continue;
+        const m = parity === 0 ? ((p6 || p7 || !p9) && p8) : ((p2 || p3 || !p5) && p4);
+        if (!m) toClear.push(y * w + x);
+      }
+      if (toClear.length) { changed = true; for (const i of toClear) img[i] = 0; }
+    }
+  }
+  return img;
+}
+
+// Zhang-Suen이 대각선에 남기는 2px 계단(2×2 블록)을 1px로 정리. 잉여점 제거:
+// 8-이웃 교차수 A==1(이웃이 연속=코너/가장자리)이고 이웃≥3(두꺼운 곳)이면 제거.
+// 교차점(A>1)과 1px 선(이웃<3)은 보존 → 연결성 유지하며 계단만 벗겨냄.
+function pruneRedundant(skel, w, h) {
+  const img = skel.slice();
+  const P = (x, y) => (x < 0 || x >= w || y < 0 || y >= h) ? 0 : img[y * w + x];
+  let changed = true, guard = 0;
+  while (changed && guard < 8) {
+    changed = false; guard += 1;
+    for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) {
+      if (!img[y * w + x]) continue;
+      const nb = [P(x, y - 1), P(x + 1, y - 1), P(x + 1, y), P(x + 1, y + 1), P(x, y + 1), P(x - 1, y + 1), P(x - 1, y), P(x - 1, y - 1)];
+      let B = 0; for (const v of nb) B += v;
+      if (B < 3) continue;                              // 1px 선 보존
+      let A = 0; for (let k = 0; k < 8; k += 1) if (nb[k] === 0 && nb[(k + 1) % 8] === 1) A += 1;
+      if (A === 1) { img[y * w + x] = 0; changed = true; } // 코너 잉여점 → 제거
+    }
+  }
+  return img;
+}
+
+const SKEL_NBR = [[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]];
+
+// 스켈레톤 → 경로 목록 [{points:[[x,y]...], closed}]. 노드(끝점 deg1·교차 deg≥3)
+// 사이를 deg2 픽셀을 따라 이어 열린 경로로, 노드 없는 순환은 닫힌 루프로.
+function skeletonToGraph(skel, w, h) {
+  const nbrs = (x, y) => {
+    const r = [];
+    for (const [dx, dy] of SKEL_NBR) { const nx = x + dx, ny = y + dy; if (nx >= 0 && nx < w && ny >= 0 && ny < h && skel[ny * w + nx]) r.push([nx, ny]); }
+    return r;
+  };
+  const deg = new Int8Array(w * h);
+  const ink = [];
+  for (let y = 0; y < h; y += 1) for (let x = 0; x < w; x += 1) if (skel[y * w + x]) { deg[y * w + x] = nbrs(x, y).length; ink.push([x, y]); }
+  const key = (x, y) => x + "_" + y;
+  const walked = new Set();                // 무방향 스텝 "a|b"
+  const stepKey = (a, b) => (a < b ? a + "|" + b : b + "|" + a);
+  const paths = [];
+  const isNode = (x, y) => deg[y * w + x] !== 2;
+
+  for (const [x, y] of ink) {
+    if (!isNode(x, y)) continue;
+    for (const [nx, ny] of nbrs(x, y)) {
+      if (walked.has(stepKey(key(x, y), key(nx, ny)))) continue;
+      const path = [[x, y]];
+      let px = x, py = y, cx = nx, cy = ny;
+      walked.add(stepKey(key(px, py), key(cx, cy)));
+      while (true) {
+        path.push([cx, cy]);
+        if (isNode(cx, cy)) break;
+        const nn = nbrs(cx, cy).filter(([ax, ay]) => !(ax === px && ay === py));
+        if (!nn.length) break;
+        px = cx; py = cy; [cx, cy] = nn[0];
+        walked.add(stepKey(key(px, py), key(cx, cy)));
+      }
+      paths.push({ points: path, closed: false });
+    }
+  }
+  // 노드 없는 순환(예: 사각 테두리) — 남은 deg2 픽셀에서 추적.
+  const used = new Set();
+  for (const p of paths) for (const [x, y] of p.points) used.add(key(x, y));
+  for (const [x, y] of ink) {
+    if (deg[y * w + x] !== 2 || used.has(key(x, y))) continue;
+    const path = [[x, y]]; used.add(key(x, y));
+    let px = x, py = y, cur = nbrs(x, y)[0];
+    while (cur) {
+      const [cx, cy] = cur;
+      if (cx === x && cy === y) break;
+      path.push([cx, cy]); used.add(key(cx, cy));
+      const nn = nbrs(cx, cy).filter(([ax, ay]) => !(ax === px && ay === py));
+      px = cx; py = cy; cur = nn[0];
+      if (path.length > w * h) break;
+    }
+    paths.push({ points: path, closed: true });
+  }
+  return paths;
+}
+
+function pathArcLength(pts) {
+  let s = 0; for (let i = 1; i < pts.length; i += 1) s += segLen(pts[i - 1], pts[i]); return s;
+}
+// 짧은 다리·스퍼 수축: 교차점에 붙은 짧은 경로(호길이 < thresh)를 없애고 그
+// 양끝 노드를 하나로 합친다(union-find). 세선화가 코너에 만든 tangle(작은 삼각형·
+// 이중다리)이 사라져 남은 팔들이 deg2로 이어짐. 독립된 짧은 획(양끝 자유단)은
+// 교차점이 아니므로 보존한다.
+function contractShortEdges(paths, thresh) {
+  const key = (pt) => pt[0] + "_" + pt[1];
+  const use = new Map();
+  for (const p of paths) { if (p.closed) continue; for (const wend of [0, 1]) { const k = key(wend ? p.points[p.points.length - 1] : p.points[0]); use.set(k, (use.get(k) || 0) + 1); } }
+  const parent = new Map();
+  const ensure = (k) => { if (!parent.has(k)) parent.set(k, k); };
+  const find = (k) => { let r = k; while (parent.get(r) !== r) r = parent.get(r); while (parent.get(k) !== r) { const n = parent.get(k); parent.set(k, r); k = n; } return r; };
+  for (const p of paths) { if (p.closed) continue; ensure(key(p.points[0])); ensure(key(p.points[p.points.length - 1])); }
+  const survivors = [];
+  for (const p of paths) {
+    if (p.closed) { survivors.push(p); continue; }
+    const k0 = key(p.points[0]), k1 = key(p.points[p.points.length - 1]);
+    const atNode = (use.get(k0) || 0) >= 2 || (use.get(k1) || 0) >= 2;
+    if (atNode && pathArcLength(p.points) < thresh) { const r0 = find(k0), r1 = find(k1); if (r0 !== r1) parent.set(r0, r1); }
+    else survivors.push(p);
+  }
+  const repCoord = (k) => { const parts = find(k).split("_"); return [Number(parts[0]), Number(parts[1])]; };
+  for (const p of survivors) { if (p.closed) continue; p.points[0] = repCoord(key(p.points[0])); p.points[p.points.length - 1] = repCoord(key(p.points[p.points.length - 1])); }
+  return survivors.length ? survivors : paths;
+}
+// 세선화가 코너에 만든 가짜 교차로 쪼개진 경로들을 재병합: 어떤 점이 '정확히
+// 2개' 경로 끝에서만 만나면(스퍼 제거 후 실질 deg2) 하나로 잇는다. 상자 테두리는
+// 닫힌 1개, L자는 꺾인 polyline 1개로 복원. 진짜 교차(십자, deg≥3)는 안 건드림.
+function mergeSharedEndpoints(paths) {
+  const key = (pt) => pt[0] + "_" + pt[1];
+  const closed = paths.filter((p) => p.closed);
+  let open = paths.filter((p) => !p.closed).map((p) => p.points.map((pt) => pt.slice()));
+  let merged = true;
+  while (merged) {
+    merged = false;
+    const endMap = new Map();
+    open.forEach((p, idx) => {
+      for (const which of [0, 1]) {
+        const k = key(which === 0 ? p[0] : p[p.length - 1]);
+        if (!endMap.has(k)) endMap.set(k, []);
+        endMap.get(k).push({ idx, which });
+      }
+    });
+    for (const ends of endMap.values()) {
+      if (ends.length !== 2 || ends[0].idx === ends[1].idx) continue; // 정확히 2경로, 자기자신 아님
+      const [e1, e2] = ends;
+      let a = open[e1.idx].slice(), b = open[e2.idx].slice();
+      if (e1.which === 0) a.reverse();          // 공유점이 a의 끝에 오도록
+      if (e2.which === 1) b.reverse();          // 공유점이 b의 시작에 오도록
+      const combined = a.concat(b.slice(1));    // 중복 공유점 제거하며 연결
+      const ni = Math.min(e1.idx, e2.idx), nj = Math.max(e1.idx, e2.idx);
+      open.splice(nj, 1); open.splice(ni, 1);
+      open.push(combined);
+      merged = true;
+      break;
+    }
+  }
+  const result = closed.slice();
+  for (const p of open) {
+    if (p.length > 3 && key(p[0]) === key(p[p.length - 1])) result.push({ points: p.slice(0, -1), closed: true });
+    else result.push({ points: p, closed: false });
+  }
+  return result;
+}
+function sampleMeanDT(pts, dt, w) {
+  let s = 0, n = 0;
+  for (const [x, y] of pts) { s += dt[y * w + x]; n += 1; }
+  return n ? s / n : 0;
+}
+function resampleOpen(pts, step) {
+  const total = pathArcLength(pts);
+  const count = Math.max(2, Math.round(total / step));
+  const out = [pts[0].slice()];
+  for (let s = 1; s < count; s += 1) {
+    const targ = (s / count) * total;
+    let acc = 0, i = 1;
+    for (; i < pts.length; i += 1) { const l = segLen(pts[i - 1], pts[i]); if (acc + l >= targ) { const t = (targ - acc) / (l || 1e-9); out.push([pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t]); break; } acc += l; }
+  }
+  out.push(pts[pts.length - 1].slice());
+  return out;
+}
+// 열린 스켈레톤 경로 → line / polyline / curve 스펙(px, strokeWidth/Level 미포함).
+function processOpenPath(pts) {
+  if (pts.length < 2) return null;
+  const a = pts[0], b = pts[pts.length - 1];
+  const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1e-9;
+  let maxd = 0;
+  for (let i = 1; i < pts.length - 1; i += 1) { const d = Math.abs(dy * pts[i][0] - dx * pts[i][1] + b[0] * a[1] - b[1] * a[0]) / len; if (d > maxd) maxd = d; }
+  if (maxd < 2.0) return { kind: "line", points: [a.slice(), b.slice()], closed: false };
+  const simp = rdp(pts, 1.5);
+  let sharp = false;
+  for (let i = 1; i < simp.length - 1; i += 1) {
+    const ux = simp[i][0] - simp[i - 1][0], uy = simp[i][1] - simp[i - 1][1];
+    const vx = simp[i + 1][0] - simp[i][0], vy = simp[i + 1][1] - simp[i][1];
+    const ang = Math.abs(Math.atan2(ux * vy - uy * vx, ux * vx + uy * vy)) * 180 / Math.PI;
+    if (ang > 50) sharp = true;
+  }
+  if (sharp) return { kind: "polyline", points: simp, closed: false };
+  return { kind: "curve", points: resampleOpen(pts, 3), closed: false };
+}
+function darkPercentile(getInk, gray, w, h, bbox, pctl) {
+  const [x0, y0, x1, y1] = bbox;
+  const hist = new Array(256).fill(0); let cnt = 0;
+  for (let y = y0; y < y1; y += 1) for (let x = x0; x < x1; x += 1) if (getInk(x, y)) { hist[gray[y * w + x]] += 1; cnt += 1; }
+  if (!cnt) return 0;
+  const target = cnt * pctl; let acc = 0;
+  for (let v = 0; v < 256; v += 1) { acc += hist[v]; if (acc >= target) return v; }
+  return 255;
+}
+
+// 컴포넌트 잉크(getInk) → 획 스펙 배열 또는 null(면이라 획 아님).
+function fitComponentStrokes(getInk, gray, w, h, bbox) {
+  const pad = 2;
+  const bx0 = Math.max(0, bbox[0] - pad), by0 = Math.max(0, bbox[1] - pad);
+  const bx1 = Math.min(w, bbox[2] + pad), by1 = Math.min(h, bbox[3] + pad);
+  const lw = bx1 - bx0, lh = by1 - by0;
+  if (lw < 3 || lh < 3) return null;
+  const m = new Uint8Array(lw * lh);
+  for (let y = 0; y < lh; y += 1) for (let x = 0; x < lw; x += 1) if (getInk(bx0 + x, by0 + y)) m[y * lw + x] = 1;
+  const dt = distanceTransform(m, lw, lh);
+  let maxDT = 0; for (let i = 0; i < dt.length; i += 1) if (dt[i] > maxDT) maxDT = dt[i];
+  if (maxDT > STROKE_HALFWIDTH_MAX) return null;                 // 두꺼움 → 면
+  const skel = pruneRedundant(guoHallThin(m, lw, lh), lw, lh);
+  let skelLen = 0; for (let i = 0; i < skel.length; i += 1) if (skel[i]) skelLen += 1;
+  if (skelLen < STROKE_ELONGATION * maxDT) return null;          // 뭉툭 → 면
+  const thresh = Math.max(4, STROKE_SPUR_FACTOR * maxDT + 2);
+  const paths = mergeSharedEndpoints(contractShortEdges(skeletonToGraph(skel, lw, lh), thresh));
+  if (!paths.length) return null;
+  let sl = darkPercentile(getInk, gray, w, h, bbox, STROKE_DARK_PCTL);
+  if (sl <= STROKE_INK_SNAP) sl = 0;
+  const out = [];
+  for (const path of paths) {
+    if (path.points.length < 2) continue;
+    const widthPx = Math.max(1, 2 * sampleMeanDT(path.points, dt, lw));
+    const gp = path.points.map(([x, y]) => [x + bx0, y + by0]);
+    if (path.closed) {
+      const sm = smoothLoop(collinearReduce(gp));
+      if (sm.points.length >= 3) out.push({ kind: sm.curved ? "curve" : "polyline", points: sm.points, closed: true, strokeWidthPx: widthPx, strokeLevel: sl });
+    } else {
+      const o = processOpenPath(gp);
+      if (o) out.push({ ...o, strokeWidthPx: widthPx, strokeLevel: sl });
+    }
+  }
+  return out.length ? out : null;
+}
+
+// Otsu 잉크 합집합에서 획 컴포넌트를 골라 방출하고, 그 픽셀을 claimed로 표시
+// (나머지는 기존 파이프라인이 claimed 제외하고 처리 → §2-1~2-3 무회귀).
+function extractStrokeComponents(imageData, options) {
+  const { dilateRadius, minArea, textSizePx, removeGrid } = options;
+  const { width: w, height: h } = imageData;
+  const bin = binarize(imageData);
+  let mask = bin.mask;
+  if (removeGrid) mask = removeGridLines(mask, w, h);
+  const grouped = dilate(mask, w, h, dilateRadius);
+  const { labels, comps } = connectedComponents(grouped, w, h);
+  const components = [];
+  const claimed = new Uint8Array(w * h);
+  for (const c of comps) {
+    if (c.area < minArea) continue;
+    const [bx0, by0, bx1, by1] = c.bbox, bw = bx1 - bx0, bh = by1 - by0;
+    const isText = bw < textSizePx && bh < textSizePx && c.area / (bw * bh) > 0.15;
+    if (isText) continue;                         // 글자는 stroke화 안 함(크롭/벡터 경로)
+    const getInk = (x, y) => x >= 0 && x < w && y >= 0 && y < h && mask[y * w + x] === 1 && labels[y * w + x] === c.label;
+    // 원/링은 §2-2 ellipse가 더 나으므로 stroke로 가로채지 않는다.
+    const rawLoops = traceContours(getInk, bx0 - 1, by0 - 1, bx1 + 1, by1 + 1).map((raw) => ({ points: raw, isHole: signedArea(raw) < 0 }));
+    if (fitComponentEllipse(rawLoops, getInk, bin.gray, w, h)) continue;
+    const strokes = fitComponentStrokes(getInk, bin.gray, w, h, c.bbox);
+    if (strokes && strokes.length) {
+      components.push({ bbox: c.bbox, area: c.area, isText: false, strokes });
+      for (let y = by0; y < by1; y += 1) for (let x = bx0; x < bx1; x += 1) if (getInk(x, y)) claimed[y * w + x] = 1;
+    }
+  }
+  // claim을 2px 팽창해 획 주변 안티앨리어싱 가장자리까지 흡수 — 면 패스에서
+  // 그 잔여가 얇은 '글자 유령' 컴포넌트로 조각나는 것을 막는다.
+  return { components, claimed: components.length ? dilate(claimed, w, h, 5) : claimed };
+}
+
 /* ===== 8. PIPELINE ===== */
 // options: dilateRadius(묶음 거리 1~9), minArea(px²), textSizePx(글자 판정 bbox),
 //          epsilon(RDP px), removeGrid(격자 제거), preserveGrayLevels(다단계 톤).
@@ -876,12 +1212,13 @@ function measureLoopFillLevel(pts, isHole, level, gray, classMap, labels, label,
 }
 
 // 기존(단일 Otsu) 경로 — preserveGrayLevels:false 및 다단계 폴백 시 그대로 사용.
-function vectorizeSingleLevel(imageData, options) {
+function vectorizeSingleLevel(imageData, options, excludeMask) {
   const { dilateRadius, minArea, textSizePx, epsilon, removeGrid } = options;
   const { width: w, height: h } = imageData;
   const { mask: rawMask, gray } = binarize(imageData);
   let mask = rawMask;
   if (removeGrid) mask = removeGridLines(mask, w, h);
+  if (excludeMask) { mask = mask.slice(); for (let i = 0; i < w * h; i += 1) if (excludeMask[i]) mask[i] = 0; } // §2-5: 획 픽셀 제외
   const grouped = dilate(mask, w, h, dilateRadius);
   const { labels, comps } = connectedComponents(grouped, w, h);
 
@@ -923,7 +1260,7 @@ function vectorizeSingleLevel(imageData, options) {
 // 다단계 톤 경로 — 밝은 레벨부터 어두운 레벨 순으로 기존 dilate→CC→trace
 // 파이프라인을 레벨마다 재실행(누적 마스크: classMap<=level). 밝은 레벨을
 // 먼저 push해 order를 낮게 주고, 어두운 레벨은 나중에 push해 위에 쌓는다.
-function vectorizeMultiLevel(imageData, options) {
+function vectorizeMultiLevel(imageData, options, excludeMask) {
   const { dilateRadius, minArea, textSizePx, epsilon, removeGrid } = options;
   const { width: w, height: h } = imageData;
   const { gray } = binarize(imageData);
@@ -931,6 +1268,7 @@ function vectorizeMultiLevel(imageData, options) {
   if (classes.length < 2) return null; // 톤이 사실상 단일 — 단일-Otsu로 폴백
 
   const lightestIdx = classes.length - 1;
+  if (excludeMask) { for (let i = 0; i < w * h; i += 1) if (excludeMask[i]) classMap[i] = lightestIdx; } // §2-5: 획 픽셀 → 배경
   if (removeGrid) {
     const inkMask = new Uint8Array(w * h);
     for (let i = 0; i < w * h; i += 1) inkMask[i] = classMap[i] < lightestIdx ? 1 : 0;
@@ -1009,9 +1347,15 @@ export function vectorizeImage(imageData, options = {}) {
     preserveGrayLevels = true,
   } = options;
   const pipelineOptions = { dilateRadius, minArea, textSizePx, epsilon, removeGrid };
-  if (preserveGrayLevels) {
-    const multi = vectorizeMultiLevel(imageData, pipelineOptions);
-    if (multi) return multi;
-  }
-  return vectorizeSingleLevel(imageData, pipelineOptions);
+  const { width: w, height: h } = imageData;
+
+  // §2-5 획 사전 패스: Otsu 잉크 합집합에서 얇은 획을 line/curve로 방출하고,
+  // 그 픽셀을 나머지(면) 파이프라인에서 제외 → 커밋된 §2-1~2-3 로직 무회귀.
+  const strokePass = extractStrokeComponents(imageData, pipelineOptions);
+  const excludeMask = strokePass.claimed;
+
+  let rest = null;
+  if (preserveGrayLevels) rest = vectorizeMultiLevel(imageData, pipelineOptions, excludeMask);
+  if (!rest) rest = vectorizeSingleLevel(imageData, pipelineOptions, excludeMask);
+  return { width: w, height: h, components: strokePass.components.concat(rest.components) };
 }

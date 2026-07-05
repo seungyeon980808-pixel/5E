@@ -88,7 +88,8 @@ function buildModal() {
       <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일 선택, 끌어 놓기 또는 Ctrl+V 붙여넣기</div>
       <canvas id="objectify-preview" class="objectify-preview" width="560" height="240" hidden style="cursor:pointer;"></canvas>
       <p class="objectify-description" id="objectify-legend" hidden>
-        <span style="color:#0969da;">■ 도형</span>&nbsp;
+        <span style="color:#0969da;">■ 면(도형)</span>&nbsp;
+        <span style="color:#1a7f37;">■ 선(획)</span>&nbsp;
         <span style="color:#e35d6a;">■ 글자 추정</span>&nbsp;·&nbsp;미리보기에서 덩어리를 클릭하면 제외/포함이 전환됩니다.
       </p>
       <div class="objectify-controls" style="grid-template-columns:1fr 1fr;">
@@ -188,16 +189,21 @@ export function initImageObjectify(state) {
     ctx.fillStyle = "rgba(255,255,255,0.75)";
     ctx.fillRect(0, 0, preview.width, preview.height);
     analysis.components.forEach((comp, index) => {
-      const path = previewPaths[index];
-      if (!path) return;
-      if (excluded.has(index)) {
-        ctx.globalAlpha = 0.22;
-        ctx.fillStyle = "#6e7781";
+      const entry = previewPaths[index];
+      if (!entry) return;
+      // 타입별 색: 글자=빨강, 획(선)=초록, 면=파랑, 제외=회색.
+      const color = excluded.has(index) ? "#6e7781"
+        : comp.isText ? "#e35d6a" : comp.strokes ? "#1a7f37" : "#0969da";
+      ctx.globalAlpha = excluded.has(index) ? 0.30 : 0.72;
+      if (entry.stroke) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(1.5, entry.width);
+        ctx.lineJoin = "round"; ctx.lineCap = "round";
+        ctx.stroke(entry.path);
       } else {
-        ctx.globalAlpha = 0.62;
-        ctx.fillStyle = comp.isText ? "#e35d6a" : "#0969da";
+        ctx.fillStyle = color;
+        ctx.fill(entry.path, "evenodd");
       }
-      ctx.fill(path, "evenodd");
       ctx.globalAlpha = 1;
       if (excluded.has(index)) {
         const [x0, y0, x1, y1] = comp.bbox;
@@ -237,17 +243,29 @@ export function initImageObjectify(state) {
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
+          // §2-5: 획은 채움이 아니라 중심선 stroke로 표시(초록).
+          if (comp.strokes) {
+            let maxW = 1;
+            for (const st of comp.strokes) {
+              const p = st.points;
+              path.moveTo(p[0][0], p[0][1]);
+              for (let i = 1; i < p.length; i += 1) path.lineTo(p[i][0], p[i][1]);
+              if (st.closed) path.closePath();
+              if (st.strokeWidthPx > maxW) maxW = st.strokeWidthPx;
+            }
+            return { path, stroke: true, width: maxW };
+          }
           if (comp.ellipse) {
             const e = comp.ellipse;
             path.ellipse(e.cx, e.cy, e.rx, e.ry, (e.rotationDeg || 0) * Math.PI / 180, 0, Math.PI * 2);
-            return path;
+            return { path, stroke: false };
           }
           for (const loop of comp.loops) {
             path.moveTo(loop.points[0][0], loop.points[0][1]);
             for (let i = 1; i < loop.points.length; i += 1) path.lineTo(loop.points[i][0], loop.points[i][1]);
             path.closePath();
           }
-          return path;
+          return { path, stroke: false };
         });
         drawPreview();
         updateResultStatus();
@@ -413,6 +431,38 @@ export function initImageObjectify(state) {
           addedIds.push(textObject.id);
           continue;
         }
+        // §2-5: 획(선) → line/polyline/curve — 면(폴리곤)이 아니라 획으로.
+        if (comp.strokes) {
+          for (const st of comp.strokes) {
+            const sw = Math.max(0.12, round3(st.strokeWidthPx * scale));
+            if (st.kind === "line") {
+              const [a, b] = st.points;
+              const lineObj = applyNewObjectStyleDefaults({
+                id: `obj_${stamp}_vecln${++idCounter}`, type: "line",
+                p1: { x: X(a[0]), y: Y(a[1]) }, p2: { x: X(b[0]), y: Y(b[1]) },
+                rotation: 0, strokeLevel: st.strokeLevel, strokeWidth: sw,
+                lineMode: "solid", lineStyle: "solid", arrowVariant: "right", dimensionVariant: "basic",
+                arrowHead: "none", dashLength: 0, dashGap: 0,
+                locked: false, positionLocked: false, layerId, order: s.objects.length,
+              });
+              s.objects.push(lineObj); addedIds.push(lineObj.id);
+            } else {
+              const base = {
+                id: `obj_${stamp}_vecst${++idCounter}`,
+                type: st.kind === "curve" ? "curve" : "polyline",
+                points: st.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
+                rotation: 0, strokeLevel: st.strokeLevel, strokeWidth: sw,
+                dashLength: 0, dashGap: 0, closed: !!st.closed,
+                fillNone: true, fillLevel: 255, fillStyle: "solid",   // 획: 채움 없음(테두리만)
+                locked: false, positionLocked: false, layerId, order: s.objects.length,
+              };
+              if (base.type === "polyline") { base.arrowHead = "none"; base.rounded = false; base.cornerRadius = 10; }
+              const stObj = applyNewObjectStyleDefaults(base);
+              s.objects.push(stObj); addedIds.push(stObj.id);
+            }
+          }
+          continue;
+        }
         // §2-2: 원/링 → 네이티브 ellipse 1객체 (px → world mm 환산).
         if (comp.ellipse) {
           const e = comp.ellipse;
@@ -459,17 +509,9 @@ export function initImageObjectify(state) {
         }
       }
 
-      // 삽입물 전체를 하나의 그룹으로 (참고 이미지는 제외).
-      // undo/redo는 rebuildGroups가 obj.groupId에서 재구성하므로 안전.
-      if (addedIds.length >= 2) {
-        const groupId = `grp_${stamp}_vec`;
-        for (const id of addedIds) {
-          const obj = s.objects.find((o) => o.id === id);
-          if (obj) obj.groupId = groupId;
-        }
-        s.groups.push({ id: groupId, memberIds: [...addedIds] });
-      }
-
+      // 그룹으로 묶지 않는다 (사용자 요구): 객체화의 목적이 '각각 분리'이므로
+      // 삽입 직후 그룹은 오히려 방해. 다중 선택 상태만 남겨 원하면 바로 함께
+      // 옮길 수 있게 하되, 빈 곳 클릭 후 하나를 누르면 그 객체만 선택된다.
       s.undoStack.push(snapshot);
       s.redoStack = [];
       s.selectedIds = addedIds;
