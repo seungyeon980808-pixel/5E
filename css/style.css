@@ -1439,3 +1439,55 @@ textarea.unified-text-input {
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* ===== RESPONSIVE LAYOUT (mobile-first drawers) =====
+   데스크톱(≥1025px): 기존 3열 그리드 그대로.
+   태블릿(≤1024px): 좌 도구 패널을 살짝 줄여 캔버스 폭 확보.
+   폰(≤767px): 사이드 패널을 오버레이 드로어로 전환해 캔버스가 항상 전체 폭.
+   ※ .panel-right 드로어 규칙은 cascade 때문에 inspector.css(나중 로드)에 있음. */
+
+/* 드로어 토글 버튼 / 배경: 기본(데스크톱)은 숨김 */
+.drawer-toggle { display: none; }
+.drawer-backdrop { display: none; }
+
+/* ----- 태블릿 ----- */
+@media (max-width: 1024px) {
+  :root { --panel-left-w: 104px; }
+  .panel-left { padding: 8px 4px; }
+}
+
+/* ----- 폰: 오버레이 드로어 ----- */
+@media (max-width: 767px) {
+  /* 캔버스가 전체 폭을 차지하도록 단일 열 그리드로 */
+  .app { grid-template-columns: 1fr; }
+
+  /* 툴바가 좁은 폭에서 넘치지 않고 줄바꿈되도록 */
+  .canvas-toolbar { flex-wrap: wrap; }
+
+  /* 토글 버튼 노출 */
+  .drawer-toggle { display: inline-flex; }
+
+  /* 좌측 도구 패널을 왼쪽에서 슬라이드하는 드로어로 (우측은 inspector.css) */
+  .panel-left {
+    position: fixed;
+    top: 0;
+    bottom: var(--footer-h);
+    left: 0;
+    width: 240px;
+    max-width: 82vw;
+    z-index: 1200;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .panel-left.is-open { transform: translateX(0); }
+
+  /* 드로어 뒤 반투명 배경 (탭하면 닫힘) */
+  .drawer-backdrop.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.45);
+  }
+}

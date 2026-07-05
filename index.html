@@ -14,8 +14,9 @@
     rel="stylesheet"
   />
 
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/inspector.css" />
+  <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
+  <link rel="stylesheet" href="css/style.css?v=0.46.0" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.46.0" />
   <style>
     .branch-warning-banner {
       position: fixed;
@@ -123,7 +124,7 @@
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
-    <aside class="panel panel-left">
+    <aside class="panel panel-left" id="panel-left">
       <div class="tool-list" id="tool-list">
         <!-- 오브젝트 검색 진입점: 원래 Ctrl+F로만 열리던 검색 모달을 눈에 보이는 버튼으로도 노출 -->
         <button class="object-search-trigger" type="button" id="object-search-trigger"
@@ -185,6 +186,11 @@
     <!-- ----- CENTER: canvas (the only working panel in 1A) ----- -->
     <main class="panel panel-center">
       <div class="canvas-toolbar">
+        <!-- 모바일 드로어 토글 (데스크톱에선 CSS로 숨김) -->
+        <button id="drawer-left-toggle" class="topbar-btn drawer-toggle" type="button"
+                aria-controls="panel-left" aria-expanded="false" title="도구 패널 열기">☰ 도구</button>
+        <button id="drawer-right-toggle" class="topbar-btn drawer-toggle" type="button"
+                aria-controls="panel-right" aria-expanded="false" title="속성 패널 열기">속성</button>
         <div class="app-brand" title="5E (sciEnceEducationalExamEasyEditor)"><span class="beta-label">[시범공개]</span>5E</div>
         <!-- Undo / Redo (icon-only; sit immediately left of 파일) -->
         <button id="undo-btn" class="topbar-btn icon-btn" type="button"
@@ -273,7 +279,7 @@
     </main>
 
     <!-- ----- RIGHT: inspector ----- -->
-    <aside class="panel panel-right">
+    <aside class="panel panel-right" id="panel-right">
       <div id="inspector-resize"></div>
       <div id="inspector">
         <div id="inspector-empty">선택된 오브젝트 없음</div>
@@ -282,6 +288,9 @@
         </div>
       </div>
     </aside>
+
+    <!-- 모바일 드로어 열림 시 캔버스 위에 깔리는 반투명 배경 (데스크톱에선 CSS로 숨김) -->
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
   </div>
 
   <div class="developer-credit" aria-hidden="true">
@@ -290,7 +299,7 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.45.0</strong> · 2026-07-05
+    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.46.0</strong> · 2026-07-05
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
@@ -339,6 +348,66 @@
       });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.45.0"></script>
+  <!-- ===== MOBILE DRAWER TOGGLES =====
+       좁은 화면(<768px)에서 좌/우 사이드 패널을 오버레이 드로어로 열고 닫는다.
+       순수 DOM 토글이라 ES 모듈 그래프를 건드리지 않고 인라인 IIFE로 처리(브랜치 복사 버튼과 동일 방식). -->
+  <script>
+    (() => {
+      const leftPanel = document.getElementById("panel-left");
+      const rightPanel = document.getElementById("panel-right");
+      const backdrop = document.getElementById("drawer-backdrop");
+      const leftBtn = document.getElementById("drawer-left-toggle");
+      const rightBtn = document.getElementById("drawer-right-toggle");
+      if (!leftPanel || !rightPanel || !backdrop || !leftBtn || !rightBtn) return;
+
+      const mq = window.matchMedia("(max-width: 767px)");
+
+      function closeAll() {
+        leftPanel.classList.remove("is-open");
+        rightPanel.classList.remove("is-open");
+        backdrop.classList.remove("is-open");
+        backdrop.hidden = true;
+        leftBtn.setAttribute("aria-expanded", "false");
+        rightBtn.setAttribute("aria-expanded", "false");
+      }
+
+      function openPanel(panel, btn, otherPanel, otherBtn) {
+        // 한 번에 하나만 열어 두 드로어가 겹치지 않게 한다
+        otherPanel.classList.remove("is-open");
+        otherBtn.setAttribute("aria-expanded", "false");
+        panel.classList.add("is-open");
+        btn.setAttribute("aria-expanded", "true");
+        backdrop.hidden = false;
+        backdrop.classList.add("is-open");
+      }
+
+      function toggle(panel, btn, otherPanel, otherBtn) {
+        if (panel.classList.contains("is-open")) closeAll();
+        else openPanel(panel, btn, otherPanel, otherBtn);
+      }
+
+      leftBtn.addEventListener("click", () => toggle(leftPanel, leftBtn, rightPanel, rightBtn));
+      rightBtn.addEventListener("click", () => toggle(rightPanel, rightBtn, leftPanel, leftBtn));
+      backdrop.addEventListener("click", closeAll);
+
+      // 좌측 드로어에서 도구/심볼을 고르면 바로 캔버스를 보도록 닫아 준다
+      leftPanel.addEventListener("click", (e) => {
+        if (e.target.closest("[data-tool],[data-symbol],#object-search-trigger")) closeAll();
+      });
+
+      // Esc로 열린 드로어 닫기(열려 있을 때만 가로채 앱의 다른 Esc 동작과 충돌 방지)
+      window.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        if (leftPanel.classList.contains("is-open") || rightPanel.classList.contains("is-open")) {
+          closeAll();
+          e.stopPropagation();
+        }
+      }, true);
+
+      // 데스크톱 폭으로 돌아오면 드로어 상태를 초기화해 그리드 레이아웃으로 복귀
+      mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
+    })();
+  </script>
+  <script type="module" src="js/main.js?v=0.46.0"></script>
 </body>
 </html>

@@ -342,3 +342,27 @@ details[open] > .insp-summary::before {
   flex: 1;
   min-width: 0;
 }
+
+/* ===== RESPONSIVE: 인스펙터 우측 드로어 (폰 ≤767px) =====
+   .panel-right는 여기(나중 로드)에서 position:relative로 잡혀 있어, style.css의
+   미디어쿼리로는 못 덮는다. 그래서 드로어 규칙을 이 파일에 둔다.
+   또 inspector.js의 리사이즈 핸들이 인라인 style.width를 쓰므로 폭은 !important로 고정. */
+@media (max-width: 767px) {
+  .panel-right {
+    position: fixed;
+    top: 0;
+    bottom: var(--footer-h);
+    right: 0;
+    left: auto;
+    width: 300px !important;
+    max-width: 86vw;
+    z-index: 1200;
+    transform: translateX(100%);
+    transition: transform 200ms ease;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .panel-right.is-open { transform: translateX(0); }
+
+  /* 드로어는 폭이 고정이라 드래그 리사이즈 핸들을 숨긴다 */
+  #inspector-resize { display: none; }
+}
