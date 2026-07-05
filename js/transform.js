@@ -889,7 +889,7 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, 5); changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, 5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
             if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
             if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
@@ -983,7 +983,7 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (isClosedPoly(o) || isClosedCurve(o)) { rotatePolyPoints(o, -5); changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
             if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
             if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
@@ -1193,10 +1193,10 @@ export function initTransform(svg, state) {
           _rotating       = true;
           _rotObjId       = obj.id;
           _rotOrigObj     = JSON.parse(JSON.stringify(obj));
-          // Closed polyline/curve rotates about its bbox CENTER (points are baked,
-          // there is no rotation field / opposite-corner pivot to track). anglearc
-          // rotates about its VERTEX (= objectCenter), spinning startAngle.
-          _rotPivot       = (obj.positionLocked || isClosedPoly(obj) || isClosedCurve(obj) || obj.type === "anglearc" || obj.type === "labeler")
+          // Polyline/curve (open OR closed) rotates about its bbox CENTER (points are
+          // baked, there is no rotation field / opposite-corner pivot to track).
+          // anglearc rotates about its VERTEX (= objectCenter), spinning startAngle.
+          _rotPivot       = (obj.positionLocked || obj.type === "polyline" || obj.type === "curve" || obj.type === "anglearc" || obj.type === "labeler")
             ? objectCenter(obj) : getRotPivot(obj, hLabel);
           const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
           _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
@@ -1276,8 +1276,9 @@ export function initTransform(svg, state) {
       // Ctrl = snap to 15-degree increments (applied to the accumulated delta)
       if (e.ctrlKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
 
-      // Closed polyline / closed curve: bake the rotation into every point about the bbox center.
-      if (isClosedPoly(_rotOrigObj) || isClosedCurve(_rotOrigObj)) {
+      // Polyline / curve (open OR closed): bake the rotation into every point about the
+      // bbox center. Open cut pieces are open polylines and must rotate like closed ones.
+      if (_rotOrigObj.type === "polyline" || _rotOrigObj.type === "curve") {
         const rad = deltaDeg * (Math.PI / 180);
         const cosP = Math.cos(rad), sinP = Math.sin(rad);
         const px = _rotPivot.x, py = _rotPivot.y;

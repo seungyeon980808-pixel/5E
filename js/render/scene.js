@@ -871,12 +871,16 @@ function renderHandles(sel, scene, zoom, activeTool) {
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
   const _anglearc = sel.type === "anglearc";
   const _rightangle = sel.type === "rightangle";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "coordplane" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve) {
+  // Open polyline/curve normally shows per-vertex handles (edit each point), but under
+  // the rotate tool it borrows branch-A corner rotate handles so it spins about its
+  // bbox center like other shapes — cut pieces are open polylines and must rotate too.
+  const _openPolyRot = (sel.type === "polyline" || sel.type === "curve") && !sel.closed && activeTool === "rotate";
+  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "coordplane" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve || _openPolyRot) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).
     let x, y, w, h, deg;
-    if (_closedPoly || _closedCurve || _anglearc || _rightangle) {
+    if (_closedPoly || _closedCurve || _anglearc || _rightangle || _openPolyRot) {
       const bb = singleObjBBox(sel, scene);
       ({ x, y, w, h } = bb);
       deg = 0;
