@@ -36,7 +36,7 @@ import {
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
-  getObjectBBox,
+  getObjectBBox, marqueeHitsObject,
 } from "./pick.js?v=0.46.0";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
@@ -515,8 +515,7 @@ function setupDrawing() {
           const _mLayerId = o.layerId ?? 1;
           const _mLayer = (s.layers || []).find(l => l.id === _mLayerId);
           if (!_mLayer || _mLayer.visible === false || _mLayerId !== s.activeLayerId) return false;
-          const bb = getObjectBBox(o);
-          return bb && bboxIntersects(bb, selRect);
+          return marqueeHitsObject(o, selRect); // 기하 기반: 큰 선의 bbox만 겹쳐도 선택되던 버그 수정
         })
         .map((o) => o.id);
     });

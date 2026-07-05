@@ -13,6 +13,7 @@ import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
+  bboxIntersects,
 } from "./geometry.js?v=0.46.0";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
@@ -355,10 +356,68 @@ function getObjectBBox(o) {
   return null;
 }
 
+/* ----- marquee (drag) selection: geometry-aware, consistent with hitTest -----
+ * BUG FIX: marquee used to select any object whose BBOX intersected the drag rect.
+ * A thin line/curve (예: 경사면) has a bbox covering the whole figure, so a small
+ * drag over empty space near it wrongly selected it — mismatching click, which
+ * hit-tests the actual stroke. Now an OPEN line/polyline/curve is selected only
+ * when its actual stroke segments intersect the rect; filled/box objects (and
+ * closed poly/curve, whose interior click also selects) keep bbox-intersect. */
+function pointInRect(x, y, r) {
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+function segSegCross(ax, ay, bx, by, cx, cy, dx, dy) {
+  const d = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+  if (Math.abs(d) < 1e-12) return false;
+  const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / d;
+  const u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / d;
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+}
+function segIntersectsRect(x1, y1, x2, y2, r) {
+  if (pointInRect(x1, y1, r) || pointInRect(x2, y2, r)) return true;
+  const rx2 = r.x + r.w, ry2 = r.y + r.h;
+  return segSegCross(x1, y1, x2, y2, r.x, r.y, rx2, r.y) ||
+         segSegCross(x1, y1, x2, y2, rx2, r.y, rx2, ry2) ||
+         segSegCross(x1, y1, x2, y2, rx2, ry2, r.x, ry2) ||
+         segSegCross(x1, y1, x2, y2, r.x, ry2, r.x, r.y);
+}
+// 열린 선형 객체의 실제 획 선분 목록(곡선은 베지어 샘플). 히트테스트와 동일 기하.
+function objectStrokeSegments(o) {
+  const segs = [];
+  if (o.type === "line") { if (o.p1 && o.p2) segs.push([o.p1.x, o.p1.y, o.p2.x, o.p2.y]); return segs; }
+  if (o.type === "polyline") {
+    const pts = o.points || [];
+    for (let k = 0; k < pts.length - 1; k++) segs.push([pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y]);
+    return segs;
+  }
+  if (o.type === "curve") {
+    const pts = o.points || [];
+    if (pts.length < 2) return segs;
+    if (pts.length === 2) { segs.push([pts[0].x, pts[0].y, pts[1].x, pts[1].y]); return segs; }
+    const SAMPLES = 10;
+    for (let k = 0; k < pts.length - 1; k++) {
+      const seg = curveBezierSeg(pts, k);
+      let prev = { x: seg.sx, y: seg.sy };
+      for (let s = 1; s <= SAMPLES; s++) { const cur = evalBezier(seg, s / SAMPLES); segs.push([prev.x, prev.y, cur.x, cur.y]); prev = cur; }
+    }
+    return segs;
+  }
+  return segs;
+}
+function marqueeHitsObject(o, selRect) {
+  const bb = getObjectBBox(o);
+  if (!bb || !bboxIntersects(bb, selRect)) return false;          // 빠른 배제
+  const isStroke = o.type === "line"
+    || (o.type === "polyline" && !o.closed)
+    || (o.type === "curve" && !o.closed);
+  if (!isStroke) return true;                                     // 채움/박스/닫힌도형 = bbox로 충분
+  return objectStrokeSegments(o).some((s) => segIntersectsRect(s[0], s[1], s[2], s[3], selRect));
+}
+
 export {
   isClosedPoly, isClosedCurve,
   isBackgroundUnrecognized, isLockedTracingImage, isObjectSelectable,
   isPositionMovableForCursor, isBasicLine, basicLineHitThreshold,
   nearestBasicLine, pickSelectableObject,
-  hitTest, getObjectBBox,
+  hitTest, getObjectBBox, marqueeHitsObject,
 };
