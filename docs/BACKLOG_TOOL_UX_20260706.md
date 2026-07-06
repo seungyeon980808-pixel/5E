@@ -11,10 +11,18 @@
 
 ## 확정 항목
 
-### ① 라벨러 입력 = 텍스트 도구와 동일
-- 현재: 라벨러는 `_openSmallTextEditor`(전용 폰트/크기·빠른문자), 텍스트 도구는 `_openUnifiedTextEditor`.
-- 변경: 라벨러도 `_openUnifiedTextEditor`를 옵션(`isLabeler`)으로 열게 통일. 커밋 경로엔 이미 라벨러 분기 있음(p1/p2·labelSize 스키마 유지). 통합 후 `_openSmallTextEditor` 제거.
-- 파일: `js/text-editor.js`, `js/tools/click-placement.js(commitLabeler)`. 위험 中.
+### ① 라벨러 입력 = 텍스트 도구와 동일 — ✅ 이미 완료 상태였음 (2026-07-06 확인)
+- 이 문서를 쓸 때의 전제("라벨러는 현재 `_openSmallTextEditor` 사용")가 낡아 있었다.
+  실제로는 `git log -S`로 확인 결과 v0.44.0(`tools.js`→`text-editor.js` 추출) 때 이미
+  라벨러가 `openLabelerTextEditor()`를 통해 `_openUnifiedTextEditor`를 쓰도록 끝나 있었다
+  (`js/text-editor.js:87-110`, 생성 경로 `js/tools/click-placement.js:326`, 더블클릭
+  재편집 경로 `js/tools.js:391`). 커밋 경로도 `editingType==="labeler"` 분기로
+  p1/p2·labelSize·textRuns·fontFamily를 정확히 보존한다(`js/text-editor.js:1345-1368`).
+- `_openSmallTextEditor`는 지금 **각도 호(anglearc) 라벨/기호 편집 전용**으로만 남아있고
+  (`openAngleArcLabelEditor`, `js/text-editor.js:111-112`) 이건 별개 기능이라 건드리지 않음
+  — 문서가 시킨 대로 삭제했다면 각도 라벨 편집이 깨졌을 것.
+- 브라우저 스모크로 라벨러 두 클릭 생성 → "라벨 텍스트 입력" 제목의 통합 에디터
+  (`.unified-text-editor`) 오픈 확인, Esc 취소 확인. 코드 변경 없음.
 
 ### ② 자유그리기 기본값
 - `js/tools/free-draw.js` 커밋 객체: `strokeLevel 0→255`, `strokeWidth 0→0.2`, 채움 흰색(현 `fillLevel:255` 유지). 위험 低.
