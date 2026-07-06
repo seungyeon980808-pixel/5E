@@ -16,19 +16,22 @@
 /* ===== SELF-HOSTED FONT: Latin Modern (수식 전용) =====
  * 수식/formula 글꼴. LaTeX 기본 수식체 Computer Modern의 오픈타입판. 정자 + 이탤릭
  * 2종을 같은 family 이름으로 등록 → "물리량 이탤릭" 로직(resolveTextFontStyle)이
- * font-style:italic을 줄 때 진짜 이탤릭 페이스가 쓰인다. 파일(fonts/lmroman10-*.otf)이
+ * font-style:italic을 줄 때 진짜 이탤릭 페이스가 쓰인다. 파일(fonts/lmroman10-*)이
  * 없으면 EQUATION_FONT_FAMILY 뒤쪽 fallback(Times/serif)으로 그려진다.
+ * woff2를 먼저 받고(≈98KB, otf 대비 -57%) otf는 구형 브라우저용 폴백으로만 남긴다.
  * 라이선스: GUST Font License (상업·웹임베딩 허용). */
 @font-face {
   font-family: "Latin Modern Roman";
-  src: url("../fonts/lmroman10-regular.otf") format("opentype");
+  src: url("../fonts/lmroman10-regular.woff2") format("woff2"),
+       url("../fonts/lmroman10-regular.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "Latin Modern Roman";
-  src: url("../fonts/lmroman10-italic.otf") format("opentype");
+  src: url("../fonts/lmroman10-italic.woff2") format("woff2"),
+       url("../fonts/lmroman10-italic.otf") format("opentype");
   font-weight: normal;
   font-style: italic;
   font-display: swap;
