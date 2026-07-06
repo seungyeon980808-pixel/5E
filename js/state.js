@@ -21,9 +21,12 @@ export const TOOL_LABEL_FONT_FAMILY = EQUATION_FONT_FAMILY;
 export const VARIABLE_LABEL_FONT_STYLE = "italic";
 export const CALLOUT_LABEL_FONT_STYLE = "normal";
 export const OBJECT_LABEL_TYPES = ["quantity", "label"];
-export const OBJECT_LABEL_QUANTITY_FONT_FAMILY = '"Times New Roman", "Cambria Math", "HYhwpEQ", "HWhwpEQ", "Batang", "바탕", serif';
-// 라벨(물체명·비물리량) 기본 글꼴: 신명중명조 정체. 물리량(이탤릭 Times)과 구분.
-// 일반 텍스트 도구(돋움)와도 분리 — 객체 라벨 "라벨" 종류 전용.
+// 물리량(quantity) 객체 라벨 = 텍스트 도구의 "수식" 글꼴(EQUATION_FONT_FAMILY)과 동일.
+// 단일 출처: 수식 글꼴을 그대로 재사용하므로 자동 라벨링과 텍스트 "수식"이 항상 일치한다
+// (숫자 정자화·자간도 isEquationFontFamily 경로로 함께 따라온다).
+export const OBJECT_LABEL_QUANTITY_FONT_FAMILY = EQUATION_FONT_FAMILY;
+// 라벨(물체명·비물리량) 기본 글꼴: 신명중명조 정체. 물리량(수식 글꼴 이탤릭)과 구분.
+// 일반 텍스트 도구(돋움)와도 분리 — 객체 라벨 "라벨" 종류 + 텍스트 입력기 "라벨" 옵션 공용.
 export const OBJECT_LABEL_TEXT_FONT_FAMILY = '"신명중명조", "Shin Myeongjo", "SMMyungJo", "Batang", "바탕", serif';
 
 // 구간 번호(section/region markers)로 쓰인 ASCII I/II/III만 세리프(Times New Roman

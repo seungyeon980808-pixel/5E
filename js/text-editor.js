@@ -12,7 +12,7 @@ import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
-  EQUATION_FONT_FAMILY,
+  EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
@@ -494,6 +494,10 @@ const FORMULA_SYMBOLS = [
 const EDITOR_FONT_OPTIONS = [
   { label: "한글 텍스트(돋움)", css: TEXT_FONTS[0]?.css || DEFAULT_TEXT_FONT },
   { label: "수식", css: EQUATION_FONT_FAMILY },
+  // "라벨" = 객체 자동 라벨링의 "라벨"(kind:"label", 신명중명조 정체)과 동일한 글꼴.
+  // OBJECT_LABEL_TEXT_FONT_FAMILY 단일 상수를 그대로 참조하므로 객체 라벨과 텍스트
+  // 입력기가 절대 어긋나지 않는다. 비이탤릭(정자)이며 자간 보정도 없다.
+  { label: "라벨", css: OBJECT_LABEL_TEXT_FONT_FAMILY },
   { label: "명조", css: "serif" },
   { label: "고딕", css: "'Malgun Gothic', sans-serif" },
 ];

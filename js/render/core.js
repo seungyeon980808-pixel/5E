@@ -321,10 +321,13 @@ function applyObjectLabelFont(t, labelType, fallback = "quantity") {
     });
     return;
   }
+  // 물리량 라벨 = 텍스트 도구 "수식" 글꼴과 완전히 동일하게 렌더한다: 수식 글꼴 자간
+  // (EQUATION_LETTER_SPACING)까지 맞춘다. font-family가 EQUATION_FONT_FAMILY이므로
+  // fillTextWithRomanRuns의 숫자 정자화(wantsUprightDigits)도 자동으로 적용된다.
   applySvgTextFont(t, {
     family: OBJECT_LABEL_QUANTITY_FONT_FAMILY,
     style: VARIABLE_LABEL_FONT_STYLE,
-    letterSpacing: "normal",
+    letterSpacing: EQUATION_LETTER_SPACING,
   });
 }
 

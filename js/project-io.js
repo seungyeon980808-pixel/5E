@@ -55,10 +55,10 @@ function migrate(data) {
         positionLocked: obj.positionLocked ?? false,
       };
       if (LABEL_CAPABLE_TYPES.has(next.type)) {
-        // labeler(콜아웃)·rect(블록 이름) default to "label"(정체); every other
-        // label-capable shape defaults to "quantity"(물리량·italic). An explicit
-        // labelType is always preserved, so a rect set to 물리량 reloads as italic.
-        next.labelType = normalizeLabelType(next.labelType, (next.type === "labeler" || next.type === "rect") ? "label" : "quantity");
+        // labeler(콜아웃)만 "label"(정체) 기본; 사각형을 포함한 나머지 도형은
+        // "quantity"(물리량·수식 글꼴) 기본이다. An explicit labelType is always
+        // preserved, so a rect switched to "라벨" reloads as 신명중명조 정체.
+        next.labelType = normalizeLabelType(next.labelType, next.type === "labeler" ? "label" : "quantity");
       }
       migrateObjectStyleMode(next);
       if (next.type === "text") {
