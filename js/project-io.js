@@ -14,6 +14,7 @@ import { rebuildGroups } from "./transform.js?v=0.50.6";
 import { screenToWorld } from "./viewport.js?v=0.50.6";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.50.6";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.50.6";
+import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.50.6";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -34,7 +35,7 @@ const APPARATUS_TEMPLATE_IDS = {
   scale: "M003",
 };
 
-const LABEL_CAPABLE_TYPES = new Set(["rect", "ellipse", "line", "axes", "coordplane", "anglearc", "labeler", "circuit", "optics"]);
+// LABEL_CAPABLE_TYPES from object-types.js registry.
 
 function normalizeLabelType(value, fallback = "quantity") {
   return value === "quantity" || value === "label" ? value : fallback;

@@ -9,12 +9,15 @@
  */
 
 import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.50.6";
+import {
+  SHAPE_TYPES,
+  SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
+  SNAP_LINE_TARGET_TYPES as LINE_TARGET_TYPES,
+  SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
+} from "./object-types.js?v=0.50.6";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
-const SHAPE_TYPES = new Set(["rect", "ellipse", "triangle"]);
-const EDGE_TARGET_TYPES = new Set(["rect", "triangle", "line", "polyline"]);
-const LINE_TARGET_TYPES = new Set(["line", "polyline"]);
 const CIRCLE_RATIO_EPSILON = 1e-3;
 
 /* ===== PRIORITY SNAP: endpoint-first targets =====
@@ -25,7 +28,7 @@ const CIRCLE_RATIO_EPSILON = 1e-3;
  * uses (tools.js isObjectSelectable); locked objects stay eligible because snapping
  * to a fixed reference is useful (DESIGN 6-1).
  */
-const LINE_LIKE_TYPES = new Set(["line", "circuit", "polyline", "curve"]);
+// LINE_LIKE_TYPES (line/circuit/polyline/curve) from object-types.js registry.
 
 function isSnapTargetEligible(obj, snapshot) {
   const layerId = obj.layerId ?? 1;

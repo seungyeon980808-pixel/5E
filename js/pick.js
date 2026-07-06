@@ -15,6 +15,10 @@ import {
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
   bboxIntersects,
 } from "./geometry.js?v=0.50.6";
+import {
+  OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
+  POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES,
+} from "./object-types.js?v=0.50.6";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
@@ -133,14 +137,9 @@ export function pickSelectableObjectFromEvent(svg, state, event) {
 function hitTest(objects, p, tol = 0, lineTol = tol) {
   for (let i = objects.length - 1; i >= 0; i--) {
     const o = objects[i];
-    if (o.type !== "rect" && o.type !== "ellipse" && o.type !== "triangle" &&
-        o.type !== "line" && o.type !== "polyline" && o.type !== "curve" && o.type !== "funcgraph" &&
-        o.type !== "text" && o.type !== "formula" && o.type !== "image" && o.type !== "svgAsset" && o.type !== "axes" && o.type !== "coordplane" &&
-        o.type !== "anglearc" && o.type !== "rightangle" && o.type !== "circuit" &&
-        o.type !== "optics" && o.type !== "apparatus" && o.type !== "labeler" &&
-        o.type !== "pendulum") continue;
+    if (!OBJECT_TYPES[o.type]) continue; // was: explicit whitelist of all 20 hittable types
 
-    if (o.type === "text" || o.type === "formula") {
+    if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
       // Use the rendered SVG element's getBBox for an accurate hit area.
       const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
       if (!svgEl) continue;
@@ -155,7 +154,8 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     // slack already converted to world units (tol = tolerancePx / currentZoom),
     // so the band stays visually constant at any zoom (DESIGN-style tolerance).
     const margin = (o.strokeWidth || 0) / 2 +
-      ((o.type === "line" || o.type === "polyline" || o.type === "curve" || o.type === "funcgraph" || o.type === "circuit" || o.type === "pendulum") ? lineTol : tol);
+      // was: line|polyline|curve|funcgraph|circuit|pendulum
+      (LINE_TOL_TYPES.has(o.type) ? lineTol : tol);
 
     if (o.type === "line") {
       if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
@@ -244,7 +244,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
-    if (o.type === "rect" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+    if (BOX_FACE_TYPES.has(o.type)) { // was: rect|image|svgAsset|axes|coordplane|optics|apparatus
       // box == actual shape: outward-grown bbox containment (axes/coordplane/optics
       // select as one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
@@ -310,7 +310,8 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+  if (SIZE_TYPES.has(o.type)) {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -337,7 +338,7 @@ function getObjectBBox(o) {
     const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
-  if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
+  if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -347,7 +348,7 @@ function getObjectBBox(o) {
     }
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
-  if (o.type === "text" || o.type === "formula") {
+  if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
     if (!svgEl) return null;
     try { const bb = svgEl.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
@@ -420,7 +421,7 @@ function pointsBBox(poly) {
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 // 축정렬 bbox가 곧 도형인 박스 계열(회전 없을 때만) — 회전되면 다각형으로 처리.
-const BOX_FACE_TYPES = new Set(["rect", "image", "svgAsset", "axes", "coordplane", "optics", "apparatus"]);
+// BOX_FACE_TYPES는 object-types.js 레지스트리에서 import.
 // 면(face) 도형의 월드 경계 다각형(회전 반영) — 마퀴가 클릭과 같은 기하를 보게 한다.
 // bbox 근사가 틀리는 경우(원·삼각형의 빈 모서리, 오목 닫힌도형, 회전 박스)만 대상.
 // bbox가 곧 도형인 축정렬 박스, 그 외 비-면 타입(anglearc·circuit 등)은 null → 호출자가 bbox 유지.

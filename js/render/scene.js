@@ -27,6 +27,7 @@ import { renderCircuit } from "./circuit.js?v=0.50.6";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.50.6";
 import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.50.6";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.50.6";
+import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=0.50.6";
 import { resolveObjectStyle } from "../style-mode.js?v=0.50.6";
 import { renderFormula } from "../formula.js?v=0.50.6";
 import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.50.6";
@@ -759,7 +760,8 @@ export function renderObject(obj) {
 /* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+  if (SIZE_TYPES.has(o.type)) {
     const deg = o.rotation || 0;
     if (!deg) return { x: o.x, y: o.y, w: o.w, h: o.h };
     const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
@@ -785,7 +787,7 @@ export function singleObjBBox(o, scene) {
     const r = (o.size || 0) * 1.6;
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
-  if (o.type === "text" || o.type === "formula") {
+  if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const el = scene.querySelector(`[data-id="${o.id}"]`);
     if (el) {
       try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
@@ -809,7 +811,7 @@ export function singleObjBBox(o, scene) {
   if (o.type === "pendulum") {
     return pendulumBBox(o);
   }
-  if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
+  if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;
     let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
@@ -875,7 +877,8 @@ function renderHandles(sel, scene, zoom, activeTool) {
   // the rotate tool it borrows branch-A corner rotate handles so it spins about its
   // bbox center like other shapes — cut pieces are open polylines and must rotate too.
   const _openPolyRot = (sel.type === "polyline" || sel.type === "curve") && !sel.closed && activeTool === "rotate";
-  if (sel.type === "rect" || sel.type === "ellipse" || sel.type === "triangle" || sel.type === "image" || sel.type === "svgAsset" || sel.type === "axes" || sel.type === "coordplane" || sel.type === "optics" || sel.type === "apparatus" || _anglearc || _rightangle || _closedPoly || _closedCurve || _openPolyRot) {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus (+ derived-box cases)
+  if (SIZE_TYPES.has(sel.type) || _anglearc || _rightangle || _closedPoly || _closedCurve || _openPolyRot) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).

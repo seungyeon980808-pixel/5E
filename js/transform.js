@@ -18,6 +18,7 @@ import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./sna
 import { setSnapPreview, pendulumBBox } from "./render.js?v=0.50.6";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=0.50.6";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.50.6";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.50.6";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -137,7 +138,7 @@ export function redo(state) {
 /* ===== MOVE GESTURE ===== */
 
 const MOVE_THRESHOLD = 0.01; // world units; below this = plain click, not a drag
-const SHAPE_MOVE_TYPES = new Set(["rect", "ellipse", "triangle"]);
+// SHAPE_TYPES (rect/ellipse/triangle) from object-types.js registry.
 
 let _moving = false;
 let _moveObjIds = [];
@@ -249,7 +250,7 @@ function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
   for (const o of objs) {
-    if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+    if (SIZE_TYPES.has(o.type)) { // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
       acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
     } else if (o.type === "anglearc") {
       const r = o.radius || 0;
@@ -533,7 +534,8 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 
 /* ----- world bbox of one object (text uses its rendered <text> box) ----- */
 function objWorldBBox(o, svg) {
-  if (o.type === "rect" || o.type === "ellipse" || o.type === "triangle" || o.type === "image" || o.type === "svgAsset" || o.type === "axes" || o.type === "coordplane" || o.type === "optics" || o.type === "apparatus") {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+  if (SIZE_TYPES.has(o.type)) {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -633,7 +635,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   for (const obj of objs) {
     const orig = origObjs[obj.id];
     if (!orig) continue;
-    if (orig.type === "rect" || orig.type === "ellipse" || orig.type === "triangle" || orig.type === "image" || orig.type === "svgAsset" || orig.type === "axes" || orig.type === "coordplane" || orig.type === "optics" || orig.type === "apparatus") {
+    if (SIZE_TYPES.has(orig.type)) { // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
     } else if (orig.type === "anglearc") {
@@ -795,7 +797,7 @@ export function initTransform(svg, state) {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
             if (isClosedPoly(o) || isClosedCurve(o)) { flipPolyPoints(o, flipAxis); changed = true; return; }
-            if (!["rect", "ellipse", "triangle"].includes(o.type)) return;
+            if (!SHAPE_TYPES.has(o.type)) return;
             o[flipAxis] = !(o[flipAxis] ?? false);
             changed = true;
           });
@@ -891,7 +893,7 @@ export function initTransform(svg, state) {
             if (!isMutable(o)) return;
             if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, 5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
             if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
+            if (!FLIP_TYPES.has(o.type)) return;
             o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
@@ -985,7 +987,7 @@ export function initTransform(svg, state) {
             if (!isMutable(o)) return;
             if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
             if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
-            if (!["rect", "ellipse", "triangle", "svgAsset", "optics", "apparatus"].includes(o.type)) return;
+            if (!FLIP_TYPES.has(o.type)) return;
             o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });
@@ -1502,7 +1504,7 @@ export function initTransform(svg, state) {
         const orig = _moveOrigObjs[id];
         if (!obj || !orig) return;
         applyDelta(obj, orig, dx, dy);
-        if (SHAPE_MOVE_TYPES.has(obj.type)) {
+        if (SHAPE_TYPES.has(obj.type)) {
           obj.rotation = snapped.rotation === null ? (orig.rotation || 0) : snapped.rotation;
         }
       });
@@ -1624,7 +1626,7 @@ export function initTransform(svg, state) {
         const orig = _moveOrigObjs[id];
         if (!obj || !orig) return;
         applyDelta(obj, orig, rawDx, rawDy);
-        if (SHAPE_MOVE_TYPES.has(obj.type)) obj.rotation = orig.rotation || 0;
+        if (SHAPE_TYPES.has(obj.type)) obj.rotation = orig.rotation || 0;
       });
     });
   });
