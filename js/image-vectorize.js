@@ -19,6 +19,8 @@
 // preserveGrayLevels:false 또는 톤이 실제로 단일한 이미지는 기존 단일-Otsu
 // 경로(vectorizeSingleLevel)로 정확히 폴백한다. */
 
+import { extractStrokes } from "./image-line-extract.js?v=0.53.0";
+
 /* ===== 1. OTSU BINARIZE ===== */
 // imageData: {width, height, data(RGBA)}. Caller must have composited the
 // image over a WHITE canvas first (transparent PNG safety). Returns
@@ -587,6 +589,346 @@ function fitComponentEllipse(rawLoops, getInk, gray, w, h) {
   };
 }
 
+/* ===== 8b-2. RECT / 균일 띠 stroke+fill FITTING (§8) =====
+//
+// 사각 링(또는 채운 사각)을 폴리곤 2겹 대신 회전 rect 1객체로, 비(非)사각
+// 균일두께 띠(삼각 링 등)를 stroke+fill 한 폐폴리라인 1객체로 방출한다.
+// fitComponentEllipse(§2-2)와 같은 철학: RDP 이전 원시 경계점에서 판정하고,
+// 회색은 측정 헬퍼(medianGrayInBox)로 실측하며, 실패 시 예외 없이 null을
+// 반환해 호출부가 다음 단으로 폴백한다(회귀 위험 0). 원형이면 꼭짓점 게이트가
+// 자연 차단해 rect fit은 null이 되고, 원/링은 계속 ellipse의 몫이다.
+//   · fitComponentRect  : 바깥 1개·꼭짓점 4개·각 90°±10°·면적비≥0.92 게이트.
+//     구멍 1개면 4변 두께 CV≤0.30 검사 후 stroke=띠·fill=구멍 실측(hasFill).
+//   · fitStrokedRegion  : 비사각 균일 띠(삼각 링 등). 바깥·구멍 중간선 근사.
+//   · mergeBandFills     : 다단계 톤 후처리 — 빈 구멍을 밝은 컴포넌트가 채우면
+//     그 회색을 fill로 흡수하고 그 컴포넌트를 제거(호출 배선은 §8 C 단계 몫). */
+
+const RECT_RDP_EPSILON = 2;        // px — 사각 꼭짓점 추출 RDP 허용 오차
+const RECT_ANGLE_TOL_DEG = 10;     // 꼭짓점 직각 허용 편차(90°±10°)
+const RECT_AREA_RATIO_MIN = 0.92;  // 회전 사각 면적 / 폴리곤 실면적 최소비
+const BAND_THICKNESS_CV_MAX = 0.30;// 균일 띠 두께 변동계수(std/mean) 상한
+const STROKED_MIN_POINTS = 6;      // 균일 띠 바깥 윤곽 최소 꼭짓점(잡음 방어)
+
+// 폐루프에 대한 RDP. rdp가 열린 폴리라인용이라 폐루프를 그대로 [.., 시작]으로
+// 닫아 넘기면 시작=끝이 0길이 기준선이 돼 두 점으로 붕괴한다(RDP 특성). 그래서
+// 무게중심에서 가장 먼 점(반드시 진짜 꼭짓점)을 기준으로 루프를 두 열린 반쪽으로
+// 쪼개 각각 RDP를 돌린 뒤 이어붙인다. 이렇게 얻은 꼭짓점 집합에서 닫힘 중복점을
+// 제거해 반환한다. collinearReduce가 이미 4점 이하로 축약했으면 그대로 쓴다.
+function rdpClosed(points, epsilon) {
+  const reduced = collinearReduce(points);
+  if (reduced.length <= 4) return reduced;        // 이미 최소 꼭짓점(합성 클린 루프)
+  let cx = 0, cy = 0;
+  for (const [x, y] of reduced) { cx += x; cy += y; }
+  cx /= reduced.length; cy /= reduced.length;
+  let far = 0, farD = -1;
+  for (let i = 0; i < reduced.length; i += 1) {
+    const d = (reduced[i][0] - cx) ** 2 + (reduced[i][1] - cy) ** 2;
+    if (d > farD) { farD = d; far = i; }
+  }
+  // 시작 꼭짓점(far)에서 정반대 꼭짓점까지, 다시 시작으로 — 두 열린 반쪽.
+  const n = reduced.length;
+  const rot = [];
+  for (let i = 0; i < n; i += 1) rot.push(reduced[(far + i) % n]);
+  rot.push(reduced[far]);                          // 끝=시작(닫힘)
+  const half = Math.floor(n / 2);
+  const a = rdp(rot.slice(0, half + 1), epsilon);
+  const b = rdp(rot.slice(half), epsilon);
+  const merged = a.slice(0, -1).concat(b);         // a 끝 == b 시작 중복 제거
+  const out = merged.slice();
+  while (out.length > 3 && segDist(out[0], out[out.length - 1]) < 1e-6) out.pop();
+  return out;
+}
+function segDist(a, b) { return Math.hypot(b[0] - a[0], b[1] - a[1]); }
+
+// 폴리곤 부호면적 절대값(px²) — signedArea와 달리 점 배열 그대로(좌표 px).
+function polygonArea(points) {
+  let sum = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const [x1, y1] = points[i];
+    const [x2, y2] = points[(i + 1) % points.length];
+    sum += x1 * y2 - x2 * y1;
+  }
+  return Math.abs(sum) / 2;
+}
+
+// 4꼭짓점 폴리곤 → 각 꼭짓점 내부각(도) 배열.
+function cornerAngles(quad) {
+  const n = quad.length;
+  const angs = [];
+  for (let i = 0; i < n; i += 1) {
+    const P = quad[(i - 1 + n) % n], Q = quad[i], R = quad[(i + 1) % n];
+    const ax = P[0] - Q[0], ay = P[1] - Q[1], bx = R[0] - Q[0], by = R[1] - Q[1];
+    const dot = ax * bx + ay * by;
+    const m = Math.hypot(ax, ay) * Math.hypot(bx, by) || 1e-9;
+    angs.push(Math.acos(Math.max(-1, Math.min(1, dot / m))) * 180 / Math.PI);
+  }
+  return angs;
+}
+
+// 4꼭짓점 사각 → 회전 rect 파라미터 { cx, cy, hw, hh, angle(rad), rotationDeg }.
+// 한 변을 u축으로 삼아 네 꼭짓점을 u·v로 사영, 반폭·반높이를 구한다(측정 회색
+// 이 아니라 기하만 — ellipse의 PCA 프레임과 동일 발상).
+function rectFromQuad(quad) {
+  let cx = 0, cy = 0;
+  for (const [x, y] of quad) { cx += x; cy += y; }
+  cx /= quad.length; cy /= quad.length;
+  const angle = Math.atan2(quad[1][1] - quad[0][1], quad[1][0] - quad[0][0]);
+  const c = Math.cos(angle), s = Math.sin(angle);
+  let umin = Infinity, umax = -Infinity, vmin = Infinity, vmax = -Infinity;
+  for (const [x, y] of quad) {
+    const dx = x - cx, dy = y - cy;
+    const u = dx * c + dy * s, v = -dx * s + dy * c;
+    if (u < umin) umin = u; if (u > umax) umax = u;
+    if (v < vmin) vmin = v; if (v > vmax) vmax = v;
+  }
+  const cu = (umin + umax) / 2, cv = (vmin + vmax) / 2;
+  const rcx = cx + cu * c - cv * s, rcy = cy + cu * s + cv * c; // 프레임 중심→이미지
+  return {
+    cx: rcx, cy: rcy, hw: (umax - umin) / 2, hh: (vmax - vmin) / 2,
+    angle, rotationDeg: angle * 180 / Math.PI,
+  };
+}
+
+// 원시 루프 → 회전 사각 게이트 통과 시 rect 파라미터, 아니면 null.
+function fitRectToLoop(points) {
+  const quad = rdpClosed(points, RECT_RDP_EPSILON);
+  if (quad.length !== 4) return null;             // 꼭짓점 정확히 4개
+  const angs = cornerAngles(quad);
+  for (const a of angs) if (Math.abs(a - 90) > RECT_ANGLE_TOL_DEG) return null; // 각 90°±10°
+  const rect = rectFromQuad(quad);
+  if (rect.hw < ELLIPSE_MIN_RADIUS || rect.hh < ELLIPSE_MIN_RADIUS) return null;
+  const rectArea = 4 * rect.hw * rect.hh;
+  const polyArea = polygonArea(quad);
+  if (polyArea <= 0) return null;
+  // 면적비: 회전 사각(꼭짓점 사영 bbox)이 실제 폴리곤을 ≥92% 덮어야 진짜 사각.
+  const ratio = polyArea / rectArea;
+  if (ratio < RECT_AREA_RATIO_MIN || ratio > 1 / RECT_AREA_RATIO_MIN) return null;
+  return rect;
+}
+
+// 사각 fit + 균일 띠 stroke+fill 판정. 반환:
+//   null | { cx, cy, w, h, rotationDeg, strokeWidthPx, strokeLevel, fillLevel, hasFill }
+// 좌표·크기는 전부 이미지 px(objectify가 scale로 world mm 환산). 원/링이면
+// 꼭짓점 게이트가 걸러 null(→ ellipse 몫). getInk: 이 컴포넌트 잉크 여부.
+function fitComponentRect(rawLoops, getInk, gray, w, h) {
+  const outers = rawLoops.filter((l) => !l.isHole);
+  const holes = rawLoops.filter((l) => l.isHole);
+  if (outers.length !== 1) return null;           // 바깥 경계 정확히 1개
+  const outerRect = fitRectToLoop(outers[0].points);
+  if (!outerRect) return null;
+
+  // 구멍 없음 → 꽉 찬 사각: fill=잉크 실측, stroke 0.
+  if (!holes.length) {
+    const inkGray = medianGrayInBox(gray, w, h, loopBox(outers[0].points, w, h), getInk);
+    return {
+      cx: outerRect.cx, cy: outerRect.cy, w: 2 * outerRect.hw, h: 2 * outerRect.hh,
+      rotationDeg: outerRect.rotationDeg, strokeWidthPx: 0, strokeLevel: 0,
+      fillLevel: inkGray === null ? 0 : inkGray, hasFill: false,
+    };
+  }
+
+  // 링 후보: 가장 큰 구멍만 검사(다중 구멍이면 깨끗한 사각 링 아님).
+  let hole = holes[0], holeSpan = -1;
+  for (const hl of holes) {
+    const b = loopBox(hl.points, w, h);
+    const span = (b[2] - b[0]) * (b[3] - b[1]);
+    if (span > holeSpan) { holeSpan = span; hole = hl; }
+  }
+  const innerRect = fitRectToLoop(hole.points);
+  if (!innerRect) return null;                    // 구멍이 사각 아님 → 폴백
+
+  // 동심(중심거리 < 0.15·min(반폭,반높이)) — ellipse 링과 같은 기준.
+  const dc = Math.hypot(outerRect.cx - innerRect.cx, outerRect.cy - innerRect.cy);
+  if (dc >= RING_CONCENTRIC_RATIO * Math.min(outerRect.hw, outerRect.hh)) return null;
+
+  // 4변 두께(바깥 반extent − 안쪽 반extent)의 변동계수. 안쪽 사각의 자체 u/v축은
+  // 감김·첫변 방향에 따라 바깥과 90° 어긋날 수 있으므로, 구멍 꼭짓점을 바깥 프레임
+  // 좌표로 직접 사영해 그 프레임에서 안쪽 반extent를 재측정한다(축 대응 보장).
+  const innerQuad = rdpClosed(hole.points, RECT_RDP_EPSILON);
+  if (innerQuad.length !== 4) return null;
+  const cA = Math.cos(outerRect.angle), sA = Math.sin(outerRect.angle);
+  let iumin = Infinity, iumax = -Infinity, ivmin = Infinity, ivmax = -Infinity;
+  for (const [x, y] of innerQuad) {
+    const dx = x - outerRect.cx, dy = y - outerRect.cy;
+    const u = dx * cA + dy * sA, v = -dx * sA + dy * cA;
+    if (u < iumin) iumin = u; if (u > iumax) iumax = u;
+    if (v < ivmin) ivmin = v; if (v > ivmax) ivmax = v;
+  }
+  const inHw = (iumax - iumin) / 2, inHh = (ivmax - ivmin) / 2; // 바깥 프레임 기준 구멍 반extent
+  const ts = [
+    outerRect.hw - iumax,   // +u 변 두께
+    outerRect.hw + iumin,   // -u 변 두께(iumin<0)
+    outerRect.hh - ivmax,   // +v 변 두께
+    outerRect.hh + ivmin,   // -v 변 두께(ivmin<0)
+  ];
+  let tSum = 0;
+  for (const t of ts) { if (t <= 0) return null; tSum += t; } // 구멍이 삐져나옴 → 링 아님
+  const tMean = tSum / ts.length;
+  let variance = 0;
+  for (const t of ts) variance += (t - tMean) * (t - tMean);
+  const tStd = Math.sqrt(variance / ts.length);
+  if (tMean <= 0 || tStd / tMean >= BAND_THICKNESS_CV_MAX) return null;
+
+  // 중심선 rect(바깥·안쪽 반extent 평균) + strokeWidth=평균 띠 두께.
+  const inkGray = medianGrayInBox(gray, w, h, loopBox(outers[0].points, w, h), getInk);
+  const holeGray = medianGrayInBox(gray, w, h, loopBox(hole.points, w, h), (x, y) => !getInk(x, y));
+  return {
+    cx: outerRect.cx, cy: outerRect.cy,           // 동심 링 → 바깥 중심 = 중심선 중심
+    w: (outerRect.hw + inHw), h: (outerRect.hh + inHh), // 중심선 전폭 = 바깥·구멍 반extent 합
+    rotationDeg: outerRect.rotationDeg, strokeWidthPx: tMean,
+    strokeLevel: inkGray === null ? 0 : inkGray,
+    fillLevel: holeGray === null ? 255 : holeGray, hasFill: true,
+  };
+}
+
+// 두 폐폴리곤(바깥·구멍)의 중간선 근사: 바깥 점마다 가장 가까운 구멍 점을 찾아
+// 중점을 취한다(겉보기 오차 ≤ 2px 목표). 두 윤곽은 균일 두께라 최근접 대응이
+// 대체로 마주보는 변으로 이어져 중심선이 안정적이다.
+function midlineBetween(outerPts, holePts) {
+  const mids = [];
+  for (const p of outerPts) {
+    let best = holePts[0], bestD = Infinity;
+    for (const q of holePts) {
+      const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2;
+      if (d < bestD) { bestD = d; best = q; }
+    }
+    mids.push([(p[0] + best[0]) / 2, (p[1] + best[1]) / 2]);
+  }
+  return mids;
+}
+
+// 균일 두께 대칭성: 바깥 점마다 최근접 구멍 점까지 거리의 변동계수. 두께가
+// 고르면 이 거리(≈띠 두께)가 일정하다. 반환 { mean, cv } 또는 null(점 부족).
+function bandThicknessStats(outerPts, holePts) {
+  if (!outerPts.length || !holePts.length) return null;
+  const dists = [];
+  for (const p of outerPts) {
+    let bestD = Infinity;
+    for (const q of holePts) {
+      const d = (p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2;
+      if (d < bestD) bestD = d;
+    }
+    dists.push(Math.sqrt(bestD));
+  }
+  let sum = 0;
+  for (const d of dists) sum += d;
+  const mean = sum / dists.length;
+  if (mean <= 0) return null;
+  let variance = 0;
+  for (const d of dists) variance += (d - mean) * (d - mean);
+  return { mean, cv: Math.sqrt(variance / dists.length) / mean };
+}
+
+// 비(非)사각 균일 띠(삼각 링 등) → stroke+fill 폐폴리라인. 반환:
+//   null | { points:[{x,y}px], strokeWidthPx, strokeLevel, fillLevel }
+// points는 바깥·구멍 윤곽의 중간선 근사. 원형 링·사각 링도 여기 걸릴 수 있으나
+// 사다리(§2)에서 ellipse·rect가 먼저 소진하므로 실질 대상은 삼각/다각 링이다.
+function fitStrokedRegion(rawLoops, getInk, gray, w, h) {
+  const outers = rawLoops.filter((l) => !l.isHole);
+  const holes = rawLoops.filter((l) => l.isHole);
+  if (outers.length !== 1 || holes.length < 1) return null; // 바깥1·구멍1 균일 띠 전제
+  const outerPts = collinearReduce(outers[0].points);
+  if (outerPts.length < STROKED_MIN_POINTS) return null;    // 잡음 덩어리 방어
+
+  // 가장 큰 구멍만(다중 구멍이면 깨끗한 균일 띠 아님).
+  let hole = holes[0], holeSpan = -1;
+  for (const hl of holes) {
+    const b = loopBox(hl.points, w, h);
+    const span = (b[2] - b[0]) * (b[3] - b[1]);
+    if (span > holeSpan) { holeSpan = span; hole = hl; }
+  }
+  const holePts = collinearReduce(hole.points);
+
+  const stats = bandThicknessStats(outerPts, holePts);
+  if (!stats || stats.cv >= BAND_THICKNESS_CV_MAX) return null; // 두께 불균일 → 폴백
+
+  const mids = midlineBetween(outerPts, holePts).map(([x, y]) => ({ x, y }));
+  if (mids.length < 3) return null;
+
+  const inkGray = medianGrayInBox(gray, w, h, loopBox(outers[0].points, w, h), getInk);
+  const holeGray = medianGrayInBox(gray, w, h, loopBox(hole.points, w, h), (x, y) => !getInk(x, y));
+  return {
+    points: mids, strokeWidthPx: stats.mean,
+    strokeLevel: inkGray === null ? 0 : inkGray,
+    fillLevel: holeGray === null ? 255 : holeGray,
+  };
+}
+
+// 다단계 톤 후처리: 테두리가 있는 링 rect(hasFill=true·strokeWidthPx>0)나
+// strokedRegion의 구멍 안을, 더 밝은 level의 다른 컴포넌트가 면적≥80% 채우면
+// 그 밝은 컴포넌트를 host 채움으로 흡수하고 제거한다(헌법 §0-1: 겹친 두 도형 금지
+// → 테두리+채움 한 객체). 흡수 실패(fill 못 읽음) 시 제거하지 않는다(확신 우선 §5).
+// 구멍 없는 솔리드 사각(hasFill=false)은 host 대상이 아니다(채움색 오변경 방지).
+// 호출 배선은 §8 C(advancedShapes 게이트 안에서만).
+function mergeBandFills(components) {
+  const removed = new Set();
+  for (const host of components) {
+    const holeBox = bandHoleBox(host);   // 링/띠의 구멍만 반환(솔리드는 null)
+    if (!holeBox) continue;
+    const [hx0, hy0, hx1, hy1] = holeBox;
+    const holeArea = Math.max(0, (hx1 - hx0)) * Math.max(0, (hy1 - hy0));
+    if (holeArea <= 0) continue;
+    const hostLevel = host.level;
+
+    for (const cand of components) {
+      if (cand === host || removed.has(cand)) continue;
+      // 더 밝은 레벨만(level 값이 클수록 밝음 — §2-1 계약).
+      if (typeof hostLevel !== "number" || typeof cand.level !== "number") continue;
+      if (cand.level <= hostLevel) continue;
+      const cb = cand.bbox;
+      if (!cb) continue;
+      // 후보 bbox가 구멍 bbox의 ≥80%를 덮는가(교집합 면적 / 구멍 면적).
+      const ix0 = Math.max(hx0, cb[0]), iy0 = Math.max(hy0, cb[1]);
+      const ix1 = Math.min(hx1, cb[2]), iy1 = Math.min(hy1, cb[3]);
+      const inter = Math.max(0, ix1 - ix0) * Math.max(0, iy1 - iy0);
+      if (inter / holeArea < 0.80) continue;
+      if (absorbFill(host, cand)) { removed.add(cand); break; } // 흡수 성공 때만 제거(한 host엔 하나)
+    }
+  }
+  return components.filter((c) => !removed.has(c));
+}
+
+// host의 '채워질 구멍' bbox[x0,y0,x1,y1] 또는 null. 대상은 테두리가 있는 링
+// rect(hasFill=true·strokeWidthPx>0)와 strokedRegion. 구멍 없는 솔리드 사각은
+// null(오병합·채움색 변경 방지 — 헌법 §0-2).
+function bandHoleBox(host) {
+  if (host.rect && host.rect.hasFill === true && host.rect.strokeWidthPx > 0) {
+    const r = host.rect, c = Math.cos(r.rotationDeg * Math.PI / 180), s = Math.sin(r.rotationDeg * Math.PI / 180);
+    // 안쪽 구멍 반extent = 중심선 반extent − 띠 반두께(대칭 가정). 회전 반영 AABB.
+    const ihw = Math.max(0, r.w / 2 - r.strokeWidthPx / 2), ihh = Math.max(0, r.h / 2 - r.strokeWidthPx / 2);
+    const ex = Math.abs(ihw * c) + Math.abs(ihh * s), ey = Math.abs(ihw * s) + Math.abs(ihh * c);
+    return [r.cx - ex, r.cy - ey, r.cx + ex, r.cy + ey];
+  }
+  if (host.strokedRegion && Array.isArray(host.strokedRegion.points)) {
+    const pts = host.strokedRegion.points;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pts) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+    if (!isFinite(x0)) return null;
+    return [x0, y0, x1, y1];
+  }
+  return null;
+}
+
+// 흡수: 밝은 cand의 fillLevel(있으면)을 host 채움으로 이식. 성공하면 true.
+// cand가 rect/strokedRegion/ellipse/loops 어느 형태든 실측 fill을 읽는다(계약 일치).
+function absorbFill(host, cand) {
+  let fill = null;
+  if (cand.rect && typeof cand.rect.fillLevel === "number") fill = cand.rect.fillLevel;
+  else if (cand.strokedRegion && typeof cand.strokedRegion.fillLevel === "number") fill = cand.strokedRegion.fillLevel;
+  else if (cand.ellipse && typeof cand.ellipse.fillLevel === "number") fill = cand.ellipse.fillLevel;
+  else if (typeof cand.fillLevel === "number") fill = cand.fillLevel;
+  else if (Array.isArray(cand.loops)) {
+    const outer = cand.loops.find((l) => !l.isHole && typeof l.fillLevel === "number");
+    if (outer) fill = outer.fillLevel;
+  }
+  if (fill === null) return false;
+  if (host.rect) host.rect.fillLevel = fill;        // 링 host는 이미 hasFill=true
+  else if (host.strokedRegion) host.strokedRegion.fillLevel = fill;
+  return true;
+}
+
+export { fitComponentRect, fitStrokedRegion, mergeBandFills };
+
 /* ===== 8c. CORNER-PRESERVING SMOOTHING + AXIS SNAP (§2-3) =====
 //
 // ellipse 피팅에 실패한 비(非)글자 루프의 각짐(픽셀 계단 + RDP 가짜 코너)을 없앤다.
@@ -831,6 +1173,51 @@ function smoothLoop(pts) {
   return cleaned.length >= 3 ? { points: cleaned, curved: true } : { points: pts, curved: false };
 }
 
+/* ===== 8d. ADVANCED SHAPES 판정 사다리 배선 (§8 임무 C, 명세 §2) =====
+//
+// advancedShapes 게이트 안에서만 호출된다(꺼짐 = 이 함수 자체가 호출 안 됨 →
+// 코드 경로 100% 동일, 헌법 §0-3). ellipse 판정 실패 후, 다음 순서로 시도:
+//   ③ fitComponentRect     → 사각 링/채움 사각 (stroke+fill 한 객체)
+//   ④ fitStrokedRegion     → 비사각 균일 띠(stroke+fill 한 폐폴리라인)
+//   ⑤ extractStrokes       → 가는 획 망(부분 방출 + 잔여 잉크)
+// 성공한 단만 반환, 실패하면 다음 단으로. 전부 실패하면 null(호출자가 기존
+// 폴백 폴리곤 경로로 처리). 예외는 절대 밖으로 던지지 않는다(각 판정 함수가
+// 이미 null-안전이므로 여기서 추가 try/catch는 extractStrokes 호출부에만). */
+// 획 경로({x,y} 점열, 원본 px)의 회색조 실측: 경로 bbox 안의 컴포넌트 잉크
+// 중앙값. medianGrayInBox(§8b) 재사용 — 측정 실패 시 0(검정) 폴백.
+function measureStrokePathLevel(points, getInk, gray, w, h) {
+  // 중심선 bbox는 축정렬(수평·수직) 획에서 0폭/0높이로 붕괴해 회색 실측이 검정(0)으로
+  // 폴백된다(§0-2 위반: 회색 획이 검정으로). 획 두께만큼 여유를 줘 획 잉크를 박스에
+  // 포함시킨다 — medianGrayInBox의 getInk 필터가 배경·이웃 컴포넌트를 걸러 패딩은 안전.
+  const raw = loopBox(points.map((p) => [p.x, p.y]), w, h);
+  const PAD = 5;
+  const box = [
+    Math.max(0, raw[0] - PAD), Math.max(0, raw[1] - PAD),
+    Math.min(w, raw[2] + PAD), Math.min(h, raw[3] + PAD),
+  ];
+  const level = medianGrayInBox(gray, w, h, box, getInk);
+  return level === null ? 0 : level;
+}
+
+function fitAdvancedComponent(rawLoops, getInk, gray, w, h, bx0, by0, bx1, by1) {
+  const rect = fitComponentRect(rawLoops, getInk, gray, w, h);
+  if (rect) return { kind: "rect", rect };
+
+  const strokedRegion = fitStrokedRegion(rawLoops, getInk, gray, w, h);
+  if (strokedRegion) return { kind: "strokedRegion", strokedRegion };
+
+  let strokes = null;
+  try {
+    strokes = extractStrokes(getInk, bx0, by0, bx1, by1);
+  } catch (_e) {
+    strokes = null; // 안전: extractStrokes 자체가 null-안전이나 이중 방어
+  }
+  if (strokes && strokes.paths && strokes.paths.length) {
+    return { kind: "strokes", strokes };
+  }
+  return null;
+}
+
 /* ===== 8. PIPELINE ===== */
 // options: dilateRadius(묶음 거리 1~9), minArea(px²), textSizePx(글자 판정 bbox),
 //          epsilon(RDP px), removeGrid(격자 제거), preserveGrayLevels(다단계 톤).
@@ -883,7 +1270,7 @@ function measureLoopFillLevel(pts, isHole, level, gray, classMap, labels, label,
 
 // 기존(단일 Otsu) 경로 — preserveGrayLevels:false 및 다단계 폴백 시 그대로 사용.
 function vectorizeSingleLevel(imageData, options) {
-  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask } = options;
+  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask, advancedShapes } = options;
   const { width: w, height: h } = imageData;
   const { mask: rawMask, gray } = binarize(imageData);
   let mask = rawMask;
@@ -907,6 +1294,46 @@ function vectorizeSingleLevel(imageData, options) {
     // §2-2: 원/링이면 폴리곤 2겹 대신 ellipse 1객체(글자는 §2-4 몫이라 제외).
     const ellipse = isText ? null : fitComponentEllipse(rawLoops, getInk, gray, w, h);
     if (ellipse) { components.push({ bbox: c.bbox, area: c.area, isText, ellipse }); continue; }
+
+    // §8 사다리(임무 C): advancedShapes일 때만, ellipse 실패 뒤 rect/균일띠/획
+    // 순서로 시도. 글자는 §2-4 몫이라 제외. 실패하면 그대로 아래 폴백 경로.
+    let advanced = null;
+    if (advancedShapes && !isText) {
+      advanced = fitAdvancedComponent(rawLoops, getInk, gray, w, h, bx0 - 1, by0 - 1, bx1 + 1, by1 + 1);
+    }
+    if (advanced && advanced.kind === "rect") {
+      components.push({ bbox: c.bbox, area: c.area, isText, rect: advanced.rect });
+      continue;
+    }
+    if (advanced && advanced.kind === "strokedRegion") {
+      components.push({ bbox: c.bbox, area: c.area, isText, strokedRegion: advanced.strokedRegion });
+      continue;
+    }
+
+    // 획 승격: 잔여 잉크는 기존 loops 경로로 함께 방출(명세 §2 부분 방출 설계).
+    // strokes일 때는 잔여 잉크 기준으로 윤곽을 재추적해야 "잔여 조각만" 나온다
+    // (rawLoops를 그대로 쓰면 획으로 이미 설명된 잉크까지 다시 폴리곤화된다).
+    if (advanced && advanced.kind === "strokes") {
+      const residualGetInk = (x, y) => getInk(x, y) && advanced.strokes.isResidualInk(x, y);
+      const residualLoops = traceContours(residualGetInk, bx0 - 1, by0 - 1, bx1 + 1, by1 + 1)
+        .map((raw) => ({ points: raw, isHole: signedArea(raw) < 0 }));
+      const loops = [];
+      for (const rl of residualLoops) {
+        const reduced = collinearReduce(rl.points);
+        const sm = smoothLoop(reduced);      // §2-3 코너 보존 스무딩(잔여도 비글자 취급)
+        if (sm.points.length < 3) continue;
+        loops.push({ points: sm.points, isHole: rl.isHole, curved: sm.curved });
+      }
+      loops.sort((a, b) => (a.isHole ? 1 : 0) - (b.isHole ? 1 : 0));
+      const strokePaths = advanced.strokes.paths.map((p) => ({
+        kind: p.kind,
+        points: p.points.map((pt) => [pt.x, pt.y]),
+        thicknessPx: p.thicknessPx,
+        strokeLevel: measureStrokePathLevel(p.points, getInk, gray, w, h),
+      }));
+      components.push({ bbox: c.bbox, area: c.area, isText, strokes: strokePaths, loops });
+      continue;
+    }
 
     const loops = [];
     for (const rl of rawLoops) {
@@ -932,7 +1359,7 @@ function vectorizeSingleLevel(imageData, options) {
 // 파이프라인을 레벨마다 재실행(누적 마스크: classMap<=level). 밝은 레벨을
 // 먼저 push해 order를 낮게 주고, 어두운 레벨은 나중에 push해 위에 쌓는다.
 function vectorizeMultiLevel(imageData, options) {
-  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask } = options;
+  const { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask, advancedShapes } = options;
   const { width: w, height: h } = imageData;
   const { gray } = binarize(imageData);
   const { classMap, classes } = computeGrayLevels(gray, w, h);
@@ -987,6 +1414,45 @@ function vectorizeMultiLevel(imageData, options) {
       const ellipse = isText ? null : fitComponentEllipse(rawLoops, getInk, gray, w, h);
       if (ellipse) { components.push({ bbox: c.bbox, area: c.area, isText, level, ellipse }); continue; }
 
+      // §8 사다리(임무 C): advancedShapes일 때만, ellipse 실패 뒤 rect/균일띠/획
+      // 순서로 시도. 글자는 §2-4 몫이라 제외. 실패하면 그대로 아래 폴백 경로.
+      let advanced = null;
+      if (advancedShapes && !isText) {
+        advanced = fitAdvancedComponent(rawLoops, getInk, gray, w, h, bx0 - 1, by0 - 1, bx1 + 1, by1 + 1);
+      }
+      if (advanced && advanced.kind === "rect") {
+        components.push({ bbox: c.bbox, area: c.area, isText, level, rect: advanced.rect });
+        continue;
+      }
+      if (advanced && advanced.kind === "strokedRegion") {
+        components.push({ bbox: c.bbox, area: c.area, isText, level, strokedRegion: advanced.strokedRegion });
+        continue;
+      }
+
+      if (advanced && advanced.kind === "strokes") {
+        // 잔여 잉크 기준으로 윤곽 재추적(§2 부분 방출) — Single 경로와 동일 원칙.
+        const residualGetInk = (x, y) => getInk(x, y) && advanced.strokes.isResidualInk(x, y);
+        const residualLoops = traceContours(residualGetInk, bx0 - 1, by0 - 1, bx1 + 1, by1 + 1)
+          .map((raw) => ({ points: raw, isHole: signedArea(raw) < 0 }));
+        const loops = [];
+        for (const rl of residualLoops) {
+          const reduced = collinearReduce(rl.points);
+          const sm = smoothLoop(reduced);
+          if (sm.points.length < 3) continue;
+          const fillLevel = measureLoopFillLevel(sm.points, rl.isHole, level, gray, classMap, labels, c.label, w, h);
+          loops.push({ points: sm.points, isHole: rl.isHole, curved: sm.curved, fillLevel });
+        }
+        loops.sort((a, b) => (a.isHole ? 1 : 0) - (b.isHole ? 1 : 0));
+        const strokePaths = advanced.strokes.paths.map((p) => ({
+          kind: p.kind,
+          points: p.points.map((pt) => [pt.x, pt.y]),
+          thicknessPx: p.thicknessPx,
+          strokeLevel: measureStrokePathLevel(p.points, getInk, gray, w, h),
+        }));
+        components.push({ bbox: c.bbox, area: c.area, isText, level, strokes: strokePaths, loops });
+        continue;
+      }
+
       const loops = [];
       for (const rl of rawLoops) {
         const reduced = collinearReduce(rl.points);
@@ -1018,11 +1484,18 @@ export function vectorizeImage(imageData, options = {}) {
     removeGrid = false,
     preserveGrayLevels = true,
     cutMask = null,               // 분리 브러시: 사용자가 그은 절단선 픽셀(1=자름)
+    advancedShapes = false,       // [고급] 선·도형 승격 게이트(명세 §8 임무 C). 기본 꺼짐 = 회귀 0.
   } = options;
-  const pipelineOptions = { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask };
+  const pipelineOptions = { dilateRadius, minArea, textSizePx, epsilon, removeGrid, cutMask, advancedShapes };
+  let result;
   if (preserveGrayLevels) {
     const multi = vectorizeMultiLevel(imageData, pipelineOptions);
-    if (multi) return multi;
+    result = multi || vectorizeSingleLevel(imageData, pipelineOptions);
+  } else {
+    result = vectorizeSingleLevel(imageData, pipelineOptions);
   }
-  return vectorizeSingleLevel(imageData, pipelineOptions);
+  // advancedShapes일 때만 밴드 채움 병합 후처리(명세 §2 ④ 후속) — 꺼짐이면
+  // 호출 자체가 없어 결과가 기존과 100% 동일(헌법 §0-3).
+  if (advancedShapes) result.components = mergeBandFills(result.components);
+  return result;
 }

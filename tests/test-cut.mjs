@@ -1,5 +1,5 @@
 // 분리 브러시 cutMask 검증: 붙은 두 사각형이 절단선으로 갈라지는지.
-import { vectorizeImage } from "file:///C:/Users/user/Desktop/project/51_5E/5E_image_dev/js/image-vectorize.js";
+import { vectorizeImage } from "../js/image-vectorize.js";
 
 function makeImage(w, h) {
   const data = new Uint8Array(w * h * 4).fill(255);
