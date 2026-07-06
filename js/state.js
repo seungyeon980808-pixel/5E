@@ -7,7 +7,7 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=0.50.0";
+import { createStore } from "./store.js?v=0.50.5";
 
 export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif';
 // 수식 글꼴: "수식" 글꼴 옵션(EDITOR_FONT_OPTIONS)과 formula 렌더가 쓴다. Latin Modern
@@ -81,9 +81,11 @@ export function isEquationFontFamily(value) {
 }
 
 export function resolveTextFontStyle(obj = {}) {
-  if (typeof obj.italic === "boolean") return obj.italic ? "italic" : "normal";
+  // 수식 글꼴은 기울임 토글과 무관하게 항상 이탤릭(글자) — 숫자는 렌더 단계에서
+  // 정자화된다. (기울임 UI는 제거됨.) 그래서 이 체크를 obj.italic보다 먼저 둔다.
   if (isEquationFontFamily(obj.fontFamily)) return EQUATION_FONT_STYLE;
-  return obj.italic === true || obj.fontStyle === "italic" ? "italic" : "normal";
+  if (typeof obj.italic === "boolean") return obj.italic ? "italic" : "normal";
+  return obj.fontStyle === "italic" ? "italic" : "normal";
 }
 
 export function resolveTextLetterSpacing(obj = {}) {

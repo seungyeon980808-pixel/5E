@@ -8,7 +8,7 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.50.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.50.5";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -16,15 +16,15 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.50.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.50.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.50.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.50.0";
-import { pickSelectableObjectAtPoint } from "./pick.js?v=0.50.0";
+} from "./state.js?v=0.50.5";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.50.5";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.50.5";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.50.5";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=0.50.5";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=0.50.0";
+import { isSpaceHeld } from "./tools.js?v=0.50.5";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -483,11 +483,16 @@ function _caretIndexFromPoint(clientX, clientY) {
 // numerals are intentionally NOT here: they belong to the styled symbol palette
 // (_buildSymbolPalette) which inserts ASCII I/II/III as Times-serif runs, not
 // plain Unicode Ⅰ/Ⅱ/Ⅲ characters.
-const FORMULA_SYMBOLS = ["θ", "λ", "Δ", "μ", "π", "→", "←", "±", "×", "₀", "₁", "₂", "₃", "²", "³"];
+// [보이는 글리프, 입력칸에 넣을 LaTeX] — 입력칸은 항상 LaTeX 소스를 유지한다.
+const FORMULA_SYMBOLS = [
+  ["θ", "\\theta"], ["λ", "\\lambda"], ["Δ", "\\Delta"], ["μ", "\\mu"], ["π", "\\pi"],
+  ["→", "\\to"], ["←", "\\leftarrow"], ["±", "\\pm"], ["×", "\\times"],
+  ["₀", "_0"], ["₁", "_1"], ["₂", "_2"], ["₃", "_3"], ["²", "^2"], ["³", "^3"],
+];
 const EDITOR_FONT_OPTIONS = [
-  { label: "기본 (돋움)", css: TEXT_FONTS[0]?.css || DEFAULT_TEXT_FONT },
-  { label: "기본 명조", css: "serif" },
+  { label: "한글 텍스트(돋움)", css: TEXT_FONTS[0]?.css || DEFAULT_TEXT_FONT },
   { label: "수식", css: EQUATION_FONT_FAMILY },
+  { label: "명조", css: "serif" },
   { label: "고딕", css: "'Malgun Gothic', sans-serif" },
 ];
 
@@ -510,7 +515,9 @@ function looksLikeFormula(src) {
   // 일반 텍스트(+styled run) 경로를 타서 라벨의 "mgh" 같은 문자열이 수식이 되지 않는다.
   if (_textPlainOnly) return false;
   const value = String(src || "");
-  return _textFormulaMode || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
+  // 백슬래시 명령(\sin \theta \frac 등)이 있으면 항상 수식으로 판정한다. 이게 없으면
+  // "\sin"만 입력했을 때 직전 조작(_textFormulaMode)에 따라 수식/일반을 오가던 비결정 버그가 났다.
+  return _textFormulaMode || /\\[a-zA-Z]/.test(value) || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
 }
 
 function _textValue() {
@@ -763,16 +770,8 @@ function _buildSymbolPalette() {
   [["I", "I"], ["II", "II"], ["III", "III"]].forEach(([label, text]) =>
     romanRow.appendChild(_symbolPaletteButton(label, text, SECTION_ROMAN_STYLE, `구간 ${label} (Times 정체)`)));
 
-  const qtyRow = document.createElement("div");
-  qtyRow.className = "formula-palette-row symbol-palette-row";
-  const qtyTag = document.createElement("span");
-  qtyTag.className = "symbol-palette-tag";
-  qtyTag.textContent = "물리량";
-  qtyRow.appendChild(qtyTag);
-  ["m", "v", "F", "a", "t"].forEach((ch) =>
-    qtyRow.appendChild(_symbolPaletteButton(ch, ch, QUANTITY_STYLE, `물리량 ${ch} (Times 이탤릭)`)));
-
-  panel.append(romanRow, qtyRow);
+  // 물리량(m/v/F/a/t) 팔레트는 제거됨 — 수식 글꼴로 직접 입력한다.
+  panel.append(romanRow);
   return panel;
 }
 
@@ -782,18 +781,78 @@ function _buildUnifiedFormulaPanel() {
   const structure = document.createElement("div");
   structure.className = "formula-palette-row";
   [
-    ["분수", () => _insertFormulaTemplate("frac{}{}")],
-    ["벡터", () => _insertFormulaTemplate("vec{}")],
-    ["루트", () => _insertFormulaTemplate("sqrt{}")],
-    ["아래첨자", () => _insertIntoUnifiedText("₀")],
-    ["위첨자", () => _insertIntoUnifiedText("²")],
+    ["분수", () => _insertFormulaTemplate("\\frac{}{}")],
+    ["벡터", () => _insertFormulaTemplate("\\vec{}")],
+    ["루트", () => _insertFormulaTemplate("\\sqrt{}")],
+    ["아래첨자", () => _insertFormulaTemplate("_{}")],
+    ["위첨자", () => _insertFormulaTemplate("^{}")],
   ].forEach(([label, fn]) => structure.appendChild(_fxPaletteButton(label, fn)));
 
   const symbols = document.createElement("div");
   symbols.className = "formula-palette-row";
-  FORMULA_SYMBOLS.forEach((sym) => symbols.appendChild(_fxPaletteButton(sym, () => _insertIntoUnifiedText(sym))));
+  FORMULA_SYMBOLS.forEach(([glyph, ins]) => symbols.appendChild(_fxPaletteButton(glyph, () => _insertIntoUnifiedText(ins))));
   panel.append(structure, symbols);
   return panel;
+}
+
+/* ----- 수식 입력 도움말(LaTeX 문법) 버튼 + 팝오버 ----- */
+let _formulaHelpPopover = null;
+function _closeFormulaHelp() {
+  if (_formulaHelpPopover) { _formulaHelpPopover.remove(); _formulaHelpPopover = null; }
+  document.removeEventListener("pointerdown", _formulaHelpOutside, true);
+}
+function _formulaHelpOutside(e) {
+  if (!_formulaHelpPopover) { _closeFormulaHelp(); return; }
+  if (!_formulaHelpPopover.contains(e.target) && !(e.target.closest && e.target.closest(".unified-editor-help"))) {
+    _closeFormulaHelp();
+  }
+}
+function _buildFormulaHelpButton() {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "unified-editor-help";
+  btn.textContent = "?";
+  btn.title = "수식 입력은 LaTeX 문법을 따릅니다";
+  btn.setAttribute("aria-label", "수식 입력 도움말 (LaTeX 문법)");
+  btn.style.cssText = "margin-left:auto;flex:0 0 auto;width:22px;height:22px;border-radius:50%;" +
+    "border:1px solid var(--border,#555);background:transparent;color:inherit;" +
+    "font-weight:700;font-size:13px;line-height:1;cursor:pointer;";
+  btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+  btn.addEventListener("mousedown", (e) => e.stopPropagation());
+  btn.addEventListener("click", (e) => { e.stopPropagation(); _toggleFormulaHelp(btn); });
+  return btn;
+}
+function _toggleFormulaHelp(anchorBtn) {
+  if (_formulaHelpPopover) { _closeFormulaHelp(); return; }
+  const rows = [
+    ["분수", "\\frac{1}{2}"],
+    ["위/아래첨자", "x^2   v_0   x^{10}"],
+    ["루트 · 벡터", "\\sqrt{2}   \\vec{F}"],
+    ["그리스", "\\theta \\pi \\lambda \\mu \\Delta \\omega"],
+    ["함수", "\\sin \\cos \\tan \\log \\ln \\exp \\lim"],
+    ["기호", "\\pm \\times \\cdot \\to \\leq \\geq \\neq \\infty"],
+  ];
+  const pop = document.createElement("div");
+  pop.className = "unified-formula-help-popover";
+  pop.style.cssText = "position:fixed;z-index:100001;max-width:340px;padding:12px 14px;" +
+    "background:var(--bg-panel,#2c2c2c);color:var(--text-primary,#e8e8e8);" +
+    "border:1px solid var(--border,#555);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);" +
+    "font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;font-size:12px;line-height:1.5;";
+  let html = "<div style='font-weight:700;margin-bottom:8px'>수식 입력은 LaTeX 문법을 따릅니다</div>" +
+    "<table style='border-collapse:collapse'>";
+  for (const [k, v] of rows) {
+    html += "<tr><td style='padding:2px 12px 2px 0;color:var(--text-secondary,#999);white-space:nowrap;vertical-align:top'>" +
+      k + "</td><td style='padding:2px 0;font-family:\"IBM Plex Mono\",monospace'>" +
+      v.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</td></tr>";
+  }
+  html += "</table>";
+  pop.innerHTML = html;
+  document.body.appendChild(pop);
+  const r = anchorBtn.getBoundingClientRect();
+  pop.style.top = (r.bottom + 6) + "px";
+  pop.style.right = Math.max(8, window.innerWidth - r.right) + "px";
+  _formulaHelpPopover = pop;
+  setTimeout(() => document.addEventListener("pointerdown", _formulaHelpOutside, true), 0);
 }
 
 function _buildUnifiedStyleControls() {
@@ -824,17 +883,13 @@ function _buildUnifiedStyleControls() {
   });
   sizeLabel.appendChild(_textSizeInput);
 
-  _textItalicInput = document.createElement("button");
-  _textItalicInput.type = "button";
-  _textItalicInput.className = "unified-style-toggle";
-  _textItalicInput.textContent = "기울임";
-
+  // 기울임 토글은 제거됨 — 수식 글꼴은 항상 이탤릭(글자)/정자(숫자)로 렌더된다.
   _textBoldInput = document.createElement("button");
   _textBoldInput.type = "button";
   _textBoldInput.className = "unified-style-toggle";
   _textBoldInput.textContent = "굵게";
 
-  controls.append(fontLabel, sizeLabel, _textItalicInput, _textBoldInput);
+  controls.append(fontLabel, sizeLabel, _textBoldInput);
   // Capture the caret range BEFORE the control steals focus. Both pointerdown and
   // mousedown fire ahead of the native <select> popup / button focus, so the range
   // the user picked is cached even when the dropdown later collapses the textarea.
@@ -849,10 +904,6 @@ function _buildUnifiedStyleControls() {
   const applyStyle = () => _applyUnifiedStyleToDraft();
   _textFontSelect.addEventListener("change", applyStyle);
   _textSizeInput.addEventListener("change", applyStyle);
-  _textItalicInput.addEventListener("click", () => {
-    _textItalicInput.setAttribute("aria-pressed", _textItalicInput.getAttribute("aria-pressed") !== "true");
-    applyStyle();
-  });
   _textBoldInput.addEventListener("click", () => {
     _textBoldInput.setAttribute("aria-pressed", _textBoldInput.getAttribute("aria-pressed") !== "true");
     applyStyle();
@@ -1028,7 +1079,13 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
 
   const title = document.createElement("div");
   title.className = "unified-editor-title";
-  title.textContent = opts.title || "텍스트 입력";
+  title.style.display = "flex";
+  title.style.alignItems = "center";
+  const titleText = document.createElement("span");
+  titleText.textContent = opts.title || "텍스트 입력";
+  title.appendChild(titleText);
+  // 수식 도움말(LaTeX 문법) — 라벨러(plainOnly)엔 수식이 없어 생략.
+  if (!_textPlainOnly) title.appendChild(_buildFormulaHelpButton());
   _enableUnifiedEditorDrag(title);
 
   const previewLabel = document.createElement("div");

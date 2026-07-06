@@ -7,7 +7,7 @@ import {
   applySvgTextFont,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.50.0";
+} from "./core.js?v=0.50.5";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -15,7 +15,16 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=0.50.0";
+} from "../state.js?v=0.50.5";
+
+// 멀티라인 라인 tspan에 부모 <text>의 글꼴/스타일을 명시 복사한다 — 숫자 정자화
+// (fillTextWithRomanRuns) 감지가 라인 tspan 단위에서도 동작하도록.
+function inheritLineFont(child, parent) {
+  const ff = parent.getAttribute("font-family");
+  if (ff) child.setAttribute("font-family", ff);
+  const fs = parent.getAttribute("font-style");
+  if (fs) child.setAttribute("font-style", fs);
+}
 
 function applySvgTextRunStyle(t, style = {}) {
   applySvgTextFont(t, {
@@ -132,6 +141,7 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
       const ts = document.createElementNS(SVG_NS, "tspan");
       ts.setAttribute("x", x);
       ts.setAttribute("dy", i === 0 ? -lineHeight * (lines.length - 1) / 2 : lineHeight);
+      inheritLineFont(ts, t);
       fillTextWithRomanRuns(ts, line || "\u00a0");
       t.appendChild(ts);
     });
@@ -285,6 +295,7 @@ function renderText(obj) {
         const ts = document.createElementNS(SVG_NS, "tspan");
         ts.setAttribute("x", obj.x);
         ts.setAttribute("dy", i === 0 ? "0" : obj.fontSize * 1.4);
+        inheritLineFont(ts, el);
         fillTextWithRomanRuns(ts, line || "\u00a0");
         el.appendChild(ts);
       });

@@ -27,7 +27,8 @@ import {
   DEFAULT_TEXT_SIZE_MM,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
-} from "./state.js?v=0.50.0";
+  isEquationFontFamily,
+} from "./state.js?v=0.50.5";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 // Glyph + rule ink. Mirrors renderText(), which always paints #0d1117 (text has
@@ -54,6 +55,26 @@ const GREEK = {
 //   { type:"vec",  body:<node> }
 //   { type:"sqrt", body:<node> }
 //   { type:"script", base:<node>, sub:<node|null>, sup:<node|null> }
+// 표준 수식 함수명(LaTeX \sin 등) — 백슬래시로 입력하면 정자(로만)로 렌더, 변수와 구분.
+const FUNCTION_NAMES = new Set([
+  "sin", "cos", "tan", "sec", "csc", "cot",
+  "sinh", "cosh", "tanh", "coth",
+  "arcsin", "arccos", "arctan",
+  "log", "ln", "lg", "exp", "lim", "max", "min", "sup", "inf",
+  "det", "dim", "ker", "deg", "gcd", "arg", "mod",
+]);
+
+// 기호 명령(LaTeX \pm 등) — 백슬래시로 입력하면 해당 글리프로. 팔레트 버튼도 이걸 넣는다.
+const SYMBOLS = {
+  pm: "±", mp: "∓", times: "×", cdot: "·", div: "÷", ast: "∗",
+  to: "→", rightarrow: "→", leftarrow: "←", leftrightarrow: "↔",
+  Rightarrow: "⇒", Leftarrow: "⇐", Leftrightarrow: "⇔",
+  leq: "≤", le: "≤", geq: "≥", ge: "≥", neq: "≠", ne: "≠",
+  approx: "≈", equiv: "≡", propto: "∝", sim: "∼",
+  infty: "∞", partial: "∂", nabla: "∇", cdots: "⋯", ldots: "…",
+  angle: "∠", perp: "⊥", parallel: "∥", circ: "∘", pm2: "±",
+};
+
 function parseFormula(src) {
   const s = String(src == null ? "" : src);
   let i = 0;
@@ -100,23 +121,32 @@ function parseFormula(src) {
     const c = s[i];
     if (c === undefined) return null;
     if (c === "{") return parseGroup(depth);
-    if (isLetter(c)) {
-      const w = readWord();
-      if (depth < MAX_DEPTH && s[i] === "{" && (w === "frac" || w === "vec" || w === "sqrt")) {
-        if (w === "frac") {
-          const num = parseGroup(depth);
-          skipSpaces();
-          const den = s[i] === "{" ? parseGroup(depth) : { type: "row", items: [] };
-          return { type: "frac", num, den };
-        }
-        if (w === "vec") return { type: "vec", body: parseGroup(depth) };
-        return { type: "sqrt", body: parseGroup(depth) };
-      }
-      // Whole-word Greek substitution; otherwise the run is literal text.
-      return { type: "text", value: GREEK[w] || w };
-    }
+    if (c === "\\") { i++; return commandAtom(readWord(), depth, true); }  // 백슬래시 명령(\sin \theta \frac)
+    if (isLetter(c)) return commandAtom(readWord(), depth, false);         // bare word(하위호환: theta·frac 등)
     if (isDigit(c)) return { type: "text", value: readNumber() };
     i++; return { type: "text", value: c }; // space, operators, parens, unicode glyph
+  }
+
+  // 명령/단어 하나를 원자로 변환. isCommand = 백슬래시로 시작했는지.
+  function commandAtom(w, depth, isCommand) {
+    // 구조 명령(분수·벡터·루트) — bare·백슬래시 모두 허용(하위호환)
+    if (depth < MAX_DEPTH && s[i] === "{" && (w === "frac" || w === "vec" || w === "sqrt")) {
+      if (w === "frac") {
+        const num = parseGroup(depth);
+        skipSpaces();
+        const den = s[i] === "{" ? parseGroup(depth) : { type: "row", items: [] };
+        return { type: "frac", num, den };
+      }
+      if (w === "vec") return { type: "vec", body: parseGroup(depth) };
+      return { type: "sqrt", body: parseGroup(depth) };
+    }
+    // 함수명·기호는 백슬래시로 입력했을 때만 특수 처리 — bare "sin"은 이탤릭 리터럴
+    if (isCommand) {
+      if (FUNCTION_NAMES.has(w)) return { type: "func", value: w };        // \sin \cos… → 정자(로만)
+      if (SYMBOLS[w] != null) return { type: "text", value: SYMBOLS[w] };   // \pm \times \to …
+    }
+    // 그리스문자 치환(bare·백슬래시 모두) 또는 리터럴 텍스트
+    return { type: "text", value: GREEK[w] || w };
   }
 
   function parseAtomWithScripts(depth) {
@@ -140,9 +170,35 @@ function _ctx() {
   if (!_measureCanvas) _measureCanvas = document.createElement("canvas");
   return _measureCanvas.getContext("2d");
 }
+// 수식 글꼴 이탤릭에서 숫자는 정자(upright)로 — draw/advance가 동일 분할을 써야
+// 첨자·본문 폭이 어긋나지 않는다(정렬 보증). 분리 불필요 시 null.
+// [{text, style}] 반환: 숫자 런=normal, 나머지=italic.
+function numberStyleRuns(str, font) {
+  if (!(font.style === "italic" && isEquationFontFamily(font.family)) || !/\d/.test(str)) return null;
+  const re = /\d+(?:[.,]\d+)*/g;
+  const runs = [];
+  let last = 0, m;
+  while ((m = re.exec(str))) {
+    if (m.index > last) runs.push({ text: str.slice(last, m.index), style: "italic" });
+    runs.push({ text: m[0], style: "normal" });
+    last = m.index + m[0].length;
+  }
+  if (last < str.length) runs.push({ text: str.slice(last), style: "italic" });
+  return runs;
+}
+
 function advance(str, F, font) {
   if (!str) return 0;
   const c = _ctx();
+  const runs = numberStyleRuns(str, font);
+  if (runs) {
+    let w = 0;
+    for (const r of runs) {
+      c.font = `${r.style} ${font.weight || "normal"} ${F}px ${font.family}`;
+      w += c.measureText(r.text).width;
+    }
+    return w;
+  }
   c.font = `${font.style || "normal"} ${font.weight || "normal"} ${F}px ${font.family}`;
   return c.measureText(str).width;
 }
@@ -171,6 +227,45 @@ function layoutText(value, F, font) {
       t.setAttribute("font-style", resolveTextFontStyle({ fontFamily: font.family, fontStyle: font.style }));
       const letterSpacing = resolveTextLetterSpacing({ fontFamily: font.family });
       if (letterSpacing) t.setAttribute("letter-spacing", letterSpacing);
+      t.setAttribute("fill", INK);
+      t.setAttribute("text-anchor", "start");
+      const runs = numberStyleRuns(value, font);
+      if (runs) {
+        for (const r of runs) {
+          if (r.style === "normal") {
+            const ts = el("tspan");
+            ts.setAttribute("font-style", "normal");
+            ts.textContent = r.text;
+            t.appendChild(ts);
+          } else {
+            t.appendChild(document.createTextNode(r.text));
+          }
+        }
+      } else {
+        t.textContent = value;
+      }
+      g.appendChild(t);
+    },
+  };
+}
+
+// 함수명(sin·cos…)은 정자(로만)로 렌더 — 수식 글꼴이 이탤릭이어도 정체 유지(LaTeX \operatorname).
+function layoutFunc(value, F, font) {
+  const c = _ctx();
+  c.font = `normal ${font.weight || "normal"} ${F}px ${font.family}`;
+  const w = c.measureText(value).width;
+  return {
+    w, ascent: F * ASC, descent: F * DESC,
+    draw(g, x, baseY) {
+      const t = el("text");
+      t.setAttribute("x", x);
+      t.setAttribute("y", baseY);
+      t.setAttribute("font-size", F);
+      t.setAttribute("font-family", font.family);
+      t.setAttribute("font-style", "normal");
+      if (font.weight && font.weight !== "normal") t.setAttribute("font-weight", font.weight);
+      const ls = resolveTextLetterSpacing({ fontFamily: font.family });
+      if (ls) t.setAttribute("letter-spacing", ls);
       t.setAttribute("fill", INK);
       t.setAttribute("text-anchor", "start");
       t.textContent = value;
@@ -226,7 +321,7 @@ function layoutFrac(node, F, font) {
   const partF = F * 0.88;
   const num = layout(node.num, partF, font);
   const den = layout(node.den, partF, font);
-  const pad = F * 0.08;
+  const pad = F * 0.05;   // 분수 좌우 여백(작게 — 뒤 글자와 너무 벌어지지 않게)
   const inner = Math.max(num.w, den.w);
   const w = inner + 2 * pad;
   const axis = F * 0.22;  // fraction bar sits this far above the baseline
@@ -315,6 +410,7 @@ function layout(node, F, font) {
   switch (node && node.type) {
     case "row": return layoutRow(node, F, font);
     case "text": return layoutText(node.value, F, font);
+    case "func": return layoutFunc(node.value, F, font);
     case "script": return layoutScript(node, F, font);
     case "frac": return layoutFrac(node, F, font);
     case "vec": return layoutVec(node, F, font);

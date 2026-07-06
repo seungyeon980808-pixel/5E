@@ -15,8 +15,8 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.50.0" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.50.0" />
+  <link rel="stylesheet" href="css/style.css?v=0.50.5" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.50.5" />
   <style>
     .branch-warning-banner {
       position: fixed;
@@ -107,9 +107,9 @@
 <body>
   <div class="branch-warning-banner" role="status" aria-label="현재 로컬 브랜치 경고">
     <div class="branch-warning-text">
-      <span>[BRANCH: work-dev]</span>
-      <span>기능 개발 브랜치</span>
-      <span>PORT 8000</span>
+      <span>[BRANCH: integration-hub]</span>
+      <span>통합 검증 브랜치</span>
+      <span id="branch-port">PORT 8000</span>
     </div>
     <button
       id="branch-command-copy"
@@ -117,10 +117,11 @@
       type="button"
       title="로컬 서버 명령 복사"
       aria-label="로컬 서버 명령 복사"
-      data-command="cd C:\Users\user\Desktop\project\51_5E\5E_work_dev; git status --short --branch; python -m http.server 8000"
+      data-command="cd C:\Users\user\Desktop\project\51_5E\5E_hub; git status --short --branch; python -m http.server 8100"
     >⧉</button>
     <span id="branch-copy-status" class="branch-copy-status" aria-live="polite">서버 실행 명령 복사됨</span>
   </div>
+  <script>{const p=document.getElementById("branch-port");if(p)p.textContent="PORT "+(location.port||"80");}</script>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
@@ -302,7 +303,7 @@
 
   <!-- ===== FOOTER: version + date ===== -->
   <footer class="app-footer">
-    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.50.0</strong> · 2026-07-06
+    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.50.5</strong> · 2026-07-06
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
@@ -411,6 +412,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.50.0"></script>
+  <script type="module" src="js/main.js?v=0.50.5"></script>
 </body>
 </html>
