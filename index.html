@@ -18,27 +18,34 @@
   <link rel="stylesheet" href="css/style.css?v=0.50.6" />
   <link rel="stylesheet" href="css/inspector.css?v=0.50.6" />
   <style>
+    /* Dev-only branch marker: kept slim + flat (no gradient / heavy shadow) so it
+       states the branch without dominating the UI. See CLAUDE.md 'AI티 금지'. */
     .branch-warning-banner {
       position: fixed;
-      top: 12px;
+      top: 8px;
       left: 50%;
       z-index: 99999;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       max-width: calc(100vw - 24px);
-      padding: 10px 14px;
-      color: #ecfeff;
-      font-family: "IBM Plex Sans KR", "Noto Sans KR", sans-serif;
-      font-size: 15px;
-      font-weight: 800;
+      padding: 4px 8px 4px 10px;
+      color: #cbd5e1;
+      font-family: "IBM Plex Mono", "IBM Plex Sans KR", monospace;
+      font-size: 11px;
+      font-weight: 500;
       line-height: 1.25;
-      background: linear-gradient(135deg, #035d6f 0%, #0891b2 50%, #0f766e 100%);
-      border: 3px solid #67e8f9;
-      border-radius: 8px;
-      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42), 0 0 0 2px rgba(8, 145, 178, 0.45);
+      background: rgba(22, 27, 34, 0.92);
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
       transform: translateX(-50%);
+      backdrop-filter: blur(6px);
     }
+
+    .branch-warning-text > span:first-child { color: #58a6ff; font-weight: 600; }
+    .branch-warning-text > span:nth-child(2),
+    #branch-port { color: #8b8f96; }
 
     .branch-warning-text {
       display: flex;
@@ -50,23 +57,23 @@
     }
 
     .branch-warning-copy {
-      width: 30px;
-      height: 30px;
+      width: 20px;
+      height: 20px;
       flex: 0 0 auto;
-      color: #083344;
-      font-size: 16px;
-      font-weight: 900;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
       line-height: 1;
       cursor: pointer;
-      background: #cffafe;
-      border: 2px solid #ffffff;
-      border-radius: 999px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+      background: transparent;
+      border: 1px solid #30363d;
+      border-radius: 5px;
     }
+    .branch-warning-copy:hover { background: rgba(255, 255, 255, 0.06); }
 
     .branch-warning-copy:focus-visible {
-      outline: 3px solid #ffffff;
-      outline-offset: 3px;
+      outline: 2px solid #58a6ff;
+      outline-offset: 2px;
     }
 
     .branch-copy-status {
@@ -74,12 +81,12 @@
       top: calc(100% + 6px);
       right: 0;
       padding: 4px 8px;
-      color: #ecfeff;
-      font-size: 12px;
-      font-weight: 800;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 500;
       white-space: nowrap;
-      background: rgba(8, 51, 68, 0.96);
-      border: 1px solid #67e8f9;
+      background: rgba(13, 17, 23, 0.96);
+      border: 1px solid #30363d;
       border-radius: 6px;
       opacity: 0;
       transform: translateY(-3px);
@@ -94,8 +101,8 @@
 
     @media (max-width: 720px) {
       .branch-warning-banner {
-        top: 8px;
-        font-size: 13px;
+        top: 6px;
+        font-size: 10px;
       }
 
       .branch-warning-text {
@@ -297,13 +304,10 @@
     <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
   </div>
 
-  <div class="developer-credit" aria-hidden="true">
-    Developed by 박승연 | SMOE
-  </div>
-
-  <!-- ===== FOOTER: version + date ===== -->
+  <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.50.6</strong> · 2026-07-06
+    <span class="app-footer-main"><span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.50.6</strong> · 2026-07-06</span>
+    <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
