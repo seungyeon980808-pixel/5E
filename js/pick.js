@@ -5,20 +5,24 @@
 // LIVE rendered SVG element (getBBox), so this module keeps its own _svg
 // reference, assigned by initPick(svg) from initTools.
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.50.7";
-import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.50.7";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.50.8";
+import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.50.8";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=0.50.7";
+import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=0.50.8";
+// Labeler hit-test reuses the SAME multiline-aware text block the renderer trims
+// the leader to (render/annotations.js:renderLabeler), so the clickable label area
+// matches the visible glyphs exactly instead of a fixed one-glyph box.
+import { estimateLabelBlock } from "./render/labels.js?v=0.50.8";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
   bboxIntersects,
-} from "./geometry.js?v=0.50.7";
+} from "./geometry.js?v=0.50.8";
 import {
   OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
   POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES,
-} from "./object-types.js?v=0.50.7";
+} from "./object-types.js?v=0.50.8";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
@@ -270,14 +274,18 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     }
 
     if (o.type === "labeler") {
-      // Hit on the leader segment (p1→p2) OR inside the label box centered at p2.
+      // Hit on the leader segment (p1→p2) OR inside the label block centered at p2.
       const a = o.p1, b = o.p2;
       if (a && b) {
         if (segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin) return o.id;
+        // Label area = the SAME multiline-aware text block the renderer measures
+        // (estimateLabelBlock), centered on p2, grown by the click margin. The old
+        // fixed sz*0.7 box only covered ~one glyph, so clicking a multi-char or
+        // multi-line label anywhere but near the leader tip missed it entirely.
         const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
-        const half = sz * 0.7 + margin; // ~ one glyph box around the label point
-        if (p.x >= b.x - half && p.x <= b.x + half &&
-            p.y >= b.y - half && p.y <= b.y + half) return o.id;
+        const { hw, hh } = estimateLabelBlock(o.text, sz, sz * 0.25);
+        if (p.x >= b.x - hw - margin && p.x <= b.x + hw + margin &&
+            p.y >= b.y - hh - margin && p.y <= b.y + hh + margin) return o.id;
       }
       continue;
     }
@@ -332,10 +340,13 @@ function getObjectBBox(o) {
     return pendulumBBox(o);
   }
   if (o.type === "labeler") {
+    // Same label block as the hit-test (estimateLabelBlock) so marquee selection
+    // covers the full multiline label, not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
-    const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const minX = Math.min(a.x, b.x - sz), minY = Math.min(a.y, b.y - sz);
-    const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
+    const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
+    const { hw, hh } = estimateLabelBlock(o.text, sz, sz * 0.25);
+    const minX = Math.min(a.x, b.x - hw), minY = Math.min(a.y, b.y - hh);
+    const maxX = Math.max(a.x, b.x + hw), maxY = Math.max(a.y, b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph

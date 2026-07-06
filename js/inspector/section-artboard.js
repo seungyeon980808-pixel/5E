@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=0.50.7";
+import { makeSection } from "./widgets.js?v=0.50.8";
 
 export function buildArtboardSection(ctx) {
   const { state } = ctx;

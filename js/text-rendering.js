@@ -2,7 +2,7 @@ import {
   ROMAN_NUMERAL_FONT_FAMILY,
   splitRomanRuns,
   isEquationFontFamily,
-} from "./state.js?v=0.50.7";
+} from "./state.js?v=0.50.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

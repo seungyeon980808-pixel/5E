@@ -12,9 +12,9 @@ import {
   oDot,
   hatchVLine,
   oDashV,
-} from "./core.js?v=0.50.7";
-import { resolveFill } from "./fill.js?v=0.50.7";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.50.7";
+} from "./core.js?v=0.50.8";
+import { resolveFill } from "./fill.js?v=0.50.8";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.50.8";
 
 /* ===== OPTICS: branch-A box symbol (x/y/w/h/rotation), kind-dispatched =====
  *
