@@ -27,10 +27,12 @@ import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.50.6";
 import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.50.6";
 import { getSvgAsset } from "./svg-assets.js?v=0.50.6";
 import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.50.6";
+import { nextObjectId } from "./tools/id.js?v=0.50.6";
+import { setupFreeDraw } from "./tools/free-draw.js?v=0.50.6";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
-  simplifyRDP, bboxIntersects,
+  bboxIntersects,
 } from "./geometry.js?v=0.50.6";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
@@ -70,7 +72,8 @@ const TEXT_HALF_LEADING_PX = TEXT_EDITOR_PX * (TEXT_LINE_HEIGHT - 1) / 2;
 
 let _svg = null;
 let _state = null;
-let _idCounter = 0;
+// object-id generation moved to tools/id.js (nextObjectId) so extracted tool
+// pipelines share one counter and can never mint colliding ids.
 
 // Which circuit element / optics kind the next placement creates. Set via
 // armSymbol() when a left-panel symbol button is clicked; the placement pipelines
@@ -109,7 +112,7 @@ export function initTools(svg, state) {
   setupKeyboard();
   setupDrawing();
   setupClickDrawing();
-  setupFreeDraw();
+  setupFreeDraw(_svg, _state);
   setupNodePlacement();
   initTextEditing(_svg, _state); // text tool + click-to-edit + shortcuts + context menu
 
@@ -466,7 +469,7 @@ function setupDrawing() {
       if (isCommittable(shape)) {
         // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
         const snap = JSON.parse(JSON.stringify(s.objects));
-        shape.id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
+        shape.id = nextObjectId();
         shape.order = s.objects.length;
         shape.layerId = s.activeLayerId;
         s.objects.push(shape);
@@ -558,85 +561,7 @@ let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C"/"CIRCUIT") w
 let draftPoints = [];     // world-space vertices placed so far
 let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
 
-/* ===== FREE-DRAW TOOL (F): freehand drag → simplified+smoothed closed curve =====
- * Captures a freehand pointer drag as raw world points, previews them live as an
- * open curve, then on release simplifies them (Ramer–Douglas–Peucker) and stores
- * them as a CLOSED curve object — reusing the closed-curve fill/render/hit infra.
- * The Catmull-Rom closed renderer smooths the anchors AND the end→start wrap, so
- * the shape closes cleanly. Default fill = opaque WHITE, default no stroke
- * (borderless; main use = covering parts of an imported image). Fill/stroke stay
- * editable in the inspector; it exports, undoes in one step, and round-trips via
- * project-io exactly like any other curve. */
-let _fdActive = false;    // a free-draw drag is in progress
-let _fdRaw = null;        // raw captured world points during the drag
-const FD_MIN_STEP = 0.3;  // min world-mm movement to record a new raw point
-const FD_RDP_EPS  = 0.6;  // RDP simplification tolerance (world mm)
-
-function setupFreeDraw() {
-  _svg.addEventListener("pointerdown", (e) => {
-    if (e.button !== 0) return;
-    if (spaceHeld) return;
-    if (_state.get().activeTool !== "F") return;
-    e.preventDefault();
-    _fdActive = true;
-    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
-    _fdRaw = [p];
-    try { _svg.setPointerCapture(e.pointerId); } catch (_) {}
-  });
-
-  _svg.addEventListener("pointermove", (e) => {
-    if (!_fdActive) return;
-    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
-    const last = _fdRaw[_fdRaw.length - 1];
-    if (last && Math.hypot(p.x - last.x, p.y - last.y) < FD_MIN_STEP) return;
-    _fdRaw.push(p);
-    // Live preview: an OPEN curve with a thin visible stroke so the path is seen
-    // while drawing (the committed object is closed + borderless white).
-    _state.update((s) => {
-      s.draft = {
-        type: "curve", points: _fdRaw.slice(), closed: false, rotation: 0,
-        strokeLevel: 0, strokeWidth: 0.3, fillNone: true, dashLength: 0, dashGap: 0,
-      };
-    });
-  });
-
-  window.addEventListener("pointerup", (e) => {
-    if (!_fdActive) return;
-    _fdActive = false;
-    try { _svg.releasePointerCapture(e.pointerId); } catch (_) {}
-    const raw = _fdRaw || [];
-    _fdRaw = null;
-    const simplified = simplifyRDP(raw, FD_RDP_EPS);
-    _state.update((s) => {
-      s.draft = null;
-      if (simplified.length < 3) return; // need 3+ anchors for a closed fillable curve
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      const obj = {
-        id: `obj_${Date.now().toString(36)}_${++_idCounter}`,
-        type: "curve",
-        points: simplified,
-        closed: true,
-        rotation: 0,
-        strokeLevel: 0,
-        strokeWidth: 0,      // borderless by default (no stroke)
-        fillLevel: 255,      // opaque white fill
-        fillNone: false,
-        fillStyle: "solid",
-        dashLength: 0,
-        dashGap: 0,
-        locked: false,
-        positionLocked: false,
-        layerId: s.activeLayerId,
-        order: s.objects.length,
-      };
-      s.objects.push(obj);
-      s.undoStack.push(snap);
-      s.redoStack = [];
-      s.selectedIds = [obj.id];
-      s.activeTool = "V"; // auto-return to select right after drawing (DESIGN 4-3)
-    });
-  });
-}
+// FREE-DRAW TOOL (F) extracted to tools/free-draw.js (setupFreeDraw).
 
 /* ===== 6a: NODE (점) SINGLE-CLICK PLACEMENT =====
  * The node tool creates a default-size 점 on ONE click (atomic, not a drag).
@@ -690,7 +615,7 @@ function setupNodePlacement() {
     _state.update((s) => {
       const snap = JSON.parse(JSON.stringify(s.objects));
       const obj = {
-        id: `obj_${Date.now().toString(36)}_${++_idCounter}`,
+        id: nextObjectId(),
         type: "optics", kind: "node",
         x: place.x - sz / 2, y: place.y - sz / 2, w: sz, h: sz,
         rotation: 0, strokeLevel: 0, strokeWidth: 0.3,
@@ -1005,7 +930,7 @@ function commitClickShape(shape) {
   _state.update((s) => {
     // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
     const snap = JSON.parse(JSON.stringify(s.objects));
-    shape.id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
+    shape.id = nextObjectId();
     shape.order = s.objects.length;
     shape.layerId = s.activeLayerId;
     s.objects.push(shape);
