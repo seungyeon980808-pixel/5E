@@ -58,11 +58,11 @@ let centerLocked = false;
 export function setCenterLocked(val) { centerLocked = val; }
 
 /* ===== ZOOM LIMITS (easy-to-tune) =====================================
- * MAX_ZOOM        — maximum zoom-IN factor (readout ×). 50 = 5000%.
+ * MAX_ZOOM        — maximum zoom-IN factor (readout ×). 100 = 10000%.
  * MIN_ARTBOARD_VIEWPORT_RATIO — at maximum zoom-OUT the artboard must still
  *   cover at least this fraction of the viewport on BOTH axes. 0.5 = 50%.
  * ===================================================================== */
-const MAX_ZOOM = 50;
+const MAX_ZOOM = 100;
 const MIN_ARTBOARD_VIEWPORT_RATIO = 0.5;
 
 // Allowed range for the viewBox WIDTH (vb.w), given the current SVG box + artboard.
