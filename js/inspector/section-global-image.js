@@ -3,6 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
+import { startImageCompare } from "../image-compare.js?v=0.53.0";
+
 export function buildGlobalImageSection(ctx) {
   const { state, pushSnap, snapObjectsAlways } = ctx;
 
@@ -188,6 +190,21 @@ export function buildGlobalImageSection(ctx) {
         s2.redoStack = [];
       });
     });
+
+    // 비교: 트레이싱용 원본 이미지 vs 내가 그린 오브젝트를 좌우로 비교. 배경 이미지는
+    // 선택금지 상태라 캔버스에서 못 고르므로, 이 관리 패널에 버튼을 둔다(순수 표시 —
+    // state/undo/export에 흔적 없음). 영역 드래그+Enter 후 좌우 팝업.
+    const compareRow = document.createElement("div");
+    compareRow.className = "insp-row";
+    const compareBtn = document.createElement("button");
+    compareBtn.type = "button";
+    compareBtn.className = "modal-btn";
+    compareBtn.style.flex = "1";
+    compareBtn.textContent = "비교";
+    compareBtn.title = "영역을 지정해 원본 이미지와 내가 그린 그림을 좌우로 비교";
+    compareBtn.addEventListener("click", () => startImageCompare(state, img));
+    compareRow.appendChild(compareBtn);
+    bgBody.appendChild(compareRow);
   }
 
   function renderBgSection(s) {

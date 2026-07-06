@@ -117,7 +117,7 @@ function segValue(group, attr) {
  * 크기(mm)가 실시간 표시된다. Enter로 확정(화면 사각형 → world 좌표 → onDone(bounds)),
  * Esc/우클릭으로 취소(onDone(null)). world 1단위=1mm이므로 라벨은 mm.
  * 미리보기·영역지정(export) 둘 다 이 한 함수를 쓴다. */
-function runAreaCapture(svg, state, onDone, hintText) {
+export function runAreaCapture(svg, state, onDone, hintText) {
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
   overlay.style.cssText =
