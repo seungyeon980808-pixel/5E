@@ -5,6 +5,13 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
+import { getRenderScale } from "./viewport.js?v=0.51.0";
+// Guide click-to-select over the artboard: objects always win, so the guide is
+// only picked when NO object sits under the point (pick.js is the same oracle
+// tools.js selection uses). tools.js also owns the Space-pan tracker.
+import { pickSelectableObjectAtPoint } from "./pick.js?v=0.51.0";
+import { isSpaceHeld } from "./tools.js?v=0.51.0";
+
 let _svg    = null;
 let _state  = null;
 let _hCanvas = null; // horizontal ruler canvas (top)
@@ -224,10 +231,48 @@ export function initRuler(svg, state) {
   wireRuler(_hCanvas, "x");
   wireRuler(_vCanvas, "y");
 
+  // World-coordinate guide proximity: the visible line over the artboard is
+  // pointer-transparent (scene.js), so DOM target checks alone can never pick
+  // it there. Distance is axis-aligned (a guide is an infinite h/v line).
+  const findGuideNearWorldPoint = (clientX, clientY) => {
+    const p = worldPoint(clientX, clientY);
+    if (!p) return null;
+    const tol = GUIDE_HIT_PX / (getRenderScale() || 1);
+    let nearest = null;
+    let nearestDistance = tol;
+    for (const guide of state.get().guides || []) {
+      const distance = guide.axis === "x"
+        ? Math.abs(p.x - guide.position)
+        : Math.abs(p.y - guide.position);
+      if (distance <= nearestDistance) {
+        nearest = guide;
+        nearestDistance = distance;
+      }
+    }
+    return nearest;
+  };
+
   svg.addEventListener("mousedown", (e) => {
     const guideId = e.target && e.target.dataset && e.target.dataset.guideId;
     if (e.button !== 0) return;
     if (!guideId) {
+      // No margin drag-zone under the cursor. Fall back to world-coordinate
+      // proximity so the guide is selectable/draggable ANYWHERE along the line
+      // (over the artboard included) — but only when the select tool is armed,
+      // Space-pan isn't held, and NO object sits under the point (objects win,
+      // preserving the original "guides never steal object clicks" intent).
+      if (state.get().activeTool === "V" && !isSpaceHeld()) {
+        const near = findGuideNearWorldPoint(e.clientX, e.clientY);
+        if (near) {
+          const p = worldPoint(e.clientX, e.clientY);
+          if (p && !pickSelectableObjectAtPoint(state.get(), p)) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectAndStartDrag(near.id);
+            return;
+          }
+        }
+      }
       if (state.get().selectedGuideId) {
         state.update((s) => { s.selectedGuideId = null; });
       }
