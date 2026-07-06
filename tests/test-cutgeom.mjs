@@ -66,23 +66,30 @@ console.log("칼 (knife)");
   check("line 칼 → 2 line", r && r.length === 2 && r.every(p=>p.type==="line"));
 }
 
-console.log("네이티브 도형 (원/상자/삼각형) — #1: 자동 닫힘 없이 열린 호로");
+console.log("네이티브 도형 (원/상자/삼각형) — 채운 도형=닫힌 채움 두 조각, 윤곽선=열린 호");
 {
-  // 원(ellipse) 가로 절단 → 열린 조각 2개
+  // 채운 원(ellipse, fillNone:false) 가로 절단 → 닫힌 채움 조각 2개 (색 유지)
   const el = { id:'e', type:'ellipse', x:-20, y:-20, w:40, h:40, rotation:0, strokeLevel:0, strokeWidth:0.4, fillLevel:255, fillNone:false, fillStyle:'solid' };
   const r = cutKnife(el, { x:-30, y:0 }, { x:30, y:0 });
-  check("원 → 2조각", r && r.length === 2, `got ${r && r.length}`);
-  check("조각은 '열린' polyline", r && r.every(p => p.type === 'polyline' && p.closed === false), JSON.stringify(r && r.map(p=>p.type+':'+p.closed)));
+  check("채운 원 → 2조각", r && r.length === 2, `got ${r && r.length}`);
+  check("조각은 '닫힌' polyline(채움 유지)", r && r.every(p => p.type === 'polyline' && p.closed === true), JSON.stringify(r && r.map(p=>p.type+':'+p.closed)));
   check("도형 필드(x/w) 제거", r && r.every(p => !('w' in p) && !('x' in p)));
-  check("열린 조각은 fillNone=true(면 채움 없음)", r && r.every(p => p.fillNone === true));
-  check("회전 가능 형태(points 배열 + rotation:0)", r && r.every(p => Array.isArray(p.points) && p.points.length >= 2 && p.rotation === 0));
+  check("채운 조각은 fillNone 아님(면 채움 유지)", r && r.every(p => !p.fillNone));
+  check("회전 가능 형태(points 배열 + rotation:0)", r && r.every(p => Array.isArray(p.points) && p.points.length >= 3 && p.rotation === 0));
 }
 {
-  // 상자(rect) 세로 절단 → 2 열린 조각
+  // 채운 상자(rect) 세로 절단 → 닫힌 채움 조각 2개
   const rc = { id:'r', type:'rect', x:-15, y:-10, w:30, h:20, rotation:0, strokeLevel:0, strokeWidth:0.4, fillLevel:255, fillNone:false, fillStyle:'solid' };
   const r = cutKnife(rc, { x:0, y:-20 }, { x:0, y:20 });
-  check("상자 → 2조각", r && r.length === 2, `got ${r && r.length}`);
-  check("조각 열린 polyline", r && r.every(p => p.type === 'polyline' && p.closed === false));
+  check("채운 상자 → 2조각", r && r.length === 2, `got ${r && r.length}`);
+  check("조각 닫힌 polyline(채움 유지)", r && r.every(p => p.type === 'polyline' && p.closed === true && !p.fillNone));
+}
+{
+  // 윤곽선만(fillNone:true)인 닫힌 원 → 예전처럼 '열린' 호 2개(채움 없음). 회귀 방지.
+  const ring = { id:'e2', type:'ellipse', x:-20, y:-20, w:40, h:40, rotation:0, strokeLevel:3, strokeWidth:0.4, fillLevel:255, fillNone:true, fillStyle:'solid' };
+  const r = cutKnife(ring, { x:-30, y:0 }, { x:30, y:0 });
+  check("윤곽 원 → 2조각", r && r.length === 2, `got ${r && r.length}`);
+  check("윤곽 조각은 '열린' polyline(fillNone=true)", r && r.every(p => p.type === 'polyline' && p.closed === false && p.fillNone === true), JSON.stringify(r && r.map(p=>p.closed+'/'+p.fillNone)));
 }
 {
   // 원을 안 지나가는 칼 → null

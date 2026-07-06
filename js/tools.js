@@ -208,7 +208,7 @@ function setupKeyboard() {
     else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
     else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
     else if (key === "c") setActiveTool("C");
-    else if (key === "e") setActiveTool("CUT");           // 자르기(가위/칼) — 도구 안 서브모드는 1/2 (cut-tool.js)
+    else if (key === "e") setActiveTool("CUT");           // 자르기(가위) — 자유곡선/Shift 직선/Shift+Ctrl 각도스냅 (cut-tool.js)
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
     else if (key === "t") setActiveTool("T");
     else if (key === "f") {
