@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=0.50.8";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.50.8";
-import { renderText } from "./labels.js?v=0.50.8";
-import { makeFillPattern } from "./fill.js?v=0.50.8";
+import { getZoom, getRenderScale } from "../viewport.js?v=0.50.9";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.50.9";
+import { renderText } from "./labels.js?v=0.50.9";
+import { makeFillPattern } from "./fill.js?v=0.50.9";
 import {
   renderRect,
   renderEllipse,
@@ -20,17 +20,17 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=0.50.8";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.50.8";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=0.50.8";
-import { renderCircuit } from "./circuit.js?v=0.50.8";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.50.8";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.50.8";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.50.8";
-import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=0.50.8";
-import { resolveObjectStyle } from "../style-mode.js?v=0.50.8";
-import { renderFormula } from "../formula.js?v=0.50.8";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.50.8";
+} from "./shapes.js?v=0.50.9";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.50.9";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=0.50.9";
+import { renderCircuit } from "./circuit.js?v=0.50.9";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.50.9";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.50.9";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.50.9";
+import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=0.50.9";
+import { resolveObjectStyle } from "../style-mode.js?v=0.50.9";
+import { renderFormula } from "../formula.js?v=0.50.9";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.50.9";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
