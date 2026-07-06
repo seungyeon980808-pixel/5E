@@ -48,13 +48,17 @@ def exam_label(month: int) -> str:
 
 
 def load_vocab(path: Path):
-    """어휘집 로드 → (전체 태그 set, 카테고리 리스트). 파일이 없으면 검증 생략."""
+    """어휘집 로드 → (전체 태그 set, tag→파트 map, 파트 리스트, 카테고리 리스트).
+    카테고리 name = 파트. 파일이 없으면 태그 검증·파트 도출을 생략한다."""
     if not path.is_file():
-        return None, []
+        return None, {}, [], []
     data = json.loads(path.read_text(encoding="utf-8"))
     categories = data.get("categories", [])
     all_tags = {t for c in categories for t in c.get("tags", [])}
-    return all_tags, [{"name": c["name"], "tags": c["tags"]} for c in categories]
+    tag_to_part = {t: c["name"] for c in categories for t in c.get("tags", [])}
+    # parts 순서: 명시된 parts 우선, 없으면 카테고리 등장 순
+    parts = data.get("parts") or [c["name"] for c in categories]
+    return all_tags, tag_to_part, parts, [{"name": c["name"], "tags": c["tags"]} for c in categories]
 
 
 def parse_tag_cell(cell) -> list:
@@ -63,23 +67,34 @@ def parse_tag_cell(cell) -> list:
     return [t for t in TAG_SPLIT_RE.split(str(cell).strip()) if t]
 
 
-def load_tags_xlsx(path: Path) -> dict:
+# 태그 시트 열 규약: A=id, B=tags(쉼표 구분), C=part(선택).
+#  C열은 선택 — 비우면 태그에서 파트를 자동 도출한다. 여러 파트는 쉼표로.
+def _ingest_tag_row(rows_out_tags, rows_out_parts, key, tag_cell, part_cell):
+    rows_out_tags[key] = parse_tag_cell(tag_cell)
+    parts = parse_tag_cell(part_cell)
+    if parts:
+        rows_out_parts[key] = parts
+
+
+def load_tags_xlsx(path: Path):
     from openpyxl import load_workbook
     wb = load_workbook(path, read_only=True, data_only=True)
     ws = wb.active
-    tags_by_id = {}
+    tags_by_id, parts_by_id = {}, {}
     for row in ws.iter_rows(values_only=True):
         if not row or row[0] is None:
             continue
         key = str(row[0]).strip()
         if not key or key.lower() == "id":  # 헤더 행
             continue
-        tags_by_id[key] = parse_tag_cell(row[1] if len(row) > 1 else None)
+        _ingest_tag_row(tags_by_id, parts_by_id, key,
+                        row[1] if len(row) > 1 else None,
+                        row[2] if len(row) > 2 else None)
     wb.close()
-    return tags_by_id
+    return tags_by_id, parts_by_id
 
 
-def load_tags_csv(path: Path) -> dict:
+def load_tags_csv(path: Path):
     import csv
     for enc in ("utf-8-sig", "cp949"):
         try:
@@ -90,12 +105,14 @@ def load_tags_csv(path: Path) -> dict:
             continue
     else:
         raise SystemExit(f"오류: {path} 인코딩을 읽을 수 없습니다 (utf-8/cp949 아님)")
-    tags_by_id = {}
+    tags_by_id, parts_by_id = {}, {}
     for row in rows:
         if not row or not row[0].strip() or row[0].strip().lower() == "id":
             continue
-        tags_by_id[row[0].strip()] = parse_tag_cell(",".join(row[1:]))
-    return tags_by_id
+        _ingest_tag_row(tags_by_id, parts_by_id, row[0].strip(),
+                        row[1] if len(row) > 1 else None,
+                        row[2] if len(row) > 2 else None)
+    return tags_by_id, parts_by_id
 
 
 def main():
@@ -117,14 +134,28 @@ def main():
             if candidate.is_file():
                 tags_path = candidate
                 break
-    tags_by_id = {}
+    tags_by_id, explicit_parts_by_id = {}, {}
     if tags_path and tags_path.is_file():
         if tags_path.suffix.lower() == ".xlsx":
-            tags_by_id = load_tags_xlsx(tags_path)
+            tags_by_id, explicit_parts_by_id = load_tags_xlsx(tags_path)
         else:
-            tags_by_id = load_tags_csv(tags_path)
+            tags_by_id, explicit_parts_by_id = load_tags_csv(tags_path)
 
-    vocab_set, vocab_categories = load_vocab(args.vocab)
+    vocab_set, tag_to_part, vocab_parts, vocab_categories = load_vocab(args.vocab)
+
+    def parts_for(item_id, tags):
+        """문항 파트: 엑셀 part열이 있으면 그것, 없으면 태그에서 자동 도출 (어휘집 순서 유지)."""
+        explicit = explicit_parts_by_id.get(item_id)
+        derived = explicit if explicit else [tag_to_part[t] for t in tags if t in tag_to_part]
+        seen, ordered = set(), []
+        for p in derived:
+            if p not in seen:
+                seen.add(p)
+                ordered.append(p)
+        # vocab_parts 순서대로 정렬 (드롭다운 순서와 일치)
+        if vocab_parts:
+            ordered.sort(key=lambda p: vocab_parts.index(p) if p in vocab_parts else 999)
+        return ordered
 
     # ----- 이미지 스캔 -----
     items = []
@@ -171,14 +202,20 @@ def main():
             "no": no,
             "title": f"{year}학년도 {exam} {subject_label} {no}번",
             "tags": tags,
+            "parts": parts_for(item_id, tags),
         })
 
     items.sort(key=lambda x: (x["subject"], -x["year"], x["month"], x["no"]))
+
+    # 드롭다운용 축 값: 파트는 어휘집 순서, 년도는 내림차순
+    years = sorted({it["year"] for it in items}, reverse=True)
 
     manifest = {
         "version": "exam-library-v1",
         "generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "count": len(items),
+        "parts": vocab_parts,
+        "years": years,
         "tagVocab": vocab_categories,
         "items": items,
     }
@@ -187,8 +224,10 @@ def main():
 
     # ----- 보고 -----
     tagged = sum(1 for it in items if it["tags"])
+    parted = sum(1 for it in items if it["parts"])
     print(f"manifest.json 생성 완료 → {args.out}")
-    print(f"  문항 {len(items)}개 (태그 있음 {tagged} / 없음 {len(items) - tagged})")
+    print(f"  문항 {len(items)}개 (태그 있음 {tagged} / 없음 {len(items) - tagged}"
+          f" · 파트 분류됨 {parted})")
     if tags_path and tags_path.is_file():
         orphan_ids = sorted(set(tags_by_id) - set(seen_ids))
         print(f"  태그 시트: {tags_path.name} ({len(tags_by_id)}행)")

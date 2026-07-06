@@ -43,12 +43,26 @@ function prepareItems(items) {
   }
 }
 
-function searchItems(query) {
+// 과목 드롭다운 값(물리1/물리2/기타) → item.subject 코드 매칭
+function subjectMatches(it, subj) {
+  if (subj === "물리1") return it.subject === "p1";
+  if (subj === "물리2") return it.subject === "p2";
+  if (subj === "기타") return it.subject !== "p1" && it.subject !== "p2";
+  return true; // "" = 전체
+}
+
+/* 세 검색 방식(코드입력·드롭다운·태깅)을 전부 AND로 결합.
+ * filters = { subject, part, year } (빈 문자열이면 해당 축 무시). */
+function searchItems(query, filters) {
   const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
   const tags = [...selectedTags];
+  const { subject, part, year } = filters;
   return manifest.items.filter((it) =>
     tokens.every((t) => it._hay.includes(t) || it._hayNs.includes(t)) &&
-    tags.every((t) => (it.tags || []).includes(t)));
+    tags.every((t) => (it.tags || []).includes(t)) &&
+    (!subject || subjectMatches(it, subject)) &&
+    (!part || (it.parts || []).includes(part)) &&
+    (!year || String(it.year) === year));
 }
 
 /* ===== modal ===== */
@@ -61,7 +75,22 @@ function buildModal() {
       <h2 class="modal-title" id="examlib-title">기출 문항 검색</h2>
       <div class="examlib-search-row">
         <input id="examlib-query" type="search" autocomplete="off"
-               placeholder="검색 — 예: 2026 수능 1  /  용수철 충돌" />
+               placeholder="코드·문항번호 검색 — 예: 2026 수능 1  /  p1 2025 11" />
+      </div>
+      <div class="examlib-filter-row">
+        <select id="examlib-subject" aria-label="과목 선택">
+          <option value="">과목 전체</option>
+          <option value="물리1">물리1</option>
+          <option value="물리2">물리2</option>
+          <option value="기타">기타</option>
+        </select>
+        <select id="examlib-part" aria-label="파트 선택">
+          <option value="">파트 전체</option>
+        </select>
+        <select id="examlib-year" aria-label="년도 선택">
+          <option value="">년도 전체</option>
+        </select>
+        <button id="examlib-reset" type="button" class="examlib-reset">필터 초기화</button>
       </div>
       <div id="examlib-tagbar" class="examlib-tagbar" hidden></div>
       <p id="examlib-status" class="objectify-status" role="status"></p>
@@ -80,15 +109,37 @@ export function initExamLibrary(state) {
 
   const overlay = buildModal();
   const queryInput = overlay.querySelector("#examlib-query");
+  const subjectSelect = overlay.querySelector("#examlib-subject");
+  const partSelect = overlay.querySelector("#examlib-part");
+  const yearSelect = overlay.querySelector("#examlib-year");
+  const resetButton = overlay.querySelector("#examlib-reset");
   const tagbar = overlay.querySelector("#examlib-tagbar");
   const status = overlay.querySelector("#examlib-status");
   const grid = overlay.querySelector("#examlib-grid");
+
+  const filterValues = () => ({
+    subject: subjectSelect.value,
+    part: partSelect.value,
+    year: yearSelect.value,
+  });
 
   const setStatus = (msg, isError = false) => {
     status.textContent = msg;
     status.classList.toggle("is-error", isError);
   };
   const close = () => { overlay.hidden = true; };
+
+  /* ----- 드롭다운 옵션 채우기 (파트·년도는 manifest에서) ----- */
+  function populateFilters() {
+    partSelect.length = 1;  // "파트 전체"만 남기고 재생성
+    for (const p of manifest.parts || []) {
+      partSelect.add(new Option(p, p));
+    }
+    yearSelect.length = 1;
+    for (const y of manifest.years || []) {
+      yearSelect.add(new Option(`${y}학년도`, String(y)));
+    }
+  }
 
   /* ----- 태그 칩 (manifest.tagVocab 기반, 카테고리별) ----- */
   function renderTagbar() {
@@ -155,7 +206,17 @@ export function initExamLibrary(state) {
 
   function runSearch() {
     if (!manifest) return;
-    renderResults(searchItems(queryInput.value));
+    renderResults(searchItems(queryInput.value, filterValues()));
+  }
+
+  function resetFilters() {
+    queryInput.value = "";
+    subjectSelect.value = "";
+    partSelect.value = "";
+    yearSelect.value = "";
+    selectedTags.clear();
+    tagbar.querySelectorAll(".examlib-chip.is-on").forEach((c) => c.classList.remove("is-on"));
+    runSearch();
   }
 
   /* ----- [이미지로 삽입]: fetch → dataURL → 기존 이미지 객체 삽입 경로 ----- */
@@ -215,6 +276,7 @@ export function initExamLibrary(state) {
       manifest = data;
       prepareItems(manifest.items);
       byId = new Map(manifest.items.map((it) => [it.id, it]));
+      populateFilters();
       renderTagbar();
       runSearch();
     } catch (e) {
@@ -237,4 +299,8 @@ export function initExamLibrary(state) {
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });
   queryInput.addEventListener("input", runSearch);
+  for (const sel of [subjectSelect, partSelect, yearSelect]) {
+    sel.addEventListener("change", runSearch);
+  }
+  resetButton.addEventListener("click", resetFilters);
 }
