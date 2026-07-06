@@ -6,14 +6,16 @@
 // reference, assigned by initPick(svg) from initTools.
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=0.51.0";
-import { DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.51.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "./state.js?v=0.51.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=0.51.0";
-// Labeler hit-test reuses the SAME multiline-aware text block the renderer trims
-// the leader to (render/annotations.js:renderLabeler), so the clickable label area
-// matches the visible glyphs exactly instead of a fixed one-glyph box.
+// Labeler hit-test reuses the SAME label block the renderer trims the leader to
+// (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
+// measureFormula for formula labels (확정 항목 ①) — so the clickable label area
+// always matches the visible glyphs instead of a fixed one-glyph box.
 import { estimateLabelBlock } from "./render/labels.js?v=0.51.0";
+import { measureFormula } from "./formula.js?v=0.51.0";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
@@ -34,6 +36,24 @@ function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === tru
 // A closed curve follows the SAME pattern: branch-B storage (anchor array) +
 // branch-A (face) interaction. The gap is closed with a smooth curved span.
 function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true; }
+
+// Labeler label-block half extents (world mm), mirroring renderLabeler EXACTLY:
+// formula labels use the measured formula box, plain labels the multiline estimate.
+// Shared by hitTest and getObjectBBox so click and marquee can never disagree.
+function labelerBlockHalf(o) {
+  const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
+  const pad = sz * 0.25;
+  const src = o.contentMode === "formula" ? (o.source || o.rawSource || "") : "";
+  if (src) {
+    const m = measureFormula(src, sz, {
+      family: o.fontFamily || DEFAULT_TEXT_FONT,
+      weight: o.fontWeight || "normal",
+      style: o.italic === true ? "italic" : "normal",
+    });
+    return { hw: m.w / 2 + pad, hh: m.h / 2 + pad };
+  }
+  return estimateLabelBlock(o.text, sz, pad);
+}
 
 let _svg = null;
 export function initPick(svg) { _svg = svg; }
@@ -278,12 +298,11 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       const a = o.p1, b = o.p2;
       if (a && b) {
         if (segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin) return o.id;
-        // Label area = the SAME multiline-aware text block the renderer measures
-        // (estimateLabelBlock), centered on p2, grown by the click margin. The old
-        // fixed sz*0.7 box only covered ~one glyph, so clicking a multi-char or
-        // multi-line label anywhere but near the leader tip missed it entirely.
-        const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
-        const { hw, hh } = estimateLabelBlock(o.text, sz, sz * 0.25);
+        // Label area = the SAME block the renderer measures (labelerBlockHalf:
+        // formula box or multiline text estimate), centered on p2, grown by the
+        // click margin. The old fixed sz*0.7 box only covered ~one glyph, so
+        // clicking a longer label anywhere but near the leader tip missed it.
+        const { hw, hh } = labelerBlockHalf(o);
         if (p.x >= b.x - hw - margin && p.x <= b.x + hw + margin &&
             p.y >= b.y - hh - margin && p.y <= b.y + hh + margin) return o.id;
       }
@@ -340,11 +359,10 @@ function getObjectBBox(o) {
     return pendulumBBox(o);
   }
   if (o.type === "labeler") {
-    // Same label block as the hit-test (estimateLabelBlock) so marquee selection
-    // covers the full multiline label, not just a one-glyph pad around p2.
+    // Same label block as the hit-test (labelerBlockHalf) so marquee selection
+    // covers the full label (text or formula), not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
-    const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
-    const { hw, hh } = estimateLabelBlock(o.text, sz, sz * 0.25);
+    const { hw, hh } = labelerBlockHalf(o);
     const minX = Math.min(a.x, b.x - hw), minY = Math.min(a.y, b.y - hh);
     const maxX = Math.max(a.x, b.x + hw), maxY = Math.max(a.y, b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };

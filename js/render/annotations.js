@@ -8,6 +8,10 @@ import {
   applyObjectLabelFont,
 } from "./core.js?v=0.51.0";
 import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=0.51.0";
+// Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
+// (contentMode:"formula") renders through the SAME projection formula objects use,
+// so the label, the editor preview, and SVG/PNG export can never diverge.
+import { measureFormula, renderFormula } from "../formula.js?v=0.51.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -240,7 +244,18 @@ function renderLabeler(obj) {
   const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
   // Small visual gap (~2-4px equivalent) between the leader tip and the text edge.
   const pad = size * 0.25;
-  const { hw, hh } = estimateLabelBlock(obj.text, size, pad);
+  // Formula label: EXACT measured box (measureFormula); plain text: the same
+  // over-estimating multiline block the plain renderer has always used.
+  const fmSource = obj.contentMode === "formula" ? (obj.source || obj.rawSource || "") : "";
+  const fmFont = fmSource ? {
+    family: obj.fontFamily || DEFAULT_TEXT_FONT,
+    weight: obj.fontWeight || "normal",
+    style: obj.italic === true ? "italic" : "normal",
+  } : null;
+  const fm = fmSource ? measureFormula(fmSource, size, fmFont) : null;
+  const { hw, hh } = fm
+    ? { hw: fm.w / 2 + pad, hh: fm.h / 2 + pad }
+    : estimateLabelBlock(obj.text, size, pad);
   // Distance from b back along the leader to where it crosses the padded block:
   // the nearer of the vertical/horizontal faces (ray-vs-centered-box).
   const tx = Math.abs(ux) > 1e-6 ? hw / Math.abs(ux) : Infinity;
@@ -262,13 +277,27 @@ function renderLabeler(obj) {
     g.appendChild(line);
   }
 
-  // Upright (non-rotating) callout text at p2. The labeler is an editable text
-  // object: its default style is Dotum-first NORMAL text (not 물리량 italic). A
-  // per-object fontFamily (set in the inspector 글씨체 control) overrides the
-  // default; if absent, fall back to the system Dotum stack.
-  // 팔레트로 삽입한 구간(Times 정체)·물리량(Times 이탤릭) styled run이 있으면 런 단위로
-  // 렌더한다(편집기 미리보기와 일치). 없으면 기존 일반 텍스트(구간 I/II/III 세리프 자동)
-  // 경로를 그대로 사용해 예전 라벨과 100% 동일하게 그린다.
+  // Upright (non-rotating) callout at p2.
+  // ① 수식 라벨: renderFormula(수식 객체와 동일 투영)를 p2 중심에 배치. renderFormula의
+  //    앵커는 top-left이므로 측정 폭/높이의 절반만큼 되끌어 중앙 정렬한다. id는 넘기지
+  //    않는다(중첩 data-id가 픽/QA의 hit-twin 혼동을 다시 만들지 않도록).
+  if (fm) {
+    const fmEl = renderFormula({
+      x: b.x - fm.w / 2,
+      y: b.y - fm.h / 2,
+      source: fmSource,
+      fontSize: size,
+      fontFamily: fmFont.family,
+      fontWeight: fmFont.weight,
+      italic: obj.italic === true,
+    });
+    if (fmEl) g.appendChild(fmEl);
+    return g;
+  }
+  // ② 일반 텍스트 라벨(기존 경로 그대로): default style is Dotum-first NORMAL text.
+  // A per-object fontFamily (dialog 글씨체 control) overrides the default.
+  // 팔레트로 삽입한 구간(Times 정체) styled run이 있으면 런 단위로 렌더한다(편집기
+  // 미리보기와 일치). 없으면 일반 텍스트(구간 I/II/III 세리프 자동) 경로 그대로.
   const styled = hasStyledTextRuns(obj);
   const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
     fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,

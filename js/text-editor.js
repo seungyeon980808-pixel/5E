@@ -81,9 +81,9 @@ function _closeSmallEditor() {
 // object type + field (and title) differ. The labeler edits obj.text; the angle
 // arc edits obj.label (its θ symbol → any text/formula-like string).
 // 라벨러 입력기 = 텍스트 입력기(_openUnifiedTextEditor)와 "완전히 동일한" 편집 UI를
-// 사용한다. 커밋 대상만 다르다(라벨러 객체의 text/textRuns/fontFamily/labelSize).
-// 라벨은 수식이 아니므로 plainOnly로 열어 수식 패널을 숨기고, 심볼 팔레트(구간 I/II/III·
-// 물리량 m/v/F/a/t)는 텍스트 도구와 똑같이 styled run으로 삽입된다.
+// 사용한다(수식 패널·LaTeX 도움말 포함 — 확정 항목 ① 재확인, 2026-07-06). 커밋
+// 대상만 다르다: 수식이면 라벨러 객체의 contentMode/source/rawSource, 일반 텍스트면
+// text/textRuns — 어느 쪽이든 fontFamily/labelSize는 함께 갱신된다.
 export function openLabelerTextEditor(objId) {
   if (_textEditor) _commitText();
   const s = _state.get();
@@ -91,22 +91,24 @@ export function openLabelerTextEditor(objId) {
   if (!o || o.type !== "labeler") return;
   const size = o.labelSize || DEFAULT_TEXT_SIZE_MM;
   const anchor = o.p2 || o.p1 || { x: o.x || 0, y: o.y || 0 };
+  const isFormula = o.contentMode === "formula" && !!(o.rawSource || o.source);
+  const prefill = isFormula ? (o.rawSource || o.source) : (o.text || "");
   _openUnifiedTextEditor({
     x: anchor.x, y: anchor.y,
-    text: o.text || "",
-    source: o.text || "",
-    contentMode: "plain",
+    text: prefill,
+    source: o.rawSource || o.source || o.text || "",
+    contentMode: isFormula ? "formula" : "plain",
     fontSize: size,
     fontFamily: o.fontFamily || DEFAULT_TEXT_FONT,
     fontWeight: o.fontWeight || "normal",
     fontStyle: o.italic === true ? "italic" : "normal",
     italic: o.italic === true,
-    textRuns: normalizeTextRuns(o),
+    textRuns: isFormula ? undefined : normalizeTextRuns(o),
     underline: false, strikeout: false,
     rotation: o.rotation ?? 0,
     editingId: o.id,
     editingType: "labeler",
-  }, 0, 0, o.text || "", { plainOnly: true, title: "라벨 텍스트 입력" });
+  }, 0, 0, prefill, { title: "라벨 텍스트 입력" });
 }
 export function openAngleArcLabelEditor(objId) {
   _openSmallTextEditor(objId, { type: "anglearc", field: "label", title: "각도 라벨/기호 입력", selectAll: true });
@@ -1343,7 +1345,10 @@ function _commitText() {
   const val = dt ? (dt.text ?? _textEditor.value) : _textEditor.value;
   const rawSource = String(val || "").trim();
   const isLabeler = dt && dt.editingType === "labeler";
-  const formulaMode = !isLabeler && dt && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
+  // 라벨러도 텍스트 도구와 동일하게 수식으로 승격될 수 있다(확정 항목 ①):
+  // 수식이면 라벨러 객체에 contentMode/source/rawSource로 저장되고
+  // renderLabeler가 renderFormula로 그린다.
+  const formulaMode = dt && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
   const normalizedSource = normalizeFormulaSource(rawSource);
   const fromTool = _state.get().activeTool === "T"; // new-text path
   _removeTextEditor();
@@ -1352,15 +1357,27 @@ function _commitText() {
   _state.update((s) => {
     if (isLabeler) {
       // 라벨러 커밋 대상: 기존 라벨러 객체(항상 editingId 존재, 새로 만들지 않음).
-      // text(호환용) + textRuns(styled 심볼 보존) + fontFamily + labelSize(mm) 갱신.
+      // 수식 → contentMode/source/rawSource (+ text에 원문 보관: 구버전 로더 호환),
+      // 일반 → text + textRuns(styled 심볼 보존). fontFamily/labelSize(mm) 공통 갱신.
       // 빈 문자열이면 원본 유지(삭제보다 복원 선호). 한 번의 undo 엔트리.
       const o = s.objects.find((x) => x.id === dt.editingId);
       if (o && o.type === "labeler" && rawSource) {
         const snap = JSON.parse(JSON.stringify(s.objects));
         s.undoStack.push(snap);
         s.redoStack = [];
-        o.text = val;
-        o.textRuns = normalizeTextRuns(dt);
+        if (formulaMode) {
+          o.contentMode = "formula";
+          o.source = normalizedSource;
+          o.rawSource = rawSource;
+          o.text = rawSource;      // 구버전 로더는 이 원문을 일반 텍스트로 그림
+          delete o.textRuns;
+        } else {
+          delete o.contentMode;
+          delete o.source;
+          delete o.rawSource;
+          o.text = val;
+          o.textRuns = normalizeTextRuns(dt);
+        }
         o.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
         o.labelSize = dt.fontSize;
         o.fontWeight = dt.fontWeight || "normal";
