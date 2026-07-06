@@ -95,7 +95,7 @@
   --c-border: var(--border);
 
   --panel-left-w: 130px;
-  --panel-right-w: 160px;
+  --panel-right-w: 215px;
   --footer-h: 28px;
 }
 
@@ -285,33 +285,31 @@ body {
 }
 .tool-btn:hover { background: var(--btn-tool-hover); }
 
+/* icon/letter sits DIRECTLY in the button — no inner keycap box (de-boxed) */
 .tool-btn kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: var(--bg-panel-hover);
-  border: 1px solid var(--c-border);
-  border-radius: 4px;
-  padding: 3px;
-  min-width: 24px;
-  text-align: center;
+  color: var(--text-label);
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
+.tool-btn:hover kbd { color: var(--text-primary); }
 /* shape icons inherit the kbd text color so they highlight with active state */
 .tool-btn kbd .tool-ico {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 .tool-btn kbd .tool-letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  font-size: 13px;
+  width: 18px;
+  height: 18px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1;
 }
@@ -324,8 +322,6 @@ body {
 }
 .tool-btn.is-active kbd {
   color: #fff;
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
 }
 
 /* ===== CENTER CANVAS ===== */
@@ -339,18 +335,26 @@ body {
 .canvas-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 6px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--c-border);
   background: var(--bg-panel);
+}
+/* vertical group separator between toolbar clusters (brand | history | menus) */
+.tb-sep {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--c-border);
 }
 
 .app-brand {
   display: inline-flex;
   align-items: center;
   height: 28px;
-  padding: 0 8px;
-  border-right: 1px solid var(--c-border);
+  padding: 0 8px 0 0;
   color: var(--accent-2);
   font-size: 15px;
   font-weight: 700;
