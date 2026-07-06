@@ -1,6 +1,6 @@
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=0.51.1";
+import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=0.52.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg"]);
 let _idCounter = 0;
