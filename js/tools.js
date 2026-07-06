@@ -192,7 +192,7 @@ function hasFlippableTriangleSelected() {
   });
 }
 
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / E(자르기) / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
@@ -207,6 +207,7 @@ function setupKeyboard() {
     else if (key === "y") setActiveTool("Y");
     else if (key === "l") setActiveTool("L");
     else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
+    else if (key === "d" && !e.shiftKey) setActiveTool("F"); // 자유 그리기 (Draw) — 도구코드는 "F"; Shift+D는 좌표 디버그 오버레이(main.js) 몫
     else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
     else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
     else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호

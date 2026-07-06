@@ -250,10 +250,12 @@ if (_APP_DEBUG_ENABLED) {
     zoom: getZoom,
   };
 
-  /* ----- COORD DEBUG OVERLAY (press "d" to toggle) -----
+  /* ----- COORD DEBUG OVERLAY (press Shift+D to toggle) -----
    * Proves pointer?뭮orld mapping live. Compares the app's screenToWorld with a
    * fresh getScreenCTM round-trip; "?screen" is how far the mapped point lands
-   * from the real pointer pixel ??must read ~0 at any zoom/pan. */
+   * from the real pointer pixel ??must read ~0 at any zoom/pan.
+   * NOTE: moved from bare "d" to Shift+D so the new 자유 그리기(D) tool shortcut
+   * (tools.js setupKeyboard) owns the bare "d" key without toggling this dev overlay. */
   (function initCoordDebug() {
     const box = document.createElement("div");
     box.id = "coord-debug";
@@ -267,7 +269,7 @@ if (_APP_DEBUG_ENABLED) {
     window.addEventListener("keydown", (e) => {
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      if (e.key.toLowerCase() === "d" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key.toLowerCase() === "d" && e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
         box.style.display = box.style.display === "none" ? "block" : "none";
       }
     });

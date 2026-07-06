@@ -127,16 +127,19 @@ export const TEMPLATES = {
   clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
   scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
 
+  // 회로 심볼 순서 = 팔레트 표시 순서(JS 객체는 삽입 순서 보존). 사용자 지정 3열 배열:
+  //   저항 / 코일 / 축전기 · 직류전원 / 교류전원 / 전구 · 전류계 / 전압계 / 다이오드 · 미지소자
+  // element 값과 symbolId는 참조가 걸려 있어 절대 변경 금지 — 순서와 label(전지→직류전원)만 조정.
   resistor:  { kind: "shape", category: "회로", label: "저항",     keywords: ["저항", "resistor", "옴", "ohm", "R"],            create: { tool: "CIRCUIT", element: "resistor" } },
-  dc_source: { kind: "shape", category: "회로", label: "전지",     keywords: ["전지", "전원", "직류", "dc", "battery", "source"], create: { tool: "CIRCUIT", element: "dc_source" } },
-  ac_source: { kind: "shape", category: "회로", label: "교류전원", keywords: ["교류", "ac", "전원", "source", "sine"],          create: { tool: "CIRCUIT", element: "ac_source" } },
-  capacitor: { kind: "shape", category: "회로", label: "축전기",   keywords: ["축전기", "콘덴서", "capacitor", "condenser", "C"], create: { tool: "CIRCUIT", element: "capacitor" } },
   inductor:  { kind: "shape", category: "회로", label: "코일",     keywords: ["코일", "인덕터", "inductor", "coil", "L"],        create: { tool: "CIRCUIT", element: "inductor" } },
-  unknown:   { kind: "shape", category: "회로", label: "미지소자", keywords: ["미지", "소자", "unknown", "box", "element"],      create: { tool: "CIRCUIT", element: "unknown" } },
-  diode:     { kind: "shape", category: "회로", label: "다이오드", keywords: ["다이오드", "diode", "정류"],                      create: { tool: "CIRCUIT", element: "diode" } },
+  capacitor: { kind: "shape", category: "회로", label: "축전기",   keywords: ["축전기", "콘덴서", "capacitor", "condenser", "C"], create: { tool: "CIRCUIT", element: "capacitor" } },
+  dc_source: { kind: "shape", category: "회로", label: "직류전원", keywords: ["직류전원", "전지", "전원", "직류", "dc", "battery", "source"], create: { tool: "CIRCUIT", element: "dc_source" } },
+  ac_source: { kind: "shape", category: "회로", label: "교류전원", keywords: ["교류", "ac", "전원", "source", "sine"],          create: { tool: "CIRCUIT", element: "ac_source" } },
   lamp:      { kind: "shape", category: "회로", label: "전구",     keywords: ["전구", "램프", "lamp", "bulb", "light"],          create: { tool: "CIRCUIT", element: "lamp" } },
   ammeter:   { kind: "shape", category: "회로", label: "전류계",   keywords: ["전류계", "ammeter", "A", "전류"],                 create: { tool: "CIRCUIT", element: "ammeter" } },
   voltmeter: { kind: "shape", category: "회로", label: "전압계",   keywords: ["전압계", "voltmeter", "V", "전압"],               create: { tool: "CIRCUIT", element: "voltmeter" } },
+  diode:     { kind: "shape", category: "회로", label: "다이오드", keywords: ["다이오드", "diode", "정류"],                      create: { tool: "CIRCUIT", element: "diode" } },
+  unknown:   { kind: "shape", category: "회로", label: "미지소자", keywords: ["미지", "소자", "unknown", "box", "element"],      create: { tool: "CIRCUIT", element: "unknown" } },
 
   /* ----- 광학: lenses / mirrors / object / screen / point source — each arms the
    * OPTICS tool (rect-style size-drag) with a specific kind (tools.js makeShape
@@ -452,17 +455,12 @@ function renderPanel() {
 
   const pending = []; // icon svgs to size once they are live in the DOM
 
-  // 공통 객체(좌표축/각도 호)는 별도 카테고리 헤더 없이 기본 도구(V/L/P…) 그룹 안에
-  // 이어 붙인다. 레지스트리 데이터(category 등)는 그대로 두고 렌더 위치만 옮긴다.
-  const basicBody = document.querySelector("#tool-list .tool-section-body");
-  if (basicBody) {
-    Object.keys(TEMPLATES)
-      .filter((id) => TEMPLATES[id].category === "공통")
-      .forEach((id) => basicBody.appendChild(makeSymbolButton(id, TEMPLATES[id], pending)));
-  }
-
+  // 공통(category:"공통") 심볼(라벨러/함수/점/각도호/직각)은 index.html '공통 도구'
+  // 그리드에 하드코딩 버튼(data-symbol)으로 직접 배치했으므로, 여기서는 팔레트에
+  // 다시 그리지 않는다(중복 방지). 레지스트리 항목 자체는 검색/instantiate/키보드
+  // 단축키가 참조하므로 삭제하지 않는다.
   for (const cat of CATEGORY_ORDER) {
-    if (cat === "공통") continue; // 위에서 기본 도구 그룹에 병합됨
+    if (cat === "공통") continue; // 하드코딩 버튼으로 상단 그리드에 이미 존재
     const ids = Object.keys(TEMPLATES).filter((id) => TEMPLATES[id].category === cat);
     if (!ids.length) continue;
 
