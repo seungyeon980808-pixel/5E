@@ -175,6 +175,15 @@ function buildModal() {
 }
 
 /* ===== init ===== */
+/* 외부 모듈용 진입점(기출 라이브러리 등): 모달을 열고 파일을 바로 로드.
+ * initImageObjectify()가 실행된 뒤에만 동작 — 준비 전이면 false 반환. */
+let _openWithFile = null;
+export function openObjectifyWithFile(file) {
+  if (!_openWithFile) return false;
+  _openWithFile(file);
+  return true;
+}
+
 export function initImageObjectify(state) {
   const openButton = document.getElementById("image-objectify-open");
   if (!openButton) return;
@@ -717,6 +726,10 @@ export function initImageObjectify(state) {
     overlay.hidden = false;
     dropzone.focus();
   });
+  _openWithFile = (file) => {
+    overlay.hidden = false;
+    loadFile(file);
+  };
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });

@@ -12,6 +12,7 @@
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
 import { insertImageFromSrc } from "./image-paste.js?v=0.50.6";
+import { openObjectifyWithFile } from "./image-objectify.js?v=0.50.6";
 
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -136,6 +137,7 @@ export function initExamLibrary(state) {
         </div>
         <div class="examlib-actions">
           <button type="button" class="modal-btn modal-btn-primary" data-act="insert" data-id="${item.id}">이미지로 삽입</button>
+          <button type="button" class="modal-btn" data-act="objectify" data-id="${item.id}">객체로 변환</button>
         </div>`;
       card.querySelector("img").src = imageUrl(item);
       card.querySelector(".examlib-title").textContent = item.title;
@@ -172,12 +174,32 @@ export function initExamLibrary(state) {
     }
   }
 
+  /* ----- [객체로 변환]: fetch → File → 기존 이미지 객체화 모달로 전달 ----- */
+  async function objectifyItem(item, button) {
+    button.disabled = true;
+    setStatus(`${item.title} 불러오는 중…`);
+    try {
+      const res = await fetch(imageUrl(item));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], item.file, { type: "image/png" });
+      if (!openObjectifyWithFile(file)) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+      close();
+      setStatus(`문항 ${manifest.items.length}개`); // 재오픈 대비 상태 원복
+    } catch (e) {
+      setStatus(`객체 변환 실패: ${e && e.message ? e.message : e}`, true);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   grid.addEventListener("click", (e) => {
     const button = e.target.closest("button[data-act]");
     if (!button) return;
     const item = byId.get(button.dataset.id);
     if (!item) return;
     if (button.dataset.act === "insert") insertItem(item, button);
+    else if (button.dataset.act === "objectify") objectifyItem(item, button);
   });
 
   /* ----- manifest 로드 (첫 오픈 시 1회) ----- */
