@@ -56,7 +56,7 @@ export const OBJECT_TYPES = {
   coordplane: { sizeBox: 1, boxFace: 1, label: 1 },
   anglearc:   { label: 1 },
   rightangle: {},
-  labeler:    { label: 1 },
+  labeler:    { label: 1, lineTol: 1 },
   circuit:    { lineTol: 1, label: 1, snapLineLike: 1 },
   optics:     { sizeBox: 1, boxFace: 1, flip: 1, label: 1 },
   apparatus:  { sizeBox: 1, boxFace: 1, flip: 1 },
@@ -74,7 +74,7 @@ export const SIZE_TYPES             = typesWith("sizeBox");        // 9: rect el
 export const BOX_FACE_TYPES         = typesWith("boxFace");        // 7: rect image svgAsset axes coordplane optics apparatus
 export const SHAPE_TYPES            = typesWith("shape");          // 3: rect ellipse triangle
 export const FLIP_TYPES             = typesWith("flip");           // 6: rect ellipse triangle svgAsset optics apparatus
-export const LINE_TOL_TYPES         = typesWith("lineTol");        // 6: line polyline curve funcgraph circuit pendulum
+export const LINE_TOL_TYPES         = typesWith("lineTol");        // 7: line polyline curve funcgraph circuit pendulum labeler
 export const POINT_ARRAY_TYPES      = typesWith("points");         // 3: polyline curve funcgraph
 export const TEXT_MEASURED_TYPES    = typesWith("textMeasured");   // 2: text formula
 export const LABEL_CAPABLE_TYPES    = typesWith("label");          // 9: rect ellipse line axes coordplane anglearc labeler circuit optics

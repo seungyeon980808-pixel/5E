@@ -5,6 +5,13 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
+import { getRenderScale } from "./viewport.js?v=0.52.0";
+// Guide click-to-select over the artboard: objects always win, so the guide is
+// only picked when NO object sits under the point (pick.js is the same oracle
+// tools.js selection uses). tools.js also owns the Space-pan tracker.
+import { pickSelectableObjectAtPoint } from "./pick.js?v=0.52.0";
+import { isSpaceHeld } from "./tools.js?v=0.52.0";
+
 let _svg    = null;
 let _state  = null;
 let _hCanvas = null; // horizontal ruler canvas (top)
@@ -21,6 +28,50 @@ const _badgeHits = { x: [], y: [] };
 const GUIDE_COLOR = "#0969da";
 const GUIDE_SELECTED_COLOR = "#0550ae";
 const GUIDE_HIT_PX = 6;
+
+// Client(px) → world(mm) via the live SVG CTM (module-level so both the mousedown
+// selector and the hover-cursor helper share ONE implementation).
+function _worldFromClient(clientX, clientY) {
+  if (!_svg) return null;
+  const m = _svg.getScreenCTM();
+  if (!m) return null;
+  return new DOMPoint(clientX, clientY).matrixTransform(m.inverse());
+}
+
+// Nearest guide whose infinite line passes within GUIDE_HIT_PX (screen px) of the
+// point. Axis-aligned distance because a guide is a full-canvas h/v line.
+function _nearestGuideAtClient(clientX, clientY) {
+  if (!_state) return null;
+  const p = _worldFromClient(clientX, clientY);
+  if (!p) return null;
+  const tol = GUIDE_HIT_PX / (getRenderScale() || 1);
+  let nearest = null;
+  let nearestDistance = tol;
+  for (const guide of _state.get().guides || []) {
+    const distance = guide.axis === "x"
+      ? Math.abs(p.x - guide.position)
+      : Math.abs(p.y - guide.position);
+    if (distance <= nearestDistance) {
+      nearest = guide;
+      nearestDistance = distance;
+    }
+  }
+  return nearest ? { guide: nearest, world: p } : null;
+}
+
+// Resize cursor to show over a guide the pointer can grab (select tool only, and
+// only where NO object sits — objects win). Exported so tools.js can apply it in
+// its own pointermove cursor decision (deterministic; no listener-order race).
+// Returns "col-resize" (vertical guide) / "row-resize" (horizontal guide) / null.
+export function guideCursorAt(clientX, clientY) {
+  if (!_state) return null;
+  const s = _state.get();
+  if (s.activeTool !== "V") return null;
+  const hit = _nearestGuideAtClient(clientX, clientY);
+  if (!hit) return null;
+  if (pickSelectableObjectAtPoint(s, hit.world)) return null; // object under point wins
+  return hit.guide.axis === "x" ? "col-resize" : "row-resize";
+}
 
 // Observe the fixed-size wrapper, not the canvas backing stores. Canvas
 // width/height updates must not reconnect the observer: observe() itself queues
@@ -228,6 +279,21 @@ export function initRuler(svg, state) {
     const guideId = e.target && e.target.dataset && e.target.dataset.guideId;
     if (e.button !== 0) return;
     if (!guideId) {
+      // No margin drag-zone under the cursor. Fall back to world-coordinate
+      // proximity so the guide is selectable/draggable ANYWHERE along the line
+      // (over the artboard included) — but only when the select tool is armed,
+      // Space-pan isn't held, and NO object sits under the point (objects win,
+      // preserving the original "guides never steal object clicks" intent).
+      if (state.get().activeTool === "V" && !isSpaceHeld()) {
+        const hit = _nearestGuideAtClient(e.clientX, e.clientY);
+        if (hit && !pickSelectableObjectAtPoint(state.get(), hit.world)) {
+          e.preventDefault();
+          e.stopPropagation();
+          svg.style.cursor = hit.guide.axis === "x" ? "col-resize" : "row-resize";
+          selectAndStartDrag(hit.guide.id);
+          return;
+        }
+      }
       if (state.get().selectedGuideId) {
         state.update((s) => { s.selectedGuideId = null; });
       }
@@ -244,12 +310,18 @@ export function initRuler(svg, state) {
     if (!point) return;
     state.update((s) => {
       const guide = s.guides.find((item) => item.id === _dragGuideId);
-      if (guide) guide.position = guide.axis === "x" ? point.x : point.y;
+      if (guide) {
+        guide.position = guide.axis === "x" ? point.x : point.y;
+        // Keep the grab affordance visible for the WHOLE drag (tools.js pointermove
+        // early-returns while a button is down, so it won't fight this).
+        svg.style.cursor = guide.axis === "x" ? "col-resize" : "row-resize";
+      }
     });
   });
   window.addEventListener("mouseup", () => {
     if (!_dragGuideId) return;
     _dragGuideId = null;
+    svg.style.cursor = ""; // hand back to tools.js's hover-cursor logic
     _scheduleDraw();
   });
 

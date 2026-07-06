@@ -12,10 +12,10 @@
  * initTools. Space-held (pan) state stays owned by tools.js and is read via its
  * isSpaceHeld() getter so there is never a divergent copy. */
 
-import { screenToWorld } from "../viewport.js?v=0.51.0";
-import { simplifyRDP } from "../geometry.js?v=0.51.0";
-import { nextObjectId } from "./id.js?v=0.51.0";
-import { isSpaceHeld } from "../tools.js?v=0.51.0";
+import { screenToWorld } from "../viewport.js?v=0.52.0";
+import { simplifyRDP } from "../geometry.js?v=0.52.0";
+import { nextObjectId } from "./id.js?v=0.52.0";
+import { isSpaceHeld } from "../tools.js?v=0.52.0";
 
 let _svg = null;
 let _state = null;
@@ -72,8 +72,8 @@ export function setupFreeDraw(svg, state) {
         points: simplified,
         closed: true,
         rotation: 0,
-        strokeLevel: 0,
-        strokeWidth: 0,      // borderless by default (no stroke)
+        strokeLevel: 255,
+        strokeWidth: 0.2,
         fillLevel: 255,      // opaque white fill
         fillNone: false,
         fillStyle: "solid",

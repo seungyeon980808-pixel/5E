@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.51.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.52.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,34 +19,34 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.51.0";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.51.0";
-import { resolveEndpointSnap } from "./snap.js?v=0.51.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.51.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.51.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.51.0";
-import { getSvgAsset } from "./svg-assets.js?v=0.51.0";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.51.0";
-import { nextObjectId } from "./tools/id.js?v=0.51.0";
-import { setupFreeDraw } from "./tools/free-draw.js?v=0.51.0";
-import { setupNodePlacement } from "./tools/node-placement.js?v=0.51.0";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.51.0";
+} from "./state.js?v=0.52.0";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.52.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.52.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.52.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.52.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.52.0";
+import { getSvgAsset } from "./svg-assets.js?v=0.52.0";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.52.0";
+import { nextObjectId } from "./tools/id.js?v=0.52.0";
+import { setupFreeDraw } from "./tools/free-draw.js?v=0.52.0";
+import { setupNodePlacement } from "./tools/node-placement.js?v=0.52.0";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.52.0";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=0.51.0";
+} from "./geometry.js?v=0.52.0";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=0.51.0";
+} from "./pick.js?v=0.52.0";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.51.0";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.52.0";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -55,11 +55,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=0.51.0";
+} from "./text-editor.js?v=0.52.0";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.51.0";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.52.0";
+// Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
+// the pointermove handler, so the ruler↔tools import cycle stays safe.
+import { guideCursorAt } from "./ruler.js?v=0.52.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -189,24 +192,7 @@ function hasFlippableTriangleSelected() {
   });
 }
 
-// Mirrors transform.js's own Shift+G ungroup precondition (V tool, selection shares
-// one groupId) so tools.js can tell whether THAT handler is about to ungroup instead.
-function willUngroupSelection() {
-  const s = _state.get();
-  const selectedIds = s.selectedIds || [];
-  if (s.activeTool !== "V" || !selectedIds.length) return false;
-  const refId = s.targetedId || selectedIds[0];
-  const refObj = s.objects.find((o) => o.id === refId);
-  if (!refObj || !refObj.groupId) return false;
-  const gid = refObj.groupId;
-  if (!s.targetedId && !selectedIds.every((id) => {
-    const o = s.objects.find((ob) => ob.id === id);
-    return o && o.groupId === gid;
-  })) return false;
-  return true;
-}
-
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / K(자르기) / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / E(자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
@@ -222,24 +208,27 @@ function setupKeyboard() {
     else if (key === "l") setActiveTool("L");
     else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
     else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
-    else if (key === "x") activateSymbolShortcut("axes", "X");
-    else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호 — single binding
-    else if (key === "g" && e.shiftKey) {
-      // Shift+G collides with transform.js's ungroup shortcut (same physical key,
-      // no stopPropagation on either window listener — both would otherwise fire).
-      // Skip arming the rightangle symbol whenever transform.js's ungroup guard
-      // (activeTool==="V" + a valid shared groupId on the selection) would fire instead.
-      if (!willUngroupSelection()) activateSymbolShortcut("rightangle", "Shift+G");
-    }
+    else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
+    else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
     else if (key === "c") setActiveTool("C");
-    else if (key === "k") setActiveTool("CUT");           // 자르기(가위/칼) — 도구 안 서브모드는 1/2 (cut-tool.js)
+    else if (key === "e") setActiveTool("CUT");           // 자르기(가위/칼) — 도구 안 서브모드는 1/2 (cut-tool.js)
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
     else if (key === "t") setActiveTool("T");
     else if (key === "f") {
       // F collides with transform.js's triangle flipY toggle (same reason as above).
-      // Skip the tool switch whenever an unlocked triangle is selected — transform.js
-      // will flip it instead of us switching to free-draw.
-      if (!hasFlippableTriangleSelected()) setActiveTool("F"); // 자유그리기 (free-draw)
+      // Skip the shortcut whenever an unlocked triangle is selected — transform.js
+      // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
+      // 함수 입력, freeing F up — 확정 항목 ⑧).
+      if (!hasFlippableTriangleSelected()) activateSymbolShortcut("funcgraph", "F"); // 함수 입력
+    }
+    else if (key === "tab") {
+      // ④: while the angle-tool pair is armed, Tab toggles 호(ARC) ↔ 직각(RIGHTANGLE)
+      // in place instead of tabbing focus away.
+      const activeTool = _state.get().activeTool;
+      if (activeTool === "ARC" || activeTool === "RIGHTANGLE") {
+        e.preventDefault();
+        activateSymbolShortcut(activeTool === "ARC" ? "rightangle" : "anglearc", "Tab");
+      }
     }
   });
 }
@@ -320,7 +309,12 @@ function setupDrawing() {
     if (e.target?.dataset?.handle) return;
     const picked = pickSelectableObjectFromEvent(_svg, s, e);
     if (!picked) {
-      _svg.style.cursor = activeTool === "V" ? "default" : "";
+      // Over an empty spot: if a ruler guide passes under the pointer, show the
+      // grab (↕/↔) affordance — the visible guide line is pointer-transparent, so
+      // without this there is NO hover cue that the guide is draggable over the
+      // artboard (ruler.js owns the proximity test; objects already won above).
+      const guideCursor = activeTool === "V" ? guideCursorAt(e.clientX, e.clientY) : null;
+      _svg.style.cursor = guideCursor || (activeTool === "V" ? "default" : "");
       return;
     }
     const isSelected = (s.selectedIds || []).includes(picked.id);

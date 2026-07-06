@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.51.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.51.0";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.51.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.51.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.51.0";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.51.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.52.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.52.0";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.52.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.52.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.52.0";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.52.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -780,6 +780,32 @@ export function initTransform(svg, state) {
       return;
     }
 
+    // Shift+ArrowUp/Down ??nudge strokeWidth of selected object(s) by ??.1mm
+    // (min 0). Held-key tracking mirrors the plain arrow-nudge below so a single
+    // press pushes exactly one undo snapshot even under key-repeat.
+    if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      if (!selectedIds.length) return;
+      const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+      const targets = selected.filter((o) => isMutable(o) && typeof o.strokeWidth === "number");
+      if (!targets.length) return;
+      e.preventDefault();
+      const delta = e.key === "ArrowUp" ? 0.1 : -0.1;
+      const shiftArrowKey = "Shift+" + e.key;
+      const isFirst = !_arrowKeysHeld.has(shiftArrowKey);
+      if (isFirst) _arrowKeysHeld.add(shiftArrowKey);
+      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      state.update((s2) => {
+        if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
+        (s2.selectedIds || []).forEach((id) => {
+          const obj = s2.objects.find((o) => o.id === id);
+          if (!isMutable(obj) || typeof obj.strokeWidth !== "number") return;
+          obj.strokeWidth = Math.max(0, Math.round((obj.strokeWidth + delta) * 10) / 10);
+        });
+      });
+      return;
+    }
+
     // Arrow nudge (0.5 world units; Ctrl = 5 units; snapshot pushed on first keydown only)
     if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
         e.key === "ArrowLeft" || e.key === "ArrowRight") {
@@ -1107,6 +1133,7 @@ export function initTransform(svg, state) {
     if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
         e.key === "ArrowLeft" || e.key === "ArrowRight") {
       _arrowKeysHeld.delete(e.key);
+      _arrowKeysHeld.delete("Shift+" + e.key);
     }
   });
 
