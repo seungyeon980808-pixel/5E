@@ -6,7 +6,7 @@
 // (Pollinations.AI)로 전송되므로 패널 하단에 상시 고지한다.
 // 캔버스 상태(store/state)는 일절 건드리지 않는 독립 UI 모듈이다.
 
-import { chatCompletion, cooldownRemainingMs, getAiToken, setAiToken } from "./ai-client.js?v=0.51.0";
+import { chatCompletion, cooldownRemainingMs, getProxyUrl, setProxyUrl } from "./ai-client.js?v=0.51.0";
 
 const REFERENCE_URL = "docs/ai-reference.md";
 const MAX_HISTORY = 6; // 시스템 프롬프트 제외 최근 6개(3문답)만 전송 — 토큰 상한 관리
@@ -66,9 +66,9 @@ function buildPanel() {
       <textarea class="ai-chat-input" rows="2" placeholder="5E 사용법을 질문하세요"></textarea>
       <button type="submit" class="ai-chat-send">보내기</button>
     </form>
-    <footer class="ai-chat-note">질문은 외부 무료 AI(Pollinations.AI)로 전송됩니다.
+    <footer class="ai-chat-note">질문은 프록시를 거쳐 외부 무료 AI(Pollinations.AI)로 전송됩니다.
       학생 개인정보·출제 전 문항은 입력하지 마세요.
-      <button type="button" class="ai-chat-token-btn">토큰 설정</button></footer>`;
+      <button type="button" class="ai-chat-token-btn">프록시 설정</button></footer>`;
   document.body.appendChild(panel);
   return panel;
 }
@@ -127,22 +127,22 @@ export function initAiChat() {
     panel.hidden = true;
   });
 
-  // 토큰 설정: enter.pollinations.ai 무료 가입 후 발급받은 토큰을 localStorage에만
-  // 저장한다 (코드/저장소에 넣지 않음). 빈 값 입력 시 삭제.
-  const tokenBtn = panel.querySelector(".ai-chat-token-btn");
-  const refreshTokenLabel = () => {
-    tokenBtn.textContent = getAiToken() ? "토큰 설정됨 (변경)" : "토큰 설정";
+  // 프록시 설정: 배포한 Cloudflare Worker 주소를 localStorage에만 저장한다.
+  // (비밀 토큰이 아니라 공개 엔드포인트 주소이므로 저장해도 안전.) 빈 값이면 삭제.
+  const proxyBtn = panel.querySelector(".ai-chat-token-btn");
+  const refreshProxyLabel = () => {
+    proxyBtn.textContent = getProxyUrl() ? "프록시 설정됨 (변경)" : "프록시 설정";
   };
-  refreshTokenLabel();
-  tokenBtn.addEventListener("click", () => {
-    const cur = getAiToken();
+  refreshProxyLabel();
+  proxyBtn.addEventListener("click", () => {
+    const cur = getProxyUrl();
     const next = window.prompt(
-      "Pollinations 토큰을 입력하세요.\n(enter.pollinations.ai 무료 가입 → 토큰 발급)\n빈 칸으로 확인하면 저장된 토큰을 삭제합니다.",
+      "AI 프록시(Cloudflare Worker) 주소를 입력하세요.\n예: https://5e-ai-proxy.<계정>.workers.dev\n빈 칸으로 확인하면 저장된 주소를 삭제합니다.",
       cur
     );
     if (next === null) return; // 취소
-    setAiToken(next.trim());
-    refreshTokenLabel();
+    setProxyUrl(next.trim());
+    refreshProxyLabel();
   });
 
   // Enter 전송, Shift+Enter 줄바꿈 (textarea라 전역 도구 단축키와 충돌 없음)

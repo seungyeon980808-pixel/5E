@@ -1,30 +1,31 @@
-/* ===== AI CLIENT (무료 AI API 어댑터: Pollinations.AI) ===== */
+/* ===== AI CLIENT (5E AI 프록시 어댑터) ===== */
 //
-// 텍스트(챗) 호출 어댑터. 이미지 생성/변환은 다음 단계에서 이 모듈에 추가한다.
-// - 익명 무료 티어는 요청 간격 제한(약 15초)이 있어 cooldown을 여기서 관리한다.
-//   UI는 cooldownRemainingMs()로 남은 시간을 읽어 전송 버튼을 잠근다.
-// - 토큰(무료 가입 시 발급)은 localStorage에만 두고 코드/저장소에 절대 넣지
-//   않는다 (docs/IMAGE_TO_OBJECT_API_DESIGN_20260630.md §3 보안 요구사항).
+// 브라우저는 Pollinations를 직접 호출할 수 없다(봇 차단 Turnstile로 403). 그래서
+// 실제 호출은 Cloudflare Worker 프록시(cloudflare-worker/)가 서버측에서 대신 하고,
+// 브라우저는 그 Worker 주소로만 요청한다. 비밀 토큰은 Worker에만 있고 여기엔 없다.
+//
+// - 프록시 주소는 localStorage에만 둔다(비밀 아님, 배포 후 1회 입력). 코드/저장소에
+//   하드코딩하지 않아 사람마다 다른 Worker를 쓸 수 있다.
+// - 무료 등급 요청 간격(약 5초)을 cooldown으로 관리한다. UI는 cooldownRemainingMs()로
+//   남은 시간을 읽어 전송 버튼을 잠근다.
 
-const TEXT_ENDPOINT = "https://text.pollinations.ai/openai";
-const TEXT_MODEL = "openai-fast";
-const COOLDOWN_MS = 15000;
-const TOKEN_KEY = "5e.ai.token";
-// Pollinations 웹앱 식별자 (enter.pollinations.ai에 등록한 앱 도메인과 일치시킬 것).
-// 미등록 상태의 익명 브라우저 요청은 Turnstile(봇 방지)에 걸려 403이 난다 — 2026-07-06 실측.
-const APP_REFERRER = "5e-science-draw";
+const PROXY_URL_KEY = "5e.ai.proxyUrl";
+const COOLDOWN_MS = 6000;
 
 let lastRequestAt = 0;
 
-/* ===== TOKEN (등록 티어 준비용 — 현재 챗은 토큰 없이도 동작) ===== */
-export function getAiToken() {
-  try { return localStorage.getItem(TOKEN_KEY) || ""; } catch { return ""; }
+/* ===== PROXY URL ===== */
+export function getProxyUrl() {
+  try { return localStorage.getItem(PROXY_URL_KEY) || ""; } catch { return ""; }
 }
-export function setAiToken(token) {
+export function setProxyUrl(url) {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
-  } catch { /* localStorage 불가 환경에서는 세션 한정으로만 동작 */ }
+    if (url) localStorage.setItem(PROXY_URL_KEY, url);
+    else localStorage.removeItem(PROXY_URL_KEY);
+  } catch { /* localStorage 불가 환경: 이 세션에서는 설정 불가 */ }
+}
+export function hasProxy() {
+  return !!getProxyUrl();
 }
 
 /* ===== COOLDOWN ===== */
@@ -34,31 +35,31 @@ export function cooldownRemainingMs() {
 
 /* ===== CHAT ===== */
 // messages: [{role:"system"|"user"|"assistant", content:string}, ...]
-// 성공 시 응답 텍스트를 반환하고, 실패 시 사용자에게 보여줄 한국어 Error를 던진다.
+// 성공 시 응답 텍스트 반환, 실패 시 사용자에게 보여줄 한국어 Error를 던진다.
 export async function chatCompletion(messages) {
-  const headers = { "Content-Type": "application/json" };
-  const token = getAiToken();
-  if (token) headers["Authorization"] = "Bearer " + token;
+  const proxy = getProxyUrl();
+  if (!proxy) {
+    throw new Error(
+      "AI 프록시 주소가 설정되지 않았습니다. 하단 [프록시 설정]에서 Worker 주소를 입력해 주세요."
+    );
+  }
 
   lastRequestAt = Date.now();
   let res;
   try {
-    res = await fetch(TEXT_ENDPOINT, {
+    res = await fetch(proxy, {
       method: "POST",
-      headers,
-      body: JSON.stringify({
-        model: TEXT_MODEL, max_tokens: 1500, referrer: APP_REFERRER, messages,
-      }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages }),
     });
   } catch {
-    throw new Error("AI 서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.");
+    throw new Error("AI 프록시에 연결하지 못했습니다. 주소와 인터넷 연결을 확인해 주세요.");
   }
 
   if (res.status === 403) {
-    // 익명 브라우저 접근은 Turnstile로 차단됨 — 무료 가입 토큰/앱 등록이 필요
     throw new Error(
-      "AI 서비스 인증이 필요합니다. enter.pollinations.ai에서 무료 가입 후 " +
-      "발급받은 토큰을 아래 [토큰 설정]에 입력해 주세요."
+      "프록시가 이 사이트의 요청을 거부했습니다. Worker의 허용 출처(ALLOWED_ORIGINS)에 " +
+      "현재 주소가 들어 있는지 확인해 주세요."
     );
   }
   if (res.status === 429) {
