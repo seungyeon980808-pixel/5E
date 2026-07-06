@@ -588,10 +588,10 @@ function makeShape(type, a, b) {
     order: 0,              // assigned on commit (z-order within layer)
   };
   if (type === "triangle") shape.flipX = b.x < a.x;
-  // Rectangle internal labels are typically block NAMES (A, B, C …), so a new rect
-  // defaults to the "label"(정체·upright) type. The user can still switch it to
-  // "물리량"(quantity) in the inspector to render the label as Times New Roman italic.
-  if (type === "rect") shape.labelType = "label";
+  // 모든 도형의 기본 라벨은 "물리량"(quantity, 수식 글꼴 이탤릭) + 가운데(labelPos 미설정
+  // → withBoxLabel에서 "center"). 사각형도 동일하게 quantity로 시작한다(블록 이름 A·B·C를
+  // 쓸 때는 인스펙터에서 "라벨" 종류로 바꾸면 신명중명조 정체로 렌더된다).
+  // shape.labelType은 위에서 이미 "quantity"로 초기화되어 있으므로 rect 전용 재지정은 없다.
   // Optics (branch A): reuse the size-drag box wholesale; only kind + label fields
   // are added. Default fillNone so lenses/mirrors drop as clean outlines.
   if (type === "optics") {
