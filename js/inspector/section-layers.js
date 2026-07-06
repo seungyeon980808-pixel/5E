@@ -24,14 +24,24 @@ export function buildLayersSection(ctx) {
   layerDetails.appendChild(layerBody);
 
   function renderLayerPanel(s) {
-    if (layerBody.contains(document.activeElement)) return; // don't clobber inline name edit
+    // Bail ONLY while the inline rename INPUT is focused — re-rendering then would
+    // clobber the edit. A focused eye BUTTON must NOT block re-render, else the
+    // visibility toggle won't show until another action re-renders (real mouse
+    // clicks focus the button; programmatic .click() doesn't — that hid the bug).
+    const ae = document.activeElement;
+    if (ae && ae.tagName === "INPUT" && layerBody.contains(ae)) return;
     layerBody.innerHTML = "";
 
-    // Bordered box holding the layer rows (top row = front-most, 3 → 2 → 1).
+    // Layer list box (top row = front-most, 3 → 2 → 1). Themed via CSS classes.
     const listBox = document.createElement("div");
-    listBox.style.cssText =
-      "border:1px solid #d0d7de;border-radius:4px;overflow:hidden;";
+    listBox.className = "insp-layers";
     layerBody.appendChild(listBox);
+
+    // Eye (visible) / eye-off (hidden) toggle glyphs — currentColor stroke.
+    const EYE =
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S4.8 4.8 10 4.8 18.2 10 18.2 10 15.2 15.2 10 15.2 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.3"/></svg>';
+    const EYE_OFF =
+      '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 10S4.8 4.8 10 4.8 18.2 10 18.2 10 15.2 15.2 10 15.2 1.8 10 1.8 10Z"/><circle cx="10" cy="10" r="2.3"/><line x1="3.4" y1="3.4" x2="16.6" y2="16.6"/></svg>';
 
     const layers = [...(s.layers || [])].reverse(); // layer 3 on top → layer 1 on bottom
     for (const layer of layers) {
@@ -39,33 +49,30 @@ export function buildLayersSection(ctx) {
       const isHidden = layer.visible === false;
 
       const row = document.createElement("div");
-      row.style.cssText =
-        "display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;" +
-        "border-left:3px solid " + (isActive ? "#0969da" : "transparent") + ";" +
-        "background:" + (isActive ? "rgba(9,105,218,0.12)" : "transparent") + ";";
+      row.className =
+        "insp-layer-row" + (isActive ? " is-active" : "") + (isHidden ? " is-hidden" : "");
 
-      // Visibility checkbox — checked = visible. stopPropagation keeps the
-      // checkbox click from also triggering the row's "set active" handler.
-      const visCb = document.createElement("input");
-      visCb.type = "checkbox";
-      visCb.checked = !isHidden;
-      visCb.title = isHidden ? "표시" : "숨기기";
-      visCb.style.cssText = "flex-shrink:0;cursor:pointer;margin:0;";
-      visCb.addEventListener("click", (e) => { e.stopPropagation(); });
-      visCb.addEventListener("change", (e) => {
+      // Visibility toggle (eye). stopPropagation keeps it from also triggering
+      // the row's "set active" click.
+      const eyeBtn = document.createElement("button");
+      eyeBtn.type = "button";
+      eyeBtn.className = "insp-layer-eye";
+      eyeBtn.innerHTML = isHidden ? EYE_OFF : EYE;
+      eyeBtn.title = isHidden ? "표시" : "숨기기";
+      eyeBtn.setAttribute("aria-label", isHidden ? "레이어 표시" : "레이어 숨기기");
+      eyeBtn.setAttribute("aria-pressed", String(!isHidden));
+      eyeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         state.update((s2) => {
-          const l = s2.layers.find(l => l.id === layer.id);
-          if (l) l.visible = !visCb.checked ? false : true;
+          const l = s2.layers.find((l) => l.id === layer.id);
+          if (l) l.visible = isHidden; // hidden → show, visible → hide
         });
       });
 
       // Layer name
       const nameSpan = document.createElement("span");
+      nameSpan.className = "insp-layer-name";
       nameSpan.textContent = layer.name;
-      nameSpan.style.cssText =
-        "flex:1;font-size:12px;user-select:none;overflow:hidden;text-overflow:ellipsis;" +
-        "white-space:nowrap;opacity:" + (isHidden ? "0.4" : "1") + ";";
 
       // Click row → set active layer
       row.addEventListener("click", () => {
@@ -76,14 +83,12 @@ export function buildLayersSection(ctx) {
         });
       });
 
-      // Double-click name → inline edit
+      // Double-click name → inline rename
       nameSpan.addEventListener("dblclick", (e) => {
         e.stopPropagation();
         const inp = document.createElement("input");
+        inp.className = "insp-layer-name-input";
         inp.value = layer.name;
-        inp.style.cssText =
-          "flex:1;font-size:12px;background:#1e1f22;color:#dcddde;" +
-          "border:1px solid #0969da;border-radius:3px;padding:1px 4px;width:100%;min-width:0;";
         nameSpan.replaceWith(inp);
         inp.focus();
         inp.select();
@@ -93,7 +98,7 @@ export function buildLayersSection(ctx) {
           committed = true;
           const newName = inp.value.trim() || layer.name;
           state.update((s2) => {
-            const l = s2.layers.find(l => l.id === layer.id);
+            const l = s2.layers.find((l) => l.id === layer.id);
             if (l) l.name = newName;
           });
         }
@@ -104,7 +109,7 @@ export function buildLayersSection(ctx) {
         });
       });
 
-      row.appendChild(visCb);
+      row.appendChild(eyeBtn);
       row.appendChild(nameSpan);
       listBox.appendChild(row);
     }

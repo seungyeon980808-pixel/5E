@@ -27,14 +27,14 @@
   background: var(--insp-bg);
   color: var(--insp-header);
   border-bottom: 1px solid var(--insp-border);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 #inspector {
   display: flex;
   flex-direction: column;
   height: 100%;
-  font-size: 11px;
+  font-size: 12px;
   font-family: "IBM Plex Sans KR", sans-serif;
   color: var(--insp-text);
 }
@@ -57,7 +57,7 @@
 #inspector-empty {
   padding: 10px 8px;
   color: var(--insp-label);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 #inspector-content {
@@ -73,7 +73,7 @@
 .insp-summary {
   padding: 6px 8px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--insp-header);
   user-select: none;
@@ -95,6 +95,7 @@
   /* ASCII-only escape (U+203A) so the disclosure chevron can't turn into
      mojibake if the sheet is ever read with the wrong charset. */
   content: "\203A";
+  color: var(--accent-2);
   display: inline-block;
   font-size: 13px;
   line-height: 1;
@@ -114,7 +115,7 @@ details[open] > .insp-summary::before {
 
 .insp-help {
   color: var(--insp-label);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.35;
 }
 
@@ -125,7 +126,7 @@ details[open] > .insp-summary::before {
 }
 
 .insp-field-label {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insp-label);
   min-width: 28px;
   flex-shrink: 0;
@@ -144,12 +145,12 @@ details[open] > .insp-summary::before {
 .insp-input {
   flex: 0 0 auto;
   width: 64px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insp-text);
   background: var(--insp-field-bg);
   border: 1px solid var(--insp-border);
   border-radius: var(--insp-radius);
-  padding: 3px 6px;
+  padding: 4px 6px;
   font-family: "IBM Plex Mono", monospace;
   min-width: 0;
 }
@@ -167,7 +168,7 @@ details[open] > .insp-summary::before {
 }
 
 .insp-num {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insp-text);
   min-width: 28px;
   text-align: right;
@@ -183,7 +184,7 @@ details[open] > .insp-summary::before {
 }
 
 .insp-unit {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--insp-label);
   flex-shrink: 0;
 }
@@ -199,7 +200,7 @@ details[open] > .insp-summary::before {
 .insp-ab-preset {
   min-width: 0;
   padding: 5px 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-family: "IBM Plex Mono", monospace;
   cursor: pointer;
   color: var(--insp-text);
@@ -267,7 +268,7 @@ details[open] > .insp-summary::before {
   width: 48px;
   flex-shrink: 0;
   text-align: right;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--insp-text);
   background: var(--insp-field-bg);
   border: 1px solid var(--insp-border);
@@ -341,6 +342,69 @@ details[open] > .insp-summary::before {
 .insp-bg-btns .modal-btn {
   flex: 1;
   min-width: 0;
+}
+
+/* ===== 레이어 패널 (layer list — eye toggle + active row) ===== */
+.insp-layers {
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  overflow: hidden;
+}
+.insp-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 5px 5px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.insp-layer-row + .insp-layer-row {
+  border-top: 1px solid var(--insp-border);
+}
+.insp-layer-row:hover {
+  background: var(--bg-panel-hover);
+}
+.insp-layer-row.is-active {
+  border-left-color: var(--insp-accent);
+  background: color-mix(in srgb, var(--insp-accent) 14%, transparent);
+}
+.insp-layer-eye {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--insp-label);
+  background: transparent;
+  border: 0;
+  border-radius: var(--insp-radius);
+  cursor: pointer;
+}
+.insp-layer-eye svg { width: 15px; height: 15px; }
+.insp-layer-eye:hover { color: var(--insp-text); background: rgba(128, 128, 128, 0.15); }
+.insp-layer-row.is-hidden .insp-layer-name { opacity: 0.45; }
+.insp-layer-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--insp-text);
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.insp-layer-name-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-accent);
+  border-radius: var(--insp-radius);
+  padding: 1px 4px;
 }
 
 /* ===== RESPONSIVE: 인스펙터 우측 드로어 (폰 ≤767px) =====
