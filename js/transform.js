@@ -243,6 +243,64 @@ function applyAngleDeg(obj, deg) {
   return false;
 }
 
+/* ----- STYLE PROPERTY COPY (Shift+C / Shift+V) -----
+ * 각도(objectAngleDeg)에 더해 "스타일" 속성만 복사한다. 외부 레이아웃(x/y/w/h,
+ * points, p1/p2, 크기·회전 외 지오메트리)과 정체성(id/groupId/layerId/order),
+ * 그리고 내용 텍스트(label/text/source/dimensionLabel/lengthLabel)는 제외.
+ *
+ * 원칙: 붙여넣기 대상 객체에 이미 존재하는 키만 덮어쓴다 (타입이 달라 없는 속성은
+ * 건너뜀) → 사각형→직선처럼 타입이 달라도 공통 스타일만 안전하게 옮겨진다.
+ * 필드명은 docs/OBJECT_SCHEMA.md §2~3 및 실제 렌더/인스펙터 코드로 확정한 실명. */
+const STYLE_PROP_KEYS = [
+  // 선(stroke)
+  "strokeLevel", "strokeWidth",
+  // 면(fill)
+  "fillLevel", "fillNone", "fillStyle", "opacity",
+  // 선 스타일 / 점선(dash) / 화살표
+  "dashLength", "dashGap", "partialDash", "dashRatio", "dashFlip",
+  "lineMode", "lineStyle", "arrowVariant", "arrowHead", "dimensionVariant",
+  // 라벨 스타일(내용 텍스트 제외 — 종류/위치/크기/표시 여부)
+  "labelType", "labelPos", "labelSize", "labelShow", "labelFlip", "showLabel",
+  // 텍스트/글꼴 스타일
+  "fontFamily", "fontSize", "fontWeight", "fontStyle", "italic", "underline",
+  "strikeout", "letterSpacing",
+];
+
+/* 선택 1개에서 스타일 속성을 추출 (객체에 실제로 존재하는 키만 담는다). */
+function extractStyleProps(obj) {
+  const props = {};
+  if (!obj) return props;
+  for (const k of STYLE_PROP_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      const v = obj[k];
+      props[k] = (v && typeof v === "object") ? JSON.parse(JSON.stringify(v)) : v;
+    }
+  }
+  return props;
+}
+
+/* 대상 객체에 '존재하는 속성만' 안전 적용. 없는 키는 건너뛰어 타입이 달라도
+ * 죽지 않는다. 값이 실제로 바뀌면 true. (angle은 여기서 다루지 않음 — 호출부에서
+ * applyAngleDeg로 별도 적용) */
+function applyStyleProps(obj, props) {
+  if (!obj || obj.locked || !props) return false;
+  let changed = false;
+  for (const k of STYLE_PROP_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(props, k)) continue;
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue; // 없는 속성은 건너뜀
+    const next = props[k];
+    if (next && typeof next === "object") {
+      if (JSON.stringify(obj[k]) === JSON.stringify(next)) continue;
+      obj[k] = JSON.parse(JSON.stringify(next));
+      changed = true;
+    } else if (obj[k] !== next) {
+      obj[k] = next;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 /* ----- axis-aligned bbox of a set of (clipboard) objects, in world units -----
  * Text uses its anchor point as a zero-size box (the clone isn't rendered, so
  * getBBox is unavailable). Used to center a paste on the mouse. */
@@ -696,25 +754,46 @@ export function initTransform(svg, state) {
     const s = state.get();
     const selectedIds = s.selectedIds || [];
 
+    // Shift+C — 선택 1개의 스타일 속성 + 각도를 복사 (외부 레이아웃/내용 제외)
     if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "c") {
       if (selectedIds.length !== 1) return;
       const obj = s.objects.find((o) => o.id === selectedIds[0]);
-      const value = objectAngleDeg(obj);
-      if (value == null || !isFinite(value)) return;
+      if (!obj) return;
+      const props = extractStyleProps(obj);
+      const angle = objectAngleDeg(obj);
+      const hasAngle = angle != null && isFinite(angle);
+      // 스타일도 각도도 없으면 복사할 것이 없음
+      if (!hasAngle && Object.keys(props).length === 0) return;
       e.preventDefault();
-      _propertyClipboard = { kind: "angle", value };
+      _propertyClipboard = {
+        kind: "style",
+        props,
+        angle: hasAngle ? angle : null,
+      };
       return;
     }
 
+    // Shift+V — 선택 객체들에 스타일 + 각도를 적용 (존재하는 속성만). 구버전 angle
+    // 클립보드와도 호환. undo 스냅샷 push + redo clear 유지.
     if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "v") {
-      if (!_propertyClipboard || _propertyClipboard.kind !== "angle" || !selectedIds.length) return;
+      if (!_propertyClipboard || !selectedIds.length) return;
+      const clip = _propertyClipboard;
+      // 하위호환: 구 {kind:"angle", value} 형태를 style 형태로 정규화
+      const angle = (clip.kind === "angle")
+        ? clip.value
+        : (clip.angle != null ? clip.angle : null);
+      const props = (clip.kind === "style") ? clip.props : null;
+      const hasApplicableAngle = angle != null && isFinite(angle);
+      if (!hasApplicableAngle && (!props || Object.keys(props).length === 0)) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         let changed = false;
         (s2.selectedIds || []).forEach((id) => {
           const obj = s2.objects.find((o) => o.id === id);
-          if (applyAngleDeg(obj, _propertyClipboard.value)) changed = true;
+          if (!obj) return;
+          if (props && applyStyleProps(obj, props)) changed = true;
+          if (hasApplicableAngle && applyAngleDeg(obj, angle)) changed = true;
         });
         if (changed) {
           s2.undoStack.push(snap);
