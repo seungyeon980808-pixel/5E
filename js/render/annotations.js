@@ -6,14 +6,14 @@ import {
   makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.50.6";
-import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=0.50.6";
+} from "./core.js?v=0.50.7";
+import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=0.50.7";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=0.50.6";
+} from "../state.js?v=0.50.7";
 
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
  * drawn in a SINGLE pass into one <g>. Ticks/labels are PROJECTIONS computed
