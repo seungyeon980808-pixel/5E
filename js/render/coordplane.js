@@ -17,8 +17,8 @@ import {
   applyObjectLabelFont,
   catmullRomPath,
   applyDash,
-} from "./core.js?v=0.50.5";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.50.5";
+} from "./core.js?v=0.50.6";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.50.6";
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
@@ -245,7 +245,7 @@ function renderCoordplane(obj) {
   }
   // Origin "O" — below-left of the origin, only when the origin is on-screen (평가원).
   if (obj.showOrigin && xAxisVisible && yAxisVisible) {
-    addName("O", worldX0 - nameSize * 0.35, worldY0 + nameSize * 0.35, "end", "hanging");
+    addName(obj.labelOrigin ?? "O", worldX0 - nameSize * 0.35, worldY0 + nameSize * 0.35, "end", "hanging");
   }
 
   // ----- rotation: whole plane turns about its bbox center -----

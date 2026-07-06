@@ -34,7 +34,8 @@ function makeDefaultCoordplane(at) {
     labelX: "x", labelY: "y",
     showAxisLabels: true,           // 축 이름(x/y) on/off
     axisLabelSize: 3.5,             // 축 이름 글자 크기 (mm)
-    showOrigin: true,               // 원점 "O" 표시 (평가원)
+    showOrigin: true,               // 원점 라벨 표시 (평가원)
+    labelOrigin: "O",               // 원점 라벨 텍스트(LaTeX 가능, 비우면 숨김)
     labelType: "quantity",
     exportable: true,               // 요구 6: 평면 출력 on/off
     strokeLevel: 0,                 // 0 = black (DESIGN 2-2)

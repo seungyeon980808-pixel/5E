@@ -5,7 +5,9 @@
  * show/hide in js/inspector.js. Every edit goes through ctx.commitSelectedObject
  * (undo snapshot + locked/type guard). 기획서 §10-② 인스펙터. */
 
-import { makeSection } from "./widgets.js?v=0.50.5";
+import { makeSection } from "./widgets.js?v=0.50.6";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.50.6";
+import { state } from "../state.js?v=0.50.6";
 
 const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
 
@@ -14,6 +16,17 @@ export function buildCoordplaneSection(ctx) {
   const body = document.createElement("div");
 
   const applies = (o) => o && o.type === "coordplane";
+
+  // ---- 상세 편집 모달 진입 버튼 (설정이 많아 전용 모달에서 다룬다) ----
+  const detailBtn = document.createElement("button");
+  detailBtn.type = "button";
+  detailBtn.textContent = "상세 편집…";
+  detailBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:5px;border:1px solid #0969da;border-radius:3px;background:#0d2847;color:#dcddde;cursor:pointer;";
+  detailBtn.addEventListener("click", () => {
+    const id = (state.get().selectedIds || [])[0];
+    if (id) openPlaneModal(id);
+  });
+  body.appendChild(detailBtn);
 
   // ---- generic number input that commits o[prop] on change ----
   function makeNum(prop, { step = "1" } = {}) {
