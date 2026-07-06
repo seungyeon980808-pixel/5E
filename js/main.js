@@ -20,6 +20,7 @@ import { initRuler, setRulerVisible } from "./ruler.js?v=0.51.0";
 import { initSettings } from "./settings.js?v=0.51.0";
 import { initImageObjectify } from "./image-objectify.js?v=0.51.0";
 import { initImageImportMock } from "./image-import-mock.js?v=0.51.0";
+import { initAiChat } from "./ai/ai-chat.js?v=0.51.0";
 import { initImagePaste } from "./image-paste.js?v=0.51.0";
 import { initImageCutout } from "./image-cutout.js?v=0.51.0";
 import { initTemplates } from "./templates.js?v=0.51.0";
@@ -159,6 +160,9 @@ initImageObjectify(state);
 
 /* ----- advanced: local mock JSON → editable objects (image-to-object Phase 1) ----- */
 initImageImportMock(state);
+
+/* ----- advanced: AI 도우미 챗봇 패널 (docs/ai-reference.md 근거 도움말) ----- */
+initAiChat();
 
 /* ----- clipboard image paste: Ctrl+V → normal image object ----- */
 initImagePaste(state, svg);
