@@ -8,10 +8,10 @@
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld } from "./viewport.js?v=0.51.0";
-import { cutObject, isCuttable, distanceToObject } from "./cut-geometry.js?v=0.51.0";
-import { snapLineEnd } from "./geometry.js?v=0.51.0";
-import { getObjectBBox } from "./pick.js?v=0.51.0";
+import { screenToWorld } from "./viewport.js?v=0.51.1";
+import { cutObject, isCuttable, distanceToObject } from "./cut-geometry.js?v=0.51.1";
+import { snapLineEnd } from "./geometry.js?v=0.51.1";
+import { getObjectBBox } from "./pick.js?v=0.51.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MODE_HINT = {

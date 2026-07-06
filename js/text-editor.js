@@ -8,7 +8,7 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.51.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.51.1";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -16,15 +16,15 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.51.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.51.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.51.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.51.0";
-import { pickSelectableObjectAtPoint } from "./pick.js?v=0.51.0";
+} from "./state.js?v=0.51.1";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.51.1";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.51.1";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.51.1";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=0.51.1";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=0.51.0";
+import { isSpaceHeld } from "./tools.js?v=0.51.1";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -695,6 +695,20 @@ function _insertIntoUnifiedText(value, cursorOffset = null) {
   _textEditor.focus();
 }
 
+// 원문자(㉠㉡…) 같은 "완성된 유니코드 글자"는 수식이 아니라 일반 텍스트다. 따라서
+// _textFormulaMode을 켜지 않고, 기존 styled run은 보존하는 _syncDraftFromUnifiedEditor
+// 경로로만 반영한다(=라벨/텍스트가 수식으로 승격되지 않는다).
+function _insertPlainCharIntoUnifiedText(value) {
+  if (!_textEditor) return;
+  const start = _textEditor.selectionStart ?? _textEditor.value.length;
+  const end = _textEditor.selectionEnd ?? _textEditor.value.length;
+  _textEditor.value = _textEditor.value.slice(0, start) + value + _textEditor.value.slice(end);
+  const pos = start + value.length;
+  _textEditor.setSelectionRange(pos, pos);
+  _syncDraftFromUnifiedEditor();
+  _textEditor.focus();
+}
+
 function _insertFormulaTemplate(template) {
   const firstEmpty = template.indexOf("{}");
   _insertIntoUnifiedText(template, firstEmpty >= 0 ? firstEmpty + 1 : null);
@@ -772,8 +786,22 @@ function _buildSymbolPalette() {
   [["I", "I"], ["II", "II"], ["III", "III"]].forEach(([label, text]) =>
     romanRow.appendChild(_symbolPaletteButton(label, text, SECTION_ROMAN_STYLE, `구간 ${label} (Times 정체)`)));
 
+  // 원문자(㉠㉡㉢㉣㉤): 보기 번호에 쓰는 완성 유니코드 글자. 라벨러/텍스트 공통으로
+  // 빠르게 넣도록 팔레트 행을 둔다. 수식이 아니므로 일반 텍스트로 삽입한다.
+  const circledRow = document.createElement("div");
+  circledRow.className = "formula-palette-row symbol-palette-row";
+  const circledTag = document.createElement("span");
+  circledTag.className = "symbol-palette-tag";
+  circledTag.textContent = "원문자";
+  circledRow.appendChild(circledTag);
+  ["㉠", "㉡", "㉢", "㉣", "㉤"].forEach((ch) => {
+    const b = _fxPaletteButton(ch, () => _insertPlainCharIntoUnifiedText(ch));
+    b.title = `${ch} 삽입`;
+    circledRow.appendChild(b);
+  });
+
   // 물리량(m/v/F/a/t) 팔레트는 제거됨 — 수식 글꼴로 직접 입력한다.
-  panel.append(romanRow);
+  panel.append(romanRow, circledRow);
   return panel;
 }
 
