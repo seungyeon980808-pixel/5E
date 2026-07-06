@@ -223,7 +223,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_PX = 16;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
 const ICON_STROKE_PX = 1.1;  // target on-screen stroke weight (≈ the base-tool icons)
 const CIRCUIT_PALETTE_LABELS = { resistor: "R", inductor: "L", capacitor: "C", voltmeter: "V", ammeter: "A" };
-const SHORTCUT_LABELS = { anglearc: "A", rightangle: "Shift+G", node: "N", labeler: "Shift+T", funcgraph: "F" };
+const SHORTCUT_LABELS = { anglearc: "A", rightangle: "Shift+A", node: "N", labeler: "Shift+T", funcgraph: "F" };
 
 // Representative bounding boxes (world mm) per OPTICS kind — only drives the icon's
 // aspect ratio; the viewBox auto-fits afterwards. fillNone keeps shapes hollow.

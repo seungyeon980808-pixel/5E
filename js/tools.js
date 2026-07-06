@@ -189,23 +189,6 @@ function hasFlippableTriangleSelected() {
   });
 }
 
-// Mirrors transform.js's own Shift+G ungroup precondition (V tool, selection shares
-// one groupId) so tools.js can tell whether THAT handler is about to ungroup instead.
-function willUngroupSelection() {
-  const s = _state.get();
-  const selectedIds = s.selectedIds || [];
-  if (s.activeTool !== "V" || !selectedIds.length) return false;
-  const refId = s.targetedId || selectedIds[0];
-  const refObj = s.objects.find((o) => o.id === refId);
-  if (!refObj || !refObj.groupId) return false;
-  const gid = refObj.groupId;
-  if (!s.targetedId && !selectedIds.every((id) => {
-    const o = s.objects.find((ob) => ob.id === id);
-    return o && o.groupId === gid;
-  })) return false;
-  return true;
-}
-
 /* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / N(점) / C / E(자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
@@ -222,14 +205,8 @@ function setupKeyboard() {
     else if (key === "l") setActiveTool("L");
     else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
     else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
-    else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호 — single binding
-    else if (key === "g" && e.shiftKey) {
-      // Shift+G collides with transform.js's ungroup shortcut (same physical key,
-      // no stopPropagation on either window listener — both would otherwise fire).
-      // Skip arming the rightangle symbol whenever transform.js's ungroup guard
-      // (activeTool==="V" + a valid shared groupId on the selection) would fire instead.
-      if (!willUngroupSelection()) activateSymbolShortcut("rightangle", "Shift+G");
-    }
+    else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
+    else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
     else if (key === "c") setActiveTool("C");
     else if (key === "e") setActiveTool("CUT");           // 자르기(가위/칼) — 도구 안 서브모드는 1/2 (cut-tool.js)
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
@@ -240,6 +217,15 @@ function setupKeyboard() {
       // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
       // 함수 입력, freeing F up — 확정 항목 ⑧).
       if (!hasFlippableTriangleSelected()) activateSymbolShortcut("funcgraph", "F"); // 함수 입력
+    }
+    else if (key === "tab") {
+      // ④: while the angle-tool pair is armed, Tab toggles 호(ARC) ↔ 직각(RIGHTANGLE)
+      // in place instead of tabbing focus away.
+      const activeTool = _state.get().activeTool;
+      if (activeTool === "ARC" || activeTool === "RIGHTANGLE") {
+        e.preventDefault();
+        activateSymbolShortcut(activeTool === "ARC" ? "rightangle" : "anglearc", "Tab");
+      }
     }
   });
 }
