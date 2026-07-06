@@ -1,0 +1,82 @@
+/* ===== EXAM LIBRARY MODAL (기출 문항 검색) ===== */
+
+.modal-examlib { width: 680px; max-width: calc(100vw - 32px); }
+
+.examlib-search-row input {
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.examlib-search-row input:focus { outline: none; border-color: var(--accent); }
+
+/* ----- 태그 칩 바 (카테고리 라벨 + 토글 칩) ----- */
+.examlib-tagbar {
+  margin: 8px 0 2px;
+  max-height: 108px;
+  overflow-y: auto;
+  line-height: 2;
+}
+.examlib-tagcat {
+  display: inline-block;
+  margin: 0 6px 0 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.examlib-chip {
+  display: inline-block;
+  margin: 0 4px 2px 0;
+  padding: 1px 9px;
+  font-size: 12px;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.examlib-chip:hover { background: var(--btn-tool-hover); }
+.examlib-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+/* ----- 결과 그리드 ----- */
+.examlib-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+  max-height: 46vh;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+.examlib-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.examlib-thumb {
+  height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff; /* 문항 PNG는 흰 배경 전제 — 다크 모드에서도 흰 판 유지 */
+}
+/* 로드 전에도 박스를 차지해야 함 — 0×0 img는 브라우저가 lazy 로딩을 건너뜀 */
+.examlib-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.examlib-meta { padding: 6px 8px 0; }
+.examlib-title { font-size: 12px; color: var(--text-primary); }
+.examlib-tags {
+  min-height: 14px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.examlib-actions { display: flex; gap: 6px; padding: 6px 8px 8px; }
+.examlib-actions .modal-btn { flex: 1; padding: 3px 0; font-size: 12px; }
