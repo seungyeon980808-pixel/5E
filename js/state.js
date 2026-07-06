@@ -254,7 +254,7 @@ export const state = createStore({
   // artboard: the page region, single source of truth for its size (DESIGN 1-1).
   // 1 world unit = 1 mm. Centered on world origin, so it spans
   // x ∈ [-w/2, +w/2], y ∈ [-h/2, +h/2] (origin derived as -w/2, -h/2).
-  // Default 90×60. Max size is 100×100 (size-adjust UI lands later; not enforced yet).
+  // Default 90×60. Max size is 200×200 (clamped in inspector/section-artboard.js).
   artboard: { w: 90, h: 60 },
 
   // viewBox: world-space rectangle currently shown (x, y, w, h).

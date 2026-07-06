@@ -13,3 +13,8 @@ node_modules/
 .env
 .env.*
 !.env.example
+
+# Exam preview backgrounds — may contain third-party (e.g. KICE) copyrighted
+# exam pages. Keep local; do NOT commit/deploy publicly. Swap for a self-made
+# mock page before any public release.
+assets/exam-backgrounds/

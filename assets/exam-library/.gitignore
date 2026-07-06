@@ -1,0 +1,5 @@
+# 기출 이미지는 저작권 문제로 로컬 전용 — 커밋 금지 (EXAM_LIBRARY_SPEC 참고)
+images/*
+!images/.gitkeep
+# manifest.json은 build_manifest.py가 로컬 이미지에서 생성하는 산출물
+manifest.json

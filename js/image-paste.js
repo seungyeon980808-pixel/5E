@@ -65,6 +65,13 @@ function insertImageObject(state, src, size) {
   });
 }
 
+/* 외부 모듈용(기출 라이브러리 등): dataURL을 즉시 이미지 객체로 삽입.
+ * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다. */
+export async function insertImageFromSrc(state, src) {
+  const size = await loadImageSize(src);
+  insertImageObject(state, src, size);
+}
+
 export function initImagePaste(state, svg) {
   async function insertFromSrc(src) {
     try {

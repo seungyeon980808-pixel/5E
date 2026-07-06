@@ -21,6 +21,7 @@ import { initSettings } from "./settings.js?v=0.51.0";
 import { initImageObjectify } from "./image-objectify.js?v=0.51.0";
 import { initImageImportMock } from "./image-import-mock.js?v=0.51.0";
 import { initImagePaste } from "./image-paste.js?v=0.51.0";
+import { initExamLibrary } from "./exam-library.js?v=0.51.0";
 import { initImageCutout } from "./image-cutout.js?v=0.51.0";
 import { initTemplates } from "./templates.js?v=0.51.0";
 import { initObjectSearch } from "./search.js?v=0.51.0";
@@ -162,6 +163,9 @@ initImageImportMock(state);
 
 /* ----- clipboard image paste: Ctrl+V → normal image object ----- */
 initImagePaste(state, svg);
+
+/* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
+initExamLibrary(state);
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);

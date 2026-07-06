@@ -173,19 +173,16 @@ export async function exportSvg(state, filename, bounds = null, options = {}) {
   }
 }
 
-/* ----- exportPng: rasterize the export SVG at a DPI onto a white canvas ----- */
-// `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
-export async function exportPng(state, filename, dpi, bounds = null, options = {}) {
-  const name = filename || getDefaultExportFilename("png");
-  // Ask for the save location first, while still inside the user gesture (before
-  // the async rasterization below, which would otherwise lose the activation).
-  const handle = await pickSaveHandle(name, { mime: "image/png", ext: ".png", description: "PNG 이미지" });
-  if (handle === null) return; // user cancelled the save dialog
-
-  const s = state.get();
+/* ----- rasterizeExportCanvas: SVG → white-background canvas at a DPI ----- */
+// The shared raster core. exportPng encodes the returned canvas to a PNG blob;
+// the exam preview (exam-preview.js) composites it over a background image at
+// true mm size. Both go through THIS one path, so the preview shows exactly what
+// export produces — same font substitution, same clipping — with no drift.
+// Resolves { canvas, widthMm, heightMm }; rejects if the SVG fails to decode.
+export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {} } = {}) {
   const { x, y, w, h } = exportRegion(s, bounds);
 
-  // mm ??px at the requested DPI (25.4mm = 1 inch).
+  // mm → px at the requested DPI (25.4mm = 1 inch).
   const pixelW = Math.round((w / MM_PER_INCH) * dpi);
   const pixelH = Math.round((h / MM_PER_INCH) * dpi);
 
@@ -208,29 +205,50 @@ export async function exportPng(state, filename, dpi, bounds = null, options = {
   const doc = `<?xml version="1.0" encoding="UTF-8"?>\n${source}`;
   const url = URL.createObjectURL(new Blob([doc], { type: "image/svg+xml;charset=utf-8" }));
 
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = pixelW;
-    canvas.height = pixelH;
-    const ctx = canvas.getContext("2d");
-    // Belt-and-suspenders white fill in case the SVG rect ever falls short.
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pixelW, pixelH);
-    ctx.drawImage(img, 0, 0, pixelW, pixelH);
-    URL.revokeObjectURL(url);
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      if (handle) {
-        writeHandle(handle, blob).catch(() => downloadBlob(blob, name));
-      } else {
-        downloadBlob(blob, name);
-      }
-    }, "image/png");
-  };
-  img.onerror = () => {
-    URL.revokeObjectURL(url);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = pixelW;
+      canvas.height = pixelH;
+      const ctx = canvas.getContext("2d");
+      // Belt-and-suspenders white fill in case the SVG rect ever falls short.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, pixelW, pixelH);
+      ctx.drawImage(img, 0, 0, pixelW, pixelH);
+      URL.revokeObjectURL(url);
+      resolve({ canvas, widthMm: w, heightMm: h });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("SVG rasterization failed"));
+    };
+    img.src = url;
+  });
+}
+
+/* ----- exportPng: rasterize the export SVG at a DPI onto a white canvas ----- */
+// `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
+export async function exportPng(state, filename, dpi, bounds = null, options = {}) {
+  const name = filename || getDefaultExportFilename("png");
+  // Ask for the save location first, while still inside the user gesture (before
+  // the async rasterization below, which would otherwise lose the activation).
+  const handle = await pickSaveHandle(name, { mime: "image/png", ext: ".png", description: "PNG 이미지" });
+  if (handle === null) return; // user cancelled the save dialog
+
+  let result;
+  try {
+    result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
+  } catch (_) {
     alert("PNG로 내보내는 중 오류가 발생했습니다.");
-  };
-  img.src = url;
+    return;
+  }
+  result.canvas.toBlob((blob) => {
+    if (!blob) return;
+    if (handle) {
+      writeHandle(handle, blob).catch(() => downloadBlob(blob, name));
+    } else {
+      downloadBlob(blob, name);
+    }
+  }, "image/png");
 }
