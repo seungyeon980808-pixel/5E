@@ -222,7 +222,6 @@ function setupKeyboard() {
     else if (key === "l") setActiveTool("L");
     else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
     else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
-    else if (key === "x") activateSymbolShortcut("axes", "X");
     else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호 — single binding
     else if (key === "g" && e.shiftKey) {
       // Shift+G collides with transform.js's ungroup shortcut (same physical key,
@@ -237,9 +236,10 @@ function setupKeyboard() {
     else if (key === "t") setActiveTool("T");
     else if (key === "f") {
       // F collides with transform.js's triangle flipY toggle (same reason as above).
-      // Skip the tool switch whenever an unlocked triangle is selected — transform.js
-      // will flip it instead of us switching to free-draw.
-      if (!hasFlippableTriangleSelected()) setActiveTool("F"); // 자유그리기 (free-draw)
+      // Skip the shortcut whenever an unlocked triangle is selected — transform.js
+      // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
+      // 함수 입력, freeing F up — 확정 항목 ⑧).
+      if (!hasFlippableTriangleSelected()) activateSymbolShortcut("funcgraph", "F"); // 함수 입력
     }
   });
 }

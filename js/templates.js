@@ -26,7 +26,6 @@ import { armSymbol } from "./tools.js?v=0.50.7";
 import { renderObject } from "./render.js?v=0.50.7";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.50.7";
 import { getSvgAsset } from "./svg-assets.js?v=0.50.7";
-import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.50.7";
 import { openFunctionModal } from "./function-graph/modal.js?v=0.50.7";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
@@ -36,55 +35,17 @@ let _tplIdCounter = 0;
 
 /* ===== SYMBOL REGISTRY (keyed by symbolId — the UNIQUE per-object id) ===== */
 export const TEMPLATES = {
-  /* ----- 공통: axes + angle arc ----- */
+  /* ----- 공통: angle arc -----
+   * NOTE: the "axes" CREATION button/shortcut (X) was removed here (확정 항목 ⑥) —
+   * the "axes" TYPE itself (render/pick/inspector/object-types) is kept as-is for
+   * old save-file compatibility; only this registry entry is gone. */
 
-  /* AXES — atomic (single type:"axes" object). Carries x/y/w/h/rotation so it
-   * rides the existing size-based transform path with no new logic. Ticks/labels
-   * are computed by the renderer, never stored as separate objects. */
-  axes: {
-    kind: "atomic",
-    category: "공통",
-    label: "좌표축",
-    keywords: ["좌표축", "axes", "축", "xy", "그래프", "graph"],
-    create: {},
-    make(at) {
-      const w = 44, h = 34; // default extent (mm); resizable afterwards
-      return {
-        type: "axes",
-        x: at.x - w / 2,
-        y: at.y - h / 2,
-        w,
-        h,
-        rotation: 0,
-        strokeLevel: 0,                 // 0 = black (DESIGN 2-2)
-        strokeWidth: DEFAULT_STROKE_WIDTH,
-        showTicks: true,
-        tickSpacing: 5,                 // world units (mm) between ticks
-        axisVariant: "cross",           // "cross" | "quadrant" | "single" (form)
-        labelX: "x",
-        labelY: "y",
-        labelType: "quantity",
-        locked: false,
-        positionLocked: false,
-      };
-    },
-  },
-
-  /* COORDPLANE — atomic (single type:"coordplane" object). A full math coordinate
-   * system: box + display range + grid/ticks/numeric labels, all projected by the
-   * renderer from the data (기획서 §3-1). Rides the existing size-based transform
-   * path (x/y/w/h/rotation) like `axes`. `funcgraph`s reference it by planeId. */
-  coordplane: {
-    kind: "atomic",
-    category: "함수",
-    label: "좌표평면",
-    keywords: ["좌표평면", "좌표계", "그래프", "graph", "plane", "함수", "xy", "격자", "grid"],
-    create: {},
-    make(at) {
-      // Schema lives in function-graph/defaults.js (shared with the graph inserter).
-      return makeDefaultCoordplane(at);
-    },
-  },
+  /* COORDPLANE — the independent "좌표평면" creation button was removed here
+   * (확정 항목 ⑦). The "coordplane" TYPE, makeDefaultCoordplane, its renderer
+   * (render/coordplane.js), and its inspector (section-coordplane.js) are all
+   * kept untouched — 함수 입력 auto-creates a coordplane internally
+   * (function-graph/insert.js) whenever none is selected, so funcgraph literally
+   * cannot exist without this foundation. */
 
   /* FUNCGRAPH — "함수 입력". kind "funcinput": clicking opens the formula input
    * (interim prompt now; §10-④ 모달 later) instead of arming a tool or dropping an
@@ -92,7 +53,7 @@ export const TEMPLATES = {
    * on the selected coordplane, or a fresh plane if none is selected. */
   funcgraph: {
     kind: "funcinput",
-    category: "함수",
+    category: "공통",
     label: "함수 입력",
     keywords: ["함수", "그래프", "수식", "function", "graph", "sin", "cos", "log", "y=f(x)", "지수", "로그", "삼각"],
     create: {},
@@ -262,7 +223,7 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 const ICON_PX = 16;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
 const ICON_STROKE_PX = 1.1;  // target on-screen stroke weight (≈ the base-tool icons)
 const CIRCUIT_PALETTE_LABELS = { resistor: "R", inductor: "L", capacitor: "C", voltmeter: "V", ammeter: "A" };
-const SHORTCUT_LABELS = { axes: "X", anglearc: "A", rightangle: "Shift+G", node: "N", labeler: "Shift+T" };
+const SHORTCUT_LABELS = { anglearc: "A", rightangle: "Shift+G", node: "N", labeler: "Shift+T", funcgraph: "F" };
 
 // Representative bounding boxes (world mm) per OPTICS kind — only drives the icon's
 // aspect ratio; the viewBox auto-fits afterwards. fillNone keeps shapes hollow.
