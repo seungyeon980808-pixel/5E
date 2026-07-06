@@ -6,7 +6,8 @@
 //
 //   · 가위(scissors): 클릭 지점에서 경로를 둘로 (닫힌 경로는 그 지점에서 열림)
 //   · 칼(knife):      직선 a→b와의 교차점마다 경로 분할 (닫힌 도형은 2교차서 두 호로)
-// 모든 조각은 열린 경로로 방출한다 — 자르기가 합성 변(닫는 변)을 만들지 않도록.
+// 획·윤곽선 조각은 열린 경로로 방출한다(합성 변이 안 생기게). 단, 색을 채운
+// 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
 function round3(v) { return Math.round(v * 1000) / 1000; }
@@ -36,6 +37,12 @@ export function isCuttable(o) {
 // 네이티브 도형(원/상자/삼각형)은 항상 닫힘; polyline/curve는 o.closed.
 function objClosed(o) {
   return o.type === "ellipse" || o.type === "rect" || o.type === "triangle" || !!o.closed;
+}
+// 색을 채운 닫힌 영역인가(=렌더러가 fill을 그리는 도형). fillNone이면 윤곽선만 있는
+// 도형/열린 획이므로 false. 이 판정으로 잘린 조각을 닫힌-채움으로 유지할지 정한다.
+// (render/fill.js: obj.fillNone → "transparent" 규칙과 일치)
+export function isFilledRegion(o) {
+  return isCuttable(o) && objClosed(o) && !o.fillNone;
 }
 function rotatePt(px, py, cx, cy, deg) {
   if (!deg) return { x: px, y: py };
@@ -116,6 +123,9 @@ function dedupe(pts) {
 /* ----- 가위: 클릭 지점에서 분할 ----- */
 export function cutScissors(o, point) {
   if (!isCuttable(o)) return null;
+  // 색을 채운 영역은 점 클릭 한 번으로 2D를 나눌 수 없다 → 가위로는 건드리지 않고
+  // 원본 유지(예전엔 닫힌 경로가 열리며 채움이 사라졌음). 영역 분할은 칼로 가로지른다.
+  if (isFilledRegion(o)) return null;
   const pts = objPoints(o);
   if (pts.length < 2) return null;
   const closed = objClosed(o);
@@ -198,8 +208,10 @@ export function cutKnife(o, a, b) {
     if (crossings.length !== 2) return null; // 2교차만 두 조각으로 분할(그 외는 원본 유지)
     crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
     const [c0, c1] = crossings;
-    // 닫힌 도형을 두 교차점에서 자르면 두 "호(arc)"가 된다. 자동으로 닫지 않는다
-    // (닫으면 합성 현(弦)이 그어져 사용자 의도와 다름) → 열린 조각으로 방출.
+    // 두 교차점에서 두 "호(arc)"가 나온다. 채운 영역이면 잘린 현(弦)을 따라 각각 닫아
+    // 두 개의 채워진 조각으로 방출(색 유지). 윤곽선만 있는 도형이면 닫지 않고 열린
+    // 호로 방출(합성 현이 안 그어지게) — 기존 동작 유지.
+    const fillHalves = isFilledRegion(o);
     const arcA = [c0.pt];
     for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
     arcA.push(c1.pt);
@@ -210,9 +222,11 @@ export function cutKnife(o, a, b) {
     }
     arcB.push(c0.pt);
     const A = dedupe(arcA), B = dedupe(arcB);
+    // 채운 조각은 면적을 가지려면 3점 이상 필요(현으로 닫히므로). 획 조각은 2점이면 충분.
+    const minPts = fillHalves ? 3 : 2;
     const out = [];
-    if (A.length >= 2) out.push(makePiece(o, A, false));
-    if (B.length >= 2) out.push(makePiece(o, B, false));
+    if (A.length >= minPts) out.push(makePiece(o, A, fillHalves));
+    if (B.length >= minPts) out.push(makePiece(o, B, fillHalves));
     return out.length >= 2 ? out : null;
   }
   return splitOpenAtCrossings(o, pts, crossings);
@@ -235,9 +249,82 @@ export function distanceToObject(o, point) {
   return Math.sqrt(best);
 }
 
+/* ----- 자유경로(가위): 그려진 폴리라인이 지나가는 곳마다 분할 ----- */
+// 절단 경로에서 두 교차점 ca,cb '사이'의 그려진 정점들을 ca→cb 순서로 반환(끝점 제외).
+// 직선(2점 경로)이면 항상 빈 배열 → 채운 조각이 곧은 현으로 닫힘(=칼과 동일).
+function pathInterior(cutPts, ca, cb) {
+  let a = ca, b = cb, rev = false;
+  if (a.pseg > b.pseg || (a.pseg === b.pseg && a.u > b.u)) { a = cb; b = ca; rev = true; }
+  const mids = [];
+  for (let k = a.pseg + 1; k <= b.pseg; k++) mids.push({ x: cutPts[k].x, y: cutPts[k].y });
+  if (rev) mids.reverse();
+  return mids;
+}
+// 대상 경계 × 절단 경로 교차점. 각 교차에 대상 위치(seg,t)와 경로 위치(pseg,u) 기록.
+function freehandCrossings(o, cut) {
+  const pts = objPoints(o);
+  if (!pts || pts.length < 2 || cut.length < 2) return null;
+  const closed = objClosed(o);
+  const raw = [];
+  const N = closed ? pts.length : pts.length - 1;
+  for (let i = 0; i < N; i++) {
+    const s0 = pts[i], s1 = pts[(i + 1) % pts.length];
+    for (let j = 0; j < cut.length - 1; j++) {
+      const X = segSegIntersect(s0, s1, cut[j], cut[j + 1]);
+      if (X) raw.push({ seg: i, t: X.t, pseg: j, u: X.u, pt: { x: X.x, y: X.y } });
+    }
+  }
+  return { pts, closed, crossings: dedupeCrossings(raw) };
+}
+// 절단 경로가 대상을 자르는 지점들(빨간 점 미리보기용). 못 자르면 [].
+export function cutCrossingPoints(o, path) {
+  if (!isCuttable(o)) return [];
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  const r = freehandCrossings(o, cut);
+  return r ? r.crossings.map((c) => c.pt) : [];
+}
+export function cutFreehand(o, path) {
+  if (!isCuttable(o)) return null;
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return null;
+  const r = freehandCrossings(o, cut);
+  if (!r) return null;
+  const { pts, closed, crossings } = r;
+  if (!crossings.length) return null;
+  if (!closed) return splitOpenAtCrossings(o, pts, crossings);
+  if (crossings.length !== 2) return null; // 닫힌 도형은 2교차(관통)만 분할 — 그 외 원본 유지
+  crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
+  const [c0, c1] = crossings;
+  const arcAInterior = [];
+  for (let k = c0.seg + 1; k <= c1.seg; k++) arcAInterior.push(pts[k]);
+  const arcBInterior = [];
+  for (let k = (c1.seg + 1) % pts.length; k !== (c0.seg + 1) % pts.length; k = (k + 1) % pts.length) {
+    arcBInterior.push(pts[k]);
+    if (arcBInterior.length > pts.length + 2) break;
+  }
+  const fillHalves = isFilledRegion(o);
+  if (!fillHalves) {
+    // 윤곽선: 두 열린 호(절단 경로는 버림) — 기존 칼 동작과 동일.
+    const A = dedupe([c0.pt, ...arcAInterior, c1.pt]);
+    const B = dedupe([c1.pt, ...arcBInterior, c0.pt]);
+    const out = [];
+    if (A.length >= 2) out.push(makePiece(o, A, false));
+    if (B.length >= 2) out.push(makePiece(o, B, false));
+    return out.length >= 2 ? out : null;
+  }
+  // 채운 영역: 그려진 절단 경로를 공유 경계로 삼아 채운 두 조각으로.
+  const A = dedupe([c0.pt, ...arcAInterior, c1.pt, ...pathInterior(cut, c1, c0)]);
+  const B = dedupe([c1.pt, ...arcBInterior, c0.pt, ...pathInterior(cut, c0, c1)]);
+  const out = [];
+  if (A.length >= 3) out.push(makePiece(o, A, true));
+  if (B.length >= 3) out.push(makePiece(o, B, true));
+  return out.length >= 2 ? out : null;
+}
+
 // 디스패처: mode·geom으로 객체를 잘라 조각 반환. 못 자르면 null.
 export function cutObject(o, mode, geom) {
   if (mode === "scissors") return cutScissors(o, geom.point);
   if (mode === "knife") return cutKnife(o, geom.a, geom.b);
+  if (mode === "freehand" || mode === "path") return cutFreehand(o, geom.path);
   return null;
 }

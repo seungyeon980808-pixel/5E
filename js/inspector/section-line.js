@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.52.0";
+import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.53.0";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
