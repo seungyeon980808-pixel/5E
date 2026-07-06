@@ -46,6 +46,153 @@ function saveDefaults(d) {
   localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
 }
 
+/* ----- settings file I/O (백업/복원) ----- */
+//
+// 비설치형 웹앱이라 브라우저 캐시(localStorage)를 지우면 개인 설정이 사라진다.
+// 여기서 개인 설정 키들을 JSON 파일로 내보내고(다운로드) 다시 불러온다(복원).
+// 다운로드/파일입력 관습은 project-io.js와 동일(Blob + <a download>, <input type=file>).
+//
+// PERSONAL_KEYS: settings.js와 앱이 관리하는 "개인 설정" localStorage 키 목록.
+//   - DEFAULTS_KEY("phyDraw.defaults") : 기본값 설정 모달이 관리
+//   - "theme"                          : 흑백/라이트 모드(main.js가 관리)
+// 존재하는 키만 내보낸다(값이 없는 키는 파일에 포함하지 않는다).
+const THEME_KEY = "theme";
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY];
+
+// 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
+// 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.
+const SETTINGS_FILE_KIND = "5E-settings";
+const SETTINGS_FILE_VERSION = "1";
+
+// 파일명: 5E-settings-YYYYMMDD.json
+function settingsFilename() {
+  const now = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
+  return `5E-settings-${stamp}.json`;
+}
+
+// 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
+function collectSettings() {
+  const data = {};
+  for (const key of PERSONAL_KEYS) {
+    const raw = localStorage.getItem(key);
+    if (raw === null) continue;
+    data[key] = raw;   // 원본 문자열 그대로 보존(정확한 왕복 보장)
+  }
+  return {
+    app: "5E",
+    kind: SETTINGS_FILE_KIND,
+    version: SETTINGS_FILE_VERSION,
+    savedAt: new Date().toISOString(),
+    data,
+  };
+}
+
+// 설정 저장하기: 개인 설정을 JSON 파일로 다운로드.
+function exportSettings() {
+  const json = JSON.stringify(collectSettings(), null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = settingsFilename();
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 불러온 페이로드가 우리 설정 파일 스키마인지 검증한다(깨진/다른 파일 방어).
+// 통과하면 { data } 를, 아니면 null 을 돌려준다.
+function validateSettingsPayload(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  if (raw.kind !== SETTINGS_FILE_KIND) return null;
+  if (!raw.data || typeof raw.data !== "object") return null;
+  // data 안의 값은 localStorage에 넣을 문자열이어야 한다.
+  for (const key of Object.keys(raw.data)) {
+    if (typeof raw.data[key] !== "string") return null;
+  }
+  return { data: raw.data };
+}
+
+// 파일에서 읽어들인 설정을 localStorage에 반영하고, 가능한 것은 즉시 적용한다.
+// 우리가 아는 개인 설정 키(PERSONAL_KEYS)만 반영한다(임의 키 주입 방지).
+// 반환: 반영된 키 배열.
+function applyImportedSettings(data) {
+  const applied = [];
+  for (const key of PERSONAL_KEYS) {
+    if (!(key in data)) continue;
+    const value = data[key];
+
+    if (key === DEFAULTS_KEY) {
+      // 값이 유효한 JSON 객체일 때만 반영(깨진 값이 defaults를 오염시키지 않게).
+      try {
+        const parsed = JSON.parse(value);
+        if (!parsed || typeof parsed !== "object") continue;
+      } catch {
+        continue;
+      }
+    }
+    if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
+
+    localStorage.setItem(key, value);
+    applied.push(key);
+  }
+
+  // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
+  if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
+
+  return applied;
+}
+
+// theme를 리로드 없이 즉시 반영(main.js initTheme의 동작을 그대로 재현).
+function applyThemeLive(theme) {
+  const root = document.documentElement;
+  root.setAttribute("data-theme", theme);
+  const btn = document.getElementById("theme-toggle");
+  if (btn) {
+    const dark = theme === "dark";
+    btn.setAttribute("aria-pressed", String(dark));
+    btn.setAttribute("aria-label", dark ? "흑백 모드 끄기" : "흑백 모드 켜기");
+    btn.title = dark ? "흑백 모드 끄기" : "흑백 모드 켜기";
+  }
+}
+
+// 설정 불러오기: 파일 파싱 → 검증 → 반영. 실패 시 한국어로 알리고 아무것도 바꾸지 않는다.
+function importSettingsFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let raw;
+    try {
+      raw = JSON.parse(reader.result);
+    } catch {
+      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정 파일인지 확인해 주세요.");
+      return;
+    }
+    const valid = validateSettingsPayload(raw);
+    if (!valid) {
+      alert("올바른 5E 설정 파일이 아닙니다. 설정은 변경되지 않았습니다.");
+      return;
+    }
+    const applied = applyImportedSettings(valid.data);
+    if (applied.length === 0) {
+      alert("불러올 수 있는 설정 항목이 없습니다. 설정은 변경되지 않았습니다.");
+      return;
+    }
+    // 기본값 설정(phyDraw.defaults)은 새 도형 생성 시 참조되므로 즉시 반영되지만,
+    // 이미 그려 둔 도형이나 열려 있는 모달에는 재열기 전까지 보이지 않을 수 있다.
+    const needsReopenNote = applied.includes(DEFAULTS_KEY);
+    alert(
+      "설정을 불러왔습니다." +
+      (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "")
+    );
+  };
+  reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
+  reader.readAsText(file);
+}
+
 /* ----- dropdown: registered with the shared top-menu (exclusive with 파일) ----- */
 function initSettingsMenu() {
   const btn = document.getElementById("settings-menu-btn");
@@ -327,5 +474,26 @@ export function initSettings(state) {
       gridInterval: Number(fields.gridInterval.value),
     });
     hideModal();
+  });
+
+  /* ----- 설정 파일 저장/불러오기 dropdown 항목 wiring ----- */
+  // 숨김 파일 입력은 여기서 만들어 index.html은 마크업만 유지(project-io.js 관습).
+  const settingsFileInput = document.createElement("input");
+  settingsFileInput.type = "file";
+  settingsFileInput.accept = ".json,application/json";
+  settingsFileInput.style.display = "none";
+  document.body.appendChild(settingsFileInput);
+
+  const exportBtn = document.getElementById("settings-export");
+  if (exportBtn) exportBtn.addEventListener("click", exportSettings);
+
+  const importBtn = document.getElementById("settings-import");
+  if (importBtn) importBtn.addEventListener("click", () => settingsFileInput.click());
+
+  settingsFileInput.addEventListener("change", () => {
+    const file = settingsFileInput.files && settingsFileInput.files[0];
+    if (file) importSettingsFile(file);
+    // 같은 파일을 다시 선택해도 change가 발생하도록 초기화.
+    settingsFileInput.value = "";
   });
 }
