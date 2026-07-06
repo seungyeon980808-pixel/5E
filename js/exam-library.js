@@ -52,13 +52,42 @@ function subjectMatches(it, subj) {
 // 드롭다운 정렬 순서(물리→화학→생명→지구→통합). 목록에 없는 과목코드는 뒤로.
 const SUBJECT_ORDER = ["p1", "p2", "c1", "c2", "b1", "b2", "e1", "e2", "i1"];
 
-// 압축 코드(공백 없는 숫자 8자리: 학년도4+시험월2+문항번호2) — 예: "20261101" → 2026/11/01번.
-// 문항번호가 3자리인 예외 케이스는 드물어 우선 2자리만 지원(맞는 게 없으면 일반 토큰검색으로 폴백).
+// 4자리 연도가 실제 라이브러리 연도 범위 안이면 "연도"로 인정(6자리 애매성 해소용).
+function plausibleYear4(y) {
+  const years = (manifest && manifest.years) || [];
+  if (years.length) return y >= Math.min(...years) && y <= Math.max(...years);
+  return y >= 2000 && y <= 2099;
+}
+
+// 압축 코드 파싱 — 숫자·구분자만 있을 때, 자릿수로 알아서 해석(문항번호는 선택):
+//   4자리 YYMM        예: 2611     → 2026학년도 11월(수능), 전 문항
+//   6자리 YYYYMM      예: 202611   → 2026학년도 11월, 전 문항
+//   6자리 YYMMNN      예: 261101   → 2026학년도 11월 1번  (앞 4자리가 연도로 안 맞을 때)
+//   8자리 YYYYMMNN    예: 20261101 → 2026학년도 11월 1번
+// 연도 2자리는 20YY로 본다(26→2026). 안 맞으면 null → 일반 토큰검색으로 폴백.
 function parseCompactCode(query) {
-  const digits = query.replace(/\s+/g, "");
-  const m = digits.match(/^(\d{4})(\d{2})(\d{2})$/);
-  if (!m) return null;
-  return { year: Number(m[1]), month: Number(m[2]), no: Number(m[3]) };
+  const q = String(query).trim();
+  if (!q || !/^[\d\s.\-]+$/.test(q)) return null; // 문자가 섞이면 압축코드 아님
+  const d = q.replace(/\D/g, "");
+  const okM = (m) => m >= 1 && m <= 12;
+  const okN = (n) => n >= 1 && n <= 40;
+  const y2 = (s) => 2000 + Number(s);
+  if (d.length === 4) {
+    const year = y2(d.slice(0, 2)), month = Number(d.slice(2, 4));
+    return okM(month) ? { year, month, no: null } : null;
+  }
+  if (d.length === 6) {
+    const yA = Number(d.slice(0, 4)), mA = Number(d.slice(4, 6));
+    if (plausibleYear4(yA) && okM(mA)) return { year: yA, month: mA, no: null };
+    const yB = y2(d.slice(0, 2)), mB = Number(d.slice(2, 4)), nB = Number(d.slice(4, 6));
+    if (okM(mB) && okN(nB)) return { year: yB, month: mB, no: nB };
+    return null;
+  }
+  if (d.length === 8) {
+    const year = Number(d.slice(0, 4)), month = Number(d.slice(4, 6)), no = Number(d.slice(6, 8));
+    return okM(month) && okN(no) ? { year, month, no } : null;
+  }
+  return null;
 }
 
 /* 검색 방식(압축코드 또는 토큰입력 · 드롭다운 4종)을 전부 AND로 결합.
@@ -70,7 +99,8 @@ function searchItems(query, filters) {
   const { subject, part, year, concept } = filters;
   return manifest.items.filter((it) =>
     (compact
-      ? (it.year === compact.year && it.month === compact.month && it.no === compact.no)
+      ? (it.year === compact.year && it.month === compact.month
+         && (compact.no == null || it.no === compact.no))
       : tokens.every((t) => it._hay.includes(t) || it._hayNs.includes(t))) &&
     (!concept || (it.tags || []).includes(concept)) &&
     (!subject || subjectMatches(it, subject)) &&
@@ -103,7 +133,7 @@ function buildModal() {
       </div>
       <div class="examlib-search-row">
         <input id="examlib-query" type="search" autocomplete="off"
-               placeholder="문항번호 검색 — 예: 20261101 (2026학년도 11월 1번)" />
+               placeholder="문항번호 — 2611·202611=2026 수능,  20261101=2026 수능 1번" />
       </div>
       <div class="examlib-toolbar">
         <p id="examlib-status" class="objectify-status" role="status"></p>
