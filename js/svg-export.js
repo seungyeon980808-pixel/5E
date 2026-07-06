@@ -48,6 +48,9 @@ function isReferenceImage(obj) {
 }
 
 function isHidden(s, obj, options = {}) {
+  // 이미지 비교(image-compare.js): 우측 창은 "그린 것만" 보여야 하므로 모든 이미지 제외.
+  // 기본값 off → export 동작은 그대로.
+  if (obj.type === "image" && options.excludeAllImages === true) return true;
   if (obj.type === "image" && options.includeReferenceImages === false && isReferenceImage(obj)) return true;
   if (obj.type !== "image" && obj.exportable === false) return true;
   const layer = (s.layers || []).find((l) => l.id === (obj.layerId ?? 1));

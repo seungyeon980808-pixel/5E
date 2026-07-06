@@ -5,6 +5,7 @@
 
 import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=0.53.0";
 import { makeSection } from "./widgets.js?v=0.53.0";
+import { startImageCompare } from "../image-compare.js?v=0.53.0";
 
 export function buildImageSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -111,6 +112,25 @@ export function buildImageSection(ctx) {
   imgExportNote.style.margin = "4px 0 6px";
   imgExportNote.textContent = "배경 이미지는 기본적으로 내보내기에서 제외됩니다.";
   imgBody.appendChild(imgExportNote);
+
+  // 비교: 트레이싱용 원본 이미지 vs 내가 그린 오브젝트를 좌우로 나란히 비교.
+  // 영역을 드래그로 지정(Enter 확정)한 뒤 순수 표시 팝업을 띄운다 — state/undo/
+  // export에 흔적을 남기지 않는다. 이미지 객체가 없으면 startImageCompare가 무시.
+  const imgCompareRow = document.createElement("div");
+  imgCompareRow.className = "insp-row";
+  const imgCompareBtn = document.createElement("button");
+  imgCompareBtn.type = "button";
+  imgCompareBtn.className = "modal-btn";
+  imgCompareBtn.style.width = "100%";
+  imgCompareBtn.textContent = "비교";
+  imgCompareRow.appendChild(imgCompareBtn);
+  imgBody.appendChild(imgCompareRow);
+  imgCompareBtn.addEventListener("click", () => {
+    const s = state.get();
+    const cur = selectedImage(s);
+    if (!cur) return; // 이미지 없음 → 안전하게 무시
+    startImageCompare(state, cur);
+  });
 
   // remove button (label switches to 배경 이미지 제거 for background mode).
   const imgRemoveRow = document.createElement("div");
