@@ -1,6 +1,6 @@
 /* ===== EXAM LIBRARY MODAL (기출 문항 검색) ===== */
 
-.modal-examlib { width: 680px; max-width: calc(100vw - 32px); }
+.modal-examlib { width: 980px; max-width: calc(100vw - 32px); }
 
 .examlib-search-row input {
   width: 100%;
@@ -13,7 +13,7 @@
 }
 .examlib-search-row input:focus { outline: none; border-color: var(--accent); }
 
-/* ----- 드롭다운 필터 행 (과목·파트·년도 + 초기화) ----- */
+/* ----- 드롭다운 필터 행 (과목·년도·단원·개념 + 초기화) ----- */
 .examlib-filter-row {
   display: flex;
   flex-wrap: wrap;
@@ -45,46 +45,27 @@
 }
 .examlib-reset:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 
-/* ----- 태그 칩 바 (카테고리 라벨 + 토글 칩) ----- */
-.examlib-tagbar {
-  margin: 8px 0 2px;
-  max-height: 108px;
-  overflow-y: auto;
-  line-height: 2;
+/* ----- 상태줄 + 선택된 문항용 액션 버튼(상단 고정, 카드마다 반복 안 함) ----- */
+.examlib-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
 }
-.examlib-tagcat {
-  display: inline-block;
-  margin: 0 6px 0 2px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-.examlib-chip {
-  display: inline-block;
-  margin: 0 4px 2px 0;
-  padding: 1px 9px;
-  font-size: 12px;
-  font-family: inherit;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-.examlib-chip:hover { background: var(--btn-tool-hover); }
-.examlib-chip.is-on {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #ffffff;
-}
+.examlib-toolbar .objectify-status { margin: 0; }
+.examlib-selected-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.examlib-selected-actions .modal-btn { padding: 5px 12px; font-size: 13px; }
+.examlib-selected-actions .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ----- 결과 그리드 ----- */
+/* ----- 결과 그리드 (한 줄 4장 고정) ----- */
 .examlib-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 10px;
-  max-height: 46vh;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  max-height: 58vh;
   overflow-y: auto;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .examlib-card {
   display: flex;
@@ -92,9 +73,15 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   overflow: hidden;
+  cursor: pointer;
+}
+.examlib-card:hover { border-color: var(--text-secondary); }
+.examlib-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent) inset;
 }
 .examlib-thumb {
-  height: 110px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -102,7 +89,7 @@
 }
 /* 로드 전에도 박스를 차지해야 함 — 0×0 img는 브라우저가 lazy 로딩을 건너뜀 */
 .examlib-thumb img { width: 100%; height: 100%; object-fit: contain; }
-.examlib-meta { padding: 6px 8px 0; }
+.examlib-meta { padding: 6px 8px 8px; }
 .examlib-title { font-size: 12px; color: var(--text-primary); }
 .examlib-tags {
   min-height: 14px;
@@ -110,5 +97,3 @@
   font-size: 11px;
   color: var(--text-secondary);
 }
-.examlib-actions { display: flex; gap: 6px; padding: 6px 8px 8px; }
-.examlib-actions .modal-btn { flex: 1; padding: 3px 0; font-size: 12px; }
