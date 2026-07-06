@@ -102,6 +102,18 @@ state.subscribe(applyViewBox);
 // state.update(), which already fires the applyViewBox + render subscribers.
 initViewport(svg, state, () => {});
 
+/* zoom readout is derived from the SVG's on-screen width, which is 0 until the
+   3-panel grid finishes its first layout pass. The last applyViewBox at init
+   therefore burns in a stale "0.00×"; refresh once the box has real width so the
+   readout shows the true fit-zoom. */
+requestAnimationFrame(function refreshZoomReadout() {
+  if (svg.getBoundingClientRect().width === 0) {
+    requestAnimationFrame(refreshZoomReadout);
+    return;
+  }
+  applyViewBox(state.get());
+});
+
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
 
