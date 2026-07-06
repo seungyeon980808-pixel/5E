@@ -467,7 +467,7 @@ function circleGeometry(obj, dx, dy) {
   };
 }
 
-function polygonVertices(obj, dx = 0, dy = 0) {
+function polygonVertices(obj, dx = 0, dy = 0, rotationDeg = obj.rotation || 0) {
   if (obj.type !== "rect" && obj.type !== "triangle") return [];
   const x = obj.x + dx, y = obj.y + dy, w = obj.w, h = obj.h;
   const cx = x + w / 2, cy = y + h / 2;
@@ -481,7 +481,7 @@ function polygonVertices(obj, dx = 0, dy = 0) {
     const tipY = obj.flipY ? y + h : y;
     vertices = [{ x: rightX, y: baseY }, { x: otherX, y: baseY }, { x: rightX, y: tipY }];
   }
-  return vertices.map((point) => rotPt(point.x, point.y, cx, cy, obj.rotation || 0));
+  return vertices.map((point) => rotPt(point.x, point.y, cx, cy, rotationDeg));
 }
 
 function targetEdgeSegments(obj) {
@@ -505,32 +505,46 @@ function targetEdgeSegments(obj) {
     .filter(([a, b]) => isUsableSegment(a, b));
 }
 
-function contactCandidateForSegment(movingObj, raw, target, a, b) {
-  const edgeX = b.x - a.x, edgeY = b.y - a.y;
-  const length = Math.hypot(edgeX, edgeY);
-  if (!length) return null;
-  const normal = { x: -edgeY / length, y: edgeX / length };
+/* ===== ANGLE HELPERS (rotation alignment) =====
+ * All in radians. wrapPi → (-π, π]. Parallel alignment is mod π (a face direction
+ * is unsigned), so parallelDelta returns the SMALLEST signed rotation in (-π/2, π/2]
+ * that makes `fromAngle` parallel to `toAngle`. This choice prevents needless flips
+ * (spec: {타깃각, 타깃각+180°} 중 현재 면각과 차가 가장 작은 쪽). */
+function wrapPi(rad) {
+  let r = rad;
+  while (r > Math.PI) r -= 2 * Math.PI;
+  while (r <= -Math.PI) r += 2 * Math.PI;
+  return r;
+}
+function parallelDelta(fromAngle, toAngle) {
+  let d = wrapPi(toAngle - fromAngle);
+  if (d > Math.PI / 2) d -= Math.PI;
+  else if (d <= -Math.PI / 2) d += Math.PI;
+  return d; // (-π/2, π/2]
+}
 
-  const circle = circleGeometry(movingObj, raw.dx, raw.dy);
-  if (circle) {
-    const along = ((circle.center.x - a.x) * edgeX + (circle.center.y - a.y) * edgeY)
-      / (length * length);
-    if (along < 0 || along > 1) return null;
-    const contactPoint = { x: a.x + along * edgeX, y: a.y + along * edgeY };
-    const signedDistance = (circle.center.x - a.x) * normal.x
-      + (circle.center.y - a.y) * normal.y;
-    const correction = (signedDistance < 0 ? -circle.radius : circle.radius) - signedDistance;
-    return {
-      distance: Math.abs(correction),
-      dx: raw.dx + correction * normal.x,
-      dy: raw.dy + correction * normal.y,
-      target,
-      targetPoint: contactPoint,
-      contactPoint,
-    };
+/* Given the mover's rotated polygon vertices and the target edge angle, choose the
+ * polygon face (edge) that needs the LEAST rotation to become parallel, and return
+ * that signed rotation delta (radians). The chosen face is the one that will make
+ * contact after alignment. Returns 0 if no usable edge (leaves geometry untouched). */
+function alignmentDeltaToEdge(vertices, targetAngle) {
+  let best = null;
+  for (let i = 0; i < vertices.length; i += 1) {
+    const p = vertices[i], q = vertices[(i + 1) % vertices.length];
+    const ex = q.x - p.x, ey = q.y - p.y;
+    if (Math.hypot(ex, ey) === 0) continue;
+    const faceAngle = Math.atan2(ey, ex);
+    const d = parallelDelta(faceAngle, targetAngle);
+    if (!best || Math.abs(d) < Math.abs(best)) best = d;
   }
+  return best === null ? 0 : best;
+}
 
-  const vertices = polygonVertices(movingObj, raw.dx, raw.dy);
+/* Rest the given polygon `vertices` against the target edge a→b by translating
+ * along the edge normal so the near support face seats on the edge. Pure geometry;
+ * the caller supplies `raw` (base translate) and attaches target/rotation. Mirrors
+ * the original polygon contact math. Returns a candidate or null. */
+function polygonContactAgainstEdge(vertices, raw, a, b, edgeX, edgeY, length, normal) {
   if (!vertices.length) return null;
   const signed = vertices.map((point) => (point.x - a.x) * normal.x + (point.y - a.y) * normal.y);
   const min = Math.min(...signed), max = Math.max(...signed);
@@ -554,13 +568,60 @@ function contactCandidateForSegment(movingObj, raw, target, a, b) {
       distance: Math.abs(support.correction),
       dx: raw.dx + support.correction * normal.x,
       dy: raw.dy + support.correction * normal.y,
-      target,
       targetPoint: contactPoint,
       contactPoint,
     };
     if (!best || candidate.distance < best.distance) best = candidate;
   }
   return best;
+}
+
+function contactCandidateForSegment(movingObj, raw, target, a, b) {
+  const edgeX = b.x - a.x, edgeY = b.y - a.y;
+  const length = Math.hypot(edgeX, edgeY);
+  if (!length) return null;
+  const normal = { x: -edgeY / length, y: edgeX / length };
+
+  const circle = circleGeometry(movingObj, raw.dx, raw.dy);
+  if (circle) {
+    // 곡면 이동체(원/타원)는 회전 정렬 대상 아님 — 기존 rotation:null 경로 유지.
+    const along = ((circle.center.x - a.x) * edgeX + (circle.center.y - a.y) * edgeY)
+      / (length * length);
+    if (along < 0 || along > 1) return null;
+    const contactPoint = { x: a.x + along * edgeX, y: a.y + along * edgeY };
+    const signedDistance = (circle.center.x - a.x) * normal.x
+      + (circle.center.y - a.y) * normal.y;
+    const correction = (signedDistance < 0 ? -circle.radius : circle.radius) - signedDistance;
+    return {
+      distance: Math.abs(correction),
+      dx: raw.dx + correction * normal.x,
+      dy: raw.dy + correction * normal.y,
+      target,
+      targetPoint: contactPoint,
+      contactPoint,
+      rotation: null,
+    };
+  }
+
+  // Polygon mover (rect/triangle): align its contact face to the target edge, then
+  // seat the ROTATED polygon against the edge (vertex-path pattern: decide rotation,
+  // recompute contact with the rotated points). delta≈0 ⇒ identical to prior behavior.
+  const baseRotation = movingObj.rotation || 0;
+  const current = polygonVertices(movingObj, raw.dx, raw.dy, baseRotation);
+  if (!current.length) return null;
+  const targetAngle = Math.atan2(edgeY, edgeX);
+  const delta = alignmentDeltaToEdge(current, targetAngle);           // radians
+  const deltaDeg = delta * 180 / Math.PI;
+  const rotated = deltaDeg
+    ? polygonVertices(movingObj, raw.dx, raw.dy, baseRotation + deltaDeg)
+    : current;
+  const candidate = polygonContactAgainstEdge(rotated, raw, a, b, edgeX, edgeY, length, normal);
+  if (!candidate) return null;
+  candidate.target = target;
+  // Absolute rotation to write when attached. null when there is no effective
+  // rotation, so parallel cases keep the original rotation (transform.js: orig||0).
+  candidate.rotation = deltaDeg ? baseRotation + deltaDeg : null;
+  return candidate;
 }
 
 function closestContactCandidate(moveObjIds, origObjs, raw, state, maxDistance) {
@@ -798,7 +859,9 @@ export function resolveSnap(moveObjIds, origObjs, raw, mods, zoom, state, scene)
   if (preferTangent) {
     const preview = { from: tangent.contactPoint, to: tangent.contactPoint };
     if (tangent.distance > ATTACH_PX / scale) return { ...unsnapped, preview };
-    return { dx: tangent.dx, dy: tangent.dy, preview, rotation: null };
+    // tangent.rotation (absolute) is non-null only for a rotation-aligned polygon
+    // face-snap; ellipse/curve tangents keep null so nothing rotates (곡면 제외).
+    return { dx: tangent.dx, dy: tangent.dy, preview, rotation: tangent.rotation ?? null };
   }
   if (!validPair) return unsnapped;
 
