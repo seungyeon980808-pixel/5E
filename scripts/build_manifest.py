@@ -7,8 +7,10 @@
 # 실행:  python scripts/build_manifest.py
 # 흐름:  이미지 추가/삭제 또는 tags.xlsx 수정 → 이 스크립트 재실행 → 앱 새로고침
 #
-# 파일명 규칙: <과목코드>_<학년도4자리>_<시험월2자리>_<문항번호>.png
-#   예) p1_2026_11_01.png  →  2026학년도 수능 물리1 1번
+# 파일명 규칙: <과목코드>_<학년도4자리>_<시험월2자리>_<문항번호>[_<서브번호>].png
+#   예) p1_2026_11_01.png    →  2026학년도 수능 물리1 1번
+#   예) p1_2026_11_02_1.png, p1_2026_11_02_2.png
+#       → 한 문항에 그림이 여러 장이면 서브번호(_1, _2, ...)로 구분 (id도 서로 달라짐)
 #   프리픽스 뒤에 붙는 라벨은 무시된다:
 #   예) "p1_2025_03_02 [2025학년도 3월 학평 물리1 2번].png" 도 동일하게 인식
 
@@ -32,8 +34,9 @@ SUBJECT_MAP = {
     "i1": "통합과학",
 }
 
-# 파일명 stem 앞부분만 매칭 — 뒤에 붙는 " [라벨]" 등은 무시
-FILENAME_RE = re.compile(r"^([a-z]+\d*)_(\d{4})_(\d{2})_(\d{1,3})", re.IGNORECASE)
+# 파일명 stem 앞부분만 매칭 — 뒤에 붙는 " [라벨]" 등은 무시.
+# 마지막 그룹(서브번호)은 선택: 한 문항에 그림이 여러 장일 때만 존재.
+FILENAME_RE = re.compile(r"^([a-z]+\d*)_(\d{4})_(\d{2})_(\d{1,3})(?:_(\d{1,2}))?", re.IGNORECASE)
 
 # 태그 구분자: 쉼표/세미콜론/슬래시/가운뎃점/공백 모두 허용
 TAG_SPLIT_RE = re.compile(r"[,;/·\s]+")
@@ -158,10 +161,11 @@ def main():
         return ordered
 
     # ----- 이미지 스캔 -----
-    items = []
-    skipped = []          # (파일명, 사유)
-    seen_ids = {}         # id → 파일명 (중복 감지)
-    unknown_tags = {}     # 태그 → [id...]
+    # 1차: 파일명 파싱만 먼저 해서 문항별(서브번호 제외) 그림 개수를 센다
+    # (title에 "2/3"처럼 표시하려면 같은 문항의 총 그림 수를 알아야 함).
+    parsed = []            # (f, subject_code, year, month, no, seq)
+    skipped = []           # (파일명, 사유)
+    base_count = {}        # base_id(서브번호 제외) → 그림 개수
 
     for f in sorted(args.images.iterdir()):
         if not f.is_file() or f.suffix.lower() != ".png":
@@ -170,14 +174,25 @@ def main():
             continue
         m = FILENAME_RE.match(f.stem)
         if not m:
-            skipped.append((f.name, "파일명 규칙 불일치 (과목_학년도_월_번호)"))
+            skipped.append((f.name, "파일명 규칙 불일치 (과목_학년도_월_번호[_서브번호])"))
             continue
         subject_code = m.group(1).lower()
         year, month, no = int(m.group(2)), int(m.group(3)), int(m.group(4))
+        seq = int(m.group(5)) if m.group(5) else None
         if not (1 <= month <= 12):
             skipped.append((f.name, f"시험월 {month:02d} 비정상"))
             continue
-        item_id = f"{subject_code}_{year}_{month:02d}_{no:02d}"
+        base_id = f"{subject_code}_{year}_{month:02d}_{no:02d}"
+        base_count[base_id] = base_count.get(base_id, 0) + 1
+        parsed.append((f, subject_code, year, month, no, seq, base_id))
+
+    # 2차: id 확정(서브번호 있으면 id에 포함) + 항목 생성
+    items = []
+    seen_ids = {}          # id → 파일명 (중복 감지)
+    unknown_tags = {}      # 태그 → [id...]
+
+    for f, subject_code, year, month, no, seq, base_id in parsed:
+        item_id = f"{base_id}_{seq}" if seq else base_id
         if item_id in seen_ids:
             skipped.append((f.name, f"id 중복 (동일 문항: {seen_ids[item_id]})"))
             continue
@@ -191,6 +206,11 @@ def main():
                 if t not in vocab_set:
                     unknown_tags.setdefault(t, []).append(item_id)
 
+        title = f"{year}학년도 {exam} {subject_label} {no}번"
+        total = base_count.get(base_id, 1)
+        if seq and total > 1:
+            title += f" ({seq}/{total})"
+
         items.append({
             "id": item_id,
             "file": f.name,
@@ -200,12 +220,12 @@ def main():
             "month": month,
             "exam": exam,
             "no": no,
-            "title": f"{year}학년도 {exam} {subject_label} {no}번",
+            "title": title,
             "tags": tags,
             "parts": parts_for(item_id, tags),
         })
 
-    items.sort(key=lambda x: (x["subject"], -x["year"], x["month"], x["no"]))
+    items.sort(key=lambda x: (x["subject"], -x["year"], x["month"], x["no"], x["id"]))
 
     # 드롭다운용 축 값: 파트는 어휘집 순서, 년도는 내림차순
     years = sorted({it["year"] for it in items}, reverse=True)

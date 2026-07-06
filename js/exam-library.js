@@ -43,13 +43,14 @@ function prepareItems(items) {
   }
 }
 
-// 과목 드롭다운 값(물리1/물리2/기타) → item.subject 코드 매칭
+// 과목 드롭다운은 manifest에 실제로 존재하는 과목만 채운다(populateFilters) —
+// 값은 과목코드(p1/c1/b1/e1...) 그대로라 item.subject와 직접 비교하면 된다.
 function subjectMatches(it, subj) {
-  if (subj === "물리1") return it.subject === "p1";
-  if (subj === "물리2") return it.subject === "p2";
-  if (subj === "기타") return it.subject !== "p1" && it.subject !== "p2";
-  return true; // "" = 전체
+  return !subj || it.subject === subj; // "" = 전체
 }
+
+// 드롭다운 정렬 순서(물리→화학→생명→지구→통합). 목록에 없는 과목코드는 뒤로.
+const SUBJECT_ORDER = ["p1", "p2", "c1", "c2", "b1", "b2", "e1", "e2", "i1"];
 
 /* 세 검색 방식(코드입력·드롭다운·태깅)을 전부 AND로 결합.
  * filters = { subject, part, year } (빈 문자열이면 해당 축 무시). */
@@ -80,9 +81,6 @@ function buildModal() {
       <div class="examlib-filter-row">
         <select id="examlib-subject" aria-label="과목 선택">
           <option value="">과목 전체</option>
-          <option value="물리1">물리1</option>
-          <option value="물리2">물리2</option>
-          <option value="기타">기타</option>
         </select>
         <select id="examlib-part" aria-label="파트 선택">
           <option value="">파트 전체</option>
@@ -129,8 +127,24 @@ export function initExamLibrary(state) {
   };
   const close = () => { overlay.hidden = true; };
 
-  /* ----- 드롭다운 옵션 채우기 (파트·년도는 manifest에서) ----- */
+  /* ----- 드롭다운 옵션 채우기 (과목·파트·년도 전부 manifest 실제 데이터에서) ----- */
   function populateFilters() {
+    subjectSelect.length = 1; // "과목 전체"만 남기고 재생성
+    const subjectLabels = new Map(); // code → label (첫 등장값 사용)
+    for (const it of manifest.items) {
+      if (!subjectLabels.has(it.subject)) subjectLabels.set(it.subject, it.subjectLabel || it.subject);
+    }
+    const codes = [...subjectLabels.keys()].sort((a, b) => {
+      const ia = SUBJECT_ORDER.indexOf(a), ib = SUBJECT_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    for (const code of codes) {
+      subjectSelect.add(new Option(subjectLabels.get(code), code));
+    }
+
     partSelect.length = 1;  // "파트 전체"만 남기고 재생성
     for (const p of manifest.parts || []) {
       partSelect.add(new Option(p, p));
