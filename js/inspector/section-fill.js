@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection } from "./widgets.js?v=0.53.0";
+import { makeColorPicker, makeSection } from "./widgets.js?v=0.54.0";
 
 export function buildFillSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
