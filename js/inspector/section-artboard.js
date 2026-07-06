@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=0.50.6";
+import { makeSection } from "./widgets.js?v=0.51.0";
 
 export function buildArtboardSection(ctx) {
   const { state } = ctx;
@@ -12,8 +12,8 @@ export function buildArtboardSection(ctx) {
    * Lets the user set the page size. Changing it ONLY moves the artboard
    * boundary — objects keep their exact world coordinates. The artboard stays
    * centered on origin: render.js derives x=-w/2, y=-h/2 from state.artboard,
-   * so it re-centers automatically. Max 100×100, min 10×10 (clamped here). */
-  const AB_MIN = 10, AB_MAX = 100;
+   * so it re-centers automatically. Max 200×200, min 10×10 (clamped here). */
+  const AB_MIN = 10, AB_MAX = 200;
 
   const abBody = document.createElement("div");
   abBody.className = "insp-body";
@@ -74,7 +74,7 @@ export function buildArtboardSection(ctx) {
   // Preset buttons: just set w,h and apply the same way.
   const abPresets = document.createElement("div");
   abPresets.className = "insp-ab-presets";
-  [[90, 60], [100, 100], [100, 60], [60, 90]].forEach(([w, h]) => {
+  [[60, 40], [95, 50], [80, 35], [160, 80]].forEach(([w, h]) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "insp-ab-preset";

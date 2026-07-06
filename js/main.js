@@ -7,24 +7,24 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.50.6";
-import { render } from "./render.js?v=0.50.6";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.50.6";
-import { initTools } from "./tools.js?v=0.50.6";
-import { initCutTool } from "./cut-tool.js?v=0.50.6";
-import { initTransform, undo, redo } from "./transform.js?v=0.50.6";
-import { initInspector } from "./inspector.js?v=0.50.6";
-import { initProjectIO } from "./project-io.js?v=0.50.6";
-import { initExportDialog } from "./export-dialog.js?v=0.50.6";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.50.6";
-import { initSettings } from "./settings.js?v=0.50.6";
-import { initImageObjectify } from "./image-objectify.js?v=0.50.6";
-import { initImageImportMock } from "./image-import-mock.js?v=0.50.6";
-import { initImagePaste } from "./image-paste.js?v=0.50.6";
-import { initExamLibrary } from "./exam-library.js?v=0.50.6";
-import { initImageCutout } from "./image-cutout.js?v=0.50.6";
-import { initTemplates } from "./templates.js?v=0.50.6";
-import { initObjectSearch } from "./search.js?v=0.50.6";
+import { state } from "./state.js?v=0.51.0";
+import { render } from "./render.js?v=0.51.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.51.0";
+import { initTools } from "./tools.js?v=0.51.0";
+import { initCutTool } from "./cut-tool.js?v=0.51.0";
+import { initTransform, undo, redo } from "./transform.js?v=0.51.0";
+import { initInspector } from "./inspector.js?v=0.51.0";
+import { initProjectIO } from "./project-io.js?v=0.51.0";
+import { initExportDialog } from "./export-dialog.js?v=0.51.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.51.0";
+import { initSettings } from "./settings.js?v=0.51.0";
+import { initImageObjectify } from "./image-objectify.js?v=0.51.0";
+import { initImageImportMock } from "./image-import-mock.js?v=0.51.0";
+import { initImagePaste } from "./image-paste.js?v=0.51.0";
+import { initExamLibrary } from "./exam-library.js?v=0.51.0";
+import { initImageCutout } from "./image-cutout.js?v=0.51.0";
+import { initTemplates } from "./templates.js?v=0.51.0";
+import { initObjectSearch } from "./search.js?v=0.51.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -283,7 +283,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v0.50.6] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v0.51.0] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +

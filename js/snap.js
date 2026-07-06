@@ -8,13 +8,13 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.50.6";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.51.0";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
   SNAP_LINE_TARGET_TYPES as LINE_TARGET_TYPES,
   SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
-} from "./object-types.js?v=0.50.6";
+} from "./object-types.js?v=0.51.0";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
