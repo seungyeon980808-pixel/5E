@@ -3,7 +3,7 @@
 //  ① 별도 회색 레벨로 방출되어 검정 선 밑에 "회색 유령"이 깔리고(blur),
 //  ② fillLevel 중앙값 측정이 AA 픽셀에 오염되어 연하게 측정되고(fade),
 //  ③ 검정 코어가 조각나 minArea에 걸려 획이 소실된다(글자).
-import { vectorizeImage } from "file:///C:/Users/user/Desktop/project/51_5E/5E_image_dev/js/image-vectorize.js";
+import { vectorizeImage } from "../js/image-vectorize.js";
 
 function makeImage(w, h) {
   const data = new Uint8Array(w * h * 4).fill(255);

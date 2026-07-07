@@ -1,6 +1,6 @@
 // 삐침 재현 2차: 붓글씨 획 끝 같은 "예각 슬리버" — 두 변이 1~3°로 만나는 형태.
 // 스캔 재기(jitter)로 LS 피팅 직선이 평행+오프셋이 되면 교점이 축방향으로 발산하는지.
-import { vectorizeImage } from "file:///C:/Users/user/Desktop/project/51_5E/5E_image_dev/js/image-vectorize.js";
+import { vectorizeImage } from "../js/image-vectorize.js";
 
 function makeImage(w, h) {
   const data = new Uint8Array(w * h * 4).fill(255);

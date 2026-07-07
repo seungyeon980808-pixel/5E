@@ -1,5 +1,5 @@
 // §2-2 회귀 테스트: 원/링 → ellipse 피팅, 사각형/찌그러짐 → 폴리곤 폴백.
-import { vectorizeImage } from "file:///C:/Users/user/Desktop/project/51_5E/5E_image_dev/js/image-vectorize.js";
+import { vectorizeImage } from "../js/image-vectorize.js";
 
 function makeImage(w, h) {
   const data = new Uint8Array(w * h * 4).fill(255); // 흰 배경, 불투명

@@ -3,7 +3,7 @@
 //  · 둥근 블롭 → closed curve (curved:true)
 //  · 원 → §2-2 ellipse 우선(스무딩 아님)
 //  · 회색 사각 → 다단계 경로 회귀(fillLevel 실측 유지)
-import { vectorizeImage } from "file:///C:/Users/user/Desktop/project/51_5E/5E_image_dev/js/image-vectorize.js";
+import { vectorizeImage } from "../js/image-vectorize.js";
 
 function makeImage(w, h) {
   const data = new Uint8Array(w * h * 4).fill(255);

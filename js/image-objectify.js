@@ -14,6 +14,7 @@
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.0";
 import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.0";
 import { vectorizeImage } from "./image-vectorize.js?v=0.54.0";
+import { measureFormula } from "./formula.js?v=0.54.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
@@ -115,22 +116,18 @@ function buildModal() {
             <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기</div>
           </div>
           <div id="objectify-tools" class="objectify-tools" hidden>
-            <button id="objectify-cut-toggle" type="button" class="modal-btn">✂ 자르기</button>
-            <button id="objectify-group-toggle" type="button" class="modal-btn">🔗 묶기</button>
-            <label class="modal-label" style="font-weight:normal;margin:0;white-space:nowrap;">브러시 <input id="objectify-cut-width" type="range" min="2" max="30" step="1" value="8" style="vertical-align:middle;width:80px;" /><output id="objectify-cut-width-value">8px</output></label>
-            <button id="objectify-cut-clear" type="button" class="modal-btn" disabled>자른 선 지우기</button>
-            <button id="objectify-group-clear" type="button" class="modal-btn" disabled>묶음 해제</button>
             <button id="objectify-zoom-reset" type="button" class="modal-btn">전체 보기</button>
-            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">휠=확대/축소 · 빈 곳 드래그=이동 · ✂/🔗 켜고 드래그=자르기/묶기 · 클릭=제외</span>
+            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">휠=확대/축소 · 드래그=이동 · 클릭=제외</span>
           </div>
           <p class="objectify-description" id="objectify-legend" hidden style="margin:0;">
-            <span style="color:#0969da;">■ 도형</span>&nbsp;
-            <span style="color:#e35d6a;">■ 글자 추정</span>&nbsp;
-            <span style="color:#8250df;">■ 묶음</span>&nbsp;·&nbsp;클릭=제외/포함 전환.
+            <span id="objectify-legend-body">
+              <span style="color:#0969da;">■ 도형</span>&nbsp;
+              <span style="color:#e35d6a;">■ 글자 추정</span>
+            </span>&nbsp;·&nbsp;클릭=제외/포함 전환.
           </p>
         </div>
         <div class="objectify-right">
-          <p class="objectify-description" style="margin:0;">떨어진 잉크 덩어리를 편집 가능한 객체로 분리합니다. 흰 배경은 자동 투명 처리. 붙은 덩어리는 <b>✂ 자르기</b>로 나누고, 흩어진 조각은 <b>🔗 묶기</b>로 한 객체 묶음으로 만든 뒤 삽입하세요.</p>
+          <p class="objectify-description" style="margin:0;">이미지 속 그림을 내 도구로 다시 편집할 수 있는 객체로 분리합니다. 흰 배경은 자동으로 투명 처리됩니다. 아래 설정으로 인식을 조정하고(가까운 잉크를 묶는 거리·무시할 최소 크기·글자 처리·회색 단계 보존 등), 미리보기에서 원치 않는 조각을 <b>클릭</b>해 제외한 뒤 <b>객체로 삽입</b>하세요.</p>
           <div class="objectify-controls" style="grid-template-columns:1fr 1fr;">
             <label class="modal-field">
               <span class="modal-label">오브젝트 묶음 거리</span>
@@ -161,6 +158,7 @@ function buildModal() {
           <label class="modal-field modal-field-row"><input id="objectify-graylevels" type="checkbox" checked /><span class="modal-label">회색 단계 보존 (흰/회색/검정 다단계 인식)</span></label>
           <label class="modal-field modal-field-row"><input id="objectify-removegrid" type="checkbox" /><span class="modal-label">격자·눈금선 제거 (그래프·도표용)</span></label>
           <label class="modal-field modal-field-row"><input id="objectify-reference" type="checkbox" /><span class="modal-label">원본 이미지를 반투명 배경으로 함께 삽입</span></label>
+          <label class="modal-field modal-field-row"><input id="objectify-advanced" type="checkbox" /><span class="modal-label">[고급·미완성 ⚠] 선·도형 승격 — 실험 기능, 결과가 부정확할 수 있음 (획→선 객체, 사각→상자, 테두리+채움 통합)</span></label>
         </div>
       </div>
       <p id="objectify-status" class="objectify-status" role="status">이미지를 선택하세요.</p>
@@ -193,12 +191,14 @@ export function initImageObjectify(state) {
   const dropzone = overlay.querySelector("#objectify-dropzone");
   const preview = overlay.querySelector("#objectify-preview");
   const legend = overlay.querySelector("#objectify-legend");
+  const legendBody = overlay.querySelector("#objectify-legend-body");
   const status = overlay.querySelector("#objectify-status");
   const analyzeButton = overlay.querySelector("#objectify-analyze");
   const insertButton = overlay.querySelector("#objectify-insert");
   const removeGridInput = overlay.querySelector("#objectify-removegrid");
   const grayLevelsInput = overlay.querySelector("#objectify-graylevels");
   const referenceInput = overlay.querySelector("#objectify-reference");
+  const advancedInput = overlay.querySelector("#objectify-advanced");
   const sliders = {
     dilate: overlay.querySelector("#objectify-dilate"),
     minarea: overlay.querySelector("#objectify-minarea"),
@@ -208,12 +208,6 @@ export function initImageObjectify(state) {
 
   const stage = overlay.querySelector("#objectify-stage");
   const tools = overlay.querySelector("#objectify-tools");
-  const cutToggle = overlay.querySelector("#objectify-cut-toggle");
-  const groupToggle = overlay.querySelector("#objectify-group-toggle");
-  const cutWidthInput = overlay.querySelector("#objectify-cut-width");
-  const cutWidthValue = overlay.querySelector("#objectify-cut-width-value");
-  const cutClearButton = overlay.querySelector("#objectify-cut-clear");
-  const groupClearButton = overlay.querySelector("#objectify-group-clear");
   const zoomResetButton = overlay.querySelector("#objectify-zoom-reset");
 
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
@@ -221,11 +215,6 @@ export function initImageObjectify(state) {
   let analysis = null;       // vectorizeImage 결과
   let previewPaths = [];     // 컴포넌트별 Path2D 캐시
   let excluded = new Set();  // 미리보기에서 제외한 컴포넌트 index
-  let brushMode = null;      // null | "cut" | "group" — 현재 브러시
-  let cutStrokes = [];       // 절단선 [{ points:[[x,y]...], width }]
-  let groupStrokes = [];     // 묶음선 [{ points:[[x,y]...], width }]
-  let drawingStroke = null;  // 현재 드래그 중인 브러시 선
-  let bundles = [];          // 묶음: [[컴포넌트 index...], ...] (재분석마다 재계산)
   const view = { zoom: 1, ox: 0, oy: 0 }; // 미리보기 줌/팬
   let panning = null;        // 빈 곳 드래그 이동 상태
   let pointerMoved = false;  // 드래그 여부(클릭-제외 억제용)
@@ -245,48 +234,24 @@ export function initImageObjectify(state) {
       epsilon: Number(sliders.eps.value) / 10,
       removeGrid: removeGridInput.checked,
       preserveGrayLevels: grayLevelsInput.checked,
+      advancedShapes: advancedInput.checked,
     };
   }
 
-  // 분리 브러시: 사용자가 그은 절단선들을 sourceCanvas 해상도의 cutMask(1=자름)로
-  // 래스터화. 원본은 불변, 분석 마스크에만 적용된다.
-  function buildCutMask() {
-    if (!sourceCanvas || !cutStrokes.length) return null;
-    const c = document.createElement("canvas");
-    c.width = sourceCanvas.width; c.height = sourceCanvas.height;
-    const cx = c.getContext("2d");
-    cx.strokeStyle = "#000"; cx.fillStyle = "#000"; cx.lineCap = "round"; cx.lineJoin = "round";
-    for (const st of cutStrokes) {
-      if (st.points.length === 1) {
-        cx.beginPath(); cx.arc(st.points[0][0], st.points[0][1], st.width / 2, 0, Math.PI * 2); cx.fill();
-        continue;
-      }
-      cx.lineWidth = st.width;
-      cx.beginPath();
-      cx.moveTo(st.points[0][0], st.points[0][1]);
-      for (let i = 1; i < st.points.length; i += 1) cx.lineTo(st.points[i][0], st.points[i][1]);
-      cx.stroke();
-    }
-    const d = cx.getImageData(0, 0, c.width, c.height).data;
-    const mask = new Uint8Array(c.width * c.height);
-    for (let i = 0; i < mask.length; i += 1) if (d[i * 4 + 3] > 0) mask[i] = 1;
-    return mask;
+  // 판정별 미리보기 색(명세 §4): 선=파랑, rect=초록, 균일띠=청록, 원=보라,
+  // 텍스트=주황, 폴백=기존 도형(파랑)/글자(빨강) 표시 그대로 유지.
+  const JUDGMENT_COLORS = {
+    strokes: "#0969da", rect: "#2da44e", strokedRegion: "#0e7490", ellipse: "#8250df", text: "#bf5b04",
+  };
+  function judgmentColor(comp) {
+    if (comp.isText) return advancedInput.checked ? JUDGMENT_COLORS.text : "#e35d6a";
+    if (!advancedInput.checked) return "#0969da"; // 고급 꺼짐 = 기존 파랑 표시 그대로
+    if (comp.ellipse) return JUDGMENT_COLORS.ellipse;
+    if (comp.rect) return JUDGMENT_COLORS.rect;
+    if (comp.strokedRegion) return JUDGMENT_COLORS.strokedRegion;
+    if (comp.strokes) return JUDGMENT_COLORS.strokes;
+    return "#0969da"; // 폴백(현행 조각)
   }
-
-  // 브러시 선을 미리보기에 그린다(자르기=빨강, 묶기=보라).
-  function drawBrushStroke(ctx, st, color) {
-    ctx.strokeStyle = color; ctx.fillStyle = color;
-    ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.lineWidth = st.width;
-    if (st.points.length === 1) {
-      ctx.beginPath(); ctx.arc(st.points[0][0], st.points[0][1], st.width / 2, 0, Math.PI * 2); ctx.fill();
-      return;
-    }
-    ctx.beginPath();
-    ctx.moveTo(st.points[0][0], st.points[0][1]);
-    for (let i = 1; i < st.points.length; i += 1) ctx.lineTo(st.points[i][0], st.points[i][1]);
-    ctx.stroke();
-  }
-  const bundleColor = (bi) => `hsl(${270 + (bi * 47) % 90}, 58%, 52%)`;
 
   // 이미지 px (x,y)에 있는 최상위(가장 작은) 컴포넌트 index.
   function componentIndexAt(x, y) {
@@ -299,24 +264,6 @@ export function initImageObjectify(state) {
     });
     return hit;
   }
-  // 묶음선이 지나가는 컴포넌트들을 묶음으로(union-find). 선 자체로 저장돼 있어
-  // 슬라이더 변경·재분석 후에도 매번 현재 컴포넌트로 재매핑된다.
-  function computeBundles() {
-    bundles = [];
-    if (!analysis || !groupStrokes.length) return;
-    const n = analysis.components.length;
-    const parent = Array.from({ length: n }, (_, i) => i);
-    const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
-    for (const st of groupStrokes) {
-      const touched = [];
-      for (const [x, y] of st.points) { const idx = componentIndexAt(x, y); if (idx >= 0 && !touched.includes(idx)) touched.push(idx); }
-      for (let k = 1; k < touched.length; k += 1) parent[find(touched[k])] = find(touched[0]);
-    }
-    const groups = new Map();
-    for (let i = 0; i < n; i += 1) { const r = find(i); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(i); }
-    bundles = [...groups.values()].filter((g) => g.length >= 2);
-  }
-
   /* ----- 줌/팬 (미리보기 캔버스 CSS transform) ----- */
   function applyView() {
     preview.style.transform = `translate(${view.ox}px, ${view.oy}px) scale(${view.zoom})`;
@@ -341,18 +288,22 @@ export function initImageObjectify(state) {
     ctx.fillStyle = "rgba(255,255,255,0.72)";
     ctx.fillRect(0, 0, preview.width, preview.height);
     const lw = Math.min(6, Math.max(0.6, 1.8 / view.zoom)); // 줌 무관 일정한 시각 두께
-    const bundleOf = new Map();
-    bundles.forEach((b, bi) => b.forEach((ci) => bundleOf.set(ci, bi)));
     analysis.components.forEach((comp, index) => {
       const path = previewPaths[index];
       if (!path) return;
-      let color;
-      if (excluded.has(index)) color = "#6e7781";
-      else if (bundleOf.has(index)) color = bundleColor(bundleOf.get(index));
-      else color = comp.isText ? "#e35d6a" : "#0969da";
+      const color = excluded.has(index) ? "#6e7781" : judgmentColor(comp);
       ctx.globalAlpha = excluded.has(index) ? 0.22 : 0.58;
-      ctx.fillStyle = color;
-      ctx.fill(path, "evenodd");
+      if (comp.strokes && !excluded.has(index)) {
+        // 획 판정: 채움 대신 굵은 선으로 강조(가는 선은 fill로는 안 보임).
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(3, 5 / view.zoom);
+        ctx.lineCap = "round"; ctx.lineJoin = "round";
+        ctx.stroke(path);
+        if (comp.loops.length) { ctx.fillStyle = color; ctx.fill(path, "evenodd"); }
+      } else {
+        ctx.fillStyle = color;
+        ctx.fill(path, "evenodd");
+      }
       ctx.globalAlpha = 1;
       if (excluded.has(index)) {
         const [x0, y0, x1, y1] = comp.bbox;
@@ -360,18 +311,25 @@ export function initImageObjectify(state) {
         ctx.setLineDash([4 * lw, 3 * lw]);
         ctx.strokeRect(x0 - 1.5, y0 - 1.5, x1 - x0 + 3, y1 - y0 + 3);
         ctx.setLineDash([]);
-      } else if (bundleOf.has(index)) {
-        const [x0, y0, x1, y1] = comp.bbox;
-        ctx.strokeStyle = color; ctx.lineWidth = lw;
-        ctx.strokeRect(x0 - 1, y0 - 1, x1 - x0 + 2, y1 - y0 + 2);
       }
     });
-    for (const st of cutStrokes) drawBrushStroke(ctx, st, "rgba(224,49,49,0.9)");
-    for (const st of groupStrokes) drawBrushStroke(ctx, st, "rgba(130,80,223,0.85)");
-    if (drawingStroke) drawBrushStroke(ctx, drawingStroke, brushMode === "cut" ? "rgba(224,49,49,0.9)" : "rgba(130,80,223,0.85)");
     stage.classList.add("has-image");   // 이미지 있음 → 안내 오버레이 숨김(미리보기와 통합)
     tools.hidden = false;
     legend.hidden = false;
+    updateLegend();
+  }
+
+  // 고급 토글 상태에 맞춰 범례 갱신(명세 §4). 꺼짐 = 기존 3색 그대로.
+  function updateLegend() {
+    if (!legendBody) return;
+    legendBody.innerHTML = advancedInput.checked
+      ? `<span style="color:${JUDGMENT_COLORS.strokes};">■ 선</span>&nbsp;
+         <span style="color:${JUDGMENT_COLORS.rect};">■ 상자</span>&nbsp;
+         <span style="color:${JUDGMENT_COLORS.strokedRegion};">■ 균일 띠</span>&nbsp;
+         <span style="color:${JUDGMENT_COLORS.ellipse};">■ 원</span>&nbsp;
+         <span style="color:${JUDGMENT_COLORS.text};">■ 글자 추정</span>`
+      : `<span style="color:#0969da;">■ 도형</span>&nbsp;
+         <span style="color:#e35d6a;">■ 글자 추정</span>`;
   }
 
   function updateResultStatus() {
@@ -396,13 +354,45 @@ export function initImageObjectify(state) {
       try {
         const ctx = sourceCanvas.getContext("2d");
         const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        analysis = vectorizeImage(imageData, { ...currentOptions(), cutMask: buildCutMask() });
+        analysis = vectorizeImage(imageData, currentOptions());
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
           if (comp.ellipse) {
             const e = comp.ellipse;
             path.ellipse(e.cx, e.cy, e.rx, e.ry, (e.rotationDeg || 0) * Math.PI / 180, 0, Math.PI * 2);
+            return path;
+          }
+          // §8 임무 C 미리보기: rect/strokedRegion/strokes 판정 하이라이트(명세 §4).
+          if (comp.rect) {
+            const r = comp.rect;
+            const rot = (r.rotationDeg || 0) * Math.PI / 180;
+            const cos = Math.cos(rot), sin = Math.sin(rot);
+            const hw = r.w / 2, hh = r.h / 2;
+            const corners = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]]
+              .map(([dx, dy]) => [r.cx + dx * cos - dy * sin, r.cy + dx * sin + dy * cos]);
+            path.moveTo(corners[0][0], corners[0][1]);
+            for (let i = 1; i < corners.length; i += 1) path.lineTo(corners[i][0], corners[i][1]);
+            path.closePath();
+            return path;
+          }
+          if (comp.strokedRegion) {
+            const pts = comp.strokedRegion.points;
+            path.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i += 1) path.lineTo(pts[i].x, pts[i].y);
+            path.closePath();
+            return path;
+          }
+          if (comp.strokes) {
+            for (const sp of comp.strokes) {
+              path.moveTo(sp.points[0][0], sp.points[0][1]);
+              for (let i = 1; i < sp.points.length; i += 1) path.lineTo(sp.points[i][0], sp.points[i][1]);
+            }
+            for (const loop of comp.loops) {
+              path.moveTo(loop.points[0][0], loop.points[0][1]);
+              for (let i = 1; i < loop.points.length; i += 1) path.lineTo(loop.points[i][0], loop.points[i][1]);
+              path.closePath();
+            }
             return path;
           }
           for (const loop of comp.loops) {
@@ -412,7 +402,6 @@ export function initImageObjectify(state) {
           }
           return path;
         });
-        computeBundles();            // 묶음선 → 현재 컴포넌트로 재매핑
         if (needFit) { fitView(); needFit = false; }  // 새 이미지만 전체 보기
         drawPreview();
         updateResultStatus();
@@ -456,10 +445,8 @@ export function initImageObjectify(state) {
         sourceDataUrl = reader.result;
         analysis = null;
         excluded = new Set();
-        // 새 이미지 → 자르기·묶기·모드 초기화 + 전체 보기
-        cutStrokes = []; groupStrokes = []; bundles = []; drawingStroke = null; panning = null;
-        cutClearButton.disabled = true; groupClearButton.disabled = true;
-        setBrushMode(null); needFit = true;
+        // 새 이미지 → 팬 상태 초기화 + 전체 보기
+        panning = null; needFit = true;
         analyzeButton.disabled = false;
         analyze();
       };
@@ -477,16 +464,6 @@ export function initImageObjectify(state) {
     ];
   }
 
-  /* ----- 브러시 모드 전환 (null=보기/제외, "cut", "group") ----- */
-  function setBrushMode(mode) {
-    brushMode = mode;
-    cutToggle.classList.toggle("is-active", mode === "cut");
-    groupToggle.classList.toggle("is-active", mode === "group");
-    cutToggle.textContent = mode === "cut" ? "✂ 자르기 (켜짐)" : "✂ 자르기";
-    groupToggle.textContent = mode === "group" ? "🔗 묶기 (켜짐)" : "🔗 묶기";
-    stage.classList.toggle("is-brush", !!mode);
-  }
-
   /* ----- 휠 줌 (커서 기준) ----- */
   stage.addEventListener("wheel", (event) => {
     if (!sourceCanvas) return;
@@ -501,25 +478,15 @@ export function initImageObjectify(state) {
     applyView();
   }, { passive: false });
 
-  /* ----- 포인터: 브러시(자르기/묶기) 그리기 · 빈 곳 드래그=이동 · 클릭=제외 ----- */
+  /* ----- 포인터: 빈 곳 드래그=이동 · 클릭=제외 ----- */
   preview.addEventListener("mousedown", (event) => {
     if (!analysis || event.button !== 0) return;
     pointerMoved = false;
-    if (brushMode) {
-      event.preventDefault();
-      drawingStroke = { points: [previewPointerPos(event)], width: Number(cutWidthInput.value) };
-      drawPreview();
-    } else {
-      panning = { sx: event.clientX, sy: event.clientY, ox0: view.ox, oy0: view.oy };
-      stage.classList.add("is-panning");
-    }
+    panning = { sx: event.clientX, sy: event.clientY, ox0: view.ox, oy0: view.oy };
+    stage.classList.add("is-panning");
   });
   window.addEventListener("mousemove", (event) => {
-    if (drawingStroke) {
-      pointerMoved = true;
-      drawingStroke.points.push(previewPointerPos(event));
-      drawPreview();
-    } else if (panning) {
+    if (panning) {
       if (Math.abs(event.clientX - panning.sx) + Math.abs(event.clientY - panning.sy) > 3) pointerMoved = true;
       view.ox = panning.ox0 + (event.clientX - panning.sx);
       view.oy = panning.oy0 + (event.clientY - panning.sy);
@@ -527,23 +494,12 @@ export function initImageObjectify(state) {
     }
   });
   window.addEventListener("mouseup", () => {
-    if (drawingStroke) {
-      const stroke = drawingStroke;
-      drawingStroke = null;
-      if (brushMode === "cut") {
-        cutStrokes.push(stroke); cutClearButton.disabled = false;
-        analyze();                       // 절단은 마스크 변경 → 재분석
-      } else if (brushMode === "group") {
-        groupStrokes.push(stroke); groupClearButton.disabled = false;
-        computeBundles(); drawPreview();  // 묶음은 재분석 불필요 — 재매핑만
-      }
-    }
     panning = null;
     stage.classList.remove("is-panning");
   });
-  // 클릭=제외/포함 (드래그·브러시가 아니었을 때만)
+  // 클릭=제외/포함 (드래그가 아니었을 때만)
   preview.addEventListener("click", (event) => {
-    if (!analysis || brushMode || pointerMoved) return;
+    if (!analysis || pointerMoved) return;
     const [x, y] = previewPointerPos(event);
     const hit = componentIndexAt(x, y);
     if (hit < 0) return;
@@ -592,12 +548,9 @@ export function initImageObjectify(state) {
       const snapshot = clone(s.objects);
       const layerId = s.activeLayerId;
       const addedIds = [];
-      const addedByComp = new Map();   // comp → [삽입된 obj.id...] (묶음 그룹화용)
-      const pushObj = (obj, comp) => {
+      const pushObj = (obj) => {
         s.objects.push(obj);
         addedIds.push(obj.id);
-        if (!addedByComp.has(comp)) addedByComp.set(comp, []);
-        addedByComp.get(comp).push(obj.id);
       };
 
       if (referenceInput.checked && sourceDataUrl) {
@@ -628,27 +581,33 @@ export function initImageObjectify(state) {
               locked: false, positionLocked: false, imageSelectionLocked: false,
               cutouts: [], layerId, order: s.objects.length,
             });
-            pushObj(imgObj, comp);
+            pushObj(imgObj);
             continue;
           }
           // 크롭 실패(초소형) 시 아래 폴리곤 벡터화로 폴백.
         }
+        // 명세 §5: textMode='replace'는 토글과 무관한 무조건 변경 — text 대신
+        // formula 객체(placeholder 순번, text-editor.js 새 수식 생성 선례 필드).
         if (comp.isText && textMode === "replace") {
           const [bx0, by0, , by1] = comp.bbox;
           const fontSize = Math.min(12, Math.max(2.5, round3((by1 - by0) * scale)));
-          const textObject = applyNewObjectStyleDefaults({
+          const source = replacedLabels.get(comp) || "A";
+          const fontFamily = DEFAULT_TEXT_FONT;
+          const m = measureFormula(source, fontSize, { family: fontFamily, weight: "normal", style: "normal" });
+          const formulaObject = applyNewObjectStyleDefaults({
             id: `obj_${stamp}_vectext${++idCounter}`,
-            type: "text",
+            type: "formula",
             x: X(bx0), y: Y(by0),
-            text: replacedLabels.get(comp) || "A",
-            fontSize, fontFamily: DEFAULT_TEXT_FONT,
+            source, rawSource: source,
+            w: m.w, h: m.h,
+            fontSize, fontFamily,
             fontWeight: "normal", fontStyle: "normal",
             italic: false, letterSpacing: null,
             underline: false, strikeout: false,
             rotation: 0, locked: false, positionLocked: false,
             layerId, order: s.objects.length,
           });
-          pushObj(textObject, comp);
+          pushObj(formulaObject);
           continue;
         }
         // §2-2: 원/링 → 네이티브 ellipse 1객체 (px → world mm 환산).
@@ -669,8 +628,100 @@ export function initImageObjectify(state) {
             locked: false, positionLocked: false,
             layerId, order: s.objects.length,
           });
-          pushObj(ellipseObject, comp);
+          pushObj(ellipseObject);
           continue;
+        }
+        // §8 임무 C 매핑(명세 §3): 사각 링/채움 사각 → 네이티브 rect 1객체
+        // (ellipse 삽입의 px→mm scale 선례를 그대로 따른다).
+        if (comp.rect) {
+          const r = comp.rect;
+          const cxW = ox + r.cx * scale, cyW = oy + r.cy * scale;
+          const wW = r.w * scale, hW = r.h * scale;
+          const rectObject = applyNewObjectStyleDefaults({
+            id: `obj_${stamp}_vecrect${++idCounter}`,
+            type: "rect",
+            x: round3(cxW - wW / 2), y: round3(cyW - hW / 2),
+            w: round3(wW), h: round3(hW),
+            rotation: round3(r.rotationDeg || 0),
+            strokeLevel: r.strokeLevel, strokeWidth: round3(r.strokeWidthPx * scale),
+            // fitComponentRect은 솔리드(hasFill:false)=잉크 실측, 링(hasFill:true)=구멍 실측
+            // 을 모두 fillLevel에 담는다 → 항상 실측 채움 사용(헌법 §0-2 겉보기 동일).
+            fillLevel: r.fillLevel,
+            fillNone: false, fillStyle: "solid",
+            dashLength: 0, dashGap: 0,
+            labelType: "label",
+            locked: false, positionLocked: false,
+            layerId, order: s.objects.length,
+          });
+          pushObj(rectObject);
+          continue;
+        }
+        // 비사각 균일 띠(삼각 링 등) → stroke+fill 한 닫힌 polyline 1객체.
+        if (comp.strokedRegion) {
+          const sr = comp.strokedRegion;
+          const polyObject = applyNewObjectStyleDefaults({
+            id: `obj_${stamp}_vecband${++idCounter}`,
+            type: "polyline",
+            points: sr.points.map((p) => ({ x: X(p.x), y: Y(p.y) })),
+            rotation: 0,
+            strokeLevel: sr.strokeLevel, strokeWidth: round3(sr.strokeWidthPx * scale),
+            arrowHead: "none", dashLength: 0, dashGap: 0,
+            closed: true,
+            fillLevel: sr.fillLevel, fillNone: false, fillStyle: "solid",
+            rounded: false, cornerRadius: 10,
+            locked: false, positionLocked: false,
+            layerId, order: s.objects.length,
+          });
+          pushObj(polyObject);
+          continue;
+        }
+        // 가는 획 망(§2 ⑤): 경로별 line/polyline/curve + 잔여 잉크는 아래 loops로.
+        if (comp.strokes) {
+          for (const sp of comp.strokes) {
+            const strokeWidth = round3(sp.thicknessPx * scale);
+            let strokeObj;
+            if (sp.kind === "line") {
+              const [p1, p2] = sp.points;
+              strokeObj = applyNewObjectStyleDefaults({
+                id: `obj_${stamp}_vecline${++idCounter}`,
+                type: "line",
+                p1: { x: X(p1[0]), y: Y(p1[1]) }, p2: { x: X(p2[0]), y: Y(p2[1]) },
+                rotation: 0,
+                strokeLevel: sp.strokeLevel !== undefined ? sp.strokeLevel : 0, strokeWidth,
+                lineMode: "solid", lineStyle: "solid", arrowVariant: "right", dimensionVariant: "basic",
+                arrowHead: "none", dashLength: 0, dashGap: 0,
+                locked: false, positionLocked: false,
+                layerId, order: s.objects.length,
+              });
+            } else if (sp.kind === "curve") {
+              strokeObj = applyNewObjectStyleDefaults({
+                id: `obj_${stamp}_veccurve${++idCounter}`,
+                type: "curve",
+                points: sp.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
+                rotation: 0,
+                strokeLevel: sp.strokeLevel !== undefined ? sp.strokeLevel : 0, strokeWidth,
+                arrowHead: "none", dashLength: 0, dashGap: 0,
+                closed: false, fillLevel: 255, fillNone: true, fillStyle: "solid",
+                locked: false, positionLocked: false,
+                layerId, order: s.objects.length,
+              });
+            } else {
+              strokeObj = applyNewObjectStyleDefaults({
+                id: `obj_${stamp}_vecpoly${++idCounter}`,
+                type: "polyline",
+                points: sp.points.map(([px, py]) => ({ x: X(px), y: Y(py) })),
+                rotation: 0,
+                strokeLevel: sp.strokeLevel !== undefined ? sp.strokeLevel : 0, strokeWidth,
+                arrowHead: "none", dashLength: 0, dashGap: 0,
+                closed: false, fillLevel: 255, fillNone: true, fillStyle: "solid",
+                rounded: false, cornerRadius: 10,
+                locked: false, positionLocked: false,
+                layerId, order: s.objects.length,
+              });
+            }
+            pushObj(strokeObj);
+          }
+          // 잔여 잉크는 현행 조각(폴백 폴리곤)으로 함께 방출 — 아래 loops 루프가 처리.
         }
         for (const loop of comp.loops) {
           // 채움 폴리곤 — 테두리 없음 (자유곡선 F 관례). 회색 단계 보존 시
@@ -691,24 +742,7 @@ export function initImageObjectify(state) {
           const shape = loop.curved
             ? applyNewObjectStyleDefaults({ ...base, type: "curve" })
             : applyNewObjectStyleDefaults({ ...base, type: "polyline", arrowHead: "none", rounded: false, cornerRadius: 10 });
-          pushObj(shape, comp);
-        }
-      }
-
-      // 🔗 묶기: 기본은 그룹 안 묶음(각각 분리). 단, 사용자가 묶음선으로 지정한
-      // bundle의 멤버 객체들만 하나의 그룹으로 만든다(제외된 컴포넌트는 빠짐).
-      for (const bundle of bundles) {
-        const ids = [];
-        for (const ci of bundle) {
-          if (excluded.has(ci)) continue;
-          const comp = analysis.components[ci];
-          const compIds = addedByComp.get(comp);
-          if (compIds) ids.push(...compIds);
-        }
-        if (ids.length >= 2) {
-          const groupId = `grp_${stamp}_b${++idCounter}`;
-          for (const id of ids) { const o = s.objects.find((x) => x.id === id); if (o) o.groupId = groupId; }
-          s.groups.push({ id: groupId, memberIds: [...ids] });
+          pushObj(shape);
         }
       }
 
@@ -775,24 +809,10 @@ export function initImageObjectify(state) {
   }
   removeGridInput.addEventListener("change", scheduleAnalyze);
   grayLevelsInput.addEventListener("change", scheduleAnalyze);
+  advancedInput.addEventListener("change", scheduleAnalyze);
   analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
 
-  // 전처리 툴바: 자르기·묶기·브러시굵기·지우기·전체보기
-  cutToggle.addEventListener("click", () => setBrushMode(brushMode === "cut" ? null : "cut"));
-  groupToggle.addEventListener("click", () => setBrushMode(brushMode === "group" ? null : "group"));
-  cutWidthInput.addEventListener("input", () => { cutWidthValue.textContent = cutWidthInput.value + "px"; });
-  cutClearButton.addEventListener("click", () => {
-    if (!cutStrokes.length) return;
-    cutStrokes = [];
-    cutClearButton.disabled = true;
-    analyze();                 // 절단 해제 → 재분석
-  });
-  groupClearButton.addEventListener("click", () => {
-    if (!groupStrokes.length) return;
-    groupStrokes = []; bundles = [];
-    groupClearButton.disabled = true;
-    drawPreview();             // 묶음 해제 → 재매핑만
-  });
+  // 전처리 툴바: 전체보기
   zoomResetButton.addEventListener("click", fitView);
 }
