@@ -17,7 +17,8 @@
  * 포함될 수 있어 .gitignore 처리 — 공개 배포 전 자작 목업으로 교체할 것.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=0.54.8";
+import { rasterizeExportCanvas } from "./svg-export.js?v=0.54.9";
+import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=0.54.9";
 
 /* ----- 배경 양식 목록 -----
  * 각 항목은 실제 인쇄 물리 크기(mm)를 가진다. 이 값으로 그림을 정확한 배율로
@@ -42,6 +43,19 @@ let _els = null;     // 자주 쓰는 하위 요소 캐시
 const _bgCache = {}; // id → 로드된 Image (배경은 1회만 로드)
 let _activeBgId = BACKGROUNDS[0] ? BACKGROUNDS[0].id : null;
 let _lastSettings = null; // 마지막 open 시의 export 설정(배경 전환 시 재래스터화용)
+
+/* 내장 배경 + 사용자가 등록한 배경(localStorage)을 합친 목록.
+ * 사용자 항목은 src에 dataURL을 그대로 쓴다(Image/<img>가 dataURL을 지원). */
+function allBackgrounds() {
+  const user = loadPreviewBackgrounds().map((b) => ({
+    id: b.id,
+    label: b.name,
+    src: b.dataUrl,
+    pageWidthMm: b.widthMm,
+    pageHeightMm: b.heightMm,
+  }));
+  return [...BACKGROUNDS, ...user];
+}
 
 /* ----- 배경 이미지 로드(캐시) ----- */
 function loadBackground(bg) {
@@ -74,27 +88,23 @@ function buildModal() {
   title.textContent = "시험지 미리보기";
   modal.appendChild(title);
 
-  // 배경 선택 탭(양식이 2개 이상일 때만 표시).
-  const tabs = document.createElement("div");
-  tabs.className = "seg";
-  tabs.style.alignSelf = "flex-start";
-  if (BACKGROUNDS.length > 1) {
-    BACKGROUNDS.forEach((bg) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "seg-btn" + (bg.id === _activeBgId ? " is-active" : "");
-      b.textContent = bg.label;
-      b.addEventListener("click", () => {
-        if (bg.id === _activeBgId) return;
-        _activeBgId = bg.id;
-        tabs.querySelectorAll(".seg-btn").forEach((x) => x.classList.remove("is-active"));
-        b.classList.add("is-active");
-        renderStage();
-      });
-      tabs.appendChild(b);
-    });
-    modal.appendChild(tabs);
-  }
+  // 배경 선택 드롭다운(내장 + 사용자 등록). 항목은 open 때마다 다시 채운다.
+  const bgRow = document.createElement("label");
+  bgRow.className = "modal-field";
+  bgRow.style.cssText = "flex-direction:row;align-items:center;gap:8px;align-self:flex-start;";
+  const bgLabel = document.createElement("span");
+  bgLabel.className = "modal-label";
+  bgLabel.style.margin = "0";
+  bgLabel.textContent = "배경 양식";
+  const bgSelect = document.createElement("select");
+  bgSelect.className = "modal-input";
+  bgSelect.addEventListener("change", () => {
+    _activeBgId = bgSelect.value;
+    renderStage();
+  });
+  bgRow.appendChild(bgLabel);
+  bgRow.appendChild(bgSelect);
+  modal.appendChild(bgRow);
 
   // 스크롤 가능한 무대(배경 + 그림 오버레이가 들어갈 곳).
   const scroller = document.createElement("div");
@@ -146,7 +156,22 @@ function buildModal() {
   }, true);
 
   _overlay = overlay;
-  _els = { stage, info, title };
+  _els = { stage, info, title, bgSelect };
+}
+
+/* 드롭다운 옵션을 현재(내장+사용자) 목록으로 다시 채우고, 활성 배경을 보정한다. */
+function populateBgSelect() {
+  const sel = _els.bgSelect;
+  const list = allBackgrounds();
+  sel.innerHTML = "";
+  for (const bg of list) {
+    sel.add(new Option(bg.label, bg.id));
+  }
+  // 활성 배경이 목록에서 사라졌으면(삭제됨) 첫 항목으로.
+  if (!list.some((b) => b.id === _activeBgId)) {
+    _activeBgId = list[0] ? list[0].id : null;
+  }
+  if (_activeBgId) sel.value = _activeBgId;
 }
 
 function hide() {
@@ -159,7 +184,8 @@ function hide() {
 let _artState = null;
 
 async function renderStage() {
-  const bg = BACKGROUNDS.find((b) => b.id === _activeBgId) || BACKGROUNDS[0];
+  const list = allBackgrounds();
+  const bg = list.find((b) => b.id === _activeBgId) || list[0];
   const { stage, info } = _els;
   stage.innerHTML = "";
   _artState = null;
@@ -300,6 +326,7 @@ function endDrag() {
 export function openExamPreview(settings) {
   if (!_overlay) buildModal();
   _lastSettings = settings;
+  populateBgSelect();   // 사용자 등록 배경이 바뀌었을 수 있으니 열 때마다 갱신
   _overlay.hidden = false;
   renderStage();
 }

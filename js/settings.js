@@ -17,9 +17,15 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.8";
-import { registerTopMenu } from "./top-menu.js?v=0.54.8";
-import { showAlert } from "./ui-dialogs.js?v=0.54.8";
+} from "./state.js?v=0.54.9";
+import { registerTopMenu } from "./top-menu.js?v=0.54.9";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.9";
+import {
+  PREVIEW_BG_KEY,
+  loadPreviewBackgrounds,
+  addPreviewBackground,
+  removePreviewBackground,
+} from "./preview-backgrounds.js?v=0.54.9";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -60,7 +66,7 @@ function saveDefaults(d) {
 const THEME_KEY = "theme";
 const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
 const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY];
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY];
 
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
 // 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.
@@ -129,6 +135,7 @@ const EXPORT_CHOICES = [
   { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
   { key: SUBJECT_KEY,           label: "과목 선택" },
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
+  { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
 ];
 function openExportDialog() {
   const overlay = document.createElement("div");
@@ -351,6 +358,25 @@ function buildModal() {
             <input type="number" id="defaults-grid-interval" class="modal-input"
                    min="5" max="50" step="5" autocomplete="off" />
           </label>
+
+          <div class="defaults-pbg">
+            <span class="modal-label">인쇄 비교 이미지</span>
+            <p class="defaults-pbg-desc">실제 인쇄해 본 시험지 이미지를 등록하면,
+              '이미지로 내보내기 → 미리보기'에서 배경으로 골라 크기를 비교할 수 있습니다.</p>
+            <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
+            <div class="defaults-pbg-form">
+              <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
+              <div class="defaults-pbg-row">
+                <input type="text" id="defaults-pbg-name" class="modal-input"
+                       placeholder="이름(선택)" maxlength="40" autocomplete="off" />
+                <input type="number" id="defaults-pbg-w" class="modal-input"
+                       placeholder="가로 mm" min="1" step="1" autocomplete="off" />
+                <input type="number" id="defaults-pbg-h" class="modal-input"
+                       placeholder="세로 mm" min="1" step="1" autocomplete="off" />
+                <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="defaults-preview">
@@ -513,6 +539,7 @@ export function initSettings(state) {
   function showModal() {
     populate();
     renderPreview();
+    renderPbgList();
     overlay.hidden = false;
     fields.strokeWidth.focus();
     fields.strokeWidth.select();
@@ -550,6 +577,72 @@ export function initSettings(state) {
       gridInterval: Number(fields.gridInterval.value),
     });
     hideModal();
+  });
+
+  /* ----- 인쇄 비교 이미지: 업로드 / 목록 / 삭제 ----- */
+  const pbgFile = overlay.querySelector("#defaults-pbg-file");
+  const pbgName = overlay.querySelector("#defaults-pbg-name");
+  const pbgW = overlay.querySelector("#defaults-pbg-w");
+  const pbgH = overlay.querySelector("#defaults-pbg-h");
+  const pbgAdd = overlay.querySelector("#defaults-pbg-add");
+  const pbgListEl = overlay.querySelector("#defaults-pbg-list");
+
+  function renderPbgList() {
+    const list = loadPreviewBackgrounds();
+    pbgListEl.innerHTML = "";
+    if (!list.length) {
+      const empty = document.createElement("p");
+      empty.className = "defaults-pbg-empty";
+      empty.textContent = "등록된 이미지가 없습니다.";
+      pbgListEl.appendChild(empty);
+      return;
+    }
+    for (const bg of list) {
+      const row = document.createElement("div");
+      row.className = "defaults-pbg-item";
+      const thumb = document.createElement("img");
+      thumb.src = bg.dataUrl;
+      thumb.alt = "";
+      thumb.className = "defaults-pbg-thumb";
+      const meta = document.createElement("span");
+      meta.className = "defaults-pbg-meta";
+      meta.textContent = `${bg.name} · ${bg.widthMm}×${bg.heightMm}mm`;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "defaults-pbg-del";
+      del.textContent = "✕";
+      del.title = "삭제";
+      del.addEventListener("click", async () => {
+        const yes = await showConfirm(`'${bg.name}'\n정말로 삭제하시겠습니까?`,
+          { title: "이미지 삭제", okText: "예", cancelText: "아니오" });
+        if (!yes) return;
+        removePreviewBackground(bg.id);
+        renderPbgList();
+      });
+      row.appendChild(thumb);
+      row.appendChild(meta);
+      row.appendChild(del);
+      pbgListEl.appendChild(row);
+    }
+  }
+
+  pbgAdd.addEventListener("click", async () => {
+    const file = pbgFile.files && pbgFile.files[0];
+    if (!file) { showAlert("추가할 이미지 파일을 먼저 선택하세요.", { title: "인쇄 비교 이미지" }); return; }
+    pbgAdd.disabled = true;
+    try {
+      await addPreviewBackground({
+        name: pbgName.value,
+        widthMm: pbgW.value,
+        heightMm: pbgH.value,
+        file,
+      });
+      pbgFile.value = ""; pbgName.value = ""; pbgW.value = ""; pbgH.value = "";
+      renderPbgList();
+    } catch (err) {
+      showAlert(err && err.message ? err.message : "이미지를 추가하지 못했습니다.", { title: "인쇄 비교 이미지" });
+    }
+    pbgAdd.disabled = false;
   });
 
   /* ----- 설정 파일 저장/불러오기 dropdown 항목 wiring ----- */

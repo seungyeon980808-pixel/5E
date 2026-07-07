@@ -1652,3 +1652,18 @@ textarea.unified-text-input {
 /* 이미지로 내보내기: [내보내기] 버튼은 평소 무색, hover 시에만 강조색 */
 #export-confirm { background: transparent; color: var(--c-text); border-color: var(--c-border); }
 #export-confirm:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
+.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--c-border); }
+.defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+.defaults-pbg-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.defaults-pbg-empty { margin: 0; font-size: 12px; color: var(--text-secondary); }
+.defaults-pbg-item { display: flex; align-items: center; gap: 8px; }
+.defaults-pbg-thumb { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; flex: none; }
+.defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defaults-pbg-del { flex: none; width: 20px; font-size: 11px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
+.defaults-pbg-del:hover { color: #e5534b; }
+.defaults-pbg-row { display: flex; gap: 6px; margin-top: 6px; }
+.defaults-pbg-row .modal-input { min-width: 0; }
+.defaults-pbg-row #defaults-pbg-name { flex: 2 1 0; }
+.defaults-pbg-row #defaults-pbg-w, .defaults-pbg-row #defaults-pbg-h { flex: 1 1 0; }

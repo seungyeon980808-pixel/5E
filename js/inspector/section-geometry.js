@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=0.54.8";
-import { makeSection } from "./widgets.js?v=0.54.8";
+import { openAngleArcLabelEditor } from "../tools.js?v=0.54.9";
+import { makeSection } from "./widgets.js?v=0.54.9";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
