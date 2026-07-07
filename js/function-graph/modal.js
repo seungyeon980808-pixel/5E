@@ -7,12 +7,12 @@
  *     선택 함수는 파랑으로 강조. 정의역 드래그 핸들은 선택 함수에 적용.
  * 확인 = insertFunctionGraphs로 모든 함수를 한 평면에 한 번에 커밋(undo 1회). */
 
-import { state } from "../state.js?v=0.54.1";
-import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.1";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.54.1";
-import { sampleFunctionPoints } from "./sampler.js?v=0.54.1";
-import { insertFunctionGraphs } from "./insert.js?v=0.54.1";
-import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.1";
+import { state } from "../state.js?v=0.54.2";
+import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.2";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.54.2";
+import { sampleFunctionPoints } from "./sampler.js?v=0.54.2";
+import { insertFunctionGraphs } from "./insert.js?v=0.54.2";
+import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -24,7 +24,8 @@ const HELPERS = [
 ];
 
 // [label, dashLength, dashGap] — 회색조 프로젝트라 색 대신 선 종류로 함수를 구분.
-const LINE_STYLES = [["실선", 0, 0], ["점선", 0.6, 0.4], ["파선", 1.4, 0.6]];
+// 점선 간격 0.4→1.0: 종전엔 촘촘해서 실선처럼 보였음(점선답게 띄움).
+const LINE_STYLES = [["실선", 0, 0], ["점선", 0.5, 1.0], ["파선", 1.4, 0.6]];
 
 let _overlay = null;
 let _els = null;

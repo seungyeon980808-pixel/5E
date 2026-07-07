@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.1" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.1" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.1" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.2" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.2" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.2" />
   <style>
     /* Dev-only branch marker: kept slim + flat (no gradient / heavy shadow) so it
        states the branch without dominating the UI. See CLAUDE.md 'AI티 금지'. */
@@ -135,13 +135,6 @@
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
     <aside class="panel panel-left" id="panel-left">
       <div class="tool-list" id="tool-list">
-        <!-- 오브젝트 검색 진입점: 원래 Ctrl+F로만 열리던 검색 모달을 눈에 보이는 버튼으로도 노출 -->
-        <button class="object-search-trigger" type="button" id="object-search-trigger"
-                title="오브젝트 검색 (Ctrl+F)" aria-label="오브젝트 검색 (Ctrl+F)">
-          <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
-          <span class="search-trigger-label">검색</span>
-          <kbd class="search-trigger-hint">Ctrl F</kbd>
-        </button>
         <div class="tool-section">
           <div class="tool-section-header">공통 도구 <span class="toggle-icon">▾</span></div>
           <!-- 공통 도구 그리드(3열). 순서는 사용자 지정(선택/회전/자르기 → 도형 → 선 →
@@ -204,6 +197,24 @@
             <button class="tool-btn" type="button" data-symbol="rightangle" title="직각 표시 (Shift+A)" aria-label="직각 표시 (Shift+A)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4 L5 15 L16 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11 L9 11 L9 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></kbd>
             </button>
+          </div>
+        </div>
+        <!-- ===== 과목별 오브젝트: 과목 선택 → 파트별 라이브러리(현재는 빈 자리) =====
+             과목 선택에 따라 :root[data-subject]가 바뀌어 강조색 테마가 전환된다.
+             파트 아코디언 본문은 아직 비어 있고(구현 예정), 기본은 접힘. subject-objects.js가 채운다. -->
+        <div class="tool-section" id="subject-section">
+          <div class="tool-section-header">과목별 오브젝트 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-body tool-section-body-wide">
+            <label class="subject-select-row">
+              <span class="subject-select-label">과목</span>
+              <select id="subject-select" class="subject-select" aria-label="과목 선택">
+                <option value="p">물리</option>
+                <option value="c">화학</option>
+                <option value="b">생명과학</option>
+                <option value="e">지구과학</option>
+              </select>
+            </label>
+            <div id="subject-parts"></div>
           </div>
         </div>
         <!-- ===== SYMBOL LIBRARY: generated from templates.js TEMPLATES =====
@@ -299,6 +310,12 @@
 
       <!-- ===== CANVAS BOTTOM BAR: grid controls ===== -->
       <div class="canvas-bottom-bar">
+        <!-- 오브젝트 검색 진입점 (Ctrl+F 단축키는 그대로, 표기만 제거) -->
+        <button class="object-search-trigger" type="button" id="object-search-trigger"
+                title="오브젝트 검색" aria-label="오브젝트 검색">
+          <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
+          <span class="search-trigger-label">검색</span>
+        </button>
         <label>
           <input type="checkbox" id="grid-toggle" />
           격자
@@ -337,7 +354,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main"><span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.1</strong> · 2026-07-07</span>
+    <span class="app-footer-main"><span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.2</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -447,6 +464,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.1"></script>
+  <script type="module" src="js/main.js?v=0.54.2"></script>
 </body>
 </html>

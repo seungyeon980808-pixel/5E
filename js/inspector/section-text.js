@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle } from "../state.js?v=0.54.1";
-import { makeSection } from "./widgets.js?v=0.54.1";
+import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle } from "../state.js?v=0.54.2";
+import { makeSection } from "./widgets.js?v=0.54.2";
 
 export function buildTextSection(ctx) {
   const { state } = ctx;

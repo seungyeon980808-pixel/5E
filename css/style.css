@@ -84,6 +84,16 @@
   --scrollbar-thumb: #afb8c1;
 }
 
+/* ===== 과목별 강조색 테마 (왼쪽 패널 과목 선택이 :root[data-subject]를 설정) =====
+   물리=현행 블루(기본, 별도 override 없음). 화학=고급 버건디, 생명=고급 틸,
+   지구=고급 우디 브라운. 두 테마(dark/light) 위에 accent 계열만 덮어쓴다. */
+:root[data-subject="c"] { --accent:#b03a4a; --accent-hover:#c24d5c; --accent-2:#8a2b39; --accent-2-hover:#a03442; --btn-tool-active:#b03a4a; }
+:root[data-subject="c"][data-theme="light"] { --accent:#9a2f3d; --accent-hover:#8a2b39; --accent-2:#8a2b39; --accent-2-hover:#7a2531; --btn-tool-active:#9a2f3d; }
+:root[data-subject="b"] { --accent:#0f8a72; --accent-hover:#14a086; --accent-2:#0c6a58; --accent-2-hover:#0f8069; --btn-tool-active:#0f8a72; }
+:root[data-subject="b"][data-theme="light"] { --accent:#0c7a64; --accent-hover:#0a6a58; --accent-2:#0c6a58; --accent-2-hover:#0a5a4c; --btn-tool-active:#0c7a64; }
+:root[data-subject="e"] { --accent:#a5794a; --accent-hover:#b98a58; --accent-2:#7a5330; --accent-2-hover:#8e6339; --btn-tool-active:#a5794a; }
+:root[data-subject="e"][data-theme="light"] { --accent:#8a6338; --accent-hover:#7a5330; --accent-2:#7a5330; --accent-2-hover:#6a4728; --btn-tool-active:#8a6338; }
+
 /* ===== TOKENS (legacy aliases → resolve against the active theme) ===== */
 :root {
   --font-normal-text: "돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
@@ -217,15 +227,14 @@ body {
 }
 
 /* ===== OBJECT SEARCH TRIGGER (좌측 패널 상단 검색 진입 버튼) ===== */
+/* 캔버스 하단 바(격자 옆) 인라인 버튼 — 종전 좌측 패널 전폭 버튼에서 이동 */
 .object-search-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 7px 8px;
-  margin-bottom: 6px;
+  gap: 5px;
+  padding: 3px 9px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.3;
   color: var(--c-sub);
@@ -235,6 +244,29 @@ body {
   cursor: pointer;
 }
 .object-search-trigger:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+
+/* ===== 과목별 오브젝트 섹션 (왼쪽 패널) ===== */
+.subject-select-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.subject-select-label { font-size:12px; color:var(--text-label); flex:none; }
+.subject-select {
+  flex:1 1 auto; height:30px; padding:0 8px; font-family:inherit; font-size:13px;
+  color:var(--text-primary); background:var(--bg-input);
+  border:1px solid var(--accent); border-radius:6px; cursor:pointer;
+}
+.subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
+.subject-part-header {
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:7px 10px; font-family:inherit; font-size:12.5px; font-weight:500;
+  color:var(--text-label); background:var(--btn-tool-bg); border:0; cursor:pointer;
+  border-left:3px solid var(--accent);
+}
+.subject-part-header:hover { background:var(--btn-tool-hover); color:var(--text-primary); }
+.subject-part-header .toggle-icon { transition:transform .15s; font-size:11px; color:var(--text-secondary); }
+.subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
+.subject-part.is-collapsed .subject-part-body { display:none; }
+.subject-part-body { padding:8px 10px; }
+.subject-part-empty { margin:0; font-size:12px; color:var(--text-secondary); }
+@media (prefers-reduced-motion: reduce) { .subject-part-header .toggle-icon { transition:none; } }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
 /* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
 .search-trigger-label { flex: 1 1 auto; text-align: left; white-space: nowrap; }
