@@ -8,13 +8,12 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.54.0";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=0.54.1";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
-  SNAP_LINE_TARGET_TYPES as LINE_TARGET_TYPES,
   SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
-} from "./object-types.js?v=0.54.0";
+} from "./object-types.js?v=0.54.1";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;
@@ -445,6 +444,21 @@ function shapeCandidatePoints(obj, dx = 0, dy = 0, rotation = obj.rotation || 0)
   ];
 }
 
+/* Snap candidate points that lie ON the shape. Triangle's bbox has an empty
+ * corner (and two off-shape edge midpoints), so it uses its real vertices plus
+ * edge midpoints instead of the rect-style 8 bbox points (팬텀 스냅 방지). */
+function shapeSnapCandidatePoints(obj, dx = 0, dy = 0, rotation = obj.rotation || 0) {
+  if (obj.type === "triangle") {
+    const v = polygonVertices(obj, dx, dy, rotation);
+    const mids = v.map((p, i) => {
+      const q = v[(i + 1) % v.length];
+      return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+    });
+    return v.concat(mids);
+  }
+  return shapeCandidatePoints(obj, dx, dy, rotation);
+}
+
 function bboxCandidatePoints(box) {
   const { x, y, w, h } = box;
   return [
@@ -634,7 +648,8 @@ function closestContactCandidate(moveObjIds, origObjs, raw, state, maxDistance) 
   let bestDistance = maxDistance;
   for (const target of state.get().objects) {
     if (!target?.id || moving.has(target.id) || !EDGE_TARGET_TYPES.has(target.type)) continue;
-    if (movingObj.type !== "ellipse" && !LINE_TARGET_TYPES.has(target.type)) continue;
+    // 다각형(사각형/삼각형) 이동체도 rect/triangle의 실제 변에 면 안착 가능
+    // (종전에는 line/polyline 변만 허용 → 삼각형 빗변에 사각형이 못 붙던 원인 중 하나)
     for (const [a, b] of targetEdgeSegments(target)) {
       const candidate = contactCandidateForSegment(movingObj, raw, target, a, b);
       if (candidate && candidate.distance <= bestDistance) {
@@ -650,7 +665,7 @@ function draggedCandidatePoints(moveObjIds, origObjs, dx, dy, scene, rotation = 
   const eligible = moveObjIds.map((id) => origObjs[id]).filter((o) => o && SHAPE_TYPES.has(o.type));
   if (!eligible.length) return null;
   if (moveObjIds.length === 1 && eligible.length === 1) {
-    return shapeCandidatePoints(eligible[0], dx, dy, rotation ?? (eligible[0].rotation || 0));
+    return shapeSnapCandidatePoints(eligible[0], dx, dy, rotation ?? (eligible[0].rotation || 0));
   }
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -673,7 +688,7 @@ function closestPair(moveObjIds, draggedPoints, state, maxDistance) {
   let bestDistance = maxDistance;
   for (const target of state.get().objects) {
     if (!target?.id || moving.has(target.id) || !SHAPE_TYPES.has(target.type)) continue;
-    const targetPoints = shapeCandidatePoints(target);
+    const targetPoints = shapeSnapCandidatePoints(target);
     for (let draggedIndex = 0; draggedIndex < draggedPoints.length; draggedIndex += 1) {
       for (const targetPoint of targetPoints) {
         const draggedPoint = draggedPoints[draggedIndex];
@@ -770,13 +785,17 @@ function ellipseTangent(obj, p1, nx, ny) {
 }
 
 /* Tangent translation of a line to a curve, approximated on its hit-test polygon:
- * rest the line against the extreme sample point on the near side. */
-function curveTangent(obj, p1, nx, ny) {
+ * rest the line against the extreme sample point on the near side.
+ * LOCAL contact: only samples whose projection lies within the segment span count —
+ * a long curve's far-away global extreme must not steal (or kill) the snap. */
+function curveTangent(obj, p1, nx, ny, ux, uy, L) {
   const pts = curveSamplePoints(obj);
   if (!Array.isArray(pts) || pts.length < 2) return null;
   let minE = Infinity, maxE = -Infinity, minPt = null, maxPt = null;
   for (const pt of pts) {
     if (!isValidPoint(pt)) continue;
+    const along = (pt.x - p1.x) * ux + (pt.y - p1.y) * uy;
+    if (along < 0 || along > L) continue; // 선분 구간 밖 표본 = 지역 접촉 아님
     const e = (pt.x - p1.x) * nx + (pt.y - p1.y) * ny;
     if (e < minE) { minE = e; minPt = pt; }
     if (e > maxE) { maxE = e; maxPt = pt; }
@@ -812,7 +831,7 @@ function resolveLineTangentSnap(moveObjIds, origObjs, raw, scale, state) {
     if (!t?.id || exclude.has(t.id) || !isSnapTargetEligible(t, snapshot)) continue;
     let cand = null;
     if (t.type === "ellipse") cand = ellipseTangent(t, p1, nx, ny);
-    else if (t.type === "curve") cand = curveTangent(t, p1, nx, ny);
+    else if (t.type === "curve") cand = curveTangent(t, p1, nx, ny, ux, uy, L);
     if (!cand || !within(cand.contact)) continue;
     if (cand.distance <= previewDist && (!best || cand.distance < best.distance)) best = cand;
   }
