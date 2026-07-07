@@ -22,6 +22,7 @@ export const OBJECT_TYPE_IDS = [
   "axes", "coordplane",
   "anglearc", "rightangle", "labeler",
   "circuit", "optics", "apparatus", "pendulum",
+  "gauge",
 ];
 
 // Per-type classification flags. Each flag names a behavior-class that some
@@ -61,6 +62,9 @@ export const OBJECT_TYPES = {
   optics:     { sizeBox: 1, boxFace: 1, flip: 1, label: 1 },
   apparatus:  { sizeBox: 1, boxFace: 1, flip: 1 },
   pendulum:   { lineTol: 1 },
+  // gauge = 자·각도기 측정 가이드(kind: ruler|protractor). 크기박스로 이동/리사이즈/
+  // bbox/저장을 그대로 상속. boxFace로 bbox 전체가 클릭 면이 되어 선택이 쉽다.
+  gauge:      { sizeBox: 1, boxFace: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.

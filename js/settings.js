@@ -17,15 +17,15 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.9";
-import { registerTopMenu } from "./top-menu.js?v=0.54.9";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.9";
+} from "./state.js?v=0.54.10";
+import { registerTopMenu } from "./top-menu.js?v=0.54.10";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.10";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=0.54.9";
+} from "./preview-backgrounds.js?v=0.54.10";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -40,6 +40,8 @@ const FACTORY_DEFAULTS = {
   gridVisible: false,
   gridOpacity: 3,
   gridInterval: 10,
+  rulerTickMm: 10,        // 자 눈금 간격(mm) — 새 자 생성 시 초깃값
+  protractorTickDeg: 10,  // 각도기 눈금 간격(°)
 };
 
 export function loadDefaults() {
@@ -359,6 +361,18 @@ function buildModal() {
                    min="5" max="50" step="5" autocomplete="off" />
           </label>
 
+          <label class="modal-field" for="defaults-ruler-tick">
+            <span class="modal-label">자 눈금 간격 (mm)</span>
+            <input type="number" id="defaults-ruler-tick" class="modal-input"
+                   min="1" max="50" step="1" autocomplete="off" />
+          </label>
+
+          <label class="modal-field" for="defaults-protractor-tick">
+            <span class="modal-label">각도기 눈금 간격 (°)</span>
+            <input type="number" id="defaults-protractor-tick" class="modal-input"
+                   min="1" max="45" step="1" autocomplete="off" />
+          </label>
+
           <div class="defaults-pbg">
             <span class="modal-label">인쇄 비교 이미지</span>
             <p class="defaults-pbg-desc">실제 인쇄해 본 시험지 이미지를 등록하면,
@@ -412,6 +426,8 @@ export function initSettings(state) {
     gridVisible:  overlay.querySelector("#defaults-grid-visible"),
     gridOpacity:  overlay.querySelector("#defaults-grid-opacity"),
     gridInterval: overlay.querySelector("#defaults-grid-interval"),
+    rulerTickMm:      overlay.querySelector("#defaults-ruler-tick"),
+    protractorTickDeg: overlay.querySelector("#defaults-protractor-tick"),
   };
   const previewSvg = overlay.querySelector("#defaults-preview-svg");
 
@@ -430,6 +446,8 @@ export function initSettings(state) {
     fields.gridVisible.checked = !!d.gridVisible;
     fields.gridOpacity.value  = d.gridOpacity;
     fields.gridInterval.value = d.gridInterval;
+    fields.rulerTickMm.value       = d.rulerTickMm;
+    fields.protractorTickDeg.value = d.protractorTickDeg;
   }
 
   // Read the chosen TEXT_STYLES preset (weight + font-style) from the select.
@@ -575,6 +593,8 @@ export function initSettings(state) {
       gridVisible:  fields.gridVisible.checked,
       gridOpacity:  Number(fields.gridOpacity.value),
       gridInterval: Number(fields.gridInterval.value),
+      rulerTickMm:       Number(fields.rulerTickMm.value),
+      protractorTickDeg: Number(fields.protractorTickDeg.value),
     });
     hideModal();
   });

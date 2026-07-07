@@ -31,7 +31,7 @@
 | 단계 | 작업 | 상태 | 여기까지 됨 / 남은 것 | 관련 커밋 |
 |---|---|---|---|---|
 | 1 (E) | 인쇄 비교 이미지 등록 | ☑ 완료 | preview-backgrounds.js 신설(업로드→리사이즈 dataURL→localStorage `5e.previewBackgrounds`), settings.js 기본값 모달에 업로드/목록/삭제(showConfirm) UI + PERSONAL_KEYS·EXPORT_CHOICES 등록, exam-preview.js 배경 셀렉터를 내장+사용자 병합 드롭다운으로. 브라우저 E2E 통과(업로드→미리보기 선택→삭제→설정저장 포함) | (v0.54.9 커밋) |
-| 2 (D) | 자·각도기 가이드 | ☐ 미착수 | (아직 시작 안 함) | — |
+| 2 (D) | 자·각도기 가이드 | ☑ 완료 | 오브젝트 타입명은 **`gauge`**로 채택(기존 `state.guides`=눈금자 안내선과 충돌 회피). object-types에 gauge(sizeBox·boxFace) 등록, render/gauge.js 신설(자=띠+눈금+mm숫자, 각도기=반원+방사눈금+°숫자, opacity·rotation 지원), tools.js에 RULER/PROTRACTOR 도구+드래그생성(눈금간격은 기본값에서, 드래그와 무관 고정), index.html 공통도구 버튼 2개, inspector.js isShape에 gauge 포함(크기·위치/보호 자동), inspector/section-gauge.js 신설(자체구독형: 눈금간격·투명도), settings.js 기본값에 자눈금(mm)·각도기눈금(°). 브라우저 E2E 통과(자/각도기 드래그생성→렌더→인스펙터 편집→투명도→위치고정→기본값 저장), 콘솔 에러 0 | (v0.54.10 커밋) |
 | 3 (F) | 문항 세트 탭 | ☐ 미착수 | (아직 시작 안 함) | — |
 
 > **작성 규칙**: 진행 중 세션이 멈출 때는 반드시 이 표의 해당 단계를 `◐ 진행중`으로 바꾸고

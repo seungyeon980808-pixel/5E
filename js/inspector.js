@@ -6,25 +6,25 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=0.54.9";
-import { resolveObjectStyle } from "./style-mode.js?v=0.54.9";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=0.54.10";
+import { resolveObjectStyle } from "./style-mode.js?v=0.54.10";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
-} from "./inspector/widgets.js?v=0.54.9";
-import { createInspectorContext } from "./inspector/context.js?v=0.54.9";
-import { buildLineSection } from "./inspector/section-line.js?v=0.54.9";
-import { buildGroupSection } from "./inspector/section-group.js?v=0.54.9";
-import { buildTextSection } from "./inspector/section-text.js?v=0.54.9";
-import { buildFillSection } from "./inspector/section-fill.js?v=0.54.9";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=0.54.9";
-import { buildProtectSection } from "./inspector/section-protect.js?v=0.54.9";
-import { buildImageSection } from "./inspector/section-image.js?v=0.54.9";
-import { buildPendulumSection } from "./inspector/section-pendulum.js?v=0.54.9";
-import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=0.54.9";
-import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=0.54.9";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=0.54.9";
-import { buildLayersSection } from "./inspector/section-layers.js?v=0.54.9";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=0.54.9";
+} from "./inspector/widgets.js?v=0.54.10";
+import { createInspectorContext } from "./inspector/context.js?v=0.54.10";
+import { buildLineSection } from "./inspector/section-line.js?v=0.54.10";
+import { buildGroupSection } from "./inspector/section-group.js?v=0.54.10";
+import { buildTextSection } from "./inspector/section-text.js?v=0.54.10";
+import { buildFillSection } from "./inspector/section-fill.js?v=0.54.10";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=0.54.10";
+import { buildProtectSection } from "./inspector/section-protect.js?v=0.54.10";
+import { buildImageSection } from "./inspector/section-image.js?v=0.54.10";
+import { buildPendulumSection } from "./inspector/section-pendulum.js?v=0.54.10";
+import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=0.54.10";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=0.54.10";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=0.54.10";
+import { buildLayersSection } from "./inspector/section-layers.js?v=0.54.10";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=0.54.10";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {
@@ -553,7 +553,8 @@ export function initInspector(state) {
     const isApparatus = obj.type === "apparatus";
     const appKind = isApparatus ? (obj.kind || "wire") : null;
     const isSvgAsset = obj.type === "svgAsset";
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset;
+    const isGauge = obj.type === "gauge"; // 자·각도기: X/Y/W/H/회전(크기박스) 사용
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset || isGauge;
     const isArc = obj.type === "anglearc";
     const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";

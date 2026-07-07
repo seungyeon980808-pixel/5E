@@ -7,27 +7,28 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.9";
-import { render } from "./render.js?v=0.54.9";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.9";
-import { initTools } from "./tools.js?v=0.54.9";
-import { initCutTool } from "./cut-tool.js?v=0.54.9";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.9";
-import { initInspector } from "./inspector.js?v=0.54.9";
-import { initProjectIO } from "./project-io.js?v=0.54.9";
-import { initExportDialog } from "./export-dialog.js?v=0.54.9";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.9";
-import { initSettings } from "./settings.js?v=0.54.9";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.9";
-import { initImagePaste } from "./image-paste.js?v=0.54.9";
-import { initImageCutout } from "./image-cutout.js?v=0.54.9";
-import { initExamLibrary } from "./exam-library.js?v=0.54.9";
-import { initTemplates } from "./templates.js?v=0.54.9";
-import { initObjectSearch } from "./search.js?v=0.54.9";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.9";
-import { initToolHint } from "./tool-hint.js?v=0.54.9";
-import { initPersonalObjects } from "./personal-objects.js?v=0.54.9";
-import { initBulkEdit } from "./bulk-edit.js?v=0.54.9";
+import { state } from "./state.js?v=0.54.10";
+import { render } from "./render.js?v=0.54.10";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.10";
+import { initTools } from "./tools.js?v=0.54.10";
+import { initCutTool } from "./cut-tool.js?v=0.54.10";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.10";
+import { initInspector } from "./inspector.js?v=0.54.10";
+import { initProjectIO } from "./project-io.js?v=0.54.10";
+import { initExportDialog } from "./export-dialog.js?v=0.54.10";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.10";
+import { initSettings } from "./settings.js?v=0.54.10";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.10";
+import { initImagePaste } from "./image-paste.js?v=0.54.10";
+import { initImageCutout } from "./image-cutout.js?v=0.54.10";
+import { initExamLibrary } from "./exam-library.js?v=0.54.10";
+import { initTemplates } from "./templates.js?v=0.54.10";
+import { initObjectSearch } from "./search.js?v=0.54.10";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.10";
+import { initToolHint } from "./tool-hint.js?v=0.54.10";
+import { initPersonalObjects } from "./personal-objects.js?v=0.54.10";
+import { initBulkEdit } from "./bulk-edit.js?v=0.54.10";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.10";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -129,6 +130,9 @@ initTransform(svg, state);
 
 /* ----- inspector: right-panel controls wired to selected object ----- */
 initInspector(state);
+
+/* ----- 자·각도기(gauge) 전용 인스펙터 섹션(자체 구독형; initInspector 뒤에 마운트) ----- */
+initGaugeSection(state);
 
 /* ===== UNDO / REDO TOP-BAR BUTTONS (icon-only; left of 파일) ===== */
 (function initUndoRedoButtons() {

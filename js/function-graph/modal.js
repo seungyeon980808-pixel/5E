@@ -7,12 +7,12 @@
  *     선택 함수는 파랑으로 강조. 정의역 드래그 핸들은 선택 함수에 적용.
  * 확인 = insertFunctionGraphs로 모든 함수를 한 평면에 한 번에 커밋(undo 1회). */
 
-import { state } from "../state.js?v=0.54.9";
-import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.9";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.54.9";
-import { sampleFunctionPoints } from "./sampler.js?v=0.54.9";
-import { insertFunctionGraphs } from "./insert.js?v=0.54.9";
-import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.9";
+import { state } from "../state.js?v=0.54.10";
+import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.10";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.54.10";
+import { sampleFunctionPoints } from "./sampler.js?v=0.54.10";
+import { insertFunctionGraphs } from "./insert.js?v=0.54.10";
+import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.10";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

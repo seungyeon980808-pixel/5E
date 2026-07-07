@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.54.9";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.54.10";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,34 +19,34 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.54.9";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.54.9";
-import { resolveEndpointSnap } from "./snap.js?v=0.54.9";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.9";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.54.9";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.54.9";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.9";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.54.9";
-import { nextObjectId } from "./tools/id.js?v=0.54.9";
-import { setupFreeDraw } from "./tools/free-draw.js?v=0.54.9";
-import { setupNodePlacement } from "./tools/node-placement.js?v=0.54.9";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.54.9";
+} from "./state.js?v=0.54.10";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.54.10";
+import { resolveEndpointSnap } from "./snap.js?v=0.54.10";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.10";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.54.10";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.54.10";
+import { getSvgAsset } from "./svg-assets.js?v=0.54.10";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.54.10";
+import { nextObjectId } from "./tools/id.js?v=0.54.10";
+import { setupFreeDraw } from "./tools/free-draw.js?v=0.54.10";
+import { setupNodePlacement } from "./tools/node-placement.js?v=0.54.10";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.54.10";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=0.54.9";
+} from "./geometry.js?v=0.54.10";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=0.54.9";
+} from "./pick.js?v=0.54.10";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.54.9";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.54.10";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -55,14 +55,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=0.54.9";
+} from "./text-editor.js?v=0.54.10";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.54.9";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.54.10";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=0.54.9";
+import { guideCursorAt } from "./ruler.js?v=0.54.10";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -250,7 +250,10 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", RULER: "gauge", PROTRACTOR: "gauge" };
+// 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
+const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
+let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
 
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
@@ -436,6 +439,7 @@ function setupDrawing() {
     startWorld = screenToWorld(_svg, vb, e.clientX, e.clientY);
     drawing = true;
     drawType = type;
+    _drawKind = GAUGE_KIND[_state.get().activeTool] || null; // gauge일 때만 유효
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, startWorld); });
   });
 
@@ -660,7 +664,40 @@ function makeShape(type, a, b) {
       shape.strokeWidth = 0;
     }
   }
+  if (type === "gauge") {
+    const d = gaugeTickDefaults();
+    shape.kind = _drawKind || "ruler";
+    shape.opacity = 1;
+    shape.fillNone = true;
+    if (shape.kind === "ruler") {
+      // 눈금자: 폭=드래그 가로길이, 높이=고정 띠(10mm). 눈금 간격은 드래그와 무관.
+      shape.tickIntervalMm = d.rulerTickMm;
+      shape.h = 10;
+    } else {
+      // 각도기: 반지름=드래그 더 큰 변, 폭=지름, 높이=반지름(반원 bbox).
+      const rad = Math.max(shape.w, shape.h);
+      shape.w = rad * 2;
+      shape.h = rad;
+      shape.lockAspect = true;
+      shape.tickIntervalDeg = d.protractorTickDeg;
+    }
+  }
   return applyNewObjectStyleDefaults(shape);
+}
+
+/* 자·각도기 눈금 간격 기본값 — 기본값 설정(localStorage)에서 읽는다(순환 import
+ * 회피를 위해 직접 파싱). 값이 없거나 깨졌으면 안전한 기본값(10mm / 10°). */
+function gaugeTickDefaults() {
+  const fallback = { rulerTickMm: 10, protractorTickDeg: 10 };
+  try {
+    const d = JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}");
+    return {
+      rulerTickMm: Number(d.rulerTickMm) > 0 ? Number(d.rulerTickMm) : fallback.rulerTickMm,
+      protractorTickDeg: Number(d.protractorTickDeg) > 0 ? Number(d.protractorTickDeg) : fallback.protractorTickDeg,
+    };
+  } catch (_) {
+    return fallback;
+  }
 }
 
 /* ----- build an endpoint-based line from two world points (DESIGN 2-1 branch B) ----- */
