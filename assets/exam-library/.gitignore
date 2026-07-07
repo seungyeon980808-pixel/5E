@@ -3,3 +3,7 @@ images/*
 !images/.gitkeep
 # manifest.json은 build_manifest.py가 로컬 이미지에서 생성하는 산출물
 manifest.json
+
+# 구버전 이미지 백업(저작권 — 커밋 금지)과 로컬 백업 파일
+_backup_old_images/
+*.bak
