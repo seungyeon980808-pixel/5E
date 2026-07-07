@@ -11,10 +11,10 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.4";
-import { registerTopMenu } from "./top-menu.js?v=0.54.4";
-import { screenToWorld } from "./viewport.js?v=0.54.4";
-import { openExamPreview } from "./exam-preview.js?v=0.54.4";
+import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.5";
+import { registerTopMenu } from "./top-menu.js?v=0.54.5";
+import { screenToWorld } from "./viewport.js?v=0.54.5";
+import { openExamPreview } from "./exam-preview.js?v=0.54.5";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -150,7 +150,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   dim.dataset.dim = "1";
   dim.style.cssText =
     "position:absolute;display:none;z-index:3;padding:2px 6px;border-radius:3px;cursor:text;" +
-    "background:#1f6feb;color:#fff;font-size:12px;font-weight:600;" +
+    "background:var(--accent);color:#fff;font-size:12px;font-weight:600;" +
     "white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.4);";
   const INP =
     "width:46px;text-align:right;font:inherit;color:#fff;border:0;border-radius:3px;" +
@@ -187,7 +187,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     h.dataset.h = id;
     h.style.cssText =
       "position:absolute;width:11px;height:11px;margin:-6px 0 0 -6px;display:none;z-index:4;" +
-      "background:#fff;border:1.5px solid #1f6feb;border-radius:2px;box-sizing:border-box;cursor:" + CURSORS[id] + ";";
+      "background:#fff;border:1.5px solid var(--accent);border-radius:2px;box-sizing:border-box;cursor:" + CURSORS[id] + ";";
     overlay.appendChild(h);
     handleEls[id] = h;
   }

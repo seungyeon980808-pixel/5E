@@ -11,10 +11,10 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.4";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.4";
-import { vectorizeImage } from "./image-vectorize.js?v=0.54.4";
-import { measureFormula } from "./formula.js?v=0.54.4";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.5";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.5";
+import { vectorizeImage } from "./image-vectorize.js?v=0.54.5";
+import { measureFormula } from "./formula.js?v=0.54.5";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
@@ -91,10 +91,10 @@ function injectObjectifyStyles() {
     .objectify-stage.is-panning { cursor:grabbing; }
     .objectify-stage canvas { position:absolute; top:0; left:0; transform-origin:0 0; }
     .objectify-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .objectify-tools .modal-btn.is-active { background:#0969da; color:#fff; border-color:#0969da; }
+    .objectify-tools .modal-btn.is-active { background:var(--accent); color:#fff; border-color:var(--accent); }
     .modal-objectify .objectify-dropzone { position:absolute; inset:0; margin:0; z-index:3; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px; background:#22272e; color:#adbac7; border:2px dashed #444c56; border-radius:8px; cursor:pointer; }
     .objectify-stage.has-image .objectify-dropzone { display:none; }
-    .objectify-stage.is-dragover .objectify-dropzone { display:flex; background:#2d333b; border-color:#0969da; }
+    .objectify-stage.is-dragover .objectify-dropzone { display:flex; background:#2d333b; border-color:var(--accent); }
   `;
   document.head.appendChild(style);
 }

@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection } from "./widgets.js?v=0.54.4";
+import { makeColorPicker, makeSection } from "./widgets.js?v=0.54.5";
 
 export function buildFillSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -76,7 +76,7 @@ export function buildFillSection(ctx) {
     const btn = document.createElement("button");
     btn.title = label;
     btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18">${FILL_STYLE_ICONS[value]}</svg>`;
-    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -103,9 +103,9 @@ export function buildFillSection(ctx) {
     const fs = obj.fillStyle ?? "solid";
     Object.entries(_fillStyleBtnEls).forEach(([val, btn]) => {
       const active = val === fs;
-      btn.style.background = active ? "#4a9eff" : "#1e1f22";
-      btn.style.color      = active ? "#ffffff" : "#dcddde";
-      btn.style.border     = active ? "1px solid #4a9eff" : "1px solid #3a3c41";
+      btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
+      btn.style.color      = active ? "#ffffff" : "var(--text-primary)";
+      btn.style.border     = active ? "1px solid var(--accent)" : "1px solid var(--border)";
     });
   }
 

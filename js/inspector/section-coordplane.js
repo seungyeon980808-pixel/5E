@@ -5,11 +5,11 @@
  * show/hide in js/inspector.js. Every edit goes through ctx.commitSelectedObject
  * (undo snapshot + locked/type guard). 기획서 §10-② 인스펙터. */
 
-import { makeSection } from "./widgets.js?v=0.54.4";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.4";
-import { state } from "../state.js?v=0.54.4";
+import { makeSection } from "./widgets.js?v=0.54.5";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.5";
+import { state } from "../state.js?v=0.54.5";
 
-const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
+const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
 
 export function buildCoordplaneSection(ctx) {
   const { commitSelectedObject, makeLabelTypeRow } = ctx;
@@ -21,7 +21,7 @@ export function buildCoordplaneSection(ctx) {
   const detailBtn = document.createElement("button");
   detailBtn.type = "button";
   detailBtn.textContent = "상세 편집…";
-  detailBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:5px;border:1px solid #0969da;border-radius:3px;background:#0d2847;color:#dcddde;cursor:pointer;";
+  detailBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:5px;border:1px solid var(--accent);border-radius:3px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
   detailBtn.addEventListener("click", () => {
     const id = (state.get().selectedIds || [])[0];
     if (id) openPlaneModal(id);
@@ -76,7 +76,7 @@ export function buildCoordplaneSection(ctx) {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = text;
-    b.style.cssText = "font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 8px;margin-left:3px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+    b.style.cssText = "font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 8px;margin-left:3px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       commitSelectedObject((o) => {
         if (!applies(o) || o.axisVariant === val) return false;
@@ -205,8 +205,8 @@ export function buildCoordplaneSection(ctx) {
     const av = obj.axisVariant || "cross";
     Object.entries(variantBtns).forEach(([val, b]) => {
       const on = val === av;
-      b.style.background = on ? "#4a9eff" : "#1e1f22";
-      b.style.borderColor = on ? "#4a9eff" : "#3a3c41";
+      b.style.background = on ? "var(--accent)" : "var(--bg-input)";
+      b.style.borderColor = on ? "var(--accent)" : "var(--border)";
       b.disabled = !!obj.locked;
     });
 

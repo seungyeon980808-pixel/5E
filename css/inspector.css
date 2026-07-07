@@ -430,3 +430,14 @@ details[open] > .insp-summary::before {
   /* 드로어는 폭이 고정이라 드래그 리사이즈 핸들을 숨긴다 */
   #inspector-resize { display: none; }
 }
+
+
+/* 라벨 4요소 2×2 배열: [종류][위치] / [라벨][크기] */
+.insp-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 6px;
+  align-items: center;
+}
+.insp-2col .insp-row { min-width: 0; }
+.insp-2col .insp-input { min-width: 0; width: 100%; }

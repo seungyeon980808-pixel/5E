@@ -12,11 +12,11 @@
  * 공통 도구(#tool-list 상단)는 과목과 무관하게 항상 표시된다.
  */
 
-import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.4";
+import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.5";
 
 const SUBJECTS = {
   p: {
-    label: "물리",
+    label: "물리학",
     parts: [
       { name: "역학", cats: ["역학"] },
       { name: "전기자기학", cats: ["회로", "전자기학"] },

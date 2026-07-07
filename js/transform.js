@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.4";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.4";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.4";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.4";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.4";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.4";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.5";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.5";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.5";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.5";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.5";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.5";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -304,6 +304,36 @@ function applyStyleProps(obj, props) {
 /* ----- axis-aligned bbox of a set of (clipboard) objects, in world units -----
  * Text uses its anchor point as a zero-size box (the clone isn't rendered, so
  * getBBox is unavailable). Used to center a paste on the mouse. */
+/* 퍼스널 오브젝트 삽입: 저장된 오브젝트 묶음을 뷰 중앙에 복제 삽입(붙여넣기와 동일 계보).
+ * id·groupId를 새로 부여하고 Undo 1스텝을 push한다. personal-objects.js가 사용. */
+export function instantiateObjectsAt(state, srcObjs, target) {
+  if (!Array.isArray(srcObjs) || !srcObjs.length) return;
+  const bbox = clipboardBBox(srcObjs);
+  const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
+  const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
+  const dx = target.x - cx, dy = target.y - cy;
+  const stamp = Date.now().toString(36);
+  const gmap = new Map();
+  let gi = 0;
+  const newObjs = srcObjs.map((src, i) => {
+    const o = JSON.parse(JSON.stringify(src));
+    o.id = `obj_${stamp}_p${i}`;
+    if (o.groupId) {
+      if (!gmap.has(o.groupId)) gmap.set(o.groupId, `grp_${stamp}_${++gi}`);
+      o.groupId = gmap.get(o.groupId);
+    }
+    applyDelta(o, src, dx, dy);
+    return o;
+  });
+  state.update((s2) => {
+    s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
+    s2.redoStack = [];
+    newObjs.forEach((o) => s2.objects.push(o));
+    s2.selectedIds = newObjs.map((o) => o.id);
+    s2.targetedId = null;
+  });
+}
+
 function clipboardBBox(objs) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };

@@ -6,8 +6,8 @@
  * 좌표평면을 더블클릭하거나 인스펙터 "상세 편집…" 버튼으로 연다.
  * 편집은 draft(깊은 복사)에 하고, 확인 시 실제 객체에 한 번에 반영(undo 1회). */
 
-import { state } from "../state.js?v=0.54.4";
-import { renderCoordplane } from "../render/coordplane.js?v=0.54.4";
+import { state } from "../state.js?v=0.54.5";
+import { renderCoordplane } from "../render/coordplane.js?v=0.54.5";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
@@ -78,12 +78,12 @@ function row(labelText, ...nodes) {
   r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#c9d1d9;";
   const l = document.createElement("label");
   l.textContent = labelText;
-  l.style.cssText = "flex:0 0 92px;color:#8b949e;";
+  l.style.cssText = "flex:0 0 92px;color:var(--text-secondary);";
   r.appendChild(l);
   nodes.forEach((n) => r.appendChild(n));
   return r;
 }
-function span(text) { const s = document.createElement("span"); s.textContent = text; s.style.color = "#8b949e"; return s; }
+function span(text) { const s = document.createElement("span"); s.textContent = text; s.style.color = "var(--text-secondary)"; return s; }
 
 /* 숫자 라벨/축 이름 크기 행의 표시 여부를 토글 상태에 맞춘다. */
 function syncVisibility() {
@@ -95,8 +95,8 @@ function syncControls() {
   const d = _draft;
   _els.variantBtns.forEach((b) => {
     const on = b._val === (d.axisVariant || "cross");
-    b.style.background = on ? "#0d2847" : "#1e1f22";
-    b.style.borderColor = on ? "#0969da" : "#3a3c41";
+    b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
+    b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });
   const setV = (inp) => { if (inp && document.activeElement !== inp) inp.value = d[inp._prop] ?? ""; };
   _els.inputs.forEach(setV);
@@ -139,7 +139,7 @@ function build() {
   VARIANTS.forEach(([val, text]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = text; b._val = val;
-    b.style.cssText = "font-size:12px;border:1px solid #3a3c41;border-radius:3px;padding:3px 10px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { set("axisVariant", val); syncControls(); });
     variantBtns.push(b); variantWrap.appendChild(b);
   });
@@ -195,7 +195,7 @@ function build() {
   controls.appendChild(row("내보내기", exportLabel));
 
   const hint = document.createElement("div");
-  hint.style.cssText = "font-size:11px;color:#8b949e;line-height:1.6;margin-top:4px;";
+  hint.style.cssText = "font-size:11px;color:var(--text-secondary);line-height:1.6;margin-top:4px;";
   hint.innerHTML = "· 라벨은 LaTeX 문법 지원(<code>v_0</code>, <code>\\theta</code>).<br>· 원점 라벨을 비우면 원점 글자가 숨겨집니다.";
   controls.appendChild(hint);
 

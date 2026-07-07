@@ -5,7 +5,8 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=0.54.4";
+} from "./templates.js?v=0.54.5";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=0.54.5";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -42,7 +43,8 @@ export function initObjectSearch() {
     const match = matches[index];
     if (!match) return;
     close();
-    activateTemplate(match.id);
+    if (match.personal) insertPersonalItem(match.id);
+    else activateTemplate(match.id);
   }
 
   function syncHighlight(scroll = false) {
@@ -57,11 +59,18 @@ export function initObjectSearch() {
 
   function renderResults() {
     const query = input.value.trim().toLocaleLowerCase();
+    const rank = (c) => { const i = CATEGORY_ORDER.indexOf(c); return i === -1 ? 99 : i; };
     matches = Object.entries(TEMPLATES)
       .filter(([, def]) => [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
       .map(([id, def]) => ({ id, def }))
-      .sort((a, b) => CATEGORY_ORDER.indexOf(a.def.category) - CATEGORY_ORDER.indexOf(b.def.category));
+      .sort((a, b) => rank(a.def.category) - rank(b.def.category));
+    // 퍼스널 오브젝트: 이름/분류 매치 → 목록 끝에 '퍼스널' 그룹으로
+    for (const it of listPersonalItems()) {
+      if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
+      matches.push({ id: it.id, personal: true,
+        def: { label: it.name, category: `퍼스널 · ${it.category}`, kind: "atomic" } });
+    }
     highlighted = matches.length ? 0 : -1;
     results.replaceChildren();
 
@@ -93,17 +102,25 @@ export function initObjectSearch() {
 
         const iconBox = document.createElement("span");
         iconBox.className = "object-search-icon";
-        const icon = buildSymbolIcon(match.id, match.def);
-        iconBox.appendChild(icon);
+        let icon = null;
+        if (match.personal) {
+          const letter = document.createElement("span");
+          letter.textContent = (match.def.label || "?").slice(0, 1);
+          letter.style.cssText = "font-weight:700;font-size:13px;";
+          iconBox.appendChild(letter);
+        } else {
+          icon = buildSymbolIcon(match.id, match.def);
+          iconBox.appendChild(icon);
+        }
 
         const label = document.createElement("span");
         label.textContent = match.def.label;
         const badge = document.createElement("span");
         badge.className = "object-search-badge";
-        badge.textContent = match.def.kind === "atomic" ? "즉시" : "드래그";
+        badge.textContent = match.personal ? "퍼스널" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
-        sizeIconViewBox(icon);
+        if (icon) sizeIconViewBox(icon);
       }
     }
     syncHighlight();

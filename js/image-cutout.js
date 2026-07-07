@@ -19,7 +19,7 @@
 // (they read obj.cutouts). Temporary drag UI is drawn on the SVG root (not in
 // state.objects), so it is never selectable and never exported. */
 
-import { screenToWorld } from "./viewport.js?v=0.54.4";
+import { screenToWorld } from "./viewport.js?v=0.54.5";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -138,7 +138,7 @@ function drawRectPreview(obj, aFrac, bFrac) {
   const el = ensurePreview("polygon");
   el.setAttribute("points", corners.map((p) => `${p.x},${p.y}`).join(" "));
   el.setAttribute("fill", "rgba(9,105,218,0.18)");
-  el.setAttribute("stroke", "#0969da");
+  el.style.stroke = "var(--accent)";
   el.setAttribute("stroke-width", "0.3");
   el.setAttribute("stroke-dasharray", "0.7 0.5");
 }

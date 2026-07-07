@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.4" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.4" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.4" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.5" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.5" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.5" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -25,6 +25,13 @@
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
     <aside class="panel panel-left" id="panel-left">
       <div class="tool-list" id="tool-list">
+        <!-- 과목 선택: 강조색·배경 톤 테마와 '과목별 오브젝트' 파트가 함께 전환된다 -->
+        <select id="subject-select" class="subject-select subject-select-panel" aria-label="과목 선택">
+          <option value="p">물리학</option>
+          <option value="c">화학</option>
+          <option value="b">생명과학</option>
+          <option value="e">지구과학</option>
+        </select>
         <div class="tool-section">
           <div class="tool-section-header">공통 도구 <span class="toggle-icon">▾</span></div>
           <!-- 공통 도구 그리드(3열). 순서는 사용자 지정(선택/회전/자르기 → 도형 → 선 →
@@ -100,11 +107,20 @@
         </div>
         <!-- 심볼 라이브러리는 '과목별 오브젝트' 파트 아코디언(#subject-parts)으로 흡수됨
              (subject-objects.js가 templates.js 카테고리를 새 분류로 렌더). -->
+        <!-- 퍼스널 오브젝트: 사용자가 저장한 오브젝트 묶음 라이브러리 (personal-objects.js) -->
+        <div class="tool-section" id="personal-section">
+          <div class="tool-section-header">퍼스널 오브젝트 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-body tool-section-body-wide">
+            <div id="personal-parts"><p class="subject-part-empty">저장된 오브젝트가 없습니다.</p></div>
+          </div>
+        </div>
         <div class="tool-section">
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <button id="image-objectify-open" class="advanced-tool-btn" type="button"
                     title="이미지 객체화 (Ctrl+T)">이미지 객체화</button>
+            <button id="personal-object-save" class="advanced-tool-btn" type="button"
+                    title="선택한 오브젝트를 퍼스널 오브젝트로 저장">퍼스널 오브젝트로 저장</button>
           </div>
         </div>
       </div>
@@ -119,13 +135,6 @@
         <button id="drawer-right-toggle" class="topbar-btn drawer-toggle" type="button"
                 aria-controls="panel-right" aria-expanded="false" title="속성 패널 열기">속성</button>
         <div class="app-brand" title="5E (sciEnceEducationalExamEasyEditor)">5E</div>
-        <!-- 과목 선택: 강조색·배경 톤 테마와 좌측 '과목별 오브젝트' 파트가 함께 전환된다 -->
-        <select id="subject-select" class="subject-select subject-select-topbar" aria-label="과목 선택">
-          <option value="p">물리</option>
-          <option value="c">화학</option>
-          <option value="b">생명과학</option>
-          <option value="e">지구과학</option>
-        </select>
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- Undo / Redo (icon-only; sit immediately left of 파일) -->
         <button id="undo-btn" class="topbar-btn icon-btn" type="button"
@@ -245,7 +254,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.4</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.5</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -311,6 +320,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.4"></script>
+  <script type="module" src="js/main.js?v=0.54.5"></script>
 </body>
 </html>

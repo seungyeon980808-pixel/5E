@@ -7,12 +7,12 @@
  *     선택 함수는 파랑으로 강조. 정의역 드래그 핸들은 선택 함수에 적용.
  * 확인 = insertFunctionGraphs로 모든 함수를 한 평면에 한 번에 커밋(undo 1회). */
 
-import { state } from "../state.js?v=0.54.4";
-import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.4";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.54.4";
-import { sampleFunctionPoints } from "./sampler.js?v=0.54.4";
-import { insertFunctionGraphs } from "./insert.js?v=0.54.4";
-import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.4";
+import { state } from "../state.js?v=0.54.5";
+import { renderCoordplane, renderFuncgraph } from "../render/coordplane.js?v=0.54.5";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.54.5";
+import { sampleFunctionPoints } from "./sampler.js?v=0.54.5";
+import { insertFunctionGraphs } from "./insert.js?v=0.54.5";
+import { worldXFromMathX, mathXFromWorldX } from "./coords.js?v=0.54.5";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -74,8 +74,8 @@ function renderChips() {
     chip.type = "button";
     const on = i === _sel;
     chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font:12px monospace;" +
-      "border:1px solid " + (on ? "#0969da" : "#3a3c41") + ";border-radius:4px;padding:3px 8px;" +
-      "background:" + (on ? "#0d2847" : "#1e1f22") + ";color:#dcddde;cursor:pointer;max-width:180px;";
+      "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;" +
+      "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);cursor:pointer;max-width:180px;";
     const lbl = document.createElement("span");
     lbl.textContent = "y=" + (f.expr.trim() || "…");
     lbl.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
@@ -98,8 +98,8 @@ function renderChips() {
   const add = document.createElement("button");
   add.type = "button";
   add.textContent = "+ 함수 추가";
-  add.style.cssText = "font-size:12px;border:1px dashed #3a3c41;border-radius:4px;padding:3px 10px;" +
-    "background:transparent;color:#8b949e;cursor:pointer;";
+  add.style.cssText = "font-size:12px;border:1px dashed var(--border);border-radius:4px;padding:3px 10px;" +
+    "background:transparent;color:var(--text-secondary);cursor:pointer;";
   add.addEventListener("click", () => {
     _funcs.push(newFunc());
     _sel = _funcs.length - 1;
@@ -117,8 +117,8 @@ function syncControls() {
   _els.widthInput.value = f.strokeWidth;
   [..._els.styleHost.children].forEach((b, i) => {
     const on = i === f.styleIdx;
-    b.style.background = on ? "#0d2847" : "#1e1f22";
-    b.style.borderColor = on ? "#0969da" : "#3a3c41";
+    b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
+    b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });
   _els.domainMin.value = fmt(f.domain.min);
   _els.domainMax.value = fmt(f.domain.max);
@@ -145,7 +145,7 @@ function renderPreview() {
     if (points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
     const [, dl, dg] = LINE_STYLES[f.styleIdx] || LINE_STYLES[0];
     const el = renderFuncgraph({ points, strokeLevel: 0, strokeWidth: f.strokeWidth, dashLength: dl, dashGap: dg });
-    if (i === _sel) el.querySelectorAll("path,polyline,polygon").forEach((p) => p.setAttribute("stroke", "#0969da"));
+    if (i === _sel) el.querySelectorAll("path,polyline,polygon").forEach((p) => { p.style.stroke = "var(--accent)"; });
     svg.appendChild(el);
   });
 
@@ -168,7 +168,7 @@ function renderPreview() {
       const vis = document.createElementNS(SVG_NS, "line");
       vis.setAttribute("x1", wx); vis.setAttribute("y1", plane.y);
       vis.setAttribute("x2", wx); vis.setAttribute("y2", plane.y + plane.h);
-      vis.setAttribute("stroke", "#0969da"); vis.setAttribute("stroke-width", 0.7);
+      vis.style.stroke = "var(--accent)"; vis.setAttribute("stroke-width", 0.7);
       svg.appendChild(vis);
       const hit = document.createElementNS(SVG_NS, "line");
       hit.setAttribute("x1", wx); hit.setAttribute("y1", plane.y);
@@ -265,7 +265,7 @@ function buildModal() {
                style="flex:1;font-family:monospace;" />
       </div>
       <div id="fg-helpers" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;"></div>
-      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:10px;font-size:12px;color:#8b949e;">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
         <label style="display:flex;align-items:center;gap:6px;">선 굵기
           <input type="number" id="fg-width" min="0.1" max="2" step="0.1" style="width:60px;" class="modal-input" />
         </label>
@@ -279,16 +279,16 @@ function buildModal() {
         <div style="flex:0 0 auto;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
             <span class="modal-label">미리보기</span>
-            <span id="fg-domain" style="color:#8b949e;font-size:12px;"></span>
+            <span id="fg-domain" style="color:var(--text-secondary);font-size:12px;"></span>
           </div>
           <div id="fg-preview" style="width:420px;height:420px;border:1px solid #30363d;border-radius:4px;background:#fff;overflow:hidden;"></div>
         </div>
         <div style="flex:1;min-width:0;">
           <div id="fg-error" style="color:#e5534b;font-size:12px;min-height:16px;"></div>
-          <div style="margin-top:8px;color:#8b949e;font-size:12px;line-height:1.7;">
-            · <b style="color:#0969da;">＋ 함수 추가</b>로 여러 함수를 한 평면에.<br>
+          <div style="margin-top:8px;color:var(--text-secondary);font-size:12px;line-height:1.7;">
+            · <b style="color:var(--accent);">＋ 함수 추가</b>로 여러 함수를 한 평면에.<br>
             · 함수별로 선 굵기·종류·정의역을 따로 정할 수 있어요.<br>
-            · 미리보기의 <b style="color:#0969da;">파란 세로 핸들</b>을 드래그해 선택 함수의 범위를 정하세요.<br>
+            · 미리보기의 <b style="color:var(--accent);">세로 핸들</b>을 드래그해 선택 함수의 범위를 정하세요.<br>
             · 각도는 라디안. <code>5x</code>는 <code>5*x</code>로 자동 인식.<br>
             · 함수는 괄호 필요: <code>sin(5x)</code> (○), <code>sin5x</code> (×).
           </div>
@@ -320,7 +320,7 @@ function buildModal() {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.style.cssText = "font-size:12px;font-family:monospace;border:1px solid #3a3c41;border-radius:3px;padding:3px 9px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+    b.style.cssText = "font-size:12px;font-family:monospace;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       insertAtCursor(input, text);
       if (cur()) cur().expr = input.value;
@@ -333,7 +333,7 @@ function buildModal() {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.style.cssText = "font-size:12px;border:1px solid #3a3c41;border-radius:3px;padding:3px 9px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { if (cur()) { cur().styleIdx = i; syncControls(); renderPreview(); } });
     styleHost.appendChild(b);
   });
@@ -361,6 +361,7 @@ function buildModal() {
   confirmBtn.addEventListener("click", commit);
   cancelBtn.addEventListener("click", hide);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) hide(); });
+  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); hide(); } });
   return overlay;
 }
 

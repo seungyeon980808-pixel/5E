@@ -102,7 +102,7 @@
   --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border:#d7d1c6; }
 
 /* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
-input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
 
 /* ===== TOKENS (legacy aliases → resolve against the active theme) ===== */
 :root {
@@ -262,6 +262,7 @@ body {
   border:1px solid var(--accent); border-radius:6px; cursor:pointer;
 }
 .subject-select-topbar { margin-left:8px; }
+.subject-select-panel { width:100%; margin:0 0 8px; height:30px; }
 .subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
 .subject-part-header {
   width:100%; display:flex; align-items:center; justify-content:space-between;
@@ -397,8 +398,11 @@ body {
   height: 28px;
   padding: 0 8px 0 0;
   color: var(--accent-2);
-  font-size: 15px;
-  font-weight: 700;
+  /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-size: 18px;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -1608,3 +1612,18 @@ textarea.unified-text-input {
   vertical-align: 2px;
 }
 .export-help-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* 퍼스널 오브젝트 목록 행 */
+.personal-item { display: flex; align-items: stretch; gap: 4px; margin-bottom: 4px; }
+.personal-item-btn {
+  flex: 1 1 auto; min-width: 0; text-align: left; padding: 5px 8px;
+  font-family: inherit; font-size: 12px; color: var(--text-primary);
+  background: var(--btn-tool-bg); border: 1px solid var(--c-border); border-radius: 5px;
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.personal-item-btn:hover { background: var(--btn-tool-hover); border-color: var(--accent); }
+.personal-item-del {
+  flex: none; width: 22px; font-size: 10px; color: var(--text-secondary);
+  background: transparent; border: 1px solid var(--c-border); border-radius: 5px; cursor: pointer;
+}
+.personal-item-del:hover { color: #e5534b; border-color: #e5534b; }

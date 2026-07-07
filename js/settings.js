@@ -17,8 +17,8 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.4";
-import { registerTopMenu } from "./top-menu.js?v=0.54.4";
+} from "./state.js?v=0.54.5";
+import { registerTopMenu } from "./top-menu.js?v=0.54.5";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -57,7 +57,9 @@ function saveDefaults(d) {
 //   - "theme"                          : 흑백/라이트 모드(main.js가 관리)
 // 존재하는 키만 내보낸다(값이 없는 키는 파일에 포함하지 않는다).
 const THEME_KEY = "theme";
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY];
+const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
+const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY];
 
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
 // 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.

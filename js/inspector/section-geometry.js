@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=0.54.4";
-import { makeSection } from "./widgets.js?v=0.54.4";
+import { openAngleArcLabelEditor } from "../tools.js?v=0.54.5";
+import { makeSection } from "./widgets.js?v=0.54.5";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -151,9 +151,12 @@ export function buildGeometrySection(ctx) {
   labelInp.addEventListener("blur", commitArcLabel);
   labelRow.appendChild(labelLbl);
   labelRow.appendChild(labelInp);
-  // 배치 순서: 라벨 종류 → 라벨 위치 → 라벨 → (편집/표시). labelRow는 위치 행 뒤에 붙인다.
+  // 라벨 2×2 배열: [종류][위치] / [라벨][ ] — 편집/표시는 그리드 아래 전폭.
+  const labelGridA = document.createElement("div");
+  labelGridA.className = "insp-2col";
+  sec3Body.appendChild(labelGridA);
   const objectLabelTypeRow = makeLabelTypeRow((o) => o.type === "anglearc" || o.type === "optics" || o.type === "circuit");
-  sec3Body.appendChild(objectLabelTypeRow.row);
+  labelGridA.appendChild(objectLabelTypeRow.row);
 
   // anglearc-only: 라벨 편집 button. Opens the SAME small text editor the labeler
   // uses (writes obj.label), so θ can be changed to α/β/A/㉠/Ⅰ/m/h and simple
@@ -167,7 +170,7 @@ export function buildGeometrySection(ctx) {
   arcLabelEditBtn.type = "button";
   arcLabelEditBtn.textContent = "라벨 편집...";
   arcLabelEditBtn.title = "각도 라벨/기호 입력기 열기";
-  arcLabelEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;";
+  arcLabelEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
   arcLabelEditBtn.addEventListener("click", () => {
     const id = (state.get().selectedIds || [])[0];
     if (id) openAngleArcLabelEditor(id);
@@ -214,10 +217,10 @@ export function buildGeometrySection(ctx) {
   });
   labelPosRow.appendChild(labelPosLbl);
   labelPosRow.appendChild(labelPosSel);
-  sec3Body.appendChild(labelPosRow);
-  sec3Body.appendChild(labelRow);        // 라벨 (위치 행 아래)
-  sec3Body.appendChild(arcLabelEditRow); // 라벨 편집...
-  sec3Body.appendChild(showLabelRow);    // 라벨 표시
+  labelGridA.appendChild(labelPosRow);
+  labelGridA.appendChild(labelRow);      // 2행 1열: 라벨
+  sec3Body.appendChild(arcLabelEditRow); // 라벨 편집... (전폭)
+  sec3Body.appendChild(showLabelRow);    // 라벨 표시 (전폭)
   labelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
@@ -346,9 +349,12 @@ export function buildGeometrySection(ctx) {
   boxLabelInp.addEventListener("blur", commitBoxLabel);
   boxLabelRow.appendChild(boxLabelLbl);
   boxLabelRow.appendChild(boxLabelInp);
-  // 배치 순서: 라벨 종류 → 라벨 위치 → 라벨 → 라벨 크기
+  // 라벨 2×2 배열: [종류][위치] / [라벨][크기]
+  const labelGridB = document.createElement("div");
+  labelGridB.className = "insp-2col";
+  sec3Body.appendChild(labelGridB);
   const boxLabelTypeRow = makeLabelTypeRow((o) => o.type === "rect" || o.type === "ellipse");
-  sec3Body.appendChild(boxLabelTypeRow.row);
+  labelGridB.appendChild(boxLabelTypeRow.row);
 
   const boxLabelPosRow = document.createElement("div");
   boxLabelPosRow.className = "insp-row";
@@ -364,8 +370,8 @@ export function buildGeometrySection(ctx) {
   });
   boxLabelPosRow.appendChild(boxLabelPosLbl);
   boxLabelPosRow.appendChild(boxLabelPosSel);
-  sec3Body.appendChild(boxLabelPosRow);
-  sec3Body.appendChild(boxLabelRow); // 라벨 (위치 행 아래)
+  labelGridB.appendChild(boxLabelPosRow);
+  labelGridB.appendChild(boxLabelRow); // 2행 1열: 라벨
   boxLabelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
@@ -381,7 +387,7 @@ export function buildGeometrySection(ctx) {
 
   // ---- rect/ellipse 라벨 크기 (Group 6 task 6): per-box label font size. ----
   const boxLabelSizeRow = makeLabelSizeRow((o) => o.type === "rect" || o.type === "ellipse");
-  sec3Body.appendChild(boxLabelSizeRow.row);
+  labelGridB.appendChild(boxLabelSizeRow.row); // 2행 2열: 라벨 크기
 
   // capacitor-only: plate separation 간격 (world mm).
   const gapRow = document.createElement("div");
@@ -451,8 +457,8 @@ export function buildGeometrySection(ctx) {
     btn.type = "button";
     btn.textContent = label;
     btn.style.cssText =
-      "flex:1;padding:4px 0;margin-left:4px;border:1px solid #3a3c41;border-radius:4px;" +
-      "background:#1e1f22;color:#ddd;cursor:pointer;font-size:12px;";
+      "flex:1;padding:4px 0;margin-left:4px;border:1px solid var(--border);border-radius:4px;" +
+      "background:var(--bg-input);color:#ddd;cursor:pointer;font-size:12px;";
     btn.addEventListener("click", () =>
       commitAxes((o) => {
         if ((o.axisVariant || "cross") === id) return false;

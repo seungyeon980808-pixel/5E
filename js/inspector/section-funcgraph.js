@@ -5,11 +5,11 @@
  * shared 선 section (sec1). Interim expr entry is a prompt() — the §10-④ 모달 will
  * replace it. Mount + show/hide live in js/inspector.js. */
 
-import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.54.4";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.54.4";
+import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.54.5";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.54.5";
 
-const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
-const BTN_CSS = "font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:3px 8px;background:#1e1f22;color:#dcddde;cursor:pointer;";
+const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:3px;padding:3px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 
 export function buildFuncgraphSection(ctx) {
   const { state } = ctx;
@@ -60,7 +60,7 @@ export function buildFuncgraphSection(ctx) {
   exprLbl.className = "insp-field-label";
   exprLbl.textContent = "수식";
   const exprVal = document.createElement("span");
-  exprVal.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:11px;color:#dcddde;padding:0 6px;";
+  exprVal.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:11px;color:var(--text-primary);padding:0 6px;";
   const exprBtn = document.createElement("button");
   exprBtn.type = "button";
   exprBtn.textContent = "편집";
@@ -177,8 +177,8 @@ export function buildFuncgraphSection(ctx) {
     const dl = obj.dashLength ?? 0, dg = obj.dashGap ?? 0;
     dashBtns.forEach(({ btn, preset }) => {
       const on = Math.abs(preset.dashLength - dl) < 1e-6 && Math.abs(preset.dashGap - dg) < 1e-6;
-      btn.style.background = on ? "#4a9eff" : "#1e1f22";
-      btn.style.borderColor = on ? "#4a9eff" : "#3a3c41";
+      btn.style.background = on ? "var(--accent)" : "var(--bg-input)";
+      btn.style.borderColor = on ? "var(--accent)" : "var(--border)";
       btn.disabled = !!obj.locked;
     });
     const locked = !!obj.locked;

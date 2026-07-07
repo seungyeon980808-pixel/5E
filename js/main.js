@@ -7,25 +7,26 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.4";
-import { render } from "./render.js?v=0.54.4";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.4";
-import { initTools } from "./tools.js?v=0.54.4";
-import { initCutTool } from "./cut-tool.js?v=0.54.4";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.4";
-import { initInspector } from "./inspector.js?v=0.54.4";
-import { initProjectIO } from "./project-io.js?v=0.54.4";
-import { initExportDialog } from "./export-dialog.js?v=0.54.4";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.4";
-import { initSettings } from "./settings.js?v=0.54.4";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.4";
-import { initImagePaste } from "./image-paste.js?v=0.54.4";
-import { initImageCutout } from "./image-cutout.js?v=0.54.4";
-import { initExamLibrary } from "./exam-library.js?v=0.54.4";
-import { initTemplates } from "./templates.js?v=0.54.4";
-import { initObjectSearch } from "./search.js?v=0.54.4";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.4";
-import { initToolHint } from "./tool-hint.js?v=0.54.4";
+import { state } from "./state.js?v=0.54.5";
+import { render } from "./render.js?v=0.54.5";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.5";
+import { initTools } from "./tools.js?v=0.54.5";
+import { initCutTool } from "./cut-tool.js?v=0.54.5";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.5";
+import { initInspector } from "./inspector.js?v=0.54.5";
+import { initProjectIO } from "./project-io.js?v=0.54.5";
+import { initExportDialog } from "./export-dialog.js?v=0.54.5";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.5";
+import { initSettings } from "./settings.js?v=0.54.5";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.5";
+import { initImagePaste } from "./image-paste.js?v=0.54.5";
+import { initImageCutout } from "./image-cutout.js?v=0.54.5";
+import { initExamLibrary } from "./exam-library.js?v=0.54.5";
+import { initTemplates } from "./templates.js?v=0.54.5";
+import { initObjectSearch } from "./search.js?v=0.54.5";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.5";
+import { initToolHint } from "./tool-hint.js?v=0.54.5";
+import { initPersonalObjects } from "./personal-objects.js?v=0.54.5";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -179,6 +180,9 @@ initSubjectObjects();
 
 /* ----- 도구별 하단 안내(자르기 패턴 일반화 공용 슬롯) ----- */
 initToolHint(state);
+
+/* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
+initPersonalObjects(state);
 
 /* ===== TOOL PANEL: collapsible section toggle (event delegation) ===== */
 (function initToolSections() {
