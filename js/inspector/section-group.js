@@ -12,6 +12,7 @@ export function buildGroupSection(ctx) {
   groupDiv.style.cssText = "padding: 6px 8px;";
   const ungroupBtn = document.createElement("button");
   ungroupBtn.textContent = "개체 풀기";
+  ungroupBtn.title = "오브젝트 분리 (Shift+G)";
   ungroupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;width:100%;";
   ungroupBtn.addEventListener("click", () => {
     const s = state.get();
@@ -40,7 +41,8 @@ export function buildGroupSection(ctx) {
   groupBtnDiv.style.cssText = "padding: 6px 8px;";
   groupBtnDiv.style.display = "none";
   const groupBtn = document.createElement("button");
-  groupBtn.textContent = "묶기";
+  groupBtn.textContent = "개체 묶기";
+  groupBtn.title = "오브젝트 묶기 (G)";
   groupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid #3a3c41;border-radius:3px;background:#1e1f22;color:#dcddde;width:100%;";
   groupBtn.addEventListener("click", () => {
     // Mirrors the G-key group-creation logic in transform.js.

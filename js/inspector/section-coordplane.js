@@ -5,9 +5,9 @@
  * show/hide in js/inspector.js. Every edit goes through ctx.commitSelectedObject
  * (undo snapshot + locked/type guard). 기획서 §10-② 인스펙터. */
 
-import { makeSection } from "./widgets.js?v=0.54.3";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.3";
-import { state } from "../state.js?v=0.54.3";
+import { makeSection } from "./widgets.js?v=0.54.4";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.4";
+import { state } from "../state.js?v=0.54.4";
 
 const NUM_CSS = "width:52px;font-size:11px;border:1px solid #3a3c41;border-radius:3px;padding:2px 4px;text-align:center;background:#1e1f22;color:#dcddde;";
 

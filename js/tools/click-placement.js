@@ -18,19 +18,19 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=0.54.3";
-import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=0.54.3";
-import { setSnapPreview } from "../render.js?v=0.54.3";
-import { resolveEndpointSnap } from "../snap.js?v=0.54.3";
-import { applyNewObjectStyleDefaults } from "../style-mode.js?v=0.54.3";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.3";
-import { nextObjectId } from "./id.js?v=0.54.3";
-import { openLabelerTextEditor } from "../text-editor.js?v=0.54.3";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=0.54.4";
+import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=0.54.4";
+import { setSnapPreview } from "../render.js?v=0.54.4";
+import { resolveEndpointSnap } from "../snap.js?v=0.54.4";
+import { applyNewObjectStyleDefaults } from "../style-mode.js?v=0.54.4";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.4";
+import { nextObjectId } from "./id.js?v=0.54.4";
+import { openLabelerTextEditor } from "../text-editor.js?v=0.54.4";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=0.54.3";
+} from "../tools.js?v=0.54.4";
 
 const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve", CIRCUIT: "circuit" };
 

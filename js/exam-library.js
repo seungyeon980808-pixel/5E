@@ -11,8 +11,8 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=0.54.3";
-import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.3";
+import { insertImageFromSrc } from "./image-paste.js?v=0.54.4";
+import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.4";
 
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -371,12 +371,19 @@ export function initExamLibrary(state) {
   }
 
   /* ----- open/close ----- */
-  openButton.addEventListener("click", () => {
+  const openLibrary = () => {
     overlay.hidden = false;
     if (!manifest) loadManifest();
     else runSearch(); // 재오픈: 마지막 검색 상태 유지한 채 갱신
     subjectSelect.focus(); // 과목 선택이 첫 단계이므로 여기에 포커스
-  });
+  };
+  openButton.addEventListener("click", openLibrary);
+  // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.key.toLowerCase() !== "f") return;
+    e.preventDefault();
+    if (overlay.hidden) openLibrary();
+  }, true);
   overlay.querySelector("#examlib-close").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });

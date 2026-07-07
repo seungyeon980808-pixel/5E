@@ -11,10 +11,10 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.3";
-import { registerTopMenu } from "./top-menu.js?v=0.54.3";
-import { screenToWorld } from "./viewport.js?v=0.54.3";
-import { openExamPreview } from "./exam-preview.js?v=0.54.3";
+import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.4";
+import { registerTopMenu } from "./top-menu.js?v=0.54.4";
+import { screenToWorld } from "./viewport.js?v=0.54.4";
+import { openExamPreview } from "./exam-preview.js?v=0.54.4";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.

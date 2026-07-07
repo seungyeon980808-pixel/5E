@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=0.54.3";
-import { makeSection } from "./widgets.js?v=0.54.3";
+import { openAngleArcLabelEditor } from "../tools.js?v=0.54.4";
+import { makeSection } from "./widgets.js?v=0.54.4";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -151,7 +151,7 @@ export function buildGeometrySection(ctx) {
   labelInp.addEventListener("blur", commitArcLabel);
   labelRow.appendChild(labelLbl);
   labelRow.appendChild(labelInp);
-  sec3Body.appendChild(labelRow);
+  // 배치 순서: 라벨 종류 → 라벨 위치 → 라벨 → (편집/표시). labelRow는 위치 행 뒤에 붙인다.
   const objectLabelTypeRow = makeLabelTypeRow((o) => o.type === "anglearc" || o.type === "optics" || o.type === "circuit");
   sec3Body.appendChild(objectLabelTypeRow.row);
 
@@ -174,7 +174,6 @@ export function buildGeometrySection(ctx) {
   });
   arcLabelEditRow.appendChild(arcLabelEditLbl);
   arcLabelEditRow.appendChild(arcLabelEditBtn);
-  sec3Body.appendChild(arcLabelEditRow);
 
   // optics-only: show/hide toggle for the label (like the anglearc label visibility).
   const showLabelRow = document.createElement("div");
@@ -187,7 +186,6 @@ export function buildGeometrySection(ctx) {
   showLabelLbl.textContent = "라벨 표시";
   showLabelRow.appendChild(showLabelCb);
   showLabelRow.appendChild(showLabelLbl);
-  sec3Body.appendChild(showLabelRow);
   showLabelCb.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
@@ -217,6 +215,9 @@ export function buildGeometrySection(ctx) {
   labelPosRow.appendChild(labelPosLbl);
   labelPosRow.appendChild(labelPosSel);
   sec3Body.appendChild(labelPosRow);
+  sec3Body.appendChild(labelRow);        // 라벨 (위치 행 아래)
+  sec3Body.appendChild(arcLabelEditRow); // 라벨 편집...
+  sec3Body.appendChild(showLabelRow);    // 라벨 표시
   labelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
@@ -345,7 +346,7 @@ export function buildGeometrySection(ctx) {
   boxLabelInp.addEventListener("blur", commitBoxLabel);
   boxLabelRow.appendChild(boxLabelLbl);
   boxLabelRow.appendChild(boxLabelInp);
-  sec3Body.appendChild(boxLabelRow);
+  // 배치 순서: 라벨 종류 → 라벨 위치 → 라벨 → 라벨 크기
   const boxLabelTypeRow = makeLabelTypeRow((o) => o.type === "rect" || o.type === "ellipse");
   sec3Body.appendChild(boxLabelTypeRow.row);
 
@@ -364,6 +365,7 @@ export function buildGeometrySection(ctx) {
   boxLabelPosRow.appendChild(boxLabelPosLbl);
   boxLabelPosRow.appendChild(boxLabelPosSel);
   sec3Body.appendChild(boxLabelPosRow);
+  sec3Body.appendChild(boxLabelRow); // 라벨 (위치 행 아래)
   boxLabelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;

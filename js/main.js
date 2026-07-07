@@ -7,25 +7,25 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.3";
-import { render } from "./render.js?v=0.54.3";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.3";
-import { initTools } from "./tools.js?v=0.54.3";
-import { initCutTool } from "./cut-tool.js?v=0.54.3";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.3";
-import { initInspector } from "./inspector.js?v=0.54.3";
-import { initProjectIO } from "./project-io.js?v=0.54.3";
-import { initExportDialog } from "./export-dialog.js?v=0.54.3";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.3";
-import { initSettings } from "./settings.js?v=0.54.3";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.3";
-import { initImagePaste } from "./image-paste.js?v=0.54.3";
-import { initImageCutout } from "./image-cutout.js?v=0.54.3";
-import { initExamLibrary } from "./exam-library.js?v=0.54.3";
-import { initTemplates } from "./templates.js?v=0.54.3";
-import { initObjectSearch } from "./search.js?v=0.54.3";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.3";
-import { initToolHint } from "./tool-hint.js?v=0.54.3";
+import { state } from "./state.js?v=0.54.4";
+import { render } from "./render.js?v=0.54.4";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.4";
+import { initTools } from "./tools.js?v=0.54.4";
+import { initCutTool } from "./cut-tool.js?v=0.54.4";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.4";
+import { initInspector } from "./inspector.js?v=0.54.4";
+import { initProjectIO } from "./project-io.js?v=0.54.4";
+import { initExportDialog } from "./export-dialog.js?v=0.54.4";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.4";
+import { initSettings } from "./settings.js?v=0.54.4";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.4";
+import { initImagePaste } from "./image-paste.js?v=0.54.4";
+import { initImageCutout } from "./image-cutout.js?v=0.54.4";
+import { initExamLibrary } from "./exam-library.js?v=0.54.4";
+import { initTemplates } from "./templates.js?v=0.54.4";
+import { initObjectSearch } from "./search.js?v=0.54.4";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.4";
+import { initToolHint } from "./tool-hint.js?v=0.54.4";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -193,14 +193,24 @@ initToolHint(state);
 
 /* ===== GRID CONTROLS (canvas bottom bar) ===== */
 (function initGridControls() {
-  const toggle   = document.getElementById("grid-toggle");
+  const gridBtn  = document.getElementById("grid-btn");
+  const detail   = document.getElementById("grid-detail");
   const slider   = document.getElementById("grid-opacity");
   const interval = document.getElementById("grid-interval");
   const centerBtn = document.getElementById("center-view-btn");
-  if (!toggle || !slider) return;
-  toggle.addEventListener("change", () => {
-    state.update((s) => { s.grid.visible = toggle.checked; });
+  if (!gridBtn || !slider) return;
+  // 격자 = 토글 버튼: 켰을 때만 진하기/간격 세부 컨트롤 표시
+  const syncGridBtn = (on) => {
+    gridBtn.classList.toggle("is-active", on);
+    gridBtn.setAttribute("aria-pressed", String(on));
+    if (detail) detail.hidden = !on;
+  };
+  gridBtn.addEventListener("click", () => {
+    const on = !state.get().grid.visible;
+    state.update((s) => { s.grid.visible = on; });
+    syncGridBtn(on);
   });
+  syncGridBtn(!!state.get().grid.visible);
   slider.addEventListener("input", () => {
     state.update((s) => { s.grid.opacity = Number(slider.value); });
   });
@@ -218,10 +228,8 @@ initToolHint(state);
       if (locked) centerView(state);
     });
   }
-  const rulerToggle = document.getElementById("ruler-toggle");
-  if (rulerToggle) {
-    rulerToggle.addEventListener("change", () => setRulerVisible(rulerToggle.checked));
-  }
+  // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
+  setRulerVisible(true);
 })();
 
 /* ----- initial paint ----- */

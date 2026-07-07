@@ -89,17 +89,17 @@
    지구=고급 우디 브라운. accent 계열 + 배경 톤(bg-app/panel/canvas)을 과목
    컬러 쪽으로 살짝 기울인다(채도 낮은 유사 톤 — 눈에 거슬리지 않는 수준). */
 :root[data-subject="c"] { --accent:#b03a4a; --accent-hover:#c24d5c; --accent-2:#8a2b39; --accent-2-hover:#a03442; --btn-tool-active:#b03a4a;
-  --bg-app:#151013; --bg-panel:#1e1619; --bg-panel-hover:#2a2024; --bg-canvas:#151013; --bg-input:#151013; --border:#3d3034; }
+  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#110f12; --bg-input:#110f12; --border:#363037; }
 :root[data-subject="c"][data-theme="light"] { --accent:#9a2f3d; --accent-hover:#8a2b39; --accent-2:#8a2b39; --accent-2-hover:#7a2531; --btn-tool-active:#9a2f3d;
-  --bg-app:#f2eaec; --bg-panel:#ffffff; --bg-panel-hover:#f8f1f3; --bg-canvas:#e8dcdf; --border:#dcc9cd; }
+  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border:#d6cdd0; }
 :root[data-subject="b"] { --accent:#0f8a72; --accent-hover:#14a086; --accent-2:#0c6a58; --accent-2-hover:#0f8069; --btn-tool-active:#0f8a72;
   --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#0e1512; --bg-input:#0e1512; --border:#2c3d36; }
 :root[data-subject="b"][data-theme="light"] { --accent:#0c7a64; --accent-hover:#0a6a58; --accent-2:#0c6a58; --accent-2-hover:#0a5a4c; --btn-tool-active:#0c7a64;
   --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border:#c8d8d1; }
 :root[data-subject="e"] { --accent:#a5794a; --accent-hover:#b98a58; --accent-2:#7a5330; --accent-2-hover:#8e6339; --btn-tool-active:#a5794a;
-  --bg-app:#15110d; --bg-panel:#1e1812; --bg-panel-hover:#2a221a; --bg-canvas:#15110d; --bg-input:#15110d; --border:#3d3428; }
+  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#121009; --bg-input:#121009; --border:#37322a; }
 :root[data-subject="e"][data-theme="light"] { --accent:#8a6338; --accent-hover:#7a5330; --accent-2:#7a5330; --accent-2-hover:#6a4728; --btn-tool-active:#8a6338;
-  --bg-app:#f1ece4; --bg-panel:#ffffff; --bg-panel-hover:#f8f3ea; --bg-canvas:#e7dfd2; --border:#dcd0bd; }
+  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border:#d7d1c6; }
 
 /* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
 input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
@@ -170,7 +170,7 @@ body {
   overflow: auto;
 }
 
-.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; }
+.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; padding-top: 46px; } /* 상단 툴바 높이만큼 내려 '공통 도구'가 도구 줄 위치에서 시작 */
 .panel-right { border-left: 1px solid var(--c-border); }
 
 .panel-title {
@@ -1586,6 +1586,17 @@ textarea.unified-text-input {
     background: rgba(0, 0, 0, 0.45);
   }
 }
+
+/* 하단 바: 격자 토글 버튼(누름 상태 = 과목 accent) + 세부(진하기/간격) */
+.grid-toggle-btn {
+  padding: 3px 10px; font-family: inherit; font-size: 12px; font-weight: 500;
+  color: var(--c-sub); background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
+}
+.grid-toggle-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+.grid-toggle-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.grid-detail { display: inline-flex; align-items: center; gap: 10px; }
+.grid-detail[hidden] { display: none; }
 
 /* 모달 제목 옆 ? 도움말 버튼 (이미지로 내보내기 등) — hover/focus 시 title 툴팁 */
 .export-help-btn {

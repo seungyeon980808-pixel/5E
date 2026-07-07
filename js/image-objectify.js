@@ -11,10 +11,10 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.3";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.3";
-import { vectorizeImage } from "./image-vectorize.js?v=0.54.3";
-import { measureFormula } from "./formula.js?v=0.54.3";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.4";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.4";
+import { vectorizeImage } from "./image-vectorize.js?v=0.54.4";
+import { measureFormula } from "./formula.js?v=0.54.4";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
@@ -760,6 +760,15 @@ export function initImageObjectify(state) {
     overlay.hidden = false;
     dropzone.focus();
   });
+  // Ctrl+T = 이미지 객체화. (일부 브라우저는 Ctrl+T를 새 탭에 예약해 가로챌 수
+  // 없다 — 그 경우 버튼으로 연다. 가로챌 수 있는 환경에서는 즉시 열림.)
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "t") return;
+    const tgt = e.target;
+    if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
+    e.preventDefault();
+    if (overlay.hidden) { overlay.hidden = false; dropzone.focus(); }
+  }, true);
   _openWithFile = (file) => {
     overlay.hidden = false;
     loadFile(file);

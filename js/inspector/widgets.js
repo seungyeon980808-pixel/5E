@@ -69,12 +69,8 @@ export function makeColorPicker(onInput, onStart, onCommit) {
   barRow.appendChild(barWrap);
   barRow.appendChild(numInput);
 
-  const preview = document.createElement("div");
-  preview.className = "cp-preview";
-
   root.appendChild(palette);
   root.appendChild(barRow);
-  root.appendChild(preview);
 
   let _level = 0;
 
@@ -82,7 +78,6 @@ export function makeColorPicker(onInput, onStart, onCommit) {
     _level = Math.round(Math.max(0, Math.min(255, v)));
     const pct = (1 - _level / 255) * 100; // left=white=255, right=black=0
     handle.style.left = `${pct}%`;
-    preview.style.background = levelToHex(_level);
     // Don't clobber the field while the user is typing in it.
     if (document.activeElement !== numInput) numInput.value = 255 - _level;
     if (fire && onInput) onInput(_level);
@@ -106,8 +101,8 @@ export function makeColorPicker(onInput, onStart, onCommit) {
     return Math.round((1 - pct) * 255);
   }
 
-  // Palette swatches
-  GRAY_LEVELS.forEach((g) => {
+  // Palette swatches — 슬라이더와 같은 방향(왼쪽=흰색 → 오른쪽=검정)
+  [...GRAY_LEVELS].reverse().forEach((g) => {
     const sw = document.createElement("div");
     sw.className = "cp-swatch";
     sw.style.background = levelToHex(g);

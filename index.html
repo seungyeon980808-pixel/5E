@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.3" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.3" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.3" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.4" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.4" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.4" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -103,8 +103,8 @@
         <div class="tool-section">
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
-            <button id="exam-library-open" class="advanced-tool-btn" type="button">기출 문항 검색</button>
-            <button id="image-objectify-open" class="advanced-tool-btn" type="button">이미지 객체화</button>
+            <button id="image-objectify-open" class="advanced-tool-btn" type="button"
+                    title="이미지 객체화 (Ctrl+T)">이미지 객체화</button>
           </div>
         </div>
       </div>
@@ -198,32 +198,33 @@
         </div>
       </div>
 
-      <!-- ===== CANVAS BOTTOM BAR: grid controls ===== -->
+      <!-- ===== CANVAS BOTTOM BAR: 검색 · 격자 토글(+세부) · 중앙 정렬 ===== -->
       <div class="canvas-bottom-bar">
-        <!-- 오브젝트 검색 진입점 (Ctrl+F 단축키는 그대로, 표기만 제거) -->
         <button class="object-search-trigger" type="button" id="object-search-trigger"
-                title="오브젝트 검색" aria-label="오브젝트 검색">
+                title="오브젝트 검색 (Ctrl+F)" aria-label="오브젝트 검색 (Ctrl+F)">
           <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
-          <span class="search-trigger-label">검색</span>
+          <span class="search-trigger-label">오브젝트 검색</span>
         </button>
-        <label>
-          <input type="checkbox" id="grid-toggle" />
-          격자
-        </label>
-        <label>
-          진하기
-          <input type="range" id="grid-opacity" min="1" max="10" value="3" />
-        </label>
-        <label>
-          간격
-          <input type="number" id="grid-interval" min="5" max="50" step="5" value="10" />
-          mm
-        </label>
+        <button class="object-search-trigger" type="button" id="exam-library-open"
+                title="기출문항 검색 (Ctrl+Shift+F)" aria-label="기출문항 검색 (Ctrl+Shift+F)">
+          <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><line x1="6.5" y1="7" x2="13.5" y2="7"/><line x1="6.5" y1="10" x2="13.5" y2="10"/><line x1="6.5" y1="13" x2="10.5" y2="13"/></svg>
+          <span class="search-trigger-label">기출문항 검색</span>
+        </button>
+        <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
+        <button id="grid-btn" class="grid-toggle-btn" type="button" aria-pressed="false"
+                title="격자 켜기/끄기">격자</button>
+        <span id="grid-detail" class="grid-detail" hidden>
+          <label>
+            진하기
+            <input type="range" id="grid-opacity" min="1" max="10" value="3" />
+          </label>
+          <label>
+            간격
+            <input type="number" id="grid-interval" min="5" max="50" step="5" value="10" />
+            mm
+          </label>
+        </span>
         <button id="center-view-btn" title="아트보드를 화면 중앙으로">⌖</button>
-        <label>
-          <input type="checkbox" id="ruler-toggle" checked />
-          눈금자
-        </label>
       </div>
     </main>
 
@@ -244,7 +245,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.3</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.4</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -310,6 +311,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.3"></script>
+  <script type="module" src="js/main.js?v=0.54.4"></script>
 </body>
 </html>

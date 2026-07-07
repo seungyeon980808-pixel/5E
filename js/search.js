@@ -5,7 +5,7 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=0.54.3";
+} from "./templates.js?v=0.54.4";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -148,6 +148,7 @@ export function initObjectSearch() {
   });
   document.addEventListener("keydown", (event) => {
     if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "f") return;
+    if (event.shiftKey) return; // Ctrl+Shift+F는 기출문항 검색 몫
     if (isTypingTarget(event.target) && event.target !== input) return;
     event.preventDefault();
     if (overlay.hidden) open();
