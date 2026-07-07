@@ -9,7 +9,7 @@
   background: var(--bg-input);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
 }
 .examlib-search-row input:focus { outline: none; border-color: var(--accent); }
 
@@ -28,7 +28,7 @@
   background: var(--bg-input);
   color: var(--text-primary);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 .examlib-filter-row select:focus { outline: none; border-color: var(--accent); }
@@ -40,7 +40,7 @@
   background: transparent;
   color: var(--text-secondary);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
 }
 .examlib-reset:hover { background: var(--btn-tool-hover); color: var(--text-primary); }

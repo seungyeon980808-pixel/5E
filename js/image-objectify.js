@@ -11,10 +11,10 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.5";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.5";
-import { vectorizeImage } from "./image-vectorize.js?v=0.54.5";
-import { measureFormula } from "./formula.js?v=0.54.5";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.6";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=0.54.6";
+import { vectorizeImage } from "./image-vectorize.js?v=0.54.6";
+import { measureFormula } from "./formula.js?v=0.54.6";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)

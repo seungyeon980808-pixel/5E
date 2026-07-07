@@ -13,7 +13,7 @@ export function buildGroupSection(ctx) {
   const ungroupBtn = document.createElement("button");
   ungroupBtn.textContent = "오브젝트 분리(Shift+G)";
   ungroupBtn.title = "오브젝트 분리 (Shift+G)";
-  ungroupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);width:100%;";
+  ungroupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);width:100%;";
   ungroupBtn.addEventListener("click", () => {
     const s = state.get();
     const refId = s.targetedId || (s.selectedIds || [])[0];
@@ -43,7 +43,7 @@ export function buildGroupSection(ctx) {
   const groupBtn = document.createElement("button");
   groupBtn.textContent = "오브젝트 묶기(G)";
   groupBtn.title = "오브젝트 묶기 (G)";
-  groupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);width:100%;";
+  groupBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);width:100%;";
   groupBtn.addEventListener("click", () => {
     // Mirrors the G-key group-creation logic in transform.js.
     const s = state.get();

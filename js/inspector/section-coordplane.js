@@ -5,11 +5,11 @@
  * show/hide in js/inspector.js. Every edit goes through ctx.commitSelectedObject
  * (undo snapshot + locked/type guard). 기획서 §10-② 인스펙터. */
 
-import { makeSection } from "./widgets.js?v=0.54.5";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.5";
-import { state } from "../state.js?v=0.54.5";
+import { makeSection } from "./widgets.js?v=0.54.6";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.6";
+import { state } from "../state.js?v=0.54.6";
 
-const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
 
 export function buildCoordplaneSection(ctx) {
   const { commitSelectedObject, makeLabelTypeRow } = ctx;
@@ -21,7 +21,7 @@ export function buildCoordplaneSection(ctx) {
   const detailBtn = document.createElement("button");
   detailBtn.type = "button";
   detailBtn.textContent = "상세 편집…";
-  detailBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:5px;border:1px solid var(--accent);border-radius:3px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
+  detailBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:5px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
   detailBtn.addEventListener("click", () => {
     const id = (state.get().selectedIds || [])[0];
     if (id) openPlaneModal(id);
@@ -76,7 +76,7 @@ export function buildCoordplaneSection(ctx) {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = text;
-    b.style.cssText = "font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 8px;margin-left:3px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 8px;margin-left:3px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       commitSelectedObject((o) => {
         if (!applies(o) || o.axisVariant === val) return false;

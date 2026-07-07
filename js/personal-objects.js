@@ -8,7 +8,7 @@
  * · 백업: settings.js PERSONAL_KEYS에 포함되어 '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=0.54.5";
+import { instantiateObjectsAt } from "./transform.js?v=0.54.6";
 
 const KEY = "5e.personalObjects";
 const DEFAULT_CATEGORY = "기본";
@@ -46,7 +46,7 @@ function askNameCategory(existingCategories, done) {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal" role="dialog" aria-modal="true" style="width:min(320px, calc(100vw - 32px))">
-      <h2 class="modal-title">퍼스널 오브젝트로 저장</h2>
+      <h2 class="modal-title">오브젝트 저장</h2>
       <label class="modal-field"><span class="modal-label">이름</span>
         <input type="text" id="po-name" class="modal-input" maxlength="40" autocomplete="off" /></label>
       <label class="modal-field"><span class="modal-label">분류</span>
@@ -107,7 +107,7 @@ export function renderLibrary() {
   const list = load();
   _partsHost.innerHTML = "";
   if (!list.length) {
-    _partsHost.innerHTML = `<p class="subject-part-empty">저장된 오브젝트가 없습니다.<br>캔버스에서 선택 후 [퍼스널 오브젝트로 저장]</p>`;
+    _partsHost.innerHTML = `<p class="subject-part-empty">저장된 오브젝트가 없습니다.<br>캔버스에서 선택 후 [오브젝트 저장]</p>`;
     return;
   }
   const byCat = new Map();

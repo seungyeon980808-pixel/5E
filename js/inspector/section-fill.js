@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection } from "./widgets.js?v=0.54.5";
+import { makeColorPicker, makeSection } from "./widgets.js?v=0.54.6";
 
 export function buildFillSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -76,7 +76,7 @@ export function buildFillSection(ctx) {
     const btn = document.createElement("button");
     btn.title = label;
     btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18">${FILL_STYLE_ICONS[value]}</svg>`;
-    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];

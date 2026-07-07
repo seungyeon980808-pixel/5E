@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.54.5";
+import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=0.54.6";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
@@ -47,7 +47,7 @@ export function buildLineSection(ctx) {
   widthNum.min = "0.1";
   widthNum.max = "0.5";
   widthNum.step = "0.1";
-  widthNum.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+  widthNum.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
   const widthUnit = document.createElement("span");
   widthUnit.textContent = "mm";
   widthUnit.className = "insp-unit";
@@ -90,7 +90,7 @@ export function buildLineSection(ctx) {
   const ARROW_CYCLE = ["end", "start", "both", "none"];
   const ARROW_LABELS = { end: "정방향", start: "역방향", both: "양끝", none: "없음" };
   const arrowBtn = document.createElement("button");
-  arrowBtn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+  arrowBtn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
   arrowBtn.addEventListener("click", () => {
     const s = state.get();
     const ids = s.selectedIds || [];
@@ -132,7 +132,7 @@ export function buildLineSection(ctx) {
     btn.title = label;
     btn.setAttribute("aria-label", label);
     btn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${icon}</svg>`;
-    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -185,7 +185,7 @@ export function buildLineSection(ctx) {
   const dimensionLabelInp = document.createElement("input");
   dimensionLabelInp.type = "text";
   dimensionLabelInp.maxLength = 40;
-  dimensionLabelInp.style.cssText = "width:90px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:3px 5px;background:var(--bg-input);color:var(--text-primary);";
+  dimensionLabelInp.style.cssText = "width:90px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 5px;background:var(--bg-input);color:var(--text-primary);";
   dimensionLabelInp.addEventListener("change", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
@@ -215,7 +215,7 @@ export function buildLineSection(ctx) {
   const lineLabelInp = document.createElement("input");
   lineLabelInp.type = "text";
   lineLabelInp.maxLength = 60;
-  lineLabelInp.style.cssText = "width:90px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:3px 5px;background:var(--bg-input);color:var(--text-primary);";
+  lineLabelInp.style.cssText = "width:90px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 5px;background:var(--bg-input);color:var(--text-primary);";
   lineLabelInp.addEventListener("change", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
@@ -272,7 +272,7 @@ export function buildLineSection(ctx) {
   const lineLabelFlipBtn = document.createElement("button");
   lineLabelFlipBtn.type = "button";
   lineLabelFlipBtn.textContent = "반전";
-  lineLabelFlipBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+  lineLabelFlipBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
   lineLabelFlipBtn.addEventListener("click", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
@@ -314,7 +314,7 @@ export function buildLineSection(ctx) {
     const btn = document.createElement("button");
     btn.title = preset.label;
     btn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${DASH_ICONS[preset.label] || ""}</svg>`;
-    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+    btn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -342,7 +342,7 @@ export function buildLineSection(ctx) {
   partialDashBtn.innerHTML = '<svg width="40" height="24" viewBox="0 0 40 24">' +
     '<line x1="2" y1="12" x2="20" y2="12" stroke="#888" stroke-width="2"/>' +
     '<line x1="20" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="3 3"/></svg>';
-  partialDashBtn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+  partialDashBtn.style.cssText = "width:40px;height:24px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
   partialDashBtn.addEventListener("click", () => {
     const s = state.get();
     const ids = s.selectedIds || [];
@@ -384,7 +384,7 @@ export function buildLineSection(ctx) {
     num.min = "0.2";
     num.max = "1.5";
     num.step = "0.1";
-    num.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+    num.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
     const unit = document.createElement("span");
     unit.textContent = "mm";
     unit.className = "insp-unit";
@@ -456,7 +456,7 @@ export function buildLineSection(ctx) {
   ratioNum.min = "0";
   ratioNum.max = "1";
   ratioNum.step = "0.05";
-  ratioNum.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+  ratioNum.style.cssText = "width:40px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
   ratioRow.appendChild(ratioLbl);
   ratioRow.appendChild(ratioRange);
   ratioRow.appendChild(ratioNum);
@@ -499,7 +499,7 @@ export function buildLineSection(ctx) {
   const flipBtn = document.createElement("button");
   flipBtn.type = "button";
   flipBtn.textContent = "방향 반전";
-  flipBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:3px;background:var(--bg-input);color:var(--text-primary);";
+  flipBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
   flipBtn.addEventListener("click", () => {
     const s = state.get();
     const ids = s.selectedIds || [];

@@ -432,12 +432,23 @@ details[open] > .insp-summary::before {
 }
 
 
-/* 라벨 4요소 2×2 배열: [종류][위치] / [라벨][크기] */
+/* 라벨 4요소 2×2 배열: [종류][위치] / [라벨][크기]
+ * 좁은 패널에서 찌그러지지 않게 셀 내부는 '라벨 위·컨트롤 아래' 세로 스택. */
 .insp-2col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 6px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: start;
+  margin-bottom: 6px;
 }
-.insp-2col .insp-row { min-width: 0; }
-.insp-2col .insp-input { min-width: 0; width: 100%; }
+.insp-2col .insp-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+}
+.insp-2col .insp-field-label { width: auto; min-width: 0; text-align: left; }
+.insp-2col .insp-input, .insp-2col select, .insp-2col input { min-width: 0; width: 100%; box-sizing: border-box; }

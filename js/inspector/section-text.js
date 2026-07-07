@@ -3,8 +3,8 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle } from "../state.js?v=0.54.5";
-import { makeSection } from "./widgets.js?v=0.54.5";
+import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle } from "../state.js?v=0.54.6";
+import { makeSection } from "./widgets.js?v=0.54.6";
 
 export function buildTextSection(ctx) {
   const { state } = ctx;
@@ -21,7 +21,7 @@ export function buildTextSection(ctx) {
   fontFamLbl.className = "insp-field-label";
   fontFamLbl.textContent = "글꼴";
   const fontFamSel = document.createElement("select");
-  fontFamSel.style.cssText = "flex:1;min-width:0;font-size:12px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;background:var(--bg-input);color:var(--text-primary);";
+  fontFamSel.style.cssText = "flex:1;min-width:0;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg-input);color:var(--text-primary);";
   TEXT_FONTS.forEach((f) => {
     const opt = document.createElement("option");
     opt.value = f.css;
@@ -42,7 +42,7 @@ export function buildTextSection(ctx) {
   fontSizeNum.min = String(MIN_TEXT_PT);
   fontSizeNum.max = "400";
   fontSizeNum.step = "1";
-  fontSizeNum.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+  fontSizeNum.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
   const fontSizeUnit = document.createElement("span");
   fontSizeUnit.textContent = "pt"; // points; stored fontSize is world-unit mm
   fontSizeUnit.className = "insp-unit";

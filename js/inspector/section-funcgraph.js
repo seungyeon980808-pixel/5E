@@ -5,11 +5,11 @@
  * shared 선 section (sec1). Interim expr entry is a prompt() — the §10-④ 모달 will
  * replace it. Mount + show/hide live in js/inspector.js. */
 
-import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.54.5";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.54.5";
+import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.54.6";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.54.6";
 
-const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
-const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:3px;padding:3px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 
 export function buildFuncgraphSection(ctx) {
   const { state } = ctx;

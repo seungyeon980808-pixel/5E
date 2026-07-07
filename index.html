@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.5" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.5" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.5" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.6" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.6" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.6" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -99,7 +99,7 @@
         <!-- ===== 과목별 오브젝트: 과목 선택 → 파트별 라이브러리(현재는 빈 자리) =====
              과목 선택에 따라 :root[data-subject]가 바뀌어 강조색 테마가 전환된다.
              파트 아코디언 본문은 아직 비어 있고(구현 예정), 기본은 접힘. subject-objects.js가 채운다. -->
-        <div class="tool-section" id="subject-section">
+        <div class="tool-section is-collapsed" id="subject-section">
           <div class="tool-section-header">과목별 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <div id="subject-parts"></div>
@@ -108,7 +108,7 @@
         <!-- 심볼 라이브러리는 '과목별 오브젝트' 파트 아코디언(#subject-parts)으로 흡수됨
              (subject-objects.js가 templates.js 카테고리를 새 분류로 렌더). -->
         <!-- 퍼스널 오브젝트: 사용자가 저장한 오브젝트 묶음 라이브러리 (personal-objects.js) -->
-        <div class="tool-section" id="personal-section">
+        <div class="tool-section is-collapsed" id="personal-section">
           <div class="tool-section-header">퍼스널 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <div id="personal-parts"><p class="subject-part-empty">저장된 오브젝트가 없습니다.</p></div>
@@ -120,7 +120,7 @@
             <button id="image-objectify-open" class="advanced-tool-btn" type="button"
                     title="이미지 객체화 (Ctrl+T)">이미지 객체화</button>
             <button id="personal-object-save" class="advanced-tool-btn" type="button"
-                    title="선택한 오브젝트를 퍼스널 오브젝트로 저장">퍼스널 오브젝트로 저장</button>
+                    title="선택한 오브젝트를 퍼스널 오브젝트로 저장 (좌측 라이브러리에 추가)">오브젝트 저장</button>
           </div>
         </div>
       </div>
@@ -254,7 +254,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.5</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.6</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -320,6 +320,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.5"></script>
+  <script type="module" src="js/main.js?v=0.54.6"></script>
 </body>
 </html>

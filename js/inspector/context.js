@@ -4,7 +4,7 @@
  * helper closures shared by the section builders (snapshots, label-row
  * builders, single-object commit helper). */
 
-import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.54.5";
+import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.54.6";
 
 export function createInspectorContext(state) {
   const emptyEl   = document.getElementById("inspector-empty");
@@ -27,7 +27,7 @@ export function createInspectorContext(state) {
     num.min = String(MIN_TEXT_PT);
     num.max = "400";
     num.step = "1";
-    num.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:3px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+    num.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
     const unit = document.createElement("span");
     unit.textContent = "pt";
     unit.className = "insp-unit";

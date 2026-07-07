@@ -53,8 +53,8 @@
   --text-label: #b1bac4;
   --accent: #2f81f7;
   --accent-hover: #4493f8;
-  --accent-2: #22b8d6;
-  --accent-2-hover: #3cc4de;
+  --accent-2: #5ea1f7;
+  --accent-2-hover: #79b3f9;
   --btn-tool-active: #2f81f7;
   --btn-tool-bg: transparent;
   --btn-tool-hover: #21262d;
@@ -76,8 +76,8 @@
   --text-label: #424a53;
   --accent: #0969da;
   --accent-hover: #0860ca;
-  --accent-2: #0e7490;
-  --accent-2-hover: #0b5e75;
+  --accent-2: #0a5aa8;
+  --accent-2-hover: #084b8d;
   --btn-tool-active: #0969da;
   --btn-tool-bg: transparent;
   --btn-tool-hover: #eaeef2;
@@ -170,7 +170,7 @@ body {
   overflow: auto;
 }
 
-.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; padding-top: 46px; } /* 상단 툴바 높이만큼 내려 '공통 도구'가 도구 줄 위치에서 시작 */
+.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
 .panel-right { border-left: 1px solid var(--c-border); }
 
 .panel-title {
@@ -1627,3 +1627,11 @@ textarea.unified-text-input {
   background: transparent; border: 1px solid var(--c-border); border-radius: 5px; cursor: pointer;
 }
 .personal-item-del:hover { color: #e5534b; border-color: #e5534b; }
+
+/* ===== 버튼 곡률 통일: 기준 = 좌측 도구 버튼(.tool-btn) 6px ===== */
+.btn, .topbar-btn, .modal-btn, .file-menu-item, .seg-btn, .advanced-tool-btn,
+.examlib-reset, .grid-toggle-btn, .object-search-trigger, .subject-select,
+.personal-item-btn, .personal-item-del, .drawer-toggle, .icon-btn,
+.objectify-dropzone, .subject-part-header {
+  border-radius: 6px;
+}
