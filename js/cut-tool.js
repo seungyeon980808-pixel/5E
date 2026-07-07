@@ -9,19 +9,18 @@
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld } from "./viewport.js?v=0.54.2";
-import { cutObject, isCuttable, cutCrossingPoints } from "./cut-geometry.js?v=0.54.2";
-import { snapLineEnd } from "./geometry.js?v=0.54.2";
-import { simplifyRDP } from "./geometry.js?v=0.54.2";
-import { getObjectBBox } from "./pick.js?v=0.54.2";
+import { screenToWorld } from "./viewport.js?v=0.54.3";
+import { cutObject, isCuttable, cutCrossingPoints } from "./cut-geometry.js?v=0.54.3";
+import { snapLineEnd } from "./geometry.js?v=0.54.3";
+import { simplifyRDP } from "./geometry.js?v=0.54.3";
+import { getObjectBBox } from "./pick.js?v=0.54.3";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const HINT = "자유롭게 그어 자릅니다 · Shift=직선 · Shift+Ctrl=각도 스냅";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록
 const RDP_EPS_PX = 1.5;  // 자유경로 단순화 허용오차(화면 px)
 
-let _state, _svg, _panel;
+let _state, _svg;
 let _drawing = null;     // 드래그 중: { start:{x,y}, free:[{x,y}...], path:[{x,y}...] }
 let _overlay = null;     // 임시 미리보기 <g> (빨간 경로 + 교차점 점)
 let _bboxLayer = null;   // 전체 오브젝트 bbox 표시 <g>
@@ -29,40 +28,12 @@ let _bboxRaf = 0;
 let _space = false;
 let _idc = 0;
 
-function injectStyles() {
-  if (document.getElementById("cut-tool-styles")) return;
-  const st = document.createElement("style");
-  st.id = "cut-tool-styles";
-  st.textContent = `
-    /* 캔버스 하단 바(격자·눈금자 줄)의 남는 오른쪽에 도킹 — 캔버스를 가리지 않음 */
-    #cut-tool-panel { display:flex; align-items:center; gap:6px; margin-left:auto;
-      min-width:0; overflow:hidden; white-space:nowrap; }
-    #cut-tool-panel[hidden] { display:none; }   /* [hidden]이 display:flex를 이기도록(우선순위) */
-    #cut-tool-panel .cut-tool-title { font-weight:700; }
-    #cut-tool-panel #cut-tool-hint { opacity:.75; font-size:12px; overflow:hidden; text-overflow:ellipsis; }
-  `;
-  document.head.appendChild(st);
-}
-
-function buildPanel() {
-  injectStyles();
-  _panel = document.createElement("div");
-  _panel.id = "cut-tool-panel";
-  _panel.hidden = true;
-  _panel.innerHTML = `
-    <span class="cut-tool-title">✂ 자르기</span>
-    <span id="cut-tool-hint">${HINT}</span>`;
-  // 하단 바가 있으면 그 안에(오른쪽 정렬), 없으면(레이아웃 변경 대비) 종전처럼 body에
-  const bar = document.querySelector(".canvas-bottom-bar");
-  if (bar) bar.appendChild(_panel);
-  else document.body.appendChild(_panel);
-}
+/* 하단 안내 패널은 공용 tool-hint.js가 전담한다(자르기 포함 전 도구 공통 슬롯). */
 
 function isActive() { return _state.get().activeTool === "CUT"; }
 
 function syncUI(tool) {
   const on = tool === "CUT";
-  _panel.hidden = !on;
   setCursor(on ? CUT_CURSOR : "");
   if (on) scheduleBBoxes();
   else { clearOverlay(); clearBBoxes(); _drawing = null; }
@@ -207,7 +178,6 @@ function applyCut(path) {
 
 export function initCutTool(svg, state) {
   _state = state; _svg = svg;
-  buildPanel();
   state.subscribe((s) => syncUI(s.activeTool));
   syncUI(state.get().activeTool);
   svg.addEventListener("mousedown", onDown);

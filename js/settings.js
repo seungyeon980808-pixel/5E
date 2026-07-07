@@ -17,8 +17,8 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.2";
-import { registerTopMenu } from "./top-menu.js?v=0.54.2";
+} from "./state.js?v=0.54.3";
+import { registerTopMenu } from "./top-menu.js?v=0.54.3";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -193,11 +193,26 @@ function importSettingsFile(file) {
   reader.readAsText(file);
 }
 
-/* ----- dropdown: registered with the shared top-menu (exclusive with 파일) ----- */
+/* ----- dropdown: registered with the shared top-menu (exclusive with 파일) -----
+ * 하단 설명 영역(#settings-menu-desc): 파일 메뉴와 동일 패턴 — hover/focus한
+ * 항목의 data-desc를 보여주고, 벗어나면 기본 안내로 되돌린다. */
+const DEFAULT_SETTINGS_DESC = "설정 작업을 선택하세요.";
 function initSettingsMenu() {
   const btn = document.getElementById("settings-menu-btn");
   const list = document.getElementById("settings-menu-list");
-  registerTopMenu("settings", btn, list);
+  const desc = document.getElementById("settings-menu-desc");
+  const reset = () => { if (desc) desc.textContent = DEFAULT_SETTINGS_DESC; };
+  if (desc && list) {
+    list.querySelectorAll(".file-menu-item").forEach((item) => {
+      const text = item.getAttribute("data-desc");
+      const show = () => { if (text) desc.textContent = text; };
+      item.addEventListener("mouseenter", show);
+      item.addEventListener("focus", show);
+      item.addEventListener("mouseleave", reset);
+      item.addEventListener("blur", reset);
+    });
+  }
+  registerTopMenu("settings", btn, list, { onOpen: reset });
 }
 
 /* ----- modal markup, built once and appended to <body> ----- */

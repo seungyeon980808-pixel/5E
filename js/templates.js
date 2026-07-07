@@ -21,12 +21,12 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.54.2";
-import { armSymbol } from "./tools.js?v=0.54.2";
-import { renderObject } from "./render.js?v=0.54.2";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.2";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.2";
-import { openFunctionModal } from "./function-graph/modal.js?v=0.54.2";
+import { state } from "./state.js?v=0.54.3";
+import { armSymbol } from "./tools.js?v=0.54.3";
+import { renderObject } from "./render.js?v=0.54.3";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.3";
+import { getSvgAsset } from "./svg-assets.js?v=0.54.3";
+import { openFunctionModal } from "./function-graph/modal.js?v=0.54.3";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -446,6 +446,15 @@ function makeSymbolButton(id, def, pending) {
   }
   btn.appendChild(kbd);
   return btn;
+}
+
+/* 과목별 파트 아코디언(subject-objects.js)이 카테고리 심볼 버튼을 채울 때 사용.
+ * 반환: 만든 버튼 수. 아이콘 svg들은 sizer 배열로 넘겨 '보이게 된 뒤' 크기를 맞춘다
+ * (접힌 아코디언 안에서는 getBBox가 0이라 즉시 사이징 불가 → 첫 펼침 때 호출). */
+export function renderSymbolsForCategories(container, categories, sizer) {
+  const ids = Object.keys(TEMPLATES).filter((id) => categories.includes(TEMPLATES[id].category));
+  for (const id of ids) container.appendChild(makeSymbolButton(id, TEMPLATES[id], sizer));
+  return ids.length;
 }
 
 function renderPanel() {

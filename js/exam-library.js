@@ -11,8 +11,8 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=0.54.2";
-import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.2";
+import { insertImageFromSrc } from "./image-paste.js?v=0.54.3";
+import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.3";
 
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -95,7 +95,8 @@ function parseCompactCode(query) {
 function searchItems(query, filters) {
   const trimmed = query.trim();
   const compact = parseCompactCode(trimmed);
-  const tokens = compact ? [] : trimmed.toLowerCase().split(/\s+/).filter(Boolean);
+  // '#'는 태그 구분자로도 허용: "#역학#도르레" → ["역학","도르레"] (AND)
+  const tokens = compact ? [] : trimmed.toLowerCase().split(/[#\s]+/).filter(Boolean);
   const { subject, part, year, concept } = filters;
   return manifest.items.filter((it) =>
     (compact
@@ -115,10 +116,13 @@ function buildModal() {
   overlay.hidden = true;
   overlay.innerHTML = `
     <div class="modal modal-examlib" role="dialog" aria-modal="true" aria-labelledby="examlib-title">
-      <h2 class="modal-title" id="examlib-title">기출 문항 검색</h2>
+      <div class="examlib-title-row">
+        <h2 class="modal-title" id="examlib-title">기출 문항 검색</h2>
+        <p id="examlib-status" class="objectify-status examlib-status-inline" role="status"></p>
+      </div>
       <div class="examlib-filter-row">
         <select id="examlib-subject" aria-label="과목 선택">
-          <option value="">과목 선택 ▾</option>
+          <option value="">과목 선택</option>
         </select>
         <select id="examlib-year" aria-label="년도 선택">
           <option value="">년도 전체</option>
@@ -133,10 +137,9 @@ function buildModal() {
       </div>
       <div class="examlib-search-row">
         <input id="examlib-query" type="search" autocomplete="off"
-               placeholder="문항번호 — 2611·202611=2026 수능,  20261101=2026 수능 1번" />
+               placeholder="번호 검색 : 261101 = 2026학년도 수능 1번   /   해시태그 검색 : #역학#도르레#마찰력" />
       </div>
       <div class="examlib-toolbar">
-        <p id="examlib-status" class="objectify-status" role="status"></p>
         <div class="examlib-selected-actions">
           <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지로 삽입</button>
           <button id="examlib-objectify" type="button" class="modal-btn" disabled>객체로 변환</button>

@@ -97,3 +97,20 @@
   font-size: 11px;
   color: var(--text-secondary);
 }
+
+/* 제목 옆 인라인 상태 문구 (예: "과목을 먼저 선택하세요.") */
+.examlib-title-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.examlib-title-row .modal-title { margin: 0; }
+.examlib-status-inline { margin: 0; font-size: 13px; }
+
+/* 삽입/변환 버튼: 활성 상태에서 hover 시 색이 분명히 변하도록 */
+.examlib-selected-actions .modal-btn:not([disabled]):hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.examlib-selected-actions .modal-btn-primary:not([disabled]):hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.examlib-selected-actions .modal-btn[disabled] { opacity: .45; cursor: not-allowed; }

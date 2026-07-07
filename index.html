@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>[시범공개] 5E</title>
+  <title>5E</title>
   <link rel="icon" href="data:," />
 
   <!-- ===== FONTS (IBM Plex Sans KR / Mono) ===== -->
@@ -15,121 +15,11 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.2" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.2" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.2" />
-  <style>
-    /* Dev-only branch marker: kept slim + flat (no gradient / heavy shadow) so it
-       states the branch without dominating the UI. See CLAUDE.md 'AI티 금지'. */
-    .branch-warning-banner {
-      position: fixed;
-      top: 8px;
-      left: 50%;
-      z-index: 99999;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: calc(100vw - 24px);
-      padding: 4px 8px 4px 10px;
-      color: #cbd5e1;
-      font-family: "IBM Plex Mono", "IBM Plex Sans KR", monospace;
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 1.25;
-      background: rgba(22, 27, 34, 0.92);
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-      transform: translateX(-50%);
-      backdrop-filter: blur(6px);
-    }
-
-    .branch-warning-text > span:first-child { color: #58a6ff; font-weight: 600; }
-    .branch-warning-text > span:nth-child(2),
-    #branch-port { color: #8b8f96; }
-
-    .branch-warning-text {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      white-space: nowrap;
-      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
-    }
-
-    .branch-warning-copy {
-      width: 20px;
-      height: 20px;
-      flex: 0 0 auto;
-      color: #cbd5e1;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1;
-      cursor: pointer;
-      background: transparent;
-      border: 1px solid #30363d;
-      border-radius: 5px;
-    }
-    .branch-warning-copy:hover { background: rgba(255, 255, 255, 0.06); }
-
-    .branch-warning-copy:focus-visible {
-      outline: 2px solid #58a6ff;
-      outline-offset: 2px;
-    }
-
-    .branch-copy-status {
-      position: absolute;
-      top: calc(100% + 6px);
-      right: 0;
-      padding: 4px 8px;
-      color: #cbd5e1;
-      font-size: 11px;
-      font-weight: 500;
-      white-space: nowrap;
-      background: rgba(13, 17, 23, 0.96);
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      opacity: 0;
-      transform: translateY(-3px);
-      transition: opacity 120ms ease, transform 120ms ease;
-      pointer-events: none;
-    }
-
-    .branch-copy-status.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    @media (max-width: 720px) {
-      .branch-warning-banner {
-        top: 6px;
-        font-size: 10px;
-      }
-
-      .branch-warning-text {
-        white-space: normal;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css?v=0.54.3" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.3" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.3" />
 </head>
 <body>
-  <div class="branch-warning-banner" role="status" aria-label="현재 로컬 브랜치 경고">
-    <div class="branch-warning-text">
-      <span>[BRANCH: integration-hub]</span>
-      <span>통합 검증 브랜치</span>
-      <span id="branch-port">PORT 8000</span>
-    </div>
-    <button
-      id="branch-command-copy"
-      class="branch-warning-copy"
-      type="button"
-      title="로컬 서버 명령 복사"
-      aria-label="로컬 서버 명령 복사"
-      data-command="cd C:\Users\user\Desktop\project\51_5E\5E_hub; git status --short --branch; python -m http.server 8100"
-    >⧉</button>
-    <span id="branch-copy-status" class="branch-copy-status" aria-live="polite">서버 실행 명령 복사됨</span>
-  </div>
-  <script>{const p=document.getElementById("branch-port");if(p)p.textContent="PORT "+(location.port||"80");}</script>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
@@ -205,23 +95,11 @@
         <div class="tool-section" id="subject-section">
           <div class="tool-section-header">과목별 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
-            <label class="subject-select-row">
-              <span class="subject-select-label">과목</span>
-              <select id="subject-select" class="subject-select" aria-label="과목 선택">
-                <option value="p">물리</option>
-                <option value="c">화학</option>
-                <option value="b">생명과학</option>
-                <option value="e">지구과학</option>
-              </select>
-            </label>
             <div id="subject-parts"></div>
           </div>
         </div>
-        <!-- ===== SYMBOL LIBRARY: generated from templates.js TEMPLATES =====
-             initTemplates() fills this with one collapsible .tool-section per
-             category (공통 / 회로 / 광학 / 역학). Each generated button carries a
-             UNIQUE data-symbol="<symbolId>". Do NOT hardcode symbol buttons here. -->
-        <div id="symbol-sections"></div>
+        <!-- 심볼 라이브러리는 '과목별 오브젝트' 파트 아코디언(#subject-parts)으로 흡수됨
+             (subject-objects.js가 templates.js 카테고리를 새 분류로 렌더). -->
         <div class="tool-section">
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
@@ -240,13 +118,20 @@
                 aria-controls="panel-left" aria-expanded="false" title="도구 패널 열기">☰ 도구</button>
         <button id="drawer-right-toggle" class="topbar-btn drawer-toggle" type="button"
                 aria-controls="panel-right" aria-expanded="false" title="속성 패널 열기">속성</button>
-        <div class="app-brand" title="5E (sciEnceEducationalExamEasyEditor)"><span class="beta-label">[시범공개]</span>5E</div>
+        <div class="app-brand" title="5E (sciEnceEducationalExamEasyEditor)">5E</div>
+        <!-- 과목 선택: 강조색·배경 톤 테마와 좌측 '과목별 오브젝트' 파트가 함께 전환된다 -->
+        <select id="subject-select" class="subject-select subject-select-topbar" aria-label="과목 선택">
+          <option value="p">물리</option>
+          <option value="c">화학</option>
+          <option value="b">생명과학</option>
+          <option value="e">지구과학</option>
+        </select>
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- Undo / Redo (icon-only; sit immediately left of 파일) -->
         <button id="undo-btn" class="topbar-btn icon-btn" type="button"
                 title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
         <button id="redo-btn" class="topbar-btn icon-btn" type="button"
-                title="다시 실행 (Ctrl+Y / Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
+                title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
         <div class="file-menu">
@@ -268,10 +153,15 @@
         <div class="file-menu">
           <button id="settings-menu-btn" class="topbar-btn" type="button" aria-haspopup="true" aria-expanded="false" title="설정">설정 ▾</button>
           <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
-            <button id="open-defaults" class="file-menu-item" type="button" role="menuitem">기본값 설정</button>
-            <button id="settings-export" class="file-menu-item" type="button" role="menuitem" title="현재 개인 설정을 JSON 파일로 저장">설정 저장하기</button>
-            <button id="settings-import" class="file-menu-item" type="button" role="menuitem" title="저장해 둔 설정 파일을 불러옵니다">설정 불러오기</button>
-            <button id="open-shortcuts" class="file-menu-item" type="button" role="menuitem" disabled title="준비 중">단축키 설정</button>
+            <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="선 굵기·글꼴 크기 같은 새 오브젝트의 기본값을 정합니다.">기본값 설정</button>
+            <button id="settings-export" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="지금 쓰는 개인 설정을 파일로 저장해 백업합니다.">설정 저장하기</button>
+            <button id="settings-import" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="저장해 둔 설정 파일을 불러와 그대로 복원합니다.">설정 불러오기</button>
+            <button id="open-shortcuts" class="file-menu-item" type="button" role="menuitem" disabled
+                    data-desc="단축키를 원하는 키로 바꿉니다. (준비 중)">단축키 설정</button>
+            <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
           </div>
         </div>
         <span id="zoom-readout" class="zoom-readout">zoom 1.00×</span>
@@ -354,56 +244,12 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main"><span class="beta-label">[시범공개]</span> 5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.2</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.3</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script>
-    (() => {
-      const copyButton = document.getElementById("branch-command-copy");
-      const status = document.getElementById("branch-copy-status");
-      if (!copyButton || !status) return;
-
-      const fallbackCopy = (text) => {
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        textArea.setAttribute("readonly", "");
-        textArea.style.position = "fixed";
-        textArea.style.top = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.select();
-        textArea.setSelectionRange(0, textArea.value.length);
-        const copied = document.execCommand("copy");
-        textArea.remove();
-        if (!copied) throw new Error("Fallback copy failed");
-      };
-
-      const showStatus = () => {
-        status.classList.add("is-visible");
-        window.clearTimeout(showStatus.timer);
-        showStatus.timer = window.setTimeout(() => {
-          status.classList.remove("is-visible");
-        }, 1600);
-      };
-
-      copyButton.addEventListener("click", async () => {
-        const command = copyButton.dataset.command || "";
-        try {
-          if (navigator.clipboard?.writeText) {
-            await navigator.clipboard.writeText(command);
-          } else {
-            fallbackCopy(command);
-          }
-          showStatus();
-        } catch (error) {
-          fallbackCopy(command);
-          showStatus();
-        }
-      });
-    })();
-  </script>
   <!-- ===== MOBILE DRAWER TOGGLES =====
        좁은 화면(<768px)에서 좌/우 사이드 패널을 오버레이 드로어로 열고 닫는다.
        순수 DOM 토글이라 ES 모듈 그래프를 건드리지 않고 인라인 IIFE로 처리(브랜치 복사 버튼과 동일 방식). -->
@@ -464,6 +310,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.2"></script>
+  <script type="module" src="js/main.js?v=0.54.3"></script>
 </body>
 </html>

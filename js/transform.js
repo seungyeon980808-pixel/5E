@@ -2,7 +2,7 @@
 //
 // Owns two concerns:
 //   1. Body-drag MOVE of the selected object (V tool only).
-//   2. Snapshot-based Undo/Redo engine (Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y).
+//   2. Snapshot-based Undo/Redo engine (Ctrl+Z / Ctrl+Shift+Z).
 //
 // Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN 吏?).
 // Snapshot is captured at drag start; committed only if the pointer crossed a
@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.2";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.2";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.2";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.2";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.2";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.2";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.3";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.3";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.3";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.3";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.3";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.3";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -731,7 +731,7 @@ export function initTransform(svg, state) {
   window.addEventListener("keydown", (e) => { if (e.code === "Space") _spaceHeld = true; });
   window.addEventListener("keyup",   (e) => { if (e.code === "Space") _spaceHeld = false; });
 
-  /* -- Undo/Redo keyboard: Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y -- */
+  /* -- Undo/Redo keyboard: Ctrl+Z / Ctrl+Shift+Z (다시 실행은 이 하나로만) -- */
   window.addEventListener("keydown", (e) => {
     if (!e.ctrlKey && !e.metaKey) return;
     const t = e.target;
@@ -740,7 +740,7 @@ export function initTransform(svg, state) {
     if (key === "z" && !e.shiftKey) {
       e.preventDefault();
       undo(state);
-    } else if ((key === "z" && e.shiftKey) || key === "y") {
+    } else if (key === "z" && e.shiftKey) {
       e.preventDefault();
       redo(state);
     }

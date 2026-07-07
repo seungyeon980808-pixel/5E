@@ -7,24 +7,25 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.2";
-import { render } from "./render.js?v=0.54.2";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.2";
-import { initTools } from "./tools.js?v=0.54.2";
-import { initCutTool } from "./cut-tool.js?v=0.54.2";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.2";
-import { initInspector } from "./inspector.js?v=0.54.2";
-import { initProjectIO } from "./project-io.js?v=0.54.2";
-import { initExportDialog } from "./export-dialog.js?v=0.54.2";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.2";
-import { initSettings } from "./settings.js?v=0.54.2";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.2";
-import { initImagePaste } from "./image-paste.js?v=0.54.2";
-import { initImageCutout } from "./image-cutout.js?v=0.54.2";
-import { initExamLibrary } from "./exam-library.js?v=0.54.2";
-import { initTemplates } from "./templates.js?v=0.54.2";
-import { initObjectSearch } from "./search.js?v=0.54.2";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.2";
+import { state } from "./state.js?v=0.54.3";
+import { render } from "./render.js?v=0.54.3";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.3";
+import { initTools } from "./tools.js?v=0.54.3";
+import { initCutTool } from "./cut-tool.js?v=0.54.3";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.3";
+import { initInspector } from "./inspector.js?v=0.54.3";
+import { initProjectIO } from "./project-io.js?v=0.54.3";
+import { initExportDialog } from "./export-dialog.js?v=0.54.3";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.3";
+import { initSettings } from "./settings.js?v=0.54.3";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.3";
+import { initImagePaste } from "./image-paste.js?v=0.54.3";
+import { initImageCutout } from "./image-cutout.js?v=0.54.3";
+import { initExamLibrary } from "./exam-library.js?v=0.54.3";
+import { initTemplates } from "./templates.js?v=0.54.3";
+import { initObjectSearch } from "./search.js?v=0.54.3";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.3";
+import { initToolHint } from "./tool-hint.js?v=0.54.3";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -175,6 +176,9 @@ initObjectSearch();
 
 /* ----- 과목별 오브젝트: 과목 선택 + 파트 아코디언 + 과목별 강조색 테마 ----- */
 initSubjectObjects();
+
+/* ----- 도구별 하단 안내(자르기 패턴 일반화 공용 슬롯) ----- */
+initToolHint(state);
 
 /* ===== TOOL PANEL: collapsible section toggle (event delegation) ===== */
 (function initToolSections() {

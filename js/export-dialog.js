@@ -11,10 +11,10 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.2";
-import { registerTopMenu } from "./top-menu.js?v=0.54.2";
-import { screenToWorld } from "./viewport.js?v=0.54.2";
-import { openExamPreview } from "./exam-preview.js?v=0.54.2";
+import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.3";
+import { registerTopMenu } from "./top-menu.js?v=0.54.3";
+import { screenToWorld } from "./viewport.js?v=0.54.3";
+import { openExamPreview } from "./exam-preview.js?v=0.54.3";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -54,7 +54,10 @@ function buildModal() {
   overlay.hidden = true;
   overlay.innerHTML = `
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="export-title" style="width:min(400px, calc(100vw - 32px))">
-      <h2 class="modal-title" id="export-title">이미지로 내보내기</h2>
+      <h2 class="modal-title" id="export-title">이미지로 내보내기
+        <button type="button" class="export-help-btn" aria-label="이미지로 내보내기 도움말"
+                title="아트보드를 이미지 파일로 저장합니다.&#10;· PNG — 한글(HWP)·PPT 등에 바로 붙여 넣는 그림 파일&#10;· SVG — 확대해도 깨지지 않는 벡터 파일(일러스트 편집용)&#10;여백·배율은 아래 옵션으로 조정합니다.">?</button>
+      </h2>
 
       <label class="modal-field" for="export-filename">
         <span class="modal-label">파일 이름</span>
