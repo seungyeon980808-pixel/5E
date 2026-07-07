@@ -290,6 +290,7 @@ export function initExamLibrary(state) {
     subjectSelect.value = "";
     partSelect.value = "";
     yearSelect.value = "";
+    conceptSelect.value = "";
     populateConceptOptions(); // 단원 초기화됐으니 개념 목록도 전체로
     runSearch();
   }

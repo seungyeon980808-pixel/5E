@@ -21,7 +21,7 @@ import { initSettings } from "./settings.js?v=0.54.0";
 import { initImageObjectify } from "./image-objectify.js?v=0.54.0";
 import { initImagePaste } from "./image-paste.js?v=0.54.0";
 import { initImageCutout } from "./image-cutout.js?v=0.54.0";
-import { initExamLibrary } from "./exam-library.js?v=0.54.0";
+import { initExamLibrary } from "./exam-library.js?v=0.54.1";
 import { initTemplates } from "./templates.js?v=0.54.0";
 import { initObjectSearch } from "./search.js?v=0.54.0";
 
