@@ -34,12 +34,12 @@ function injectStyles() {
   const st = document.createElement("style");
   st.id = "cut-tool-styles";
   st.textContent = `
-    #cut-tool-panel { position:fixed; top:110px; left:50%; transform:translateX(-50%); z-index:60;
-      display:flex; align-items:center; gap:8px; padding:7px 12px; background:#fff; border:1px solid #d0d7de;
-      border-radius:10px; box-shadow:0 4px 14px rgba(0,0,0,.12); font-family:"IBM Plex Sans KR",sans-serif; }
-    #cut-tool-panel[hidden] { display:none; }   /* [hidden]이 ID의 display:flex를 이기도록(우선순위) */
-    #cut-tool-panel .cut-tool-title { font-weight:700; color:#0d1117; margin-right:2px; }
-    #cut-tool-panel #cut-tool-hint { color:#6e7781; font-size:13px; }
+    /* 캔버스 하단 바(격자·눈금자 줄)의 남는 오른쪽에 도킹 — 캔버스를 가리지 않음 */
+    #cut-tool-panel { display:flex; align-items:center; gap:6px; margin-left:auto;
+      min-width:0; overflow:hidden; white-space:nowrap; }
+    #cut-tool-panel[hidden] { display:none; }   /* [hidden]이 display:flex를 이기도록(우선순위) */
+    #cut-tool-panel .cut-tool-title { font-weight:700; }
+    #cut-tool-panel #cut-tool-hint { opacity:.75; font-size:12px; overflow:hidden; text-overflow:ellipsis; }
   `;
   document.head.appendChild(st);
 }
@@ -52,7 +52,10 @@ function buildPanel() {
   _panel.innerHTML = `
     <span class="cut-tool-title">✂ 자르기</span>
     <span id="cut-tool-hint">${HINT}</span>`;
-  document.body.appendChild(_panel);
+  // 하단 바가 있으면 그 안에(오른쪽 정렬), 없으면(레이아웃 변경 대비) 종전처럼 body에
+  const bar = document.querySelector(".canvas-bottom-bar");
+  if (bar) bar.appendChild(_panel);
+  else document.body.appendChild(_panel);
 }
 
 function isActive() { return _state.get().activeTool === "CUT"; }
