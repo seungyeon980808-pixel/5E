@@ -8,7 +8,7 @@
  * · 백업: settings.js PERSONAL_KEYS에 포함되어 '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=0.54.6";
+import { instantiateObjectsAt } from "./transform.js?v=0.54.7";
 
 const KEY = "5e.personalObjects";
 const DEFAULT_CATEGORY = "기본";
@@ -40,19 +40,31 @@ export function insertPersonalItem(id) {
   instantiateObjectsAt(_state, it.objects, { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 });
 }
 
-/* ---------- 이름/분류 입력 모달 ---------- */
+/* ---------- 이름/분류 입력 모달 ----------
+ * 분류는 드롭다운(기존 분류)에서 고르거나 '＋ 새 분류 만들기'를 선택해
+ * 새 이름을 입력한다(다른 드롭다운과 같은 양식의 select 사용). */
+const NEW_CAT_VALUE = "__new__";
 function askNameCategory(existingCategories, done) {
+  const cats = existingCategories.length ? existingCategories : [DEFAULT_CATEGORY];
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" style="width:min(320px, calc(100vw - 32px))">
+    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
       <h2 class="modal-title">오브젝트 저장</h2>
+      <p class="objectify-description" style="margin:0 0 10px;">
+        생성한 오브젝트를 다음 작업에서도 사용할 수 있게 저장합니다.
+        저장된 오브젝트는 왼쪽 <b>퍼스널 오브젝트</b>와
+        <b>오브젝트 검색(Ctrl+F)</b>에서도 조회할 수 있습니다.</p>
       <label class="modal-field"><span class="modal-label">이름</span>
         <input type="text" id="po-name" class="modal-input" maxlength="40" autocomplete="off" /></label>
       <label class="modal-field"><span class="modal-label">분류</span>
-        <input type="text" id="po-cat" class="modal-input" maxlength="20" autocomplete="off"
-               list="po-cat-list" placeholder="${DEFAULT_CATEGORY}" />
-        <datalist id="po-cat-list">${existingCategories.map((c) => `<option value="${c}">`).join("")}</datalist></label>
+        <select id="po-cat-select" class="modal-input">
+          ${cats.map((c) => `<option value="${c}">${c}</option>`).join("")}
+          <option value="${NEW_CAT_VALUE}">＋ 새 분류 만들기…</option>
+        </select></label>
+      <label class="modal-field" id="po-newcat-field" hidden><span class="modal-label">새 분류 이름</span>
+        <input type="text" id="po-cat-new" class="modal-input" maxlength="20" autocomplete="off"
+               placeholder="예: 역학 세트" /></label>
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="po-cancel">취소</button>
         <button type="button" class="modal-btn modal-btn-primary" id="po-ok">저장</button>
@@ -60,7 +72,14 @@ function askNameCategory(existingCategories, done) {
     </div>`;
   document.body.appendChild(overlay);
   const name = overlay.querySelector("#po-name");
-  const cat = overlay.querySelector("#po-cat");
+  const catSel = overlay.querySelector("#po-cat-select");
+  const newField = overlay.querySelector("#po-newcat-field");
+  const newInput = overlay.querySelector("#po-cat-new");
+  catSel.addEventListener("change", () => {
+    const isNew = catSel.value === NEW_CAT_VALUE;
+    newField.hidden = !isNew;
+    if (isNew) newInput.focus();
+  });
   const close = () => overlay.remove();
   overlay.querySelector("#po-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
@@ -71,7 +90,12 @@ function askNameCategory(existingCategories, done) {
   overlay.querySelector("#po-ok").addEventListener("click", () => {
     const n = name.value.trim();
     if (!n) { name.focus(); return; }
-    done(n, cat.value.trim() || DEFAULT_CATEGORY);
+    let category = catSel.value;
+    if (category === NEW_CAT_VALUE) {
+      category = newInput.value.trim();
+      if (!category) { newInput.focus(); return; }
+    }
+    done(n, category || DEFAULT_CATEGORY);
     close();
   });
   name.focus();

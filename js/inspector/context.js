@@ -4,7 +4,7 @@
  * helper closures shared by the section builders (snapshots, label-row
  * builders, single-object commit helper). */
 
-import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.54.6";
+import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.54.7";
 
 export function createInspectorContext(state) {
   const emptyEl   = document.getElementById("inspector-empty");
@@ -27,27 +27,37 @@ export function createInspectorContext(state) {
     num.min = String(MIN_TEXT_PT);
     num.max = "400";
     num.step = "1";
-    num.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+    num.className = "insp-input";
+    // 'pt' 단위를 박스 안(오른쪽)에 표시 — 다른 입력 박스와 폭·모양 통일
+    const wrap = document.createElement("span");
+    wrap.style.cssText = "position:relative;display:block;min-width:0;";
+    num.style.cssText = "width:100%;box-sizing:border-box;padding-right:24px;";
     const unit = document.createElement("span");
     unit.textContent = "pt";
-    unit.className = "insp-unit";
-    row.appendChild(lbl); row.appendChild(num); row.appendChild(unit);
-    num.addEventListener("change", () => {
+    unit.style.cssText = "position:absolute;right:8px;top:50%;transform:translateY(-50%);" +
+      "font-size:10px;color:var(--text-secondary);pointer-events:none;";
+    wrap.appendChild(num); wrap.appendChild(unit);
+    row.appendChild(lbl); row.appendChild(wrap);
+    // 숫자만 입력해도 즉시 반영: input마다 적용하되 Undo 스냅샷은 편집 세션당 1회
+    let editSnap = null;
+    const applySize = (pushUndo) => {
       const s = state.get();
       const id = (s.selectedIds || [])[0];
       if (!id) return;
       let pt = Number(num.value);
-      if (!isFinite(pt) || pt < MIN_TEXT_PT) pt = MIN_TEXT_PT;
-      const mm = ptToMm(pt);
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      if (!isFinite(pt) || pt < MIN_TEXT_PT) return; // 입력 중 미완성 값은 무시
+      const mm = ptToMm(Math.min(400, pt));
       state.update((s2) => {
         const o = s2.objects.find((it) => it.id === id);
         if (!o || !applies(o) || o.locked) return;
+        if (o.labelSize === mm) return;
+        if (pushUndo && editSnap) { s2.undoStack.push(editSnap); s2.redoStack = []; editSnap = null; }
         o.labelSize = mm;
-        s2.undoStack.push(snap);
-        s2.redoStack = [];
       });
-    });
+    };
+    num.addEventListener("focus", () => { editSnap = JSON.parse(JSON.stringify(state.get().objects)); });
+    num.addEventListener("input", () => applySize(true));
+    num.addEventListener("change", () => { applySize(true); editSnap = null; });
     return { row, num };
   }
 

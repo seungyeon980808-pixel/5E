@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.6" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.6" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.6" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.7" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.7" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.7" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -121,6 +121,8 @@
                     title="이미지 객체화 (Ctrl+T)">이미지 객체화</button>
             <button id="personal-object-save" class="advanced-tool-btn" type="button"
                     title="선택한 오브젝트를 퍼스널 오브젝트로 저장 (좌측 라이브러리에 추가)">오브젝트 저장</button>
+            <button id="bulk-edit-open" class="advanced-tool-btn" type="button"
+                    title="선택(없으면 전체) 오브젝트의 굵기·색·글씨 크기·각도를 한 번에 통일하거나 증감">전체 수정</button>
           </div>
         </div>
       </div>
@@ -254,7 +256,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.6</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.7</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -320,6 +322,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.6"></script>
+  <script type="module" src="js/main.js?v=0.54.7"></script>
 </body>
 </html>

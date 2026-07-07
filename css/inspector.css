@@ -286,11 +286,12 @@ details[open] > .insp-summary::before {
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid var(--insp-accent);
+  /* 모던 바 형태: 그라디언트 바보다 살짝 길게 튀어나온 세로 바 */
+  width: 5px;
+  height: 20px;
+  border-radius: 2.5px;
+  background: var(--insp-accent);
+  border: 1px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.4);
   cursor: grab;
   z-index: 1;

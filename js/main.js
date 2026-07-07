@@ -7,26 +7,27 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.6";
-import { render } from "./render.js?v=0.54.6";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.6";
-import { initTools } from "./tools.js?v=0.54.6";
-import { initCutTool } from "./cut-tool.js?v=0.54.6";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.6";
-import { initInspector } from "./inspector.js?v=0.54.6";
-import { initProjectIO } from "./project-io.js?v=0.54.6";
-import { initExportDialog } from "./export-dialog.js?v=0.54.6";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.6";
-import { initSettings } from "./settings.js?v=0.54.6";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.6";
-import { initImagePaste } from "./image-paste.js?v=0.54.6";
-import { initImageCutout } from "./image-cutout.js?v=0.54.6";
-import { initExamLibrary } from "./exam-library.js?v=0.54.6";
-import { initTemplates } from "./templates.js?v=0.54.6";
-import { initObjectSearch } from "./search.js?v=0.54.6";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.6";
-import { initToolHint } from "./tool-hint.js?v=0.54.6";
-import { initPersonalObjects } from "./personal-objects.js?v=0.54.6";
+import { state } from "./state.js?v=0.54.7";
+import { render } from "./render.js?v=0.54.7";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.7";
+import { initTools } from "./tools.js?v=0.54.7";
+import { initCutTool } from "./cut-tool.js?v=0.54.7";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.7";
+import { initInspector } from "./inspector.js?v=0.54.7";
+import { initProjectIO } from "./project-io.js?v=0.54.7";
+import { initExportDialog } from "./export-dialog.js?v=0.54.7";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.7";
+import { initSettings } from "./settings.js?v=0.54.7";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.7";
+import { initImagePaste } from "./image-paste.js?v=0.54.7";
+import { initImageCutout } from "./image-cutout.js?v=0.54.7";
+import { initExamLibrary } from "./exam-library.js?v=0.54.7";
+import { initTemplates } from "./templates.js?v=0.54.7";
+import { initObjectSearch } from "./search.js?v=0.54.7";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.7";
+import { initToolHint } from "./tool-hint.js?v=0.54.7";
+import { initPersonalObjects } from "./personal-objects.js?v=0.54.7";
+import { initBulkEdit } from "./bulk-edit.js?v=0.54.7";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -183,6 +184,9 @@ initToolHint(state);
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
+
+/* ----- 전체 수정: 선택(없으면 전체) 오브젝트 속성 일괄 통일/증감 ----- */
+initBulkEdit(state);
 
 /* ===== TOOL PANEL: collapsible section toggle (event delegation) ===== */
 (function initToolSections() {

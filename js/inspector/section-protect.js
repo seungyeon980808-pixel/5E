@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=0.54.6";
+import { makeSection } from "./widgets.js?v=0.54.7";
 
 export function buildProtectSection(ctx) {
   const { state, snapBefore } = ctx;
@@ -12,20 +12,10 @@ export function buildProtectSection(ctx) {
   const sec4Body = document.createElement("div");
   sec4Body.className = "insp-body";
 
-  const lockRow = document.createElement("div");
-  lockRow.className = "insp-row";
-  const lockCb = document.createElement("input");
-  lockCb.type = "checkbox";
-  lockCb.className = "insp-cb";
-  const lockLbl = document.createElement("label");
-  lockLbl.className = "insp-field-label";
-  lockLbl.textContent = "개체 잠금";
-  lockRow.appendChild(lockCb);
-  lockRow.appendChild(lockLbl);
-  sec4Body.appendChild(lockRow);
-
+  // 순서: 위치 고정(약한 보호)이 위, 오브젝트 잠금(강한 보호)이 아래.
   const positionLockRow = document.createElement("div");
   positionLockRow.className = "insp-row";
+  positionLockRow.title = "오브젝트가 변형은 가능하지만 위치는 고정됩니다.";
   const positionLockCb = document.createElement("input");
   positionLockCb.type = "checkbox";
   positionLockCb.className = "insp-cb";
@@ -35,6 +25,19 @@ export function buildProtectSection(ctx) {
   positionLockRow.appendChild(positionLockCb);
   positionLockRow.appendChild(positionLockLbl);
   sec4Body.appendChild(positionLockRow);
+
+  const lockRow = document.createElement("div");
+  lockRow.className = "insp-row";
+  lockRow.title = "오브젝트의 변형을 금지하고 위치를 고정합니다.";
+  const lockCb = document.createElement("input");
+  lockCb.type = "checkbox";
+  lockCb.className = "insp-cb";
+  const lockLbl = document.createElement("label");
+  lockLbl.className = "insp-field-label";
+  lockLbl.textContent = "오브젝트 잠금";
+  lockRow.appendChild(lockCb);
+  lockRow.appendChild(lockLbl);
+  sec4Body.appendChild(lockRow);
 
   lockCb.addEventListener("change", () => {
     const s = state.get();
@@ -68,7 +71,7 @@ export function buildProtectSection(ctx) {
     });
   });
 
-  const sec4 = makeSection("보호", sec4Body);
+  const sec4 = makeSection("오브젝트 보호", sec4Body);
 
   return { sec4, lockCb, positionLockCb };
 }
