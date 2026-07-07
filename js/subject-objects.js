@@ -12,7 +12,7 @@
  * 공통 도구(#tool-list 상단)는 과목과 무관하게 항상 표시된다.
  */
 
-import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.7";
+import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.8";
 
 const SUBJECTS = {
   p: {
@@ -90,6 +90,8 @@ export function initSubjectObjects() {
     select.value = c;
     buildParts(parts, c);
     try { localStorage.setItem(STORAGE_KEY, c); } catch (_) { /* ignore */ }
+    // 다른 모듈(퍼스널 오브젝트 등)이 과목 전환에 반응할 수 있게 알림
+    window.dispatchEvent(new CustomEvent("5e:subject-changed", { detail: { subject: c } }));
   };
 
   let initial = "p";

@@ -11,8 +11,9 @@
  *   · 적용 = Undo 1스텝.
  */
 
-import { ptToMm, MIN_TEXT_PT } from "./state.js?v=0.54.7";
-import { SHAPE_TYPES } from "./object-types.js?v=0.54.7";
+import { ptToMm, MIN_TEXT_PT } from "./state.js?v=0.54.8";
+import { SHAPE_TYPES } from "./object-types.js?v=0.54.8";
+import { showAlert } from "./ui-dialogs.js?v=0.54.8";
 
 let _state = null;
 let _overlay = null;
@@ -149,9 +150,9 @@ function apply() {
     if (_mode === "delta" && v === 0) return false;
     return true;
   });
-  if (!picked.length) { alert("적용할 항목을 체크하고 값을 입력하세요."); return; }
+  if (!picked.length) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 수정" }); return; }
   const { objs } = targets();
-  if (!objs.length) { alert("적용할 오브젝트가 없습니다."); return; }
+  if (!objs.length) { showAlert("적용할 오브젝트가 없습니다.", { title: "전체 수정" }); return; }
   const idSet = new Set(objs.map((o) => o.id));
   _state.update((s2) => {
     s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));

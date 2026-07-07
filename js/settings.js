@@ -17,8 +17,9 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.7";
-import { registerTopMenu } from "./top-menu.js?v=0.54.7";
+} from "./state.js?v=0.54.8";
+import { registerTopMenu } from "./top-menu.js?v=0.54.8";
+import { showAlert } from "./ui-dialogs.js?v=0.54.8";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -75,9 +76,10 @@ function settingsFilename() {
 }
 
 // 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
-function collectSettings() {
+// keys를 넘기면 그 키만 포함(설정 저장 위젯의 항목 선택).
+function collectSettings(keys = PERSONAL_KEYS) {
   const data = {};
-  for (const key of PERSONAL_KEYS) {
+  for (const key of keys) {
     const raw = localStorage.getItem(key);
     if (raw === null) continue;
     data[key] = raw;   // 원본 문자열 그대로 보존(정확한 왕복 보장)
@@ -91,19 +93,76 @@ function collectSettings() {
   };
 }
 
-// 설정 저장하기: 개인 설정을 JSON 파일로 다운로드.
-function exportSettings() {
-  const json = JSON.stringify(collectSettings(), null, 2);
+/* 저장 위치 지정: 브라우저가 지원하면(크롬/엣지) 폴더·파일명을 고르는 저장
+ * 대화상자를 띄우고, 아니면 기존처럼 다운로드 폴더로 내려받는다. */
+async function saveJsonWithPicker(json, filename) {
   const blob = new Blob([json], { type: "application/json" });
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: "5E 설정 파일", accept: { "application/json": [".json"] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false; // 사용자가 취소
+      // 실패 시 다운로드 폴백
+    }
+  }
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
-  a.download = settingsFilename();
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
+/* 설정 저장 위젯: 무엇을 저장할지 고르고 → 저장 위치 지정 */
+const EXPORT_CHOICES = [
+  { key: DEFAULTS_KEY,          label: "기본값 설정 (선 굵기·글꼴 등)" },
+  { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
+  { key: SUBJECT_KEY,           label: "과목 선택" },
+  { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
+];
+function openExportDialog() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
+      <h2 class="modal-title">설정 저장하기</h2>
+      <p class="objectify-description" style="margin:0 0 8px;">
+        저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 파일로 내려받습니다.
+        '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
+      ${EXPORT_CHOICES.map((c, i) => `
+        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" data-i="${i}" ${localStorage.getItem(c.key) !== null ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
+          <span class="modal-label" style="margin:0;">${c.label}</span>
+        </label>`).join("")}
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="sx-cancel">취소</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="sx-ok">저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector("#sx-cancel").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  overlay.querySelector("#sx-ok").addEventListener("click", async () => {
+    const keys = [...overlay.querySelectorAll("input[type=checkbox]")]
+      .filter((cb) => cb.checked)
+      .map((cb) => EXPORT_CHOICES[Number(cb.dataset.i)].key);
+    if (!keys.length) { showAlert("저장할 항목을 하나 이상 선택하세요.", { title: "설정 저장하기" }); return; }
+    const json = JSON.stringify(collectSettings(keys), null, 2);
+    close();
+    await saveJsonWithPicker(json, settingsFilename());
+  });
 }
 
 // 불러온 페이로드가 우리 설정 파일 스키마인지 검증한다(깨진/다른 파일 방어).
@@ -502,7 +561,7 @@ export function initSettings(state) {
   document.body.appendChild(settingsFileInput);
 
   const exportBtn = document.getElementById("settings-export");
-  if (exportBtn) exportBtn.addEventListener("click", exportSettings);
+  if (exportBtn) exportBtn.addEventListener("click", openExportDialog);
 
   const importBtn = document.getElementById("settings-import");
   if (importBtn) importBtn.addEventListener("click", () => settingsFileInput.click());

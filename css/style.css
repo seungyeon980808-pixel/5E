@@ -1623,10 +1623,19 @@ textarea.unified-text-input {
 }
 .personal-item-btn:hover { background: var(--btn-tool-hover); border-color: var(--accent); }
 .personal-item-del {
-  flex: none; width: 22px; font-size: 10px; color: var(--text-secondary);
-  background: transparent; border: 1px solid var(--c-border); border-radius: 5px; cursor: pointer;
+  /* 해당 줄의 ▾ 토글과 같은 급의 아주 작은 버튼 */
+  flex: none; width: 14px; padding: 0; font-size: 9px; line-height: 1;
+  color: var(--text-secondary); background: transparent; border: none; cursor: pointer;
+  align-self: center;
 }
-.personal-item-del:hover { color: #e5534b; border-color: #e5534b; }
+.personal-item-del:hover { color: #e5534b; }
+.personal-store-btn {
+  display: block; width: 100%; margin: 0 0 6px; padding: 6px 8px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--accent); background: transparent;
+  border: 1px dashed var(--accent); border-radius: 6px; cursor: pointer;
+}
+.personal-store-btn:hover { color: #fff; background: var(--accent); border-style: solid; }
 
 /* ===== 버튼 곡률 통일: 기준 = 좌측 도구 버튼(.tool-btn) 6px ===== */
 .btn, .topbar-btn, .modal-btn, .file-menu-item, .seg-btn, .advanced-tool-btn,
@@ -1635,3 +1644,11 @@ textarea.unified-text-input {
 .objectify-dropzone, .subject-part-header {
   border-radius: 6px;
 }
+
+/* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
+.file-menu-item { display: flex; align-items: center; }
+.menu-kbd { margin-left: auto; padding-left: 12px; font-size: 11px; color: var(--text-secondary); }
+
+/* 이미지로 내보내기: [내보내기] 버튼은 평소 무색, hover 시에만 강조색 */
+#export-confirm { background: transparent; color: var(--c-text); border-color: var(--c-border); }
+#export-confirm:hover { background: var(--accent); border-color: var(--accent); color: #fff; }

@@ -114,3 +114,13 @@
   border-color: var(--accent-hover);
 }
 .examlib-selected-actions .modal-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* 연도 범위(시작~끝) */
+.examlib-year-range { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.examlib-year-range select { min-width: 0; }
+.examlib-year-tilde { color: var(--text-secondary); flex: none; }
+
+/* 오브젝트 저장소: 카드 하단 액션 + SVG 썸네일 */
+.postore-actions { display: flex; gap: 6px; padding: 6px 8px 8px; }
+.postore-actions .modal-btn { flex: 1 1 0; padding: 4px 0; font-size: 12px; }
+.postore-thumb svg { width: 100%; height: 100%; display: block; background: #fff; }

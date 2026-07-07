@@ -11,10 +11,11 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, formatExportTimestamp } from "./svg-export.js?v=0.54.7";
-import { registerTopMenu } from "./top-menu.js?v=0.54.7";
-import { screenToWorld } from "./viewport.js?v=0.54.7";
-import { openExamPreview } from "./exam-preview.js?v=0.54.7";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp } from "./svg-export.js?v=0.54.8";
+import { showAlert } from "./ui-dialogs.js?v=0.54.8";
+import { registerTopMenu } from "./top-menu.js?v=0.54.8";
+import { screenToWorld } from "./viewport.js?v=0.54.8";
+import { openExamPreview } from "./exam-preview.js?v=0.54.8";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -91,6 +92,8 @@ function buildModal() {
         <button type="button" class="modal-btn" id="export-cancel">취소</button>
         <button type="button" class="modal-btn" id="export-preview">미리보기</button>
         <button type="button" class="modal-btn" id="export-area">영역 지정</button>
+        <button type="button" class="modal-btn" id="export-copy"
+                title="PNG를 클립보드에 복사 — 한글(HWP)·PPT에 바로 붙여넣기(Ctrl+V)">복사</button>
         <button type="button" class="modal-btn modal-btn-primary" id="export-confirm">내보내기</button>
       </div>
     </div>
@@ -411,6 +414,35 @@ export function initExportDialog(state, svg) {
   overlay.querySelector("#export-confirm").addEventListener("click", () => {
     doExport(null);
     hideModal();
+  });
+
+  // [복사]: 현재 설정(dpi·참고이미지)으로 PNG를 클립보드에 — 한글/PPT에 바로 Ctrl+V.
+  const copyBtn = overlay.querySelector("#export-copy");
+  copyBtn.addEventListener("click", async () => {
+    const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+    const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
+    copyBtn.disabled = true;
+    try {
+      const ok = await copyPngToClipboard(state, dpi, null, options);
+      if (ok) {
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = "복사됨!";
+        setTimeout(() => { copyBtn.textContent = orig; copyBtn.disabled = false; }, 1200);
+        return;
+      }
+      showAlert("이 브라우저 환경에서는 클립보드 복사를 지원하지 않습니다.\n(내보내기로 파일 저장을 이용하세요)", { title: "복사" });
+    } catch (_) {
+      showAlert("클립보드 복사에 실패했습니다. 다시 시도해 주세요.", { title: "복사" });
+    }
+    copyBtn.disabled = false;
+  });
+
+  // Ctrl+S = 프로젝트 저장 (브라우저 기본 저장 대화상자 차단)
+  window.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+    if ((e.key || "").toLowerCase() !== "s") return;
+    e.preventDefault();
+    document.getElementById("project-save")?.click();
   });
 
   // 미리보기: 먼저 영역을 지정하게 한 뒤(영역지정과 동일한 드래그), 그 영역을 실제

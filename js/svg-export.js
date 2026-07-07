@@ -18,7 +18,7 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=0.54.7";
+import { renderObject, makeFillPattern } from "./render.js?v=0.54.8";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -232,6 +232,18 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
 
 /* ----- exportPng: rasterize the export SVG at a DPI onto a white canvas ----- */
 // `bounds` (optional): world {x,y,w,h} rectangle for selected-area capture.
+/* 현재 아트보드를 PNG로 래스터라이즈해 클립보드에 복사한다.
+ * 한글(HWP)·PPT 등에서 바로 Ctrl+V 가능. localhost/HTTPS + 사용자 제스처 필요.
+ * 성공 시 true. (SVG는 클립보드 규격상 지원되지 않아 PNG만) */
+export async function copyPngToClipboard(state, dpi = 300, bounds = null, options = {}) {
+  if (!navigator.clipboard || typeof ClipboardItem === "undefined") return false;
+  const result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
+  const blob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
+  if (!blob) return false;
+  await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+  return true;
+}
+
 export async function exportPng(state, filename, dpi, bounds = null, options = {}) {
   const name = filename || getDefaultExportFilename("png");
   // Ask for the save location first, while still inside the user gesture (before

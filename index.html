@@ -15,9 +15,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.7" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.7" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.7" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.8" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.8" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.8" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -150,13 +150,13 @@
                   aria-haspopup="true" aria-expanded="false" title="파일">파일 ▾</button>
           <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="project-save" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장</button>
+                    data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장 <span class="menu-kbd">Ctrl+S</span></button>
             <button id="project-open" class="file-menu-item" type="button" role="menuitem"
                     data-desc="저장해 둔 프로젝트 파일을 열어 이어서 편집합니다.">프로젝트 불러오기</button>
             <button id="image-import" class="file-menu-item" type="button" role="menuitem"
                     data-desc="JPG, PNG 등의 이미지 파일을 캔버스에 불러와 배치합니다.">이미지 불러오기</button>
             <button id="image-export" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기</button>
+                    data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기 <span class="menu-kbd">Alt+P</span></button>
             <div id="file-menu-desc" class="file-menu-desc">파일 작업을 선택하세요.</div>
           </div>
         </div>
@@ -256,7 +256,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.7</strong> · 2026-07-07</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.8</strong> · 2026-07-07</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -322,6 +322,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.7"></script>
+  <script type="module" src="js/main.js?v=0.54.8"></script>
 </body>
 </html>

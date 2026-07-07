@@ -11,8 +11,8 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=0.54.7";
-import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.7";
+import { insertImageFromSrc } from "./image-paste.js?v=0.54.8";
+import { openObjectifyWithFile } from "./image-objectify.js?v=0.54.8";
 
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -97,7 +97,11 @@ function searchItems(query, filters) {
   const compact = parseCompactCode(trimmed);
   // '#'는 태그 구분자로도 허용: "#역학#도르레" → ["역학","도르레"] (AND)
   const tokens = compact ? [] : trimmed.toLowerCase().split(/[#\s]+/).filter(Boolean);
-  const { subject, part, year, concept } = filters;
+  const { subject, part, yearFrom, yearTo, concept } = filters;
+  // 연도 범위: 시작·끝 어느 쪽만 골라도 동작, 순서가 뒤집혀 있어도 자동 정규화
+  let yLo = yearFrom ? Number(yearFrom) : null;
+  let yHi = yearTo ? Number(yearTo) : null;
+  if (yLo !== null && yHi !== null && yLo > yHi) { const tmp = yLo; yLo = yHi; yHi = tmp; }
   return manifest.items.filter((it) =>
     (compact
       ? (it.year === compact.year && it.month === compact.month
@@ -106,7 +110,8 @@ function searchItems(query, filters) {
     (!concept || (it.tags || []).includes(concept)) &&
     (!subject || subjectMatches(it, subject)) &&
     (!part || (it.parts || []).includes(part)) &&
-    (!year || String(it.year) === year));
+    (yLo === null || it.year >= yLo) &&
+    (yHi === null || it.year <= yHi));
 }
 
 /* ===== modal ===== */
@@ -124,9 +129,15 @@ function buildModal() {
         <select id="examlib-subject" aria-label="과목 선택">
           <option value="">과목 선택</option>
         </select>
-        <select id="examlib-year" aria-label="년도 선택">
-          <option value="">년도 전체</option>
-        </select>
+        <span class="examlib-year-range">
+          <select id="examlib-year-from" aria-label="년도 시작">
+            <option value="">년도(시작)</option>
+          </select>
+          <span class="examlib-year-tilde">~</span>
+          <select id="examlib-year-to" aria-label="년도 끝">
+            <option value="">년도(끝)</option>
+          </select>
+        </span>
         <select id="examlib-part" aria-label="단원 선택">
           <option value="">단원 전체</option>
         </select>
@@ -141,8 +152,8 @@ function buildModal() {
       </div>
       <div class="examlib-toolbar">
         <div class="examlib-selected-actions">
-          <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지로 삽입</button>
-          <button id="examlib-objectify" type="button" class="modal-btn" disabled>객체로 변환</button>
+          <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
+          <button id="examlib-objectify" type="button" class="modal-btn" disabled>오브젝트 변환</button>
         </div>
       </div>
       <div id="examlib-grid" class="examlib-grid"></div>
@@ -162,7 +173,8 @@ export function initExamLibrary(state) {
   const queryInput = overlay.querySelector("#examlib-query");
   const subjectSelect = overlay.querySelector("#examlib-subject");
   const partSelect = overlay.querySelector("#examlib-part");
-  const yearSelect = overlay.querySelector("#examlib-year");
+  const yearFromSelect = overlay.querySelector("#examlib-year-from");
+  const yearToSelect = overlay.querySelector("#examlib-year-to");
   const conceptSelect = overlay.querySelector("#examlib-concept");
   const resetButton = overlay.querySelector("#examlib-reset");
   const status = overlay.querySelector("#examlib-status");
@@ -173,7 +185,8 @@ export function initExamLibrary(state) {
   const filterValues = () => ({
     subject: subjectSelect.value,
     part: partSelect.value,
-    year: yearSelect.value,
+    yearFrom: yearFromSelect.value,
+    yearTo: yearToSelect.value,
     concept: conceptSelect.value,
   });
 
@@ -202,13 +215,20 @@ export function initExamLibrary(state) {
   }
 
   /* ----- 드롭다운 옵션 채우기 (과목·파트·년도 전부 manifest 실제 데이터에서) ----- */
-  function populateFilters() {
-    subjectSelect.length = 1; // "과목 전체"만 남기고 재생성
+  /* 과목 옵션: 앱의 현재 과목 모드(p/c/b/e)에 해당하는 과목(예: 화학 → 화학1·화학2)만.
+   * 모드와 겹치는 과목이 manifest에 없으면 전체를 보여준다(안전 폴백). */
+  function populateSubjectOptions() {
+    const prev = subjectSelect.value;
+    subjectSelect.length = 1;
     const subjectLabels = new Map(); // code → label (첫 등장값 사용)
     for (const it of manifest.items) {
       if (!subjectLabels.has(it.subject)) subjectLabels.set(it.subject, it.subjectLabel || it.subject);
     }
-    const codes = [...subjectLabels.keys()].sort((a, b) => {
+    const mode = document.documentElement.getAttribute("data-subject") || "";
+    let codes = [...subjectLabels.keys()];
+    const modeCodes = codes.filter((c) => c.startsWith(mode));
+    if (mode && modeCodes.length) codes = modeCodes;
+    codes.sort((a, b) => {
       const ia = SUBJECT_ORDER.indexOf(a), ib = SUBJECT_ORDER.indexOf(b);
       if (ia === -1 && ib === -1) return a.localeCompare(b);
       if (ia === -1) return 1;
@@ -218,14 +238,22 @@ export function initExamLibrary(state) {
     for (const code of codes) {
       subjectSelect.add(new Option(subjectLabels.get(code), code));
     }
+    // 과목 모드가 이미 정해져 있으므로 첫 과목(과목1)을 자동 선택해 바로 보여준다.
+    subjectSelect.value = codes.includes(prev) ? prev : (codes[0] || "");
+  }
+
+  function populateFilters() {
+    populateSubjectOptions();
 
     partSelect.length = 1;  // "단원 전체"만 남기고 재생성
     for (const p of manifest.parts || []) {
       partSelect.add(new Option(p, p));
     }
-    yearSelect.length = 1;
+    yearFromSelect.length = 1;
+    yearToSelect.length = 1;
     for (const y of manifest.years || []) {
-      yearSelect.add(new Option(`${y}학년도`, String(y)));
+      yearFromSelect.add(new Option(`${y}학년도`, String(y)));
+      yearToSelect.add(new Option(`${y}학년도`, String(y)));
     }
     populateConceptOptions();
   }
@@ -290,10 +318,11 @@ export function initExamLibrary(state) {
 
   function resetFilters() {
     queryInput.value = "";
-    subjectSelect.value = "";
     partSelect.value = "";
-    yearSelect.value = "";
+    yearFromSelect.value = "";
+    yearToSelect.value = "";
     conceptSelect.value = "";
+    populateSubjectOptions(); // 과목은 현재 모드의 첫 과목으로 복귀
     populateConceptOptions(); // 단원 초기화됐으니 개념 목록도 전체로
     runSearch();
   }
@@ -374,8 +403,11 @@ export function initExamLibrary(state) {
   const openLibrary = () => {
     overlay.hidden = false;
     if (!manifest) loadManifest();
-    else runSearch(); // 재오픈: 마지막 검색 상태 유지한 채 갱신
-    subjectSelect.focus(); // 과목 선택이 첫 단계이므로 여기에 포커스
+    else {
+      populateSubjectOptions(); // 과목 모드가 바뀌었을 수 있으니 열 때마다 재구성
+      runSearch();
+    }
+    subjectSelect.focus();
   };
   openButton.addEventListener("click", openLibrary);
   // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
@@ -389,7 +421,7 @@ export function initExamLibrary(state) {
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });
   queryInput.addEventListener("input", runSearch);
   partSelect.addEventListener("change", () => { populateConceptOptions(); runSearch(); });
-  for (const sel of [subjectSelect, yearSelect, conceptSelect]) {
+  for (const sel of [subjectSelect, yearFromSelect, yearToSelect, conceptSelect]) {
     sel.addEventListener("change", runSearch);
   }
   resetButton.addEventListener("click", resetFilters);
