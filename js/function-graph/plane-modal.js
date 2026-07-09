@@ -6,8 +6,8 @@
  * 좌표평면을 더블클릭하거나 인스펙터 "상세 편집…" 버튼으로 연다.
  * 편집은 draft(깊은 복사)에 하고, 확인 시 실제 객체에 한 번에 반영(undo 1회). */
 
-import { state } from "../state.js?v=0.54.10";
-import { renderCoordplane } from "../render/coordplane.js?v=0.54.10";
+import { state } from "../state.js?v=0.54.11";
+import { renderCoordplane } from "../render/coordplane.js?v=0.54.11";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
