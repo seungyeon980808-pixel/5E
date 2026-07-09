@@ -1,9 +1,6 @@
-# 기출 이미지는 저작권 문제로 로컬 전용 — 커밋 금지 (EXAM_LIBRARY_SPEC 참고)
-images/*
-!images/.gitkeep
-# manifest.json은 build_manifest.py가 로컬 이미지에서 생성하는 산출물
-manifest.json
+# 기출 이미지·manifest.json은 공개 사이트(GitHub Pages) 기출 검색용으로 커밋한다.
+# (교육적 사용 목적으로 공개 결정 — 2026-07-09)
 
-# 구버전 이미지 백업(저작권 — 커밋 금지)과 로컬 백업 파일
+# 구버전 이미지 백업(용량 큼)과 로컬 백업 파일은 커밋 금지
 _backup_old_images/
 *.bak
