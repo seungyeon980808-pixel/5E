@@ -6,8 +6,8 @@
 // otherwise a fresh default plane is created at the view center. One undo snapshot
 // covers both objects, and the new funcgraph is auto-selected.
 
-import { sampleFunctionPoints } from "./sampler.js?v=0.54.12";
-import { makeDefaultCoordplane } from "./defaults.js?v=0.54.12";
+import { sampleFunctionPoints } from "./sampler.js?v=0.54.14";
+import { makeDefaultCoordplane } from "./defaults.js?v=0.54.14";
 
 let _fgCounter = 0;
 

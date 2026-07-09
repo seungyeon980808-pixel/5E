@@ -1653,6 +1653,10 @@ textarea.unified-text-input {
 #export-confirm { background: transparent; color: var(--c-text); border-color: var(--c-border); }
 #export-confirm:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* 전체 통일/수정: [적용] 버튼도 평소 무색, hover 시에만 강조색 */
+#bulk-apply { background: transparent; color: var(--c-text); border-color: var(--c-border); }
+#bulk-apply:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
 /* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
 .defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--c-border); }
 .defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }

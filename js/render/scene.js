@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=0.54.12";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.54.12";
-import { renderText } from "./labels.js?v=0.54.12";
-import { makeFillPattern } from "./fill.js?v=0.54.12";
+import { getZoom, getRenderScale } from "../viewport.js?v=0.54.14";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=0.54.14";
+import { renderText } from "./labels.js?v=0.54.14";
+import { makeFillPattern } from "./fill.js?v=0.54.14";
 import {
   renderRect,
   renderEllipse,
@@ -20,18 +20,18 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=0.54.12";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.54.12";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=0.54.12";
-import { renderCircuit } from "./circuit.js?v=0.54.12";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.54.12";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.54.12";
-import { renderGauge } from "./gauge.js?v=0.54.12";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.12";
-import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=0.54.12";
-import { resolveObjectStyle } from "../style-mode.js?v=0.54.12";
-import { renderFormula } from "../formula.js?v=0.54.12";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.54.12";
+} from "./shapes.js?v=0.54.14";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=0.54.14";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=0.54.14";
+import { renderCircuit } from "./circuit.js?v=0.54.14";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=0.54.14";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=0.54.14";
+import { renderGauge } from "./gauge.js?v=0.54.14";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.14";
+import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=0.54.14";
+import { resolveObjectStyle } from "../style-mode.js?v=0.54.14";
+import { renderFormula } from "../formula.js?v=0.54.14";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=0.54.14";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
