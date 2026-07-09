@@ -7,8 +7,8 @@ import {
   cText,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.54.11";
-import { CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.11";
+} from "./core.js?v=0.54.12";
+import { CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.12";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *

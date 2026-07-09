@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.11";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.11";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.11";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.11";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.11";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.11";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.12";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.12";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.12";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.12";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.12";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.12";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -364,7 +364,7 @@ function applyDelta(obj, orig, dx, dy) {
       obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
       obj.type === "image" || obj.type === "svgAsset" ||
       obj.type === "axes" || obj.type === "coordplane" || obj.type === "anglearc" || obj.type === "rightangle" ||
-      obj.type === "optics" || obj.type === "apparatus") {
+      obj.type === "optics" || obj.type === "apparatus" || obj.type === "gauge") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     // coordplane moves by its box (x,y); dependent funcgraphs are re-offset by the
     // caller (step 5 재샘플 결합) — the plane itself just translates here.
