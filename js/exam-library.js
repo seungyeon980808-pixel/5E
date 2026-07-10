@@ -18,6 +18,7 @@ const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
+let synonyms = {};        // { 태그/단원명: [동의어…] } — synonyms.json의 map (없으면 {})
 let byId = new Map();
 let selectedId = null;    // 그리드에서 선택된 카드(문항)의 id — 상단 액션 버튼이 이걸 대상으로 동작
 
@@ -37,7 +38,14 @@ function blobToDataUrl(blob) {
 /* ----- 검색: 모든 토큰이 (id+제목+태그) 문자열에 포함되어야 매치 (AND) ----- */
 function prepareItems(items) {
   for (const it of items) {
-    const hay = `${it.id} ${it.title} ${(it.tags || []).join(" ")}`.toLowerCase();
+    // 태그·단원에 걸린 동의어·연관어를 검색 문자열에 이어붙인다 — "빗면에서 미끄러지는"
+    // 같은 자연어 일부 키워드로도 관련 태그가 걸리게. (AND 매치 로직 자체는 그대로)
+    const extra = [];
+    for (const key of [...(it.tags || []), ...(it.parts || [])]) {
+      const syns = synonyms[key];
+      if (syns) extra.push(...syns);
+    }
+    const hay = `${it.id} ${it.title} ${(it.tags || []).join(" ")} ${extra.join(" ")}`.toLowerCase();
     it._hay = hay;
     it._hayNs = hay.replace(/\s+/g, ""); // "물리11번"처럼 붙여 써도 매치되게
   }
@@ -387,6 +395,14 @@ export function initExamLibrary(state) {
         throw new Error("manifest 형식이 exam-library-v1이 아닙니다.");
       }
       manifest = data;
+      // 동의어 사전(선택): 있으면 검색어 확장에 쓰고, 없거나 깨져도 검색은 정상 동작.
+      try {
+        const sres = await fetch(LIB_BASE + "synonyms.json", { cache: "no-store" });
+        if (sres.ok) {
+          const sdata = await sres.json();
+          synonyms = (sdata && sdata.map) || {};
+        }
+      } catch { synonyms = {}; }
       prepareItems(manifest.items);
       byId = new Map(manifest.items.map((it) => [it.id, it]));
       populateFilters();
