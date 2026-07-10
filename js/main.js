@@ -24,6 +24,7 @@ import { initImageCutout } from "./image-cutout.js?v=0.54.14";
 import { initExamLibrary } from "./exam-library.js?v=0.54.14";
 import { initTemplates } from "./templates.js?v=0.54.14";
 import { initObjectSearch } from "./search.js?v=0.54.14";
+import { initCommandPalette } from "./command-palette.js?v=0.54.14";
 import { initSubjectObjects } from "./subject-objects.js?v=0.54.14";
 import { initToolHint } from "./tool-hint.js?v=0.54.14";
 import { initPersonalObjects } from "./personal-objects.js?v=0.54.14";
@@ -179,6 +180,9 @@ initTemplates(svg);
 
 /* ----- object search: Ctrl+F registry search + existing creation paths ----- */
 initObjectSearch();
+
+/* ----- command palette: Ctrl+K 통합 실행기(명령 + 오브젝트 검색) ----- */
+initCommandPalette();
 
 /* ----- 과목별 오브젝트: 과목 선택 + 파트 아코디언 + 과목별 강조색 테마 ----- */
 initSubjectObjects();
