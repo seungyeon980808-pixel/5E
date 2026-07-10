@@ -45,7 +45,7 @@ function normalizeLabelType(value, fallback = "quantity") {
 // Currently only "0.13" exists, so this is a pass-through. As the schema
 // evolves, insert version-specific transforms here, e.g.:
 //   if (data.version === "0.13") { data = upgrade_0_13_to_0_14(data); }
-function migrate(data) {
+export function migrate(data) {
   if (!data || !Array.isArray(data.objects)) return data;
   return {
     ...data,
@@ -212,7 +212,7 @@ function migrate(data) {
 }
 
 /* ----- serialize: build the saved-file object from live state ----- */
-function serialize(s) {
+export function serialize(s) {
   return {
     version: SCHEMA_VERSION,
     objects: s.objects,
@@ -240,7 +240,7 @@ function saveProject(state) {
 }
 
 /* ----- applyLoaded: replace drawing data through the store (re-renders) ----- */
-function applyLoaded(state, data) {
+export function applyLoaded(state, data) {
   state.update((s) => {
     // Replace the persistent drawing data.
     s.objects = data.objects;
