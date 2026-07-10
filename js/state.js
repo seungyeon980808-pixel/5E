@@ -314,4 +314,14 @@ export const state = createStore({
 
   // grid: canvas reference grid (never exported). opacity maps 1-10 → 0.05-1.0.
   grid: { visible: false, opacity: 3, interval: 10 },
+
+  // ===== 다중 페이지(아트보드) — 스왑 방식 =====
+  // 활성 페이지의 데이터는 위 s.objects/s.guides/s.layers/s.artboard(그 자리 그대로)에
+  // 있고, 나머지(순서·이름·문항 메타 포함 전체 기록)는 pages[]에 보관한다. 페이지 전환
+  // 시 현재 4필드를 활성 page 기록에 써넣고(writeBack) 대상 page의 4필드를 top-level로
+  // 꺼내온다. 그래서 render/pick/transform/snap 등 다른 모듈은 무수정으로 유지된다.
+  // 각 page = { id, name, meta:{ number, points }, objects, guides, layers, artboard }.
+  // pages는 pages.js initPages()가 최초 1개(현재 top-level을 감싼)로 채운다.
+  pages: [],
+  activePageId: null,
 });

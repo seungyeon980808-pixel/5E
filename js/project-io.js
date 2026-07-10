@@ -20,7 +20,10 @@ import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.54.14";
 // 0.15 adds editing guides; older files without them load with an empty guide list.
 // 0.16 adds coordplane + funcgraph (함수 그래프); older files simply lack both types,
 // so their backfill target is 0 — loading an old file stays a no-op for them.
-const SCHEMA_VERSION = "0.16";
+// 0.17 adds 다중 페이지(아트보드): the file now stores pages[] (each = objects/guides/
+// layers/artboard + 문항 메타). Older files (single-page, top-level objects) are
+// wrapped into one page by migrate(), so every previous save still loads intact.
+const SCHEMA_VERSION = "0.17";
 
 // Default artboard size for files saved before the artboard field existed.
 const DEFAULT_ARTBOARD = { w: 90, h: 60 };
@@ -41,15 +44,12 @@ function normalizeLabelType(value, fallback = "quantity") {
   return value === "quantity" || value === "label" ? value : fallback;
 }
 
-/* ----- migrate: bring an older saved file up to the current schema ----- */
-// Currently only "0.13" exists, so this is a pass-through. As the schema
-// evolves, insert version-specific transforms here, e.g.:
-//   if (data.version === "0.13") { data = upgrade_0_13_to_0_14(data); }
-function migrate(data) {
-  if (!data || !Array.isArray(data.objects)) return data;
-  return {
-    ...data,
-    objects: data.objects.map((obj) => {
+/* ----- migrateObjectList: normalize/backfill one objects[] array ----- */
+// Extracted so both the legacy top-level objects[] and every page's objects[]
+// go through the exact same per-object migration.
+function migrateObjectList(objects) {
+  if (!Array.isArray(objects)) return [];
+  return objects.map((obj) => {
       const next = {
         ...obj,
         positionLocked: obj.positionLocked ?? false,
@@ -207,19 +207,91 @@ function migrate(data) {
         next.labelShow = next.labelShow ?? false;
       }
       return next;
-    }),
+    });
+}
+
+/* ----- sanitizeGuides / sanitizeArtboard: shared normalizers ----- */
+function sanitizeGuides(guides) {
+  return Array.isArray(guides)
+    ? guides.filter((g) => g && (g.axis === "x" || g.axis === "y") && typeof g.position === "number")
+    : [];
+}
+function sanitizeArtboard(artboard) {
+  return (artboard && typeof artboard.w === "number" && typeof artboard.h === "number")
+    ? { w: artboard.w, h: artboard.h }
+    : { ...DEFAULT_ARTBOARD };
+}
+function sanitizeMeta(meta) {
+  return {
+    number: meta && typeof meta.number === "string" ? meta.number : "",
+    points: meta && typeof meta.points === "string" ? meta.points : "",
   };
 }
 
+let _loadSeq = 0;
+function makePageId() { return `page_load_${Date.now().toString(36)}_${++_loadSeq}`; }
+
+/* ----- migratePage: normalize one page record (objects + guides + layers + meta) ----- */
+function migratePage(page, index) {
+  return {
+    id: page && page.id ? page.id : makePageId(),
+    name: page && typeof page.name === "string" && page.name ? page.name : `페이지 ${index + 1}`,
+    meta: sanitizeMeta(page && page.meta),
+    objects: migrateObjectList(page && page.objects),
+    guides: sanitizeGuides(page && page.guides),
+    layers: Array.isArray(page && page.layers) && page.layers.length ? page.layers : null,
+    artboard: sanitizeArtboard(page && page.artboard),
+  };
+}
+
+/* ----- migrate: bring an older saved file up to the current schema -----
+ * 0.17 introduced pages[]. Files saved before that carry a single drawing at the
+ * top level (objects/guides/layers/artboard) and NO pages field — we wrap them
+ * into a single page here, so every previous save keeps loading intact. */
+function migrate(data) {
+  if (!data || typeof data !== "object") return data;
+
+  // New (0.17+) format: already has pages[]. Normalize each page.
+  if (Array.isArray(data.pages)) {
+    const pages = data.pages.map((p, i) => migratePage(p, i));
+    const activePageId = pages.some((p) => p.id === data.activePageId)
+      ? data.activePageId
+      : (pages[0] ? pages[0].id : null);
+    return { ...data, pages, activePageId };
+  }
+
+  // Legacy single-page file: wrap the top-level drawing into page 1.
+  if (!Array.isArray(data.objects)) return data;
+  const page = migratePage({
+    name: "페이지 1",
+    objects: data.objects,
+    guides: data.guides,
+    layers: data.layers,
+    artboard: data.artboard,
+  }, 0);
+  return { ...data, pages: [page], activePageId: page.id };
+}
+
 /* ----- serialize: build the saved-file object from live state ----- */
+// Emits pages[]; the active page's live top-level 4 fields are substituted in so
+// unsaved edits on the current page are captured without a prior write-back call.
 function serialize(s) {
+  const pages = (s.pages || []).map((p) => {
+    const isActive = p.id === s.activePageId;
+    return {
+      id: p.id,
+      name: p.name,
+      meta: p.meta || { number: "", points: "" },
+      objects: isActive ? s.objects : p.objects,
+      guides: isActive ? s.guides : p.guides,
+      layers: isActive ? s.layers : p.layers,
+      artboard: isActive ? s.artboard : p.artboard,
+    };
+  });
   return {
     version: SCHEMA_VERSION,
-    objects: s.objects,
-    guides: s.guides,
-    layers: s.layers,
-    // artboard: page size (single source of truth for export/render dimensions).
-    artboard: s.artboard,
+    pages,
+    activePageId: s.activePageId,
     // groups omitted on purpose — derived from obj.groupId on load.
   };
 }
@@ -239,21 +311,40 @@ function saveProject(state) {
   URL.revokeObjectURL(url);
 }
 
+/* ----- defaultLayers: fresh 3-layer set for pages saved without layers ----- */
+function defaultLayers() {
+  return [
+    { id: 1, name: "레이어 1", visible: true },
+    { id: 2, name: "레이어 2", visible: true },
+    { id: 3, name: "레이어 3", visible: true },
+  ];
+}
+
 /* ----- applyLoaded: replace drawing data through the store (re-renders) ----- */
+// data.pages[] is guaranteed by migrate(). The active page's 4 fields are lifted
+// to the top level (the live drawing), the rest stay in s.pages — the same swap
+// structure pages.js maintains, so render/pick/etc. read the active page as before.
 function applyLoaded(state, data) {
   state.update((s) => {
-    // Replace the persistent drawing data.
-    s.objects = data.objects;
-    s.guides = Array.isArray(data.guides)
-      ? data.guides.filter((guide) => guide && (guide.axis === "x" || guide.axis === "y")
-          && typeof guide.position === "number")
-      : [];
-    s.layers = data.layers;
-    // Restore artboard; older files (no artboard field) default to 90×60.
-    s.artboard = (data.artboard && typeof data.artboard.w === "number"
-                  && typeof data.artboard.h === "number")
-      ? { w: data.artboard.w, h: data.artboard.h }
-      : { ...DEFAULT_ARTBOARD };
+    const pages = data.pages.map((p) => ({
+      id: p.id,
+      name: p.name,
+      meta: p.meta || { number: "", points: "" },
+      objects: Array.isArray(p.objects) ? p.objects : [],
+      guides: Array.isArray(p.guides) ? p.guides : [],
+      layers: Array.isArray(p.layers) && p.layers.length ? p.layers : defaultLayers(),
+      artboard: p.artboard || { ...DEFAULT_ARTBOARD },
+    }));
+    s.pages = pages;
+    const active = pages.find((p) => p.id === data.activePageId) || pages[0];
+    s.activePageId = active.id;
+
+    // Lift the active page's data to the live top-level fields.
+    s.objects = active.objects;
+    s.guides = active.guides;
+    s.layers = active.layers;
+    s.artboard = active.artboard;
+
     // Groups are derived from groupId — rebuild rather than trust the file.
     rebuildGroups(s);
 
@@ -264,6 +355,7 @@ function applyLoaded(state, data) {
     s.selectedGuideId = null;
     s.targetedId = null;
     s.draft = null;
+    s.draftText = null;
 
     // Keep activeLayerId valid against the loaded layers.
     if (!s.layers.some((l) => l.id === s.activeLayerId)) {
@@ -281,14 +373,16 @@ function openProject(state, file) {
       const raw = JSON.parse(reader.result);
       const data = migrate(raw);
 
-      // Structural sanity check before touching live state.
+      // Structural sanity check before touching live state. migrate() guarantees
+      // a pages[] array (legacy single-page files are wrapped into one page).
       if (
         !data ||
         typeof data !== "object" ||
-        !Array.isArray(data.objects) ||
-        !Array.isArray(data.layers)
+        !Array.isArray(data.pages) ||
+        data.pages.length === 0 ||
+        !data.pages.every((p) => p && Array.isArray(p.objects))
       ) {
-        throw new Error("필요한 데이터(objects/layers) 형식이 올바르지 않습니다.");
+        throw new Error("필요한 데이터(pages) 형식이 올바르지 않습니다.");
       }
 
       applyLoaded(state, data);

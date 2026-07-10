@@ -29,6 +29,7 @@ import { initToolHint } from "./tool-hint.js?v=0.54.14";
 import { initPersonalObjects } from "./personal-objects.js?v=0.54.14";
 import { initBulkEdit } from "./bulk-edit.js?v=0.54.14";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.14";
+import { initPages } from "./pages.js?v=0.54.14";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -155,6 +156,9 @@ initProjectIO(state, svg);
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
+
+/* ----- 다중 페이지: 하단 탭 바(추가/복제/이름변경/순서/삭제) + 스왑 전환 ----- */
+initPages(state);
 
 /* ----- rulers: top + left ruler canvases synced to viewport ----- */
 initRuler(svg, state);
