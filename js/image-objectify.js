@@ -354,6 +354,25 @@ export function initImageObjectify(state) {
       try {
         const ctx = sourceCanvas.getContext("2d");
         const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+        // 사전 게이트: 사진·스캔처럼 어두운 잉크 비율이 과도하게 높은 이미지는 대량 잉크로
+        // 오판돼 벡터화가 메인 스레드를 수십 초~분 프리징시킨다. 벡터화 전에 어두운 픽셀
+        // 비율을 재서 상한(55%)을 넘으면 조기 중단하고 안내한다.
+        {
+          const d = imageData.data;
+          let ink = 0, opaque = 0;
+          for (let p = 0; p < d.length; p += 4) {
+            if (d[p + 3] < 16) continue; // 투명 픽셀 제외
+            opaque++;
+            const lum = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
+            if (lum < 128) ink++;
+          }
+          const ratio = opaque ? ink / opaque : 0;
+          if (ratio > 0.55) {
+            setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(ratio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
+            analyzeButton.disabled = false;
+            return;
+          }
+        }
         analysis = vectorizeImage(imageData, currentOptions());
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {

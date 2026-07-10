@@ -352,6 +352,9 @@ function readImageFile(file, dropPos, state) {
       const y = Math.min(Math.max(center.y - h / 2, minY), artboardH / 2 - h);
       let objectId;
       state.update((s) => {
+        // 이미지 삽입을 undo 스택에 기록(예전엔 누락돼 Ctrl+Z가 삽입 이전의 다른 작업까지
+        // 한꺼번에 되돌렸음 — 클립보드 붙여넣기 경로와 동일하게 스냅샷 push + redo clear).
+        const snap = JSON.parse(JSON.stringify(s.objects));
         const newObj = applyNewObjectStyleDefaults({
           id: `obj_${Date.now().toString(36)}_img${++_imgIdCounter}`,
           type: "image",
@@ -374,6 +377,8 @@ function readImageFile(file, dropPos, state) {
         });
         objectId = newObj.id;
         s.objects.push(newObj);
+        s.undoStack.push(snap);
+        s.redoStack = [];
         s.selectedIds = [newObj.id];
         s.targetedId = null;
         s.activeTool = "V";

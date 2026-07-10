@@ -8,6 +8,7 @@
 
 import { state } from "../state.js?v=0.54.14";
 import { renderCoordplane } from "../render/coordplane.js?v=0.54.14";
+import { sampleFunctionPoints } from "./sampler.js?v=0.54.14";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
@@ -225,10 +226,26 @@ function commit() {
     if (!o) return;
     const snap = JSON.parse(JSON.stringify(st.objects));
     let changed = false;
+    let rangeChanged = false;
+    const RANGE_KEYS = new Set(["xMin", "xMax", "yMin", "yMax"]);
     for (const k of DRAFT_FIELDS) {
-      if (_draft[k] !== undefined && o[k] !== _draft[k]) { o[k] = _draft[k]; changed = true; }
+      if (_draft[k] !== undefined && o[k] !== _draft[k]) {
+        if (RANGE_KEYS.has(k)) rangeChanged = true;
+        o[k] = _draft[k]; changed = true;
+      }
     }
     if (!changed) return;
+    // 평면 범위가 바뀌면 이 평면에 속한 함수그래프의 baked 좌표가 옛 눈금 기준이라
+    // 어긋난다 → 새 평면 기준으로 재샘플링한다(정의역은 새 x범위로 클램프).
+    if (rangeChanged) {
+      for (const fg of st.objects) {
+        if (fg.type !== "funcgraph" || fg.planeId !== o.id) continue;
+        const dMin = Math.max(o.xMin, Math.min(fg.domainMin, fg.domainMax));
+        const dMax = Math.min(o.xMax, Math.max(fg.domainMin, fg.domainMax));
+        const { points } = sampleFunctionPoints(fg.expr, dMin, dMax, o);
+        if (points && points.length >= 2) { fg.points = points; fg.domainMin = dMin; fg.domainMax = dMax; }
+      }
+    }
     st.undoStack.push(snap);
     st.redoStack = [];
   });

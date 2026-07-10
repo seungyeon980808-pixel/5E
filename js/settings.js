@@ -192,6 +192,7 @@ function validateSettingsPayload(raw) {
 // 반환: 반영된 키 배열.
 function applyImportedSettings(data) {
   const applied = [];
+  const failed = [];
   for (const key of PERSONAL_KEYS) {
     if (!(key in data)) continue;
     const value = data[key];
@@ -207,14 +208,21 @@ function applyImportedSettings(data) {
     }
     if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
 
-    localStorage.setItem(key, value);
-    applied.push(key);
+    // 키별 try/catch — 한 항목이 용량 초과 등으로 실패해도 나머지 항목은 계속 반영하고,
+    // 실패한 키는 모아 호출부가 사용자에게 안내할 수 있게 한다(예전엔 예외가 던져져 이후
+    // 항목이 침묵 중단됐음).
+    try {
+      localStorage.setItem(key, value);
+      applied.push(key);
+    } catch (_) {
+      failed.push(key);
+    }
   }
 
   // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
   if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
 
-  return applied;
+  return { applied, failed };
 }
 
 // theme를 리로드 없이 즉시 반영(main.js initTheme의 동작을 그대로 재현).
@@ -246,9 +254,13 @@ function importSettingsFile(file) {
       alert("올바른 5E 설정 파일이 아닙니다. 설정은 변경되지 않았습니다.");
       return;
     }
-    const applied = applyImportedSettings(valid.data);
+    const { applied, failed } = applyImportedSettings(valid.data);
     if (applied.length === 0) {
-      alert("불러올 수 있는 설정 항목이 없습니다. 설정은 변경되지 않았습니다.");
+      alert(
+        failed.length
+          ? "저장 공간이 부족해 설정을 반영하지 못했습니다. 설정은 변경되지 않았습니다."
+          : "불러올 수 있는 설정 항목이 없습니다. 설정은 변경되지 않았습니다."
+      );
       return;
     }
     // 기본값 설정(phyDraw.defaults)은 새 도형 생성 시 참조되므로 즉시 반영되지만,
@@ -256,7 +268,8 @@ function importSettingsFile(file) {
     const needsReopenNote = applied.includes(DEFAULTS_KEY);
     alert(
       "설정을 불러왔습니다." +
-      (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "")
+      (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "") +
+      (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "")
     );
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");

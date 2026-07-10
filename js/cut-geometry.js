@@ -10,6 +10,25 @@
 // 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
+import { curveBezierSeg, curveBezierSegClosed, evalBezier } from "./geometry.js?v=0.54.14";
+
+// curve 객체의 렌더된 스플라인을 폴리라인으로 샘플링(제어점 직선이 아니라 실제 곡선
+// 기준으로 잘리게). render/core.js의 curveSamplePoints와 동일한 Catmull-Rom 제어점 사용.
+function curveSample(o, samplesPerSeg = 12) {
+  const pts = o.points || [];
+  const n = pts.length;
+  if (n < 2) return pts.map((p) => ({ x: p.x, y: p.y }));
+  if (n === 2) return [{ x: pts[0].x, y: pts[0].y }, { x: pts[1].x, y: pts[1].y }];
+  const closed = o.closed === true && n >= 3;
+  const out = [{ x: pts[0].x, y: pts[0].y }];
+  const segCount = closed ? n : n - 1;
+  for (let i = 0; i < segCount; i++) {
+    const seg = closed ? curveBezierSegClosed(pts, i) : curveBezierSeg(pts, i);
+    for (let s = 1; s <= samplesPerSeg; s++) out.push(evalBezier(seg, s / samplesPerSeg));
+  }
+  return out;
+}
+
 function round3(v) { return Math.round(v * 1000) / 1000; }
 function dist2(ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; return dx * dx + dy * dy; }
 
@@ -79,7 +98,8 @@ function trianglePolygon(o) {
 // 객체 → 점 배열(월드). line은 [p1,p2], polyline/curve는 points, 도형은 다각형화.
 function objPoints(o) {
   if (o.type === "line") return [{ x: o.p1.x, y: o.p1.y }, { x: o.p2.x, y: o.p2.y }];
-  if (o.type === "polyline" || o.type === "curve") return (o.points || []).map((p) => ({ x: p.x, y: p.y }));
+  if (o.type === "curve") return curveSample(o);
+  if (o.type === "polyline") return (o.points || []).map((p) => ({ x: p.x, y: p.y }));
   if (o.type === "ellipse") return ellipsePolygon(o);
   if (o.type === "rect") return rectPolygon(o);
   if (o.type === "triangle") return trianglePolygon(o);
@@ -216,10 +236,12 @@ export function cutKnife(o, a, b) {
     for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
     arcA.push(c1.pt);
     const arcB = [c1.pt];
-    for (let k = (c1.seg + 1) % pts.length; k !== (c0.seg + 1) % pts.length; k = (k + 1) % pts.length) {
-      arcB.push(pts[k]);
-      if (arcB.length > pts.length + 2) break;
-    }
+    // 두 교차점이 같은 세그먼트(c0.seg===c1.seg)에 있으면 start===end라 while 루프가
+    // 0회 실행돼 도형 대부분이 소실됐다. 순회 횟수를 미리 계산해(같은 세그먼트면 N,
+    // 즉 나머지 전체를 한 바퀴) 그만큼 정점을 도는 카운트 루프로 교체.
+    const stepsB = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+    let kB = (c1.seg + 1) % pts.length;
+    for (let s = 0; s < stepsB; s++) { arcB.push(pts[kB]); kB = (kB + 1) % pts.length; }
     arcB.push(c0.pt);
     const A = dedupe(arcA), B = dedupe(arcB);
     // 채운 조각은 면적을 가지려면 3점 이상 필요(현으로 닫히므로). 획 조각은 2점이면 충분.
@@ -298,10 +320,11 @@ export function cutFreehand(o, path) {
   const arcAInterior = [];
   for (let k = c0.seg + 1; k <= c1.seg; k++) arcAInterior.push(pts[k]);
   const arcBInterior = [];
-  for (let k = (c1.seg + 1) % pts.length; k !== (c0.seg + 1) % pts.length; k = (k + 1) % pts.length) {
-    arcBInterior.push(pts[k]);
-    if (arcBInterior.length > pts.length + 2) break;
-  }
+  // 같은 세그먼트(c0.seg===c1.seg)일 때 0회 실행되던 버그를 카운트 루프로 교체
+  // (같은 세그먼트면 N = 나머지 전체를 한 바퀴).
+  const stepsBI = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+  let kBI = (c1.seg + 1) % pts.length;
+  for (let s = 0; s < stepsBI; s++) { arcBInterior.push(pts[kBI]); kBI = (kBI + 1) % pts.length; }
   const fillHalves = isFilledRegion(o);
   if (!fillHalves) {
     // 윤곽선: 두 열린 호(절단 경로는 버림) — 기존 칼 동작과 동일.

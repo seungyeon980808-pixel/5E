@@ -18,7 +18,7 @@ import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./sna
 import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.14";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.14";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.14";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES } from "./object-types.js?v=0.54.14";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=0.54.14";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -457,6 +457,16 @@ function snapLineEndpoint(anchor, point) {
 }
 
 function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
+  // Rotated box objects (SHAPE_TYPES carry a `rotation` field; lines/polylines
+  // bake rotation into their points and have none): the handle math below runs in
+  // the object's UNROTATED local frame, so the world-space drag delta must be
+  // rotated by -rotation first, otherwise the resize goes the wrong direction.
+  if (orig.rotation) {
+    const a = -orig.rotation * Math.PI / 180;
+    const c = Math.cos(a), s = Math.sin(a);
+    const rx = dx * c - dy * s, ry = dx * s + dy * c;
+    dx = rx; dy = ry;
+  }
   // anglearc: a single-DOF symbol ??resizing scales the RADIUS, vertex anchored.
   // Reuse the SAME per-handle box math on the arc's vertex-centered square bbox,
   // then map the resulting box size back to a radius (avg half-extent so every
@@ -717,7 +727,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
     h = MIN_SIZE; if (ratio > 0 && isFinite(ratio)) w = h * ratio;
   }
 
-  const sx = w / box0.w, sy = h / box0.h;
+  const sx = box0.w ? w / box0.w : 1, sy = box0.h ? h / box0.h : 1;
   const mapPt = (px, py) => ({ x: x + (px - box0.x) * sx, y: y + (py - box0.y) * sy });
 
   for (const obj of objs) {
@@ -780,6 +790,9 @@ export function initTransform(svg, state) {
   window.addEventListener("keydown", (e) => {
     const t = e.target;
     if (isEditingFieldTarget(t)) return;
+    // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
+    // 단축키가 새어 들어가지 않게 차단한다.
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
 
     const s = state.get();
     const selectedIds = s.selectedIds || [];
@@ -1527,7 +1540,7 @@ export function initTransform(svg, state) {
           if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler" || orig.type === "pendulum") {
             obj.p1 = memberRot(orig.p1.x, orig.p1.y);
             obj.p2 = memberRot(orig.p2.x, orig.p2.y);
-          } else if (orig.type === "polyline" || orig.type === "curve") {
+          } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
             obj.points = orig.points.map((p) => memberRot(p.x, p.y));
           } else if (orig.type === "anglearc") {
             // vertex rotates about the pivot; spin lives in startAngle (screen-CW

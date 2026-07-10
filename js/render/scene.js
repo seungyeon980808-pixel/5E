@@ -347,6 +347,14 @@ export function render(state) {
           box.setAttribute("stroke-width", "0.4");
           box.setAttribute("stroke-dasharray", "0.6 0.6");
           box.style.stroke = _selColor;
+          // getBBox()는 요소 자신의 rotate 변환을 반영하지 않으므로 회전된 텍스트/수식은
+          // 선택 외곽선이 회전 전 위치에 남는다 → 렌더와 동일한 rotate를 박스에도 적용.
+          // (text는 앵커 obj.x/obj.y, formula는 박스 중심이 피벗)
+          if (sel.rotation) {
+            const px = sel.type === "formula" ? sel.x + (sel.w || 0) / 2 : sel.x;
+            const py = sel.type === "formula" ? sel.y + (sel.h || 0) / 2 : sel.y;
+            box.setAttribute("transform", `rotate(${sel.rotation} ${px} ${py})`);
+          }
           scene.appendChild(box);
         } catch (_) { /* not laid out yet */ }
       }
@@ -407,7 +415,10 @@ export function render(state) {
   // ----- selection handles (DESIGN 5-2: fixed 10 CSS px = 10/zoom world units) -----
   if (_selIds.length === 1) {
     const handleSel = renderObjectById(state, _selIds[0]);
-    if (handleSel && !state.targetedId) {
+    // 숨긴 레이어의 객체에는 핸들을 그리지 않는다(보이지 않는 객체가 변형되는 것 방지).
+    const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
+    const _hVisible = !(_hLayer && _hLayer.visible === false);
+    if (handleSel && _hVisible && !state.targetedId) {
       renderHandles(handleSel, scene, getZoom(), state.activeTool);
     }
   } else if (_selIds.length > 1 && !state.targetedId) {
@@ -568,7 +579,9 @@ function renderGrid(state) {
   const majorStroke = `rgba(0,0,0,${opacity.toFixed(2)})`;
   const minorStroke = `rgba(0,0,0,${(opacity * 0.5).toFixed(2)})`;
 
-  const STEP  = state.grid.interval ?? 10;
+  // 음수/0/빈값이 들어오면(입력칸 min 속성은 타이핑을 못 막음) x가 매회 감소하며
+  // x<=xMax가 영원히 참이 돼 무한 루프로 탭이 정지한다 → 하한 1로 클램프.
+  const STEP  = Math.max(1, Number(state.grid.interval) || 10);
   const MAJOR = STEP * 5;
 
   // Vertical lines (x = constant)

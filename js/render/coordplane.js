@@ -168,7 +168,7 @@ function renderCoordplane(obj) {
   if (obj.showTicks) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
-      for (let k = tr.kStart; k <= tr.kEnd; k++) {
+      if (tr.kEnd - tr.kStart <= GRID_MAX_LINES) for (let k = tr.kStart; k <= tr.kEnd; k++) {
         if (k === 0 || (!bothSides && k < 0) || atEdgeX(k * tr.step)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addLine(vx, worldY0 - tHalf, vx, worldY0 + tHalf, color, sw);
@@ -176,7 +176,7 @@ function renderCoordplane(obj) {
     }
     if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
-      for (let k = tr.kStart; k <= tr.kEnd; k++) {
+      if (tr.kEnd - tr.kStart <= GRID_MAX_LINES) for (let k = tr.kStart; k <= tr.kEnd; k++) {
         if (k === 0 || (!bothSides && k < 0) || atEdgeY(k * tr.step)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addLine(worldX0 - tHalf, vy, worldX0 + tHalf, vy, color, sw);
@@ -202,7 +202,7 @@ function renderCoordplane(obj) {
   if (obj.showTickLabels) {
     if (xAxisVisible) {
       const tr = tickRange(xMin, xMax, obj.gridStepX || 1);
-      for (let k = tr.kStart; k <= tr.kEnd; k++) {
+      if (tr.kEnd - tr.kStart <= GRID_MAX_LINES) for (let k = tr.kStart; k <= tr.kEnd; k++) {
         if (k === 0 || (!bothSides && k < 0) || atEdgeX(k * tr.step)) continue;
         const vx = worldXFromMathX(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), vx, worldY0 + tHalf + numSize * 1.05, "middle", "hanging");
@@ -210,7 +210,7 @@ function renderCoordplane(obj) {
     }
     if (hasYArm && yAxisVisible) {
       const tr = tickRange(yMin, yMax, obj.gridStepY || 1);
-      for (let k = tr.kStart; k <= tr.kEnd; k++) {
+      if (tr.kEnd - tr.kStart <= GRID_MAX_LINES) for (let k = tr.kStart; k <= tr.kEnd; k++) {
         if (k === 0 || (!bothSides && k < 0) || atEdgeY(k * tr.step)) continue;
         const vy = worldYFromMathY(P, k * tr.step);
         addNumber(fmtTick(k * tr.step), worldX0 - tHalf - numSize * 0.5, vy, "end", "middle");
@@ -260,9 +260,29 @@ function renderCoordplane(obj) {
 /* ===== FUNCGRAPH (step 3): a formula-driven open curve =====
  * points[] are already baked to WORLD mm by the sampler, so rendering is just the
  * open Catmull-Rom path — identical to an open `curve`. No arrowheads, no fill. */
+// 불연속(점근선/극점)에서 sampler가 run을 끊어 두면 flat points[]에 큰 점프가 남는다.
+// 그 점프를 그대로 이으면 존재하지 않는 가짜 세로선이 그려지므로, 인접 점 간 거리가
+// (중앙값의 8배 이상으로) 크게 튀는 지점에서 서브패스를 분리해 개별 M으로 그린다.
+function funcgraphPathD(pts) {
+  if (!pts || pts.length < 2) return catmullRomPath(pts || []);
+  const dists = [];
+  for (let i = 1; i < pts.length; i++) dists.push(Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+  const sorted = [...dists].sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)] || 0;
+  const thresh = med * 8;
+  let run = [pts[0]];
+  const parts = [];
+  for (let i = 1; i < pts.length; i++) {
+    if (med > 0 && dists[i - 1] > thresh) { parts.push(run); run = [pts[i]]; }
+    else run.push(pts[i]);
+  }
+  parts.push(run);
+  return parts.map((r) => catmullRomPath(r)).filter(Boolean).join(" ").trim();
+}
+
 function renderFuncgraph(obj) {
   const el = document.createElementNS(SVG_NS, "path");
-  el.setAttribute("d", catmullRomPath(obj.points || []));
+  el.setAttribute("d", funcgraphPathD(obj.points || []));
   el.setAttribute("fill", "none");
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);
