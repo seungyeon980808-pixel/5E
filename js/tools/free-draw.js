@@ -55,6 +55,17 @@ export function setupFreeDraw(svg, state) {
     });
   });
 
+  // 터치 환경에서 pointercancel(제스처 가로채기 등)이 오면 pointerup이 안 와서
+  // _fdActive가 영구히 남고 이후 이동만으로 유령 곡선이 쌓인다 → 상태를 리셋하고
+  // 진행 중이던 미리보기 draft도 지운다.
+  window.addEventListener("pointercancel", (e) => {
+    if (!_fdActive) return;
+    _fdActive = false;
+    _fdRaw = null;
+    try { _svg.releasePointerCapture(e.pointerId); } catch (_) {}
+    _state.update((s) => { s.draft = null; });
+  });
+
   window.addEventListener("pointerup", (e) => {
     if (!_fdActive) return;
     _fdActive = false;

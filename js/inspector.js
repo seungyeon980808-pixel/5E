@@ -409,7 +409,7 @@ export function initInspector(state) {
     // Text/image have no stroke/fill controls; text gets 글꼴, image gets 이미지.
     sec1.style.display = (isText || isImage) ? "none" : "";
     secText.style.display = isText ? "" : "none";
-    imageSection.style.display = "none";
+    imageSection.style.display = isImage ? "" : "none";
     if (isImage) {
       imageSection.open = true;
       const isBg = obj.mode === "background";
@@ -538,7 +538,9 @@ export function initInspector(state) {
     strokeCP.setValue(styleObj.strokeLevel ?? 0);
     const sw = styleObj.strokeWidth ?? 0.2;
     widthRange.value = sw;
-    widthNum.value =sw.toFixed(1);
+    // 입력 중인 필드를 populate()가 덮어쓰면 타이핑 값이 꼬인다 → 다른 숫자 입력과
+    // 동일하게 활성 요소일 때는 값 재작성을 건너뛴다.
+    if (document.activeElement !== widthNum) widthNum.value = sw.toFixed(1);
 
     // Section 2
     const fn = !!(styleObj.fillNone);

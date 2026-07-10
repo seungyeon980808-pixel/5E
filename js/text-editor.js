@@ -521,9 +521,15 @@ function looksLikeFormula(src) {
   // 일반 텍스트(+styled run) 경로를 타서 라벨의 "mgh" 같은 문자열이 수식이 되지 않는다.
   if (_textPlainOnly) return false;
   const value = String(src || "");
-  // 백슬래시 명령(\sin \theta \frac 등)이 있으면 항상 수식으로 판정한다. 이게 없으면
-  // "\sin"만 입력했을 때 직전 조작(_textFormulaMode)에 따라 수식/일반을 오가던 비결정 버그가 났다.
-  return _textFormulaMode || /\\[a-zA-Z]/.test(value) || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
+  // 여러 줄 입력은 수식으로 승격하지 않는다 — 수식 렌더는 줄바꿈을 한 줄로 뭉개
+  // 문자·줄이 소실되므로, 일반 문장("실험_1\n온도" 등)이 수식으로 오판되지 않게 한다.
+  if (/\n/.test(value)) return false;
+  const hasSyntax = /\\[a-zA-Z]/.test(value) || /\b(frac|vec|sqrt)\s*\{/.test(value) || /[_^]/.test(value);
+  // 수식 문법이 전혀 없으면 팔레트 클릭으로 켜졌던 수식 모드 플래그를 자동 해제한다
+  // (한 번 켜지면 세션 내내 순수 한글 문장까지 수식으로 저장되던 버그 방지).
+  if (!hasSyntax) _textFormulaMode = false;
+  // 백슬래시 명령(\sin \theta \frac 등)이 있으면 항상 수식으로 판정한다.
+  return _textFormulaMode || hasSyntax;
 }
 
 function _textValue() {

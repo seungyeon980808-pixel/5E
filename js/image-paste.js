@@ -3,7 +3,32 @@
 import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=0.54.14";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg"]);
+const MAX_IMG_DIM = 2000; // px — 초고해상도 붙여넣기 이미지는 이 상한으로 다운스케일
+const MAX_UNDO = 60;      // undo 스냅샷 개수 상한(딥클론 누적 메모리 폭증 방지)
 let _idCounter = 0;
+
+// 자연 크기가 상한을 넘으면 canvas로 축소 재인코딩해 저장(=undo 스냅샷에 딥클론되는
+// data URL 크기를 줄여 메모리 폭증을 막는다). 상한 이하면 원본 그대로.
+function downscaleIfNeeded(src, natural) {
+  const max = Math.max(natural.w, natural.h);
+  if (max <= MAX_IMG_DIM) return Promise.resolve({ src, size: natural });
+  const scale = MAX_IMG_DIM / max;
+  const w = Math.max(1, Math.round(natural.w * scale));
+  const h = Math.max(1, Math.round(natural.h * scale));
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve({ src: c.toDataURL("image/png"), size: { w, h } });
+      } catch (_) { resolve({ src, size: natural }); }
+    };
+    img.onerror = () => resolve({ src, size: natural });
+    img.src = src;
+  });
+}
 
 function isEditingFieldTarget(target) {
   if (!target) return false;
@@ -38,6 +63,7 @@ function insertImageObject(state, src, size) {
 
   state.update((s) => {
     s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+    if (s.undoStack.length > MAX_UNDO) s.undoStack.splice(0, s.undoStack.length - MAX_UNDO);
     s.redoStack = [];
     s.objects.push({
       id,
@@ -68,15 +94,17 @@ function insertImageObject(state, src, size) {
 /* 외부 모듈용(기출 라이브러리 등): dataURL을 즉시 이미지 객체로 삽입.
  * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다. */
 export async function insertImageFromSrc(state, src) {
-  const size = await loadImageSize(src);
-  insertImageObject(state, src, size);
+  const natural = await loadImageSize(src);
+  const scaled = await downscaleIfNeeded(src, natural);
+  insertImageObject(state, scaled.src, scaled.size);
 }
 
 export function initImagePaste(state, svg) {
   async function insertFromSrc(src) {
     try {
-      const size = await loadImageSize(src);
-      insertImageObject(state, src, size);
+      const natural = await loadImageSize(src);
+      const scaled = await downscaleIfNeeded(src, natural);
+      insertImageObject(state, scaled.src, scaled.size);
     } catch (_) {
       // Decode failure: silently abort.
     }

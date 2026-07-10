@@ -169,8 +169,20 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       if (!svgEl) continue;
       try {
         const bb = svgEl.getBBox();
-        if (p.x >= bb.x - tol && p.x <= bb.x + bb.width + tol &&
-            p.y >= bb.y - tol && p.y <= bb.y + bb.height + tol) return o.id;
+        // getBBox()는 요소 자신의 rotate 변환을 반영하지 않는다 → 회전된 텍스트/수식은
+        // 클릭점을 앵커(피벗) 기준 -rotation으로 역회전해 회전 전 로컬 좌표로 비교해야
+        // 실제 보이는 위치에서 선택된다. (text 피벗=x/y, formula 피벗=박스 중심)
+        let hx = p.x, hy = p.y;
+        if (o.rotation) {
+          const px = o.type === "formula" ? o.x + (o.w || 0) / 2 : o.x;
+          const py = o.type === "formula" ? o.y + (o.h || 0) / 2 : o.y;
+          const r = -o.rotation * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+          const ddx = p.x - px, ddy = p.y - py;
+          hx = px + ddx * c - ddy * s;
+          hy = py + ddx * s + ddy * c;
+        }
+        if (hx >= bb.x - tol && hx <= bb.x + bb.width + tol &&
+            hy >= bb.y - tol && hy <= bb.y + bb.height + tol) return o.id;
       } catch (_) { /* element not in layout yet */ }
       continue;
     }

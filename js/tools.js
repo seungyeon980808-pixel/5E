@@ -159,6 +159,10 @@ export function armSymbol(symbolId, tool, variant) {
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
   if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
   _activeSymbolId = symbolId;
+  // 같은 배치 도구 안에서 소자만 바꾸면(예: 저항→전지) setActiveTool이 조기 반환해
+  // 진행 중이던 첫 단자 클릭 draft가 남는다 → 도구 전환 여부와 무관하게 항상 폐기.
+  clearClickLocals();
+  _state.update((s) => { s.draft = null; });
   setActiveTool(tool);
   syncButtons(_state.get().activeTool);
 }

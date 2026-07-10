@@ -32,13 +32,19 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
   const hi = Math.max(domainMin, domainMax);
   if (!(hi > lo)) return { points: [], error: "정의역이 비어 있습니다" };
 
-  // Collect runs of consecutive finite samples; a non-finite value breaks the run.
+  // 평면의 표시 y범위 — 이 밖으로 나가는 값은 run을 끊어(평면 밖으로 돌출하거나 점근선을
+  // 가로지르는 가짜 세로선이 그려지지 않게) 렌더러가 별도 서브패스로 그리게 한다.
+  const yLo = Math.min(plane.yMin, plane.yMax);
+  const yHi = Math.max(plane.yMin, plane.yMax);
+
+  // Collect runs of consecutive finite, in-range samples; a non-finite OR out-of-range
+  // value breaks the run.
   const runs = [];
   let run = [];
   for (let i = 0; i <= samples; i++) {
     const mx = lo + (hi - lo) * (i / samples);
     const my = fn(mx);
-    if (Number.isFinite(my)) {
+    if (Number.isFinite(my) && my >= yLo && my <= yHi) {
       run.push({ x: worldXFromMathX(plane, mx), y: worldYFromMathY(plane, my) });
     } else if (run.length) {
       runs.push(run);

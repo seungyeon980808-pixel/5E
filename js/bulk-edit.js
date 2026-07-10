@@ -79,16 +79,17 @@ const FIELDS = [
   },
   {
     key: "textSize", type: "number", label: "글씨 크기", unit: "pt", step: 1, uniDefault: 10,
-    has: (o) => o.type === "text" || typeof o.labelSize === "number",
+    // formula도 fontSize로 글자 크기를 가지므로 함께 포함(기존엔 text만 반영됐음).
+    has: (o) => o.type === "text" || o.type === "formula" || typeof o.labelSize === "number",
     setUni: (o, v) => {
       const mm = ptToMm(Math.max(MIN_TEXT_PT, v));
-      if (o.type === "text") o.fontSize = mm;
+      if (o.type === "text" || o.type === "formula") o.fontSize = mm;
       if (typeof o.labelSize === "number") o.labelSize = mm;
     },
     setDelta: (o, d) => {
       const dmm = ptToMm(d) - ptToMm(0);
       const minMm = ptToMm(MIN_TEXT_PT);
-      if (o.type === "text" && typeof o.fontSize === "number") o.fontSize = Math.max(minMm, o.fontSize + dmm);
+      if ((o.type === "text" || o.type === "formula") && typeof o.fontSize === "number") o.fontSize = Math.max(minMm, o.fontSize + dmm);
       if (typeof o.labelSize === "number") o.labelSize = Math.max(minMm, o.labelSize + dmm);
     },
   },
@@ -285,5 +286,8 @@ export function initBulkEdit(state) {
     renderFields();
     syncTargetText();
     _overlay.hidden = false;
+    // 모달 내부로 포커스를 옮겨야 ESC 키가 오버레이 keydown 핸들러에 도달하고,
+    // Delete가 뒤편 캔버스로 새지 않는다.
+    (_overlay.querySelector("#bulk-apply") || _overlay.querySelector(".modal-input"))?.focus();
   });
 }

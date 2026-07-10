@@ -32,7 +32,10 @@ function load() {
   } catch (_) { return []; }
 }
 function save(list) {
-  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (_) { /* ignore */ }
+  // 성공 여부를 반환 → 호출부가 용량 초과(QuotaExceededError) 등 실패를 감지해 사용자에게
+  // 알릴 수 있게 한다(예전엔 조용히 삼켜 저장 실패를 못 알아챘음).
+  try { localStorage.setItem(KEY, JSON.stringify(list)); return true; }
+  catch (_) { return false; }
 }
 /* 현재 과목에서 보여줄 항목 (과목 미기록 = 옛 데이터 → 모든 과목에서 표시) */
 function visibleItems() {
@@ -139,7 +142,10 @@ function saveCurrentSelection() {
       savedAt: new Date().toISOString(),
       objects: JSON.parse(JSON.stringify(objs)),
     });
-    save(list);
+    if (!save(list)) {
+      showAlert("저장 공간이 부족해 오브젝트를 저장하지 못했습니다. 이미지가 큰 오브젝트를 줄이거나 기존 항목을 삭제한 뒤 다시 시도하세요.", { title: "오브젝트 저장 실패" });
+      return;
+    }
     renderLibrary();
   });
 }

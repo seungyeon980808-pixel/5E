@@ -23,6 +23,52 @@ import { renderObject, makeFillPattern } from "./render.js?v=0.54.14";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
 
+/* ----- PNG pHYs(DPI) 청크 삽입 -----
+ * canvas.toBlob은 해상도(pHYs)를 기록하지 않아 뷰어가 96dpi로 오인 → 한글/워드에 약 3배
+ * 크기로 삽입된다. IHDR 뒤에 pHYs 청크(픽셀/미터, 단위=1)를 넣어 실제 DPI를 새긴다. */
+const _CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function _crc32(bytes) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) c = _CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function insertPngPhys(buffer, dpi) {
+  const src = new Uint8Array(buffer);
+  // PNG 시그니처(8) + IHDR(길이4+타입4+데이터13+CRC4 = 25) 뒤(=33)에 삽입.
+  const PNG_SIG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+  for (let i = 0; i < 8; i++) if (src[i] !== PNG_SIG[i]) return buffer; // PNG 아님 → 원본 유지
+  const insertAt = 33;
+  const ppm = Math.round(dpi / 0.0254); // 인치당 dpi → 미터당 픽셀
+  const chunk = new Uint8Array(21); // 길이4 + "pHYs"4 + 데이터9 + CRC4
+  const dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9);            // 데이터 길이 = 9
+  chunk[4] = 0x70; chunk[5] = 0x48; chunk[6] = 0x59; chunk[7] = 0x73; // "pHYs"
+  dv.setUint32(8, ppm);         // ppu X
+  dv.setUint32(12, ppm);        // ppu Y
+  chunk[16] = 1;                // 단위 = 미터
+  dv.setUint32(17, _crc32(chunk.subarray(4, 17))); // CRC(타입+데이터)
+  const out = new Uint8Array(src.length + chunk.length);
+  out.set(src.subarray(0, insertAt), 0);
+  out.set(chunk, insertAt);
+  out.set(src.subarray(insertAt), insertAt + chunk.length);
+  return out.buffer;
+}
+// PNG blob에 DPI를 새겨 새 blob으로 반환(실패 시 원본).
+async function pngBlobWithDpi(blob, dpi) {
+  try {
+    const buf = await blob.arrayBuffer();
+    return new Blob([insertPngPhys(buf, dpi)], { type: "image/png" });
+  } catch (_) { return blob; }
+}
+
 /* ----- default export filename: local date/time to the minute (YYYYMMDD_HHmm) -----
  * Shared by the export dialog and the save fallbacks so the timestamp format is
  * defined once. Example: new Date(2026,5,30,21,40) → "20260630_2140". */
@@ -37,10 +83,49 @@ export function getDefaultExportFilename(ext) {
   return e ? `${formatExportTimestamp()}.${e}` : formatExportTimestamp();
 }
 
-/* ----- NO font embedding: text uses the system gothic stack by NAME ----- */
-// The default font is a system stack (돋움 / Apple SD Gothic Neo / Malgun Gothic),
-// so SVG/PNG export carries only the font-family string and renders from the
-// font installed on the exporting machine — no @font-face, no base64 inlining.
+/* ----- webfont embedding for export -----
+ * 기본 한글 텍스트는 시스템 고딕 스택(이름 기반)이라 임베딩이 필요 없지만, 수식/물리량
+ * 텍스트에 쓰는 웹폰트(Latin Modern Roman 정자·이탤릭, 함초롬바탕)는 SVG-as-image의 격리
+ * 문맥에서 문서 웹폰트를 못 써 폴백(Times/serif)으로 렌더돼 글꼴·간격이 어긋났다. 그래서
+ * 폰트 파일을 base64로 인라인한 @font-face를 export SVG의 <defs>에 넣어 편집 화면과 같은
+ * 글꼴로 내보낸다. 파일이 없으면(선택적 폰트) 조용히 건너뛰어 기존 폴백 동작을 유지한다. */
+const EMBED_FONTS = [
+  { family: "Latin Modern Roman", style: "normal", url: "fonts/lmroman10-regular.woff2" },
+  { family: "Latin Modern Roman", style: "italic", url: "fonts/lmroman10-italic.woff2" },
+  { family: "HamchoromBatang",    style: "normal", url: "fonts/HamchoromBatang.woff2" },
+];
+let _fontCss = "";          // 캐시된 @font-face CSS(base64). 사용 가능한 폰트가 없으면 "".
+let _fontCssPromise = null;
+
+async function _fileToBase64(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("font fetch failed");
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  let bin = "";
+  const CH = 0x8000;
+  for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+  return btoa(bin);
+}
+
+// 폰트를 한 번만 받아 base64 @font-face로 캐시한다. export 전에 await하면 임베딩이 보장되고,
+// 캐시가 비어 있으면(첫 동기 호출 등) 임베딩 없이 기존처럼 폴백 렌더된다.
+export function ensureEmbeddedFonts() {
+  if (_fontCssPromise) return _fontCssPromise;
+  _fontCssPromise = (async () => {
+    const parts = [];
+    for (const f of EMBED_FONTS) {
+      try {
+        const b64 = await _fileToBase64(f.url);
+        parts.push(`@font-face{font-family:"${f.family}";font-style:${f.style};font-weight:normal;src:url(data:font/woff2;base64,${b64}) format("woff2");}`);
+      } catch (_) { /* 폰트 파일 없음 → 건너뜀(기존 폴백 유지) */ }
+    }
+    _fontCss = parts.join("\n");
+    return _fontCss;
+  })();
+  return _fontCssPromise;
+}
+// 모듈 로드 시 미리 받아 두어(비동기) 이후 동기 export 경로도 캐시를 쓸 수 있게 한다.
+ensureEmbeddedFonts();
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
 function isReferenceImage(obj) {
@@ -122,8 +207,14 @@ export function buildExportSvg(s, bounds = null, options = {}) {
   // viewBox = artboard region exactly ??off-page content is cropped.
   svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
 
-  // ----- defs: artboard clip + per-object fill patterns -----
+  // ----- defs: 웹폰트 @font-face(있으면) + artboard clip + per-object fill patterns -----
   const defs = document.createElementNS(SVG_NS, "defs");
+
+  if (_fontCss) {
+    const style = document.createElementNS(SVG_NS, "style");
+    style.textContent = _fontCss;
+    defs.appendChild(style);
+  }
 
   const clip = document.createElementNS(SVG_NS, "clipPath");
   clip.setAttribute("id", "artboard-clip");
@@ -163,6 +254,7 @@ export async function exportSvg(state, filename, bounds = null, options = {}) {
   // Ask for the save location first, while still inside the user gesture.
   const handle = await pickSaveHandle(name, { mime: "image/svg+xml", ext: ".svg", description: "SVG 이미지" });
   if (handle === null) return; // user cancelled the save dialog
+  await ensureEmbeddedFonts(); // 편집 화면과 같은 웹폰트로 내보내지도록 임베딩 준비
   const svg = buildExportSvg(state.get(), bounds, options);
   const source = new XMLSerializer().serializeToString(svg);
   // XML prolog keeps the file valid as a standalone .svg document.
@@ -237,9 +329,11 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
  * 성공 시 true. (SVG는 클립보드 규격상 지원되지 않아 PNG만) */
 export async function copyPngToClipboard(state, dpi = 300, bounds = null, options = {}) {
   if (!navigator.clipboard || typeof ClipboardItem === "undefined") return false;
+  await ensureEmbeddedFonts();
   const result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
-  const blob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
-  if (!blob) return false;
+  const rawBlob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
+  if (!rawBlob) return false;
+  const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록
   await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
   return true;
 }
@@ -251,6 +345,7 @@ export async function exportPng(state, filename, dpi, bounds = null, options = {
   const handle = await pickSaveHandle(name, { mime: "image/png", ext: ".png", description: "PNG 이미지" });
   if (handle === null) return; // user cancelled the save dialog
 
+  await ensureEmbeddedFonts();
   let result;
   try {
     result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
@@ -258,8 +353,9 @@ export async function exportPng(state, filename, dpi, bounds = null, options = {
     alert("PNG로 내보내는 중 오류가 발생했습니다.");
     return;
   }
-  result.canvas.toBlob((blob) => {
-    if (!blob) return;
+  result.canvas.toBlob(async (rawBlob) => {
+    if (!rawBlob) return;
+    const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록 → HWP/워드 삽입 크기 정상
     if (handle) {
       writeHandle(handle, blob).catch(() => downloadBlob(blob, name));
     } else {

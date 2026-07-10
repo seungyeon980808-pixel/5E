@@ -143,6 +143,11 @@ initGaugeSection(state);
   const undoBtn = document.getElementById("undo-btn");
   const redoBtn = document.getElementById("redo-btn");
   if (!undoBtn || !redoBtn) return;
+  // mousedown 시 기본 포커스 이동(blur)을 막는다 → 텍스트/수식 편집 중 버튼을 눌러도
+  // 편집 중이던 입력이 blur로 커밋된 직후 그 스냅샷을 undo가 되돌려 입력이 증발하는
+  // 문제를 방지(편집기가 포커스를 유지한 채 실행취소가 동작).
+  undoBtn.addEventListener("mousedown", (e) => e.preventDefault());
+  redoBtn.addEventListener("mousedown", (e) => e.preventDefault());
   undoBtn.addEventListener("click", () => undo(state));
   redoBtn.addEventListener("click", () => redo(state));
   // Reflect availability on every state change (history changes via update()).
@@ -245,7 +250,8 @@ initDataPlot();
   });
   if (interval) {
     interval.addEventListener("input", () => {
-      state.update((s) => { s.grid.interval = Number(interval.value); });
+      // 음수/0/빈값이 렌더러로 들어가면 격자 루프가 무한 반복해 탭이 멈춘다 → 하한 1로 클램프.
+      state.update((s) => { s.grid.interval = Math.max(1, Number(interval.value) || 10); });
     });
   }
   if (centerBtn) {
