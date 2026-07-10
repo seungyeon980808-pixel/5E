@@ -7,8 +7,11 @@
  * page의 4필드를 top-level로 꺼내오는" 스왑. 그래서 render/pick/transform/snap
  * 등은 무수정으로 동작한다.
  *
- * page 기록: { id, name, meta:{ number, points }, objects, guides, layers, artboard }.
+ * page 기록: { id, name, objects, guides, layers, artboard }.
+ * (meta 필드는 하위호환을 위해 로드/저장 시 보존만 하고 UI에는 노출하지 않는다.)
  */
+
+import { showPrompt, showConfirm } from "./ui-dialogs.js?v=0.54.14";
 
 let _seq = 0;
 function newPageId() {
@@ -78,7 +81,7 @@ export function initPages(state) {
 }
 
 function pagesSignature(s) {
-  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name, p.meta?.number, p.meta?.points]))
+  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name]))
     + "|" + s.activePageId;
 }
 
@@ -153,32 +156,42 @@ function duplicatePage(state) {
 }
 
 /* ----- 삭제(최소 1개 유지) ----- */
-function deletePage(state, id) {
+async function deletePage(state, id) {
   const s0 = state.get();
   if ((s0.pages || []).length <= 1) return;
-  const p = findPage(s0, id);
-  if (!p) return;
-  if (!confirm(`'${p.name}' 페이지를 삭제할까요? 되돌릴 수 없습니다.`)) return;
+  const p0 = findPage(s0, id);
+  if (!p0) return;
+  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n되돌릴 수 없습니다.`, {
+    title: "페이지 삭제", okText: "삭제", cancelText: "취소",
+  });
+  if (!ok) return;
 
-  const wasActive = s0.activePageId === id;
-  const idx = s0.pages.indexOf(p);
-  const neighbor = s0.pages[idx + 1] || s0.pages[idx - 1];
+  // await 동안 상태가 바뀌었을 수 있으므로 다시 읽는다.
+  const s = state.get();
+  if ((s.pages || []).length <= 1) return;
+  const p = findPage(s, id);
+  if (!p) return;
+  const wasActive = s.activePageId === id;
+  const idx = s.pages.indexOf(p);
+  const neighbor = s.pages[idx + 1] || s.pages[idx - 1];
 
   if (wasActive && neighbor) {
     // 이웃 페이지를 top-level로 끌어온 뒤 대상 제거.
     switchPage(state, neighbor.id);
   }
-  state.update((s) => {
-    s.pages = s.pages.filter((pg) => pg.id !== id);
-    if (!findPage(s, s.activePageId)) s.activePageId = s.pages[0] ? s.pages[0].id : null;
+  state.update((st) => {
+    st.pages = st.pages.filter((pg) => pg.id !== id);
+    if (!findPage(st, st.activePageId)) st.activePageId = st.pages[0] ? st.pages[0].id : null;
   });
 }
 
-/* ----- 이름변경 ----- */
-function renamePage(state, id) {
+/* ----- 이름변경 (앱 양식 입력 다이얼로그) ----- */
+async function renamePage(state, id) {
   const p = findPage(state.get(), id);
   if (!p) return;
-  const name = prompt("페이지 이름", p.name);
+  const name = await showPrompt("", {
+    title: "페이지 이름 변경", value: p.name, placeholder: "페이지 이름", maxLength: 40,
+  });
   if (name == null) return;
   const trimmed = name.trim();
   state.update((s) => {
@@ -187,7 +200,7 @@ function renamePage(state, id) {
   });
 }
 
-/* ----- 순서변경(활성 페이지를 좌/우로) ----- */
+/* ----- 순서변경(페이지를 좌/우로) ----- */
 function movePage(state, id, dir) {
   state.update((s) => {
     const idx = s.pages.findIndex((p) => p.id === id);
@@ -198,54 +211,22 @@ function movePage(state, id, dir) {
   });
 }
 
-/* ----- 문항 메타(문항번호·배점) 갱신 ----- */
-function setMeta(state, id, key, value) {
-  state.update((s) => {
-    const p = findPage(s, id);
-    if (!p) return;
-    if (!p.meta) p.meta = { number: "", points: "" };
-    p.meta[key] = value;
-  });
-}
-
-/* ===== 탭 바 DOM ===== */
+/* ===== 탭 바 DOM (엑셀 시트 탭 방식) ===== */
 let _bar = null;      // 컨테이너(#page-tab-bar)
-let _tabsEl = null;   // 탭 목록
-let _metaEl = null;   // 문항 메타 입력 영역
+let _tabsEl = null;   // 탭 목록(가로 스크롤)
 
 function buildBar(state) {
   _bar = document.getElementById("page-tab-bar");
   if (!_bar) return;
   _bar.innerHTML = `
-    <div class="page-tabs" id="page-tabs"></div>
-    <div class="page-tab-actions">
-      <button type="button" id="page-add" title="새 페이지 추가">＋</button>
-      <button type="button" id="page-dup" title="현재 페이지 복제">⧉</button>
-      <button type="button" id="page-left" title="왼쪽으로 이동">◀</button>
-      <button type="button" id="page-right" title="오른쪽으로 이동">▶</button>
-    </div>
-    <div class="page-meta" id="page-meta">
-      <label>문항 <input type="text" id="page-meta-number" maxlength="8" placeholder="번호" /></label>
-      <label>배점 <input type="text" id="page-meta-points" maxlength="6" placeholder="점" /></label>
-    </div>`;
+    <div class="page-tabs" id="page-tabs" role="tablist"></div>
+    <button type="button" class="page-add-btn" id="page-add" title="새 페이지 추가" aria-label="새 페이지 추가">＋</button>`;
 
   _tabsEl = _bar.querySelector("#page-tabs");
-  _metaEl = _bar.querySelector("#page-meta");
-
   _bar.querySelector("#page-add").addEventListener("click", () => addPage(state));
-  _bar.querySelector("#page-dup").addEventListener("click", () => duplicatePage(state));
-  _bar.querySelector("#page-left").addEventListener("click", () => movePage(state, state.get().activePageId, -1));
-  _bar.querySelector("#page-right").addEventListener("click", () => movePage(state, state.get().activePageId, +1));
 
-  const numInput = _bar.querySelector("#page-meta-number");
-  const ptInput = _bar.querySelector("#page-meta-points");
-  numInput.addEventListener("input", () => setMeta(state, state.get().activePageId, "number", numInput.value));
-  ptInput.addEventListener("input", () => setMeta(state, state.get().activePageId, "points", ptInput.value));
-
-  // 탭 클릭/더블클릭/삭제 — 이벤트 위임(탭은 renderTabs가 매번 다시 그림).
+  // 탭 클릭=전환, 더블클릭=이름 변경, 우클릭=컨텍스트 메뉴(엑셀식).
   _tabsEl.addEventListener("click", (e) => {
-    const del = e.target.closest(".page-tab-del");
-    if (del) { deletePage(state, del.closest(".page-tab").dataset.id); return; }
     const tab = e.target.closest(".page-tab");
     if (tab) switchPage(state, tab.dataset.id);
   });
@@ -253,31 +234,80 @@ function buildBar(state) {
     const tab = e.target.closest(".page-tab");
     if (tab) renamePage(state, tab.dataset.id);
   });
+  _tabsEl.addEventListener("contextmenu", (e) => {
+    const tab = e.target.closest(".page-tab");
+    if (!tab) return;
+    e.preventDefault();
+    switchPage(state, tab.dataset.id);       // 우클릭한 탭을 활성화한 뒤 메뉴를 연다.
+    openContextMenu(state, tab.dataset.id, e.clientX, e.clientY);
+  });
 }
 
 function renderTabs(state) {
   if (!_tabsEl) return;
   const s = state.get();
   const active = s.activePageId;
-  _tabsEl.innerHTML = (s.pages || []).map((p, i) => {
-    const num = p.meta && p.meta.number ? p.meta.number : (i + 1);
+  _tabsEl.innerHTML = (s.pages || []).map((p) => {
     const isActive = p.id === active;
-    const nameHtml = escapeHtml(p.name);
-    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}" title="더블클릭하여 이름 변경">
-        <span class="page-tab-no">${escapeHtml(String(num))}</span>
-        <span class="page-tab-name">${nameHtml}</span>
-        <button type="button" class="page-tab-del" title="페이지 삭제" aria-label="페이지 삭제">×</button>
+    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}"
+        role="tab" aria-selected="${isActive}" title="${escapeHtml(p.name)} · 더블클릭 이름 변경 · 우클릭 메뉴">
+        <span class="page-tab-name">${escapeHtml(p.name)}</span>
       </div>`;
   }).join("");
+}
 
-  // 메타 입력을 활성 페이지 값으로 동기화(입력 중이 아닐 때만 덮어씀).
-  if (_metaEl) {
-    const p = findPage(s, active);
-    const numInput = _metaEl.querySelector("#page-meta-number");
-    const ptInput = _metaEl.querySelector("#page-meta-points");
-    if (p && numInput && document.activeElement !== numInput) numInput.value = (p.meta && p.meta.number) || "";
-    if (p && ptInput && document.activeElement !== ptInput) ptInput.value = (p.meta && p.meta.points) || "";
-  }
+/* ===== 우클릭 컨텍스트 메뉴 (복제·순서·삭제) ===== */
+let _menuEl = null;
+function closeContextMenu() {
+  if (_menuEl) { _menuEl.remove(); _menuEl = null; }
+  document.removeEventListener("mousedown", _onDocDown, true);
+  document.removeEventListener("keydown", _onDocKey, true);
+  window.removeEventListener("blur", closeContextMenu);
+}
+function _onDocDown(e) { if (_menuEl && !_menuEl.contains(e.target)) closeContextMenu(); }
+function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
+
+function openContextMenu(state, id, x, y) {
+  closeContextMenu();
+  const s = state.get();
+  const idx = (s.pages || []).findIndex((p) => p.id === id);
+  const count = (s.pages || []).length;
+  const items = [
+    { label: "이름 변경", act: () => renamePage(state, id) },
+    { label: "복제", act: () => duplicatePage(state) },
+    { sep: true },
+    { label: "왼쪽으로 이동", disabled: idx <= 0, act: () => movePage(state, id, -1) },
+    { label: "오른쪽으로 이동", disabled: idx >= count - 1, act: () => movePage(state, id, +1) },
+    { sep: true },
+    { label: "삭제", disabled: count <= 1, danger: true, act: () => deletePage(state, id) },
+  ];
+
+  const menu = document.createElement("div");
+  menu.className = "text-ctx-menu page-ctx-menu";
+  menu.innerHTML = items.map((it, i) =>
+    it.sep ? `<div class="page-ctx-sep"></div>`
+      : `<button type="button" class="text-ctx-item${it.danger ? " is-danger" : ""}" data-i="${i}"${it.disabled ? " disabled" : ""}>${it.label}</button>`
+  ).join("");
+  document.body.appendChild(menu);
+
+  // 화면 밖으로 나가지 않게 위치 보정.
+  const r = menu.getBoundingClientRect();
+  const px = Math.min(x, window.innerWidth - r.width - 8);
+  const py = Math.min(y, window.innerHeight - r.height - 8);
+  menu.style.left = `${Math.max(8, px)}px`;
+  menu.style.top = `${Math.max(8, py)}px`;
+
+  menu.addEventListener("click", (e) => {
+    const btn = e.target.closest(".text-ctx-item");
+    if (!btn || btn.disabled) return;
+    const it = items[Number(btn.dataset.i)];
+    closeContextMenu();
+    it.act();
+  });
+  _menuEl = menu;
+  document.addEventListener("mousedown", _onDocDown, true);
+  document.addEventListener("keydown", _onDocKey, true);
+  window.addEventListener("blur", closeContextMenu);
 }
 
 function escapeHtml(str) {

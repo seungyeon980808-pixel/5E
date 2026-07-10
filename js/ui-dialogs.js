@@ -46,3 +46,39 @@ export function showConfirm(message, { title = "확인", okText = "예", cancelT
     ],
   });
 }
+
+/* 텍스트 입력 다이얼로그(브라우저 prompt() 대체) → Promise<string|null>.
+ * 확인=입력값, 취소/Esc/바깥클릭=null. */
+export function showPrompt(message, { title = "입력", value = "", placeholder = "", okText = "확인", cancelText = "취소", maxLength } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    overlay.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
+        <h2 class="modal-title">${title}</h2>
+        <div class="modal-field">
+          ${message ? `<label class="modal-label">${message}</label>` : ""}
+          <input type="text" class="modal-input" />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn" data-act="cancel">${cancelText}</button>
+          <button type="button" class="modal-btn modal-btn-primary" data-act="ok">${okText}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const input = overlay.querySelector(".modal-input");
+    input.value = value;
+    if (placeholder) input.placeholder = placeholder;
+    if (maxLength) input.maxLength = maxLength;
+    const done = (val) => { overlay.remove(); resolve(val); };
+    overlay.querySelector('[data-act="ok"]').addEventListener("click", () => done(input.value));
+    overlay.querySelector('[data-act="cancel"]').addEventListener("click", () => done(null));
+    overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(null); });
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.stopPropagation(); done(null); }
+      if (e.key === "Enter") { e.preventDefault(); done(input.value); }
+    });
+    input.focus();
+    input.select();
+  });
+}
