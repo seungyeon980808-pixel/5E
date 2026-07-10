@@ -27,6 +27,7 @@ import { renderObject } from "./render.js?v=0.54.14";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.14";
 import { getSvgAsset } from "./svg-assets.js?v=0.54.14";
 import { openFunctionModal } from "./function-graph/modal.js?v=0.54.14";
+import { openDataPlotModal } from "./data-plot.js?v=0.54.14";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -56,6 +57,19 @@ export const TEMPLATES = {
     category: "공통",
     label: "함수 입력",
     keywords: ["함수", "그래프", "수식", "function", "graph", "sin", "cos", "log", "y=f(x)", "지수", "로그", "삼각"],
+    create: {},
+  },
+
+  /* DATA-PLOT — "데이터 표 → 산점도". kind "dataplot": 클릭 시 x·y 표 붙여넣기 모달을
+   * 연다(함수 입력과 동일 패턴). 삽입 경로(data-plot.js)가 선택된 좌표평면 위에, 없으면
+   * 데이터 범위에 맞춘 새 평면 위에 점 객체들 + 연결선을 만든다. 좌측엔 버튼이 없고
+   * '고급 기능' 섹션 + 오브젝트 검색으로만 진입하므로 hidden:true로 팔레트에서 뺀다. */
+  datatable: {
+    kind: "dataplot",
+    hidden: true,
+    category: "공통",
+    label: "데이터 표 → 산점도",
+    keywords: ["데이터", "데이터 표", "산점도", "표", "측정값", "실험", "scatter", "plot", "data", "table", "csv", "엑셀", "그래프"],
     create: {},
   },
 
@@ -508,6 +522,9 @@ export function activateTemplate(symbolId) {
   } else if (def.kind === "funcinput") {
     // 함수 입력: open the formula modal (input + live preview + confirm).
     openFunctionModal();
+  } else if (def.kind === "dataplot") {
+    // 데이터 표: open the x·y paste modal (parse + auto plane + points/line).
+    openDataPlotModal();
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};

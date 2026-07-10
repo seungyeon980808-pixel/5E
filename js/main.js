@@ -28,6 +28,7 @@ import { initSubjectObjects } from "./subject-objects.js?v=0.54.14";
 import { initToolHint } from "./tool-hint.js?v=0.54.14";
 import { initPersonalObjects } from "./personal-objects.js?v=0.54.14";
 import { initBulkEdit } from "./bulk-edit.js?v=0.54.14";
+import { initDataPlot } from "./data-plot.js?v=0.54.14";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.14";
 
 const svg = document.getElementById("canvas");
@@ -191,6 +192,9 @@ initPersonalObjects(state);
 
 /* ----- 전체 수정: 선택(없으면 전체) 오브젝트 속성 일괄 통일/증감 ----- */
 initBulkEdit(state);
+
+/* ----- 데이터 표 → 산점도: x·y 표 붙여넣기 → 좌표평면 위 점 + 연결선 ----- */
+initDataPlot();
 
 /* ===== TOOL PANEL: collapsible section toggle (event delegation) ===== */
 (function initToolSections() {
