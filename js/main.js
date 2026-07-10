@@ -30,6 +30,7 @@ import { initPersonalObjects } from "./personal-objects.js?v=0.54.14";
 import { initBulkEdit } from "./bulk-edit.js?v=0.54.14";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.14";
 import { initAutosave } from "./autosave.js?v=0.54.14";
+import { initPages } from "./pages.js?v=0.54.14";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -154,7 +155,11 @@ initGaugeSection(state);
 /* ----- project I/O: top-bar 저장/불러오기 buttons (editable JSON source) ----- */
 initProjectIO(state, svg);
 
-/* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 ----- */
+/* ----- 다중 페이지: 하단 탭 바(추가/복제/이름변경/순서/삭제) + 스왑 전환 ----- */
+initPages(state);
+
+/* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
+ * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 initAutosave(state);
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */

@@ -1671,3 +1671,46 @@ textarea.unified-text-input {
 .defaults-pbg-row .modal-input { min-width: 0; }
 .defaults-pbg-row #defaults-pbg-name { flex: 2 1 0; }
 .defaults-pbg-row #defaults-pbg-w, .defaults-pbg-row #defaults-pbg-h { flex: 1 1 0; }
+
+/* ===== PAGE TAB BAR (다중 아트보드 페이지 탭) ===== */
+.page-tab-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px; min-height: 34px;
+  border-top: 1px solid var(--c-border);
+  background: var(--c-bg, #f6f8fa);
+  overflow-x: auto;
+}
+.page-tabs { display: flex; align-items: center; gap: 4px; flex: 1 1 auto; min-width: 0; }
+.page-tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 8px; border: 1px solid var(--c-border); border-radius: 5px 5px 0 0;
+  background: transparent; color: var(--c-text); font-size: 12px; line-height: 1.4;
+  cursor: pointer; white-space: nowrap; user-select: none;
+}
+.page-tab:hover { background: var(--c-hover, rgba(0,0,0,0.05)); }
+.page-tab.is-active { background: var(--c-main, #0969da); color: #fff; border-color: var(--c-main, #0969da); }
+.page-tab-no {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 16px; height: 16px; padding: 0 3px; border-radius: 8px;
+  background: rgba(0,0,0,0.12); font-size: 10px; font-weight: 600;
+}
+.page-tab.is-active .page-tab-no { background: rgba(255,255,255,0.28); }
+.page-tab-name { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.page-tab-del {
+  border: none; background: transparent; color: inherit; cursor: pointer;
+  font-size: 13px; line-height: 1; padding: 0 2px; opacity: 0.55;
+}
+.page-tab-del:hover { opacity: 1; }
+.page-tab-actions { display: flex; gap: 2px; flex: none; }
+.page-tab-actions button {
+  border: 1px solid var(--c-border); background: transparent; color: var(--c-text);
+  border-radius: 4px; width: 24px; height: 24px; font-size: 13px; cursor: pointer;
+}
+.page-tab-actions button:hover { background: var(--c-hover, rgba(0,0,0,0.05)); }
+.page-meta { display: flex; gap: 8px; flex: none; font-size: 11px; color: var(--text-secondary); }
+.page-meta label { display: inline-flex; align-items: center; gap: 3px; }
+.page-meta input {
+  width: 44px; padding: 2px 4px; font-size: 11px;
+  border: 1px solid var(--c-border); border-radius: 4px;
+  background: var(--c-input-bg, #fff); color: var(--c-text);
+}

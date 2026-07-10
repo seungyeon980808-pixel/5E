@@ -76,6 +76,15 @@ function saveSnapshot(db, data) {
   });
 }
 
+/* ----- snapshotHasObjects: 페이지 여러 개 중 하나라도 객체가 있는지 -----
+ * serialize()가 다중 페이지(pages[]) 형식을 내보내므로(단일 objects[] 아님),
+ * "빈 도면" 판정은 모든 페이지를 훑어야 한다. */
+function snapshotHasObjects(data) {
+  return Array.isArray(data.pages) && data.pages.some(
+    (p) => p && Array.isArray(p.objects) && p.objects.length
+  );
+}
+
 /* ----- 복구 모달용 시각 포맷 ----- */
 function formatTime(ts) {
   try {
@@ -103,7 +112,7 @@ export async function initAutosave(state) {
   //     덮어쓰지 않는다.
   try {
     const latest = await getLatest(db);
-    if (latest && latest.data && Array.isArray(latest.data.objects) && latest.data.objects.length) {
+    if (latest && latest.data && snapshotHasObjects(latest.data)) {
       const ok = await showConfirm(
         `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
         { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
@@ -124,7 +133,7 @@ export async function initAutosave(state) {
     timer = setTimeout(() => {
       timer = null;
       const snap = serialize(s);
-      if (!snap.objects || snap.objects.length === 0) return;
+      if (!snapshotHasObjects(snap)) return;
       const json = JSON.stringify(snap);
       if (json === lastJson) return;
       lastJson = json;
