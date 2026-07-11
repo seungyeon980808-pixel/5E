@@ -260,7 +260,10 @@ body {
 
 /* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
 .subject-select {
-  height:28px; padding:0 8px; font-family:inherit; font-size:13px; font-weight:500;
+  height:28px; padding:0 8px; font-size:14px; font-weight:600;
+  /* 5E 브랜드(Georgia serif)와 어울리도록 한글 serif로 맞추고 가운데 정렬 */
+  font-family:"Noto Serif KR", Georgia, "Times New Roman", serif;
+  text-align:center; text-align-last:center;
   color:var(--text-primary); background:var(--bg-input);
   border:1px solid var(--accent); border-radius:6px; cursor:pointer;
 }
@@ -297,8 +300,9 @@ body {
 .tool-section-body-wide { grid-template-columns: 1fr; }
 .advanced-tool-btn {
   width: 100%;
-  padding: 9px 6px;
+  padding: 9px 10px;
   font: 500 13px/1.3 inherit;
+  text-align: left;
   color: var(--c-text);
   background: var(--btn-tool-bg);
   border: 1px solid var(--c-border);

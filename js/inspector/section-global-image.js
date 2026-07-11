@@ -20,7 +20,7 @@ export function buildGlobalImageSection(ctx) {
   bgSection.className = "insp-section insp-bg-section";
   const bgSummary = document.createElement("summary");
   bgSummary.className = "insp-summary";
-  bgSummary.textContent = "이미지";
+  bgSummary.textContent = "이미지 관리";
   bgSection.appendChild(bgSummary);
   const bgBody = document.createElement("div");
   bgBody.className = "insp-body";
