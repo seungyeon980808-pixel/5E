@@ -11,7 +11,7 @@
  * (meta 필드는 하위호환을 위해 로드/저장 시 보존만 하고 UI에는 노출하지 않는다.)
  */
 
-import { showPrompt, showConfirm } from "./ui-dialogs.js?v=0.54.14";
+import { showPrompt, showConfirm } from "./ui-dialogs.js?v=0.54.27";
 
 let _seq = 0;
 function newPageId() {

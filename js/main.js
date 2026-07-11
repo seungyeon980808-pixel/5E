@@ -7,44 +7,50 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.14";
-import { render } from "./render.js?v=0.54.14";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.14";
-import { initTools } from "./tools.js?v=0.54.14";
-import { initCutTool } from "./cut-tool.js?v=0.54.14";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.14";
-import { initInspector } from "./inspector.js?v=0.54.14";
-import { initProjectIO } from "./project-io.js?v=0.54.14";
-import { initExportDialog } from "./export-dialog.js?v=0.54.14";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.14";
-import { initSettings } from "./settings.js?v=0.54.14";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.14";
-import { initImagePaste } from "./image-paste.js?v=0.54.14";
-import { initImageCutout } from "./image-cutout.js?v=0.54.14";
-import { initExamLibrary } from "./exam-library.js?v=0.54.14";
-import { initTemplates } from "./templates.js?v=0.54.14";
-import { initObjectSearch } from "./search.js?v=0.54.14";
-import { initCommandPalette } from "./command-palette.js?v=0.54.14";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.14";
-import { initToolHint } from "./tool-hint.js?v=0.54.14";
-import { initPersonalObjects } from "./personal-objects.js?v=0.54.14";
-import { initBulkEdit } from "./bulk-edit.js?v=0.54.14";
-import { initDataPlot } from "./data-plot.js?v=0.54.14";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.14";
-import { initAutosave } from "./autosave.js?v=0.54.14";
-import { initPages } from "./pages.js?v=0.54.14";
+import { state } from "./state.js?v=0.54.27";
+import { render } from "./render.js?v=0.54.27";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.27";
+import { initTools } from "./tools.js?v=0.54.27";
+import { initCutTool } from "./cut-tool.js?v=0.54.27";
+import { initTransform, undo, redo } from "./transform.js?v=0.54.27";
+import { initInspector } from "./inspector.js?v=0.54.27";
+import { initProjectIO } from "./project-io.js?v=0.54.27";
+import { initExportDialog } from "./export-dialog.js?v=0.54.27";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.27";
+import { initSettings } from "./settings.js?v=0.54.27";
+import { initImageObjectify } from "./image-objectify.js?v=0.54.27";
+import { initImagePaste } from "./image-paste.js?v=0.54.27";
+import { initImageCutout } from "./image-cutout.js?v=0.54.27";
+import { initExamLibrary } from "./exam-library.js?v=0.54.27";
+import { initTemplates } from "./templates.js?v=0.54.27";
+import { initObjectSearch } from "./search.js?v=0.54.27";
+import { initCommandPalette } from "./command-palette.js?v=0.54.27";
+import { initSubjectObjects } from "./subject-objects.js?v=0.54.27";
+import { initToolHint } from "./tool-hint.js?v=0.54.27";
+import { initPersonalObjects } from "./personal-objects.js?v=0.54.27";
+import { initBulkEdit } from "./bulk-edit.js?v=0.54.27";
+import { initDataPlot } from "./data-plot.js?v=0.54.27";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.27";
+import { initAutosave } from "./autosave.js?v=0.54.27";
+import { initPages } from "./pages.js?v=0.54.27";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
 
 /* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
 (function initFullscreen() {
-  const app = document.querySelector(".app");
   const btn = document.getElementById("fullscreen-toggle");
-  if (!app || !btn) return;
+  if (!btn) return;
+
+  // 전체화면 대상은 .app이 아니라 "문서 전체"(documentElement)여야 한다.
+  // 모든 모달·오버레이·컨텍스트 메뉴는 document.body에 append되는데, .app만
+  // 전체화면으로 만들면 이 위젯들이 전체화면 요소(top layer) 뒤에 깔려 안 보인다
+  // (z-index로도 못 이긴다). 문서 전체를 전체화면으로 하면 body의 위젯이 전부
+  // 전체화면 안에 포함돼 정상적으로 뜬다.
+  const target = document.documentElement;
 
   const syncButton = () => {
-    const active = document.fullscreenElement === app;
+    const active = document.fullscreenElement === target;
     btn.setAttribute("aria-pressed", String(active));
     btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
     btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
@@ -52,7 +58,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   const toggleFullscreen = async () => {
     try {
       if (document.fullscreenElement) await document.exitFullscreen();
-      else await app.requestFullscreen();
+      else await target.requestFullscreen();
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
     }

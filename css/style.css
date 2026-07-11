@@ -151,10 +151,13 @@ body {
   min-height: 0; /* allow children to shrink */
 }
 
-.app:fullscreen {
-  width: 100vw;
-  height: 100vh;
+/* 전체화면 대상은 문서 루트(main.js 참고). 전체화면 배경만 보장하면 body가
+   이미 100vh flex 레이아웃으로 채우므로 .app/footer/위젯이 정상 배치된다. */
+:root:fullscreen {
   background: var(--bg-app);
+}
+:root:fullscreen body {
+  height: 100vh;
   overflow: hidden;
 }
 
@@ -404,7 +407,11 @@ body {
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0;
+  text-decoration: none;
+  cursor: pointer;
 }
+.app-brand:visited { color: var(--accent-2); }
+.app-brand:hover { color: var(--accent); }
 
 /* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
 .beta-label {
@@ -494,7 +501,8 @@ body {
   top: calc(100% + 6px);
   left: 0;
   z-index: 200;
-  min-width: 168px;
+  min-width: 230px;
+  width: max-content;
   display: flex;
   flex-direction: column;
   padding: 4px;
@@ -515,6 +523,7 @@ body {
   border-radius: 5px;
   padding: 7px 10px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .file-menu-item:hover { background: var(--btn-tool-hover); }
 
@@ -742,6 +751,167 @@ body {
   border-color: var(--accent);
 }
 .modal-btn-primary:hover { background: var(--accent-hover); }
+
+/* ===== DATA-PLOT: 데이터 자료변환 (미리보기 좌 · 입력 우, 2단) ===== */
+.dp-modal { width: min(980px, 96vw); }
+.dp-modal .modal-title { font-size: 18px; }
+.dp-desc { color: var(--text-secondary); font-size: 13.5px; line-height: 1.7; margin: 0 0 12px; }
+.dp-hint { color: var(--text-secondary); font-size: 12px; line-height: 1.6; margin-top: 8px; }
+.dp-body {
+  display: flex;
+  gap: 20px;
+  align-items: stretch;
+  flex-wrap: wrap;         /* 좁은 화면에서는 세로로 쌓임 */
+}
+.dp-left, .dp-right {
+  flex: 1 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 엑셀식 입력 그리드 — 좌측 번호칸 + 머리(조작변인/종속변인) 편집 입력칸 */
+.dp-grid-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.dp-grid { width: 100%; border-collapse: collapse; }
+.dp-grid th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-panel);
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+}
+.dp-grid th + th { border-left: 1px solid var(--border); }
+/* 좌측 번호 열(머리 코너 + 각 행 번호): 좁고 회색, 입력 불가 */
+.dp-corner, .dp-rownum {
+  width: 40px; min-width: 40px;
+  text-align: center;
+  color: var(--text-label);
+  background: var(--bg-panel);
+  font-size: 12.5px;
+  user-select: none;
+}
+.dp-corner { padding: 8px 0; font-weight: 600; }
+.dp-rownum { border-right: 1px solid var(--border); }
+/* 머리 입력칸: 입력 가능한 필드처럼 보이게 옅은 배경 + 회색 안내문 */
+.dp-head-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid transparent;
+  border-radius: 0;
+  padding: 9px 8px;
+  outline: none;
+  text-align: center;
+  cursor: text;
+}
+.dp-head-input::placeholder { color: var(--text-label); font-weight: 500; }
+.dp-head-input:focus { border-color: var(--accent); }
+.dp-grid td { position: relative; border-bottom: 1px solid var(--border); padding: 2px; }
+.dp-grid td.dp-rownum { padding: 0; }
+.dp-grid td + td { border-left: 1px solid var(--border); }
+.dp-grid tr:last-child td { border-bottom: 0; }
+.dp-cell-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 8px;
+  outline: none;
+  text-align: center;
+}
+.dp-cell-input:focus { border-color: var(--accent); background: var(--bg-input); }
+/* 드래그 범위 선택 · 자동채우기 미리보기 하이라이트 */
+.dp-cell-input.dp-cell-sel { background: rgba(9, 105, 218, 0.18); }
+.dp-cell-input.dp-fill-preview { background: rgba(9, 105, 218, 0.10); }
+/* 엑셀식 자동 채우기 핸들: 마지막 셀 우하단의 작은 사각형 */
+.dp-fill-handle {
+  position: absolute; right: 1px; bottom: 1px;
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border: 1px solid #fff;
+  border-radius: 1px;
+  cursor: crosshair;
+  z-index: 2;
+}
+.dp-grid tbody { user-select: none; }      /* 드래그 선택 중 번호칸 텍스트가 잡히지 않게 */
+.dp-cell-input { user-select: text; }      /* 셀 안 텍스트는 정상 선택/편집 가능 */
+.dp-grid tbody:focus { outline: none; }
+.dp-controls-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 8px; flex-wrap: wrap;
+}
+.dp-add-row-btn {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.dp-add-row-btn:hover { color: var(--text-primary); border-color: var(--accent); }
+.dp-count { font-size: 12.5px; color: var(--text-secondary); }
+.dp-count-warn { color: #d1242f; }
+.dp-check {
+  display: flex; align-items: center; gap: 7px;
+  margin-top: 11px;
+  font-size: 14px; color: var(--text-secondary);
+  cursor: pointer;
+}
+.dp-check input { width: 15px; height: 15px; }
+/* 눈금 간격 수동 지정(가로/세로) */
+.dp-step-row { display: flex; gap: 12px; margin-top: 12px; }
+.dp-step-field {
+  flex: 1 1 0; min-width: 0;
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 13px; color: var(--text-label);
+}
+.dp-step-input {
+  width: 100%; box-sizing: border-box;
+  font-family: inherit; font-size: 14.5px;
+  color: var(--text-primary); background: var(--bg-input);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 9px; outline: none;
+}
+.dp-step-input:focus { border-color: var(--accent); }
+
+/* 실시간 미리보기: 실제 출력과 동일한 흑백 도해 → 항상 흰 배경(종이처럼) */
+.dp-preview-label {
+  margin: 0 0 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+.dp-preview {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.dp-preview-svg { width: 100%; height: 100%; }
+.dp-preview-empty { color: #8b949e; font-size: 13px; padding: 0 12px; text-align: center; }
 
 .modal-image-paste {
   width: min(640px, calc(100vw - 40px));
@@ -986,6 +1156,9 @@ body {
   display: block;
   background: var(--bg-canvas);
   /* cursor hints for pan are set from viewport.js */
+  /* 터치 기기: 캔버스 위 손가락 제스처를 브라우저 스크롤/팬으로 뺏기지 않게 한다.
+     touch-drag.js가 이 터치를 마우스 이벤트로 변환해 그리기·이동을 처리한다. */
+  touch-action: none;
 }
 #canvas.is-panning { cursor: grabbing; }
 #canvas.space-held { cursor: grab; }
@@ -1462,9 +1635,8 @@ textarea.unified-text-input {
   white-space: nowrap;
 }
 .app-footer-credit strong {
-  color: var(--text-primary);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  color: inherit;
+  font-weight: inherit;
 }
 
 /* ===== STARTUP GUIDANCE MODAL ===== */
@@ -1683,7 +1855,7 @@ textarea.unified-text-input {
 }
 .page-tabs {
   display: flex; align-items: flex-end; gap: 2px;
-  flex: 1 1 auto; min-width: 0;
+  flex: 0 1 auto; min-width: 0;
   overflow-x: auto; overflow-y: hidden;
   scrollbar-width: thin;
 }

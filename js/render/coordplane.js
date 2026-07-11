@@ -15,10 +15,16 @@ import {
   grayHex,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
+  applySvgTextFont,
   catmullRomPath,
   applyDash,
-} from "./core.js?v=0.54.14";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.54.14";
+} from "./core.js?v=0.54.27";
+import { EQUATION_FONT_FAMILY, EQUATION_LETTER_SPACING } from "../state.js?v=0.54.27";
+import { renderFormula, measureFormula } from "../formula.js?v=0.54.27";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.54.27";
+
+// 축 이름에 수식 문법(_ ^ \ {)이 있으면 formula.js로 수식 렌더 대상(v_0, \theta 등).
+const LABEL_MATH_RE = /[_^\\{]/;
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
@@ -110,17 +116,20 @@ function renderCoordplane(obj) {
   // (no dashes poking into the one-cell axis margin, #3). The rectangle is bounded
   // by the outermost drawn grid lines; the origin sides (L자/직선) are the axes.
   if (obj.showGrid) {
+    // fullGrid(데이터 자료변환): 가장자리 칸까지 격자를 박스 전체에 채운다. 기본(평가원)은
+    // 한 칸 짧게(범위 [-5,5] → 격자 [-4,4]) 그려 축 화살표와 겹치지 않게 한다.
+    const full = !!obj.fullGrid;
     const gx = tickRange(xMin, xMax, obj.gridStepX || 1);
     const gy = tickRange(yMin, yMax, obj.gridStepY || 1);
-    // outermost non-edge grid multiples (one cell inside the range)
-    let gXhi = gx.kEnd * gx.step; if (atEdgeX(gXhi)) gXhi -= gx.step;
-    let gXlo = gx.kStart * gx.step; if (atEdgeX(gXlo)) gXlo += gx.step;
-    let gYhi = gy.kEnd * gy.step; if (atEdgeY(gYhi)) gYhi -= gy.step;
-    let gYlo = gy.kStart * gy.step; if (atEdgeY(gYlo)) gYlo += gy.step;
-    const rectTop   = worldYFromMathY(P, gYhi);
-    const rectBot   = bothSides ? worldYFromMathY(P, gYlo) : worldY0; // origin side = x-axis
-    const rectLeft  = bothSides ? worldXFromMathX(P, gXlo) : worldX0; // origin side = y-axis
-    const rectRight = worldXFromMathX(P, gXhi);
+    // outermost non-edge grid multiples (one cell inside the range); full이면 박스 끝까지.
+    let gXhi = gx.kEnd * gx.step; if (!full && atEdgeX(gXhi)) gXhi -= gx.step;
+    let gXlo = gx.kStart * gx.step; if (!full && atEdgeX(gXlo)) gXlo += gx.step;
+    let gYhi = gy.kEnd * gy.step; if (!full && atEdgeY(gYhi)) gYhi -= gy.step;
+    let gYlo = gy.kStart * gy.step; if (!full && atEdgeY(gYlo)) gYlo += gy.step;
+    const rectTop   = full ? top : worldYFromMathY(P, gYhi);
+    const rectBot   = full ? (bothSides ? bottom : worldY0) : (bothSides ? worldYFromMathY(P, gYlo) : worldY0);
+    const rectLeft  = full ? (bothSides ? left : worldX0) : (bothSides ? worldXFromMathX(P, gXlo) : worldX0);
+    const rectRight = full ? right : worldXFromMathX(P, gXhi);
     const gdash = Math.max(sw * 3.5, 0.7);
     const addGrid = (x1, y1, x2, y2) => {
       const l = document.createElementNS(SVG_NS, "line");
@@ -133,7 +142,7 @@ function renderCoordplane(obj) {
     };
     if (gx.kEnd - gx.kStart <= GRID_MAX_LINES) {
       for (let k = gx.kStart; k <= gx.kEnd; k++) {
-        if ((!bothSides && k < 0) || atEdgeX(k * gx.step)) continue; // 양의 구역만 + 한 칸 짧게
+        if ((!bothSides && k < 0) || (!full && atEdgeX(k * gx.step))) continue; // 양의 구역만 (+기본은 한 칸 짧게)
         const vx = worldXFromMathX(P, k * gx.step);
         if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
         addGrid(vx, rectTop, vx, rectBot);
@@ -141,7 +150,7 @@ function renderCoordplane(obj) {
     }
     if (hasYArm && gy.kEnd - gy.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
       for (let k = gy.kStart; k <= gy.kEnd; k++) {
-        if ((!bothSides && k < 0) || atEdgeY(k * gy.step)) continue;
+        if ((!bothSides && k < 0) || (!full && atEdgeY(k * gy.step))) continue;
         const vy = worldYFromMathY(P, k * gy.step);
         if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
         addGrid(rectLeft, vy, rectRight, vy);
@@ -191,8 +200,11 @@ function renderCoordplane(obj) {
     t.setAttribute("x", nx);
     t.setAttribute("y", ny);
     t.setAttribute("font-size", numSize);
-    // Upright serif numerals (math-axis convention); NOT the italic 물리량 font.
-    t.setAttribute("font-family", "'Times New Roman', 'IBM Plex Serif', serif");
+    // Upright numerals(math-axis convention); NOT the italic 물리량 font. 데이터 자료변환
+    // 평면은 앱 표준 수식 글꼴(Latin Modern, 정자)로 통일, 그 외는 기존 serif 유지.
+    t.setAttribute("font-family", obj.uprightMathFont
+      ? EQUATION_FONT_FAMILY
+      : "'Times New Roman', 'IBM Plex Serif', serif");
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("dominant-baseline", baseline);
@@ -220,13 +232,33 @@ function renderCoordplane(obj) {
 
   // ----- AXIS NAME LABELS (x / y) + ORIGIN (O) — equation font, toggleable -----
   const nameSize = obj.axisLabelSize ? Math.max(obj.axisLabelSize, 1) : Math.max(sw * 14, 3);
+  // 수식 문법이 든 축 이름은 formula.js로 렌더(v_0 → 아래첨자). 앵커/베이스라인은 측정 후 보정.
+  const addMathName = (text, lx, ly, anchor, baseline) => {
+    const fontHint = { family: EQUATION_FONT_FAMILY, weight: "normal", style: "italic" };
+    const m = measureFormula(text, nameSize, fontHint);
+    const left = anchor === "end" ? lx - m.w : anchor === "middle" ? lx - m.w / 2 : lx;
+    const top = baseline === "hanging" ? ly : baseline === "middle" ? ly - m.h / 2 : ly - m.ascent;
+    const gg = renderFormula({ source: text, x: left, y: top, fontSize: nameSize, fontFamily: EQUATION_FONT_FAMILY, fontStyle: "italic" });
+    // formula 글리프 색을 축 색으로 통일(투명 히트 rect는 건드리지 않음).
+    gg.querySelectorAll("text, tspan, path, line").forEach((el) => {
+      if (el.getAttribute("fill") !== "transparent") el.setAttribute("fill", color);
+    });
+    g.appendChild(gg);
+  };
   const addName = (text, lx, ly, anchor, baseline) => {
     if (!text) return;
+    if (obj.uprightMathFont && LABEL_MATH_RE.test(text)) { addMathName(text, lx, ly, anchor, baseline); return; }
     const t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("x", lx);
     t.setAttribute("y", ly);
     t.setAttribute("font-size", nameSize);
-    applyObjectLabelFont(t, obj.labelType);
+    // 데이터 자료변환: 축 이름/원점을 upright Latin Modern(라틴메쓰 정자)으로. 그 외 평면은
+    // 기존 물리량(이탤릭 수식) 글꼴 유지.
+    if (obj.uprightMathFont) {
+      applySvgTextFont(t, { family: EQUATION_FONT_FAMILY, style: "normal", letterSpacing: EQUATION_LETTER_SPACING });
+    } else {
+      applyObjectLabelFont(t, obj.labelType);
+    }
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("dominant-baseline", baseline);
