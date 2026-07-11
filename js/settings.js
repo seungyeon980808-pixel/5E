@@ -68,7 +68,24 @@ function saveDefaults(d) {
 const THEME_KEY = "theme";
 const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
 const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY];
+const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY];
+
+/* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
+ * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=.app zoom)이 전환된다. */
+const SCREEN_SIZES = new Set(["small", "medium", "large", "wide"]);
+const DEFAULT_SCREEN = "large";
+export function loadScreenSize() {
+  let v = DEFAULT_SCREEN;
+  try { v = localStorage.getItem(SCREEN_KEY) || DEFAULT_SCREEN; } catch (_) { /* ignore */ }
+  return SCREEN_SIZES.has(v) ? v : DEFAULT_SCREEN;
+}
+export function applyScreenSize(value) {
+  const v = SCREEN_SIZES.has(value) ? value : DEFAULT_SCREEN;
+  document.documentElement.setAttribute("data-screen", v);
+  try { localStorage.setItem(SCREEN_KEY, v); } catch (_) { /* ignore */ }
+  return v;
+}
 
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
 // 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.
@@ -133,12 +150,49 @@ async function saveJsonWithPicker(json, filename) {
 
 /* 설정 저장 위젯: 무엇을 저장할지 고르고 → 저장 위치 지정 */
 const EXPORT_CHOICES = [
-  { key: DEFAULTS_KEY,          label: "기본값 설정 (선 굵기·글꼴 등)" },
+  { key: DEFAULTS_KEY,          label: "오브젝트 설정 (선 굵기·글꼴 등)" },
   { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
   { key: SUBJECT_KEY,           label: "과목 선택" },
+  { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
   { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
 ];
+
+/* 환경 설정 대화상자: 화면 크기 프리셋 선택(즉시 적용) */
+const SCREEN_OPTS = [
+  { v: "small",  label: "소형",   hint: "작은 노트북·태블릿" },
+  { v: "medium", label: "중형",   hint: "일반 노트북" },
+  { v: "large",  label: "대형",   hint: "데스크톱 모니터 (기본)" },
+  { v: "wide",   label: "와이드", hint: "대형·와이드 모니터" },
+];
+function openScreenDialog() {
+  const cur = loadScreenSize();
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
+      <h2 class="modal-title">환경 설정</h2>
+      <p class="objectify-description" style="margin:0 0 10px;">
+        화면 크기에 맞춰 글씨와 도구 패널의 크기를 조정합니다. 선택하면 바로 적용됩니다.</p>
+      ${SCREEN_OPTS.map((o) => `
+        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
+          <input type="radio" name="screen-size" value="${o.v}" ${o.v === cur ? "checked" : ""} />
+          <span class="modal-label" style="margin:0;">${o.label}
+            <span style="color:var(--text-secondary);font-weight:400;">· ${o.hint}</span></span>
+        </label>`).join("")}
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-primary" id="scr-close">닫기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector("#scr-close").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  overlay.querySelectorAll('input[name="screen-size"]').forEach((radio) => {
+    radio.addEventListener("change", () => { if (radio.checked) applyScreenSize(radio.value); });
+  });
+}
 function openExportDialog() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -317,7 +371,7 @@ function buildModal() {
 
   overlay.innerHTML = `
     <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
-      <h2 class="modal-title" id="defaults-title">기본값 설정</h2>
+      <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
       <p class="defaults-notice">이 값들은 저장은 되지만 아직 새 도형 생성·격자 표시에는
         반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
 
@@ -427,6 +481,11 @@ function buildModal() {
 /* ----- initSettings: wire dropdown + 기본값 설정 modal ----- */
 export function initSettings(state) {
   initSettingsMenu();
+
+  // 환경 설정(화면 크기): 저장값을 즉시 적용 + 드롭다운 항목 배선
+  applyScreenSize(loadScreenSize());
+  const screenBtn = document.getElementById("open-screen");
+  if (screenBtn) screenBtn.addEventListener("click", openScreenDialog);
 
   const overlay = buildModal();
   const fields = {

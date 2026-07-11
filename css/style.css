@@ -176,6 +176,16 @@ body {
 .panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
 .panel-right { border-left: 1px solid var(--c-border); }
 
+/* ===== 환경 설정: 화면 크기 프리셋 → 앱 UI 스케일(zoom) =====
+   .app 전체에 zoom을 걸어 글씨·도구 패널·간격을 한 번에 확대/축소한다.
+   캔버스 좌표 변환(getScreenCTM)은 zoom을 반영하므로 그리기·클릭은 그대로 동작한다.
+   기본(미설정/대형)=1.0. 세부 비율·패널폭은 추후 조정 가능. */
+.app { zoom: var(--ui-zoom, 1); }
+:root[data-screen="small"]  { --ui-zoom: 0.80; --panel-left-w: 120px; }
+:root[data-screen="medium"] { --ui-zoom: 0.90; }
+:root[data-screen="large"]  { --ui-zoom: 1.00; }
+:root[data-screen="wide"]   { --ui-zoom: 1.08; --panel-left-w: 145px; }
+
 .panel-title {
   font-weight: 600;
   font-size: 13px;
