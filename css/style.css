@@ -427,6 +427,44 @@ body {
 .app-brand:visited { color: var(--accent-2); }
 .app-brand:hover { color: var(--accent); }
 
+/* ===== Pro/Lite 모드 전환 버튼 (5E 브랜드 오른쪽) =====
+   글씨 색·크기는 5E 브랜드(과목별 accent-2, serif italic)를 따라간다. */
+.mode-toggle-btn {
+  display: inline-flex; align-items: center;
+  height: 28px; margin-left: 2px; padding: 0 7px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic; font-size: 18px; font-weight: 600; line-height: 1;
+  color: var(--accent-2);
+  background: transparent; border: 0; border-radius: 6px; cursor: pointer;
+}
+.mode-toggle-btn:hover { color: var(--accent); background: var(--btn-tool-hover); }
+
+/* ===== LITE 모드 =====
+   구조는 그대로 두고 CSS로만 숨기거나 키운다(display:none / 크기 조정). */
+/* 좌측 패널을 조금 넓혀 큰 도구 버튼이 들어갈 공간 확보 */
+:root[data-mode="lite"] { --panel-left-w: 176px; }
+/* Lite 숨김 항목: 과목별/퍼스널 오브젝트(+저장) · 전체 통일/수정 · 오브젝트 검색 */
+:root[data-mode="lite"] #subject-section,
+:root[data-mode="lite"] #personal-section,
+:root[data-mode="lite"] #personal-object-save,
+:root[data-mode="lite"] #bulk-edit-open,
+:root[data-mode="lite"] #object-search-trigger { display: none !important; }
+/* 레이어: 1만 표시(활성 레이어 고정은 view-mode.js가 처리) */
+:root[data-mode="lite"] .insp-layer-row:not([data-layer-id="1"]) { display: none; }
+/* 도구 버튼: 크게 + 아이콘 아래 단축키 표시 */
+:root[data-mode="lite"] #tool-list .tool-btn {
+  flex-direction: column; aspect-ratio: auto; min-height: 54px;
+  padding: 8px 4px 6px; gap: 4px;
+}
+:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-ico { width: 23px; height: 23px; }
+:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: 19px; }
+:root[data-mode="lite"] #tool-list .tool-btn[data-sc]::after {
+  content: attr(data-sc);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  color: var(--text-secondary); letter-spacing: .02em;
+}
+:root[data-mode="lite"] #tool-list .tool-btn.is-active[data-sc]::after { color: rgba(255, 255, 255, .85); }
+
 /* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
 .beta-label {
   color: #d1242f;

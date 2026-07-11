@@ -28,6 +28,7 @@ import { initCommandPalette } from "./command-palette.js?v=0.54.27";
 import { initSubjectObjects } from "./subject-objects.js?v=0.54.27";
 import { initToolHint } from "./tool-hint.js?v=0.54.27";
 import { initTooltips } from "./tooltip.js?v=0.54.27";
+import { initViewMode } from "./view-mode.js?v=0.54.27";
 import { initPersonalObjects } from "./personal-objects.js?v=0.54.27";
 import { initBulkEdit } from "./bulk-edit.js?v=0.54.27";
 import { initDataPlot } from "./data-plot.js?v=0.54.27";
@@ -214,6 +215,9 @@ initToolHint(state);
 
 /* ----- 커스텀 툴팁: 네이티브 title 을 앱 톤 툴팁으로 대체 ----- */
 initTooltips();
+
+/* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
+initViewMode(state);
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
