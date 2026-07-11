@@ -183,8 +183,9 @@
                     data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장 <span class="menu-kbd">Ctrl+S</span></button>
             <button id="project-open" class="file-menu-item" type="button" role="menuitem"
                     data-desc="저장해 둔 프로젝트 파일을 열어 이어서 편집합니다.">프로젝트 불러오기</button>
-            <button id="image-import" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="JPG, PNG 등의 이미지 파일을 캔버스에 불러와 배치합니다.">이미지 불러오기</button>
+            <button id="image-import" class="file-menu-item file-menu-parent" type="button" role="menuitem"
+                    aria-haspopup="true" aria-expanded="false"
+                    data-desc="여러 이미지를 한 페이지에 모아 넣거나, 페이지별로 하나씩 나눠 불러옵니다.">이미지 불러오기 <span class="menu-caret" aria-hidden="true">▸</span></button>
             <button id="image-export" class="file-menu-item" type="button" role="menuitem"
                     data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기 <span class="menu-kbd">Alt+P</span></button>
             <div id="file-menu-desc" class="file-menu-desc">파일 작업을 선택하세요.</div>

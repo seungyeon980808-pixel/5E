@@ -52,13 +52,15 @@ function fitToArtboard(natural, artboard) {
   return { w: natural.w * scale, h: natural.h * scale };
 }
 
-function insertImageObject(state, src, size) {
+function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
-  const target = getLastMouseWorld() ||
-    { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 };
-  const x = target.x - fitted.w / 2;
-  const y = target.y - fitted.h / 2;
+  // place.at 지정 시 그 지점(예: 아트보드 원점)을 기준으로, 아니면 마지막 마우스/뷰포트 중앙.
+  const target = (place && place.at) ? place.at : (getLastMouseWorld() ||
+    { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
+  const off = (place && place.offset) || { dx: 0, dy: 0 };
+  const x = target.x - fitted.w / 2 + off.dx;
+  const y = target.y - fitted.h / 2 + off.dy;
   const id = `obj_${Date.now().toString(36)}_img${++_idCounter}`;
 
   state.update((s) => {
@@ -91,12 +93,13 @@ function insertImageObject(state, src, size) {
   });
 }
 
-/* 외부 모듈용(기출 라이브러리 등): dataURL을 즉시 이미지 객체로 삽입.
- * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다. */
-export async function insertImageFromSrc(state, src) {
+/* 외부 모듈용(기출 라이브러리·이미지 불러오기 등): dataURL을 즉시 이미지 객체로 삽입.
+ * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다.
+ * opts.at={x,y} = 삽입 기준점(예: 아트보드 원점), opts.offset={dx,dy} = 카스케이드용. */
+export async function insertImageFromSrc(state, src, opts) {
   const natural = await loadImageSize(src);
   const scaled = await downscaleIfNeeded(src, natural);
-  insertImageObject(state, scaled.src, scaled.size);
+  insertImageObject(state, scaled.src, scaled.size, opts);
 }
 
 export function initImagePaste(state, svg) {

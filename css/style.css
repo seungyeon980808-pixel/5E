@@ -531,6 +531,21 @@ body {
 }
 .file-menu-item:hover { background: var(--btn-tool-hover); }
 
+/* 서브메뉴가 있는 항목(이미지 불러오기)의 우측 화살표 */
+.menu-caret { margin-left: auto; padding-left: 14px; color: var(--text-secondary); font-size: 12px; }
+/* 우측 플라이아웃 서브메뉴 (파일 메뉴 리스트 기준 오른쪽으로 펼침) */
+.file-submenu {
+  position: absolute; left: calc(100% + 4px); top: 0; z-index: 210;
+  min-width: 150px;
+  display: flex; flex-direction: column;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+.file-submenu[hidden] { display: none; }
+
 /* Bottom description area: compact, muted, themed via vars (dark/light safe). */
 .file-menu-desc {
   margin-top: 4px;
