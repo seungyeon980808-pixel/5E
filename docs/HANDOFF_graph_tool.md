@@ -1,10 +1,42 @@
 # 인수인계서 — 5E 그래프 도구 (feat/graph-tool)
 
-작성: 2026-07-11. 이전 세션 컨텍스트 소진으로 새 세션에서 이어서 작업.
+작성: 2026-07-11, 갱신: 2026-07-12. 컨텍스트 소진 시 새 세션에서 이어서 작업.
 
 ---
 
-## 0-L. 최신: v0.54.30-graph — x이름 더 왼쪽 + 꺾은선 완성=Enter/우클릭 (2026-07-12, 미커밋)
+## ★★ 다음 세션 시작 (이걸 먼저 읽으세요) — 2026-07-12 커밋 완료
+
+### 상태
+- **커밋 완료**: `feat/graph-tool` HEAD = **`32bfa9a`** ("feat: 평가원 그래프 통합 도구…"). base=`0c9bd7a`.
+- **미푸시** (사용자 지시 대기). 워크트리 `51_5E/branches/5E_graph_dev`, 버전 `v0.54.30-graph`, 전 모듈 `?v=0.54.30`.
+- 이번 대규모 세션 = 그래프 도구를 **거의 완성** 단계까지. 사용자 피드백 15+회 반복 반영(0-B~0-L 로그 참고).
+
+### 새 세션 시작 프롬프트(예시)
+```
+branches/5E_graph_dev 워크트리(feat/graph-tool, HEAD 32bfa9a)에서 그래프 도구를 이어서 만든다.
+docs/HANDOFF_graph_tool.md 상단 "다음 세션 시작"과 GRAPH_TOOL_SPEC.md, 메모리 5e-graph-tool을
+읽고 현재 상태 파악. 다음 작업 = ⑩구간 화살표 방향 4옵션(중간2/끝2). 코드 건드리기 전 파일 먼저 읽기.
+Do not ask clarifying questions unless blocked. Make reasonable assumptions and proceed.
+```
+- 프리뷰: launch.json "graph-dev"(포트 8300). ⚠️ **뷰포트 0폭** → 스크린샷·화면클릭 시뮬 불가. 검증은 `preview_eval`로 ①순수함수 dynamic import ②DOM 구조/속성 ③렌더 SVG 직렬화(아티팩트로 사용자에 시각 제시). **파일 수정 후 `?v=` 전역 bump 필수**(sed: `find js -name '*.js' -exec sed -i -E 's/\?v=0\.54\.30/?v=0.54.31/g' {} + && sed -i ... index.html` + 하단 버전문자열).
+
+### 다음 작업 (우선순위)
+1. **⑩ 구간 화살표 방향 4옵션** (유일하게 남은 원 요구): 현재 `section-funcgraph.js`의 구간 화살표는 **끝 화살표 1종 고정**. 직선 도구의 옵션 체계(중간 화살표 2방향 + 끝 화살표 2방향)를 참고해 방향 선택 UI + polyline arrowHead/중간표식 배선. (직선 도구 = `js/tools.js` makeLine + inspector section-line lineMode "middleArrow" 등)
+2. 사용자 실사용 피드백 대기(러버밴드 드로잉·스냅·라벨 위치 미세조정은 실제 화면에서만 체감 — 0폭 환경 한계).
+3. (선택) 데이터 자료변환(5E_hub) 흡수 — 별개, 추후.
+
+### 핵심 파일 지도
+- `js/graph/graph-modal.js` — 통합 모달(좌표 cfg + 계열 + 미리보기 + 생성/편집). openGraphModal(planeId?).
+- `js/render/coordplane.js` — 좌표평면 렌더(축/격자/눈금/라벨/화살표) + renderFuncgraph(계열+끝라벨).
+- `js/render/graph-label.js` — 혼합 라벨러(한글/수식/단위/멀티라인/halo/KO_SCALE).
+- `js/inspector/section-funcgraph.js` — 계열 인스펙터 + Phase3(표시점/수선/화살표).
+- `js/inspector/section-coordplane.js` — 슬림 인스펙터("그래프 편집…" 진입 + 내보내기).
+- `js/tools.js` — 더블클릭 재편집 분기(richLabels→graph-modal), F단축키(openFunctionModal).
+- `js/project-io.js` — coordplane 신규 필드 백필(gridCountX/Y·gridOver·labelScale·tickLabelMode·tickTextX/Y).
+
+---
+
+## 0-L. v0.54.30-graph — x이름 더 왼쪽 + 꺾은선 완성=Enter/우클릭 (2026-07-12)
 1. **x이름 더 왼쪽**(coordplane): x = right+nameSize*0.06 → **right−nameSize*0.35**(팁보다 4.5mm 왼쪽 = 화살표 아래쪽).
 2. **꺾은선 완성 = Enter/우클릭**(graph-modal): 미리보기 dblclick 완료 제거 → svg `contextmenu`(우클릭, preventDefault)+window `keydown` Enter(입력칸 타이핑 중 제외)로 `finishPointsSeries()`(=_sel −1). 중복점 pop 불필요. 힌트 문구 "Enter 또는 우클릭이면 완료".
 검증(preview_eval,콘솔0): x이름 팁−4.5mm, 우클릭·Enter 각각 편집기 숨김(완료), 힌트 갱신.
