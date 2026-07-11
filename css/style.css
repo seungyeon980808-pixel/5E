@@ -1775,6 +1775,16 @@ textarea.unified-text-input {
 }
 .grid-toggle-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
 .grid-toggle-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+/* 중앙 고정 토글(⌖): 비활성=어두운 버튼, 활성=과목 강조색 (grid-toggle-btn과 동일 톤) */
+#center-view-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 26px; padding: 0;
+  font-size: 15px; line-height: 1;
+  color: var(--c-sub); background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
+}
+#center-view-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+#center-view-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
 .grid-detail { display: inline-flex; align-items: center; gap: 10px; }
 .grid-detail[hidden] { display: none; }
 

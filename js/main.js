@@ -261,12 +261,23 @@ initDataPlot();
     });
   }
   if (centerBtn) {
-    centerBtn.addEventListener("click", () => {
-      const locked = centerBtn.classList.toggle("is-active");
+    // 스타일은 CSS(.is-active = 과목 강조색)에 위임 — 인라인 하드코딩 제거
+    const applyCenterLock = (locked) => {
+      centerBtn.classList.toggle("is-active", locked);
+      centerBtn.setAttribute("aria-pressed", String(locked));
       setCenterLocked(locked);
-      centerBtn.style.background = locked ? "var(--c-main)" : "";
-      centerBtn.style.color = locked ? "#fff" : "";
-      if (locked) centerView(state);
+      if (locked) centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
+    };
+    centerBtn.addEventListener("click", () => {
+      applyCenterLock(!centerBtn.classList.contains("is-active"));
+    });
+    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시)
+    window.addEventListener("keydown", (e) => {
+      if (e.code !== "Space" || !(e.ctrlKey || e.metaKey)) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      applyCenterLock(!centerBtn.classList.contains("is-active"));
     });
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
