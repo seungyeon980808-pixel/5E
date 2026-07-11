@@ -27,6 +27,7 @@ import { initObjectSearch } from "./search.js?v=0.54.27";
 import { initCommandPalette } from "./command-palette.js?v=0.54.27";
 import { initSubjectObjects } from "./subject-objects.js?v=0.54.27";
 import { initToolHint } from "./tool-hint.js?v=0.54.27";
+import { initTooltips } from "./tooltip.js?v=0.54.27";
 import { initPersonalObjects } from "./personal-objects.js?v=0.54.27";
 import { initBulkEdit } from "./bulk-edit.js?v=0.54.27";
 import { initDataPlot } from "./data-plot.js?v=0.54.27";
@@ -210,6 +211,9 @@ initSubjectObjects();
 
 /* ----- 도구별 하단 안내(자르기 패턴 일반화 공용 슬롯) ----- */
 initToolHint(state);
+
+/* ----- 커스텀 툴팁: 네이티브 title 을 앱 톤 툴팁으로 대체 ----- */
+initTooltips();
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);

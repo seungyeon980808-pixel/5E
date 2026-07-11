@@ -1788,6 +1788,27 @@ textarea.unified-text-input {
 .grid-detail { display: inline-flex; align-items: center; gap: 10px; }
 .grid-detail[hidden] { display: none; }
 
+/* ===== CUSTOM TOOLTIP (js/tooltip.js) — 네이티브 title 대체, 앱 톤 =====
+   fixed 위치. 색은 패널/보더/텍스트 토큰을 그대로 써 라이트·다크·과목 테마에
+   모두 자연스럽게 얹힌다. 그림자는 과하지 않게 얕게. */
+.app-tooltip {
+  position: fixed; z-index: 9000; pointer-events: none;
+  max-width: 264px; padding: 5px 9px;
+  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  white-space: pre-line; word-break: keep-all;
+  opacity: 0; transform: translateY(2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.app-tooltip.is-visible { opacity: 1; transform: none; }
+.app-tooltip[data-place="below"] { transform: translateY(-2px); }
+.app-tooltip[data-place="below"].is-visible { transform: none; }
+@media (prefers-reduced-motion: reduce) { .app-tooltip { transition: none; } }
+
 /* 모달 제목 옆 ? 도움말 버튼 (이미지로 내보내기 등) — hover/focus 시 title 툴팁 */
 .export-help-btn {
   display: inline-flex; align-items: center; justify-content: center;
