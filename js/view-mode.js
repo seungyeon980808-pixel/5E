@@ -43,6 +43,7 @@ function applyMode(mode, persist = true) {
   if (_btn) {
     _btn.textContent = m === "lite" ? "Lite" : "Pro";
     _btn.setAttribute("aria-pressed", String(m === "lite"));
+    _btn.classList.toggle("is-on", m === "lite"); // 채워진 알약(켜짐) 표시
   }
   // Lite에서는 레이어 1만 보이므로, 활성 레이어를 1로 고정한다.
   if (m === "lite" && _state) {

@@ -10,13 +10,13 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.54.27";
-import { screenToWorld } from "./viewport.js?v=0.54.27";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.54.27";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.54.27";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.54.27";
-import { insertImageFromSrc } from "./image-paste.js?v=0.54.27";
-import { addPage } from "./pages.js?v=0.54.27";
+import { rebuildGroups } from "./transform.js?v=0.55.0";
+import { screenToWorld } from "./viewport.js?v=0.55.0";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.55.0";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.55.0";
+import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.55.0";
+import { insertImageFromSrc } from "./image-paste.js?v=0.55.0";
+import { addPage } from "./pages.js?v=0.55.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -587,8 +587,14 @@ export function initProjectIO(state, svg) {
     submenu.className = "file-submenu";
     submenu.hidden = true;
     submenu.innerHTML =
-      '<button type="button" class="file-menu-item" data-mode="single-page">한 페이지에 넣기</button>' +
-      '<button type="button" class="file-menu-item" data-mode="per-page">페이지별로 넣기</button>';
+      '<button type="button" class="file-menu-item file-submenu-item" data-mode="single-page">' +
+        '<span class="fsi-title">한 페이지에 넣기</span>' +
+        '<span class="fsi-desc">고른 이미지를 모두 지금 페이지에 배치합니다. 겹치지 않게 조금씩 어긋나게 놓입니다.</span>' +
+      '</button>' +
+      '<button type="button" class="file-menu-item file-submenu-item" data-mode="per-page">' +
+        '<span class="fsi-title">페이지별로 넣기</span>' +
+        '<span class="fsi-desc">이미지 한 장마다 새 페이지를 만들어 하나씩 배치합니다.</span>' +
+      '</button>';
     (fileMenuList || imageImportBtn.parentElement).appendChild(submenu);
 
     const closeSub = () => {

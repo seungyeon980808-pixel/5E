@@ -18,10 +18,10 @@ import {
   applySvgTextFont,
   catmullRomPath,
   applyDash,
-} from "./core.js?v=0.54.27";
-import { EQUATION_FONT_FAMILY, EQUATION_LETTER_SPACING } from "../state.js?v=0.54.27";
-import { renderFormula, measureFormula } from "../formula.js?v=0.54.27";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.54.27";
+} from "./core.js?v=0.55.0";
+import { EQUATION_FONT_FAMILY, EQUATION_LETTER_SPACING } from "../state.js?v=0.55.0";
+import { renderFormula, measureFormula } from "../formula.js?v=0.55.0";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=0.55.0";
 
 // 축 이름에 수식 문법(_ ^ \ {)이 있으면 formula.js로 수식 렌더 대상(v_0, \theta 등).
 const LABEL_MATH_RE = /[_^\\{]/;

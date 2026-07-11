@@ -180,11 +180,14 @@ body {
    .app 전체에 zoom을 걸어 글씨·도구 패널·간격을 한 번에 확대/축소한다.
    캔버스 좌표 변환(getScreenCTM)은 zoom을 반영하므로 그리기·클릭은 그대로 동작한다.
    기본(미설정/대형)=1.0. 세부 비율·패널폭은 추후 조정 가능. */
-.app { zoom: var(--ui-zoom, 1); }
-:root[data-screen="small"]  { --ui-zoom: 0.80; --panel-left-w: 120px; }
-:root[data-screen="medium"] { --ui-zoom: 0.90; }
+/* body 전체에 zoom → 글씨·패널·모달·툴팁까지 한 번에 스케일(브라우저 확대와 동일).
+   body(뷰포트를 채우는 요소)에 걸어야 빈 공간 없이 반영되고, 모달/위젯도 함께
+   줄어 화면 밖으로 벗어나지 않는다. (.app 에 걸면 100vh 기준이라 하단 여백 발생) */
+body { zoom: var(--ui-zoom, 1); }
+:root[data-screen="small"]  { --ui-zoom: 0.68; }
+:root[data-screen="medium"] { --ui-zoom: 0.84; }
 :root[data-screen="large"]  { --ui-zoom: 1.00; }
-:root[data-screen="wide"]   { --ui-zoom: 1.08; --panel-left-w: 145px; }
+:root[data-screen="wide"]   { --ui-zoom: 1.12; }
 
 .panel-title {
   font-weight: 600;
@@ -270,9 +273,9 @@ body {
 
 /* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
 .subject-select {
-  height:28px; padding:0 8px; font-size:14px; font-weight:600;
-  /* 5E 브랜드(Georgia serif)와 어울리도록 한글 serif로 맞추고 가운데 정렬 */
-  font-family:"Noto Serif KR", Georgia, "Times New Roman", serif;
+  height:28px; padding:0 8px; font-size:13px; font-weight:600;
+  /* 다른 UI 요소와 같은 본문 글꼴(IBM Plex Sans KR) + 가운데 정렬 */
+  font-family:inherit;
   text-align:center; text-align-last:center;
   color:var(--text-primary); background:var(--bg-input);
   border:1px solid var(--accent); border-radius:6px; cursor:pointer;
@@ -413,7 +416,7 @@ body {
   display: inline-flex;
   align-items: center;
   height: 28px;
-  padding: 0 8px 0 0;
+  padding: 0 2px 0 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 축소 */
   color: var(--accent-2);
   /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
   font-family: Georgia, "Times New Roman", serif;
@@ -431,13 +434,22 @@ body {
    글씨 색·크기는 5E 브랜드(과목별 accent-2, serif italic)를 따라간다. */
 .mode-toggle-btn {
   display: inline-flex; align-items: center;
-  height: 28px; margin-left: 2px; padding: 0 7px;
+  height: 23px; margin-left: 6px; padding: 0 10px;
   font-family: Georgia, "Times New Roman", serif;
-  font-style: italic; font-size: 18px; font-weight: 600; line-height: 1;
+  font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
-  background: transparent; border: 0; border-radius: 6px; cursor: pointer;
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 999px;
+  cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
-.mode-toggle-btn:hover { color: var(--accent); background: var(--btn-tool-hover); }
+.mode-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* Lite = 켜짐(채워진 알약)으로 토글 상태를 분명히 표시.
+   조상 선택자(:root[data-mode]) 대신 버튼 자신의 상태 클래스로 걸어(view-mode.js가
+   토글) 어떤 환경에서도 확실히 적용되게 한다. */
+.mode-toggle-btn.is-on {
+  color: #fff; background: var(--accent); border-color: var(--accent);
+}
+.mode-toggle-btn.is-on:hover { color: #fff; }
 
 /* ===== LITE 모드 =====
    구조는 그대로 두고 CSS로만 숨기거나 키운다(display:none / 크기 조정). */
@@ -584,7 +596,7 @@ body {
 /* 우측 플라이아웃 서브메뉴 (파일 메뉴 리스트 기준 오른쪽으로 펼침) */
 .file-submenu {
   position: absolute; left: calc(100% + 4px); top: 0; z-index: 210;
-  min-width: 150px;
+  min-width: 236px;
   display: flex; flex-direction: column;
   padding: 4px;
   background: var(--bg-panel);
@@ -593,6 +605,13 @@ body {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
 .file-submenu[hidden] { display: none; }
+/* 옵션 = 제목 + 설명 2줄 */
+.file-submenu-item { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; }
+.file-submenu-item .fsi-title { font-size: 14px; color: var(--text-primary); }
+.file-submenu-item .fsi-desc {
+  font-size: 11.5px; line-height: 1.4; color: var(--text-secondary);
+  white-space: normal; text-align: left;
+}
 
 /* Bottom description area: compact, muted, themed via vars (dark/light safe). */
 .file-menu-desc {

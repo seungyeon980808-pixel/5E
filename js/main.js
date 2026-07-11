@@ -7,34 +7,34 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=0.54.27";
-import { render } from "./render.js?v=0.54.27";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.54.27";
-import { initTools } from "./tools.js?v=0.54.27";
-import { initCutTool } from "./cut-tool.js?v=0.54.27";
-import { initTransform, undo, redo } from "./transform.js?v=0.54.27";
-import { initInspector } from "./inspector.js?v=0.54.27";
-import { initProjectIO } from "./project-io.js?v=0.54.27";
-import { initExportDialog } from "./export-dialog.js?v=0.54.27";
-import { initRuler, setRulerVisible } from "./ruler.js?v=0.54.27";
-import { initSettings } from "./settings.js?v=0.54.27";
-import { initImageObjectify } from "./image-objectify.js?v=0.54.27";
-import { initImagePaste } from "./image-paste.js?v=0.54.27";
-import { initImageCutout } from "./image-cutout.js?v=0.54.27";
-import { initExamLibrary } from "./exam-library.js?v=0.54.27";
-import { initTemplates } from "./templates.js?v=0.54.27";
-import { initObjectSearch } from "./search.js?v=0.54.27";
-import { initCommandPalette } from "./command-palette.js?v=0.54.27";
-import { initSubjectObjects } from "./subject-objects.js?v=0.54.27";
-import { initToolHint } from "./tool-hint.js?v=0.54.27";
-import { initTooltips } from "./tooltip.js?v=0.54.27";
-import { initViewMode } from "./view-mode.js?v=0.54.27";
-import { initPersonalObjects } from "./personal-objects.js?v=0.54.27";
-import { initBulkEdit } from "./bulk-edit.js?v=0.54.27";
-import { initDataPlot } from "./data-plot.js?v=0.54.27";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=0.54.27";
-import { initAutosave } from "./autosave.js?v=0.54.27";
-import { initPages } from "./pages.js?v=0.54.27";
+import { state } from "./state.js?v=0.55.0";
+import { render } from "./render.js?v=0.55.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=0.55.0";
+import { initTools } from "./tools.js?v=0.55.0";
+import { initCutTool } from "./cut-tool.js?v=0.55.0";
+import { initTransform, undo, redo } from "./transform.js?v=0.55.0";
+import { initInspector } from "./inspector.js?v=0.55.0";
+import { initProjectIO } from "./project-io.js?v=0.55.0";
+import { initExportDialog } from "./export-dialog.js?v=0.55.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=0.55.0";
+import { initSettings } from "./settings.js?v=0.55.0";
+import { initImageObjectify } from "./image-objectify.js?v=0.55.0";
+import { initImagePaste } from "./image-paste.js?v=0.55.0";
+import { initImageCutout } from "./image-cutout.js?v=0.55.0";
+import { initExamLibrary } from "./exam-library.js?v=0.55.0";
+import { initTemplates } from "./templates.js?v=0.55.0";
+import { initObjectSearch } from "./search.js?v=0.55.0";
+import { initCommandPalette } from "./command-palette.js?v=0.55.0";
+import { initSubjectObjects } from "./subject-objects.js?v=0.55.0";
+import { initToolHint } from "./tool-hint.js?v=0.55.0";
+import { initTooltips } from "./tooltip.js?v=0.55.0";
+import { initViewMode } from "./view-mode.js?v=0.55.0";
+import { initPersonalObjects } from "./personal-objects.js?v=0.55.0";
+import { initBulkEdit } from "./bulk-edit.js?v=0.55.0";
+import { initDataPlot } from "./data-plot.js?v=0.55.0";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=0.55.0";
+import { initAutosave } from "./autosave.js?v=0.55.0";
+import { initPages } from "./pages.js?v=0.55.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -219,6 +219,14 @@ initTooltips();
 /* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
 initViewMode(state);
 
+/* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
+   앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로
+   레이아웃이 깨지지 않게 막는다. 캔버스 위 Ctrl+휠(도형 줌)은 그대로 동작. */
+window.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
+});
+
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
 
@@ -279,14 +287,17 @@ initDataPlot();
     centerBtn.addEventListener("click", () => {
       applyCenterLock(!centerBtn.classList.contains("is-active"));
     });
-    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시)
-    window.addEventListener("keydown", (e) => {
+    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시).
+    // 캡처 단계로 등록해 다른 핸들러의 stopPropagation 영향을 받지 않게 한다.
+    // 참고: Windows에서 Ctrl+Space가 '입력 방법 전환' OS 단축키로 예약돼 있으면
+    //       브라우저에 이벤트가 도달하지 않을 수 있다(그 경우 Windows 키보드 설정에서 해제).
+    document.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || !(e.ctrlKey || e.metaKey)) return;
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       e.preventDefault();
       applyCenterLock(!centerBtn.classList.contains("is-active"));
-    });
+    }, true);
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);

@@ -16,12 +16,12 @@
  *   싱글턴이 유지된다(state가 갈리면 캔버스와 상태가 어긋난다).
  */
 
-import { state } from "./state.js?v=0.54.27";
-import { worldFromMath } from "./function-graph/coords.js?v=0.54.27";
-import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.54.27";
-import { nextObjectId } from "./tools/id.js?v=0.54.27";
-import { renderCoordplane } from "./render/coordplane.js?v=0.54.27";
-import { SVG_NS } from "./render/core.js?v=0.54.27";
+import { state } from "./state.js?v=0.55.0";
+import { worldFromMath } from "./function-graph/coords.js?v=0.55.0";
+import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=0.55.0";
+import { nextObjectId } from "./tools/id.js?v=0.55.0";
+import { renderCoordplane } from "./render/coordplane.js?v=0.55.0";
+import { SVG_NS } from "./render/core.js?v=0.55.0";
 
 // 점 객체 기본 크기(bbox mm) — node-placement.js의 NODE_DEFAULT_SIZE와 일치.
 const NODE_SIZE = 2.27;

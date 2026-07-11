@@ -11,8 +11,8 @@ import {
   OBJECT_LABEL_QUANTITY_FONT_FAMILY,
   OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextLetterSpacing,
-} from "../state.js?v=0.54.27";
-import { fillSvgTextWithRomanRuns } from "../text-rendering.js?v=0.54.27";
+} from "../state.js?v=0.55.0";
+import { fillSvgTextWithRomanRuns } from "../text-rendering.js?v=0.55.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

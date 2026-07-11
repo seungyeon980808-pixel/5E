@@ -17,15 +17,15 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.27";
-import { registerTopMenu } from "./top-menu.js?v=0.54.27";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.27";
+} from "./state.js?v=0.55.0";
+import { registerTopMenu } from "./top-menu.js?v=0.55.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.55.0";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=0.54.27";
+} from "./preview-backgrounds.js?v=0.55.0";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -72,7 +72,7 @@ const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크
 const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY];
 
 /* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
- * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=.app zoom)이 전환된다. */
+ * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
 const SCREEN_SIZES = new Set(["small", "medium", "large", "wide"]);
 const DEFAULT_SCREEN = "large";
 export function loadScreenSize() {
