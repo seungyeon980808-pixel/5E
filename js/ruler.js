@@ -5,12 +5,12 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
-import { getRenderScale } from "./viewport.js?v=0.54.14";
+import { getRenderScale } from "./viewport.js?v=0.54.30";
 // Guide click-to-select over the artboard: objects always win, so the guide is
 // only picked when NO object sits under the point (pick.js is the same oracle
 // tools.js selection uses). tools.js also owns the Space-pan tracker.
-import { pickSelectableObjectAtPoint } from "./pick.js?v=0.54.14";
-import { isSpaceHeld } from "./tools.js?v=0.54.14";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=0.54.30";
+import { isSpaceHeld } from "./tools.js?v=0.54.30";
 
 let _svg    = null;
 let _state  = null;

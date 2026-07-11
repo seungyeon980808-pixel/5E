@@ -5,8 +5,8 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=0.54.14";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=0.54.14";
+} from "./templates.js?v=0.54.30";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=0.54.30";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

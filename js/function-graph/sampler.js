@@ -8,9 +8,9 @@
 // The output points[] are BAKED world coordinates — the funcgraph then renders,
 // hit-tests, and exports exactly like an open `curve` (no special-case code).
 
-import { compile } from "./parser.js?v=0.54.14";
-import { worldXFromMathX, worldYFromMathY } from "./coords.js?v=0.54.14";
-import { simplifyRDP } from "../geometry.js?v=0.54.14";
+import { compile } from "./parser.js?v=0.54.30";
+import { worldXFromMathX, worldYFromMathY } from "./coords.js?v=0.54.30";
+import { simplifyRDP } from "../geometry.js?v=0.54.30";
 
 const DEFAULT_SAMPLES = 900;   // evenly across the domain before simplification
 const DEFAULT_EPS_MM = 0.07;   // RDP tolerance (world mm); ~5× denser → smooth curve

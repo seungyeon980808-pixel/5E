@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.54.14";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.54.30";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,34 +19,36 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.54.14";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.54.14";
-import { resolveEndpointSnap } from "./snap.js?v=0.54.14";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.14";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.54.14";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.54.14";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.14";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.54.14";
-import { nextObjectId } from "./tools/id.js?v=0.54.14";
-import { setupFreeDraw } from "./tools/free-draw.js?v=0.54.14";
-import { setupNodePlacement } from "./tools/node-placement.js?v=0.54.14";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.54.14";
+} from "./state.js?v=0.54.30";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.54.30";
+import { resolveEndpointSnap } from "./snap.js?v=0.54.30";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.30";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.54.30";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.54.30";
+import { getSvgAsset } from "./svg-assets.js?v=0.54.30";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.54.30";
+import { openFunctionModal } from "./function-graph/modal.js?v=0.54.30";
+import { openGraphModal } from "./graph/graph-modal.js?v=0.54.30";
+import { nextObjectId } from "./tools/id.js?v=0.54.30";
+import { setupFreeDraw } from "./tools/free-draw.js?v=0.54.30";
+import { setupNodePlacement } from "./tools/node-placement.js?v=0.54.30";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.54.30";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=0.54.14";
+} from "./geometry.js?v=0.54.30";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=0.54.14";
+} from "./pick.js?v=0.54.30";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.54.14";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.54.30";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -55,14 +57,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=0.54.14";
+} from "./text-editor.js?v=0.54.30";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.54.14";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.54.30";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=0.54.14";
+import { guideCursorAt } from "./ruler.js?v=0.54.30";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -127,7 +129,7 @@ export function initTools(svg, state) {
 }
 
 /* ----- tool selection: the one path that changes the armed tool ----- */
-function setActiveTool(tool) {
+export function setActiveTool(tool) {
   if (_state.get().activeTool === tool) return;
   clearClickLocals(); // arming another tool discards any in-progress click draft
   cancelActiveTextEditor(); // discard any in-progress text edit
@@ -224,7 +226,9 @@ function setupKeyboard() {
       // Skip the shortcut whenever an unlocked triangle is selected — transform.js
       // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
       // 함수 입력, freeing F up — 확정 항목 ⑧).
-      if (!hasFlippableTriangleSelected()) activateSymbolShortcut("funcgraph", "F"); // 함수 입력
+      // 함수 입력: 좌측 버튼은 그래프로 통합돼 제거됐지만 F 단축키는 유지(선택된
+      // 좌표평면 위에 함수를 얹거나, 없으면 새 평면을 만든다 → function-graph/modal.js).
+      if (!hasFlippableTriangleSelected()) openFunctionModal();
     }
     else if (key === "tab") {
       // ④: while the angle-tool pair is armed, Tab toggles 호(ARC) ↔ 직각(RIGHTANGLE)
@@ -410,7 +414,11 @@ function setupDrawing() {
         openAngleArcLabelEditor(hitId); return;
       }
       if (_ho && _ho.type === "coordplane") {
-        openPlaneModal(hitId); return;
+        // 그래프 도구로 만든 평면(richLabels)은 통합 그래프 모달(좌표+계열 한 화면)로,
+        // 그 외(함수입력이 만든 구형 평면)는 기존 상세 편집 모달로 재편집한다.
+        if (_ho.richLabels) openGraphModal(hitId);
+        else openPlaneModal(hitId);
+        return;
       }
     }
     if (hitId === null && _at === "V") {

@@ -35,9 +35,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.14" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.14" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.14" />
+  <link rel="stylesheet" href="css/style.css?v=0.54.30" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.54.30" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.54.30" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -100,9 +100,11 @@
             <button class="tool-btn" type="button" data-symbol="labeler" title="라벨러 (Shift+T)" aria-label="라벨러 (Shift+T)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="3" cy="17" r="1.4" fill="currentColor"/><text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text></svg></kbd>
             </button>
-            <!-- 5줄: 함수 / 점 (2개 — 새 줄에서 시작) -->
-            <button class="tool-btn" type="button" data-symbol="funcgraph" title="함수 입력 (F)" aria-label="함수 입력 (F)">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 3 L3.5 16.5 L17 16.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14 Q9 3.5 17 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></kbd>
+            <!-- 5줄: 그래프 / 점.  함수 입력·계열 추가는 그래프 하나로 통합 —
+                 그래프를 만들면(좌표평면 선택) 우측 인스펙터 "그래프 요소"에서 함수·점 계열을
+                 추가한다. 함수 입력은 F 단축키로도 진입(tools.js). -->
+            <button class="tool-btn" type="button" data-symbol="graph" title="그래프 (좌표 틀)" aria-label="그래프 (좌표 틀)">
+              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 3 L4 16 L17 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><g stroke="currentColor" stroke-width="0.7" stroke-dasharray="1.4 1" opacity="0.75"><line x1="8.3" y1="6" x2="8.3" y2="16"/><line x1="12.6" y1="6" x2="12.6" y2="16"/><line x1="4" y1="11.8" x2="17" y2="11.8"/><line x1="4" y1="7.6" x2="17" y2="7.6"/></g></svg></kbd>
             </button>
             <button class="tool-btn" type="button" data-symbol="node" title="점 (N)" aria-label="점 (N)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" fill="currentColor" stroke="none"/></svg></kbd>
@@ -289,7 +291,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.14</strong> · 2026-07-09</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.30-graph</strong> · 2026-07-11</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -355,6 +357,6 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.14"></script>
+  <script type="module" src="js/main.js?v=0.54.30"></script>
 </body>
 </html>

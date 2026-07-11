@@ -21,13 +21,14 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.54.14";
-import { armSymbol } from "./tools.js?v=0.54.14";
-import { renderObject } from "./render.js?v=0.54.14";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.14";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.14";
-import { openFunctionModal } from "./function-graph/modal.js?v=0.54.14";
-import { openDataPlotModal } from "./data-plot.js?v=0.54.14";
+import { state } from "./state.js?v=0.54.30";
+import { armSymbol } from "./tools.js?v=0.54.30";
+import { renderObject } from "./render.js?v=0.54.30";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.30";
+import { getSvgAsset } from "./svg-assets.js?v=0.54.30";
+import { openFunctionModal } from "./function-graph/modal.js?v=0.54.30";
+import { openDataPlotModal } from "./data-plot.js?v=0.54.30";
+import { openGraphModal } from "./graph/graph-modal.js?v=0.54.30";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -57,6 +58,17 @@ export const TEMPLATES = {
     category: "공통",
     label: "함수 입력",
     keywords: ["함수", "그래프", "수식", "function", "graph", "sin", "cos", "log", "y=f(x)", "지수", "로그", "삼각"],
+    create: {},
+  },
+
+  /* GRAPH — "그래프". kind "graph": 좌표 틀(coordplane)을 독립적으로 삽입한다(함수 없이도).
+   * 클릭 시 설정 모달(형태 ㄴ/ㅏ/십자·축이름·격자·원점)을 연다. 함수·물체는 이 틀 위에
+   * 얹는다. graph-modal.js가 richLabels/gridToData 플래그를 켠 coordplane을 만든다. */
+  graph: {
+    kind: "graph",
+    category: "공통",
+    label: "그래프",
+    keywords: ["그래프", "좌표", "좌표평면", "축", "틀", "graph", "axis", "coordinate", "plane", "격자", "L자", "ㄴ자"],
     create: {},
   },
 
@@ -368,6 +380,17 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
+  if (id === "graph") {
+    // ㄴ자 축 + 점선 격자(빈 좌표 틀 상징).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<path d="M4 3 L4 16 L17 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<g stroke="currentColor" stroke-width="0.7" stroke-dasharray="1.4 1" opacity="0.75">' +
+      '<line x1="8.3" y1="6" x2="8.3" y2="16"/><line x1="12.6" y1="6" x2="12.6" y2="16"/>' +
+      '<line x1="4" y1="11.8" x2="17" y2="11.8"/><line x1="4" y1="7.6" x2="17" y2="7.6"/></g>';
+    return svg;
+  }
+
   if (id === "labeler") {
     // A short leader line from a graph anchor up to an upright circled letter.
     svg.setAttribute("viewBox", "0 0 20 20");
@@ -525,6 +548,9 @@ export function activateTemplate(symbolId) {
   } else if (def.kind === "dataplot") {
     // 데이터 표: open the x·y paste modal (parse + auto plane + points/line).
     openDataPlotModal();
+  } else if (def.kind === "graph") {
+    // 그래프: open the coordinate-frame config modal (형태·라벨·격자·원점 + 삽입).
+    openGraphModal();
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};

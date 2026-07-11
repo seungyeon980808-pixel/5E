@@ -10,11 +10,11 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=0.54.14";
-import { screenToWorld } from "./viewport.js?v=0.54.14";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.54.14";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.54.14";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.54.14";
+import { rebuildGroups } from "./transform.js?v=0.54.30";
+import { screenToWorld } from "./viewport.js?v=0.54.30";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.54.30";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.54.30";
+import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.54.30";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -183,6 +183,13 @@ function migrateObjectList(objects) {
         next.showTicks = next.showTicks ?? true;
         next.showTickLabels = next.showTickLabels ?? false;
         next.tickLabelSize = next.tickLabelSize ?? 2.6;
+        // 눈금 라벨 모드(그래프 도구): 없음/숫자/문자. 구파일은 showTickLabels로 유도.
+        next.tickLabelMode = next.tickLabelMode ?? (next.showTickLabels ? "number" : "none");
+        next.tickTextX = Array.isArray(next.tickTextX) ? next.tickTextX : [];
+        next.tickTextY = Array.isArray(next.tickTextY) ? next.tickTextY : [];
+        // 그래프 도구: 눈금/격자 칸 수 캡(gridCountX/Y)은 spread로 보존. 격자 초과분만 백필.
+        next.gridOver = Number.isFinite(next.gridOver) ? next.gridOver : (next.gridCountX !== undefined ? 0.5 : 0);
+        next.labelScale = Number.isFinite(next.labelScale) ? next.labelScale : 1; // 글씨 크기 배율
         next.labelX = next.labelX ?? "x"; next.labelY = next.labelY ?? "y";
         next.showAxisLabels = next.showAxisLabels ?? true;
         next.axisLabelSize = next.axisLabelSize ?? 3.5;
