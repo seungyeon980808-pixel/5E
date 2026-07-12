@@ -9,10 +9,10 @@
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=0.54.27";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.27";
-import { renderObject } from "./render.js?v=0.54.27";
-import { getObjectBBox } from "./pick.js?v=0.54.27";
+import { instantiateObjectsAt } from "./transform.js?v=0.56.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.56.0";
+import { renderObject } from "./render.js?v=0.56.0";
+import { getObjectBBox } from "./pick.js?v=0.56.0";
 
 const KEY = "5e.personalObjects";
 const DEFAULT_CATEGORY = "기본";

@@ -11,10 +11,10 @@ import {
   catmullRomClosedPath,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.54.27";
-import { withBoxLabel, withLineLabel } from "./labels.js?v=0.54.27";
-import { resolveFill } from "./fill.js?v=0.54.27";
-import { getSvgAsset } from "../svg-assets.js?v=0.54.27";
+} from "./core.js?v=0.56.0";
+import { withBoxLabel, withLineLabel } from "./labels.js?v=0.56.0";
+import { resolveFill } from "./fill.js?v=0.56.0";
+import { getSvgAsset } from "../svg-assets.js?v=0.56.0";
 
 /* ----- rect: size-based shape (DESIGN 2-1 branch A) ----- */
 function renderRect(obj) {
@@ -341,9 +341,15 @@ function renderPolyline(obj) {
   if ((arrowHead === "start" || arrowHead === "both") && startDir) {
     g.appendChild(makeArrowHead(pts[0].x, pts[0].y, -startDir.x, -startDir.y, sw, color));
   }
-  if (arrowHead === "center") { // legacy project compatibility
+  if (arrowHead === "center") {
+    // 중간 화살표 방향 2종(그래프 도구 구간 화살표 §10-⑩): arrowVariant "left" = 진행
+    // 방향의 반대(역방향), 그 외("right"/미지정) = 진행 방향(정방향). renderLine의
+    // middleArrow와 동일한 arrowVariant 규약을 재사용.
     const m = polylineMidpoint(pts);
-    if (m) g.appendChild(makeArrowHead(m.x, m.y, m.dx, m.dy, sw, color));
+    if (m) {
+      const flip = obj.arrowVariant === "left" ? -1 : 1;
+      g.appendChild(makeArrowHead(m.x, m.y, m.dx * flip, m.dy * flip, sw, color));
+    }
   }
 
   return g;

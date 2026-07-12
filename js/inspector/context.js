@@ -4,7 +4,7 @@
  * helper closures shared by the section builders (snapshots, label-row
  * builders, single-object commit helper). */
 
-import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.54.27";
+import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=0.56.0";
 
 export function createInspectorContext(state) {
   const emptyEl   = document.getElementById("inspector-empty");

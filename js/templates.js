@@ -21,13 +21,12 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.54.27";
-import { armSymbol } from "./tools.js?v=0.54.27";
-import { renderObject } from "./render.js?v=0.54.27";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.27";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.27";
-import { openFunctionModal } from "./function-graph/modal.js?v=0.54.27";
-import { openDataPlotModal } from "./data-plot.js?v=0.54.27";
+import { state } from "./state.js?v=0.56.0";
+import { armSymbol } from "./tools.js?v=0.56.0";
+import { renderObject } from "./render.js?v=0.56.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.56.0";
+import { getSvgAsset } from "./svg-assets.js?v=0.56.0";
+import { openGraphModal } from "./graph/graph-modal.js?v=0.56.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -60,16 +59,15 @@ export const TEMPLATES = {
     create: {},
   },
 
-  /* DATA-PLOT — "데이터 표 → 산점도". kind "dataplot": 클릭 시 x·y 표 붙여넣기 모달을
-   * 연다(함수 입력과 동일 패턴). 삽입 경로(data-plot.js)가 선택된 좌표평면 위에, 없으면
-   * 데이터 범위에 맞춘 새 평면 위에 점 객체들 + 연결선을 만든다. 좌측엔 버튼이 없고
-   * '고급 기능' 섹션 + 오브젝트 검색으로만 진입하므로 hidden:true로 팔레트에서 뺀다. */
-  datatable: {
-    kind: "dataplot",
-    hidden: true,
+  /* GRAPH — "그래프". kind "graph": 좌표 틀(coordplane)을 독립적으로 삽입한다(함수 없이도).
+   * 클릭 시 설정 모달(형태 ㄴ/ㅏ/십자·축이름·격자·원점)을 연다. 함수·물체는 이 틀 위에
+   * 얹는다. graph-modal.js가 richLabels/gridToData 플래그를 켠 coordplane을 만든다. */
+  graph: {
+    kind: "graph",
     category: "공통",
-    label: "데이터 표 → 산점도",
-    keywords: ["데이터", "데이터 표", "산점도", "표", "측정값", "실험", "scatter", "plot", "data", "table", "csv", "엑셀", "그래프"],
+    hidden: true,   // 좌측 팔레트에서 뺌 — 고급 기능 "좌표/함수 생성" 버튼 + F 단축키로 진입(요구)
+    label: "좌표/함수 생성",
+    keywords: ["그래프", "좌표", "좌표평면", "함수", "중간점", "축", "틀", "graph", "axis", "coordinate", "plane", "격자", "L자", "ㄴ자", "sin", "cos"],
     create: {},
   },
 
@@ -368,6 +366,17 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
+  if (id === "graph") {
+    // ㄴ자 축 + 점선 격자(빈 좌표 틀 상징).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<path d="M4 3 L4 16 L17 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<g stroke="currentColor" stroke-width="0.7" stroke-dasharray="1.4 1" opacity="0.75">' +
+      '<line x1="8.3" y1="6" x2="8.3" y2="16"/><line x1="12.6" y1="6" x2="12.6" y2="16"/>' +
+      '<line x1="4" y1="11.8" x2="17" y2="11.8"/><line x1="4" y1="7.6" x2="17" y2="7.6"/></g>';
+    return svg;
+  }
+
   if (id === "labeler") {
     // A short leader line from a graph anchor up to an upright circled letter.
     svg.setAttribute("viewBox", "0 0 20 20");
@@ -520,11 +529,11 @@ export function activateTemplate(symbolId) {
     const center = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 };
     instantiate(symbolId, center);
   } else if (def.kind === "funcinput") {
-    // 함수 입력: open the formula modal (input + live preview + confirm).
-    openFunctionModal();
-  } else if (def.kind === "dataplot") {
-    // 데이터 표: open the x·y paste modal (parse + auto plane + points/line).
-    openDataPlotModal();
+    // 함수 입력: 통합 그래프 모달로 일원화(입구 하나). 좌표 탭 먼저.
+    openGraphModal();
+  } else if (def.kind === "graph") {
+    // 그래프: open the coordinate-frame config modal (형태·라벨·격자·원점 + 삽입).
+    openGraphModal();
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};

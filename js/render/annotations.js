@@ -6,18 +6,18 @@ import {
   makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=0.54.27";
-import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=0.54.27";
+} from "./core.js?v=0.56.0";
+import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=0.56.0";
 // Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
 // (contentMode:"formula") renders through the SAME projection formula objects use,
 // so the label, the editor preview, and SVG/PNG export can never diverge.
-import { measureFormula, renderFormula } from "../formula.js?v=0.54.27";
+import { measureFormula, renderFormula } from "../formula.js?v=0.56.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=0.54.27";
+} from "../state.js?v=0.56.0";
 
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
  * drawn in a SINGLE pass into one <g>. Ticks/labels are PROJECTIONS computed

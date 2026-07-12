@@ -18,21 +18,27 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=0.54.27";
-import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=0.54.27";
-import { setSnapPreview } from "../render.js?v=0.54.27";
-import { resolveEndpointSnap } from "../snap.js?v=0.54.27";
-import { applyNewObjectStyleDefaults } from "../style-mode.js?v=0.54.27";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.54.27";
-import { nextObjectId } from "./id.js?v=0.54.27";
-import { openLabelerTextEditor } from "../text-editor.js?v=0.54.27";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=0.56.0";
+import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=0.56.0";
+import { setSnapPreview } from "../render.js?v=0.56.0";
+import { resolveEndpointSnap } from "../snap.js?v=0.56.0";
+import { applyNewObjectStyleDefaults } from "../style-mode.js?v=0.56.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=0.56.0";
+import { nextObjectId } from "./id.js?v=0.56.0";
+import { openLabelerTextEditor } from "../text-editor.js?v=0.56.0";
+import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=0.56.0";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=0.56.0";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=0.54.27";
+} from "../tools.js?v=0.56.0";
 
-const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve", CIRCUIT: "circuit" };
+// SERIES(계열 추가): 클릭으로 점을 찍어 좌표평면 위에 직선/꺾은선 계열(funcgraph,
+// sourceKind:"points")을 만든다. 폴리라인(P)과 같은 클릭 라이프사이클(더블클릭/Enter로
+// 종료)을 그대로 타되, 커밋 시 일반 polyline이 아니라 funcgraph를 만들어 같은 평면의
+// 다른 계열·함수와 나란히 겹쳐 그려지게 한다(§그래프 도구 Phase 2).
+const CLICK_TOOLS = { L: "line", P: "polyline", C: "curve", CIRCUIT: "circuit", SERIES: "series" };
 
 let _svg = null;
 let _state = null;
@@ -91,19 +97,23 @@ export function setupClickDrawing(svg, state) {
     updateDraftPreview();
   });
 
-  // Double-click finishes a polyline or curve. Its two click events already
+  // Double-click finishes a polyline/curve/series. Its two click events already
   // appended a duplicate vertex at the finish spot, so drop it before committing.
   _svg.addEventListener("dblclick", () => {
-    if (clickTool !== "P" && clickTool !== "C") return;
+    if (clickTool !== "P" && clickTool !== "C" && clickTool !== "SERIES") return;
     if (draftPoints.length > 0) draftPoints.pop();
+    if (clickTool === "SERIES") { commitSeries(); return; }
     finishPolyline();
   });
 
-  // Enter finishes a polyline/curve; Esc cancels any in-progress click draft.
+  // Enter finishes a polyline/curve/series; Esc cancels any in-progress click draft.
   window.addEventListener("keydown", (e) => {
     if (!clickTool) return;
     if (e.key === "Escape") { e.preventDefault(); resetClickDraft(); }
-    else if (e.key === "Enter" && (clickTool === "P" || clickTool === "C")) { e.preventDefault(); finishPolyline(); }
+    else if (e.key === "Enter" && (clickTool === "P" || clickTool === "C" || clickTool === "SERIES")) {
+      e.preventDefault();
+      if (clickTool === "SERIES") commitSeries(); else finishPolyline();
+    }
   });
 }
 
@@ -331,6 +341,68 @@ function finishPolyline() {
   if (draftPoints.length < 2) { resetClickDraft(); return; }
   const shape = clickTool === "C" ? makeCurve(draftPoints) : makePolyline(draftPoints);
   commitClickShape(shape);
+}
+
+/* ===== SERIES(계열 추가): 클릭한 점들 → 좌표평면 위 직선/꺾은선 계열(funcgraph) =====
+ * 함수 입력(function-graph/insert.js)과 같은 평면 선택 규칙: 좌표평면이 선택돼 있으면
+ * 그 위에, 없으면 뷰 중앙에 새 평면을 만들어 그 위에 얹는다. 점은 화면 클릭 좌표를
+ * 평면의 수학 좌표로 환산해 mathPoints[]에 저장(평면 range가 나중에 바뀌어도 재투영
+ * 가능하도록) + 그 시점의 world mm를 points[]에 굽는다(렌더는 points[]만 읽음). */
+function commitSeries() {
+  if (draftPoints.length < 2) { resetClickDraft(); return; }
+  const s = _state.get();
+  const selId = (s.selectedIds || [])[0];
+  const selected = selId ? s.objects.find((o) => o.id === selId) : null;
+  const reusePlane = selected && selected.type === "coordplane" ? selected : null;
+
+  let newPlane = null;
+  let plane = reusePlane;
+  if (!plane) {
+    const vb = s.viewBox;
+    newPlane = makeDefaultCoordplane({ x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 });
+    plane = newPlane;
+  }
+  const mathPoints = draftPoints.map((w) => mathFromWorld(plane, w.x, w.y));
+  const worldPts = mathPoints.map((m) => worldFromMath(plane, m.x, m.y));
+
+  _state.update((st) => {
+    const snap = JSON.parse(JSON.stringify(st.objects));
+    let planeId;
+    if (newPlane) {
+      newPlane.id = nextObjectId();
+      newPlane.order = st.objects.length;
+      newPlane.layerId = st.activeLayerId;
+      st.objects.push(newPlane);
+      planeId = newPlane.id;
+    } else {
+      planeId = reusePlane.id;
+    }
+    const fg = applyNewObjectStyleDefaults({
+      type: "funcgraph",
+      sourceKind: "points",      // 수식이 아니라 수동으로 찍은 점 기반 계열
+      planeId,
+      mathPoints,
+      points: worldPts,
+      curveStyle: "straight",    // 직선/꺾은선(요구 ④). 곡선으로 바꾸려면 인스펙터에서.
+      closed: false,
+      strokeLevel: 0,
+      strokeWidth: 0.3,
+      dashLength: 0, dashGap: 0, // 실선 기본; 인스펙터의 기존 선 종류 버튼으로 점선 전환 가능
+      endLabel: "",              // 계열 끝 라벨(요구 ⑬). 인스펙터에서 입력
+      label: "", labelShow: false,
+      locked: false, positionLocked: false,
+    });
+    fg.id = nextObjectId();
+    fg.order = st.objects.length;
+    fg.layerId = st.activeLayerId;
+    st.objects.push(fg);
+    st.undoStack.push(snap);
+    st.redoStack = [];
+    st.selectedIds = [fg.id];
+    st.targetedId = null;
+    st.activeTool = "V";
+  });
+  clearClickLocals();
 }
 
 // Push a finished click-to-click shape through the SAME store path as the drag

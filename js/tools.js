@@ -11,7 +11,7 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.54.27";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=0.56.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,35 +19,35 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=0.54.27";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.54.27";
-import { resolveEndpointSnap } from "./snap.js?v=0.54.27";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.27";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.54.27";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.54.27";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.27";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.54.27";
-import { openDataPlotEditor, isDataPlotPlane } from "./data-plot.js?v=0.54.27";
-import { nextObjectId } from "./tools/id.js?v=0.54.27";
-import { setupFreeDraw } from "./tools/free-draw.js?v=0.54.27";
-import { setupNodePlacement } from "./tools/node-placement.js?v=0.54.27";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.54.27";
+} from "./state.js?v=0.56.0";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=0.56.0";
+import { resolveEndpointSnap } from "./snap.js?v=0.56.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.56.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=0.56.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=0.56.0";
+import { getSvgAsset } from "./svg-assets.js?v=0.56.0";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=0.56.0";
+import { openGraphModal } from "./graph/graph-modal.js?v=0.56.0";
+import { nextObjectId } from "./tools/id.js?v=0.56.0";
+import { setupFreeDraw } from "./tools/free-draw.js?v=0.56.0";
+import { setupNodePlacement } from "./tools/node-placement.js?v=0.56.0";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=0.56.0";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=0.54.27";
+} from "./geometry.js?v=0.56.0";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=0.54.27";
+} from "./pick.js?v=0.56.0";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.54.27";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=0.56.0";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -56,14 +56,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=0.54.27";
+} from "./text-editor.js?v=0.56.0";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.54.27";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=0.56.0";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=0.54.27";
+import { guideCursorAt } from "./ruler.js?v=0.56.0";
 
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
@@ -115,6 +115,7 @@ export function initTools(svg, state) {
   _state = state;
 
   setupButtons();
+  setupToolChoosers();
   setupKeyboard();
   setupDrawing();
   setupClickDrawing(_svg, _state);
@@ -122,13 +123,16 @@ export function initTools(svg, state) {
   setupNodePlacement(_svg, _state);
   initTextEditing(_svg, _state); // text tool + click-to-edit + shortcuts + context menu
 
+  // 고급 기능의 "좌표(중간점)함수" 버튼 → 통합 그래프 모달(요구: 함수 기능을 고급으로 이동).
+  document.getElementById("graph-tool-open")?.addEventListener("click", () => openGraphModal());
+
   // Keep the tool buttons in sync with state.activeTool on every change.
   state.subscribe((s) => syncButtons(s.activeTool));
   syncButtons(state.get().activeTool);
 }
 
 /* ----- tool selection: the one path that changes the armed tool ----- */
-function setActiveTool(tool) {
+export function setActiveTool(tool) {
   if (_state.get().activeTool === tool) return;
   clearClickLocals(); // arming another tool discards any in-progress click draft
   cancelActiveTextEditor(); // discard any in-progress text edit
@@ -149,6 +153,43 @@ function setupButtons() {
   });
 }
 
+/* ----- 통합 도구 버튼(텍스트·라벨러 / 각도·직각) 선택 팝오버 -----
+ * 통합 버튼을 누르면 옆에 팝오버가 떠 둘 중 하나를 고른다. 팝오버 안의 옵션 버튼은 진짜
+ * data-tool/data-symbol을 달고 있어 클릭 시 기존 파이프라인(setupButtons / #tool-list 위임)이
+ * 그대로 도구를 켠다 — 여기서는 팝오버 열고/닫고/위치만 잡는다. 단축키는 팝오버가 숨겨져
+ * 있어도 이 옵션 버튼을 querySelector로 찾아 click()하므로 그대로 작동한다. */
+function setupToolChoosers() {
+  const PAIRS = [
+    { btn: "tool-text-merged", chooser: "chooser-text" },
+    { btn: "tool-angle-merged", chooser: "chooser-angle" },
+  ];
+  const closeAll = () => document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+  let anyBound = false;
+  PAIRS.forEach(({ btn, chooser }) => {
+    const b = document.getElementById(btn), c = document.getElementById(chooser);
+    if (!b || !c) return;
+    anyBound = true;
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
+      const willOpen = c.hidden;
+      closeAll();
+      if (!willOpen) return;
+      c.hidden = false;
+      const r = b.getBoundingClientRect();
+      c.style.left = Math.round(r.right + 6) + "px";
+      c.style.top = Math.round(r.top) + "px";
+    });
+    // 옵션 클릭 = 도구 선택(기존 위임이 처리) + 팝오버 닫기.
+    c.addEventListener("click", () => { closeAll(); });
+  });
+  if (anyBound) {
+    // 팝오버 바깥을 누르면 닫는다(통합 버튼 자신은 stopPropagation으로 제외됨).
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".tool-chooser")) closeAll();
+    });
+  }
+}
+
 /* ----- arm a library symbol (called by templates.js for "shape"-kind symbols) -----
  * Records the concrete variant (the EXACT thing the old per-element/per-kind
  * buttons did) then arms the shared placement tool. syncButtons runs explicitly so
@@ -159,12 +200,15 @@ export function armSymbol(symbolId, tool, variant) {
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
   if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
-  _activeSymbolId = symbolId;
   // 같은 배치 도구 안에서 소자만 바꾸면(예: 저항→전지) setActiveTool이 조기 반환해
   // 진행 중이던 첫 단자 클릭 draft가 남는다 → 도구 전환 여부와 무관하게 항상 폐기.
   clearClickLocals();
   _state.update((s) => { s.draft = null; });
   setActiveTool(tool);
+  // _activeSymbolId는 위 두 state.update가 유발하는 syncButtons(이전 도구 기준) 뒤에 설정해야
+  // 한다. 먼저 설정하면, 비-심볼 도구(예: 텍스트 T)에서 심볼로 전환할 때 그 syncButtons가
+  // "!SYMBOL_TOOLS.has(옛 도구)"로 _activeSymbolId를 null로 지워 하이라이트가 사라졌다.
+  _activeSymbolId = symbolId;
   syncButtons(_state.get().activeTool);
 }
 
@@ -185,6 +229,11 @@ function syncButtons(activeTool) {
   document.querySelectorAll("[data-symbol]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.symbol === _activeSymbolId);
   });
+  // 통합 버튼(텍스트·라벨러 / 각도·직각)은 data-tool/data-symbol이 없으니 직접 하이라이트한다.
+  const tm = document.getElementById("tool-text-merged");
+  if (tm) tm.classList.toggle("is-active", activeTool === "T" || _activeSymbolId === "labeler");
+  const am = document.getElementById("tool-angle-merged");
+  if (am) am.classList.toggle("is-active", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
 }
 
 // Mirrors transform.js's own F-key precondition (selected, unlocked, type "triangle")
@@ -225,7 +274,17 @@ function setupKeyboard() {
       // Skip the shortcut whenever an unlocked triangle is selected — transform.js
       // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
       // 함수 입력, freeing F up — 확정 항목 ⑧).
-      if (!hasFlippableTriangleSelected()) activateSymbolShortcut("funcgraph", "F"); // 함수 입력
+      // F = 통합 그래프 모달(좌표 탭 먼저, 확정 6). 선택된 그래프(좌표평면 richLabels 또는
+      // 그 위 계열)가 있으면 그 그래프를 편집 모드로, 없으면 새 그래프를 만든다.
+      if (!hasFlippableTriangleSelected()) {
+        const s = _state.get();
+        const sel = (s.selectedIds || [])[0];
+        const selObj = sel ? s.objects.find((o) => o.id === sel) : null;
+        let planeId = null;
+        if (selObj && selObj.type === "coordplane" && selObj.richLabels) planeId = selObj.id;
+        else if (selObj && selObj.type === "funcgraph" && selObj.planeId) planeId = selObj.planeId;
+        openGraphModal(planeId);   // startTab 기본 "coord"
+      }
     }
     else if (key === "tab") {
       // ④: while the angle-tool pair is armed, Tab toggles 호(ARC) ↔ 직각(RIGHTANGLE)
@@ -411,9 +470,11 @@ function setupDrawing() {
         openAngleArcLabelEditor(hitId); return;
       }
       if (_ho && _ho.type === "coordplane") {
-        // 데이터 자료변환으로 만든 그래프면 데이터 편집창을, 아니면 평면 상세편집을 연다.
-        if (isDataPlotPlane(_ho)) { openDataPlotEditor(hitId); return; }
-        openPlaneModal(hitId); return;
+        // 그래프 도구로 만든 평면(richLabels)은 통합 그래프 모달(좌표+계열 한 화면)로,
+        // 그 외(함수입력이 만든 구형 평면)는 기존 상세 편집 모달로 재편집한다.
+        if (_ho.richLabels) openGraphModal(hitId);
+        else openPlaneModal(hitId);
+        return;
       }
     }
     if (hitId === null && _at === "V") {

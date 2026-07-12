@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=0.54.27";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.54.27";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=0.54.27";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=0.54.27";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.54.27";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=0.54.27";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=0.56.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=0.56.0";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=0.56.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=0.56.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=0.56.0";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=0.56.0";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
@@ -358,6 +358,16 @@ function clipboardBBox(objs) {
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
+/* ----- funcgraph에 얹힌 그래프 요소(표시점/수선/화살표)를 본체 곡선과 같은 변환으로 옮긴다 -----
+ * guideSegs/markers/arrowPolys는 세계좌표 배열이라 points와 함께 옮기지 않으면 이동/회전/
+ * 리사이즈 때 좌표에서 떨어져 나온다(요구: 함께 묶여 이동). fn(pt{x,y}) → pt{x,y}. */
+function mapFgElements(obj, orig, fn) {
+  if (obj.type !== "funcgraph") return;
+  if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
+  if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
+  if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));
+}
+
 /* ----- set object position from original + delta (avoids float drift) ----- */
 function applyDelta(obj, orig, dx, dy) {
   if (obj.type === "rect" || obj.type === "ellipse" ||
@@ -376,7 +386,9 @@ function applyDelta(obj, orig, dx, dy) {
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
   } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
-    obj.points = orig.points.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+    const tr = (p) => ({ x: p.x + dx, y: p.y + dy });
+    obj.points = orig.points.map(tr);
+    mapFgElements(obj, orig, tr);   // 그래프 요소도 함께 이동(요구: 수선/표시점 분리 방지)
   }
 }
 
@@ -755,6 +767,7 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
       if (typeof orig.bobRadius === "number") obj.bobRadius = orig.bobRadius * sx; // sx == sy (forced ratio)
     } else if (orig.type === "polyline" || orig.type === "curve" || orig.type === "funcgraph") {
       obj.points = orig.points.map((p) => mapPt(p.x, p.y));
+      mapFgElements(obj, orig, (p) => mapPt(p.x, p.y)); // 그래프 요소도 함께 리사이즈(분리 방지)
     }
     if (orig.positionLocked) {
       const before = objectCenter(orig);
@@ -1542,6 +1555,7 @@ export function initTransform(svg, state) {
             obj.p2 = memberRot(orig.p2.x, orig.p2.y);
           } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
             obj.points = orig.points.map((p) => memberRot(p.x, p.y));
+            mapFgElements(obj, orig, (p) => memberRot(p.x, p.y)); // 그래프 요소도 함께 회전(분리 방지)
           } else if (orig.type === "anglearc") {
             // vertex rotates about the pivot; spin lives in startAngle (screen-CW
             // = +deltaDeg = math decrease).

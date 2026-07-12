@@ -1,15 +1,14 @@
 /* ===== INSPECTOR SECTION — 함수 그래프 (funcgraph) =====
- * Edit the formula, the generation domain, and convert the graph to a plain
- * editable curve (기획서 §3-2 "곡선으로 변환" escape hatch). Formula/domain edits
- * RE-SAMPLE against the graph's coordplane (planeId). Stroke color/width use the
- * shared 선 section (sec1). Interim expr entry is a prompt() — the §10-④ 모달 will
- * replace it. Mount + show/hide live in js/inspector.js. */
+ * 개편(2026-07): 함수·요소의 모든 상세 설정(수식·정의역·끝라벨·선종류·선모양·표시점·
+ * 수선·구간 화살표)은 이제 "그래프" 모달에서 미리 세팅한다. 재편집도 모달로 한다
+ * (좌표평면 더블클릭, 또는 아래 "그래프 편집…" 버튼). 이 인스펙터에는 진입 버튼과
+ * 파괴적 escape hatch("곡선으로 변환")만 남긴다. 선 색·굵기는 공용 "선" 섹션(sec1)이 담당.
+ * Mount + show/hide live in js/inspector.js. */
 
-import { makeSection, DASH_PRESETS } from "./widgets.js?v=0.54.27";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=0.54.27";
+import { makeSection } from "./widgets.js?v=0.56.0";
+import { openGraphModal } from "../graph/graph-modal.js?v=0.56.0";
 
-const NUM_CSS = "width:52px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
-const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 
 export function buildFuncgraphSection(ctx) {
   const { state } = ctx;
@@ -22,170 +21,61 @@ export function buildFuncgraphSection(ctx) {
     return o && o.type === "funcgraph" ? o : null;
   }
 
-  // Re-sample o.expr over [domainMin,domainMax] onto its plane (found in objects[]).
-  // Returns true on success (o.points updated), else a user-facing error string.
-  function resampleInto(o, objects) {
-    const plane = objects.find((p) => p.id === o.planeId && p.type === "coordplane");
-    if (!plane) return "소속 좌표평면을 찾을 수 없습니다 (곡선으로 변환하세요)";
-    const { points, error } = sampleFunctionPoints(o.expr, o.domainMin, o.domainMax, plane);
-    if (error) return error;
-    if (points.length < 2) return "정의역 안에서 그릴 수 있는 점이 없습니다";
-    o.points = points;
-    return true;
-  }
+  // 안내: 상세 설정은 모달에서.
+  const hint = document.createElement("div");
+  hint.style.cssText = "font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;";
+  hint.textContent = "함수·표시점·수선·화살표 설정은 그래프 편집 창에서 바꿉니다. (좌표평면 더블클릭 또는 아래 버튼)";
+  body.appendChild(hint);
 
-  // mutate(o, objects) → true (commit), false (no-op), or an error string (alert).
-  function commit(mutate) {
-    const s = state.get();
-    const id = (s.selectedIds || [])[0];
-    if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    let err = null;
-    state.update((s2) => {
-      const o = s2.objects.find((it) => it.id === id);
-      if (!o || o.locked) return;
-      const res = mutate(o, s2.objects);
-      if (typeof res === "string") { err = res; return; }
-      if (res !== true) return;
-      s2.undoStack.push(snap);
-      s2.redoStack = [];
-    });
-    if (err) window.alert(err);
-  }
-
-  // ---- 수식 row: current expr + 편집 button (prompt → resample) ----
-  const exprRow = document.createElement("div");
-  exprRow.className = "insp-row";
-  const exprLbl = document.createElement("label");
-  exprLbl.className = "insp-field-label";
-  exprLbl.textContent = "수식";
-  const exprVal = document.createElement("span");
-  exprVal.style.cssText = "flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:11px;color:var(--text-primary);padding:0 6px;";
-  const exprBtn = document.createElement("button");
-  exprBtn.type = "button";
-  exprBtn.textContent = "편집";
-  exprBtn.style.cssText = BTN_CSS;
-  exprRow.appendChild(exprLbl);
-  exprRow.appendChild(exprVal);
-  exprRow.appendChild(exprBtn);
-  body.appendChild(exprRow);
-  exprBtn.addEventListener("click", () => {
+  // 그래프 편집…: 이 계열이 속한 좌표평면의 통합 모달을 편집 모드로 연다.
+  const editRow = document.createElement("div");
+  editRow.className = "insp-row";
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.textContent = "그래프 편집…";
+  editBtn.style.cssText = BTN_CSS + "width:100%;";
+  editRow.appendChild(editBtn);
+  body.appendChild(editRow);
+  editBtn.addEventListener("click", () => {
     const o = currentFuncgraph();
-    if (!o || o.locked) return;
-    const input = window.prompt("함수식", o.expr || "");
-    if (input == null) return;
-    const expr = input.trim();
-    if (!expr) return;
-    commit((o2, objects) => {
-      if (o2.type !== "funcgraph") return false;
-      const old = o2.expr;
-      o2.expr = expr;
-      const r = resampleInto(o2, objects);
-      if (r !== true) { o2.expr = old; return r; }  // revert + surface the error
-      return true;
-    });
+    if (!o) return;
+    if (o.planeId) openGraphModal(o.planeId);
+    else window.alert("소속 좌표평면을 찾을 수 없습니다 (곡선으로 변환된 계열일 수 있습니다).");
   });
 
-  // ---- 정의역 row: min ~ max (re-sample on change) ----
-  function domainInput(prop) {
-    const inp = document.createElement("input");
-    inp.type = "number";
-    inp.step = "any";
-    inp.style.cssText = NUM_CSS;
-    inp.addEventListener("change", () => {
-      const v = Number(inp.value);
-      if (!Number.isFinite(v)) return;
-      commit((o, objects) => {
-        if (o.type !== "funcgraph" || o[prop] === v) return false;
-        const old = o[prop];
-        o[prop] = v;
-        const r = resampleInto(o, objects);
-        if (r !== true) { o[prop] = old; return r; }
-        return true;
-      });
-    });
-    return inp;
-  }
-  const domRow = document.createElement("div");
-  domRow.className = "insp-row";
-  const domLbl = document.createElement("label");
-  domLbl.className = "insp-field-label";
-  domLbl.textContent = "정의역";
-  const domMin = domainInput("domainMin");
-  const domMax = domainInput("domainMax");
-  const tilde = document.createElement("span");
-  tilde.textContent = "~"; tilde.className = "insp-unit";
-  domRow.appendChild(domLbl);
-  domRow.appendChild(domMin);
-  domRow.appendChild(tilde);
-  domRow.appendChild(domMax);
-  body.appendChild(domRow);
-
-  // ---- 선 종류 (실선/점선) — 여러 함수 구분용(§12-3) ----
-  const dashRow = document.createElement("div");
-  dashRow.className = "insp-row";
-  const dashLbl = document.createElement("label");
-  dashLbl.className = "insp-field-label";
-  dashLbl.textContent = "선 종류";
-  dashRow.appendChild(dashLbl);
-  const dashBtns = [];
-  DASH_PRESETS.forEach((preset) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = preset.label;
-    b.style.cssText = BTN_CSS + "margin-left:3px;padding:2px 6px;";
-    b.addEventListener("click", () => commit((o) => {
-      if (o.type !== "funcgraph") return false;
-      o.dashLength = preset.dashLength;
-      o.dashGap = preset.dashGap;
-      return true;
-    }));
-    dashBtns.push({ btn: b, preset });
-    dashRow.appendChild(b);
-  });
-  body.appendChild(dashRow);
-
-  // ---- 곡선으로 변환 (§3-2): funcgraph → plain open curve (one-way) ----
+  // 곡선으로 변환 (§3-2): funcgraph → 일반 곡선(수식/요소 구동을 끊음, 되돌리기 불가).
   const convRow = document.createElement("div");
   convRow.className = "insp-row";
   const convBtn = document.createElement("button");
   convBtn.type = "button";
   convBtn.textContent = "곡선으로 변환";
-  convBtn.title = "수식 구동을 끊고 점을 직접 편집할 수 있는 일반 곡선으로 바꿉니다 (되돌리기 불가)";
-  convBtn.style.cssText = BTN_CSS + "width:100%;";
+  convBtn.title = "수식 구동을 끊고 점을 직접 편집할 수 있는 일반 곡선으로 바꿉니다 (표시점·수선·화살표는 사라짐, 되돌리기 불가)";
+  convBtn.style.cssText = BTN_CSS + "width:100%;margin-top:4px;";
   convRow.appendChild(convBtn);
   body.appendChild(convRow);
   convBtn.addEventListener("click", () => {
     const o = currentFuncgraph();
     if (!o || o.locked) return;
-    commit((o2) => {
-      if (o2.type !== "funcgraph") return false;
+    const s = state.get();
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o2 = s2.objects.find((it) => it.id === o.id);
+      if (!o2 || o2.locked || o2.type !== "funcgraph") return;
       o2.type = "curve";
       delete o2.expr; delete o2.domainMin; delete o2.domainMax; delete o2.planeId;
+      // 그래프 요소(표시점/수선/화살표) 베이크·스펙 제거 — 일반 곡선엔 의미 없음.
+      delete o2.markers; delete o2.guideSegs; delete o2.arrowPolys;
+      delete o2.markerXs; delete o2.guideXs; delete o2.arrowSpecs;
       o2.fillLevel = 255; o2.fillNone = false; o2.fillStyle = "solid"; o2.arrowHead = "none";
-      return true;
+      s2.undoStack.push(snap); s2.redoStack = [];
     });
   });
 
   const secFunc = makeSection("함수 그래프", body);
 
   function sync(obj) {
-    exprVal.textContent = obj.expr || "(없음)";
-    exprVal.title = obj.expr || "";
-    if (document.activeElement !== domMin) domMin.value = obj.domainMin ?? "";
-    if (document.activeElement !== domMax) domMax.value = obj.domainMax ?? "";
-    const dl = obj.dashLength ?? 0, dg = obj.dashGap ?? 0;
-    dashBtns.forEach(({ btn, preset }) => {
-      const on = Math.abs(preset.dashLength - dl) < 1e-6 && Math.abs(preset.dashGap - dg) < 1e-6;
-      btn.style.background = on ? "var(--accent)" : "var(--bg-input)";
-      btn.style.borderColor = on ? "var(--accent)" : "var(--border)";
-      btn.disabled = !!obj.locked;
-    });
-    const locked = !!obj.locked;
-    exprBtn.disabled = locked;
-    domMin.disabled = locked;
-    domMax.disabled = locked;
-    convBtn.disabled = locked;
+    editBtn.disabled = false;      // 편집 창 진입은 잠금과 무관
+    convBtn.disabled = !!obj.locked;
   }
 
   return { secFunc, syncFuncgraph: sync };

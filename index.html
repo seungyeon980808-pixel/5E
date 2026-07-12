@@ -35,9 +35,9 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=0.54.27" />
-  <link rel="stylesheet" href="css/inspector.css?v=0.54.27" />
-  <link rel="stylesheet" href="css/exam-library.css?v=0.54.27" />
+  <link rel="stylesheet" href="css/style.css?v=0.56.0" />
+  <link rel="stylesheet" href="css/inspector.css?v=0.56.0" />
+  <link rel="stylesheet" href="css/exam-library.css?v=0.56.0" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -90,37 +90,55 @@
             <button class="tool-btn" type="button" data-tool="C" title="곡선 (C)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5,14 C5,4 9,4 10,10 S15,16 16.5,6"/></svg></kbd>
             </button>
-            <!-- 4줄: 자유그리기 / 텍스트 / 라벨러 -->
+            <!-- 4줄: 자유그리기 / 텍스트·라벨러(통합) / 각도·직각(통합).
+                 통합 버튼(#tool-*-merged)은 누르면 아래 .tool-chooser 팝오버가 떠 둘 중 하나를 고른다.
+                 아이콘은 각각 텍스트·각도호로 통일, 단축키는 그대로(T/Shift+T, A/Shift+A). 실제 도구를
+                 켜는 버튼(data-tool/data-symbol)은 팝오버 안에 남아 있어 단축키 querySelector가 그대로 찾는다. -->
             <button class="tool-btn" type="button" data-tool="F" title="자유 그리기 (D)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 13 C5 7 7 6 8.5 9.5 S11.5 15.5 13.5 11 C14.5 8.8 16 9 16.5 11"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-tool="T" title="텍스트 (T)">
+            <button class="tool-btn" type="button" id="tool-text-merged" aria-haspopup="true"
+                    title="텍스트 (T) — 자유 텍스트&#10;라벨러 (Shift+T) — 지시선 + 이름표" aria-label="텍스트 / 라벨러">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="5" x2="16" y2="5"/><line x1="10" y1="5" x2="10" y2="16"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-symbol="labeler" title="라벨러 (Shift+T)" aria-label="라벨러 (Shift+T)">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="3" cy="17" r="1.4" fill="currentColor"/><text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text></svg></kbd>
+            <button class="tool-btn" type="button" id="tool-angle-merged" aria-haspopup="true"
+                    title="각도 호 (A)&#10;직각 표시 (Shift+A)" aria-label="각도 / 직각">
+              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text></svg></kbd>
             </button>
-            <!-- 5줄: 함수 / 점 (2개 — 새 줄에서 시작) -->
-            <button class="tool-btn" type="button" data-symbol="funcgraph" title="함수 입력 (F)" aria-label="함수 입력 (F)">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 3 L3.5 16.5 L17 16.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 14 Q9 3.5 17 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></kbd>
-            </button>
+            <!-- 5줄: 점 / 자 / 각도기 (통합으로 자리가 나 자·각도기를 점 옆으로 — 요구) -->
             <button class="tool-btn" type="button" data-symbol="node" title="점 (N)" aria-label="점 (N)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" fill="currentColor" stroke="none"/></svg></kbd>
             </button>
-            <!-- 6줄: 각도호 / 직각 (2개 — 각도호에 grid-column-start:1로 새 줄 강제) -->
-            <button class="tool-btn" type="button" data-symbol="anglearc" title="각도 호 (A)" aria-label="각도 호 (A)" style="grid-column-start:1">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text></svg></kbd>
-            </button>
-            <button class="tool-btn" type="button" data-symbol="rightangle" title="직각 표시 (Shift+A)" aria-label="직각 표시 (Shift+A)">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4 L5 15 L16 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11 L9 11 L9 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></kbd>
-            </button>
-            <!-- 7줄: 자 / 각도기 (드래그 생성, 측정 가이드) -->
-            <button class="tool-btn" type="button" data-tool="RULER" title="자 (드래그로 생성)" aria-label="자" style="grid-column-start:1">
+            <button class="tool-btn" type="button" data-tool="RULER" title="자 (드래그로 생성)" aria-label="자">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="15" height="6"/><line x1="5.5" y1="7" x2="5.5" y2="10"/><line x1="8.5" y1="7" x2="8.5" y2="10"/><line x1="11.5" y1="7" x2="11.5" y2="10"/><line x1="14.5" y1="7" x2="14.5" y2="10"/></svg></kbd>
             </button>
             <button class="tool-btn" type="button" data-tool="PROTRACTOR" title="각도기 (드래그로 생성)" aria-label="각도기">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14 A7 7 0 0 1 17 14 Z"/><line x1="10" y1="14" x2="10" y2="8"/><line x1="6.4" y1="9.1" x2="7.7" y2="10.6"/><line x1="13.6" y1="9.1" x2="12.3" y2="10.6"/></svg></kbd>
             </button>
+
+            <!-- 통합 선택 팝오버(그리드 밖, position:fixed). 안의 버튼이 진짜 도구를 켠다
+                 (data-tool=setupButtons / data-symbol=#tool-list 위임). 숨겨져 있어도 단축키가
+                 querySelector로 찾아 click()하므로 T/Shift+T/A/Shift+A가 그대로 작동한다. -->
+            <div class="tool-chooser" id="chooser-text" hidden role="menu" aria-label="텍스트 / 라벨러 선택">
+              <button class="tool-chooser-opt" type="button" data-tool="T" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="5" x2="16" y2="5"/><line x1="10" y1="5" x2="10" y2="16"/></svg></span>
+                <span class="chooser-txt"><b>텍스트</b><small>자유 텍스트 (T)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-symbol="labeler" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="3" cy="17" r="1.4" fill="currentColor"/><text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text></svg></span>
+                <span class="chooser-txt"><b>라벨러</b><small>지시선 + 이름표 (Shift+T)</small></span>
+              </button>
+            </div>
+            <div class="tool-chooser" id="chooser-angle" hidden role="menu" aria-label="각도 / 직각 선택">
+              <button class="tool-chooser-opt" type="button" data-symbol="anglearc" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text></svg></span>
+                <span class="chooser-txt"><b>각도</b><small>각도 호 (A)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-symbol="rightangle" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4 L5 15 L16 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11 L9 11 L9 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                <span class="chooser-txt"><b>직각</b><small>직각 표시 (Shift+A)</small></span>
+              </button>
+            </div>
           </div>
         </div>
         <!-- ===== 과목별 오브젝트: 과목 선택 → 파트별 라이브러리(현재는 빈 자리) =====
@@ -150,8 +168,8 @@
                     title="선택한 오브젝트를 퍼스널 오브젝트로 저장 (좌측 라이브러리에 추가)">오브젝트 저장</button>
             <button id="bulk-edit-open" class="advanced-tool-btn" type="button"
                     title="선택(없으면 전체) 오브젝트의 굵기·색·글씨·각도·잠금을 한 번에 통일하거나 증감">전체 통일/수정</button>
-            <button id="data-plot-open" class="advanced-tool-btn" type="button"
-                    title="조작변인·종속변인 표를 입력하면 좌표평면 위 측정점(+연결선) 산점도를 생성">데이터 자료변환</button>
+            <button id="graph-tool-open" class="advanced-tool-btn" type="button"
+                    title="좌표평면 + 함수·직선·꺾은선·곡선을 만드는 그래프 도구 (F 단축키)">좌표/함수 생성</button>
           </div>
         </div>
       </div>
@@ -290,7 +308,7 @@
 
   <!-- ===== FOOTER: product/version (left) · developer credit (right) ===== -->
   <footer class="app-footer">
-    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.54.16</strong> · 2026-07-11</span>
+    <span class="app-footer-main">5E (sciEnceEducationalExamEasyEditor) · 과학 교사를 위한 시험문제 그림 제작 도구 · <strong>v0.56.0</strong> · 2026-07-13</span>
     <span class="app-footer-credit">Developed by <strong>박승연</strong> | SMOE</span>
   </footer>
 
@@ -356,8 +374,8 @@
       mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
     })();
   </script>
-  <script type="module" src="js/main.js?v=0.54.27"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
-  <script src="js/touch-drag.js?v=0.54.27"></script>
+  <script src="js/touch-drag.js?v=0.56.0"></script>
+  <script type="module" src="js/main.js?v=0.56.0"></script>
 </body>
 </html>
