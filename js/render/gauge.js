@@ -9,7 +9,7 @@
  * world 단위 = 1mm. 눈금 간격은 드래그 크기와 무관하게 obj.tickInterval*로 고정.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=0.56.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.0.0";
 
 const clampInterval = (v, min) => (Number.isFinite(v) && v >= min ? v : min);
 

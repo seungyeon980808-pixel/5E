@@ -1634,10 +1634,10 @@ textarea.unified-text-input {
   font-size: 12px;
   white-space: nowrap;
 }
+/* 이름(박승연)을 "Developed by"·"SMOE"와 같은 글씨체·색으로(요구: 강조 없이 동일하게) */
 .app-footer-credit strong {
-  color: var(--text-primary);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  color: inherit;
+  font-weight: inherit;
 }
 
 /* ===== STARTUP GUIDANCE MODAL ===== */

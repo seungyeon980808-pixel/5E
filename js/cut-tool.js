@@ -9,11 +9,11 @@
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld } from "./viewport.js?v=0.56.0";
-import { cutObject, isCuttable, cutCrossingPoints } from "./cut-geometry.js?v=0.56.0";
-import { snapLineEnd } from "./geometry.js?v=0.56.0";
-import { simplifyRDP } from "./geometry.js?v=0.56.0";
-import { getObjectBBox } from "./pick.js?v=0.56.0";
+import { screenToWorld } from "./viewport.js?v=1.0.0";
+import { cutObject, isCuttable, cutCrossingPoints } from "./cut-geometry.js?v=1.0.0";
+import { snapLineEnd } from "./geometry.js?v=1.0.0";
+import { simplifyRDP } from "./geometry.js?v=1.0.0";
+import { getObjectBBox } from "./pick.js?v=1.0.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
