@@ -8,10 +8,10 @@
  *   - 내보내기 포함 : exportable 토글(요구 6 잔존 기능).
  * 더블클릭 재편집도 같은 분기를 탄다(tools.js). */
 
-import { makeSection } from "./widgets.js?v=0.54.30";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.30";
-import { openGraphModal } from "../graph/graph-modal.js?v=0.54.30";
-import { state } from "../state.js?v=0.54.30";
+import { makeSection } from "./widgets.js?v=0.54.51";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=0.54.51";
+import { openGraphModal } from "../graph/graph-modal.js?v=0.54.51";
+import { state } from "../state.js?v=0.54.51";
 
 export function buildCoordplaneSection(ctx) {
   const { commitSelectedObject } = ctx;

@@ -366,6 +366,24 @@ body {
   color: #fff;
 }
 
+/* ===== 통합 도구 선택 팝오버(텍스트·라벨러 / 각도·직각) ===== */
+/* 그리드 밖에 fixed로 띄운다 — 그리드 흐름을 건드리지 않게 hidden일 땐 확실히 숨김. */
+.tool-chooser { position: fixed; z-index: 100000; display: flex; flex-direction: column; gap: 3px;
+  padding: 5px; min-width: 168px; background: var(--btn-tool-bg, #1b1f24);
+  border: 1px solid var(--c-border); border-radius: 8px; box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
+.tool-chooser[hidden] { display: none; }   /* display:flex보다 우선하도록 명시 */
+.tool-chooser-opt { display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 9px; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  background: transparent; color: var(--c-text); text-align: left; font-family: inherit; }
+.tool-chooser-opt:hover { background: var(--btn-tool-hover); border-color: var(--c-border); }
+.tool-chooser-opt.is-active { background: var(--btn-tool-active); border-color: var(--btn-tool-active); color: #fff; }
+.tool-chooser-opt .chooser-ico { flex: 0 0 auto; display: inline-flex; }
+.tool-chooser-opt .chooser-ico svg { width: 22px; height: 22px; color: currentColor; }
+.tool-chooser-opt .chooser-txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.tool-chooser-opt .chooser-txt b { font-size: 13px; font-weight: 600; }
+.tool-chooser-opt .chooser-txt small { font-size: 11px; color: var(--c-sub); }
+.tool-chooser-opt.is-active .chooser-txt small { color: rgba(255,255,255,0.75); }
+
 /* ===== CENTER CANVAS ===== */
 .panel-center {
   display: flex;
@@ -776,16 +794,32 @@ body {
 .gm-check { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
 .gm-check input[type="checkbox"] { width: 15px; height: 15px; }
 .gm-origin { width: 46px; margin-left: 6px; text-align: center; }
-/* 칸 수 스텝퍼(−/＋ 버튼 + 좁은 숫자칸) — 한 줄 배치용 */
-.gm-step {
-  width: 24px; height: 26px; padding: 0; font-size: 15px; line-height: 1;
-  color: var(--text-primary); background: var(--bg-input);
-  border: 1px solid var(--border); border-radius: 6px; cursor: pointer;
+/* 라벨+입력을 한 줄에 붙이는 인라인 필드(모양·칸 수·라벨 크기·축 이름) */
+.gm-inl {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; color: var(--text-label); white-space: nowrap;
 }
-.gm-step:hover { border-color: var(--accent); }
-.gm-num.gm-stepnum { width: 46px; text-align: center; padding: 6px 4px; }
-/* 숫자 입력의 브라우저 기본 스핀 버튼 숨김(스텝퍼로 대체) */
-.gm-stepnum::-webkit-inner-spin-button, .gm-stepnum::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* 위아래 ▲▼ 스핀 버튼으로 증감하는 좁은 숫자칸(칸 수·라벨 크기 — 양옆 버튼 대체) */
+.gm-num.gm-spinnum { width: 58px; text-align: center; padding: 5px 2px 5px 8px; }
+.gm-spinnum::-webkit-inner-spin-button { opacity: 1; }
+/* 물음표 도움말 배지 — 설명은 커서를 올리면 뜨는 title 툴팁으로 */
+.gm-help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-left: 5px; flex: 0 0 auto;
+  border: 1px solid var(--border); border-radius: 50%;
+  font-size: 10px; font-weight: 700; line-height: 1;
+  color: var(--text-secondary); background: var(--bg-input);
+  cursor: pointer; user-select: none;
+}
+.gm-help:hover { border-color: var(--accent); color: var(--accent); }
+/* 물음표 클릭 시 뜨는 설명 팝오버 */
+.gm-help-pop {
+  position: fixed; z-index: 100000; box-sizing: border-box;
+  background: var(--bg-input); color: var(--text-primary);
+  border: 1px solid var(--accent); border-radius: 6px;
+  padding: 8px 11px; font-size: 12px; line-height: 1.55;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
 
 .modal-image-paste {
   width: min(640px, calc(100vw - 40px));

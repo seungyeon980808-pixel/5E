@@ -11,9 +11,9 @@
  * 좌표계: 월드 mm. size/x/y 전부 mm. formula.js와 동일한 정자-숫자/이탤릭-변수 규칙을 그대로 물려받는다.
  */
 
-import { SVG_NS } from "./core.js?v=0.54.30";
-import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=0.54.30";
-import { renderFormula, measureFormula } from "../formula.js?v=0.54.30";
+import { SVG_NS } from "./core.js?v=0.54.51";
+import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=0.54.51";
+import { renderFormula, measureFormula } from "../formula.js?v=0.54.51";
 
 function el(tag) { return document.createElementNS(SVG_NS, tag); }
 
@@ -66,9 +66,10 @@ function recolorFormula(g, color) {
 }
 
 // 한 줄을 baseline y=0, 좌측 x=0 기준의 <g>로 빌드. { g, width, ascent, descent } 반환.
+// ascent/descent는 실제 렌더 내용 기준(한글은 koSize) — 줄바꿈 간격을 촘촘히 쌓기 위함(요구).
 function buildLine(line, size, color) {
   const g = el("g");
-  let cx = 0, asc = size * 0.78, desc = size * 0.22;
+  let cx = 0, asc = 0, desc = 0;
   for (const run of splitRuns(line)) {
     if (run.text === "") continue;
     if (run.kind === "ko") {
@@ -84,6 +85,8 @@ function buildLine(line, size, color) {
       t.textContent = run.text;
       g.appendChild(t);
       cx += measureKo(run.text, koSize);
+      asc = Math.max(asc, koSize * 0.82);            // 한글 실제 높이(koSize 기준)
+      desc = Math.max(desc, koSize * 0.18);
     } else {
       // 영문/수식 런: formula.js(첨자·분수·그리스·함수정자)로 렌더.
       // math=변수 이탤릭 / unit(괄호·단위)=정자 — fontStyle만 바꾸면 formula가 둘 다 처리.
@@ -104,6 +107,7 @@ function buildLine(line, size, color) {
       desc = Math.max(desc, m.descent);
     }
   }
+  if (asc === 0 && desc === 0) { asc = size * 0.78; desc = size * 0.22; } // 빈 줄 fallback
   return { g, width: cx, ascent: asc, descent: desc };
 }
 
@@ -128,18 +132,24 @@ function applyHalo(wrap, size) {
  *   lineGap = 1.3,            // 줄 간격(×size)
  * }) → <g> | null(빈 문자열)
  */
+// 줄 사이 여백(×size). 균일 lineHeight 대신 각 줄의 실제 ascent/descent로 촘촘히 쌓아
+// 줄바꿈 간격을 크게 줄인다(요구: 위아래 간격 훨씬 좁게). 첫 baseline=0 기준 상대 baseline 배열.
+const INTERLINE_GAP = 0.12;
+
 export function renderGraphLabel(source, opts = {}) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return null;
-  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, lineGap = 1.3 } = opts;
+  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true } = opts;
 
   const lines = text.split("\n").map((l) => buildLine(l, size, color));
-  const lineHeight = size * lineGap;
   const n = lines.length;
+  const gap = size * INTERLINE_GAP;
+  // 상대 baseline: 이전 줄 descent + 여백 + 현재 줄 ascent 만큼 내려간다(각 줄 실제 높이 기준).
+  const baseYs = [0];
+  for (let i = 1; i < n; i++) baseYs[i] = baseYs[i - 1] + lines[i - 1].descent + gap + lines[i].ascent;
   const ascent = lines[0].ascent;
   const descent = lines[n - 1].descent;
-  const blockBottom = (n - 1) * lineHeight + descent; // 첫 baseline 기준 블록 하단
-  // 첫 줄 baseline의 절대 y (vAlign에 따라).
+  const blockBottom = baseYs[n - 1] + descent; // 첫 baseline 기준 블록 하단
   let firstBaseY;
   if (vAlign === "top") firstBaseY = y + ascent;
   else if (vAlign === "bottom") firstBaseY = y - blockBottom;
@@ -149,7 +159,7 @@ export function renderGraphLabel(source, opts = {}) {
   const wrap = el("g");
   lines.forEach((ln, i) => {
     const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
-    ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + i * lineHeight})`);
+    ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);
     wrap.appendChild(ln.g);
   });
   if (halo) applyHalo(wrap, size);
@@ -157,14 +167,13 @@ export function renderGraphLabel(source, opts = {}) {
 }
 
 // 라벨 블록의 대략 크기(배치 계산용). { w, ascent, descent, h }.
-export function measureGraphLabel(source, size = 3.5, lineGap = 1.3) {
+export function measureGraphLabel(source, size = 3.5) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return { w: 0, ascent: 0, descent: 0, h: 0 };
   const lines = text.split("\n").map((l) => buildLine(l, size, "#000"));
   const w = Math.max(...lines.map((l) => l.width), 0);
-  const lineHeight = size * lineGap;
-  const ascent = lines[0].ascent;
-  const descent = lines[lines.length - 1].descent;
-  const h = ascent + (lines.length - 1) * lineHeight + descent;
-  return { w, ascent, descent, h };
+  const gap = size * INTERLINE_GAP;
+  let h = lines[0].ascent + lines[0].descent;
+  for (let i = 1; i < lines.length; i++) h += gap + lines[i].ascent + lines[i].descent;
+  return { w, ascent: lines[0].ascent, descent: lines[lines.length - 1].descent, h };
 }

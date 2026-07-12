@@ -12,7 +12,7 @@
  * 공통 도구(#tool-list 상단)는 과목과 무관하게 항상 표시된다.
  */
 
-import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.30";
+import { renderSymbolsForCategories, sizeIconViewBox } from "./templates.js?v=0.54.51";
 
 const SUBJECTS = {
   p: {

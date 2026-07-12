@@ -17,15 +17,15 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=0.54.30";
-import { registerTopMenu } from "./top-menu.js?v=0.54.30";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.30";
+} from "./state.js?v=0.54.51";
+import { registerTopMenu } from "./top-menu.js?v=0.54.51";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=0.54.51";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=0.54.30";
+} from "./preview-backgrounds.js?v=0.54.51";
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";

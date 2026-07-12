@@ -21,14 +21,12 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=0.54.30";
-import { armSymbol } from "./tools.js?v=0.54.30";
-import { renderObject } from "./render.js?v=0.54.30";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.30";
-import { getSvgAsset } from "./svg-assets.js?v=0.54.30";
-import { openFunctionModal } from "./function-graph/modal.js?v=0.54.30";
-import { openDataPlotModal } from "./data-plot.js?v=0.54.30";
-import { openGraphModal } from "./graph/graph-modal.js?v=0.54.30";
+import { state } from "./state.js?v=0.54.51";
+import { armSymbol } from "./tools.js?v=0.54.51";
+import { renderObject } from "./render.js?v=0.54.51";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=0.54.51";
+import { getSvgAsset } from "./svg-assets.js?v=0.54.51";
+import { openGraphModal } from "./graph/graph-modal.js?v=0.54.51";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -67,21 +65,9 @@ export const TEMPLATES = {
   graph: {
     kind: "graph",
     category: "공통",
-    label: "그래프",
-    keywords: ["그래프", "좌표", "좌표평면", "축", "틀", "graph", "axis", "coordinate", "plane", "격자", "L자", "ㄴ자"],
-    create: {},
-  },
-
-  /* DATA-PLOT — "데이터 표 → 산점도". kind "dataplot": 클릭 시 x·y 표 붙여넣기 모달을
-   * 연다(함수 입력과 동일 패턴). 삽입 경로(data-plot.js)가 선택된 좌표평면 위에, 없으면
-   * 데이터 범위에 맞춘 새 평면 위에 점 객체들 + 연결선을 만든다. 좌측엔 버튼이 없고
-   * '고급 기능' 섹션 + 오브젝트 검색으로만 진입하므로 hidden:true로 팔레트에서 뺀다. */
-  datatable: {
-    kind: "dataplot",
-    hidden: true,
-    category: "공통",
-    label: "데이터 표 → 산점도",
-    keywords: ["데이터", "데이터 표", "산점도", "표", "측정값", "실험", "scatter", "plot", "data", "table", "csv", "엑셀", "그래프"],
+    hidden: true,   // 좌측 팔레트에서 뺌 — 고급 기능 "좌표/함수 생성" 버튼 + F 단축키로 진입(요구)
+    label: "좌표/함수 생성",
+    keywords: ["그래프", "좌표", "좌표평면", "함수", "중간점", "축", "틀", "graph", "axis", "coordinate", "plane", "격자", "L자", "ㄴ자", "sin", "cos"],
     create: {},
   },
 
@@ -543,11 +529,8 @@ export function activateTemplate(symbolId) {
     const center = { x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 };
     instantiate(symbolId, center);
   } else if (def.kind === "funcinput") {
-    // 함수 입력: open the formula modal (input + live preview + confirm).
-    openFunctionModal();
-  } else if (def.kind === "dataplot") {
-    // 데이터 표: open the x·y paste modal (parse + auto plane + points/line).
-    openDataPlotModal();
+    // 함수 입력: 통합 그래프 모달로 일원화(입구 하나). 좌표 탭 먼저.
+    openGraphModal();
   } else if (def.kind === "graph") {
     // 그래프: open the coordinate-frame config modal (형태·라벨·격자·원점 + 삽입).
     openGraphModal();
