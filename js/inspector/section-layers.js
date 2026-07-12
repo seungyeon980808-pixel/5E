@@ -51,6 +51,7 @@ export function buildLayersSection(ctx) {
       const row = document.createElement("div");
       row.className =
         "insp-layer-row" + (isActive ? " is-active" : "") + (isHidden ? " is-hidden" : "");
+      row.dataset.layerId = String(layer.id); // Lite 모드에서 레이어 1만 표시(CSS)
 
       // Visibility toggle (eye). stopPropagation keeps it from also triggering
       // the row's "set active" click.

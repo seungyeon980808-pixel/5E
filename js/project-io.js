@@ -15,6 +15,8 @@ import { screenToWorld } from "./viewport.js?v=0.56.0";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=0.56.0";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=0.56.0";
 import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=0.56.0";
+import { insertImageFromSrc } from "./image-paste.js?v=0.56.0";
+import { addPage } from "./pages.js?v=0.56.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -530,20 +532,103 @@ export function initProjectIO(state, svg) {
     fileInput.value = "";
   });
 
-  // Hidden file input for image import.
+  // ===== 이미지 불러오기: 다중 파일 + '한 페이지에 넣기' / '페이지별로 넣기' =====
+  // 클릭 시 우측 서브메뉴에서 배치 방식을 고른다. 배치는 비대화형 자동 배치
+  // (아트보드 원점 기준 fit). '한 페이지'는 겹침 방지용 카스케이드 오프셋.
   const imageInput = document.createElement("input");
   imageInput.type = "file";
   imageInput.accept = "image/png,image/jpeg";
+  imageInput.multiple = true;
   imageInput.style.display = "none";
   document.body.appendChild(imageInput);
 
-  if (imageImportBtn) imageImportBtn.addEventListener("click", () => imageInput.click());
+  let importMode = "single-page"; // 'single-page' | 'per-page'
 
-  imageInput.addEventListener("change", () => {
-    const file = imageInput.files && imageInput.files[0];
-    if (file) readImageFile(file, null, state);
+  const fileToDataURL = (file) =>
+    new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = () => reject(new Error("read fail"));
+      r.readAsDataURL(file);
+    });
+
+  // 모든 이미지를 현재 페이지에 (겹치지 않게 살짝 카스케이드)
+  async function importOnePage(files) {
+    const OFF = 4; // mm
+    let i = 0;
+    for (const file of files) {
+      try {
+        const src = await fileToDataURL(file);
+        await insertImageFromSrc(state, src, { at: { x: 0, y: 0 }, offset: { dx: i * OFF, dy: i * OFF } });
+      } catch (_) { /* 디코드 실패 파일은 건너뜀 */ }
+      i++;
+    }
+  }
+
+  // 이미지마다 새 페이지 (현재 페이지가 비어 있으면 첫 장은 현재 페이지 재사용)
+  async function importPerPage(files) {
+    const startEmpty = (state.get().objects || []).length === 0;
+    let i = 0;
+    for (const file of files) {
+      try {
+        const src = await fileToDataURL(file);
+        if (!(i === 0 && startEmpty)) addPage(state);
+        await insertImageFromSrc(state, src, { at: { x: 0, y: 0 } });
+      } catch (_) { /* 디코드 실패 파일은 건너뜀 */ }
+      i++;
+    }
+  }
+
+  imageInput.addEventListener("change", async () => {
+    const files = Array.from(imageInput.files || []);
     imageInput.value = "";
+    if (!files.length) return;
+    if (importMode === "per-page") await importPerPage(files);
+    else await importOnePage(files);
   });
+
+  // 파일 메뉴 리스트 안, 우측 플라이아웃 서브메뉴
+  if (imageImportBtn) {
+    const fileMenuList = imageImportBtn.closest(".file-menu-list");
+    const submenu = document.createElement("div");
+    submenu.className = "file-submenu";
+    submenu.hidden = true;
+    submenu.innerHTML =
+      '<button type="button" class="file-menu-item file-submenu-item" data-mode="single-page">' +
+        '<span class="fsi-title">한 페이지에 넣기</span>' +
+        '<span class="fsi-desc">고른 이미지를 모두 지금 페이지에 배치합니다. 겹치지 않게 조금씩 어긋나게 놓입니다.</span>' +
+      '</button>' +
+      '<button type="button" class="file-menu-item file-submenu-item" data-mode="per-page">' +
+        '<span class="fsi-title">페이지별로 넣기</span>' +
+        '<span class="fsi-desc">이미지 한 장마다 새 페이지를 만들어 하나씩 배치합니다.</span>' +
+      '</button>';
+    (fileMenuList || imageImportBtn.parentElement).appendChild(submenu);
+
+    const closeSub = () => {
+      submenu.hidden = true;
+      imageImportBtn.setAttribute("aria-expanded", "false");
+    };
+
+    imageImportBtn.addEventListener("click", (e) => {
+      // top-menu의 '리스트 클릭=닫기'/outside-click 로 상단 메뉴가 닫히지 않도록 차단
+      e.stopPropagation();
+      const willOpen = submenu.hidden;
+      submenu.hidden = !willOpen;
+      imageImportBtn.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    submenu.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-mode]");
+      if (!b) return;
+      importMode = b.dataset.mode;
+      closeSub();
+      imageInput.click(); // 이 클릭은 버블 → 파일 메뉴가 닫힌다
+    });
+
+    // 파일 메뉴 버튼을 다시 누르면 서브메뉴 상태 초기화
+    const fileBtn = document.getElementById("file-menu-btn");
+    if (fileBtn) fileBtn.addEventListener("click", closeSub);
+  }
 
   // Drag-and-drop image import on the canvas.
   if (svg) {

@@ -125,6 +125,8 @@ export function initViewport(svg, state, onChange) {
   let spaceHeld = false;
   let panning = false;
   let panStart = null; // { sx, sy, vb:{...} }
+  let spaceDragged = false;  // Space를 누른 채 팬(드래그)을 시작했는가
+  let spaceOnCanvas = false;  // Space 눌림이 캔버스/본문 대상이었는가(입력필드 제외)
 
   // notify caller (main) that viewBox changed → it writes SVG + re-renders
   const commit = () => onChange();
@@ -200,6 +202,7 @@ export function initViewport(svg, state, onChange) {
 
     e.preventDefault(); // always suppress middle-click autoscroll
     if (centerLocked) return;
+    if (isSpaceLeft) spaceDragged = true; // 스페이스+드래그 팬 → 탭이 아님(중앙복귀 억제)
     panning = true;
     const vb = state.get().viewBox;
     panStart = { sx: e.clientX, sy: e.clientY, vb: { ...vb } };
@@ -230,19 +233,30 @@ export function initViewport(svg, state, onChange) {
     svg.classList.remove("is-panning");
   });
 
-  /* --- Space toggles pan-ready cursor (don't scroll page) --- */
+  /* --- Space: 누르는 동안 팬(홀드), 짧게 탭(드래그 없이)하면 중앙으로 복귀 --- */
   window.addEventListener("keydown", (e) => {
-    if (e.code === "Space" && !spaceHeld) {
+    if (e.code !== "Space") return;
+    // Ctrl/⌘+Space = 중앙 고정 토글(main.js가 처리) → 팬/탭 로직에서 제외
+    if (e.ctrlKey || e.metaKey) return;
+    // 텍스트 입력 중이면 스페이스는 그대로(공백 입력)
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (!spaceHeld) {
       spaceHeld = true;
+      spaceDragged = false;
+      spaceOnCanvas = (t === document.body || t === svg);
       svg.classList.add("space-held");
-      // avoid page scroll only when canvas is the focus target
-      if (e.target === document.body) e.preventDefault();
+      // 캔버스/본문에 포커스일 때만 페이지 스크롤 억제
+      if (spaceOnCanvas) e.preventDefault();
     }
   });
   window.addEventListener("keyup", (e) => {
-    if (e.code === "Space") {
-      spaceHeld = false;
-      svg.classList.remove("space-held");
+    if (e.code !== "Space" || !spaceHeld) return;
+    spaceHeld = false;
+    svg.classList.remove("space-held");
+    // 드래그 없이 캔버스에서 탭 → 1회 중앙 복귀 (고정 상태면 이미 중앙이라 생략)
+    if (spaceOnCanvas && !spaceDragged && !centerLocked) {
+      centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
     }
   });
 

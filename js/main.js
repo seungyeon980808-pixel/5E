@@ -27,6 +27,8 @@ import { initObjectSearch } from "./search.js?v=0.56.0";
 import { initCommandPalette } from "./command-palette.js?v=0.56.0";
 import { initSubjectObjects } from "./subject-objects.js?v=0.56.0";
 import { initToolHint } from "./tool-hint.js?v=0.56.0";
+import { initTooltips } from "./tooltip.js?v=0.56.0";
+import { initViewMode } from "./view-mode.js?v=0.56.0";
 import { initPersonalObjects } from "./personal-objects.js?v=0.56.0";
 import { initBulkEdit } from "./bulk-edit.js?v=0.56.0";
 import { initDataPlot } from "./data-plot.js?v=0.56.0";
@@ -211,6 +213,20 @@ initSubjectObjects();
 /* ----- 도구별 하단 안내(자르기 패턴 일반화 공용 슬롯) ----- */
 initToolHint(state);
 
+/* ----- 커스텀 툴팁: 네이티브 title 을 앱 톤 툴팁으로 대체 ----- */
+initTooltips();
+
+/* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
+initViewMode(state);
+
+/* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
+   앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로
+   레이아웃이 깨지지 않게 막는다. 캔버스 위 Ctrl+휠(도형 줌)은 그대로 동작. */
+window.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+window.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
+});
+
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
 
@@ -261,13 +277,27 @@ initDataPlot();
     });
   }
   if (centerBtn) {
-    centerBtn.addEventListener("click", () => {
-      const locked = centerBtn.classList.toggle("is-active");
+    // 스타일은 CSS(.is-active = 과목 강조색)에 위임 — 인라인 하드코딩 제거
+    const applyCenterLock = (locked) => {
+      centerBtn.classList.toggle("is-active", locked);
+      centerBtn.setAttribute("aria-pressed", String(locked));
       setCenterLocked(locked);
-      centerBtn.style.background = locked ? "var(--c-main)" : "";
-      centerBtn.style.color = locked ? "#fff" : "";
-      if (locked) centerView(state);
+      if (locked) centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
+    };
+    centerBtn.addEventListener("click", () => {
+      applyCenterLock(!centerBtn.classList.contains("is-active"));
     });
+    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시).
+    // 캡처 단계로 등록해 다른 핸들러의 stopPropagation 영향을 받지 않게 한다.
+    // 참고: Windows에서 Ctrl+Space가 '입력 방법 전환' OS 단축키로 예약돼 있으면
+    //       브라우저에 이벤트가 도달하지 않을 수 있다(그 경우 Windows 키보드 설정에서 해제).
+    document.addEventListener("keydown", (e) => {
+      if (e.code !== "Space" || !(e.ctrlKey || e.metaKey)) return;
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      e.preventDefault();
+      applyCenterLock(!centerBtn.classList.contains("is-active"));
+    }, true);
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);

@@ -112,7 +112,7 @@ export function switchPage(state, targetId) {
 }
 
 /* ----- 추가(빈 페이지) ----- */
-function addPage(state) {
+export function addPage(state) {
   const id = newPageId();
   state.update((s) => {
     writeBackActive(s);
