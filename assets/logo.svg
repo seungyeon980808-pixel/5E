@@ -1,38 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="5E 로고 — 네 과학 분야 배지">
-  <style>
-    .s { stroke: #1a1d26; fill: none; }
-    .f { fill: #1a1d26; stroke: none; }
-    @media (prefers-color-scheme: dark) {
-      .s { stroke: #e6edf3; }
-      .f { fill: #e6edf3; }
-    }
-    :root[data-theme="dark"] .s { stroke: #e6edf3; }
-    :root[data-theme="dark"] .f { fill: #e6edf3; }
-    :root[data-theme="light"] .s { stroke: #1a1d26; }
-    :root[data-theme="light"] .f { fill: #1a1d26; }
-  </style>
-  <rect class="s" x="5" y="5" width="86" height="86" rx="22" stroke-width="2"/>
-  <g class="s" stroke-width="1.9" stroke-linecap="round">
-    <ellipse cx="30" cy="30" rx="13" ry="5"/>
-    <ellipse cx="30" cy="30" rx="13" ry="5" transform="rotate(60 30 30)"/>
-    <ellipse cx="30" cy="30" rx="13" ry="5" transform="rotate(120 30 30)"/>
-  </g>
-  <circle class="f" cx="30" cy="30" r="1.9"/>
-  <polygon class="s" points="76,30 71,38.66 61,38.66 56,30 61,21.34 71,21.34" stroke-width="1.9" stroke-linejoin="round"/>
-  <circle class="s" cx="66" cy="30" r="5.5" stroke-width="1.7"/>
-  <g class="s" stroke-width="2.2" stroke-linecap="round">
-    <path d="M30 53 C 39 57 39 62 30 66 C 21 70 21 75 30 79"/>
-    <path d="M30 53 C 21 57 21 62 30 66 C 39 70 39 75 30 79"/>
-  </g>
-  <g class="s" stroke-width="1.5" stroke-linecap="round">
-    <line x1="23" y1="58" x2="37" y2="58"/>
-    <line x1="26" y1="62.5" x2="34" y2="62.5"/>
-    <line x1="26" y1="69.5" x2="34" y2="69.5"/>
-    <line x1="23" y1="74" x2="37" y2="74"/>
-  </g>
-  <g class="s" stroke-width="1.9">
-    <circle cx="66" cy="66" r="11"/>
-    <ellipse cx="66" cy="66" rx="4.5" ry="11"/>
-    <line x1="55" y1="66" x2="77" y2="66"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="5E">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="60%" r="72%">
+      <stop offset="0%" stop-color="#23366b"/>
+      <stop offset="66%" stop-color="#0b1128"/>
+    </radialGradient>
+  </defs>
+  <rect width="96" height="96" rx="20" fill="url(#bg)"/>
+  <text x="49" y="49" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="600" font-size="54" fill="#f5f8ff" text-anchor="middle" dominant-baseline="central">5E</text>
 </svg>
