@@ -114,8 +114,10 @@ function renderCoordplane(obj) {
   //   single    : x축만 (직선)
   const variant = obj.axisVariant || "cross";
   const hasYArm = variant !== "single";                    // 세로축을 그리나?
-  const xBoth = variant === "cross";                       // x축 음의 방향도 그리나?
-  const yBoth = variant === "cross" || variant === "halfcross"; // y축 음의 방향도?
+  // 음의 방향 축 팔은 범위가 실제로 음수까지 갈 때만 그린다(비대칭 범위 지원 — variant 대신
+  // xMin/yMin으로 판정). 기존 3모양(ㄴ자·ㅏ자·십자)에선 결과가 동일하다.
+  const xBoth = xMin < -1e-9;                              // x축 음의 방향도 그리나?
+  const yBoth = hasYArm && yMin < -1e-9;                   // y축 음의 방향도?
   const rich = !!obj.richLabels;       // 혼합 라벨러(한글정자+영문이탤릭+수식) 사용
   const gridToData = !!obj.gridToData; // 격자를 데이터 사각형 끝까지(꼬리 없이)
   // Positive-only forms start each axis at the origin; fall back to the box edge
@@ -134,16 +136,19 @@ function renderCoordplane(obj) {
   // "한 칸+α"). gridOver = 격자를 마지막 눈금 밖으로 더 뻗는 칸(사진4의 "반 칸"). 둘 다
   // 없으면(구 좌표평면) 기존처럼 xMin..xMax 정수배수.
   const stepX = obj.gridStepX || 1, stepY = obj.gridStepY || 1;
-  const gcX = Number.isFinite(obj.gridCountX) ? obj.gridCountX : null;
-  const gcY = Number.isFinite(obj.gridCountY) ? obj.gridCountY : null;
+  // 격자·눈금 칸 수: 방향별(pos/neg) 우선, 없으면 대칭 gridCountX/Y로 폴백(구파일 호환).
+  const gcXpos = Number.isFinite(obj.gridCountXPos) ? obj.gridCountXPos : (Number.isFinite(obj.gridCountX) ? obj.gridCountX : null);
+  const gcYpos = Number.isFinite(obj.gridCountYPos) ? obj.gridCountYPos : (Number.isFinite(obj.gridCountY) ? obj.gridCountY : null);
+  const gcXneg = Number.isFinite(obj.gridCountXNeg) ? obj.gridCountXNeg : (Number.isFinite(obj.gridCountX) ? obj.gridCountX : gcXpos);
+  const gcYneg = Number.isFinite(obj.gridCountYNeg) ? obj.gridCountYNeg : (Number.isFinite(obj.gridCountY) ? obj.gridCountY : gcYpos);
   const gridOver = Number.isFinite(obj.gridOver) ? obj.gridOver : 0;
-  const kx = gcX != null ? { kStart: xBoth ? -gcX : 0, kEnd: gcX, step: stepX } : tickRange(xMin, xMax, stepX);
-  const ky = gcY != null ? { kStart: yBoth ? -gcY : 0, kEnd: gcY, step: stepY } : tickRange(yMin, yMax, stepY);
+  const kx = gcXpos != null ? { kStart: xBoth ? -gcXneg : 0, kEnd: gcXpos, step: stepX } : tickRange(xMin, xMax, stepX);
+  const ky = gcYpos != null ? { kStart: yBoth ? -gcYneg : 0, kEnd: gcYpos, step: stepY } : tickRange(yMin, yMax, stepY);
   // 눈금/라벨 스킵 판정: gridCount·gridToData 경로에선 데이터 범위를 이미 정확히 캡했으니
   // 박스-끝 트리밍(atEdge)을 걸지 않는다. 구 좌표평면(둘 다 없음)에서만 atEdge로 다듬는다.
-  const legacyTrim = gcX == null && !gridToData;
+  const legacyTrim = gcXpos == null && !gridToData;
   const skipTickX = (v) => legacyTrim && atEdgeX(v);
-  const skipTickY = (v) => (gcY == null && !gridToData) && atEdgeY(v);
+  const skipTickY = (v) => (gcYpos == null && !gridToData) && atEdgeY(v);
 
   // ----- GRID (light, dashed — 평가원 style) -----
   // Every grid line spans the SAME grid rectangle so the ends line up cleanly
@@ -404,8 +409,23 @@ function smoothSamplePts(pts, t, segs = 12) {
   }
   return out;
 }
-function funcgraphPathD(pts, curvature = 1) {
-  if (!pts || pts.length < 2) return catmullRomPathT(pts || [], curvature);
+// 명시적 경계(breaks = 샘플러가 준 '새 run 시작 인덱스')로만 점 배열을 run으로 나눈다.
+// 경계가 없으면 한 덩어리. 사용자가 찍은 꺾은선의 긴 구간이 임의로 끊기지 않게, 직선 계열은
+// 이것만 쓴다(거리 추정 없음).
+function splitByBreaks(pts, breaks) {
+  if (!breaks || !breaks.length) return [pts];
+  const set = new Set(breaks);
+  const runs = []; let run = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (set.has(i) && run.length) { runs.push(run); run = []; }
+    run.push(pts[i]);
+  }
+  if (run.length) runs.push(run);
+  return runs;
+}
+// 구파일(breaks 없이 저장된 함수식) 호환용: 이웃 점 간 거리가 튀는 곳에서 끊는다. 정확하진
+// 않지만 없는 것보다 낫다. breaks가 있으면 그쪽이 우선(정확).
+function distanceSplitRuns(pts) {
   const dists = [];
   for (let i = 1; i < pts.length; i++) dists.push(Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
   const sorted = [...dists].sort((a, b) => a - b);
@@ -418,13 +438,22 @@ function funcgraphPathD(pts, curvature = 1) {
     else run.push(pts[i]);
   }
   parts.push(run);
-  return parts.map((r) => catmullRomPathT(r, curvature)).filter(Boolean).join(" ").trim();
+  return parts;
+}
+function funcgraphPathD(pts, curvature = 1, breaks) {
+  if (!pts || pts.length < 2) return catmullRomPathT(pts || [], curvature);
+  // 평면 밖으로 나갔다 돌아온 조각들을 가짜 직선으로 잇지 않도록 run별로 나눠 그린다.
+  const runs = (breaks && breaks.length) ? splitByBreaks(pts, breaks) : distanceSplitRuns(pts);
+  return runs.map((r) => catmullRomPathT(r, curvature)).filter(Boolean).join(" ").trim();
 }
 
 // 직선/꺾은선 계열(사용자가 클릭으로 찍은 점): 점 사이를 곡선이 아니라 그냥 직선으로 잇는다.
-function straightPathD(pts) {
+// breaks가 있으면(직선 모양 함수식) 그 경계에서만 끊고, 없으면 통째로 잇는다(종전과 동일).
+function straightPathD(pts, breaks) {
   if (!pts || pts.length < 2) return "";
-  return `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" ");
+  return splitByBreaks(pts, breaks)
+    .map((r) => r.length < 2 ? "" : `M ${r[0].x} ${r[0].y} ` + r.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" "))
+    .filter(Boolean).join(" ").trim();
 }
 
 function renderFuncgraph(obj) {
@@ -435,7 +464,7 @@ function renderFuncgraph(obj) {
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
   const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
   const el = document.createElementNS(SVG_NS, "path");
-  el.setAttribute("d", style === "straight" ? straightPathD(pts) : funcgraphPathD(pts, obj.curvature));
+  el.setAttribute("d", style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks));
   el.setAttribute("fill", "none");
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);

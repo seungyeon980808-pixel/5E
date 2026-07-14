@@ -26,6 +26,13 @@ import {
   addPreviewBackground,
   removePreviewBackground,
 } from "./preview-backgrounds.js?v=1.0.0";
+// 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
+// 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
+// 순환 없음).
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.0";
+
+// initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
+let _state = null;
 
 /* ----- defaults schema + localStorage load/save ----- */
 const DEFAULTS_KEY = "phyDraw.defaults";
@@ -98,6 +105,13 @@ function settingsFilename() {
   const p = (n) => String(n).padStart(2, "0");
   const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
   return `5E-settings-${stamp}.json`;
+}
+// 프로젝트까지 포함한 '전체 백업' 파일명: 5E-backup-YYYYMMDD.json
+function backupFilename() {
+  const now = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
+  return `5E-backup-${stamp}.json`;
 }
 
 // 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
@@ -198,15 +212,19 @@ function openExportDialog() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
-      <h2 class="modal-title">설정 저장하기</h2>
+      <h2 class="modal-title">전체 저장 (백업)</h2>
       <p class="objectify-description" style="margin:0 0 8px;">
-        저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 파일로 내려받습니다.
+        저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 <b>한 파일</b>로 내려받습니다.
         '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
       ${EXPORT_CHOICES.map((c, i) => `
         <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
           <input type="checkbox" data-i="${i}" ${localStorage.getItem(c.key) !== null ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
           <span class="modal-label" style="margin:0;">${c.label}</span>
         </label>`).join("")}
+      <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;">
+        <input type="checkbox" id="sx-project" checked />
+        <span class="modal-label" style="margin:0;">현재 프로젝트 (그림·모든 페이지)</span>
+      </label>
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="sx-cancel">취소</button>
         <button type="button" class="modal-btn modal-btn-primary" id="sx-ok">저장</button>
@@ -218,13 +236,20 @@ function openExportDialog() {
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
   overlay.querySelector("#sx-ok").addEventListener("click", async () => {
-    const keys = [...overlay.querySelectorAll("input[type=checkbox]")]
+    // 설정 항목은 data-i가 붙은 체크박스만(프로젝트 체크박스는 data-i가 없어 제외됨).
+    const keys = [...overlay.querySelectorAll("input[data-i]")]
       .filter((cb) => cb.checked)
       .map((cb) => EXPORT_CHOICES[Number(cb.dataset.i)].key);
-    if (!keys.length) { showAlert("저장할 항목을 하나 이상 선택하세요.", { title: "설정 저장하기" }); return; }
-    const json = JSON.stringify(collectSettings(keys), null, 2);
+    const includeProject = !!overlay.querySelector("#sx-project")?.checked;
+    if (!keys.length && !includeProject) { showAlert("저장할 항목을 하나 이상 선택하세요.", { title: "전체 저장 (백업)" }); return; }
+    const payload = collectSettings(keys);
+    if (includeProject && _state) {
+      // 현재 프로젝트(그림·모든 페이지)를 같은 파일에 첨부. 직렬화 실패 시 나머지만 저장.
+      try { payload.project = serializeProject(_state.get()); } catch (_) { /* 프로젝트만 누락 */ }
+    }
+    const json = JSON.stringify(payload, null, 2);
     close();
-    await saveJsonWithPicker(json, settingsFilename());
+    await saveJsonWithPicker(json, payload.project ? backupFilename() : settingsFilename());
   });
 }
 
@@ -295,7 +320,7 @@ function applyThemeLive(theme) {
 // 설정 불러오기: 파일 파싱 → 검증 → 반영. 실패 시 한국어로 알리고 아무것도 바꾸지 않는다.
 function importSettingsFile(file) {
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     let raw;
     try {
       raw = JSON.parse(reader.result);
@@ -309,11 +334,40 @@ function importSettingsFile(file) {
       return;
     }
     const { applied, failed } = applyImportedSettings(valid.data);
-    if (applied.length === 0) {
+
+    // 전체 백업 파일이면 현재 프로젝트(그림)도 함께 복원(요구 3). 되돌리기 어려운 '대체'라
+    // 먼저 확인받는다. '설정만'을 고르면 그림은 건드리지 않는다.
+    let projectLoaded = false;
+    const proj = raw.project;
+    const looksProject = proj && typeof proj === "object" &&
+      (Array.isArray(proj.pages) || Array.isArray(proj.objects));
+    if (looksProject && _state) {
+      const ok = await showConfirm(
+        "이 파일에는 프로젝트(그림)도 들어 있습니다.\n현재 작업을 이 프로젝트로 대체할까요?\n(저장하지 않은 현재 작업은 사라집니다.)",
+        { title: "전체 백업 복원", okText: "프로젝트도 복원", cancelText: "설정만" }
+      );
+      if (ok) {
+        try {
+          const data = migrateProject(proj);
+          if (data && Array.isArray(data.pages) && data.pages.length &&
+              data.pages.every((p) => p && Array.isArray(p.objects))) {
+            applyLoaded(_state, data);
+            projectLoaded = true;
+          } else {
+            alert("파일의 프로젝트 형식이 올바르지 않아 그림은 복원하지 못했습니다.");
+          }
+        } catch (_) {
+          alert("프로젝트를 복원하는 중 오류가 발생했습니다.");
+        }
+      }
+    }
+
+    if (applied.length === 0 && !projectLoaded) {
       alert(
         failed.length
           ? "저장 공간이 부족해 설정을 반영하지 못했습니다. 설정은 변경되지 않았습니다."
-          : "불러올 수 있는 설정 항목이 없습니다. 설정은 변경되지 않았습니다."
+          : (looksProject ? "복원을 취소했습니다. 아무것도 변경되지 않았습니다."
+                          : "불러올 수 있는 항목이 없습니다. 설정은 변경되지 않았습니다.")
       );
       return;
     }
@@ -321,7 +375,7 @@ function importSettingsFile(file) {
     // 이미 그려 둔 도형이나 열려 있는 모달에는 재열기 전까지 보이지 않을 수 있다.
     const needsReopenNote = applied.includes(DEFAULTS_KEY);
     alert(
-      "설정을 불러왔습니다." +
+      (projectLoaded ? "전체 백업을 불러왔습니다 (설정 + 프로젝트)." : "설정을 불러왔습니다.") +
       (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "") +
       (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "")
     );
@@ -480,6 +534,7 @@ function buildModal() {
 
 /* ----- initSettings: wire dropdown + 기본값 설정 modal ----- */
 export function initSettings(state) {
+  _state = state;   // 전체 백업(프로젝트 포함 저장/복원)에서 사용
   initSettingsMenu();
 
   // 환경 설정(화면 크기): 저장값을 즉시 적용 + 드롭다운 항목 배선

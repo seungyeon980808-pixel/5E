@@ -19,6 +19,7 @@ import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/co
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.0";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.0";
 import { nextObjectId } from "../tools/id.js?v=1.0.0";
+import { simplifyRDP } from "../geometry.js?v=1.0.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -52,12 +53,13 @@ let _previewSvg = null;           // 클릭 좌표 환산용
 let _previewPlane = null;
 let _placeMode = null;            // null | "marker" | "guide" — 미리보기 클릭 배치 모드
 let _selPts = null;               // 선택 계열의 baked world points(배치 고스트 스냅·클릭 가드용)
+let _selBreaks = null;            // 선택 계열의 끊긴 구간 경계(worldYAtX가 빈 구간 건너뛰게)
 let _activeDraw = -1;             // 클릭으로 '그리는 중'인 점 계열 index(-1=없음). 빈 클릭 선택해제 판정용
 
 /* ---------- 기본값 ---------- */
 function defaultCfg() {
   return {
-    variant: "quadrant", cx: 5, cy: 5,
+    variant: "quadrant", xNeg: 0, xPos: 5, yNeg: 0, yPos: 5,
     labelX: "x", labelY: "y", showX: true, showY: true,
     origin: "0", showOrigin: true,
     showGrid: true, showTicks: true,
@@ -93,16 +95,21 @@ function genMultiples(base, count) {
   return out;
 }
 function applyCfg(plane, cfg) {
-  const cx = Math.max(1, cfg.cx), cy = Math.max(1, cfg.cy);
+  // 축별로 음(neg)·양(pos) 방향 칸 수를 따로 둔다(요구 1·2: 비대칭 범위). neg=0이면 그 방향
+  // 축 팔이 없다(ㄴ자·ㅏ자). 모양 프리셋은 이 값들을 채우고, 범위 입력으로 미세 조정한다.
+  const xPos = Math.max(1, cfg.xPos), yPos = Math.max(1, cfg.yPos);
+  const xNeg = Math.max(0, cfg.xNeg || 0), yNeg = Math.max(0, cfg.yNeg || 0);
   plane.axisVariant = cfg.variant;
   plane.richLabels = true;
   plane.gridToData = true;
-  plane.xMin = cfg.variant === "cross" ? -(cx + PAD_X) : 0;
-  plane.xMax = cx + PAD_X;
-  plane.yMin = (cfg.variant === "cross" || cfg.variant === "halfcross") ? -(cy + PAD_Y) : 0;
-  plane.yMax = cy + PAD_Y;
+  plane.xMin = xNeg > 0 ? -(xNeg + PAD_X) : 0;
+  plane.xMax = xPos + PAD_X;
+  plane.yMin = yNeg > 0 ? -(yNeg + PAD_Y) : 0;
+  plane.yMax = yPos + PAD_Y;
   plane.gridStepX = 1; plane.gridStepY = 1;
-  plane.gridCountX = cx; plane.gridCountY = cy;  // 눈금/격자를 ±칸 수로 캡(나머지=화살표 마진)
+  plane.gridCountX = xPos; plane.gridCountY = yPos;          // 구코드 호환(양의 칸 수)
+  plane.gridCountXPos = xPos; plane.gridCountXNeg = xNeg;    // 비대칭 격자·눈금 범위
+  plane.gridCountYPos = yPos; plane.gridCountYNeg = yNeg;
   plane.gridOver = GRID_OVER;                     // 격자만 마지막 눈금 밖 반 칸 더
   plane.showGrid = cfg.showGrid;
   plane.showTicks = cfg.showTicks;
@@ -138,7 +145,7 @@ function applyCfg(plane, cfg) {
   // 축 라벨 이동: 오프셋을 평면에 저장 → coordplane가 축 이름을 그만큼 옮겨 그린다.
   plane.labelXOffset = cfg.labelXOffset && Number.isFinite(cfg.labelXOffset.dx) ? { dx: cfg.labelXOffset.dx, dy: cfg.labelXOffset.dy } : { dx: 0, dy: 0 };
   plane.labelYOffset = cfg.labelYOffset && Number.isFinite(cfg.labelYOffset.dx) ? { dx: cfg.labelYOffset.dx, dy: cfg.labelYOffset.dy } : { dx: 0, dy: 0 };
-  plane.graphCfg = { cx, cy };   // 재편집 시 칸 수 복원용 스펙
+  plane.graphCfg = { xNeg, xPos, yNeg, yPos };   // 재편집 시 범위 복원용 스펙
   return plane;
 }
 
@@ -174,6 +181,18 @@ function extendedMathPts(s) {
   return [...pts, { x: b.x + (dx / len) * amt, y: b.y + (dy / len) * amt }];
 }
 
+// 자유곡선(요구): 점 계열을 '곡선' 모양으로 그릴 땐, 손으로 찍거나 끌면서 생긴 잔떨림을
+// RDP로 걸러 앵커만 남긴다 → Catmull-Rom이 앵커들을 시작~끝까지 매끄럽게 지나는
+// 깔끔한 곡선을 그린다(모든 모양을 손으로 정확히 그릴 수 없으니 곡선은 앱이 다듬는다).
+// 잔떨림 허용 오차 = 셀 크기의 ~28%(최소 1.2mm). 손떨림·스냅 지터는 걸러지고,
+// 의도적 굴곡(보통 1칸 이상)은 살아남는다.
+function freeCurvePts(s, worldPts, plane) {
+  if (s.kind !== "points" || (s.curveStyle || "straight") !== "smooth") return worldPts;
+  if (!worldPts || worldPts.length < 3) return worldPts;
+  const eps = Math.max(1.2, cellOf(plane) * 0.28);
+  return simplifyRDP(worldPts, eps);
+}
+
 // 함수식 자유 이동(요구): 계열의 offset(math dx,dy)을 baked world 점들에 적용.
 // math 오프셋이라 평면 위치·배율과 무관(미리보기/캔버스 일관).
 function applyOffset(worldPts, plane, offset) {
@@ -188,10 +207,19 @@ function applyOffset(worldPts, plane, offset) {
 // 함수/점이 화살표 아래까지 뻗지 않도록. 점 스냅 클램프·함수 기본 정의역에 공통 사용.
 function dataBounds(plane) {
   const over = plane.gridOver || 0;
-  const cx = Number.isFinite(plane.gridCountX) ? plane.gridCountX : Math.max(1, Math.round(plane.xMax - PAD_X));
-  const cy = Number.isFinite(plane.gridCountY) ? plane.gridCountY : Math.max(1, Math.round(plane.yMax - PAD_Y));
-  const xMax = cx + over, yMax = cy + over;
-  return { xMin: plane.xMin < 0 ? -xMax : 0, xMax, yMin: plane.yMin < 0 ? -yMax : 0, yMax };
+  const cxPos = Number.isFinite(plane.gridCountXPos) ? plane.gridCountXPos
+    : (Number.isFinite(plane.gridCountX) ? plane.gridCountX : Math.max(1, Math.round(plane.xMax - PAD_X)));
+  const cyPos = Number.isFinite(plane.gridCountYPos) ? plane.gridCountYPos
+    : (Number.isFinite(plane.gridCountY) ? plane.gridCountY : Math.max(1, Math.round(plane.yMax - PAD_Y)));
+  const cxNeg = Number.isFinite(plane.gridCountXNeg) ? plane.gridCountXNeg
+    : (Number.isFinite(plane.gridCountX) ? plane.gridCountX : cxPos);   // 구파일=대칭 폴백
+  const cyNeg = Number.isFinite(plane.gridCountYNeg) ? plane.gridCountYNeg
+    : (Number.isFinite(plane.gridCountY) ? plane.gridCountY : cyPos);
+  const xMax = cxPos + over, yMax = cyPos + over;
+  return {
+    xMin: plane.xMin < 0 ? -(cxNeg + over) : 0, xMax,
+    yMin: plane.yMin < 0 ? -(cyNeg + over) : 0, yMax,
+  };
 }
 
 /* ---------- 그래프 요소(표시점 ● / 수선의 발 / 화살표) ---------- */
@@ -205,9 +233,13 @@ function geomPts(s, pts) {
   return (s.kind === "points" && cs === "smooth") ? smoothSamplePts(pts, s.curvature) : pts;
 }
 // 계열의 baked world points[]에서 world-x에 해당하는 world-y를 선형 보간(범위 밖 null).
-function worldYAtX(points, wx) {
+// breaks(끊긴 구간 시작 인덱스)가 주어지면 그 경계 구간은 건너뛴다 — 평면 밖으로 나간
+// 가짜 직선 위에 표시점/수선/화살표가 스냅되지 않게.
+function worldYAtX(points, wx, breaks) {
   if (!points || points.length < 2) return null;
+  const brk = (breaks && breaks.length) ? new Set(breaks) : null;
   for (let i = 1; i < points.length; i++) {
+    if (brk && brk.has(i)) continue;   // i부터 새 run → (i-1, i)는 실제 선이 아님
     const a = points[i - 1], b = points[i];
     const lo = Math.min(a.x, b.x), hi = Math.max(a.x, b.x);
     if (wx >= lo - 1e-9 && wx <= hi + 1e-9) {
@@ -219,15 +251,15 @@ function worldYAtX(points, wx) {
   return null;
 }
 // 계열의 요소 math 스펙(markers/guides/arrows) → 세계좌표 렌더 데이터(renderFuncgraph가 그림).
-function bakeElements(s, plane, pts) {
+function bakeElements(s, plane, pts, breaks) {
   const markers = [], guideSegs = [], arrowPolys = [];
   const o0 = worldFromMath(plane, 0, 0);
   (s.markers || []).forEach((mx) => {
-    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx);
+    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx, breaks);
     if (wy != null) markers.push({ x: wx, y: wy });
   });
   (s.guides || []).forEach((mx) => {
-    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx);
+    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx, breaks);
     if (wy == null) return;
     if (Math.abs(wy - o0.y) > 1e-6) guideSegs.push([{ x: wx, y: wy }, { x: wx, y: o0.y }]); // → x축(수직)
     if (Math.abs(wx - o0.x) > 1e-6) guideSegs.push([{ x: wx, y: wy }, { x: o0.x, y: wy }]); // → y축(수평)
@@ -240,14 +272,14 @@ function bakeElements(s, plane, pts) {
     if (!Number.isFinite(a.x)) return;
     const dir = a.dir < 0 ? -1 : 1;
     const cwx = worldFromMath(plane, a.x, 0).x;                 // 화살촉 = 클릭 지점
-    const ccy = worldYAtX(pts, cwx);
+    const ccy = worldYAtX(pts, cwx, breaks);
     if (ccy == null) return;
     // 꼬리는 진행 반대쪽으로 ARROW_SPAN만큼. 단 선의 x-범위를 벗어나면 끝점으로 clamp한다 —
     // 벗어나면 worldYAtX가 null이라 높이가 ccy로 튀고, 원점 등을 지나며 지그재그 stub이 생김(버그).
     const xsMin = Math.min(...pts.map((p) => p.x)), xsMax = Math.max(...pts.map((p) => p.x));
     const rawTailX = worldFromMath(plane, a.x - dir * ARROW_SPAN, 0).x;
     const wTailX = Math.max(xsMin, Math.min(xsMax, rawTailX)); // 선 밖으로 안 나가게
-    const yTail = worldYAtX(pts, wTailX);
+    const yTail = worldYAtX(pts, wTailX, breaks);
     const lo = Math.min(cwx, wTailX), hi = Math.max(cwx, wTailX);
     // 꼬리 → (사이 곡선점) → 화살촉(마지막). arrowHead:"end"가 마지막 점(=클릭 지점)에 화살촉을 그린다.
     const poly = [{ x: wTailX, y: yTail != null ? yTail : ccy }];
@@ -261,9 +293,9 @@ function bakeElements(s, plane, pts) {
   return { markers, guideSegs, arrowPolys };
 }
 // 커밋용: 세계좌표 렌더 데이터 + 원본 math 스펙(재편집 시 모달이 되읽음).
-function elementFields(s, plane, pts) {
+function elementFields(s, plane, pts, breaks) {
   return {
-    ...bakeElements(s, plane, pts),
+    ...bakeElements(s, plane, pts, breaks),
     markerXs: [...(s.markers || [])], guideXs: [...(s.guides || [])],
     arrowSpecs: (s.arrows || []).map((a) => ({ ...a })),
   };
@@ -306,16 +338,17 @@ function prepareSeries(plane) {
       // 함수는 데이터 범위(눈금 끝+반 칸)까지만 — 화살표 마진 아래로 뻗지 않게.
       const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const { points: sampled, error } = sampleFunctionPoints(expr, dMin, dMax, plane);
+      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane);
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
       const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
-      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, points, offset: off, ...elementFields(s, plane, points) });
+      // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
+      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
-      const points = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 렌더·베이크(자동 연장 반영)
+      const points = freeCurvePts(s, extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)), plane); // 렌더·베이크(자동 연장+자유곡선 다듬기)
       list.push({ ...common, sourceKind: "points", mathPoints, points, autoExtend: !!s.autoExtend, ...elementFields(s, plane, geomPts(s, points)) });
     }
   }
@@ -422,10 +455,10 @@ function refreshPreview() {
   svg.appendChild(renderCoordplane(plane));
 
   let selError = "";
-  _selPts = null;   // 선택 계열의 baked points를 이 렌더에서 갱신(배치 고스트·클릭 가드용)
+  _selPts = null; _selBreaks = null;   // 선택 계열의 baked points/경계를 이 렌더에서 갱신(배치 고스트·클릭 가드용)
   _series.forEach((s, i) => {
     const [, dl, dg] = LINE_STYLES[s.styleIdx] || LINE_STYLES[0];
-    let pts = null, sourceKind, curveStyle;
+    let pts = null, sourceKind, curveStyle, breaks = null;
     if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) return;
@@ -436,19 +469,20 @@ function refreshPreview() {
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
       pts = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
+      breaks = r.breaks;                              // 끊긴 구간(평면 밖) 경계
     } else {
       if (!s.pts.length) return;
-      pts = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 자동 연장 반영
+      pts = freeCurvePts(s, extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)), plane); // 자동 연장+자유곡선 다듬기
       sourceKind = "points"; curveStyle = "straight";
     }
-    if (i === _sel) _selPts = geomPts(s, pts);   // 선택 계열 곡선(배치 스냅 기준 — 그려진 곡선과 동일 기하)
+    if (i === _sel) { _selPts = geomPts(s, pts); _selBreaks = breaks; }   // 선택 계열 곡선+경계(배치 스냅 기준)
     const el = renderFuncgraph({
-      points: pts, strokeLevel: 0, strokeWidth: s.strokeWidth,
+      points: pts, strokeLevel: 0, strokeWidth: s.strokeWidth, breaks,
       dashLength: dl, dashGap: dg, sourceKind,
       curveStyle: s.curveStyle || (s.kind === "points" ? "straight" : "smooth"),
       curvature: s.curvature,
       endLabel: s.endLabel, endLabelSize: endLabelSizeOf(plane),
-      ...bakeElements(s, plane, geomPts(s, pts)),  // 표시점/수선/화살표 실시간 미리보기
+      ...bakeElements(s, plane, geomPts(s, pts), breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
     svg.appendChild(el);
@@ -468,6 +502,11 @@ function refreshPreview() {
       const path = el.querySelector("path");
       if (path) {
         const hit = path.cloneNode(false);
+        // cloneNode가 seriesColorSel이 넣은 인라인 style.stroke(=파랑)까지 복사한다. 인라인
+        // 스타일은 stroke 속성(attribute)보다 우선하므로, 투명으로 두려면 인라인 쪽을 지워야
+        // 한다 — 안 그러면 굵기 3짜리 투명 히트선이 파란 띠로 보인다(미리보기가 실제 출력보다
+        // 두꺼워 보이던 버그). 인라인을 투명으로 덮어 미리보기 굵기 = 실제 함수 굵기.
+        hit.style.stroke = "transparent"; hit.style.strokeWidth = "";
         hit.setAttribute("stroke", "transparent"); hit.setAttribute("stroke-width", 3);
         hit.setAttribute("fill", "none"); hit.style.cursor = "move";
         hit.addEventListener("click", (e) => e.stopPropagation());
@@ -536,7 +575,7 @@ function refreshPreview() {
     const m = clientToMath(clientX, clientY);
     if (!m) return null;
     const wx = worldFromMath(_previewPlane, m.x, 0).x;
-    const wy = worldYAtX(_selPts, wx);
+    const wy = worldYAtX(_selPts, wx, _selBreaks);
     return wy == null ? null : { mx: m.x, wx, wy };
   };
 
@@ -831,11 +870,29 @@ function syncSeriesEditor() {
   syncElementLists();
 }
 
+// 모양 프리셋 → 범위(neg/pos) 기본값. 음방향은 그 모양에 팔이 있을 때만 대칭값으로 채운다.
+function applyVariantPreset(v) {
+  _cfg.variant = v;
+  const xp = Math.max(1, _cfg.xPos), yp = Math.max(1, _cfg.yPos);
+  if (v === "quadrant") { _cfg.xNeg = 0; _cfg.yNeg = 0; }
+  else if (v === "halfcross") { _cfg.xNeg = 0; _cfg.yNeg = yp; }
+  else if (v === "cross") { _cfg.xNeg = xp; _cfg.yNeg = yp; }
+}
+
 /* ---------- 좌표(cfg) 컨트롤 동기화 ---------- */
 function syncCfgControls() {
   const c = _cfg;
   _els.variantSel.value = c.variant;
-  _els.cx.value = c.cx; _els.cy.value = c.cy;
+  // 범위 입력: 양방향(pos)은 항상, 음방향(neg)은 그 축 팔이 있는 모양에서만 활성.
+  //   ㄴ자: x-neg·y-neg 비활성(0) / ㅏ자: y-neg만 활성 / 십자: 둘 다 활성.
+  if (document.activeElement !== _els.xPos) _els.xPos.value = c.xPos;
+  if (document.activeElement !== _els.yPos) _els.yPos.value = c.yPos;
+  if (document.activeElement !== _els.xNeg) _els.xNeg.value = c.xNeg;
+  if (document.activeElement !== _els.yNeg) _els.yNeg.value = c.yNeg;
+  const xNegOn = c.variant === "cross";
+  const yNegOn = c.variant === "cross" || c.variant === "halfcross";
+  _els.xNeg.disabled = !xNegOn; _els.xNeg.style.opacity = xNegOn ? "" : "0.4";
+  _els.yNeg.disabled = !yNegOn; _els.yNeg.style.opacity = yNegOn ? "" : "0.4";
   _els.labelX.value = c.labelX; _els.labelY.value = c.labelY;
   _els.showOrigin.checked = c.showOrigin;
   _els.originBtn.textContent = c.origin;
@@ -933,6 +990,7 @@ function build() {
 
           <div id="gm-tab-coord">
           <!-- 모양(드롭다운) + 칸 수 한 줄(요구 2). 칸 수 증감은 입력칸의 ▲▼ 스핀 버튼으로. -->
+          <!-- 모양은 첫 줄, x축·y축 범위는 둘째 줄에 나란히(요구: x·y 정렬) -->
           <div class="gm-field" style="display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
             <span class="gm-inl">모양
               <select id="gm-variant-sel" class="gm-num" style="width:auto;padding:5px 6px;">
@@ -940,8 +998,10 @@ function build() {
                 <option value="halfcross">ㅏ자</option>
                 <option value="cross">십자</option>
               </select></span>
-            <span class="gm-inl">가로 <input type="number" id="gm-cx" class="gm-num gm-spinnum" min="1" value="5"></span>
-            <span class="gm-inl">세로 <input type="number" id="gm-cy" class="gm-num gm-spinnum" min="1" value="5"></span>
+          </div>
+          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap;">
+            <span class="gm-inl" style="white-space:nowrap;">x축 <input type="number" id="gm-xneg" class="gm-num gm-spinnum" min="0" value="0" title="왼쪽(음의 x) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-xpos" class="gm-num gm-spinnum" min="1" value="5" title="오른쪽(양의 x) 칸 수" style="width:48px;"></span>
+            <span class="gm-inl" style="white-space:nowrap;">y축 <input type="number" id="gm-yneg" class="gm-num gm-spinnum" min="0" value="0" title="아래(음의 y) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-ypos" class="gm-num gm-spinnum" min="1" value="5" title="위(양의 y) 칸 수" style="width:48px;"></span>
           </div>
           <!-- 축 이름: 라벨과 입력창을 나란히 한 줄(요구 3). 입력창은 한 줄 높이, 내용이
                길어지면 자동으로 아래로 늘어난다(field-sizing). -->
@@ -996,7 +1056,7 @@ function build() {
           <div id="gm-tab-func" style="display:none;">
           <div style="display:flex;gap:6px;margin-bottom:8px;">
             <button type="button" id="gm-add-expr" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">＋ 함수식</button>
-            <button type="button" id="gm-add-points" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">＋ 직선·꺾은선·곡선</button>
+            <button type="button" id="gm-add-points" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">＋ 직선·꺾은선·자유곡선</button>
           </div>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
           <div id="gm-empty-hint" style="font-size:12px;color:var(--text-secondary);">
@@ -1025,7 +1085,7 @@ function build() {
             </div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
               선 <span id="gm-styles" style="display:inline-flex;gap:4px;"></span>
-              굵기 <input type="number" id="gm-width" class="gm-num" style="width:54px;" min="0.1" max="2" step="0.1">
+              굵기 <input type="number" id="gm-width" class="gm-num gm-spinnum" style="width:58px;" min="0.1" max="2" step="0.1">
             </div>
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
               모양 <span id="gm-curve" style="display:inline-flex;gap:4px;"></span>
@@ -1089,7 +1149,8 @@ function build() {
     tabCoord: overlay.querySelector("#gm-tab-coord"), tabFunc: overlay.querySelector("#gm-tab-func"),
     tabCoordBtn: overlay.querySelector("#gm-tab-coord-btn"), tabFuncBtn: overlay.querySelector("#gm-tab-func-btn"),
     variantSel: overlay.querySelector("#gm-variant-sel"),
-    cx: overlay.querySelector("#gm-cx"), cy: overlay.querySelector("#gm-cy"),
+    xNeg: overlay.querySelector("#gm-xneg"), xPos: overlay.querySelector("#gm-xpos"),
+    yNeg: overlay.querySelector("#gm-yneg"), yPos: overlay.querySelector("#gm-ypos"),
     labelX: overlay.querySelector("#gm-labelx"), labelY: overlay.querySelector("#gm-labely"),
     showOrigin: overlay.querySelector("#gm-showorigin"), originBtn: overlay.querySelector("#gm-origin-toggle"),
     showGrid: overlay.querySelector("#gm-showgrid"), showTicks: overlay.querySelector("#gm-showticks"),
@@ -1124,12 +1185,20 @@ function build() {
   _els.tabFuncBtn.addEventListener("click", () => setTab("func"));
 
   /* --- 좌표(cfg) 배선: 리스너가 _cfg에 쓰고 미리보기 갱신 --- */
-  // 모양 = 드롭다운(요구 2).
-  _els.variantSel.addEventListener("change", () => { _cfg.variant = _els.variantSel.value; refreshPreview(); });
+  // 모양 = 프리셋: 고르면 범위 입력(음/양 방향 칸 수)을 그 모양 기본값으로 채우고
+  // 음방향 입력을 활성/비활성한다(ㄴ자=음방향 없음 / ㅏ자=y음방향 / 십자=둘 다).
+  _els.variantSel.addEventListener("change", () => {
+    applyVariantPreset(_els.variantSel.value);
+    syncCfgControls();
+    refreshPreview();
+  });
   const int = (el, d) => { const n = parseInt(el.value, 10); return Number.isFinite(n) && n > 0 ? n : d; };
-  // 칸 수 증감 = 입력칸의 ▲▼ 스핀 버튼(요구 2 — 양옆 −/＋ 버튼 제거로 공간 확보).
-  _els.cx.addEventListener("input", () => { _cfg.cx = int(_els.cx, 5); refreshPreview(); });
-  _els.cy.addEventListener("input", () => { _cfg.cy = int(_els.cy, 5); refreshPreview(); });
+  const intNeg = (el) => { const n = parseInt(el.value, 10); return Number.isFinite(n) && n > 0 ? n : 0; };
+  // 범위 칸 수: 양방향(pos)≥1, 음방향(neg)≥0(비대칭 허용). 증감은 입력칸 ▲▼ 스핀.
+  _els.xPos.addEventListener("input", () => { _cfg.xPos = int(_els.xPos, 5); refreshPreview(); });
+  _els.yPos.addEventListener("input", () => { _cfg.yPos = int(_els.yPos, 5); refreshPreview(); });
+  _els.xNeg.addEventListener("input", () => { if (_els.xNeg.disabled) return; _cfg.xNeg = intNeg(_els.xNeg); refreshPreview(); });
+  _els.yNeg.addEventListener("input", () => { if (_els.yNeg.disabled) return; _cfg.yNeg = intNeg(_els.yNeg); refreshPreview(); });
   // 글씨 크기(%) — 축 이름 / 눈금·성분 분리. 증감은 ▲▼ 스핀 버튼(요구 6, 50~200%).
   const clampScale = (el) => { const n = parseInt(el.value, 10); return Number.isFinite(n) ? Math.max(50, Math.min(200, n)) : 100; };
   _els.axisScale.addEventListener("input", () => { _cfg.axisLabelScale = clampScale(_els.axisScale) / 100; refreshPreview(); });
@@ -1181,9 +1250,10 @@ function build() {
   const readDomain = () => {
     const s = _series[_sel]; if (!s || s.kind !== "expr") return;
     const lo = parseFloat(_els.dMin.value), hi = parseFloat(_els.dMax.value);
-    const edge = _cfg.cx + GRID_OVER;   // 데이터 끝(눈금+반 칸)
+    const edgePos = _cfg.xPos + GRID_OVER;                              // 오른쪽 데이터 끝
+    const edgeNeg = (_cfg.xNeg > 0) ? -(_cfg.xNeg + GRID_OVER) : 0;     // 왼쪽 데이터 끝(음방향 없으면 0)
     s.domain = (Number.isFinite(lo) || Number.isFinite(hi))
-      ? { min: Number.isFinite(lo) ? lo : -edge, max: Number.isFinite(hi) ? hi : edge }
+      ? { min: Number.isFinite(lo) ? lo : edgeNeg, max: Number.isFinite(hi) ? hi : edgePos }
       : null;
     refreshPreview();
   };
@@ -1283,8 +1353,12 @@ function loadFromPlane(plane) {
   const objs = state.get().objects;
   const cfg = defaultCfg();
   cfg.variant = plane.axisVariant || "quadrant";
-  cfg.cx = plane.graphCfg && plane.graphCfg.cx ? plane.graphCfg.cx : Math.max(1, Math.round((plane.xMax ?? 5) - PAD_X));
-  cfg.cy = plane.graphCfg && plane.graphCfg.cy ? plane.graphCfg.cy : Math.max(1, Math.round((plane.yMax ?? 5) - PAD_Y));
+  // 범위 복원: 신형 graphCfg(xNeg/xPos/yNeg/yPos) 우선 → 구형(cx/cy, 대칭) → 평면 범위 추정.
+  const gc = plane.graphCfg || {};
+  cfg.xPos = Number.isFinite(gc.xPos) ? gc.xPos : (Number.isFinite(gc.cx) ? gc.cx : Math.max(1, Math.round((plane.xMax ?? 5) - PAD_X)));
+  cfg.yPos = Number.isFinite(gc.yPos) ? gc.yPos : (Number.isFinite(gc.cy) ? gc.cy : Math.max(1, Math.round((plane.yMax ?? 5) - PAD_Y)));
+  cfg.xNeg = Number.isFinite(gc.xNeg) ? gc.xNeg : (cfg.variant === "cross" ? cfg.xPos : 0);
+  cfg.yNeg = Number.isFinite(gc.yNeg) ? gc.yNeg : ((cfg.variant === "cross" || cfg.variant === "halfcross") ? cfg.yPos : 0);
   cfg.labelX = plane.labelX ?? "x"; cfg.labelY = plane.labelY ?? "y";
   cfg.showX = true; cfg.showY = true;   // 축 라벨은 항상 표시(on/off 제거 — 요구)
   cfg.origin = (plane.labelOrigin === "O") ? "O" : "0";

@@ -305,12 +305,33 @@ export function serialize(s) {
   };
 }
 
-/* ----- saveProject: download current drawing as a .json file ----- */
-function saveProject(state) {
+/* ----- saveProject: write the current drawing as a .json file -----
+ * Chromium/Edge(showSaveFilePicker): 사용자가 저장 폴더 + 파일명을 직접 고른다(요구:
+ * "어디에 어떻게 저장될지 정할 수 있어야"). 그 외 브라우저·취소 외 오류 → 기존처럼
+ * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
+ * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
+async function saveProject(state) {
   const json = JSON.stringify(serialize(state.get()), null, 2);
   const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
 
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: DEFAULT_FILENAME,
+        types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (e) {
+      if (e && e.name === "AbortError") return;   // 사용자가 저장 취소 → 아무것도 안 함
+      // 권한 거부/기타 오류 → 아래 기본 다운로드로 폴백
+    }
+  }
+
+  // 폴백: 브라우저 기본 다운로드(다운로드 폴더로 저장, 위치 선택 없음).
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = DEFAULT_FILENAME;
@@ -636,7 +657,14 @@ export function initProjectIO(state, svg) {
     svg.addEventListener("drop", (e) => {
       e.preventDefault();
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!file || !file.type.startsWith("image/")) return;
+      if (!file) return;
+      // JSON 프로젝트 파일도 드래그앤드랍 지원(요구): 상단 '열기'와 동일하게 로드(현재 작업 대체).
+      // 일부 OS에서 .json의 MIME이 비어 있을 수 있어 확장자도 함께 본다.
+      if (file.type === "application/json" || /\.json$/i.test(file.name)) {
+        openProject(state, file);
+        return;
+      }
+      if (!file.type.startsWith("image/")) return;
       const vb = state.get().viewBox;
       const pos = screenToWorld(svg, vb, e.clientX, e.clientY);
       readImageFile(file, pos, state);

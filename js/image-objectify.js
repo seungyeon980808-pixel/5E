@@ -117,6 +117,7 @@ function buildModal() {
           </div>
           <div id="objectify-tools" class="objectify-tools" hidden>
             <button id="objectify-zoom-reset" type="button" class="modal-btn">전체 보기</button>
+            <button id="objectify-region" type="button" class="modal-btn" title="드래그로 남길 영역을 지정합니다. 영역 안쪽 조각만 남고 나머지는 제외됩니다.">영역만 남기기</button>
             <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">휠=확대/축소 · 드래그=이동 · 클릭=제외</span>
           </div>
           <p class="objectify-description" id="objectify-legend" hidden style="margin:0;">
@@ -209,6 +210,8 @@ export function initImageObjectify(state) {
   const stage = overlay.querySelector("#objectify-stage");
   const tools = overlay.querySelector("#objectify-tools");
   const zoomResetButton = overlay.querySelector("#objectify-zoom-reset");
+  const regionButton = overlay.querySelector("#objectify-region");
+  const toolHint = overlay.querySelector("#objectify-tool-hint");
 
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
   let sourceDataUrl = null;  // 참고 이미지 삽입용 원본 dataURL
@@ -218,6 +221,8 @@ export function initImageObjectify(state) {
   const view = { zoom: 1, ox: 0, oy: 0 }; // 미리보기 줌/팬
   let panning = null;        // 빈 곳 드래그 이동 상태
   let pointerMoved = false;  // 드래그 여부(클릭-제외 억제용)
+  let regionMode = false;    // '영역만 남기기' 도구 활성(드래그로 남길 사각형 지정)
+  let regionDrag = null;     // 영역 드래그 중 사각형(이미지 px) {x0,y0,x1,y1}
   let needFit = false;       // 새 이미지 로드 시 1회 전체 보기
 
   const setStatus = (message, isError = false) => {
@@ -313,6 +318,19 @@ export function initImageObjectify(state) {
         ctx.setLineDash([]);
       }
     });
+    // '영역만 남기기' 드래그 사각형(파란 점선 + 옅은 채움).
+    if (regionDrag) {
+      const rx0 = Math.min(regionDrag.x0, regionDrag.x1), ry0 = Math.min(regionDrag.y0, regionDrag.y1);
+      const rw = Math.abs(regionDrag.x1 - regionDrag.x0), rh = Math.abs(regionDrag.y1 - regionDrag.y0);
+      ctx.save();
+      ctx.fillStyle = "rgba(9,105,218,0.10)";
+      ctx.fillRect(rx0, ry0, rw, rh);
+      ctx.strokeStyle = "#0969da";
+      ctx.lineWidth = Math.max(1, 2 / view.zoom);
+      ctx.setLineDash([6 / view.zoom, 4 / view.zoom]);
+      ctx.strokeRect(rx0, ry0, rw, rh);
+      ctx.restore();
+    }
     stage.classList.add("has-image");   // 이미지 있음 → 안내 오버레이 숨김(미리보기와 통합)
     tools.hidden = false;
     legend.hidden = false;
@@ -483,6 +501,52 @@ export function initImageObjectify(state) {
     ];
   }
 
+  /* ----- '영역만 남기기' 도구 (그림판 사각형 선택처럼) -----
+   * 켜면 다음 드래그로 사각형을 그린다. 놓으면 그 사각형 안(각 조각 bbox 중심 기준)만
+   * 남기고 나머지는 제외한다(원하는 부분만 출력). 일회성 — 적용 후 자동으로 꺼진다. */
+  function setRegionMode(on) {
+    regionMode = on;
+    regionButton.style.background = on ? "var(--accent, #0969da)" : "";
+    regionButton.style.color = on ? "#fff" : "";
+    regionButton.style.borderColor = on ? "var(--accent, #0969da)" : "";
+    if (toolHint) {
+      toolHint.textContent = on
+        ? "드래그로 남길 영역을 그리세요 — 그 안쪽만 남습니다 (Esc 취소)"
+        : "휠=확대/축소 · 드래그=이동 · 클릭=제외";
+    }
+    stage.style.cursor = on ? "crosshair" : "";
+  }
+  // 사각형 안(조각 bbox 중심)만 남기고 나머지는 excluded로. 너무 작으면 무시(false).
+  function applyRegionKeep(rect) {
+    if (!analysis) return false;
+    const rx0 = Math.min(rect.x0, rect.x1), ry0 = Math.min(rect.y0, rect.y1);
+    const rx1 = Math.max(rect.x0, rect.x1), ry1 = Math.max(rect.y0, rect.y1);
+    if (rx1 - rx0 < 3 || ry1 - ry0 < 3) return false; // 클릭 수준의 미세 드래그 무시
+    const next = new Set();
+    analysis.components.forEach((comp, index) => {
+      const [x0, y0, x1, y1] = comp.bbox;
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+      if (!(cx >= rx0 && cx <= rx1 && cy >= ry0 && cy <= ry1)) next.add(index); // 영역 밖 → 제외
+    });
+    excluded = next;   // 영역 안만 남긴다(이전 수동 제외는 새 선택으로 대체)
+    return true;
+  }
+  regionButton.addEventListener("click", () => {
+    if (!analysis) return;
+    setRegionMode(!regionMode);
+    regionDrag = null;
+    drawPreview();
+  });
+  // Esc: 영역 모드/드래그 취소(모달은 닫지 않음).
+  overlay.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && (regionMode || regionDrag)) {
+      event.stopPropagation();
+      regionDrag = null;
+      setRegionMode(false);
+      drawPreview();
+    }
+  }, true);
+
   /* ----- 휠 줌 (커서 기준) ----- */
   stage.addEventListener("wheel", (event) => {
     if (!sourceCanvas) return;
@@ -501,10 +565,22 @@ export function initImageObjectify(state) {
   preview.addEventListener("mousedown", (event) => {
     if (!analysis || event.button !== 0) return;
     pointerMoved = false;
+    if (regionMode) {   // 영역 도구: 드래그로 사각형 그리기(팬 안 함)
+      const [x, y] = previewPointerPos(event);
+      regionDrag = { x0: x, y0: y, x1: x, y1: y };
+      return;
+    }
     panning = { sx: event.clientX, sy: event.clientY, ox0: view.ox, oy0: view.oy };
     stage.classList.add("is-panning");
   });
   window.addEventListener("mousemove", (event) => {
+    if (regionDrag) {   // 영역 사각형 갱신 + 미리보기 오버레이
+      const [x, y] = previewPointerPos(event);
+      regionDrag.x1 = x; regionDrag.y1 = y;
+      pointerMoved = true;
+      drawPreview();
+      return;
+    }
     if (panning) {
       if (Math.abs(event.clientX - panning.sx) + Math.abs(event.clientY - panning.sy) > 3) pointerMoved = true;
       view.ox = panning.ox0 + (event.clientX - panning.sx);
@@ -513,12 +589,20 @@ export function initImageObjectify(state) {
     }
   });
   window.addEventListener("mouseup", () => {
+    if (regionDrag) {   // 영역 확정: 안쪽만 남기고 나머지 제외
+      const applied = applyRegionKeep(regionDrag);
+      regionDrag = null;
+      if (applied) setRegionMode(false);   // 일회성 도구 — 적용 후 꺼짐
+      drawPreview();
+      updateResultStatus();
+      return;
+    }
     panning = null;
     stage.classList.remove("is-panning");
   });
-  // 클릭=제외/포함 (드래그가 아니었을 때만)
+  // 클릭=제외/포함 (드래그·영역모드가 아닐 때만)
   preview.addEventListener("click", (event) => {
-    if (!analysis || pointerMoved) return;
+    if (!analysis || pointerMoved || regionMode) return;
     const [x, y] = previewPointerPos(event);
     const hit = componentIndexAt(x, y);
     if (hit < 0) return;
