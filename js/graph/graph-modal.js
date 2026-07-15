@@ -19,7 +19,6 @@ import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/co
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.0";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.0";
 import { nextObjectId } from "../tools/id.js?v=1.0.0";
-import { simplifyRDP } from "../geometry.js?v=1.0.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -76,8 +75,9 @@ function defaultCfg() {
 }
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
-function newExprSeries() { return { kind: "expr", expr: "", domain: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, markers: [], guides: [], arrows: [] }; }
-function newPointsSeries() { return { kind: "points", pts: [], styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, markers: [], guides: [], arrows: [] }; }
+// movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
+function newExprSeries() { return { kind: "expr", expr: "", domain: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newPointsSeries() { return { kind: "points", pts: [], styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
 function parseTicks(text) {
@@ -181,17 +181,9 @@ function extendedMathPts(s) {
   return [...pts, { x: b.x + (dx / len) * amt, y: b.y + (dy / len) * amt }];
 }
 
-// 자유곡선(요구): 점 계열을 '곡선' 모양으로 그릴 땐, 손으로 찍거나 끌면서 생긴 잔떨림을
-// RDP로 걸러 앵커만 남긴다 → Catmull-Rom이 앵커들을 시작~끝까지 매끄럽게 지나는
-// 깔끔한 곡선을 그린다(모든 모양을 손으로 정확히 그릴 수 없으니 곡선은 앱이 다듬는다).
-// 잔떨림 허용 오차 = 셀 크기의 ~28%(최소 1.2mm). 손떨림·스냅 지터는 걸러지고,
-// 의도적 굴곡(보통 1칸 이상)은 살아남는다.
-function freeCurvePts(s, worldPts, plane) {
-  if (s.kind !== "points" || (s.curveStyle || "straight") !== "smooth") return worldPts;
-  if (!worldPts || worldPts.length < 3) return worldPts;
-  const eps = Math.max(1.2, cellOf(plane) * 0.28);
-  return simplifyRDP(worldPts, eps);
-}
+// 자유곡선(요구 재정의): 점 계열 '곡선' 모양은 사용자가 찍은 점을 '정확히' 지나가야 한다.
+// 그래서 점을 지우거나(RDP) 옮기지(라플라시안) 않는다 — 매끄러움은 렌더 단계의 centripetal
+// Catmull-Rom(coordplane.js)이 담당한다(출렁임 없이 앵커를 그대로 통과). 여기선 점을 안 건드린다.
 
 // 함수식 자유 이동(요구): 계열의 offset(math dx,dy)을 baked world 점들에 적용.
 // math 오프셋이라 평면 위치·배율과 무관(미리보기/캔버스 일관).
@@ -348,8 +340,8 @@ function prepareSeries(plane) {
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
-      const points = freeCurvePts(s, extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)), plane); // 렌더·베이크(자동 연장+자유곡선 다듬기)
-      list.push({ ...common, sourceKind: "points", mathPoints, points, autoExtend: !!s.autoExtend, ...elementFields(s, plane, geomPts(s, points)) });
+      const points = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 렌더·베이크(자동 연장 반영, 매끄러움은 렌더 centripetal이 담당)
+      list.push({ ...common, sourceKind: "points", mathPoints, points, breaks: [], autoExtend: !!s.autoExtend, ...elementFields(s, plane, geomPts(s, points)) });
     }
   }
   return { ok: true, list };
@@ -472,8 +464,9 @@ function refreshPreview() {
       breaks = r.breaks;                              // 끊긴 구간(평면 밖) 경계
     } else {
       if (!s.pts.length) return;
-      pts = freeCurvePts(s, extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)), plane); // 자동 연장+자유곡선 다듬기
+      pts = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 자동 연장 반영(매끄러움은 렌더 centripetal)
       sourceKind = "points"; curveStyle = "straight";
+      breaks = [];   // 손그림 곡선은 끊김 없는 연속선 — 거리 휴리스틱으로 쪼개지지 않게 명시
     }
     if (i === _sel) { _selPts = geomPts(s, pts); _selBreaks = breaks; }   // 선택 계열 곡선+경계(배치 스냅 기준)
     const el = renderFuncgraph({
@@ -487,25 +480,48 @@ function refreshPreview() {
     if (i === _sel) seriesColorSel(el);
     svg.appendChild(el);
     // 선택된 점 계열: 실제로 '찍은' 점만 파란 점으로 표시(자동 연장점은 제외).
+    // 각 점은 드래그 핸들(요구: 자유곡선을 마우스 드래그로 변형) — 점을 끌면 s.pts가
+    // 갱신되고, 곡선 모양이면 스무딩이 다시 돌아 매끄러운 곡선으로 따라온다.
     if (s.kind === "points" && i === _sel) {
-      s.pts.forEach((mp) => {
+      s.pts.forEach((mp, pi) => {
         const w = worldFromMath(plane, mp.x, mp.y);
         const c = document.createElementNS(SVG_NS, "circle");
         c.setAttribute("cx", w.x); c.setAttribute("cy", w.y); c.setAttribute("r", 0.9);
         c.setAttribute("fill", "var(--accent)");
         svg.appendChild(c);
+        // 잡기 쉬운 투명 히트 원 + 드래그로 꼭짓점 이동(1/8칸 스냅은 clientToMath가 처리).
+        const hitC = document.createElementNS(SVG_NS, "circle");
+        hitC.setAttribute("cx", w.x); hitC.setAttribute("cy", w.y); hitC.setAttribute("r", 2.2);
+        hitC.setAttribute("fill", "transparent"); hitC.style.cursor = "grab";
+        hitC.addEventListener("click", (e) => e.stopPropagation());
+        hitC.addEventListener("mousedown", (e) => {
+          e.preventDefault(); e.stopPropagation();
+          const onMove = (ev) => {
+            const m = clientToMath(ev.clientX, ev.clientY);
+            if (!m) return;
+            s.pts[pi] = m;
+            refreshPreview();
+          };
+          const onUp = () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            syncSeriesEditor();   // 좌표 직접 입력창에 드래그 결과 반영
+          };
+          window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+        });
+        svg.appendChild(hitC);
       });
     }
-    // 선택된 함수식 계열: 곡선을 드래그해 자유 이동(요구). 곡선 위 투명 굵은 히트선 + 드래그.
-    // 드래그는 offset(math)에 누적. refreshPreview가 재생성해도 window 리스너로 이어감.
-    if (s.kind === "expr" && i === _sel && !_placeMode) {
+    // '이동' 체크(요구): 선택 계열의 곡선 몸통을 드래그하면 계열 전체가 따라온다.
+    // 함수식 = offset(math) 누적, 점 계열 = 찍은 점들을 통째로 평행이동(저장·수선도 일관).
+    // 곡선 위 투명 굵은 히트선 + 드래그. refreshPreview가 재생성해도 window 리스너로 이어감.
+    if (i === _sel && !_placeMode && s.movable && _activeDraw !== i) {
       const path = el.querySelector("path");
       if (path) {
         const hit = path.cloneNode(false);
         // cloneNode가 seriesColorSel이 넣은 인라인 style.stroke(=파랑)까지 복사한다. 인라인
         // 스타일은 stroke 속성(attribute)보다 우선하므로, 투명으로 두려면 인라인 쪽을 지워야
-        // 한다 — 안 그러면 굵기 3짜리 투명 히트선이 파란 띠로 보인다(미리보기가 실제 출력보다
-        // 두꺼워 보이던 버그). 인라인을 투명으로 덮어 미리보기 굵기 = 실제 함수 굵기.
+        // 한다 — 안 그러면 굵기 3짜리 투명 히트선이 파란 띠로 보인다.
         hit.style.stroke = "transparent"; hit.style.strokeWidth = "";
         hit.setAttribute("stroke", "transparent"); hit.setAttribute("stroke-width", 3);
         hit.setAttribute("fill", "none"); hit.style.cursor = "move";
@@ -513,17 +529,28 @@ function refreshPreview() {
         hit.addEventListener("mousedown", (e) => {
           e.preventDefault(); e.stopPropagation();
           const start = clientToWorld(e.clientX, e.clientY);
-          const baseOff = { ...(s.offset || { dx: 0, dy: 0 }) };
           if (!start) return;
+          const baseOff = { ...(s.offset || { dx: 0, dy: 0 }) };
+          const basePts = s.kind === "points" ? s.pts.map((p) => ({ ...p })) : null;
           const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
           const uy = (plane.yMax - plane.yMin) ? plane.h / (plane.yMax - plane.yMin) : 1;
           const onMove = (ev) => {
             const w = clientToWorld(ev.clientX, ev.clientY);
             if (!w) return;
-            s.offset = { dx: baseOff.dx + (w.x - start.x) / ux, dy: baseOff.dy - (w.y - start.y) / uy };
+            const dxm = (w.x - start.x) / ux, dym = -(w.y - start.y) / uy;
+            if (s.kind === "expr") s.offset = { dx: baseOff.dx + dxm, dy: baseOff.dy + dym };
+            else s.pts = basePts.map((p) => ({ x: p.x + dxm, y: p.y + dym }));
             refreshPreview();
           };
-          const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+          const onUp = () => {
+            window.removeEventListener("mousemove", onMove);
+            window.removeEventListener("mouseup", onUp);
+            if (s.kind === "points") {
+              // 자유 이동이라 소수가 길어진다 — 놓는 순간 1/1000로 반올림해 좌표를 깔끔하게.
+              s.pts = s.pts.map((p) => ({ x: Math.round(p.x * 1000) / 1000, y: Math.round(p.y * 1000) / 1000 }));
+              syncSeriesEditor();   // 좌표 입력창에 이동 결과 반영
+            }
+          };
           window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         });
         svg.appendChild(hit);
@@ -740,13 +767,15 @@ function clientToMath(cx, cy) {
 /* ---------- 계열 칩 + 편집 패널 ---------- */
 function seriesLabel(s) {
   if (s.kind === "expr") return "y=" + (String(s.expr || "").trim() || "…");
-  return (s.endLabel ? s.endLabel + " " : "") + `꺾은선 ${s.pts.length}점`;
+  const kind = (s.curveStyle === "smooth") ? "자유곡선" : "꺾은선";   // 하위 탭 타입에 맞춘 이름
+  return (s.endLabel ? s.endLabel + " " : "") + `${kind} ${s.pts.length}점`;
 }
 
 function renderChips() {
   const host = _els.chips;
   host.replaceChildren();
   _series.forEach((s, i) => {
+    if (funcTabOf(s) !== _funcTab) return;   // 현재 하위 탭 소속 계열만 칩으로 보인다
     const chip = document.createElement("button");
     chip.type = "button";
     const on = i === _sel;
@@ -763,7 +792,11 @@ function renderChips() {
     x.addEventListener("click", (e) => {
       e.stopPropagation();
       _series.splice(i, 1);
-      if (_sel >= _series.length) _sel = _series.length - 1;
+      // 삭제 후 선택은 현재 하위 탭 안에서 유지(밖이거나 없으면 이 탭 첫 계열, 없으면 해제).
+      if (!_series[_sel] || funcTabOf(_series[_sel]) !== _funcTab) {
+        _sel = _series.findIndex((ss) => funcTabOf(ss) === _funcTab);
+      }
+      _placeMode = null; _activeDraw = -1;
       renderChips(); syncSeriesEditor(); refreshPreview();
     });
     chip.appendChild(x);
@@ -843,6 +876,7 @@ function syncSeriesEditor() {
   // 자동 연장선: 직선·꺾은선(점 계열)에만 의미 있음(눈대중 그리기). 끝 라벨과 한 줄(요구 8).
   _els.autoExtRow.style.display = s.kind === "points" ? "inline-flex" : "none";
   _els.autoExt.checked = !!s.autoExtend;
+  _els.move.checked = !!s.movable;
   if (s.kind === "expr") {
     if (document.activeElement !== _els.expr) _els.expr.value = s.expr;
     if (document.activeElement !== _els.dMin) _els.dMin.value = s.domain ? s.domain.min : "";
@@ -934,6 +968,42 @@ function setTab(tab) {
   const off = "background:var(--bg-input);color:var(--text-primary);";
   _els.tabCoordBtn.style.cssText = base + (tab === "coord" ? on : off);
   _els.tabFuncBtn.style.cssText = base + (tab === "func" ? on : off);
+  if (tab === "func") setFuncTab(_funcTab);   // 함수 탭 진입 시 하위 탭 상태 반영
+}
+
+/* ---------- 함수 하위 탭: 해석적 함수 / 직선·꺾은선 / 자유곡선 ---------- */
+let _funcTab = "expr";            // "expr" | "poly" | "free"
+// 계열이 어느 하위 탭에 속하는지: 함수식=expr, 점 계열은 곡선(smooth)=free / 직선(straight)=poly.
+function funcTabOf(s) {
+  if (!s) return "expr";
+  if (s.kind === "expr") return "expr";
+  return (s.curveStyle === "smooth") ? "free" : "poly";
+}
+const FUNCTAB = {
+  expr: { add: "＋ 함수식 추가", hint: "함수식(y=…)을 추가하세요.",
+          make: () => newExprSeries() },
+  poly: { add: "＋ 직선·꺾은선 추가", hint: "미리보기를 클릭해 점을 찍으면 직선·꺾은선이 됩니다.",
+          make: () => { const s = newPointsSeries(); s.curveStyle = "straight"; return s; } },
+  free: { add: "＋ 자유곡선 추가", hint: "미리보기를 클릭해 점을 찍으면 그 점들을 매끄럽게 잇는 자유곡선이 됩니다.",
+          make: () => { const s = newPointsSeries(); s.curveStyle = "smooth"; return s; } },
+};
+function setFuncTab(ft) {
+  _funcTab = ft;
+  const sub = { expr: _els.subExpr, poly: _els.subPoly, free: _els.subFree };
+  Object.entries(sub).forEach(([k, btn]) => {
+    const active = k === ft;
+    btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
+    btn.style.color = active ? "#fff" : "var(--text-primary)";
+    btn.style.borderColor = active ? "var(--accent)" : "var(--border)";
+  });
+  _els.addSeries.textContent = FUNCTAB[ft].add;
+  _els.emptyHint.textContent = FUNCTAB[ft].hint;
+  // 선택 계열이 이 하위 탭 소속이 아니면, 이 탭의 첫 계열을 고른다(없으면 해제).
+  if (_sel === -1 || !_series[_sel] || funcTabOf(_series[_sel]) !== ft) {
+    _sel = _series.findIndex((s) => funcTabOf(s) === ft);
+    _placeMode = null; _activeDraw = -1;
+  }
+  renderChips(); syncSeriesEditor(); refreshPreview();
 }
 
 /* ---------- 물음표(?) 도움말 팝오버 ---------- */
@@ -1054,10 +1124,14 @@ function build() {
           </div><!-- /gm-tab-coord -->
 
           <div id="gm-tab-func" style="display:none;">
-          <div style="display:flex;gap:6px;margin-bottom:8px;">
-            <button type="button" id="gm-add-expr" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">＋ 함수식</button>
-            <button type="button" id="gm-add-points" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">＋ 직선·꺾은선·자유곡선</button>
+          <!-- 함수 하위 탭(요구): 해석적 함수 / 직선·꺾은선 / 자유곡선 — 성격별로 분리 편집.
+               미리보기는 셋이 공유하고, '만들기'는 모든 하위 탭의 계열을 한 평면에 합친다. -->
+          <div id="gm-subtabs" style="display:flex;gap:4px;margin-bottom:6px;">
+            <button type="button" id="gm-sub-expr" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">해석적 함수</button>
+            <button type="button" id="gm-sub-poly" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">직선·꺾은선</button>
+            <button type="button" id="gm-sub-free" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">자유곡선</button>
           </div>
+          <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size:12px;padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
           <div id="gm-empty-hint" style="font-size:12px;color:var(--text-secondary);">
             함수식 또는 직선·꺾은선을 추가하세요.<span class="gm-help" title="계열 없이 좌표 틀만 만들 수도 있습니다. 추가한 함수는 미리보기 위에 바로 그려집니다.">?</span>
@@ -1087,7 +1161,8 @@ function build() {
               선 <span id="gm-styles" style="display:inline-flex;gap:4px;"></span>
               굵기 <input type="number" id="gm-width" class="gm-num gm-spinnum" style="width:58px;" min="0.1" max="2" step="0.1">
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+            <!-- 모양(직선/곡선)은 하위 탭이 결정하므로 숨김(직선·꺾은선=직선, 자유곡선=곡선). -->
+            <div id="gm-shape-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
               모양 <span id="gm-curve" style="display:inline-flex;gap:4px;"></span>
             </div>
             <div id="gm-curvature-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
@@ -1097,6 +1172,10 @@ function build() {
             </div>
             <!-- 자동 연장선 + 끝 라벨 한 줄(요구 8) — 연장선 설명은 물음표 툴팁으로 -->
             <div style="display:flex;gap:14px;align-items:center;font-size:12px;color:var(--text-secondary);">
+              <span style="display:inline-flex;align-items:center;">
+                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+                  <input type="checkbox" id="gm-move"> 이동</label><span class="gm-help" title="체크하면 미리보기에서 이 함수(곡선)를 드래그해 자유롭게 옮길 수 있습니다.">?</span>
+              </span>
               <span id="gm-autoext-row" style="display:none;align-items:center;">
                 <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
                   <input type="checkbox" id="gm-autoext"> 자동 연장선</label><span class="gm-help" title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 매칭되게 합니다.">?</span>
@@ -1162,6 +1241,8 @@ function build() {
     tickBaseRows: overlay.querySelector("#gm-tickbase-rows"),
     tickBaseX: overlay.querySelector("#gm-tickbase-x"), tickBaseY: overlay.querySelector("#gm-tickbase-y"),
     chips: overlay.querySelector("#gm-chips"), emptyHint: overlay.querySelector("#gm-empty-hint"),
+    subExpr: overlay.querySelector("#gm-sub-expr"), subPoly: overlay.querySelector("#gm-sub-poly"),
+    subFree: overlay.querySelector("#gm-sub-free"), addSeries: overlay.querySelector("#gm-add-series"),
     editor: overlay.querySelector("#gm-series-editor"),
     exprRow: overlay.querySelector("#gm-expr-row"), expr: overlay.querySelector("#gm-expr"),
     exprHelpers: overlay.querySelector("#gm-expr-helpers"),
@@ -1172,6 +1253,7 @@ function build() {
     curveHost: overlay.querySelector("#gm-curve"),
     curvatureRow: overlay.querySelector("#gm-curvature-row"), curvVal: overlay.querySelector("#gm-curv-val"),
     autoExt: overlay.querySelector("#gm-autoext"), autoExtRow: overlay.querySelector("#gm-autoext-row"),
+    move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
     markerClick: overlay.querySelector("#gm-marker-click"), markerList: overlay.querySelector("#gm-marker-list"),
     guideClick: overlay.querySelector("#gm-guide-click"), guideList: overlay.querySelector("#gm-guide-list"),
@@ -1233,8 +1315,13 @@ function build() {
   _els.tickBaseY.addEventListener("input", () => { _cfg.tickBaseY = _els.tickBaseY.value; refreshPreview(); });
 
   /* --- 계열 배선 --- */
-  overlay.querySelector("#gm-add-expr").addEventListener("click", () => { addSeries(newExprSeries()); _els.expr.focus(); });
-  overlay.querySelector("#gm-add-points").addEventListener("click", () => addSeries(newPointsSeries()));
+  _els.subExpr.addEventListener("click", () => setFuncTab("expr"));
+  _els.subPoly.addEventListener("click", () => setFuncTab("poly"));
+  _els.subFree.addEventListener("click", () => setFuncTab("free"));
+  _els.addSeries.addEventListener("click", () => {
+    addSeries(FUNCTAB[_funcTab].make());     // 현재 하위 탭 타입으로 추가
+    if (_funcTab === "expr") _els.expr.focus();
+  });
   _els.expr.addEventListener("input", () => { const s = _series[_sel]; if (s) { s.expr = _els.expr.value; renderChips(); refreshPreview(); } });
   // 수식 도우미 버튼(기존 함수 도구처럼): 커서 위치에 삽입.
   HELPERS.forEach(([label, text]) => {
@@ -1297,6 +1384,9 @@ function build() {
   // 자동 연장선(요구): 계열별 토글.
   _els.autoExt.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.autoExtend = _els.autoExt.checked; refreshPreview(); }
+  });
+  _els.move.addEventListener("change", () => {
+    const s = _series[_sel]; if (s) { s.movable = _els.move.checked; refreshPreview(); }
   });
   // 곡률 증감(요구: 곡선일 때만). 현재값 기준 ±(0.4~2.4, 표준=1).
   const bumpCurv = (d) => {

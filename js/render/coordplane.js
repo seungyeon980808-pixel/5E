@@ -372,33 +372,56 @@ function renderCoordplane(obj) {
 // 불연속(점근선/극점)에서 sampler가 run을 끊어 두면 flat points[]에 큰 점프가 남는다.
 // 그 점프를 그대로 이으면 존재하지 않는 가짜 세로선이 그려지므로, 인접 점 간 거리가
 // (중앙값의 8배 이상으로) 크게 튀는 지점에서 서브패스를 분리해 개별 M으로 그린다.
-// 곡률(텐션) 파라미터 t: 1=표준(제어점 offset=Δ/6), 크면 더 볼록, 작으면 더 평평(요구: 곡률 증감).
+// ----- Centripetal Catmull-Rom → 한 구간(p1→p2)의 큐빅 베지어 제어점 -----
+// 지정한 점을 '정확히' 지나가는 보간 곡선(요구: 내가 찍은 점을 정확히 통과). 균일 방식은
+// 점 간격이 들쭉날쭉하거나 급히 꺾이면 곡선이 출렁이거나 고리를 만든다(overshoot). 중심
+// 매개변수(centripetal, α=0.5)는 그런 출렁임·꼬임 없이 매끄럽다(d3 curveCatmullRom 방식).
+// 곡률 t: 제어점을 앵커에서 t배만큼 밀어 볼록함 조절(1=표준). 앵커는 그대로라 통과 보장.
+function crBezierCP(p0, p1, p2, p3, t) {
+  const EPS = 1e-12;
+  const d01 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  const d12 = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const d23 = Math.hypot(p3.x - p2.x, p3.y - p2.y);
+  const l01a = Math.sqrt(d01), l12a = Math.sqrt(d12), l23a = Math.sqrt(d23);
+  let c1x = p1.x, c1y = p1.y, c2x = p2.x, c2y = p2.y;
+  if (l01a > EPS) {
+    const a = 2 * d01 + 3 * l01a * l12a + d12, n = 3 * l01a * (l01a + l12a);
+    c1x = (p1.x * a - p0.x * d12 + p2.x * d01) / n;
+    c1y = (p1.y * a - p0.y * d12 + p2.y * d01) / n;
+  }
+  if (l23a > EPS) {
+    const b = 2 * d23 + 3 * l23a * l12a + d12, m = 3 * l23a * (l23a + l12a);
+    c2x = (p2.x * b + p1.x * d23 - p3.x * d12) / m;
+    c2y = (p2.y * b + p1.y * d23 - p3.y * d12) / m;
+  }
+  const s = Number.isFinite(t) ? t : 1;   // 곡률: 제어점을 앵커 기준 s배로 스케일
+  if (s !== 1) {
+    c1x = p1.x + (c1x - p1.x) * s; c1y = p1.y + (c1y - p1.y) * s;
+    c2x = p2.x + (c2x - p2.x) * s; c2y = p2.y + (c2y - p2.y) * s;
+  }
+  return { c1x, c1y, c2x, c2y };
+}
 function catmullRomPathT(pts, t) {
   if (!pts || pts.length < 2) return "";
   if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
-  const k = (Number.isFinite(t) ? t : 1) / 6;
   const n = pts.length;
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 0; i < n - 1; i++) {
     const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
-    const cp1x = p1.x + (p2.x - p0.x) * k, cp1y = p1.y + (p2.y - p0.y) * k;
-    const cp2x = p2.x - (p3.x - p1.x) * k, cp2y = p2.y - (p3.y - p1.y) * k;
-    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+    const { c1x, c1y, c2x, c2y } = crBezierCP(p0, p1, p2, p3, t);
+    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
   }
   return d;
 }
-// 곡선(스무딩) 렌더와 동일한 Catmull-Rom 기하로 폴리라인을 촘촘한 점으로 편다.
-// 표시점/수선/화살표의 베이크·클릭 스냅이 '그려진 곡선 위'에 정확히 앉게 하는 용도 —
-// 꼭짓점을 직선 보간하면 곡률에 따라 실제 곡선과 최대 반 칸 가까이 어긋난다(화살표 버그).
+// 곡선(스무딩) 렌더와 동일한 기하로 폴리라인을 촘촘한 점으로 편다(표시점/수선/화살표가
+// '그려진 곡선 위'에 정확히 앉게 하는 용도). 렌더와 같은 centripetal 제어점을 써야 어긋나지 않는다.
 function smoothSamplePts(pts, t, segs = 12) {
   if (!pts || pts.length < 3) return pts || [];
-  const k = (Number.isFinite(t) ? t : 1) / 6;
   const n = pts.length;
   const out = [{ x: pts[0].x, y: pts[0].y }];
   for (let i = 0; i < n - 1; i++) {
     const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
-    const c1x = p1.x + (p2.x - p0.x) * k, c1y = p1.y + (p2.y - p0.y) * k;
-    const c2x = p2.x - (p3.x - p1.x) * k, c2y = p2.y - (p3.y - p1.y) * k;
+    const { c1x, c1y, c2x, c2y } = crBezierCP(p0, p1, p2, p3, t);
     for (let j = 1; j <= segs; j++) {
       const u = j / segs, v = 1 - u;
       out.push({
@@ -442,8 +465,11 @@ function distanceSplitRuns(pts) {
 }
 function funcgraphPathD(pts, curvature = 1, breaks) {
   if (!pts || pts.length < 2) return catmullRomPathT(pts || [], curvature);
-  // 평면 밖으로 나갔다 돌아온 조각들을 가짜 직선으로 잇지 않도록 run별로 나눠 그린다.
-  const runs = (breaks && breaks.length) ? splitByBreaks(pts, breaks) : distanceSplitRuns(pts);
+  // breaks가 배열이면(빈 배열 포함) sampler가 준 정확한 경계 = 신뢰한다. 빈 배열 = 끊김 없는
+  // 완전 연속 곡선 = 한 덩어리. breaks가 아예 없을 때(구파일)만 거리 휴리스틱으로 폴백한다.
+  // ★ 예전엔 빈 배열도 휴리스틱으로 넘어가, 고주파 함수의 가파른 구간을 '끊김'으로 오판해
+  //   연속 곡선을 여러 조각으로 쪼개고 큰 틈을 냈다(사진2·3 버그). Array.isArray로 해결.
+  const runs = Array.isArray(breaks) ? splitByBreaks(pts, breaks) : distanceSplitRuns(pts);
   return runs.map((r) => catmullRomPathT(r, curvature)).filter(Boolean).join(" ").trim();
 }
 
