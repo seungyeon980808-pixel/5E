@@ -19,6 +19,7 @@ import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/co
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.1";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.1";
 import { nextObjectId } from "../tools/id.js?v=1.0.1";
+import { simplifyRDP } from "../geometry.js?v=1.0.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -564,6 +565,9 @@ function refreshPreview() {
   //   상태(그리기 아님)나 배치 모드(_placeMode)에서는 안 그린다 — 함수 그리기와 표시점/보기
   //   상태는 완전 별개(요구). 러버밴드가 남으면 함수 끝에서 연장되듯 보인다.
   const drawing = _activeDraw === _sel && _series[_sel] && _series[_sel].kind === "points" && !_placeMode;
+  // 자유곡선(smooth) 계열을 '그리는 중'이면 클릭 대신 드래그로 죽 그린다(요구: 대충 그리고
+  // 앵커를 끌어 손보기). 아래 pointer 핸들러가 전담하며, 이때 click/러버밴드 경로는 비활성.
+  const freehandDraw = drawing && _series[_sel].curveStyle === "smooth";
   let rubber = null, ghost = null;
   if (drawing) {
     rubber = document.createElementNS(SVG_NS, "line");
@@ -626,6 +630,7 @@ function refreshPreview() {
   };
 
   svg.addEventListener("click", (e) => {
+    if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     const s = _series[_sel];
     // 배치 모드: 함수 위를 클릭할 때만 찍는다(함수 밖 클릭은 무시). 표시점/수선/화살표 동일.
     if (s && (_placeMode === "marker" || _placeMode === "guide" || _placeMode === "arrow")) {
@@ -672,6 +677,7 @@ function refreshPreview() {
       showCoordTip(hit.mx, my, cw ? cw.x : hit.wx, cw ? cw.y : hit.wy);
       return;
     }
+    if (freehandDraw) return;   // 자유곡선 드로잉 중엔 러버밴드/고스트 대신 실시간 스트로크만 그린다
     if (!drawing || !rubber) return;
     const m = clientToMath(e.clientX, e.clientY);
     if (!m) { rubber.style.display = "none"; ghost.style.display = "none"; if (coordTip) coordTip.style.display = "none"; return; }
@@ -694,6 +700,66 @@ function refreshPreview() {
     if (coordTip) coordTip.style.display = "none";
   });
   svg.style.cursor = (drawing || placing) ? "crosshair" : "";
+
+  // ── 자유곡선: 마우스로 죽 그리면(드래그) 성긴 앵커로 단순화된 매끄러운 곡선이 된다.
+  //    손그림 원시점을 RDP로 대여섯 개 앵커만 남기고(모양=자유·근사), 그 앵커를 s.pts로 삼아
+  //    기존 앵커 드래그 편집으로 인계한다(요구: 대충 그리고 손으로 다듬기). 탭(거의 안 움직임)은
+  //    점 하나 추가. ★ 손그림 '모든 점'을 정확히 통과시키려 하지 않는다 — 그건 예전 버그의 원인.
+  if (freehandDraw) {
+    const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
+    const cellW = ux * (plane.gridStepX || 1);
+    const FD_EPS = Math.max(1.2, cellW * 0.3);   // RDP 허용오차(월드mm) — 성긴 앵커
+    const FD_MIN = 0.4;                           // 원시점 최소 간격(월드mm)
+    let raw = null, moved = false, live = null;
+    svg.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      const w = clientToWorld(e.clientX, e.clientY);
+      if (!w) return;
+      e.preventDefault();
+      raw = [{ x: w.x, y: w.y }]; moved = false;
+      try { svg.setPointerCapture(e.pointerId); } catch (_) {}
+      live = document.createElementNS(SVG_NS, "path");
+      live.setAttribute("fill", "none"); live.setAttribute("stroke", "var(--accent)");
+      live.setAttribute("stroke-width", 0.4); live.setAttribute("stroke-linecap", "round");
+      live.setAttribute("stroke-linejoin", "round"); live.setAttribute("pointer-events", "none");
+      svg.appendChild(live);
+    });
+    svg.addEventListener("pointermove", (e) => {
+      if (!raw) return;
+      const w = clientToWorld(e.clientX, e.clientY);
+      if (!w) return;
+      const last = raw[raw.length - 1];
+      if (Math.hypot(w.x - last.x, w.y - last.y) < FD_MIN) return;
+      raw.push({ x: w.x, y: w.y }); moved = true;
+      live.setAttribute("d", "M " + raw.map((p) => `${p.x} ${p.y}`).join(" L "));
+    });
+    const endFD = (e) => {
+      if (!raw) return;
+      try { svg.releasePointerCapture(e.pointerId); } catch (_) {}
+      const pts = raw; raw = null;
+      if (live) { live.remove(); live = null; }
+      const s = _series[_sel];
+      if (!s) return;
+      if (!moved || pts.length < 2) {
+        // 탭 = 점 하나 추가(클릭 배치와 같은 감각). 계속 그리기 모드 유지.
+        const m0 = clientToMath(e.clientX, e.clientY);
+        if (m0) { s.pts.push(m0); syncSeriesEditor(); refreshPreview(); renderChips(); }
+        return;
+      }
+      // 드래그 = 스트로크를 성긴 앵커로 단순화해 계열의 점으로 삼는다(1/8칸 스냅·박스 클램프).
+      const anchorsW = simplifyRDP(pts, FD_EPS);
+      const db = dataBounds(plane);
+      const sx = (plane.gridStepX || 1) / 8, sy = (plane.gridStepY || 1) / 8;
+      s.pts = anchorsW.map((p) => {
+        const m = mathFromWorld(plane, p.x, p.y);
+        const nx = Math.round(m.x / sx) * sx, ny = Math.round(m.y / sy) * sy;
+        return { x: Math.max(db.xMin, Math.min(db.xMax, nx)), y: Math.max(db.yMin, Math.min(db.yMax, ny)) };
+      });
+      finishPointsSeries();   // 그리기 종료 → 앵커가 드래그 편집 가능한 상태로
+    };
+    svg.addEventListener("pointerup", endFD);
+    svg.addEventListener("pointercancel", endFD);
+  }
 
   // 축 라벨 이동(요구): 켜져 있으면 축 이름(data-axisname)을 드래그해 위치 오프셋을 조정한다.
   // 드래그 중 refreshPreview가 라벨을 재생성하므로, 이동 추적은 window 리스너로 이어간다.
@@ -984,7 +1050,7 @@ const FUNCTAB = {
           make: () => newExprSeries() },
   poly: { add: "＋ 직선·꺾은선 추가", hint: "미리보기를 클릭해 점을 찍으면 직선·꺾은선이 됩니다.",
           make: () => { const s = newPointsSeries(); s.curveStyle = "straight"; return s; } },
-  free: { add: "＋ 자유곡선 추가", hint: "미리보기를 클릭해 점을 찍으면 그 점들을 매끄럽게 잇는 자유곡선이 됩니다.",
+  free: { add: "＋ 자유곡선 추가", hint: "미리보기에서 마우스로 죽 그리면(드래그) 매끄러운 자유곡선이 됩니다. 그린 뒤 파란 점(앵커)을 끌어 모양을 다듬으세요. (탭하면 점 하나씩 추가)",
           make: () => { const s = newPointsSeries(); s.curveStyle = "smooth"; return s; } },
 };
 function setFuncTab(ft) {
