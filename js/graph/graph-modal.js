@@ -19,7 +19,7 @@ import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/co
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.1";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.1";
 import { nextObjectId } from "../tools/id.js?v=1.0.1";
-import { simplifyRDP } from "../geometry.js?v=1.0.1";
+import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.0.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -510,6 +510,14 @@ function refreshPreview() {
           };
           window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         });
+        // 우클릭 = 이 앵커만 삭제(요구: 앵커 개수 변경). 최소 2점은 유지. 그리는 중엔 무시.
+        hitC.addEventListener("contextmenu", (e) => {
+          if (_activeDraw === i || _placeMode) return;
+          e.preventDefault(); e.stopPropagation();
+          if (s.pts.length <= 2) return;
+          s.pts.splice(pi, 1);
+          syncSeriesEditor(); renderChips(); refreshPreview();
+        });
         svg.appendChild(hitC);
       });
     }
@@ -965,6 +973,9 @@ function syncSeriesEditor() {
   const showCurv = s.kind === "points" && cs === "smooth";
   _els.curvatureRow.style.display = showCurv ? "flex" : "none";
   if (showCurv) _els.curvVal.textContent = Math.round((s.curvature || 1) * 100) + "%";
+  // 앵커 수 조절: 자유곡선(smooth 점 계열)에만.
+  _els.anchorsRow.style.display = showCurv ? "flex" : "none";
+  if (showCurv) _els.anchorVal.textContent = s.pts.length;
   if (document.activeElement !== _els.width) _els.width.value = s.strokeWidth;
   if (document.activeElement !== _els.endLabel) _els.endLabel.value = s.endLabel;
   syncElementLists();
@@ -1236,6 +1247,13 @@ function build() {
               <span id="gm-curv-val" style="min-width:38px;text-align:center;">100%</span>
               <button type="button" id="gm-curv-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
             </div>
+            <!-- 앵커 수 조절(자유곡선): ＋=가장 성긴 구간 분할, −=모양 가장 덜 바뀌는 앵커 제거 -->
+            <div id="gm-anchors-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+              앵커 수 <button type="button" id="gm-anchor-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
+              <span id="gm-anchor-val" style="min-width:26px;text-align:center;">0</span>
+              <button type="button" id="gm-anchor-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
+              <span class="gm-help" title="곡선을 이루는 점(앵커)의 개수를 조절합니다. ＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 골라 지울 수도 있습니다.">?</span>
+            </div>
             <!-- 자동 연장선 + 끝 라벨 한 줄(요구 8) — 연장선 설명은 물음표 툴팁으로 -->
             <div style="display:flex;gap:14px;align-items:center;font-size:12px;color:var(--text-secondary);">
               <span style="display:inline-flex;align-items:center;">
@@ -1318,6 +1336,7 @@ function build() {
     styleHost: overlay.querySelector("#gm-styles"), width: overlay.querySelector("#gm-width"),
     curveHost: overlay.querySelector("#gm-curve"),
     curvatureRow: overlay.querySelector("#gm-curvature-row"), curvVal: overlay.querySelector("#gm-curv-val"),
+    anchorsRow: overlay.querySelector("#gm-anchors-row"), anchorVal: overlay.querySelector("#gm-anchor-val"),
     autoExt: overlay.querySelector("#gm-autoext"), autoExtRow: overlay.querySelector("#gm-autoext-row"),
     move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
@@ -1462,6 +1481,30 @@ function build() {
   };
   overlay.querySelector("#gm-curv-dn").addEventListener("click", () => bumpCurv(-0.2));
   overlay.querySelector("#gm-curv-up").addEventListener("click", () => bumpCurv(0.2));
+  // 앵커 수 조절(요구): ＋=가장 긴 구간의 중점에 앵커 삽입(성긴 곳을 촘촘하게),
+  // −=이웃을 잇는 선에서 수직거리가 가장 작은 내부 앵커 제거(모양을 가장 덜 바꾸는 점). 끝점 유지.
+  overlay.querySelector("#gm-anchor-up").addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "points" || s.pts.length < 2) return;
+    let bi = 0, bd = -1;
+    for (let k = 0; k + 1 < s.pts.length; k++) {
+      const d = Math.hypot(s.pts[k + 1].x - s.pts[k].x, s.pts[k + 1].y - s.pts[k].y);
+      if (d > bd) { bd = d; bi = k; }
+    }
+    const a = s.pts[bi], b = s.pts[bi + 1];
+    s.pts.splice(bi + 1, 0, { x: Math.round((a.x + b.x) / 2 * 1000) / 1000, y: Math.round((a.y + b.y) / 2 * 1000) / 1000 });
+    syncSeriesEditor(); renderChips(); refreshPreview();
+  });
+  overlay.querySelector("#gm-anchor-dn").addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "points" || s.pts.length <= 2) return;
+    let bi = -1, bd = Infinity;
+    for (let k = 1; k + 1 < s.pts.length; k++) {
+      const d = fdPerpDist(s.pts[k], s.pts[k - 1], s.pts[k + 1]);
+      if (d < bd) { bd = d; bi = k; }
+    }
+    if (bi < 0) bi = s.pts.length - 2;   // 안전장치(전부 동일선상 등)
+    s.pts.splice(bi, 1);
+    syncSeriesEditor(); renderChips(); refreshPreview();
+  });
 
   /* --- 그래프 요소 배선(표시점/수선/화살표 — 전부 클릭식, 같은 위계) --- */
   // "찍기"를 켜면 배치 모드 → 미리보기의 함수 위를 클릭해 찍는다. 토글 시 미리보기 재생성.
