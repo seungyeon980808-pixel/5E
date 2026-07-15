@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.0.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.0.0";
-import { setSnapPreview, pendulumBBox } from "./render.js?v=1.0.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.0.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.0.0";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=1.0.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.0.1";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.0.1";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=1.0.1";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.0.1";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.0.1";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=1.0.1";
 
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }

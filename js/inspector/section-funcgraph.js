@@ -5,8 +5,8 @@
  * 파괴적 escape hatch("곡선으로 변환")만 남긴다. 선 색·굵기는 공용 "선" 섹션(sec1)이 담당.
  * Mount + show/hide live in js/inspector.js. */
 
-import { makeSection } from "./widgets.js?v=1.0.0";
-import { openGraphModal } from "../graph/graph-modal.js?v=1.0.0";
+import { makeSection } from "./widgets.js?v=1.0.1";
+import { openGraphModal } from "../graph/graph-modal.js?v=1.0.1";
 
 const BTN_CSS = "font-size:11px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 

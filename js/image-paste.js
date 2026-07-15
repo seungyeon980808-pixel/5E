@@ -1,6 +1,6 @@
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.0.0";
+import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.0.1";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg"]);
 const MAX_IMG_DIM = 2000; // px — 초고해상도 붙여넣기 이미지는 이 상한으로 다운스케일
