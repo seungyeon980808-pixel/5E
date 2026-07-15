@@ -30,6 +30,8 @@ import {
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
 import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.1";
+// 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복한다.
+import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.0.1";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -119,8 +121,9 @@ function backupFilename() {
 function collectSettings(keys = PERSONAL_KEYS) {
   const data = {};
   for (const key of keys) {
-    const raw = localStorage.getItem(key);
-    if (raw === null) continue;
+    // 퍼스널 라이브러리는 IDB에 있으므로 localStorage 대신 전용 게터로 읽는다.
+    const raw = key === PERSONAL_OBJECTS_KEY ? exportLibraryString() : localStorage.getItem(key);
+    if (raw === null || raw === undefined) continue;
     data[key] = raw;   // 원본 문자열 그대로 보존(정확한 왕복 보장)
   }
   return {
@@ -216,11 +219,15 @@ function openExportDialog() {
       <p class="objectify-description" style="margin:0 0 8px;">
         저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 <b>한 파일</b>로 내려받습니다.
         '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
-      ${EXPORT_CHOICES.map((c, i) => `
+      ${EXPORT_CHOICES.map((c, i) => {
+        // 퍼스널 라이브러리는 IDB에 있으므로 localStorage가 아니라 실제 보유 여부로 판단.
+        const has = c.key === PERSONAL_OBJECTS_KEY ? hasLibraryItems() : localStorage.getItem(c.key) !== null;
+        return `
         <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" data-i="${i}" ${localStorage.getItem(c.key) !== null ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
+          <input type="checkbox" data-i="${i}" ${has ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
           <span class="modal-label" style="margin:0;">${c.label}</span>
-        </label>`).join("")}
+        </label>`;
+      }).join("")}
       <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;">
         <input type="checkbox" id="sx-project" checked />
         <span class="modal-label" style="margin:0;">현재 프로젝트 (그림·모든 페이지)</span>
@@ -286,6 +293,13 @@ function applyImportedSettings(data) {
       }
     }
     if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
+
+    // 퍼스널 라이브러리는 IDB로 복원(비동기 자체 처리 + 라이브러리 갱신). localStorage 아님.
+    if (key === PERSONAL_OBJECTS_KEY) {
+      importLibraryString(value);
+      applied.push(key);
+      continue;
+    }
 
     // 키별 try/catch — 한 항목이 용량 초과 등으로 실패해도 나머지 항목은 계속 반영하고,
     // 실패한 키는 모아 호출부가 사용자에게 안내할 수 있게 한다(예전엔 예외가 던져져 이후

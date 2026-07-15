@@ -13,6 +13,7 @@ import { instantiateObjectsAt } from "./transform.js?v=1.0.1";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.0.1";
 import { renderObject } from "./render.js?v=1.0.1";
 import { getObjectBBox } from "./pick.js?v=1.0.1";
+import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.0.1";
 
 const KEY = "5e.personalObjects";
 const DEFAULT_CATEGORY = "기본";
@@ -23,20 +24,61 @@ let _partsHost = null;
 
 const currentSubject = () => document.documentElement.getAttribute("data-subject") || "p";
 
-/* ---------- 저장소 ---------- */
-function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    const list = raw ? JSON.parse(raw) : [];
-    return Array.isArray(list) ? list : [];
-  } catch (_) { return []; }
+/* ---------- 저장소 (IndexedDB, localStorage 폴백) ----------
+ * 인메모리 캐시(_cache)를 진실로 삼아 동기 읽기(load)를 유지하고, 실제 영속화는 IndexedDB로
+ * 백그라운드 처리한다 → 동기 호출부(visibleItems/renderLibrary 등)를 안 건드린다.
+ * IDB가 없거나 실패하면 예전처럼 localStorage로 폴백(단, 그러면 ~5MB 상한이 그대로 적용). */
+let _cache = [];
+let _useIDB = false;
+
+function load() { return _cache; }   // 동기 — 호출부 그대로
+
+function persist() {
+  if (_useIDB) {
+    // 낙관적: 캐시는 이미 갱신됨. IDB 쓰기는 백그라운드에서 하고 실패만 알린다.
+    idbSet(KEY, _cache).catch(() => showAlert("라이브러리를 저장하지 못했습니다.", { title: "저장 오류" }));
+    return true;
+  }
+  try { localStorage.setItem(KEY, JSON.stringify(_cache)); return true; }
+  catch (_) { return false; }   // localStorage 폴백 용량 초과 → 호출부가 안내
 }
+
 function save(list) {
-  // 성공 여부를 반환 → 호출부가 용량 초과(QuotaExceededError) 등 실패를 감지해 사용자에게
-  // 알릴 수 있게 한다(예전엔 조용히 삼켜 저장 실패를 못 알아챘음).
-  try { localStorage.setItem(KEY, JSON.stringify(list)); return true; }
-  catch (_) { return false; }
+  // 성공 여부 반환(호출부가 용량 초과 등 실패를 감지). IDB 경로는 낙관적으로 true.
+  _cache = Array.isArray(list) ? list : [];
+  return persist();
 }
+
+// 앱 시작 시 1회: IDB에서 캐시를 채우고, IDB가 비어 있으면 localStorage 레거시를 일회성 이전.
+// ★ 마이그레이션 후에도 localStorage 원본은 지우지 않는다(안전망 — IDB가 깨져도 복구 가능).
+async function bootstrapStorage() {
+  if (idbAvailable()) {
+    try {
+      let list = await idbGet(KEY);
+      if (!Array.isArray(list)) {
+        let legacy = [];
+        try { const raw = localStorage.getItem(KEY); const p = raw ? JSON.parse(raw) : []; legacy = Array.isArray(p) ? p : []; } catch (_) { /* 무시 */ }
+        list = legacy;
+        if (list.length) await idbSet(KEY, list);   // localStorage 원본은 그대로 보존
+      }
+      _cache = list;
+      _useIDB = true;
+      return;
+    } catch (_) { _useIDB = false; /* IDB 실패 → localStorage 폴백 */ }
+  }
+  try { const raw = localStorage.getItem(KEY); const p = raw ? JSON.parse(raw) : []; _cache = Array.isArray(p) ? p : []; }
+  catch (_) { _cache = []; }
+}
+
+/* 백업(settings.js)용: 라이브러리는 이제 IDB에 있으므로 localStorage로 못 읽는다.
+ * 현재 라이브러리를 문자열로 내보내거나(없으면 null), 문자열을 받아 복원한다. */
+export function exportLibraryString() { return _cache.length ? JSON.stringify(_cache) : null; }
+export async function importLibraryString(str) {
+  let list = [];
+  try { const p = JSON.parse(str); list = Array.isArray(p) ? p : []; } catch (_) { return false; }
+  save(list); renderLibrary(); return true;
+}
+export function hasLibraryItems() { return _cache.length > 0; }
 /* 현재 과목에서 보여줄 항목 (과목 미기록 = 옛 데이터 → 모든 과목에서 표시) */
 function visibleItems() {
   const subj = currentSubject();
@@ -338,14 +380,16 @@ export function renderLibrary() {
   }
 }
 
-export function initPersonalObjects(state) {
+export async function initPersonalObjects(state) {
   _state = state;
   _partsHost = document.getElementById("personal-parts");
   document.getElementById("personal-object-save")
     ?.addEventListener("click", saveCurrentSelection);
+  // 저장 계층(IDB) 부팅 후 렌더 — 캐시가 채워진 뒤 목록을 그린다.
+  await bootstrapStorage();
   renderLibrary();
   // 과목 모드 전환 → 그 과목의 오브젝트만 다시 표시
   window.addEventListener("5e:subject-changed", renderLibrary);
-  // 설정 불러오기(다른 탭 포함)로 localStorage가 바뀌면 목록 갱신
+  // 설정 불러오기(다른 탭 포함)로 localStorage가 바뀌면 목록 갱신(레거시 폴백 경로용)
   window.addEventListener("storage", (e) => { if (e.key === KEY) renderLibrary(); });
 }
