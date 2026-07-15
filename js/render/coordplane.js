@@ -114,8 +114,10 @@ function renderCoordplane(obj) {
   //   single    : x축만 (직선)
   const variant = obj.axisVariant || "cross";
   const hasYArm = variant !== "single";                    // 세로축을 그리나?
-  const xBoth = variant === "cross";                       // x축 음의 방향도 그리나?
-  const yBoth = variant === "cross" || variant === "halfcross"; // y축 음의 방향도?
+  // 음의 방향 축 팔은 범위가 실제로 음수까지 갈 때만 그린다(비대칭 범위 지원 — variant 대신
+  // xMin/yMin으로 판정). 기존 3모양(ㄴ자·ㅏ자·십자)에선 결과가 동일하다.
+  const xBoth = xMin < -1e-9;                              // x축 음의 방향도 그리나?
+  const yBoth = hasYArm && yMin < -1e-9;                   // y축 음의 방향도?
   const rich = !!obj.richLabels;       // 혼합 라벨러(한글정자+영문이탤릭+수식) 사용
   const gridToData = !!obj.gridToData; // 격자를 데이터 사각형 끝까지(꼬리 없이)
   // Positive-only forms start each axis at the origin; fall back to the box edge
@@ -134,16 +136,19 @@ function renderCoordplane(obj) {
   // "한 칸+α"). gridOver = 격자를 마지막 눈금 밖으로 더 뻗는 칸(사진4의 "반 칸"). 둘 다
   // 없으면(구 좌표평면) 기존처럼 xMin..xMax 정수배수.
   const stepX = obj.gridStepX || 1, stepY = obj.gridStepY || 1;
-  const gcX = Number.isFinite(obj.gridCountX) ? obj.gridCountX : null;
-  const gcY = Number.isFinite(obj.gridCountY) ? obj.gridCountY : null;
+  // 격자·눈금 칸 수: 방향별(pos/neg) 우선, 없으면 대칭 gridCountX/Y로 폴백(구파일 호환).
+  const gcXpos = Number.isFinite(obj.gridCountXPos) ? obj.gridCountXPos : (Number.isFinite(obj.gridCountX) ? obj.gridCountX : null);
+  const gcYpos = Number.isFinite(obj.gridCountYPos) ? obj.gridCountYPos : (Number.isFinite(obj.gridCountY) ? obj.gridCountY : null);
+  const gcXneg = Number.isFinite(obj.gridCountXNeg) ? obj.gridCountXNeg : (Number.isFinite(obj.gridCountX) ? obj.gridCountX : gcXpos);
+  const gcYneg = Number.isFinite(obj.gridCountYNeg) ? obj.gridCountYNeg : (Number.isFinite(obj.gridCountY) ? obj.gridCountY : gcYpos);
   const gridOver = Number.isFinite(obj.gridOver) ? obj.gridOver : 0;
-  const kx = gcX != null ? { kStart: xBoth ? -gcX : 0, kEnd: gcX, step: stepX } : tickRange(xMin, xMax, stepX);
-  const ky = gcY != null ? { kStart: yBoth ? -gcY : 0, kEnd: gcY, step: stepY } : tickRange(yMin, yMax, stepY);
+  const kx = gcXpos != null ? { kStart: xBoth ? -gcXneg : 0, kEnd: gcXpos, step: stepX } : tickRange(xMin, xMax, stepX);
+  const ky = gcYpos != null ? { kStart: yBoth ? -gcYneg : 0, kEnd: gcYpos, step: stepY } : tickRange(yMin, yMax, stepY);
   // 눈금/라벨 스킵 판정: gridCount·gridToData 경로에선 데이터 범위를 이미 정확히 캡했으니
   // 박스-끝 트리밍(atEdge)을 걸지 않는다. 구 좌표평면(둘 다 없음)에서만 atEdge로 다듬는다.
-  const legacyTrim = gcX == null && !gridToData;
+  const legacyTrim = gcXpos == null && !gridToData;
   const skipTickX = (v) => legacyTrim && atEdgeX(v);
-  const skipTickY = (v) => (gcY == null && !gridToData) && atEdgeY(v);
+  const skipTickY = (v) => (gcYpos == null && !gridToData) && atEdgeY(v);
 
   // ----- GRID (light, dashed — 평가원 style) -----
   // Every grid line spans the SAME grid rectangle so the ends line up cleanly
@@ -367,33 +372,56 @@ function renderCoordplane(obj) {
 // 불연속(점근선/극점)에서 sampler가 run을 끊어 두면 flat points[]에 큰 점프가 남는다.
 // 그 점프를 그대로 이으면 존재하지 않는 가짜 세로선이 그려지므로, 인접 점 간 거리가
 // (중앙값의 8배 이상으로) 크게 튀는 지점에서 서브패스를 분리해 개별 M으로 그린다.
-// 곡률(텐션) 파라미터 t: 1=표준(제어점 offset=Δ/6), 크면 더 볼록, 작으면 더 평평(요구: 곡률 증감).
+// ----- Centripetal Catmull-Rom → 한 구간(p1→p2)의 큐빅 베지어 제어점 -----
+// 지정한 점을 '정확히' 지나가는 보간 곡선(요구: 내가 찍은 점을 정확히 통과). 균일 방식은
+// 점 간격이 들쭉날쭉하거나 급히 꺾이면 곡선이 출렁이거나 고리를 만든다(overshoot). 중심
+// 매개변수(centripetal, α=0.5)는 그런 출렁임·꼬임 없이 매끄럽다(d3 curveCatmullRom 방식).
+// 곡률 t: 제어점을 앵커에서 t배만큼 밀어 볼록함 조절(1=표준). 앵커는 그대로라 통과 보장.
+function crBezierCP(p0, p1, p2, p3, t) {
+  const EPS = 1e-12;
+  const d01 = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+  const d12 = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+  const d23 = Math.hypot(p3.x - p2.x, p3.y - p2.y);
+  const l01a = Math.sqrt(d01), l12a = Math.sqrt(d12), l23a = Math.sqrt(d23);
+  let c1x = p1.x, c1y = p1.y, c2x = p2.x, c2y = p2.y;
+  if (l01a > EPS) {
+    const a = 2 * d01 + 3 * l01a * l12a + d12, n = 3 * l01a * (l01a + l12a);
+    c1x = (p1.x * a - p0.x * d12 + p2.x * d01) / n;
+    c1y = (p1.y * a - p0.y * d12 + p2.y * d01) / n;
+  }
+  if (l23a > EPS) {
+    const b = 2 * d23 + 3 * l23a * l12a + d12, m = 3 * l23a * (l23a + l12a);
+    c2x = (p2.x * b + p1.x * d23 - p3.x * d12) / m;
+    c2y = (p2.y * b + p1.y * d23 - p3.y * d12) / m;
+  }
+  const s = Number.isFinite(t) ? t : 1;   // 곡률: 제어점을 앵커 기준 s배로 스케일
+  if (s !== 1) {
+    c1x = p1.x + (c1x - p1.x) * s; c1y = p1.y + (c1y - p1.y) * s;
+    c2x = p2.x + (c2x - p2.x) * s; c2y = p2.y + (c2y - p2.y) * s;
+  }
+  return { c1x, c1y, c2x, c2y };
+}
 function catmullRomPathT(pts, t) {
   if (!pts || pts.length < 2) return "";
   if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
-  const k = (Number.isFinite(t) ? t : 1) / 6;
   const n = pts.length;
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 0; i < n - 1; i++) {
     const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
-    const cp1x = p1.x + (p2.x - p0.x) * k, cp1y = p1.y + (p2.y - p0.y) * k;
-    const cp2x = p2.x - (p3.x - p1.x) * k, cp2y = p2.y - (p3.y - p1.y) * k;
-    d += ` C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+    const { c1x, c1y, c2x, c2y } = crBezierCP(p0, p1, p2, p3, t);
+    d += ` C ${c1x} ${c1y} ${c2x} ${c2y} ${p2.x} ${p2.y}`;
   }
   return d;
 }
-// 곡선(스무딩) 렌더와 동일한 Catmull-Rom 기하로 폴리라인을 촘촘한 점으로 편다.
-// 표시점/수선/화살표의 베이크·클릭 스냅이 '그려진 곡선 위'에 정확히 앉게 하는 용도 —
-// 꼭짓점을 직선 보간하면 곡률에 따라 실제 곡선과 최대 반 칸 가까이 어긋난다(화살표 버그).
+// 곡선(스무딩) 렌더와 동일한 기하로 폴리라인을 촘촘한 점으로 편다(표시점/수선/화살표가
+// '그려진 곡선 위'에 정확히 앉게 하는 용도). 렌더와 같은 centripetal 제어점을 써야 어긋나지 않는다.
 function smoothSamplePts(pts, t, segs = 12) {
   if (!pts || pts.length < 3) return pts || [];
-  const k = (Number.isFinite(t) ? t : 1) / 6;
   const n = pts.length;
   const out = [{ x: pts[0].x, y: pts[0].y }];
   for (let i = 0; i < n - 1; i++) {
     const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
-    const c1x = p1.x + (p2.x - p0.x) * k, c1y = p1.y + (p2.y - p0.y) * k;
-    const c2x = p2.x - (p3.x - p1.x) * k, c2y = p2.y - (p3.y - p1.y) * k;
+    const { c1x, c1y, c2x, c2y } = crBezierCP(p0, p1, p2, p3, t);
     for (let j = 1; j <= segs; j++) {
       const u = j / segs, v = 1 - u;
       out.push({
@@ -404,8 +432,23 @@ function smoothSamplePts(pts, t, segs = 12) {
   }
   return out;
 }
-function funcgraphPathD(pts, curvature = 1) {
-  if (!pts || pts.length < 2) return catmullRomPathT(pts || [], curvature);
+// 명시적 경계(breaks = 샘플러가 준 '새 run 시작 인덱스')로만 점 배열을 run으로 나눈다.
+// 경계가 없으면 한 덩어리. 사용자가 찍은 꺾은선의 긴 구간이 임의로 끊기지 않게, 직선 계열은
+// 이것만 쓴다(거리 추정 없음).
+function splitByBreaks(pts, breaks) {
+  if (!breaks || !breaks.length) return [pts];
+  const set = new Set(breaks);
+  const runs = []; let run = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (set.has(i) && run.length) { runs.push(run); run = []; }
+    run.push(pts[i]);
+  }
+  if (run.length) runs.push(run);
+  return runs;
+}
+// 구파일(breaks 없이 저장된 함수식) 호환용: 이웃 점 간 거리가 튀는 곳에서 끊는다. 정확하진
+// 않지만 없는 것보다 낫다. breaks가 있으면 그쪽이 우선(정확).
+function distanceSplitRuns(pts) {
   const dists = [];
   for (let i = 1; i < pts.length; i++) dists.push(Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
   const sorted = [...dists].sort((a, b) => a - b);
@@ -418,13 +461,25 @@ function funcgraphPathD(pts, curvature = 1) {
     else run.push(pts[i]);
   }
   parts.push(run);
-  return parts.map((r) => catmullRomPathT(r, curvature)).filter(Boolean).join(" ").trim();
+  return parts;
+}
+function funcgraphPathD(pts, curvature = 1, breaks) {
+  if (!pts || pts.length < 2) return catmullRomPathT(pts || [], curvature);
+  // breaks가 배열이면(빈 배열 포함) sampler가 준 정확한 경계 = 신뢰한다. 빈 배열 = 끊김 없는
+  // 완전 연속 곡선 = 한 덩어리. breaks가 아예 없을 때(구파일)만 거리 휴리스틱으로 폴백한다.
+  // ★ 예전엔 빈 배열도 휴리스틱으로 넘어가, 고주파 함수의 가파른 구간을 '끊김'으로 오판해
+  //   연속 곡선을 여러 조각으로 쪼개고 큰 틈을 냈다(사진2·3 버그). Array.isArray로 해결.
+  const runs = Array.isArray(breaks) ? splitByBreaks(pts, breaks) : distanceSplitRuns(pts);
+  return runs.map((r) => catmullRomPathT(r, curvature)).filter(Boolean).join(" ").trim();
 }
 
 // 직선/꺾은선 계열(사용자가 클릭으로 찍은 점): 점 사이를 곡선이 아니라 그냥 직선으로 잇는다.
-function straightPathD(pts) {
+// breaks가 있으면(직선 모양 함수식) 그 경계에서만 끊고, 없으면 통째로 잇는다(종전과 동일).
+function straightPathD(pts, breaks) {
   if (!pts || pts.length < 2) return "";
-  return `M ${pts[0].x} ${pts[0].y} ` + pts.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" ");
+  return splitByBreaks(pts, breaks)
+    .map((r) => r.length < 2 ? "" : `M ${r[0].x} ${r[0].y} ` + r.slice(1).map((p) => `L ${p.x} ${p.y}`).join(" "))
+    .filter(Boolean).join(" ").trim();
 }
 
 function renderFuncgraph(obj) {
@@ -435,7 +490,7 @@ function renderFuncgraph(obj) {
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
   const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
   const el = document.createElementNS(SVG_NS, "path");
-  el.setAttribute("d", style === "straight" ? straightPathD(pts) : funcgraphPathD(pts, obj.curvature));
+  el.setAttribute("d", style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks));
   el.setAttribute("fill", "none");
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);

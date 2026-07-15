@@ -130,18 +130,37 @@ export function buildGlobalImageSection(ctx) {
       if (_opSnap) { pushSnap(_opSnap); _opSnap = null; }
     });
 
-    const selectionLockRow = document.createElement("div");
-    selectionLockRow.className = "insp-row";
-    const selectionLockCb = document.createElement("input");
-    selectionLockCb.type = "checkbox";
-    selectionLockCb.className = "insp-cb";
-    selectionLockCb.checked = selectionLocked;
-    const selectionLockLbl = document.createElement("label");
-    selectionLockLbl.className = "insp-field-label";
-    selectionLockLbl.textContent = "선택금지";
-    selectionLockRow.appendChild(selectionLockCb);
-    selectionLockRow.appendChild(selectionLockLbl);
-    bgBody.appendChild(selectionLockRow);
+    // ----- 잠금류 토글 3종을 한 그리드로 통합(요구: 이미지 관리 한 패널에서 다 관리) -----
+    //   선택금지 | 위치고정
+    //   비율고정 |
+    // '잠금'(obj.locked)은 위치고정+비율고정과 중복이라 두지 않는다(요구). 아래의 별도
+    // '이미지' 섹션은 일반 선택 화면에서 감춘다(inspector.js) — 여기로 일원화.
+    const lockGrid = document.createElement("div");
+    lockGrid.className = "insp-row";
+    lockGrid.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;align-items:center;";
+    // 체크박스 셀(라벨 클릭으로도 토글). disabled면 흐리게.
+    const lockCell = (labelText, checked, disabled) => {
+      const cell = document.createElement("label");
+      cell.style.cssText = "display:flex;align-items:center;gap:6px;margin:0;cursor:pointer;" +
+        (disabled ? "opacity:0.45;cursor:default;" : "");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.className = "insp-cb"; cb.checked = checked; cb.disabled = disabled;
+      const lbl = document.createElement("span");
+      lbl.className = "insp-field-label"; lbl.textContent = labelText; lbl.style.margin = "0";
+      cell.appendChild(cb); cell.appendChild(lbl);
+      return { cell, cb };
+    };
+    // 선택금지면 위치고정·비율고정 둘 다 비활성(요구: 선택금지 상태에선 이미지 자체를 못
+    // 건드리므로 위치·비율도 잠긴 것으로 본다).
+    const { cell: selCell, cb: selectionLockCb } = lockCell("선택금지", selectionLocked, false);
+    const { cell: posCell, cb: posLockCb } = lockCell("위치고정", !!img.positionLocked, selectionLocked);
+    const { cell: aspCell, cb: aspectCb } = lockCell("비율고정", img.aspectLocked !== false, selectionLocked);
+    lockGrid.appendChild(selCell);
+    lockGrid.appendChild(posCell);
+    lockGrid.appendChild(aspCell);
+    bgBody.appendChild(lockGrid);
+
+    // 선택금지: 켜면 캔버스에서 못 고르게(위치고정 해제·선택 해제). 끄면 다시 선택 가능.
     selectionLockCb.addEventListener("change", () => {
       const snap = snapObjectsAlways();
       const locked = selectionLockCb.checked;
@@ -163,21 +182,7 @@ export function buildGlobalImageSection(ctx) {
         s2.redoStack = [];
       });
     });
-
-    const posLockRow = document.createElement("div");
-    posLockRow.className = "insp-row";
-    posLockRow.style.opacity = selectionLocked ? "0.45" : "";
-    const posLockCb = document.createElement("input");
-    posLockCb.type = "checkbox";
-    posLockCb.className = "insp-cb";
-    posLockCb.checked = !!img.positionLocked;
-    posLockCb.disabled = selectionLocked;
-    const posLockLbl = document.createElement("label");
-    posLockLbl.className = "insp-field-label";
-    posLockLbl.textContent = "위치고정";
-    posLockRow.appendChild(posLockCb);
-    posLockRow.appendChild(posLockLbl);
-    bgBody.appendChild(posLockRow);
+    // 위치고정: 이동 잠금(선택금지면 비활성).
     posLockCb.addEventListener("change", () => {
       if (posLockCb.disabled) return;
       const snap = snapObjectsAlways();
@@ -190,21 +195,55 @@ export function buildGlobalImageSection(ctx) {
         s2.redoStack = [];
       });
     });
+    // 비율고정: 크기 조절 시 가로세로 비율 유지(삽입 기본 on). 선택금지면 비활성이라 무시.
+    aspectCb.addEventListener("change", () => {
+      if (aspectCb.disabled) return;
+      const snap = snapObjectsAlways();
+      const locked = aspectCb.checked;
+      state.update((s2) => {
+        const o = s2.objects.find((x) => x.id === id);
+        if (!o || o.aspectLocked === locked) return;
+        o.aspectLocked = locked;
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+    });
 
-    // 비교: 트레이싱용 원본 이미지 vs 내가 그린 오브젝트를 좌우로 비교. 배경 이미지는
-    // 선택금지 상태라 캔버스에서 못 고르므로, 이 관리 패널에 버튼을 둔다(순수 표시 —
-    // state/undo/export에 흔적 없음). 영역 드래그+Enter 후 좌우 팝업.
-    const compareRow = document.createElement("div");
-    compareRow.className = "insp-row";
+    // ----- 비교 · 삭제 (한 줄, 나란히 — 아트보드 프리셋처럼 작게 insp-ab-preset) -----
+    const btnRow = document.createElement("div");
+    btnRow.className = "insp-row";
+    btnRow.style.cssText = "display:flex;gap:6px;";
+    // 비교: 트레이싱용 원본 이미지 vs 내가 그린 오브젝트를 좌우로 비교(순수 표시, undo/export 무영향).
     const compareBtn = document.createElement("button");
     compareBtn.type = "button";
-    compareBtn.className = "modal-btn";
+    compareBtn.className = "insp-ab-preset";
     compareBtn.style.flex = "1";
     compareBtn.textContent = "비교";
     compareBtn.title = "영역을 지정해 원본 이미지와 내가 그린 그림을 좌우로 비교";
     compareBtn.addEventListener("click", () => startImageCompare(state, img));
-    compareRow.appendChild(compareBtn);
-    bgBody.appendChild(compareRow);
+    // 삭제: 선택금지/배경이라 캔버스에서 못 골라도 여기서 삭제(undo 가능).
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "insp-ab-preset insp-image-delete-btn";
+    delBtn.style.flex = "1";
+    delBtn.textContent = "삭제";
+    delBtn.title = "이 이미지를 삭제합니다 (Ctrl+Z로 되돌리기 가능)";
+    delBtn.addEventListener("click", () => {
+      const snap = snapObjectsAlways();
+      state.update((s2) => {
+        const before = (s2.objects || []).length;
+        s2.objects = (s2.objects || []).filter((x) => x.id !== id);
+        if ((s2.objects || []).length === before) return;   // 대상 없음 → undo 스냅 남기지 않음
+        s2.selectedIds = (s2.selectedIds || []).filter((sid) => sid !== id);
+        if (s2.targetedId === id) s2.targetedId = null;
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+      _managedImageId = null;  // 다음 렌더에서 남은 이미지로 재선택(없으면 "이미지 없음")
+    });
+    btnRow.appendChild(compareBtn);
+    btnRow.appendChild(delBtn);
+    bgBody.appendChild(btnRow);
   }
 
   function renderBgSection(s) {

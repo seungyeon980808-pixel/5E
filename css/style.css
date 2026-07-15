@@ -894,9 +894,14 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12.5px; color: var(--text-label); white-space: nowrap;
 }
-/* 위아래 ▲▼ 스핀 버튼으로 증감하는 좁은 숫자칸(칸 수·라벨 크기 — 양옆 버튼 대체) */
+/* 위아래 ▲▼ 스핀 버튼으로 증감하는 좁은 숫자칸(칸 수·라벨 크기 — 양옆 버튼 대체).
+   네이티브 스핀 버튼은 색을 직접 못 바꾸므로 opacity로 입력창 톤에 녹인다(요구: 톤 조절)
+   — 평소엔 은은하게, 마우스를 올리거나 포커스일 때만 또렷하게. */
 .gm-num.gm-spinnum { width: 58px; text-align: center; padding: 5px 2px 5px 8px; }
-.gm-spinnum::-webkit-inner-spin-button { opacity: 1; }
+.gm-spinnum::-webkit-inner-spin-button { opacity: 0.7; }         /* 활성 = 또렷하게(요구) */
+.gm-spinnum:hover::-webkit-inner-spin-button,
+.gm-spinnum:focus::-webkit-inner-spin-button { opacity: 1; }
+.gm-spinnum:disabled::-webkit-inner-spin-button { opacity: 0.15; } /* 비활성과 확실히 구분 */
 /* 물음표 도움말 배지 — 설명은 커서를 올리면 뜨는 title 툴팁으로 */
 .gm-help {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1789,7 +1794,9 @@ textarea.unified-text-input {
    fixed 위치. 색은 패널/보더/텍스트 토큰을 그대로 써 라이트·다크·과목 테마에
    모두 자연스럽게 얹힌다. 그림자는 과하지 않게 얕게. */
 .app-tooltip {
-  position: fixed; z-index: 9000; pointer-events: none;
+  /* 모달(.modal-overlay z-index:10000)·도움말 팝오버(100000)보다 위에 떠야 가려지지 않는다
+     (그래프 모달의 물음표 툴팁이 모달 뒤로 깔리던 버그 수정). */
+  position: fixed; z-index: 100001; pointer-events: none;
   max-width: 264px; padding: 5px 9px;
   font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
   color: var(--text-primary);

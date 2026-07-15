@@ -21,6 +21,9 @@ function el(tag) { return document.createElementNS(SVG_NS, tag); }
 const HANGUL_RE = /[가-힣ᄀ-ᇿ㄰-㆏]/;
 // 한글은 같은 font-size라도 라틴/수식보다 커 보인다 → 더 줄여 시각 균형(요구: 한글 더 작게).
 const KO_SCALE = 0.72;
+// 기호(영문·괄호·수식) 런은 한글과 같은 크기면 더 커 보인다 → 기본값에서 2pt 축소(요구).
+// 1pt = 0.3528mm → 2pt ≈ 0.71mm. 최소 1mm 보장.
+const MATH_TRIM_MM = 0.71;
 
 // 괄호 안은 "단위"로 본다(평가원 관례: 물리량 기호만 이탤릭, 단위는 정자).
 // 예: "속도(m/s)" → 속도=한글 정자, (m/s)=라틴 정자(이탤릭 금지). 괄호 문자 자체도 정자.
@@ -91,9 +94,10 @@ function buildLine(line, size, color) {
       // 영문/수식 런: formula.js(첨자·분수·그리스·함수정자)로 렌더.
       // math=변수 이탤릭 / unit(괄호·단위)=정자 — fontStyle만 바꾸면 formula가 둘 다 처리.
       const style = run.kind === "unit" ? "normal" : "italic";
+      const mSize = Math.max(1, size - MATH_TRIM_MM);   // 기호는 한글 대비 2pt 작게(요구)
       const fh = { family: EQUATION_FONT_FAMILY, weight: "normal", style };
-      const m = measureFormula(run.text, size, fh);
-      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: size, fontFamily: EQUATION_FONT_FAMILY, fontStyle: style });
+      const m = measureFormula(run.text, mSize, fh);
+      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: mSize, fontFamily: EQUATION_FONT_FAMILY, fontStyle: style });
       recolorFormula(fg, color);
       // 단위 런 정자 강제: resolveTextFontStyle이 수식 글꼴을 무조건 이탤릭으로 되돌리므로
       // (state.js — 일반 수식 객체용 규칙), 여기서 글리프 스타일만 정자로 덮어쓴다.
@@ -103,8 +107,13 @@ function buildLine(line, size, color) {
       }
       g.appendChild(fg);
       cx += m.w;
-      asc = Math.max(asc, m.ascent);
-      desc = Math.max(desc, m.descent);
+      // 공백만인 런(줄 안의 띄어쓰기·들여쓰기용)은 가로 폭만 차지하고 줄 높이(ascent/descent)엔
+      // 기여하지 않는다. 안 그러면 공백의 수식-글꼴 높이가 한글 줄 높이를 부풀려, 스페이스를
+      // 넣는 순간 위·아래 줄 간격이 벌어진다(사용자 보고 버그).
+      if (run.text.trim() !== "") {
+        asc = Math.max(asc, m.ascent);
+        desc = Math.max(desc, m.descent);
+      }
     }
   }
   if (asc === 0 && desc === 0) { asc = size * 0.78; desc = size * 0.22; } // 빈 줄 fallback

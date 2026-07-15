@@ -406,32 +406,13 @@ export function initInspector(state) {
     // Images have neither stroke/fill nor a 글꼴 section; they get their own 이미지
     // section (opacity/비율 고정/잠금/제거) instead.
     const isImage = obj.type === "image";
-    // Text/image have no stroke/fill controls; text gets 글꼴, image gets 이미지.
+    // Text/image have no stroke/fill controls; text gets 글꼴.
     sec1.style.display = (isText || isImage) ? "none" : "";
     secText.style.display = isText ? "" : "none";
-    imageSection.style.display = isImage ? "" : "none";
-    if (isImage) {
-      imageSection.open = true;
-      const isBg = obj.mode === "background";
-      imgOpacityRow.style.display = isBg ? "" : "none";
-      imgLockRow.style.display = "";
-      if (document.activeElement !== imgOpacityRange) {
-        imgOpacityRange.value = obj.opacity ?? 1;
-        imgOpacityOut.textContent = `${Math.round((obj.opacity ?? 1) * 100)}%`;
-      }
-      // 비율 고정 is meaningful for edit-mode resize; hide it for background images
-      // (locked, not freely resized).
-      imgAspectRow.style.display = isBg ? "none" : "";
-      imgAspectCb.checked = obj.aspectLocked !== false;
-      imgLockCb.checked = !!obj.locked;
-      imgExportNote.style.display = (obj.exportable === false) ? "" : "none";
-      queueMicrotask(() => { imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거"; });
-      imgRemoveBtn.textContent = isBg ? "배경 이미지 제거" : "이미지 제거";
-      // Cutout editing: edit-mode images only (never background). "지운 영역 초기화"
-      // appears only when the image actually has one or more cutouts.
-      imgCutoutBlock.style.display = "none";
-      imgClearCutBtn.style.display = "none";
-    }
+    // 이미지 조작은 상단 '이미지 관리'(global) 패널로 일원화(요구) — 일반 선택에서는 이 별도
+    // '이미지' 섹션을 숨긴다. 오려내기 등 편집 세션 UI는 위쪽 imageEditSession 분기에서만
+    // 이 섹션을 쓰므로 그대로 둔다(여긴 일반 선택 분기라 영향 없음).
+    imageSection.style.display = "none";
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       italicCb.checked = styleObj.italic === true;
