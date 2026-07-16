@@ -4,6 +4,13 @@
  *   showConfirm(message, { title, okText })  → Promise<boolean>
  */
 
+// title/message에는 페이지·오브젝트·배경 이름 등 사용자가 자유 입력한 문자열이 그대로
+// 섞여 들어온다(예: pages.js의 삭제 확인 "'{이름}' 페이지를 삭제할까요?"). innerHTML에
+// 이스케이프 없이 꽂으면 그 이름에 담긴 HTML/스크립트가 그대로 실행된다 — 반드시 이스케이프.
+function escapeHtml(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 function buildDialog({ title, message, buttons }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
@@ -14,8 +21,8 @@ function buildDialog({ title, message, buttons }) {
     overlay.innerHTML = `
       <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"
            style="width:min(320px, calc(100vw - 32px))">
-        <h2 class="modal-title">${title}</h2>
-        <p class="objectify-description" style="margin:0 0 4px;white-space:pre-line;">${message}</p>
+        <h2 class="modal-title">${escapeHtml(title)}</h2>
+        <p class="objectify-description" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
         <div class="modal-actions">${btnHtml}</div>
       </div>`;
     document.body.appendChild(overlay);
@@ -55,9 +62,9 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
     overlay.className = "modal-overlay";
     overlay.innerHTML = `
       <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
-        <h2 class="modal-title">${title}</h2>
+        <h2 class="modal-title">${escapeHtml(title)}</h2>
         <div class="modal-field">
-          ${message ? `<label class="modal-label">${message}</label>` : ""}
+          ${message ? `<label class="modal-label">${escapeHtml(message)}</label>` : ""}
           <input type="text" class="modal-input" />
         </div>
         <div class="modal-actions">

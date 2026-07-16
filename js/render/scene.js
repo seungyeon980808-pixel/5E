@@ -905,6 +905,11 @@ function renderHandles(sel, scene, zoom, activeTool) {
     let x, y, w, h, deg;
     if (_closedPoly || _closedCurve || _anglearc || _rightangle || _openPolyRot) {
       const bb = singleObjBBox(sel, scene);
+      // points가 빈 배열인 폴리라인/커브(옛 프로젝트 파일·객체화 산출물) 등은 bb가 null —
+      // 다른 호출부(예: 283-298행)처럼 방어해 핸들을 그리지 않고 빠진다. 방어 없이
+      // 구조분해하면 render()가 예외를 던지고, render는 state.subscribe(render)라
+      // 이후 모든 상태 변경이 화면에 반영되지 않는 정지 상태에 빠진다.
+      if (!bb) return g;
       ({ x, y, w, h } = bb);
       deg = 0;
     } else {
