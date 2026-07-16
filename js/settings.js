@@ -32,6 +32,8 @@ import {
 import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.1";
 // 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복한다.
 import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.0.1";
+// 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
+import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.0.1";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -113,7 +115,7 @@ function backupFilename() {
   const now = new Date();
   const p = (n) => String(n).padStart(2, "0");
   const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
-  return `5E-backup-${stamp}.json`;
+  return `5E-backup-${stamp}.zip`;
 }
 
 // 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
@@ -137,6 +139,30 @@ function collectSettings(keys = PERSONAL_KEYS) {
 
 /* 저장 위치 지정: 브라우저가 지원하면(크롬/엣지) 폴더·파일명을 고르는 저장
  * 대화상자를 띄우고, 아니면 기존처럼 다운로드 폴더로 내려받는다. */
+// Blob을 저장 위치 지정(또는 다운로드 폴백)으로 내려받는다. ZIP 백업/JSON 설정 공용.
+async function saveBlobWithPicker(blob, filename, { desc = "5E 파일", mime = "application/octet-stream", ext = ".bin" } = {}) {
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: desc, accept: { [mime]: [ext] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
 async function saveJsonWithPicker(json, filename) {
   const blob = new Blob([json], { type: "application/json" });
   if (window.showSaveFilePicker) {
@@ -254,9 +280,10 @@ function openExportDialog() {
       // 현재 프로젝트(그림·모든 페이지)를 같은 파일에 첨부. 직렬화 실패 시 나머지만 저장.
       try { payload.project = serializeProject(_state.get()); } catch (_) { /* 프로젝트만 누락 */ }
     }
-    const json = JSON.stringify(payload, null, 2);
     close();
-    await saveJsonWithPicker(json, payload.project ? backupFilename() : settingsFilename());
+    // 전체 백업 = ZIP(이미지를 바이너리로 분리해 가볍게). 복원은 옛 JSON도 자동 감지.
+    const blob = buildBackupZip(payload);
+    await saveBlobWithPicker(blob, backupFilename(), { desc: "5E 백업(zip)", mime: "application/zip", ext: ".zip" });
   });
 }
 
@@ -337,9 +364,11 @@ function importSettingsFile(file) {
   reader.onload = async () => {
     let raw;
     try {
-      raw = JSON.parse(reader.result);
+      const u8 = new Uint8Array(reader.result);
+      // ZIP 백업이면 압축 해제 + 이미지 재수화, 아니면 옛 단일 JSON.
+      raw = isZip(u8) ? parseBackupZip(u8) : JSON.parse(new TextDecoder().decode(u8));
     } catch {
-      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정 파일인지 확인해 주세요.");
+      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정/백업 파일인지 확인해 주세요.");
       return;
     }
     const valid = validateSettingsPayload(raw);
@@ -395,7 +424,7 @@ function importSettingsFile(file) {
     );
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);   // ZIP(바이너리)·JSF 공용 — onload에서 형식 감지
 }
 
 /* ----- dropdown: registered with the shared top-menu (exclusive with 파일) -----
@@ -810,7 +839,7 @@ export function initSettings(state) {
   // 숨김 파일 입력은 여기서 만들어 index.html은 마크업만 유지(project-io.js 관습).
   const settingsFileInput = document.createElement("input");
   settingsFileInput.type = "file";
-  settingsFileInput.accept = ".json,application/json";
+  settingsFileInput.accept = ".zip,application/zip,.json,application/json";
   settingsFileInput.style.display = "none";
   document.body.appendChild(settingsFileInput);
 
