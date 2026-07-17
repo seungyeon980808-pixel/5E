@@ -17,7 +17,7 @@
  * 포함될 수 있어 .gitignore 처리 — 공개 배포 전 자작 목업으로 교체할 것.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.0.1";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.0.1";
 import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.0.1";
 
 /* ----- 배경 양식 목록 -----
@@ -182,8 +182,12 @@ function hide() {
 /* ----- 현재 무대(배경 + 그림)를 그린다 ----- */
 // _artState: { canvas, widthMm, heightMm, pxPerMm, stageW, stageH } — placeArtwork에서 쓴다.
 let _artState = null;
+// 배경 전환 시 겹치는 renderStage 호출을 구분하기 위한 세대 토큰. 나중에 시작했지만
+// 먼저 끝난 호출이 최종 화면을 갖도록, 각 await 뒤 자신이 최신 호출인지 확인한다.
+let _renderGen = 0;
 
 async function renderStage() {
+  const myGen = ++_renderGen;
   const list = allBackgrounds();
   const bg = list.find((b) => b.id === _activeBgId) || list[0];
   const { stage, info } = _els;
@@ -195,6 +199,11 @@ async function renderStage() {
     return;
   }
 
+  // 0) export와 같은 웹폰트 임베딩이 끝난 뒤에 래스터화해야 수식 폰트가 폴백되지 않는다
+  // (svg-export.js의 exportSvg/exportPng도 동일하게 이 await를 거친다).
+  await ensureEmbeddedFonts();
+  if (myGen !== _renderGen) return; // 그 사이 다른 배경으로 전환됨 → 이 결과는 버림
+
   // 1) 그림을 export와 동일 경로로 래스터화(흰 배경, 실제 크기 mm 포함).
   let art;
   try {
@@ -204,20 +213,24 @@ async function renderStage() {
       options: _lastSettings.options,
     });
   } catch (_) {
+    if (myGen !== _renderGen) return;
     info.textContent = "그림을 준비하는 중 오류가 발생했습니다.";
     return;
   }
+  if (myGen !== _renderGen) return;
 
   // 2) 배경 로드.
   let bgImg;
   try {
     bgImg = await loadBackground(bg);
   } catch (_) {
+    if (myGen !== _renderGen) return;
     info.innerHTML =
       `배경 이미지를 불러오지 못했습니다: <code>${bg.src}</code><br>` +
       "로컬 자산(.gitignore)이라 저장소를 새로 받은 경우 없을 수 있습니다.";
     return;
   }
+  if (myGen !== _renderGen) return; // 최신 호출이 아니면 아래 DOM 갱신을 건너뛴다
 
   // 3) 표시 배율: 시험지 글자가 읽히도록 "폭 기준"으로 확대하고 세로는 스크롤한다
   // (전체 페이지를 다 우겨넣으면 글자가 너무 작아 비교가 안 됨). 목표 밀도는 화면에서
