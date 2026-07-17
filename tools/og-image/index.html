@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>5E 공유 썸네일(OG) 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; padding:28px; background:#f6f8fa; color:#0d1117;
+         font-family:"IBM Plex Sans KR",system-ui,sans-serif; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p.sub { color:#57606a; font-size:14px; margin:0 0 18px; line-height:1.6; }
+  code { font-family:"IBM Plex Mono",monospace; background:#eef1f4; padding:1px 5px; border-radius:4px; }
+  .bar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  button { font:inherit; font-size:14px; padding:8px 16px; border-radius:8px;
+           border:1px solid #d0d7de; background:#fff; cursor:pointer; }
+  button:hover { border-color:#0969da; color:#0969da; }
+  button.primary { background:#0969da; border-color:#0969da; color:#fff; }
+  label { font-size:13px; color:#57606a; }
+  input[type=range] { vertical-align:middle; }
+  #warn { font-size:13px; padding:8px 12px; border-radius:8px; margin-bottom:12px; display:none; }
+  #warn.bad { display:block; background:#fdf0ef; border-left:3px solid #cf222e; color:#cf222e; }
+  #warn.ok  { display:block; background:#eaf5ec; border-left:3px solid #2da44e; color:#1a7f37; }
+  canvas { max-width:100%; height:auto; border:1px solid #d0d7de; border-radius:10px; display:block; }
+</style>
+</head>
+<body>
+  <h1>5E 공유 썸네일(OG) 생성기</h1>
+  <p class="sub">
+    문구·색·크기는 아래 <code>CFG</code> 만 고치면 된다. “PNG 내려받기”로 1200×630 을 뽑아
+    <code>assets/og-image.png</code> 를 교체한다. 퍼스널 사이트에도 쓰면
+    <code>98_pesnal_site/assets/og-5e.png</code> 로 같이 교체.<br>
+    글씨를 더 키우려면 <b>배율</b> 슬라이더를 올린다 — 오른쪽 <b>5E</b> 와 겹치면 바로 경고가 뜬다.
+  </p>
+
+  <div class="bar">
+    <label>배율 <input id="scale" type="range" min="0.8" max="1.4" step="0.02" value="1"> <b id="scaleV">1.00×</b></label>
+    <span style="flex:1"></span>
+    <button id="dl" class="primary">PNG 내려받기</button>
+  </div>
+  <div id="warn"></div>
+  <canvas id="cv" width="1200" height="630"></canvas>
+
+<script>
+/* ===== CFG — 여기만 고치면 된다 ===== */
+const CFG = {
+  W: 1200, H: 630,
+
+  bg:     "#0a101e",   // 바탕
+  glow:   "#213661",   // 5E 뒤 번짐
+  accent: "#4c9dff",   // 파랑 — 강조되는 E, 헤드라인 둘째 줄
+  white:  "#f5f8ff",
+  dim:    "#8fa0bd",   // E 가 아닌 글자
+  subCol: "#9fb0cc",   // 맨 아래 기능 나열
+
+  // 5E 를 이루는 다섯 단어. 대문자로 쓴 E 가 파랗게 강조된다.
+  words: ["sciEnce", "Educational", "Exam", "Easy", "Editor"],
+  head1: "과학 시험 그림을",
+  head2: "찾고·편집하고·그리다",
+  subline: "기출 검색 · 이미지 객체화 · 개인 오브젝트 라이브러리 · PNG 내보내기",
+
+  // 글자 크기 (배율 슬라이더가 여기에 곱해진다)
+  size: { words: 24, head: 64, subline: 23, mark: 205 },
+
+  // 자리
+  pos: { x: 72, wordsY: 185, head1Y: 288, head2Y: 376, subY: 458, markX: 965, markY: 315 },
+
+  markFont: 'italic 600 §px Georgia, "Times New Roman", serif',  // logo.svg 와 같은 계열
+  krFont:   '§ "IBM Plex Sans KR", sans-serif',
+};
+/* =================================== */
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const warn = document.getElementById("warn");
+let scale = 1;
+
+const krF = (weight, size) => CFG.krFont.replace("§", weight + " " + Math.round(size * scale) + "px");
+const markF = size => CFG.markFont.replace("§", Math.round(size * scale));
+
+/* 한 단어를 그리되 대문자 E 만 파랑으로. 그린 너비를 돌려준다. */
+function wordWithE(word, x, y) {
+  let cur = x;
+  for (const ch of word) {
+    ctx.fillStyle = ch === "E" ? CFG.accent : CFG.dim;
+    ctx.fillText(ch, cur, y);
+    cur += ctx.measureText(ch).width;
+  }
+  return cur - x;
+}
+
+function draw() {
+  const { pos: P, size: S } = CFG;
+
+  // 배경 + 글로우
+  ctx.fillStyle = CFG.bg;
+  ctx.fillRect(0, 0, CFG.W, CFG.H);
+  const g = ctx.createRadialGradient(P.markX, P.markY, 20, P.markX, P.markY, 430);
+  g.addColorStop(0, CFG.glow);
+  g.addColorStop(1, "rgba(10,16,30,0)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, CFG.W, CFG.H);
+
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+
+  // 다섯 단어 한 줄 — 예전의 중복이던 "FIND · EDIT · DRAW" 자리
+  let cur = P.x;
+  const sep = "  ·  ";
+  CFG.words.forEach((w, i) => {
+    ctx.font = krF(600, S.words);
+    cur += wordWithE(w, cur, P.wordsY);
+    if (i < CFG.words.length - 1) {
+      ctx.font = krF(400, S.words);
+      ctx.fillStyle = CFG.dim;
+      ctx.fillText(sep, cur, P.wordsY);
+      cur += ctx.measureText(sep).width;
+    }
+  });
+  const ends = [cur];
+
+  // 헤드라인
+  ctx.font = krF(700, S.head);
+  ctx.fillStyle = CFG.white;
+  ctx.fillText(CFG.head1, P.x, P.head1Y);
+  ends.push(P.x + ctx.measureText(CFG.head1).width);
+  ctx.fillStyle = CFG.accent;
+  ctx.fillText(CFG.head2, P.x, P.head2Y);
+  ends.push(P.x + ctx.measureText(CFG.head2).width);
+
+  // 기능 나열
+  ctx.font = krF(400, S.subline);
+  ctx.fillStyle = CFG.subCol;
+  ctx.fillText(CFG.subline, P.x, P.subY);
+  ends.push(P.x + ctx.measureText(CFG.subline).width);
+
+  // 큰 5E (두 번 그린다 — 발광 한 번, 또렷하게 한 번)
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = markF(S.mark);
+  const markW = ctx.measureText("5E").width;
+  ctx.shadowColor = "rgba(120,180,255,0.55)";
+  ctx.shadowBlur = 60;
+  ctx.fillStyle = CFG.white;
+  ctx.fillText("5E", P.markX, P.markY);
+  ctx.shadowBlur = 0;
+  ctx.fillText("5E", P.markX, P.markY);
+  ctx.restore();
+
+  // 왼쪽 글이 5E 를 침범하는지 검사
+  const markLeft = P.markX - markW / 2;
+  const gap = Math.round(markLeft - Math.max(...ends));
+  if (gap < 24) {
+    warn.className = "bad";
+    warn.textContent = "⚠ 글씨가 5E 와 " + (gap < 0 ? "겹칩니다" : "너무 붙습니다") + " (여유 " + gap + "px). 배율을 낮추세요.";
+  } else {
+    warn.className = "ok";
+    warn.textContent = "✅ 5E 와 안 겹침 — 여유 " + gap + "px";
+  }
+}
+
+document.fonts.ready.then(draw);
+
+const sl = document.getElementById("scale");
+sl.oninput = () => {
+  scale = parseFloat(sl.value);
+  document.getElementById("scaleV").textContent = scale.toFixed(2) + "×";
+  draw();
+};
+document.getElementById("dl").onclick = () => {
+  const a = document.createElement("a");
+  a.download = "og-image.png";
+  a.href = cv.toDataURL("image/png");
+  a.click();
+};
+</script>
+</body>
+</html>
