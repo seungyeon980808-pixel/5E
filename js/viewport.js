@@ -179,9 +179,11 @@ export function initViewport(svg, state, onChange) {
           vb.y = -newH / 2;
         } else {
           const before = screenToWorld(svg, vb, e.clientX, e.clientY);
-          const rect = svg.getBoundingClientRect();
-          const fx = (e.clientX - rect.left) / rect.width;
-          const fy = (e.clientY - rect.top) / rect.height;
+          // rect 기준 fx/fy는 preserveAspectRatio="xMidYMid meet"의 레터박스를 무시해
+          // before(CTM 기반, 정확)와 기준계가 어긋난다. 대신 old viewBox 안에서 before가
+          // 차지하는 비율을 직접 구해(같은 CTM 보정을 이미 포함) newW/newH에 적용한다.
+          const fx = (before.x - vb.x) / vb.w;
+          const fy = (before.y - vb.y) / vb.h;
           vb.w = newW;
           vb.h = newH;
           vb.x = before.x - fx * newW;

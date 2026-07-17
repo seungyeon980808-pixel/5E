@@ -148,6 +148,10 @@ let _pendingSnapshot = null; // full objects clone for undo; committed only if m
 let _didMove = false;        // true once the threshold is crossed
 let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
 let _spaceHeld = false;
+// 연속 Ctrl+V id 중복 방지용 카운터 — Date.now()만 쓰면 같은 ms 안에 빠르게 여러 번
+// 붙여넣을 때 앞선 붙여넣기와 id 구간이 겹칠 수 있다(text-editor.js의 obj_${stamp}_${++counter}
+// 패턴과 동일하게 모듈 스코프 카운터로 유일성을 보장).
+let _pasteCounter = 0;
 
 /* handle-drag state (resize branch A / endpoint branch B) */
 let _handleDragging   = false;
@@ -619,6 +623,18 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
     return;
   }
 
+  // 회전된 박스의 코너 핸들 보정: 위 계산은 로컬(비회전) 좌표에서 반대 코너를 고정하지만,
+  // 렌더는 박스 '자신의' 새 중심을 축으로 다시 회전한다 — 리사이즈로 중심이 이동하면 재회전
+  // 후 반대 코너의 세계좌표가 함께 밀린다. 회전 전(orig)/후(x,y,w,h) 세계좌표를 getRotPivot로
+  // 비교해 그 차이만큼 박스를 평행이동시켜 반대 코너를 세계좌표에서도 고정한다.
+  // (n/s/e/w 엣지 핸들은 비율고정 시 '반대편' 의미 자체가 달라 이 보정 대상에서 제외 — 별개 사안.)
+  if (orig.rotation && (handle === "nw" || handle === "ne" || handle === "se" || handle === "sw")) {
+    const worldBefore = getRotPivot(orig, handle);
+    const worldAfter = getRotPivot({ x, y, w, h, rotation: orig.rotation }, handle);
+    x += worldBefore.x - worldAfter.x;
+    y += worldBefore.y - worldAfter.y;
+  }
+
   obj.x = x;
   obj.y = y;
   obj.w = w;
@@ -646,6 +662,12 @@ function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
 function objWorldBBox(o, svg) {
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
   if (SIZE_TYPES.has(o.type)) {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  // formula는 text와 달리 실측 w/h를 직접 갖는다(text-editor.js measureFormula) — SIZE_TYPES와
+  // 같은 모양의 박스를 그대로 쓸 수 있다. 이 분기가 없으면 groupBBox에서 통째로 빠져(null)
+  // 그룹 리사이즈 시 수식만 지오메트리가 갱신되지 않는다.
+  if (o.type === "formula") {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
   }
   if (o.type === "anglearc") {
@@ -758,6 +780,12 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
       const p = mapPt(orig.x, orig.y);
       obj.x = p.x; obj.y = p.y;
       obj.fontSize = orig.fontSize * sx; // sx == sy under forced ratio
+    } else if (orig.type === "formula") {
+      // formula는 text와 달리 w/h를 직접 가지므로 SIZE_TYPES처럼 박스도 함께 스케일하고,
+      // 렌더 크기가 실제로 커지도록 fontSize도 같이 조절한다(강제 비율이라 sx==sy).
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
+      obj.fontSize = orig.fontSize * sx;
     } else if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
@@ -789,6 +817,9 @@ export function initTransform(svg, state) {
     if (!e.ctrlKey && !e.metaKey) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    // 모달이 열린 동안(다중 함수 입력 등, 포커스가 input이 아닌 버튼/배경일 때)
+    // Ctrl+Z가 뒤편 캔버스를 몰래 undo하지 않게 차단(아래 Delete 가드와 동일 패턴).
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
     const key = e.key.toLowerCase();
     if (key === "z" && !e.shiftKey) {
       e.preventDefault();
@@ -887,7 +918,9 @@ export function initTransform(svg, state) {
       const dy = target.y - cy;
       const newObjs = _clipboard.map((src, i) => {
         const newObj = JSON.parse(JSON.stringify(src));
-        newObj.id = String(Date.now() + i);
+        // Date.now()+i만 쓰면 연속 Ctrl+V가 같은 ms 안에 겹쳐 id 중복이 날 수 있어
+        // 모듈 카운터를 덧붙인다(같은 타임스탬프라도 항상 유일).
+        newObj.id = String(Date.now() + i) + "_" + (++_pasteCounter);
         applyDelta(newObj, src, dx, dy); // handles every shape type incl. image
         return newObj;
       });
@@ -906,10 +939,16 @@ export function initTransform(svg, state) {
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
-        s2.undoStack.push(snap);
-        s2.redoStack = [];
         // locked objects are never deleted; remove only selected + mutable ones
+        const before = s2.objects.length;
         s2.objects = s2.objects.filter((o) => !(selectedIds.includes(o.id) && isMutable(o)));
+        const changed = s2.objects.length !== before;
+        // 잠긴 객체만 선택돼 실제로 지워진 게 없으면 undo 스냅샷을 남기지 않는다
+        // (PageUp z-order의 if(moved), Shift+V의 if(changed) 패턴과 동일).
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
         s2.selectedIds = [];
       });
       return;
@@ -1020,7 +1059,11 @@ export function initTransform(svg, state) {
                 if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
-                } else if (obj.type === "polyline" || obj.type === "curve") {
+                } else if (POINT_ARRAY_TYPES.has(obj.type)) {
+                  // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
+                  // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
+                  // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
+                  // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
                   obj.points = obj.points.map((p) => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
@@ -1114,7 +1157,11 @@ export function initTransform(svg, state) {
                 if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
-                } else if (obj.type === "polyline" || obj.type === "curve") {
+                } else if (POINT_ARRAY_TYPES.has(obj.type)) {
+                  // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
+                  // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
+                  // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
+                  // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
                   obj.points = obj.points.map((p) => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
@@ -1382,14 +1429,18 @@ export function initTransform(svg, state) {
     if (activeTool !== "V") return; // rotate tool has no body-move behavior
 
     const s = state.get();
-    const selectedIds = s.selectedIds || [];
 
     const pickedObj = pickSelectableObjectFromEvent(svg, s, e);
     const clickedId = pickedObj?.id || null;
 
-    // Allow move only if the clicked object is in the current selection
-    if (!clickedId || !selectedIds.includes(clickedId)) return;
+    // "새 객체 클릭은 선택만" 가드: tools.js의 bubble mousedown이 이미 이번 클릭으로
+    // selectedIds를 갱신했으므로(캡처가 먼저 저장한 _prevSelectedIds 이후) 여기서
+    // state.get().selectedIds를 다시 읽으면 방금 새로 선택된 객체도 항상 포함돼
+    // 판정이 무력화된다. 클릭 "이전" 선택 상태(_prevSelectedIds)와 비교해야
+    // "원래부터 선택돼 있던 객체를 눌렀는가"를 정확히 가릴 수 있다.
+    if (!clickedId || !_prevSelectedIds.includes(clickedId)) return;
 
+    const selectedIds = s.selectedIds || []; // move는 클릭 이후(현재) 선택 집합을 대상으로 함
     const obj = pickedObj || s.objects.find((o) => o.id === clickedId);
     if (!obj) return;
     const vb = s.viewBox;

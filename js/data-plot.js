@@ -28,7 +28,15 @@ function parseData(text) {
   for (const rawLine of String(text || "").split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line) continue;
-    const tokens = line.split(/[\s,]+/).filter((t) => t.length);
+    // 콤마는 절대 구분자로 쓰지 않는다 — "1,234.5" 같은 천단위 콤마 서식이
+    // 콤마를 구분자로 오인해 두 값으로 쪼개지는 것을 막기 위함(엑셀 붙여넣기 대응).
+    // 탭/세미콜론이 있으면(엑셀 붙여넣기 표준) 그것을 우선 구분자로 쓰고,
+    // 없으면 공백으로만 나눈 뒤 각 토큰에서 천단위 콤마를 제거한다.
+    let tokens = line.split(/[\t;]+/).filter((t) => t.length);
+    if (tokens.length < 2) {
+      tokens = line.split(/\s+/).filter((t) => t.length);
+    }
+    tokens = tokens.map((t) => t.replace(/,/g, ""));
     const x = parseFloat(tokens[0]);
     const y = parseFloat(tokens[1]);
     if (Number.isFinite(x) && Number.isFinite(y)) pts.push({ x, y });

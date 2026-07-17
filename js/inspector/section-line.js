@@ -98,6 +98,7 @@ export function buildLineSection(ctx) {
     const snap = JSON.parse(JSON.stringify(s.objects));
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
+      if (o && o.locked) return; // 잠긴 객체는 화살표 변경 금지
       if (o && (o.type === "line" || o.type === "polyline")) {
         const current = ARROW_CYCLE.includes(o.arrowHead) ? o.arrowHead : "none";
         o.arrowHead = ARROW_CYCLE[(ARROW_CYCLE.indexOf(current) + 1) % ARROW_CYCLE.length];
@@ -140,7 +141,7 @@ export function buildLineSection(ctx) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const o = s2.objects.find((item) => item.id === ids[0]);
-        if (!o || o.type !== "line") return;
+        if (!o || o.type !== "line" || o.locked) return; // 잠긴 객체는 선 모드 변경 금지
         const oldMode = o.lineMode
           ?? (o.lineStyle === "dimensionArrow" ? "lengthArrow" : o.lineStyle)
           ?? (o.arrowHead === "center" ? "middleArrow" : (o.arrowHead ?? "none") === "none" ? "solid" : "arrow");
@@ -181,7 +182,7 @@ export function buildLineSection(ctx) {
   dimensionLabelRow.className = "insp-row";
   const dimensionLabelLbl = document.createElement("label");
   dimensionLabelLbl.className = "insp-field-label";
-  dimensionLabelLbl.textContent = "Label";
+  dimensionLabelLbl.textContent = "라벨";
   const dimensionLabelInp = document.createElement("input");
   dimensionLabelInp.type = "text";
   dimensionLabelInp.maxLength = 40;
@@ -467,7 +468,7 @@ export function buildLineSection(ctx) {
     if (ids.length !== 1) return;
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
-      if (o && o.type === "line") o.dashRatio = val;
+      if (o && o.type === "line" && !o.locked) o.dashRatio = val; // 잠긴 객체는 실선 비율 변경 금지
     });
   }
   let _ratioSnap = null;
@@ -507,7 +508,7 @@ export function buildLineSection(ctx) {
     const snap = JSON.parse(JSON.stringify(s.objects));
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
-      if (o && o.type === "line") {
+      if (o && o.type === "line" && !o.locked) {
         o.dashFlip = !o.dashFlip;
         s2.undoStack.push(snap);
         s2.redoStack = [];
@@ -542,6 +543,7 @@ export function buildLineSection(ctx) {
     const val = closeCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
+      if (o && o.locked) return; // 잠긴 객체는 닫기 토글 금지
       if (o && (o.type === "polyline" || o.type === "curve")) {
         s2.undoStack.push(snap);
         s2.redoStack = [];
@@ -571,6 +573,7 @@ export function buildLineSection(ctx) {
     const val = roundCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
+      if (o && o.locked) return; // 잠긴 객체는 경사면처리 토글 금지
       if (o && o.type === "polyline") {
         s2.undoStack.push(snap);
         s2.redoStack = [];

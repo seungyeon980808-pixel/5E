@@ -118,8 +118,10 @@ function applyCfg(plane, cfg) {
   plane.tickBaseX = cfg.tickBaseX; plane.tickBaseY = cfg.tickBaseY;
   if (cfg.tickMode === "multiple") {
     plane.tickLabelMode = "text"; plane.showTickLabels = false;
-    plane.tickTextX = genMultiples(cfg.tickBaseX, cx);
-    plane.tickTextY = genMultiples(cfg.tickBaseY, cy);
+    // 배수 개수 = 그 방향 양의 칸 수(xPos/yPos). cx/cy는 이 함수 스코프에 없는 변수였다
+    // — 라벨을 '배수'로 선택하는 즉시 ReferenceError로 모달 전체가 크래시했다.
+    plane.tickTextX = genMultiples(cfg.tickBaseX, xPos);
+    plane.tickTextY = genMultiples(cfg.tickBaseY, yPos);
   } else {
     plane.tickLabelMode = cfg.tickMode;
     plane.showTickLabels = cfg.tickMode === "number"; // 구코드 호환 플래그
@@ -336,7 +338,10 @@ function prepareSeries(plane) {
       const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
       // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
-      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
+      // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
+      // 별도 domainAuto 플래그로 남겨야, 재편집·평면 범위 확장 시 domain을 다시 자동으로
+      // 넓힐 수 있다(안 남기면 항상 '명시 정의역'으로 보여 옛 경계에 갇힌다).
+      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
@@ -396,10 +401,14 @@ function commitEdit() {
     const snap = JSON.parse(JSON.stringify(st.objects));
     applyCfg(o, _cfg);                       // 박스(x/y/w/h)는 그대로, 범위·표시만 갱신
     setLabelSizes(o);                        // 라벨 크기도 셀 기준으로 갱신
-    // 옛 그래프 그룹 해체(계열을 전량 교체하므로 멤버 구성이 바뀐다). 계열 전량 교체
+    // 옛 그래프 그룹 해체(계열을 전량 교체하므로 멤버 구성이 바뀐다) — 단, 이 그래프
+    // 자신의 자동 그룹("grp_"+id)일 때만. 사용자가 직접 만든 수동 그룹(예: 평면+텍스트
+    // 상자를 Ctrl+G로 묶은 것)까지 종류 불문 해체하면, 무관한 멤버들의 groupId까지
+    // 조용히 벗겨져 그룹 배치가 풀린다 — 자동 그룹인지 정확히 구분해서만 해체한다.
     // (마커/수선/화살표는 planeId 참조라 유지됨 — 위치 재베이크는 백로그).
     const oldGid = o.groupId;
-    if (oldGid) {
+    const isAutoGid = oldGid === "grp_" + o.id;
+    if (oldGid && isAutoGid) {
       st.groups = (st.groups || []).filter((g) => g.id !== oldGid);
       st.objects.forEach((x) => { if (x.groupId === oldGid) delete x.groupId; });
     }
@@ -411,7 +420,10 @@ function commitEdit() {
       st.objects.push(f);
       memberIds.push(f.id);
     }
-    if (_cfg.lockPosition && memberIds.length > 1) {
+    // 수동 그룹(oldGid가 있는데 자동 그룹이 아님)이면 재구성하지 않는다 — 사용자의 기존
+    // 그룹 소속을 그대로 둔다(새 함수그래프만 그 그룹 밖에 남음, 자동그룹 재부여로
+    // 수동 그룹에서 조용히 빼내지 않기 위함).
+    if (_cfg.lockPosition && memberIds.length > 1 && (isAutoGid || !oldGid)) {
       const gid = "grp_" + o.id;
       for (const id of memberIds) { const x = st.objects.find((y) => y.id === id); if (x) x.groupId = gid; }
       (st.groups = st.groups || []).push({ id: gid, memberIds });
@@ -791,7 +803,16 @@ function renderChips() {
     x.style.cssText = "color:#e5534b;font-weight:700;flex:0 0 auto;";
     x.addEventListener("click", (e) => {
       e.stopPropagation();
+      // splice 전에 '삭제 대상이 선택 중이었는지'와 '선택 앞쪽이 당겨지는지'를 먼저 판정한다
+      // — 안 하면 앞쪽 계열 삭제로 배열이 한 칸 당겨질 때 _sel이 같은 자리를 가리켜 엉뚱한
+      // (원래는 그 뒤에 있던) 계열이 조용히 선택으로 남고, 이후 입력이 그 계열을 덮어쓴다.
+      const deletedWasSelected = i === _sel;
       _series.splice(i, 1);
+      if (deletedWasSelected) {
+        _sel = -1; // 선택 중이던 계열이 삭제됨 — 반드시 재선택
+      } else if (i < _sel) {
+        _sel -= 1; // 앞쪽이 당겨진 만큼 보정해 같은 계열을 계속 가리키게
+      }
       // 삭제 후 선택은 현재 하위 탭 안에서 유지(밖이거나 없으면 이 탭 첫 계열, 없으면 해제).
       if (!_series[_sel] || funcTabOf(_series[_sel]) !== _funcTab) {
         _sel = _series.findIndex((ss) => funcTabOf(ss) === _funcTab);
@@ -1009,30 +1030,32 @@ function setFuncTab(ft) {
 /* ---------- 물음표(?) 도움말 팝오버 ---------- */
 // 배지의 title(설명 문구)을 hover뿐 아니라 '클릭'해도 뜨게(요구). 같은 배지를 다시 누르거나
 // 바깥을 누르면 닫힌다. 위치는 배지 바로 아래(뷰포트 기준 fixed), 우측 넘침은 클램프.
+// 도움말 팝오버 엘리먼트를 모듈 스코프로 추적 — 모달이 Escape로 닫힐 때(hide())도
+// 열려 있는 팝오버를 정리할 수 있어야 하므로 setupHelpPopovers 내부 지역변수로 가두지 않는다.
+let _helpPop = null, _helpForEl = null;
+function closeHelpPopover() { if (_helpPop) { _helpPop.remove(); _helpPop = null; _helpForEl = null; } }
 function setupHelpPopovers(overlay) {
-  let pop = null, forEl = null;
-  const close = () => { if (pop) { pop.remove(); pop = null; forEl = null; } };
   overlay.addEventListener("click", (e) => {
     const badge = e.target.closest(".gm-help");
-    if (!badge) { close(); return; }
+    if (!badge) { closeHelpPopover(); return; }
     // 배지가 <label> 안에 있으면(축 라벨 이동/묶기) 클릭이 체크박스로 한 번 더 전달돼 두 번째
     // click(target=input)이 close()를 불러 팝오버가 즉시 닫혔다. preventDefault로 라벨 전달 차단.
     e.preventDefault();
     e.stopPropagation();
-    if (forEl === badge) { close(); return; }   // 같은 배지 재클릭 = 토글 닫기
-    close();
+    if (_helpForEl === badge) { closeHelpPopover(); return; }   // 같은 배지 재클릭 = 토글 닫기
+    closeHelpPopover();
     const text = badge.getAttribute("data-help") || badge.getAttribute("title") || "";
     if (!text) return;
-    pop = document.createElement("div");
-    pop.className = "gm-help-pop";
-    pop.textContent = text;
-    document.body.appendChild(pop);
-    forEl = badge;
+    _helpPop = document.createElement("div");
+    _helpPop.className = "gm-help-pop";
+    _helpPop.textContent = text;
+    document.body.appendChild(_helpPop);
+    _helpForEl = badge;
     const br = badge.getBoundingClientRect();
     const w = Math.min(260, window.innerWidth - 16);
-    pop.style.width = w + "px";
-    pop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - w - 8)) + "px";
-    pop.style.top = (br.bottom + 6) + "px";
+    _helpPop.style.width = w + "px";
+    _helpPop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - w - 8)) + "px";
+    _helpPop.style.top = (br.bottom + 6) + "px";
   });
 }
 
@@ -1199,7 +1222,9 @@ function build() {
                   <div id="gm-guide-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점을 중심으로 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
+                  <!-- 문구 정정: 화살촉이 클릭 지점에 오고 꼬리가 반대로 뻗는 실제 동작과
+                       "중심으로"라는 옛 문구가 어긋나 있었음(261행 주석 참고). -->
+                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점에 화살촉이 오도록 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
                   <button type="button" id="gm-arrow-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
                   <div id="gm-arrow-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
                 </div>
@@ -1410,7 +1435,9 @@ function build() {
   // 버튼은 선택 유지(그것들은 선택 계열을 편집/전환하므로). 그 외 모달 여백 클릭은 해제.
   overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
     if (_sel === -1 && !_placeMode && _activeDraw === -1) return;
-    if (e.target.closest("#gm-preview, #gm-series-editor, #gm-chips, .gm-tabs, #gm-add-expr, #gm-add-points, .modal-actions")) return;
+    // 예외 목록이 옛 id(#gm-add-expr,#gm-add-points)를 가리키고 있었음 — 실제 DOM엔
+    // #gm-add-series(추가 버튼)와 #gm-subtabs(하위 탭 컨테이너)가 있으므로 교체.
+    if (e.target.closest("#gm-preview, #gm-series-editor, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions")) return;
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
@@ -1427,7 +1454,8 @@ function build() {
   return overlay;
 }
 
-function hide() { if (_overlay) _overlay.hidden = true; _placeMode = null; }
+// Escape 등으로 모달을 닫을 때 열려 있는 도움말(?) 팝오버가 화면에 남는 버그 수정 — 함께 정리.
+function hide() { if (_overlay) _overlay.hidden = true; _placeMode = null; closeHelpPopover(); }
 
 // funcgraph에 저장된 요소 원본 math 스펙 → 계열 편집 상태로.
 function loadElements(fg) {
@@ -1489,7 +1517,10 @@ function loadFromPlane(plane) {
     } else {
       _series.push({
         kind: "expr", expr: fg.expr || "",
-        domain: (fg.domainMin != null && fg.domainMax != null) ? { min: fg.domainMin, max: fg.domainMax } : null,
+        // domainAuto가 있으면(이 수정 이후 저장분) 그 값을 그대로 신뢰 — true면 '자동'으로
+        // 복원해 평면 범위가 넓어지면 함수도 같이 넓게 다시 그려진다. domainAuto가 없는
+        // 옛 파일은 이전 동작 그대로(명시 정의역으로 취급) — 하위호환.
+        domain: (!fg.domainAuto && fg.domainMin != null && fg.domainMax != null) ? { min: fg.domainMin, max: fg.domainMax } : null,
         styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "smooth", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1,
         offset: (fg.offset && Number.isFinite(fg.offset.dx)) ? { dx: fg.offset.dx, dy: fg.offset.dy } : { dx: 0, dy: 0 },
         endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, ...loadElements(fg),

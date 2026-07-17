@@ -119,7 +119,10 @@ export function removeGridLines(mask, w, h) {
 export function dilate(mask, w, h, radius) {
   if (radius <= 1) return mask.slice();
   const out = new Uint8Array(w * h);
-  const reach = (radius - 1) >> 1;
+  // 왜: (radius-1)>>1은 짝수 radius(2,4,6,8)가 바로 아래 홀수와 동일한 reach로
+  // 뭉개져 매 단계가 구분 안 됐다. radius>>1은 홀/짝 구분 없는 순수 정수 나눗셈이라
+  // radius=1→0, 2→1, 3→1, 4→2처럼 매 단계가 이전과 달라진다.
+  const reach = radius >> 1;
   for (let y = 0; y < h; y += 1) {
     for (let x = 0; x < w; x += 1) {
       if (!mask[y * w + x]) continue;

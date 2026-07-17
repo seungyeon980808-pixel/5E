@@ -229,7 +229,17 @@ export function initImageObjectify(state) {
     status.textContent = message;
     status.classList.toggle("is-error", isError);
   };
-  const close = () => { overlay.hidden = true; };
+  const close = () => {
+    overlay.hidden = true;
+    // 영역 드래그 도중 모달이 닫히는 경로(예: Esc 오라우팅, 바깥 클릭)가 있으면, 정리
+    // 안 된 regionDrag가 살아남아 이후 window mouseup이 닫힌 모달 뒤에서 제외 목록을
+    // 그리다 만 사각형 기준으로 조용히 교체한다 — 닫을 때 항상 리셋한다.
+    regionDrag = null;
+    setRegionMode(false);
+    // 재오픈 시 상태 꼬임 방지: 팬 드래그 상태와 예약된 분석 타이머도 함께 정리.
+    panning = null;
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = null; }
+  };
 
   function currentOptions() {
     return {
@@ -285,7 +295,9 @@ export function initImageObjectify(state) {
 
   /* ----- 미리보기: 원본 흐리게 + 컴포넌트 오버레이 + 브러시선 ----- */
   function drawPreview() {
-    if (!sourceCanvas || !analysis) return;
+    // 주의: analysis가 없어도(예: 어두운 이미지 게이트로 분석이 중단된 직후)
+    // sourceCanvas만이라도 그려야 미리보기에 "이전" 이미지의 오버레이가 남지 않는다.
+    if (!sourceCanvas) return;
     preview.width = sourceCanvas.width;
     preview.height = sourceCanvas.height;
     const ctx = preview.getContext("2d");
@@ -293,7 +305,7 @@ export function initImageObjectify(state) {
     ctx.fillStyle = "rgba(255,255,255,0.72)";
     ctx.fillRect(0, 0, preview.width, preview.height);
     const lw = Math.min(6, Math.max(0.6, 1.8 / view.zoom)); // 줌 무관 일정한 시각 두께
-    analysis.components.forEach((comp, index) => {
+    if (analysis) analysis.components.forEach((comp, index) => {
       const path = previewPaths[index];
       if (!path) return;
       const color = excluded.has(index) ? "#6e7781" : judgmentColor(comp);
@@ -388,6 +400,12 @@ export function initImageObjectify(state) {
           if (ratio > 0.55) {
             setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(ratio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
             analyzeButton.disabled = false;
+            // 조기 return 전에 이전 analysis를 비우고 한 번 다시 그려야 한다 —
+            // 안 그러면 sourceCanvas는 이미 새 이미지로 바뀌었는데 미리보기엔
+            // 이전 이미지의 컴포넌트 오버레이가 그대로 남는다(원본만이라도 표시).
+            analysis = null;
+            previewPaths = [];
+            drawPreview();
             return;
           }
         }
@@ -537,15 +555,9 @@ export function initImageObjectify(state) {
     regionDrag = null;
     drawPreview();
   });
-  // Esc: 영역 모드/드래그 취소(모달은 닫지 않음).
-  overlay.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && (regionMode || regionDrag)) {
-      event.stopPropagation();
-      regionDrag = null;
-      setRegionMode(false);
-      drawPreview();
-    }
-  }, true);
+  // Esc 취소는 아래 document 레벨 핸들러(영역 취소 우선)로 통합했다 — overlay 스코프
+  // 리스너는 캔버스 클릭 후 포커스가 body로 이동하면(캔버스는 포커스 불가 요소) 이벤트
+  // 전파 경로에 overlay가 없어 아예 호출되지 않는 문제가 있었다(모달 닫기 핸들러만 반응).
 
   /* ----- 휠 줌 (커서 기준) ----- */
   stage.addEventListener("wheel", (event) => {
@@ -617,6 +629,13 @@ export function initImageObjectify(state) {
     const comps = analysis.components.filter((_, index) => !excluded.has(index));
     if (!comps.length) return;
     const textMode = overlay.querySelector('input[name="objectify-textmode"]:checked').value;
+    // 남은 조각이 전부 "글자추정 + 지우기" 모드면 아래 루프가 전부 continue돼
+    // addedIds가 비게 된다 — 이 경우 undo 스냅샷만 쌓고 조용히 닫히는 대신
+    // 사용자에게 알리고 아무 것도 하지 않은 채 종료한다.
+    if (comps.every((comp) => comp.isText && textMode === "remove")) {
+      setStatus("삽입할 오브젝트가 없습니다. (모든 조각이 글자로 인식되어 \"지우기\"로 제외됨)", true);
+      return;
+    }
 
     const artboard = state.get().artboard;
     const scale = Math.min(
@@ -849,6 +868,18 @@ export function initImageObjectify(state) {
         }
       }
 
+      // 파일 머리 주석(11행)이 약속한 대로, 삽입물 전체를 groupId 하나로 묶는다(Shift+G로
+      // 해제 가능) — 안 묶으면 선택을 한 번 해제한 뒤 옮길 때 조각 하나만 딸려 나와
+      // 그림이 흩어진다. 참조 이미지(반투명 배경, positionLocked)는 addedIds에 원래
+      // 안 들어가 있어 자동으로 그룹 밖에 남는다.
+      if (addedIds.length > 1) {
+        const gid = `grp_${stamp}`;
+        for (const id of addedIds) {
+          const obj = s.objects.find((o) => o.id === id);
+          if (obj) obj.groupId = gid;
+        }
+        (s.groups = s.groups || []).push({ id: gid, memberIds: [...addedIds] });
+      }
       s.undoStack.push(snapshot);
       s.redoStack = [];
       s.selectedIds = addedIds;
@@ -878,7 +909,18 @@ export function initImageObjectify(state) {
   };
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });
+  // Esc: 영역 모드/드래그 중이면 그 취소를 우선(모달은 안 닫음), 아니면 모달을 닫는다.
+  // document 레벨이라 포커스가 어디 있든(캔버스 클릭 후 body에 있어도) 항상 도달한다.
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || overlay.hidden) return;
+    if (regionMode || regionDrag) {
+      regionDrag = null;
+      setRegionMode(false);
+      drawPreview();
+      return;
+    }
+    close();
+  });
   document.addEventListener("keydown", (event) => {
     if (!overlay.hidden && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
       event.stopPropagation();

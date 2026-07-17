@@ -9,6 +9,7 @@
 import { state } from "../state.js?v=1.0.1";
 import { renderCoordplane } from "../render/coordplane.js?v=1.0.1";
 import { sampleFunctionPoints } from "./sampler.js?v=1.0.1";
+import { worldFromMath } from "./coords.js?v=1.0.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
@@ -50,6 +51,10 @@ function numInput(prop, step) {
   inp.type = "number"; inp.step = step || "any"; inp.className = "modal-input";
   inp.style.cssText = "width:66px;";
   inp.addEventListener("input", () => {
+    // 빈 칸일 때 Number("")===0(유한값)이라 그대로 커밋하면, 지우자마자 draft가 0으로
+    // 바뀌어 확인을 누르면 0(또는 [0,0] 붕괴)이 실제 평면에 저장된다 — 새 값을 입력하기
+    // 전까지는(빈 칸인 동안) draft를 건드리지 않는다(modal.js의 parseFloat NaN 가드와 동일 의도).
+    if (inp.value.trim() === "") return;
     const v = Number(inp.value);
     if (Number.isFinite(v)) set(prop, v);
   });
@@ -230,6 +235,11 @@ function commit() {
     const RANGE_KEYS = new Set(["xMin", "xMax", "yMin", "yMax"]);
     for (const k of DRAFT_FIELDS) {
       if (_draft[k] !== undefined && o[k] !== _draft[k]) {
+        // labelOrigin 특별 처리: openPlaneModal이 표시용으로 _draft.labelOrigin에
+        // 기본값 "O"를 주입했을 뿐인데(원본은 undefined), 이 차이 때문에 아무 것도
+        // 안 건드리고 확인만 눌러도 changed=true → undo 스냅샷이 쌓였다. 원본이
+        // undefined이고 draft가 그 주입 기본값 그대로면 실질적으로 변경 없음으로 취급.
+        if (k === "labelOrigin" && o[k] === undefined && _draft[k] === "O") continue;
         if (RANGE_KEYS.has(k)) rangeChanged = true;
         o[k] = _draft[k]; changed = true;
       }
@@ -240,10 +250,29 @@ function commit() {
     if (rangeChanged) {
       for (const fg of st.objects) {
         if (fg.type !== "funcgraph" || fg.planeId !== o.id) continue;
-        const dMin = Math.max(o.xMin, Math.min(fg.domainMin, fg.domainMax));
-        const dMax = Math.min(o.xMax, Math.max(fg.domainMin, fg.domainMax));
-        const { points } = sampleFunctionPoints(fg.expr, dMin, dMax, o);
-        if (points && points.length >= 2) { fg.points = points; fg.domainMin = dMin; fg.domainMax = dMax; }
+        if (fg.expr) {
+          // 옛 정의역이 새 x범위와 겹치지 않으면(dMin>=dMax로 붕괴) sampler가 빈 결과를
+          // 돌려주고 조용히 건너뛰어 옛 눈금 기준 points가 새 축 위에 그대로 남아 어긋났다
+          // — 겹치지 않으면 평면 전체 범위로 되돌려 최소한 곡선이 새 축과 맞게 만든다.
+          let dMin = Math.max(o.xMin, Math.min(fg.domainMin, fg.domainMax));
+          let dMax = Math.min(o.xMax, Math.max(fg.domainMin, fg.domainMax));
+          if (!(dMin < dMax)) { dMin = o.xMin; dMax = o.xMax; }
+          const { points, breaks } = sampleFunctionPoints(fg.expr, dMin, dMax, o);
+          if (points && points.length >= 2) {
+            fg.points = points;
+            // breaks도 새 points 길이에 맞춰 함께 갱신 — 안 하면 옛 인덱스가 새 배열을
+            // 엉뚱한 자리에서 끊어(렌더러가 배열이면 그대로 신뢰) 점근선이 잘못 끊긴다.
+            fg.breaks = breaks || [];
+            fg.domainMin = dMin; fg.domainMax = dMax;
+          }
+        } else if (Array.isArray(fg.mathPoints) && fg.mathPoints.length) {
+          // 손그림/점찍기 계열(sourceKind:'points')은 수식이 없어 재샘플이 안 되지만,
+          // 원본 수학좌표(mathPoints)를 새 평면 매핑으로 다시 투영하면 된다.
+          fg.points = fg.mathPoints.map((m) => worldFromMath(o, m.x, m.y));
+        }
+        // ⚠️ 알려진 한계(이번 수정 범위 밖): 이 계열에 얹힌 표시점/수선/화살표
+        // (guideSegs/markers/arrowPolys, 세계좌표 베이크)는 여기서 재베이크되지 않는다.
+        // graph-modal.js의 bakeElements와 같은 로직이 필요한 별도 작업.
       }
     }
     st.undoStack.push(snap);
@@ -263,4 +292,8 @@ export function openPlaneModal(planeId) {
   syncControls();
   renderPreview();
   _overlay.hidden = false;
+  // 연 직후 포커스가 오버레이 밖(예: 방금 클릭한 평면 아이콘)에 남아 있으면 overlay의
+  // keydown 리스너까지 Escape가 전달되지 않아 모달이 안 닫혔다 — 첫 입력칸에 포커스를
+  // 줘서 이후 키 입력이 모달 안에서 잡히게 한다(가장 간단한 해결).
+  if (_els.inputs[0]) _els.inputs[0].focus();
 }

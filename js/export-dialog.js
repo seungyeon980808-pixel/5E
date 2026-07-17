@@ -22,6 +22,14 @@ import { openExamPreview } from "./exam-preview.js?v=1.0.1";
 // recomputed each time the modal opens so it reflects the actual export time.
 const defaultNameBase = () => formatExportTimestamp();
 
+// 파일시스템에서 쓸 수 없는 문자(경로 구분자 등)를 걸러낸다. 이런 문자가 섞인 이름으로
+// showSaveFilePicker를 부르면 브라우저가 조용히 실패해(취소와 구분 안 됨) 안내 없이
+// 기본 다운로드 폴더로 대체 저장되므로, 저장 직전에 여기서 미리 치환해 둔다.
+const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/g;
+function sanitizeFilename(name) {
+  return String(name || "").replace(INVALID_FILENAME_CHARS, "_").trim();
+}
+
 /* ----- dropdown: exclusive with 설정 (shared top-menu) + hover descriptions ----- */
 const DEFAULT_FILE_DESC = "파일 작업을 선택하세요.";
 function initFileMenu() {
@@ -356,12 +364,17 @@ export function initExportDialog(state, svg) {
   const filenameInput = overlay.querySelector("#export-filename");
   const includeReferenceImagesInput = overlay.querySelector("#export-include-reference-images");
 
-  function showModal() {
+  // isReopen: 미리보기/영역지정에서 Esc로 취소하고 이 다이얼로그로 되돌아오는 경우
+  // true로 넘긴다. 이때는 사용자가 이미 입력해 둔 파일명(input이 DOM에 그대로 남아
+  // 있음)을 타임스탬프로 덮어쓰지 않는다 — 새로 여는 경우(openBtn)만 리셋한다.
+  function showModal(isReopen = false) {
     overlay.hidden = false;
-    // Refresh the default name to the current minute each time the dialog opens
-    // (unless the user has typed a custom name this session is fine to overwrite —
-    // the field is always reset to the live timestamp on open).
-    filenameInput.value = defaultNameBase();
+    if (!isReopen) {
+      // Refresh the default name to the current minute each time the dialog opens
+      // fresh (unless the user has typed a custom name this session is fine to
+      // overwrite — the field is always reset to the live timestamp on open).
+      filenameInput.value = defaultNameBase();
+    }
     filenameInput.focus();
     filenameInput.select();
   }
@@ -402,7 +415,7 @@ export function initExportDialog(state, svg) {
 
   // Export the current settings, optionally cropped to a world-coord rectangle.
   function doExport(bounds) {
-    const name = (filenameInput.value || "").trim() || defaultNameBase();
+    const name = sanitizeFilename(filenameInput.value) || defaultNameBase();
     const format = segValue(formatGroup, "data-format");
     const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
     if (format === "svg") {
@@ -456,7 +469,7 @@ export function initExportDialog(state, svg) {
     previewBtn.addEventListener("click", () => {
       hideModal();
       runAreaCapture(svg, state, (bounds) => {
-        if (!bounds) { showModal(); return; }
+        if (!bounds) { showModal(true); return; }
         const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
         const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
         openExamPreview({ state, dpi, options, bounds });
@@ -475,7 +488,7 @@ export function initExportDialog(state, svg) {
       const s = state.get();
       const pages = s.pages || [];
       if (pages.length === 0) return;
-      const base = (filenameInput.value || "").trim() || defaultNameBase();
+      const base = sanitizeFilename(filenameInput.value) || defaultNameBase();
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
       const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
       const pad = String(pages.length).length;
@@ -518,7 +531,7 @@ export function initExportDialog(state, svg) {
       hideModal();
       runAreaCapture(svg, state, (bounds) => {
         if (bounds) doExport(bounds);
-        else showModal(); // cancelled → reopen the dialog where we left off
+        else showModal(true); // cancelled → reopen the dialog where we left off(입력값 유지)
       });
     });
   }

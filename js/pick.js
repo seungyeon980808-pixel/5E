@@ -503,6 +503,21 @@ function faceBoundaryPolygon(o) {
     }
     return out;
   }
+  // 회전된 텍스트/수식: getBBox()는 rotate 변환을 반영하지 않으므로(마퀴가 hitTest와
+  // 다른 기하를 보게 됨), hitTest(172-183행)와 동일한 피벗(텍스트=x/y, 수식=박스 중심)
+  // 기준으로 bbox 네 모서리를 회전시킨 사각형을 반환한다. 회전 없으면 기존 bbox 판정 유지.
+  if (TEXT_MEASURED_TYPES.has(o.type)) {
+    if (!deg) return null;
+    const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
+    if (!svgEl) return null;
+    try {
+      const bb = svgEl.getBBox();
+      const cx = o.type === "formula" ? o.x + (o.w || 0) / 2 : o.x;
+      const cy = o.type === "formula" ? o.y + (o.h || 0) / 2 : o.y;
+      return [[bb.x, bb.y], [bb.x + bb.width, bb.y], [bb.x + bb.width, bb.y + bb.height], [bb.x, bb.y + bb.height]]
+        .map(([x, y]) => rotWorldPoint(x, y, cx, cy, deg));
+    } catch (_) { return null; }
+  }
   return null;
 }
 function marqueeHitsObject(o, selRect) {
