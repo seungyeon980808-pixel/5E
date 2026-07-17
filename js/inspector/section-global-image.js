@@ -30,6 +30,13 @@ export function buildGlobalImageSection(ctx) {
   let _managedImageId = null;
   let _bgOpacityDragId = null;
 
+  // 왜: 투명도 슬라이더를 값 변화 없이 눌렀다 떼면 change 이벤트가 안 떠
+  // _bgOpacityDragId가 영구 잔존해 패널 갱신(renderGlobalImagePanel의 40행 가드)이
+  // 멈춘다. renderGlobalImagePanel은 매 상태갱신마다 다시 실행되므로 리스너를 그
+  // 안(개별 슬라이더)에 걸면 재렌더마다 중복 등록된다 — 섹션당 한 번만, window
+  // pointerup에서 change 여부와 무관하게 항상 리셋한다.
+  window.addEventListener("pointerup", () => { _bgOpacityDragId = null; });
+
   function imageLabel(obj, index) {
     return obj.name || obj.label || `이미지 ${index + 1}`;
   }

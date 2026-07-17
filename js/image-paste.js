@@ -2,7 +2,8 @@
 
 import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.0.1";
 
-const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg"]);
+// 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
+const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
 const MAX_IMG_DIM = 2000; // px — 초고해상도 붙여넣기 이미지는 이 상한으로 다운스케일
 const MAX_UNDO = 60;      // undo 스냅샷 개수 상한(딥클론 누적 메모리 폭증 방지)
 let _idCounter = 0;
@@ -51,7 +52,9 @@ function loadImageSize(src) {
 }
 
 function fitToArtboard(natural, artboard) {
-  const scale = Math.min((artboard.w * 0.9) / natural.w, (artboard.h * 0.9) / natural.h);
+  // 왜: Math.min만 쓰면 작은 이미지가 아트보드의 90%까지 강제 확대돼 화질이
+  // 열화된다 — 1을 상한으로 둬 축소만 하고 확대는 하지 않는다.
+  const scale = Math.min((artboard.w * 0.9) / natural.w, (artboard.h * 0.9) / natural.h, 1);
   return { w: natural.w * scale, h: natural.h * scale };
 }
 

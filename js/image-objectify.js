@@ -236,6 +236,9 @@ export function initImageObjectify(state) {
     // 그리다 만 사각형 기준으로 조용히 교체한다 — 닫을 때 항상 리셋한다.
     regionDrag = null;
     setRegionMode(false);
+    // 재오픈 시 상태 꼬임 방지: 팬 드래그 상태와 예약된 분석 타이머도 함께 정리.
+    panning = null;
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = null; }
   };
 
   function currentOptions() {
@@ -292,7 +295,9 @@ export function initImageObjectify(state) {
 
   /* ----- 미리보기: 원본 흐리게 + 컴포넌트 오버레이 + 브러시선 ----- */
   function drawPreview() {
-    if (!sourceCanvas || !analysis) return;
+    // 주의: analysis가 없어도(예: 어두운 이미지 게이트로 분석이 중단된 직후)
+    // sourceCanvas만이라도 그려야 미리보기에 "이전" 이미지의 오버레이가 남지 않는다.
+    if (!sourceCanvas) return;
     preview.width = sourceCanvas.width;
     preview.height = sourceCanvas.height;
     const ctx = preview.getContext("2d");
@@ -300,7 +305,7 @@ export function initImageObjectify(state) {
     ctx.fillStyle = "rgba(255,255,255,0.72)";
     ctx.fillRect(0, 0, preview.width, preview.height);
     const lw = Math.min(6, Math.max(0.6, 1.8 / view.zoom)); // 줌 무관 일정한 시각 두께
-    analysis.components.forEach((comp, index) => {
+    if (analysis) analysis.components.forEach((comp, index) => {
       const path = previewPaths[index];
       if (!path) return;
       const color = excluded.has(index) ? "#6e7781" : judgmentColor(comp);
@@ -395,6 +400,12 @@ export function initImageObjectify(state) {
           if (ratio > 0.55) {
             setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(ratio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
             analyzeButton.disabled = false;
+            // 조기 return 전에 이전 analysis를 비우고 한 번 다시 그려야 한다 —
+            // 안 그러면 sourceCanvas는 이미 새 이미지로 바뀌었는데 미리보기엔
+            // 이전 이미지의 컴포넌트 오버레이가 그대로 남는다(원본만이라도 표시).
+            analysis = null;
+            previewPaths = [];
+            drawPreview();
             return;
           }
         }
@@ -618,6 +629,13 @@ export function initImageObjectify(state) {
     const comps = analysis.components.filter((_, index) => !excluded.has(index));
     if (!comps.length) return;
     const textMode = overlay.querySelector('input[name="objectify-textmode"]:checked').value;
+    // 남은 조각이 전부 "글자추정 + 지우기" 모드면 아래 루프가 전부 continue돼
+    // addedIds가 비게 된다 — 이 경우 undo 스냅샷만 쌓고 조용히 닫히는 대신
+    // 사용자에게 알리고 아무 것도 하지 않은 채 종료한다.
+    if (comps.every((comp) => comp.isText && textMode === "remove")) {
+      setStatus("삽입할 오브젝트가 없습니다. (모든 조각이 글자로 인식되어 \"지우기\"로 제외됨)", true);
+      return;
+    }
 
     const artboard = state.get().artboard;
     const scale = Math.min(
