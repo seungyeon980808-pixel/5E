@@ -9,6 +9,7 @@
 import { state } from "../state.js?v=1.0.1";
 import { renderCoordplane } from "../render/coordplane.js?v=1.0.1";
 import { sampleFunctionPoints } from "./sampler.js?v=1.0.1";
+import { worldFromMath } from "./coords.js?v=1.0.1";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const VARIANTS = [["cross", "십자"], ["quadrant", "L자"], ["single", "직선"]];
@@ -50,6 +51,10 @@ function numInput(prop, step) {
   inp.type = "number"; inp.step = step || "any"; inp.className = "modal-input";
   inp.style.cssText = "width:66px;";
   inp.addEventListener("input", () => {
+    // 빈 칸일 때 Number("")===0(유한값)이라 그대로 커밋하면, 지우자마자 draft가 0으로
+    // 바뀌어 확인을 누르면 0(또는 [0,0] 붕괴)이 실제 평면에 저장된다 — 새 값을 입력하기
+    // 전까지는(빈 칸인 동안) draft를 건드리지 않는다(modal.js의 parseFloat NaN 가드와 동일 의도).
+    if (inp.value.trim() === "") return;
     const v = Number(inp.value);
     if (Number.isFinite(v)) set(prop, v);
   });
@@ -240,10 +245,29 @@ function commit() {
     if (rangeChanged) {
       for (const fg of st.objects) {
         if (fg.type !== "funcgraph" || fg.planeId !== o.id) continue;
-        const dMin = Math.max(o.xMin, Math.min(fg.domainMin, fg.domainMax));
-        const dMax = Math.min(o.xMax, Math.max(fg.domainMin, fg.domainMax));
-        const { points } = sampleFunctionPoints(fg.expr, dMin, dMax, o);
-        if (points && points.length >= 2) { fg.points = points; fg.domainMin = dMin; fg.domainMax = dMax; }
+        if (fg.expr) {
+          // 옛 정의역이 새 x범위와 겹치지 않으면(dMin>=dMax로 붕괴) sampler가 빈 결과를
+          // 돌려주고 조용히 건너뛰어 옛 눈금 기준 points가 새 축 위에 그대로 남아 어긋났다
+          // — 겹치지 않으면 평면 전체 범위로 되돌려 최소한 곡선이 새 축과 맞게 만든다.
+          let dMin = Math.max(o.xMin, Math.min(fg.domainMin, fg.domainMax));
+          let dMax = Math.min(o.xMax, Math.max(fg.domainMin, fg.domainMax));
+          if (!(dMin < dMax)) { dMin = o.xMin; dMax = o.xMax; }
+          const { points, breaks } = sampleFunctionPoints(fg.expr, dMin, dMax, o);
+          if (points && points.length >= 2) {
+            fg.points = points;
+            // breaks도 새 points 길이에 맞춰 함께 갱신 — 안 하면 옛 인덱스가 새 배열을
+            // 엉뚱한 자리에서 끊어(렌더러가 배열이면 그대로 신뢰) 점근선이 잘못 끊긴다.
+            fg.breaks = breaks || [];
+            fg.domainMin = dMin; fg.domainMax = dMax;
+          }
+        } else if (Array.isArray(fg.mathPoints) && fg.mathPoints.length) {
+          // 손그림/점찍기 계열(sourceKind:'points')은 수식이 없어 재샘플이 안 되지만,
+          // 원본 수학좌표(mathPoints)를 새 평면 매핑으로 다시 투영하면 된다.
+          fg.points = fg.mathPoints.map((m) => worldFromMath(o, m.x, m.y));
+        }
+        // ⚠️ 알려진 한계(이번 수정 범위 밖): 이 계열에 얹힌 표시점/수선/화살표
+        // (guideSegs/markers/arrowPolys, 세계좌표 베이크)는 여기서 재베이크되지 않는다.
+        // graph-modal.js의 bakeElements와 같은 로직이 필요한 별도 작업.
       }
     }
     st.undoStack.push(snap);

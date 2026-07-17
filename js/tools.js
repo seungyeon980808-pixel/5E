@@ -253,6 +253,10 @@ function setupKeyboard() {
     if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    // 모달(함수 입력·좌표평면 상세 등)이 열린 동안, 포커스가 그 안의 BUTTON에 있을 때도
+    // v/s/t/f 등 도구 단축키가 뒤편 캔버스 도구를 바꾸지 않게 차단(transform.js의 Delete/
+    // Ctrl+Z 가드와 동일 패턴). 특히 F는 그래프 모달을 모달 위에 겹쳐 열어버렸다.
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
     const key = e.key.toLowerCase();
     if (key === "v") setActiveTool("V");
     else if (key === "s") setActiveTool("RECT");       // 사각형 — shortcut is S, not R (see SHAPE_TYPE note)
