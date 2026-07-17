@@ -15,6 +15,7 @@
 
 import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.0.1";
 import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.0.1";
+import { state } from "./state.js?v=1.0.1";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -36,14 +37,51 @@ function pressKey(key, { shift = false } = {}) {
   }));
 }
 
+// 그룹/잠금 사전조건 미충족 시 잠깐 보여줄 경고 텍스트. pick()이 명령 실행 전
+// 팔레트 모달을 먼저 닫으므로(포커스를 캔버스로 돌리기 위해), 모달 안이 아니라
+// document.body에 붙는 독립 토스트로 띄운다 — 그래야 모달이 닫혀도 보인다.
+let _hintEl = null;
+let _hintTimer = null;
+function showHint(msg) {
+  if (!_hintEl) {
+    _hintEl = document.createElement("div");
+    _hintEl.className = "object-search-empty";
+    _hintEl.style.cssText =
+      "position:fixed;left:50%;top:16%;transform:translateX(-50%);z-index:9999;" +
+      "background:#fff;border:1px solid #d0d7de;border-radius:6px;padding:8px 14px;" +
+      "color:#b54708;box-shadow:0 2px 8px rgba(0,0,0,.15);";
+    _hintEl.hidden = true;
+    document.body.appendChild(_hintEl);
+  }
+  _hintEl.textContent = msg;
+  _hintEl.hidden = false;
+  clearTimeout(_hintTimer);
+  _hintTimer = setTimeout(() => { _hintEl.hidden = true; }, 1800);
+}
+
+/* transform.js의 group(g)/ungroup(shift+g)/lockToggle(k) 사전조건을 그대로 복제한다
+ * (transform.js는 수정 대상 아님, 조건만 읽어 여기서 미리 검사). 조건 미충족이면
+ * keydown을 아예 dispatch하지 않고 팔레트에 경고를 띄운다 — 기존엔 조용히 무시됐다. */
+function runIfSelectionOk(check, failMsg, key, opts) {
+  const s = state.get();
+  if (!check(s)) { showHint(failMsg); return; }
+  pressKey(key, opts);
+}
+
 /* ===== COMMAND REGISTRY =====
  * run은 기존 기능을 "연결만" 한다. shortcutLabel은 항목 옆에 회색 배지로 표기된다. */
 const COMMANDS = [
   { id: "undo",        label: "실행취소",          keywords: ["undo", "되돌리기", "취소"],        shortcutLabel: "Ctrl+Z",       run: () => clickById("undo-btn") },
   { id: "redo",        label: "다시실행",          keywords: ["redo", "재실행"],                  shortcutLabel: "Ctrl+Shift+Z", run: () => clickById("redo-btn") },
-  { id: "group",       label: "그룹 묶기",         keywords: ["group", "묶기", "그룹화"],          shortcutLabel: "G",            run: () => pressKey("g") },
-  { id: "ungroup",     label: "그룹 해제",         keywords: ["ungroup", "해제", "그룹풀기"],      shortcutLabel: "Shift+G",      run: () => pressKey("g", { shift: true }) },
-  { id: "lockToggle",  label: "잠금 토글",         keywords: ["lock", "잠금", "고정", "unlock"],   shortcutLabel: "K",            run: () => pressKey("k") },
+  { id: "group",       label: "그룹 묶기",         keywords: ["group", "묶기", "그룹화"],          shortcutLabel: "G",            run: () => runIfSelectionOk(
+    (s) => s.activeTool === "V" && (s.selectedIds || []).length >= 2,
+    "선택 도구(V)에서 오브젝트 2개 이상을 선택해야 그룹을 묶을 수 있어요.", "g") },
+  { id: "ungroup",     label: "그룹 해제",         keywords: ["ungroup", "해제", "그룹풀기"],      shortcutLabel: "Shift+G",      run: () => runIfSelectionOk(
+    (s) => s.activeTool === "V" && (s.selectedIds || []).length >= 1,
+    "선택 도구(V)에서 그룹을 선택해야 해제할 수 있어요.", "g", { shift: true }) },
+  { id: "lockToggle",  label: "잠금 토글",         keywords: ["lock", "잠금", "고정", "unlock"],   shortcutLabel: "K",            run: () => runIfSelectionOk(
+    (s) => s.activeTool === "V" && (s.selectedIds || []).length >= 1,
+    "선택 도구(V)에서 오브젝트를 선택해야 잠금을 토글할 수 있어요.", "k") },
   { id: "projectSave", label: "프로젝트 저장",     keywords: ["save", "저장", "project"],          shortcutLabel: "",             run: () => clickById("project-save") },
   { id: "projectOpen", label: "프로젝트 불러오기", keywords: ["open", "load", "불러오기", "열기"], shortcutLabel: "",             run: () => clickById("project-open") },
   { id: "imageImport", label: "이미지 가져오기",   keywords: ["image", "import", "가져오기", "삽입"], shortcutLabel: "",           run: () => clickById("image-import") },
@@ -117,7 +155,8 @@ export function initCommandPalette() {
     }
     // (b) 오브젝트: search.js와 동일 데이터 재사용(TEMPLATES → 퍼스널)
     const objMatches = Object.entries(TEMPLATES)
-      .filter(([, def]) => [def.label, ...(def.keywords || [])]
+      // def.hidden=true는 좌측 팔레트에서 의도적으로 숨긴 항목(예: graph) — 검색에도 노출하지 않는다.
+      .filter(([, def]) => !def.hidden && [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
       .map(([id, def]) => ({ kind: "template", id, def }))
       .sort((a, b) => rank(a.def.category) - rank(b.def.category));
