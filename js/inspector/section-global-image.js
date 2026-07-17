@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startImageCompare } from "../image-compare.js?v=1.0.1";
+import { startImageCompare } from "../image-compare.js?v=1.1.0";
 
 export function buildGlobalImageSection(ctx) {
   const { state, pushSnap, snapObjectsAlways } = ctx;

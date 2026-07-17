@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=1.0.1";
+import { makeSection } from "./widgets.js?v=1.1.0";
 
 export function buildProtectSection(ctx) {
   const { state, snapBefore } = ctx;

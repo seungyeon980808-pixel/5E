@@ -11,8 +11,8 @@
  * 스냅샷이 수 MB에 달할 수 있어 localStorage(≈5MB, 문자열 전용) 용량이 부족하다.
  */
 
-import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.0.1";
-import { showConfirm } from "./ui-dialogs.js?v=1.0.1";
+import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.1.0";
+import { showConfirm } from "./ui-dialogs.js?v=1.1.0";
 
 const DB_NAME = "5e-autosave";
 const DB_VERSION = 1;

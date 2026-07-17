@@ -11,8 +11,8 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=1.0.1";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.0.1";
+import { insertImageFromSrc } from "./image-paste.js?v=1.1.0";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.1.0";
 
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
