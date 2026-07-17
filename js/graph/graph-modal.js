@@ -1030,30 +1030,32 @@ function setFuncTab(ft) {
 /* ---------- 물음표(?) 도움말 팝오버 ---------- */
 // 배지의 title(설명 문구)을 hover뿐 아니라 '클릭'해도 뜨게(요구). 같은 배지를 다시 누르거나
 // 바깥을 누르면 닫힌다. 위치는 배지 바로 아래(뷰포트 기준 fixed), 우측 넘침은 클램프.
+// 도움말 팝오버 엘리먼트를 모듈 스코프로 추적 — 모달이 Escape로 닫힐 때(hide())도
+// 열려 있는 팝오버를 정리할 수 있어야 하므로 setupHelpPopovers 내부 지역변수로 가두지 않는다.
+let _helpPop = null, _helpForEl = null;
+function closeHelpPopover() { if (_helpPop) { _helpPop.remove(); _helpPop = null; _helpForEl = null; } }
 function setupHelpPopovers(overlay) {
-  let pop = null, forEl = null;
-  const close = () => { if (pop) { pop.remove(); pop = null; forEl = null; } };
   overlay.addEventListener("click", (e) => {
     const badge = e.target.closest(".gm-help");
-    if (!badge) { close(); return; }
+    if (!badge) { closeHelpPopover(); return; }
     // 배지가 <label> 안에 있으면(축 라벨 이동/묶기) 클릭이 체크박스로 한 번 더 전달돼 두 번째
     // click(target=input)이 close()를 불러 팝오버가 즉시 닫혔다. preventDefault로 라벨 전달 차단.
     e.preventDefault();
     e.stopPropagation();
-    if (forEl === badge) { close(); return; }   // 같은 배지 재클릭 = 토글 닫기
-    close();
+    if (_helpForEl === badge) { closeHelpPopover(); return; }   // 같은 배지 재클릭 = 토글 닫기
+    closeHelpPopover();
     const text = badge.getAttribute("data-help") || badge.getAttribute("title") || "";
     if (!text) return;
-    pop = document.createElement("div");
-    pop.className = "gm-help-pop";
-    pop.textContent = text;
-    document.body.appendChild(pop);
-    forEl = badge;
+    _helpPop = document.createElement("div");
+    _helpPop.className = "gm-help-pop";
+    _helpPop.textContent = text;
+    document.body.appendChild(_helpPop);
+    _helpForEl = badge;
     const br = badge.getBoundingClientRect();
     const w = Math.min(260, window.innerWidth - 16);
-    pop.style.width = w + "px";
-    pop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - w - 8)) + "px";
-    pop.style.top = (br.bottom + 6) + "px";
+    _helpPop.style.width = w + "px";
+    _helpPop.style.left = Math.max(8, Math.min(br.left, window.innerWidth - w - 8)) + "px";
+    _helpPop.style.top = (br.bottom + 6) + "px";
   });
 }
 
@@ -1220,7 +1222,9 @@ function build() {
                   <div id="gm-guide-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점을 중심으로 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
+                  <!-- 문구 정정: 화살촉이 클릭 지점에 오고 꼬리가 반대로 뻗는 실제 동작과
+                       "중심으로"라는 옛 문구가 어긋나 있었음(261행 주석 참고). -->
+                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점에 화살촉이 오도록 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
                   <button type="button" id="gm-arrow-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
                   <div id="gm-arrow-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
                 </div>
@@ -1431,7 +1435,9 @@ function build() {
   // 버튼은 선택 유지(그것들은 선택 계열을 편집/전환하므로). 그 외 모달 여백 클릭은 해제.
   overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
     if (_sel === -1 && !_placeMode && _activeDraw === -1) return;
-    if (e.target.closest("#gm-preview, #gm-series-editor, #gm-chips, .gm-tabs, #gm-add-expr, #gm-add-points, .modal-actions")) return;
+    // 예외 목록이 옛 id(#gm-add-expr,#gm-add-points)를 가리키고 있었음 — 실제 DOM엔
+    // #gm-add-series(추가 버튼)와 #gm-subtabs(하위 탭 컨테이너)가 있으므로 교체.
+    if (e.target.closest("#gm-preview, #gm-series-editor, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions")) return;
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
@@ -1448,7 +1454,8 @@ function build() {
   return overlay;
 }
 
-function hide() { if (_overlay) _overlay.hidden = true; _placeMode = null; }
+// Escape 등으로 모달을 닫을 때 열려 있는 도움말(?) 팝오버가 화면에 남는 버그 수정 — 함께 정리.
+function hide() { if (_overlay) _overlay.hidden = true; _placeMode = null; closeHelpPopover(); }
 
 // funcgraph에 저장된 요소 원본 math 스펙 → 계열 편집 상태로.
 function loadElements(fg) {

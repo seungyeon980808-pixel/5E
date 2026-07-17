@@ -48,7 +48,12 @@ function tokenize(str) {
       while (j < s.length) {
         const d = s[j];
         if (d >= "0" && d <= "9") { j++; continue; }
-        if (d === "." && !seenDot) { seenDot = true; j++; continue; }
+        if (d === ".") {
+          // 두 번째 소수점("1.2.3" 같은 오타)은 암묵 곱(1.2*0.3)으로 조용히 넘어가지 않고
+          // 여기서 즉시 에러 — 오타를 유효한 식으로 오인하는 걸 막는다.
+          if (seenDot) throw new Error(`잘못된 숫자: "${s.slice(i, j + 1)}"`);
+          seenDot = true; j++; continue;
+        }
         break;
       }
       tokens.push({ t: "num", v: parseFloat(s.slice(i, j)) });

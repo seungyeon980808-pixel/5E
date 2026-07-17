@@ -87,8 +87,17 @@ function renderChips() {
       x.style.cssText = "color:#e5534b;font-weight:700;flex:0 0 auto;";
       x.addEventListener("click", (e) => {
         e.stopPropagation();
+        // splice 전에 '삭제 대상이 선택 중이었는지'/'선택 앞쪽이 당겨지는지'를 먼저 판정.
+        // 안 하면 선택보다 앞쪽 칩을 지울 때 배열이 한 칸 당겨져 _sel이 같은 인덱스를
+        // 가리키게 되고, 결과적으로 선택이 조용히 다른 함수로 옮겨간다(graph-modal.js의
+        // 같은 패턴 버그와 동일 — 그쪽 수정을 그대로 적용).
+        const deletedWasSelected = i === _sel;
         _funcs.splice(i, 1);
-        if (_sel >= _funcs.length) _sel = _funcs.length - 1;
+        if (deletedWasSelected) {
+          if (_sel >= _funcs.length) _sel = _funcs.length - 1;
+        } else if (i < _sel) {
+          _sel -= 1;
+        }
         syncControls(); renderPreview();
       });
       chip.appendChild(x);

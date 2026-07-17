@@ -235,6 +235,11 @@ function commit() {
     const RANGE_KEYS = new Set(["xMin", "xMax", "yMin", "yMax"]);
     for (const k of DRAFT_FIELDS) {
       if (_draft[k] !== undefined && o[k] !== _draft[k]) {
+        // labelOrigin 특별 처리: openPlaneModal이 표시용으로 _draft.labelOrigin에
+        // 기본값 "O"를 주입했을 뿐인데(원본은 undefined), 이 차이 때문에 아무 것도
+        // 안 건드리고 확인만 눌러도 changed=true → undo 스냅샷이 쌓였다. 원본이
+        // undefined이고 draft가 그 주입 기본값 그대로면 실질적으로 변경 없음으로 취급.
+        if (k === "labelOrigin" && o[k] === undefined && _draft[k] === "O") continue;
         if (RANGE_KEYS.has(k)) rangeChanged = true;
         o[k] = _draft[k]; changed = true;
       }
@@ -287,4 +292,8 @@ export function openPlaneModal(planeId) {
   syncControls();
   renderPreview();
   _overlay.hidden = false;
+  // 연 직후 포커스가 오버레이 밖(예: 방금 클릭한 평면 아이콘)에 남아 있으면 overlay의
+  // keydown 리스너까지 Escape가 전달되지 않아 모달이 안 닫혔다 — 첫 입력칸에 포커스를
+  // 줘서 이후 키 입력이 모달 안에서 잡히게 한다(가장 간단한 해결).
+  if (_els.inputs[0]) _els.inputs[0].focus();
 }
