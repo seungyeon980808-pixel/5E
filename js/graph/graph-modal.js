@@ -118,8 +118,10 @@ function applyCfg(plane, cfg) {
   plane.tickBaseX = cfg.tickBaseX; plane.tickBaseY = cfg.tickBaseY;
   if (cfg.tickMode === "multiple") {
     plane.tickLabelMode = "text"; plane.showTickLabels = false;
-    plane.tickTextX = genMultiples(cfg.tickBaseX, cx);
-    plane.tickTextY = genMultiples(cfg.tickBaseY, cy);
+    // 배수 개수 = 그 방향 양의 칸 수(xPos/yPos). cx/cy는 이 함수 스코프에 없는 변수였다
+    // — 라벨을 '배수'로 선택하는 즉시 ReferenceError로 모달 전체가 크래시했다.
+    plane.tickTextX = genMultiples(cfg.tickBaseX, xPos);
+    plane.tickTextY = genMultiples(cfg.tickBaseY, yPos);
   } else {
     plane.tickLabelMode = cfg.tickMode;
     plane.showTickLabels = cfg.tickMode === "number"; // 구코드 호환 플래그
@@ -336,7 +338,10 @@ function prepareSeries(plane) {
       const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
       // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
-      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
+      // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
+      // 별도 domainAuto 플래그로 남겨야, 재편집·평면 범위 확장 시 domain을 다시 자동으로
+      // 넓힐 수 있다(안 남기면 항상 '명시 정의역'으로 보여 옛 경계에 갇힌다).
+      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
@@ -396,10 +401,14 @@ function commitEdit() {
     const snap = JSON.parse(JSON.stringify(st.objects));
     applyCfg(o, _cfg);                       // 박스(x/y/w/h)는 그대로, 범위·표시만 갱신
     setLabelSizes(o);                        // 라벨 크기도 셀 기준으로 갱신
-    // 옛 그래프 그룹 해체(계열을 전량 교체하므로 멤버 구성이 바뀐다). 계열 전량 교체
+    // 옛 그래프 그룹 해체(계열을 전량 교체하므로 멤버 구성이 바뀐다) — 단, 이 그래프
+    // 자신의 자동 그룹("grp_"+id)일 때만. 사용자가 직접 만든 수동 그룹(예: 평면+텍스트
+    // 상자를 Ctrl+G로 묶은 것)까지 종류 불문 해체하면, 무관한 멤버들의 groupId까지
+    // 조용히 벗겨져 그룹 배치가 풀린다 — 자동 그룹인지 정확히 구분해서만 해체한다.
     // (마커/수선/화살표는 planeId 참조라 유지됨 — 위치 재베이크는 백로그).
     const oldGid = o.groupId;
-    if (oldGid) {
+    const isAutoGid = oldGid === "grp_" + o.id;
+    if (oldGid && isAutoGid) {
       st.groups = (st.groups || []).filter((g) => g.id !== oldGid);
       st.objects.forEach((x) => { if (x.groupId === oldGid) delete x.groupId; });
     }
@@ -411,7 +420,10 @@ function commitEdit() {
       st.objects.push(f);
       memberIds.push(f.id);
     }
-    if (_cfg.lockPosition && memberIds.length > 1) {
+    // 수동 그룹(oldGid가 있는데 자동 그룹이 아님)이면 재구성하지 않는다 — 사용자의 기존
+    // 그룹 소속을 그대로 둔다(새 함수그래프만 그 그룹 밖에 남음, 자동그룹 재부여로
+    // 수동 그룹에서 조용히 빼내지 않기 위함).
+    if (_cfg.lockPosition && memberIds.length > 1 && (isAutoGid || !oldGid)) {
       const gid = "grp_" + o.id;
       for (const id of memberIds) { const x = st.objects.find((y) => y.id === id); if (x) x.groupId = gid; }
       (st.groups = st.groups || []).push({ id: gid, memberIds });
@@ -791,7 +803,16 @@ function renderChips() {
     x.style.cssText = "color:#e5534b;font-weight:700;flex:0 0 auto;";
     x.addEventListener("click", (e) => {
       e.stopPropagation();
+      // splice 전에 '삭제 대상이 선택 중이었는지'와 '선택 앞쪽이 당겨지는지'를 먼저 판정한다
+      // — 안 하면 앞쪽 계열 삭제로 배열이 한 칸 당겨질 때 _sel이 같은 자리를 가리켜 엉뚱한
+      // (원래는 그 뒤에 있던) 계열이 조용히 선택으로 남고, 이후 입력이 그 계열을 덮어쓴다.
+      const deletedWasSelected = i === _sel;
       _series.splice(i, 1);
+      if (deletedWasSelected) {
+        _sel = -1; // 선택 중이던 계열이 삭제됨 — 반드시 재선택
+      } else if (i < _sel) {
+        _sel -= 1; // 앞쪽이 당겨진 만큼 보정해 같은 계열을 계속 가리키게
+      }
       // 삭제 후 선택은 현재 하위 탭 안에서 유지(밖이거나 없으면 이 탭 첫 계열, 없으면 해제).
       if (!_series[_sel] || funcTabOf(_series[_sel]) !== _funcTab) {
         _sel = _series.findIndex((ss) => funcTabOf(ss) === _funcTab);
@@ -1489,7 +1510,10 @@ function loadFromPlane(plane) {
     } else {
       _series.push({
         kind: "expr", expr: fg.expr || "",
-        domain: (fg.domainMin != null && fg.domainMax != null) ? { min: fg.domainMin, max: fg.domainMax } : null,
+        // domainAuto가 있으면(이 수정 이후 저장분) 그 값을 그대로 신뢰 — true면 '자동'으로
+        // 복원해 평면 범위가 넓어지면 함수도 같이 넓게 다시 그려진다. domainAuto가 없는
+        // 옛 파일은 이전 동작 그대로(명시 정의역으로 취급) — 하위호환.
+        domain: (!fg.domainAuto && fg.domainMin != null && fg.domainMax != null) ? { min: fg.domainMin, max: fg.domainMax } : null,
         styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "smooth", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1,
         offset: (fg.offset && Number.isFinite(fg.offset.dx)) ? { dx: fg.offset.dx, dy: fg.offset.dy } : { dx: 0, dy: 0 },
         endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, ...loadElements(fg),
