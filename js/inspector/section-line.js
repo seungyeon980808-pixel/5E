@@ -182,7 +182,7 @@ export function buildLineSection(ctx) {
   dimensionLabelRow.className = "insp-row";
   const dimensionLabelLbl = document.createElement("label");
   dimensionLabelLbl.className = "insp-field-label";
-  dimensionLabelLbl.textContent = "Label";
+  dimensionLabelLbl.textContent = "라벨";
   const dimensionLabelInp = document.createElement("input");
   dimensionLabelInp.type = "text";
   dimensionLabelInp.maxLength = 40;

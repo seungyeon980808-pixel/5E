@@ -79,10 +79,7 @@ function askNameCategory(existingCategories, done) {
       <label class="modal-field"><span class="modal-label">이름</span>
         <input type="text" id="po-name" class="modal-input" maxlength="40" autocomplete="off" /></label>
       <label class="modal-field"><span class="modal-label">분류</span>
-        <select id="po-cat-select" class="modal-input">
-          ${cats.map((c) => `<option value="${c}">${c}</option>`).join("")}
-          <option value="${NEW_CAT_VALUE}">＋ 새 분류 만들기…</option>
-        </select></label>
+        <select id="po-cat-select" class="modal-input"></select></label>
       <label class="modal-field" id="po-newcat-field" hidden><span class="modal-label">새 분류 이름</span>
         <input type="text" id="po-cat-new" class="modal-input" maxlength="20" autocomplete="off"
                placeholder="예: 역학 세트" /></label>
@@ -94,6 +91,10 @@ function askNameCategory(existingCategories, done) {
   document.body.appendChild(overlay);
   const name = overlay.querySelector("#po-name");
   const catSel = overlay.querySelector("#po-cat-select");
+  // innerHTML 템플릿 대신 DOM API(new Option)로 채운다 — 분류명에 따옴표 등이
+  // 섞여도 이스케이프 없이 안전하다(populateStoreCats와 동일 패턴).
+  cats.forEach((c) => catSel.add(new Option(c, c)));
+  catSel.add(new Option("＋ 새 분류 만들기…", NEW_CAT_VALUE));
   const newField = overlay.querySelector("#po-newcat-field");
   const newInput = overlay.querySelector("#po-cat-new");
   catSel.addEventListener("change", () => {

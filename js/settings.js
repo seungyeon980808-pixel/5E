@@ -61,8 +61,16 @@ export function loadDefaults() {
     return { ...FACTORY_DEFAULTS };
   }
 }
+// 저장공간 부족(QuotaExceededError) 등으로 setItem이 실패할 수 있다 — 예외가
+// 그대로 전파되면 호출자(저장 버튼 클릭 핸들러)의 나머지 코드(hideModal 등)까지
+// 멈춰 버튼이 무반응·무안내로 죽는다. boolean을 반환해 호출자가 안내할 수 있게 한다.
 function saveDefaults(d) {
-  localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
+  try {
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /* ----- settings file I/O (백업/복원) ----- */
@@ -459,8 +467,8 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
       <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
-      <p class="defaults-notice">이 값들은 저장은 되지만 아직 새 도형 생성·격자 표시에는
-        반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
+      <p class="defaults-notice">자·각도기 눈금 간격은 즉시 반영됩니다. 그 외 값은 저장은
+        되지만 새 도형 생성·격자 표시에는 아직 반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
 
       <div class="defaults-body">
         <div class="defaults-fields">
@@ -732,7 +740,10 @@ export function initSettings(state) {
 
   // Cancel / overlay-click / Escape close without saving.
   overlay.querySelector("#defaults-cancel").addEventListener("click", hideModal);
-  overlay.addEventListener("click", (e) => {
+  // click이 아닌 mousedown: 다른 모달(openScreenDialog 등)과 동일 패턴 —
+  // 입력칸 안에서 드래그 선택 후 오버레이 위에서 mouseup되면 click이 오버레이
+  // 타겟으로 잡혀 실수로 닫히는 것을 막는다.
+  overlay.addEventListener("mousedown", (e) => {
     if (e.target === overlay) hideModal();
   });
   document.addEventListener("keydown", (e) => {
@@ -742,7 +753,7 @@ export function initSettings(state) {
   // Save: read fields → persist → close. (Step 2 wires these into drawing.)
   overlay.querySelector("#defaults-save").addEventListener("click", () => {
     const style = currentStyle();
-    saveDefaults({
+    const ok = saveDefaults({
       strokeWidth:  Number(fields.strokeWidth.value),
       strokeLevel:  Number(fields.strokeLevel.value),
       fillLevel:    Number(fields.fillLevel.value),
@@ -756,6 +767,12 @@ export function initSettings(state) {
       rulerTickMm:       Number(fields.rulerTickMm.value),
       protractorTickDeg: Number(fields.protractorTickDeg.value),
     });
+    // 저장 실패(용량 부족) 시 사용자에게 알리고 모달은 열어둔다 — 값을 다시
+    // 입력하지 않아도 재시도할 수 있게.
+    if (!ok) {
+      alert("저장 공간이 부족해 저장하지 못했습니다.");
+      return;
+    }
     hideModal();
   });
 

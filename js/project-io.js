@@ -361,6 +361,13 @@ function defaultLayers() {
 // to the top level (the live drawing), the rest stay in s.pages — the same swap
 // structure pages.js maintains, so render/pick/etc. read the active page as before.
 export function applyLoaded(state, data) {
+  // 이미지 배치 대기 상태(_placement)가 남아있으면 정리한다 — 프로젝트를 새로
+  // 불러와 objects가 통째로 교체되는데 대기 중이던 placeholder id를 계속 들고
+  // 있으면 이후 클릭/Escape 처리가 존재하지 않는 오브젝트를 참조하게 된다.
+  if (_placement) {
+    _placement = null;
+    if (_placementHint) _placementHint.hidden = true;
+  }
   state.update((s) => {
     const pages = data.pages.map((p) => ({
       id: p.id,

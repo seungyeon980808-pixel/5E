@@ -136,9 +136,12 @@ export async function initAutosave(state) {
       if (!snapshotHasObjects(snap)) return;
       const json = JSON.stringify(snap);
       if (json === lastJson) return;
-      lastJson = json;
       // JSON.parse로 라이브 참조를 끊은 순수 스냅샷을 저장한다.
-      saveSnapshot(db, JSON.parse(json)).catch(() => {});
+      // lastJson 갱신은 저장 성공 후에만 한다 — 실패 시에도 미리 갱신해버리면
+      // 다음 변경까지 "이미 저장됨"으로 오인해 그 상태가 영구히 유실된다.
+      saveSnapshot(db, JSON.parse(json))
+        .then(() => { lastJson = json; })
+        .catch(() => { /* 실패 시 lastJson 갱신 안 함 → 다음 변경 시 재시도됨 */ });
     }, DEBOUNCE_MS);
   };
   state.subscribe(schedule);
