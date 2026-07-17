@@ -92,10 +92,15 @@ function renderOverlay(path) {
   const dotR = worldPerPx() * 3.2;
   for (const o of _state.get().objects) {
     if (!isCuttable(o)) continue;
-    for (const pt of cutCrossingPoints(o, path)) {
+    const crossings = cutCrossingPoints(o, path);
+    // cutFreehand(cut-geometry.js)는 교차점이 정확히 2개(관통)일 때만 실제로 자른다.
+    // 2개가 아니면 여기서 점을 찍어도 실제로는 안 잘리므로, 회색으로 표시해
+    // "표시는 되지만 이 상태로는 적용되지 않음"을 시각적으로 구분한다.
+    const willCut = crossings.length === 2;
+    for (const pt of crossings) {
       const c = document.createElementNS(SVG_NS, "circle");
       c.setAttribute("cx", pt.x); c.setAttribute("cy", pt.y); c.setAttribute("r", dotR);
-      c.setAttribute("fill", "#e0313c");
+      c.setAttribute("fill", willCut ? "#e0313c" : "#adb5bd");
       c.setAttribute("stroke", "#fff");
       c.setAttribute("stroke-width", worldPerPx() * 0.8);
       g.appendChild(c);
@@ -110,6 +115,11 @@ function pathFromEvent(e, finalize) {
   const cur = worldPos(e);
   if (e.shiftKey) {
     const end = e.ctrlKey ? snapLineEnd(_drawing.start, cur, true) : cur;
+    // Shift(직선 모드) 동안에도 free 배열의 마지막 점을 현재 위치로 갱신해둔다.
+    // 그렇지 않으면 Shift를 뗀 순간 free의 마지막 점(직선 진입 전 위치)과 지금
+    // 위치 사이가 멀어져, 자유곡선 절단 경로에 의도치 않은 긴 직선 점프가 낀다.
+    const free = _drawing.free;
+    if (free.length) free[free.length - 1] = end; else free.push(end);
     return [_drawing.start, end];
   }
   const free = _drawing.free;
