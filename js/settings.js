@@ -30,6 +30,9 @@ import {
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
 import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.1";
+// 설정 불러오기 후 같은 탭에서 라이브러리를 즉시 다시 그리기 위함(감사 finding 2).
+// personal-objects.js는 settings.js를 import하지 않으므로 순환 없음.
+import { renderLibrary as renderPersonalLibrary } from "./personal-objects.js?v=1.0.1";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -266,12 +269,29 @@ function validateSettingsPayload(raw) {
   return { data: raw.data };
 }
 
+// 대체 전 확인이 필요한 키: 통째로 덮어써 기존 데이터가 영구 소실될 수 있는 항목
+// (감사 finding 1). 라벨은 확인 대화상자 문구에 쓰인다.
+const CONFIRM_REPLACE_KEYS = {
+  [PERSONAL_OBJECTS_KEY]: "퍼스널 오브젝트 라이브러리",
+  [PREVIEW_BG_KEY]: "인쇄 비교 배경 이미지",
+};
+// 값이 "실질적으로 비어있음"인지 — 비어있으면 대체해도 잃을 게 없어 확인을 생략한다.
+function isEmptyListValue(raw) {
+  if (raw === null || raw === undefined) return true;
+  const t = raw.trim();
+  return t === "" || t === "[]" || t === "{}";
+}
+
 // 파일에서 읽어들인 설정을 localStorage에 반영하고, 가능한 것은 즉시 적용한다.
 // 우리가 아는 개인 설정 키(PERSONAL_KEYS)만 반영한다(임의 키 주입 방지).
-// 반환: 반영된 키 배열.
-function applyImportedSettings(data) {
+// 라이브러리·배경(PERSONAL_OBJECTS_KEY/PREVIEW_BG_KEY)은 기존에 실제 데이터가 있으면
+// showConfirm으로 먼저 확인받는다(감사 finding 1: 확인 없이 통째로 덮어써 데이터 소실).
+// async로 바뀌었으므로 호출부(importSettingsFile)도 await해야 한다.
+// 반환: { applied, failed, skipped } — skipped는 사용자가 교체를 취소한 키.
+async function applyImportedSettings(data) {
   const applied = [];
   const failed = [];
+  const skipped = [];
   for (const key of PERSONAL_KEYS) {
     if (!(key in data)) continue;
     const value = data[key];
@@ -287,12 +307,23 @@ function applyImportedSettings(data) {
     }
     if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
 
+    if (CONFIRM_REPLACE_KEYS[key] && !isEmptyListValue(localStorage.getItem(key))) {
+      const ok = await showConfirm(
+        `이 파일의 ${CONFIRM_REPLACE_KEYS[key]}로 기존 항목을 대체할까요?\n(기존 항목은 사라집니다.)`,
+        { title: "설정 불러오기", okText: "교체", cancelText: "건너뛰기" }
+      );
+      if (!ok) { skipped.push(key); continue; }
+    }
+
     // 키별 try/catch — 한 항목이 용량 초과 등으로 실패해도 나머지 항목은 계속 반영하고,
     // 실패한 키는 모아 호출부가 사용자에게 안내할 수 있게 한다(예전엔 예외가 던져져 이후
     // 항목이 침묵 중단됐음).
     try {
       localStorage.setItem(key, value);
       applied.push(key);
+      // 같은 탭에서는 storage 이벤트가 발화하지 않으므로(finding 2), 라이브러리는 여기서
+      // 직접 다시 그린다. SUBJECT_KEY/SCREEN_KEY의 실시간 반영은 범위를 넘어 후속 과제로 남김.
+      if (key === PERSONAL_OBJECTS_KEY) renderPersonalLibrary();
     } catch (_) {
       failed.push(key);
     }
@@ -301,7 +332,7 @@ function applyImportedSettings(data) {
   // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
   if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
 
-  return { applied, failed };
+  return { applied, failed, skipped };
 }
 
 // theme를 리로드 없이 즉시 반영(main.js initTheme의 동작을 그대로 재현).
@@ -333,7 +364,7 @@ function importSettingsFile(file) {
       alert("올바른 5E 설정 파일이 아닙니다. 설정은 변경되지 않았습니다.");
       return;
     }
-    const { applied, failed } = applyImportedSettings(valid.data);
+    const { applied, failed, skipped } = await applyImportedSettings(valid.data);
 
     // 전체 백업 파일이면 현재 프로젝트(그림)도 함께 복원(요구 3). 되돌리기 어려운 '대체'라
     // 먼저 확인받는다. '설정만'을 고르면 그림은 건드리지 않는다.
@@ -366,8 +397,9 @@ function importSettingsFile(file) {
       alert(
         failed.length
           ? "저장 공간이 부족해 설정을 반영하지 못했습니다. 설정은 변경되지 않았습니다."
-          : (looksProject ? "복원을 취소했습니다. 아무것도 변경되지 않았습니다."
-                          : "불러올 수 있는 항목이 없습니다. 설정은 변경되지 않았습니다.")
+          : (skipped.length ? "교체를 건너뛰었습니다. 설정은 변경되지 않았습니다."
+             : (looksProject ? "복원을 취소했습니다. 아무것도 변경되지 않았습니다."
+                              : "불러올 수 있는 항목이 없습니다. 설정은 변경되지 않았습니다."))
       );
       return;
     }
@@ -377,7 +409,8 @@ function importSettingsFile(file) {
     alert(
       (projectLoaded ? "전체 백업을 불러왔습니다 (설정 + 프로젝트)." : "설정을 불러왔습니다.") +
       (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "") +
-      (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "")
+      (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "") +
+      (skipped.length ? `\n일부 항목(${skipped.length}개)은 교체를 건너뛰어 기존 값이 유지되었습니다.` : "")
     );
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
