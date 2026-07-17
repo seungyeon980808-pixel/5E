@@ -229,7 +229,14 @@ export function initImageObjectify(state) {
     status.textContent = message;
     status.classList.toggle("is-error", isError);
   };
-  const close = () => { overlay.hidden = true; };
+  const close = () => {
+    overlay.hidden = true;
+    // 영역 드래그 도중 모달이 닫히는 경로(예: Esc 오라우팅, 바깥 클릭)가 있으면, 정리
+    // 안 된 regionDrag가 살아남아 이후 window mouseup이 닫힌 모달 뒤에서 제외 목록을
+    // 그리다 만 사각형 기준으로 조용히 교체한다 — 닫을 때 항상 리셋한다.
+    regionDrag = null;
+    setRegionMode(false);
+  };
 
   function currentOptions() {
     return {
@@ -537,15 +544,9 @@ export function initImageObjectify(state) {
     regionDrag = null;
     drawPreview();
   });
-  // Esc: 영역 모드/드래그 취소(모달은 닫지 않음).
-  overlay.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && (regionMode || regionDrag)) {
-      event.stopPropagation();
-      regionDrag = null;
-      setRegionMode(false);
-      drawPreview();
-    }
-  }, true);
+  // Esc 취소는 아래 document 레벨 핸들러(영역 취소 우선)로 통합했다 — overlay 스코프
+  // 리스너는 캔버스 클릭 후 포커스가 body로 이동하면(캔버스는 포커스 불가 요소) 이벤트
+  // 전파 경로에 overlay가 없어 아예 호출되지 않는 문제가 있었다(모달 닫기 핸들러만 반응).
 
   /* ----- 휠 줌 (커서 기준) ----- */
   stage.addEventListener("wheel", (event) => {
@@ -849,6 +850,18 @@ export function initImageObjectify(state) {
         }
       }
 
+      // 파일 머리 주석(11행)이 약속한 대로, 삽입물 전체를 groupId 하나로 묶는다(Shift+G로
+      // 해제 가능) — 안 묶으면 선택을 한 번 해제한 뒤 옮길 때 조각 하나만 딸려 나와
+      // 그림이 흩어진다. 참조 이미지(반투명 배경, positionLocked)는 addedIds에 원래
+      // 안 들어가 있어 자동으로 그룹 밖에 남는다.
+      if (addedIds.length > 1) {
+        const gid = `grp_${stamp}`;
+        for (const id of addedIds) {
+          const obj = s.objects.find((o) => o.id === id);
+          if (obj) obj.groupId = gid;
+        }
+        (s.groups = s.groups || []).push({ id: gid, memberIds: [...addedIds] });
+      }
       s.undoStack.push(snapshot);
       s.redoStack = [];
       s.selectedIds = addedIds;
@@ -878,7 +891,18 @@ export function initImageObjectify(state) {
   };
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !overlay.hidden) close(); });
+  // Esc: 영역 모드/드래그 중이면 그 취소를 우선(모달은 안 닫음), 아니면 모달을 닫는다.
+  // document 레벨이라 포커스가 어디 있든(캔버스 클릭 후 body에 있어도) 항상 도달한다.
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || overlay.hidden) return;
+    if (regionMode || regionDrag) {
+      regionDrag = null;
+      setRegionMode(false);
+      drawPreview();
+      return;
+    }
+    close();
+  });
   document.addEventListener("keydown", (event) => {
     if (!overlay.hidden && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
       event.stopPropagation();
