@@ -150,6 +150,10 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
   const s = _state.get();
   const o = s.objects.find((x) => x.id === objId);
   if (!o || o.type !== type) return;
+  // 정밀감사 MINOR: 통합 편집기가 열려 있으면 먼저 커밋해 닫는다(다른 오프너인
+  // openLabelerTextEditor/startEditingTextObject와 동일한 가드) — 안 그러면 소형
+  // 편집기와 통합 편집기가 동시에 열려버림.
+  if (_textEditor) _commitText();
   _closeSmallEditor();
   _smallEditorObjId = objId;
   _smallEditorType = type;
@@ -339,6 +343,10 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
 // Enter commits; Shift+Enter inserts a newline; ESC cancels (restoring the
 // original when editing an existing object).
 
+// 정밀감사 MINOR: _enableUnifiedEditorDrag가 등록하는 window 리스너 참조(재등록 시
+// 덮어써지므로, 이전 리스너는 _removeTextEditor에서 이 변수로 제거해야 누적되지 않는다).
+let _dragMoveHandler = null;
+let _dragUpHandler = null;
 let _textEditor = null;     // the live capture <textarea>/<input>, or null
 let _textBox = null;        // unified floating text/formula editor container
 let _textPreview = null;
@@ -577,11 +585,16 @@ function _updateTextDebug() {
 }
 
 function _currentUnifiedStyle() {
+  // 정밀감사 MINOR: _textItalicInput은 DOM에 생성되지 않는 죽은 참조(기울임 토글
+  // UI는 제거됨) — 항상 null이라 여기서 italic:false로 강제되어, 편집기에서 아무
+  // 필드나 바꾸면 기존 이탤릭이 정자로 리셋되던 버그. draft에 이미 있는 italic 값을
+  // 그대로 유지한다.
+  const dt = _state.get()?.draftText;
   return {
     fontFamily: _textFontSelect?.value || DEFAULT_TEXT_FONT,
     fontSize: ptToMm(Math.max(MIN_TEXT_PT, parseFloat(_textSizeInput?.value) || mmToPt(DEFAULT_TEXT_SIZE_MM))),
     fontWeight: _textBoldInput?.getAttribute("aria-pressed") === "true" ? "bold" : "normal",
-    italic: _textItalicInput?.getAttribute("aria-pressed") === "true",
+    italic: dt?.italic ?? false,
     underline: false,
     strikeout: false,
   };
@@ -1083,15 +1096,19 @@ function _enableUnifiedEditorDrag(header) {
       top: parseFloat(_textBox.style.top) || 0,
     };
   });
-  window.addEventListener("mousemove", (e) => {
+  // 정밀감사 MINOR: 편집기를 열 때마다 window 리스너가 새로 붙고 한 번도 제거되지
+  // 않던 누수. 핸들러 참조를 모듈 스코프에 저장해 _removeTextEditor에서 정리한다.
+  _dragMoveHandler = (e) => {
     if (!drag || !_textBox) return;
     const wrap = _svg.closest(".canvas-wrap");
     const maxLeft = Math.max(0, wrap.clientWidth - _textBox.offsetWidth);
     const maxTop = Math.max(0, wrap.clientHeight - _textBox.offsetHeight);
     _textBox.style.left = Math.min(maxLeft, Math.max(0, drag.left + e.clientX - drag.x)) + "px";
     _textBox.style.top = Math.min(maxTop, Math.max(0, drag.top + e.clientY - drag.y)) + "px";
-  });
-  window.addEventListener("mouseup", () => { drag = null; });
+  };
+  _dragUpHandler = () => { drag = null; };
+  window.addEventListener("mousemove", _dragMoveHandler);
+  window.addEventListener("mouseup", _dragUpHandler);
 }
 
 function _centerUnifiedEditor(wrap) {
@@ -1186,6 +1203,18 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   _syncEditorFont();
   _textEditor.focus();
   _textEditor.setSelectionRange(_textEditor.value.length, _textEditor.value.length);
+  // 정밀감사 MINOR(스코프 축소): 클릭 지점에 캐럿을 놓는 기능이 _openTextEditor의
+  // 죽은 코드(구현 아래 return 이후)에 남아 있었다. 통합 편집기가 caretClick 힌트를
+  // 받으면 기존 _caretIndexFromPoint(437행)를 재사용해 클릭 좌표 기반 인덱스로
+  // 캐럿을 옮긴다 — 레이아웃이 자리 잡은 다음 프레임에 실행해야 좌표가 어긋나지 않는다.
+  if (opts.caretClick) {
+    const { x, y } = opts.caretClick;
+    requestAnimationFrame(() => {
+      if (!_textEditor) return;
+      const idx = _caretIndexFromPoint(x, y);
+      if (idx != null) _textEditor.setSelectionRange(idx, idx);
+    });
+  }
   _cacheTextSelection();
   ["select", "mouseup", "pointerup", "keyup", "focus"].forEach((type) => {
     _textEditor.addEventListener(type, _cacheTextSelection);
@@ -1210,7 +1239,10 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
 // clientX/clientY = screen px of the text's top-left anchor.
 // caretClick = client {x,y} of the opening mouse click, or null (F2 / menu).
 function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
-  _openUnifiedTextEditor(draft, clientX, clientY, prefill);
+  // 정밀감사 MINOR(스코프 축소): 아래 caretClick 처리(1254행~)는 이 함수 상단의
+  // return 때문에 죽은 코드였다 — _openUnifiedTextEditor로 그대로 배선해 클릭
+  // 지점 캐럿 배치가 실제로 동작하도록 opts.caretClick으로 전달한다.
+  _openUnifiedTextEditor(draft, clientX, clientY, prefill, caretClick ? { caretClick } : {});
   return;
   _textAnchor = { x: draft.x, y: draft.y };
   // While editing, the textarea renders both glyphs and caret. Keeping those in
@@ -1347,6 +1379,10 @@ function _syncEditorWidth() {
 }
 
 function _removeTextEditor() {
+  // 정밀감사 MINOR: 드래그 리스너 정리(등록 쪽 주석 참고) — 편집기가 열릴 때마다
+  // 쌓이던 window mousemove/mouseup 리스너 누수 수정.
+  if (_dragMoveHandler) { window.removeEventListener("mousemove", _dragMoveHandler); _dragMoveHandler = null; }
+  if (_dragUpHandler) { window.removeEventListener("mouseup", _dragUpHandler); _dragUpHandler = null; }
   if (_textBox) {
     const box = _textBox;
     _textBox = null;
@@ -1400,6 +1436,21 @@ function _commitText() {
       // 빈 문자열이면 원본 유지(삭제보다 복원 선호). 한 번의 undo 엔트리.
       const o = s.objects.find((x) => x.id === dt.editingId);
       if (o && o.type === "labeler" && rawSource) {
+        // 정밀감사 MINOR: 라벨러 소형 편집기 commit(약 273~300행)의 변경-여부 비교
+        // 패턴을 재편집에도 적용 — 아무 것도 안 바꾸고 확인만 눌러도 undo 스냅샷이
+        // 쌓이던 버그(무조건 push).
+        const italicNext = resolveTextFontStyle(dt) === "italic";
+        const textChanged = formulaMode
+          ? (o.contentMode !== "formula" || o.source !== normalizedSource || o.rawSource !== rawSource)
+          : (o.contentMode === "formula" || (o.text ?? "") !== val ||
+             JSON.stringify(o.textRuns || []) !== JSON.stringify(normalizeTextRuns(dt)));
+        const fontChanged = (o.fontFamily || DEFAULT_TEXT_FONT) !== (dt.fontFamily || DEFAULT_TEXT_FONT);
+        const sizeChanged = o.labelSize !== dt.fontSize;
+        const weightChanged = (o.fontWeight || "normal") !== (dt.fontWeight || "normal");
+        const italicChanged = !!o.italic !== italicNext;
+        if (!textChanged && !fontChanged && !sizeChanged && !weightChanged && !italicChanged) {
+          return;
+        }
         const snap = JSON.parse(JSON.stringify(s.objects));
         s.undoStack.push(snap);
         s.redoStack = [];
@@ -1426,6 +1477,23 @@ function _commitText() {
       // original unchanged (prefer restore over delete). One undo entry.
       const o = s.objects.find((x) => x.id === dt.editingId);
       if (o && rawSource) {
+        // 정밀감사 MINOR: 라벨러 재편집과 동일한 변경-여부 비교 — 텍스트/수식을 그대로
+        // 두고 확인만 눌러도 undo 스냅샷이 쌓이던 버그.
+        const italicNext = resolveTextFontStyle(dt) === "italic";
+        const textChanged = formulaMode
+          ? (o.type !== "formula" || o.source !== normalizedSource || o.rawSource !== rawSource)
+          : (o.type !== "text" || (o.text ?? "") !== val ||
+             JSON.stringify(o.textRuns || []) !== JSON.stringify(normalizeTextRuns(dt)));
+        const styleChanged =
+          o.fontSize !== dt.fontSize ||
+          o.fontFamily !== dt.fontFamily ||
+          o.fontWeight !== dt.fontWeight ||
+          !!o.italic !== italicNext ||
+          o.underline !== dt.underline ||
+          o.strikeout !== dt.strikeout;
+        if (!textChanged && !styleChanged) {
+          return;
+        }
         const snap = JSON.parse(JSON.stringify(s.objects));
         s.undoStack.push(snap);
         s.redoStack = [];
