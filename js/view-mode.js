@@ -18,6 +18,7 @@ const DEFAULT_MODE = "pro";
 
 let _state = null;
 let _btn = null;
+let _savedLayerId = null; // Lite 진입 직전 activeLayerId(Pro 복귀 시 복원용)
 
 function loadMode() {
   let v = DEFAULT_MODE;
@@ -49,8 +50,20 @@ function applyMode(mode, persist = true) {
   if (m === "lite" && _state) {
     const s = _state.get();
     if (s.activeLayerId !== 1) {
+      // Pro로 되돌아갈 때 복원할 수 있도록 강제 변경 직전 값을 저장해둔다.
+      _savedLayerId = s.activeLayerId;
       _state.update((st) => { st.activeLayerId = 1; st.selectedIds = []; st.targetedId = null; });
     }
+  } else if (m === "pro" && _state && _savedLayerId != null) {
+    // Lite가 강제한 레이어1 고정을 되돌린다 — 저장된 레이어가 아직 존재할 때만 복원하고,
+    // 사용 후엔 다음 전환에 잘못 재사용되지 않도록 반드시 비운다.
+    const s = _state.get();
+    const stillExists = Array.isArray(s.layers) && s.layers.some((l) => l.id === _savedLayerId);
+    if (stillExists && s.activeLayerId !== _savedLayerId) {
+      const restoreId = _savedLayerId;
+      _state.update((st) => { st.activeLayerId = restoreId; st.selectedIds = []; st.targetedId = null; });
+    }
+    _savedLayerId = null;
   }
   return m;
 }

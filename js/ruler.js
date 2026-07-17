@@ -319,6 +319,10 @@ export function initRuler(svg, state) {
     });
   });
   window.addEventListener("mouseup", () => {
+    // 자 바깥(작업 캔버스 위 등)에서 마우스를 놓으면 ruler canvas의 'click'이 발생하지
+    // 않아 _suppressRulerClick이 리셋될 기회가 없다 — 여기서도 반드시 풀어줘야 다음
+    // 자 클릭(안내선 추가)이 무시되지 않는다.
+    _suppressRulerClick = false;
     if (!_dragGuideId) return;
     _dragGuideId = null;
     svg.style.cursor = ""; // hand back to tools.js's hover-cursor logic

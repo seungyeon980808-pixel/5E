@@ -228,7 +228,11 @@ function sanitizeGuides(guides) {
     : [];
 }
 function sanitizeArtboard(artboard) {
-  return (artboard && typeof artboard.w === "number" && typeof artboard.h === "number")
+  // typeof NaN도 "number"라 기존 검사(=== "number")만으로는 0/음수/NaN이 그대로
+  // 통과해 viewport.js의 나눗셈이 Infinity/NaN으로 붕괴한다. 유한 양수인지까지 확인.
+  const okW = artboard && Number.isFinite(artboard.w) && artboard.w > 0;
+  const okH = artboard && Number.isFinite(artboard.h) && artboard.h > 0;
+  return (okW && okH)
     ? { w: artboard.w, h: artboard.h }
     : { ...DEFAULT_ARTBOARD };
 }
