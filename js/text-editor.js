@@ -1429,7 +1429,12 @@ function _commitText() {
         const snap = JSON.parse(JSON.stringify(s.objects));
         s.undoStack.push(snap);
         s.redoStack = [];
-        if (formulaMode || o.type === "formula") {
+        // formulaMode는 '지금 편집 중인 내용'을 실시간 반영하는 신호(dt.contentMode가
+        // 타이핑마다 looksLikeFormula로 갱신됨, 673·690행). `|| o.type === "formula"`가
+        // 붙어 있으면 사용자가 내용을 일반 텍스트로 바꿔도(formulaMode=false) 옛 타입에
+        // 발이 묶여 강제로 formula 유지됐다 — 미리보기(_refreshUnifiedPreview)는 이미
+        // formulaMode만 보고 갈아타므로 커밋도 같은 신호만 따르게 맞춘다.
+        if (formulaMode) {
           o.type = "formula";
           o.source = normalizedSource;
           o.rawSource = rawSource;
