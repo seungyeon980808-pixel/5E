@@ -148,6 +148,10 @@ let _pendingSnapshot = null; // full objects clone for undo; committed only if m
 let _didMove = false;        // true once the threshold is crossed
 let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
 let _spaceHeld = false;
+// 연속 Ctrl+V id 중복 방지용 카운터 — Date.now()만 쓰면 같은 ms 안에 빠르게 여러 번
+// 붙여넣을 때 앞선 붙여넣기와 id 구간이 겹칠 수 있다(text-editor.js의 obj_${stamp}_${++counter}
+// 패턴과 동일하게 모듈 스코프 카운터로 유일성을 보장).
+let _pasteCounter = 0;
 
 /* handle-drag state (resize branch A / endpoint branch B) */
 let _handleDragging   = false;
@@ -914,7 +918,9 @@ export function initTransform(svg, state) {
       const dy = target.y - cy;
       const newObjs = _clipboard.map((src, i) => {
         const newObj = JSON.parse(JSON.stringify(src));
-        newObj.id = String(Date.now() + i);
+        // Date.now()+i만 쓰면 연속 Ctrl+V가 같은 ms 안에 겹쳐 id 중복이 날 수 있어
+        // 모듈 카운터를 덧붙인다(같은 타임스탬프라도 항상 유일).
+        newObj.id = String(Date.now() + i) + "_" + (++_pasteCounter);
         applyDelta(newObj, src, dx, dy); // handles every shape type incl. image
         return newObj;
       });
@@ -933,10 +939,16 @@ export function initTransform(svg, state) {
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
-        s2.undoStack.push(snap);
-        s2.redoStack = [];
         // locked objects are never deleted; remove only selected + mutable ones
+        const before = s2.objects.length;
         s2.objects = s2.objects.filter((o) => !(selectedIds.includes(o.id) && isMutable(o)));
+        const changed = s2.objects.length !== before;
+        // 잠긴 객체만 선택돼 실제로 지워진 게 없으면 undo 스냅샷을 남기지 않는다
+        // (PageUp z-order의 if(moved), Shift+V의 if(changed) 패턴과 동일).
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
         s2.selectedIds = [];
       });
       return;
@@ -1417,14 +1429,18 @@ export function initTransform(svg, state) {
     if (activeTool !== "V") return; // rotate tool has no body-move behavior
 
     const s = state.get();
-    const selectedIds = s.selectedIds || [];
 
     const pickedObj = pickSelectableObjectFromEvent(svg, s, e);
     const clickedId = pickedObj?.id || null;
 
-    // Allow move only if the clicked object is in the current selection
-    if (!clickedId || !selectedIds.includes(clickedId)) return;
+    // "새 객체 클릭은 선택만" 가드: tools.js의 bubble mousedown이 이미 이번 클릭으로
+    // selectedIds를 갱신했으므로(캡처가 먼저 저장한 _prevSelectedIds 이후) 여기서
+    // state.get().selectedIds를 다시 읽으면 방금 새로 선택된 객체도 항상 포함돼
+    // 판정이 무력화된다. 클릭 "이전" 선택 상태(_prevSelectedIds)와 비교해야
+    // "원래부터 선택돼 있던 객체를 눌렀는가"를 정확히 가릴 수 있다.
+    if (!clickedId || !_prevSelectedIds.includes(clickedId)) return;
 
+    const selectedIds = s.selectedIds || []; // move는 클릭 이후(현재) 선택 집합을 대상으로 함
     const obj = pickedObj || s.objects.find((o) => o.id === clickedId);
     if (!obj) return;
     const vb = s.viewBox;

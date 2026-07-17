@@ -109,6 +109,11 @@ export function setupClickDrawing(svg, state) {
   // Enter finishes a polyline/curve/series; Esc cancels any in-progress click draft.
   window.addEventListener("keydown", (e) => {
     if (!clickTool) return;
+    // 인스펙터 등 텍스트 입력란에 포커스가 있을 때는 Enter/Escape를 그리기 명령으로
+    // 가로채지 않는다(tools.js:254-255와 동일 가드) — 안 그러면 값 입력 중 Enter가
+    // 그리다 만 꺾은선을 의도치 않게 커밋시킨다.
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key === "Escape") { e.preventDefault(); resetClickDraft(); }
     else if (e.key === "Enter" && (clickTool === "P" || clickTool === "C" || clickTool === "SERIES")) {
       e.preventDefault();
@@ -164,7 +169,10 @@ function commitCircuit() {
 function handleArcClick(e) {
   const vb = _state.get().viewBox;
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
+  // 미리보기(mousemove, draftPoints[마지막])와 같은 기준점을 써야 3번째 클릭의 Ctrl
+  // 15° 스냅 결과가 직전 미리보기와 정확히 일치한다(고정된 draftPoints[0]을 쓰면
+  // 2번째 클릭 이후엔 기준점이 달라져 커밋 위치가 미리보기에서 미끄러졌다).
+  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
   draftPoints.push(cur);
   clickTool = "ARC";
   mouseWorld = cur;
@@ -226,7 +234,9 @@ function commitArc() {
 function handleRightAngleClick(e) {
   const vb = _state.get().viewBox;
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
+  // handleArcClick과 동일 이유: 미리보기와 같은 기준점(draftPoints 마지막)을 써야
+  // 3번째 클릭의 Ctrl 15° 스냅이 직전 미리보기 위치와 어긋나지 않는다.
+  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
   draftPoints.push(cur);
   clickTool = "RIGHTANGLE";
   mouseWorld = cur;
