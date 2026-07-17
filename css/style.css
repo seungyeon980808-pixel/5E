@@ -1633,17 +1633,39 @@ textarea.unified-text-input {
 /* main text ellipsizes instead of overflowing when the window gets narrow */
 .app-footer-main {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
+  overflow: hidden;
 }
+.footer-brand { font-style: italic; }
+/* 라이선스·소스 뱃지 (양쪽 테마 자동 대응 — var 사용) */
+.footer-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--c-sub);
+  background: var(--bg-panel);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: border-color .12s, color .12s;
+}
+.footer-badge:hover { border-color: var(--accent); color: var(--accent); }
+.footer-code { font-family: ui-monospace, "Consolas", monospace; }
 .app-footer-credit {
   flex: 0 0 auto;
   color: var(--text-label);
   font-size: 12px;
-  white-space: nowrap;
+  word-break: keep-all;   /* 좁아져 줄바꿈돼도 한글이 단어 단위로(글자 안 잘림) */
 }
-/* 이름(박승연)을 "Developed by"·"SMOE"와 같은 글씨체·색으로(요구: 강조 없이 동일하게) */
+/* 이름(박승연)을 "Copyright"·"SMOE"와 같은 글씨체·색으로(강조 없이 동일하게) */
 .app-footer-credit strong {
   color: inherit;
   font-weight: inherit;
