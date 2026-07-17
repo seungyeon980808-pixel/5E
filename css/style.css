@@ -1167,6 +1167,10 @@ body { zoom: var(--ui-zoom, 1); }
 }
 #canvas.is-panning { cursor: grabbing; }
 #canvas.space-held { cursor: grab; }
+/* 캔버스 이미지의 브라우저 기본 드래그(첨부파일 고스트) 차단 — 이게 뜨면 포인터를 브라우저가
+   가져가 선택·마퀴가 끊긴다. 실제 차단은 tools.js의 dragstart preventDefault가 담당하고,
+   이건 webkit 계열 보강(고스트가 잠깐 뜨는 것까지 막음). */
+#canvas image { -webkit-user-drag: none; user-drag: none; }
 
 /* Subtle brand watermark on the dark workspace surround. It's a CSS background
    of the SVG box, so it sits BEHIND the scene: the white artboard rect covers it

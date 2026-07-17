@@ -111,6 +111,13 @@ const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
   _svg = svg;
+  // 브라우저 기본 드래그 차단(요구: 이미지 위에서 선택이 깨지는 버그).
+  // SVG <image>는 기본적으로 draggable이라, 이미지 위에서 누르고 끌면 브라우저가 자기
+  // 드래그앤드롭(첨부파일 고스트)을 시작하면서 포인터를 가져간다 → mousemove가 끊겨
+  // 선택·마퀴·오브젝트 드래그가 중간에 죽는다. 특히 객체화가 남기는 반투명 원본 이미지는
+  // 원본 영역 전체를 덮으므로, '오브젝트가 없는 곳'에서도 이 현상이 난다.
+  // 캔버스 루트에서 한 번 막으면 모든 자식(이미지 포함)에 적용된다.
+  svg.addEventListener("dragstart", (e) => e.preventDefault());
   initPick(svg); // pick.js keeps its own _svg for text/formula getBBox hit-testing
   _state = state;
 
