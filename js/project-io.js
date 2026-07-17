@@ -13,6 +13,8 @@
 import { rebuildGroups } from "./transform.js?v=1.0.1";
 import { screenToWorld } from "./viewport.js?v=1.0.1";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.0.1";
+import { showConfirm } from "./ui-dialogs.js?v=1.0.1";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.0.1";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.0.1";
 import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.0.1";
 import { insertImageFromSrc } from "./image-paste.js?v=1.0.1";
@@ -398,7 +400,7 @@ export function applyLoaded(state, data) {
 /* ----- openProject: read a .json file and load it into state ----- */
 function openProject(state, file) {
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const raw = JSON.parse(reader.result);
       const data = migrate(raw);
@@ -414,6 +416,16 @@ function openProject(state, file) {
       ) {
         throw new Error("필요한 데이터(pages) 형식이 올바르지 않습니다.");
       }
+
+      // 파일이 유효하다고 확인된 뒤에만 묻는다(깨진 파일은 확인창 없이 바로 에러).
+      // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
+      // .json이 캔버스에 실수로 떨어지거나 '열기'를 잘못 눌러도 아무 확인 없이
+      // 현재 작업 전체가 사라지던 것을 막는다.
+      const ok = await showConfirm(
+        "현재 작업을 이 프로젝트 파일로 대체할까요?\n저장하지 않은 현재 작업은 사라집니다.",
+        { title: "프로젝트 열기", okText: "열기", cancelText: "취소" },
+      );
+      if (!ok) return;
 
       applyLoaded(state, data);
     } catch (err) {
@@ -459,9 +471,9 @@ function beginImagePlacement(state, objectId) {
 function readImageFile(file, dropPos, state) {
   const reader = new FileReader();
   reader.onload = (e) => {
-    const src = e.target.result;
+    const rawSrc = e.target.result;
     const img = new Image();
-    img.onload = () => {
+    img.onload = async () => {
       const { w: artboardW, h: artboardH } = state.get().artboard;
       const scale = Math.min(
         (artboardW * 0.9) / img.naturalWidth,
@@ -474,6 +486,11 @@ function readImageFile(file, dropPos, state) {
       const minY = -artboardH / 2;
       const x = Math.min(Math.max(center.x - w / 2, minX), artboardW / 2 - w);
       const y = Math.min(Math.max(center.y - h / 2, minY), artboardH / 2 - h);
+      // 붙여넣기(Ctrl+V) 경로는 고해상도 원본을 downscaleIfNeeded로 축소해 저장하는데,
+      // 드래그앤드롭만 이 처리가 없어 스마트폰 사진 같은 고해상도 원본이 그대로 저장돼
+      // 프로젝트 파일·자동저장 스냅샷을 수십 MB로 부풀렸다 — 같은 축소를 적용한다.
+      // 캔버스 위 표시 크기(w/h, 위 스케일)는 원본 픽셀 수와 무관해 변하지 않는다.
+      const { src } = await downscaleIfNeeded(rawSrc, { w: img.naturalWidth, h: img.naturalHeight });
       let objectId;
       state.update((s) => {
         // 이미지 삽입을 undo 스택에 기록(예전엔 누락돼 Ctrl+Z가 삽입 이전의 다른 작업까지
@@ -509,7 +526,7 @@ function readImageFile(file, dropPos, state) {
       });
       beginImagePlacement(state, objectId);
     };
-    img.src = src;
+    img.src = rawSrc;
   };
   reader.readAsDataURL(file);
 }
@@ -529,6 +546,13 @@ export function initProjectIO(state, svg) {
 
   window.addEventListener("keydown", (e) => {
     if (!_placement || (e.key !== "Enter" && e.key !== "Escape")) return;
+    // 캡처 단계+stopImmediatePropagation이라 조건이 _placement뿐이면 포커스가 어디 있든
+    // 가로챈다 — 이미지 배치 확정 대기 중에 페이지 이름 변경/수식 편집기 같은 다른 입력이
+    // 열려 있으면 그 다이얼로그의 Enter/Escape가 아예 도달하지 못하고 대신 이미지가
+    // 확정/삭제된다. 다른 곳(tools.js 등)과 같은 INPUT/TEXTAREA/contentEditable 가드로,
+    // 실제로 다른 입력에 포커스가 가 있을 때는 그쪽 처리를 우선시킨다.
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     if (e.key === "Escape") cancelImagePlacement(state);

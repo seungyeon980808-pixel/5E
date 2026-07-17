@@ -12,6 +12,7 @@
  */
 
 import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.0.1";
+import { rebuildGroups } from "./transform.js?v=1.0.1";
 
 let _seq = 0;
 function newPageId() {
@@ -97,6 +98,10 @@ export function switchPage(state, targetId) {
     s.layers = t.layers;
     s.artboard = t.artboard;
     s.activePageId = targetId;
+    // s.groups는 전역 필드라 페이지별로 스왑되지 않는데, rebuildGroups(undo/redo·불러오기가
+    // 쓰는 것과 같은 헬퍼)를 안 부르면 이전 페이지 기준 그룹이 그대로 남아 새 페이지의
+    // 그룹 객체를 클릭해도 낱개로만 선택된다 — 전환마다 새 페이지 objects 기준으로 재구축.
+    rebuildGroups(s);
     // v1: 전환은 undo 대상이 아니다 → 히스토리/선택/드래프트를 새 페이지 기준으로 초기화.
     s.undoStack = [];
     s.redoStack = [];

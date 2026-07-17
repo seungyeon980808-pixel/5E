@@ -9,7 +9,10 @@ let _idCounter = 0;
 
 // 자연 크기가 상한을 넘으면 canvas로 축소 재인코딩해 저장(=undo 스냅샷에 딥클론되는
 // data URL 크기를 줄여 메모리 폭증을 막는다). 상한 이하면 원본 그대로.
-function downscaleIfNeeded(src, natural) {
+// project-io.js(드래그앤드롭 이미지 삽입)도 같은 축소를 쓴다 — 붙여넣기 경로만
+// 축소하고 드롭 경로는 원본 그대로 저장하면 저장 파일·자동저장이 고해상도 사진에서
+// 폭증한다(1건 프로젝트-저장/페이지 감사 finding).
+export function downscaleIfNeeded(src, natural) {
   const max = Math.max(natural.w, natural.h);
   if (max <= MAX_IMG_DIM) return Promise.resolve({ src, size: natural });
   const scale = MAX_IMG_DIM / max;
