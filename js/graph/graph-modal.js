@@ -57,7 +57,8 @@ let _series = [];                 // [{kind:"expr",expr,domain:{min,max}|null,..
 let _sel = -1;                    // 선택 계열 index
 let _previewSvg = null;           // 클릭 좌표 환산용
 let _previewPlane = null;
-let _placeMode = null;            // null | "marker" | "guide" — 미리보기 클릭 배치 모드
+let _placeMode = null;            // null | "marker" | "guide" | "arrow" — 미리보기 클릭 배치 모드
+let _boxMode = false;             // 사각형 드래그로 정의역·치역을 한 번에 지정하는 중
 let _selPts = null;               // 선택 계열의 baked world points(배치 고스트 스냅·클릭 가드용)
 let _selBreaks = null;            // 선택 계열의 끊긴 구간 경계(worldYAtX가 빈 구간 건너뛰게)
 let _activeDraw = -1;             // 클릭으로 '그리는 중'인 점 계열 index(-1=없음). 빈 클릭 선택해제 판정용
@@ -84,7 +85,7 @@ function defaultCfg() {
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
 // movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
-function newExprSeries() { return { kind: "expr", expr: "", domain: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newExprSeries() { return { kind: "expr", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 function newPointsSeries() { return { kind: "points", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
@@ -202,6 +203,71 @@ function extendedMathPts(s) {
 // 자유곡선(요구 재정의): 점 계열 '곡선' 모양은 사용자가 찍은 점을 '정확히' 지나가야 한다.
 // 그래서 점을 지우거나(RDP) 옮기지(라플라시안) 않는다 — 매끄러움은 렌더 단계의 centripetal
 // Catmull-Rom(coordplane.js)이 담당한다(출렁임 없이 앵커를 그대로 통과). 여기선 점을 안 건드린다.
+
+/* 치역(y 범위) 밖을 잘라낸다(요구 6).
+ * 평가원 그래프는 곡선의 일부 구간만 보여주는 경우가 많다. 정의역이 x를 자르듯
+ * 치역은 y를 자른다 — 축 표시 범위를 바꾸는 게 아니라 "곡선을 잘라내는" 쪽이다.
+ *
+ * 경계를 지나는 자리에는 교점을 끼워 넣어 잘린 끝이 들쭉날쭉하지 않게 하고,
+ * 끊긴 구간은 기존 breaks 규약(새 run이 시작하는 인덱스)으로 알린다 —
+ * 렌더러·표시점 스냅이 이미 그 규약을 쓰고 있어 따로 손댈 곳이 없다.
+ * world y는 위아래가 뒤집혀 있으므로(math y 클수록 world y 작다) 경계도 뒤집어 받는다. */
+function clipToRange(points, breaks, wyTop, wyBottom) {
+  if (!points || points.length < 2) return { points, breaks };
+  const inR = (p) => p.y >= wyTop - 1e-9 && p.y <= wyBottom + 1e-9;
+  // 두 점 사이가 경계를 지날 때의 교점(선형). 수평이면 교점이 없으니 b를 그대로 쓴다.
+  const cross = (a, b, bound) => {
+    const dy = b.y - a.y;
+    if (Math.abs(dy) < 1e-12) return { x: b.x, y: bound };
+    const t = (bound - a.y) / dy;
+    return { x: a.x + (b.x - a.x) * t, y: bound };
+  };
+  const boundFor = (p) => (p.y < wyTop ? wyTop : wyBottom);
+
+  // 먼저 "이어지는 구간(run)"들을 만든 뒤 한 번에 펴 놓는다.
+  // 인덱스를 세면서 동시에 붙이면 break 위치를 놓치기 쉬워, 두 단계로 나눴다.
+  const srcBreaks = new Set(breaks || []);
+  const runs = [];
+  let run = null;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i], cur = inR(p);
+    const prev = i > 0 ? points[i - 1] : null;
+    const prevIn = prev ? inR(prev) : false;
+    const cut = srcBreaks.has(i);          // 원래부터 끊겨 있던 자리
+    if (cut) run = null;                   // 이전 run과 잇지 않는다
+    if (cur) {
+      if (!run) {
+        run = [];
+        runs.push(run);
+        // 밖에서 들어온 경우엔 경계 교점부터 시작해 잘린 끝을 깔끔하게
+        if (prev && !prevIn && !cut) run.push(cross(prev, p, boundFor(prev)));
+      }
+      run.push(p);
+    } else if (run) {
+      run.push(cross(prev || p, p, boundFor(p)));   // 나가는 자리에 교점을 찍고 끊는다
+      run = null;
+    }
+  }
+
+  const out = [], outBreaks = [];
+  runs.forEach((r) => {
+    if (r.length < 2) return;              // 점 하나짜리 조각은 그릴 게 없다
+    if (out.length) outBreaks.push(out.length);
+    r.forEach((p) => out.push(p));
+  });
+  return out.length >= 2 ? { points: out, breaks: outBreaks } : { points, breaks };
+}
+
+// 계열의 치역 설정을 world 경계로 바꿔 클리핑을 적용한다(설정이 없으면 그대로).
+function applyRange(pts, brks, plane, range) {
+  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return { points: pts, breaks: brks };
+  const lo = Math.min(range.min, range.max), hi = Math.max(range.min, range.max);
+  // world y가 어느 방향으로 커지는지 단정하지 않는다 — 두 경계를 모두 변환한 뒤 정렬한다.
+  // (math y가 클수록 world y가 작다고 가정했다가, 조건이 항상 거짓이 되어 클리핑이
+  //  통째로 무시된 적이 있다. 평면 설정에 따라 방향이 달라질 수 있으므로 재지 말고 비교한다.)
+  const wa = worldFromMath(plane, 0, hi).y, wb = worldFromMath(plane, 0, lo).y;
+  return clipToRange(pts, brks, Math.min(wa, wb), Math.max(wa, wb));
+}
 
 // 함수식 자유 이동(요구): 계열의 offset(math dx,dy)을 baked world 점들에 적용.
 // math 오프셋이라 평면 위치·배율과 무관(미리보기/캔버스 일관).
@@ -446,13 +512,19 @@ function prepareSeries(plane) {
       const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane);
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
-      const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
+      const moved = applyOffset(sampled, plane, s.offset);    // 함수식 자유 이동
+      const clipped = applyRange(moved, breaks, plane, s.range); // 치역 밖 잘라내기
+      const points = clipped.points;
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
       // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
       // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
       // 별도 domainAuto 플래그로 남겨야, 재편집·평면 범위 확장 시 domain을 다시 자동으로
       // 넓힐 수 있다(안 남기면 항상 '명시 정의역'으로 보여 옛 경계에 갇힌다).
-      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
+      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain,
+        points, breaks: clipped.breaks, offset: off,
+        rangeMin: s.range ? Math.min(s.range.min, s.range.max) : null,
+        rangeMax: s.range ? Math.max(s.range.min, s.range.max) : null,
+        ...elementFields(s, plane, points, clipped.breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
@@ -589,8 +661,12 @@ function refreshPreview() {
       const r = sampleFunctionPoints(expr, dMin, dMax, plane);
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
-      pts = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
-      breaks = r.breaks;                              // 끊긴 구간(평면 밖) 경계
+      {
+        const moved = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
+        const clipped = applyRange(moved, r.breaks, plane, s.range); // 치역 밖 잘라내기
+        pts = clipped.points;
+        breaks = clipped.breaks;                      // 끊긴 구간(평면 밖·치역 밖) 경계
+      }
     } else {
       if (!s.pts.length) return;
       // 핸들(베지어 변환)이 있으면 자동 연장 없이 s.pts 그대로 + 핸들로 렌더.
@@ -867,7 +943,53 @@ function refreshPreview() {
     coordTip.style.display = "";
   };
 
+  /* 사각형 드래그로 정의역·치역을 한 번에 정한다(요구 6).
+     끄는 동안 반투명 사각형을 보여 주고, 놓는 순간 그 x·y 범위를 계열에 넣는다.
+     너무 작게 끌린 것(스치듯 클릭)은 무시한다 — 실수로 곡선이 사라지지 않게. */
+  if (_boxMode && _series[_sel]) {
+    let box = null, start = null;
+    svg.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      start = clientToWorld(e.clientX, e.clientY);
+      if (!start) return;
+      box = document.createElementNS(SVG_NS, "rect");
+      box.setAttribute("fill", "color-mix(in srgb, var(--accent) 14%, transparent)");
+      box.setAttribute("stroke", "var(--accent)");
+      box.setAttribute("stroke-width", 0.25);
+      box.setAttribute("stroke-dasharray", "0.8 0.5");
+      box.setAttribute("pointer-events", "none");
+      svg.appendChild(box);
+      const onMove = (ev) => {
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (!w || !box) return;
+        box.setAttribute("x", Math.min(start.x, w.x)); box.setAttribute("y", Math.min(start.y, w.y));
+        box.setAttribute("width", Math.abs(w.x - start.x)); box.setAttribute("height", Math.abs(w.y - start.y));
+      };
+      const onUp = (ev) => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (box) { box.remove(); box = null; }
+        const s2 = _series[_sel];
+        if (!w || !s2) return;
+        if (Math.abs(w.x - start.x) < 1 || Math.abs(w.y - start.y) < 1) return;  // 너무 작으면 무시
+        const a = mathFromWorld(_previewPlane, start.x, start.y);
+        const b = mathFromWorld(_previewPlane, w.x, w.y);
+        const round2 = (v) => Math.round(v * 100) / 100;
+        s2.domain = { min: round2(Math.min(a.x, b.x)), max: round2(Math.max(a.x, b.x)) };
+        s2.range = { min: round2(Math.min(a.y, b.y)), max: round2(Math.max(a.y, b.y)) };
+        _boxMode = false;                   // 한 번 정하면 모드는 꺼진다
+        syncSeriesEditor(); refreshPreview();
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    });
+    svg.style.cursor = "crosshair";
+  }
+
   svg.addEventListener("click", (e) => {
+    if (_boxMode) return;       // 범위 지정 중에는 클릭 배치·선택 해제가 끼어들지 않게
     if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     const s = _series[_sel];
     // 배치 모드: 함수 위를 클릭할 때만 찍는다(함수 밖 클릭은 무시). 표시점/수선/화살표 동일.
@@ -1220,6 +1342,7 @@ function syncSeriesEditor() {
   _els.exprRow.style.display = s.kind === "expr" ? "" : "none";
   _els.exprHelpers.style.display = s.kind === "expr" ? "flex" : "none";
   _els.domainRow.style.display = s.kind === "expr" ? "" : "none";
+  _els.rangeRow.style.display = s.kind === "expr" ? "" : "none";
   _els.ptsRows.style.display = s.kind === "points" ? "" : "none";
   // 자동 연장선: 직선·꺾은선(점 계열)에만 의미 있음(눈대중 그리기). 끝 라벨과 한 줄(요구 8).
   _els.autoExtRow.style.display = s.kind === "points" ? "inline-flex" : "none";
@@ -1229,6 +1352,12 @@ function syncSeriesEditor() {
     if (document.activeElement !== _els.expr) _els.expr.value = s.expr;
     if (document.activeElement !== _els.dMin) _els.dMin.value = s.domain ? s.domain.min : "";
     if (document.activeElement !== _els.dMax) _els.dMax.value = s.domain ? s.domain.max : "";
+    if (document.activeElement !== _els.rMin) _els.rMin.value = s.range ? s.range.min : "";
+    if (document.activeElement !== _els.rMax) _els.rMax.value = s.range ? s.range.max : "";
+    _els.boxDrag.classList.toggle("on", _boxMode);
+    _els.boxDrag.style.background = _boxMode ? "var(--accent)" : "";
+    _els.boxDrag.style.color = _boxMode ? "#fff" : "";
+    _els.boxNote.hidden = !_boxMode;
   } else {
     if (document.activeElement !== _els.pts) _els.pts.value = ptsToText(s.pts);
   }
@@ -1609,13 +1738,29 @@ function build() {
                 <div class="gm-row-body" id="gm-expr-helpers" style="flex-wrap:wrap;gap:3px;"></div>
               </div>
               <div class="gm-row" id="gm-domain-row">
-                <span class="gm-row-lbl">정의역</span>
+                <span class="gm-row-lbl">정의역 <i>x</i></span>
                 <div class="gm-row-body">
                   <input type="number" id="gm-dmin" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
                   <span style="color:var(--text-secondary);">~</span>
                   <input type="number" id="gm-dmax" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
                 </div>
               </div>
+              <div class="gm-row" id="gm-range-row">
+                <span class="gm-row-lbl">치역 <i>y</i></span>
+                <div class="gm-row-body">
+                  <input type="number" id="gm-rmin" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                  <span style="color:var(--text-secondary);">~</span>
+                  <input type="number" id="gm-rmax" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body">
+                  <button type="button" id="gm-box-drag" class="modal-btn" style="font-size:11px;padding:4px 10px;">드래그로 지정</button>
+                  <button type="button" id="gm-box-clear" class="modal-btn" style="font-size:11px;padding:4px 10px;">범위 해제</button>
+                </div>
+              </div>
+              <p class="gm-ax-note" id="gm-box-note" hidden>미리보기에서 사각형을 끌면 그 안쪽만 남깁니다.</p>
             </div>
 
             <div id="gm-pts-rows" class="gm-group" style="display:none;">
@@ -1774,6 +1919,10 @@ function build() {
     exprHelpers: overlay.querySelector("#gm-expr-helpers"),
     domainRow: overlay.querySelector("#gm-domain-row"),
     dMin: overlay.querySelector("#gm-dmin"), dMax: overlay.querySelector("#gm-dmax"),
+    rangeRow: overlay.querySelector("#gm-range-row"),
+    rMin: overlay.querySelector("#gm-rmin"), rMax: overlay.querySelector("#gm-rmax"),
+    boxDrag: overlay.querySelector("#gm-box-drag"), boxClear: overlay.querySelector("#gm-box-clear"),
+    boxNote: overlay.querySelector("#gm-box-note"),
     ptsRows: overlay.querySelector("#gm-pts-rows"), pts: overlay.querySelector("#gm-pts"),
     styleHost: overlay.querySelector("#gm-styles"), width: overlay.querySelector("#gm-width"),
     curveHost: overlay.querySelector("#gm-curve"),
@@ -1941,6 +2090,30 @@ function build() {
   _els.autoExt.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.autoExtend = _els.autoExt.checked; refreshPreview(); }
   });
+  // ----- 정의역·치역 -----
+  const readRange = () => {
+    const a = parseFloat(_els.rMin.value), b = parseFloat(_els.rMax.value);
+    return (Number.isFinite(a) && Number.isFinite(b)) ? { min: a, max: b } : null;
+  };
+  [_els.rMin, _els.rMax].forEach((el) => el.addEventListener("input", () => {
+    const s2 = _series[_sel]; if (!s2) return;
+    s2.range = readRange(); refreshPreview();
+  }));
+
+  // 사각형 드래그로 정의역·치역을 한 번에. 숫자 네 칸을 채우는 것보다 빠르고,
+  // "여기부터 저기까지"를 눈으로 정하는 작업이라 그림 위에서 하는 게 맞다.
+  _els.boxDrag.addEventListener("click", () => {
+    if (!_series[_sel]) return;
+    _boxMode = !_boxMode;
+    if (_boxMode) _placeMode = null;   // 두 모드가 동시에 켜지면 클릭이 어디로 갈지 모호하다
+    syncElementLists(); syncSeriesEditor(); refreshPreview();
+  });
+  _els.boxClear.addEventListener("click", () => {
+    const s2 = _series[_sel]; if (!s2) return;
+    s2.domain = null; s2.range = null; _boxMode = false;
+    syncSeriesEditor(); refreshPreview();
+  });
+
   _els.move.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.movable = _els.move.checked; refreshPreview(); }
   });
