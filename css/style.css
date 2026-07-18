@@ -978,6 +978,31 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-step:has(input:disabled) { opacity: 0.45; }
 .gm-step:has(input:disabled) button { cursor: not-allowed; }
 
+/* 모양 세그먼트: 드롭다운(클릭 2번, 폭도 늘어짐) 대신 세 모양을 한 줄에 펼친다.
+   미니 축 아이콘이 글자보다 먼저 읽힌다. */
+.gm-variant-seg {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px; flex: 1;
+}
+.gm-variant-seg button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 36px; padding: 0 4px;
+  font: inherit; font-size: 12.5px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-input); color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap;
+}
+.gm-variant-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-variant-seg button.on {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-input));
+  border-color: var(--accent); color: var(--accent);
+}
+.gm-variant-seg svg {
+  width: 15px; height: 15px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
 /* 원점 표기 0 / O 세그먼트 */
 .gm-origin-seg {
   display: inline-flex; flex: none;

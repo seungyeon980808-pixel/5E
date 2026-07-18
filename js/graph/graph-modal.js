@@ -947,7 +947,10 @@ function applyVariantPreset(v) {
 /* ---------- 좌표(cfg) 컨트롤 동기화 ---------- */
 function syncCfgControls() {
   const c = _cfg;
-  _els.variantSel.value = c.variant;
+  // 모양은 버튼 세그먼트 — 고른 쪽에 .on을 준다.
+  _els.variantSel.querySelectorAll("button[data-variant]").forEach((b) => {
+    b.classList.toggle("on", b.dataset.variant === c.variant);
+  });
   // 범위 입력: 양방향(pos)은 항상, 음방향(neg)은 그 축 팔이 있는 모양에서만 활성.
   //   ㄴ자: x-neg·y-neg 비활성(0) / ㅏ자: y-neg만 활성 / 십자: 둘 다 활성.
   if (document.activeElement !== _els.xPos) _els.xPos.value = c.xPos;
@@ -1116,11 +1119,16 @@ function build() {
             <div class="gm-row">
               <span class="gm-row-lbl">모양</span>
               <div class="gm-row-body">
-                <select id="gm-variant-sel" class="gm-num" style="width:auto;padding:6px 8px;">
-                  <option value="quadrant">ㄴ자</option>
-                  <option value="halfcross">ㅏ자</option>
-                  <option value="cross">십자</option>
-                </select>
+                <!-- 선택지가 셋뿐이라 드롭다운(클릭 2번) 대신 한 번에 고르는 버튼으로.
+                     축 모양은 글자보다 그림이 빠르게 읽혀 미니 축 아이콘을 함께 둔다. -->
+                <div class="gm-variant-seg" id="gm-variant-sel">
+                  <button type="button" data-variant="quadrant" title="1사분면만 (음의 방향 없음)">
+                    <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M5 3 V17 H19"/></svg>ㄴ자</button>
+                  <button type="button" data-variant="halfcross" title="y축은 양·음, x축은 양의 방향만">
+                    <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M6 2 V20 M6 11 H19"/></svg>ㅏ자</button>
+                  <button type="button" data-variant="cross" title="네 방향 모두">
+                    <svg viewBox="0 0 22 22" aria-hidden="true"><path d="M11 2 V20 M2 11 H20"/></svg>십자</button>
+                </div>
               </div>
             </div>
             <div class="gm-axis-grid">
@@ -1386,8 +1394,10 @@ function build() {
   /* --- 좌표(cfg) 배선: 리스너가 _cfg에 쓰고 미리보기 갱신 --- */
   // 모양 = 프리셋: 고르면 범위 입력(음/양 방향 칸 수)을 그 모양 기본값으로 채우고
   // 음방향 입력을 활성/비활성한다(ㄴ자=음방향 없음 / ㅏ자=y음방향 / 십자=둘 다).
-  _els.variantSel.addEventListener("change", () => {
-    applyVariantPreset(_els.variantSel.value);
+  _els.variantSel.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-variant]");
+    if (!btn || btn.dataset.variant === _cfg.variant) return;
+    applyVariantPreset(btn.dataset.variant);
     syncCfgControls();
     refreshPreview();
   });
