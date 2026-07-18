@@ -13,9 +13,9 @@
  *   · 적용 = Undo 1스텝.
  */
 
-import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.0.3";
-import { SHAPE_TYPES } from "./object-types.js?v=1.0.3";
-import { showAlert } from "./ui-dialogs.js?v=1.0.3";
+import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.0.2";
+import { SHAPE_TYPES } from "./object-types.js?v=1.0.2";
+import { showAlert } from "./ui-dialogs.js?v=1.0.2";
 
 let _state = null;
 let _overlay = null;

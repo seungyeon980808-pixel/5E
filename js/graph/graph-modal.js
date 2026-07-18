@@ -13,12 +13,12 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state } from "../state.js?v=1.0.3";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.3";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/coordplane.js?v=1.0.3";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.3";
-import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.3";
-import { nextObjectId } from "../tools/id.js?v=1.0.3";
+import { state } from "../state.js?v=1.0.2";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/coordplane.js?v=1.0.2";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.2";
+import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.2";
+import { nextObjectId } from "../tools/id.js?v=1.0.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
