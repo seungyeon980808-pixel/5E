@@ -520,89 +520,101 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
       <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
-      <p class="defaults-notice">자·각도기 눈금 간격은 즉시 반영됩니다. 그 외 값은 저장은
-        되지만 새 도형 생성·격자 표시에는 아직 반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
 
       <div class="defaults-body">
         <div class="defaults-fields">
-          <label class="modal-field" for="defaults-stroke-width">
-            <span class="modal-label">기본 선 굵기 (mm)</span>
-            <input type="number" id="defaults-stroke-width" class="modal-input"
-                   step="0.1" min="0.1" max="0.5" autocomplete="off" />
-          </label>
+          <!-- 반복되던 "기본 …" 접두어는 묶음 제목으로 올렸다(DESIGN 13-1).
+               라벨을 입력칸 위가 아니라 왼쪽 고정 열에 두어 행 높이를 절반으로 줄인다 —
+               종전엔 11개가 한 열에 세로로 쌓여 모달이 화면보다 460px 길었다. -->
+          <div class="gm-group">
+            <p class="gm-group-h">선 · 채움</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 굵기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-width" step="0.1" min="0.1" max="0.5" autocomplete="off" aria-label="기본 선 굵기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 선 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">채우기 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-fill-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 채우기 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-stroke-level">
-            <span class="modal-label">기본 선 명도 (0-255)</span>
-            <input type="number" id="defaults-stroke-level" class="modal-input"
-                   min="0" max="255" step="1" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">글자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글자 크기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-text-size" step="0.1" min="0" autocomplete="off" aria-label="기본 글자 크기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글씨체</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">굵기</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
+              </div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-fill-level">
-            <span class="modal-label">기본 채우기 명도 (0-255)</span>
-            <input type="number" id="defaults-fill-level" class="modal-input"
-                   min="0" max="255" step="1" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">격자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">시작 시 표시</span>
+              <div class="gm-row-body">
+                <label class="gm-check" for="defaults-grid-visible">
+                  <input type="checkbox" id="defaults-grid-visible" /> 켜기
+                </label>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">진하기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-opacity" min="1" max="10" step="1" autocomplete="off" aria-label="격자 진하기"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">1–10</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">간격</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-interval" min="5" max="50" step="5" autocomplete="off" aria-label="격자 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-text-size">
-            <span class="modal-label">기본 글자 크기 (mm)</span>
-            <input type="number" id="defaults-text-size" class="modal-input"
-                   step="0.1" min="0" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">자 · 각도기</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">자 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-ruler-tick" min="1" max="50" step="1" autocomplete="off" aria-label="자 눈금 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">각도기 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-protractor-tick" min="1" max="45" step="1" autocomplete="off" aria-label="각도기 눈금 간격 (도)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">°</span></div>
+            </div>
+            <!-- 안내는 해당하는 자리에만 둔다(DESIGN 13-3). 종전엔 모달 맨 위에
+                 모든 항목에 대한 주의문이 늘 떠 있어 읽히지 않았다. -->
+            <p class="gm-ax-note">이 두 값만 지금 놓인 자·각도기에 바로 반영됩니다.
+              나머지는 저장되지만 새 도형·격자에는 아직 적용되지 않습니다.</p>
+          </div>
 
-          <label class="modal-field" for="defaults-text-font">
-            <span class="modal-label">기본 글씨체</span>
-            <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
-          </label>
-
-          <label class="modal-field" for="defaults-text-style">
-            <span class="modal-label">기본 글자 스타일 (굵기)</span>
-            <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
-          </label>
-
-          <label class="modal-field modal-field-row" for="defaults-grid-visible">
-            <input type="checkbox" id="defaults-grid-visible" />
-            <span class="modal-label">앱 시작 시 격자 표시</span>
-          </label>
-
-          <label class="modal-field" for="defaults-grid-opacity">
-            <span class="modal-label">격자 진하기 (1-10)</span>
-            <input type="number" id="defaults-grid-opacity" class="modal-input"
-                   min="1" max="10" step="1" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-grid-interval">
-            <span class="modal-label">격자 간격 (mm)</span>
-            <input type="number" id="defaults-grid-interval" class="modal-input"
-                   min="5" max="50" step="5" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-ruler-tick">
-            <span class="modal-label">자 눈금 간격 (mm)</span>
-            <input type="number" id="defaults-ruler-tick" class="modal-input"
-                   min="1" max="50" step="1" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-protractor-tick">
-            <span class="modal-label">각도기 눈금 간격 (°)</span>
-            <input type="number" id="defaults-protractor-tick" class="modal-input"
-                   min="1" max="45" step="1" autocomplete="off" />
-          </label>
-
-          <div class="defaults-pbg">
-            <span class="modal-label">인쇄 비교 이미지</span>
-            <p class="defaults-pbg-desc">실제 인쇄해 본 시험지 이미지를 등록하면,
-              '이미지로 내보내기 → 미리보기'에서 배경으로 골라 크기를 비교할 수 있습니다.</p>
-            <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
-            <div class="defaults-pbg-form">
-              <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
-              <div class="defaults-pbg-row">
-                <input type="text" id="defaults-pbg-name" class="modal-input"
-                       placeholder="이름(선택)" maxlength="40" autocomplete="off" />
-                <input type="number" id="defaults-pbg-w" class="modal-input"
-                       placeholder="가로 mm" min="1" step="1" autocomplete="off" />
-                <input type="number" id="defaults-pbg-h" class="modal-input"
-                       placeholder="세로 mm" min="1" step="1" autocomplete="off" />
-                <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+          <div class="gm-group">
+            <p class="gm-group-h">인쇄 비교 이미지</p>
+            <div class="defaults-pbg">
+              <p class="defaults-pbg-desc">실제 인쇄한 시험지를 등록하면 '이미지로 내보내기 →
+                미리보기'에서 배경으로 골라 크기를 견줘 볼 수 있습니다.</p>
+              <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
+              <div class="defaults-pbg-form">
+                <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
+                <div class="defaults-pbg-row">
+                  <input type="text" id="defaults-pbg-name" class="modal-input"
+                         placeholder="이름(선택)" maxlength="40" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-w" class="modal-input"
+                         placeholder="가로 mm" min="1" step="1" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-h" class="modal-input"
+                         placeholder="세로 mm" min="1" step="1" autocomplete="off" />
+                  <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+                </div>
               </div>
             </div>
           </div>

@@ -1681,14 +1681,7 @@ function build() {
   // −/+ 스테퍼: 네이티브 ▲▼가 너무 작아 누르기 어려웠다. 버튼은 해당 input의
   // step만큼 값을 올리고 내리며(0.1 간격 조정에 특히 유리), 기존 리스너가 듣는
   // "input" 이벤트를 그대로 흘려보내 배선을 재사용한다.
-  _els.tabCoord.addEventListener("click", (e) => {
-    const btn = e.target.closest(".gm-step button[data-step]");
-    if (!btn) return;
-    const inp = btn.closest(".gm-step").querySelector("input");
-    if (!inp || inp.disabled) return;
-    if (Number(btn.dataset.step) > 0) inp.stepUp(); else inp.stepDown();
-    inp.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+  // (스테퍼 ▲▼ 동작은 js/stepper.js가 문서 전역에서 처리한다)
   _els.showGrid.addEventListener("change", () => { _cfg.showGrid = _els.showGrid.checked; refreshPreview(); });
   _els.showTicks.addEventListener("change", () => { _cfg.showTicks = _els.showTicks.checked; refreshPreview(); });
   _els.lockPos.addEventListener("change", () => { _cfg.lockPosition = _els.lockPos.checked; });

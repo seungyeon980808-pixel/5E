@@ -767,12 +767,18 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 20px;
   align-items: flex-start;
 }
+/* 설정 항목 열. 라벨을 왼쪽 고정 열로 옮기면서 240px로는 좁아 폭을 늘렸다.
+   그래도 모달이 화면을 넘지 않도록 이 열 안에서만 스크롤한다 — 종전엔 모달 자체가
+   1180px까지 자라 화면(720px) 밖으로 잘려 나갔다. */
 .defaults-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 240px;
+  width: 330px;
+  flex: none;
+  max-height: min(560px, 70vh);
+  overflow-y: auto;
+  padding-right: 6px;
 }
+/* 이 모달 안에서는 라벨 열을 조금 넓게 — "채우기 명도"·"각도기 눈금"이 들어가야 한다. */
+.defaults-fields .gm-row { grid-template-columns: 104px 1fr; }
 .defaults-preview {
   display: flex;
   flex-direction: column;

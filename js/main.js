@@ -37,6 +37,7 @@ import { initAutosave } from "./autosave.js?v=1.0.2";
 import { initPages } from "./pages.js?v=1.0.2";
 import { localizeShortcutLabels } from "./platform.js?v=1.0.2";
 import { initModalDrag } from "./modal-drag.js?v=1.0.2";
+import { initSteppers } from "./stepper.js?v=1.0.2";
 import { initReferenceWindows } from "./reference-window.js?v=1.0.2";
 
 const svg = document.getElementById("canvas");
@@ -228,6 +229,9 @@ localizeShortcutLabels();
 
 /* ----- 모든 모달에 좌상단 드래그 손잡이 부착(이후 생기는 모달도 자동) ----- */
 initModalDrag();
+
+/* ----- .gm-step ▲▼ 스테퍼 (어느 화면에 놓이든 동작) ----- */
+initSteppers();
 
 /* ----- 참고 문항 창(별도 브라우저 창) — 최소화 칩 막대 준비 ----- */
 initReferenceWindows(state);
