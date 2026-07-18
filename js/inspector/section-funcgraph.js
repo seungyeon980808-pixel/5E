@@ -64,7 +64,7 @@ export function buildFuncgraphSection(ctx) {
       o2.type = "curve";
       delete o2.expr; delete o2.domainMin; delete o2.domainMax; delete o2.planeId;
       // 그래프 요소(표시점/수선/화살표) 베이크·스펙 제거 — 일반 곡선엔 의미 없음.
-      delete o2.markers; delete o2.guideSegs; delete o2.arrowPolys;
+      delete o2.markers; delete o2.guideSegs; delete o2.arrowPolys; delete o2.arrowMarks;
       delete o2.markerXs; delete o2.guideXs; delete o2.arrowSpecs;
       o2.fillLevel = 255; o2.fillNone = false; o2.fillStyle = "solid"; o2.arrowHead = "none";
       s2.undoStack.push(snap); s2.redoStack = [];

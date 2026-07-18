@@ -30,9 +30,13 @@ import {
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
 import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.2";
-// 설정 불러오기 후 같은 탭에서 라이브러리를 즉시 다시 그리기 위함(감사 finding 2).
-// personal-objects.js는 settings.js를 import하지 않으므로 순환 없음.
-import { renderLibrary as renderPersonalLibrary } from "./personal-objects.js?v=1.0.2";
+// 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
+// hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
+// localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.
+// importLibraryString은 내부에서 renderLibrary까지 처리하므로 별도 재렌더 호출이 필요 없다(finding 2).
+import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.0.2";
+// 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
+import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.0.2";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -122,7 +126,7 @@ function backupFilename() {
   const now = new Date();
   const p = (n) => String(n).padStart(2, "0");
   const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
-  return `5E-backup-${stamp}.json`;
+  return `5E-backup-${stamp}.zip`;
 }
 
 // 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
@@ -130,8 +134,9 @@ function backupFilename() {
 function collectSettings(keys = PERSONAL_KEYS) {
   const data = {};
   for (const key of keys) {
-    const raw = localStorage.getItem(key);
-    if (raw === null) continue;
+    // 퍼스널 라이브러리는 IDB에 있으므로 localStorage 대신 전용 게터로 읽는다.
+    const raw = key === PERSONAL_OBJECTS_KEY ? exportLibraryString() : localStorage.getItem(key);
+    if (raw === null || raw === undefined) continue;
     data[key] = raw;   // 원본 문자열 그대로 보존(정확한 왕복 보장)
   }
   return {
@@ -145,6 +150,30 @@ function collectSettings(keys = PERSONAL_KEYS) {
 
 /* 저장 위치 지정: 브라우저가 지원하면(크롬/엣지) 폴더·파일명을 고르는 저장
  * 대화상자를 띄우고, 아니면 기존처럼 다운로드 폴더로 내려받는다. */
+// Blob을 저장 위치 지정(또는 다운로드 폴백)으로 내려받는다. ZIP 백업/JSON 설정 공용.
+async function saveBlobWithPicker(blob, filename, { desc = "5E 파일", mime = "application/octet-stream", ext = ".bin" } = {}) {
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: desc, accept: { [mime]: [ext] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
 async function saveJsonWithPicker(json, filename) {
   const blob = new Blob([json], { type: "application/json" });
   if (window.showSaveFilePicker) {
@@ -227,11 +256,15 @@ function openExportDialog() {
       <p class="objectify-description" style="margin:0 0 8px;">
         저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 <b>한 파일</b>로 내려받습니다.
         '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
-      ${EXPORT_CHOICES.map((c, i) => `
+      ${EXPORT_CHOICES.map((c, i) => {
+        // 퍼스널 라이브러리는 IDB에 있으므로 localStorage가 아니라 실제 보유 여부로 판단.
+        const has = c.key === PERSONAL_OBJECTS_KEY ? hasLibraryItems() : localStorage.getItem(c.key) !== null;
+        return `
         <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" data-i="${i}" ${localStorage.getItem(c.key) !== null ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
+          <input type="checkbox" data-i="${i}" ${has ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
           <span class="modal-label" style="margin:0;">${c.label}</span>
-        </label>`).join("")}
+        </label>`;
+      }).join("")}
       <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;">
         <input type="checkbox" id="sx-project" checked />
         <span class="modal-label" style="margin:0;">현재 프로젝트 (그림·모든 페이지)</span>
@@ -258,9 +291,10 @@ function openExportDialog() {
       // 현재 프로젝트(그림·모든 페이지)를 같은 파일에 첨부. 직렬화 실패 시 나머지만 저장.
       try { payload.project = serializeProject(_state.get()); } catch (_) { /* 프로젝트만 누락 */ }
     }
-    const json = JSON.stringify(payload, null, 2);
     close();
-    await saveJsonWithPicker(json, payload.project ? backupFilename() : settingsFilename());
+    // 전체 백업 = ZIP(이미지를 바이너리로 분리해 가볍게). 복원은 옛 JSON도 자동 감지.
+    const blob = buildBackupZip(payload);
+    await saveBlobWithPicker(blob, backupFilename(), { desc: "5E 백업(zip)", mime: "application/zip", ext: ".zip" });
   });
 }
 
@@ -315,12 +349,30 @@ async function applyImportedSettings(data) {
     }
     if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
 
-    if (CONFIRM_REPLACE_KEYS[key] && !isEmptyListValue(localStorage.getItem(key))) {
-      const ok = await showConfirm(
-        `이 파일의 ${CONFIRM_REPLACE_KEYS[key]}로 기존 항목을 대체할까요?\n(기존 항목은 사라집니다.)`,
-        { title: "설정 불러오기", okText: "교체", cancelText: "건너뛰기" }
-      );
-      if (!ok) { skipped.push(key); continue; }
+    // ① 통째로 덮어써 기존 데이터가 사라질 수 있는 키는 먼저 확인받는다(감사 finding 1).
+    //    라이브러리는 이제 IDB에 살기 때문에 "기존 항목이 있는지"를 localStorage로 판단하면
+    //    안 된다 — 마이그레이션 뒤 localStorage에 남은 잔재를 보고 오판하거나, 반대로 IDB에
+    //    든 항목을 못 보고 확인 없이 덮어쓸 수 있다. hasLibraryItems()가 캐시(=IDB)를 본다.
+    if (CONFIRM_REPLACE_KEYS[key]) {
+      const hasExisting = key === PERSONAL_OBJECTS_KEY
+        ? hasLibraryItems()
+        : !isEmptyListValue(localStorage.getItem(key));
+      if (hasExisting) {
+        const ok = await showConfirm(
+          `이 파일의 ${CONFIRM_REPLACE_KEYS[key]}로 기존 항목을 대체할까요?\n(기존 항목은 사라집니다.)`,
+          { title: "설정 불러오기", okText: "교체", cancelText: "건너뛰기" }
+        );
+        if (!ok) { skipped.push(key); continue; }
+      }
+    }
+
+    // ② 확인을 통과한 라이브러리는 localStorage가 아니라 IDB로 복원한다.
+    //    importLibraryString이 저장과 재렌더(finding 2)를 함께 처리하므로 여기서 끝낸다.
+    //    await 해야 실패 시 applied에 잘못 기록하지 않는다.
+    if (key === PERSONAL_OBJECTS_KEY) {
+      const ok = await importLibraryString(value);
+      if (ok) applied.push(key); else failed.push(key);
+      continue;
     }
 
     // 키별 try/catch — 한 항목이 용량 초과 등으로 실패해도 나머지 항목은 계속 반영하고,
@@ -329,9 +381,8 @@ async function applyImportedSettings(data) {
     try {
       localStorage.setItem(key, value);
       applied.push(key);
-      // 같은 탭에서는 storage 이벤트가 발화하지 않으므로(finding 2), 라이브러리는 여기서
-      // 직접 다시 그린다. SUBJECT_KEY/SCREEN_KEY의 실시간 반영은 범위를 넘어 후속 과제로 남김.
-      if (key === PERSONAL_OBJECTS_KEY) renderPersonalLibrary();
+      // (라이브러리 재렌더는 위 ②에서 importLibraryString이 처리한다 — 여기까지 오지 않는다.
+      //  SUBJECT_KEY/SCREEN_KEY의 실시간 반영은 범위를 넘어 후속 과제로 남김.)
     } catch (_) {
       failed.push(key);
     }
@@ -362,9 +413,11 @@ function importSettingsFile(file) {
   reader.onload = async () => {
     let raw;
     try {
-      raw = JSON.parse(reader.result);
+      const u8 = new Uint8Array(reader.result);
+      // ZIP 백업이면 압축 해제 + 이미지 재수화, 아니면 옛 단일 JSON.
+      raw = isZip(u8) ? parseBackupZip(u8) : JSON.parse(new TextDecoder().decode(u8));
     } catch {
-      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정 파일인지 확인해 주세요.");
+      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정/백업 파일인지 확인해 주세요.");
       return;
     }
     const valid = validateSettingsPayload(raw);
@@ -422,7 +475,7 @@ function importSettingsFile(file) {
     );
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);   // ZIP(바이너리)·JSF 공용 — onload에서 형식 감지
 }
 
 /* ----- dropdown: registered with the shared top-menu (exclusive with 파일) -----
@@ -846,7 +899,7 @@ export function initSettings(state) {
   // 숨김 파일 입력은 여기서 만들어 index.html은 마크업만 유지(project-io.js 관습).
   const settingsFileInput = document.createElement("input");
   settingsFileInput.type = "file";
-  settingsFileInput.accept = ".json,application/json";
+  settingsFileInput.accept = ".zip,application/zip,.json,application/json";
   settingsFileInput.style.display = "none";
   document.body.appendChild(settingsFileInput);
 

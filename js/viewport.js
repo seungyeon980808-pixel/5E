@@ -131,41 +131,58 @@ export function initViewport(svg, state, onChange) {
   // notify caller (main) that viewBox changed → it writes SVG + re-renders
   const commit = () => onChange();
 
-  /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl = zoom --- */
+  /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
+   * 휠 이벤트의 단위는 브라우저·기기마다 다르다. deltaMode가 0이면 픽셀,
+   * 1이면 줄 수(Firefox: deltaY ±3), 2면 페이지 수다. 정규화하지 않으면
+   * Firefox에서 팬·줌이 30배 가까이 둔해진다. Mac 트랙패드는 이벤트를 훨씬
+   * 잦게, 작은 delta로 보내므로 한 이벤트당 변화량에 상한도 둔다. */
+  const LINE_PX = 16;      // deltaMode=1일 때 한 줄의 픽셀 환산치
+  const MAX_STEP = 120;    // 한 이벤트가 만들 수 있는 최대 픽셀 변화(트랙패드 폭주 방지)
+  const clampStep = (v) => Math.max(-MAX_STEP, Math.min(MAX_STEP, v));
+  const wheelPx = (e) => {
+    const unit = e.deltaMode === 1 ? LINE_PX : (e.deltaMode === 2 ? svg.getBoundingClientRect().height : 1);
+    return { x: clampStep(e.deltaX * unit), y: clampStep(e.deltaY * unit) };
+  };
   svg.addEventListener(
     "wheel",
     (e) => {
-      if (!e.ctrlKey && !e.shiftKey) {
+      // Mac: 트랙패드 핀치 줌은 ctrlKey=true인 wheel로 오고, ⌘+휠도 줌으로 받는다.
+      const zooming = e.ctrlKey || e.metaKey;
+      const d = wheelPx(e);
+      if (!zooming && !e.shiftKey) {
         // plain scroll → pan vertically (blocked when centerLocked)
         e.preventDefault();
         if (!centerLocked) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
-            s.viewBox.y += (e.deltaY / _rect.height) * s.viewBox.h;
+            s.viewBox.y += (d.y / _rect.height) * s.viewBox.h;
             clampViewBox(s);
           });
           commit();
         }
         return;
       }
-      if (e.shiftKey && !e.ctrlKey) {
+      if (e.shiftKey && !zooming) {
         // Shift+scroll → pan horizontally (blocked when centerLocked)
+        // Mac 트랙패드의 가로 스와이프는 deltaX로 오고, Shift+휠은 deltaY로 온다.
+        // 둘 중 실제로 값이 있는 쪽을 쓴다.
         e.preventDefault();
         if (!centerLocked) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
-            s.viewBox.x += (e.deltaY / _rect.height) * s.viewBox.h;
+            const amount = Math.abs(d.x) > Math.abs(d.y) ? d.x : d.y;
+            s.viewBox.x += (amount / _rect.height) * s.viewBox.h;
             clampViewBox(s);
           });
           commit();
         }
         return;
       }
-      // Ctrl+scroll → zoom; when centerLocked, zoom is centered on artboard origin
+      // Ctrl/⌘+scroll(또는 트랙패드 핀치) → zoom; centerLocked면 아트보드 원점 기준
       e.preventDefault();
       state.update((s) => {
         const vb = s.viewBox;
-        const factor = Math.pow(ZOOM_STEP, e.deltaY);
+        const factor = Math.pow(ZOOM_STEP, d.y);
         const { minW, maxW } = zoomWidthBounds(svg, s);
         const clampedW = Math.min(maxW, Math.max(minW, vb.w * factor));
         const k = clampedW / vb.w;

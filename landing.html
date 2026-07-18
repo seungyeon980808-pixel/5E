@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5E · 과학문제 이미지 편집기</title>
+  <meta name="description" content="원하는 그림을 찾고, 편집하고, 그리는 과학시험문제용 에디터입니다." />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0a1230" />
+
+  <!-- 공유 카드 (OG) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="5E" />
+  <meta property="og:title" content="5E · 과학문제 이미지 편집기" />
+  <meta property="og:description" content="원하는 그림을 찾고, 편집하고, 그리는 과학시험문제용 에디터입니다." />
+  <meta property="og:url" content="https://seungyeon980808-pixel.github.io/5E/landing.html" />
+  <meta property="og:image" content="https://seungyeon980808-pixel.github.io/5E/assets/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="5E · 과학문제 이미지 편집기" />
+  <meta name="twitter:description" content="원하는 그림을 찾고, 편집하고, 그리는 과학시험문제용 에디터입니다." />
+  <meta name="twitter:image" content="https://seungyeon980808-pixel.github.io/5E/assets/og-image.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --navy1: #12203c; --navy0: #070c1a;
+      --ink: #eef2fb; --gray: #93a3c8; --muted: #6f86c0; --eyebrow: #7f97cf;
+      --cobalt: #2f81f7; --cobalt-lite: #5ea1f7;
+      --line: rgba(255,255,255,0.09);
+      --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "IBM Plex Sans KR", system-ui, sans-serif;
+      background: var(--navy0);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      word-break: keep-all;
+    }
+    .page { max-width: 480px; margin: 0 auto; position: relative; overflow: hidden; background: linear-gradient(172deg, var(--navy1) 0%, var(--navy0) 46%); }
+
+    /* ===== HEADER ===== */
+    .hdr { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 9px; padding: 13px 20px;
+      background: color-mix(in srgb, var(--navy0) 78%, transparent); backdrop-filter: saturate(160%) blur(12px); -webkit-backdrop-filter: saturate(160%) blur(12px); border-bottom: 1px solid var(--line); }
+    .hdr .bdg { width: 26px; height: 26px; color: var(--ink); }
+    .hdr .wm { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 600; font-size: 20px; color: var(--cobalt-lite); }
+    .hdr .open { margin-left: auto; font-weight: 600; font-size: 13px; color: #fff; background: var(--cobalt); padding: 7px 15px; border-radius: 999px; text-decoration: none; }
+
+    /* ===== HERO ===== */
+    .hero { position: relative; padding: 26px 24px 8px; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(48px); z-index: 0; will-change: transform; }
+    .blb1 { width: 340px; height: 340px; background: radial-gradient(circle, rgba(47,110,240,0.38), transparent 60%); top: -110px; left: -60px; animation: d1 24s ease-in-out infinite; }
+    .blb2 { width: 280px; height: 280px; background: radial-gradient(circle, rgba(96,150,255,0.22), transparent 62%); top: 250px; right: -90px; animation: d2 30s ease-in-out infinite; }
+    @keyframes d1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(10%,8%) scale(1.12); } }
+    @keyframes d2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-10%,7%) scale(1.1); } }
+    .hero > *:not(.blob) { position: relative; z-index: 1; }
+    .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.14em; color: var(--eyebrow); margin-bottom: 16px; }
+    h1 { font-weight: 700; font-size: 34px; line-height: 1.24; letter-spacing: -0.02em; margin: 0 0 16px; }
+    h1 .ac { color: var(--cobalt-lite); }
+    .sub { font-weight: 400; font-size: 15px; line-height: 1.68; color: var(--gray); margin: 0 0 22px; max-width: 30ch; }
+    .cta { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .btnp { font-weight: 600; font-size: 15px; color: #fff; background: var(--cobalt); padding: 13px 20px; border-radius: 12px; text-decoration: none; transition: transform 0.2s var(--ease), background 0.2s var(--ease); }
+    .btnp:hover { background: #3d8bfd; transform: translateY(-1px); }
+    .btng { font-weight: 600; font-size: 15px; color: #cdd8ef; border: 1px solid rgba(255,255,255,0.2); padding: 13px 20px; border-radius: 12px; text-decoration: none; transition: border-color 0.2s var(--ease); }
+    .btng:hover { border-color: var(--cobalt-lite); }
+    .helper { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+    .hero-visual { display: flex; justify-content: center; padding: 20px 0 30px; position: relative; }
+    .hero-visual .vglow { position: absolute; z-index: 0; width: 230px; height: 230px; left: 50%; top: 50%; transform: translate(-50%,-50%); border-radius: 50%; background: radial-gradient(circle, rgba(47,110,240,0.30), transparent 62%); filter: blur(26px); }
+    .hero-visual .vbadge { position: relative; z-index: 1; width: 150px; height: 150px; color: var(--ink); }
+
+    /* ===== CHIPS ===== */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px 10px; padding: 18px 24px 6px; border-top: 1px solid var(--line); }
+    .chip { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--gray); }
+    .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--cobalt-lite); flex: 0 0 auto; }
+
+    /* ===== SECTION ===== */
+    .sec { padding: 40px 24px 8px; }
+    .sec .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.12em; color: var(--cobalt-lite); margin-bottom: 12px; }
+    .sec h2 { font-weight: 700; font-size: 25px; line-height: 1.3; letter-spacing: -0.02em; margin: 0 0 8px; }
+    .sec .lead { font-size: 14.5px; line-height: 1.65; color: var(--gray); margin: 0 0 22px; }
+
+    .rows { display: flex; flex-direction: column; gap: 18px; }
+    .row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; }
+    .tag { font-weight: 600; font-size: 12.5px; color: var(--cobalt-lite); background: rgba(47,110,240,0.14); border: 1px solid rgba(96,150,255,0.28); padding: 4px 10px; border-radius: 8px; white-space: nowrap; }
+    .row .rt strong { display: block; font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: 3px; }
+    .row .rt span { font-size: 13.5px; line-height: 1.6; color: var(--gray); }
+
+    /* ===== MOCKUP ===== */
+    .mock { margin: 26px 0 4px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #0e1730; box-shadow: 0 20px 50px -24px rgba(0,0,0,0.7); }
+    .mock .bar { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+    .mock .bar i { width: 9px; height: 9px; border-radius: 50%; background: #33405e; display: inline-block; }
+    .mock .bar .t { margin-left: 8px; font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--muted); }
+    .mock .canvas { background: #f6f8fa; padding: 14px; }
+    .mock .canvas svg { width: 100%; height: auto; display: block; }
+
+    /* ===== FINAL CTA ===== */
+    .final { text-align: center; padding: 46px 24px 20px; border-top: 1px solid var(--line); margin-top: 34px; }
+    .final h2 { font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin: 0 0 8px; }
+    .final p { font-size: 14px; color: var(--gray); margin: 0 0 20px; }
+    .final .btnp { font-size: 16px; padding: 14px 28px; }
+
+    /* ===== FOOTER ===== */
+    .foot { text-align: center; padding: 26px 24px 40px; }
+    .foot .fn { font-family: Georgia, serif; font-style: italic; font-size: 15px; color: var(--cobalt-lite); }
+    .foot .fs { font-size: 11.5px; color: var(--muted); margin-top: 6px; font-family: "IBM Plex Mono", monospace; }
+
+    @media (prefers-reduced-motion: reduce) { .blob { animation: none; } }
+  </style>
+</head>
+<body>
+  <!-- reusable badge symbol -->
+  <svg style="width:0;height:0;position:absolute" aria-hidden="true"><symbol id="b" viewBox="0 0 96 96" fill="none" stroke="currentColor">
+    <rect x="5" y="5" width="86" height="86" rx="22" stroke-width="2"/>
+    <g stroke-width="1.9" stroke-linecap="round">
+      <ellipse cx="30" cy="30" rx="13" ry="5"/><ellipse cx="30" cy="30" rx="13" ry="5" transform="rotate(60 30 30)"/><ellipse cx="30" cy="30" rx="13" ry="5" transform="rotate(120 30 30)"/>
+    </g>
+    <circle cx="30" cy="30" r="1.9" fill="currentColor" stroke="none"/>
+    <polygon points="76,30 71,38.66 61,38.66 56,30 61,21.34 71,21.34" stroke-width="1.9" stroke-linejoin="round"/>
+    <circle cx="66" cy="30" r="5.5" stroke-width="1.7"/>
+    <g stroke-width="2.2" stroke-linecap="round"><path d="M30 53 C 39 57 39 62 30 66 C 21 70 21 75 30 79"/><path d="M30 53 C 21 57 21 62 30 66 C 39 70 39 75 30 79"/></g>
+    <g stroke-width="1.5" stroke-linecap="round"><line x1="23" y1="58" x2="37" y2="58"/><line x1="26" y1="62.5" x2="34" y2="62.5"/><line x1="26" y1="69.5" x2="34" y2="69.5"/><line x1="23" y1="74" x2="37" y2="74"/></g>
+    <g stroke-width="1.9"><circle cx="66" cy="66" r="11"/><ellipse cx="66" cy="66" rx="4.5" ry="11"/><line x1="55" y1="66" x2="77" y2="66"/></g>
+  </symbol></svg>
+
+  <div class="page">
+    <!-- ===== HEADER ===== -->
+    <header class="hdr">
+      <svg class="bdg" viewBox="0 0 96 96"><use href="#b"/></svg>
+      <span class="wm">5E</span>
+      <a class="open" href="./">열기 →</a>
+    </header>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+      <div class="blob blb1"></div>
+      <div class="blob blb2"></div>
+      <div class="eyebrow">FIND · EDIT · DRAW</div>
+      <h1>원하는 과학 그림을<br><span class="ac">찾고·편집하고·그리다</span></h1>
+      <p class="sub">기출에서 찾고, 이미지를 편집하고, 회로·렌즈·그래프까지 직접 그리는 과학 시험문제용 에디터.</p>
+      <div class="cta">
+        <a class="btnp" href="./">5E 열기 →</a>
+        <a class="btng" href="./docs/USER_GUIDE.md">사용 가이드</a>
+      </div>
+      <div class="helper">물리·화학·생명·지구과학 · 기출 4천 문항 내장<br>설치 없이 브라우저에서 바로</div>
+      <div class="hero-visual">
+        <div class="vglow"></div>
+        <svg class="vbadge" viewBox="0 0 96 96"><use href="#b"/></svg>
+      </div>
+    </section>
+
+    <!-- ===== CHIPS ===== -->
+    <div class="chips">
+      <span class="chip">물리·화학·생명·지구</span>
+      <span class="chip">기출 4천 문항</span>
+      <span class="chip">도형·수식·그래프</span>
+      <span class="chip">PNG·한글 내보내기</span>
+    </div>
+
+    <!-- ===== FEATURE ROWS ===== -->
+    <section class="sec">
+      <div class="kicker">FIND · EDIT · DRAW</div>
+      <h2>찾고, 편집하고,<br>직접 그리고</h2>
+      <p class="lead">시험문제 그림에 필요한 세 가지를 한 화면에서. 매번 반복하던 작업을 가장 빠르게.</p>
+      <div class="rows">
+        <div class="row">
+          <span class="tag">찾기</span>
+          <div class="rt"><strong>기출 4천 문항에서 바로</strong><span>번호·해시태그로 문항을 찾아 이미지 또는 편집 가능한 객체로 캔버스에 반입합니다.</span></div>
+        </div>
+        <div class="row">
+          <span class="tag">편집</span>
+          <div class="rt"><strong>이미지를 편집 가능한 객체로</strong><span>붙여넣은 그림을 선·도형으로 분리(객체화)해 라벨·굵기·모양을 자유롭게 고칩니다.</span></div>
+        </div>
+        <div class="row">
+          <span class="tag">그리기</span>
+          <div class="rt"><strong>회로·렌즈·그래프까지</strong><span>물리 회로, 광학 렌즈, 함수 그래프 등 과학 도해를 mm 단위로 정확하게 직접 그립니다.</span></div>
+        </div>
+      </div>
+
+      <!-- editor mockup -->
+      <div class="mock">
+        <div class="bar"><i></i><i></i><i></i><span class="t">5E · editor</span></div>
+        <div class="canvas">
+          <svg viewBox="0 0 320 170" fill="none" stroke="#1a1d26" xmlns="http://www.w3.org/2000/svg">
+            <line x1="24" y1="90" x2="296" y2="90" stroke="#c2c9d2" stroke-width="1" stroke-dasharray="3 4"/>
+            <path d="M160 44 Q144 90 160 136" stroke-width="1.6"/>
+            <path d="M160 44 Q176 90 160 136" stroke-width="1.6"/>
+            <line x1="70" y1="90" x2="70" y2="56" stroke-width="1.8"/>
+            <path d="M65 62 L70 54 L75 62" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M70 56 L160 56 L246 122" stroke-width="1.4"/>
+            <path d="M70 56 L246 122" stroke-width="1.4"/>
+            <line x1="246" y1="90" x2="246" y2="122" stroke-width="1.8"/>
+            <path d="M241 116 L246 124 L251 116" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="58" y="50" font-family="IBM Plex Sans KR, sans-serif" font-size="10" fill="#57606a" stroke="none">물체</text>
+            <text x="252" y="132" font-family="IBM Plex Sans KR, sans-serif" font-size="10" fill="#57606a" stroke="none">상</text>
+            <text x="150" y="30" font-family="IBM Plex Sans KR, sans-serif" font-size="10" fill="#57606a" stroke="none">볼록렌즈</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FINAL CTA ===== -->
+    <section class="final">
+      <h2>지금, 브라우저에서 바로</h2>
+      <p>설치도 로그인도 없이 클릭 한 번.</p>
+      <a class="btnp" href="./">5E 열기 →</a>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="foot">
+      <div class="fn">5E</div>
+      <div class="fs">sciEnce Educational Exam Easy Editor</div>
+    </footer>
+  </div>
+</body>
+</html>
