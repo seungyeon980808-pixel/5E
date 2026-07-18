@@ -657,6 +657,7 @@ body { zoom: var(--ui-zoom, 1); }
 .modal-overlay[hidden] { display: none; }
 
 .modal {
+  position: relative; /* 좌상단 드래그 손잡이(.modal-drag-handle)의 기준 */
   width: 320px;
   max-width: calc(100vw - 32px);
   display: flex;
@@ -669,6 +670,53 @@ body { zoom: var(--ui-zoom, 1); }
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
+
+/* 창 이동 손잡이: 좌상단 모서리에 점 여섯 개(⠿). 모달 안쪽 드래그 조작과 겹치지
+   않도록 전용 영역으로 두고, flex 흐름에서는 빼서(absolute) 기존 레이아웃을 안 건드린다. */
+.modal-drag-handle {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  cursor: grab;
+  opacity: 0.4;
+  /* 3×2 점 격자 */
+  background-image: radial-gradient(currentColor 1px, transparent 1.2px);
+  background-size: 5px 5px;
+  background-position: 5px 5px;
+  background-repeat: repeat;
+  color: var(--text-secondary);
+}
+.modal-drag-handle:hover { opacity: 0.85; background-color: var(--btn-tool-hover); }
+.modal-drag-handle.is-dragging { cursor: grabbing; opacity: 1; }
+
+/* ----- 참고 문항 창: 최소화된 창이 쌓이는 칩 막대(우하단) -----
+   별도 브라우저 창을 접어 두면 여기 남아, 눌러서 다시 열 수 있다. */
+.refwin-dock {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1200;         /* 모달(1000)보다 위, 툴팁(100001)보다 아래 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.refwin-dock[hidden] { display: none; }
+.refwin-chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.refwin-chip:hover { color: #fff; background: var(--accent); border-color: var(--accent); }
 
 .modal-title {
   margin: 0;
@@ -849,12 +897,15 @@ body { zoom: var(--ui-zoom, 1); }
   cursor: pointer;
 }
 .modal-btn:hover { background: var(--btn-tool-hover); }
-.modal-btn-primary {
+/* 주요 동작 버튼: 평상시엔 일반 버튼과 같은 회색, 마우스를 올렸을 때만 강조색.
+   상시 파란 버튼은 "커서가 올라가 있지 않은데 색이 켜져 있다"는 오해를 부른다.
+   위계는 색이 아니라 굵기로만 표시한다. */
+.modal-btn-primary { font-weight: 600; }
+.modal-btn-primary:not(:disabled):hover {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
 }
-.modal-btn-primary:hover { background: var(--accent-hover); }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
 .gm-modal { width: min(760px, 96vw); }
@@ -958,11 +1009,8 @@ body { zoom: var(--ui-zoom, 1); }
   border-color: var(--border);
   white-space: nowrap;
 }
-.image-paste-actions .modal-btn-primary {
-  color: var(--text-primary);
-  background: var(--btn-tool-bg);
-  border-color: var(--border);
-}
+/* (예전엔 여기서 primary의 상시 파랑을 국소적으로 눌러줬으나,
+   이제 공용 .modal-btn-primary 자체가 평상시 회색이라 불필요) */
 .image-paste-actions .modal-btn:hover,
 .image-paste-actions .modal-btn:focus-visible {
   color: #fff;

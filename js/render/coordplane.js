@@ -17,6 +17,7 @@ import {
   applyObjectLabelFont,
   catmullRomPath,
   applyDash,
+  makeArrowHead,
 } from "./core.js?v=1.0.2";
 import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.0.2";
 import { renderGraphLabel } from "./graph-label.js?v=1.0.2";
@@ -589,6 +590,12 @@ function renderFuncgraph(obj) {
     l.setAttribute("stroke-dasharray", "0.54 0.42"); l.setAttribute("stroke-linecap", "round"); // 대시·간격 40%↓(요구)
     g.appendChild(l);
   });
+  // 구간 화살표: 곡선 위 지정 지점에 화살촉만 접선 방향으로 얹는다(선을 덧그리지 않는다).
+  (obj.arrowMarks || []).forEach((am) => {
+    if (!am || !Number.isFinite(am.x) || !Number.isFinite(am.y)) return;
+    g.appendChild(makeArrowHead(am.x, am.y, am.dx, am.dy, am.strokeWidth || 0.525, gc));
+  });
+  // arrowPolys는 옛 저장 파일 호환용(예전엔 화살표를 폴리라인으로 구웠다).
   (obj.arrowPolys || []).forEach((ap) => {
     if (!ap || !ap.points || ap.points.length < 2) return;
     const el = renderPolyline({

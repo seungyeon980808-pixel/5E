@@ -14,13 +14,17 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.0.2";
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.0.2";
 
+import { openReferenceWindow } from "./reference-window.js?v=1.0.2";
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
 let synonyms = {};        // { 태그/단원명: [동의어…] } — synonyms.json의 map (없으면 {})
 let byId = new Map();
-let selectedId = null;    // 그리드에서 선택된 카드(문항)의 id — 상단 액션 버튼이 이걸 대상으로 동작
+// 그리드에서 선택된 카드(문항) id들 — 상단 액션 버튼이 이걸 대상으로 동작.
+// 참고 창이 최대 4문항까지 받으므로 선택도 4개까지만 허용한다.
+let selectedIds = [];
+const MAX_SELECT = 4;
 // 삽입/객체변환 fetch가 진행 중인 동안 true. 진행 중 다른 카드를 선택해도(updateActionButtons가
 // 다시 불려도) 버튼이 재활성화되지 않게 막아 중복 삽입을 방지한다.
 let _busy = false;
@@ -165,6 +169,8 @@ function buildModal() {
         <div class="examlib-selected-actions">
           <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
           <button id="examlib-objectify" type="button" class="modal-btn" disabled>오브젝트 변환</button>
+          <button id="examlib-refwin" type="button" class="modal-btn" disabled
+                  title="선택한 문항을 별도 창으로 띄웁니다 (듀얼 모니터용)">참고 창 열기</button>
         </div>
       </div>
       <div id="examlib-grid" class="examlib-grid"></div>
@@ -192,6 +198,7 @@ export function initExamLibrary(state) {
   const grid = overlay.querySelector("#examlib-grid");
   const insertBtn = overlay.querySelector("#examlib-insert");
   const objectifyBtn = overlay.querySelector("#examlib-objectify");
+  const refwinBtn = overlay.querySelector("#examlib-refwin");
 
   const filterValues = () => ({
     subject: subjectSelect.value,
@@ -207,21 +214,39 @@ export function initExamLibrary(state) {
   };
   const close = () => { overlay.hidden = true; };
 
-  /* ----- 그리드 선택 상태(카드 클릭 → 상단 액션 버튼이 대상으로 삼음) ----- */
+  /* ----- 그리드 선택 상태(카드 클릭 → 상단 액션 버튼이 대상으로 삼음) -----
+     클릭할 때마다 켜고 끄는 토글이다(Ctrl/⌘를 눌러야 하는 방식은 Mac에서 우클릭과
+     충돌하고, 이 화면은 어차피 다중 선택이 기본 동작이라 그냥 토글이 낫다). */
+  const selectedItems = () => selectedIds.map((id) => byId.get(id)).filter(Boolean);
   function updateActionButtons() {
-    const has = !!selectedId && !_busy;
-    insertBtn.disabled = !has;
-    objectifyBtn.disabled = !has;
+    const n = selectedIds.length;
+    const ready = n > 0 && !_busy;
+    insertBtn.disabled = !ready;
+    // 오브젝트 변환은 편집 모달을 띄우는 대화형이라 한 번에 하나만 다룰 수 있다.
+    objectifyBtn.disabled = !ready || n > 1;
+    objectifyBtn.title = n > 1 ? "오브젝트 변환은 한 문항씩만 됩니다." : "";
+    refwinBtn.disabled = !ready;
+    insertBtn.textContent = n > 1 ? `이미지 삽입 (${n})` : "이미지 삽입";
+    refwinBtn.textContent = n > 1 ? `참고 창 열기 (${n})` : "참고 창 열기";
   }
-  function selectCard(id, cardEl) {
-    const prev = grid.querySelector(".examlib-card.is-selected");
-    if (prev) prev.classList.remove("is-selected");
-    selectedId = id;
-    if (cardEl) cardEl.classList.add("is-selected");
+  function syncCardMarks() {
+    grid.querySelectorAll(".examlib-card").forEach((c) => {
+      c.classList.toggle("is-selected", selectedIds.includes(c.dataset.id));
+    });
+  }
+  function toggleCard(id) {
+    const at = selectedIds.indexOf(id);
+    if (at >= 0) selectedIds.splice(at, 1);
+    else if (selectedIds.length >= MAX_SELECT) {
+      setStatus(`한 번에 ${MAX_SELECT}문항까지만 선택할 수 있습니다.`);
+      return;
+    } else selectedIds.push(id);
+    syncCardMarks();
     updateActionButtons();
   }
   function clearSelection() {
-    selectedId = null;
+    selectedIds = [];
+    syncCardMarks();
     updateActionButtons();
   }
 
@@ -384,16 +409,22 @@ export function initExamLibrary(state) {
   grid.addEventListener("click", (e) => {
     const card = e.target.closest(".examlib-card");
     if (!card) return;
-    selectCard(card.dataset.id, card);
+    toggleCard(card.dataset.id);
   });
 
-  insertBtn.addEventListener("click", () => {
-    const item = byId.get(selectedId);
-    if (item) insertItem(item, insertBtn);
+  insertBtn.addEventListener("click", async () => {
+    // 여러 개를 고른 경우 고른 순서대로 차례차례 넣는다.
+    for (const item of selectedItems()) await insertItem(item, insertBtn);
   });
   objectifyBtn.addEventListener("click", () => {
-    const item = byId.get(selectedId);
+    const item = selectedItems()[0];
     if (item) objectifyItem(item, objectifyBtn);
+  });
+  refwinBtn.addEventListener("click", () => {
+    const items = selectedItems();
+    if (!items.length) return;
+    openReferenceWindow(items);
+    close();   // 참고 창을 띄웠으면 검색 모달은 비켜 준다
   });
 
   /* ----- manifest 로드 (첫 오픈 시 1회) ----- */

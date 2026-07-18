@@ -78,9 +78,13 @@
   cursor: pointer;
 }
 .examlib-card:hover { border-color: var(--text-secondary); }
+/* 선택 표시: 바깥쪽 링 하나로만 그린다.
+   inset 그림자를 쓰면 카드 안 썸네일(흰 배경 150px)이 위쪽 링을 덮어버려
+   변/모서리마다 두께가 달라 보였다. 바깥 링은 overflow:hidden에 잘리지 않고
+   border-radius를 그대로 따라가므로 네 변 두께가 항상 균일하다. */
 .examlib-card.is-selected {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent) inset;
+  box-shadow: 0 0 0 3px var(--accent);
 }
 .examlib-thumb {
   height: 150px;
@@ -106,16 +110,8 @@
 .examlib-title-row .modal-title { margin: 0; }
 .examlib-status-inline { margin: 0; font-size: 13px; }
 
-/* 삽입/변환 버튼: 활성 상태에서 hover 시 색이 분명히 변하도록 */
-.examlib-selected-actions .modal-btn:not([disabled]):hover {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.examlib-selected-actions .modal-btn-primary:not([disabled]):hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
-}
+/* 삽입/변환 버튼의 hover 색은 style.css의 공용 .modal-btn 규칙을 그대로 따른다.
+   (예전엔 여기서 두 버튼 모두 hover 시 파랗게 덮어써서 앱 내 다른 모달과 규칙이 어긋났음) */
 .examlib-selected-actions .modal-btn[disabled] { opacity: .45; cursor: not-allowed; }
 
 /* 연도 범위(시작~끝) */

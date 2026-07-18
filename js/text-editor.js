@@ -1924,7 +1924,13 @@ function setupTextContextMenu() {
         const sel = s.objects.find((o) => o.id === s.selectedIds[0]);
         if (sel && (sel.type === "text" || sel.type === "formula")) obj = sel;
       }
-      if (!obj) return; // not a text target → leave the native menu alone
+      if (!obj) {
+        // 텍스트 대상이 아니면 텍스트 메뉴는 안 띄운다. 다만 Mac에서 Ctrl+클릭은 OS가
+        // 우클릭으로 바꿔 보내므로, 각도 스냅(Ctrl+드래그) 도중에도 이 이벤트가 뜬다.
+        // 그대로 두면 그릴 때마다 브라우저 기본 메뉴가 튀어나오므로 캔버스에선 막는다.
+        e.preventDefault();
+        return;
+      }
       target = { kind: "object", id: obj.id };
       if (!(s.selectedIds || []).includes(obj.id)) {
         _state.update((s2) => { s2.selectedIds = [obj.id]; s2.targetedId = null; });
