@@ -1,7 +1,14 @@
 # 그래프 도구 개편 사양 (탭 모달 + 회색 눈금) — 초안
 
-작성: 2026-07-12 (대화 확정 기반). 상태: **구현 완료 v0.54.35 — 검증 통과·미커밋.** (확정 1~6 + 가정 A~F 전부 반영)
-관련: [GRAPH_TOOL_SPEC.md](GRAPH_TOOL_SPEC.md)(원 명세·17요구), [HANDOFF_graph_tool.md](HANDOFF_graph_tool.md)(현 구현 상태 v0.54.32).
+작성: 2026-07-12 (대화 확정 기반). 상태: **✅ 릴리즈됨 — v1.1.0에 포함.** (확정 1~6 + 가정 A~F 전부 반영·병합·배포 완료)
+관련: [GRAPH_TOOL_SPEC.md](GRAPH_TOOL_SPEC.md)(원 명세·17요구), [archive/HANDOFF_graph_tool.md](archive/HANDOFF_graph_tool.md)(당시 세션 인계 기록 — 브랜치 병합으로 역할 종료).
+
+> 이 문서는 이제 **"왜 모달이 이 모양인가"의 근거**로 읽는다. 실행 지시서가 아니다.
+> 본문의 `☐ 미확인` 표시는 전부 해소됐다 — 확정 1~6과 가정 A·C·F 모두 코드로 확인됨
+> (회색 눈금 `render/coordplane.js`, 2탭 + 하위 3탭 `graph/graph-modal.js`,
+> 인스펙터 비우기 `inspector/section-funcgraph.js`·`section-coordplane.js`, F 단축키 `tools.js`).
+> 실제 구현은 문서를 넘어섰다 — 함수 탭 하위 3종에 **자유곡선**이 추가됐고, 치역 지정과
+> 베지어 핸들 편집은 이 개편안에 없던 기능이다.
 
 ---
 

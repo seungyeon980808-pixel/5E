@@ -5,9 +5,14 @@
 | 항목 | 내용 |
 |---|---|
 | 목적 | 타입×속성 지도 — 구조 파악과 Claude Code 세션 토큰 절감용 |
-| 버전 | v0.40.0 |
-| 날짜 | 2026-07-03 |
+| 버전 | v1.1.0 |
+| 날짜 | 2026-07-19 (표 본문은 v0.40.0 조사분 + 이후 델타 반영) |
 | 유지 규칙 | **객체 스키마를 바꾸는 커밋은 이 문서도 같이 갱신한다** |
+
+> ⚠️ **`render.js:NNNN` 형태의 줄번호 인용은 전부 죽었다.** v0.41.0에서 렌더러가 분해되어
+> `js/render.js`는 11줄짜리 재export 껍데기이고, 실제 코드는 `js/render/` 아래
+> (`scene.js`·`shapes.js`·`labels.js`·`coordplane.js`·`circuit.js`·`annotations.js`·`gauge.js`…)에 있다.
+> 디스패치는 `js/render/scene.js`의 `renderObject()`다. 파일명만 믿고 줄번호는 다시 찾을 것.
 
 - 근거는 전부 실제 코드(생성 경로·렌더러·변환 코드)이며, 추정한 항목은 `(확인 필요)`로 표시했다.
 - "생성 시 기본값"은 도구/템플릿 생성 코드 기준. 인스펙터에서 나중에 붙는 속성은 `(인스펙터 추가)`로 표시 — 생성 직후 객체에는 없는 필드다.
@@ -15,9 +20,12 @@
 
 <!-- ===== TYPE INDEX ===== -->
 
-## 1. 타입 총람 (18종)
+## 1. 타입 총람 (21종)
 
-`render.js renderObject()` 디스패치(render.js:686-725) 기준. 생성 경로가 여러 개인 타입은 모두 표기.
+정본은 `js/object-types.js`의 `OBJECT_TYPE_IDS`이며, `js/render/scene.js`의 `renderObject()`
+디스패치와 1:1로 대응한다. 생성 경로가 여러 개인 타입은 모두 표기.
+
+> 아래 표는 18종까지만 상세하다. v0.40.0 이후 추가된 **3종**은 §1-2에 따로 적었다.
 
 | # | type | 분류 | 지오메트리 | 생성 경로 |
 |---|------|------|-----------|----------|
@@ -39,6 +47,38 @@
 | 16 | `optics` | 광학/역학 박스 심볼 | x/y/w/h + kind | tools.js `makeShape` (OPTICS + kind), tools.js `setupNodePlacement` (점 단일 클릭) |
 | 17 | `apparatus` | 실험 기구 | x/y/w/h + kind | tools.js `makeShape` (APPARATUS + kind) |
 | 18 | `pendulum` | 단진자 | p1(고정점)/p2(추 중심) | tools.js `makePendulum` (PENDULUM 드래그) |
+
+### 1-2. v0.40.0 이후 추가된 3종
+
+| # | type | 분류 | 지오메트리 | 생성 경로 |
+|---|------|------|-----------|----------|
+| 19 | `coordplane` | 박스(branch A) | x/y/w/h + 축 범위·격자 | `function-graph/defaults.js makeDefaultCoordplane`, `graph/graph-modal.js buildFrame` |
+| 20 | `funcgraph` | 점열(baked) + math 스펙 | `points[]` + `expr`/`planeId` | `function-graph/insert.js`, `graph/graph-modal.js`, `tools/click-placement.js` |
+| 21 | `gauge` | 자·각도기 | x/y/w/h + kind | `tools.js makeShape` (RULER/PROTRACTOR → 같은 type) |
+
+**`coordplane` 고유 필드**: `xNeg`/`xPos`/`yNeg`/`yPos`(축별 음·양 방향 칸 수 — 비대칭 평면),
+`gridCountXPos`/`XNeg`/`YPos`/`YNeg`, `tickStepX`/`tickStepY`(눈금 한 칸 값, 0.1 단위),
+`tickLabelMode`, `labelOrigin`(원점 라벨, 기본 `"O"` · 비우면 숨김), `lockAspect:true`.
+
+**`funcgraph` 고유 필드** — 월드 점을 baked 저장하고 재편집용 math 스펙을 함께 보관한다:
+
+| 필드 | 뜻 |
+|---|---|
+| `points[]` / `mathPoints[]` | 렌더용 월드 점 / 재편집용 math 좌표 |
+| `expr`, `sourceKind` | 수식 문자열, `"expr"` 또는 `"points"` |
+| `domainMin`/`domainMax`/`domainAuto` | 정의역 |
+| `rangeMin`/`rangeMax` | **치역** — 벗어난 구간은 `breaks`로 끊긴다 |
+| `breaks[]` | 끊긴 run의 시작 인덱스(평면 밖·치역 밖). 빈 배열 = 연속 |
+| `handles[]` / `handlesMath[]` | 베지어 제어점(월드) / 앵커 기준 math 오프셋 |
+| `curveStyle`, `curvature` | `"straight"`(꺾은선) / `"smooth"`(자유곡선), 곡률 |
+| `markerXs`, `guideXs`, `arrowSpecs` | 표시점 · 수선의 발 · 화살표 |
+| `endLabel`, `endLabelSize`, `offset{dx,dy}`, `autoExtend`, `planeId` | 끝 라벨, 이동 오프셋, 소속 평면 |
+
+> ⚠️ **`js/project-io.js`의 백필이 이 필드들을 아직 따라오지 못했다.** `breaks`·`handles`·
+> `rangeMin/Max`·`markerXs`·`sourceKind`, 그리고 `line.dimensionLabelSize`,
+> `coordplane.gridCountXPos/Neg`·`labelOrigin`은 백필 목록에 없다. §2의 "새 필드를 더하면
+> 백필도 같이" 불변 규칙이 실제로 깨져 있는 상태다 — 옛 파일을 열 때 렌더러의 기본값에
+> 의존하고 있으니, 손볼 때 함께 정리할 것.
 
 <!-- ===== COMMON PROPS ===== -->
 

@@ -4,14 +4,18 @@
 > 머지하면 충돌이 수십 개로 보입니다. **겁먹지 마세요 — 대부분(보통 80~90%)은
 > 버전 숫자만 다른 기계적 충돌입니다.** 진짜 코드 충돌은 보통 5~10개뿐입니다.
 >
-> 이 문서대로 하면 15~30분이면 안전하게 끝납니다. (2026-07-06 tool-ux-revamp 머지 기준)
+> 이 문서대로 하면 15~30분이면 안전하게 끝납니다.
+> (기준 사례: 2026-07-18 `integration-hub` → `main` v1.1.0 머지 — 73파일·충돌 0)
 
 ---
 
-## 0. 시작 전 확인 (5E_hub 폴더에서)
+## 0. 시작 전 확인 (branches/5E_hubmerge 폴더에서)
+
+> ⚠️ 허브는 `branches/5E_hubmerge`다. **`5E_hub` 폴더는 허브가 아니라** `feature/app-icon`
+> 워크트리다 — 이름에 속아 거기서 병합하지 말 것.
 
 ```bash
-cd C:/Users/user/Desktop/project/51_5E/5E_hub
+cd C:/Users/user/Desktop/project/51_5E/branches/5E_hubmerge
 git status                      # 현재 브랜치 = integration-hub, 워킹트리 clean 확인
 git log --oneline -3            # 허브 최신 상태 확인
 ```
@@ -100,19 +104,24 @@ grep -rl "^<<<<<<< \|^>>>>>>> " --include="*.js" --include="*.html" --include="*
 
 ## 4. 버전 전체 통일 ⭐
 
-최종 버전 하나로 모든 `?v=`와 푸터를 맞춥니다. (규칙: 기능 추가면 `v0.X.0`)
+**⚠️ 버전은 사용자 지시가 있을 때만 올립니다.** 병합 자체로는 올리지 않고, 릴리즈하기로
+정한 시점에만 이 단계를 밟습니다. (규칙: 기능 추가면 `v1.X.0`, 버그픽스면 `v1.1.X`.
+다음 번호는 **마지막 GitHub Release 기준**으로 셉니다.)
 
 ```bash
-# 예: 최종 버전을 0.52.0으로 → 이전 0.50.x/0.51.x 흔적을 전부 교체
-grep -rl "0\.5[01]\.[0-9]" --include="*.js" --include="*.html" --include="*.css" . \
-  | xargs sed -i -E 's/0\.5[01]\.[0-9]+/0.52.0/g'
+# 예: 최종 버전을 1.2.0으로 → 이전 1.0.x/1.1.x 흔적을 전부 교체
+grep -rl "1\.[01]\.[0-9]" --include="*.js" --include="*.html" --include="*.css" . \
+  | xargs sed -i -E 's/1\.[01]\.[0-9]+/1.2.0/g'
 
 # 확인: 남은 이전 버전 없어야 함
-grep -rn "0\.5[01]\.[0-9]" --include="*.js" --include="*.html" . | grep -v "0.52.0"
+grep -rn "1\.[01]\.[0-9]" --include="*.js" --include="*.html" . | grep -v "1.2.0"
 # 확인: 푸터 버전 단일
-grep -o 'v0\.[0-9]*\.[0-9]*' index.html | sort -u
+grep -o 'v1\.[0-9]*\.[0-9]*' index.html | sort -u
+# 확인: ?v= 개수(v1.1.0 시점 297곳). 주석 속 "?v=" 설명 4곳은 여기 안 잡힌다
+grep -ro "?v=1\.2\.0" --include=*.js --include=*.html --include=*.css . | wc -l
 ```
-> 범위(`0.5[01]`)는 그때그때 실제 남아있는 버전대에 맞춰 조정하세요.
+> 범위(`1\.[01]`)는 그때그때 실제 남아있는 버전대에 맞춰 조정하세요.
+> **옛 `v0\.` 패턴은 더 이상 아무것도 잡지 못합니다** — 1.x대로 넘어왔습니다.
 
 ---
 
