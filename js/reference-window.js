@@ -19,8 +19,8 @@
  *   삭제        → 확인을 거쳐 칩까지 없앤다.
  */
 
-import { showConfirm } from "./ui-dialogs.js?v=1.0.2";
-import { makeModalDraggable } from "./modal-drag.js?v=1.0.2";
+import { showConfirm } from "./ui-dialogs.js?v=1.1.0";
+import { makeModalDraggable } from "./modal-drag.js?v=1.1.0";
 
 const IMG_BASE = "assets/exam-library/images/";
 
@@ -111,7 +111,7 @@ function windowMarkup(entry) {
 
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <title>참고 문항 · 5E</title>
-<link rel="stylesheet" href="css/style.css?v=1.0.2">
+<link rel="stylesheet" href="css/style.css?v=1.1.0">
 <style>
   /* 앱 스타일시트 뒤에 와서 본문 레이아웃만 덮어쓴다. */
   * { box-sizing: border-box; }

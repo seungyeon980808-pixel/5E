@@ -7,7 +7,7 @@ import {
   applySvgTextFont,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.0.2";
+} from "./core.js?v=1.1.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -15,7 +15,7 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=1.0.2";
+} from "../state.js?v=1.1.0";
 
 // 라벨 세로 중심 보정(em 단위). dominant-baseline:"central"은 글자의 잉크가 아니라
 // em 박스를 기준으로 중심을 잡아 라벨이 눈에 띄게 아래로 내려앉았다. 대신

@@ -8,9 +8,9 @@
 // The output points[] are BAKED world coordinates — the funcgraph then renders,
 // hit-tests, and exports exactly like an open `curve` (no special-case code).
 
-import { compile } from "./parser.js?v=1.0.2";
-import { worldXFromMathX, worldYFromMathY } from "./coords.js?v=1.0.2";
-import { simplifyRDP } from "../geometry.js?v=1.0.2";
+import { compile } from "./parser.js?v=1.1.0";
+import { worldXFromMathX, worldYFromMathY } from "./coords.js?v=1.1.0";
+import { simplifyRDP } from "../geometry.js?v=1.1.0";
 
 const DEFAULT_SAMPLES = 1600;  // evenly across the domain before simplification
                                // (고주파 함수 여유 — sin/cos(10x) 등에서 봉우리 표현 부족 방지)

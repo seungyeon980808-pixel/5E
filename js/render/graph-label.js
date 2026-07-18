@@ -11,9 +11,9 @@
  * 좌표계: 월드 mm. size/x/y 전부 mm. formula.js와 동일한 정자-숫자/이탤릭-변수 규칙을 그대로 물려받는다.
  */
 
-import { SVG_NS } from "./core.js?v=1.0.2";
-import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=1.0.2";
-import { renderFormula, measureFormula } from "../formula.js?v=1.0.2";
+import { SVG_NS } from "./core.js?v=1.1.0";
+import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=1.1.0";
+import { renderFormula, measureFormula } from "../formula.js?v=1.1.0";
 
 function el(tag) { return document.createElementNS(SVG_NS, tag); }
 
