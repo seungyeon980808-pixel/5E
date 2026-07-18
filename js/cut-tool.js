@@ -15,6 +15,7 @@ import { snapLineEnd } from "./geometry.js?v=1.0.2";
 import { simplifyRDP } from "./geometry.js?v=1.0.2";
 import { getObjectBBox } from "./pick.js?v=1.0.2";
 
+import { snapKey } from "./platform.js?v=1.0.2";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록
@@ -114,7 +115,7 @@ function renderOverlay(path) {
 function pathFromEvent(e, finalize) {
   const cur = worldPos(e);
   if (e.shiftKey) {
-    const end = e.ctrlKey ? snapLineEnd(_drawing.start, cur, true) : cur;
+    const end = snapKey(e) ? snapLineEnd(_drawing.start, cur, true) : cur;
     // Shift(직선 모드) 동안에도 free 배열의 마지막 점을 현재 위치로 갱신해둔다.
     // 그렇지 않으면 Shift를 뗀 순간 free의 마지막 점(직선 진입 전 위치)과 지금
     // 위치 사이가 멀어져, 자유곡선 절단 경로에 의도치 않은 긴 직선 점프가 낀다.

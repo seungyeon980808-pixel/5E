@@ -65,6 +65,7 @@ export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor,
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
 import { guideCursorAt } from "./ruler.js?v=1.0.2";
 
+import { snapKey } from "./platform.js?v=1.0.2";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
@@ -538,7 +539,7 @@ function setupDrawing() {
     // Shift = aspect-ratio lock: force w === h (perfect square / circle) using the
     // larger of the two extents, preserving the drag direction on each axis.
     const cur = drawType === "line"
-      ? snapLineEnd(startWorld, pointer, e.ctrlKey)
+      ? snapLineEnd(startWorld, pointer, snapKey(e))
       : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, cur); });
   });
@@ -549,7 +550,7 @@ function setupDrawing() {
     const vb = _state.get().viewBox;
     const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
     const cur = drawType === "line"
-      ? snapLineEnd(startWorld, pointer, e.ctrlKey)
+      ? snapLineEnd(startWorld, pointer, snapKey(e))
       : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     const shape = makeShape(drawType, startWorld, cur);
     // 실험기구(전선 등)는 makeShape가 종류별 최소 크기를 강제(예: wire length=Math.max(w,18))

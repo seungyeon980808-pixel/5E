@@ -35,6 +35,7 @@ import { initDataPlot } from "./data-plot.js?v=1.0.2";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.0.2";
 import { initAutosave } from "./autosave.js?v=1.0.2";
 import { initPages } from "./pages.js?v=1.0.2";
+import { localizeShortcutLabels } from "./platform.js?v=1.0.2";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -219,10 +220,15 @@ initTooltips();
 /* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
 initViewMode(state);
 
+/* ----- Mac 표기 정리: 화면에 박힌 "Ctrl"을 ⌘로 바꾼다(Windows에선 무동작) -----
+   UI가 다 만들어진 뒤 한 번만 훑는다. 이후 동적으로 생기는 문구는 각자 keyLabel()을 쓴다. */
+localizeShortcutLabels();
+
 /* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
    앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로
    레이아웃이 깨지지 않게 막는다. 캔버스 위 Ctrl+휠(도형 줌)은 그대로 동작. */
-window.addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+// Mac은 ⌘+휠로도 브라우저 확대가 되고, 트랙패드 핀치는 ctrlKey=true인 휠로 온다 — 둘 다 막는다.
+window.addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false });
 window.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
 });

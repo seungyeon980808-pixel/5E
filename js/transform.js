@@ -20,6 +20,7 @@ import { pickSelectableObjectFromEvent } from "./tools.js?v=1.0.2";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.0.2";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=1.0.2";
 
+import { snapKey, modKey } from "./platform.js?v=1.0.2";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -1017,7 +1018,7 @@ export function initTransform(svg, state) {
         });
         return;
       }
-      const nudge = e.ctrlKey ? 5 : 0.5;
+      const nudge = modKey(e) ? 5 : 0.5;
       const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
       if (selected.some((o) => !isPositionMovable(o))) return;
       const dx = e.key === "ArrowLeft" ? -nudge : e.key === "ArrowRight" ? nudge : 0;
@@ -1501,7 +1502,7 @@ export function initTransform(svg, state) {
       const curAngle = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
       let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
       // Ctrl = snap to 15-degree increments (applied to the accumulated delta)
-      if (e.ctrlKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
+      if (snapKey(e)) deltaDeg = Math.round(deltaDeg / 15) * 15;
 
       // Polyline / curve (open OR closed): bake the rotation into every point about the
       // bbox center. Open cut pieces are open polylines and must rotate like closed ones.
@@ -1594,7 +1595,7 @@ export function initTransform(svg, state) {
       let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
       // Ctrl = snap to 15-degree increments (same rule as single-object rotation).
       // Aspect lock does NOT apply: rotation never distorts a shape.
-      if (e.ctrlKey) deltaDeg = Math.round(deltaDeg / 15) * 15;
+      if (snapKey(e)) deltaDeg = Math.round(deltaDeg / 15) * 15;
 
       const rad = deltaDeg * (Math.PI / 180);
       const cosT = Math.cos(rad), sinT = Math.sin(rad);
@@ -1677,7 +1678,7 @@ export function initTransform(svg, state) {
       state.update((s) => {
         const obj = objectById(s, _handleOrigObj.id);
         if (!obj) return;
-        applyHandleDelta(obj, _handleOrigObj, _handleId, dx, dy, e.shiftKey, e.ctrlKey);
+        applyHandleDelta(obj, _handleOrigObj, _handleId, dx, dy, e.shiftKey, snapKey(e));
         let preview = null;
         if (e.shiftKey) {
           // CONSOLIDATED endpoint snap: ONE path resolves both 6b (edge/vertex/

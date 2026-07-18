@@ -28,6 +28,7 @@ import { nextObjectId } from "./id.js?v=1.0.2";
 import { openLabelerTextEditor } from "../text-editor.js?v=1.0.2";
 import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.0.2";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
+import { snapKey } from "../platform.js?v=1.0.2";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable,
@@ -67,7 +68,7 @@ export function setupClickDrawing(svg, state) {
     // identical to what the preview showed (no last-pixel drift). See snapAngle.
     if (tool === "L" && e.shiftKey) {
       cur = snapDrawPoint(cur, true);
-    } else if (e.ctrlKey && (tool === "L" || tool === "P" || tool === "CIRCUIT") && draftPoints.length > 0) {
+    } else if (snapKey(e) && (tool === "L" || tool === "P" || tool === "CIRCUIT") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     }
     draftPoints.push(cur);
@@ -88,7 +89,7 @@ export function setupClickDrawing(svg, state) {
     // arc), sharing snapAngle with the commit path so preview and commit never diverge.
     if (clickTool === "L" && e.shiftKey) {
       cur = snapDrawPoint(cur, true);
-    } else if (e.ctrlKey && (clickTool === "L" || clickTool === "P" || clickTool === "CIRCUIT" || clickTool === "ARC" || clickTool === "RIGHTANGLE" || clickTool === "LABELER") && draftPoints.length > 0) {
+    } else if (snapKey(e) && (clickTool === "L" || clickTool === "P" || clickTool === "CIRCUIT" || clickTool === "ARC" || clickTool === "RIGHTANGLE" || clickTool === "LABELER") && draftPoints.length > 0) {
       cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
     } else if (clickTool === "L") {
       setSnapPreview(null); // Shift released mid-draw: drop the stale overlay
@@ -172,7 +173,7 @@ function handleArcClick(e) {
   // 미리보기(mousemove, draftPoints[마지막])와 같은 기준점을 써야 3번째 클릭의 Ctrl
   // 15° 스냅 결과가 직전 미리보기와 정확히 일치한다(고정된 draftPoints[0]을 쓰면
   // 2번째 클릭 이후엔 기준점이 달라져 커밋 위치가 미리보기에서 미끄러졌다).
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
+  if (snapKey(e) && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
   draftPoints.push(cur);
   clickTool = "ARC";
   mouseWorld = cur;
@@ -236,7 +237,7 @@ function handleRightAngleClick(e) {
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
   // handleArcClick과 동일 이유: 미리보기와 같은 기준점(draftPoints 마지막)을 써야
   // 3번째 클릭의 Ctrl 15° 스냅이 직전 미리보기 위치와 어긋나지 않는다.
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
+  if (snapKey(e) && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
   draftPoints.push(cur);
   clickTool = "RIGHTANGLE";
   mouseWorld = cur;
@@ -320,7 +321,7 @@ function makeLabelerDraft(anchor, labelPt) {
 function handleLabelerClick(e) {
   const vb = _state.get().viewBox;
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-  if (e.ctrlKey && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
+  if (snapKey(e) && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
   draftPoints.push(cur);
   clickTool = "LABELER";
   mouseWorld = cur;

@@ -565,7 +565,12 @@ export function initImageObjectify(state) {
     event.preventDefault();
     const rect = stage.getBoundingClientRect();
     const mx = event.clientX - rect.left, my = event.clientY - rect.top;
-    const factor = event.deltaY < 0 ? 1.15 : 1 / 1.15;
+    // 부호만 보고 한 번에 1.15배씩 움직이면, 한 제스처에 이벤트를 훨씬 많이 보내는
+    // Mac 트랙패드에서 줌이 걷잡을 수 없이 빨라진다. 실제 이동량에 비례시키고
+    // deltaMode(줄/페이지 단위)도 픽셀로 환산한다.
+    const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? rect.height : 1);
+    const dy = Math.max(-120, Math.min(120, event.deltaY * unit));
+    const factor = Math.pow(1.0015, -dy);
     const nz = Math.max(0.05, Math.min(20, view.zoom * factor));
     view.ox = mx - (mx - view.ox) * (nz / view.zoom);
     view.oy = my - (my - view.oy) * (nz / view.zoom);
