@@ -223,10 +223,25 @@ function cLine(a, b, sw, color) {
   l.setAttribute("stroke", color); l.setAttribute("stroke-width", sw);
   return l;
 }
+/* 라벨 세로 중심 보정(em). dominant-baseline:"central"은 글자의 잉크가 아니라 em 박스를
+   기준으로 중심을 잡는다. 수식 글꼴(Latin Modern Roman)은 fontBoundingBox.ascent가 1.125em로
+   커서 central 기준선이 베이스라인 위 0.4175em에 놓이는데, 실제 잉크 중심은 소문자 0.215em·
+   대문자 0.34em이라 글자가 눈에 띄게 아래로 처졌다.
+
+   대신 dominant-baseline을 지정하지 않고(=alphabetic) y를 이 값만큼 내린다. 값은 대문자
+   높이의 절반에 해당해, 상자 안 글자를 x-높이가 아니라 cap-height 기준으로 앉히는 조판
+   관행과 맞는다. 부수 효과로 dominant-baseline을 무시하는 외부 SVG 임포터(HWP·일러스트
+   레이터)에서도 위치가 맞는다.
+
+   글자별 실측이 아니라 단일 상수인 이유: ① 한 그림 안의 같은 글자가 항상 같은 높이에
+   놓여야 하고 ② 내보내기 경로에서 getBBox가 0을 반환하기 때문. */
+export const LABEL_OPTICAL_CENTER_EM = 0.316;
+
 // A centered glyph (shared by circle-body elements + diode terminal labels + optics label).
 function cText(g, x, y, text, size, color, fontFamily = null, fontStyle = null, labelType = null) {
   const t = document.createElementNS(SVG_NS, "text");
-  t.setAttribute("x", x); t.setAttribute("y", y);
+  t.setAttribute("x", x);
+  t.setAttribute("y", y + size * LABEL_OPTICAL_CENTER_EM);
   t.setAttribute("font-size", size);
   if (fontFamily || fontStyle) {
     applySvgTextFont(t, {
@@ -239,7 +254,7 @@ function cText(g, x, y, text, size, color, fontFamily = null, fontStyle = null, 
   }
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
-  t.setAttribute("dominant-baseline", "central");
+  // dominant-baseline은 일부러 지정하지 않는다 — 위 y 보정이 대신한다.
   fillTextWithRomanRuns(t, text);
   g.appendChild(t);
 }

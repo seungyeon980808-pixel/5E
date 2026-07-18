@@ -11,6 +11,7 @@ import {
   catmullRomClosedPath,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
+  LABEL_OPTICAL_CENTER_EM,
 } from "./core.js?v=1.1.0";
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.1.0";
 import { resolveFill } from "./fill.js?v=1.1.0";
@@ -229,17 +230,19 @@ function renderLine(obj) {
     const label = document.createElementNS(SVG_NS, "text");
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
-    label.setAttribute("x", mx);
-    label.setAttribute("y", my);
-    label.setAttribute("fill", color);
     // 치수 라벨 글자 크기: obj.dimensionLabelSize(mm) 우선, 미설정 시 선 두께 기반 자동.
-    label.setAttribute("font-size", obj.dimensionLabelSize || Math.max(2.5, sw * 8));
+    const labelSize = obj.dimensionLabelSize || Math.max(2.5, sw * 8);
+    label.setAttribute("x", mx);
+    // 세로 중심 보정 — 라벨/기호와 같은 기준(core.js LABEL_OPTICAL_CENTER_EM).
+    label.setAttribute("y", my + labelSize * LABEL_OPTICAL_CENTER_EM);
+    label.setAttribute("fill", color);
+    label.setAttribute("font-size", labelSize);
     // Match the straight-line external label (makeUprightLabel): HWP equation
     // stack so a dimension label (e.g. "Q") reads identically to a line
     // variable label (e.g. "H"). Style only — geometry/behavior unchanged.
     applyObjectLabelFont(label, obj.labelType);
     label.setAttribute("text-anchor", "middle");
-    label.setAttribute("dominant-baseline", "central");
+    // dominant-baseline 미지정 — 위 y 보정이 대신한다.
     label.setAttribute("paint-order", "stroke");
     label.setAttribute("stroke", "white");
     label.setAttribute("stroke-width", Math.max(0.8, sw * 3));
