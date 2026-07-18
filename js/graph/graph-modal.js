@@ -204,71 +204,6 @@ function extendedMathPts(s) {
 // 그래서 점을 지우거나(RDP) 옮기지(라플라시안) 않는다 — 매끄러움은 렌더 단계의 centripetal
 // Catmull-Rom(coordplane.js)이 담당한다(출렁임 없이 앵커를 그대로 통과). 여기선 점을 안 건드린다.
 
-/* 치역(y 범위) 밖을 잘라낸다(요구 6).
- * 평가원 그래프는 곡선의 일부 구간만 보여주는 경우가 많다. 정의역이 x를 자르듯
- * 치역은 y를 자른다 — 축 표시 범위를 바꾸는 게 아니라 "곡선을 잘라내는" 쪽이다.
- *
- * 경계를 지나는 자리에는 교점을 끼워 넣어 잘린 끝이 들쭉날쭉하지 않게 하고,
- * 끊긴 구간은 기존 breaks 규약(새 run이 시작하는 인덱스)으로 알린다 —
- * 렌더러·표시점 스냅이 이미 그 규약을 쓰고 있어 따로 손댈 곳이 없다.
- * world y는 위아래가 뒤집혀 있으므로(math y 클수록 world y 작다) 경계도 뒤집어 받는다. */
-function clipToRange(points, breaks, wyTop, wyBottom) {
-  if (!points || points.length < 2) return { points, breaks };
-  const inR = (p) => p.y >= wyTop - 1e-9 && p.y <= wyBottom + 1e-9;
-  // 두 점 사이가 경계를 지날 때의 교점(선형). 수평이면 교점이 없으니 b를 그대로 쓴다.
-  const cross = (a, b, bound) => {
-    const dy = b.y - a.y;
-    if (Math.abs(dy) < 1e-12) return { x: b.x, y: bound };
-    const t = (bound - a.y) / dy;
-    return { x: a.x + (b.x - a.x) * t, y: bound };
-  };
-  const boundFor = (p) => (p.y < wyTop ? wyTop : wyBottom);
-
-  // 먼저 "이어지는 구간(run)"들을 만든 뒤 한 번에 펴 놓는다.
-  // 인덱스를 세면서 동시에 붙이면 break 위치를 놓치기 쉬워, 두 단계로 나눴다.
-  const srcBreaks = new Set(breaks || []);
-  const runs = [];
-  let run = null;
-  for (let i = 0; i < points.length; i++) {
-    const p = points[i], cur = inR(p);
-    const prev = i > 0 ? points[i - 1] : null;
-    const prevIn = prev ? inR(prev) : false;
-    const cut = srcBreaks.has(i);          // 원래부터 끊겨 있던 자리
-    if (cut) run = null;                   // 이전 run과 잇지 않는다
-    if (cur) {
-      if (!run) {
-        run = [];
-        runs.push(run);
-        // 밖에서 들어온 경우엔 경계 교점부터 시작해 잘린 끝을 깔끔하게
-        if (prev && !prevIn && !cut) run.push(cross(prev, p, boundFor(prev)));
-      }
-      run.push(p);
-    } else if (run) {
-      run.push(cross(prev || p, p, boundFor(p)));   // 나가는 자리에 교점을 찍고 끊는다
-      run = null;
-    }
-  }
-
-  const out = [], outBreaks = [];
-  runs.forEach((r) => {
-    if (r.length < 2) return;              // 점 하나짜리 조각은 그릴 게 없다
-    if (out.length) outBreaks.push(out.length);
-    r.forEach((p) => out.push(p));
-  });
-  return out.length >= 2 ? { points: out, breaks: outBreaks } : { points, breaks };
-}
-
-// 계열의 치역 설정을 world 경계로 바꿔 클리핑을 적용한다(설정이 없으면 그대로).
-function applyRange(pts, brks, plane, range) {
-  if (!range || !Number.isFinite(range.min) || !Number.isFinite(range.max)) return { points: pts, breaks: brks };
-  const lo = Math.min(range.min, range.max), hi = Math.max(range.min, range.max);
-  // world y가 어느 방향으로 커지는지 단정하지 않는다 — 두 경계를 모두 변환한 뒤 정렬한다.
-  // (math y가 클수록 world y가 작다고 가정했다가, 조건이 항상 거짓이 되어 클리핑이
-  //  통째로 무시된 적이 있다. 평면 설정에 따라 방향이 달라질 수 있으므로 재지 말고 비교한다.)
-  const wa = worldFromMath(plane, 0, hi).y, wb = worldFromMath(plane, 0, lo).y;
-  return clipToRange(pts, brks, Math.min(wa, wb), Math.max(wa, wb));
-}
-
 // 함수식 자유 이동(요구): 계열의 offset(math dx,dy)을 baked world 점들에 적용.
 // math 오프셋이라 평면 위치·배율과 무관(미리보기/캔버스 일관).
 function applyOffset(worldPts, plane, offset) {
@@ -509,22 +444,20 @@ function prepareSeries(plane) {
       // 함수는 데이터 범위(눈금 끝+반 칸)까지만 — 화살표 마진 아래로 뻗지 않게.
       const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane);
+      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
-      const moved = applyOffset(sampled, plane, s.offset);    // 함수식 자유 이동
-      const clipped = applyRange(moved, breaks, plane, s.range); // 치역 밖 잘라내기
-      const points = clipped.points;
+      const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
       // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
       // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
       // 별도 domainAuto 플래그로 남겨야, 재편집·평면 범위 확장 시 domain을 다시 자동으로
       // 넓힐 수 있다(안 남기면 항상 '명시 정의역'으로 보여 옛 경계에 갇힌다).
       list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain,
-        points, breaks: clipped.breaks, offset: off,
+        points, breaks, offset: off,
         rangeMin: s.range ? Math.min(s.range.min, s.range.max) : null,
         rangeMax: s.range ? Math.max(s.range.min, s.range.max) : null,
-        ...elementFields(s, plane, points, clipped.breaks) });
+        ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
@@ -658,15 +591,11 @@ function refreshPreview() {
       const db = dataBounds(plane);
       const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const r = sampleFunctionPoints(expr, dMin, dMax, plane);
+      const r = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
-      {
-        const moved = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
-        const clipped = applyRange(moved, r.breaks, plane, s.range); // 치역 밖 잘라내기
-        pts = clipped.points;
-        breaks = clipped.breaks;                      // 끊긴 구간(평면 밖·치역 밖) 경계
-      }
+      pts = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
+      breaks = r.breaks;                             // 끊긴 구간(평면 밖·치역 밖) 경계
     } else {
       if (!s.pts.length) return;
       // 핸들(베지어 변환)이 있으면 자동 연장 없이 s.pts 그대로 + 핸들로 렌더.

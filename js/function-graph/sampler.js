@@ -36,8 +36,15 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
 
   // 평면의 표시 y범위 — 이 밖으로 나가는 값은 run을 끊어(평면 밖으로 돌출하거나 점근선을
   // 가로지르는 가짜 세로선이 그려지지 않게) 렌더러가 별도 서브패스로 그리게 한다.
-  const yLo = Math.min(plane.yMin, plane.yMax);
-  const yHi = Math.max(plane.yMin, plane.yMax);
+  // opts.yRange(치역)가 있으면 더 좁은 쪽을 쓴다. 자르기는 반드시 '여기서' 해야 한다 —
+  // 아래 RDP 단순화를 거친 성긴 점을 나중에 자르면 조각마다 점이 두어 개만 남아
+  // 곡선 보간이 크게 튀고(세로 스파이크) 모양이 망가진다.
+  let yLo = Math.min(plane.yMin, plane.yMax);
+  let yHi = Math.max(plane.yMin, plane.yMax);
+  if (opts.yRange && Number.isFinite(opts.yRange.min) && Number.isFinite(opts.yRange.max)) {
+    yLo = Math.max(yLo, Math.min(opts.yRange.min, opts.yRange.max));
+    yHi = Math.min(yHi, Math.max(opts.yRange.min, opts.yRange.max));
+  }
 
   // Collect runs of consecutive finite, in-range samples; a non-finite OR out-of-range
   // value breaks the run.
