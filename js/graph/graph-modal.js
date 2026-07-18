@@ -108,13 +108,18 @@ function applyCfg(plane, cfg) {
   plane.xMax = xPos + PAD_X;
   plane.yMin = yNeg > 0 ? -(yNeg + PAD_Y) : 0;
   plane.yMax = yPos + PAD_Y;
-  plane.gridStepX = 1; plane.gridStepY = 1;                  // 물리 격자 칸 간격(불변)
-  // 숫자 눈금 라벨의 '한 칸 값'(요구): 물리 칸과 분리 — 라벨만 k×tickStep으로 표기.
-  plane.tickStepX = Number.isFinite(cfg.tickStepX) && cfg.tickStepX >= 0.1 ? cfg.tickStepX : 1;
-  plane.tickStepY = Number.isFinite(cfg.tickStepY) && cfg.tickStepY >= 0.1 ? cfg.tickStepY : 1;
-  plane.gridCountX = xPos; plane.gridCountY = yPos;          // 구코드 호환(양의 칸 수)
-  plane.gridCountXPos = xPos; plane.gridCountXNeg = xNeg;    // 비대칭 격자·눈금 범위
-  plane.gridCountYPos = yPos; plane.gridCountYNeg = yNeg;
+  // 격자 간격(요구): 축이 덮는 값 범위(0~xPos)는 그대로 두고 **격자선을 그 간격마다** 긋는다.
+  // 간격 0.5면 눈금이 0, 0.5, 1 … 로 촘촘해진다(칸이 2배). 라벨은 coordplane이 k×step으로
+  // 계산하므로 별도 배율이 필요 없다 — 격자와 숫자가 자동으로 같은 값을 가리킨다.
+  const gsx = Number.isFinite(cfg.tickStepX) && cfg.tickStepX >= 0.1 ? cfg.tickStepX : 1;
+  const gsy = Number.isFinite(cfg.tickStepY) && cfg.tickStepY >= 0.1 ? cfg.tickStepY : 1;
+  plane.gridStepX = gsx; plane.gridStepY = gsy;
+  // 칸 수 = 값 범위 ÷ 간격. 나누어떨어지지 않으면 반올림해 마지막 눈금을 범위 끝에 맞춘다.
+  const kxPos = Math.max(1, Math.round(xPos / gsx)), kxNeg = Math.max(0, Math.round(xNeg / gsx));
+  const kyPos = Math.max(1, Math.round(yPos / gsy)), kyNeg = Math.max(0, Math.round(yNeg / gsy));
+  plane.gridCountX = kxPos; plane.gridCountY = kyPos;        // 구코드 호환(양의 칸 수)
+  plane.gridCountXPos = kxPos; plane.gridCountXNeg = kxNeg;  // 비대칭 격자·눈금 범위
+  plane.gridCountYPos = kyPos; plane.gridCountYNeg = kyNeg;
   plane.gridOver = GRID_OVER;                     // 격자만 마지막 눈금 밖 반 칸 더
   plane.showGrid = cfg.showGrid;
   plane.showTicks = cfg.showTicks;
@@ -214,10 +219,13 @@ function dataBounds(plane) {
     : (Number.isFinite(plane.gridCountX) ? plane.gridCountX : cxPos);   // 구파일=대칭 폴백
   const cyNeg = Number.isFinite(plane.gridCountYNeg) ? plane.gridCountYNeg
     : (Number.isFinite(plane.gridCountY) ? plane.gridCountY : cyPos);
-  const xMax = cxPos + over, yMax = cyPos + over;
+  // 칸 인덱스 → 수학 값으로 환산한다. 격자 간격이 1이 아니면(예 0.5) 칸 수와 값이 달라져,
+  // 그냥 칸 수를 쓰면 함수·점이 축 범위의 두 배까지 뻗는다.
+  const sx = plane.gridStepX || 1, sy = plane.gridStepY || 1;
+  const xMax = (cxPos + over) * sx, yMax = (cyPos + over) * sy;
   return {
-    xMin: plane.xMin < 0 ? -(cxNeg + over) : 0, xMax,
-    yMin: plane.yMin < 0 ? -(cyNeg + over) : 0, yMax,
+    xMin: plane.xMin < 0 ? -(cxNeg + over) * sx : 0, xMax,
+    yMin: plane.yMin < 0 ? -(cyNeg + over) * sy : 0, yMax,
   };
 }
 
@@ -1356,12 +1364,12 @@ function build() {
               <div class="gm-ax-head"><i>x</i> 가로축</div>
               <div class="gm-ax-head"><i>y</i> 세로축</div>
 
-              <div class="gm-ax-lbl">칸 개수</div>
+              <div class="gm-ax-lbl">축 범위</div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-xpos" min="1" value="5" title="오른쪽(양의 x) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-step"><input type="number" id="gm-xpos" min="1" value="5" title="x축이 0부터 어디까지 (값)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-ypos" min="1" value="5" title="위(양의 y) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-step"><input type="number" id="gm-ypos" min="1" value="5" title="y축이 0부터 어디까지 (값)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
 
               <div class="gm-ax-lbl gm-neg-row">음의 방향</div>
@@ -1372,13 +1380,13 @@ function build() {
                 <span class="gm-step"><input type="number" id="gm-yneg" min="0" value="0" title="아래(음의 y) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
 
-              <div class="gm-ax-lbl">한 칸 값</div>
+              <div class="gm-ax-lbl">격자 간격</div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-step"><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 격자·눈금을 이 값마다 긋는다 (0.5면 0, 0.5, 1 … )"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">0.1씩</span>
               </div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-step"><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 격자·눈금을 이 값마다 긋는다 (0.5면 0, 0.5, 1 … )"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">0.1씩</span>
               </div>
 
