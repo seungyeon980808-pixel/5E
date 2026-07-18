@@ -958,12 +958,19 @@ function syncCfgControls() {
   if (document.activeElement !== _els.yStep) _els.yStep.value = c.tickStepY ?? 1;
   const xNegOn = c.variant === "cross";
   const yNegOn = c.variant === "cross" || c.variant === "halfcross";
-  _els.xNeg.disabled = !xNegOn; _els.xNeg.style.opacity = xNegOn ? "" : "0.4";
-  _els.yNeg.disabled = !yNegOn; _els.yNeg.style.opacity = yNegOn ? "" : "0.4";
+  // 흐림 처리는 스테퍼 칸 전체가 맡는다(.gm-step:has(input:disabled)) — 입력칸에 따로
+  // opacity를 주면 이중으로 곱해져 글자가 안 보일 만큼 흐려진다.
+  _els.xNeg.disabled = !xNegOn;
+  _els.yNeg.disabled = !yNegOn;
+  // 잠긴 칸이 있을 때만 이유를 안내한다(십자에선 다 열려 있어 불필요).
+  const negNote = _els.overlay.querySelector("#gm-neg-note");
+  if (negNote) negNote.style.display = (!xNegOn || !yNegOn) ? "" : "none";
   _els.labelX.value = c.labelX; _els.labelY.value = c.labelY;
   _els.showOrigin.checked = c.showOrigin;
-  _els.originBtn.textContent = c.origin;
-  _els.originBtn.style.fontStyle = c.origin === "O" ? "italic" : "normal";
+  // 원점 표기는 0/O 두 버튼 세그먼트 — 현재 값 쪽에 .on을 준다(누를 수 있음이 드러나게).
+  _els.originBtn.querySelectorAll("button[data-origin]").forEach((b) => {
+    b.classList.toggle("on", b.dataset.origin === c.origin);
+  });
   _els.showGrid.checked = c.showGrid;
   _els.showTicks.checked = c.showTicks;
   if (document.activeElement !== _els.axisScale) _els.axisScale.value = Math.round((c.axisLabelScale || 1) * 100);
@@ -1094,73 +1101,129 @@ function build() {
           </div>
 
           <div id="gm-tab-coord">
-          <!-- 모양(드롭다운) + 칸 수 한 줄(요구 2). 칸 수 증감은 입력칸의 ▲▼ 스핀 버튼으로. -->
-          <!-- 모양은 첫 줄, x축·y축 범위는 둘째 줄에 나란히(요구: x·y 정렬) -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
-            <span class="gm-inl">모양
-              <select id="gm-variant-sel" class="gm-num" style="width:auto;padding:5px 6px;">
-                <option value="quadrant">ㄴ자</option>
-                <option value="halfcross">ㅏ자</option>
-                <option value="cross">십자</option>
-              </select></span>
+          <!-- 좌표 탭 레이아웃(UI 개선): 라벨 열을 92px로 고정하고 관련 항목을 그룹으로 묶는다.
+               핵심은 '축 표' — x·y를 열로 세워 칸 개수 → 한 칸 값 → 축 이름이 같은 세로줄에
+               계열로 쌓이게 했다(종전엔 라벨 길이가 달라 입력칸이 행마다 어긋났다).
+               id는 종전 그대로라 이벤트 배선·populate는 손대지 않는다. -->
+          <div class="gm-group">
+            <div class="gm-group-h">축 만들기</div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">모양</span>
+              <div class="gm-row-body">
+                <select id="gm-variant-sel" class="gm-num" style="width:auto;padding:6px 8px;">
+                  <option value="quadrant">ㄴ자</option>
+                  <option value="halfcross">ㅏ자</option>
+                  <option value="cross">십자</option>
+                </select>
+              </div>
+            </div>
+            <div class="gm-axis-grid">
+              <div></div>
+              <div class="gm-ax-head"><i>x</i> 가로축</div>
+              <div class="gm-ax-head"><i>y</i> 세로축</div>
+
+              <div class="gm-ax-lbl">칸 개수</div>
+              <div class="gm-ax-cell">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xneg" min="0" value="0" title="왼쪽(음의 x) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-sep">~</span>
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xpos" min="1" value="5" title="오른쪽(양의 x) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+              </div>
+              <div class="gm-ax-cell">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-yneg" min="0" value="0" title="아래(음의 y) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-sep">~</span>
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-ypos" min="1" value="5" title="위(양의 y) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+              </div>
+
+              <div class="gm-ax-lbl">한 칸 값</div>
+              <div class="gm-ax-cell">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-unit">0.1씩</span>
+              </div>
+              <div class="gm-ax-cell">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-unit">0.1씩</span>
+              </div>
+
+              <div class="gm-ax-lbl">축 이름</div>
+              <div class="gm-ax-cell">
+                <textarea id="gm-labelx" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 시간(s)"
+                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:32px;">x</textarea>
+              </div>
+              <div class="gm-ax-cell">
+                <textarea id="gm-labely" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 속도(m/s)"
+                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:32px;">y</textarea>
+              </div>
+
+              <div class="gm-ax-note" id="gm-neg-note">ㄴ자는 음의 방향이 없어 왼쪽 칸이 잠깁니다 — 모양을 십자로 바꾸면 열립니다.</div>
+            </div>
           </div>
-          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap;">
-            <span class="gm-inl" style="white-space:nowrap;">x축 <input type="number" id="gm-xneg" class="gm-num gm-spinnum" min="0" value="0" title="왼쪽(음의 x) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-xpos" class="gm-num gm-spinnum" min="1" value="5" title="오른쪽(양의 x) 칸 수" style="width:48px;"></span>
-            <span class="gm-inl" style="white-space:nowrap;">y축 <input type="number" id="gm-yneg" class="gm-num gm-spinnum" min="0" value="0" title="아래(음의 y) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-ypos" class="gm-num gm-spinnum" min="1" value="5" title="위(양의 y) 칸 수" style="width:48px;"></span>
+
+          <div class="gm-group">
+            <div class="gm-group-h">표시 요소</div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">보이기</span>
+              <div class="gm-row-body gm-checks">
+                <label class="gm-check"><input type="checkbox" id="gm-showgrid" checked> 격자</label>
+                <label class="gm-check"><input type="checkbox" id="gm-showticks" checked> 눈금</label>
+                <label class="gm-check"><input type="checkbox" id="gm-showorigin" checked> 원점</label>
+                <span class="gm-origin-seg" id="gm-origin-toggle" title="원점 표기: 숫자 0 또는 영문 O">
+                  <button type="button" data-origin="0">0</button><button type="button" data-origin="O">O</button>
+                </span>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">동작</span>
+              <div class="gm-row-body gm-checks">
+                <label class="gm-check"><input type="checkbox" id="gm-labelmove"> 축 라벨 이동<span class="gm-help" title="켜면 미리보기에서 축 이름(예: y, t)을 드래그해 위치를 옮길 수 있습니다. 끄면 원래 위치로 돌아갑니다.">?</span></label>
+                <label class="gm-check"><input type="checkbox" id="gm-lockpos"> 좌표·함수 묶기<span class="gm-help" title="좌표평면과 함수를 하나의 그룹으로 묶어 캔버스에서 함께 이동합니다.">?</span></label>
+              </div>
+            </div>
           </div>
-          <!-- 한 칸 간격(눈금값): 격자 물리 칸은 그대로 두고, '숫자' 눈금 라벨에서 한 칸이
-               나타내는 값만 0.1 단위로 조정한다(▲▼ 스핀 = 0.1씩). 기본 1.0. -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap;">
-            <span class="gm-inl" style="white-space:nowrap;">x 간격 <input type="number" id="gm-xstep" class="gm-num gm-spinnum" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)" style="width:56px;"></span>
-            <span class="gm-inl" style="white-space:nowrap;">y 간격 <input type="number" id="gm-ystep" class="gm-num gm-spinnum" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)" style="width:56px;"></span>
-          </div>
-          <!-- 축 이름: 라벨과 입력창을 나란히 한 줄(요구 3). 입력창은 한 줄 높이, 내용이
-               길어지면 자동으로 아래로 늘어난다(field-sizing). -->
-          <div class="gm-field" style="display:flex;align-items:flex-start;gap:10px;">
-            <span class="gm-inl" style="flex:1;min-width:0;">가로축 이름
-              <textarea id="gm-labelx" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 시간(s)"
-                style="flex:1;min-width:0;width:auto;resize:none;field-sizing:content;min-height:32px;">x</textarea></span>
-            <span class="gm-inl" style="flex:1;min-width:0;">세로축 이름
-              <textarea id="gm-labely" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 속도(m/s)"
-                style="flex:1;min-width:0;width:auto;resize:none;field-sizing:content;min-height:32px;">y</textarea></span>
-          </div>
-          <!-- 축 라벨 이동 / 좌표·함수 묶기 한 줄(요구 4) — 설명은 물음표 툴팁으로 -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-            <label class="gm-check" style="margin-top:0;"><input type="checkbox" id="gm-labelmove"> 축 라벨 이동<span class="gm-help" title="켜면 미리보기에서 축 이름(예: y, t)을 드래그해 위치를 옮길 수 있습니다. 끄면 원래 위치로 돌아갑니다.">?</span></label>
-            <label class="gm-check" style="margin-top:0;"><input type="checkbox" id="gm-lockpos"> 좌표·함수 묶기<span class="gm-help" title="좌표평면과 함수를 하나의 그룹으로 묶어 캔버스에서 함께 이동합니다.">?</span></label>
-          </div>
-          <!-- 격자 / 눈금 / 원점 순서 한 줄(요구 3) -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-            <label class="gm-check" style="margin-top:0;"><input type="checkbox" id="gm-showgrid" checked> 격자</label>
-            <label class="gm-check" style="margin-top:0;"><input type="checkbox" id="gm-showticks" checked> 눈금</label>
-            <span style="display:inline-flex;align-items:center;gap:7px;">
-              <label class="gm-check" style="margin-top:0;"><input type="checkbox" id="gm-showorigin" checked> 원점</label>
-              <button type="button" id="gm-origin-toggle" title="누르면 0 ↔ O 전환"
-                style="font:600 14px serif;width:32px;height:24px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;">0</button>
-            </span>
-          </div>
-          <!-- 눈금 라벨: 제목 + 버튼을 한 줄에(요구 5 — 줄바꿈 없이) -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
-            <span class="gm-label" style="margin:0;white-space:nowrap;">눈금 라벨</span>
-            <div id="gm-tickmode" style="display:flex;gap:4px;flex-wrap:nowrap;"></div>
-          </div>
-          <div id="gm-ticktext-rows" class="gm-field" style="display:none;">
-            <label class="gm-sub" style="margin-bottom:5px;"><span>x축 눈금 (쉼표 구분·수식 가능)</span>
-              <input type="text" id="gm-ticktext-x" class="gm-num" style="font-family:monospace;" placeholder="예: t_0, 2t_0, 3t_0"></label>
-            <label class="gm-sub"><span>y축 눈금</span>
-              <input type="text" id="gm-ticktext-y" class="gm-num" style="font-family:monospace;" placeholder="예: v_0, 2v_0"></label>
-          </div>
-          <!-- 배수 모드: 기준 문자 하나만 넣으면 2배·3배… 자동 생성(요구: 더 쉬운 방법) -->
-          <div id="gm-tickbase-rows" class="gm-field" style="display:none;">
-            <label class="gm-sub" style="margin-bottom:5px;"><span>x축 기준 문자 (자동으로 2·3·4배 생성)</span>
-              <input type="text" id="gm-tickbase-x" class="gm-num" style="font-family:monospace;" placeholder="예: t_0  → t₀, 2t₀, 3t₀…"></label>
-            <label class="gm-sub"><span>y축 기준 문자</span>
-              <input type="text" id="gm-tickbase-y" class="gm-num" style="font-family:monospace;" placeholder="예: v_0  → v₀, 2v₀, 3v₀…"></label>
-          </div>
-          <!-- 라벨 크기 두 가지를 한 줄에(요구 6) — 칸 수와 같은 양식(▲▼ 스핀 버튼) -->
-          <div class="gm-field" style="display:flex;align-items:center;gap:12px;flex-wrap:nowrap;">
-            <span class="gm-inl">좌표 라벨 크기 <input type="number" id="gm-axisscale" class="gm-num gm-spinnum" min="50" max="200" step="10" value="100">%</span>
-            <span class="gm-inl">성분 라벨 크기 <input type="number" id="gm-tickscale" class="gm-num gm-spinnum" min="50" max="200" step="10" value="100">%</span>
+
+          <div class="gm-group">
+            <div class="gm-group-h">눈금 라벨</div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">종류</span>
+              <div class="gm-row-body">
+                <div id="gm-tickmode"></div>
+              </div>
+            </div>
+            <div id="gm-ticktext-rows" style="display:none;">
+              <div class="gm-row">
+                <span class="gm-row-lbl">x축 눈금</span>
+                <div class="gm-row-body"><input type="text" id="gm-ticktext-x" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: t_0, 2t_0, 3t_0"></div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">y축 눈금</span>
+                <div class="gm-row-body"><input type="text" id="gm-ticktext-y" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: v_0, 2v_0"></div>
+              </div>
+              <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">쉼표로 구분해 입력합니다 · 수식 가능</div>
+            </div>
+            <div id="gm-tickbase-rows" style="display:none;">
+              <div class="gm-row">
+                <span class="gm-row-lbl">x축 기준</span>
+                <div class="gm-row-body"><input type="text" id="gm-tickbase-x" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: t_0  → t₀, 2t₀, 3t₀…"></div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">y축 기준</span>
+                <div class="gm-row-body"><input type="text" id="gm-tickbase-y" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: v_0  → v₀, 2v₀, 3v₀…"></div>
+              </div>
+              <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">기준 문자 하나만 넣으면 2·3·4배가 자동 생성됩니다</div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">좌표 크기</span>
+              <div class="gm-row-body">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-unit">%</span>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">성분 크기</span>
+              <div class="gm-row-body">
+                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-unit">%</span>
+              </div>
+            </div>
           </div>
           </div><!-- /gm-tab-coord -->
 
@@ -1342,15 +1405,29 @@ function build() {
   _els.labelX.addEventListener("input", () => { _cfg.labelX = _els.labelX.value; refreshPreview(); });
   _els.labelY.addEventListener("input", () => { _cfg.labelY = _els.labelY.value; refreshPreview(); });
   _els.showOrigin.addEventListener("change", () => { _cfg.showOrigin = _els.showOrigin.checked; refreshPreview(); });
-  // 원점: 입력이 아니라 토글 버튼 — 숫자 0(정자) ↔ 영문 O(이탤릭). 요구 3.
-  _els.originBtn.addEventListener("click", () => {
-    _cfg.origin = _cfg.origin === "0" ? "O" : "0";
+  // 원점 표기: 숫자 0(정자) / 영문 O(이탤릭) 두 버튼 중 고른다(종전엔 눌러서 순환하는
+  // 단일 버튼이라 클릭 가능하다는 게 드러나지 않았다).
+  _els.originBtn.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-origin]");
+    if (!btn || btn.dataset.origin === _cfg.origin) return;
+    _cfg.origin = btn.dataset.origin;
     syncCfgControls(); refreshPreview();
+  });
+  // −/+ 스테퍼: 네이티브 ▲▼가 너무 작아 누르기 어려웠다. 버튼은 해당 input의
+  // step만큼 값을 올리고 내리며(0.1 간격 조정에 특히 유리), 기존 리스너가 듣는
+  // "input" 이벤트를 그대로 흘려보내 배선을 재사용한다.
+  _els.tabCoord.addEventListener("click", (e) => {
+    const btn = e.target.closest(".gm-step button[data-step]");
+    if (!btn) return;
+    const inp = btn.parentElement.querySelector("input");
+    if (!inp || inp.disabled) return;
+    if (Number(btn.dataset.step) > 0) inp.stepUp(); else inp.stepDown();
+    inp.dispatchEvent(new Event("input", { bubbles: true }));
   });
   _els.showGrid.addEventListener("change", () => { _cfg.showGrid = _els.showGrid.checked; refreshPreview(); });
   _els.showTicks.addEventListener("change", () => { _cfg.showTicks = _els.showTicks.checked; refreshPreview(); });
   _els.lockPos.addEventListener("change", () => { _cfg.lockPosition = _els.lockPos.checked; });
-  [["none", "없음"], ["number", "숫자"], ["multiple", "배수"], ["text", "직접 입력"]].forEach(([mode, label]) => {
+  [["none", "없음"], ["number", "숫자"], ["multiple", "배수"], ["text", "직접"]].forEach(([mode, label]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = label; b._mode = mode;
     b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
