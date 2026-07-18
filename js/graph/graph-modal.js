@@ -1371,7 +1371,10 @@ function build() {
         <span style="font-size:12px;font-weight:400;color:var(--text-secondary);">원하는 좌표를 설정하고 자유롭게 그래프를 그립니다.</span>
       </h2>
       <div class="gm-body" style="flex-wrap:nowrap;">
-        <div class="gm-right" style="flex:0 0 370px;max-height:66vh;overflow-y:auto;padding-right:6px;">
+        <!-- 높이를 고정한다(max-height가 아니라 height). max-height면 내용이 적은 탭에서만
+             열이 짧아지고, 미리보기가 그 높이에 맞춰 늘어나므로(align-items:stretch)
+             탭을 옮길 때마다 창과 미리보기가 같이 줄었다 늘었다 한다(실측 편차 103px). -->
+        <div class="gm-right" style="flex:0 0 370px;height:66vh;overflow-y:auto;padding-right:6px;">
 
           <!-- 탭: 좌표 / 함수 (미리보기는 오른쪽 고정, 양 탭 공유) -->
           <div class="gm-tabs" style="display:flex;gap:4px;margin-bottom:12px;">

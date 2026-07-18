@@ -1007,6 +1007,9 @@ body { zoom: var(--ui-zoom, 1); }
   align-items: center; gap: 10px; margin-bottom: 9px;
 }
 .gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+/* display:grid가 브라우저 기본 [hidden]{display:none}을 이겨서, hidden을 걸어도
+   행이 그대로 보였다(빈 칩 행 3개가 남던 원인). 명시적으로 눌러 준다. */
+.gm-row[hidden] { display: none; }
 
 /* 끝 라벨: v_0 정도만 들어가므로 남는 폭을 다 먹지 않게 고정한다(의견 5). */
 .gm-endlabel-in { width: 128px; flex: none; font-family: monospace; }
