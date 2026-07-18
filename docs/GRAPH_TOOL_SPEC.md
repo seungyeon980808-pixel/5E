@@ -34,7 +34,7 @@
 | markers | (없음) | `node` 점 객체 + `planeId` + `graphRole:"marker"`, worldFromMath 배치 |
 | guides | (없음) | `line`(점선) 객체 + `planeId` + `graphRole:"guide"`, 점→각 축 수선 |
 
-> ⚠️ 조사 gotcha: `funcgraph.points[]`는 **월드 mm로 구운 캐시**다. 평면 range 변경 시 재샘플은 `plane-modal.js`/`section-funcgraph.js`에서만 일어나고 **캔버스 드래그 리사이즈에는 미구현**(백로그). 수동 points 계열은 `mathPoints[]`(수학좌표 원본)를 저장해 재베이크 가능하게 한다. 그룹 이동(translate)은 points가 같이 옮겨져 문제없음.
+> ⚠️ 조사 gotcha (2026-07-19 재확인 — **여전히 유효**): `funcgraph.points[]`는 **월드 mm로 구운 캐시**다. 평면 range 변경 시 재샘플은 `plane-modal.js`/`section-funcgraph.js`에서만 일어나고 **캔버스 드래그 리사이즈에는 미구현**(백로그). 수동 points 계열은 `mathPoints[]`(수학좌표 원본)를 저장해 재베이크 가능하게 한다. 그룹 이동(translate)은 points가 같이 옮겨져 문제없음.
 
 ---
 

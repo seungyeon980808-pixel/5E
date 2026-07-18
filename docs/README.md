@@ -24,7 +24,6 @@
 | `EXAM_LIBRARY_SPEC_20260706.md` | 기출 라이브러리 데이터 계약(`tags.csv` → `build_manifest.py`) |
 | `IMAGE_OBJECT_SEAM_CONTRACT.md` | 이미지 → 객체 변환 경계 계약 |
 | `HELP_PLAN.md` | 도움말 4층 계획 — ①② 완료, ③ 절반, ④ 미착수 |
-| `CODEX_HANDOFF_DEF.md` | 외부 에이전트 인계 정의 |
 
 ## 조사 리포트 (2026-07-10 · 기준 v0.54.14)
 
