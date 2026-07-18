@@ -13,9 +13,9 @@
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.0.4";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.0.4";
-import { state } from "./state.js?v=1.0.4";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.0.3";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.0.3";
+import { state } from "./state.js?v=1.0.3";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

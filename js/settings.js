@@ -17,22 +17,22 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=1.0.4";
-import { registerTopMenu } from "./top-menu.js?v=1.0.4";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.0.4";
+} from "./state.js?v=1.0.3";
+import { registerTopMenu } from "./top-menu.js?v=1.0.3";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.0.3";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=1.0.4";
+} from "./preview-backgrounds.js?v=1.0.3";
 // 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
-import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.4";
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.3";
 // 설정 불러오기 후 같은 탭에서 라이브러리를 즉시 다시 그리기 위함(감사 finding 2).
 // personal-objects.js는 settings.js를 import하지 않으므로 순환 없음.
-import { renderLibrary as renderPersonalLibrary } from "./personal-objects.js?v=1.0.4";
+import { renderLibrary as renderPersonalLibrary } from "./personal-objects.js?v=1.0.3";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;

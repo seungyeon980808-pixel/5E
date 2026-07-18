@@ -4,8 +4,8 @@
  * (main.js, snap.js, svg-export.js, templates.js, tools.js, transform.js),
  * so every existing `from "./render.js?v=..."` import keeps working. */
 
-export { render, setSnapPreview, renderObject, singleObjBBox } from "./render/scene.js?v=1.0.4";
-export { rotPt, curveSamplePoints } from "./render/core.js?v=1.0.4";
-export { makeFillPattern } from "./render/fill.js?v=1.0.4";
-export { circuitBodyPolygon } from "./render/circuit.js?v=1.0.4";
-export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.0.4";
+export { render, setSnapPreview, renderObject, singleObjBBox } from "./render/scene.js?v=1.0.3";
+export { rotPt, curveSamplePoints } from "./render/core.js?v=1.0.3";
+export { makeFillPattern } from "./render/fill.js?v=1.0.3";
+export { circuitBodyPolygon } from "./render/circuit.js?v=1.0.3";
+export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.0.3";

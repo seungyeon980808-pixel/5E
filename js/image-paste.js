@@ -1,6 +1,6 @@
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.0.4";
+import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.0.3";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);

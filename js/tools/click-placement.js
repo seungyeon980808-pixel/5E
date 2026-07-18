@@ -18,21 +18,21 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=1.0.4";
-import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.0.4";
-import { setSnapPreview } from "../render.js?v=1.0.4";
-import { resolveEndpointSnap } from "../snap.js?v=1.0.4";
-import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.0.4";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.0.4";
-import { nextObjectId } from "./id.js?v=1.0.4";
-import { openLabelerTextEditor } from "../text-editor.js?v=1.0.4";
-import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.0.4";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.4";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=1.0.3";
+import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.0.3";
+import { setSnapPreview } from "../render.js?v=1.0.3";
+import { resolveEndpointSnap } from "../snap.js?v=1.0.3";
+import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.0.3";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.0.3";
+import { nextObjectId } from "./id.js?v=1.0.3";
+import { openLabelerTextEditor } from "../text-editor.js?v=1.0.3";
+import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.0.3";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.3";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=1.0.4";
+} from "../tools.js?v=1.0.3";
 
 // SERIES(계열 추가): 클릭으로 점을 찍어 좌표평면 위에 직선/꺾은선 계열(funcgraph,
 // sourceKind:"points")을 만든다. 폴리라인(P)과 같은 클릭 라이프사이클(더블클릭/Enter로
