@@ -17,6 +17,23 @@ import {
   hasStyledTextRuns,
 } from "../state.js?v=1.0.2";
 
+// 라벨 세로 중심 보정(em 단위). dominant-baseline:"central"은 글자의 잉크가 아니라
+// em 박스를 기준으로 중심을 잡아 라벨이 눈에 띄게 아래로 내려앉았다. 대신
+// 베이스라인 기준(dominant-baseline 미지정)으로 두고 이 값만큼 y를 내린다.
+//
+// 값의 근거(Latin Modern Roman 실측, canvas actualBoundingBox 기준):
+//   central 기준선 = 베이스라인 위 0.4175em  ← fontBoundingBox.ascent가 1.125em로
+//                                              (수식 기호·악센트 여유) 비정상적으로 높다
+//   m·v·n·x·r·a 잉크 중심 = 베이스라인 위 0.215em
+//   → 기존 central은 소문자를 0.2em 아래로 내려보내고 있었다(5mm 라벨에서 약 1mm).
+// 잉크 기준 정중앙은 소문자에서 0.215em이지만, 실제로 보면 글자가 떠 보인다.
+// 사용자 판단에 따라 기존 central(0.4175em)과 잉크 정중앙(0.215em)의 중간값을 쓴다.
+//
+// 글자별 실측이 아니라 단일 상수인 이유: ① 한 그림 안의 여러 m이 항상 같은 높이에
+// 놓여야 하고(잉크 실측을 쓰면 m과 mg가 다른 높이가 된다) ② 내보내기 경로에서
+// getBBox가 0을 반환하기 때문(estimateLabelBlock 주석 참고).
+const LABEL_OPTICAL_CENTER_EM = 0.316;
+
 // 멀티라인 라인 tspan에 부모 <text>의 글꼴/스타일을 명시 복사한다 — 숫자 정자화
 // (fillTextWithRomanRuns) 감지가 라인 tspan 단위에서도 동작하도록.
 function inheritLineFont(child, parent) {
@@ -85,7 +102,7 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   if (!s) return null;
   const t = document.createElementNS(SVG_NS, "text");
   t.setAttribute("x", x);
-  t.setAttribute("y", y);
+  t.setAttribute("y", y + sizeMm * LABEL_OPTICAL_CENTER_EM);
   t.setAttribute("font-size", sizeMm);
   // An explicit fontFamily (e.g. the labeler's Dotum-first normal text) overrides
   // the labelType-based 물리량/라벨 font policy; otherwise fall back to it.
@@ -96,7 +113,8 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   }
   t.setAttribute("fill", color);
   t.setAttribute("text-anchor", "middle");
-  t.setAttribute("dominant-baseline", "central");
+  // dominant-baseline은 일부러 지정하지 않는다(=alphabetic). 위 y 보정이 대신한다.
+  // HWP·Illustrator 등 외부 SVG 임포터가 dominant-baseline을 무시하는 문제도 함께 사라진다.
   // White halo so the label stays readable over strokes/fills (mirrors the
   // line length-display label).
   t.setAttribute("paint-order", "stroke");
