@@ -849,12 +849,15 @@ body { zoom: var(--ui-zoom, 1); }
   cursor: pointer;
 }
 .modal-btn:hover { background: var(--btn-tool-hover); }
-.modal-btn-primary {
+/* 주요 동작 버튼: 평상시엔 일반 버튼과 같은 회색, 마우스를 올렸을 때만 강조색.
+   상시 파란 버튼은 "커서가 올라가 있지 않은데 색이 켜져 있다"는 오해를 부른다.
+   위계는 색이 아니라 굵기로만 표시한다. */
+.modal-btn-primary { font-weight: 600; }
+.modal-btn-primary:not(:disabled):hover {
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
 }
-.modal-btn-primary:hover { background: var(--accent-hover); }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
 .gm-modal { width: min(760px, 96vw); }
@@ -958,11 +961,8 @@ body { zoom: var(--ui-zoom, 1); }
   border-color: var(--border);
   white-space: nowrap;
 }
-.image-paste-actions .modal-btn-primary {
-  color: var(--text-primary);
-  background: var(--btn-tool-bg);
-  border-color: var(--border);
-}
+/* (예전엔 여기서 primary의 상시 파랑을 국소적으로 눌러줬으나,
+   이제 공용 .modal-btn-primary 자체가 평상시 회색이라 불필요) */
 .image-paste-actions .modal-btn:hover,
 .image-paste-actions .modal-btn:focus-visible {
   color: #fff;
