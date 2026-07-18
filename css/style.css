@@ -973,6 +973,11 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
 .gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }
 .gm-unit { font-size: 12px; color: var(--text-secondary); }
+
+/* 좌표 크기 · 성분 크기: 단위도 범위도 같은 한 쌍이라 한 행에 나란히 놓는다.
+   왼쪽 칸이 좌표, 오른쪽 칸이 성분 — 행 라벨의 "좌표 / 성분" 순서와 같다. */
+.gm-scale-pair { gap: 14px; flex-wrap: wrap; }
+.gm-scale-item { display: inline-flex; align-items: center; gap: 5px; }
 .gm-sep { color: var(--text-secondary); font-size: 12px; }
 
 /* 축 표: [라벨 92px][x열][y열] */

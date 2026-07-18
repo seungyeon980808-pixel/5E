@@ -1448,18 +1448,20 @@ function build() {
               </div>
               <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">기준 문자 하나만 넣으면 2·3·4배가 자동 생성됩니다</div>
             </div>
+            <!-- 좌표 크기·성분 크기는 단위(%)도 범위도 같은 한 쌍이라 한 행에 나란히 둔다.
+                 순서가 행 라벨("좌표 / 성분")과 같으므로 칸마다 이름표를 또 붙이지 않는다.
+                 어느 칸이 무엇인지는 aria-label로만 보조기기에 알린다. -->
             <div class="gm-row">
-              <span class="gm-row-lbl">좌표 크기</span>
-              <div class="gm-row-body">
-                <span class="gm-step"><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                <span class="gm-unit">%</span>
-              </div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">성분 크기</span>
-              <div class="gm-row-body">
-                <span class="gm-step"><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                <span class="gm-unit">%</span>
+              <span class="gm-row-lbl">좌표 / 성분 크기</span>
+              <div class="gm-row-body gm-scale-pair">
+                <span class="gm-scale-item">
+                  <span class="gm-step"><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100" aria-label="좌표 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                  <span class="gm-unit">%</span>
+                </span>
+                <span class="gm-scale-item">
+                  <span class="gm-step"><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100" aria-label="성분 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                  <span class="gm-unit">%</span>
+                </span>
               </div>
             </div>
           </div>
