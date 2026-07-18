@@ -15,6 +15,7 @@ import { insertImageFromSrc } from "./image-paste.js?v=1.0.2";
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.0.2";
 
 import { openReferenceWindow } from "./reference-window.js?v=1.0.2";
+import { setOpenOrigin } from "./modal-motion.js?v=1.0.2";
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
@@ -459,8 +460,10 @@ export function initExamLibrary(state) {
   }
 
   /* ----- open/close ----- */
-  const openLibrary = () => {
+  const openLibrary = (trigger) => {
     overlay.hidden = false;
+    // 누른 버튼 자리에서 창이 자라나게 — 기본(가운데)보다 인과가 분명하다.
+    setOpenOrigin(overlay.querySelector(".modal"), trigger || openButton);
     if (!manifest) loadManifest();
     else {
       populateSubjectOptions(); // 과목 모드가 바뀌었을 수 있으니 열 때마다 재구성
@@ -468,7 +471,7 @@ export function initExamLibrary(state) {
     }
     subjectSelect.focus();
   };
-  openButton.addEventListener("click", openLibrary);
+  openButton.addEventListener("click", () => openLibrary(openButton));
   // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.key.toLowerCase() !== "f") return;

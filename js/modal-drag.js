@@ -34,15 +34,24 @@ function _clamp(modal, x, y) {
   return { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) };
 }
 
-/** 모달 하나에 좌상단 드래그 손잡이를 붙인다. 이미 붙어 있으면 아무것도 하지 않는다. */
+/** 모달 하나에 드래그 손잡이를 붙인다. 이미 붙어 있으면 아무것도 하지 않는다.
+ *  손잡이는 제목과 같은 줄에 놓는다 — 모서리에 절대배치하면 제목과 중심선이 어긋나
+ *  창에 얹힌 이물처럼 보인다. 제목이 없는 대상(참고 창 도크 등)만 맨 앞에 붙인다. */
 function makeModalDraggable(modal) {
-  if (!modal || modal.querySelector(`:scope > .${HANDLE_CLASS}`)) return;
+  if (!modal || modal.querySelector(`.${HANDLE_CLASS}`)) return;
 
   const handle = document.createElement("div");
   handle.className = HANDLE_CLASS;
   handle.title = "끌어서 창 위치 옮기기 (두 번 누르면 가운데로)";
   handle.setAttribute("aria-label", "창 이동 손잡이");
-  modal.prepend(handle);
+
+  const titleHost = modal.querySelector(".modal-title, h2");
+  if (titleHost) {
+    titleHost.classList.add("has-drag-handle");
+    titleHost.prepend(handle);
+  } else {
+    modal.prepend(handle);
+  }
 
   let start = null;
 
