@@ -270,16 +270,14 @@ function renderCoordplane(obj) {
   // k=1,2,3… 눈금에 배열 순서대로 붙는다(수식 가능 — rich 경로가 renderGraphLabel로 렌더).
   const tickMode = obj.tickLabelMode || (obj.showTickLabels ? "number" : "none");
   if (tickMode !== "none") {
-    // 숫자 눈금값 = k × 한칸값(tickStep). 물리 칸(kx.step)과 분리 — 격자는 그대로 두고
-    // 라벨 숫자만 0.1 단위 간격으로 표기(예: 한칸값 0.5 → 0, 0.5, 1.0…). 미설정=1.
-    const tsX = Number.isFinite(obj.tickStepX) && obj.tickStepX > 0 ? obj.tickStepX : 1;
-    const tsY = Number.isFinite(obj.tickStepY) && obj.tickStepY > 0 ? obj.tickStepY : 1;
+    // 숫자 눈금값 = k × 격자 간격. 격자선이 곧 그 값의 자리이므로 별도 배율을 곱하지 않는다
+    // (간격 0.5면 격자가 0.5마다 그어지고 라벨도 0, 0.5, 1… 로 따라붙는다).
     const labelFor = (k, labelStep, arr) =>
       tickMode === "text" ? (k >= 1 && arr && arr[k - 1] != null ? String(arr[k - 1]) : "") : fmtTick(k * labelStep);
     if (xAxisVisible) {
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
-        const txt = labelFor(k, tsX, obj.tickTextX);
+        const txt = labelFor(k, kx.step, obj.tickTextX);
         if (!txt) continue;
         const vx = worldXFromMathX(P, k * kx.step);
         // 눈금 라벨을 눈금선보다 살짝 왼쪽으로(요구): 아래첨자(t₀의 ₀) 때문에 우측으로
@@ -290,7 +288,7 @@ function renderCoordplane(obj) {
     if (hasYArm && yAxisVisible) {
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
-        const txt = labelFor(k, tsY, obj.tickTextY);
+        const txt = labelFor(k, ky.step, obj.tickTextY);
         if (!txt) continue;
         const vy = worldYFromMathY(P, k * ky.step);
         addNumber(txt, worldX0 - tickGap, vy, "end", "middle");
