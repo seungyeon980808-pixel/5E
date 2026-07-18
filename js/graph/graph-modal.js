@@ -13,13 +13,13 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state } from "../state.js?v=1.0.2";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts } from "../render/coordplane.js?v=1.0.2";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.2";
-import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.2";
-import { nextObjectId } from "../tools/id.js?v=1.0.2";
-import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.0.2";
+import { state } from "../state.js?v=1.1.0";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.1.0";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.1.0";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.1.0";
+import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.1.0";
+import { nextObjectId } from "../tools/id.js?v=1.1.0";
+import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.1.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -27,7 +27,13 @@ const PAD_Y = 1.3;                // y: 마지막 눈금 → 화살표 여유
 const GRID_OVER = 0.5;            // 격자를 마지막 눈금 밖으로 더 뻗는 칸(사진4: "반 칸")
 // 회색조 프로젝트: 색 대신 선 종류로 계열 구분. [라벨, dashLength, dashGap](mm).
 // 대시·간격 40% 축소(요구): 점선 1.6/1.2→0.96/0.72, 파선 2.4/1.3→1.44/0.78.
-const LINE_STYLES = [["실선", 0, 0], ["점선", 0.96, 0.72], ["파선", 1.44, 0.78]];
+// [이름, 대시 길이, 간격]. 0,0 = 실선. 글자로는 어떤 선인지 알 수 없어 버튼은 미니 SVG로 그린다.
+const LINE_STYLES = [
+  ["실선", 0, 0],
+  ["촘촘한 점선", 0.42, 0.5],
+  ["점선", 0.96, 0.72],
+  ["파선", 1.9, 0.9],
+];
 // 수식 도우미 버튼(기존 함수 도구와 동일): [라벨, 커서에 삽입할 문자].
 const HELPERS = [
   ["sin", "sin("], ["cos", "cos("], ["tan", "tan("], ["log", "log("], ["ln", "ln("],
@@ -51,7 +57,8 @@ let _series = [];                 // [{kind:"expr",expr,domain:{min,max}|null,..
 let _sel = -1;                    // 선택 계열 index
 let _previewSvg = null;           // 클릭 좌표 환산용
 let _previewPlane = null;
-let _placeMode = null;            // null | "marker" | "guide" — 미리보기 클릭 배치 모드
+let _placeMode = null;            // null | "marker" | "guide" | "arrow" — 미리보기 클릭 배치 모드
+let _boxMode = false;             // 사각형 드래그로 정의역·치역을 한 번에 지정하는 중
 let _selPts = null;               // 선택 계열의 baked world points(배치 고스트 스냅·클릭 가드용)
 let _selBreaks = null;            // 선택 계열의 끊긴 구간 경계(worldYAtX가 빈 구간 건너뛰게)
 let _activeDraw = -1;             // 클릭으로 '그리는 중'인 점 계열 index(-1=없음). 빈 클릭 선택해제 판정용
@@ -78,7 +85,7 @@ function defaultCfg() {
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
 // movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
-function newExprSeries() { return { kind: "expr", expr: "", domain: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newExprSeries() { return { kind: "expr", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 function newPointsSeries() { return { kind: "points", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
@@ -231,9 +238,10 @@ function dataBounds(plane) {
 
 /* ---------- 그래프 요소(표시점 ● / 수선의 발 / 화살표) ---------- */
 const ARROW_SW = 0.525;   // 화살표(화살촉) 두께 — 화살촉 크기가 여기 비례(요구: +50%, 0.35→0.525).
-// 표시점/수선/화살표를 찍을 때, 커서가 곡선에서 이보다 멀면 "곡선을 노린 게 아니다"로 보고 무시한다.
-// world 단위(≈mm). 너무 작으면 곡선을 정확히 짚어야 해 불편하고, 너무 크면 빈 곳 클릭에도 찍힌다.
-const SNAP_MAX_DIST = 6;
+// 배치할 때 커서와 곡선의 거리는 제한하지 않는다(요구). 좌표 라벨·눈금에 가려 곡선을
+// 정확히 짚기 어려운 자리가 많은데, 거리를 제한하면 그런 곳에서 아무리 눌러도 안 찍힌다.
+// 어차피 찍히는 위치는 "곡선 위 최근접점"이라 멀리서 눌러도 결과가 곡선을 벗어나지 않는다.
+// 모드 해제는 미리보기 바깥을 누르는 것으로 한다(아래 setupPlaceEscape).
 // 요소 베이크·클릭 스냅용 기하: 곡선 스타일 점 계열은 렌더와 동일한 Catmull-Rom으로
 // 촘촘히 편 점을 쓴다. 꼭짓점을 직선 보간하면 화살표/표시점/수선이 실제 그려진 곡선에서
 // 떨어진 지점에 찍힌다(화살표 위치 버그의 원인). 함수식 계열은 이미 촘촘히 샘플됨.
@@ -309,6 +317,12 @@ function nearestOnPolyline(points, wx, wy, breaks) {
 // 저장된 요소 스펙 하나를 math 좌표로 정규화한다.
 // 구버전 파일은 x 숫자만 저장했으므로(정의역→치역 매핑 시절), 그 경우 y는 없는 것으로 두고
 // 아래 resolveSpec에서 worldYAtX로 한 번 복원한다. 신규 저장은 {x, y}.
+// 고스트 크기는 렌더러와 같은 함수(markerRadius)를 쓴다 — 값을 양쪽에 적어 두면 어긋난다.
+function markerRadiusOf(s) {
+  return markerRadius(s && Number.isFinite(s.strokeWidth) ? s.strokeWidth : 0.4);
+}
+// 요소 스펙 한 개를 얕게 복사한다(구버전 숫자 스펙과 신형 {x,y}를 모두 받는다).
+function copySpec(v) { return typeof v === "number" ? v : { ...v }; }
 function specMath(v) {
   if (typeof v === "number") return Number.isFinite(v) ? { x: v, y: null } : null;
   if (!v || !Number.isFinite(v.x)) return null;
@@ -325,6 +339,33 @@ function resolveSpec(spec, plane, pts, breaks) {
     return wy == null ? null : { x: w.x, y: wy, dx: 1, dy: 0 };
   }
   return nearestOnPolyline(pts, w.x, w.y, breaks);
+}
+/* 미리보기 전용: 찍어 둔 표시점이 눈에 띄게 한다(의견 7).
+ * 표시점은 검은 원 하나라서 축·격자(검은 선) 위나 모서리에 찍히면 그림에 묻혀
+ * 찍힌 건지 아닌지 분간이 안 된다. 그래서 두 가지를 얹는다.
+ *   · 흰 테두리 — 검은 배경선 위에서도 점의 윤곽이 산다
+ *   · 강조색 링 — "여기 찍혔다"는 표시
+ * 최종 결과물(캔버스·내보내기)에는 손대지 않는다. 시험지에 파란 링이 나가면 안 되고,
+ * 이건 그림의 일부가 아니라 편집 중에만 필요한 안내이기 때문이다.
+ * renderFuncgraph가 만든 DOM에만 덧그리므로 저장되는 데이터도 그대로다. */
+function markPlacedElements(groupEl) {
+  if (!groupEl || !groupEl.querySelectorAll) return;
+  groupEl.querySelectorAll("circle").forEach((c) => {
+    const r = parseFloat(c.getAttribute("r")) || 0;
+    if (!r) return;
+    c.setAttribute("stroke", "#ffffff");
+    c.setAttribute("stroke-width", String(r * 0.42));
+    c.setAttribute("paint-order", "stroke");   // 흰 테두리가 채움 밖으로 나가게
+    const ring = document.createElementNS(SVG_NS, "circle");
+    ring.setAttribute("cx", c.getAttribute("cx"));
+    ring.setAttribute("cy", c.getAttribute("cy"));
+    ring.setAttribute("r", String(r * 2.05));
+    ring.setAttribute("fill", "none");
+    ring.setAttribute("stroke", "var(--accent)");
+    ring.setAttribute("stroke-width", String(r * 0.5));
+    ring.setAttribute("pointer-events", "none");
+    c.parentNode.insertBefore(ring, c);
+  });
 }
 // 계열의 요소 math 스펙(markers/guides/arrows) → 세계좌표 렌더 데이터(renderFuncgraph가 그림).
 function bakeElements(s, plane, pts, breaks) {
@@ -403,7 +444,7 @@ function prepareSeries(plane) {
       // 함수는 데이터 범위(눈금 끝+반 칸)까지만 — 화살표 마진 아래로 뻗지 않게.
       const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane);
+      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
       const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
@@ -412,7 +453,11 @@ function prepareSeries(plane) {
       // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
       // 별도 domainAuto 플래그로 남겨야, 재편집·평면 범위 확장 시 domain을 다시 자동으로
       // 넓힐 수 있다(안 남기면 항상 '명시 정의역'으로 보여 옛 경계에 갇힌다).
-      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain, points, breaks, offset: off, ...elementFields(s, plane, points, breaks) });
+      list.push({ ...common, expr, domainMin: dMin, domainMax: dMax, domainAuto: !s.domain,
+        points, breaks, offset: off,
+        rangeMin: s.range ? Math.min(s.range.min, s.range.max) : null,
+        rangeMax: s.range ? Math.max(s.range.min, s.range.max) : null,
+        ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
@@ -546,11 +591,11 @@ function refreshPreview() {
       const db = dataBounds(plane);
       const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const r = sampleFunctionPoints(expr, dMin, dMax, plane);
+      const r = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
       pts = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
-      breaks = r.breaks;                              // 끊긴 구간(평면 밖) 경계
+      breaks = r.breaks;                             // 끊긴 구간(평면 밖·치역 밖) 경계
     } else {
       if (!s.pts.length) return;
       // 핸들(베지어 변환)이 있으면 자동 연장 없이 s.pts 그대로 + 핸들로 렌더.
@@ -570,6 +615,7 @@ function refreshPreview() {
       ...bakeElements(s, plane, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
+    markPlacedElements(el);
     svg.appendChild(el);
     // 선택된 점 계열: 실제로 '찍은' 점만 파란 점으로 표시(자동 연장점은 제외).
     // 각 점은 드래그 핸들(요구: 자유곡선을 마우스 드래그로 변형) — 점을 끌면 s.pts가
@@ -694,6 +740,15 @@ function refreshPreview() {
           if (!start) return;
           const baseOff = { ...(s.offset || { dx: 0, dy: 0 }) };
           const basePts = s.kind === "points" ? s.pts.map((p) => ({ ...p })) : null;
+          // 표시점·수선·화살표는 곡선 '위'에 찍은 것이므로 곡선과 함께 움직여야 한다.
+          // 이들은 math 절대좌표로 저장되는데, 종전엔 곡선만 옮기고 이 좌표는 두었다.
+          // 그러면 다음 렌더에서 옮겨간 곡선을 기준으로 최근접점을 다시 잡아, 요소가
+          // 곡선을 따라오는 대신 제자리에서 미끄러지듯 딴 데로 갔다.
+          const baseEls = {
+            markers: (s.markers || []).map(copySpec),
+            guides: (s.guides || []).map(copySpec),
+            arrows: (s.arrows || []).map((a) => ({ ...a })),
+          };
           const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
           const uy = (plane.yMax - plane.yMin) ? plane.h / (plane.yMax - plane.yMin) : 1;
           const onMove = (ev) => {
@@ -702,6 +757,15 @@ function refreshPreview() {
             const dxm = (w.x - start.x) / ux, dym = -(w.y - start.y) / uy;
             if (s.kind === "expr") s.offset = { dx: baseOff.dx + dxm, dy: baseOff.dy + dym };
             else s.pts = basePts.map((p) => ({ x: p.x + dxm, y: p.y + dym }));
+            // 곡선과 같은 양만큼 요소도 평행이동(구버전 숫자 스펙은 x만 있다).
+            const shift = (v) => (typeof v === "number" ? v + dxm
+              : { ...v, x: v.x + dxm, y: Number.isFinite(v.y) ? v.y + dym : v.y });
+            s.markers = baseEls.markers.map(shift);
+            s.guides = baseEls.guides.map(shift);
+            s.arrows = baseEls.arrows.map((a) => ({
+              ...a, x: a.x + dxm, y: Number.isFinite(a.y) ? a.y + dym : a.y,
+            }));
+            syncElementLists();
             refreshPreview();
           };
           const onUp = () => {
@@ -746,12 +810,26 @@ function refreshPreview() {
   // (요구: 어디에 들어가는지 미리 볼 수 있어야). 선택 계열에 곡선이 없으면(_selPts null)
   // 고스트가 안 뜨고 클릭해도 무시 → 함수 밖/빈 계열에 찍히는 버그 원천 차단.
   const placing = !!_placeMode && Array.isArray(_selPts) && _selPts.length >= 2;
-  let pGhost = null, pV = null, pH = null;
+  let pGhost = null, pGhostRing = null, pV = null, pH = null;
   if (placing) {
+    // 찍기 전 미리보기: 찍고 나면 어떻게 보일지를 그대로 보여준다(요구 2).
+    // 종전엔 반투명 파란 원 하나라 "여기 찍힌다"가 아니라 그냥 커서 장식처럼 보였다.
+    // 실제 표시점과 같은 구성(검은 점 + 흰 테두리 + 강조 링)에 점선 링만 더해
+    // "아직 확정 아님"을 구분한다.
+    pGhostRing = document.createElementNS(SVG_NS, "circle");
+    pGhostRing.setAttribute("fill", "none");
+    pGhostRing.setAttribute("stroke", "var(--accent)");
+    pGhostRing.setAttribute("stroke-dasharray", "0.55 0.45");
+    pGhostRing.setAttribute("pointer-events", "none");
+    pGhostRing.style.display = "none";
+    svg.appendChild(pGhostRing);
+
     pGhost = document.createElementNS(SVG_NS, "circle");
-    pGhost.setAttribute("r", 1.1); pGhost.setAttribute("fill", "var(--accent)");
-    pGhost.setAttribute("fill-opacity", "0.55"); pGhost.setAttribute("stroke", "var(--accent)");
-    pGhost.setAttribute("stroke-width", 0.35); pGhost.style.display = "none";
+    pGhost.setAttribute("fill", "#111111");
+    pGhost.setAttribute("fill-opacity", "0.75");
+    pGhost.setAttribute("stroke", "#ffffff");
+    pGhost.setAttribute("paint-order", "stroke");
+    pGhost.style.display = "none";
     pGhost.setAttribute("pointer-events", "none");
     if (_placeMode === "guide") {
       const mkG = () => { const l = document.createElementNS(SVG_NS, "line");
@@ -770,7 +848,7 @@ function refreshPreview() {
     const w = clientToWorld(clientX, clientY);
     if (!w) return null;
     const p = nearestOnPolyline(_selPts, w.x, w.y, _selBreaks);
-    if (!p || p.dist > SNAP_MAX_DIST) return null;
+    if (!p) return null;
     const m = mathFromWorld(_previewPlane, p.x, p.y);
     return { mx: m.x, my: m.y, wx: p.x, wy: p.y };
   };
@@ -794,7 +872,53 @@ function refreshPreview() {
     coordTip.style.display = "";
   };
 
+  /* 사각형 드래그로 정의역·치역을 한 번에 정한다(요구 6).
+     끄는 동안 반투명 사각형을 보여 주고, 놓는 순간 그 x·y 범위를 계열에 넣는다.
+     너무 작게 끌린 것(스치듯 클릭)은 무시한다 — 실수로 곡선이 사라지지 않게. */
+  if (_boxMode && _series[_sel]) {
+    let box = null, start = null;
+    svg.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      start = clientToWorld(e.clientX, e.clientY);
+      if (!start) return;
+      box = document.createElementNS(SVG_NS, "rect");
+      box.setAttribute("fill", "color-mix(in srgb, var(--accent) 14%, transparent)");
+      box.setAttribute("stroke", "var(--accent)");
+      box.setAttribute("stroke-width", 0.25);
+      box.setAttribute("stroke-dasharray", "0.8 0.5");
+      box.setAttribute("pointer-events", "none");
+      svg.appendChild(box);
+      const onMove = (ev) => {
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (!w || !box) return;
+        box.setAttribute("x", Math.min(start.x, w.x)); box.setAttribute("y", Math.min(start.y, w.y));
+        box.setAttribute("width", Math.abs(w.x - start.x)); box.setAttribute("height", Math.abs(w.y - start.y));
+      };
+      const onUp = (ev) => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (box) { box.remove(); box = null; }
+        const s2 = _series[_sel];
+        if (!w || !s2) return;
+        if (Math.abs(w.x - start.x) < 1 || Math.abs(w.y - start.y) < 1) return;  // 너무 작으면 무시
+        const a = mathFromWorld(_previewPlane, start.x, start.y);
+        const b = mathFromWorld(_previewPlane, w.x, w.y);
+        const round2 = (v) => Math.round(v * 100) / 100;
+        s2.domain = { min: round2(Math.min(a.x, b.x)), max: round2(Math.max(a.x, b.x)) };
+        s2.range = { min: round2(Math.min(a.y, b.y)), max: round2(Math.max(a.y, b.y)) };
+        _boxMode = false;                   // 한 번 정하면 모드는 꺼진다
+        syncSeriesEditor(); refreshPreview();
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    });
+    svg.style.cursor = "crosshair";
+  }
+
   svg.addEventListener("click", (e) => {
+    if (_boxMode) return;       // 범위 지정 중에는 클릭 배치·선택 해제가 끼어들지 않게
     if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     const s = _series[_sel];
     // 배치 모드: 함수 위를 클릭할 때만 찍는다(함수 밖 클릭은 무시). 표시점/수선/화살표 동일.
@@ -830,8 +954,19 @@ function refreshPreview() {
     // 배치 모드 고스트: 함수 위 찍힐 점(+수선이면 축까지 안내선) 미리보기.
     if (placing) {
       const hit = snapToFunc(e.clientX, e.clientY);
-      if (!hit) { pGhost.style.display = "none"; if (pV) pV.style.display = "none"; if (pH) pH.style.display = "none"; if (coordTip) coordTip.style.display = "none"; return; }
+      if (!hit) {
+        pGhost.style.display = "none"; pGhostRing.style.display = "none";
+        if (pV) pV.style.display = "none"; if (pH) pH.style.display = "none";
+        if (coordTip) coordTip.style.display = "none"; return;
+      }
+      // 실제로 찍혔을 때와 같은 크기로 — 선 굵기를 따라간다(요구 3과 같은 식).
+      const gr = markerRadiusOf(_series[_sel]);
+      pGhost.setAttribute("r", gr);
+      pGhost.setAttribute("stroke-width", gr * 0.42);
+      pGhostRing.setAttribute("r", gr * 2.05);
+      pGhostRing.setAttribute("stroke-width", gr * 0.5);
       pGhost.setAttribute("cx", hit.wx); pGhost.setAttribute("cy", hit.wy); pGhost.style.display = "";
+      pGhostRing.setAttribute("cx", hit.wx); pGhostRing.setAttribute("cy", hit.wy); pGhostRing.style.display = "";
       if (_placeMode === "guide") {
         const o0 = worldFromMath(_previewPlane, 0, 0);
         pV.setAttribute("x1", hit.wx); pV.setAttribute("y1", hit.wy); pV.setAttribute("x2", hit.wx); pV.setAttribute("y2", o0.y); pV.style.display = "";
@@ -861,6 +996,7 @@ function refreshPreview() {
     if (rubber) rubber.style.display = "none";
     if (ghost) ghost.style.display = "none";
     if (pGhost) pGhost.style.display = "none";
+    if (pGhostRing) pGhostRing.style.display = "none";
     if (pV) pV.style.display = "none";
     if (pH) pH.style.display = "none";
     if (coordTip) coordTip.style.display = "none";
@@ -1093,10 +1229,24 @@ function syncElementLists() {
     });
   }
   // 클릭 배치 버튼 활성 표시(표시점/수선/화살표 동일 위계).
-  const arm = (btn, on) => { btn.style.background = on ? "var(--accent)" : ""; btn.style.color = on ? "#fff" : ""; };
+  // 버튼이 곧 스위치이므로 켜짐을 클래스로 표시한다(인라인 style 대신 — 테마와 함께 간다).
+  const arm = (btn, on) => btn.classList.toggle("on", on);
   arm(_els.markerClick, _placeMode === "marker");
   arm(_els.guideClick, _placeMode === "guide");
   arm(_els.arrowClick, _placeMode === "arrow");
+  // 사용법은 켜져 있을 때만 나온다(DESIGN 13-3) — 늘 떠 있으면 배경이 되어 안 읽힌다.
+  const NOTE = {
+    marker: "미리보기에서 곡선 위를 클릭하면 그 자리에 점이 생깁니다.",
+    guide: "미리보기에서 곡선 위를 클릭하면 그 점에서 두 축까지 점선이 생깁니다.",
+    arrow: "미리보기에서 곡선 위를 클릭하면 그 자리에 화살촉이 놓입니다. 칩의 좌표를 누르면 방향이 바뀝니다.",
+  };
+  if (_els.elemNote) {
+    _els.elemNote.textContent = NOTE[_placeMode] || "";
+    _els.elemNote.hidden = !NOTE[_placeMode];
+  }
+  // 찍은 것이 없는 칩 행은 감춘다 — 빈 줄이 세 개 떠 있을 이유가 없다.
+  [[_els.markerRow, _els.markerList], [_els.guideRow, _els.guideList], [_els.arrowRow, _els.arrowList]]
+    .forEach(([row, list]) => { if (row && list) row.hidden = list.children.length === 0; });
 }
 
 // 좌표 텍스트("0,0 1,2 3,2") ↔ pts[] 변환.
@@ -1121,6 +1271,7 @@ function syncSeriesEditor() {
   _els.exprRow.style.display = s.kind === "expr" ? "" : "none";
   _els.exprHelpers.style.display = s.kind === "expr" ? "flex" : "none";
   _els.domainRow.style.display = s.kind === "expr" ? "" : "none";
+  _els.rangeRow.style.display = s.kind === "expr" ? "" : "none";
   _els.ptsRows.style.display = s.kind === "points" ? "" : "none";
   // 자동 연장선: 직선·꺾은선(점 계열)에만 의미 있음(눈대중 그리기). 끝 라벨과 한 줄(요구 8).
   _els.autoExtRow.style.display = s.kind === "points" ? "inline-flex" : "none";
@@ -1130,10 +1281,17 @@ function syncSeriesEditor() {
     if (document.activeElement !== _els.expr) _els.expr.value = s.expr;
     if (document.activeElement !== _els.dMin) _els.dMin.value = s.domain ? s.domain.min : "";
     if (document.activeElement !== _els.dMax) _els.dMax.value = s.domain ? s.domain.max : "";
+    if (document.activeElement !== _els.rMin) _els.rMin.value = s.range ? s.range.min : "";
+    if (document.activeElement !== _els.rMax) _els.rMax.value = s.range ? s.range.max : "";
+    _els.boxDrag.classList.toggle("on", _boxMode);
+    _els.boxDrag.style.background = _boxMode ? "var(--accent)" : "";
+    _els.boxDrag.style.color = _boxMode ? "#fff" : "";
+    _els.boxNote.hidden = !_boxMode;
   } else {
     if (document.activeElement !== _els.pts) _els.pts.value = ptsToText(s.pts);
   }
   [..._els.styleHost.children].forEach((b, i) => {
+    b.style.color = (s.styleIdx === i) ? "var(--accent)" : "var(--text-label)";
     const on = i === s.styleIdx;
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
@@ -1146,13 +1304,13 @@ function syncSeriesEditor() {
   });
   // 곡률 조절: 점 계열을 곡선으로 그릴 때만(꺾은선→곡선). 함수식은 식이 형태를 정하므로 숨김.
   const showCurv = s.kind === "points" && cs === "smooth";
-  _els.curvatureRow.style.display = showCurv ? "flex" : "none";
+  _els.curvatureRow.style.display = showCurv ? "" : "none";
   if (showCurv) _els.curvVal.textContent = Math.round((s.curvature || 1) * 100) + "%";
   // 앵커 수 조절: 자유곡선(smooth 점 계열)에만.
-  _els.anchorsRow.style.display = showCurv ? "flex" : "none";
+  _els.anchorsRow.style.display = showCurv ? "" : "none";
   if (showCurv) _els.anchorVal.textContent = s.pts.length;
   // 베지어 핸들 변환/해제: 자유곡선에만. 핸들 유무에 따라 변환/해제 버튼 전환.
-  _els.bezierRow.style.display = showCurv ? "flex" : "none";
+  _els.bezierRow.style.display = showCurv ? "" : "none";
   if (showCurv) {
     const on = useHandles(s);
     _els.bezierOn.style.display = on ? "none" : "";
@@ -1322,14 +1480,17 @@ function build() {
   overlay.id = "graph-modal-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="modal gm-modal" role="dialog" aria-modal="true" aria-label="그래프" style="width:min(960px,96vw);">
+    <div class="modal gm-modal" role="dialog" aria-modal="true" aria-label="그래프">
       <!-- 제목 오른쪽에 간단 설명(요구 1) -->
       <h2 class="modal-title" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <span id="gm-title">그래프 만들기</span>
         <span style="font-size:12px;font-weight:400;color:var(--text-secondary);">원하는 좌표를 설정하고 자유롭게 그래프를 그립니다.</span>
       </h2>
       <div class="gm-body" style="flex-wrap:nowrap;">
-        <div class="gm-right" style="flex:0 0 370px;max-height:66vh;overflow-y:auto;padding-right:6px;">
+        <!-- 높이를 고정한다(max-height가 아니라 height). max-height면 내용이 적은 탭에서만
+             열이 짧아지고, 미리보기가 그 높이에 맞춰 늘어나므로(align-items:stretch)
+             탭을 옮길 때마다 창과 미리보기가 같이 줄었다 늘었다 한다(실측 편차 103px). -->
+        <div class="gm-right" style="flex:0 0 444px;height:66vh;overflow-y:auto;padding-right:6px;">
 
           <!-- 탭: 좌표 / 함수 (미리보기는 오른쪽 고정, 양 탭 공유) -->
           <div class="gm-tabs" style="display:flex;gap:4px;margin-bottom:12px;">
@@ -1478,10 +1639,10 @@ function build() {
           <div id="gm-tab-func" style="display:none;">
           <!-- 함수 하위 탭(요구): 해석적 함수 / 직선·꺾은선 / 자유곡선 — 성격별로 분리 편집.
                미리보기는 셋이 공유하고, '만들기'는 모든 하위 탭의 계열을 한 평면에 합친다. -->
-          <div id="gm-subtabs" style="display:flex;gap:4px;margin-bottom:6px;">
-            <button type="button" id="gm-sub-expr" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">해석적 함수</button>
-            <button type="button" id="gm-sub-poly" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">직선·꺾은선</button>
-            <button type="button" id="gm-sub-free" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">자유곡선</button>
+          <div id="gm-subtabs" class="gm-elem-seg" style="display:flex;margin-bottom:8px;">
+            <button type="button" id="gm-sub-expr" style="flex:1;">해석적 함수</button>
+            <button type="button" id="gm-sub-poly" style="flex:1;">직선·꺾은선</button>
+            <button type="button" id="gm-sub-free" style="flex:1;">자유곡선</button>
           </div>
           <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size:12px;padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
@@ -1490,86 +1651,157 @@ function build() {
           </div>
 
           <div id="gm-series-editor" style="display:none;">
-            <div id="gm-expr-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-              <span style="font-size:13px;color:var(--text-label);white-space:nowrap;">y =</span>
-              <input type="text" id="gm-expr" class="gm-num" style="font-family:monospace;flex:1;" spellcheck="false" placeholder="예: sin(x), x^2-3x+1">
-            </div>
-            <div id="gm-expr-helpers" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;"></div>
-            <div id="gm-domain-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              정의역 <input type="number" id="gm-dmin" class="gm-num" style="width:62px;" step="0.5" placeholder="자동"> ~
-              <input type="number" id="gm-dmax" class="gm-num" style="width:62px;" step="0.5" placeholder="자동">
-            </div>
-            <div id="gm-pts-rows" style="display:none;margin-bottom:6px;">
-              <div style="font-size:12px;color:var(--text-secondary);margin-bottom:5px;">
-                점 찍기 / 좌표 직접 입력<span class="gm-help" title="미리보기를 클릭해 꼭짓점을 찍으세요 — 커서까지 선이 따라옵니다. Enter 또는 우클릭이면 완료. 마지막 눈금 밖으로도 조금 나갈 수 있습니다. 아래 칸에 좌표를 직접 입력할 수도 있습니다.">?</span>
+            <!-- 아래 모든 행은 라벨 92px 고정 열(.gm-row)에 맞춘다 — 좌표 탭과 같은 세로
+                 기준선을 쓰기 위해서다(DESIGN 13-1). 종전엔 행마다 제 글자 수만큼
+                 입력칸이 밀려 시작점이 여섯 갈래였다. -->
+            <div id="gm-expr-row" class="gm-group">
+              <p class="gm-group-h">식</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">y =</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-expr" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: sin(x), x^2-3x+1">
+                </div>
               </div>
-              <input type="text" id="gm-pts" class="gm-num" style="font-family:monospace;width:100%;" spellcheck="false" placeholder="예: 0,0 1,2 3,2">
-              <div style="display:flex;gap:6px;margin-top:5px;">
-                <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size:11px;padding:3px 8px;">마지막 점 삭제</button>
-                <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size:11px;padding:3px 8px;">전체 지움</button>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body" id="gm-expr-helpers" style="flex-wrap:wrap;gap:3px;"></div>
               </div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              선 <span id="gm-styles" style="display:inline-flex;gap:4px;"></span>
-              굵기 <input type="number" id="gm-width" class="gm-num gm-spinnum" style="width:58px;" min="0.1" max="2" step="0.1">
-            </div>
-            <!-- 모양(직선/곡선)은 하위 탭이 결정하므로 숨김(직선·꺾은선=직선, 자유곡선=곡선). -->
-            <div id="gm-shape-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              모양 <span id="gm-curve" style="display:inline-flex;gap:4px;"></span>
-            </div>
-            <div id="gm-curvature-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              곡률 <button type="button" id="gm-curv-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
-              <span id="gm-curv-val" style="min-width:38px;text-align:center;">100%</span>
-              <button type="button" id="gm-curv-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
-            </div>
-            <!-- 앵커 수 조절(자유곡선): ＋=가장 성긴 구간 분할, −=모양 가장 덜 바뀌는 앵커 제거 -->
-            <div id="gm-anchors-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              앵커 수 <button type="button" id="gm-anchor-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
-              <span id="gm-anchor-val" style="min-width:26px;text-align:center;">0</span>
-              <button type="button" id="gm-anchor-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
-              <span class="gm-help" title="곡선을 이루는 점(앵커)의 개수를 조절합니다. ＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 골라 지울 수도 있습니다.">?</span>
-            </div>
-            <!-- 베지어 핸들 변환/해제: 앵커에 접선 핸들을 노출해 곡률을 직접 잡는다(스무스 노드). -->
-            <div id="gm-bezier-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size:11px;padding:3px 9px;">베지어로 변환</button>
-              <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
-              <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 곡선이 휘는 정도를 직접 조절할 수 있습니다(변환 직후 모양은 그대로). '자동 곡선으로'를 누르면 핸들을 지우고 원래 자동 곡선으로 돌아갑니다.">?</span>
-            </div>
-            <!-- 자동 연장선 + 끝 라벨 한 줄(요구 8) — 연장선 설명은 물음표 툴팁으로 -->
-            <div style="display:flex;gap:14px;align-items:center;font-size:12px;color:var(--text-secondary);">
-              <span style="display:inline-flex;align-items:center;">
-                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="gm-move"> 이동</label><span class="gm-help" title="체크하면 미리보기에서 이 함수(곡선)를 드래그해 자유롭게 옮길 수 있습니다.">?</span>
-              </span>
-              <span id="gm-autoext-row" style="display:none;align-items:center;">
-                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="gm-autoext"> 자동 연장선</label><span class="gm-help" title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 매칭되게 합니다.">?</span>
-              </span>
-              <span style="display:inline-flex;gap:6px;align-items:center;flex:1;min-width:0;">끝 라벨
-                <input type="text" id="gm-endlabel" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: v_0 (비우면 없음)"></span>
+              <div class="gm-row" id="gm-domain-row">
+                <span class="gm-row-lbl">정의역 <i>x</i></span>
+                <div class="gm-row-body">
+                  <input type="number" id="gm-dmin" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                  <span style="color:var(--text-secondary);">~</span>
+                  <input type="number" id="gm-dmax" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                </div>
+              </div>
+              <div class="gm-row" id="gm-range-row">
+                <span class="gm-row-lbl">치역 <i>y</i></span>
+                <div class="gm-row-body">
+                  <input type="number" id="gm-rmin" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                  <span style="color:var(--text-secondary);">~</span>
+                  <input type="number" id="gm-rmax" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body">
+                  <button type="button" id="gm-box-drag" class="modal-btn" style="font-size:11px;padding:4px 10px;">드래그로 지정</button>
+                  <button type="button" id="gm-box-clear" class="modal-btn" style="font-size:11px;padding:4px 10px;">범위 해제</button>
+                </div>
+              </div>
+              <p class="gm-ax-note" id="gm-box-note" hidden>미리보기에서 사각형을 끌면 그 안쪽만 남깁니다.</p>
             </div>
 
-            <!-- 그래프 요소: 3개를 나란히(요구 9). 사용법은 물음표 툴팁으로(요구 7). -->
-            <div id="gm-elements" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;">그래프 요소</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">표시점 ●<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 자리에 점이 생깁니다.">?</span></span>
-                  <button type="button" id="gm-marker-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-marker-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+            <div id="gm-pts-rows" class="gm-group" style="display:none;">
+              <p class="gm-group-h">점</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">좌표 입력</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-pts" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: 0,0 1,2 3,2">
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">수선의 발<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 점에서 두 축까지 점선 수선이 생깁니다.">?</span></span>
-                  <button type="button" id="gm-guide-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-guide-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body">
+                  <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size:11px;padding:3px 8px;">마지막 점 삭제</button>
+                  <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size:11px;padding:3px 8px;">전체 지움</button>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <!-- 문구 정정: 화살촉이 클릭 지점에 오고 꼬리가 반대로 뻗는 실제 동작과
-                       "중심으로"라는 옛 문구가 어긋나 있었음(261행 주석 참고). -->
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점에 화살촉이 오도록 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
-                  <button type="button" id="gm-arrow-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-arrow-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+              </div>
+              <p class="gm-ax-note">미리보기를 클릭해 꼭짓점을 찍고, Enter 또는 우클릭으로 마칩니다.</p>
+            </div>
+
+            <div class="gm-row" id="gm-shape-row" style="display:none;">
+              <span class="gm-row-lbl">모양</span>
+              <div class="gm-row-body"><span id="gm-curve" style="display:inline-flex;gap:4px;"></span></div>
+            </div>
+            <div class="gm-row" id="gm-curvature-row" style="display:none;">
+              <span class="gm-row-lbl">곡률</span>
+              <div class="gm-row-body">
+                <span class="gm-pm">
+                  <button type="button" id="gm-curv-dn">−</button>
+                  <span id="gm-curv-val">100%</span>
+                  <button type="button" id="gm-curv-up">＋</button>
+                </span>
+              </div>
+            </div>
+            <div class="gm-row" id="gm-anchors-row" style="display:none;">
+              <span class="gm-row-lbl">앵커 수</span>
+              <div class="gm-row-body">
+                <span class="gm-pm">
+                  <button type="button" id="gm-anchor-dn">−</button>
+                  <span id="gm-anchor-val">0</span>
+                  <button type="button" id="gm-anchor-up">＋</button>
+                </span>
+                <span class="gm-help" title="＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 지울 수도 있습니다.">?</span>
+              </div>
+            </div>
+            <div class="gm-row" id="gm-bezier-row" style="display:none;">
+              <span class="gm-row-lbl"></span>
+              <div class="gm-row-body">
+                <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size:11px;padding:3px 9px;">베지어로 변환</button>
+                <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
+                <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 휘는 정도를 직접 조절할 수 있습니다.">?</span>
+              </div>
+            </div>
+
+            <div class="gm-group">
+              <p class="gm-group-h">모양</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">선 종류</span>
+                <div class="gm-row-body"><span id="gm-styles" style="display:inline-flex;gap:4px;"></span></div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">선 굵기</span>
+                <div class="gm-row-body">
+                  <span class="gm-step"><input type="number" id="gm-width" min="0.1" max="2" step="0.1" aria-label="선 굵기">
+                    <span class="gm-step-btns">
+                      <button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button>
+                      <button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button>
+                    </span></span>
+                  <span class="gm-unit">mm</span>
                 </div>
+              </div>
+            <!-- 끝 라벨은 v_0 정도의 짧은 값만 들어간다. 남는 폭을 다 먹지 않게 줄이고,
+                 이동·자동 연장선을 같은 행에 나란히 둔다(의견 5). -->
+            <div class="gm-row">
+              <span class="gm-row-lbl">끝 라벨</span>
+              <div class="gm-row-body">
+                <input type="text" id="gm-endlabel" class="gm-num gm-endlabel-in"
+                       spellcheck="false" placeholder="예: v_0" aria-label="끝 라벨">
+                <label class="gm-check" title="체크하면 미리보기에서 이 함수(곡선)를 끌어 옮길 수 있습니다.">
+                  <input type="checkbox" id="gm-move"> 이동</label>
+                <label class="gm-check" id="gm-autoext-row"
+                       title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 맞습니다.">
+                  <input type="checkbox" id="gm-autoext"> 자동 연장선</label>
+              </div>
+            </div>
+
+            </div>
+
+            <!-- 그래프 요소: 이름 자체가 스위치다(의견 6). 종전엔 이름 + '찍기' 두 요소가
+                 한 쌍이었는데 이름이 이미 버튼 구실을 하고 있어 '찍기'는 군더더기였다.
+                 스위치가 된 만큼 켜진 것이 분명히 보여야 한다(DESIGN 13-2). -->
+            <div id="gm-elements" class="gm-group">
+              <div class="gm-elem-head">
+                <p class="gm-group-h">그래프 요소</p>
+                <div class="gm-elem-btns">
+                  <button type="button" id="gm-marker-click">표시점</button>
+                  <button type="button" id="gm-guide-click">수선의 발</button>
+                  <button type="button" id="gm-arrow-click">화살표</button>
+                </div>
+              </div>
+              <p class="gm-ax-note" id="gm-elem-note" hidden></p>
+              <div class="gm-row gm-elem-chiprow" id="gm-marker-row" hidden>
+                <span class="gm-row-lbl">표시점</span>
+                <div class="gm-row-body"><div id="gm-marker-list" class="gm-chips"></div></div>
+              </div>
+              <div class="gm-row gm-elem-chiprow" id="gm-guide-row" hidden>
+                <span class="gm-row-lbl">수선의 발</span>
+                <div class="gm-row-body"><div id="gm-guide-list" class="gm-chips"></div></div>
+              </div>
+              <div class="gm-row gm-elem-chiprow" id="gm-arrow-row" hidden>
+                <span class="gm-row-lbl">화살표</span>
+                <div class="gm-row-body"><div id="gm-arrow-list" class="gm-chips"></div></div>
               </div>
             </div>
           </div>
@@ -1616,6 +1848,10 @@ function build() {
     exprHelpers: overlay.querySelector("#gm-expr-helpers"),
     domainRow: overlay.querySelector("#gm-domain-row"),
     dMin: overlay.querySelector("#gm-dmin"), dMax: overlay.querySelector("#gm-dmax"),
+    rangeRow: overlay.querySelector("#gm-range-row"),
+    rMin: overlay.querySelector("#gm-rmin"), rMax: overlay.querySelector("#gm-rmax"),
+    boxDrag: overlay.querySelector("#gm-box-drag"), boxClear: overlay.querySelector("#gm-box-clear"),
+    boxNote: overlay.querySelector("#gm-box-note"),
     ptsRows: overlay.querySelector("#gm-pts-rows"), pts: overlay.querySelector("#gm-pts"),
     styleHost: overlay.querySelector("#gm-styles"), width: overlay.querySelector("#gm-width"),
     curveHost: overlay.querySelector("#gm-curve"),
@@ -1623,6 +1859,10 @@ function build() {
     anchorsRow: overlay.querySelector("#gm-anchors-row"), anchorVal: overlay.querySelector("#gm-anchor-val"),
     bezierRow: overlay.querySelector("#gm-bezier-row"), bezierOn: overlay.querySelector("#gm-bezier-on"), bezierOff: overlay.querySelector("#gm-bezier-off"),
     autoExt: overlay.querySelector("#gm-autoext"), autoExtRow: overlay.querySelector("#gm-autoext-row"),
+    elemNote: overlay.querySelector("#gm-elem-note"),
+    markerRow: overlay.querySelector("#gm-marker-row"),
+    guideRow: overlay.querySelector("#gm-guide-row"),
+    arrowRow: overlay.querySelector("#gm-arrow-row"),
     move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
     markerClick: overlay.querySelector("#gm-marker-click"), markerList: overlay.querySelector("#gm-marker-list"),
@@ -1681,14 +1921,7 @@ function build() {
   // −/+ 스테퍼: 네이티브 ▲▼가 너무 작아 누르기 어려웠다. 버튼은 해당 input의
   // step만큼 값을 올리고 내리며(0.1 간격 조정에 특히 유리), 기존 리스너가 듣는
   // "input" 이벤트를 그대로 흘려보내 배선을 재사용한다.
-  _els.tabCoord.addEventListener("click", (e) => {
-    const btn = e.target.closest(".gm-step button[data-step]");
-    if (!btn) return;
-    const inp = btn.closest(".gm-step").querySelector("input");
-    if (!inp || inp.disabled) return;
-    if (Number(btn.dataset.step) > 0) inp.stepUp(); else inp.stepDown();
-    inp.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+  // (스테퍼 ▲▼ 동작은 js/stepper.js가 문서 전역에서 처리한다)
   _els.showGrid.addEventListener("change", () => { _cfg.showGrid = _els.showGrid.checked; refreshPreview(); });
   _els.showTicks.addEventListener("change", () => { _cfg.showTicks = _els.showTicks.checked; refreshPreview(); });
   _els.lockPos.addEventListener("change", () => { _cfg.lockPosition = _els.lockPos.checked; });
@@ -1749,10 +1982,21 @@ function build() {
     const s = _series[_sel]; if (!s || s.kind !== "points") return;
     s.pts = []; syncSeriesEditor(); renderChips(); refreshPreview();
   });
-  LINE_STYLES.forEach(([label], i) => {
+  // 선 종류는 대상이 그림 그 자체라 글자 대신 그 선을 그려 보여준다(DESIGN 13-2).
+  // "점선"·"파선"이라는 이름만으로는 어느 쪽이 더 촘촘한지 알 수 없다.
+  LINE_STYLES.forEach(([label, dl, dg], i) => {
     const b = document.createElement("button");
-    b.type = "button"; b.textContent = label;
-    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
+    b.style.cssText = "border:1px solid var(--border);border-radius:3px;padding:5px 8px;background:var(--bg-input);cursor:pointer;line-height:0;";
+    const svgEl = document.createElementNS(SVG_NS, "svg");
+    svgEl.setAttribute("width", "40"); svgEl.setAttribute("height", "10");
+    svgEl.setAttribute("viewBox", "0 0 40 10");
+    const ln = document.createElementNS(SVG_NS, "line");
+    ln.setAttribute("x1", 2); ln.setAttribute("y1", 5); ln.setAttribute("x2", 38); ln.setAttribute("y2", 5);
+    ln.setAttribute("stroke", "currentColor"); ln.setAttribute("stroke-width", 1.7);
+    // 대시 값은 world 단위(mm)라 40px짜리 미리보기에 맞춰 배로 키워 보여준다.
+    if (dl) ln.setAttribute("stroke-dasharray", `${dl * 2.4} ${dg * 2.4}`);
+    svgEl.appendChild(ln); b.appendChild(svgEl);
     b.addEventListener("click", () => { const s = _series[_sel]; if (s) { s.styleIdx = i; syncSeriesEditor(); refreshPreview(); } });
     _els.styleHost.appendChild(b);
   });
@@ -1775,6 +2019,30 @@ function build() {
   _els.autoExt.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.autoExtend = _els.autoExt.checked; refreshPreview(); }
   });
+  // ----- 정의역·치역 -----
+  const readRange = () => {
+    const a = parseFloat(_els.rMin.value), b = parseFloat(_els.rMax.value);
+    return (Number.isFinite(a) && Number.isFinite(b)) ? { min: a, max: b } : null;
+  };
+  [_els.rMin, _els.rMax].forEach((el) => el.addEventListener("input", () => {
+    const s2 = _series[_sel]; if (!s2) return;
+    s2.range = readRange(); refreshPreview();
+  }));
+
+  // 사각형 드래그로 정의역·치역을 한 번에. 숫자 네 칸을 채우는 것보다 빠르고,
+  // "여기부터 저기까지"를 눈으로 정하는 작업이라 그림 위에서 하는 게 맞다.
+  _els.boxDrag.addEventListener("click", () => {
+    if (!_series[_sel]) return;
+    _boxMode = !_boxMode;
+    if (_boxMode) _placeMode = null;   // 두 모드가 동시에 켜지면 클릭이 어디로 갈지 모호하다
+    syncElementLists(); syncSeriesEditor(); refreshPreview();
+  });
+  _els.boxClear.addEventListener("click", () => {
+    const s2 = _series[_sel]; if (!s2) return;
+    s2.domain = null; s2.range = null; _boxMode = false;
+    syncSeriesEditor(); refreshPreview();
+  });
+
   _els.move.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.movable = _els.move.checked; refreshPreview(); }
   });
@@ -1835,6 +2103,25 @@ function build() {
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) hide(); });
   // 미리보기 밖 중립 영역 클릭 → 함수 선택 해제(요구): 계열 편집기·칩·탭·추가버튼·미리보기·하단
   // 버튼은 선택 유지(그것들은 선택 계열을 편집/전환하므로). 그 외 모달 여백 클릭은 해제.
+  // 배치 모드(표시점·수선·화살표) 해제: 미리보기 밖 아무 데나 누르면 꺼진다(요구).
+  // 스냅 거리 제한을 없앤 뒤로는 미리보기 안을 누르면 늘 찍히므로, 빠져나갈 길이 필요하다.
+  // 계열 선택은 건드리지 않는다 — 모드만 끄고 하던 작업은 그대로 이어가게.
+  overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
+    if (!_placeMode) return;
+    if (e.target.closest("#gm-preview, .gm-elem-btns")) return;
+    _placeMode = null;
+    syncElementLists();
+    refreshPreview();
+  }, true);
+  // Esc로도 빠져나온다 — 모드가 켜진 채 다른 걸 누르려다 헤매지 않게.
+  overlay.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !_placeMode) return;
+    e.stopPropagation();
+    _placeMode = null;
+    syncElementLists();
+    refreshPreview();
+  });
+
   overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
     if (_sel === -1 && !_placeMode && _activeDraw === -1) return;
     // 예외 목록이 옛 id(#gm-add-expr,#gm-add-points)를 가리키고 있었음 — 실제 DOM엔

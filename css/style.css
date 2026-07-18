@@ -434,12 +434,14 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   height: 28px;
-  padding: 0 2px 0 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 축소 */
+  padding: 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 제거 */
   color: var(--accent-2);
   /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
-  font-size: 18px;
+  /* 툴바 한 줄(28px) 안에 머무는 최대치. 더 키우면 위아래 칸을 침범한다. */
+  font-size: 22px;
+  line-height: 1;
   font-weight: 600;
   letter-spacing: 0;
   text-decoration: none;
@@ -452,7 +454,9 @@ body { zoom: var(--ui-zoom, 1); }
    글씨 색·크기는 5E 브랜드(과목별 accent-2, serif italic)를 따라간다. */
 .mode-toggle-btn {
   display: inline-flex; align-items: center;
-  height: 23px; margin-left: 6px; padding: 0 10px;
+  /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
+     컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
+  height: 23px; margin-left: -2px; padding: 0 10px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
@@ -673,24 +677,48 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* 창 이동 손잡이: 좌상단 모서리에 점 여섯 개(⠿). 모달 안쪽 드래그 조작과 겹치지
    않도록 전용 영역으로 두고, flex 흐름에서는 빼서(absolute) 기존 레이아웃을 안 건드린다. */
+/* 제목 줄에 손잡이가 들어간 경우 — 제목 글자와 중심선을 맞춘다. */
+.modal-title.has-drag-handle { display: flex; align-items: center; gap: 8px; }
+
 .modal-drag-handle {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
   cursor: grab;
-  opacity: 0.4;
-  /* 3×2 점 격자 */
-  background-image: radial-gradient(currentColor 1px, transparent 1.2px);
-  background-size: 5px 5px;
-  background-position: 5px 5px;
+  opacity: 0.45;
+  /* 점 격자 — 제목 글자보다 작아야 손잡이로 읽히고 제목을 밀어내지 않는다. */
+  background-image: radial-gradient(currentColor 0.9px, transparent 1.1px);
+  background-size: 4.5px 4.5px;
+  background-position: 1px 1px;
   background-repeat: repeat;
   color: var(--text-secondary);
 }
-.modal-drag-handle:hover { opacity: 0.85; background-color: var(--btn-tool-hover); }
+.modal-drag-handle:hover { opacity: 0.9; background-color: var(--btn-tool-hover); }
 .modal-drag-handle.is-dragging { cursor: grabbing; opacity: 1; }
+
+/* ----- 창이 뜰 때 -----
+   목표치를 1.2%만 지나쳤다가 되돌아와 멈춘다 — "확 떴다가 자리를 잡는" 느낌만 남기고
+   구경거리가 되지 않을 만큼 짧게(260ms). 연출이 아니라 어디에 무엇이 생겼는지 알리는 장치다.
+   transform이 아니라 scale 속성을 쓰는 이유: 창을 끌어 옮기면 .modal에 인라인
+   transform:translate()가 남는데, transform으로 애니메이션하면 그 위치가 초기화된다. */
+@keyframes modal-pop {
+  0%   { opacity: 0; scale: 0.94; }
+  62%  { opacity: 1; scale: 1.012; }
+  100% { opacity: 1; scale: 1; }
+}
+@keyframes modal-overlay-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.modal-overlay:not([hidden]) { animation: modal-overlay-fade 180ms ease-out; }
+.modal-overlay:not([hidden]) > .modal {
+  animation: modal-pop 260ms cubic-bezier(.2, .9, .25, 1.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay:not([hidden]),
+  .modal-overlay:not([hidden]) > .modal { animation: none; }
+}
 
 /* ----- 참고 문항 창: 최소화된 창이 쌓이는 칩 막대(우하단) -----
    별도 브라우저 창을 접어 두면 여기 남아, 눌러서 다시 열 수 있다. */
@@ -743,12 +771,18 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 20px;
   align-items: flex-start;
 }
+/* 설정 항목 열. 라벨을 왼쪽 고정 열로 옮기면서 240px로는 좁아 폭을 늘렸다.
+   그래도 모달이 화면을 넘지 않도록 이 열 안에서만 스크롤한다 — 종전엔 모달 자체가
+   1180px까지 자라 화면(720px) 밖으로 잘려 나갔다. */
 .defaults-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 240px;
+  width: 330px;
+  flex: none;
+  max-height: min(560px, 70vh);
+  overflow-y: auto;
+  padding-right: 6px;
 }
+/* 이 모달 안에서는 라벨 열을 조금 넓게 — "채우기 명도"·"각도기 눈금"이 들어가야 한다. */
+.defaults-fields .gm-row { grid-template-columns: 104px 1fr; }
 .defaults-preview {
   display: flex;
   flex-direction: column;
@@ -916,7 +950,9 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
-.gm-modal { width: min(760px, 96vw); }
+/* 폭은 여기서만 정한다 — 종전엔 마크업에 인라인 width가 박혀 있어 이 값이 무시됐다.
+   실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
+.gm-modal { width: min(1152px, 96vw); }
 .gm-modal .modal-title { font-size: 18px; }
 .gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
@@ -977,9 +1013,85 @@ body { zoom: var(--ui-zoom, 1); }
   align-items: center; gap: 10px; margin-bottom: 9px;
 }
 .gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+/* display:grid가 브라우저 기본 [hidden]{display:none}을 이겨서, hidden을 걸어도
+   행이 그대로 보였다(빈 칩 행 3개가 남던 원인). 명시적으로 눌러 준다. */
+.gm-row[hidden] { display: none; }
+
+/* 끝 라벨: v_0 정도만 들어가므로 남는 폭을 다 먹지 않게 고정한다(의견 5). */
+.gm-endlabel-in { width: 128px; flex: none; font-family: monospace; }
+
+/* 그래프 요소 스위치 — 좌표 탭의 .gm-variant-seg와 같은 규약(켜진 쪽에 .on). */
+/* 그래프 요소: 제목과 같은 줄에 두고(요구 1) 서로 띄운다(요구 7).
+   붙여 놓으면 세 개가 한 덩어리로 보여 개별 스위치라는 게 안 읽힌다. */
+.gm-elem-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.gm-elem-head .gm-group-h { margin: 0; }
+.gm-elem-btns { display: inline-flex; gap: 10px; }
+.gm-elem-btns button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+.gm-elem-seg { display: inline-flex; }
+.gm-elem-seg button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 11px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-left-width: 0;
+}
+.gm-elem-seg button:first-child { border-left-width: 1px; border-radius: 6px 0 0 6px; }
+.gm-elem-seg button:last-child { border-radius: 0 6px 6px 0; }
+.gm-elem-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-seg button.on {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.gm-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* −/값/＋ 묶음(곡률·앵커 수). 이 둘은 값을 직접 넣는 게 아니라 "한 단계씩 조정"하는
+   조작이라 숫자 입력칸(.gm-step)으로 바꾸지 않았다 — 앵커 ＋는 가장 성긴 구간을
+   나누고 −는 영향이 가장 적은 점을 지우는, 임의의 수를 넣을 수 없는 동작이다.
+   대신 세 조각을 한 덩어리로 붙여 다른 컨트롤과 높이·모서리를 맞춘다. */
+.gm-pm { display: inline-flex; align-items: stretch; height: 30px; }
+.gm-pm button {
+  font: inherit;
+  font-size: 13px;
+  width: 30px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: var(--bg-panel-hover);
+  border: 1px solid var(--border);
+}
+.gm-pm button:first-child { border-radius: 6px 0 0 6px; }
+.gm-pm button:last-child { border-radius: 0 6px 6px 0; }
+.gm-pm button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-pm > span {
+  min-width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
 .gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
-.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }
+.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); white-space: nowrap; }
 .gm-unit { font-size: 12px; color: var(--text-secondary); }
 
 /* 좌표 크기 · 성분 크기: 단위도 범위도 같은 한 쌍이라 한 행에 나란히 놓는다.

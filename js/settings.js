@@ -17,26 +17,26 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=1.0.2";
-import { registerTopMenu } from "./top-menu.js?v=1.0.2";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.0.2";
+} from "./state.js?v=1.1.0";
+import { registerTopMenu } from "./top-menu.js?v=1.1.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.1.0";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=1.0.2";
+} from "./preview-backgrounds.js?v=1.1.0";
 // 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
-import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.0.2";
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.1.0";
 // 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
 // hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
 // localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.
 // importLibraryString은 내부에서 renderLibrary까지 처리하므로 별도 재렌더 호출이 필요 없다(finding 2).
-import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.0.2";
+import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.1.0";
 // 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
-import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.0.2";
+import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.1.0";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -91,7 +91,9 @@ const THEME_KEY = "theme";
 const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
 const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
 const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY];
+const UI_ZOOM_KEY = "5e.uiZoom";                    // 환경 설정: 자유 UI 배율
+const REF_MEMO_KEY = "5e.refmemo";                  // 참고 창의 문항별 메모
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, UI_ZOOM_KEY, REF_MEMO_KEY];
 
 /* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
  * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
@@ -107,6 +109,42 @@ export function applyScreenSize(value) {
   document.documentElement.setAttribute("data-screen", v);
   try { localStorage.setItem(SCREEN_KEY, v); } catch (_) { /* ignore */ }
   return v;
+}
+
+/* ----- 환경 설정: UI 배율 자유 조절 -----
+ * 프리셋(:root[data-screen] → --ui-zoom)이 4단계뿐이라 원하는 크기를 못 맞춘다는
+ * 요구에 따라 자유값을 얹는다. :root의 인라인 스타일은 선택자 규칙보다 우선하므로
+ * 프리셋 CSS를 그대로 둔 채 덮어쓸 수 있다. 값을 지우면 다시 프리셋으로 돌아간다. */
+const ZOOM_KEY = "5e.uiZoom";
+const ZOOM_MIN = 0.60;
+const ZOOM_MAX = 1.40;
+const clampZoom = (n) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(n)));
+
+export function loadUiZoom() {
+  try {
+    const raw = localStorage.getItem(ZOOM_KEY);
+    if (raw == null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? clampZoom(n) : null;
+  } catch (_) { return null; }
+}
+export function applyUiZoom(n) {
+  const v = clampZoom(Number.isFinite(Number(n)) ? n : 1);
+  document.documentElement.style.setProperty("--ui-zoom", String(v));
+  try { localStorage.setItem(ZOOM_KEY, String(v)); } catch (_) { /* ignore */ }
+  return v;
+}
+export function clearUiZoom() {
+  document.documentElement.style.removeProperty("--ui-zoom");
+  try { localStorage.removeItem(ZOOM_KEY); } catch (_) { /* ignore */ }
+}
+/** 지금 실제로 먹고 있는 배율(자유값이 없으면 프리셋 값)을 읽는다. */
+function currentUiZoom() {
+  const free = loadUiZoom();
+  if (free != null) return free;
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--ui-zoom");
+  const n = Number(String(css).trim());
+  return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
@@ -208,43 +246,176 @@ const EXPORT_CHOICES = [
   { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
   { key: SUBJECT_KEY,           label: "과목 선택" },
   { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
+  { key: UI_ZOOM_KEY,           label: "환경 설정 (자유 배율)" },
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
   { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
+  { key: REF_MEMO_KEY,          label: "참고 창 문항별 메모" },
 ];
 
-/* 환경 설정 대화상자: 화면 크기 프리셋 선택(즉시 적용) */
-const SCREEN_OPTS = [
-  { v: "small",  label: "소형",   hint: "작은 노트북·태블릿" },
-  { v: "medium", label: "중형",   hint: "일반 노트북" },
-  { v: "large",  label: "대형",   hint: "데스크톱 모니터 (기본)" },
-  { v: "wide",   label: "와이드", hint: "대형·와이드 모니터" },
+/* ===== 환경 설정 대화상자 (탭) =====
+ * 설정이 늘어나 한 판에 담기 어려워져 탭으로 나눴다. 각 탭은 "이미 있는 기능"을
+ * 제자리에 모으는 것이 원칙 — 여기서 새 설정을 발명하지 않는다. 아직 채울 것이
+ * 없는 탭은 비워 두지 말고 무엇이 들어올지 적어 둔다(빈 탭이 제일 나쁘다).
+ *
+ * 기존 대화상자(오브젝트 설정·백업·복원)는 복제하지 않고 드롭다운의 원래 버튼을
+ * 눌러 재사용한다 — 배선이 한 곳에만 있어야 어긋나지 않는다. */
+const PREF_TABS = [
+  { id: "screen",  label: "화면" },
+  { id: "tools",   label: "편집 도구" },
+  { id: "storage", label: "저장" },
+  { id: "library", label: "라이브러리" },
+  { id: "advanced",label: "고급" },
 ];
-function openScreenDialog() {
-  const cur = loadScreenSize();
+
+function prefStyles() {
+  return `
+    .pref-modal { width:min(560px, calc(100vw - 32px)); }
+    .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
+    .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
+                padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
+                font:600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+    .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
+    .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
+    .pref-panel { display:none; min-height:180px; }
+    .pref-panel.is-on { display:block; }
+    .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .pref-row .modal-label { margin:0; flex:0 0 auto; }
+    .pref-zoom { flex:1 1 auto; }
+    .pref-zoom-val { flex:0 0 52px; text-align:right; font:600 12px/1 "IBM Plex Mono",monospace;
+                     color:var(--text-primary); }
+    .pref-note { margin:0 0 12px; font-size:12px; line-height:1.6; color:var(--text-secondary); }
+    .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
+                 font-size:12px; line-height:1.6; color:var(--text-secondary); }
+  `;
+}
+
+function openPreferencesDialog() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
+  const zoom0 = currentUiZoom();
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
-      <h2 class="modal-title">환경 설정</h2>
-      <p class="objectify-description" style="margin:0 0 10px;">
-        화면 크기에 맞춰 글씨와 도구 패널의 크기를 조정합니다. 선택하면 바로 적용됩니다.</p>
-      ${SCREEN_OPTS.map((o) => `
-        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
-          <input type="radio" name="screen-size" value="${o.v}" ${o.v === cur ? "checked" : ""} />
-          <span class="modal-label" style="margin:0;">${o.label}
-            <span style="color:var(--text-secondary);font-weight:400;">· ${o.hint}</span></span>
-        </label>`).join("")}
+    <div class="modal pref-modal" role="dialog" aria-modal="true" aria-labelledby="pref-title">
+      <style>${prefStyles()}</style>
+      <h2 class="modal-title" id="pref-title">환경 설정</h2>
+      <div class="pref-tabs" role="tablist">
+        ${PREF_TABS.map((t, i) => `<button type="button" class="pref-tab${i === 0 ? " is-on" : ""}"
+           role="tab" data-tab="${t.id}" aria-selected="${i === 0}">${t.label}</button>`).join("")}
+      </div>
+
+      <section class="pref-panel is-on" data-panel="screen" role="tabpanel">
+        <p class="pref-note">글씨와 도구 패널의 크기를 한꺼번에 키우거나 줄입니다. 움직이는 즉시 적용됩니다.</p>
+        <div class="pref-row">
+          <span class="modal-label">화면 크기</span>
+          <input id="pref-zoom" class="pref-zoom" type="range" min="60" max="140" step="1"
+                 value="${Math.round(zoom0 * 100)}" />
+          <output class="pref-zoom-val" id="pref-zoom-val">${Math.round(zoom0 * 100)}%</output>
+        </div>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
+        </div>
+        <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
+      </section>
+
+      <section class="pref-panel" data-panel="tools" role="tabpanel">
+        <p class="pref-note">새로 만드는 오브젝트에 적용될 기본값입니다 — 선 굵기, 글꼴과 글씨 크기,
+          격자·자·각도기 눈금 간격 등을 정합니다.</p>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn modal-btn-primary" id="pref-open-defaults">오브젝트 설정 열기</button>
+        </div>
+        <p class="pref-note">여기서 정한 값은 이미 만들어 둔 오브젝트에는 영향을 주지 않습니다.</p>
+      </section>
+
+      <section class="pref-panel" data-panel="storage" role="tabpanel">
+        <p class="pref-note">개인 설정·퍼스널 라이브러리·현재 작업을 한 파일로 묶어 백업하고,
+          다른 PC에서 그 파일로 복원합니다.</p>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn modal-btn-primary" id="pref-export">전체 저장 (백업)</button>
+          <button type="button" class="modal-btn" id="pref-import">불러오기 (복원)</button>
+        </div>
+      </section>
+
+      <section class="pref-panel" data-panel="library" role="tabpanel">
+        <p class="pref-note">기출 문항 참고 창에 적어 둔 <b>문항별 메모</b>는 이 브라우저에 보관됩니다.
+          같은 문항을 다시 열면 메모가 그대로 나옵니다.</p>
+        <div class="pref-row">
+          <span class="modal-label">저장된 메모</span>
+          <span id="pref-memo-count" class="pref-zoom-val" style="flex:0 0 auto;">0개</span>
+        </div>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn" id="pref-memo-clear">문항별 메모 전체 지우기</button>
+        </div>
+        <p class="pref-note">메모는 백업 파일에도 함께 저장됩니다.</p>
+      </section>
+
+      <section class="pref-panel" data-panel="advanced" role="tabpanel">
+        <p class="pref-soon">아직 비어 있는 탭입니다. 단축키 바꾸기, 이미지 객체화의 기본 인식값,
+          실험 기능 켜기가 여기로 들어올 예정입니다. 지금은 단축키 설정이 준비 중이라
+          옮길 것이 없습니다.</p>
+      </section>
+
       <div class="modal-actions">
-        <button type="button" class="modal-btn modal-btn-primary" id="scr-close">닫기</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="pref-close">닫기</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
+
   const close = () => overlay.remove();
-  overlay.querySelector("#scr-close").addEventListener("click", close);
+  overlay.querySelector("#pref-close").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
-  overlay.querySelectorAll('input[name="screen-size"]').forEach((radio) => {
-    radio.addEventListener("change", () => { if (radio.checked) applyScreenSize(radio.value); });
+
+  // --- 탭 전환 ---
+  const tabs = [...overlay.querySelectorAll(".pref-tab")];
+  const panels = [...overlay.querySelectorAll(".pref-panel")];
+  tabs.forEach((tab) => tab.addEventListener("click", () => {
+    tabs.forEach((t) => { const on = t === tab; t.classList.toggle("is-on", on); t.setAttribute("aria-selected", String(on)); });
+    panels.forEach((p) => p.classList.toggle("is-on", p.dataset.panel === tab.dataset.tab));
+  }));
+
+  // --- 화면: 자유 배율 ---
+  const zoomInput = overlay.querySelector("#pref-zoom");
+  const zoomOut = overlay.querySelector("#pref-zoom-val");
+  zoomInput.addEventListener("input", () => {
+    const pct = Number(zoomInput.value);
+    zoomOut.textContent = `${pct}%`;
+    applyUiZoom(pct / 100);
+  });
+  overlay.querySelector("#pref-zoom-reset").addEventListener("click", () => {
+    clearUiZoom();
+    const back = Math.round(currentUiZoom() * 100);
+    zoomInput.value = String(back);
+    zoomOut.textContent = `${back}%`;
+  });
+
+  // --- 다른 대화상자는 드롭다운의 원래 버튼을 눌러 재사용한다(배선 중복 방지) ---
+  const relay = (btnId, targetId) => {
+    const btn = overlay.querySelector(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(targetId);
+      close();
+      if (target) target.click();
+    });
+  };
+  relay("#pref-open-defaults", "open-defaults");
+  relay("#pref-export", "settings-export");
+  relay("#pref-import", "settings-import");
+
+  // --- 라이브러리: 문항별 메모 개수 + 전체 삭제 ---
+  const countEl = overlay.querySelector("#pref-memo-count");
+  const readMemoCount = () => {
+    try { return Object.keys(JSON.parse(localStorage.getItem(REF_MEMO_KEY)) || {}).length; }
+    catch (_) { return 0; }
+  };
+  countEl.textContent = `${readMemoCount()}개`;
+  overlay.querySelector("#pref-memo-clear").addEventListener("click", async () => {
+    if (readMemoCount() === 0) return;
+    const ok = await showConfirm("문항별 메모를 모두 지울까요? 되돌릴 수 없습니다.",
+      { title: "메모 전체 삭제", okText: "지우기", cancelText: "취소" });
+    if (!ok) return;
+    try { localStorage.removeItem(REF_MEMO_KEY); } catch (_) { /* ignore */ }
+    countEl.textContent = "0개";
   });
 }
 function openExportDialog() {
@@ -520,89 +691,101 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
       <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
-      <p class="defaults-notice">자·각도기 눈금 간격은 즉시 반영됩니다. 그 외 값은 저장은
-        되지만 새 도형 생성·격자 표시에는 아직 반영되지 않습니다(다음 업데이트에서 적용 예정).</p>
 
       <div class="defaults-body">
         <div class="defaults-fields">
-          <label class="modal-field" for="defaults-stroke-width">
-            <span class="modal-label">기본 선 굵기 (mm)</span>
-            <input type="number" id="defaults-stroke-width" class="modal-input"
-                   step="0.1" min="0.1" max="0.5" autocomplete="off" />
-          </label>
+          <!-- 반복되던 "기본 …" 접두어는 묶음 제목으로 올렸다(DESIGN 13-1).
+               라벨을 입력칸 위가 아니라 왼쪽 고정 열에 두어 행 높이를 절반으로 줄인다 —
+               종전엔 11개가 한 열에 세로로 쌓여 모달이 화면보다 460px 길었다. -->
+          <div class="gm-group">
+            <p class="gm-group-h">선 · 채움</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 굵기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-width" step="0.1" min="0.1" max="0.5" autocomplete="off" aria-label="기본 선 굵기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 선 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">채우기 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-fill-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 채우기 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-stroke-level">
-            <span class="modal-label">기본 선 명도 (0-255)</span>
-            <input type="number" id="defaults-stroke-level" class="modal-input"
-                   min="0" max="255" step="1" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">글자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글자 크기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-text-size" step="0.1" min="0" autocomplete="off" aria-label="기본 글자 크기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글씨체</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">굵기</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
+              </div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-fill-level">
-            <span class="modal-label">기본 채우기 명도 (0-255)</span>
-            <input type="number" id="defaults-fill-level" class="modal-input"
-                   min="0" max="255" step="1" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">격자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">시작 시 표시</span>
+              <div class="gm-row-body">
+                <label class="gm-check" for="defaults-grid-visible">
+                  <input type="checkbox" id="defaults-grid-visible" /> 켜기
+                </label>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">진하기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-opacity" min="1" max="10" step="1" autocomplete="off" aria-label="격자 진하기"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">1–10</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">간격</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-interval" min="5" max="50" step="5" autocomplete="off" aria-label="격자 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+          </div>
 
-          <label class="modal-field" for="defaults-text-size">
-            <span class="modal-label">기본 글자 크기 (mm)</span>
-            <input type="number" id="defaults-text-size" class="modal-input"
-                   step="0.1" min="0" autocomplete="off" />
-          </label>
+          <div class="gm-group">
+            <p class="gm-group-h">자 · 각도기</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">자 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-ruler-tick" min="1" max="50" step="1" autocomplete="off" aria-label="자 눈금 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">각도기 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-protractor-tick" min="1" max="45" step="1" autocomplete="off" aria-label="각도기 눈금 간격 (도)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">°</span></div>
+            </div>
+            <!-- 안내는 해당하는 자리에만 둔다(DESIGN 13-3). 종전엔 모달 맨 위에
+                 모든 항목에 대한 주의문이 늘 떠 있어 읽히지 않았다. -->
+            <p class="gm-ax-note">이 두 값만 지금 놓인 자·각도기에 바로 반영됩니다.
+              나머지는 저장되지만 새 도형·격자에는 아직 적용되지 않습니다.</p>
+          </div>
 
-          <label class="modal-field" for="defaults-text-font">
-            <span class="modal-label">기본 글씨체</span>
-            <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
-          </label>
-
-          <label class="modal-field" for="defaults-text-style">
-            <span class="modal-label">기본 글자 스타일 (굵기)</span>
-            <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
-          </label>
-
-          <label class="modal-field modal-field-row" for="defaults-grid-visible">
-            <input type="checkbox" id="defaults-grid-visible" />
-            <span class="modal-label">앱 시작 시 격자 표시</span>
-          </label>
-
-          <label class="modal-field" for="defaults-grid-opacity">
-            <span class="modal-label">격자 진하기 (1-10)</span>
-            <input type="number" id="defaults-grid-opacity" class="modal-input"
-                   min="1" max="10" step="1" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-grid-interval">
-            <span class="modal-label">격자 간격 (mm)</span>
-            <input type="number" id="defaults-grid-interval" class="modal-input"
-                   min="5" max="50" step="5" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-ruler-tick">
-            <span class="modal-label">자 눈금 간격 (mm)</span>
-            <input type="number" id="defaults-ruler-tick" class="modal-input"
-                   min="1" max="50" step="1" autocomplete="off" />
-          </label>
-
-          <label class="modal-field" for="defaults-protractor-tick">
-            <span class="modal-label">각도기 눈금 간격 (°)</span>
-            <input type="number" id="defaults-protractor-tick" class="modal-input"
-                   min="1" max="45" step="1" autocomplete="off" />
-          </label>
-
-          <div class="defaults-pbg">
-            <span class="modal-label">인쇄 비교 이미지</span>
-            <p class="defaults-pbg-desc">실제 인쇄해 본 시험지 이미지를 등록하면,
-              '이미지로 내보내기 → 미리보기'에서 배경으로 골라 크기를 비교할 수 있습니다.</p>
-            <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
-            <div class="defaults-pbg-form">
-              <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
-              <div class="defaults-pbg-row">
-                <input type="text" id="defaults-pbg-name" class="modal-input"
-                       placeholder="이름(선택)" maxlength="40" autocomplete="off" />
-                <input type="number" id="defaults-pbg-w" class="modal-input"
-                       placeholder="가로 mm" min="1" step="1" autocomplete="off" />
-                <input type="number" id="defaults-pbg-h" class="modal-input"
-                       placeholder="세로 mm" min="1" step="1" autocomplete="off" />
-                <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+          <div class="gm-group">
+            <p class="gm-group-h">인쇄 비교 이미지</p>
+            <div class="defaults-pbg">
+              <p class="defaults-pbg-desc">실제 인쇄한 시험지를 등록하면 '이미지로 내보내기 →
+                미리보기'에서 배경으로 골라 크기를 견줘 볼 수 있습니다.</p>
+              <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
+              <div class="defaults-pbg-form">
+                <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
+                <div class="defaults-pbg-row">
+                  <input type="text" id="defaults-pbg-name" class="modal-input"
+                         placeholder="이름(선택)" maxlength="40" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-w" class="modal-input"
+                         placeholder="가로 mm" min="1" step="1" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-h" class="modal-input"
+                         placeholder="세로 mm" min="1" step="1" autocomplete="off" />
+                  <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+                </div>
               </div>
             </div>
           </div>
@@ -634,7 +817,10 @@ export function initSettings(state) {
   // 환경 설정(화면 크기): 저장값을 즉시 적용 + 드롭다운 항목 배선
   applyScreenSize(loadScreenSize());
   const screenBtn = document.getElementById("open-screen");
-  if (screenBtn) screenBtn.addEventListener("click", openScreenDialog);
+  if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
+  // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
+  const savedZoom = loadUiZoom();
+  if (savedZoom != null) applyUiZoom(savedZoom);
 
   const overlay = buildModal();
   const fields = {
@@ -793,7 +979,7 @@ export function initSettings(state) {
 
   // Cancel / overlay-click / Escape close without saving.
   overlay.querySelector("#defaults-cancel").addEventListener("click", hideModal);
-  // click이 아닌 mousedown: 다른 모달(openScreenDialog 등)과 동일 패턴 —
+  // click이 아닌 mousedown: 다른 모달(openPreferencesDialog 등)과 동일 패턴 —
   // 입력칸 안에서 드래그 선택 후 오버레이 위에서 mouseup되면 click이 오버레이
   // 타겟으로 잡혀 실수로 닫히는 것을 막는다.
   overlay.addEventListener("mousedown", (e) => {

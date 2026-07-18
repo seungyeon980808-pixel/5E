@@ -19,7 +19,7 @@
 // preserveGrayLevels:false 또는 톤이 실제로 단일한 이미지는 기존 단일-Otsu
 // 경로(vectorizeSingleLevel)로 정확히 폴백한다. */
 
-import { extractStrokes } from "./image-line-extract.js?v=1.0.2";
+import { extractStrokes } from "./image-line-extract.js?v=1.1.0";
 
 /* ===== 1. OTSU BINARIZE ===== */
 // imageData: {width, height, data(RGBA)}. Caller must have composited the
@@ -1482,7 +1482,7 @@ export function vectorizeImage(imageData, options = {}) {
   const {
     dilateRadius = 3,
     minArea = 25,
-    textSizePx = 22,
+    textSizePx = 55,
     epsilon = 1.2,
     removeGrid = false,
     preserveGrayLevels = true,

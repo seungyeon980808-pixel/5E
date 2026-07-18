@@ -18,10 +18,10 @@ import {
   catmullRomPath,
   applyDash,
   makeArrowHead,
-} from "./core.js?v=1.0.2";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.0.2";
-import { renderGraphLabel } from "./graph-label.js?v=1.0.2";
-import { renderPolyline } from "./shapes.js?v=1.0.2";
+} from "./core.js?v=1.1.0";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.1.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.1.0";
+import { renderPolyline } from "./shapes.js?v=1.1.0";
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
 function baselineToVAlign(b) {
@@ -68,6 +68,13 @@ function fmtTick(v) {
 function tickRange(lo, hi, step) {
   const s = Math.abs(step) > 1e-9 ? Math.abs(step) : 1;
   return { kStart: Math.ceil(lo / s - 1e-9), kEnd: Math.floor(hi / s + 1e-9), step: s };
+}
+
+/* 표시점 반지름 = 선 굵기 연동. 미리보기 고스트(graph-modal)와 실제 렌더가 같은 값을
+   써야 "찍기 전 ≠ 찍은 뒤"로 어긋나지 않는다 — 상수를 양쪽에 두었다가 실제로 어긋났다. */
+function markerRadius(strokeWidth) {
+  const sw = Number.isFinite(strokeWidth) ? strokeWidth : 0.4;
+  return Math.max(sw * 1.465, 0.564);
 }
 
 function renderCoordplane(obj) {
@@ -606,11 +613,13 @@ function renderFuncgraph(obj) {
     if (!m) return;
     const c = document.createElementNS(SVG_NS, "circle");
     c.setAttribute("cx", m.x); c.setAttribute("cy", m.y);
-    c.setAttribute("r", obj.markerSize || Math.max(gsw * 1.82, 0.7)); // 요구: 종전 대비 30%↓
+    // 선 굵기(gsw)에 비례. 계수·하한을 다시 30% 줄였다(요구) — graph-modal의
+    // markerRadiusOf와 같은 식이어야 "찍기 전 미리보기 = 찍은 뒤"가 어긋나지 않는다.
+    c.setAttribute("r", obj.markerSize || markerRadius(gsw));
     c.setAttribute("fill", gc); c.setAttribute("stroke", "none");
     g.appendChild(c);
   });
   return g;
 }
 
-export { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts };
+export { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius };

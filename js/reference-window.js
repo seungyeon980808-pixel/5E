@@ -6,8 +6,9 @@
  *   창 밖으로 못 나가서 결국 5E와 같은 화면을 나눠 쓰게 된다. 별도 창이라야 다른
  *   모니터로 끌어다 놓을 수 있다.
  *
- * 저장 정책: 세션 한정. 프로젝트 파일에 남기지 않는다(작업 중 참고용이라는 성격).
- *   새로고침하면 사라진다.
+ * 저장 정책: 창(어떤 문항을 띄웠는지)은 세션 한정 — 새로고침하면 사라진다.
+ *   반면 메모는 문항별로 localStorage에 영구 보관한다. 같은 기출을 다음에 다시 열면
+ *   적어 둔 메모가 그대로 나온다. 프로젝트 파일에는 넣지 않는다(개인 메모라서).
  *
  * 소속(종속): 항목은 아트보드 페이지(하단 탭) 단위로 묶인다. 탭을 바꾸면 그 페이지에
  *   속한 참고 창 칩만 보인다. 창 자체는 OS 창이라 페이지를 바꿔도 닫지 않는다 —
@@ -18,13 +19,29 @@
  *   삭제        → 확인을 거쳐 칩까지 없앤다.
  */
 
-import { showConfirm } from "./ui-dialogs.js?v=1.0.2";
-import { makeModalDraggable } from "./modal-drag.js?v=1.0.2";
+import { showConfirm } from "./ui-dialogs.js?v=1.1.0";
+import { makeModalDraggable } from "./modal-drag.js?v=1.1.0";
 
 const IMG_BASE = "assets/exam-library/images/";
 
+/* 문항별 메모는 창이 아니라 "문항"에 딸린다 — 같은 기출을 다음에 다시 열어도 남아야
+   하기 때문. 기출 문항은 manifest의 item.id(예: b1_2027_06_01)가 안정적인 열쇠다.
+   저장 위치는 localStorage: 프로젝트 파일과 무관한 개인 메모라 저장 형식을 건드리지
+   않고, 브라우저에 남아 새로고침·창 닫기를 견딘다. */
+const MEMO_KEY = "5e.refmemo";
+
+function loadMemos() {
+  try { return JSON.parse(localStorage.getItem(MEMO_KEY)) || {}; } catch { return {}; }
+}
+function getMemo(itemKey) { return loadMemos()[itemKey] || ""; }
+function setMemo(itemKey, text) {
+  const all = loadMemos();
+  if (text && text.trim()) all[itemKey] = text; else delete all[itemKey];
+  try { localStorage.setItem(MEMO_KEY, JSON.stringify(all)); } catch { /* 용량 초과는 무시 */ }
+}
+
 let _seq = 0;
-const _entries = [];          // { id, pageId, items[], memo, win }
+const _entries = [];          // { id, pageId, items[], win }
 let _dock = null;             // 최소화된 참고 창 칩이 쌓이는 막대
 let _getPageId = () => "";    // main이 주입 — 현재 아트보드 페이지 id
 
@@ -70,44 +87,67 @@ function gridTemplate(n) {
   return { cols: 2, rows: 2 };
 }
 
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+/* 창의 겉모습은 5E 본 화면과 같아야 한다(사용자 요구). 색·글꼴 토큰을 손으로 베끼면
+   본 화면 테마가 바뀔 때마다 어긋나므로, 앱 스타일시트를 그대로 링크해 토큰을
+   물려받고 창 전용 레이아웃만 그 뒤에 덧붙인다. about:blank는 opener와 같은 출처라
+   상대경로가 5E 기준으로 풀린다(이미지 경로가 이미 그렇게 동작 중). */
 function windowMarkup(entry) {
   const g = gridTemplate(entry.items.length);
+  const cells = entry.items.map((it) => {
+    const key = esc(it.id || it.file);
+    const cap = esc(it.title || "");
+    return `<figure class="refcell" data-item="${key}">
+      <div class="refshot"><img alt="" src="${IMG_BASE}${esc(it.file)}"></div>
+      <figcaption class="refcap" title="${cap}">${cap}</figcaption>
+      <textarea class="refmemo" data-item="${key}" rows="2"
+                placeholder="이 문항 메모 — 문항별로 저장되어 다음에 다시 열어도 남습니다."></textarea>
+    </figure>`;
+  }).join("");
+
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8">
 <title>참고 문항 · 5E</title>
+<link rel="stylesheet" href="css/style.css?v=1.1.0">
 <style>
-  :root { color-scheme: light dark; }
+  /* 앱 스타일시트 뒤에 와서 본문 레이아웃만 덮어쓴다. */
   * { box-sizing: border-box; }
-  body { margin:0; height:100vh; display:flex; flex-direction:column;
-         font-family:"IBM Plex Sans KR",system-ui,sans-serif; background:#f6f8fa; color:#0d1117; }
-  @media (prefers-color-scheme: dark) { body { background:#0d1117; color:#e6edf3; } }
-  header { display:flex; align-items:center; gap:8px; padding:6px 10px;
-           border-bottom:1px solid #d0d7de; flex:none; }
-  header .title { font-size:13px; font-weight:600; margin-right:auto; }
-  header button { font:inherit; font-size:12px; padding:4px 10px; cursor:pointer;
-                  border:1px solid #d0d7de; border-radius:6px; background:transparent; color:inherit; }
-  header button:hover { background:#0969da; border-color:#0969da; color:#fff; }
-  header button.danger:hover { background:#cf222e; border-color:#cf222e; }
-  .grid { flex:1; display:grid; gap:6px; padding:6px; min-height:0;
-          grid-template-columns:repeat(${g.cols},1fr); grid-template-rows:repeat(${g.rows},1fr); }
-  .cell { border:1px solid #d0d7de; border-radius:6px; background:#fff; overflow:hidden;
-          display:flex; align-items:center; justify-content:center; }
-  .cell img { max-width:100%; max-height:100%; object-fit:contain; }
-  .memo { flex:none; border-top:1px solid #d0d7de; padding:6px; }
-  .memo textarea { width:100%; height:84px; resize:vertical; font:inherit; font-size:13px;
-                   padding:6px 8px; border:1px solid #d0d7de; border-radius:6px;
-                   background:transparent; color:inherit; }
+  html, body { height:100%; }
+  body { margin:0; display:flex; flex-direction:column; overflow:hidden;
+         font-family:"IBM Plex Sans KR",system-ui,sans-serif;
+         background:var(--bg-app,#f6f8fa); color:var(--text-primary,#0d1117); }
+  .refhead { display:flex; align-items:center; gap:6px; flex:none;
+             padding:7px 10px; border-bottom:1px solid var(--c-border,#d0d7de);
+             background:var(--bg-panel,#fff); }
+  .refhead .title { font-size:13px; font-weight:600; margin-right:auto;
+                    color:var(--text-primary,#0d1117); }
+  .refgrid { flex:1; display:grid; gap:8px; padding:8px; min-height:0;
+             grid-template-columns:repeat(${g.cols},1fr); grid-template-rows:repeat(${g.rows},1fr); }
+  .refcell { margin:0; min-height:0; display:flex; flex-direction:column; gap:5px;
+             padding:7px; border:1px solid var(--c-border,#d0d7de); border-radius:8px;
+             background:var(--bg-panel,#fff); }
+  .refshot { flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
+             background:#fff; border-radius:5px; overflow:hidden; }
+  .refshot img { max-width:100%; max-height:100%; object-fit:contain; }
+  .refcap { flex:none; font-size:11px; color:var(--text-secondary,#57606a);
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .refmemo { flex:none; width:100%; resize:vertical; font:inherit; font-size:12.5px;
+             padding:5px 7px; border:1px solid var(--c-border,#d0d7de); border-radius:6px;
+             background:var(--bg-input,transparent); color:inherit; }
+  .refmemo:focus { outline:none; border-color:var(--accent,#0969da); }
+  .refmemo.is-saved { border-color:var(--accent,#0969da); }
 </style></head><body>
-<header>
+<header class="refhead">
   <span class="title">참고 문항 ${entry.items.length}개</span>
-  <button type="button" id="btn-min" title="창만 닫고 5E의 칩으로 접어 둡니다">× 접기</button>
-  <button type="button" id="btn-del" class="danger" title="이 참고 창을 완전히 없앱니다">삭제</button>
+  <button type="button" id="btn-min" class="modal-btn"
+          title="창만 닫고 5E의 칩으로 접어 둡니다">× 접기</button>
+  <button type="button" id="btn-del" class="modal-btn"
+          title="이 참고 창을 완전히 없앱니다">삭제</button>
 </header>
-<div class="grid">
-  ${entry.items.map((it) => `<div class="cell"><img alt="" src="${IMG_BASE}${it.file}"></div>`).join("")}
-</div>
-<div class="memo">
-  <textarea id="memo" placeholder="문항 제작 메모 — 이 창에만 남고 저장 파일에는 들어가지 않습니다."></textarea>
-</div>
+<div class="refgrid">${cells}</div>
 </body></html>`;
 }
 
@@ -130,20 +170,29 @@ function openWindow(entry) {
   w.document.write(windowMarkup(entry));
   w.document.close();
 
+  // 본 화면의 테마·과목 속성을 자식 문서에 복사한다 — 링크한 style.css의 색 토큰이
+  // :root의 data-* 로 갈리기 때문. 이게 없으면 스타일시트를 링크해도 색이 안 맞는다.
+  const root = document.documentElement;
+  for (const a of root.attributes) {
+    if (a.name.startsWith("data-")) w.document.documentElement.setAttribute(a.name, a.value);
+  }
+
   // 같은 출처라 자식 문서를 직접 만질 수 있다 — postMessage 배선이 필요 없다.
-  const memo = w.document.getElementById("memo");
-  memo.value = entry.memo || "";
-  memo.addEventListener("input", () => { entry.memo = memo.value; });
+  w.document.querySelectorAll(".refmemo").forEach((ta) => {
+    const key = ta.dataset.item;
+    ta.value = getMemo(key);
+    ta.addEventListener("input", () => setMemo(key, ta.value));
+  });
 
   w.document.getElementById("btn-min").addEventListener("click", () => {
-    entry.memo = memo.value;
     w.close();
     renderDock();
   });
   w.document.getElementById("btn-del").addEventListener("click", async () => {
     // 확인 창은 5E 본 창에 띄운다 — 자식 창에 모달 인프라를 복제하지 않기 위해.
     w.blur(); window.focus();
-    const ok = await showConfirm("이 참고 창을 삭제할까요? 메모도 함께 사라집니다.",
+    // 메모는 문항에 딸려 있으므로 창을 지워도 남는다 — 문구를 그에 맞게 고쳤다.
+    const ok = await showConfirm("이 참고 창을 삭제할까요? 문항별 메모는 그대로 남습니다.",
       { title: "참고 창 삭제", okText: "삭제", cancelText: "취소" });
     if (!ok) { w.focus(); return; }
     removeEntry(entry);
@@ -170,7 +219,7 @@ function removeEntry(entry) {
 function openReferenceWindow(items) {
   const list = (items || []).slice(0, 4);
   if (!list.length) return null;
-  const entry = { id: ++_seq, pageId: _getPageId(), items: list, memo: "", win: null };
+  const entry = { id: ++_seq, pageId: _getPageId(), items: list, win: null };
   _entries.push(entry);
   return openWindow(entry);
 }

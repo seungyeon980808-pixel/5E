@@ -11,10 +11,11 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=1.0.2";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.0.2";
+import { insertImageFromSrc } from "./image-paste.js?v=1.1.0";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.1.0";
 
-import { openReferenceWindow } from "./reference-window.js?v=1.0.2";
+import { openReferenceWindow } from "./reference-window.js?v=1.1.0";
+import { setOpenOrigin } from "./modal-motion.js?v=1.1.0";
 const LIB_BASE = "assets/exam-library/";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
@@ -168,8 +169,8 @@ function buildModal() {
       <div class="examlib-toolbar">
         <div class="examlib-selected-actions">
           <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
-          <button id="examlib-objectify" type="button" class="modal-btn" disabled>오브젝트 변환</button>
-          <button id="examlib-refwin" type="button" class="modal-btn" disabled
+          <button id="examlib-objectify" type="button" class="modal-btn modal-btn-primary" disabled>오브젝트 변환</button>
+          <button id="examlib-refwin" type="button" class="modal-btn modal-btn-primary" disabled
                   title="선택한 문항을 별도 창으로 띄웁니다 (듀얼 모니터용)">참고 창 열기</button>
         </div>
       </div>
@@ -459,8 +460,10 @@ export function initExamLibrary(state) {
   }
 
   /* ----- open/close ----- */
-  const openLibrary = () => {
+  const openLibrary = (trigger) => {
     overlay.hidden = false;
+    // 누른 버튼 자리에서 창이 자라나게 — 기본(가운데)보다 인과가 분명하다.
+    setOpenOrigin(overlay.querySelector(".modal"), trigger || openButton);
     if (!manifest) loadManifest();
     else {
       populateSubjectOptions(); // 과목 모드가 바뀌었을 수 있으니 열 때마다 재구성
@@ -468,7 +471,7 @@ export function initExamLibrary(state) {
     }
     subjectSelect.focus();
   };
-  openButton.addEventListener("click", openLibrary);
+  openButton.addEventListener("click", () => openLibrary(openButton));
   // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.key.toLowerCase() !== "f") return;
