@@ -953,6 +953,125 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-spinnum:hover::-webkit-inner-spin-button,
 .gm-spinnum:focus::-webkit-inner-spin-button { opacity: 1; }
 .gm-spinnum:disabled::-webkit-inner-spin-button { opacity: 0.15; } /* 비활성과 확실히 구분 */
+
+/* ===== 좌표 탭 레이아웃 (UI 개선) =====
+   라벨 열을 92px로 고정해 입력칸이 한 줄로 정렬되게 하고(인스펙터 .insp-line-grid와 같은
+   사고), 관련 항목을 그룹으로 묶어 위계를 만든다. 핵심은 '축 표'(.gm-axis-grid) —
+   x·y를 열로 세워 칸 개수·한 칸 값·축 이름이 같은 세로줄에 계열로 쌓인다. */
+.gm-group { margin-bottom: 16px; }
+.gm-group + .gm-group { border-top: 1px solid var(--border); padding-top: 14px; }
+.gm-group-h {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+  color: var(--text-secondary); margin-bottom: 11px; text-transform: uppercase;
+}
+.gm-row {
+  display: grid; grid-template-columns: 92px 1fr;
+  align-items: center; gap: 10px; margin-bottom: 9px;
+}
+.gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+.gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gm-checks { flex-wrap: wrap; gap: 8px 18px; }
+.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }
+.gm-unit { font-size: 12px; color: var(--text-secondary); }
+.gm-sep { color: var(--text-secondary); font-size: 12px; }
+
+/* 축 표: [라벨 92px][x열][y열] */
+.gm-axis-grid {
+  display: grid; grid-template-columns: 92px 1fr 1fr;
+  align-items: center; gap: 9px 14px;
+}
+.gm-ax-head {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding-bottom: 2px; border-bottom: 1px solid var(--border);
+}
+.gm-ax-head i { font: italic 700 13px "Times New Roman", serif; }
+.gm-ax-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+.gm-ax-cell { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.gm-ax-note {
+  grid-column: 2 / -1;
+  font-size: 11.5px; color: var(--text-secondary); margin-top: -2px;
+}
+
+/* 스테퍼: ▲▼를 입력칸 오른쪽에 세로로 몰아 가로 폭을 아끼고(양옆에 두면 칸이 넓어져
+   축 표가 넘친다), 대신 칸 높이를 키워 버튼 타겟을 확보한다. 24×18px로 네이티브
+   스핀(13×9)보다 3배 넓어 0.1씩 반복해 누르기 쉽다. */
+.gm-step {
+  display: inline-flex; align-items: stretch; flex: none;
+  height: 36px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg-input); overflow: hidden;
+}
+.gm-step input {
+  width: 48px; padding: 0 4px; border: 0; border-radius: 0;
+  background: transparent; color: var(--text-primary);
+  font: inherit; font-size: 13.5px; text-align: center; outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.gm-step input:focus { background: var(--bg-panel-hover); }
+.gm-step-btns {
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+.gm-step-btns button {
+  flex: 1; width: 24px; padding: 0; border: 0;
+  display: grid; place-items: center;
+  background: transparent; color: var(--text-secondary);
+  font: inherit; font-size: 9px; line-height: 1; cursor: pointer;
+}
+.gm-step-btns button + button { border-top: 1px solid var(--border); }
+.gm-step-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+/* 스테퍼 안에서는 네이티브 스핀이 중복이라 감춘다 */
+.gm-step input::-webkit-inner-spin-button,
+.gm-step input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.gm-step input[type="number"] { -moz-appearance: textfield; }
+/* 잠긴 칸은 칸 전체를 흐리게 — 왜 못 쓰는지 .gm-ax-note가 설명한다 */
+.gm-step:has(input:disabled) { opacity: 0.45; }
+.gm-step:has(input:disabled) button { cursor: not-allowed; }
+
+/* 모양 세그먼트: 드롭다운(클릭 2번, 폭도 늘어짐) 대신 세 모양을 한 줄에 펼친다.
+   미니 축 아이콘이 글자보다 먼저 읽힌다. */
+.gm-variant-seg {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px; flex: 1;
+}
+.gm-variant-seg button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 36px; padding: 0 4px;
+  font: inherit; font-size: 12.5px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-input); color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap;
+}
+.gm-variant-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-variant-seg button.on {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-input));
+  border-color: var(--accent); color: var(--accent);
+}
+.gm-variant-seg svg {
+  width: 15px; height: 15px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* 원점 표기 0 / O 세그먼트 */
+.gm-origin-seg {
+  display: inline-flex; flex: none;
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+.gm-origin-seg button {
+  font: 600 13px "Times New Roman", serif; padding: 0;
+  width: 30px; height: 26px; border: 0;
+  background: var(--bg-input); color: var(--text-secondary); cursor: pointer;
+}
+.gm-origin-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-origin-seg button.on { background: var(--accent); color: #fff; }
+.gm-origin-seg button:last-child { font-style: italic; }
+
+/* 눈금 라벨 종류: 글자 수와 무관하게 균등폭 */
+/* minmax(0,1fr) — 그냥 1fr이면 가장 긴 라벨의 최소너비에 밀려 한 칸만 넓어진다 */
+#gm-tickmode { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; flex: 1; }
+#gm-tickmode button { white-space: nowrap; text-align: center; }
 /* 물음표 도움말 배지 — 설명은 커서를 올리면 뜨는 title 툴팁으로 */
 .gm-help {
   display: inline-flex; align-items: center; justify-content: center;
