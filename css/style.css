@@ -1007,6 +1007,31 @@ body { zoom: var(--ui-zoom, 1); }
   align-items: center; gap: 10px; margin-bottom: 9px;
 }
 .gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+
+/* 끝 라벨: v_0 정도만 들어가므로 남는 폭을 다 먹지 않게 고정한다(의견 5). */
+.gm-endlabel-in { width: 128px; flex: none; font-family: monospace; }
+
+/* 그래프 요소 스위치 — 좌표 탭의 .gm-variant-seg와 같은 규약(켜진 쪽에 .on). */
+.gm-elem-seg { display: inline-flex; }
+.gm-elem-seg button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 11px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-left-width: 0;
+}
+.gm-elem-seg button:first-child { border-left-width: 1px; border-radius: 6px 0 0 6px; }
+.gm-elem-seg button:last-child { border-radius: 0 6px 6px 0; }
+.gm-elem-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-seg button.on {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.gm-chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
 .gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }

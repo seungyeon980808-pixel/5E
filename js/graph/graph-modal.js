@@ -326,6 +326,33 @@ function resolveSpec(spec, plane, pts, breaks) {
   }
   return nearestOnPolyline(pts, w.x, w.y, breaks);
 }
+/* 미리보기 전용: 찍어 둔 표시점이 눈에 띄게 한다(의견 7).
+ * 표시점은 검은 원 하나라서 축·격자(검은 선) 위나 모서리에 찍히면 그림에 묻혀
+ * 찍힌 건지 아닌지 분간이 안 된다. 그래서 두 가지를 얹는다.
+ *   · 흰 테두리 — 검은 배경선 위에서도 점의 윤곽이 산다
+ *   · 강조색 링 — "여기 찍혔다"는 표시
+ * 최종 결과물(캔버스·내보내기)에는 손대지 않는다. 시험지에 파란 링이 나가면 안 되고,
+ * 이건 그림의 일부가 아니라 편집 중에만 필요한 안내이기 때문이다.
+ * renderFuncgraph가 만든 DOM에만 덧그리므로 저장되는 데이터도 그대로다. */
+function markPlacedElements(groupEl) {
+  if (!groupEl || !groupEl.querySelectorAll) return;
+  groupEl.querySelectorAll("circle").forEach((c) => {
+    const r = parseFloat(c.getAttribute("r")) || 0;
+    if (!r) return;
+    c.setAttribute("stroke", "#ffffff");
+    c.setAttribute("stroke-width", String(r * 0.42));
+    c.setAttribute("paint-order", "stroke");   // 흰 테두리가 채움 밖으로 나가게
+    const ring = document.createElementNS(SVG_NS, "circle");
+    ring.setAttribute("cx", c.getAttribute("cx"));
+    ring.setAttribute("cy", c.getAttribute("cy"));
+    ring.setAttribute("r", String(r * 2.05));
+    ring.setAttribute("fill", "none");
+    ring.setAttribute("stroke", "var(--accent)");
+    ring.setAttribute("stroke-width", String(r * 0.5));
+    ring.setAttribute("pointer-events", "none");
+    c.parentNode.insertBefore(ring, c);
+  });
+}
 // 계열의 요소 math 스펙(markers/guides/arrows) → 세계좌표 렌더 데이터(renderFuncgraph가 그림).
 function bakeElements(s, plane, pts, breaks) {
   const markers = [], guideSegs = [], arrowMarks = [];
@@ -570,6 +597,7 @@ function refreshPreview() {
       ...bakeElements(s, plane, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
+    markPlacedElements(el);
     svg.appendChild(el);
     // 선택된 점 계열: 실제로 '찍은' 점만 파란 점으로 표시(자동 연장점은 제외).
     // 각 점은 드래그 핸들(요구: 자유곡선을 마우스 드래그로 변형) — 점을 끌면 s.pts가
@@ -1093,10 +1121,24 @@ function syncElementLists() {
     });
   }
   // 클릭 배치 버튼 활성 표시(표시점/수선/화살표 동일 위계).
-  const arm = (btn, on) => { btn.style.background = on ? "var(--accent)" : ""; btn.style.color = on ? "#fff" : ""; };
+  // 버튼이 곧 스위치이므로 켜짐을 클래스로 표시한다(인라인 style 대신 — 테마와 함께 간다).
+  const arm = (btn, on) => btn.classList.toggle("on", on);
   arm(_els.markerClick, _placeMode === "marker");
   arm(_els.guideClick, _placeMode === "guide");
   arm(_els.arrowClick, _placeMode === "arrow");
+  // 사용법은 켜져 있을 때만 나온다(DESIGN 13-3) — 늘 떠 있으면 배경이 되어 안 읽힌다.
+  const NOTE = {
+    marker: "미리보기에서 곡선 위를 클릭하면 그 자리에 점이 생깁니다.",
+    guide: "미리보기에서 곡선 위를 클릭하면 그 점에서 두 축까지 점선이 생깁니다.",
+    arrow: "미리보기에서 곡선 위를 클릭하면 그 자리에 화살촉이 놓입니다. 칩의 좌표를 누르면 방향이 바뀝니다.",
+  };
+  if (_els.elemNote) {
+    _els.elemNote.textContent = NOTE[_placeMode] || "";
+    _els.elemNote.hidden = !NOTE[_placeMode];
+  }
+  // 찍은 것이 없는 칩 행은 감춘다 — 빈 줄이 세 개 떠 있을 이유가 없다.
+  [[_els.markerRow, _els.markerList], [_els.guideRow, _els.guideList], [_els.arrowRow, _els.arrowList]]
+    .forEach(([row, list]) => { if (row && list) row.hidden = list.children.length === 0; });
 }
 
 // 좌표 텍스트("0,0 1,2 3,2") ↔ pts[] 변환.
@@ -1535,41 +1577,48 @@ function build() {
               <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
               <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 곡선이 휘는 정도를 직접 조절할 수 있습니다(변환 직후 모양은 그대로). '자동 곡선으로'를 누르면 핸들을 지우고 원래 자동 곡선으로 돌아갑니다.">?</span>
             </div>
-            <!-- 자동 연장선 + 끝 라벨 한 줄(요구 8) — 연장선 설명은 물음표 툴팁으로 -->
-            <div style="display:flex;gap:14px;align-items:center;font-size:12px;color:var(--text-secondary);">
-              <span style="display:inline-flex;align-items:center;">
-                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="gm-move"> 이동</label><span class="gm-help" title="체크하면 미리보기에서 이 함수(곡선)를 드래그해 자유롭게 옮길 수 있습니다.">?</span>
-              </span>
-              <span id="gm-autoext-row" style="display:none;align-items:center;">
-                <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="gm-autoext"> 자동 연장선</label><span class="gm-help" title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 매칭되게 합니다.">?</span>
-              </span>
-              <span style="display:inline-flex;gap:6px;align-items:center;flex:1;min-width:0;">끝 라벨
-                <input type="text" id="gm-endlabel" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: v_0 (비우면 없음)"></span>
+            <!-- 끝 라벨은 v_0 정도의 짧은 값만 들어간다. 남는 폭을 다 먹지 않게 줄이고,
+                 이동·자동 연장선을 같은 행에 나란히 둔다(의견 5). -->
+            <div class="gm-row">
+              <span class="gm-row-lbl">끝 라벨</span>
+              <div class="gm-row-body">
+                <input type="text" id="gm-endlabel" class="gm-num gm-endlabel-in"
+                       spellcheck="false" placeholder="예: v_0" aria-label="끝 라벨">
+                <label class="gm-check" title="체크하면 미리보기에서 이 함수(곡선)를 끌어 옮길 수 있습니다.">
+                  <input type="checkbox" id="gm-move"> 이동</label>
+                <label class="gm-check" id="gm-autoext-row"
+                       title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 맞습니다.">
+                  <input type="checkbox" id="gm-autoext"> 자동 연장선</label>
+              </div>
             </div>
 
-            <!-- 그래프 요소: 3개를 나란히(요구 9). 사용법은 물음표 툴팁으로(요구 7). -->
-            <div id="gm-elements" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px;">
-              <div style="font-size:11px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;">그래프 요소</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">표시점 ●<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 자리에 점이 생깁니다.">?</span></span>
-                  <button type="button" id="gm-marker-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-marker-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+            <!-- 그래프 요소: 이름 자체가 스위치다(의견 6). 종전엔 이름 + '찍기' 두 요소가
+                 한 쌍이었는데 이름이 이미 버튼 구실을 하고 있어 '찍기'는 군더더기였다.
+                 스위치가 된 만큼 켜진 것이 분명히 보여야 한다(DESIGN 13-2). -->
+            <div id="gm-elements" class="gm-group">
+              <p class="gm-group-h">그래프 요소</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">찍을 요소</span>
+                <div class="gm-row-body">
+                  <div class="gm-elem-seg">
+                    <button type="button" id="gm-marker-click">표시점</button>
+                    <button type="button" id="gm-guide-click">수선의 발</button>
+                    <button type="button" id="gm-arrow-click">화살표</button>
+                  </div>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">수선의 발<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 점에서 두 축까지 점선 수선이 생깁니다.">?</span></span>
-                  <button type="button" id="gm-guide-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-guide-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start;font-size:12px;color:var(--text-secondary);">
-                  <!-- 문구 정정: 화살촉이 클릭 지점에 오고 꼬리가 반대로 뻗는 실제 동작과
-                       "중심으로"라는 옛 문구가 어긋나 있었음(261행 주석 참고). -->
-                  <span style="display:inline-flex;align-items:center;white-space:nowrap;">화살표<span class="gm-help" title="찍기를 누른 뒤 미리보기의 함수 위를 클릭하면 그 지점에 화살촉이 오도록 곡선을 따라가는 화살표가 생깁니다. 생긴 칩의 좌표를 누르면 방향이 반대로 바뀝니다.">?</span></span>
-                  <button type="button" id="gm-arrow-click" class="modal-btn" style="font-size:11px;padding:2px 12px;">찍기</button>
-                  <div id="gm-arrow-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-                </div>
+              </div>
+              <p class="gm-ax-note" id="gm-elem-note" hidden></p>
+              <div class="gm-row gm-elem-chiprow" id="gm-marker-row" hidden>
+                <span class="gm-row-lbl">표시점</span>
+                <div class="gm-row-body"><div id="gm-marker-list" class="gm-chips"></div></div>
+              </div>
+              <div class="gm-row gm-elem-chiprow" id="gm-guide-row" hidden>
+                <span class="gm-row-lbl">수선의 발</span>
+                <div class="gm-row-body"><div id="gm-guide-list" class="gm-chips"></div></div>
+              </div>
+              <div class="gm-row gm-elem-chiprow" id="gm-arrow-row" hidden>
+                <span class="gm-row-lbl">화살표</span>
+                <div class="gm-row-body"><div id="gm-arrow-list" class="gm-chips"></div></div>
               </div>
             </div>
           </div>
@@ -1623,6 +1672,10 @@ function build() {
     anchorsRow: overlay.querySelector("#gm-anchors-row"), anchorVal: overlay.querySelector("#gm-anchor-val"),
     bezierRow: overlay.querySelector("#gm-bezier-row"), bezierOn: overlay.querySelector("#gm-bezier-on"), bezierOff: overlay.querySelector("#gm-bezier-off"),
     autoExt: overlay.querySelector("#gm-autoext"), autoExtRow: overlay.querySelector("#gm-autoext-row"),
+    elemNote: overlay.querySelector("#gm-elem-note"),
+    markerRow: overlay.querySelector("#gm-marker-row"),
+    guideRow: overlay.querySelector("#gm-guide-row"),
+    arrowRow: overlay.querySelector("#gm-arrow-row"),
     move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
     markerClick: overlay.querySelector("#gm-marker-click"), markerList: overlay.querySelector("#gm-marker-list"),
