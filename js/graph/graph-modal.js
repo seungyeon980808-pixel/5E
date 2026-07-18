@@ -962,9 +962,15 @@ function syncCfgControls() {
   // opacity를 주면 이중으로 곱해져 글자가 안 보일 만큼 흐려진다.
   _els.xNeg.disabled = !xNegOn;
   _els.yNeg.disabled = !yNegOn;
-  // 잠긴 칸이 있을 때만 이유를 안내한다(십자에선 다 열려 있어 불필요).
+  // '음의 방향' 행은 그 방향 축 팔이 있는 모양에서만 보인다 — ㄴ자에선 통째로 감춰
+  // 잠긴 칸을 보여주지 않는다(종전엔 잠긴 칸이 늘 떠 있어 왜 못 쓰는지 헷갈렸다).
+  const showNegRow = xNegOn || yNegOn;
+  _els.overlay.querySelectorAll(".gm-neg-row").forEach((el) => {
+    el.style.display = showNegRow ? "" : "none";
+  });
+  // 행은 보이는데 한쪽만 잠긴 경우(ㅏ자)에만 이유를 덧붙인다.
   const negNote = _els.overlay.querySelector("#gm-neg-note");
-  if (negNote) negNote.style.display = (!xNegOn || !yNegOn) ? "" : "none";
+  if (negNote) negNote.style.display = (showNegRow && (!xNegOn || !yNegOn)) ? "" : "none";
   _els.labelX.value = c.labelX; _els.labelY.value = c.labelY;
   _els.showOrigin.checked = c.showOrigin;
   // 원점 표기는 0/O 두 버튼 세그먼트 — 현재 값 쪽에 .on을 준다(누를 수 있음이 드러나게).
@@ -1124,37 +1130,41 @@ function build() {
 
               <div class="gm-ax-lbl">칸 개수</div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xneg" min="0" value="0" title="왼쪽(음의 x) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
-                <span class="gm-sep">~</span>
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xpos" min="1" value="5" title="오른쪽(양의 x) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-xpos" min="1" value="5" title="오른쪽(양의 x) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-yneg" min="0" value="0" title="아래(음의 y) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
-                <span class="gm-sep">~</span>
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-ypos" min="1" value="5" title="위(양의 y) 칸 수"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-ypos" min="1" value="5" title="위(양의 y) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+              </div>
+
+              <div class="gm-ax-lbl gm-neg-row">음의 방향</div>
+              <div class="gm-ax-cell gm-neg-row">
+                <span class="gm-step"><input type="number" id="gm-xneg" min="0" value="0" title="왼쪽(음의 x) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+              </div>
+              <div class="gm-ax-cell gm-neg-row">
+                <span class="gm-step"><input type="number" id="gm-yneg" min="0" value="0" title="아래(음의 y) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
 
               <div class="gm-ax-lbl">한 칸 값</div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">0.1씩</span>
               </div>
               <div class="gm-ax-cell">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">0.1씩</span>
               </div>
 
               <div class="gm-ax-lbl">축 이름</div>
               <div class="gm-ax-cell">
                 <textarea id="gm-labelx" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 시간(s)"
-                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:32px;">x</textarea>
+                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:36px;">x</textarea>
               </div>
               <div class="gm-ax-cell">
                 <textarea id="gm-labely" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 속도(m/s)"
-                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:32px;">y</textarea>
+                  style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:36px;">y</textarea>
               </div>
 
-              <div class="gm-ax-note" id="gm-neg-note">ㄴ자는 음의 방향이 없어 왼쪽 칸이 잠깁니다 — 모양을 십자로 바꾸면 열립니다.</div>
+              <div class="gm-ax-note" id="gm-neg-note">ㅏ자는 x축에 음의 방향이 없습니다 — 십자로 바꾸면 열립니다.</div>
             </div>
           </div>
 
@@ -1213,14 +1223,14 @@ function build() {
             <div class="gm-row">
               <span class="gm-row-lbl">좌표 크기</span>
               <div class="gm-row-body">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">%</span>
               </div>
             </div>
             <div class="gm-row">
               <span class="gm-row-lbl">성분 크기</span>
               <div class="gm-row-body">
-                <span class="gm-step"><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">−</button><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">+</button></span>
+                <span class="gm-step"><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
                 <span class="gm-unit">%</span>
               </div>
             </div>
@@ -1419,7 +1429,7 @@ function build() {
   _els.tabCoord.addEventListener("click", (e) => {
     const btn = e.target.closest(".gm-step button[data-step]");
     if (!btn) return;
-    const inp = btn.parentElement.querySelector("input");
+    const inp = btn.closest(".gm-step").querySelector("input");
     if (!inp || inp.disabled) return;
     if (Number(btn.dataset.step) > 0) inp.stepUp(); else inp.stepDown();
     inp.dispatchEvent(new Event("input", { bubbles: true }));

@@ -942,26 +942,34 @@ body { zoom: var(--ui-zoom, 1); }
   font-size: 11.5px; color: var(--text-secondary); margin-top: -2px;
 }
 
-/* −/+ 스테퍼: 네이티브 ▲▼보다 타겟이 커서 0.1씩 조정할 때 편하다 */
+/* 스테퍼: ▲▼를 입력칸 오른쪽에 세로로 몰아 가로 폭을 아끼고(양옆에 두면 칸이 넓어져
+   축 표가 넘친다), 대신 칸 높이를 키워 버튼 타겟을 확보한다. 24×18px로 네이티브
+   스핀(13×9)보다 3배 넓어 0.1씩 반복해 누르기 쉽다. */
 .gm-step {
-  display: inline-flex; align-items: center; flex: none;
+  display: inline-flex; align-items: stretch; flex: none;
+  height: 36px;
   border: 1px solid var(--border); border-radius: 7px;
   background: var(--bg-input); overflow: hidden;
 }
-.gm-step button {
-  font: inherit; font-size: 15px; line-height: 1; padding: 0;
-  width: 26px; height: 30px; border: 0; background: transparent;
-  color: var(--text-secondary); cursor: pointer;
-}
-.gm-step button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 .gm-step input {
-  width: 44px; height: 30px; padding: 0; border: 0; border-radius: 0;
-  border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  width: 48px; padding: 0 4px; border: 0; border-radius: 0;
   background: transparent; color: var(--text-primary);
   font: inherit; font-size: 13.5px; text-align: center; outline: none;
   font-variant-numeric: tabular-nums;
 }
 .gm-step input:focus { background: var(--bg-panel-hover); }
+.gm-step-btns {
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+.gm-step-btns button {
+  flex: 1; width: 24px; padding: 0; border: 0;
+  display: grid; place-items: center;
+  background: transparent; color: var(--text-secondary);
+  font: inherit; font-size: 9px; line-height: 1; cursor: pointer;
+}
+.gm-step-btns button + button { border-top: 1px solid var(--border); }
+.gm-step-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 /* 스테퍼 안에서는 네이티브 스핀이 중복이라 감춘다 */
 .gm-step input::-webkit-inner-spin-button,
 .gm-step input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
