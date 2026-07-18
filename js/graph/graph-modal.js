@@ -221,8 +221,10 @@ function dataBounds(plane) {
 }
 
 /* ---------- 그래프 요소(표시점 ● / 수선의 발 / 화살표) ---------- */
-const ARROW_SPAN = 1.8;   // 화살표 길이(수학 단위, ~1.8칸) — 곡선 접선을 따라간다(요구: +50%).
 const ARROW_SW = 0.525;   // 화살표(화살촉) 두께 — 화살촉 크기가 여기 비례(요구: +50%, 0.35→0.525).
+// 표시점/수선/화살표를 찍을 때, 커서가 곡선에서 이보다 멀면 "곡선을 노린 게 아니다"로 보고 무시한다.
+// world 단위(≈mm). 너무 작으면 곡선을 정확히 짚어야 해 불편하고, 너무 크면 빈 곳 클릭에도 찍힌다.
+const SNAP_MAX_DIST = 6;
 // 요소 베이크·클릭 스냅용 기하: 곡선 스타일 점 계열은 렌더와 동일한 Catmull-Rom으로
 // 촘촘히 편 점을 쓴다. 꼭짓점을 직선 보간하면 화살표/표시점/수선이 실제 그려진 곡선에서
 // 떨어진 지점에 찍힌다(화살표 위치 버그의 원인). 함수식 계열은 이미 촘촘히 샘플됨.
@@ -248,53 +250,88 @@ function worldYAtX(points, wx, breaks) {
   }
   return null;
 }
+// 계열의 baked world points[] 위에서 (wx, wy)에 가장 가까운 점을 찾는다.
+// worldYAtX와 달리 마우스의 y도 함께 쓰므로 세로선·원처럼 x 하나에 y가 여럿인 도형도 다룬다.
+// 각 선분에 점을 수직 투영해 최단거리 점을 고르는 표준 방식. breaks 경계 구간은 건너뛴다.
+// 반환: { x, y, dx, dy, dist } — dx,dy는 그 지점의 단위 접선(화살촉 방향에 쓰임).
+function nearestOnPolyline(points, wx, wy, breaks) {
+  if (!points || points.length < 2) return null;
+  const brk = (breaks && breaks.length) ? new Set(breaks) : null;
+  let best = null;
+  for (let i = 1; i < points.length; i++) {
+    if (brk && brk.has(i)) continue;   // i부터 새 run → (i-1, i)는 실제 선이 아님
+    const a = points[i - 1], b = points[i];
+    const vx = b.x - a.x, vy = b.y - a.y;
+    const len2 = vx * vx + vy * vy;
+    if (len2 < 1e-18) continue;        // 길이 0 선분
+    // 투영 파라미터 t를 [0,1]로 잘라 선분 안쪽(또는 끝점)의 최근접점을 얻는다.
+    let t = ((wx - a.x) * vx + (wy - a.y) * vy) / len2;
+    t = t < 0 ? 0 : (t > 1 ? 1 : t);
+    const px = a.x + t * vx, py = a.y + t * vy;
+    const d = Math.hypot(wx - px, wy - py);
+    if (!best || d < best.dist) {
+      const len = Math.sqrt(len2);
+      best = { x: px, y: py, dx: vx / len, dy: vy / len, dist: d };
+    }
+  }
+  return best;
+}
+// 저장된 요소 스펙 하나를 math 좌표로 정규화한다.
+// 구버전 파일은 x 숫자만 저장했으므로(정의역→치역 매핑 시절), 그 경우 y는 없는 것으로 두고
+// 아래 resolveSpec에서 worldYAtX로 한 번 복원한다. 신규 저장은 {x, y}.
+function specMath(v) {
+  if (typeof v === "number") return Number.isFinite(v) ? { x: v, y: null } : null;
+  if (!v || !Number.isFinite(v.x)) return null;
+  return { x: v.x, y: Number.isFinite(v.y) ? v.y : null };
+}
+// math 스펙 → 실제 곡선 위의 world 점. y가 있으면 최근접점으로, 없으면(구버전) x 매핑으로 복원.
+// 평면 크기나 함수식이 바뀌어 곡선이 다시 샘플돼도 저장된 좌표에서 가장 가까운 곳으로 다시 붙는다.
+function resolveSpec(spec, plane, pts, breaks) {
+  const m = specMath(spec);
+  if (!m) return null;
+  const w = worldFromMath(plane, m.x, m.y == null ? 0 : m.y);
+  if (m.y == null) {
+    const wy = worldYAtX(pts, w.x, breaks);
+    return wy == null ? null : { x: w.x, y: wy, dx: 1, dy: 0 };
+  }
+  return nearestOnPolyline(pts, w.x, w.y, breaks);
+}
 // 계열의 요소 math 스펙(markers/guides/arrows) → 세계좌표 렌더 데이터(renderFuncgraph가 그림).
 function bakeElements(s, plane, pts, breaks) {
-  const markers = [], guideSegs = [], arrowPolys = [];
+  const markers = [], guideSegs = [], arrowMarks = [];
   const o0 = worldFromMath(plane, 0, 0);
-  (s.markers || []).forEach((mx) => {
-    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx, breaks);
-    if (wy != null) markers.push({ x: wx, y: wy });
+  (s.markers || []).forEach((spec) => {
+    const p = resolveSpec(spec, plane, pts, breaks);
+    if (p) markers.push({ x: p.x, y: p.y });
   });
-  (s.guides || []).forEach((mx) => {
-    const wx = worldFromMath(plane, mx, 0).x, wy = worldYAtX(pts, wx, breaks);
-    if (wy == null) return;
+  (s.guides || []).forEach((spec) => {
+    const p = resolveSpec(spec, plane, pts, breaks);
+    if (!p) return;
+    const wx = p.x, wy = p.y;
     if (Math.abs(wy - o0.y) > 1e-6) guideSegs.push([{ x: wx, y: wy }, { x: wx, y: o0.y }]); // → x축(수직)
     if (Math.abs(wx - o0.x) > 1e-6) guideSegs.push([{ x: wx, y: wy }, { x: o0.x, y: wy }]); // → y축(수평)
   });
-  // 화살표: 클릭한 바로 그 지점에 '화살촉'이 오도록 놓는다(요구 핵심 — "2,2에 찍으면 화살표가 2,2에").
-  // 종전엔 클릭점을 '중심'으로 삼아 화살촉이 반 칸 앞(예: 클릭 2 → 화살촉 2.5)에 찍혀 딴 곳처럼 보였다.
-  // 이제 화살촉 = 클릭 x, 꼬리 = 진행 반대쪽으로 ARROW_SPAN만큼. 방향 반전(dir)은 화살촉을 그
-  // 자리에 둔 채(제자리) 꼬리 쪽과 화살촉 방향만 바꾼다. 미리보기 고스트(원)가 뜨는 자리 = 화살촉 자리.
+  // 화살표: 찍은 그 지점에 '화살촉 하나만' 곡선의 접선 방향으로 놓는다.
+  // 종전엔 화살촉만이 아니라 꼬리에서 클릭점까지 곡선을 따라가는 선을 통째로 새로 그렸다.
+  // 그런데 꼬리를 계열 전체의 x-범위로 clamp해서, 클릭점이 시작부에서 ARROW_SPAN 안쪽이면
+  // 꼬리가 곡선 첫 점으로 붙어버렸다 → "곡선 처음부터 클릭점까지 굵은 선이 덧그려지는" 증상.
+  // 곡선 자체는 이미 그려져 있으므로 그 위에 화살촉만 얹으면 방향 표시로 충분하다(평가원 양식).
   (s.arrows || []).forEach((a) => {
-    if (!Number.isFinite(a.x)) return;
-    const dir = a.dir < 0 ? -1 : 1;
-    const cwx = worldFromMath(plane, a.x, 0).x;                 // 화살촉 = 클릭 지점
-    const ccy = worldYAtX(pts, cwx, breaks);
-    if (ccy == null) return;
-    // 꼬리는 진행 반대쪽으로 ARROW_SPAN만큼. 단 선의 x-범위를 벗어나면 끝점으로 clamp한다 —
-    // 벗어나면 worldYAtX가 null이라 높이가 ccy로 튀고, 원점 등을 지나며 지그재그 stub이 생김(버그).
-    const xsMin = Math.min(...pts.map((p) => p.x)), xsMax = Math.max(...pts.map((p) => p.x));
-    const rawTailX = worldFromMath(plane, a.x - dir * ARROW_SPAN, 0).x;
-    const wTailX = Math.max(xsMin, Math.min(xsMax, rawTailX)); // 선 밖으로 안 나가게
-    const yTail = worldYAtX(pts, wTailX, breaks);
-    const lo = Math.min(cwx, wTailX), hi = Math.max(cwx, wTailX);
-    // 꼬리 → (사이 곡선점) → 화살촉(마지막). arrowHead:"end"가 마지막 점(=클릭 지점)에 화살촉을 그린다.
-    const poly = [{ x: wTailX, y: yTail != null ? yTail : ccy }];
-    pts.filter((p) => p.x > lo + 1e-6 && p.x < hi - 1e-6)
-       .sort((p, q) => (cwx > wTailX ? p.x - q.x : q.x - p.x))
-       .forEach((p) => poly.push({ x: p.x, y: p.y }));
-    poly.push({ x: cwx, y: ccy });
-    if (poly.length < 2) return;
-    arrowPolys.push({ points: poly, arrowHead: "end", strokeWidth: ARROW_SW }); // 화살촉=클릭 지점
+    const p = resolveSpec(a, plane, pts, breaks);
+    if (!p) return;
+    const dir = a.dir < 0 ? -1 : 1;   // 방향 반전은 화살촉을 제자리에 둔 채 향만 뒤집는다
+    arrowMarks.push({ x: p.x, y: p.y, dx: p.dx * dir, dy: p.dy * dir, strokeWidth: ARROW_SW });
   });
-  return { markers, guideSegs, arrowPolys };
+  return { markers, guideSegs, arrowMarks };
 }
 // 커밋용: 세계좌표 렌더 데이터 + 원본 math 스펙(재편집 시 모달이 되읽음).
+// markerXs/guideXs는 이름은 옛 그대로지만(저장 호환) 값은 이제 {x, y}다.
+// 예전 파일의 숫자 값도 그대로 읽힌다 — specMath가 둘 다 받는다.
 function elementFields(s, plane, pts, breaks) {
+  const copy = (v) => (typeof v === "number" ? v : { ...v });
   return {
     ...bakeElements(s, plane, pts, breaks),
-    markerXs: [...(s.markers || [])], guideXs: [...(s.guides || [])],
+    markerXs: (s.markers || []).map(copy), guideXs: (s.guides || []).map(copy),
     arrowSpecs: (s.arrows || []).map((a) => ({ ...a })),
   };
 }
@@ -619,13 +656,17 @@ function refreshPreview() {
     }
     svg.appendChild(pGhost);
   }
-  // 커서 x → 함수 위 점(world). 범위 밖이면 null.
+  // 커서에서 가장 가까운 '곡선 위의 점'(world). 커서에서 너무 멀면 null(빈 곳 클릭은 무시).
+  // 종전엔 커서의 x만 보고 그 x에서의 함숫값을 찾았다. 그래서 세로선(x가 일정)에서는
+  // 어디를 눌러도 같은 점만 나오고, 원·좌우로 열린 포물선처럼 x 하나에 y가 둘 이상인
+  // 도형에서는 항상 한쪽 가지만 잡혔다. 이제 커서의 x·y를 함께 써서 실제 최근접점을 찍는다.
   const snapToFunc = (clientX, clientY) => {
-    const m = clientToMath(clientX, clientY);
-    if (!m) return null;
-    const wx = worldFromMath(_previewPlane, m.x, 0).x;
-    const wy = worldYAtX(_selPts, wx, _selBreaks);
-    return wy == null ? null : { mx: m.x, wx, wy };
+    const w = clientToWorld(clientX, clientY);
+    if (!w) return null;
+    const p = nearestOnPolyline(_selPts, w.x, w.y, _selBreaks);
+    if (!p || p.dist > SNAP_MAX_DIST) return null;
+    const m = mathFromWorld(_previewPlane, p.x, p.y);
+    return { mx: m.x, my: m.y, wx: p.x, wy: p.y };
   };
 
   // 좌표 툴팁(요구): 함수/수선/표시점을 찍을 때 커서가 노리는 좌표를 커서 바로 위에 표시.
@@ -653,9 +694,10 @@ function refreshPreview() {
     if (s && (_placeMode === "marker" || _placeMode === "guide" || _placeMode === "arrow")) {
       const hit = snapToFunc(e.clientX, e.clientY);
       if (!hit) return;
-      if (_placeMode === "marker") (s.markers = s.markers || []).push(hit.mx);
-      else if (_placeMode === "guide") (s.guides = s.guides || []).push(hit.mx);
-      else (s.arrows = s.arrows || []).push({ x: hit.mx, dir: 1 }); // 기본 정방향(+), 칩 클릭으로 전환
+      // 찍은 지점을 (x, y) 그대로 저장한다 — x만 저장하면 세로선·다가 도형에서 되살릴 수 없다.
+      if (_placeMode === "marker") (s.markers = s.markers || []).push({ x: hit.mx, y: hit.my });
+      else if (_placeMode === "guide") (s.guides = s.guides || []).push({ x: hit.mx, y: hit.my });
+      else (s.arrows = s.arrows || []).push({ x: hit.mx, y: hit.my, dir: 1 }); // 기본 정방향(+), 칩 클릭으로 전환
       syncElementLists(); refreshPreview();
       return;
     }
@@ -845,6 +887,13 @@ function addSeries(s) {
 }
 
 /* ---------- 그래프 요소 목록(칩) + 방향 버튼 동기화 ---------- */
+// 칩 라벨: 이제 (x, y) 두 좌표를 다 보여준다. 구버전 파일의 숫자 스펙은 x만 표시.
+function chipLabel(spec) {
+  const r = (v) => { const n = Math.round(v * 100) / 100; return Object.is(n, -0) ? "0" : String(n); };
+  if (typeof spec === "number") return `x=${r(spec)}`;
+  if (!spec || !Number.isFinite(spec.x)) return "?";
+  return Number.isFinite(spec.y) ? `(${r(spec.x)}, ${r(spec.y)})` : `x=${r(spec.x)}`;
+}
 function elemChip(text, onDel) {
   const chip = document.createElement("span");
   chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;font:11px monospace;border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:var(--bg-input);color:var(--text-primary);";
@@ -860,13 +909,13 @@ function syncElementLists() {
   _els.guideList.replaceChildren();
   _els.arrowList.replaceChildren();
   if (s) {
-    (s.markers || []).forEach((mx, i) => _els.markerList.appendChild(
-      elemChip(`x=${mx}`, () => { s.markers.splice(i, 1); syncElementLists(); refreshPreview(); })));
-    (s.guides || []).forEach((mx, i) => _els.guideList.appendChild(
-      elemChip(`x=${mx}`, () => { s.guides.splice(i, 1); syncElementLists(); refreshPreview(); })));
+    (s.markers || []).forEach((spec, i) => _els.markerList.appendChild(
+      elemChip(chipLabel(spec), () => { s.markers.splice(i, 1); syncElementLists(); refreshPreview(); })));
+    (s.guides || []).forEach((spec, i) => _els.guideList.appendChild(
+      elemChip(chipLabel(spec), () => { s.guides.splice(i, 1); syncElementLists(); refreshPreview(); })));
     (s.arrows || []).forEach((a, i) => {
       const dirSym = a.dir < 0 ? "←" : "→";
-      const chip = elemChip(`x=${a.x} ${dirSym}`, () => { s.arrows.splice(i, 1); syncElementLists(); refreshPreview(); });
+      const chip = elemChip(`${chipLabel(a)} ${dirSym}`, () => { s.arrows.splice(i, 1); syncElementLists(); refreshPreview(); });
       // 좌표(라벨, ×제외)를 누르면 방향 전환(요구).
       const lbl = chip.firstChild;
       lbl.style.cursor = "pointer"; lbl.title = "누르면 방향 전환";

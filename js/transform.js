@@ -370,6 +370,18 @@ function mapFgElements(obj, orig, fn) {
   if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
   if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
   if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));
+  // arrowMarks는 위치뿐 아니라 화살촉이 향하는 방향(dx,dy)도 같이 변환해야 한다.
+  // 방향은 그대로 넣을 수 없으므로(fn에 이동 성분이 섞여 있음) 시작점과 끝점을 각각 옮긴 뒤
+  // 그 차이를 다시 단위벡터로 만든다 — 이동·회전·리사이즈 어디에도 그대로 통한다.
+  if (orig.arrowMarks) obj.arrowMarks = orig.arrowMarks.map((am) => {
+    const p = fn({ x: am.x, y: am.y });
+    const q = fn({ x: am.x + am.dx, y: am.y + am.dy });
+    const vx = q.x - p.x, vy = q.y - p.y;
+    const len = Math.hypot(vx, vy);
+    return len < 1e-9
+      ? { ...am, x: p.x, y: p.y }
+      : { ...am, x: p.x, y: p.y, dx: vx / len, dy: vy / len };
+  });
 }
 
 /* ----- set object position from original + delta (avoids float drift) ----- */
