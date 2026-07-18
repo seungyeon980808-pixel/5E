@@ -68,6 +68,9 @@
   max-height: 58vh;
   overflow-y: auto;
   margin-top: 8px;
+  /* 선택 링(카드 바깥 3px)이 그려질 자리. overflow-y:auto가 가로도 함께 잘라내므로,
+     여백이 없으면 1열·4열 카드의 바깥쪽 링만 잘려 나가 가운데 카드와 두께가 달라 보인다. */
+  padding: 4px;
 }
 .examlib-card {
   display: flex;
