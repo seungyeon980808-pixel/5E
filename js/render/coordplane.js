@@ -70,6 +70,13 @@ function tickRange(lo, hi, step) {
   return { kStart: Math.ceil(lo / s - 1e-9), kEnd: Math.floor(hi / s + 1e-9), step: s };
 }
 
+/* 표시점 반지름 = 선 굵기 연동. 미리보기 고스트(graph-modal)와 실제 렌더가 같은 값을
+   써야 "찍기 전 ≠ 찍은 뒤"로 어긋나지 않는다 — 상수를 양쪽에 두었다가 실제로 어긋났다. */
+function markerRadius(strokeWidth) {
+  const sw = Number.isFinite(strokeWidth) ? strokeWidth : 0.4;
+  return Math.max(sw * 1.465, 0.564);
+}
+
 function renderCoordplane(obj) {
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
@@ -608,11 +615,11 @@ function renderFuncgraph(obj) {
     c.setAttribute("cx", m.x); c.setAttribute("cy", m.y);
     // 선 굵기(gsw)에 비례. 계수·하한을 다시 30% 줄였다(요구) — graph-modal의
     // markerRadiusOf와 같은 식이어야 "찍기 전 미리보기 = 찍은 뒤"가 어긋나지 않는다.
-    c.setAttribute("r", obj.markerSize || Math.max(gsw * 1.274, 0.49));
+    c.setAttribute("r", obj.markerSize || markerRadius(gsw));
     c.setAttribute("fill", gc); c.setAttribute("stroke", "none");
     g.appendChild(c);
   });
   return g;
 }
 
-export { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts };
+export { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius };

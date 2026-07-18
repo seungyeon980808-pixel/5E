@@ -946,8 +946,9 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
-/* 요구: 위젯이 작아 불편 → 가로만 20% 확대(760 → 912). 세로는 화면이 허락하지 않는다. */
-.gm-modal { width: min(912px, 96vw); }
+/* 폭은 여기서만 정한다 — 종전엔 마크업에 인라인 width가 박혀 있어 이 값이 무시됐다.
+   실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
+.gm-modal { width: min(1152px, 96vw); }
 .gm-modal .modal-title { font-size: 18px; }
 .gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }

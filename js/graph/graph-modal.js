@@ -15,7 +15,7 @@
 
 import { state } from "../state.js?v=1.0.2";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts } from "../render/coordplane.js?v=1.0.2";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.0.2";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.2";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.2";
 import { nextObjectId } from "../tools/id.js?v=1.0.2";
@@ -27,7 +27,13 @@ const PAD_Y = 1.3;                // y: 마지막 눈금 → 화살표 여유
 const GRID_OVER = 0.5;            // 격자를 마지막 눈금 밖으로 더 뻗는 칸(사진4: "반 칸")
 // 회색조 프로젝트: 색 대신 선 종류로 계열 구분. [라벨, dashLength, dashGap](mm).
 // 대시·간격 40% 축소(요구): 점선 1.6/1.2→0.96/0.72, 파선 2.4/1.3→1.44/0.78.
-const LINE_STYLES = [["실선", 0, 0], ["점선", 0.96, 0.72], ["파선", 1.44, 0.78]];
+// [이름, 대시 길이, 간격]. 0,0 = 실선. 글자로는 어떤 선인지 알 수 없어 버튼은 미니 SVG로 그린다.
+const LINE_STYLES = [
+  ["실선", 0, 0],
+  ["촘촘한 점선", 0.42, 0.5],
+  ["점선", 0.96, 0.72],
+  ["파선", 1.9, 0.9],
+];
 // 수식 도우미 버튼(기존 함수 도구와 동일): [라벨, 커서에 삽입할 문자].
 const HELPERS = [
   ["sin", "sin("], ["cos", "cos("], ["tan", "tan("], ["log", "log("], ["ln", "ln("],
@@ -231,9 +237,10 @@ function dataBounds(plane) {
 
 /* ---------- 그래프 요소(표시점 ● / 수선의 발 / 화살표) ---------- */
 const ARROW_SW = 0.525;   // 화살표(화살촉) 두께 — 화살촉 크기가 여기 비례(요구: +50%, 0.35→0.525).
-// 표시점/수선/화살표를 찍을 때, 커서가 곡선에서 이보다 멀면 "곡선을 노린 게 아니다"로 보고 무시한다.
-// world 단위(≈mm). 너무 작으면 곡선을 정확히 짚어야 해 불편하고, 너무 크면 빈 곳 클릭에도 찍힌다.
-const SNAP_MAX_DIST = 6;
+// 배치할 때 커서와 곡선의 거리는 제한하지 않는다(요구). 좌표 라벨·눈금에 가려 곡선을
+// 정확히 짚기 어려운 자리가 많은데, 거리를 제한하면 그런 곳에서 아무리 눌러도 안 찍힌다.
+// 어차피 찍히는 위치는 "곡선 위 최근접점"이라 멀리서 눌러도 결과가 곡선을 벗어나지 않는다.
+// 모드 해제는 미리보기 바깥을 누르는 것으로 한다(아래 setupPlaceEscape).
 // 요소 베이크·클릭 스냅용 기하: 곡선 스타일 점 계열은 렌더와 동일한 Catmull-Rom으로
 // 촘촘히 편 점을 쓴다. 꼭짓점을 직선 보간하면 화살표/표시점/수선이 실제 그려진 곡선에서
 // 떨어진 지점에 찍힌다(화살표 위치 버그의 원인). 함수식 계열은 이미 촘촘히 샘플됨.
@@ -309,11 +316,9 @@ function nearestOnPolyline(points, wx, wy, breaks) {
 // 저장된 요소 스펙 하나를 math 좌표로 정규화한다.
 // 구버전 파일은 x 숫자만 저장했으므로(정의역→치역 매핑 시절), 그 경우 y는 없는 것으로 두고
 // 아래 resolveSpec에서 worldYAtX로 한 번 복원한다. 신규 저장은 {x, y}.
-// 표시점 반지름 = 선 굵기 연동(요구 3). 종전 계수 1.82·하한 0.7에서 각각 30% 줄였다.
-// 미리보기 고스트와 렌더러가 같은 값을 써야 "찍기 전 = 찍은 뒤"가 된다.
+// 고스트 크기는 렌더러와 같은 함수(markerRadius)를 쓴다 — 값을 양쪽에 적어 두면 어긋난다.
 function markerRadiusOf(s) {
-  const sw = (s && Number.isFinite(s.strokeWidth)) ? s.strokeWidth : 0.4;
-  return Math.max(sw * 1.274, 0.49);
+  return markerRadius(s && Number.isFinite(s.strokeWidth) ? s.strokeWidth : 0.4);
 }
 // 요소 스펙 한 개를 얕게 복사한다(구버전 숫자 스펙과 신형 {x,y}를 모두 받는다).
 function copySpec(v) { return typeof v === "number" ? v : { ...v }; }
@@ -838,7 +843,7 @@ function refreshPreview() {
     const w = clientToWorld(clientX, clientY);
     if (!w) return null;
     const p = nearestOnPolyline(_selPts, w.x, w.y, _selBreaks);
-    if (!p || p.dist > SNAP_MAX_DIST) return null;
+    if (!p) return null;
     const m = mathFromWorld(_previewPlane, p.x, p.y);
     return { mx: m.x, my: m.y, wx: p.x, wy: p.y };
   };
@@ -1228,6 +1233,7 @@ function syncSeriesEditor() {
     if (document.activeElement !== _els.pts) _els.pts.value = ptsToText(s.pts);
   }
   [..._els.styleHost.children].forEach((b, i) => {
+    b.style.color = (s.styleIdx === i) ? "var(--accent)" : "var(--text-label)";
     const on = i === s.styleIdx;
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
@@ -1416,7 +1422,7 @@ function build() {
   overlay.id = "graph-modal-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="modal gm-modal" role="dialog" aria-modal="true" aria-label="그래프" style="width:min(960px,96vw);">
+    <div class="modal gm-modal" role="dialog" aria-modal="true" aria-label="그래프">
       <!-- 제목 오른쪽에 간단 설명(요구 1) -->
       <h2 class="modal-title" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <span id="gm-title">그래프 만들기</span>
@@ -1898,10 +1904,21 @@ function build() {
     const s = _series[_sel]; if (!s || s.kind !== "points") return;
     s.pts = []; syncSeriesEditor(); renderChips(); refreshPreview();
   });
-  LINE_STYLES.forEach(([label], i) => {
+  // 선 종류는 대상이 그림 그 자체라 글자 대신 그 선을 그려 보여준다(DESIGN 13-2).
+  // "점선"·"파선"이라는 이름만으로는 어느 쪽이 더 촘촘한지 알 수 없다.
+  LINE_STYLES.forEach(([label, dl, dg], i) => {
     const b = document.createElement("button");
-    b.type = "button"; b.textContent = label;
-    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.type = "button"; b.title = label; b.setAttribute("aria-label", label);
+    b.style.cssText = "border:1px solid var(--border);border-radius:3px;padding:5px 8px;background:var(--bg-input);cursor:pointer;line-height:0;";
+    const svgEl = document.createElementNS(SVG_NS, "svg");
+    svgEl.setAttribute("width", "40"); svgEl.setAttribute("height", "10");
+    svgEl.setAttribute("viewBox", "0 0 40 10");
+    const ln = document.createElementNS(SVG_NS, "line");
+    ln.setAttribute("x1", 2); ln.setAttribute("y1", 5); ln.setAttribute("x2", 38); ln.setAttribute("y2", 5);
+    ln.setAttribute("stroke", "currentColor"); ln.setAttribute("stroke-width", 1.7);
+    // 대시 값은 world 단위(mm)라 40px짜리 미리보기에 맞춰 배로 키워 보여준다.
+    if (dl) ln.setAttribute("stroke-dasharray", `${dl * 2.4} ${dg * 2.4}`);
+    svgEl.appendChild(ln); b.appendChild(svgEl);
     b.addEventListener("click", () => { const s = _series[_sel]; if (s) { s.styleIdx = i; syncSeriesEditor(); refreshPreview(); } });
     _els.styleHost.appendChild(b);
   });
@@ -1984,6 +2001,25 @@ function build() {
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) hide(); });
   // 미리보기 밖 중립 영역 클릭 → 함수 선택 해제(요구): 계열 편집기·칩·탭·추가버튼·미리보기·하단
   // 버튼은 선택 유지(그것들은 선택 계열을 편집/전환하므로). 그 외 모달 여백 클릭은 해제.
+  // 배치 모드(표시점·수선·화살표) 해제: 미리보기 밖 아무 데나 누르면 꺼진다(요구).
+  // 스냅 거리 제한을 없앤 뒤로는 미리보기 안을 누르면 늘 찍히므로, 빠져나갈 길이 필요하다.
+  // 계열 선택은 건드리지 않는다 — 모드만 끄고 하던 작업은 그대로 이어가게.
+  overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
+    if (!_placeMode) return;
+    if (e.target.closest("#gm-preview, .gm-elem-btns")) return;
+    _placeMode = null;
+    syncElementLists();
+    refreshPreview();
+  }, true);
+  // Esc로도 빠져나온다 — 모드가 켜진 채 다른 걸 누르려다 헤매지 않게.
+  overlay.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || !_placeMode) return;
+    e.stopPropagation();
+    _placeMode = null;
+    syncElementLists();
+    refreshPreview();
+  });
+
   overlay.querySelector(".gm-modal").addEventListener("mousedown", (e) => {
     if (_sel === -1 && !_placeMode && _activeDraw === -1) return;
     // 예외 목록이 옛 id(#gm-add-expr,#gm-add-points)를 가리키고 있었음 — 실제 DOM엔
