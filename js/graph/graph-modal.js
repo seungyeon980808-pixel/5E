@@ -309,6 +309,14 @@ function nearestOnPolyline(points, wx, wy, breaks) {
 // 저장된 요소 스펙 하나를 math 좌표로 정규화한다.
 // 구버전 파일은 x 숫자만 저장했으므로(정의역→치역 매핑 시절), 그 경우 y는 없는 것으로 두고
 // 아래 resolveSpec에서 worldYAtX로 한 번 복원한다. 신규 저장은 {x, y}.
+// 표시점 반지름 = 선 굵기 연동(요구 3). 종전 계수 1.82·하한 0.7에서 각각 30% 줄였다.
+// 미리보기 고스트와 렌더러가 같은 값을 써야 "찍기 전 = 찍은 뒤"가 된다.
+function markerRadiusOf(s) {
+  const sw = (s && Number.isFinite(s.strokeWidth)) ? s.strokeWidth : 0.4;
+  return Math.max(sw * 1.274, 0.49);
+}
+// 요소 스펙 한 개를 얕게 복사한다(구버전 숫자 스펙과 신형 {x,y}를 모두 받는다).
+function copySpec(v) { return typeof v === "number" ? v : { ...v }; }
 function specMath(v) {
   if (typeof v === "number") return Number.isFinite(v) ? { x: v, y: null } : null;
   if (!v || !Number.isFinite(v.x)) return null;
@@ -722,6 +730,15 @@ function refreshPreview() {
           if (!start) return;
           const baseOff = { ...(s.offset || { dx: 0, dy: 0 }) };
           const basePts = s.kind === "points" ? s.pts.map((p) => ({ ...p })) : null;
+          // 표시점·수선·화살표는 곡선 '위'에 찍은 것이므로 곡선과 함께 움직여야 한다.
+          // 이들은 math 절대좌표로 저장되는데, 종전엔 곡선만 옮기고 이 좌표는 두었다.
+          // 그러면 다음 렌더에서 옮겨간 곡선을 기준으로 최근접점을 다시 잡아, 요소가
+          // 곡선을 따라오는 대신 제자리에서 미끄러지듯 딴 데로 갔다.
+          const baseEls = {
+            markers: (s.markers || []).map(copySpec),
+            guides: (s.guides || []).map(copySpec),
+            arrows: (s.arrows || []).map((a) => ({ ...a })),
+          };
           const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
           const uy = (plane.yMax - plane.yMin) ? plane.h / (plane.yMax - plane.yMin) : 1;
           const onMove = (ev) => {
@@ -730,6 +747,15 @@ function refreshPreview() {
             const dxm = (w.x - start.x) / ux, dym = -(w.y - start.y) / uy;
             if (s.kind === "expr") s.offset = { dx: baseOff.dx + dxm, dy: baseOff.dy + dym };
             else s.pts = basePts.map((p) => ({ x: p.x + dxm, y: p.y + dym }));
+            // 곡선과 같은 양만큼 요소도 평행이동(구버전 숫자 스펙은 x만 있다).
+            const shift = (v) => (typeof v === "number" ? v + dxm
+              : { ...v, x: v.x + dxm, y: Number.isFinite(v.y) ? v.y + dym : v.y });
+            s.markers = baseEls.markers.map(shift);
+            s.guides = baseEls.guides.map(shift);
+            s.arrows = baseEls.arrows.map((a) => ({
+              ...a, x: a.x + dxm, y: Number.isFinite(a.y) ? a.y + dym : a.y,
+            }));
+            syncElementLists();
             refreshPreview();
           };
           const onUp = () => {
@@ -774,12 +800,26 @@ function refreshPreview() {
   // (요구: 어디에 들어가는지 미리 볼 수 있어야). 선택 계열에 곡선이 없으면(_selPts null)
   // 고스트가 안 뜨고 클릭해도 무시 → 함수 밖/빈 계열에 찍히는 버그 원천 차단.
   const placing = !!_placeMode && Array.isArray(_selPts) && _selPts.length >= 2;
-  let pGhost = null, pV = null, pH = null;
+  let pGhost = null, pGhostRing = null, pV = null, pH = null;
   if (placing) {
+    // 찍기 전 미리보기: 찍고 나면 어떻게 보일지를 그대로 보여준다(요구 2).
+    // 종전엔 반투명 파란 원 하나라 "여기 찍힌다"가 아니라 그냥 커서 장식처럼 보였다.
+    // 실제 표시점과 같은 구성(검은 점 + 흰 테두리 + 강조 링)에 점선 링만 더해
+    // "아직 확정 아님"을 구분한다.
+    pGhostRing = document.createElementNS(SVG_NS, "circle");
+    pGhostRing.setAttribute("fill", "none");
+    pGhostRing.setAttribute("stroke", "var(--accent)");
+    pGhostRing.setAttribute("stroke-dasharray", "0.55 0.45");
+    pGhostRing.setAttribute("pointer-events", "none");
+    pGhostRing.style.display = "none";
+    svg.appendChild(pGhostRing);
+
     pGhost = document.createElementNS(SVG_NS, "circle");
-    pGhost.setAttribute("r", 1.1); pGhost.setAttribute("fill", "var(--accent)");
-    pGhost.setAttribute("fill-opacity", "0.55"); pGhost.setAttribute("stroke", "var(--accent)");
-    pGhost.setAttribute("stroke-width", 0.35); pGhost.style.display = "none";
+    pGhost.setAttribute("fill", "#111111");
+    pGhost.setAttribute("fill-opacity", "0.75");
+    pGhost.setAttribute("stroke", "#ffffff");
+    pGhost.setAttribute("paint-order", "stroke");
+    pGhost.style.display = "none";
     pGhost.setAttribute("pointer-events", "none");
     if (_placeMode === "guide") {
       const mkG = () => { const l = document.createElementNS(SVG_NS, "line");
@@ -858,8 +898,19 @@ function refreshPreview() {
     // 배치 모드 고스트: 함수 위 찍힐 점(+수선이면 축까지 안내선) 미리보기.
     if (placing) {
       const hit = snapToFunc(e.clientX, e.clientY);
-      if (!hit) { pGhost.style.display = "none"; if (pV) pV.style.display = "none"; if (pH) pH.style.display = "none"; if (coordTip) coordTip.style.display = "none"; return; }
+      if (!hit) {
+        pGhost.style.display = "none"; pGhostRing.style.display = "none";
+        if (pV) pV.style.display = "none"; if (pH) pH.style.display = "none";
+        if (coordTip) coordTip.style.display = "none"; return;
+      }
+      // 실제로 찍혔을 때와 같은 크기로 — 선 굵기를 따라간다(요구 3과 같은 식).
+      const gr = markerRadiusOf(_series[_sel]);
+      pGhost.setAttribute("r", gr);
+      pGhost.setAttribute("stroke-width", gr * 0.42);
+      pGhostRing.setAttribute("r", gr * 2.05);
+      pGhostRing.setAttribute("stroke-width", gr * 0.5);
       pGhost.setAttribute("cx", hit.wx); pGhost.setAttribute("cy", hit.wy); pGhost.style.display = "";
+      pGhostRing.setAttribute("cx", hit.wx); pGhostRing.setAttribute("cy", hit.wy); pGhostRing.style.display = "";
       if (_placeMode === "guide") {
         const o0 = worldFromMath(_previewPlane, 0, 0);
         pV.setAttribute("x1", hit.wx); pV.setAttribute("y1", hit.wy); pV.setAttribute("x2", hit.wx); pV.setAttribute("y2", o0.y); pV.style.display = "";
@@ -889,6 +940,7 @@ function refreshPreview() {
     if (rubber) rubber.style.display = "none";
     if (ghost) ghost.style.display = "none";
     if (pGhost) pGhost.style.display = "none";
+    if (pGhostRing) pGhostRing.style.display = "none";
     if (pV) pV.style.display = "none";
     if (pH) pH.style.display = "none";
     if (coordTip) coordTip.style.display = "none";
@@ -1374,7 +1426,7 @@ function build() {
         <!-- 높이를 고정한다(max-height가 아니라 height). max-height면 내용이 적은 탭에서만
              열이 짧아지고, 미리보기가 그 높이에 맞춰 늘어나므로(align-items:stretch)
              탭을 옮길 때마다 창과 미리보기가 같이 줄었다 늘었다 한다(실측 편차 103px). -->
-        <div class="gm-right" style="flex:0 0 370px;height:66vh;overflow-y:auto;padding-right:6px;">
+        <div class="gm-right" style="flex:0 0 444px;height:66vh;overflow-y:auto;padding-right:6px;">
 
           <!-- 탭: 좌표 / 함수 (미리보기는 오른쪽 고정, 양 탭 공유) -->
           <div class="gm-tabs" style="display:flex;gap:4px;margin-bottom:12px;">
@@ -1650,15 +1702,12 @@ function build() {
                  한 쌍이었는데 이름이 이미 버튼 구실을 하고 있어 '찍기'는 군더더기였다.
                  스위치가 된 만큼 켜진 것이 분명히 보여야 한다(DESIGN 13-2). -->
             <div id="gm-elements" class="gm-group">
-              <p class="gm-group-h">그래프 요소</p>
-              <div class="gm-row">
-                <span class="gm-row-lbl">찍을 요소</span>
-                <div class="gm-row-body">
-                  <div class="gm-elem-seg">
-                    <button type="button" id="gm-marker-click">표시점</button>
-                    <button type="button" id="gm-guide-click">수선의 발</button>
-                    <button type="button" id="gm-arrow-click">화살표</button>
-                  </div>
+              <div class="gm-elem-head">
+                <p class="gm-group-h">그래프 요소</p>
+                <div class="gm-elem-btns">
+                  <button type="button" id="gm-marker-click">표시점</button>
+                  <button type="button" id="gm-guide-click">수선의 발</button>
+                  <button type="button" id="gm-arrow-click">화살표</button>
                 </div>
               </div>
               <p class="gm-ax-note" id="gm-elem-note" hidden></p>

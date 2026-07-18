@@ -606,7 +606,9 @@ function renderFuncgraph(obj) {
     if (!m) return;
     const c = document.createElementNS(SVG_NS, "circle");
     c.setAttribute("cx", m.x); c.setAttribute("cy", m.y);
-    c.setAttribute("r", obj.markerSize || Math.max(gsw * 1.82, 0.7)); // 요구: 종전 대비 30%↓
+    // 선 굵기(gsw)에 비례. 계수·하한을 다시 30% 줄였다(요구) — graph-modal의
+    // markerRadiusOf와 같은 식이어야 "찍기 전 미리보기 = 찍은 뒤"가 어긋나지 않는다.
+    c.setAttribute("r", obj.markerSize || Math.max(gsw * 1.274, 0.49));
     c.setAttribute("fill", gc); c.setAttribute("stroke", "none");
     g.appendChild(c);
   });

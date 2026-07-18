@@ -946,7 +946,8 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
-.gm-modal { width: min(760px, 96vw); }
+/* 요구: 위젯이 작아 불편 → 가로만 20% 확대(760 → 912). 세로는 화면이 허락하지 않는다. */
+.gm-modal { width: min(912px, 96vw); }
 .gm-modal .modal-title { font-size: 18px; }
 .gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
@@ -1015,6 +1016,24 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-endlabel-in { width: 128px; flex: none; font-family: monospace; }
 
 /* 그래프 요소 스위치 — 좌표 탭의 .gm-variant-seg와 같은 규약(켜진 쪽에 .on). */
+/* 그래프 요소: 제목과 같은 줄에 두고(요구 1) 서로 띄운다(요구 7).
+   붙여 놓으면 세 개가 한 덩어리로 보여 개별 스위치라는 게 안 읽힌다. */
+.gm-elem-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.gm-elem-head .gm-group-h { margin: 0; }
+.gm-elem-btns { display: inline-flex; gap: 10px; }
+.gm-elem-btns button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
 .gm-elem-seg { display: inline-flex; }
 .gm-elem-seg button {
   font: inherit;
@@ -1067,7 +1086,7 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
-.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }
+.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); white-space: nowrap; }
 .gm-unit { font-size: 12px; color: var(--text-secondary); }
 
 /* 좌표 크기 · 성분 크기: 단위도 범위도 같은 한 쌍이라 한 행에 나란히 놓는다.
