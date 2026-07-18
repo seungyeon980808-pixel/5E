@@ -19,6 +19,7 @@
  */
 
 import { showConfirm } from "./ui-dialogs.js?v=1.0.2";
+import { makeModalDraggable } from "./modal-drag.js?v=1.0.2";
 
 const IMG_BASE = "assets/exam-library/images/";
 
@@ -34,6 +35,9 @@ function ensureDock() {
   _dock.className = "refwin-dock";
   _dock.hidden = true;
   document.body.appendChild(_dock);
+  // 모달과 같은 손잡이·같은 조작(끌어서 이동, 두 번 눌러 제자리)을 그대로 쓴다.
+  // 우하단 고정 위치가 다른 UI를 가릴 수 있어 사용자가 치울 수 있어야 한다.
+  makeModalDraggable(_dock);
   return _dock;
 }
 
@@ -42,7 +46,10 @@ function renderDock() {
   const page = _getPageId();
   // 이 페이지에 속하면서 창이 닫혀 있는(=최소화된) 것만 칩으로 보인다.
   const mine = _entries.filter((e) => e.pageId === page && (!e.win || e.win.closed));
+  // 손잡이는 replaceChildren에 쓸려나가지 않게 보존한다.
+  const handle = dock.querySelector(":scope > .modal-drag-handle");
   dock.replaceChildren();
+  if (handle) dock.appendChild(handle);
   mine.forEach((entry) => {
     const chip = document.createElement("button");
     chip.type = "button";

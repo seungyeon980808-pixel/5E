@@ -705,6 +705,14 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 6px;
 }
 .refwin-dock[hidden] { display: none; }
+/* 도크의 손잡이는 모달과 달리 절대배치가 아니라 칩들 위에 흐름대로 놓인다
+   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). */
+.refwin-dock .modal-drag-handle {
+  position: static;
+  opacity: 0.55;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+}
 .refwin-chip {
   font: inherit;
   font-size: 12px;
