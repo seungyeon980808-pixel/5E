@@ -436,6 +436,55 @@ function smoothSamplePts(pts, t, segs = 12) {
   }
   return out;
 }
+// ----- 베지어 핸들(편집 가능한 접선) -----
+// centripetal Catmull-Rom이 각 앵커에서 자동으로 잡는 접선을, 사용자가 잡아끌 수 있는
+// 핸들로 노출한다(잉크스케이프 노드 편집). catmullRomHandles: 각 앵커의 in/out 핸들을
+// '앵커 기준 오프셋'으로 반환(저장·앵커 이동에 안정적). 렌더/샘플은 절대 제어점을 받는다.
+function catmullRomHandles(pts, t) {
+  const n = pts.length;
+  const h = pts.map(() => ({ ix: 0, iy: 0, ox: 0, oy: 0 }));
+  if (n < 2) return h;
+  if (n === 2) { // 두 점 = 직선. 핸들을 1/3 지점에 둬 직선 유지.
+    const dx = (pts[1].x - pts[0].x) / 3, dy = (pts[1].y - pts[0].y) / 3;
+    h[0].ox = dx; h[0].oy = dy; h[1].ix = -dx; h[1].iy = -dy;
+    return h;
+  }
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
+    const { c1x, c1y, c2x, c2y } = crBezierCP(p0, p1, p2, p3, t);
+    h[i].ox = c1x - p1.x; h[i].oy = c1y - p1.y;         // p1의 out 핸들
+    h[i + 1].ix = c2x - p2.x; h[i + 1].iy = c2y - p2.y; // p2의 in 핸들
+  }
+  return h;
+}
+// 절대 제어점(handles[i] = {inX,inY,outX,outY}, pts와 평행)으로 3차 베지어 path를 만든다.
+function bezierPathD(pts, handles) {
+  if (!pts || pts.length < 2 || !handles || handles.length !== pts.length) return "";
+  let d = `M ${pts[0].x} ${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const o = handles[i], nx = handles[i + 1];
+    d += ` C ${o.outX} ${o.outY} ${nx.inX} ${nx.inY} ${pts[i + 1].x} ${pts[i + 1].y}`;
+  }
+  return d;
+}
+// 핸들 베지어를 촘촘한 점으로 편다(표시점/수선/스냅이 곡선 위에 앉게).
+function bezierSamplePts(pts, handles, segs = 16) {
+  if (!pts || pts.length < 2 || !handles || handles.length !== pts.length) return pts || [];
+  const out = [{ x: pts[0].x, y: pts[0].y }];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p1 = pts[i], p2 = pts[i + 1];
+    const c1x = handles[i].outX, c1y = handles[i].outY;
+    const c2x = handles[i + 1].inX, c2y = handles[i + 1].inY;
+    for (let j = 1; j <= segs; j++) {
+      const u = j / segs, v = 1 - u;
+      out.push({
+        x: v * v * v * p1.x + 3 * v * v * u * c1x + 3 * v * u * u * c2x + u * u * u * p2.x,
+        y: v * v * v * p1.y + 3 * v * v * u * c1y + 3 * v * u * u * c2y + u * u * u * p2.y,
+      });
+    }
+  }
+  return out;
+}
 // 명시적 경계(breaks = 샘플러가 준 '새 run 시작 인덱스')로만 점 배열을 run으로 나눈다.
 // 경계가 없으면 한 덩어리. 사용자가 찍은 꺾은선의 긴 구간이 임의로 끊기지 않게, 직선 계열은
 // 이것만 쓴다(거리 추정 없음).
@@ -494,7 +543,10 @@ function renderFuncgraph(obj) {
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
   const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
   const el = document.createElementNS(SVG_NS, "path");
-  el.setAttribute("d", style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks));
+  // 편집 가능한 베지어 핸들이 있으면(자유곡선 변환) 그 제어점으로 진짜 3차 베지어를 그린다.
+  const hasHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length && pts.length >= 2;
+  el.setAttribute("d", hasHandles ? bezierPathD(pts, obj.handles)
+    : (style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks)));
   el.setAttribute("fill", "none");
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);
@@ -556,4 +608,4 @@ function renderFuncgraph(obj) {
   return g;
 }
 
-export { renderCoordplane, renderFuncgraph, smoothSamplePts };
+export { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts };

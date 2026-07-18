@@ -370,6 +370,14 @@ function mapFgElements(obj, orig, fn) {
   if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
   if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
   if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));
+  // 베지어 핸들(자유곡선 변환)도 세계좌표 절대 제어점이라 앵커(points)와 같은 변환으로 옮겨야
+  // 한다 — 안 그러면 앵커만 이동/회전/리사이즈되고 제어점은 제자리에 남아 곡선이 뒤틀린다.
+  if (orig.handles) {
+    obj.handles = orig.handles.map((h) => {
+      const ip = fn({ x: h.inX, y: h.inY }), op = fn({ x: h.outX, y: h.outY });
+      return { inX: ip.x, inY: ip.y, outX: op.x, outY: op.y };
+    });
+  }
 }
 
 /* ----- set object position from original + delta (avoids float drift) ----- */

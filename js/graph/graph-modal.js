@@ -15,10 +15,11 @@
 
 import { state } from "../state.js?v=1.0.2";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/coordplane.js?v=1.0.2";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts } from "../render/coordplane.js?v=1.0.2";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.2";
 import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.2";
 import { nextObjectId } from "../tools/id.js?v=1.0.2";
+import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.0.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -78,7 +79,7 @@ function defaultCfg() {
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
 // movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
 function newExprSeries() { return { kind: "expr", expr: "", domain: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
-function newPointsSeries() { return { kind: "points", pts: [], styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newPointsSeries() { return { kind: "points", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
 function parseTicks(text) {
@@ -230,6 +231,27 @@ function geomPts(s, pts) {
   const cs = s.curveStyle || (s.kind === "expr" ? "smooth" : "straight");
   return (s.kind === "points" && cs === "smooth") ? smoothSamplePts(pts, s.curvature) : pts;
 }
+// ----- 베지어 핸들(자유곡선 정밀 편집) -----
+// 계열이 편집 가능한 핸들을 가졌는가(자유곡선 + handles가 pts와 평행).
+function useHandles(s) {
+  return s && s.kind === "points" && s.curveStyle === "smooth"
+    && Array.isArray(s.handles) && s.handles.length === s.pts.length && s.pts.length >= 2;
+}
+// s.handles(앵커 기준 math 오프셋) → 절대 world 제어점 {inX,inY,outX,outY}[] (렌더/샘플용).
+function worldHandlesOf(s, plane) {
+  if (!useHandles(s)) return null;
+  return s.pts.map((p, i) => {
+    const h = s.handles[i] || { ix: 0, iy: 0, ox: 0, oy: 0 };
+    const inW = worldFromMath(plane, p.x + h.ix, p.y + h.iy);
+    const outW = worldFromMath(plane, p.x + h.ox, p.y + h.oy);
+    return { inX: inW.x, inY: inW.y, outX: outW.x, outY: outW.y };
+  });
+}
+// 앵커를 추가/삭제해 pts 길이가 바뀌면 핸들을 현재 접선으로 다시 계산(구조 변경 시에만 호출).
+// 앵커 '이동'에는 부르지 않는다 — 오프셋 저장이라 앵커와 함께 따라가는 게 맞다(수동 편집 보존).
+function syncHandlesToStructure(s) {
+  if (s && Array.isArray(s.handles)) s.handles = catmullRomHandles(s.pts, s.curvature);
+}
 // 계열의 baked world points[]에서 world-x에 해당하는 world-y를 선형 보간(범위 밖 null).
 // breaks(끊긴 구간 시작 인덱스)가 주어지면 그 경계 구간은 건너뛴다 — 평면 밖으로 나간
 // 가짜 직선 위에 표시점/수선/화살표가 스냅되지 않게.
@@ -349,8 +371,14 @@ function prepareSeries(plane) {
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
-      const points = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 렌더·베이크(자동 연장 반영, 매끄러움은 렌더 centripetal이 담당)
-      list.push({ ...common, sourceKind: "points", mathPoints, points, breaks: [], autoExtend: !!s.autoExtend, ...elementFields(s, plane, geomPts(s, points)) });
+      const uh = useHandles(s);
+      const points = (uh ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(plane, m.x, m.y)); // 렌더·베이크
+      const wHandles = uh ? worldHandlesOf(s, plane) : null;
+      const geom = wHandles ? bezierSamplePts(points, wHandles, 16) : geomPts(s, points);
+      const obj = { ...common, sourceKind: "points", mathPoints, points, breaks: [], autoExtend: !!s.autoExtend, ...elementFields(s, plane, geom) };
+      // 베지어 핸들: world 제어점(렌더용) + math 오프셋(재편집용)을 함께 저장.
+      if (uh) { obj.handles = wHandles; obj.handlesMath = s.handles.map((h) => ({ ...h })); }
+      list.push(obj);
     }
   }
   return { ok: true, list };
@@ -480,18 +508,21 @@ function refreshPreview() {
       breaks = r.breaks;                              // 끊긴 구간(평면 밖) 경계
     } else {
       if (!s.pts.length) return;
-      pts = extendedMathPts(s).map((m) => worldFromMath(plane, m.x, m.y)); // 자동 연장 반영(매끄러움은 렌더 centripetal)
+      // 핸들(베지어 변환)이 있으면 자동 연장 없이 s.pts 그대로 + 핸들로 렌더.
+      pts = (useHandles(s) ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(plane, m.x, m.y));
       sourceKind = "points"; curveStyle = "straight";
       breaks = [];   // 손그림 곡선은 끊김 없는 연속선 — 거리 휴리스틱으로 쪼개지지 않게 명시
     }
-    if (i === _sel) { _selPts = geomPts(s, pts); _selBreaks = breaks; }   // 선택 계열 곡선+경계(배치 스냅 기준)
+    const wHandles = worldHandlesOf(s, plane);                   // 핸들 있으면 world 제어점, 없으면 null
+    const geom = wHandles ? bezierSamplePts(pts, wHandles, 16) : geomPts(s, pts);  // 요소 베이크/스냅용 곡선
+    if (i === _sel) { _selPts = geom; _selBreaks = breaks; }     // 선택 계열 곡선+경계(배치 스냅 기준)
     const el = renderFuncgraph({
       points: pts, strokeLevel: 0, strokeWidth: s.strokeWidth, breaks,
       dashLength: dl, dashGap: dg, sourceKind,
       curveStyle: s.curveStyle || (s.kind === "points" ? "straight" : "smooth"),
-      curvature: s.curvature,
+      curvature: s.curvature, handles: wHandles,                // 있으면 렌더가 진짜 3차 베지어로
       endLabel: s.endLabel, endLabelSize: endLabelSizeOf(plane),
-      ...bakeElements(s, plane, geomPts(s, pts), breaks),  // 표시점/수선/화살표 실시간 미리보기
+      ...bakeElements(s, plane, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
     svg.appendChild(el);
@@ -531,7 +562,71 @@ function refreshPreview() {
           };
           window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
         });
+        // 우클릭 = 이 앵커만 삭제(요구: 앵커 개수 변경). 최소 2점은 유지. 그리는 중엔 무시.
+        hitC.addEventListener("contextmenu", (e) => {
+          if (_activeDraw === i || _placeMode) return;
+          e.preventDefault(); e.stopPropagation();
+          if (s.pts.length <= 2) return;
+          s.pts.splice(pi, 1);
+          if (s.handles) syncHandlesToStructure(s);
+          syncSeriesEditor(); renderChips(); refreshPreview();
+        });
         svg.appendChild(hitC);
+      });
+    }
+    // 베지어 핸들 편집(스무스 노드): 선택된 자유곡선(변환됨)에서 각 앵커의 in/out 핸들을
+    // 드래그해 곡선이 얼마나 볼록하게 휘는지 조절한다(잉크스케이프式). 두 핸들은 일직선 유지.
+    if (i === _sel && wHandles && _activeDraw !== i && !_placeMode) {
+      s.pts.forEach((mp, pi) => {
+        const a = worldFromMath(plane, mp.x, mp.y);
+        const mkHandle = (which) => {
+          const h = s.handles[pi];
+          const off = which === "out" ? { x: h.ox, y: h.oy } : { x: h.ix, y: h.iy };
+          if (off.x === 0 && off.y === 0) return;   // 끝점의 없는 핸들은 안 그림
+          const hw = worldFromMath(plane, mp.x + off.x, mp.y + off.y);
+          const line = document.createElementNS(SVG_NS, "line");
+          line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
+          line.setAttribute("x2", hw.x); line.setAttribute("y2", hw.y);
+          line.setAttribute("stroke", "var(--accent)"); line.setAttribute("stroke-width", 0.22);
+          line.setAttribute("stroke-opacity", "0.7"); line.setAttribute("pointer-events", "none");
+          svg.appendChild(line);
+          const dot = document.createElementNS(SVG_NS, "circle");
+          dot.setAttribute("cx", hw.x); dot.setAttribute("cy", hw.y); dot.setAttribute("r", 0.75);
+          dot.setAttribute("fill", "#fff"); dot.setAttribute("stroke", "var(--accent)"); dot.setAttribute("stroke-width", 0.4);
+          svg.appendChild(dot);
+          const hit = document.createElementNS(SVG_NS, "circle");
+          hit.setAttribute("cx", hw.x); hit.setAttribute("cy", hw.y); hit.setAttribute("r", 1.9);
+          hit.setAttribute("fill", "transparent"); hit.style.cursor = "grab";
+          hit.addEventListener("click", (e) => e.stopPropagation());
+          hit.addEventListener("mousedown", (e) => {
+            e.preventDefault(); e.stopPropagation();
+            const onMove = (ev) => {
+              const w = clientToWorld(ev.clientX, ev.clientY);
+              if (!w) return;
+              const m = mathFromWorld(plane, w.x, w.y);
+              const no = { x: m.x - mp.x, y: m.y - mp.y };   // 새 오프셋(math)
+              const hh = s.handles[pi];
+              if (which === "out") { hh.ox = no.x; hh.oy = no.y; } else { hh.ix = no.x; hh.iy = no.y; }
+              // 스무스: 반대 핸들을 정반대 방향으로(자기 길이 유지). 반대가 없으면(끝점) 그대로.
+              const opp = which === "out" ? { x: hh.ix, y: hh.iy } : { x: hh.ox, y: hh.oy };
+              const oppLen = Math.hypot(opp.x, opp.y), nLen = Math.hypot(no.x, no.y) || 1;
+              if (oppLen > 1e-6) {
+                const ux = -no.x / nLen * oppLen, uy = -no.y / nLen * oppLen;
+                if (which === "out") { hh.ix = ux; hh.iy = uy; } else { hh.ox = ux; hh.oy = uy; }
+              }
+              refreshPreview();
+            };
+            const onUp = () => {
+              window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp);
+              const hh = s.handles[pi];   // 소수 정리
+              hh.ix = Math.round(hh.ix * 1000) / 1000; hh.iy = Math.round(hh.iy * 1000) / 1000;
+              hh.ox = Math.round(hh.ox * 1000) / 1000; hh.oy = Math.round(hh.oy * 1000) / 1000;
+            };
+            window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+          });
+          svg.appendChild(hit);
+        };
+        mkHandle("in"); mkHandle("out");
       });
     }
     // '이동' 체크(요구): 선택 계열의 곡선 몸통을 드래그하면 계열 전체가 따라온다.
@@ -586,6 +681,9 @@ function refreshPreview() {
   //   상태(그리기 아님)나 배치 모드(_placeMode)에서는 안 그린다 — 함수 그리기와 표시점/보기
   //   상태는 완전 별개(요구). 러버밴드가 남으면 함수 끝에서 연장되듯 보인다.
   const drawing = _activeDraw === _sel && _series[_sel] && _series[_sel].kind === "points" && !_placeMode;
+  // 자유곡선(smooth) 계열을 '그리는 중'이면 클릭 대신 드래그로 죽 그린다(요구: 대충 그리고
+  // 앵커를 끌어 손보기). 아래 pointer 핸들러가 전담하며, 이때 click/러버밴드 경로는 비활성.
+  const freehandDraw = drawing && _series[_sel].curveStyle === "smooth";
   let rubber = null, ghost = null;
   if (drawing) {
     rubber = document.createElementNS(SVG_NS, "line");
@@ -648,6 +746,7 @@ function refreshPreview() {
   };
 
   svg.addEventListener("click", (e) => {
+    if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     const s = _series[_sel];
     // 배치 모드: 함수 위를 클릭할 때만 찍는다(함수 밖 클릭은 무시). 표시점/수선/화살표 동일.
     if (s && (_placeMode === "marker" || _placeMode === "guide" || _placeMode === "arrow")) {
@@ -694,6 +793,7 @@ function refreshPreview() {
       showCoordTip(hit.mx, my, cw ? cw.x : hit.wx, cw ? cw.y : hit.wy);
       return;
     }
+    if (freehandDraw) return;   // 자유곡선 드로잉 중엔 러버밴드/고스트 대신 실시간 스트로크만 그린다
     if (!drawing || !rubber) return;
     const m = clientToMath(e.clientX, e.clientY);
     if (!m) { rubber.style.display = "none"; ghost.style.display = "none"; if (coordTip) coordTip.style.display = "none"; return; }
@@ -716,6 +816,67 @@ function refreshPreview() {
     if (coordTip) coordTip.style.display = "none";
   });
   svg.style.cursor = (drawing || placing) ? "crosshair" : "";
+
+  // ── 자유곡선: 마우스로 죽 그리면(드래그) 성긴 앵커로 단순화된 매끄러운 곡선이 된다.
+  //    손그림 원시점을 RDP로 대여섯 개 앵커만 남기고(모양=자유·근사), 그 앵커를 s.pts로 삼아
+  //    기존 앵커 드래그 편집으로 인계한다(요구: 대충 그리고 손으로 다듬기). 탭(거의 안 움직임)은
+  //    점 하나 추가. ★ 손그림 '모든 점'을 정확히 통과시키려 하지 않는다 — 그건 예전 버그의 원인.
+  if (freehandDraw) {
+    const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
+    const cellW = ux * (plane.gridStepX || 1);
+    const FD_EPS = Math.max(1.2, cellW * 0.3);   // RDP 허용오차(월드mm) — 성긴 앵커
+    const FD_MIN = 0.4;                           // 원시점 최소 간격(월드mm)
+    let raw = null, moved = false, live = null;
+    svg.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0) return;
+      const w = clientToWorld(e.clientX, e.clientY);
+      if (!w) return;
+      e.preventDefault();
+      raw = [{ x: w.x, y: w.y }]; moved = false;
+      try { svg.setPointerCapture(e.pointerId); } catch (_) {}
+      live = document.createElementNS(SVG_NS, "path");
+      live.setAttribute("fill", "none"); live.setAttribute("stroke", "var(--accent)");
+      live.setAttribute("stroke-width", 0.4); live.setAttribute("stroke-linecap", "round");
+      live.setAttribute("stroke-linejoin", "round"); live.setAttribute("pointer-events", "none");
+      svg.appendChild(live);
+    });
+    svg.addEventListener("pointermove", (e) => {
+      if (!raw) return;
+      const w = clientToWorld(e.clientX, e.clientY);
+      if (!w) return;
+      const last = raw[raw.length - 1];
+      if (Math.hypot(w.x - last.x, w.y - last.y) < FD_MIN) return;
+      raw.push({ x: w.x, y: w.y }); moved = true;
+      live.setAttribute("d", "M " + raw.map((p) => `${p.x} ${p.y}`).join(" L "));
+    });
+    const endFD = (e) => {
+      if (!raw) return;
+      try { svg.releasePointerCapture(e.pointerId); } catch (_) {}
+      const pts = raw; raw = null;
+      if (live) { live.remove(); live = null; }
+      const s = _series[_sel];
+      if (!s) return;
+      if (!moved || pts.length < 2) {
+        // 탭 = 점 하나 추가(클릭 배치와 같은 감각). 계속 그리기 모드 유지.
+        const m0 = clientToMath(e.clientX, e.clientY);
+        if (m0) { s.pts.push(m0); if (s.handles) syncHandlesToStructure(s); syncSeriesEditor(); refreshPreview(); renderChips(); }
+        return;
+      }
+      // 드래그 = 스트로크를 성긴 앵커로 단순화해 계열의 점으로 삼는다(1/8칸 스냅·박스 클램프).
+      const anchorsW = simplifyRDP(pts, FD_EPS);
+      const db = dataBounds(plane);
+      const sx = (plane.gridStepX || 1) / 8, sy = (plane.gridStepY || 1) / 8;
+      s.pts = anchorsW.map((p) => {
+        const m = mathFromWorld(plane, p.x, p.y);
+        const nx = Math.round(m.x / sx) * sx, ny = Math.round(m.y / sy) * sy;
+        return { x: Math.max(db.xMin, Math.min(db.xMax, nx)), y: Math.max(db.yMin, Math.min(db.yMax, ny)) };
+      });
+      if (s.handles) syncHandlesToStructure(s);   // (드물게) 이미 핸들이 있었다면 새 앵커에 맞춤
+      finishPointsSeries();   // 그리기 종료 → 앵커가 드래그 편집 가능한 상태로
+    };
+    svg.addEventListener("pointerup", endFD);
+    svg.addEventListener("pointercancel", endFD);
+  }
 
   // 축 라벨 이동(요구): 켜져 있으면 축 이름(data-axisname)을 드래그해 위치 오프셋을 조정한다.
   // 드래그 중 refreshPreview가 라벨을 재생성하므로, 이동 추적은 window 리스너로 이어간다.
@@ -930,6 +1091,16 @@ function syncSeriesEditor() {
   const showCurv = s.kind === "points" && cs === "smooth";
   _els.curvatureRow.style.display = showCurv ? "flex" : "none";
   if (showCurv) _els.curvVal.textContent = Math.round((s.curvature || 1) * 100) + "%";
+  // 앵커 수 조절: 자유곡선(smooth 점 계열)에만.
+  _els.anchorsRow.style.display = showCurv ? "flex" : "none";
+  if (showCurv) _els.anchorVal.textContent = s.pts.length;
+  // 베지어 핸들 변환/해제: 자유곡선에만. 핸들 유무에 따라 변환/해제 버튼 전환.
+  _els.bezierRow.style.display = showCurv ? "flex" : "none";
+  if (showCurv) {
+    const on = useHandles(s);
+    _els.bezierOn.style.display = on ? "none" : "";
+    _els.bezierOff.style.display = on ? "" : "none";
+  }
   if (document.activeElement !== _els.width) _els.width.value = s.strokeWidth;
   if (document.activeElement !== _els.endLabel) _els.endLabel.value = s.endLabel;
   syncElementLists();
@@ -1017,7 +1188,7 @@ const FUNCTAB = {
           make: () => newExprSeries() },
   poly: { add: "＋ 직선·꺾은선 추가", hint: "미리보기를 클릭해 점을 찍으면 직선·꺾은선이 됩니다.",
           make: () => { const s = newPointsSeries(); s.curveStyle = "straight"; return s; } },
-  free: { add: "＋ 자유곡선 추가", hint: "미리보기를 클릭해 점을 찍으면 그 점들을 매끄럽게 잇는 자유곡선이 됩니다.",
+  free: { add: "＋ 자유곡선 추가", hint: "미리보기에서 마우스로 죽 그리면(드래그) 매끄러운 자유곡선이 됩니다. 그린 뒤 파란 점(앵커)을 끌어 모양을 다듬으세요. (탭하면 점 하나씩 추가)",
           make: () => { const s = newPointsSeries(); s.curveStyle = "smooth"; return s; } },
 };
 function setFuncTab(ft) {
@@ -1211,6 +1382,19 @@ function build() {
               <span id="gm-curv-val" style="min-width:38px;text-align:center;">100%</span>
               <button type="button" id="gm-curv-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
             </div>
+            <!-- 앵커 수 조절(자유곡선): ＋=가장 성긴 구간 분할, −=모양 가장 덜 바뀌는 앵커 제거 -->
+            <div id="gm-anchors-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+              앵커 수 <button type="button" id="gm-anchor-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
+              <span id="gm-anchor-val" style="min-width:26px;text-align:center;">0</span>
+              <button type="button" id="gm-anchor-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
+              <span class="gm-help" title="곡선을 이루는 점(앵커)의 개수를 조절합니다. ＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 골라 지울 수도 있습니다.">?</span>
+            </div>
+            <!-- 베지어 핸들 변환/해제: 앵커에 접선 핸들을 노출해 곡률을 직접 잡는다(스무스 노드). -->
+            <div id="gm-bezier-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
+              <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size:11px;padding:3px 9px;">베지어로 변환</button>
+              <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
+              <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 곡선이 휘는 정도를 직접 조절할 수 있습니다(변환 직후 모양은 그대로). '자동 곡선으로'를 누르면 핸들을 지우고 원래 자동 곡선으로 돌아갑니다.">?</span>
+            </div>
             <!-- 자동 연장선 + 끝 라벨 한 줄(요구 8) — 연장선 설명은 물음표 툴팁으로 -->
             <div style="display:flex;gap:14px;align-items:center;font-size:12px;color:var(--text-secondary);">
               <span style="display:inline-flex;align-items:center;">
@@ -1296,6 +1480,8 @@ function build() {
     styleHost: overlay.querySelector("#gm-styles"), width: overlay.querySelector("#gm-width"),
     curveHost: overlay.querySelector("#gm-curve"),
     curvatureRow: overlay.querySelector("#gm-curvature-row"), curvVal: overlay.querySelector("#gm-curv-val"),
+    anchorsRow: overlay.querySelector("#gm-anchors-row"), anchorVal: overlay.querySelector("#gm-anchor-val"),
+    bezierRow: overlay.querySelector("#gm-bezier-row"), bezierOn: overlay.querySelector("#gm-bezier-on"), bezierOff: overlay.querySelector("#gm-bezier-off"),
     autoExt: overlay.querySelector("#gm-autoext"), autoExtRow: overlay.querySelector("#gm-autoext-row"),
     move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
@@ -1444,6 +1630,43 @@ function build() {
   };
   overlay.querySelector("#gm-curv-dn").addEventListener("click", () => bumpCurv(-0.2));
   overlay.querySelector("#gm-curv-up").addEventListener("click", () => bumpCurv(0.2));
+  // 앵커 수 조절(요구): ＋=가장 긴 구간의 중점에 앵커 삽입(성긴 곳을 촘촘하게),
+  // −=이웃을 잇는 선에서 수직거리가 가장 작은 내부 앵커 제거(모양을 가장 덜 바꾸는 점). 끝점 유지.
+  overlay.querySelector("#gm-anchor-up").addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "points" || s.pts.length < 2) return;
+    let bi = 0, bd = -1;
+    for (let k = 0; k + 1 < s.pts.length; k++) {
+      const d = Math.hypot(s.pts[k + 1].x - s.pts[k].x, s.pts[k + 1].y - s.pts[k].y);
+      if (d > bd) { bd = d; bi = k; }
+    }
+    const a = s.pts[bi], b = s.pts[bi + 1];
+    s.pts.splice(bi + 1, 0, { x: Math.round((a.x + b.x) / 2 * 1000) / 1000, y: Math.round((a.y + b.y) / 2 * 1000) / 1000 });
+    if (s.handles) syncHandlesToStructure(s);
+    syncSeriesEditor(); renderChips(); refreshPreview();
+  });
+  overlay.querySelector("#gm-anchor-dn").addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "points" || s.pts.length <= 2) return;
+    let bi = -1, bd = Infinity;
+    for (let k = 1; k + 1 < s.pts.length; k++) {
+      const d = fdPerpDist(s.pts[k], s.pts[k - 1], s.pts[k + 1]);
+      if (d < bd) { bd = d; bi = k; }
+    }
+    if (bi < 0) bi = s.pts.length - 2;   // 안전장치(전부 동일선상 등)
+    s.pts.splice(bi, 1);
+    if (s.handles) syncHandlesToStructure(s);
+    syncSeriesEditor(); renderChips(); refreshPreview();
+  });
+  // 베지어 변환: 현재 접선에서 핸들을 초기화(모양 동일하게 시작) → 흰 핸들 드래그로 곡률 조절.
+  _els.bezierOn.addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "points" || s.curveStyle !== "smooth" || s.pts.length < 2) return;
+    s.handles = catmullRomHandles(s.pts, s.curvature);
+    syncSeriesEditor(); refreshPreview();
+  });
+  _els.bezierOff.addEventListener("click", () => {
+    const s = _series[_sel]; if (!s) return;
+    s.handles = null;   // 자동 곡선(centripetal)으로 복귀
+    syncSeriesEditor(); refreshPreview();
+  });
 
   /* --- 그래프 요소 배선(표시점/수선/화살표 — 전부 클릭식, 같은 위계) --- */
   // "찍기"를 켜면 배치 모드 → 미리보기의 함수 위를 클릭해 찍는다. 토글 시 미리보기 재생성.
@@ -1539,7 +1762,7 @@ function loadFromPlane(plane) {
       const pts = Array.isArray(fg.mathPoints) && fg.mathPoints.length
         ? fg.mathPoints.map((p) => ({ x: p.x, y: p.y }))
         : (fg.points || []).map((p) => mathFromWorld(plane, p.x, p.y));
-      _series.push({ kind: "points", pts, styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "straight", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1, endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, ...loadElements(fg) });
+      _series.push({ kind: "points", pts, styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "straight", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1, endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, handles: (Array.isArray(fg.handlesMath) && fg.handlesMath.length === pts.length) ? fg.handlesMath.map((h) => ({ ...h })) : null, ...loadElements(fg) });
     } else {
       _series.push({
         kind: "expr", expr: fg.expr || "",
