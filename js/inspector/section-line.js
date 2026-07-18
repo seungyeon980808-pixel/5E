@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.0.2";
+import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.0.4";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
@@ -204,6 +204,10 @@ export function buildLineSection(ctx) {
   sec1Body.appendChild(dimensionLabelRow);
   const dimensionLabelTypeRow = makeLabelTypeRow((o) => o.type === "line");
   sec1Body.appendChild(dimensionLabelTypeRow.row);
+  // 치수 라벨(길이 표시 모드)의 글자 크기: obj.dimensionLabelSize (mm)에 저장.
+  // 미설정 시 render/shapes.js가 선 두께 기반 자동 크기로 폴백한다.
+  const dimensionLabelSizeRow = makeLabelSizeRow((o) => o.type === "line", "라벨 크기", "dimensionLabelSize");
+  sec1Body.appendChild(dimensionLabelSizeRow.row);
 
   /* ---- straight-line upright label (Group 3): text input + on/off toggle ----
    * Writes obj.label / obj.labelShow. When on, render.js (withLineLabel) draws
@@ -746,7 +750,7 @@ export function buildLineSection(ctx) {
     sec1, strokeCP, widthRange, widthNum,
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
-    dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow,
+    dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,

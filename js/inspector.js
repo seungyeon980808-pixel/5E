@@ -6,25 +6,25 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.0.2";
-import { resolveObjectStyle } from "./style-mode.js?v=1.0.2";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.0.4";
+import { resolveObjectStyle } from "./style-mode.js?v=1.0.4";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
-} from "./inspector/widgets.js?v=1.0.2";
-import { createInspectorContext } from "./inspector/context.js?v=1.0.2";
-import { buildLineSection } from "./inspector/section-line.js?v=1.0.2";
-import { buildGroupSection } from "./inspector/section-group.js?v=1.0.2";
-import { buildTextSection } from "./inspector/section-text.js?v=1.0.2";
-import { buildFillSection } from "./inspector/section-fill.js?v=1.0.2";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.0.2";
-import { buildProtectSection } from "./inspector/section-protect.js?v=1.0.2";
-import { buildImageSection } from "./inspector/section-image.js?v=1.0.2";
-import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.0.2";
-import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.0.2";
-import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.0.2";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.0.2";
-import { buildLayersSection } from "./inspector/section-layers.js?v=1.0.2";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.0.2";
+} from "./inspector/widgets.js?v=1.0.4";
+import { createInspectorContext } from "./inspector/context.js?v=1.0.4";
+import { buildLineSection } from "./inspector/section-line.js?v=1.0.4";
+import { buildGroupSection } from "./inspector/section-group.js?v=1.0.4";
+import { buildTextSection } from "./inspector/section-text.js?v=1.0.4";
+import { buildFillSection } from "./inspector/section-fill.js?v=1.0.4";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.0.4";
+import { buildProtectSection } from "./inspector/section-protect.js?v=1.0.4";
+import { buildImageSection } from "./inspector/section-image.js?v=1.0.4";
+import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.0.4";
+import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.0.4";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.0.4";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.0.4";
+import { buildLayersSection } from "./inspector/section-layers.js?v=1.0.4";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.0.4";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {
@@ -67,7 +67,7 @@ export function initInspector(state) {
     sec1, strokeCP, widthRange, widthNum,
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
-    dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow,
+    dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
@@ -210,6 +210,7 @@ export function initInspector(state) {
     lineLabelFlipRow.style.display = "none";
     lineLabelSizeRow.row.style.display = "none";
     dimensionLabelTypeRow.row.style.display = "none";
+    dimensionLabelSizeRow.row.style.display = "none";
     objectLabelTypeRow.row.style.display = "none";
     axisLabelTypeRow.row.style.display = "none";
     terminalLabelTypeRow.row.style.display = "none";
@@ -471,10 +472,19 @@ export function initInspector(state) {
     lineModeBtnEls.arrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${arrowIcon}</svg>`;
     lineModeBtnEls.middleArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${obj.arrowVariant === "left" ? MIDDLE_LEFT_ICON : ARROW_ICONS.center}</svg>`;
     lineModeBtnEls.lengthArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${lengthIcon(obj.dimensionVariant || "basic")}</svg>`;
-    dimensionLabelRow.style.display = isStraightLine && lineMode === "lengthArrow" ? "" : "none";
-    dimensionLabelTypeRow.row.style.display = isStraightLine && lineMode === "lengthArrow" ? "" : "none";
+    const showDimLabel = isStraightLine && lineMode === "lengthArrow";
+    dimensionLabelRow.style.display = showDimLabel ? "" : "none";
+    dimensionLabelTypeRow.row.style.display = showDimLabel ? "" : "none";
+    dimensionLabelSizeRow.row.style.display = showDimLabel ? "" : "none";
     if (document.activeElement !== dimensionLabelInp) dimensionLabelInp.value = obj.dimensionLabel ?? "d";
-    if (isStraightLine && lineMode === "lengthArrow") dimensionLabelTypeRow.sync(obj);
+    if (showDimLabel) {
+      dimensionLabelTypeRow.sync(obj);
+      if (document.activeElement !== dimensionLabelSizeRow.num) {
+        // 미설정 시 render/shapes.js와 동일한 선-두께 기반 자동 크기를 표시.
+        const autoMm = Math.max(2.5, (obj.strokeWidth ?? 0.2) * 8);
+        dimensionLabelSizeRow.num.value = Math.round(mmToPt(obj.dimensionLabelSize || autoMm));
+      }
+    }
 
     // Group-3 straight-line upright label: text + on/off toggle + 반전 + 크기.
     // Hidden entirely in length-display (lengthArrow) mode — the dimension label

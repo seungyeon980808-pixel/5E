@@ -7,7 +7,7 @@ import {
   applySvgTextFont,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.0.2";
+} from "./core.js?v=1.0.4";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -15,7 +15,7 @@ import {
   resolveTextLetterSpacing,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=1.0.2";
+} from "../state.js?v=1.0.4";
 
 // 멀티라인 라인 tspan에 부모 <text>의 글꼴/스타일을 명시 복사한다 — 숫자 정자화
 // (fillTextWithRomanRuns) 감지가 라인 tspan 단위에서도 동작하도록.

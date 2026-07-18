@@ -4,7 +4,7 @@
  * helper closures shared by the section builders (snapshots, label-row
  * builders, single-object commit helper). */
 
-import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=1.0.2";
+import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=1.0.4";
 
 export function createInspectorContext(state) {
   const emptyEl   = document.getElementById("inspector-empty");
@@ -16,7 +16,7 @@ export function createInspectorContext(state) {
    * A "라벨 크기" number input in points; stores obj.labelSize in world mm.
    * `applies(o)` guards which selected object types accept the edit (line vs box).
    * Returns { row, num } so callers can append it and sync its value in populate(). */
-  function makeLabelSizeRow(applies, labelText = "라벨 크기") {
+  function makeLabelSizeRow(applies, labelText = "라벨 크기", prop = "labelSize") {
     const row = document.createElement("div");
     row.className = "insp-row";
     const lbl = document.createElement("label");
@@ -50,9 +50,9 @@ export function createInspectorContext(state) {
       state.update((s2) => {
         const o = s2.objects.find((it) => it.id === id);
         if (!o || !applies(o) || o.locked) return;
-        if (o.labelSize === mm) return;
+        if (o[prop] === mm) return;
         if (pushUndo && editSnap) { s2.undoStack.push(editSnap); s2.redoStack = []; editSnap = null; }
-        o.labelSize = mm;
+        o[prop] = mm;
       });
     };
     num.addEventListener("focus", () => { editSnap = JSON.parse(JSON.stringify(state.get().objects)); });

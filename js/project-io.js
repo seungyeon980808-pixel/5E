@@ -10,15 +10,15 @@
 // which snapshots only `objects` and rebuilds groups). groupId is the single
 // source of truth, so we rebuild groups on load via that same helper.
 
-import { rebuildGroups } from "./transform.js?v=1.0.2";
-import { screenToWorld } from "./viewport.js?v=1.0.2";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.0.2";
-import { showConfirm } from "./ui-dialogs.js?v=1.0.2";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.0.2";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.0.2";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.0.2";
-import { insertImageFromSrc } from "./image-paste.js?v=1.0.2";
-import { addPage } from "./pages.js?v=1.0.2";
+import { rebuildGroups } from "./transform.js?v=1.0.4";
+import { screenToWorld } from "./viewport.js?v=1.0.4";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.0.4";
+import { showConfirm } from "./ui-dialogs.js?v=1.0.4";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.0.4";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.0.4";
+import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.0.4";
+import { insertImageFromSrc } from "./image-paste.js?v=1.0.4";
+import { addPage } from "./pages.js?v=1.0.4";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -182,6 +182,8 @@ function migrateObjectList(objects) {
         next.xMin = next.xMin ?? -5; next.xMax = next.xMax ?? 5;
         next.yMin = next.yMin ?? -5; next.yMax = next.yMax ?? 5;
         next.gridStepX = next.gridStepX ?? 1; next.gridStepY = next.gridStepY ?? 1;
+        next.tickStepX = next.tickStepX ?? 1; next.tickStepY = next.tickStepY ?? 1; // 숫자 눈금 한칸값
+
         next.showAxisLines = next.showAxisLines ?? true;
         next.showGrid = next.showGrid ?? false;
         next.showTicks = next.showTicks ?? true;

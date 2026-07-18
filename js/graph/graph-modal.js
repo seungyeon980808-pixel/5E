@@ -13,12 +13,12 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state } from "../state.js?v=1.0.2";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.2";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/coordplane.js?v=1.0.2";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.2";
-import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.2";
-import { nextObjectId } from "../tools/id.js?v=1.0.2";
+import { state } from "../state.js?v=1.0.4";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.0.4";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts } from "../render/coordplane.js?v=1.0.4";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.0.4";
+import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.0.4";
+import { nextObjectId } from "../tools/id.js?v=1.0.4";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -59,6 +59,7 @@ let _activeDraw = -1;             // 클릭으로 '그리는 중'인 점 계열 
 function defaultCfg() {
   return {
     variant: "quadrant", xNeg: 0, xPos: 5, yNeg: 0, yPos: 5,
+    tickStepX: 1, tickStepY: 1,    // 한 칸이 나타내는 값(숫자 눈금 라벨 전용; 물리 칸은 불변)
     labelX: "x", labelY: "y", showX: true, showY: true,
     origin: "0", showOrigin: true,
     showGrid: true, showTicks: true,
@@ -106,7 +107,10 @@ function applyCfg(plane, cfg) {
   plane.xMax = xPos + PAD_X;
   plane.yMin = yNeg > 0 ? -(yNeg + PAD_Y) : 0;
   plane.yMax = yPos + PAD_Y;
-  plane.gridStepX = 1; plane.gridStepY = 1;
+  plane.gridStepX = 1; plane.gridStepY = 1;                  // 물리 격자 칸 간격(불변)
+  // 숫자 눈금 라벨의 '한 칸 값'(요구): 물리 칸과 분리 — 라벨만 k×tickStep으로 표기.
+  plane.tickStepX = Number.isFinite(cfg.tickStepX) && cfg.tickStepX >= 0.1 ? cfg.tickStepX : 1;
+  plane.tickStepY = Number.isFinite(cfg.tickStepY) && cfg.tickStepY >= 0.1 ? cfg.tickStepY : 1;
   plane.gridCountX = xPos; plane.gridCountY = yPos;          // 구코드 호환(양의 칸 수)
   plane.gridCountXPos = xPos; plane.gridCountXNeg = xNeg;    // 비대칭 격자·눈금 범위
   plane.gridCountYPos = yPos; plane.gridCountYNeg = yNeg;
@@ -147,7 +151,7 @@ function applyCfg(plane, cfg) {
   // 축 라벨 이동: 오프셋을 평면에 저장 → coordplane가 축 이름을 그만큼 옮겨 그린다.
   plane.labelXOffset = cfg.labelXOffset && Number.isFinite(cfg.labelXOffset.dx) ? { dx: cfg.labelXOffset.dx, dy: cfg.labelXOffset.dy } : { dx: 0, dy: 0 };
   plane.labelYOffset = cfg.labelYOffset && Number.isFinite(cfg.labelYOffset.dx) ? { dx: cfg.labelYOffset.dx, dy: cfg.labelYOffset.dy } : { dx: 0, dy: 0 };
-  plane.graphCfg = { xNeg, xPos, yNeg, yPos };   // 재편집 시 범위 복원용 스펙
+  plane.graphCfg = { xNeg, xPos, yNeg, yPos, tickStepX: plane.tickStepX, tickStepY: plane.tickStepY };   // 재편집 시 범위·간격 복원용 스펙
   return plane;
 }
 
@@ -495,12 +499,18 @@ function refreshPreview() {
     // 각 점은 드래그 핸들(요구: 자유곡선을 마우스 드래그로 변형) — 점을 끌면 s.pts가
     // 갱신되고, 곡선 모양이면 스무딩이 다시 돌아 매끄러운 곡선으로 따라온다.
     if (s.kind === "points" && i === _sel) {
+      // '그리는 중'이면 기존 점 위에 드래그 히트 원을 얹지 않는다 — 얹으면 그 원이 클릭을
+      // 가로채(stopPropagation) 같은 점을 다시 찍을 수 없어 폐쇄 고리((1,1)→…→(1,1))가
+      // 완성되지 않는다(버그). 그리기 중엔 클릭이 svg 핸들러로 가 꼭짓점이 추가되고,
+      // 드래그 편집 핸들은 그리기를 마친 뒤(선택 상태)에 되살아난다.
+      const drawingThis = _activeDraw === i && !_placeMode;
       s.pts.forEach((mp, pi) => {
         const w = worldFromMath(plane, mp.x, mp.y);
         const c = document.createElementNS(SVG_NS, "circle");
         c.setAttribute("cx", w.x); c.setAttribute("cy", w.y); c.setAttribute("r", 0.9);
         c.setAttribute("fill", "var(--accent)");
         svg.appendChild(c);
+        if (drawingThis) return;   // 드래그 핸들 생략 → 같은 점 재클릭 허용
         // 잡기 쉬운 투명 히트 원 + 드래그로 꼭짓점 이동(1/8칸 스냅은 clientToMath가 처리).
         const hitC = document.createElementNS(SVG_NS, "circle");
         hitC.setAttribute("cx", w.x); hitC.setAttribute("cy", w.y); hitC.setAttribute("r", 2.2);
@@ -944,6 +954,8 @@ function syncCfgControls() {
   if (document.activeElement !== _els.yPos) _els.yPos.value = c.yPos;
   if (document.activeElement !== _els.xNeg) _els.xNeg.value = c.xNeg;
   if (document.activeElement !== _els.yNeg) _els.yNeg.value = c.yNeg;
+  if (document.activeElement !== _els.xStep) _els.xStep.value = c.tickStepX ?? 1;
+  if (document.activeElement !== _els.yStep) _els.yStep.value = c.tickStepY ?? 1;
   const xNegOn = c.variant === "cross";
   const yNegOn = c.variant === "cross" || c.variant === "halfcross";
   _els.xNeg.disabled = !xNegOn; _els.xNeg.style.opacity = xNegOn ? "" : "0.4";
@@ -1095,6 +1107,12 @@ function build() {
           <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap;">
             <span class="gm-inl" style="white-space:nowrap;">x축 <input type="number" id="gm-xneg" class="gm-num gm-spinnum" min="0" value="0" title="왼쪽(음의 x) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-xpos" class="gm-num gm-spinnum" min="1" value="5" title="오른쪽(양의 x) 칸 수" style="width:48px;"></span>
             <span class="gm-inl" style="white-space:nowrap;">y축 <input type="number" id="gm-yneg" class="gm-num gm-spinnum" min="0" value="0" title="아래(음의 y) 칸 수" style="width:48px;"> ~ <input type="number" id="gm-ypos" class="gm-num gm-spinnum" min="1" value="5" title="위(양의 y) 칸 수" style="width:48px;"></span>
+          </div>
+          <!-- 한 칸 간격(눈금값): 격자 물리 칸은 그대로 두고, '숫자' 눈금 라벨에서 한 칸이
+               나타내는 값만 0.1 단위로 조정한다(▲▼ 스핀 = 0.1씩). 기본 1.0. -->
+          <div class="gm-field" style="display:flex;align-items:center;gap:16px;flex-wrap:nowrap;">
+            <span class="gm-inl" style="white-space:nowrap;">x 간격 <input type="number" id="gm-xstep" class="gm-num gm-spinnum" min="0.1" step="0.1" value="1" title="x축 한 칸이 나타내는 값(숫자 눈금)" style="width:56px;"></span>
+            <span class="gm-inl" style="white-space:nowrap;">y 간격 <input type="number" id="gm-ystep" class="gm-num gm-spinnum" min="0.1" step="0.1" value="1" title="y축 한 칸이 나타내는 값(숫자 눈금)" style="width:56px;"></span>
           </div>
           <!-- 축 이름: 라벨과 입력창을 나란히 한 줄(요구 3). 입력창은 한 줄 높이, 내용이
                길어지면 자동으로 아래로 늘어난다(field-sizing). -->
@@ -1255,6 +1273,7 @@ function build() {
     variantSel: overlay.querySelector("#gm-variant-sel"),
     xNeg: overlay.querySelector("#gm-xneg"), xPos: overlay.querySelector("#gm-xpos"),
     yNeg: overlay.querySelector("#gm-yneg"), yPos: overlay.querySelector("#gm-ypos"),
+    xStep: overlay.querySelector("#gm-xstep"), yStep: overlay.querySelector("#gm-ystep"),
     labelX: overlay.querySelector("#gm-labelx"), labelY: overlay.querySelector("#gm-labely"),
     showOrigin: overlay.querySelector("#gm-showorigin"), originBtn: overlay.querySelector("#gm-origin-toggle"),
     showGrid: overlay.querySelector("#gm-showgrid"), showTicks: overlay.querySelector("#gm-showticks"),
@@ -1306,6 +1325,10 @@ function build() {
   _els.yPos.addEventListener("input", () => { _cfg.yPos = int(_els.yPos, 5); refreshPreview(); });
   _els.xNeg.addEventListener("input", () => { if (_els.xNeg.disabled) return; _cfg.xNeg = intNeg(_els.xNeg); refreshPreview(); });
   _els.yNeg.addEventListener("input", () => { if (_els.yNeg.disabled) return; _cfg.yNeg = intNeg(_els.yNeg); refreshPreview(); });
+  // 한 칸 간격(눈금값): ≥0.1, 0.1 단위. 부동소수 누적 방지로 1/10 반올림해 저장.
+  const stepVal = (el) => { const n = parseFloat(el.value); return Number.isFinite(n) && n >= 0.1 ? Math.round(n * 10) / 10 : 1; };
+  _els.xStep.addEventListener("input", () => { _cfg.tickStepX = stepVal(_els.xStep); refreshPreview(); });
+  _els.yStep.addEventListener("input", () => { _cfg.tickStepY = stepVal(_els.yStep); refreshPreview(); });
   // 글씨 크기(%) — 축 이름 / 눈금·성분 분리. 증감은 ▲▼ 스핀 버튼(요구 6, 50~200%).
   const clampScale = (el) => { const n = parseInt(el.value, 10); return Number.isFinite(n) ? Math.max(50, Math.min(200, n)) : 100; };
   _els.axisScale.addEventListener("input", () => { _cfg.axisLabelScale = clampScale(_els.axisScale) / 100; refreshPreview(); });
@@ -1477,6 +1500,9 @@ function loadFromPlane(plane) {
   cfg.yPos = Number.isFinite(gc.yPos) ? gc.yPos : (Number.isFinite(gc.cy) ? gc.cy : Math.max(1, Math.round((plane.yMax ?? 5) - PAD_Y)));
   cfg.xNeg = Number.isFinite(gc.xNeg) ? gc.xNeg : (cfg.variant === "cross" ? cfg.xPos : 0);
   cfg.yNeg = Number.isFinite(gc.yNeg) ? gc.yNeg : ((cfg.variant === "cross" || cfg.variant === "halfcross") ? cfg.yPos : 0);
+  // 한 칸 간격(눈금값) 복원: graphCfg → plane.tickStep* → 기본 1.
+  cfg.tickStepX = Number.isFinite(gc.tickStepX) ? gc.tickStepX : (Number.isFinite(plane.tickStepX) ? plane.tickStepX : 1);
+  cfg.tickStepY = Number.isFinite(gc.tickStepY) ? gc.tickStepY : (Number.isFinite(plane.tickStepY) ? plane.tickStepY : 1);
   cfg.labelX = plane.labelX ?? "x"; cfg.labelY = plane.labelY ?? "y";
   cfg.showX = true; cfg.showY = true;   // 축 라벨은 항상 표시(on/off 제거 — 요구)
   cfg.origin = (plane.labelOrigin === "O") ? "O" : "0";

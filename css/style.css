@@ -1920,7 +1920,7 @@ textarea.unified-text-input {
 }
 .page-tabs {
   display: flex; align-items: flex-end; gap: 2px;
-  flex: 1 1 auto; min-width: 0;
+  flex: 0 1 auto; min-width: 0;
   overflow-x: auto; overflow-y: hidden;
   scrollbar-width: thin;
 }

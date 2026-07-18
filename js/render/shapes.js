@@ -11,10 +11,10 @@ import {
   catmullRomClosedPath,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.0.2";
-import { withBoxLabel, withLineLabel } from "./labels.js?v=1.0.2";
-import { resolveFill } from "./fill.js?v=1.0.2";
-import { getSvgAsset } from "../svg-assets.js?v=1.0.2";
+} from "./core.js?v=1.0.4";
+import { withBoxLabel, withLineLabel } from "./labels.js?v=1.0.4";
+import { resolveFill } from "./fill.js?v=1.0.4";
+import { getSvgAsset } from "../svg-assets.js?v=1.0.4";
 
 /* ----- rect: size-based shape (DESIGN 2-1 branch A) ----- */
 function renderRect(obj) {
@@ -232,7 +232,8 @@ function renderLine(obj) {
     label.setAttribute("x", mx);
     label.setAttribute("y", my);
     label.setAttribute("fill", color);
-    label.setAttribute("font-size", Math.max(2.5, sw * 8));
+    // 치수 라벨 글자 크기: obj.dimensionLabelSize(mm) 우선, 미설정 시 선 두께 기반 자동.
+    label.setAttribute("font-size", obj.dimensionLabelSize || Math.max(2.5, sw * 8));
     // Match the straight-line external label (makeUprightLabel): HWP equation
     // stack so a dimension label (e.g. "Q") reads identically to a line
     // variable label (e.g. "H"). Style only — geometry/behavior unchanged.
