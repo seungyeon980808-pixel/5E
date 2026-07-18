@@ -1035,6 +1035,36 @@ body { zoom: var(--ui-zoom, 1); }
   border-color: var(--accent);
 }
 .gm-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* −/값/＋ 묶음(곡률·앵커 수). 이 둘은 값을 직접 넣는 게 아니라 "한 단계씩 조정"하는
+   조작이라 숫자 입력칸(.gm-step)으로 바꾸지 않았다 — 앵커 ＋는 가장 성긴 구간을
+   나누고 −는 영향이 가장 적은 점을 지우는, 임의의 수를 넣을 수 없는 동작이다.
+   대신 세 조각을 한 덩어리로 붙여 다른 컨트롤과 높이·모서리를 맞춘다. */
+.gm-pm { display: inline-flex; align-items: stretch; height: 30px; }
+.gm-pm button {
+  font: inherit;
+  font-size: 13px;
+  width: 30px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: var(--bg-panel-hover);
+  border: 1px solid var(--border);
+}
+.gm-pm button:first-child { border-radius: 6px 0 0 6px; }
+.gm-pm button:last-child { border-radius: 0 6px 6px 0; }
+.gm-pm button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-pm > span {
+  min-width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
 .gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
 .gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); }

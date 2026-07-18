@@ -1188,13 +1188,13 @@ function syncSeriesEditor() {
   });
   // 곡률 조절: 점 계열을 곡선으로 그릴 때만(꺾은선→곡선). 함수식은 식이 형태를 정하므로 숨김.
   const showCurv = s.kind === "points" && cs === "smooth";
-  _els.curvatureRow.style.display = showCurv ? "flex" : "none";
+  _els.curvatureRow.style.display = showCurv ? "" : "none";
   if (showCurv) _els.curvVal.textContent = Math.round((s.curvature || 1) * 100) + "%";
   // 앵커 수 조절: 자유곡선(smooth 점 계열)에만.
-  _els.anchorsRow.style.display = showCurv ? "flex" : "none";
+  _els.anchorsRow.style.display = showCurv ? "" : "none";
   if (showCurv) _els.anchorVal.textContent = s.pts.length;
   // 베지어 핸들 변환/해제: 자유곡선에만. 핸들 유무에 따라 변환/해제 버튼 전환.
-  _els.bezierRow.style.display = showCurv ? "flex" : "none";
+  _els.bezierRow.style.display = showCurv ? "" : "none";
   if (showCurv) {
     const on = useHandles(s);
     _els.bezierOn.style.display = on ? "none" : "";
@@ -1523,10 +1523,10 @@ function build() {
           <div id="gm-tab-func" style="display:none;">
           <!-- 함수 하위 탭(요구): 해석적 함수 / 직선·꺾은선 / 자유곡선 — 성격별로 분리 편집.
                미리보기는 셋이 공유하고, '만들기'는 모든 하위 탭의 계열을 한 평면에 합친다. -->
-          <div id="gm-subtabs" style="display:flex;gap:4px;margin-bottom:6px;">
-            <button type="button" id="gm-sub-expr" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">해석적 함수</button>
-            <button type="button" id="gm-sub-poly" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">직선·꺾은선</button>
-            <button type="button" id="gm-sub-free" class="modal-btn" style="flex:1;font-size:12px;padding:5px;">자유곡선</button>
+          <div id="gm-subtabs" class="gm-elem-seg" style="display:flex;margin-bottom:8px;">
+            <button type="button" id="gm-sub-expr" style="flex:1;">해석적 함수</button>
+            <button type="button" id="gm-sub-poly" style="flex:1;">직선·꺾은선</button>
+            <button type="button" id="gm-sub-free" style="flex:1;">자유곡선</button>
           </div>
           <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size:12px;padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
@@ -1535,51 +1535,100 @@ function build() {
           </div>
 
           <div id="gm-series-editor" style="display:none;">
-            <div id="gm-expr-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
-              <span style="font-size:13px;color:var(--text-label);white-space:nowrap;">y =</span>
-              <input type="text" id="gm-expr" class="gm-num" style="font-family:monospace;flex:1;" spellcheck="false" placeholder="예: sin(x), x^2-3x+1">
-            </div>
-            <div id="gm-expr-helpers" style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;"></div>
-            <div id="gm-domain-row" style="display:flex;gap:6px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              정의역 <input type="number" id="gm-dmin" class="gm-num" style="width:62px;" step="0.5" placeholder="자동"> ~
-              <input type="number" id="gm-dmax" class="gm-num" style="width:62px;" step="0.5" placeholder="자동">
-            </div>
-            <div id="gm-pts-rows" style="display:none;margin-bottom:6px;">
-              <div style="font-size:12px;color:var(--text-secondary);margin-bottom:5px;">
-                점 찍기 / 좌표 직접 입력<span class="gm-help" title="미리보기를 클릭해 꼭짓점을 찍으세요 — 커서까지 선이 따라옵니다. Enter 또는 우클릭이면 완료. 마지막 눈금 밖으로도 조금 나갈 수 있습니다. 아래 칸에 좌표를 직접 입력할 수도 있습니다.">?</span>
+            <!-- 아래 모든 행은 라벨 92px 고정 열(.gm-row)에 맞춘다 — 좌표 탭과 같은 세로
+                 기준선을 쓰기 위해서다(DESIGN 13-1). 종전엔 행마다 제 글자 수만큼
+                 입력칸이 밀려 시작점이 여섯 갈래였다. -->
+            <div id="gm-expr-row" class="gm-group">
+              <p class="gm-group-h">식</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">y =</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-expr" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: sin(x), x^2-3x+1">
+                </div>
               </div>
-              <input type="text" id="gm-pts" class="gm-num" style="font-family:monospace;width:100%;" spellcheck="false" placeholder="예: 0,0 1,2 3,2">
-              <div style="display:flex;gap:6px;margin-top:5px;">
-                <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size:11px;padding:3px 8px;">마지막 점 삭제</button>
-                <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size:11px;padding:3px 8px;">전체 지움</button>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body" id="gm-expr-helpers" style="flex-wrap:wrap;gap:3px;"></div>
+              </div>
+              <div class="gm-row" id="gm-domain-row">
+                <span class="gm-row-lbl">정의역</span>
+                <div class="gm-row-body">
+                  <input type="number" id="gm-dmin" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                  <span style="color:var(--text-secondary);">~</span>
+                  <input type="number" id="gm-dmax" class="gm-num" style="width:70px;" step="0.5" placeholder="자동">
+                </div>
               </div>
             </div>
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              선 <span id="gm-styles" style="display:inline-flex;gap:4px;"></span>
-              굵기 <input type="number" id="gm-width" class="gm-num gm-spinnum" style="width:58px;" min="0.1" max="2" step="0.1">
+
+            <div id="gm-pts-rows" class="gm-group" style="display:none;">
+              <p class="gm-group-h">점</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">좌표 입력</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-pts" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: 0,0 1,2 3,2">
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl"></span>
+                <div class="gm-row-body">
+                  <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size:11px;padding:3px 8px;">마지막 점 삭제</button>
+                  <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size:11px;padding:3px 8px;">전체 지움</button>
+                </div>
+              </div>
+              <p class="gm-ax-note">미리보기를 클릭해 꼭짓점을 찍고, Enter 또는 우클릭으로 마칩니다.</p>
             </div>
-            <!-- 모양(직선/곡선)은 하위 탭이 결정하므로 숨김(직선·꺾은선=직선, 자유곡선=곡선). -->
-            <div id="gm-shape-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              모양 <span id="gm-curve" style="display:inline-flex;gap:4px;"></span>
+
+            <div class="gm-row" id="gm-shape-row" style="display:none;">
+              <span class="gm-row-lbl">모양</span>
+              <div class="gm-row-body"><span id="gm-curve" style="display:inline-flex;gap:4px;"></span></div>
             </div>
-            <div id="gm-curvature-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              곡률 <button type="button" id="gm-curv-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
-              <span id="gm-curv-val" style="min-width:38px;text-align:center;">100%</span>
-              <button type="button" id="gm-curv-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
+            <div class="gm-row" id="gm-curvature-row" style="display:none;">
+              <span class="gm-row-lbl">곡률</span>
+              <div class="gm-row-body">
+                <span class="gm-pm">
+                  <button type="button" id="gm-curv-dn">−</button>
+                  <span id="gm-curv-val">100%</span>
+                  <button type="button" id="gm-curv-up">＋</button>
+                </span>
+              </div>
             </div>
-            <!-- 앵커 수 조절(자유곡선): ＋=가장 성긴 구간 분할, −=모양 가장 덜 바뀌는 앵커 제거 -->
-            <div id="gm-anchors-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              앵커 수 <button type="button" id="gm-anchor-dn" class="modal-btn" style="font-size:12px;padding:2px 9px;">−</button>
-              <span id="gm-anchor-val" style="min-width:26px;text-align:center;">0</span>
-              <button type="button" id="gm-anchor-up" class="modal-btn" style="font-size:12px;padding:2px 9px;">＋</button>
-              <span class="gm-help" title="곡선을 이루는 점(앵커)의 개수를 조절합니다. ＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 골라 지울 수도 있습니다.">?</span>
+            <div class="gm-row" id="gm-anchors-row" style="display:none;">
+              <span class="gm-row-lbl">앵커 수</span>
+              <div class="gm-row-body">
+                <span class="gm-pm">
+                  <button type="button" id="gm-anchor-dn">−</button>
+                  <span id="gm-anchor-val">0</span>
+                  <button type="button" id="gm-anchor-up">＋</button>
+                </span>
+                <span class="gm-help" title="＋는 가장 성긴 구간에 점을 더하고, −는 모양을 가장 덜 바꾸는 점을 지웁니다. 미리보기에서 앵커를 우클릭하면 그 점만 지울 수도 있습니다.">?</span>
+              </div>
             </div>
-            <!-- 베지어 핸들 변환/해제: 앵커에 접선 핸들을 노출해 곡률을 직접 잡는다(스무스 노드). -->
-            <div id="gm-bezier-row" style="display:none;gap:8px;align-items:center;margin-bottom:6px;font-size:12px;color:var(--text-secondary);">
-              <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size:11px;padding:3px 9px;">베지어로 변환</button>
-              <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
-              <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 곡선이 휘는 정도를 직접 조절할 수 있습니다(변환 직후 모양은 그대로). '자동 곡선으로'를 누르면 핸들을 지우고 원래 자동 곡선으로 돌아갑니다.">?</span>
+            <div class="gm-row" id="gm-bezier-row" style="display:none;">
+              <span class="gm-row-lbl"></span>
+              <div class="gm-row-body">
+                <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size:11px;padding:3px 9px;">베지어로 변환</button>
+                <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size:11px;padding:3px 9px;display:none;">자동 곡선으로</button>
+                <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 휘는 정도를 직접 조절할 수 있습니다.">?</span>
+              </div>
             </div>
+
+            <div class="gm-group">
+              <p class="gm-group-h">모양</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">선 종류</span>
+                <div class="gm-row-body"><span id="gm-styles" style="display:inline-flex;gap:4px;"></span></div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">선 굵기</span>
+                <div class="gm-row-body">
+                  <span class="gm-step"><input type="number" id="gm-width" min="0.1" max="2" step="0.1" aria-label="선 굵기">
+                    <span class="gm-step-btns">
+                      <button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button>
+                      <button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button>
+                    </span></span>
+                  <span class="gm-unit">mm</span>
+                </div>
+              </div>
             <!-- 끝 라벨은 v_0 정도의 짧은 값만 들어간다. 남는 폭을 다 먹지 않게 줄이고,
                  이동·자동 연장선을 같은 행에 나란히 둔다(의견 5). -->
             <div class="gm-row">
@@ -1593,6 +1642,8 @@ function build() {
                        title="꺾은선 끝을 반 칸 늘려, 끝부분에도 수선·표시점이 잘 맞습니다.">
                   <input type="checkbox" id="gm-autoext"> 자동 연장선</label>
               </div>
+            </div>
+
             </div>
 
             <!-- 그래프 요소: 이름 자체가 스위치다(의견 6). 종전엔 이름 + '찍기' 두 요소가
