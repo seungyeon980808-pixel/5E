@@ -11,16 +11,22 @@
 
 ## 현재 지도
 
-| 폴더 (`51_5E\` 아래) | 브랜치 | 포트 | 역할 | main 대비 | origin |
+흐름은 **작업 브랜치 → `integration-hub`(합치는 곳) → `main`(배포)** 이다.
+따라서 브랜치의 안전 여부는 `main` 기준이 아니라 **① 허브에 들어갔나 ② 허브가 origin에 올라갔나**로 본다.
+
+| 폴더 (`51_5E\` 아래) | 브랜치 | 포트 | 역할 | 허브 병합 | origin |
 |---|---|---|---|---|---|
-| `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages). 급한 버그는 여기서 직접 고치기도 함 | — | ✅ 동기 |
-| `5E_hubmerge` | `integration-hub` | ⚠️ 8190 | 브랜치 병합 무대 | +11 | ✅ 있음 |
-| `5E_hub` | `feature/app-icon` | 8199 | 앱 아이콘·공유 썸네일 디자인 | +3 | ❌ 로컬만 |
-| `branches/5E_curve_dev` | `feat/curve-smoothing` | 8340 | 자유곡선(centripetal)·베지어 핸들 편집 | +5 | ✅ 있음 |
-| `branches/5E_libstore_dev` | `feat/library-storage` | 8350 | 라이브러리 IndexedDB 이전 + ZIP 백업 | +3 | ❌ 로컬만 |
-| `branches/5E_macfix_dev` | `feat/mac-graph-examlib` | ⚠️ 8190 | Mac 대응 + 모달 이동 손잡이 + 기출 다중선택 | +4 | ❌ 로컬만 |
-| `branches/5E_uidetail_dev` | `feat/ui-detail` | 8400 | UI 조립 원칙 적용(그래프 모달 좌표 탭) + 문서 최신화 | +5 | ❌ 로컬만 |
-| `branches/5E_ai_dev` | `feat/ai-assist` | ⚠️ 없음 | AI 챗봇(Cloudflare Worker 프록시) | +2 | ❌ 로컬만 |
+| `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages). 급한 버그는 여기서 직접 고치기도 함 | (배포선) | ✅ 동기 |
+| `5E_hubmerge` | `integration-hub` | ⚠️ 8190 | **합치는 곳** — 작업 브랜치를 여기 모아 검증 후 main으로 | 자신 | ⚠️ **로컬에만 57커밋** |
+| `branches/5E_curve_dev` | `feat/curve-smoothing` | 8340 | 자유곡선(centripetal)·베지어 핸들 편집 | ✅ 병합됨 | ✅ 있음 |
+| `branches/5E_macfix_dev` | `feat/mac-graph-examlib` | ⚠️ 8190 | Mac 대응 + 모달 이동 손잡이 + 기출 다중선택 | ✅ 병합됨 | ❌ |
+| `5E_hub` | `feature/app-icon` | 8199 | 앱 아이콘·공유 썸네일 디자인 | ❌ 아직 | ❌ |
+| `branches/5E_libstore_dev` | `feat/library-storage` | 8350 | 라이브러리 IndexedDB 이전 + ZIP 백업 | ❌ 아직 | ❌ |
+| `branches/5E_ai_dev` | `feat/ai-assist` | ⚠️ 없음 | AI 챗봇(Cloudflare Worker 프록시) | ❌ 아직 | ❌ |
+| `branches/5E_uidetail_dev` | `feat/ui-detail` | 8400 | UI 조립 원칙 적용 + 문서 최신화 | ❌ 작업 중 | ❌ |
+
+> 허브에 이미 병합된 브랜치(`curve-smoothing`·`mac-graph-examlib`)는 그 자체를 push하지 않아도
+> **허브만 push하면 내용이 보존된다.** 반대로 허브가 push되지 않으면 병합해 둔 것까지 함께 위태롭다.
 
 ---
 
@@ -36,9 +42,15 @@
 - 처방: 8250(과거 사용값)으로 만들어 둔다. `.bat`은 **ASCII + CRLF**로 저장할 것
   (UTF-8/LF이면 한국어 Windows의 cmd가 파싱에 실패한다).
 
-**3. origin에 없는 브랜치가 5개다** — `ai-assist` · `library-storage` · `mac-graph-examlib` · `ui-detail` · `app-icon`
-- 합쳐 **17커밋이 이 PC에만** 있다. 디스크가 날아가면 복구 수단이 없다.
-- 처방: 병합 계획이 없더라도 `git push -u origin <브랜치>`로 올려만 둔다.
+**3. `integration-hub`가 origin보다 57커밋 앞서 있다 — 이게 가장 큰 위험이다.**
+- 작업 브랜치를 허브에 열심히 합쳐 놨는데 **그 허브 자체가 한 번도 push되지 않았다.**
+  합쳐 둔 `curve-smoothing`·`mac-graph-examlib`의 성과까지 전부 이 PC에만 있다.
+- 처방: `git push origin integration-hub` 하나면 57커밋이 통째로 안전해진다.
+- 아직 허브에 없는 `app-icon`·`library-storage`·`ai-assist`·`ui-detail`은 별도다 —
+  허브에 병합하거나, 각자 `git push -u origin <브랜치>`로 올려 둔다.
+
+> **판단 기준**: "이 브랜치를 push했나"가 아니라 **"이 커밋이 origin 어딘가에 있나"**로 본다.
+> 허브에 병합된 브랜치는 허브만 올라가면 안전하다.
 
 ---
 
