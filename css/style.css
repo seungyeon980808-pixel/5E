@@ -434,12 +434,14 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   height: 28px;
-  padding: 0 2px 0 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 축소 */
+  padding: 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 제거 */
   color: var(--accent-2);
   /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
-  font-size: 18px;
+  /* 툴바 한 줄(28px) 안에 머무는 최대치. 더 키우면 위아래 칸을 침범한다. */
+  font-size: 22px;
+  line-height: 1;
   font-weight: 600;
   letter-spacing: 0;
   text-decoration: none;
@@ -452,7 +454,9 @@ body { zoom: var(--ui-zoom, 1); }
    글씨 색·크기는 5E 브랜드(과목별 accent-2, serif italic)를 따라간다. */
 .mode-toggle-btn {
   display: inline-flex; align-items: center;
-  height: 23px; margin-left: 6px; padding: 0 10px;
+  /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
+     컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
+  height: 23px; margin-left: -2px; padding: 0 10px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);

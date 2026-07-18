@@ -1482,7 +1482,7 @@ export function vectorizeImage(imageData, options = {}) {
   const {
     dilateRadius = 3,
     minArea = 25,
-    textSizePx = 22,
+    textSizePx = 55,
     epsilon = 1.2,
     removeGrid = false,
     preserveGrayLevels = true,

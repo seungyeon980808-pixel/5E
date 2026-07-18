@@ -169,8 +169,8 @@ function buildModal() {
       <div class="examlib-toolbar">
         <div class="examlib-selected-actions">
           <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
-          <button id="examlib-objectify" type="button" class="modal-btn" disabled>오브젝트 변환</button>
-          <button id="examlib-refwin" type="button" class="modal-btn" disabled
+          <button id="examlib-objectify" type="button" class="modal-btn modal-btn-primary" disabled>오브젝트 변환</button>
+          <button id="examlib-refwin" type="button" class="modal-btn modal-btn-primary" disabled
                   title="선택한 문항을 별도 창으로 띄웁니다 (듀얼 모니터용)">참고 창 열기</button>
         </div>
       </div>
