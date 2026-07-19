@@ -922,6 +922,93 @@ body { zoom: var(--ui-zoom, 1); }
   background: var(--accent);
 }
 
+/* ===== BATCH EXPORT (페이지 일괄 내보내기 모달) ===== */
+.batch-modal { width: min(480px, calc(100vw - 32px)); }
+
+/* 저장 폴더 줄: 경로 + [폴더 연결] 버튼 */
+.batch-dir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-dir-path {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 미지정 상태는 회색으로 — "아직 할 일이 남았다"를 색이 아니라 명도로 표시한다. */
+.batch-dir-path.is-empty { color: var(--text-secondary); }
+
+/* 전체 선택/해제: 라벨 줄 오른쪽 끝에 붙는 작은 텍스트 버튼 */
+.modal-label:has(.batch-select-all) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.batch-select-all {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.batch-select-all:hover { color: var(--text-primary); }
+
+.batch-list {
+  max-height: min(300px, 40vh);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-input);
+}
+.batch-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.batch-row:hover { background: var(--btn-tool-hover); }
+.batch-row-name {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 실제로 떨어질 파일 이름 — 확인용이므로 본문보다 한 단계 약하게. */
+.batch-row-file {
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.batch-row-tag {
+  margin-left: 5px;
+  padding: 1px 5px;
+  color: var(--text-secondary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+}
+.batch-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;

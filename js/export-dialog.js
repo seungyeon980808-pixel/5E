@@ -11,8 +11,8 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, rasterizeExportCanvas } from "./svg-export.js?v=1.1.0";
-import { commitActivePage } from "./pages.js?v=1.1.0";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp } from "./svg-export.js?v=1.1.0";
+import { openBatchExport } from "./export-batch.js?v=1.1.0";
 import { showAlert } from "./ui-dialogs.js?v=1.1.0";
 import { registerTopMenu } from "./top-menu.js?v=1.1.0";
 import { screenToWorld } from "./viewport.js?v=1.1.0";
@@ -102,7 +102,7 @@ function buildModal() {
         <button type="button" class="modal-btn" id="export-preview">미리보기</button>
         <button type="button" class="modal-btn" id="export-area">영역 지정</button>
         <button type="button" class="modal-btn" id="export-all-pages"
-                title="모든 페이지를 각각 PNG 파일로 내보냅니다.">전체 페이지</button>
+                title="저장 폴더를 지정하고 내보낼 페이지를 골라 PNG로 저장합니다.">페이지 선택…</button>
         <button type="button" class="modal-btn" id="export-copy"
                 title="PNG를 클립보드에 복사 — 한글(HWP)·PPT에 바로 붙여넣기(Ctrl+V)">복사</button>
         <button type="button" class="modal-btn modal-btn-primary" id="export-confirm">내보내기</button>
@@ -477,50 +477,18 @@ export function initExportDialog(state, svg) {
     });
   }
 
-  // 전체 페이지 일괄 내보내기: 모든 페이지를 각각 PNG로 저장한다. 기존 렌더 경로
-  // (rasterizeExportCanvas)를 페이지 루프로 감싼다 — 페이지별로 그 페이지의 4필드
-  // (objects/guides/layers/artboard)를 담은 스냅샷 상태를 만들어 넘긴다. SVG는 페이지당
-  // 파일 여러 개라 애매하므로 v1은 PNG만 지원한다.
+  // 전체 페이지 일괄 내보내기: 예전에는 이 버튼을 누르는 즉시 모든 페이지가 다운로드
+  // 폴더로 쏟아졌다. 지금은 중간 단계(export-batch.js)를 연다 — 저장 폴더를 연결하고,
+  // 탭에 열린 페이지 중 내보낼 것을 고르고, 페이지에 지정한 이름을 그대로 파일명으로
+  // 쓴다. SVG는 페이지당 파일이 여러 개라 애매하므로 PNG만 지원하는 것은 그대로다.
   const allBtn = overlay.querySelector("#export-all-pages");
   if (allBtn) {
-    allBtn.addEventListener("click", async () => {
-      commitActivePage(state);           // 활성 페이지의 미저장 편집을 page 기록에 반영
-      const s = state.get();
-      const pages = s.pages || [];
-      if (pages.length === 0) return;
+    allBtn.addEventListener("click", () => {
       const base = sanitizeFilename(filenameInput.value) || defaultNameBase();
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
       const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
-      const pad = String(pages.length).length;
-
-      allBtn.disabled = true;
-      const orig = allBtn.textContent;
-      try {
-        for (let i = 0; i < pages.length; i++) {
-          const p = pages[i];
-          allBtn.textContent = `${i + 1}/${pages.length}…`;
-          // 렌더가 읽는 필드만 갈아끼운 스냅샷 상태(라이브 상태는 건드리지 않음).
-          const snap = { ...s, objects: p.objects, guides: p.guides, layers: p.layers, artboard: p.artboard };
-          const num = p.meta && p.meta.number ? p.meta.number : String(i + 1).padStart(pad, "0");
-          const name = `${base}_p${num}.png`;
-          const result = await rasterizeExportCanvas(snap, { dpi, bounds: null, options });
-          const blob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = name;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-          }
-          // 연속 다운로드가 브라우저에 막히지 않도록 살짝 간격을 둔다.
-          await new Promise((res) => setTimeout(res, 150));
-        }
-      } catch (_) {
-        showAlert("전체 페이지 내보내기 중 오류가 발생했습니다.", { title: "내보내기" });
-      }
-      allBtn.textContent = orig;
-      allBtn.disabled = false;
       hideModal();
+      openBatchExport({ state, dpi, options, baseName: base });
     });
   }
 
