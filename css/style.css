@@ -691,6 +691,10 @@ body { zoom: var(--ui-zoom, 1); }
   max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
   max-height: calc((100vh - 40px) / var(--ui-zoom, 1));
   overflow-y: auto;
+  /* body{zoom} 안의 스크롤 컨테이너에서 Chromium이 이전 프레임을 못 지우고 겹쳐
+     그리는 버그 대비 — 자체 컴포지팅 레이어로 승격. (기출 문항 검색 카드가 층층이
+     겹쳐 보이던 버그와 같은 계열, 안전하게 모든 모달에 선반영) */
+  transform: translateZ(0);
   display: flex;
   flex-direction: column;
   gap: 16px;
