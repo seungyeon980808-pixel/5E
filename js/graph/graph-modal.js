@@ -13,7 +13,7 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state } from "../state.js?v=1.1.0";
+import { state, ptToMm, mmToPt } from "../state.js?v=1.1.0";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.1.0";
 import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.1.0";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.1.0";
@@ -96,6 +96,9 @@ function defaultCfg() {
     annArrows: [],                // 자유 화살촉 [{x,y, tx,ty}] (head, tail로 방향)
     guideLines: [],               // 가이드라인 [{x1,y1,x2,y2}] (두 점 점선)
     legends: [],                  // 범례 박스 [{x,y, rows:[{dash,text}]}]
+    // 라벨러 표시점(요구 ⑥): 점 + A·B·C… 순서 라벨. dist(mm)·angle(도, 0=오른쪽·+=반시계)·
+    // size(mm, 15pt 기본)로 라벨 위치·크기를 조절. text는 직접 수정 가능.
+    annLabelPoints: [],            // [{x,y, text, dist, angle, size}]
   };
 }
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
@@ -205,6 +208,7 @@ function applyCfg(plane, cfg) {
   plane.annArrows = arr(cfg.annArrows);
   plane.guideLines = arr(cfg.guideLines);
   plane.legends = arr(cfg.legends);
+  plane.annLabelPoints = arr(cfg.annLabelPoints);
   plane.graphCfg = { xNeg, xPos, yNeg, yPos, tickStepX: plane.tickStepX, tickStepY: plane.tickStepY };   // 재편집 시 범위·간격 복원용 스펙
   return plane;
 }
@@ -1029,6 +1033,10 @@ function refreshPreview() {
       else if (_annMode === "guideline") {
         if (!_annPending) { _annPending = { x: hit.mx, y: hit.my }; }   // 가이드라인 첫 점
         else { (_cfg.guideLines = _cfg.guideLines || []).push({ x1: _annPending.x, y1: _annPending.y, x2: hit.mx, y2: hit.my }); _annPending = null; }
+      } else if (_annMode === "labelpt") {
+        // 라벨러 표시점(요구 ⑥): 찍는 순서대로 A·B·C… 자동 부여(추후 개별 수정 가능).
+        const arr = (_cfg.annLabelPoints = _cfg.annLabelPoints || []);
+        arr.push({ x: hit.mx, y: hit.my, text: nextLabelLetter(arr.length), dist: 5, angle: 45, size: ptToMm(15) });
       }
       if (typeof syncAnnLists === "function") syncAnnLists();
       refreshPreview();
@@ -1406,6 +1414,12 @@ function addSeries(s) {
 
 /* ---------- 그래프 요소 목록(칩) + 방향 버튼 동기화 ---------- */
 // 칩 라벨: 이제 (x, y) 두 좌표를 다 보여준다. 구버전 파일의 숫자 스펙은 x만 표시.
+// 라벨러 표시점(요구 ⑥): 찍은 개수 기준 base-26 문자열(A..Z, AA..AZ, BA..). 인덱스는 0부터.
+function nextLabelLetter(count) {
+  let s = "", n = count;
+  do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
+  return s;
+}
 function chipLabel(spec) {
   const r = (v) => { const n = Math.round(v * 100) / 100; return Object.is(n, -0) ? "0" : String(n); };
   if (typeof spec === "number") return `x=${r(spec)}`;
@@ -1490,22 +1504,76 @@ function syncAnnLists() {
   fill(_els.annArrowList, _els.annArrowRow, _cfg.annArrows, (a) => fmt(a) + " →");
   fill(_els.annGuidelineList, _els.annGuidelineRow, _cfg.guideLines,
     (g) => `(${(+g.x1).toFixed(1)},${(+g.y1).toFixed(1)})–(${(+g.x2).toFixed(1)},${(+g.y2).toFixed(1)})`);
+  fill(_els.annLabelPtList, _els.annLabelPtRow, _cfg.annLabelPoints,
+    (lp) => `${lp.text ?? "?"} ${fmt(lp)}`);
+  renderLabelPtEditor();
   const arm = (btn, on) => btn && btn.classList.toggle("on", on);
   arm(_els.annMarker, _annMode === "marker");
   arm(_els.annGuide, _annMode === "guide");
   arm(_els.annArrow, _annMode === "arrow");
   arm(_els.annGuideline, _annMode === "guideline");
+  arm(_els.annLabelPt, _annMode === "labelpt");
   const H = {
     marker: "미리보기를 클릭해 표시점을 찍습니다.",
     guide: "미리보기를 클릭하면 그 점에서 두 축까지 점선(수선의 발)이 생깁니다.",
     arrow: "함수(곡선) 위를 클릭하면 그 자리에 접선 방향으로 화살촉이 놓입니다. 함수가 없으면 놓이지 않습니다.",
     guideline: "두 점을 클릭하면 그 사이에 안내 점선이 생깁니다.",
+    labelpt: "미리보기를 클릭해 A·B·C… 순서로 표시점을 찍습니다. 거리·각도·글씨는 아래에서 조정합니다.",
   };
   _els.annHint.textContent = _annMode
     ? (_annPending ? "한 번 더 클릭해 끝점을 지정하세요." : H[_annMode])
     : "도구를 켜고 미리보기를 클릭해 배치합니다. 함수가 없어도 됩니다.";
   renderLegendEditor();
 }
+// 라벨러 표시점 에디터(요구 ⑥): 점마다 텍스트·거리(mm)·각도(°, PageUp/Down 15°씩)·글씨크기(pt).
+function renderLabelPtEditor() {
+  const host = _els.annLabelPtEditor;
+  if (!host) return;
+  host.replaceChildren();
+  const miniBtn = "font-size:11px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
+  (_cfg.annLabelPoints || []).forEach((lp, i) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:flex;gap:5px;align-items:center;margin:6px 0 0 102px;flex-wrap:wrap;";
+    const txt = document.createElement("input"); txt.type = "text"; txt.value = lp.text ?? "";
+    txt.style.cssText = "width:44px;font-family:monospace;font-size:12px;text-align:center;";
+    txt.addEventListener("input", () => { lp.text = txt.value; refreshPreview(); });
+
+    const numField = (label, val, step, min, onSet) => {
+      const wrap = document.createElement("span");
+      wrap.style.cssText = "display:flex;align-items:center;gap:3px;font-size:11px;color:var(--text-secondary);";
+      const lb = document.createElement("span"); lb.textContent = label;
+      const inp = document.createElement("input"); inp.type = "number"; inp.step = String(step);
+      if (min != null) inp.min = String(min);
+      inp.value = val;
+      inp.style.cssText = "width:56px;font-size:11px;padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
+      inp.addEventListener("input", () => { onSet(parseFloat(inp.value)); refreshPreview(); });
+      wrap.append(lb, inp);
+      return { wrap, inp };
+    };
+
+    const distF = numField("거리(mm)", (Number.isFinite(lp.dist) ? lp.dist : 5).toFixed(1), 0.5, 0,
+      (v) => { lp.dist = Number.isFinite(v) && v >= 0 ? v : lp.dist; });
+    const angleF = numField("각도(°)", Math.round(Number.isFinite(lp.angle) ? lp.angle : 45), 15, null,
+      (v) => { lp.angle = Number.isFinite(v) ? v : lp.angle; });
+    // 요구: PageUp/PageDown으로 15°씩 회전(각도 칸에 포커스가 있을 때).
+    angleF.inp.addEventListener("keydown", (e) => {
+      if (e.key !== "PageUp" && e.key !== "PageDown") return;
+      e.preventDefault();
+      lp.angle = (Number.isFinite(lp.angle) ? lp.angle : 45) + (e.key === "PageUp" ? 15 : -15);
+      angleF.inp.value = Math.round(lp.angle);
+      refreshPreview();
+    });
+    const sizeF = numField("글씨(pt)", Math.round(mmToPt(Number.isFinite(lp.size) ? lp.size : ptToMm(15))), 1, 4,
+      (v) => { lp.size = Number.isFinite(v) && v > 0 ? ptToMm(v) : lp.size; });
+
+    const rm = document.createElement("button"); rm.type = "button"; rm.textContent = "삭제"; rm.style.cssText = miniBtn;
+    rm.addEventListener("click", () => { _cfg.annLabelPoints.splice(i, 1); syncAnnLists(); refreshPreview(); });
+
+    row.append(txt, distF.wrap, angleF.wrap, sizeF.wrap, rm);
+    host.appendChild(row);
+  });
+}
+
 function renderLegendEditor() {
   const host = _els.annLegendEditor;
   if (!host) return;
@@ -2151,6 +2219,7 @@ function build() {
                 <button type="button" id="gm-ann-guide" class="gm-ann-tool">수선의 발</button>
                 <button type="button" id="gm-ann-arrow" class="gm-ann-tool">화살표</button>
                 <button type="button" id="gm-ann-guideline" class="gm-ann-tool">가이드라인</button>
+                <button type="button" id="gm-ann-labelpt" class="gm-ann-tool">라벨러 표시점</button>
               </div>
             </div>
             <div class="gm-ax-note" id="gm-ann-hint" style="padding-left:102px;">도구를 켜고 미리보기를 클릭해 배치합니다. 함수가 없어도 됩니다.</div>
@@ -2170,6 +2239,12 @@ function build() {
               <span class="gm-row-lbl">가이드라인</span>
               <div class="gm-row-body"><div id="gm-ann-guideline-list" class="gm-chips"></div></div>
             </div>
+
+            <div class="gm-row gm-elem-chiprow" id="gm-ann-labelpt-row" hidden style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+              <span class="gm-row-lbl">라벨러 표시점</span>
+              <div class="gm-row-body"><div id="gm-ann-labelpt-list" class="gm-chips"></div></div>
+            </div>
+            <div id="gm-ann-labelpt-editor"></div>
 
             <div class="gm-row" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
               <span class="gm-row-lbl">범례</span>
@@ -2208,6 +2283,9 @@ function build() {
     annGuideRow: overlay.querySelector("#gm-ann-guide-row"), annGuideList: overlay.querySelector("#gm-ann-guide-list"),
     annArrowRow: overlay.querySelector("#gm-ann-arrow-row"), annArrowList: overlay.querySelector("#gm-ann-arrow-list"),
     annGuidelineRow: overlay.querySelector("#gm-ann-guideline-row"), annGuidelineList: overlay.querySelector("#gm-ann-guideline-list"),
+    annLabelPt: overlay.querySelector("#gm-ann-labelpt"),
+    annLabelPtRow: overlay.querySelector("#gm-ann-labelpt-row"), annLabelPtList: overlay.querySelector("#gm-ann-labelpt-list"),
+    annLabelPtEditor: overlay.querySelector("#gm-ann-labelpt-editor"),
     annLegendAdd: overlay.querySelector("#gm-ann-legend-add"), annLegendEditor: overlay.querySelector("#gm-ann-legend-editor"),
     variantSel: overlay.querySelector("#gm-variant-sel"),
     xNeg: overlay.querySelector("#gm-xneg"), xPos: overlay.querySelector("#gm-xpos"),
@@ -2273,6 +2351,7 @@ function build() {
   _els.annGuide.addEventListener("click", () => armAnn("guide"));
   _els.annArrow.addEventListener("click", () => armAnn("arrow"));
   _els.annGuideline.addEventListener("click", () => armAnn("guideline"));
+  _els.annLabelPt.addEventListener("click", () => armAnn("labelpt"));
   _els.annLegendAdd.addEventListener("click", () => {
     // 미리보기 중앙 부근에 기본 2줄 범례를 놓는다. 위치는 드래그로 조정.
     const cx = (_previewPlane ? (_previewPlane.xMin + _previewPlane.xMax) / 2 : 1);
@@ -2666,6 +2745,7 @@ function loadFromPlane(plane) {
   cfg.annArrows = rArr(plane.annArrows);
   cfg.guideLines = rArr(plane.guideLines);
   cfg.legends = rArr(plane.legends);
+  cfg.annLabelPoints = rArr(plane.annLabelPoints);
   // 계열 묶기는 평면의 seriesLock(신규) 우선, 없으면 자식 계열의 positionLocked로 유도.
   cfg.lockPosition = (plane.seriesLock !== undefined)
     ? !!plane.seriesLock

@@ -211,6 +211,7 @@ function migrateObjectList(objects) {
         next.annArrows = Array.isArray(next.annArrows) ? next.annArrows : [];
         next.guideLines = Array.isArray(next.guideLines) ? next.guideLines : [];
         next.legends = Array.isArray(next.legends) ? next.legends : [];
+        next.annLabelPoints = Array.isArray(next.annLabelPoints) ? next.annLabelPoints : [];
         // 그래프 도구: 눈금/격자 칸 수 캡(gridCountX/Y)은 spread로 보존. 격자 초과분만 백필.
         next.gridOver = Number.isFinite(next.gridOver) ? next.gridOver : (next.gridCountX !== undefined ? 0.5 : 0);
         next.labelScale = Number.isFinite(next.labelScale) ? next.labelScale : 1; // 글씨 크기 배율

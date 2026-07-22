@@ -518,6 +518,26 @@ function renderCoordplane(obj) {
     c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
     g.appendChild(c);
   });
+  // 라벨러 표시점(요구 ⑥): 점 + A·B·C… 라벨. 라벨은 점에서 dist(mm)만큼 angle(도, 0=오른쪽,
+  // +=반시계) 방향에 놓인다. 화면 y는 아래로 증가하므로 반시계로 보이려면 dy를 -sin으로 뒤집는다.
+  (obj.annLabelPoints || []).forEach((lp, li) => {
+    if (!lp || !Number.isFinite(lp.x) || !Number.isFinite(lp.y)) return;
+    const wx = wmX(lp.x), wy = wmY(lp.y);
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", wx); c.setAttribute("cy", wy);
+    c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
+    if (Number.isFinite(li)) c.setAttribute("data-labelpt", String(li));   // 미리보기 드래그용(향후)
+    g.appendChild(c);
+    const dist = Number.isFinite(lp.dist) ? lp.dist : 5;
+    const angleDeg = Number.isFinite(lp.angle) ? lp.angle : 45;
+    const rad = (angleDeg * Math.PI) / 180;
+    const lx = wx + Math.cos(rad) * dist, ly = wy - Math.sin(rad) * dist;
+    const size = Number.isFinite(lp.size) ? lp.size : 5.29; // 15pt ≈ 5.29mm
+    const lbl = renderGraphLabel(String(lp.text ?? ""), {
+      x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true,
+    });
+    if (lbl) g.appendChild(lbl);
+  });
   // 범례 박스: 선 견본 + 글씨 여러 줄. anchor(x,y)=박스 좌상단(math). 크기는 world mm.
   (obj.legends || []).forEach((lg, li) => {
     if (!lg || !Array.isArray(lg.rows) || !lg.rows.length) return;
