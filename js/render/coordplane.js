@@ -535,8 +535,9 @@ function renderCoordplane(obj) {
     const rad = (angleDeg * Math.PI) / 180;
     const lx = wx + Math.cos(rad) * dist, ly = wy - Math.sin(rad) * dist;
     const size = Number.isFinite(lp.size) ? lp.size : 5.29; // 15pt ≈ 5.29mm
+    // 점 이름(A·B·C…)은 변수가 아니라 이름표 — 기울임 없이 정자로 쓴다(요구).
     const lbl = renderGraphLabel(String(lp.text ?? ""), {
-      x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true,
+      x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
     });
     if (lbl) g.appendChild(lbl);
   });
