@@ -91,9 +91,22 @@ export function resolveTextFontStyle(obj = {}) {
   return obj.fontStyle === "italic" ? "italic" : "normal";
 }
 
+/* 자간(letter-spacing). obj.letterSpacing은 **em 단위 수치**다(0 = 글꼴 기본).
+   em으로 두는 이유: 글자 크기를 바꿔도 간격 비율이 유지돼야 조판이 안 흐트러진다.
+   수식 글꼴은 자체 자간(EQUATION_LETTER_SPACING)이 있으므로, 사용자가 명시적으로
+   값을 준 경우에만 그것을 덮는다.
+
+   기준값 메모(2026-07-23 실측): 2026학년도 수능 물리1 17번의 본문 라벨
+   "평면에서 수직으로 나오는 방향"을 돋움으로 재현해 맞춰 본 결과 최적은
+   자간 -0.01em(사실상 0), 장평 96%였다. 즉 평가원 지면은 자간을 거의 건드리지
+   않는다 — 기본값 0을 유지하고, 이 필드는 미세조정용으로만 쓴다. */
 export function resolveTextLetterSpacing(obj = {}) {
+  const em = Number(obj.letterSpacing);
+  if (Number.isFinite(em) && em !== 0) return `${em}em`;
   return isEquationFontFamily(obj.fontFamily) ? EQUATION_LETTER_SPACING : null;
 }
+export const LETTER_SPACING_MIN = -0.1;
+export const LETTER_SPACING_MAX = 0.5;
 
 export function textRunStyleFromObject(obj = {}) {
   const italic = typeof obj.italic === "boolean"
@@ -107,6 +120,7 @@ export function textRunStyleFromObject(obj = {}) {
     italic,
     underline: !!obj.underline,
     strikeout: !!obj.strikeout,
+    letterSpacing: Number.isFinite(Number(obj.letterSpacing)) ? Number(obj.letterSpacing) : 0,
   };
 }
 
@@ -125,6 +139,8 @@ export function normalizeTextRunStyle(style = {}, fallback = {}) {
     italic,
     underline: typeof style.underline === "boolean" ? style.underline : base.underline,
     strikeout: typeof style.strikeout === "boolean" ? style.strikeout : base.strikeout,
+    letterSpacing: Number.isFinite(Number(style.letterSpacing))
+      ? Number(style.letterSpacing) : base.letterSpacing,
   };
 }
 
