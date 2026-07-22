@@ -8,7 +8,7 @@
 import { makeSection } from "./widgets.js?v=1.1.0";
 import { openGraphModal } from "../graph/graph-modal.js?v=1.1.0";
 
-const BTN_CSS = "font-size: calc(11px * var(--text-scale, 1));border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+const BTN_CSS = "font-size: 11px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 
 export function buildFuncgraphSection(ctx) {
   const { state } = ctx;
@@ -23,7 +23,7 @@ export function buildFuncgraphSection(ctx) {
 
   // 안내: 상세 설정은 모달에서.
   const hint = document.createElement("div");
-  hint.style.cssText = "font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);line-height:1.6;margin-bottom:8px;";
+  hint.style.cssText = "font-size: 11px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;";
   hint.textContent = "함수·표시점·수선·화살표 설정은 그래프 편집 창에서 바꿉니다. (좌표평면 더블클릭 또는 아래 버튼)";
   body.appendChild(hint);
 

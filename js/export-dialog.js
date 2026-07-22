@@ -148,7 +148,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   hint.style.cssText =
     "position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:2;" +
     "padding:6px 14px;border-radius:4px;background:rgba(20,20,22,0.92);white-space:nowrap;" +
-    "color:#fff;font-size: calc(13px * var(--text-scale, 1));font-weight:500;pointer-events:none;" +
+    "color:#fff;font-size: 13px;font-weight:500;pointer-events:none;" +
     "box-shadow:0 1px 6px rgba(0,0,0,0.4);";
   overlay.appendChild(hint);
 
@@ -164,7 +164,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   dim.dataset.dim = "1";
   dim.style.cssText =
     "position:absolute;display:none;z-index:3;padding:2px 6px;border-radius:3px;cursor:text;" +
-    "background:var(--accent);color:#fff;font-size: calc(12px * var(--text-scale, 1));font-weight:600;" +
+    "background:var(--accent);color:#fff;font-size: 12px;font-weight:600;" +
     "white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.4);";
   const INP =
     "width:46px;text-align:right;font:inherit;color:#fff;border:0;border-radius:3px;" +

@@ -30,7 +30,7 @@ function injectStyles() {
       min-width:0; overflow:hidden; white-space:nowrap; }
     #tool-hint[hidden] { display:none; }
     #tool-hint .tool-hint-title { font-weight:700; }
-    #tool-hint .tool-hint-text { opacity:.75; font-size: calc(12px * var(--text-scale, 1)); overflow:hidden; text-overflow:ellipsis; }
+    #tool-hint .tool-hint-text { opacity:.75; font-size: 12px; overflow:hidden; text-overflow:ellipsis; }
   `;
   document.head.appendChild(st);
 }

@@ -71,7 +71,7 @@ function buildModal() {
 
   const info = document.createElement("div");
   info.style.cssText =
-    "font-size: calc(12px * var(--text-scale, 1));color:var(--text-secondary,#57606a);line-height:1.5;";
+    "font-size: 12px;color:var(--text-secondary,#57606a);line-height:1.5;";
   modal.appendChild(info);
 
   const actions = document.createElement("div");
@@ -107,7 +107,7 @@ function makePane(label) {
   wrap.style.cssText = "display:flex;flex-direction:column;gap:6px;align-items:center;flex:0 0 auto;";
   const cap = document.createElement("div");
   cap.textContent = label;
-  cap.style.cssText = "font-size: calc(12px * var(--text-scale, 1));font-weight:600;color:var(--text-secondary,#57606a);";
+  cap.style.cssText = "font-size: 12px;font-weight:600;color:var(--text-secondary,#57606a);";
   const box = document.createElement("div");
   box.style.cssText =
     "background:var(--bg-input,#f0f2f5);border:1px solid var(--border,#d0d7de);" +
@@ -210,7 +210,7 @@ async function renderCompare(state, imageObj, bounds) {
     leftCanvas = cropOriginal(img, imageObj, bounds, displayW, displayH);
   } catch (_) {
     const msg = document.createElement("div");
-    msg.style.cssText = "font-size: calc(12px * var(--text-scale, 1));color:var(--text-secondary,#57606a);padding:20px;";
+    msg.style.cssText = "font-size: 12px;color:var(--text-secondary,#57606a);padding:20px;";
     msg.textContent = "원본 이미지를 불러오지 못했습니다.";
     left.box.appendChild(msg);
   }

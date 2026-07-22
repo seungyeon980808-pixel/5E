@@ -198,10 +198,10 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
     ctrlRow.className = "unified-editor-row";
 
     const fontWrap = document.createElement("label");
-    fontWrap.style.cssText = "display:flex;align-items:center;gap:4px;flex:1;min-width:0;font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);";
+    fontWrap.style.cssText = "display:flex;align-items:center;gap:4px;flex:1;min-width:0;font-size: 11px;color:var(--text-secondary);";
     fontWrap.append("글씨체");
     fontSel = document.createElement("select");
-    fontSel.style.cssText = "flex:1;min-width:0;font-size: calc(12px * var(--text-scale, 1));color:var(--text-primary);background:var(--bg-canvas);border:1px solid var(--border);border-radius:5px;padding:3px 5px;";
+    fontSel.style.cssText = "flex:1;min-width:0;font-size: 12px;color:var(--text-primary);background:var(--bg-canvas);border:1px solid var(--border);border-radius:5px;padding:3px 5px;";
     TEXT_FONTS.forEach((f) => {
       const opt = document.createElement("option");
       opt.value = f.css; opt.textContent = f.label;
@@ -211,14 +211,14 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
     fontWrap.appendChild(fontSel);
 
     const sizeWrap = document.createElement("label");
-    sizeWrap.style.cssText = "display:flex;align-items:center;gap:4px;font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);";
+    sizeWrap.style.cssText = "display:flex;align-items:center;gap:4px;font-size: 11px;color:var(--text-secondary);";
     sizeWrap.append("글씨 크기");
     sizeInp = document.createElement("input");
     sizeInp.type = "number";
     sizeInp.min = String(MIN_TEXT_PT);
     sizeInp.max = "400";
     sizeInp.step = "1";
-    sizeInp.style.cssText = "width:56px;font-size: calc(12px * var(--text-scale, 1));text-align:center;color:var(--text-primary);background:var(--bg-canvas);border:1px solid var(--border);border-radius:5px;padding:3px 4px;";
+    sizeInp.style.cssText = "width:56px;font-size: 12px;text-align:center;color:var(--text-primary);background:var(--bg-canvas);border:1px solid var(--border);border-radius:5px;padding:3px 4px;";
     sizeInp.value = Math.round(mmToPt(o.labelSize || DEFAULT_TEXT_SIZE_MM));
     sizeWrap.appendChild(sizeInp);
     const sizeUnit = document.createElement("span");
@@ -235,7 +235,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
       b.type = "button";
       b.textContent = ch;
       b.title = `${ch} 삽입`;
-      b.style.cssText = "min-width:28px;height:28px;padding:0 4px;font-size: calc(14px * var(--text-scale, 1));cursor:pointer;color:var(--text-primary);background:var(--btn-tool-bg);border:1px solid var(--border);border-radius:5px;";
+      b.style.cssText = "min-width:28px;height:28px;padding:0 4px;font-size: 14px;cursor:pointer;color:var(--text-primary);background:var(--btn-tool-bg);border:1px solid var(--border);border-radius:5px;";
       b.addEventListener("mousedown", (e) => e.preventDefault()); // keep textarea caret/focus
       b.addEventListener("click", () => insertLabelerChar(ch));
       charsRow.appendChild(b);
@@ -869,7 +869,7 @@ function _buildFormulaHelpButton() {
   btn.setAttribute("aria-label", "수식 입력 도움말 (LaTeX 문법)");
   btn.style.cssText = "margin-left:auto;flex:0 0 auto;width:22px;height:22px;border-radius:50%;" +
     "border:1px solid var(--border,#555);background:transparent;color:inherit;" +
-    "font-weight:700;font-size: calc(13px * var(--text-scale, 1));line-height:1;cursor:pointer;";
+    "font-weight:700;font-size: 13px;line-height:1;cursor:pointer;";
   btn.addEventListener("pointerdown", (e) => e.stopPropagation());
   btn.addEventListener("mousedown", (e) => e.stopPropagation());
   btn.addEventListener("click", (e) => { e.stopPropagation(); _toggleFormulaHelp(btn); });
@@ -890,7 +890,7 @@ function _toggleFormulaHelp(anchorBtn) {
   pop.style.cssText = "position:fixed;z-index:100001;max-width:340px;padding:12px 14px;" +
     "background:var(--bg-panel,#2c2c2c);color:var(--text-primary,#e8e8e8);" +
     "border:1px solid var(--border,#555);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.45);" +
-    "font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;font-size: calc(12px * var(--text-scale, 1));line-height:1.5;";
+    "font-family:'IBM Plex Sans KR','Noto Sans KR',sans-serif;font-size: 12px;line-height:1.5;";
   let html = "<div style='font-weight:700;margin-bottom:8px'>수식 입력은 LaTeX 문법을 따릅니다</div>" +
     "<table style='border-collapse:collapse'>";
   for (const [k, v] of rows) {
@@ -973,7 +973,7 @@ function _buildUnifiedStyleControls() {
     _textDebugEl = document.createElement("pre");
     _textDebugEl.className = "unified-style-debug";
     _textDebugEl.style.cssText =
-      "margin:4px 0 0;padding:4px 6px;font: calc(11px * var(--text-scale, 1))/1.4 monospace;white-space:pre-wrap;" +
+      "margin:4px 0 0;padding:4px 6px;font: 11px/1.4 monospace;white-space:pre-wrap;" +
       "background:#0d1117;color:#7ee787;border-radius:4px;max-height:70px;overflow:auto;";
     wrapper.appendChild(_textDebugEl);
   }

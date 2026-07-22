@@ -73,7 +73,7 @@ function renderChips() {
     const chip = document.createElement("button");
     chip.type = "button";
     const on = i === _sel;
-    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: calc(12px * var(--text-scale, 1)) monospace;" +
+    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: 12px monospace;" +
       "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;" +
       "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);cursor:pointer;max-width:180px;";
     const lbl = document.createElement("span");
@@ -107,7 +107,7 @@ function renderChips() {
   const add = document.createElement("button");
   add.type = "button";
   add.textContent = "+ 함수 추가";
-  add.style.cssText = "font-size: calc(12px * var(--text-scale, 1));border:1px dashed var(--border);border-radius:4px;padding:3px 10px;" +
+  add.style.cssText = "font-size: 12px;border:1px dashed var(--border);border-radius:4px;padding:3px 10px;" +
     "background:transparent;color:var(--text-secondary);cursor:pointer;";
   add.addEventListener("click", () => {
     _funcs.push(newFunc());
@@ -274,7 +274,7 @@ function buildModal() {
                style="flex:1;font-family:monospace;" />
       </div>
       <div id="fg-helpers" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;"></div>
-      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:10px;font-size: calc(12px * var(--text-scale, 1));color:var(--text-secondary);">
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:10px;font-size: 12px;color:var(--text-secondary);">
         <label style="display:flex;align-items:center;gap:6px;">선 굵기
           <input type="number" id="fg-width" min="0.1" max="2" step="0.1" style="width:60px;" class="modal-input" />
         </label>
@@ -288,13 +288,13 @@ function buildModal() {
         <div style="flex:0 0 auto;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
             <span class="modal-label">미리보기</span>
-            <span id="fg-domain" style="color:var(--text-secondary);font-size: calc(12px * var(--text-scale, 1));"></span>
+            <span id="fg-domain" style="color:var(--text-secondary);font-size: 12px;"></span>
           </div>
           <div id="fg-preview" style="width:420px;height:420px;border:1px solid #30363d;border-radius:4px;background:#fff;overflow:hidden;"></div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div id="fg-error" style="color:#e5534b;font-size: calc(12px * var(--text-scale, 1));min-height:16px;"></div>
-          <div style="margin-top:8px;color:var(--text-secondary);font-size: calc(12px * var(--text-scale, 1));line-height:1.7;">
+          <div id="fg-error" style="color:#e5534b;font-size: 12px;min-height:16px;"></div>
+          <div style="margin-top:8px;color:var(--text-secondary);font-size: 12px;line-height:1.7;">
             · <b style="color:var(--accent);">＋ 함수 추가</b>로 여러 함수를 한 평면에.<br>
             · 함수별로 선 굵기·종류·정의역을 따로 정할 수 있어요.<br>
             · 미리보기의 <b style="color:var(--accent);">세로 핸들</b>을 드래그해 선택 함수의 범위를 정하세요.<br>
@@ -329,7 +329,7 @@ function buildModal() {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));font-family:monospace;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;font-family:monospace;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       insertAtCursor(input, text);
       if (cur()) cur().expr = input.value;
@@ -342,7 +342,7 @@ function buildModal() {
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = label;
-    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 9px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { if (cur()) { cur().styleIdx = i; syncControls(); renderPreview(); } });
     styleHost.appendChild(b);
   });

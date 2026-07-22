@@ -1369,7 +1369,7 @@ function renderChips() {
     const chip = document.createElement("button");
     chip.type = "button";
     const on = i === _sel;
-    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: calc(12px * var(--text-scale, 1)) monospace;max-width:170px;" +
+    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: 12px monospace;max-width:170px;" +
       "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;cursor:pointer;" +
       "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);";
     const lbl = document.createElement("span");
@@ -1428,7 +1428,7 @@ function chipLabel(spec) {
 }
 function elemChip(text, onDel) {
   const chip = document.createElement("span");
-  chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;font: calc(11px * var(--text-scale, 1)) monospace;border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:var(--bg-input);color:var(--text-primary);";
+  chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;font: 11px monospace;border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:var(--bg-input);color:var(--text-primary);";
   const t = document.createElement("span"); t.textContent = text; chip.appendChild(t);
   const x = document.createElement("span"); x.textContent = "×";
   x.style.cssText = "color:#e5534b;font-weight:700;cursor:pointer;";
@@ -1530,22 +1530,22 @@ function renderLabelPtEditor() {
   const host = _els.annLabelPtEditor;
   if (!host) return;
   host.replaceChildren();
-  const miniBtn = "font-size: calc(11px * var(--text-scale, 1));padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
+  const miniBtn = "font-size: 11px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
   (_cfg.annLabelPoints || []).forEach((lp, i) => {
     const row = document.createElement("div");
     row.style.cssText = "display:flex;gap:5px;align-items:center;margin:6px 0 0 102px;flex-wrap:wrap;";
     const txt = document.createElement("input"); txt.type = "text"; txt.value = lp.text ?? "";
-    txt.style.cssText = "width:44px;font-family:monospace;font-size: calc(12px * var(--text-scale, 1));text-align:center;";
+    txt.style.cssText = "width:44px;font-family:monospace;font-size: 12px;text-align:center;";
     txt.addEventListener("input", () => { lp.text = txt.value; refreshPreview(); });
 
     const numField = (label, val, step, min, onSet) => {
       const wrap = document.createElement("span");
-      wrap.style.cssText = "display:flex;align-items:center;gap:3px;font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);";
+      wrap.style.cssText = "display:flex;align-items:center;gap:3px;font-size: 11px;color:var(--text-secondary);";
       const lb = document.createElement("span"); lb.textContent = label;
       const inp = document.createElement("input"); inp.type = "number"; inp.step = String(step);
       if (min != null) inp.min = String(min);
       inp.value = val;
-      inp.style.cssText = "width:56px;font-size: calc(11px * var(--text-scale, 1));padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
+      inp.style.cssText = "width:56px;font-size: 11px;padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
       inp.addEventListener("input", () => { onSet(parseFloat(inp.value)); refreshPreview(); });
       wrap.append(lb, inp);
       return { wrap, inp };
@@ -1578,26 +1578,26 @@ function renderLegendEditor() {
   const host = _els.annLegendEditor;
   if (!host) return;
   host.replaceChildren();
-  const miniBtn = "font-size: calc(11px * var(--text-scale, 1));padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
+  const miniBtn = "font-size: 11px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
   (_cfg.legends || []).forEach((lg, li) => {
     const box = document.createElement("div");
-    box.style.cssText = "border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0 0 calc(102px * var(--text-scale, 1));";
+    box.style.cssText = "border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0 0 102px;";
     const head = document.createElement("div");
     head.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;";
-    const ttl = document.createElement("b"); ttl.style.fontSize = "calc(12px * var(--text-scale, 1))"; ttl.textContent = `범례 ${li + 1}`;
+    const ttl = document.createElement("b"); ttl.style.fontSize = "12px"; ttl.textContent = `범례 ${li + 1}`;
     const delLeg = document.createElement("button"); delLeg.type = "button"; delLeg.textContent = "삭제"; delLeg.style.cssText = miniBtn;
     delLeg.addEventListener("click", () => { _cfg.legends.splice(li, 1); syncAnnLists(); refreshPreview(); });
     head.append(ttl, delLeg); box.appendChild(head);
     // 글씨 크기·실 길이 조정(요구 3). 값이 없으면 렌더러 기본(2.2 / size*2.4)을 쓴다.
     const sizeRow = document.createElement("div");
-    sizeRow.style.cssText = "display:flex;gap:8px;margin-bottom:6px;align-items:center;font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);";
+    sizeRow.style.cssText = "display:flex;gap:8px;margin-bottom:6px;align-items:center;font-size: 11px;color:var(--text-secondary);";
     const numField = (label, val, dflt, on) => {
       const wrap = document.createElement("span");
       wrap.style.cssText = "display:flex;align-items:center;gap:3px;";
       const lb = document.createElement("span"); lb.textContent = label;
       const inp = document.createElement("input"); inp.type = "number"; inp.step = "0.1"; inp.min = "0.5";
       inp.value = Number.isFinite(val) ? val : dflt;
-      inp.style.cssText = "width:48px;font-size: calc(11px * var(--text-scale, 1));padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
+      inp.style.cssText = "width:48px;font-size: 11px;padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
       inp.addEventListener("input", () => { const n = parseFloat(inp.value); on(Number.isFinite(n) && n > 0 ? n : undefined); refreshPreview(); });
       wrap.append(lb, inp); return wrap;
     };
@@ -1610,12 +1610,12 @@ function renderLegendEditor() {
       const row = document.createElement("div");
       row.style.cssText = "display:flex;gap:4px;margin-bottom:4px;align-items:center;";
       const sel = document.createElement("select");
-      sel.style.cssText = "font-size: calc(11px * var(--text-scale, 1));flex:0 0 calc(62px * var(--text-scale, 1));";
+      sel.style.cssText = "font-size: 11px;flex:0 0 62px;";
       LEG_DASH.forEach((o) => { const op = document.createElement("option"); op.value = o.key; op.textContent = o.label; sel.appendChild(op); });
       sel.value = legDashKey(r.dash);
       sel.addEventListener("change", () => { r.dash = (LEG_DASH.find((o) => o.key === sel.value) || {}).dash || null; refreshPreview(); });
       const inp = document.createElement("input"); inp.type = "text"; inp.value = r.text || "";
-      inp.placeholder = "예: y=f(x)"; inp.style.cssText = "flex:1;min-width:0;font-family:monospace;font-size: calc(12px * var(--text-scale, 1));";
+      inp.placeholder = "예: y=f(x)"; inp.style.cssText = "flex:1;min-width:0;font-family:monospace;font-size: 12px;";
       inp.addEventListener("input", () => { r.text = inp.value; refreshPreview(); });
       const rm = document.createElement("button"); rm.type = "button"; rm.textContent = "×"; rm.style.cssText = miniBtn;
       rm.addEventListener("click", () => {
@@ -1796,7 +1796,7 @@ function setTab(tab) {
   _els.tabCoord.style.display = tab === "coord" ? "" : "none";
   _els.tabFunc.style.display = tab === "func" ? "" : "none";
   _els.tabAnnot.style.display = tab === "annot" ? "" : "none";
-  const base = "font-size: calc(13px * var(--text-scale, 1));font-weight:600;padding:6px 16px;border:1px solid var(--border);border-radius:6px 6px 0 0;cursor:pointer;";
+  const base = "font-size: 13px;font-weight:600;padding:6px 16px;border:1px solid var(--border);border-radius:6px 6px 0 0;cursor:pointer;";
   const on = "background:var(--accent);border-color:var(--accent);color:#fff;";
   const off = "background:var(--bg-input);color:var(--text-primary);";
   _els.tabCoordBtn.style.cssText = base + (tab === "coord" ? on : off);
@@ -1884,13 +1884,13 @@ function build() {
       <!-- 제목 오른쪽에 간단 설명(요구 1) -->
       <h2 class="modal-title" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <span id="gm-title">그래프 만들기</span>
-        <span style="font-size: calc(12px * var(--text-scale, 1));font-weight:400;color:var(--text-secondary);">원하는 좌표를 설정하고 자유롭게 그래프를 그립니다.</span>
+        <span style="font-size: 12px;font-weight:400;color:var(--text-secondary);">원하는 좌표를 설정하고 자유롭게 그래프를 그립니다.</span>
       </h2>
       <div class="gm-body" style="flex-wrap:nowrap;">
         <!-- 높이를 고정한다(max-height가 아니라 height). max-height면 내용이 적은 탭에서만
              열이 짧아지고, 미리보기가 그 높이에 맞춰 늘어나므로(align-items:stretch)
              탭을 옮길 때마다 창과 미리보기가 같이 줄었다 늘었다 한다(실측 편차 103px). -->
-        <div class="gm-right" style="flex:0 0 calc(444px * var(--text-scale, 1));height:66vh;overflow-y:auto;padding-right:6px;">
+        <div class="gm-right" style="flex:0 0 444px;height:66vh;overflow-y:auto;padding-right:6px;">
 
           <!-- 탭: 좌표 / 함수 (미리보기는 오른쪽 고정, 양 탭 공유) -->
           <div class="gm-tabs" style="display:flex;gap:4px;margin-bottom:12px;">
@@ -2020,7 +2020,7 @@ function build() {
                 <div class="gm-row-body gm-checks" style="flex-wrap:wrap;">
                   <label class="gm-check"><input type="checkbox" id="gm-labelmove"> 축 라벨 이동<span class="gm-help" title="켜면 미리보기에서 축 이름(예: y, t)을 드래그해 위치를 옮길 수 있습니다. 끄면 원래 위치로 돌아갑니다.">?</span></label>
                   <label class="gm-check"><input type="checkbox" id="gm-tickmove"> 눈금 숫자 이동<span class="gm-help" title="켜면 미리보기에서 눈금 숫자를 드래그해 곡선을 피할 수 있습니다. '첫 라벨에 맞추기'로 세로 높이를 첫 숫자에 정렬합니다.">?</span></label>
-                  <button type="button" id="gm-tickalign" style="display:none;font-size: calc(12px * var(--text-scale, 1));padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">첫 라벨에 맞추기</button>
+                  <button type="button" id="gm-tickalign" style="display:none;font-size: 12px;padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">첫 라벨에 맞추기</button>
                   <label class="gm-check"><input type="checkbox" id="gm-lockpos"> 좌표·함수 묶기<span class="gm-help" title="좌표평면과 함수를 하나의 그룹으로 묶어 캔버스에서 함께 이동합니다.">?</span></label>
                 </div>
               </div>
@@ -2069,9 +2069,9 @@ function build() {
             <button type="button" id="gm-sub-poly" style="flex:1;">직선·꺾은선</button>
             <button type="button" id="gm-sub-free" style="flex:1;">자유곡선</button>
           </div>
-          <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size: calc(12px * var(--text-scale, 1));padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
+          <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size: 12px;padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
-          <div id="gm-empty-hint" style="font-size: calc(12px * var(--text-scale, 1));color:var(--text-secondary);">
+          <div id="gm-empty-hint" style="font-size: 12px;color:var(--text-secondary);">
             함수식 또는 직선·꺾은선을 추가하세요.<span class="gm-help" title="계열 없이 좌표 틀만 만들 수도 있습니다. 추가한 함수는 미리보기 위에 바로 그려집니다.">?</span>
           </div>
 
@@ -2110,8 +2110,8 @@ function build() {
               <div class="gm-row">
                 <span class="gm-row-lbl"></span>
                 <div class="gm-row-body">
-                  <button type="button" id="gm-box-drag" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:4px 10px;">드래그로 지정</button>
-                  <button type="button" id="gm-box-clear" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:4px 10px;">범위 해제</button>
+                  <button type="button" id="gm-box-drag" class="modal-btn" style="font-size: 11px;padding:4px 10px;">드래그로 지정</button>
+                  <button type="button" id="gm-box-clear" class="modal-btn" style="font-size: 11px;padding:4px 10px;">범위 해제</button>
                 </div>
               </div>
               <p class="gm-ax-note" id="gm-box-note" hidden>미리보기에서 사각형을 끌면 그 안쪽만 남깁니다.</p>
@@ -2128,8 +2128,8 @@ function build() {
               <div class="gm-row">
                 <span class="gm-row-lbl"></span>
                 <div class="gm-row-body">
-                  <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:3px 8px;">마지막 점 삭제</button>
-                  <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:3px 8px;">전체 지움</button>
+                  <button type="button" id="gm-pts-undo" class="modal-btn" style="font-size: 11px;padding:3px 8px;">마지막 점 삭제</button>
+                  <button type="button" id="gm-pts-clear" class="modal-btn" style="font-size: 11px;padding:3px 8px;">전체 지움</button>
                 </div>
               </div>
               <p class="gm-ax-note">미리보기를 클릭해 꼭짓점을 찍고, Enter 또는 우클릭으로 마칩니다.</p>
@@ -2163,8 +2163,8 @@ function build() {
             <div class="gm-row" id="gm-bezier-row" style="display:none;">
               <span class="gm-row-lbl"></span>
               <div class="gm-row-body">
-                <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:3px 9px;">베지어로 변환</button>
-                <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size: calc(11px * var(--text-scale, 1));padding:3px 9px;display:none;">자동 곡선으로</button>
+                <button type="button" id="gm-bezier-on" class="modal-btn" style="font-size: 11px;padding:3px 9px;">베지어로 변환</button>
+                <button type="button" id="gm-bezier-off" class="modal-btn" style="font-size: 11px;padding:3px 9px;display:none;">자동 곡선으로</button>
                 <span class="gm-help" title="변환하면 각 앵커에 접선 핸들이 생겨, 흰 점을 끌어 휘는 정도를 직접 조절할 수 있습니다.">?</span>
               </div>
             </div>
@@ -2249,7 +2249,7 @@ function build() {
             <div class="gm-row" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
               <span class="gm-row-lbl">범례</span>
               <div class="gm-row-body">
-                <button type="button" id="gm-ann-legend-add" style="font-size: calc(12px * var(--text-scale, 1));padding:3px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">+ 범례 추가</button>
+                <button type="button" id="gm-ann-legend-add" style="font-size: 12px;padding:3px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">+ 범례 추가</button>
               </div>
             </div>
             <div class="gm-ax-note" style="padding-left:102px;">함수 선이 무엇인지 알려주는 작은 박스입니다. 미리보기에서 드래그해 옮깁니다.</div>
@@ -2260,7 +2260,7 @@ function build() {
         <div class="gm-left" style="flex:1;min-width:0;">
           <div class="gm-preview-label">미리보기</div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
-          <div id="gm-error" style="color:#e5534b;font-size: calc(12px * var(--text-scale, 1));min-height:16px;margin-top:4px;"></div>
+          <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
         </div>
       </div>
       <div class="modal-actions">
@@ -2458,7 +2458,7 @@ function build() {
   [["none", "없음"], ["number", "숫자"], ["multiple", "배수"], ["text", "직접"]].forEach(([mode, label]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = label; b._mode = mode;
-    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { _cfg.tickMode = mode; syncCfgControls(); refreshPreview(); });
     _els.tickModeHost.appendChild(b);
   });
@@ -2480,7 +2480,7 @@ function build() {
   HELPERS.forEach(([label, text]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = label;
-    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));font-family:monospace;border:1px solid var(--border);border-radius:3px;padding:2px 7px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;font-family:monospace;border:1px solid var(--border);border-radius:3px;padding:2px 7px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => {
       insertAtCursor(_els.expr, text);
       const s = _series[_sel]; if (s) { s.expr = _els.expr.value; renderChips(); refreshPreview(); }
@@ -2534,7 +2534,7 @@ function build() {
   [["직선", "straight"], ["곡선", "smooth"]].forEach(([label, val]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = label; b._curve = val;
-    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { const s = _series[_sel]; if (s) { s.curveStyle = val; syncSeriesEditor(); refreshPreview(); } });
     _els.curveHost.appendChild(b);
   });

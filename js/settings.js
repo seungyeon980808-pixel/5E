@@ -151,32 +151,6 @@ function currentUiZoom() {
   return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
-/* ----- 환경 설정: 글씨 크기만 따로 조절 -----
- * '화면 크기'(zoom)는 아이콘·툴박스까지 전부 같이 커진다. 요구: 글씨만 키우고 아이콘은
- * 그대로 두되, 칸이 부족해지면 줄바꿈이 아니라 컨테이너(패널·모달·열)가 넓어져야 한다.
- * 구현: font-size 전체(css/js 인라인 210곳)를 calc(Npx * var(--text-scale))로 미리 바꿔
- * 두었고, 텍스트를 담는 주요 컨테이너 폭(툴박스·인스펙터·모달·그래프 도구 열)도 같은
- * --text-scale로 함께 커지도록 연동해 뒀다 — 이 변수 하나만 바꾸면 전부 같이 반응한다. */
-const TEXT_SCALE_KEY = "5e.textScale";
-const TEXT_SCALE_MIN = 0.7;
-const TEXT_SCALE_MAX = 2.5;
-const clampTextScale = (n) => Math.min(TEXT_SCALE_MAX, Math.max(TEXT_SCALE_MIN, Number(n)));
-
-export function loadTextScale() {
-  try {
-    const raw = localStorage.getItem(TEXT_SCALE_KEY);
-    if (raw == null) return 1;
-    const n = Number(raw);
-    return Number.isFinite(n) ? clampTextScale(n) : 1;
-  } catch (_) { return 1; }
-}
-export function applyTextScale(n) {
-  const v = clampTextScale(Number.isFinite(Number(n)) ? n : 1);
-  document.documentElement.style.setProperty("--text-scale", String(v));
-  try { localStorage.setItem(TEXT_SCALE_KEY, String(v)); } catch (_) { /* ignore */ }
-  return v;
-}
-
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
 // 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.
 const SETTINGS_FILE_KIND = "5E-settings";
@@ -303,7 +277,7 @@ function prefStyles() {
     .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
     .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
                 padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
-                font: 600 calc(12.5px * var(--text-scale, 1))/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+                font: 600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
     .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
     .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
     .pref-panel { display:none; min-height:180px; }
@@ -311,12 +285,12 @@ function prefStyles() {
     .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .pref-row .modal-label { margin:0; flex:0 0 auto; }
     .pref-zoom { flex:1 1 auto; }
-    .pref-zoom-val { flex:0 0 calc(52px * var(--text-scale, 1)); text-align:right; font: 600 calc(12px * var(--text-scale, 1))/1 "IBM Plex Mono",monospace;
+    .pref-zoom-val { flex:0 0 52px; text-align:right; font: 600 12px/1 "IBM Plex Mono",monospace;
                      color:var(--text-primary); }
-    .pref-note { margin:0 0 12px; font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+    .pref-note { margin:0 0 12px; font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
     .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
     .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
-                 font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+                 font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
   `;
 }
 
@@ -345,18 +319,6 @@ function openPreferencesDialog() {
           <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
         </div>
         <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
-
-        <p class="pref-note" style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">글씨 크기만 따로 키우거나 줄입니다. 아이콘·도구 크기는 그대로 두고, 칸이 부족해지면
-          줄바꿈 대신 패널·모달이 함께 넓어집니다.</p>
-        <div class="pref-row">
-          <span class="modal-label">글씨 크기</span>
-          <input id="pref-text-scale" class="pref-zoom" type="range" min="70" max="250" step="1"
-                 value="${Math.round(loadTextScale() * 100)}" />
-          <output class="pref-zoom-val" id="pref-text-scale-val">${Math.round(loadTextScale() * 100)}%</output>
-        </div>
-        <div class="pref-actions">
-          <button type="button" class="modal-btn" id="pref-text-scale-reset">기본 크기로</button>
-        </div>
       </section>
 
       <section class="pref-panel" data-panel="tools" role="tabpanel">
@@ -428,20 +390,6 @@ function openPreferencesDialog() {
     const back = Math.round(currentUiZoom() * 100);
     zoomInput.value = String(back);
     zoomOut.textContent = `${back}%`;
-  });
-
-  // --- 글씨 크기(요구): 화면 크기와 별개로, 텍스트만 키우고 컨테이너가 함께 넓어진다 ---
-  const textScaleInput = overlay.querySelector("#pref-text-scale");
-  const textScaleOut = overlay.querySelector("#pref-text-scale-val");
-  textScaleInput.addEventListener("input", () => {
-    const pct = Number(textScaleInput.value);
-    textScaleOut.textContent = `${pct}%`;
-    applyTextScale(pct / 100);
-  });
-  overlay.querySelector("#pref-text-scale-reset").addEventListener("click", () => {
-    applyTextScale(1);
-    textScaleInput.value = "100";
-    textScaleOut.textContent = "100%";
   });
 
   // --- 다른 대화상자는 드롭다운의 원래 버튼을 눌러 재사용한다(배선 중복 방지) ---
@@ -877,7 +825,6 @@ export function initSettings(state) {
   // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
   const savedZoom = loadUiZoom();
   if (savedZoom != null) applyUiZoom(savedZoom);
-  applyTextScale(loadTextScale());   // 글씨 크기(요구): 저장값 즉시 적용, 없으면 100%
 
   const overlay = buildModal();
   const fields = {

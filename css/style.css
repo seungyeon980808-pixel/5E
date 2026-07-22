@@ -117,7 +117,6 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --panel-left-w: 130px;
   --panel-right-w: 215px;
   --footer-h: 28px;
-  --text-scale: 1;   /* 요구: 환경설정 '글씨 크기' — font-size는 전부 calc(...*var(--text-scale))로 연동 */
 }
 
 /* ===== RESET / BASE ===== */
@@ -152,9 +151,7 @@ body {
 .app {
   flex: 1 1 auto;
   display: grid;
-  /* 요구: 글씨 크기를 키우면 툴박스가 줄바꿈 대신 함께 넓어져야 한다 — panel-left-w를
-     --text-scale로 함께 스케일. panel-right(인스펙터)는 inspector.css에서 같은 방식. */
-  grid-template-columns: calc(var(--panel-left-w) * var(--text-scale)) 1fr auto;
+  grid-template-columns: var(--panel-left-w) 1fr auto;
   min-height: 0; /* allow children to shrink */
 }
 
@@ -198,13 +195,13 @@ body { zoom: var(--ui-zoom, 1); }
 
 .panel-title {
   font-weight: 600;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: var(--c-sub);
   margin-bottom: 8px;
 }
 
 .placeholder {
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -228,7 +225,7 @@ body { zoom: var(--ui-zoom, 1); }
   justify-content: space-between;
   width: 100%;
   padding: 6px 4px;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   font-weight: 600;
   color: var(--c-sub);
   cursor: pointer;
@@ -267,7 +264,7 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 5px;
   padding: 3px 9px;
   font-family: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.3;
   color: var(--c-sub);
@@ -280,7 +277,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
 .subject-select {
-  height:28px; padding:0 8px; font-size: calc(13px * var(--text-scale, 1)); font-weight:600;
+  height:28px; padding:0 8px; font-size: 13px; font-weight:600;
   /* 다른 UI 요소와 같은 본문 글꼴(IBM Plex Sans KR) + 가운데 정렬 */
   font-family:inherit;
   text-align:center; text-align-last:center;
@@ -292,16 +289,16 @@ body { zoom: var(--ui-zoom, 1); }
 .subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
 .subject-part-header {
   width:100%; display:flex; align-items:center; justify-content:space-between;
-  padding:7px 10px; font-family:inherit; font-size: calc(12.5px * var(--text-scale, 1)); font-weight:500;
+  padding:7px 10px; font-family:inherit; font-size: 12.5px; font-weight:500;
   color:var(--text-label); background:var(--btn-tool-bg); border:0; cursor:pointer;
   border-left:3px solid var(--accent);
 }
 .subject-part-header:hover { background:var(--btn-tool-hover); color:var(--text-primary); }
-.subject-part-header .toggle-icon { transition:transform .15s; font-size: calc(11px * var(--text-scale, 1)); color:var(--text-secondary); }
+.subject-part-header .toggle-icon { transition:transform .15s; font-size: 11px; color:var(--text-secondary); }
 .subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
 .subject-part.is-collapsed .subject-part-body { display:none; }
 .subject-part-body { padding:8px 10px; }
-.subject-part-empty { margin:0; font-size: calc(12px * var(--text-scale, 1)); color:var(--text-secondary); }
+.subject-part-empty { margin:0; font-size: 12px; color:var(--text-secondary); }
 @media (prefers-reduced-motion: reduce) { .subject-part-header .toggle-icon { transition:none; } }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
 /* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
@@ -309,7 +306,7 @@ body { zoom: var(--ui-zoom, 1); }
 .search-trigger-hint {
   flex: none;
   margin-left: auto;
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
   color: var(--c-sub);
   border: 1px solid var(--c-border);
   border-radius: 4px;
@@ -321,7 +318,7 @@ body { zoom: var(--ui-zoom, 1); }
 .advanced-tool-btn {
   width: 100%;
   padding: 9px 10px;
-  font: 500 calc(13px * var(--text-scale, 1))/1.3 inherit;
+  font: 500 13px/1.3 inherit;
   text-align: left;
   color: var(--c-text);
   background: var(--btn-tool-bg);
@@ -344,7 +341,7 @@ body { zoom: var(--ui-zoom, 1); }
   width: 100%;
   aspect-ratio: 1;
   font-family: inherit;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: var(--c-text);
   background: var(--btn-tool-bg);
   border: 1px solid var(--c-border);
@@ -378,7 +375,7 @@ body { zoom: var(--ui-zoom, 1); }
   justify-content: center;
   width: 18px;
   height: 18px;
-  font-size: calc(15px * var(--text-scale, 1));
+  font-size: 15px;
   font-weight: 700;
   line-height: 1;
 }
@@ -407,8 +404,8 @@ body { zoom: var(--ui-zoom, 1); }
 .tool-chooser-opt .chooser-ico { flex: 0 0 auto; display: inline-flex; }
 .tool-chooser-opt .chooser-ico svg { width: 22px; height: 22px; color: currentColor; }
 .tool-chooser-opt .chooser-txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
-.tool-chooser-opt .chooser-txt b { font-size: calc(13px * var(--text-scale, 1)); font-weight: 600; }
-.tool-chooser-opt .chooser-txt small { font-size: calc(11px * var(--text-scale, 1)); color: var(--c-sub); }
+.tool-chooser-opt .chooser-txt b { font-size: 13px; font-weight: 600; }
+.tool-chooser-opt .chooser-txt small { font-size: 11px; color: var(--c-sub); }
 .tool-chooser-opt.is-active .chooser-txt small { color: rgba(255,255,255,0.75); }
 
 /* ===== CENTER CANVAS ===== */
@@ -447,7 +444,7 @@ body { zoom: var(--ui-zoom, 1); }
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
   /* 툴바 한 줄(28px) 안에 머무는 최대치. 더 키우면 위아래 칸을 침범한다. */
-  font-size: calc(22px * var(--text-scale, 1));
+  font-size: 22px;
   line-height: 1;
   font-weight: 600;
   letter-spacing: 0;
@@ -465,7 +462,7 @@ body { zoom: var(--ui-zoom, 1); }
      컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
   height: 23px; margin-left: -2px; padding: 0 10px;
   font-family: Georgia, "Times New Roman", serif;
-  font-style: italic; font-size: calc(15px * var(--text-scale, 1)); font-weight: 600; line-height: 1;
+  font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
   background: var(--btn-tool-bg);
   border: 1px solid var(--c-border); border-radius: 999px;
@@ -498,10 +495,10 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 8px 4px 6px; gap: 4px;
 }
 :root[data-mode="lite"] #tool-list .tool-btn kbd .tool-ico { width: 23px; height: 23px; }
-:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: calc(19px * var(--text-scale, 1)); }
+:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: 19px; }
 :root[data-mode="lite"] #tool-list .tool-btn[data-sc]::after {
   content: attr(data-sc);
-  font: 600 calc(10px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
+  font: 600 10px/1 "IBM Plex Mono", monospace;
   color: var(--text-secondary); letter-spacing: .02em;
 }
 :root[data-mode="lite"] #tool-list .tool-btn.is-active[data-sc]::after { color: rgba(255, 255, 255, .85); }
@@ -515,7 +512,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 .btn {
   font-family: inherit;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: #fff;
   background: var(--c-main);
   border: 1px solid var(--c-main);
@@ -527,14 +524,14 @@ body { zoom: var(--ui-zoom, 1); }
 .btn:active { background: #0757b0; }
 
 .hint {
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
 /* project I/O buttons (left of the canvas toolbar; theme-driven, subtle) */
 .topbar-btn {
   font-family: inherit;
-  font-size: calc(14px * var(--text-scale, 1));
+  font-size: 14px;
   line-height: 1;
   color: var(--text-primary);
   background: var(--btn-tool-bg);
@@ -553,7 +550,7 @@ body { zoom: var(--ui-zoom, 1); }
   width: 30px;
   height: 28px;
   padding: 4px;
-  font-size: calc(16px * var(--text-scale, 1));
+  font-size: 16px;
 }
 .topbar-btn:disabled {
   opacity: 0.4;
@@ -601,14 +598,25 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 4px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
 }
 .file-menu-list[hidden] { display: none; }
+/* 모달과 같은 등장 연출(짧게 튀었다 자리잡기)을 드롭다운에도 맞춘다 — 지금까지는
+   대화상자만 이 느낌이 있고 파일/설정 메뉴는 즉시 나타나 뚝뚝 끊겨 보였다. */
+.file-menu-list:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@keyframes menu-pop {
+  0%   { opacity: 0; transform: scale(0.96) translateY(-3px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .file-menu-list:not([hidden]) { animation: none; }
+}
 
 .file-menu-item {
   font-family: inherit;
-  font-size: calc(14px * var(--text-scale, 1));
+  font-size: 14px;
   text-align: left;
   color: var(--text-primary);
   background: transparent;
@@ -621,7 +629,7 @@ body { zoom: var(--ui-zoom, 1); }
 .file-menu-item:hover { background: var(--btn-tool-hover); }
 
 /* 서브메뉴가 있는 항목(이미지 불러오기)의 우측 화살표 */
-.menu-caret { margin-left: auto; padding-left: 14px; color: var(--text-secondary); font-size: calc(12px * var(--text-scale, 1)); }
+.menu-caret { margin-left: auto; padding-left: 14px; color: var(--text-secondary); font-size: 12px; }
 /* 우측 플라이아웃 서브메뉴 (파일 메뉴 리스트 기준 오른쪽으로 펼침) */
 .file-submenu {
   position: absolute; left: calc(100% + 4px); top: 0; z-index: 210;
@@ -630,15 +638,20 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 4px;
   background: var(--bg-panel);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
 }
 .file-submenu[hidden] { display: none; }
+.file-submenu:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .file-submenu:not([hidden]) { animation: none; }
+}
 /* 옵션 = 제목 + 설명 2줄 */
 .file-submenu-item { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; }
-.file-submenu-item .fsi-title { font-size: calc(14px * var(--text-scale, 1)); color: var(--text-primary); }
+.file-submenu-item .fsi-title { font-size: 14px; color: var(--text-primary); }
 .file-submenu-item .fsi-desc {
-  font-size: calc(11.5px * var(--text-scale, 1)); line-height: 1.4; color: var(--text-secondary);
+  font-size: 11.5px; line-height: 1.4; color: var(--text-secondary);
   white-space: normal; text-align: left;
 }
 
@@ -648,7 +661,7 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 7px 10px 6px;
   border-top: 1px solid var(--border);
   max-width: 220px;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   line-height: 1.45;
   color: var(--text-secondary);
   white-space: normal;
@@ -669,9 +682,13 @@ body { zoom: var(--ui-zoom, 1); }
 
 .modal {
   position: relative; /* 좌상단 드래그 손잡이(.modal-drag-handle)의 기준 */
-  /* 요구: 글씨 크기를 키우면 모달도 줄바꿈 대신 함께 넓어져야 한다. */
-  width: calc(320px * var(--text-scale));
+  width: 320px;
   max-width: calc(100vw - 32px);
+  /* 내용이 길거나(기출 문항 검색 등) 화면 크기(ui-zoom)가 커진 상태에서도 모달
+     자체는 절대 뷰포트를 넘지 않게 상한을 둔다. vh는 zoom과 무관하게 항상 실제
+     화면 기준이라 안전하다 — 넘치는 내용은 모달 안에서 스크롤된다. */
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -766,7 +783,7 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .refwin-chip {
   font: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   padding: 6px 12px;
   cursor: pointer;
   color: var(--text-primary);
@@ -779,7 +796,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 .modal-title {
   margin: 0;
-  font-size: calc(15px * var(--text-scale, 1));
+  font-size: 15px;
   font-weight: 600;
 }
 
@@ -805,7 +822,7 @@ body { zoom: var(--ui-zoom, 1); }
   padding-right: 6px;
 }
 /* 이 모달 안에서는 라벨 열을 조금 넓게 — "채우기 명도"·"각도기 눈금"이 들어가야 한다. */
-.defaults-fields .gm-row { grid-template-columns: calc(104px * var(--text-scale, 1)) 1fr; }
+.defaults-fields .gm-row { grid-template-columns: 104px 1fr; }
 .defaults-preview {
   display: flex;
   flex-direction: column;
@@ -830,7 +847,7 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 .modal-label {
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-label);
 }
 
@@ -844,7 +861,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 .modal-input {
   font-family: inherit;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: var(--text-primary);
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -873,7 +890,7 @@ body { zoom: var(--ui-zoom, 1); }
 .object-search-category {
   padding: 8px 10px 4px;
   color: var(--text-secondary);
-  font-size: calc(10px * var(--text-scale, 1));
+  font-size: 10px;
   font-weight: 600;
 }
 .object-search-row {
@@ -886,7 +903,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-primary);
   background: transparent;
   border: 0;
-  font: calc(12px * var(--text-scale, 1))/1.3 inherit;
+  font: 12px/1.3 inherit;
   text-align: left;
   cursor: default;
 }
@@ -909,13 +926,13 @@ body { zoom: var(--ui-zoom, 1); }
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
   border-radius: 999px;
-  font-size: calc(10px * var(--text-scale, 1));
+  font-size: 10px;
 }
 .object-search-empty {
   margin: 0;
   padding: 24px 12px;
   color: var(--text-secondary);
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   text-align: center;
 }
 
@@ -931,7 +948,7 @@ body { zoom: var(--ui-zoom, 1); }
 .seg-btn {
   flex: 1;
   font-family: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-secondary);
   background: transparent;
   border: 0;
@@ -953,7 +970,7 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .modal-btn {
   font-family: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-primary);
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
@@ -975,42 +992,42 @@ body { zoom: var(--ui-zoom, 1); }
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
 /* 폭은 여기서만 정한다 — 종전엔 마크업에 인라인 width가 박혀 있어 이 값이 무시됐다.
    실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
-.gm-modal { width: min(calc(1152px * var(--text-scale)), 96vw); }
-.gm-modal .modal-title { font-size: calc(18px * var(--text-scale, 1)); }
-.gm-desc { color: var(--text-secondary); font-size: calc(13px * var(--text-scale, 1)); line-height: 1.7; margin: 0 0 12px; }
+.gm-modal { width: min(1152px, 96vw); }
+.gm-modal .modal-title { font-size: 18px; }
+.gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
 .gm-left, .gm-right { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; }
-.gm-preview-label { margin: 0 0 5px; font-size: calc(13px * var(--text-scale, 1)); font-weight: 600; color: var(--text-label); }
+.gm-preview-label { margin: 0 0 5px; font-size: 13px; font-weight: 600; color: var(--text-label); }
 .gm-preview {
   flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
   min-height: 280px; background: #fff; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
 }
 .gm-preview-svg { width: 100%; height: 100%; }
 .gm-field { margin-bottom: 12px; }
-.gm-label { display: block; font-size: calc(13px * var(--text-scale, 1)); font-weight: 600; color: var(--text-label); margin-bottom: 5px; }
-.gm-variant { display: flex; gap: 14px; font-size: calc(14px * var(--text-scale, 1)); color: var(--text-primary); }
+.gm-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-label); margin-bottom: 5px; }
+.gm-variant { display: flex; gap: 14px; font-size: 14px; color: var(--text-primary); }
 .gm-variant label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
 .gm-row2 { display: flex; gap: 12px; }
-.gm-sub { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); }
+.gm-sub { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-label); }
 .gm-num, .gm-origin {
-  box-sizing: border-box; font-family: inherit; font-size: calc(14px * var(--text-scale, 1)); color: var(--text-primary);
+  box-sizing: border-box; font-family: inherit; font-size: 14px; color: var(--text-primary);
   background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; outline: none;
 }
 .gm-num { width: 100%; }
 .gm-num:focus, .gm-origin:focus, .gm-ta:focus { border-color: var(--accent); }
-.gm-labrow { display: flex; align-items: center; gap: 6px; font-size: calc(13px * var(--text-scale, 1)); font-weight: 600; color: var(--text-label); margin-bottom: 5px; cursor: pointer; }
+.gm-labrow { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-label); margin-bottom: 5px; cursor: pointer; }
 .gm-ta {
-  width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: calc(14px * var(--text-scale, 1));
+  width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 14px;
   color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border);
   border-radius: 6px; padding: 7px 9px; outline: none; line-height: 1.4;
 }
-.gm-check { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: calc(14px * var(--text-scale, 1)); color: var(--text-secondary); cursor: pointer; }
+.gm-check { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
 .gm-check input[type="checkbox"] { width: 15px; height: 15px; }
 .gm-origin { width: 46px; margin-left: 6px; text-align: center; }
 /* 라벨+입력을 한 줄에 붙이는 인라인 필드(모양·칸 수·라벨 크기·축 이름) */
 .gm-inl {
   display: inline-flex; align-items: center; gap: 5px;
-  font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap;
+  font-size: 12.5px; color: var(--text-label); white-space: nowrap;
 }
 /* 위아래 ▲▼ 스핀 버튼으로 증감하는 좁은 숫자칸(칸 수·라벨 크기 — 양옆 버튼 대체).
    네이티브 스핀 버튼은 색을 직접 못 바꾸므로 opacity로 입력창 톤에 녹인다(요구: 톤 조절)
@@ -1028,14 +1045,14 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-group { margin-bottom: 16px; }
 .gm-group + .gm-group { border-top: 1px solid var(--border); padding-top: 14px; }
 .gm-group-h {
-  font-size: calc(11px * var(--text-scale, 1)); font-weight: 700; letter-spacing: 0.07em;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
   color: var(--text-secondary); margin-bottom: 11px; text-transform: uppercase;
 }
 .gm-row {
-  display: grid; grid-template-columns: calc(92px * var(--text-scale, 1)) 1fr;
+  display: grid; grid-template-columns: 92px 1fr;
   align-items: center; gap: 10px; margin-bottom: 9px;
 }
-.gm-row-lbl { font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap; }
+.gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
 /* display:grid가 브라우저 기본 [hidden]{display:none}을 이겨서, hidden을 걸어도
    행이 그대로 보였다(빈 칩 행 3개가 남던 원인). 명시적으로 눌러 준다. */
 .gm-row[hidden] { display: none; }
@@ -1051,7 +1068,7 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-elem-btns { display: inline-flex; gap: 10px; }
 .gm-elem-btns button {
   font: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   padding: 5px 12px;
   cursor: pointer;
   color: var(--text-label);
@@ -1065,11 +1082,11 @@ body { zoom: var(--ui-zoom, 1); }
 /* 칸 범위/간격: 한 셀에 [범위]/[간격] 두 스테퍼를 나란히(요구). */
 .gm-range-step { display: flex; align-items: center; gap: 4px; }
 .gm-range-step .gm-step { flex: 1 1 0; min-width: 0; }
-.gm-rs-sep { color: var(--text-secondary); font-size: calc(12px * var(--text-scale, 1)); flex: 0 0 auto; }
+.gm-rs-sep { color: var(--text-secondary); font-size: 12px; flex: 0 0 auto; }
 
 /* 고급 옵션: 좌표 탭 맨 아래 인라인 패널(모달 아님 → 미리보기가 계속 보인다). */
 .gm-adv-toggle {
-  width: 100%; text-align: left; font: inherit; font-size: calc(13px * var(--text-scale, 1)); font-weight: 600;
+  width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
   padding: 7px 12px; cursor: pointer; color: inherit;
   background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
   display: flex; justify-content: space-between; align-items: center;
@@ -1082,17 +1099,17 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .gm-adv-panel[hidden] { display: none; }
 .gm-adv-sect { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
-.gm-adv-h { font-size: calc(12px * var(--text-scale, 1)); font-weight: 600; margin-bottom: 8px; }
+.gm-adv-h { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
 .gm-adv-h small { font-weight: 400; color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
 /* 네 끝(x+ x− y+ y−) 여백 입력: 한 줄에 나란히, 라벨은 짧게 잘리지 않게. */
 .gm-end-row { display: flex; gap: 8px; }
 .gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
-.gm-end-item label { font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary); flex: 0 0 auto; }
+.gm-end-item label { font-size: 12px; color: var(--text-secondary); flex: 0 0 auto; }
 .gm-end-item .gm-step { flex: 1 1 0; min-width: 0; }
 
 /* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
 .gm-ann-tool {
-  font: inherit; font-size: calc(12px * var(--text-scale, 1)); padding: 5px 12px; cursor: pointer;
+  font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer;
   color: var(--text-label); background: transparent;
   border: 1px solid var(--border); border-radius: 6px;
 }
@@ -1102,7 +1119,7 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-elem-seg { display: inline-flex; }
 .gm-elem-seg button {
   font: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   padding: 5px 11px;
   cursor: pointer;
   color: var(--text-label);
@@ -1127,7 +1144,7 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-pm { display: inline-flex; align-items: stretch; height: 30px; }
 .gm-pm button {
   font: inherit;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   width: 30px;
   cursor: pointer;
   color: var(--text-label);
@@ -1142,7 +1159,7 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(12.5px * var(--text-scale, 1));
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   background: var(--bg-input);
@@ -1151,31 +1168,31 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .gm-checks { flex-wrap: wrap; gap: 8px 18px; }
-.gm-row-body .gm-check { margin-top: 0; font-size: calc(13px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap; }
-.gm-unit { font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary); }
+.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); white-space: nowrap; }
+.gm-unit { font-size: 12px; color: var(--text-secondary); }
 
 /* 좌표 크기 · 성분 크기: 단위도 범위도 같은 한 쌍이라 한 행에 나란히 놓는다.
    왼쪽 칸이 좌표, 오른쪽 칸이 성분 — 행 라벨의 "좌표 / 성분" 순서와 같다. */
 .gm-scale-pair { gap: 14px; flex-wrap: wrap; }
 .gm-scale-item { display: inline-flex; align-items: center; gap: 5px; }
-.gm-sep { color: var(--text-secondary); font-size: calc(12px * var(--text-scale, 1)); }
+.gm-sep { color: var(--text-secondary); font-size: 12px; }
 
 /* 축 표: [라벨 92px][x열][y열] */
 .gm-axis-grid {
-  display: grid; grid-template-columns: calc(92px * var(--text-scale, 1)) 1fr 1fr;
+  display: grid; grid-template-columns: 92px 1fr 1fr;
   align-items: center; gap: 9px 14px;
 }
 .gm-ax-head {
-  font-size: calc(12px * var(--text-scale, 1)); font-weight: 700; letter-spacing: 0.04em;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
   color: var(--text-secondary);
   padding-bottom: 2px; border-bottom: 1px solid var(--border);
 }
-.gm-ax-head i { font: italic 700 calc(13px * var(--text-scale, 1)) "Times New Roman", serif; }
-.gm-ax-lbl { font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap; }
+.gm-ax-head i { font: italic 700 13px "Times New Roman", serif; }
+.gm-ax-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
 .gm-ax-cell { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .gm-ax-note {
   grid-column: 2 / -1;
-  font-size: calc(11.5px * var(--text-scale, 1)); color: var(--text-secondary); margin-top: -2px;
+  font-size: 11.5px; color: var(--text-secondary); margin-top: -2px;
 }
 
 /* 스테퍼: ▲▼를 입력칸 오른쪽에 세로로 몰아 가로 폭을 아끼고(양옆에 두면 칸이 넓어져
@@ -1190,7 +1207,7 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-step input {
   width: 48px; padding: 0 4px; border: 0; border-radius: 0;
   background: transparent; color: var(--text-primary);
-  font: inherit; font-size: calc(13.5px * var(--text-scale, 1)); text-align: center; outline: none;
+  font: inherit; font-size: 13.5px; text-align: center; outline: none;
   font-variant-numeric: tabular-nums;
 }
 .gm-step input:focus { background: var(--bg-panel-hover); }
@@ -1202,7 +1219,7 @@ body { zoom: var(--ui-zoom, 1); }
   flex: 1; width: 24px; padding: 0; border: 0;
   display: grid; place-items: center;
   background: transparent; color: var(--text-secondary);
-  font: inherit; font-size: calc(9px * var(--text-scale, 1)); line-height: 1; cursor: pointer;
+  font: inherit; font-size: 9px; line-height: 1; cursor: pointer;
 }
 .gm-step-btns button + button { border-top: 1px solid var(--border); }
 .gm-step-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
@@ -1223,7 +1240,7 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-variant-seg button {
   display: inline-flex; align-items: center; justify-content: center; gap: 5px;
   height: 36px; padding: 0 4px;
-  font: inherit; font-size: calc(12.5px * var(--text-scale, 1));
+  font: inherit; font-size: 12.5px;
   border: 1px solid var(--border); border-radius: 6px;
   background: var(--bg-input); color: var(--text-secondary);
   cursor: pointer; white-space: nowrap;
@@ -1245,7 +1262,7 @@ body { zoom: var(--ui-zoom, 1); }
   border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
 }
 .gm-origin-seg button {
-  font: 600 calc(13px * var(--text-scale, 1)) "Times New Roman", serif; padding: 0;
+  font: 600 13px "Times New Roman", serif; padding: 0;
   width: 30px; height: 26px; border: 0;
   background: var(--bg-input); color: var(--text-secondary); cursor: pointer;
 }
@@ -1262,7 +1279,7 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex; align-items: center; justify-content: center;
   width: 15px; height: 15px; margin-left: 5px; flex: 0 0 auto;
   border: 1px solid var(--border); border-radius: 50%;
-  font-size: calc(10px * var(--text-scale, 1)); font-weight: 700; line-height: 1;
+  font-size: 10px; font-weight: 700; line-height: 1;
   color: var(--text-secondary); background: var(--bg-input);
   cursor: pointer; user-select: none;
 }
@@ -1272,7 +1289,7 @@ body { zoom: var(--ui-zoom, 1); }
   position: fixed; z-index: 100000; box-sizing: border-box;
   background: var(--bg-input); color: var(--text-primary);
   border: 1px solid var(--accent); border-radius: 6px;
-  padding: 8px 11px; font-size: calc(12px * var(--text-scale, 1)); line-height: 1.55;
+  padding: 8px 11px; font-size: 12px; line-height: 1.55;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
 }
 
@@ -1291,7 +1308,7 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 12px;
   margin: 0 0 18px;
   color: var(--text-secondary);
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   line-height: 1.65;
 }
 .image-paste-guide strong {
@@ -1340,12 +1357,12 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* ===== IMAGE OBJECTIFY ===== */
-.modal-objectify { width: calc(620px * var(--text-scale)); }
+.modal-objectify { width: 620px; }
 .objectify-description,
 .objectify-status,
 .defaults-notice {
   margin: 0;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   line-height: 1.5;
   color: var(--text-secondary);
 }
@@ -1373,10 +1390,10 @@ body { zoom: var(--ui-zoom, 1); }
   border: 1px solid var(--border);
   border-radius: 6px;
 }
-.objectify-controls { display: grid; grid-template-columns: 1fr calc(160px * var(--text-scale, 1)); gap: 12px; }
+.objectify-controls { display: grid; grid-template-columns: 1fr 160px; gap: 12px; }
 .objectify-range-row { display: flex; align-items: center; gap: 8px; }
 .objectify-range-row input[type="range"] { flex: 1; }
-.objectify-range-value { min-width: 32px; text-align: right; font: calc(12px * var(--text-scale, 1)) "IBM Plex Mono", monospace; }
+.objectify-range-value { min-width: 32px; text-align: right; font: 12px "IBM Plex Mono", monospace; }
 @media (max-width: 680px) {
   .objectify-controls { grid-template-columns: 1fr; }
 }
@@ -1384,7 +1401,7 @@ body { zoom: var(--ui-zoom, 1); }
 .zoom-readout {
   margin-left: auto;
   font-family: "IBM Plex Mono", monospace;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: var(--c-sub);
 }
 
@@ -1421,7 +1438,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: #fff;
   background: rgba(13, 17, 23, 0.82);
   border-radius: 6px;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   pointer-events: none;
   white-space: nowrap;
 }
@@ -1488,7 +1505,7 @@ body { zoom: var(--ui-zoom, 1); }
   background: #0550ae;
   border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 1px;
-  font: calc(9px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
+  font: 9px/1 "IBM Plex Mono", monospace;
   white-space: nowrap;
   transform-origin: center;
 }
@@ -1552,7 +1569,7 @@ body { zoom: var(--ui-zoom, 1); }
   box-sizing: content-box;
   margin: 0;
   font-family: var(--font-normal-text);
-  font-size: calc(14px * var(--text-scale, 1));
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.4;
   min-width: 60px;
@@ -1583,7 +1600,7 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .unified-editor-title,
 .unified-preview-label {
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-label);
 }
@@ -1613,7 +1630,7 @@ body { zoom: var(--ui-zoom, 1); }
   width: 100%;
   height: 40px;
   padding: 8px 10px;
-  font: calc(14px * var(--text-scale, 1))/20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif;
+  font: 14px/20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif;
   box-sizing: border-box;
 }
 /* Text-tool capture is now a <textarea>: let it grow with rows (Enter = newline),
@@ -1629,11 +1646,11 @@ textarea.unified-text-input {
 .unified-editor-hint {
   margin-top: -2px;
   color: var(--text-secondary);
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
 }
 .unified-text-editor .text-formula-source-input {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif !important;
-  font-size: calc(14px * var(--text-scale, 1)) !important;
+  font-size: 14px !important;
   line-height: 20px !important;
   font-weight: 400 !important;
   font-style: normal !important;
@@ -1653,7 +1670,7 @@ textarea.unified-text-input {
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
   border-radius: 5px;
-  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Sans KR", sans-serif;
+  font: 12px/1 "IBM Plex Sans KR", sans-serif;
   cursor: pointer;
 }
 .unified-editor-btn:hover,
@@ -1673,7 +1690,7 @@ textarea.unified-text-input {
 .plain-preview {
   white-space: pre-wrap;
   color: #0d1117;
-  font-size: calc(15px * var(--text-scale, 1));
+  font-size: 15px;
   line-height: 1.4;
 }
 .formula-preview-svg {
@@ -1685,11 +1702,11 @@ textarea.unified-text-input {
 }
 .formula-preview-error {
   color: #b42318;
-  font: calc(12px * var(--text-scale, 1))/1.35 "IBM Plex Sans KR", sans-serif;
+  font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-controls {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) calc(72px * var(--text-scale, 1)) auto auto;
+  grid-template-columns: minmax(220px, 1fr) 72px auto auto;
   align-items: end;
   gap: 6px;
 }
@@ -1698,12 +1715,12 @@ textarea.unified-text-input {
   flex-direction: column;
   gap: 3px;
   color: var(--text-secondary);
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
 }
 .unified-style-controls select {
   height: 28px;
   padding: 0 6px;
-  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Sans KR", sans-serif;
+  font: 12px/1 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-toggle {
   height: 28px;
@@ -1740,7 +1757,7 @@ textarea.unified-text-input {
 .symbol-palette-row { align-items: center; }
 .symbol-palette-tag {
   min-width: 40px;
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
   color: var(--text-secondary, #57606a);
 }
 .symbol-palette-btn { min-width: 30px; font-weight: 600; }
@@ -1762,7 +1779,7 @@ textarea.unified-text-input {
   min-height: 84px;
   resize: vertical;
   white-space: pre;
-  font: calc(15px * var(--text-scale, 1))/1.4 system-ui, -apple-system, "Segoe UI", "IBM Plex Sans KR", sans-serif;
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", "IBM Plex Sans KR", sans-serif;
 }
 
 .formula-editor {
@@ -1781,7 +1798,7 @@ textarea.unified-text-input {
   min-width: 220px;
   padding: 5px 7px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: #dcddde;
   background: #1e1f22;
   border: 1px solid #3a3c41;
@@ -1795,7 +1812,7 @@ textarea.unified-text-input {
   min-width: 26px;
   height: 24px;
   padding: 0 6px;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   line-height: 1;
   color: #dcddde;
   background: #1e1f22;
@@ -1817,7 +1834,7 @@ textarea.unified-text-input {
   border: 1px solid var(--c-border, #3a3c41);
   border-radius: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-label, #dcddde);
 }
 .text-ctx-menu[hidden] { display: none; }
@@ -1830,7 +1847,7 @@ textarea.unified-text-input {
   border-radius: 4px;
   background: transparent;
   color: inherit;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   cursor: pointer;
 }
 .text-ctx-item:hover { background: var(--accent, #0969da); color: #fff; }
@@ -1860,10 +1877,10 @@ textarea.unified-text-input {
   border-radius: 8px;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
   color: var(--text-label, #dcddde);
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
 }
 .font-modal-header {
-  font-size: calc(14px * var(--text-scale, 1));
+  font-size: 14px;
   font-weight: 600;
   padding-bottom: 8px;
   border-bottom: 1px solid var(--c-border, #3a3c41);
@@ -1874,14 +1891,14 @@ textarea.unified-text-input {
   gap: 12px;
 }
 .fm-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.fm-label { font-size: calc(11px * var(--text-scale, 1)); color: var(--text-secondary, #9aa0a6); }
+.fm-label { font-size: 11px; color: var(--text-secondary, #9aa0a6); }
 .fm-list {
   width: 100%;
   border: 1px solid var(--c-border, #3a3c41);
   border-radius: 4px;
   background: #1e1f22;
   color: #dcddde;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   padding: 2px;
 }
 .fm-list option { padding: 2px 4px; }
@@ -1891,7 +1908,7 @@ textarea.unified-text-input {
   border-radius: 4px;
   background: #1e1f22;
   color: #dcddde;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   padding: 3px 5px;
   text-align: center;
 }
@@ -1918,7 +1935,7 @@ textarea.unified-text-input {
   border: 1px solid var(--c-border, #3a3c41);
   background: #1e1f22;
   color: #dcddde;
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   cursor: pointer;
 }
 .fm-ok { background: var(--accent, #0969da); border-color: var(--accent, #0969da); color: #fff; }
@@ -1933,7 +1950,7 @@ textarea.unified-text-input {
   padding: 5px 12px;
   border-top: 1px solid var(--c-border);
   background: var(--bg-panel);
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   color: var(--text-label);
 }
 .canvas-bottom-bar label {
@@ -1955,7 +1972,7 @@ textarea.unified-text-input {
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
   border-radius: 5px;
-  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
+  font: 12px/1 "IBM Plex Mono", monospace;
   outline: none;
 }
 .canvas-bottom-bar input[type="number"]:focus {
@@ -1970,6 +1987,7 @@ textarea.unified-text-input {
 
 /* ===== FOOTER (product/version left · developer credit right) ===== */
 .app-footer {
+  position: relative;
   flex: 0 0 auto;
   height: var(--footer-h);
   display: flex;
@@ -1977,10 +1995,29 @@ textarea.unified-text-input {
   justify-content: space-between;
   gap: 12px;
   padding: 0 14px;
-  font-size: calc(11px * var(--text-scale, 1));
+  font-size: 11px;
   color: var(--text-secondary);
   background: var(--bg-panel);
   border-top: 1px solid var(--c-border);
+}
+/* 요구: 은색으로 살짝 빛나는 느낌 — 상단 경계선을 은은한 은색 그라데이션 실선으로,
+   그 위에 아주 옅은 광선을 얹는다. 과하지 않게(디자인 원칙: 큰 그림자·과한 효과 금지)
+   가장자리로 갈수록 사라지는 얇은 선 하나로만 표현한다. */
+.app-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200, 208, 218, 0.55) 20%,
+    rgba(230, 236, 242, 0.9) 50%,
+    rgba(200, 208, 218, 0.55) 80%,
+    transparent 100%);
+  box-shadow: 0 0 6px 0 rgba(200, 210, 224, 0.45);
+  pointer-events: none;
 }
 /* main text ellipsizes instead of overflowing when the window gets narrow */
 .app-footer-main {
@@ -1998,7 +2035,7 @@ textarea.unified-text-input {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: calc(10.5px * var(--text-scale, 1));
+  font-size: 10.5px;
   line-height: 1;
   color: var(--c-sub);
   background: var(--bg-panel);
@@ -2014,7 +2051,7 @@ textarea.unified-text-input {
 .app-footer-credit {
   flex: 0 0 auto;
   color: var(--text-label);
-  font-size: calc(12px * var(--text-scale, 1));
+  font-size: 12px;
   word-break: keep-all;   /* 좁아져 줄바꿈돼도 한글이 단어 단위로(글자 안 잘림) */
 }
 /* 이름(박승연)을 "Copyright"·"SMOE"와 같은 글씨체·색으로(강조 없이 동일하게) */
@@ -2046,14 +2083,14 @@ textarea.unified-text-input {
 }
 
 .modal-title {
-  font-size: calc(15px * var(--text-scale, 1));
+  font-size: 15px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 16px 0;
 }
 
 .modal-list {
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   color: var(--text-primary);
   line-height: 1.7;
   margin: 0 0 24px 0;
@@ -2065,7 +2102,7 @@ textarea.unified-text-input {
   width: 100%;
   padding: 9px 0;
   font-family: inherit;
-  font-size: calc(13px * var(--text-scale, 1));
+  font-size: 13px;
   font-weight: 600;
   color: #fff;
   background: var(--accent);
@@ -2088,7 +2125,7 @@ textarea.unified-text-input {
   padding: 8px 16px;
   background: rgba(9, 105, 218, 0.95);
   color: #fff;
-  font: calc(13px * var(--text-scale, 1))/1.4 "IBM Plex Sans KR", sans-serif;
+  font: 13px/1.4 "IBM Plex Sans KR", sans-serif;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   pointer-events: none;
@@ -2149,7 +2186,7 @@ textarea.unified-text-input {
 
 /* 하단 바: 격자 토글 버튼(누름 상태 = 과목 accent) + 세부(진하기/간격) */
 .grid-toggle-btn {
-  padding: 3px 10px; font-family: inherit; font-size: calc(12px * var(--text-scale, 1)); font-weight: 500;
+  padding: 3px 10px; font-family: inherit; font-size: 12px; font-weight: 500;
   color: var(--c-sub); background: var(--btn-tool-bg);
   border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
 }
@@ -2159,7 +2196,7 @@ textarea.unified-text-input {
 #center-view-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 26px; padding: 0;
-  font-size: calc(15px * var(--text-scale, 1)); line-height: 1;
+  font-size: 15px; line-height: 1;
   color: var(--c-sub); background: var(--btn-tool-bg);
   border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
 }
@@ -2176,7 +2213,7 @@ textarea.unified-text-input {
      (그래프 모달의 물음표 툴팁이 모달 뒤로 깔리던 버그 수정). */
   position: fixed; z-index: 100001; pointer-events: none;
   max-width: 264px; padding: 5px 9px;
-  font: 500 calc(12px * var(--text-scale, 1))/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
   color: var(--text-primary);
   background: var(--bg-panel);
   border: 1px solid var(--c-border);
@@ -2195,7 +2232,7 @@ textarea.unified-text-input {
 .export-help-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 18px; height: 18px; margin-left: 6px; padding: 0;
-  font-size: calc(12px * var(--text-scale, 1)); font-weight: 700; line-height: 1;
+  font-size: 12px; font-weight: 700; line-height: 1;
   color: var(--text-secondary); background: transparent;
   border: 1px solid var(--border); border-radius: 50%; cursor: help;
   vertical-align: 2px;
@@ -2206,21 +2243,21 @@ textarea.unified-text-input {
 .personal-item { display: flex; align-items: stretch; gap: 4px; margin-bottom: 4px; }
 .personal-item-btn {
   flex: 1 1 auto; min-width: 0; text-align: left; padding: 5px 8px;
-  font-family: inherit; font-size: calc(12px * var(--text-scale, 1)); color: var(--text-primary);
+  font-family: inherit; font-size: 12px; color: var(--text-primary);
   background: var(--btn-tool-bg); border: 1px solid var(--c-border); border-radius: 5px;
   cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .personal-item-btn:hover { background: var(--btn-tool-hover); border-color: var(--accent); }
 .personal-item-del {
   /* 해당 줄의 ▾ 토글과 같은 급의 아주 작은 버튼 */
-  flex: none; width: 14px; padding: 0; font-size: calc(9px * var(--text-scale, 1)); line-height: 1;
+  flex: none; width: 14px; padding: 0; font-size: 9px; line-height: 1;
   color: var(--text-secondary); background: transparent; border: none; cursor: pointer;
   align-self: center;
 }
 .personal-item-del:hover { color: #e5534b; }
 .personal-store-btn {
   display: block; width: 100%; margin: 0 0 6px; padding: 6px 8px;
-  font-family: inherit; font-size: calc(12px * var(--text-scale, 1)); font-weight: 600;
+  font-family: inherit; font-size: 12px; font-weight: 600;
   color: var(--accent); background: transparent;
   border: 1px dashed var(--accent); border-radius: 6px; cursor: pointer;
 }
@@ -2236,7 +2273,7 @@ textarea.unified-text-input {
 
 /* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
 .file-menu-item { display: flex; align-items: center; }
-.menu-kbd { margin-left: auto; padding-left: 12px; font-size: calc(11px * var(--text-scale, 1)); color: var(--text-secondary); }
+.menu-kbd { margin-left: auto; padding-left: 12px; font-size: 11px; color: var(--text-secondary); }
 
 /* 이미지로 내보내기: [내보내기] 버튼은 평소 무색, hover 시에만 강조색 */
 #export-confirm { background: transparent; color: var(--c-text); border-color: var(--c-border); }
@@ -2248,13 +2285,13 @@ textarea.unified-text-input {
 
 /* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
 .defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--c-border); }
-.defaults-pbg-desc { margin: 4px 0 8px; font-size: calc(11px * var(--text-scale, 1)); color: var(--text-secondary); line-height: 1.5; }
+.defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
 .defaults-pbg-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
-.defaults-pbg-empty { margin: 0; font-size: calc(12px * var(--text-scale, 1)); color: var(--text-secondary); }
+.defaults-pbg-empty { margin: 0; font-size: 12px; color: var(--text-secondary); }
 .defaults-pbg-item { display: flex; align-items: center; gap: 8px; }
 .defaults-pbg-thumb { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; flex: none; }
-.defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: calc(12px * var(--text-scale, 1)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.defaults-pbg-del { flex: none; width: 20px; font-size: calc(11px * var(--text-scale, 1)); color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
+.defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defaults-pbg-del { flex: none; width: 20px; font-size: 11px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
 .defaults-pbg-del:hover { color: #e5534b; }
 .defaults-pbg-row { display: flex; gap: 6px; margin-top: 6px; }
 .defaults-pbg-row .modal-input { min-width: 0; }
@@ -2282,7 +2319,7 @@ textarea.unified-text-input {
   border: 1px solid transparent; border-bottom: none;
   border-radius: 6px 6px 0 0;
   background: transparent; color: var(--text-secondary);
-  font-size: calc(12px * var(--text-scale, 1)); line-height: 1.4;
+  font-size: 12px; line-height: 1.4;
   cursor: pointer; white-space: nowrap; user-select: none;
 }
 .page-tab:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
@@ -2295,7 +2332,7 @@ textarea.unified-text-input {
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--border); border-radius: 6px;
   background: var(--btn-tool-bg); color: var(--text-secondary);
-  font-size: calc(15px * var(--text-scale, 1)); line-height: 1; cursor: pointer;
+  font-size: 15px; line-height: 1; cursor: pointer;
 }
 .page-add-btn:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 

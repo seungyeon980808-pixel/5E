@@ -366,7 +366,7 @@ if (_APP_DEBUG_ENABLED) {
     box.id = "coord-debug";
     box.style.cssText =
       "position:fixed;left:8px;bottom:8px;z-index:9999;display:none;" +
-      "font: calc(11px * var(--text-scale, 1))/1.45 'IBM Plex Mono',monospace;white-space:pre;" +
+      "font: 11px/1.45 'IBM Plex Mono',monospace;white-space:pre;" +
       "background:rgba(13,17,23,.88);color:#7ee787;padding:8px 10px;" +
       "border-radius:6px;pointer-events:none;max-width:46ch;";
     document.body.appendChild(box);
