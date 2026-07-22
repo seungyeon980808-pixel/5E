@@ -7,6 +7,7 @@ import {
   applySvgTextFont,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
+  LABEL_OPTICAL_CENTER_EM,
 } from "./core.js?v=1.1.0";
 import {
   DEFAULT_TEXT_FONT,
@@ -17,22 +18,7 @@ import {
   hasStyledTextRuns,
 } from "../state.js?v=1.1.0";
 
-// 라벨 세로 중심 보정(em 단위). dominant-baseline:"central"은 글자의 잉크가 아니라
-// em 박스를 기준으로 중심을 잡아 라벨이 눈에 띄게 아래로 내려앉았다. 대신
-// 베이스라인 기준(dominant-baseline 미지정)으로 두고 이 값만큼 y를 내린다.
-//
-// 값의 근거(Latin Modern Roman 실측, canvas actualBoundingBox 기준):
-//   central 기준선 = 베이스라인 위 0.4175em  ← fontBoundingBox.ascent가 1.125em로
-//                                              (수식 기호·악센트 여유) 비정상적으로 높다
-//   m·v·n·x·r·a 잉크 중심 = 베이스라인 위 0.215em
-//   → 기존 central은 소문자를 0.2em 아래로 내려보내고 있었다(5mm 라벨에서 약 1mm).
-// 잉크 기준 정중앙은 소문자에서 0.215em이지만, 실제로 보면 글자가 떠 보인다.
-// 사용자 판단에 따라 기존 central(0.4175em)과 잉크 정중앙(0.215em)의 중간값을 쓴다.
-//
-// 글자별 실측이 아니라 단일 상수인 이유: ① 한 그림 안의 여러 m이 항상 같은 높이에
-// 놓여야 하고(잉크 실측을 쓰면 m과 mg가 다른 높이가 된다) ② 내보내기 경로에서
-// getBBox가 0을 반환하기 때문(estimateLabelBlock 주석 참고).
-const LABEL_OPTICAL_CENTER_EM = 0.316;
+// 세로 중심 보정 상수는 core.js에 있다(치수 라벨·회로 기호와 같은 값을 쓰기 위해).
 
 // 멀티라인 라인 tspan에 부모 <text>의 글꼴/스타일을 명시 복사한다 — 숫자 정자화
 // (fillTextWithRomanRuns) 감지가 라인 tspan 단위에서도 동작하도록.
