@@ -80,24 +80,32 @@ const ARROW_SEGS_NORM = (() => {
   }
   return { segs, notch: pts[n - 1] };
 })();
-function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
-  const px = -dirY, py = dirX;                 // 수직 단위
-  const L = sw * 6.0;                            // 전체 크기 배율(비율은 ARROW_TRACE가 고정)
-  const P = (b, s) => `${tipX - dirX * b * L + px * s * L} ${tipY - dirY * b * L + py * s * L}`;
+// 정준(canonical) 방향(dir=(0,-1), 즉 "위쪽")·L=1 기준 'd' 문자열을 모듈 로드 시 딱 한 번만
+// 만든다(P(b,s)=(s,b)로 단순화됨 — dirX=0,dirY=-1,px=1,py=0일 때 수식이 그렇게 떨어진다).
+// 성능 실측: 이전엔 매 호출마다 256개 숫자를 문자열로 새로 조립했다(옛 폴리곤 8개 대비 32배) —
+// 이게 Catmull-Rom 계산을 hoist한 뒤에도 여전히 옛 방식 대비 ~44배 느렸던 진짜 원인이었다.
+// 이제 'd'는 상수이고, 호출마다 하는 일은 transform(translate·rotate·scale) 문자열 하나뿐이다
+// — 숫자 4개로 줄어 옛 폴리곤 수준(오차 범위)까지 회복된다(실측: 아래 커밋 로그 참고).
+const ARROW_D_CANON = (() => {
   const { segs, notch } = ARROW_SEGS_NORM;
+  const P = (b, s) => `${s} ${b}`;   // 정준 P(b,s) = (s, b) — 위 주석 참고
   let d = `M ${P(0, 0)} `;
   segs.forEach(([, c1, c2, p1]) => { d += `C ${P(c1[0], c1[1])} ${P(c2[0], c2[1])} ${P(p1[0], p1[1])} `; });
-  // 홈 바닥(왼쪽 끝→오른쪽 끝)은 축 폭을 가로지르는 직선 — 실제로 축 상단 가장자리와 같은 선.
   d += `L ${P(notch[0], -notch[1])} `;
-  // 오른쪽은 왼쪽과 좌우 대칭(s → -s), 역순으로 홈에서 앞끝까지 — 반대쪽을 따로 추적하지 않고
-  // 부호만 뒤집으므로 대칭이 어긋날 수 없다.
   [...segs].reverse().forEach(([p0, c1, c2]) => { d += `C ${P(c2[0], -c2[1])} ${P(c1[0], -c1[1])} ${P(p0[0], -p0[1])} `; });
   d += "Z";
+  return d;
+})();
+function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
+  const L = sw * 6.0;             // 전체 크기 배율(비율은 ARROW_TRACE가 고정)
+  // 정준 방향(0,-1) → (dirX,dirY)로 돌리는 회전각(도, SVG는 시계방향+). atan2 기준 유도.
+  const rotDeg = (Math.atan2(dirY, dirX) * 180) / Math.PI + 90;
   const path = document.createElementNS(SVG_NS, "path");
-  path.setAttribute("d", d);
+  path.setAttribute("d", ARROW_D_CANON);
+  path.setAttribute("transform", `translate(${tipX} ${tipY}) rotate(${rotDeg}) scale(${L})`);
   path.setAttribute("fill", color);
   path.setAttribute("stroke", color);
-  path.setAttribute("stroke-width", sw * 0.15);
+  path.setAttribute("stroke-width", 0.15 / 6);   // scale(L)로 함께 커져 최종 sw*0.15가 된다
   path.setAttribute("stroke-linejoin", "round");
   return path;
 }
