@@ -31,7 +31,7 @@ function baselineToVAlign(b) {
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
 const GRID_LEVEL = 80;         // mid gray (0=black … 255=white) — 요구: 지금 회색과 완전검정의 중간값
-const TICK_LEVEL = 140;        // 눈금 표시선: 축(검정)보다 확실히 옅은 회색(#8c8c8c). 격자(160)보단 살짝 진해 눈금으로 읽힘(요구: 회색)
+const TICK_LEVEL = 70;         // 눈금 표시선: 요구 — 지금 회색(140)과 완전검정의 중간값으로 더 진하게
 const GRID_MAX_LINES = 160;    // per axis; beyond this the grid is skipped
 
 /* ----- 부드러운(베지어) 화살촉 — 평가원 만년필식, 실사진에서 직접 추적(요구 5).
