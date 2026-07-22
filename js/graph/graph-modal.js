@@ -1581,10 +1581,10 @@ function renderLegendEditor() {
   const miniBtn = "font-size: calc(11px * var(--text-scale, 1));padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
   (_cfg.legends || []).forEach((lg, li) => {
     const box = document.createElement("div");
-    box.style.cssText = "border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0 0 102px;";
+    box.style.cssText = "border:1px solid var(--border);border-radius:6px;padding:8px;margin:6px 0 0 calc(102px * var(--text-scale, 1));";
     const head = document.createElement("div");
     head.style.cssText = "display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;";
-    const ttl = document.createElement("b"); ttl.style.fontSize = "12px"; ttl.textContent = `범례 ${li + 1}`;
+    const ttl = document.createElement("b"); ttl.style.fontSize = "calc(12px * var(--text-scale, 1))"; ttl.textContent = `범례 ${li + 1}`;
     const delLeg = document.createElement("button"); delLeg.type = "button"; delLeg.textContent = "삭제"; delLeg.style.cssText = miniBtn;
     delLeg.addEventListener("click", () => { _cfg.legends.splice(li, 1); syncAnnLists(); refreshPreview(); });
     head.append(ttl, delLeg); box.appendChild(head);

@@ -735,15 +735,30 @@ body { zoom: var(--ui-zoom, 1); }
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+  /* 애플 독처럼 캡슐형 배경을 둬서 "떠 있는 여러 칩"이 아니라 하나의 창처럼 읽히게,
+     동시에 칩 사이/둘레 여백이 생겨 손잡이가 아니어도 잡아서 끌 수 있게 한다. */
+  padding: 8px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+  cursor: grab;
 }
+.refwin-dock:active { cursor: grabbing; }
 .refwin-dock[hidden] { display: none; }
 /* 도크의 손잡이는 모달과 달리 절대배치가 아니라 칩들 위에 흐름대로 놓인다
-   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). */
+   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). 여백 전체가 이미
+   드래그를 받으므로(dragWholeElement) 손잡이는 "여기를 잡으면 된다"는 표식만
+   하면 되지만, 눈에 덜 띄면 여전히 못 찾으므로 크게·진하게 둔다. */
 .refwin-dock .modal-drag-handle {
   position: static;
-  opacity: 0.55;
+  width: 18px;
+  height: 18px;
+  opacity: 0.75;
   background-color: var(--bg-panel);
   border: 1px solid var(--border);
+  align-self: center;
 }
 .refwin-chip {
   font: inherit;
