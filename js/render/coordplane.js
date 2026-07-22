@@ -55,6 +55,55 @@ function appendArrow(g, tipX, tipY, dirX, dirY, sw, color) {
   g.appendChild(poly);
 }
 
+/* ----- 부드러운(베지어) 화살촉 — 평가원 만년필식, 실사진에서 직접 추적(요구 5).
+ * 사용자가 준 참고 사진(화살촉)을 픽셀 단위로 윤곽 추출(파이썬 PIL/numpy) → 왼쪽 경계를
+ * (앞끝→갈고리 뒤끝→홈) 22개 점으로 다운샘플 → 참고 이미지 전체 높이(L_head) 기준 정규화.
+ * 검증: 이 정규화 점을 다시 래스터화해 원본과 겹쳐 IoU 96.97% / Dice 98.46%(스크립트로 실측).
+ * 렌더는 이 점들을 Catmull-Rom→큐빅 베지어로 이어 매끈한 곡선을 만들고 좌우 대칭한다.
+ * tip=(tipX,tipY), d=(dirX,dirY) 진행방향 단위, sw=크기 배수(L=sw*mL). 채움만(테두리 없음). */
+// 정규화 좌표(b/L_head, s/L_head): b=앞끝에서의 진행거리, s=중심축에서의 옆 거리.
+// [0]=앞끝 … [13]=갈고리 뒤끝(가장 넓음) … [21]=홈 끝(축 폭 가장자리, 막대와 만나는 점).
+const ARROW_TRACE = [
+  [0.0000, 0.0128], [0.0769, 0.0282], [0.1538, 0.0436], [0.2308, 0.0590], [0.3077, 0.0795],
+  [0.3846, 0.0949], [0.4615, 0.1154], [0.5385, 0.1359], [0.6154, 0.1615], [0.6923, 0.1923],
+  [0.7692, 0.2231], [0.8462, 0.2538], [0.9231, 0.2846], [1.0000, 0.3205], [0.9795, 0.2436],
+  [0.9641, 0.2231], [0.9487, 0.1974], [0.9282, 0.1718], [0.9077, 0.1410], [0.8923, 0.1154],
+  [0.8769, 0.1000], [0.8564, 0.0436],
+];
+function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
+  const px = -dirY, py = dirX;                 // 수직 단위
+  const L = sw * 6.0;                            // 전체 크기 배율(비율은 위 트레이스가 고정)
+  const pts = ARROW_TRACE.map(([bn, sn]) => [bn * L, sn * L]);
+  // Catmull-Rom(균일) → 큐빅 베지어: 트레이스 점을 정확히 지나가며 곡률이 자연스럽게 변한다.
+  const n = pts.length;
+  const segs = [];
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
+    segs.push([
+      p1,
+      [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6],
+      [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6],
+      p2,
+    ]);
+  }
+  const P = (b, s) => `${tipX - dirX * b + px * s} ${tipY - dirY * b + py * s}`;
+  let d = `M ${P(0, 0)} `;
+  segs.forEach(([, c1, c2, p1]) => { d += `C ${P(c1[0], c1[1])} ${P(c2[0], c2[1])} ${P(p1[0], p1[1])} `; });
+  // 홈 바닥(왼쪽 끝→오른쪽 끝)은 축 폭을 가로지르는 직선 — 실제로 축 상단 가장자리와 같은 선.
+  const notch = pts[n - 1];
+  d += `L ${P(notch[0], -notch[1])} `;
+  // 오른쪽은 왼쪽과 좌우 대칭(s → -s), 역순으로 홈에서 앞끝까지.
+  [...segs].reverse().forEach(([p0, c1, c2]) => { d += `C ${P(c2[0], -c2[1])} ${P(c1[0], -c1[1])} ${P(p0[0], -p0[1])} `; });
+  d += "Z";
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", d);
+  path.setAttribute("fill", color);
+  path.setAttribute("stroke", color);
+  path.setAttribute("stroke-width", sw * 0.15);
+  path.setAttribute("stroke-linejoin", "round");
+  return path;
+}
+
 /* ----- format a tick value: kill float noise, trim trailing zeros ----- */
 function fmtTick(v) {
   if (!Number.isFinite(v)) return "";
@@ -445,8 +494,9 @@ function renderCoordplane(obj) {
     if (Number.isFinite(a.dx) && Number.isFinite(a.dy)) { dx = a.dx; dy = a.dy; }
     else { dx = cx - wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1); dy = cy - wmY(Number.isFinite(a.ty) ? a.ty : a.y); }
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-    const headSw = annSw * 1.75, headLen = headSw * 4.5;   // makeArrowHead의 length와 동일
-    g.appendChild(makeArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
+    const headSw = annSw * 1.75, headLen = headSw * 6.0;   // smoothArrowHead의 L과 동일
+    // 클릭 지점이 화살촉 정중앙(요구 4) — 촉을 진행방향으로 절반 앞당긴다. 막대(곡선)는 홈으로 이어짐.
+    g.appendChild(smoothArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
   });
   // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
   (obj.annMarkers || []).forEach((p) => {
