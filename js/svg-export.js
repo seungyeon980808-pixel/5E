@@ -85,14 +85,13 @@ export function getDefaultExportFilename(ext) {
 
 /* ----- webfont embedding for export -----
  * 기본 한글 텍스트는 시스템 고딕 스택(이름 기반)이라 임베딩이 필요 없지만, 수식/물리량
- * 텍스트에 쓰는 웹폰트(Latin Modern Roman 정자·이탤릭, 함초롬바탕)는 SVG-as-image의 격리
+ * 텍스트에 쓰는 웹폰트(Latin Modern Roman 정자·이탤릭)는 SVG-as-image의 격리
  * 문맥에서 문서 웹폰트를 못 써 폴백(Times/serif)으로 렌더돼 글꼴·간격이 어긋났다. 그래서
  * 폰트 파일을 base64로 인라인한 @font-face를 export SVG의 <defs>에 넣어 편집 화면과 같은
  * 글꼴로 내보낸다. 파일이 없으면(선택적 폰트) 조용히 건너뛰어 기존 폴백 동작을 유지한다. */
 const EMBED_FONTS = [
   { family: "Latin Modern Roman", style: "normal", url: "fonts/lmroman10-regular.woff2" },
   { family: "Latin Modern Roman", style: "italic", url: "fonts/lmroman10-italic.woff2" },
-  { family: "HamchoromBatang",    style: "normal", url: "fonts/HamchoromBatang.woff2" },
 ];
 let _fontCss = "";          // 캐시된 @font-face CSS(base64). 사용 가능한 폰트가 없으면 "".
 let _fontCssPromise = null;

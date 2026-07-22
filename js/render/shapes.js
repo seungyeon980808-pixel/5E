@@ -17,6 +17,11 @@ import { withBoxLabel, withLineLabel } from "./labels.js?v=1.1.0";
 import { resolveFill } from "./fill.js?v=1.1.0";
 import { getSvgAsset } from "../svg-assets.js?v=1.1.0";
 
+// 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
+// (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.
+// 홈 깊이 비율만 0.3→0.16로 줄여 홈 아래쪽 각을 ~106°→~136°로 넓혔다.
+const LINE_ARROW_OPTS = { lenMul: 6.5, widthMul: 2.6, notchRatio: 0.16 };
+
 /* ----- rect: size-based shape (DESIGN 2-1 branch A) ----- */
 function renderRect(obj) {
   const r = document.createElementNS(SVG_NS, "rect");
@@ -187,28 +192,28 @@ function renderLine(obj) {
   bodyEls.forEach((b) => g.appendChild(b));
 
   if (arrowHead === "end") {
-    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
+    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color, LINE_ARROW_OPTS));
   } else if (arrowHead === "start") {
-    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
+    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
   } else if (arrowHead === "both") {
-    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
-    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
+    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color, LINE_ARROW_OPTS));
+    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
   } else if (lineStyle === "middleArrow") {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     const direction = obj.arrowVariant === "left" ? -1 : 1;
-    g.appendChild(makeArrowHead(mx, my, nx * direction, ny * direction, sw, color));
+    g.appendChild(makeArrowHead(mx, my, nx * direction, ny * direction, sw, color, LINE_ARROW_OPTS));
   } else if (lineStyle === "midInward") {
     // Two arrowheads at ~1/3 and ~2/3 of the span, BOTH pointing INWARD toward
     // the midpoint (→ on the left half, ← on the right half) — bidirectional
     // tension/compression. n = p1→p2 unit; left head aims +n, right head −n.
     const p13 = { x: obj.p1.x + (obj.p2.x - obj.p1.x) / 3, y: obj.p1.y + (obj.p2.y - obj.p1.y) / 3 };
     const p23 = { x: obj.p1.x + (obj.p2.x - obj.p1.x) * 2 / 3, y: obj.p1.y + (obj.p2.y - obj.p1.y) * 2 / 3 };
-    g.appendChild(makeArrowHead(p13.x, p13.y, nx, ny, sw, color));
-    g.appendChild(makeArrowHead(p23.x, p23.y, -nx, -ny, sw, color));
+    g.appendChild(makeArrowHead(p13.x, p13.y, nx, ny, sw, color, LINE_ARROW_OPTS));
+    g.appendChild(makeArrowHead(p23.x, p23.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
   } else if (lineStyle === "lengthArrow") {
-    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color));
-    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color));
+    g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color, LINE_ARROW_OPTS));
+    g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
 
     const dimensionVariant = ["basic", "rightBar", "leftBar", "bothBars"].includes(obj.dimensionVariant)
       ? obj.dimensionVariant
@@ -340,10 +345,10 @@ function renderPolyline(obj) {
   g.appendChild(el);
 
   if ((arrowHead === "end" || arrowHead === "both") && endDir) {
-    g.appendChild(makeArrowHead(pts[n - 1].x, pts[n - 1].y, endDir.x, endDir.y, sw, color));
+    g.appendChild(makeArrowHead(pts[n - 1].x, pts[n - 1].y, endDir.x, endDir.y, sw, color, LINE_ARROW_OPTS));
   }
   if ((arrowHead === "start" || arrowHead === "both") && startDir) {
-    g.appendChild(makeArrowHead(pts[0].x, pts[0].y, -startDir.x, -startDir.y, sw, color));
+    g.appendChild(makeArrowHead(pts[0].x, pts[0].y, -startDir.x, -startDir.y, sw, color, LINE_ARROW_OPTS));
   }
   if (arrowHead === "center") {
     // 중간 화살표 방향 2종(그래프 도구 구간 화살표 §10-⑩): arrowVariant "left" = 진행
@@ -352,7 +357,7 @@ function renderPolyline(obj) {
     const m = polylineMidpoint(pts);
     if (m) {
       const flip = obj.arrowVariant === "left" ? -1 : 1;
-      g.appendChild(makeArrowHead(m.x, m.y, m.dx * flip, m.dy * flip, sw, color));
+      g.appendChild(makeArrowHead(m.x, m.y, m.dx * flip, m.dy * flip, sw, color, LINE_ARROW_OPTS));
     }
   }
 

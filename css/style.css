@@ -1,17 +1,23 @@
 @charset "UTF-8";
-/* ===== OPTIONAL SELF-HOSTED FONT: 함초롬바탕 =====
- * The DEFAULT text font is now a system gothic stack (돋움 / Apple SD Gothic Neo
- * / Malgun Gothic) resolved by NAME — no @font-face needed for it. 함초롬바탕
- * remains a SELECTABLE option only; this @font-face renders it when the woff2 is
- * present at fonts/HamchoromBatang.woff2 (see fonts/README.txt), otherwise it
- * falls back to the serif in the "HamchoromBatang", serif chain. */
-@font-face {
-  font-family: "HamchoromBatang";
-  src: url("../fonts/HamchoromBatang.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* ===== 본문 글꼴 방침 (2026-07-23 확정) =====
+ * 그림에 들어가는 텍스트의 기본 글꼴은 **돋움**이다 — js/state.js의
+ * TEXT_FONT_FAMILY('"돋움","Dotum","Apple SD Gothic Neo","맑은 고딕",
+ * "Malgun Gothic", sans-serif') 하나로 관리하며, @font-face 없이 **이름으로만**
+ * 해석한다(자가호스팅·임베딩 없음). Windows는 돋움, macOS는 Apple SD Gothic Neo로 풀린다.
+ *
+ * 왜 돋움인가: 수능/평가원 시험지는 SM(신명) 계열 유료 글꼴로 조판된다
+ * (SM중고딕·SM태고딕·신명중명조 등). SM 계열은 라이선스상 웹 임베딩이 안 되고
+ * 이 PC에도 없다. 실측 결과 한양(HY)·신명(SM)·돋움은 같은 한국 인쇄 고딕 계보라
+ * 골격이 거의 같고, 특히 돋움과 HY견고딕은 메트릭이 0.2px 차이로 사실상 동일했다
+ * (64px "아크릴 관 저울 수평면": 돋움 640.1×74 / HY견고딕 639.9×74).
+ * 참고로 HY중고딕은 레지스트리에 등록돼 있어도 브라우저가 접근하지 못한다(폴백).
+ * → 실제로 쓸 수 있는 것 중 수능 지면에 가장 가까운 선택이 돋움이다.
+ *
+ * 함초롬바탕은 2026-07-23에 제거했다. 글꼴 목록·@font-face·자가호스팅 woff2·
+ * 내보내기 임베딩(EMBED_FONTS)에서 모두 뺐다. 다시 넣는다면 @font-face의 src에
+ * local()을 반드시 **맨 앞에** 둘 것 — @font-face를 선언하는 순간 그 이름이 선언에
+ * 예약되어, url이 404여도 PC에 설치된 동명 폰트로 되돌아가지 않고 serif로 넘어간다.
+ * 이것 때문에 함초롬바탕이 설치된 PC에서도 화면·내보내기 모두 명조로 나갔었다. */
 
 /* ===== SELF-HOSTED FONT: Latin Modern (수식 전용) =====
  * 수식/formula 글꼴. LaTeX 기본 수식체 Computer Modern의 오픈타입판. 정자 + 이탤릭
@@ -45,9 +51,9 @@
   --bg-app: #0d1117;
   --bg-panel: #161b22;
   --bg-panel-hover: #21262d;
-  --bg-canvas: #0d1117;
+  --bg-canvas: #010409;
   --bg-input: #0d1117;
-  --border: #30363d;
+  --border-strong: #30363d;
   --text-primary: #e6edf3;
   --text-secondary: #7d8590;
   --text-label: #b1bac4;
@@ -70,7 +76,7 @@
   --bg-panel-hover: #f3f5f8;
   --bg-canvas: #dde3ea;
   --bg-input: #ffffff;
-  --border: #d0d7de;
+  --border-strong: #d0d7de;
   --text-primary: #0d1117;
   --text-secondary: #656d76;
   --text-label: #424a53;
@@ -89,17 +95,17 @@
    지구=고급 우디 브라운. accent 계열 + 배경 톤(bg-app/panel/canvas)을 과목
    컬러 쪽으로 살짝 기울인다(채도 낮은 유사 톤 — 눈에 거슬리지 않는 수준). */
 :root[data-subject="c"] { --accent:#b03a4a; --accent-hover:#c24d5c; --accent-2:#8a2b39; --accent-2-hover:#a03442; --btn-tool-active:#b03a4a;
-  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#110f12; --bg-input:#110f12; --border:#363037; }
+  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#08070a; --bg-input:#110f12; --border-strong:#363037; }
 :root[data-subject="c"][data-theme="light"] { --accent:#9a2f3d; --accent-hover:#8a2b39; --accent-2:#8a2b39; --accent-2-hover:#7a2531; --btn-tool-active:#9a2f3d;
-  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border:#d6cdd0; }
+  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border-strong:#d6cdd0; }
 :root[data-subject="b"] { --accent:#0f8a72; --accent-hover:#14a086; --accent-2:#0c6a58; --accent-2-hover:#0f8069; --btn-tool-active:#0f8a72;
-  --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#0e1512; --bg-input:#0e1512; --border:#2c3d36; }
+  --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#070a09; --bg-input:#0e1512; --border-strong:#2c3d36; }
 :root[data-subject="b"][data-theme="light"] { --accent:#0c7a64; --accent-hover:#0a6a58; --accent-2:#0c6a58; --accent-2-hover:#0a5a4c; --btn-tool-active:#0c7a64;
-  --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border:#c8d8d1; }
+  --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border-strong:#c8d8d1; }
 :root[data-subject="e"] { --accent:#a5794a; --accent-hover:#b98a58; --accent-2:#7a5330; --accent-2-hover:#8e6339; --btn-tool-active:#a5794a;
-  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#121009; --bg-input:#121009; --border:#37322a; }
+  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#090805; --bg-input:#121009; --border-strong:#37322a; }
 :root[data-subject="e"][data-theme="light"] { --accent:#8a6338; --accent-hover:#7a5330; --accent-2:#7a5330; --accent-2-hover:#6a4728; --btn-tool-active:#8a6338;
-  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border:#d7d1c6; }
+  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border-strong:#d7d1c6; }
 
 /* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
 input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
@@ -113,6 +119,18 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --c-sub: var(--text-label);
   --c-text: var(--text-primary);
   --c-border: var(--border);
+
+  /* ===== 테두리 3단 (2026-07-23) =====
+     예전엔 앱 전체 86곳이 전부 같은 1px·같은 색이라 화면이 "격자 상자"로 읽혔다.
+     역할별로 세기를 나눈다 — 구조(패널 외곽·모달)만 원래 세기를 쓰고, 컨트롤은 한 단,
+     섹션 내부 구분선은 두 단 낮춘다.
+       --border-strong  패널 외곽·모달 경계   (테마 블록이 직접 정의)
+       --border         컨트롤 (기본값)        ← 기존 var(--border) 사용처가 여기로 온다
+       --border-muted   섹션 내부 구분선
+     아래 둘은 --border-strong에서 파생되므로 과목 테마 8종이 자동으로 따라온다.
+     새 색을 만들지 않는다는 DESIGN.md 13-4 원칙에 맞춰, 패널 배경 쪽으로 섞기만 한다. */
+  --border: color-mix(in srgb, var(--border-strong, #30363d) 65%, var(--bg-panel));
+  --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
 
   --panel-left-w: 130px;
   --panel-right-w: 215px;
@@ -139,7 +157,11 @@ body {
   background: var(--bg-app);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* zoom은 100vh 계산에 관여하지 않고 그려진 결과만 확대한다 — height를 그대로
+     100vh로 두면 배율(ui-zoom)만큼 실제 렌더 높이가 뷰포트를 넘어서 하단(푸터·
+     기출문항검색 등)이 화면 밖으로 잘린다. 배율의 역수로 미리 줄여 두면 zoom이
+     걸린 뒤 정확히 뷰포트 높이(100vh)로 돌아온다. */
+  height: calc(100vh / var(--ui-zoom, 1));
   overflow: hidden;
 }
 
@@ -157,7 +179,7 @@ body {
   background: var(--bg-app);
 }
 :root:fullscreen body {
-  height: 100vh;
+  height: calc(100vh / var(--ui-zoom, 1));
   overflow: hidden;
 }
 
@@ -173,8 +195,8 @@ body {
   overflow: auto;
 }
 
-.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
-.panel-right { border-left: 1px solid var(--c-border); }
+.panel-left { border-right: 1px solid var(--border-strong); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
+.panel-right { border-left: 1px solid var(--border-strong); }
 
 /* ===== 환경 설정: 화면 크기 프리셋 → 앱 UI 스케일(zoom) =====
    .app 전체에 zoom을 걸어 글씨·도구 패널·간격을 한 번에 확대/축소한다.
@@ -225,7 +247,7 @@ body { zoom: var(--ui-zoom, 1); }
   font-weight: 600;
   color: var(--c-sub);
   cursor: pointer;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--border-muted);
   margin-bottom: 6px;
   user-select: none;
 }
@@ -273,28 +295,28 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
 .subject-select {
-  height:28px; padding:0 8px; font-size:13px; font-weight:600;
+  height:28px; padding:0 8px; font-size: 13px; font-weight:600;
   /* 다른 UI 요소와 같은 본문 글꼴(IBM Plex Sans KR) + 가운데 정렬 */
   font-family:inherit;
   text-align:center; text-align-last:center;
   color:var(--text-primary); background:var(--bg-input);
-  border:1px solid var(--accent); border-radius:6px; cursor:pointer;
+  border:1px solid var(--accent); border-radius:9px; cursor:pointer;
 }
 .subject-select-topbar { margin-left:8px; }
 .subject-select-panel { width:100%; margin:0 0 8px; height:30px; }
 .subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
 .subject-part-header {
   width:100%; display:flex; align-items:center; justify-content:space-between;
-  padding:7px 10px; font-family:inherit; font-size:12.5px; font-weight:500;
+  padding:7px 10px; font-family:inherit; font-size: 12.5px; font-weight:500;
   color:var(--text-label); background:var(--btn-tool-bg); border:0; cursor:pointer;
   border-left:3px solid var(--accent);
 }
 .subject-part-header:hover { background:var(--btn-tool-hover); color:var(--text-primary); }
-.subject-part-header .toggle-icon { transition:transform .15s; font-size:11px; color:var(--text-secondary); }
+.subject-part-header .toggle-icon { transition:transform .15s; font-size: 11px; color:var(--text-secondary); }
 .subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
 .subject-part.is-collapsed .subject-part-body { display:none; }
 .subject-part-body { padding:8px 10px; }
-.subject-part-empty { margin:0; font-size:12px; color:var(--text-secondary); }
+.subject-part-empty { margin:0; font-size: 12px; color:var(--text-secondary); }
 @media (prefers-reduced-motion: reduce) { .subject-part-header .toggle-icon { transition:none; } }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
 /* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
@@ -340,12 +362,14 @@ body { zoom: var(--ui-zoom, 1); }
   font-size: 13px;
   color: var(--c-text);
   background: var(--btn-tool-bg);
-  border: 1px solid var(--c-border);
+  /* 상시 테두리를 걷는다 — 15개 버튼이 저마다 상자를 두르면 도구 영역이 격자가 된다.
+     자리는 남겨야(1px transparent) hover·활성 시 레이아웃이 흔들리지 않는다. */
+  border: 1px solid transparent;
   border-radius: 6px;
   padding: 4px;
   cursor: pointer;
 }
-.tool-btn:hover { background: var(--btn-tool-hover); }
+.tool-btn:hover { background: var(--btn-tool-hover); border-color: var(--border); }
 
 /* icon/letter sits DIRECTLY in the button — no inner keycap box (de-boxed) */
 .tool-btn kbd {
@@ -362,16 +386,16 @@ body { zoom: var(--ui-zoom, 1); }
 /* shape icons inherit the kbd text color so they highlight with active state */
 .tool-btn kbd .tool-ico {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 .tool-btn kbd .tool-letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  font-size: 15px;
+  width: 17px;
+  height: 17px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
 }
@@ -417,7 +441,7 @@ body { zoom: var(--ui-zoom, 1); }
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--border-strong);
   background: var(--bg-panel);
 }
 /* vertical group separator between toolbar clusters (brand | history | menus) */
@@ -593,11 +617,22 @@ body { zoom: var(--ui-zoom, 1); }
   flex-direction: column;
   padding: 4px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
 }
 .file-menu-list[hidden] { display: none; }
+/* 모달과 같은 등장 연출(짧게 튀었다 자리잡기)을 드롭다운에도 맞춘다 — 지금까지는
+   대화상자만 이 느낌이 있고 파일/설정 메뉴는 즉시 나타나 뚝뚝 끊겨 보였다. */
+.file-menu-list:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@keyframes menu-pop {
+  0%   { opacity: 0; transform: scale(0.96) translateY(-3px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .file-menu-list:not([hidden]) { animation: none; }
+}
 
 .file-menu-item {
   font-family: inherit;
@@ -622,11 +657,16 @@ body { zoom: var(--ui-zoom, 1); }
   display: flex; flex-direction: column;
   padding: 4px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
 }
 .file-submenu[hidden] { display: none; }
+.file-submenu:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .file-submenu:not([hidden]) { animation: none; }
+}
 /* 옵션 = 제목 + 설명 2줄 */
 .file-submenu-item { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; }
 .file-submenu-item .fsi-title { font-size: 14px; color: var(--text-primary); }
@@ -639,7 +679,7 @@ body { zoom: var(--ui-zoom, 1); }
 .file-menu-desc {
   margin-top: 4px;
   padding: 7px 10px 6px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-muted);
   max-width: 220px;
   font-size: 12px;
   line-height: 1.45;
@@ -663,14 +703,25 @@ body { zoom: var(--ui-zoom, 1); }
 .modal {
   position: relative; /* 좌상단 드래그 손잡이(.modal-drag-handle)의 기준 */
   width: 320px;
-  max-width: calc(100vw - 32px);
+  /* 내용이 길거나(기출 문항 검색 등) 화면 크기(ui-zoom)가 커진 상태에서도 모달
+     자체는 절대 뷰포트를 넘지 않게 상한을 둔다. 주의: 이 .modal은 body{zoom}이
+     걸린 트리 안에 있어서, vh 기반 계산값도 이 안에서는 다시 zoom배만큼 곱해져
+     그려진다(= body 높이에 썼던 것과 같은 함정). 그래서 그냥 100vh가 아니라
+     zoom의 역수로 한 번 더 나눠야 화면에는 정확히 실제 뷰포트 크기로 보인다. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  max-height: calc((100vh - 40px) / var(--ui-zoom, 1));
+  overflow-y: auto;
+  /* body{zoom} 안의 스크롤 컨테이너에서 Chromium이 이전 프레임을 못 지우고 겹쳐
+     그리는 버그 대비 — 자체 컴포지팅 레이어로 승격. (기출 문항 검색 카드가 층층이
+     겹쳐 보이던 버그와 같은 계열, 안전하게 모든 모달에 선반영) */
+  transform: translateZ(0);
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 20px;
   background: var(--bg-panel);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
@@ -731,15 +782,30 @@ body { zoom: var(--ui-zoom, 1); }
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
+  /* 애플 독처럼 캡슐형 배경을 둬서 "떠 있는 여러 칩"이 아니라 하나의 창처럼 읽히게,
+     동시에 칩 사이/둘레 여백이 생겨 손잡이가 아니어도 잡아서 끌 수 있게 한다. */
+  padding: 8px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+  cursor: grab;
 }
+.refwin-dock:active { cursor: grabbing; }
 .refwin-dock[hidden] { display: none; }
 /* 도크의 손잡이는 모달과 달리 절대배치가 아니라 칩들 위에 흐름대로 놓인다
-   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). */
+   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). 여백 전체가 이미
+   드래그를 받으므로(dragWholeElement) 손잡이는 "여기를 잡으면 된다"는 표식만
+   하면 되지만, 눈에 덜 띄면 여전히 못 찾으므로 크게·진하게 둔다. */
 .refwin-dock .modal-drag-handle {
   position: static;
-  opacity: 0.55;
+  width: 18px;
+  height: 18px;
+  opacity: 0.75;
   background-color: var(--bg-panel);
   border: 1px solid var(--border);
+  align-self: center;
 }
 .refwin-chip {
   font: inherit;
@@ -1041,6 +1107,13 @@ body { zoom: var(--ui-zoom, 1); }
    실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
 .gm-modal { width: min(1152px, 96vw); }
 .gm-modal .modal-title { font-size: 18px; }
+/* 드래그로 글자가 파랗게 잡히지 않게. 이 모달은 '조작'이 전부라(미리보기에 자유곡선을
+   그리고, 칩·스테퍼를 끌고) 드래그마다 라벨·버튼 글자가 선택되면 화면이 지저분해진다.
+   진짜로 선택이 필요한 입력칸만 예외로 되돌린다. */
+.gm-modal { user-select: none; -webkit-user-select: none; }
+.gm-modal input, .gm-modal textarea {
+  user-select: text; -webkit-user-select: text;
+}
 .gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
 .gm-left, .gm-right { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; }
@@ -1125,6 +1198,43 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 .gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+/* 칸 범위/간격: 한 셀에 [범위]/[간격] 두 스테퍼를 나란히(요구). */
+.gm-range-step { display: flex; align-items: center; gap: 4px; }
+.gm-range-step .gm-step { flex: 1 1 0; min-width: 0; }
+.gm-rs-sep { color: var(--text-secondary); font-size: 12px; flex: 0 0 auto; }
+
+/* 고급 옵션: 좌표 탭 맨 아래 인라인 패널(모달 아님 → 미리보기가 계속 보인다). */
+.gm-adv-toggle {
+  width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+  padding: 7px 12px; cursor: pointer; color: inherit;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.gm-adv-toggle:hover { background: var(--btn-tool-hover); }
+.gm-adv-panel {
+  margin-top: 10px; padding: 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 45%, transparent);
+}
+.gm-adv-panel[hidden] { display: none; }
+.gm-adv-sect { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.gm-adv-h { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.gm-adv-h small { font-weight: 400; color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
+/* 네 끝(x+ x− y+ y−) 여백 입력: 한 줄에 나란히, 라벨은 짧게 잘리지 않게. */
+.gm-end-row { display: flex; gap: 8px; }
+.gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.gm-end-item label { font-size: 12px; color: var(--text-secondary); flex: 0 0 auto; }
+.gm-end-item .gm-step { flex: 1 1 0; min-width: 0; }
+
+/* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
+.gm-ann-tool {
+  font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer;
+  color: var(--text-label); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px;
+}
+.gm-ann-tool:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-ann-tool.on { color: #fff; background: var(--accent); border-color: var(--accent); }
 
 .gm-elem-seg { display: inline-flex; }
 .gm-elem-seg button {
@@ -1475,8 +1585,8 @@ body { zoom: var(--ui-zoom, 1); }
   grid-column: 1;
   grid-row: 1;
   background: var(--bg-panel);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border-muted);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .ruler {
@@ -1491,7 +1601,7 @@ body { zoom: var(--ui-zoom, 1); }
   grid-row: 1;
   width: 100%;
   height: 100%;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .ruler-v {
@@ -1499,7 +1609,7 @@ body { zoom: var(--ui-zoom, 1); }
   grid-row: 2;
   width: 100%;
   height: 100%;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--border-muted);
 }
 
 .guide-coordinate-editor {
@@ -1958,7 +2068,7 @@ textarea.unified-text-input {
   align-items: center;
   gap: 14px;
   padding: 5px 12px;
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--border-strong);
   background: var(--bg-panel);
   font-size: 12px;
   color: var(--text-label);
@@ -1997,6 +2107,7 @@ textarea.unified-text-input {
 
 /* ===== FOOTER (product/version left · developer credit right) ===== */
 .app-footer {
+  position: relative;
   flex: 0 0 auto;
   height: var(--footer-h);
   display: flex;
@@ -2007,7 +2118,26 @@ textarea.unified-text-input {
   font-size: 11px;
   color: var(--text-secondary);
   background: var(--bg-panel);
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--border-strong);
+}
+/* 요구: 은색으로 살짝 빛나는 느낌 — 상단 경계선을 은은한 은색 그라데이션 실선으로,
+   그 위에 아주 옅은 광선을 얹는다. 과하지 않게(디자인 원칙: 큰 그림자·과한 효과 금지)
+   가장자리로 갈수록 사라지는 얇은 선 하나로만 표현한다. */
+.app-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200, 208, 218, 0.55) 20%,
+    rgba(230, 236, 242, 0.9) 50%,
+    rgba(200, 208, 218, 0.55) 80%,
+    transparent 100%);
+  box-shadow: 0 0 6px 0 rgba(200, 210, 224, 0.45);
+  pointer-events: none;
 }
 /* main text ellipsizes instead of overflowing when the window gets narrow */
 .app-footer-main {
@@ -2260,6 +2390,10 @@ textarea.unified-text-input {
 .objectify-dropzone, .subject-part-header {
   border-radius: 6px;
 }
+/* 요구: 상단 툴바(과목 선택·되돌리기/다시 실행 등)를 애플 곡률에 맞게 — 6px보다
+   더 부드럽고 둥근 인상. 다른 버튼들의 6px 기준은 그대로 두고 우선 이 두 곳만
+   먼저 손본다(요청 범위). */
+.subject-select, .topbar-btn { border-radius: 9px; }
 
 /* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
 .file-menu-item { display: flex; align-items: center; }
@@ -2274,7 +2408,7 @@ textarea.unified-text-input {
 #bulk-apply:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
-.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--c-border); }
+.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
 .defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
 .defaults-pbg-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 .defaults-pbg-empty { margin: 0; font-size: 12px; color: var(--text-secondary); }

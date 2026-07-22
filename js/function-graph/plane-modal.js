@@ -81,7 +81,7 @@ function checkbox(prop, defaultTrue) {
 
 function row(labelText, ...nodes) {
   const r = document.createElement("div");
-  r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#c9d1d9;";
+  r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size: 12px;color:#c9d1d9;";
   const l = document.createElement("label");
   l.textContent = labelText;
   l.style.cssText = "flex:0 0 92px;color:var(--text-secondary);";
@@ -145,7 +145,7 @@ function build() {
   VARIANTS.forEach(([val, text]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = text; b._val = val;
-    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { set("axisVariant", val); syncControls(); });
     variantBtns.push(b); variantWrap.appendChild(b);
   });
@@ -201,7 +201,7 @@ function build() {
   controls.appendChild(row("내보내기", exportLabel));
 
   const hint = document.createElement("div");
-  hint.style.cssText = "font-size:11px;color:var(--text-secondary);line-height:1.6;margin-top:4px;";
+  hint.style.cssText = "font-size: 11px;color:var(--text-secondary);line-height:1.6;margin-top:4px;";
   hint.innerHTML = "· 라벨은 LaTeX 문법 지원(<code>v_0</code>, <code>\\theta</code>).<br>· 원점 라벨을 비우면 원점 글자가 숨겨집니다.";
   controls.appendChild(hint);
 

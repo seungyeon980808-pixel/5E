@@ -70,7 +70,9 @@ function recolorFormula(g, color) {
 
 // 한 줄을 baseline y=0, 좌측 x=0 기준의 <g>로 빌드. { g, width, ascent, descent } 반환.
 // ascent/descent는 실제 렌더 내용 기준(한글은 koSize) — 줄바꿈 간격을 촘촘히 쌓기 위함(요구).
-function buildLine(line, size, color) {
+// upright=true면 영문·수식 런까지 정자로 렌더한다(요구: 라벨러 표시점 A·B·C…는 기울임 없음).
+// 점 이름은 변수가 아니라 '이름표'라 이탤릭이 어울리지 않는다 — 단위 런과 같은 처리로 통일.
+function buildLine(line, size, color, upright = false) {
   const g = el("g");
   let cx = 0, asc = 0, desc = 0;
   for (const run of splitRuns(line)) {
@@ -93,7 +95,7 @@ function buildLine(line, size, color) {
     } else {
       // 영문/수식 런: formula.js(첨자·분수·그리스·함수정자)로 렌더.
       // math=변수 이탤릭 / unit(괄호·단위)=정자 — fontStyle만 바꾸면 formula가 둘 다 처리.
-      const style = run.kind === "unit" ? "normal" : "italic";
+      const style = (run.kind === "unit" || upright) ? "normal" : "italic";
       const mSize = Math.max(1, size - MATH_TRIM_MM);   // 기호는 한글 대비 2pt 작게(요구)
       const fh = { family: EQUATION_FONT_FAMILY, weight: "normal", style };
       const m = measureFormula(run.text, mSize, fh);
@@ -102,7 +104,7 @@ function buildLine(line, size, color) {
       // 단위 런 정자 강제: resolveTextFontStyle이 수식 글꼴을 무조건 이탤릭으로 되돌리므로
       // (state.js — 일반 수식 객체용 규칙), 여기서 글리프 스타일만 정자로 덮어쓴다.
       // 폭은 위 measureFormula가 이미 normal 기준으로 쟀으니 어긋나지 않는다.
-      if (run.kind === "unit") {
+      if (run.kind === "unit" || upright) {
         fg.querySelectorAll("text, tspan").forEach((t) => t.setAttribute("font-style", "normal"));
       }
       g.appendChild(fg);
@@ -139,6 +141,7 @@ function applyHalo(wrap, size) {
  *   vAlign = "baseline",      // 세로: "baseline"(첫 줄 baseline=y) | "top" | "middle" | "bottom"
  *   halo = true,
  *   lineGap = 1.3,            // 줄 간격(×size)
+ *   upright = false,          // true면 영문·수식도 정자(라벨러 표시점처럼 '이름표'인 라벨)
  * }) → <g> | null(빈 문자열)
  */
 // 줄 사이 여백(×size). 균일 lineHeight 대신 각 줄의 실제 ascent/descent로 촘촘히 쌓아
@@ -148,9 +151,9 @@ const INTERLINE_GAP = 0.12;
 export function renderGraphLabel(source, opts = {}) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return null;
-  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true } = opts;
+  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false } = opts;
 
-  const lines = text.split("\n").map((l) => buildLine(l, size, color));
+  const lines = text.split("\n").map((l) => buildLine(l, size, color, upright));
   const n = lines.length;
   const gap = size * INTERLINE_GAP;
   // 상대 baseline: 이전 줄 descent + 여백 + 현재 줄 ascent 만큼 내려간다(각 줄 실제 높이 기준).
@@ -176,10 +179,10 @@ export function renderGraphLabel(source, opts = {}) {
 }
 
 // 라벨 블록의 대략 크기(배치 계산용). { w, ascent, descent, h }.
-export function measureGraphLabel(source, size = 3.5) {
+export function measureGraphLabel(source, size = 3.5, upright = false) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return { w: 0, ascent: 0, descent: 0, h: 0 };
-  const lines = text.split("\n").map((l) => buildLine(l, size, "#000"));
+  const lines = text.split("\n").map((l) => buildLine(l, size, "#000", upright));
   const w = Math.max(...lines.map((l) => l.width), 0);
   const gap = size * INTERLINE_GAP;
   let h = lines[0].ascent + lines[0].descent;

@@ -14,6 +14,7 @@ import {
   DEFAULT_TEXT_SIZE_MM,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
+  resolveTextWidthScale,
   normalizeTextRuns,
   hasStyledTextRuns,
 } from "../state.js?v=1.1.0";
@@ -282,9 +283,15 @@ function renderText(obj) {
   el.setAttribute("text-anchor", "start");
   el.setAttribute("dominant-baseline", "hanging");
   if (obj.id) el.dataset.id = obj.id;
-  // Optional rotation about the text's top-left anchor.
+  // Optional rotation about the text's top-left anchor, + 장평(가로 배율).
+  // 변환 목록은 왼쪽부터 적용된다 → 장평으로 가로만 늘린 결과를 앵커 기준으로 회전.
+  // 장평 피벗은 앵커(obj.x): text-anchor="start"라 글자가 여기서 시작한다.
   const rot = obj.rotation ?? 0;
-  if (rot) el.setAttribute("transform", `rotate(${rot},${obj.x},${obj.y})`);
+  const wsx = resolveTextWidthScale(obj);
+  const tf = [];
+  if (rot) tf.push(`rotate(${rot},${obj.x},${obj.y})`);
+  if (wsx !== 1) tf.push(`translate(${obj.x},0) scale(${wsx},1) translate(${-obj.x},0)`);
+  if (tf.length) el.setAttribute("transform", tf.join(" "));
 
   // 다중 런(실제 사용자 서식)일 때만 런 단위로 그린다. 단일/빈 런은 일반 텍스트로
   // 취급해 "구간 I/II/III" 세리프(section-marker) 처리를 적용한다. (hasStyledTextRuns)

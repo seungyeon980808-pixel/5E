@@ -1,6 +1,29 @@
 /* ===== EXAM LIBRARY MODAL (기출 문항 검색) ===== */
 
-.modal-examlib { width: 980px; max-width: calc(100vw - 32px); }
+/* 세로도 .modal의 max-height(calc(100vh - 40px)) 안에서 flex column으로 눌러 담는다.
+   제목·필터·검색·툴바·하단 버튼은 flex:none으로 고정 높이를 지키고, 결과 그리드만
+   flex:1로 남는 공간을 전부 차지해 자체 스크롤한다 — 그래야 결과가 몇 장이든 "닫기"
+   버튼이 화면 밖으로 밀려나지 않는다(예전엔 그리드가 58vh 고정이라, 필터·검색 줄까지
+   합친 전체 높이가 모달의 max-height를 넘으면 모달 전체가 스크롤되며 하단 버튼이
+   보이지 않는 위치까지 밀려났다). */
+.modal-examlib {
+  width: 980px;
+  /* .modal의 max-width와 같은 이유로 ui-zoom의 역수를 곱한다 — 자세한 설명은 style.css
+     .modal 규칙의 주석 참고. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  /* overflow는 .modal의 기본값(auto)을 그대로 쓴다 — hidden으로 막아 두면, 필터 행이
+     화면 크기(ui-zoom)가 아주 클 때 줄바꿈되며 그리드를 0까지 줄여도 모자란 극단적
+     상황에서 "닫기" 버튼이 잘려서 아예 스크롤로도 닿지 않게 된다. auto로 두면 평소엔
+     안쪽 .examlib-grid가 먼저 스크롤을 흡수하고(자연스러운 동작), 그래도 모자란
+     극단적 경우에만 모달 전체가 스크롤되는 안전망으로 전환된다. */
+}
+.modal-examlib .examlib-title-row,
+.modal-examlib .examlib-filter-row,
+.modal-examlib .examlib-search-row,
+.modal-examlib .examlib-toolbar,
+.modal-examlib .modal-actions {
+  flex: none;
+}
 
 .examlib-search-row input {
   width: 100%;
@@ -62,11 +85,28 @@
 .examlib-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  /* 이 그리드가 flex:1 아이템이라 자기 자신도 유동 크기라는 점과 맞물려, 암묵 행
+     높이를 auto로 두면(기본값) Chromium이 행 트랙을 전부 같은 위치로 뭉개서
+     카드가 층층이 겹쳐 그려지는 버그가 있었다(실측: 1열 카드끼리 완전히 겹침).
+     min-content로 명시해 각 행이 카드 내용만큼 확실히 자기 높이를 갖게 한다. */
+  grid-auto-rows: min-content;
   align-items: start; /* Safari 방지: 기본 stretch면 grid 행이 카드를 실제보다 낮게 늘려서
                           안의 고정높이 썸네일(.examlib-thumb)이 눌리는 WebKit 버그가 있음 */
   gap: 12px;
-  max-height: 58vh;
+  align-content: start; /* 결과가 적을 때 grid가 flex:1의 남는 공간까지 늘어나며 카드 사이
+                            간격이 벌어지지 않게 — 카드는 위에서부터 채우고 나머지는 빈 공간 */
+  flex: 1 1 auto;
+  /* 평소엔 0까지 줄어들 수 있어야 부모 안에서 스크롤되지만(표준 트릭), 화면 크기가
+     아주 커서 위 필터·검색 줄까지 다 합쳐 공간이 심하게 모자랄 땐 카드가 안 보일
+     만큼 쪼그라드는 것보다 차라리 모달 전체가 스크롤되는 게 낫다 — 최소 키를 둬서
+     그 지점부터는 넘치는 몫을 .modal-examlib(부모)의 스크롤로 넘긴다. */
+  min-height: 160px;
   overflow-y: auto;
+  /* Chromium이 body{zoom} 안에 있는 스크롤 컨테이너에서 스크롤 시 이전 프레임의
+     카드 이미지를 지우지 못하고 겹쳐 그리는 알려진 리페인트 버그가 있다(화면 크기
+     배율을 올린 채 기출 문항 검색을 스크롤하면 카드가 층층이 겹쳐 보임). 자체
+     컴포지팅 레이어로 승격해 강제로 다시 그리게 하면 사라진다. */
+  transform: translateZ(0);
   margin-top: 8px;
   /* 선택 링(카드 바깥 3px)이 그려질 자리. overflow-y:auto가 가로도 함께 잘라내므로,
      여백이 없으면 1열·4열 카드의 바깥쪽 링만 잘려 나가 가운데 카드와 두께가 달라 보인다. */

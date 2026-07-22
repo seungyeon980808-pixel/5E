@@ -24,7 +24,7 @@ export function buildCoordplaneSection(ctx) {
   editBtn.type = "button";
   editBtn.textContent = "그래프 편집…";
   editBtn.title = "좌표 틀과 그 위의 함수·직선/꺾은선을 한 화면에서 편집합니다 (더블클릭과 동일)";
-  editBtn.style.cssText = "width:100%;margin-bottom:8px;font-size:12px;padding:6px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
+  editBtn.style.cssText = "width:100%;margin-bottom:8px;font-size: 12px;padding:6px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 22%, var(--bg-input));color:var(--text-primary);cursor:pointer;";
   editBtn.addEventListener("click", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
@@ -37,7 +37,7 @@ export function buildCoordplaneSection(ctx) {
 
   const hint = document.createElement("div");
   hint.textContent = "형태·칸 수·라벨·계열은 편집 화면에서 바꿉니다.";
-  hint.style.cssText = "font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;";
+  hint.style.cssText = "font-size: 11px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;";
   body.appendChild(hint);
 
   // ---- 내보내기 포함 (exportable) ----

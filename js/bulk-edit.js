@@ -211,7 +211,7 @@ function renderFields() {
       input.value = _mode === "uniform" ? String(f.uniDefault) : "0";
       input.addEventListener("input", () => { cb.checked = true; });
       const unit = document.createElement("span");
-      unit.style.cssText = "flex:none;font-size:11px;color:var(--text-secondary);width:38px;";
+      unit.style.cssText = "flex:none;font-size: 11px;color:var(--text-secondary);width:38px;";
       unit.textContent = _mode === "delta" ? `±${f.unit}` : f.unit;
       row.appendChild(input); row.appendChild(unit);
       read = () => Number(input.value);

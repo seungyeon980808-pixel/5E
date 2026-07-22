@@ -6,7 +6,7 @@
 // reference, assigned by initPick(svg) from initTools.
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.1.0";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "./state.js?v=1.1.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.1.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=1.1.0";
@@ -168,7 +168,8 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
       if (!svgEl) continue;
       try {
-        const bb = svgEl.getBBox();
+        // getBBox()는 요소 자신의 transform을 반영하지 않으므로 장평(가로 배율)을 먼저 보정한다.
+        const bb = scaleBBoxForWidth(o, svgEl.getBBox());
         // getBBox()는 요소 자신의 rotate 변환을 반영하지 않는다 → 회전된 텍스트/수식은
         // 클릭점을 앵커(피벗) 기준 -rotation으로 역회전해 회전 전 로컬 좌표로 비교해야
         // 실제 보이는 위치에서 선택된다. (text 피벗=x/y, formula 피벗=박스 중심)
@@ -392,7 +393,7 @@ function getObjectBBox(o) {
   if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
     if (!svgEl) return null;
-    try { const bb = svgEl.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+    try { const bb = scaleBBoxForWidth(o, svgEl.getBBox()); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
     catch (_) { return null; }
   }
   return null;
@@ -511,7 +512,7 @@ function faceBoundaryPolygon(o) {
     const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
     if (!svgEl) return null;
     try {
-      const bb = svgEl.getBBox();
+      const bb = scaleBBoxForWidth(o, svgEl.getBBox());
       const cx = o.type === "formula" ? o.x + (o.w || 0) / 2 : o.x;
       const cy = o.type === "formula" ? o.y + (o.h || 0) / 2 : o.y;
       return [[bb.x, bb.y], [bb.x + bb.width, bb.y], [bb.x + bb.width, bb.y + bb.height], [bb.x, bb.y + bb.height]]

@@ -180,7 +180,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal" role="dialog" aria-modal="true" aria-label="데이터 표" style="width:560px;max-width:96vw;">
       <h2 class="modal-title">실험 데이터 표 → 산점도</h2>
-      <p style="color:var(--text-secondary);font-size:12px;line-height:1.7;margin:0 0 8px;">
+      <p style="color:var(--text-secondary);font-size: 12px;line-height:1.7;margin:0 0 8px;">
         한 줄에 <code>x&nbsp;&nbsp;y</code> 한 쌍씩 붙여넣으세요(탭·쉼표·공백 구분).
         엑셀/시트에서 두 열을 복사해 그대로 붙여넣어도 됩니다. 헤더 줄은 자동으로 건너뜁니다.
       </p>
@@ -191,13 +191,13 @@ function buildModal() {
 2	3.9
 3	6.2"
         style="width:100%;height:200px;font-family:monospace;resize:vertical;"></textarea>
-      <div style="display:flex;align-items:center;gap:16px;margin-top:10px;font-size:13px;color:var(--text-secondary);">
+      <div style="display:flex;align-items:center;gap:16px;margin-top:10px;font-size: 13px;color:var(--text-secondary);">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
           <input type="checkbox" id="dp-connect" /> 측정점을 연결선(꺾은선)으로 잇기
         </label>
       </div>
-      <div id="dp-error" style="color:#e5534b;font-size:12px;min-height:16px;margin-top:6px;"></div>
-      <div style="color:var(--text-secondary);font-size:12px;line-height:1.7;margin-top:2px;">
+      <div id="dp-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:6px;"></div>
+      <div style="color:var(--text-secondary);font-size: 12px;line-height:1.7;margin-top:2px;">
         · 좌표평면을 먼저 선택하면 그 평면 위에, 아니면 데이터 범위에 맞춘 새 평면이 생깁니다.<br>
         · 축 눈금은 최소·최대에 여유 10%를 두고 보기 좋은 값(1·2·5 단위)으로 자동 설정됩니다.
       </div>

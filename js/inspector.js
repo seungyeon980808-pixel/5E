@@ -76,7 +76,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
@@ -147,6 +147,10 @@ export function initInspector(state) {
     fontFamSel.disabled = disabled;
     fontSizeNum.disabled = disabled;
     italicCb.disabled = disabled;
+    lsRange.disabled = disabled;
+    lsNum.disabled = disabled;
+    wsRange.disabled = disabled;
+    wsNum.disabled = disabled;
     centerLineSel.disabled = disabled || locked;
   }
 
@@ -421,6 +425,15 @@ export function initInspector(state) {
         // Stored fontSize is world-unit mm; the field shows points.
         fontSizeNum.value = Math.round(mmToPt(styleObj.fontSize ?? 0) * 10) / 10;
       }
+      // 자간(em). 편집 중인 칸은 건드리지 않는다 — 타이핑 도중 값이 튀지 않게.
+      const lsVal = Number.isFinite(Number(styleObj.letterSpacing)) ? Number(styleObj.letterSpacing) : 0;
+      if (document.activeElement !== lsRange) lsRange.value = String(lsVal);
+      if (document.activeElement !== lsNum) lsNum.value = String(lsVal);
+      // 장평: 저장은 배율, 표시는 %
+      const wsPct = Math.round((Number.isFinite(Number(obj.widthScale)) && Number(obj.widthScale) > 0
+        ? Number(obj.widthScale) : 1) * 100);
+      if (document.activeElement !== wsRange) wsRange.value = String(wsPct);
+      if (document.activeElement !== wsNum) wsNum.value = String(wsPct);
     }
     const isLineFamily = LINE_TYPES.includes(obj.type);
 

@@ -193,6 +193,25 @@ function migrateObjectList(objects) {
         next.tickLabelMode = next.tickLabelMode ?? (next.showTickLabels ? "number" : "none");
         next.tickTextX = Array.isArray(next.tickTextX) ? next.tickTextX : [];
         next.tickTextY = Array.isArray(next.tickTextY) ? next.tickTextY : [];
+        // 고급(요구): 점선 격자 튀어나옴 네 끝. 구파일은 단일 gridOver(없으면 0.5)로 폴백.
+        {
+          const go = Number.isFinite(next.gridOver) ? next.gridOver : 0.5;
+          next.gridOverXPos = Number.isFinite(next.gridOverXPos) ? next.gridOverXPos : go;
+          next.gridOverXNeg = Number.isFinite(next.gridOverXNeg) ? next.gridOverXNeg : go;
+          next.gridOverYPos = Number.isFinite(next.gridOverYPos) ? next.gridOverYPos : go;
+          next.gridOverYNeg = Number.isFinite(next.gridOverYNeg) ? next.gridOverYNeg : go;
+        }
+        // 눈금 숫자 이동(요구 ②): 숫자별 위치 오프셋. 구파일엔 없으므로 빈 배열.
+        next.tickMovable = next.tickMovable ?? false;
+        next.tickOffX = Array.isArray(next.tickOffX) ? next.tickOffX : [];
+        next.tickOffY = Array.isArray(next.tickOffY) ? next.tickOffY : [];
+        // '표시' 레이어(요구 ③): 독립 주석. 구파일엔 없으므로 빈 배열.
+        next.annMarkers = Array.isArray(next.annMarkers) ? next.annMarkers : [];
+        next.annGuides = Array.isArray(next.annGuides) ? next.annGuides : [];
+        next.annArrows = Array.isArray(next.annArrows) ? next.annArrows : [];
+        next.guideLines = Array.isArray(next.guideLines) ? next.guideLines : [];
+        next.legends = Array.isArray(next.legends) ? next.legends : [];
+        next.annLabelPoints = Array.isArray(next.annLabelPoints) ? next.annLabelPoints : [];
         // 그래프 도구: 눈금/격자 칸 수 캡(gridCountX/Y)은 spread로 보존. 격자 초과분만 백필.
         next.gridOver = Number.isFinite(next.gridOver) ? next.gridOver : (next.gridCountX !== undefined ? 0.5 : 0);
         next.labelScale = Number.isFinite(next.labelScale) ? next.labelScale : 1; // 글씨 크기 배율

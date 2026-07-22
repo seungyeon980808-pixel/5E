@@ -171,7 +171,7 @@ export function buildGeometrySection(ctx) {
   arcLabelEditBtn.type = "button";
   arcLabelEditBtn.textContent = "라벨 편집...";
   arcLabelEditBtn.title = "각도 라벨/기호 입력기 열기";
-  arcLabelEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+  arcLabelEditBtn.style.cssText = "padding:4px 10px;font-size: 11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
   arcLabelEditBtn.addEventListener("click", () => {
     const id = (state.get().selectedIds || [])[0];
     if (id) openAngleArcLabelEditor(id);
@@ -460,7 +460,7 @@ export function buildGeometrySection(ctx) {
     btn.textContent = label;
     btn.style.cssText =
       "flex:1;padding:4px 0;margin-left:4px;border:1px solid var(--border);border-radius:4px;" +
-      "background:var(--bg-input);color:#ddd;cursor:pointer;font-size:12px;";
+      "background:var(--bg-input);color:#ddd;cursor:pointer;font-size: 12px;";
     btn.addEventListener("click", () =>
       commitAxes((o) => {
         if ((o.axisVariant || "cross") === id) return false;

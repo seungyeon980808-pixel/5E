@@ -36,8 +36,12 @@ function _clamp(modal, x, y) {
 
 /** 모달 하나에 드래그 손잡이를 붙인다. 이미 붙어 있으면 아무것도 하지 않는다.
  *  손잡이는 제목과 같은 줄에 놓는다 — 모서리에 절대배치하면 제목과 중심선이 어긋나
- *  창에 얹힌 이물처럼 보인다. 제목이 없는 대상(참고 창 도크 등)만 맨 앞에 붙인다. */
-function makeModalDraggable(modal) {
+ *  창에 얹힌 이물처럼 보인다. 제목이 없는 대상(참고 창 도크 등)만 맨 앞에 붙인다.
+ *
+ *  opts.dragWholeElement: 손잡이(14px 점)를 정확히 맞추기 힘든 작은 위젯(도크 등)용.
+ *  자식 요소(칩 버튼 등)가 아니라 모달/도크 자체의 빈 여백을 눌렀을 때도 같은 드래그가
+ *  시작되게 한다 — 클릭은 그대로 버튼에서 처리되고, 여백만 드래그를 가로챈다. */
+function makeModalDraggable(modal, opts = {}) {
   if (!modal || modal.querySelector(`.${HANDLE_CLASS}`)) return;
 
   const handle = document.createElement("div");
@@ -55,14 +59,26 @@ function makeModalDraggable(modal) {
 
   let start = null;
 
-  handle.addEventListener("mousedown", (e) => {
+  const beginDrag = (e) => {
     if (e.button !== 0) return;
     e.preventDefault();   // 텍스트 선택 방지
     e.stopPropagation();  // 배경 클릭=닫기, 모달 여백 클릭=선택해제와 충돌하지 않게
     const cur = _offsets.get(modal) || { x: 0, y: 0 };
     start = { mx: e.clientX, my: e.clientY, ox: cur.x, oy: cur.y };
     handle.classList.add("is-dragging");
-  });
+  };
+
+  handle.addEventListener("mousedown", beginDrag);
+
+  // opts.dragWholeElement: 도크처럼 손잡이가 작아 놓치기 쉬운 대상은 여백(=자식 버튼이
+  // 아닌 도크 자체)을 눌러도 같은 드래그가 시작되게 한다. 칩 버튼 클릭은 target이
+  // 버튼이라 여기 안 걸리고 그대로 click 이벤트로 열기 동작을 한다.
+  if (opts.dragWholeElement) {
+    modal.addEventListener("mousedown", (e) => {
+      if (e.target !== modal) return;
+      beginDrag(e);
+    });
+  }
 
   // move/up은 window에서 받는다 — 빠르게 끌어 커서가 손잡이를 벗어나도 계속 따라오게.
   window.addEventListener("mousemove", (e) => {

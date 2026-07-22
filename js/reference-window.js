@@ -54,7 +54,9 @@ function ensureDock() {
   document.body.appendChild(_dock);
   // 모달과 같은 손잡이·같은 조작(끌어서 이동, 두 번 눌러 제자리)을 그대로 쓴다.
   // 우하단 고정 위치가 다른 UI를 가릴 수 있어 사용자가 치울 수 있어야 한다.
-  makeModalDraggable(_dock);
+  // dragWholeElement: 칩 사이 빈 여백을 잡아도 끌리게 — 14px 손잡이 점만으로는
+  // 잡기 힘들다는 피드백 반영.
+  makeModalDraggable(_dock, { dragWholeElement: true });
   return _dock;
 }
 
@@ -122,7 +124,7 @@ function windowMarkup(entry) {
   .refhead { display:flex; align-items:center; gap:6px; flex:none;
              padding:7px 10px; border-bottom:1px solid var(--c-border,#d0d7de);
              background:var(--bg-panel,#fff); }
-  .refhead .title { font-size:13px; font-weight:600; margin-right:auto;
+  .refhead .title { font-size: 13px; font-weight:600; margin-right:auto;
                     color:var(--text-primary,#0d1117); }
   .refgrid { flex:1; display:grid; gap:8px; padding:8px; min-height:0;
              grid-template-columns:repeat(${g.cols},1fr); grid-template-rows:repeat(${g.rows},1fr); }
@@ -132,9 +134,9 @@ function windowMarkup(entry) {
   .refshot { flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
              background:#fff; border-radius:5px; overflow:hidden; }
   .refshot img { max-width:100%; max-height:100%; object-fit:contain; }
-  .refcap { flex:none; font-size:11px; color:var(--text-secondary,#57606a);
+  .refcap { flex:none; font-size: 11px; color:var(--text-secondary,#57606a);
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .refmemo { flex:none; width:100%; resize:vertical; font:inherit; font-size:12.5px;
+  .refmemo { flex:none; width:100%; resize:vertical; font:inherit; font-size: 12.5px;
              padding:5px 7px; border:1px solid var(--c-border,#d0d7de); border-radius:6px;
              background:var(--bg-input,transparent); color:inherit; }
   .refmemo:focus { outline:none; border-color:var(--accent,#0969da); }
