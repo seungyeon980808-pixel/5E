@@ -150,6 +150,11 @@ function renderCoordplane(obj) {
   const gcXneg = Number.isFinite(obj.gridCountXNeg) ? obj.gridCountXNeg : (Number.isFinite(obj.gridCountX) ? obj.gridCountX : gcXpos);
   const gcYneg = Number.isFinite(obj.gridCountYNeg) ? obj.gridCountYNeg : (Number.isFinite(obj.gridCountY) ? obj.gridCountY : gcYpos);
   const gridOver = Number.isFinite(obj.gridOver) ? obj.gridOver : 0;
+  // 점선 격자 튀어나옴(고급): 네 끝 각각. 없으면 단일 gridOver로 폴백(구파일 호환).
+  const goXP = Number.isFinite(obj.gridOverXPos) ? obj.gridOverXPos : gridOver;
+  const goXN = Number.isFinite(obj.gridOverXNeg) ? obj.gridOverXNeg : gridOver;
+  const goYP = Number.isFinite(obj.gridOverYPos) ? obj.gridOverYPos : gridOver;
+  const goYN = Number.isFinite(obj.gridOverYNeg) ? obj.gridOverYNeg : gridOver;
   const kx = gcXpos != null ? { kStart: xBoth ? -gcXneg : 0, kEnd: gcXpos, step: stepX } : tickRange(xMin, xMax, stepX);
   const ky = gcYpos != null ? { kStart: yBoth ? -gcYneg : 0, kEnd: gcYpos, step: stepY } : tickRange(yMin, yMax, stepY);
   // 눈금/라벨 스킵 판정: gridCount·gridToData 경로에선 데이터 범위를 이미 정확히 캡했으니
@@ -190,10 +195,10 @@ function renderCoordplane(obj) {
       yLoK = Math.round(gYlo / ky.step); yHiK = Math.round(gYhi / ky.step);
     }
     // 격자 사각형 경계 = 마지막 눈금 + gridOver 칸(사진4: 데이터 밖으로 반 칸 더).
-    const rectLeft  = xBoth ? worldXFromMathX(P, (xLoK - gridOver) * kx.step) : worldX0;
-    const rectRight = worldXFromMathX(P, (xHiK + gridOver) * kx.step);
-    const rectTop   = worldYFromMathY(P, (yHiK + gridOver) * ky.step);
-    const rectBot   = yBoth ? worldYFromMathY(P, (yLoK - gridOver) * ky.step) : worldY0;
+    const rectLeft  = xBoth ? worldXFromMathX(P, (xLoK - goXN) * kx.step) : worldX0;
+    const rectRight = worldXFromMathX(P, (xHiK + goXP) * kx.step);
+    const rectTop   = worldYFromMathY(P, (yHiK + goYP) * ky.step);
+    const rectBot   = yBoth ? worldYFromMathY(P, (yLoK - goYN) * ky.step) : worldY0;
     if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) {
       for (let k = xLoK; k <= xHiK; k++) {
         if ((!xBoth && k < 0) || skipTickX(k * kx.step)) continue;

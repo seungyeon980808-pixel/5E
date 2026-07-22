@@ -1039,6 +1039,33 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 .gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
 
+/* 칸 범위/간격: 한 셀에 [범위]/[간격] 두 스테퍼를 나란히(요구). */
+.gm-range-step { display: flex; align-items: center; gap: 4px; }
+.gm-range-step .gm-step { flex: 1 1 0; min-width: 0; }
+.gm-rs-sep { color: var(--text-secondary); font-size: 12px; flex: 0 0 auto; }
+
+/* 고급 옵션 모달(그래프 모달 위에 겹치는 서브 모달). */
+.gm-adv-overlay {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-input) 30%, transparent);
+  backdrop-filter: blur(1px);
+}
+.gm-adv-overlay[hidden] { display: none; }
+.gm-adv-modal {
+  background: var(--bg-panel, var(--bg-input)); color: inherit;
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  width: min(460px, 92%); max-height: 82%; overflow-y: auto; padding: 16px 18px;
+}
+.gm-adv-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.gm-adv-head b { font-size: 15px; }
+.gm-adv-sect { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.gm-adv-sect > .gm-group-h { margin-bottom: 8px; }
+.gm-end-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 10px; }
+.gm-end-grid label { font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 2px; }
+.gm-end-grid input { width: 100%; }
+
 /* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
 .gm-ann-tool {
   font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer;

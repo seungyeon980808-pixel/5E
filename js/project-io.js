@@ -193,6 +193,14 @@ function migrateObjectList(objects) {
         next.tickLabelMode = next.tickLabelMode ?? (next.showTickLabels ? "number" : "none");
         next.tickTextX = Array.isArray(next.tickTextX) ? next.tickTextX : [];
         next.tickTextY = Array.isArray(next.tickTextY) ? next.tickTextY : [];
+        // 고급(요구): 점선 격자 튀어나옴 네 끝. 구파일은 단일 gridOver(없으면 0.5)로 폴백.
+        {
+          const go = Number.isFinite(next.gridOver) ? next.gridOver : 0.5;
+          next.gridOverXPos = Number.isFinite(next.gridOverXPos) ? next.gridOverXPos : go;
+          next.gridOverXNeg = Number.isFinite(next.gridOverXNeg) ? next.gridOverXNeg : go;
+          next.gridOverYPos = Number.isFinite(next.gridOverYPos) ? next.gridOverYPos : go;
+          next.gridOverYNeg = Number.isFinite(next.gridOverYNeg) ? next.gridOverYNeg : go;
+        }
         // 눈금 숫자 이동(요구 ②): 숫자별 위치 오프셋. 구파일엔 없으므로 빈 배열.
         next.tickMovable = next.tickMovable ?? false;
         next.tickOffX = Array.isArray(next.tickOffX) ? next.tickOffX : [];

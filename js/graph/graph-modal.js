@@ -85,6 +85,10 @@ function defaultCfg() {
     labelYOffset: { dx: 0, dy: 0 },
     tickMovable: false,           // 눈금 숫자 이동 가능(요구 ②) — 켜면 숫자를 드래그
     tickOffX: [], tickOffY: [],   // 눈금 숫자별 위치 오프셋 [{dx,dy}…] (순번 = 아래→위)
+    // 고급: 화살표 촉 위치 = 마지막 눈금에서의 여백(네 끝 각각, 값 단위). 기본 = 현행(x 1.6·y 1.3).
+    padXPos: PAD_X, padXNeg: PAD_X, padYPos: PAD_Y, padYNeg: PAD_Y,
+    // 고급: 점선 격자가 눈금 밖으로 튀어나오는 칸(네 끝 각각). 0=닫힘, >0=열려 튀어나옴. 기본 0.5.
+    gridOverXPos: GRID_OVER, gridOverXNeg: GRID_OVER, gridOverYPos: GRID_OVER, gridOverYNeg: GRID_OVER,
     // '표시' 레이어(요구 ③): 곡선에 종속되지 않는 독립 주석. 전부 math 좌표.
     annMarkers: [],               // 자유 표시점 [{x,y}]
     annGuides: [],                // 자유 수선의 발 [{x,y}] (두 축으로 점선)
@@ -122,10 +126,16 @@ function applyCfg(plane, cfg) {
   plane.axisVariant = cfg.variant;
   plane.richLabels = true;
   plane.gridToData = true;
-  plane.xMin = xNeg > 0 ? -(xNeg + PAD_X) : 0;
-  plane.xMax = xPos + PAD_X;
-  plane.yMin = yNeg > 0 ? -(yNeg + PAD_Y) : 0;
-  plane.yMax = yPos + PAD_Y;
+  // 화살표 촉 위치(고급): 마지막 눈금에서의 여백을 네 끝 각각 지정(값 단위, 기본 현행 1.6/1.3).
+  const padXP = Number.isFinite(cfg.padXPos) ? cfg.padXPos : PAD_X;
+  const padXN = Number.isFinite(cfg.padXNeg) ? cfg.padXNeg : PAD_X;
+  const padYP = Number.isFinite(cfg.padYPos) ? cfg.padYPos : PAD_Y;
+  const padYN = Number.isFinite(cfg.padYNeg) ? cfg.padYNeg : PAD_Y;
+  plane.xMin = xNeg > 0 ? -(xNeg + padXN) : 0;
+  plane.xMax = xPos + padXP;
+  plane.yMin = yNeg > 0 ? -(yNeg + padYN) : 0;
+  plane.yMax = yPos + padYP;
+  plane.padXPos = padXP; plane.padXNeg = padXN; plane.padYPos = padYP; plane.padYNeg = padYN;  // 재편집 복원용
   // 격자 간격(요구): 축이 덮는 값 범위(0~xPos)는 그대로 두고 **격자선을 그 간격마다** 긋는다.
   // 간격 0.5면 눈금이 0, 0.5, 1 … 로 촘촘해진다(칸이 2배). 라벨은 coordplane이 k×step으로
   // 계산하므로 별도 배율이 필요 없다 — 격자와 숫자가 자동으로 같은 값을 가리킨다.
@@ -138,7 +148,12 @@ function applyCfg(plane, cfg) {
   plane.gridCountX = kxPos; plane.gridCountY = kyPos;        // 구코드 호환(양의 칸 수)
   plane.gridCountXPos = kxPos; plane.gridCountXNeg = kxNeg;  // 비대칭 격자·눈금 범위
   plane.gridCountYPos = kyPos; plane.gridCountYNeg = kyNeg;
-  plane.gridOver = GRID_OVER;                     // 격자만 마지막 눈금 밖 반 칸 더
+  // 점선 격자 튀어나옴(고급): 네 끝 각각(칸 단위). gridOver는 구코드 호환(대칭 폴백값)으로 남긴다.
+  plane.gridOverXPos = Number.isFinite(cfg.gridOverXPos) ? cfg.gridOverXPos : GRID_OVER;
+  plane.gridOverXNeg = Number.isFinite(cfg.gridOverXNeg) ? cfg.gridOverXNeg : GRID_OVER;
+  plane.gridOverYPos = Number.isFinite(cfg.gridOverYPos) ? cfg.gridOverYPos : GRID_OVER;
+  plane.gridOverYNeg = Number.isFinite(cfg.gridOverYNeg) ? cfg.gridOverYNeg : GRID_OVER;
+  plane.gridOver = plane.gridOverXPos;            // 구코드 호환(단일값 폴백)
   plane.showGrid = cfg.showGrid;
   plane.showTicks = cfg.showTicks;
   // 눈금 라벨: 없음/숫자/배수(기준 문자 자동)/직접(쉼표). 배수·직접은 렌더상 "text" 모드.
@@ -240,6 +255,11 @@ function applyOffset(worldPts, plane, offset) {
 // 함수/점이 화살표 아래까지 뻗지 않도록. 점 스냅 클램프·함수 기본 정의역에 공통 사용.
 function dataBounds(plane) {
   const over = plane.gridOver || 0;
+  // 격자 초과분(칸)을 네 끝 각각(고급). 없으면 단일 over로 폴백.
+  const ovXP = Number.isFinite(plane.gridOverXPos) ? plane.gridOverXPos : over;
+  const ovXN = Number.isFinite(plane.gridOverXNeg) ? plane.gridOverXNeg : over;
+  const ovYP = Number.isFinite(plane.gridOverYPos) ? plane.gridOverYPos : over;
+  const ovYN = Number.isFinite(plane.gridOverYNeg) ? plane.gridOverYNeg : over;
   const cxPos = Number.isFinite(plane.gridCountXPos) ? plane.gridCountXPos
     : (Number.isFinite(plane.gridCountX) ? plane.gridCountX : Math.max(1, Math.round(plane.xMax - PAD_X)));
   const cyPos = Number.isFinite(plane.gridCountYPos) ? plane.gridCountYPos
@@ -251,10 +271,10 @@ function dataBounds(plane) {
   // 칸 인덱스 → 수학 값으로 환산한다. 격자 간격이 1이 아니면(예 0.5) 칸 수와 값이 달라져,
   // 그냥 칸 수를 쓰면 함수·점이 축 범위의 두 배까지 뻗는다.
   const sx = plane.gridStepX || 1, sy = plane.gridStepY || 1;
-  const xMax = (cxPos + over) * sx, yMax = (cyPos + over) * sy;
+  const xMax = (cxPos + ovXP) * sx, yMax = (cyPos + ovYP) * sy;
   return {
-    xMin: plane.xMin < 0 ? -(cxNeg + over) * sx : 0, xMax,
-    yMin: plane.yMin < 0 ? -(cyNeg + over) * sy : 0, yMax,
+    xMin: plane.xMin < 0 ? -(cxNeg + ovXN) * sx : 0, xMax,
+    yMin: plane.yMin < 0 ? -(cyNeg + ovYN) * sy : 0, yMax,
   };
 }
 
@@ -1619,6 +1639,16 @@ function syncCfgControls() {
   _els.labelMove.checked = !!c.labelMovable;
   _els.tickMove.checked = !!c.tickMovable;
   _els.tickAlign.style.display = c.tickMovable ? "" : "none";
+  // 고급: 화살표 여백·격자 튀어나옴 네 끝 값 반영. 음의 방향이 없는 모양에선 x−/y− 비활성.
+  const setEnd = (el, v, on) => { if (!el) return; if (document.activeElement !== el) el.value = v; el.disabled = !on; };
+  setEnd(_els.padXP, Number.isFinite(c.padXPos) ? c.padXPos : PAD_X, true);
+  setEnd(_els.padXN, Number.isFinite(c.padXNeg) ? c.padXNeg : PAD_X, xNegOn);
+  setEnd(_els.padYP, Number.isFinite(c.padYPos) ? c.padYPos : PAD_Y, true);
+  setEnd(_els.padYN, Number.isFinite(c.padYNeg) ? c.padYNeg : PAD_Y, yNegOn);
+  setEnd(_els.govXP, Number.isFinite(c.gridOverXPos) ? c.gridOverXPos : GRID_OVER, true);
+  setEnd(_els.govXN, Number.isFinite(c.gridOverXNeg) ? c.gridOverXNeg : GRID_OVER, xNegOn);
+  setEnd(_els.govYP, Number.isFinite(c.gridOverYPos) ? c.gridOverYPos : GRID_OVER, true);
+  setEnd(_els.govYN, Number.isFinite(c.gridOverYNeg) ? c.gridOverYNeg : GRID_OVER, yNegOn);
   [..._els.tickModeHost.children].forEach((b) => {
     const on = b._mode === c.tickMode;
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
@@ -1778,12 +1808,17 @@ function build() {
               <div class="gm-ax-head"><i>x</i> 가로축</div>
               <div class="gm-ax-head"><i>y</i> 세로축</div>
 
-              <div class="gm-ax-lbl">축 범위</div>
-              <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-xpos" min="1" value="5" title="x축이 0부터 어디까지 (값)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+              <!-- 칸 범위/간격: 종전 '축 범위'(칸 수)와 '격자 간격'을 한 줄에 나란히(요구). id 유지. -->
+              <div class="gm-ax-lbl">칸 범위/간격</div>
+              <div class="gm-ax-cell gm-range-step">
+                <span class="gm-step"><input type="number" id="gm-xpos" min="1" value="5" title="x축 칸 범위 (0부터 어디까지)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-rs-sep">/</span>
+                <span class="gm-step"><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 격자·눈금 간격 (0.5면 0, 0.5, 1 …)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
-              <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-ypos" min="1" value="5" title="y축이 0부터 어디까지 (값)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+              <div class="gm-ax-cell gm-range-step">
+                <span class="gm-step"><input type="number" id="gm-ypos" min="1" value="5" title="y축 칸 범위 (0부터 어디까지)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-rs-sep">/</span>
+                <span class="gm-step"><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 격자·눈금 간격 (0.5면 0, 0.5, 1 …)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
               </div>
 
               <div class="gm-ax-lbl gm-neg-row">음의 방향</div>
@@ -1792,16 +1827,6 @@ function build() {
               </div>
               <div class="gm-ax-cell gm-neg-row">
                 <span class="gm-step"><input type="number" id="gm-yneg" min="0" value="0" title="아래(음의 y) 칸 수"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-              </div>
-
-              <div class="gm-ax-lbl">격자 간격</div>
-              <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-xstep" min="0.1" step="0.1" value="1" title="x축 격자·눈금을 이 값마다 긋는다 (0.5면 0, 0.5, 1 … )"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                <span class="gm-unit">0.1씩</span>
-              </div>
-              <div class="gm-ax-cell">
-                <span class="gm-step"><input type="number" id="gm-ystep" min="0.1" step="0.1" value="1" title="y축 격자·눈금을 이 값마다 긋는다 (0.5면 0, 0.5, 1 … )"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                <span class="gm-unit">0.1씩</span>
               </div>
 
               <div class="gm-ax-lbl">축 이름</div>
@@ -1832,12 +1857,10 @@ function build() {
               </div>
             </div>
             <div class="gm-row">
-              <span class="gm-row-lbl">동작</span>
-              <div class="gm-row-body gm-checks">
-                <label class="gm-check"><input type="checkbox" id="gm-labelmove"> 축 라벨 이동<span class="gm-help" title="켜면 미리보기에서 축 이름(예: y, t)을 드래그해 위치를 옮길 수 있습니다. 끄면 원래 위치로 돌아갑니다.">?</span></label>
-                <label class="gm-check"><input type="checkbox" id="gm-tickmove"> 눈금 숫자 이동<span class="gm-help" title="켜면 미리보기에서 눈금 숫자를 드래그해 곡선을 피할 수 있습니다. '첫 라벨에 맞추기'로 세로 높이를 첫 숫자에 정렬합니다.">?</span></label>
-                <button type="button" id="gm-tickalign" style="display:none;font-size:12px;padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">첫 라벨에 맞추기</button>
-                <label class="gm-check"><input type="checkbox" id="gm-lockpos"> 좌표·함수 묶기<span class="gm-help" title="좌표평면과 함수를 하나의 그룹으로 묶어 캔버스에서 함께 이동합니다.">?</span></label>
+              <span class="gm-row-lbl">고급</span>
+              <div class="gm-row-body">
+                <button type="button" id="gm-adv-open" style="font-size:12px;padding:4px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:inherit;cursor:pointer;">고급 옵션 열기</button>
+                <span class="gm-ax-note" style="padding-left:8px;">라벨/눈금 이동 · 묶기 · 글씨 크기 · 화살표·격자 범위</span>
               </div>
             </div>
           </div>
@@ -1871,22 +1894,6 @@ function build() {
                 <div class="gm-row-body"><input type="text" id="gm-tickbase-y" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: v_0  → v₀, 2v₀, 3v₀…"></div>
               </div>
               <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">기준 문자 하나만 넣으면 2·3·4배가 자동 생성됩니다</div>
-            </div>
-            <!-- 좌표 크기·성분 크기는 단위(%)도 범위도 같은 한 쌍이라 한 행에 나란히 둔다.
-                 순서가 행 라벨("좌표 / 성분")과 같으므로 칸마다 이름표를 또 붙이지 않는다.
-                 어느 칸이 무엇인지는 aria-label로만 보조기기에 알린다. -->
-            <div class="gm-row">
-              <span class="gm-row-lbl">좌표 / 성분 크기</span>
-              <div class="gm-row-body gm-scale-pair">
-                <span class="gm-scale-item">
-                  <span class="gm-step"><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100" aria-label="좌표 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                  <span class="gm-unit">%</span>
-                </span>
-                <span class="gm-scale-item">
-                  <span class="gm-step"><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100" aria-label="성분 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
-                  <span class="gm-unit">%</span>
-                </span>
-              </div>
             </div>
           </div>
           </div><!-- /gm-tab-coord -->
@@ -2090,7 +2097,63 @@ function build() {
         <button type="button" class="modal-btn" id="gm-cancel">취소</button>
         <button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">만들기</button>
       </div>
+
+      <!-- 고급 옵션 모달(요구): 활용도 낮은 옵션 + 화살표/격자 범위. 좌표 탭 [고급]으로 연다.
+           동작/크기 컨트롤은 여기로 옮겼고 id는 유지해 이벤트 배선은 그대로 동작한다. -->
+      <div class="gm-adv-overlay" id="gm-adv-overlay" hidden>
+        <div class="gm-adv-modal">
+          <div class="gm-adv-head">
+            <b>고급 옵션</b>
+            <button type="button" id="gm-adv-close" class="modal-btn" style="font-size:12px;padding:3px 12px;">닫기</button>
+          </div>
+
+          <div class="gm-row">
+            <span class="gm-row-lbl">동작</span>
+            <div class="gm-row-body gm-checks" style="flex-wrap:wrap;">
+              <label class="gm-check"><input type="checkbox" id="gm-labelmove"> 축 라벨 이동<span class="gm-help" title="켜면 미리보기에서 축 이름(예: y, t)을 드래그해 위치를 옮길 수 있습니다. 끄면 원래 위치로 돌아갑니다.">?</span></label>
+              <label class="gm-check"><input type="checkbox" id="gm-tickmove"> 눈금 숫자 이동<span class="gm-help" title="켜면 미리보기에서 눈금 숫자를 드래그해 곡선을 피할 수 있습니다. '첫 라벨에 맞추기'로 세로 높이를 첫 숫자에 정렬합니다.">?</span></label>
+              <button type="button" id="gm-tickalign" style="display:none;font-size:12px;padding:2px 8px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;">첫 라벨에 맞추기</button>
+              <label class="gm-check"><input type="checkbox" id="gm-lockpos"> 좌표·함수 묶기<span class="gm-help" title="좌표평면과 함수를 하나의 그룹으로 묶어 캔버스에서 함께 이동합니다.">?</span></label>
+            </div>
+          </div>
+
+          <div class="gm-row">
+            <span class="gm-row-lbl">좌표 / 성분 크기</span>
+            <div class="gm-row-body gm-scale-pair">
+              <span class="gm-scale-item">
+                <span class="gm-step"><input type="number" id="gm-axisscale" min="50" max="200" step="10" value="100" aria-label="좌표 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-unit">%</span>
+              </span>
+              <span class="gm-scale-item">
+                <span class="gm-step"><input type="number" id="gm-tickscale" min="50" max="200" step="10" value="100" aria-label="성분 크기(%)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                <span class="gm-unit">%</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="gm-adv-sect">
+            <div class="gm-group-h">화살표 위치 <span style="font-weight:400;color:var(--text-secondary);font-size:11px;">— 마지막 눈금에서의 여백(칸)</span></div>
+            <div class="gm-end-grid">
+              <div><label>x + (오른쪽)</label><input type="number" id="gm-pad-xp" class="gm-num" step="0.1" min="0" value="1.6"></div>
+              <div><label>x − (왼쪽)</label><input type="number" id="gm-pad-xn" class="gm-num" step="0.1" min="0" value="1.6"></div>
+              <div><label>y + (위)</label><input type="number" id="gm-pad-yp" class="gm-num" step="0.1" min="0" value="1.3"></div>
+              <div><label>y − (아래)</label><input type="number" id="gm-pad-yn" class="gm-num" step="0.1" min="0" value="1.3"></div>
+            </div>
+          </div>
+
+          <div class="gm-adv-sect">
+            <div class="gm-group-h">격자 튀어나옴 <span style="font-weight:400;color:var(--text-secondary);font-size:11px;">— 눈금 밖으로 더 뻗는 칸 (0=닫힘)</span></div>
+            <div class="gm-end-grid">
+              <div><label>x + (오른쪽)</label><input type="number" id="gm-gov-xp" class="gm-num" step="0.1" min="0" value="0.5"></div>
+              <div><label>x − (왼쪽)</label><input type="number" id="gm-gov-xn" class="gm-num" step="0.1" min="0" value="0.5"></div>
+              <div><label>y + (위)</label><input type="number" id="gm-gov-yp" class="gm-num" step="0.1" min="0" value="0.5"></div>
+              <div><label>y − (아래)</label><input type="number" id="gm-gov-yn" class="gm-num" step="0.1" min="0" value="0.5"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>`;
+  overlay.querySelector(".gm-modal").style.position = "relative";
   document.body.appendChild(overlay);
 
   _els = {
@@ -2117,6 +2180,12 @@ function build() {
     axisScale: overlay.querySelector("#gm-axisscale"), tickScale: overlay.querySelector("#gm-tickscale"),
     lockPos: overlay.querySelector("#gm-lockpos"), labelMove: overlay.querySelector("#gm-labelmove"),
     tickMove: overlay.querySelector("#gm-tickmove"), tickAlign: overlay.querySelector("#gm-tickalign"),
+    // 고급 모달
+    advOverlay: overlay.querySelector("#gm-adv-overlay"), advOpen: overlay.querySelector("#gm-adv-open"), advClose: overlay.querySelector("#gm-adv-close"),
+    padXP: overlay.querySelector("#gm-pad-xp"), padXN: overlay.querySelector("#gm-pad-xn"),
+    padYP: overlay.querySelector("#gm-pad-yp"), padYN: overlay.querySelector("#gm-pad-yn"),
+    govXP: overlay.querySelector("#gm-gov-xp"), govXN: overlay.querySelector("#gm-gov-xn"),
+    govYP: overlay.querySelector("#gm-gov-yp"), govYN: overlay.querySelector("#gm-gov-yn"),
     tickModeHost: overlay.querySelector("#gm-tickmode"),
     tickTextRows: overlay.querySelector("#gm-ticktext-rows"),
     tickTextX: overlay.querySelector("#gm-ticktext-x"), tickTextY: overlay.querySelector("#gm-ticktext-y"),
@@ -2201,6 +2270,17 @@ function build() {
   const clampScale = (el) => { const n = parseInt(el.value, 10); return Number.isFinite(n) ? Math.max(50, Math.min(200, n)) : 100; };
   _els.axisScale.addEventListener("input", () => { _cfg.axisLabelScale = clampScale(_els.axisScale) / 100; refreshPreview(); });
   _els.tickScale.addEventListener("input", () => { _cfg.tickLabelScale = clampScale(_els.tickScale) / 100; refreshPreview(); });
+  // 고급 모달 열기/닫기.
+  _els.advOpen.addEventListener("click", () => { syncCfgControls(); _els.advOverlay.hidden = false; });
+  _els.advClose.addEventListener("click", () => { _els.advOverlay.hidden = true; });
+  _els.advOverlay.addEventListener("mousedown", (e) => { if (e.target === _els.advOverlay) _els.advOverlay.hidden = true; });
+  // 화살표 여백·격자 튀어나옴(네 끝) — 입력 즉시 미리보기 반영(요구: 실시간).
+  const numOrDefault = (el, d) => { const n = parseFloat(el.value); return Number.isFinite(n) && n >= 0 ? n : d; };
+  const bindEnd = (el, key, d) => el.addEventListener("input", () => { _cfg[key] = numOrDefault(el, d); refreshPreview(); });
+  bindEnd(_els.padXP, "padXPos", PAD_X); bindEnd(_els.padXN, "padXNeg", PAD_X);
+  bindEnd(_els.padYP, "padYPos", PAD_Y); bindEnd(_els.padYN, "padYNeg", PAD_Y);
+  bindEnd(_els.govXP, "gridOverXPos", GRID_OVER); bindEnd(_els.govXN, "gridOverXNeg", GRID_OVER);
+  bindEnd(_els.govYP, "gridOverYPos", GRID_OVER); bindEnd(_els.govYN, "gridOverYNeg", GRID_OVER);
   _els.labelMove.addEventListener("change", () => {
     _cfg.labelMovable = _els.labelMove.checked;
     // 끄면 옮겼던 축 라벨을 원래 지정 위치로 되돌린다(요구).
@@ -2451,7 +2531,12 @@ function build() {
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
   setupHelpPopovers(overlay);
-  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); hide(); } });
+  overlay.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    // 고급 모달이 열려 있으면 그것부터 닫는다(전체 모달은 유지).
+    if (_els.advOverlay && !_els.advOverlay.hidden) { e.preventDefault(); e.stopPropagation(); _els.advOverlay.hidden = true; return; }
+    e.preventDefault(); e.stopPropagation(); hide();
+  });
   // Enter = 그리는 중인 점 계열 완성(요구). 입력칸 타이핑 중일 땐 무시. 모달 열려 있을 때만.
   window.addEventListener("keydown", (e) => {
     if (!_overlay || _overlay.hidden || e.key !== "Enter") return;
@@ -2507,6 +2592,16 @@ function loadFromPlane(plane) {
   cfg.labelMovable = !!plane.labelMovable;
   cfg.labelXOffset = plane.labelXOffset && Number.isFinite(plane.labelXOffset.dx) ? { dx: plane.labelXOffset.dx, dy: plane.labelXOffset.dy } : { dx: 0, dy: 0 };
   cfg.labelYOffset = plane.labelYOffset && Number.isFinite(plane.labelYOffset.dx) ? { dx: plane.labelYOffset.dx, dy: plane.labelYOffset.dy } : { dx: 0, dy: 0 };
+  // 고급: 화살표 여백·격자 튀어나옴 네 끝 복원. 없으면 현행 기본값.
+  cfg.padXPos = Number.isFinite(plane.padXPos) ? plane.padXPos : PAD_X;
+  cfg.padXNeg = Number.isFinite(plane.padXNeg) ? plane.padXNeg : PAD_X;
+  cfg.padYPos = Number.isFinite(plane.padYPos) ? plane.padYPos : PAD_Y;
+  cfg.padYNeg = Number.isFinite(plane.padYNeg) ? plane.padYNeg : PAD_Y;
+  const goFallback = Number.isFinite(plane.gridOver) ? plane.gridOver : GRID_OVER;
+  cfg.gridOverXPos = Number.isFinite(plane.gridOverXPos) ? plane.gridOverXPos : goFallback;
+  cfg.gridOverXNeg = Number.isFinite(plane.gridOverXNeg) ? plane.gridOverXNeg : goFallback;
+  cfg.gridOverYPos = Number.isFinite(plane.gridOverYPos) ? plane.gridOverYPos : goFallback;
+  cfg.gridOverYNeg = Number.isFinite(plane.gridOverYNeg) ? plane.gridOverYNeg : goFallback;
   // 눈금 숫자 이동 오프셋 복원(요구 ②).
   cfg.tickMovable = !!plane.tickMovable;
   const restoreOffs = (arr) => Array.isArray(arr) ? arr.map((o) => (o && (Number.isFinite(o.dx) || Number.isFinite(o.dy))) ? { dx: o.dx || 0, dy: o.dy || 0 } : { dx: 0, dy: 0 }) : [];
@@ -2568,6 +2663,8 @@ export function openGraphModal(planeId = null, startTab = "coord") {
     _series = []; _sel = -1;
   }
   _placeMode = null; _activeDraw = -1;   // 열 때는 배치·그리기 모드 초기화
+  _annMode = null; _annPending = null;   // 표시 배치 모드도 초기화
+  if (_els.advOverlay) _els.advOverlay.hidden = true;   // 고급 모달은 닫힌 채로 시작
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
   _els.confirm.textContent = _mode === "edit" ? "적용" : "만들기";
   _els.error.textContent = "";
