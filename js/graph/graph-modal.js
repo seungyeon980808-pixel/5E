@@ -60,6 +60,7 @@ let _previewPlane = null;
 let _placeMode = null;            // null | "marker" | "guide" | "arrow" — 미리보기 클릭 배치 모드
 let _annMode = null;              // '표시' 탭 배치 모드: null | "marker"|"guide"|"arrow"|"guideline"|"legend"
 let _annPending = null;           // 두 점짜리(화살표·가이드라인)의 첫 점 임시 저장
+let _lpSel = -1;                  // 선택된 라벨러 표시점 index(-1=없음). PageUp/Down 각도 회전 대상
 let _boxMode = false;             // 사각형 드래그로 정의역·치역을 한 번에 지정하는 중
 let _selPts = null;               // 선택 계열의 baked world points(배치 고스트 스냅·클릭 가드용)
 let _selBreaks = null;            // 선택 계열의 끊긴 구간 경계(worldYAtX가 빈 구간 건너뛰게)
@@ -286,6 +287,22 @@ function dataBounds(plane) {
   };
 }
 
+// 사용자가 '직접' 데이터를 놓을 수 있는 최대 범위 = 평면 박스 전체(= 화살표 여백까지).
+// dataBounds(격자 끝)는 '자동'으로 정해지는 값(함수 기본 정의역)의 기준일 뿐, 손으로 그리거나
+// 정의역을 직접 지정한 경우까지 격자에 가둘 이유가 없다(요구: 격자가 데이터 범위를 제한하지 않는다).
+// 격자 초과분(gridOver)이 여백보다 클 수도 있으므로 둘 중 넓은 쪽을 쓴다.
+function plotBounds(plane) {
+  const db = dataBounds(plane);
+  const px = Number.isFinite(plane.xMin) ? plane.xMin : db.xMin;
+  const pX = Number.isFinite(plane.xMax) ? plane.xMax : db.xMax;
+  const py = Number.isFinite(plane.yMin) ? plane.yMin : db.yMin;
+  const pY = Number.isFinite(plane.yMax) ? plane.yMax : db.yMax;
+  return {
+    xMin: Math.min(db.xMin, px), xMax: Math.max(db.xMax, pX),
+    yMin: Math.min(db.yMin, py), yMax: Math.max(db.yMax, pY),
+  };
+}
+
 /* ---------- 그래프 요소(표시점 ● / 수선의 발 / 화살표) ---------- */
 const ARROW_SW = 0.525;   // 화살표(화살촉) 두께 — 화살촉 크기가 여기 비례(요구: +50%, 0.35→0.525).
 // 배치할 때 커서와 곡선의 거리는 제한하지 않는다(요구). 좌표 라벨·눈금에 가려 곡선을
@@ -417,6 +434,38 @@ function markPlacedElements(groupEl) {
     c.parentNode.insertBefore(ring, c);
   });
 }
+/* 라벨러 표시점(표시 탭): '지금 PageUp/Down이 돌릴 점'을 미리보기에서 눈으로 알 수 있게 한다.
+ * 선택된 점에만 강조 링을 얹고, 배치 모드가 꺼져 있을 때는 점을 눌러 선택을 옮길 수 있다
+ * (배치 모드 중엔 클릭이 '새 점 찍기'여야 하므로 건드리지 않는다).
+ * markPlacedElements와 같은 원칙: 미리보기 DOM에만 덧그리고 저장 데이터는 그대로 둔다. */
+function markSelLabelPt(svg) {
+  if (!svg || _tab !== "annot") return;
+  svg.querySelectorAll("[data-labelpt]").forEach((c) => {
+    const i = parseInt(c.getAttribute("data-labelpt"), 10);
+    if (!Number.isFinite(i)) return;
+    if (!_annMode) {
+      c.style.cursor = "pointer";
+      c.setAttribute("pointer-events", "all");
+      c.addEventListener("click", (e) => {
+        e.stopPropagation();                     // 빈 화면 클릭(선택 해제)로 새어나가지 않게
+        if (_lpSel === i) return;
+        _lpSel = i; renderLabelPtEditor(); refreshPreview();
+      });
+    }
+    if (i !== _lpSel) return;
+    const r = parseFloat(c.getAttribute("r")) || 0.6;
+    const ring = document.createElementNS(SVG_NS, "circle");
+    ring.setAttribute("cx", c.getAttribute("cx"));
+    ring.setAttribute("cy", c.getAttribute("cy"));
+    ring.setAttribute("r", String(r * 2.05));
+    ring.setAttribute("fill", "none");
+    ring.setAttribute("stroke", "var(--accent)");
+    ring.setAttribute("stroke-width", String(r * 0.5));
+    ring.setAttribute("pointer-events", "none");
+    c.parentNode.insertBefore(ring, c);
+  });
+}
+
 // 계열의 요소 math 스펙(markers/guides/arrows) → 세계좌표 렌더 데이터(renderFuncgraph가 그림).
 function bakeElements(s, plane, pts, breaks) {
   const markers = [], guideSegs = [], arrowMarks = [];
@@ -491,9 +540,11 @@ function prepareSeries(plane) {
     if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) continue;
-      // 함수는 데이터 범위(눈금 끝+반 칸)까지만 — 화살표 마진 아래로 뻗지 않게.
-      const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
-      const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
+      // 자동 정의역은 데이터 범위(눈금 끝+반 칸)까지 — 화살표 마진 아래로 저절로 뻗지 않게.
+      // 반면 사용자가 정의역을 직접 준 경우엔 평면 박스 끝까지 허용한다(격자로 가두지 않는다).
+      const pb = plotBounds(plane);
+      const dMin = s.domain ? Math.max(pb.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
+      const dMax = s.domain ? Math.min(pb.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
       const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
@@ -629,6 +680,7 @@ function refreshPreview() {
   svg.setAttribute("viewBox", `${plane.x - mX} ${plane.y - mY} ${plane.w + 2 * mX} ${plane.h + 2 * mY}`);
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
   svg.appendChild(renderCoordplane(plane));
+  markSelLabelPt(svg);   // 선택된 라벨러 표시점에 강조 링(편집 중 안내 — 결과물엔 안 나간다)
 
   let selError = "";
   _selPts = null; _selBreaks = null;   // 선택 계열의 baked points/경계를 이 렌더에서 갱신(배치 고스트·클릭 가드용)
@@ -639,9 +691,9 @@ function refreshPreview() {
     if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) return;
-      const db = dataBounds(plane);
-      const dMin = s.domain ? Math.max(db.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
-      const dMax = s.domain ? Math.min(db.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
+      const db = dataBounds(plane), pb = plotBounds(plane);   // 자동=격자 끝, 직접 지정=평면 박스 끝
+      const dMin = s.domain ? Math.max(pb.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
+      const dMax = s.domain ? Math.min(pb.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
       const r = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
@@ -1037,6 +1089,7 @@ function refreshPreview() {
         // 라벨러 표시점(요구 ⑥): 찍는 순서대로 A·B·C… 자동 부여(추후 개별 수정 가능).
         const arr = (_cfg.annLabelPoints = _cfg.annLabelPoints || []);
         arr.push({ x: hit.mx, y: hit.my, text: nextLabelLetter(arr.length), dist: 5, angle: 45, size: ptToMm(15) });
+        _lpSel = arr.length - 1;   // 찍자마자 선택 상태 → PageUp/Down으로 바로 각도를 돌릴 수 있다(요구)
       }
       if (typeof syncAnnLists === "function") syncAnnLists();
       refreshPreview();
@@ -1206,12 +1259,12 @@ function refreshPreview() {
       }
       // 드래그 = 스트로크를 성긴 앵커로 단순화해 계열의 점으로 삼는다(1/8칸 스냅·박스 클램프).
       const anchorsW = simplifyRDP(pts, FD_EPS);
-      const db = dataBounds(plane);
+      const pb = plotBounds(plane);   // 격자가 아니라 평면 박스까지 — 손그림은 격자 밖으로 나갈 수 있다
       const sx = (plane.gridStepX || 1) / 8, sy = (plane.gridStepY || 1) / 8;
       s.pts = anchorsW.map((p) => {
         const m = mathFromWorld(plane, p.x, p.y);
         const nx = Math.round(m.x / sx) * sx, ny = Math.round(m.y / sy) * sy;
-        return { x: Math.max(db.xMin, Math.min(db.xMax, nx)), y: Math.max(db.yMin, Math.min(db.yMax, ny)) };
+        return { x: Math.max(pb.xMin, Math.min(pb.xMax, nx)), y: Math.max(pb.yMin, Math.min(pb.yMax, ny)) };
       });
       if (s.handles) syncHandlesToStructure(s);   // (드물게) 이미 핸들이 있었다면 새 앵커에 맞춤
       finishPointsSeries();   // 그리기 종료 → 앵커가 드래그 편집 가능한 상태로
@@ -1346,11 +1399,12 @@ function clientToMath(cx, cy) {
   // 스냅 간격을 더 촘촘하게(칸의 1/8 = 종전 1/4의 2배) — 원하는 점을 정확히 지나게(요구).
   const sx = (_previewPlane.gridStepX || 1) / 8, sy = (_previewPlane.gridStepY || 1) / 8;
   const nx = Math.round(m.x / sx) * sx, ny = Math.round(m.y / sy) * sy;
-  // 데이터 범위(눈금 끝 + 반 칸)로 클램프 — 화살표 마진(그 밖)까지는 안 나가게.
-  const db = dataBounds(_previewPlane);
+  // 클램프는 '평면 박스'까지만 한다(요구). 격자 끝에서 막으면 정의역·치역이 격자에 갇힌 것처럼
+  // 보여, 손으로 찍은 점·자유곡선이 마지막 눈금 밖으로 나가질 못한다.
+  const pb = plotBounds(_previewPlane);
   return {
-    x: Math.max(db.xMin, Math.min(db.xMax, nx)),
-    y: Math.max(db.yMin, Math.min(db.yMax, ny)),
+    x: Math.max(pb.xMin, Math.min(pb.xMax, nx)),
+    y: Math.max(pb.yMin, Math.min(pb.yMax, ny)),
   };
 }
 
@@ -1518,22 +1572,48 @@ function syncAnnLists() {
     guide: "미리보기를 클릭하면 그 점에서 두 축까지 점선(수선의 발)이 생깁니다.",
     arrow: "함수(곡선) 위를 클릭하면 그 자리에 접선 방향으로 화살촉이 놓입니다. 함수가 없으면 놓이지 않습니다.",
     guideline: "두 점을 클릭하면 그 사이에 안내 점선이 생깁니다.",
-    labelpt: "미리보기를 클릭해 A·B·C… 순서로 표시점을 찍습니다. 거리·각도·글씨는 아래에서 조정합니다.",
+    labelpt: "미리보기를 클릭해 A·B·C… 순서로 표시점을 찍습니다. 찍은 점이 바로 선택되니 PageUp/PageDown으로 라벨 방향을 15°씩 돌리세요. 거리·글씨는 아래에서 조정합니다.",
   };
   _els.annHint.textContent = _annMode
     ? (_annPending ? "한 번 더 클릭해 끝점을 지정하세요." : H[_annMode])
     : "도구를 켜고 미리보기를 클릭해 배치합니다. 함수가 없어도 됩니다.";
   renderLegendEditor();
 }
+// 선택된 라벨러 표시점의 각도를 d(°)만큼 돌린다. PageUp/Down(전역·각도칸 공용) 진입점.
+// 각도 칸이 화면에 있으면 값도 함께 갱신한다(에디터 전체를 다시 그리면 포커스가 날아간다).
+function rotateSelLabelPt(d) {
+  const lp = (_cfg.annLabelPoints || [])[_lpSel];
+  if (!lp) return false;
+  lp.angle = (Number.isFinite(lp.angle) ? lp.angle : 45) + d;
+  const inp = _els.annLabelPtEditor && _els.annLabelPtEditor.querySelector(`[data-lp-angle="${_lpSel}"]`);
+  if (inp) inp.value = Math.round(lp.angle);
+  refreshPreview();
+  return true;
+}
+
 // 라벨러 표시점 에디터(요구 ⑥): 점마다 텍스트·거리(mm)·각도(°, PageUp/Down 15°씩)·글씨크기(pt).
+// 줄을 누르면 그 점이 '선택'된다(찍은 직후엔 자동 선택) — 선택된 점은 PageUp/Down으로 회전.
 function renderLabelPtEditor() {
   const host = _els.annLabelPtEditor;
   if (!host) return;
   host.replaceChildren();
+  const list = _cfg.annLabelPoints || [];
+  if (_lpSel >= list.length) _lpSel = list.length - 1;   // 삭제로 인덱스가 밀린 경우 보정
   const miniBtn = "font-size: 11px;padding:2px 7px;border:1px solid var(--border);border-radius:5px;background:var(--bg-input);color:inherit;cursor:pointer;";
-  (_cfg.annLabelPoints || []).forEach((lp, i) => {
+  // 선택 표시는 '다시 그리기' 없이 스타일만 갈아끼운다 — 입력칸을 누르는 순간 DOM을 새로
+  // 만들면 그 클릭이 사라진 요소로 가 포커스가 안 잡힌다.
+  const rows = [];
+  const paintSel = () => rows.forEach((r, i) => {
+    r.style.background = i === _lpSel ? "color-mix(in srgb, var(--accent) 12%, transparent)" : "transparent";
+    r.style.boxShadow = i === _lpSel ? "inset 2px 0 0 var(--accent)" : "none";
+  });
+  list.forEach((lp, i) => {
     const row = document.createElement("div");
-    row.style.cssText = "display:flex;gap:5px;align-items:center;margin:6px 0 0 102px;flex-wrap:wrap;";
+    rows.push(row);
+    row.style.cssText = "display:flex;gap:5px;align-items:center;margin:6px 0 0 102px;flex-wrap:wrap;"
+      + "padding:3px 6px;border-radius:6px;cursor:pointer;";
+    // 줄 아무 데나 누르면 그 점이 선택된다(입력칸을 누른 경우 포함) — 그다음 PageUp/Down이 이 점을 돌린다.
+    row.addEventListener("mousedown", () => { if (_lpSel !== i) { _lpSel = i; paintSel(); refreshPreview(); } });
     const txt = document.createElement("input"); txt.type = "text"; txt.value = lp.text ?? "";
     txt.style.cssText = "width:44px;font-family:monospace;font-size: 12px;text-align:center;";
     txt.addEventListener("input", () => { lp.text = txt.value; refreshPreview(); });
@@ -1555,23 +1635,29 @@ function renderLabelPtEditor() {
       (v) => { lp.dist = Number.isFinite(v) && v >= 0 ? v : lp.dist; });
     const angleF = numField("각도(°)", Math.round(Number.isFinite(lp.angle) ? lp.angle : 45), 15, null,
       (v) => { lp.angle = Number.isFinite(v) ? v : lp.angle; });
-    // 요구: PageUp/PageDown으로 15°씩 회전(각도 칸에 포커스가 있을 때).
+    angleF.inp.setAttribute("data-lp-angle", String(i));   // 전역 PageUp/Down이 값을 갱신할 대상
+    // 요구: PageUp/PageDown으로 15°씩 회전 — 각도 칸에 포커스가 있을 때도 같은 동작.
     angleF.inp.addEventListener("keydown", (e) => {
       if (e.key !== "PageUp" && e.key !== "PageDown") return;
-      e.preventDefault();
-      lp.angle = (Number.isFinite(lp.angle) ? lp.angle : 45) + (e.key === "PageUp" ? 15 : -15);
-      angleF.inp.value = Math.round(lp.angle);
-      refreshPreview();
+      e.preventDefault(); e.stopPropagation();   // 전역 핸들러와 이중 적용 방지
+      _lpSel = i; paintSel();
+      rotateSelLabelPt(e.key === "PageUp" ? 15 : -15);
     });
     const sizeF = numField("글씨(pt)", Math.round(mmToPt(Number.isFinite(lp.size) ? lp.size : ptToMm(15))), 1, 4,
       (v) => { lp.size = Number.isFinite(v) && v > 0 ? ptToMm(v) : lp.size; });
 
     const rm = document.createElement("button"); rm.type = "button"; rm.textContent = "삭제"; rm.style.cssText = miniBtn;
-    rm.addEventListener("click", () => { _cfg.annLabelPoints.splice(i, 1); syncAnnLists(); refreshPreview(); });
+    rm.addEventListener("click", () => {
+      _cfg.annLabelPoints.splice(i, 1);
+      if (_lpSel === i) _lpSel = Math.min(i, _cfg.annLabelPoints.length - 1);   // 지운 자리의 다음 점으로
+      else if (_lpSel > i) _lpSel -= 1;
+      syncAnnLists(); refreshPreview();
+    });
 
     row.append(txt, distF.wrap, angleF.wrap, sizeF.wrap, rm);
     host.appendChild(row);
   });
+  paintSel();
 }
 
 function renderLegendEditor() {
@@ -2666,6 +2752,18 @@ function build() {
     }
     e.preventDefault(); e.stopPropagation(); hide();
   });
+  // PageUp/PageDown = 선택된 라벨러 표시점의 라벨 각도 15°씩 회전(요구).
+  // 점을 찍으면 곧바로 선택되므로, 찍은 뒤 손을 옮기지 않고 바로 방향을 돌릴 수 있다.
+  // 각도 입력칸에 포커스가 있을 땐 그 칸의 핸들러가 처리하고 여기까지 오지 않는다.
+  window.addEventListener("keydown", (e) => {
+    if (!_overlay || _overlay.hidden) return;
+    if (e.key !== "PageUp" && e.key !== "PageDown") return;
+    if (_tab !== "annot" || _lpSel < 0) return;
+    const t = e.target;
+    if (t && t.tagName === "TEXTAREA") return;   // 여러 줄 입력에서는 원래대로 스크롤
+    if (!rotateSelLabelPt(e.key === "PageUp" ? 15 : -15)) return;
+    e.preventDefault();
+  });
   // Enter = 그리는 중인 점 계열 완성(요구). 입력칸 타이핑 중일 땐 무시. 모달 열려 있을 때만.
   window.addEventListener("keydown", (e) => {
     if (!_overlay || _overlay.hidden || e.key !== "Enter") return;
@@ -2796,6 +2894,7 @@ export function openGraphModal(planeId = null, startTab = "coord") {
   }
   _placeMode = null; _activeDraw = -1;   // 열 때는 배치·그리기 모드 초기화
   _annMode = null; _annPending = null;   // 표시 배치 모드도 초기화
+  _lpSel = -1;                           // 라벨러 표시점 선택도 초기화(옛 인덱스가 남지 않게)
   if (_els.advPanel) { _els.advPanel.hidden = true; if (_els.advCaret) _els.advCaret.textContent = "▾"; }   // 고급 패널은 접힌 채로 시작
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
   _els.confirm.textContent = _mode === "edit" ? "적용" : "만들기";
