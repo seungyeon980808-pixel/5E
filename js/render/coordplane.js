@@ -491,9 +491,11 @@ function renderCoordplane(obj) {
     if (Number.isFinite(a.dx) && Number.isFinite(a.dy)) { dx = a.dx; dy = a.dy; }
     else { dx = cx - wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1); dy = cy - wmY(Number.isFinite(a.ty) ? a.ty : a.y); }
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-    const headSw = annSw * 1.75, headLen = headSw * 6.0;   // smoothArrowHead의 L과 동일
-    // 클릭 지점이 화살촉 정중앙(요구 4) — 촉을 진행방향으로 절반 앞당긴다. 막대(곡선)는 홈으로 이어짐.
-    g.appendChild(smoothArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
+    // 방향표시 화살표(표시 탭)는 기존 화살촉(makeArrowHead)을 그대로 쓴다 — 좌표축 화살표만
+    // smoothArrowHead(요구 5)로 바뀌었고, 이 화살표·직선 끝 화살표는 원래 것을 유지한다.
+    const headSw = annSw * 1.75, headLen = headSw * 4.5;   // makeArrowHead의 length와 동일
+    // 클릭 지점이 화살촉 정중앙(요구 4) — 촉을 진행방향으로 절반 앞당긴다.
+    g.appendChild(makeArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
   });
   // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
   (obj.annMarkers || []).forEach((p) => {
