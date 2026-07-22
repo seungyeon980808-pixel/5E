@@ -204,7 +204,6 @@ export const TEXT_FONTS = [
   // Windows resolves 돋움; macOS falls back to Apple SD Gothic Neo. Export
   // renders from the exporting machine's installed font (no inlining).
   { label: "돋움 (시스템)",      css: TEXT_FONT_FAMILY },
-  { label: "함초롬바탕",        css: '"HamchoromBatang", serif' },
   { label: "신명중명조",        css: '"신명중명조", "바탕", serif' },
   { label: "IBM Plex Sans KR", css: "'IBM Plex Sans KR', sans-serif" },
   { label: "Noto Sans KR",     css: "'Noto Sans KR', sans-serif" },

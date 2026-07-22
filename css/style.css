@@ -1,27 +1,23 @@
 @charset "UTF-8";
-/* ===== OPTIONAL SELF-HOSTED FONT: 함초롬바탕 =====
- * The DEFAULT text font is now a system gothic stack (돋움 / Apple SD Gothic Neo
- * / Malgun Gothic) resolved by NAME — no @font-face needed for it. 함초롬바탕
- * remains a SELECTABLE option only.
+/* ===== 본문 글꼴 방침 (2026-07-23 확정) =====
+ * 그림에 들어가는 텍스트의 기본 글꼴은 **돋움**이다 — js/state.js의
+ * TEXT_FONT_FAMILY('"돋움","Dotum","Apple SD Gothic Neo","맑은 고딕",
+ * "Malgun Gothic", sans-serif') 하나로 관리하며, @font-face 없이 **이름으로만**
+ * 해석한다(자가호스팅·임베딩 없음). Windows는 돋움, macOS는 Apple SD Gothic Neo로 풀린다.
  *
- * local()이 반드시 먼저 와야 한다 (2026-07-23 수정).
- *   @font-face를 선언하는 순간 브라우저는 "HamchoromBatang"이라는 이름을 이 선언에
- *   예약한다. 그래서 src의 url이 404여도 PC에 설치된 동명 폰트로 되돌아가지 않고
- *   곧장 다음 폰트(serif)로 넘어간다 — 한글(HWP)이 깔린 PC에는 함초롬바탕이 있는데도
- *   앱에서는 쓸 수 없었다. 화면뿐 아니라 내보내기(SVG 재렌더)까지 같은 해석을 타므로
- *   완성된 문항 그림이 명조로 나가는 실결함이었다.
- *   실측(64px "함초롬바탕 국어 영역"): 수정 전 1260.25×92 = 폴백과 완전 동일,
- *   로컬 직접 지정 시 1258.19×83 — 즉 폰트는 있는데 못 닿고 있었다.
+ * 왜 돋움인가: 수능/평가원 시험지는 SM(신명) 계열 유료 글꼴로 조판된다
+ * (SM중고딕·SM태고딕·신명중명조 등). SM 계열은 라이선스상 웹 임베딩이 안 되고
+ * 이 PC에도 없다. 실측 결과 한양(HY)·신명(SM)·돋움은 같은 한국 인쇄 고딕 계보라
+ * 골격이 거의 같고, 특히 돋움과 HY견고딕은 메트릭이 0.2px 차이로 사실상 동일했다
+ * (64px "아크릴 관 저울 수평면": 돋움 640.1×74 / HY견고딕 639.9×74).
+ * 참고로 HY중고딕은 레지스트리에 등록돼 있어도 브라우저가 접근하지 못한다(폴백).
+ * → 실제로 쓸 수 있는 것 중 수능 지면에 가장 가까운 선택이 돋움이다.
  *
- * 해석 순서: 설치된 로컬 폰트 → 자가호스팅 woff2(있으면) → serif. */
-@font-face {
-  font-family: "HamchoromBatang";
-  src: local("함초롬바탕"), local("HCR Batang"), local("HamchoromBatang"),
-       url("../fonts/HamchoromBatang.woff2") format("woff2");
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+ * 함초롬바탕은 2026-07-23에 제거했다. 글꼴 목록·@font-face·자가호스팅 woff2·
+ * 내보내기 임베딩(EMBED_FONTS)에서 모두 뺐다. 다시 넣는다면 @font-face의 src에
+ * local()을 반드시 **맨 앞에** 둘 것 — @font-face를 선언하는 순간 그 이름이 선언에
+ * 예약되어, url이 404여도 PC에 설치된 동명 폰트로 되돌아가지 않고 serif로 넘어간다.
+ * 이것 때문에 함초롬바탕이 설치된 PC에서도 화면·내보내기 모두 명조로 나갔었다. */
 
 /* ===== SELF-HOSTED FONT: Latin Modern (수식 전용) =====
  * 수식/formula 글꼴. LaTeX 기본 수식체 Computer Modern의 오픈타입판. 정자 + 이탤릭
