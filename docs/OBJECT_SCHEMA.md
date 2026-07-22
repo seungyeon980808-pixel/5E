@@ -74,11 +74,18 @@
 | `markerXs`, `guideXs`, `arrowSpecs` | 표시점 · 수선의 발 · 화살표 |
 | `endLabel`, `endLabelSize`, `offset{dx,dy}`, `autoExtend`, `planeId` | 끝 라벨, 이동 오프셋, 소속 평면 |
 
-> ⚠️ **`js/project-io.js`의 백필이 이 필드들을 아직 따라오지 못했다.** `breaks`·`handles`·
-> `rangeMin/Max`·`markerXs`·`sourceKind`, 그리고 `line.dimensionLabelSize`,
-> `coordplane.gridCountXPos/Neg`·`labelOrigin`은 백필 목록에 없다. §2의 "새 필드를 더하면
-> 백필도 같이" 불변 규칙이 실제로 깨져 있는 상태다 — 옛 파일을 열 때 렌더러의 기본값에
-> 의존하고 있으니, 손볼 때 함께 정리할 것.
+> **위 신규 필드들은 `js/project-io.js`에 백필이 없다 — 그리고 그게 맞다.**
+> 읽는 쪽에서 전부 방어적으로 기본값을 처리한다(`Array.isArray(...) ? ... : []`,
+> `obj.dimensionLabelSize || 자동계산` 등). 특히 아래 둘은 **부재 자체가 하위호환 장치**라
+> 백필하면 오히려 회귀가 난다:
+>
+> - **`breaks`** — `render/coordplane.js`가 `Array.isArray(breaks)`로 갈린다. 있으면 그 경계로
+>   정확히 끊고, **없으면 구파일용 거리 휴리스틱(`distanceSplitRuns`)** 을 쓴다. `[]`를 백필하면
+>   구파일이 "끊김 없는 연속"으로 잘못 해석된다.
+> - **`gridCountXPos/Neg`** — 없으면 `gridCountX`로 폴백해 대칭 평면을 재현한다. 백필하면 폴백이 죽는다.
+>
+> 즉 §2의 "새 필드를 더하면 백필도 같이" 규칙은 **기본값이 상수일 때**의 이야기다.
+> 기본값이 "다른 필드에서 유도" 또는 "부재가 곧 신호"인 경우는 백필하지 않는 편이 옳다.
 
 <!-- ===== COMMON PROPS ===== -->
 
