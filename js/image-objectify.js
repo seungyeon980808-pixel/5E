@@ -82,7 +82,21 @@ function injectObjectifyStyles() {
   const style = document.createElement("style");
   style.id = "objectify-enh-styles";
   style.textContent = `
-    .modal-objectify { width:94vw !important; max-width:94vw !important; height:92vh; max-height:92vh; display:flex; flex-direction:column; gap:10px; }
+    /* 크기 규칙 (2026-07-23 개정)
+       예전: width:94vw !important / height:92vh — 세 가지가 문제였다.
+         ① 화면이 넓을수록 무한정 커진다(2560px 모니터에서 2406px). 작업에 필요한
+            폭은 스테이지+우측 패널 300px 정도라 그렇게까지 클 이유가 없다.
+         ② !important 때문에 .modal의 화면배율(--ui-zoom) 보정이 무력화됐다.
+            실측: 배율 1.5배에서 모달 높이 934px > 뷰포트 720px = 화면 밖으로 넘침.
+         ③ 내용과 무관하게 항상 92vh라 작은 이미지도 창이 꽉 찼다.
+       지금: 적정 크기(1120×720)를 기본으로 두되 화면이 좁으면 min()으로 줄어들고,
+            배율 보정은 .modal의 max-width/max-height가 그대로 담당하게 !important를 뺀다.
+            vh/vw를 --ui-zoom으로 나누는 이유는 .modal 규칙 주석 참고. */
+    .modal-objectify {
+      width: min(1120px, calc((100vw - 48px) / var(--ui-zoom, 1)));
+      height: min(720px, calc((100vh - 48px) / var(--ui-zoom, 1)));
+      display:flex; flex-direction:column; gap:10px;
+    }
     .objectify-body { display:flex; gap:16px; flex:1 1 auto; min-height:0; }
     .objectify-left { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
     .objectify-right { flex:0 0 300px; overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-right:4px; }
