@@ -1020,6 +1020,13 @@ body { zoom: var(--ui-zoom, 1); }
    실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
 .gm-modal { width: min(1152px, 96vw); }
 .gm-modal .modal-title { font-size: 18px; }
+/* 드래그로 글자가 파랗게 잡히지 않게. 이 모달은 '조작'이 전부라(미리보기에 자유곡선을
+   그리고, 칩·스테퍼를 끌고) 드래그마다 라벨·버튼 글자가 선택되면 화면이 지저분해진다.
+   진짜로 선택이 필요한 입력칸만 예외로 되돌린다. */
+.gm-modal { user-select: none; -webkit-user-select: none; }
+.gm-modal input, .gm-modal textarea {
+  user-select: text; -webkit-user-select: text;
+}
 .gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
 .gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
 .gm-left, .gm-right { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; }
