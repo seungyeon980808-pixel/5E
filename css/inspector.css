@@ -17,7 +17,7 @@
   min-width: 150px;
   max-width: 480px;
   flex-shrink: 0;
-  border-left: 1px solid var(--insp-border);
+  border-left: 1px solid var(--border-strong);
   overflow-y: auto;
   background: var(--insp-bg);
   position: relative;
@@ -26,7 +26,7 @@
 .panel-right .panel-title {
   background: var(--insp-bg);
   color: var(--insp-header);
-  border-bottom: 1px solid var(--insp-border);
+  border-bottom: 1px solid var(--border-muted);
   font-size: 12px;
 }
 
@@ -67,7 +67,7 @@
 
 /* ----- Collapsible section ----- */
 .insp-section {
-  border-bottom: 1px solid var(--insp-border);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .insp-summary {
@@ -318,7 +318,7 @@ details[open] > .insp-summary::before {
   padding: 4px 0;
 }
 .insp-bg-row + .insp-bg-row {
-  border-top: 1px solid var(--insp-border);
+  border-top: 1px solid var(--border-muted);
 }
 .insp-bg-thumb {
   flex: 0 0 auto;

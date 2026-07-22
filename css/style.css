@@ -45,9 +45,9 @@
   --bg-app: #0d1117;
   --bg-panel: #161b22;
   --bg-panel-hover: #21262d;
-  --bg-canvas: #0d1117;
+  --bg-canvas: #010409;
   --bg-input: #0d1117;
-  --border: #30363d;
+  --border-strong: #30363d;
   --text-primary: #e6edf3;
   --text-secondary: #7d8590;
   --text-label: #b1bac4;
@@ -70,7 +70,7 @@
   --bg-panel-hover: #f3f5f8;
   --bg-canvas: #dde3ea;
   --bg-input: #ffffff;
-  --border: #d0d7de;
+  --border-strong: #d0d7de;
   --text-primary: #0d1117;
   --text-secondary: #656d76;
   --text-label: #424a53;
@@ -89,17 +89,17 @@
    지구=고급 우디 브라운. accent 계열 + 배경 톤(bg-app/panel/canvas)을 과목
    컬러 쪽으로 살짝 기울인다(채도 낮은 유사 톤 — 눈에 거슬리지 않는 수준). */
 :root[data-subject="c"] { --accent:#b03a4a; --accent-hover:#c24d5c; --accent-2:#8a2b39; --accent-2-hover:#a03442; --btn-tool-active:#b03a4a;
-  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#110f12; --bg-input:#110f12; --border:#363037; }
+  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#08070a; --bg-input:#110f12; --border-strong:#363037; }
 :root[data-subject="c"][data-theme="light"] { --accent:#9a2f3d; --accent-hover:#8a2b39; --accent-2:#8a2b39; --accent-2-hover:#7a2531; --btn-tool-active:#9a2f3d;
-  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border:#d6cdd0; }
+  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border-strong:#d6cdd0; }
 :root[data-subject="b"] { --accent:#0f8a72; --accent-hover:#14a086; --accent-2:#0c6a58; --accent-2-hover:#0f8069; --btn-tool-active:#0f8a72;
-  --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#0e1512; --bg-input:#0e1512; --border:#2c3d36; }
+  --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#070a09; --bg-input:#0e1512; --border-strong:#2c3d36; }
 :root[data-subject="b"][data-theme="light"] { --accent:#0c7a64; --accent-hover:#0a6a58; --accent-2:#0c6a58; --accent-2-hover:#0a5a4c; --btn-tool-active:#0c7a64;
-  --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border:#c8d8d1; }
+  --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border-strong:#c8d8d1; }
 :root[data-subject="e"] { --accent:#a5794a; --accent-hover:#b98a58; --accent-2:#7a5330; --accent-2-hover:#8e6339; --btn-tool-active:#a5794a;
-  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#121009; --bg-input:#121009; --border:#37322a; }
+  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#090805; --bg-input:#121009; --border-strong:#37322a; }
 :root[data-subject="e"][data-theme="light"] { --accent:#8a6338; --accent-hover:#7a5330; --accent-2:#7a5330; --accent-2-hover:#6a4728; --btn-tool-active:#8a6338;
-  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border:#d7d1c6; }
+  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border-strong:#d7d1c6; }
 
 /* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
 input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
@@ -113,6 +113,18 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --c-sub: var(--text-label);
   --c-text: var(--text-primary);
   --c-border: var(--border);
+
+  /* ===== 테두리 3단 (2026-07-23) =====
+     예전엔 앱 전체 86곳이 전부 같은 1px·같은 색이라 화면이 "격자 상자"로 읽혔다.
+     역할별로 세기를 나눈다 — 구조(패널 외곽·모달)만 원래 세기를 쓰고, 컨트롤은 한 단,
+     섹션 내부 구분선은 두 단 낮춘다.
+       --border-strong  패널 외곽·모달 경계   (테마 블록이 직접 정의)
+       --border         컨트롤 (기본값)        ← 기존 var(--border) 사용처가 여기로 온다
+       --border-muted   섹션 내부 구분선
+     아래 둘은 --border-strong에서 파생되므로 과목 테마 8종이 자동으로 따라온다.
+     새 색을 만들지 않는다는 DESIGN.md 13-4 원칙에 맞춰, 패널 배경 쪽으로 섞기만 한다. */
+  --border: color-mix(in srgb, var(--border-strong, #30363d) 65%, var(--bg-panel));
+  --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
 
   --panel-left-w: 130px;
   --panel-right-w: 215px;
@@ -177,8 +189,8 @@ body {
   overflow: auto;
 }
 
-.panel-left { border-right: 1px solid var(--c-border); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
-.panel-right { border-left: 1px solid var(--c-border); }
+.panel-left { border-right: 1px solid var(--border-strong); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
+.panel-right { border-left: 1px solid var(--border-strong); }
 
 /* ===== 환경 설정: 화면 크기 프리셋 → 앱 UI 스케일(zoom) =====
    .app 전체에 zoom을 걸어 글씨·도구 패널·간격을 한 번에 확대/축소한다.
@@ -229,7 +241,7 @@ body { zoom: var(--ui-zoom, 1); }
   font-weight: 600;
   color: var(--c-sub);
   cursor: pointer;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--border-muted);
   margin-bottom: 6px;
   user-select: none;
 }
@@ -344,12 +356,14 @@ body { zoom: var(--ui-zoom, 1); }
   font-size: 13px;
   color: var(--c-text);
   background: var(--btn-tool-bg);
-  border: 1px solid var(--c-border);
+  /* 상시 테두리를 걷는다 — 15개 버튼이 저마다 상자를 두르면 도구 영역이 격자가 된다.
+     자리는 남겨야(1px transparent) hover·활성 시 레이아웃이 흔들리지 않는다. */
+  border: 1px solid transparent;
   border-radius: 6px;
   padding: 4px;
   cursor: pointer;
 }
-.tool-btn:hover { background: var(--btn-tool-hover); }
+.tool-btn:hover { background: var(--btn-tool-hover); border-color: var(--border); }
 
 /* icon/letter sits DIRECTLY in the button — no inner keycap box (de-boxed) */
 .tool-btn kbd {
@@ -366,16 +380,16 @@ body { zoom: var(--ui-zoom, 1); }
 /* shape icons inherit the kbd text color so they highlight with active state */
 .tool-btn kbd .tool-ico {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 .tool-btn kbd .tool-letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
-  font-size: 15px;
+  width: 17px;
+  height: 17px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1;
 }
@@ -421,7 +435,7 @@ body { zoom: var(--ui-zoom, 1); }
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border-bottom: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--border-strong);
   background: var(--bg-panel);
 }
 /* vertical group separator between toolbar clusters (brand | history | menus) */
@@ -597,7 +611,7 @@ body { zoom: var(--ui-zoom, 1); }
   flex-direction: column;
   padding: 4px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   transform-origin: top left;
@@ -637,7 +651,7 @@ body { zoom: var(--ui-zoom, 1); }
   display: flex; flex-direction: column;
   padding: 4px;
   background: var(--bg-panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   transform-origin: top left;
@@ -659,7 +673,7 @@ body { zoom: var(--ui-zoom, 1); }
 .file-menu-desc {
   margin-top: 4px;
   padding: 7px 10px 6px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-muted);
   max-width: 220px;
   font-size: 12px;
   line-height: 1.45;
@@ -701,7 +715,7 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 20px;
   background: var(--bg-panel);
   color: var(--text-primary);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
@@ -1471,8 +1485,8 @@ body { zoom: var(--ui-zoom, 1); }
   grid-column: 1;
   grid-row: 1;
   background: var(--bg-panel);
-  border-right: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border-muted);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .ruler {
@@ -1487,7 +1501,7 @@ body { zoom: var(--ui-zoom, 1); }
   grid-row: 1;
   width: 100%;
   height: 100%;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--border-muted);
 }
 
 .ruler-v {
@@ -1495,7 +1509,7 @@ body { zoom: var(--ui-zoom, 1); }
   grid-row: 2;
   width: 100%;
   height: 100%;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid var(--border-muted);
 }
 
 .guide-coordinate-editor {
@@ -1954,7 +1968,7 @@ textarea.unified-text-input {
   align-items: center;
   gap: 14px;
   padding: 5px 12px;
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--border-strong);
   background: var(--bg-panel);
   font-size: 12px;
   color: var(--text-label);
@@ -2004,7 +2018,7 @@ textarea.unified-text-input {
   font-size: 11px;
   color: var(--text-secondary);
   background: var(--bg-panel);
-  border-top: 1px solid var(--c-border);
+  border-top: 1px solid var(--border-strong);
 }
 /* 요구: 은색으로 살짝 빛나는 느낌 — 상단 경계선을 은은한 은색 그라데이션 실선으로,
    그 위에 아주 옅은 광선을 얹는다. 과하지 않게(디자인 원칙: 큰 그림자·과한 효과 금지)
@@ -2294,7 +2308,7 @@ textarea.unified-text-input {
 #bulk-apply:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
-.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--c-border); }
+.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
 .defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
 .defaults-pbg-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
 .defaults-pbg-empty { margin: 0; font-size: 12px; color: var(--text-secondary); }
