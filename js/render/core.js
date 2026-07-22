@@ -31,11 +31,18 @@ function applyDash(el, obj) {
   if (dl > 0 && dg > 0) el.setAttribute("stroke-dasharray", `${dl} ${dg}`);
 }
 
-/* ----- arrowhead: filled triangle pointing in (dirX, dirY), tip at (tipX, tipY) ----- */
-function makeArrowHead(tipX, tipY, dirX, dirY, strokeWidth, color) {
-  const length     = strokeWidth * 4.5;
-  const halfWidth  = strokeWidth * 1.8;
-  const notchDepth = length * 0.3;
+/* ----- arrowhead: filled triangle pointing in (dirX, dirY), tip at (tipX, tipY) -----
+ * opts로 크기·홈 깊이를 조절할 수 있다(기본값은 원래 비율 그대로 — 축 주석·광학·구간화살표
+ * 등 opts 없이 부르는 다른 모든 곳은 전혀 바뀌지 않는다). 직선/폴리라인 끝 화살표(shapes.js)만
+ * 요구에 따라 더 크고, 아래쪽(홈) 각도가 더 넓은 값을 명시적으로 넘긴다 — 위쪽(끝) 각도는
+ * lenMul:widthMul 비율(1.8/4.5)을 그대로 유지해 안 변한다. */
+function makeArrowHead(tipX, tipY, dirX, dirY, strokeWidth, color, opts = {}) {
+  const lenMul = opts.lenMul ?? 4.5;
+  const widthMul = opts.widthMul ?? 1.8;
+  const notchRatio = opts.notchRatio ?? 0.3;
+  const length     = strokeWidth * lenMul;
+  const halfWidth  = strokeWidth * widthMul;
+  const notchDepth = length * notchRatio;
 
   const perpX = -dirY, perpY = dirX;
 

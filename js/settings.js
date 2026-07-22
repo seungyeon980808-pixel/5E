@@ -116,8 +116,12 @@ export function applyScreenSize(value) {
  * 요구에 따라 자유값을 얹는다. :root의 인라인 스타일은 선택자 규칙보다 우선하므로
  * 프리셋 CSS를 그대로 둔 채 덮어쓸 수 있다. 값을 지우면 다시 프리셋으로 돌아간다. */
 const ZOOM_KEY = "5e.uiZoom";
-const ZOOM_MIN = 0.60;
-const ZOOM_MAX = 1.40;
+// 요구: 60~140%는 너무 좁아 원하는 크기를 못 맞춘다 — 자유롭게 조절 가능하도록 범위 확장.
+// --ui-zoom은 CSS zoom(배율 전체를 통째로 키움, 폰트만 커지는 게 아님)이라 범위를 넓혀도
+// 텍스트만 줄바꿈되는 일 없이 레이아웃째 같이 커진다(실측 검증: 250%에서도 내보내기
+// 다이얼로그 버튼 줄바꿈 없음).
+const ZOOM_MIN = 0.50;
+const ZOOM_MAX = 3.00;
 const clampZoom = (n) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(n)));
 
 export function loadUiZoom() {
@@ -307,7 +311,7 @@ function openPreferencesDialog() {
         <p class="pref-note">글씨와 도구 패널의 크기를 한꺼번에 키우거나 줄입니다. 움직이는 즉시 적용됩니다.</p>
         <div class="pref-row">
           <span class="modal-label">화면 크기</span>
-          <input id="pref-zoom" class="pref-zoom" type="range" min="60" max="140" step="1"
+          <input id="pref-zoom" class="pref-zoom" type="range" min="50" max="300" step="1"
                  value="${Math.round(zoom0 * 100)}" />
           <output class="pref-zoom-val" id="pref-zoom-val">${Math.round(zoom0 * 100)}%</output>
         </div>
