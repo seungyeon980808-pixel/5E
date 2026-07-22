@@ -282,7 +282,7 @@ body { zoom: var(--ui-zoom, 1); }
   font-family:inherit;
   text-align:center; text-align-last:center;
   color:var(--text-primary); background:var(--bg-input);
-  border:1px solid var(--accent); border-radius:6px; cursor:pointer;
+  border:1px solid var(--accent); border-radius:9px; cursor:pointer;
 }
 .subject-select-topbar { margin-left:8px; }
 .subject-select-panel { width:100%; margin:0 0 8px; height:30px; }
@@ -683,11 +683,13 @@ body { zoom: var(--ui-zoom, 1); }
 .modal {
   position: relative; /* 좌상단 드래그 손잡이(.modal-drag-handle)의 기준 */
   width: 320px;
-  max-width: calc(100vw - 32px);
   /* 내용이 길거나(기출 문항 검색 등) 화면 크기(ui-zoom)가 커진 상태에서도 모달
-     자체는 절대 뷰포트를 넘지 않게 상한을 둔다. vh는 zoom과 무관하게 항상 실제
-     화면 기준이라 안전하다 — 넘치는 내용은 모달 안에서 스크롤된다. */
-  max-height: calc(100vh - 40px);
+     자체는 절대 뷰포트를 넘지 않게 상한을 둔다. 주의: 이 .modal은 body{zoom}이
+     걸린 트리 안에 있어서, vh 기반 계산값도 이 안에서는 다시 zoom배만큼 곱해져
+     그려진다(= body 높이에 썼던 것과 같은 함정). 그래서 그냥 100vh가 아니라
+     zoom의 역수로 한 번 더 나눠야 화면에는 정확히 실제 뷰포트 크기로 보인다. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  max-height: calc((100vh - 40px) / var(--ui-zoom, 1));
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -2270,6 +2272,10 @@ textarea.unified-text-input {
 .objectify-dropzone, .subject-part-header {
   border-radius: 6px;
 }
+/* 요구: 상단 툴바(과목 선택·되돌리기/다시 실행 등)를 애플 곡률에 맞게 — 6px보다
+   더 부드럽고 둥근 인상. 다른 버튼들의 6px 기준은 그대로 두고 우선 이 두 곳만
+   먼저 손본다(요청 범위). */
+.subject-select, .topbar-btn { border-radius: 9px; }
 
 /* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
 .file-menu-item { display: flex; align-items: center; }
