@@ -73,7 +73,7 @@ function renderChips() {
     const chip = document.createElement("button");
     chip.type = "button";
     const on = i === _sel;
-    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font:12px monospace;" +
+    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: calc(12px * var(--text-scale, 1)) monospace;" +
       "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;" +
       "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);cursor:pointer;max-width:180px;";
     const lbl = document.createElement("span");

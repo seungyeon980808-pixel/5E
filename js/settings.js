@@ -303,7 +303,7 @@ function prefStyles() {
     .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
     .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
                 padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
-                font:600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+                font: 600 calc(12.5px * var(--text-scale, 1))/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
     .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
     .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
     .pref-panel { display:none; min-height:180px; }
@@ -311,12 +311,12 @@ function prefStyles() {
     .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .pref-row .modal-label { margin:0; flex:0 0 auto; }
     .pref-zoom { flex:1 1 auto; }
-    .pref-zoom-val { flex:0 0 calc(52px * var(--text-scale, 1)); text-align:right; font:600 12px/1 "IBM Plex Mono",monospace;
+    .pref-zoom-val { flex:0 0 calc(52px * var(--text-scale, 1)); text-align:right; font: 600 calc(12px * var(--text-scale, 1))/1 "IBM Plex Mono",monospace;
                      color:var(--text-primary); }
-    .pref-note { margin:0 0 12px; font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); }
+    .pref-note { margin:0 0 12px; font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
     .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
     .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
-                 font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); }
+                 font-size: calc(12px * var(--text-scale, 1)); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
   `;
 }
 

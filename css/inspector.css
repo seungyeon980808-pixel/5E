@@ -137,15 +137,15 @@ details[open] > .insp-summary::before {
 /* 선 섹션: 라벨 컬럼을 가장 긴 라벨("화살표 종류") 기준 고정폭으로 통일해
    모든 컨트롤이 같은 x에서 시작하도록 정렬한다 (Illustrator Stroke 패널 방식). */
 .insp-line-grid .insp-field-label {
-  width: 58px;
-  min-width: 58px;
+  width: calc(58px * var(--text-scale, 1));
+  min-width: calc(58px * var(--text-scale, 1));
   text-align: left;
 }
 
 /* 크기·위치 number fields: fixed 64px, sit tight next to the label (left-aligned) */
 .insp-input {
   flex: 0 0 auto;
-  width: 64px;
+  width: calc(64px * var(--text-scale, 1));
   font-size: calc(12px * var(--text-scale, 1));
   color: var(--insp-text);
   background: var(--insp-field-bg);
@@ -266,7 +266,7 @@ details[open] > .insp-summary::before {
 
 /* Numeric level box (0 = white, 255 = black), 48px, right-aligned next to slider */
 .cp-num-input {
-  width: 48px;
+  width: calc(48px * var(--text-scale, 1));
   flex-shrink: 0;
   text-align: right;
   font-size: calc(12px * var(--text-scale, 1));

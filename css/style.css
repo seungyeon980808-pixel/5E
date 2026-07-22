@@ -317,7 +317,7 @@ body { zoom: var(--ui-zoom, 1); }
 .advanced-tool-btn {
   width: 100%;
   padding: 9px 10px;
-  font: 500 13px/1.3 inherit;
+  font: 500 calc(13px * var(--text-scale, 1))/1.3 inherit;
   text-align: left;
   color: var(--c-text);
   background: var(--btn-tool-bg);
@@ -497,7 +497,7 @@ body { zoom: var(--ui-zoom, 1); }
 :root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: calc(19px * var(--text-scale, 1)); }
 :root[data-mode="lite"] #tool-list .tool-btn[data-sc]::after {
   content: attr(data-sc);
-  font: 600 10px/1 "IBM Plex Mono", monospace;
+  font: 600 calc(10px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
   color: var(--text-secondary); letter-spacing: .02em;
 }
 :root[data-mode="lite"] #tool-list .tool-btn.is-active[data-sc]::after { color: rgba(255, 255, 255, .85); }
@@ -786,7 +786,7 @@ body { zoom: var(--ui-zoom, 1); }
   padding-right: 6px;
 }
 /* 이 모달 안에서는 라벨 열을 조금 넓게 — "채우기 명도"·"각도기 눈금"이 들어가야 한다. */
-.defaults-fields .gm-row { grid-template-columns: 104px 1fr; }
+.defaults-fields .gm-row { grid-template-columns: calc(104px * var(--text-scale, 1)) 1fr; }
 .defaults-preview {
   display: flex;
   flex-direction: column;
@@ -867,7 +867,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-primary);
   background: transparent;
   border: 0;
-  font: 12px/1.3 inherit;
+  font: calc(12px * var(--text-scale, 1))/1.3 inherit;
   text-align: left;
   cursor: default;
 }
@@ -1013,7 +1013,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-secondary); margin-bottom: 11px; text-transform: uppercase;
 }
 .gm-row {
-  display: grid; grid-template-columns: 92px 1fr;
+  display: grid; grid-template-columns: calc(92px * var(--text-scale, 1)) 1fr;
   align-items: center; gap: 10px; margin-bottom: 9px;
 }
 .gm-row-lbl { font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap; }
@@ -1143,7 +1143,7 @@ body { zoom: var(--ui-zoom, 1); }
 
 /* 축 표: [라벨 92px][x열][y열] */
 .gm-axis-grid {
-  display: grid; grid-template-columns: 92px 1fr 1fr;
+  display: grid; grid-template-columns: calc(92px * var(--text-scale, 1)) 1fr 1fr;
   align-items: center; gap: 9px 14px;
 }
 .gm-ax-head {
@@ -1151,7 +1151,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-secondary);
   padding-bottom: 2px; border-bottom: 1px solid var(--border);
 }
-.gm-ax-head i { font: italic 700 13px "Times New Roman", serif; }
+.gm-ax-head i { font: italic 700 calc(13px * var(--text-scale, 1)) "Times New Roman", serif; }
 .gm-ax-lbl { font-size: calc(12.5px * var(--text-scale, 1)); color: var(--text-label); white-space: nowrap; }
 .gm-ax-cell { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .gm-ax-note {
@@ -1226,7 +1226,7 @@ body { zoom: var(--ui-zoom, 1); }
   border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
 }
 .gm-origin-seg button {
-  font: 600 13px "Times New Roman", serif; padding: 0;
+  font: 600 calc(13px * var(--text-scale, 1)) "Times New Roman", serif; padding: 0;
   width: 30px; height: 26px; border: 0;
   background: var(--bg-input); color: var(--text-secondary); cursor: pointer;
 }
@@ -1354,10 +1354,10 @@ body { zoom: var(--ui-zoom, 1); }
   border: 1px solid var(--border);
   border-radius: 6px;
 }
-.objectify-controls { display: grid; grid-template-columns: 1fr 160px; gap: 12px; }
+.objectify-controls { display: grid; grid-template-columns: 1fr calc(160px * var(--text-scale, 1)); gap: 12px; }
 .objectify-range-row { display: flex; align-items: center; gap: 8px; }
 .objectify-range-row input[type="range"] { flex: 1; }
-.objectify-range-value { min-width: 32px; text-align: right; font: 12px "IBM Plex Mono", monospace; }
+.objectify-range-value { min-width: 32px; text-align: right; font: calc(12px * var(--text-scale, 1)) "IBM Plex Mono", monospace; }
 @media (max-width: 680px) {
   .objectify-controls { grid-template-columns: 1fr; }
 }
@@ -1469,7 +1469,7 @@ body { zoom: var(--ui-zoom, 1); }
   background: #0550ae;
   border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 1px;
-  font: 9px/1 "IBM Plex Mono", monospace;
+  font: calc(9px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
   white-space: nowrap;
   transform-origin: center;
 }
@@ -1594,7 +1594,7 @@ body { zoom: var(--ui-zoom, 1); }
   width: 100%;
   height: 40px;
   padding: 8px 10px;
-  font: 14px/20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif;
+  font: calc(14px * var(--text-scale, 1))/20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif;
   box-sizing: border-box;
 }
 /* Text-tool capture is now a <textarea>: let it grow with rows (Enter = newline),
@@ -1634,7 +1634,7 @@ textarea.unified-text-input {
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
   border-radius: 5px;
-  font: 12px/1 "IBM Plex Sans KR", sans-serif;
+  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Sans KR", sans-serif;
   cursor: pointer;
 }
 .unified-editor-btn:hover,
@@ -1666,11 +1666,11 @@ textarea.unified-text-input {
 }
 .formula-preview-error {
   color: #b42318;
-  font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
+  font: calc(12px * var(--text-scale, 1))/1.35 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-controls {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) 72px auto auto;
+  grid-template-columns: minmax(220px, 1fr) calc(72px * var(--text-scale, 1)) auto auto;
   align-items: end;
   gap: 6px;
 }
@@ -1684,7 +1684,7 @@ textarea.unified-text-input {
 .unified-style-controls select {
   height: 28px;
   padding: 0 6px;
-  font: 12px/1 "IBM Plex Sans KR", sans-serif;
+  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Sans KR", sans-serif;
 }
 .unified-style-toggle {
   height: 28px;
@@ -1743,7 +1743,7 @@ textarea.unified-text-input {
   min-height: 84px;
   resize: vertical;
   white-space: pre;
-  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", "IBM Plex Sans KR", sans-serif;
+  font: calc(15px * var(--text-scale, 1))/1.4 system-ui, -apple-system, "Segoe UI", "IBM Plex Sans KR", sans-serif;
 }
 
 .formula-editor {
@@ -1936,7 +1936,7 @@ textarea.unified-text-input {
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
   border-radius: 5px;
-  font: 12px/1 "IBM Plex Mono", monospace;
+  font: calc(12px * var(--text-scale, 1))/1 "IBM Plex Mono", monospace;
   outline: none;
 }
 .canvas-bottom-bar input[type="number"]:focus {
@@ -2069,7 +2069,7 @@ textarea.unified-text-input {
   padding: 8px 16px;
   background: rgba(9, 105, 218, 0.95);
   color: #fff;
-  font: 13px/1.4 "IBM Plex Sans KR", sans-serif;
+  font: calc(13px * var(--text-scale, 1))/1.4 "IBM Plex Sans KR", sans-serif;
   border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   pointer-events: none;
@@ -2157,7 +2157,7 @@ textarea.unified-text-input {
      (그래프 모달의 물음표 툴팁이 모달 뒤로 깔리던 버그 수정). */
   position: fixed; z-index: 100001; pointer-events: none;
   max-width: 264px; padding: 5px 9px;
-  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  font: 500 calc(12px * var(--text-scale, 1))/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
   color: var(--text-primary);
   background: var(--bg-panel);
   border: 1px solid var(--c-border);

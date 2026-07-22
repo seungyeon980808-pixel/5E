@@ -1,6 +1,6 @@
 /* ===== EXAM LIBRARY MODAL (기출 문항 검색) ===== */
 
-.modal-examlib { width: 980px; max-width: calc(100vw - 32px); }
+.modal-examlib { width: calc(980px * var(--text-scale, 1)); max-width: calc(100vw - 32px); }
 
 .examlib-search-row input {
   width: 100%;

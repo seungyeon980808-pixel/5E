@@ -973,7 +973,7 @@ function _buildUnifiedStyleControls() {
     _textDebugEl = document.createElement("pre");
     _textDebugEl.className = "unified-style-debug";
     _textDebugEl.style.cssText =
-      "margin:4px 0 0;padding:4px 6px;font:11px/1.4 monospace;white-space:pre-wrap;" +
+      "margin:4px 0 0;padding:4px 6px;font: calc(11px * var(--text-scale, 1))/1.4 monospace;white-space:pre-wrap;" +
       "background:#0d1117;color:#7ee787;border-radius:4px;max-height:70px;overflow:auto;";
     wrapper.appendChild(_textDebugEl);
   }

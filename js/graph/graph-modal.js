@@ -1369,7 +1369,7 @@ function renderChips() {
     const chip = document.createElement("button");
     chip.type = "button";
     const on = i === _sel;
-    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font:12px monospace;max-width:170px;" +
+    chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: calc(12px * var(--text-scale, 1)) monospace;max-width:170px;" +
       "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;cursor:pointer;" +
       "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);";
     const lbl = document.createElement("span");
@@ -1428,7 +1428,7 @@ function chipLabel(spec) {
 }
 function elemChip(text, onDel) {
   const chip = document.createElement("span");
-  chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;font:11px monospace;border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:var(--bg-input);color:var(--text-primary);";
+  chip.style.cssText = "display:inline-flex;align-items:center;gap:4px;font: calc(11px * var(--text-scale, 1)) monospace;border:1px solid var(--border);border-radius:4px;padding:1px 6px;background:var(--bg-input);color:var(--text-primary);";
   const t = document.createElement("span"); t.textContent = text; chip.appendChild(t);
   const x = document.createElement("span"); x.textContent = "×";
   x.style.cssText = "color:#e5534b;font-weight:700;cursor:pointer;";
