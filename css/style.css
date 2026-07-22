@@ -1039,6 +1039,15 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 .gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
 
+/* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
+.gm-ann-tool {
+  font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer;
+  color: var(--text-label); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px;
+}
+.gm-ann-tool:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-ann-tool.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
 .gm-elem-seg { display: inline-flex; }
 .gm-elem-seg button {
   font: inherit;

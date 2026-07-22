@@ -255,50 +255,73 @@ function renderCoordplane(obj) {
   const numSize = Math.max(obj.tickLabelSize || 2.6, 1);
   // 축↔라벨 간격: 눈금이 안쪽으로만 뻗으니 라벨을 축 바로 밑에 더 바짝(요구: 여전히 낮다).
   const tickGap = numSize * 0.04 + sw * 1.5;
-  const addNumber = (text, nx, ny, anchor, baseline) => {
+  // 눈금 숫자 이동(요구 ②): 숫자마다 {dx,dy} 오프셋을 적용하고, data-tick으로 태깅한다
+  // (모달 미리보기가 그 태그를 잡아 드래그로 오프셋을 조정). tag=`${axis}:${ord}`.
+  const addNumber = (text, nx, ny, anchor, baseline, tag) => {
+    let node;
     if (rich) {
-      const gl = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: false });
-      if (gl) g.appendChild(gl);
-      return;
+      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: false });
+      if (node) g.appendChild(node);
+    } else {
+      node = document.createElementNS(SVG_NS, "text");
+      node.setAttribute("x", nx); node.setAttribute("y", ny);
+      node.setAttribute("font-size", numSize);
+      // Upright serif numerals (math-axis convention); NOT the italic 물리량 font.
+      node.setAttribute("font-family", "'Times New Roman', 'IBM Plex Serif', serif");
+      node.setAttribute("fill", color);
+      node.setAttribute("text-anchor", anchor);
+      node.setAttribute("dominant-baseline", baseline);
+      node.textContent = text;
+      g.appendChild(node);
     }
-    const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", nx); t.setAttribute("y", ny);
-    t.setAttribute("font-size", numSize);
-    // Upright serif numerals (math-axis convention); NOT the italic 물리량 font.
-    t.setAttribute("font-family", "'Times New Roman', 'IBM Plex Serif', serif");
-    t.setAttribute("fill", color);
-    t.setAttribute("text-anchor", anchor);
-    t.setAttribute("dominant-baseline", baseline);
-    t.textContent = text;
-    g.appendChild(t);
+    if (node && tag) node.setAttribute("data-tick", tag);
+    return node;
+  };
+  // 눈금별 이동 오프셋 조회(월드 mm). obj.tickOffX/Y = [{dx,dy}, …] (순번 기준).
+  const tickOffOf = (arr, ord) => {
+    const o = arr && arr[ord];
+    return (o && (Number.isFinite(o.dx) || Number.isFinite(o.dy)))
+      ? { dx: o.dx || 0, dy: o.dy || 0 } : { dx: 0, dy: 0 };
   };
   // 눈금 라벨 모드: "none"(없음) | "number"(자동 숫자) | "text"(문자 눈금 — t_0, 2t_0 등 직접).
-  // 구파일 호환: tickLabelMode 없으면 showTickLabels로 판정. 문자 눈금은 양의 방향
-  // k=1,2,3… 눈금에 배열 순서대로 붙는다(수식 가능 — rich 경로가 renderGraphLabel로 렌더).
+  // 구파일 호환: tickLabelMode 없으면 showTickLabels로 판정.
+  // 문자 눈금은 '가장 아래(축 팔의 맨 끝) → 위' 순서로 배열이 붙는다(요구: ㅏ자 음의 y축에도
+  // 입력 가능해야 함). 원점(k=0)은 건너뛴다. 아래 tickOrd(k,kStart)가 그 순번을 준다 —
+  // 양의 방향만 있는 축(ㄴ자·1사분면: kStart 0 또는 1)에서는 항상 k-1이 되어 기존 동작과 동일하다.
   const tickMode = obj.tickLabelMode || (obj.showTickLabels ? "number" : "none");
+  // kStart..k 사이 0이 아닌 눈금 중 k의 0-based 순번(원점 건너뜀 보정).
+  const tickOrd = (k, kStart) => (k - kStart) - (kStart <= 0 && k >= 0 ? 1 : 0);
   if (tickMode !== "none") {
     // 숫자 눈금값 = k × 격자 간격. 격자선이 곧 그 값의 자리이므로 별도 배율을 곱하지 않는다
     // (간격 0.5면 격자가 0.5마다 그어지고 라벨도 0, 0.5, 1… 로 따라붙는다).
-    const labelFor = (k, labelStep, arr) =>
-      tickMode === "text" ? (k >= 1 && arr && arr[k - 1] != null ? String(arr[k - 1]) : "") : fmtTick(k * labelStep);
+    const labelFor = (k, labelStep, arr, kStart) => {
+      if (tickMode !== "text") return fmtTick(k * labelStep);
+      if (!arr) return "";
+      const ord = tickOrd(k, kStart);
+      return (ord >= 0 && arr[ord] != null) ? String(arr[ord]) : "";
+    };
     if (xAxisVisible) {
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
-        const txt = labelFor(k, kx.step, obj.tickTextX);
+        const txt = labelFor(k, kx.step, obj.tickTextX, kx.kStart);
         if (!txt) continue;
+        const ordX = tickOrd(k, kx.kStart);
+        const offX = tickOffOf(obj.tickOffX, ordX);
         const vx = worldXFromMathX(P, k * kx.step);
         // 눈금 라벨을 눈금선보다 살짝 왼쪽으로(요구): 아래첨자(t₀의 ₀) 때문에 우측으로
         // 치우쳐 보이는 걸 보정.
-        addNumber(txt, vx - numSize * 0.14, worldY0 + tickGap, "middle", "hanging");
+        addNumber(txt, vx - numSize * 0.14 + offX.dx, worldY0 + tickGap + offX.dy, "middle", "hanging", "x:" + ordX);
       }
     }
     if (hasYArm && yAxisVisible) {
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
-        const txt = labelFor(k, ky.step, obj.tickTextY);
+        const txt = labelFor(k, ky.step, obj.tickTextY, ky.kStart);
         if (!txt) continue;
+        const ordY = tickOrd(k, ky.kStart);
+        const offY = tickOffOf(obj.tickOffY, ordY);
         const vy = worldYFromMathY(P, k * ky.step);
-        addNumber(txt, worldX0 - tickGap, vy, "end", "middle");
+        addNumber(txt, worldX0 - tickGap + offY.dx, vy + offY.dy, "end", "middle", "y:" + ordY);
       }
     }
   }
@@ -367,6 +390,58 @@ function renderCoordplane(obj) {
     else addName(oText, worldX0 - oSize * 0.22, worldY0 + oSize * 0.08, "end", "hanging", oSize);
   }
 
+  // ----- '표시' 레이어(요구 ③): 곡선에 종속되지 않는 독립 주석 -----
+  // 전부 평면 객체에 math 좌표로 저장되고 여기서 P로 world 변환 → 평면을 리사이즈해도 함께 따라온다.
+  // 표시점 ●, 수선의 발(축까지 점선), 화살촉, 가이드라인(두 점 점선), 범례(선 견본+글씨) 박스.
+  const annColor = grayHex(obj.strokeLevel);
+  const annSw = obj.strokeWidth || 0.3;
+  const wmX = (mx) => worldXFromMathX(P, mx), wmY = (my) => worldYFromMathY(P, my);
+  // 수선의 발: 점 (x,y)에서 두 축으로 점선을 내린다(곡선 불필요 — 자유 표시점에서도 동작).
+  (obj.annGuides || []).forEach((p) => {
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+    const wx = wmX(p.x), wy = wmY(p.y);
+    const seg = (x1, y1, x2, y2) => {
+      const l = document.createElementNS(SVG_NS, "line");
+      l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+      l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.55);
+      l.setAttribute("stroke-dasharray", "0.54 0.42"); l.setAttribute("stroke-linecap", "round");
+      g.appendChild(l);
+    };
+    if (Math.abs(wy - worldY0) > 1e-6) seg(wx, wy, wx, worldY0);   // → x축(수직)
+    if (Math.abs(wx - worldX0) > 1e-6) seg(wx, wy, worldX0, wy);   // → y축(수평)
+  });
+  // 가이드라인: 두 점을 잇는 점선(수선의 발보다 대시가 큼 — 안내선 성격).
+  (obj.guideLines || []).forEach((gl) => {
+    if (!gl || !Number.isFinite(gl.x1)) return;
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", wmX(gl.x1)); l.setAttribute("y1", wmY(gl.y1));
+    l.setAttribute("x2", wmX(gl.x2)); l.setAttribute("y2", wmY(gl.y2));
+    l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.7);
+    l.setAttribute("stroke-dasharray", "1.2 0.9"); l.setAttribute("stroke-linecap", "round");
+    g.appendChild(l);
+  });
+  // 화살촉: head=(x,y), tail=(tx,ty)로 방향을 잡는다. 곡선 없어도 두 점으로 방향 지정.
+  (obj.annArrows || []).forEach((a) => {
+    if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return;
+    const hx = wmX(a.x), hy = wmY(a.y);
+    const tx = wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1), ty = wmY(Number.isFinite(a.ty) ? a.ty : a.y);
+    let dx = hx - tx, dy = hy - ty; const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    g.appendChild(makeArrowHead(hx, hy, dx, dy, annSw * 1.75, annColor));
+  });
+  // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
+  (obj.annMarkers || []).forEach((p) => {
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", wmX(p.x)); c.setAttribute("cy", wmY(p.y));
+    c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
+    g.appendChild(c);
+  });
+  // 범례 박스: 선 견본 + 글씨 여러 줄. anchor(x,y)=박스 좌상단(math). 크기는 world mm.
+  (obj.legends || []).forEach((lg, li) => {
+    if (!lg || !Array.isArray(lg.rows) || !lg.rows.length) return;
+    renderLegendBox(g, lg, wmX(lg.x), wmY(lg.y), obj, li);
+  });
+
   // ----- rotation: whole plane turns about its bbox center -----
   const rot = obj.rotation ?? 0;
   if (rot) {
@@ -374,6 +449,42 @@ function renderCoordplane(obj) {
     g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
   }
   return g;
+}
+
+/* 범례 박스 렌더: 각 줄 [선 견본 ──][글씨]. 선 견본은 dash(=[on,off] world mm)로 스타일 표현.
+ * text는 renderGraphLabel(혼합 글꼴·수식)로 그린다. 박스는 얇은 테두리 + 흰 배경. */
+function renderLegendBox(g, lg, x0, y0, obj, li) {
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.3;
+  const size = Number.isFinite(lg.size) ? lg.size : (Number.isFinite(obj.tickLabelSize) ? obj.tickLabelSize : 2.6);
+  const pad = size * 0.6, rowH = size * 1.55, swatch = size * 2.6, gap = size * 0.6;
+  const rows = lg.rows;
+  const boxW = Number.isFinite(lg.w) ? lg.w : (pad * 2 + swatch + gap + size * 6);
+  const boxH = pad * 2 + rowH * rows.length;
+  const rect = document.createElementNS(SVG_NS, "rect");
+  rect.setAttribute("x", x0); rect.setAttribute("y", y0);
+  rect.setAttribute("width", boxW); rect.setAttribute("height", boxH);
+  rect.setAttribute("fill", "#ffffff"); rect.setAttribute("fill-opacity", "0.9");
+  rect.setAttribute("stroke", color); rect.setAttribute("stroke-width", sw * 0.5);
+  rect.setAttribute("rx", size * 0.25);
+  if (Number.isFinite(li)) rect.setAttribute("data-legend", String(li));   // 미리보기 드래그 이동용
+  g.appendChild(rect);
+  rows.forEach((r, i) => {
+    const cy = y0 + pad + rowH * i + rowH / 2;
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", x0 + pad); l.setAttribute("y1", cy);
+    l.setAttribute("x2", x0 + pad + swatch); l.setAttribute("y2", cy);
+    l.setAttribute("stroke", color); l.setAttribute("stroke-width", sw * 1.3);
+    l.setAttribute("stroke-linecap", "round");
+    if (Array.isArray(r.dash) && r.dash.length === 2 && (r.dash[0] || r.dash[1])) {
+      l.setAttribute("stroke-dasharray", `${r.dash[0]} ${r.dash[1]}`);
+    }
+    g.appendChild(l);
+    const lbl = renderGraphLabel(String(r.text || ""), {
+      x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
+    });
+    if (lbl) g.appendChild(lbl);
+  });
 }
 
 /* ===== FUNCGRAPH (step 3): a formula-driven open curve =====
