@@ -85,6 +85,11 @@
 .examlib-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  /* 이 그리드가 flex:1 아이템이라 자기 자신도 유동 크기라는 점과 맞물려, 암묵 행
+     높이를 auto로 두면(기본값) Chromium이 행 트랙을 전부 같은 위치로 뭉개서
+     카드가 층층이 겹쳐 그려지는 버그가 있었다(실측: 1열 카드끼리 완전히 겹침).
+     min-content로 명시해 각 행이 카드 내용만큼 확실히 자기 높이를 갖게 한다. */
+  grid-auto-rows: min-content;
   align-items: start; /* Safari 방지: 기본 stretch면 grid 행이 카드를 실제보다 낮게 늘려서
                           안의 고정높이 썸네일(.examlib-thumb)이 눌리는 WebKit 버그가 있음 */
   gap: 12px;
