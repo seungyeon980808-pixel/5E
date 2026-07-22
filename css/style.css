@@ -140,7 +140,11 @@ body {
   background: var(--bg-app);
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* zoom은 100vh 계산에 관여하지 않고 그려진 결과만 확대한다 — height를 그대로
+     100vh로 두면 배율(ui-zoom)만큼 실제 렌더 높이가 뷰포트를 넘어서 하단(푸터·
+     기출문항검색 등)이 화면 밖으로 잘린다. 배율의 역수로 미리 줄여 두면 zoom이
+     걸린 뒤 정확히 뷰포트 높이(100vh)로 돌아온다. */
+  height: calc(100vh / var(--ui-zoom, 1));
   overflow: hidden;
 }
 
@@ -160,7 +164,7 @@ body {
   background: var(--bg-app);
 }
 :root:fullscreen body {
-  height: 100vh;
+  height: calc(100vh / var(--ui-zoom, 1));
   overflow: hidden;
 }
 
