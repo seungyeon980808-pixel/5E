@@ -1044,27 +1044,29 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-range-step .gm-step { flex: 1 1 0; min-width: 0; }
 .gm-rs-sep { color: var(--text-secondary); font-size: 12px; flex: 0 0 auto; }
 
-/* 고급 옵션 모달(그래프 모달 위에 겹치는 서브 모달). */
-.gm-adv-overlay {
-  position: absolute; inset: 0; z-index: 5;
-  display: flex; align-items: center; justify-content: center;
-  background: color-mix(in srgb, var(--bg-input) 30%, transparent);
-  backdrop-filter: blur(1px);
+/* 고급 옵션: 좌표 탭 맨 아래 인라인 패널(모달 아님 → 미리보기가 계속 보인다). */
+.gm-adv-toggle {
+  width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+  padding: 7px 12px; cursor: pointer; color: inherit;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
 }
-.gm-adv-overlay[hidden] { display: none; }
-.gm-adv-modal {
-  background: var(--bg-panel, var(--bg-input)); color: inherit;
-  border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
-  width: min(460px, 92%); max-height: 82%; overflow-y: auto; padding: 16px 18px;
+.gm-adv-toggle:hover { background: var(--btn-tool-hover); }
+.gm-adv-panel {
+  margin-top: 10px; padding: 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 45%, transparent);
 }
-.gm-adv-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.gm-adv-head b { font-size: 15px; }
+.gm-adv-panel[hidden] { display: none; }
 .gm-adv-sect { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
-.gm-adv-sect > .gm-group-h { margin-bottom: 8px; }
-.gm-end-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 10px; }
-.gm-end-grid label { font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 2px; }
-.gm-end-grid input { width: 100%; }
+.gm-adv-h { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.gm-adv-h small { font-weight: 400; color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
+/* 네 끝(x+ x− y+ y−) 여백 입력: 한 줄에 나란히, 라벨은 짧게 잘리지 않게. */
+.gm-end-row { display: flex; gap: 8px; }
+.gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 5px; }
+.gm-end-item label { font-size: 12px; color: var(--text-secondary); flex: 0 0 auto; }
+.gm-end-item input { width: 100%; min-width: 0; padding: 4px 6px; box-sizing: border-box;
+  background: var(--bg-input); color: inherit; border: 1px solid var(--border); border-radius: 5px; }
 
 /* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
 .gm-ann-tool {
