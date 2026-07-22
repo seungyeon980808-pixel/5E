@@ -431,19 +431,22 @@ function renderCoordplane(obj) {
     const l = document.createElementNS(SVG_NS, "line");
     l.setAttribute("x1", wmX(gl.x1)); l.setAttribute("y1", wmY(gl.y1));
     l.setAttribute("x2", wmX(gl.x2)); l.setAttribute("y2", wmY(gl.y2));
-    l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.7);
-    l.setAttribute("stroke-dasharray", "1.2 0.9"); l.setAttribute("stroke-linecap", "round");
+    // 가이드라인: 수선의 발보다 더 촘촘하고 얇게(요구 2, 평가원 양식).
+    l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.45);
+    l.setAttribute("stroke-dasharray", "0.45 0.35"); l.setAttribute("stroke-linecap", "round");
     g.appendChild(l);
   });
   // 화살촉: (x,y)=곡선 위 지점, (dx,dy)=그 지점 접선(요구 5, 클릭 한 번). 옛 데이터(tx,ty)도 호환.
+  // 클릭한 지점이 화살촉의 '정중앙'에 오도록 촉을 진행 방향으로 길이 절반만큼 앞당긴다(요구 4).
   (obj.annArrows || []).forEach((a) => {
     if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return;
-    const hx = wmX(a.x), hy = wmY(a.y);
+    const cx = wmX(a.x), cy = wmY(a.y);
     let dx, dy;
     if (Number.isFinite(a.dx) && Number.isFinite(a.dy)) { dx = a.dx; dy = a.dy; }
-    else { dx = hx - wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1); dy = hy - wmY(Number.isFinite(a.ty) ? a.ty : a.y); }
+    else { dx = cx - wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1); dy = cy - wmY(Number.isFinite(a.ty) ? a.ty : a.y); }
     const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
-    g.appendChild(makeArrowHead(hx, hy, dx, dy, annSw * 1.75, annColor));
+    const headSw = annSw * 1.75, headLen = headSw * 4.5;   // makeArrowHead의 length와 동일
+    g.appendChild(makeArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
   });
   // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
   (obj.annMarkers || []).forEach((p) => {

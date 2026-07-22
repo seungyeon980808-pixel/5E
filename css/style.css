@@ -1063,10 +1063,9 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-adv-h small { font-weight: 400; color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
 /* 네 끝(x+ x− y+ y−) 여백 입력: 한 줄에 나란히, 라벨은 짧게 잘리지 않게. */
 .gm-end-row { display: flex; gap: 8px; }
-.gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 5px; }
+.gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
 .gm-end-item label { font-size: 12px; color: var(--text-secondary); flex: 0 0 auto; }
-.gm-end-item input { width: 100%; min-width: 0; padding: 4px 6px; box-sizing: border-box;
-  background: var(--bg-input); color: inherit; border: 1px solid var(--border); border-radius: 5px; }
+.gm-end-item .gm-step { flex: 1 1 0; min-width: 0; }
 
 /* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
 .gm-ann-tool {

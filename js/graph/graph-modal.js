@@ -1285,12 +1285,15 @@ function refreshPreview() {
       el.addEventListener("click", (e) => e.stopPropagation());
       el.addEventListener("mousedown", (e) => {
         e.preventDefault(); e.stopPropagation();
-        const start = clientToMath(e.clientX, e.clientY);
+        // 범례는 미리보기 어디로든 자유 이동(요구 3): 데이터 범위로 클램프하는 clientToMath 대신
+        // 언클램프 변환(clientToWorld → mathFromWorld)을 쓴다.
+        const toM = (cx, cy) => { const w = clientToWorld(cx, cy); return w ? mathFromWorld(_previewPlane, w.x, w.y) : null; };
+        const start = toM(e.clientX, e.clientY);
         const lg = (_cfg.legends || [])[li];
         if (!start || !lg) return;
         const base = { x: lg.x, y: lg.y };
         const onMove = (ev) => {
-          const m = clientToMath(ev.clientX, ev.clientY);
+          const m = toM(ev.clientX, ev.clientY);
           if (!m) return;
           lg.x = base.x + (m.x - start.x); lg.y = base.y + (m.y - start.y);
           refreshPreview();
@@ -1970,20 +1973,20 @@ function build() {
               <div class="gm-adv-sect">
                 <div class="gm-adv-h">화살표 위치<small>마지막 눈금에서의 여백(칸)</small></div>
                 <div class="gm-end-row">
-                  <span class="gm-end-item"><label>x+</label><input type="number" id="gm-pad-xp" step="0.1" min="0" value="1.6"></span>
-                  <span class="gm-end-item"><label>x−</label><input type="number" id="gm-pad-xn" step="0.1" min="0" value="1.6"></span>
-                  <span class="gm-end-item"><label>y+</label><input type="number" id="gm-pad-yp" step="0.1" min="0" value="1.3"></span>
-                  <span class="gm-end-item"><label>y−</label><input type="number" id="gm-pad-yn" step="0.1" min="0" value="1.3"></span>
+                  <span class="gm-end-item"><label>x+</label><span class="gm-step"><input type="number" id="gm-pad-xp" step="0.1" min="0" value="1.6"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>x−</label><span class="gm-step"><input type="number" id="gm-pad-xn" step="0.1" min="0" value="1.6"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>y+</label><span class="gm-step"><input type="number" id="gm-pad-yp" step="0.1" min="0" value="1.3"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>y−</label><span class="gm-step"><input type="number" id="gm-pad-yn" step="0.1" min="0" value="1.3"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
                 </div>
               </div>
 
               <div class="gm-adv-sect">
                 <div class="gm-adv-h">격자 튀어나옴<small>눈금 밖으로 더 뻗는 칸 (0=닫힘)</small></div>
                 <div class="gm-end-row">
-                  <span class="gm-end-item"><label>x+</label><input type="number" id="gm-gov-xp" step="0.1" min="0" value="0.5"></span>
-                  <span class="gm-end-item"><label>x−</label><input type="number" id="gm-gov-xn" step="0.1" min="0" value="0.5"></span>
-                  <span class="gm-end-item"><label>y+</label><input type="number" id="gm-gov-yp" step="0.1" min="0" value="0.5"></span>
-                  <span class="gm-end-item"><label>y−</label><input type="number" id="gm-gov-yn" step="0.1" min="0" value="0.5"></span>
+                  <span class="gm-end-item"><label>x+</label><span class="gm-step"><input type="number" id="gm-gov-xp" step="0.1" min="0" value="0.5"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>x−</label><span class="gm-step"><input type="number" id="gm-gov-xn" step="0.1" min="0" value="0.5"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>y+</label><span class="gm-step"><input type="number" id="gm-gov-yp" step="0.1" min="0" value="0.5"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
+                  <span class="gm-end-item"><label>y−</label><span class="gm-step"><input type="number" id="gm-gov-yn" step="0.1" min="0" value="0.5"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span></span>
                 </div>
               </div>
             </div>
