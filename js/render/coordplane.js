@@ -30,8 +30,8 @@ function baselineToVAlign(b) {
 
 // Grid lines are deliberately light + thin (grayscale project); a hard cap keeps a
 // tiny step over a wide range from spraying hundreds of lines.
-const GRID_LEVEL = 80;         // mid gray (0=black … 255=white) — 요구: 지금 회색과 완전검정의 중간값
-const TICK_LEVEL = 70;         // 눈금 표시선: 요구 — 지금 회색(140)과 완전검정의 중간값으로 더 진하게
+const GRID_LEVEL = 0;          // 요구: 다른 시험지 확인 결과 점선은 그냥 검정
+const TICK_LEVEL = 0;          // 요구: 눈금 표시선도 그냥 검정
 const GRID_MAX_LINES = 160;    // per axis; beyond this the grid is skipped
 
 /* ----- 부드러운(베지어) 화살촉 — 평가원 만년필식, 실사진에서 직접 추적(요구 5).
@@ -283,13 +283,14 @@ function renderCoordplane(obj) {
   // y축 눈금은 오른쪽으로만(왼쪽으로 안 튀어나옴). 반대쪽으로는 그 방향에 데이터가 있을 때만
   // (십자=양쪽). x축 아래쪽은 y가 음수 범위(yBoth)일 때만, y축 왼쪽은 x가 음수 범위(xBoth)일 때만.
   const tIn = sw * 4.8;              // 안쪽(데이터 쪽) 길이 — 눈금을 조금 더 길게(요구)
+  const tickSw = sw * 0.8;           // 요구: 눈금 굵기를 축선보다 20% 얇게(축·격자는 sw 그대로)
   if (obj.showTicks) {
     if (xAxisVisible) {
       const up = tIn, down = yBoth ? tIn : 0;       // 위=항상, 아래=y음수범위일 때만
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
         const vx = worldXFromMathX(P, k * kx.step);
-        addLine(vx, worldY0 - up, vx, worldY0 + down, tickColor, sw);  // -y = 위(안쪽), 회색
+        addLine(vx, worldY0 - up, vx, worldY0 + down, tickColor, tickSw);  // -y = 위(안쪽)
       }
     }
     if (hasYArm && yAxisVisible) {
@@ -297,7 +298,7 @@ function renderCoordplane(obj) {
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
         const vy = worldYFromMathY(P, k * ky.step);
-        addLine(worldX0 - leftLen, vy, worldX0 + rightLen, vy, tickColor, sw); // +x = 오른쪽(안쪽), 회색
+        addLine(worldX0 - leftLen, vy, worldX0 + rightLen, vy, tickColor, tickSw); // +x = 오른쪽(안쪽)
       }
     }
   }
