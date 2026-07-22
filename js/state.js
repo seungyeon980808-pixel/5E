@@ -108,6 +108,39 @@ export function resolveTextLetterSpacing(obj = {}) {
 export const LETTER_SPACING_MIN = -0.1;
 export const LETTER_SPACING_MAX = 0.5;
 
+/* ===== 장평(width scale) =====
+ * obj.widthScale = 가로 배율(1 = 100%). 한글(HWP)의 "장평"과 같은 개념이고,
+ * 평가원 지면이 실제로 쓰는 조판값이다 — 예: 신명 중고딕 장평 95%, 신그래픽 장평 90%.
+ * 실측(2026 수능 물리1 17번 라벨을 돋움으로 재현): 장평 96%에서 자형 유사도가
+ * 67.20% → 72.22%로 올라갔다(천장 74.27%의 97%).
+ *
+ * 구현 주의 — 왜 transform 인가:
+ *   textLength+lengthAdjust 는 getBBox 가 반영해줘서 히트테스트가 공짜지만, 자연폭을
+ *   정확히 알아야 한다. 내보내기는 DOM 밖에서 새로 그려 getComputedTextLength()를 못 쓰고,
+ *   캔버스 측정은 한글은 0% 오차지만 라틴 런(별도 글꼴로 쪼개 그림)에서 -6.6% 어긋난다.
+ *   측정이 틀리면 textLength 가 글자를 강제로 눌러 찌그러진다. 그래서 측정이 필요 없는
+ *   transform:scale 을 쓰고, 대신 getBBox 소비처를 아래 헬퍼로 보정한다.
+ *
+ * 적용 범위: text 객체만. formula 는 canvas measureText 기반 자체 레이아웃으로
+ * 내보내기 픽셀 일치를 보장하므로 건드리지 않는다. */
+export const WIDTH_SCALE_MIN = 0.5;
+export const WIDTH_SCALE_MAX = 1.5;
+export function resolveTextWidthScale(obj = {}) {
+  if (!obj || obj.type !== "text") return 1;
+  const v = Number(obj.widthScale);
+  if (!Number.isFinite(v) || v <= 0) return 1;
+  return Math.max(WIDTH_SCALE_MIN, Math.min(WIDTH_SCALE_MAX, v));
+}
+/** getBBox()는 요소 자신의 transform을 반영하지 않는다(회전과 같은 함정).
+ *  장평이 걸린 text의 bbox를 앵커(obj.x, text-anchor=start) 기준으로 가로 보정한다.
+ *  장평이 1이면 입력 bbox를 그대로 돌려주므로 기존 동작과 완전히 동일하다. */
+export function scaleBBoxForWidth(obj, bb) {
+  const sx = resolveTextWidthScale(obj);
+  if (sx === 1) return { x: bb.x, y: bb.y, width: bb.width, height: bb.height };
+  const ax = obj.x;
+  return { x: ax + (bb.x - ax) * sx, y: bb.y, width: bb.width * sx, height: bb.height };
+}
+
 export function textRunStyleFromObject(obj = {}) {
   const italic = typeof obj.italic === "boolean"
     ? obj.italic

@@ -76,7 +76,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
@@ -149,6 +149,8 @@ export function initInspector(state) {
     italicCb.disabled = disabled;
     lsRange.disabled = disabled;
     lsNum.disabled = disabled;
+    wsRange.disabled = disabled;
+    wsNum.disabled = disabled;
     centerLineSel.disabled = disabled || locked;
   }
 
@@ -427,6 +429,11 @@ export function initInspector(state) {
       const lsVal = Number.isFinite(Number(styleObj.letterSpacing)) ? Number(styleObj.letterSpacing) : 0;
       if (document.activeElement !== lsRange) lsRange.value = String(lsVal);
       if (document.activeElement !== lsNum) lsNum.value = String(lsVal);
+      // 장평: 저장은 배율, 표시는 %
+      const wsPct = Math.round((Number.isFinite(Number(obj.widthScale)) && Number(obj.widthScale) > 0
+        ? Number(obj.widthScale) : 1) * 100);
+      if (document.activeElement !== wsRange) wsRange.value = String(wsPct);
+      if (document.activeElement !== wsNum) wsNum.value = String(wsPct);
     }
     const isLineFamily = LINE_TYPES.includes(obj.type);
 

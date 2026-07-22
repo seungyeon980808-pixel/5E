@@ -4,7 +4,8 @@
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
 import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
-         LETTER_SPACING_MIN, LETTER_SPACING_MAX } from "../state.js?v=1.1.0";
+         LETTER_SPACING_MIN, LETTER_SPACING_MAX,
+         WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.1.0";
 import { makeSection } from "./widgets.js?v=1.1.0";
 
 export function buildTextSection(ctx) {
@@ -91,6 +92,31 @@ export function buildTextSection(ctx) {
   lsRow.append(lsLbl, lsRange, lsNum, lsUnit);
   secTextBody.appendChild(lsRow);
 
+  /* 장평 — 가로 배율(%). 한글(HWP)의 "장평"과 같은 개념이고 평가원 지면이 실제로 쓰는 값이다
+     (예: 신명 중고딕 장평 95%). 실측상 돋움 장평 96%에서 수능 지면과 가장 가까웠다. */
+  const wsRow = document.createElement("div");
+  wsRow.className = "insp-row";
+  const wsLbl = document.createElement("label");
+  wsLbl.className = "insp-field-label";
+  wsLbl.textContent = "장평";
+  const wsRange = document.createElement("input");
+  wsRange.type = "range";
+  wsRange.className = "insp-range";
+  wsRange.min = String(Math.round(WIDTH_SCALE_MIN * 100));
+  wsRange.max = String(Math.round(WIDTH_SCALE_MAX * 100));
+  wsRange.step = "1";
+  const wsNum = document.createElement("input");
+  wsNum.type = "number";
+  wsNum.className = "insp-input";
+  wsNum.min = wsRange.min;
+  wsNum.max = wsRange.max;
+  wsNum.step = "1";
+  const wsUnit = document.createElement("span");
+  wsUnit.className = "insp-unit";
+  wsUnit.textContent = "%";
+  wsRow.append(wsLbl, wsRange, wsNum, wsUnit);
+  secTextBody.appendChild(wsRow);
+
   function applyTextProp(prop, value) {
     const s = state.get();
     const ids = s.selectedIds || [];
@@ -144,9 +170,22 @@ export function buildTextSection(ctx) {
   lsNum.addEventListener("change", () => commitLetterSpacing(lsNum.value));
   lsNum.addEventListener("keydown", (e) => { if (e.key === "Enter") lsNum.blur(); });
 
+  // 장평은 UI가 %, 저장은 배율(1 = 100%)
+  function commitWidthScale(rawPct) {
+    const pct = Number(rawPct);
+    if (!Number.isFinite(pct)) return;
+    const c = Math.max(WIDTH_SCALE_MIN * 100, Math.min(WIDTH_SCALE_MAX * 100, Math.round(pct)));
+    wsRange.value = String(c);
+    wsNum.value = String(c);
+    applyTextProp("widthScale", c / 100);
+  }
+  wsRange.addEventListener("input", () => commitWidthScale(wsRange.value));
+  wsNum.addEventListener("change", () => commitWidthScale(wsNum.value));
+  wsNum.addEventListener("keydown", (e) => { if (e.key === "Enter") wsNum.blur(); });
+
   // 예전의 "글꼴 설정..." 버튼(별도 모달)은 제거됐다. 글꼴/크기/굵게/기울임과 심볼
   // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
   const secText = makeSection("글꼴", secTextBody);
 
-  return { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum };
+  return { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum, wsRange, wsNum };
 }

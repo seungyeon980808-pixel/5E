@@ -27,7 +27,7 @@ import { renderCircuit } from "./circuit.js?v=1.1.0";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.1.0";
 import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.1.0";
 import { renderGauge } from "./gauge.js?v=1.1.0";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.1.0";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.1.0";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=1.1.0";
 import { resolveObjectStyle } from "../style-mode.js?v=1.1.0";
 import { renderFormula } from "../formula.js?v=1.1.0";
@@ -337,7 +337,8 @@ export function render(state) {
       const textEl = scene.querySelector(`[data-id="${sel.id}"]`);
       if (textEl) {
         try {
-          const bb = textEl.getBBox();
+          // getBBox()는 요소 자신의 transform 미반영 → 장평(가로 배율)을 먼저 보정.
+          const bb = scaleBBoxForWidth(sel, textEl.getBBox());
           const box = document.createElementNS(SVG_NS, "rect");
           box.setAttribute("x", bb.x);
           box.setAttribute("y", bb.y);
@@ -513,7 +514,7 @@ export function render(state) {
     tEl.dataset.ui = "draft-text";
     scene.appendChild(tEl);
     try {
-      const bb = tEl.getBBox();
+      const bb = scaleBBoxForWidth(dt, tEl.getBBox()); // 장평 보정(위 규칙과 동일)
       const pad = 3 / getRenderScale(); // ~3 screen px of padding, zoom-stable
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", bb.x - pad);
@@ -810,7 +811,7 @@ export function singleObjBBox(o, scene) {
   if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const el = scene.querySelector(`[data-id="${o.id}"]`);
     if (el) {
-      try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+      try { const bb = scaleBBoxForWidth(o, el.getBBox()); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
       catch (_) { /* not laid out yet */ }
     }
     return null;
