@@ -83,6 +83,7 @@ function defaultCfg() {
     labelMovable: false,          // 축 라벨 이동 가능 — 켜면 미리보기에서 드래그(요구)
     labelXOffset: { dx: 0, dy: 0 }, // 축 이름 위치 오프셋(월드 mm; 드래그로 조정)
     labelYOffset: { dx: 0, dy: 0 },
+    labelXPos: null, labelYPos: null, // 옮긴 축 이름의 박스 기준 절대 분율(요구 2). null=축 앵커 사용
     tickMovable: false,           // 눈금 숫자 이동 가능(요구 ②) — 켜면 숫자를 드래그
     tickOffX: [], tickOffY: [],   // 눈금 숫자별 위치 오프셋 [{dx,dy}…] (순번 = 아래→위)
     // 고급: 화살표 촉 위치 = 마지막 눈금에서의 여백(네 끝 각각, 값 단위). 기본 = 현행(x 1.6·y 1.3).
@@ -190,6 +191,9 @@ function applyCfg(plane, cfg) {
   // 축 라벨 이동: 오프셋을 평면에 저장 → coordplane가 축 이름을 그만큼 옮겨 그린다.
   plane.labelXOffset = cfg.labelXOffset && Number.isFinite(cfg.labelXOffset.dx) ? { dx: cfg.labelXOffset.dx, dy: cfg.labelXOffset.dy } : { dx: 0, dy: 0 };
   plane.labelYOffset = cfg.labelYOffset && Number.isFinite(cfg.labelYOffset.dx) ? { dx: cfg.labelYOffset.dx, dy: cfg.labelYOffset.dy } : { dx: 0, dy: 0 };
+  // 옮긴 축 이름의 박스 기준 절대 분율(요구 2). 없으면 null(축 앵커 사용).
+  plane.labelXPos = cfg.labelXPos && Number.isFinite(cfg.labelXPos.fx) ? { fx: cfg.labelXPos.fx, fy: cfg.labelXPos.fy } : null;
+  plane.labelYPos = cfg.labelYPos && Number.isFinite(cfg.labelYPos.fx) ? { fx: cfg.labelYPos.fx, fy: cfg.labelYPos.fy } : null;
   // 눈금 숫자 이동(요구 ②): 숫자별 {dx,dy} 오프셋 배열을 평면에 복사.
   const copyOffs = (arr) => Array.isArray(arr) ? arr.map((o) => (o && (Number.isFinite(o.dx) || Number.isFinite(o.dy))) ? { dx: o.dx || 0, dy: o.dy || 0 } : { dx: 0, dy: 0 }) : [];
   plane.tickOffX = copyOffs(cfg.tickOffX);
@@ -917,7 +921,8 @@ function refreshPreview() {
     return { mx: m.x, my: m.y, wx: p.x, wy: p.y };
   };
   // '표시' 탭 배치용: 모든 곡선 중 최근접점(임계 안이면 스냅), 없으면 커서 좌표 그대로.
-  const snapAnn = (clientX, clientY) => {
+  // 모든 계열 곡선 중 최근접점(+접선 dx,dy). 곡선이 하나도 없으면 null.
+  const nearestCurve = (clientX, clientY) => {
     const w = clientToWorld(clientX, clientY);
     if (!w) return null;
     let best = null;
@@ -925,11 +930,14 @@ function refreshPreview() {
       const p = nearestOnPolyline(sp.pts, w.x, w.y, sp.breaks);
       if (p && (!best || p.dist < best.dist)) best = p;
     }
+    if (!best) return null;
+    const m = mathFromWorld(_previewPlane, best.x, best.y);
+    return { mx: m.x, my: m.y, wx: best.x, wy: best.y, dx: best.dx, dy: best.dy, dist: best.dist };
+  };
+  const snapAnn = (clientX, clientY) => {
+    const nc = nearestCurve(clientX, clientY);
     const SNAP = 3;   // world mm 임계 — 이보다 가까우면 곡선에 붙는다
-    if (best && best.dist <= SNAP) {
-      const m = mathFromWorld(_previewPlane, best.x, best.y);
-      return { mx: m.x, my: m.y, wx: best.x, wy: best.y, snapped: true };
-    }
+    if (nc && nc.dist <= SNAP) return { mx: nc.mx, my: nc.my, wx: nc.wx, wy: nc.wy, dx: nc.dx, dy: nc.dy, snapped: true };
     const m = clientToMath(clientX, clientY);
     if (!m) return null;
     const wf = worldFromMath(_previewPlane, m.x, m.y);
@@ -938,7 +946,7 @@ function refreshPreview() {
 
   // 좌표 툴팁(요구): 함수/수선/표시점을 찍을 때 커서가 노리는 좌표를 커서 바로 위에 표시.
   let coordTip = null;
-  if (drawing || placing) {
+  if (drawing || placing || _annMode) {   // '표시' 탭 배치 중에도 커서 좌표를 보여준다(요구 4)
     coordTip = document.createElementNS(SVG_NS, "text");
     coordTip.setAttribute("font-size", 3);
     coordTip.setAttribute("fill", "#111"); coordTip.setAttribute("text-anchor", "middle");
@@ -1005,17 +1013,22 @@ function refreshPreview() {
     if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     // '표시' 레이어 배치(요구 ③): 곡선이 가까우면 스냅, 없으면 클릭 좌표 그대로 — 함수 없이도 동작.
     if (_annMode) {
+      // 화살표(요구 5): 함수 위에서만, 클릭 '한 번'에 그 지점 접선 방향으로 화살촉을 놓는다.
+      if (_annMode === "arrow") {
+        const nc = nearestCurve(e.clientX, e.clientY);
+        if (!nc) return;   // 곡선이 없으면(또는 못 잡으면) 배치하지 않는다
+        (_cfg.annArrows = _cfg.annArrows || []).push({ x: nc.mx, y: nc.my, dx: nc.dx, dy: nc.dy });
+        if (typeof syncAnnLists === "function") syncAnnLists();
+        refreshPreview();
+        return;
+      }
       const hit = snapAnn(e.clientX, e.clientY);
       if (!hit) return;
       if (_annMode === "marker") (_cfg.annMarkers = _cfg.annMarkers || []).push({ x: hit.mx, y: hit.my });
       else if (_annMode === "guide") (_cfg.annGuides = _cfg.annGuides || []).push({ x: hit.mx, y: hit.my });
-      else if (_annMode === "arrow" || _annMode === "guideline") {
-        if (!_annPending) { _annPending = { x: hit.mx, y: hit.my }; }   // 첫 점(화살표=꼬리, 가이드=시작)
-        else {
-          if (_annMode === "arrow") (_cfg.annArrows = _cfg.annArrows || []).push({ x: hit.mx, y: hit.my, tx: _annPending.x, ty: _annPending.y });
-          else (_cfg.guideLines = _cfg.guideLines || []).push({ x1: _annPending.x, y1: _annPending.y, x2: hit.mx, y2: hit.my });
-          _annPending = null;
-        }
+      else if (_annMode === "guideline") {
+        if (!_annPending) { _annPending = { x: hit.mx, y: hit.my }; }   // 가이드라인 첫 점
+        else { (_cfg.guideLines = _cfg.guideLines || []).push({ x1: _annPending.x, y1: _annPending.y, x2: hit.mx, y2: hit.my }); _annPending = null; }
       }
       if (typeof syncAnnLists === "function") syncAnnLists();
       refreshPreview();
@@ -1054,9 +1067,11 @@ function refreshPreview() {
   svg.addEventListener("mousemove", (e) => {
     // '표시' 탭 배치 고스트(요구): 찍힐 점을 커서를 따라 파란 미리보기로 보여준다.
     if (_annMode) {
-      const hit = snapAnn(e.clientX, e.clientY);
+      // 화살표는 곡선 위에서만 — 곡선 최근접점에 접선 방향 미리보기.
+      const hit = _annMode === "arrow" ? nearestCurve(e.clientX, e.clientY) : snapAnn(e.clientX, e.clientY);
       if (!hit) {
         [annGhost, annRing, annV, annH, annSeg].forEach((el) => { if (el) el.style.display = "none"; });
+        if (coordTip) coordTip.style.display = "none";
         return;
       }
       const gr = markerRadius(_cfg.strokeWidth || 0.4);
@@ -1069,10 +1084,18 @@ function refreshPreview() {
         annV.setAttribute("x1", hit.wx); annV.setAttribute("y1", hit.wy); annV.setAttribute("x2", hit.wx); annV.setAttribute("y2", o0.y); annV.style.display = "";
         annH.setAttribute("x1", hit.wx); annH.setAttribute("y1", hit.wy); annH.setAttribute("x2", o0.x); annH.setAttribute("y2", hit.wy); annH.style.display = "";
       }
-      if ((_annMode === "arrow" || _annMode === "guideline") && _annPending) {
+      if (_annMode === "arrow" && annSeg && Number.isFinite(hit.dx)) {
+        // 접선 방향으로 짧은 선(화살촉이 놓일 방향 안내).
+        const L = gr * 4;
+        annSeg.setAttribute("x1", hit.wx - hit.dx * L); annSeg.setAttribute("y1", hit.wy - hit.dy * L);
+        annSeg.setAttribute("x2", hit.wx + hit.dx * L); annSeg.setAttribute("y2", hit.wy + hit.dy * L); annSeg.style.display = "";
+      } else if (_annMode === "guideline" && _annPending && annSeg) {
         const t = worldFromMath(_previewPlane, _annPending.x, _annPending.y);
         annSeg.setAttribute("x1", t.x); annSeg.setAttribute("y1", t.y); annSeg.setAttribute("x2", hit.wx); annSeg.setAttribute("y2", hit.wy); annSeg.style.display = "";
       }
+      // 커서 좌표 표시(요구 4): 찍힐 좌표를 커서 위에.
+      const cw = clientToWorld(e.clientX, e.clientY);
+      showCoordTip(hit.mx, hit.my, cw ? cw.x : hit.wx, cw ? cw.y : hit.wy);
       return;
     }
     // 배치 모드 고스트: 함수 위 찍힐 점(+수선이면 축까지 안내선) 미리보기.
@@ -1201,13 +1224,19 @@ function refreshPreview() {
       el.addEventListener("mousedown", (e) => {
         e.preventDefault(); e.stopPropagation();
         const start = clientToWorld(e.clientX, e.clientY);
-        const key = which === "x" ? "labelXOffset" : "labelYOffset";
-        const base = { ...(_cfg[key] || { dx: 0, dy: 0 }) };
         if (!start) return;
+        // 라벨을 '평면 박스 기준 분율'로 저장한다(요구 2): 화살표 여백·범위를 바꿔 축이 움직여도
+        // 라벨은 박스 안 같은 자리에 남는다. 기준 world = 현재 라벨 중심(분율 있으면 그로부터).
+        const posKey = which === "x" ? "labelXPos" : "labelYPos";
+        const pl = _previewPlane;
+        let baseW;
+        if (_cfg[posKey] && Number.isFinite(_cfg[posKey].fx)) baseW = { x: pl.x + _cfg[posKey].fx * pl.w, y: pl.y + _cfg[posKey].fy * pl.h };
+        else { try { const b = el.getBBox(); baseW = { x: b.x + b.width / 2, y: b.y + b.height / 2 }; } catch (_) { baseW = { x: start.x, y: start.y }; } }
         const onMove = (ev) => {
           const w = clientToWorld(ev.clientX, ev.clientY);
           if (!w) return;
-          _cfg[key] = { dx: base.dx + (w.x - start.x), dy: base.dy + (w.y - start.y) };
+          const nx = baseW.x + (w.x - start.x), ny = baseW.y + (w.y - start.y);
+          _cfg[posKey] = { fx: (nx - pl.x) / pl.w, fy: (ny - pl.y) / pl.h };
           refreshPreview();
         };
         const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
@@ -1466,7 +1495,7 @@ function syncAnnLists() {
   const H = {
     marker: "미리보기를 클릭해 표시점을 찍습니다.",
     guide: "미리보기를 클릭하면 그 점에서 두 축까지 점선(수선의 발)이 생깁니다.",
-    arrow: "두 번 클릭 — 첫 점=꼬리, 둘째 점=화살촉 방향.",
+    arrow: "함수(곡선) 위를 클릭하면 그 자리에 접선 방향으로 화살촉이 놓입니다. 함수가 없으면 놓이지 않습니다.",
     guideline: "두 점을 클릭하면 그 사이에 안내 점선이 생깁니다.",
   };
   _els.annHint.textContent = _annMode
@@ -1488,6 +1517,24 @@ function renderLegendEditor() {
     const delLeg = document.createElement("button"); delLeg.type = "button"; delLeg.textContent = "삭제"; delLeg.style.cssText = miniBtn;
     delLeg.addEventListener("click", () => { _cfg.legends.splice(li, 1); syncAnnLists(); refreshPreview(); });
     head.append(ttl, delLeg); box.appendChild(head);
+    // 글씨 크기·실 길이 조정(요구 3). 값이 없으면 렌더러 기본(2.2 / size*2.4)을 쓴다.
+    const sizeRow = document.createElement("div");
+    sizeRow.style.cssText = "display:flex;gap:8px;margin-bottom:6px;align-items:center;font-size:11px;color:var(--text-secondary);";
+    const numField = (label, val, dflt, on) => {
+      const wrap = document.createElement("span");
+      wrap.style.cssText = "display:flex;align-items:center;gap:3px;";
+      const lb = document.createElement("span"); lb.textContent = label;
+      const inp = document.createElement("input"); inp.type = "number"; inp.step = "0.1"; inp.min = "0.5";
+      inp.value = Number.isFinite(val) ? val : dflt;
+      inp.style.cssText = "width:48px;font-size:11px;padding:2px 4px;background:var(--bg-input);color:inherit;border:1px solid var(--border);border-radius:4px;";
+      inp.addEventListener("input", () => { const n = parseFloat(inp.value); on(Number.isFinite(n) && n > 0 ? n : undefined); refreshPreview(); });
+      wrap.append(lb, inp); return wrap;
+    };
+    sizeRow.append(
+      numField("글씨", lg.size, 2.2, (v) => { lg.size = v; }),
+      numField("실 길이", lg.swatch, 5.3, (v) => { lg.swatch = v; }),
+    );
+    box.appendChild(sizeRow);
     (lg.rows || []).forEach((r, ri) => {
       const row = document.createElement("div");
       row.style.cssText = "display:flex;gap:4px;margin-bottom:4px;align-items:center;";
@@ -2269,14 +2316,14 @@ function build() {
   // 화살표 여백·격자 튀어나옴(네 끝) — 입력 즉시 미리보기 반영(요구: 실시간).
   const numOrDefault = (el, d) => { const n = parseFloat(el.value); return Number.isFinite(n) && n >= 0 ? n : d; };
   const bindEnd = (el, key, d) => el.addEventListener("input", () => { _cfg[key] = numOrDefault(el, d); refreshPreview(); });
-  bindEnd(_els.padXP, "padXPos", PAD_X); bindEnd(_els.padXN, "padXNeg", PAD_X);
-  bindEnd(_els.padYP, "padYPos", PAD_Y); bindEnd(_els.padYN, "padYNeg", PAD_Y);
   bindEnd(_els.govXP, "gridOverXPos", GRID_OVER); bindEnd(_els.govXN, "gridOverXNeg", GRID_OVER);
   bindEnd(_els.govYP, "gridOverYPos", GRID_OVER); bindEnd(_els.govYN, "gridOverYNeg", GRID_OVER);
+  bindEnd(_els.padXP, "padXPos", PAD_X); bindEnd(_els.padXN, "padXNeg", PAD_X);
+  bindEnd(_els.padYP, "padYPos", PAD_Y); bindEnd(_els.padYN, "padYNeg", PAD_Y);
   _els.labelMove.addEventListener("change", () => {
     _cfg.labelMovable = _els.labelMove.checked;
     // 끄면 옮겼던 축 라벨을 원래 지정 위치로 되돌린다(요구).
-    if (!_cfg.labelMovable) { _cfg.labelXOffset = { dx: 0, dy: 0 }; _cfg.labelYOffset = { dx: 0, dy: 0 }; }
+    if (!_cfg.labelMovable) { _cfg.labelXOffset = { dx: 0, dy: 0 }; _cfg.labelYOffset = { dx: 0, dy: 0 }; _cfg.labelXPos = null; _cfg.labelYPos = null; }
     refreshPreview();
   });
   // 눈금 숫자 이동(요구 ②): 켜면 드래그 가능(offset은 유지 — 곡선 피한 위치는 확정된 배치).
@@ -2305,6 +2352,11 @@ function build() {
   });
   _els.labelX.addEventListener("input", () => { _cfg.labelX = _els.labelX.value; refreshPreview(); });
   _els.labelY.addEventListener("input", () => { _cfg.labelY = _els.labelY.value; refreshPreview(); });
+  // 축 이름 칸에 포커스가 오면(탭 이동 포함) 기존 글자를 통째로 선택 → 바로 덮어쓸 수 있게(요구 1).
+  // 일부 브라우저가 focus 직후 선택을 지우므로 setTimeout(0)으로 한 틱 뒤에 선택한다.
+  [_els.labelX, _els.labelY].forEach((el) => el.addEventListener("focus", () => {
+    setTimeout(() => { try { el.select(); } catch (_) {} }, 0);
+  }));
   _els.showOrigin.addEventListener("change", () => { _cfg.showOrigin = _els.showOrigin.checked; refreshPreview(); });
   // 원점 표기: 숫자 0(정자) / 영문 O(이탤릭) 두 버튼 중 고른다(종전엔 눌러서 순환하는
   // 단일 버튼이라 클릭 가능하다는 게 드러나지 않았다).
@@ -2587,6 +2639,8 @@ function loadFromPlane(plane) {
   cfg.labelMovable = !!plane.labelMovable;
   cfg.labelXOffset = plane.labelXOffset && Number.isFinite(plane.labelXOffset.dx) ? { dx: plane.labelXOffset.dx, dy: plane.labelXOffset.dy } : { dx: 0, dy: 0 };
   cfg.labelYOffset = plane.labelYOffset && Number.isFinite(plane.labelYOffset.dx) ? { dx: plane.labelYOffset.dx, dy: plane.labelYOffset.dy } : { dx: 0, dy: 0 };
+  cfg.labelXPos = plane.labelXPos && Number.isFinite(plane.labelXPos.fx) ? { fx: plane.labelXPos.fx, fy: plane.labelXPos.fy } : null;
+  cfg.labelYPos = plane.labelYPos && Number.isFinite(plane.labelYPos.fx) ? { fx: plane.labelYPos.fx, fy: plane.labelYPos.fy } : null;
   // 고급: 화살표 여백·격자 튀어나옴 네 끝 복원. 없으면 현행 기본값.
   cfg.padXPos = Number.isFinite(plane.padXPos) ? plane.padXPos : PAD_X;
   cfg.padXNeg = Number.isFinite(plane.padXNeg) ? plane.padXNeg : PAD_X;

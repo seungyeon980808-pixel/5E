@@ -20,7 +20,7 @@ import {
   makeArrowHead,
 } from "./core.js?v=1.1.0";
 import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.1.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.1.0";
+import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.1.0";
 import { renderPolyline } from "./shapes.js?v=1.1.0";
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
@@ -355,17 +355,27 @@ function renderCoordplane(obj) {
   // 잡을 수 있게 data-axisname으로 태깅한다(요구: 축 라벨 이동 가능).
   const offX = obj.labelXOffset && Number.isFinite(obj.labelXOffset.dx) ? obj.labelXOffset : { dx: 0, dy: 0 };
   const offY = obj.labelYOffset && Number.isFinite(obj.labelYOffset.dx) ? obj.labelYOffset : { dx: 0, dy: 0 };
+  // 축 라벨 이동(요구 2): 옮긴 라벨은 '평면 박스 기준 분율(labelXPos/labelYPos)'로 절대 위치를
+  // 잡는다 → 화살표 여백·범위를 바꿔 축(원점)이 움직여도 라벨은 제자리에 남는다. 분율이 없으면
+  // (아직 안 옮김) 기존처럼 축 앵커 + 오프셋을 쓴다.
+  const posX = obj.labelXPos && Number.isFinite(obj.labelXPos.fx) ? obj.labelXPos : null;
+  const posY = obj.labelYPos && Number.isFinite(obj.labelYPos.fx) ? obj.labelYPos : null;
   const addAxisName = (which, text, lx, ly, anchor, baseline) => {
     if (!text) return;
     const off = which === "x" ? offX : offY;
-    const px = lx + (off.dx || 0), py = ly + (off.dy || 0);
+    const pos = which === "x" ? posX : posY;
+    const px = pos ? obj.x + pos.fx * obj.w : lx + (off.dx || 0);
+    const py = pos ? obj.y + pos.fy * obj.h : ly + (off.dy || 0);
+    // 분율 위치는 라벨 '중심'을 그 점에 맞춘다(모달 드래그가 중심 분율을 저장하므로 튐 없음).
+    const anc = pos ? "middle" : anchor;
+    const bl = pos ? "middle" : baseline;
     let el = null;
-    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true });
+    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true });
     else {
       el = document.createElementNS(SVG_NS, "text");
       el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", nameSize);
       applyObjectLabelFont(el, obj.labelType); el.setAttribute("fill", color);
-      el.setAttribute("text-anchor", anchor); el.setAttribute("dominant-baseline", baseline);
+      el.setAttribute("text-anchor", anc); el.setAttribute("dominant-baseline", bl);
       fillTextWithRomanRuns(el, text);
     }
     if (el) { el.setAttribute("data-axisname", which); g.appendChild(el); }
@@ -425,12 +435,14 @@ function renderCoordplane(obj) {
     l.setAttribute("stroke-dasharray", "1.2 0.9"); l.setAttribute("stroke-linecap", "round");
     g.appendChild(l);
   });
-  // 화살촉: head=(x,y), tail=(tx,ty)로 방향을 잡는다. 곡선 없어도 두 점으로 방향 지정.
+  // 화살촉: (x,y)=곡선 위 지점, (dx,dy)=그 지점 접선(요구 5, 클릭 한 번). 옛 데이터(tx,ty)도 호환.
   (obj.annArrows || []).forEach((a) => {
     if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return;
     const hx = wmX(a.x), hy = wmY(a.y);
-    const tx = wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1), ty = wmY(Number.isFinite(a.ty) ? a.ty : a.y);
-    let dx = hx - tx, dy = hy - ty; const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+    let dx, dy;
+    if (Number.isFinite(a.dx) && Number.isFinite(a.dy)) { dx = a.dx; dy = a.dy; }
+    else { dx = hx - wmX(Number.isFinite(a.tx) ? a.tx : a.x - 1); dy = hy - wmY(Number.isFinite(a.ty) ? a.ty : a.y); }
+    const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
     g.appendChild(makeArrowHead(hx, hy, dx, dy, annSw * 1.75, annColor));
   });
   // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
@@ -456,22 +468,34 @@ function renderCoordplane(obj) {
   return g;
 }
 
-/* 범례 박스 렌더: 각 줄 [선 견본 ──][글씨]. 선 견본은 dash(=[on,off] world mm)로 스타일 표현.
- * text는 renderGraphLabel(혼합 글꼴·수식)로 그린다. 박스는 얇은 테두리 + 흰 배경. */
+/* 범례 박스 렌더(요구 3): 평가원 양식 — 작고 직각인 박스, 각 줄 [선 견본 ──][글씨].
+ * lg.size=글씨 크기, lg.swatch=선 견본 길이(둘 다 mm, 없으면 기본). 박스는 실제 글씨 폭에
+ * 맞춰 딱 맞게(auto-fit). 텍스트 자간은 현행 대비 +50%(요구). 선 견본은 dash로 스타일 표현. */
 function renderLegendBox(g, lg, x0, y0, obj, li) {
   const color = grayHex(obj.strokeLevel);
   const sw = obj.strokeWidth || 0.3;
-  const size = Number.isFinite(lg.size) ? lg.size : (Number.isFinite(obj.tickLabelSize) ? obj.tickLabelSize : 2.6);
-  const pad = size * 0.6, rowH = size * 1.55, swatch = size * 2.6, gap = size * 0.6;
+  // 기본값을 평가원 양식에 맞게 작게(종전보다 축소).
+  const size = Number.isFinite(lg.size) && lg.size > 0 ? lg.size : 2.2;
+  const swatch = Number.isFinite(lg.swatch) && lg.swatch > 0 ? lg.swatch : size * 2.4;
+  const pad = Number.isFinite(lg.pad) && lg.pad >= 0 ? lg.pad : size * 0.5;
+  const rowH = size * 1.5, gap = size * 0.55;
+  const ls = size * 0.18;   // 자간(+50% 느낌): 글자 사이를 벌린다(요구).
   const rows = lg.rows;
-  const boxW = Number.isFinite(lg.w) ? lg.w : (pad * 2 + swatch + gap + size * 6);
+  // 박스 폭 = 여백 + 견본 + 간격 + 가장 넓은 글씨 폭(자간 반영) + 여백.
+  let maxText = 0;
+  rows.forEach((r) => {
+    const t = String(r.text || "");
+    const w = measureGraphLabel(t, size).w + ls * Math.max(0, t.replace(/\s/g, "").length - 1);
+    if (w > maxText) maxText = w;
+  });
+  const boxW = pad * 2 + swatch + gap + maxText;
   const boxH = pad * 2 + rowH * rows.length;
   const rect = document.createElementNS(SVG_NS, "rect");
   rect.setAttribute("x", x0); rect.setAttribute("y", y0);
   rect.setAttribute("width", boxW); rect.setAttribute("height", boxH);
   rect.setAttribute("fill", "#ffffff"); rect.setAttribute("fill-opacity", "0.9");
   rect.setAttribute("stroke", color); rect.setAttribute("stroke-width", sw * 0.5);
-  rect.setAttribute("rx", size * 0.25);
+  // 직각 박스(요구): rx 제거.
   if (Number.isFinite(li)) rect.setAttribute("data-legend", String(li));   // 미리보기 드래그 이동용
   g.appendChild(rect);
   rows.forEach((r, i) => {
@@ -488,7 +512,11 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
     const lbl = renderGraphLabel(String(r.text || ""), {
       x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
     });
-    if (lbl) g.appendChild(lbl);
+    if (lbl) {
+      // 자간 +50%(요구): formula/한글 런의 <text>에 letter-spacing 적용(textContent 기반이라 반영됨).
+      lbl.querySelectorAll("text").forEach((t) => t.setAttribute("letter-spacing", ls));
+      g.appendChild(lbl);
+    }
   });
 }
 
