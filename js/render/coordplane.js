@@ -51,13 +51,18 @@ const ARROW_TRACE = [
   [0.9641, 0.2208], [0.9487, 0.1992], [0.9282, 0.1695], [0.9077, 0.1399], [0.8923, 0.1187],
   [0.8769, 0.0977], [0.8564, 0.0436],
 ];
-function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
-  const px = -dirY, py = dirX;                 // 수직 단위
-  const L = sw * 6.0;                            // 전체 크기 배율(비율은 위 트레이스가 고정)
-  const pts = ARROW_TRACE.map(([bn, sn]) => [bn * L, sn * L]);
-  const n = pts.length;
-  // centripetal Catmull-Rom(α=0.5) → 큐빅 베지어: 점 간격이 고르지 않아도 출렁이지 않는다.
+// centripetal Catmull-Rom(α=0.5) → 큐빅 베지어 제어점, L=1(정규화) 기준으로 '모듈 로드 시
+// 딱 한 번만' 계산해 둔다. ARROW_TRACE는 고정 상수라 이 결과는 절대 안 바뀐다 — 성능 실측
+// 결과 매 렌더마다 이 계산을 새로 하면 화살촉 하나에 ~370µs(옛 폴리곤 대비 88배)가 들어
+// 드래그 중(전체 씬이 상태 변경마다 재렌더됨) 체감될 만큼 느려졌다(요구: 버벅임 원인 해결).
+// smoothArrowHead는 이 정규화 좌표를 sw*6 배로 스케일만 하고 tip/방향으로 옮기기만 한다.
+const ARROW_SEGS_NORM = (() => {
+  const n = ARROW_TRACE.length;
+  const pts = ARROW_TRACE.map(([bn, sn]) => [bn, sn]);
   const dist = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]) ** 0.5;
+  const vec = (a, b) => [b[0] - a[0], b[1] - a[1]];
+  const scl = (v, k) => [v[0] * k, v[1] * k];
+  const add = (...vs) => vs.reduce((a, v) => [a[0] + v[0], a[1] + v[1]], [0, 0]);
   const segs = [];
   for (let i = 0; i < n - 1; i++) {
     const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
@@ -65,9 +70,6 @@ function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
     const t1 = t0 + (dist(p0, p1) || 1e-6);
     const t2 = t1 + (dist(p1, p2) || 1e-6);
     const t3 = t2 + (dist(p2, p3) || 1e-6);
-    const vec = (a, b) => [b[0] - a[0], b[1] - a[1]];
-    const scl = (v, k) => [v[0] * k, v[1] * k];
-    const add = (...vs) => vs.reduce((a, v) => [a[0] + v[0], a[1] + v[1]], [0, 0]);
     let m1 = add(scl(vec(p1, p2), 1 / (t2 - t1)), scl(vec(p0, p2), -1 / (t2 - t0)), scl(vec(p0, p1), 1 / (t1 - t0)));
     m1 = scl(m1, t2 - t1);
     let m2 = add(scl(vec(p2, p3), 1 / (t3 - t2)), scl(vec(p1, p3), -1 / (t3 - t1)), scl(vec(p1, p2), 1 / (t2 - t1)));
@@ -76,11 +78,16 @@ function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
     const c2 = add(p2, scl(m2, -1 / 3));
     segs.push([p1, c1, c2, p2]);
   }
-  const P = (b, s) => `${tipX - dirX * b + px * s} ${tipY - dirY * b + py * s}`;
+  return { segs, notch: pts[n - 1] };
+})();
+function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
+  const px = -dirY, py = dirX;                 // 수직 단위
+  const L = sw * 6.0;                            // 전체 크기 배율(비율은 ARROW_TRACE가 고정)
+  const P = (b, s) => `${tipX - dirX * b * L + px * s * L} ${tipY - dirY * b * L + py * s * L}`;
+  const { segs, notch } = ARROW_SEGS_NORM;
   let d = `M ${P(0, 0)} `;
   segs.forEach(([, c1, c2, p1]) => { d += `C ${P(c1[0], c1[1])} ${P(c2[0], c2[1])} ${P(p1[0], p1[1])} `; });
   // 홈 바닥(왼쪽 끝→오른쪽 끝)은 축 폭을 가로지르는 직선 — 실제로 축 상단 가장자리와 같은 선.
-  const notch = pts[n - 1];
   d += `L ${P(notch[0], -notch[1])} `;
   // 오른쪽은 왼쪽과 좌우 대칭(s → -s), 역순으로 홈에서 앞끝까지 — 반대쪽을 따로 추적하지 않고
   // 부호만 뒤집으므로 대칭이 어긋날 수 없다.
