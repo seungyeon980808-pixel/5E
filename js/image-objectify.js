@@ -85,14 +85,14 @@ function injectObjectifyStyles() {
     .modal-objectify { width:94vw !important; max-width:94vw !important; height:92vh; max-height:92vh; display:flex; flex-direction:column; gap:10px; }
     .objectify-body { display:flex; gap:16px; flex:1 1 auto; min-height:0; }
     .objectify-left { flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
-    .objectify-right { flex:0 0 300px; overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-right:4px; }
+    .objectify-right { flex:0 0 calc(300px * var(--text-scale, 1)); overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-right:4px; }
     /* 컴팩트 패널: 긴 설명문을 걷어내고 각 항목 옆 물음표(.gm-help) 툴팁으로 옮겼다.
        라벨/여백을 줄여 스크롤 없이 한 화면에 들어오게 한다. */
     .objectify-sec { display:flex; align-items:center; gap:2px; margin:2px 0 -2px;
                      font:600 11px/1 "IBM Plex Sans KR",system-ui,sans-serif;
                      letter-spacing:.02em; color:var(--text-secondary); }
     .objectify-right .modal-field { gap:2px; }
-    .objectify-right .modal-label { font-size:11.5px; display:inline-flex; align-items:center; }
+    .objectify-right .modal-label { font-size: calc(11.5px * var(--text-scale, 1)); display:inline-flex; align-items:center; }
     .objectify-right .objectify-controls { gap:8px 10px; }
     .objectify-right .modal-field-row { margin:0; gap:6px; align-items:center; }
     /* 체크박스 행: 물음표를 label 밖에 둔다 — label 안에 있으면 눌렀을 때 체크가 토글된다. */

@@ -120,7 +120,7 @@ function buildModal() {
   // 안내 + 실제 크기 표시.
   const info = document.createElement("div");
   info.style.cssText =
-    "font-size:12px;color:var(--text-secondary,#57606a);line-height:1.5;";
+    "font-size: calc(12px * var(--text-scale, 1));color:var(--text-secondary,#57606a);line-height:1.5;";
   modal.appendChild(info);
 
   // 액션 버튼.

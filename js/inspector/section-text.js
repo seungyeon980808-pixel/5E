@@ -21,7 +21,7 @@ export function buildTextSection(ctx) {
   fontFamLbl.className = "insp-field-label";
   fontFamLbl.textContent = "글꼴";
   const fontFamSel = document.createElement("select");
-  fontFamSel.style.cssText = "flex:1;min-width:0;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg-input);color:var(--text-primary);";
+  fontFamSel.style.cssText = "flex:1;min-width:0;font-size: calc(12px * var(--text-scale, 1));border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg-input);color:var(--text-primary);";
   TEXT_FONTS.forEach((f) => {
     const opt = document.createElement("option");
     opt.value = f.css;
@@ -42,7 +42,7 @@ export function buildTextSection(ctx) {
   fontSizeNum.min = String(MIN_TEXT_PT);
   fontSizeNum.max = "400";
   fontSizeNum.step = "1";
-  fontSizeNum.style.cssText = "width:56px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
+  fontSizeNum.style.cssText = "width:56px;font-size: calc(11px * var(--text-scale, 1));border:1px solid var(--border);border-radius:6px;padding:2px 4px;text-align:center;background:var(--bg-input);color:var(--text-primary);";
   const fontSizeUnit = document.createElement("span");
   fontSizeUnit.textContent = "pt"; // points; stored fontSize is world-unit mm
   fontSizeUnit.className = "insp-unit";

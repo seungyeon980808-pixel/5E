@@ -35,7 +35,7 @@ export function createInspectorContext(state) {
     const unit = document.createElement("span");
     unit.textContent = "pt";
     unit.style.cssText = "position:absolute;right:8px;top:50%;transform:translateY(-50%);" +
-      "font-size:10px;color:var(--text-secondary);pointer-events:none;";
+      "font-size: calc(10px * var(--text-scale, 1));color:var(--text-secondary);pointer-events:none;";
     wrap.appendChild(num); wrap.appendChild(unit);
     row.appendChild(lbl); row.appendChild(wrap);
     // 숫자만 입력해도 즉시 반영: input마다 적용하되 Undo 스냅샷은 편집 세션당 1회

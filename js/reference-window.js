@@ -122,7 +122,7 @@ function windowMarkup(entry) {
   .refhead { display:flex; align-items:center; gap:6px; flex:none;
              padding:7px 10px; border-bottom:1px solid var(--c-border,#d0d7de);
              background:var(--bg-panel,#fff); }
-  .refhead .title { font-size:13px; font-weight:600; margin-right:auto;
+  .refhead .title { font-size: calc(13px * var(--text-scale, 1)); font-weight:600; margin-right:auto;
                     color:var(--text-primary,#0d1117); }
   .refgrid { flex:1; display:grid; gap:8px; padding:8px; min-height:0;
              grid-template-columns:repeat(${g.cols},1fr); grid-template-rows:repeat(${g.rows},1fr); }
@@ -132,9 +132,9 @@ function windowMarkup(entry) {
   .refshot { flex:1; min-height:0; display:flex; align-items:center; justify-content:center;
              background:#fff; border-radius:5px; overflow:hidden; }
   .refshot img { max-width:100%; max-height:100%; object-fit:contain; }
-  .refcap { flex:none; font-size:11px; color:var(--text-secondary,#57606a);
+  .refcap { flex:none; font-size: calc(11px * var(--text-scale, 1)); color:var(--text-secondary,#57606a);
             white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .refmemo { flex:none; width:100%; resize:vertical; font:inherit; font-size:12.5px;
+  .refmemo { flex:none; width:100%; resize:vertical; font:inherit; font-size: calc(12.5px * var(--text-scale, 1));
              padding:5px 7px; border:1px solid var(--c-border,#d0d7de); border-radius:6px;
              background:var(--bg-input,transparent); color:inherit; }
   .refmemo:focus { outline:none; border-color:var(--accent,#0969da); }

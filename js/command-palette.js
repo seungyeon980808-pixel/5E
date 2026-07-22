@@ -198,7 +198,7 @@ export function initCommandPalette() {
         iconBox.className = "object-search-icon";
         const glyph = document.createElement("span");
         glyph.textContent = "⌘";
-        glyph.style.cssText = "font-weight:700;font-size:13px;opacity:.65;";
+        glyph.style.cssText = "font-weight:700;font-size: calc(13px * var(--text-scale, 1));opacity:.65;";
         iconBox.appendChild(glyph);
 
         const label = document.createElement("span");
@@ -237,7 +237,7 @@ export function initCommandPalette() {
         if (match.kind === "personal") {
           const letter = document.createElement("span");
           letter.textContent = (match.def.label || "?").slice(0, 1);
-          letter.style.cssText = "font-weight:700;font-size:13px;";
+          letter.style.cssText = "font-weight:700;font-size: calc(13px * var(--text-scale, 1));";
           iconBox.appendChild(letter);
         } else {
           icon = buildSymbolIcon(match.id, match.def);

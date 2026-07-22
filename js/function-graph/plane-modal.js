@@ -81,10 +81,10 @@ function checkbox(prop, defaultTrue) {
 
 function row(labelText, ...nodes) {
   const r = document.createElement("div");
-  r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;color:#c9d1d9;";
+  r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size: calc(12px * var(--text-scale, 1));color:#c9d1d9;";
   const l = document.createElement("label");
   l.textContent = labelText;
-  l.style.cssText = "flex:0 0 92px;color:var(--text-secondary);";
+  l.style.cssText = "flex:0 0 calc(92px * var(--text-scale, 1));color:var(--text-secondary);";
   r.appendChild(l);
   nodes.forEach((n) => r.appendChild(n));
   return r;
@@ -119,7 +119,7 @@ function build() {
     <div class="modal" role="dialog" aria-modal="true" aria-label="좌표평면 상세 편집" style="width:780px;max-width:96vw;">
       <h2 class="modal-title">좌표평면 상세 편집</h2>
       <div style="display:flex;gap:18px;align-items:flex-start;">
-        <div id="cp-controls" style="flex:0 0 360px;"></div>
+        <div id="cp-controls" style="flex:0 0 calc(360px * var(--text-scale, 1));"></div>
         <div style="flex:1;min-width:0;">
           <div class="modal-label" style="margin-bottom:4px;">미리보기</div>
           <div id="cp-preview" style="width:100%;height:360px;border:1px solid #30363d;border-radius:4px;background:#fff;overflow:hidden;"></div>
@@ -145,7 +145,7 @@ function build() {
   VARIANTS.forEach(([val, text]) => {
     const b = document.createElement("button");
     b.type = "button"; b.textContent = text; b._val = val;
-    b.style.cssText = "font-size:12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.style.cssText = "font-size: calc(12px * var(--text-scale, 1));border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
     b.addEventListener("click", () => { set("axisVariant", val); syncControls(); });
     variantBtns.push(b); variantWrap.appendChild(b);
   });
@@ -201,7 +201,7 @@ function build() {
   controls.appendChild(row("내보내기", exportLabel));
 
   const hint = document.createElement("div");
-  hint.style.cssText = "font-size:11px;color:var(--text-secondary);line-height:1.6;margin-top:4px;";
+  hint.style.cssText = "font-size: calc(11px * var(--text-scale, 1));color:var(--text-secondary);line-height:1.6;margin-top:4px;";
   hint.innerHTML = "· 라벨은 LaTeX 문법 지원(<code>v_0</code>, <code>\\theta</code>).<br>· 원점 라벨을 비우면 원점 글자가 숨겨집니다.";
   controls.appendChild(hint);
 

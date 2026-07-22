@@ -106,7 +106,7 @@ export function initObjectSearch() {
         if (match.personal) {
           const letter = document.createElement("span");
           letter.textContent = (match.def.label || "?").slice(0, 1);
-          letter.style.cssText = "font-weight:700;font-size:13px;";
+          letter.style.cssText = "font-weight:700;font-size: calc(13px * var(--text-scale, 1));";
           iconBox.appendChild(letter);
         } else {
           icon = buildSymbolIcon(match.id, match.def);
