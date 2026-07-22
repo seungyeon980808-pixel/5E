@@ -2,12 +2,22 @@
 /* ===== OPTIONAL SELF-HOSTED FONT: 함초롬바탕 =====
  * The DEFAULT text font is now a system gothic stack (돋움 / Apple SD Gothic Neo
  * / Malgun Gothic) resolved by NAME — no @font-face needed for it. 함초롬바탕
- * remains a SELECTABLE option only; this @font-face renders it when the woff2 is
- * present at fonts/HamchoromBatang.woff2 (see fonts/README.txt), otherwise it
- * falls back to the serif in the "HamchoromBatang", serif chain. */
+ * remains a SELECTABLE option only.
+ *
+ * local()이 반드시 먼저 와야 한다 (2026-07-23 수정).
+ *   @font-face를 선언하는 순간 브라우저는 "HamchoromBatang"이라는 이름을 이 선언에
+ *   예약한다. 그래서 src의 url이 404여도 PC에 설치된 동명 폰트로 되돌아가지 않고
+ *   곧장 다음 폰트(serif)로 넘어간다 — 한글(HWP)이 깔린 PC에는 함초롬바탕이 있는데도
+ *   앱에서는 쓸 수 없었다. 화면뿐 아니라 내보내기(SVG 재렌더)까지 같은 해석을 타므로
+ *   완성된 문항 그림이 명조로 나가는 실결함이었다.
+ *   실측(64px "함초롬바탕 국어 영역"): 수정 전 1260.25×92 = 폴백과 완전 동일,
+ *   로컬 직접 지정 시 1258.19×83 — 즉 폰트는 있는데 못 닿고 있었다.
+ *
+ * 해석 순서: 설치된 로컬 폰트 → 자가호스팅 woff2(있으면) → serif. */
 @font-face {
   font-family: "HamchoromBatang";
-  src: url("../fonts/HamchoromBatang.woff2") format("woff2");
+  src: local("함초롬바탕"), local("HCR Batang"), local("HamchoromBatang"),
+       url("../fonts/HamchoromBatang.woff2") format("woff2");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
