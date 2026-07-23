@@ -10,7 +10,7 @@
  * 컨트롤: 눈금 간격(자=mm, 각도기=°) · 투명도(0~100%).
  */
 
-import { makeSection } from "./widgets.js?v=1.1.0";
+import { makeSection } from "./widgets.js?v=1.2.0";
 
 export function initGaugeSection(state) {
   const content = document.getElementById("inspector-content");

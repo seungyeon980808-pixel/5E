@@ -17,26 +17,26 @@ import {
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
-} from "./state.js?v=1.1.0";
-import { registerTopMenu } from "./top-menu.js?v=1.1.0";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.1.0";
+} from "./state.js?v=1.2.0";
+import { registerTopMenu } from "./top-menu.js?v=1.2.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.2.0";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
   addPreviewBackground,
   removePreviewBackground,
-} from "./preview-backgrounds.js?v=1.1.0";
+} from "./preview-backgrounds.js?v=1.2.0";
 // 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
-import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.1.0";
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.2.0";
 // 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
 // hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
 // localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.
 // importLibraryString은 내부에서 renderLibrary까지 처리하므로 별도 재렌더 호출이 필요 없다(finding 2).
-import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.1.0";
+import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.2.0";
 // 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
-import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.1.0";
+import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.2.0";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;

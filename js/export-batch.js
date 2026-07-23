@@ -15,10 +15,10 @@
  * 쓴다. 페이지별로 그 페이지의 4필드를 담은 스냅샷 상태를 만들어 넘긴다.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.1.0";
-import { commitActivePage } from "./pages.js?v=1.1.0";
-import { showAlert } from "./ui-dialogs.js?v=1.1.0";
-import { idbAvailable, idbGet, idbSet } from "./idb-store.js?v=1.1.0";
+import { rasterizeExportCanvas } from "./svg-export.js?v=1.2.0";
+import { commitActivePage } from "./pages.js?v=1.2.0";
+import { showAlert } from "./ui-dialogs.js?v=1.2.0";
+import { idbAvailable, idbGet, idbSet } from "./idb-store.js?v=1.2.0";
 
 const DIR_KEY = "export-dir-handle";
 const FS_SUPPORTED = typeof window !== "undefined" && !!window.showDirectoryPicker;

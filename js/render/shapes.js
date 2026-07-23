@@ -12,10 +12,10 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
-} from "./core.js?v=1.1.0";
-import { withBoxLabel, withLineLabel } from "./labels.js?v=1.1.0";
-import { resolveFill } from "./fill.js?v=1.1.0";
-import { getSvgAsset } from "../svg-assets.js?v=1.1.0";
+} from "./core.js?v=1.2.0";
+import { withBoxLabel, withLineLabel } from "./labels.js?v=1.2.0";
+import { resolveFill } from "./fill.js?v=1.2.0";
+import { getSvgAsset } from "../svg-assets.js?v=1.2.0";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.

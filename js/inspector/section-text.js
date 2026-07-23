@@ -5,8 +5,8 @@
 
 import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
          LETTER_SPACING_MIN, LETTER_SPACING_MAX,
-         WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.1.0";
-import { makeSection } from "./widgets.js?v=1.1.0";
+         WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.2.0";
+import { makeSection } from "./widgets.js?v=1.2.0";
 
 export function buildTextSection(ctx) {
   const { state } = ctx;

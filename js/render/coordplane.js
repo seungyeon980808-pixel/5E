@@ -18,10 +18,10 @@ import {
   catmullRomPath,
   applyDash,
   makeArrowHead,
-} from "./core.js?v=1.1.0";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.1.0";
-import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.1.0";
-import { renderPolyline } from "./shapes.js?v=1.1.0";
+} from "./core.js?v=1.2.0";
+import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.2.0";
+import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.2.0";
+import { renderPolyline } from "./shapes.js?v=1.2.0";
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
 function baselineToVAlign(b) {

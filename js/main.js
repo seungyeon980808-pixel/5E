@@ -7,38 +7,38 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=1.1.0";
-import { render } from "./render.js?v=1.1.0";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.1.0";
-import { initTools } from "./tools.js?v=1.1.0";
-import { initCutTool } from "./cut-tool.js?v=1.1.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.1.0";
-import { initInspector } from "./inspector.js?v=1.1.0";
-import { initProjectIO } from "./project-io.js?v=1.1.0";
-import { initExportDialog } from "./export-dialog.js?v=1.1.0";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.1.0";
-import { initSettings } from "./settings.js?v=1.1.0";
-import { initImageObjectify } from "./image-objectify.js?v=1.1.0";
-import { initImagePaste } from "./image-paste.js?v=1.1.0";
-import { initImageCutout } from "./image-cutout.js?v=1.1.0";
-import { initExamLibrary } from "./exam-library.js?v=1.1.0";
-import { initTemplates } from "./templates.js?v=1.1.0";
-import { initObjectSearch } from "./search.js?v=1.1.0";
-import { initCommandPalette } from "./command-palette.js?v=1.1.0";
-import { initSubjectObjects } from "./subject-objects.js?v=1.1.0";
-import { initToolHint } from "./tool-hint.js?v=1.1.0";
-import { initTooltips } from "./tooltip.js?v=1.1.0";
-import { initViewMode } from "./view-mode.js?v=1.1.0";
-import { initPersonalObjects } from "./personal-objects.js?v=1.1.0";
-import { initBulkEdit } from "./bulk-edit.js?v=1.1.0";
-import { initDataPlot } from "./data-plot.js?v=1.1.0";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=1.1.0";
-import { initAutosave } from "./autosave.js?v=1.1.0";
-import { initPages } from "./pages.js?v=1.1.0";
-import { localizeShortcutLabels } from "./platform.js?v=1.1.0";
-import { initModalDrag } from "./modal-drag.js?v=1.1.0";
-import { initSteppers } from "./stepper.js?v=1.1.0";
-import { initReferenceWindows } from "./reference-window.js?v=1.1.0";
+import { state } from "./state.js?v=1.2.0";
+import { render } from "./render.js?v=1.2.0";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.2.0";
+import { initTools } from "./tools.js?v=1.2.0";
+import { initCutTool } from "./cut-tool.js?v=1.2.0";
+import { initTransform, undo, redo } from "./transform.js?v=1.2.0";
+import { initInspector } from "./inspector.js?v=1.2.0";
+import { initProjectIO } from "./project-io.js?v=1.2.0";
+import { initExportDialog } from "./export-dialog.js?v=1.2.0";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.2.0";
+import { initSettings } from "./settings.js?v=1.2.0";
+import { initImageObjectify } from "./image-objectify.js?v=1.2.0";
+import { initImagePaste } from "./image-paste.js?v=1.2.0";
+import { initImageCutout } from "./image-cutout.js?v=1.2.0";
+import { initExamLibrary } from "./exam-library.js?v=1.2.0";
+import { initTemplates } from "./templates.js?v=1.2.0";
+import { initObjectSearch } from "./search.js?v=1.2.0";
+import { initCommandPalette } from "./command-palette.js?v=1.2.0";
+import { initSubjectObjects } from "./subject-objects.js?v=1.2.0";
+import { initToolHint } from "./tool-hint.js?v=1.2.0";
+import { initTooltips } from "./tooltip.js?v=1.2.0";
+import { initViewMode } from "./view-mode.js?v=1.2.0";
+import { initPersonalObjects } from "./personal-objects.js?v=1.2.0";
+import { initBulkEdit } from "./bulk-edit.js?v=1.2.0";
+import { initDataPlot } from "./data-plot.js?v=1.2.0";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=1.2.0";
+import { initAutosave } from "./autosave.js?v=1.2.0";
+import { initPages } from "./pages.js?v=1.2.0";
+import { localizeShortcutLabels } from "./platform.js?v=1.2.0";
+import { initModalDrag } from "./modal-drag.js?v=1.2.0";
+import { initSteppers } from "./stepper.js?v=1.2.0";
+import { initReferenceWindows } from "./reference-window.js?v=1.2.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -398,7 +398,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v0.53.0] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v1.2.0] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +
