@@ -3,71 +3,75 @@
 > 2026-07-03 세션 교훈: "이 폴더 = 이 브랜치 = 이 역할"이 문서에 없으면 오진이 생긴다.
 > **폴더에서 브랜치를 바꾸지 말 것. 브랜치가 필요하면 폴더(워크트리)를 만든다.**
 
-- 최종 실측: **2026-07-19** (`git worktree list` + 각 폴더 `run-server.bat` 대조)
-- 배포 버전: **v1.1.0** (마지막 GitHub Release = v1.1.0, 태그 커밋 `48ab998` = `main` HEAD)
+- 최종 실측: **2026-07-23** (브랜치 대통합 직후)
+- 배포 버전: **v1.1.0** (마지막 GitHub Release = v1.1.0). 코드는 그 이후 41커밋 더 나갔고
+  버전 문자열은 아직 안 올렸다 — 다음 릴리즈 때 한 번에 올린다.
 - 이 표는 추측이 아니라 실측이다. 갱신할 때도 맨 아래 명령으로 다시 뽑는다.
 
 ---
 
 ## 현재 지도
 
-흐름은 **작업 브랜치 → `integration-hub`(합치는 곳) → `main`(배포)** 이다.
-다만 v1.1.0 릴리즈로 허브의 내용이 전부 `main`에 들어갔고 `main`은 origin과 동기다.
-따라서 지금은 대부분의 브랜치가 이미 안전하며, **판단 기준은 "이 커밋이 origin 어딘가에 있나"** 하나다.
+흐름은 **`main` 하나**다. 2026-07-23에 살아 있던 브랜치를 전부 `main`에 병합하고
+origin에 올린 뒤, 역할이 끝난 브랜치·워크트리를 정리했다.
+`integration-hub`(합치는 곳)는 **없앴다** — main이 그 역할을 그대로 한다.
 
-| 폴더 (`51_5E\` 아래) | 브랜치 | 포트 | 역할 | main 병합 | origin |
-|---|---|---|---|---|---|
-| `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages) | (배포선) | ✅ 동기 |
-| `branches/5E_hubmerge` | `integration-hub` | ⚠️ 8320 | **합치는 곳** — main에 전부 흡수됨(4커밋 뒤짐) | ✅ 흡수 | ✅ (main 경유) |
-| `branches/5E_curve_dev` | `feat/curve-smoothing` | 8340 | 자유곡선(centripetal)·베지어 핸들 편집 | ✅ 병합됨 | ✅ 있음 |
-| `branches/5E_macfix_dev` | `feat/mac-graph-examlib` | ⚠️ 8190 | Mac 대응 + 모달 이동 손잡이 + 기출 다중선택 | ✅ 병합됨 | ✅ (main 경유) |
-| `5E_hub` | `feature/app-icon` | 8199 | 앱 아이콘·공유 썸네일 디자인 | ✅ 병합됨 | ✅ (main 경유) |
-| `branches/5E_libstore_dev` | `feat/library-storage` | 8350 | 라이브러리 IndexedDB 이전 + ZIP 백업 | ✅ 병합됨 | ✅ (main 경유) |
-| `branches/5E_label_dev` | `fix/label-centering` | ⚠️ 8320 | 사각형 안 라벨 세로 중심 보정 | ✅ 병합됨 | ✅ (main 경유) |
-| `branches/5E_uibatch_dev` | `feat/ui-batch7` | ⚠️ 8320 | UI 요구 7건(툴바·참고창·객체화·환경설정 탭) | ✅ 병합됨 | ✅ (main 경유) |
-| `branches/5E_uidetail_dev` | `feat/ui-detail` | 8400 | UI 조립 원칙 적용 + 문서 최신화 | ✅ 병합됨 | ✅ (main 경유) |
-| `branches/5E_ai_dev` | `feat/ai-assist` | ⚠️ 없음 | AI 챗봇(Cloudflare Worker 프록시) | ❌ **+2커밋** | ❌ **로컬 전용** |
+| 폴더 (`51_5E\` 아래) | 브랜치 | 포트 | 역할 | 상태 |
+|---|---|---|---|---|
+| `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages) · 기본 작업 폴더 | ✅ origin 동기 |
+| `branches/5E_ai_dev` | `feat/ai-assist` | 8250 | AI 챗봇(Cloudflare Worker 프록시) — 베타, 보류 | ⏸ main에 +2커밋, origin에는 있음 |
 
-> **워크트리는 10개다.** `main` 병합이 끝난 브랜치는 폴더째 정리해도 되지만,
-> 지우기 전에 `git rev-list --count main..<브랜치>`가 0인지 반드시 확인한다.
+**워크트리는 2개다.** 여기 없는 폴더는 없는 게 맞다.
 
----
+### 정리된 것 (2026-07-23)
 
-## ⚠️ 지금 걸려 있는 문제 3가지
-
-**1. 포트가 두 군데서 겹친다**
-- **8190**: `5E_main` · `branches/5E_macfix_dev`
-- **8320**: `branches/5E_hubmerge` · `branches/5E_label_dev` · `branches/5E_uibatch_dev`
-- 증상: 한 폴더에서 서버를 띄워 둔 채 다른 폴더의 `run-server.bat`을 열면, 새 서버가 뜨지 못하고
-  **이미 떠 있던 남의 서버**에 접속된다. "분명 고쳤는데 화면이 그대로"의 주범이다.
-- 처방: 폴더마다 고유 포트를 준다. 실제로 비어 있는 대역 → **8440 · 8450 · 8460**.
-  (8210·8220·8230은 이미 `.claude/launch.json`에서 쓰고 있으니 고르지 말 것.)
-- 포트를 바꾸면 브라우저 캐시(origin 단위)까지 무효화되므로 그 자체로 이득이다.
-
-**2. `5E_ai_dev`에 `run-server.bat`이 없다** — 실행 방법이 폴더에 남아 있지 않다.
-- 처방: 8250(과거 사용값)으로 만들어 둔다. `.bat`은 **ASCII + CRLF**로 저장할 것
-  (UTF-8/LF이면 한국어 Windows의 cmd가 파싱에 실패한다).
-
-**3. `feat/ai-assist` 2커밋이 어디에도 없다 — 유일하게 남은 위험이다.**
-- `094b535`·`626794d` — main에도, 허브에도, origin에도 없다. **이 PC에만 존재한다.**
-- 처방: `git push -u origin feat/ai-assist` 또는 허브에 병합.
-- 챗봇은 베타이고 Cloudflare Worker에 의존해 v1.1.0에서 **의도적으로 제외**했다.
-  기능을 넣지 않더라도 커밋 보존을 위해 push는 해 두는 편이 안전하다.
-- (구 위험이던 "허브 미push"는 v1.1.0 머지로 해소됐다. `origin/integration-hub`는 16커밋
-  뒤져 있지만 그 커밋들은 전부 `origin/main`에서 도달 가능하다.)
+- **워크트리 11개 삭제** — `5E_hub` · `5E_annot_dev` · `5E_curve_dev` · `5E_debt_dev` ·
+  `5E_export_dev` · `5E_hubmerge` · `5E_label_dev` · `5E_libstore_dev` · `5E_macfix_dev` ·
+  `5E_uibatch_dev` · `5E_uidetail_dev` (+ 빈 껍데기 `5E_majorfix_dev`)
+- **로컬 브랜치 12개 삭제** — 전부 `git rev-list --count main..<브랜치>` = 0 확인 후 삭제.
+  `integration-hub` · `feature/app-icon` · `feat/visual-weight` · `feat/annot-tab` ·
+  `feat/curve-smoothing` · `feat/export-batch` · `feat/library-storage` ·
+  `feat/mac-graph-examlib` · `feat/ui-batch7` · `feat/ui-detail` ·
+  `fix/label-centering` · `fix/schema-backfill`
+- **origin 브랜치 4개 삭제** — `integration-hub` · `object-dev` · `feat/exam-image-import` ·
+  `feat/curve-smoothing` (모두 `main`에서 도달 가능)
+- **남긴 것** — `origin/main-backup-20260701`. 2026-07-01 커밋 2개(`c1df5bf`·`d3e36f0`)가
+  **`main`에 없다.** 잔재로 보여도 지우면 그 히스토리가 사라진다. 확인 전엔 두는 게 맞다.
+- `5E_hub`에 있던 참고 이미지(`graph_reference/`, 26장)는 워크트리 삭제에 휩쓸리지 않게
+  `51_5E/graph_reference/`로 옮겼다(git 밖).
 
 ---
 
 ## 규칙
 
 - **한 폴더 = 한 브랜치 = 한 포트.** 셋 중 하나라도 겹치면 오진이 시작된다.
-- 폴더에서 `git checkout`으로 브랜치를 갈아타지 않는다. 새 작업 = 새 워크트리.
+- **새 브랜치는 `main`에서 딴다.** 허브를 base로 삼던 습관 때문에 작업 브랜치가 main보다
+  뒤처진 채로 자라 병합 때 충돌이 났다.
   ```bash
   git worktree add -b feat/<이름> ../branches/5E_<약칭>_dev main
   ```
-- `run-server.bat`은 그 폴더 전용 포트를 박아 둔다. **병합할 때는 제외**한다(dev 전용이라 배포본에 섞이면 안 된다).
+- 폴더에서 `git checkout`으로 브랜치를 갈아타지 않는다. 새 작업 = 새 워크트리.
+- **병합이 끝나면 그 자리에서 지운다.** 안 지워서 12개까지 쌓였다.
+  ```bash
+  git rev-list --count main..<브랜치>   # 0이면
+  git worktree remove ../branches/<폴더> && git branch -d <브랜치>
+  ```
+- `run-server.bat`은 그 폴더 전용 포트를 박아 둔다. **병합할 때는 제외**한다(dev 전용).
 - 배포는 `main` 기준 — `main`에 올라간 것만 사용자에게 보인다.
 - 작업 시작 전 `git status`로 그 폴더의 미커밋 상태를 먼저 확인한다.
+
+## 알아 둘 함정 — 줄바꿈(CRLF/LF) 충돌
+
+2026-07-23 병합에서 `js/export-dialog.js`·`js/render/labels.js`가 **파일 전체 충돌**로 잡혔다.
+내용이 아니라 한쪽이 CRLF로 다시 저장돼 모든 줄이 바뀐 것으로 보인 탓이다. 해결은 이렇게 한다.
+
+```bash
+git show $BASE:$f > base.txt
+git show HEAD:$f  > ours.txt
+git show <브랜치>:$f | tr -d '\r' > theirs.txt   # 줄바꿈만 되돌리고
+git merge-file -L main -L base -L branch ours.txt base.txt theirs.txt   # 3-way 재실행
+```
+실제 충돌은 0이었다. **파일째 `--ours`로 덮지 말 것** — 반대편 변경이 통째로 날아간다.
 
 ## 갱신하는 법
 
