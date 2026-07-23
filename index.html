@@ -232,6 +232,12 @@
             <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
           </div>
         </div>
+        <!-- MCP 연결 상태 — localhost(또는 ?mcp=1)일 때만 js/mcp-bridge.js가 hidden을 벗긴다.
+             점(●)이 상태 표시: 회색 테두리만=연결 안 됨, 파란 채움=연결됨. -->
+        <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
+                title="MCP 연결 안 됨" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
+          MCP <span class="mcp-dot" aria-hidden="true"></span>
+        </button>
         <span id="zoom-readout" class="zoom-readout">zoom 1.00×</span>
         <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
                 title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
@@ -395,5 +401,7 @@
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.2.0"></script>
   <script type="module" src="js/main.js?v=1.2.0"></script>
+  <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
+  <script type="module" src="js/mcp-bridge.js?v=1.2.0"></script>
 </body>
 </html>

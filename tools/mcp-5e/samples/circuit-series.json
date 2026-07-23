@@ -1,0 +1,305 @@
+{
+  "version": "0.17",
+  "pages": [
+    {
+      "id": "page_mrxqh4js_m1",
+      "name": "페이지 1",
+      "meta": {
+        "number": "",
+        "points": ""
+      },
+      "objects": [
+        {
+          "element": "resistor",
+          "label": "R_1",
+          "labelType": "quantity",
+          "height": 3.2,
+          "type": "circuit",
+          "p1": {
+            "x": -19,
+            "y": -16
+          },
+          "p2": {
+            "x": -5,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m2",
+          "order": 0
+        },
+        {
+          "element": "resistor",
+          "label": "R_2",
+          "labelType": "quantity",
+          "height": 3.2,
+          "type": "circuit",
+          "p1": {
+            "x": 5,
+            "y": -16
+          },
+          "p2": {
+            "x": 19,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m3",
+          "order": 1
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": -30,
+            "y": -16
+          },
+          "p2": {
+            "x": -19,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m4",
+          "order": 2
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": -5,
+            "y": -16
+          },
+          "p2": {
+            "x": 5,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m5",
+          "order": 3
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": 19,
+            "y": -16
+          },
+          "p2": {
+            "x": 30,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m6",
+          "order": 4
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": 30,
+            "y": -16
+          },
+          "p2": {
+            "x": 30,
+            "y": 16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m7",
+          "order": 5
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": 30,
+            "y": 16
+          },
+          "p2": {
+            "x": -30,
+            "y": 16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m8",
+          "order": 6
+        },
+        {
+          "element": "dc_source",
+          "label": "V",
+          "labelType": "quantity",
+          "type": "circuit",
+          "p1": {
+            "x": -30,
+            "y": 7
+          },
+          "p2": {
+            "x": -30,
+            "y": -7
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m9",
+          "order": 7
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": -30,
+            "y": 16
+          },
+          "p2": {
+            "x": -30,
+            "y": 7
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m10",
+          "order": 8
+        },
+        {
+          "rotation": 0,
+          "lineMode": "solid",
+          "lineStyle": "solid",
+          "arrowVariant": "right",
+          "dimensionVariant": "basic",
+          "arrowHead": "none",
+          "dashLength": 0,
+          "dashGap": 0,
+          "type": "line",
+          "p1": {
+            "x": -30,
+            "y": -7
+          },
+          "p2": {
+            "x": -30,
+            "y": -16
+          },
+          "strokeWidth": 0.2,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "id": "obj_mrxqh4k0_m11",
+          "order": 9
+        },
+        {
+          "text": "그림 1. 직렬 회로",
+          "fontSize": 3.7,
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "fontWeight": "normal",
+          "fontStyle": "normal",
+          "italic": false,
+          "letterSpacing": 0,
+          "underline": false,
+          "strikeout": false,
+          "rotation": 0,
+          "type": "text",
+          "x": -30,
+          "y": -21,
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "id": "obj_mrxqh4k7_m12",
+          "order": 10
+        }
+      ],
+      "guides": [],
+      "layers": [
+        {
+          "id": 1,
+          "name": "레이어 1",
+          "visible": true
+        },
+        {
+          "id": 2,
+          "name": "레이어 2",
+          "visible": true
+        },
+        {
+          "id": 3,
+          "name": "레이어 3",
+          "visible": true
+        }
+      ],
+      "artboard": {
+        "w": 90,
+        "h": 60
+      }
+    }
+  ],
+  "activePageId": "page_mrxqh4js_m1"
+}

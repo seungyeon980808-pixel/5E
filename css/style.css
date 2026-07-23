@@ -1519,11 +1519,34 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 .zoom-readout {
-  margin-left: auto;
   font-family: "IBM Plex Mono", monospace;
   font-size: 13px;
   color: var(--c-sub);
 }
+
+/* MCP 연결 상태 — zoom readout 바로 왼쪽. margin-left:auto를 여기로 옮겨서(zoom-readout엔
+   더 이상 없음) 이 버튼부터 툴바 오른쪽 끝으로 붙는다. 점(●)이 상태를 나타낸다:
+   회색 테두리만=연결 안 됨, 파란 채움=연결됨 — 흔한 "연결 상태 표시등" 관례를 그대로 따른다. */
+.mcp-bridge-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mcp-bridge-btn .mcp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--text-secondary);
+  flex: 0 0 auto;
+}
+.mcp-bridge-btn[aria-pressed="true"] .mcp-dot {
+  background: var(--c-main);
+  border-color: var(--c-main);
+}
+.mcp-bridge-btn.mcp-connecting .mcp-dot { opacity: 0.5; }
+.mcp-bridge-btn.mcp-flash { background: var(--btn-tool-hover); }
 
 /* theme / monochrome toggle (sits at the far right of the canvas toolbar) */
 .theme-toggle {
