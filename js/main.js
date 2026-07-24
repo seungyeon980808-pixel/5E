@@ -13,6 +13,7 @@ import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } fro
 import { initTools } from "./tools.js?v=1.2.0";
 import { initCutTool } from "./cut-tool.js?v=1.2.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.2.0";
+import { initArtboardResize } from "./artboard-resize.js?v=1.2.0";
 import { initInspector } from "./inspector.js?v=1.2.0";
 import { initProjectIO } from "./project-io.js?v=1.2.0";
 import { initExportDialog } from "./export-dialog.js?v=1.2.0";
@@ -143,6 +144,9 @@ initCutTool(svg, state);
 
 /* ----- transform: body-drag move + Undo/Redo (must come after initTools) ----- */
 initTransform(svg, state);
+
+/* ----- artboard 드래그 리사이즈: 우하단 핸들로 페이지 크기 조절(모드일 때만) ----- */
+initArtboardResize(svg, state);
 
 /* ----- inspector: right-panel controls wired to selected object ----- */
 initInspector(state);

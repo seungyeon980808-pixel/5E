@@ -318,6 +318,10 @@ export const state = createStore({
   // Default 90×60. Max size is 200×200 (clamped in inspector/section-artboard.js).
   artboard: { w: 90, h: 60 },
 
+  // artboardResizeMode: 켜지면 캔버스 아트보드 우하단에 드래그 핸들을 그려 크기를
+  // 마우스로 조절한다(js/artboard-resize.js). 인스펙터 아트보드 섹션 버튼이 토글.
+  artboardResizeMode: false,
+
   // viewBox: world-space rectangle currently shown (x, y, w, h).
   // Initial view: 90×60 artboard centered at origin with ~10mm margin on each side.
   viewBox: { x: -55, y: -40, w: 110, h: 80 },

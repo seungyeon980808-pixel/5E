@@ -213,6 +213,26 @@ details[open] > .insp-summary::before {
   border-color: var(--insp-accent);
 }
 
+/* 아트보드 "드래그로 조절" 토글 버튼 — 프리셋과 같은 톤, 켜지면 강조색으로 채움 */
+.insp-ab-drag-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+}
+.insp-ab-drag-btn:hover { border-color: var(--insp-accent); }
+.insp-ab-drag-btn.is-active {
+  color: #fff;
+  background: var(--insp-accent);
+  border-color: var(--insp-accent);
+}
+
 /* ----- Color picker ----- */
 .cp-root {
   display: flex;
