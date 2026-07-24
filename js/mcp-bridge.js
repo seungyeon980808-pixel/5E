@@ -109,6 +109,22 @@ const COMMANDS = {
     return { removed };
   },
 
+  // 아트보드(페이지) 크기 변경 — 기출 그림의 가로세로 비율을 맞추는 데 쓴다.
+  // 원본이 정사각형에 가까운데 90×60으로 그리면 도형이 전부 눌려 보이기 때문.
+  setArtboard({ w, h }) {
+    const nw = Number(w), nh = Number(h);
+    if (!Number.isFinite(nw) || !Number.isFinite(nh) || nw <= 0 || nh <= 0) {
+      throw new Error("아트보드 크기는 0보다 큰 숫자여야 합니다");
+    }
+    state.update((s) => {
+      s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+      s.redoStack = [];
+      s.artboard = { w: nw, h: nh };
+    });
+    flash(`아트보드 ${nw}×${nh}mm`);
+    return { artboard: { w: nw, h: nh } };
+  },
+
   // 현재 페이지 비우기 (Ctrl+Z로 되돌아온다)
   clear() {
     let removed = 0;

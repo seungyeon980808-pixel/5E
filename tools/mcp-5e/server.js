@@ -192,6 +192,21 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "set_artboard",
+    description:
+      "열려 있는 화면의 아트보드(페이지) 크기를 mm로 바꾼다. 기출 그림을 재현할 때 원본의 " +
+      "가로세로 비율을 먼저 맞추는 용도 — 정사각형에 가까운 원본을 기본 90×60에 그리면 " +
+      "그림이 눌려 보인다. 크기를 바꾸면 그릴 수 있는 좌표 범위도 함께 바뀐다(±w/2, ±h/2).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        w: { type: "number", description: "가로 mm" },
+        h: { type: "number", description: "세로 mm" },
+      },
+      required: ["w", "h"],
+    },
+  },
+  {
     name: "list_objects",
     description: "프로젝트에 들어 있는 페이지·객체 목록을 요약해서 본다. 수정 대상 id를 찾을 때 쓴다.",
     inputSchema: { type: "object", properties: { path: PATH_PROP }, required: ["path"] },
@@ -339,6 +354,15 @@ const HANDLERS = {
   async clear_app() {
     const r = await sendToApp("clear");
     return `${r.removed}개 지웠습니다 — 앱에서 Ctrl+Z로 되돌릴 수 있습니다.`;
+  },
+
+  async set_artboard({ w, h }) {
+    const r = await sendToApp("setArtboard", { w, h });
+    const a = r.artboard;
+    return [
+      `아트보드를 ${a.w}×${a.h}mm로 바꿨습니다.`,
+      `그릴 수 있는 범위: x ${-a.w / 2} ~ ${a.w / 2}, y ${-a.h / 2} ~ ${a.h / 2}`,
+    ].join("\n");
   },
 
   async remove_from_app({ ids }) {

@@ -15,6 +15,8 @@ import { measureFormula, renderFormula } from "../formula.js?v=1.2.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
+  OBJECT_LABEL_QUANTITY_FONT_FAMILY,
+  EQUATION_FONT_STYLE,
   normalizeTextRuns,
   hasStyledTextRuns,
 } from "../state.js?v=1.2.0";
@@ -179,18 +181,21 @@ function renderAngleArc(obj) {
     if (obj.labelType !== "label") {
       // 물리량(기본): 수식 엔진으로 렌더 — 입력은 theta_2 그대로 두고 화면만 θ₂로.
       // 그리스 이름·아래첨자(_)·위첨자(^)가 수식 객체와 동일하게 변환된다.
+      // 글꼴은 물리량 라벨 정책 그대로 수식 글꼴(EQUATION = Latin Modern 이탤릭) —
+      // 여기서 일반 텍스트 글꼴을 넘기면 θ가 정체 Θ로 나와 평가원 표기와 어긋난다.
       // renderFormula의 앵커는 top-left이므로 실측 폭/높이 절반만큼 되끌어 중앙 정렬.
+      const fmFamily = obj.fontFamily || OBJECT_LABEL_QUANTITY_FONT_FAMILY;
       const fm = measureFormula(obj.label, labelSize, {
-        family: obj.fontFamily || DEFAULT_TEXT_FONT,
+        family: fmFamily,
         weight: "normal",
-        style: "normal",
+        style: EQUATION_FONT_STYLE,
       });
       const fmEl = renderFormula({
         x: lx - fm.w / 2,
         y: ly - fm.h / 2,
         source: obj.label,
         fontSize: labelSize,
-        fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+        fontFamily: fmFamily,
       });
       if (fmEl) g.appendChild(fmEl);
     } else {

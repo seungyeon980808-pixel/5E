@@ -8,7 +8,10 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
 } from "./core.js?v=1.2.0";
-import { CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "../state.js?v=1.2.0";
+import {
+  CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM,
+  OBJECT_LABEL_QUANTITY_FONT_FAMILY, EQUATION_FONT_STYLE,
+} from "../state.js?v=1.2.0";
 import { measureFormula, renderFormula } from "../formula.js?v=1.2.0";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
@@ -271,13 +274,16 @@ function renderCircuit(obj) {
     const ly = mid.y + py * off * sign;
     if (obj.labelType !== "label") {
       // 물리량(기본): 수식 엔진으로 — R_1이 R₁로, theta가 θ로 (anglearc와 동일 정책).
+      // 글꼴은 물리량 라벨 정책대로 수식 글꼴(Latin Modern 이탤릭) — 일반 텍스트
+      // 글꼴을 넘기면 그리스 문자가 정체로 나와 평가원 표기와 어긋난다.
+      const fmFamily = obj.fontFamily || OBJECT_LABEL_QUANTITY_FONT_FAMILY;
       const fm = measureFormula(obj.label, size, {
-        family: obj.fontFamily || DEFAULT_TEXT_FONT, weight: "normal", style: "normal",
+        family: fmFamily, weight: "normal", style: EQUATION_FONT_STYLE,
       });
       const fmEl = renderFormula({
         x: lx - fm.w / 2, y: ly - fm.h / 2,
         source: obj.label, fontSize: size,
-        fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+        fontFamily: fmFamily,
       });
       if (fmEl) g.appendChild(fmEl);
       return g;
