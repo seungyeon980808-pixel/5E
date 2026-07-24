@@ -88,3 +88,22 @@ export const SNAP_LINE_LIKE_TYPES   = typesWith("snapLineLike");   // 4: line ci
 
 // Convenience predicate for the most-duplicated classification (box size object).
 export function isSizeObject(o) { return !!o && SIZE_TYPES.has(o.type); }
+
+/* ----- 텍스트 최상단 정책 -----
+ * 시험지 그림에서 글자는 무엇에도 가려지면 안 된다(평가원 관례). 렌더(scene.js)와
+ * 픽(pick.js hitTest)이 이 함수를 '같이' 써서 보이는 순서와 클릭 순서가 항상 일치한다.
+ * text/formula를 배열 순서를 보존한 채 맨 뒤(=맨 위)로 올린다. 저장 데이터(objects[])의
+ * 순서는 건드리지 않는다 — 이건 표시·픽 전용 view다. */
+export const FLOAT_TOP_TYPES = TEXT_MEASURED_TYPES; // text, formula
+export function zOrderObjects(objects) {
+  const list = objects || [];
+  let needs = false;
+  for (let i = 0, seenTop = false; i < list.length; i++) {
+    if (FLOAT_TOP_TYPES.has(list[i].type)) seenTop = true;
+    else if (seenTop) { needs = true; break; }   // 텍스트 '뒤'에 비텍스트가 있음 → 재배열 필요
+  }
+  if (!needs) return list;
+  const base = [], top = [];
+  for (const o of list) (FLOAT_TOP_TYPES.has(o.type) ? top : base).push(o);
+  return base.concat(top);
+}

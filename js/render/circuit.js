@@ -8,7 +8,8 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
 } from "./core.js?v=1.2.0";
-import { CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.2.0";
+import { CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT } from "../state.js?v=1.2.0";
+import { measureFormula, renderFormula } from "../formula.js?v=1.2.0";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *
@@ -266,14 +267,35 @@ function renderCircuit(obj) {
     // sits "above" the box regardless of the placement tilt.
     const sign = py <= 0 ? 1 : -1;
     const off = CIRCUIT_BODY_HALF_H + size * 0.6;
+    const lx = mid.x + px * off * sign;
+    const ly = mid.y + py * off * sign;
+    if (obj.labelType !== "label") {
+      // 물리량(기본): 수식 엔진으로 — R_1이 R₁로, theta가 θ로 (anglearc와 동일 정책).
+      const fm = measureFormula(obj.label, size, {
+        family: obj.fontFamily || DEFAULT_TEXT_FONT, weight: "normal", style: "normal",
+      });
+      const fmEl = renderFormula({
+        x: lx - fm.w / 2, y: ly - fm.h / 2,
+        source: obj.label, fontSize: size,
+        fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+      });
+      if (fmEl) g.appendChild(fmEl);
+      return g;
+    }
     const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", mid.x + px * off * sign);
-    t.setAttribute("y", mid.y + py * off * sign);
+    t.setAttribute("x", lx);
+    t.setAttribute("y", ly);
     t.setAttribute("font-size", size);
     applyObjectLabelFont(t, obj.labelType);
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
+    if (obj.halo !== false) {
+      t.setAttribute("paint-order", "stroke");
+      t.setAttribute("stroke", "white");
+      t.setAttribute("stroke-width", size * 0.16);
+      t.setAttribute("stroke-linejoin", "round");
+    }
     fillTextWithRomanRuns(t, obj.label);
     g.appendChild(t);
   }

@@ -28,7 +28,7 @@ import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.2.0";
 import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.2.0";
 import { renderGauge } from "./gauge.js?v=1.2.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.2.0";
-import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES } from "../object-types.js?v=1.2.0";
+import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, zOrderObjects } from "../object-types.js?v=1.2.0";
 import { resolveObjectStyle } from "../style-mode.js?v=1.2.0";
 import { renderFormula } from "../formula.js?v=1.2.0";
 import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.2.0";
@@ -126,8 +126,10 @@ export function render(state) {
   }
 
   // ----- committed objects (z-order = array order, DESIGN 1-1) -----
+  // 단, text/formula는 항상 최상단(zOrderObjects) — 픽(pick.js hitTest)도 같은
+  // view를 쓰므로 보이는 순서와 클릭 순서가 일치한다.
   const _editingId = state.draftText && state.draftText.editingId;
-  for (const obj of state.objects) {
+  for (const obj of zOrderObjects(state.objects)) {
     // The object being re-edited is drawn by the draftText preview instead, so
     // skip its committed render to avoid double text while editing.
     if (_editingId && obj.id === _editingId) continue;

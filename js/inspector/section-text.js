@@ -65,6 +65,20 @@ export function buildTextSection(ctx) {
   italicRow.appendChild(italicLbl);
   secTextBody.appendChild(italicRow);
 
+  // 흰 테두리(halo) — 기본 켜짐(부재 = 켜짐). 선·채움 위에서도 글자가 읽히게 하는
+  // 평가원 관례라 기본값이고, 드물게 끌 일이 있을 때만 여기서 끈다.
+  const haloRow = document.createElement("div");
+  haloRow.className = "insp-row";
+  const haloCb = document.createElement("input");
+  haloCb.type = "checkbox";
+  haloCb.className = "insp-cb";
+  const haloLbl = document.createElement("label");
+  haloLbl.className = "insp-field-label";
+  haloLbl.textContent = "흰 테두리";
+  haloRow.appendChild(haloCb);
+  haloRow.appendChild(haloLbl);
+  secTextBody.appendChild(haloRow);
+
   /* 자간 — em 단위(0 = 글꼴 기본). 글자 크기를 바꿔도 비율이 유지되도록 em으로 둔다.
      실측 메모: 평가원 지면(2026 수능 물리1 17번 라벨)을 돋움으로 재현해 맞춘 결과
      최적이 -0.01em, 즉 사실상 기본값이었다. 그래서 기본은 0이고 이 컨트롤은
@@ -148,6 +162,21 @@ export function buildTextSection(ctx) {
       s2.redoStack = [];
     });
   });
+  haloCb.addEventListener("change", () => {
+    const val = haloCb.checked;
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (!o || (o.type !== "text" && o.type !== "formula")) return;
+      // 켜짐이 기본이므로 켤 때는 필드를 지운다(부재 = 켜짐) — 저장 파일을 깨끗하게.
+      if (val) delete o.halo; else o.halo = false;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
   fontSizeNum.addEventListener("change", () => {
     let v = parseFloat(fontSizeNum.value); // entered in pt → store mm
     if (!isFinite(v)) return;
@@ -187,5 +216,5 @@ export function buildTextSection(ctx) {
   // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
   const secText = makeSection("글꼴", secTextBody);
 
-  return { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum, wsRange, wsNum };
+  return { secText, fontFamSel, fontSizeNum, italicCb, haloCb, lsRange, lsNum, wsRange, wsNum };
 }

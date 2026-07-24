@@ -466,6 +466,18 @@ export function renderFormula(obj) {
 
   L.draw(g, left, baseY);
 
+  // 흰 테두리(halo) — 텍스트 객체와 동일한 기본 켜짐 정책(renderText 참조). 수식도
+  // 선 위에 얹히는 라벨로 쓰이므로 글리프(<text>)에만 적용한다(분수선 등 선은 제외).
+  if (obj.halo !== false) {
+    const hw = F * 0.16;
+    g.querySelectorAll("text").forEach((t) => {
+      t.setAttribute("paint-order", "stroke");
+      t.setAttribute("stroke", "white");
+      t.setAttribute("stroke-width", hw);
+      t.setAttribute("stroke-linejoin", "round");
+    });
+  }
+
   if (obj.rotation) {
     g.setAttribute("transform", `rotate(${obj.rotation} ${left + W / 2} ${top + H / 2})`);
   }

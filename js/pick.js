@@ -23,7 +23,7 @@ import {
 } from "./geometry.js?v=1.2.0";
 import {
   OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
-  POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES,
+  POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES, zOrderObjects,
 } from "./object-types.js?v=1.2.0";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
@@ -159,8 +159,11 @@ export function pickSelectableObjectFromEvent(svg, state, event) {
 // click slack). Rect's bbox == its shape, so it keeps the bbox test; the ellipse
 // and triangle use shape-specific tests so the empty bbox corners do NOT select.
 function hitTest(objects, p, tol = 0, lineTol = tol) {
-  for (let i = objects.length - 1; i >= 0; i--) {
-    const o = objects[i];
+  // text/formula 최상단 정책: 렌더(scene.js)와 같은 zOrderObjects view로 스캔해야
+  // "보이는 순서 = 클릭 순서"가 유지된다.
+  const zObjects = zOrderObjects(objects);
+  for (let i = zObjects.length - 1; i >= 0; i--) {
+    const o = zObjects[i];
     if (!OBJECT_TYPES[o.type]) continue; // was: explicit whitelist of all 20 hittable types
 
     if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula

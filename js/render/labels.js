@@ -282,6 +282,15 @@ function renderText(obj) {
   if (deco.length) el.setAttribute("text-decoration", deco.join(" "));
   el.setAttribute("text-anchor", "start");
   el.setAttribute("dominant-baseline", "hanging");
+  // 흰 테두리(halo) — 기본 켜짐. 시험지 그림에서 글자가 선·채움 위에 얹히는 게 일상이라
+  // 평가원 원본처럼 항상 가독성을 확보한다. 인스펙터에서 obj.halo=false로 끌 수 있다.
+  // (부재 = 켜짐이므로 구파일 백필 불필요 — project-io 규칙 "부재가 곧 신호"와 일치)
+  if (obj.halo !== false) {
+    el.setAttribute("paint-order", "stroke");
+    el.setAttribute("stroke", "white");
+    el.setAttribute("stroke-width", (obj.fontSize || DEFAULT_TEXT_SIZE_MM) * 0.16);
+    el.setAttribute("stroke-linejoin", "round");
+  }
   if (obj.id) el.dataset.id = obj.id;
   // Optional rotation about the text's top-left anchor, + 장평(가로 배율).
   // 변환 목록은 왼쪽부터 적용된다 → 장평으로 가로만 늘린 결과를 앵커 기준으로 회전.

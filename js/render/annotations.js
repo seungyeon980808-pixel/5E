@@ -174,16 +174,45 @@ function renderAngleArc(obj) {
     const mid = a0 + sweep / 2;
     const rad = (mid * Math.PI) / 180;
     const lr = r + labelSize * 0.9;
-    const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", vx + lr * Math.cos(rad));
-    t.setAttribute("y", vy - lr * Math.sin(rad));
-    t.setAttribute("font-size", labelSize);
-    applyObjectLabelFont(t, obj.labelType);
-    t.setAttribute("fill", color);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("dominant-baseline", "middle");
-    fillTextWithRomanRuns(t, obj.label);
-    g.appendChild(t);
+    const lx = vx + lr * Math.cos(rad);
+    const ly = vy - lr * Math.sin(rad);
+    if (obj.labelType !== "label") {
+      // 물리량(기본): 수식 엔진으로 렌더 — 입력은 theta_2 그대로 두고 화면만 θ₂로.
+      // 그리스 이름·아래첨자(_)·위첨자(^)가 수식 객체와 동일하게 변환된다.
+      // renderFormula의 앵커는 top-left이므로 실측 폭/높이 절반만큼 되끌어 중앙 정렬.
+      const fm = measureFormula(obj.label, labelSize, {
+        family: obj.fontFamily || DEFAULT_TEXT_FONT,
+        weight: "normal",
+        style: "normal",
+      });
+      const fmEl = renderFormula({
+        x: lx - fm.w / 2,
+        y: ly - fm.h / 2,
+        source: obj.label,
+        fontSize: labelSize,
+        fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+      });
+      if (fmEl) g.appendChild(fmEl);
+    } else {
+      // "라벨"(정체) 종류: 일반 텍스트 경로 유지({romanN}·구간 세리프 처리 포함).
+      const t = document.createElementNS(SVG_NS, "text");
+      t.setAttribute("x", lx);
+      t.setAttribute("y", ly);
+      t.setAttribute("font-size", labelSize);
+      applyObjectLabelFont(t, obj.labelType);
+      t.setAttribute("fill", color);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("dominant-baseline", "middle");
+      // 흰 테두리 — renderText와 동일 정책(기본 켜짐)
+      if (obj.halo !== false) {
+        t.setAttribute("paint-order", "stroke");
+        t.setAttribute("stroke", "white");
+        t.setAttribute("stroke-width", labelSize * 0.16);
+        t.setAttribute("stroke-linejoin", "round");
+      }
+      fillTextWithRomanRuns(t, obj.label);
+      g.appendChild(t);
+    }
   }
 
   return g;

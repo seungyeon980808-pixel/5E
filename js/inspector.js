@@ -76,7 +76,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
@@ -147,6 +147,7 @@ export function initInspector(state) {
     fontFamSel.disabled = disabled;
     fontSizeNum.disabled = disabled;
     italicCb.disabled = disabled;
+    haloCb.disabled = disabled;
     lsRange.disabled = disabled;
     lsNum.disabled = disabled;
     wsRange.disabled = disabled;
@@ -421,6 +422,7 @@ export function initInspector(state) {
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       italicCb.checked = styleObj.italic === true;
+      haloCb.checked = styleObj.halo !== false;   // 부재 = 켜짐
       if (document.activeElement !== fontSizeNum) {
         // Stored fontSize is world-unit mm; the field shows points.
         fontSizeNum.value = Math.round(mmToPt(styleObj.fontSize ?? 0) * 10) / 10;

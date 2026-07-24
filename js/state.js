@@ -36,7 +36,10 @@ export const ROMAN_NUMERAL_FONT_FAMILY = '"Times New Roman", "Batang", "바탕",
 
 // "구간"(with optional spaces) 뒤에 붙은 I / II / III 만 매칭한다. 라틴 단어 경계
 // (뒤가 라틴 글자면 미매칭)로 "구간 Info" 같은 영어 단어는 제외된다.
-const SECTION_ROMAN_RE = /구간(\s*)(I{1,3})(?![A-Za-z])/g;
+// 추가로 명시적 매크로 {roman1}~{roman12} 를 지원한다(그룹 3) — "구간" 문맥 없이도
+// 영역 이름(I·II·III)을 Times 정체로 쓰고 싶을 때 쓴다. 매크로라 오변환이 없다.
+const SECTION_ROMAN_RE = /구간(\s*)(I{1,3})(?![A-Za-z])|\{roman(1[0-2]|[1-9])\}/g;
+const ROMAN_NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
 
 // 텍스트를 "구간 로마 숫자 런"과 "일반 런"으로 쪼갠다. 로마 숫자 런이 되는 것은
 // "구간 I", "마찰구간 II", "마찰 구간 III"처럼 구간 번호로 쓰인 I/II/III 뿐이다.
@@ -54,6 +57,13 @@ export function splitRomanRuns(text) {
   SECTION_ROMAN_RE.lastIndex = 0;
   let last = 0, m;
   while ((m = SECTION_ROMAN_RE.exec(s))) {
+    if (m[3] !== undefined) {
+      // {romanN} 매크로: 매크로 전체를 로마 숫자 런으로 치환한다.
+      if (m.index > last) push(s.slice(last, m.index), false);
+      push(ROMAN_NUMERALS[Number(m[3]) - 1], true);
+      last = m.index + m[0].length;
+      continue;
+    }
     // 로마 토큰은 "구간" + 공백 뒤에서 시작한다. 그 앞(한글 "구간"과 간격 포함)은
     // 일반 텍스트 글꼴을 유지한다.
     const romanStart = m.index + "구간".length + m[1].length;
