@@ -8,8 +8,14 @@
  *     서버 → 앱 : SSE (GET /events)   — 명령을 흘려보낸다
  *     앱 → 서버 : POST /result        — 실행 결과를 돌려준다
  *
- * 127.0.0.1에만 바인딩한다(외부에서 접근 불가). 포트는 8579부터 비어 있는 것을 쓴다 —
- * Claude 세션을 두 개 띄워도 서로 밀어내지 않게.
+ * 127.0.0.1에만 바인딩한다(외부에서 접근 불가). 포트는 8579부터 비어 있는 것을 쓴다.
+ *
+ * 좀비 서버 정리: Claude Code 창을 X 버튼으로 닫으면(정상 종료가 아니라) 이 서버의
+ * 부모 프로세스는 죽어도 이 서버 자신은 안 죽고 포트를 계속 쥐고 있는 경우가 있다.
+ * 그러면 새로 켠 세션은 그다음 포트로 밀려나고, 브라우저는 여전히 그 죽은 좀비한테
+ * 붙어서 "연결은 됐는데 반응이 없는" 상태가 된다. 그래서 시작할 때마다 먼저
+ * PORT_RANGE 전체를 훑어 이미 떠 있는 mcp-5e 서버가 있으면 종료 요청을 보내고
+ * (evictOthers), 그다음에 8579부터 다시 잡는다 — 항상 "제일 최근에 켠 것만" 산다.
  */
 
 import http from "node:http";
@@ -67,6 +73,15 @@ function handle(req, res) {
     return;
   }
 
+  if (url.pathname === "/shutdown" && req.method === "POST") {
+    // 새로 뜬 세션이 좀비를 정리할 때 보내는 요청. 응답부터 보내고 나서 죽는다 —
+    // 안 그러면 요청 보낸 쪽이 연결 끊김 에러를 본다.
+    res.writeHead(204);
+    res.end();
+    setTimeout(() => process.exit(0), 50);
+    return;
+  }
+
   if (url.pathname === "/result" && req.method === "POST") {
     let body = "";
     req.on("data", (c) => { body += c; });
@@ -86,9 +101,28 @@ function handle(req, res) {
   res.end();
 }
 
-/* ----- 서버 기동: 비어 있는 포트를 찾아 순서대로 시도 ----- */
-export function startBridge() {
-  if (server) return Promise.resolve(port);
+/* ----- 좀비 정리: 이미 떠 있는 mcp-5e 서버들에 종료 요청을 보낸다 -----
+ * 요청 자체가 실패해도(이미 죽은 포트 등) 무시한다 — 정리가 목적이지 확인이 목적이 아니다. */
+async function evictOthers() {
+  let evicted = 0;
+  for (const p of PORT_RANGE) {
+    try {
+      const h = await fetch(`http://127.0.0.1:${p}/health`, { signal: AbortSignal.timeout(400) });
+      if (!h.ok) continue;
+      const info = await h.json();
+      if (info.server !== "mcp-5e") continue;   // 다른 프로그램이 그 포트를 쓰는 중 — 손대지 않는다
+      await fetch(`http://127.0.0.1:${p}/shutdown`, { method: "POST", signal: AbortSignal.timeout(400) });
+      evicted++;
+    } catch { /* 그 포트엔 없거나 이미 죽음 — 정상 */ }
+  }
+  if (evicted) await new Promise((r) => setTimeout(r, 300));   // 포트가 실제로 풀릴 시간
+  return evicted;
+}
+
+/* ----- 서버 기동: 좀비 정리 후, 비어 있는 포트를 찾아 순서대로 시도 ----- */
+export async function startBridge() {
+  if (server) return port;
+  await evictOthers();
   return new Promise((resolve) => {
     const tryPort = (i) => {
       if (i >= PORT_RANGE.length) { resolve(null); return; }   // 전부 사용중 → 통로 없이 동작
