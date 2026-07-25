@@ -144,7 +144,10 @@ const TOOLS = [
             "(시간축처럼 값 범위가 좁은 축을 물리적으로 늘려 읽기 쉽게), " +
             "axisVariant(cross|quadrant|single), showGrid, labelX, labelY, showTickLabels, " +
             "richLabels(축 이름 글씨체 — 그래프 도구와 같게 하려면 true), " +
-            "seriesLock(좌표·함수 묶기, 기본 true) 등. " +
+            "seriesLock(좌표·함수 묶기, 기본 true), " +
+            "annGuides(수선의 발 [{x,y}] — 앱 ③표시 탭과 같은 평면 요소), " +
+            "guideLines(가이드라인 [{x1,y1,x2,y2}] — 계단 불연속 연결 등), " +
+            "annMarkers(표시점 [{x,y}]) 등. 좌표는 전부 수학 좌표. " +
             "글자 크기는 칸 크기에 비례한다: axisLabelSize=cellX*0.8-0.35, tickLabelSize=cellX*0.68-0.35",
         },
         functions: {

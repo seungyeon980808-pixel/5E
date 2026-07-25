@@ -159,6 +159,12 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       "gridOver", "gridOverXPos", "gridOverXNeg", "gridOverYPos", "gridOverYNeg",
       "padXPos", "padXNeg", "padYPos", "padYNeg",
       "seriesLock",
+      // ③표시 탭의 평면 요소들(전부 math 좌표 — renderCoordplane이 world로 변환하므로
+      // 평면을 옮기거나 리사이즈해도 따라온다). 앱 UI의 '배치 도구'와 같은 데이터다:
+      //   annGuides  = 수선의 발  [{x,y}]      점에서 두 축으로 내리는 점선
+      //   guideLines = 가이드라인 [{x1,y1,x2,y2}]  두 점을 잇는 점선(계단 불연속 연결 등)
+      //   annMarkers = 표시점 [{x,y}] / annArrows = 화살표 / legends = 범례
+      "annGuides", "guideLines", "annMarkers", "annArrows", "annLabelPoints", "legends",
     ]),
   };
   // 좌표·함수 묶기: 그래프 도구의 기본값과 같게 켠다(끄려면 seriesLock:false를 명시).
