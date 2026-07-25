@@ -211,6 +211,28 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "list_pages",
+    description:
+      "열려 있는 앱의 페이지(탭) 목록과 각 페이지의 객체 수·아트보드를 본다. " +
+      "그림을 여러 장 그릴 때 어느 탭이 비어 있는지 확인하는 용도.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "set_page",
+    description:
+      "열려 있는 앱의 페이지(탭)를 전환한다. 그림 한 장당 한 페이지를 쓰면 서로 겹치지 않는다. " +
+      "page: 인덱스(0부터) | 페이지 이름 | 페이지 id. 없는 페이지면 create:true로 새로 만든다" +
+      "(이름을 주면 그 이름으로 생성). 전환 후 add_objects/add_graph는 그 페이지에 그려진다.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        page: { description: "인덱스(0부터) 또는 이름 또는 id" },
+        create: { type: "boolean", description: "없으면 새로 만들기(기본 false)" },
+      },
+      required: ["page"],
+    },
+  },
+  {
     name: "set_artboard",
     description:
       "열려 있는 화면의 아트보드(페이지) 크기를 mm로 바꾼다. 기출 그림을 재현할 때 원본의 " +
@@ -373,6 +395,19 @@ const HANDLERS = {
   async clear_app() {
     const r = await sendToApp("clear");
     return `${r.removed}개 지웠습니다 — 앱에서 Ctrl+Z로 되돌릴 수 있습니다.`;
+  },
+
+  async list_pages() {
+    const r = await sendToApp("listPages");
+    const rows = r.pages.map((p) =>
+      `${p.id === r.active ? "▶" : " "} [${p.index}] ${p.name} — 객체 ${p.objects}개, ` +
+      `아트보드 ${p.artboard ? `${p.artboard.w}×${p.artboard.h}mm` : "?"}`);
+    return [`페이지 ${r.pages.length}장 (▶ = 현재)`, ...rows].join("\n");
+  },
+
+  async set_page({ page, create }) {
+    const r = await sendToApp("setPage", { page, create: !!create });
+    return `${r.created ? "새 페이지를 만들어 " : ""}"${r.name}"(으)로 이동했습니다 — 이제 여기에 그려집니다.`;
   },
 
   async set_artboard({ w, h }) {

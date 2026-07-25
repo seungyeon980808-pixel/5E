@@ -22,6 +22,7 @@
 
 import { state } from "./state.js?v=1.2.0";
 import { showAlert } from "./ui-dialogs.js?v=1.2.0";
+import { switchPage, addPage } from "./pages.js?v=1.2.0";
 
 const PORTS = [8579, 8580, 8581, 8582, 8583];
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
@@ -116,6 +117,50 @@ const COMMANDS = {
     });
     flash(`${removed}개 삭제됨`);
     return { removed };
+  },
+
+  /* ----- 페이지 목록 ----- */
+  // 그림을 여러 장 그릴 때 어느 탭에 무엇이 있는지 보고, 원하는 탭으로 옮겨 그리기 위한 것.
+  listPages() {
+    const s = state.get();
+    return {
+      active: s.activePageId,
+      pages: (s.pages || []).map((p, i) => ({
+        index: i, id: p.id, name: p.name,
+        // 활성 페이지의 objects는 s.objects에 있고, 비활성 페이지는 p.objects에 있다.
+        objects: p.id === s.activePageId ? s.objects.length : (p.objects || []).length,
+        artboard: p.artboard,
+      })),
+    };
+  },
+
+  /* ----- 페이지 전환 / 추가 -----
+   * page: 인덱스(0부터) | 이름 | id. create:true면 없을 때 새로 만든다.
+   * 앱의 pages.js를 그대로 호출하므로 탭 UI·그룹 재구축·히스토리 처리가 앱과 동일하다. */
+  setPage({ page, create }) {
+    const s = state.get();
+    const list = s.pages || [];
+    let target = null;
+    if (typeof page === "number") target = list[page];
+    else if (typeof page === "string") target = list.find((p) => p.id === page || p.name === page);
+    if (!target) {
+      if (!create) throw new Error(`페이지를 찾을 수 없습니다: ${page} (현재 ${list.length}장)`);
+      addPage(state);
+      // 이름을 지정해 만든 경우 새 탭 이름을 그대로 붙인다(pages.js의 renamePage는
+      // 사용자에게 입력을 묻는 대화상자라 여기서 쓸 수 없다).
+      if (typeof page === "string") {
+        state.update((st) => {
+          const np = (st.pages || []).find((p) => p.id === st.activePageId);
+          if (np) np.name = page;
+        });
+      }
+      flash("페이지 추가");
+      const s2 = state.get();
+      return { active: s2.activePageId, name: activePageName(s2), created: true };
+    }
+    switchPage(state, target.id);
+    flash(`${target.name}(으)로 이동`);
+    return { active: target.id, name: target.name, created: false };
   },
 
   // 아트보드(페이지) 크기 변경 — 기출 그림의 가로세로 비율을 맞추는 데 쓴다.
