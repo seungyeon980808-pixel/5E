@@ -5,6 +5,7 @@
  */
 
 import { sampleFunctionPoints } from "../../../js/function-graph/sampler.js";
+import { worldXFromMathX, worldYFromMathY } from "../../../js/function-graph/coords.js";
 import { CIRCUIT_BODY_MM } from "./schema.js";
 
 const DEFAULT_ELEMENT_SPAN = 14;   // 소자 하나가 차지하는 단자간 거리(mm). 몸통 8 + 리드 3+3
@@ -130,9 +131,13 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
   if (xMax <= xMin || yMax <= yMin) {
     return { error: "plane 범위가 잘못됐습니다 (xMax>xMin, yMax>yMin)" };
   }
+  // 칸 크기. 축마다 다르게 줄 수 있다(cellMmX/cellMmY) — 시간축처럼 값 범위가 좁은 축을
+  // 물리적으로 늘려야 그래프가 읽기 쉬워지기 때문(세로로 길쭉한 v-t 그래프 방지).
   const cell = num(plane.cellMm, 4.8);                    // defaults.js와 같은 기본 칸 크기
-  const w = num(plane.w, cell * (xMax - xMin));
-  const h = num(plane.h, cell * (yMax - yMin));
+  const cellX = num(plane.cellMmX, cell);
+  const cellY = num(plane.cellMmY, cell);
+  const w = num(plane.w, cellX * (xMax - xMin));
+  const h = num(plane.h, cellY * (yMax - yMin));
   const cx = num(at && at.x, 0), cy = num(at && at.y, 0);   // 원점 = 아트보드 중앙
 
   const planeObj = {
@@ -153,8 +158,12 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       "gridCountYPos", "gridCountYNeg",
       "gridOver", "gridOverXPos", "gridOverXNeg", "gridOverYPos", "gridOverYNeg",
       "padXPos", "padXNeg", "padYPos", "padYNeg",
+      "seriesLock",
     ]),
   };
+  // 좌표·함수 묶기: 그래프 도구의 기본값과 같게 켠다(끄려면 seriesLock:false를 명시).
+  // 켜져 있으면 평면을 옮길 때 계열·수선의 발·표시점이 함께 따라간다.
+  if (planeObj.seriesLock === undefined) planeObj.seriesLock = true;
 
   const graphs = [];
   for (const f of functions) {
@@ -168,6 +177,10 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       warnings.push(`"${f.expr}": 표시 범위 안에 그려질 점이 없습니다 (yMin/yMax 또는 정의역 확인)`);
       continue;
     }
+    // 그래프 요소(수선의 발·표시점·화살촉)는 앱 그래프 도구와 같은 방식으로 굽는다:
+    // math 좌표 스펙(guides/markers)을 세계좌표로 바꿔 funcgraph에 실으면 renderFuncgraph가
+    // 계열과 함께 그린다. 원본 스펙(guideXs/markerXs)도 같이 저장해 모달에서 재편집된다.
+    const els = bakeGraphElements(f, planeObj);
     graphs.push(trim({
       type: "funcgraph",
       expr: f.expr,
@@ -181,9 +194,37 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       dashGap: num(f.dashGap, 0),
       label: f.label || "",
       labelShow: !!f.label,
+      endLabel: f.endLabel || undefined,
+      ...els,
     }));
   }
   return { plane: planeObj, graphs, warnings };
+}
+
+/* 그래프 요소 굽기 — graph-modal.js bakeElements()와 같은 규칙.
+ *   guides : [{x, y}]  점에서 x축(수직)·y축(수평)으로 내린 '수선의 발'
+ *   markers: [{x, y}]  곡선 위 표시점(●)
+ * 좌표는 수학 좌표(축 눈금 값)로 준다 — 세계좌표(mm) 변환은 여기서 한다. */
+function bakeGraphElements(f, plane) {
+  const toWorld = (mx, my) => ({ x: worldXFromMathX(plane, mx), y: worldYFromMathY(plane, my) });
+  const o0 = toWorld(0, 0);
+  const guideSegs = [], markers = [];
+  const guides = Array.isArray(f.guides) ? f.guides : [];
+  const marks = Array.isArray(f.markers) ? f.markers : [];
+  for (const gspec of guides) {
+    if (!gspec || !Number.isFinite(gspec.x) || !Number.isFinite(gspec.y)) continue;
+    const p = toWorld(gspec.x, gspec.y);
+    if (Math.abs(p.y - o0.y) > 1e-6) guideSegs.push([{ x: p.x, y: p.y }, { x: p.x, y: o0.y }]); // → x축
+    if (Math.abs(p.x - o0.x) > 1e-6) guideSegs.push([{ x: p.x, y: p.y }, { x: o0.x, y: p.y }]); // → y축
+  }
+  for (const mspec of marks) {
+    if (!mspec || !Number.isFinite(mspec.x) || !Number.isFinite(mspec.y)) continue;
+    markers.push(toWorld(mspec.x, mspec.y));
+  }
+  const out = {};
+  if (guideSegs.length) { out.guideSegs = guideSegs; out.guideXs = guides.map((g) => ({ ...g })); }
+  if (markers.length) { out.markers = markers; out.markerXs = marks.map((m) => ({ ...m })); }
+  return out;
 }
 
 function num(v, d) { return Number.isFinite(v) ? v : d; }

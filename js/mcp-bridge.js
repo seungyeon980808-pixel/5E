@@ -87,6 +87,7 @@ const COMMANDS = {
       }
       s.selectedIds = ids;
       s.targetedId = null;
+      lockPlanesToSeries(s, ids);
     });
     flash(`${ids.length}개 추가됨`);
     return { added: ids.length, ids };
@@ -139,6 +140,30 @@ const COMMANDS = {
     return { removed };
   },
 };
+
+/* ----- 좌표·함수 묶기(seriesLock) -----
+ * 그래프 도구로 만든 그래프는 평면과 계열이 한 그룹으로 묶여 함께 움직인다(기본 ON).
+ * MCP로 들어온 그래프도 같아야 한다 — 안 묶이면 평면만 끌었을 때 곡선·수선의 발이
+ * 제자리에 남아 축과 어긋난다. 방금 들어온 객체 중 평면(seriesLock !== false)과
+ * 그 평면을 planeId로 가리키는 계열을 한 그룹으로 만든다. */
+function lockPlanesToSeries(s, newIds) {
+  const fresh = new Set(newIds);
+  for (const plane of s.objects) {
+    if (plane.type !== "coordplane" || !fresh.has(plane.id)) continue;
+    if (plane.seriesLock === false) continue;
+    const memberIds = [plane.id];
+    for (const o of s.objects) {
+      if (o.planeId === plane.id && fresh.has(o.id) && !o.groupId) memberIds.push(o.id);
+    }
+    if (memberIds.length < 2) continue;
+    const gid = "grp_" + plane.id;
+    for (const id of memberIds) {
+      const o = s.objects.find((x) => x.id === id);
+      if (o && !o.groupId) o.groupId = gid;
+    }
+    (s.groups = s.groups || []).push({ id: gid, memberIds });
+  }
+}
 
 function activePageName(s) {
   const p = (s.pages || []).find((q) => q.id === s.activePageId);

@@ -139,8 +139,13 @@ const TOOLS = [
         at: { ...XY, description: "평면의 중심 좌표(mm)" },
         plane: {
           type: "object",
-          description: "평면 설정. xMin/xMax/yMin/yMax(기본 -5..5), cellMm(한 칸 mm, 기본 4.8), " +
-            "axisVariant(cross|quadrant|single), showGrid, labelX, labelY, showTickLabels 등",
+          description: "평면 설정. xMin/xMax/yMin/yMax(기본 -5..5), " +
+            "cellMm(한 칸 mm, 기본 4.8) — 축마다 다르게 하려면 cellMmX/cellMmY " +
+            "(시간축처럼 값 범위가 좁은 축을 물리적으로 늘려 읽기 쉽게), " +
+            "axisVariant(cross|quadrant|single), showGrid, labelX, labelY, showTickLabels, " +
+            "richLabels(축 이름 글씨체 — 그래프 도구와 같게 하려면 true), " +
+            "seriesLock(좌표·함수 묶기, 기본 true) 등. " +
+            "글자 크기는 칸 크기에 비례한다: axisLabelSize=cellX*0.8-0.35, tickLabelSize=cellX*0.68-0.35",
         },
         functions: {
           type: "array",
@@ -155,6 +160,17 @@ const TOOLS = [
               dashLength: { type: "number" },
               dashGap: { type: "number" },
               label: { type: "string", description: "곡선 끝 라벨" },
+              guides: {
+                type: "array",
+                description: "수선의 발 — 이 점에서 x축·y축으로 내리는 가는 파선. 수학 좌표 {x,y}. " +
+                  "직선 도구로 따로 긋지 말고 이걸 쓴다(평면에 종속돼 함께 움직인다)",
+                items: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } }, required: ["x", "y"] },
+              },
+              markers: {
+                type: "array",
+                description: "곡선 위 표시점(●). 수학 좌표 {x,y}",
+                items: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } }, required: ["x", "y"] },
+              },
             },
             required: ["expr"],
           },
