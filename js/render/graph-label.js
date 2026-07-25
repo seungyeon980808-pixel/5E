@@ -99,7 +99,12 @@ function buildLine(line, size, color, upright = false) {
       const mSize = Math.max(1, size - MATH_TRIM_MM);   // 기호는 한글 대비 2pt 작게(요구)
       const fh = { family: EQUATION_FONT_FAMILY, weight: "normal", style };
       const m = measureFormula(run.text, mSize, fh);
-      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: mSize, fontFamily: EQUATION_FONT_FAMILY, fontStyle: style });
+      // halo:false 필수 — renderFormula의 기본 halo는 글리프에 '흰색 stroke'를 건다. 그런데
+      // 바로 아래 recolorFormula가 stroke를 라벨 색(검정)으로 덮어써서, 흰 테두리가 '검은
+      // 테두리'로 바뀌어 글자가 굵은 슬랩체처럼 뭉개진다(눈금 숫자 굵기 버그).
+      // 축 이름처럼 halo가 필요한 경우는 renderGraphLabel이 applyHalo로 따로 씌우므로
+      // (그쪽은 stroke를 흰색으로 다시 설정) 여기서 formula 자체 halo는 꺼야 한다.
+      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: mSize, fontFamily: EQUATION_FONT_FAMILY, fontStyle: style, halo: false });
       recolorFormula(fg, color);
       // 단위 런 정자 강제: resolveTextFontStyle이 수식 글꼴을 무조건 이탤릭으로 되돌리므로
       // (state.js — 일반 수식 객체용 규칙), 여기서 글리프 스타일만 정자로 덮어쓴다.
