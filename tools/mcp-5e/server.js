@@ -33,7 +33,11 @@ const TARGET_PATH_PROP = {
   type: "string",
   description: "대상 .json 파일의 절대경로. **생략하면 지금 열려 있는 5E 화면에 바로 그린다**(기본).",
 };
-const PAGE_PROP = { description: "페이지 인덱스(0부터) 또는 이름/id. 생략하면 활성 페이지" };
+const PAGE_PROP = {
+  description: "페이지 인덱스(0부터) 또는 이름/id. 생략하면 활성 페이지. " +
+    "앱에 그릴 때도 동작한다 — 없는 페이지면 그 이름/번호로 새 탭을 만들어 옮긴 뒤 그린다. " +
+    "그림을 여러 장 그릴 때는 장마다 다른 page를 줘서 겹치지 않게 한다.",
+};
 
 const TOOLS = [
   {
@@ -284,6 +288,12 @@ async function deliver({ path, page }, objects, label) {
     return { where: `파일 ${pg.name}`, count: r.ids.length, total: pg.objects.length, warnings: r.warnings };
   }
 
+  // 앱 모드에서도 page를 존중한다 — 없으면 만들어서 그 탭으로 옮긴 뒤 그린다.
+  // (종전엔 파일 모드에서만 쓰이고 앱 모드에선 조용히 무시돼, 그림 여러 장을 한 페이지에
+  //  겹쳐 그릴 수밖에 없었다. 그림 한 장 = 한 탭이 기본이다.)
+  if (page !== undefined && page !== null && page !== "") {
+    await sendToApp("setPage", { page, create: true });
+  }
   const info = await sendToApp("ping");        // 앱이 붙어 있는지 + 아트보드 확인
   const errors = [], warnings = [], normalized = [];
   objects.forEach((raw, i) => {
