@@ -12,6 +12,7 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
+  makeLabelKnockout,
 } from "./core.js?v=1.2.0";
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.2.0";
 import { resolveFill } from "./fill.js?v=1.2.0";
@@ -232,6 +233,7 @@ function renderLine(obj) {
     if (dimensionVariant === "leftBar" || dimensionVariant === "bothBars") addCap(obj.p1);
     if (dimensionVariant === "rightBar" || dimensionVariant === "bothBars") addCap(obj.p2);
 
+    const labelText = obj.dimensionLabel || "d";
     const label = document.createElementNS(SVG_NS, "text");
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
@@ -252,7 +254,15 @@ function renderLine(obj) {
     label.setAttribute("stroke", "white");
     label.setAttribute("stroke-width", Math.max(0.8, sw * 3));
     label.setAttribute("stroke-linejoin", "round");
-    fillTextWithRomanRuns(label, obj.dimensionLabel || "d");
+    fillTextWithRomanRuns(label, labelText);
+    // 글자 사이 틈으로 치수선이 비치지 않게, 라벨 구간 전체를 먼저 흰색으로 지운다.
+    const ko = makeLabelKnockout([labelText], mx, my + labelSize * LABEL_OPTICAL_CENTER_EM, labelSize, {
+      anchor: "middle",
+      fontFamily: label.getAttribute("font-family") || undefined,
+      fontStyle: label.getAttribute("font-style") || undefined,
+      fontWeight: label.getAttribute("font-weight") || undefined,
+    });
+    if (ko) g.appendChild(ko);
     g.appendChild(label);
   }
 

@@ -8,6 +8,7 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
+  makeLabelKnockout,
 } from "./core.js?v=1.2.0";
 import {
   DEFAULT_TEXT_FONT,
@@ -134,7 +135,8 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
       }
       t.appendChild(ts);
     });
-    return t;
+    return withKnockout(t, runLines.map((line) => line.map((r) => r.text).join("")),
+      x, y + sizeMm * LABEL_OPTICAL_CENTER_EM, sizeMm, options);
   }
 
   const lines = s.split("\n");
@@ -151,7 +153,26 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
       t.appendChild(ts);
     });
   }
-  return t;
+  return withKnockout(t, lines, x, y + sizeMm * LABEL_OPTICAL_CENTER_EM, sizeMm, options);
+}
+
+/* \ub77c\ubca8 \ub4a4\ub97c \ud770 \uc0ac\uac01\ud615\uc73c\ub85c \uc9c0\uc6cc \ubc11\uc120\uc774 \uae00\uc790 \uc0ac\uc774\ub85c \ube44\uce58\uc9c0 \uc54a\uac8c \ud55c\ub2e4(core.makeLabelKnockout).
+ * \uc9c0\uc6b8 \uac8c \uc5c6\uac70\ub098 options.knockout === false \uba74 <text> \uadf8\ub300\ub85c \ub3cc\ub824\uc900\ub2e4 \u2014 \ud638\ucd9c\ubd80\ub294 \uc5b4\ub290 \ucabd\uc774\ub4e0
+ * appendChild\ub9cc \ud558\ubbc0\ub85c \ubc18\ud658 \ud0c0\uc785\uc774 <g>\ub85c \ubc14\ub00c\uc5b4\ub3c4 \uc548\uc804\ud558\ub2e4. */
+function withKnockout(t, lines, x, baselineY, sizeMm, options = {}) {
+  if (options.knockout === false) return t;
+  const rect = makeLabelKnockout(lines, x, baselineY, sizeMm, {
+    anchor: "middle",
+    lineHeight: sizeMm * 1.2,
+    fontFamily: t.getAttribute("font-family") || undefined,
+    fontStyle: t.getAttribute("font-style") || undefined,
+    fontWeight: t.getAttribute("font-weight") || undefined,
+  });
+  if (!rect) return t;
+  const g = document.createElementNS(SVG_NS, "g");
+  g.appendChild(rect);
+  g.appendChild(t);
+  return g;
 }
 
 /* Attach a box-shape's (rect/ellipse) upright label, if any. The anchor is

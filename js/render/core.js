@@ -244,6 +244,63 @@ function cLine(a, b, sw, color) {
    놓여야 하고 ② 내보내기 경로에서 getBBox가 0을 반환하기 때문. */
 export const LABEL_OPTICAL_CENTER_EM = 0.316;
 
+/* ===== 라벨 녹아웃(배경 지우기) — 모든 라벨 공통 =====
+ * 왜 필요한가: 흰 테두리(halo)는 글리프 '윤곽'만 따라간다. 그래서 글자와 글자 사이 틈으로
+ * 밑에 깔린 선이 그대로 비쳤다("4.5 m" 치수선에서 숫자 사이로 선이 지나가던 문제).
+ * 라벨이 차지하는 구간 전체를 흰 사각형으로 한 번 지우고 그 위에 글자를 얹으면,
+ * 라벨 시작~끝까지 선이 깨끗하게 끊긴다.
+ *
+ * 측정은 canvas measureText로 한다 — getBBox는 내보내기 경로에서 0을 돌려주기 때문
+ * (이 파일 위쪽 LABEL_OPTICAL_CENTER_EM 주석과 같은 이유).
+ */
+let _koCtx = null;
+function koMeasure(lines, sizeMm, fontCss) {
+  if (!_koCtx) _koCtx = document.createElement("canvas").getContext("2d");
+  _koCtx.font = fontCss;
+  let w = 0;
+  for (const ln of lines) w = Math.max(w, _koCtx.measureText(ln).width);
+  return w;
+}
+
+/* 라벨 뒤에 깔 흰 사각형을 만든다. 없으면(빈 문자열 등) null.
+ *   lines        : 줄 배열(측정용 평문)
+ *   x, baselineY : 첫 줄 baseline 기준점 — makeUprightLabel과 같은 좌표계
+ *   anchor       : "middle" | "start" | "end" (text-anchor와 같은 의미)
+ *   lineHeight   : 여러 줄일 때 줄 간격(mm). 블록은 baselineY를 중심으로 상하 대칭.
+ */
+export function makeLabelKnockout(lines, x, baselineY, sizeMm, opts = {}) {
+  const arr = (Array.isArray(lines) ? lines : [String(lines ?? "")]).map((s) => String(s ?? ""));
+  if (!arr.length || arr.every((s) => s.trim() === "")) return null;
+  const size = Number(sizeMm) > 0 ? Number(sizeMm) : 3.7;
+  const family = opts.fontFamily || "serif";
+  const style = opts.fontStyle || "normal";
+  const weight = opts.fontWeight || "normal";
+  const w = koMeasure(arr, size, `${style} ${weight} ${size}px ${family}`);
+  if (!(w > 0)) return null;
+
+  const anchor = opts.anchor || "middle";
+  const lh = opts.lineHeight || size * 1.2;
+  const n = arr.length;
+  // 좌우는 아주 조금만(글자 옆 선이 바짝 붙어 보이지 않을 만큼), 위아래는 글자 높이를 덮게.
+  const padX = size * 0.14;
+  const padTop = size * 0.82;
+  const padBot = size * 0.26;
+  const firstBase = baselineY - (lh * (n - 1)) / 2;   // makeUprightLabel의 다중 줄 배치와 동일
+  const left = anchor === "middle" ? x - w / 2 - padX : anchor === "end" ? x - w - padX : x - padX;
+  const top = firstBase - padTop;
+  const h = padTop + padBot + lh * (n - 1);
+
+  const r = document.createElementNS(SVG_NS, "rect");
+  r.setAttribute("x", left);
+  r.setAttribute("y", top);
+  r.setAttribute("width", w + padX * 2);
+  r.setAttribute("height", h);
+  r.setAttribute("fill", "white");
+  r.setAttribute("stroke", "none");
+  r.setAttribute("pointer-events", "none");
+  return r;
+}
+
 // A centered glyph (shared by circle-body elements + diode terminal labels + optics label).
 function cText(g, x, y, text, size, color, fontFamily = null, fontStyle = null, labelType = null) {
   const t = document.createElementNS(SVG_NS, "text");

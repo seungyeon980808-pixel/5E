@@ -174,6 +174,21 @@ export function renderGraphLabel(source, opts = {}) {
   else firstBaseY = y; // baseline
 
   const wrap = el("g");
+  // 라벨 구간 전체를 흰색으로 먼저 지운다 — halo(글리프 윤곽)만으로는 글자 사이 틈으로
+  // 그래프 선·격자가 비친다. 줄마다 실제 폭이 다르므로 줄 단위로 지운다.
+  lines.forEach((ln, i) => {
+    if (!(ln.width > 0)) return;
+    const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
+    const r = el("rect");
+    r.setAttribute("x", x + dx - size * 0.12);
+    r.setAttribute("y", firstBaseY + baseYs[i] - ln.ascent - size * 0.08);
+    r.setAttribute("width", ln.width + size * 0.24);
+    r.setAttribute("height", ln.ascent + ln.descent + size * 0.16);
+    r.setAttribute("fill", "white");
+    r.setAttribute("stroke", "none");
+    r.setAttribute("pointer-events", "none");
+    wrap.appendChild(r);
+  });
   lines.forEach((ln, i) => {
     const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
     ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);
