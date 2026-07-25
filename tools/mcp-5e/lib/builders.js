@@ -165,6 +165,29 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
   // 켜져 있으면 평면을 옮길 때 계열·수선의 발·표시점이 함께 따라간다.
   if (planeObj.seriesLock === undefined) planeObj.seriesLock = true;
 
+  /* 재편집 스펙(graphCfg) — 없으면 그래프 편집 모달이 평면 범위에서 '역산'을 하고,
+   * 그 역산이 원래 설정과 달라져 "캔버스와 미리보기가 다른" 문제가 생긴다.
+   * (예: yMax 5.8, padY 1.3 → Math.round(4.5)=5 로 칸 범위가 5가 되고,
+   *  간격은 tickStepY 기본값 1이 쓰여 눈금이 1·2·3·4·5로 바뀌었다.)
+   * 그래서 앱의 그래프 도구가 저장하는 것과 같은 스펙을 여기서도 만들어 둔다.
+   * xPos/yPos = 마지막 눈금 값(= 범위 끝에서 화살표 여백 pad를 뺀 값). */
+  const stepX = num(planeObj.gridStepX, 1) || 1;
+  const stepY = num(planeObj.gridStepY, 1) || 1;
+  planeObj.tickStepX = num(planeObj.tickStepX, stepX);
+  planeObj.tickStepY = num(planeObj.tickStepY, stepY);
+  const padXP = num(planeObj.padXPos, 1.6), padXN = num(planeObj.padXNeg, 1.6);
+  const padYP = num(planeObj.padYPos, 1.3), padYN = num(planeObj.padYNeg, 1.3);
+  if (planeObj.graphCfg === undefined) {
+    planeObj.graphCfg = {
+      xPos: round1(xMax - padXP),
+      xNeg: xMin < 0 ? round1(-xMin - padXN) : 0,
+      yPos: round1(yMax - padYP),
+      yNeg: yMin < 0 ? round1(-yMin - padYN) : 0,
+      tickStepX: planeObj.tickStepX,
+      tickStepY: planeObj.tickStepY,
+    };
+  }
+
   const graphs = [];
   for (const f of functions) {
     const dMin = num(f.domain && f.domain.min, xMin);
@@ -228,6 +251,7 @@ function bakeGraphElements(f, plane) {
 }
 
 function num(v, d) { return Number.isFinite(v) ? v : d; }
+function round1(v) { return Math.round(v * 10) / 10; }   // 부동소수 찌꺼기 정리(4.499999→4.5)
 function pick(o, keys) {
   const out = {};
   for (const k of keys) if (o[k] !== undefined) out[k] = o[k];

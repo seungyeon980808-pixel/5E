@@ -147,6 +147,10 @@ function applyCfg(plane, cfg) {
   const gsx = Number.isFinite(cfg.tickStepX) && cfg.tickStepX >= 0.1 ? cfg.tickStepX : 1;
   const gsy = Number.isFinite(cfg.tickStepY) && cfg.tickStepY >= 0.1 ? cfg.tickStepY : 1;
   plane.gridStepX = gsx; plane.gridStepY = gsy;
+  // tickStep*도 같은 값으로 맞춘다. 아래 graphCfg가 plane.tickStep*을 읽어 저장하는데,
+  // 여기서 갱신하지 않으면 언제나 기본값 1이 저장돼 재편집 때 간격이 1로 되돌아갔다
+  // (간격 1.5로 만든 그래프를 다시 열면 1이 되던 버그).
+  plane.tickStepX = gsx; plane.tickStepY = gsy;
   // 칸 수 = 값 범위 ÷ 간격. 나누어떨어지지 않으면 반올림해 마지막 눈금을 범위 끝에 맞춘다.
   const kxPos = Math.max(1, Math.round(xPos / gsx)), kxNeg = Math.max(0, Math.round(xNeg / gsx));
   const kyPos = Math.max(1, Math.round(yPos / gsy)), kyNeg = Math.max(0, Math.round(yNeg / gsy));
