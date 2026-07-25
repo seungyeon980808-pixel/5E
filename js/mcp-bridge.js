@@ -68,6 +68,14 @@ const COMMANDS = {
         label: o.label || o.text || o.expr || undefined,
         x: o.x, y: o.y, w: o.w, h: o.h, p1: o.p1, p2: o.p2,
         pointCount: Array.isArray(o.points) ? o.points.length : undefined,
+        // 그래프 내장 요소(수선의 발·표시점·화살촉) 개수. 이게 보이면 그 요소가 계열에
+        // 실린 '내장 요소'라는 뜻 — 별도 직선 객체로 흉내 낸 것과 밖에서 구별하기 위한 표시.
+        planeId: o.planeId,
+        guides: Array.isArray(o.guideXs) ? o.guideXs.length : undefined,
+        markers: Array.isArray(o.markerXs) ? o.markerXs.length : undefined,
+        arrows: Array.isArray(o.arrowSpecs) ? o.arrowSpecs.length : undefined,
+        seriesLock: o.type === "coordplane" ? o.seriesLock !== false : undefined,
+        groupId: o.groupId,
       })),
     };
   },
