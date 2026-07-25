@@ -676,7 +676,21 @@ function finishPointsSeries() {
 
 function refreshPreview() {
   if (!_els) return;
-  const plane = buildFrame(_cfg, { x: 0, y: 0 }, { w: 90, h: 60 });
+  // 편집 모드에선 실제 평면의 박스(w/h)를 그대로 쓴다 — commitEdit가 "박스는 그대로,
+  // 범위·표시만 갱신" 정책이므로, 미리보기도 같은 박스로 그려야 '적용 결과 = 미리보기'가
+  // 성립한다. 종전엔 buildFrame(정사각 셀 강제)으로 새 틀을 만들어 보여줘서, 축별 칸
+  // 크기가 다른 평면(가로로 늘린 시간축 등)을 열면 미리보기 비율이 캔버스와 달랐다.
+  // 새로 만들기 모드는 종전대로 buildFrame(정사각 셀)을 쓴다.
+  let plane = null;
+  if (_planeId) {
+    const cur = state.get().objects.find((o) => o.id === _planeId && o.type === "coordplane");
+    if (cur) {
+      plane = applyCfg(JSON.parse(JSON.stringify(cur)), _cfg);
+      plane.x = -plane.w / 2; plane.y = -plane.h / 2;   // 미리보기 viewBox 중앙 정렬용
+      setLabelSizes(plane);                              // commitEdit와 같은 라벨 크기 산출
+    }
+  }
+  if (!plane) plane = buildFrame(_cfg, { x: 0, y: 0 }, { w: 90, h: 60 });
   _previewPlane = plane;
   const mX = 14, mY = 13;
   const svg = document.createElementNS(SVG_NS, "svg");
