@@ -169,11 +169,58 @@ async function respond(port, id, ok, payload) {
   } catch { /* 서버가 사라졌다 — 다음 명령에서 재연결된다 */ }
 }
 
+/* ----- 자동 재연결(워치독) -----
+ * 왜 필요한가: 예전엔 페이지가 뜰 때 findPort()를 딱 한 번만 했다. 그때 MCP 서버가 아직
+ * 안 떠 있었으면(Claude Code를 나중에 켬) 영영 끊긴 채로 남아, 사용자가 버튼을 눌러야만
+ * 붙었다. EventSource 자체 재연결은 '같은 포트'로만 시도하므로 서버가 다른 포트(8580…)로
+ * 올라오거나 세션이 바뀌면 그것도 소용이 없다. 그래서 끊겨 있는 동안 주기적으로 포트를
+ * 다시 훑는다. 붙으면 멈추고, 끊기면 다시 돈다.
+ * 간격은 2초에서 시작해 1.5배씩 늘려 최대 15초 — 서버가 없을 때 fetch 폭풍을 내지 않는다. */
+const RETRY_MIN_MS = 2000;
+const RETRY_MAX_MS = 15000;
+let retryTimer = null;
+let retryDelay = RETRY_MIN_MS;
+
+function stopWatchdog() {
+  clearTimeout(retryTimer);
+  retryTimer = null;
+  retryDelay = RETRY_MIN_MS;
+}
+
+function scheduleReconnect() {
+  if (retryTimer || connecting) return;          // 이미 예약됐거나 수동 재시도 중
+  retryTimer = setTimeout(async () => {
+    retryTimer = null;
+    if (badgeState === "connected") return;      // 그 사이에 붙었다
+    const port = await findPort();
+    if (port) { connect(port); return; }         // connect()의 onopen이 워치독을 멈춘다
+    // 하한을 RETRY_MIN_MS로 걸어 둔다 — retryNow()가 0으로 시작시켜도 다음 간격이
+    // 0으로 굳어 fetch 폭풍이 되지 않게.
+    retryDelay = Math.min(Math.max(Math.round(retryDelay * 1.5), RETRY_MIN_MS), RETRY_MAX_MS);
+    scheduleReconnect();
+  }, retryDelay);
+}
+
+// 탭을 다시 보거나 창에 포커스가 돌아오면 즉시 한 번 시도한다(백오프 대기 없이).
+// 다른 창에서 Claude Code를 켜고 돌아오는 흐름이 가장 흔하기 때문.
+function retryNow() {
+  if (badgeState === "connected" || connecting) return;
+  stopWatchdog();
+  retryDelay = 0;        // 대기 없이 한 번 — 실패하면 위 백오프가 다시 2초부터 잡는다
+  scheduleReconnect();
+}
+
 function connect(port) {
   lastPort = port;
+  if (source) { try { source.close(); } catch { /* 이미 닫힘 */ } }
   source = new EventSource(`http://127.0.0.1:${port}/events`);
-  source.onopen = () => setBadge("connected", port);
-  source.onerror = () => setBadge("disconnected", port);   // EventSource가 알아서 재연결도 시도한다
+  source.onopen = () => { stopWatchdog(); setBadge("connected", port); };
+  source.onerror = () => {
+    // EventSource는 같은 포트로만 재시도하므로 여기서 끊고 워치독에 넘긴다(포트가 바뀌어도 찾도록).
+    if (source) { try { source.close(); } catch { /* 무시 */ } source = null; }
+    setBadge("disconnected", port);
+    scheduleReconnect();
+  };
   source.onmessage = async (ev) => {
     let msg;
     try { msg = JSON.parse(ev.data); } catch { return; }
@@ -239,12 +286,14 @@ async function handleBadgeClick() {
   }
   if (connecting) return;
   connecting = true;
+  stopWatchdog();                    // 수동 재시도가 워치독과 겹치지 않게
   setBadge("connecting");
   const port = await findPort();
   connecting = false;
   if (port) { connect(port); return; }
 
   setBadge("disconnected");
+  scheduleReconnect();               // 수동 시도가 실패해도 이후엔 자동으로 계속 노린다
   return showAlert(
     "MCP 서버를 찾지 못했습니다.\n\n" +
       "확인할 것:\n" +
@@ -268,9 +317,12 @@ export async function initMcpBridge() {
   if (!bridgeEnabled()) return;      // 켜지 않은 브라우저는 로컬 포트를 두드리지도 않는다(버튼은 hidden 그대로)
   bridgeBtn()?.addEventListener("click", handleBadgeClick);
   setBadge("connecting");            // 버튼을 먼저 보여준다 — 못 찾아도 눌러서 재시도할 수 있게
+  // 탭 복귀·창 포커스에서 즉시 재시도(백오프를 기다리지 않는다).
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) retryNow(); });
+  window.addEventListener("focus", retryNow);
   const port = await findPort();
   if (port) connect(port);
-  else setBadge("disconnected");
+  else { setBadge("disconnected"); scheduleReconnect(); }   // 나중에 서버가 떠도 알아서 붙는다
 }
 
 if (document.readyState === "loading") {
