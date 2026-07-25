@@ -145,6 +145,14 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       "showAxisLines", "showGrid", "showTicks", "showTickLabels", "tickLabelSize",
       "tickLabelMode", "labelX", "labelY", "showAxisLabels", "axisLabelSize",
       "showOrigin", "labelOrigin", "strokeWidth", "strokeLevel", "lockAspect",
+      // 그래프 도구(graph-modal) 평면과 같은 모양을 낼 수 있게 통과시키는 플래그들.
+      // richLabels가 없으면 축 이름이 혼합 라벨러(한글정자+영문이탤릭)를 타지 못하고
+      // 구식 세리프 이탤릭으로 렌더된다 — MCP로 만든 그래프 글씨체가 달랐던 원인.
+      "richLabels", "gridToData",
+      "gridCountX", "gridCountY", "gridCountXPos", "gridCountXNeg",
+      "gridCountYPos", "gridCountYNeg",
+      "gridOver", "gridOverXPos", "gridOverXNeg", "gridOverYPos", "gridOverYNeg",
+      "padXPos", "padXNeg", "padYPos", "padYNeg",
     ]),
   };
 
