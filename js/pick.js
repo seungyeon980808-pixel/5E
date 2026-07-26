@@ -9,7 +9,7 @@ import { screenToWorld, getRenderScale } from "./viewport.js?v=1.2.0";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.2.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, pendulumGeometry, pendulumBBox } from "./render.js?v=1.2.0";
+import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox } from "./render.js?v=1.2.0";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
@@ -211,6 +211,13 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
+    if (o.type === "spring") {
+      // 코일이 축 좌우로 진폭만큼 벌어져 있으므로, 축 선분에 진폭만큼 여유를 준다.
+      const geo = springGeometry(o);
+      if (segDist(p.x, p.y, geo.p1.x, geo.p1.y, geo.p2.x, geo.p2.y) <= margin + geo.amp) return o.id;
+      continue;
+    }
+
     if (o.type === "pendulum") {
       // Clickable = the real string segment, the real bob disk, and (when shown)
       // each ghost string/bob — the SAME geometry the renderer draws.
@@ -370,6 +377,9 @@ function getObjectBBox(o) {
       x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
       w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
     };
+  }
+  if (o.type === "spring") {
+    return springBBox(o);
   }
   if (o.type === "pendulum") {
     return pendulumBBox(o);

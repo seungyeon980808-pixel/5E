@@ -9,3 +9,4 @@ export { rotPt, curveSamplePoints } from "./render/core.js?v=1.2.0";
 export { makeFillPattern } from "./render/fill.js?v=1.2.0";
 export { circuitBodyPolygon } from "./render/circuit.js?v=1.2.0";
 export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.2.0";
+export { springGeometry, springBBox, SPRING_DEFAULTS } from "./render/spring.js?v=1.2.0";

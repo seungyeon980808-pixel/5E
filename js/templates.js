@@ -181,6 +181,7 @@ export const TEMPLATES = {
     keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
     create: { tool: "SVGASSET", kind: "cart" },
   },
+  spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
@@ -384,6 +385,15 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
       '<circle cx="3" cy="17" r="1.4" fill="currentColor"/>' +
       '<text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text>';
+    return svg;
+  }
+
+  if (id === "spring") {
+    // 코일 실루엣: 양끝 직선부 + 지그재그 굽이(객체 모양과 같은 인상).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<path d="M2 10 H5 L6.5 6 L8.5 14 L10.5 6 L12.5 14 L14 10 H18" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>';
     return svg;
   }
 

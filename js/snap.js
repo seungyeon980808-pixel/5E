@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry } from "./render.js?v=1.2.0";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry } from "./render.js?v=1.2.0";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
@@ -87,6 +87,11 @@ export function collectPrioritySnapPoints(state, excludeIds) {
     } else if (obj.type === "optics" && obj.kind === "object_arrow") {
       const { head, attach } = opticalObjectHead(obj);
       points.push(makeSnapPoint(head, "optical-object-head", obj.id, "head", 1, attach));
+    } else if (obj.type === "spring") {
+      // 용수철은 끝점이 물체에 닿는 부품이라 p1/p2를 앵커로 준다(요구: 스냅으로 붙이기).
+      const geo = springGeometry(obj);
+      if (isValidPoint(geo.p1)) points.push(makeSnapPoint(geo.p1, "line-endpoint", obj.id, "p1", 0));
+      if (isValidPoint(geo.p2)) points.push(makeSnapPoint(geo.p2, "line-endpoint", obj.id, "p2", 0));
     } else if (obj.type === "pendulum") {
       // Minimal anchors: pivot, real bob center, and the two ghost bob centers
       // when those ghosts are visible (all derived from p1/p2 at render time).

@@ -208,7 +208,7 @@ function lineAngleDeg(obj) {
 
 function objectAngleDeg(obj) {
   if (!obj) return null;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring") && obj.p1 && obj.p2) return lineAngleDeg(obj);
   if (typeof obj.rotation === "number") return obj.rotation;
   return null;
 }
@@ -224,7 +224,7 @@ function unitForAngle(deg) {
 
 function applyAngleDeg(obj, deg) {
   if (!obj || obj.locked || obj.positionLocked) return false;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") && obj.p1 && obj.p2) {
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring") && obj.p1 && obj.p2) {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
@@ -353,7 +353,7 @@ function clipboardBBox(objs) {
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
-    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum") {
+    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum" || o.type === "spring") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
     } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
@@ -405,7 +405,7 @@ function applyDelta(obj, orig, dx, dy) {
     // caller (step 5 재샘플 결합) — the plane itself just translates here.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
-  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum" || obj.type === "spring") {
     // Circuit/labeler/pendulum move by translating BOTH endpoints (pendulum:
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };

@@ -331,7 +331,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", RULER: "gauge", PROTRACTOR: "gauge" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", RULER: "gauge", PROTRACTOR: "gauge" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -651,7 +651,7 @@ function setupDrawing() {
 /* ----- commit gate: ignore stray clicks that drew nothing ----- */
 // Size-based shapes need a non-trivial box; a line needs a non-trivial length.
 export function isCommittable(shape) {
-  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum") {
+  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -664,6 +664,7 @@ export function isCommittable(shape) {
 function makeShape(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
+  if (type === "spring") return makeSpring(a, b);
   const shape = {
     id: null, // assigned on commit
     type,
@@ -825,6 +826,30 @@ export function makeLine(a, b) {
  * geometry (ghost bobs, vertical normal) is derived at render (see render.js
  * pendulumGeometry), never stored. bobRadius is seeded from the length so the bob
  * scales sensibly; it is then a stored, editable property. */
+/* ----- 용수철: 드래그 두 점이 곧 양 끝(물체에 닿는 지점) -----
+ * 길이는 두 점으로 정해지고 코일 수·진폭은 필드로 남는다 — 압축/이완을 끌어서 표현한다. */
+function makeSpring(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "spring",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    coils: 6,
+    amplitude: 1.6,
+    leadLength: 2,
+    springStyle: "coil",
+    label: "",
+    labelShow: false,
+    labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
 function makePendulum(a, b) {
   return applyNewObjectStyleDefaults({
     id: null,                     // assigned on commit

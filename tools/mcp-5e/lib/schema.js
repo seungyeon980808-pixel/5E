@@ -56,7 +56,7 @@ const APPARATUS_SIZES = {
 };
 
 /* ----- 기하 분류 ----- */
-const P1P2_TYPES = new Set(["line", "circuit", "pendulum", "labeler"]);
+const P1P2_TYPES = new Set(["line", "circuit", "pendulum", "labeler", "spring"]);
 const ANCHOR_TYPES = new Set(["text", "formula", "anglearc", "rightangle"]);
 const NO_STROKE_TYPES = new Set(["text", "formula", "image"]);
 
@@ -143,6 +143,11 @@ const DEFAULTS = {
   },
 
   // tools.js makePendulum
+  // 용수철: 길이는 p1/p2가 정하고 코일 수·진폭·양끝 직선부는 필드다.
+  spring: () => ({
+    coils: 6, amplitude: 1.6, leadLength: 2, springStyle: "coil",
+    label: "", labelShow: false, labelType: "quantity",
+  }),
   pendulum: () => ({
     showCenterGhost: true, showSymmetricGhost: true, showLengthLabel: true,
     lengthLabel: "L_B", labelType: "quantity",
@@ -217,6 +222,7 @@ export const TYPE_DOC = {
   optics: { summary: `광학·역학 심볼(${OPTICS_KINDS.join("/")})`, required: "x,y,w,h,kind" },
   apparatus: { summary: `실험 기구(${APPARATUS_KINDS.join("/")})`, required: "x,y,kind" },
   pendulum: { summary: "단진자. p1=고정점, p2=추 중심", required: "p1,p2" },
+  spring: { summary: "용수철. p1→p2가 양 끝(물체에 닿는 지점). coils·amplitude·leadLength·springStyle(coil|zigzag)", required: "p1,p2" },
   gauge: { summary: `측정 가이드(${GAUGE_KINDS.join("/")})`, required: "x,y,w,h,kind" },
 };
 

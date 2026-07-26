@@ -21,7 +21,7 @@ export const OBJECT_TYPE_IDS = [
   "image", "svgAsset",
   "axes", "coordplane",
   "anglearc", "rightangle", "labeler",
-  "circuit", "optics", "apparatus", "pendulum",
+  "circuit", "optics", "apparatus", "pendulum", "spring",
   "gauge",
 ];
 
@@ -62,6 +62,9 @@ export const OBJECT_TYPES = {
   optics:     { sizeBox: 1, boxFace: 1, flip: 1, label: 1 },
   apparatus:  { sizeBox: 1, boxFace: 1, flip: 1 },
   pendulum:   { lineTol: 1 },
+  // spring = 용수철. p1/p2 계열(line·circuit·pendulum과 같은 가족).
+  // snapLineLike: 끝점이 블록 모서리에 자석처럼 붙어야 해서 켠다(요구).
+  spring:     { lineTol: 1, label: 1, snapLineLike: 1 },
   // gauge = 자·각도기 측정 가이드(kind: ruler|protractor). 크기박스로 이동/리사이즈/
   // bbox/저장을 그대로 상속. boxFace로 bbox 전체가 클릭 면이 되어 선택이 쉽다.
   gauge:      { sizeBox: 1, boxFace: 1 },
