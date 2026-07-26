@@ -338,6 +338,7 @@ function renderLabeler(obj) {
   // 미리보기와 일치). 없으면 일반 텍스트(구간 I/II/III 세리프 자동) 경로 그대로.
   const styled = hasStyledTextRuns(obj);
   const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
+    labelBg: obj.labelBg, haloRatio: obj.haloRatio,
     fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
     fontStyle: obj.italic === true ? "italic" : "normal",
     fontWeight: obj.fontWeight || "normal",

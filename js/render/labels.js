@@ -9,6 +9,7 @@ import {
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
   makeLabelKnockout,
+  applyGlyphHalo,
 } from "./core.js?v=1.2.0";
 import {
   DEFAULT_TEXT_FONT,
@@ -161,6 +162,11 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
  * appendChild\ub9cc \ud558\ubbc0\ub85c \ubc18\ud658 \ud0c0\uc785\uc774 <g>\ub85c \ubc14\ub00c\uc5b4\ub3c4 \uc548\uc804\ud558\ub2e4. */
 function withKnockout(t, lines, x, baselineY, sizeMm, options = {}) {
   if (options.knockout === false) return t;
+  // 기본: 글자 모양대로만 가린다(core.applyGlyphHalo). 옆 글자를 건드리지 않는다.
+  applyGlyphHalo(t, sizeMm, options.haloRatio);
+  // labelBg가 켜졌을 때만 라벨 뒤를 흰 사각형으로 통째로 지운다 — 회색 면·격자 위처럼
+  // 글자 사이 틈으로 배경이 비치는 게 거슬리는 그림에서만 쓴다(2026-07-26 교사 결정).
+  if (!options.labelBg) return t;
   const rect = makeLabelKnockout(lines, x, baselineY, sizeMm, {
     anchor: "middle",
     lineHeight: sizeMm * 1.2,
@@ -206,8 +212,8 @@ function withBoxLabel(shapeEl, obj) {
   // Roman italic. `italic:false` only pins that fallback — it does not override an
   // explicit "quantity". Ellipse keeps its own "quantity" fallback.
   const labelOpts = obj.type === "rect"
-    ? { labelType: obj.labelType, italic: false }
-    : { labelType: obj.labelType };
+    ? { labelType: obj.labelType, italic: false, labelBg: obj.labelBg, haloRatio: obj.haloRatio }
+    : { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio };
   const lbl = makeUprightLabel(obj.label, anchor.x, anchor.y, grayHex(obj.strokeLevel), size, labelOpts);
   if (!lbl) return shapeEl;
   const g = document.createElementNS(SVG_NS, "g");
@@ -243,7 +249,7 @@ function withLineLabel(bodyEl, obj) {
   const off = size; // fixed perpendicular gap (angle-independent)
   const lx = mx + nx * off * side;
   const ly = my + ny * off * side;
-  const lbl = makeUprightLabel(obj.label, lx, ly, grayHex(obj.strokeLevel), size, { labelType: obj.labelType });
+  const lbl = makeUprightLabel(obj.label, lx, ly, grayHex(obj.strokeLevel), size, { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio });
   if (!lbl) return bodyEl;
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) { g.dataset.id = obj.id; if (bodyEl.dataset) delete bodyEl.dataset.id; }

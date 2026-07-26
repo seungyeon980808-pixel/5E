@@ -11,7 +11,7 @@
  * 좌표계: 월드 mm. size/x/y 전부 mm. formula.js와 동일한 정자-숫자/이탤릭-변수 규칙을 그대로 물려받는다.
  */
 
-import { SVG_NS } from "./core.js?v=1.2.0";
+import { SVG_NS, HALO_RATIO, applyGlyphHalo } from "./core.js?v=1.2.0";
 import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=1.2.0";
 import { renderFormula, measureFormula } from "../formula.js?v=1.2.0";
 
@@ -128,20 +128,9 @@ function buildLine(line, size, color, upright = false) {
 }
 
 // 라벨 <text> 들에 흰 테두리 halo 부여(그래프 선 위에서 깔끔히 끊김; makeUprightLabel 방식).
-/* 가림(할로) 굵기 = 글자 크기 × 이 배율. 2026-07-26 교사 확정값.
- * 배율이라 라벨이 커지면 가림도 같이 커진다. 그림마다 다르게 주고 싶으면
- * renderGraphLabel(..., { haloRatio }) 로 덮어쓴다(객체의 haloRatio 필드가 여기로 온다). */
-export const HALO_RATIO = 0.13;
-
-function applyHalo(wrap, size, ratio) {
-  const w = size * (Number.isFinite(ratio) && ratio >= 0 ? ratio : HALO_RATIO);
-  wrap.querySelectorAll("text, tspan").forEach((t) => {
-    t.setAttribute("paint-order", "stroke");
-    t.setAttribute("stroke", "white");
-    t.setAttribute("stroke-width", w);
-    t.setAttribute("stroke-linejoin", "round");
-  });
-}
+/* 가림(할로)은 core.applyGlyphHalo가 단일 출처다 — 캔버스 라벨과 그래프 라벨이
+ * 같은 굵기·같은 모양으로 나온다. 그림마다 다르게 주려면 opts.haloRatio를 넘긴다. */
+export { HALO_RATIO };
 
 /* ----- PUBLIC: 혼합 라벨을 SVG <g>로 렌더 -----
  * renderGraphLabel(source, {
@@ -190,7 +179,7 @@ export function renderGraphLabel(source, opts = {}) {
     ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);
     wrap.appendChild(ln.g);
   });
-  if (halo) applyHalo(wrap, size, haloRatio);
+  if (halo) applyGlyphHalo(wrap, size, haloRatio);
   return wrap;
 }
 

@@ -87,6 +87,7 @@ export function initInspector(state) {
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
+    labelBgRow, labelHaloRow, syncLabelHalo,
     labelerLine2Row, syncLabelerLine2,
     boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
@@ -629,6 +630,14 @@ export function initInspector(state) {
     // node uses a label-position dropdown instead of the show/hide toggle.
     showLabelRow.style.display = (isOptics && !isNode) ? "" : "none";
     labelPosRow.style.display = isNode ? "" : "none";
+    // 라벨 가림 옵션: 라벨을 가질 수 있는 타입에서만 보인다.
+    const LABELLED = ["rect", "ellipse", "triangle", "line", "labeler", "pendulum", "spring",
+      "optics", "circuit", "polyline", "curve"];
+    const hasLabel = LABELLED.includes(obj.type);
+    labelBgRow.style.display = hasLabel ? "" : "none";
+    labelHaloRow.style.display = hasLabel ? "" : "none";
+    if (hasLabel) syncLabelHalo(obj);
+
     labelerLenRow.style.display = isLabeler ? "" : "none";
     labelerLine2Row.style.display = isLabeler ? "" : "none";
     if (isLabeler) syncLabelerLine2();

@@ -13,6 +13,7 @@ import {
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
   makeLabelKnockout,
+  applyGlyphHalo,
 } from "./core.js?v=1.2.0";
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.2.0";
 import { resolveFill } from "./fill.js?v=1.2.0";
@@ -299,19 +300,19 @@ function renderLine(obj) {
     applyObjectLabelFont(label, obj.labelType);
     label.setAttribute("text-anchor", "middle");
     // dominant-baseline 미지정 — 위 y 보정이 대신한다.
-    label.setAttribute("paint-order", "stroke");
-    label.setAttribute("stroke", "white");
-    label.setAttribute("stroke-width", Math.max(0.8, sw * 3));
-    label.setAttribute("stroke-linejoin", "round");
     fillTextWithRomanRuns(label, labelText);
-    // 글자 사이 틈으로 치수선이 비치지 않게, 라벨 구간 전체를 먼저 흰색으로 지운다.
-    const ko = makeLabelKnockout([labelText], mx, my + labelSize * LABEL_OPTICAL_CENTER_EM, labelSize, {
-      anchor: "middle",
-      fontFamily: label.getAttribute("font-family") || undefined,
-      fontStyle: label.getAttribute("font-style") || undefined,
-      fontWeight: label.getAttribute("font-weight") || undefined,
-    });
-    if (ko) g.appendChild(ko);
+    // 가림은 글자 모양대로만. 예전엔 선 굵기에 비례한 테두리(max(0.8, sw*3)) + 흰 사각형을
+    // 함께 씌워, 글자 왼쪽으로 1mm 넘게 흰 영역이 나가 옆 글자를 지웠다(교사 지적).
+    applyGlyphHalo(label, labelSize, obj.haloRatio);
+    if (obj.labelBg) {
+      const ko = makeLabelKnockout([labelText], mx, my + labelSize * LABEL_OPTICAL_CENTER_EM, labelSize, {
+        anchor: "middle",
+        fontFamily: label.getAttribute("font-family") || undefined,
+        fontStyle: label.getAttribute("font-style") || undefined,
+        fontWeight: label.getAttribute("font-weight") || undefined,
+      });
+      if (ko) g.appendChild(ko);
+    }
     g.appendChild(label);
   }
 
