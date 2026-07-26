@@ -40,15 +40,29 @@ export function springGeometry(obj) {
   return { p1, p2, a, b, L, coilLen, ax, ay, nx, ny, coils, amp, lead };
 }
 
-/* 코일 경로(d). style에 따라 반원 아크 반복 또는 지그재그. */
+/* 코일 경로(d).
+ *
+ * ※ 예전 구현은 굽이마다 SVG 아크(A) 두 개를 이어 붙였는데, 반지름을 amp 기준으로 잡는
+ *   바람에 반굽이 폭보다 커져 아크가 눌리고 접점에서 접선이 꺾여 **첨점**이 생겼다.
+ *   (step 2.33mm, 반굽이 1.17mm인데 rx 1.60mm — 기하적으로 매끈할 수 없다.)
+ *   그래서 아크를 버리고, 사인 곡선을 촘촘히 샘플링해 잇는다. 접선이 연속이라 첨점이 없고
+ *   길이·코일 수·진폭을 어떻게 줘도 항상 매끈하다.
+ */
+/* 사인 1/4주기를 3차 베지어로 근사할 때의 제어점 계수.
+ * 오차 0.7%(중점 0.7121A vs 정확값 0.7071A) — 인쇄 크기에서 보이지 않는다.
+ * 이 방식은 마루에서 접선이 수평, 영점에서 양쪽 접선이 같아 **C1 연속**이라
+ * 코일이 아무리 촘촘해도(진폭 > 반굽이 폭이어도) 첨점이 생길 수 없다. */
+const Q_CTRL_X = 0.36;                    // 제어점의 축 방향 위치(1/4주기 대비)
+const Q_CTRL_Y = 0.36 * Math.PI / 2;      // ≈0.5655 — 영점 기울기와 맞물리는 값
+
 function coilPathD(geo, style) {
   const { a, ax, ay, nx, ny, coils, amp, coilLen } = geo;
   if (coilLen <= 0) return "";
-  const step = coilLen / coils;                 // 굽이 하나의 축 방향 길이
   const at = (t, s) => ({ x: a.x + ax * t + nx * s, y: a.y + ay * t + ny * s });
 
   if (style === "zigzag") {
-    // 지그재그: 반 굽이마다 좌우로 꺾인다. 시작·끝은 축 위에서 만난다.
+    // 지그재그: 반 굽이마다 좌우로 꺾인다(전기 회로 저항식이 아니라 역학 교재식 삼각파).
+    const step = coilLen / coils;
     let d = `M ${a.x} ${a.y}`;
     for (let i = 0; i < coils; i++) {
       const s1 = at(step * (i + 0.25), (i % 2 === 0 ? amp : -amp));
@@ -59,16 +73,30 @@ function coilPathD(geo, style) {
     return d + ` L ${end.x} ${end.y}`;
   }
 
-  // coil(기본): 굽이마다 반원 두 개를 번갈아 붙여 실제 스프링처럼 둥글게.
-  // 원호 반지름은 진폭과 굽이 폭에서 뽑고, sweep을 번갈아 주어 8자가 아니라 나선처럼 보이게 한다.
-  let d = `M ${a.x} ${a.y}`;
-  const r = Math.max(amp, step * 0.5);
+  // coil(기본): 사인 한 주기 = 굽이 하나. 1/4주기씩 3차 베지어로 잇는다.
+  const P = coilLen / coils;          // 한 굽이(주기)
+  const q = P / 4;                    // 1/4주기
+  const fmt = (p) => `${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
+  const start = at(0, 0);
+  let d = `M ${fmt(start)}`;
+  // 한 구간: 축 위 t0에서 시작해 진폭 s0 → s1 로 가는 1/4주기.
+  const quarter = (t0, s0, s1) => {
+    const peakStart = Math.abs(s0) > Math.abs(s1);    // 마루에서 출발 → 접선 수평
+    const c1 = peakStart
+      ? at(t0 + Q_CTRL_X * q, s0)
+      : at(t0 + Q_CTRL_X * q, Q_CTRL_Y * s1);
+    const c2 = peakStart
+      ? at(t0 + (1 - Q_CTRL_X) * q, Q_CTRL_Y * s0)
+      : at(t0 + (1 - Q_CTRL_X) * q, s1);
+    const end = at(t0 + q, s1);
+    d += ` C ${fmt(c1)} ${fmt(c2)} ${fmt(end)}`;
+  };
   for (let i = 0; i < coils; i++) {
-    const mid = at(step * (i + 0.5), (i % 2 === 0 ? amp : -amp));
-    const end = at(step * (i + 1), 0);
-    const sweep = i % 2 === 0 ? 1 : 0;
-    d += ` A ${r} ${amp} 0 0 ${sweep} ${mid.x} ${mid.y}`;
-    d += ` A ${r} ${amp} 0 0 ${sweep} ${end.x} ${end.y}`;
+    const t0 = P * i;
+    quarter(t0, 0, amp);            // 영점 → 마루
+    quarter(t0 + q, amp, 0);        // 마루 → 영점
+    quarter(t0 + 2 * q, 0, -amp);   // 영점 → 골
+    quarter(t0 + 3 * q, -amp, 0);   // 골 → 영점
   }
   return d;
 }
