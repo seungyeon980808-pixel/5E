@@ -184,6 +184,59 @@ const CIRCUIT_ELEMENTS = {
   },
 
   // unknown: circle body with a "?" inside.
+  /* switch: 단자 원 두 개 + 접점 막대. 평가원 표기 그대로 — 열림이면 막대가 들린다.
+   * 회로도의 68%에 등장하는데 지금까지 목록에 없어 line+ellipse로 흉내 내야 했다. */
+  switch(g, geo, sw, color, obj) {
+    const H = CIRCUIT_BODY_HALF_H;
+    const r = Math.max(sw * 2.2, 0.75);            // 단자 원 반지름
+    const bodyHalf = geo.half * 0.62;              // 두 단자 사이 절반 폭
+    const closed = obj && obj.closed === true;
+    const a = circuitPt(geo, -bodyHalf, 0);        // 왼쪽 단자
+    const b = circuitPt(geo, bodyHalf, 0);         // 오른쪽 단자
+    // 리드선
+    g.appendChild(cLine(circuitPt(geo, -geo.half, 0), a, sw, color));
+    g.appendChild(cLine(b, circuitPt(geo, geo.half, 0), sw, color));
+    // 접점 막대: 닫히면 축 위, 열리면 오른쪽 끝이 들린다(막대 길이는 그대로).
+    const lift = closed ? 0 : H * 1.55;
+    const tip = circuitPt(geo, bodyHalf - r * 0.9, -lift);
+    g.appendChild(cLine(a, tip, sw * 1.7, color));
+    for (const c of [a, b]) {
+      const el = document.createElementNS(SVG_NS, "circle");
+      el.setAttribute("cx", c.x); el.setAttribute("cy", c.y); el.setAttribute("r", r);
+      el.setAttribute("fill", "#ffffff"); el.setAttribute("stroke", color);
+      el.setAttribute("stroke-width", sw);
+      g.appendChild(el);
+    }
+  },
+
+  /* switch_spdt: 공통 단자 1 + 접점 2(a·b). 전환 스위치(a/b 중 하나에 붙는다). */
+  switch_spdt(g, geo, sw, color, obj) {
+    const H = CIRCUIT_BODY_HALF_H;
+    const r = Math.max(sw * 2.2, 0.75);
+    const bodyHalf = geo.half * 0.62;
+    const dy = H * 1.5;
+    const to = (obj && obj.throwTo === "b") ? 1 : -1;      // -1 = a(위), +1 = b(아래)
+    const com = circuitPt(geo, -bodyHalf, 0);
+    const ca = circuitPt(geo, bodyHalf, -dy);
+    const cb = circuitPt(geo, bodyHalf, dy);
+    g.appendChild(cLine(circuitPt(geo, -geo.half, 0), com, sw, color));
+    g.appendChild(cLine(ca, circuitPt(geo, geo.half, -dy), sw, color));
+    g.appendChild(cLine(cb, circuitPt(geo, geo.half, dy), sw, color));
+    g.appendChild(cLine(com, circuitPt(geo, bodyHalf - r * 0.9, to * dy), sw * 1.7, color));
+    for (const c of [com, ca, cb]) {
+      const el = document.createElementNS(SVG_NS, "circle");
+      el.setAttribute("cx", c.x); el.setAttribute("cy", c.y); el.setAttribute("r", r);
+      el.setAttribute("fill", "#ffffff"); el.setAttribute("stroke", color);
+      el.setAttribute("stroke-width", sw);
+      g.appendChild(el);
+    }
+    const size = DEFAULT_TEXT_SIZE_MM * 0.8;
+    const la = circuitPt(geo, geo.half + size * 0.8, -dy);
+    const lb = circuitPt(geo, geo.half + size * 0.8, dy);
+    cText(g, la.x, la.y, "a", size, color);
+    cText(g, lb.x, lb.y, "b", size, color);
+  },
+
   unknown(g, geo, sw, color) {
     circuitCircleBody(g, geo, sw, color);
     cText(g, geo.mid.x, geo.mid.y, "?", CIRCUIT_CIRCLE_R * 1.2, color);

@@ -32,6 +32,7 @@ export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale"];
 export const CIRCUIT_ELEMENTS = [
   "resistor", "dc_source", "ac_source", "capacitor", "inductor",
   "diode", "lamp", "ammeter", "voltmeter", "unknown",
+  "switch", "switch_spdt",
 ];
 export const SVG_ASSET_IDS = ["pulley", "cart"];
 // 도르래 형태: basic(원+축) | ceiling(천장 브래킷) | wall(벽 브래킷)
@@ -141,6 +142,8 @@ const DEFAULTS = {
     }
     if (element === "capacitor") d.gap = 1.6;
     if (element === "diode") d.terminalLabels = ["", ""];
+    if (element === "switch") d.closed = false;                 // 기본 열림
+    if (element === "switch_spdt") d.throwTo = "a";             // a 접점에 붙음
     return d;
   },
 

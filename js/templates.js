@@ -181,6 +181,8 @@ export const TEMPLATES = {
     keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
     create: { tool: "SVGASSET", kind: "cart" },
   },
+  sw_open:     { kind: "shape", category: "전기", label: "스위치",     keywords: ["스위치", "switch", "개폐기", "S1"], create: { tool: "CIRCUIT", element: "switch" } },
+  sw_spdt:     { kind: "shape", category: "전기", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
   pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
   spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },

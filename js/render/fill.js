@@ -7,9 +7,15 @@ import { resolveObjectStyle } from "../style-mode.js?v=1.2.0";
 // Tile size / dot radius / mark stroke are fixed world-unit (mm) values, cheap to
 // tune. Patterns are per-object (id = pat_{obj.id}) and rebuilt every render, so a
 // different fillLevel per object never collides.
-const PAT_TILE   = 3.2;  // pattern tile edge (mm)
+const PAT_TILE   = 3.2;  // pattern tile edge (mm) — obj.fillTile 로 덮어쓸 수 있다
 const PAT_DOT_R  = 0.55; // dot radius (mm)
 const PAT_STROKE = 0.35; // cross/hatch mark stroke width (mm)
+
+/* 자기장 기호 격자로 쓸 때 필요한 조절값(요구):
+ *   fillTile     — 기호 간격(mm). 영역이 커져도 원하는 밀도로 유지된다.
+ *   fillDotStyle — "filled"(●, 기본) | "ring"(⊙, 가운데 점 있는 원)
+ * 평가원은 둘 다 쓴다: ● 는 단순 표기, ⊙ 는 '나오는 방향'을 또렷이 할 때. */
+const PAT_TILE_MIN = 0.8, PAT_TILE_MAX = 20;
 
 /* ----- which objects can carry a fill (shared by render + pattern builder) ----- */
 // rect/ellipse/triangle always; a polyline or curve only once it is closed.
@@ -40,15 +46,18 @@ export function makeFillPattern(obj) {
   if (!obj.id || obj.fillNone || style === "solid" || !isFillable(obj)) return null;
 
   const mark = grayHex(obj.fillLevel);
+  const tile = Math.min(PAT_TILE_MAX, Math.max(PAT_TILE_MIN,
+    Number.isFinite(obj.fillTile) ? obj.fillTile : PAT_TILE));
+  const scale = tile / PAT_TILE;          // 기호 크기도 간격에 비례시켜 밀도가 자연스럽게
   const pat = document.createElementNS(SVG_NS, "pattern");
   pat.setAttribute("id", `pat_${obj.id}`);
   pat.setAttribute("patternUnits", "userSpaceOnUse");
-  pat.setAttribute("width", PAT_TILE);
-  pat.setAttribute("height", PAT_TILE);
+  pat.setAttribute("width", tile);
+  pat.setAttribute("height", tile);
 
   const base = document.createElementNS(SVG_NS, "rect");
-  base.setAttribute("width", PAT_TILE);
-  base.setAttribute("height", PAT_TILE);
+  base.setAttribute("width", tile);
+  base.setAttribute("height", tile);
   base.setAttribute("fill", "transparent");
   pat.appendChild(base);
 
@@ -57,27 +66,40 @@ export function makeFillPattern(obj) {
     l.setAttribute("x1", x1); l.setAttribute("y1", y1);
     l.setAttribute("x2", x2); l.setAttribute("y2", y2);
     l.setAttribute("stroke", mark);
-    l.setAttribute("stroke-width", PAT_STROKE);
+    l.setAttribute("stroke-width", PAT_STROKE * scale);
     pat.appendChild(l);
   };
 
   if (style === "dots") {
-    const c = document.createElementNS(SVG_NS, "circle");
-    c.setAttribute("cx", PAT_TILE / 2);
-    c.setAttribute("cy", PAT_TILE / 2);
-    c.setAttribute("r", PAT_DOT_R);
-    c.setAttribute("fill", mark);
-    pat.appendChild(c);
+    const m = tile / 2, r = PAT_DOT_R * scale;
+    if (obj.fillDotStyle === "ring") {
+      // ⊙ : 테두리 원 + 가운데 점 (자기장 '나오는 방향' 표기)
+      const ring = document.createElementNS(SVG_NS, "circle");
+      ring.setAttribute("cx", m); ring.setAttribute("cy", m); ring.setAttribute("r", r * 1.45);
+      ring.setAttribute("fill", "none");
+      ring.setAttribute("stroke", mark);
+      ring.setAttribute("stroke-width", PAT_STROKE * scale);
+      pat.appendChild(ring);
+      const dot = document.createElementNS(SVG_NS, "circle");
+      dot.setAttribute("cx", m); dot.setAttribute("cy", m); dot.setAttribute("r", r * 0.42);
+      dot.setAttribute("fill", mark);
+      pat.appendChild(dot);
+    } else {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", m); c.setAttribute("cy", m); c.setAttribute("r", r);
+      c.setAttribute("fill", mark);
+      pat.appendChild(c);
+    }
   } else if (style === "cross") {
-    const m = PAT_TILE / 2, d = PAT_TILE * 0.22; // ??arm half-length
+    const m = tile / 2, d = tile * 0.22; // ??arm half-length
     line(m - d, m - d, m + d, m + d);
     line(m - d, m + d, m + d, m - d);
   } else if (style === "hatch") {
     // 45째 parallel lines. The main anti-diagonal tiles seamlessly; the two
     // half-corner segments fill the seams so the lines read as continuous.
-    line(0, PAT_TILE, PAT_TILE, 0);
-    line(-PAT_TILE / 2, PAT_TILE / 2, PAT_TILE / 2, -PAT_TILE / 2);
-    line(PAT_TILE / 2, PAT_TILE * 1.5, PAT_TILE * 1.5, PAT_TILE / 2);
+    line(0, tile, tile, 0);
+    line(-tile / 2, tile / 2, tile / 2, -tile / 2);
+    line(tile / 2, tile * 1.5, tile * 1.5, tile / 2);
   }
   return pat;
 }
