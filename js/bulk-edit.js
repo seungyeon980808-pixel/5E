@@ -295,15 +295,53 @@ function depthAxisAngle(objs) {
   return 50;
 }
 
-/* 간격 항목 — 축마다 독립된 한 줄이다(드롭다운으로 묶지 않는다).
+/* 정렬·간격 항목 — 축마다 독립된 한 줄이다(드롭다운으로 묶지 않는다).
  * 묶어 두면 "좌우 간격 통일"과 "상하 간격 통일"이 각각 있는지 화면에서 안 보인다.
- * 둘 다 체크하면 적힌 순서대로 차례로 적용된다. */
-const GAP_AXES = [
-  { axis: "x", key: "gapX", label: "좌우 간격 통일" },
-  { axis: "y", key: "gapY", label: "상하 간격 통일" },
-  { axis: "z", key: "gapZ", label: "깊이 간격 통일" },
+ * 여러 개를 체크하면 적힌 순서대로 적용된다 — **정렬이 먼저, 간격이 나중**이다.
+ *
+ * 정렬과 간격은 서로 직각인 축을 건드린다:
+ *   · 좌우 정렬 = 세로 위치를 맞춰 가로 한 줄로 세운다
+ *   · 좌우 간격 = 그 줄 안에서 가로 빈 거리를 고르게 한다
+ * 둘을 같이 체크하면 "가지런한 한 줄"이 된다. 간격만 있으면 높이는 제각각 그대로라
+ * 화면상 달라진 게 없어 보인다(2026-07-26 사용자 지적) — 그래서 정렬을 위에 둔다. */
+const ARRANGE_ROWS = [
+  { kind: "align", key: "alignH", label: "좌우 정렬(가로 한 줄)", axis: "h",
+    opts: [["mid", "가운데"], ["min", "위"], ["max", "아래"]] },
+  { kind: "align", key: "alignV", label: "상하 정렬(세로 한 줄)", axis: "v",
+    opts: [["mid", "가운데"], ["min", "왼쪽"], ["max", "오른쪽"]] },
+  { kind: "gap", key: "gapX", label: "좌우 간격 통일", axis: "x" },
+  { kind: "gap", key: "gapY", label: "상하 간격 통일", axis: "y" },
+  { kind: "gap", key: "gapZ", label: "깊이 간격 통일", axis: "z" },
 ];
-const _gapRows = new Map(); // key -> { cb, input, axis }
+const _gapRows = new Map(); // key -> { cb, read(), row }
+
+/* ----- 정렬 -----
+ * 선택 전체를 감싸는 테두리(합집합 bbox)를 기준으로 삼는다. 개별 오브젝트를 기준으로
+ * 하면 "어느 게 기준이었지?"를 사용자가 알 수 없다. 위/아래(왼쪽/오른쪽)는 그 테두리의
+ * 끝선, 가운데는 그 테두리의 중앙선이다. */
+function applyAlign(objs, axis, mode) {
+  const items = objs
+    .filter((o) => !o.locked && !o.positionLocked)
+    .map((o) => ({ o, b: getObjectBBox(o) }))
+    .filter((it) => it.b);
+  if (items.length < 2) return 0;
+  const startOf = (b) => (axis === "h" ? b.y : b.x);
+  const lenOf = (b) => (axis === "h" ? b.h : b.w);
+  const lo = Math.min(...items.map((it) => startOf(it.b)));
+  const hi = Math.max(...items.map((it) => startOf(it.b) + lenOf(it.b)));
+  let moved = 0;
+  for (const { o, b } of items) {
+    const want = mode === "min" ? lo
+      : mode === "max" ? hi - lenOf(b)
+      : (lo + hi) / 2 - lenOf(b) / 2;
+    const d = want - startOf(b);
+    if (Math.abs(d) > 1e-6) {
+      translateObject(o, axis === "h" ? 0 : d, axis === "h" ? d : 0);
+      moved += 1;
+    }
+  }
+  return moved;
+}
 
 function axisUnit(axis, objs) {
   if (axis === "x") return { ux: 1, uy: 0 };
@@ -343,7 +381,7 @@ function renderGapRows() {
   const host = _overlay.querySelector("#bulk-gap-rows");
   host.innerHTML = "";
   _gapRows.clear();
-  for (const g of GAP_AXES) {
+  for (const g of ARRANGE_ROWS) {
     const row = document.createElement("label");
     row.className = "modal-field modal-field-row";
     row.style.cssText = "display:flex;align-items:center;gap:8px;";
@@ -353,19 +391,35 @@ function renderGapRows() {
     lbl.className = "modal-label";
     lbl.style.cssText = "flex:1 1 auto;margin:0;";
     lbl.textContent = g.label;
-    const input = document.createElement("input");
-    input.type = "number";
-    input.step = "1";
-    input.value = "4";
-    input.className = "modal-input";
-    input.style.cssText = "width:90px;flex:none;";
-    input.addEventListener("input", () => { cb.checked = true; });
-    const unit = document.createElement("span");
-    unit.style.cssText = "flex:none;font-size:11px;color:var(--text-secondary);width:38px;";
-    unit.textContent = "mm";
-    row.appendChild(cb); row.appendChild(lbl); row.appendChild(input); row.appendChild(unit);
+    row.appendChild(cb); row.appendChild(lbl);
+
+    let read;
+    if (g.kind === "align") {
+      const sel = document.createElement("select");
+      sel.className = "modal-input";
+      sel.style.cssText = "width:90px;flex:none;";
+      sel.innerHTML = g.opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+      sel.addEventListener("change", () => { cb.checked = true; });
+      const pad = document.createElement("span");
+      pad.style.cssText = "flex:none;width:38px;";
+      row.appendChild(sel); row.appendChild(pad);
+      read = () => sel.value;
+    } else {
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "1";
+      input.value = "4";
+      input.className = "modal-input";
+      input.style.cssText = "width:90px;flex:none;";
+      input.addEventListener("input", () => { cb.checked = true; });
+      const unit = document.createElement("span");
+      unit.style.cssText = "flex:none;font-size:11px;color:var(--text-secondary);width:38px;";
+      unit.textContent = "mm";
+      row.appendChild(input); row.appendChild(unit);
+      read = () => Number(input.value);
+    }
     host.appendChild(row);
-    _gapRows.set(g.key, { cb, input, axis: g.axis });
+    _gapRows.set(g.key, { cb, read, def: g });
   }
 }
 
@@ -378,11 +432,10 @@ function syncTargetText() {
   // 간격은 '통일' 개념 자체라 증감(전체 수정) 모드에서는 숨긴다.
   const gapBox = _overlay.querySelector("#bulk-spacing");
   gapBox.style.display = _mode === "uniform" ? "" : "none";
-  // "줄을 맞춘다"가 아니라 "간격만 고른다"이다 — 축과 직각인 방향은 건드리지 않는다.
-  // (직각 방향까지 맞추면 사용자가 잡아둔 배치가 통째로 움직여 버린다)
   _overlay.querySelector("#bulk-gap-desc").textContent =
-    `오브젝트 사이 빈 거리를 그 값으로 맞춥니다(깊이는 투영 ${depthAxisAngle(objs)}° 방향). `
-    + "맨 앞 하나는 기준으로 두고 나머지를 밉니다.";
+    "정렬 = 한 줄로 세웁니다(선택 전체 테두리 기준). 간격 = 오브젝트 사이 빈 거리를 "
+    + `그 값으로 맞춥니다(깊이는 투영 ${depthAxisAngle(objs)}° 방향, 맨 앞 하나는 그대로). `
+    + "정렬 + 간격을 같이 체크하면 가지런한 한 줄이 됩니다.";
 }
 
 function apply() {
@@ -401,10 +454,15 @@ function apply() {
   if (_mode === "uniform") {
     for (const [, r] of _gapRows) {
       if (!r.cb.checked) continue;
-      const v = Number(r.input.value);
-      if (!isFinite(v)) { showAlert("간격에 숫자를 입력하세요.", { title: "전체 통일/수정" }); return; }
-      gaps.push({ axis: r.axis, value: v });
+      const v = r.read();
+      if (r.def.kind === "gap" && !isFinite(v)) {
+        showAlert("간격에 숫자를 입력하세요.", { title: "전체 통일/수정" }); return;
+      }
+      gaps.push({ kind: r.def.kind, axis: r.def.axis, value: v });
     }
+    // 정렬을 먼저, 간격을 나중에. 순서가 반대면 정렬이 간격을 다시 흐트러뜨린다
+    // (상하 정렬은 x를, 좌우 간격도 x를 건드린다).
+    gaps.sort((a, b) => (a.kind === "align" ? 0 : 1) - (b.kind === "align" ? 0 : 1));
   }
 
   if (!picked.length && !gaps.length) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 통일/수정" }); return; }
@@ -427,7 +485,11 @@ function apply() {
     }
     // 간격은 크기 변경이 끝난 뒤에 잡아야 한다 — 폭을 통일하고 나면 bbox가 달라지므로
     // 순서를 바꾸면 간격이 어긋난다.
-    for (const g of gaps) applySpacing(s2.objects.filter((o) => idSet.has(o.id)), g.axis, g.value);
+    for (const g of gaps) {
+      const pool = s2.objects.filter((o) => idSet.has(o.id));
+      if (g.kind === "align") applyAlign(pool, g.axis, g.value);
+      else applySpacing(pool, g.axis, g.value);
+    }
   });
   _overlay.hidden = true;
 }
