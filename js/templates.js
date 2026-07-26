@@ -404,11 +404,23 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
   }
 
   if (id === "spring") {
-    // 코일 실루엣: 양끝 직선부 + 지그재그 굽이(객체 모양과 같은 인상).
+    // 코일 실루엣: 양끝 직선부 + 촘촘히 겹친 고리(객체 모양과 같은 인상).
     svg.setAttribute("viewBox", "0 0 20 20");
+    const R = 3.4, K = 1.02, N = 5, TOT = 2 * Math.PI * N + Math.PI;
+    const pts = [];
+    let lo = Infinity, hi = -Infinity;
+    for (let i = 0; i <= 160; i++) {
+      const th = TOT * (i / 160), t = (11 / TOT) * th + K * Math.cos(th);
+      pts.push([t, R * Math.sin(th)]);
+      if (t < lo) lo = t; if (t > hi) hi = t;
+    }
+    const sc = 11 / (hi - lo);
+    const body = pts.map(([t, s], i) =>
+      (i ? "L" : "M") + (4.5 + (t - lo) * sc).toFixed(2) + " " + (10 + s).toFixed(2)).join(" ");
     svg.innerHTML =
-      '<path d="M2 10 H5 L6.5 6 L8.5 14 L10.5 6 L12.5 14 L14 10 H18" fill="none" ' +
-      'stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>';
+      `<path d="M2 10 H${(4.5 + (pts[0][0] - lo) * sc).toFixed(2)}" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>` +
+      `<path d="M${(4.5 + (pts[160][0] - lo) * sc).toFixed(2)} 10 H18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>` +
+      `<path d="${body}" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`;
     return svg;
   }
 

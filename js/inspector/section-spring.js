@@ -3,6 +3,7 @@
  * (요구: "도르래의 반지름, 감은수 등을 입력 가능한 객체로 — 단진자와 비슷한 느낌") */
 
 import { makeSection } from "./widgets.js?v=1.2.0";
+import { SPRING_DEFAULTS, HOOK_LABELS, nextHook } from "../render/spring.js?v=1.2.0";
 
 export function buildSpringSection(ctx) {
   const { state } = ctx;
@@ -20,6 +21,21 @@ export function buildSpringSection(ctx) {
       if (o[prop] === value) return;
       s2.undoStack.push(snap); s2.redoStack = [];
       o[prop] = value;
+    });
+  }
+
+  // 여러 필드를 한 번에(Undo 1스텝). 선 종류처럼 두 필드가 한 쌍인 경우에 쓴다.
+  function commitMany(props) {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== "spring" || o.locked) return;
+      if (Object.keys(props).every((k) => o[k] === props[k])) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      Object.assign(o, props);
     });
   }
 
@@ -45,36 +61,79 @@ export function buildSpringSection(ctx) {
     return inp;
   }
 
-  const turnsInp = numberRow("감은 수", "turns", { min: 1, max: 40, step: 1 });
+  function selectRow(labelText, options, onPick) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.textContent = labelText;
+    const sel = document.createElement("select");
+    sel.className = "insp-input";
+    options.forEach(([v, t]) => {
+      const op = document.createElement("option");
+      op.value = v; op.textContent = t;
+      sel.appendChild(op);
+    });
+    row.appendChild(lbl); row.appendChild(sel);
+    body.appendChild(row);
+    sel.addEventListener("change", () => onPick(sel.value));
+    return sel;
+  }
+
+  // 종류: 나선(용수철) / 실선(실·줄) — 같은 도구에서 종류만 바꾸면 실이 된다.
+  const styleSel = selectRow("종류", [["helix", "나선(용수철)"], ["line", "실선(실·줄)"]],
+    (v) => { commit("springStyle", v); syncStyleRows(v); });
+
+  const turnsInp = numberRow("감은 수", "turns", { min: 3, max: 40, step: 1 });
   const radiusInp = numberRow("반지름(mm)", "radius", { min: 0.2, max: 20, step: 0.1 });
   const leadInp = numberRow("끝단 길이(mm)", "leadLength", { min: 0, max: 20, step: 0.5 });
 
-  // 모양: 입체 나선(기본) / 사인 / 지그재그
-  const styleRow = document.createElement("div");
-  styleRow.className = "insp-row";
-  const styleLbl = document.createElement("label");
-  styleLbl.className = "insp-field-label";
-  styleLbl.textContent = "모양";
-  const styleSel = document.createElement("select");
-  styleSel.className = "insp-input";
-  [["helix", "입체 나선"], ["coil", "사인"], ["zigzag", "지그재그"]].forEach(([v, t]) => {
-    const op = document.createElement("option");
-    op.value = v; op.textContent = t;
-    styleSel.appendChild(op);
+  // 선 종류: 실선 / 점선. 5E 공용 dash 필드를 그대로 쓴다(다른 도형과 조작이 같아진다).
+  const dashSel = selectRow("선 종류", [["solid", "실선"], ["dashed", "점선"]], (v) => {
+    // dashLength·dashGap을 따로 commit하면 Undo가 두 번 걸린다 → 한 번에 넣는다.
+    commitMany({ dashLength: v === "dashed" ? 1.2 : 0, dashGap: v === "dashed" ? 0.8 : 0 });
   });
-  styleRow.appendChild(styleLbl); styleRow.appendChild(styleSel);
-  body.appendChild(styleRow);
-  styleSel.addEventListener("change", () => commit("springStyle", styleSel.value));
+
+  // 연결부(고리): 버튼 하나를 누를 때마다 없음 → 왼쪽 → 오른쪽 → 양쪽 순환.
+  const hookRow = document.createElement("div");
+  hookRow.className = "insp-row";
+  const hookLbl = document.createElement("label");
+  hookLbl.className = "insp-field-label";
+  hookLbl.textContent = "연결부";
+  const hookBtn = document.createElement("button");
+  hookBtn.type = "button";
+  hookBtn.className = "insp-input";
+  hookBtn.title = "누를 때마다 없음 → 왼쪽 → 오른쪽 → 양쪽 순으로 바뀝니다";
+  hookRow.appendChild(hookLbl); hookRow.appendChild(hookBtn);
+  body.appendChild(hookRow);
+  hookBtn.addEventListener("click", () => {
+    const s = state.get();
+    const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
+    const next = nextHook(o && o.hook);
+    commit("hook", next);
+    hookBtn.textContent = HOOK_LABELS[next];
+  });
+
+  // 나선 전용 칸(감은 수·반지름)은 종류가 "실선"이면 의미가 없으니 숨긴다.
+  function syncStyleRows(style) {
+    const hide = style === "line";
+    [turnsInp, radiusInp].forEach((inp) => { inp.closest(".insp-row").hidden = hide; });
+  }
 
   const secSpring = makeSection("용수철", body);
 
   // 선택이 바뀔 때 인스펙터가 호출한다 — 현재 값으로 입력칸을 채운다.
   function syncSpring(o) {
     if (!o || o.type !== "spring") return;
-    turnsInp.value = o.turns ?? o.coils ?? 6;
-    radiusInp.value = o.radius ?? o.amplitude ?? 1.8;
-    leadInp.value = o.leadLength ?? 2;
-    styleSel.value = o.springStyle || "helix";
+    turnsInp.value = o.turns ?? o.coils ?? SPRING_DEFAULTS.turns;
+    radiusInp.value = o.radius ?? o.amplitude ?? SPRING_DEFAULTS.radius;
+    leadInp.value = o.leadLength ?? SPRING_DEFAULTS.leadLength;
+    // 삭제된 옛 모양(coil·zigzag) 파일은 나선으로 읽는다.
+    const style = o.springStyle === "line" ? "line" : "helix";
+    styleSel.value = style;
+    syncStyleRows(style);
+    dashSel.value = (o.dashLength > 0) ? "dashed" : "solid";
+    hookBtn.textContent = HOOK_LABELS[o.hook || "none"];
   }
 
   return { secSpring, syncSpring };

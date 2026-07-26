@@ -4,9 +4,10 @@
  * 핵심인 경우가 많다). 고정 SVG 에셋으로는 늘였을 때 코일 간격이 함께 늘어나 어색해진다.
  * 그래서 pendulum과 같은 계열(p1/p2 두 점)로 두고, 코일 수·진폭·양끝 직선부를 필드로 쥔다.
  *
- * 기하: p1 ── (직선 lead) ── [코일 coils개] ── (직선 lead) ── p2
+ * 기하: p1 ─[고리?]─ (직선 lead) ── [코일] ── (직선 lead) ─[고리?]─ p2
  *   axis  = p1→p2 단위벡터, normal = axis를 90° 돌린 것(진폭 방향)
- *   style = "coil"(반원 아크 반복, 평가원 기본) | "zigzag"(직선 지그재그)
+ *   springStyle = "helix"(감긴 코일) | "line"(실·줄 — 같은 도구에서 종류만 바꾼 것)
+ *   hook = "none" | "left" | "right" | "both"  (인스펙터 버튼 한 개로 순환)
  *
  * 좌표계: 세계 mm. 다른 p1/p2 타입(line/circuit/pendulum)과 같은 이동·회전 경로를 탄다.
  */
@@ -15,12 +16,17 @@ import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.2.0";
 import { withLineLabel } from "./labels.js?v=1.2.0";
 
 export const SPRING_DEFAULTS = {
-  turns: 6,          // 감은 수 (코일 바퀴 수)
-  radius: 1.8,       // 코일 반지름(mm) — 나선의 굵기
-  leadLength: 2,     // 양끝 직선부 길이(mm) — 물체에 닿는 부분
+  turns: 14,         // 감은 수 (코일 바퀴 수)
+  radius: 2,         // 코일 반지름(mm) — 나선의 굵기
+  leadLength: 2,     // 양끝 직선부 길이(mm) — 물체·고리에 닿는 부분
   springStyle: "helix",
-  tilt: 0.55,        // 시선 기울기(반지름 대비). 클수록 고리가 많이 겹쳐 입체감이 커진다
+  hook: "none",      // 연결부(고리): none | left | right | both
 };
+
+/* 시선 기울기(반지름 대비). 고리가 얼마나 옆에서 본 것처럼 겹쳐 보이는지를 정한다.
+ * 2026-07-26 교사 확인으로 0.3 확정 — 인스펙터에는 노출하지 않는다(값 하나로 인상이 확 바뀌어
+ * 그림마다 달라지면 오히려 통일감이 깨진다). 옛 파일의 tilt 값이 있으면 그건 존중한다. */
+export const SPRING_TILT = 0.3;
 
 /* ----- 기하 계산: 렌더·픽·스냅·bbox가 모두 이 함수를 쓴다(단일 출처) ----- */
 export function springGeometry(obj) {
@@ -34,105 +40,89 @@ export function springGeometry(obj) {
   // 감은 수·반지름이 정식 이름. 옛 파일의 coils/amplitude 도 그대로 읽는다(하위호환).
   const turns = Math.max(1, Math.round(obj.turns ?? obj.coils ?? SPRING_DEFAULTS.turns));
   const radius = Math.max(0.1, obj.radius ?? obj.amplitude ?? SPRING_DEFAULTS.radius);
-  const tilt = Math.max(0, obj.tilt ?? SPRING_DEFAULTS.tilt);
-  // 양끝 직선부는 전체 길이의 40%를 넘지 않게 — 짧게 압축해도 코일이 사라지지 않는다.
-  const lead = Math.max(0, Math.min(obj.leadLength ?? SPRING_DEFAULTS.leadLength, L * 0.4));
-  const coilLen = Math.max(0, L - lead * 2);
-  const a = { x: p1.x + ax * lead, y: p1.y + ay * lead };    // 코일 시작
-  const b = { x: p2.x - ax * lead, y: p2.y - ay * lead };    // 코일 끝
-  return { p1, p2, a, b, L, coilLen, ax, ay, nx, ny, turns, radius, tilt, lead,
+  const tilt = Math.max(0, obj.tilt ?? SPRING_TILT);
+
+  // 연결부(고리)는 p1/p2 '안쪽'에 그린다 — 고리를 켜도 전체 길이(p1~p2)는 변하지 않는다.
+  const hook = obj.hook || SPRING_DEFAULTS.hook;
+  const hookR = Math.min(radius * 0.62, L * 0.18);
+  const hasHookL = hook === "left" || hook === "both";
+  const hasHookR = hook === "right" || hook === "both";
+  const cutL = hasHookL ? hookR * 2 : 0;
+  const cutR = hasHookR ? hookR * 2 : 0;
+  const s = { x: p1.x + ax * cutL, y: p1.y + ay * cutL };    // 몸통 시작(고리 뒤)
+  const e = { x: p2.x - ax * cutR, y: p2.y - ay * cutR };    // 몸통 끝
+  const bodyLen = Math.max(0, L - cutL - cutR);
+
+  // 양끝 직선부는 몸통 길이의 40%를 넘지 않게 — 짧게 압축해도 코일이 사라지지 않는다.
+  const lead = Math.max(0, Math.min(obj.leadLength ?? SPRING_DEFAULTS.leadLength, bodyLen * 0.4));
+  const coilLen = Math.max(0, bodyLen - lead * 2);
+  const a = { x: s.x + ax * lead, y: s.y + ay * lead };      // 코일 구간 시작
+  const b = { x: e.x - ax * lead, y: e.y - ay * lead };      // 코일 구간 끝
+  return { p1, p2, s, e, a, b, L, bodyLen, coilLen, ax, ay, nx, ny, turns, radius, tilt, lead,
+           hook, hookR, hasHookL, hasHookR,
            coils: turns, amp: radius };   // coils/amp = 옛 이름 별칭
 }
 
-/* 코일 경로(d).
+const HELIX_SAMPLES_PER_TURN = 64;   // 반지름 2mm에서 현 오차 ≈0.003mm — 인쇄에서 보이지 않는다
+
+/* 코일 경로(d) — 실제로 감긴 나선을 '살짝 비스듬히' 본 투영.
+ *   축 방향 : c·θ + k·cosθ      (k = tilt × R)
+ *   가로 방향: R·sinθ
+ * cos 항이 축 방향을 앞뒤로 흔들어 고리가 서로 겹치고 교차한다 — 평면 사인 곡선과 달리
+ * '감겨 있다'는 인상이 나오는 이유다. 교차 조건은 k > c 하나뿐이다.
  *
- * ※ 예전 구현은 굽이마다 SVG 아크(A) 두 개를 이어 붙였는데, 반지름을 amp 기준으로 잡는
- *   바람에 반굽이 폭보다 커져 아크가 눌리고 접점에서 접선이 꺾여 **첨점**이 생겼다.
- *   (step 2.33mm, 반굽이 1.17mm인데 rx 1.60mm — 기하적으로 매끈할 수 없다.)
- *   그래서 아크를 버리고, 사인 곡선을 촘촘히 샘플링해 잇는다. 접선이 연속이라 첨점이 없고
- *   길이·코일 수·진폭을 어떻게 줘도 항상 매끈하다.
+ * ※ 옛 구현은 k ≤ pitch×0.20 으로 묶어 두어 아무리 촘촘히 감아도 납작했다(2026-07-26 지적).
+ *   상한을 없애는 대신 코일이 양 끝 밖으로 새지 않도록 두 가지를 쓴다:
+ *   ① 반 바퀴를 더 돈다(총 turns + 0.5 바퀴). 그러면 t는 중심대칭, s는 좌우대칭이 되어
+ *      곡선 전체가 좌우 대칭이고 양쪽 직선부 길이가 정확히 같아진다.
+ *      (t(θ)+t(θe−θ)=c·θe, s(θe−θ)=s(θ) — θe=2πN+π 일 때만 성립)
+ *   ② 축 방향 t의 실제 최소·최대를 재서 [0, coilLen]에 어파인 정규화한다.
+ *      덕분에 감은 수·반지름·tilt를 어떻게 줘도 코일은 항상 코일 구간 안에 딱 맞는다.
+ * 반환: 경로 d와 곡선의 실제 양 끝점(직선부를 여기에 이어 붙인다).
  */
-/* 사인 1/4주기를 3차 베지어로 근사할 때의 제어점 계수.
- * 오차 0.7%(중점 0.7121A vs 정확값 0.7071A) — 인쇄 크기에서 보이지 않는다.
- * 이 방식은 마루에서 접선이 수평, 영점에서 양쪽 접선이 같아 **C1 연속**이라
- * 코일이 아무리 촘촘해도(진폭 > 반굽이 폭이어도) 첨점이 생길 수 없다. */
-const Q_CTRL_X = 0.36;                    // 제어점의 축 방향 위치(1/4주기 대비)
-const Q_CTRL_Y = 0.36 * Math.PI / 2;      // ≈0.5655 — 영점 기울기와 맞물리는 값
-
-const HELIX_SAMPLES_PER_TURN = 56;   // 반지름 2mm에서 현 오차 ≈0.003mm — 인쇄에서 보이지 않는다
-
-function coilPathD(geo, style) {
-  const { a, ax, ay, nx, ny, coils, amp, coilLen, turns, radius, tilt } = geo;
-  if (coilLen <= 0) return "";
+function coilPath(geo) {
+  const { a, ax, ay, nx, ny, coilLen, turns, radius, tilt } = geo;
+  if (coilLen <= 0) return null;
   const at = (t, s) => ({ x: a.x + ax * t + nx * s, y: a.y + ay * t + ny * s });
 
-  if (style !== "coil" && style !== "zigzag") {
-    /* helix(기본) — 실제로 감긴 나선을 '살짝 비스듬히' 본 투영.
-     *   축 방향 : coilLen·θ/(2πN) + tilt·R·(cosθ − 1)
-     *   가로 방향: R·sinθ
-     * cos 항이 축 방향을 앞뒤로 흔들어 고리가 서로 겹치고 교차한다 — 사인 곡선(평면)과
-     * 달리 '감겨 있다'는 인상이 나오는 이유다. θ=0·2πN 에서 보정항이 0이라 양 끝은
-     * 정확히 축 위에서 시작·종료해 직선부와 매끄럽게 이어진다. */
-    const N = turns, R = radius;
-    // 보정항 k의 상한 = pitch × 0.20.
-    //  · 이보다 크면 첫 고리가 시작점보다 앞으로 튀어나가 직선부를 침범한다
-    //    (0.24에서 -0.035·pitch 이탈 실측).
-    //  · 이보다 작으면 dt/dθ 가 항상 양수라 고리가 교차하지 않아 '평면 사인'으로 보인다
-    //    (교차 조건: 2πc > 1 → c > 0.159).
-    //  즉 0.16~0.20 이 유일한 해 구간이고, 여유를 두어 상한을 0.20으로 잡는다.
-    const pitch = coilLen / N;
-    const k = Math.min(tilt * R, pitch * 0.20);
-    const total = 2 * Math.PI * N;
-    const steps = Math.max(24, Math.round(N * HELIX_SAMPLES_PER_TURN));
-    let d = "";
-    for (let i = 0; i <= steps; i++) {
-      const th = total * (i / steps);
-      const t = coilLen * (i / steps) + k * (Math.cos(th) - 1);
-      const p = at(t, R * Math.sin(th));
-      d += (i === 0 ? "M " : " L ") + `${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
-    }
-    return d;
-  }
+  const total = 2 * Math.PI * turns + Math.PI;    // turns + 0.5 바퀴
+  const k = tilt * radius;
+  const c = coilLen / total;
+  const steps = Math.max(48, Math.round(turns * HELIX_SAMPLES_PER_TURN));
 
-  if (style === "zigzag") {
-    // 지그재그: 반 굽이마다 좌우로 꺾인다(전기 회로 저항식이 아니라 역학 교재식 삼각파).
-    const step = coilLen / coils;
-    let d = `M ${a.x} ${a.y}`;
-    for (let i = 0; i < coils; i++) {
-      const s1 = at(step * (i + 0.25), (i % 2 === 0 ? amp : -amp));
-      const s2 = at(step * (i + 0.75), (i % 2 === 0 ? -amp : amp));
-      d += ` L ${s1.x} ${s1.y} L ${s2.x} ${s2.y}`;
-    }
-    const end = at(coilLen, 0);
-    return d + ` L ${end.x} ${end.y}`;
+  const raw = [];
+  let lo = Infinity, hi = -Infinity;
+  for (let i = 0; i <= steps; i++) {
+    const th = total * (i / steps);
+    const t = c * th + k * Math.cos(th);
+    raw.push([t, radius * Math.sin(th)]);
+    if (t < lo) lo = t;
+    if (t > hi) hi = t;
   }
+  const sc = hi > lo ? coilLen / (hi - lo) : 1;
 
-  // coil(기본): 사인 한 주기 = 굽이 하나. 1/4주기씩 3차 베지어로 잇는다.
-  const P = coilLen / coils;          // 한 굽이(주기)
-  const q = P / 4;                    // 1/4주기
-  const fmt = (p) => `${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
-  const start = at(0, 0);
-  let d = `M ${fmt(start)}`;
-  // 한 구간: 축 위 t0에서 시작해 진폭 s0 → s1 로 가는 1/4주기.
-  const quarter = (t0, s0, s1) => {
-    const peakStart = Math.abs(s0) > Math.abs(s1);    // 마루에서 출발 → 접선 수평
-    const c1 = peakStart
-      ? at(t0 + Q_CTRL_X * q, s0)
-      : at(t0 + Q_CTRL_X * q, Q_CTRL_Y * s1);
-    const c2 = peakStart
-      ? at(t0 + (1 - Q_CTRL_X) * q, Q_CTRL_Y * s0)
-      : at(t0 + (1 - Q_CTRL_X) * q, s1);
-    const end = at(t0 + q, s1);
-    d += ` C ${fmt(c1)} ${fmt(c2)} ${fmt(end)}`;
-  };
-  for (let i = 0; i < coils; i++) {
-    const t0 = P * i;
-    quarter(t0, 0, amp);            // 영점 → 마루
-    quarter(t0 + q, amp, 0);        // 마루 → 영점
-    quarter(t0 + 2 * q, 0, -amp);   // 영점 → 골
-    quarter(t0 + 3 * q, -amp, 0);   // 골 → 영점
-  }
-  return d;
+  let d = "";
+  let first = null, last = null;
+  raw.forEach(([t, s], i) => {
+    const p = at((t - lo) * sc, s);
+    if (i === 0) first = p;
+    last = p;
+    d += (i === 0 ? "M " : " L ") + `${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
+  });
+  return { d, first, last };
+}
+
+/* 연결부(고리) 경로 — 끝점에서 안쪽으로 반지름 hookR 만큼 들어간 곳을 중심으로 한 열린 원.
+ * 열린 틈이 몸통 쪽을 향하게 두어 코일·실이 고리에 물린 것처럼 보인다. */
+function hookPathD(geo, which) {
+  const { p1, p2, ax, ay, nx, ny, hookR } = geo;
+  const end = which === "left" ? p1 : p2;
+  const dir = which === "left" ? 1 : -1;
+  const cx = end.x + ax * hookR * dir, cy = end.y + ay * hookR * dir;
+  const sx = cx + nx * hookR, sy = cy + ny * hookR;
+  const ex = cx - nx * hookR, ey = cy - ny * hookR;
+  const sweep = dir > 0 ? 0 : 1;
+  return `M ${sx.toFixed(3)} ${sy.toFixed(3)} A ${hookR.toFixed(3)} ${hookR.toFixed(3)} 0 1 ${sweep} ${ex.toFixed(3)} ${ey.toFixed(3)}`;
 }
 
 export function renderSpring(obj) {
@@ -152,14 +142,7 @@ export function renderSpring(obj) {
     return ln;
   };
 
-  // 양끝 직선부(물체에 닿는 부분)
-  if (geo.lead > 0) {
-    g.appendChild(mkLine(geo.p1, geo.a));
-    g.appendChild(mkLine(geo.b, geo.p2));
-  }
-
-  const d = coilPathD(geo, obj.springStyle || SPRING_DEFAULTS.springStyle);
-  if (d) {
+  const mkPath = (d, dashed) => {
     const path = document.createElementNS(SVG_NS, "path");
     path.setAttribute("d", d);
     path.setAttribute("fill", "none");
@@ -167,11 +150,39 @@ export function renderSpring(obj) {
     path.setAttribute("stroke-width", sw);
     path.setAttribute("stroke-linecap", "round");
     path.setAttribute("stroke-linejoin", "round");
-    applyDash(path, obj);
-    g.appendChild(path);
+    if (dashed) applyDash(path, obj);
+    return path;
+  };
+
+  // 연결부(고리)는 파선 대상이 아니다 — 고리까지 점선이 되면 뭘 그린 건지 안 보인다.
+  if (geo.hasHookL) g.appendChild(mkPath(hookPathD(geo, "left"), false));
+  if (geo.hasHookR) g.appendChild(mkPath(hookPathD(geo, "right"), false));
+
+  // 종류 "line"(실·줄): 몸통을 직선 하나로. 끝점 스냅·고리는 그대로 쓴다.
+  if ((obj.springStyle || SPRING_DEFAULTS.springStyle) === "line") {
+    const ln = mkLine(geo.s, geo.e);
+    applyDash(ln, obj);
+    g.appendChild(ln);
+    return withLineLabel(g, obj);
   }
 
+  const coil = coilPath(geo);
+  // 직선부는 코일의 '실제' 끝점에 이어 붙인다(정규화 때문에 몇 mm 안쪽에서 시작한다).
+  const cs = coil ? coil.first : geo.e;
+  const ce = coil ? coil.last : geo.e;
+  const l1 = mkLine(geo.s, cs); applyDash(l1, obj); g.appendChild(l1);
+  const l2 = mkLine(ce, geo.e); applyDash(l2, obj); g.appendChild(l2);
+  if (coil) g.appendChild(mkPath(coil.d, true));
+
   return withLineLabel(g, obj);
+}
+
+/* 연결부(고리) 순환: 없음 → 왼쪽 → 오른쪽 → 양쪽 → 없음 (인스펙터 버튼 한 개) */
+export const HOOK_CYCLE = ["none", "left", "right", "both"];
+export const HOOK_LABELS = { none: "없음", left: "왼쪽", right: "오른쪽", both: "양쪽" };
+export function nextHook(cur) {
+  const i = HOOK_CYCLE.indexOf(cur || "none");
+  return HOOK_CYCLE[(i + 1) % HOOK_CYCLE.length];
 }
 
 /* 코일이 진폭만큼 축 밖으로 나가므로 bbox는 그만큼 넓힌다(선택 테두리·내보내기 범위용). */
