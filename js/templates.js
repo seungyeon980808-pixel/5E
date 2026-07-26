@@ -181,6 +181,7 @@ export const TEMPLATES = {
     keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
     create: { tool: "SVGASSET", kind: "cart" },
   },
+  pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
   spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
@@ -388,6 +389,18 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
+  if (id === "pulley_ceiling") {
+    // 천장 고정판 + 브래킷 + 홈 있는 바퀴 실루엣.
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.innerHTML =
+      '<line x1="5" y1="3" x2="15" y2="3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<line x1="8" y1="3" x2="8" y2="11" stroke="currentColor" stroke-width="1"/>' +
+      '<line x1="12" y1="3" x2="12" y2="11" stroke="currentColor" stroke-width="1"/>' +
+      '<circle cx="10" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/>' +
+      '<circle cx="10" cy="12" r="1.3" fill="currentColor" stroke="none"/>';
+    return svg;
+  }
+
   if (id === "spring") {
     // 코일 실루엣: 양끝 직선부 + 지그재그 굽이(객체 모양과 같은 인상).
     svg.setAttribute("viewBox", "0 0 20 20");
@@ -547,7 +560,7 @@ export function activateTemplate(symbolId) {
   } else {
     // shape → record the variant + arm the shared placement tool (tools.js).
     const c = def.create || {};
-    armSymbol(symbolId, c.tool, c.element ?? c.kind);
+    armSymbol(symbolId, c.tool, c.element ?? c.kind, c.props);
   }
 }
 

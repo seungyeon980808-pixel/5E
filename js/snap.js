@@ -8,7 +8,7 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry } from "./render.js?v=1.2.0";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors } from "./render.js?v=1.2.0";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
@@ -87,6 +87,11 @@ export function collectPrioritySnapPoints(state, excludeIds) {
     } else if (obj.type === "optics" && obj.kind === "object_arrow") {
       const { head, attach } = opticalObjectHead(obj);
       points.push(makeSnapPoint(head, "optical-object-head", obj.id, "head", 1, attach));
+    } else if (obj.type === "apparatus" && obj.kind === "pulley") {
+      // 실은 바퀴 가장자리(접선)에 걸린다. 좌우 접선점과 축을 앵커로 노출한다.
+      for (const a of pulleyAnchors(obj)) {
+        if (isValidPoint(a)) points.push(makeSnapPoint(a, "line-endpoint", obj.id, a.role, 0));
+      }
     } else if (obj.type === "spring") {
       // 용수철은 끝점이 물체에 닿는 부품이라 p1/p2를 앵커로 준다(요구: 스냅으로 붙이기).
       const geo = springGeometry(obj);

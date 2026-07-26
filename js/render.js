@@ -10,3 +10,4 @@ export { makeFillPattern } from "./render/fill.js?v=1.2.0";
 export { circuitBodyPolygon } from "./render/circuit.js?v=1.2.0";
 export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.2.0";
 export { springGeometry, springBBox, SPRING_DEFAULTS } from "./render/spring.js?v=1.2.0";
+export { pulleyGeom, pulleyAnchors } from "./render/optics-apparatus.js?v=1.2.0";

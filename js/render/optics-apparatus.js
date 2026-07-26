@@ -95,15 +95,42 @@ const OPTICS_KINDS = {
     g.appendChild(makeArrowHead(cx, top, 0, -1, headSw, color));
   },
   // pulley: circle (dia = min(w,h)) + small center axle dot. No rope.
+  /* 도르래. variant로 형태를 고른다(요구: 시험 그림의 천장 고정형이 기존 원 하나와 다름).
+   *   basic   — 원 + 축(종전)
+   *   ceiling — 천장에 브래킷으로 매단 형태(홈 있는 바퀴 + 축 + 고정판). 실이 좌우 접선에 걸린다.
+   *   wall    — 벽에 붙인 형태(브래킷이 왼쪽으로)
+   * 바퀴의 좌우 접선점은 pulleyAnchors()가 돌려주고, snap.js가 그 점을 실 끝점 자석으로 쓴다. */
   pulley(g, obj, sw, color) {
-    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
-    const r = Math.min(obj.w, obj.h) / 2;
-    const c = document.createElementNS(SVG_NS, "circle");
-    c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
-    c.setAttribute("fill", resolveFill(obj));
-    c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
-    g.appendChild(c);
-    oDot(g, cx, cy, Math.max(r * 0.12, 0.4), color);
+    const v = obj.variant || "basic";
+    const { cx, cy, r } = pulleyGeom(obj);
+    if (v === "basic") {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
+      c.setAttribute("fill", resolveFill(obj));
+      c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+      g.appendChild(c);
+      oDot(g, cx, cy, Math.max(r * 0.12, 0.4), color);
+      return;
+    }
+    const mkCircle = (ccx, ccy, rr, fill) => {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", ccx); c.setAttribute("cy", ccy); c.setAttribute("r", rr);
+      c.setAttribute("fill", fill); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+      g.appendChild(c);
+    };
+    // 브래킷 먼저(바퀴 뒤로 가게) — 고정판에서 축까지.
+    if (v === "wall") {
+      oLine(g, obj.x, cy - r * 0.5, cx, cy, sw, color);
+      oLine(g, obj.x, cy + r * 0.5, cx, cy, sw, color);
+      oLine(g, obj.x, cy - r * 0.75, obj.x, cy + r * 0.75, sw * 1.6, color);   // 벽 고정판
+    } else {
+      oLine(g, cx - r * 0.32, obj.y, cx - r * 0.32, cy, sw, color);
+      oLine(g, cx + r * 0.32, obj.y, cx + r * 0.32, cy, sw, color);
+      oLine(g, cx - r * 0.62, obj.y, cx + r * 0.62, obj.y, sw * 1.6, color);   // 천장 고정판
+    }
+    mkCircle(cx, cy, r, grayHex(210));            // 바깥 림(홈)
+    mkCircle(cx, cy, r * 0.72, "#ffffff");        // 안쪽 원판
+    oDot(g, cx, cy, Math.max(r * 0.16, 0.5), color);  // 축
   },
   // plane_mirror: vertical straight line + back-side hatch ticks.
   plane_mirror(g, obj, sw, color) {
@@ -434,3 +461,28 @@ function drawScale(g, obj, sw, color) {
 }
 
 export { renderOptics, renderApparatus };
+
+/* ----- 도르래 기하 + 실이 걸리는 접선점 -----
+ * ceiling/wall 변형은 바퀴가 박스 전체가 아니라 브래킷을 뺀 아래쪽을 차지한다.
+ * 접선점(좌/우)은 snap.js가 실 끝점 자석으로 쓴다 — 손으로 좌표를 맞추지 않게 하는 것이 목적. */
+export function pulleyGeom(obj) {
+  const v = obj.variant || "basic";
+  if (v === "basic") {
+    const r = Math.min(obj.w, obj.h) / 2;
+    return { cx: obj.x + obj.w / 2, cy: obj.y + obj.h / 2, r };
+  }
+  if (v === "wall") {
+    const r = Math.min(obj.w * 0.72, obj.h / 2);
+    return { cx: obj.x + obj.w - r, cy: obj.y + obj.h / 2, r };
+  }
+  const r = Math.min(obj.w / 2, obj.h * 0.72);          // ceiling
+  return { cx: obj.x + obj.w / 2, cy: obj.y + obj.h - r, r };
+}
+export function pulleyAnchors(obj) {
+  const { cx, cy, r } = pulleyGeom(obj);
+  return [
+    { x: cx - r, y: cy, role: "rimLeft" },
+    { x: cx + r, y: cy, role: "rimRight" },
+    { x: cx, y: cy, role: "axle" },
+  ];
+}

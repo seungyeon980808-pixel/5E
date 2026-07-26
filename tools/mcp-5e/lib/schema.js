@@ -34,6 +34,8 @@ export const CIRCUIT_ELEMENTS = [
   "diode", "lamp", "ammeter", "voltmeter", "unknown",
 ];
 export const SVG_ASSET_IDS = ["pulley", "cart"];
+// 도르래 형태: basic(원+축) | ceiling(천장 브래킷) | wall(벽 브래킷)
+export const PULLEY_VARIANTS = ["basic", "ceiling", "wall"];
 export const GAUGE_KINDS = ["ruler", "protractor"];
 export const FILL_STYLES = ["solid", "dots", "cross", "hatch"];
 export const ARROW_HEADS = ["none", "end", "start", "both"];
@@ -100,7 +102,7 @@ const DEFAULTS = {
       d.length = o.w ?? size.w; d.angle = 0; d.thickness = 1.8; d.gap = 1.8;
     }
     if (kind === "compass") d.needleAngle = -90;
-    if (kind === "pulley") d.variant = "basic";
+    if (kind === "pulley") d.variant = o.variant || "basic";
     if (kind === "clamp") d.flipped = false;
     if (kind === "scale") d.displayText = "0.99 N";
     if (kind !== "wire") d.lockAspect = true;
@@ -248,6 +250,7 @@ function enumsFor(type) {
   if (type === "circuit") e.element = CIRCUIT_ELEMENTS;
   if (type === "svgAsset") e.assetId = SVG_ASSET_IDS;
   if (type === "gauge") e.kind = GAUGE_KINDS;
+  if (type === "apparatus") e.variant = PULLEY_VARIANTS;   // 현재 variant를 쓰는 기구는 도르래뿐
   if (type === "line") { e.lineMode = LINE_MODES; e.arrowHead = ARROW_HEADS; }
   if (type === "polyline") e.arrowHead = ARROW_HEADS;
   if (type === "coordplane") e.axisVariant = AXIS_VARIANTS;

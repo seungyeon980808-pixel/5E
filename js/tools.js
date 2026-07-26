@@ -83,6 +83,7 @@ let _state = null;
 // pipelines share one counter and can never mint colliding ids.
 
 // Which circuit element / optics kind the next placement creates. Set via
+let _symbolProps = null;   // 팔레트가 지정한 추가 필드(예: 도르래 variant) — 생성 시 병합
 // armSymbol() when a left-panel symbol button is clicked; the placement pipelines
 // read these so a single CIRCUIT/OPTICS tool covers every variant.
 let _circuitElement = "resistor";
@@ -203,7 +204,8 @@ function setupToolChoosers() {
  * buttons did) then arms the shared placement tool. syncButtons runs explicitly so
  * the highlight updates even when the armed tool is unchanged (e.g. 저항 → 전지,
  * both on CIRCUIT, where setActiveTool early-returns and fires no subscriber). */
-export function armSymbol(symbolId, tool, variant) {
+export function armSymbol(symbolId, tool, variant, props) {
+  _symbolProps = (props && typeof props === "object") ? { ...props } : null;
   if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
@@ -714,6 +716,7 @@ function makeShape(type, a, b) {
   if (type === "apparatus") {
     shape.kind = _apparatusKind || "wire";
     shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
+    if (_symbolProps) Object.assign(shape, _symbolProps);
     shape.fillNone = true;
     shape.label = "";
     if (shape.kind === "wire") {
