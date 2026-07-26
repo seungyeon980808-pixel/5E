@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "examimg-dev",
+      "name": "solid3d-dev",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8003"],
-      "port": 8003
+      "runtimeArgs": ["-m", "http.server", "8260"],
+      "port": 8260
     }
   ]
 }
