@@ -399,7 +399,7 @@ function applyDelta(obj, orig, dx, dy) {
       obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
       obj.type === "image" || obj.type === "svgAsset" ||
       obj.type === "axes" || obj.type === "coordplane" || obj.type === "anglearc" || obj.type === "rightangle" ||
-      obj.type === "optics" || obj.type === "apparatus" || obj.type === "gauge") {
+      obj.type === "optics" || obj.type === "apparatus" || obj.type === "gauge" || obj.type === "solid3d") {
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     // coordplane moves by its box (x,y); dependent funcgraphs are re-offset by the
     // caller (step 5 재샘플 결합) — the plane itself just translates here.

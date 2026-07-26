@@ -24,6 +24,7 @@ export const OBJECT_TYPE_IDS = [
   "circuit", "optics", "apparatus", "pendulum", "spring",
   "chargefield", "fieldlines", "standingwave",
   "gauge",
+  "solid3d",
 ];
 
 // Per-type classification flags. Each flag names a behavior-class that some
@@ -74,6 +75,11 @@ export const OBJECT_TYPES = {
   // gauge = 자·각도기 측정 가이드(kind: ruler|protractor). 크기박스로 이동/리사이즈/
   // bbox/저장을 그대로 상속. boxFace로 bbox 전체가 클릭 면이 되어 선택이 쉽다.
   gauge:      { sizeBox: 1, boxFace: 1 },
+  // solid3d = 경사 투영 입체(kind: box|cylinder|wedge). 그려지는 도형 전체가 bbox 안에
+  // 들어가도록 렌더러가 앞면을 깎기 때문에(render/solid3d.js), 크기박스 계열의 이동·
+  // 리사이즈·bbox·저장을 손댈 것 없이 그대로 물려받는다. boxFace로 bbox 전체가 클릭 면.
+  // snapEdge: 블록을 상판 모서리에 붙일 때 자석이 필요해서 켠다(rect와 같은 취급).
+  solid3d:    { sizeBox: 1, boxFace: 1, flip: 1, label: 1, snapEdge: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.
@@ -83,15 +89,15 @@ function typesWith(flag) {
 
 // Category Sets — each replaces a literal list previously duplicated in a module.
 // (member counts noted so a future edit can sanity-check it did not drift)
-export const SIZE_TYPES             = typesWith("sizeBox");        // 9: rect ellipse triangle image svgAsset axes coordplane optics apparatus
-export const BOX_FACE_TYPES         = typesWith("boxFace");        // 7: rect image svgAsset axes coordplane optics apparatus
+export const SIZE_TYPES             = typesWith("sizeBox");        // 11: rect ellipse triangle image svgAsset axes coordplane optics apparatus gauge solid3d
+export const BOX_FACE_TYPES         = typesWith("boxFace");        // 9: rect image svgAsset axes coordplane optics apparatus gauge solid3d
 export const SHAPE_TYPES            = typesWith("shape");          // 3: rect ellipse triangle
-export const FLIP_TYPES             = typesWith("flip");           // 6: rect ellipse triangle svgAsset optics apparatus
+export const FLIP_TYPES             = typesWith("flip");           // 7: rect ellipse triangle svgAsset optics apparatus solid3d
 export const LINE_TOL_TYPES         = typesWith("lineTol");        // 7: line polyline curve funcgraph circuit pendulum labeler
 export const POINT_ARRAY_TYPES      = typesWith("points");         // 3: polyline curve funcgraph
 export const TEXT_MEASURED_TYPES    = typesWith("textMeasured");   // 2: text formula
-export const LABEL_CAPABLE_TYPES    = typesWith("label");          // 9: rect ellipse line axes coordplane anglearc labeler circuit optics
-export const SNAP_EDGE_TARGET_TYPES = typesWith("snapEdge");       // 4: rect triangle line polyline
+export const LABEL_CAPABLE_TYPES    = typesWith("label");          // 10: rect ellipse line axes coordplane anglearc labeler circuit optics solid3d (+장/정상파·용수철)
+export const SNAP_EDGE_TARGET_TYPES = typesWith("snapEdge");       // 5: rect triangle line polyline solid3d
 export const SNAP_LINE_TARGET_TYPES = typesWith("snapLineTarget"); // 2: line polyline
 export const SNAP_LINE_LIKE_TYPES   = typesWith("snapLineLike");   // 4: line circuit polyline curve
 

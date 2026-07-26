@@ -30,6 +30,7 @@ import { renderSpring, springBBox } from "./spring.js?v=1.2.0";
 import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.2.0";
 import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.2.0";
 import { renderGauge } from "./gauge.js?v=1.2.0";
+import { renderSolid3d } from "./solid3d.js?v=1.2.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.2.0";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, zOrderObjects } from "../object-types.js?v=1.2.0";
 import { resolveObjectStyle } from "../style-mode.js?v=1.2.0";
@@ -806,6 +807,8 @@ export function renderObject(obj) {
       return renderStandingWave(obj);
     case "gauge":
       return renderGauge(obj);
+    case "solid3d":
+      return renderSolid3d(obj);
     default:
       return null;
   }

@@ -199,6 +199,16 @@ export const TEMPLATES = {
   pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
   bar_magnet:  { kind: "shape", category: "역학", label: "막대자석", keywords: ["막대자석", "자석", "magnet", "NS"],      create: { tool: "OPTICS", kind: "bar_magnet" } },
+
+  /* ----- 입체(경사 투영) — 드래그한 상자가 그림 전체 bbox가 된다(render/solid3d.js).
+   * 다섯 버튼이 renderer 셋(box/cylinder/wedge)을 공유한다: 판·원판은 각각 직육면체·
+   * 원기둥의 납작한 프리셋일 뿐이라 별도 렌더러를 만들지 않았다. props로 초기값만 다르다.
+   * 투영각은 여기서 정하지 않는다 — tools.js가 공유 기본값(30°)을 읽어 넣는다. ----- */
+  solid_box:      { kind: "shape", category: "역학", label: "직육면체", keywords: ["직육면체", "블록", "상자", "입체", "3D", "box", "block", "cuboid"], create: { tool: "SOLID3D", kind: "box" } },
+  solid_slab:     { kind: "shape", category: "역학", label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "box", props: { depth: 8 } } },
+  solid_cylinder: { kind: "shape", category: "역학", label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
+  solid_disk:     { kind: "shape", category: "역학", label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
+  solid_wedge:    { kind: "shape", category: "역학", label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -279,6 +289,16 @@ const APPARATUS_ICON_BOX = {
   scale: { w: 26, h: 18 },
 };
 
+// 입체 아이콘: symbolId별 대표 상자(월드 mm). 판·원판은 납작하게 잡아야 버튼만 보고
+// 직육면체·원기둥과 구분된다.
+const SOLID3D_ICON_BOX = {
+  solid_box:      { w: 20, h: 18, depth: 6 },
+  solid_slab:     { w: 24, h: 11, depth: 7 },
+  solid_cylinder: { w: 14, h: 22, depth: 5 },
+  solid_disk:     { w: 24, h: 12, depth: 5 },
+  solid_wedge:    { w: 24, h: 16, depth: 6 },
+};
+
 // Build the data object that the REAL renderer turns into the icon.
 function iconSampleObject(id, def) {
   // axes + anglearc carry a make() → reuse the real geometry verbatim.
@@ -332,6 +352,17 @@ function iconSampleObject(id, def) {
     if (c.kind === "clamp") sample.flipped = false;
     if (c.kind === "scale") sample.displayText = "0.99 N";
     return sample;
+  }
+  if (c.tool === "SOLID3D") {
+    const b = SOLID3D_ICON_BOX[id] || { w: 20, h: 18, depth: 6 };
+    // _outline: 면을 비운 윤곽선 모드. monochrome()이 fill을 currentColor로 바꾸기 때문에
+    // 면을 칠한 채로는 16px 아이콘이 새까만 덩어리가 된다(render/solid3d.js 참고).
+    return {
+      type: "solid3d", kind: c.kind,
+      x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
+      depth: b.depth, projAngle: 30, shade: 2, axis: "v",
+      strokeLevel: 0, strokeWidth: 0.6, showLabel: false, _outline: true,
+    };
   }
   return null;
 }

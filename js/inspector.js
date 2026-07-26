@@ -586,7 +586,8 @@ export function initInspector(state) {
     const appKind = isApparatus ? (obj.kind || "wire") : null;
     const isSvgAsset = obj.type === "svgAsset";
     const isGauge = obj.type === "gauge"; // 자·각도기: X/Y/W/H/회전(크기박스) 사용
-    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset || isGauge;
+    const isSolid3d = obj.type === "solid3d"; // 입체: X/Y/W/H/회전(크기박스) 사용
+    const isShape = SHAPE_TYPES.includes(obj.type) || obj.type === "axes" || isOptics || isApparatus || isSvgAsset || isGauge || isSolid3d;
     const isArc = obj.type === "anglearc";
     const isRightAngle = obj.type === "rightangle";
     const isCircuit = obj.type === "circuit";

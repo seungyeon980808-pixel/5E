@@ -90,6 +90,7 @@ let _circuitElement = "resistor";
 let _opticsKind = "convex_lens";
 let _apparatusKind = "wire";
 let _svgAssetId = "pulley";
+let _solid3dKind = "box";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -109,7 +110,7 @@ let _activeSymbolId = null;
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
 const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
-  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE"]);
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -211,6 +212,7 @@ export function armSymbol(symbolId, tool, variant, props) {
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
   if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
+  if (tool === "SOLID3D") _solid3dKind = variant || "box";
   // 같은 배치 도구 안에서 소자만 바꾸면(예: 저항→전지) setActiveTool이 조기 반환해
   // 진행 중이던 첫 단자 클릭 draft가 남는다 → 도구 전환 여부와 무관하게 항상 폐기.
   clearClickLocals();
@@ -334,7 +336,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -791,7 +793,41 @@ function makeShape(type, a, b) {
       shape.tickIntervalDeg = d.protractorTickDeg;
     }
   }
+  if (type === "solid3d") {
+    // 입체는 드래그 상자 = 그림 전체 bbox다(렌더러가 앞면을 안쪽으로 깎는다).
+    // 투영각은 그림 전체가 같아야 하므로 객체마다 새로 정하지 않고 공유 기본값을 읽는다.
+    shape.kind = _solid3dKind || "box";
+    shape.projAngle = solid3dProjAngle();
+    shape.shade = 2;
+    shape.axis = "v";
+    shape.label = "";
+    shape.showLabel = false;
+    shape.labelType = "label";   // 블록 이름 A·B·C — 정체(물리량 이탤릭 아님)
+    shape.fillNone = false;
+    shape.flipX = false;
+    // 깊이는 상자 크기에 비례해 잡되(작게 만들어도 입체감 유지), 최소 2mm.
+    shape.depth = Math.max(Math.min(shape.w, shape.h) * 0.35, 2);
+    if (shape.kind === "cylinder") {
+      // 원기둥은 좌우 폭이 지름이라 종횡비를 고정하지 않는다(자석은 길고 추는 짧다).
+      shape.w = Math.max(shape.w, 4);
+      shape.h = Math.max(shape.h, 4);
+    }
+    if (_symbolProps) Object.assign(shape, _symbolProps);
+  }
   return applyNewObjectStyleDefaults(shape);
+}
+
+/* 입체 투영각 공유 기본값 — 한 그림 안의 입체는 각도가 같아야 나란히 놓인 것처럼 보인다.
+ * gaugeTickDefaults와 같은 이유(순환 import 회피)로 localStorage를 직접 읽는다.
+ * 인스펙터의 "모든 입체에 적용"이 이 값을 갱신하고 기존 객체에도 일괄 반영한다. */
+function solid3dProjAngle() {
+  try {
+    const d = JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}");
+    const v = Number(d.solid3dProjAngle);
+    return v > 0 && v < 90 ? v : 30;
+  } catch (_) {
+    return 30;
+  }
 }
 
 /* 자·각도기 눈금 간격 기본값 — 기본값 설정(localStorage)에서 읽는다(순환 import
