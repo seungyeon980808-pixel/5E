@@ -100,6 +100,7 @@ export function buildChargeFieldSection(ctx) {
   const chargeLevel = numberRow(body, "전하 색(0~255)", (v) => commit("chargeLevel", Math.round(v)), { min: 0, max: 255, step: 5 });
   const label1 = textRow(body, "전하 1 라벨", (v) => commit("label1", v));
   const label2 = textRow(body, "전하 2 라벨", (v) => commit("label2", v));
+  const showArrows = checkRow(body, "화살촉 표시", (v) => commit("showArrows", v));
   const showCharge = checkRow(body, "전하 표시", (v) => commit("showCharge", v));
   const flip = checkRow(body, "극 뒤집기", (v) => commit("flip", v));
 
@@ -132,6 +133,7 @@ export function buildChargeFieldSection(ctx) {
     chargeLevel.inp.value = Number.isFinite(o.chargeLevel) ? o.chargeLevel : "";
     if (document.activeElement !== label1.inp) label1.inp.value = o.label1 || "";
     if (document.activeElement !== label2.inp) label2.inp.value = o.label2 || "";
+    showArrows.cb.checked = o.showArrows !== false;
     showCharge.cb.checked = o.showCharge !== false;
     flip.cb.checked = !!o.flip;
     syncRows(k);
@@ -150,12 +152,16 @@ export function buildFieldLinesSection(ctx) {
     (v) => { commit("kind", v); syncRows(v); });
   const lines = numberRow(body, "자기력선 개수", (v) => commit("lines", Math.round(v)), { min: 4, max: 40, step: 1 });
   const thick = numberRow(body, "자석 두께(mm)", (v) => commit("magnetThick", v), { min: 1, max: 20, step: 0.2 });
+  const showLines = checkRow(body, "자기력선 표시", (v) => commit("showLines", v));
+  const showArrowsM = checkRow(body, "화살촉 표시", (v) => commit("showArrows", v));
   const showMagnet = checkRow(body, "자석 본체 표시", (v) => commit("showMagnet", v));
   const rings = numberRow(body, "동심원 개수", (v) => commit("rings", Math.round(v)), { min: 1, max: 8, step: 1 });
   const into = checkRow(body, "전류가 들어가는 방향(⊗)", (v) => commit("into", v));
 
   function syncRows(k) {
     const wire = k === "wire";
+    showLines.row.hidden = wire;
+    showArrowsM.row.hidden = false;
     lines.row.hidden = wire;
     thick.row.hidden = wire;
     showMagnet.row.hidden = wire;
@@ -171,6 +177,8 @@ export function buildFieldLinesSection(ctx) {
     kind.sel.value = k;
     lines.inp.value = o.lines ?? 14;
     thick.inp.value = o.magnetThick ?? 5.2;
+    showLines.cb.checked = o.showLines !== false;
+    showArrowsM.cb.checked = o.showArrows !== false;
     showMagnet.cb.checked = o.showMagnet !== false;
     rings.inp.value = o.rings ?? 3;
     into.cb.checked = !!o.into;

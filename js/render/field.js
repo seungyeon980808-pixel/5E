@@ -34,6 +34,7 @@ export const CHARGEFIELD_DEFAULTS = {
   arrowDist: 6,        // 화살촉을 놓을 거리(mm, 선을 따라 잰 값)
   chargeR: 1.9,        // 점전하 원 반지름(mm)
   showCharge: true,
+  showArrows: true,
   label1: "", label2: "",
 };
 
@@ -44,6 +45,8 @@ export const FIELDLINES_DEFAULTS = {
   magnetThick: 5.2,    // 자석 몸통 두께(mm)
   rings: 3,            // wire: 동심원 개수
   into: false,         // wire: 전류가 지면으로 들어가는 방향이면 ⊗
+  showArrows: true,
+  showLines: true,     // 끄면 자석 본체만 남는다 = 막대자석 도구
 };
 
 /* ---------- 장 계산 · 선 추적 (단일 출처) ---------- */
@@ -124,11 +127,20 @@ export function traceFieldLines(chs, { lines = 12, reach = 3000, stopR = 1.0 } =
   return out;
 }
 
-// 그림 틀 밖은 잘라 낸다(위 ②). 크게 도는 선은 두 도막으로 보인다 — 교과서 그림과 같다.
+/* 그림 틀 밖은 잘라 낸다. 틀은 사각(rect) 또는 원(circle)이다 —
+ * 점전하 하나짜리 그림은 사방으로 똑같이 뻗으므로 원형 틀이 자연스럽다.
+ *
+ * 틀 밖으로 나갔다 돌아오는 선은 <b>두 도막으로 잘라서 그대로 그린다</b>.
+ * 한때 "끊겨 보인다"는 이유로 그런 선을 통째로 빼 봤는데, 선이 절반으로 줄어
+ * 그림이 더 엉망이 됐다(2026-07-26 교사 판단: 잘려도 좋으니 전부 그린다). */
+function inFrame(p, fr) {
+  if (fr.kind === "circle") return Math.hypot(p.x - fr.cx, p.y - fr.cy) <= fr.r;
+  return p.x >= fr.x0 && p.x <= fr.x1 && p.y >= fr.y0 && p.y <= fr.y1;
+}
 function clipRuns(pts, fr) {
   const runs = []; let cur = [];
   for (const p of pts) {
-    if (p.x >= fr[0] && p.x <= fr[2] && p.y >= fr[1] && p.y <= fr[3]) cur.push(p);
+    if (inFrame(p, fr)) cur.push(p);
     else { if (cur.length > 2) runs.push(cur); cur = []; }
   }
   if (cur.length > 2) runs.push(cur);
@@ -146,26 +158,33 @@ export function chargeFieldGeometry(obj) {
   let charges, frame;
   if (kind === "single") {
     // p2는 그림 반경을 정한다(끌면 그림이 커진다). 전하는 p1 하나.
+    // 사방으로 똑같이 뻗는 그림이라 <b>원형 틀</b>이 자연스럽다(2026-07-26 교사 지시).
     charges = [{ x: p1.x, y: p1.y, q: q1 || 1 }];
-    frame = [p1.x - sep, p1.y - sep, p1.x + sep, p1.y + sep];
+    frame = { kind: "circle", cx: p1.x, cy: p1.y, r: sep };
   } else if (kind === "uniform") {
     // p1·p2가 마주 보는 두 모서리 → 그 사각형이 평행판 사이 영역.
-    const x0 = Math.min(p1.x, p2.x), x1 = Math.max(p1.x, p2.x);
-    const y0 = Math.min(p1.y, p2.y), y1 = Math.max(p1.y, p2.y);
     charges = [];
-    frame = [x0, y0, x1, y1];
+    frame = { kind: "rect",
+      x0: Math.min(p1.x, p2.x), y0: Math.min(p1.y, p2.y),
+      x1: Math.max(p1.x, p2.x), y1: Math.max(p1.y, p2.y) };
   } else {
     charges = [{ x: p1.x, y: p1.y, q: q1 }, { x: p2.x, y: p2.y, q: q2 }];
     const cx = (p1.x + p2.x) / 2, cy = (p1.y + p2.y) / 2;
-    frame = [cx - sep * 1.45, cy - sep * 1.15, cx + sep * 1.45, cy + sep * 1.15];
+    frame = { kind: "rect", x0: cx - sep * 1.45, y0: cy - sep * 1.15,
+              x1: cx + sep * 1.45, y1: cy + sep * 1.15 };
   }
   return { p1, p2, kind, q1, q2, sep, charges, frame };
 }
 
+function frameBox(fr) {
+  return fr.kind === "circle"
+    ? { x0: fr.cx - fr.r, y0: fr.cy - fr.r, x1: fr.cx + fr.r, y1: fr.cy + fr.r }
+    : fr;
+}
 export function chargeFieldBBox(o) {
-  const { frame } = chargeFieldGeometry(o);
+  const b = frameBox(chargeFieldGeometry(o).frame);
   const pad = (o.strokeWidth ?? 0.25) + 1;
-  return { x: frame[0] - pad, y: frame[1] - pad, w: frame[2] - frame[0] + pad * 2, h: frame[3] - frame[1] + pad * 2 };
+  return { x: b.x0 - pad, y: b.y0 - pad, w: b.x1 - b.x0 + pad * 2, h: b.y1 - b.y0 + pad * 2 };
 }
 
 /* ---------- 자기력선 기하 ---------- */
@@ -175,21 +194,30 @@ export function fieldLinesGeometry(obj) {
   const sep = Math.max(1, Math.hypot(p2.x - p1.x, p2.y - p1.y));
   if (kind === "wire") {
     // p1 = 도선 위치, p2 = 가장 바깥 원 위의 점(반지름).
-    return { p1, p2, kind, sep, charges: [], frame: [p1.x - sep, p1.y - sep, p1.x + sep, p1.y + sep] };
+    return { p1, p2, kind, sep, charges: [],
+      frame: { kind: "circle", cx: p1.x, cy: p1.y, r: sep } };
   }
   // 막대자석: p1 = N극 끝, p2 = S극 끝. 양 끝에 세기가 같은 ±m 점원을 둔다
   // (같은 크기라 선의 개수와 좌우 모양이 저절로 대칭이 된다).
   const m = 1.6;
   const charges = [{ x: p1.x, y: p1.y, q: m }, { x: p2.x, y: p2.y, q: -m }];
   const cx = (p1.x + p2.x) / 2, cy = (p1.y + p2.y) / 2;
-  const frame = [cx - sep * 1.5, cy - sep * 1.12, cx + sep * 1.5, cy + sep * 1.12];
+  let frame = { kind: "rect", x0: cx - sep * 1.5, y0: cy - sep * 1.12,
+                x1: cx + sep * 1.5, y1: cy + sep * 1.12 };
+  // 자기력선을 끈 '자석 도구' 모드에서는 틀도 자석 몸통까지만 — 선택 영역이 괜히 넓어지지 않게.
+  if (obj.showLines === false) {
+    const th = Math.max(1, obj.magnetThick ?? FIELDLINES_DEFAULTS.magnetThick) / 2;
+    frame = { kind: "rect",
+      x0: Math.min(p1.x, p2.x) - th, y0: Math.min(p1.y, p2.y) - th,
+      x1: Math.max(p1.x, p2.x) + th, y1: Math.max(p1.y, p2.y) + th };
+  }
   return { p1, p2, kind, sep, charges, frame };
 }
 
 export function fieldLinesBBox(o) {
-  const { frame } = fieldLinesGeometry(o);
+  const b = frameBox(fieldLinesGeometry(o).frame);
   const pad = (o.strokeWidth ?? 0.25) + 1;
-  return { x: frame[0] - pad, y: frame[1] - pad, w: frame[2] - frame[0] + pad * 2, h: frame[3] - frame[1] + pad * 2 };
+  return { x: b.x0 - pad, y: b.y0 - pad, w: b.x1 - b.x0 + pad * 2, h: b.y1 - b.y0 + pad * 2 };
 }
 
 /* ---------- 공통 그리기 조각 ---------- */
@@ -223,11 +251,14 @@ function mkText(x, y, s, size, color, anchor = "middle", italic = false) {
   return t;
 }
 // 선 다발을 틀 안쪽만 그리고, 지정한 호 길이 자리에 화살촉을 얹는다.
-function paintLines(g, traced, frame, color, sw, arrowSpec) {
+function paintLines(g, traced, frame, color, sw, arrowSpec, showArrows = true) {
   for (const ln of traced) {
-    for (const run of clipRuns(ln.pts, frame)) {
+    const runs = clipRuns(ln.pts, frame);
+    if (!runs.length) continue;             // 틀 안에 한 점도 없는 선만 건너뛴다
+    for (const run of runs) {
       g.appendChild(mkPath("M " + run.map((p) => p.x.toFixed(2) + " " + p.y.toFixed(2)).join(" L "), color, sw));
     }
+    if (!showArrows) continue;
     const total = ln.arc[ln.arc.length - 1];
     const dists = arrowSpec.mode === "fraction"
       ? arrowSpec.at.map((f) => total * f)
@@ -236,7 +267,7 @@ function paintLines(g, traced, frame, color, sw, arrowSpec) {
       const i = idxAtArc(ln.arc, d);
       if (i < 1 || i > ln.pts.length - 2) continue;
       const q = ln.pts[i];
-      if (q.x < frame[0] || q.x > frame[2] || q.y < frame[1] || q.y > frame[3]) continue;
+      if (!inFrame(q, frame)) continue;
       const a = ln.pts[i - 1], b = ln.pts[i + 1];
       const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
       g.appendChild(makeArrowHead(q.x, q.y, (b.x - a.x) / len, (b.y - a.y) / len, sw * 1.3, color));
@@ -258,7 +289,7 @@ export function renderChargeField(obj) {
 
   if (geo.kind === "uniform") {
     // 평행판 균일장: 위·아래 판 사이를 곧은 화살표로 채운다(시험 그림 표준).
-    const [x0, y0, x1, y1] = geo.frame;
+    const { x0, y0, x1, y1 } = geo.frame;
     const w = x1 - x0, plate = Math.max(0.9, Math.min(1.6, w * 0.045));
     const flip = !!obj.flip;
     if (obj.showPlates !== false) {
@@ -285,7 +316,7 @@ export function renderChargeField(obj) {
 
   const traced = traceFieldLines(geo.charges, { lines, stopR: Math.max(0.8, chargeR * 0.55) });
   const arrowDist = Math.max(0.5, obj.arrowDist ?? CHARGEFIELD_DEFAULTS.arrowDist);
-  paintLines(g, traced, geo.frame, color, sw, { mode: "dist", at: [arrowDist] });
+  paintLines(g, traced, geo.frame, color, sw, { mode: "dist", at: [arrowDist] }, obj.showArrows !== false);
 
   if (showCharge) {
     geo.charges.forEach((c, i) => {
@@ -347,10 +378,11 @@ export function renderFieldLines(obj) {
   }
 
   const lines = Math.max(2, Math.round(obj.lines ?? FIELDLINES_DEFAULTS.lines));
-  const traced = traceFieldLines(geo.charges, { lines, stopR: 1.3 });
+  // 자기력선을 끄면 자석 본체만 남는다 = 막대자석 도구로 쓴다(2026-07-26 교사 지시).
+  const traced = obj.showLines === false ? [] : traceFieldLines(geo.charges, { lines, stopR: 1.3 });
   // 화살촉은 각 선의 호 길이 25%·75% 두 자리 — 선이 N→S로 좌우 대칭이라 화살촉도
   // 정확히 대칭이 되고, N 쪽에만 몰리지 않는다(2026-07-26 교사 지적).
-  paintLines(g, traced, geo.frame, color, sw, { mode: "fraction", at: [0.25, 0.75] });
+  paintLines(g, traced, geo.frame, color, sw, { mode: "fraction", at: [0.25, 0.75] }, obj.showArrows !== false);
 
   if (obj.showMagnet !== false) {
     const { p1, p2 } = geo;

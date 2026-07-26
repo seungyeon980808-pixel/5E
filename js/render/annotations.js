@@ -273,9 +273,6 @@ function renderLabeler(obj) {
   // (multiline-aware) text block so the line never crosses the glyphs. The block
   // is upright and centered on b (matching makeUprightLabel), so its axis-aligned
   // bounds are valid under any labeler rotation (which rotates a/b in world space).
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const dist = Math.hypot(dx, dy);
-  const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
   // Small visual gap (~2-4px equivalent) between the leader tip and the text edge.
   const pad = size * 0.25;
   // Formula label: EXACT measured box (measureFormula); plain text: the same
@@ -292,24 +289,31 @@ function renderLabeler(obj) {
     : estimateLabelBlock(obj.text, size, pad);
   // Distance from b back along the leader to where it crosses the padded block:
   // the nearer of the vertical/horizontal faces (ray-vs-centered-box).
-  const tx = Math.abs(ux) > 1e-6 ? hw / Math.abs(ux) : Infinity;
-  const ty = Math.abs(uy) > 1e-6 ? hh / Math.abs(uy) : Infinity;
-  const tBox = Math.min(tx, ty);
-  const lead = dist - tBox;                // leader length, trimmed to the block edge
-  // Fall back safely when the anchor sits inside (or within the gap of) the text
-  // block: skip the leader entirely rather than draw a line over the glyphs.
-  if (lead > 0.05) {
-    const ex = a.x + ux * lead, ey = a.y + uy * lead;
+  const drawLeader = (from) => {
+    if (!from) return;
+    const dx = b.x - from.x, dy = b.y - from.y;
+    const dist = Math.hypot(dx, dy);
+    const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
+    const tx = Math.abs(ux) > 1e-6 ? hw / Math.abs(ux) : Infinity;
+    const ty = Math.abs(uy) > 1e-6 ? hh / Math.abs(uy) : Infinity;
+    const lead = dist - Math.min(tx, ty);   // leader length, trimmed to the block edge
+    // Fall back safely when the anchor sits inside (or within the gap of) the text
+    // block: skip the leader entirely rather than draw a line over the glyphs.
+    if (!(lead > 0.05)) return;
     const line = document.createElementNS(SVG_NS, "line");
-    line.setAttribute("x1", a.x);
-    line.setAttribute("y1", a.y);
-    line.setAttribute("x2", ex);
-    line.setAttribute("y2", ey);
+    line.setAttribute("x1", from.x);
+    line.setAttribute("y1", from.y);
+    line.setAttribute("x2", from.x + ux * lead);
+    line.setAttribute("y2", from.y + uy * lead);
     line.setAttribute("stroke", color);
     line.setAttribute("stroke-width", sw);
     line.setAttribute("stroke-linecap", "round");
     g.appendChild(line);
-  }
+  };
+  drawLeader(a);
+  // 라벨선 추가(p3): 지시선을 하나 더 뽑아 <b>두 영역을 하나의 라벨</b>로 가리킨다
+  // (2026-07-26 교사 요청). 라벨 글자는 그대로 하나다.
+  drawLeader(obj.p3);
 
   // Upright (non-rotating) callout at p2.
   // ① 수식 라벨: renderFormula(수식 객체와 동일 투영)를 p2 중심에 배치. renderFormula의
@@ -334,6 +338,7 @@ function renderLabeler(obj) {
   // 미리보기와 일치). 없으면 일반 텍스트(구간 I/II/III 세리프 자동) 경로 그대로.
   const styled = hasStyledTextRuns(obj);
   const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
+    labelBg: obj.labelBg, haloRatio: obj.haloRatio,
     fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
     fontStyle: obj.italic === true ? "italic" : "normal",
     fontWeight: obj.fontWeight || "normal",

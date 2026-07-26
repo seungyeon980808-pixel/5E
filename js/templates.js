@@ -185,33 +185,37 @@ export const TEMPLATES = {
   sw_spdt:     { kind: "shape", category: "전기", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
   pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
   // 장(場) 그림·정상파 — 두 점(전하·극·양끝)을 끌어 배치한다.
-  ef_pair:     { kind: "shape", category: "전자기학", label: "전기력선",     keywords: ["전기력선", "전하", "쿨롱", "field", "charge"], create: { tool: "CHARGEFIELD", props: { kind: "pair" } } },
-  ef_single:   { kind: "shape", category: "전자기학", label: "점전하 전기력선", keywords: ["점전하", "전기력선", "단일", "field"], create: { tool: "CHARGEFIELD", props: { kind: "single", q1: 1 } } },
+  /* 통합 버튼 — 누르면 팝오버가 떠 갈래를 한 번 더 고른다(기존 텍스트·라벨러 버튼과 같은 방식).
+   * 실제 배치는 variants가 가리키는 항목이 하고, 그 항목들은 팔레트에서 숨긴다. */
+  ef_group:    { kind: "group", category: "전자기학", label: "전기력선", keywords: ["전기력선", "전하", "점전하", "field", "charge"],
+                 variants: ["ef_pair", "ef_single"] },
+  stw_group:   { kind: "group", category: "광학", label: "정상파", keywords: ["정상파", "줄", "기주", "열린관", "닫힌관", "standing"],
+                 variants: ["stw_string", "stw_open", "stw_closed"] },
+
+  ef_pair:     { hidden: true, kind: "shape", category: "전자기학", label: "전기력선",     keywords: ["전기력선", "전하", "쿨롱", "field", "charge"], create: { tool: "CHARGEFIELD", props: { kind: "pair" } } },
+  ef_single:   { hidden: true, kind: "shape", category: "전자기학", label: "점전하 전기력선", keywords: ["점전하", "전기력선", "단일", "field"], create: { tool: "CHARGEFIELD", props: { kind: "single", q1: 1 } } },
   ef_uniform:  { kind: "shape", category: "전자기학", label: "평행판 균일장", keywords: ["평행판", "균일장", "전기장", "uniform"], create: { tool: "CHARGEFIELD", props: { kind: "uniform" } } },
   mag_bar:     { kind: "shape", category: "전자기학", label: "자기력선",     keywords: ["자기력선", "자석", "자기장", "magnet", "field"], create: { tool: "FIELDLINES", props: { kind: "bar" } } },
   mag_wire:    { kind: "shape", category: "전자기학", label: "도선 자기장",  keywords: ["도선", "자기장", "동심원", "앙페르", "wire"], create: { tool: "FIELDLINES", props: { kind: "wire" } } },
-  stw_string:  { kind: "shape", category: "광학", label: "정상파(줄)",   keywords: ["정상파", "줄", "마디", "배", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "string" } } },
-  stw_open:    { kind: "shape", category: "광학", label: "정상파(열린관)", keywords: ["정상파", "열린관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "open" } } },
-  stw_closed:  { kind: "shape", category: "광학", label: "정상파(닫힌관)", keywords: ["정상파", "닫힌관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "closed", n: 3 } } },
+  stw_string:  { hidden: true, kind: "shape", category: "광학", label: "정상파(줄)",   keywords: ["정상파", "줄", "마디", "배", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "string" } } },
+  stw_open:    { hidden: true, kind: "shape", category: "광학", label: "정상파(열린관)", keywords: ["정상파", "열린관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "open" } } },
+  stw_closed:  { hidden: true, kind: "shape", category: "광학", label: "정상파(닫힌관)", keywords: ["정상파", "닫힌관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "closed", n: 3 } } },
   spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
-  support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
-  pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
-  bar_magnet:  { kind: "shape", category: "역학", label: "막대자석", keywords: ["막대자석", "자석", "magnet", "NS"],      create: { tool: "OPTICS", kind: "bar_magnet" } },
-
   /* ----- 입체(경사 투영, 실험 단계) — render/solid3d.js -----------------------------
-   * **팔레트에는 직육면체 버튼 하나만 내보낸다.** 갈래가 11개까지 늘어 역학 팔레트를
-   * 통째로 잡아먹었는데, 아직 실험 단계라 그만한 자리값을 못 한다(2026-07-26 사용자 판단).
-   * 다만 접기만 하면 나머지를 쓸 수가 없다 — 그래서 대표 버튼에 `chooser`를 달아,
-   * 누르면 옆에 팝오버가 떠 11개를 그대로 고르게 한다. 앱에 이미 있는 통합 버튼
-   * (텍스트/라벨러, 각도/직각)과 같은 방식이고, 팝오버 안 버튼도 진짜 data-symbol이라
-   * 기존 배선이 그대로 작동한다.
+   * 갈래가 11개까지 늘어 역학 팔레트를 통째로 잡아먹었는데, 아직 실험 단계라 그만한
+   * 자리값을 못 한다(2026-07-26 사용자 판단). 그래서 **통합 버튼 하나**로 접는다.
+   * 방식은 전기력선·정상파와 같은 kind:"group" + variants다 — 누르면 팝오버가 떠
+   * 갈래를 고르고, 팝오버 안 버튼이 실제 배치를 arm 한다.
    * 접은 항목은 **오브젝트 검색(Ctrl+F)** 으로도 나오고, 이미 저장된 파일도 그대로 열린다.
    * 놓은 뒤에 갈래를 바꾸고 싶으면 인스펙터 "입체 > 종류"를 쓴다.
    * 갈래는 renderer 넷(box/cylinder/wedge/desk + plane/axes3d)을 공유한다: 판·원판은
    * 각각 직육면체·원기둥의 납작한 프리셋일 뿐이라 별도 렌더러가 없다. ----------------- */
-  solid_box:      { kind: "shape", category: "역학", label: "입체(실험)", chooserLabel: "직육면체", chooser: ["solid_box", "solid_slab", "solid_cylinder", "solid_disk", "solid_wedge", "solid_desk", "solid_plane", "solid_axes3d", "solid_axesgnd", "groundarc", "parabola"], keywords: ["입체", "3D", "직육면체", "블록", "상자", "판", "상판", "원기둥", "원판", "받침", "빗면", "경사면", "책상", "실험대", "수평면", "바닥", "좌표축", "box", "block", "cuboid", "slab", "cylinder", "wedge", "desk", "plane", "axes"], create: { tool: "SOLID3D", kind: "box" } },
+  solid_group:    { kind: "group", category: "역학", label: "입체(실험)",
+                    keywords: ["입체", "3D", "직육면체", "블록", "상자", "판", "상판", "원기둥", "원판", "받침", "빗면", "경사면", "책상", "실험대", "수평면", "바닥", "좌표축", "포물선", "원호", "box", "cuboid", "slab", "cylinder", "wedge", "desk", "plane", "axes"],
+                    variants: ["solid_box", "solid_slab", "solid_cylinder", "solid_disk", "solid_wedge", "solid_desk", "solid_plane", "solid_axes3d", "solid_axesgnd", "groundarc", "parabola"] },
+  solid_box:      { kind: "shape", category: "역학", hidden: true, label: "직육면체", keywords: ["직육면체", "블록", "상자", "입체", "3D", "box", "block", "cuboid"], create: { tool: "SOLID3D", kind: "box" } },
   solid_slab:     { kind: "shape", category: "역학", hidden: true, label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "slab" } },
   solid_cylinder: { kind: "shape", category: "역학", hidden: true, label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_disk:     { kind: "shape", category: "역학", hidden: true, label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
@@ -294,8 +298,6 @@ const OPTICS_ICON_BOX = {
   node:           { w: 16, h: 16 },
   pivot:          { w: 18, h: 18 },
   pulley:         { w: 18, h: 18 },
-  support_tri:    { w: 20, h: 14 },
-  bar_magnet:     { w: 26, h: 12 },
 };
 
 const APPARATUS_ICON_BOX = {
@@ -641,7 +643,81 @@ export function sizeIconViewBox(svg) {
 }
 
 // Build one registry symbol button (UNIQUE data-symbol id) + queue its icon for sizing.
+/* 통합 버튼의 갈래 팝오버. 공통 도구의 .tool-chooser 마크업·CSS를 그대로 쓴다. */
+function makeGroupButton(id, def, pending) {
+  const btn = document.createElement("button");
+  btn.className = "tool-btn";
+  btn.type = "button";
+  btn.dataset.symbolGroup = id;
+  btn.title = def.label;
+  btn.setAttribute("aria-label", def.label);
+  btn.setAttribute("aria-haspopup", "true");
+  const kbd = document.createElement("kbd");
+  const first = def.variants[0];
+  const icon = buildSymbolIcon(first, TEMPLATES[first]);
+  kbd.appendChild(icon);
+  pending.push(icon);
+  btn.appendChild(kbd);
+
+  const pop = document.createElement("div");
+  pop.className = "tool-chooser";
+  pop.hidden = true;
+  pop.setAttribute("role", "menu");
+  pop.setAttribute("aria-label", def.label + " 갈래 선택");
+  def.variants.forEach((vid) => {
+    const v = TEMPLATES[vid];
+    if (!v) return;
+    const opt = document.createElement("button");
+    opt.className = "tool-chooser-opt";
+    opt.type = "button";
+    opt.dataset.symbol = vid;              // 기존 클릭 위임이 그대로 배치를 arm 한다
+    opt.setAttribute("role", "menuitem");
+    // 아이콘은 반드시 .chooser-ico로 감싼다 — CSS(.tool-chooser-opt .chooser-ico svg)가
+    // 22px로 묶어 주는 규칙이 이 클래스에 걸려 있다. 안 감싸면 svg가 제 크기대로 커져
+    // 항목 하나가 100px 가까이 된다(갈래 2~3개짜리 그룹에서는 안 드러났던 문제).
+    const ic = buildSymbolIcon(vid, v);
+    pending.push(ic);
+    const icoWrap = document.createElement("span");
+    icoWrap.className = "chooser-ico";
+    icoWrap.appendChild(ic);
+    opt.appendChild(icoWrap);
+    const t = document.createElement("span");
+    t.className = "chooser-txt";
+    const tb = document.createElement("b");
+    tb.textContent = v.label;
+    t.appendChild(tb);
+    opt.appendChild(t);
+    // 팝오버는 #tool-list 밖(body)에 붙으므로 패널의 클릭 위임이 닿지 않는다 → 직접 배선.
+    opt.addEventListener("click", () => activateTemplate(vid));
+    pop.appendChild(opt);
+  });
+  document.body.appendChild(pop);
+
+  let sized = false;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = pop.hidden;
+    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+    if (!willOpen) return;
+    pop.hidden = false;
+    // 팝오버는 hidden인 동안 getBBox가 0이라 아이콘 viewBox를 못 잡는다(pending 사이징이
+    // 이 시점엔 실패한다) → 처음 보이게 된 뒤 한 번 맞춘다.
+    if (!sized) { pop.querySelectorAll("svg.tool-ico").forEach((s) => sizeIconViewBox(s)); sized = true; }
+    const r = btn.getBoundingClientRect();
+    pop.style.left = Math.round(r.right + 6) + "px";
+    // 화면 아래로 넘치면 위로 끌어올린다 — 갈래가 많은 그룹(입체 11종)은 그냥 두면 잘린다.
+    const top = Math.min(Math.max(r.top, 8), Math.max(window.innerHeight - pop.offsetHeight - 8, 8));
+    pop.style.top = Math.round(top) + "px";
+  });
+  pop.addEventListener("click", () => { pop.hidden = true; });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".tool-chooser") && !e.target.closest("[data-symbol-group]")) pop.hidden = true;
+  });
+  return btn;
+}
+
 function makeSymbolButton(id, def, pending) {
+  if (def.kind === "group") return makeGroupButton(id, def, pending);
   const btn = document.createElement("button");
   btn.className = "tool-btn";             // square icon button (reuses active styling)
   btn.type = "button";
@@ -662,76 +738,7 @@ function makeSymbolButton(id, def, pending) {
     pending.push(icon);
   }
   btn.appendChild(kbd);
-  // data-chooser는 buildChooser가 짝을 만들 때 붙인다(팝오버 없이 붙이면 눌러도 아무
-  // 일이 안 일어나므로, 여기서 미리 붙이지 않는다).
   return btn;
-}
-
-/* ----- 통합 버튼용 팝오버 -----
- * index.html에 하드코딩된 .tool-chooser(텍스트/라벨러, 각도/직각)와 같은 마크업·CSS를
- * 쓴다. 다른 점은 **레지스트리에서 만들어진다**는 것뿐이다. 옵션 버튼이 진짜
- * data-symbol을 달고 있어서 #tool-list 위임(initTemplates)이 그대로 무장시킨다 —
- * 팝오버 전용 배선이 없다. 그래서 접힌 항목도 전부 살아 있다.
- * 팝오버는 대표 버튼과 같은 컨테이너에 넣는다(위임이 닿아야 하므로). 화면 위치는
- * position:fixed + 열 때 계산이라 컨테이너가 어디 있든 상관없다. */
-let _chooserSeq = 0;
-
-function buildChooser(leadId, def, pending, leadBtn) {
-  const box = document.createElement("div");
-  box.className = "tool-chooser";
-  // 팔레트가 두 곳(renderPanel · 과목별 아코디언)에서 그려질 수 있어 id를 고정하면
-  // 같은 id가 둘 생긴다 → 버튼마다 유일한 id를 발급해 짝을 명시적으로 묶는다.
-  box.id = `chooser-${leadId}-${++_chooserSeq}`;
-  if (leadBtn) leadBtn.dataset.chooser = box.id;
-  box.hidden = true;
-  box.setAttribute("role", "menu");
-  box.setAttribute("aria-label", `${def.label} 종류 선택`);
-  for (const mid of def.chooser) {
-    const m = TEMPLATES[mid];
-    if (!m) continue;
-    const opt = document.createElement("button");
-    opt.type = "button";
-    opt.className = "tool-chooser-opt";
-    opt.dataset.symbol = mid;
-    opt.setAttribute("role", "menuitem");
-    const ico = document.createElement("span");
-    ico.className = "chooser-ico";
-    const svg = buildSymbolIcon(mid, m);
-    ico.appendChild(svg);
-    if (pending) pending.push(svg);
-    const txt = document.createElement("span");
-    txt.className = "chooser-txt";
-    const b = document.createElement("b");
-    // 대표 항목은 팔레트에서 "입체(실험)"이지만 메뉴 안에서는 갈래 이름이어야 한다.
-    b.textContent = m.chooserLabel || m.label;
-    txt.appendChild(b);
-    opt.appendChild(ico);
-    opt.appendChild(txt);
-    box.appendChild(opt);
-  }
-  return box;
-}
-
-/* 팝오버는 접혀 있을 때 getBBox가 0이라 아이콘 크기를 못 잡는다 → 처음 열 때 한 번 맞춘다. */
-const _chooserSized = new WeakSet();
-
-function toggleChooser(leadBtn) {
-  const box = document.getElementById(leadBtn.dataset.chooser);
-  if (!box) return;
-  const willOpen = box.hidden;
-  document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
-  if (!willOpen) return;
-  box.hidden = false;
-  if (!_chooserSized.has(box)) {
-    box.querySelectorAll("svg.tool-ico").forEach((s) => sizeIconViewBox(s));
-    _chooserSized.add(box);
-  }
-  const r = leadBtn.getBoundingClientRect();
-  box.style.left = `${Math.round(r.right + 6)}px`;
-  // 아래로 넘치면 위로 붙인다 — 항목이 11개라 화면 아래쪽 버튼에서 잘리기 쉽다.
-  const h = box.offsetHeight;
-  const top = Math.min(Math.max(r.top, 8), Math.max(window.innerHeight - h - 8, 8));
-  box.style.top = `${Math.round(top)}px`;
 }
 
 /* 과목별 파트 아코디언(subject-objects.js)이 카테고리 심볼 버튼을 채울 때 사용.
@@ -740,14 +747,8 @@ function toggleChooser(leadBtn) {
 export function renderSymbolsForCategories(container, categories, sizer) {
   // hidden 항목은 팔레트에서만 뺀다 — 레지스트리에는 남아 있어 오브젝트 검색(Ctrl+F)·
   // 커맨드 팔레트·저장파일 호환은 그대로다.
-  const ids = Object.keys(TEMPLATES)
-    .filter((id) => categories.includes(TEMPLATES[id].category) && !TEMPLATES[id].hidden);
-  for (const id of ids) {
-    const btn = makeSymbolButton(id, TEMPLATES[id], sizer);
-    container.appendChild(btn);
-    // 통합 버튼이면 팝오버도 같은 컨테이너에 넣는다(#tool-list 위임이 닿아야 한다).
-    if (TEMPLATES[id].chooser) container.appendChild(buildChooser(id, TEMPLATES[id], sizer, btn));
-  }
+  const ids = Object.keys(TEMPLATES).filter((id) => categories.includes(TEMPLATES[id].category) && !TEMPLATES[id].hidden);
+  for (const id of ids) container.appendChild(makeSymbolButton(id, TEMPLATES[id], sizer));
   return ids.length;
 }
 
@@ -778,9 +779,7 @@ function renderPanel() {
     body.className = "tool-section-body";   // 3-col icon grid (same as 공통 도구)
 
     for (const id of ids) {
-      const btn = makeSymbolButton(id, TEMPLATES[id], pending);
-      body.appendChild(btn);
-      if (TEMPLATES[id].chooser) body.appendChild(buildChooser(id, TEMPLATES[id], pending, btn));
+      body.appendChild(makeSymbolButton(id, TEMPLATES[id], pending));
     }
 
     section.appendChild(header);
@@ -822,15 +821,6 @@ export function initTemplates(svg) {
   panel.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-symbol]");
     if (!btn) return;
-    if (btn.dataset.chooser) {
-      // 통합 버튼: 바로 무장하지 않고 팝오버만 연다. stopPropagation이 필요하다 —
-      // tools.js가 document에 걸어 둔 '바깥 클릭 닫기'가 방금 연 팝오버를 즉시 닫는다.
-      e.stopPropagation();
-      toggleChooser(btn);
-      return;
-    }
     activateTemplate(btn.dataset.symbol);
-    // 팝오버에서 골랐으면 닫는다(하드코딩 팝오버의 동작과 같게).
-    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
   });
 }

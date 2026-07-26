@@ -127,46 +127,16 @@ const OPTICS_KINDS = {
   node(g, obj, sw, color) {
     oDot(g, obj.x + obj.w / 2, obj.y + obj.h / 2, Math.min(obj.w, obj.h) * 0.22, color);
   },
-  // support_tri: small upward triangle (a stand/support base).
-  support_tri(g, obj, sw, color) {
-    const left = obj.x, right = obj.x + obj.w, top = obj.y, bottom = obj.y + obj.h, cx = obj.x + obj.w / 2;
-    const tri = document.createElementNS(SVG_NS, "polygon");
-    tri.setAttribute("points", `${cx},${top} ${left},${bottom} ${right},${bottom}`);
-    tri.setAttribute("fill", resolveFill(obj));
-    tri.setAttribute("stroke", color); tri.setAttribute("stroke-width", sw);
-    g.appendChild(tri);
-  },
-  // pivot: small ⊙ (outline circle + center dot) = rotation axis.
-  pivot(g, obj, sw, color) {
-    const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2, r = Math.min(obj.w, obj.h) * 0.3;
-    const c = document.createElementNS(SVG_NS, "circle");
-    c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", r);
-    c.setAttribute("fill", "none"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
-    g.appendChild(c);
-    oDot(g, cx, cy, Math.max(r * 0.28, 0.4), color);
-  },
   // screen: a thick vertical bar with hatch ticks on one side (projection screen).
   screen(g, obj, sw, color) {
     const cx = obj.x + obj.w / 2, top = obj.y, bottom = obj.y + obj.h;
     oLine(g, cx, top, cx, bottom, sw, color, Math.max(sw * 3, 0.8));
     hatchVLine(g, cx, top, bottom, 1, sw, color);
   },
-  // bar_magnet: rectangle split into two halves labelled "N" and "S".
-  bar_magnet(g, obj, sw, color) {
-    const left = obj.x, top = obj.y, cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2, bottom = obj.y + obj.h;
-    const rect = document.createElementNS(SVG_NS, "rect");
-    rect.setAttribute("x", obj.x); rect.setAttribute("y", obj.y);
-    rect.setAttribute("width", obj.w); rect.setAttribute("height", obj.h);
-    rect.setAttribute("fill", resolveFill(obj));
-    rect.setAttribute("stroke", color); rect.setAttribute("stroke-width", sw);
-    g.appendChild(rect);
-    oLine(g, cx, top, cx, bottom, sw, color);                    // divider
-    const size = Math.min(obj.w * 0.4, obj.h * 0.6);
-    cText(g, left + obj.w * 0.25, cy, "N", size, color);
-    cText(g, left + obj.w * 0.75, cy, "S", size, color);
-  },
 };
 
+/* 회전축(pivot)·받침대(support_tri)·막대자석(bar_magnet)은 2026-07-26 교사 지시로
+ * 코드에서 삭제했다. 막대자석은 자기력선 도구(fieldlines)에서 '자기력선 끄기'로 대체한다. */
 function renderOptics(obj) {
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
@@ -353,20 +323,50 @@ function drawMountedPulley(g, obj, sw, color, variant) {
     c.setAttribute("fill", fill); c.setAttribute("stroke", color);
     c.setAttribute("stroke-width", w || sw);
     g.appendChild(c);
+    return c;
   };
-  // 브래킷을 먼저(바퀴 뒤로 가게) — 고정판에서 축까지.
+  /* 2026-07-26 교사 지시(사진 참고)로 모양을 바꿨다.
+   *   · 바퀴는 <b>도넛</b>이다 — 바깥 원과 안쪽 원 사이(림)가 연회색으로 차 있고,
+   *     안쪽(홈 안)은 흰색이다. 예전엔 전체를 흰색으로 칠하고 안쪽 원을 선으로만 그렸다.
+   *   · 축은 <b>진회색 원</b>.
+   *   · 브래킷은 흰색으로 채운 띠라 바퀴 위를 지나가는 것처럼 보인다. */
+  const rimOuter = r, rimInner = r * 0.74;
+  const RIM_FILL = "#d9d9d9";     // 림(연회색)
+  const AXLE_FILL = "#8f8f8f";    // 축(진회색)
+
+  // 고정판(천장/벽) — 바퀴 뒤에 먼저.
   if (variant === "wall") {
-    line(obj.x, cy - r * 0.55, cx, cy);
-    line(obj.x, cy + r * 0.55, cx, cy);
-    line(obj.x, cy - r * 0.8, obj.x, cy + r * 0.8, sw * 1.8);   // 벽 고정판
+    line(obj.x, cy - r * 1.05, obj.x, cy + r * 1.05, sw * 2.2);
   } else {
-    line(cx - r * 0.30, obj.y, cx - r * 0.30, cy);
-    line(cx + r * 0.30, obj.y, cx + r * 0.30, cy);
-    line(cx - r * 0.7, obj.y, cx + r * 0.7, obj.y, sw * 1.8);   // 천장 고정판
+    line(cx - r * 1.05, obj.y, cx + r * 1.05, obj.y, sw * 2.2);
   }
-  circle(r, "#ffffff");                                   // 바깥 림
-  circle(r * 0.70, "none", sw * 0.85);                    // 홈(안쪽 원)
-  circle(Math.max(r * 0.22, 0.5), "#b8b8b8", sw * 0.8);   // 축
+
+  // 도넛 림: 바깥 원을 연회색으로 채우고, 안쪽 원을 흰색으로 덮는다.
+  circle(rimOuter, RIM_FILL, sw * 1.1);
+  circle(rimInner, "#ffffff", sw * 0.9);
+
+  // 브래킷(흰 띠 + 양쪽 테두리) — 고정판에서 축까지, 바퀴 위로 지나간다.
+  const bw = r * 0.30;   // 브래킷 반폭
+  if (variant === "wall") {
+    const band = document.createElementNS(SVG_NS, "rect");
+    band.setAttribute("x", obj.x); band.setAttribute("y", cy - bw);
+    band.setAttribute("width", cx - obj.x); band.setAttribute("height", bw * 2);
+    band.setAttribute("fill", "#ffffff"); band.setAttribute("stroke", "none");
+    g.appendChild(band);
+    line(obj.x, cy - bw, cx, cy - bw);
+    line(obj.x, cy + bw, cx, cy + bw);
+  } else {
+    const band = document.createElementNS(SVG_NS, "rect");
+    band.setAttribute("x", cx - bw); band.setAttribute("y", obj.y);
+    band.setAttribute("width", bw * 2); band.setAttribute("height", cy - obj.y);
+    band.setAttribute("fill", "#ffffff"); band.setAttribute("stroke", "none");
+    g.appendChild(band);
+    line(cx - bw, obj.y, cx - bw, cy);
+    line(cx + bw, obj.y, cx + bw, cy);
+  }
+
+  // 축 — 진회색 원.
+  circle(Math.max(r * 0.20, 0.45), AXLE_FILL, sw * 0.9);
 }
 
 function drawClamp(g, obj, sw, color) {

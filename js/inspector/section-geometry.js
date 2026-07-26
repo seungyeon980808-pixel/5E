@@ -259,6 +259,100 @@ export function buildGeometrySection(ctx) {
   labelerLenRow.appendChild(labelerLenUnit);
   sec3Body.appendChild(labelerLenRow);
 
+  /* ---- 라벨 가림(할로) — 라벨이 있는 모든 도형 공통 ----
+   * 기본은 '글자 모양대로만' 가린다(옆 글자를 건드리지 않는다).
+   * 배경 가림을 켜면 라벨 뒤를 흰 사각형으로 통째로 지운다 — 회색 면·격자 위처럼
+   * 글자 사이 틈으로 배경이 비치는 게 거슬리는 그림에서만 쓴다(2026-07-26 교사 결정). */
+  function commitLabelProp(prop, value) {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.locked) return;
+      if ((o[prop] ?? null) === value) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      if (value === null || value === false) delete o[prop]; else o[prop] = value;
+    });
+  }
+  const labelBgRow = document.createElement("div");
+  labelBgRow.className = "insp-row";
+  const labelBgLbl = document.createElement("label");
+  labelBgLbl.className = "insp-field-label";
+  labelBgLbl.textContent = "배경 가림";
+  const labelBgCb = document.createElement("input");
+  labelBgCb.type = "checkbox";
+  labelBgCb.title = "라벨 뒤를 흰 사각형으로 통째로 지웁니다(글자 사이 틈까지). 끄면 글자 모양대로만 가립니다";
+  labelBgRow.appendChild(labelBgLbl); labelBgRow.appendChild(labelBgCb);
+  sec3Body.appendChild(labelBgRow);
+  labelBgCb.addEventListener("change", () => commitLabelProp("labelBg", labelBgCb.checked || null));
+
+  const labelHaloRow = document.createElement("div");
+  labelHaloRow.className = "insp-row";
+  const labelHaloLbl = document.createElement("label");
+  labelHaloLbl.className = "insp-field-label";
+  labelHaloLbl.textContent = "가림 굵기";
+  const labelHaloInp = document.createElement("input");
+  labelHaloInp.type = "number";
+  labelHaloInp.className = "insp-input";
+  labelHaloInp.min = 0; labelHaloInp.max = 0.6; labelHaloInp.step = 0.01;
+  labelHaloInp.placeholder = "0.13";
+  labelHaloInp.title = "글자 크기 대비 흰 테두리 굵기. 비우면 기본값 0.13";
+  labelHaloRow.appendChild(labelHaloLbl); labelHaloRow.appendChild(labelHaloInp);
+  sec3Body.appendChild(labelHaloRow);
+  const fireHalo = () => {
+    const raw = labelHaloInp.value.trim();
+    if (raw === "") { commitLabelProp("haloRatio", null); return; }
+    const v = Number(raw);
+    if (!Number.isFinite(v)) return;
+    commitLabelProp("haloRatio", Math.min(0.6, Math.max(0, v)));
+  };
+  labelHaloInp.addEventListener("input", fireHalo);
+  labelHaloInp.addEventListener("change", fireHalo);
+
+  function syncLabelHalo(o) {
+    labelBgCb.checked = !!o.labelBg;
+    if (document.activeElement !== labelHaloInp) {
+      labelHaloInp.value = Number.isFinite(o.haloRatio) ? o.haloRatio : "";
+    }
+  }
+
+  /* 라벨선 추가(요구 2026-07-26): 지시선을 하나 더 뽑아 두 영역을 하나의 라벨로 가리킨다.
+   * 켜면 p3(두 번째 지시선 끝점)가 생기고, 캔버스에 세 번째 핸들이 나와 끌 수 있다. */
+  const labelerLine2Row = document.createElement("div");
+  labelerLine2Row.className = "insp-row";
+  const labelerLine2Lbl = document.createElement("label");
+  labelerLine2Lbl.className = "insp-field-label";
+  labelerLine2Lbl.textContent = "라벨선";
+  const labelerLine2Btn = document.createElement("button");
+  labelerLine2Btn.type = "button";
+  labelerLine2Btn.className = "insp-input";
+  labelerLine2Btn.title = "지시선을 하나 더 만들어 두 곳을 한 라벨로 가리킵니다";
+  labelerLine2Row.appendChild(labelerLine2Lbl);
+  labelerLine2Row.appendChild(labelerLine2Btn);
+  sec3Body.appendChild(labelerLine2Row);
+  labelerLine2Btn.addEventListener("click", () => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== "labeler" || o.locked) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      if (o.p3) { delete o.p3; return; }
+      // 첫 지시선을 라벨 기준으로 반대편에 복사해 둔다 — 바로 눈에 띄고 끌어 옮기기 쉽다.
+      o.p3 = { x: o.p2.x + (o.p2.x - o.p1.x), y: o.p2.y + (o.p2.y - o.p1.y) };
+    });
+    syncLabelerLine2();
+  });
+  function syncLabelerLine2() {
+    const s = state.get();
+    const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
+    labelerLine2Btn.textContent = (o && o.p3) ? "제거" : "추가";
+  }
+
   function commitLabelerLength() {
     const val = parseFloat(labelerLenInp.value);
     if (!isFinite(val) || val < 0) return;
@@ -719,6 +813,8 @@ export function buildGeometrySection(ctx) {
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
+    labelBgRow, labelHaloRow, syncLabelHalo,
+    labelerLine2Row, syncLabelerLine2,
     boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,

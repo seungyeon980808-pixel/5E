@@ -11,7 +11,7 @@
  * 좌표계: 월드 mm. size/x/y 전부 mm. formula.js와 동일한 정자-숫자/이탤릭-변수 규칙을 그대로 물려받는다.
  */
 
-import { SVG_NS } from "./core.js?v=1.2.0";
+import { SVG_NS, HALO_RATIO, applyGlyphHalo } from "./core.js?v=1.2.0";
 import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=1.2.0";
 import { renderFormula, measureFormula } from "../formula.js?v=1.2.0";
 
@@ -128,14 +128,9 @@ function buildLine(line, size, color, upright = false) {
 }
 
 // 라벨 <text> 들에 흰 테두리 halo 부여(그래프 선 위에서 깔끔히 끊김; makeUprightLabel 방식).
-function applyHalo(wrap, size) {
-  wrap.querySelectorAll("text, tspan").forEach((t) => {
-    t.setAttribute("paint-order", "stroke");
-    t.setAttribute("stroke", "white");
-    t.setAttribute("stroke-width", size * 0.16);
-    t.setAttribute("stroke-linejoin", "round");
-  });
-}
+/* 가림(할로)은 core.applyGlyphHalo가 단일 출처다 — 캔버스 라벨과 그래프 라벨이
+ * 같은 굵기·같은 모양으로 나온다. 그림마다 다르게 주려면 opts.haloRatio를 넘긴다. */
+export { HALO_RATIO };
 
 /* ----- PUBLIC: 혼합 라벨을 SVG <g>로 렌더 -----
  * renderGraphLabel(source, {
@@ -156,7 +151,7 @@ const INTERLINE_GAP = 0.12;
 export function renderGraphLabel(source, opts = {}) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return null;
-  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false } = opts;
+  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false, haloRatio } = opts;
 
   const lines = text.split("\n").map((l) => buildLine(l, size, color, upright));
   const n = lines.length;
@@ -174,27 +169,17 @@ export function renderGraphLabel(source, opts = {}) {
   else firstBaseY = y; // baseline
 
   const wrap = el("g");
-  // 라벨 구간 전체를 흰색으로 먼저 지운다 — halo(글리프 윤곽)만으로는 글자 사이 틈으로
-  // 그래프 선·격자가 비친다. 줄마다 실제 폭이 다르므로 줄 단위로 지운다.
-  lines.forEach((ln, i) => {
-    if (!(ln.width > 0)) return;
-    const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
-    const r = el("rect");
-    r.setAttribute("x", x + dx - size * 0.12);
-    r.setAttribute("y", firstBaseY + baseYs[i] - ln.ascent - size * 0.08);
-    r.setAttribute("width", ln.width + size * 0.24);
-    r.setAttribute("height", ln.ascent + ln.descent + size * 0.16);
-    r.setAttribute("fill", "white");
-    r.setAttribute("stroke", "none");
-    r.setAttribute("pointer-events", "none");
-    wrap.appendChild(r);
-  });
+  // 가림은 <b>글자 모양대로</b>만 한다(아래 applyHalo). 예전엔 줄 전체를 흰 사각형으로
+  // 덮었는데, 글자 사이로 선이 비치는 문제를 잡으려다 라벨이 흰 블록을 깔고 앉은 꼴이
+  // 됐다(2026-07-26 교사 지적: "얇은 영역으로 가리라고 했지 두껍게 가리라고 한 적 없다").
+  // 글자 사이 틈은 halo 굵기를 조금 키우는 것으로 충분히 막힌다 — 캔버스의 텍스트 도구가
+  // 쓰는 방식과 같아져 그래프 안팎의 라벨이 같은 모양으로 보인다.
   lines.forEach((ln, i) => {
     const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
     ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);
     wrap.appendChild(ln.g);
   });
-  if (halo) applyHalo(wrap, size);
+  if (halo) applyGlyphHalo(wrap, size, haloRatio);
   return wrap;
 }
 

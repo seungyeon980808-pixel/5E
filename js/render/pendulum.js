@@ -108,7 +108,7 @@ function renderPendulum(obj) {
     if (nx > 0) { nx = -nx; ny = -ny; }     // default to the left of the string
     const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
     const off = size * 0.9;
-    const lbl = makeUprightLabel(obj.lengthLabel, mx + nx * off, my + ny * off, color, size, { labelType: "quantity" });
+    const lbl = makeUprightLabel(obj.lengthLabel, mx + nx * off, my + ny * off, color, size, { labelType: "quantity", labelBg: obj.labelBg, haloRatio: obj.haloRatio });
     if (lbl) g.appendChild(lbl);
   }
 

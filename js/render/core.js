@@ -268,6 +268,35 @@ function koMeasure(lines, sizeMm, fontCss) {
  *   anchor       : "middle" | "start" | "end" (text-anchor와 같은 의미)
  *   lineHeight   : 여러 줄일 때 줄 간격(mm). 블록은 baselineY를 중심으로 상하 대칭.
  */
+/* ===== 라벨 가림(할로) — 앱 전체의 단일 출처 =====
+ * 가림은 <b>글자 모양대로만</b> 한다. 굵기 = 글자 크기 × HALO_RATIO.
+ *   · 배율이라 라벨이 커지면 가림도 같이 커진다.
+ *   · 선 굵기에 비례시키면 안 된다 — 굵은 치수선에 작은 라벨을 쓸 때 테두리가 글자를 삼킨다.
+ *   · 예전엔 라벨 뒤에 흰 사각형을 통째로 깔았는데, 글자 폭보다 넓게 지워져
+ *     <b>옆 글자까지 지워지는</b> 문제가 있었다(2026-07-26 교사 지적, 실측 왼쪽 0.9mm).
+ *     사각형이 꼭 필요한 그림(회색 면 위 등)을 위해 makeLabelKnockout은 남겨 두고,
+ *     객체의 labelBg 필드가 켜졌을 때만 쓴다.
+ */
+export const HALO_RATIO = 0.13;
+
+export function applyGlyphHalo(node, sizeMm, ratio) {
+  const r = (Number.isFinite(ratio) && ratio >= 0) ? ratio : HALO_RATIO;
+  const w = sizeMm * r;
+  const targets = node.tagName === "text" ? [node] : node.querySelectorAll("text, tspan");
+  (targets.length !== undefined ? Array.from(targets) : [targets]).forEach((t) => {
+    t.setAttribute("paint-order", "stroke");
+    t.setAttribute("stroke", "white");
+    t.setAttribute("stroke-width", w);
+    t.setAttribute("stroke-linejoin", "round");
+  });
+  if (node.tagName === "text") {
+    node.setAttribute("paint-order", "stroke");
+    node.setAttribute("stroke", "white");
+    node.setAttribute("stroke-width", w);
+    node.setAttribute("stroke-linejoin", "round");
+  }
+}
+
 export function makeLabelKnockout(lines, x, baselineY, sizeMm, opts = {}) {
   const arr = (Array.isArray(lines) ? lines : [String(lines ?? "")]).map((s) => String(s ?? ""));
   if (!arr.length || arr.every((s) => s.trim() === "")) return null;

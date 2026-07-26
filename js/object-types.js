@@ -70,12 +70,13 @@ export const OBJECT_TYPES = {
   pendulum:   { lineTol: 1, endpointHandles: 1 },
   // spring = 용수철. p1/p2 계열(line·circuit·pendulum과 같은 가족).
   // snapLineLike: 끝점이 블록 모서리에 자석처럼 붙어야 해서 켠다(요구).
-  spring:     { lineTol: 1, label: 1, snapLineLike: 1 },
+  // endpointHandles: 만든 뒤 끝점을 끌어 길이·방향을 고칠 수 있어야 한다(2026-07-26 지시).
+  spring:     { lineTol: 1, label: 1, snapLineLike: 1, endpointHandles: 1 },
   // 장(場) 그림·정상파도 p1/p2 계열이다. 전기력선·자기력선은 두 점이 '전하(극) 위치'라
   // 끌면 그림 전체가 다시 계산되고, 정상파는 두 점이 '줄·관의 양 끝'이다.
-  chargefield:  { lineTol: 1, label: 1 },
-  fieldlines:   { lineTol: 1, label: 1 },
-  standingwave: { lineTol: 1, label: 1, snapLineLike: 1 },
+  chargefield:  { lineTol: 1, label: 1, endpointHandles: 1 },
+  fieldlines:   { lineTol: 1, label: 1, endpointHandles: 1 },
+  standingwave: { lineTol: 1, label: 1, snapLineLike: 1, endpointHandles: 1 },
   // gauge = 자·각도기 측정 가이드(kind: ruler|protractor). 크기박스로 이동/리사이즈/
   // bbox/저장을 그대로 상속. boxFace로 bbox 전체가 클릭 면이 되어 선택이 쉽다.
   gauge:      { sizeBox: 1, boxFace: 1 },
@@ -109,9 +110,10 @@ export const LABEL_CAPABLE_TYPES    = typesWith("label");          // 10: rect e
 export const SNAP_EDGE_TARGET_TYPES = typesWith("snapEdge");       // 5: rect triangle line polyline solid3d
 export const SNAP_LINE_TARGET_TYPES = typesWith("snapLineTarget"); // 2: line polyline
 export const SNAP_LINE_LIKE_TYPES   = typesWith("snapLineLike");   // 4: line circuit polyline curve
-// 5: line circuit labeler pendulum parabola — 예전엔 이 목록이 scene.js·transform.js에
-// 네 벌 복사돼 있었다. 포물선을 추가하며 한 벌을 빠뜨려 "만들고 나면 끝점을 못 고치는"
-// 사고가 났다(2026-07-26). 이제 여기 한 줄이 정본이다.
+// 10: line circuit labeler pendulum spring chargefield fieldlines standingwave
+//     parabola groundarc — 예전엔 이 목록이 scene.js·transform.js에 네 벌 복사돼 있었다.
+// 포물선을 추가하며 한 벌을 빠뜨려 "만들고 나면 끝점을 못 고치는" 사고가 났고,
+// 같은 시기 main에서도 같은 목록에 4종을 손으로 더 적고 있었다(병합 충돌). 정본은 여기다.
 export const ENDPOINT_HANDLE_TYPES  = typesWith("endpointHandles");
 
 // Convenience predicate for the most-duplicated classification (box size object).

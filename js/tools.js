@@ -69,6 +69,9 @@ import { snapKey } from "./platform.js?v=1.2.0";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
+// 그릴 때 각도 이산 변환(Ctrl/Cmd)을 직선과 똑같이 받는 타입들. 전부 p1/p2 계열이라
+// "두 점을 찍어 방향을 정한다"는 조작이 같다(2026-07-26 교사 지시로 확장).
+const ANGLE_SNAP_TYPES = new Set(["line", "spring", "chargefield", "fieldlines", "standingwave"]);
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
 const TEXT_LINE_HEIGHT = 1.4; // matches .text-editor-overlay line-height AND renderText() tspan dy
 // A textarea centers its glyphs in the line box, so the first line sits half a
@@ -543,7 +546,7 @@ function setupDrawing() {
     const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
     // Shift = aspect-ratio lock: force w === h (perfect square / circle) using the
     // larger of the two extents, preserving the drag direction on each axis.
-    const cur = drawType === "line"
+    const cur = ANGLE_SNAP_TYPES.has(drawType)
       ? snapLineEnd(startWorld, pointer, snapKey(e))
       : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, cur); });
@@ -554,7 +557,7 @@ function setupDrawing() {
     drawing = false;
     const vb = _state.get().viewBox;
     const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
-    const cur = drawType === "line"
+    const cur = ANGLE_SNAP_TYPES.has(drawType)
       ? snapLineEnd(startWorld, pointer, snapKey(e))
       : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
     const shape = makeShape(drawType, startWorld, cur);
@@ -750,7 +753,9 @@ function makeShape(type, a, b) {
       shape.lockAspect = true;
       shape.needleAngle = -90;
     } else if (shape.kind === "pulley") {
-      const size = Math.max(shape.w, shape.h, 18);
+      // 드래그한 크기를 그대로 쓴다. 예전엔 18mm를 최소로 강제해 작은 도르래를 만들 수
+      // 없었다(2026-07-26 교사 지적). 비율만 유지한다.
+      const size = Math.max(shape.w, shape.h, MIN_SIZE);
       shape.w = size * 1.18;
       shape.h = size;
       shape.lockAspect = true;
