@@ -181,8 +181,10 @@ export const TEMPLATES = {
     keywords: ["수레", "역학", "역학 수레", "cart", "mechanics cart"],
     create: { tool: "SVGASSET", kind: "cart" },
   },
-  sw_open:     { kind: "shape", category: "전기", label: "스위치",     keywords: ["스위치", "switch", "개폐기", "S1"], create: { tool: "CIRCUIT", element: "switch" } },
-  sw_spdt:     { kind: "shape", category: "전기", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
+  // 분류는 반드시 CATEGORY_ORDER에 있는 이름이어야 한다. 없는 이름("전기")을 쓰면
+  // 팔레트에도, 과목별 아코디언에도 안 나온다 — 스위치 2종이 그렇게 숨어 있었다.
+  sw_open:     { kind: "shape", category: "회로", label: "스위치",     keywords: ["스위치", "switch", "개폐기", "S1"], create: { tool: "CIRCUIT", element: "switch" } },
+  sw_spdt:     { kind: "shape", category: "회로", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
   pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
   // 장(場) 그림·정상파 — 두 점(전하·극·양끝)을 끌어 배치한다.
   /* 통합 버튼 — 누르면 팝오버가 떠 갈래를 한 번 더 고른다(기존 텍스트·라벨러 버튼과 같은 방식).
