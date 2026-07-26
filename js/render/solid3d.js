@@ -23,7 +23,7 @@ import { withBoxLabel } from "./labels.js?v=1.2.0";
 
 // slab(판·상판)은 box와 같은 그림이다 — 생성 시 깊이 기본값만 다르다(tools.js).
 // 종류를 나눠 둬야 "판을 그렸다"는 의도가 저장돼 나중에 다시 편집할 때도 유지된다.
-export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge"];
+export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge", "desk"];
 // 도. 기출 실측: 작은 블록·추 40° 안팎, 바닥판 58° 안팎 → 그 사이인 50°를 기본으로 쓴다.
 // 30°는 윗면이 거의 안 보여서 시험지 그림으로 못 쓴다(2026-07-26 사용자 확인).
 export const DEFAULT_PROJ_ANGLE = 50;
@@ -48,6 +48,8 @@ function shadeOf(obj) {
  * currentColor로 바꿔 버려서, 면을 칠하면 16px 안에서 새까만 덩어리가 된다. 이 플래그가
  * 켜지면 면을 비우고 가려지는 뒷면을 생략해 윤곽선만 남긴다. 저장 데이터에는 없는 값이다. */
 const fillOf = (obj, level) => (obj._outline ? "none" : grayHex(level));
+
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /* ----- 투영 벡터 -----
  * 깊이 d와 각 a에서 (dx, dy)를 뽑되, **bbox 안에 앞면이 남도록** 잘라낸다.
@@ -87,15 +89,60 @@ function face(obj, pts, fillLevel, stroke, sw) {
 /* ===== BOX / SLAB — 직육면체 · 판 (블록 · 상판 · 실험대 다리) =====
  * 앞면은 bbox의 왼쪽 아래에 붙고, 깊이는 오른쪽 위로 뻗는다.
  * 그리는 순서 = 윗면 → 옆면 → 앞면. 앞면을 마지막에 얹어야 앞쪽 모서리가 깨끗하다. */
-function drawBox(obj, proj, stroke, sw) {
-  const { dx, dy } = proj;
-  const x0 = obj.x, y0 = obj.y + dy;
-  const fw = obj.w - dx, fh = obj.h - dy;
-  const sh = shadeOf(obj);
-  const g = document.createElementNS(SVG_NS, "g");
+// 앞면 좌상단(x0,y0)·앞면 크기(fw,fh)·투영벡터(dx,dy)로 상자 하나를 g에 얹는다.
+// 책상은 이걸 5번(상판 + 다리 4개) 부르므로 bbox 계산에서 분리해 뒀다.
+function pushBox(g, obj, x0, y0, fw, fh, dx, dy, sh, stroke, sw) {
   g.appendChild(face(obj, [[x0, y0], [x0 + fw, y0], [x0 + fw + dx, y0 - dy], [x0 + dx, y0 - dy]], sh.top, stroke, sw));
   g.appendChild(face(obj, [[x0 + fw, y0], [x0 + fw + dx, y0 - dy], [x0 + fw + dx, y0 + fh - dy], [x0 + fw, y0 + fh]], sh.side, stroke, sw));
   g.appendChild(face(obj, [[x0, y0], [x0 + fw, y0], [x0 + fw, y0 + fh], [x0, y0 + fh]], sh.front, stroke, sw));
+}
+
+function drawBox(obj, proj, stroke, sw) {
+  const { dx, dy } = proj;
+  const g = document.createElementNS(SVG_NS, "g");
+  pushBox(g, obj, obj.x, obj.y + dy, obj.w - dx, obj.h - dy, dx, dy, shadeOf(obj), stroke, sw);
+  return g;
+}
+
+/* ===== DESK — 실험대 · 책상 (상판 + 다리 4) =====
+ * 상판과 다리를 따로 놓지 않고 한 오브젝트로 그린다. 상판을 늘리면 다리가 따라와야 하고
+ * 옮길 때 5개를 같이 잡을 이유가 없다 — 시험 그림에서 책상은 통째로 한 물건이다.
+ *
+ * 다리는 상판 윗면 네 귀퉁이에 두되 **뒤쪽 다리는 자기 굵기만큼 안으로 들여** 놓는다.
+ * 그래야 다리의 뒷면이 상판 뒤 모서리와 딱 맞고, 그림 전체가 bbox 안에 남는다.
+ * 그리는 순서 = 뒤 다리 → 상판 → 앞 다리. 상판이 뒤 다리 윗부분을 자연스럽게 가린다
+ * (기출 p1_2026_06_16에서 다리가 3개만 보이는 그 모습).
+ *
+ * 추가 필드: topThickness(상판 두께) · legWidth(다리 굵기). 없으면 비율로 자동. */
+function drawDesk(obj, proj, stroke, sw) {
+  const { dx, dy } = proj;
+  const sh = shadeOf(obj);
+  const g = document.createElementNS(SVG_NS, "g");
+  const x = obj.x, y0 = obj.y + dy;
+  const fw = obj.w - dx;          // 상판 앞 모서리 길이
+  const fh = obj.h - dy;          // 앞에서 본 전체 높이(상판 + 다리)
+  const d = Math.hypot(dx, dy);   // 깊이(투영 길이)
+  const ux = d ? dx / d : 0, uy = d ? dy / d : 0;  // 깊이 방향 단위벡터
+
+  // 상판 두께와 다리 굵기: 값이 없으면 비율로, 있으면 그 값을 쓰되 항상 안전 범위로 자른다.
+  const T = clamp(Number.isFinite(obj.topThickness) ? obj.topThickness : fh * 0.12, 0.6, fh * 0.6);
+  const lwMax = Math.max(Math.min(fw, d) * 0.3, 0.6);
+  const lw = clamp(Number.isFinite(obj.legWidth) ? obj.legWidth : fw * 0.045, 0.6, lwMax);
+  const L = fh - T;               // 다리 길이
+  const dxL = lw * ux, dyL = lw * uy;
+
+  // [가로위치 X, 깊이위치 Z] — 뒤 다리(Z 큰 쪽)를 먼저 그린다.
+  const legs = [
+    [0, d - lw], [fw - lw, d - lw],   // 뒤 왼쪽 · 뒤 오른쪽
+    [0, 0], [fw - lw, 0],             // 앞 왼쪽 · 앞 오른쪽
+  ];
+  const putLeg = ([X, Z]) => {
+    if (L <= 0) return;
+    pushBox(g, obj, x + X + Z * ux, y0 + T - Z * uy, lw, L, dxL, dyL, sh, stroke, sw);
+  };
+  legs.slice(0, 2).forEach(putLeg);                                  // 뒤 다리
+  pushBox(g, obj, x, y0, fw, T, dx, dy, sh, stroke, sw);             // 상판
+  legs.slice(2).forEach(putLeg);                                     // 앞 다리
   return g;
 }
 
@@ -208,6 +255,7 @@ export function renderSolid3d(obj) {
   let inner;
   if (kind === "cylinder") inner = drawCylinder(obj, proj, stroke, sw);
   else if (kind === "wedge") inner = drawWedge(obj, proj, stroke, sw);
+  else if (kind === "desk") inner = drawDesk(obj, proj, stroke, sw);
   else inner = drawBox(obj, proj, stroke, sw);   // box · slab (그림은 같다)
   applyFlip(inner, obj);
 

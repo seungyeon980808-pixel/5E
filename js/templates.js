@@ -209,6 +209,7 @@ export const TEMPLATES = {
   solid_cylinder: { kind: "shape", category: "역학", label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_disk:     { kind: "shape", category: "역학", label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_wedge:    { kind: "shape", category: "역학", label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
+  solid_desk:     { kind: "shape", category: "역학", label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -298,6 +299,7 @@ const SOLID3D_ICON_BOX = {
   solid_cylinder: { w: 12, h: 24, depth: 6 },
   solid_disk:     { w: 26, h: 13, depth: 6 },
   solid_wedge:    { w: 26, h: 20, depth: 9 },
+  solid_desk:     { w: 26, h: 24, depth: 12 },
 };
 
 // Build the data object that the REAL renderer turns into the icon.

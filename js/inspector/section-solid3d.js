@@ -92,6 +92,19 @@ export function initSolid3dSection(state) {
   shadeRow.appendChild(shadeSel);
   body.appendChild(shadeRow);
 
+  /* ----- 책상 전용: 상판 두께 · 다리 굵기(책상일 때만 노출) ----- */
+  const topRow = row("상판 두께");
+  const topInp = document.createElement("input");
+  topInp.type = "number"; topInp.min = "0.6"; topInp.step = "0.5"; topInp.className = "insp-input";
+  topRow.appendChild(topInp); topRow.appendChild(unitSpan("mm"));
+  body.appendChild(topRow);
+
+  const legRow = row("다리 굵기");
+  const legInp = document.createElement("input");
+  legInp.type = "number"; legInp.min = "0.6"; legInp.step = "0.5"; legInp.className = "insp-input";
+  legRow.appendChild(legInp); legRow.appendChild(unitSpan("mm"));
+  body.appendChild(legRow);
+
   /* ----- 원기둥 방향(원기둥일 때만 노출) ----- */
   const axisRow = row("방향");
   const axisSel = document.createElement("select");
@@ -152,6 +165,18 @@ export function initSolid3dSection(state) {
     commit((t) => { t.axis = axisSel.value; });
   });
 
+  topInp.addEventListener("change", () => {
+    const v = Number(topInp.value);
+    if (!(v > 0)) return;
+    commit((t) => { t.topThickness = v; });
+  });
+
+  legInp.addEventListener("change", () => {
+    const v = Number(legInp.value);
+    if (!(v > 0)) return;
+    commit((t) => { t.legWidth = v; });
+  });
+
   // 일괄 적용: 잠긴 객체는 건드리지 않는다(보호 섹션의 약속). Undo는 1스텝.
   applyBtn.addEventListener("click", () => {
     const o = selected();
@@ -181,8 +206,23 @@ export function initSolid3dSection(state) {
     const o = selected();
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
-    const isCyl = (o.kind || "box") === "cylinder";
+    const kind = o.kind || "box";
+    const isCyl = kind === "cylinder";
+    const isDesk = kind === "desk";
     axisRow.style.display = isCyl ? "" : "none";
+    topRow.style.display = isDesk ? "" : "none";
+    legRow.style.display = isDesk ? "" : "none";
+    if (isDesk) {
+      // 값이 없으면 렌더러가 쓰는 자동 비율을 그대로 보여준다(빈칸보다 낫다).
+      const p = Math.max(o.h - Math.abs((o.depth ?? 0) * Math.sin(((o.projAngle ?? 50) * Math.PI) / 180)), 1);
+      if (document.activeElement !== topInp) {
+        topInp.value = Math.round((Number.isFinite(o.topThickness) ? o.topThickness : p * 0.12) * 10) / 10;
+      }
+      if (document.activeElement !== legInp) {
+        const fw = Math.max(o.w - Math.abs((o.depth ?? 0) * Math.cos(((o.projAngle ?? 50) * Math.PI) / 180)), 1);
+        legInp.value = Math.round((Number.isFinite(o.legWidth) ? o.legWidth : fw * 0.045) * 10) / 10;
+      }
+    }
     if (document.activeElement !== depthInp) {
       depthInp.value = Number.isFinite(o.depth)
         ? Math.round(o.depth * 10) / 10

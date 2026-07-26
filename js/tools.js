@@ -819,8 +819,8 @@ function makeShape(type, a, b) {
       // "가로 60 · 두께 2.5"를 끌고 깊이는 별도로 붙으므로 기출 상판이 그대로 나온다.
       const fw = Math.max(shape.w, 2);
       const fh = Math.max(shape.h, 1);
-      // 판은 넓게(가로의 45%), 블록·빗면은 앞면에 어울리게(짧은 변의 90%).
-      const d = shape.kind === "slab"
+      // 판·책상은 넓게(가로의 45%), 블록·빗면은 앞면에 어울리게(짧은 변의 90%).
+      const d = (shape.kind === "slab" || shape.kind === "desk")
         ? Math.max(fw * 0.45, 6)
         : Math.max(Math.min(fw, fh) * 0.9, 3);
       const rad = (shape.projAngle * Math.PI) / 180;
