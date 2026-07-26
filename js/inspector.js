@@ -69,6 +69,7 @@ export function initInspector(state) {
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
+    waveLengthRow, waveAmpRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
@@ -491,6 +492,15 @@ export function initInspector(state) {
     lineModeBtnEls.arrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${arrowIcon}</svg>`;
     lineModeBtnEls.middleArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${obj.arrowVariant === "left" ? MIDDLE_LEFT_ICON : ARROW_ICONS.center}</svg>`;
     lineModeBtnEls.lengthArrow.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${lengthIcon(obj.dimensionVariant || "basic")}</svg>`;
+    // 물결 화살표 전용 칸(파장·진폭)
+    const showWavy = isStraightLine && lineMode === "wavyArrow";
+    waveLengthRow.row.style.display = showWavy ? "" : "none";
+    waveAmpRow.row.style.display = showWavy ? "" : "none";
+    if (showWavy) {
+      if (document.activeElement !== waveLengthRow.inp) waveLengthRow.inp.value = obj.waveLength ?? waveLengthRow.fallback;
+      if (document.activeElement !== waveAmpRow.inp) waveAmpRow.inp.value = obj.waveAmp ?? waveAmpRow.fallback;
+    }
+
     const showDimLabel = isStraightLine && lineMode === "lengthArrow";
     dimensionLabelRow.style.display = showDimLabel ? "" : "none";
     dimensionLabelTypeRow.row.style.display = showDimLabel ? "" : "none";

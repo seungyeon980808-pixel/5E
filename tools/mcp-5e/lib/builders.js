@@ -226,6 +226,17 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       // 곡선 끝 라벨은 renderFuncgraph가 endLabel을 읽는다. 도구 스키마의 label 설명이
       // "곡선 끝 라벨"이므로 label만 준 경우에도 끝 라벨로 동작하게 넘겨준다.
       endLabel: f.endLabel || f.label || undefined,
+      // 곡선 아래 면적 채움. from·to는 정의역 값(생략 시 정의역 전체)이고,
+      // 기준선 baseY만 세계좌표(mm)로 구워 넘긴다 — 렌더러가 평면을 몰라도 되도록.
+      area: f.area ? trim({
+        from: Number.isFinite(f.area.from) ? f.area.from : undefined,
+        to: Number.isFinite(f.area.to) ? f.area.to : undefined,
+        baseY: worldYFromMathY(planeObj, 0),
+        level: Number.isFinite(f.area.level) ? f.area.level : 220,
+        edges: f.area.edges === false ? false : undefined,
+        label: f.area.label || undefined,
+        labelSize: Number.isFinite(f.area.labelSize) ? f.area.labelSize : undefined,
+      }) : undefined,
       ...els,
     }));
   }

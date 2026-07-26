@@ -104,6 +104,11 @@ function renderTriangle(obj) {
   return el;
 }
 
+/* 물결 화살표 기본값. waveLength는 mm라 선을 늘여도 물결의 촘촘함이 유지된다
+ * (파장 수를 고정하면 길게 뽑을수록 늘어져 보인다). */
+export const WAVY_DEFAULTS = { waveLength: 5, waveAmp: 1.1 };
+const WAVY_TAIL_PER_HEAD = 0.32;   // 화살촉 앞 직선부 = 화살촉 길이 × 이 값
+
 /* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
 function renderLine(obj) {
   const savedArrowHead = obj.arrowHead ?? "none";
@@ -111,7 +116,7 @@ function renderLine(obj) {
   let lineStyle = obj.lineMode ?? obj.lineStyle
     ?? (savedArrowHead === "center" ? "middleArrow" : savedArrowHead === "none" ? "solid" : "arrow");
   if (lineStyle === "dimensionArrow") lineStyle = "lengthArrow";
-  if (!["solid", "arrow", "middleArrow", "midInward", "lengthArrow"].includes(lineStyle)) lineStyle = "solid";
+  if (!["solid", "arrow", "middleArrow", "midInward", "lengthArrow", "wavyArrow"].includes(lineStyle)) lineStyle = "solid";
   const arrowHead = lineStyle === "arrow"
     ? ({ right: "end", left: "start", both: "both" }[obj.arrowVariant] || savedArrowHead)
     : "none";
@@ -141,6 +146,47 @@ function renderLine(obj) {
       lx1 += nx * arrowLen; ly1 += ny * arrowLen;
     }
     // "center" and "none": no adjustment
+  }
+
+  /* wavyArrow(물결 화살표) — 광자·전자기파. 직선 화살표와 구분되는 별도 몸통이라
+   * 아래의 <line> 조립을 타지 않고 여기서 path로 끝낸다.
+   *   · 진폭은 처음부터 끝까지 일정하다(끝에서 줄이면 파동이 사그라드는 것처럼 보인다).
+   *   · 파장 수를 정수로 끊어 마지막 점이 축 위(s=0)에 오게 하고,
+   *     짧은 직선부를 지나 화살촉이 축 방향으로 붙는다.
+   *   · 직선부·화살촉은 둘 다 선 굵기에 비례한다 — 굵기를 키워도 비율이 유지된다.
+   *     (2026-07-26 교사 확인: strokeWidth 0.35에서 직선부 0.5mm ⇒ 화살촉 길이의 0.32배) */
+  if (lineStyle === "wavyArrow" && L > 0) {
+    const headLen = sw * 4.5;
+    const tail = headLen * WAVY_TAIL_PER_HEAD;
+    const body = Math.max(headLen, L - headLen - tail);
+    const waveLen = Math.max(0.5, obj.waveLength ?? WAVY_DEFAULTS.waveLength);
+    const waves = Math.max(1, Math.round(body / waveLen));   // 정수 파장으로 끊는다
+    const amp = Math.max(0, obj.waveAmp ?? WAVY_DEFAULTS.waveAmp);
+    const px = -ny, py = nx;                                  // 진폭 방향(축의 법선)
+    const steps = Math.max(96, waves * 36);
+    let d = "";
+    for (let i = 0; i <= steps; i++) {
+      const u = i / steps;
+      const t = body * u;
+      const s = amp * Math.sin(2 * Math.PI * waves * u);
+      d += (i ? " L " : "M ")
+        + (obj.p1.x + nx * t + px * s).toFixed(3) + " "
+        + (obj.p1.y + ny * t + py * s).toFixed(3);
+    }
+    d += ` L ${(obj.p1.x + nx * (body + tail)).toFixed(3)} ${(obj.p1.y + ny * (body + tail)).toFixed(3)}`;
+    const gw = document.createElementNS(SVG_NS, "g");
+    if (obj.id) gw.dataset.id = obj.id;
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", color);
+    path.setAttribute("stroke-width", sw);
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    applyDash(path, obj);
+    gw.appendChild(path);
+    gw.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color, LINE_ARROW_OPTS));
+    return withLineLabel(gw, obj);
   }
 
   // One <line> segment; strokeLevel 0 = black (DESIGN 2-2), stroke-width in world units.

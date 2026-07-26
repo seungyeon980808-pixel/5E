@@ -20,7 +20,6 @@ export const SPRING_DEFAULTS = {
   radius: 2,         // 코일 반지름(mm) — 나선의 굵기
   leadLength: 2,     // 양끝 직선부 길이(mm) — 물체·고리에 닿는 부분
   springStyle: "helix",
-  hook: "none",      // 연결부(고리): none | left | right | both
 };
 
 /* 시선 기울기(반지름 대비). 고리가 얼마나 옆에서 본 것처럼 겹쳐 보이는지를 정한다.
@@ -42,16 +41,10 @@ export function springGeometry(obj) {
   const radius = Math.max(0.1, obj.radius ?? obj.amplitude ?? SPRING_DEFAULTS.radius);
   const tilt = Math.max(0, obj.tilt ?? SPRING_TILT);
 
-  // 연결부(고리)는 p1/p2 '안쪽'에 그린다 — 고리를 켜도 전체 길이(p1~p2)는 변하지 않는다.
-  const hook = obj.hook || SPRING_DEFAULTS.hook;
-  const hookR = Math.min(radius * 0.62, L * 0.18);
-  const hasHookL = hook === "left" || hook === "both";
-  const hasHookR = hook === "right" || hook === "both";
-  const cutL = hasHookL ? hookR * 2 : 0;
-  const cutR = hasHookR ? hookR * 2 : 0;
-  const s = { x: p1.x + ax * cutL, y: p1.y + ay * cutL };    // 몸통 시작(고리 뒤)
-  const e = { x: p2.x - ax * cutR, y: p2.y - ay * cutR };    // 몸통 끝
-  const bodyLen = Math.max(0, L - cutL - cutR);
+  // 몸통은 p1~p2 전체다. (연결부(고리)는 2026-07-26 교사 판단으로 빼 두었다 —
+  // 원하는 형태가 따로 있어 나중에 그 모양으로 추가한다.)
+  const s = p1, e = p2;
+  const bodyLen = L;
 
   // 양끝 직선부는 몸통 길이의 40%를 넘지 않게 — 짧게 압축해도 코일이 사라지지 않는다.
   const lead = Math.max(0, Math.min(obj.leadLength ?? SPRING_DEFAULTS.leadLength, bodyLen * 0.4));
@@ -59,7 +52,6 @@ export function springGeometry(obj) {
   const a = { x: s.x + ax * lead, y: s.y + ay * lead };      // 코일 구간 시작
   const b = { x: e.x - ax * lead, y: e.y - ay * lead };      // 코일 구간 끝
   return { p1, p2, s, e, a, b, L, bodyLen, coilLen, ax, ay, nx, ny, turns, radius, tilt, lead,
-           hook, hookR, hasHookL, hasHookR,
            coils: turns, amp: radius };   // coils/amp = 옛 이름 별칭
 }
 
@@ -112,18 +104,6 @@ function coilPath(geo) {
   return { d, first, last };
 }
 
-/* 연결부(고리) 경로 — 끝점에서 안쪽으로 반지름 hookR 만큼 들어간 곳을 중심으로 한 열린 원.
- * 열린 틈이 몸통 쪽을 향하게 두어 코일·실이 고리에 물린 것처럼 보인다. */
-function hookPathD(geo, which) {
-  const { p1, p2, ax, ay, nx, ny, hookR } = geo;
-  const end = which === "left" ? p1 : p2;
-  const dir = which === "left" ? 1 : -1;
-  const cx = end.x + ax * hookR * dir, cy = end.y + ay * hookR * dir;
-  const sx = cx + nx * hookR, sy = cy + ny * hookR;
-  const ex = cx - nx * hookR, ey = cy - ny * hookR;
-  const sweep = dir > 0 ? 0 : 1;
-  return `M ${sx.toFixed(3)} ${sy.toFixed(3)} A ${hookR.toFixed(3)} ${hookR.toFixed(3)} 0 1 ${sweep} ${ex.toFixed(3)} ${ey.toFixed(3)}`;
-}
 
 export function renderSpring(obj) {
   const sw = obj.strokeWidth ?? 0.3;
@@ -154,11 +134,7 @@ export function renderSpring(obj) {
     return path;
   };
 
-  // 연결부(고리)는 파선 대상이 아니다 — 고리까지 점선이 되면 뭘 그린 건지 안 보인다.
-  if (geo.hasHookL) g.appendChild(mkPath(hookPathD(geo, "left"), false));
-  if (geo.hasHookR) g.appendChild(mkPath(hookPathD(geo, "right"), false));
-
-  // 종류 "line"(실·줄): 몸통을 직선 하나로. 끝점 스냅·고리는 그대로 쓴다.
+  // 종류 "line"(실·줄): 몸통을 직선 하나로. 끝점 스냅은 그대로 쓴다.
   if ((obj.springStyle || SPRING_DEFAULTS.springStyle) === "line") {
     const ln = mkLine(geo.s, geo.e);
     applyDash(ln, obj);
@@ -175,14 +151,6 @@ export function renderSpring(obj) {
   if (coil) g.appendChild(mkPath(coil.d, true));
 
   return withLineLabel(g, obj);
-}
-
-/* 연결부(고리) 순환: 없음 → 왼쪽 → 오른쪽 → 양쪽 → 없음 (인스펙터 버튼 한 개) */
-export const HOOK_CYCLE = ["none", "left", "right", "both"];
-export const HOOK_LABELS = { none: "없음", left: "왼쪽", right: "오른쪽", both: "양쪽" };
-export function nextHook(cur) {
-  const i = HOOK_CYCLE.indexOf(cur || "none");
-  return HOOK_CYCLE[(i + 1) % HOOK_CYCLE.length];
 }
 
 /* 코일이 진폭만큼 축 밖으로 나가므로 bbox는 그만큼 넓힌다(선택 테두리·내보내기 범위용). */

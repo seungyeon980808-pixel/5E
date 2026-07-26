@@ -62,6 +62,7 @@ let _annMode = null;              // '표시' 탭 배치 모드: null | "marker"
 let _annPending = null;           // 두 점짜리(화살표·가이드라인)의 첫 점 임시 저장
 let _lpSel = -1;                  // 선택된 라벨러 표시점 index(-1=없음). PageUp/Down 각도 회전 대상
 let _boxMode = false;             // 사각형 드래그로 정의역·치역을 한 번에 지정하는 중
+let _areaMode = false;            // 좌우 드래그로 '면적 채움 구간'을 지정하는 중
 let _selPts = null;               // 선택 계열의 baked world points(배치 고스트 스냅·클릭 가드용)
 let _selBreaks = null;            // 선택 계열의 끊긴 구간 경계(worldYAtX가 빈 구간 건너뛰게)
 let _allSeriesPts = [];           // 모든 계열의 baked world points [{pts,breaks}] — '표시' 탭 스냅용
@@ -105,7 +106,7 @@ function defaultCfg() {
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
 // movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
-function newExprSeries() { return { kind: "expr", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newExprSeries() { return { kind: "expr", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [], area: null }; }
 function newPointsSeries() { return { kind: "points", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
@@ -522,6 +523,24 @@ function buildFrame(cfg, at, artboard) {
   return plane;
 }
 
+/* 곡선 아래 면적 채움 — 계열의 area 스펙을 funcgraph 필드로 옮긴다.
+ * from·to는 정의역 값 그대로 두고(재편집·재샘플에 살아남는다), 기준선 y=0 위치만
+ * 세계좌표(mm)로 구워 넘긴다 — 렌더러가 평면을 몰라도 되게. */
+function areaFields(s, plane) {
+  if (!s || !s.area || !s.area.on) return {};
+  const a = s.area;
+  return {
+    area: {
+      from: Number.isFinite(a.from) ? a.from : undefined,
+      to: Number.isFinite(a.to) ? a.to : undefined,
+      baseY: worldFromMath(plane, 0, 0).y,
+      level: Number.isFinite(a.level) ? a.level : 220,
+      edges: a.edges === false ? false : undefined,
+      label: a.label || undefined,
+    },
+  };
+}
+
 /* ---------- 계열 → funcgraph 필드 준비 (plane 기준 샘플/베이크) ---------- */
 // 반환 { ok:true, list:[fgFields] } | { ok:false, error }. 빈 계열은 조용히 건너뜀(빈 틀 허용).
 function prepareSeries(plane) {
@@ -562,6 +581,7 @@ function prepareSeries(plane) {
         points, breaks, offset: off,
         rangeMin: s.range ? Math.min(s.range.min, s.range.max) : null,
         rangeMax: s.range ? Math.max(s.range.min, s.range.max) : null,
+        ...areaFields(s, plane),
         ...elementFields(s, plane, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
@@ -706,12 +726,15 @@ function refreshPreview() {
   _series.forEach((s, i) => {
     const [, dl, dg] = LINE_STYLES[s.styleIdx] || LINE_STYLES[0];
     let pts = null, sourceKind, curveStyle, breaks = null;
+    // 면적 채움은 정의역 값 기준이라 렌더러가 '실제 그린 범위'를 알아야 한다 → 밖으로 뺀다.
+    let dMinP = null, dMaxP = null;
     if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) return;
       const db = dataBounds(plane), pb = plotBounds(plane);   // 자동=격자 끝, 직접 지정=평면 박스 끝
       const dMin = s.domain ? Math.max(pb.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(pb.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
+      dMinP = dMin; dMaxP = dMax;
       const r = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
@@ -734,6 +757,8 @@ function refreshPreview() {
       curveStyle: s.curveStyle || (s.kind === "points" ? "straight" : "smooth"),
       curvature: s.curvature, handles: wHandles,                // 있으면 렌더가 진짜 3차 베지어로
       endLabel: s.endLabel, endLabelSize: endLabelSizeOf(plane),
+      domainMin: dMinP, domainMax: dMaxP,
+      ...areaFields(s, plane),                  // 곡선 아래 면적 채움 미리보기
       ...bakeElements(s, plane, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
@@ -1082,8 +1107,53 @@ function refreshPreview() {
     svg.style.cursor = "crosshair";
   }
 
+  /* 좌우 드래그로 면적 채움 구간을 정한다. 세로는 무시하고 x만 읽는다 —
+     "여기부터 저기까지"를 눈으로 정하는 작업이라 그림 위에서 하는 게 맞다. */
+  if (_areaMode && _series[_sel] && _series[_sel].area && _series[_sel].area.on) {
+    let band = null, start = null;
+    svg.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      start = clientToWorld(e.clientX, e.clientY);
+      if (!start) return;
+      band = document.createElementNS(SVG_NS, "rect");
+      band.setAttribute("fill", "color-mix(in srgb, var(--accent) 18%, transparent)");
+      band.setAttribute("stroke", "var(--accent)");
+      band.setAttribute("stroke-width", 0.25);
+      band.setAttribute("pointer-events", "none");
+      band.setAttribute("y", _previewPlane.y);
+      band.setAttribute("height", _previewPlane.h);
+      svg.appendChild(band);
+      const onMove = (ev) => {
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (!w || !band) return;
+        band.setAttribute("x", Math.min(start.x, w.x));
+        band.setAttribute("width", Math.abs(w.x - start.x));
+      };
+      const onUp = (ev) => {
+        window.removeEventListener("mousemove", onMove);
+        window.removeEventListener("mouseup", onUp);
+        const w = clientToWorld(ev.clientX, ev.clientY);
+        if (band) { band.remove(); band = null; }
+        const s2 = _series[_sel];
+        if (!w || !s2 || !s2.area) return;
+        if (Math.abs(w.x - start.x) < 1) return;         // 스치듯 클릭은 무시
+        const a = mathFromWorld(_previewPlane, start.x, start.y);
+        const b = mathFromWorld(_previewPlane, w.x, w.y);
+        const round2 = (v) => Math.round(v * 100) / 100;
+        s2.area.from = round2(Math.min(a.x, b.x));
+        s2.area.to = round2(Math.max(a.x, b.x));
+        _areaMode = false;                                // 한 번 정하면 모드는 꺼진다
+        syncSeriesEditor(); refreshPreview();
+      };
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    });
+    svg.style.cursor = "ew-resize";
+  }
+
   svg.addEventListener("click", (e) => {
-    if (_boxMode) return;       // 범위 지정 중에는 클릭 배치·선택 해제가 끼어들지 않게
+    if (_boxMode || _areaMode) return;   // 범위 지정 중에는 클릭 배치·선택 해제가 끼어들지 않게
     if (freehandDraw) return;   // 자유곡선 그리기는 아래 pointer 핸들러가 전담(탭 점찍기 포함)
     // '표시' 레이어 배치(요구 ③): 곡선이 가까우면 스냅, 없으면 클릭 좌표 그대로 — 함수 없이도 동작.
     if (_annMode) {
@@ -1805,6 +1875,22 @@ function syncSeriesEditor() {
   }
   if (document.activeElement !== _els.width) _els.width.value = s.strokeWidth;
   if (document.activeElement !== _els.endLabel) _els.endLabel.value = s.endLabel;
+
+  // 면적 채움: 함수식 계열에만(점 계열은 정의역 개념이 없다).
+  const areaAvail = s.kind === "expr";
+  _els.areaOn.closest(".gm-row").style.display = areaAvail ? "" : "none";
+  const a = s.area || null;
+  _els.areaOn.checked = !!(a && a.on);
+  _els.areaRows.style.display = (areaAvail && a && a.on) ? "" : "none";
+  if (a && a.on) {
+    if (document.activeElement !== _els.areaFrom) _els.areaFrom.value = Number.isFinite(a.from) ? a.from : "";
+    if (document.activeElement !== _els.areaTo) _els.areaTo.value = Number.isFinite(a.to) ? a.to : "";
+    if (document.activeElement !== _els.areaLevel) _els.areaLevel.value = Number.isFinite(a.level) ? a.level : 220;
+    if (document.activeElement !== _els.areaLabel) _els.areaLabel.value = a.label || "";
+    _els.areaEdges.checked = a.edges !== false;
+    _els.areaDrag.style.background = _areaMode ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "";
+    _els.areaNote.hidden = !_areaMode;
+  }
   syncElementLists();
 }
 
@@ -2219,6 +2305,37 @@ function build() {
                 </div>
               </div>
               <p class="gm-ax-note" id="gm-box-note" hidden>미리보기에서 사각형을 끌면 그 안쪽만 남깁니다.</p>
+
+              <div class="gm-row">
+                <span class="gm-row-lbl">면적 채움</span>
+                <div class="gm-row-body">
+                  <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;">
+                    <input type="checkbox" id="gm-area-on"> 곡선 아래를 채운다
+                  </label>
+                </div>
+              </div>
+              <div id="gm-area-rows" style="display:none;">
+                <div class="gm-row">
+                  <span class="gm-row-lbl">구간 <i>x</i></span>
+                  <div class="gm-row-body">
+                    <input type="number" id="gm-area-from" class="gm-num" style="width:70px;" step="0.5" placeholder="정의역 전체">
+                    <span style="color:var(--text-secondary);">~</span>
+                    <input type="number" id="gm-area-to" class="gm-num" style="width:70px;" step="0.5" placeholder="정의역 전체">
+                    <button type="button" id="gm-area-drag" class="modal-btn" style="font-size:11px;padding:4px 10px;">드래그로 지정</button>
+                  </div>
+                </div>
+                <div class="gm-row">
+                  <span class="gm-row-lbl">명도·라벨</span>
+                  <div class="gm-row-body">
+                    <input type="number" id="gm-area-level" class="gm-num" style="width:60px;" step="5" min="0" max="255" title="회색 명도 0~255 (255=흰색)">
+                    <input type="text" id="gm-area-label" class="gm-num" style="flex:1;min-width:0;" placeholder="면적 안 글자(예: 이동 거리)">
+                    <label style="display:inline-flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;">
+                      <input type="checkbox" id="gm-area-edges"> 경계선
+                    </label>
+                  </div>
+                </div>
+                <p class="gm-ax-note" id="gm-area-note" hidden>미리보기에서 좌우로 끌면 그 구간이 채워집니다.</p>
+              </div>
             </div>
 
             <div id="gm-pts-rows" class="gm-group" style="display:none;">
@@ -2437,6 +2554,11 @@ function build() {
     arrowRow: overlay.querySelector("#gm-arrow-row"),
     move: overlay.querySelector("#gm-move"),
     endLabel: overlay.querySelector("#gm-endlabel"),
+    areaOn: overlay.querySelector("#gm-area-on"), areaRows: overlay.querySelector("#gm-area-rows"),
+    areaFrom: overlay.querySelector("#gm-area-from"), areaTo: overlay.querySelector("#gm-area-to"),
+    areaLevel: overlay.querySelector("#gm-area-level"), areaLabel: overlay.querySelector("#gm-area-label"),
+    areaEdges: overlay.querySelector("#gm-area-edges"), areaDrag: overlay.querySelector("#gm-area-drag"),
+    areaNote: overlay.querySelector("#gm-area-note"),
     markerClick: overlay.querySelector("#gm-marker-click"), markerList: overlay.querySelector("#gm-marker-list"),
     guideClick: overlay.querySelector("#gm-guide-click"), guideList: overlay.querySelector("#gm-guide-list"),
     arrowClick: overlay.querySelector("#gm-arrow-click"), arrowList: overlay.querySelector("#gm-arrow-list"),
@@ -2677,6 +2799,44 @@ function build() {
     syncSeriesEditor(); refreshPreview();
   });
 
+  /* ----- 곡선 아래 면적 채움 (함수 하나에 붙는 옵션) -----
+   * 구간은 정의역 값으로 두 칸에 넣거나, 미리보기에서 좌우로 끌어 정한다.
+   * 비워 두면 그 함수의 정의역 전체를 채운다. */
+  const areaOf = (s) => (s.area ||= { on: false, from: null, to: null, level: 220, edges: true, label: "" });
+  _els.areaOn.addEventListener("change", () => {
+    const s = _series[_sel]; if (!s) return;
+    areaOf(s).on = _els.areaOn.checked;
+    if (!_els.areaOn.checked) _areaMode = false;
+    syncSeriesEditor(); refreshPreview();
+  });
+  const readAreaNum = (el) => { const v = parseFloat(el.value); return Number.isFinite(v) ? v : null; };
+  [_els.areaFrom, _els.areaTo].forEach((el) => el.addEventListener("input", () => {
+    const s = _series[_sel]; if (!s) return;
+    const a = areaOf(s);
+    a.from = readAreaNum(_els.areaFrom); a.to = readAreaNum(_els.areaTo);
+    refreshPreview();
+  }));
+  _els.areaLevel.addEventListener("input", () => {
+    const s = _series[_sel]; if (!s) return;
+    const v = parseFloat(_els.areaLevel.value);
+    areaOf(s).level = Number.isFinite(v) ? Math.max(0, Math.min(255, v)) : 220;
+    refreshPreview();
+  });
+  _els.areaLabel.addEventListener("input", () => {
+    const s = _series[_sel]; if (!s) return;
+    areaOf(s).label = _els.areaLabel.value; refreshPreview();
+  });
+  _els.areaEdges.addEventListener("change", () => {
+    const s = _series[_sel]; if (!s) return;
+    areaOf(s).edges = _els.areaEdges.checked; refreshPreview();
+  });
+  _els.areaDrag.addEventListener("click", () => {
+    const s = _series[_sel]; if (!s || !s.area || !s.area.on) return;
+    _areaMode = !_areaMode;
+    if (_areaMode) { _boxMode = false; _placeMode = null; }
+    syncElementLists(); syncSeriesEditor(); refreshPreview();
+  });
+
   _els.move.addEventListener("change", () => {
     const s = _series[_sel]; if (s) { s.movable = _els.move.checked; refreshPreview(); }
   });
@@ -2890,7 +3050,17 @@ function loadFromPlane(plane) {
         domain: (!fg.domainAuto && fg.domainMin != null && fg.domainMax != null) ? { min: fg.domainMin, max: fg.domainMax } : null,
         styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "smooth", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1,
         offset: (fg.offset && Number.isFinite(fg.offset.dx)) ? { dx: fg.offset.dx, dy: fg.offset.dy } : { dx: 0, dy: 0 },
-        endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, ...loadElements(fg),
+        endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend,
+        // 면적 채움: baseY는 평면에서 다시 구우므로 버리고 구간·모양만 되읽는다.
+        area: fg.area ? {
+          on: true,
+          from: Number.isFinite(fg.area.from) ? fg.area.from : null,
+          to: Number.isFinite(fg.area.to) ? fg.area.to : null,
+          level: Number.isFinite(fg.area.level) ? fg.area.level : 220,
+          edges: fg.area.edges !== false,
+          label: fg.area.label || "",
+        } : null,
+        ...loadElements(fg),
       });
     }
   }

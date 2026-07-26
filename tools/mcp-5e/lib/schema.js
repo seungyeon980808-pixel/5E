@@ -40,7 +40,7 @@ export const PULLEY_VARIANTS = ["basic", "ceiling", "wall"];
 export const GAUGE_KINDS = ["ruler", "protractor"];
 export const FILL_STYLES = ["solid", "dots", "cross", "hatch"];
 export const ARROW_HEADS = ["none", "end", "start", "both"];
-export const LINE_MODES = ["solid", "arrow", "middleArrow", "lengthArrow"];
+export const LINE_MODES = ["solid", "arrow", "middleArrow", "midInward", "lengthArrow", "wavyArrow"];
 export const LABEL_TYPES = ["quantity", "label"];
 export const LABEL_POSITIONS = ["center", "above", "below", "left", "right"];
 // halfcross(ㅏ자) = x는 0부터, y는 양방향. 렌더러(coordplane.js)는 예전부터 지원하는데
@@ -150,7 +150,7 @@ const DEFAULTS = {
   // tools.js makePendulum
   // 용수철: 길이는 p1/p2가 정하고 코일 수·진폭·양끝 직선부는 필드다.
   spring: () => ({
-    turns: 14, radius: 2, leadLength: 2, springStyle: "helix", hook: "none",
+    turns: 14, radius: 2, leadLength: 2, springStyle: "helix",
     label: "", labelShow: false, labelType: "quantity",
   }),
   pendulum: () => ({
@@ -210,7 +210,7 @@ export const TYPE_DOC = {
   rect: { summary: "직사각형(블록·물체). 라벨 가능", required: "x,y,w,h" },
   ellipse: { summary: "타원·원", required: "x,y,w,h" },
   triangle: { summary: "직각삼각형(빗면). flipX/flipY로 방향", required: "x,y,w,h" },
-  line: { summary: "직선. 화살표(arrowHead)·점선 지원", required: "p1,p2" },
+  line: { summary: "직선. 화살표(arrowHead)·점선 지원. lineMode \"wavyArrow\"면 물결 화살표(광자·전자기파) — waveLength(파장mm, 기본 5)·waveAmp(진폭mm, 기본 1.1)", required: "p1,p2" },
   polyline: { summary: "꺾은선. closed:true면 채움 도형", required: "points[2+]" },
   curve: { summary: "부드러운 곡선(Catmull-Rom)", required: "points[2+]" },
   funcgraph: { summary: "함수 그래프. add_graph 툴로 만드는 것을 권장", required: "points[], planeId" },
@@ -227,7 +227,7 @@ export const TYPE_DOC = {
   optics: { summary: `광학·역학 심볼(${OPTICS_KINDS.join("/")})`, required: "x,y,w,h,kind" },
   apparatus: { summary: `실험 기구(${APPARATUS_KINDS.join("/")})`, required: "x,y,kind" },
   pendulum: { summary: "단진자. p1=고정점, p2=추 중심", required: "p1,p2" },
-  spring: { summary: "용수철. p1→p2가 양 끝(물체에 닿는 지점). turns(감은 수, 기본 14)·radius(코일 반지름mm)·leadLength·springStyle(helix 감긴코일 | line 실·줄)·hook(연결부 고리: none|left|right|both). 점선은 dashLength/dashGap", required: "p1,p2" },
+  spring: { summary: "용수철. p1→p2가 양 끝(물체에 닿는 지점). turns(감은 수, 기본 14)·radius(코일 반지름mm)·leadLength·springStyle(helix 감긴코일 | line 실·줄). 점선은 dashLength/dashGap", required: "p1,p2" },
   gauge: { summary: `측정 가이드(${GAUGE_KINDS.join("/")})`, required: "x,y,w,h,kind" },
 };
 

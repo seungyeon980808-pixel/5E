@@ -167,6 +167,17 @@ const TOOLS = [
               dashLength: { type: "number" },
               dashGap: { type: "number" },
               label: { type: "string", description: "곡선 끝 라벨" },
+              area: {
+                type: "object",
+                description: "곡선 아래 면적 채움(이 함수에만 붙는다). from·to는 정의역 값 — 생략하면 정의역 전체. x축까지 채운다",
+                properties: {
+                  from: { type: "number", description: "채울 구간 시작(정의역 값)" },
+                  to: { type: "number", description: "채울 구간 끝(정의역 값)" },
+                  level: { type: "number", description: "회색 명도 0~255 (기본 220)" },
+                  edges: { type: "boolean", description: "구간 양 끝을 곡선→축까지 가는 실선으로 내릴지(기본 true)" },
+                  label: { type: "string", description: "면적 안에 넣을 글자(예: 이동 거리)" },
+                },
+              },
               guides: {
                 type: "array",
                 description: "수선의 발 — 이 점에서 x축·y축으로 내리는 가는 파선. 수학 좌표 {x,y}. " +

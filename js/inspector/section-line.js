@@ -81,6 +81,10 @@ export function buildLineSection(ctx) {
     midInward: '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
             '<polygon points="11,8 17,12 11,16" fill="#888"/>' +
             '<polygon points="29,8 23,12 29,16" fill="#888"/>',
+    // 물결 화살표: 진폭 일정 + 짧은 직선부 + 화살촉(객체와 같은 모양).
+    wavy:   '<path d="M4 12 q2.7 -4.5 5.3 0 q2.7 4.5 5.3 0 q2.7 -4.5 5.3 0 q2.7 4.5 5.3 0 L30 12" ' +
+            'fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round"/>' +
+            '<polygon points="30,8 36,12 30,16" fill="#888"/>',
   };
   const MIDDLE_LEFT_ICON = '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
     '<polygon points="26,8 20,12 26,16" fill="#888"/>';
@@ -126,6 +130,7 @@ export function buildLineSection(ctx) {
     { value: "middleArrow", label: "Middle arrow", icon: ARROW_ICONS.center },
     { value: "midInward", label: "Inward double arrow", icon: ARROW_ICONS.midInward },
     { value: "lengthArrow", label: "Length arrow", icon: ARROW_ICONS.both },
+    { value: "wavyArrow", label: "물결 화살표 (광자·전자기파)", icon: ARROW_ICONS.wavy },
   ];
   const lineModeBtnEls = {};
   LINE_MODES.forEach(({ value, label, icon }) => {
@@ -208,6 +213,43 @@ export function buildLineSection(ctx) {
   // 미설정 시 render/shapes.js가 선 두께 기반 자동 크기로 폴백한다.
   const dimensionLabelSizeRow = makeLabelSizeRow((o) => o.type === "line", "라벨 크기", "dimensionLabelSize");
   sec1Body.appendChild(dimensionLabelSizeRow.row);
+
+  /* ---- 물결 화살표 전용: 파장·진폭 (lineMode "wavyArrow"일 때만 보인다) ----
+   * 파장은 mm다 — 선을 길게 뽑아도 물결의 촘촘함이 유지된다. 렌더러는 이 값으로
+   * 파장 수를 정수로 반올림하므로 화살촉은 항상 축 위에서 만난다. */
+  function wavyNumberRow(labelText, prop, fallback, { min, max, step }) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.textContent = labelText;
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = min; inp.max = max; inp.step = step;
+    inp.style.cssText = "width:70px;font-size:11px;border:1px solid var(--border);border-radius:6px;padding:3px 5px;background:var(--bg-input);color:var(--text-primary);";
+    const fire = () => {
+      const v = Number(inp.value);
+      if (!Number.isFinite(v)) return;
+      const s = state.get();
+      const id = (s.selectedIds || [])[0];
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const o = s2.objects.find((item) => item.id === id);
+        if (!o || o.type !== "line" || o.locked) return;
+        const nv = Math.min(max, Math.max(min, v));
+        if (o[prop] === nv) return;
+        s2.undoStack.push(snap); s2.redoStack = [];
+        o[prop] = nv;
+      });
+    };
+    inp.addEventListener("input", fire);
+    inp.addEventListener("change", fire);
+    row.appendChild(lbl); row.appendChild(inp);
+    sec1Body.appendChild(row);
+    return { row, inp, fallback };
+  }
+  const waveLengthRow = wavyNumberRow("파장(mm)", "waveLength", 5, { min: 1, max: 40, step: 0.5 });
+  const waveAmpRow = wavyNumberRow("진폭(mm)", "waveAmp", 1.1, { min: 0.2, max: 12, step: 0.1 });
 
   /* ---- straight-line upright label (Group 3): text input + on/off toggle ----
    * Writes obj.label / obj.labelShow. When on, render.js (withLineLabel) draws
@@ -751,6 +793,7 @@ export function buildLineSection(ctx) {
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
+    waveLengthRow, waveAmpRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,

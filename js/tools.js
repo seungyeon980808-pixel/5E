@@ -843,7 +843,6 @@ function makeSpring(a, b) {
     radius: 2,
     leadLength: 2,
     springStyle: "helix",
-    hook: "none",
     label: "",
     labelShow: false,
     labelType: "quantity",

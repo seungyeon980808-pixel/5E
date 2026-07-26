@@ -778,6 +778,69 @@ function renderFuncgraph(obj) {
   if (obj.id) g.dataset.id = obj.id;
 
   const pts = obj.points || [];
+
+  /* ----- 곡선 아래 면적 채움 (함수 하나에 붙는 옵션) -----
+   * obj.area = { from, to, baseY, level, edges, label }
+   *   from·to = 정의역 값(비우면 함수 정의역 전체). baseY = 기준선의 세계 y(mm) —
+   *   평면의 y=0 위치를 만든 쪽(그래프 모달·MCP)이 구워 넣는다. 이 파일의 다른 그래프
+   *   요소(guideSegs·markers)와 같은 규약이라 저장·미리보기·캔버스가 한 경로로 통일된다.
+   * 곡선보다 먼저 그려 채움이 선 아래로 깔린다. */
+  const area = obj.area;
+  if (area && Number.isFinite(area.baseY) && pts.length > 1) {
+    const dMin = obj.domainMin, dMax = obj.domainMax;
+    const hasDomain = Number.isFinite(dMin) && Number.isFinite(dMax) && dMax !== dMin;
+    const n = pts.length;
+    // 정의역 값 → 점 배열의 (실수) 인덱스. 샘플이 정의역에 균등 분포라는 성질을 쓴다.
+    const idxOf = (d) => Math.max(0, Math.min(n - 1, ((d - dMin) / (dMax - dMin)) * (n - 1)));
+    const at = (f) => {
+      const i = Math.floor(f), t = f - i;
+      if (i >= n - 1) return pts[n - 1];
+      return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t,
+               y: pts[i].y + (pts[i + 1].y - pts[i].y) * t };
+    };
+    let f0 = 0, f1 = n - 1;
+    if (hasDomain && (Number.isFinite(area.from) || Number.isFinite(area.to))) {
+      const lo = Math.min(area.from ?? dMin, area.to ?? dMax);
+      const hi = Math.max(area.from ?? dMin, area.to ?? dMax);
+      f0 = idxOf(lo); f1 = idxOf(hi);
+    }
+    if (f1 > f0) {
+      const seg = [at(f0)];
+      for (let i = Math.ceil(f0); i <= Math.floor(f1); i++) seg.push(pts[i]);
+      seg.push(at(f1));
+      const d = `M ${seg[0].x.toFixed(3)} ${area.baseY.toFixed(3)} `
+        + seg.map((p) => `L ${p.x.toFixed(3)} ${p.y.toFixed(3)}`).join(" ")
+        + ` L ${seg[seg.length - 1].x.toFixed(3)} ${area.baseY.toFixed(3)} Z`;
+      const fillEl = document.createElementNS(SVG_NS, "path");
+      fillEl.setAttribute("d", d);
+      fillEl.setAttribute("fill", grayHex(area.level ?? 220));
+      fillEl.setAttribute("stroke", "none");
+      g.appendChild(fillEl);
+      // 경계선: 채운 구간의 양 끝을 곡선에서 기준선까지 가는 실선으로 내린다(기본 켬).
+      if (area.edges !== false) {
+        [seg[0], seg[seg.length - 1]].forEach((p) => {
+          const l = document.createElementNS(SVG_NS, "line");
+          l.setAttribute("x1", p.x); l.setAttribute("y1", p.y);
+          l.setAttribute("x2", p.x); l.setAttribute("y2", area.baseY);
+          l.setAttribute("stroke", grayHex(obj.strokeLevel));
+          l.setAttribute("stroke-width", (obj.strokeWidth ?? 0.3) * 0.55);
+          g.appendChild(l);
+        });
+      }
+      // 면적 라벨: 채운 영역 한가운데에 흰 halo 글자(스타일 가이드 5장).
+      if (area.label) {
+        const mid = at((f0 + f1) / 2);
+        const lbl = renderGraphLabel(area.label, {
+          x: (seg[0].x + seg[seg.length - 1].x) / 2,
+          y: (mid.y + area.baseY) / 2,
+          size: area.labelSize || Math.max((obj.strokeWidth || 0.3) * 11, 2.8),
+          color: grayHex(obj.strokeLevel), anchor: "middle", vAlign: "middle", halo: true,
+        });
+        if (lbl) g.appendChild(lbl);
+      }
+    }
+  }
+
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
   const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
   const el = document.createElementNS(SVG_NS, "path");

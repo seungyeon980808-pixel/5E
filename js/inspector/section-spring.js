@@ -3,7 +3,7 @@
  * (요구: "도르래의 반지름, 감은수 등을 입력 가능한 객체로 — 단진자와 비슷한 느낌") */
 
 import { makeSection } from "./widgets.js?v=1.2.0";
-import { SPRING_DEFAULTS, HOOK_LABELS, nextHook } from "../render/spring.js?v=1.2.0";
+import { SPRING_DEFAULTS } from "../render/spring.js?v=1.2.0";
 
 export function buildSpringSection(ctx) {
   const { state } = ctx;
@@ -94,26 +94,6 @@ export function buildSpringSection(ctx) {
     commitMany({ dashLength: v === "dashed" ? 1.2 : 0, dashGap: v === "dashed" ? 0.8 : 0 });
   });
 
-  // 연결부(고리): 버튼 하나를 누를 때마다 없음 → 왼쪽 → 오른쪽 → 양쪽 순환.
-  const hookRow = document.createElement("div");
-  hookRow.className = "insp-row";
-  const hookLbl = document.createElement("label");
-  hookLbl.className = "insp-field-label";
-  hookLbl.textContent = "연결부";
-  const hookBtn = document.createElement("button");
-  hookBtn.type = "button";
-  hookBtn.className = "insp-input";
-  hookBtn.title = "누를 때마다 없음 → 왼쪽 → 오른쪽 → 양쪽 순으로 바뀝니다";
-  hookRow.appendChild(hookLbl); hookRow.appendChild(hookBtn);
-  body.appendChild(hookRow);
-  hookBtn.addEventListener("click", () => {
-    const s = state.get();
-    const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
-    const next = nextHook(o && o.hook);
-    commit("hook", next);
-    hookBtn.textContent = HOOK_LABELS[next];
-  });
-
   // 나선 전용 칸(감은 수·반지름)은 종류가 "실선"이면 의미가 없으니 숨긴다.
   function syncStyleRows(style) {
     const hide = style === "line";
@@ -133,7 +113,6 @@ export function buildSpringSection(ctx) {
     styleSel.value = style;
     syncStyleRows(style);
     dashSel.value = (o.dashLength > 0) ? "dashed" : "solid";
-    hookBtn.textContent = HOOK_LABELS[o.hook || "none"];
   }
 
   return { secSpring, syncSpring };
