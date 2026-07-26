@@ -405,7 +405,7 @@ function applyDelta(obj, orig, dx, dy) {
     // caller (step 5 재샘플 결합) — the plane itself just translates here.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
-  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave") {
+  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola") {
     // Circuit/labeler/pendulum move by translating BOTH endpoints (pendulum:
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };

@@ -25,6 +25,7 @@ export const OBJECT_TYPE_IDS = [
   "chargefield", "fieldlines", "standingwave",
   "gauge",
   "solid3d",
+  "parabola",
 ];
 
 // Per-type classification flags. Each flag names a behavior-class that some
@@ -80,6 +81,9 @@ export const OBJECT_TYPES = {
   // 리사이즈·bbox·저장을 손댈 것 없이 그대로 물려받는다. boxFace로 bbox 전체가 클릭 면.
   // snapEdge: 블록을 상판 모서리에 붙일 때 자석이 필요해서 켠다(rect와 같은 취급).
   solid3d:    { sizeBox: 1, boxFace: 1, flip: 1, label: 1, snapEdge: 1 },
+  // parabola = 포물선 궤적. p1/p2가 **바닥(그림자)의 출발점·도달점**이라 정상파·용수철과
+  // 같은 두 점 계열이다. snapLineLike로 끝점이 블록·상판 모서리에 붙는다.
+  parabola:   { lineTol: 1, label: 1, snapLineLike: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.

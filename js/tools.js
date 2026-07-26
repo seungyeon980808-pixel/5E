@@ -110,7 +110,7 @@ let _activeSymbolId = null;
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
 const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
-  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D"]);
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -336,7 +336,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -657,7 +657,8 @@ function setupDrawing() {
 // Size-based shapes need a non-trivial box; a line needs a non-trivial length.
 export function isCommittable(shape) {
   if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring"
-      || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave") {
+      || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave"
+      || shape.type === "parabola") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -671,6 +672,11 @@ function makeShape(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
   if (type === "spring") return makeSpring(a, b);
+  if (type === "parabola") {
+    const obj = makeParabola(a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
   if (type === "chargefield" || type === "fieldlines" || type === "standingwave") {
     const obj = type === "chargefield" ? makeChargeField(a, b)
       : type === "fieldlines" ? makeFieldLines(a, b) : makeStandingWave(a, b);
@@ -938,6 +944,32 @@ function makeFieldLines(a, b) {
 }
 
 /* 정상파 — p1·p2가 줄·관의 양 끝. */
+/* 포물선 궤적 — 드래그한 두 점은 **바닥(그림자)의 출발점·도달점**이다.
+ * 최고 높이는 두 점 사이 거리에 비례해 잡아 둔다(짧게 끌면 낮게, 길게 끌면 높게).
+ * 그래야 그린 직후 모양이 그럴듯하고, 이후 인스펙터에서 숫자로 다듬는다. */
+function makeParabola(a, b) {
+  const span = Math.hypot(b.x - a.x, b.y - a.y);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "parabola",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    apex: Math.max(span * 0.35, 3),
+    showShadow: true,     // 바닥 점선 — 이게 없으면 깊이가 안 읽힌다
+    showApex: false,
+    label: "",
+    showLabel: false,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
 function makeStandingWave(a, b) {
   return applyNewObjectStyleDefaults({
     id: null,

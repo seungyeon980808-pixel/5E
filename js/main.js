@@ -35,6 +35,7 @@ import { initBulkEdit } from "./bulk-edit.js?v=1.2.0";
 import { initDataPlot } from "./data-plot.js?v=1.2.0";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.2.0";
 import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.2.0";
+import { initParabolaSection } from "./inspector/section-parabola.js?v=1.2.0";
 import { initAutosave } from "./autosave.js?v=1.2.0";
 import { initPages } from "./pages.js?v=1.2.0";
 import { localizeShortcutLabels } from "./platform.js?v=1.2.0";
@@ -157,6 +158,9 @@ initGaugeSection(state);
 
 /* ----- 입체(solid3d) 전용 인스펙터 섹션(자체 구독형; initInspector 뒤에 마운트) ----- */
 initSolid3dSection(state);
+
+/* ----- 포물선 궤적 전용 인스펙터 섹션(자체 구독형) ----- */
+initParabolaSection(state);
 
 /* ===== UNDO / REDO TOP-BAR BUTTONS (icon-only; left of 파일) ===== */
 (function initUndoRedoButtons() {

@@ -10,7 +10,8 @@ import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./st
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
-         chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox } from "./render.js?v=1.2.0";
+         chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
+         parabolaPoints, parabolaBBox } from "./render.js?v=1.2.0";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
@@ -219,6 +220,15 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
+    if (o.type === "parabola") {
+      // 궤적 곡선(표본 폴리라인)에 굵은 클릭 띠. 바닥 점선은 궤적과 붙어 있어 따로 안 잡는다.
+      const pts = parabolaPoints(o, 24);
+      for (let i = 1; i < pts.length; i += 1) {
+        if (segDist(p.x, p.y, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y) <= margin) return o.id;
+      }
+      continue;
+    }
+
     if (o.type === "standingwave") {
       // 관·줄의 축 선분에 배 높이만큼 여유를 준다(포락선 어디를 눌러도 잡힌다).
       const geo = standingWaveGeometry(o);
@@ -399,6 +409,7 @@ function getObjectBBox(o) {
   if (o.type === "chargefield") return chargeFieldBBox(o);
   if (o.type === "fieldlines") return fieldLinesBBox(o);
   if (o.type === "standingwave") return standingWaveBBox(o);
+  if (o.type === "parabola") return parabolaBBox(o);
   if (o.type === "pendulum") {
     return pendulumBBox(o);
   }

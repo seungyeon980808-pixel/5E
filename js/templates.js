@@ -210,6 +210,9 @@ export const TEMPLATES = {
   solid_disk:     { kind: "shape", category: "역학", label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_wedge:    { kind: "shape", category: "역학", label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
   solid_desk:     { kind: "shape", category: "역학", label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
+  // 포물선: 두 번 끄는 게 아니라 **바닥의 출발점 → 도달점**을 끈다. 깊이 방향으로 끌면
+  // 안쪽으로 날아가는 3D 궤적이 된다(바닥 점선이 그 느낌을 만든다).
+  parabola:       { kind: "shape", category: "역학", label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -355,6 +358,13 @@ function iconSampleObject(id, def) {
     if (c.kind === "clamp") sample.flipped = false;
     if (c.kind === "scale") sample.displayText = "0.99 N";
     return sample;
+  }
+  if (c.tool === "PARABOLA") {
+    return {
+      type: "parabola", p1: { x: -12, y: 8 }, p2: { x: 12, y: 8 },
+      apex: 13, showShadow: true, showApex: false,
+      strokeLevel: 0, strokeWidth: 0.6, showLabel: false,
+    };
   }
   if (c.tool === "SOLID3D") {
     const b = SOLID3D_ICON_BOX[id] || { w: 20, h: 18, depth: 6 };

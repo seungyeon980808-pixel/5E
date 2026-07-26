@@ -15,3 +15,4 @@ export { chargeFieldGeometry, chargeFieldBBox, CHARGEFIELD_DEFAULTS,
 export { standingWaveGeometry, standingWaveBBox, normalizeHarmonic,
          STANDINGWAVE_DEFAULTS } from "./render/standing-wave.js?v=1.2.0";
 export { pulleyGeom, pulleyAnchors } from "./render/optics-apparatus.js?v=1.2.0";
+export { parabolaPoints, parabolaBBox, parabolaApexPoints, DEFAULT_APEX_MM } from "./render/parabola.js?v=1.2.0";
