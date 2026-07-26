@@ -129,7 +129,9 @@ const COMMANDS = {
         index: i, id: p.id, name: p.name,
         // 활성 페이지의 objects는 s.objects에 있고, 비활성 페이지는 p.objects에 있다.
         objects: p.id === s.activePageId ? s.objects.length : (p.objects || []).length,
-        artboard: p.artboard,
+        // 활성 페이지의 아트보드는 s.artboard가 진짜다(p.artboard는 페이지를 떠날 때
+        // writeBackActive로 갱신되므로 활성 중에는 낡은 값이다).
+        artboard: p.id === s.activePageId ? s.artboard : p.artboard,
       })),
     };
   },

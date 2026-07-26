@@ -40,7 +40,9 @@ export const ARROW_HEADS = ["none", "end", "start", "both"];
 export const LINE_MODES = ["solid", "arrow", "middleArrow", "lengthArrow"];
 export const LABEL_TYPES = ["quantity", "label"];
 export const LABEL_POSITIONS = ["center", "above", "below", "left", "right"];
-export const AXIS_VARIANTS = ["cross", "quadrant", "single"];
+// halfcross(ㅏ자) = x는 0부터, y는 양방향. 렌더러(coordplane.js)는 예전부터 지원하는데
+// 이 목록에 빠져 있어 MCP로는 쓸 수 없었다.
+export const AXIS_VARIANTS = ["cross", "quadrant", "halfcross", "single"];
 
 // project-io.js APPARATUS_TEMPLATE_IDS
 const APPARATUS_TEMPLATE_IDS = {
