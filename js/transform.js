@@ -476,7 +476,11 @@ function objectCenter(obj) {
   return { x: obj.x + (obj.w || 0) / 2, y: obj.y + (obj.h || 0) / 2 };
 }
 
-function translateObject(obj, dx, dy) {
+/* 오브젝트를 (dx,dy)만큼 그 자리에서 옮긴다. 타입별 좌표 표현(x/y · p1/p2 · points[])을
+ * 아는 곳이 applyDelta 하나뿐이도록 이걸 공유한다 — 드래그 밖에서 이동이 필요한 곳
+ * (bulk-edit의 간격 통일 등)도 이걸 쓴다. 분기를 복사하면 새 타입이 생겼을 때 한쪽만
+ * 고쳐져 "그 타입만 조용히 안 움직이는" 버그가 난다. */
+export function translateObject(obj, dx, dy) {
   const orig = JSON.parse(JSON.stringify(obj));
   applyDelta(obj, orig, dx, dy);
 }

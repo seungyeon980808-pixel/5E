@@ -91,8 +91,14 @@ function face(obj, pts, fillLevel, stroke, sw) {
  * 그리는 순서 = 윗면 → 옆면 → 앞면. 앞면을 마지막에 얹어야 앞쪽 모서리가 깨끗하다. */
 // 앞면 좌상단(x0,y0)·앞면 크기(fw,fh)·투영벡터(dx,dy)로 상자 하나를 g에 얹는다.
 // 책상은 이걸 5번(상판 + 다리 4개) 부르므로 bbox 계산에서 분리해 뒀다.
-function pushBox(g, obj, x0, y0, fw, fh, dx, dy, sh, stroke, sw) {
-  g.appendChild(face(obj, [[x0, y0], [x0 + fw, y0], [x0 + fw + dx, y0 - dy], [x0 + dx, y0 - dy]], sh.top, stroke, sw));
+//
+// noTop: 윗면을 그리지 않는다. 책상 다리처럼 **윗면이 다른 물체에 맞닿아 붙어 있는**
+// 상자에 쓴다. 다리 윗면을 그리면 상판 앞면 띠 위로 흰 사각형이 튀어나와, 상판이
+// 파인 것처럼 보인다(2026-07-26 사용자 지적).
+function pushBox(g, obj, x0, y0, fw, fh, dx, dy, sh, stroke, sw, noTop) {
+  if (!noTop) {
+    g.appendChild(face(obj, [[x0, y0], [x0 + fw, y0], [x0 + fw + dx, y0 - dy], [x0 + dx, y0 - dy]], sh.top, stroke, sw));
+  }
   g.appendChild(face(obj, [[x0 + fw, y0], [x0 + fw + dx, y0 - dy], [x0 + fw + dx, y0 + fh - dy], [x0 + fw, y0 + fh]], sh.side, stroke, sw));
   g.appendChild(face(obj, [[x0, y0], [x0 + fw, y0], [x0 + fw, y0 + fh], [x0, y0 + fh]], sh.front, stroke, sw));
 }
@@ -131,18 +137,20 @@ function drawDesk(obj, proj, stroke, sw) {
   const L = fh - T;               // 다리 길이
   const dxL = lw * ux, dyL = lw * uy;
 
-  // [가로위치 X, 깊이위치 Z] — 뒤 다리(Z 큰 쪽)를 먼저 그린다.
+  // [가로위치 X, 깊이위치 Z] — 뒤 다리(Z 큰 쪽)를 먼저 그려 앞 다리에 가려지게 한다.
   const legs = [
     [0, d - lw], [fw - lw, d - lw],   // 뒤 왼쪽 · 뒤 오른쪽
     [0, 0], [fw - lw, 0],             // 앞 왼쪽 · 앞 오른쪽
   ];
-  const putLeg = ([X, Z]) => {
-    if (L <= 0) return;
-    pushBox(g, obj, x + X + Z * ux, y0 + T - Z * uy, lw, L, dxL, dyL, sh, stroke, sw);
-  };
-  legs.slice(0, 2).forEach(putLeg);                                  // 뒤 다리
+  // 다리 넷을 **모두 상판보다 먼저** 그린다. 다리는 전부 상판 아래에 붙으므로 상판보다
+  // 앞설 일이 없고, 이렇게 해야 다리 옆면이 깊이만큼 위로 삐져나온 조각(y0+T보다 위)이
+  // 상판 앞면에 자연스럽게 덮인다. 앞 다리를 상판 뒤에 그리면 그 조각이 상판을 뚫고 나온다.
+  if (L > 0) {
+    for (const [X, Z] of legs) {
+      pushBox(g, obj, x + X + Z * ux, y0 + T - Z * uy, lw, L, dxL, dyL, sh, stroke, sw, true);
+    }
+  }
   pushBox(g, obj, x, y0, fw, T, dx, dy, sh, stroke, sw);             // 상판
-  legs.slice(2).forEach(putLeg);                                     // 앞 다리
   return g;
 }
 

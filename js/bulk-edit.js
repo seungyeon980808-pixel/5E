@@ -16,6 +16,8 @@
 import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.2.0";
 import { SHAPE_TYPES } from "./object-types.js?v=1.2.0";
 import { showAlert } from "./ui-dialogs.js?v=1.2.0";
+import { getObjectBBox } from "./pick.js?v=1.2.0";
+import { translateObject } from "./transform.js?v=1.2.0";
 
 let _state = null;
 let _overlay = null;
@@ -55,6 +57,38 @@ function setAngleDelta(o, d) {
   }
 }
 
+/* ----- 크기 헬퍼 -----
+ * "크기"의 뜻이 타입마다 다르다: 상자 계열(사각형·이미지·입체·자…)은 폭·높이지만
+ * 두 끝점 계열(선·회로·용수철·장 그림)은 길이다. 그래서 항목을 셋으로 나누고 각
+ * 항목의 has()가 해당되는 타입에만 걸리게 한다.
+ * lockAspect가 켜진 오브젝트(도르래·각도기 등)는 한 축만 바꾸면 찌그러지므로
+ * 반대 축을 같은 비율로 따라가게 한다. */
+const MIN_SIZE_MM = 0.5;
+
+function setBoxW(o, w) {
+  const v = Math.max(MIN_SIZE_MM, w);
+  if (o.lockAspect && o.w > 0) o.h = Math.max(MIN_SIZE_MM, o.h * (v / o.w));
+  o.w = v;
+}
+function setBoxH(o, h) {
+  const v = Math.max(MIN_SIZE_MM, h);
+  if (o.lockAspect && o.h > 0) o.w = Math.max(MIN_SIZE_MM, o.w * (v / o.h));
+  o.h = v;
+}
+const lineLen = (o) => Math.hypot(o.p2.x - o.p1.x, o.p2.y - o.p1.y);
+// 중점과 방향은 그대로 두고 길이만 바꾼다 — 한쪽 끝을 고정하면 여러 개를 통일했을 때
+// 선들이 한쪽으로 쏠려 배치가 무너진다.
+function setLineLen(o, len) {
+  const want = Math.max(MIN_SIZE_MM, len);
+  const cur = lineLen(o);
+  const cx = (o.p1.x + o.p2.x) / 2, cy = (o.p1.y + o.p2.y) / 2;
+  const ux = cur < 1e-9 ? 1 : (o.p2.x - o.p1.x) / cur;
+  const uy = cur < 1e-9 ? 0 : (o.p2.y - o.p1.y) / cur;
+  const h = want / 2;
+  o.p1 = { x: cx - ux * h, y: cy - uy * h };
+  o.p2 = { x: cx + ux * h, y: cy + uy * h };
+}
+
 /* ----- 항목 정의 -----
  * type: "number"(양쪽 모드) | "font"(통일 전용) | "bool"(통일 전용)
  * uniformOnly: 통일 모드에서만 노출 */
@@ -92,6 +126,24 @@ const FIELDS = [
       if ((o.type === "text" || o.type === "formula") && typeof o.fontSize === "number") o.fontSize = Math.max(minMm, o.fontSize + dmm);
       if (typeof o.labelSize === "number") o.labelSize = Math.max(minMm, o.labelSize + dmm);
     },
+  },
+  {
+    key: "boxW", type: "number", label: "폭", unit: "mm", step: 1, uniDefault: 20,
+    has: (o) => typeof o.w === "number" && typeof o.h === "number",
+    setUni: (o, v) => setBoxW(o, v),
+    setDelta: (o, d) => setBoxW(o, o.w + d),
+  },
+  {
+    key: "boxH", type: "number", label: "높이", unit: "mm", step: 1, uniDefault: 20,
+    has: (o) => typeof o.w === "number" && typeof o.h === "number",
+    setUni: (o, v) => setBoxH(o, v),
+    setDelta: (o, d) => setBoxH(o, o.h + d),
+  },
+  {
+    key: "lineLen", type: "number", label: "길이", unit: "mm", step: 1, uniDefault: 20,
+    has: (o) => !!(o.p1 && o.p2),
+    setUni: (o, v) => setLineLen(o, v),
+    setDelta: (o, d) => setLineLen(o, lineLen(o) + d),
   },
   {
     key: "rotation", type: "number", label: "각도", unit: "°", step: 5, uniDefault: 0,
@@ -151,6 +203,20 @@ function buildModal() {
       <p class="objectify-description" id="bulk-mode-desc" style="margin:2px 0 8px;"></p>
       <p class="objectify-description" id="bulk-target" style="margin:0 0 8px;"></p>
       <div id="bulk-fields"></div>
+      <div id="bulk-spacing" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
+        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="bulk-gap-cb" />
+          <span class="modal-label" style="flex:1 1 auto;margin:0;">간격</span>
+          <select class="modal-input" id="bulk-gap-axis" style="width:74px;flex:none;">
+            <option value="x">가로</option>
+            <option value="y">세로</option>
+            <option value="z">깊이</option>
+          </select>
+          <input type="number" class="modal-input" id="bulk-gap-val" step="1" value="4" style="width:64px;flex:none;" />
+          <span style="flex:none;font-size:11px;color:var(--text-secondary);width:22px;">mm</span>
+        </label>
+        <p class="objectify-description" id="bulk-gap-desc" style="margin:2px 0 0;"></p>
+      </div>
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="bulk-cancel">취소</button>
         <button type="button" class="modal-btn modal-btn-primary" id="bulk-apply">적용</button>
@@ -221,12 +287,73 @@ function renderFields() {
   }
 }
 
+/* ----- 간격 통일 -----
+ * FIELDS(객체를 하나씩 고치는 표)와 달리 **선택 전체를 줄 세우는 집합 연산**이라
+ * 따로 둔다. 모든 타입의 bbox로 계산하므로 타입 구분이 없다.
+ *
+ * 축이 셋인 이유: 입체 그림에서 상판 위에 놓인 물체는 가로뿐 아니라 **안쪽(깊이)**
+ * 으로도 늘어선다(기출 p1_2026_06_05의 블록 B·C). 깊이 축은 입체의 투영각과 같은
+ * 방향이라야 물체들이 같은 면 위에 있는 것처럼 보인다.
+ * 간격은 bbox 사이의 빈 거리(edge-to-edge)다 — 중심 간 거리가 아니다. */
+function depthAxisAngle(objs) {
+  const s = objs.find((o) => o.type === "solid3d" && Number.isFinite(o.projAngle));
+  if (s) return s.projAngle;
+  try {
+    const v = Number(JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}").solid3dProjAngle);
+    if (v > 0 && v < 90) return v;
+  } catch (_) { /* 기본값으로 */ }
+  return 50;
+}
+
+function axisUnit(axis, objs) {
+  if (axis === "x") return { ux: 1, uy: 0 };
+  if (axis === "y") return { ux: 0, uy: 1 };
+  const a = (depthAxisAngle(objs) * Math.PI) / 180;
+  return { ux: Math.cos(a), uy: -Math.sin(a) };   // 깊이 = 오른쪽 위로
+}
+
+function applySpacing(objs, axis, gap) {
+  const movable = objs.filter((o) => !o.locked && !o.positionLocked);
+  if (movable.length < 2) return 0;
+  const { ux, uy } = axisUnit(axis, objs);
+  const items = movable.map((o) => {
+    const b = getObjectBBox(o);
+    if (!b) return null;
+    // bbox 네 꼭짓점을 축에 투영 → 그 축에서 차지하는 구간 [min, max]
+    const ps = [[b.x, b.y], [b.x + b.w, b.y], [b.x, b.y + b.h], [b.x + b.w, b.y + b.h]]
+      .map(([px, py]) => px * ux + py * uy);
+    return { o, min: Math.min(...ps), max: Math.max(...ps) };
+  }).filter(Boolean);
+  if (items.length < 2) return 0;
+  items.sort((a, b) => a.min - b.min);
+  // 첫 번째는 그 자리에 두고 나머지를 차례로 밀어 붙인다(기준점이 움직이면 그림 전체가 밀린다).
+  let cursor = items[0].max;
+  let moved = 0;
+  for (let i = 1; i < items.length; i++) {
+    const it = items[i];
+    const wantMin = cursor + gap;
+    const shift = wantMin - it.min;
+    if (Math.abs(shift) > 1e-6) { translateObject(it.o, shift * ux, shift * uy); moved += 1; }
+    cursor = wantMin + (it.max - it.min);
+  }
+  return moved;
+}
+
 function syncTargetText() {
   const { objs, locked, scoped } = targets();
   const where = scoped ? `선택한 오브젝트 ${objs.length}개` : `캔버스 전체 ${objs.length}개`;
   const note = locked ? ` (잠긴 ${locked}개는 잠금 항목만 변경)` : "";
   _overlay.querySelector("#bulk-target").textContent = `대상: ${where}${note}`;
   _overlay.querySelector("#bulk-mode-desc").textContent = MODE_DESC[_mode];
+  // 간격은 '통일' 개념 자체라 증감(전체 수정) 모드에서는 숨긴다.
+  const gapBox = _overlay.querySelector("#bulk-spacing");
+  gapBox.style.display = _mode === "uniform" ? "" : "none";
+  const axis = _overlay.querySelector("#bulk-gap-axis").value;
+  // "줄을 맞춘다"가 아니라 "간격만 고른다"이다 — 축과 직각인 방향은 건드리지 않는다.
+  // (직각 방향까지 맞추면 사용자가 잡아둔 배치가 통째로 움직여 버린다)
+  _overlay.querySelector("#bulk-gap-desc").textContent = axis === "z"
+    ? `깊이(투영 ${depthAxisAngle(objs)}°) 방향 간격만 고릅니다. 맨 앞 오브젝트는 그대로 둡니다.`
+    : "그 방향 간격만 고릅니다. 직각 방향 위치와 맨 앞 오브젝트는 그대로 둡니다.";
 }
 
 function apply() {
@@ -240,9 +367,17 @@ function apply() {
     }
     picked.push({ field: r.field, value: r.read() });
   }
-  if (!picked.length) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 통일/수정" }); return; }
+  // 간격은 FIELDS가 아니라 별도 집합 연산이라 따로 읽는다(통일 모드 전용).
+  const gapCb = _overlay.querySelector("#bulk-gap-cb");
+  const gapOn = _mode === "uniform" && gapCb && gapCb.checked;
+  const gapVal = Number(_overlay.querySelector("#bulk-gap-val").value);
+  const gapAxis = _overlay.querySelector("#bulk-gap-axis").value;
+  if (gapOn && !isFinite(gapVal)) { showAlert("간격에 숫자를 입력하세요.", { title: "전체 통일/수정" }); return; }
+
+  if (!picked.length && !gapOn) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 통일/수정" }); return; }
   const { objs } = targets();
   if (!objs.length) { showAlert("적용할 오브젝트가 없습니다.", { title: "전체 통일/수정" }); return; }
+  if (gapOn && objs.length < 2) { showAlert("간격을 맞추려면 오브젝트가 2개 이상이어야 합니다.", { title: "전체 통일/수정" }); return; }
   const idSet = new Set(objs.map((o) => o.id));
   _state.update((s2) => {
     s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
@@ -257,6 +392,9 @@ function apply() {
         else if (field.setDelta) field.setDelta(o, value);
       }
     }
+    // 간격은 크기 변경이 끝난 뒤에 잡아야 한다 — 폭을 통일하고 나면 bbox가 달라지므로
+    // 순서를 바꾸면 간격이 어긋난다.
+    if (gapOn) applySpacing(s2.objects.filter((o) => idSet.has(o.id)), gapAxis, gapVal);
   });
   _overlay.hidden = true;
 }
@@ -274,6 +412,10 @@ export function initBulkEdit(state) {
     renderFields();
     syncTargetText();
   });
+  // 간격 값·축을 건드리면 체크박스를 자동으로 켠다(다른 항목과 같은 규칙).
+  const gapCb = _overlay.querySelector("#bulk-gap-cb");
+  _overlay.querySelector("#bulk-gap-val").addEventListener("input", () => { gapCb.checked = true; });
+  _overlay.querySelector("#bulk-gap-axis").addEventListener("change", () => { gapCb.checked = true; syncTargetText(); });
   _overlay.querySelector("#bulk-cancel").addEventListener("click", () => { _overlay.hidden = true; });
   _overlay.addEventListener("mousedown", (e) => { if (e.target === _overlay) _overlay.hidden = true; });
   _overlay.addEventListener("keydown", (e) => {
@@ -283,6 +425,7 @@ export function initBulkEdit(state) {
   document.getElementById("bulk-edit-open")?.addEventListener("click", () => {
     _mode = "uniform";
     modeSeg.querySelectorAll(".seg-btn").forEach((b, i) => b.classList.toggle("is-active", i === 0));
+    gapCb.checked = false;   // 열 때마다 간격은 꺼진 상태로 시작(실수로 배치가 밀리지 않게)
     renderFields();
     syncTargetText();
     _overlay.hidden = false;
