@@ -27,6 +27,8 @@ import { renderCircuit } from "./circuit.js?v=1.2.0";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.2.0";
 import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.2.0";
 import { renderSpring, springBBox } from "./spring.js?v=1.2.0";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.2.0";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.2.0";
 import { renderGauge } from "./gauge.js?v=1.2.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.2.0";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, zOrderObjects } from "../object-types.js?v=1.2.0";
@@ -289,7 +291,8 @@ export function render(state) {
                     : sel.locked   ? "#e53e3e"
                     : sel.positionLocked ? "#8b5cf6"
                     : "var(--c-main, #0969da)";
-    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring") {
+    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
+        || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave") {
       // Line/circuit/pendulum have no bbox; the selection guide is a dashed copy
       // of the p1–p2 segment (pendulum: pivot → real bob, i.e. the string axis).
       const ln = document.createElementNS(SVG_NS, "line");
@@ -795,6 +798,12 @@ export function renderObject(obj) {
       return renderPendulum(obj);
     case "spring":
       return renderSpring(obj);
+    case "chargefield":
+      return renderChargeField(obj);
+    case "fieldlines":
+      return renderFieldLines(obj);
+    case "standingwave":
+      return renderStandingWave(obj);
     case "gauge":
       return renderGauge(obj);
     default:
@@ -859,6 +868,9 @@ export function singleObjBBox(o, scene) {
   if (o.type === "spring") {
     return springBBox(o);
   }
+  if (o.type === "chargefield") return chargeFieldBBox(o);
+  if (o.type === "fieldlines") return fieldLinesBBox(o);
+  if (o.type === "standingwave") return standingWaveBBox(o);
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;

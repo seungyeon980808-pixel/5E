@@ -8,7 +8,8 @@
  * line, and polyline objects also contribute finite contact edges.
  */
 
-import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors } from "./render.js?v=1.2.0";
+import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors,
+         standingWaveGeometry } from "./render.js?v=1.2.0";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
@@ -97,6 +98,15 @@ export function collectPrioritySnapPoints(state, excludeIds) {
       const geo = springGeometry(obj);
       if (isValidPoint(geo.p1)) points.push(makeSnapPoint(geo.p1, "line-endpoint", obj.id, "p1", 0));
       if (isValidPoint(geo.p2)) points.push(makeSnapPoint(geo.p2, "line-endpoint", obj.id, "p2", 0));
+    } else if (obj.type === "standingwave") {
+      // 줄·관의 양 끝을 앵커로 준다(벽·다른 관에 이어 붙일 때 쓴다).
+      const geo = standingWaveGeometry(obj);
+      if (isValidPoint(geo.p1)) points.push(makeSnapPoint(geo.p1, "line-endpoint", obj.id, "p1", 0));
+      if (isValidPoint(geo.p2)) points.push(makeSnapPoint(geo.p2, "line-endpoint", obj.id, "p2", 0));
+    } else if (obj.type === "chargefield" || obj.type === "fieldlines") {
+      // 두 점은 '전하(극) 위치'다 — 다른 객체를 여기에 맞춰 놓을 수 있게 앵커로 준다.
+      if (isValidPoint(obj.p1)) points.push(makeSnapPoint(obj.p1, "line-endpoint", obj.id, "p1", 0));
+      if (isValidPoint(obj.p2)) points.push(makeSnapPoint(obj.p2, "line-endpoint", obj.id, "p2", 0));
     } else if (obj.type === "pendulum") {
       // Minimal anchors: pivot, real bob center, and the two ghost bob centers
       // when those ghosts are visible (all derived from p1/p2 at render time).

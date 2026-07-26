@@ -59,7 +59,8 @@ const APPARATUS_SIZES = {
 };
 
 /* ----- 기하 분류 ----- */
-const P1P2_TYPES = new Set(["line", "circuit", "pendulum", "labeler", "spring"]);
+const P1P2_TYPES = new Set(["line", "circuit", "pendulum", "labeler", "spring",
+  "chargefield", "fieldlines", "standingwave"]);
 const ANCHOR_TYPES = new Set(["text", "formula", "anglearc", "rightangle"]);
 const NO_STROKE_TYPES = new Set(["text", "formula", "image"]);
 
@@ -153,6 +154,22 @@ const DEFAULTS = {
     turns: 14, radius: 2, leadLength: 2, springStyle: "helix",
     label: "", labelShow: false, labelType: "quantity",
   }),
+
+  // 장(場) 그림·정상파 — 전부 p1/p2 계열. 렌더러가 실제 장을 따라 선을 추적하므로
+  // 좌표를 손으로 계산할 필요가 없다(전하 크기만 주면 개수·모양이 저절로 맞는다).
+  chargefield: () => ({
+    kind: "pair", q1: 1, q2: -1, lines: 12, arrowDist: 6, chargeR: 1.9,
+    showCharge: true, label1: "", label2: "",
+    label: "", labelShow: false, labelType: "quantity", strokeWidth: 0.25,
+  }),
+  fieldlines: () => ({
+    kind: "bar", lines: 14, showMagnet: true, magnetThick: 5.2, rings: 3, into: false,
+    label: "", labelShow: false, labelType: "quantity", strokeWidth: 0.25,
+  }),
+  standingwave: () => ({
+    medium: "string", n: 2, amplitude: 4.2, closedEnd: "p1", showNodes: true,
+    label: "", labelShow: false, labelType: "quantity", strokeWidth: 0.5,
+  }),
   pendulum: () => ({
     showCenterGhost: true, showSymmetricGhost: true, showLengthLabel: true,
     lengthLabel: "L_B", labelType: "quantity",
@@ -226,6 +243,9 @@ export const TYPE_DOC = {
   circuit: { summary: `회로 소자(${CIRCUIT_ELEMENTS.join("/")}). p1→p2가 양 단자. label에 R_1 처럼 쓰면 화면엔 R₁로 변환됨`, required: "p1,p2,element" },
   optics: { summary: `광학·역학 심볼(${OPTICS_KINDS.join("/")})`, required: "x,y,w,h,kind" },
   apparatus: { summary: `실험 기구(${APPARATUS_KINDS.join("/")})`, required: "x,y,kind" },
+  chargefield: { summary: "전기력선. kind(pair 두 전하 | single 점전하 | uniform 평행판). p1·p2 = 두 전하 위치(single이면 p2가 그림 반경, uniform이면 두 점이 사각 영역의 마주보는 모서리). q1·q2(전하 크기, 부호 포함)·lines(가장 큰 전하에서 나가는 선 개수)·arrowDist(화살촉 거리mm)·chargeR·chargeLevel·label1·label2. 선 개수는 전하 크기에 비례하고, 짝을 못 찾은 선은 열린 선이 된다", required: "p1,p2" },
+  fieldlines: { summary: "자기력선. kind(bar 막대자석 | wire 직선도선). bar: p1=N극 끝, p2=S극 끝, lines·magnetThick·showMagnet. wire: p1=도선, p2=바깥 원 위의 점, rings(동심원 수)·into(⊗ 들어가는 방향)", required: "p1,p2" },
+  standingwave: { summary: "정상파. p1·p2 = 줄·관의 양 끝. medium(string 줄 | open 열린관 | closed 닫힌관)·n(배진동 차수, 닫힌관은 홀수만)·amplitude(배의 높이mm)·closedEnd(p1|p2)·showNodes(마디 ●)", required: "p1,p2" },
   pendulum: { summary: "단진자. p1=고정점, p2=추 중심", required: "p1,p2" },
   spring: { summary: "용수철. p1→p2가 양 끝(물체에 닿는 지점). turns(감은 수, 기본 14)·radius(코일 반지름mm)·leadLength·springStyle(helix 감긴코일 | line 실·줄). 점선은 dashLength/dashGap", required: "p1,p2" },
   gauge: { summary: `측정 가이드(${GAUGE_KINDS.join("/")})`, required: "x,y,w,h,kind" },

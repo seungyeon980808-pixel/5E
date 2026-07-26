@@ -9,7 +9,8 @@ import { screenToWorld, getRenderScale } from "./viewport.js?v=1.2.0";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.2.0";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
-import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox } from "./render.js?v=1.2.0";
+import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
+         chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox } from "./render.js?v=1.2.0";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
@@ -218,6 +219,20 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
+    if (o.type === "standingwave") {
+      // 관·줄의 축 선분에 배 높이만큼 여유를 준다(포락선 어디를 눌러도 잡힌다).
+      const geo = standingWaveGeometry(o);
+      if (segDist(p.x, p.y, geo.p1.x, geo.p1.y, geo.p2.x, geo.p2.y) <= margin + geo.wall) return o.id;
+      continue;
+    }
+
+    if (o.type === "chargefield" || o.type === "fieldlines") {
+      // 선이 성겨서 선분 판정으로는 잡기 어렵다 → 그림 틀 안쪽이면 잡는다.
+      const b = o.type === "chargefield" ? chargeFieldBBox(o) : fieldLinesBBox(o);
+      if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return o.id;
+      continue;
+    }
+
     if (o.type === "pendulum") {
       // Clickable = the real string segment, the real bob disk, and (when shown)
       // each ghost string/bob — the SAME geometry the renderer draws.
@@ -381,6 +396,9 @@ function getObjectBBox(o) {
   if (o.type === "spring") {
     return springBBox(o);
   }
+  if (o.type === "chargefield") return chargeFieldBBox(o);
+  if (o.type === "fieldlines") return fieldLinesBBox(o);
+  if (o.type === "standingwave") return standingWaveBBox(o);
   if (o.type === "pendulum") {
     return pendulumBBox(o);
   }

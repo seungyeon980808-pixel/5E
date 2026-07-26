@@ -184,6 +184,15 @@ export const TEMPLATES = {
   sw_open:     { kind: "shape", category: "전기", label: "스위치",     keywords: ["스위치", "switch", "개폐기", "S1"], create: { tool: "CIRCUIT", element: "switch" } },
   sw_spdt:     { kind: "shape", category: "전기", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
   pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
+  // 장(場) 그림·정상파 — 두 점(전하·극·양끝)을 끌어 배치한다.
+  ef_pair:     { kind: "shape", category: "전자기학", label: "전기력선",     keywords: ["전기력선", "전하", "쿨롱", "field", "charge"], create: { tool: "CHARGEFIELD", props: { kind: "pair" } } },
+  ef_single:   { kind: "shape", category: "전자기학", label: "점전하 전기력선", keywords: ["점전하", "전기력선", "단일", "field"], create: { tool: "CHARGEFIELD", props: { kind: "single", q1: 1 } } },
+  ef_uniform:  { kind: "shape", category: "전자기학", label: "평행판 균일장", keywords: ["평행판", "균일장", "전기장", "uniform"], create: { tool: "CHARGEFIELD", props: { kind: "uniform" } } },
+  mag_bar:     { kind: "shape", category: "전자기학", label: "자기력선",     keywords: ["자기력선", "자석", "자기장", "magnet", "field"], create: { tool: "FIELDLINES", props: { kind: "bar" } } },
+  mag_wire:    { kind: "shape", category: "전자기학", label: "도선 자기장",  keywords: ["도선", "자기장", "동심원", "앙페르", "wire"], create: { tool: "FIELDLINES", props: { kind: "wire" } } },
+  stw_string:  { kind: "shape", category: "광학", label: "정상파(줄)",   keywords: ["정상파", "줄", "마디", "배", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "string" } } },
+  stw_open:    { kind: "shape", category: "광학", label: "정상파(열린관)", keywords: ["정상파", "열린관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "open" } } },
+  stw_closed:  { kind: "shape", category: "광학", label: "정상파(닫힌관)", keywords: ["정상파", "닫힌관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "closed", n: 3 } } },
   spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
   support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
@@ -400,6 +409,82 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
       '<line x1="12" y1="3" x2="12" y2="11" stroke="currentColor" stroke-width="1"/>' +
       '<circle cx="10" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/>' +
       '<circle cx="10" cy="12" r="1.3" fill="currentColor" stroke="none"/>';
+    return svg;
+  }
+
+  if (id === "ef_pair" || id === "ef_single" || id === "ef_uniform") {
+    // 전기력선: +/− 원과 그 사이를 잇는 휜 선(객체의 인상과 같게).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    if (id === "ef_uniform") {
+      svg.innerHTML =
+        '<line x1="2" y1="4" x2="18" y2="4" stroke="currentColor" stroke-width="1.6"/>' +
+        '<line x1="2" y1="16" x2="18" y2="16" stroke="currentColor" stroke-width="1.6"/>' +
+        '<g stroke="currentColor" stroke-width="1"><line x1="6" y1="5.5" x2="6" y2="13"/>' +
+        '<line x1="10" y1="5.5" x2="10" y2="13"/><line x1="14" y1="5.5" x2="14" y2="13"/></g>' +
+        '<polygon points="6,14.6 4.9,12.4 7.1,12.4" fill="currentColor"/>' +
+        '<polygon points="10,14.6 8.9,12.4 11.1,12.4" fill="currentColor"/>' +
+        '<polygon points="14,14.6 12.9,12.4 15.1,12.4" fill="currentColor"/>';
+    } else if (id === "ef_single") {
+      let d = '<circle cx="10" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.1"/>';
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4, c = Math.cos(a), s2 = Math.sin(a);
+        d += `<line x1="${(10 + 3.4 * c).toFixed(1)}" y1="${(10 + 3.4 * s2).toFixed(1)}" x2="${(10 + 8.4 * c).toFixed(1)}" y2="${(10 + 8.4 * s2).toFixed(1)}" stroke="currentColor" stroke-width="0.9"/>`;
+      }
+      svg.innerHTML = d;
+    } else {
+      svg.innerHTML =
+        '<circle cx="4.5" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
+        '<circle cx="15.5" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
+        '<g fill="none" stroke="currentColor" stroke-width="0.9">' +
+        '<path d="M6.6 9 Q10 4 13.4 9"/><path d="M6.6 11 Q10 16 13.4 11"/><path d="M6.7 10 H13.3"/></g>';
+    }
+    return svg;
+  }
+
+  if (id === "mag_bar" || id === "mag_wire") {
+    svg.setAttribute("viewBox", "0 0 20 20");
+    if (id === "mag_wire") {
+      svg.innerHTML =
+        '<circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="0.9"/>' +
+        '<circle cx="10" cy="10" r="6.4" fill="none" stroke="currentColor" stroke-width="0.9"/>' +
+        '<circle cx="10" cy="10" r="1.5" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
+        '<circle cx="10" cy="10" r="0.6" fill="currentColor" stroke="none"/>';
+    } else {
+      svg.innerHTML =
+        '<rect x="5" y="8.6" width="5" height="2.8" fill="currentColor" opacity="0.25" stroke="currentColor" stroke-width="0.7"/>' +
+        '<rect x="10" y="8.6" width="5" height="2.8" fill="none" stroke="currentColor" stroke-width="0.7"/>' +
+        '<g fill="none" stroke="currentColor" stroke-width="0.85">' +
+        '<path d="M5 10 Q10 3 15 10"/><path d="M5 10 Q10 17 15 10"/>' +
+        '<path d="M5 10 Q10 5.6 15 10"/><path d="M5 10 Q10 14.4 15 10"/></g>';
+    }
+    return svg;
+  }
+
+  if (id === "stw_string" || id === "stw_open" || id === "stw_closed") {
+    // 정상파: 대칭 포락선 + 마디 점(+ 관이면 벽).
+    svg.setAttribute("viewBox", "0 0 20 20");
+    const nn = id === "stw_closed" ? 3 : 2;
+    const fn = (u) => id === "stw_string" ? Math.sin(nn * Math.PI * u)
+      : id === "stw_open" ? Math.cos(nn * Math.PI * u)
+      : Math.sin(nn * Math.PI * u / 2);
+    const path = (sg) => {
+      let d = "";
+      for (let i = 0; i <= 40; i++) {
+        const u = i / 40;
+        d += (i ? "L" : "M") + (2 + u * 16).toFixed(2) + " " + (10 - sg * 4.6 * fn(u)).toFixed(2) + " ";
+      }
+      return `<path d="${d}" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>`;
+    };
+    let extra = "";
+    if (id === "stw_string") {
+      extra = '<rect x="1" y="4.6" width="1.4" height="10.8" fill="currentColor" opacity="0.3"/>' +
+              '<rect x="17.6" y="4.6" width="1.4" height="10.8" fill="currentColor" opacity="0.3"/>';
+    } else {
+      extra = '<line x1="2" y1="4.4" x2="18" y2="4.4" stroke="currentColor" stroke-width="1"/>' +
+              '<line x1="2" y1="15.6" x2="18" y2="15.6" stroke="currentColor" stroke-width="1"/>';
+      if (id === "stw_closed") extra += '<line x1="2" y1="4.4" x2="2" y2="15.6" stroke="currentColor" stroke-width="1"/>';
+    }
+    svg.innerHTML = extra + path(1) + path(-1);
     return svg;
   }
 

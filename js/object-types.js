@@ -22,6 +22,7 @@ export const OBJECT_TYPE_IDS = [
   "axes", "coordplane",
   "anglearc", "rightangle", "labeler",
   "circuit", "optics", "apparatus", "pendulum", "spring",
+  "chargefield", "fieldlines", "standingwave",
   "gauge",
 ];
 
@@ -65,6 +66,11 @@ export const OBJECT_TYPES = {
   // spring = 용수철. p1/p2 계열(line·circuit·pendulum과 같은 가족).
   // snapLineLike: 끝점이 블록 모서리에 자석처럼 붙어야 해서 켠다(요구).
   spring:     { lineTol: 1, label: 1, snapLineLike: 1 },
+  // 장(場) 그림·정상파도 p1/p2 계열이다. 전기력선·자기력선은 두 점이 '전하(극) 위치'라
+  // 끌면 그림 전체가 다시 계산되고, 정상파는 두 점이 '줄·관의 양 끝'이다.
+  chargefield:  { lineTol: 1, label: 1 },
+  fieldlines:   { lineTol: 1, label: 1 },
+  standingwave: { lineTol: 1, label: 1, snapLineLike: 1 },
   // gauge = 자·각도기 측정 가이드(kind: ruler|protractor). 크기박스로 이동/리사이즈/
   // bbox/저장을 그대로 상속. boxFace로 bbox 전체가 클릭 면이 되어 선택이 쉽다.
   gauge:      { sizeBox: 1, boxFace: 1 },

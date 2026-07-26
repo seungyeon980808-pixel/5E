@@ -108,7 +108,8 @@ let _activeSymbolId = null;
 // Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
-const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM"]);
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -333,7 +334,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", RULER: "gauge", PROTRACTOR: "gauge" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -653,7 +654,8 @@ function setupDrawing() {
 /* ----- commit gate: ignore stray clicks that drew nothing ----- */
 // Size-based shapes need a non-trivial box; a line needs a non-trivial length.
 export function isCommittable(shape) {
-  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring") {
+  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring"
+      || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -667,6 +669,13 @@ function makeShape(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
   if (type === "spring") return makeSpring(a, b);
+  if (type === "chargefield" || type === "fieldlines" || type === "standingwave") {
+    const obj = type === "chargefield" ? makeChargeField(a, b)
+      : type === "fieldlines" ? makeFieldLines(a, b) : makeStandingWave(a, b);
+    // 팔레트가 고른 갈래(전기력선 kind, 정상파 medium 등)를 얹는다.
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
   const shape = {
     id: null, // assigned on commit
     type,
@@ -833,6 +842,67 @@ export function makeLine(a, b) {
  * scales sensibly; it is then a stored, editable property. */
 /* ----- 용수철: 드래그 두 점이 곧 양 끝(물체에 닿는 지점) -----
  * 길이는 두 점으로 정해지고 코일 수·진폭은 필드로 남는다 — 압축/이완을 끌어서 표현한다. */
+/* 전기력선 — p1·p2가 '전하 위치'다(kind single이면 p2는 그림 반경).
+ * 팔레트가 kind·q1·q2를 _symbolProps로 얹어 준다. */
+function makeChargeField(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "chargefield",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    kind: "pair",
+    q1: 1, q2: -1,
+    lines: 12,
+    arrowDist: 6,
+    chargeR: 1.9,
+    showCharge: true,
+    label1: "", label2: "",
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.25,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
+/* 자기력선 — p1 = N극 끝, p2 = S극 끝(kind wire면 p1 = 도선, p2 = 바깥 원 반지름). */
+function makeFieldLines(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "fieldlines",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    kind: "bar",
+    lines: 14,
+    showMagnet: true,
+    magnetThick: 5.2,
+    rings: 3,
+    into: false,
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.25,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
+/* 정상파 — p1·p2가 줄·관의 양 끝. */
+function makeStandingWave(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "standingwave",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    medium: "string",
+    n: 2,
+    amplitude: 4.2,
+    closedEnd: "p1",
+    showNodes: true,
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.5,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
 function makeSpring(a, b) {
   return applyNewObjectStyleDefaults({
     id: null,

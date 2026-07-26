@@ -21,6 +21,7 @@ import { buildProtectSection } from "./inspector/section-protect.js?v=1.2.0";
 import { buildImageSection } from "./inspector/section-image.js?v=1.2.0";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.2.0";
 import { buildSpringSection } from "./inspector/section-spring.js?v=1.2.0";
+import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.2.0";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.2.0";
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.2.0";
 import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.2.0";
@@ -102,6 +103,9 @@ export function initInspector(state) {
   } = buildImageSection(ctx);
   const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp } = buildPendulumSection(ctx);
   const { secSpring, syncSpring } = buildSpringSection(ctx);
+  const { secChargeField, syncChargeField } = buildChargeFieldSection(ctx);
+  const { secFieldLines, syncFieldLines } = buildFieldLinesSection(ctx);
+  const { secStandingWave, syncStandingWave } = buildStandingWaveSection(ctx);
   const { secCoord, syncCoordplane } = buildCoordplaneSection(ctx);
   const { secFunc, syncFuncgraph } = buildFuncgraphSection(ctx);
   const { abSection, refreshArtboard } = buildArtboardSection(ctx);
@@ -122,6 +126,9 @@ export function initInspector(state) {
   contentEl.insertBefore(imageSection, sec3);
   contentEl.appendChild(secPend);
   contentEl.appendChild(secSpring);
+  contentEl.appendChild(secChargeField);
+  contentEl.appendChild(secFieldLines);
+  contentEl.appendChild(secStandingWave);
   contentEl.appendChild(secCoord);
   contentEl.appendChild(secFunc);
   if (root) root.appendChild(abSection);
@@ -206,6 +213,9 @@ export function initInspector(state) {
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
+    secChargeField.style.display = "none";   // 전기력선 하나를 골랐을 때만
+    secFieldLines.style.display = "none";    // 자기력선 하나를 골랐을 때만
+    secStandingWave.style.display = "none";  // 정상파 하나를 골랐을 때만
     secCoord.style.display = "none"; // shown only for a single coordplane (set below)
     secFunc.style.display = "none"; // shown only for a single funcgraph (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
@@ -635,6 +645,19 @@ export function initInspector(state) {
     const isSpring = obj.type === "spring";
     secSpring.style.display = isSpring ? "" : "none";
     if (isSpring) syncSpring(obj);
+
+    // 장(場)·정상파 section: 각 타입 하나를 골랐을 때만.
+    const isChargeField = obj.type === "chargefield";
+    secChargeField.style.display = isChargeField ? "" : "none";
+    if (isChargeField) syncChargeField(obj);
+
+    const isFieldLines = obj.type === "fieldlines";
+    secFieldLines.style.display = isFieldLines ? "" : "none";
+    if (isFieldLines) syncFieldLines(obj);
+
+    const isStandingWave = obj.type === "standingwave";
+    secStandingWave.style.display = isStandingWave ? "" : "none";
+    if (isStandingWave) syncStandingWave(obj);
 
     const isPendulum = obj.type === "pendulum";
     secPend.style.display = isPendulum ? "" : "none";
