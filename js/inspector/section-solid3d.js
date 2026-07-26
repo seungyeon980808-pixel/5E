@@ -105,6 +105,26 @@ export function initSolid3dSection(state) {
   legRow.appendChild(legInp); legRow.appendChild(unitSpan("mm"));
   body.appendChild(legRow);
 
+  /* ----- 좌표축 전용: 축 이름 3칸(좌표축일 때만 노출) ----- */
+  const nameRow = row("축 이름");
+  const nameInps = ["x", "y", "z"].map((ph) => {
+    const i = document.createElement("input");
+    i.type = "text";
+    i.className = "insp-input";
+    i.placeholder = ph;
+    i.style.minWidth = "0";
+    i.style.flex = "1";
+    nameRow.appendChild(i);
+    return i;
+  });
+  body.appendChild(nameRow);
+
+  const nameShow = row("축 이름 표시");
+  const nameCb = document.createElement("input");
+  nameCb.type = "checkbox";
+  nameShow.appendChild(nameCb);
+  body.appendChild(nameShow);
+
   /* ----- 원기둥 방향(원기둥일 때만 노출) ----- */
   const axisRow = row("방향");
   const axisSel = document.createElement("select");
@@ -177,6 +197,16 @@ export function initSolid3dSection(state) {
     commit((t) => { t.legWidth = v; });
   });
 
+  const NAME_KEYS = ["labelX", "labelY", "labelZ"];
+  nameInps.forEach((inp, i) => {
+    inp.addEventListener("change", () => {
+      commit((t) => { t[NAME_KEYS[i]] = inp.value; });
+    });
+  });
+  nameCb.addEventListener("change", () => {
+    commit((t) => { t.axisLabels = nameCb.checked; });
+  });
+
   // 일괄 적용: 잠긴 객체는 건드리지 않는다(보호 섹션의 약속). Undo는 1스텝.
   applyBtn.addEventListener("click", () => {
     const o = selected();
@@ -209,9 +239,20 @@ export function initSolid3dSection(state) {
     const kind = o.kind || "box";
     const isCyl = kind === "cylinder";
     const isDesk = kind === "desk";
+    const isAxes = kind === "axes3d";
     axisRow.style.display = isCyl ? "" : "none";
     topRow.style.display = isDesk ? "" : "none";
     legRow.style.display = isDesk ? "" : "none";
+    nameRow.style.display = isAxes ? "" : "none";
+    nameShow.style.display = isAxes ? "" : "none";
+    shadeRow.style.display = isAxes ? "none" : "";   // 좌표축엔 칠할 면이 없다
+    depthRow.querySelector(".insp-field-label").textContent = isAxes ? "z축 길이" : "깊이";
+    if (isAxes) {
+      if (document.activeElement !== nameInps[0]) nameInps[0].value = o.labelX ?? "x";
+      if (document.activeElement !== nameInps[1]) nameInps[1].value = o.labelY ?? "y";
+      if (document.activeElement !== nameInps[2]) nameInps[2].value = o.labelZ ?? "z";
+      nameCb.checked = o.axisLabels !== false;
+    }
     if (isDesk) {
       // 값이 없으면 렌더러가 쓰는 자동 비율을 그대로 보여준다(빈칸보다 낫다).
       const p = Math.max(o.h - Math.abs((o.depth ?? 0) * Math.sin(((o.projAngle ?? 50) * Math.PI) / 180)), 1);

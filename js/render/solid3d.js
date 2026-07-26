@@ -18,12 +18,15 @@
  * world 단위 = 1mm.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.2.0";
+import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.2.0";
 import { withBoxLabel } from "./labels.js?v=1.2.0";
 
 // slab(판·상판)은 box와 같은 그림이다 — 생성 시 깊이 기본값만 다르다(tools.js).
 // 종류를 나눠 둬야 "판을 그렸다"는 의도가 저장돼 나중에 다시 편집할 때도 유지된다.
-export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge", "desk"];
+// axes3d(3차원 좌표축)도 여기 산다. 입체가 아니지만 **같은 투영각을 써야** 하는 것이
+// 이 타입의 조건이고, 축이 다른 각도로 서 있으면 그림이 즉시 어긋난다. solid3d에 두면
+// 인스펙터의 "이 각도를 모든 입체에 적용"이 축에도 그대로 걸린다.
+export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge", "desk", "axes3d"];
 // 도. 기출 실측: 작은 블록·추 40° 안팎, 바닥판 58° 안팎 → 그 사이인 50°를 기본으로 쓴다.
 // 30°는 윗면이 거의 안 보여서 시험지 그림으로 못 쓴다(2026-07-26 사용자 확인).
 export const DEFAULT_PROJ_ANGLE = 50;
@@ -247,6 +250,73 @@ function drawCylinder(obj, proj, stroke, sw) {
   return g;
 }
 
+/* ===== AXES3D — 3차원 좌표축 =====
+ *
+ * 원점은 bbox의 **왼쪽 아래**. x는 오른쪽, y는 위, z는 깊이 방향(오른쪽 위)이다.
+ * z가 다른 입체의 깊이와 같은 각도로 가야 하므로 obj.projAngle을 그대로 쓴다.
+ *
+ * 축 길이: x = bbox 너비, y = bbox 높이, z = obj.depth. 셋 다 화살촉과 축 이름이
+ * 들어갈 자리(pad)만큼 짧게 끝난다 — 그래야 그림 전체가 bbox 안에 남는다(이 파일의
+ * 불변식). z는 화면상 가로·세로를 동시에 먹으므로 양쪽 모두에 대해 잘라 준다.
+ */
+export const DEFAULT_AXIS_LABEL_MM = 4;
+
+function axisText(str, x, y, size, color) {
+  const t = document.createElementNS(SVG_NS, "text");
+  t.setAttribute("x", x);
+  t.setAttribute("y", y);
+  t.setAttribute("font-size", size);
+  t.setAttribute("fill", color);
+  t.setAttribute("font-family", "Times New Roman, serif");
+  t.setAttribute("font-style", "italic");
+  t.textContent = str;
+  return t;
+}
+
+function drawAxes3d(obj, proj, stroke, sw) {
+  const g = document.createElementNS(SVG_NS, "g");
+  const size = Number.isFinite(obj.axisLabelSize) ? obj.axisLabelSize : DEFAULT_AXIS_LABEL_MM;
+  const showNames = obj.axisLabels !== false;
+  const pad = showNames ? size * 1.35 : sw * 6;   // 화살촉 + 이름 자리
+  const ox = obj.x, oy = obj.y + obj.h;           // 원점 = 왼쪽 아래
+  const minLen = Math.max(sw * 8, 1);
+
+  const lx = Math.max(obj.w - pad, minLen);
+  const ly = Math.max(obj.h - pad, minLen);
+
+  // z 방향 단위벡터(화면). 깊이는 오른쪽 위로 간다.
+  const dLen = Math.hypot(proj.dx, proj.dy) || 1;
+  const ux = proj.dx / dLen, uy = -proj.dy / dLen;
+  let lz = dLen;
+  if (ux > 1e-6) lz = Math.min(lz, (obj.w - pad) / ux);
+  if (uy < -1e-6) lz = Math.min(lz, (obj.h - pad) / -uy);
+  lz = Math.max(lz, minLen);
+
+  const axes = [
+    { tip: [ox + lx, oy], dir: [1, 0], name: obj.labelX ?? "x" },
+    { tip: [ox, oy - ly], dir: [0, -1], name: obj.labelY ?? "y" },
+    { tip: [ox + ux * lz, oy + uy * lz], dir: [ux, uy], name: obj.labelZ ?? "z" },
+  ];
+
+  for (const a of axes) {
+    const ln = document.createElementNS(SVG_NS, "line");
+    ln.setAttribute("x1", ox); ln.setAttribute("y1", oy);
+    ln.setAttribute("x2", a.tip[0]); ln.setAttribute("y2", a.tip[1]);
+    ln.setAttribute("stroke", stroke);
+    ln.setAttribute("stroke-width", sw);
+    g.appendChild(ln);
+    // 화살촉을 선 굵기에 묶으면(기본 동작) 0.2mm 선에서 1mm도 안 되게 나와 안 보인다.
+    // 좌표축 화살촉은 그림 크기에 비례해야 하므로 축 이름 크기를 기준으로 키운다.
+    const headSw = Math.max(sw, size * 0.13);
+    const head = makeArrowHead(a.tip[0], a.tip[1], a.dir[0], a.dir[1], headSw, stroke, { lenMul: 5, widthMul: 1.7 });
+    if (head) g.appendChild(head);
+    if (showNames && a.name) {
+      g.appendChild(axisText(a.name, a.tip[0] + size * 0.36, a.tip[1] + size * 0.34, size, stroke));
+    }
+  }
+  return g;
+}
+
 /* ----- 좌우 반전: bbox 중심을 축으로 미러링(회전과 독립) ----- */
 function applyFlip(g, obj) {
   if (!obj.flipX) return;
@@ -264,6 +334,7 @@ export function renderSolid3d(obj) {
   if (kind === "cylinder") inner = drawCylinder(obj, proj, stroke, sw);
   else if (kind === "wedge") inner = drawWedge(obj, proj, stroke, sw);
   else if (kind === "desk") inner = drawDesk(obj, proj, stroke, sw);
+  else if (kind === "axes3d") inner = drawAxes3d(obj, proj, stroke, sw);
   else inner = drawBox(obj, proj, stroke, sw);   // box · slab (그림은 같다)
   applyFlip(inner, obj);
 

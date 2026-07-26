@@ -212,6 +212,7 @@ export const TEMPLATES = {
   solid_desk:     { kind: "shape", category: "역학", label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
   // 포물선: 두 번 끄는 게 아니라 **바닥의 출발점 → 도달점**을 끈다. 깊이 방향으로 끌면
   // 안쪽으로 날아가는 3D 궤적이 된다(바닥 점선이 그 느낌을 만든다).
+  solid_axes3d:   { kind: "shape", category: "역학", label: "3차원 좌표축", keywords: ["좌표축", "3차원", "3D", "xyz", "축", "공간", "axes", "coordinate"], create: { tool: "SOLID3D", kind: "axes3d" } },
   parabola:       { kind: "shape", category: "역학", label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
 };
 
@@ -303,6 +304,7 @@ const SOLID3D_ICON_BOX = {
   solid_disk:     { w: 26, h: 13, depth: 6 },
   solid_wedge:    { w: 26, h: 20, depth: 9 },
   solid_desk:     { w: 26, h: 24, depth: 12 },
+  solid_axes3d:   { w: 24, h: 24, depth: 14 },
 };
 
 // Build the data object that the REAL renderer turns into the icon.
@@ -375,6 +377,8 @@ function iconSampleObject(id, def) {
       x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
       depth: b.depth, projAngle: 50, shade: 2, axis: "v",
       strokeLevel: 0, strokeWidth: 0.6, showLabel: false, _outline: true,
+      // 좌표축 아이콘은 16px 안에서 글자가 뭉개지므로 축 이름을 뺀다(선만 남긴다).
+      axisLabels: false,
     };
   }
   return null;

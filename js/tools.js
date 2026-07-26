@@ -810,12 +810,21 @@ function makeShape(type, a, b) {
     shape.labelType = "label";   // 블록 이름 A·B·C — 정체(물리량 이탤릭 아님)
     shape.fillNone = false;
     shape.flipX = false;
-    if (shape.kind === "cylinder") {
-      // 원기둥·원판은 드래그 상자가 곧 실루엣이다(가로=지름, 세로=길이). 깊이는
-      // 마개 타원의 납작함만 정하므로 bbox를 키우지 않는다.
+    if (shape.kind === "cylinder" || shape.kind === "axes3d") {
+      // 드래그 상자가 곧 그림 전체인 갈래.
+      //  · 원기둥·원판: 상자가 실루엣이다(가로=지름, 세로=길이). 깊이는 마개 타원의
+      //    납작함만 정하므로 bbox를 키우지 않는다.
+      //  · 좌표축: 상자가 x축·y축 길이다. 깊이가 z축 길이가 된다.
       shape.w = Math.max(shape.w, 3);
       shape.h = Math.max(shape.h, 3);
-      shape.depth = Math.max(Math.min(shape.w, shape.h) * 0.5, 2);
+      shape.depth = shape.kind === "axes3d"
+        ? Math.max(Math.min(shape.w, shape.h) * 0.6, 4)
+        : Math.max(Math.min(shape.w, shape.h) * 0.5, 2);
+      if (shape.kind === "axes3d") {
+        shape.axisLabels = true;
+        shape.labelX = "x"; shape.labelY = "y"; shape.labelZ = "z";
+        shape.fillNone = true;
+      }
     } else {
       // box·slab·wedge: **드래그한 사각형 = 앞에서 보이는 면**(가로 × 두께).
       // 깊이는 그 뒤(오른쪽 위)로 더 뻗으므로 bbox가 드래그 상자보다 커진다.
