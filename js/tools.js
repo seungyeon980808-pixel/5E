@@ -716,7 +716,6 @@ function makeShape(type, a, b) {
   if (type === "apparatus") {
     shape.kind = _apparatusKind || "wire";
     shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
-    if (_symbolProps) Object.assign(shape, _symbolProps);
     shape.fillNone = true;
     shape.label = "";
     if (shape.kind === "wire") {
@@ -751,6 +750,9 @@ function makeShape(type, a, b) {
       shape.lockAspect = true;
       shape.displayText = "0.99 N";
     }
+    // 팔레트가 지정한 필드(예: 천장 도르래 variant)는 kind별 기본값보다 뒤에 병합한다 —
+    // 앞에서 병합하면 pulley 분기의 variant="basic"이 덮어써서 옛 모양이 나온다.
+    if (_symbolProps) Object.assign(shape, _symbolProps);
   }
   if (type === "svgAsset") {
     const asset = getSvgAsset(_svgAssetId);
