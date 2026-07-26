@@ -7,12 +7,12 @@ import {
   cText,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.2.0";
+} from "./core.js?v=1.3.0";
 import {
   CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM,
   OBJECT_LABEL_QUANTITY_FONT_FAMILY, EQUATION_FONT_STYLE,
-} from "../state.js?v=1.2.0";
-import { measureFormula, renderFormula } from "../formula.js?v=1.2.0";
+} from "../state.js?v=1.3.0";
+import { measureFormula, renderFormula } from "../formula.js?v=1.3.0";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *

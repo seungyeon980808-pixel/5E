@@ -20,7 +20,7 @@
  * 넣어 표본을 뽑으면 끝이다 — SVG 타원 호의 회전·플래그를 손으로 맞출 필요가 없다.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.2.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
 
 export const DEFAULT_SWEEP_DEG = 90;
 const SAMPLES = 40;

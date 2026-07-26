@@ -11,7 +11,7 @@
 
 <p><strong>과학교사를 위한 시험용 이미지 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://seungyeon980808-pixel.github.io/5E/">▶ 바로 써보기</a></p>
 
-<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/latest">최신 릴리즈 <strong>v1.2.0</strong> — 무엇이 바뀌었나</a></p>
+<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/latest">최신 릴리즈 <strong>v1.3.0</strong> — 무엇이 바뀌었나</a></p>
 
 </div>
 
@@ -411,7 +411,8 @@ python -m http.server 8000
 
 | 판 | 무엇이 들어갔나 |
 |---|---|
-| [**v1.2.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.2.0) | 표시 탭 · 라벨러 표시점 · 평가원 화살촉 · 자간/장평 · 페이지 일괄 내보내기 |
+| [**v1.3.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.3.0) | 입체 도구(실험) · 용수철 재설계 · 전기력선/자기력선/정상파 · 정렬·간격 통일 · 라벨 가림 개선 · MCP 도구 |
+| [v1.2.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.2.0) | 표시 탭 · 라벨러 표시점 · 평가원 화살촉 · 자간/장평 · 페이지 일괄 내보내기 |
 | [v1.1.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.1.0) | 기출 문항 검색기 · 참고 창 · 자유곡선 베지어 편집 · 치역 지정 · ZIP 백업 |
 | [v1.0.2](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.0.2) | 출시 전 정밀 감사 — 크래시·XSS 등 품질 수정 |
 | [v1.0.1](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.0.1) | 자유곡선 정확 보간 · 앱 아이콘 · PWA |

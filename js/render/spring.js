@@ -12,8 +12,8 @@
  * 좌표계: 세계 mm. 다른 p1/p2 타입(line/circuit/pendulum)과 같은 이동·회전 경로를 탄다.
  */
 
-import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.2.0";
-import { withLineLabel } from "./labels.js?v=1.2.0";
+import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.3.0";
+import { withLineLabel } from "./labels.js?v=1.3.0";
 
 export const SPRING_DEFAULTS = {
   turns: 14,         // 감은 수 (코일 바퀴 수)

@@ -9,12 +9,12 @@
  */
 
 import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors,
-         standingWaveGeometry } from "./render.js?v=1.2.0";
+         standingWaveGeometry } from "./render.js?v=1.3.0";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
   SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
-} from "./object-types.js?v=1.2.0";
+} from "./object-types.js?v=1.3.0";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;

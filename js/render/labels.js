@@ -10,7 +10,7 @@ import {
   LABEL_OPTICAL_CENTER_EM,
   makeLabelKnockout,
   applyGlyphHalo,
-} from "./core.js?v=1.2.0";
+} from "./core.js?v=1.3.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -19,7 +19,7 @@ import {
   resolveTextWidthScale,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=1.2.0";
+} from "../state.js?v=1.3.0";
 
 // 세로 중심 보정 상수는 core.js에 있다(치수 라벨·회로 기호와 같은 값을 쓰기 위해).
 

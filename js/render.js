@@ -4,17 +4,17 @@
  * (main.js, snap.js, svg-export.js, templates.js, tools.js, transform.js),
  * so every existing `from "./render.js?v=..."` import keeps working. */
 
-export { render, setSnapPreview, renderObject, singleObjBBox } from "./render/scene.js?v=1.2.0";
-export { rotPt, curveSamplePoints } from "./render/core.js?v=1.2.0";
-export { makeFillPattern } from "./render/fill.js?v=1.2.0";
-export { circuitBodyPolygon } from "./render/circuit.js?v=1.2.0";
-export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.2.0";
-export { springGeometry, springBBox, SPRING_DEFAULTS } from "./render/spring.js?v=1.2.0";
+export { render, setSnapPreview, renderObject, singleObjBBox } from "./render/scene.js?v=1.3.0";
+export { rotPt, curveSamplePoints } from "./render/core.js?v=1.3.0";
+export { makeFillPattern } from "./render/fill.js?v=1.3.0";
+export { circuitBodyPolygon } from "./render/circuit.js?v=1.3.0";
+export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.3.0";
+export { springGeometry, springBBox, SPRING_DEFAULTS } from "./render/spring.js?v=1.3.0";
 export { chargeFieldGeometry, chargeFieldBBox, CHARGEFIELD_DEFAULTS,
-         fieldLinesGeometry, fieldLinesBBox, FIELDLINES_DEFAULTS } from "./render/field.js?v=1.2.0";
+         fieldLinesGeometry, fieldLinesBBox, FIELDLINES_DEFAULTS } from "./render/field.js?v=1.3.0";
 export { standingWaveGeometry, standingWaveBBox, normalizeHarmonic,
-         STANDINGWAVE_DEFAULTS } from "./render/standing-wave.js?v=1.2.0";
-export { pulleyGeom, pulleyAnchors } from "./render/optics-apparatus.js?v=1.2.0";
-export { parabolaPoints, parabolaBBox, parabolaApexPoints, DEFAULT_APEX_MM } from "./render/parabola.js?v=1.2.0";
+         STANDINGWAVE_DEFAULTS } from "./render/standing-wave.js?v=1.3.0";
+export { pulleyGeom, pulleyAnchors } from "./render/optics-apparatus.js?v=1.3.0";
+export { parabolaPoints, parabolaBBox, parabolaApexPoints, DEFAULT_APEX_MM } from "./render/parabola.js?v=1.3.0";
 export { groundArcPoints, groundArcBBox, groundArcRadius, screenToGround,
-         DEFAULT_SWEEP_DEG } from "./render/groundarc.js?v=1.2.0";
+         DEFAULT_SWEEP_DEG } from "./render/groundarc.js?v=1.3.0";

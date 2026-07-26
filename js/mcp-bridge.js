@@ -20,9 +20,9 @@
  * 들어오는 모든 변경은 undoStack에 스냅샷을 남긴다. 마음에 안 들면 Ctrl+Z로 되돌린다.
  */
 
-import { state } from "./state.js?v=1.2.0";
-import { showAlert } from "./ui-dialogs.js?v=1.2.0";
-import { switchPage, addPage } from "./pages.js?v=1.2.0";
+import { state } from "./state.js?v=1.3.0";
+import { showAlert } from "./ui-dialogs.js?v=1.3.0";
+import { switchPage, addPage } from "./pages.js?v=1.3.0";
 
 const PORTS = [8579, 8580, 8581, 8582, 8583];
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);

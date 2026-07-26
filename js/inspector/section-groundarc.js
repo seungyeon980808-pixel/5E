@@ -7,8 +7,8 @@
  * 바닥에서의 실제 길이라야 그림 안의 다른 거리(예: 2d)와 비교가 된다.
  */
 
-import { makeSection } from "./widgets.js?v=1.2.0";
-import { groundArcRadius } from "../render.js?v=1.2.0";
+import { makeSection } from "./widgets.js?v=1.3.0";
+import { groundArcRadius } from "../render.js?v=1.3.0";
 
 function row(labelText) {
   const r = document.createElement("div");
