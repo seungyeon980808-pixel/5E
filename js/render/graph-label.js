@@ -132,7 +132,9 @@ function applyHalo(wrap, size) {
   wrap.querySelectorAll("text, tspan").forEach((t) => {
     t.setAttribute("paint-order", "stroke");
     t.setAttribute("stroke", "white");
-    t.setAttribute("stroke-width", size * 0.16);
+    // 글자 사이 틈으로 격자·곡선이 비치지 않을 만큼만. 0.16에서는 한글 자모 사이가
+    // 비쳤고, 0.3을 넘기면 글자가 뭉개진다.
+    t.setAttribute("stroke-width", size * 0.22);
     t.setAttribute("stroke-linejoin", "round");
   });
 }
@@ -174,21 +176,11 @@ export function renderGraphLabel(source, opts = {}) {
   else firstBaseY = y; // baseline
 
   const wrap = el("g");
-  // 라벨 구간 전체를 흰색으로 먼저 지운다 — halo(글리프 윤곽)만으로는 글자 사이 틈으로
-  // 그래프 선·격자가 비친다. 줄마다 실제 폭이 다르므로 줄 단위로 지운다.
-  lines.forEach((ln, i) => {
-    if (!(ln.width > 0)) return;
-    const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
-    const r = el("rect");
-    r.setAttribute("x", x + dx - size * 0.12);
-    r.setAttribute("y", firstBaseY + baseYs[i] - ln.ascent - size * 0.08);
-    r.setAttribute("width", ln.width + size * 0.24);
-    r.setAttribute("height", ln.ascent + ln.descent + size * 0.16);
-    r.setAttribute("fill", "white");
-    r.setAttribute("stroke", "none");
-    r.setAttribute("pointer-events", "none");
-    wrap.appendChild(r);
-  });
+  // 가림은 <b>글자 모양대로</b>만 한다(아래 applyHalo). 예전엔 줄 전체를 흰 사각형으로
+  // 덮었는데, 글자 사이로 선이 비치는 문제를 잡으려다 라벨이 흰 블록을 깔고 앉은 꼴이
+  // 됐다(2026-07-26 교사 지적: "얇은 영역으로 가리라고 했지 두껍게 가리라고 한 적 없다").
+  // 글자 사이 틈은 halo 굵기를 조금 키우는 것으로 충분히 막힌다 — 캔버스의 텍스트 도구가
+  // 쓰는 방식과 같아져 그래프 안팎의 라벨이 같은 모양으로 보인다.
   lines.forEach((ln, i) => {
     const dx = anchor === "end" ? -ln.width : anchor === "middle" ? -ln.width / 2 : 0;
     ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);

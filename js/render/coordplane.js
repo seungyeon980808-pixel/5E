@@ -326,7 +326,9 @@ function renderCoordplane(obj) {
   const addNumber = (text, nx, ny, anchor, baseline, tag) => {
     let node;
     if (rich) {
-      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: false });
+      // 눈금 숫자도 halo를 켠다 — 예전엔 흰 사각형 블록이 대신 가려 줬는데 그 블록을
+      // 없앴으므로(glyph 윤곽만 남김), 격자 파선이 숫자를 뚫고 지나가지 않게 하려면 필요하다.
+      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true });
       if (node) g.appendChild(node);
     } else {
       node = document.createElementNS(SVG_NS, "text");
