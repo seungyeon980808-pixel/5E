@@ -18,7 +18,8 @@ import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./sna
 import { setSnapPreview, pendulumBBox } from "./render.js?v=1.2.0";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=1.2.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.2.0";
-import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES } from "./object-types.js?v=1.2.0";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
+         ENDPOINT_HANDLE_TYPES } from "./object-types.js?v=1.2.0";
 
 import { snapKey, modKey } from "./platform.js?v=1.2.0";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
@@ -208,7 +209,7 @@ function lineAngleDeg(obj) {
 
 function objectAngleDeg(obj) {
   if (!obj) return null;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave") && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola") && obj.p1 && obj.p2) return lineAngleDeg(obj);
   if (typeof obj.rotation === "number") return obj.rotation;
   return null;
 }
@@ -224,7 +225,7 @@ function unitForAngle(deg) {
 
 function applyAngleDeg(obj, deg) {
   if (!obj || obj.locked || obj.positionLocked) return false;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave") && obj.p1 && obj.p2) {
+  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola") && obj.p1 && obj.p2) {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
@@ -353,7 +354,7 @@ function clipboardBBox(objs) {
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
-    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum" || o.type === "spring" || o.type === "chargefield" || o.type === "fieldlines" || o.type === "standingwave") {
+    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum" || o.type === "spring" || o.type === "chargefield" || o.type === "fieldlines" || o.type === "standingwave" || o.type === "parabola") {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
     } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
@@ -419,7 +420,7 @@ function applyDelta(obj, orig, dx, dy) {
 
 /* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
 function handleEndpointPoint(obj, handle) {
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     return handle === "p0" ? obj.p1 : obj.p2;
   }
   if ((obj.type === "polyline" || obj.type === "curve")
@@ -432,7 +433,7 @@ function handleEndpointPoint(obj, handle) {
 
 function setHandleEndpointPoint(obj, handle, pt) {
   const next = { x: pt.x, y: pt.y };
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     if (handle === "p0") obj.p1 = next; else obj.p2 = next;
     return;
   }
@@ -469,7 +470,7 @@ const MIN_SIZE = 0.3; // world units; minimum w or h after resize
 
 /* ----- apply one handle drag delta to an object ----- */
 function objectCenter(obj) {
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     return { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
   }
   if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") return polyCenter(obj.points);
@@ -551,7 +552,7 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // Branch B: endpoint handles (line / circuit / labeler / polyline / curve).
   // Circuit reuses the line's p0/p1 terminal drag (body re-centers at render);
   // labeler treats p0 = leader anchor, p1 = label position (drag to reshape).
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
       obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
@@ -1081,7 +1082,7 @@ export function initTransform(svg, state) {
               members.forEach((m) => {
                 const obj = s2.objects.find((o) => o.id === m.id);
                 if (!obj) return;
-                if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+                if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
@@ -1179,7 +1180,7 @@ export function initTransform(svg, state) {
               members.forEach((m) => {
                 const obj = s2.objects.find((o) => o.id === m.id);
                 if (!obj) return;
-                if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+                if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {

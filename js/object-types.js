@@ -44,11 +44,13 @@ export const OBJECT_TYPE_IDS = [
 //  snapEdge       : contributes finite contact edges as a snap target
 //  snapLineTarget : contributes line/segment snap targets
 //  snapLineLike   : treated as a line-like body for endpoint snapping
+//  endpointHandles: 선택하면 p1/p2 자리에 끌 수 있는 끝점 핸들이 생긴다
+//                   (scene.js 핸들 그리기 + transform.js 핸들 드래그 3곳이 공유)
 export const OBJECT_TYPES = {
   rect:       { sizeBox: 1, boxFace: 1, shape: 1, flip: 1, label: 1, snapEdge: 1 },
   ellipse:    { sizeBox: 1, shape: 1, flip: 1, label: 1 },
   triangle:   { sizeBox: 1, shape: 1, flip: 1, snapEdge: 1 },
-  line:       { lineTol: 1, label: 1, snapEdge: 1, snapLineTarget: 1, snapLineLike: 1 },
+  line:       { lineTol: 1, label: 1, snapEdge: 1, snapLineTarget: 1, snapLineLike: 1, endpointHandles: 1 },
   polyline:   { points: 1, lineTol: 1, snapEdge: 1, snapLineTarget: 1, snapLineLike: 1 },
   curve:      { points: 1, lineTol: 1, snapLineLike: 1 },
   funcgraph:  { points: 1, lineTol: 1 },
@@ -60,11 +62,11 @@ export const OBJECT_TYPES = {
   coordplane: { sizeBox: 1, boxFace: 1, label: 1 },
   anglearc:   { label: 1 },
   rightangle: {},
-  labeler:    { label: 1, lineTol: 1 },
-  circuit:    { lineTol: 1, label: 1, snapLineLike: 1 },
+  labeler:    { label: 1, lineTol: 1, endpointHandles: 1 },
+  circuit:    { lineTol: 1, label: 1, snapLineLike: 1, endpointHandles: 1 },
   optics:     { sizeBox: 1, boxFace: 1, flip: 1, label: 1 },
   apparatus:  { sizeBox: 1, boxFace: 1, flip: 1 },
-  pendulum:   { lineTol: 1 },
+  pendulum:   { lineTol: 1, endpointHandles: 1 },
   // spring = 용수철. p1/p2 계열(line·circuit·pendulum과 같은 가족).
   // snapLineLike: 끝점이 블록 모서리에 자석처럼 붙어야 해서 켠다(요구).
   spring:     { lineTol: 1, label: 1, snapLineLike: 1 },
@@ -83,7 +85,7 @@ export const OBJECT_TYPES = {
   solid3d:    { sizeBox: 1, boxFace: 1, flip: 1, label: 1, snapEdge: 1 },
   // parabola = 포물선 궤적. p1/p2가 **바닥(그림자)의 출발점·도달점**이라 정상파·용수철과
   // 같은 두 점 계열이다. snapLineLike로 끝점이 블록·상판 모서리에 붙는다.
-  parabola:   { lineTol: 1, label: 1, snapLineLike: 1 },
+  parabola:   { lineTol: 1, label: 1, snapLineLike: 1, endpointHandles: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.
@@ -104,6 +106,10 @@ export const LABEL_CAPABLE_TYPES    = typesWith("label");          // 10: rect e
 export const SNAP_EDGE_TARGET_TYPES = typesWith("snapEdge");       // 5: rect triangle line polyline solid3d
 export const SNAP_LINE_TARGET_TYPES = typesWith("snapLineTarget"); // 2: line polyline
 export const SNAP_LINE_LIKE_TYPES   = typesWith("snapLineLike");   // 4: line circuit polyline curve
+// 5: line circuit labeler pendulum parabola — 예전엔 이 목록이 scene.js·transform.js에
+// 네 벌 복사돼 있었다. 포물선을 추가하며 한 벌을 빠뜨려 "만들고 나면 끝점을 못 고치는"
+// 사고가 났다(2026-07-26). 이제 여기 한 줄이 정본이다.
+export const ENDPOINT_HANDLE_TYPES  = typesWith("endpointHandles");
 
 // Convenience predicate for the most-duplicated classification (box size object).
 export function isSizeObject(o) { return !!o && SIZE_TYPES.has(o.type); }

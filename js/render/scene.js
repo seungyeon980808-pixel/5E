@@ -31,9 +31,10 @@ import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } 
 import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.2.0";
 import { renderGauge } from "./gauge.js?v=1.2.0";
 import { renderSolid3d } from "./solid3d.js?v=1.2.0";
-import { renderParabola } from "./parabola.js?v=1.2.0";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.2.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.2.0";
-import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, zOrderObjects } from "../object-types.js?v=1.2.0";
+import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
+         zOrderObjects } from "../object-types.js?v=1.2.0";
 import { resolveObjectStyle } from "../style-mode.js?v=1.2.0";
 import { renderFormula } from "../formula.js?v=1.2.0";
 import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.2.0";
@@ -294,7 +295,8 @@ export function render(state) {
                     : sel.positionLocked ? "#8b5cf6"
                     : "var(--c-main, #0969da)";
     if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
-        || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave") {
+        || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
+        || sel.type === "parabola") {
       // Line/circuit/pendulum have no bbox; the selection guide is a dashed copy
       // of the p1–p2 segment (pendulum: pivot → real bob, i.e. the string axis).
       const ln = document.createElementNS(SVG_NS, "line");
@@ -877,6 +879,7 @@ export function singleObjBBox(o, scene) {
   if (o.type === "chargefield") return chargeFieldBBox(o);
   if (o.type === "fieldlines") return fieldLinesBBox(o);
   if (o.type === "standingwave") return standingWaveBBox(o);
+  if (o.type === "parabola") return parabolaBBox(o);
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;
@@ -1060,9 +1063,11 @@ function renderHandles(sel, scene, zoom, activeTool) {
         makeArc(hx, hy, base, base + 90);
       }
     }
-  } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum") {
+  } else if (ENDPOINT_HANDLE_TYPES.has(sel.type)) {
+    // was: line|circuit|labeler|pendulum — 이제 object-types.js의 endpointHandles가 정본.
     // Circuit + labeler + pendulum reuse the line's two endpoint handles: drag
     // p1/p2 to move an endpoint. For the pendulum, p0 = pivot, p1 = real bob.
+    // 포물선은 p1/p2가 바닥의 출발점·도달점이다.
     makeHandle(sel.p1.x, sel.p1.y, "p0", true);
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
