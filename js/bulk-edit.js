@@ -128,7 +128,7 @@ const FIELDS = [
     },
   },
   {
-    key: "boxW", type: "number", label: "폭", unit: "mm", step: 1, uniDefault: 20,
+    key: "boxW", type: "number", label: "너비", unit: "mm", step: 1, uniDefault: 20,
     has: (o) => typeof o.w === "number" && typeof o.h === "number",
     setUni: (o, v) => setBoxW(o, v),
     setDelta: (o, d) => setBoxW(o, o.w + d),
@@ -204,17 +204,7 @@ function buildModal() {
       <p class="objectify-description" id="bulk-target" style="margin:0 0 8px;"></p>
       <div id="bulk-fields"></div>
       <div id="bulk-spacing" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
-          <input type="checkbox" id="bulk-gap-cb" />
-          <span class="modal-label" style="flex:1 1 auto;margin:0;">간격</span>
-          <select class="modal-input" id="bulk-gap-axis" style="width:74px;flex:none;">
-            <option value="x">가로</option>
-            <option value="y">세로</option>
-            <option value="z">깊이</option>
-          </select>
-          <input type="number" class="modal-input" id="bulk-gap-val" step="1" value="4" style="width:64px;flex:none;" />
-          <span style="flex:none;font-size:11px;color:var(--text-secondary);width:22px;">mm</span>
-        </label>
+        <div id="bulk-gap-rows"></div>
         <p class="objectify-description" id="bulk-gap-desc" style="margin:2px 0 0;"></p>
       </div>
       <div class="modal-actions">
@@ -305,6 +295,16 @@ function depthAxisAngle(objs) {
   return 50;
 }
 
+/* 간격 항목 — 축마다 독립된 한 줄이다(드롭다운으로 묶지 않는다).
+ * 묶어 두면 "좌우 간격 통일"과 "상하 간격 통일"이 각각 있는지 화면에서 안 보인다.
+ * 둘 다 체크하면 적힌 순서대로 차례로 적용된다. */
+const GAP_AXES = [
+  { axis: "x", key: "gapX", label: "좌우 간격 통일" },
+  { axis: "y", key: "gapY", label: "상하 간격 통일" },
+  { axis: "z", key: "gapZ", label: "깊이 간격 통일" },
+];
+const _gapRows = new Map(); // key -> { cb, input, axis }
+
 function axisUnit(axis, objs) {
   if (axis === "x") return { ux: 1, uy: 0 };
   if (axis === "y") return { ux: 0, uy: 1 };
@@ -339,6 +339,36 @@ function applySpacing(objs, axis, gap) {
   return moved;
 }
 
+function renderGapRows() {
+  const host = _overlay.querySelector("#bulk-gap-rows");
+  host.innerHTML = "";
+  _gapRows.clear();
+  for (const g of GAP_AXES) {
+    const row = document.createElement("label");
+    row.className = "modal-field modal-field-row";
+    row.style.cssText = "display:flex;align-items:center;gap:8px;";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    const lbl = document.createElement("span");
+    lbl.className = "modal-label";
+    lbl.style.cssText = "flex:1 1 auto;margin:0;";
+    lbl.textContent = g.label;
+    const input = document.createElement("input");
+    input.type = "number";
+    input.step = "1";
+    input.value = "4";
+    input.className = "modal-input";
+    input.style.cssText = "width:90px;flex:none;";
+    input.addEventListener("input", () => { cb.checked = true; });
+    const unit = document.createElement("span");
+    unit.style.cssText = "flex:none;font-size:11px;color:var(--text-secondary);width:38px;";
+    unit.textContent = "mm";
+    row.appendChild(cb); row.appendChild(lbl); row.appendChild(input); row.appendChild(unit);
+    host.appendChild(row);
+    _gapRows.set(g.key, { cb, input, axis: g.axis });
+  }
+}
+
 function syncTargetText() {
   const { objs, locked, scoped } = targets();
   const where = scoped ? `선택한 오브젝트 ${objs.length}개` : `캔버스 전체 ${objs.length}개`;
@@ -348,12 +378,11 @@ function syncTargetText() {
   // 간격은 '통일' 개념 자체라 증감(전체 수정) 모드에서는 숨긴다.
   const gapBox = _overlay.querySelector("#bulk-spacing");
   gapBox.style.display = _mode === "uniform" ? "" : "none";
-  const axis = _overlay.querySelector("#bulk-gap-axis").value;
   // "줄을 맞춘다"가 아니라 "간격만 고른다"이다 — 축과 직각인 방향은 건드리지 않는다.
   // (직각 방향까지 맞추면 사용자가 잡아둔 배치가 통째로 움직여 버린다)
-  _overlay.querySelector("#bulk-gap-desc").textContent = axis === "z"
-    ? `깊이(투영 ${depthAxisAngle(objs)}°) 방향 간격만 고릅니다. 맨 앞 오브젝트는 그대로 둡니다.`
-    : "그 방향 간격만 고릅니다. 직각 방향 위치와 맨 앞 오브젝트는 그대로 둡니다.";
+  _overlay.querySelector("#bulk-gap-desc").textContent =
+    `오브젝트 사이 빈 거리를 그 값으로 맞춥니다(깊이는 투영 ${depthAxisAngle(objs)}° 방향). `
+    + "맨 앞 하나는 기준으로 두고 나머지를 밉니다.";
 }
 
 function apply() {
@@ -368,16 +397,20 @@ function apply() {
     picked.push({ field: r.field, value: r.read() });
   }
   // 간격은 FIELDS가 아니라 별도 집합 연산이라 따로 읽는다(통일 모드 전용).
-  const gapCb = _overlay.querySelector("#bulk-gap-cb");
-  const gapOn = _mode === "uniform" && gapCb && gapCb.checked;
-  const gapVal = Number(_overlay.querySelector("#bulk-gap-val").value);
-  const gapAxis = _overlay.querySelector("#bulk-gap-axis").value;
-  if (gapOn && !isFinite(gapVal)) { showAlert("간격에 숫자를 입력하세요.", { title: "전체 통일/수정" }); return; }
+  const gaps = [];
+  if (_mode === "uniform") {
+    for (const [, r] of _gapRows) {
+      if (!r.cb.checked) continue;
+      const v = Number(r.input.value);
+      if (!isFinite(v)) { showAlert("간격에 숫자를 입력하세요.", { title: "전체 통일/수정" }); return; }
+      gaps.push({ axis: r.axis, value: v });
+    }
+  }
 
-  if (!picked.length && !gapOn) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 통일/수정" }); return; }
+  if (!picked.length && !gaps.length) { showAlert("적용할 항목을 체크하고 값을 입력하세요.", { title: "전체 통일/수정" }); return; }
   const { objs } = targets();
   if (!objs.length) { showAlert("적용할 오브젝트가 없습니다.", { title: "전체 통일/수정" }); return; }
-  if (gapOn && objs.length < 2) { showAlert("간격을 맞추려면 오브젝트가 2개 이상이어야 합니다.", { title: "전체 통일/수정" }); return; }
+  if (gaps.length && objs.length < 2) { showAlert("간격을 맞추려면 오브젝트가 2개 이상이어야 합니다.", { title: "전체 통일/수정" }); return; }
   const idSet = new Set(objs.map((o) => o.id));
   _state.update((s2) => {
     s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
@@ -394,7 +427,7 @@ function apply() {
     }
     // 간격은 크기 변경이 끝난 뒤에 잡아야 한다 — 폭을 통일하고 나면 bbox가 달라지므로
     // 순서를 바꾸면 간격이 어긋난다.
-    if (gapOn) applySpacing(s2.objects.filter((o) => idSet.has(o.id)), gapAxis, gapVal);
+    for (const g of gaps) applySpacing(s2.objects.filter((o) => idSet.has(o.id)), g.axis, g.value);
   });
   _overlay.hidden = true;
 }
@@ -410,12 +443,9 @@ export function initBulkEdit(state) {
     btn.classList.add("is-active");
     _mode = btn.dataset.mode;
     renderFields();
+    renderGapRows();
     syncTargetText();
   });
-  // 간격 값·축을 건드리면 체크박스를 자동으로 켠다(다른 항목과 같은 규칙).
-  const gapCb = _overlay.querySelector("#bulk-gap-cb");
-  _overlay.querySelector("#bulk-gap-val").addEventListener("input", () => { gapCb.checked = true; });
-  _overlay.querySelector("#bulk-gap-axis").addEventListener("change", () => { gapCb.checked = true; syncTargetText(); });
   _overlay.querySelector("#bulk-cancel").addEventListener("click", () => { _overlay.hidden = true; });
   _overlay.addEventListener("mousedown", (e) => { if (e.target === _overlay) _overlay.hidden = true; });
   _overlay.addEventListener("keydown", (e) => {
@@ -425,8 +455,8 @@ export function initBulkEdit(state) {
   document.getElementById("bulk-edit-open")?.addEventListener("click", () => {
     _mode = "uniform";
     modeSeg.querySelectorAll(".seg-btn").forEach((b, i) => b.classList.toggle("is-active", i === 0));
-    gapCb.checked = false;   // 열 때마다 간격은 꺼진 상태로 시작(실수로 배치가 밀리지 않게)
     renderFields();
+    renderGapRows();   // 열 때마다 새로 그린다 = 간격은 항상 꺼진 상태로 시작(실수로 배치가 밀리지 않게)
     syncTargetText();
     _overlay.hidden = false;
     // 모달 내부로 포커스를 옮겨야 ESC 키가 오버레이 keydown 핸들러에 도달하고,
