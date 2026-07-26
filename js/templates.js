@@ -212,7 +212,10 @@ export const TEMPLATES = {
   solid_desk:     { kind: "shape", category: "역학", label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
   // 포물선: 두 번 끄는 게 아니라 **바닥의 출발점 → 도달점**을 끈다. 깊이 방향으로 끌면
   // 안쪽으로 날아가는 3D 궤적이 된다(바닥 점선이 그 느낌을 만든다).
+  solid_plane:    { kind: "shape", category: "역학", label: "수평면", keywords: ["수평면", "바닥", "평면", "지면", "판", "plane", "ground", "floor"], create: { tool: "SOLID3D", kind: "plane" } },
   solid_axes3d:   { kind: "shape", category: "역학", label: "3차원 좌표축", keywords: ["좌표축", "3차원", "3D", "xyz", "축", "공간", "axes", "coordinate"], create: { tool: "SOLID3D", kind: "axes3d" } },
+  solid_axesgnd:  { kind: "shape", category: "역학", label: "평면 위 좌표축", keywords: ["좌표축", "바닥", "수평면", "xy", "2축", "평면", "ground axes"], create: { tool: "SOLID3D", kind: "axes3d", props: { variant: "ground" } } },
+  groundarc:      { kind: "shape", category: "역학", label: "평면 위 원호", keywords: ["원호", "호", "거리", "바닥", "수평면", "arc", "distance"], create: { tool: "GROUNDARC" } },
   parabola:       { kind: "shape", category: "역학", label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
 };
 
@@ -305,6 +308,8 @@ const SOLID3D_ICON_BOX = {
   solid_wedge:    { w: 26, h: 20, depth: 9 },
   solid_desk:     { w: 26, h: 24, depth: 12 },
   solid_axes3d:   { w: 24, h: 24, depth: 14 },
+  solid_axesgnd:  { w: 26, h: 18, depth: 14 },
+  solid_plane:    { w: 28, h: 15, depth: 14 },
 };
 
 // Build the data object that the REAL renderer turns into the icon.
@@ -361,6 +366,13 @@ function iconSampleObject(id, def) {
     if (c.kind === "scale") sample.displayText = "0.99 N";
     return sample;
   }
+  if (c.tool === "GROUNDARC") {
+    return {
+      type: "groundarc", p1: { x: -6, y: 8 }, p2: { x: 12, y: 8 },
+      sweep: 110, dashed: false, projAngle: 50,
+      strokeLevel: 0, strokeWidth: 0.6, showLabel: false,
+    };
+  }
   if (c.tool === "PARABOLA") {
     return {
       type: "parabola", p1: { x: -12, y: 8 }, p2: { x: 12, y: 8 },
@@ -379,6 +391,9 @@ function iconSampleObject(id, def) {
       strokeLevel: 0, strokeWidth: 0.6, showLabel: false, _outline: true,
       // 좌표축 아이콘은 16px 안에서 글자가 뭉개지므로 축 이름을 뺀다(선만 남긴다).
       axisLabels: false,
+      // 팔레트가 지정한 갈래(예: 평면 위 좌표축의 variant)를 얹는다 — 안 얹으면
+      // 두 버튼이 똑같은 아이콘으로 보인다.
+      ...(c.props || {}),
     };
   }
   return null;

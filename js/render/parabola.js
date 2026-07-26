@@ -94,6 +94,8 @@ export function renderParabola(obj) {
   path.setAttribute("stroke-width", sw);
   path.setAttribute("stroke-linejoin", "round");
   path.setAttribute("stroke-linecap", "round");
+  // 기출의 궤적은 대부분 점선이다(실제로 보이는 선이 아니라 "지나간 길"이라서).
+  if (obj.dashed) path.setAttribute("stroke-dasharray", dash);
   g.appendChild(path);
 
   // 최고점: 점 + 그림자로 내린 수선

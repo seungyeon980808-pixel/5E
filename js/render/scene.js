@@ -32,6 +32,7 @@ import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.2.0
 import { renderGauge } from "./gauge.js?v=1.2.0";
 import { renderSolid3d } from "./solid3d.js?v=1.2.0";
 import { renderParabola, parabolaBBox } from "./parabola.js?v=1.2.0";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.2.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.2.0";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
          zOrderObjects } from "../object-types.js?v=1.2.0";
@@ -296,7 +297,7 @@ export function render(state) {
                     : "var(--c-main, #0969da)";
     if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
-        || sel.type === "parabola") {
+        || sel.type === "parabola" || sel.type === "groundarc") {
       // Line/circuit/pendulum have no bbox; the selection guide is a dashed copy
       // of the p1–p2 segment (pendulum: pivot → real bob, i.e. the string axis).
       const ln = document.createElementNS(SVG_NS, "line");
@@ -814,6 +815,8 @@ export function renderObject(obj) {
       return renderSolid3d(obj);
     case "parabola":
       return renderParabola(obj);
+    case "groundarc":
+      return renderGroundArc(obj);
     default:
       return null;
   }
@@ -880,6 +883,7 @@ export function singleObjBBox(o, scene) {
   if (o.type === "fieldlines") return fieldLinesBBox(o);
   if (o.type === "standingwave") return standingWaveBBox(o);
   if (o.type === "parabola") return parabolaBBox(o);
+  if (o.type === "groundarc") return groundArcBBox(o);
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;

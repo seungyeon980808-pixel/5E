@@ -56,6 +56,10 @@ export function initParabolaSection(state) {
   shadow.row.title = "출발점과 도달점을 잇는 바닥 경로.\n이게 없으면 위로 간 건지 안쪽으로 간 건지 읽히지 않습니다.";
   body.appendChild(shadow.row);
 
+  const dashed = checkRow("궤적 점선");
+  dashed.row.title = "기출의 궤적은 대부분 점선입니다.\n실제로 보이는 선이 아니라 '지나간 길'이기 때문입니다.";
+  body.appendChild(dashed.row);
+
   const apexMark = checkRow("최고점 표시");
   apexMark.row.title = "가장 높은 지점에 점을 찍고 바닥까지 수선을 내립니다.";
   body.appendChild(apexMark.row);
@@ -97,6 +101,9 @@ export function initParabolaSection(state) {
   apexMark.cb.addEventListener("change", () => {
     commit((t) => { t.showApex = apexMark.cb.checked; });
   });
+  dashed.cb.addEventListener("change", () => {
+    commit((t) => { t.dashed = dashed.cb.checked; });
+  });
 
   function sync() {
     const o = selected();
@@ -107,6 +114,7 @@ export function initParabolaSection(state) {
     }
     shadow.cb.checked = o.showShadow !== false;
     apexMark.cb.checked = !!o.showApex;
+    dashed.cb.checked = !!o.dashed;
   }
 
   state.subscribe(sync);

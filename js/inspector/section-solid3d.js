@@ -240,13 +240,20 @@ export function initSolid3dSection(state) {
     const isCyl = kind === "cylinder";
     const isDesk = kind === "desk";
     const isAxes = kind === "axes3d";
+    const isGroundAxes = isAxes && o.variant === "ground";
+    const isPlane = kind === "plane";
     axisRow.style.display = isCyl ? "" : "none";
     topRow.style.display = isDesk ? "" : "none";
     legRow.style.display = isDesk ? "" : "none";
     nameRow.style.display = isAxes ? "" : "none";
     nameShow.style.display = isAxes ? "" : "none";
     shadeRow.style.display = isAxes ? "none" : "";   // 좌표축엔 칠할 면이 없다
+    // 수평면은 깊이를 따로 안 쓴다 — bbox 높이가 곧 깊이의 세로 성분이다.
+    // 평면 위 좌표축은 세로로 서는 축이 없어 z축 길이도 의미가 없다.
+    depthRow.style.display = (isPlane || isGroundAxes) ? "none" : "";
     depthRow.querySelector(".insp-field-label").textContent = isAxes ? "z축 길이" : "깊이";
+    // 평면 위 좌표축은 축이 둘뿐이라 세 번째 이름칸을 감춘다.
+    nameInps[2].style.display = isGroundAxes ? "none" : "";
     if (isAxes) {
       if (document.activeElement !== nameInps[0]) nameInps[0].value = o.labelX ?? "x";
       if (document.activeElement !== nameInps[1]) nameInps[1].value = o.labelY ?? "y";

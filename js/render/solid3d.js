@@ -26,7 +26,7 @@ import { withBoxLabel } from "./labels.js?v=1.2.0";
 // axes3d(3차원 좌표축)도 여기 산다. 입체가 아니지만 **같은 투영각을 써야** 하는 것이
 // 이 타입의 조건이고, 축이 다른 각도로 서 있으면 그림이 즉시 어긋난다. solid3d에 두면
 // 인스펙터의 "이 각도를 모든 입체에 적용"이 축에도 그대로 걸린다.
-export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge", "desk", "axes3d"];
+export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge", "desk", "axes3d", "plane"];
 // 도. 기출 실측: 작은 블록·추 40° 안팎, 바닥판 58° 안팎 → 그 사이인 50°를 기본으로 쓴다.
 // 30°는 윗면이 거의 안 보여서 시험지 그림으로 못 쓴다(2026-07-26 사용자 확인).
 export const DEFAULT_PROJ_ANGLE = 50;
@@ -250,6 +250,28 @@ function drawCylinder(obj, proj, stroke, sw) {
   return g;
 }
 
+/* ===== PLANE — 수평면 (두께 없는 평행사변형) =====
+ *
+ * 기출(p2_2024_11_13)의 "수평면"이다. 판(slab)과 다른 점은 **두께가 없다**는 것.
+ * 판은 앞면 띠가 보이지만 수평면은 윤곽선만 있는 평행사변형이다.
+ *
+ * 깊이를 따로 두지 않는다: bbox 높이가 곧 깊이의 세로 성분이다(h = depth·sin α).
+ * 그래서 드래그한 상자가 평면의 화면상 크기 그대로가 되고, 상자를 꽉 채운다.
+ * 뒤 물체가 비쳐 보이면 바닥으로 안 읽히므로 면은 불투명 흰색이 기본이다. */
+function drawPlane(obj, proj, stroke, sw) {
+  const g = document.createElementNS(SVG_NS, "g");
+  const a = ((Number.isFinite(obj.projAngle) ? obj.projAngle : DEFAULT_PROJ_ANGLE) * Math.PI) / 180;
+  const tan = Math.tan(a) || 1;
+  const dx = clamp(obj.h / tan, 0, obj.w * 0.9);   // 뒤로 밀리는 가로 성분
+  const fw = obj.w - dx;                           // 앞 모서리 길이
+  const yF = obj.y + obj.h, yB = obj.y;            // 앞·뒤 모서리의 y
+  const sh = shadeOf(obj);
+  g.appendChild(face(obj, [
+    [obj.x, yF], [obj.x + fw, yF], [obj.x + fw + dx, yB], [obj.x + dx, yB],
+  ], obj.shade === 0 ? 255 : sh.top, stroke, sw));
+  return g;
+}
+
 /* ===== AXES3D — 3차원 좌표축 =====
  *
  * 원점은 bbox의 **왼쪽 아래**. x는 오른쪽, y는 위, z는 깊이 방향(오른쪽 위)이다.
@@ -292,15 +314,29 @@ function drawAxes3d(obj, proj, stroke, sw) {
   if (uy < -1e-6) lz = Math.min(lz, (obj.h - pad) / -uy);
   lz = Math.max(lz, minLen);
 
-  const axes = [
-    { tip: [ox + lx, oy], dir: [1, 0], name: obj.labelX ?? "x" },
-    { tip: [ox, oy - ly], dir: [0, -1], name: obj.labelY ?? "y" },
-    { tip: [ox + ux * lz, oy + uy * lz], dir: [ux, uy], name: obj.labelZ ?? "z" },
-  ];
+  /* variant "ground" = 두 축이 **모두 바닥면에 눕는다**(기출 p2_2024_11_13의 배치).
+   * 세로로 서는 축은 아예 그리지 않고, 깊이축을 왼쪽 아래(-z)로 보낸다.
+   * 수평면 위에 x·y를 얹어야 하는 문항에서 3축 좌표계는 오히려 방해가 된다. */
+  const axes = [];
+  if ((obj.variant || "xyz") === "ground") {
+    const ca = Math.cos(proj.angle), sa = Math.sin(proj.angle) || 0.5;
+    // 깊이축이 세로로 h를, 가로로 run을 먹는다. run이 너무 커지면 오른쪽 축이 사라지므로 제한.
+    let lenD = Math.max((obj.h - pad) / sa, minLen);
+    lenD = Math.min(lenD, (obj.w * 0.6) / (ca || 1));
+    const run = lenD * ca;
+    const gx = obj.x + run, gy = obj.y;               // 원점 = 위쪽(깊이축이 왼아래로 내려간다)
+    const lenR = Math.max(obj.x + obj.w - gx - pad, minLen);
+    axes.push({ o: [gx, gy], tip: [gx + lenR, gy], dir: [1, 0], name: obj.labelY ?? "y" });
+    axes.push({ o: [gx, gy], tip: [gx - run, gy + lenD * sa], dir: [-ca, sa], name: obj.labelX ?? "x" });
+  } else {
+    axes.push({ o: [ox, oy], tip: [ox + lx, oy], dir: [1, 0], name: obj.labelX ?? "x" });
+    axes.push({ o: [ox, oy], tip: [ox, oy - ly], dir: [0, -1], name: obj.labelY ?? "y" });
+    axes.push({ o: [ox, oy], tip: [ox + ux * lz, oy + uy * lz], dir: [ux, uy], name: obj.labelZ ?? "z" });
+  }
 
   for (const a of axes) {
     const ln = document.createElementNS(SVG_NS, "line");
-    ln.setAttribute("x1", ox); ln.setAttribute("y1", oy);
+    ln.setAttribute("x1", a.o[0]); ln.setAttribute("y1", a.o[1]);
     ln.setAttribute("x2", a.tip[0]); ln.setAttribute("y2", a.tip[1]);
     ln.setAttribute("stroke", stroke);
     ln.setAttribute("stroke-width", sw);
@@ -335,6 +371,7 @@ export function renderSolid3d(obj) {
   else if (kind === "wedge") inner = drawWedge(obj, proj, stroke, sw);
   else if (kind === "desk") inner = drawDesk(obj, proj, stroke, sw);
   else if (kind === "axes3d") inner = drawAxes3d(obj, proj, stroke, sw);
+  else if (kind === "plane") inner = drawPlane(obj, proj, stroke, sw);
   else inner = drawBox(obj, proj, stroke, sw);   // box · slab (그림은 같다)
   applyFlip(inner, obj);
 

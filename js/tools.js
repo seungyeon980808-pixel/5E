@@ -110,7 +110,7 @@ let _activeSymbolId = null;
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
 const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
-  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA"]);
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA", "GROUNDARC"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -336,7 +336,7 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola", GROUNDARC: "groundarc" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -658,7 +658,7 @@ function setupDrawing() {
 export function isCommittable(shape) {
   if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring"
       || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave"
-      || shape.type === "parabola") {
+      || shape.type === "parabola" || shape.type === "groundarc") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -672,8 +672,8 @@ function makeShape(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
   if (type === "spring") return makeSpring(a, b);
-  if (type === "parabola") {
-    const obj = makeParabola(a, b);
+  if (type === "parabola" || type === "groundarc") {
+    const obj = type === "parabola" ? makeParabola(a, b) : makeGroundArc(a, b);
     if (_symbolProps) Object.assign(obj, _symbolProps);
     return obj;
   }
@@ -810,16 +810,18 @@ function makeShape(type, a, b) {
     shape.labelType = "label";   // 블록 이름 A·B·C — 정체(물리량 이탤릭 아님)
     shape.fillNone = false;
     shape.flipX = false;
-    if (shape.kind === "cylinder" || shape.kind === "axes3d") {
+    if (shape.kind === "cylinder" || shape.kind === "axes3d" || shape.kind === "plane") {
       // 드래그 상자가 곧 그림 전체인 갈래.
       //  · 원기둥·원판: 상자가 실루엣이다(가로=지름, 세로=길이). 깊이는 마개 타원의
       //    납작함만 정하므로 bbox를 키우지 않는다.
       //  · 좌표축: 상자가 x축·y축 길이다. 깊이가 z축 길이가 된다.
+      //  · 수평면: 상자가 곧 평행사변형의 화면상 크기다(두께가 없어 깊이를 안 쓴다).
       shape.w = Math.max(shape.w, 3);
       shape.h = Math.max(shape.h, 3);
       shape.depth = shape.kind === "axes3d"
         ? Math.max(Math.min(shape.w, shape.h) * 0.6, 4)
         : Math.max(Math.min(shape.w, shape.h) * 0.5, 2);
+      if (shape.kind === "plane") shape.shade = 1;
       if (shape.kind === "axes3d") {
         shape.axisLabels = true;
         shape.labelX = "x"; shape.labelY = "y"; shape.labelZ = "z";
@@ -966,6 +968,32 @@ function makeParabola(a, b) {
     apex: Math.max(span * 0.35, 3),
     showShadow: true,     // 바닥 점선 — 이게 없으면 깊이가 안 읽힌다
     showApex: false,
+    label: "",
+    showLabel: false,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 수평면 위 원호 — 드래그는 **중심 → 시작점**이다(반지름 + 시작 방향을 한 번에 정한다).
+ * 벌림각은 기본 90°이고 인스펙터에서 바꾼다. 기출의 거리 표시가 대개 직각이라 90°가
+ * 맞고, 그렇지 않을 때만 손대면 된다. */
+function makeGroundArc(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "groundarc",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    sweep: 90,
+    dashed: true,          // 기출의 거리 표시는 전부 점선
+    showRadii: false,
+    projAngle: solid3dProjAngle(),   // 입체·좌표축과 같은 각을 쓴다
     label: "",
     showLabel: false,
     rotation: 0,

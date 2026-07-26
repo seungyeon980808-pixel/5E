@@ -26,6 +26,7 @@ export const OBJECT_TYPE_IDS = [
   "gauge",
   "solid3d",
   "parabola",
+  "groundarc",
 ];
 
 // Per-type classification flags. Each flag names a behavior-class that some
@@ -86,6 +87,8 @@ export const OBJECT_TYPES = {
   // parabola = 포물선 궤적. p1/p2가 **바닥(그림자)의 출발점·도달점**이라 정상파·용수철과
   // 같은 두 점 계열이다. snapLineLike로 끝점이 블록·상판 모서리에 붙는다.
   parabola:   { lineTol: 1, label: 1, snapLineLike: 1, endpointHandles: 1 },
+  // groundarc = 수평면에 누운 원호(거리 표시). p1=중심, p2=시작점이라 두 점 계열이다.
+  groundarc:  { lineTol: 1, label: 1, endpointHandles: 1 },
 };
 
 // Derive the Set of type ids whose row has `flag` truthy.
