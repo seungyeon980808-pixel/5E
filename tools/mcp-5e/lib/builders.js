@@ -223,7 +223,9 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       dashGap: num(f.dashGap, 0),
       label: f.label || "",
       labelShow: !!f.label,
-      endLabel: f.endLabel || undefined,
+      // 곡선 끝 라벨은 renderFuncgraph가 endLabel을 읽는다. 도구 스키마의 label 설명이
+      // "곡선 끝 라벨"이므로 label만 준 경우에도 끝 라벨로 동작하게 넘겨준다.
+      endLabel: f.endLabel || f.label || undefined,
       ...els,
     }));
   }
