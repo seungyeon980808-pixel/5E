@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -4 190 42" width="950" height="210">
+<rect x="-4" y="-4" width="190" height="42" fill="#ffffff"/>
+<g fill="#ffffff" stroke="#000000" stroke-width="0.5">
+<rect x="2" y="10" width="16" height="11"/>
+<ellipse cx="32.5" cy="8.5" rx="6.5" ry="6.5"/>
+<rect x="46" y="16" width="11" height="9"/>
+<ellipse cx="71.5" cy="13.5" rx="7.5" ry="7.5"/>
+</g>
+<path d="M84 15 L92 15 M89 12 L92 15 L89 18" fill="none" stroke="#8b949e" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round"/>
+<g fill="#ffffff" stroke="#000000" stroke-width="0.5">
+<rect x="100" y="9" width="14" height="12"/>
+<ellipse cx="129" cy="15" rx="6" ry="6"/>
+<rect x="144" y="9" width="14" height="12"/>
+<ellipse cx="173" cy="15" rx="6" ry="6"/>
+</g>
+<line x1="100" y1="21" x2="179" y2="21" stroke="#0969da" stroke-width="0.35" stroke-dasharray="2 1.6"/>
+<g fill="#57606a" font-family="sans-serif" font-size="3.6">
+<text x="2" y="33">흩어진 상태</text>
+<text x="100" y="33">아래 정렬 + 좌우 간격 통일</text>
+</g>
+</svg>
