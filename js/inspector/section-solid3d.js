@@ -46,6 +46,26 @@ export function initSolid3dSection(state) {
   const body = document.createElement("div");
   body.className = "insp-body";
 
+  /* ----- 종류 -----
+   * 팔레트에는 직육면체 버튼 하나만 있고(templates.js), 나머지 갈래는 여기서 바꾼다.
+   * 갈래마다 필요한 필드가 달라서, 바꿀 때 그 갈래의 기본값을 채워 준다 —
+   * 안 채우면 책상으로 바꿨는데 다리가 없거나 좌표축에 이름이 안 뜬다. */
+  const KIND_OPTS = [
+    ["box", "직육면체"], ["slab", "판·상판"], ["cylinder", "원기둥·원판"],
+    ["wedge", "빗면"], ["desk", "실험대·책상"], ["plane", "수평면"],
+    ["axes3d", "3차원 좌표축"], ["axesgnd", "평면 위 좌표축"],
+  ];
+  const kindRow = row("종류");
+  const kindSel = document.createElement("select");
+  kindSel.className = "insp-input";
+  KIND_OPTS.forEach(([v, t]) => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = t;
+    kindSel.appendChild(o);
+  });
+  kindRow.appendChild(kindSel);
+  body.appendChild(kindRow);
+
   /* ----- 깊이 ----- */
   const depthRow = row("깊이");
   const depthInp = document.createElement("input");
@@ -165,6 +185,28 @@ export function initSolid3dSection(state) {
     });
   }
 
+  // "평면 위 좌표축"은 별도 kind가 아니라 axes3d의 variant다 — 목록에서만 한 줄로 보인다.
+  kindSel.addEventListener("change", () => {
+    const v = kindSel.value;
+    commit((t) => {
+      t.kind = v === "axesgnd" ? "axes3d" : v;
+      t.variant = v === "axesgnd" ? "ground" : undefined;
+      if (t.kind === "axes3d") {
+        t.axisLabels = t.axisLabels !== false;
+        if (t.labelX == null) t.labelX = "x";
+        if (t.labelY == null) t.labelY = "y";
+        if (t.labelZ == null) t.labelZ = "z";
+        t.fillNone = true;
+      }
+      if (t.kind === "cylinder" && !t.axis) t.axis = "v";
+      if (t.kind === "plane" && !Number.isInteger(t.shade)) t.shade = 1;
+      // 깊이가 없거나 0이면 어떤 갈래든 납작하게 나온다 — 최소값을 채운다.
+      if (!Number.isFinite(t.depth) || t.depth <= 0) {
+        t.depth = Math.max(Math.min(t.w, t.h) * 0.4, 3);
+      }
+    });
+  });
+
   depthInp.addEventListener("change", () => {
     const v = Number(depthInp.value);
     if (!(v >= 0)) return;
@@ -237,6 +279,9 @@ export function initSolid3dSection(state) {
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
     const kind = o.kind || "box";
+    if (document.activeElement !== kindSel) {
+      kindSel.value = (kind === "axes3d" && o.variant === "ground") ? "axesgnd" : kind;
+    }
     const isCyl = kind === "cylinder";
     const isDesk = kind === "desk";
     const isAxes = kind === "axes3d";

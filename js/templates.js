@@ -200,23 +200,29 @@ export const TEMPLATES = {
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
   bar_magnet:  { kind: "shape", category: "역학", label: "막대자석", keywords: ["막대자석", "자석", "magnet", "NS"],      create: { tool: "OPTICS", kind: "bar_magnet" } },
 
-  /* ----- 입체(경사 투영) — 드래그한 상자가 그림 전체 bbox가 된다(render/solid3d.js).
-   * 다섯 버튼이 renderer 셋(box/cylinder/wedge)을 공유한다: 판·원판은 각각 직육면체·
-   * 원기둥의 납작한 프리셋일 뿐이라 별도 렌더러를 만들지 않았다. props로 초기값만 다르다.
-   * 투영각은 여기서 정하지 않는다 — tools.js가 공유 기본값(30°)을 읽어 넣는다. ----- */
-  solid_box:      { kind: "shape", category: "역학", label: "직육면체", keywords: ["직육면체", "블록", "상자", "입체", "3D", "box", "block", "cuboid"], create: { tool: "SOLID3D", kind: "box" } },
-  solid_slab:     { kind: "shape", category: "역학", label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "slab" } },
-  solid_cylinder: { kind: "shape", category: "역학", label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
-  solid_disk:     { kind: "shape", category: "역학", label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
-  solid_wedge:    { kind: "shape", category: "역학", label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
-  solid_desk:     { kind: "shape", category: "역학", label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
+  /* ----- 입체(경사 투영, 실험 단계) — render/solid3d.js -----------------------------
+   * **팔레트에는 직육면체 버튼 하나만 내보낸다.** 갈래가 11개까지 늘어 역학 팔레트를
+   * 통째로 잡아먹었는데, 아직 실험 단계라 그만한 자리값을 못 한다(2026-07-26 사용자 판단).
+   * 접은 항목도 레지스트리에는 그대로 남아 **오브젝트 검색(Ctrl+F)** 으로 바로 꺼내 쓸 수
+   * 있고, 이미 저장된 파일도 그대로 열린다. 실제 사용 경로는 검색보다 인스펙터의
+   * "입체 > 종류"다 — 직육면체를 하나 놓고 거기서 갈래를 바꾸면 된다.
+   * 갈래는 renderer 넷(box/cylinder/wedge/desk + plane/axes3d)을 공유한다: 판·원판은
+   * 각각 직육면체·원기둥의 납작한 프리셋일 뿐이라 별도 렌더러가 없다. ----------------- */
+  solid_box:      { kind: "shape", category: "역학", label: "입체(실험)", keywords: ["입체", "3D", "직육면체", "블록", "상자", "판", "상판", "원기둥", "원판", "받침", "빗면", "경사면", "책상", "실험대", "수평면", "바닥", "좌표축", "box", "block", "cuboid", "slab", "cylinder", "wedge", "desk", "plane", "axes"], create: { tool: "SOLID3D", kind: "box" } },
+  solid_slab:     { kind: "shape", category: "역학", hidden: true, label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "slab" } },
+  solid_cylinder: { kind: "shape", category: "역학", hidden: true, label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
+  solid_disk:     { kind: "shape", category: "역학", hidden: true, label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
+  solid_wedge:    { kind: "shape", category: "역학", hidden: true, label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
+  solid_desk:     { kind: "shape", category: "역학", hidden: true, label: "실험대·책상", keywords: ["책상", "실험대", "탁자", "테이블", "다리", "입체", "desk", "table", "bench"], create: { tool: "SOLID3D", kind: "desk" } },
+  solid_plane:    { kind: "shape", category: "역학", hidden: true, label: "수평면", keywords: ["수평면", "바닥", "평면", "지면", "판", "plane", "ground", "floor"], create: { tool: "SOLID3D", kind: "plane" } },
+  solid_axes3d:   { kind: "shape", category: "역학", hidden: true, label: "3차원 좌표축", keywords: ["좌표축", "3차원", "3D", "xyz", "축", "공간", "axes", "coordinate"], create: { tool: "SOLID3D", kind: "axes3d" } },
+  solid_axesgnd:  { kind: "shape", category: "역학", hidden: true, label: "평면 위 좌표축", keywords: ["좌표축", "바닥", "수평면", "xy", "2축", "평면", "ground axes"], create: { tool: "SOLID3D", kind: "axes3d", props: { variant: "ground" } } },
+  // 원호·포물선은 solid3d가 아닌 별도 타입이라 "종류" 드롭다운으로는 못 바꾼다.
+  // 같이 실험 단계라 접어 두되, 검색으로는 나온다.
+  groundarc:      { kind: "shape", category: "역학", hidden: true, label: "평면 위 원호", keywords: ["원호", "호", "거리", "바닥", "수평면", "arc", "distance"], create: { tool: "GROUNDARC" } },
   // 포물선: 두 번 끄는 게 아니라 **바닥의 출발점 → 도달점**을 끈다. 깊이 방향으로 끌면
   // 안쪽으로 날아가는 3D 궤적이 된다(바닥 점선이 그 느낌을 만든다).
-  solid_plane:    { kind: "shape", category: "역학", label: "수평면", keywords: ["수평면", "바닥", "평면", "지면", "판", "plane", "ground", "floor"], create: { tool: "SOLID3D", kind: "plane" } },
-  solid_axes3d:   { kind: "shape", category: "역학", label: "3차원 좌표축", keywords: ["좌표축", "3차원", "3D", "xyz", "축", "공간", "axes", "coordinate"], create: { tool: "SOLID3D", kind: "axes3d" } },
-  solid_axesgnd:  { kind: "shape", category: "역학", label: "평면 위 좌표축", keywords: ["좌표축", "바닥", "수평면", "xy", "2축", "평면", "ground axes"], create: { tool: "SOLID3D", kind: "axes3d", props: { variant: "ground" } } },
-  groundarc:      { kind: "shape", category: "역학", label: "평면 위 원호", keywords: ["원호", "호", "거리", "바닥", "수평면", "arc", "distance"], create: { tool: "GROUNDARC" } },
-  parabola:       { kind: "shape", category: "역학", label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
+  parabola:       { kind: "shape", category: "역학", hidden: true, label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -660,7 +666,10 @@ function makeSymbolButton(id, def, pending) {
  * 반환: 만든 버튼 수. 아이콘 svg들은 sizer 배열로 넘겨 '보이게 된 뒤' 크기를 맞춘다
  * (접힌 아코디언 안에서는 getBBox가 0이라 즉시 사이징 불가 → 첫 펼침 때 호출). */
 export function renderSymbolsForCategories(container, categories, sizer) {
-  const ids = Object.keys(TEMPLATES).filter((id) => categories.includes(TEMPLATES[id].category));
+  // hidden 항목은 팔레트에서만 뺀다 — 레지스트리에는 남아 있어 오브젝트 검색(Ctrl+F)·
+  // 커맨드 팔레트·저장파일 호환은 그대로다.
+  const ids = Object.keys(TEMPLATES)
+    .filter((id) => categories.includes(TEMPLATES[id].category) && !TEMPLATES[id].hidden);
   for (const id of ids) container.appendChild(makeSymbolButton(id, TEMPLATES[id], sizer));
   return ids.length;
 }
@@ -678,7 +687,7 @@ function renderPanel() {
   // 단축키가 참조하므로 삭제하지 않는다.
   for (const cat of CATEGORY_ORDER) {
     if (cat === "공통") continue; // 하드코딩 버튼으로 상단 그리드에 이미 존재
-    const ids = Object.keys(TEMPLATES).filter((id) => TEMPLATES[id].category === cat);
+    const ids = Object.keys(TEMPLATES).filter((id) => TEMPLATES[id].category === cat && !TEMPLATES[id].hidden);
     if (!ids.length) continue;
 
     const section = document.createElement("div");
