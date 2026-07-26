@@ -20,6 +20,7 @@ import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.2.0";
 import { buildProtectSection } from "./inspector/section-protect.js?v=1.2.0";
 import { buildImageSection } from "./inspector/section-image.js?v=1.2.0";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.2.0";
+import { buildSpringSection } from "./inspector/section-spring.js?v=1.2.0";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.2.0";
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.2.0";
 import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.2.0";
@@ -99,6 +100,7 @@ export function initInspector(state) {
     imgCutoutBlock, imgClearCutBtn, imgRemoveBtn,
   } = buildImageSection(ctx);
   const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp } = buildPendulumSection(ctx);
+  const { secSpring, syncSpring } = buildSpringSection(ctx);
   const { secCoord, syncCoordplane } = buildCoordplaneSection(ctx);
   const { secFunc, syncFuncgraph } = buildFuncgraphSection(ctx);
   const { abSection, refreshArtboard } = buildArtboardSection(ctx);
@@ -118,6 +120,7 @@ export function initInspector(state) {
   contentEl.appendChild(sec4);
   contentEl.insertBefore(imageSection, sec3);
   contentEl.appendChild(secPend);
+  contentEl.appendChild(secSpring);
   contentEl.appendChild(secCoord);
   contentEl.appendChild(secFunc);
   if (root) root.appendChild(abSection);
@@ -201,6 +204,7 @@ export function initInspector(state) {
     secText.style.display = "none"; // shown only for a single text object (set below)
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
+    secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
     secCoord.style.display = "none"; // shown only for a single coordplane (set below)
     secFunc.style.display = "none"; // shown only for a single funcgraph (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
@@ -618,6 +622,10 @@ export function initInspector(state) {
 
     // 진자 section: pendulum-only display toggles + length label. The label input is
     // shown/enabled only while 길이표시 is on (mirrors the dimension-label pattern).
+    const isSpring = obj.type === "spring";
+    secSpring.style.display = isSpring ? "" : "none";
+    if (isSpring) syncSpring(obj);
+
     const isPendulum = obj.type === "pendulum";
     secPend.style.display = isPendulum ? "" : "none";
     if (isPendulum) {

@@ -15,10 +15,11 @@ import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.2.0";
 import { withLineLabel } from "./labels.js?v=1.2.0";
 
 export const SPRING_DEFAULTS = {
-  coils: 6,          // 코일(굽이) 수
-  amplitude: 1.6,    // 축에서 좌우로 벌어지는 폭(mm)
+  turns: 6,          // 감은 수 (코일 바퀴 수)
+  radius: 1.8,       // 코일 반지름(mm) — 나선의 굵기
   leadLength: 2,     // 양끝 직선부 길이(mm) — 물체에 닿는 부분
-  springStyle: "coil",
+  springStyle: "helix",
+  tilt: 0.55,        // 시선 기울기(반지름 대비). 클수록 고리가 많이 겹쳐 입체감이 커진다
 };
 
 /* ----- 기하 계산: 렌더·픽·스냅·bbox가 모두 이 함수를 쓴다(단일 출처) ----- */
@@ -30,14 +31,17 @@ export function springGeometry(obj) {
   const ax = L > 0 ? dx / L : 1, ay = L > 0 ? dy / L : 0;   // 축 단위벡터
   const nx = -ay, ny = ax;                                   // 법선(진폭 방향)
 
-  const coils = Math.max(1, Math.round(obj.coils ?? SPRING_DEFAULTS.coils));
-  const amp = Math.max(0.1, obj.amplitude ?? SPRING_DEFAULTS.amplitude);
+  // 감은 수·반지름이 정식 이름. 옛 파일의 coils/amplitude 도 그대로 읽는다(하위호환).
+  const turns = Math.max(1, Math.round(obj.turns ?? obj.coils ?? SPRING_DEFAULTS.turns));
+  const radius = Math.max(0.1, obj.radius ?? obj.amplitude ?? SPRING_DEFAULTS.radius);
+  const tilt = Math.max(0, obj.tilt ?? SPRING_DEFAULTS.tilt);
   // 양끝 직선부는 전체 길이의 40%를 넘지 않게 — 짧게 압축해도 코일이 사라지지 않는다.
   const lead = Math.max(0, Math.min(obj.leadLength ?? SPRING_DEFAULTS.leadLength, L * 0.4));
   const coilLen = Math.max(0, L - lead * 2);
   const a = { x: p1.x + ax * lead, y: p1.y + ay * lead };    // 코일 시작
   const b = { x: p2.x - ax * lead, y: p2.y - ay * lead };    // 코일 끝
-  return { p1, p2, a, b, L, coilLen, ax, ay, nx, ny, coils, amp, lead };
+  return { p1, p2, a, b, L, coilLen, ax, ay, nx, ny, turns, radius, tilt, lead,
+           coils: turns, amp: radius };   // coils/amp = 옛 이름 별칭
 }
 
 /* 코일 경로(d).
@@ -55,10 +59,40 @@ export function springGeometry(obj) {
 const Q_CTRL_X = 0.36;                    // 제어점의 축 방향 위치(1/4주기 대비)
 const Q_CTRL_Y = 0.36 * Math.PI / 2;      // ≈0.5655 — 영점 기울기와 맞물리는 값
 
+const HELIX_SAMPLES_PER_TURN = 56;   // 반지름 2mm에서 현 오차 ≈0.003mm — 인쇄에서 보이지 않는다
+
 function coilPathD(geo, style) {
-  const { a, ax, ay, nx, ny, coils, amp, coilLen } = geo;
+  const { a, ax, ay, nx, ny, coils, amp, coilLen, turns, radius, tilt } = geo;
   if (coilLen <= 0) return "";
   const at = (t, s) => ({ x: a.x + ax * t + nx * s, y: a.y + ay * t + ny * s });
+
+  if (style !== "coil" && style !== "zigzag") {
+    /* helix(기본) — 실제로 감긴 나선을 '살짝 비스듬히' 본 투영.
+     *   축 방향 : coilLen·θ/(2πN) + tilt·R·(cosθ − 1)
+     *   가로 방향: R·sinθ
+     * cos 항이 축 방향을 앞뒤로 흔들어 고리가 서로 겹치고 교차한다 — 사인 곡선(평면)과
+     * 달리 '감겨 있다'는 인상이 나오는 이유다. θ=0·2πN 에서 보정항이 0이라 양 끝은
+     * 정확히 축 위에서 시작·종료해 직선부와 매끄럽게 이어진다. */
+    const N = turns, R = radius;
+    // 보정항 k의 상한 = pitch × 0.20.
+    //  · 이보다 크면 첫 고리가 시작점보다 앞으로 튀어나가 직선부를 침범한다
+    //    (0.24에서 -0.035·pitch 이탈 실측).
+    //  · 이보다 작으면 dt/dθ 가 항상 양수라 고리가 교차하지 않아 '평면 사인'으로 보인다
+    //    (교차 조건: 2πc > 1 → c > 0.159).
+    //  즉 0.16~0.20 이 유일한 해 구간이고, 여유를 두어 상한을 0.20으로 잡는다.
+    const pitch = coilLen / N;
+    const k = Math.min(tilt * R, pitch * 0.20);
+    const total = 2 * Math.PI * N;
+    const steps = Math.max(24, Math.round(N * HELIX_SAMPLES_PER_TURN));
+    let d = "";
+    for (let i = 0; i <= steps; i++) {
+      const th = total * (i / steps);
+      const t = coilLen * (i / steps) + k * (Math.cos(th) - 1);
+      const p = at(t, R * Math.sin(th));
+      d += (i === 0 ? "M " : " L ") + `${p.x.toFixed(3)} ${p.y.toFixed(3)}`;
+    }
+    return d;
+  }
 
   if (style === "zigzag") {
     // 지그재그: 반 굽이마다 좌우로 꺾인다(전기 회로 저항식이 아니라 역학 교재식 삼각파).
@@ -142,8 +176,8 @@ export function renderSpring(obj) {
 
 /* 코일이 진폭만큼 축 밖으로 나가므로 bbox는 그만큼 넓힌다(선택 테두리·내보내기 범위용). */
 export function springBBox(o) {
-  const { p1, p2, amp } = springGeometry(o);
-  const pad = amp + (o.strokeWidth ?? 0.3);
+  const { p1, p2, radius } = springGeometry(o);
+  const pad = radius + (o.strokeWidth ?? 0.3);
   const minX = Math.min(p1.x, p2.x) - pad, maxX = Math.max(p1.x, p2.x) + pad;
   const minY = Math.min(p1.y, p2.y) - pad, maxY = Math.max(p1.y, p2.y) + pad;
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
