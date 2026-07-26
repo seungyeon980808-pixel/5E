@@ -70,7 +70,7 @@ export function initInspector(state) {
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
-    waveLengthRow, waveAmpRow,
+    waveLengthRow, waveAmpRow, waveTailRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
@@ -87,6 +87,7 @@ export function initInspector(state) {
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
+    labelerLine2Row, syncLabelerLine2,
     boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,
@@ -506,9 +507,11 @@ export function initInspector(state) {
     const showWavy = isStraightLine && lineMode === "wavyArrow";
     waveLengthRow.row.style.display = showWavy ? "" : "none";
     waveAmpRow.row.style.display = showWavy ? "" : "none";
+    waveTailRow.row.style.display = showWavy ? "" : "none";
     if (showWavy) {
       if (document.activeElement !== waveLengthRow.inp) waveLengthRow.inp.value = obj.waveLength ?? waveLengthRow.fallback;
       if (document.activeElement !== waveAmpRow.inp) waveAmpRow.inp.value = obj.waveAmp ?? waveAmpRow.fallback;
+      if (document.activeElement !== waveTailRow.inp) waveTailRow.inp.value = obj.tailRatio ?? waveTailRow.fallback;
     }
 
     const showDimLabel = isStraightLine && lineMode === "lengthArrow";
@@ -627,6 +630,8 @@ export function initInspector(state) {
     showLabelRow.style.display = (isOptics && !isNode) ? "" : "none";
     labelPosRow.style.display = isNode ? "" : "none";
     labelerLenRow.style.display = isLabeler ? "" : "none";
+    labelerLine2Row.style.display = isLabeler ? "" : "none";
+    if (isLabeler) syncLabelerLine2();
     labelerAngleRow.style.display = isLabeler ? "" : "none";
     if (isLabeler) {
       if (document.activeElement !== labelerLenInp) {

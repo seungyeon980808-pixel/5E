@@ -250,6 +250,8 @@ export function buildLineSection(ctx) {
   }
   const waveLengthRow = wavyNumberRow("파장(mm)", "waveLength", 5, { min: 1, max: 40, step: 0.5 });
   const waveAmpRow = wavyNumberRow("진폭(mm)", "waveAmp", 1.1, { min: 0.2, max: 12, step: 0.1 });
+  // 직선부는 파장에 비례한다(화살촉 길이 비례는 기본 굵기에서 안 보였다).
+  const waveTailRow = wavyNumberRow("직선부(파장 대비)", "tailRatio", 0.35, { min: 0, max: 2, step: 0.05 });
 
   /* ---- straight-line upright label (Group 3): text input + on/off toggle ----
    * Writes obj.label / obj.labelShow. When on, render.js (withLineLabel) draws
@@ -793,7 +795,7 @@ export function buildLineSection(ctx) {
     arrowRow, arrowBtn, ARROW_ICONS, MIDDLE_LEFT_ICON, lengthIcon, ARROW_CYCLE, ARROW_LABELS,
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
-    waveLengthRow, waveAmpRow,
+    waveLengthRow, waveAmpRow, waveTailRow,
     lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,

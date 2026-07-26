@@ -547,7 +547,16 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // Branch B: endpoint handles (line / circuit / labeler / polyline / curve).
   // Circuit reuses the line's p0/p1 terminal drag (body re-centers at render);
   // labeler treats p0 = leader anchor, p1 = label position (drag to reshape).
-  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum") {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum"
+      || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines"
+      || obj.type === "standingwave") {
+    // 라벨러의 두 번째 지시선 끝점(p3)은 별도 핸들.
+    if (handle === "p2" && obj.type === "labeler") {
+      const base = orig.p3 || orig.p1;
+      const dragged = { x: base.x + dx, y: base.y + dy };
+      obj.p3 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      return;
+    }
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
       obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;

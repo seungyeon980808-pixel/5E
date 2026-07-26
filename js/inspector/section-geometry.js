@@ -259,6 +259,41 @@ export function buildGeometrySection(ctx) {
   labelerLenRow.appendChild(labelerLenUnit);
   sec3Body.appendChild(labelerLenRow);
 
+  /* 라벨선 추가(요구 2026-07-26): 지시선을 하나 더 뽑아 두 영역을 하나의 라벨로 가리킨다.
+   * 켜면 p3(두 번째 지시선 끝점)가 생기고, 캔버스에 세 번째 핸들이 나와 끌 수 있다. */
+  const labelerLine2Row = document.createElement("div");
+  labelerLine2Row.className = "insp-row";
+  const labelerLine2Lbl = document.createElement("label");
+  labelerLine2Lbl.className = "insp-field-label";
+  labelerLine2Lbl.textContent = "라벨선";
+  const labelerLine2Btn = document.createElement("button");
+  labelerLine2Btn.type = "button";
+  labelerLine2Btn.className = "insp-input";
+  labelerLine2Btn.title = "지시선을 하나 더 만들어 두 곳을 한 라벨로 가리킵니다";
+  labelerLine2Row.appendChild(labelerLine2Lbl);
+  labelerLine2Row.appendChild(labelerLine2Btn);
+  sec3Body.appendChild(labelerLine2Row);
+  labelerLine2Btn.addEventListener("click", () => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== "labeler" || o.locked) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      if (o.p3) { delete o.p3; return; }
+      // 첫 지시선을 라벨 기준으로 반대편에 복사해 둔다 — 바로 눈에 띄고 끌어 옮기기 쉽다.
+      o.p3 = { x: o.p2.x + (o.p2.x - o.p1.x), y: o.p2.y + (o.p2.y - o.p1.y) };
+    });
+    syncLabelerLine2();
+  });
+  function syncLabelerLine2() {
+    const s = state.get();
+    const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
+    labelerLine2Btn.textContent = (o && o.p3) ? "제거" : "추가";
+  }
+
   function commitLabelerLength() {
     const val = parseFloat(labelerLenInp.value);
     if (!isFinite(val) || val < 0) return;
@@ -719,6 +754,7 @@ export function buildGeometrySection(ctx) {
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
+    labelerLine2Row, syncLabelerLine2,
     boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,

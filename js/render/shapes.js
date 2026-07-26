@@ -106,8 +106,10 @@ function renderTriangle(obj) {
 
 /* 물결 화살표 기본값. waveLength는 mm라 선을 늘여도 물결의 촘촘함이 유지된다
  * (파장 수를 고정하면 길게 뽑을수록 늘어져 보인다). */
-export const WAVY_DEFAULTS = { waveLength: 5, waveAmp: 1.1 };
-const WAVY_TAIL_PER_HEAD = 0.32;   // 화살촉 앞 직선부 = 화살촉 길이 × 이 값
+export const WAVY_DEFAULTS = { waveLength: 5, waveAmp: 1.1, tailRatio: 0.35 };
+// 화살촉 앞 직선부 = <b>파장 × tailRatio</b>. 화살촉 길이에 비례시켰더니 기본 선 굵기
+// (0.2mm)에서 0.3mm가 되어 사실상 보이지 않았다(2026-07-26 교사 지적). 파장에 비례하면
+// 물결을 촘촘히 해도 직선부가 같이 줄어 비율이 항상 자연스럽다.
 
 /* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
 function renderLine(obj) {
@@ -157,9 +159,10 @@ function renderLine(obj) {
    *     (2026-07-26 교사 확인: strokeWidth 0.35에서 직선부 0.5mm ⇒ 화살촉 길이의 0.32배) */
   if (lineStyle === "wavyArrow" && L > 0) {
     const headLen = sw * 4.5;
-    const tail = headLen * WAVY_TAIL_PER_HEAD;
-    const body = Math.max(headLen, L - headLen - tail);
     const waveLen = Math.max(0.5, obj.waveLength ?? WAVY_DEFAULTS.waveLength);
+    const tailRatio = Math.max(0, obj.tailRatio ?? WAVY_DEFAULTS.tailRatio);
+    const tail = waveLen * tailRatio;
+    const body = Math.max(waveLen, L - headLen - tail);
     const waves = Math.max(1, Math.round(body / waveLen));   // 정수 파장으로 끊는다
     const amp = Math.max(0, obj.waveAmp ?? WAVY_DEFAULTS.waveAmp);
     const px = -ny, py = nx;                                  // 진폭 방향(축의 법선)

@@ -185,20 +185,24 @@ export const TEMPLATES = {
   sw_spdt:     { kind: "shape", category: "전기", label: "전환 스위치", keywords: ["전환", "스위치", "spdt", "a b"], create: { tool: "CIRCUIT", element: "switch_spdt" } },
   pulley_ceiling: { kind: "shape", category: "역학", label: "천장 도르래", keywords: ["도르래", "천장", "고정도르래", "pulley"], create: { tool: "APPARATUS", kind: "pulley", props: { variant: "ceiling" } } },
   // 장(場) 그림·정상파 — 두 점(전하·극·양끝)을 끌어 배치한다.
-  ef_pair:     { kind: "shape", category: "전자기학", label: "전기력선",     keywords: ["전기력선", "전하", "쿨롱", "field", "charge"], create: { tool: "CHARGEFIELD", props: { kind: "pair" } } },
-  ef_single:   { kind: "shape", category: "전자기학", label: "점전하 전기력선", keywords: ["점전하", "전기력선", "단일", "field"], create: { tool: "CHARGEFIELD", props: { kind: "single", q1: 1 } } },
+  /* 통합 버튼 — 누르면 팝오버가 떠 갈래를 한 번 더 고른다(기존 텍스트·라벨러 버튼과 같은 방식).
+   * 실제 배치는 variants가 가리키는 항목이 하고, 그 항목들은 팔레트에서 숨긴다. */
+  ef_group:    { kind: "group", category: "전자기학", label: "전기력선", keywords: ["전기력선", "전하", "점전하", "field", "charge"],
+                 variants: ["ef_pair", "ef_single"] },
+  stw_group:   { kind: "group", category: "광학", label: "정상파", keywords: ["정상파", "줄", "기주", "열린관", "닫힌관", "standing"],
+                 variants: ["stw_string", "stw_open", "stw_closed"] },
+
+  ef_pair:     { hidden: true, kind: "shape", category: "전자기학", label: "전기력선",     keywords: ["전기력선", "전하", "쿨롱", "field", "charge"], create: { tool: "CHARGEFIELD", props: { kind: "pair" } } },
+  ef_single:   { hidden: true, kind: "shape", category: "전자기학", label: "점전하 전기력선", keywords: ["점전하", "전기력선", "단일", "field"], create: { tool: "CHARGEFIELD", props: { kind: "single", q1: 1 } } },
   ef_uniform:  { kind: "shape", category: "전자기학", label: "평행판 균일장", keywords: ["평행판", "균일장", "전기장", "uniform"], create: { tool: "CHARGEFIELD", props: { kind: "uniform" } } },
   mag_bar:     { kind: "shape", category: "전자기학", label: "자기력선",     keywords: ["자기력선", "자석", "자기장", "magnet", "field"], create: { tool: "FIELDLINES", props: { kind: "bar" } } },
   mag_wire:    { kind: "shape", category: "전자기학", label: "도선 자기장",  keywords: ["도선", "자기장", "동심원", "앙페르", "wire"], create: { tool: "FIELDLINES", props: { kind: "wire" } } },
-  stw_string:  { kind: "shape", category: "광학", label: "정상파(줄)",   keywords: ["정상파", "줄", "마디", "배", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "string" } } },
-  stw_open:    { kind: "shape", category: "광학", label: "정상파(열린관)", keywords: ["정상파", "열린관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "open" } } },
-  stw_closed:  { kind: "shape", category: "광학", label: "정상파(닫힌관)", keywords: ["정상파", "닫힌관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "closed", n: 3 } } },
+  stw_string:  { hidden: true, kind: "shape", category: "광학", label: "정상파(줄)",   keywords: ["정상파", "줄", "마디", "배", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "string" } } },
+  stw_open:    { hidden: true, kind: "shape", category: "광학", label: "정상파(열린관)", keywords: ["정상파", "열린관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "open" } } },
+  stw_closed:  { hidden: true, kind: "shape", category: "광학", label: "정상파(닫힌관)", keywords: ["정상파", "닫힌관", "기주", "standing"], create: { tool: "STANDINGWAVE", props: { medium: "closed", n: 3 } } },
   spring:      { kind: "shape", category: "역학", label: "용수철",   keywords: ["용수철", "스프링", "spring", "탄성"], create: { tool: "SPRING" } },
   pendulum:    { kind: "shape", category: "역학", label: "단진자",   keywords: ["진자", "단진자", "pendulum", "추", "bob", "흔들이"], create: { tool: "PENDULUM" } },
-  support_tri: { kind: "shape", category: "역학", label: "받침대",   keywords: ["받침대", "지지대", "support", "stand"],  create: { tool: "OPTICS", kind: "support_tri" } },
-  pivot:       { kind: "shape", category: "역학", label: "회전축",   keywords: ["회전축", "pivot", "축", "axis"],         create: { tool: "OPTICS", kind: "pivot" } },
   node:        { kind: "shape", category: "공통", label: "점",       keywords: ["점", "마디", "연결점", "node", "joint"], create: { tool: "OPTICS", kind: "node" } },
-  bar_magnet:  { kind: "shape", category: "역학", label: "막대자석", keywords: ["막대자석", "자석", "magnet", "NS"],      create: { tool: "OPTICS", kind: "bar_magnet" } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -267,8 +271,6 @@ const OPTICS_ICON_BOX = {
   node:           { w: 16, h: 16 },
   pivot:          { w: 18, h: 18 },
   pulley:         { w: 18, h: 18 },
-  support_tri:    { w: 20, h: 14 },
-  bar_magnet:     { w: 26, h: 12 },
 };
 
 const APPARATUS_ICON_BOX = {
@@ -569,7 +571,66 @@ export function sizeIconViewBox(svg) {
 }
 
 // Build one registry symbol button (UNIQUE data-symbol id) + queue its icon for sizing.
+/* 통합 버튼의 갈래 팝오버. 공통 도구의 .tool-chooser 마크업·CSS를 그대로 쓴다. */
+function makeGroupButton(id, def, pending) {
+  const btn = document.createElement("button");
+  btn.className = "tool-btn";
+  btn.type = "button";
+  btn.dataset.symbolGroup = id;
+  btn.title = def.label;
+  btn.setAttribute("aria-label", def.label);
+  btn.setAttribute("aria-haspopup", "true");
+  const kbd = document.createElement("kbd");
+  const first = def.variants[0];
+  const icon = buildSymbolIcon(first, TEMPLATES[first]);
+  kbd.appendChild(icon);
+  pending.push(icon);
+  btn.appendChild(kbd);
+
+  const pop = document.createElement("div");
+  pop.className = "tool-chooser";
+  pop.hidden = true;
+  pop.setAttribute("role", "menu");
+  pop.setAttribute("aria-label", def.label + " 갈래 선택");
+  def.variants.forEach((vid) => {
+    const v = TEMPLATES[vid];
+    if (!v) return;
+    const opt = document.createElement("button");
+    opt.className = "tool-chooser-opt";
+    opt.type = "button";
+    opt.dataset.symbol = vid;              // 기존 클릭 위임이 그대로 배치를 arm 한다
+    opt.setAttribute("role", "menuitem");
+    const ic = buildSymbolIcon(vid, v);
+    pending.push(ic);
+    opt.appendChild(ic);
+    const t = document.createElement("span");
+    t.textContent = v.label;
+    opt.appendChild(t);
+    // 팝오버는 #tool-list 밖(body)에 붙으므로 패널의 클릭 위임이 닿지 않는다 → 직접 배선.
+    opt.addEventListener("click", () => activateTemplate(vid));
+    pop.appendChild(opt);
+  });
+  document.body.appendChild(pop);
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const willOpen = pop.hidden;
+    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+    if (!willOpen) return;
+    pop.hidden = false;
+    const r = btn.getBoundingClientRect();
+    pop.style.left = Math.round(r.right + 6) + "px";
+    pop.style.top = Math.round(r.top) + "px";
+  });
+  pop.addEventListener("click", () => { pop.hidden = true; });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".tool-chooser") && !e.target.closest("[data-symbol-group]")) pop.hidden = true;
+  });
+  return btn;
+}
+
 function makeSymbolButton(id, def, pending) {
+  if (def.kind === "group") return makeGroupButton(id, def, pending);
   const btn = document.createElement("button");
   btn.className = "tool-btn";             // square icon button (reuses active styling)
   btn.type = "button";
@@ -597,7 +658,7 @@ function makeSymbolButton(id, def, pending) {
  * 반환: 만든 버튼 수. 아이콘 svg들은 sizer 배열로 넘겨 '보이게 된 뒤' 크기를 맞춘다
  * (접힌 아코디언 안에서는 getBBox가 0이라 즉시 사이징 불가 → 첫 펼침 때 호출). */
 export function renderSymbolsForCategories(container, categories, sizer) {
-  const ids = Object.keys(TEMPLATES).filter((id) => categories.includes(TEMPLATES[id].category));
+  const ids = Object.keys(TEMPLATES).filter((id) => categories.includes(TEMPLATES[id].category) && !TEMPLATES[id].hidden);
   for (const id of ids) container.appendChild(makeSymbolButton(id, TEMPLATES[id], sizer));
   return ids.length;
 }

@@ -1054,11 +1054,17 @@ function renderHandles(sel, scene, zoom, activeTool) {
         makeArc(hx, hy, base, base + 90);
       }
     }
-  } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum") {
+  } else if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum"
+             || sel.type === "spring" || sel.type === "chargefield" || sel.type === "fieldlines"
+             || sel.type === "standingwave") {
     // Circuit + labeler + pendulum reuse the line's two endpoint handles: drag
     // p1/p2 to move an endpoint. For the pendulum, p0 = pivot, p1 = real bob.
+    // 용수철·전기력선·자기력선·정상파도 같은 핸들을 쓴다 — 만든 뒤 끝점을 끌어
+    // 길이·방향을 고칠 수 있어야 한다(2026-07-26 교사 지시).
     makeHandle(sel.p1.x, sel.p1.y, "p0", true);
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
+    // 라벨러의 두 번째 지시선: 세 번째 핸들.
+    if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
   }

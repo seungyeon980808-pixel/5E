@@ -25,8 +25,7 @@ export const CIRCUIT_BODY_MM = 8;         // state.js — 소자 몸통 길이(�
 /* ----- kind / element 레지스트리 (렌더러 디스패치와 1:1) ----- */
 export const OPTICS_KINDS = [
   "convex_lens", "concave_lens", "convex_mirror", "concave_mirror", "plane_mirror",
-  "object_arrow", "point_light", "screen", "pulley", "node", "support_tri",
-  "pivot", "bar_magnet",
+  "object_arrow", "point_light", "screen", "pulley", "node",
 ];
 export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale"];
 export const CIRCUIT_ELEMENTS = [
