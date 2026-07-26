@@ -328,7 +328,7 @@ function renderCoordplane(obj) {
     if (rich) {
       // 눈금 숫자도 halo를 켠다 — 예전엔 흰 사각형 블록이 대신 가려 줬는데 그 블록을
       // 없앴으므로(glyph 윤곽만 남김), 격자 파선이 숫자를 뚫고 지나가지 않게 하려면 필요하다.
-      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true });
+      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
       if (node) g.appendChild(node);
     } else {
       node = document.createElementNS(SVG_NS, "text");
@@ -400,7 +400,7 @@ function renderCoordplane(obj) {
     if (!text) return;
     if (rich) {
       // 혼합 라벨러: 한글 정자 + 영문 이탤릭 + 줄바꿈 + 수식 + halo.
-      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true });
+      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
       if (gl) g.appendChild(gl);
       return;
     }
@@ -433,7 +433,7 @@ function renderCoordplane(obj) {
     const anc = pos ? "middle" : anchor;
     const bl = pos ? "middle" : baseline;
     let el = null;
-    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true });
+    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true, haloRatio: obj.haloRatio });
     else {
       el = document.createElementNS(SVG_NS, "text");
       el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", nameSize);
@@ -540,6 +540,7 @@ function renderCoordplane(obj) {
     // 점 이름(A·B·C…)은 변수가 아니라 이름표 — 기울임 없이 정자로 쓴다(요구).
     const lbl = renderGraphLabel(String(lp.text ?? ""), {
       x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
+      haloRatio: obj.haloRatio,
     });
     if (lbl) g.appendChild(lbl);
   });
@@ -837,6 +838,7 @@ function renderFuncgraph(obj) {
           y: (mid.y + area.baseY) / 2,
           size: area.labelSize || Math.max((obj.strokeWidth || 0.3) * 11, 2.8),
           color: grayHex(obj.strokeLevel), anchor: "middle", vAlign: "middle", halo: true,
+          haloRatio: Number.isFinite(area.haloRatio) ? area.haloRatio : obj.haloRatio,
         });
         if (lbl) g.appendChild(lbl);
       }
@@ -872,7 +874,7 @@ function renderFuncgraph(obj) {
     const ly = last.y + ny * size * 0.18;
     const lbl = renderGraphLabel(obj.endLabel, {
       x: lx, y: ly, size, color: grayHex(obj.strokeLevel),
-      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true,
+      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio,
     });
     if (lbl) g.appendChild(lbl);
   }

@@ -128,13 +128,17 @@ function buildLine(line, size, color, upright = false) {
 }
 
 // 라벨 <text> 들에 흰 테두리 halo 부여(그래프 선 위에서 깔끔히 끊김; makeUprightLabel 방식).
-function applyHalo(wrap, size) {
+/* 가림(할로) 굵기 = 글자 크기 × 이 배율. 2026-07-26 교사 확정값.
+ * 배율이라 라벨이 커지면 가림도 같이 커진다. 그림마다 다르게 주고 싶으면
+ * renderGraphLabel(..., { haloRatio }) 로 덮어쓴다(객체의 haloRatio 필드가 여기로 온다). */
+export const HALO_RATIO = 0.13;
+
+function applyHalo(wrap, size, ratio) {
+  const w = size * (Number.isFinite(ratio) && ratio >= 0 ? ratio : HALO_RATIO);
   wrap.querySelectorAll("text, tspan").forEach((t) => {
     t.setAttribute("paint-order", "stroke");
     t.setAttribute("stroke", "white");
-    // 글자 사이 틈으로 격자·곡선이 비치지 않을 만큼만. 0.16에서는 한글 자모 사이가
-    // 비쳤고, 0.3을 넘기면 글자가 뭉개진다.
-    t.setAttribute("stroke-width", size * 0.22);
+    t.setAttribute("stroke-width", w);
     t.setAttribute("stroke-linejoin", "round");
   });
 }
@@ -158,7 +162,7 @@ const INTERLINE_GAP = 0.12;
 export function renderGraphLabel(source, opts = {}) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return null;
-  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false } = opts;
+  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false, haloRatio } = opts;
 
   const lines = text.split("\n").map((l) => buildLine(l, size, color, upright));
   const n = lines.length;
@@ -186,7 +190,7 @@ export function renderGraphLabel(source, opts = {}) {
     ln.g.setAttribute("transform", `translate(${x + dx}, ${firstBaseY + baseYs[i]})`);
     wrap.appendChild(ln.g);
   });
-  if (halo) applyHalo(wrap, size);
+  if (halo) applyHalo(wrap, size, haloRatio);
   return wrap;
 }
 

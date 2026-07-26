@@ -13,6 +13,43 @@ import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.2.0";
 import { openGraphModal } from "../graph/graph-modal.js?v=1.2.0";
 import { state } from "../state.js?v=1.2.0";
 
+
+/* 라벨 가림(할로) 굵기 — 글자 크기 대비 배율. 비우면 기본값(0.13)을 쓴다.
+ * 그림마다 배경이 달라(격자 위 / 회색 면 위 / 굵은 곡선 위) 필요한 가림이 다르므로
+ * 객체별로 따로 줄 수 있게 열어 둔다(2026-07-26 교사 지시). */
+function makeHaloRow(body, state, typeOf) {
+  const row = document.createElement("div");
+  row.className = "insp-row";
+  const lbl = document.createElement("label");
+  lbl.className = "insp-field-label";
+  lbl.textContent = "라벨 가림";
+  const inp = document.createElement("input");
+  inp.type = "number"; inp.className = "insp-input";
+  inp.min = 0; inp.max = 0.6; inp.step = 0.01;
+  inp.placeholder = "0.13";
+  inp.title = "글자 크기 대비 흰 테두리 굵기. 비우면 기본값 0.13";
+  row.appendChild(lbl); row.appendChild(inp); body.appendChild(row);
+  const fire = () => {
+    const raw = inp.value.trim();
+    const v = raw === "" ? null : Math.min(0.6, Math.max(0, Number(raw)));
+    if (raw !== "" && !Number.isFinite(v)) return;
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== typeOf || o.locked) return;
+      if ((o.haloRatio ?? null) === v) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      if (v === null) delete o.haloRatio; else o.haloRatio = v;
+    });
+  };
+  inp.addEventListener("input", fire);
+  inp.addEventListener("change", fire);
+  return { row, inp };
+}
+
 export function buildCoordplaneSection(ctx) {
   const { commitSelectedObject } = ctx;
   const body = document.createElement("div");
@@ -61,13 +98,17 @@ export function buildCoordplaneSection(ctx) {
     });
   });
 
+  const haloRow = makeHaloRow(body, state, "coordplane");
+
   const secCoord = makeSection("좌표평면", body);
 
   function sync(obj) {
     editBtn.disabled = !!obj.locked;
     exportCb.checked = obj.exportable !== false;
     exportCb.disabled = !!obj.locked;
+    if (document.activeElement !== haloRow.inp) haloRow.inp.value = Number.isFinite(obj.haloRatio) ? obj.haloRatio : "";
   }
+
 
   return { secCoord, syncCoordplane: sync };
 }
