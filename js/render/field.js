@@ -130,10 +130,9 @@ export function traceFieldLines(chs, { lines = 12, reach = 3000, stopR = 1.0 } =
 /* 그림 틀 밖은 잘라 낸다. 틀은 사각(rect) 또는 원(circle)이다 —
  * 점전하 하나짜리 그림은 사방으로 똑같이 뻗으므로 원형 틀이 자연스럽다.
  *
- * ⚠️ 도막이 둘 이상 나오는 선(= 틀 밖으로 나갔다가 되돌아오는 선)은 <b>아예 그리지
- * 않는다</b>. 잘라 그리면 선이 중간에 끊겨 보인다는 지적(2026-07-26)에 따른 것으로,
- * "틀 안에서 온전히 완결되는 선만 그린다"는 규칙이다. 한 번 나가고 안 돌아오는 선
- * (점전하의 방사선, 크기가 다른 전하의 열린 선)은 도막이 하나라 그대로 남는다. */
+ * 틀 밖으로 나갔다 돌아오는 선은 <b>두 도막으로 잘라서 그대로 그린다</b>.
+ * 한때 "끊겨 보인다"는 이유로 그런 선을 통째로 빼 봤는데, 선이 절반으로 줄어
+ * 그림이 더 엉망이 됐다(2026-07-26 교사 판단: 잘려도 좋으니 전부 그린다). */
 function inFrame(p, fr) {
   if (fr.kind === "circle") return Math.hypot(p.x - fr.cx, p.y - fr.cy) <= fr.r;
   return p.x >= fr.x0 && p.x <= fr.x1 && p.y >= fr.y0 && p.y <= fr.y1;
@@ -145,7 +144,7 @@ function clipRuns(pts, fr) {
     else { if (cur.length > 2) runs.push(cur); cur = []; }
   }
   if (cur.length > 2) runs.push(cur);
-  return runs.length > 1 ? [] : runs;   // 끊겨 보이는 선은 버린다
+  return runs;
 }
 function idxAtArc(arc, d) { for (let i = 1; i < arc.length; i++) if (arc[i] >= d) return i; return -1; }
 
@@ -255,7 +254,7 @@ function mkText(x, y, s, size, color, anchor = "middle", italic = false) {
 function paintLines(g, traced, frame, color, sw, arrowSpec, showArrows = true) {
   for (const ln of traced) {
     const runs = clipRuns(ln.pts, frame);
-    if (!runs.length) continue;             // 끊기는 선은 통째로 생략
+    if (!runs.length) continue;             // 틀 안에 한 점도 없는 선만 건너뛴다
     for (const run of runs) {
       g.appendChild(mkPath("M " + run.map((p) => p.x.toFixed(2) + " " + p.y.toFixed(2)).join(" L "), color, sw));
     }
