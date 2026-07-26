@@ -203,12 +203,15 @@ export const TEMPLATES = {
   /* ----- 입체(경사 투영, 실험 단계) — render/solid3d.js -----------------------------
    * **팔레트에는 직육면체 버튼 하나만 내보낸다.** 갈래가 11개까지 늘어 역학 팔레트를
    * 통째로 잡아먹었는데, 아직 실험 단계라 그만한 자리값을 못 한다(2026-07-26 사용자 판단).
-   * 접은 항목도 레지스트리에는 그대로 남아 **오브젝트 검색(Ctrl+F)** 으로 바로 꺼내 쓸 수
-   * 있고, 이미 저장된 파일도 그대로 열린다. 실제 사용 경로는 검색보다 인스펙터의
-   * "입체 > 종류"다 — 직육면체를 하나 놓고 거기서 갈래를 바꾸면 된다.
+   * 다만 접기만 하면 나머지를 쓸 수가 없다 — 그래서 대표 버튼에 `chooser`를 달아,
+   * 누르면 옆에 팝오버가 떠 11개를 그대로 고르게 한다. 앱에 이미 있는 통합 버튼
+   * (텍스트/라벨러, 각도/직각)과 같은 방식이고, 팝오버 안 버튼도 진짜 data-symbol이라
+   * 기존 배선이 그대로 작동한다.
+   * 접은 항목은 **오브젝트 검색(Ctrl+F)** 으로도 나오고, 이미 저장된 파일도 그대로 열린다.
+   * 놓은 뒤에 갈래를 바꾸고 싶으면 인스펙터 "입체 > 종류"를 쓴다.
    * 갈래는 renderer 넷(box/cylinder/wedge/desk + plane/axes3d)을 공유한다: 판·원판은
    * 각각 직육면체·원기둥의 납작한 프리셋일 뿐이라 별도 렌더러가 없다. ----------------- */
-  solid_box:      { kind: "shape", category: "역학", label: "입체(실험)", keywords: ["입체", "3D", "직육면체", "블록", "상자", "판", "상판", "원기둥", "원판", "받침", "빗면", "경사면", "책상", "실험대", "수평면", "바닥", "좌표축", "box", "block", "cuboid", "slab", "cylinder", "wedge", "desk", "plane", "axes"], create: { tool: "SOLID3D", kind: "box" } },
+  solid_box:      { kind: "shape", category: "역학", label: "입체(실험)", chooserLabel: "직육면체", chooser: ["solid_box", "solid_slab", "solid_cylinder", "solid_disk", "solid_wedge", "solid_desk", "solid_plane", "solid_axes3d", "solid_axesgnd", "groundarc", "parabola"], keywords: ["입체", "3D", "직육면체", "블록", "상자", "판", "상판", "원기둥", "원판", "받침", "빗면", "경사면", "책상", "실험대", "수평면", "바닥", "좌표축", "box", "block", "cuboid", "slab", "cylinder", "wedge", "desk", "plane", "axes"], create: { tool: "SOLID3D", kind: "box" } },
   solid_slab:     { kind: "shape", category: "역학", hidden: true, label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "slab" } },
   solid_cylinder: { kind: "shape", category: "역학", hidden: true, label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_disk:     { kind: "shape", category: "역학", hidden: true, label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
@@ -659,7 +662,76 @@ function makeSymbolButton(id, def, pending) {
     pending.push(icon);
   }
   btn.appendChild(kbd);
+  // data-chooser는 buildChooser가 짝을 만들 때 붙인다(팝오버 없이 붙이면 눌러도 아무
+  // 일이 안 일어나므로, 여기서 미리 붙이지 않는다).
   return btn;
+}
+
+/* ----- 통합 버튼용 팝오버 -----
+ * index.html에 하드코딩된 .tool-chooser(텍스트/라벨러, 각도/직각)와 같은 마크업·CSS를
+ * 쓴다. 다른 점은 **레지스트리에서 만들어진다**는 것뿐이다. 옵션 버튼이 진짜
+ * data-symbol을 달고 있어서 #tool-list 위임(initTemplates)이 그대로 무장시킨다 —
+ * 팝오버 전용 배선이 없다. 그래서 접힌 항목도 전부 살아 있다.
+ * 팝오버는 대표 버튼과 같은 컨테이너에 넣는다(위임이 닿아야 하므로). 화면 위치는
+ * position:fixed + 열 때 계산이라 컨테이너가 어디 있든 상관없다. */
+let _chooserSeq = 0;
+
+function buildChooser(leadId, def, pending, leadBtn) {
+  const box = document.createElement("div");
+  box.className = "tool-chooser";
+  // 팔레트가 두 곳(renderPanel · 과목별 아코디언)에서 그려질 수 있어 id를 고정하면
+  // 같은 id가 둘 생긴다 → 버튼마다 유일한 id를 발급해 짝을 명시적으로 묶는다.
+  box.id = `chooser-${leadId}-${++_chooserSeq}`;
+  if (leadBtn) leadBtn.dataset.chooser = box.id;
+  box.hidden = true;
+  box.setAttribute("role", "menu");
+  box.setAttribute("aria-label", `${def.label} 종류 선택`);
+  for (const mid of def.chooser) {
+    const m = TEMPLATES[mid];
+    if (!m) continue;
+    const opt = document.createElement("button");
+    opt.type = "button";
+    opt.className = "tool-chooser-opt";
+    opt.dataset.symbol = mid;
+    opt.setAttribute("role", "menuitem");
+    const ico = document.createElement("span");
+    ico.className = "chooser-ico";
+    const svg = buildSymbolIcon(mid, m);
+    ico.appendChild(svg);
+    if (pending) pending.push(svg);
+    const txt = document.createElement("span");
+    txt.className = "chooser-txt";
+    const b = document.createElement("b");
+    // 대표 항목은 팔레트에서 "입체(실험)"이지만 메뉴 안에서는 갈래 이름이어야 한다.
+    b.textContent = m.chooserLabel || m.label;
+    txt.appendChild(b);
+    opt.appendChild(ico);
+    opt.appendChild(txt);
+    box.appendChild(opt);
+  }
+  return box;
+}
+
+/* 팝오버는 접혀 있을 때 getBBox가 0이라 아이콘 크기를 못 잡는다 → 처음 열 때 한 번 맞춘다. */
+const _chooserSized = new WeakSet();
+
+function toggleChooser(leadBtn) {
+  const box = document.getElementById(leadBtn.dataset.chooser);
+  if (!box) return;
+  const willOpen = box.hidden;
+  document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+  if (!willOpen) return;
+  box.hidden = false;
+  if (!_chooserSized.has(box)) {
+    box.querySelectorAll("svg.tool-ico").forEach((s) => sizeIconViewBox(s));
+    _chooserSized.add(box);
+  }
+  const r = leadBtn.getBoundingClientRect();
+  box.style.left = `${Math.round(r.right + 6)}px`;
+  // 아래로 넘치면 위로 붙인다 — 항목이 11개라 화면 아래쪽 버튼에서 잘리기 쉽다.
+  const h = box.offsetHeight;
+  const top = Math.min(Math.max(r.top, 8), Math.max(window.innerHeight - h - 8, 8));
+  box.style.top = `${Math.round(top)}px`;
 }
 
 /* 과목별 파트 아코디언(subject-objects.js)이 카테고리 심볼 버튼을 채울 때 사용.
@@ -670,7 +742,12 @@ export function renderSymbolsForCategories(container, categories, sizer) {
   // 커맨드 팔레트·저장파일 호환은 그대로다.
   const ids = Object.keys(TEMPLATES)
     .filter((id) => categories.includes(TEMPLATES[id].category) && !TEMPLATES[id].hidden);
-  for (const id of ids) container.appendChild(makeSymbolButton(id, TEMPLATES[id], sizer));
+  for (const id of ids) {
+    const btn = makeSymbolButton(id, TEMPLATES[id], sizer);
+    container.appendChild(btn);
+    // 통합 버튼이면 팝오버도 같은 컨테이너에 넣는다(#tool-list 위임이 닿아야 한다).
+    if (TEMPLATES[id].chooser) container.appendChild(buildChooser(id, TEMPLATES[id], sizer, btn));
+  }
   return ids.length;
 }
 
@@ -701,7 +778,9 @@ function renderPanel() {
     body.className = "tool-section-body";   // 3-col icon grid (same as 공통 도구)
 
     for (const id of ids) {
-      body.appendChild(makeSymbolButton(id, TEMPLATES[id], pending));
+      const btn = makeSymbolButton(id, TEMPLATES[id], pending);
+      body.appendChild(btn);
+      if (TEMPLATES[id].chooser) body.appendChild(buildChooser(id, TEMPLATES[id], pending, btn));
     }
 
     section.appendChild(header);
@@ -743,6 +822,15 @@ export function initTemplates(svg) {
   panel.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-symbol]");
     if (!btn) return;
+    if (btn.dataset.chooser) {
+      // 통합 버튼: 바로 무장하지 않고 팝오버만 연다. stopPropagation이 필요하다 —
+      // tools.js가 document에 걸어 둔 '바깥 클릭 닫기'가 방금 연 팝오버를 즉시 닫는다.
+      e.stopPropagation();
+      toggleChooser(btn);
+      return;
+    }
     activateTemplate(btn.dataset.symbol);
+    // 팝오버에서 골랐으면 닫는다(하드코딩 팝오버의 동작과 같게).
+    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
   });
 }
