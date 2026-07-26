@@ -21,9 +21,13 @@
 import { SVG_NS, grayHex } from "./core.js?v=1.2.0";
 import { withBoxLabel } from "./labels.js?v=1.2.0";
 
-export const SOLID3D_KINDS = ["box", "cylinder", "wedge"];
-export const DEFAULT_PROJ_ANGLE = 30;   // 도. 기출 그림 실측 25~35° 사이
-export const DEFAULT_DEPTH_RATIO = 0.35; // 깊이 = 짧은 변 × 이 값
+// slab(판·상판)은 box와 같은 그림이다 — 생성 시 깊이 기본값만 다르다(tools.js).
+// 종류를 나눠 둬야 "판을 그렸다"는 의도가 저장돼 나중에 다시 편집할 때도 유지된다.
+export const SOLID3D_KINDS = ["box", "slab", "cylinder", "wedge"];
+// 도. 기출 실측: 작은 블록·추 40° 안팎, 바닥판 58° 안팎 → 그 사이인 50°를 기본으로 쓴다.
+// 30°는 윗면이 거의 안 보여서 시험지 그림으로 못 쓴다(2026-07-26 사용자 확인).
+export const DEFAULT_PROJ_ANGLE = 50;
+export const DEFAULT_DEPTH_RATIO = 0.35; // 깊이 = 짧은 변 × 이 값 (depth가 없는 옛 객체용)
 export const DEFAULT_SHADE = 2;
 
 /* 면 3단계 음영(gray 0~255). 윗면이 가장 밝고 옆면이 가장 어둡다 — 기출 그림의 관례.
@@ -47,8 +51,14 @@ const fillOf = (obj, level) => (obj._outline ? "none" : grayHex(level));
 
 /* ----- 투영 벡터 -----
  * 깊이 d와 각 a에서 (dx, dy)를 뽑되, **bbox 안에 앞면이 남도록** 잘라낸다.
- * 앞면이 0이 되면(깊이가 상자보다 큼) 도형이 사라져 버려서, 각 축 80%에서 멈춘다.
- * dx/dy를 같은 비율 k로 줄이므로 투영각은 유지된다(각도가 틀어지면 다른 물체와 안 맞는다). */
+ * 앞면이 0이 되면(깊이가 상자보다 큼) 도형이 사라져 버리므로 최소 두께만 남긴다.
+ *
+ * 이 최소치는 "비율"이 아니라 "절대값(mm)"이어야 한다. 예전엔 각 축 80%로 잘랐는데,
+ * 그러면 상판처럼 **얇고 깊은** 물체(두께 3mm · 깊이 40mm)가 원천적으로 불가능했다
+ * — bbox 높이의 20%가 강제로 앞면 두께가 돼서 판이 늘 두꺼운 벽돌로 보였다.
+ * dx/dy는 같은 비율 k로 줄이므로 투영각은 유지된다(각도가 틀어지면 다른 물체와 안 맞는다). */
+const MIN_FRONT_MM = 0.8;   // 앞면(두께)으로 남겨 둘 최소 폭·높이
+
 export function projectionOf(obj) {
   const w = Math.max(Number(obj.w) || 0, 0.001);
   const h = Math.max(Number(obj.h) || 0, 0.001);
@@ -57,7 +67,9 @@ export function projectionOf(obj) {
   const d = Number.isFinite(obj.depth) ? Math.abs(obj.depth) : Math.min(w, h) * DEFAULT_DEPTH_RATIO;
   let dx = Math.abs(d * Math.cos(a));
   let dy = Math.abs(d * Math.sin(a));
-  const k = Math.min(dx > w * 0.8 ? (w * 0.8) / dx : 1, dy > h * 0.8 ? (h * 0.8) / dy : 1);
+  const maxDx = Math.max(w - MIN_FRONT_MM, w * 0.05);
+  const maxDy = Math.max(h - MIN_FRONT_MM, h * 0.05);
+  const k = Math.min(dx > maxDx ? maxDx / dx : 1, dy > maxDy ? maxDy / dy : 1);
   return { dx: dx * k, dy: dy * k, angle: a };
 }
 
@@ -72,7 +84,7 @@ function face(obj, pts, fillLevel, stroke, sw) {
   return el;
 }
 
-/* ===== BOX — 직육면체 (블록 · 상판 · 실험대 다리) =====
+/* ===== BOX / SLAB — 직육면체 · 판 (블록 · 상판 · 실험대 다리) =====
  * 앞면은 bbox의 왼쪽 아래에 붙고, 깊이는 오른쪽 위로 뻗는다.
  * 그리는 순서 = 윗면 → 옆면 → 앞면. 앞면을 마지막에 얹어야 앞쪽 모서리가 깨끗하다. */
 function drawBox(obj, proj, stroke, sw) {
@@ -196,7 +208,7 @@ export function renderSolid3d(obj) {
   let inner;
   if (kind === "cylinder") inner = drawCylinder(obj, proj, stroke, sw);
   else if (kind === "wedge") inner = drawWedge(obj, proj, stroke, sw);
-  else inner = drawBox(obj, proj, stroke, sw);
+  else inner = drawBox(obj, proj, stroke, sw);   // box · slab (그림은 같다)
   applyFlip(inner, obj);
 
   // 반전 transform과 회전 transform이 한 요소에서 겹치지 않게 바깥 <g>로 감싼다.

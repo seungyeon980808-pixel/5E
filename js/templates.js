@@ -205,7 +205,7 @@ export const TEMPLATES = {
    * 원기둥의 납작한 프리셋일 뿐이라 별도 렌더러를 만들지 않았다. props로 초기값만 다르다.
    * 투영각은 여기서 정하지 않는다 — tools.js가 공유 기본값(30°)을 읽어 넣는다. ----- */
   solid_box:      { kind: "shape", category: "역학", label: "직육면체", keywords: ["직육면체", "블록", "상자", "입체", "3D", "box", "block", "cuboid"], create: { tool: "SOLID3D", kind: "box" } },
-  solid_slab:     { kind: "shape", category: "역학", label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "box", props: { depth: 8 } } },
+  solid_slab:     { kind: "shape", category: "역학", label: "판·상판", keywords: ["판", "상판", "책상", "실험대", "바닥", "입체", "slab", "table", "plate"], create: { tool: "SOLID3D", kind: "slab" } },
   solid_cylinder: { kind: "shape", category: "역학", label: "원기둥", keywords: ["원기둥", "실린더", "추", "자석", "봉", "입체", "cylinder", "rod"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_disk:     { kind: "shape", category: "역학", label: "원판·받침", keywords: ["원판", "받침", "스탠드", "디스크", "입체", "disk", "base"], create: { tool: "SOLID3D", kind: "cylinder" } },
   solid_wedge:    { kind: "shape", category: "역학", label: "빗면", keywords: ["빗면", "경사면", "삼각기둥", "쐐기", "입체", "wedge", "incline", "ramp"], create: { tool: "SOLID3D", kind: "wedge" } },
@@ -291,12 +291,13 @@ const APPARATUS_ICON_BOX = {
 
 // 입체 아이콘: symbolId별 대표 상자(월드 mm). 판·원판은 납작하게 잡아야 버튼만 보고
 // 직육면체·원기둥과 구분된다.
+// (아이콘은 bbox 직접 지정이다 — 캔버스의 "드래그=앞면" 해석을 거치지 않는다.)
 const SOLID3D_ICON_BOX = {
-  solid_box:      { w: 20, h: 18, depth: 6 },
-  solid_slab:     { w: 24, h: 11, depth: 7 },
-  solid_cylinder: { w: 14, h: 22, depth: 5 },
-  solid_disk:     { w: 24, h: 12, depth: 5 },
-  solid_wedge:    { w: 24, h: 16, depth: 6 },
+  solid_box:      { w: 20, h: 20, depth: 9 },
+  solid_slab:     { w: 26, h: 16, depth: 16 },
+  solid_cylinder: { w: 12, h: 24, depth: 6 },
+  solid_disk:     { w: 26, h: 13, depth: 6 },
+  solid_wedge:    { w: 26, h: 20, depth: 9 },
 };
 
 // Build the data object that the REAL renderer turns into the icon.
@@ -360,7 +361,7 @@ function iconSampleObject(id, def) {
     return {
       type: "solid3d", kind: c.kind,
       x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
-      depth: b.depth, projAngle: 30, shade: 2, axis: "v",
+      depth: b.depth, projAngle: 50, shade: 2, axis: "v",
       strokeLevel: 0, strokeWidth: 0.6, showLabel: false, _outline: true,
     };
   }

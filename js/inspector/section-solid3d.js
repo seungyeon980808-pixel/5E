@@ -188,7 +188,7 @@ export function initSolid3dSection(state) {
         ? Math.round(o.depth * 10) / 10
         : Math.round(Math.min(o.w, o.h) * 0.35 * 10) / 10;
     }
-    if (document.activeElement !== angInp) angInp.value = Number.isFinite(o.projAngle) ? o.projAngle : 30;
+    if (document.activeElement !== angInp) angInp.value = Number.isFinite(o.projAngle) ? o.projAngle : 50;
     if (document.activeElement !== shadeSel) shadeSel.value = String(Number.isInteger(o.shade) ? o.shade : 2);
     if (document.activeElement !== axisSel) axisSel.value = o.axis === "h" ? "h" : "v";
   }

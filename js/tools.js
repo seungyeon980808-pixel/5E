@@ -794,7 +794,6 @@ function makeShape(type, a, b) {
     }
   }
   if (type === "solid3d") {
-    // 입체는 드래그 상자 = 그림 전체 bbox다(렌더러가 앞면을 안쪽으로 깎는다).
     // 투영각은 그림 전체가 같아야 하므로 객체마다 새로 정하지 않고 공유 기본값을 읽는다.
     shape.kind = _solid3dKind || "box";
     shape.projAngle = solid3dProjAngle();
@@ -805,12 +804,30 @@ function makeShape(type, a, b) {
     shape.labelType = "label";   // 블록 이름 A·B·C — 정체(물리량 이탤릭 아님)
     shape.fillNone = false;
     shape.flipX = false;
-    // 깊이는 상자 크기에 비례해 잡되(작게 만들어도 입체감 유지), 최소 2mm.
-    shape.depth = Math.max(Math.min(shape.w, shape.h) * 0.35, 2);
     if (shape.kind === "cylinder") {
-      // 원기둥은 좌우 폭이 지름이라 종횡비를 고정하지 않는다(자석은 길고 추는 짧다).
-      shape.w = Math.max(shape.w, 4);
-      shape.h = Math.max(shape.h, 4);
+      // 원기둥·원판은 드래그 상자가 곧 실루엣이다(가로=지름, 세로=길이). 깊이는
+      // 마개 타원의 납작함만 정하므로 bbox를 키우지 않는다.
+      shape.w = Math.max(shape.w, 3);
+      shape.h = Math.max(shape.h, 3);
+      shape.depth = Math.max(Math.min(shape.w, shape.h) * 0.5, 2);
+    } else {
+      // box·slab·wedge: **드래그한 사각형 = 앞에서 보이는 면**(가로 × 두께).
+      // 깊이는 그 뒤(오른쪽 위)로 더 뻗으므로 bbox가 드래그 상자보다 커진다.
+      //
+      // 왜 이렇게 읽나: 드래그 상자를 bbox로 쓰면 두께 = 높이 − 깊이의 세로성분이라,
+      // 상판처럼 납작하게 끌수록 깊이가 0으로 눌려 종잇장이 됐다. 앞면으로 읽으면
+      // "가로 60 · 두께 2.5"를 끌고 깊이는 별도로 붙으므로 기출 상판이 그대로 나온다.
+      const fw = Math.max(shape.w, 2);
+      const fh = Math.max(shape.h, 1);
+      // 판은 넓게(가로의 45%), 블록·빗면은 앞면에 어울리게(짧은 변의 90%).
+      const d = shape.kind === "slab"
+        ? Math.max(fw * 0.45, 6)
+        : Math.max(Math.min(fw, fh) * 0.9, 3);
+      const rad = (shape.projAngle * Math.PI) / 180;
+      shape.depth = d;
+      shape.y -= d * Math.sin(rad);
+      shape.w = fw + d * Math.cos(rad);
+      shape.h = fh + d * Math.sin(rad);
     }
     if (_symbolProps) Object.assign(shape, _symbolProps);
   }
@@ -824,9 +841,9 @@ function solid3dProjAngle() {
   try {
     const d = JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}");
     const v = Number(d.solid3dProjAngle);
-    return v > 0 && v < 90 ? v : 30;
+    return v > 0 && v < 90 ? v : 50;
   } catch (_) {
-    return 30;
+    return 50;
   }
 }
 
