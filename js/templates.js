@@ -706,7 +706,11 @@ function makeGroupButton(id, def, pending) {
     // 이 시점엔 실패한다) → 처음 보이게 된 뒤 한 번 맞춘다.
     if (!sized) { pop.querySelectorAll("svg.tool-ico").forEach((s) => sizeIconViewBox(s)); sized = true; }
     const r = btn.getBoundingClientRect();
-    pop.style.left = Math.round(r.right + 6) + "px";
+    // 버튼 오른쪽이 아니라 **패널 오른쪽 끝** 기준으로 붙인다 — 안쪽 열 버튼에서 열면
+    // 팝오버가 팔레트 위로 올라타 아이콘을 덮었다.
+    const panel = btn.closest(".panel-left");
+    const anchorRight = panel ? panel.getBoundingClientRect().right : r.right;
+    pop.style.left = Math.round(Math.max(anchorRight, r.right) + 6) + "px";
     // 화면 아래로 넘치면 위로 끌어올린다 — 갈래가 많은 그룹(입체 11종)은 그냥 두면 잘린다.
     const top = Math.min(Math.max(r.top, 8), Math.max(window.innerHeight - pop.offsetHeight - 8, 8));
     pop.style.top = Math.round(top) + "px";

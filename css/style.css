@@ -413,7 +413,9 @@ body { zoom: var(--ui-zoom, 1); }
 /* ===== 통합 도구 선택 팝오버(텍스트·라벨러 / 각도·직각) ===== */
 /* 그리드 밖에 fixed로 띄운다 — 그리드 흐름을 건드리지 않게 hidden일 땐 확실히 숨김. */
 .tool-chooser { position: fixed; z-index: 100000; display: flex; flex-direction: column; gap: 3px;
-  padding: 5px; min-width: 168px; background: var(--btn-tool-bg, #1b1f24);
+  /* 배경은 반드시 --bg-panel. 예전엔 var(--btn-tool-bg, #1b1f24)였는데 --btn-tool-bg가
+     transparent로 정의돼 있어 폴백이 영영 안 먹고 팝오버가 통째로 비쳤다. */
+  padding: 5px; min-width: 168px; background: var(--bg-panel);
   border: 1px solid var(--c-border); border-radius: 8px; box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
 .tool-chooser[hidden] { display: none; }   /* display:flex보다 우선하도록 명시 */
 .tool-chooser-opt { display: flex; align-items: center; gap: 9px; width: 100%;
