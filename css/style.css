@@ -196,6 +196,12 @@ body {
 }
 
 .panel-left { border-right: 1px solid var(--border-strong); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
+/* 스크롤바가 자리를 차지하지 않게 한다(2026-07-27 교사 확정 "스크롤바 겹치기").
+   overflow:auto 이면 세로 스크롤바가 오른쪽 10px 을 상시 먹어, 도구 그리드가 쓸 수 있는
+   폭이 117 → 107px 로 줄고 오른쪽만 비어 보였다. 감춰서 폭을 100% 쓴다 —
+   휠·트랙패드 스크롤은 그대로 동작한다. */
+.panel-left { scrollbar-width: none; }
+.panel-left::-webkit-scrollbar { width: 0; height: 0; }
 .panel-right { border-left: 1px solid var(--border-strong); }
 
 /* ===== 환경 설정: 화면 크기 프리셋 → 앱 UI 스케일(zoom) =====
@@ -315,7 +321,9 @@ body { zoom: var(--ui-zoom, 1); }
 .subject-part-header .toggle-icon { transition:transform .15s; font-size: 11px; color:var(--text-secondary); }
 .subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
 .subject-part.is-collapsed .subject-part-body { display:none; }
-.subject-part-body { padding:8px 10px; }
+/* 좌우 여백을 없앤다 — 과목 오브젝트 버튼이 공통 도구와 같은 폭을 쓰게 한다.
+   10px 씩 들어가 있어서 같은 3열인데도 버튼이 29px 대 36px 로 작았다. */
+.subject-part-body { padding:8px 0; }
 .subject-part-empty { margin:0; font-size: 12px; color:var(--text-secondary); }
 @media (prefers-reduced-motion: reduce) { .subject-part-header .toggle-icon { transition:none; } }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
@@ -384,10 +392,12 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .tool-btn:hover kbd { color: var(--text-primary); }
 /* shape icons inherit the kbd text color so they highlight with active state */
+/* 버튼이 33 → 36px 로 커진 만큼 아이콘도 같이 올린다(버튼의 약 52% — 확정 시안 기준).
+   공통 도구와 과목 오브젝트가 같은 값을 쓰므로 둘의 크기는 계속 같다. */
 .tool-btn kbd .tool-ico {
   display: block;
-  width: 17px;
-  height: 17px;
+  width: 19px;
+  height: 19px;
 }
 .tool-btn kbd .tool-letter {
   display: inline-flex;

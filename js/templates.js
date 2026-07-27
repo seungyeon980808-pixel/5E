@@ -282,8 +282,8 @@ const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", 
  * the renderer, any future edit to a shape updates its icon automatically. No icon
  * is hand-drawn here — we only choose representative sizes + a clean data variant. */
 const SVG_NS = "http://www.w3.org/2000/svg";
-const ICON_PX = 16;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
-const ICON_STROKE_PX = 1.1;  // target on-screen stroke weight (≈ the base-tool icons)
+const ICON_PX = 19;          // tool-ico render box (matches css .tool-btn kbd .tool-ico)
+const ICON_STROKE_PX = 1.3;  // target on-screen stroke weight (≈ the base-tool icons)
 const CIRCUIT_PALETTE_LABELS = { resistor: "R", inductor: "L", capacitor: "C", voltmeter: "V", ammeter: "A" };
 const SHORTCUT_LABELS = { anglearc: "A", rightangle: "Shift+A", node: "N", labeler: "Shift+T", funcgraph: "F" };
 
