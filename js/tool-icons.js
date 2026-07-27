@@ -16,9 +16,13 @@
  * 저항(resistor)은 교사 판단으로 기존 아이콘을 그대로 쓴다 → 일부러 넣지 않는다.
  */
 
+/* 굵기 3단계. 주선(1.5)은 공통 도구 아이콘(index.html, stroke-width 1.5)과 같은 값이다.
+ * 보조선·실선은 처음에 1.05 / 0.8 로 잡았더니 화면에서 0.68~0.85px 까지 내려가,
+ * 요소 수가 적고 전부 1.5 인 공통 도구 옆에서 아이콘이 가벼워 보였다(교사 지적).
+ * 주선은 그대로 두고 얇은 쪽만 올렸다(2026-07-27 확정). */
 const S    = 'stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"';
-const S2   = 'stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.05"';
-const HAIR = 'stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="0.8"';
+const S2   = 'stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25"';
+const HAIR = 'stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"';
 
 const DOT = (x, y, r = 1.8) => `<circle cx="${x}" cy="${y}" r="${r}" fill="currentColor"/>`;
 const RING = (x, y, r = 1.5) => `<circle cx="${x}" cy="${y}" r="${r}" ${S2}/>`;
@@ -127,7 +131,7 @@ export const TOOL_ICONS = {
   /* 도선: 사선으로 눕히면 같은 20×20 안에서 가로보다 길어 보인다. */
   wire:
     `<path d="M2.66 17.38 L18.66 5.38 M1.34 15.62 L17.34 3.62" ` +
-    `stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.6"/>`,
+    `stroke="currentColor" fill="none" stroke-linecap="round" stroke-width="0.85"/>`,
   compass:
     `<circle cx="10" cy="10" r="8.3" ${S2}/>` +
     `<path d="M13.6 6.4 L11.3 11.3 L6.4 13.6 L8.7 8.7 Z" ${S2}/>` +
