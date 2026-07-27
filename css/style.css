@@ -2371,6 +2371,9 @@ textarea.unified-text-input {
 .app-tooltip.is-visible { opacity: 1; transform: none; }
 .app-tooltip[data-place="below"] { transform: translateY(-2px); }
 .app-tooltip[data-place="below"].is-visible { transform: none; }
+/* 좌측 도구 팔레트 안 버튼은 패널 오른쪽 바깥에 붙는다(옆 아이콘을 덮지 않게). */
+.app-tooltip[data-place="right"] { transform: translateX(-2px); }
+.app-tooltip[data-place="right"].is-visible { transform: none; }
 @media (prefers-reduced-motion: reduce) { .app-tooltip { transition: none; } }
 
 /* 모달 제목 옆 ? 도움말 버튼 (이미지로 내보내기 등) — hover/focus 시 title 툴팁 */
