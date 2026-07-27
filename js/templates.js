@@ -26,6 +26,7 @@ import { armSymbol } from "./tools.js?v=1.3.0";
 import { renderObject } from "./render.js?v=1.3.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.3.0";
 import { getSvgAsset } from "./svg-assets.js?v=1.3.0";
+import { TOOL_ICONS } from "./tool-icons.js?v=1.3.0";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.3.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
@@ -437,6 +438,16 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
 
+  /* 팔레트 전용 아이콘 정본(js/tool-icons.js)이 있으면 그것을 쓴다. 렌더러 출력을 축소한
+   * 자동 아이콘은 22px에서 뭉개져 무슨 도구인지 안 보였다(2026-07-27 교사 지적).
+   * 여기 없는 id만 아래의 개별 분기 → svgAsset → 렌더러 자동 생성 순으로 넘어간다. */
+  if (TOOL_ICONS[id]) {
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.dataset.fixedIcon = "1";   // sizeIconViewBox가 재단·굵기변경을 건너뛰게 한다
+    svg.innerHTML = TOOL_ICONS[id];
+    return svg;
+  }
+
   if (id === "anglearc") {
     svg.setAttribute("viewBox", "0 0 20 20");
     svg.innerHTML =
@@ -476,138 +487,10 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
     return svg;
   }
 
-  if (id === "pulley_ceiling") {
-    // 천장 고정판 + 브래킷 + 홈 있는 바퀴 실루엣.
-    svg.setAttribute("viewBox", "0 0 20 20");
-    svg.innerHTML =
-      '<line x1="5" y1="3" x2="15" y2="3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
-      '<line x1="8" y1="3" x2="8" y2="11" stroke="currentColor" stroke-width="1"/>' +
-      '<line x1="12" y1="3" x2="12" y2="11" stroke="currentColor" stroke-width="1"/>' +
-      '<circle cx="10" cy="12" r="5" fill="none" stroke="currentColor" stroke-width="1.2"/>' +
-      '<circle cx="10" cy="12" r="1.3" fill="currentColor" stroke="none"/>';
-    return svg;
-  }
+  /* pulley_ceiling · ef_* · mag_* · stw_* · spring · pendulum · cart 의 손그림 아이콘은
+   * 2026-07-27 팔레트 아이콘 전면 개편 때 js/tool-icons.js 로 옮겼다(위의 TOOL_ICONS 분기).
+   * 여기 남은 분기는 tool-icons.js 가 다루지 않는 공통 도구 4종뿐이다. */
 
-  if (id === "ef_pair" || id === "ef_single" || id === "ef_uniform") {
-    // 전기력선: +/− 원과 그 사이를 잇는 휜 선(객체의 인상과 같게).
-    svg.setAttribute("viewBox", "0 0 20 20");
-    if (id === "ef_uniform") {
-      svg.innerHTML =
-        '<line x1="2" y1="4" x2="18" y2="4" stroke="currentColor" stroke-width="1.6"/>' +
-        '<line x1="2" y1="16" x2="18" y2="16" stroke="currentColor" stroke-width="1.6"/>' +
-        '<g stroke="currentColor" stroke-width="1"><line x1="6" y1="5.5" x2="6" y2="13"/>' +
-        '<line x1="10" y1="5.5" x2="10" y2="13"/><line x1="14" y1="5.5" x2="14" y2="13"/></g>' +
-        '<polygon points="6,14.6 4.9,12.4 7.1,12.4" fill="currentColor"/>' +
-        '<polygon points="10,14.6 8.9,12.4 11.1,12.4" fill="currentColor"/>' +
-        '<polygon points="14,14.6 12.9,12.4 15.1,12.4" fill="currentColor"/>';
-    } else if (id === "ef_single") {
-      let d = '<circle cx="10" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.1"/>';
-      for (let i = 0; i < 8; i++) {
-        const a = i * Math.PI / 4, c = Math.cos(a), s2 = Math.sin(a);
-        d += `<line x1="${(10 + 3.4 * c).toFixed(1)}" y1="${(10 + 3.4 * s2).toFixed(1)}" x2="${(10 + 8.4 * c).toFixed(1)}" y2="${(10 + 8.4 * s2).toFixed(1)}" stroke="currentColor" stroke-width="0.9"/>`;
-      }
-      svg.innerHTML = d;
-    } else {
-      svg.innerHTML =
-        '<circle cx="4.5" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
-        '<circle cx="15.5" cy="10" r="2.2" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
-        '<g fill="none" stroke="currentColor" stroke-width="0.9">' +
-        '<path d="M6.6 9 Q10 4 13.4 9"/><path d="M6.6 11 Q10 16 13.4 11"/><path d="M6.7 10 H13.3"/></g>';
-    }
-    return svg;
-  }
-
-  if (id === "mag_bar" || id === "mag_wire") {
-    svg.setAttribute("viewBox", "0 0 20 20");
-    if (id === "mag_wire") {
-      svg.innerHTML =
-        '<circle cx="10" cy="10" r="3.2" fill="none" stroke="currentColor" stroke-width="0.9"/>' +
-        '<circle cx="10" cy="10" r="6.4" fill="none" stroke="currentColor" stroke-width="0.9"/>' +
-        '<circle cx="10" cy="10" r="1.5" fill="none" stroke="currentColor" stroke-width="1.1"/>' +
-        '<circle cx="10" cy="10" r="0.6" fill="currentColor" stroke="none"/>';
-    } else {
-      svg.innerHTML =
-        '<rect x="5" y="8.6" width="5" height="2.8" fill="currentColor" opacity="0.25" stroke="currentColor" stroke-width="0.7"/>' +
-        '<rect x="10" y="8.6" width="5" height="2.8" fill="none" stroke="currentColor" stroke-width="0.7"/>' +
-        '<g fill="none" stroke="currentColor" stroke-width="0.85">' +
-        '<path d="M5 10 Q10 3 15 10"/><path d="M5 10 Q10 17 15 10"/>' +
-        '<path d="M5 10 Q10 5.6 15 10"/><path d="M5 10 Q10 14.4 15 10"/></g>';
-    }
-    return svg;
-  }
-
-  if (id === "stw_string" || id === "stw_open" || id === "stw_closed") {
-    // 정상파: 대칭 포락선 + 마디 점(+ 관이면 벽).
-    svg.setAttribute("viewBox", "0 0 20 20");
-    const nn = id === "stw_closed" ? 3 : 2;
-    const fn = (u) => id === "stw_string" ? Math.sin(nn * Math.PI * u)
-      : id === "stw_open" ? Math.cos(nn * Math.PI * u)
-      : Math.sin(nn * Math.PI * u / 2);
-    const path = (sg) => {
-      let d = "";
-      for (let i = 0; i <= 40; i++) {
-        const u = i / 40;
-        d += (i ? "L" : "M") + (2 + u * 16).toFixed(2) + " " + (10 - sg * 4.6 * fn(u)).toFixed(2) + " ";
-      }
-      return `<path d="${d}" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>`;
-    };
-    let extra = "";
-    if (id === "stw_string") {
-      extra = '<rect x="1" y="4.6" width="1.4" height="10.8" fill="currentColor" opacity="0.3"/>' +
-              '<rect x="17.6" y="4.6" width="1.4" height="10.8" fill="currentColor" opacity="0.3"/>';
-    } else {
-      extra = '<line x1="2" y1="4.4" x2="18" y2="4.4" stroke="currentColor" stroke-width="1"/>' +
-              '<line x1="2" y1="15.6" x2="18" y2="15.6" stroke="currentColor" stroke-width="1"/>';
-      if (id === "stw_closed") extra += '<line x1="2" y1="4.4" x2="2" y2="15.6" stroke="currentColor" stroke-width="1"/>';
-    }
-    svg.innerHTML = extra + path(1) + path(-1);
-    return svg;
-  }
-
-  if (id === "spring") {
-    // 코일 실루엣: 양끝 직선부 + 촘촘히 겹친 고리(객체 모양과 같은 인상).
-    svg.setAttribute("viewBox", "0 0 20 20");
-    const R = 3.4, K = 1.02, N = 5, TOT = 2 * Math.PI * N + Math.PI;
-    const pts = [];
-    let lo = Infinity, hi = -Infinity;
-    for (let i = 0; i <= 160; i++) {
-      const th = TOT * (i / 160), t = (11 / TOT) * th + K * Math.cos(th);
-      pts.push([t, R * Math.sin(th)]);
-      if (t < lo) lo = t; if (t > hi) hi = t;
-    }
-    const sc = 11 / (hi - lo);
-    const body = pts.map(([t, s], i) =>
-      (i ? "L" : "M") + (4.5 + (t - lo) * sc).toFixed(2) + " " + (10 + s).toFixed(2)).join(" ");
-    svg.innerHTML =
-      `<path d="M2 10 H${(4.5 + (pts[0][0] - lo) * sc).toFixed(2)}" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>` +
-      `<path d="M${(4.5 + (pts[160][0] - lo) * sc).toFixed(2)} 10 H18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>` +
-      `<path d="${body}" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>`;
-    return svg;
-  }
-
-  if (id === "pendulum") {
-    // Clean silhouette: support bar at top, string, filled bob (matches the object).
-    svg.setAttribute("viewBox", "0 0 20 20");
-    svg.innerHTML =
-      '<line x1="5" y1="3.5" x2="15" y2="3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>' +
-      '<line x1="10" y1="3.5" x2="14" y2="13" stroke="currentColor" stroke-width="1.1"/>' +
-      '<circle cx="14" cy="14" r="3" fill="currentColor" stroke="none"/>';
-    return svg;
-  }
-
-  if (id === "cart") {
-    // Hand-drawn override: the real cart asset is too busy for a 16px monochrome
-    // silhouette. Most SVG assets DON'T need an override (see the generic
-    // svgAsset fallback below) — only add one here if the auto icon looks bad.
-    svg.setAttribute("viewBox", "0 0 24 20");
-    svg.innerHTML =
-      '<path d="M4 6.5 H19 V12.5 H4 Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>' +
-      '<path d="M4 6.5 V4.5 H6.5 M19 6.5 V4.5 H16.5" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>' +
-      '<circle cx="8" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
-      '<circle cx="16" cy="15" r="2.2" fill="none" stroke="currentColor" stroke-width="1.5"/>' +
-      '<path d="M10.2 15 H13.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>';
-    return svg;
-  }
 
   // Generic svgAsset icon: any new SVG_ASSETS entry (see js/svg-assets.js) whose
   // TEMPLATES id matches an asset id renders its OWN artwork as the button icon
@@ -632,6 +515,11 @@ export function buildSymbolIcon(id, def = TEMPLATES[id]) {
 // viewBox needs the svg LIVE in the DOM (getBBox). Fit it to the content and give
 // every icon the same on-screen stroke weight.
 export function sizeIconViewBox(svg) {
+  /* 팔레트 전용 아이콘(js/tool-icons.js)은 손대지 않는다. 이 함수는 렌더러에서 뽑아 온
+   * 아이콘을 버튼에 맞게 재단하려고 만든 것이라, 20×20으로 크기·여백·선 굵기를 이미
+   * 맞춰 둔 아이콘에 적용하면 ① viewBox를 내용에 딱 붙게 잘라 서로 다른 배율로 커지고
+   * ② setStrokeWidth가 1.5/1.05/0.8 위계를 한 값으로 덮어쓴다. */
+  if (svg.dataset.fixedIcon) return;
   const g = svg.firstElementChild;
   if (!g) return;
   let bb;
