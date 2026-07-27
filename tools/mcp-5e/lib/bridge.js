@@ -29,6 +29,8 @@ let client = null;              // 현재 붙어 있는 앱(SSE 응답 스트림
 let clientInfo = null;
 let seq = 0;
 const pending = new Map();      // id → { resolve, reject, timer }
+// 연결을 뺏긴 창들. 자동 재연결로는 다시 못 붙는다(사람이 배지를 눌러야 한다).
+const evictedCids = new Set();
 
 function cors(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -53,15 +55,36 @@ function handle(req, res) {
   }
 
   if (url.pathname === "/events") {
+    /* 자동 재연결은 남의 연결을 뺏지 못한다 (2026-07-27).
+     *
+     * 예전에는 "가장 마지막에 붙은 앱이 이긴다"만 있었다. 그런데 뺏긴 앱은 연결이 끊긴 걸
+     * 알고 **자동으로 다시 붙는다**. 그래서 5E 창이 둘이면 서로 무한히 뺏고 뺏겨, 명령이
+     * 어느 창으로 갈지 매번 달라졌다(실제로 다른 세션이 열어둔 창과 교대로 붙었다).
+     *
+     * 규칙: 이미 붙어 있는 앱이 있으면 **처음 보는 창**이나 **사람이 직접 누른 재연결**만
+     * 넘겨받는다. 한 번 뺏긴 창이 저 혼자 다시 붙는 것은 막는다.
+     * 자기를 밝히지 않는 옛 버전 앱(cid 없음)도 넘겨받지 못한다 — 누군지 모르는 창에
+     * 그림을 보내는 것이 가장 위험하다. */
+    const cid = url.searchParams.get("cid") || "";
+    const manual = url.searchParams.get("manual") === "1";
+    if (client && !manual && (!cid || evictedCids.has(cid))) {
+      res.writeHead(409, { "content-type": "application/json" });
+      return res.end(JSON.stringify({
+        error: "이미 다른 5E 창이 연결돼 있습니다. 이 창에 연결하려면 화면의 MCP 배지를 누르세요.",
+      }));
+    }
     /* 새 탭이 붙으면 이전 연결은 끊는다 — 명령이 두 곳으로 가면 어느 쪽이 반영됐는지 알 수 없다.
      *
      * 2026-07-27: 끊기 전에 **이전 앱에게 왜 끊기는지 알려준다**. 예전에는 조용히 뺏어서,
      * 교사가 5E를 다시 열었을 때 연결이 그쪽으로 넘어간 걸 아무도 몰랐고 Claude가 교사
      * 문서에 그림을 그려 넣는 사고가 났다. 이제 이전 앱은 "연결을 뺏겼다"를 화면에 띄운다. */
     if (client) {
+      // 뺏긴 창은 "parked" 로 기억해 둔다 — 저 혼자 다시 붙지 못하게(위 409 규칙).
+      if (clientInfo && clientInfo.clientId) evictedCids.add(clientInfo.clientId);
       try { client.write(`event: evicted\ndata: {"by":${JSON.stringify(req.headers.origin || "?")}}\n\n`); } catch { /* 이미 끊김 */ }
       try { client.end(); } catch { /* 이미 끊김 */ }
     }
+    evictedCids.delete(cid);   // 지금 붙는 창은 다시 정상 후보로 돌린다
     res.writeHead(200, {
       "content-type": "text/event-stream",
       "cache-control": "no-cache",

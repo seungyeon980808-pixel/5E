@@ -328,13 +328,15 @@ function retryNow() {
   scheduleReconnect();
 }
 
-function connect(port) {
+function connect(port, manual = false) {
   lastPort = port;
   if (source) { try { source.close(); } catch { /* 이미 닫힘 */ } }
   /* 내가 누구인지 밝히면서 붙는다 — 서버가 app_status 로 "지금 붙은 게 어느 창인지"를
    * 돌려줄 수 있어야 한다. 같은 포트의 다른 탭도 구분해야 하므로 창마다 다른 CLIENT_ID 를 쓴다.
    * (2026-07-27: 어느 창에 붙었는지 알 수 없어 교사 문서에 그림이 들어간 사고가 있었다) */
-  const q = `?cid=${encodeURIComponent(CLIENT_ID)}&href=${encodeURIComponent(location.href)}`;
+  // manual=1 은 "사람이 배지를 눌렀다"는 표시 — 서버는 이때만 다른 창의 연결을 넘겨준다.
+  const q = `?cid=${encodeURIComponent(CLIENT_ID)}&href=${encodeURIComponent(location.href)}`
+          + (manual ? "&manual=1" : "");
   source = new EventSource(`http://127.0.0.1:${port}/events${q}`);
   source.onopen = () => { stopWatchdog(); setBadge("connected", port); };
   /* 다른 창이 통로를 가져가면 서버가 알려준다. 조용히 끊기면 이 창에 그리고 있다고
@@ -419,7 +421,8 @@ async function handleBadgeClick() {
   setBadge("connecting");
   const port = await findPort();
   connecting = false;
-  if (port) { connect(port); return; }
+  // 사람이 직접 누른 것이므로 다른 창이 붙어 있어도 넘겨받는다.
+  if (port) { connect(port, true); return; }
 
   setBadge("disconnected");
   scheduleReconnect();               // 수동 시도가 실패해도 이후엔 자동으로 계속 노린다
