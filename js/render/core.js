@@ -244,6 +244,47 @@ function cLine(a, b, sw, color) {
    놓여야 하고 ② 내보내기 경로에서 getBBox가 0을 반환하기 때문. */
 export const LABEL_OPTICAL_CENTER_EM = 0.316;
 
+/* ===== 잉크 중앙 보정 — 사각형 라벨 전용 (2026-07-27 교사 결정) =====
+ * 위 상수 하나로는 상자 안 라벨을 중앙에 못 놓는다는 게 실측으로 확인됐다.
+ *   · 세로: 대문자는 0.34em, 소문자는 0.215em이 필요해 0.316 하나로는 소문자가 처진다.
+ *   · 가로: text-anchor:middle 은 잉크가 아니라 advance(자간 포함)를 중앙에 놓는다.
+ *     이탤릭(물리량)은 글자가 기울어 잉크 중심이 오른쪽으로 밀리고, 그 양이 글자마다
+ *     다르다(실측: A 0.006em, m 0.072em, M 0.111em, T 0.132em). 상수로는 못 맞춘다.
+ * 그래서 사각형 라벨만 글자별로 재서 맞춘다. 측정은 koMeasure와 같은 canvas measureText —
+ * getBBox는 내보내기 경로에서 0을 돌려주므로 여기서도 쓸 수 없다.
+ * 잴 수 없으면(글꼴 미로드·빈 문자열 등) null을 돌려주고, 호출부는 기존 상수로 되돌아간다.
+ *
+ *   text            : 한 줄 평문
+ *   sizeMm          : 글자 크기(mm) — 반환값도 같은 단위(mm)다
+ *   font            : { style, weight, family } — <text>에 실제 적용된 값
+ *   letterSpacingEm : 자간(em). 수식 글꼴은 -0.04em이 붙어 중심이 더 밀린다
+ * 반환 { dx, dy } : 앵커에 더할 가로 보정, baseline에 더할 세로 보정 */
+export function labelInkOffsets(text, sizeMm, font = {}, letterSpacingEm = 0) {
+  const s = String(text ?? "");
+  if (!s || !(sizeMm > 0)) return null;
+  if (!_koCtx) _koCtx = document.createElement("canvas").getContext("2d");
+  const ctx = _koCtx;
+  const hasLs = "letterSpacing" in ctx;
+  try {
+    /* 라벨 실물 크기(3.7mm)로 그대로 재면 안 된다 — 브라우저가 잉크 상자를 정수 픽셀로
+     * 반올림해, 서로 다른 글자가 같은 값으로 뭉개진다(실측: 세로 보정이 0.405/0.270
+     * 두 값으로만 나왔다). 큰 기준 크기로 재고 비례로 줄인다. */
+    const REF = 400;
+    const k = sizeMm / REF;
+    ctx.font = `${font.style || "normal"} ${font.weight || "normal"} ${REF}px ${font.family || "serif"}`;
+    if (hasLs) ctx.letterSpacing = `${letterSpacingEm * REF}px`;
+    const m = ctx.measureText(s);
+    const l = -m.actualBoundingBoxLeft, r = m.actualBoundingBoxRight;
+    const t = -m.actualBoundingBoxAscent, b = m.actualBoundingBoxDescent;
+    if (![l, r, t, b, m.width].every(Number.isFinite) || m.width <= 0) return null;
+    return { dx: -(((l + r) / 2) - m.width / 2) * k, dy: -((t + b) / 2) * k };
+  } catch {
+    return null;
+  } finally {
+    if (hasLs) ctx.letterSpacing = "0px";
+  }
+}
+
 /* ===== 라벨 녹아웃(배경 지우기) — 모든 라벨 공통 =====
  * 왜 필요한가: 흰 테두리(halo)는 글리프 '윤곽'만 따라간다. 그래서 글자와 글자 사이 틈으로
  * 밑에 깔린 선이 그대로 비쳤다("4.5 m" 치수선에서 숫자 사이로 선이 지나가던 문제).

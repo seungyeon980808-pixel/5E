@@ -8,6 +8,7 @@ import {
   fillTextWithRomanRuns,
   applyObjectLabelFont,
   LABEL_OPTICAL_CENTER_EM,
+  labelInkOffsets,
   makeLabelKnockout,
   applyGlyphHalo,
 } from "./core.js?v=1.3.0";
@@ -90,8 +91,11 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   const s = String(text ?? "");
   if (!s) return null;
   const t = document.createElementNS(SVG_NS, "text");
-  t.setAttribute("x", x);
-  t.setAttribute("y", y + sizeMm * LABEL_OPTICAL_CENTER_EM);
+  // 앵커·baseline은 기본값(상수 보정)으로 두고, centerInk가 켜지면 아래에서 실측으로 덮는다.
+  let anchorX = x;
+  let baselineY = y + sizeMm * LABEL_OPTICAL_CENTER_EM;
+  t.setAttribute("x", anchorX);
+  t.setAttribute("y", baselineY);
   t.setAttribute("font-size", sizeMm);
   // An explicit fontFamily (e.g. the labeler's Dotum-first normal text) overrides
   // the labelType-based 물리량/라벨 font policy; otherwise fall back to it.
@@ -141,20 +145,50 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   }
 
   const lines = s.split("\n");
+  /* 사각형 라벨만(options.centerInk) 글자별 잉크 중앙으로 다시 앉힌다.
+   * 한 줄일 때만 한다 — 여러 줄은 블록 전체가 baselineY를 중심으로 대칭이라
+   * 글자 하나를 기준으로 옮기면 오히려 어긋난다. 못 재면 위에서 넣은 상수 그대로. */
+  if (options.centerInk && lines.length === 1) {
+    const ink = labelInkOffsets(lines[0], sizeMm, textFontParts(t), textLetterSpacingEm(t, sizeMm));
+    if (ink) {
+      t.setAttribute("x", x + ink.dx);
+      t.setAttribute("y", y + ink.dy);
+      baselineY = y + ink.dy;
+      anchorX = x + ink.dx;
+    }
+  }
   if (lines.length === 1) {
     fillTextWithRomanRuns(t, lines[0]);
   } else {
     const lineHeight = sizeMm * 1.2;
     lines.forEach((line, i) => {
       const ts = document.createElementNS(SVG_NS, "tspan");
-      ts.setAttribute("x", x);
+      ts.setAttribute("x", anchorX);
       ts.setAttribute("dy", i === 0 ? -lineHeight * (lines.length - 1) / 2 : lineHeight);
       inheritLineFont(ts, t);
       fillTextWithRomanRuns(ts, line || "\u00a0");
       t.appendChild(ts);
     });
   }
-  return withKnockout(t, lines, x, y + sizeMm * LABEL_OPTICAL_CENTER_EM, sizeMm, options);
+  return withKnockout(t, lines, anchorX, baselineY, sizeMm, options);
+}
+
+/* centerInk 측정용 보조 — <text>에 실제로 적용된 글꼴을 그대로 읽어 온다. */
+function textFontParts(t) {
+  return {
+    style: t.getAttribute("font-style") || "normal",
+    weight: t.getAttribute("font-weight") || "normal",
+    family: t.getAttribute("font-family") || "serif",
+  };
+}
+/* 자간은 "-0.04em" 같은 em 문자열이거나 "normal"이다. em 수치로 돌려준다.
+ * px/mm 등 em이 아닌 단위는 글자 크기에 비례하지 않으므로 0으로 본다(현재 앱에는 없다). */
+function textLetterSpacingEm(t, sizeMm) {
+  const raw = (t.getAttribute("letter-spacing") || "").trim();
+  if (!raw || raw === "normal") return 0;
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n)) return 0;
+  return raw.endsWith("em") ? n : (sizeMm > 0 ? n / sizeMm : 0);
 }
 
 /* \ub77c\ubca8 \ub4a4\ub97c \ud770 \uc0ac\uac01\ud615\uc73c\ub85c \uc9c0\uc6cc \ubc11\uc120\uc774 \uae00\uc790 \uc0ac\uc774\ub85c \ube44\uce58\uc9c0 \uc54a\uac8c \ud55c\ub2e4(core.makeLabelKnockout).
@@ -211,8 +245,12 @@ function withBoxLabel(shapeEl, obj) {
   // A rect whose labelType is explicitly "quantity"(물리량) still renders as Times New
   // Roman italic. `italic:false` only pins that fallback — it does not override an
   // explicit "quantity". Ellipse keeps its own "quantity" fallback.
+  // centerInk는 **사각형 + 안쪽 배치**에서만 켠다(2026-07-27 교사 결정). 바깥 배치(above/below/
+  // left/right)는 도형에서 gap만큼 떨어뜨리는 게 기준이라 잉크 중앙을 다시 잡을 이유가 없다.
+  // 타원·선 라벨은 이번 범위 밖 — 상수 보정을 그대로 쓴다.
   const labelOpts = obj.type === "rect"
-    ? { labelType: obj.labelType, italic: false, labelBg: obj.labelBg, haloRatio: obj.haloRatio }
+    ? { labelType: obj.labelType, italic: false, labelBg: obj.labelBg, haloRatio: obj.haloRatio,
+        centerInk: pos === "center" }
     : { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio };
   const lbl = makeUprightLabel(obj.label, anchor.x, anchor.y, grayHex(obj.strokeLevel), size, labelOpts);
   if (!lbl) return shapeEl;
