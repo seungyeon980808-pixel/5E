@@ -212,6 +212,23 @@ const TOOLS = [
     inputSchema: { type: "object", properties: {} },
   },
   {
+    name: "export_image",
+    description:
+      "지금 화면에 그려진 그림을 **PNG 이미지로 받아 눈으로 확인한다**. read_app 은 좌표만 " +
+      "주기 때문에 선이 안 이어졌는지·라벨이 도형을 뚫었는지·화살표 방향이 반대인지를 알 수 " +
+      "없다. 그릴 때마다 이걸 불러 결과를 보고 고친다. 문서를 바꾸지 않고 파일도 만들지 않는다. " +
+      "이미지는 토큰을 많이 먹으므로 기본 가로 600px 로 보고, 자세히 봐야 할 때만 올린다.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        widthPx: {
+          type: "number",
+          description: "결과 가로 픽셀 (200~2000, 기본 600). 세부를 볼 때만 키운다.",
+        },
+      },
+    },
+  },
+  {
     name: "remove_from_app",
     description: "열려 있는 화면에서 id로 객체를 지운다. 앱에서 Ctrl+Z로 되돌릴 수 있다.",
     inputSchema: {
@@ -405,12 +422,39 @@ const HANDLERS = {
       ].join("\n");
     }
     const info = await sendToApp("ping");
-    return `✅ 연결됨 (127.0.0.1:${b.port}) — ${info.page}, 객체 ${info.objects}개, 아트보드 ${info.artboard.w}×${info.artboard.h}mm`;
+    /* 어느 창에 붙었는지 반드시 밝힌다. 5E 를 두 개 열어 두면 나중에 연 쪽이 통로를
+     * 가져가는데, 예전에는 그걸 알 수 없어 교사가 쓰던 문서에 그림을 그려 넣는 사고가 났다.
+     * 창 표식(cid)과 주소를 같이 보여줘야 "내가 만든 창이 맞나"를 판단할 수 있다. */
+    const c = b.client || {};
+    return [
+      `✅ 연결됨 (127.0.0.1:${b.port})`,
+      `   창: ${c.clientId || "?"}  ${c.href || c.origin || ""}`,
+      `   내용: ${info.page}, 객체 ${info.objects}개, 아트보드 ${info.artboard.w}×${info.artboard.h}mm`,
+      "",
+      "⚠️ 이 창이 내가 의도한 창인지 확인하고 그릴 것. 5E 를 여러 개 열어 두면",
+      "   가장 마지막에 연 창이 통로를 가져간다(이전 창에는 그려지지 않는다).",
+    ].join("\n");
   },
 
   async read_app() {
     const s = await sendToApp("getState");
     return JSON.stringify(s, null, 2);
+  },
+
+  /* 그림을 이미지로 받아 본다. 응답에 image 파트를 실어야 하므로 문자열이 아니라
+   * { content: [...] } 를 통째로 돌려준다(디스패처가 그대로 내보낸다). */
+  async export_image({ widthPx } = {}) {
+    const r = await sendToApp("exportImage", { widthPx });
+    return {
+      content: [
+        { type: "image", data: r.base64, mimeType: r.mimeType },
+        {
+          type: "text",
+          text: `${r.page} — 객체 ${r.objects}개, 아트보드 ` +
+                `${r.artboardMm.w}×${r.artboardMm.h}mm, 이미지 ${r.widthPx}×${r.heightPx}px`,
+        },
+      ],
+    };
   },
 
   async clear_app() {
@@ -502,8 +546,11 @@ async function handle(msg) {
     const fn = HANDLERS[name];
     if (!fn) return replyError(id, -32601, `알 수 없는 툴: ${name}`);
     try {
-      const text = await fn((params && params.arguments) || {});
-      return reply(id, { content: [{ type: "text", text: String(text) }] });
+      const out = await fn((params && params.arguments) || {});
+      // 핸들러는 보통 문자열을 돌려준다. export_image 처럼 이미지를 실어야 하는 툴만
+      // { content: [...] } 를 통째로 돌려주고, 그건 그대로 내보낸다.
+      if (out && typeof out === "object" && Array.isArray(out.content)) return reply(id, out);
+      return reply(id, { content: [{ type: "text", text: String(out) }] });
     } catch (e) {
       // 툴 오류는 프로토콜 오류가 아니라 isError 결과로 돌려준다 — 모델이 읽고 고칠 수 있게.
       return reply(id, { content: [{ type: "text", text: `오류: ${e.message}` }], isError: true });

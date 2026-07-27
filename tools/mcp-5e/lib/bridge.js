@@ -53,8 +53,15 @@ function handle(req, res) {
   }
 
   if (url.pathname === "/events") {
-    // 새 탭이 붙으면 이전 연결은 끊는다 — 명령이 두 곳으로 가면 어느 쪽이 반영됐는지 알 수 없다.
-    if (client) { try { client.end(); } catch { /* 이미 끊김 */ } }
+    /* 새 탭이 붙으면 이전 연결은 끊는다 — 명령이 두 곳으로 가면 어느 쪽이 반영됐는지 알 수 없다.
+     *
+     * 2026-07-27: 끊기 전에 **이전 앱에게 왜 끊기는지 알려준다**. 예전에는 조용히 뺏어서,
+     * 교사가 5E를 다시 열었을 때 연결이 그쪽으로 넘어간 걸 아무도 몰랐고 Claude가 교사
+     * 문서에 그림을 그려 넣는 사고가 났다. 이제 이전 앱은 "연결을 뺏겼다"를 화면에 띄운다. */
+    if (client) {
+      try { client.write(`event: evicted\ndata: {"by":${JSON.stringify(req.headers.origin || "?")}}\n\n`); } catch { /* 이미 끊김 */ }
+      try { client.end(); } catch { /* 이미 끊김 */ }
+    }
     res.writeHead(200, {
       "content-type": "text/event-stream",
       "cache-control": "no-cache",
@@ -62,7 +69,14 @@ function handle(req, res) {
     });
     res.write(": connected\n\n");
     client = res;
-    clientInfo = { origin: req.headers.origin || "?", since: new Date().toISOString() };
+    /* 어느 앱이 붙었는지 식별할 수 있게 붙은 쪽이 스스로 밝힌 정보를 함께 담는다.
+     * origin(포트)만으로는 같은 포트의 다른 탭을 구분하지 못한다 → 앱이 만든 clientId 를 쓴다. */
+    clientInfo = {
+      origin: req.headers.origin || "?",
+      clientId: url.searchParams.get("cid") || "?",
+      href: url.searchParams.get("href") || "",
+      since: new Date().toISOString(),
+    };
     const keepAlive = setInterval(() => {
       try { res.write(": ping\n\n"); } catch { clearInterval(keepAlive); }
     }, 25000);

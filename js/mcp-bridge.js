@@ -23,7 +23,11 @@
 import { state } from "./state.js?v=1.3.0";
 import { showAlert } from "./ui-dialogs.js?v=1.3.0";
 import { switchPage, addPage } from "./pages.js?v=1.3.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.3.0";
 
+const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
+// 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).
+const CLIENT_ID = Math.random().toString(36).slice(2, 8) + "-" + String(Date.now()).slice(-5);
 const PORTS = [8579, 8580, 8581, 8582, 8583];
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const STORAGE_KEY = "5e.mcpBridge";
@@ -194,6 +198,40 @@ const COMMANDS = {
     flash("전부 지움 (Ctrl+Z로 되돌리기)");
     return { removed };
   },
+
+  /* 지금 화면을 PNG로 찍어 보낸다 — Claude가 자기가 그린 그림을 **눈으로** 확인하는 통로.
+   *
+   * 왜 필요한가: getState 는 객체 id·타입·좌표만 준다. 그래서 선이 안 이어졌는지,
+   * 라벨이 도형을 뚫고 나갔는지, 화살표가 반대인지는 좌표를 머릿속으로 재구성해야만
+   * 알 수 있었다(2026-07-27 도르래 지지대가 끊긴 걸 교사가 사진으로 알려준 사건).
+   *
+   * 문서를 바꾸지 않는다. 파일도 만들지 않는다 — 캔버스를 base64 로 떠서 돌려줄 뿐이다.
+   *
+   * widthPx: 결과 가로 픽셀. 이미지는 토큰을 많이 먹으므로 기본을 낮게 잡고,
+   *   자세히 봐야 할 때만 올린다. rasterizeExportCanvas 는 dpi 로 받으므로
+   *   아트보드 실제 폭(mm)에서 필요한 dpi 를 역산한다.
+   */
+  async exportImage({ widthPx } = {}) {
+    const s = state.get();
+    if (!s.objects.length) throw new Error("화면에 그려진 것이 없습니다");
+    // 글꼴 임베딩을 반드시 먼저 태운다 — 빠뜨리면 수식(Latin Modern)이 다른 글꼴로
+    // 래스터라이즈돼, 화면과 다른 그림을 보고 판단하게 된다.
+    await ensureEmbeddedFonts();
+    const wantPx = Math.min(Math.max(Math.round(widthPx || 600), 200), 2000);
+    const widthMm = s.artboard?.w || 90;
+    const dpi = Math.max(24, Math.round((wantPx / widthMm) * MM_PER_INCH));
+    const { canvas, widthMm: outW, heightMm: outH } = await rasterizeExportCanvas(s, { dpi });
+    const dataUrl = canvas.toDataURL("image/png");
+    return {
+      mimeType: "image/png",
+      base64: dataUrl.slice(dataUrl.indexOf(",") + 1),
+      widthPx: canvas.width,
+      heightPx: canvas.height,
+      artboardMm: { w: outW, h: outH },
+      page: activePageName(s),
+      objects: s.objects.length,
+    };
+  },
 };
 
 /* ----- 좌표·함수 묶기(seriesLock) -----
@@ -293,8 +331,17 @@ function retryNow() {
 function connect(port) {
   lastPort = port;
   if (source) { try { source.close(); } catch { /* 이미 닫힘 */ } }
-  source = new EventSource(`http://127.0.0.1:${port}/events`);
+  /* 내가 누구인지 밝히면서 붙는다 — 서버가 app_status 로 "지금 붙은 게 어느 창인지"를
+   * 돌려줄 수 있어야 한다. 같은 포트의 다른 탭도 구분해야 하므로 창마다 다른 CLIENT_ID 를 쓴다.
+   * (2026-07-27: 어느 창에 붙었는지 알 수 없어 교사 문서에 그림이 들어간 사고가 있었다) */
+  const q = `?cid=${encodeURIComponent(CLIENT_ID)}&href=${encodeURIComponent(location.href)}`;
+  source = new EventSource(`http://127.0.0.1:${port}/events${q}`);
   source.onopen = () => { stopWatchdog(); setBadge("connected", port); };
+  /* 다른 창이 통로를 가져가면 서버가 알려준다. 조용히 끊기면 이 창에 그리고 있다고
+   * 착각한 채 남의 문서를 건드리게 되므로, 화면에 분명히 띄운다. */
+  source.addEventListener("evicted", () => {
+    flash("MCP 연결을 다른 5E 창에 넘겼습니다 — 이 창에는 그려지지 않습니다");
+  });
   source.onerror = () => {
     // EventSource는 같은 포트로만 재시도하므로 여기서 끊고 워치독에 넘긴다(포트가 바뀌어도 찾도록).
     if (source) { try { source.close(); } catch { /* 무시 */ } source = null; }
@@ -306,7 +353,9 @@ function connect(port) {
     try { msg = JSON.parse(ev.data); } catch { return; }
     const fn = COMMANDS[msg.cmd];
     if (!fn) return respond(port, msg.id, false, `알 수 없는 명령: ${msg.cmd}`);
-    try { respond(port, msg.id, true, fn(msg.args || {})); }
+    // await 를 반드시 건다 — exportImage 처럼 비동기인 명령이 있다. 안 걸면 Promise
+    // 객체가 그대로 직렬화돼 빈 {} 가 나간다(동기 명령은 await 해도 그대로다).
+    try { respond(port, msg.id, true, await fn(msg.args || {})); }
     catch (e) { respond(port, msg.id, false, e.message); }
   };
 }
