@@ -345,25 +345,23 @@ function drawMountedPulley(g, obj, sw, color, variant) {
   circle(rimOuter, RIM_FILL, sw * 1.1);
   circle(rimInner, "#ffffff", sw * 0.9);
 
-  // 브래킷(흰 띠 + 양쪽 테두리) — 고정판에서 축까지, 바퀴 위로 지나간다.
-  const bw = r * 0.30;   // 브래킷 반폭
-  if (variant === "wall") {
-    const band = document.createElementNS(SVG_NS, "rect");
-    band.setAttribute("x", obj.x); band.setAttribute("y", cy - bw);
-    band.setAttribute("width", cx - obj.x); band.setAttribute("height", bw * 2);
-    band.setAttribute("fill", "#ffffff"); band.setAttribute("stroke", "none");
-    g.appendChild(band);
-    line(obj.x, cy - bw, cx, cy - bw);
-    line(obj.x, cy + bw, cx, cy + bw);
-  } else {
-    const band = document.createElementNS(SVG_NS, "rect");
-    band.setAttribute("x", cx - bw); band.setAttribute("y", obj.y);
-    band.setAttribute("width", bw * 2); band.setAttribute("height", cy - obj.y);
-    band.setAttribute("fill", "#ffffff"); band.setAttribute("stroke", "none");
-    g.appendChild(band);
-    line(cx - bw, obj.y, cx - bw, cy);
-    line(cx + bw, obj.y, cx + bw, cy);
-  }
+  /* 브래킷 — 고정판에서 내려와 **축을 감싸고 닫히는 U자(요크)**.
+   * 예전에는 흰 띠 + 양쪽 세로선 2개뿐이라 축 부근에서 아래가 열려 있었고,
+   * 그래서 지지대가 중간에 뚝 끊긴 것처럼 보였다(2026-07-27 교사 지적).
+   * 이제 한 path로 "내려가기 → 축 둘레 반원 → 올라오기"를 그린다. 흰 채움은
+   * 그대로라 여전히 바퀴 위를 지나가는 것처럼 보인다. */
+  const bw = r * 0.30;   // 브래킷 반폭 = 요크 반원의 반지름
+  const yoke = document.createElementNS(SVG_NS, "path");
+  yoke.setAttribute("d", variant === "wall"
+    // 벽 고정: 왼쪽에서 들어와 축 오른쪽으로 돌아 나간다.
+    ? `M ${obj.x} ${cy - bw} L ${cx} ${cy - bw} A ${bw} ${bw} 0 0 1 ${cx} ${cy + bw} L ${obj.x} ${cy + bw}`
+    // 천장 고정: 위에서 내려와 축 아래로 돌아 올라간다.
+    : `M ${cx - bw} ${obj.y} L ${cx - bw} ${cy} A ${bw} ${bw} 0 0 0 ${cx + bw} ${cy} L ${cx + bw} ${obj.y}`);
+  yoke.setAttribute("fill", "#ffffff");
+  yoke.setAttribute("stroke", color);
+  yoke.setAttribute("stroke-width", sw);
+  yoke.setAttribute("stroke-linejoin", "round");
+  g.appendChild(yoke);
 
   // 축 — 진회색 원.
   circle(Math.max(r * 0.20, 0.45), AXLE_FILL, sw * 0.9);
