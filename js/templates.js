@@ -139,6 +139,8 @@ export const TEMPLATES = {
   compass: { kind: "shape", category: "전자기학", label: "나침반", keywords: ["나침반", "compass", "needle", "magnetic"], create: { tool: "APPARATUS", kind: "compass" } },
   clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
   scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
+  transistor: { kind: "shape", category: "전자기학", label: "트랜지스터", keywords: ["트랜지스터", "transistor", "npn", "pnp", "증폭", "베이스", "컬렉터", "이미터"], create: { tool: "APPARATUS", kind: "transistor" } },
+  axis_break: { kind: "shape", category: "그래프", label: "축 생략 기호", keywords: ["생략", "축 생략", "끊음", "break", "물결", "≈"], create: { tool: "APPARATUS", kind: "axis_break" } },
 
   // 회로 심볼 순서 = 팔레트 표시 순서(JS 객체는 삽입 순서 보존). 사용자 지정 3열 배열:
   //   저항 / 코일 / 축전기 · 직류전원 / 교류전원 / 전구 · 전류계 / 전압계 / 다이오드 · 미지소자
@@ -309,6 +311,8 @@ const APPARATUS_ICON_BOX = {
   pulley: { w: 18, h: 18 },
   clamp: { w: 18, h: 24 },
   scale: { w: 26, h: 18 },
+  transistor: { w: 20, h: 20 },
+  axis_break: { w: 5, h: 7 },
 };
 
 // 입체 아이콘: symbolId별 대표 상자(월드 mm). 판·원판은 납작하게 잡아야 버튼만 보고

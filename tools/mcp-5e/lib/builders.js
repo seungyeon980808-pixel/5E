@@ -18,7 +18,7 @@ const SIDES = ["top", "right", "bottom", "left"];
  * elements: [{ element, side?, t?, span?, label?, height?, gap? }]
  * branches: [{ at: 0..1, elements: [...] }]  — 위/아래 변을 잇는 세로 가지(병렬)
  */
-export function buildCircuitLoop({ box, elements = [], branches = [], strokeWidth = 0.2 }) {
+export function buildCircuitLoop({ box, elements = [], branches = [], strokeWidth = 0.2, bodyScale }) {
   const warnings = [];
   const objs = [];
   const { x, y, w, h } = box;
@@ -60,6 +60,7 @@ export function buildCircuitLoop({ box, elements = [], branches = [], strokeWidt
         type: "circuit", element: e.element,
         p1: along(g, s0), p2: along(g, s1),
         label: e.label || "", height: e.height, gap: e.gap, strokeWidth,
+        bodyScale: Number.isFinite(e.bodyScale) ? e.bodyScale : bodyScale,
       }));
     }
     // 남은 구간을 도선(line)으로 채운다
@@ -90,6 +91,7 @@ export function buildCircuitLoop({ box, elements = [], branches = [], strokeWidt
         type: "circuit", element: e.element,
         p1: along(g, center - span / 2), p2: along(g, center + span / 2),
         label: e.label || "", height: e.height, gap: e.gap, strokeWidth,
+        bodyScale: Number.isFinite(e.bodyScale) ? e.bodyScale : bodyScale,
       }));
     }
     let cursor = 0;
@@ -104,6 +106,54 @@ export function buildCircuitLoop({ box, elements = [], branches = [], strokeWidt
     if (topHit) warnings.push(`가지 ${bi}(at=${at})가 윗변 소자와 겹칩니다 — at 값을 옮기세요`);
   });
 
+  return { objects: objs, warnings };
+}
+
+/* ===== 회로: 임의 배선(사선·삼각형·격자) =====
+ * buildCircuitLoop 은 사각 폐회로 전용이라 삼각형 배치·대각선 가지를 못 만들었다
+ * (기출 5장). 소자(circuit)는 원래 p1·p2 두 점을 받아 **어느 각도로도** 놓이므로
+ * 없던 것은 부품이 아니라 "구간을 따라 소자를 놓고 남은 곳을 도선으로 잇는" 계산뿐이다.
+ *
+ * wires: [{ from:[x,y]|{x,y}, to:…, elements:[{element,t,span,label,…}] }]
+ * t 는 그 구간에서의 위치 0~1(생략 시 균등 분포), span 은 단자 간 거리 mm.
+ */
+export function buildCircuitPath({ wires = [], strokeWidth = 0.35, bodyScale }) {
+  const objs = [], warnings = [];
+  for (const [wi, seg] of wires.entries()) {
+    const a = pt(seg && seg.from), b = pt(seg && seg.to);
+    if (!a || !b) { warnings.push(`wires[${wi}]: from·to 가 필요합니다`); continue; }
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const L = Math.hypot(dx, dy);
+    if (L < 0.1) { warnings.push(`wires[${wi}]: 길이가 0입니다`); continue; }
+    const u = { x: dx / L, y: dy / L };
+    const at = (s) => ({ x: round1(a.x + u.x * s), y: round1(a.y + u.y * s) });
+
+    const list = (seg.elements || []).map((e) => ({ ...e }));
+    const auto = list.filter((e) => !Number.isFinite(e.t));
+    auto.forEach((e, k) => { e.t = (k + 1) / (auto.length + 1); });
+    list.sort((x, y) => x.t - y.t);
+
+    const placed = [];
+    for (const e of list) {
+      const span = Math.max(CIRCUIT_BODY_MM + 2, e.span || DEFAULT_ELEMENT_SPAN);
+      if (span > L) warnings.push(`wires[${wi}]: 소자 ${e.element}(${span}mm)가 구간(${round1(L)}mm)보다 깁니다`);
+      const c = clamp(e.t * L, span / 2, L - span / 2);
+      placed.push([c - span / 2, c + span / 2]);
+      objs.push(trim({
+        type: "circuit", element: e.element || "resistor",
+        p1: at(c - span / 2), p2: at(c + span / 2),
+        label: e.label || "", labelType: e.label ? "quantity" : undefined,
+        height: e.height, gap: e.gap, strokeWidth,
+        bodyScale: Number.isFinite(e.bodyScale) ? e.bodyScale : bodyScale,
+      }));
+    }
+    let cur = 0;
+    for (const [s0, s1] of placed.sort((p, q) => p[0] - q[0])) {
+      if (s0 - cur > 0.05) objs.push(wire(at(cur), at(s0), strokeWidth));
+      cur = Math.max(cur, s1);
+    }
+    if (L - cur > 0.05) objs.push(wire(at(cur), at(L), strokeWidth));
+  }
   return { objects: objs, warnings };
 }
 
@@ -308,6 +358,142 @@ function bakeGraphElements(f, plane) {
   if (guideSegs.length) { out.guideSegs = guideSegs; out.guideXs = guides.map((g) => ({ ...g })); }
   if (markers.length) { out.markers = markers; out.markerXs = marks.map((m) => ({ ...m })); }
   return out;
+}
+
+/* ===== 치수 표시(dim_group) — 치수선 + 두 연장선 =====
+ *
+ * 기출 483장 중 129장이 치수 표시를 쓰고, 그중 89장은 이것 하나만 막고 있었다.
+ * 치수선 '본체'는 이미 있다 — line 의 lineMode:"lengthArrow" 가 양끝 화살촉 +
+ * 끝 캡(dimensionVariant) + 가운데 라벨(dimensionLabel)을 한 객체로 그린다.
+ * 즉 이 빌더는 **직선 도구의 확장**이고, 새 객체 타입을 만들지 않는다.
+ * 없던 것은 하나뿐이다: 두 기준점에서 치수선까지 뻗는 점선 연장선의 자동 정렬.
+ *
+ * 계약 — 모델은 오프셋의 '부호'를 계산하지 않는다:
+ *   · 재는 두 점(from·to)은 그림 위의 실제 기준점을 그대로 준다(치수선 위치가 아니다).
+ *   · 치수선이 놓일 쪽은 side 이름으로 고른다 — "above|below"(가로) / "left|right"(세로).
+ *   · 연장선은 기준점 → 치수선 + overshoot 까지 자동으로 그어지고, 여러 치수가
+ *     같은 기준점을 공유하면 겹치는 연장선은 한 번만 그린다.
+ *   · 선 굵기·점선 간격은 §17 치수보조선 표준으로 고정한다.
+ */
+const DIM_SW = 0.35;                 // §17 표준 선 굵기
+const DIM_EXT_DASH = { dashLength: 1.0, dashGap: 0.3 };   // scene.js LINE_KINDS["치수보조선"]
+const DIM_LABEL_SIZE = 4.2;          // §2 이름표 크기에 맞춘 치수 라벨 (자동값 2.8은 너무 작다)
+const DIM_CAPS = ["basic", "rightBar", "leftBar", "bothBars"];
+
+export function buildDimension(spec) {
+  const list = Array.isArray(spec.dims) && spec.dims.length ? spec.dims : [spec];
+  const objects = [], extras = [], errors = [], warnings = [], notes = [];
+  const seenExt = new Set();          // 공유 기준점의 연장선 중복 방지
+
+  for (const [i, d] of list.entries()) {
+    const where = list.length > 1 ? `dims[${i}]` : "치수";
+    const from = pt(d.from), to = pt(d.to);
+    if (!from || !to) { errors.push(`${where}: from·to 는 {x,y} 또는 [x,y] 여야 합니다`); continue; }
+    const dx = to.x - from.x, dy = to.y - from.y;
+    if (Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6) { errors.push(`${where}: from 과 to 가 같은 점입니다`); continue; }
+
+    // 방향 자동 판정: 한 축이 다른 축의 3배 이상이면 그 축의 치수(≈18° 이내), 아니면 빗변 평행
+    let dir = ["horizontal", "vertical", "parallel"].includes(d.direction) ? d.direction : null;
+    if (!dir) {
+      const adx = Math.abs(dx), ady = Math.abs(dy);
+      dir = adx >= ady * 3 ? "horizontal" : ady >= adx * 3 ? "vertical" : "parallel";
+    }
+    const off = Math.abs(num(d.offset, num(d.extend, 8)));     // extend 는 인수인계 문서의 이름
+    const over = Math.abs(num(d.overshoot, 1.5));              // 치수선을 넘어 더 뻗는 길이
+    const gap = Math.abs(num(d.gap, 0));                       // 기준점에서 띄우는 간격
+
+    // 오프셋 방향(단위벡터). side 이름 → 부호. 기본은 가로=아래, 세로=왼쪽, 빗변=진행방향 왼쪽.
+    let n, base1 = from, base2 = to, sideName;
+    if (dir === "horizontal") {
+      const below = d.side !== "above";
+      sideName = below ? "아래쪽" : "위쪽";
+      n = { x: 0, y: below ? 1 : -1 };
+      const y = below ? Math.max(from.y, to.y) : Math.min(from.y, to.y);
+      base1 = { x: from.x, y }; base2 = { x: to.x, y };        // 두 점의 y가 달라도 치수선은 한 높이
+    } else if (dir === "vertical") {
+      const right = d.side === "right";
+      sideName = right ? "오른쪽" : "왼쪽";
+      n = { x: right ? 1 : -1, y: 0 };
+      const x = right ? Math.max(from.x, to.x) : Math.min(from.x, to.x);
+      base1 = { x, y: from.y }; base2 = { x, y: to.y };
+    } else {
+      const u = unitVec(dx, dy);
+      const right = d.side === "right";
+      sideName = right ? "오른쪽" : "왼쪽";
+      n = right ? { x: -u.y, y: u.x } : { x: u.y, y: -u.x };   // +y 아래 좌표계에서 진행방향 기준
+    }
+
+    const q1 = { x: base1.x + n.x * off, y: base1.y + n.y * off };
+    const q2 = { x: base2.x + n.x * off, y: base2.y + n.y * off };
+
+    const label = d.label === undefined || d.label === null ? "d" : String(d.label);
+    const labelSize = num(d.labelSize, DIM_LABEL_SIZE);
+    const labelAside = ["above", "below", "left", "right"].includes(d.labelPos);
+    objects.push(trim({
+      type: "line", p1: q1, p2: q2,
+      lineMode: "lengthArrow",
+      dimensionVariant: DIM_CAPS.includes(d.caps) ? d.caps : "basic",
+      // 라벨을 옆으로 뺄 때는 가운데 라벨을 비운다(렌더러는 빈 문자열이면 "d"를 쓴다 → 공백 한 칸)
+      dimensionLabel: labelAside ? " " : label,
+      dimensionLabelSize: labelSize,
+      labelType: d.labelType,
+      strokeWidth: DIM_SW, strokeLevel: 0,
+    }));
+
+    // 연장선 — 기준점에서 치수선 너머 overshoot 까지. off 가 0이면 그릴 것이 없다.
+    let extCount = 0;
+    if (d.extLines !== false && off > 0.05) {
+      for (const [p, q] of [[base1, q1], [base2, q2]]) {
+        const a = { x: p.x + n.x * gap, y: p.y + n.y * gap };
+        const b = { x: q.x + n.x * over, y: q.y + n.y * over };
+        const key = `${r2(a.x)},${r2(a.y)}→${r2(b.x)},${r2(b.y)}`;
+        if (seenExt.has(key)) continue;
+        seenExt.add(key);
+        extras.push({
+          type: "line", p1: a, p2: b, lineMode: "solid",
+          strokeWidth: DIM_SW, strokeLevel: 0, ...DIM_EXT_DASH,
+        });
+        extCount++;
+      }
+    }
+
+    // 라벨을 치수선 밖으로: 별도 text 객체(x,y = 좌상단, hanging 기준)로 중앙 정렬해 얹는다
+    if (labelAside) {
+      const mid = { x: (q1.x + q2.x) / 2, y: (q1.y + q2.y) / 2 };
+      const lg = num(d.labelGap, labelSize * 0.75);
+      const w = estWidth(label, labelSize);
+      // 라벨 블록의 '중심'을 치수선 가운데에서 lg + 블록 절반만큼 민다
+      const cx = mid.x + (d.labelPos === "left" ? -(lg + w / 2) : d.labelPos === "right" ? lg + w / 2 : 0);
+      const cy = mid.y + (d.labelPos === "above" ? -(lg + labelSize / 2) : d.labelPos === "below" ? lg + labelSize / 2 : 0);
+      objects.push({
+        type: "text", x: cx - w / 2, y: cy - labelSize / 2,
+        text: label, fontSize: labelSize,
+      });
+    }
+
+    const L = Math.hypot(q2.x - q1.x, q2.y - q1.y);
+    const dirKo = dir === "horizontal" ? "가로" : dir === "vertical" ? "세로" : "빗변 평행";
+    notes.push(`치수 ${label || "(빈 라벨)"} — ${dirKo} ${L.toFixed(1)}mm, ${sideName}으로 ${off}mm 떨어뜨림, 연장선 ${extCount}개`);
+    if (L < 4) warnings.push(`${where}: 치수선이 ${L.toFixed(1)}mm 로 짧습니다 — 화살촉 두 개가 라벨을 덮습니다(라벨을 labelPos로 빼세요)`);
+    if (off > 0 && off < 2) warnings.push(`${where}: offset ${off}mm 는 너무 가까워 치수선이 도형에 붙습니다(권장 6~10)`);
+  }
+
+  // 연장선이 먼저(아래층), 치수선·라벨이 나중(§19 — 치수는 위층)
+  return { objects: [...extras, ...objects], errors, warnings, notes };
+}
+
+function pt(p) {
+  if (Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1])) return { x: p[0], y: p[1] };
+  if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) return { x: p.x, y: p.y };
+  return null;
+}
+function unitVec(x, y) { const L = Math.hypot(x, y) || 1; return { x: x / L, y: y / L }; }
+function r2(v) { return Math.round(v * 100) / 100; }
+function estWidth(s, size) {
+  // 서버에 폰트 메트릭이 없다 — 한글 전각, 라틴·숫자 0.55em 추정(scene.js estTextWidth 와 같은 규칙)
+  let em = 0;
+  for (const ch of String(s ?? "")) em += /[가-힣ㄱ-ㆎ]/.test(ch) ? 1 : 0.55;
+  return em * size;
 }
 
 function num(v, d) { return Number.isFinite(v) ? v : d; }

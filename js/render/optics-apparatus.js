@@ -203,6 +203,8 @@ function renderApparatus(obj) {
   else if (kind === "pulley") drawPulley(g, obj, sw, color);
   else if (kind === "clamp") drawClamp(g, obj, sw, color);
   else if (kind === "scale") drawScale(g, obj, sw, color);
+  else if (kind === "transistor") drawTransistor(g, obj, sw, color);
+  else if (kind === "axis_break") drawAxisBreak(g, obj, sw, color);
 
   const rot = obj.rotation ?? 0;
   if (rot) {
@@ -365,6 +367,106 @@ function drawMountedPulley(g, obj, sw, color, variant) {
 
   // 축 — 진회색 원.
   circle(Math.max(r * 0.20, 0.45), AXLE_FILL, sw * 0.9);
+}
+
+/* 축 생략 기호(≈) — 기출 7장. 축의 일부를 잘라 먹었다는 표시다.
+ *
+ * **두 빗금 사이는 반드시 뒤를 가려야 한다.** 가리지 않으면 축선·격자가 기호를 뚫고
+ * 지나가 "끊은" 것으로 안 보인다. 그래서 상자 안쪽을 흰색으로 먼저 덮고(knockout)
+ * 그 위에 빗금 두 개를 긋는다. 상자를 축 위에 얹어 놓기만 하면 된다.
+ *
+ *   rotation 으로 세로축에도 쓴다(세로축은 90).
+ *   slant  빗금 기울기(도, 기본 22 — 제도 관행)
+ *   style  "slash"(기본, 곧은 빗금 두 개) | "wave"(물결 두 줄)
+ */
+function drawAxisBreak(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const knock = document.createElementNS(SVG_NS, "rect");
+  knock.setAttribute("x", x); knock.setAttribute("y", y);
+  knock.setAttribute("width", w); knock.setAttribute("height", h);
+  knock.setAttribute("fill", "#fff");
+  knock.setAttribute("stroke", "none");
+  g.appendChild(knock);
+
+  const wave = obj.style === "wave";
+  const gap = Math.max(w * 0.42, sw * 3);
+  const cx = x + w / 2;
+  const dx = Math.tan(((obj.slant ?? 22) * Math.PI) / 180) * (h / 2);
+  for (const s of [-1, 1]) {
+    const bx = cx + (s * gap) / 2;
+    const p = document.createElementNS(SVG_NS, "path");
+    p.setAttribute("d", wave
+      // 물결: 위·아래로 한 번씩 흔들리는 S자
+      ? `M ${bx - dx} ${y + h} C ${bx - dx * 0.2} ${y + h * 0.66}, ${bx + dx * 0.2} ${y + h * 0.34}, ${bx + dx} ${y}`
+      : `M ${bx - dx} ${y + h} L ${bx + dx} ${y}`);
+    p.setAttribute("fill", "none");
+    p.setAttribute("stroke", color);
+    p.setAttribute("stroke-width", sw);
+    p.setAttribute("stroke-linecap", "round");
+    g.appendChild(p);
+  }
+}
+
+/* 트랜지스터 — 기출 483장 중 11장(2위 부품). 회로 소자(circuit)가 아니라 실험 기구로
+ * 둔 이유: circuit 은 p1·p2 **두 단자**짜리 모델인데 트랜지스터는 단자가 셋이다.
+ * 상자(x,y,w,h)로 놓고 세 단자를 상자 변에 내보내면 도선을 아무 방향으로나 붙일 수 있다.
+ *
+ *   왼쪽 변 가운데 = 베이스(B) · 오른쪽 위 = 컬렉터(C) · 오른쪽 아래 = 이미터(E)
+ *   variant: "npn"(기본, 화살촉이 이미터 쪽으로 나감) | "pnp"(베이스 쪽으로 들어옴)
+ *   circled: true 면 몸통을 원으로 감싼다(교과서 표기)
+ *   showTerminals: false 면 단자 동그라미를 뺀다(기본은 켬 — 기출이 단자마다 ○를 찍는다)
+ */
+function drawTransistor(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const cy = y + h / 2;
+  const barX = x + w * 0.38;                       // 베이스 막대
+  const barTop = y + h * 0.2, barBot = y + h * 0.8;
+  const legX = x + w * 0.84;                       // 컬렉터·이미터가 꺾여 나가는 세로선
+  const cJoin = { x: barX, y: y + h * 0.32 };      // 막대에서 갈라지는 점
+  const eJoin = { x: barX, y: y + h * 0.68 };
+  const cBend = { x: legX, y: y + h * 0.16 };
+  const eBend = { x: legX, y: y + h * 0.84 };
+  const r = Math.max(Math.min(w, h) * 0.055, sw * 1.1);
+
+  if (obj.circled) {
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", x + w * 0.55); c.setAttribute("cy", cy);
+    c.setAttribute("r", Math.min(w, h) * 0.42);
+    c.setAttribute("fill", "none"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+    g.appendChild(c);
+  }
+  oLine(g, barX, barTop, barX, barBot, sw * 1.6, color);      // 베이스 막대(굵게)
+  oLine(g, x, cy, barX, cy, sw, color);                        // 베이스 리드
+  oLine(g, cJoin.x, cJoin.y, cBend.x, cBend.y, sw, color);     // 컬렉터 사선
+  oLine(g, cBend.x, cBend.y, legX, y, sw, color);              // 컬렉터 단자까지
+  oLine(g, eJoin.x, eJoin.y, eBend.x, eBend.y, sw, color);     // 이미터 사선
+  oLine(g, eBend.x, eBend.y, legX, y + h, sw, color);          // 이미터 단자까지
+
+  // 화살촉: 이미터 사선의 가운데. npn 은 바깥(이미터 쪽), pnp 는 안쪽(막대 쪽).
+  const out = (obj.variant || "npn") !== "pnp";
+  const dx = eBend.x - eJoin.x, dy = eBend.y - eJoin.y;
+  const L = Math.hypot(dx, dy) || 1;
+  const ux = (dx / L) * (out ? 1 : -1), uy = (dy / L) * (out ? 1 : -1);
+  const tip = out
+    ? { x: eJoin.x + dx * 0.62, y: eJoin.y + dy * 0.62 }
+    : { x: eJoin.x + dx * 0.38, y: eJoin.y + dy * 0.38 };
+  const len = Math.max(Math.min(w, h) * 0.18, sw * 3.2), half = len * 0.42;
+  const head = document.createElementNS(SVG_NS, "polygon");
+  head.setAttribute("points",
+    `${tip.x},${tip.y} ${tip.x - ux * len + -uy * half},${tip.y - uy * len + ux * half} ` +
+    `${tip.x - ux * len - -uy * half},${tip.y - uy * len - ux * half}`);
+  head.setAttribute("fill", color);
+  g.appendChild(head);
+
+  if (obj.showTerminals !== false) {                 // 단자 ○(속 빈 원) — 기출 표기
+    for (const [tx, ty] of [[x, cy], [legX, y], [legX, y + h]]) {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", tx); c.setAttribute("cy", ty); c.setAttribute("r", r);
+      c.setAttribute("fill", "#fff");
+      c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+      g.appendChild(c);
+    }
+  }
 }
 
 function drawClamp(g, obj, sw, color) {

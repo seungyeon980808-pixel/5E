@@ -27,7 +27,7 @@ export const OPTICS_KINDS = [
   "convex_lens", "concave_lens", "convex_mirror", "concave_mirror", "plane_mirror",
   "object_arrow", "point_light", "screen", "pulley", "node",
 ];
-export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale"];
+export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale", "transistor", "axis_break"];
 export const CIRCUIT_ELEMENTS = [
   "resistor", "dc_source", "ac_source", "capacitor", "inductor",
   "diode", "lamp", "ammeter", "voltmeter", "unknown",
@@ -51,12 +51,13 @@ export const AXIS_VARIANTS = ["cross", "quadrant", "halfcross", "single"];
 // project-io.js APPARATUS_TEMPLATE_IDS
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001", compass: "E002", pulley: "M001", clamp: "M004", scale: "M003",
+  transistor: "E010", axis_break: "G010",
 };
 
 // 기구별 기본 크기 (templates.js DEFAULT_SIZES 발췌)
 const APPARATUS_SIZES = {
   wire: { w: 26, h: 6 }, compass: { w: 18, h: 18 }, pulley: { w: 18, h: 18 },
-  clamp: { w: 18, h: 24 }, scale: { w: 26, h: 18 },
+  clamp: { w: 18, h: 24 }, scale: { w: 26, h: 18 }, transistor: { w: 20, h: 20 }, axis_break: { w: 5, h: 7 },
 };
 
 /* ----- 기하 분류 ----- */
@@ -101,6 +102,8 @@ const DEFAULTS = {
       ...BOX_STYLE(), kind, templateId: APPARATUS_TEMPLATE_IDS[kind] ?? null,
       w: size.w, h: size.h, rotation: 0,
     };
+    if (kind === "transistor") { d.variant = o.variant || "npn"; d.showTerminals = true; }
+    if (kind === "axis_break") { d.slant = 22; d.style = o.style || "slash"; }
     if (kind === "wire") {
       d.length = o.w ?? size.w; d.angle = 0; d.thickness = 1.8; d.gap = 1.8;
     }
@@ -234,20 +237,24 @@ export const TYPE_DOC = {
   funcgraph: { summary: "함수 그래프. add_graph 툴로 만드는 것을 권장", required: "points[], planeId" },
   text: { summary: "일반 텍스트(x,y = 앵커). {roman1}~{roman12}는 Times 정체 로마숫자(I·II·III…)로 렌더. 흰 테두리(halo)는 기본 켜짐", required: "x,y,text" },
   formula: { summary: "수식(중괄호 문법). w/h는 앱이 실측하므로 추정치가 들어간다", required: "x,y,source" },
-  image: { summary: "래스터 이미지. MCP로는 만들 수 없다(앱에서 붙여넣기)", required: "-" },
+  image: {
+    summary: "래스터 이미지. src(data URI) 또는 srcPath(로컬 파일 경로)를 준다. "
+      + "srcPath를 주면 서버가 읽어 data URI로 바꾸고, w/h를 생략하면 원본 비율로 채운다",
+    required: "x,y + (src | srcPath)",
+  },
   svgAsset: { summary: `내장 SVG 심볼(${SVG_ASSET_IDS.join("/")})`, required: "x,y,w,h,assetId" },
   axes: { summary: "구형 좌표축. 신규 작업은 coordplane을 쓴다", required: "x,y,w,h" },
   coordplane: { summary: "좌표평면(축·격자·눈금). add_graph가 자동 생성", required: "x,y,w,h" },
   anglearc: { summary: "각도 호. x,y = 꼭짓점. label에 theta_1 처럼 쓰면 화면엔 θ₁로 변환됨(그리스어 이름·_아래첨자·^위첨자)", required: "x,y" },
   rightangle: { summary: "직각 표시. x,y = 꼭짓점", required: "x,y" },
   labeler: { summary: "지시선 + 라벨(㉠㉡). p1=가리키는 곳, p2=글자 위치", required: "p1,p2" },
-  circuit: { summary: `회로 소자(${CIRCUIT_ELEMENTS.join("/")}). p1→p2가 양 단자. label에 R_1 처럼 쓰면 화면엔 R₁로 변환됨`, required: "p1,p2,element" },
+  circuit: { summary: `회로 소자(${CIRCUIT_ELEMENTS.join("/")}). p1→p2가 양 단자. label에 R_1 처럼 쓰면 화면엔 R₁로 변환됨. bodyScale(소자 크기 배율, 기본 1)`, required: "p1,p2,element" },
   optics: { summary: `광학·역학 심볼(${OPTICS_KINDS.join("/")})`, required: "x,y,w,h,kind" },
   apparatus: { summary: `실험 기구(${APPARATUS_KINDS.join("/")})`, required: "x,y,kind" },
   chargefield: { summary: "전기력선. kind(pair 두 전하 | single 점전하 | uniform 평행판). p1·p2 = 두 전하 위치(single이면 p2가 그림 반경, uniform이면 두 점이 사각 영역의 마주보는 모서리). q1·q2(전하 크기, 부호 포함)·lines(가장 큰 전하에서 나가는 선 개수)·arrowDist(화살촉 거리mm)·chargeR·chargeLevel·label1·label2. 선 개수는 전하 크기에 비례하고, 짝을 못 찾은 선은 열린 선이 된다", required: "p1,p2" },
   fieldlines: { summary: "자기력선. kind(bar 막대자석 | wire 직선도선). bar: p1=N극 끝, p2=S극 끝, lines·magnetThick·showMagnet. wire: p1=도선, p2=바깥 원 위의 점, rings(동심원 수)·into(⊗ 들어가는 방향)", required: "p1,p2" },
   standingwave: { summary: "정상파. p1·p2 = 줄·관의 양 끝. medium(string 줄 | open 열린관 | closed 닫힌관)·n(배진동 차수, 닫힌관은 홀수만)·amplitude(배의 높이mm)·closedEnd(p1|p2)·showNodes(마디 ●)", required: "p1,p2" },
-  pendulum: { summary: "단진자. p1=고정점, p2=추 중심", required: "p1,p2" },
+  pendulum: { summary: "단진자. p1=고정점, p2=추 중심. bobRadius(추 반지름 mm, 생략=길이 비례 자동)", required: "p1,p2" },
   spring: { summary: "용수철. p1→p2가 양 끝(물체에 닿는 지점). turns(감은 수, 기본 14)·radius(코일 반지름mm)·leadLength·springStyle(helix 감긴코일 | line 실·줄). 점선은 dashLength/dashGap", required: "p1,p2" },
   gauge: { summary: `측정 가이드(${GAUGE_KINDS.join("/")})`, required: "x,y,w,h,kind" },
 };
@@ -306,8 +313,15 @@ export function normalizeObject(input, opts = {}) {
   if (!OBJECT_TYPE_IDS.includes(type)) {
     return { errors: [`알 수 없는 type "${type}" (가능: ${OBJECT_TYPE_IDS.join(", ")})`], warnings, obj: null };
   }
-  if (type === "image") {
-    return { errors: ["image는 MCP로 만들 수 없습니다 — 앱에서 붙여넣기(Ctrl+V) 하세요"], warnings, obj: null };
+  // image: 렌더러(js/render/shapes.js renderImage)가 요구하는 건 x,y,w,h + src 뿐이다.
+  // src는 data URI 여야 한다 — 프로젝트 .json 이 다른 기기로 옮겨져도 그림이 살아 있어야 하므로
+  // 외부 파일 경로나 http URL 을 그대로 두지 않는다. 파일에서 만들려면 server.js 가
+  // srcPath 를 읽어 data URI 로 바꿔 넣는다(add_objects 전처리).
+  if (type === "image" && typeof input.src !== "string") {
+    return {
+      errors: ["image: src(data URI)가 없습니다 — srcPath로 파일 경로를 주면 서버가 변환합니다"],
+      warnings, obj: null,
+    };
   }
 
   const factory = DEFAULTS[type] || (() => ({}));

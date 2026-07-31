@@ -39,6 +39,10 @@ GitHub Pages 배포(`main` 브랜치 기준), 저장소 `seungyeon980808-pixel/5
 | 알려진 결함 확인 | `docs/BUG_AUDIT_20260710.md` (47건 중 **약 90% 수정됨** · ⚠️#23은 오진이니 고치지 말 것) |
 | 객체 데이터 구조 | `docs/OBJECT_SCHEMA.md` |
 | **기출 도판 재현** | `docs/FIGURE_DESIGN_PRINCIPLES.md`(눈·판단 규칙 19장) + `docs/DRAWING_GUIDE.md`(도구·필드 함정) |
+| **삽화(손·사람) 넣기** | `docs/PARTS_PIPELINE.md` — 그리지 말고 기출 PDF 600dpi에서 오린다 |
+| **무슨 부품을 만들지** | 물리 `docs/PART_FREQUENCY.md`(483장) · 화학 `docs/PART_FREQUENCY_CHEM.md`(280장). 인수인계는 `docs/HANDOFF_atlas_20260731.md` / `docs/HANDOFF_atlas_chem_20260731.md` |
+| **도판 분해 규격** | `docs/FIGURE_DECOMPOSE_SPEC.md`(물리판 원본) + `docs/FIGURE_DECOMPOSE_SPEC_CHEM.md`(화학 어휘 덮어쓰기) |
+| **생명·지구 조사 착수** | `docs/HANDOFF_survey_bio_earth.md` — 새 세션에 붙여넣을 프롬프트 2개 |
 | **MCP로 그림 그리기** | `tools/mcp-5e/CONVENTIONS.md` — 호출 6단계·페이지 규약. **브라우저 콘솔 뒷길 금지, MCP 도구만** |
 | 브랜치 병합 | `docs/MERGE_PLAYBOOK.md` |
 

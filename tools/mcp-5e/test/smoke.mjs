@@ -102,6 +102,118 @@ await call("add_objects", {
   ],
 });
 
+/* ----- 3.5) 경사면 장면: 검산 리포트가 전부 ✔ 로 나와야 한다 -----
+ * 이 툴의 계약은 "면에 정확히 붙는다"이므로, 응답에 ⚠ 가 하나라도 있으면 실패로 센다. */
+const inclineFile = path.join(OUT, "mcp5e_incline.json");
+await call("create_project", { path: inclineFile, artboard: { w: 110, h: 70 }, pageNames: ["경사면", "마찰"], overwrite: true });
+const scene1 = await call("add_incline_scene", {
+  path: inclineFile, page: "경사면",
+  incline: { angleDeg: 30, length: 40, apex: "left" },
+  ground: { length: 40 },
+  blocks: [
+    { on: "경사면", s: 0.7, size: 8, labelInner: "m", labelOuter: "A" },
+    { on: "수평면", s: 0.45, size: 8, labelInner: "2m", labelOuter: "B" },
+    { on: "경사면", s: 0.25, size: 8, phantom: true },
+  ],
+  friction: [{ on: "수평면", from: 0.15, to: 0.75 }],
+  angleArc: true,
+  dims: [{ kind: "height", label: "h" }],
+  arrows: [{ on: "경사면", s: 0.5, direction: "down" }],
+  captions: [{ text: "수평면", on: "수평면", s: 0.9 }],
+});
+// 반대 방향 + 실로 이은 두 블록 + 구간 치수선
+const scene2 = await call("add_incline_scene", {
+  path: inclineFile, page: "마찰",
+  incline: { angleDeg: 37, height: 22, apex: "right" },
+  ground: { length: 50, extendBack: 6 },
+  blocks: [
+    { on: "수평면", s: 0.35, size: 8, labelInner: "m" },
+    { on: "수평면", s: 0.62, size: 8, labelInner: "3m" },
+    { on: "경사면", s: 0.75, size: 8, labelOuter: "P", labelOuterPos: "right" },
+  ],
+  connectors: [{ from: 0, to: 1, kind: "실" }],
+  friction: [{ on: "경사면", from: 0, to: 1 }],
+  dims: [{ kind: "along", on: "수평면", from: 0.35, to: 0.62, label: "d" }],
+  guides: [{ on: "경사면", s: 0.75, length: 24, lineKind: "기준선" }],
+});
+for (const [name, text] of [["경사면", scene1], ["마찰", scene2]]) {
+  if (text.includes("⚠")) { failed++; console.log(`FAIL  add_incline_scene(${name}) 검산에 ⚠ 가 있습니다`); }
+}
+await call("validate_project", { path: inclineFile });
+// 없는 면 이름·잘못된 각도는 그리기 전에 막혀야 한다
+await call("add_incline_scene", { path: inclineFile, incline: { angleDeg: 30 }, blocks: [{ on: "천장", s: 0.5 }] }, { expectError: true });
+await call("add_incline_scene", { path: inclineFile, incline: { angleDeg: 95 } }, { expectError: true });
+await call("add_incline_scene", { path: inclineFile, incline: { angleDeg: 30 }, blocks: [{ on: "수평면" }], connectors: [{ from: 0, to: 9 }] }, { expectError: true });
+
+/* ----- 3.7) 치수 표시: 연속 치수 + 세로 치수 -----
+ * 기준점을 공유하는 두 치수를 한 번에 주면 가운데 연장선은 1개만 나와야 한다(총 3개). */
+const dimFile = path.join(OUT, "mcp5e_dim.json");
+await call("create_project", { path: dimFile, artboard: { w: 110, h: 70 }, overwrite: true });
+await call("add_objects", {
+  path: dimFile,
+  objects: [
+    { type: "line", p1: { x: -40, y: 10 }, p2: { x: 40, y: 10 } },
+    { type: "rect", x: -30, y: 2, w: 8, h: 8, label: "A", labelType: "label" },
+    { type: "rect", x: 10, y: 2, w: 8, h: 8, label: "B", labelType: "label" },
+  ],
+});
+const dimText = await call("add_dimension", {
+  path: dimFile,
+  dims: [
+    { from: [-30, 10], to: [0, 10], label: "L" },
+    { from: [0, 10], to: [18, 10], label: "2L" },
+    { from: { x: -30, y: 2 }, to: { x: -30, y: 10 }, direction: "vertical", side: "left", label: "h", caps: "bothBars" },
+  ],
+});
+if (!/치수 표시 8개/.test(dimText)) { failed++; console.log("FAIL  add_dimension: 공유 연장선이 합쳐지지 않았습니다(치수선3 + 연장선5 = 8 기대)"); }
+await call("validate_project", { path: dimFile });
+await call("add_dimension", { path: dimFile, from: { x: 0, y: 0 }, to: { x: 0, y: 0 } }, { expectError: true });
+await call("add_dimension", { path: dimFile, from: { x: 0, y: 0 } }, { expectError: true });
+
+/* ----- 3.8) 사선 배선(wires) — 삼각형 회로 -----
+ * circuit 은 원래 p1/p2 라 어느 각도로도 놓인다. 없던 건 "구간을 따라 놓고 남은 곳을
+ * 도선으로 잇는" 계산뿐이었다(2026-07-31 오진 정정). */
+const wireFile = path.join(OUT, "mcp5e_wires.json");
+await call("create_project", { path: wireFile, artboard: { w: 80, h: 62 }, overwrite: true });
+await call("add_circuit", {
+  path: wireFile,
+  wires: [
+    { from: [0, -24], to: [-16, -2], elements: [{ element: "resistor", label: "R" }] },
+    { from: [0, -24], to: [16, -2], elements: [{ element: "resistor", label: "R" }] },
+    { from: [-16, -2], to: [16, -2], elements: [{ element: "resistor", t: 0.3, label: "R" }, { element: "ammeter", t: 0.72, span: 11 }] },
+    { from: [-32, 20], to: [32, 20], elements: [{ element: "dc_source", label: "V", span: 10 }] },
+  ],
+});
+await call("validate_project", { path: wireFile });
+await call("add_circuit", { path: wireFile }, { expectError: true });   // box·wires 둘 다 없음
+
+/* ----- 3.9) 스탠드·레일 부착 ----- */
+const rigFile = path.join(OUT, "mcp5e_rig.json");
+await call("create_project", { path: rigFile, artboard: { w: 90, h: 60 }, overwrite: true });
+await call("add_stand_rig", {
+  path: rigFile, at: { x: -20, y: 20 },
+  hang: [{ s: 0.75, kind: "spring", length: 14, label: "k", block: { size: 8, label: "m" } }],
+});
+await call("add_stand_rig", {
+  path: rigFile,
+  rail: { y: 12, from: 4, to: 40, items: [{ at: 0.28, size: 9, label: "A" }, { at: 0.72, size: 9, label: "B" }] },
+});
+await call("validate_project", { path: rigFile });
+
+/* ----- 3.95) 오려낸 삽화 부품 ----- */
+const partList = await call("add_part", {});
+if (/hand_grip/.test(partList)) {
+  const partFile = path.join(OUT, "mcp5e_part.json");
+  await call("create_project", { path: partFile, artboard: { w: 60, h: 40 }, overwrite: true });
+  const t2 = await call("add_part", {
+    path: partFile, part: "hand_grip", gripAt: { x: 0, y: 0 }, w: 12,
+    between: [{ type: "rect", x: 0, y: -4, w: 8, h: 8, fillLevel: 255, labelInner: "m" }],
+  });
+  if (!/3개 객체/.test(t2)) { failed++; console.log("FAIL  add_part: 뒤·물체·앞 3개가 아닙니다"); }
+  await call("validate_project", { path: partFile });
+}
+await call("add_part", { part: "없는부품" }, { expectError: true });
+
 /* ----- 4) 실패해야 하는 입력들 (검증이 실제로 막는지) ----- */
 await call("add_objects", { path: graphFile, objects: [{ type: "rectangle", x: 0, y: 0, w: 5, h: 5 }] }, { expectError: true });
 await call("add_objects", { path: graphFile, objects: [{ type: "rect", x: 0, y: 0, w: -5, h: 5 }] }, { expectError: true });
@@ -112,5 +224,5 @@ await call("add_graph", { path: graphFile, at: { x: 45, y: 30 }, functions: [{ e
 await call("list_objects", { path: circuitFile });
 
 child.stdin.end();
-console.log(failed ? `\n❌ 실패 ${failed}건` : `\n✅ 전부 통과 — 확인용 파일:\n   ${circuitFile}\n   ${graphFile}`);
+console.log(failed ? `\n❌ 실패 ${failed}건` : `\n✅ 전부 통과 — 확인용 파일:\n   ${circuitFile}\n   ${graphFile}\n   ${inclineFile}`);
 process.exit(failed ? 1 : 0);

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "hand_grip",
+    "name": "쥔 손",
+    "keywords": [
+      "손",
+      "쥔 손",
+      "잡은 손",
+      "hand",
+      "grip"
+    ],
+    "files": {
+      "full": "hand_grip.png",
+      "back": "hand_grip_back.png",
+      "front": "hand_grip_front.png"
+    },
+    "px": [
+      143,
+      110
+    ],
+    "mm": [
+      6.05,
+      4.66
+    ],
+    "split": {
+      "axis": "x",
+      "px": 97
+    },
+    "source": {
+      "src": "p3_Im1.png",
+      "box": [
+        165,
+        276,
+        315,
+        386
+      ],
+      "dpi": 600.0,
+      "note": "p1_2025_06 19번 도판"
+    }
+  },
+  {
+    "id": "hand_press",
+    "name": "누르는 손(점선)",
+    "keywords": [
+      "손",
+      "누르는 손",
+      "점선 손",
+      "hand",
+      "press"
+    ],
+    "files": {
+      "full": "hand_press.png"
+    },
+    "px": [
+      318,
+      228
+    ],
+    "mm": [
+      13.46,
+      9.65
+    ],
+    "split": null,
+    "source": {
+      "src": "p1_Im1.png",
+      "box": [
+        368,
+        6,
+        686,
+        234
+      ],
+      "dpi": 600.0,
+      "note": "p1_2024_11 8번 도판 — 두 손가락으로 누름(가상선)"
+    }
+  }
+]

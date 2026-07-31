@@ -40,6 +40,8 @@ const APPARATUS_TEMPLATE_IDS = {
   pulley: "M001",
   clamp: "M004",
   scale: "M003",
+  transistor: "E010",
+  axis_break: "G010",
 };
 
 // LABEL_CAPABLE_TYPES from object-types.js registry.

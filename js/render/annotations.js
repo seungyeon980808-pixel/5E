@@ -289,8 +289,26 @@ function renderLabeler(obj) {
     : estimateLabelBlock(obj.text, size, pad);
   // Distance from b back along the leader to where it crosses the padded block:
   // the nearer of the vertical/horizontal faces (ray-vs-centered-box).
+  /* 꺾인 지시선(elbow) — 기출 12장. 라벨에서 나온 선이 한 번 꺾여 그림 속 부위를
+   * 가리킨다(가방 삽화의 ㉠㉡㉢, 대역 그림에서 갈라져 나가는 선). 지금까지는 직선뿐이라
+   * line 두 개를 손으로 맞춰야 했다. elbow 를 주면 [앵커 → 꺾임점] 은 그대로 긋고,
+   * [꺾임점 → 라벨] 구간만 글자 상자에 닿기 전에 잘라 낸다(직선일 때와 같은 규칙). */
+  const drawSeg = (from, to) => {
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", from.x); l.setAttribute("y1", from.y);
+    l.setAttribute("x2", to.x); l.setAttribute("y2", to.y);
+    l.setAttribute("stroke", color);
+    l.setAttribute("stroke-width", sw);
+    l.setAttribute("stroke-linecap", "round");
+    g.appendChild(l);
+  };
   const drawLeader = (from) => {
     if (!from) return;
+    const elbow = obj.elbow;
+    if (elbow && Number.isFinite(elbow.x) && Number.isFinite(elbow.y)) {
+      drawSeg(from, elbow);
+      from = elbow;                          // 꺾임점부터는 아래의 직선 규칙 그대로
+    }
     const dx = b.x - from.x, dy = b.y - from.y;
     const dist = Math.hypot(dx, dy);
     const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
@@ -300,15 +318,7 @@ function renderLabeler(obj) {
     // Fall back safely when the anchor sits inside (or within the gap of) the text
     // block: skip the leader entirely rather than draw a line over the glyphs.
     if (!(lead > 0.05)) return;
-    const line = document.createElementNS(SVG_NS, "line");
-    line.setAttribute("x1", from.x);
-    line.setAttribute("y1", from.y);
-    line.setAttribute("x2", from.x + ux * lead);
-    line.setAttribute("y2", from.y + uy * lead);
-    line.setAttribute("stroke", color);
-    line.setAttribute("stroke-width", sw);
-    line.setAttribute("stroke-linecap", "round");
-    g.appendChild(line);
+    drawSeg(from, { x: from.x + ux * lead, y: from.y + uy * lead });
   };
   drawLeader(a);
   // 라벨선 추가(p3): 지시선을 하나 더 뽑아 <b>두 영역을 하나의 라벨</b>로 가리킨다

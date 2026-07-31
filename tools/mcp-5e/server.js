@@ -14,9 +14,13 @@ import {
   appendObjects, validateData, summarize, newObjectId, DEFAULT_ARTBOARD,
 } from "./lib/project.js";
 import { OBJECT_TYPE_IDS, TYPE_DOC, describeType, normalizeObject } from "./lib/schema.js";
-import { buildCircuitLoop, buildGraph } from "./lib/builders.js";
+import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension } from "./lib/builders.js";
+import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
+import { buildPart, partsSummary } from "./lib/parts.js";
+import { buildStandRig } from "./lib/rig.js";
 import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
+import { inlineImages } from "./lib/images.js";
 
 const PROTOCOL_VERSION = "2024-11-05";
 
@@ -72,7 +76,10 @@ const TOOLS = [
     description:
       "객체를 추가한다. path를 생략하면 지금 열려 있는 5E 화면에 즉시 나타난다(권장). " +
       "필드가 틀리면 하나도 넣지 않고 오류를 돌려준다(반쯤 들어간 도면을 만들지 않기 위해). " +
-      "id/order는 자동 부여된다. 타입별 필드는 describe_schema 참고.",
+      "id/order는 자동 부여된다. 타입별 필드는 describe_schema 참고. " +
+      "**이미지**: {type:\"image\", x, y, srcPath:\"<로컬 파일 절대경로>\"} 로 넣으면 서버가 읽어 " +
+      "내장(data URI)한다. w/h를 생략하면 원본 비율로 채운다(기본 폭 60mm). " +
+      "기출 삽화를 잘라 쓸 때는 미리 잘라둔 파일 경로를 준다.",
     inputSchema: {
       type: "object",
       properties: {
@@ -90,15 +97,39 @@ const TOOLS = [
   {
     name: "add_circuit",
     description:
-      "사각 폐회로를 만든다. box 둘레에 소자를 놓고 빈 구간은 도선으로 잇는다. 전원은 기본으로 " +
-      "왼쪽 변, 나머지 소자는 윗변에 균등 배치된다. branches를 주면 위·아래 변을 잇는 세로 " +
-      "가지(병렬 회로)가 추가된다. path를 생략하면 열려 있는 화면에 바로 그린다.",
+      "사각 폐회로를 만든다. box 둘레에 소자를 놓고 빈 구간은 도선으로 잇는다. " +
+      "전원은 기본으로 왼쪽 변, 나머지는 윗변에 균등 배치된다. " +
+      "branches를 주면 병렬 가지가 추가된다. path 생략 = 열린 화면에 바로.\n" +
+      "**사각형이 아닌 배선**(삼각형·대각선·격자)은 box 대신 wires 를 준다 — " +
+      "구간마다 두 점을 찍고 소자를 얹으면 사선 위에서도 저항 지그재그가 알아서 기울어진다.\n" +
+      "예) 삼각형 회로 — 각 변에 R, 가운데 줄에 R과 전류계, 밑변에 전지:\n" +
+      '  { wires:[ {from:[0,-24], to:[-16,-2], elements:[{element:"resistor",label:"R"}]},\n' +
+      '            {from:[-16,-2], to:[16,-2], elements:[{element:"resistor",t:0.3,label:"R"},\n' +
+      '                                                  {element:"ammeter",t:0.72,span:11}]},\n' +
+      '            {from:[-32,20], to:[32,20], elements:[{element:"dc_source",label:"V",span:10}]} ] }',
     inputSchema: {
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
         page: PAGE_PROP,
-        box: { ...BOX, description: "회로 사각형의 좌상단과 크기(mm)" },
+        box: { ...BOX, description: "회로 사각형의 좌상단과 크기(mm). wires 를 쓰면 필요 없다" },
+        wires: {
+          type: "array",
+          description: "임의 배선 — 구간마다 두 점과 그 위에 놓을 소자. 사각형이 아닌 회로는 이걸 쓴다",
+          items: {
+            type: "object",
+            properties: {
+              from: { description: "구간 시작 [x,y] 또는 {x,y}" },
+              to: { description: "구간 끝" },
+              elements: {
+                type: "array",
+                description: "이 구간에 놓을 소자들 (element, t 0~1, span mm, label)",
+                items: { type: "object" },
+              },
+            },
+            required: ["from", "to"],
+          },
+        },
         elements: {
           type: "array",
           description: "회로 소자들",
@@ -114,6 +145,10 @@ const TOOLS = [
             required: ["element"],
           },
         },
+        bodyScale: {
+          type: "number",
+          description: "소자 크기 배율(전체 적용, 기본 1). 몸통·원·기호가 함께 커지고 단자는 그대로. 개별 소자에 bodyScale을 주면 그게 우선",
+        },
         branches: {
           type: "array",
           description: "병렬 가지(위·아래 변을 잇는 세로선)",
@@ -126,7 +161,7 @@ const TOOLS = [
           },
         },
       },
-      required: ["box", "elements"],
+      required: [],
     },
   },
   {
@@ -230,6 +265,314 @@ const TOOLS = [
         },
       },
       required: ["at"],
+    },
+  },
+  {
+    name: "add_part",
+    description:
+      "기출 원본에서 오려낸 삽화 부품(손·사람 등)을 넣는다. **삽화는 그리지 않는다** — " +
+      "5E로 그릴 수 없는 그림(손·사람·차량)은 기출 PDF의 600dpi 원본에서 오려 둔 것을 쓴다. " +
+      "part 를 빼고 부르면 쓸 수 있는 부품 목록이 온다.\n" +
+      "**쥔 그림은 두 조각이다**: 손바닥은 물체 뒤, 손가락은 물체 앞에 와야 쥔 것으로 보인다. " +
+      "between 에 쥐는 대상(블록 등)을 주면 뒤 조각 → 그 객체 → 앞 조각 순서로 들어가 " +
+      "저절로 그렇게 된다. gripAt 에 물체의 모서리 좌표를 주면 쥐는 선이 거기에 맞는다.\n" +
+      "크기를 안 주면 **기출 인쇄 크기 그대로**(손은 가로 6mm)다. 시험지 도판은 작다 — " +
+      "키우기 전에 원본 크기를 먼저 보라.\n" +
+      "예) 한 변 8mm 인 블록을 쥔 손:\n" +
+      '  { part:"hand_grip", gripAt:{x:0,y:0}, w:12,\n' +
+      '    between:[{ type:"rect", x:0, y:-4, w:8, h:8, fillLevel:255, label:"m", labelType:"quantity" }] }',
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP,
+        page: PAGE_PROP,
+        part: { type: "string", description: "부품 id (예: hand_grip, hand_press). 생략하면 목록만 돌려준다" },
+        at: { ...XY, description: "좌상단 좌표(mm)" },
+        gripAt: {
+          ...XY,
+          description: "쥐는 선(앞/뒤 경계)을 맞출 점 — 쥐는 물체의 모서리 좌표를 그대로 준다. " +
+            "세로는 중심 정렬이라 물체 한가운데를 쥔 모양이 된다. at 보다 이걸 권한다",
+        },
+        w: { type: "number", description: "가로 mm. 생략하면 기출 인쇄 크기(비율 유지)" },
+        h: { type: "number", description: "세로 mm" },
+        layer: {
+          type: "string", enum: ["both", "back", "front"],
+          description: "both(기본)=두 조각 다. 사이에 넣을 것이 복잡해 따로 부를 때만 back/front 를 쓴다",
+        },
+        between: {
+          type: "array",
+          description: "뒤 조각과 앞 조각 사이에 낄 객체들(= 쥐는 대상). add_objects 와 같은 형식",
+          items: { type: "object", properties: { type: { type: "string", enum: OBJECT_TYPE_IDS } }, required: ["type"] },
+        },
+      },
+    },
+  },
+  {
+    name: "add_stand_rig",
+    description:
+      "스탠드·레일에 장치를 매달거나 얹는다(기출 13장). 스탠드·용수철·블록은 원래 다 있는데 " +
+      "**부착 관계**가 없어서 좌표를 다섯 번씩 손으로 맞춰야 했다 — 그 계산을 대신한다.\n" +
+      "매다는 위치는 가로대에서의 s(0~1)로만 준다(0=기둥 쪽, 1=바깥 끝). mm 를 계산하지 않는다.\n" +
+      "예1) 스탠드 가로대에 용수철저울을 매달고 그 끝에 질량 m 블록:\n" +
+      '  { at:{x:0,y:16}, hang:[{ s:0.75, kind:"spring", length:14, label:"k",\n' +
+      '                          block:{size:8, label:"m"} }] }' + "\n" +
+      "예2) 레일 위에 바퀴 달린 운반대 A·B:\n" +
+      '  { rail:{ y:10, from:-34, to:34, items:[{at:0.3,size:9,label:"A"},{at:0.7,size:9,label:"B"}] } }',
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP,
+        page: PAGE_PROP,
+        at: { ...XY, description: "스탠드 받침 바닥의 가운데 좌표(mm)" },
+        stand: { ...BOX, description: "스탠드 상자를 직접 줄 때(생략하면 at 기준 18×34)" },
+        hang: {
+          type: "array",
+          description: "가로대에 매다는 것들",
+          items: {
+            type: "object",
+            properties: {
+              s: { type: "number", description: "가로대에서의 위치 0~1 (0=기둥 쪽, 기본 0.75)" },
+              kind: { type: "string", enum: ["spring", "string"], description: "용수철(기본) 또는 실" },
+              length: { type: "number", description: "매단 길이 mm (기본 14)" },
+              label: { type: "string", description: "용수철 옆 라벨 (예: k)" },
+              block: { type: "object", description: "끝에 거는 블록 { size, label }" },
+            },
+          },
+        },
+        rail: {
+          type: "object",
+          description: "레일(이중선) 위에 얹는 것 — { y, from, to, items:[{at 0~1, size, label, wheels}] }",
+        },
+      },
+    },
+  },
+  {
+    name: "add_dimension",
+    description:
+      "치수 표시(치수선 + 점선 연장선)를 그린다. 길이·높이·간격을 재는 표시는 전부 이 툴을 쓴다 — " +
+      "직선 두세 개를 손으로 맞추지 않는다. **재는 두 점을 그대로 준다**(치수선이 놓일 위치가 아니라). " +
+      "치수선은 side 쪽으로 offset 만큼 밀려나고, 두 기준점에서 치수선까지 뻗는 점선 연장선이 " +
+      "자동으로 그어진다(치수보조선 표준: 굵기 0.35, 점선 1.0/0.3). " +
+      "dims 배열로 여러 개를 한 번에 주면 같은 기준점을 쓰는 연장선은 한 번만 그린다(연속 치수).\n" +
+      "예1) 블록 두 개 사이 거리 d 를 아래쪽에 표시:\n" +
+      '  { from:{x:-20,y:6}, to:{x:4,y:6}, label:"d" }\n' +
+      "예2) 높이 h 를 왼쪽에, 끝 캡을 넣어서:\n" +
+      '  { from:{x:-18,y:-14}, to:{x:-18,y:6}, direction:"vertical", side:"left", label:"h", caps:"bothBars" }\n' +
+      "예3) 연속 치수 L, 2L (기준점 공유):\n" +
+      '  { dims:[ {from:[-20,10],to:[0,10],label:"L"}, {from:[0,10],to:[40,10],label:"2L"} ] }',
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP,
+        page: PAGE_PROP,
+        from: { ...XY, description: "재기 시작하는 기준점(그림 위 실제 점). [x,y] 배열도 된다" },
+        to: { ...XY, description: "재기 끝나는 기준점" },
+        label: { type: "string", description: "치수 라벨(기본 \"d\"). 첨자 가능: d_1, 2t_0" },
+        direction: {
+          type: "string", enum: ["auto", "horizontal", "vertical", "parallel"],
+          description: "치수선 방향. auto(기본) = 두 점이 거의 가로면 가로, 거의 세로면 세로, " +
+            "비스듬하면 두 점을 잇는 방향과 평행",
+        },
+        side: {
+          type: "string", enum: ["above", "below", "left", "right"],
+          description: "치수선을 어느 쪽으로 뺄지. 가로 치수는 above|below(기본 below), " +
+            "세로·빗변 치수는 left|right(기본 left)",
+        },
+        offset: { type: "number", description: "기준점에서 치수선까지 거리 mm(기본 8, 권장 6~10)" },
+        overshoot: { type: "number", description: "연장선이 치수선을 넘어 더 뻗는 길이 mm(기본 1.5)" },
+        gap: { type: "number", description: "기준점에서 연장선이 떨어져 시작하는 간격 mm(기본 0)" },
+        caps: {
+          type: "string", enum: ["basic", "rightBar", "leftBar", "bothBars"],
+          description: "치수선 끝 캡(기본 basic = 화살촉만). bothBars = 양끝에 짧은 세로 막대",
+        },
+        labelPos: {
+          type: "string", enum: ["center", "above", "below", "left", "right"],
+          description: "라벨 위치. 기본 center(치수선 가운데에 흰 테두리로 얹힘). " +
+            "치수선이 짧아 화살촉이 라벨을 덮을 때만 옆으로 뺀다",
+        },
+        labelSize: { type: "number", description: "라벨 글자 크기 mm(기본 4.2)" },
+        labelType: { type: "string", description: "라벨 글씨체 종류(quantity=물리량 이탤릭 등). 생략 시 기본" },
+        extLines: { type: "boolean", description: "점선 연장선을 그릴지(기본 true). 도형의 변이 이미 연장선 노릇을 하면 false" },
+        dims: {
+          type: "array",
+          description: "여러 치수를 한 번에. 각 원소는 위의 from/to/label/direction/side/offset… 을 그대로 갖는다",
+          items: { type: "object" },
+        },
+      },
+    },
+  },
+  {
+    name: "add_incline_scene",
+    description:
+      "경사면 장면을 한 번에 그린다. 경사면 문항(빗면 위 블록·마찰 구간·각도·치수)은 이 툴을 쓴다 — " +
+      "add_objects 로 직접 조립하지 않는다. **좌표(mm)를 계산해서 넣지 않는다**: 물체 위치는 면 위 " +
+      "s(0~1)로만 주고, 접촉점·기울기·법선 방향·그리는 순서는 이 툴이 계산한다. " +
+      "면 이름은 둘뿐이다 — \"경사면\"(s=0 아래끝, s=1 꼭대기), \"수평면\"(s=0 경사면 아래끝, s=1 바깥쪽 끝). " +
+      "빗면은 triangle 자산, 선 굵기 0.35, 마찰 띠는 면 안쪽, 블록은 면 바깥쪽으로 자동 배치되며 " +
+      "응답에 접촉 거리·각도·글자 간격 검산 결과가 함께 온다. path 생략 = 열려 있는 화면에 바로.\n" +
+      "예1) 30° 경사면 위 질량 m 인 물체 A, 아래쪽 절반이 마찰 구간, 각도 표시:\n" +
+      '  { incline:{angleDeg:30, length:40, apex:"left"}, ground:{length:40},\n' +
+      '    blocks:[{on:"경사면", s:0.7, size:8, labelInner:"m", labelOuter:"A"}],\n' +
+      '    friction:[{on:"경사면", from:0, to:0.5}], angleArc:true,\n' +
+      '    captions:[{text:"수평면", on:"수평면", s:0.75}] }\n' +
+      "예2) 수평면 위 두 물체를 실로 잇고, 경사면 높이에 치수선 h, 가상선(이동 후 위치) 블록:\n" +
+      '  { incline:{angleDeg:37, height:20, apex:"right"},\n' +
+      '    blocks:[{on:"수평면", s:0.3, size:8, labelInner:"2m"},\n' +
+      '            {on:"수평면", s:0.6, size:8, labelInner:"m"},\n' +
+      '            {on:"경사면", s:0.8, size:8, phantom:true}],\n' +
+      '    connectors:[{from:0, to:1, kind:"실"}], dims:[{kind:"height", label:"h"}] }',
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP,
+        page: PAGE_PROP,
+        at: { ...XY, description: "장면 전체의 중심(mm). 생략하면 아트보드 중앙" },
+        incline: {
+          type: "object",
+          description: "경사면(빗면). 크기는 length 또는 height 중 하나만 주면 된다",
+          properties: {
+            angleDeg: { type: "number", description: "경사각(도). 기본 30" },
+            length: { type: "number", description: "빗면 길이 mm(기본 42)" },
+            height: { type: "number", description: "높이 mm — length 대신 이걸 주면 각도에서 길이를 역산한다" },
+            apex: { type: "string", enum: ["left", "right"], description: "꼭대기가 왼쪽인지 오른쪽인지(기본 left = 왼쪽이 높고 오른쪽으로 내려온다)" },
+          },
+        },
+        ground: {
+          type: "object",
+          description: "수평면",
+          properties: {
+            length: { type: "number", description: "경사면 아래끝에서 바깥쪽으로 뻗는 길이 mm(기본 45)" },
+            extendBack: { type: "number", description: "빗면 뒤쪽으로 더 뻗는 길이 mm(기본 0)" },
+          },
+        },
+        blocks: {
+          type: "array",
+          description: "면 위의 물체(§15 사각 블록). 면에 정확히 접하도록 자동 스냅된다",
+          items: {
+            type: "object",
+            properties: {
+              on: { type: "string", description: "\"경사면\" 또는 \"수평면\"" },
+              s: { type: "number", description: "면 위 위치 0~1 (기본 0.5)" },
+              size: { type: "number", description: "한 변 mm(기본 8, 창작 도판은 정사각형이 기본)" },
+              w: { type: "number", description: "기출 재현으로 직사각형이 필요할 때만" },
+              h: { type: "number" },
+              labelInner: { type: "string", description: "상자 안 글자 — 물리량(m, 2m, m_B). 첨자로 렌더된다" },
+              labelOuter: { type: "string", description: "상자 밖 이름표 — A, B, P" },
+              labelOuterPos: { type: "string", enum: ["above", "below", "left", "right"], description: "기본 above" },
+              phantom: { type: "boolean", description: "true면 가상선(이동 후·가상 위치)의 파선 상자로 그린다(§17)" },
+              fillLevel: { type: "number", description: "채움 0(검정)~255(흰색). 기본 255" },
+            },
+            required: ["on"],
+          },
+        },
+        friction: {
+          type: "array",
+          description: "마찰 구간 회색 띠. 면 '안쪽'으로 깔린다(§11) — 물체가 지나갈 자리를 막지 않는다",
+          items: {
+            type: "object",
+            properties: {
+              on: { type: "string", description: "\"경사면\" 또는 \"수평면\"" },
+              from: { type: "number", description: "시작 s (0~1)" },
+              to: { type: "number", description: "끝 s (0~1)" },
+              thickness: { type: "number", description: "띠 두께 mm(기본 2)" },
+              level: { type: "number", description: "회색 0~255(기본 205 — 기출 실측값)" },
+            },
+            required: ["on", "from", "to"],
+          },
+        },
+        connectors: {
+          type: "array",
+          description: "블록끼리 잇는 실·용수철. 블록 변에 정확히 접한다(§10). 지금은 같은 면 위의 두 블록만",
+          items: {
+            type: "object",
+            properties: {
+              from: { type: "number", description: "blocks 배열의 번호(0부터)" },
+              to: { type: "number", description: "blocks 배열의 번호(0부터)" },
+              kind: { type: "string", enum: ["실", "용수철"], description: "기본 실" },
+              turns: { type: "number", description: "용수철 감은 수(기본 8) — 원본에서 세서 넣는다(§14)" },
+              label: { type: "string" },
+            },
+            required: ["from", "to"],
+          },
+        },
+        panel: {
+          type: "string",
+          description: "패널 이름 — 장면 아래 가운데에 붙는다(예: \"(가)\"). 기출 장면의 52%가 단다",
+        },
+        autoName: {
+          type: "boolean",
+          description: "이름 없는 블록에 A·B·C 를 자동으로 붙일지(기본 true). " +
+            "기출 장면의 90%가 물체에 이름표를 달아서 기본값을 켜 뒀다. 끄려면 false",
+        },
+        angleArc: {
+          description: "경사각 호. true 면 기본(label θ). {label, radius, showLabel} 로 세부 지정",
+        },
+        dims: {
+          type: "array",
+          description: "치수선(내장 치수선을 쓴다 — 화살표와 글자를 손으로 조립하지 않는다, §14)",
+          items: {
+            type: "object",
+            properties: {
+              kind: { type: "string", enum: ["height", "along"], description: "height=경사면 높이, along=면 위 구간 길이" },
+              on: { type: "string", description: "along 일 때의 면 이름" },
+              from: { type: "number", description: "along 일 때 시작 s" },
+              to: { type: "number", description: "along 일 때 끝 s" },
+              label: { type: "string", description: "치수 글자 (h, 2d, L)" },
+              labelSize: { type: "number", description: "치수 글자 크기 mm(기본 4.2 — 이름표와 같은 크기)" },
+              offset: { type: "number", description: "면에서 띄우는 거리 mm(기본 8)" },
+            },
+            required: ["kind"],
+          },
+        },
+        arrows: {
+          type: "array",
+          description: "움직임 화살표. 길이는 표준 5mm 고정 — 위치와 방향만 준다(§17)",
+          items: {
+            type: "object",
+            properties: {
+              on: { type: "string" },
+              s: { type: "number" },
+              direction: { type: "string", enum: ["up", "down"], description: "면을 따라 위/아래(기본 up = s가 커지는 쪽)" },
+              gap: { type: "number", description: "면에서 띄우는 거리 mm(기본 6)" },
+              label: { type: "string" },
+            },
+            required: ["on"],
+          },
+        },
+        guides: {
+          type: "array",
+          description: "보조선(기준선·궤적선 등). 굵기·점선 규격은 이름으로 고른다 — 숫자를 넣지 않는다",
+          items: {
+            type: "object",
+            properties: {
+              on: { type: "string" },
+              s: { type: "number" },
+              length: { type: "number", description: "mm(기본 20)" },
+              back: { type: "number", description: "반대쪽으로도 뻗는 길이 mm" },
+              direction: { type: "string", enum: ["horizontal", "vertical"], description: "기본 horizontal" },
+              lineKind: { type: "string", enum: LINE_KIND_NAMES, description: "기본 기준선" },
+            },
+            required: ["on"],
+          },
+        },
+        captions: {
+          type: "array",
+          description: "한글 설명 글자(수평면, 마찰 구간 …). 선·띠에서 자동으로 떨어뜨리고 간격을 검산한다(§11)",
+          items: {
+            type: "object",
+            properties: {
+              text: { type: "string" },
+              on: { type: "string" },
+              s: { type: "number", description: "기본 0.8" },
+              side: { type: "string", enum: ["above", "below"], description: "면의 위/아래(기본 below)" },
+              gap: { type: "number", description: "면에서 띄우는 거리 mm(기본 3)" },
+              fontSize: { type: "number", description: "mm(기본 3.7)" },
+            },
+            required: ["text", "on"],
+          },
+        },
+      },
+      required: ["incline"],
     },
   },
   {
@@ -417,15 +760,24 @@ const HANDLERS = {
 
   async add_objects({ path, page, objects }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects 배열이 비었습니다");
-    const d = await deliver({ path, page }, objects);
+    const d = await deliver({ path, page }, inlineImages(objects));
     return deliverReport(`${d.count}개 추가`, d);
   },
 
-  async add_circuit({ path, page, box, elements, branches }) {
-    const built = buildCircuitLoop({ box, elements, branches: branches || [] });
+  async add_circuit({ path, page, box, elements, branches, bodyScale, wires }) {
+    if (Array.isArray(wires) && wires.length) {
+      const b = buildCircuitPath({ wires, bodyScale });
+      const dd = await deliver({ path, page }, b.objects);
+      return deliverReport(
+        `배선 ${dd.count}개 객체 추가 (구간 ${wires.length}개)`, dd,
+        b.warnings.length ? ["", "배치 경고:", ...b.warnings] : [],
+      );
+    }
+    if (!box) throw new Error("box 또는 wires 중 하나는 있어야 합니다");
+    const built = buildCircuitLoop({ box, elements: elements || [], branches: branches || [], bodyScale });
     const d = await deliver({ path, page }, built.objects);
     return deliverReport(
-      `회로 ${d.count}개 객체 추가 (소자 ${elements.length}개 + 도선)`, d,
+      `회로 ${d.count}개 객체 추가 (소자 ${(elements || []).length}개 + 도선)`, d,
       built.warnings.length ? ["", "배치 경고:", ...built.warnings] : [],
     );
   },
@@ -442,6 +794,57 @@ const HANDLERS = {
       [`평면 id: ${planeId} (${built.plane.w.toFixed(1)}×${built.plane.h.toFixed(1)}mm)`,
         ...(built.warnings.length ? ["", "샘플링 경고:", ...built.warnings] : [])],
     );
+  },
+
+  /* 오려낸 삽화 부품. part 없이 부르면 목록만 — 모델이 뭘 쓸 수 있는지 먼저 보게 한다. */
+  async add_part({ path, page, part, ...spec }) {
+    if (!part) return partsSummary();
+    const built = buildPart({ part, ...spec });
+    if (built.error) throw new Error(built.error);
+    const d = await deliver({ path, page }, inlineImages(built.objects));
+    return deliverReport(`부품 ${d.count}개 객체 추가`, d, [
+      ...built.notes.map((t) => `  · ${t}`),
+      ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
+    ]);
+  },
+
+  /* 스탠드·레일 부착. 만든 위치를 문장으로 돌려준다 — 가로대 y·x 범위를 알아야
+   * 그 옆에 치수선이나 이름표를 붙일 수 있다. */
+  async add_stand_rig({ path, page, ...spec }) {
+    const built = buildStandRig(spec);
+    if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
+    if (!built.objects.length) throw new Error("그릴 것이 없습니다 — hang 또는 rail 을 주세요");
+    const d = await deliver({ path, page }, built.objects);
+    return deliverReport(`장치 ${d.count}개 객체 추가`, d, built.notes.map((t) => `  · ${t}`));
+  },
+
+  /* 치수 표시. 만든 값(길이·오프셋·연장선 수)을 문장으로 돌려준다 —
+   * 그림 판독이 약한 모델도 "치수선이 반대쪽에 붙었다"를 글로 읽고 고칠 수 있게. */
+  async add_dimension({ path, page, ...spec }) {
+    const built = buildDimension(spec);
+    if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
+    if (!built.objects.length) throw new Error("그릴 치수가 없습니다 — from·to 를 주세요");
+    const d = await deliver({ path, page }, built.objects);
+    return deliverReport(`치수 표시 ${d.count}개 객체 추가`, d, [
+      ...built.notes.map((t) => `  · ${t}`),
+      ...(built.warnings.length ? ["", "경고:", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
+    ]);
+  },
+
+  /* 경사면 장면. 검산 리포트를 '항상' 붙인다 — 그림 판독이 약한 모델도 글로 읽고 고칠 수 있게. */
+  async add_incline_scene({ path, page, ...spec }) {
+    const built = buildInclineScene(spec);
+    if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
+    const d = await deliver({ path, page }, built.objects);
+    const layers = Object.entries(built.counts).filter(([, n]) => n).map(([k, n]) => `${k} ${n}`).join(" · ");
+    return deliverReport(`경사면 장면 ${d.count}개 객체 추가`, d, [
+      `층(§19): ${layers}`,
+      `장면 크기: ${built.size.w.toFixed(1)}×${built.size.h.toFixed(1)}mm — 아트보드보다 크면 set_artboard로 넓히세요`,
+      "",
+      "검산(§16·§11·§17):",
+      ...built.checks.map((c) => `  ${c.ok ? "✔" : "⚠"} ${c.text}`),
+      ...(built.checks.every((c) => c.ok) ? [] : ["", "⚠ 표시가 있으면 값을 고쳐 다시 부르세요(같은 page로 다시 부르면 겹칩니다 — remove_from_app 먼저)."]),
+    ]);
   },
 
   /* ----- 열려 있는 앱 직결 ----- */
