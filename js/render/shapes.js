@@ -15,6 +15,7 @@ import {
   makeLabelKnockout,
   applyGlyphHalo,
   DIM_HALO_RATIO,
+  LABEL_INK,
 } from "./core.js?v=1.3.0";
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.3.0";
 import { resolveFill } from "./fill.js?v=1.3.0";
@@ -293,7 +294,8 @@ function renderLine(obj) {
     label.setAttribute("x", mx);
     // 세로 중심 보정 — 라벨/기호와 같은 기준(core.js LABEL_OPTICAL_CENTER_EM).
     label.setAttribute("y", my + labelSize * LABEL_OPTICAL_CENTER_EM);
-    label.setAttribute("fill", color);
+    // 치수 라벨도 선 색을 따라가지 않는다 — 검정 고정(2026-07-31 교사 지적).
+    label.setAttribute("fill", LABEL_INK);
     label.setAttribute("font-size", labelSize);
     // Match the straight-line external label (makeUprightLabel): HWP equation
     // stack so a dimension label (e.g. "Q") reads identically to a line

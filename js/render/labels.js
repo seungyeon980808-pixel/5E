@@ -2,6 +2,7 @@
 
 import {
   SVG_NS,
+  LABEL_INK,
   grayHex,
   rotPt,
   applySvgTextFont,
@@ -91,6 +92,8 @@ function appendStyledTextRuns(parent, obj) {
  * included in export (it lives in renderObject's output). Returns an SVG <text>
  * node, or null when there's no label text. */
 // Physics variable labels use the Chrome-resolved HWP equation font family.
+// color 인자는 더 이상 글자색으로 쓰지 않는다 — 라벨은 주인 도형의 선·면 색을 따라가지 않고
+// 항상 검정(LABEL_INK)이다(2026-07-31 교사 지적). 호출부 시그니처는 그대로 두어 손대지 않는다.
 function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, options = {}) {
   const s = String(text ?? "");
   if (!s) return null;
@@ -108,7 +111,7 @@ function makeUprightLabel(text, x, y, color, sizeMm = DEFAULT_TEXT_SIZE_MM, opti
   } else {
     applyObjectLabelFont(t, options.labelType, options.labelKind === "callout" || options.italic === false ? "label" : "quantity");
   }
-  t.setAttribute("fill", color);
+  t.setAttribute("fill", LABEL_INK);
   t.setAttribute("text-anchor", "middle");
   // dominant-baseline은 일부러 지정하지 않는다(=alphabetic). 위 y 보정이 대신한다.
   // HWP·Illustrator 등 외부 SVG 임포터가 dominant-baseline을 무시하는 문제도 함께 사라진다.
@@ -353,7 +356,12 @@ function withLineLabel(bodyEl, obj) {
   const off = size; // fixed perpendicular gap (angle-independent)
   const lx = mx + nx * off * side;
   const ly = my + ny * off * side;
-  const lbl = makeUprightLabel(obj.label, lx, ly, grayHex(obj.strokeLevel), size, { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio });
+  // 물리량이면서 첨자 문법이 있으면 수식 경로 — 상자 라벨(withBoxLabel)·회로 소자 라벨과
+  // 같은 정책이다. 이게 없어서 실·용수철·선의 label 만 v_0 이 v₀ 로 바뀌지 않았다(2026-07-31).
+  // 기본값(labelType 미지정)은 물리량이다 — 글꼴 정책(applyObjectLabelFont)과 같은 기준.
+  const lbl = (obj.labelType !== "label" && /[_^]/.test(String(obj.label)))
+    ? makeQuantityBoxLabel(obj.label, lx, ly, size)
+    : makeUprightLabel(obj.label, lx, ly, grayHex(obj.strokeLevel), size, { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio });
   if (!lbl) return bodyEl;
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) { g.dataset.id = obj.id; if (bodyEl.dataset) delete bodyEl.dataset.id; }
@@ -399,7 +407,7 @@ function renderText(obj) {
   el.setAttribute("x", obj.x);
   el.setAttribute("y", obj.y);
   el.setAttribute("font-size", obj.fontSize);
-  el.setAttribute("fill", "#0d1117");
+  el.setAttribute("fill", LABEL_INK);
   // Style fields — safe defaults so old text objects (without them) still render.
   applySvgTextFont(el, {
     family: obj.fontFamily || DEFAULT_TEXT_FONT,

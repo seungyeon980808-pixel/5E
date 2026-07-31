@@ -2,6 +2,7 @@
 
 import {
   SVG_NS,
+  LABEL_INK,
   grayHex,
   cLine,
   cText,
@@ -28,12 +29,22 @@ import { measureFormula, renderFormula } from "../formula.js?v=1.3.0";
 const CIRCUIT_BODY_HALF_H = CIRCUIT_BODY_MM * 0.2; // default body box half-height (perp to axis)
 const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacitor", "voltmeter", "ammeter"]);
 
+/* 소자 크기 배율(2026-07-31 교사 요구: "회로 에셋이 작다"). 몸통 길이·높이·원 반지름이
+ * 함께 이 배율을 탄다. 리드는 남는 구간을 채우므로 단자 위치는 그대로다. */
+function bodyK(obj) {
+  const k = obj && obj.bodyScale;
+  return Number.isFinite(k) && k > 0 ? k : 1;
+}
+
 function circuitHalfHeight(obj) {
+  const k = bodyK(obj);
   const defaultHeight = obj && (obj.element === "voltmeter" || obj.element === "ammeter")
-    ? CIRCUIT_CIRCLE_R * 2
-    : CIRCUIT_BODY_HALF_H * 2;
+    ? CIRCUIT_CIRCLE_R * 2 * k
+    : CIRCUIT_BODY_HALF_H * 2 * k;
+  // 저장된 height 에도 배율을 곱한다 — 생성 시 기본 height 가 구워지는 소자(계기류 등)가
+  // 배율을 우회하지 않게. bodyScale 의 의미는 "소자 전체 크기"다.
   const h = obj && CIRCUIT_HEIGHT_ELEMENTS.has(obj.element) && Number.isFinite(obj.height)
-    ? obj.height
+    ? obj.height * k
     : defaultHeight;
   return Math.max(0.5, h) / 2;
 }
@@ -47,11 +58,15 @@ function circuitGeom(obj) {
   const ux = dx / L, uy = dy / L;       // unit vector along p1→p2
   const px = -uy, py = ux;              // unit vector perpendicular to the axis
   const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-  const half = Math.min(CIRCUIT_BODY_MM, L) / 2;
-  const heightScale = circuitHalfHeight(obj) / CIRCUIT_BODY_HALF_H;
+  const k = bodyK(obj);
+  const half = Math.min(CIRCUIT_BODY_MM * k, L) / 2;
+  // heightScale 은 "배율 적용된 기본 높이 대비" 비율 — bodyScale 기본(1)에서 1이 되고,
+  // 사용자가 height 를 따로 주면 그 비율만큼만 세로가 변한다(기존 의미 유지).
+  const heightScale = circuitHalfHeight(obj) / (CIRCUIT_BODY_HALF_H * k);
   const bodyStart = { x: mid.x - ux * half, y: mid.y - uy * half };
   const bodyEnd   = { x: mid.x + ux * half, y: mid.y + uy * half };
-  return { p1, p2, dx, dy, L, ux, uy, px, py, mid, half, heightScale, bodyStart, bodyEnd };
+  return { p1, p2, dx, dy, L, ux, uy, px, py, mid, half, heightScale, bodyStart, bodyEnd,
+           k, H: CIRCUIT_BODY_HALF_H * k, circleR: CIRCUIT_CIRCLE_R * k };
 }
 
 // World-space 4-corner polygon of the element body box (for hit-testing). Shared
@@ -79,7 +94,7 @@ function circuitPt(geo, a, o) {
 
 // Circle body + short connectors from circle edge to the lead ends (ac/unknown/lamp/meters).
 function circuitCircleBody(g, geo, sw, color, obj) {
-  const r = obj ? Math.max(0.25, circuitHalfHeight(obj)) : CIRCUIT_CIRCLE_R;
+  const r = obj ? Math.max(0.25, circuitHalfHeight(obj)) : geo.circleR;
   const c = document.createElementNS(SVG_NS, "circle");
   c.setAttribute("cx", geo.mid.x); c.setAttribute("cy", geo.mid.y);
   c.setAttribute("r", r);
@@ -121,7 +136,7 @@ const CIRCUIT_ELEMENTS = {
 
   // dc_source: long(+) & short(−) bars ⟂ axis with a small gap at center.
   dc_source(g, geo, sw, color) {
-    const H = CIRCUIT_BODY_HALF_H, half = geo.half;
+    const H = geo.H, half = geo.half;
     const d = half * 0.18;                                         // half-gap between the bars
     g.appendChild(cLine(circuitPt(geo, -half, 0), circuitPt(geo, -d, 0), sw, color));              // lead → long bar
     g.appendChild(cLine(circuitPt(geo, d, 0), circuitPt(geo, half, 0), sw, color));                // short bar → lead
@@ -132,7 +147,7 @@ const CIRCUIT_ELEMENTS = {
   // ac_source: circle body with a sine wave (∿) inside.
   ac_source(g, geo, sw, color) {
     circuitCircleBody(g, geo, sw, color);
-    const aMax = CIRCUIT_CIRCLE_R * 0.7, amp = CIRCUIT_CIRCLE_R * 0.45, N = 24;
+    const aMax = geo.circleR * 0.7, amp = geo.circleR * 0.45, N = 24;
     const pts = [];
     for (let i = 0; i <= N; i++) {
       const a = -aMax + (2 * aMax) * (i / N);
@@ -187,7 +202,7 @@ const CIRCUIT_ELEMENTS = {
   /* switch: 단자 원 두 개 + 접점 막대. 평가원 표기 그대로 — 열림이면 막대가 들린다.
    * 회로도의 68%에 등장하는데 지금까지 목록에 없어 line+ellipse로 흉내 내야 했다. */
   switch(g, geo, sw, color, obj) {
-    const H = CIRCUIT_BODY_HALF_H;
+    const H = geo.H;
     const r = Math.max(sw * 2.2, 0.75);            // 단자 원 반지름
     const bodyHalf = geo.half * 0.62;              // 두 단자 사이 절반 폭
     const closed = obj && obj.closed === true;
@@ -211,7 +226,7 @@ const CIRCUIT_ELEMENTS = {
 
   /* switch_spdt: 공통 단자 1 + 접점 2(a·b). 전환 스위치(a/b 중 하나에 붙는다). */
   switch_spdt(g, geo, sw, color, obj) {
-    const H = CIRCUIT_BODY_HALF_H;
+    const H = geo.H;
     const r = Math.max(sw * 2.2, 0.75);
     const bodyHalf = geo.half * 0.62;
     const dy = H * 1.5;
@@ -239,12 +254,12 @@ const CIRCUIT_ELEMENTS = {
 
   unknown(g, geo, sw, color) {
     circuitCircleBody(g, geo, sw, color);
-    cText(g, geo.mid.x, geo.mid.y, "?", CIRCUIT_CIRCLE_R * 1.2, color);
+    cText(g, geo.mid.x, geo.mid.y, "?", geo.circleR * 1.2, color);
   },
 
   // diode: filled triangle along axis + cathode bar at the tip; two terminal labels.
   diode(g, geo, sw, color, obj) {
-    const H = CIRCUIT_BODY_HALF_H, half = geo.half;
+    const H = geo.H, half = geo.half;
     const triHalf = half * 0.6;
     g.appendChild(cLine(circuitPt(geo, -half, 0), circuitPt(geo, -triHalf, 0), sw, color)); // lead → base
     g.appendChild(cLine(circuitPt(geo, triHalf, 0), circuitPt(geo, half, 0), sw, color));   // bar → lead
@@ -267,7 +282,7 @@ const CIRCUIT_ELEMENTS = {
   // lamp: circle body with an ✕ inside.
   lamp(g, geo, sw, color) {
     circuitCircleBody(g, geo, sw, color);
-    const d = CIRCUIT_CIRCLE_R * 0.6;
+    const d = geo.circleR * 0.6;
     g.appendChild(cLine(circuitPt(geo, -d, -d), circuitPt(geo, d, d), sw, color));
     g.appendChild(cLine(circuitPt(geo, -d, d), circuitPt(geo, d, -d), sw, color));
   },
@@ -306,7 +321,7 @@ function renderCircuit(obj) {
   // Shared skeleton — leads: terminal → body edge. Equal by construction; drawn
   // only when there is leftover wire (clamped to zero-length when the body fills
   // the whole span, so no overlapping/negative wire).
-  if (L > CIRCUIT_BODY_MM) {
+  if (L > geo.half * 2) {
     g.appendChild(seg(p1, bodyStart));
     g.appendChild(seg(bodyEnd, p2));
   }
@@ -322,7 +337,7 @@ function renderCircuit(obj) {
     // Offset along the perpendicular toward screen-up (smaller y) so the label
     // sits "above" the box regardless of the placement tilt.
     const sign = py <= 0 ? 1 : -1;
-    const off = CIRCUIT_BODY_HALF_H + size * 0.6;
+    const off = geo.H + size * 0.6;
     const lx = mid.x + px * off * sign;
     const ly = mid.y + py * off * sign;
     if (obj.labelType !== "label") {
@@ -346,7 +361,8 @@ function renderCircuit(obj) {
     t.setAttribute("y", ly);
     t.setAttribute("font-size", size);
     applyObjectLabelFont(t, obj.labelType);
-    t.setAttribute("fill", color);
+    // 소자 라벨도 소자 선 색을 따라가지 않는다 — 검정 고정(2026-07-31 교사 지적).
+    t.setAttribute("fill", LABEL_INK);
     t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
     if (obj.halo !== false) {

@@ -16,6 +16,12 @@ import { fillSvgTextWithRomanRuns } from "../text-rendering.js?v=1.3.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/* ----- 라벨 글자색: 항상 검정 고정 -----
+ * 라벨은 주인 도형의 선·면 색을 따라가지 않는다(2026-07-31 교사 지적). 회색 띠(마찰 구간)나
+ * 옅은 선에 라벨을 달면 글자까지 회색으로 흐려져 시험지 인쇄에서 읽히지 않았다.
+ * 독립 text 객체가 이미 쓰던 값과 같은 먹색으로 통일한다. */
+const LABEL_INK = "#0d1117";
+
 /* ----- grayscale level (0??55) ??hex; 0 = black, 255 = white (DESIGN 7-2) ----- */
 function grayHex(level = 0) {
   const v = Math.max(0, Math.min(255, Math.round(level)));
@@ -488,6 +494,7 @@ function applyObjectLabelFont(t, labelType, fallback = "quantity") {
 
 export {
   SVG_NS,
+  LABEL_INK,
   grayHex,
   applyDash,
   makeArrowHead,
