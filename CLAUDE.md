@@ -38,6 +38,8 @@ GitHub Pages 배포(`main` 브랜치 기준), 저장소 `seungyeon980808-pixel/5
 | 다음에 뭘 만들지 | `docs/FEATURE_PROPOSALS_20260710.md` (20선 중 **6건 완료 · 14건 남음**) |
 | 알려진 결함 확인 | `docs/BUG_AUDIT_20260710.md` (47건 중 **약 90% 수정됨** · ⚠️#23은 오진이니 고치지 말 것) |
 | 객체 데이터 구조 | `docs/OBJECT_SCHEMA.md` |
+| **기출 도판 재현** | `docs/FIGURE_DESIGN_PRINCIPLES.md`(눈·판단 규칙 19장) + `docs/DRAWING_GUIDE.md`(도구·필드 함정) |
+| **MCP로 그림 그리기** | `tools/mcp-5e/CONVENTIONS.md` — 호출 6단계·페이지 규약. **브라우저 콘솔 뒷길 금지, MCP 도구만** |
 | 브랜치 병합 | `docs/MERGE_PLAYBOOK.md` |
 
 - `docs/`의 **날짜가 박힌 문서는 그 시점 스냅샷**이다. 현재 상태로 믿지 말고 작성일을 확인한다.
