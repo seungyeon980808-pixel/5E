@@ -14,8 +14,8 @@
  * 좌표계: 세계 mm. p1/p2 계열이라 line·spring과 같은 이동·회전 경로를 탄다.
  */
 
-import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.3.0";
-import { withLineLabel } from "./labels.js?v=1.3.0";
+import { SVG_NS, grayHex, applyDash } from "./core.js?v=1.4.0";
+import { withLineLabel } from "./labels.js?v=1.4.0";
 
 export const STANDINGWAVE_DEFAULTS = {
   medium: "string",   // string(줄) | open(열린관) | closed(닫힌관)

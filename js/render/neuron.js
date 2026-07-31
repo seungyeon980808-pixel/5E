@@ -21,9 +21,9 @@
  * core.js 의 makeArrowHead() 를 같은 옵션값으로 부른다(아래 LINE_ARROW_OPTS 주석).
  */
 
-import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.3.0";
-import { makeUprightLabel } from "./labels.js?v=1.3.0";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.3.0";
+import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.4.0";
+import { makeUprightLabel } from "./labels.js?v=1.4.0";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 
 /* 직선/폴리라인 끝 화살표와 **완전히 같은 값**. shapes.js:27 의 LINE_ARROW_OPTS 가
  * 모듈 지역 상수라 import 할 수 없어 값만 옮겨 적는다(다른 파일을 건드리지 않는다는

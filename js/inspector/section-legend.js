@@ -9,8 +9,8 @@
  * 배치·수치 값의 뜻은 docs/BIO_PARTS_SPEC.md §5 를 따른다(필드 이름·기본값 동일).
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { LEGEND_SAMPLES } from "../render/legend.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { LEGEND_SAMPLES } from "../render/legend.js?v=1.4.0";
 
 const DIRECTIONS = [["vertical", "세로"], ["horizontal", "가로"]];
 

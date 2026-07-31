@@ -26,8 +26,8 @@
  * 색은 `grayHex(obj.strokeLevel ?? 0)` — 검정 하드코딩 금지.
  */
 
-import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 /* 시안 좌표계 — cellSVG() 상수 그대로 */
 const VB_W = 52;          // 가로 한 변

@@ -10,7 +10,7 @@
  * 주면 원하는 모양을 얻을 때까지 숫자를 계속 고쳐야 한다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 const DEFAULT_APEX = 14;
 

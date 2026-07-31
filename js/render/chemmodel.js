@@ -32,8 +32,8 @@
  * 서로 뭉개진다(문서 전역 id 이므로).
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 export const CHEMMODEL_KINDS = ["atom", "shell", "lattice", "molecule", "lewis"];
 

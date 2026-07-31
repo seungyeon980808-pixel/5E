@@ -5,7 +5,7 @@
  * 렌더러도 같은 장(場) 엔진을 쓴다. 갈래(kind)만 다르다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 function commitTo(state, type, prop, value) {
   const s = state.get();

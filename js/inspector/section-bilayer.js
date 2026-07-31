@@ -9,8 +9,8 @@
  * selected() / commit() / sync() 3함수 패턴은 section-groundarc.js 와 같다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { BILAYER_DEFAULTS } from "../render/bilayer.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { BILAYER_DEFAULTS } from "../render/bilayer.js?v=1.4.0";
 
 function row(labelText) {
   const r = document.createElement("div");

@@ -12,8 +12,8 @@
  * 때만** 다시 만든다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.4.0";
 
 const KINDS = [["bar", "막대그래프"], ["pie", "원그래프"]];
 

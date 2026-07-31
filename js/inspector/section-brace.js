@@ -6,7 +6,7 @@
  * section-groundarc.js 의 selected() / commit() / sync() 3함수 패턴을 그대로 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 function row(labelText) {
   const r = document.createElement("div");

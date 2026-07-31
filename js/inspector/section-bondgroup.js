@@ -10,8 +10,8 @@
  * 상자를 키우면 같은 값이라도 같은 비율로 커진다. 그래서 단위를 붙이지 않는다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { BOND_MOLECULES, DEFAULT_MOLECULE } from "../render/bondgroup.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { BOND_MOLECULES, DEFAULT_MOLECULE } from "../render/bondgroup.js?v=1.4.0";
 
 function row(labelText) {
   const r = document.createElement("div");

@@ -12,8 +12,8 @@
  * 필드 이름·기본값의 뜻은 docs/CHEM_PARTS_SPEC.md §8 을 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { CHEMGRAPH_KINDS, CHEMGRAPH_ACID_TYPES } from "../render/chemgraph.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { CHEMGRAPH_KINDS, CHEMGRAPH_ACID_TYPES } from "../render/chemgraph.js?v=1.4.0";
 
 const KIND_LABELS = [
   ["energy", "반응 에너지 도표"],

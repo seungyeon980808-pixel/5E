@@ -27,8 +27,8 @@
  *   metalShade        금속 칸 회색
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 /* 시안 `PT` 그대로 — [기호, 원자번호, 주기, 족, 금속여부].
  * 족은 1·2·13~18 만 쓴다(전이금속 없음). */

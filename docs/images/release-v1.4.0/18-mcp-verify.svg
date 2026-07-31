@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 70" id="fig-18" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <style>
+    .hd   { font-size: 3.2px; fill: #0d1117; font-weight: 600; }
+    .hdx  { font-size: 2.5px; fill: #57606a; }
+    .step { font-size: 3px; fill: #0d1117; font-weight: 600; }
+    .tool { font-size: 2.6px; fill: #0969da; font-family: 'IBM Plex Mono', monospace; }
+    .row  { font-size: 2.8px; fill: #0d1117; font-family: 'IBM Plex Mono', monospace; }
+    .ok   { fill: #0e7490; font-weight: 600; }
+    .warn { fill: #9a6700; font-weight: 600; }
+    .note { font-size: 2.5px; fill: #57606a; }
+  </style>
+  <defs>
+    <marker id="ah18" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#0d1117"/>
+    </marker>
+  </defs>
+
+  <!-- ===== LEFT : 눈으로 확인하는 고리 ===== -->
+  <text class="hd" x="4" y="7">① 눈으로</text>
+  <text class="hdx" x="27" y="7">— 고리가 닫혔습니다</text>
+
+  <rect x="6" y="12" width="76" height="12" rx="1" fill="#ffffff" stroke="#d0d7de" stroke-width="0.4"/>
+  <text class="step" x="11" y="18">그린다</text>
+  <text class="tool" x="11" y="22">add_incline_scene</text>
+
+  <rect x="6" y="32" width="76" height="12" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/>
+  <text class="step" x="11" y="38">본다</text>
+  <text class="tool" x="11" y="42">export_image</text>
+
+  <rect x="6" y="52" width="76" height="12" rx="1" fill="#ffffff" stroke="#d0d7de" stroke-width="0.4"/>
+  <text class="step" x="11" y="58">고친다</text>
+  <text class="tool" x="11" y="62">remove_objects</text>
+
+  <line x1="44" y1="24" x2="44" y2="30.5" stroke="#0d1117" stroke-width="0.35" marker-end="url(#ah18)"/>
+  <line x1="44" y1="44" x2="44" y2="50.5" stroke="#0d1117" stroke-width="0.35" marker-end="url(#ah18)"/>
+  <path d="M 82 58 C 93 58 93 18 83.5 18" fill="none" stroke="#0d1117" stroke-width="0.35" marker-end="url(#ah18)"/>
+  <text class="note" x="88" y="38" text-anchor="middle" transform="rotate(90 88 38)">2회 이내</text>
+
+  <line x1="100" y1="4" x2="100" y2="66" stroke="#d0d7de" stroke-width="0.3"/>
+
+  <!-- ===== RIGHT : 검산 리포트 ===== -->
+  <text class="hd" x="104" y="7">② 안 봐도</text>
+  <text class="hdx" x="127" y="7">— 응답마다 검산 리포트가 붙습니다</text>
+
+  <rect x="104" y="11" width="122" height="46" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/>
+  <text class="row ok"   x="108" y="19">✔</text><text class="row" x="114" y="19">접촉</text><text class="row" x="128" y="19">블록 A – 경사면</text><text class="row" x="222" y="19" text-anchor="end">0.000 mm</text>
+  <text class="row ok"   x="108" y="26">✔</text><text class="row" x="114" y="26">각도</text><text class="row" x="128" y="26">되잰 경사각</text><text class="row" x="222" y="26" text-anchor="end">30.0°</text>
+  <text class="row ok"   x="108" y="33">✔</text><text class="row" x="114" y="33">층순</text><text class="row" x="128" y="33">마찰 띠 → 빗면 → 블록</text><text class="row" x="222" y="33" text-anchor="end">§19</text>
+  <text class="row warn" x="108" y="40">⚠</text><text class="row" x="114" y="40">간격</text><text class="row" x="128" y="40">"수평면" 글자 ↔ 선</text><text class="row" x="222" y="40" text-anchor="end">1.2 mm (2.0 필요)</text>
+  <line x1="108" y1="45" x2="222" y2="45" stroke="#d0d7de" stroke-width="0.3"/>
+  <text class="note" x="108" y="50">만들어진 객체에서 <tspan fill="#0d1117" font-weight="600">되짚어 재서</tspan> 돌려줍니다 — 요청한 값을 그대로 읊는 것이 아닙니다.</text>
+  <text class="note" x="108" y="54.5">⚠ 가 있으면 값을 고쳐 다시 부릅니다.</text>
+
+  <text class="note" x="104" y="64">이미지 판독이 약한 모델도 이 표만 읽고 고칠 수 있습니다 — 그게 이 리포트의 목적입니다.</text>
+</svg>

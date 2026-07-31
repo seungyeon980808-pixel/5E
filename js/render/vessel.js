@@ -27,8 +27,8 @@
  * 넣고, 가로로 아주 긴 <rect> 를 잘라 그린다. 액면선·피스톤도 같은 클립을 쓴다.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 /* ----- kind 표 — 시안 VK 를 그대로 옮긴 것 -----
  *   outline    윤곽선(그리는 경로). round 는 circle 로 대신한다

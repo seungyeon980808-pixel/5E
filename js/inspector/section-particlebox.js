@@ -10,8 +10,8 @@
  * 구조는 section-legend.js 의 selected() / commit() / sync() 3함수 패턴 그대로다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { PARTICLE_STATES, PARTICLE_MOTIONS, PARTICLE_SHAPES } from "../render/particlebox.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { PARTICLE_STATES, PARTICLE_MOTIONS, PARTICLE_SHAPES } from "../render/particlebox.js?v=1.4.0";
 
 const STATES = [["solid", "고체 (격자)"], ["liquid", "액체"], ["gas", "기체"]];
 const MOTIONS = [["none", "없음"], ["trail", "속도선(꼬리)"], ["arrow", "화살표"]];

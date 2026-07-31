@@ -3,10 +3,10 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.3.0";
-import { boxLabelSlots } from "../render.js?v=1.3.0";
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.3.0";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.4.0";
+import { boxLabelSlots } from "../render.js?v=1.4.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.4.0";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -125,7 +125,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.3.0");
+    const mod = await import("../erase-tool.js?v=1.4.0");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";

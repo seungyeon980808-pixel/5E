@@ -21,9 +21,9 @@
  * 바깥(outer)은 -n 쪽으로 잡는다 — 수평(왼→오른쪽) 막에서 화면 위가 바깥이 된다.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { makeUprightLabel } from "./labels.js?v=1.3.0";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { makeUprightLabel } from "./labels.js?v=1.4.0";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 
 export const BILAYER_DEFAULTS = {
   unitCount: 14,

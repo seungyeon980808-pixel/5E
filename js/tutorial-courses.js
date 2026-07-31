@@ -21,11 +21,11 @@
 import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
-} from "./state.js?v=1.3.0";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH } from "./tools.js?v=1.3.0";
-import { TEMPLATES } from "./templates.js?v=1.3.0";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.3.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.3.0";
+} from "./state.js?v=1.4.0";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH } from "./tools.js?v=1.4.0";
+import { TEMPLATES } from "./templates.js?v=1.4.0";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.4.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
 
 const objects = () => state.get().objects || [];
 

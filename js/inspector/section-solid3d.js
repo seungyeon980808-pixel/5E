@@ -17,7 +17,7 @@
  * 만들 입체의 기본값"(localStorage)을 함께 제공한다. 실사용상 전역과 같고 비용은 0.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 const DEFAULTS_KEY = "phyDraw.defaults";
 const SHADE_LABELS = [["0", "없음(흰 면)"], ["1", "옅게"], ["2", "기본"]];

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 84" id="fig-17" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <style>
+    .hd   { font-size: 3.2px; fill: #0d1117; font-weight: 600; }
+    .hdx  { font-size: 2.5px; fill: #57606a; }
+    .code { font-size: 2.9px; fill: #0d1117; font-family: 'IBM Plex Mono', monospace; }
+    .val  { fill: #0969da; font-weight: 600; }
+    .ann  { font-size: 2.5px; fill: #0969da; }
+    .lbl  { font-size: 3px; fill: #0d1117; }
+  </style>
+
+  <!-- ===== LEFT : 주는 것 ===== -->
+  <text class="hd" x="4" y="7">주는 것</text>
+  <text class="hdx" x="24" y="7">— 각도와 면 위 위치(0~1)뿐</text>
+  <rect x="4" y="11" width="108" height="64" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/>
+  <text class="code" x="8" y="17">add_incline_scene {</text>
+  <text class="code" x="8" y="21.6">  incline: { angle: <tspan class="val">30</tspan> },</text>
+  <text class="code" x="8" y="26.2">  blocks: [</text>
+  <text class="code" x="8" y="30.8">    { on:"경사면", s:<tspan class="val">0.55</tspan> },</text>
+  <text class="code" x="8" y="35.4">    { on:"수평면", s:<tspan class="val">0.30</tspan> } ],</text>
+  <text class="code" x="8" y="40">  friction: { on:"경사면",</text>
+  <text class="code" x="8" y="44.6">              from:<tspan class="val">0.1</tspan>, to:<tspan class="val">0.5</tspan> },</text>
+  <text class="code" x="8" y="49.2">  angleArc: true,</text>
+  <text class="code" x="8" y="53.8">  panelLabel: "(가)"</text>
+  <text class="code" x="8" y="58.4">}</text>
+  <line x1="8" y1="63" x2="108" y2="63" stroke="#d0d7de" stroke-width="0.3"/>
+  <text class="hdx" x="8" y="68">mm 는 한 번도 나오지 않습니다.</text>
+  <text class="hdx" x="8" y="72">"기준선"처럼 선도 이름으로 고릅니다.</text>
+
+  <line x1="115" y1="4" x2="115" y2="80" stroke="#d0d7de" stroke-width="0.3"/>
+
+  <!-- ===== RIGHT : 툴이 계산하는 것 ===== -->
+  <text class="hd" x="118" y="7">툴이 계산하는 것</text>
+  <text class="hdx" x="154" y="7">— 접촉점 · 회전각의 부호 · 법선 · 안팎 · 층 순서</text>
+
+  <!-- 마찰 띠 (면 안쪽) -->
+  <polygon points="138.4,54.31 164,39.53 165,41.26 139.4,56.04" fill="#c9cdd1"/>
+  <!-- 빗면 -->
+  <polygon points="132,58 196,58 196,21.05" fill="none" stroke="#0d1117" stroke-width="0.5" stroke-linejoin="round"/>
+  <!-- 수평면 -->
+  <line x1="198" y1="58" x2="226" y2="58" stroke="#0d1117" stroke-width="0.5"/>
+  <!-- 각도호 -->
+  <path d="M 138 58 A 6 6 0 0 0 137.196 55" fill="none" stroke="#0d1117" stroke-width="0.35"/>
+  <text class="lbl" x="143.5" y="57.5" font-style="italic">θ</text>
+  <!-- 경사면 위 블록 (자동 회전 −30°, 접촉 스냅) -->
+  <g transform="translate(165.7,35.08) rotate(-30)">
+    <rect x="-5" y="-3" width="10" height="6" fill="#ffffff" stroke="#0d1117" stroke-width="0.5"/>
+    <text class="lbl" x="0" y="1.1" text-anchor="middle" font-style="italic">A</text>
+  </g>
+  <!-- 수평면 위 블록 -->
+  <rect x="201.4" y="52" width="10" height="6" fill="#ffffff" stroke="#0d1117" stroke-width="0.5"/>
+  <text class="lbl" x="206.4" y="56.1" text-anchor="middle" font-style="italic">B</text>
+  <!-- 패널 이름 -->
+  <text class="lbl" x="178" y="76" text-anchor="middle">(가)</text>
+
+  <!-- 주석 -->
+  <line x1="152" y1="17.5" x2="164.6" y2="32.4" stroke="#0969da" stroke-width="0.25"/>
+  <circle cx="164.6" cy="32.4" r="0.6" fill="#0969da"/>
+  <text class="ann" x="150" y="16" text-anchor="middle">블록: 접촉 0.00mm · 회전 −30°</text>
+
+  <line x1="140" y1="68.5" x2="151.7" y2="48.5" stroke="#0969da" stroke-width="0.25"/>
+  <circle cx="151.7" cy="48.5" r="0.6" fill="#0969da"/>
+  <text class="ann" x="126" y="71.5">마찰 띠는 면 <tspan font-weight="600">안쪽</tspan>으로</text>
+
+  <line x1="206" y1="66" x2="207" y2="59.5" stroke="#0969da" stroke-width="0.25"/>
+  <circle cx="207" cy="59.5" r="0.6" fill="#0969da"/>
+  <text class="ann" x="206" y="68.5" text-anchor="middle">면 이름은 경사면 · 수평면 둘뿐</text>
+</svg>

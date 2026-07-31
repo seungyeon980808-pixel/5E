@@ -22,9 +22,9 @@
  *   padding 2.4 · sampleWidth 8 · fontSize 2.8
  */
 
-import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.3.0";
-import { makeFillPattern, resolveFill } from "./fill.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.4.0";
+import { makeFillPattern, resolveFill } from "./fill.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 export const LEGEND_SAMPLES = ["solid", "dash", "dot", "dashdot", "arrow", "gray", "hatch", "marker"];
 

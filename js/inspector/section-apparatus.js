@@ -9,7 +9,7 @@
  * 인스펙터에서 바꾼 값이 새로 만든 객체에는 안 붙는다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 function commit(state, prop, value) {
   const s = state.get();

@@ -20,10 +20,10 @@
  * 들어오는 모든 변경은 undoStack에 스냅샷을 남긴다. 마음에 안 들면 Ctrl+Z로 되돌린다.
  */
 
-import { state } from "./state.js?v=1.3.0";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.3.0";
-import { switchPage, addPage } from "./pages.js?v=1.3.0";
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.3.0";
+import { state } from "./state.js?v=1.4.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { switchPage, addPage } from "./pages.js?v=1.4.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.4.0";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).

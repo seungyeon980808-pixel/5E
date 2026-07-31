@@ -29,8 +29,8 @@
  *   기본 크기 40 × 26 mm
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 /* ----- 분자 8종 — 시안 `BONDS` 그대로 -----
  * a: [[기호, 상대x, 상대y], …]   상대좌표 × bondLength 로 배치(중심이 0,0)

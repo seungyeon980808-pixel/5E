@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 230 88" id="fig-16" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <style>
+    .cat  { font-size: 3.1px; fill: #0d1117; font-weight: 600; text-anchor: end; }
+    .cnt  { font-size: 2.4px; fill: #57606a; text-anchor: end; }
+    .tool { font-size: 2.2px; fill: #0d1117; text-anchor: middle; font-family: 'IBM Plex Mono', monospace; }
+    .new  { fill: #0969da; }
+    .leg  { font-size: 2.5px; fill: #57606a; }
+    .legb { font-size: 2.5px; fill: #0d1117; font-weight: 600; }
+  </style>
+
+  <!-- ===== ROW 1 : 그리기 ===== -->
+  <text class="cat" x="30" y="15.3">그리기</text><text class="cnt" x="30" y="19">3 → 7</text>
+  <rect x="34"    y="10" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="47"    y="15.3">add_objects</text>
+  <rect x="61.7"  y="10" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="74.7"  y="15.3">add_circuit</text>
+  <rect x="89.4"  y="10" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="102.4" y="15.3">add_graph</text>
+  <rect x="117.1" y="10" width="26" height="9" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/><text class="tool new" x="130.1" y="15.3">add_part</text><circle cx="140.9" cy="12.2" r="0.9" fill="#0969da"/>
+  <rect x="144.8" y="10" width="26" height="9" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/><text class="tool new" x="157.8" y="15.3">add_stand_rig</text><circle cx="168.6" cy="12.2" r="0.9" fill="#0969da"/>
+  <rect x="172.5" y="10" width="26" height="9" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/><text class="tool new" x="185.5" y="15.3">add_dimension</text><circle cx="196.3" cy="12.2" r="0.9" fill="#0969da"/>
+  <rect x="200.2" y="10" width="26" height="9" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/><text class="tool new" x="213.2" y="15.3">add_incline_scene</text><circle cx="224" cy="12.2" r="0.9" fill="#0969da"/>
+
+  <!-- ===== ROW 2 : 읽고 보기 ===== -->
+  <text class="cat" x="30" y="29.3">읽고 보기</text><text class="cnt" x="30" y="33">3 → 4</text>
+  <rect x="34"    y="24" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="47"    y="29.3">app_status</text>
+  <rect x="61.7"  y="24" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="74.7"  y="29.3">read_app</text>
+  <rect x="89.4"  y="24" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="102.4" y="29.3">list_objects</text>
+  <rect x="117.1" y="24" width="26" height="9" rx="1" fill="#eaf2fb" stroke="#0969da" stroke-width="0.5"/><text class="tool new" x="130.1" y="29.3">export_image</text><circle cx="140.9" cy="26.2" r="0.9" fill="#0969da"/>
+
+  <!-- ===== ROW 3 : 지우기 ===== -->
+  <text class="cat" x="30" y="43.3">지우기</text>
+  <rect x="34"    y="38" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="47"    y="43.3">remove_from_app</text>
+  <rect x="61.7"  y="38" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="74.7"  y="43.3">remove_objects</text>
+  <rect x="89.4"  y="38" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="102.4" y="43.3">clear_app</text>
+
+  <!-- ===== ROW 4 : 페이지·판 ===== -->
+  <text class="cat" x="30" y="57.3">페이지·판</text>
+  <rect x="34"    y="52" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="47"    y="57.3">list_pages</text>
+  <rect x="61.7"  y="52" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="74.7"  y="57.3">set_page</text>
+  <rect x="89.4"  y="52" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="102.4" y="57.3">set_artboard</text>
+
+  <!-- ===== ROW 5 : 프로젝트 ===== -->
+  <text class="cat" x="30" y="71.3">프로젝트</text>
+  <rect x="34"    y="66" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="47"    y="71.3">describe_schema</text>
+  <rect x="61.7"  y="66" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="74.7"  y="71.3">create_project</text>
+  <rect x="89.4"  y="66" width="26" height="9" rx="1" fill="#f6f8fa" stroke="#d0d7de" stroke-width="0.3"/><text class="tool" x="102.4" y="71.3">validate_project</text>
+
+  <!-- ===== LEGEND ===== -->
+  <line x1="34" y1="80" x2="226" y2="80" stroke="#d0d7de" stroke-width="0.3"/>
+  <circle cx="35.2" cy="85" r="0.9" fill="#0969da"/>
+  <text class="legb" x="38" y="86">파란 것 5개가 이번에 늘었습니다.</text>
+  <text class="leg" x="88" y="86">전체 15 → 20개. 늘어난 자리는 전부 "좌표를 손으로 계산하던 자리"입니다.</text>
+</svg>

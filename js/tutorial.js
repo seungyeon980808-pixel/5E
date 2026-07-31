@@ -19,11 +19,11 @@
  *   새로 시작해 흐림 패널이 겹쳐 남는 문제가 실제로 있었다(tutorial.py 주석).
  */
 
-import { state } from "./state.js?v=1.3.0";
-import { addPage, switchPage } from "./pages.js?v=1.3.0";
-import { showConfirm } from "./ui-dialogs.js?v=1.3.0";
-import { buildExportSvg } from "./svg-export.js?v=1.3.0";
-import { COURSES, getCourse } from "./tutorial-courses.js?v=1.3.0";
+import { state } from "./state.js?v=1.4.0";
+import { addPage, switchPage } from "./pages.js?v=1.4.0";
+import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { buildExportSvg } from "./svg-export.js?v=1.4.0";
+import { COURSES, getCourse } from "./tutorial-courses.js?v=1.4.0";
 
 /* ===== 저장 (localStorage) ===== */
 

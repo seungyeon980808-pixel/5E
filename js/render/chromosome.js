@@ -21,10 +21,10 @@
  *   <g> 안 <defs> 에 넣는다. 그래서 scene.js 의 전역 defs 수집과 무관하게 동작한다.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { resolveFill, makeFillPattern } from "./fill.js?v=1.3.0";
-import { makeUprightLabel } from "./labels.js?v=1.3.0";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
+import { resolveFill, makeFillPattern } from "./fill.js?v=1.4.0";
+import { makeUprightLabel } from "./labels.js?v=1.4.0";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 
 const DEF_WIDTH  = 3;      // chromatidWidth
 const DEF_GAP    = 1.6;    // chromatidGap

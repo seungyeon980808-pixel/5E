@@ -26,8 +26,8 @@
  * 자동 처리된다. 직접 <text> 를 만들지 않는다.
  */
 
-import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 /* 조각 기본 색 — 기출은 무채색이다(시안 pState.colors 와 동일). */
 export const CHEMCHART_PIE_COLORS = ["#ffffff", "#c9c9c9", "#8f8f8f", "#e4e4e4", "#6f6f6f"];

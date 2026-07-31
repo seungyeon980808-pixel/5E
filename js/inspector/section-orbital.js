@@ -10,8 +10,8 @@
  * 명세: docs/CHEM_PARTS_SPEC.md §4 — 필드 이름·기본값은 거기서만 가져온다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { ORBITAL_CAPACITY } from "../render/orbital.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { ORBITAL_CAPACITY } from "../render/orbital.js?v=1.4.0";
 
 const KINDS = [["box", "오비탈 상자"], ["shape", "오비탈 모양"]];
 const SHAPES = [

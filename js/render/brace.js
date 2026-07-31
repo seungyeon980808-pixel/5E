@@ -27,13 +27,13 @@
  * 다른 타입과 같은 관례).
  */
 
-import { SVG_NS, grayHex, fillTextWithRomanRuns, applyObjectLabelFont } from "./core.js?v=1.3.0";
-import { measureFormula, renderFormula } from "../formula.js?v=1.3.0";
+import { SVG_NS, grayHex, fillTextWithRomanRuns, applyObjectLabelFont } from "./core.js?v=1.4.0";
+import { measureFormula, renderFormula } from "../formula.js?v=1.4.0";
 import {
   DEFAULT_TEXT_SIZE_MM,
   OBJECT_LABEL_QUANTITY_FONT_FAMILY,
   EQUATION_FONT_STYLE,
-} from "../state.js?v=1.3.0";
+} from "../state.js?v=1.4.0";
 
 export const DEFAULT_BRACE_DEPTH = 5;
 const LABEL_GAP = 3.4;      // 꼭짓점 ~ 라벨 중심 (mm, 명세 고정값)

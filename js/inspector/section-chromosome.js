@@ -7,7 +7,7 @@
  * 명세: docs/BIO_PARTS_SPEC.md §2 — 필드 이름·기본값은 거기서만 가져온다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 function row(labelText) {
   const r = document.createElement("div");

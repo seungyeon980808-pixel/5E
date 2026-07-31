@@ -11,11 +11,11 @@
  * 좌표평면: 이미 선택돼 있으면 그 위에, 없으면 데이터 범위에 맞춰 새 평면을 자동 생성한다.
  */
 
-import { state } from "./state.js?v=1.3.0";
-import { worldFromMath } from "./function-graph/coords.js?v=1.3.0";
-import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=1.3.0";
-import { nextObjectId } from "./tools/id.js?v=1.3.0";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.3.0";
+import { state } from "./state.js?v=1.4.0";
+import { worldFromMath } from "./function-graph/coords.js?v=1.4.0";
+import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=1.4.0";
+import { nextObjectId } from "./tools/id.js?v=1.4.0";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.4.0";
 
 // 점 객체 기본 크기(bbox mm) — 숫자를 복사해 두면 기본 크기를 바꿀 때 여기만 옛 값으로
 // 남는다(실제로 2.27 이 남아 있었다). node-placement.js 의 값을 그대로 가져다 쓴다.

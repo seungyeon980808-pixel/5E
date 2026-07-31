@@ -8,7 +8,7 @@
  * 구조는 js/inspector/section-legend.js 의 selected() / commit() / sync() 3함수 패턴.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
 
 const DIRECTIONS = [["horizontal", "가로로 자르기"], ["vertical", "세로로 자르기"]];
 

@@ -25,7 +25,7 @@
  *   seed             배치 난수 씨앗 (7)
  */
 
-import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.3.0";
+import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.4.0";
 
 export const PARTICLE_STATES = ["solid", "liquid", "gas"];
 export const PARTICLE_MOTIONS = ["none", "trail", "arrow"];

@@ -24,8 +24,8 @@
  * 필드 목록은 image-objectify.js 삽입부(v1.3.0, 780~930행)를 본보기로 그대로 따랐다.
  */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.3.0";
-import { simplifyRDP } from "./geometry.js?v=1.3.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
+import { simplifyRDP } from "./geometry.js?v=1.4.0";
 
 /* ===== 상수 ===== */
 

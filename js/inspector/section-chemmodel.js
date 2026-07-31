@@ -8,8 +8,8 @@
  * 필드 이름·기본값은 docs/CHEM_PARTS_SPEC.md §2 에서만 가져온다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { MOLECULES, VALENCE, CHEMMODEL_KINDS } from "../render/chemmodel.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { MOLECULES, VALENCE, CHEMMODEL_KINDS } from "../render/chemmodel.js?v=1.4.0";
 
 const KIND_LABELS = [
   ["atom", "원자 구슬"],

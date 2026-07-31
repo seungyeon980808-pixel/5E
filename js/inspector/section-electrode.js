@@ -7,8 +7,8 @@
  * 필드 이름과 기본값은 docs/CHEM_PARTS_SPEC.md §9 를 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { ELECTRODE_DEFAULTS } from "../render/electrode.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { ELECTRODE_DEFAULTS } from "../render/electrode.js?v=1.4.0";
 
 function row(labelText) {
   const r = document.createElement("div");

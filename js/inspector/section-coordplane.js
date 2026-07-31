@@ -8,10 +8,10 @@
  *   - 내보내기 포함 : exportable 토글(요구 6 잔존 기능).
  * 더블클릭 재편집도 같은 분기를 탄다(tools.js). */
 
-import { makeSection } from "./widgets.js?v=1.3.0";
-import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.3.0";
-import { openGraphModal } from "../graph/graph-modal.js?v=1.3.0";
-import { state } from "../state.js?v=1.3.0";
+import { makeSection } from "./widgets.js?v=1.4.0";
+import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.4.0";
+import { openGraphModal } from "../graph/graph-modal.js?v=1.4.0";
+import { state } from "../state.js?v=1.4.0";
 
 
 /* 라벨 가림(할로) 굵기 — 글자 크기 대비 배율. 비우면 기본값(0.13)을 쓴다.

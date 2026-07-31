@@ -18,8 +18,8 @@
  * world 단위 = 1mm.
  */
 
-import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.3.0";
-import { withBoxLabel } from "./labels.js?v=1.3.0";
+import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.4.0";
+import { withBoxLabel } from "./labels.js?v=1.4.0";
 
 // slab(판·상판)은 box와 같은 그림이다 — 생성 시 깊이 기본값만 다르다(tools.js).
 // 종류를 나눠 둬야 "판을 그렸다"는 의도가 저장돼 나중에 다시 편집할 때도 유지된다.

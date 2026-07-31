@@ -19,7 +19,7 @@
  * 아니라 객체를 되돌려 오히려 혼란스럽다. 그래서 일관되게 undo에 넣지 않는다.
  */
 
-import { screenToWorld } from "./viewport.js?v=1.3.0";
+import { screenToWorld } from "./viewport.js?v=1.4.0";
 
 const AB_MIN = 10, AB_MAX = 200;   // section-artboard.js와 같은 한계
 const clamp = (v) => Math.max(AB_MIN, Math.min(AB_MAX, Math.round(v)));

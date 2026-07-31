@@ -25,7 +25,7 @@
  * (시안 `docs/chem-parts-proposal.html` 의 brkSVG 와 같은 방식).
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
 
 const DEF_AMP = 0.5;
 const DEF_GAP = 1.6;

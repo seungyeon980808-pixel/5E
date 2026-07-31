@@ -32,8 +32,8 @@
  *   isWater true · triplePt {x,y} · criticalPt {x,y} · showRegionNames true
  */
 
-import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.3.0";
-import { renderGraphLabel } from "./graph-label.js?v=1.3.0";
+import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.4.0";
+import { renderGraphLabel } from "./graph-label.js?v=1.4.0";
 
 export const CHEMGRAPH_KINDS = ["energy", "titration", "phase"];
 export const CHEMGRAPH_ACID_TYPES = ["sw", "ww"];
