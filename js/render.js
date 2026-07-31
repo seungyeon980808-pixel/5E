@@ -7,6 +7,8 @@
 export { render, setSnapPreview, renderObject, singleObjBBox } from "./render/scene.js?v=1.3.0";
 export { rotPt, curveSamplePoints } from "./render/core.js?v=1.3.0";
 export { makeFillPattern } from "./render/fill.js?v=1.3.0";
+// 인스펙터가 상자 라벨 두 슬롯을 렌더러와 '같은 규칙'으로 읽기 위해 필요하다.
+export { boxLabelSlots } from "./render/labels.js?v=1.3.0";
 export { circuitBodyPolygon } from "./render/circuit.js?v=1.3.0";
 export { pendulumGeometry, pendulumBobRadius, pendulumBBox } from "./render/pendulum.js?v=1.3.0";
 export { springGeometry, springBBox, SPRING_DEFAULTS } from "./render/spring.js?v=1.3.0";

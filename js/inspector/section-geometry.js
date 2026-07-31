@@ -4,7 +4,9 @@
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
 import { openAngleArcLabelEditor } from "../tools.js?v=1.3.0";
+import { boxLabelSlots } from "../render.js?v=1.3.0";
 import { makeSection } from "./widgets.js?v=1.3.0";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.3.0";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -219,6 +221,58 @@ export function buildGeometrySection(ctx) {
   labelPosRow.appendChild(labelPosLbl);
   labelPosRow.appendChild(labelPosSel);
   labelGridA.appendChild(labelPosRow);
+
+  /* node-only: 점 지름(mm) — 표시점 크기를 숫자로 정한다(사용자 요구 2026-07-28).
+   * 표시점은 bbox(w,h)로 저장되고 실제 점은 그 안에 비율로 그려지므로,
+   * 입력값(지름) ↔ bbox 변환은 node-placement.js 의 식을 그대로 쓴다(두 곳이 어긋나면
+   * 새로 놓은 점과 숫자로 고친 점의 크기가 달라진다). */
+  const nodeSizeRow = document.createElement("div");
+  nodeSizeRow.className = "insp-row";
+  const nodeSizeLbl = document.createElement("label");
+  nodeSizeLbl.className = "insp-field-label";
+  nodeSizeLbl.textContent = "점 지름";
+  const nodeSizeInp = document.createElement("input");
+  nodeSizeInp.type = "number";
+  nodeSizeInp.min = "0.2";
+  nodeSizeInp.max = "20";
+  nodeSizeInp.step = "0.1";
+  nodeSizeInp.className = "insp-input";
+  const nodeSizeWrap = document.createElement("span");
+  nodeSizeWrap.style.cssText = "position:relative;display:block;min-width:0;";
+  nodeSizeInp.style.cssText = "width:100%;box-sizing:border-box;padding-right:26px;";
+  const nodeSizeUnit = document.createElement("span");
+  nodeSizeUnit.textContent = "mm";
+  nodeSizeUnit.style.cssText = "position:absolute;right:8px;top:50%;transform:translateY(-50%);" +
+    "font-size:10px;color:var(--text-secondary);pointer-events:none;";
+  nodeSizeWrap.appendChild(nodeSizeInp);
+  nodeSizeWrap.appendChild(nodeSizeUnit);
+  nodeSizeRow.appendChild(nodeSizeLbl);
+  nodeSizeRow.appendChild(nodeSizeWrap);
+  labelGridA.appendChild(nodeSizeRow);
+
+  // 입력할 때마다 반영하되 Undo 스냅샷은 편집 세션당 한 번(라벨 크기 행과 같은 방식).
+  let nodeSizeSnap = null;
+  const applyNodeSize = () => {
+    const d = Number(nodeSizeInp.value);
+    if (!isFinite(d) || d < 0.2) return;          // 입력 중 미완성 값은 무시
+    const box = nodeBoxFromDiameter(Math.min(20, d));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === (s2.selectedIds || [])[0]);
+      if (!o || o.type !== "optics" || o.kind !== "node" || o.locked) return;
+      if (Math.abs((o.w ?? 0) - box) < 1e-6 && Math.abs((o.h ?? 0) - box) < 1e-6) return;
+      if (nodeSizeSnap) { s2.undoStack.push(nodeSizeSnap); s2.redoStack = []; nodeSizeSnap = null; }
+      // 중심을 유지한 채 크기만 바꾼다 — 안 그러면 숫자를 고칠 때 점이 옆으로 밀린다.
+      const cx = (o.x ?? 0) + (o.w ?? 0) / 2;
+      const cy = (o.y ?? 0) + (o.h ?? 0) / 2;
+      o.w = box; o.h = box;
+      o.x = cx - box / 2; o.y = cy - box / 2;
+    });
+  };
+  nodeSizeInp.addEventListener("focus", () => {
+    nodeSizeSnap = JSON.parse(JSON.stringify(state.get().objects));
+  });
+  nodeSizeInp.addEventListener("input", applyNodeSize);
+  nodeSizeInp.addEventListener("change", () => { applyNodeSize(); nodeSizeSnap = null; });
   labelGridA.appendChild(labelRow);      // 2행 1열: 라벨
   sec3Body.appendChild(arcLabelEditRow); // 라벨 편집... (전폭)
   sec3Body.appendChild(showLabelRow);    // 라벨 표시 (전폭)
@@ -416,74 +470,199 @@ export function buildGeometrySection(ctx) {
   labelerAngleInp.addEventListener("keydown", (e) => { if (e.key === "Enter") labelerAngleInp.blur(); });
   labelerAngleInp.addEventListener("blur", commitLabelerAngle);
 
-  /* ---- rect/ellipse upright label (Group 3): text input + position dropdown ----
-   * Writes obj.label / obj.labelPos. The label renders screen-upright, excluded
-   * from rotation, in the default font (see render.js withBoxLabel). */
-  const boxLabelRow = document.createElement("div");
-  boxLabelRow.className = "insp-row";
-  const boxLabelLbl = document.createElement("label");
-  boxLabelLbl.className = "insp-field-label";
-  boxLabelLbl.textContent = "라벨";
-  const boxLabelInp = document.createElement("input");
-  boxLabelInp.type = "text";
-  boxLabelInp.maxLength = 60;
-  boxLabelInp.className = "insp-input";
-  function commitBoxLabel() {
-    const s = state.get();
-    if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    state.update((s2) => {
-      const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
-      if (!o || o.locked) return;
-      if ((o.label ?? "") === boxLabelInp.value) return; // no-op → no undo entry
-      s2.undoStack.push(snap); s2.redoStack = [];
-      o.label = boxLabelInp.value;
-    });
+  /* ---- rect/ellipse 상자 라벨: 안쪽·바깥 두 슬롯 (docs/BOX_LABEL_DUAL_SPEC.md) ----
+   * 기출 도판은 상자 하나에 글자를 둘 붙인다 — 안쪽에 물리량(m_B), 바깥에 이름표(B).
+   *   안쪽: 항상 상자 중앙. 서체를 물리량(이탤릭·아래첨자)/이름표(정체) 중 고른다.
+   *   바깥: 언제나 이름표(정체). 위·아래·왼쪽·오른쪽 중 고른다.
+   * 슬롯을 끄면 그 슬롯의 글자를 비운다 — 렌더러가 "빈 문자열 = 꺼짐"으로 읽는다
+   * (labels.js boxLabelSlots). 그래서 표시 여부용 필드를 따로 두지 않는다.
+   * 필드: labelInner / labelInnerType / labelOuter / labelOuterPos, labelSize는 공유. */
+  const BOX_LABEL_APPLIES = (o) => o.type === "rect" || o.type === "ellipse";
+
+  /* 새 필드가 아직 없는 상자(구파일·구버전에서 만든 것)는 렌더러와 **같은 규칙**으로 읽는다
+   * (render/labels.js boxLabelSlots) — 그래야 화면에 보이는 라벨이 패널에도 그대로 뜬다. */
+  function readSlot(obj, prop) {
+    if (obj.labelInner != null || obj.labelOuter != null) return obj[prop];
+    const s = boxLabelSlots(obj);
+    if (prop === "labelInner") return s.inner.text;
+    if (prop === "labelInnerType") return s.inner.type || "quantity";
+    if (prop === "labelOuter") return s.outer.text;
+    if (prop === "labelOuterPos") return s.outer.pos;
+    if (prop === "labelOuterType") return s.outer.type || "label";
+    return obj[prop];
   }
-  boxLabelInp.addEventListener("keydown", (e) => { if (e.key === "Enter") boxLabelInp.blur(); });
-  boxLabelInp.addEventListener("blur", commitBoxLabel);
-  boxLabelRow.appendChild(boxLabelLbl);
-  boxLabelRow.appendChild(boxLabelInp);
-  // 라벨 2×2 배열: [종류][위치] / [라벨][크기]
+  /* 첫 편집에서 옛 단일 슬롯을 새 두 슬롯으로 굳힌다 — 파일 열기 마이그레이션과 같은 규칙.
+   * 이걸 안 하면 안쪽만 쓴 순간 렌더러가 새 필드 쪽으로 넘어가 바깥 라벨이 사라진다. */
+  function ensureSlots(o) {
+    if (o.labelInner != null || o.labelOuter != null) return;
+    const s = boxLabelSlots(o);
+    o.labelInner = s.inner.text;
+    o.labelInnerType = s.inner.type || "quantity";
+    o.labelOuter = s.outer.text;
+    o.labelOuterPos = s.outer.pos;
+    o.labelOuterType = s.outer.type || "label";
+  }
+
+  // 라벨 2×2 배열: [안쪽 글자][서체] / [바깥 글자][위치] + [크기]
   const labelGridB = document.createElement("div");
   labelGridB.className = "insp-2col";
   sec3Body.appendChild(labelGridB);
-  const boxLabelTypeRow = makeLabelTypeRow((o) => o.type === "rect" || o.type === "ellipse");
-  labelGridB.appendChild(boxLabelTypeRow.row);
-  { const l = boxLabelTypeRow.row.querySelector(".insp-field-label"); if (l) l.textContent = "종류"; }
 
-  const boxLabelPosRow = document.createElement("div");
-  boxLabelPosRow.className = "insp-row";
-  const boxLabelPosLbl = document.createElement("label");
-  boxLabelPosLbl.className = "insp-field-label";
-  boxLabelPosLbl.textContent = "위치";
-  const boxLabelPosSel = document.createElement("select");
-  boxLabelPosSel.className = "insp-input";
-  [["center", "가운데"], ["above", "위"], ["below", "아래"], ["left", "왼쪽"], ["right", "오른쪽"]].forEach(([val, text]) => {
-    const opt = document.createElement("option");
-    opt.value = val; opt.textContent = text;
-    boxLabelPosSel.appendChild(opt);
-  });
-  boxLabelPosRow.appendChild(boxLabelPosLbl);
-  boxLabelPosRow.appendChild(boxLabelPosSel);
-  labelGridB.appendChild(boxLabelPosRow);
-  labelGridB.appendChild(boxLabelRow); // 2행 1열: 라벨
-  boxLabelPosSel.addEventListener("change", () => {
-    const s = state.get();
-    if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    const val = ["center", "above", "below", "left", "right"].includes(boxLabelPosSel.value) ? boxLabelPosSel.value : "center";
-    state.update((s2) => {
-      const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
-      if (!o || o.locked) return;
-      s2.undoStack.push(snap); s2.redoStack = [];
-      o.labelPos = val;
+  /* 체크박스를 머리글에 얹은 글자 입력 칸. 체크를 끄면 글자를 비우되 이번 세션 동안은
+   * 기억해 둔다(stash) — 껐다 켰다 하며 비교할 때 다시 타이핑하지 않게. */
+  function makeSlotTextRow(labelText, prop, onToggle) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.style.cssText = "display:flex;align-items:center;gap:4px;";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.style.cssText = "width:auto;flex:0 0 auto;margin:0;";
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(labelText));
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.maxLength = 60;
+    inp.className = "insp-input";
+    row.appendChild(lbl);
+    row.appendChild(inp);
+
+    const stash = new Map(); // objId → 껐을 때의 글자
+    let pendingId = null;    // 켰지만 아직 글자를 안 넣은 객체 — 체크가 되돌아가지 않게
+
+    function commit() {
+      commitSelectedObject((o) => {
+        if (!BOX_LABEL_APPLIES(o)) return false;
+        if ((readSlot(o, prop) ?? "") === inp.value) return false; // no-op → undo 항목 안 만든다
+        ensureSlots(o);
+        o[prop] = inp.value;
+        return true;
+      });
+    }
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") inp.blur(); });
+    inp.addEventListener("blur", commit);
+
+    cb.addEventListener("change", () => {
+      const s = state.get();
+      const id = (s.selectedIds || [])[0];
+      if (!id) return;
+      if (cb.checked) {
+        pendingId = id;
+        const back = stash.get(id) || "";
+        inp.value = back;
+        inp.disabled = false;
+        if (back) commit(); else inp.focus();
+      } else {
+        pendingId = null;
+        const cur = inp.value;
+        if (cur) stash.set(id, cur);
+        inp.value = "";
+        commitSelectedObject((o) => {
+          if (!BOX_LABEL_APPLIES(o) || !(readSlot(o, prop) ?? "")) return false;
+          ensureSlots(o);
+          o[prop] = "";
+          return true;
+        });
+      }
+      if (onToggle) onToggle(cb.checked);
     });
-  });
+
+    return {
+      row, cb, inp,
+      on() { return cb.checked; },
+      sync(obj) {
+        const text = readSlot(obj, prop) ?? "";
+        const on = !!text || pendingId === obj.id;
+        if (pendingId && pendingId !== obj.id) pendingId = null;
+        cb.checked = on;
+        if (document.activeElement !== inp) inp.value = text;
+        inp.disabled = !on || !!obj.locked;
+      },
+      setLocked(locked) { cb.disabled = !!locked; if (locked) inp.disabled = true; },
+    };
+  }
+
+  /* 드롭다운 한 줄 — 값이 정해진 목록 안에 있을 때만 쓴다. */
+  function makeSlotSelectRow(labelText, prop, options, fallback) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.textContent = labelText;
+    const sel = document.createElement("select");
+    sel.className = "insp-input";
+    options.forEach(([val, text]) => {
+      const opt = document.createElement("option");
+      opt.value = val; opt.textContent = text;
+      sel.appendChild(opt);
+    });
+    row.appendChild(lbl);
+    row.appendChild(sel);
+    const allowed = options.map(([v]) => v);
+    sel.addEventListener("change", () => {
+      const val = allowed.includes(sel.value) ? sel.value : fallback;
+      commitSelectedObject((o) => {
+        if (!BOX_LABEL_APPLIES(o) || readSlot(o, prop) === val) return false;
+        ensureSlots(o);
+        o[prop] = val;
+        return true;
+      });
+    });
+    return {
+      row, sel,
+      sync(obj) {
+        const cur = readSlot(obj, prop);
+        sel.value = allowed.includes(cur) ? cur : fallback;
+      },
+    };
+  }
+
+  /* 배치: [✓안쪽][서체] / [✓바깥][서체] / [위치][크기]
+   * 서체를 같은 열에 세워 두 슬롯을 나란히 읽게 한다(DESIGN 13-1 세로 기준선). */
+  const LABEL_FONTS = [["quantity", "물리량"], ["label", "이름표"]];
+  const boxInnerRow = makeSlotTextRow("안쪽", "labelInner", () => syncBoxLabelEnabled());
+  const boxInnerTypeRow = makeSlotSelectRow("서체", "labelInnerType", LABEL_FONTS, "quantity");
+  const boxOuterRow = makeSlotTextRow("바깥", "labelOuter", () => syncBoxLabelEnabled());
+  // 바깥도 물리량을 쓸 수 있다(2026-07-31). 기본은 이름표 — 옛 그림이 그대로 보이게.
+  const boxOuterTypeRow = makeSlotSelectRow("서체", "labelOuterType", LABEL_FONTS, "label");
+  const boxOuterPosRow = makeSlotSelectRow("위치", "labelOuterPos",
+    [["above", "위"], ["below", "아래"], ["left", "왼쪽"], ["right", "오른쪽"]], "right");
+  labelGridB.appendChild(boxInnerRow.row);
+  labelGridB.appendChild(boxInnerTypeRow.row);
+  labelGridB.appendChild(boxOuterRow.row);
+  labelGridB.appendChild(boxOuterTypeRow.row);
+  labelGridB.appendChild(boxOuterPosRow.row);
+
+  /* 꺼진 슬롯의 서체·위치는 쓸 데가 없다 → 비활성(조건을 채우면 쓸 수 있다는 뜻, DESIGN 13-3). */
+  function syncBoxLabelEnabled(locked = false) {
+    boxInnerTypeRow.sel.disabled = locked || !boxInnerRow.on();
+    boxOuterTypeRow.sel.disabled = locked || !boxOuterRow.on();
+    boxOuterPosRow.sel.disabled = locked || !boxOuterRow.on();
+  }
+
+  const boxLabel = {
+    rows: [boxInnerRow.row, boxInnerTypeRow.row, boxOuterRow.row,
+           boxOuterTypeRow.row, boxOuterPosRow.row],
+    grid: labelGridB,
+    sync(obj) {
+      boxInnerRow.sync(obj);
+      boxOuterRow.sync(obj);
+      boxInnerTypeRow.sync(obj);
+      boxOuterTypeRow.sync(obj);
+      boxOuterPosRow.sync(obj);
+      boxInnerRow.setLocked(obj.locked);
+      boxOuterRow.setLocked(obj.locked);
+      syncBoxLabelEnabled(!!obj.locked);
+    },
+    setVisible(on) {
+      labelGridB.style.display = on ? "" : "none";
+    },
+  };
 
   // ---- rect/ellipse 라벨 크기 (Group 6 task 6): per-box label font size. ----
   const boxLabelSizeRow = makeLabelSizeRow((o) => o.type === "rect" || o.type === "ellipse", "크기");
-  labelGridB.appendChild(boxLabelSizeRow.row); // 2행 2열: 크기
+  labelGridB.appendChild(boxLabelSizeRow.row); // 3행 1열: 크기 (두 슬롯이 공유)
 
   // capacitor-only: plate separation 간격 (world mm).
   const gapRow = document.createElement("div");
@@ -811,11 +990,11 @@ export function buildGeometrySection(ctx) {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
     radF, saF, swF, arcPair,
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
-    showLabelRow, showLabelCb, labelPosRow, labelPosSel,
+    showLabelRow, showLabelCb, labelPosRow, labelPosSel, nodeSizeRow, nodeSizeInp,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
     labelBgRow, labelHaloRow, syncLabelHalo,
     labelerLine2Row, syncLabelerLine2,
-    boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
+    boxLabel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,
     centerLineRow, centerLineSel, term1, term2, terminalLabelTypeRow,

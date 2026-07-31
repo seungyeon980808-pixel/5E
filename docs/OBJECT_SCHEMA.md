@@ -400,3 +400,26 @@ O = 지원, X = 미지원, 부분 = 조건부. 근거: transform.js(리사이즈
 - **그룹**: Ctrl+G는 타입 제한 없음 (locked 객체만 제외, transform.js:1041-1056).
 
 <!-- ===== END ===== -->
+
+### 3-2b. rect/ellipse 안쪽·바깥 라벨 (2026-07-30 추가)
+
+상자 하나에 라벨 **두 개**를 동시에 붙인다. 명세: `docs/BOX_LABEL_DUAL_SPEC.md`
+
+| 속성 | 의미 | 기본값 |
+|---|---|---|
+| `labelInner` | 안쪽(가운데) 글자. 비면 없음 | — |
+| `labelInnerType` | `"quantity"`(물리량·이탤릭·**첨자 렌더**) \| `"label"`(이름표·정체) | `"label"` 취급 |
+| `labelOuter` | 바깥 글자. 비면 없음 | — |
+| `labelOuterType` | 안쪽과 같은 두 값 (2026-07-31 추가) | `"label"`(이름표·정체) |
+| `labelOuterPos` | `"above"` \| `"below"` \| `"left"` \| `"right"` | `"right"` |
+
+- `labelSize` · `labelBg` · `haloRatio` 는 두 슬롯이 공유한다.
+- **옛 파일 호환**: 새 필드가 하나도 없으면 옛 `label`/`labelPos`/`labelType` 을 읽는다.
+  `labelPos:"center"` → 안쪽, 그 외 → 바깥. 마이그레이션 없이 그대로 보인다(`render/labels.js:boxLabelSlots`).
+- `labelInnerType:"quantity"` 이고 글자에 `_`/`^` 가 있을 때만 수식 렌더러(`measureFormula`+`renderFormula`)를 탄다.
+  그래서 **`m_B` 의 B 가 아래첨자로 나온다** — 옛 단일 라벨에서는 글자 그대로 나왔다.
+- **인스펙터 UI**: 크기·위치 섹션의 라벨 그리드 — `[안쪽 글자][서체] / [바깥 글자][위치] / [크기]`.
+  슬롯 앞 체크박스를 끄면 그 슬롯의 글자를 **빈 문자열로 지운다**(= 꺼짐). 표시 여부 필드는 따로 없다.
+  꺼진 슬롯의 서체·위치 드롭다운은 비활성. (`js/inspector/section-geometry.js` boxLabel)
+- **파일 열기 마이그레이션**: `project-io.js` 가 옛 단일 슬롯을 새 필드로 옮겨 적는다(옛 필드는 남긴다).
+  렌더러의 폴백과 규칙이 같으므로 결과가 어긋나지 않는다.

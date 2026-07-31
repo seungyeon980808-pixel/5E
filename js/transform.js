@@ -267,6 +267,8 @@ const STYLE_PROP_KEYS = [
   "lineMode", "lineStyle", "arrowVariant", "arrowHead", "dimensionVariant",
   // 라벨 스타일(내용 텍스트 제외 — 종류/위치/크기/표시 여부)
   "labelType", "labelPos", "labelSize", "labelShow", "labelFlip", "showLabel",
+  // 상자 라벨 두 슬롯의 '서체·위치'만 스타일이다 — 글자 내용(labelInner/labelOuter)은 제외.
+  "labelInnerType", "labelOuterType", "labelOuterPos",
   // 텍스트/글꼴 스타일
   "fontFamily", "fontSize", "fontWeight", "fontStyle", "italic", "underline",
   "strikeout", "letterSpacing",

@@ -12,9 +12,13 @@ import {
   makeLabelKnockout,
   applyGlyphHalo,
 } from "./core.js?v=1.3.0";
+// 안쪽 물리량 라벨(m_B)의 아래첨자는 수식 렌더러를 거쳐야 나온다 — anglearc·labeler와 같은 경로.
+import { measureFormula, renderFormula } from "../formula.js?v=1.3.0";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
+  OBJECT_LABEL_QUANTITY_FONT_FAMILY,
+  EQUATION_FONT_STYLE,
   resolveTextFontStyle,
   resolveTextLetterSpacing,
   resolveTextWidthScale,
@@ -221,43 +225,105 @@ function withKnockout(t, lines, x, baselineY, sizeMm, options = {}) {
  * (default center).
  * When a label exists the shape is wrapped in a <g> that carries the data-id;
  * with no label the bare shape element is returned unchanged. */
-function withBoxLabel(shapeEl, obj) {
+/* 안쪽·바깥 두 슬롯을 해석한다 (docs/BOX_LABEL_DUAL_SPEC.md).
+ * 새 필드(labelInner/labelOuter)가 하나라도 있으면 그것을 쓰고, 없으면 옛 단일 슬롯
+ * (label/labelPos/labelType)을 위치에 따라 안쪽·바깥 중 한쪽으로 읽는다.
+ * → 옛 프로젝트 파일은 마이그레이션 없이도 그대로 보인다. */
+function boxLabelSlots(obj) {
+  if (obj.labelInner != null || obj.labelOuter != null) {
+    return {
+      inner: { text: obj.labelInner || "", type: obj.labelInnerType || "" },
+      outer: { text: obj.labelOuter || "", pos: obj.labelOuterPos || "right",
+               // 바깥도 물리량을 쓸 수 있다(2026-07-31). 부재는 옛 규칙대로 이름표.
+               type: obj.labelOuterType || "label" },
+    };
+  }
   const pos = obj.labelPos || "center";
-  const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
-  const gap = size * 0.85;
+  if (pos === "center") {
+    return { inner: { text: obj.label || "", type: obj.labelType || "" },
+             outer: { text: "", pos: "right", type: "label" } };
+  }
+  return { inner: { text: "", type: "" },
+           outer: { text: obj.label || "", pos, type: "label" } };
+}
+
+/* Anchor in the object's LOCAL (unrotated) frame, measured from the center.
+ * center -> (0,0); the four "outside" spots sit one `gap` beyond each edge.
+ * Rotated by obj.rotation around the center so the anchor stays pinned to the
+ * same relative spot as the shape turns (the glyph itself stays upright — the
+ * text node is appended OUTSIDE the rotation group). */
+function boxLabelAnchor(obj, pos, gap) {
   const cx = obj.x + obj.w / 2;
   const cy = obj.y + obj.h / 2;
-  // Anchor in the object's LOCAL (unrotated) frame, measured from the center.
-  // center -> (0,0); the four "outside" spots sit one `gap` beyond each edge.
   let lx = 0, ly = 0;
   if (pos === "above")      ly = -(obj.h / 2 + gap);
   else if (pos === "below") ly =  (obj.h / 2 + gap);
   else if (pos === "left")  lx = -(obj.w / 2 + gap);
   else if (pos === "right") lx =  (obj.w / 2 + gap);
-  // Rotate that local anchor by obj.rotation around the center (via the shared
-  // rotPt helper) so it stays pinned to the same relative spot as the shape
-  // turns. The text node itself is appended OUTSIDE the rotation group, so the
-  // glyph stays upright.
-  const anchor = rotPt(cx + lx, cy + ly, cx, cy, obj.rotation || 0);
-  // Rectangle labels honor the object's labelType like every other shape, but with
-  // a "label"(신명중명조 정체·upright) FALLBACK: block names (A, B, C …) created without
-  // an explicit type default to regular/upright and never inherit the 물리량 italic.
-  // A rect whose labelType is explicitly "quantity"(물리량) still renders as Times New
-  // Roman italic. `italic:false` only pins that fallback — it does not override an
-  // explicit "quantity". Ellipse keeps its own "quantity" fallback.
-  // centerInk는 **사각형 + 안쪽 배치**에서만 켠다(2026-07-27 교사 결정). 바깥 배치(above/below/
-  // left/right)는 도형에서 gap만큼 떨어뜨리는 게 기준이라 잉크 중앙을 다시 잡을 이유가 없다.
-  // 타원·선 라벨은 이번 범위 밖 — 상수 보정을 그대로 쓴다.
-  const labelOpts = obj.type === "rect"
-    ? { labelType: obj.labelType, italic: false, labelBg: obj.labelBg, haloRatio: obj.haloRatio,
-        centerInk: pos === "center" }
-    : { labelType: obj.labelType, labelBg: obj.labelBg, haloRatio: obj.haloRatio };
-  const lbl = makeUprightLabel(obj.label, anchor.x, anchor.y, grayHex(obj.strokeLevel), size, labelOpts);
-  if (!lbl) return shapeEl;
+  return rotPt(cx + lx, cy + ly, cx, cy, obj.rotation || 0);
+}
+
+/* 안쪽 물리량 라벨은 수식 렌더러로 그린다 — m_B 의 B 가 아래첨자로 나와야 한다.
+ * renderFormula 의 앵커는 top-left 이므로 실측 폭·높이의 절반만큼 되끌어 중앙에 맞춘다
+ * (anglearc 라벨과 같은 방식). 첨자·위첨자가 없는 글자는 이 경로를 타지 않는다. */
+function makeQuantityBoxLabel(text, ax, ay, sizeMm) {
+  const family = OBJECT_LABEL_QUANTITY_FONT_FAMILY;
+  const fm = measureFormula(text, sizeMm, { family, weight: "normal", style: EQUATION_FONT_STYLE });
+  if (!fm) return null;
+  return renderFormula({
+    x: ax - fm.w / 2,
+    y: ay - fm.h / 2,
+    source: text,
+    fontSize: sizeMm,
+    fontFamily: family,
+  });
+}
+
+/* Attach a box-shape's (rect/ellipse) upright labels, if any. 안쪽(가운데)과
+ * 바깥(위·아래·왼쪽·오른쪽)을 **동시에** 붙일 수 있다 — 상자 안에 물리량(m_B),
+ * 상자 밖에 이름표(B)를 두는 기출 관례를 그대로 그리기 위해서다.
+ * 라벨이 하나라도 있으면 도형을 <g>로 감싸 data-id를 옮긴다. */
+function withBoxLabel(shapeEl, obj) {
+  const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+  const gap = size * 0.85;
+  const { inner, outer } = boxLabelSlots(obj);
+  const parts = [];
+
+  if (inner.text) {
+    const a = boxLabelAnchor(obj, "center", gap);
+    // 물리량이면서 첨자 문법이 있을 때만 수식 경로. 그 외는 기존 텍스트 경로 그대로.
+    const el = (inner.type === "quantity" && /[_^]/.test(inner.text))
+      ? makeQuantityBoxLabel(inner.text, a.x, a.y, size)
+      // Rectangle labels honor labelType like every other shape, but with a
+      // "label"(신명중명조 정체) FALLBACK: block names (A, B, C …) created without an
+      // explicit type default to upright and never inherit the 물리량 italic.
+      // centerInk는 **사각형 + 안쪽 배치**에서만 켠다(2026-07-27 교사 결정).
+      : makeUprightLabel(inner.text, a.x, a.y, grayHex(obj.strokeLevel), size,
+          obj.type === "rect"
+            ? { labelType: inner.type, italic: false, labelBg: obj.labelBg,
+                haloRatio: obj.haloRatio, centerInk: true }
+            : { labelType: inner.type, labelBg: obj.labelBg, haloRatio: obj.haloRatio });
+    if (el) parts.push(el);
+  }
+
+  if (outer.text) {
+    // 바깥도 안쪽과 같은 두 서체를 쓴다(2026-07-31 교사 결정). 상자 안이 이름(A·B)이고
+    // 바깥이 질량(m·2m)인 도판이 있어서다 — 기본값은 여전히 이름표(정체)다.
+    // 바깥 배치는 도형에서 gap만큼 떨어뜨리는 게 기준이라 centerInk를 켜지 않는다.
+    const a = boxLabelAnchor(obj, outer.pos, gap);
+    const el = (outer.type === "quantity" && /[_^]/.test(outer.text))
+      ? makeQuantityBoxLabel(outer.text, a.x, a.y, size)
+      // outer.type 은 항상 quantity|label 중 하나라 fallback(italic 플래그)은 쓰지 않는다.
+      : makeUprightLabel(outer.text, a.x, a.y, grayHex(obj.strokeLevel), size,
+          { labelType: outer.type, labelBg: obj.labelBg, haloRatio: obj.haloRatio });
+    if (el) parts.push(el);
+  }
+
+  if (!parts.length) return shapeEl;
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) { g.dataset.id = obj.id; delete shapeEl.dataset.id; }
   g.appendChild(shapeEl);
-  g.appendChild(lbl);
+  parts.forEach((p) => g.appendChild(p));
   return g;
 }
 
@@ -391,6 +457,7 @@ function renderText(obj) {
 
 export {
   makeUprightLabel,
+  boxLabelSlots,
   withBoxLabel,
   withLineLabel,
   estimateLabelBlock,

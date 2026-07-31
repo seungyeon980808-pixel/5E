@@ -64,6 +64,20 @@ function migrateObjectList(objects) {
         // preserved, so a rect switched to "라벨" reloads as 신명중명조 정체.
         next.labelType = normalizeLabelType(next.labelType, next.type === "labeler" ? "label" : "quantity");
       }
+      /* 상자 라벨 안쪽·바깥 두 슬롯 (docs/BOX_LABEL_DUAL_SPEC.md).
+       * 옛 파일은 label/labelPos/labelType 하나만 갖는다 → 위치에 따라 한쪽 슬롯으로 옮긴다.
+       * 옛 필드는 지우지 않는다 — 구버전 앱에서 열어도 최소한 하나는 보이게. */
+      if ((next.type === "rect" || next.type === "ellipse") &&
+          next.labelInner == null && next.labelOuter == null) {
+        const pos = next.labelPos || "center";
+        const inner = pos === "center";
+        next.labelInner = inner ? (next.label ?? "") : "";
+        next.labelInnerType = normalizeLabelType(next.labelType, "quantity");
+        next.labelOuter = inner ? "" : (next.label ?? "");
+        next.labelOuterPos = inner ? "right" : pos;
+        // 옛 파일의 바깥 라벨은 전부 이름표(정체)였다 — 물리량 선택지가 없었다.
+        next.labelOuterType = "label";
+      }
       migrateObjectStyleMode(next);
       if (next.type === "text") {
         next.italic = next.italic ?? false;

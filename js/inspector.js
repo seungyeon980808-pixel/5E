@@ -11,6 +11,7 @@ import { resolveObjectStyle } from "./style-mode.js?v=1.3.0";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
 } from "./inspector/widgets.js?v=1.3.0";
+import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.3.0";
 import { createInspectorContext } from "./inspector/context.js?v=1.3.0";
 import { buildLineSection } from "./inspector/section-line.js?v=1.3.0";
 import { buildGroupSection } from "./inspector/section-group.js?v=1.3.0";
@@ -85,11 +86,11 @@ export function initInspector(state) {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
     radF, saF, swF, arcPair,
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
-    showLabelRow, showLabelCb, labelPosRow, labelPosSel,
+    showLabelRow, showLabelCb, labelPosRow, labelPosSel, nodeSizeRow, nodeSizeInp,
     labelerLenRow, labelerLenInp, labelerAngleRow, labelerAngleInp,
     labelBgRow, labelHaloRow, syncLabelHalo,
     labelerLine2Row, syncLabelerLine2,
-    boxLabelRow, boxLabelInp, boxLabelTypeRow, boxLabelPosRow, boxLabelPosSel, boxLabelSizeRow,
+    boxLabel, boxLabelSizeRow,
     gapRow, gapInp, circuitHeightF,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,
     centerLineRow, centerLineSel, term1, term2, terminalLabelTypeRow,
@@ -222,9 +223,7 @@ export function initInspector(state) {
     secFunc.style.display = "none"; // shown only for a single funcgraph (set below)
     // Group-3 upright-label rows: shown only for a single rect/ellipse (box) or
     // line (set in the single-selection branch); hidden in every other case.
-    boxLabelRow.style.display = "none";
-    boxLabelTypeRow.row.style.display = "none";
-    boxLabelPosRow.style.display = "none";
+    boxLabel.setVisible(false);
     boxLabelSizeRow.row.style.display = "none";
     lineLabelRow.style.display = "none";
     lineLabelTypeRow.row.style.display = "none";
@@ -631,6 +630,12 @@ export function initInspector(state) {
     // node uses a label-position dropdown instead of the show/hide toggle.
     showLabelRow.style.display = (isOptics && !isNode) ? "" : "none";
     labelPosRow.style.display = isNode ? "" : "none";
+    // 표시점 지름 — 점일 때만. 입력 중에는 값을 덮어쓰지 않는다(커서가 튄다).
+    nodeSizeRow.style.display = isNode ? "" : "none";
+    if (isNode && document.activeElement !== nodeSizeInp) {
+      const box = Math.min(obj.w ?? 0, obj.h ?? 0);
+      nodeSizeInp.value = (Math.round(nodeDiameterFromBox(box) * 100) / 100).toString();
+    }
     // 라벨 가림 옵션: 라벨을 가질 수 있는 타입에서만 보인다.
     const LABELLED = ["rect", "ellipse", "triangle", "line", "labeler", "pendulum", "spring",
       "optics", "circuit", "polyline", "curve"];
@@ -699,16 +704,13 @@ export function initInspector(state) {
     secFunc.style.display = isFuncgraph ? "" : "none";
     if (isFuncgraph) syncFuncgraph(obj);
 
-    // Group-3 box upright label: rect/ellipse only (text + center/above/below).
+    // 상자 라벨: rect/ellipse만. 안쪽(가운데)·바깥(위/아래/왼/오른) 두 슬롯을 동시에 쓴다
+    // (docs/BOX_LABEL_DUAL_SPEC.md).
     const isBoxLabelType = obj.type === "rect" || obj.type === "ellipse";
-    boxLabelRow.style.display = isBoxLabelType ? "" : "none";
-    boxLabelTypeRow.row.style.display = isBoxLabelType ? "" : "none";
-    boxLabelPosRow.style.display = isBoxLabelType ? "" : "none";
+    boxLabel.setVisible(isBoxLabelType);
     boxLabelSizeRow.row.style.display = isBoxLabelType ? "" : "none";
     if (isBoxLabelType) {
-      if (document.activeElement !== boxLabelInp) boxLabelInp.value = obj.label ?? "";
-      boxLabelTypeRow.sync(obj);
-      boxLabelPosSel.value = ["center", "above", "below", "left", "right"].includes(obj.labelPos) ? obj.labelPos : "center";
+      boxLabel.sync(obj);
       if (document.activeElement !== boxLabelSizeRow.num) {
         boxLabelSizeRow.num.value = Math.round(mmToPt(obj.labelSize || DEFAULT_TEXT_SIZE_MM));
       }
@@ -813,9 +815,7 @@ export function initInspector(state) {
     labelerAngleInp.disabled = !!obj.locked;
     showLabelCb.disabled = !!obj.locked;
     labelPosSel.disabled = !!obj.locked;
-    boxLabelInp.disabled = !!obj.locked;
-    boxLabelTypeRow.sel.disabled = !!obj.locked;
-    boxLabelPosSel.disabled = !!obj.locked;
+    // 상자 라벨 두 슬롯의 잠금은 boxLabel.sync가 함께 처리한다(꺼진 슬롯 비활성과 겹치므로).
     lineLabelInp.disabled = !!obj.locked;
     lineLabelTypeRow.sel.disabled = !!obj.locked;
     lineLabelShowCb.disabled = !!obj.locked;
