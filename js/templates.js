@@ -141,7 +141,7 @@ export const TEMPLATES = {
   scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
   bar_magnet: { kind: "shape", category: "전자기학", label: "막대자석", keywords: ["자석", "막대자석", "N극", "S극", "magnet"], create: { tool: "APPARATUS", kind: "bar_magnet" } },
   speaker: { kind: "shape", category: "역학", label: "스피커", keywords: ["스피커", "음원", "소리", "음파", "speaker"], create: { tool: "APPARATUS", kind: "speaker" } },
-  thermometer: { kind: "shape", category: "공통", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer" } },
+  thermometer: { kind: "shape", category: "열역학", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer" } },
   phototube: { kind: "shape", category: "광학", label: "광전관", keywords: ["광전관", "광전 효과", "광전자", "phototube"], create: { tool: "APPARATUS", kind: "phototube" } },
   slit: { kind: "shape", category: "광학", label: "슬릿", keywords: ["슬릿", "단일 슬릿", "이중 슬릿", "간섭", "slit"], create: { tool: "APPARATUS", kind: "slit" } },
   fringe_pattern: { kind: "shape", category: "광학", label: "간섭무늬", keywords: ["간섭무늬", "무늬", "밝은 무늬", "fringe"], create: { tool: "APPARATUS", kind: "fringe_pattern" } },
@@ -169,11 +169,18 @@ export const TEMPLATES = {
   /* ----- 광학: lenses / mirrors / object / screen / point source — each arms the
    * OPTICS tool (rect-style size-drag) with a specific kind (tools.js makeShape
    * reads _opticsKind). ----- */
-  convex_lens:    { kind: "shape", category: "광학", label: "볼록렌즈", keywords: ["볼록", "렌즈", "convex", "lens"],            create: { tool: "OPTICS", kind: "convex_lens" } },
-  concave_lens:   { kind: "shape", category: "광학", label: "오목렌즈", keywords: ["오목", "렌즈", "concave", "lens"],           create: { tool: "OPTICS", kind: "concave_lens" } },
-  convex_mirror:  { kind: "shape", category: "광학", label: "볼록거울", keywords: ["볼록", "거울", "convex", "mirror"],          create: { tool: "OPTICS", kind: "convex_mirror" } },
-  concave_mirror: { kind: "shape", category: "광학", label: "오목거울", keywords: ["오목", "거울", "concave", "mirror"],         create: { tool: "OPTICS", kind: "concave_mirror" } },
-  plane_mirror:   { kind: "shape", category: "광학", label: "평면거울", keywords: ["평면", "거울", "plane", "mirror"],           create: { tool: "OPTICS", kind: "plane_mirror" } },
+  /* 렌즈·거울 5종은 팔레트에서 갈래 하나로 묶는다(2026-07-31 교사 지시).
+   * 버튼 얼굴은 오목렌즈이고, 누르면 다섯이 팝오버로 쭉 나온다. 검색(Ctrl+F)·단축키·
+   * 저장파일은 개별 id를 그대로 쓰므로 hidden 만 붙인다. */
+  optics_group:   { kind: "group", category: "광학", label: "렌즈·거울",
+                    keywords: ["렌즈", "거울", "볼록", "오목", "평면", "lens", "mirror", "광학"],
+                    variants: ["concave_lens", "convex_lens", "concave_mirror", "convex_mirror", "plane_mirror"] },
+
+  convex_lens:    { hidden: true, kind: "shape", category: "광학", label: "볼록렌즈", keywords: ["볼록", "렌즈", "convex", "lens"],            create: { tool: "OPTICS", kind: "convex_lens" } },
+  concave_lens:   { hidden: true, kind: "shape", category: "광학", label: "오목렌즈", keywords: ["오목", "렌즈", "concave", "lens"],           create: { tool: "OPTICS", kind: "concave_lens" } },
+  convex_mirror:  { hidden: true, kind: "shape", category: "광학", label: "볼록거울", keywords: ["볼록", "거울", "convex", "mirror"],          create: { tool: "OPTICS", kind: "convex_mirror" } },
+  concave_mirror: { hidden: true, kind: "shape", category: "광학", label: "오목거울", keywords: ["오목", "거울", "concave", "mirror"],         create: { tool: "OPTICS", kind: "concave_mirror" } },
+  plane_mirror:   { hidden: true, kind: "shape", category: "광학", label: "평면거울", keywords: ["평면", "거울", "plane", "mirror"],           create: { tool: "OPTICS", kind: "plane_mirror" } },
   object_arrow:   { kind: "shape", category: "광학", label: "물체",     keywords: ["물체", "화살표", "object", "arrow"],         create: { tool: "OPTICS", kind: "object_arrow" } },
   screen:         { kind: "shape", category: "광학", label: "스크린",   keywords: ["스크린", "screen", "벽"],                    create: { tool: "OPTICS", kind: "screen" } },
   point_light:    { kind: "shape", category: "광학", label: "점광원",   keywords: ["점광원", "광원", "point", "light", "source"], create: { tool: "OPTICS", kind: "point_light" } },
@@ -284,7 +291,7 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "표시·주석"];
+const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "열역학", "표시·주석"];
 
 /* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
  *

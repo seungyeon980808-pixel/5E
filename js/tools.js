@@ -746,6 +746,20 @@ function makeShape(type, a, b) {
       shape.w = Math.max(shape.w, shape.length);
       shape.h = Math.max(shape.h, shape.thickness * 3);
       shape.rotation = 0;
+    } else if (shape.kind === "slit") {
+      // 슬릿은 세 값이 인스펙터에서 조절된다(개수·틈 길이·틈 간격). 기본은 이중 슬릿.
+      shape.slits = 2;
+      shape.slitLen = 1.6;
+      shape.slitGap = 4;
+    } else if (shape.kind === "device_box") {
+      shape.terminals = 2;
+      shape.termSide = "bottom";
+    } else if (shape.kind === "speaker") {
+      shape.facing = "right";
+    } else if (shape.kind === "bar_magnet") {
+      shape.northSide = "left";
+    } else if (shape.kind === "transistor") {
+      shape.variant = "npn";
     } else if (shape.kind === "compass") {
       const size = Math.max(shape.w, shape.h, 12);
       shape.w = size;

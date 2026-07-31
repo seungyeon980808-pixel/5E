@@ -22,6 +22,7 @@ import { buildProtectSection } from "./inspector/section-protect.js?v=1.3.0";
 import { buildImageSection } from "./inspector/section-image.js?v=1.3.0";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.3.0";
 import { buildSpringSection } from "./inspector/section-spring.js?v=1.3.0";
+import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.3.0";
 import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.3.0";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.3.0";
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.3.0";
@@ -106,6 +107,7 @@ export function initInspector(state) {
   } = buildImageSection(ctx);
   const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp } = buildPendulumSection(ctx);
   const { secSpring, syncSpring } = buildSpringSection(ctx);
+  const { secApparatus, syncApparatus } = buildApparatusSection(ctx);
   const { secChargeField, syncChargeField } = buildChargeFieldSection(ctx);
   const { secFieldLines, syncFieldLines } = buildFieldLinesSection(ctx);
   const { secStandingWave, syncStandingWave } = buildStandingWaveSection(ctx);
@@ -129,6 +131,7 @@ export function initInspector(state) {
   contentEl.insertBefore(imageSection, sec3);
   contentEl.appendChild(secPend);
   contentEl.appendChild(secSpring);
+  contentEl.appendChild(secApparatus);
   contentEl.appendChild(secChargeField);
   contentEl.appendChild(secFieldLines);
   contentEl.appendChild(secStandingWave);
@@ -216,6 +219,7 @@ export function initInspector(state) {
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
+    secApparatus.style.display = "none"; // 기구 하나를 골랐을 때만(갈래에 옵션이 있는 것만)
     secChargeField.style.display = "none";   // 전기력선 하나를 골랐을 때만
     secFieldLines.style.display = "none";    // 자기력선 하나를 골랐을 때만
     secStandingWave.style.display = "none";  // 정상파 하나를 골랐을 때만
@@ -664,6 +668,9 @@ export function initInspector(state) {
     // shown/enabled only while 길이표시 is on (mirrors the dimension-label pattern).
     const isSpring = obj.type === "spring";
     secSpring.style.display = isSpring ? "" : "none";
+    // 기구 갈래별 옵션(슬릿 틈 개수·장치 상자 단자 …). 옵션이 없는 갈래는 sync가 숨긴다.
+    if (obj.type === "apparatus") syncApparatus(obj);
+    else secApparatus.style.display = "none";
     if (isSpring) syncSpring(obj);
 
     // 장(場)·정상파 section: 각 타입 하나를 골랐을 때만.

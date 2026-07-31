@@ -117,6 +117,80 @@ def alpha_outside(base, work, Image):
     return out
 
 
+def keep_component(img, seed, ImageDraw, min_area=6, only=False):
+    """씨앗 픽셀이 속한 잉크 덩어리만 남기고 나머지를 흰색으로 지운다.
+
+    "이미지 부분만 딱" 오리기 위한 것. 도판에서 삽화만 떼어내면 옆의 치수선·글자·
+    블록 선이 같이 딸려오는데, 그걸 --erase 로 하나씩 지우면 손이 많이 가고 빠뜨린다.
+    삽화는 대개 하나의 큰 덩어리이므로, 그 덩어리와 **그 덩어리의 상자 안에 들어 있는
+    작은 조각들**(눈·단추처럼 떨어진 획)만 남기면 깨끗하게 떨어진다.
+    """
+    w, h = img.size
+    px = img.load()
+    ink = [[px[x, y] < INK for x in range(w)] for y in range(h)]
+    lab = [[0] * w for _ in range(h)]
+    comps = []
+    for y0 in range(h):
+        for x0 in range(w):
+            if not ink[y0][x0] or lab[y0][x0]:
+                continue
+            n = len(comps) + 1
+            q = deque([(x0, y0)]); lab[y0][x0] = n
+            cells = []
+            while q:
+                a, b = q.popleft(); cells.append((a, b))
+                for dx in (-1, 0, 1):
+                    for dy in (-1, 0, 1):
+                        i, j = a + dx, b + dy
+                        if 0 <= i < w and 0 <= j < h and ink[j][i] and not lab[j][i]:
+                            lab[j][i] = n; q.append((i, j))
+            xs = [p[0] for p in cells]; ys = [p[1] for p in cells]
+            comps.append({"n": n, "cells": cells,
+                          "bb": (min(xs), min(ys), max(xs), max(ys))})
+    sx, sy = seed
+    main = None
+    best = 1e9
+    for c in comps:                       # 씨앗에 가장 가까운(또는 씨앗을 품은) 덩어리
+        x0, y0, x1, y1 = c["bb"]
+        dx = 0 if x0 <= sx <= x1 else min(abs(sx - x0), abs(sx - x1))
+        dy = 0 if y0 <= sy <= y1 else min(abs(sy - y0), abs(sy - y1))
+        dist = (dx * dx + dy * dy) - len(c["cells"]) * 1e-6
+        if lab[sy][sx] == c["n"]:
+            main = c; break
+        if dist < best:
+            best = dist; main = c
+    if main is None:
+        return img
+    mx0, my0, mx1, my1 = main["bb"]
+    keep = {main["n"]}
+    for c in ([] if only else comps):                       # 큰 덩어리의 상자 안에 든 작은 조각도 같이 남긴다
+        x0, y0, x1, y1 = c["bb"]
+        if len(c["cells"]) >= min_area and x0 >= mx0 and y0 >= my0 and x1 <= mx1 and y1 <= my1:
+            keep.add(c["n"])
+    out = img.copy()
+    op = out.load()
+    for c in comps:
+        if c["n"] in keep:
+            continue
+        for (x, y) in c["cells"]:
+            op[x, y] = 255
+    return out
+
+
+def ink_bbox(img, margin=2):
+    w, h = img.size
+    px = img.load()
+    xs, ys = [], []
+    for y in range(h):
+        for x in range(w):
+            if px[x, y] < INK:
+                xs.append(x); ys.append(y)
+    if not xs:
+        return (0, 0, w, h)
+    return (max(0, min(xs) - margin), max(0, min(ys) - margin),
+            min(w, max(xs) + 1 + margin), min(h, max(ys) + 1 + margin))
+
+
 def update_manifest(entry):
     PARTS_DIR.mkdir(parents=True, exist_ok=True)
     rows = []
@@ -142,16 +216,45 @@ def main():
                     help="앞/뒤로 자를 위치 — 0~1 비율 또는 px. 세로로 자르려면 접두사 y (예: y0.6)")
     ap.add_argument("--dpi", type=float, default=600, help="원본 해상도(기본 600)")
     ap.add_argument("--note", default="", help="출처 메모")
+    ap.add_argument("--keep", default=None,
+                    help="씨앗 픽셀 x:y — 그 잉크 덩어리(와 그 상자 안의 조각)만 남기고 나머지를 지운다. "
+                         "옆의 치수선·글자를 손으로 --erase 하지 않아도 된다")
+    ap.add_argument("--keep-only", action="store_true", dest="keep_only",
+                    help="--keep 덩어리 '하나만' 남긴다 — 말풍선·칠판처럼 테두리만 쓰고 "
+                         "안의 글자는 버릴 때. (기본은 상자 안의 작은 조각도 함께 남긴다)")
+    ap.add_argument("--autotrim", action="store_true",
+                    help="남은 잉크의 최소 상자로 다시 자른다 — '이미지 부분만 딱'")
+    ap.add_argument("--margin", type=int, default=2, help="autotrim 여백 px(기본 2)")
+    ap.add_argument("--opaque", action="store_true",
+                    help="투명 처리를 하지 않는다 — 사진·망점 삽화(배·사람 그림)는 밝은 회색이 "
+                         "바깥과 이어져 있어서 투명 처리를 하면 몸통이 뚫린다")
+    ap.add_argument("--outdir", default=None,
+                    help="결과를 넣을 폴더(기본 assets/exam-parts). 승인 전 시안은 다른 폴더에 모은다")
     a = ap.parse_args()
+
+    global PARTS_DIR, MANIFEST
+    if a.outdir:
+        PARTS_DIR = Path(a.outdir)
+        MANIFEST = PARTS_DIR / "manifest.json"
 
     img, Image, ImageDraw = load(a.src)
     x0, y0, x1, y1 = parse_box(a.box)
     d = ImageDraw.Draw(img)
     for e in a.erase:
         d.rectangle(parse_box(e), fill=255)
+    if a.keep:
+        sx, sy = [int(v) for v in a.keep.replace(",", ":").split(":")]
+        img = keep_component(img.crop((x0, y0, x1, y1)), (sx - x0, sy - y0), ImageDraw,
+                             only=a.keep_only)
+        x0, y0 = 0, 0
+        x1, y1 = img.size
+    if a.autotrim:
+        sub = img.crop((x0, y0, x1, y1))
+        bx = ink_bbox(sub, a.margin)
+        x0, y0, x1, y1 = x0 + bx[0], y0 + bx[1], x0 + bx[2], y0 + bx[3]
     img = img.crop((x0, y0, x1, y1))
     base, work = seal_edge(img, a.seal, ImageDraw)
-    rgba = alpha_outside(base, work, Image)
+    rgba = base.convert("RGBA") if a.opaque else alpha_outside(base, work, Image)
     w, h = rgba.size
     mm = (round(w / a.dpi * 25.4, 2), round(h / a.dpi * 25.4, 2))
 

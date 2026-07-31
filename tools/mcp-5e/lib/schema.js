@@ -111,7 +111,7 @@ const DEFAULTS = {
     if (kind === "axis_break") { d.slant = 22; d.style = o.style || "slash"; }
     if (kind === "device_box") { d.label = o.label || ""; d.terminals = Number.isFinite(o.terminals) ? o.terminals : 2; d.termSide = o.termSide || "bottom"; }
     if (kind === "speaker") { d.facing = o.facing || "right"; }
-    if (kind === "slit") { d.slits = o.slits === 2 ? 2 : 1; }
+    if (kind === "slit") { d.slits = Math.max(1, Math.round(o.slits || 1)); d.slitLen = 1.6; d.slitGap = 4; }
     if (kind === "bar_magnet") { d.northSide = o.northSide || "left"; }
     if (kind === "wire") {
       d.length = o.w ?? size.w; d.angle = 0; d.thickness = 1.8; d.gap = 1.8;

@@ -282,6 +282,27 @@ function makeQuantityBoxLabel(text, ax, ay, sizeMm) {
   });
 }
 
+/* 라벨 한 개를 만드는 **공용 진입점**. 어느 부품이든 사용자가 적어 넣는 라벨은 전부
+ * 이걸 거친다 — 물리량이면서 첨자 문법(_ ^)이 있으면 수식 렌더러로, 아니면 기존 정자
+ * 텍스트로 간다. 2026-07-31 이전에는 상자·선·회로만 수식 경로가 있었고 진자·광학·기구
+ * 라벨은 v_0 을 그대로 "v_0" 으로 찍었다.
+ *   text  라벨 글자 · ax, ay  글자 중심 · sizeMm  글자 크기
+ *   opts.labelType  "quantity"(기본, 물리량) | "label"(이름표 정자)
+ * 반환은 <text> 또는 수식 <g>. 붙일 곳에서 그대로 appendChild 하면 된다. */
+function makeLabelEl(text, ax, ay, sizeMm, opts = {}) {
+  const s = String(text ?? "");
+  if (!s) return null;
+  const type = opts.labelType;
+  if (type !== "label" && /[_^]/.test(s)) {
+    const el = makeQuantityBoxLabel(s, ax, ay, sizeMm);
+    if (el) return el;                       // 수식 파서가 실패하면 아래 정자 경로로 흘린다
+  }
+  return makeUprightLabel(s, ax, ay, opts.color || LABEL_INK, sizeMm, {
+    labelType: type, labelBg: opts.labelBg, haloRatio: opts.haloRatio,
+    italic: opts.italic, centerInk: opts.centerInk,
+  });
+}
+
 /* Attach a box-shape's (rect/ellipse) upright labels, if any. 안쪽(가운데)과
  * 바깥(위·아래·왼쪽·오른쪽)을 **동시에** 붙일 수 있다 — 상자 안에 물리량(m_B),
  * 상자 밖에 이름표(B)를 두는 기출 관례를 그대로 그리기 위해서다.
@@ -419,7 +440,13 @@ function renderText(obj) {
   if (obj.underline) deco.push("underline");
   if (obj.strikeout) deco.push("line-through");
   if (deco.length) el.setAttribute("text-decoration", deco.join(" "));
-  el.setAttribute("text-anchor", "start");
+  /* 세로쓰기(textOrient:"vertical") — 기출 그래프의 세로축 이름 표기.
+   * 회전(눕히기)과 다른 물건이다: 글자는 똑바로 선 채 한 자씩 아래로 쌓인다.
+   * 회전은 이미 rotation 으로 되지만, 평가원 도판의 "수심(m)" 같은 축 이름은
+   * 눕히지 않고 세워 쌓는다(docs/SURVEY_earth_20260731.md — 그래프 패널에 거의 매장).
+   * 글자마다 x 를 앵커에 맞춰야 기둥이 흔들리지 않으므로 가운데 정렬로 바꾼다. */
+  const vertical = obj.textOrient === "vertical";
+  el.setAttribute("text-anchor", vertical ? "middle" : "start");
   el.setAttribute("dominant-baseline", "hanging");
   // 흰 테두리(halo) — 기본 켜짐. 시험지 그림에서 글자가 선·채움 위에 얹히는 게 일상이라
   // 평가원 원본처럼 항상 가독성을 확보한다. 인스펙터에서 obj.halo=false로 끌 수 있다.
@@ -443,7 +470,20 @@ function renderText(obj) {
 
   // 다중 런(실제 사용자 서식)일 때만 런 단위로 그린다. 단일/빈 런은 일반 텍스트로
   // 취급해 "구간 I/II/III" 세리프(section-marker) 처리를 적용한다. (hasStyledTextRuns)
-  if (hasStyledTextRuns(obj)) {
+  if (vertical && !hasStyledTextRuns(obj)) {
+    // 줄바꿈은 무시하고 글자 단위로 쌓는다 — 세로 축 이름은 한 기둥이 원칙이다.
+    // 줄 간격 1.4배(가로 여러 줄)보다 촘촘한 1.05배를 쓴다: 가로쓰기의 줄 간격을
+    // 그대로 쓰면 글자 사이가 벌어져 축 이름이 아니라 낱글자 여러 개로 보인다.
+    const chars = Array.from((obj.text || "").replace(/\n/g, ""));
+    chars.forEach((ch, i) => {
+      const ts = document.createElementNS(SVG_NS, "tspan");
+      ts.setAttribute("x", obj.x);
+      ts.setAttribute("dy", i === 0 ? "0" : (obj.fontSize || DEFAULT_TEXT_SIZE_MM) * 1.05);
+      inheritLineFont(ts, el);
+      fillTextWithRomanRuns(ts, ch === " " ? " " : ch);
+      el.appendChild(ts);
+    });
+  } else if (hasStyledTextRuns(obj)) {
     appendStyledTextRuns(el, obj);
   } else {
     const lines = (obj.text || "").split("\n");
@@ -464,6 +504,7 @@ function renderText(obj) {
 }
 
 export {
+  makeLabelEl,
   makeUprightLabel,
   boxLabelSlots,
   withBoxLabel,

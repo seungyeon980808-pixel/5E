@@ -14,6 +14,7 @@ import {
   oDashV,
 } from "./core.js?v=1.3.0";
 import { resolveFill } from "./fill.js?v=1.3.0";
+import { makeLabelEl } from "./labels.js?v=1.3.0";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.3.0";
 
 /* ===== OPTICS: branch-A box symbol (x/y/w/h/rotation), kind-dispatched =====
@@ -156,7 +157,9 @@ function renderOptics(obj) {
   // Optional label below the bbox (toggled by showLabel, like the anglearc label).
   if (obj.showLabel && (obj.label ?? "") !== "") {
     const size = DEFAULT_TEXT_SIZE_MM;
-    cText(g, obj.x + obj.w / 2, obj.y + obj.h + size * 0.8, obj.label, size, color, null, null, obj.labelType);
+    const el = makeLabelEl(obj.label, obj.x + obj.w / 2, obj.y + obj.h + size * 0.8, size,
+      { labelType: obj.labelType });
+    if (el) g.appendChild(el);
   }
 
   const rot = obj.rotation ?? 0;
@@ -468,7 +471,10 @@ function drawDeviceBox(g, obj, sw, color) {
   }
   if ((obj.label ?? "") !== "") {
     const size = obj.labelSize || Math.min(h * 0.34, w / Math.max(String(obj.label).length, 1) * 0.9, 4.2);
-    cText(g, x + w / 2, y + h / 2, obj.label, size, color, null, null, obj.labelType ?? "label");
+    // 장치 이름("전원 장치")은 정자가 기본이지만, R_1 처럼 첨자를 적으면 수식으로 간다.
+    const el = makeLabelEl(obj.label, x + w / 2, y + h / 2, size,
+      { labelType: obj.labelType ?? (/[_^]/.test(String(obj.label)) ? "quantity" : "label") });
+    if (el) g.appendChild(el);
   }
 }
 
@@ -528,21 +534,46 @@ function drawPhototube(g, obj, sw, color) {
   oLine(g, cx + sgn * R * 0.45, cy, cx + sgn * R * 0.45, y + h, sw, color);
 }
 
-/* 슬릿 판 — 세로 벽에 틈 1개(단일) 또는 2개(이중). 기출 9회. 틈으로 뒤가 보여야
- * 하므로 벽은 채운 사각형 조각들로 그린다. slits 1|2, gapRatio 틈 크기(기본 0.09). */
+/* 슬릿 판 — 세로 벽에 틈이 뚫린 판. 기출 9회(단일·이중 슬릿 간섭).
+ *
+ * 세 값을 사용자가 직접 정한다(2026-07-31 교사 지시):
+ *   slits    틈 개수 (1 이상). 1이면 단일, 2면 이중 슬릿
+ *   slitLen  틈 하나의 길이 mm (기본 1.6)
+ *   slitGap  이웃한 틈의 **중심 간 거리** mm (기본 4). 개수가 1이면 쓰이지 않는다
+ * 틈 무리는 판의 세로 가운데에 모인다. 판 밖으로 넘치면 판 높이에 맞춰 줄인다 —
+ * 사용자가 개수를 올리다가 그림이 깨지지 않게.
+ *
+ * 틈으로 뒤가 보여야 하므로 판은 '채운 사각 조각'들로 그린다(뚫린 구멍이 아니라
+ * 남은 살을 그리는 방식). 그래서 뒤의 광선·격자가 틈으로 그대로 비친다. */
+function slitGeom(obj) {
+  const h = obj.h;
+  const n = Math.max(1, Math.round(obj.slits || 1));
+  let len = Math.max(obj.slitLen ?? 1.6, 0.2);
+  let gap = Math.max(obj.slitGap ?? 4, len + 0.2);        // 틈끼리 겹치지 않게
+  const span = n === 1 ? len : gap * (n - 1) + len;        // 무리 전체 높이
+  if (span > h * 0.94 && span > 0) {                       // 판을 넘치면 비율대로 축소
+    const k = (h * 0.94) / span;
+    len *= k; gap *= k;
+  }
+  return { n, len, gap };
+}
+
 function drawSlit(g, obj, sw, color) {
   const { x, y, w, h } = obj;
-  const gap = Math.max(h * (obj.gapRatio || 0.09), 1.2);
-  const cxs = obj.slits === 2 ? [y + h * 0.38, y + h * 0.62] : [y + h * 0.5];
+  const { n, len, gap } = slitGeom(obj);
+  const cy = y + h / 2;
+  const first = cy - (n === 1 ? 0 : (gap * (n - 1)) / 2);
+  const holes = [];
+  for (let i = 0; i < n; i++) {
+    const c = first + gap * i;
+    holes.push([c - len / 2, c + len / 2]);
+  }
   let cur = y;
   const segs = [];
-  for (const cyy of cxs) {
-    segs.push([cur, cyy - gap / 2]);
-    cur = cyy + gap / 2;
-  }
+  for (const [a, b] of holes) { segs.push([cur, a]); cur = b; }
   segs.push([cur, y + h]);
   for (const [a, b] of segs) {
-    if (b - a < 0.05) continue;
+    if (b - a < 0.03) continue;
     const r = document.createElementNS(SVG_NS, "rect");
     r.setAttribute("x", x); r.setAttribute("y", a);
     r.setAttribute("width", w); r.setAttribute("height", b - a);

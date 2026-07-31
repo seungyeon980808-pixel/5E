@@ -1,7 +1,7 @@
 /* ===== RENDER/PENDULUM: simple pendulum symbol + geometry/bbox helpers ===== */
 
 import { SVG_NS, grayHex } from "./core.js?v=1.3.0";
-import { makeUprightLabel } from "./labels.js?v=1.3.0";
+import { makeLabelEl } from "./labels.js?v=1.3.0";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.3.0";
 
 /* ===== SIMPLE PENDULUM (native object; pivot = p1, bob center = p2) =====
@@ -26,10 +26,13 @@ export function pendulumGeometry(obj) {
 // Bob radius scales with the pendulum length, clamped to a sensible mm range so
 // short pendulums stay visible and long ones don't grow an oversized bob. An
 // explicit stored bobRadius (e.g. after a future manual edit) always wins.
-export function pendulumBobRadius(obj, L = null) {
+export const PENDULUM_BOB_RADIUS_MM = 2;      // 교사 결정(2026-07-31): 추 반지름 기본 2mm
+
+export function pendulumBobRadius(obj) {
+  // 예전에는 실 길이에 비례해 2~8mm 로 키웠는데, 기출 도판의 추는 길이와 무관하게
+  // 작고 일정하다. 저장된 bobRadius 가 있으면 그것이 우선(사용자가 조절한 값).
   if (typeof obj.bobRadius === "number" && obj.bobRadius > 0) return obj.bobRadius;
-  const len = L == null ? Math.hypot((obj.p2?.x ?? 0) - (obj.p1?.x ?? 0), (obj.p2?.y ?? 0) - (obj.p1?.y ?? 0)) : L;
-  return Math.max(2, Math.min(8, len * 0.16));
+  return PENDULUM_BOB_RADIUS_MM;
 }
 
 function renderPendulum(obj) {
@@ -108,7 +111,9 @@ function renderPendulum(obj) {
     if (nx > 0) { nx = -nx; ny = -ny; }     // default to the left of the string
     const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
     const off = size * 0.9;
-    const lbl = makeUprightLabel(obj.lengthLabel, mx + nx * off, my + ny * off, color, size, { labelType: "quantity", labelBg: obj.labelBg, haloRatio: obj.haloRatio });
+    // 라벨은 공용 진입점을 탄다 — L_B 의 B 가 아래첨자로 나와야 한다(2026-07-31).
+    const lbl = makeLabelEl(obj.lengthLabel, mx + nx * off, my + ny * off, size,
+      { labelType: obj.labelType || "quantity", labelBg: obj.labelBg, haloRatio: obj.haloRatio });
     if (lbl) g.appendChild(lbl);
   }
 
