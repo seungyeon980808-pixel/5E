@@ -31,7 +31,7 @@ import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.3.0";
 import { snapKey } from "../platform.js?v=1.3.0";
 import {
   isSpaceHeld,
-  makeLine, makeCircuit, makePolyline, makeCurve, isCommittable,
+  makeLine, makeCircuit, makePolyline, makeCurve, isCommittable, getSymbolProps,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
 } from "../tools.js?v=1.3.0";
 
@@ -419,6 +419,14 @@ function commitSeries() {
 // Push a finished click-to-click shape through the SAME store path as the drag
 // flow (id + z-order assigned on commit), then auto-return to V (DESIGN 4-3).
 function commitClickShape(shape) {
+  /* 팔레트가 지정한 추가 필드를 얹는다(전선 기호·등치선 값·산점 등).
+   * 드래그로 그리는 도형은 tools.js makeShape 안에서 이미 같은 일을 한다 —
+   * 클릭배치만 commit이 이 파일에 있어 빠져 있었다. 선·꺾은선·곡선에만 적용해
+   * 라벨러·각도호처럼 자기 필드를 스스로 채우는 것들을 건드리지 않는다. */
+  if (shape && (shape.type === "line" || shape.type === "polyline" || shape.type === "curve")) {
+    const props = getSymbolProps();
+    if (props) Object.assign(shape, props);
+  }
   _state.update((s) => {
     // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
     const snap = JSON.parse(JSON.stringify(s.objects));

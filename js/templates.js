@@ -251,6 +251,85 @@ export const TEMPLATES = {
   // 포물선: 두 번 끄는 게 아니라 **바닥의 출발점 → 도달점**을 끈다. 깊이 방향으로 끌면
   // 안쪽으로 날아가는 3D 궤적이 된다(바닥 점선이 그 느낌을 만든다).
   parabola:       { kind: "shape", category: "역학", hidden: true, label: "포물선 궤적", keywords: ["포물선", "궤적", "포사체", "던지기", "비스듬히", "parabola", "projectile", "trajectory"], create: { tool: "PARABOLA" } },
+
+  /* ===== 생명과학 부품 (2026-07-31) =====
+   * 기출 69장 조사(docs/SURVEY_bio_20260731.md)에서 나온 병목을 부품으로 만든 것.
+   * 카테고리 이름은 subject-objects.js 의 생명과학 아코디언 이름과 **글자까지 같아야**
+   * 팔레트에 나온다(templates.js 위쪽 주석의 그 함정 — 지금도 axis_break 가 그래서 안 보인다). */
+  bilayer:    { kind: "shape", category: "세포학", label: "인지질 이중층", keywords: ["인지질", "이중층", "세포막", "막", "지질", "bilayer", "membrane", "lipid"], create: { tool: "BILAYER" } },
+  neuron:     { kind: "shape", category: "동식물학", label: "뉴런", keywords: ["뉴런", "신경", "신경세포", "축삭", "가지돌기", "시냅스", "neuron", "axon"], create: { tool: "NEURON" } },
+  chromosome: { kind: "shape", category: "유전학", label: "염색체", keywords: ["염색체", "염색분체", "동원체", "상동", "대립유전자", "chromosome", "chromatid"], create: { tool: "CHROMOSOME" } },
+  pedigree:   { kind: "shape", category: "유전학", label: "가계도", keywords: ["가계도", "가계", "유전", "세대", "발현", "보인자", "pedigree"], create: { tool: "PEDIGREE" } },
+  // 중괄호·범례는 생명 전용이 아니다(물리·화학·지구에서도 쓴다). 지금은 생명 패널에만
+  // 노출하고, 다른 과목 패널을 손댈 때 같은 카테고리를 그쪽 cats 에도 넣으면 된다.
+  brace:      { kind: "shape", category: "표시·주석", label: "중괄호", keywords: ["중괄호", "괄호", "묶음", "구획", "brace", "bracket"], create: { tool: "BRACE" } },
+  legend:     { kind: "shape", category: "표시·주석", label: "범례", keywords: ["범례", "기호 설명", "legend", "key"], create: { tool: "LEGEND" } },
+
+  /* ===== 화학 부품 (2026-07-31) =====
+   * 기출 280장 전수 분해(docs/PART_FREQUENCY_CHEM.md)에서 나온 대기열을 부품으로 만든 것.
+   * 카테고리 이름은 subject-objects.js 의 화학 아코디언 이름과 **글자까지 같아야** 팔레트에 나온다.
+   * 용기는 대기열 1~5위를 한 타입으로 덮으므로(93장) kind 별로 버튼을 따로 낸다. */
+  vessel_beaker:   { kind: "shape", category: "실험 기구", label: "비커", keywords: ["비커", "beaker", "용기", "유리"], create: { tool: "VESSEL", props: { kind: "beaker", text: "", hasPiston: false, liquid: 0.45 } } },
+  vessel_flask:    { kind: "shape", category: "실험 기구", label: "삼각플라스크", keywords: ["삼각플라스크", "플라스크", "flask"], create: { tool: "VESSEL", props: { kind: "flask", text: "", hasPiston: false, liquid: 0.4 } } },
+  vessel_tube:     { kind: "shape", category: "실험 기구", label: "시험관", keywords: ["시험관", "test tube", "튜브"], create: { tool: "VESSEL", props: { kind: "test_tube", text: "", hasPiston: false, liquid: 0.45 } } },
+  vessel_cylinder: { kind: "shape", category: "실험 기구", label: "눈금실린더", keywords: ["눈금실린더", "메스실린더", "cylinder", "부피"], create: { tool: "VESSEL", props: { kind: "cylinder_graduated", text: "", hasPiston: false, liquid: 0.5, hasTicks: true } } },
+  vessel_funnel:   { kind: "shape", category: "실험 기구", label: "깔때기", keywords: ["깔때기", "funnel", "거름", "여과"], create: { tool: "VESSEL", props: { kind: "funnel", text: "", hasPiston: false, liquid: 0 } } },
+  vessel_utube:    { kind: "shape", category: "실험 기구", label: "U자관", keywords: ["U자관", "유자관", "u tube", "수은"], create: { tool: "VESSEL", props: { kind: "u_tube", text: "", hasPiston: false, liquid: 0.4 } } },
+  vessel_burette:  { kind: "shape", category: "실험 기구", label: "뷰렛", keywords: ["뷰렛", "burette", "적정"], create: { tool: "VESSEL", props: { kind: "burette", text: "", hasPiston: false, liquid: 0.6, hasTicks: true } } },
+  vessel_round:    { kind: "shape", category: "실험 기구", label: "강철 용기", keywords: ["강철 용기", "원형 용기", "구형", "기체"], create: { tool: "VESSEL", props: { kind: "round", hasPiston: false, liquid: 0 } } },
+  vessel_piston:   { kind: "shape", category: "실험 기구", label: "실린더+피스톤", keywords: ["실린더", "피스톤", "기체", "부피", "보일"], create: { tool: "VESSEL", props: { kind: "box", liquid: 0 } } },
+  electrode:  { kind: "shape", category: "실험 기구", label: "전극·전지", keywords: ["전극", "전지", "갈바니", "전기분해", "염다리", "electrode"], create: { tool: "ELECTRODE" } },
+
+  chem_atom:  { kind: "shape", category: "원자·주기율", label: "원자 구슬", keywords: ["원자", "구슬", "입자", "atom"], create: { tool: "CHEMMODEL", props: { kind: "atom" } } },
+  chem_shell: { kind: "shape", category: "원자·주기율", label: "전자 껍질", keywords: ["전자 껍질", "껍질", "전자 배치", "보어", "shell"], create: { tool: "CHEMMODEL", props: { kind: "shell" } } },
+  chem_lewis: { kind: "shape", category: "원자·주기율", label: "전자점식", keywords: ["전자점식", "루이스", "원자가 전자", "lewis"], create: { tool: "CHEMMODEL", props: { kind: "lewis" } } },
+  orbital_box:{ kind: "shape", category: "원자·주기율", label: "오비탈 상자", keywords: ["오비탈", "상자", "전자 배치", "스핀", "아우프바우"], create: { tool: "ORBITAL", props: { kind: "box" } } },
+  orbital_sh: { kind: "shape", category: "원자·주기율", label: "오비탈 모양", keywords: ["오비탈", "s 오비탈", "p 오비탈", "아령", "orbital"], create: { tool: "ORBITAL", props: { kind: "shape" } } },
+  periodic:   { kind: "shape", category: "원자·주기율", label: "주기율표", keywords: ["주기율표", "주기", "족", "원소", "periodic"], create: { tool: "PERIODIC" } },
+
+  chem_molecule: { kind: "shape", category: "결합·분자", label: "분자 모형", keywords: ["분자", "모형", "결합각", "구조", "molecule"], create: { tool: "CHEMMODEL", props: { kind: "molecule" } } },
+  chem_lattice:  { kind: "shape", category: "결합·분자", label: "결정 격자", keywords: ["결정", "격자", "단위세포", "면심", "체심", "흑연"], create: { tool: "CHEMMODEL", props: { kind: "lattice" } } },
+  bondgroup:     { kind: "shape", category: "결합·분자", label: "구조식", keywords: ["구조식", "결합", "이중결합", "삼중결합", "bond"], create: { tool: "BONDGROUP" } },
+
+  particlebox: { kind: "shape", category: "물질의 상태", label: "입자 상자", keywords: ["입자", "상자", "고체", "액체", "기체", "상태 변화", "확산"], create: { tool: "PARTICLEBOX" } },
+
+  chart_bar:  { kind: "shape", category: "반응·그래프", label: "막대그래프", keywords: ["막대", "막대그래프", "bar"], create: { tool: "CHEMCHART", props: { kind: "bar" } } },
+  chart_pie:  { kind: "shape", category: "반응·그래프", label: "원그래프", keywords: ["원그래프", "파이", "비율", "조성", "pie"], create: { tool: "CHEMCHART", props: { kind: "pie", values: "1,3", names: "X,Y" } } },
+  graph_ene:  { kind: "shape", category: "반응·그래프", label: "반응 에너지", keywords: ["반응 에너지", "엔탈피", "활성화 에너지", "발열", "흡열"], create: { tool: "CHEMGRAPH", props: { kind: "energy" } } },
+  graph_tit:  { kind: "shape", category: "반응·그래프", label: "적정 곡선", keywords: ["적정", "중화", "당량점", "pH", "titration"], create: { tool: "CHEMGRAPH", props: { kind: "titration" } } },
+  graph_pha:  { kind: "shape", category: "반응·그래프", label: "상평형 그림", keywords: ["상평형", "삼중점", "임계점", "phase"], create: { tool: "CHEMGRAPH", props: { kind: "phase" } } },
+
+  axisbreak:  { kind: "shape", category: "표시·주석", label: "축 생략", keywords: ["축 생략", "물결", "생략 기호", "break"], create: { tool: "AXISBREAK" } },
+
+  /* ===== 지구과학 (2026-07-31) — 규격은 docs/EARTH_PARTS_SPEC.md =====
+   * 전용 타입을 만들지 않았다. 전선·등치선·산점은 본질이 곡선·꺾은선이라
+   * 기존 도구(C 곡선 · P 꺾은선 · L 선 · RECT)에 필드만 얹는다(props).
+   * 그래서 만들고 나면 꼭짓점을 찝어 구부리는 동작이 그대로 따라온다.
+   * 필드가 실제로 붙는 자리: tools.js makeShape(드래그) / tools/click-placement.js
+   * commitClickShape(클릭배치). */
+
+  // ----- 지질학: 암상 무늬는 '무슨 암석인가'를 말하는 정보다(장식이 아니다) -----
+  strata_lime: { kind: "shape", category: "지질학", label: "석회암 층", keywords: ["석회암", "지층", "벽돌", "단면", "limestone"], create: { tool: "RECT", props: { fillStyle: "brick", fillLevel: 0 } } },
+  strata_volc: { kind: "shape", category: "지질학", label: "화산암 층", keywords: ["화산암", "응회암", "지층", "단면", "volcanic"], create: { tool: "RECT", props: { fillStyle: "vees", fillLevel: 0 } } },
+  strata_plut: { kind: "shape", category: "지질학", label: "심성암 층", keywords: ["심성암", "화강암", "관입", "지층", "granite"], create: { tool: "RECT", props: { fillStyle: "plus", fillLevel: 0 } } },
+  strata_shale:{ kind: "shape", category: "지질학", label: "셰일 층", keywords: ["셰일", "이암", "층리", "지층", "shale"], create: { tool: "RECT", props: { fillStyle: "hlines", fillLevel: 0 } } },
+  // 부정합면 — 물결치는 접촉면. 곡선을 굵게 그어 지층 경계로 쓴다.
+  unconformity:{ kind: "shape", category: "지질학", label: "부정합면", keywords: ["부정합", "접촉면", "물결", "경계", "unconformity"], create: { tool: "C", props: { strokeWidth: 0.4 } } },
+
+  // ----- 해양학 -----
+  isobath:    { kind: "shape", category: "해양학", label: "등수심선", keywords: ["등수심선", "등치선", "수심", "해저", "isobath"], create: { tool: "C", props: { inlineLabel: "100", inlineLabelT: 0.5 } } },
+  scalebar:   { kind: "shape", category: "해양학", label: "축척 막대", keywords: ["축척", "스케일바", "지도", "거리", "scale"], create: { tool: "L", props: { lineMode: "scaleBar", scaleBarVariant: "bars", dimensionLabel: "0 - 200 km" } } },
+
+  // ----- 기상학: 전선 기호 4종 + 등압선 -----
+  front_cold: { kind: "shape", category: "기상학", label: "한랭 전선", keywords: ["한랭전선", "전선", "삼각", "일기도", "cold front"], create: { tool: "C", props: { frontKind: "cold", frontGap: 7 } } },
+  front_warm: { kind: "shape", category: "기상학", label: "온난 전선", keywords: ["온난전선", "전선", "반원", "일기도", "warm front"], create: { tool: "C", props: { frontKind: "warm", frontGap: 7 } } },
+  front_stat: { kind: "shape", category: "기상학", label: "정체 전선", keywords: ["정체전선", "장마", "전선", "일기도", "stationary"], create: { tool: "C", props: { frontKind: "stationary", frontGap: 7 } } },
+  front_occl: { kind: "shape", category: "기상학", label: "폐색 전선", keywords: ["폐색전선", "전선", "일기도", "occluded"], create: { tool: "C", props: { frontKind: "occluded", frontGap: 7 } } },
+  isobar:     { kind: "shape", category: "기상학", label: "등압선", keywords: ["등압선", "등치선", "기압", "일기도", "isobar"], create: { tool: "C", props: { inlineLabel: "1000", inlineLabelT: 0.5 } } },
+
+  // ----- 천문학: 산점(H-R도·은하 분포) -----
+  scatter:    { kind: "shape", category: "천문학", label: "산점", keywords: ["산점", "산점도", "H-R도", "분포", "별", "scatter"], create: { tool: "P", props: { markerOnly: true } } },
+  scatter_o:  { kind: "shape", category: "천문학", label: "산점(속 빈 원)", keywords: ["산점", "빈 원", "구분", "H-R도", "scatter"], create: { tool: "P", props: { markerOnly: true, markerOpen: true } } },
 };
 
 /* ===== INSTANTIATE: atomic creation entry point ===== */
@@ -290,7 +369,12 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "열역학", "표시·주석"];
+const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "열역학",
+  // 생명과학 (2026-07-31)
+  "세포학", "동식물학", "유전학",
+  // 지구과학 (2026-07-31) — docs/EARTH_PARTS_SPEC.md
+  "지질학", "해양학", "기상학", "천문학",
+  "표시·주석"];
 
 /* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
  *
@@ -353,6 +437,21 @@ const SOLID3D_ICON_BOX = {
 };
 
 // Build the data object that the REAL renderer turns into the icon.
+/* 화학 부품 아이콘 상자 — 도구코드별 {타입, 크기, 기본필드, 아이콘 전용 덮어쓰기}.
+ * iconOnly 는 팔레트 props 보다 뒤에 얹혀 **아이콘에서만** 글자를 지운다(16px 가독성). */
+const CHEM_ICON_BOX = {
+  VESSEL:      { type: "vessel", w: 18, h: 22, props: { kind: "box", liquid: 0.4, hasPiston: false }, iconOnly: { text: "", hasStopcock: false } },
+  CHEMMODEL:   { type: "chemmodel", w: 22, h: 22, props: { kind: "atom", symbol: "O" }, iconOnly: { showGeoLabel: false } },
+  PARTICLEBOX: { type: "particlebox", w: 20, h: 20, props: { state: "gas", count: 9, particleRadius: 1.4 } },
+  ORBITAL:     { type: "orbital", w: 22, h: 22, props: { kind: "shape", orbital: "pz" }, iconOnly: { showSymbol: false, electrons: 4, showOrbitalLabels: false } },
+  BONDGROUP:   { type: "bondgroup", w: 24, h: 16, props: { molecule: "CO2", bondLength: 7 }, iconOnly: { showKoreanName: false } },
+  CHEMCHART:   { type: "chemchart", w: 22, h: 20, props: { kind: "bar", values: "2,4,3", names: "" }, iconOnly: { xTitle: "", yTitle: "", showGuide: false, showRatio: false } },
+  AXISBREAK:   { type: "axisbreak", w: 22, h: 6, props: { dir: "horizontal", amp: 0.8, gap: 2, period: 4 } },
+  CHEMGRAPH:   { type: "chemgraph", w: 24, h: 20, props: { kind: "energy" }, iconOnly: { showMarks: false, showRegionNames: false, showEqPoint: false } },
+  ELECTRODE:   { type: "electrode", w: 24, h: 20, props: {}, iconOnly: { solution: "", leftLabel: "", rightLabel: "", showElectronArrow: false } },
+  PERIODIC:    { type: "periodic", w: 26, h: 13, props: { periods: 3 }, iconOnly: { showZ: false, metalShade: true } },
+};
+
 function iconSampleObject(id, def) {
   // axes + anglearc carry a make() → reuse the real geometry verbatim.
   if (typeof def.make === "function") {
@@ -420,6 +519,69 @@ function iconSampleObject(id, def) {
       strokeLevel: 0, strokeWidth: 0.6, showLabel: false,
     };
   }
+  /* ----- 생명과학 부품 아이콘 표본 (docs/BIO_PARTS_SPEC.md) -----
+   * 아이콘은 렌더러가 그린 그림을 그대로 축소한 것이므로, 16px에서 알아볼 수 있게
+   * "가장 그 부품다운" 값을 고른다(개수는 줄이고 굵기는 키운다). */
+  if (c.tool === "BRACE") {
+    return {
+      type: "brace", p1: { x: 0, y: -11 }, p2: { x: 0, y: 11 },
+      depth: 6, flipSide: false, showLabel: false,
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  if (c.tool === "CHROMOSOME") {
+    return {
+      type: "chromosome", p1: { x: 0, y: -11 }, p2: { x: 0, y: 11 },
+      chromatidWidth: 4.4, chromatidGap: 2.4, centromere: 0.32,
+      fillStyle: "solid", fillLevel: 255, homologPair: false, showLabels: false,
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  if (c.tool === "BILAYER") {
+    return {
+      type: "bilayer", p1: { x: -12, y: 0 }, p2: { x: 12, y: 0 },
+      unitCount: 6, thickness: 11, headRadius: 2, proteins: [],
+      labelOuter: "", labelInner: "",
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  if (c.tool === "NEURON") {
+    return {
+      type: "neuron", p1: { x: -8, y: 0 }, p2: { x: 13, y: 0 },
+      somaRadius: 4.2, dendrites: 4, terminals: 3, showStim: false,
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  if (c.tool === "LEGEND") {
+    return {
+      type: "legend", x: -11, y: -8, w: 22, h: 16,
+      items: [{ sample: "solid", text: "" }, { sample: "dash", text: "" }],
+      direction: "vertical", border: true, padding: 2, sampleWidth: 13, fontSize: 2.8,
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  if (c.tool === "PEDIGREE") {
+    return {
+      type: "pedigree", x: -12, y: -9, w: 24, h: 18,
+      gen2Kids: 2, gen3Kids: 0, gen3Parent: 0, symbolRadius: 3,
+      showNumbers: false, affected: "3", affectedFill: "hatch", carrier: "",
+      strokeLevel: 0, strokeWidth: 0.6,
+    };
+  }
+  /* 화학 부품 10종 — 팔레트 아이콘. 16px 안에서 읽히도록 글자·부속을 덜어 낸다.
+   * (docs/CHEM_PARTS_SPEC.md) props 를 마지막에 얹어 팔레트가 고른 갈래가 이긴다. */
+  if (CHEM_ICON_BOX[c.tool]) {
+    const b = CHEM_ICON_BOX[c.tool];
+    return {
+      type: b.type,
+      x: -b.w / 2, y: -b.h / 2, w: b.w, h: b.h, rotation: 0,
+      strokeLevel: 0, strokeWidth: 0.6,
+      ...b.props,
+      ...(c.props || {}),
+      // 아이콘에서는 글자를 빼거나 줄인다 — 16px에서 뭉개져 검은 덩어리로 보인다.
+      ...(b.iconOnly || {}),
+    };
+  }
   if (c.tool === "SOLID3D") {
     const b = SOLID3D_ICON_BOX[id] || { w: 20, h: 18, depth: 6 };
     // _outline: 면을 비운 윤곽선 모드. monochrome()이 fill을 currentColor로 바꾸기 때문에
@@ -433,6 +595,46 @@ function iconSampleObject(id, def) {
       axisLabels: false,
       // 팔레트가 지정한 갈래(예: 평면 위 좌표축의 variant)를 얹는다 — 안 얹으면
       // 두 버튼이 똑같은 아이콘으로 보인다.
+      ...(c.props || {}),
+    };
+  }
+  /* ----- 지구과학 부품 아이콘 표본 (docs/EARTH_PARTS_SPEC.md) -----
+   * 전용 타입이 없어 곡선·꺾은선·선·사각형 위에 필드를 얹은 것들이라, 아이콘도
+   * 같은 타입의 표본에 그 필드를 그대로 얹어 만든다. 16px에서 알아보게 기호는
+   * 크고 성기게(frontGap↑ frontSize↑), 값 라벨은 짧게 둔다. */
+  if (c.tool === "C") {
+    return {
+      type: "curve",
+      points: [{ x: -13, y: 4 }, { x: -2, y: -4 }, { x: 13, y: 3 }],
+      closed: false, strokeLevel: 0, strokeWidth: 0.8,
+      ...(c.props || {}),
+      // 아이콘용 덮어쓰기 — 실제 기본값(간격 7mm)이면 16px 안에 기호가 뭉친다.
+      ...(c.props && c.props.frontKind ? { frontGap: 11, frontSize: 5 } : {}),
+      ...(c.props && c.props.inlineLabel ? { inlineLabel: "10", inlineLabelSize: 5 } : {}),
+    };
+  }
+  if (c.tool === "P" && c.props && c.props.markerOnly) {
+    return {
+      type: "polyline",
+      points: [{ x: -11, y: 5 }, { x: -4, y: -5 }, { x: 3, y: 2 }, { x: 11, y: -6 }],
+      strokeLevel: 0, strokeWidth: 0.5, markerSize: 5,
+      ...(c.props || {}),
+    };
+  }
+  if (c.tool === "L" && c.props && c.props.lineMode === "scaleBar") {
+    return {
+      type: "line", p1: { x: -12, y: 3 }, p2: { x: 12, y: 3 },
+      strokeLevel: 0, strokeWidth: 0.8,
+      ...(c.props || {}),
+      dimensionLabel: "",   // 16px에서 글자는 뭉개진다 — 막대 모양만 보인다
+    };
+  }
+  if (c.tool === "RECT" && c.props && c.props.fillStyle) {
+    return {
+      type: "rect", x: -11, y: -8, w: 22, h: 16, rotation: 0,
+      strokeLevel: 0, strokeWidth: 0.6, fillNone: false,
+      // 무늬 타일을 키워야 16px 안에서 벽돌·v·+·줄이 구분된다(기본 3.2mm면 뭉갠다).
+      fillTile: 6,
       ...(c.props || {}),
     };
   }

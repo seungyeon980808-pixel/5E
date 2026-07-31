@@ -19,7 +19,7 @@ import { setSnapPreview, pendulumBBox } from "./render.js?v=1.3.0";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=1.3.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.3.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
-         ENDPOINT_HANDLE_TYPES } from "./object-types.js?v=1.3.0";
+         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.3.0";
 
 import { snapKey, modKey } from "./platform.js?v=1.3.0";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
@@ -207,9 +207,18 @@ function lineAngleDeg(obj) {
   return Math.atan2(obj.p2.y - obj.p1.y, obj.p2.x - obj.p1.x) * 180 / Math.PI;
 }
 
+/* p1/p2 두 점 계열 목록 — 정본은 object-types.js의 endpointHandles 다.
+ * 예전엔 이 목록이 이 파일에만 네 벌 손으로 복사돼 있었고, 포물선을 추가할 때 한 벌을
+ * 빠뜨려 "만들고 나면 끝점을 못 고치는" 사고가 났다(object-types.js:113 주석). 생명과학
+ * 부품 4종을 더하며 같은 사고가 재발하지 않도록 파생 Set으로 바꾼다.
+ *
+ * 각도 계열만 labeler 를 뺀다: labeler 는 지시선이라 "객체의 각도"라는 개념을 쓰지
+ * 않았고(기존 동작), 여기에 넣으면 회전 UI가 새로 생겨 동작이 바뀐다. */
+const P1P2_ANGLE_TYPES = new Set([...ENDPOINT_HANDLE_TYPES].filter((t) => t !== "labeler"));
+
 function objectAngleDeg(obj) {
   if (!obj) return null;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola" || obj.type === "groundarc") && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if (P1P2_ANGLE_TYPES.has(obj.type) && obj.p1 && obj.p2) return lineAngleDeg(obj);
   if (typeof obj.rotation === "number") return obj.rotation;
   return null;
 }
@@ -225,7 +234,7 @@ function unitForAngle(deg) {
 
 function applyAngleDeg(obj, deg) {
   if (!obj || obj.locked || obj.positionLocked) return false;
-  if ((obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola" || obj.type === "groundarc") && obj.p1 && obj.p2) {
+  if (P1P2_ANGLE_TYPES.has(obj.type) && obj.p1 && obj.p2) {
     const mx = (obj.p1.x + obj.p2.x) / 2;
     const my = (obj.p1.y + obj.p2.y) / 2;
     const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
@@ -263,7 +272,7 @@ const STYLE_PROP_KEYS = [
   // 면(fill)
   "fillLevel", "fillNone", "fillStyle", "opacity",
   // 선 스타일 / 점선(dash) / 화살표
-  "dashLength", "dashGap", "partialDash", "dashRatio", "dashFlip",
+  "dashLength", "dashGap", "dashPattern", "partialDash", "dashRatio", "dashFlip",
   "lineMode", "lineStyle", "arrowVariant", "arrowHead", "dimensionVariant",
   // 라벨 스타일(내용 텍스트 제외 — 종류/위치/크기/표시 여부)
   "labelType", "labelPos", "labelSize", "labelShow", "labelFlip", "showLabel",
@@ -295,6 +304,14 @@ function applyStyleProps(obj, props) {
   let changed = false;
   for (const k of STYLE_PROP_KEYS) {
     if (!Object.prototype.hasOwnProperty.call(props, k)) continue;
+    // dashPattern(일점쇄선 등)은 나중에 생긴 필드라 대상에 키가 아예 없는 게 정상이다.
+    // 점선을 지원하는 객체(=dashLength를 가진 객체)면 새로 만들어 준다.
+    if (k === "dashPattern" && !Object.prototype.hasOwnProperty.call(obj, k)) {
+      if (!Object.prototype.hasOwnProperty.call(obj, "dashLength")) continue;
+      obj.dashPattern = Array.isArray(props[k]) ? props[k].slice() : props[k];
+      changed = true;
+      continue;
+    }
     if (!Object.prototype.hasOwnProperty.call(obj, k)) continue; // 없는 속성은 건너뜀
     const next = props[k];
     if (next && typeof next === "object") {
@@ -305,6 +322,14 @@ function applyStyleProps(obj, props) {
       obj[k] = next;
       changed = true;
     }
+  }
+  // 원본이 2값 점선(패턴 없음)인데 대상에 옛 dashPattern이 남아 있으면 지운다 —
+  // 안 그러면 실선/점선 스타일을 붙여도 일점쇄선이 그대로 살아남는다(상호배타).
+  if (Object.prototype.hasOwnProperty.call(props, "dashLength")
+      && !Object.prototype.hasOwnProperty.call(props, "dashPattern")
+      && Object.prototype.hasOwnProperty.call(obj, "dashPattern")) {
+    delete obj.dashPattern;
+    changed = true;
   }
   return changed;
 }
@@ -356,7 +381,7 @@ function clipboardBBox(objs) {
       acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
     } else if (o.type === "text" || o.type === "formula") {
       acc(o.x, o.y);
-    } else if (o.type === "line" || o.type === "circuit" || o.type === "labeler" || o.type === "pendulum" || o.type === "spring" || o.type === "chargefield" || o.type === "fieldlines" || o.type === "standingwave" || o.type === "parabola" || o.type === "groundarc") {
+    } else if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
     } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
@@ -398,18 +423,24 @@ function mapFgElements(obj, orig, fn) {
 
 /* ----- set object position from original + delta (avoids float drift) ----- */
 function applyDelta(obj, orig, dx, dy) {
-  if (obj.type === "rect" || obj.type === "ellipse" ||
-      obj.type === "triangle" || obj.type === "text" || obj.type === "formula" ||
-      obj.type === "image" || obj.type === "svgAsset" ||
-      obj.type === "axes" || obj.type === "coordplane" || obj.type === "anglearc" || obj.type === "rightangle" ||
-      obj.type === "optics" || obj.type === "apparatus" || obj.type === "gauge" || obj.type === "solid3d") {
+  // x/y 하나로 움직이는 계열 = 크기박스(SIZE_TYPES) + 실측 텍스트(text·formula) + 각도호·직각.
+  //
+  // 예전엔 이 조건이 타입 이름 15개를 손으로 나열한 목록이었다. object-types.js가 만들어진
+  // 이유가 바로 이 패턴인데(그 파일 머리말: "목록 하나를 빠뜨리면 **조용한** 버그가 난다")
+  // 여기만 리터럴로 남아 있었다. 그 결과 크기박스로 새로 추가한 타입들이 이 분기에
+  // 걸리지 못하고 **아무 분기에도 해당되지 않아 그냥 안 움직였다** — 오류도 안 났다.
+  // 실제로 생명과학 legend·pedigree(2026-07-31)가 이미 이 버그를 갖고 있었고,
+  // 화학 부품 10종을 넣으면서 드러났다. 이제 파생 Set을 쓰므로 새 크기박스 타입은
+  // object-types.js에 행을 추가하는 것만으로 자동으로 움직인다.
+  if (SIZE_TYPES.has(obj.type) || TEXT_MEASURED_TYPES.has(obj.type) ||
+      obj.type === "anglearc" || obj.type === "rightangle") {
     // (groundarc·parabola는 아래 p1/p2 분기에서 처리된다)
     // anglearc moves by its vertex (x,y); radius/angles are unaffected.
     // coordplane moves by its box (x,y); dependent funcgraphs are re-offset by the
     // caller (step 5 재샘플 결합) — the plane itself just translates here.
     obj.x = orig.x + dx;
     obj.y = orig.y + dy;
-  } else if (obj.type === "line" || obj.type === "circuit" || obj.type === "labeler" || obj.type === "pendulum" || obj.type === "spring" || obj.type === "chargefield" || obj.type === "fieldlines" || obj.type === "standingwave" || obj.type === "parabola" || obj.type === "groundarc") {
+  } else if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
     // Circuit/labeler/pendulum move by translating BOTH endpoints (pendulum:
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
@@ -574,10 +605,18 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
     }
     return;
   }
-  // Open polyline & open curve: per-vertex endpoint handles (branch B). A CLOSED
-  // polyline or closed curve instead falls through to branch-A bbox resize below.
-  if ((obj.type === "curve" && !obj.closed) || (obj.type === "polyline" && obj.closed !== true)) {
+  // Polyline & curve: per-vertex handles (branch B). 열린 것은 꼭짓점 핸들만 갖고,
+  // 닫힌 것은 크기조절 상자 핸들(n/s/e/w/모서리)과 꼭짓점 핸들을 함께 갖는다
+  // (scene.js renderHandles 참고). 그래서 여기서는 '핸들 이름이 p<번호>인가'로
+  // 가른다 — 상자 핸들이면 이 가지를 그냥 지나쳐 아래 branch-A 로 간다.
+  // 닫힘 여부로 가르던 옛 조건은 닫힌 도형의 모양을 영영 못 고치게 만들었다
+  // (등치선 폐곡선·지질 단면의 닫힌 영역).
+  if ((obj.type === "curve" || obj.type === "polyline") && /^p\d+$/.test(handle)) {
     const i = parseInt(handle.slice(1), 10);
+    // 점 배열이 빈 옛 파일·객체화 산출물에서 핸들 번호가 범위를 벗어날 수 있다.
+    // 방어 없이 구조분해하면 드래그 중 예외가 나고, render가 state 구독이라
+    // 이후 화면이 갱신되지 않는 정지 상태에 빠진다(scene.js 같은 사고 참고).
+    if (!orig.points || !orig.points[i]) return;
     let dragged = { x: orig.points[i].x + dx, y: orig.points[i].y + dy };
     // Ctrl angle-constraint (Feature B): snap the dragged vertex so its segment to
     // the PREVIOUS neighbor (i-1) — or the NEXT neighbor (i+1) for vertex 0 — falls

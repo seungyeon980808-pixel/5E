@@ -1,0 +1,219 @@
+/* ===== PARTS LIBRARY MODAL (부품 라이브러리 — 퍼블릭 도메인 도해 검색·선화 삽입) =====
+   기출 문항 검색(css/exam-library.css)과 같은 뼈대를 쓴다: .modal의 max-height 안에서
+   flex column으로 눌러 담고, 제목·필터·검색·하단 버튼은 flex:none으로 높이를 지키며
+   본문(그리드+미리보기)만 flex:1로 남는 공간을 차지해 자체 스크롤한다. */
+.modal-partslib {
+  width: 1040px;
+  /* .modal의 max-width와 같은 이유로 ui-zoom의 역수를 곱한다 — style.css .modal 주석 참고. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+}
+.modal-partslib .partslib-title-row,
+.modal-partslib .partslib-filter-row,
+.modal-partslib .partslib-search-row,
+.modal-partslib .modal-actions {
+  flex: none;
+}
+
+/* 제목 옆 인라인 상태 문구 */
+.partslib-title-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.partslib-title-row .modal-title { margin: 0; }
+.partslib-status-inline { margin: 0; font-size: 13px; }
+
+/* ----- 검색 입력 ----- */
+.partslib-search-row input {
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.partslib-search-row input:focus { outline: none; border-color: var(--accent); }
+
+/* ----- 드롭다운 필터 행 (과목·분야 + 초기화) ----- */
+.partslib-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.partslib-filter-row select {
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.partslib-filter-row select:focus { outline: none; border-color: var(--accent); }
+.partslib-reset {
+  margin-left: auto;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.partslib-reset:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+
+/* ----- 본문: 왼쪽 결과 그리드 + 오른쪽 미리보기 ----- */
+.partslib-body {
+  display: flex;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 220px;   /* 공간이 심하게 모자라면 모달 전체 스크롤로 넘긴다(exam-library와 동일 방침) */
+  margin-top: 8px;
+}
+
+/* ----- 결과 그리드 (한 줄 3장 고정 — 카드가 정사각 썸네일이라 4장보다 3장이 읽힌다) ----- */
+.partslib-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  /* 암묵 행 높이를 auto로 두면 Chromium이 행 트랙을 뭉개 카드가 겹쳐 그려지는 버그가
+     있다(exam-library.css 주석 참고) → min-content로 명시. */
+  grid-auto-rows: min-content;
+  align-items: start;   /* Safari: 기본 stretch면 고정 높이 썸네일이 눌린다 */
+  align-content: start;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  /* body{zoom} 안 스크롤 컨테이너의 Chromium 리페인트 버그 회피 — 자체 레이어로 승격 */
+  transform: translateZ(0);
+  padding: 4px;
+}
+.partslib-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.partslib-card:hover { border-color: var(--text-secondary); }
+/* 선택 표시는 바깥 링 하나로만 (inset 그림자는 흰 썸네일에 덮여 두께가 달라 보인다) */
+.partslib-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.partslib-thumb {
+  height: 132px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;   /* 원본 도해는 흰 배경 전제 — 다크 모드에서도 흰 판 유지 */
+  padding: 6px;
+}
+/* 로드 전에도 박스를 차지해야 함 — 0×0 img는 브라우저가 lazy 로딩을 건너뜀 */
+.partslib-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.partslib-meta { padding: 6px 8px 8px; }
+.partslib-name { font-size: 12px; color: var(--text-primary); }
+.partslib-sub {
+  min-height: 14px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.partslib-lic { margin-top: 4px; }
+
+/* 라이선스 배지 — 카드와 미리보기 양쪽에서 같은 모양 */
+.partslib-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  background: var(--btn-tool-hover, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ----- 미리보기 패널 ----- */
+.partslib-preview {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow-y: auto;
+}
+.partslib-preview-head { font-size: 12px; color: var(--text-secondary); }
+
+/* 위계 4단계 · 채우기 2종 버튼 행 */
+.partslib-opt-row { display: flex; flex-wrap: wrap; gap: 4px; }
+.partslib-opt {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.partslib-opt:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.partslib-opt.is-on {
+  color: var(--text-primary);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.partslib-preview-box {
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;   /* 선화는 흰 종이 위에서 봐야 실제 인쇄와 같다 */
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+}
+.partslib-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.partslib-preview-box img.is-empty { display: none; }
+
+.partslib-preview-name { font-size: 12px; color: var(--text-primary); word-break: break-all; }
+.partslib-preview-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 18px;
+  font-size: 11px;
+}
+.partslib-source { color: var(--accent); text-decoration: none; }
+.partslib-source:hover { text-decoration: underline; }
+
+.partslib-preview .modal-btn { margin-top: auto; padding: 6px 12px; font-size: 13px; }
+.partslib-preview .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ----- 좁은 화면: 미리보기를 아래로 내린다 ----- */
+@media (max-width: 900px) {
+  .partslib-body { flex-direction: column; }
+  .partslib-grid { grid-template-columns: repeat(2, 1fr); }
+  .partslib-preview { flex: 0 0 auto; }
+}
+
+/* [선 객체로 넣기] 안내 — 두 삽입 방식의 차이를 한 줄로 알려 준다.
+   이미지는 <image> 한 장이라 가볍지만 자르기 도구가 못 자른다(cut-geometry.js isCuttable). */
+.partslib-insert-hint {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--c-text-dim, #6b7785);
+}
+.partslib-insert-hint b { color: var(--c-text, #0d1117); font-weight: 600; }
+#partslib-insert-obj { width: 100%; margin-top: 6px; }

@@ -4,6 +4,8 @@
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
 import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.3.0";
+// 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
+import { normalizeDashPattern } from "../render/core.js?v=1.3.0";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
@@ -85,6 +87,11 @@ export function buildLineSection(ctx) {
     wavy:   '<path d="M4 12 q2.7 -4.5 5.3 0 q2.7 4.5 5.3 0 q2.7 -4.5 5.3 0 q2.7 4.5 5.3 0 L30 12" ' +
             'fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round"/>' +
             '<polygon points="30,8 36,12 30,16" fill="#888"/>',
+    // 축척 막대 — 양 끝 세로 바 + 위 라벨 자리(지도 관례)
+    scaleBar: '<line x1="6" y1="14" x2="34" y2="14" stroke="#888" stroke-width="1.5"/>' +
+            '<line x1="6" y1="10" x2="6" y2="18" stroke="#888" stroke-width="1.5"/>' +
+            '<line x1="34" y1="10" x2="34" y2="18" stroke="#888" stroke-width="1.5"/>' +
+            '<line x1="12" y1="6" x2="28" y2="6" stroke="#bbb" stroke-width="1.5"/>',
   };
   const MIDDLE_LEFT_ICON = '<line x1="4" y1="12" x2="36" y2="12" stroke="#888" stroke-width="1.5"/>' +
     '<polygon points="26,8 20,12 26,16" fill="#888"/>';
@@ -131,6 +138,8 @@ export function buildLineSection(ctx) {
     { value: "midInward", label: "Inward double arrow", icon: ARROW_ICONS.midInward },
     { value: "lengthArrow", label: "Length arrow", icon: ARROW_ICONS.both },
     { value: "wavyArrow", label: "물결 화살표 (광자·전자기파)", icon: ARROW_ICONS.wavy },
+    // 다시 누르면 모양이 순환한다(양끝 바 → 흑백 교차 → 선만) — 다른 모드와 같은 규약.
+    { value: "scaleBar", label: "축척 막대 (지도·현미경) — 다시 누르면 모양 순환", icon: ARROW_ICONS.scaleBar },
   ];
   const lineModeBtnEls = {};
   LINE_MODES.forEach(({ value, label, icon }) => {
@@ -166,6 +175,13 @@ export function buildLineSection(ctx) {
           const current = cycle.includes(o.dimensionVariant) ? o.dimensionVariant : "basic";
           o.dimensionVariant = oldMode === value ? cycle[(cycle.indexOf(current) + 1) % cycle.length] : "basic";
           o.dimensionLabel ??= "d";
+          o.arrowHead = "none";
+        } else if (value === "scaleBar") {
+          const cycle = ["bars", "alt", "simple"];
+          const current = cycle.includes(o.scaleBarVariant) ? o.scaleBarVariant : "bars";
+          o.scaleBarVariant = oldMode === value ? cycle[(cycle.indexOf(current) + 1) % cycle.length] : "bars";
+          // 라벨 필드는 치수선과 공유한다. 축척은 단위가 붙는 게 관례라 기본값을 다르게 준다.
+          o.dimensionLabel ??= "0 - 200 km";
           o.arrowHead = "none";
         } else {
           o.arrowHead = "none";
@@ -357,6 +373,9 @@ export function buildLineSection(ctx) {
     "점선1": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="4 3"/>',
     "점선2": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="8 3"/>',
     "점선3": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="2 2"/>',
+    // 4값·6값 패턴 프리셋(mm)을 아이콘 좌표(px)로 대략 4배 확대해 보여준다.
+    "일점쇄선": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="9.6 2.4 1.2 2.4"/>',
+    "이점쇄선": '<line x1="2" y1="12" x2="38" y2="12" stroke="#888" stroke-width="2" stroke-dasharray="9.6 2.4 1.2 2.4 1.2 2.4"/>',
   };
   const _dashBtnEls = [];
   DASH_PRESETS.forEach((preset) => {
@@ -372,8 +391,17 @@ export function buildLineSection(ctx) {
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
         if (supportsDash(o)) {
-          o.dashLength = preset.dashLength;
-          o.dashGap = preset.dashGap;
+          if (Array.isArray(preset.dashPattern)) {
+            // 패턴 프리셋: dashPattern 이 켜지면 2값은 solid(0,0)로 내려 상호배타를 지킨다.
+            o.dashPattern = preset.dashPattern.slice();
+            o.dashLength = 0;
+            o.dashGap = 0;
+          } else {
+            // 2값 프리셋: 패턴을 지워야 applyDash 가 기존 경로를 탄다.
+            delete o.dashPattern;
+            o.dashLength = preset.dashLength;
+            o.dashGap = preset.dashGap;
+          }
           o.partialDash = false; // selecting a normal dash preset exits 부분 점선 mode
           s2.undoStack.push(snap);
           s2.redoStack = [];
@@ -401,6 +429,7 @@ export function buildLineSection(ctx) {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (o && o.type === "line") {
         o.partialDash = true;
+        delete o.dashPattern; // 부분 점선은 2값 경로 전용 — 패턴과 상호배타
         if ((o.dashLength ?? 0) <= 0) { o.dashLength = 0.2; o.dashGap = 0.2; } // ensure dashes show
         o.dashRatio ??= 0.5;
         o.dashFlip ??= false;
@@ -600,6 +629,142 @@ export function buildLineSection(ctx) {
     });
   });
 
+  /* ---- 곡선 전용: 전선 기호 · 등치선 값 라벨 (지구과학, 2026-07-31) ----
+   * 새 객체 타입을 만들지 않고 곡선의 옵션으로 둔다 — 전선도 등치선도 본질이
+   * 곡선이라, 옵션으로 두면 꼭짓점을 끌어 구부리는 동작이 그대로 따라온다.
+   * 렌더는 js/render/shapes.js renderCurve 가 맡는다. */
+  const FRONT_KINDS = [
+    ["", "없음"], ["cold", "한랭"], ["warm", "온난"],
+    ["stationary", "정체"], ["occluded", "폐색"],
+  ];
+  const frontRow = document.createElement("div");
+  frontRow.className = "insp-row";
+  const frontLbl = document.createElement("label");
+  frontLbl.className = "insp-field-label";
+  frontLbl.textContent = "전선 기호";
+  const frontSel = document.createElement("select");
+  frontSel.style.cssText = "flex:1;min-width:0;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 4px;background:var(--bg-input);color:var(--text-primary);";
+  FRONT_KINDS.forEach(([v, t]) => {
+    const o = document.createElement("option");
+    o.value = v; o.textContent = t;
+    frontSel.appendChild(o);
+  });
+  frontRow.append(frontLbl, frontSel);
+  sec1Body.appendChild(frontRow);
+
+  const frontGapRow = document.createElement("div");
+  frontGapRow.className = "insp-row";
+  const frontGapLbl = document.createElement("label");
+  frontGapLbl.className = "insp-field-label";
+  frontGapLbl.textContent = "기호 간격";
+  const frontGapInp = document.createElement("input");
+  frontGapInp.type = "number";
+  frontGapInp.className = "insp-input";
+  frontGapInp.min = "2"; frontGapInp.max = "40"; frontGapInp.step = "0.5";
+  const frontGapUnit = document.createElement("span");
+  frontGapUnit.className = "insp-unit";
+  frontGapUnit.textContent = "mm";
+  const frontFlipBtn = document.createElement("button");
+  frontFlipBtn.textContent = "반대쪽";
+  frontFlipBtn.title = "기호가 붙는 쪽을 뒤집는다";
+  frontFlipBtn.style.cssText = "font-size:11px;padding:2px 8px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+  frontGapRow.append(frontGapLbl, frontGapInp, frontGapUnit, frontFlipBtn);
+  sec1Body.appendChild(frontGapRow);
+
+  const inlineRow = document.createElement("div");
+  inlineRow.className = "insp-row";
+  const inlineLbl = document.createElement("label");
+  inlineLbl.className = "insp-field-label";
+  inlineLbl.textContent = "선 위 값";
+  const inlineInp = document.createElement("input");
+  inlineInp.type = "text";
+  inlineInp.className = "insp-input";
+  inlineInp.placeholder = "예: 1000";
+  inlineInp.style.flex = "1";
+  inlineRow.append(inlineLbl, inlineInp);
+  sec1Body.appendChild(inlineRow);
+
+  const inlinePosRow = document.createElement("div");
+  inlinePosRow.className = "insp-row";
+  const inlinePosLbl = document.createElement("label");
+  inlinePosLbl.className = "insp-field-label";
+  inlinePosLbl.textContent = "값 위치";
+  const inlinePosRange = document.createElement("input");
+  inlinePosRange.type = "range";
+  inlinePosRange.className = "insp-range";
+  inlinePosRange.min = "0"; inlinePosRange.max = "1"; inlinePosRange.step = "0.01";
+  inlinePosRow.append(inlinePosLbl, inlinePosRange);
+  sec1Body.appendChild(inlinePosRow);
+
+  /* ---- 폴리라인 전용: 산점(점만 표시) — 지구과학 H-R도·은하 분포 ---- */
+  const scatterRow = document.createElement("div");
+  scatterRow.className = "insp-row";
+  const scatterCb = document.createElement("input");
+  scatterCb.type = "checkbox";
+  scatterCb.className = "insp-cb";
+  const scatterLbl = document.createElement("label");
+  scatterLbl.className = "insp-field-label";
+  scatterLbl.textContent = "점만 표시(산점)";
+  const scatterOpenBtn = document.createElement("button");
+  scatterOpenBtn.textContent = "속 빈 원";
+  scatterOpenBtn.title = "점을 ● 대신 ○ 로 — 두 자료를 구분할 때";
+  scatterOpenBtn.style.cssText = "font-size:11px;padding:2px 8px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+  scatterRow.append(scatterCb, scatterLbl, scatterOpenBtn);
+  sec1Body.appendChild(scatterRow);
+
+  const applyPolyProp = (mutate) => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = snapBefore();
+    state.update((s2) => {
+      const o = s2.objects.find((x) => x.id === ids[0]);
+      if (!o || o.type !== "polyline" || o.locked) return;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+      mutate(o);
+    });
+  };
+  scatterCb.addEventListener("change", () => applyPolyProp((o) => {
+    if (scatterCb.checked) o.markerOnly = true; else delete o.markerOnly;
+  }));
+  scatterOpenBtn.addEventListener("click", () => applyPolyProp((o) => {
+    if (o.markerOpen) delete o.markerOpen; else o.markerOpen = true;
+  }));
+
+  /* 곡선 필드 공통 반영기 — 선택이 단일 곡선일 때만 동작한다. */
+  const applyCurveProp = (mutate) => {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = snapBefore();
+    state.update((s2) => {
+      const o = s2.objects.find((x) => x.id === ids[0]);
+      if (!o || o.type !== "curve" || o.locked) return;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+      mutate(o);
+    });
+  };
+  frontSel.addEventListener("change", () => applyCurveProp((o) => {
+    // 부재 = 기호 없음. 끌 때 필드를 지워 저장 파일을 깨끗하게 둔다.
+    if (frontSel.value) o.frontKind = frontSel.value; else delete o.frontKind;
+  }));
+  frontGapInp.addEventListener("change", () => applyCurveProp((o) => {
+    const v = parseFloat(frontGapInp.value);
+    if (Number.isFinite(v) && v > 1) o.frontGap = v;
+  }));
+  frontFlipBtn.addEventListener("click", () => applyCurveProp((o) => {
+    if (o.flipSide) delete o.flipSide; else o.flipSide = true;
+  }));
+  inlineInp.addEventListener("change", () => applyCurveProp((o) => {
+    const v = inlineInp.value.trim();
+    if (v) o.inlineLabel = v; else delete o.inlineLabel;
+  }));
+  inlinePosRange.addEventListener("input", () => applyCurveProp((o) => {
+    o.inlineLabelT = parseFloat(inlinePosRange.value);
+  }));
+
   // ---- 경사면처리 toggle (single polyline only): rounds interior joints at render. ----
   const roundRow = document.createElement("div");
   roundRow.className = "insp-row";
@@ -671,11 +836,15 @@ export function buildLineSection(ctx) {
   function syncDashControls(obj) {
     const dl = obj.dashLength ?? 0;
     const dg = obj.dashGap ?? 0;
+    // 패턴(일점쇄선 등)이 살아 있으면 그쪽이 활성 프리셋 — 렌더러(applyDash)의 우선순위와 같다.
+    const pat = normalizeDashPattern(obj.dashPattern);
     const isPartial = obj.type === "line" && !!obj.partialDash;
     _dashBtnEls.forEach((btn, i) => {
       const p = DASH_PRESETS[i];
       // In partial mode no plain preset is the active "선 종류" (the partial button is).
-      const active = !isPartial && p.dashLength === dl && p.dashGap === dg;
+      const active = !isPartial && (Array.isArray(p.dashPattern)
+        ? (!!pat && p.dashPattern.length === pat.length && p.dashPattern.every((v, k) => v === pat[k]))
+        : (!pat && p.dashLength === dl && p.dashGap === dg));
       btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
       btn.style.color      = active ? "#ffffff" : "var(--text-primary)";
       btn.style.border     = active ? "1px solid var(--accent)" : "1px solid var(--border)";
@@ -686,7 +855,8 @@ export function buildLineSection(ctx) {
     partialDashBtn.style.color      = isPartial ? "#ffffff" : "var(--text-primary)";
     partialDashBtn.style.border     = isPartial ? "1px solid var(--accent)" : "1px solid var(--border)";
 
-    const dashed = dl > 0;
+    // 길이/간격 슬라이더는 2값 점선 전용 — 패턴이 켜져 있으면 감춘다.
+    const dashed = !pat && dl > 0;
     dashSliders.style.display = dashed ? "" : "none";
     if (dashed) {
       dashLenSlider.range.value = dl; dashLenSlider.num.value = dl.toFixed(1);
@@ -801,6 +971,8 @@ export function buildLineSection(ctx) {
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
     closeRow, closeCb, roundRow, roundCb, radiusRow, radiusInp,
+    frontRow, frontSel, frontGapRow, frontGapInp, inlineRow, inlineInp, inlinePosRow, inlinePosRange,
+    scatterRow, scatterCb,
     angleRow, angleInp, syncDashControls,
   };
 }

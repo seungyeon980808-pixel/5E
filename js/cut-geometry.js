@@ -282,11 +282,8 @@ function pathInterior(cutPts, ca, cb) {
   if (rev) mids.reverse();
   return mids;
 }
-// 대상 경계 × 절단 경로 교차점. 각 교차에 대상 위치(seg,t)와 경로 위치(pseg,u) 기록.
-function freehandCrossings(o, cut) {
-  const pts = objPoints(o);
-  if (!pts || pts.length < 2 || cut.length < 2) return null;
-  const closed = objClosed(o);
+// 점 배열(경계) × 절단 경로 교차점 raw 목록. 대상 위치(seg,t)·경로 위치(pseg,u) 기록.
+function crossingsForPts(pts, closed, cut) {
   const raw = [];
   const N = closed ? pts.length : pts.length - 1;
   for (let i = 0; i < N; i++) {
@@ -296,10 +293,18 @@ function freehandCrossings(o, cut) {
       if (X) raw.push({ seg: i, t: X.t, pseg: j, u: X.u, pt: { x: X.x, y: X.y } });
     }
   }
-  return { pts, closed, crossings: dedupeCrossings(raw) };
+  return raw;
+}
+// 대상 경계 × 절단 경로 교차점. 각 교차에 대상 위치(seg,t)와 경로 위치(pseg,u) 기록.
+function freehandCrossings(o, cut) {
+  const pts = objPoints(o);
+  if (!pts || pts.length < 2 || cut.length < 2) return null;
+  const closed = objClosed(o);
+  return { pts, closed, crossings: dedupeCrossings(crossingsForPts(pts, closed, cut)) };
 }
 // 절단 경로가 대상을 자르는 지점들(빨간 점 미리보기용). 못 자르면 [].
 export function cutCrossingPoints(o, path) {
+  if (isBoxCuttable(o)) return boxCrossingPoints(o, path);   // 상자형(이미지·svgAsset)
   if (!isCuttable(o)) return [];
   const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
   const r = freehandCrossings(o, cut);
@@ -342,6 +347,61 @@ export function cutFreehand(o, path) {
   if (A.length >= 3) out.push(makePiece(o, A, true));
   if (B.length >= 3) out.push(makePiece(o, B, true));
   return out.length >= 2 ? out : null;
+}
+
+/* ----- 상자형(이미지·svgAsset) 자르기 =====================================
+// 래스터/SVG는 점 배열로 나눌 수 없다. 대신 **같은 상자·같은 그림**을 가진 조각 둘을
+// 만들고, 각자 반대쪽을 `cutouts`(객체 상자의 0~1 분수 다각형 마스크)로 지운다.
+// 마스크는 objectBoundingBox 단위라 이동·크기변경·회전에 자동으로 따라붙는다.
+// 분할 수학은 cutFreehand와 동일(닫힌 사각형 × 절단 경로, 2교차만 지원). */
+let _cutoutSeq = 0;
+
+export function isBoxCuttable(o) {
+  return !!o && (o.type === "image" || o.type === "svgAsset");
+}
+// 월드 점 → 객체 로컬 분수 좌표(회전 풀고 상자로 정규화). 0~1 밖은 마스크가 알아서 자름.
+function worldToFrac(o, p) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+  const q = rotatePt(p.x, p.y, cx, cy, -(o.rotation || 0));
+  return { x: round3((q.x - o.x) / o.w), y: round3((q.y - o.y) / o.h) };
+}
+// 원본을 복사하고 지울 다각형(분수 좌표)을 cutouts에 **이어붙인** 조각.
+function makeBoxPiece(o, erasePoly) {
+  const base = JSON.parse(JSON.stringify(o));
+  delete base.id; delete base.groupId;
+  const prev = Array.isArray(base.cutouts) ? base.cutouts : [];
+  base.cutouts = [...prev, { id: `cut_${Date.now().toString(36)}_${++_cutoutSeq}`, type: "poly", points: erasePoly }];
+  return base;
+}
+// 상자형의 교차점(빨간 점 미리보기용). 못 구하면 [].
+function boxCrossingPoints(o, path) {
+  if (!(o.w > 0) || !(o.h > 0)) return [];
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return [];
+  return dedupeCrossings(crossingsForPts(rectPolygon(o), true, cut)).map((c) => c.pt);
+}
+export function cutBoxObject(o, path) {
+  if (!isBoxCuttable(o)) return null;
+  if (!(o.w > 0) || !(o.h > 0)) return null;
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return null;
+  const pts = rectPolygon(o);                     // 회전 반영한 닫힌 사각형 4점(월드)
+  const crossings = dedupeCrossings(crossingsForPts(pts, true, cut));
+  if (crossings.length !== 2) return null;        // 관통(2교차)만 분할 — 그 외 원본 유지
+  crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
+  const [c0, c1] = crossings;
+  const arcA = [];
+  for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
+  const stepsB = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+  let kB = (c1.seg + 1) % pts.length;
+  const arcB = [];
+  for (let s = 0; s < stepsB; s++) { arcB.push(pts[kB]); kB = (kB + 1) % pts.length; }
+  const A = dedupe([c0.pt, ...arcA, c1.pt, ...pathInterior(cut, c1, c0)]);
+  const B = dedupe([c1.pt, ...arcB, c0.pt, ...pathInterior(cut, c0, c1)]);
+  if (A.length < 3 || B.length < 3) return null;
+  const fA = A.map((p) => worldToFrac(o, p));
+  const fB = B.map((p) => worldToFrac(o, p));
+  return [makeBoxPiece(o, fB), makeBoxPiece(o, fA)];   // 서로 반대쪽을 지운다
 }
 
 // 디스패처: mode·geom으로 객체를 잘라 조각 반환. 못 자르면 null.

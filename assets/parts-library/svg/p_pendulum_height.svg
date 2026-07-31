@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  width="100%" height="100%" viewBox="-105 0 230 225">
+<defs>
+	<marker id="EndArrow" viewBox="0 0 10 10" refX="10" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<polyline points="10,5 0,10 4,5 0,0 10,5" fill="black" />
+	</marker>
+</defs>
+<title>Simple pendulum</title>
+<defs>
+	<marker id="EndArrow" viewBox="0 0 10 10" refX="10" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<polyline points="10,5 0,10 4,5 0,0 10,5" fill="rgb(135,115,255)" />
+	</marker>
+	<marker id="StartArrow" viewBox="0 0 10 10" refX="0" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<polyline points="0,5 10,0 6,5 10,10 0,5" fill="rgb(135,115,255)" />
+	</marker>
+	<radialGradient id = "light" cx = "50%" cy = "50%" fx = "40%" fy = "35%" r = "65%">
+		<stop stop-color = "rgb(255,255,255)" offset = "0%"/>
+		<stop stop-color = "rgb(190,190,190)" offset = "40%"/>
+		<stop stop-color = "rgb(80,80,80)" offset = "100%"/>
+	</radialGradient>
+</defs>
+<circle cx="0" cy="5" r="3" fill="black" />
+<g style="fill:none;stroke:grey;stroke-width:.6">
+	<path d="M-102.5,182.5 A202,202 0 0,0 102.5,182.5"
+		style="stroke-dasharray:5,4" />
+	<path d="M0,40 A35,35 0 0,0 9.1,38.8" stroke="black"/>
+	<path d="M0,60 A55,55 0 0,0 27.5,52.6 M0,63 A58,58 0 0,0 29,55.2" />
+</g>
+<g id="pendulum" transform="rotate(-15,0,5)" >
+	<line x1="0" x2="0" y1="8" y2="190" style="stroke:black;stroke-width:1" />
+	<circle cx="0" cy="210" r="20" fill="url(#light)" />
+</g>
+<use xlink:href="#pendulum" transform="rotate(-15,0,5)" opacity=".6" />
+<g style="stroke-width:.6;fill:none;stroke:rgb(135,115,255)">
+	<path d="M0,8 V203 M-35,203 H35 M0,182.5 H83" stroke-dasharray="4,2" />
+	<g marker-end="url(#EndArrow)" marker-start="url(#StartArrow)">
+		<line x1="-10" x2="-10" y1="5" y2="182.5" /> 
+		<line x1="-30" x2="-30" y1="5" y2="203" />
+		<line x1="15" x2="15" y1="203" y2="182.5" />
+	</g>
+</g>
+<text font-size="12" fill="black">
+	<tspan x="2" y="50">&#x03b8;</tspan>
+	<tspan x="20" y="70">&#x03b8;</tspan><tspan dy="5" font-size="8">0</tspan>
+	<tspan x="-20" y="100" font-style="italic">y</tspan><tspan dy="5" font-size="8">0</tspan>
+	<tspan x="-39" y="130" font-style="italic">y</tspan><tspan dy="5" font-size="8">1</tspan>
+	<tspan x="18" y="196" font-style="italic" font-size="9">h</tspan>
+</text>
+</svg>

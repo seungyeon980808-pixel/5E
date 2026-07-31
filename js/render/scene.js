@@ -33,6 +33,25 @@ import { renderGauge } from "./gauge.js?v=1.3.0";
 import { renderSolid3d } from "./solid3d.js?v=1.3.0";
 import { renderParabola, parabolaBBox } from "./parabola.js?v=1.3.0";
 import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.3.0";
+// 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
+import { renderBrace, braceBBox } from "./brace.js?v=1.3.0";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.3.0";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.3.0";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.3.0";
+import { renderLegend, legendBBox } from "./legend.js?v=1.3.0";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.3.0";
+// 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
+// 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
+import { renderVessel } from "./vessel.js?v=1.3.0";
+import { renderChemModel } from "./chemmodel.js?v=1.3.0";
+import { renderParticleBox } from "./particlebox.js?v=1.3.0";
+import { renderOrbital } from "./orbital.js?v=1.3.0";
+import { renderBondGroup } from "./bondgroup.js?v=1.3.0";
+import { renderChemChart } from "./chemchart.js?v=1.3.0";
+import { renderAxisBreak } from "./axisbreak.js?v=1.3.0";
+import { renderChemGraph } from "./chemgraph.js?v=1.3.0";
+import { renderElectrode } from "./electrode.js?v=1.3.0";
+import { renderPeriodic } from "./periodic.js?v=1.3.0";
 import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.3.0";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
          zOrderObjects } from "../object-types.js?v=1.3.0";
@@ -297,7 +316,9 @@ export function render(state) {
                     : "var(--c-main, #0969da)";
     if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
-        || sel.type === "parabola" || sel.type === "groundarc") {
+        || sel.type === "parabola" || sel.type === "groundarc"
+        // 생명과학 p1/p2 계열 — 두 점을 잇는 점선 복제가 선택 표시다(위와 같은 규칙)
+        || sel.type === "brace" || sel.type === "chromosome" || sel.type === "bilayer" || sel.type === "neuron") {
       // Line/circuit/pendulum have no bbox; the selection guide is a dashed copy
       // of the p1–p2 segment (pendulum: pivot → real bob, i.e. the string axis).
       const ln = document.createElementNS(SVG_NS, "line");
@@ -817,6 +838,39 @@ export function renderObject(obj) {
       return renderParabola(obj);
     case "groundarc":
       return renderGroundArc(obj);
+    case "brace":
+      return renderBrace(obj);
+    case "chromosome":
+      return renderChromosome(obj);
+    case "bilayer":
+      return renderBilayer(obj);
+    case "neuron":
+      return renderNeuron(obj);
+    case "legend":
+      return renderLegend(obj);
+    case "pedigree":
+      return renderPedigree(obj);
+    /* ----- 화학 부품 10종 (docs/CHEM_PARTS_SPEC.md) ----- */
+    case "vessel":
+      return renderVessel(obj);
+    case "chemmodel":
+      return renderChemModel(obj);
+    case "particlebox":
+      return renderParticleBox(obj);
+    case "orbital":
+      return renderOrbital(obj);
+    case "bondgroup":
+      return renderBondGroup(obj);
+    case "chemchart":
+      return renderChemChart(obj);
+    case "axisbreak":
+      return renderAxisBreak(obj);
+    case "chemgraph":
+      return renderChemGraph(obj);
+    case "electrode":
+      return renderElectrode(obj);
+    case "periodic":
+      return renderPeriodic(obj);
     default:
       return null;
   }
@@ -884,6 +938,12 @@ export function singleObjBBox(o, scene) {
   if (o.type === "standingwave") return standingWaveBBox(o);
   if (o.type === "parabola") return parabolaBBox(o);
   if (o.type === "groundarc") return groundArcBBox(o);
+  if (o.type === "brace") return braceBBox(o);
+  if (o.type === "chromosome") return chromosomeBBox(o);
+  if (o.type === "bilayer") return bilayerBBox(o);
+  if (o.type === "neuron") return neuronBBox(o);
+  if (o.type === "legend") return legendBBox(o);
+  if (o.type === "pedigree") return pedigreeBBox(o);
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
     const pts = o.points || [];
     if (!pts.length) return null;
@@ -1029,6 +1089,15 @@ function renderHandles(sel, scene, zoom, activeTool) {
       makeHandle(hS.x,  hS.y,  "s");
       makeHandle(hSW.x, hSW.y, "sw");
       makeHandle(hW.x,  hW.y,  "w");
+      /* 닫힌 폴리라인·곡선은 크기조절 상자 '위에' 꼭짓점 핸들을 함께 얹는다.
+       * 등치선의 폐곡선 링, 지질 단면의 닫힌 영역처럼 모양 자체가 정보인 그림은
+       * 상자 스케일만으로는 못 고친다 — 점을 찝어 구부릴 수 있어야 한다.
+       * 열린 것은 아래 else-if 가지에서 이미 꼭짓점만 그린다. 여기서는 상자를
+       * 없애지 않고 더하기만 해서 기존 크기조절 동작을 그대로 남긴다.
+       * 회전 도구일 때는 위쪽 분기라 여기 오지 않는다(핸들이 겹치지 않는다). */
+      if (_closedPoly || _closedCurve) {
+        (sel.points || []).forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
+      }
     }
   } else if (sel.type === "labeler" && activeTool === "rotate") {
     // Labeler rotation: corner handles (blue circles + 90° arc hints) around the

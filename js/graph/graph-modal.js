@@ -17,7 +17,7 @@ import { state, ptToMm, mmToPt } from "../state.js?v=1.3.0";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.3.0";
 import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.3.0";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.3.0";
-import { worldFromMath, mathFromWorld } from "../function-graph/coords.js?v=1.3.0";
+import { worldFromMath, mathFromWorld, planeAsY2 } from "../function-graph/coords.js?v=1.3.0";
 import { nextObjectId } from "../tools/id.js?v=1.3.0";
 import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.3.0";
 
@@ -74,6 +74,11 @@ function defaultCfg() {
     variant: "quadrant", xNeg: 0, xPos: 5, yNeg: 0, yPos: 5,
     tickStepX: 1, tickStepY: 1,    // 한 칸이 나타내는 값(숫자 눈금 라벨 전용; 물리 칸은 불변)
     labelX: "x", labelY: "y", showX: true, showY: true,
+    // 오른쪽 세로축(y2) — 생명과학 자료해석 문항의 좌우 이중 y축. 끄면(기본) 평면에
+    // y2 필드 자체를 안 넣으므로, 옛 그래프는 물론 새로 만든 보통 그래프도 종전과 동일하다.
+    y2On: false, labelY2: "", y2Pos: null,   // y2Pos = 오른쪽 축 마지막 눈금 값(null=왼쪽과 같음)
+    y2ShowTick: false,                       // 기출 관례: 오른쪽 눈금 숫자가 없는 경우가 많다
+    y2TickText: "",                          // 직접 문자 눈금(쉼표 구분, 아래→위)
     origin: "0", showOrigin: true,
     showGrid: true, showTicks: true,
     tickMode: "none",             // "none" | "number" | "multiple" | "text"
@@ -106,8 +111,29 @@ function defaultCfg() {
 // 계열 기본 선 굵기: 축보다 굵되 과하지 않게(요구: 조금 더 얇게 → 0.4mm).
 // curveStyle: 함수식=곡선(smooth), 직선·꺾은선=직선(straight) 기본. autoExtend: 자동 연장선(기본 off).
 // movable: '이동' 체크(요구) — 켜면 미리보기에서 곡선 몸통 드래그 = 계열 전체 이동.
-function newExprSeries() { return { kind: "expr", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [], area: null }; }
-function newPointsSeries() { return { kind: "points", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+function newExprSeries() { return { kind: "expr", axis: "y", expr: "", domain: null, range: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "smooth", curvature: 1, offset: { dx: 0, dy: 0 }, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [], area: null }; }
+function newPointsSeries() { return { kind: "points", axis: "y", pts: [], handles: null, styleIdx: 0, strokeWidth: 0.4, curveStyle: "straight", curvature: 1, endLabel: "", autoExtend: false, movable: false, markers: [], guides: [], arrows: [] }; }
+// 막대그래프 계열(생명과학 기출 관례): 세로 막대 + 회색 단색 + 검은 외곽선, 무늬 없음이 기본.
+// items = [{label, value}] (값·이름표를 쉼표 한 줄로 받아 이 배열로 파싱). widthRatio =
+// 한 칸(슬롯)에서 막대가 차지하는 비율 — 0.55면 막대:간격 ≈ 1:0.8 로 기출 판형에 가깝다.
+function newBarSeries() { return { kind: "bar", axis: "y", items: [], widthRatio: 0.55, fillStyle: "gray", styleIdx: 0, strokeWidth: 0.3, endLabel: "", movable: false, markers: [], guides: [], arrows: [] }; }
+// 막대 채우기 선택지: [라벨, 값]. 값은 기존 채우기 무늬 어휘(solid/hatch/dots/cross)를 그대로
+// 재사용하되, 회색·흰색은 명도만 다른 solid이므로 여기서만 별칭으로 구분한다.
+const BAR_FILLS = [["회색", "gray"], ["흰색", "white"], ["빗금", "hatch"], ["점", "dots"], ["교차", "cross"]];
+const BAR_GRAY_LEVEL = 170;   // 기출 막대 회색(0=검정, 255=흰색)
+// 막대 채우기 별칭 → 공용 채우기 필드(fillStyle/fillLevel). 렌더는 js/render/fill.js가 맡는다.
+function barFillFields(alias) {
+  const a = alias || "gray";
+  if (a === "white") return { fillStyle: "solid", fillLevel: 255 };
+  if (a === "gray") return { fillStyle: "solid", fillLevel: BAR_GRAY_LEVEL };
+  return { fillStyle: a, fillLevel: 0 };   // hatch/dots/cross = 검은 무늬
+}
+// 쉼표 한 줄 ↔ 배열. 값은 숫자, 이름표는 글자 그대로(빈 칸 허용).
+function parseCsvLine(text) {
+  return String(text || "").split(",").map((t) => t.trim());
+}
+function barValuesText(s) { return (s.items || []).map((it) => (Number.isFinite(it.value) ? it.value : "")).join(", "); }
+function barLabelsText(s) { return (s.items || []).map((it) => it.label || "").join(", "); }
 
 /* ---------- cfg → coordplane 필드 반영 (범위·표시 — 박스 지오메트리 제외) ---------- */
 function parseTicks(text) {
@@ -181,6 +207,26 @@ function applyCfg(plane, cfg) {
     plane.tickTextX = parseTicks(cfg.tickTextX);
     plane.tickTextY = parseTicks(cfg.tickTextY);
   }
+  // ----- 오른쪽 세로축(y2): 좌우 이중 y축 -----
+  // 판(box)은 하나뿐이라 두 축의 격자·눈금 높이는 반드시 같은 자리여야 한다. 그래서 UI는
+  // '오른쪽 축 마지막 눈금 값'(y2Pos) 하나만 받고, 왼쪽 축 범위 전체에 같은 배율 s2를 곱해
+  // y2Min/y2Max를 만든다 → 오른쪽 눈금 k칸이 왼쪽 눈금 k칸과 정확히 같은 높이에 놓인다.
+  // y2를 안 쓰면 plane.y2를 아예 지운다(필드가 없으면 렌더러가 종전과 100% 동일하게 그린다).
+  if (cfg.y2On) {
+    const y2Pos = Number.isFinite(cfg.y2Pos) && cfg.y2Pos > 0 ? cfg.y2Pos : yPos;
+    const s2 = y2Pos / yPos;                       // 값 배율(왼쪽 1칸 = 오른쪽 gsy*s2)
+    plane.y2 = {
+      enabled: true,
+      labelY2: cfg.labelY2 || "",
+      y2Min: plane.yMin * s2, y2Max: plane.yMax * s2,
+      gridStepY2: gsy * s2, tickStepY2: gsy * s2,
+      tickTextY2: parseTicks(cfg.y2TickText),
+      showTickY2: !!cfg.y2ShowTick,
+      y2Pos,                                       // 재편집 복원용(원본 입력값)
+    };
+  } else if (plane.y2) {
+    delete plane.y2;
+  }
   plane.showAxisLines = true;
   plane.showAxisLabels = true;
   plane.showAxisLabelX = cfg.showX;
@@ -217,6 +263,14 @@ function applyCfg(plane, cfg) {
   plane.annLabelPoints = arr(cfg.annLabelPoints);
   plane.graphCfg = { xNeg, xPos, yNeg, yPos, tickStepX: plane.tickStepX, tickStepY: plane.tickStepY };   // 재편집 시 범위·간격 복원용 스펙
   return plane;
+}
+
+/* 계열이 '읽는 축'에 맞는 평면 뷰를 돌려준다(좌우 이중 y축).
+ * axis:"y2"인 계열만 y2 스케일(planeAsY2 — yMin/yMax·gridStepY만 갈아끼운 얕은 복사)로 굽고,
+ * 그 외(=기존 파일 전부, axis 없음 포함)는 평면 그 자체를 그대로 돌려준다. 덕분에 샘플러·
+ * 베이크·스냅 등 매핑을 쓰는 코드가 y2를 몰라도 되고, 기존 동작이 한 줄도 안 바뀐다. */
+function planeForSeries(s, plane) {
+  return (s && s.axis === "y2" && plane && plane.y2 && plane.y2.enabled) ? planeAsY2(plane) : plane;
 }
 
 // 라벨 크기를 셀(칸) 크기에 비례해 크게(기본값 상향 — 사진처럼, 종전보다 +30%). 박스 정해진 뒤 호출.
@@ -541,13 +595,61 @@ function areaFields(s, plane) {
   };
 }
 
+/* 막대그래프 굽기 — 계열의 items(값·이름표)를 세계좌표(mm) 사각형으로 바꾼다.
+ * 배치 규약: 데이터 x 범위를 막대 개수만큼 균등 분할한 '슬롯'을 만들고, 각 슬롯 한가운데에
+ * 폭 = 슬롯 × widthRatio 인 막대를 세운다(막대:간격 ≈ 1:1). 값은 y 수학값 그대로 = 높이.
+ * 반환 { bars, points }:
+ *   bars.items = [{x,y,w,h,label}] — 사각형(요구한 world mm 규격, 회전 전 기준)
+ *   points     = 막대마다 네 꼭짓점(bl,tl,tr,br) — funcgraph 공용 좌표 배열.
+ *                이동·회전·리사이즈(transform.js)와 bbox·클릭(pick.js)이 이 배열만 보므로,
+ *                여기에 같은 좌표를 실어야 캔버스에서 막대가 평면과 함께 움직인다.
+ *                렌더러는 points가 맞으면 그쪽을 진실로 삼는다(변환 결과 반영). */
+function bakeBars(s, plane) {
+  const items = (s.items || []).filter((it) => it && Number.isFinite(it.value));
+  if (!items.length) return null;
+  const db = dataBounds(plane);
+  const xLo = Math.max(0, db.xMin), xHi = db.xMax;
+  const slot = (xHi - xLo) / items.length;
+  if (!(slot > 0)) return null;
+  const wr = Number.isFinite(s.widthRatio) ? Math.max(0.1, Math.min(0.95, s.widthRatio)) : 0.55;
+  // 높이 맞춤: 기출 막대그래프는 y축에 눈금이 없어(원점 0만) 값이 '상대 크기'로만 읽힌다.
+  // 60·100·45처럼 축 범위(0~5칸)를 훌쩍 넘는 값을 그대로 쓰면 막대가 판을 뚫고 나가므로,
+  // 가장 큰 값이 데이터 범위 끝을 넘을 때만 전체를 같은 비율로 줄여 판 안에 넣는다.
+  // 값이 이미 범위 안이면 손대지 않는다 — 눈금을 켜고 쓰는 경우 값=좌표가 유지된다.
+  const vMax = Math.max(...items.map((it) => Math.abs(it.value)));
+  const fit = (vMax > 0 && vMax > db.yMax) ? db.yMax / vMax : 1;
+  const base = worldFromMath(plane, 0, 0);
+  const rects = [], points = [];
+  items.forEach((it, i) => {
+    const cx = xLo + slot * (i + 0.5);
+    const v = it.value * fit;
+    const wa = worldFromMath(plane, cx - (slot * wr) / 2, v);
+    const wb = worldFromMath(plane, cx + (slot * wr) / 2, v);
+    const x0 = Math.min(wa.x, wb.x), x1 = Math.max(wa.x, wb.x);
+    const top = Math.min(wa.y, base.y), bot = Math.max(wa.y, base.y);
+    rects.push({ x: x0, y: top, w: x1 - x0, h: bot - top, label: it.label || "" });
+    points.push({ x: x0, y: bot }, { x: x0, y: top }, { x: x1, y: top }, { x: x1, y: bot });
+  });
+  return {
+    points,
+    bars: {
+      items: rects,
+      labelSize: endLabelSizeOf(plane),
+      strokeWidth: Number.isFinite(s.strokeWidth) ? s.strokeWidth : 0.3,
+      ...barFillFields(s.fillStyle),
+    },
+  };
+}
+
 /* ---------- 계열 → funcgraph 필드 준비 (plane 기준 샘플/베이크) ---------- */
 // 반환 { ok:true, list:[fgFields] } | { ok:false, error }. 빈 계열은 조용히 건너뜀(빈 틀 허용).
 function prepareSeries(plane) {
   const list = [];
   const endSize = endLabelSizeOf(plane); // 끝 라벨(눈금 라벨과 동일 크기)
-  const db = dataBounds(plane);
   for (const s of _series) {
+    // 이 계열이 읽는 축(왼쪽 y / 오른쪽 y2)에 맞는 평면 뷰. axis가 없으면 plane 그대로다.
+    const pl = planeForSeries(s, plane);
+    const db = dataBounds(pl);
     const [, dl, dg] = LINE_STYLES[s.styleIdx] || LINE_STYLES[0];
     const common = {
       type: "funcgraph", closed: false, strokeLevel: 0,
@@ -559,19 +661,32 @@ function prepareSeries(plane) {
       // 위치 고정은 개별 잠금(positionLocked)이 아니라 '평면+계열 그룹 묶기'로 처리한다
       // (요구: 좌표와 함께 움직임). 그룹 배선은 commitCreate/commitEdit에서.
       locked: false, positionLocked: false,
+      axis: s.axis === "y2" ? "y2" : "y",     // 읽는 축(좌우 이중 y축) — 재편집 복원용
     };
-    if (s.kind === "expr") {
+    if (s.kind === "bar") {
+      // 막대는 새 객체 타입을 만들지 않는다 — funcgraph에 bars 필드로 얹는다(요구).
+      // 원본 math 스펙(barItems/barWidthRatio/barFill)도 함께 저장해야 재편집으로 되살아난다.
+      const baked = bakeBars(s, pl);
+      if (!baked) continue;
+      list.push({
+        ...common, sourceKind: "bar", curveStyle: "straight", endLabel: "",
+        points: baked.points, breaks: [], bars: baked.bars,
+        barItems: (s.items || []).map((it) => ({ label: it.label || "", value: it.value })),
+        barWidthRatio: Number.isFinite(s.widthRatio) ? s.widthRatio : 0.55,
+        barFill: s.fillStyle || "gray",
+      });
+    } else if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) continue;
       // 자동 정의역은 데이터 범위(눈금 끝+반 칸)까지 — 화살표 마진 아래로 저절로 뻗지 않게.
       // 반면 사용자가 정의역을 직접 준 경우엔 평면 박스 끝까지 허용한다(격자로 가두지 않는다).
-      const pb = plotBounds(plane);
+      const pb = plotBounds(pl);
       const dMin = s.domain ? Math.max(pb.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(pb.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
-      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
+      const { points: sampled, breaks, error } = sampleFunctionPoints(expr, dMin, dMax, pl, { yRange: s.range });
       if (error) return { ok: false, error: `${expr}: ${error}` };
       if (sampled.length < 2) return { ok: false, error: `${expr}: 정의역 안에서 그릴 점이 없습니다` };
-      const points = applyOffset(sampled, plane, s.offset);   // 함수식 자유 이동
+      const points = applyOffset(sampled, pl, s.offset);   // 함수식 자유 이동
       const off = s.offset && Number.isFinite(s.offset.dx) ? { dx: s.offset.dx, dy: s.offset.dy } : { dx: 0, dy: 0 };
       // breaks(끊긴 구간)를 함수그래프에 함께 저장 → 렌더러가 그 경계에서 선을 끊는다(가짜선 방지).
       // domainMin/domainMax는 항상 채워지는 '실제 그린 범위'(재샘플용) — '자동'이었는지는
@@ -581,16 +696,16 @@ function prepareSeries(plane) {
         points, breaks, offset: off,
         rangeMin: s.range ? Math.min(s.range.min, s.range.max) : null,
         rangeMax: s.range ? Math.max(s.range.min, s.range.max) : null,
-        ...areaFields(s, plane),
-        ...elementFields(s, plane, points, breaks) });
+        ...areaFields(s, pl),
+        ...elementFields(s, pl, points, breaks) });
     } else {
       if (!s.pts || s.pts.length < 2) continue;
       const mathPoints = s.pts.map((p) => ({ x: p.x, y: p.y }));   // 원본(재편집용)
       const uh = useHandles(s);
-      const points = (uh ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(plane, m.x, m.y)); // 렌더·베이크
-      const wHandles = uh ? worldHandlesOf(s, plane) : null;
+      const points = (uh ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(pl, m.x, m.y)); // 렌더·베이크
+      const wHandles = uh ? worldHandlesOf(s, pl) : null;
       const geom = wHandles ? bezierSamplePts(points, wHandles, 16) : geomPts(s, points);
-      const obj = { ...common, sourceKind: "points", mathPoints, points, breaks: [], autoExtend: !!s.autoExtend, ...elementFields(s, plane, geom) };
+      const obj = { ...common, sourceKind: "points", mathPoints, points, breaks: [], autoExtend: !!s.autoExtend, ...elementFields(s, pl, geom) };
       // 베지어 핸들: world 제어점(렌더용) + math 오프셋(재편집용)을 함께 저장.
       if (uh) { obj.handles = wHandles; obj.handlesMath = s.handles.map((h) => ({ ...h })); }
       list.push(obj);
@@ -724,30 +839,47 @@ function refreshPreview() {
   _selPts = null; _selBreaks = null;   // 선택 계열의 baked points/경계를 이 렌더에서 갱신(배치 고스트·클릭 가드용)
   _allSeriesPts = [];                  // 모든 계열 곡선(표시 탭 스냅용)을 이 렌더에서 다시 모은다
   _series.forEach((s, i) => {
+    // 읽는 축(왼쪽 y / 오른쪽 y2)에 맞는 평면 뷰 — 커밋(prepareSeries)과 같은 규약이라
+    // 미리보기와 캔버스 결과가 어긋나지 않는다. axis가 없으면 plane 그대로.
+    const pl = planeForSeries(s, plane);
     const [, dl, dg] = LINE_STYLES[s.styleIdx] || LINE_STYLES[0];
     let pts = null, sourceKind, curveStyle, breaks = null;
     // 면적 채움은 정의역 값 기준이라 렌더러가 '실제 그린 범위'를 알아야 한다 → 밖으로 뺀다.
     let dMinP = null, dMaxP = null;
+    // 막대그래프: 커밋 경로(prepareSeries)와 완전히 같은 bakeBars 결과를 그대로 넘겨,
+    // 미리보기와 캔버스가 한 함수에서 나온 같은 사각형을 그린다. 점·핸들·이동 편집 UI는
+    // 막대에 해당 없으므로 여기서 끝낸다.
+    if (s.kind === "bar") {
+      const baked = bakeBars(s, pl);
+      if (!baked) return;
+      const el = renderFuncgraph({
+        points: baked.points, bars: baked.bars, sourceKind: "bar", curveStyle: "straight",
+        strokeLevel: 0, strokeWidth: s.strokeWidth, breaks: [],
+      });
+      if (i === _sel) seriesColorSel(el);
+      svg.appendChild(el);
+      return;
+    }
     if (s.kind === "expr") {
       const expr = String(s.expr || "").trim();
       if (!expr) return;
-      const db = dataBounds(plane), pb = plotBounds(plane);   // 자동=격자 끝, 직접 지정=평면 박스 끝
+      const db = dataBounds(pl), pb = plotBounds(pl);   // 자동=격자 끝, 직접 지정=평면 박스 끝
       const dMin = s.domain ? Math.max(pb.xMin, Math.min(s.domain.min, s.domain.max)) : db.xMin;
       const dMax = s.domain ? Math.min(pb.xMax, Math.max(s.domain.min, s.domain.max)) : db.xMax;
       dMinP = dMin; dMaxP = dMax;
-      const r = sampleFunctionPoints(expr, dMin, dMax, plane, { yRange: s.range });
+      const r = sampleFunctionPoints(expr, dMin, dMax, pl, { yRange: s.range });
       if (r.error) { if (i === _sel) selError = r.error; return; }
       if (r.points.length < 2) { if (i === _sel) selError = "정의역 안에 그릴 점이 없습니다"; return; }
-      pts = applyOffset(r.points, plane, s.offset);   // 함수식 자유 이동 반영
+      pts = applyOffset(r.points, pl, s.offset);   // 함수식 자유 이동 반영
       breaks = r.breaks;                             // 끊긴 구간(평면 밖·치역 밖) 경계
     } else {
       if (!s.pts.length) return;
       // 핸들(베지어 변환)이 있으면 자동 연장 없이 s.pts 그대로 + 핸들로 렌더.
-      pts = (useHandles(s) ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(plane, m.x, m.y));
+      pts = (useHandles(s) ? s.pts : extendedMathPts(s)).map((m) => worldFromMath(pl, m.x, m.y));
       sourceKind = "points"; curveStyle = "straight";
       breaks = [];   // 손그림 곡선은 끊김 없는 연속선 — 거리 휴리스틱으로 쪼개지지 않게 명시
     }
-    const wHandles = worldHandlesOf(s, plane);                   // 핸들 있으면 world 제어점, 없으면 null
+    const wHandles = worldHandlesOf(s, pl);                      // 핸들 있으면 world 제어점, 없으면 null
     const geom = wHandles ? bezierSamplePts(pts, wHandles, 16) : geomPts(s, pts);  // 요소 베이크/스냅용 곡선
     if (i === _sel) { _selPts = geom; _selBreaks = breaks; }     // 선택 계열 곡선+경계(배치 스냅 기준)
     if (Array.isArray(geom) && geom.length >= 2) _allSeriesPts.push({ pts: geom, breaks });  // 표시 탭 스냅용
@@ -758,8 +890,8 @@ function refreshPreview() {
       curvature: s.curvature, handles: wHandles,                // 있으면 렌더가 진짜 3차 베지어로
       endLabel: s.endLabel, endLabelSize: endLabelSizeOf(plane),
       domainMin: dMinP, domainMax: dMaxP,
-      ...areaFields(s, plane),                  // 곡선 아래 면적 채움 미리보기
-      ...bakeElements(s, plane, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
+      ...areaFields(s, pl),                  // 곡선 아래 면적 채움 미리보기
+      ...bakeElements(s, pl, geom, breaks),  // 표시점/수선/화살표 실시간 미리보기
     });
     if (i === _sel) seriesColorSel(el);
     markPlacedElements(el);
@@ -774,7 +906,7 @@ function refreshPreview() {
       // 드래그 편집 핸들은 그리기를 마친 뒤(선택 상태)에 되살아난다.
       const drawingThis = _activeDraw === i && !_placeMode;
       s.pts.forEach((mp, pi) => {
-        const w = worldFromMath(plane, mp.x, mp.y);
+        const w = worldFromMath(pl, mp.x, mp.y);
         const c = document.createElementNS(SVG_NS, "circle");
         c.setAttribute("cx", w.x); c.setAttribute("cy", w.y); c.setAttribute("r", 0.9);
         c.setAttribute("fill", "var(--accent)");
@@ -816,12 +948,12 @@ function refreshPreview() {
     // 드래그해 곡선이 얼마나 볼록하게 휘는지 조절한다(잉크스케이프式). 두 핸들은 일직선 유지.
     if (i === _sel && wHandles && _activeDraw !== i && !_placeMode) {
       s.pts.forEach((mp, pi) => {
-        const a = worldFromMath(plane, mp.x, mp.y);
+        const a = worldFromMath(pl, mp.x, mp.y);
         const mkHandle = (which) => {
           const h = s.handles[pi];
           const off = which === "out" ? { x: h.ox, y: h.oy } : { x: h.ix, y: h.iy };
           if (off.x === 0 && off.y === 0) return;   // 끝점의 없는 핸들은 안 그림
-          const hw = worldFromMath(plane, mp.x + off.x, mp.y + off.y);
+          const hw = worldFromMath(pl, mp.x + off.x, mp.y + off.y);
           const line = document.createElementNS(SVG_NS, "line");
           line.setAttribute("x1", a.x); line.setAttribute("y1", a.y);
           line.setAttribute("x2", hw.x); line.setAttribute("y2", hw.y);
@@ -841,7 +973,7 @@ function refreshPreview() {
             const onMove = (ev) => {
               const w = clientToWorld(ev.clientX, ev.clientY);
               if (!w) return;
-              const m = mathFromWorld(plane, w.x, w.y);
+              const m = mathFromWorld(pl, w.x, w.y);
               const no = { x: m.x - mp.x, y: m.y - mp.y };   // 새 오프셋(math)
               const hh = s.handles[pi];
               if (which === "out") { hh.ox = no.x; hh.oy = no.y; } else { hh.ix = no.x; hh.iy = no.y; }
@@ -896,8 +1028,8 @@ function refreshPreview() {
             guides: (s.guides || []).map(copySpec),
             arrows: (s.arrows || []).map((a) => ({ ...a })),
           };
-          const ux = (plane.xMax - plane.xMin) ? plane.w / (plane.xMax - plane.xMin) : 1;
-          const uy = (plane.yMax - plane.yMin) ? plane.h / (plane.yMax - plane.yMin) : 1;
+          const ux = (pl.xMax - pl.xMin) ? pl.w / (pl.xMax - pl.xMin) : 1;
+          const uy = (pl.yMax - pl.yMin) ? pl.h / (pl.yMax - pl.yMin) : 1;
           const onMove = (ev) => {
             const w = clientToWorld(ev.clientX, ev.clientY);
             if (!w) return;
@@ -1483,13 +1615,16 @@ function clientToMath(cx, cy) {
   const pt = _previewSvg.createSVGPoint();
   pt.x = cx; pt.y = cy;
   const w = pt.matrixTransform(ctm.inverse());
-  const m = mathFromWorld(_previewPlane, w.x, w.y);
+  // 선택 계열이 오른쪽 축(y2)을 읽으면 그 스케일로 환산한다(찍은 점이 오른쪽 눈금을 따르도록).
+  // 선택이 없거나 왼쪽 축이면 _previewPlane 그대로 — 기존 동작과 동일.
+  const cp = planeForSeries(_series[_sel], _previewPlane) || _previewPlane;
+  const m = mathFromWorld(cp, w.x, w.y);
   // 스냅 간격을 더 촘촘하게(칸의 1/8 = 종전 1/4의 2배) — 원하는 점을 정확히 지나게(요구).
-  const sx = (_previewPlane.gridStepX || 1) / 8, sy = (_previewPlane.gridStepY || 1) / 8;
+  const sx = (cp.gridStepX || 1) / 8, sy = (cp.gridStepY || 1) / 8;
   const nx = Math.round(m.x / sx) * sx, ny = Math.round(m.y / sy) * sy;
   // 클램프는 '평면 박스'까지만 한다(요구). 격자 끝에서 막으면 정의역·치역이 격자에 갇힌 것처럼
   // 보여, 손으로 찍은 점·자유곡선이 마지막 눈금 밖으로 나가질 못한다.
-  const pb = plotBounds(_previewPlane);
+  const pb = plotBounds(cp);
   return {
     x: Math.max(pb.xMin, Math.min(pb.xMax, nx)),
     y: Math.max(pb.yMin, Math.min(pb.yMax, ny)),
@@ -1498,6 +1633,11 @@ function clientToMath(cx, cy) {
 
 /* ---------- 계열 칩 + 편집 패널 ---------- */
 function seriesLabel(s) {
+  if (s.kind === "bar") {
+    const n = (s.items || []).filter((it) => it && Number.isFinite(it.value)).length;
+    const names = (s.items || []).map((it) => it.label).filter(Boolean).join(",");
+    return names ? `막대 ${names}` : `막대 ${n}개`;
+  }
   if (s.kind === "expr") return "y=" + (String(s.expr || "").trim() || "…");
   const kind = (s.curveStyle === "smooth") ? "자유곡선" : "꺾은선";   // 하위 탭 타입에 맞춘 이름
   return (s.endLabel ? s.endLabel + " " : "") + `${kind} ${s.pts.length}점`;
@@ -1830,11 +1970,33 @@ function syncSeriesEditor() {
   _els.domainRow.style.display = s.kind === "expr" ? "" : "none";
   _els.rangeRow.style.display = s.kind === "expr" ? "" : "none";
   _els.ptsRows.style.display = s.kind === "points" ? "" : "none";
+  // 막대그래프 전용 행. 막대는 선이 아니므로 선 종류·모양·끝 라벨·이동은 의미가 없다.
+  _els.barRows.style.display = s.kind === "bar" ? "" : "none";
   // 자동 연장선: 직선·꺾은선(점 계열)에만 의미 있음(눈대중 그리기). 끝 라벨과 한 줄(요구 8).
   _els.autoExtRow.style.display = s.kind === "points" ? "inline-flex" : "none";
   _els.autoExt.checked = !!s.autoExtend;
   _els.move.checked = !!s.movable;
-  if (s.kind === "expr") {
+  // 읽는 축: 오른쪽 축이 켜져 있을 때만 고르게 한다(꺼져 있으면 선택지가 하나뿐이라 무의미).
+  const y2Avail = !!(_cfg && _cfg.y2On);
+  _els.axisRow.style.display = y2Avail ? "" : "none";
+  if (y2Avail) {
+    const ax = s.axis === "y2" ? "y2" : "y";
+    [..._els.axisSeg.children].forEach((b) => {
+      const on = b._axis === ax;
+      b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
+      b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+    });
+  }
+  if (s.kind === "bar") {
+    if (document.activeElement !== _els.barValues) _els.barValues.value = barValuesText(s);
+    if (document.activeElement !== _els.barLabels) _els.barLabels.value = barLabelsText(s);
+    if (document.activeElement !== _els.barWidth) _els.barWidth.value = Number.isFinite(s.widthRatio) ? s.widthRatio : 0.55;
+    [..._els.barFillHost.children].forEach((b) => {
+      const on = b._fill === (s.fillStyle || "gray");
+      b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
+      b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+    });
+  } else if (s.kind === "expr") {
     if (document.activeElement !== _els.expr) _els.expr.value = s.expr;
     if (document.activeElement !== _els.dMin) _els.dMin.value = s.domain ? s.domain.min : "";
     if (document.activeElement !== _els.dMax) _els.dMax.value = s.domain ? s.domain.max : "";
@@ -1853,6 +2015,12 @@ function syncSeriesEditor() {
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });
+  // 막대는 실선 외곽선 하나뿐이라 선 종류·끝 라벨·이동 행을 숨긴다(선 굵기 = 외곽선 굵기).
+  const isBar = s.kind === "bar";
+  const styleRow = _els.styleHost.closest(".gm-row");
+  if (styleRow) styleRow.style.display = isBar ? "none" : "";
+  const endRow = _els.endLabel.closest(".gm-row");
+  if (endRow) endRow.style.display = isBar ? "none" : "";
   const cs = s.curveStyle || (s.kind === "points" ? "straight" : "smooth");
   [..._els.curveHost.children].forEach((b) => {
     const on = b._curve === cs;
@@ -1934,6 +2102,13 @@ function syncCfgControls() {
   const negNote = _els.overlay.querySelector("#gm-neg-note");
   if (negNote) negNote.style.display = (showNegRow && (!xNegOn || !yNegOn)) ? "" : "none";
   _els.labelX.value = c.labelX; _els.labelY.value = c.labelY;
+  // 오른쪽 세로축(y2)
+  _els.y2On.checked = !!c.y2On;
+  _els.y2Rows.style.display = c.y2On ? "" : "none";
+  if (document.activeElement !== _els.labelY2) _els.labelY2.value = c.labelY2 || "";
+  if (document.activeElement !== _els.y2Pos) _els.y2Pos.value = Number.isFinite(c.y2Pos) ? c.y2Pos : "";
+  _els.y2ShowTick.checked = !!c.y2ShowTick;
+  if (document.activeElement !== _els.y2TickText) _els.y2TickText.value = c.y2TickText || "";
   _els.showOrigin.checked = c.showOrigin;
   // 원점 표기는 0/O 두 버튼 세그먼트 — 현재 값 쪽에 .on을 준다(누를 수 있음이 드러나게).
   _els.originBtn.querySelectorAll("button[data-origin]").forEach((b) => {
@@ -1997,10 +2172,13 @@ function setTab(tab) {
 }
 
 /* ---------- 함수 하위 탭: 해석적 함수 / 직선·꺾은선 / 자유곡선 ---------- */
-let _funcTab = "expr";            // "expr" | "poly" | "free"
-// 계열이 어느 하위 탭에 속하는지: 함수식=expr, 점 계열은 곡선(smooth)=free / 직선(straight)=poly.
+let _funcTab = "expr";            // "expr" | "poly" | "free" | "bar"
+// 계열이 어느 하위 탭에 속하는지: 함수식=expr, 막대=bar, 점 계열은 곡선(smooth)=free /
+// 직선(straight)=poly. ★ kind 분기를 먼저 본다 — 막대 계열은 curveStyle이 없어서
+// 마지막 줄로 흘러가면 조용히 poly 탭에 섞인다(칩·편집 UI가 엉킨다).
 function funcTabOf(s) {
   if (!s) return "expr";
+  if (s.kind === "bar") return "bar";
   if (s.kind === "expr") return "expr";
   return (s.curveStyle === "smooth") ? "free" : "poly";
 }
@@ -2011,10 +2189,12 @@ const FUNCTAB = {
           make: () => { const s = newPointsSeries(); s.curveStyle = "straight"; return s; } },
   free: { add: "＋ 자유곡선 추가", hint: "미리보기에서 마우스로 죽 그리면(드래그) 매끄러운 자유곡선이 됩니다. 그린 뒤 파란 점(앵커)을 끌어 모양을 다듬으세요. (탭하면 점 하나씩 추가)",
           make: () => { const s = newPointsSeries(); s.curveStyle = "smooth"; return s; } },
+  bar:  { add: "＋ 막대그래프 추가", hint: "값과 이름표를 쉼표로 구분해 한 줄씩 적으면 막대가 세워집니다.",
+          make: () => newBarSeries() },
 };
 function setFuncTab(ft) {
   _funcTab = ft;
-  const sub = { expr: _els.subExpr, poly: _els.subPoly, free: _els.subFree };
+  const sub = { expr: _els.subExpr, poly: _els.subPoly, free: _els.subFree, bar: _els.subBar };
   Object.entries(sub).forEach(([k, btn]) => {
     const active = k === ft;
     btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
@@ -2149,6 +2329,37 @@ function build() {
 
               <div class="gm-ax-note" id="gm-neg-note">ㅏ자는 x축에 음의 방향이 없습니다 — 십자로 바꾸면 열립니다.</div>
             </div>
+
+            <!-- 오른쪽 세로축(y2): 생명과학 자료해석 문항의 정형 형식(좌우 이중 y축).
+                 판은 하나이므로 오른쪽 눈금은 왼쪽 격자와 같은 높이에 놓이고, '최대값'만
+                 다르게 준다. 격자는 왼쪽 축 기준으로만 그린다(두 겹 방지). -->
+            <div class="gm-row">
+              <span class="gm-row-lbl">오른쪽 축</span>
+              <div class="gm-row-body gm-checks">
+                <label class="gm-check"><input type="checkbox" id="gm-y2-on"> 오른쪽 세로축 쓰기<span class="gm-help" title="왼쪽 축과 이름·눈금이 다른 오른쪽 세로축을 세웁니다. 계열마다 읽는 축을 골라 어느 축 눈금으로 그릴지 정합니다. 격자는 왼쪽 축 기준으로만 그려집니다.">?</span></label>
+              </div>
+            </div>
+            <div id="gm-y2-rows" style="display:none;">
+              <div class="gm-row">
+                <span class="gm-row-lbl">축 이름</span>
+                <div class="gm-row-body">
+                  <textarea id="gm-labely2" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 개체 수"
+                    style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:36px;"></textarea>
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">최대값 / 눈금</span>
+                <div class="gm-row-body">
+                  <span class="gm-step"><input type="number" id="gm-y2-pos" min="0.1" step="0.1" placeholder="왼쪽과 같음" title="오른쪽 축 마지막 눈금의 값"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span>
+                  <label class="gm-check" title="기출 도판은 오른쪽 축에 숫자가 없는 경우가 많습니다. 꺼도 축선과 축 이름은 그려집니다."><input type="checkbox" id="gm-y2-showtick"> 눈금 숫자</label>
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">직접 눈금</span>
+                <div class="gm-row-body"><input type="text" id="gm-y2-ticktext" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: N_0, 2N_0 (비우면 숫자)"></div>
+              </div>
+              <div class="gm-ax-note" style="padding-left:102px;">오른쪽 눈금은 왼쪽 격자와 같은 높이에 놓입니다 · 쉼표로 구분 · <b>아래부터 위 순서</b></div>
+            </div>
           </div>
 
           <div class="gm-group">
@@ -2258,6 +2469,7 @@ function build() {
             <button type="button" id="gm-sub-expr" style="flex:1;">해석적 함수</button>
             <button type="button" id="gm-sub-poly" style="flex:1;">직선·꺾은선</button>
             <button type="button" id="gm-sub-free" style="flex:1;">자유곡선</button>
+            <button type="button" id="gm-sub-bar" style="flex:1;">막대그래프</button>
           </div>
           <button type="button" id="gm-add-series" class="modal-btn" style="width:100%;font-size: 12px;padding:6px;margin-bottom:8px;">＋ 함수식 추가</button>
           <div id="gm-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;"></div>
@@ -2356,6 +2568,50 @@ function build() {
               <p class="gm-ax-note">미리보기를 클릭해 꼭짓점을 찍고, Enter 또는 우클릭으로 마칩니다.</p>
             </div>
 
+            <!-- 막대그래프(생명과학 기출 관례): 값·이름표를 쉼표 한 줄로 받는다. y축은
+                 눈금 없이 원점 0만 두고(좌표 탭 → 눈금 라벨 '없음'), x축 눈금선도 끄면
+                 기출 판형과 같아진다 — 아래 안내 문구가 그 조합을 알려준다. -->
+            <div id="gm-bar-rows" class="gm-group" style="display:none;">
+              <p class="gm-group-h">막대</p>
+              <div class="gm-row">
+                <span class="gm-row-lbl">값</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-bar-values" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: 60, 100, 45">
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">이름표</span>
+                <div class="gm-row-body">
+                  <input type="text" id="gm-bar-labels" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" spellcheck="false" placeholder="예: Ⅰ, Ⅱ, Ⅲ">
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">막대 폭</span>
+                <div class="gm-row-body">
+                  <span class="gm-step"><input type="number" id="gm-bar-width" min="0.1" max="0.95" step="0.05" aria-label="막대 폭 비율">
+                    <span class="gm-step-btns">
+                      <button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button>
+                      <button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button>
+                    </span></span>
+                  <span class="gm-unit">칸</span>
+                  <span class="gm-help" title="한 칸에서 막대가 차지하는 비율입니다. 0.55면 막대와 간격이 거의 1:1이 되어 기출 판형과 비슷합니다.">?</span>
+                </div>
+              </div>
+              <div class="gm-row">
+                <span class="gm-row-lbl">채우기</span>
+                <div class="gm-row-body"><span id="gm-bar-fill" style="display:inline-flex;gap:4px;flex-wrap:wrap;"></span></div>
+              </div>
+              <p class="gm-ax-note">값 개수만큼 막대가 균등하게 놓이고, 이름표는 막대 아래에 붙습니다. 값이 y축 범위를 넘으면 가장 큰 막대가 축 끝에 닿도록 전체를 같은 비율로 줄입니다(기출처럼 y축 눈금을 끄고 쓰면 상대 크기만 보입니다).</p>
+            </div>
+
+            <!-- 읽는 축(좌우 이중 y축): 오른쪽 축을 켜둔 경우에만 보인다. 막대·함수식·꺾은선 모두 적용. -->
+            <div class="gm-row" id="gm-axis-row" style="display:none;">
+              <span class="gm-row-lbl">읽는 축</span>
+              <div class="gm-row-body">
+                <span id="gm-axis-seg" style="display:inline-flex;gap:4px;"></span>
+                <span class="gm-help" title="이 계열의 값을 왼쪽 세로축 눈금으로 읽을지, 오른쪽 세로축 눈금으로 읽을지 고릅니다.">?</span>
+              </div>
+            </div>
             <div class="gm-row" id="gm-shape-row" style="display:none;">
               <span class="gm-row-lbl">모양</span>
               <div class="gm-row-body"><span id="gm-curve" style="display:inline-flex;gap:4px;"></span></div>
@@ -2513,6 +2769,10 @@ function build() {
     yNeg: overlay.querySelector("#gm-yneg"), yPos: overlay.querySelector("#gm-ypos"),
     xStep: overlay.querySelector("#gm-xstep"), yStep: overlay.querySelector("#gm-ystep"),
     labelX: overlay.querySelector("#gm-labelx"), labelY: overlay.querySelector("#gm-labely"),
+    y2On: overlay.querySelector("#gm-y2-on"), y2Rows: overlay.querySelector("#gm-y2-rows"),
+    labelY2: overlay.querySelector("#gm-labely2"), y2Pos: overlay.querySelector("#gm-y2-pos"),
+    y2ShowTick: overlay.querySelector("#gm-y2-showtick"), y2TickText: overlay.querySelector("#gm-y2-ticktext"),
+    axisRow: overlay.querySelector("#gm-axis-row"), axisSeg: overlay.querySelector("#gm-axis-seg"),
     showOrigin: overlay.querySelector("#gm-showorigin"), originBtn: overlay.querySelector("#gm-origin-toggle"),
     showGrid: overlay.querySelector("#gm-showgrid"), showTicks: overlay.querySelector("#gm-showticks"),
     axisScale: overlay.querySelector("#gm-axisscale"), tickScale: overlay.querySelector("#gm-tickscale"),
@@ -2531,7 +2791,11 @@ function build() {
     tickBaseX: overlay.querySelector("#gm-tickbase-x"), tickBaseY: overlay.querySelector("#gm-tickbase-y"),
     chips: overlay.querySelector("#gm-chips"), emptyHint: overlay.querySelector("#gm-empty-hint"),
     subExpr: overlay.querySelector("#gm-sub-expr"), subPoly: overlay.querySelector("#gm-sub-poly"),
-    subFree: overlay.querySelector("#gm-sub-free"), addSeries: overlay.querySelector("#gm-add-series"),
+    subFree: overlay.querySelector("#gm-sub-free"), subBar: overlay.querySelector("#gm-sub-bar"),
+    addSeries: overlay.querySelector("#gm-add-series"),
+    barRows: overlay.querySelector("#gm-bar-rows"),
+    barValues: overlay.querySelector("#gm-bar-values"), barLabels: overlay.querySelector("#gm-bar-labels"),
+    barWidth: overlay.querySelector("#gm-bar-width"), barFillHost: overlay.querySelector("#gm-bar-fill"),
     editor: overlay.querySelector("#gm-series-editor"),
     exprRow: overlay.querySelector("#gm-expr-row"), expr: overlay.querySelector("#gm-expr"),
     exprHelpers: overlay.querySelector("#gm-expr-helpers"),
@@ -2665,6 +2929,33 @@ function build() {
   [_els.labelX, _els.labelY].forEach((el) => el.addEventListener("focus", () => {
     setTimeout(() => { try { el.select(); } catch (_) {} }, 0);
   }));
+  /* --- 오른쪽 세로축(y2) 배선 --- */
+  _els.y2On.addEventListener("change", () => {
+    _cfg.y2On = _els.y2On.checked;
+    // 끄면 계열의 '읽는 축'도 전부 왼쪽으로 되돌린다 — 안 그러면 보이지 않는 축을 읽는
+    // 계열이 남아, 사용자가 알 수 없는 스케일로 값이 굽는다.
+    if (!_cfg.y2On) _series.forEach((s2) => { s2.axis = "y"; });
+    syncCfgControls(); syncSeriesEditor(); refreshPreview();
+  });
+  _els.labelY2.addEventListener("input", () => { _cfg.labelY2 = _els.labelY2.value; refreshPreview(); });
+  _els.y2Pos.addEventListener("input", () => {
+    const n = parseFloat(_els.y2Pos.value);
+    _cfg.y2Pos = Number.isFinite(n) && n > 0 ? n : null;   // 비우면 왼쪽 축과 같은 값
+    refreshPreview();
+  });
+  _els.y2ShowTick.addEventListener("change", () => { _cfg.y2ShowTick = _els.y2ShowTick.checked; refreshPreview(); });
+  _els.y2TickText.addEventListener("input", () => { _cfg.y2TickText = _els.y2TickText.value; refreshPreview(); });
+  // 계열별 '읽는 축' 선택(왼쪽/오른쪽) — 선 모양 버튼과 같은 세그먼트 방식.
+  [["왼쪽", "y"], ["오른쪽", "y2"]].forEach(([label, val]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = label; b._axis = val;
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.addEventListener("click", () => {
+      const s2 = _series[_sel]; if (!s2) return;
+      s2.axis = val; syncSeriesEditor(); renderChips(); refreshPreview();
+    });
+    _els.axisSeg.appendChild(b);
+  });
   _els.showOrigin.addEventListener("change", () => { _cfg.showOrigin = _els.showOrigin.checked; refreshPreview(); });
   // 원점 표기: 숫자 0(정자) / 영문 O(이탤릭) 두 버튼 중 고른다(종전엔 눌러서 순환하는
   // 단일 버튼이라 클릭 가능하다는 게 드러나지 않았다).
@@ -2697,9 +2988,41 @@ function build() {
   _els.subExpr.addEventListener("click", () => setFuncTab("expr"));
   _els.subPoly.addEventListener("click", () => setFuncTab("poly"));
   _els.subFree.addEventListener("click", () => setFuncTab("free"));
+  _els.subBar.addEventListener("click", () => setFuncTab("bar"));
   _els.addSeries.addEventListener("click", () => {
     addSeries(FUNCTAB[_funcTab].make());     // 현재 하위 탭 타입으로 추가
     if (_funcTab === "expr") _els.expr.focus();
+    if (_funcTab === "bar") _els.barValues.focus();
+  });
+  /* --- 막대그래프 배선: 값·이름표는 쉼표 한 줄, 폭 비율·채우기는 즉시 반영 --- */
+  // 값과 이름표는 서로 다른 길이로 들어올 수 있다(이름표만 먼저 적는 등) — 값 개수를
+  // 기준으로 items를 만들고 이름표는 있는 만큼만 채운다. 값이 비면 그 칸은 막대 없음.
+  const readBarItems = () => {
+    const s = _series[_sel]; if (!s || s.kind !== "bar") return;
+    const vals = parseCsvLine(_els.barValues.value);
+    const labs = parseCsvLine(_els.barLabels.value);
+    while (vals.length && vals[vals.length - 1] === "") vals.pop();
+    s.items = vals.map((v, i) => ({ label: labs[i] || "", value: parseFloat(v) }));
+    renderChips(); refreshPreview();
+  };
+  _els.barValues.addEventListener("input", readBarItems);
+  _els.barLabels.addEventListener("input", readBarItems);
+  _els.barWidth.addEventListener("input", () => {
+    const s = _series[_sel]; if (!s || s.kind !== "bar") return;
+    const n = parseFloat(_els.barWidth.value);
+    s.widthRatio = Number.isFinite(n) ? Math.max(0.1, Math.min(0.95, n)) : 0.55;
+    refreshPreview();
+  });
+  BAR_FILLS.forEach(([label, value]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = label; b._fill = value;
+    b.style.cssText = "font-size: 12px;border:1px solid var(--border);border-radius:3px;padding:3px 10px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
+    b.addEventListener("click", () => {
+      const s = _series[_sel]; if (!s || s.kind !== "bar") return;
+      s.fillStyle = value;
+      syncSeriesEditor(); refreshPreview();
+    });
+    _els.barFillHost.appendChild(b);
   });
   _els.expr.addEventListener("input", () => { const s = _series[_sel]; if (s) { s.expr = _els.expr.value; renderChips(); refreshPreview(); } });
   // 수식 도우미 버튼(기존 함수 도구처럼): 커서 위치에 삽입.
@@ -2980,6 +3303,13 @@ function loadFromPlane(plane) {
   cfg.tickStepX = Number.isFinite(gc.tickStepX) ? gc.tickStepX : (Number.isFinite(plane.tickStepX) ? plane.tickStepX : 1);
   cfg.tickStepY = Number.isFinite(gc.tickStepY) ? gc.tickStepY : (Number.isFinite(plane.tickStepY) ? plane.tickStepY : 1);
   cfg.labelX = plane.labelX ?? "x"; cfg.labelY = plane.labelY ?? "y";
+  // 오른쪽 세로축(y2) 복원. 필드가 없는 옛 파일 = 꺼짐(종전과 동일하게 그려진다).
+  const y2 = plane.y2 || null;
+  cfg.y2On = !!(y2 && y2.enabled);
+  cfg.labelY2 = y2 ? (y2.labelY2 || "") : "";
+  cfg.y2Pos = (y2 && Number.isFinite(y2.y2Pos)) ? y2.y2Pos : null;
+  cfg.y2ShowTick = !!(y2 && y2.showTickY2);
+  cfg.y2TickText = (y2 && Array.isArray(y2.tickTextY2)) ? y2.tickTextY2.join(", ") : "";
   cfg.showX = true; cfg.showY = true;   // 축 라벨은 항상 표시(on/off 제거 — 요구)
   cfg.origin = (plane.labelOrigin === "O") ? "O" : "0";
   cfg.showOrigin = plane.showOrigin !== false;
@@ -3036,14 +3366,27 @@ function loadFromPlane(plane) {
   };
   for (const fg of objs) {
     if (fg.type !== "funcgraph" || fg.planeId !== plane.id) continue;
-    if (fg.sourceKind === "points") {
+    if (fg.sourceKind === "bar" || fg.bars) {
+      // 막대 재편집: 세계좌표 사각형(bars)이 아니라 원본 math 스펙(barItems)을 되읽는다.
+      // 사각형은 평면이 바뀌면 어차피 bakeBars가 다시 구우므로 버린다.
+      const items = Array.isArray(fg.barItems)
+        ? fg.barItems.map((it) => ({ label: it.label || "", value: it.value }))
+        : (fg.bars && Array.isArray(fg.bars.items) ? fg.bars.items.map((r) => ({ label: r.label || "", value: 0 })) : []);
+      _series.push({
+        kind: "bar", axis: fg.axis === "y2" ? "y2" : "y", items,
+        widthRatio: Number.isFinite(fg.barWidthRatio) ? fg.barWidthRatio : 0.55,
+        fillStyle: fg.barFill || "gray",
+        styleIdx: 0, strokeWidth: fg.strokeWidth ?? 0.3,
+        endLabel: "", movable: false, markers: [], guides: [], arrows: [],
+      });
+    } else if (fg.sourceKind === "points") {
       const pts = Array.isArray(fg.mathPoints) && fg.mathPoints.length
         ? fg.mathPoints.map((p) => ({ x: p.x, y: p.y }))
-        : (fg.points || []).map((p) => mathFromWorld(plane, p.x, p.y));
-      _series.push({ kind: "points", pts, styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "straight", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1, endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, handles: (Array.isArray(fg.handlesMath) && fg.handlesMath.length === pts.length) ? fg.handlesMath.map((h) => ({ ...h })) : null, ...loadElements(fg) });
+        : (fg.points || []).map((p) => mathFromWorld(planeForSeries(fg, plane), p.x, p.y));
+      _series.push({ kind: "points", axis: fg.axis === "y2" ? "y2" : "y", pts, styleIdx: styleIdxOf(fg), strokeWidth: fg.strokeWidth ?? 0.3, curveStyle: fg.curveStyle || "straight", curvature: Number.isFinite(fg.curvature) ? fg.curvature : 1, endLabel: fg.endLabel || "", autoExtend: !!fg.autoExtend, handles: (Array.isArray(fg.handlesMath) && fg.handlesMath.length === pts.length) ? fg.handlesMath.map((h) => ({ ...h })) : null, ...loadElements(fg) });
     } else {
       _series.push({
-        kind: "expr", expr: fg.expr || "",
+        kind: "expr", axis: fg.axis === "y2" ? "y2" : "y", expr: fg.expr || "",
         // domainAuto가 있으면(이 수정 이후 저장분) 그 값을 그대로 신뢰 — true면 '자동'으로
         // 복원해 평면 범위가 넓어지면 함수도 같이 넓게 다시 그려진다. domainAuto가 없는
         // 옛 파일은 이전 동작 그대로(명시 정의역으로 취급) — 하위호환.

@@ -20,3 +20,21 @@ export { pulleyGeom, pulleyAnchors } from "./render/optics-apparatus.js?v=1.3.0"
 export { parabolaPoints, parabolaBBox, parabolaApexPoints, DEFAULT_APEX_MM } from "./render/parabola.js?v=1.3.0";
 export { groundArcPoints, groundArcBBox, groundArcRadius, screenToGround,
          DEFAULT_SWEEP_DEG } from "./render/groundarc.js?v=1.3.0";
+// 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
+export { bracePathPoints, braceBBox } from "./render/brace.js?v=1.3.0";
+export { chromosomeGeometry, chromosomeBBox } from "./render/chromosome.js?v=1.3.0";
+export { bilayerGeometry, bilayerBBox } from "./render/bilayer.js?v=1.3.0";
+export { neuronGeometry, neuronBBox } from "./render/neuron.js?v=1.3.0";
+export { legendLayout, legendBBox } from "./render/legend.js?v=1.3.0";
+export { pedigreeLayout, pedigreeBBox } from "./render/pedigree.js?v=1.3.0";
+// 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
+export { vesselBBox, VESSEL_KINDS } from "./render/vessel.js?v=1.3.0";
+export { chemModelBBox, MOLECULES, VALENCE } from "./render/chemmodel.js?v=1.3.0";
+export { particleBoxBBox } from "./render/particlebox.js?v=1.3.0";
+export { orbitalBBox } from "./render/orbital.js?v=1.3.0";
+export { bondGroupBBox, BOND_MOLECULES } from "./render/bondgroup.js?v=1.3.0";
+export { chemChartBBox } from "./render/chemchart.js?v=1.3.0";
+export { axisBreakBBox } from "./render/axisbreak.js?v=1.3.0";
+export { chemGraphBBox } from "./render/chemgraph.js?v=1.3.0";
+export { electrodeBBox } from "./render/electrode.js?v=1.3.0";
+export { periodicBBox, PERIODIC_ELEMENTS } from "./render/periodic.js?v=1.3.0";

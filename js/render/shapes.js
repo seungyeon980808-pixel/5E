@@ -121,7 +121,8 @@ function renderLine(obj) {
   let lineStyle = obj.lineMode ?? obj.lineStyle
     ?? (savedArrowHead === "center" ? "middleArrow" : savedArrowHead === "none" ? "solid" : "arrow");
   if (lineStyle === "dimensionArrow") lineStyle = "lengthArrow";
-  if (!["solid", "arrow", "middleArrow", "midInward", "lengthArrow", "wavyArrow"].includes(lineStyle)) lineStyle = "solid";
+  if (!["solid", "arrow", "middleArrow", "midInward", "lengthArrow", "wavyArrow",
+        "scaleBar"].includes(lineStyle)) lineStyle = "solid";
   const arrowHead = lineStyle === "arrow"
     ? ({ right: "end", left: "start", both: "both" }[obj.arrowVariant] || savedArrowHead)
     : "none";
@@ -264,6 +265,72 @@ function renderLine(obj) {
     const p23 = { x: obj.p1.x + (obj.p2.x - obj.p1.x) * 2 / 3, y: obj.p1.y + (obj.p2.y - obj.p1.y) * 2 / 3 };
     g.appendChild(makeArrowHead(p13.x, p13.y, nx, ny, sw, color, LINE_ARROW_OPTS));
     g.appendChild(makeArrowHead(p23.x, p23.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
+  } else if (lineStyle === "scaleBar") {
+    /* ----- 축척 막대 (지도·현미경 사진) — 2026-07-31 -----
+     * 치수선(lengthArrow)과 형제다: 같은 두 점 위에 얹히지만 화살촉이 없고,
+     * 라벨이 가운데가 아니라 '막대 위'에 놓인다(지도 관례). 기출 5장이 이것 때문에
+     * 막혀 있었다(docs/SURVEY_earth_20260731.md §5).
+     *   bars   양 끝에 세로 바 — 가장 흔한 형태
+     *   alt    흑백 교차 — 절반을 검게 칠한 막대(축척자)
+     *   simple 선만
+     * 라벨은 dimensionLabel/dimensionLabelSize 를 그대로 재사용한다 — 치수선에서
+     * 이미 쓰는 필드라 인스펙터·복사·스타일 붙여넣기 배선이 공짜로 따라온다. */
+    const variant = ["bars", "alt", "simple"].includes(obj.scaleBarVariant)
+      ? obj.scaleBarVariant : "bars";
+    const capHalf = Math.max(sw * 4, 1.2);
+    if (variant === "alt") {
+      // 흑백 교차: 막대를 법선 방향으로 두께 있게 세운 뒤 앞 절반만 채운다.
+      const th = Math.max(sw * 3, 0.9);           // 막대 두께의 절반
+      const mid = { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
+      const quad = (a, b) => {
+        const p = document.createElementNS(SVG_NS, "polygon");
+        p.setAttribute("points", [
+          `${a.x - ny * th},${a.y + nx * th}`,
+          `${b.x - ny * th},${b.y + nx * th}`,
+          `${b.x + ny * th},${b.y - nx * th}`,
+          `${a.x + ny * th},${a.y - nx * th}`,
+        ].join(" "));
+        p.setAttribute("stroke", color);
+        p.setAttribute("stroke-width", sw);
+        return p;
+      };
+      const first = quad(obj.p1, mid);
+      first.setAttribute("fill", color);
+      const second = quad(mid, obj.p2);
+      second.setAttribute("fill", "#ffffff");
+      g.appendChild(first);
+      g.appendChild(second);
+    } else if (variant === "bars") {
+      const addCap = (point) => {
+        const cap = document.createElementNS(SVG_NS, "line");
+        cap.setAttribute("x1", point.x - ny * capHalf);
+        cap.setAttribute("y1", point.y + nx * capHalf);
+        cap.setAttribute("x2", point.x + ny * capHalf);
+        cap.setAttribute("y2", point.y - nx * capHalf);
+        cap.setAttribute("stroke", color);
+        cap.setAttribute("stroke-width", sw);
+        g.appendChild(cap);
+      };
+      addCap(obj.p1);
+      addCap(obj.p2);
+    }
+    const labelText = obj.dimensionLabel || "";
+    if (labelText) {
+      const labelSize = obj.dimensionLabelSize || Math.max(2.5, sw * 8);
+      const mx = (obj.p1.x + obj.p2.x) / 2;
+      const my = (obj.p1.y + obj.p2.y) / 2;
+      // 막대 '위'(법선 반대쪽)로 띄운다 — 막대와 글자가 겹치면 지도에서 둘 다 안 읽힌다.
+      const gap = capHalf + labelSize * 0.9;
+      const label = document.createElementNS(SVG_NS, "text");
+      label.setAttribute("x", mx + ny * gap);
+      label.setAttribute("y", my - nx * gap + labelSize * LABEL_OPTICAL_CENTER_EM);
+      label.setAttribute("fill", LABEL_INK);
+      label.setAttribute("font-size", labelSize);
+      label.setAttribute("text-anchor", "middle");
+      applyObjectLabelFont(label, obj.labelType, "label");
+      fillTextWithRomanRuns(label, labelText);
+      g.appendChild(label);
+    }
   } else if (lineStyle === "lengthArrow") {
     g.appendChild(makeArrowHead(obj.p2.x, obj.p2.y, nx, ny, sw, color, LINE_ARROW_OPTS));
     g.appendChild(makeArrowHead(obj.p1.x, obj.p1.y, -nx, -ny, sw, color, LINE_ARROW_OPTS));
@@ -336,6 +403,30 @@ function renderPolyline(obj) {
   const color = grayHex(obj.strokeLevel);
   const pts = obj.points || [];
   const n = pts.length;
+
+  /* ----- 산점(markerOnly): 잇는 선 없이 점만 찍는다 — 2026-07-31 -----
+   * H-R도·은하 분포처럼 점이 수십~수백 개인 자료다. 그래프 모달의 '표시점'은
+   * 낱개 클릭이라 이런 양을 감당하지 못했다(docs/SURVEY_earth_20260731.md §5).
+   * 새 타입 대신 폴리라인의 옵션으로 두는 이유: 점 배열을 이미 갖고 있고,
+   * 그래서 점마다 핸들이 붙어 자료점 하나를 집어 옮기는 것까지 공짜로 된다.
+   *   markerSize   점 지름(mm). 없으면 선 굵기에 비례
+   *   markerOpen   속 빈 원(○) — 기출에서 두 자료를 구분할 때 쓰는 그 표기 */
+  if (obj.markerOnly === true) {
+    const g = document.createElementNS(SVG_NS, "g");
+    const r = (Number.isFinite(obj.markerSize) && obj.markerSize > 0 ? obj.markerSize : sw * 4) / 2;
+    for (const p of pts) {
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", p.x);
+      c.setAttribute("cy", p.y);
+      c.setAttribute("r", r);
+      c.setAttribute("fill", obj.markerOpen ? "#ffffff" : color);
+      c.setAttribute("stroke", color);
+      c.setAttribute("stroke-width", sw);
+      g.appendChild(c);
+    }
+    if (obj.id) g.dataset.id = obj.id;
+    return g;
+  }
 
   // ----- closed polyline: a filled <polygon> (fillable like rect/ellipse/triangle) -----
   // Arrowheads don't apply to a closed shape; it just takes the shared fill + dash.
@@ -431,24 +522,121 @@ function renderPolyline(obj) {
 
 /* ----- curve: Catmull-Rom smooth path through anchors ----- */
 function renderCurve(obj) {
-  if (obj.closed === true && (obj.points || []).length >= 3) {
-    const el = document.createElementNS(SVG_NS, "path");
-    el.setAttribute("d", catmullRomClosedPath(obj.points));
-    el.setAttribute("fill", obj.fillNone ? "transparent" : resolveFill(obj));
-    el.setAttribute("stroke", grayHex(obj.strokeLevel));
-    el.setAttribute("stroke-width", obj.strokeWidth);
-    applyDash(el, obj);
-    if (obj.id) el.dataset.id = obj.id;
-    return el;
-  }
+  const closed = obj.closed === true && (obj.points || []).length >= 3;
   const el = document.createElementNS(SVG_NS, "path");
-  el.setAttribute("d", catmullRomPath(obj.points));
-  el.setAttribute("fill", "none");
+  el.setAttribute("d", closed ? catmullRomClosedPath(obj.points) : catmullRomPath(obj.points));
+  el.setAttribute("fill", closed ? (obj.fillNone ? "transparent" : resolveFill(obj)) : "none");
   el.setAttribute("stroke", grayHex(obj.strokeLevel));
   el.setAttribute("stroke-width", obj.strokeWidth);
   applyDash(el, obj);
   if (obj.id) el.dataset.id = obj.id;
-  return el;
+
+  /* ----- 지구과학 확장 두 가지 (2026-07-31) -----
+   * 둘 다 '새 타입'이 아니라 곡선의 옵션으로 둔다. 새 타입으로 만들면 꼭짓점 핸들·
+   * 픽·복사·저장·스타일 배선을 전부 새로 깔아야 하는데, 이것들은 본질이 곡선이라
+   * 그럴 이유가 없다. 옵션으로 두면 "마우스로 찝어 구부리기"가 공짜로 따라온다.
+   *   frontKind   전선 기호(한랭·온난·정체·폐색) — 곡선을 따라 반복해 얹는다
+   *   inlineLabel 등치선 값 라벨 — 선을 끊고 그 자리에 값이 앉는다(지도 관례)
+   * 둘 다 경로 위 좌표가 필요해 SVG 의 getPointAtLength 를 쓴다. 이 API 는 문서에
+   * 붙지 않은 요소에서도 동작하므로 렌더 도중 호출해도 안전하다(export 경로 포함). */
+  const wantsPathWork = obj.frontKind || obj.inlineLabel;
+  if (!wantsPathWork || !(obj.points || []).length) return el;
+
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  g.appendChild(el);
+
+  let L = 0;
+  try { L = el.getTotalLength(); } catch { L = 0; }
+  if (!(L > 0)) return g;
+  const at = (d) => {
+    const p = el.getPointAtLength(Math.max(0, Math.min(L, d)));
+    const q = el.getPointAtLength(Math.max(0, Math.min(L, d + 0.4)));
+    const vx = q.x - p.x, vy = q.y - p.y;
+    const len = Math.hypot(vx, vy) || 1;
+    return { x: p.x, y: p.y, tx: vx / len, ty: vy / len };
+  };
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth ?? 0.2;
+
+  if (obj.frontKind) {
+    /* 기호는 진행 방향 왼쪽(법선 -n)에 붙이는 것이 기상 관례다. flipSide 로 뒤집는다.
+     * 정체 전선만 예외로, 삼각과 반원이 서로 반대쪽에 번갈아 붙는다(그게 정의다). */
+    const kind = ["cold", "warm", "stationary", "occluded"].includes(obj.frontKind)
+      ? obj.frontKind : "cold";
+    const gap = Number.isFinite(obj.frontGap) && obj.frontGap > 1 ? obj.frontGap : 7;
+    const size = Number.isFinite(obj.frontSize) && obj.frontSize > 0 ? obj.frontSize : gap * 0.34;
+    const baseSide = obj.flipSide ? -1 : 1;
+    let k = 0;
+    for (let d = gap * 0.6; d <= L - size; d += gap, k += 1) {
+      const p = at(d);
+      // 법선(왼쪽) = 진행방향을 -90° 돌린 것. SVG 는 y가 아래로 자란다.
+      const nx = p.ty, ny = -p.tx;
+      let mark = kind, side = baseSide;
+      if (kind === "stationary") { mark = k % 2 ? "warm" : "cold"; side = k % 2 ? -baseSide : baseSide; }
+      else if (kind === "occluded") { mark = k % 2 ? "warm" : "cold"; }
+      const sx = nx * side, sy = ny * side;
+      if (mark === "cold") {
+        // 삼각: 밑변은 선 위, 꼭짓점이 바깥으로.
+        const a = { x: p.x - p.tx * size * 0.6, y: p.y - p.ty * size * 0.6 };
+        const b = { x: p.x + p.tx * size * 0.6, y: p.y + p.ty * size * 0.6 };
+        const c = { x: p.x + sx * size, y: p.y + sy * size };
+        const tri = document.createElementNS(SVG_NS, "polygon");
+        tri.setAttribute("points", `${a.x},${a.y} ${c.x},${c.y} ${b.x},${b.y}`);
+        tri.setAttribute("fill", color);
+        tri.setAttribute("stroke", color);
+        tri.setAttribute("stroke-width", sw * 0.5);
+        g.appendChild(tri);
+      } else {
+        // 반원: 지름이 선 위에 놓이고 볼록한 쪽이 바깥으로. 큰 호 플래그는 항상 0,
+        // sweep 은 붙는 쪽에 따라 뒤집어야 반원이 선 안쪽으로 말리지 않는다.
+        const r = size * 0.6;
+        const a = { x: p.x - p.tx * r, y: p.y - p.ty * r };
+        const b = { x: p.x + p.tx * r, y: p.y + p.ty * r };
+        const cross = p.tx * sy - p.ty * sx;   // 붙는 쪽 판별(부호만 쓴다)
+        const arc = document.createElementNS(SVG_NS, "path");
+        arc.setAttribute("d", `M ${a.x} ${a.y} A ${r} ${r} 0 0 ${cross > 0 ? 1 : 0} ${b.x} ${b.y}`);
+        arc.setAttribute("fill", color);
+        arc.setAttribute("stroke", color);
+        arc.setAttribute("stroke-width", sw * 0.5);
+        g.appendChild(arc);
+      }
+    }
+  }
+
+  if (obj.inlineLabel) {
+    /* 등치선 값 라벨: 선을 끊고 그 자리에 값이 앉는다. 실제로 경로를 자르는 대신
+     * 바탕색 사각형을 깔아 선을 가린다 — 경로를 자르면 곡선을 구부릴 때마다 다시
+     * 잘라야 하고, 도형이 둘로 갈라져 한 객체로 다루기 어려워진다.
+     * 글자는 그 지점의 접선 방향으로 눕힌다(지도 관례). 위아래가 뒤집히지 않게
+     * 기울기가 ±90°를 넘으면 180° 돌린다. */
+    const t = Number.isFinite(obj.inlineLabelT) ? Math.max(0, Math.min(1, obj.inlineLabelT)) : 0.5;
+    const size = obj.inlineLabelSize || Math.max(2.2, sw * 7);
+    const p = at(L * t);
+    let deg = Math.atan2(p.ty, p.tx) * 180 / Math.PI;
+    if (deg > 90) deg -= 180; else if (deg < -90) deg += 180;
+    const text = String(obj.inlineLabel);
+    const halfW = size * 0.34 * text.length + size * 0.18;
+    const mask = document.createElementNS(SVG_NS, "rect");
+    mask.setAttribute("x", p.x - halfW);
+    mask.setAttribute("y", p.y - size * 0.62);
+    mask.setAttribute("width", halfW * 2);
+    mask.setAttribute("height", size * 1.24);
+    mask.setAttribute("fill", "#ffffff");
+    mask.setAttribute("transform", `rotate(${deg},${p.x},${p.y})`);
+    g.appendChild(mask);
+    const label = document.createElementNS(SVG_NS, "text");
+    label.setAttribute("x", p.x);
+    label.setAttribute("y", p.y + size * LABEL_OPTICAL_CENTER_EM);
+    label.setAttribute("fill", LABEL_INK);
+    label.setAttribute("font-size", size);
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("transform", `rotate(${deg},${p.x},${p.y})`);
+    applyObjectLabelFont(label, obj.labelType, "label");
+    fillTextWithRomanRuns(label, text);
+    g.appendChild(label);
+  }
+  return g;
 }
 
 /* ----- image: embedded raster via SVG <image> (href = base64 data URL) ----- */
@@ -497,8 +685,30 @@ function renderImage(obj) {
   base.setAttribute("fill", "#ffffff");
   mask.appendChild(base);
 
+  appendCutoutShapes(mask, cutouts);
+  defs.appendChild(mask);
+  g.appendChild(defs);
+
+  el.setAttribute("mask", `url(#${maskId})`);
+  g.appendChild(el);
+  return g;
+}
+
+/* 지우기 영역(cutouts)을 마스크에 검정으로 칠한다. 좌표는 객체 상자의 0~1 분수
+ * (maskContentUnits="objectBoundingBox") — 이동·크기변경·회전에 자동으로 따라붙는다.
+ *   rect : {x,y,w,h}                    — 사각형 지우개
+ *   path : {points[], brushWidth}       — 브러시 획
+ *   poly : {points[]}                   — 채운 다각형(가위로 이미지를 반 자를 때) */
+function appendCutoutShapes(mask, cutouts) {
   for (const cut of cutouts) {
-    if (cut && cut.type === "rect") {
+    if (cut && cut.type === "poly") {
+      const pts = Array.isArray(cut.points) ? cut.points : [];
+      if (pts.length < 3) continue;
+      const poly = document.createElementNS(SVG_NS, "polygon");
+      poly.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
+      poly.setAttribute("fill", "#000000");
+      mask.appendChild(poly);
+    } else if (cut && cut.type === "rect") {
       const r = document.createElementNS(SVG_NS, "rect");
       r.setAttribute("x", cut.x); r.setAttribute("y", cut.y);
       r.setAttribute("width", cut.w); r.setAttribute("height", cut.h);
@@ -527,12 +737,26 @@ function renderImage(obj) {
       }
     }
   }
-  defs.appendChild(mask);
-  g.appendChild(defs);
+}
 
-  el.setAttribute("mask", `url(#${maskId})`);
-  g.appendChild(el);
-  return g;
+/* cutouts가 있으면 <defs><mask>를 만들어 반환(없으면 null). 흰=보임, 검정=지워짐. */
+function buildCutoutMask(obj) {
+  const cutouts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
+  if (cutouts.length === 0) return null;
+  const maskId = `imgmask_${obj.id}`;
+  const defs = document.createElementNS(SVG_NS, "defs");
+  const mask = document.createElementNS(SVG_NS, "mask");
+  mask.setAttribute("id", maskId);
+  mask.setAttribute("maskUnits", "objectBoundingBox");
+  mask.setAttribute("maskContentUnits", "objectBoundingBox");
+  const base = document.createElementNS(SVG_NS, "rect");
+  base.setAttribute("x", "0"); base.setAttribute("y", "0");
+  base.setAttribute("width", "1"); base.setAttribute("height", "1");
+  base.setAttribute("fill", "#ffffff");
+  mask.appendChild(base);
+  appendCutoutShapes(mask, cutouts);
+  defs.appendChild(mask);
+  return { defs, maskId };
 }
 
 /* ----- svgAsset: one selectable, image-like built-in SVG asset ----- */
@@ -557,6 +781,12 @@ function renderSvgAsset(obj) {
   image.setAttribute("height", obj.h);
   image.setAttribute("href", href);
   image.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  // 가위로 잘린 svgAsset도 이미지와 동일하게 마스크로 반쪽을 지운다.
+  const cm = buildCutoutMask(obj);
+  if (cm) {
+    g.appendChild(cm.defs);
+    image.setAttribute("mask", `url(#${cm.maskId})`);
+  }
   g.appendChild(image);
 
   const rot = obj.rotation ?? 0;

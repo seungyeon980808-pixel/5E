@@ -19,9 +19,10 @@ import {
   applyDash,
   makeArrowHead,
 } from "./core.js?v=1.3.0";
-import { worldXFromMathX, worldYFromMathY } from "../function-graph/coords.js?v=1.3.0";
+import { worldXFromMathX, worldYFromMathY, worldYFromMathY2, y2RangeOf } from "../function-graph/coords.js?v=1.3.0";
 import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.3.0";
 import { renderPolyline } from "./shapes.js?v=1.3.0";
+import { resolveFill, makeFillPattern } from "./fill.js?v=1.3.0";
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
 function baselineToVAlign(b) {
@@ -468,6 +469,62 @@ function renderCoordplane(obj) {
     else addName(oText, worldX0 - oSize * 0.22, worldY0 + oSize * 0.08, "end", "hanging", oSize);
   }
 
+  // ----- 오른쪽 세로축(y2): 좌우 이중 y축 -----
+  // 생명과학 자료해석 문항의 정형 형식 — 왼쪽 축과 오른쪽 축의 '이름·눈금'이 서로 다르고,
+  // 계열마다 어느 축을 읽는지가 정해진다. 판(box)은 하나이므로 오른쪽 축은 판의 오른쪽
+  // 끝(right)에 세우고, 눈금은 데이터 반대쪽(바깥)으로 뻗는다.
+  // ★ 격자는 왼쪽 축 기준으로만 그린다(위 GRID 블록) — 두 축 모두 그리면 격자가 두 겹이 된다.
+  // ★ 기출 관례상 눈금 '숫자'가 아예 없는 경우가 많다 → showTickY2를 꺼도 축선·축 이름은 나온다.
+  const y2c = obj.y2;
+  if (y2c && y2c.enabled && hasYArm && obj.showAxisLines) {
+    const r2 = y2RangeOf(obj);
+    // 축선 + 화살촉: 왼쪽 세로축과 같은 모양·같은 높이 범위(판의 아래끝~위끝).
+    addLine(right, yAxisBottom, right, top + shaftGap, color, sw);
+    appendArrow(g, right, top, 0, -1, headSw, color);
+    const step2 = Number.isFinite(y2c.gridStepY2) && y2c.gridStepY2 > 0 ? y2c.gridStepY2 : 1;
+    const lblStep2 = Number.isFinite(y2c.tickStepY2) && y2c.tickStepY2 > 0 ? y2c.tickStepY2 : step2;
+    const texts2 = Array.isArray(y2c.tickTextY2) && y2c.tickTextY2.length ? y2c.tickTextY2 : null;
+    const showNum2 = y2c.showTickY2 === true || !!texts2;
+    // 눈금 칸 인덱스는 왼쪽 축(ky)의 것을 그대로 쓴다 — 판이 하나뿐이라 두 축의 눈금 개수가
+    // 같아야 하고, 왼쪽에서 화살표 여백으로 잘라 둔 마지막 칸을 오른쪽만 더 그리면 안 된다
+    // (tickRange로 y2 범위를 따로 훑으면 여백 안쪽에 눈금이 하나 더 생긴다).
+    const lo2 = Math.min(r2.min, r2.max), hi2 = Math.max(r2.min, r2.max);
+    let ord2 = 0;
+    if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) {
+      for (let k = ky.kStart; k <= ky.kEnd; k++) {
+        const v2 = k * step2;
+        if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
+        if (v2 < lo2 - 1e-6 || v2 > hi2 + 1e-6) continue;
+        const vy = worldYFromMathY2(obj, v2);
+        // 눈금 표시선도 showTickY2를 따라간다 — 끄면 '축선 + 축 이름'만 남는다(기출 관례).
+        if (obj.showTicks && showNum2) addLine(right, vy, right + tIn, vy, tickColor, tickSw);  // 바깥(오른쪽)으로
+        if (showNum2) {
+          const txt = texts2 ? String(texts2[ord2] ?? "") : fmtTick(k * lblStep2);
+          if (txt) addNumber(txt, right + tIn + tickGap, vy, "start", "middle", null);
+        }
+        ord2++;
+      }
+    }
+    // 축 이름: 오른쪽 바깥에 세로쓰기(아래→위로 읽는 방향, -90° 회전).
+    if (y2c.labelY2) {
+      const lx = right + tIn + (showNum2 ? numSize * 1.9 : numSize * 0.5) + nameSize * 0.65;
+      const ly = (top + bottom) / 2;
+      const wrap = document.createElementNS(SVG_NS, "g");
+      wrap.setAttribute("transform", `rotate(-90 ${lx} ${ly})`);
+      let el2 = null;
+      if (rich) {
+        el2 = renderGraphLabel(y2c.labelY2, { x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio });
+      } else {
+        el2 = document.createElementNS(SVG_NS, "text");
+        el2.setAttribute("x", lx); el2.setAttribute("y", ly); el2.setAttribute("font-size", nameSize);
+        applyObjectLabelFont(el2, obj.labelType); el2.setAttribute("fill", color);
+        el2.setAttribute("text-anchor", "middle"); el2.setAttribute("dominant-baseline", "middle");
+        fillTextWithRomanRuns(el2, y2c.labelY2);
+      }
+      if (el2) { el2.setAttribute("data-axisname", "y2"); wrap.appendChild(el2); g.appendChild(wrap); }
+    }
+  }
+
   // ----- '표시' 레이어(요구 ③): 곡선에 종속되지 않는 독립 주석 -----
   // 전부 평면 객체에 math 좌표로 저장되고 여기서 P로 world 변환 → 평면을 리사이즈해도 함께 따라온다.
   // 표시점 ●, 수선의 발(축까지 점선), 화살촉, 가이드라인(두 점 점선), 범례(선 견본+글씨) 박스.
@@ -776,6 +833,9 @@ function straightPathD(pts, breaks) {
     .filter(Boolean).join(" ").trim();
 }
 
+// 막대 무늬 <pattern> id 일련번호 — 모달 미리보기처럼 obj.id가 없는 렌더에서 충돌을 막는다.
+let _barPatSeq = 0;
+
 function renderFuncgraph(obj) {
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
@@ -845,24 +905,84 @@ function renderFuncgraph(obj) {
     }
   }
 
+  /* ----- 막대그래프 (obj.bars) -----
+   * 새 객체 타입을 만들지 않고 funcgraph에 얹은 막대(생명과학 기출 관례: 세로 막대,
+   * 회색 단색 + 검은 외곽선, 무늬 없음). 기하가 두 곳에 있는 이유:
+   *   obj.bars.items = [{x,y,w,h,label}] — 구울 때의 축 정렬 사각형(원본 규격)
+   *   obj.points     = 막대마다 네 꼭짓점(bl,tl,tr,br) — 이동·회전·리사이즈(transform.js)와
+   *                    bbox·클릭(pick.js)이 실제로 보고 옮기는 배열
+   * 그래서 개수가 맞으면 points를 진실로 삼는다 — 그래야 회전·리사이즈 결과가 그려진다.
+   * 채우기는 js/render/fill.js의 공용 함수(resolveFill·makeFillPattern)를 재사용한다. */
+  const bars = obj.bars;
+  const isBars = !!(bars && Array.isArray(bars.items) && bars.items.length);
+  if (isBars) {
+    const usePts = pts.length === bars.items.length * 4;
+    // 무늬 채우기는 객체별 <pattern>이 필요하다. id는 funcgraph id 기준(없으면 렌더 일련번호).
+    const fillObj = {
+      type: "rect", id: `bars_${obj.id != null ? obj.id : "p" + (++_barPatSeq)}`,
+      fillStyle: bars.fillStyle || "solid",
+      fillLevel: Number.isFinite(bars.fillLevel) ? bars.fillLevel : 170,
+      fillTile: bars.fillTile,
+    };
+    const pat = makeFillPattern(fillObj);
+    if (pat) {
+      const defs = document.createElementNS(SVG_NS, "defs");
+      defs.appendChild(pat);
+      g.appendChild(defs);
+    }
+    const fillAttr = resolveFill(fillObj);
+    const edge = grayHex(obj.strokeLevel);
+    const esw = Number.isFinite(bars.strokeWidth) ? bars.strokeWidth : (obj.strokeWidth ?? 0.3);
+    const lblSize = Number.isFinite(bars.labelSize) ? bars.labelSize : Math.max(esw * 11, 2.6);
+    bars.items.forEach((r, i) => {
+      const q = usePts ? pts.slice(i * 4, i * 4 + 4) : [
+        { x: r.x, y: r.y + r.h }, { x: r.x, y: r.y },
+        { x: r.x + r.w, y: r.y }, { x: r.x + r.w, y: r.y + r.h },
+      ];
+      if (q.length < 4 || q.some((p) => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y))) return;
+      const bar = document.createElementNS(SVG_NS, "path");
+      bar.setAttribute("d", `M ${q[0].x} ${q[0].y} L ${q[1].x} ${q[1].y} L ${q[2].x} ${q[2].y} L ${q[3].x} ${q[3].y} Z`);
+      bar.setAttribute("fill", fillAttr);
+      bar.setAttribute("stroke", edge);
+      bar.setAttribute("stroke-width", esw);
+      bar.setAttribute("stroke-linejoin", "miter");
+      g.appendChild(bar);
+      // 이름표: 막대 아래(밑변 바깥쪽). '아래'를 윗변→밑변 방향으로 구해 회전에도 따라간다.
+      if (!r.label) return;
+      const bm = { x: (q[0].x + q[3].x) / 2, y: (q[0].y + q[3].y) / 2 };
+      const tm = { x: (q[1].x + q[2].x) / 2, y: (q[1].y + q[2].y) / 2 };
+      let ux = bm.x - tm.x, uy = bm.y - tm.y;
+      const ul = Math.hypot(ux, uy);
+      if (ul > 1e-6) { ux /= ul; uy /= ul; } else { ux = 0; uy = 1; }
+      const lbl = renderGraphLabel(r.label, {
+        x: bm.x + ux * lblSize * 0.45, y: bm.y + uy * lblSize * 0.45,
+        size: lblSize, color: edge, anchor: "middle", vAlign: "top",
+      });
+      if (lbl) g.appendChild(lbl);
+    });
+  }
+
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
-  const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
-  const el = document.createElementNS(SVG_NS, "path");
-  // 편집 가능한 베지어 핸들이 있으면(자유곡선 변환) 그 제어점으로 진짜 3차 베지어를 그린다.
-  const hasHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length && pts.length >= 2;
-  el.setAttribute("d", hasHandles ? bezierPathD(pts, obj.handles)
-    : (style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks)));
-  el.setAttribute("fill", "none");
-  el.setAttribute("stroke", grayHex(obj.strokeLevel));
-  el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);
-  el.setAttribute("stroke-linecap", "round");
-  el.setAttribute("stroke-linejoin", "round");
-  applyDash(el, obj);
-  g.appendChild(el);
+  // 막대 계열은 points가 '사각형 꼭짓점'이라 선으로 이으면 안 된다 — 선 경로를 건너뛴다.
+  if (!isBars) {
+    const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
+    const el = document.createElementNS(SVG_NS, "path");
+    // 편집 가능한 베지어 핸들이 있으면(자유곡선 변환) 그 제어점으로 진짜 3차 베지어를 그린다.
+    const hasHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length && pts.length >= 2;
+    el.setAttribute("d", hasHandles ? bezierPathD(pts, obj.handles)
+      : (style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks)));
+    el.setAttribute("fill", "none");
+    el.setAttribute("stroke", grayHex(obj.strokeLevel));
+    el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);
+    el.setAttribute("stroke-linecap", "round");
+    el.setAttribute("stroke-linejoin", "round");
+    applyDash(el, obj);
+    g.appendChild(el);
+  }
 
   // 끝 라벨(요구 ⑬): 계열의 마지막 점 옆에 이름을 붙인다. 혼합 라벨러 재사용(한글정자+
   // 영문이탤릭+수식+halo) — 그래프 선 위에 걸쳐도 부드럽게 끊긴다(요구 ⑯).
-  if (obj.endLabel && pts.length) {
+  if (obj.endLabel && pts.length && !isBars) {
     const last = pts[pts.length - 1];
     const prev = pts.length > 1 ? pts[pts.length - 2] : last;
     const dx = last.x - prev.x, dy = last.y - prev.y;

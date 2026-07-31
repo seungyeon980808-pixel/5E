@@ -49,6 +49,42 @@ function mathFromWorld(P, wx, wy) {
   return { x: mathXFromWorldX(P, wx), y: mathYFromWorldY(P, wy) };
 }
 
+/* ===== 오른쪽 세로축(y2) — 좌우 이중 y축 =====
+ * 생명과학 자료해석 문항의 정형 형식(왼쪽 축과 오른쪽 축의 이름·눈금이 서로 다름).
+ * 위의 worldYFromMathY는 옛 저장 파일 전부가 통과하는 단일 진리원이므로 절대 건드리지 않고,
+ * y2 전용 매핑을 여기에 '덧붙인다'. 판(box)의 세로 높이 P.h는 그대로 쓰고, 대응시키는
+ * 수학 범위만 y2Min~y2Max로 바꾼 선형 대응이다. y2 설정이 없으면 왼쪽 축과 동일해진다.
+ * 저장 스키마: P.y2 = { enabled, labelY2, y2Min, y2Max, gridStepY2, tickStepY2,
+ *                      tickTextY2, showTickY2 } — 기존 y 필드는 손대지 않는다. */
+function hasY2(P) { return !!(P && P.y2 && P.y2.enabled); }
+function y2RangeOf(P) {
+  const c = (P && P.y2) || {};
+  return {
+    min: Number.isFinite(c.y2Min) ? c.y2Min : P.yMin,
+    max: Number.isFinite(c.y2Max) ? c.y2Max : P.yMax,
+  };
+}
+function worldYFromMathY2(P, my) {
+  const r = y2RangeOf(P);
+  const dy = r.max - r.min;
+  // 왼쪽 축과 같은 y 반전 규약: y2Max가 판의 위쪽(작은 SVG y).
+  return P.y + (dy !== 0 ? (r.max - my) * (P.h / dy) : 0);
+}
+function mathY2FromWorldY(P, wy) {
+  const r = y2RangeOf(P);
+  return P.h !== 0 ? r.max - (wy - P.y) * ((r.max - r.min) / P.h) : r.max;
+}
+// y2 축을 '왼쪽 축인 척' 하는 평면 뷰로 바꿔 준다. 계열을 y2 스케일로 굽는 코드(샘플러·
+// 베이크·미리보기)가 worldFromMath 등 기존 함수를 그대로 쓰게 하는 얇은 어댑터다 —
+// 덕분에 y2 지원 때문에 매핑 호출부를 여기저기 분기시키지 않아도 된다.
+function planeAsY2(P) {
+  const r = y2RangeOf(P);
+  const c = (P && P.y2) || {};
+  const gs = Number.isFinite(c.gridStepY2) && c.gridStepY2 > 0 ? c.gridStepY2 : (P.gridStepY || 1);
+  const ts = Number.isFinite(c.tickStepY2) && c.tickStepY2 > 0 ? c.tickStepY2 : gs;
+  return { ...P, yMin: r.min, yMax: r.max, gridStepY: gs, tickStepY: ts };
+}
+
 /* ----- world coords of the math origin (0,0) ----- */
 // The axis crosses the visible box only when 0 is inside the corresponding range;
 // callers that draw the axis lines test that separately (0 in [xMin,xMax] etc.).
@@ -61,4 +97,5 @@ export {
   worldFromMath, worldXFromMathX, worldYFromMathY,
   mathFromWorld, mathXFromWorldX, mathYFromWorldY,
   originWorld,
+  hasY2, y2RangeOf, worldYFromMathY2, mathY2FromWorldY, planeAsY2,
 };

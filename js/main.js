@@ -12,6 +12,7 @@ import { render } from "./render.js?v=1.3.0";
 import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.3.0";
 import { initTools } from "./tools.js?v=1.3.0";
 import { initCutTool } from "./cut-tool.js?v=1.3.0";
+import { initEraseTool } from "./erase-tool.js?v=1.3.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.3.0";
 import { initArtboardResize } from "./artboard-resize.js?v=1.3.0";
 import { initInspector } from "./inspector.js?v=1.3.0";
@@ -23,6 +24,9 @@ import { initImageObjectify } from "./image-objectify.js?v=1.3.0";
 import { initImagePaste } from "./image-paste.js?v=1.3.0";
 import { initImageCutout } from "./image-cutout.js?v=1.3.0";
 import { initExamLibrary } from "./exam-library.js?v=1.3.0";
+// 부품 라이브러리 — 퍼블릭 도메인 도해를 선화로 바꿔 넣는 창. 기출 라이브러리와 같은
+// 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
+import { initPartsLibrary } from "./parts-library.js?v=1.3.0";
 import { initTemplates } from "./templates.js?v=1.3.0";
 import { initObjectSearch } from "./search.js?v=1.3.0";
 import { initCommandPalette } from "./command-palette.js?v=1.3.0";
@@ -37,6 +41,24 @@ import { initGaugeSection } from "./inspector/section-gauge.js?v=1.3.0";
 import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.3.0";
 import { initParabolaSection } from "./inspector/section-parabola.js?v=1.3.0";
 import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.3.0";
+// 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
+import { initBraceSection } from "./inspector/section-brace.js?v=1.3.0";
+import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.3.0";
+import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.3.0";
+import { initNeuronSection } from "./inspector/section-neuron.js?v=1.3.0";
+import { initLegendSection } from "./inspector/section-legend.js?v=1.3.0";
+import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.3.0";
+// 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
+import { initVesselSection } from "./inspector/section-vessel.js?v=1.3.0";
+import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.3.0";
+import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.3.0";
+import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.3.0";
+import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.3.0";
+import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.3.0";
+import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.3.0";
+import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.3.0";
+import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.3.0";
+import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.3.0";
 import { initAutosave } from "./autosave.js?v=1.3.0";
 import { initPages } from "./pages.js?v=1.3.0";
 import { localizeShortcutLabels } from "./platform.js?v=1.3.0";
@@ -146,6 +168,9 @@ initTools(svg, state);
 /* ----- cut tool: 생성 후 캔버스에서 객체 자르기(가위/칼/올가미) ----- */
 initCutTool(svg, state);
 
+/* ----- erase tool: 올가미로 이미지·SVG자산에 진짜 투명 구멍 뚫기(지우개) ----- */
+initEraseTool(state, svg);
+
 /* ----- transform: body-drag move + Undo/Redo (must come after initTools) ----- */
 initTransform(svg, state);
 
@@ -166,6 +191,24 @@ initParabolaSection(state);
 
 /* ----- 수평면 위 원호 전용 인스펙터 섹션(자체 구독형) ----- */
 initGroundArcSection(state);
+
+/* ----- 생명과학 부품 전용 인스펙터 섹션(전부 자체 구독형) ----- */
+initBraceSection(state);
+initChromosomeSection(state);
+initBilayerSection(state);
+initNeuronSection(state);
+initLegendSection(state);
+initPedigreeSection(state);
+initVesselSection(state);
+initChemModelSection(state);
+initParticleBoxSection(state);
+initOrbitalSection(state);
+initBondGroupSection(state);
+initChemChartSection(state);
+initAxisBreakSection(state);
+initChemGraphSection(state);
+initElectrodeSection(state);
+initPeriodicSection(state);
 
 /* ===== UNDO / REDO TOP-BAR BUTTONS (icon-only; left of 파일) ===== */
 (function initUndoRedoButtons() {
@@ -215,6 +258,7 @@ initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
 initExamLibrary(state);
+initPartsLibrary(state);
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);

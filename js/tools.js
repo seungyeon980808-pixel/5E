@@ -37,6 +37,8 @@ import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
 } from "./geometry.js?v=1.3.0";
+// 각도 이산 변환 대상 목록의 정본(리터럴 5종을 대체) — object-types.js의 angleSnap.
+import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.3.0";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
@@ -71,7 +73,8 @@ export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
 // 그릴 때 각도 이산 변환(Ctrl/Cmd)을 직선과 똑같이 받는 타입들. 전부 p1/p2 계열이라
 // "두 점을 찍어 방향을 정한다"는 조작이 같다(2026-07-26 교사 지시로 확장).
-const ANGLE_SNAP_TYPES = new Set(["line", "spring", "chargefield", "fieldlines", "standingwave"]);
+// 정본은 object-types.js의 angleSnap 플래그다 — 여기 리터럴로 적혀 있던 탓에 그 뒤
+// 추가된 p1/p2 타입(포물선·원호·진자·생명 부품 4종)이 조용히 빠져 있었다(2026-07-31 수정).
 const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
 const TEXT_LINE_HEIGHT = 1.4; // matches .text-editor-overlay line-height AND renderText() tspan dy
 // A textarea centers its glyphs in the line box, so the first line sits half a
@@ -113,7 +116,12 @@ let _activeSymbolId = null;
 // one of these is active, _activeSymbolId names WHICH symbol armed it; any other
 // tool (incl. auto-return to V after a commit) means no symbol is armed.
 const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
-  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA", "GROUNDARC"]);
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA", "GROUNDARC",
+  // 생명과학 부품 (2026-07-31) — docs/BIO_PARTS_SPEC.md
+  "BRACE", "CHROMOSOME", "BILAYER", "NEURON", "LEGEND", "PEDIGREE",
+  // 화학 부품 (2026-07-31) — docs/CHEM_PARTS_SPEC.md
+  "VESSEL", "CHEMMODEL", "PARTICLEBOX", "ORBITAL", "BONDGROUP",
+  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC"]);
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -148,6 +156,11 @@ export function initTools(svg, state) {
 /* ----- tool selection: the one path that changes the armed tool ----- */
 export function setActiveTool(tool) {
   if (_state.get().activeTool === tool) return;
+  /* 팔레트가 얹어둔 추가 필드를 여기서 버린다. 곡선·꺾은선이 심볼 도구가 되면서
+   * (지구과학 전선·등치선·산점) 팔레트로 '한랭 전선'을 고른 뒤 C 키로 맨 곡선을
+   * 그리면 옛 필드가 따라붙는 사고가 가능해졌다. armSymbol 은 이 함수를 부른 **뒤에**
+   * 값을 넣으므로 정상 경로는 영향받지 않는다. */
+  _symbolProps = null;
   clearClickLocals(); // arming another tool discards any in-progress click draft
   cancelActiveTextEditor(); // discard any in-progress text edit
   cancelActiveFormulaEditor(); // discard any in-progress formula edit
@@ -210,7 +223,6 @@ function setupToolChoosers() {
  * the highlight updates even when the armed tool is unchanged (e.g. 저항 → 전지,
  * both on CIRCUIT, where setActiveTool early-returns and fires no subscriber). */
 export function armSymbol(symbolId, tool, variant, props) {
-  _symbolProps = (props && typeof props === "object") ? { ...props } : null;
   if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
   if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
   if (tool === "APPARATUS") _apparatusKind = variant || "wire";
@@ -221,6 +233,8 @@ export function armSymbol(symbolId, tool, variant, props) {
   clearClickLocals();
   _state.update((s) => { s.draft = null; });
   setActiveTool(tool);
+  // 추가 필드는 setActiveTool **뒤에** 넣는다 — 그 안에서 옛 값을 비우기 때문이다.
+  _symbolProps = (props && typeof props === "object") ? { ...props } : null;
   // _activeSymbolId는 위 두 state.update가 유발하는 syncButtons(이전 도구 기준) 뒤에 설정해야
   // 한다. 먼저 설정하면, 비-심볼 도구(예: 텍스트 T)에서 심볼로 전환할 때 그 syncButtons가
   // "!SYMBOL_TOOLS.has(옛 도구)"로 _activeSymbolId를 null로 지워 하이라이트가 사라졌다.
@@ -231,6 +245,12 @@ export function armSymbol(symbolId, tool, variant, props) {
 // Read the armed optics kind. Exposed as a getter (armSymbol owns the value) so
 // tools/node-placement.js can tell when the 점 tool is armed without a copy.
 export function getOpticsKind() { return _opticsKind; }
+
+/* 팔레트가 지정한 추가 필드. 드래그로 그리는 도형은 makeShape 안에서 직접 병합하지만,
+ * 클릭배치(선 L·꺾은선 P·곡선 C)는 commit이 tools/click-placement.js 에 있어 값을 못 봤다.
+ * 지구과학 부품(전선 기호·등치선·산점)이 전부 곡선·꺾은선 위에 얹히는 옵션이라
+ * 이 경로에도 병합이 필요해졌다 — 값의 주인은 그대로 armSymbol 이고 여기선 읽기만 한다. */
+export function getSymbolProps() { return _symbolProps; }
 
 function syncButtons(activeTool) {
   // A library symbol stays armed only while its placement tool is active; any plain
@@ -291,6 +311,7 @@ function setupKeyboard() {
     else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
     else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
     else if (key === "c") setActiveTool("C");
+    else if (key === "e" && e.shiftKey) setActiveTool("ERASE"); // 지우개(올가미) — 이미지·SVG자산에 투명 구멍 (erase-tool.js)
     else if (key === "e") setActiveTool("CUT");           // 자르기(가위) — 자유곡선/Shift 직선/Shift+Ctrl 각도스냅 (cut-tool.js)
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
     else if (key === "t") setActiveTool("T");
@@ -339,7 +360,14 @@ function activateSymbolShortcut(symbolId, shortcutLabel) {
 // letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
 // letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
 // the old bare "R") avoids reading like a collision with rotate.
-const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola", GROUNDARC: "groundarc" };
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola", GROUNDARC: "groundarc",
+  BRACE: "brace", CHROMOSOME: "chromosome", BILAYER: "bilayer", NEURON: "neuron",
+  LEGEND: "legend", PEDIGREE: "pedigree",
+  // 화학 부품 10종 — 전부 크기박스 계열이라 드래그로 상자를 그려 만든다.
+  VESSEL: "vessel", CHEMMODEL: "chemmodel", PARTICLEBOX: "particlebox",
+  ORBITAL: "orbital", BONDGROUP: "bondgroup", CHEMCHART: "chemchart",
+  AXISBREAK: "axisbreak", CHEMGRAPH: "chemgraph", ELECTRODE: "electrode",
+  PERIODIC: "periodic" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -393,7 +421,7 @@ function setupDrawing() {
     if (e.buttons & 1) return;
     const s = _state.get();
     const activeTool = s.activeTool;
-    if (activeTool === "CUT") return; // 자르기 도구의 커서(가위/칼)는 cut-tool.js가 전담 — 여기서 지우지 않는다
+    if (activeTool === "CUT" || activeTool === "ERASE") return; // 자르기/지우개 커서는 cut-tool.js·erase-tool.js가 전담 — 여기서 지우지 않는다
     if (activeTool !== "V" && activeTool !== "rotate") {
       _svg.style.cursor = "";
       return;
@@ -661,7 +689,10 @@ function setupDrawing() {
 export function isCommittable(shape) {
   if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring"
       || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave"
-      || shape.type === "parabola" || shape.type === "groundarc") {
+      || shape.type === "parabola" || shape.type === "groundarc"
+      // 생명과학 p1/p2 계열 (docs/BIO_PARTS_SPEC.md)
+      || shape.type === "brace" || shape.type === "chromosome"
+      || shape.type === "bilayer" || shape.type === "neuron") {
     return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
   }
   if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
@@ -677,6 +708,25 @@ function makeShape(type, a, b) {
   if (type === "spring") return makeSpring(a, b);
   if (type === "parabola" || type === "groundarc") {
     const obj = type === "parabola" ? makeParabola(a, b) : makeGroundArc(a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  // 생명과학 부품 — p1/p2 계열 넷과 크기박스 계열 둘. 팔레트가 고른 갈래(_symbolProps)를
+  // 얹는 방식은 위 전기력선·정상파와 같다. (docs/BIO_PARTS_SPEC.md)
+  if (type === "brace" || type === "chromosome" || type === "bilayer" || type === "neuron"
+      || type === "legend" || type === "pedigree") {
+    const obj = type === "brace" ? makeBrace(a, b)
+      : type === "chromosome" ? makeChromosome(a, b)
+      : type === "bilayer" ? makeBilayer(a, b)
+      : type === "neuron" ? makeNeuron(a, b)
+      : type === "legend" ? makeLegend(a, b) : makePedigree(a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  // 화학 부품 10종 — 전부 크기박스 계열이라 팩토리 하나로 묶인다(docs/CHEM_PARTS_SPEC.md).
+  // 팔레트가 고른 갈래(kind 등)는 _symbolProps 로 얹는다 — 위 생명과학과 같은 방식.
+  if (CHEM_FACTORIES[type]) {
+    const obj = CHEM_FACTORIES[type](a, b);
     if (_symbolProps) Object.assign(obj, _symbolProps);
     return obj;
   }
@@ -867,6 +917,14 @@ function makeShape(type, a, b) {
     }
     if (_symbolProps) Object.assign(shape, _symbolProps);
   }
+  /* 크기박스 계열이 아닌 **맨 도형**(사각형·타원·삼각형)에도 팔레트 필드를 얹는다.
+   * 지금까지는 kind 를 고르는 부품(광학·기구·입체·화학·생명)만 병합 지점이 있었다.
+   * 지구과학 지질 단면은 "사각형 + 암상 무늬(fillStyle)"라 맨 도형에 필드가 붙어야 한다.
+   * 여기서 얹고 아래 applyNewObjectStyleDefaults 로 넘긴다 — 그 함수는 사용자가 정한
+   * 새 객체 기본 스타일을 채우되 이미 있는 값을 덮지 않으므로 순서가 이 편이 안전하다. */
+  if (_symbolProps && (type === "rect" || type === "ellipse" || type === "triangle")) {
+    Object.assign(shape, _symbolProps);
+  }
   return applyNewObjectStyleDefaults(shape);
 }
 
@@ -1025,6 +1083,252 @@ function makeGroundArc(a, b) {
     order: 0,
   });
 }
+
+/* ===== 생명과학 부품 팩토리 (2026-07-31) =====
+ * 규격은 docs/BIO_PARTS_SPEC.md. 기본값을 여기서 바꾸면 명세도 같이 고칠 것.
+ * 앞의 넷은 p1/p2 계열(드래그 = 두 끝점), 뒤의 둘은 크기박스 계열(드래그 = 상자). */
+
+/* 중괄호 — 드래그가 **묶는 구간**이고 꼭짓점은 그 선의 수직 방향으로 나온다. */
+function makeBrace(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "brace",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    depth: 5,
+    flipSide: false,
+    label: "",
+    showLabel: false,
+    labelType: "label",   // 중괄호에 붙는 건 ㉠㉡ 같은 이름표라 정체가 기본
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 염색체 — 드래그가 위 끝 → 아래 끝. X자가 아니라 캡슐 2개 + 동원체 점이다. */
+function makeChromosome(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "chromosome",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    chromatidWidth: 3,
+    chromatidGap: 1.6,
+    centromere: 0.32,
+    fillStyle: "solid",
+    fillLevel: 255,
+    homologPair: false,
+    pairGap: 20,
+    labelLeft: "", labelRight: "",
+    labelLeft2: "", labelRight2: "",
+    showLabels: true,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 인지질 이중층 — 드래그가 막의 좌 → 우(중심선). */
+function makeBilayer(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "bilayer",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    unitCount: 14,
+    thickness: 7,
+    headRadius: 1.05,
+    proteins: [],          // 기본은 단백질 없음 — 인스펙터에서 개수를 올리면 균등 배치된다
+    labelOuter: "",
+    labelInner: "",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 뉴런 — 드래그가 신경세포체 → 축삭 말단. */
+function makeNeuron(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "neuron",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    somaRadius: 3.4,
+    dendrites: 5,
+    terminals: 3,
+    showStim: false,
+    stimAt: 0.45,
+    stimLabel: "자극",
+    showStimDistance: true,
+    distanceLabel: "d",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 크기박스 계열 두 종의 공통 상자 계산 — 음수 드래그를 정규화하고, 너무 작게 끌었을
+ * 때는 기본 크기를 준다(팔레트에서 클릭 한 번으로 놓는 경우가 흔하다). */
+function bioBox(a, b, defW, defH) {
+  const w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+  const useDefault = w < MIN_SIZE || h < MIN_SIZE;
+  return {
+    x: useDefault ? a.x : Math.min(a.x, b.x),
+    y: useDefault ? a.y : Math.min(a.y, b.y),
+    w: useDefault ? defW : w,
+    h: useDefault ? defH : h,
+  };
+}
+
+/* 범례 — 그래프 모달 안에만 있던 범례를 그림 어디서나 쓸 수 있게 뺀 것. */
+function makeLegend(a, b) {
+  const box = bioBox(a, b, 34, 16);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "legend",
+    ...box,
+    items: [
+      { sample: "solid", text: "A" },
+      { sample: "dash", text: "B" },
+    ],
+    direction: "vertical",
+    border: true,
+    padding: 2.4,
+    sampleWidth: 8,
+    fontSize: 2.8,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 가계도 — 전체 그림이 상자 안에 맞춰 그려진다. */
+function makePedigree(a, b) {
+  const box = bioBox(a, b, 60, 42);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "pedigree",
+    ...box,
+    gen2Kids: 3,
+    gen3Kids: 0,
+    gen3Parent: 0,
+    symbolRadius: 2.6,
+    showNumbers: true,
+    affected: "",
+    affectedFill: "hatch",
+    carrier: "",
+    carrierFill: "gray",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* ===== 화학 부품 10종 — 크기박스 팩토리 (docs/CHEM_PARTS_SPEC.md) =====
+ * 전부 "상자 안에 그림을 맞춰 그리는" 성격이라 공통 뼈대(id/type/box/공용 스타일)가
+ * 같다. 생명과학처럼 함수를 열 개 늘어놓는 대신 부품별 기본 필드만 표로 두고
+ * makeChem() 하나가 상자와 공용 필드를 붙인다 — 새 부품을 더할 때 표에 한 줄만 쓰면 된다.
+ * 기본 크기(defW·defH)는 명세의 "기본 크기" 값이다. */
+const CHEM_DEFAULTS = {
+  vessel: [30, 34, {
+    kind: "box", liquid: 0.34, liquidColor: "#d9dcdf",
+    hasPiston: true, pistonAt: 0.66, hasFix: true, hasWeight: false,
+    hasStopcock: false, hasTicks: false,
+    text: "A(g) 2 mol\n1 L", textPos: "middle",
+  }],
+  chemmodel: [30, 30, {
+    kind: "atom", symbol: "O", shade: true,
+    shells: "2,8,2", dashedShell: true,
+    cell: "fcc", ballRadius: 2.0, showEdge: true, cut: false,
+    molecule: "H2O", bondLength: 9, bondAngle: 104.5, showGeoLabel: true,
+    bracket: false, charge: "",
+  }],
+  particlebox: [26, 26, {
+    state: "gas", count: 14, particleRadius: 1.15,
+    motion: "none", particleShape: "circle", mix: false, seed: 7,
+  }],
+  orbital: [30, 30, {
+    kind: "shape", electrons: 8, showOrbitalLabels: true,
+    orbital: "pz", showAxis: true, showNode: true, showSymbol: true,
+  }],
+  bondgroup: [40, 26, {
+    molecule: "C2H4", bondLength: 8, symbolSize: 3.2, showKoreanName: true,
+  }],
+  chemchart: [44, 34, {
+    kind: "bar", values: "3,5,2,4", names: "A,B,C,D",
+    xTitle: "물질", yTitle: "양(mol)", showGuide: true,
+    colors: ["#ffffff", "#c9c9c9", "#8f8f8f", "#e4e4e4", "#6f6f6f"],
+    showRatio: true, showTick: false,
+  }],
+  axisbreak: [30, 4, { dir: "horizontal", amp: 0.5, gap: 1.6, period: 3.0 }],
+  chemgraph: [44, 34, {
+    kind: "energy", reactant: 0.42, product: 0.2, peak: 0.85,
+    showCatalyst: false, showMarks: true,
+    acidType: "sw", eqVolume: 0.5, eqPH: 7, showEqPoint: true,
+    isWater: true, triplePt: { x: 0.34, y: 0.3 }, criticalPt: { x: 0.82, y: 0.82 },
+    showRegionNames: true,
+  }],
+  electrode: [44, 40, {
+    solution: "KOH(aq)", liquidColor: "#c9cdd1", depth: 0.62,
+    leftLabel: "산화 전극", rightLabel: "환원 전극",
+    lampOn: true, saltBridge: false, showElectronArrow: true,
+  }],
+  periodic: [52, 26, {
+    periods: 4, highlight: "", highlightSymbols: "", showZ: true, metalShade: false,
+  }],
+};
+
+function makeChem(type, a, b) {
+  const [defW, defH, fields] = CHEM_DEFAULTS[type];
+  const box = bioBox(a, b, defW, defH);
+  // 중첩 객체(triplePt 등)가 여러 인스턴스에 공유되지 않도록 깊은 복사로 떼어 낸다.
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type,
+    ...box,
+    ...JSON.parse(JSON.stringify(fields)),
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+const CHEM_FACTORIES = Object.fromEntries(
+  Object.keys(CHEM_DEFAULTS).map((t) => [t, (a, b) => makeChem(t, a, b)]),
+);
 
 function makeStandingWave(a, b) {
   return applyNewObjectStyleDefaults({

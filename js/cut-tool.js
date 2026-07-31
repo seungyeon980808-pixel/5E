@@ -10,7 +10,7 @@
 // 스토어 교체(Undo 1스텝)만 담당. */
 
 import { screenToWorld } from "./viewport.js?v=1.3.0";
-import { cutObject, isCuttable, cutCrossingPoints } from "./cut-geometry.js?v=1.3.0";
+import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.3.0";
 import { snapLineEnd } from "./geometry.js?v=1.3.0";
 import { simplifyRDP } from "./geometry.js?v=1.3.0";
 import { getObjectBBox } from "./pick.js?v=1.3.0";
@@ -59,7 +59,7 @@ function drawBBoxes() {
     r.setAttribute("x", bb.x); r.setAttribute("y", bb.y);
     r.setAttribute("width", bb.w); r.setAttribute("height", bb.h);
     r.setAttribute("fill", "none");
-    r.setAttribute("stroke", isCuttable(o) ? "#0969da" : "#adb5bd");
+    r.setAttribute("stroke", (isCuttable(o) || isBoxCuttable(o)) ? "#0969da" : "#adb5bd");
     r.setAttribute("stroke-width", sw);
     r.setAttribute("stroke-dasharray", `${sw * 3} ${sw * 2}`);
     r.setAttribute("opacity", "0.55");
@@ -92,8 +92,9 @@ function renderOverlay(path) {
   // 실제 잘리는 지점: 채운 빨간 점
   const dotR = worldPerPx() * 3.2;
   for (const o of _state.get().objects) {
-    if (!isCuttable(o)) continue;
-    const crossings = cutCrossingPoints(o, path);
+    if (!isCuttable(o) && !isBoxCuttable(o)) continue;
+    let crossings = [];
+    try { crossings = cutCrossingPoints(o, path); } catch (_) { crossings = []; }
     // cutFreehand(cut-geometry.js)는 교차점이 정확히 2개(관통)일 때만 실제로 자른다.
     // 2개가 아니면 여기서 점을 찍어도 실제로는 안 잘리므로, 회색으로 표시해
     // "표시는 되지만 이 상태로는 적용되지 않음"을 시각적으로 구분한다.
@@ -156,8 +157,10 @@ function applyCut(path) {
   const objs = _state.get().objects;
   const results = [];
   for (const o of objs) {
-    if (!isCuttable(o)) continue;
-    const pieces = cutObject(o, "freehand", { path });
+    const boxy = isBoxCuttable(o);
+    if (!isCuttable(o) && !boxy) continue;
+    // 상자형(이미지·svgAsset)은 점 배열이 아니라 마스크로 반쪽을 지운 복제 둘로 나뉜다.
+    const pieces = boxy ? cutBoxObject(o, path) : cutObject(o, "freehand", { path });
     if (pieces && pieces.length) results.push({ id: o.id, pieces });
   }
   if (!results.length) return;

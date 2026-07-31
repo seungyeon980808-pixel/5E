@@ -64,12 +64,40 @@ export function buildFillSection(ctx) {
            '<line x1="0" y1="9" x2="9" y2="0" stroke="#888" stroke-width="1"/>' +
            '<line x1="4" y1="14" x2="14" y2="4" stroke="#888" stroke-width="1"/>' +
            '<line x1="9" y1="18" x2="18" y2="9" stroke="#888" stroke-width="1"/>',
+    // 암상 무늬 4종 (지구과학 지질 단면) — 아이콘은 fill.js 의 타일과 같은 모양이어야
+    // 고른 것과 그려지는 것이 어긋나지 않는다.
+    brick: '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<line x1="0" y1="6" x2="18" y2="6" stroke="#888" stroke-width="1"/>' +
+           '<line x1="0" y1="12" x2="18" y2="12" stroke="#888" stroke-width="1"/>' +
+           '<line x1="9" y1="0" x2="9" y2="6" stroke="#888" stroke-width="1"/>' +
+           '<line x1="4" y1="6" x2="4" y2="12" stroke="#888" stroke-width="1"/>' +
+           '<line x1="14" y1="6" x2="14" y2="12" stroke="#888" stroke-width="1"/>' +
+           '<line x1="9" y1="12" x2="9" y2="18" stroke="#888" stroke-width="1"/>',
+    vees:  '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<path d="M2 7 L5 11 L8 7" fill="none" stroke="#888" stroke-width="1"/>' +
+           '<path d="M10 13 L13 17 L16 13" fill="none" stroke="#888" stroke-width="1"/>' +
+           '<path d="M10 2 L13 6 L16 2" fill="none" stroke="#888" stroke-width="1"/>',
+    plus:  '<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<line x1="2" y1="5" x2="8" y2="5" stroke="#888" stroke-width="1"/>' +
+           '<line x1="5" y1="2" x2="5" y2="8" stroke="#888" stroke-width="1"/>' +
+           '<line x1="10" y1="13" x2="16" y2="13" stroke="#888" stroke-width="1"/>' +
+           '<line x1="13" y1="10" x2="13" y2="16" stroke="#888" stroke-width="1"/>',
+    hlines:'<rect width="18" height="18" fill="white" stroke="#ccc" rx="1"/>' +
+           '<line x1="0" y1="5" x2="18" y2="5" stroke="#888" stroke-width="1"/>' +
+           '<line x1="0" y1="9" x2="18" y2="9" stroke="#888" stroke-width="1"/>' +
+           '<line x1="0" y1="13" x2="18" y2="13" stroke="#888" stroke-width="1"/>',
   };
   const FILL_STYLE_OPTIONS = [
     { label: "색",   value: "solid" },
     { label: "도트", value: "dots"  },
     { label: "엑스", value: "cross" },
     { label: "헤칭", value: "hatch" },
+    // 지질 단면용. 이름은 무늬 모양이 아니라 '무슨 암석인가'로 적는다 —
+    // 교사가 고를 때 보는 것이 암석이기 때문이다(docs/SURVEY_earth_20260731.md §5).
+    { label: "벽돌(석회암)", value: "brick"  },
+    { label: "v (화산암)",   value: "vees"   },
+    { label: "+ (심성암)",   value: "plus"   },
+    { label: "가로줄(셰일)", value: "hlines" },
   ];
   const _fillStyleBtnEls = {};
   FILL_STYLE_OPTIONS.forEach(({ label, value }) => {

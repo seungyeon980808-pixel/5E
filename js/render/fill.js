@@ -101,6 +101,37 @@ export function makeFillPattern(obj) {
     line(-tile / 2, tile / 2, tile / 2, -tile / 2);
     line(tile / 2, tile * 1.5, tile * 1.5, tile / 2);
   }
+  /* ----- 암상(岩相) 무늬 4종 — 지구과학 지질 단면 (2026-07-31) -----
+   * 지질 도판에서 무늬는 장식이 아니라 '무슨 암석인가'를 말하는 정보다.
+   * 기존 4종(solid/dots/cross/hatch)으로는 석회암·화산암·심성암·셰일을 구분할 수
+   * 없어 기출 6장이 재현 불가였다(docs/SURVEY_earth_20260731.md §5).
+   * 타일 한 장이 그대로 이어붙는 것을 전제로 좌표를 잡는다 — 경계에서 무늬가
+   * 끊겨 보이면 안 되므로, 타일 밖으로 나가는 획은 반대편에 짝을 하나 더 둔다. */
+  else if (style === "brick") {
+    // 벽돌(석회암): 가로 줄눈 2개 + 세로 줄눈을 한 칸씩 엇갈려 쌓는다.
+    const h = tile / 2;
+    line(0, 0, tile, 0);
+    line(0, h, tile, h);
+    line(tile / 2, 0, tile / 2, h);        // 위 칸 세로 줄눈: 가운데
+    line(0, h, 0, tile);                   // 아래 칸 세로 줄눈: 양 끝(엇갈림)
+    line(tile, h, tile, tile);
+  } else if (style === "vees") {
+    // v (화산암·응회암): 위아래로 엇갈린 작은 v 두 개.
+    const a = tile * 0.22;
+    const v = (cx, cy) => { line(cx - a, cy - a, cx, cy); line(cx, cy, cx + a, cy - a); };
+    v(tile * 0.28, tile * 0.34);
+    v(tile * 0.72, tile * 0.84);
+  } else if (style === "plus") {
+    // + (화강암 등 심성암): 십자를 엇갈려 둘.
+    const d = tile * 0.16;
+    const plus = (cx, cy) => { line(cx - d, cy, cx + d, cy); line(cx, cy - d, cx, cy + d); };
+    plus(tile * 0.3, tile * 0.3);
+    plus(tile * 0.75, tile * 0.75);
+  } else if (style === "hlines") {
+    // 가로줄(셰일·이암): 층리를 나타내는 가는 수평선.
+    line(0, tile * 0.25, tile, tile * 0.25);
+    line(0, tile * 0.75, tile, tile * 0.75);
+  }
   return pat;
 }
 

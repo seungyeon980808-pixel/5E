@@ -79,6 +79,20 @@ export function buildTextSection(ctx) {
   haloRow.appendChild(haloLbl);
   secTextBody.appendChild(haloRow);
 
+  /* 세로쓰기 — 글자를 세운 채 아래로 쌓는다. 회전(눕히기)과 다른 물건이라 따로 둔다.
+     지구·생명 기출 그래프의 세로축 이름이 거의 이 표기다. */
+  const vertRow = document.createElement("div");
+  vertRow.className = "insp-row";
+  const vertCb = document.createElement("input");
+  vertCb.type = "checkbox";
+  vertCb.className = "insp-cb";
+  const vertLbl = document.createElement("label");
+  vertLbl.className = "insp-field-label";
+  vertLbl.textContent = "세로쓰기";
+  vertRow.appendChild(vertCb);
+  vertRow.appendChild(vertLbl);
+  secTextBody.appendChild(vertRow);
+
   /* 자간 — em 단위(0 = 글꼴 기본). 글자 크기를 바꿔도 비율이 유지되도록 em으로 둔다.
      실측 메모: 평가원 지면(2026 수능 물리1 17번 라벨)을 돋움으로 재현해 맞춘 결과
      최적이 -0.01em, 즉 사실상 기본값이었다. 그래서 기본은 0이고 이 컨트롤은
@@ -177,6 +191,21 @@ export function buildTextSection(ctx) {
       s2.redoStack = [];
     });
   });
+  vertCb.addEventListener("change", () => {
+    const val = vertCb.checked;
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((o) => o.id === ids[0]);
+      if (!o || o.type !== "text") return;
+      // 가로쓰기가 기본이므로 끌 때 필드를 지운다(부재 = 가로) — 저장 파일을 깨끗하게.
+      if (val) o.textOrient = "vertical"; else delete o.textOrient;
+      s2.undoStack.push(snap);
+      s2.redoStack = [];
+    });
+  });
   fontSizeNum.addEventListener("change", () => {
     let v = parseFloat(fontSizeNum.value); // entered in pt → store mm
     if (!isFinite(v)) return;
@@ -216,5 +245,5 @@ export function buildTextSection(ctx) {
   // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
   const secText = makeSection("글꼴", secTextBody);
 
-  return { secText, fontFamSel, fontSizeNum, italicCb, haloCb, lsRange, lsNum, wsRange, wsNum };
+  return { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };
 }

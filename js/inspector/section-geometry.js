@@ -698,6 +698,37 @@ export function buildGeometrySection(ctx) {
   const circuitHeightF = makePosRow("높이", "height", "0.1");
   sec3Body.appendChild(circuitHeightF.el);
 
+  // 회로 소자 크기 배율(2026-07-31): 몸통·원·기호가 함께 커진다. 단자 위치는 그대로.
+  const bodyScaleRow = document.createElement("div");
+  bodyScaleRow.className = "insp-row";
+  const bodyScaleLbl = document.createElement("label");
+  bodyScaleLbl.className = "insp-field-label";
+  bodyScaleLbl.textContent = "소자 크기";
+  const bodyScaleInp = document.createElement("input");
+  bodyScaleInp.type = "number";
+  bodyScaleInp.step = "0.1";
+  bodyScaleInp.min = "0.5";
+  bodyScaleInp.max = "3";
+  bodyScaleInp.className = "insp-input";
+  const bodyScaleUnit = document.createElement("span");
+  bodyScaleUnit.className = "insp-unit";
+  bodyScaleUnit.textContent = "×";
+  bodyScaleRow.appendChild(bodyScaleLbl);
+  bodyScaleRow.appendChild(bodyScaleInp);
+  bodyScaleRow.appendChild(bodyScaleUnit);
+  sec3Body.appendChild(bodyScaleRow);
+  function commitBodyScale() {
+    const val = parseFloat(bodyScaleInp.value);
+    if (!isFinite(val) || val <= 0) return;
+    commitSelectedObject((o) => {
+      if (o.type !== "circuit" || o.bodyScale === val) return false;
+      o.bodyScale = val;
+      return true;
+    });
+  }
+  bodyScaleInp.addEventListener("keydown", (e) => { if (e.key === "Enter") bodyScaleInp.blur(); });
+  bodyScaleInp.addEventListener("blur", commitBodyScale);
+
   // axes-only: 형태(축 모양) 3종 전환 + X/Y 라벨 + 눈금 간격. Shown only when a single
   // 좌표축 is selected. Reuses existing fields (axisVariant/labelX/labelY/tickSpacing);
   // each control commits on click or Enter/blur with one undo snapshot, like the rows above.
@@ -995,7 +1026,7 @@ export function buildGeometrySection(ctx) {
     labelBgRow, labelHaloRow, syncLabelHalo,
     labelerLine2Row, syncLabelerLine2,
     boxLabel, boxLabelSizeRow,
-    gapRow, gapInp, circuitHeightF,
+    gapRow, gapInp, circuitHeightF, bodyScaleRow, bodyScaleInp,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,
     centerLineRow, centerLineSel, term1, term2, terminalLabelTypeRow,
     raSizeF, raAngleF, raDirRow, raDirSel,

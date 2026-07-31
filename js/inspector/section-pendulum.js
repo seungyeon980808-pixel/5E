@@ -73,7 +73,47 @@ export function buildPendulumSection(ctx) {
   pendLabelInp.addEventListener("input", commitPendLabel);
   pendLabelInp.addEventListener("change", commitPendLabel);
 
+  /* 추 반지름(mm) — 렌더러는 원래 bobRadius 를 읽는데(자동값 우선순위: 저장값 > 길이 비례)
+   * 조절 UI가 없었다(2026-07-31 교사 요구). 비우면 자동으로 돌아간다. */
+  const pendBobRow = document.createElement("div");
+  pendBobRow.className = "insp-row";
+  const pendBobLbl = document.createElement("label");
+  pendBobLbl.className = "insp-field-label";
+  pendBobLbl.textContent = "추 반지름";
+  const pendBobInp = document.createElement("input");
+  pendBobInp.type = "number";
+  pendBobInp.step = "0.1";
+  pendBobInp.min = "0.5";
+  pendBobInp.className = "insp-input";
+  const pendBobUnit = document.createElement("span");
+  pendBobUnit.className = "insp-unit";
+  pendBobUnit.textContent = "mm";
+  pendBobRow.appendChild(pendBobLbl);
+  pendBobRow.appendChild(pendBobInp);
+  pendBobRow.appendChild(pendBobUnit);
+  secPendBody.appendChild(pendBobRow);
+  function commitPendBob() {
+    const s = state.get();
+    const ids = s.selectedIds || [];
+    if (ids.length !== 1) return;
+    const raw = pendBobInp.value.trim();
+    const val = raw === "" ? null : parseFloat(raw);
+    if (val !== null && (!isFinite(val) || val <= 0)) return;
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    state.update((s2) => {
+      const o = s2.objects.find((it) => it.id === ids[0]);
+      if (!o || o.type !== "pendulum" || o.locked) return;
+      if ((o.bobRadius ?? null) === val) return;
+      s2.undoStack.push(snap); s2.redoStack = [];
+      if (val === null) delete o.bobRadius;   // 비우면 자동(길이 비례)으로 복귀
+      else o.bobRadius = val;
+    });
+  }
+  pendBobInp.addEventListener("keydown", (e) => { if (e.key === "Enter") pendBobInp.blur(); });
+  pendBobInp.addEventListener("blur", commitPendBob);
+
   const secPend = makeSection("진자", secPendBody);
 
-  return { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp };
+  return { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp,
+           pendBobRow, pendBobInp };
 }

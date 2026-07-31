@@ -13,11 +13,17 @@ export function supportsDash(obj) {
   return !!obj && (DASH_TYPES.includes(obj.type) || obj.type === "funcgraph" || (obj.type === "optics" && obj.kind === "object_arrow"));
 }
 // Dash presets (world units / mm). 실선 = (0,0) = solid (no dasharray).
+// 두 가지 구조가 섞여 있다:
+//   ① 스칼라 2값(dashLength/dashGap) — 기존 프리셋
+//   ② dashPattern 배열 — 2값으로 표현 못 하는 제도 선(일점쇄선·이점쇄선)
+// 프리셋을 쓰는 쪽은 항상 preset.dashPattern 유무로 분기한다(section-line.js).
 export const DASH_PRESETS = [
   { label: "실선",  dashLength: 0, dashGap: 0 },
   { label: "점선1", dashLength: 0.2, dashGap: 0.2 },
   { label: "점선2", dashLength: 0.5, dashGap: 0.3 },
   { label: "점선3", dashLength: 1.0, dashGap: 0.3 },
+  { label: "일점쇄선", dashPattern: [2.4, 0.6, 0.3, 0.6] },
+  { label: "이점쇄선", dashPattern: [2.4, 0.6, 0.3, 0.6, 0.3, 0.6] },
 ];
 
 // True while user is dragging a color picker bar — suppresses populate() re-entry.

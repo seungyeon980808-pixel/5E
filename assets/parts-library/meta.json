@@ -1,0 +1,166 @@
+[
+  {
+    "id": "b_animal_cell",
+    "subject": "b",
+    "part": "세포학",
+    "name": "동물 세포",
+    "keywords": [
+      "동물세포",
+      "세포",
+      "소기관",
+      "핵",
+      "animal cell"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Animal_cell_structure_en.svg",
+    "sourceTitle": "Animal cell structure en.svg",
+    "defaultLevel": "L3"
+  },
+  {
+    "id": "b_mitochondrion",
+    "subject": "b",
+    "part": "세포학",
+    "name": "미토콘드리아",
+    "keywords": [
+      "미토콘드리아",
+      "크리스타",
+      "세포호흡",
+      "mitochondrion"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Animal_mitochondrion_diagram_en.svg",
+    "sourceTitle": "Animal mitochondrion diagram en.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "b_prokaryote",
+    "subject": "b",
+    "part": "세포학",
+    "name": "원핵세포(세균)",
+    "keywords": [
+      "원핵",
+      "세균",
+      "박테리아",
+      "편모",
+      "prokaryote"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Prokaryote_cell_diagram.svg",
+    "sourceTitle": "Prokaryote cell diagram.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "b_plant_cell",
+    "subject": "b",
+    "part": "세포학",
+    "name": "식물 세포",
+    "keywords": [
+      "식물세포",
+      "엽록체",
+      "세포벽",
+      "plant cell"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Plant_cell_structure-en.svg",
+    "sourceTitle": "Plant cell structure-en.svg",
+    "defaultLevel": "L3"
+  },
+  {
+    "id": "b_flower",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "꽃의 구조",
+    "keywords": [
+      "꽃",
+      "암술",
+      "수술",
+      "씨방",
+      "flower"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Mature_flower_diagram.svg",
+    "sourceTitle": "Mature flower diagram.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "c_distillation",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류 장치",
+    "keywords": [
+      "증류",
+      "냉각관",
+      "플라스크",
+      "distillation"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Simple_distillation_apparatus.svg",
+    "sourceTitle": "Simple distillation apparatus.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "p_pendulum_coord",
+    "subject": "p",
+    "part": "역학",
+    "name": "단진자(각도 표시)",
+    "keywords": [
+      "단진자",
+      "진자",
+      "각도",
+      "pendulum"
+    ],
+    "license": "CC0",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/25/Simple_pendulum_generalized_coordinates.svg",
+    "sourceTitle": "Simple pendulum generalized coordinates.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "p_pendulum",
+    "subject": "p",
+    "part": "역학",
+    "name": "단진자",
+    "keywords": [
+      "단진자",
+      "진자",
+      "추",
+      "pendulum"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Simple_gravity_pendulum.svg",
+    "sourceTitle": "Simple gravity pendulum.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "p_pendulum_height",
+    "subject": "p",
+    "part": "역학",
+    "name": "단진자 높이",
+    "keywords": [
+      "단진자",
+      "높이",
+      "위치에너지",
+      "pendulum"
+    ],
+    "license": "CC0",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/11/Simple_pendulum_height.svg",
+    "sourceTitle": "Simple pendulum height.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "p_ohms_law",
+    "subject": "p",
+    "part": "전기자기학",
+    "name": "옴의 법칙 회로",
+    "keywords": [
+      "옴",
+      "저항",
+      "전원",
+      "회로",
+      "ohm"
+    ],
+    "license": "CC0",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Ohm%27s_Law_with_Voltage_source_TeX.svg",
+    "sourceTitle": "Ohm's Law with Voltage source TeX.svg",
+    "defaultLevel": "L2"
+  }
+]

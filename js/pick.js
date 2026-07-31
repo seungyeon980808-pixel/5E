@@ -11,7 +11,9 @@ import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./st
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
-         parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox } from "./render.js?v=1.3.0";
+         parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
+         bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
+         legendBBox, pedigreeBBox } from "./render.js?v=1.3.0";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
@@ -67,6 +69,22 @@ export function initPick(svg) { _svg = svg; }
 // object and `locked` resumes its usual "protected but selectable" meaning.
 function isBackgroundUnrecognized(obj) {
   return !!obj && obj.type === "image" && obj.mode === "background" && obj.locked === true;
+}
+
+// 가위로 잘린 이미지/svgAsset은 두 조각이 **같은 상자**를 공유한다. 마스크로 지워진
+// 자리(cutouts의 poly)는 눈에 안 보이므로 클릭에도 잡히면 안 된다 — 그러지 않으면
+// 위쪽 조각이 항상 먼저 잡혀 아래 조각을 고를 수 없다. 좌표는 상자의 0~1 분수.
+function isInsideCutoutPoly(obj, p) {
+  const cuts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
+  if (!cuts.length || !(obj.w > 0) || !(obj.h > 0)) return false;
+  const q = localPointForSizeObject(obj, p);          // 회전을 푼 월드 좌표
+  const fx = (q.x - obj.x) / obj.w, fy = (q.y - obj.y) / obj.h;
+  for (const c of cuts) {
+    if (!c || c.type !== "poly") continue;
+    const pts = Array.isArray(c.points) ? c.points : [];
+    if (pts.length >= 3 && pointInPolygon(fx, fy, pts)) return true;
+  }
+  return false;
 }
 
 function isLockedTracingImage(obj) {
@@ -228,6 +246,25 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       continue;
     }
 
+    if (o.type === "brace") {
+      // 중괄호 경로(표본 폴리라인)에 클릭 띠. groundarc와 같은 방식이다.
+      const pts = bracePathPoints(o);
+      for (let i = 1; i < pts.length; i += 1) {
+        if (segDist(p.x, p.y, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y) <= margin) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "chromosome" || o.type === "bilayer" || o.type === "neuron") {
+      // 여러 조각으로 된 그림이라 선분 판정으로는 빈틈이 생긴다(가지돌기 사이, 인지질
+      // 사이). 전기력선·자기력선과 같이 **그림 틀 안쪽이면 잡는** 방식을 쓴다.
+      const b = o.type === "chromosome" ? chromosomeBBox(o)
+        : o.type === "bilayer" ? bilayerBBox(o) : neuronBBox(o);
+      if (b && p.x >= b.x - margin && p.x <= b.x + b.w + margin
+           && p.y >= b.y - margin && p.y <= b.y + b.h + margin) return o.id;
+      continue;
+    }
+
     if (o.type === "parabola") {
       // 궤적 곡선(표본 폴리라인)에 굵은 클릭 띠. 바닥 점선은 궤적과 붙어 있어 따로 안 잡는다.
       const pts = parabolaPoints(o, 24);
@@ -266,6 +303,16 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type === "polyline") {
       // Hit if within margin of ANY segment between consecutive vertices.
       const pts = o.points || [];
+      // 산점(점만 표시)은 이을 선이 없다 — 점 자체를 눌러야 잡힌다. 선 기준으로
+      // 판정하면 점이 없는 허공을 눌러도 선택돼 다른 객체를 고를 수 없다.
+      if (o.markerOnly === true) {
+        const r = ((Number.isFinite(o.markerSize) && o.markerSize > 0
+          ? o.markerSize : (o.strokeWidth ?? 0.2) * 4) / 2) + margin;
+        for (const q of pts) {
+          if (Math.hypot(p.x - q.x, p.y - q.y) <= r) return o.id;
+        }
+        continue;
+      }
       for (let k = 0; k < pts.length - 1; k++) {
         if (segDist(p.x, p.y, pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y) <= margin) return o.id;
       }
@@ -329,7 +376,11 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       // select as one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
       if (q.x >= o.x - margin && q.x <= o.x + o.w + margin &&
-          q.y >= o.y - margin && q.y <= o.y + o.h + margin) return o.id;
+          q.y >= o.y - margin && q.y <= o.y + o.h + margin) {
+        // 잘려 나간(마스크로 지워진) 자리면 이 객체는 거기 없는 것으로 본다
+        if ((o.type === "image" || o.type === "svgAsset") && isInsideCutoutPoly(o, p)) continue;
+        return o.id;
+      }
       continue;
     }
 
@@ -419,6 +470,12 @@ function getObjectBBox(o) {
   if (o.type === "standingwave") return standingWaveBBox(o);
   if (o.type === "parabola") return parabolaBBox(o);
   if (o.type === "groundarc") return groundArcBBox(o);
+  if (o.type === "brace") return braceBBox(o);
+  if (o.type === "chromosome") return chromosomeBBox(o);
+  if (o.type === "bilayer") return bilayerBBox(o);
+  if (o.type === "neuron") return neuronBBox(o);
+  if (o.type === "legend") return legendBBox(o);
+  if (o.type === "pedigree") return pedigreeBBox(o);
   if (o.type === "pendulum") {
     return pendulumBBox(o);
   }

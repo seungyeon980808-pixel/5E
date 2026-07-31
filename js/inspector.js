@@ -78,10 +78,12 @@ export function initInspector(state) {
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
     closeRow, closeCb, roundRow, roundCb, radiusRow, radiusInp,
+    frontRow, frontSel, frontGapRow, frontGapInp, inlineRow, inlineInp, inlinePosRow, inlinePosRange,
+    scatterRow, scatterCb,
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
@@ -92,7 +94,7 @@ export function initInspector(state) {
     labelBgRow, labelHaloRow, syncLabelHalo,
     labelerLine2Row, syncLabelerLine2,
     boxLabel, boxLabelSizeRow,
-    gapRow, gapInp, circuitHeightF,
+    gapRow, gapInp, circuitHeightF, bodyScaleRow, bodyScaleInp,
     axisVarRow, axisVarBtns, axisLabelXRow, axisLabelYRow, axisLabelTypeRow, tickRow, tickInp,
     centerLineRow, centerLineSel, term1, term2, terminalLabelTypeRow,
     raSizeF, raAngleF, raDirRow, raDirSel,
@@ -105,7 +107,8 @@ export function initInspector(state) {
     imgAspectRow, imgAspectCb, imgLockRow, imgLockCb, imgExportNote,
     imgCutoutBlock, imgClearCutBtn, imgRemoveBtn,
   } = buildImageSection(ctx);
-  const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp } = buildPendulumSection(ctx);
+  const { secPend, pendCenterCb, pendSymCb, pendLenCb, pendLabelRow, pendLabelInp,
+          pendBobRow, pendBobInp } = buildPendulumSection(ctx);
   const { secSpring, syncSpring } = buildSpringSection(ctx);
   const { secApparatus, syncApparatus } = buildApparatusSection(ctx);
   const { secChargeField, syncChargeField } = buildChargeFieldSection(ctx);
@@ -165,6 +168,7 @@ export function initInspector(state) {
     fontSizeNum.disabled = disabled;
     italicCb.disabled = disabled;
     haloCb.disabled = disabled;
+    vertCb.disabled = disabled;
     lsRange.disabled = disabled;
     lsNum.disabled = disabled;
     wsRange.disabled = disabled;
@@ -443,6 +447,10 @@ export function initInspector(state) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       italicCb.checked = styleObj.italic === true;
       haloCb.checked = styleObj.halo !== false;   // 부재 = 켜짐
+      // 세로쓰기는 text 전용(수식은 세로로 쌓을 물건이 아니다) — 부재 = 가로쓰기.
+      // 잠금에 따른 disabled 는 setStyleControlsDisabled()가 따로 걸어 준다.
+      vertCb.checked = styleObj.textOrient === "vertical";
+      vertCb.disabled = styleObj.type !== "text";
       if (document.activeElement !== fontSizeNum) {
         // Stored fontSize is world-unit mm; the field shows points.
         fontSizeNum.value = Math.round(mmToPt(styleObj.fontSize ?? 0) * 10) / 10;
@@ -471,6 +479,24 @@ export function initInspector(state) {
     const showClose  = isPolyline || isCurve;
     closeRow.style.display = showClose ? "" : "none";
     if (showClose) closeCb.checked = obj.closed === true;
+
+    /* 곡선 전용 옵션(전선 기호·등치선 값 라벨) — 곡선일 때만 보인다.
+     * 두 기능 모두 렌더가 곡선 경로를 따라 계산하므로, 꼭짓점을 끌어 모양을
+     * 바꾸면 기호와 값 라벨이 그대로 따라온다. */
+    frontRow.style.display = isCurve ? "" : "none";
+    frontGapRow.style.display = isCurve && obj.frontKind ? "" : "none";
+    inlineRow.style.display = isCurve ? "" : "none";
+    inlinePosRow.style.display = isCurve && obj.inlineLabel ? "" : "none";
+    if (isCurve) {
+      frontSel.value = obj.frontKind || "";
+      if (document.activeElement !== frontGapInp) frontGapInp.value = obj.frontGap ?? 7;
+      if (document.activeElement !== inlineInp) inlineInp.value = obj.inlineLabel ?? "";
+      inlinePosRange.value = Number.isFinite(obj.inlineLabelT) ? obj.inlineLabelT : 0.5;
+    }
+
+    // 산점(점만 표시): 폴리라인일 때만.
+    scatterRow.style.display = isPolyline ? "" : "none";
+    if (isPolyline) scatterCb.checked = obj.markerOnly === true;
 
     // 경사면처리 + 곡률 반경: single polyline only (open or closed).
     roundRow.style.display = isPolyline ? "" : "none";
@@ -518,7 +544,8 @@ export function initInspector(state) {
       if (document.activeElement !== waveTailRow.inp) waveTailRow.inp.value = obj.tailRatio ?? waveTailRow.fallback;
     }
 
-    const showDimLabel = isStraightLine && lineMode === "lengthArrow";
+    // 축척 막대도 같은 dimensionLabel 필드를 쓴다(라벨 내용·글꼴·크기 행을 공유).
+    const showDimLabel = isStraightLine && (lineMode === "lengthArrow" || lineMode === "scaleBar");
     dimensionLabelRow.style.display = showDimLabel ? "" : "none";
     dimensionLabelTypeRow.row.style.display = showDimLabel ? "" : "none";
     dimensionLabelSizeRow.row.style.display = showDimLabel ? "" : "none";
@@ -695,10 +722,15 @@ export function initInspector(state) {
       const lenOn = obj.showLengthLabel !== false;
       pendLabelRow.style.display = lenOn ? "" : "none";
       if (document.activeElement !== pendLabelInp) pendLabelInp.value = obj.lengthLabel ?? "";
+      // 추 반지름: 저장값이 있을 때만 채운다(빈 칸 = 자동 크기).
+      if (document.activeElement !== pendBobInp) {
+        pendBobInp.value = Number.isFinite(obj.bobRadius) ? String(obj.bobRadius) : "";
+      }
       pendCenterCb.cb.disabled = !!obj.locked;
       pendSymCb.cb.disabled = !!obj.locked;
       pendLenCb.cb.disabled = !!obj.locked;
       pendLabelInp.disabled = !!obj.locked;
+      pendBobInp.disabled = !!obj.locked;
     }
 
     // 좌표평면 section: range/grid/tick/number-label/axis-name/export options.
@@ -724,6 +756,10 @@ export function initInspector(state) {
     }
     gapRow.style.display = isCap ? "" : "none";
     circuitHeightF.el.style.display = hasCircuitHeight ? "" : "none";
+    bodyScaleRow.style.display = isCircuit ? "" : "none";
+    if (isCircuit && document.activeElement !== bodyScaleInp) {
+      bodyScaleInp.value = String(obj.bodyScale ?? 1);
+    }
     term1.el.style.display = isDiode ? "" : "none";
     term2.el.style.display = isDiode ? "" : "none";
     terminalLabelTypeRow.row.style.display = isDiode ? "" : "none";
@@ -833,6 +869,7 @@ export function initInspector(state) {
     axisLabelTypeRow.sel.disabled = !!obj.locked;
     gapInp.disabled = !!obj.locked;
     circuitHeightF.inp.disabled = !!obj.locked;
+    bodyScaleInp.disabled = !!obj.locked;
     term1.inp.disabled = !!obj.locked;
     term2.inp.disabled = !!obj.locked;
     axisLabelXRow.inp.disabled = !!obj.locked;

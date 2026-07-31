@@ -31,7 +31,19 @@ function grayHex(level = 0) {
 
 /* ----- dashes (line/polyline/curve): SVG stroke-dasharray in world units (mm) ----- */
 // Solid = dashLength 0 (or gap 0) ??no dasharray attribute set at all (DESIGN: presets).
+// dashPattern(숫자 배열, mm)이 있으면 그것이 우선 — 일점쇄선·이점쇄선처럼 2값으로 표현할 수
+// 없는 제도 선을 위한 새 필드. 배열이 아니거나 값이 이상하면 무시하고 기존 2값 경로로 떨어진다.
+function normalizeDashPattern(pattern) {
+  if (!Array.isArray(pattern) || pattern.length < 2) return null;
+  const nums = pattern.map((v) => Number(v));
+  if (nums.some((v) => !Number.isFinite(v) || v < 0)) return null;
+  if (!nums.some((v) => v > 0)) return null;
+  return nums;
+}
+
 function applyDash(el, obj) {
+  const pat = normalizeDashPattern(obj && obj.dashPattern);
+  if (pat) { el.setAttribute("stroke-dasharray", pat.join(" ")); return; }
   const dl = obj.dashLength ?? 0;
   const dg = obj.dashGap ?? 0;
   if (dl > 0 && dg > 0) el.setAttribute("stroke-dasharray", `${dl} ${dg}`);
@@ -497,6 +509,7 @@ export {
   LABEL_INK,
   grayHex,
   applyDash,
+  normalizeDashPattern,
   makeArrowHead,
   polylineMidpoint,
   roundedPolylinePath,
