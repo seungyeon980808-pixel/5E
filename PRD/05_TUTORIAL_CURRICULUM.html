@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5E 따라하기 — 전체 커리큘럼 (승인용 초안)</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --main: #0969da; --sub: #0e7490;
+    --bg: #f6f8fa; --text: #0d1117; --border: #d0d7de;
+    --muted: #57606a; --card: #ffffff;
+    --do: #1a7f37; --auto: #8250df;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 80px;
+    background: var(--bg); color: var(--text);
+    font-family: "IBM Plex Sans KR", sans-serif;
+    font-size: 15px; line-height: 1.65;
+    word-break: keep-all;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .subtitle { color: var(--muted); margin: 0 0 28px; font-size: 15px; }
+  h2 {
+    font-size: 19px; margin: 44px 0 4px;
+    padding-left: 12px; border-left: 4px solid var(--main);
+  }
+  .course-meta { color: var(--muted); font-size: 13.5px; margin: 0 0 14px; padding-left: 16px; }
+  .course-meta b { color: var(--main); }
+
+  /* ----- 총괄 요약 ----- */
+  .summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px; margin: 0 0 8px;
+  }
+  .sum-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .sum-card .no { font: 500 12px "IBM Plex Mono", monospace; color: var(--main); }
+  .sum-card .name { font-weight: 700; font-size: 15.5px; margin: 2px 0; }
+  .sum-card .time { color: var(--muted); font-size: 13px; }
+  .total-bar {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 16px; margin: 10px 0 0; font-size: 14.5px;
+  }
+  .total-bar b { color: var(--main); }
+
+  /* ----- 공통 원칙 ----- */
+  .rules {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 18px 22px; margin: 16px 0 0;
+  }
+  .rules h3 { margin: 0 0 10px; font-size: 16px; }
+  .rules ul { margin: 0; padding-left: 20px; }
+  .rules li { margin-bottom: 7px; }
+  .rules li:last-child { margin-bottom: 0; }
+  .rules b { color: var(--main); }
+
+  /* ----- 단계 표 ----- */
+  table {
+    width: 100%; border-collapse: collapse; background: var(--card);
+    border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+    font-size: 14px;
+  }
+  thead th {
+    background: #eaeef2; text-align: left; padding: 9px 12px;
+    font-size: 13px; border-bottom: 1px solid var(--border);
+  }
+  td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.no { font: 500 13px "IBM Plex Mono", monospace; color: var(--muted); white-space: nowrap; width: 34px; }
+  td.widget { width: 34%; }
+  td.guide { width: 33%; }
+  td.goal { width: 26%; }
+  td .t { font-weight: 700; display: block; margin-bottom: 3px; }
+  td .d { color: #333c45; }
+  td small { color: var(--muted); }
+
+  /* 인라인 뱃지 */
+  .chip {
+    display: inline-block; padding: 1px 8px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; vertical-align: 1px; margin-right: 4px;
+  }
+  .chip.read { background: #eaeef2; color: var(--muted); }
+  .chip.do   { background: #dafbe1; color: var(--do); }
+  .chip.auto { background: #fbefff; color: var(--auto); }
+  .btn-name {
+    display: inline-block; padding: 0 6px; border: 1px solid var(--border);
+    border-radius: 5px; background: var(--bg);
+    font: 500 12.5px "IBM Plex Mono", monospace; white-space: nowrap;
+  }
+  kbd {
+    display: inline-block; padding: 0 5px; border: 1px solid var(--border);
+    border-bottom-width: 2px; border-radius: 4px; background: #fff;
+    font: 500 12px "IBM Plex Mono", monospace;
+  }
+  .cursor { color: var(--main); font-weight: 600; }
+
+  .footer-note {
+    margin-top: 48px; padding: 18px 22px; border: 1px dashed var(--main);
+    border-radius: 8px; background: #eff6ff; font-size: 14.5px;
+  }
+  .footer-note b { color: var(--main); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>5E 따라하기 — 전체 커리큘럼 <span style="color:var(--muted);font-weight:400;font-size:17px;">(승인용 초안 v2 — 심화·과제 확장판)</span></h1>
+<p class="subtitle">목표는 통달이 아니라 <b>"이 프로그램 쓸만하다"고 느끼게</b> 하는 것.
+각 단계는 <b>위젯 설명</b>(안내문) · <b>화면 동작 가이드라인</b>(무엇이 강조·표시되는가) · <b>목표 동작</b>(무엇을 하면 통과인가) 3요소로 정의한다.
+3부 구성: <b>기본 트랙</b>(필수 30분) → <b>심화 트랙</b>(도구 확장 13분) → <b>실습 과제 10</b>(문제 그림을 처음부터 끝까지, 자유 선택).</p>
+
+<!-- ===== 총괄 ===== -->
+<h2 style="margin-top:24px">1부 — 기본 트랙 <small style="font-weight:400;color:var(--muted)">모두가 거치는 필수 코스</small></h2>
+<div class="summary">
+  <div class="sum-card"><div class="no">코스 0</div><div class="name">시작 준비</div><div class="time">화면 설정 · 약 2분 · 5단계</div></div>
+  <div class="sum-card"><div class="no">코스 1</div><div class="name">기초 조작</div><div class="time">놓인 것 다루기 · 약 8분 · 12단계</div></div>
+  <div class="sum-card"><div class="no">코스 2</div><div class="name">빗면 그림 완성</div><div class="time">그림 한 장 · 약 8분 · 11단계</div></div>
+  <div class="sum-card"><div class="no">코스 3</div><div class="name">기출 검색</div><div class="time">가장 빠른 길 · 약 5분 · 8단계</div></div>
+  <div class="sum-card"><div class="no">코스 4</div><div class="name">내보내기와 저장</div><div class="time">마무리 습관 · 약 4분 · 6단계</div></div>
+</div>
+<div class="total-bar">기본 트랙 <b>42단계 · 약 27분</b> — 실습 단계는 전부 클릭·드래그·<kbd>Shift</kbd>/<kbd>Ctrl</kbd>뿐. <b>타이핑 0회</b> (글자가 필요한 곳은 전부 자동 입력).</div>
+
+<h2>2부 — 심화 트랙 <small style="font-weight:400;color:var(--muted)">기본을 마친 사람에게 추천되는 도구 확장</small></h2>
+<div class="summary">
+  <div class="sum-card"><div class="no">코스 5</div><div class="name">기출 그림 다듬기</div><div class="time">가져와서 지우기 · 약 5분 · 7단계</div></div>
+  <div class="sum-card"><div class="no">코스 6</div><div class="name">정렬과 간격</div><div class="time">가지런히 세우기 · 약 4분 · 6단계</div></div>
+  <div class="sum-card"><div class="no">코스 7</div><div class="name">꺾은선으로 지형 그리기</div><div class="time">비탈·계단·굴곡 · 약 4분 · 6단계</div></div>
+</div>
+<div class="total-bar">심화 트랙 <b>19단계 · 약 13분</b> — 지우기(이미지·가위)·다중 선택·전체 통일/수정·꺾은선까지.</div>
+
+<h2>3부 — 실습 과제 10 <small style="font-weight:400;color:var(--muted)">문제 그림을 처음부터 끝까지 · 자유 선택</small></h2>
+<div class="total-bar" style="margin-bottom:8px">과제당 <b>4~6분</b>, 전부 하면 약 <b>45분</b> — 완주 의무 없음. 각 과제는 <b>서로 다른 도구 조합</b>을 쓰도록 설계해, 열 개를 돌면 5E의 주요 기능을 한 번씩 다 만져 보게 된다. 상세 표는 문서 하단.</div>
+
+<!-- ===== 공통 원칙 ===== -->
+<div class="rules">
+  <h3>모든 코스에 적용되는 공통 원칙</h3>
+  <ul>
+    <li><span class="chip read">읽기</span> 설명만 있는 단계 — <b>[다음]</b>으로 진행.
+        <span class="chip do">실습</span> 사용자가 직접 하는 단계 — 동작이 감지되면 자동 진행.
+        <span class="chip auto">자동</span> 프로그램이 대신 해 주는 단계 — <b>[자동으로 하기]</b> 버튼 하나만 누르면 됨.</li>
+    <li><b>타이핑 금지</b> — '수평면', 'm' 같은 글자는 전부 <span class="chip auto">자동</span>으로 넣는다. 사용자가 키보드로 치는 일은 없다.</li>
+    <li><b>언제든 [이전]</b> — 되돌아간 단계는 실습을 다시 요구하지 않는 읽기 모드. [다음]으로 언제든 복귀.</li>
+    <li><b>가이드라인 표기</b> — 눌러야 할 버튼은 테두리 강조 + 안내문에 <b>위치를 말로</b>도 쓴다 (예: "왼쪽 도구 3번째 줄 맨 왼쪽, 사선 모양"). 그릴 자리는 점선 영역, 클릭 순서는 ①② 번호, 드래그는 경로 점선.</li>
+    <li><b>가상 커서</b> — 실습 단계마다 커서가 동작을 반복 시연. 시인성 강화: 크기 1.4배, 진한 그림자, 이동 속도 지금의 60% (부드러운 감속). 사용자가 마우스를 잡으면 즉시 비켜남.</li>
+    <li><b>설명 창</b> — 본문 15px→<b>16px</b>, 제목 17px→<b>18px</b>, 창 너비 360px. 어느 화면 배율에서도 같은 크기로 읽힘.</li>
+    <li><b>연습 페이지</b> — 실습 코스는 '따라하기 연습' 페이지를 자동 생성. 사용자의 원래 작업물은 절대 건드리지 않고, 끝나면 삭제 여부를 물음.</li>
+  </ul>
+</div>
+
+<!-- ===== 코스 0 ===== -->
+<h2>코스 0 — 시작 준비 <small style="font-weight:400;color:var(--muted)">"내 눈에 맞는 화면부터"</small></h2>
+<p class="course-meta">약 <b>2분</b> · 5단계 · 실습 3 — 첫 방문 배너에서 이어지는 가장 첫 코스</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">반갑습니다</span><span class="d">5E는 시험지에 넣을 그림을 만드는 도구. 연습 페이지를 따로 만들었고 원래 작업은 안 건드림. 언제든 [그만]·[이전] 가능.</span></td>
+  <td class="guide">화면 중앙에 설명 창만. 강조 없음.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">먼저 화면 크기부터</span><span class="d">"글씨가 작거나 크면 뭘 배워도 불편합니다. 위쪽의 <b>설정</b>을 눌러 주세요."</span></td>
+  <td class="guide">상단 툴바 <span class="btn-name">설정 ▾</span> 버튼 테두리 강조. <span class="cursor">커서가 그 버튼을 콕 누르는 시연 반복.</span></td>
+  <td class="goal"><span class="btn-name">설정 ▾</span> 클릭 → 드롭다운 열림</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">환경 설정 열기</span><span class="d">"펼쳐진 메뉴에서 <b>환경 설정</b>을 누르세요."</span></td>
+  <td class="guide">드롭다운의 <span class="btn-name">환경 설정</span> 항목만 밝게. 나머지 항목은 흐림 유지.</td>
+  <td class="goal"><span class="btn-name">환경 설정</span> 클릭 → 창 열림</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">슬라이더를 움직여 눈에 맞추세요</span><span class="d">"움직이는 즉시 온 화면이 커지고 작아집니다. <b>따로 저장할 필요 없습니다 — 놓는 순간 저장되어, 다음에 열어도 이 크기 그대로입니다.</b>"</span></td>
+  <td class="guide">환경 설정 '화면' 탭의 <span class="btn-name">화면 크기</span> 슬라이더 강조. <span class="cursor">커서가 슬라이더를 좌우로 끄는 시연.</span> 안내 위젯은 배율 변화를 실시간 추적(실측 검증 완료).</td>
+  <td class="goal">슬라이더 값 변경 (5% 이상)</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">닫고 시작합니다</span><span class="d">"이제 화면이 눈에 맞았습니다. <b>닫기</b>를 누르세요. 이 창의 다른 탭(도구·저장…)은 나중에 필요할 때 만나면 됩니다."</span></td>
+  <td class="guide">환경 설정 창의 <span class="btn-name">닫기</span> 버튼 강조.</td>
+  <td class="goal"><span class="btn-name">닫기</span> 클릭 → 창 닫힘</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 1 ===== -->
+<h2>코스 1 — 기초 조작 <small style="font-weight:400;color:var(--muted)">"이미 놓인 것을 다뤄 본다"</small></h2>
+<p class="course-meta">약 <b>8분</b> · 12단계 · 실습 8 — <b>그리기 없음.</b> 사각형·직선을 미리 놓아 두고 옮기고·돌리고·늘이는 것부터. 연습 페이지 자동 생성</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">화면은 다섯 구역입니다</span><span class="d">왼쪽=도구 · 가운데=그림 · 오른쪽=속성 · 아래=페이지 · 위=파일/설정. "지금부터 하나씩 짚어 드립니다."</span></td>
+  <td class="guide">강조 없음(전체 화면). 설명 창 중앙.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">왼쪽 — 도구 서랍</span><span class="d">4칸 소개: 공통 도구(선·도형·글자) / 과목별 오브젝트(빗면·회로…) / 퍼스널(내가 저장한 것) / 고급 기능. "위 과목 상자를 바꾸면 목록이 통째로 바뀝니다."</span></td>
+  <td class="guide">왼쪽 패널 전체를 구멍으로. 나머지 흐림.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">가운데 — 시험지에 들어갈 딱 그 영역</span><span class="d">"흰 판이 아트보드입니다. 휠=확대·축소, 스페이스+드래그=이동. 한번 휠을 굴려 보셔도 됩니다."</span></td>
+  <td class="guide">캔버스 영역 구멍. 하단에 "휠을 굴려 보세요(선택)" 표시.</td>
+  <td class="goal">[다음] (휠은 자유)</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">헤맸을 땐 — 화면 고정</span><span class="d">"확대·이동을 하다 그림을 잃어버리면 이 단추 하나로 돌아옵니다. 직접 눌러 보세요. (<kbd>Ctrl</kbd>+<kbd>Space</kbd>)"</span></td>
+  <td class="guide">하단 바 <span class="btn-name">⌖</span> 버튼 강조 + 위치를 말로: "캔버스 아래 막대의 오른쪽 끝, 과녁 모양". <span class="cursor">커서 시연.</span></td>
+  <td class="goal"><span class="btn-name">⌖</span> 클릭 → 화면 중앙 정렬됨</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">연습감을 놓아 드릴게요</span><span class="d">"[자동으로 하기]를 누르면 사각형 하나와 직선 하나가 캔버스에 놓입니다."</span></td>
+  <td class="guide">버튼을 누르면 사각형(캔버스 왼쪽)·직선(오른쪽 아래)이 자동 생성되는 것이 눈앞에서 보임.</td>
+  <td class="goal">[자동으로 하기] 클릭</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">골라서 옮기기</span><span class="d">"선택 도구(V) 상태입니다. 사각형을 누른 채 <b>점선 자리까지</b> 끌어 옮겨 보세요."</span></td>
+  <td class="guide">도착지 점선 상자 + <span class="cursor">커서가 사각형→점선 자리로 끄는 시연(경로 점선).</span></td>
+  <td class="goal">사각형 중심이 점선 안에 들어옴</td></tr>
+<tr><td class="no">7</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">크기 바꾸기</span><span class="d">"고른 것 모서리에 파란 손잡이가 있습니다. <b>오른쪽 아래 손잡이</b>를 끌어 점선 크기만큼 키워 보세요."</span></td>
+  <td class="guide">목표 크기 점선 + 오른쪽 아래 핸들에 작은 원 표시. <span class="cursor">커서가 핸들을 끄는 시연.</span></td>
+  <td class="goal">사각형 너비가 목표의 ±30% 안</td></tr>
+<tr><td class="no">8</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">돌려 보기</span><span class="d">"위쪽 도구에서 <b>회전(R)</b>을 누른 뒤, 사각형을 끌면 돌아갑니다. 비스듬하게 만들어 보세요."</span></td>
+  <td class="guide">① <span class="btn-name">회전 도구</span> 버튼 강조(1번째 줄 가운데, 원형 화살표) → ② 사각형 주변에 회전 방향 곡선 화살표. <span class="cursor">커서 시연 2막.</span></td>
+  <td class="goal">회전값이 10° 이상 변함</td></tr>
+<tr><td class="no">9</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">오른쪽 — 속성에서 굵기 바꾸기</span><span class="d">"사각형이 골라진 동안 오른쪽이 그 사각형의 속성입니다. <b>선 굵기</b>를 한 단계 올려 보세요. 캔버스에 바로 반영됩니다."</span></td>
+  <td class="guide">오른쪽 패널의 <span class="btn-name">선 굵기</span> 줄만 구멍으로 강조. <span class="cursor">커서가 굵기 단추를 누르는 시연.</span></td>
+  <td class="goal">strokeWidth 값 변경</td></tr>
+<tr><td class="no">10</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">직선은 끝점을 잡습니다</span><span class="d">"이번엔 직선. 누르면 <b>양 끝에 손잡이</b>가 생깁니다. 오른쪽 끝을 끌어 점선 위치까지 — 길이도 각도도 이 손잡이 하나로 바뀝니다."</span></td>
+  <td class="guide">직선 선택 유도 → 끝점 목표 위치에 ◎ 표시 + 경로 점선. <span class="cursor">커서가 끝점을 끄는 시연.</span></td>
+  <td class="goal">끝점이 목표 반경 안</td></tr>
+<tr><td class="no">11</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">화살표 달기</span><span class="d">"직선이 골라진 채로, 오른쪽 속성의 <b>화살표</b> 단추를 눌러 보세요. 힘·속도 표시가 한 번에 됩니다."</span></td>
+  <td class="guide">속성 패널 <span class="btn-name">화살표</span> 줄 강조. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">lineMode가 arrow 계열로 변경</td></tr>
+<tr><td class="no">12</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">기초 끝 — 이것만 알면 절반입니다</span><span class="d">"고르고 → 끌고 → 오른쪽에서 다듬는다. 5E의 모든 것이 이 리듬입니다. 실수하면 <kbd>Ctrl</kbd>+<kbd>Z</kbd>. 다음 코스에서 진짜 그림 한 장을 만들어 봅니다."</span></td>
+  <td class="guide">강조 없음. 완료 후 코스 목록에서 '빗면 그림 완성' 추천 표시.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 2 ===== -->
+<h2>코스 2 — 빗면 그림 완성 <small style="font-weight:400;color:var(--muted)">"바닥을 깔고, 붙여 나간다"</small></h2>
+<p class="course-meta">약 <b>8분</b> · 11단계 · 실습 7 + 자동 2 — 순서 자체가 요령: 바닥 → 글자(자동) → 빗면(스냅) → 물체(스냅). <b>스냅 버그 수정 완료 상태 기준</b></p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">이런 그림을 만듭니다</span><span class="d">"역학 문항 단골 그림. <b>바닥부터 깔고 거기에 붙여 나가는 순서</b>가 요령입니다. 점선 자리에 딱 맞지 않아도 됩니다."</span></td>
+  <td class="guide">완성 도면 전체를 점선으로 미리보기(빗면+물체+바닥+수평면 글자). 설명 창은 도면을 피해 배치.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">① 바닥 — 직선 도구</span><span class="d">"<b>왼쪽 도구 3번째 줄 맨 왼쪽, 사선(╱) 모양</b>이 직선입니다(L). 눌러 주세요."</span></td>
+  <td class="guide"><span class="btn-name">직선 도구</span> 버튼만 테두리 강조 + 안내문에 위치 명시. <span class="cursor">커서가 버튼을 누르는 시연.</span></td>
+  <td class="goal">직선 도구 활성화</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">두 점을 차례로 클릭</span><span class="d">"직선은 <b>끄는 게 아니라 두 점을 찍습니다.</b> ①을 누르고 ②를 누르세요. <kbd>Ctrl</kbd>을 누른 채 ②를 찍으면 완전한 수평이 됩니다."</span></td>
+  <td class="guide">바닥선 양 끝에 <b>①②</b> 번호 원 고정 표시. <span class="cursor">커서가 ①에서 나타나 콕, 사라졌다 ②에서 콕 (미끄러짐 없음 — 클릭임이 보이게).</span> <kbd>Ctrl</kbd> 칩 표시.</td>
+  <td class="goal">line 객체 생성</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">'수평면' 글자는 자동으로</span><span class="d">"바닥 오른쪽 아래에 '수평면'이라고 적습니다. 타이핑은 필요 없습니다 — <b>[자동으로 넣기]</b>를 누르면 프로그램이 대신 씁니다. (직접 쓰는 법: 텍스트 도구 T → 클릭 → 입력 → <kbd>Ctrl</kbd>+<kbd>Enter</kbd>)"</span></td>
+  <td class="guide">글자가 들어갈 점선 상자 표시. 버튼을 누르면 텍스트 객체가 그 자리에 생기는 것이 보임.</td>
+  <td class="goal">[자동으로 넣기] 클릭 → text 생성</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">② 빗면 — 직각삼각형 도구</span><span class="d">"<b>왼쪽 도구 2번째 줄 가운데, 삼각형(◺) 모양</b>입니다(Y). 눌러 주세요."</span></td>
+  <td class="guide"><span class="btn-name">직각삼각형 도구</span> 버튼 강조 + 위치 명시. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">삼각형 도구 활성화</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">바닥에서 띄워 그리기</span><span class="d">"일부러 바닥 위에 띄운 자리입니다. 왼쪽 위 → 오른쪽 아래로 끄세요. <b>지금은 안 닿아도 됩니다 — 다음 단계에서 붙입니다.</b>"</span></td>
+  <td class="guide">띄운 자리 점선 삼각형 + <span class="cursor">커서가 대각선으로 끄는 시연(경로 점선).</span></td>
+  <td class="goal">triangle 생성</td></tr>
+<tr><td class="no">7</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t"><kbd>Shift</kbd>로 바닥에 붙이기</span><span class="d">"삼각형을 고른 뒤 <kbd>Shift</kbd>를 누른 채 아래로 끌면, 바닥선 가까이에서 <b>자석처럼 붙습니다.</b> 이 스냅이 시험지 그림을 깔끔하게 만드는 핵심입니다."</span></td>
+  <td class="guide">최종 위치 점선 + <span class="cursor">커서에 <kbd>Shift</kbd> 칩을 달고 아래로 끄는 시연.</span></td>
+  <td class="goal">아랫변이 바닥선에 밀착(±0.1mm)</td></tr>
+<tr><td class="no">8</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">③ 물체 — <kbd>Shift</kbd>로 정사각형</span><span class="d">"사각형 도구(S)를 누르고, 빈 자리에 <kbd>Shift</kbd>를 누른 채 끌면 <b>비율이 고정돼 정사각형</b>이 됩니다."</span></td>
+  <td class="guide">① <span class="btn-name">사각형 도구</span> 강조(2번째 줄 맨 오른쪽) → ② 빈 자리 점선 정사각형 + <span class="cursor"><kbd>Shift</kbd> 칩 커서 시연.</span></td>
+  <td class="goal">rect 생성</td></tr>
+<tr><td class="no">9</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">물리량 라벨 m — 자동으로</span><span class="d">"물체에는 질량 <i>m</i>을 적습니다. <b>[자동으로 넣기]</b>를 누르면 방금 그린 사각형에 라벨이 붙습니다. (직접: 사각형 선택 → 오른쪽 '라벨' 칸)"</span></td>
+  <td class="guide">버튼을 누르면 사각형에 기울인 <i>m</i>이 나타나는 것이 보임. 오른쪽 라벨 칸도 함께 잠깐 강조(어디서 하는지 기억되게).</span></td>
+  <td class="goal">[자동으로 넣기] 클릭 → label 적용</td></tr>
+<tr><td class="no">10</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t"><kbd>Shift</kbd>로 빗면에 얹기</span><span class="d">"물체를 <kbd>Shift</kbd>를 누른 채 빗면 쪽으로 끌면 <b>빗변에 맞춰 기울며 달라붙습니다.</b> 완성입니다."</span></td>
+  <td class="guide">최종 위치 점선(기운 상태) + <span class="cursor"><kbd>Shift</kbd> 칩 커서 시연.</span></td>
+  <td class="goal">물체가 빗변에 밀착</td></tr>
+<tr><td class="no">11</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">그림 한 장 완성</span><span class="d">"파워포인트로 10분 걸릴 그림이 2분입니다. 빗면 채우기를 빗금으로 바꾸는 것, 내보내는 법은 다음 코스에서."</span></td>
+  <td class="guide">완성 그림 주변만 밝게. 코스 목록에서 '기출 검색' 추천.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 3 ===== -->
+<h2>코스 3 — 기출 검색 <small style="font-weight:400;color:var(--muted)">"사실 처음부터 그릴 필요가 없다"</small></h2>
+<p class="course-meta">약 <b>5분</b> · 8단계 · 실습 4 — 552문항 라이브러리. 검색어도 타이핑 대신 자동 입력</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">가장 빠른 길</span><span class="d">"물리1·화학1·생명1·지구1 기출 도해 552문항이 들어 있습니다. <b>찾아서 가져와 고치는 쪽이 그리는 것보다 빠릅니다.</b>"</span></td>
+  <td class="guide">강조 없음.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">기출문항 검색 열기</span><span class="d">"<b>캔버스 아래 막대의 [기출문항 검색]</b>을 누르세요. (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>)"</span></td>
+  <td class="guide">하단 <span class="btn-name">기출문항 검색</span> 버튼 강조. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">검색 창 열림</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">골라서 좁히기</span><span class="d">"위쪽 상자들로 과목·년도·단원·개념을 좁힙니다."</span></td>
+  <td class="guide">모달 위에 얹혀, 필터 줄(과목·년도·단원·개념 4상자)을 한 덩어리로 강조.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">'빗면'으로 검색해 봅니다</span><span class="d">"검색은 말로 합니다 — 동의어도 알아들어서 '빗면'이면 '경사면'도 걸립니다. <b>[자동으로 검색]</b>을 누르면 검색창에 '빗면'이 입력됩니다."</span></td>
+  <td class="guide">검색 입력칸 강조 → 버튼을 누르면 '빗면'이 입력되고 결과가 줄어드는 것이 보임.</td>
+  <td class="goal">[자동으로 검색] 클릭</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">마음에 드는 카드를 하나</span><span class="d">"카드를 누르면 선택됩니다. 아래 단추들이 그때 켜집니다."</span></td>
+  <td class="guide">결과 그리드 강조. <span class="cursor">커서가 카드 하나를 누르는 시연.</span></td>
+  <td class="goal">카드 선택 (버튼 활성화)</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">가져오는 법이 셋</span><span class="d">"<b>이미지 삽입</b>=그림째 / <b>오브젝트 변환</b>=선 하나하나 고칠 수 있게 / <b>참고 창</b>=옆에 띄워 보고 그리기. 숫자·선을 바꿀 거면 오브젝트 변환."</span></td>
+  <td class="guide">세 버튼 <span class="btn-name">이미지 삽입</span> <span class="btn-name">오브젝트 변환</span> <span class="btn-name">참고 창</span>을 한 덩어리로 강조.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">7</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">오브젝트 변환으로 가져와 보세요</span><span class="d">"누르면 창이 닫히며 캔버스에 문항 도해가 <b>수정 가능한 선</b>으로 들어옵니다."</span></td>
+  <td class="guide"><span class="btn-name">오브젝트 변환</span> 버튼만 강조. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">변환 실행 → 캔버스에 객체 생성</td></tr>
+<tr><td class="no">8</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">이게 5E의 본 흐름입니다</span><span class="d">"찾고 → 가져오고 → 필요한 데만 고친다. 가져온 것도 방금 배운 기초 조작(고르고·끌고·다듬기) 그대로입니다."</span></td>
+  <td class="guide">가져온 객체 주변 밝게. '내보내기와 저장' 추천.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 4 ===== -->
+<h2>코스 4 — 내보내기와 저장 <small style="font-weight:400;color:var(--muted)">"만든 것을 한글에 붙이기까지"</small></h2>
+<p class="course-meta">약 <b>4분</b> · 6단계 · 실습 3 — 파일을 실제로 저장하지는 않고, 대화상자까지 열어 보고 닫는다 (다운로드 폴더를 어지럽히지 않음)</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">만들었으면 꺼내야죠</span><span class="d">"5E의 결과물은 두 가지 — 한글에 붙일 <b>이미지</b>, 나중에 또 고칠 <b>프로젝트 파일</b>."</span></td>
+  <td class="guide">강조 없음.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">파일 메뉴 열기</span><span class="d">"위쪽 <b>파일</b>을 누르세요."</span></td>
+  <td class="guide">상단 <span class="btn-name">파일 ▾</span> 강조. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">드롭다운 열림</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">이미지로 내보내기</span><span class="d">"<b>이미지로 내보내기</b>를 누르면 미리보기 창이 뜹니다. (<kbd>Alt</kbd>+<kbd>P</kbd>)"</span></td>
+  <td class="guide">메뉴의 <span class="btn-name">이미지로 내보내기</span> 항목만 밝게.</td>
+  <td class="goal">내보내기 대화상자 열림</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">여기서 정하는 것</span><span class="d">"형식(PNG/JPG)·크기·페이지 범위. <b>문항별 페이지를 폴더 하나로 한꺼번에</b> 뽑을 수도 있습니다. 오늘은 구경만 하고 닫습니다."</span></td>
+  <td class="guide">대화상자 위에 얹혀 형식/크기/범위 컨트롤을 차례로 강조. 닫기 버튼 위치 표시.</td>
+  <td class="goal">대화상자 닫기</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">저장 걱정은 안 해도 됩니다</span><span class="d">"작업은 2.5초마다 <b>브라우저에 자동 저장</b>됩니다. 실수로 꺼도 다시 열면 복구를 묻습니다. 다른 컴퓨터로 옮길 때만 프로젝트 저장(<kbd>Ctrl</kbd>+<kbd>S</kbd>)이나 설정의 전체 백업을 쓰세요."</span></td>
+  <td class="guide">파일 메뉴의 <span class="btn-name">프로젝트 저장</span> 항목을 잠깐 강조(누르지는 않음).</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">30분 완주 — 수고하셨습니다</span><span class="d">"화면 맞추기 → 기초 조작 → 그림 한 장 → 기출 검색 → 내보내기. 이제 실전에서 쓰시면 됩니다. 막히면 언제든 위쪽 [따라하기]로 돌아오세요."</span></td>
+  <td class="guide">코스 목록에 전체 완료 표시.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 5 ===== -->
+<h2>코스 5 — 기출 그림 다듬기 <small style="font-weight:400;color:var(--muted)">"가져온 그림에서 필요 없는 부분을 지운다"</small></h2>
+<p class="course-meta">약 <b>5분</b> · 7단계 · 실습 5 — 이미지 지우기(사각형·자유)와 가위(✂)를 모두 체험. 코스 3(기출 검색)을 마친 사람에게 추천</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">기출 그림, 그대로 쓰긴 아깝죠</span><span class="d">"문항 도해에는 보통 필요 없는 것이 섞여 있습니다 — 남의 문항 번호, 안 쓸 보조선. 지우는 법이 두 가지입니다: <b>이미지는 지우개</b>, <b>선은 가위</b>."</span></td>
+  <td class="guide">강조 없음.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">연습감을 가져올게요</span><span class="d">"[자동으로 하기]를 누르면 기출 문항 하나가 <b>이미지</b>로 캔버스에 들어옵니다."</span></td>
+  <td class="guide">버튼을 누르면 기출 이미지가 캔버스 가운데 놓이는 것이 보임.</td>
+  <td class="goal">[자동으로 하기] 클릭 → image 생성</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">이미지를 골라 지우개 꺼내기</span><span class="d">"이미지를 한 번 누르면 오른쪽 속성에 <b>[사각형 영역 지우기]</b> 단추가 나옵니다. 눌러 주세요."</span></td>
+  <td class="guide">이미지 선택 유도 → 속성 패널의 <span class="btn-name">사각형 영역 지우기</span> 버튼 강조. <span class="cursor">커서 시연 2막(이미지 클릭 → 버튼 클릭).</span></td>
+  <td class="goal">지우기 모드 진입</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">점선 자리를 끌어서 지우기</span><span class="d">"점선 상자 부분(문항 번호 자리)을 대각선으로 끌면 그 영역이 <b>투명하게 지워집니다.</b> 이미지를 옮기거나 돌려도 지운 자리는 따라갑니다."</span></td>
+  <td class="guide">지울 영역 점선 상자 + <span class="cursor">커서가 대각선으로 끄는 시연(경로 점선).</span></td>
+  <td class="goal">cutout 1개 생성</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">모양이 얄궂으면 — 자유 영역 지우기</span><span class="d">"이번엔 <b>[자유 영역 지우기]</b>. 붓으로 칠하듯 문지르면 칠한 자리만 지워집니다."</span></td>
+  <td class="guide">속성의 <span class="btn-name">자유 영역 지우기</span> 버튼 강조 → 지울 자리에 물결 모양 안내선. <span class="cursor">커서가 문지르는 시연.</span></td>
+  <td class="goal">path cutout 생성</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">선으로 된 그림은 가위로</span><span class="d">"'오브젝트 변환'으로 가져온 그림은 선 하나하나가 객체라, <b>가위(✂, E)</b>로 긋기만 하면 잘립니다. 옆에 놓인 연습용 선을 가위로 그어 보세요."</span></td>
+  <td class="guide">자동으로 놓인 연습 선 1개 + <span class="btn-name">가위 도구</span> 버튼 강조(1번째 줄 맨 오른쪽) → 자를 경로 점선. <span class="cursor">커서 시연 2막.</span></td>
+  <td class="goal">가위 절단 실행 (객체 수 증가)</td></tr>
+<tr><td class="no">7</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">이제 어떤 그림이 와도</span><span class="d">"통째로 쓸 건 이미지+지우개, 뜯어고칠 건 오브젝트 변환+가위. 두 길을 다 알았습니다."</span></td>
+  <td class="guide">완료 표시. '정렬과 간격' 추천.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 6 ===== -->
+<h2>코스 6 — 정렬과 간격 <small style="font-weight:400;color:var(--muted)">"여러 개를 가지런히 — 전체 통일/수정"</small></h2>
+<p class="course-meta">약 <b>4분</b> · 6단계 · 실습 4 — 드래그 다중 선택과 정렬·간격 기능. 같은 그림 여러 개짜리 문항(비교 실험 등)의 필수기</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip auto">자동</span><span class="t">삐뚤빼뚤한 실험 기구 세 개</span><span class="d">"[자동으로 하기]를 누르면 비커 대신 쓸 사각형 세 개가 <b>일부러 삐뚤빼뚤하게</b> 놓입니다. 이걸 가지런히 만들어 봅니다."</span></td>
+  <td class="guide">버튼 클릭 → 높이·간격이 제각각인 사각형 3개 배치.</td>
+  <td class="goal">[자동으로 하기] 클릭</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">한꺼번에 고르기 — 드래그 선택</span><span class="d">"빈 곳에서 시작해 세 개를 <b>모두 감싸도록</b> 끌면 한꺼번에 골라집니다."</span></td>
+  <td class="guide">세 개를 감싸는 큰 점선 사각형 + <span class="cursor">커서가 대각선으로 끄는 시연.</span></td>
+  <td class="goal">selectedIds 3개</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">전체 통일/수정 열기</span><span class="d">"왼쪽 아래 <b>고급 기능</b>의 <b>[전체 통일/수정]</b>을 누르세요. 골라 둔 것들을 한 방에 다루는 창입니다."</span></td>
+  <td class="guide">왼쪽 패널 <span class="btn-name">전체 통일/수정</span> 버튼 강조 + 위치 명시("왼쪽 맨 아래 고급 기능 묶음"). <span class="cursor">커서 시연.</span></td>
+  <td class="goal">전체 통일/수정 창 열림</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">좌우 정렬 — 가로 한 줄로</span><span class="d">"<b>좌우 정렬(가로 한 줄)</b>을 체크하고 적용하세요. 세로 높이가 맞춰져 한 줄이 됩니다."</span></td>
+  <td class="guide">창 안의 <span class="btn-name">좌우 정렬(가로 한 줄)</span> 체크 줄만 강조 → <span class="btn-name">적용</span> 버튼. <span class="cursor">커서 시연 2막.</span></td>
+  <td class="goal">정렬 적용 (y값 일치)</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">간격도 똑같이</span><span class="d">"이번엔 <b>가로 간격</b>을 체크하고 적용 — 사이 거리가 전부 같아집니다. 정렬이 먼저, 간격이 나중입니다."</span></td>
+  <td class="guide">창 안의 <span class="btn-name">가로 간격</span> 체크 줄 강조 → <span class="btn-name">적용</span>. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">간격 적용 (등간격)</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">비교 실험 그림이 30초</span><span class="d">"같은 장치 셋을 놓고 조건만 바꾸는 문항 — 이제 복제(<kbd>Ctrl</kbd>+<kbd>D</kbd>) → 정렬 → 간격이면 끝입니다. 이 창은 색·굵기를 한 방에 통일할 때도 씁니다."</span></td>
+  <td class="guide">완료 표시. '꺾은선으로 지형 그리기' 추천.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 코스 7 ===== -->
+<h2>코스 7 — 꺾은선으로 지형 그리기 <small style="font-weight:400;color:var(--muted)">"삼각형으로 안 되는 비탈은 꺾은선으로"</small></h2>
+<p class="course-meta">약 <b>4분</b> · 6단계 · 실습 4 — 클릭으로 점을 잇는 세 번째 그리기 방식. 곡면·계단·복합 경사면의 열쇠</p>
+<table>
+<thead><tr><th></th><th>위젯 설명 (안내문)</th><th>화면 동작 가이드라인</th><th>목표 동작 (통과 조건)</th></tr></thead>
+<tbody>
+<tr><td class="no">1</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">비탈 + 평지 + 비탈</span><span class="d">"직각삼각형으로는 '내려왔다가 평평했다가 또 내려가는' 지형을 못 만듭니다. <b>꺾은선(P)</b>은 찍는 대로 이어져서 어떤 지형이든 됩니다."</span></td>
+  <td class="guide">완성 지형(비탈—평지—비탈) 점선 미리보기.</td>
+  <td class="goal">[다음]</td></tr>
+<tr><td class="no">2</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">꺾은선 도구</span><span class="d">"<b>왼쪽 도구 3번째 줄 가운데, 지그재그(⌇) 모양</b>입니다(P). 눌러 주세요."</span></td>
+  <td class="guide"><span class="btn-name">꺾은선 도구</span> 버튼 강조 + 위치 명시. <span class="cursor">커서 시연.</span></td>
+  <td class="goal">꺾은선 도구 활성화</td></tr>
+<tr><td class="no">3</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">①→②→③→④ 차례로 클릭</span><span class="d">"번호 자리를 차례로 누르세요. 누를 때마다 선이 한 마디씩 이어집니다. 아직 끝내지 마세요."</span></td>
+  <td class="guide">지형 꼭짓점 4곳에 <b>①②③④</b> 번호 원 + <span class="cursor">커서가 각 점을 차례로 콕콕 누르는 시연(미끄러짐 없음).</span></td>
+  <td class="goal">draft 점 4개</td></tr>
+<tr><td class="no">4</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">더블클릭으로 완성</span><span class="d">"마지막 자리 ⑤에서 <b>더블클릭</b>하면 꺾은선이 완성됩니다. (<kbd>Enter</kbd>도 같고, <kbd>Esc</kbd>는 취소)"</span></td>
+  <td class="guide">⑤ 자리에 이중 원 표시 + <span class="cursor">커서가 빠르게 두 번 콕콕.</span></td>
+  <td class="goal">polyline 객체 생성</td></tr>
+<tr><td class="no">5</td>
+  <td class="widget"><span class="chip do">실습</span><span class="t">찍은 점은 나중에도 고칩니다</span><span class="d">"완성한 꺾은선을 고르면 <b>모든 꼭짓점에 손잡이</b>가 생깁니다. 가운데 점을 끌어 평지 높이를 바꿔 보세요."</span></td>
+  <td class="guide">가운데 꼭짓점에 ◎ + 이동 목표 위치 점선. <span class="cursor">커서가 꼭짓점을 끄는 시연.</span></td>
+  <td class="goal">꼭짓점 이동</td></tr>
+<tr><td class="no">6</td>
+  <td class="widget"><span class="chip read">읽기</span><span class="t">세 가지 그리기, 전부 배웠습니다</span><span class="d">"도형=드래그, 직선=두 점, 꺾은선=여러 점+더블클릭. 곡선(C)도 꺾은선과 똑같이 찍으면 부드럽게 이어집니다."</span></td>
+  <td class="guide">완료 표시. 실습 과제 목록 추천.</td>
+  <td class="goal">[마치기]</td></tr>
+</tbody>
+</table>
+
+<!-- ===== 실습 과제 10 ===== -->
+<h2>실습 과제 10 — 문제 그림을 처음부터 끝까지 <small style="font-weight:400;color:var(--muted)">과제당 4~6분 · 자유 선택 · 도구 조합이 전부 다름</small></h2>
+<p class="course-meta">각 과제는 <b>완성 그림 점선 미리보기 → 단계별 안내(자동 입력 포함) → 완성</b> 구조.
+글자·수치는 전부 <span class="chip auto">자동</span> 입력이고, 사용자는 도구 선택·드래그·클릭·<kbd>Shift</kbd>/<kbd>Ctrl</kbd>만 한다.
+"처음 쓰는 기능" 열이 이 과제에서 새로 만져 보는 것 — 열 개를 돌면 주요 기능을 전부 한 번씩 쓰게 된다.</p>
+<table>
+<thead><tr><th></th><th style="width:19%">만드는 그림</th><th style="width:38%">진행 흐름 (요약)</th><th style="width:28%">처음 쓰는 기능</th><th>시간</th></tr></thead>
+<tbody>
+<tr><td class="no">P1</td>
+  <td><b>도르래 두 물체</b><br><small>역학 단골 — 줄로 연결된 m₁·m₂</small></td>
+  <td class="d">수평면 직선 → 책상 사각형 → <b>도르래</b> 배치 → 직선 2개로 줄 연결(<kbd>Shift</kbd> 끝점 스냅) → 물체 2개 + 라벨 m₁·m₂(자동) → 화살표로 운동 방향</td>
+  <td><span class="btn-name">과목별 오브젝트: 도르래</span> · 끝점 스냅으로 줄 잇기</td>
+  <td>5분</td></tr>
+<tr><td class="no">P2</td>
+  <td><b>용수철 진동</b><br><small>평형점 기준 진동 그림</small></td>
+  <td class="d"><b>클램프(스탠드)</b> 배치 → <b>용수철</b> 달기 → 물체 + 라벨 m(자동) → 평형점 <b>점선</b>(선 종류 바꾸기) → 변위 화살표 + 라벨 x(자동)</td>
+  <td><span class="btn-name">용수철</span> · <span class="btn-name">클램프</span> · 선 종류(점선) 속성</td>
+  <td>4분</td></tr>
+<tr><td class="no">P3</td>
+  <td><b>단진자와 각도</b><br><small>기준선에서 θ만큼 벗어난 진자</small></td>
+  <td class="d"><b>단진자</b> 배치 → 연직 기준 점선 → <b>각도 호(A)</b>로 θ 표시(자동 라벨) → <b>직각 표시(Shift+A)</b> → 최저점에 <b>점(N)</b></td>
+  <td><span class="btn-name">단진자</span> · <span class="btn-name">각도 호</span> · <span class="btn-name">직각 표시</span> · <span class="btn-name">점</span></td>
+  <td>4분</td></tr>
+<tr><td class="no">P4</td>
+  <td><b>복합 경사면 활강</b><br><small>비탈—평지—비탈 지형 위 물체</small></td>
+  <td class="d"><b>꺾은선</b>으로 지형(코스 7 복습) → 물체 <kbd>Shift</kbd> 정사각형 → <b>회전 도구</b>로 비탈에 맞춰 기울이기 → 빗금 <b>채우기</b>로 지면 표시 → 구간 라벨 A·B·C(자동)</td>
+  <td>채우기 종류(빗금) · 회전+스냅 조합</td>
+  <td>5분</td></tr>
+<tr><td class="no">P5</td>
+  <td><b>직류 회로</b><br><small>전지·저항·전구·전류계 직렬 회로</small></td>
+  <td class="d"><b>직류전원</b> → <b>저항</b> → <b>전구</b> → <b>전류계</b>를 차례로 배치 → <b>회로 연결선</b>으로 단자끼리 잇기(끝점이 단자에 스냅) → 저항값 라벨 R(자동)</td>
+  <td><span class="btn-name">회로 부품 4종</span> · 회로 연결선(단자 스냅)</td>
+  <td>6분</td></tr>
+<tr><td class="no">P6</td>
+  <td><b>볼록렌즈 상 작도</b><br><small>광학 작도의 표준형</small></td>
+  <td class="d"><b>볼록렌즈</b> → <b>물체 화살표</b> → 광축 직선 → 초점 <b>점</b> 2개 + 라벨 F(자동) → 광선 직선 2개에 <b>화살표</b> → <b>스크린</b> 배치</td>
+  <td><span class="btn-name">광학 부품 3종</span> · 광선 작도(물체 머리 스냅)</td>
+  <td>6분</td></tr>
+<tr><td class="no">P7</td>
+  <td><b>정상파 실험</b><br><small>줄의 정상파 — 마디·배 표시</small></td>
+  <td class="d"><b>정상파(줄)</b> 배치 → <b>라벨러(Shift+T)</b>로 마디·배 지시선(자동 문구) → <b>자(눈금)</b>로 줄 길이 L 표시 → 진동수 라벨(자동)</td>
+  <td><span class="btn-name">정상파</span> · <span class="btn-name">라벨러(지시선)</span> · <span class="btn-name">자</span></td>
+  <td>4분</td></tr>
+<tr><td class="no">P8</td>
+  <td><b>점전하 전기력선</b><br><small>+q·−q 주위 전기장</small></td>
+  <td class="d"><b>전기력선(쌍)</b> 배치 → 전하 라벨 +q·−q(자동) → 특정 지점에 <b>점</b> + 장 방향 <b>화살표</b> → 등전위 <b>곡선(C)</b> 하나 점선으로</td>
+  <td><span class="btn-name">전기력선</span> · <span class="btn-name">곡선 도구</span></td>
+  <td>4분</td></tr>
+<tr><td class="no">P9</td>
+  <td><b>v–t 그래프 문항</b><br><small>속도-시간 그래프와 넓이</small></td>
+  <td class="d">고급 기능 <b>[좌표/함수 생성]</b>으로 좌표평면 → 축 라벨 v·t(자동) → <b>꺾은선</b>으로 그래프 → 넓이 부분 <b>빗금 채우기</b> → 눈금 수치(자동)</td>
+  <td><span class="btn-name">좌표/함수 생성</span> · 그래프 위 그리기</td>
+  <td>6분</td></tr>
+<tr><td class="no">P10</td>
+  <td><b>기출 변형 문제</b><br><small>종합 — 실전 흐름 그대로</small></td>
+  <td class="d">기출 검색 → <b>오브젝트 변환</b> → <b>가위</b>로 안 쓸 부분 절단·삭제 → 수치 라벨 교체(자동) → <b>페이지 복제</b>로 원본/변형 나란히 → <b>일괄 내보내기</b> 대화상자 확인</td>
+  <td>페이지 복제 · 폴더 일괄 내보내기 · (코스 3+5 종합)</td>
+  <td>6분</td></tr>
+</tbody>
+</table>
+
+<div class="footer-note">
+  <b>승인 요청.</b> 이 커리큘럼(기본 5코스 + 심화 3코스 + 실습 과제 10 = 총 18개)으로 진행할까요?
+  승인해 주시면 <b>기본 트랙 코스 0 → 1 순서로 확정·구현</b>을 시작하고, 심화·과제는 그 다음 차수로 만듭니다.
+  실습 과제 10개의 단계별 상세(위젯 설명·가이드라인·목표 동작)는 각 과제 구현 직전에 같은 형식으로 펼쳐 승인받겠습니다.
+  구현에 함께 들어가는 엔진 작업: [자동으로 하기] 버튼(자동 입력), 커서 시인성 강화(크기 1.4배·속도 60%),
+  설명 창 글씨 확대(본문 16px), 이동 모션 부드럽게(420ms 감속), 핸들·슬라이더 같은 <b>세부 컨트롤 단위 강조</b>.
+  단계 문구·순서 중 고칠 곳을 짚어 주시면 반영 후 시작하겠습니다.
+</div>
+
+</div>
+</body>
+</html>
