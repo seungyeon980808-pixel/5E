@@ -5,7 +5,7 @@
 
 export const GRAY_LEVELS = [0, 43, 85, 128, 170, 213, 255];
 export const SHAPE_TYPES = ["rect", "ellipse", "triangle"];
-export const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacitor", "voltmeter", "ammeter"]);
+export const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacitor", "voltmeter", "ammeter", "galvanometer", "motor"]);
 // Branch-B "line family": share arrow + dash controls; fill section is hidden for them.
 export const LINE_TYPES = ["line", "polyline", "curve"];
 export const DASH_TYPES = [...SHAPE_TYPES, ...LINE_TYPES];

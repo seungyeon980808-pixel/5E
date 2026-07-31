@@ -205,6 +205,13 @@ function renderApparatus(obj) {
   else if (kind === "scale") drawScale(g, obj, sw, color);
   else if (kind === "transistor") drawTransistor(g, obj, sw, color);
   else if (kind === "axis_break") drawAxisBreak(g, obj, sw, color);
+  else if (kind === "device_box") drawDeviceBox(g, obj, sw, color);
+  else if (kind === "speaker") drawSpeaker(g, obj, sw, color);
+  else if (kind === "phototube") drawPhototube(g, obj, sw, color);
+  else if (kind === "slit") drawSlit(g, obj, sw, color);
+  else if (kind === "thermometer") drawThermometer(g, obj, sw, color);
+  else if (kind === "bar_magnet") drawBarMagnet(g, obj, sw, color);
+  else if (kind === "fringe_pattern") drawFringePattern(g, obj, sw, color);
 
   const rot = obj.rotation ?? 0;
   if (rot) {
@@ -404,6 +411,214 @@ function drawAxisBreak(g, obj, sw, color) {
     p.setAttribute("stroke-width", sw);
     p.setAttribute("stroke-linecap", "round");
     g.appendChild(p);
+  }
+}
+
+/* ===== 시험지 장치 기호 7종 (2026-07-31, 도판 483장 집계 기반) =====
+ * 삽화(사람·차량)가 아니라 **선 그림 기호**다 — 오리지 않고 그린다.
+ * 전부 상자(x,y,w,h) 투영이라 rect 와 같은 조작(이동·리사이즈·회전)을 공짜로 얻는다. */
+
+/* 장치 상자 — 기출에서 가장 흔한 도구(전원 장치·계측기·인터페이스·광원·저항 상자,
+ * 합쳐 60회). 전부 "라벨 붙은 사각 상자 + 단자"라서 부품 하나로 덮는다.
+ *   label      상자 안 글자("전원 장치", "저항 상자" …). 없으면 빈 상자
+ *   terminals  단자 개수(기본 2, 0이면 없음) / termSide 단자가 붙는 변(기본 "bottom")
+ *   plusMinus  true 면 첫·끝 단자 옆에 +− 표기(전원 장치)
+ *   emit       "left"|"right" — 빛이 나가는 주둥이(광원 상자)
+ * 상자 안은 흰색으로 뒤를 가린다(장치가 도선 위에 얹히는 그림이 많다). */
+function drawDeviceBox(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const box = document.createElementNS(SVG_NS, "rect");
+  box.setAttribute("x", x); box.setAttribute("y", y);
+  box.setAttribute("width", w); box.setAttribute("height", h);
+  box.setAttribute("fill", "#fff");
+  box.setAttribute("stroke", color); box.setAttribute("stroke-width", sw);
+  g.appendChild(box);
+
+  if (obj.emit === "left" || obj.emit === "right") {           // 광원 주둥이
+    const sgn = obj.emit === "right" ? 1 : -1;
+    const bx = obj.emit === "right" ? x + w : x;
+    const nh = Math.min(h * 0.34, 6), nw = Math.max(w * 0.1, 2.2);
+    const p = document.createElementNS(SVG_NS, "path");
+    p.setAttribute("d", `M ${bx} ${y + h / 2 - nh / 2} L ${bx + sgn * nw} ${y + h / 2 - nh * 0.3} ` +
+      `L ${bx + sgn * nw} ${y + h / 2 + nh * 0.3} L ${bx} ${y + h / 2 + nh / 2} Z`);
+    p.setAttribute("fill", "#fff"); p.setAttribute("stroke", color); p.setAttribute("stroke-width", sw);
+    g.appendChild(p);
+  }
+
+  const n = Number.isFinite(obj.terminals) ? obj.terminals : 2;
+  if (n > 0) {
+    const side = obj.termSide || "bottom";
+    const r = Math.max(Math.min(w, h) * 0.05, sw * 1.6, 0.7);
+    const horiz = side === "bottom" || side === "top";
+    const L = horiz ? w : h;
+    for (let i = 0; i < n; i++) {
+      const t = n === 1 ? 0.5 : 0.3 + (0.4 * i) / (n - 1);      // 가운데 몰아 배치(기출 관행)
+      const tx = horiz ? x + L * t : (side === "left" ? x : x + w);
+      const ty = horiz ? (side === "bottom" ? y + h : y) : y + L * t;
+      const c = document.createElementNS(SVG_NS, "circle");
+      c.setAttribute("cx", tx); c.setAttribute("cy", ty); c.setAttribute("r", r);
+      c.setAttribute("fill", "#fff"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+      g.appendChild(c);
+      if (obj.plusMinus && n >= 2 && (i === 0 || i === n - 1)) {
+        const s = Math.max(Math.min(w, h) * 0.16, 2.2);
+        const off = side === "bottom" ? -s * 0.75 : s * 0.9;    // 단자 위(상자 안쪽)에 표기
+        cText(g, tx, ty + (horiz ? off : 0), i === 0 ? "+" : "−", s, color);
+      }
+    }
+  }
+  if ((obj.label ?? "") !== "") {
+    const size = obj.labelSize || Math.min(h * 0.34, w / Math.max(String(obj.label).length, 1) * 0.9, 4.2);
+    cText(g, x + w / 2, y + h / 2, obj.label, size, color, null, null, obj.labelType ?? "label");
+  }
+}
+
+/* 스피커(음원) — 몸통 상자 + 나팔 사다리꼴 + 소리 호 2개. 기출 12회.
+ *   facing "right"(기본)|"left" · showWaves 소리 호(기본 true) */
+function drawSpeaker(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const sgn = obj.facing === "left" ? -1 : 1;
+  const x0 = obj.facing === "left" ? x + w : x;              // 몸통 쪽 기준
+  const bodyW = w * 0.34, coneW = w * 0.3;
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", Math.min(x0, x0 + sgn * bodyW)); body.setAttribute("y", y + h * 0.28);
+  body.setAttribute("width", bodyW); body.setAttribute("height", h * 0.44);
+  body.setAttribute("fill", "#fff"); body.setAttribute("stroke", color); body.setAttribute("stroke-width", sw);
+  g.appendChild(body);
+  const bx = x0 + sgn * bodyW;
+  const cone = document.createElementNS(SVG_NS, "path");
+  cone.setAttribute("d", `M ${bx} ${y + h * 0.34} L ${bx + sgn * coneW} ${y + h * 0.06} ` +
+    `L ${bx + sgn * coneW} ${y + h * 0.94} L ${bx} ${y + h * 0.66} Z`);
+  cone.setAttribute("fill", "#fff"); cone.setAttribute("stroke", color); cone.setAttribute("stroke-width", sw);
+  g.appendChild(cone);
+  if (obj.showWaves !== false) {
+    const cx0 = bx + sgn * coneW + sgn * w * 0.06;
+    for (const k of [0.55, 1]) {
+      const r = w * 0.16 * k + w * 0.04;
+      const a = document.createElementNS(SVG_NS, "path");
+      a.setAttribute("d", `M ${cx0 + sgn * r * 0.35} ${y + h / 2 - r} ` +
+        `A ${r} ${r} 0 0 ${sgn > 0 ? 1 : 0} ${cx0 + sgn * r * 0.35} ${y + h / 2 + r}`);
+      a.setAttribute("fill", "none"); a.setAttribute("stroke", color); a.setAttribute("stroke-width", sw);
+      g.appendChild(a);
+    }
+  }
+}
+
+/* 광전관 — 유리관(원) 안 왼쪽에 금속판(음극) 호, 오른쪽에 집전 막대, 아래로 리드 2개.
+ * 기출 8회(광전효과 단원 단골). facing "right" = 빛이 오른쪽에서 들어옴(금속판이 왼쪽). */
+function drawPhototube(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const cx = x + w / 2, cy = y + h * 0.44;
+  const R = Math.min(w, h * 0.88) / 2 * 0.92;
+  const sgn = obj.facing === "left" ? -1 : 1;                // 금속판이 반대쪽
+  const c = document.createElementNS(SVG_NS, "circle");
+  c.setAttribute("cx", cx); c.setAttribute("cy", cy); c.setAttribute("r", R);
+  c.setAttribute("fill", "#fff"); c.setAttribute("stroke", color); c.setAttribute("stroke-width", sw);
+  g.appendChild(c);
+  const plate = document.createElementNS(SVG_NS, "path");    // 금속판: 원 안쪽을 따라가는 호(굵게)
+  const pr = R * 0.62;
+  plate.setAttribute("d", `M ${cx - sgn * pr * Math.cos(Math.PI / 4)} ${cy - pr * Math.sin(Math.PI / 4)} ` +
+    `A ${pr} ${pr} 0 0 ${sgn > 0 ? 0 : 1} ${cx - sgn * pr * Math.cos(Math.PI / 4)} ${cy + pr * Math.sin(Math.PI / 4)}`);
+  plate.setAttribute("fill", "none"); plate.setAttribute("stroke", color);
+  plate.setAttribute("stroke-width", sw * 2.4);
+  g.appendChild(plate);
+  oLine(g, cx + sgn * R * 0.45, cy, cx + sgn * R * 0.2, cy, sw, color);   // 집전 막대
+  oDot(g, cx + sgn * R * 0.45, cy, Math.max(sw * 1.6, R * 0.06), color);
+  // 리드: 금속판·집전극 → 관 아래 밖으로
+  oLine(g, cx - sgn * pr, cy, cx - sgn * pr, y + h, sw, color);
+  oLine(g, cx + sgn * R * 0.45, cy, cx + sgn * R * 0.45, y + h, sw, color);
+}
+
+/* 슬릿 판 — 세로 벽에 틈 1개(단일) 또는 2개(이중). 기출 9회. 틈으로 뒤가 보여야
+ * 하므로 벽은 채운 사각형 조각들로 그린다. slits 1|2, gapRatio 틈 크기(기본 0.09). */
+function drawSlit(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const gap = Math.max(h * (obj.gapRatio || 0.09), 1.2);
+  const cxs = obj.slits === 2 ? [y + h * 0.38, y + h * 0.62] : [y + h * 0.5];
+  let cur = y;
+  const segs = [];
+  for (const cyy of cxs) {
+    segs.push([cur, cyy - gap / 2]);
+    cur = cyy + gap / 2;
+  }
+  segs.push([cur, y + h]);
+  for (const [a, b] of segs) {
+    if (b - a < 0.05) continue;
+    const r = document.createElementNS(SVG_NS, "rect");
+    r.setAttribute("x", x); r.setAttribute("y", a);
+    r.setAttribute("width", w); r.setAttribute("height", b - a);
+    r.setAttribute("fill", color);
+    g.appendChild(r);
+  }
+}
+
+/* 온도계 — 구(수은 구) + 관 + 눈금. 기출 6회. level 0~1 = 수은 기둥 높이(기본 0.55). */
+function drawThermometer(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const cx = x + w / 2;
+  const bulbR = Math.min(w / 2, h * 0.12);
+  const bulbY = y + h - bulbR;
+  const stemW = bulbR * 0.9;
+  const stem = document.createElementNS(SVG_NS, "rect");
+  stem.setAttribute("x", cx - stemW / 2); stem.setAttribute("y", y);
+  stem.setAttribute("width", stemW); stem.setAttribute("height", h - bulbR * 1.6);
+  stem.setAttribute("rx", stemW / 2);
+  stem.setAttribute("fill", "#fff"); stem.setAttribute("stroke", color); stem.setAttribute("stroke-width", sw);
+  g.appendChild(stem);
+  const b = document.createElementNS(SVG_NS, "circle");
+  b.setAttribute("cx", cx); b.setAttribute("cy", bulbY); b.setAttribute("r", bulbR);
+  b.setAttribute("fill", color);
+  g.appendChild(b);
+  const lv = Math.min(Math.max(obj.level ?? 0.55, 0), 1);
+  const topY = y + (h - bulbR * 2) * (1 - lv);
+  oLine(g, cx, bulbY - bulbR * 0.5, cx, topY, sw * 2, color);            // 수은 기둥
+  for (let i = 1; i <= 4; i++) {                                          // 눈금
+    const ty = y + (h - bulbR * 2.4) * (i / 5);
+    oLine(g, cx + stemW / 2, ty, cx + stemW / 2 + w * 0.18, ty, sw, color);
+  }
+}
+
+/* 막대자석 — N/S 반반. northSide "left"(기본)|"right". 기출 자기 단원 단골. */
+function drawBarMagnet(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const horiz = w >= h;
+  const box = document.createElementNS(SVG_NS, "rect");
+  box.setAttribute("x", x); box.setAttribute("y", y);
+  box.setAttribute("width", w); box.setAttribute("height", h);
+  box.setAttribute("fill", "#fff"); box.setAttribute("stroke", color); box.setAttribute("stroke-width", sw);
+  g.appendChild(box);
+  if (horiz) oLine(g, x + w / 2, y, x + w / 2, y + h, sw, color);
+  else oLine(g, x, y + h / 2, x + w, y + h / 2, sw, color);
+  const size = Math.min(horiz ? h * 0.55 : w * 0.55, (horiz ? w : h) * 0.2);
+  const first = obj.northSide === "right" ? "S" : "N";
+  const second = first === "N" ? "S" : "N";
+  if (horiz) {
+    cText(g, x + w * 0.25, y + h / 2, first, size, color);
+    cText(g, x + w * 0.75, y + h / 2, second, size, color);
+  } else {
+    cText(g, x + w / 2, y + h * 0.25, first, size, color);
+    cText(g, x + w / 2, y + h * 0.75, second, size, color);
+  }
+}
+
+/* 간섭무늬 — 스크린 띠 안에 밝/어둡 줄무늬. 기출 4회(이중슬릿 결과 표시).
+ * stripes 어두운 줄 수(기본 5) — 가운데가 밝은 무늬가 되도록 홀수 권장. */
+function drawFringePattern(g, obj, sw, color) {
+  const { x, y, w, h } = obj;
+  const box = document.createElementNS(SVG_NS, "rect");
+  box.setAttribute("x", x); box.setAttribute("y", y);
+  box.setAttribute("width", w); box.setAttribute("height", h);
+  box.setAttribute("fill", "#fff"); box.setAttribute("stroke", color); box.setAttribute("stroke-width", sw);
+  g.appendChild(box);
+  const n = Math.max(obj.stripes || 5, 1);
+  const period = h / (n + 1);
+  const dark = Math.min(period * 0.55, h * 0.12);
+  for (let i = 1; i <= n; i++) {
+    const cy = y + period * i;
+    const r = document.createElementNS(SVG_NS, "rect");
+    r.setAttribute("x", x + sw); r.setAttribute("y", cy - dark / 2);
+    r.setAttribute("width", w - sw * 2); r.setAttribute("height", dark);
+    r.setAttribute("fill", color);
+    g.appendChild(r);
   }
 }
 

@@ -6,6 +6,7 @@ import {
   grayHex,
   cLine,
   cText,
+  makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
 } from "./core.js?v=1.3.0";
@@ -27,7 +28,7 @@ import { measureFormula, renderFormula } from "../formula.js?v=1.3.0";
  * skeleton (leads + label) and dispatches the BODY by `element` through
  * CIRCUIT_ELEMENTS, so Steps 2–3 add elements by adding cases only. */
 const CIRCUIT_BODY_HALF_H = CIRCUIT_BODY_MM * 0.2; // default body box half-height (perp to axis)
-const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacitor", "voltmeter", "ammeter"]);
+const CIRCUIT_HEIGHT_ELEMENTS = new Set(["resistor", "inductor", "capacitor", "voltmeter", "ammeter", "galvanometer", "motor"]);
 
 /* 소자 크기 배율(2026-07-31 교사 요구: "회로 에셋이 작다"). 몸통 길이·높이·원 반지름이
  * 함께 이 배율을 탄다. 리드는 남는 구간을 채우므로 단자 위치는 그대로다. */
@@ -297,6 +298,33 @@ const CIRCUIT_ELEMENTS = {
   voltmeter(g, geo, sw, color, obj) {
     circuitCircleBody(g, geo, sw, color, obj);
     cText(g, geo.mid.x, geo.mid.y, "V", Math.max(0.25, circuitHalfHeight(obj)) * 1.2, color);
+  },
+
+  // galvanometer: circle body with "G" inside (검류계 — 기출 4회, 전자기 유도 단원).
+  galvanometer(g, geo, sw, color, obj) {
+    circuitCircleBody(g, geo, sw, color, obj);
+    cText(g, geo.mid.x, geo.mid.y, "G", Math.max(0.25, circuitHalfHeight(obj)) * 1.2, color);
+  },
+
+  // motor: circle body with "M" inside (전동기 — 기출 2회).
+  motor(g, geo, sw, color, obj) {
+    circuitCircleBody(g, geo, sw, color, obj);
+    cText(g, geo.mid.x, geo.mid.y, "M", Math.max(0.25, circuitHalfHeight(obj)) * 1.2, color);
+  },
+
+  // led: diode symbol + two small outgoing arrows (빛 방출 표기 — 기출 표준).
+  led(g, geo, sw, color, obj) {
+    CIRCUIT_ELEMENTS.diode(g, geo, sw, color, obj);
+    const H = geo.H;
+    const sign = geo.py <= 0 ? 1 : -1;                       // perpendicular toward screen-up
+    for (const a of [-0.25, 0.25]) {
+      const from = circuitPt(geo, a * geo.half, H * 1.1 * sign);
+      const dx = (geo.px * sign - geo.ux * 0.4), dy = (geo.py * sign - geo.uy * 0.4);
+      const L = Math.hypot(dx, dy) || 1;
+      const to = { x: from.x + (dx / L) * H * 1.7, y: from.y + (dy / L) * H * 1.7 };
+      g.appendChild(cLine(from, to, sw, color));
+      g.appendChild(makeArrowHead(to.x, to.y, (dx / L), (dy / L), sw * 0.9, color));
+    }
   },
 };
 

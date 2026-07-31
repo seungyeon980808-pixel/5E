@@ -1094,8 +1094,8 @@ export function makeCircuit(a, b) {
     order: 0,                 // assigned on commit (z-order within layer)
   };
   // Element-specific data fields (only the relevant element carries each).
-  if (["resistor", "inductor", "capacitor", "voltmeter", "ammeter"].includes(element)) {
-    obj.height = (element === "voltmeter" || element === "ammeter") ? 5.12 : 3.2;
+  if (["resistor", "inductor", "capacitor", "voltmeter", "ammeter", "galvanometer", "motor"].includes(element)) {
+    obj.height = (element === "resistor" || element === "inductor" || element === "capacitor") ? 3.2 : 5.12;
   }
   if (element === "capacitor") obj.gap = CIRCUIT_CAP_GAP_DEFAULT; // plate separation (world mm)
   if (element === "diode") obj.terminalLabels = ["", ""];          // 단자1 / 단자2

@@ -42,6 +42,13 @@ const APPARATUS_TEMPLATE_IDS = {
   scale: "M003",
   transistor: "E010",
   axis_break: "G010",
+  device_box: "E011",
+  bar_magnet: "E012",
+  speaker: "W001",
+  thermometer: "M010",
+  phototube: "O010",
+  slit: "O011",
+  fringe_pattern: "O012",
 };
 
 // LABEL_CAPABLE_TYPES from object-types.js registry.

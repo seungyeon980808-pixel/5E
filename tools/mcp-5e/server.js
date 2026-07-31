@@ -136,7 +136,7 @@ const TOOLS = [
           items: {
             type: "object",
             properties: {
-              element: { type: "string", description: "resistor|dc_source|ac_source|capacitor|inductor|diode|lamp|ammeter|voltmeter|unknown" },
+              element: { type: "string", description: "resistor|dc_source|ac_source|capacitor|inductor|diode|lamp|led|ammeter|voltmeter|galvanometer|motor|unknown" },
               side: { type: "string", enum: ["top", "right", "bottom", "left"], description: "놓을 변(생략 시 자동)" },
               t: { type: "number", description: "그 변에서의 위치 0~1(생략 시 균등 분포)" },
               span: { type: "number", description: "단자 간 거리 mm(기본 14)" },

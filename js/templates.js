@@ -139,8 +139,14 @@ export const TEMPLATES = {
   compass: { kind: "shape", category: "전자기학", label: "나침반", keywords: ["나침반", "compass", "needle", "magnetic"], create: { tool: "APPARATUS", kind: "compass" } },
   clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
   scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
+  bar_magnet: { kind: "shape", category: "전자기학", label: "막대자석", keywords: ["자석", "막대자석", "N극", "S극", "magnet"], create: { tool: "APPARATUS", kind: "bar_magnet" } },
+  speaker: { kind: "shape", category: "역학", label: "스피커", keywords: ["스피커", "음원", "소리", "음파", "speaker"], create: { tool: "APPARATUS", kind: "speaker" } },
+  thermometer: { kind: "shape", category: "공통", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer" } },
+  phototube: { kind: "shape", category: "광학", label: "광전관", keywords: ["광전관", "광전 효과", "광전자", "phototube"], create: { tool: "APPARATUS", kind: "phototube" } },
+  slit: { kind: "shape", category: "광학", label: "슬릿", keywords: ["슬릿", "단일 슬릿", "이중 슬릿", "간섭", "slit"], create: { tool: "APPARATUS", kind: "slit" } },
+  fringe_pattern: { kind: "shape", category: "광학", label: "간섭무늬", keywords: ["간섭무늬", "무늬", "밝은 무늬", "fringe"], create: { tool: "APPARATUS", kind: "fringe_pattern" } },
   transistor: { kind: "shape", category: "전자기학", label: "트랜지스터", keywords: ["트랜지스터", "transistor", "npn", "pnp", "증폭", "베이스", "컬렉터", "이미터"], create: { tool: "APPARATUS", kind: "transistor" } },
-  axis_break: { kind: "shape", category: "그래프", label: "축 생략 기호", keywords: ["생략", "축 생략", "끊음", "break", "물결", "≈"], create: { tool: "APPARATUS", kind: "axis_break" } },
+  axis_break: { kind: "shape", category: "표시·주석", label: "축 생략 기호", keywords: ["생략", "축 생략", "끊음", "break", "물결", "≈"], create: { tool: "APPARATUS", kind: "axis_break" } },
 
   // 회로 심볼 순서 = 팔레트 표시 순서(JS 객체는 삽입 순서 보존). 사용자 지정 3열 배열:
   //   저항 / 코일 / 축전기 · 직류전원 / 교류전원 / 전구 · 전류계 / 전압계 / 다이오드 · 미지소자
@@ -153,6 +159,10 @@ export const TEMPLATES = {
   lamp:      { kind: "shape", category: "회로", label: "전구",     keywords: ["전구", "램프", "lamp", "bulb", "light"],          create: { tool: "CIRCUIT", element: "lamp" } },
   ammeter:   { kind: "shape", category: "회로", label: "전류계",   keywords: ["전류계", "ammeter", "A", "전류"],                 create: { tool: "CIRCUIT", element: "ammeter" } },
   voltmeter: { kind: "shape", category: "회로", label: "전압계",   keywords: ["전압계", "voltmeter", "V", "전압"],               create: { tool: "CIRCUIT", element: "voltmeter" } },
+  galvanometer: { kind: "shape", category: "회로", label: "검류계", keywords: ["검류계", "galvanometer", "G", "유도 전류"], create: { tool: "CIRCUIT", element: "galvanometer" } },
+  motor: { kind: "shape", category: "회로", label: "전동기", keywords: ["전동기", "모터", "motor", "M"], create: { tool: "CIRCUIT", element: "motor" } },
+  led: { kind: "shape", category: "회로", label: "LED", keywords: ["LED", "발광", "다이오드", "led"], create: { tool: "CIRCUIT", element: "led" } },
+  device_box: { kind: "shape", category: "회로", label: "장치 상자", keywords: ["전원 장치", "장치", "계측기", "인터페이스", "광원", "저항 상자", "상자", "device", "box"], create: { tool: "APPARATUS", kind: "device_box" } },
   diode:     { kind: "shape", category: "회로", label: "다이오드", keywords: ["다이오드", "diode", "정류"],                      create: { tool: "CIRCUIT", element: "diode" } },
   unknown:   { kind: "shape", category: "회로", label: "미지소자", keywords: ["미지", "소자", "unknown", "box", "element"],      create: { tool: "CIRCUIT", element: "unknown" } },
 
@@ -274,7 +284,7 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학"];
+const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "표시·주석"];
 
 /* ===== ICON RENDERING — reuse the REAL renderers (render.js) at small scale =====
  *
@@ -313,6 +323,13 @@ const APPARATUS_ICON_BOX = {
   scale: { w: 26, h: 18 },
   transistor: { w: 20, h: 20 },
   axis_break: { w: 5, h: 7 },
+  device_box: { w: 26, h: 14 },
+  speaker: { w: 18, h: 14 },
+  phototube: { w: 16, h: 20 },
+  slit: { w: 4, h: 22 },
+  thermometer: { w: 7, h: 22 },
+  bar_magnet: { w: 26, h: 9 },
+  fringe_pattern: { w: 7, h: 22 },
 };
 
 // 입체 아이콘: symbolId별 대표 상자(월드 mm). 판·원판은 납작하게 잡아야 버튼만 보고
