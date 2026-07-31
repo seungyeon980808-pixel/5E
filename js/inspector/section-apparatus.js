@@ -100,7 +100,7 @@ export function buildApparatusSection(ctx) {
     ["", "없음"], ["right", "오른쪽"], ["left", "왼쪽"],
   ], (v) => commit(state, "emit", v || undefined));
 
-  /* ----- 스피커 · 자석 · 트랜지스터 · 축 생략 · 온도계 ----- */
+  /* ----- 스피커 · 자석 · 트랜지스터 · 온도계 ----- */
   const facing = selectRow(body, "향하는 쪽", [["right", "오른쪽"], ["left", "왼쪽"]],
     (v) => commit(state, "facing", v));
   const waves = checkRow(body, "소리 표시", (v) => commit(state, "showWaves", v));
@@ -109,15 +109,13 @@ export function buildApparatusSection(ctx) {
   const npn = selectRow(body, "형식", [["npn", "npn"], ["pnp", "pnp"]],
     (v) => commit(state, "variant", v));
   const circled = checkRow(body, "원 두르기", (v) => commit(state, "circled", v));
-  const brStyle = selectRow(body, "생략 기호", [["slash", "빗금"], ["wave", "물결"]],
-    (v) => commit(state, "style", v));
   const level = numberRow(body, "눈금 높이(0~1)", (v) => commit(state, "level", v),
     { min: 0, max: 1, step: 0.05 });
   const stripes = numberRow(body, "무늬 줄 수", (v) => commit(state, "stripes", Math.round(v)),
     { min: 1, max: 21, step: 2 });
 
   const ALL = [slitCount, slitLen, slitGap, termCount, termSide, plusMinus, emit,
-    facing, waves, north, npn, circled, brStyle, level, stripes];
+    facing, waves, north, npn, circled, level, stripes];
 
   // 갈래 → 보여줄 줄. 여기 없는 갈래(도선·나침반·도르래…)는 섹션 자체가 숨는다.
   const BY_KIND = {
@@ -126,7 +124,6 @@ export function buildApparatusSection(ctx) {
     speaker: [facing, waves],
     bar_magnet: [north],
     transistor: [npn, circled],
-    axis_break: [brStyle],
     thermometer: [level],
     fringe_pattern: [stripes],
   };
@@ -150,7 +147,6 @@ export function buildApparatusSection(ctx) {
     north.sel.value = obj.northSide || "left";
     npn.sel.value = obj.variant === "pnp" ? "pnp" : "npn";
     circled.cb.checked = !!obj.circled;
-    brStyle.sel.value = obj.style === "wave" ? "wave" : "slash";
     level.inp.value = obj.level ?? 0.55;
     stripes.inp.value = obj.stripes || 5;
   }

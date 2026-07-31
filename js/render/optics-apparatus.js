@@ -207,7 +207,6 @@ function renderApparatus(obj) {
   else if (kind === "clamp") drawClamp(g, obj, sw, color);
   else if (kind === "scale") drawScale(g, obj, sw, color);
   else if (kind === "transistor") drawTransistor(g, obj, sw, color);
-  else if (kind === "axis_break") drawAxisBreak(g, obj, sw, color);
   else if (kind === "device_box") drawDeviceBox(g, obj, sw, color);
   else if (kind === "speaker") drawSpeaker(g, obj, sw, color);
   else if (kind === "phototube") drawPhototube(g, obj, sw, color);
@@ -377,44 +376,6 @@ function drawMountedPulley(g, obj, sw, color, variant) {
 
   // 축 — 진회색 원.
   circle(Math.max(r * 0.20, 0.45), AXLE_FILL, sw * 0.9);
-}
-
-/* 축 생략 기호(≈) — 기출 7장. 축의 일부를 잘라 먹었다는 표시다.
- *
- * **두 빗금 사이는 반드시 뒤를 가려야 한다.** 가리지 않으면 축선·격자가 기호를 뚫고
- * 지나가 "끊은" 것으로 안 보인다. 그래서 상자 안쪽을 흰색으로 먼저 덮고(knockout)
- * 그 위에 빗금 두 개를 긋는다. 상자를 축 위에 얹어 놓기만 하면 된다.
- *
- *   rotation 으로 세로축에도 쓴다(세로축은 90).
- *   slant  빗금 기울기(도, 기본 22 — 제도 관행)
- *   style  "slash"(기본, 곧은 빗금 두 개) | "wave"(물결 두 줄)
- */
-function drawAxisBreak(g, obj, sw, color) {
-  const { x, y, w, h } = obj;
-  const knock = document.createElementNS(SVG_NS, "rect");
-  knock.setAttribute("x", x); knock.setAttribute("y", y);
-  knock.setAttribute("width", w); knock.setAttribute("height", h);
-  knock.setAttribute("fill", "#fff");
-  knock.setAttribute("stroke", "none");
-  g.appendChild(knock);
-
-  const wave = obj.style === "wave";
-  const gap = Math.max(w * 0.42, sw * 3);
-  const cx = x + w / 2;
-  const dx = Math.tan(((obj.slant ?? 22) * Math.PI) / 180) * (h / 2);
-  for (const s of [-1, 1]) {
-    const bx = cx + (s * gap) / 2;
-    const p = document.createElementNS(SVG_NS, "path");
-    p.setAttribute("d", wave
-      // 물결: 위·아래로 한 번씩 흔들리는 S자
-      ? `M ${bx - dx} ${y + h} C ${bx - dx * 0.2} ${y + h * 0.66}, ${bx + dx * 0.2} ${y + h * 0.34}, ${bx + dx} ${y}`
-      : `M ${bx - dx} ${y + h} L ${bx + dx} ${y}`);
-    p.setAttribute("fill", "none");
-    p.setAttribute("stroke", color);
-    p.setAttribute("stroke-width", sw);
-    p.setAttribute("stroke-linecap", "round");
-    g.appendChild(p);
-  }
 }
 
 /* ===== 시험지 장치 기호 7종 (2026-07-31, 도판 483장 집계 기반) =====

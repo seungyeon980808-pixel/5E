@@ -59,7 +59,7 @@ add_dimension(from:{x,y}, to:{x,y}, label:"4h",
 | 항목 | 무엇으로 | 어디에 |
 |---|---|---|
 | `transistor` 11장 | 실험 기구 `kind:"transistor"` (npn/pnp/원 두르기) | `js/render/optics-apparatus.js` |
-| `axis_break` 7장 | 실험 기구 `kind:"axis_break"` — **두 빗금 사이가 뒤를 가린다** | 같은 파일 |
+| `axis_break` 7장 | 독립 타입 `axisbreak`(화학 세션이 만든 것) — 물결 두 줄, 사이가 뒤를 가린다. 화학 11장과 공용 | `js/render/axisbreak.js` |
 | `leader_group` 12장 | `labeler` 에 꺾임점 `elbow` 추가 | `js/render/annotations.js` |
 | `rig_attach` 13장 | MCP `add_stand_rig` (스탠드 가로대 s·레일 위 운반대) | `tools/mcp-5e/lib/rig.js` |
 | `diagonal_wiring` 5장 | **오진이었다** — 소자는 원래 사선에 놓인다. `add_circuit` 에 `wires` 입력만 추가 | `tools/mcp-5e/lib/builders.js` |

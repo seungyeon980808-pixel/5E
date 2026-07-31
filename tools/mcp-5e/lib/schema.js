@@ -27,7 +27,7 @@ export const OPTICS_KINDS = [
   "convex_lens", "concave_lens", "convex_mirror", "concave_mirror", "plane_mirror",
   "object_arrow", "point_light", "screen", "pulley", "node",
 ];
-export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale", "transistor", "axis_break",
+export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale", "transistor",
   "device_box", "speaker", "phototube", "slit", "thermometer", "bar_magnet", "fringe_pattern"];
 export const CIRCUIT_ELEMENTS = [
   "resistor", "dc_source", "ac_source", "capacitor", "inductor",
@@ -52,14 +52,14 @@ export const AXIS_VARIANTS = ["cross", "quadrant", "halfcross", "single"];
 // project-io.js APPARATUS_TEMPLATE_IDS
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001", compass: "E002", pulley: "M001", clamp: "M004", scale: "M003",
-  transistor: "E010", axis_break: "G010", device_box: "E011", bar_magnet: "E012",
+  transistor: "E010", device_box: "E011", bar_magnet: "E012",
   speaker: "W001", thermometer: "M010", phototube: "O010", slit: "O011", fringe_pattern: "O012",
 };
 
 // 기구별 기본 크기 (templates.js DEFAULT_SIZES 발췌)
 const APPARATUS_SIZES = {
   wire: { w: 26, h: 6 }, compass: { w: 18, h: 18 }, pulley: { w: 18, h: 18 },
-  clamp: { w: 18, h: 24 }, scale: { w: 26, h: 18 }, transistor: { w: 20, h: 20 }, axis_break: { w: 5, h: 7 },
+  clamp: { w: 18, h: 24 }, scale: { w: 26, h: 18 }, transistor: { w: 20, h: 20 },
   device_box: { w: 26, h: 14 }, speaker: { w: 18, h: 14 }, phototube: { w: 16, h: 20 },
   slit: { w: 4, h: 22 }, thermometer: { w: 7, h: 22 }, bar_magnet: { w: 26, h: 9 },
   fringe_pattern: { w: 7, h: 22 },
@@ -108,7 +108,6 @@ const DEFAULTS = {
       w: size.w, h: size.h, rotation: 0,
     };
     if (kind === "transistor") { d.variant = o.variant || "npn"; d.showTerminals = true; }
-    if (kind === "axis_break") { d.slant = 22; d.style = o.style || "slash"; }
     if (kind === "device_box") { d.label = o.label || ""; d.terminals = Number.isFinite(o.terminals) ? o.terminals : 2; d.termSide = o.termSide || "bottom"; }
     if (kind === "speaker") { d.facing = o.facing || "right"; }
     if (kind === "slit") { d.slits = Math.max(1, Math.round(o.slits || 1)); d.slitLen = 1.6; d.slitGap = 4; }

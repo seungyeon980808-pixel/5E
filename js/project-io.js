@@ -41,7 +41,6 @@ const APPARATUS_TEMPLATE_IDS = {
   clamp: "M004",
   scale: "M003",
   transistor: "E010",
-  axis_break: "G010",
   device_box: "E011",
   bar_magnet: "E012",
   speaker: "W001",
