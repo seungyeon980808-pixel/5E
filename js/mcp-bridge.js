@@ -21,7 +21,7 @@
  */
 
 import { state } from "./state.js?v=1.3.0";
-import { showAlert } from "./ui-dialogs.js?v=1.3.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.3.0";
 import { switchPage, addPage } from "./pages.js?v=1.3.0";
 import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.3.0";
 
@@ -426,7 +426,7 @@ async function handleBadgeClick() {
 
   setBadge("disconnected");
   scheduleReconnect();               // 수동 시도가 실패해도 이후엔 자동으로 계속 노린다
-  return showAlert(
+  const open = await showConfirm(
     "MCP 서버를 찾지 못했습니다.\n\n" +
       "확인할 것:\n" +
       "1. 컴퓨터에서 Claude Code가 실행 중이고, 'mcp-5e' 도구가 등록돼 있는지\n" +
@@ -435,18 +435,62 @@ async function handleBadgeClick() {
       "3. 이 화면이 http://localhost 로 열려 있는지 (지금 주소: " + location.origin + ")\n\n" +
       "웹페이지는 보안상 프로그램을 스스로 실행할 수 없어서, 이 버튼은\n" +
       "'이미 켜진 서버에 다시 붙어보기'만 할 수 있습니다.",
-    { title: "MCP 연결 안 됨" }
+    { title: "MCP 연결 안 됨", okText: "설치 안내 열기", cancelText: "닫기" }
   );
+  if (open) window.open(GUIDE_URL, "_blank", "noopener");
 }
 
 /* ----- 시작 -----
  * index.html이 이 파일을 <script type="module">로 직접 싣는다. 그래서 스스로 켜지되,
  * 다른 모듈이 import 했을 때 두 번 켜지지 않도록 한 번만 돌게 막아 둔다. */
+/* ----- 미설치 사용자용: 버튼은 보이되, 포트는 두드리지 않는다 -----
+ * 발견성(2026-07-31 교사 결정): 게이트를 안 켠 브라우저에도 버튼은 항상 보인다.
+ * 눌렀을 때만 한 번 찾아 보고 — 찾으면 그 자리에서 켜지고(다음부터 자동 연결),
+ * 못 찾으면 설치 안내를 띄운다. 백그라운드 포트 노크는 여전히 게이트 뒤에 있다. */
+const GUIDE_URL = "https://github.com/seungyeon980808-pixel/5E/blob/main/tools/mcp-5e/GUIDE_FOR_TEACHERS.md";
+
+async function handleInstallClick() {
+  if (connecting) return;
+  connecting = true;
+  setBadge("connecting");
+  const port = await findPort();
+  connecting = false;
+  if (port) {
+    // 서버가 이미 떠 있다 = 설치된 사용자다. 이 브라우저에 켠 것으로 기억하고 정식 배선으로 전환.
+    try { localStorage.setItem(STORAGE_KEY, "1"); } catch {}
+    const b = bridgeBtn();
+    b?.removeEventListener("click", handleInstallClick);
+    b?.addEventListener("click", handleBadgeClick);
+    connect(port, true);
+    return;
+  }
+  setBadge("disconnected");
+  const open = await showConfirm(
+    "Claude에게 말로 그림을 시키는 기능입니다.\n" +
+      "예: \"30° 경사면에 물체 두 개 그려줘\"\n\n" +
+      "연결된 서버를 찾지 못했습니다.\n" +
+      "· 처음이라면 — 설치가 한 번 필요합니다 (Claude 유료 구독 + Node.js, 약 10분)\n" +
+      "· 이미 설치했다면 — Claude Code를 켠 뒤 이 버튼을 다시 눌러 보세요.",
+    { title: "AI로 그리기 (MCP)", okText: "설치 안내 열기", cancelText: "닫기" }
+  );
+  if (open) window.open(GUIDE_URL, "_blank", "noopener");
+}
+
 let started = false;
 export async function initMcpBridge() {
   if (started) return;
   started = true;
-  if (!bridgeEnabled()) return;      // 켜지 않은 브라우저는 로컬 포트를 두드리지도 않는다(버튼은 hidden 그대로)
+  if (!bridgeEnabled()) {
+    // 게이트를 안 켠 브라우저: 포트를 두드리지 않되 버튼은 보인다(설치 안내 입구).
+    const b = bridgeBtn();
+    if (b) {
+      b.hidden = false;
+      b.setAttribute("aria-pressed", "false");
+      b.title = "AI로 그리기 — 클릭: 연결 시도 / 설치 안내";
+      b.addEventListener("click", handleInstallClick);
+    }
+    return;
+  }
   bridgeBtn()?.addEventListener("click", handleBadgeClick);
   setBadge("connecting");            // 버튼을 먼저 보여준다 — 못 찾아도 눌러서 재시도할 수 있게
   // 탭 복귀·창 포커스에서 즉시 재시도(백오프를 기다리지 않는다).
