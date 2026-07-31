@@ -20,10 +20,18 @@ import { nextObjectId } from "./id.js?v=1.3.0";
 import { isSpaceHeld, getOpticsKind } from "../tools.js?v=1.3.0";
 
 const DEFAULT_STROKE_WIDTH = 0.2;     // mirrors tools.js default line width (DESIGN 3-2)
-const POINT_DIAMETER_PER_WIDTH = 5;   // dot Ø ≈ 5 × line width (estimated from reference)
+/* 새 점의 지름 = 이 값 × 선 굵기.
+ *   5     → 1.0mm Ø   (원래 값. 기출 도판의 표시점보다 컸다)
+ *   3.5   → 0.7mm Ø   (2026-07-28 30% 축소)
+ *   4.025 → 0.805mm Ø (2026-07-28 다시 15% 확대 = 3.5 × 1.15) ← 현재
+ * bbox ≈ 1.83mm. 이 값만 바꾸면 새로 놓는 점·산점도 점·인스펙터 기본 표시가 함께 따라온다. */
+const POINT_DIAMETER_PER_WIDTH = 3.5 * 1.15;
 const NODE_DOT_RADIUS_RATIO = 0.22;   // must match render.js node drawer
-const NODE_DEFAULT_SIZE =
-  (DEFAULT_STROKE_WIDTH * POINT_DIAMETER_PER_WIDTH) / (2 * NODE_DOT_RADIUS_RATIO); // ≈ 2.27 mm bbox → 1.0 mm Ø dot
+export const NODE_DEFAULT_SIZE =
+  (DEFAULT_STROKE_WIDTH * POINT_DIAMETER_PER_WIDTH) / (2 * NODE_DOT_RADIUS_RATIO); // ≈ 1.59 mm bbox → 0.7 mm Ø dot
+// 점 지름(mm) ↔ bbox 변환 — 인스펙터의 '점 지름' 입력이 같은 식을 써야 한다.
+export const nodeBoxFromDiameter = (mm) => mm / (2 * NODE_DOT_RADIUS_RATIO);
+export const nodeDiameterFromBox = (box) => box * 2 * NODE_DOT_RADIUS_RATIO;
 
 let _svg = null;
 let _state = null;

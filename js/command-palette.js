@@ -95,6 +95,7 @@ const COMMANDS = [
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
   { id: "shortcuts",   label: "단축키 도움말",     keywords: ["shortcut", "단축키", "도움말", "help"], shortcutLabel: "",          run: () => clickById("open-shortcuts") },
+  { id: "tutorial",    label: "튜토리얼", keywords: ["tutorial", "튜토리얼", "따라하기", "도움말", "help", "처음"], shortcutLabel: "", run: () => clickById("tutorial-btn") },
 ];
 
 export function initCommandPalette() {

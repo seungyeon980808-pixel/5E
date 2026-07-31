@@ -14,6 +14,7 @@ import {
   LABEL_OPTICAL_CENTER_EM,
   makeLabelKnockout,
   applyGlyphHalo,
+  DIM_HALO_RATIO,
 } from "./core.js?v=1.3.0";
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.3.0";
 import { resolveFill } from "./fill.js?v=1.3.0";
@@ -303,7 +304,9 @@ function renderLine(obj) {
     fillTextWithRomanRuns(label, labelText);
     // 가림은 글자 모양대로만. 예전엔 선 굵기에 비례한 테두리(max(0.8, sw*3)) + 흰 사각형을
     // 함께 씌워, 글자 왼쪽으로 1mm 넘게 흰 영역이 나가 옆 글자를 지웠다(교사 지적).
-    applyGlyphHalo(label, labelSize, obj.haloRatio);
+    // 치수 라벨은 선 위에 얹혀 있다 — 기본 가림으로는 글자 사이로 선이 지나간다.
+    // 그래서 이 라벨만 기본값을 DIM_HALO_RATIO 로 둔다(사용자가 지정하면 그 값이 우선).
+    applyGlyphHalo(label, labelSize, obj.haloRatio ?? DIM_HALO_RATIO);
     if (obj.labelBg) {
       const ko = makeLabelKnockout([labelText], mx, my + labelSize * LABEL_OPTICAL_CENTER_EM, labelSize, {
         anchor: "middle",

@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="css/style.css?v=1.3.0" />
   <link rel="stylesheet" href="css/inspector.css?v=1.3.0" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.3.0" />
+  <link rel="stylesheet" href="css/tutorial.css?v=1.3.0" />
 </head>
 <body>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
@@ -232,10 +233,16 @@
             <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
           </div>
         </div>
-        <!-- MCP 연결 상태 — localhost(또는 ?mcp=1)일 때만 js/mcp-bridge.js가 hidden을 벗긴다.
+        <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
+             처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
+        <button id="tutorial-btn" class="topbar-btn" type="button"
+                title="튜토리얼 — 화면 위에서 하나씩 짚어 드립니다">튜토리얼</button>
+        <!-- MCP 연결 상태 — js/mcp-bridge.js가 hidden을 벗긴다(이제 항상 보임, 2026-07-31).
+             게이트(localhost/?mcp=1)를 안 켠 브라우저에서는 '설치 안내 입구'로 동작:
+             클릭 시 한 번 연결을 시도하고, 실패하면 설치 안내 다이얼로그를 띄운다.
              점(●)이 상태 표시: 회색 테두리만=연결 안 됨, 파란 채움=연결됨. -->
         <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
-                title="MCP 연결 안 됨" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
+                title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
           MCP <span class="mcp-dot" aria-hidden="true"></span>
         </button>
         <span id="zoom-readout" class="zoom-readout">zoom 1.00×</span>

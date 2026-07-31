@@ -43,6 +43,7 @@ import { localizeShortcutLabels } from "./platform.js?v=1.3.0";
 import { initModalDrag } from "./modal-drag.js?v=1.3.0";
 import { initSteppers } from "./stepper.js?v=1.3.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.3.0";
+import { initTutorial } from "./tutorial.js?v=1.3.0";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -251,6 +252,10 @@ initSteppers();
 
 /* ----- 참고 문항 창(별도 브라우저 창) — 최소화 칩 막대 준비 ----- */
 initReferenceWindows(state);
+
+/* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
+   페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
+initTutorial();
 
 /* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
    앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로

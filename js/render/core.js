@@ -320,6 +320,12 @@ function koMeasure(lines, sizeMm, fontCss) {
  */
 export const HALO_RATIO = 0.13;
 
+/* 치수선(길이표시) 라벨만 더 넓게 가린다.
+ * 치수 라벨은 **선 위에 얹혀** 있어서 기본 가림(0.13)으로는 글자 사이로 선이 그대로
+ * 지나간다 — 기출 도판은 라벨 자리에서 선이 끊긴 것처럼 보인다. 그래서 이 라벨만
+ * 배율을 올린다. 다른 라벨까지 올리면 옆 글자를 지운다(2026-07-26 교사 지적). */
+export const DIM_HALO_RATIO = 0.34;
+
 export function applyGlyphHalo(node, sizeMm, ratio) {
   const r = (Number.isFinite(ratio) && ratio >= 0) ? ratio : HALO_RATIO;
   const w = sizeMm * r;

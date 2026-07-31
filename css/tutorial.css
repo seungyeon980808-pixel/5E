@@ -1,0 +1,766 @@
+/* ===== TUTORIAL (따라하기) =====
+ *
+ * 레이어는 documentElement 에 붙는다(body{zoom} 영향을 안 받게) — js/tutorial.js 주석 참고.
+ * 그래서 여기 좌표·크기는 전부 뷰포트 실측 px 이고, rem/em 을 쓰지 않는다.
+ * 색은 앱 토큰(--accent 등)을 그대로 따라가 과목 테마·흑백 모드에 함께 반응한다.
+ *
+ * z-index: 앱에서 가장 높은 값이 100001(툴팁)이므로 그 위에 쌓는다.
+ *   흐림/테두리 100010 · 코치 100012 · 배너 100014 · 코스 고르기 100016
+ *
+ * ── 모션 규칙 (Emil Kowalski 원칙 기반) ─────────────────────────────
+ *  · 떠오를 때: 빠르게 "확" 나타나 살짝 넘쳤다가 안정 (pop-in, scale 0.95→1 + 위로 떠오름).
+ *    scale(0) 금지 — 아무것도 없던 데서 생기는 물건은 없다.
+ *  · 단계가 바뀔 때: 제자리에서 부드럽게 사라진 뒤(fade-out, ease-out 140ms)
+ *    "새 위치에서" 다시 떠오른다 — 화면을 가로질러 날아가지 않는다.
+ *  · 시선 유도 순서: 테두리(대상)가 먼저 뜨고 → 80ms 뒤 설명 창 → 안정된 뒤 커서 시연.
+ *    눈은 밝아지는 곳을 따라가므로, 항상 '대상 → 설명' 순서다.
+ *  · 화면 추적(창 크기·배율 변화)만 이동 애니메이션(ease-in-out)을 쓴다.
+ */
+/* 시간 값은 여기 한곳에서만 정한다 — js/tutorial.js 의 T_EXIT/T_ENTER 와 짝을 맞춘다.
+ * 일반 UI 예산(300ms 이하)보다 길게 잡은 이유: 튜토리얼은 '처음 한 번' 보는 화면이라
+ * 빈도가 낮다. 자주 보는 UI일수록 짧아야 하고, 설명하는 모션은 눈이 따라올 시간을 줘야 한다. */
+:root {
+  --tut-ease-out: cubic-bezier(0.23, 1, 0.32, 1);      /* 진입·퇴장: 시작이 빠르다 */
+  --tut-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);  /* 화면 위 이동 */
+  --tut-ease-pop: cubic-bezier(0.30, 1.24, 0.44, 1);   /* 확 떠서 살짝 넘치고 안정 */
+  --tut-t-exit: 240ms;
+  --tut-t-enter: 560ms;
+  --tut-t-track: 520ms;
+}
+
+/* ----- 레이어 뼈대 ----- */
+.tut-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100010;
+  pointer-events: none;
+}
+
+/* 흐림 4장. 구멍 바깥이라 클릭을 막아 준다(딴 데로 새지 않게). */
+.tut-dim {
+  position: fixed;
+  background: rgba(1, 4, 9, 0.5);
+  pointer-events: auto;
+}
+:root[data-theme="light"] .tut-dim { background: rgba(13, 17, 23, 0.34); }
+
+/* ----- 캔버스 위 안내 영역 ("여기다 그리세요") -----
+   화면 전체를 덮는 투명 SVG. 좌표는 js 가 화면 픽셀로 넣어 준다. */
+.tut-guide {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.tut-guide-shape {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+/* 닫힌 도형은 안쪽을 아주 옅게 채워 '이 영역'이라는 게 읽히게 한다. */
+.tut-guide-shape.is-closed { fill: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tut-guide-note {
+  fill: var(--accent);
+  font-family: "IBM Plex Sans KR", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  paint-order: stroke;
+  stroke: var(--bg-canvas);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+/* 클릭 시연: 누를 자리에 박아 두는 번호 (①②… 순서를 눈으로 남긴다) */
+.tut-click-dot {
+  fill: var(--accent);
+  stroke: #fff;
+  stroke-width: 1.5;
+  opacity: 0.95;
+}
+.tut-click-num {
+  fill: #fff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 누르고 있어야 하는 키 — 작업 자리 위에 고정으로 떠 있다 */
+.tut-modkey {
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.4em 0.8em;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-family: "IBM Plex Sans KR", sans-serif;
+  font-size: calc(14px * var(--ui-zoom, 1));
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(1, 4, 9, 0.45);
+  pointer-events: none;
+  animation: tut-modkey-pulse 2.4s ease-in-out infinite;
+}
+.tut-modkey[hidden] { display: none; }
+.tut-modkey kbd {
+  padding: 0.1em 0.5em;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.16);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.95em;
+}
+/* 아주 옅은 맥동 — '지금 누르고 있어야 한다'는 신호. 위치는 안 움직인다. */
+@keyframes tut-modkey-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.72; }
+}
+
+/* 가상 커서가 지나갈 길 */
+.tut-demo-path {
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 5;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+/* ----- 가상 커서 (시연) -----
+   translate 기준점이 화살표 '끝'이 되도록, 안쪽 요소를 그 자리에 맞춰 놓는다. */
+.tut-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  will-change: transform;
+}
+.tut-ghost[hidden] { display: none; }
+
+.tut-ghost-arrow {
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: calc(30px * var(--ui-zoom, 1));   /* 시인성 1.4배 + 화면 배율 추종 */
+  height: calc(42px * var(--ui-zoom, 1));
+  fill: #fff;
+  stroke: #0d1117;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 3px 5px rgba(1, 4, 9, 0.6));
+  transition: transform 120ms var(--tut-ease-out);
+}
+.tut-ghost.is-pressed .tut-ghost-arrow { transform: scale(0.88); }
+
+/* 누르고 있는 동안 커서 끝에 퍼지는 고리 */
+.tut-ghost-ring {
+  position: absolute;
+  left: -17px;
+  top: -17px;
+  width: 34px;
+  height: 34px;
+  border: 2.5px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.4);
+  transition: opacity 140ms var(--tut-ease-out), transform 200ms var(--tut-ease-out);
+}
+.tut-ghost.is-pressed .tut-ghost-ring { opacity: 0.9; transform: scale(1); }
+
+/* Shift·Ctrl 같은 보조키 표시 */
+.tut-ghost-mod {
+  position: absolute;
+  left: 26px;
+  top: 30px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: #fff;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(1, 4, 9, 0.45);
+}
+.tut-ghost-mod[hidden] { display: none; }
+
+/* 구멍 둘레 테두리. 클릭은 통과해야 하므로 pointer-events 는 끈다.
+ * 평상시(창 크기 추적)엔 부드러운 이동, 단계 전환 땐 새 자리에서 pop 으로 뜬다. */
+.tut-halo {
+  position: fixed;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+  pointer-events: none;
+  transition: left var(--tut-t-track) var(--tut-ease-in-out),
+              top var(--tut-t-track) var(--tut-ease-in-out),
+              width var(--tut-t-track) var(--tut-ease-in-out),
+              height var(--tut-t-track) var(--tut-ease-in-out);
+}
+.tut-halo[hidden] { display: none; }
+.tut-halo.is-entering {
+  transition: none;                     /* 새 자리로 '이동'하지 않고 그 자리에서 뜬다 */
+  animation: tut-halo-pop var(--tut-t-enter) var(--tut-ease-pop);
+}
+@keyframes tut-halo-pop {
+  from { opacity: 0; transform: scale(1.045); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* 흐림 4장도 추적 이동만 부드럽게 (단계 전환 시엔 JS 가 transition 을 잠시 끈다) */
+.tut-dim {
+  transition: left var(--tut-t-track) var(--tut-ease-in-out),
+              top var(--tut-t-track) var(--tut-ease-in-out),
+              width var(--tut-t-track) var(--tut-ease-in-out),
+              height var(--tut-t-track) var(--tut-ease-in-out);
+}
+.tut-dim.no-anim { transition: none; }
+
+/* ----- 설명 창(코치) -----
+ * 앱의 화면 크기(--ui-zoom)를 따라간다. 레이어가 body 밖(html 밑)이라 body{zoom} 이
+ * 안 먹으므로, 대신 글꼴 크기와 폭에 배율을 곱한다. 위치(left/top)는 실제 px 그대로라
+ * 대상 추적이 어긋나지 않는다 — zoom 속성을 쓰면 left/top 까지 배로 밀려 깨진다.
+ * 안쪽 요소는 전부 em 이라 이 한 줄만 바뀌면 통째로 커진다. */
+.tut-coach {
+  position: fixed;
+  font-size: calc(16px * var(--ui-zoom, 1));
+  width: calc(360px * var(--ui-zoom, 1));
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  padding: 1em 1.13em 0.88em;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(1, 4, 9, 0.45);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans KR", sans-serif;
+  pointer-events: auto;
+  /* 추적 이동만 부드럽게. 단계 전환은 transform/opacity 로만 움직인다(GPU). */
+  transition: left var(--tut-t-track) var(--tut-ease-in-out),
+              top var(--tut-t-track) var(--tut-ease-in-out);
+}
+/* 대상이 있는 쪽에서 자라 나오게 — 짚는 곳과 설명이 한 몸으로 읽힌다(origin-aware). */
+.tut-coach[data-side="right"] { transform-origin: left center; }
+.tut-coach[data-side="left"]  { transform-origin: right center; }
+.tut-coach[data-side="below"] { transform-origin: center top; }
+.tut-coach[data-side="above"] { transform-origin: center bottom; }
+.tut-coach[data-side="center"]{ transform-origin: center center; }
+
+/* 단계 전환: 제자리에서 사라지고(빠른 fade-out) → 새 위치에서 확 떠오른다(pop). */
+.tut-coach.is-leaving {
+  transition: opacity var(--tut-t-exit) var(--tut-ease-out),
+              transform var(--tut-t-exit) var(--tut-ease-out);
+  opacity: 0;
+  transform: scale(0.98);
+  pointer-events: none;
+}
+.tut-coach.is-entering {
+  animation: tut-coach-pop var(--tut-t-enter) var(--tut-ease-pop);
+}
+@keyframes tut-coach-pop {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.tut-coach-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tut-coach-course {
+  font-size: 0.7em;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+.tut-coach-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.7em;
+  color: var(--text-secondary);
+}
+
+.tut-coach-title {
+  margin: 0 0 0.56em;
+  font-size: 1.13em;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.tut-coach-text { margin-bottom: 0.81em; }
+.tut-line {
+  margin: 0;
+  font-size: 1em;
+  line-height: 1.66;
+  color: var(--text-label);
+  min-height: 0.5em;            /* 빈 줄이 단락 사이 여백으로 보이게 */
+}
+/* 글머리표 줄이 넘어갈 때 '·' 아래로 흐르지 않고 글자에 맞춰 들여쓰이게 한다. */
+.tut-line-bullet { padding-left: 11px; text-indent: -11px; }
+
+/* 실습 단계 표식 — [다음] 자리를 대신한다. */
+.tut-coach-do {
+  display: inline-block;
+  margin-bottom: 0.69em;
+  padding: 0.31em 0.75em;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-size: 0.88em;
+  font-weight: 600;
+}
+
+/* [자동으로 하기] — 타이핑 대신 프로그램이 대신 해 주는 단계의 큰 버튼 */
+.tut-coach-auto {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.75em;
+  padding: 0.63em 1em;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.94em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 160ms var(--tut-ease-out), background 160ms ease;
+}
+.tut-coach-auto:hover { background: var(--accent-hover); }
+.tut-coach-auto:active { transform: scale(0.98); }
+.tut-coach-auto[hidden] { display: none; }
+.tut-coach-do[hidden] { display: none; }
+
+.tut-coach-foot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tut-spacer { flex: 1; }
+
+/* ----- 단추 (앱 .topbar-btn 톤) ----- */
+.tut-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: transform 160ms var(--tut-ease-out), background 160ms ease;
+}
+/* 설명 창 안의 버튼은 창 배율을 따라간다(밖의 배너·목록 버튼은 고정 크기 유지) */
+.tut-coach .tut-btn { font-size: 0.84em; padding: 0.38em 0.88em; }
+.tut-btn:active:not(:disabled) { transform: scale(0.97); }
+.tut-btn:hover:not(:disabled) { background: var(--bg-panel-hover); }
+.tut-btn:disabled { opacity: 0.4; cursor: default; }
+.tut-btn[hidden] { display: none; }
+
+.tut-btn-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.tut-btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.tut-btn-quit { color: var(--text-secondary); }
+.tut-btn-skip { color: var(--text-secondary); font-size: 11px; padding: 5px 9px; }
+
+/* ----- 코스 고르기 ----- */
+.tut-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100016;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1, 4, 9, 0.55);
+}
+
+.tut-picker {
+  width: 720px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  /* 코스가 많은 단계(실습 10개)에서도 왼쪽 단계 목록은 늘 보여야 하므로
+     창째 스크롤하지 않고 오른쪽 코스 목록만 스크롤한다. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 20px 22px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(1, 4, 9, 0.45);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans KR", sans-serif;
+}
+
+.tut-picker-title {
+  margin: 0 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+}
+.tut-picker-lead {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.tut-picker-congrats {
+  margin: 8px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tut-picker-congrats strong { display: block; font-weight: 600; }
+.tut-picker-congrats span { color: var(--text-secondary); }
+
+/* ----- 난이도 (쉬움 / 어려움) ----- */
+.tut-level {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.tut-level-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--bg-app);
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tut-level-btn:hover { background: var(--bg-panel-hover); border-color: var(--accent); }
+.tut-level-btn.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.tut-level-name { font-size: 13px; font-weight: 700; }
+.tut-level-btn.is-active .tut-level-name { color: var(--accent); }
+.tut-level-desc { font-size: 11.5px; line-height: 1.45; color: var(--text-secondary); }
+
+@media (max-width: 560px) {
+  .tut-level { grid-template-columns: 1fr; }
+}
+
+/* 왼쪽 단계 목록 + 오른쪽 코스 목록 (위계) */
+.tut-picker-cols {
+  display: grid;
+  grid-template-columns: 176px 1fr;
+  gap: 16px;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+}
+
+.tut-picker-pane {
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tut-track-nav { display: flex; flex-direction: column; gap: 6px; }
+
+.tut-track-btn {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  padding: 10px 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--bg-app);
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tut-track-btn:hover { background: var(--bg-panel-hover); border-color: var(--accent); }
+.tut-track-btn.is-active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.tut-track-name { font-size: 13px; font-weight: 700; }
+.tut-track-btn.is-active .tut-track-name { color: var(--accent); }
+.tut-track-lead {
+  grid-column: 1 / -1;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.tut-track-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.tut-track-btn.is-cleared .tut-track-count { color: var(--accent); }
+
+.tut-pane-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-panel);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 2px 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-strong);
+}
+.tut-pane-name { font-size: 13px; font-weight: 700; color: var(--accent); }
+.tut-pane-note { font-size: 11.5px; color: var(--text-secondary); }
+
+.tut-picker-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* 좁은 화면에서는 단계를 가로 줄로 눕힌다 */
+@media (max-width: 760px) {
+  .tut-picker-cols { grid-template-columns: 1fr; gap: 12px; }
+  .tut-track-nav { flex-direction: row; flex-wrap: wrap; }
+  .tut-track-btn { flex: 1 1 120px; }
+}
+
+.tut-course {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--bg-app);
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tut-course:hover { background: var(--bg-panel-hover); border-color: var(--accent); }
+.tut-course.is-suggested { border-color: var(--accent); }
+
+.tut-course-mark {
+  flex: 0 0 16px;
+  color: var(--accent);
+  font-size: 13px;
+  text-align: center;
+}
+.tut-course-body { flex: 1; min-width: 0; }
+.tut-course-title { display: block; font-size: 13px; font-weight: 500; }
+.tut-course-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.tut-course-meta {
+  flex: 0 0 auto;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.tut-course.is-done .tut-course-title { color: var(--text-secondary); }
+
+.tut-picker-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+/* ----- 원본과 비교 (어려움 난이도 마지막 단계) ----- */
+.tut-compare-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100018;   /* 코치 창(100015)보다 위 — 비교 중에는 이것만 보여야 한다 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1, 4, 9, 0.62);
+}
+
+.tut-compare {
+  width: 980px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px 18px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(1, 4, 9, 0.45);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans KR", sans-serif;
+}
+
+.tut-compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tut-compare-title { margin: 0; font-size: 16px; font-weight: 600; }
+.tut-compare-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* 원본만 보여 줄 때(첫 단계) — 한 칸이라 창을 좁힌다 */
+.tut-compare.is-single { width: 720px; }
+.tut-compare.is-single .tut-compare-body { grid-template-columns: 1fr; }
+
+.tut-compare-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 12px;
+  min-height: 0;
+}
+.tut-compare-pane { display: flex; flex-direction: column; gap: 6px; margin: 0; min-width: 0; }
+.tut-compare-pane figcaption {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+/* 원본 도판은 흰 바탕에 검은 선이다 — 어두운 패널에 그냥 얹으면 안 보인다. */
+.tut-compare-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  overflow: auto;
+}
+.tut-compare-box img,
+.tut-compare-box svg { max-width: 100%; max-height: 52vh; height: auto; }
+
+@media (max-width: 760px) {
+  .tut-compare-body { grid-template-columns: 1fr; }
+  .tut-compare-box img, .tut-compare-box svg { max-height: 30vh; }
+}
+
+/* ----- 첫 방문 환영 창 (화면 한가운데) ----- */
+.tut-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100014;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(1, 4, 9, 0.55);
+  animation: tut-fade-in 220ms var(--tut-ease-out);
+}
+@keyframes tut-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+.tut-welcome {
+  width: calc(460px * var(--ui-zoom, 1));
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 1.5em 1.6em 1.25em;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-top: 3px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(1, 4, 9, 0.5);
+  color: var(--text-primary);
+  font-family: "IBM Plex Sans KR", sans-serif;
+  font-size: calc(16px * var(--ui-zoom, 1));
+  animation: tut-coach-pop var(--tut-t-enter) var(--tut-ease-pop);
+}
+.tut-welcome-title {
+  margin: 0 0 0.5em;
+  font-size: 1.31em;
+  font-weight: 700;
+}
+.tut-welcome-lead {
+  margin: 0 0 1em;
+  font-size: 1em;
+  line-height: 1.6;
+  color: var(--text-label);
+}
+.tut-welcome-list {
+  margin: 0 0 1.25em;
+  padding-left: 1.15em;
+  font-size: 0.94em;
+  line-height: 1.75;
+  color: var(--text-label);
+}
+.tut-welcome-list li { margin-bottom: 0.2em; }
+.tut-welcome-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5em;
+}
+.tut-welcome-foot .tut-btn { font-size: 0.9em; padding: 0.5em 1.1em; }
+
+/* ----- 건너뛰기 후 "따라하기는 여기 있습니다" 짚어 주기 (4초 뒤 사라짐) ----- */
+.tut-pointout {
+  position: fixed;
+  z-index: 100015;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.9em;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-family: "IBM Plex Sans KR", sans-serif;
+  font-size: calc(14px * var(--ui-zoom, 1));
+  white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(1, 4, 9, 0.5);
+  pointer-events: none;
+  animation: tut-coach-pop var(--tut-t-enter) var(--tut-ease-pop);
+}
+.tut-pointout-arrow { font-size: 0.8em; line-height: 1; }
+.tut-pointout-ring {
+  position: fixed;
+  z-index: 100015;
+  border: 2px solid var(--accent);
+  border-radius: 7px;
+  pointer-events: none;
+  animation: tut-modkey-pulse 1.6s ease-in-out infinite;
+}
+
+/* 좁은 화면: 코치 폭을 줄인다(데스크톱 우선, 깨지지만 않게). */
+@media (max-width: 640px) {
+  .tut-coach { width: 280px; }
+}
+
+/* 움직임을 줄여 달라고 설정한 사용자에게는 전환 애니메이션을 끈다. */
+@media (prefers-reduced-motion: reduce) {
+  .tut-halo, .tut-coach, .tut-dim { transition: none; }
+  .tut-welcome, .tut-welcome-overlay { animation: none; }
+  /* 이동·확대는 빼고 opacity 만 남긴다 — 모션 축소는 '없앰'이 아니라 '줄임'. */
+  .tut-coach.is-entering, .tut-halo.is-entering { animation: tut-fade-only 160ms ease-out; }
+  @keyframes tut-fade-only { from { opacity: 0; } to { opacity: 1; } }
+  .tut-coach.is-leaving { transform: none; }
+  /* 시연 커서는 계속 움직이므로 아예 감춘다 — 경로 점선과 글 설명만 남는다. */
+  .tut-ghost { display: none !important; }
+}

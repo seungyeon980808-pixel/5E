@@ -569,7 +569,11 @@ function alignmentDeltaToEdge(vertices, targetAngle) {
     if (Math.hypot(ex, ey) === 0) continue;
     const faceAngle = Math.atan2(ey, ex);
     const d = parallelDelta(faceAngle, targetAngle);
-    if (!best || Math.abs(d) < Math.abs(best)) best = d;
+    // best 는 "아직 못 정했음"을 null 로 표시한다. !best 로 검사하면 d === 0
+    // (이미 목표 변과 나란한 면 — 우리가 가장 원하는 면)이 뽑힌 뒤에도 !0 === true 라
+    // 다음 면이 무조건 덮어썼다. 그래서 아랫변이 수평인 직각삼각형을 수평선에 붙일 때
+    // 0° 대신 빗변 각(±43.8°)이 골라져 삼각형이 기울어 누웠다.
+    if (best === null || Math.abs(d) < Math.abs(best)) best = d;
   }
   return best === null ? 0 : best;
 }

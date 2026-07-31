@@ -15,9 +15,11 @@ import { state } from "./state.js?v=1.3.0";
 import { worldFromMath } from "./function-graph/coords.js?v=1.3.0";
 import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=1.3.0";
 import { nextObjectId } from "./tools/id.js?v=1.3.0";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.3.0";
 
-// 점 객체 기본 크기(bbox mm) — node-placement.js의 NODE_DEFAULT_SIZE와 일치.
-const NODE_SIZE = 2.27;
+// 점 객체 기본 크기(bbox mm) — 숫자를 복사해 두면 기본 크기를 바꿀 때 여기만 옛 값으로
+// 남는다(실제로 2.27 이 남아 있었다). node-placement.js 의 값을 그대로 가져다 쓴다.
+const NODE_SIZE = NODE_DEFAULT_SIZE;
 
 /* ---------- 파서: 붙여넣기 텍스트 → [{x, y}] (수학 좌표) ---------- */
 // 한 줄 = 한 점. 탭/쉼표/공백 어느 것으로 나뉘어도 처리. 숫자 2개를 못 뽑는 줄
