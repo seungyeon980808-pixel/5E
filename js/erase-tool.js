@@ -15,6 +15,7 @@
 import { screenToWorld } from "./viewport.js?v=1.3.0";
 import { simplifyRDP } from "./geometry.js?v=1.3.0";
 import { getObjectBBox } from "./pick.js?v=1.3.0";
+import { tightenBoxObject } from "./cut-geometry.js?v=1.3.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ERASE_CURSOR = "crosshair";
@@ -186,11 +187,37 @@ function applyErase(path) {
       const next = JSON.parse(JSON.stringify(o));
       // 기존 cutouts를 지우지 않고 이어붙인다 — 여러 번 지울 수 있어야 한다.
       next.cutouts = [...(Array.isArray(next.cutouts) ? next.cutouts : []), cut];
-      return next;
+      // 지운 뒤 상자를 남은 그림에 맞춰 좁힌다(빈 상자가 클릭·정렬·내보내기를 어긋내지
+      // 않게). 좁힐 게 없으면 tightenBoxObject가 null → 그대로 둔다.
+      return tightenBoxObject(next) || next;
     });
     s.undoStack.push(snapshot);
     s.redoStack = [];
   });
+}
+
+/* ----- [여백 정리] — 선택한 상자형 객체의 상자를 보이는 그림에 맞춘다 -----
+ * 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일이나 여러 번 손댄 객체를 위해 손으로
+ * 부를 수 있는 경로를 따로 둔다. 선택이 없으면 전체를 훑는다. Undo 1스텝.
+ * 바뀐 객체 수를 반환(0이면 아무것도 안 함). */
+export function trimSelectedBoxMargins() {
+  if (!_state) return 0;
+  const s = _state.get();
+  const sel = new Set(s.selectedIds || []);
+  const targets = s.objects.filter((o) => isErasable(o) && (sel.size === 0 || sel.has(o.id)));
+  const map = new Map();
+  for (const o of targets) {
+    const t = tightenBoxObject(o);
+    if (t) map.set(o.id, t);
+  }
+  if (!map.size) return 0;
+  _state.update((s2) => {
+    const snapshot = JSON.parse(JSON.stringify(s2.objects));
+    s2.objects = s2.objects.map((o) => map.get(o.id) || o);
+    s2.undoStack.push(snapshot);
+    s2.redoStack = [];
+  });
+  return map.size;
 }
 
 export function initEraseTool(state, svg) {

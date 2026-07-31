@@ -20,6 +20,7 @@ import {
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.3.0";
 import { resolveFill } from "./fill.js?v=1.3.0";
 import { getSvgAsset } from "../svg-assets.js?v=1.3.0";
+import { normalizeSrcRect } from "../cut-geometry.js?v=1.3.0";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.
@@ -639,15 +640,56 @@ function renderCurve(obj) {
   return g;
 }
 
+/* ----- srcRect: 원본 그림의 일부만 상자에 보여 주기 -------------------------
+ * 가위·지우개로 만든 조각은 상자를 보이는 범위로 좁히고(cut-geometry.js의
+ * tightenBoxObject), 대신 "원본의 어느 부분인지"를 obj.srcRect(0~1 분수)로 들고 온다.
+ * 여기서는 중첩 <svg viewBox>로 그 부분만 상자에 그린다 — "이 부분만 이 상자에"가 SVG
+ * 문법 자체로 풀리므로 클릭·이동·회전·크기조절은 상자를 그대로 쓰면 된다.
+ *
+ * 중첩 <svg>의 좌표계는 **원본 상자를 mm로 되돌린 크기**(U×V)로 잡는다. 그래야
+ * preserveAspectRatio="xMidYMid meet"(svgAsset)이 원본과 똑같은 비율로 앉는다.
+ * U·V는 현재 상자에서 되계산하므로 크기조절에도 그대로 따라온다.
+ * srcRect가 없으면 이 경로를 아예 타지 않는다(기존 동작 100% 유지). */
+function srcRectOf(obj) {
+  if (!(obj.w > 0) || !(obj.h > 0)) return null;
+  return normalizeSrcRect(obj.srcRect);
+}
+function makeSrcRectViewport(obj, sr, href, preserveAspectRatio) {
+  const U = obj.w / sr.w, V = obj.h / sr.h;   // 원본 상자 전체의 크기(mm)
+  const nested = document.createElementNS(SVG_NS, "svg");
+  nested.setAttribute("x", obj.x);
+  nested.setAttribute("y", obj.y);
+  nested.setAttribute("width", obj.w);
+  nested.setAttribute("height", obj.h);
+  nested.setAttribute("viewBox", `${sr.x * U} ${sr.y * V} ${obj.w} ${obj.h}`);
+  nested.setAttribute("preserveAspectRatio", "none");
+  nested.setAttribute("overflow", "hidden");
+  const img = document.createElementNS(SVG_NS, "image");
+  img.setAttribute("x", "0");
+  img.setAttribute("y", "0");
+  img.setAttribute("width", U);
+  img.setAttribute("height", V);
+  img.setAttribute("href", href);
+  img.setAttribute("preserveAspectRatio", preserveAspectRatio);
+  nested.appendChild(img);
+  return nested;
+}
+
 /* ----- image: embedded raster via SVG <image> (href = base64 data URL) ----- */
 function renderImage(obj) {
-  const el = document.createElementNS(SVG_NS, "image");
-  el.setAttribute("x", obj.x);
-  el.setAttribute("y", obj.y);
-  el.setAttribute("width", obj.w);
-  el.setAttribute("height", obj.h);
-  el.setAttribute("href", obj.src);
-  el.setAttribute("preserveAspectRatio", "none");
+  const sr = srcRectOf(obj);
+  let el;
+  if (sr) {
+    el = makeSrcRectViewport(obj, sr, obj.src, "none");
+  } else {
+    el = document.createElementNS(SVG_NS, "image");
+    el.setAttribute("x", obj.x);
+    el.setAttribute("y", obj.y);
+    el.setAttribute("width", obj.w);
+    el.setAttribute("height", obj.h);
+    el.setAttribute("href", obj.src);
+    el.setAttribute("preserveAspectRatio", "none");
+  }
   if (obj.opacity != null) el.setAttribute("opacity", obj.opacity);
   const rot = obj.rotation ?? 0;
   const cx = obj.x + obj.w / 2;
@@ -661,36 +703,22 @@ function renderImage(obj) {
     return el;
   }
 
-  // ----- cutouts present → wrap the <image> in a <g> that carries its OWN <defs>
+  // ----- cutouts present → wrap the image in a <g> that carries its OWN <defs>
   // + <mask>, so the mask travels with the object node itself (works identically
   // in the live render AND standalone SVG export — both call renderObject). The
-  // mask uses maskContentUnits="objectBoundingBox" so cutout fractions [0..1] map
-  // to the image box automatically through move/resize/rotate (the group holds the
-  // rotation; the mask lives in the pre-rotation box space). White = keep,
-  // black = erased/transparent. Opacity on the <image> still multiplies. -----
+  // group holds the rotation; the mask lives in the pre-rotation box space.
+  // White = keep, black = erased/transparent. Opacity still multiplies. -----
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
   if (rot !== 0) g.setAttribute("transform", `rotate(${rot},${cx},${cy})`);
 
-  const defs = document.createElementNS(SVG_NS, "defs");
-  const maskId = `imgmask_${obj.id}`; // obj ids are unique → no cross-image collision
-  const mask = document.createElementNS(SVG_NS, "mask");
-  mask.setAttribute("id", maskId);
-  mask.setAttribute("maskUnits", "objectBoundingBox");
-  mask.setAttribute("maskContentUnits", "objectBoundingBox");
-
-  const base = document.createElementNS(SVG_NS, "rect"); // whole image visible
-  base.setAttribute("x", "0"); base.setAttribute("y", "0");
-  base.setAttribute("width", "1"); base.setAttribute("height", "1");
-  base.setAttribute("fill", "#ffffff");
-  mask.appendChild(base);
-
-  appendCutoutShapes(mask, cutouts);
-  defs.appendChild(mask);
-  g.appendChild(defs);
-
-  el.setAttribute("mask", `url(#${maskId})`);
-  g.appendChild(el);
+  const cm = buildCutoutMask(obj);
+  if (!cm) { g.appendChild(el); return g; }
+  g.appendChild(cm.defs);
+  const masked = document.createElementNS(SVG_NS, "g");
+  masked.setAttribute("mask", `url(#${cm.maskId})`);
+  masked.appendChild(el);
+  g.appendChild(masked);
   return g;
 }
 
@@ -739,22 +767,36 @@ function appendCutoutShapes(mask, cutouts) {
   }
 }
 
-/* cutouts가 있으면 <defs><mask>를 만들어 반환(없으면 null). 흰=보임, 검정=지워짐. */
+/* cutouts가 있으면 <defs><mask>를 만들어 반환(없으면 null). 흰=보임, 검정=지워짐.
+ * 단위는 userSpaceOnUse + 상자 크기만큼 스케일한 <g>다. 예전엔 objectBoundingBox를
+ * 썼지만, srcRect가 있는 객체는 <image>가 중첩 <svg> 안으로 들어가 "객체 상자"가
+ * 모호해진다(엔진마다 다르다). 상자 좌표를 직접 써서 그 모호함을 없앤다 — 결과 좌표계
+ * (상자의 0~1 분수, 회전 풀기 전)는 예전과 완전히 같다. */
 function buildCutoutMask(obj) {
   const cutouts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
   if (cutouts.length === 0) return null;
+  if (!(obj.w > 0) || !(obj.h > 0)) return null;
   const maskId = `imgmask_${obj.id}`;
   const defs = document.createElementNS(SVG_NS, "defs");
   const mask = document.createElementNS(SVG_NS, "mask");
   mask.setAttribute("id", maskId);
-  mask.setAttribute("maskUnits", "objectBoundingBox");
-  mask.setAttribute("maskContentUnits", "objectBoundingBox");
+  mask.setAttribute("maskUnits", "userSpaceOnUse");
+  mask.setAttribute("maskContentUnits", "userSpaceOnUse");
+  // 마스크 영역은 예전 기본값(-10%~110%)과 같게 잡아 동작을 그대로 유지한다.
+  mask.setAttribute("x", obj.x - obj.w * 0.1);
+  mask.setAttribute("y", obj.y - obj.h * 0.1);
+  mask.setAttribute("width", obj.w * 1.2);
+  mask.setAttribute("height", obj.h * 1.2);
+  // 이 <g> 안에서는 좌표가 다시 상자의 0~1 분수가 된다.
+  const frac = document.createElementNS(SVG_NS, "g");
+  frac.setAttribute("transform", `translate(${obj.x},${obj.y}) scale(${obj.w},${obj.h})`);
   const base = document.createElementNS(SVG_NS, "rect");
   base.setAttribute("x", "0"); base.setAttribute("y", "0");
   base.setAttribute("width", "1"); base.setAttribute("height", "1");
   base.setAttribute("fill", "#ffffff");
-  mask.appendChild(base);
-  appendCutoutShapes(mask, cutouts);
+  frac.appendChild(base);
+  appendCutoutShapes(frac, cutouts);
+  mask.appendChild(frac);
   defs.appendChild(mask);
   return { defs, maskId };
 }
@@ -774,18 +816,28 @@ function renderSvgAsset(obj) {
   body.setAttribute("fill", "transparent");
   g.appendChild(body);
 
-  const image = document.createElementNS(SVG_NS, "image");
-  image.setAttribute("x", obj.x);
-  image.setAttribute("y", obj.y);
-  image.setAttribute("width", obj.w);
-  image.setAttribute("height", obj.h);
-  image.setAttribute("href", href);
-  image.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  const sr = srcRectOf(obj);
+  let image;
+  if (sr) {
+    // 잘린 조각: 좁혀진 상자에 원본의 srcRect 부분만 (중첩 <svg viewBox>).
+    image = makeSrcRectViewport(obj, sr, href, "xMidYMid meet");
+  } else {
+    image = document.createElementNS(SVG_NS, "image");
+    image.setAttribute("x", obj.x);
+    image.setAttribute("y", obj.y);
+    image.setAttribute("width", obj.w);
+    image.setAttribute("height", obj.h);
+    image.setAttribute("href", href);
+    image.setAttribute("preserveAspectRatio", "xMidYMid meet");
+  }
   // 가위로 잘린 svgAsset도 이미지와 동일하게 마스크로 반쪽을 지운다.
   const cm = buildCutoutMask(obj);
   if (cm) {
     g.appendChild(cm.defs);
-    image.setAttribute("mask", `url(#${cm.maskId})`);
+    const masked = document.createElementNS(SVG_NS, "g");
+    masked.setAttribute("mask", `url(#${cm.maskId})`);
+    masked.appendChild(image);
+    image = masked;
   }
   g.appendChild(image);
 

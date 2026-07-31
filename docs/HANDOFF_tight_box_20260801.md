@@ -1,7 +1,24 @@
 # 인수인계 — 이미지 상자를 그림에 맞추고, 여백 없이 내보내기 (2026-08-01)
 
-> 새 세션에 **아래 §6 프롬프트를 통째로 붙여넣으면** 시작된다.
-> 이 문서 자체도 그 세션이 먼저 읽어야 할 배경이다.
+> ## ✅ 이 작업은 2026-08-01에 **끝났다.** 아래 §6 프롬프트를 다시 실행하지 말 것.
+>
+> 결과 규격은 `docs/PARTS_LIBRARY_SPEC.md` §6 "상자는 그림에 맞춘다" 와
+> `docs/OBJECT_SCHEMA.md`(`srcRect` 필드)로 옮겼다 — **그 두 곳이 정본**이다.
+> 이 문서는 왜 그렇게 정했는지의 기록으로만 남긴다. 실측·함정(§5, §7)은 여전히 유효하다.
+>
+> | 손댄 곳 | 무엇 |
+> |---|---|
+> | `js/cut-geometry.js` | `tightenBoxObject()`·`normalizeSrcRect()` 신설, `cutBoxObject`가 조각마다 좁힘 |
+> | `js/render/shapes.js` | `renderImage`·`renderSvgAsset`에 `srcRect` 중첩 `<svg viewBox>`. 마스크를 `userSpaceOnUse`로(중첩 svg에서 객체 상자가 모호해지므로) |
+> | `js/erase-tool.js` | 지운 뒤 자동 좁힘 + `trimSelectedBoxMargins()` |
+> | `js/image-cutout.js` | 인스펙터 지우기 확정 시 세션 도형으로 좁힘 |
+> | `js/inspector/section-geometry.js`·`js/inspector.js` | 좌표 섹션에 **[여백 정리]** 버튼 |
+> | `js/command-palette.js` | Ctrl+K → **이미지 여백 정리** |
+> | `js/svg-export.js`·`js/export-dialog.js` | `getContentBounds()` + **[내용에 맞춤]** 체크박스·여백 mm |
+>
+> **검증 실측**: 작은 조각 낭비 76% → **0%**(보이는 11mm / 상자 10.99mm) · 원본과 조각
+> 합성본 픽셀 동일(25,600px 중 0 차이) · 아트보드 90×60mm → 내용에 맞춤 25.94×40mm ·
+> 콘솔 에러 0건. 버전은 올리지 않았다(`?v=1.3.0` 유지).
 
 ---
 

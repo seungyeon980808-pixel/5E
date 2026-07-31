@@ -11,7 +11,7 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp } from "./svg-export.js?v=1.3.0";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.3.0";
 import { openBatchExport } from "./export-batch.js?v=1.3.0";
 import { showAlert } from "./ui-dialogs.js?v=1.3.0";
 import { registerTopMenu } from "./top-menu.js?v=1.3.0";
@@ -95,6 +95,15 @@ function buildModal() {
       <label class="modal-field modal-field-row" for="export-include-reference-images">
         <input type="checkbox" id="export-include-reference-images" checked />
         <span class="modal-label">배경/참고 이미지 포함</span>
+      </label>
+
+      <label class="modal-field modal-field-row" for="export-fit-content"
+             title="아트보드 전체가 아니라 그려진 것에 딱 맞춰 내보냅니다.&#10;[영역 지정]으로 손수 잡지 않아도 여백이 사라집니다.">
+        <input type="checkbox" id="export-fit-content" />
+        <span class="modal-label">내용에 맞춤 (여백 없이)</span>
+        <input type="number" id="export-fit-padding" class="modal-input" value="0" min="0" max="50" step="0.5"
+               style="width:64px;margin-left:auto;text-align:right" disabled />
+        <span class="modal-label" style="flex:none">mm</span>
       </label>
 
       <div class="modal-actions">
@@ -363,6 +372,19 @@ export function initExportDialog(state, svg) {
   const dpiField = overlay.querySelector("#export-dpi-field");
   const filenameInput = overlay.querySelector("#export-filename");
   const includeReferenceImagesInput = overlay.querySelector("#export-include-reference-images");
+  const fitContentInput = overlay.querySelector("#export-fit-content");
+  const fitPaddingInput = overlay.querySelector("#export-fit-padding");
+  fitContentInput.addEventListener("change", () => {
+    fitPaddingInput.disabled = !fitContentInput.checked;
+  });
+
+  // "내용에 맞춤"이 켜져 있으면 보이는 객체 bbox 합집합(+여백)을 쓰고, 담을 게 없으면
+  // null을 돌려 기존 아트보드 기준으로 되돌아간다.
+  function fitBounds(options) {
+    if (!fitContentInput.checked) return null;
+    const pad = Math.max(0, parseFloat(fitPaddingInput.value) || 0);
+    return getContentBounds(state.get(), options, pad);
+  }
 
   // isReopen: 미리보기/영역지정에서 Esc로 취소하고 이 다이얼로그로 되돌아오는 경우
   // true로 넘긴다. 이때는 사용자가 이미 입력해 둔 파일명(input이 DOM에 그대로 남아
@@ -418,11 +440,13 @@ export function initExportDialog(state, svg) {
     const name = sanitizeFilename(filenameInput.value) || defaultNameBase();
     const format = segValue(formatGroup, "data-format");
     const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+    // 영역을 손수 지정했으면 그것이 우선. 아니면 "내용에 맞춤" 설정을 따른다.
+    const region = bounds || fitBounds(options);
     if (format === "svg") {
-      exportSvg(state, `${name}.svg`, bounds, options);
+      exportSvg(state, `${name}.svg`, region, options);
     } else {
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
-      exportPng(state, `${name}.png`, dpi, bounds, options);
+      exportPng(state, `${name}.png`, dpi, region, options);
     }
   }
 
@@ -439,7 +463,7 @@ export function initExportDialog(state, svg) {
     const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
     copyBtn.disabled = true;
     try {
-      const ok = await copyPngToClipboard(state, dpi, null, options);
+      const ok = await copyPngToClipboard(state, dpi, fitBounds(options), options);
       if (ok) {
         const orig = copyBtn.textContent;
         copyBtn.textContent = "복사됨!";

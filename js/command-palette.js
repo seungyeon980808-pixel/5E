@@ -16,6 +16,7 @@
 import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.3.0";
 import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.3.0";
 import { state } from "./state.js?v=1.3.0";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.3.0";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 
@@ -94,6 +95,11 @@ const COMMANDS = [
   { id: "examSearch",  label: "기출문항 검색 열기", keywords: ["exam", "기출", "문항", "검색"],     shortcutLabel: "Ctrl+Shift+F", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
+  // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
+  { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
+    const n = trimSelectedBoxMargins();
+    showHint(n > 0 ? `${n}개 객체의 상자를 그림에 맞췄어요.` : "좁힐 여백이 없어요(가위·지우개로 자른 이미지에만 적용됩니다).");
+  } },
   { id: "shortcuts",   label: "단축키 도움말",     keywords: ["shortcut", "단축키", "도움말", "help"], shortcutLabel: "",          run: () => clickById("open-shortcuts") },
   { id: "tutorial",    label: "튜토리얼", keywords: ["tutorial", "튜토리얼", "따라하기", "도움말", "help", "처음"], shortcutLabel: "", run: () => clickById("tutorial-btn") },
 ];

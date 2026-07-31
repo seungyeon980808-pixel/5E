@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8003"],
       "port": 8003
+    },
+    {
+      "name": "relnote-figs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8410"],
+      "port": 8410
     }
   ]
 }

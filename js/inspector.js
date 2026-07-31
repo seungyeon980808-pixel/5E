@@ -86,7 +86,7 @@ export function initInspector(state) {
   const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
-    sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
+    sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,
     radF, saF, swF, arcPair,
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel, nodeSizeRow, nodeSizeInp,
@@ -244,6 +244,7 @@ export function initInspector(state) {
     axisLabelTypeRow.row.style.display = "none";
     terminalLabelTypeRow.row.style.display = "none";
     lockAspectRow.style.display = "none";
+    trimRow.style.display = "none";
 
     // Targeted state: only show ungroup button, hide everything else
     if (s.targetedId) {
@@ -640,6 +641,8 @@ export function initInspector(state) {
     xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "flex";
     whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "flex";
     lockAspectRow.style.display = isSvgAsset ? "flex" : "none";
+    // 여백 정리는 상자 + 그림을 함께 갖는 타입(이미지·SVG 자산)에만 뜻이 있다.
+    trimRow.style.display = (isSvgAsset || isImage) ? "flex" : "none";
     rotF.el.style.display = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
     arcPair.style.display = isArc ? "flex" : "none";

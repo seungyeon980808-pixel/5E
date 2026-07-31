@@ -223,7 +223,8 @@ strokeLevel/strokeWidth/fill **없음**. 색은 렌더에서 `#0d1117` 고정.
 | `aspectLocked` | 비율 고정 리사이즈 | `true` | transform.js:470 |
 | `exportable` | 내보내기 포함 여부 | `true` | svg-export.js:isHidden |
 | `imageSelectionLocked` | 이미지 전용 선택 잠금(트레이싱 참고용) | `false` | render.js:615, tools.js:501 |
-| `cutouts[]` | 지우기 영역 `{type:"rect",x,y,w,h}` 또는 `{type:"path"\|"lasso",points[],brushWidth}` — 이미지 자체 좌표계 0~1 비율 | `[]` | render.js:1572-1632(mask) |
+| `cutouts[]` | 지우기 영역 `{type:"rect",x,y,w,h}` 또는 `{type:"path"\|"lasso",points[],brushWidth}` — **현재 상자** 좌표계 0~1 비율 | `[]` | render.js:1572-1632(mask) |
+| `srcRect` | **원본 그림의 어느 부분을 이 상자에 보여줄지** `{x,y,w,h}` (원본 기준 0~1 비율). 없으면 원본 전체 | 없음 | render/shapes.js:renderImage(중첩 `<svg viewBox>`) |
 | `recognized` | 객체화(이미지→객체) 인식 완료 플래그 | 로드 시 backfill `false` | project-io.js:121 |
 | `rotation` | 박스 중심 회전 | 0 | render.js:renderImage |
 
@@ -236,6 +237,7 @@ strokeLevel/strokeWidth/fill **없음**. 색은 렌더에서 `#0d1117` 고정.
 | `src` | (선택) dataUri 오버라이드 — 없으면 에셋 dataUri | 없음 | render.js:1644 |
 | `x,y,w,h` | 배치 박스 | 드래그 | render.js:renderSvgAsset |
 | `lockAspect` | 비율 고정 | `true` | transform.js(리사이즈) |
+| `cutouts[]` / `srcRect` | image와 동일 규약(가위·지우개 조각) | `[]` / 없음 | render/shapes.js:renderSvgAsset |
 | `fillNone` / `strokeWidth` | 형식상 존재 (`true` / `0`) — 렌더는 `<image>`라 미사용 | true / 0 | — |
 
 ### 3-11. axes (templates.js:TEMPLATES.axes.make)

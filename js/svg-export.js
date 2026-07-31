@@ -19,6 +19,7 @@
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
 import { renderObject, makeFillPattern } from "./render.js?v=1.3.0";
+import { getObjectBBox } from "./pick.js?v=1.3.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -190,6 +191,49 @@ function exportRegion(s, bounds) {
   }
   const { w, h } = s.artboard;
   return { x: -w / 2, y: -h / 2, w, h };
+}
+
+/* ----- "내용에 맞춤": 실제로 보이는 것만 담는 사각형 -----------------------
+ * 아트보드 기준으로 내보내면 그림 주변의 빈 종이가 그대로 따라 나간다. 지금까지는
+ * [영역 지정]으로 손수 잡는 수밖에 없었다. 여기서는 **내보내기에 실제로 포함되는**
+ * 객체들(isHidden으로 거른 그것)의 bbox 합집합을 구해 그 사각형을 쓴다.
+ *
+ * 자르기·지우기가 상자를 그림에 맞춰 좁히므로(cut-geometry.js) 이 합집합이 곧 그림에
+ * 딱 맞는 범위가 된다. 상자가 헐거우면 자동으로 맞춰도 빈 공간이 딸려 나온다 —
+ * 두 기능이 한 몸인 이유다.
+ *
+ * · 회전한 객체는 네 꼭짓점을 돌려 감싼다(getObjectBBox는 회전 전 상자를 준다).
+ * · 획은 상자 밖으로 절반이 삐져나오므로 strokeWidth/2 만큼 넓힌다(0 여백에서 잘림 방지).
+ * 담을 게 없으면 null → 호출자는 기존 아트보드 기준으로 되돌아간다. */
+function rotatedBBox(bb, deg, cx, cy) {
+  const r = deg * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [px, py] of [[bb.x, bb.y], [bb.x + bb.w, bb.y], [bb.x + bb.w, bb.y + bb.h], [bb.x, bb.y + bb.h]]) {
+    const dx = px - cx, dy = py - cy;
+    const qx = cx + dx * c - dy * sn, qy = cy + dx * sn + dy * c;
+    if (qx < x0) x0 = qx; if (qx > x1) x1 = qx;
+    if (qy < y0) y0 = qy; if (qy > y1) y1 = qy;
+  }
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+export function getContentBounds(s, options = {}, padding = 0) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const obj of s.objects) {
+    if (isHidden(s, obj, options)) continue;
+    let bb = null;
+    try { bb = getObjectBBox(obj); } catch (_) { bb = null; }
+    if (!bb || !isFinite(bb.x) || !isFinite(bb.y) || !(bb.w >= 0) || !(bb.h >= 0)) continue;
+    const rot = Number(obj.rotation) || 0;
+    if (rot) bb = rotatedBBox(bb, rot, bb.x + bb.w / 2, bb.y + bb.h / 2);
+    const half = (Number(obj.strokeWidth) || 0) / 2;
+    if (bb.x - half < x0) x0 = bb.x - half;
+    if (bb.y - half < y0) y0 = bb.y - half;
+    if (bb.x + bb.w + half > x1) x1 = bb.x + bb.w + half;
+    if (bb.y + bb.h + half > y1) y1 = bb.y + bb.h + half;
+  }
+  if (!isFinite(x0) || !(x1 > x0) || !(y1 > y0)) return null;
+  const p = Math.max(0, Number(padding) || 0);
+  return { x: x0 - p, y: y0 - p, w: (x1 - x0) + 2 * p, h: (y1 - y0) + 2 * p };
 }
 
 /* ----- build the standalone export <svg> for the current state ----- */

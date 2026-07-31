@@ -111,6 +111,27 @@ export function buildGeometrySection(ctx) {
     });
   });
 
+  // ---- 여백 정리 (image·svgAsset): 상자를 실제로 보이는 그림에 맞춰 좁힌다.
+  // 가위·지우개는 이미 자동으로 좁히지만, 옛 파일이나 여러 번 손댄 객체를 위한 손 경로다.
+  // 실제 계산은 erase-tool.js의 trimSelectedBoxMargins → cut-geometry.js의 tightenBoxObject.
+  const trimRow = document.createElement("div");
+  trimRow.className = "insp-row";
+  const trimBtn = document.createElement("button");
+  trimBtn.type = "button";
+  trimBtn.className = "modal-btn";
+  trimBtn.style.width = "100%";
+  trimBtn.textContent = "여백 정리";
+  trimBtn.title = "상자를 실제로 보이는 그림에 맞춰 좁힙니다.\n빈 곳이 눌리거나 정렬·내보내기 여백이 어긋날 때 쓰세요.";
+  trimRow.appendChild(trimBtn);
+  sec3Body.appendChild(trimRow);
+  trimBtn.addEventListener("click", async () => {
+    const mod = await import("../erase-tool.js?v=1.3.0");
+    const n = mod.trimSelectedBoxMargins();
+    const orig = trimBtn.textContent;
+    trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";
+    setTimeout(() => { trimBtn.textContent = orig; }, 1200);
+  });
+
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
@@ -1018,7 +1039,7 @@ export function buildGeometrySection(ctx) {
   const sec3 = makeSection("크기·위치", sec3Body);
 
   return {
-    sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb,
+    sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,
     radF, saF, swF, arcPair,
     labelRow, labelInp, objectLabelTypeRow, arcLabelEditRow, arcLabelEditBtn,
     showLabelRow, showLabelCb, labelPosRow, labelPosSel, nodeSizeRow, nodeSizeInp,

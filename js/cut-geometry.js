@@ -10,7 +10,7 @@
 // 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
-import { curveBezierSeg, curveBezierSegClosed, evalBezier } from "./geometry.js?v=1.3.0";
+import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.3.0";
 
 // curve 객체의 렌더된 스플라인을 폴리라인으로 샘플링(제어점 직선이 아니라 실제 곡선
 // 기준으로 잘리게). render/core.js의 curveSamplePoints와 동일한 Catmull-Rom 제어점 사용.
@@ -401,7 +401,148 @@ export function cutBoxObject(o, path) {
   if (A.length < 3 || B.length < 3) return null;
   const fA = A.map((p) => worldToFrac(o, p));
   const fB = B.map((p) => worldToFrac(o, p));
-  return [makeBoxPiece(o, fB), makeBoxPiece(o, fA)];   // 서로 반대쪽을 지운다
+  // 서로 반대쪽을 지운 뒤, 각 조각의 상자를 **실제로 보이는 범위**로 좁힌다.
+  // (좁히지 못하는 경우엔 tightenBoxObject가 null을 주므로 조각을 그대로 쓴다.)
+  return [makeBoxPiece(o, fB), makeBoxPiece(o, fA)].map((p) => tightenBoxObject(p) || p);
+}
+
+/* ----- 상자 좁히기(여백 정리) ==============================================
+// 잘리거나 지워진 조각은 원본 상자를 그대로 물려받아 상자 대부분이 빈 공간이다
+// (실측: 작은 조각은 76%가 빈 공간). 그러면 빈 곳을 눌러도 잡히고, 마퀴 선택·정렬·
+// 내보내기 여백이 전부 어긋난다.
+//
+// 그래서 상자를 **보이는 범위**로 좁히고, 대신 객체가 "원본의 어느 부분을 보여줄지"를
+// `srcRect`(원본 그림 기준 0~1 분수 사각형)로 들고 다닌다. 렌더러는 중첩 <svg viewBox>
+// 로 그 부분만 새 상자에 그린다(render/shapes.js). 클릭·이동·회전·크기조절은 여전히
+// 상자만 쓰므로 손댈 곳이 없다.
+//
+// 좁히면 cutouts(상자 기준 0~1 분수)의 기준 상자가 바뀌므로 **분수 좌표를 새 상자
+// 기준으로 다시 계산**해야 한다 — 안 하면 구멍이 어긋난다. */
+
+const TRIM_GRID = 256;      // 보이는 범위 탐색 격자(한 칸 ≈ 상자의 0.4%)
+const TRIM_MIN_GAIN = 0.01; // 가로·세로 어느 쪽도 1% 넘게 못 줄이면 그대로 둔다
+
+function round4(v) { return Math.round(v * 10000) / 10000; }
+function clamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+// cutouts 하나의 분수 bbox(브러시 두께 포함). 격자 판정을 건너뛰기 위한 사전 필터.
+function cutoutFracBBox(cut) {
+  if (!cut) return null;
+  if (cut.type === "rect") {
+    const x = +cut.x, y = +cut.y, w = +cut.w, h = +cut.h;
+    if (![x, y, w, h].every(Number.isFinite)) return null;
+    return { x0: Math.min(x, x + w), y0: Math.min(y, y + h), x1: Math.max(x, x + w), y1: Math.max(y, y + h) };
+  }
+  const pts = Array.isArray(cut.points) ? cut.points : [];
+  if (!pts.length) return null;
+  const pad = (cut.type === "path" || cut.type === "lasso") ? (cut.brushWidth || 0.03) / 2 : 0;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of pts) {
+    if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
+    if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+  }
+  return { x0: x0 - pad, y0: y0 - pad, x1: x1 + pad, y1: y1 + pad };
+}
+// 분수 좌표 (u,v)가 이 cutout에 지워졌는가 — render/shapes.js의 마스크 모양과 일치시킨다.
+function fracErasedBy(cut, bb, u, v) {
+  if (!bb || u < bb.x0 || u > bb.x1 || v < bb.y0 || v > bb.y1) return false;
+  if (cut.type === "rect") return true;                       // bbox == 사각형 자체
+  const pts = cut.points;
+  if (cut.type === "poly") return pts.length >= 3 && pointInPolygon(u, v, pts);
+  // path/lasso: 채운 다각형 + 브러시 두께만큼의 테두리 획
+  if (pts.length < 3) return false;
+  if (pointInPolygon(u, v, pts)) return true;
+  const r = (cut.brushWidth || 0.03) / 2;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    if (segDist(u, v, pts[j].x, pts[j].y, pts[i].x, pts[i].y) <= r) return true;
+  }
+  return false;
+}
+// 상자([0,1]²)에서 **지워지지 않고 남은** 부분의 분수 bbox. 전부 지워졌으면 null.
+function visibleFracBBox(cutouts) {
+  const cuts = [];
+  for (const c of cutouts) {
+    if (!c || (c.type !== "poly" && c.type !== "rect" && c.type !== "path" && c.type !== "lasso")) continue;
+    const bb = cutoutFracBBox(c);
+    if (bb) cuts.push({ c, bb });
+  }
+  if (!cuts.length) return null;
+  const N = TRIM_GRID, step = 1 / N;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let j = 0; j < N; j++) {
+    const v = (j + 0.5) * step;
+    for (let i = 0; i < N; i++) {
+      const u = (i + 0.5) * step;
+      let erased = false;
+      for (const k of cuts) { if (fracErasedBy(k.c, k.bb, u, v)) { erased = true; break; } }
+      if (erased) continue;
+      if (u < x0) x0 = u; if (u > x1) x1 = u;
+      if (v < y0) y0 = v; if (v > y1) y1 = v;
+    }
+  }
+  if (!isFinite(x0)) return null;                      // 남은 곳이 없다(전부 지워짐)
+  // 격자 한 칸만큼 넉넉히 — 경계 칸은 "지워졌다"고 잡히므로 그만큼 되돌려야 잘린
+  // 가장자리가 깎이지 않는다. 더 담긴 쪽은 어차피 마스크가 지우므로 손해가 없다.
+  const h = step;
+  return { x0: clamp01(x0 - h), y0: clamp01(y0 - h), x1: clamp01(x1 + h), y1: clamp01(y1 + h) };
+}
+
+// 분수 좌표계를 [f0,f1] → [0,1]로 다시 잡은 cutout 사본.
+function remapCutout(cut, x0, y0, fw, fh) {
+  const out = JSON.parse(JSON.stringify(cut));
+  const mx = (x) => round3((x - x0) / fw);
+  const my = (y) => round3((y - y0) / fh);
+  if (out.type === "rect") {
+    out.x = mx(+out.x); out.y = my(+out.y);
+    out.w = round3((+cut.w) / fw); out.h = round3((+cut.h) / fh);
+  } else if (Array.isArray(out.points)) {
+    out.points = out.points.map((p) => ({ x: mx(p.x), y: my(p.y) }));
+    if (out.brushWidth) out.brushWidth = round3(out.brushWidth * (1 / fw + 1 / fh) / 2);
+  }
+  return out;
+}
+
+// 이미 srcRect를 들고 있으면 새 좁힘을 그 위에 합성한다(자르고 또 자를 수 있어야 한다).
+export function normalizeSrcRect(sr) {
+  if (!sr) return null;
+  const x = +sr.x, y = +sr.y, w = +sr.w, h = +sr.h;
+  if (![x, y, w, h].every(Number.isFinite) || !(w > 0) || !(h > 0)) return null;
+  if (x <= 0 && y <= 0 && w >= 1 && h >= 1) return null;   // 원본 전체 → 없는 것과 같다
+  return { x, y, w, h };
+}
+
+/* 상자형(이미지·svgAsset) 객체의 상자를 보이는 범위로 좁힌 **새 객체**를 반환.
+ * 좁힐 게 없거나 대상이 아니면 null(호출자는 원본을 그대로 쓴다). id·layerId 등 다른
+ * 필드는 전부 보존한다 — 자르기 조각뿐 아니라 [여백 정리] 명령도 이 함수를 쓴다. */
+export function tightenBoxObject(o) {
+  if (!isBoxCuttable(o)) return null;
+  if (!(o.w > 0) || !(o.h > 0)) return null;
+  const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];
+  if (!cutouts.length) return null;
+  const b = visibleFracBBox(cutouts);
+  if (!b) return null;
+  const fw = b.x1 - b.x0, fh = b.y1 - b.y0;
+  if (!(fw > 0) || !(fh > 0)) return null;
+  if (fw > 1 - TRIM_MIN_GAIN && fh > 1 - TRIM_MIN_GAIN) return null;   // 이미 딱 맞음
+
+  const next = JSON.parse(JSON.stringify(o));
+  const nw = fw * o.w, nh = fh * o.h;
+  // 회전은 상자 중심을 기준으로 걸린다. 상자를 좁히면 중심이 옮겨지므로, 새 중심을
+  // **원래 중심·원래 각도로 회전**시킨 자리에 놓아야 그림이 화면에서 안 움직인다.
+  const oldCx = o.x + o.w / 2, oldCy = o.y + o.h / 2;
+  const wc = rotatePt(o.x + b.x0 * o.w + nw / 2, o.y + b.y0 * o.h + nh / 2, oldCx, oldCy, o.rotation || 0);
+  next.x = round3(wc.x - nw / 2);
+  next.y = round3(wc.y - nh / 2);
+  next.w = round3(nw);
+  next.h = round3(nh);
+
+  const s0 = normalizeSrcRect(o.srcRect) || { x: 0, y: 0, w: 1, h: 1 };
+  next.srcRect = {
+    x: round4(s0.x + b.x0 * s0.w), y: round4(s0.y + b.y0 * s0.h),
+    w: round4(fw * s0.w), h: round4(fh * s0.h),
+  };
+  next.cutouts = cutouts.map((c) => remapCutout(c, b.x0, b.y0, fw, fh));
+  return next;
 }
 
 // 디스패처: mode·geom으로 객체를 잘라 조각 반환. 못 자르면 null.

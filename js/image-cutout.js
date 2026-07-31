@@ -20,6 +20,7 @@
 // state.objects), so it is never selectable and never exported. */
 
 import { screenToWorld } from "./viewport.js?v=1.3.0";
+import { tightenBoxObject } from "./cut-geometry.js?v=1.3.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -262,7 +263,7 @@ async function commitImageEditSession() {
     _state.update((s) => {
       const cur = sessionObj(s);
       if (!cur) return;
-      s.objects.push({
+      let placed = {
         id,
         type: "image",
         src,
@@ -279,7 +280,14 @@ async function commitImageEditSession() {
         layerId: cur.layerId ?? s.activeLayerId,
         order: s.objects.length,
         cutouts: [],
-      });
+      };
+      // 지운 자리는 위에서 픽셀로 구워졌지만(cutouts는 비운다), **어디를 지웠는지는
+      // 세션이 알고 있다**. 그 도형으로 상자를 남은 그림에 맞춰 좁혀 둔다 — 안 그러면
+      // 원본만 한 빈 상자가 남아 빈 곳이 눌리고 내보내기 여백이 커진다.
+      // (픽셀을 검사하는 게 아니라 지운 도형을 쓰는 것이라 자르기와 같은 원리다.)
+      const tightened = tightenBoxObject({ ...placed, cutouts: session.cutouts || [] });
+      if (tightened) placed = { ...tightened, cutouts: [] };
+      s.objects.push(placed);
       s.imageEditSession = null;
       s.selectedIds = [id];
       s.targetedId = null;
