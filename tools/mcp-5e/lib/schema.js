@@ -42,6 +42,8 @@ export const ARROW_HEADS = ["none", "end", "start", "both"];
 export const LINE_MODES = ["solid", "arrow", "middleArrow", "midInward", "lengthArrow", "wavyArrow"];
 export const LABEL_TYPES = ["quantity", "label"];
 export const LABEL_POSITIONS = ["center", "above", "below", "left", "right"];
+// 상자 라벨 바깥 슬롯은 가운데가 없다 — 가운데는 안쪽 슬롯이 맡는다(BOX_LABEL_DUAL_SPEC).
+export const OUTER_LABEL_POSITIONS = ["above", "below", "left", "right"];
 // halfcross(ㅏ자) = x는 0부터, y는 양방향. 렌더러(coordplane.js)는 예전부터 지원하는데
 // 이 목록에 빠져 있어 MCP로는 쓸 수 없었다.
 export const AXIS_VARIANTS = ["cross", "quadrant", "halfcross", "single"];
@@ -281,6 +283,11 @@ function enumsFor(type) {
   }
   if (["rect", "ellipse", "line", "optics", "circuit", "anglearc"].includes(type)) {
     e.labelType = LABEL_TYPES; e.labelPos = LABEL_POSITIONS;
+  }
+  if (["rect", "ellipse"].includes(type)) {
+    // 상자 라벨 두 슬롯: 안쪽(물리량/이름표) + 바깥(위·아래·왼쪽·오른쪽)
+    e.labelInnerType = LABEL_TYPES; e.labelOuterType = LABEL_TYPES;
+    e.labelOuterPos = OUTER_LABEL_POSITIONS;
   }
   return e;
 }

@@ -12,6 +12,9 @@ Claude가 **5E 프로젝트 파일(.json)을 직접 만들도록** 해 주는 �
 
 > **다른 교사가 자기 컴퓨터에 설치하려면** → [GUIDE_FOR_TEACHERS.md](GUIDE_FOR_TEACHERS.md)
 > (터미널/개발 배경 없이 따라 할 수 있게 쓴 설치 안내서)
+>
+> **설치 후 Claude가 도구를 부르는 순서·문법** → [CONVENTIONS.md](CONVENTIONS.md)
+> (표준 호출 6단계 · 페이지 규약 · 하지 말 것 · 알려진 공백)
 
 ## 등록
 
@@ -49,7 +52,7 @@ claude mcp add 5e -- node "C:/Users/user/Desktop/project/51_5E/5E_main/tools/mcp
 | `app_status` | 열려 있는 앱과 연결됐는지 확인 (안 되면 원인 안내) |
 | `add_objects` | 객체 추가. `path` 생략 시 화면에 바로. 검증 실패 시 **하나도 넣지 않는다** |
 | `add_circuit` | 사각 폐회로 — 소자 배치 + 도선 연결 + 병렬 가지 |
-| `add_graph` | 좌표평면 + 함수 그래프 (수식 파서·샘플러는 앱과 동일) |
+| `add_graph` | 좌표평면 + 함수 그래프(수식) + **점 계열 꺾은선**(`series`) + 문자 눈금(`tickTextX/Y`) |
 | `read_app` | 지금 화면에 뭐가 그려져 있는지 읽기 — "저거 옆에 화살표" 같은 지시를 처리할 때 |
 | `remove_from_app` / `clear_app` | 화면에서 지우기 (Ctrl+Z 가능) |
 | `create_project` | 빈 .json 프로젝트 생성 (아트보드 크기, 다중 페이지) |

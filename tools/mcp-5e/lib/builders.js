@@ -124,7 +124,7 @@ function trim(o) {
  * 앱의 샘플러(js/function-graph/sampler.js)를 그대로 호출한다. 같은 코드로 뽑은
  * points[]라 앱에서 다시 그려도 모양이 어긋나지 않는다.
  */
-export function buildGraph({ at, plane = {}, functions = [], planeId }) {
+export function buildGraph({ at, plane = {}, functions = [], series = [], planeId }) {
   const warnings = [];
   const xMin = num(plane.xMin, -5), xMax = num(plane.xMax, 5);
   const yMin = num(plane.yMin, -5), yMax = num(plane.yMax, 5);
@@ -165,6 +165,10 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       //   guideLines = 가이드라인 [{x1,y1,x2,y2}]  두 점을 잇는 점선(계단 불연속 연결 등)
       //   annMarkers = 표시점 [{x,y}] / annArrows = 화살표 / legends = 범례
       "annGuides", "guideLines", "annMarkers", "annArrows", "annLabelPoints", "legends",
+      // 문자 눈금(t_0·8v_0 같은 첨자 라벨)과 라벨 미세이동 — 빠져 있어서 MCP 로는
+      // 문자 눈금을 못 넣었다(2026-07-31 공백 #1). 렌더러(coordplane.js)는 원래 읽는 필드다.
+      "tickTextX", "tickTextY", "tickOffX", "tickOffY",
+      "labelXOffset", "labelYOffset",
     ]),
   };
   // 좌표·함수 묶기: 그래프 도구의 기본값과 같게 켠다(끄려면 seriesLock:false를 명시).
@@ -240,6 +244,43 @@ export function buildGraph({ at, plane = {}, functions = [], planeId }) {
       ...els,
     }));
   }
+
+  /* ----- 점 계열(꺾은선): 수식이 아니라 좌표를 직접 찍는 계열 -----
+   * v-t 계단·꺾은선 그래프용(2026-07-31 공백 #2). 앱의 SERIES 도구·그래프 모달의
+   * '직선·꺾은선' 계열과 같은 필드를 만든다 — sourceKind:"points" + mathPoints 를 함께
+   * 저장하므로 그래프 편집 모달에서 "꺾은선 N점"으로 잡혀 재편집된다. */
+  for (const s of series) {
+    const raw = Array.isArray(s && s.points) ? s.points : [];
+    const mathPoints = raw
+      .map((p) => Array.isArray(p) ? { x: p[0], y: p[1] } : { x: p && p.x, y: p && p.y })
+      .filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+    if (mathPoints.length < 2) {
+      return { error: `series: 점이 2개 이상 필요합니다 (지금 ${mathPoints.length}개)` };
+    }
+    const pts = mathPoints.map((m) => ({
+      x: worldXFromMathX(planeObj, m.x), y: worldYFromMathY(planeObj, m.y),
+    }));
+    const els = bakeGraphElements(s, planeObj);
+    graphs.push(trim({
+      type: "funcgraph",
+      sourceKind: "points",
+      // 좌표 계열 기본은 꺾은선(직선). smooth 를 명시해야만 곡선 보간(Catmull-Rom).
+      curveStyle: s.curveStyle === "smooth" ? "smooth" : "straight",
+      planeId,
+      mathPoints,
+      points: pts,
+      breaks: [],
+      autoExtend: false,
+      closed: false,
+      strokeWidth: num(s.strokeWidth, 0.4),      // 바이블 §17: 그래프 계열 0.4
+      dashLength: num(s.dashLength, 0),
+      dashGap: num(s.dashGap, 0),
+      label: "", labelShow: false,
+      endLabel: s.endLabel || s.label || undefined,
+      ...els,
+    }));
+  }
+
   return { plane: planeObj, graphs, warnings };
 }
 

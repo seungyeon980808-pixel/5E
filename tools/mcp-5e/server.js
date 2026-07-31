@@ -152,7 +152,10 @@ const TOOLS = [
             "annGuides(수선의 발 [{x,y}] — 앱 ③표시 탭과 같은 평면 요소), " +
             "guideLines(가이드라인 [{x1,y1,x2,y2}] — 계단 불연속 연결 등), " +
             "annMarkers(표시점 [{x,y}]) 등. 좌표는 전부 수학 좌표. " +
-            "글자 크기는 칸 크기에 비례한다: axisLabelSize=cellX*0.8-0.35, tickLabelSize=cellX*0.68-0.35",
+            "글자 크기는 칸 크기에 비례한다: axisLabelSize=cellX*0.8-0.35, tickLabelSize=cellX*0.68-0.35. " +
+            "문자 눈금: tickLabelMode:'text' + tickTextX/tickTextY(배열, 축 끝→위/오른쪽 순, " +
+            "빈칸은 '' — 예: ['t_0','2t_0','3t_0']). 수식 첨자 가능. " +
+            "labelXOffset/labelYOffset({dx,dy})로 축 이름 미세이동",
         },
         functions: {
           type: "array",
@@ -191,6 +194,38 @@ const TOOLS = [
               },
             },
             required: ["expr"],
+          },
+        },
+        series: {
+          type: "array",
+          description: "점 계열(꺾은선) — 수식이 아니라 좌표를 직접 찍는 계열. " +
+            "v-t 계단·꺾은선 그래프는 이걸 쓴다(직선 도구로 긋지 않는다). " +
+            "점은 수학 좌표. 그래프 편집 모달에서 '꺾은선 N점'으로 재편집된다",
+          items: {
+            type: "object",
+            properties: {
+              points: {
+                type: "array",
+                description: "꼭짓점 [[x,y], ...] 또는 [{x,y}, ...] (수학 좌표, 2개 이상)",
+                items: {},
+              },
+              curveStyle: { type: "string", enum: ["straight", "smooth"], description: "기본 straight(꺾은선). smooth = 곡선 보간" },
+              strokeWidth: { type: "number", description: "선 두께 mm(기본 0.4)" },
+              dashLength: { type: "number", description: "둘째 계열 파선은 1.9" },
+              dashGap: { type: "number", description: "둘째 계열 파선은 0.9" },
+              endLabel: { type: "string", description: "계열 끝 라벨(예: I, II)" },
+              guides: {
+                type: "array",
+                description: "수선의 발 {x,y} — functions 의 guides 와 동일",
+                items: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } }, required: ["x", "y"] },
+              },
+              markers: {
+                type: "array",
+                description: "표시점(●) {x,y}",
+                items: { type: "object", properties: { x: { type: "number" }, y: { type: "number" } }, required: ["x", "y"] },
+              },
+            },
+            required: ["points"],
           },
         },
       },
@@ -395,13 +430,15 @@ const HANDLERS = {
     );
   },
 
-  async add_graph({ path, page, at, plane, functions }) {
+  async add_graph({ path, page, at, plane, functions, series }) {
     const planeId = newObjectId();
-    const built = buildGraph({ at, plane: plane || {}, functions: functions || [], planeId });
+    const built = buildGraph({
+      at, plane: plane || {}, functions: functions || [], series: series || [], planeId,
+    });
     if (built.error) throw new Error(built.error);
     const d = await deliver({ path, page }, [built.plane, ...built.graphs]);
     return deliverReport(
-      `좌표평면 1개 + 함수 ${built.graphs.length}개 추가`, d,
+      `좌표평면 1개 + 계열 ${built.graphs.length}개 추가`, d,
       [`평면 id: ${planeId} (${built.plane.w.toFixed(1)}×${built.plane.h.toFixed(1)}mm)`,
         ...(built.warnings.length ? ["", "샘플링 경고:", ...built.warnings] : [])],
     );
