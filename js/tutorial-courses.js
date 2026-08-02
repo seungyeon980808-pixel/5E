@@ -1075,8 +1075,8 @@ function innerRegion() {
 const EXAM_SEARCH = {
   id: "exam-search",
   title: "기출 가져와 고쳐서 내보내기",
-  desc: "찾고 · 지우고 · 저장하고 · 이름 달고 · 내보내기 — 실전 한 바퀴",
-  minutes: 16,
+  desc: "찾고 · 지우고 · 저장하고 · 다시 꺼내 · 이름 달고 · 내보내기 — 실전 한 바퀴",
+  minutes: 18,
   practice: true,
   next: ["trim-exam"],
   steps: [
@@ -1272,7 +1272,17 @@ const EXAM_SEARCH = {
         "이 우주선을 다음 문항에서도 쓰려면 <퍼스널 오브젝트>로 저장해 둡니다.\n" +
         "먼저 우주선 전체를 감싸도록 끌어 고르세요.\n\n" +
         "· 저장은 '지금 골라 둔 것'을 담습니다 — 하나만 골라 두면 그 조각 하나만 저장됩니다\n" +
+        "· 빈 곳에서 시작해 대각선으로 끄세요. 커서가 어떻게 감싸는지 보여 드립니다\n" +
         "· 전부 고르려면 Ctrl+A 를 눌러도 됩니다",
+      // 감쌀 범위를 점선으로 보여 주고, 커서가 그 대각선을 실제로 끌어 보인다.
+      // "감싸도록 끌어 고르세요"는 말로만 하면 어디서 시작해 어디서 놓는지 알 수 없다.
+      action: (ctx) => { ctx.wrapBox = hullBox(allBoxes(), 4); },
+      guide: (ctx) => (ctx.wrapBox
+        ? { pts: boxPts(ctx.wrapBox), close: true, note: "이만큼 감싸기", noteDy: -10 }
+        : null),
+      demo: (ctx) => (ctx.wrapBox
+        ? { kind: "drag", from: [ctx.wrapBox.x1, ctx.wrapBox.y1], to: [ctx.wrapBox.x2, ctx.wrapBox.y2] }
+        : null),
       wait: {
         // 한 조각만 골라도 통과시키면, 조각 하나짜리 '우주선'이 저장돼 ⑧에서 이상해진다.
         // 남은 것의 대부분(70%)을 골라야 '전체를 감쌌다'로 본다.
@@ -1324,29 +1334,55 @@ const EXAM_SEARCH = {
       },
     },
     {
+      target: () => "#canvas",
+      chapter: "저장하고 다시 쓰기",
+      title: "⑦ 화면을 비웁니다",
+      text:
+        "저장이 끝났으니 화면에 남은 것은 지워도 됩니다. 저장고에 들어가 있으니까요.\n" +
+        "Ctrl+A 로 전부 고른 뒤 Delete 를 누르세요.\n\n" +
+        "· 정말 비워지는지 확인하는 단계이기도 합니다 — 다음에 저장고에서 다시 꺼냅니다\n" +
+        "· 잘못 지웠으면 Ctrl+Z 로 되돌아옵니다",
+      guide: () => {
+        const h = hullBox(allBoxes(), 4);
+        return h ? { pts: boxPts(h), close: true, note: "전부 지웁니다", noteDy: -10 } : null;
+      },
+      wait: {
+        until: () => objectCount() === 0,
+        hint: "Ctrl+A 로 고르고 Delete 를 눌러 주세요",
+      },
+    },
+    {
       target: () => "#object-search-trigger",
       chapter: "저장하고 다시 쓰기",
-      title: "⑦ 저장한 것은 검색으로 꺼냅니다",
+      title: "⑧ Ctrl+F 또는 [오브젝트 검색]을 누르세요",
       text:
-        "저장한 우주선을 다시 꺼내 보겠습니다. 캔버스 아래 막대의 [오브젝트 검색]입니다.\n\n" +
-        "· 단축키는 Ctrl+F 입니다\n" +
+        "비워진 화면에 저장해 둔 우주선을 다시 꺼냅니다.\n" +
+        "캔버스 아래 막대의 [오브젝트 검색]을 누르시거나, 그냥 Ctrl+F 를 누르세요.\n\n" +
+        "· 둘 다 같은 창이 열립니다 — 손에 익는 쪽을 쓰시면 됩니다\n" +
         "· 왼쪽 '퍼스널 오브젝트' 칸에서도 꺼낼 수 있지만, 개수가 늘면 검색이 빠릅니다",
       demo: () => ({ kind: "clicks", at: ["#object-search-trigger"] }),
       wait: {
         until: () => !!vis(".object-search-modal"),
-        hint: "오브젝트 검색을 눌러 주세요",
+        hint: "Ctrl+F 또는 [오브젝트 검색]",
       },
     },
     {
       target: () => [".object-search-input", ".object-search-results"],
       chapter: "저장하고 다시 쓰기",
-      title: "⑧ '우주선'을 찾아 캔버스에 놓습니다",
+      title: "⑨ '우주선'을 찾아 캔버스에 놓습니다",
       text:
         "이름을 치면 아래에 후보가 나옵니다. 방금 저장한 것은 '퍼스널'로 표시됩니다.\n" +
-        "그 줄을 눌러 캔버스에 놓으세요.\n\n" +
+        "그 줄을 누르면 <화면 정중앙>에 놓입니다.\n\n" +
         "· 이름은 대신 쳐 드릴게요 — 목록에서 고르기만 하시면 됩니다\n" +
+        "· 늘 보고 있는 화면의 한가운데로 들어옵니다. 찾을 필요가 없습니다\n" +
         "· 같은 장치를 여러 개 배치하는 문항(비교 실험 등)이 순식간에 됩니다",
-      action: (ctx) => { ctx.beforeInsert = objects().length; },
+      /* 꺼낸 것은 '지금 보고 있는 화면'의 중앙에 놓인다(personal-objects.js insertPersonalItem).
+       * 그래서 화면이 엉뚱한 데를 보고 있으면 아트보드 밖에 떨어진 것처럼 보인다 →
+       * 들어오기 전에 화면을 아트보드에 맞춰 둔다. 그러면 화면 중앙 = 아트보드 중앙이다. */
+      action: (ctx) => {
+        document.getElementById("center-view-btn")?.click();
+        ctx.beforeInsert = objects().length;
+      },
       auto: {
         label: "'우주선' 이라고 치기",
         stay: true,   // 창을 닫지 않는다 — 고르는 것은 사용자 몫
@@ -1370,7 +1406,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#tool-text-merged",
       chapter: "이름 붙이기",
-      title: "⑨ 텍스트/라벨러 버튼을 누르세요",
+      title: "⑩ 텍스트/라벨러 버튼을 누르세요",
       text:
         "왼쪽 도구 넷째 줄, 'T' 모양 버튼입니다. 누르면 둘 중에 고르는 작은 창이 뜹니다.\n\n" +
         "· 텍스트 — 아무 데나 글자만 놓습니다\n" +
@@ -1381,7 +1417,7 @@ const EXAM_SEARCH = {
     {
       target: () => vis('#chooser-text [data-symbol="labeler"]') || "#chooser-text",
       chapter: "이름 붙이기",
-      title: "⑩ '라벨러'를 고르세요",
+      title: "⑪ '라벨러'를 고르세요",
       text:
         "아래쪽 항목입니다. 지시선과 이름표가 함께 들어갑니다.\n\n" +
         "· 단축키는 Shift+T 입니다 (텍스트는 T)",
@@ -1392,8 +1428,9 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑪ 우주선을 찍고, 이름표 자리를 찍습니다",
+      title: "⑫ 우주선을 찍고, 이름표 자리를 찍습니다",
       text:
+        "방금 화면 가운데로 들어온 우주선에 이름을 답니다.\n" +
         "두 번 누릅니다. ① 가리킬 곳(우주선 몸통) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
         "· 두 번째 클릭에서 바로 만들어집니다\n" +
         "· 이름은 다음 단계에서 바꿉니다 — 지금은 ㉠ 로 들어옵니다",
@@ -1422,7 +1459,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑫ 이름을 '우주선'으로 고칩니다",
+      title: "⑬ 이름을 '우주선'으로 고칩니다",
       text:
         "만들어진 이름표를 <더블클릭>하면 글자를 고치는 작은 창이 뜹니다.\n" +
         "'우주선'이라고 넣고 Ctrl+Enter 로 확정하세요.\n\n" +
@@ -1443,7 +1480,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑬ 우주인도 같은 방법으로 찍습니다",
+      title: "⑭ 우주인도 같은 방법으로 찍습니다",
       text:
         "선실 안에 앉아 있는 사람을 가리켜 봅니다. 라벨러를 다시 골라 두 번 누르세요.\n\n" +
         "· 도구는 한 번 쓰면 선택 도구로 돌아옵니다 — Shift+T 로 다시 켜면 빠릅니다\n" +
@@ -1473,7 +1510,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑭ 이름을 '우주인'으로 고칩니다",
+      title: "⑮ 이름을 '우주인'으로 고칩니다",
       text:
         "방금 만든 이름표를 더블클릭해 '우주인'이라고 넣으세요.\n\n" +
         "· 이렇게 이름이 붙은 그림은 그대로 문항 지문이 됩니다\n" +
@@ -1492,7 +1529,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#file-menu-btn", "#image-export"],
       chapter: "내보내기",
-      title: "⑮ 이제 내보냅니다 — 파일 메뉴",
+      title: "⑯ 이제 내보냅니다 — 파일 메뉴",
       text:
         "다 됐으면 한글에 붙일 그림으로 뽑습니다.\n" +
         "위쪽 '파일'을 누른 뒤 '이미지로 내보내기'를 고르세요.\n\n" +
@@ -1506,7 +1543,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-format", "#export-area"],
       chapter: "내보내기",
-      title: "⑯ 필요한 부분만 — 영역 지정",
+      title: "⑰ 필요한 부분만 — 영역 지정",
       text:
         "형식은 PNG 로 두세요. 시험지에 넣을 그림은 PNG 가 깔끔합니다.\n" +
         "그림 일부만 필요하면 '영역 지정'을 눌러 캔버스에서 원하는 만큼 끕니다.\n\n" +
@@ -1517,7 +1554,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-confirm", "#export-cancel"],
       chapter: "내보내기",
-      title: "⑰ 내보내기 — 또는 오늘은 취소",
+      title: "⑱ 내보내기 — 또는 오늘은 취소",
       text:
         "'내보내기'를 누르면 PNG 파일이 내려받아집니다.\n" +
         "연습이니 '취소'로 닫으셔도 됩니다 — 둘 중 아무거나 누르세요.\n\n" +
