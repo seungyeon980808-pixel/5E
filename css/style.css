@@ -155,6 +155,12 @@ body {
   font-family: "IBM Plex Sans KR", system-ui, sans-serif;
   color: var(--c-text);
   background: var(--bg-app);
+  /* 한국어 줄바꿈: 어절(단어) 중간에서 끊지 않는다.
+     기본값은 한글을 글자 단위로 끊어서 "고르 / 세요"처럼 잘린다(사용자 지적).
+     keep-all 로 어절을 묶고, 줄보다 긴 토큰(URL·긴 영문)만 break-word 로 푼다.
+     body 에 두어 앱의 모든 안내창·모달·툴팁이 함께 따라오게 한다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
   display: flex;
   flex-direction: column;
   /* zoom은 100vh 계산에 관여하지 않고 그려진 결과만 확대한다 — height를 그대로

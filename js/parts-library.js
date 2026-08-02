@@ -98,7 +98,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-partslib" role="dialog" aria-modal="true" aria-labelledby="partslib-title">
       <div class="partslib-title-row">
-        <h2 class="modal-title" id="partslib-title">부품 라이브러리</h2>
+        <h2 class="modal-title" id="partslib-title">이미지 라이브러리</h2>
         <p id="partslib-status" class="objectify-status partslib-status-inline" role="status"></p>
       </div>
       <div class="partslib-filter-row">
@@ -467,7 +467,7 @@ export function initPartsLibrary(state) {
       manifest = null;
       grid.innerHTML = "";
       clearPreview("부품 목록을 불러오지 못했습니다.");
-      setStatus("부품 라이브러리를 찾을 수 없습니다. assets/parts-library/manifest.json이 "
+      setStatus("이미지 라이브러리를 찾을 수 없습니다. assets/parts-library/manifest.json이 "
         + "있는지 확인한 뒤 다시 여세요. "
         + `(${e && e.message ? e.message : e})`, true);
     }

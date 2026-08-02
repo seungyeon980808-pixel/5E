@@ -337,8 +337,8 @@ const P = {
 
 const BASICS = {
   id: "basics",
-  title: "기초 조작",
-  desc: "화면 맞추기부터 고르고·옮기고·다듬기까지 — 10분",
+  title: "기본 설정, 오브젝트 기초 조작",
+  desc: "내 눈에 맞는 화면부터 — 고르고·옮기고·다듬기까지",
   minutes: 10,
   practice: true,
   next: ["incline-figure"],
@@ -616,7 +616,7 @@ const BASICS = {
 
 const INCLINE_FIGURE = {
   id: "incline-figure",
-  title: "빗면 그림 완성",
+  title: "오브젝트 생성, 스냅, 라벨링",
   desc: "바닥부터 깔고 스냅으로 붙여 나가는 그림 한 장",
   minutes: 8,
   practice: true,
@@ -1057,13 +1057,6 @@ function noseSpots() {
   return { anchor: [x, h.y1 + ht * 0.5], label: [x, h.y1 - 9] };
 }
 
-/* 텍스트로 '우주인'을 적을 선실 안 자리 — 사람이 앉아 있는 왼쪽 안쪽. */
-function cabinSpot() {
-  const b = bodyBox();
-  if (!b || b.w <= 0) return null;
-  return [b.x + b.w * 0.22, b.y + b.h * 0.42];
-}
-
 /* ===== 라벨러(지시선 + 이름표) 거들기 =====
  * 이름을 고치는 정식 경로는 이름표 더블클릭 → 작은 편집 창 → Ctrl+Enter 다(text-editor.js).
  * [자동으로 하기]는 그 결과만 똑같이 만들어 준다 — 직접 하는 길과 결과가 달라지면 안 되므로
@@ -1086,15 +1079,31 @@ function setLabelerText(i, text) {
 function innerRegion() {
   const b = bodyBox();
   if (!b || b.w <= 0 || b.h <= 0) return null;
+  /* 선실의 오른쪽 위만 짚는다 — 사람은 왼쪽에 앉아 있고 글자는 그 오른쪽에 있다.
+   * 예전에는 선체 폭의 6~72%를 잡아 선실 가로 전체를 감쌌고, 그래서 "어느 글자를
+   * 말하는지" 알 수 없었다(사용자 지적). */
   return {
-    x1: b.x + b.w * 0.06, y1: b.y + b.h * 0.08,
-    x2: b.x + b.w * 0.72, y2: b.y + b.h * 0.92,
+    x1: b.x + b.w * 0.42, y1: b.y + b.h * 0.12,
+    x2: b.x + b.w * 0.68, y2: b.y + b.h * 0.62,
   };
+}
+
+/* 선실 안에서 '우주인 바로 오른쪽' — 텍스트 A 를 앉힐 자리.
+ * 사람 덩어리(선실 왼쪽에 몰린 조각들)의 오른쪽 끝에서 조금 띄운 곳을 잡는다.
+ * 비율로 못 박으면 문항이 바뀔 때 글자가 사람 위에 겹친다. */
+function cabinTextSpot() {
+  const b = bodyBox();
+  if (!b || b.w <= 0) return null;
+  const inside = allBoxes().filter((x) =>
+    x.x > b.x && x.x + x.w < b.x + b.w && x.y > b.y && x.y + x.h < b.y + b.h);
+  const left = inside.filter((x) => x.x + x.w / 2 < b.x + b.w * 0.5);
+  const personRight = left.length ? Math.max(...left.map((x) => x.x + x.w)) : b.x + b.w * 0.38;
+  return [Math.min(personRight + 2.5, b.x + b.w * 0.72), b.y + b.h * 0.62];
 }
 
 const EXAM_SEARCH = {
   id: "exam-search",
-  title: "기출 가져와 고쳐서 내보내기",
+  title: "기출문항 라이브러리, 이미지로 내보내기",
   desc: "찾고 · 지우고 · 저장하고 · 다시 꺼내 · 이름 달고 · 내보내기 — 실전 한 바퀴",
   minutes: 18,
   practice: true,
@@ -1111,15 +1120,16 @@ const EXAM_SEARCH = {
     {
       target: () => "#exam-library-open",
       chapter: "가져오기",
-      title: "기출문항 검색 열기",
+      title: "기출 라이브러리 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
         "· 단축키는 Ctrl+Shift+F 입니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출문항 검색을 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "기출 라이브러리를 눌러 주세요" },
     },
     {
       target: () => ["#examlib-query", "#examlib-status"],
+      coachSide: "right",
       chapter: "가져오기",
       title: "번호를 한 조각씩 — 결과가 좁혀집니다",
       text:
@@ -1143,6 +1153,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#examlib-grid",
+      coachSide: "right",
       chapter: "가져오기",
       title: "딱 한 문항이 남았습니다",
       text:
@@ -1215,6 +1226,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#canvas",
+      coachSide: "right",
       chapter: "고치기",
       title: "② 오른쪽 우주선만 남기고 지웁니다",
       text:
@@ -1253,12 +1265,13 @@ const EXAM_SEARCH = {
       text:
         "두 군데가 남았습니다. 점선으로 짚은 곳입니다.\n\n" +
         "· 오른쪽 — 속도 화살표와 0.6c 글씨. 감싸도록 끌어 고르고 Delete\n" +
-        "· 우주선 안 — C 같은 글자. 콕 눌러 고르고 Delete\n" +
+        "· 우주선 안 — 글자를 <클릭>해서 고르고 Delete. 끌어서 감싸면 사람까지 딸려 옵니다\n" +
         "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각입니다 — 도형과 똑같이 지웁니다\n" +
         "· 안에 있는 사람·의자는 그대로 두세요. 잘못 지웠으면 Ctrl+Z",
+      coachSide: "right",
       action: (ctx) => {
         ctx.tailIds = tailBits().map((b) => b.id);
-        ctx.tailBox = hullBox(tailBits(), 1.5);
+        ctx.tailBox = hullBox(tailBits(), 0.8);
         ctx.inner = innerRegion();
         ctx.beforeLetters = objects().length;
       },
@@ -1515,54 +1528,69 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑮ 선실 안을 눌러 '우주인'이라고 적습니다",
+      title: "⑮ 우주인 옆에 라벨 A 를 적습니다",
       text:
-        "점선 자리를 한 번 누르면 그 자리에 글자 입력창이 열립니다.\n" +
-        "'우주인'이라고 치고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "우주인 바로 오른쪽 점선 자리를 한 번 누르면 글자 입력창이 열립니다.\n" +
+        "<A> 라고 치고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "· 기출 원본의 기호를 내 문항 기호로 바꿔 다는 것입니다\n" +
         "· Enter 는 줄바꿈, 확정은 Ctrl+Enter 입니다\n" +
-        "· 아래 단추를 누르면 대신 넣어 드립니다\n" +
-        "· 글자 크기·글꼴은 오른쪽 속성에서 바꿉니다",
+        "· 아래 단추를 누르면 대신 넣어 드립니다",
       action: (ctx) => { ctx.texts0 = countOf("text"); },
       guide: () => {
-        const p = cabinSpot();
-        return p ? { pts: aimRing(p, 2.5), close: true, note: "여기를 눌러 적기", noteDy: -10 } : null;
+        const p = cabinTextSpot();
+        return p ? { pts: aimRing(p, 2.5), close: true, note: "여기에 A", noteDy: -10 } : null;
       },
       demo: () => {
-        const p = cabinSpot();
+        const p = cabinTextSpot();
         return p ? { kind: "clicks", pts: [p] } : null;
       },
       auto: {
-        label: "'우주인' 이라고 넣기",
+        label: "라벨 A 넣기",
         run: () => {
-          const p = cabinSpot();
-          if (p) placeObjects([newText(p[0], p[1], "우주인")], { allowDup: true });
+          const p = cabinTextSpot();
+          if (p) placeObjects([newText(p[0], p[1], "A")], { allowDup: true });
         },
       },
       wait: {
-        until: () => objects().some((o) => o.type === "text" && String(o.text || "").includes("우주인")),
-        hint: "점선 자리를 눌러 '우주인'이라고 적어 주세요",
+        until: () => objects().some((o) => o.type === "text" && String(o.text || "").trim() === "A"),
+        hint: "점선 자리를 눌러 A 라고 적어 주세요",
       },
     },
 
-    /* ----- 내보내기 ----- */
+    /* ----- 내보내기 -----
+     * '파일'과 '이미지로 내보내기'를 한 단계에서 함께 짚으면 구멍이 둘을 다 감싸느라
+     * 메뉴 전체만큼 커져서, 정작 어느 항목을 눌러야 하는지 알 수 없다(사용자 지적).
+     * 두 단계로 나눠 각각 정확히 짚는다. */
     {
-      target: () => ["#file-menu-btn", "#image-export"],
+      target: () => "#file-menu-btn",
       chapter: "내보내기",
-      title: "⑯ 이제 내보냅니다 — 파일 메뉴",
+      title: "⑯ 위쪽 '파일'을 누르세요",
       text:
         "다 됐으면 한글에 붙일 그림으로 뽑습니다.\n" +
-        "위쪽 '파일'을 누른 뒤 '이미지로 내보내기'를 고르세요.\n\n" +
-        "· 단축키는 Alt+P 입니다",
+        "화면 맨 위 줄 왼쪽의 '파일'입니다.\n\n" +
+        "· 누르면 목록이 펼쳐집니다",
       demo: () => ({ kind: "clicks", at: ["#file-menu-btn"] }),
+      wait: { click: "#file-menu-btn", hint: "'파일'을 눌러 주세요" },
+    },
+    {
+      target: () => "#image-export",
+      chapter: "내보내기",
+      title: "⑰ '이미지로 내보내기'를 누르세요",
+      text:
+        "펼쳐진 목록의 맨 아래 항목입니다.\n\n" +
+        "· 단축키는 Alt+P 입니다\n" +
+        "· 프로젝트 저장(Ctrl+S)은 '다시 편집할 파일'을, 이미지 내보내기는 '문서에 붙일 그림'을 만듭니다",
+      coachSide: "right",
+      demo: () => ({ kind: "clicks", at: ["#image-export"] }),
       wait: {
         until: () => !!document.getElementById("export-confirm"),
-        hint: "파일 → 이미지로 내보내기",
+        hint: "'이미지로 내보내기'를 눌러 주세요",
       },
     },
     {
       target: () => ["#export-format", "#export-area"],
       chapter: "내보내기",
-      title: "⑰ 필요한 부분만 — 영역 지정",
+      title: "⑱ 필요한 부분만 — 영역 지정",
       text:
         "형식은 PNG 로 두세요. 시험지에 넣을 그림은 PNG 가 깔끔합니다.\n" +
         "그림 일부만 필요하면 '영역 지정'을 눌러 캔버스에서 원하는 만큼 끕니다.\n\n" +
@@ -1573,7 +1601,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-confirm", "#export-cancel"],
       chapter: "내보내기",
-      title: "⑱ 내보내기 — 또는 오늘은 취소",
+      title: "⑲ 내보내기 — 또는 오늘은 취소",
       text:
         "'내보내기'를 누르면 PNG 파일이 내려받아집니다.\n" +
         "연습이니 '취소'로 닫으셔도 됩니다 — 둘 중 아무거나 누르세요.\n\n" +
@@ -1625,10 +1653,10 @@ const TRIM_EXAM = {
     },
     {
       target: () => "#exam-library-open",
-      title: "기출문항 검색 열기",
+      title: "기출 라이브러리 열기",
       text: "캔버스 아래 막대에 있습니다. 눌러 주세요. (Ctrl+Shift+F)",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출문항 검색을 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "기출 라이브러리를 눌러 주세요" },
     },
     {
       target: () => ["#examlib-query", "#examlib-status"],

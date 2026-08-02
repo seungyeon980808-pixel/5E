@@ -32,6 +32,14 @@
 }
 :root[data-theme="light"] { --tut-ok: #1a7f37; }
 
+/* 한국어 줄바꿈 — 어절 중간에서 끊지 않는다.
+   ⚠ 튜토리얼 레이어는 body 가 아니라 documentElement 에 붙으므로(머리말 참고)
+     css/style.css 의 body 규칙이 상속되지 않는다. 여기서 다시 걸어 준다. */
+.tut-layer, .tut-picker-overlay, .tut-welcome-overlay, .tut-compare-overlay, .tut-pointout {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* ----- 레이어 뼈대 ----- */
 .tut-layer {
   position: fixed;
@@ -282,9 +290,11 @@
   color: var(--text-primary);
   font-family: "IBM Plex Sans KR", sans-serif;
   pointer-events: auto;
-  /* 추적 이동만 부드럽게. 단계 전환은 transform/opacity 로만 움직인다(GPU). */
-  transition: left var(--tut-t-track) var(--tut-ease-in-out),
-              top var(--tut-t-track) var(--tut-ease-in-out);
+  /* ⚠ 자리 이동에 전환을 걸지 않는다.
+   * 예전에는 left/top 에 520ms 추적 전환이 있어서, 짚는 대상이 조금만 흔들려도
+   * 설명 창이 스르륵 미끄러졌다. 읽는 중에 글이 움직이는 것은 그 자체로 방해다 —
+   * 시선을 옮겨야 할 때(단계가 바뀔 때)만 움직여야 한다. 그건 사라졌다 새 자리에서
+   * 떠오르는 연출(is-leaving/is-entering)이 이미 담당한다. */
 }
 /* 대상이 있는 쪽에서 자라 나오게 — 짚는 곳과 설명이 한 몸으로 읽힌다(origin-aware). */
 .tut-coach[data-side="right"] { transform-origin: left center; }

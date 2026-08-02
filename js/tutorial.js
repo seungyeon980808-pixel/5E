@@ -320,8 +320,15 @@ function placeCoach(ui, hole) {
     x = hole.x > vw / 2 ? EDGE : vw - cw - EDGE;
     y = hole.y > vh / 2 ? EDGE : vh - ch - EDGE;
   }
-  coach.style.left = Math.round(clamp(x, EDGE, Math.max(EDGE, vw - cw - EDGE))) + "px";
-  coach.style.top = Math.round(clamp(y, EDGE, Math.max(EDGE, vh - ch - EDGE))) + "px";
+  const nx = Math.round(clamp(x, EDGE, Math.max(EDGE, vw - cw - EDGE)));
+  const ny = Math.round(clamp(y, EDGE, Math.max(EDGE, vh - ch - EDGE)));
+  /* 몇 px 차이로는 옮기지 않는다 — 대상 요소가 1~2px 흔들릴 때마다 설명 창이
+   * 따라 움직이면 읽는 사람에게는 글이 떨리는 것으로 보인다(사용자 지적). */
+  const px = parseFloat(coach.style.left), py = parseFloat(coach.style.top);
+  if (Number.isFinite(px) && Number.isFinite(py)
+      && Math.abs(px - nx) < 4 && Math.abs(py - ny) < 4) return;
+  coach.style.left = nx + "px";
+  coach.style.top = ny + "px";
 }
 
 /* ===== 캔버스 위 안내 영역 =====

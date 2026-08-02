@@ -92,7 +92,7 @@ const COMMANDS = [
   { id: "settingsExport", label: "설정 저장하기",  keywords: ["settings", "설정", "export", "저장"], shortcutLabel: "",            run: () => clickById("settings-export") },
   { id: "settingsImport", label: "설정 불러오기",  keywords: ["settings", "설정", "import", "불러오기"], shortcutLabel: "",        run: () => clickById("settings-import") },
   { id: "objectSearch", label: "오브젝트 검색 열기", keywords: ["object", "오브젝트", "검색", "찾기"], shortcutLabel: "Ctrl+F",     run: () => clickById("object-search-trigger") },
-  { id: "examSearch",  label: "기출문항 검색 열기", keywords: ["exam", "기출", "문항", "검색"],     shortcutLabel: "Ctrl+Shift+F", run: () => clickById("exam-library-open") },
+  { id: "examSearch",  label: "기출 라이브러리 열기", keywords: ["exam", "기출", "문항", "검색"],     shortcutLabel: "Ctrl+Shift+F", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.

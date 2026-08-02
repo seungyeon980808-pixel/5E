@@ -151,7 +151,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     "background:rgba(0,0,0,0.35);user-select:none;";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
-  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · Enter 확정 · Esc 취소";
+  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · [내보내기] 또는 Enter 로 확정 · Esc 취소";
   const hint = document.createElement("div");
   hint.textContent = HINT_DRAW;
   hint.style.cssText =
@@ -184,7 +184,19 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
   const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
   const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
-  dim.append(wInput, sepX, hInput, sepU);
+  /* 확정 단추 — 크기 표시 바로 옆.
+   * Enter 로만 확정하게 두면 "다 골라 놓고 어떻게 끝내는지 몰라" 멈춘다(사용자 지적).
+   * 눌러서 끝내는 길을 눈에 보이게 둔다. Enter 는 그대로 살려 둔다(빠른 길). */
+  const okBtn = document.createElement("button");
+  okBtn.type = "button";
+  okBtn.id = "capture-confirm";
+  okBtn.textContent = "내보내기";
+  okBtn.style.cssText =
+    "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
+    "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
+  okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
+  okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
+  dim.append(wInput, sepX, hInput, sepU, okBtn);
   overlay.appendChild(dim);
   [wInput, hInput].forEach((inp) => {
     inp.addEventListener("focus", () => { inp.select(); inp.style.background = "rgba(255,255,255,0.40)"; });

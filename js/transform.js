@@ -17,6 +17,7 @@ import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
 import { setSnapPreview, pendulumBBox } from "./render.js?v=1.4.0";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=1.4.0";
+import { isObjectSelectable } from "./pick.js?v=1.4.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
@@ -964,6 +965,19 @@ export function initTransform(svg, state) {
           s2.redoStack = [];
         }
       });
+      return;
+    }
+
+    /* Ctrl+A — 지금 화면에서 고를 수 있는 것을 전부 고른다.
+     *
+     * '고를 수 있는 것'의 기준은 마우스로 찍을 때와 같아야 한다(pick.js isObjectSelectable):
+     * 활성 레이어 · 보이는 레이어 · 선택금지가 아닌 것. 다른 기준을 새로 세우면
+     * "클릭으로는 안 골라지는데 Ctrl+A로는 골라지는" 물건이 생긴다.
+     * 브라우저 기본 동작(문서 전체 선택)은 막는다. */
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      const ids = (s.objects || []).filter((o) => isObjectSelectable(s, o)).map((o) => o.id);
+      state.update((s2) => { s2.selectedIds = ids; });
       return;
     }
 

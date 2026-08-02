@@ -138,7 +138,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-examlib" role="dialog" aria-modal="true" aria-labelledby="examlib-title">
       <div class="examlib-title-row">
-        <h2 class="modal-title" id="examlib-title">기출 문항 검색</h2>
+        <h2 class="modal-title" id="examlib-title">기출 라이브러리</h2>
         <p id="examlib-status" class="objectify-status examlib-status-inline" role="status"></p>
       </div>
       <div class="examlib-filter-row">
