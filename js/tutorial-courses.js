@@ -453,6 +453,7 @@ const BASICS = {
       title: "③ 회전 도구를 눌러 주세요",
       text:
         "왼쪽 맨 윗줄 가운데, 둥근 화살표(↻) 모양입니다.\n\n" +
+        "· 누르면 네 모서리의 손잡이가 파란 동그라미로 바뀝니다 — 그게 회전 손잡이입니다\n" +
         "· 단축키는 R 입니다",
       demo: () => ({ kind: "clicks", at: ['[data-tool="rotate"]'] }),
       wait: { click: '[data-tool="rotate"]', hint: "회전 도구를 눌러 주세요" },
@@ -460,30 +461,46 @@ const BASICS = {
     {
       chapter: "기초 조작",
       target: () => "#canvas",
-      title: "사각형 안쪽을 잡고 돌리세요",
+      title: "오른쪽 아래 파란 동그라미를 잡고 돌리세요",
       text:
-        "점선으로 짚은 곳 — 사각형 안 아무 데나 잡고, 시계 방향으로 원을 그리듯 끄세요.\n" +
-        "손잡이를 따로 잡을 필요 없이 몸통을 끌면 돌아갑니다.\n\n" +
+        "몸통을 끌면 돌아가지 않고 자리만 옮겨집니다. 회전은 <모서리의 파란 동그라미>로 합니다.\n" +
+        "오른쪽 아래 동그라미를 잡고, 점선 호를 따라 아래쪽으로 끄세요.\n\n" +
+        "· 축은 반대쪽 모서리(왼쪽 위)입니다 — 그 점을 중심으로 돌아갑니다\n" +
         "· 비스듬해지면 넘어갑니다 (10도만 돌려도 충분합니다)\n" +
         "· 되돌리려면 Ctrl+Z 입니다",
-      // 어디를 잡아야 하는지 — 지금 사각형 자리를 그대로 짚는다.
+      /* 잡을 곳(오른쪽 아래 모서리)과 지나갈 길(호)을 함께 짚는다.
+       * 회전축이 반대쪽 모서리이므로(transform.js getRotPivot), 호도 그 점을 중심으로 그린다 —
+       * 사각형 몸통을 짚어 두면 "몸통을 잡으면 되는구나"로 읽혀 실제 동작과 어긋난다. */
       guide: () => {
         const r = rectObj();
         if (!r) return null;
-        return { pts: [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]],
-                 close: true, note: "여기를 잡고", noteDy: -8 };
+        const grab = [r.x + r.w, r.y + r.h];           // 오른쪽 아래 = 잡을 곳
+        const pivot = [r.x, r.y];                      // 왼쪽 위 = 회전축
+        const rad = Math.hypot(grab[0] - pivot[0], grab[1] - pivot[1]);
+        const a0 = Math.atan2(grab[1] - pivot[1], grab[0] - pivot[0]);
+        const arc = Array.from({ length: 9 }, (_, i) => {
+          const a = a0 + (i / 8) * (25 * Math.PI / 180);   // 시계 방향으로 25도
+          return [pivot[0] + Math.cos(a) * rad, pivot[1] + Math.sin(a) * rad];
+        });
+        return [
+          { pts: aimRing(grab, 3), close: true, note: "여기를 잡고", noteDy: -7 },
+          { pts: arc, close: false, note: "이쪽으로", noteDy: 12 },
+        ];
       },
-      // 몸통을 잡고 오른쪽 아래로 호를 그리듯 끄는 시늉.
+      // 모서리 동그라미를 잡고 호를 따라 끄는 시늉(시연은 직선이므로 호의 끝점으로 잇는다).
       demo: () => {
         const r = rectObj();
         if (!r) return null;
-        const cx = r.x + r.w / 2, cy = r.y + r.h / 2;
-        return { kind: "drag", from: [cx + r.w * 0.3, cy], to: [cx + r.w * 0.25, cy + r.h * 0.45] };
+        const grab = [r.x + r.w, r.y + r.h];
+        const pivot = [r.x, r.y];
+        const rad = Math.hypot(grab[0] - pivot[0], grab[1] - pivot[1]);
+        const a = Math.atan2(grab[1] - pivot[1], grab[0] - pivot[0]) + 25 * Math.PI / 180;
+        return { kind: "drag", from: grab, to: [pivot[0] + Math.cos(a) * rad, pivot[1] + Math.sin(a) * rad] };
       },
       wait: {
         progress: P.rotate,
         until: () => P.rotate() >= 1,
-        hint: "사각형을 끌어 돌려 주세요",
+        hint: "모서리 동그라미를 잡고 돌려 주세요",
       },
     },
     {
@@ -933,7 +950,11 @@ const INCLINE_FIGURE = {
  */
 
 const EXAM_CODE = "20260611";        // 2026학년도 6월 모평 물리1 11번
-const CODE_STEPS = [2, 4, 6, 8];     // 버튼을 누를 때마다 여기까지 채운다
+/* 버튼을 누를 때마다 여기까지 채운다 — 2026 → 202606 → 20260611 세 걸음.
+ * 예전에는 앞 두 자리('20')부터 넣는 네 걸음이었는데, '20'은 사람이 실제로 칠 일이
+ * 없는 조각이라(모든 문항이 20으로 시작한다) 결과가 줄지 않아 헛걸음처럼 보였다.
+ * 사람이 실제로 나눠 치는 단위 = 학년도 / 월 / 번호, 그래서 세 걸음이다. */
+const CODE_STEPS = [4, 6, 8];
 
 function typeIntoSearch(v) {
   const q = document.getElementById("examlib-query");
@@ -949,6 +970,71 @@ const examHits = () => {
 // 지금 캔버스에 있는 그룹 id 들(객체화 삽입물은 하나의 groupId 로 묶여 온다).
 const groupIds = () => new Set(objects().map((o) => o.groupId).filter(Boolean));
 
+/* ===== 가져온 그림에서 '지울 자리' 짚기 =====
+ *
+ * 객체화로 들어온 조각은 문항마다 개수도 좌표도 달라, 지울 영역을 코드에 박을 수 없다.
+ * 그래서 **화면에 실제로 그려진 것에서 잰다** — 캔버스 SVG 의 user 단위가 곧 world mm 라
+ * getBBox 값을 그대로 안내선 좌표로 쓸 수 있다.
+ *
+ * 왜 필요한가: "나머지를 감싸도록 끌어 고르세요"라는 말만으로는 처음 온 사람이
+ * 어디서 어디까지 끌어야 하는지 알 수 없다. 지울 자리를 점선으로 보여 준다.
+ */
+function objBox(id) {
+  const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : String(id);
+  const el = document.querySelector(`#canvas [data-id="${esc}"]`);
+  if (!el || typeof el.getBBox !== "function") return null;
+  try {
+    const b = el.getBBox();
+    return b && b.width >= 0 ? { id, x: b.x, y: b.y, w: b.width, h: b.height } : null;
+  } catch (_) { return null; }
+}
+const allBoxes = () => objects().map((o) => objBox(o.id)).filter(Boolean);
+
+/* 좌우 덩어리를 가르는 x. 가운데 부근에서 가장 넓게 비어 있는 띠를 경계로 삼는다
+ * (이 문항이면 우주비행사와 오른쪽 우주선 사이). 후보를 30~80% 구간으로 묶는 이유는,
+ * 한 덩어리 안의 우연한 빈틈이 경계로 뽑히지 않게 하기 위해서다. */
+function splitX(boxes) {
+  if (boxes.length < 4) return null;
+  const cs = boxes.map((b) => b.x + b.w / 2).sort((a, b) => a - b);
+  const lo = cs[0], hi = cs[cs.length - 1];
+  if (hi - lo < 10) return null;
+  let best = 0, cut = null;
+  for (let i = 1; i < cs.length; i += 1) {
+    const mid = (cs[i] + cs[i - 1]) / 2;
+    const t = (mid - lo) / (hi - lo);
+    if (t < 0.3 || t > 0.8) continue;
+    if (cs[i] - cs[i - 1] > best) { best = cs[i] - cs[i - 1]; cut = mid; }
+  }
+  return cut;
+}
+
+// 상자 여러 개를 감싸는 하나의 상자(여백 pad mm).
+function hullBox(boxes, pad = 2.5) {
+  if (!boxes.length) return null;
+  return {
+    x1: Math.min(...boxes.map((b) => b.x)) - pad,
+    y1: Math.min(...boxes.map((b) => b.y)) - pad,
+    x2: Math.max(...boxes.map((b) => b.x + b.w)) + pad,
+    y2: Math.max(...boxes.map((b) => b.y + b.h)) + pad,
+  };
+}
+const boxPts = (h) => [[h.x1, h.y1], [h.x2, h.y1], [h.x2, h.y2], [h.x1, h.y2]];
+
+/* 남은 그림(우주선)의 '안쪽' 영역.
+ *
+ * ⚠ 글자 조각만 골라내려고 크기·위치로 추리지 않는다. 실제로 재어 보니 객체화는
+ *   선실 안 인물·의자까지 0.1mm 짜리 수십 조각으로 쪼개 놓아서(66조각 중 35개가
+ *   '작고 안쪽'에 걸렸다), 그 규칙으로 짚으면 지우지 말아야 할 것까지 점선이 쳐진다.
+ *   그래서 조각을 짚지 않고 **자리를 짚는다** — "이 안에 있는 글자를 지우세요".
+ *   무엇이 글자인지는 사람이 보면 안다. 기계가 잘못 짚는 것보다 낫다. */
+function innerRegion() {
+  const h = hullBox(allBoxes(), 0);
+  if (!h) return null;
+  const w = h.x2 - h.x1, ht = h.y2 - h.y1;
+  if (w <= 0 || ht <= 0) return null;
+  return { x1: h.x1 + w * 0.12, y1: h.y1 + ht * 0.1, x2: h.x2 - w * 0.12, y2: h.y2 - ht * 0.1 };
+}
+
 const EXAM_SEARCH = {
   id: "exam-search",
   title: "기출 가져와 고쳐서 내보내기",
@@ -958,6 +1044,7 @@ const EXAM_SEARCH = {
   next: ["trim-exam"],
   steps: [
     {
+      chapter: "가져오기",
       title: "사실 처음부터 그릴 필요가 없습니다",
       text:
         "물리1·화학1·생명1·지구1 기출 도해가 들어 있습니다.\n" +
@@ -966,6 +1053,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#exam-library-open",
+      chapter: "가져오기",
       title: "기출문항 검색 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
@@ -975,12 +1063,14 @@ const EXAM_SEARCH = {
     },
     {
       target: () => ["#examlib-query", "#examlib-status"],
+      chapter: "가져오기",
       title: "번호를 한 조각씩 — 결과가 좁혀집니다",
       text:
-        "문항 번호를 압축 코드로 칩니다. 아래 단추를 누를 때마다 두 자리씩 늘어납니다.\n" +
+        "문항 번호를 압축 코드로 칩니다. 아래 단추를 누를 때마다 한 조각씩 늘어납니다.\n" +
         "오른쪽 위 '문항 n개' 표시가 어떻게 줄어드는지 보세요.\n\n" +
-        "· 20 = 연도 앞자리 · 2026 = 학년도 · 202606 = 6월 · 20260611 = 11번\n" +
-        "· 한 번에 다 치지 않고 나눠 보는 이유는, 어디까지 좁혔는지 눈으로 알기 위해서입니다",
+        "· 2026 = 학년도 · 202606 = 6월 · 20260611 = 11번\n" +
+        "· 학년도 → 월 → 번호, 사람이 나눠 치는 그대로 세 번에 넣습니다\n" +
+        "· 한 번에 다 치셔도 됩니다 — 나눠 보는 건 어디까지 좁혔는지 눈으로 알기 위해서입니다",
       auto: {
         repeat: {
           label: (i) => (i < CODE_STEPS.length
@@ -996,6 +1086,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#examlib-grid",
+      chapter: "가져오기",
       title: "딱 한 문항이 남았습니다",
       text:
         "2026학년도 6월 모평 물리1 11번입니다. 카드를 눌러 골라 주세요.\n\n" +
@@ -1010,6 +1101,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => ["#examlib-insert", "#examlib-objectify", "#examlib-refwin"],
+      chapter: "가져오기",
       title: "가져오는 법이 셋입니다",
       text:
         "· 이미지 삽입 — 그림째로. 배경에 깔고 위에 덧그릴 때\n" +
@@ -1019,6 +1111,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#examlib-objectify",
+      chapter: "가져오기",
       title: "오브젝트 변환을 눌러 주세요",
       text:
         "누르면 잠깐 불러온 뒤 '객체화' 창이 열립니다.\n\n" +
@@ -1028,6 +1121,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#objectify-insert",
+      chapter: "가져오기",
       title: "그대로 '객체로 삽입'",
       text:
         "이 창에서 선을 얼마나 잘게 딸지 조절할 수 있습니다.\n" +
@@ -1044,6 +1138,7 @@ const EXAM_SEARCH = {
     /* ----- 묶음을 풀어야 부분만 지울 수 있다 ----- */
     {
       target: () => "#canvas",
+      chapter: "고치기",
       title: "① 먼저 묶음을 풉니다 — Shift+G",
       text:
         "가져온 그림은 전체가 한 덩어리로 묶여 들어옵니다.\n" +
@@ -1058,35 +1153,52 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#canvas",
+      chapter: "고치기",
       title: "② 오른쪽 우주선만 남기고 지웁니다",
       text:
-        "이제 낱개로 고를 수 있습니다. 남길 것은 오른쪽 우주선 하나뿐입니다.\n" +
-        "나머지를 감싸도록 끌어 고른 뒤 Delete 를 누르세요.\n\n" +
+        "이제 낱개로 고를 수 있습니다. 남길 것은 <오른쪽 우주선 하나>뿐입니다.\n" +
+        "점선 상자 안이 지울 자리입니다. 그 바깥에서 시작해 감싸도록 끌어 고른 뒤 Delete.\n\n" +
+        "· 빈 곳에서 시작해야 합니다 — 그림 위에서 끌면 그 조각이 옮겨집니다\n" +
         "· 여러 번 나눠서 지우셔도 됩니다\n" +
-        "· 잘못 지웠으면 Ctrl+Z 로 되돌립니다\n" +
-        "· 다 지우셨는데 안 넘어가면 아래 [다음]을 누르세요",
-      // 남는 조각 수가 문항마다 달라 판정이 헐렁하다 → 갇히지 않게 [다음]을 함께 둔다.
-      allowNext: true,
-      wait: {
-        until: (ctx) => objects().length > 0 && objects().length <= (ctx.keepMax || 14),
-        hint: "우주선만 남기고 지워 주세요",
-      },
+        "· 잘못 지웠으면 Ctrl+Z 로 되돌립니다",
+      /* 지울 자리는 단계에 들어온 순간의 그림에서 재어 붙들어 둔다.
+       * 지우는 동안 다시 재면 남은 것에 맞춰 상자가 계속 오그라들어, 목표가 손에서
+       * 달아나는 것처럼 보인다. 판정 경계(cutX)도 같은 순간의 값이어야 짝이 맞는다. */
       action: (ctx) => {
-        // 전체의 1/4 이하로 줄면 '나머지를 지웠다'로 본다 — 문항마다 조각 수가 달라
-        // 절대 개수로는 판정할 수 없다.
-        ctx.keepMax = Math.max(3, Math.round(objects().length * 0.25));
+        const boxes = allBoxes();
+        ctx.cutX = splitX(boxes);
+        const left = ctx.cutX == null ? [] : boxes.filter((b) => b.x + b.w / 2 < ctx.cutX);
+        ctx.eraseBox = hullBox(left);
+      },
+      guide: (ctx) => (ctx.eraseBox
+        ? { pts: boxPts(ctx.eraseBox), close: true, note: "이 안을 다 지웁니다", noteDy: -10 }
+        : null),
+      wait: {
+        // 점선 안(경계 왼쪽)에 아무것도 남지 않으면 통과. 조각 개수 비율로 어림하던
+        // 예전 기준은 문항마다 빗나갔다 — 짚어 준 영역과 채점 기준을 같게 맞춘다.
+        until: (ctx) => {
+          if (ctx.cutX == null) return false;
+          const rest = allBoxes();
+          return rest.length > 0 && !rest.some((b) => b.x + b.w / 2 < ctx.cutX);
+        },
+        hint: "점선 안을 감싸도록 끌어 고르고 Delete",
       },
     },
     {
       target: () => "#canvas",
+      chapter: "고치기",
       title: "③ 우주선 안의 글자도 지웁니다",
       text:
-        "우주선 안에 남은 c 같은 글자도 내 문항엔 필요 없습니다.\n" +
-        "글자를 눌러 고른 뒤 Delete 를 누르세요.\n\n" +
+        "우주선 안에 남은 글자(C 같은 것)도 내 문항엔 필요 없습니다.\n" +
+        "점선으로 짚은 조각을 골라 Delete 를 누르세요.\n\n" +
         "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각으로 들어옵니다 —\n" +
         "  그래서 도형과 똑같이 골라서 지웁니다\n" +
-        "· 여러 개면 감싸도록 끌어 한꺼번에 지우셔도 됩니다",
-      action: (ctx) => { ctx.beforeLetters = objects().length; },
+        "· 글자를 콕 눌러 고르고 Delete. 잘못 지웠으면 Ctrl+Z\n" +
+        "· 안에 있는 사람·의자는 그대로 두세요 — 지울 것은 글자뿐입니다",
+      action: (ctx) => { ctx.beforeLetters = objects().length; ctx.inner = innerRegion(); },
+      guide: (ctx) => (ctx.inner
+        ? { pts: boxPts(ctx.inner), close: true, note: "이 안의 글자", noteDy: -10 }
+        : null),
       wait: {
         until: (ctx) => objects().length < (ctx.beforeLetters ?? Infinity),
         hint: "글자를 고르고 Delete 를 눌러 주세요",
@@ -1094,6 +1206,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#canvas",
+      chapter: "고치기",
       title: "④ 내 라벨을 새로 답니다",
       text:
         "지운 자리에 내가 쓸 기호를 넣습니다. 이것도 대신 넣어 드릴게요.\n\n" +
@@ -1112,18 +1225,26 @@ const EXAM_SEARCH = {
     /* ----- 내 라이브러리에 저장해 두고 재사용 ----- */
     {
       target: () => "#canvas",
+      chapter: "저장하고 다시 쓰기",
       title: "⑤ 저장할 것을 골라 둡니다",
       text:
         "이 우주선을 다음 문항에서도 쓰려면 내 라이브러리에 저장해 둡니다.\n" +
         "먼저 우주선 전체를 감싸도록 끌어 고르세요.\n\n" +
-        "· 저장은 '지금 골라 둔 것'을 담습니다",
+        "· 저장은 '지금 골라 둔 것'을 담습니다 — 하나만 골라 두면 그 조각 하나만 저장됩니다\n" +
+        "· 전부 고르려면 Ctrl+A 를 눌러도 됩니다",
       wait: {
-        until: () => (state.get().selectedIds || []).length >= 1,
-        hint: "우주선을 감싸도록 끌어 주세요",
+        // 한 조각만 골라도 통과시키면, 조각 하나짜리 '우주선'이 저장돼 ⑧에서 이상해진다.
+        // 남은 것의 대부분(70%)을 골라야 '전체를 감쌌다'로 본다.
+        until: () => {
+          const n = (state.get().selectedIds || []).length;
+          return n >= Math.max(2, Math.ceil(objects().length * 0.7));
+        },
+        hint: "우주선 전체를 감싸도록 끌어 주세요",
       },
     },
     {
       target: () => "#personal-object-save",
+      chapter: "저장하고 다시 쓰기",
       title: "⑥ [오브젝트 저장]을 누르세요",
       text:
         "왼쪽 맨 아래 '고급 기능' 묶음에 있습니다.\n\n" +
@@ -1137,11 +1258,19 @@ const EXAM_SEARCH = {
     },
     {
       target: () => ["#po-name", "#po-ok"],
+      chapter: "저장하고 다시 쓰기",
       title: "⑦ 이름을 넣고 저장",
       text:
-        "이름은 대신 넣어 드릴게요. '저장'을 누르시면 됩니다.\n\n" +
+        "이름은 대신 넣어 드릴게요. 그다음 '저장'을 누르시면 됩니다.\n\n" +
         "· 분류는 그대로 두셔도 됩니다\n" +
         "· 이름을 바꾸고 싶으시면 직접 고쳐 쓰셔도 됩니다",
+      /* ⚠ 예전에는 wait 이 없어서, 이름을 넣어 주는 순간 단계가 넘어갔다 —
+       *   창이 열린 채 다음 단계로 가 버려 **저장이 안 된 상태**로 ⑧(라이브러리에서
+       *   꺼내 쓰기)에 도착했고, 거기엔 꺼낼 것이 없었다. 창이 닫혀야 넘어간다. */
+      wait: {
+        until: () => !document.getElementById("po-ok"),
+        hint: "'저장'을 눌러 주세요",
+      },
       auto: {
         label: "이름 '우주선' 넣기",
         run: () => {
@@ -1156,6 +1285,7 @@ const EXAM_SEARCH = {
       // 저장이 끝나면 왼쪽 '퍼스널 오브젝트' 칸에 항목이 생긴다. 그 칸은 기본이 접힘
       // 상태(index.html: is-collapsed)라, 먼저 펴 줘야 사용자가 볼 수 있다.
       target: () => vis("#personal-parts .personal-item-btn") || "#personal-section",
+      chapter: "저장하고 다시 쓰기",
       title: "⑧ 라이브러리에서 여러 개 꺼내 씁니다",
       text:
         "왼쪽 '퍼스널 오브젝트' 칸에 방금 저장한 우주선이 있습니다.\n" +
@@ -1179,6 +1309,7 @@ const EXAM_SEARCH = {
     /* ----- 내보내기 ----- */
     {
       target: () => ["#file-menu-btn", "#image-export"],
+      chapter: "내보내기",
       title: "⑨ 이제 내보냅니다 — 파일 메뉴",
       text:
         "다 됐으면 한글에 붙일 그림으로 뽑습니다.\n" +
@@ -1192,6 +1323,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => ["#export-format", "#export-area"],
+      chapter: "내보내기",
       title: "⑩ 필요한 부분만 — 영역 지정",
       text:
         "형식은 PNG 로 두세요. 시험지에 넣을 그림은 PNG 가 깔끔합니다.\n" +
@@ -1202,6 +1334,7 @@ const EXAM_SEARCH = {
     },
     {
       target: () => ["#export-confirm", "#export-cancel"],
+      chapter: "내보내기",
       title: "⑪ 내보내기 — 또는 오늘은 취소",
       text:
         "'내보내기'를 누르면 PNG 파일이 내려받아집니다.\n" +
@@ -1214,6 +1347,7 @@ const EXAM_SEARCH = {
       },
     },
     {
+      chapter: "내보내기",
       title: "실전 한 바퀴가 끝났습니다",
       text:
         "찾고 → 풀고 → 지우고 → 고치고 → 저장해 두고 → 꺼내 쓰고 → 내보낸다.\n" +
