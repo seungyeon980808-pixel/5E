@@ -378,6 +378,15 @@ export function normalizeObject(input, opts = {}) {
   }
   if (type === "text" && !String(obj.text || "").length) warnings.push("text: 내용이 비어 있습니다");
   if (type === "formula") {
+    /* 내용을 text 필드에 넣는 실수가 잦다(다른 타입은 전부 text 라서).
+     * 그대로 두면 빈 수식이 들어가 화면에는 아무것도 안 보이고, 왜 안 나오는지
+     * 단서도 남지 않는다 — 도면 한 판을 다시 그리게 만드는 종류의 실패라
+     * 경고가 아니라 오류로 막는다(계약: 틀리면 하나도 넣지 않는다). */
+    if (!String(obj.source || "").length) {
+      errors.push(String(obj.text || "").length
+        ? `formula: 내용은 text 가 아니라 source 에 넣습니다 — {type:"formula", x, y, source:"${obj.text}"}`
+        : "formula: source 가 비어 있습니다");
+    }
     obj.rawSource = obj.rawSource || obj.source || "";
     if (!num(obj.w) || !num(obj.h)) {
       // 앱은 캔버스로 실측하지만 서버에는 폰트 메트릭이 없다. 대략치를 넣고 경고한다.
