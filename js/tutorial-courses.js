@@ -1044,6 +1044,26 @@ function tailBits() {
  *   지우지 말아야 할 것까지 점선이 쳐진다. 그래서 조각이 아니라 **자리를 짚는다**.
  *   기준은 그림 전체가 아니라 **선체**다 — 전체로 잡으면 화살표까지 들어가 상자가
  *   오른쪽으로 늘어나고, 정작 글자는 상자 가장자리에 걸린다(사용자 지적). */
+/* 라벨러로 가리킬 '우주선 앞부분'과 이름표 자리.
+ * 앞부분(진행 방향 쪽 = 오른쪽 끝 근처)을 가리켜야 지시선이 그림을 가로지르지 않는다.
+ * 선체가 아니라 남은 그림 전체를 기준으로 잡는다 — 뾰족한 코가 선체와 별개 조각이라
+ * 선체 기준으로 잡으면 코 앞에서 조금 모자란 자리를 짚는다. */
+function noseSpots() {
+  const h = hullBox(allBoxes(), 0);
+  if (!h) return null;
+  const w = h.x2 - h.x1, ht = h.y2 - h.y1;
+  if (w <= 0 || ht <= 0) return null;
+  const x = h.x2 - w * 0.1;
+  return { anchor: [x, h.y1 + ht * 0.5], label: [x, h.y1 - 9] };
+}
+
+/* 텍스트로 '우주인'을 적을 선실 안 자리 — 사람이 앉아 있는 왼쪽 안쪽. */
+function cabinSpot() {
+  const b = bodyBox();
+  if (!b || b.w <= 0) return null;
+  return [b.x + b.w * 0.22, b.y + b.h * 0.42];
+}
+
 /* ===== 라벨러(지시선 + 이름표) 거들기 =====
  * 이름을 고치는 정식 경로는 이름표 더블클릭 → 작은 편집 창 → Ctrl+Enter 다(text-editor.js).
  * [자동으로 하기]는 그 결과만 똑같이 만들어 준다 — 직접 하는 길과 결과가 달라지면 안 되므로
@@ -1399,10 +1419,11 @@ const EXAM_SEARCH = {
       },
     },
 
-    /* ----- 이름 붙이기: 라벨러(지시선 + 이름표) -----
-     * 텍스트 도구로 글자만 놓으면 "무엇을 가리키는 글자인지"가 안 남는다. 시험지 그림에서
-     * 이름은 대상을 가리켜야 하므로 라벨러를 쓴다. 도구는 텍스트와 한 버튼에 묶여 있어
-     * (index.html #tool-text-merged → 팝오버), 버튼 → 팝오버 두 단계로 짚는다. */
+    /* ----- 이름 붙이기: 라벨러와 텍스트를 하나씩 -----
+     * 두 도구는 쓰임이 다르고, 그 차이를 한 그림 안에서 손으로 겪게 한다.
+     *   · 우주선  — 그림 <바깥>에 이름을 두고 대상을 가리켜야 한다 → 라벨러(지시선 + 이름표)
+     *   · 우주인  — 선실 <안>에 글자를 앉히면 그것으로 충분하다   → 텍스트(글자만)
+     * 두 도구는 한 버튼에 묶여 있다(index.html #tool-text-merged → 팝오버). */
     {
       target: () => "#tool-text-merged",
       chapter: "이름 붙이기",
@@ -1428,28 +1449,26 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑫ 우주선을 찍고, 이름표 자리를 찍습니다",
+      title: "⑫ 우주선 앞부분을 찍고, 이름표 자리를 찍습니다",
       text:
         "방금 화면 가운데로 들어온 우주선에 이름을 답니다.\n" +
-        "두 번 누릅니다. ① 가리킬 곳(우주선 몸통) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
+        "두 번 누릅니다. ① 가리킬 곳(우주선 <앞부분>) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
+        "· 앞부분(뾰족한 코 쪽)을 가리켜야 지시선이 그림을 가로지르지 않습니다\n" +
         "· 두 번째 클릭에서 바로 만들어집니다\n" +
         "· 이름은 다음 단계에서 바꿉니다 — 지금은 ㉠ 로 들어옵니다",
       action: (ctx) => { ctx.labelers0 = countOf("labeler"); },
       guide: () => {
-        const b = bodyBox();
-        if (!b) return null;
-        const anchor = [b.x + b.w * 0.45, b.y + b.h * 0.5];
-        const label = [b.x + b.w * 0.45, b.y - 8];
+        const p = noseSpots();
+        if (!p) return null;
         return [
-          { pts: aimRing(anchor, 2.5), close: true, note: "① 여기를 찍고", noteDy: 16 },
-          { pts: aimRing(label, 2.5), close: true, note: "② 여기를 찍기", noteDy: -10 },
-          { pts: [anchor, label], close: false },
+          { pts: aimRing(p.anchor, 2.5), close: true, note: "① 앞부분", noteDy: 16 },
+          { pts: aimRing(p.label, 2.5), close: true, note: "② 여기를 찍기", noteDy: -10 },
+          { pts: [p.anchor, p.label], close: false },
         ];
       },
       demo: () => {
-        const b = bodyBox();
-        if (!b) return null;
-        return { kind: "clicks", pts: [[b.x + b.w * 0.45, b.y + b.h * 0.5], [b.x + b.w * 0.45, b.y - 8]] };
+        const p = noseSpots();
+        return p ? { kind: "clicks", pts: [p.anchor, p.label] } : null;
       },
       wait: {
         until: (ctx) => countOf("labeler") > (ctx.labelers0 || 0),
@@ -1478,50 +1497,50 @@ const EXAM_SEARCH = {
       },
     },
     {
-      target: () => "#canvas",
+      // 팝오버가 열려 있으면 그 안의 '텍스트'를, 아직이면 통합 버튼을 짚는다.
+      // ⑩⑪에서 두 단계로 이미 익혔으므로 여기서는 한 단계로 줄인다.
+      target: () => vis('#chooser-text [data-tool="T"]') || "#tool-text-merged",
       chapter: "이름 붙이기",
-      title: "⑭ 우주인도 같은 방법으로 찍습니다",
+      title: "⑭ 이번엔 텍스트입니다 — 같은 버튼에서 '텍스트'",
       text:
-        "선실 안에 앉아 있는 사람을 가리켜 봅니다. 라벨러를 다시 골라 두 번 누르세요.\n\n" +
-        "· 도구는 한 번 쓰면 선택 도구로 돌아옵니다 — Shift+T 로 다시 켜면 빠릅니다\n" +
-        "· ① 사람 → ② 아래쪽 빈 자리 순서입니다",
-      action: (ctx) => { ctx.labelers1 = countOf("labeler"); },
-      guide: () => {
-        const b = bodyBox();
-        if (!b) return null;
-        const anchor = [b.x + b.w * 0.2, b.y + b.h * 0.6];
-        const label = [b.x + b.w * 0.2, b.y + b.h + 8];
-        return [
-          { pts: aimRing(anchor, 2.5), close: true, note: "① 우주인", noteDy: -10 },
-          { pts: aimRing(label, 2.5), close: true, note: "② 여기를 찍기", noteDy: 16 },
-          { pts: [anchor, label], close: false },
-        ];
-      },
-      demo: () => {
-        const b = bodyBox();
-        if (!b) return null;
-        return { kind: "clicks", pts: [[b.x + b.w * 0.2, b.y + b.h * 0.6], [b.x + b.w * 0.2, b.y + b.h + 8]] };
-      },
-      wait: {
-        until: (ctx) => countOf("labeler") > (ctx.labelers1 || 0),
-        hint: "라벨러로 사람을 찍고 이름표 자리를 눌러 주세요",
-      },
+        "선실 안 사람에게는 지시선이 필요 없습니다. 안쪽에 글자만 앉히면 됩니다.\n" +
+        "같은 버튼을 눌러 이번엔 위쪽 <텍스트>를 고르세요.\n\n" +
+        "· 가리켜야 하면 라벨러, 그 자리에 적으면 되면 텍스트 — 이 차이가 전부입니다\n" +
+        "· 단축키는 T 입니다",
+      demo: () => (vis('#chooser-text [data-tool="T"]')
+        ? { kind: "clicks", at: ['#chooser-text [data-tool="T"]'] }
+        : { kind: "clicks", at: ["#tool-text-merged"] }),
+      wait: { click: '#chooser-text [data-tool="T"]', hint: "'텍스트'를 골라 주세요" },
     },
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑮ 이름을 '우주인'으로 고칩니다",
+      title: "⑮ 선실 안을 눌러 '우주인'이라고 적습니다",
       text:
-        "방금 만든 이름표를 더블클릭해 '우주인'이라고 넣으세요.\n\n" +
-        "· 이렇게 이름이 붙은 그림은 그대로 문항 지문이 됩니다\n" +
-        "· 지시선 길이·각도는 오른쪽 속성에서 숫자로도 고칠 수 있습니다",
+        "점선 자리를 한 번 누르면 그 자리에 글자 입력창이 열립니다.\n" +
+        "'우주인'이라고 치고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "· Enter 는 줄바꿈, 확정은 Ctrl+Enter 입니다\n" +
+        "· 아래 단추를 누르면 대신 넣어 드립니다\n" +
+        "· 글자 크기·글꼴은 오른쪽 속성에서 바꿉니다",
+      action: (ctx) => { ctx.texts0 = countOf("text"); },
+      guide: () => {
+        const p = cabinSpot();
+        return p ? { pts: aimRing(p, 2.5), close: true, note: "여기를 눌러 적기", noteDy: -10 } : null;
+      },
+      demo: () => {
+        const p = cabinSpot();
+        return p ? { kind: "clicks", pts: [p] } : null;
+      },
       auto: {
-        label: "이름을 '우주인'으로 넣기",
-        run: (ctx) => setLabelerText(ctx.labelers1 || 1, "우주인"),
+        label: "'우주인' 이라고 넣기",
+        run: () => {
+          const p = cabinSpot();
+          if (p) placeObjects([newText(p[0], p[1], "우주인")], { allowDup: true });
+        },
       },
       wait: {
-        until: (ctx) => labelerTextAt(ctx.labelers1 || 1) === "우주인",
-        hint: "이름표를 더블클릭해 '우주인'이라고 넣어 주세요",
+        until: () => objects().some((o) => o.type === "text" && String(o.text || "").includes("우주인")),
+        hint: "점선 자리를 눌러 '우주인'이라고 적어 주세요",
       },
     },
 
