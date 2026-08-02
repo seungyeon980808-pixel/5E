@@ -62,7 +62,13 @@ function cacheSet(key, value) {
 
 /* ===== 유틸 ===== */
 
+/* level 은 보통 "L2" 같은 이름이지만, 고급 기능에서 세부값을 직접 줄 때는
+   { id, drop, dropLine, tiny } 객체를 그대로 넘긴다. 이름표만 다를 뿐 쓰임은 같다. */
 function levelOf(id) {
+  if (id && typeof id === "object") {
+    const base = LINEART_LEVELS.find((l) => l.id === id.id) || LINEART_LEVELS[2];
+    return { ...base, ...id, id: id.id || "custom" };
+  }
   return LINEART_LEVELS.find((l) => l.id === id) || LINEART_LEVELS[2];
 }
 
@@ -89,7 +95,9 @@ export function toLineArt(svgText, opts = {}) {
   const targetMm = Number(o.targetMm) > 0 ? Number(o.targetMm) : 45;
   const lineMm = Number(o.lineMm) > 0 ? Number(o.lineMm) : 0.35;
 
-  const key = `${lv.id}|${fill}|${targetMm}|${lineMm}|${svgText}`;
+  // 고급 기능에서 세부값을 직접 주면 id 가 전부 "custom" 이라, 이름만으로 키를 만들면
+  // 값을 바꿔도 캐시가 옛 결과를 돌려준다. 실제로 결과를 가르는 값을 전부 넣는다.
+  const key = `${lv.id}|${lv.drop}|${lv.dropLine}|${lv.tiny}|${fill}|${targetMm}|${lineMm}|${svgText}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 

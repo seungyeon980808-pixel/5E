@@ -24,7 +24,7 @@ import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
 import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
 import { initExamLibrary } from "./exam-library.js?v=1.4.0";
-// 부품 라이브러리 — 퍼블릭 도메인 도해를 선화로 바꿔 넣는 창. 기출 라이브러리와 같은
+// 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
 // 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
 import { initPartsLibrary } from "./parts-library.js?v=1.4.0";
 import { initTemplates } from "./templates.js?v=1.4.0";

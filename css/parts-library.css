@@ -217,3 +217,35 @@
 }
 .partslib-insert-hint b { color: var(--c-text, #0d1117); font-weight: 600; }
 #partslib-insert-obj { width: 100%; margin-top: 6px; }
+
+/* ===== 이미지 라이브러리 [베타] — 프리셋 · 고급 기능 ===== */
+.partslib-beta {
+  margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  color: #0969da; background: #eaf2fb; border: 1px solid #cfe3fb;
+  vertical-align: middle;
+}
+/* 고급을 켜면 프리셋은 잠긴다 — 두 곳에서 같은 값을 다투지 않게 */
+.partslib-opt-row.is-locked { opacity: .45; }
+.partslib-opt-row.is-locked .partslib-opt { cursor: not-allowed; }
+
+.partslib-adv-toggle {
+  width: 100%; margin: 8px 0 0; padding: 7px 10px;
+  font: inherit; font-size: 12.5px; text-align: left; cursor: pointer;
+  background: transparent; color: var(--muted, #57606a);
+  border: 1px solid var(--line, #d0d7de); border-radius: 7px;
+}
+.partslib-adv-toggle::before { content: "▸ "; }
+.partslib-adv-toggle.is-on { color: #0969da; border-color: #0969da; }
+.partslib-adv-toggle.is-on::before { content: "▾ "; }
+.partslib-adv-toggle:focus-visible { outline: 2px solid #0969da; outline-offset: 2px; }
+
+.partslib-adv {
+  margin-top: 8px; padding: 10px; display: flex; flex-direction: column; gap: 9px;
+  border: 1px solid var(--line, #d0d7de); border-radius: 8px;
+  background: var(--surface-2, #f6f8fa);
+}
+.partslib-adv-row { display: grid; grid-template-columns: 84px 1fr 54px; align-items: center; gap: 8px; font-size: 12.5px; }
+.partslib-adv-row input[type="range"] { width: 100%; }
+.partslib-adv-row output { font-size: 11.5px; color: var(--muted, #57606a); text-align: right; font-variant-numeric: tabular-nums; }
+.partslib-adv-check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; }
