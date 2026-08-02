@@ -380,6 +380,95 @@ const DIM_EXT_DASH = { dashLength: 1.0, dashGap: 0.3 };   // scene.js LINE_KINDS
 const DIM_LABEL_SIZE = 4.2;          // §2 이름표 크기에 맞춘 치수 라벨 (자동값 2.8은 너무 작다)
 const DIM_CAPS = ["basic", "rightBar", "leftBar", "bothBars"];
 
+/* ===== 균일 자기장 영역 (⊗ / ⊙ 격자) =====
+ * 기출 617장 중 자기장·전자기가 87장으로 두 번째로 많은데(07 §8), 정작 이걸 그리는
+ * 도구가 없어 매번 기호를 손으로 격자에 찍어야 했다. 그러다 보니 간격이 들쭉날쭉하고
+ * **범례 문장을 빠뜨리기 쉽다** — 07 §7 은 "⊙/× 기호를 쓰면 범례 문장 필수"라고 못박는다.
+ * 그래서 범례를 기본으로 켜 두고, 끄려면 명시적으로 legend:false 를 줘야 한다.
+ *
+ * 왜 이 구도인가: 자기장이 종이면에 수직이면 도선(면 안)과 힘(면 안)을 2D 로 정직하게
+ * 그릴 수 있다. 자기장을 면 안에 그리면 힘이 면 밖으로 나가 화살표로 못 그린다.
+ */
+const FIELD_GLYPH = { into: "×", out: "⊙" };
+
+export function buildFieldRegion({
+  box, direction = "into", spacing = 8, symbolSize, boundary = "dashed",
+  label = "", legend = true, plane = "종이면", legendAt, strokeWidth = 0.25,
+  avoid = [],
+}) {
+  const errors = [], warnings = [], objects = [], notes = [];
+  const b = box || {};
+  for (const k of ["x", "y", "w", "h"]) {
+    if (!Number.isFinite(Number(b[k]))) errors.push(`box.${k} 가 숫자가 아닙니다`);
+  }
+  if (!FIELD_GLYPH[direction]) {
+    errors.push(`direction 은 into(⊗, 들어감) 또는 out(⊙, 나옴) 이어야 합니다`);
+  }
+  if (errors.length) return { objects: [], errors, warnings, notes };
+
+  const x = Number(b.x), y = Number(b.y), w = Number(b.w), h = Number(b.h);
+  const gap = Math.max(3, Number(spacing) || 8);
+  const size = Math.max(2, Number(symbolSize) || gap * 0.45);
+  const glyph = FIELD_GLYPH[direction];
+
+  if (boundary !== "none") {
+    const rect = {
+      type: "rect", x, y, w, h, fillNone: true, strokeWidth,
+    };
+    if (boundary === "dashed") { rect.dashLength = 1.4; rect.dashGap = 1.0; }
+    objects.push(rect);
+  }
+
+  // 기호는 테두리에서 안쪽으로 반 칸 들어간 격자에 균등 배치한다.
+  const cols = Math.max(1, Math.floor((w - gap * 0.4) / gap));
+  const rows = Math.max(1, Math.floor((h - gap * 0.4) / gap));
+  const usedW = (cols - 1) * gap, usedH = (rows - 1) * gap;
+  const startX = x + (w - usedW) / 2, startY = y + (h - usedH) / 2;
+  // 도선·물체가 지나가는 자리에는 기호를 찍지 않는다 — 기출 도판도 그 자리를 비운다.
+  const skips = (Array.isArray(avoid) ? avoid : [avoid]).filter(
+    (r) => r && ["x", "y", "w", "h"].every((k) => Number.isFinite(Number(r[k]))));
+  const inSkip = (px, py) => skips.some(
+    (r) => px >= Number(r.x) && px <= Number(r.x) + Number(r.w)
+        && py >= Number(r.y) && py <= Number(r.y) + Number(r.h));
+  let placed = 0, skipped = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const cx = startX + c * gap, cy = startY + r * gap;
+      if (inSkip(cx, cy)) { skipped++; continue; }
+      objects.push({
+        type: "text", text: glyph, fontSize: size,
+        // text 의 x,y 는 글자 상자의 왼쪽 '위' 기준이라 가운데 맞춤은 직접 계산한다.
+        x: cx - size * 0.36, y: cy - size * 0.5,
+      });
+      placed++;
+    }
+  }
+  notes.push(`기호 ${placed}개 (격자 ${rows}×${cols}, 간격 ${gap}mm, 크기 ${size.toFixed(1)}mm)`
+             + (skipped ? `, 비운 자리 ${skipped}개` : ""));
+  if (!placed) warnings.push("기호가 하나도 안 들어갔습니다 — avoid 범위가 영역 전체를 덮었는지 확인하세요");
+
+  if (label) {
+    objects.push({ type: "text", text: label, fontSize: 3.4,
+                   x: x + 1.6, y: y + 1.4 });
+  }
+
+  if (legend !== false) {
+    const dirWord = direction === "into"
+      ? `${plane}에 수직으로 들어가는 방향` : `${plane}에서 수직으로 나오는 방향`;
+    const text = typeof legend === "string" && legend.trim()
+      ? legend.trim() : `${glyph}: ${dirWord}`;
+    const at = legendAt && Number.isFinite(Number(legendAt.x))
+      ? { x: Number(legendAt.x), y: Number(legendAt.y) }
+      : { x: x, y: y + h + 3.2 };
+    objects.push({ type: "text", text, fontSize: 3.2, x: at.x, y: at.y });
+    notes.push(`범례: ${text}`);
+  } else {
+    warnings.push("범례를 껐습니다 — ⊙/× 기호를 쓰면 그림 아래 범례 문장이 필수입니다(07 §7)");
+  }
+
+  return { objects, errors, warnings, notes };
+}
+
 export function buildDimension(spec) {
   const list = Array.isArray(spec.dims) && spec.dims.length ? spec.dims : [spec];
   const objects = [], extras = [], errors = [], warnings = [], notes = [];

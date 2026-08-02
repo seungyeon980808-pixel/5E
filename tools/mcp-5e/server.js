@@ -14,7 +14,8 @@ import {
   appendObjects, validateData, summarize, newObjectId, DEFAULT_ARTBOARD,
 } from "./lib/project.js";
 import { OBJECT_TYPE_IDS, TYPE_DOC, describeType, normalizeObject } from "./lib/schema.js";
-import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension } from "./lib/builders.js";
+import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension,
+         buildFieldRegion } from "./lib/builders.js";
 import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
 import { buildPart, partsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
@@ -609,6 +610,50 @@ const TOOLS = [
     },
   },
   {
+    name: "add_field_region",
+    description:
+      "종이면에 수직인 **균일 자기장 영역**을 그린다 — 파선 테두리 + ⊗(들어감)/⊙(나옴) 기호 격자 " +
+      "+ **범례 문장**(기본 자동). 기출에서 자기장·전자기는 87장으로 두 번째로 많은 유형이다.\n" +
+      "이 구도를 쓰는 이유: 자기장이 종이면에 수직이면 도선과 그 도선이 받는 힘을 둘 다 " +
+      "면 안의 화살표로 정직하게 그릴 수 있다. 자기장을 면 안에 그리면 힘이 면 밖으로 나가 " +
+      "화살표로 표현할 수 없다.\n" +
+      "예) 영역 안에 수평 도선과 위로 받는 힘:\n" +
+      "  add_field_region { box:{x:-30,y:-18,w:60,h:36}, direction:\"into\" }\n" +
+      "  add_objects [{type:\"line\", p1:{x:-34,y:0}, p2:{x:34,y:0}, lineMode:\"middleArrow\", strokeWidth:0.5},\n" +
+      "               {type:\"line\", p1:{x:0,y:0}, p2:{x:0,y:-14}, lineMode:\"arrow\", strokeWidth:0.6}]",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP, page: PAGE_PROP,
+        box: { ...BOX, description: "자기장 영역의 좌상단과 크기(mm)" },
+        direction: {
+          type: "string", enum: ["into", "out"],
+          description: "into = ⊗ 종이면으로 들어감(기본), out = ⊙ 나옴",
+        },
+        spacing: { type: "number", description: "기호 격자 간격 mm (기본 8)" },
+        symbolSize: { type: "number", description: "기호 크기 mm (기본 간격의 0.45배)" },
+        boundary: {
+          type: "string", enum: ["dashed", "solid", "none"],
+          description: "영역 테두리 (기본 dashed — 기출 표준)",
+        },
+        label: { type: "string", description: "영역 이름(예: 영역 Ⅰ). 좌상단 안쪽에 놓인다" },
+        plane: { type: "string", description: "범례에 쓸 면 이름 (기본 \"종이면\", 수능은 \"xy 평면\")" },
+        legend: {
+          description: "범례 문장. 기본 true(자동 생성), 문자열이면 그 문장, false 면 생략(권장하지 않음)",
+        },
+        legendAt: { ...XY, description: "범례 위치(생략하면 영역 왼쪽 아래)" },
+        avoid: {
+          type: "array",
+          description:
+            "기호를 찍지 않을 사각형들 — 도선·물체가 지나가는 자리를 비운다(기출 도판도 비운다). " +
+            "예: 도선이 y=4 를 지나면 [{x:-32,y:0,w:64,h:8}]",
+          items: BOX,
+        },
+      },
+      required: ["box"],
+    },
+  },
+  {
     name: "fit_artboard",
     description:
       "그린 내용에 맞춰 아트보드를 줄이고 그림을 가운데로 옮긴다. **export_image·save_image 직전에 부른다.** " +
@@ -939,6 +984,18 @@ const HANDLERS = {
         },
       ],
     };
+  },
+
+  async add_field_region({ path, page, ...spec }) {
+    const built = buildFieldRegion(spec);
+    if (built.errors.length) {
+      throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
+    }
+    const d = await deliver({ path, page }, built.objects);
+    return deliverReport(`자기장 영역 ${d.count}개 객체 추가`, d, [
+      ...built.notes.map((t) => `  · ${t}`),
+      ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
+    ]);
   },
 
   async fit_artboard({ margin, recenter } = {}) {
