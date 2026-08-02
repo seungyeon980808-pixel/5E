@@ -20,10 +20,18 @@
                                   경사면 문항은 add_objects 로 조립하지 말고 add_incline_scene (아래)
 ⑤ export_image                    눈 확인. 겹침·잘림·라벨 위치를 보고 고친다
 ⑥ remove_objects → ④ 반복         수정 루프. 목표 2회 이내(바이블 §8)
-⑦ save_image { dir }              (ExamMaker 파이프라인 한정) 눈 확인을 마친 그림을
-                                  인쇄 품질 PNG(300dpi, pHYs)로 사진 폴더에 저장.
-                                  파일명 = 페이지 이름 — 규약은 32_exam_pool/docs/PIPELINE.md
+⑦ fit_artboard                    아트보드를 그림에 맞춘다. **내보내기 직전 필수.**
+                                  ③에서 아트보드를 눈대중으로 잡으면 축 이름·라벨이
+                                  밖으로 나가 잘리고, 넉넉히 잡으면 빈 종이가 그림을
+                                  밀어내 시험지에서 작아진다. 이 도구가 둘 다 없앤다
+⑧ save_image { dir }              (ExamMaker 파이프라인 한정) 인쇄 품질 PNG(300dpi,
+                                  pHYs)로 사진 폴더에 저장. 파일명 = 페이지 이름 —
+                                  규약은 32_exam_pool/docs/PIPELINE.md
 ```
+
+**아트보드는 대충 잡고 fit_artboard 에 맡긴다.** ③의 set_artboard 는 '그릴 수 있는
+좌표 범위'를 정하는 용도이지 최종 크기가 아니다. 최종 크기는 ⑦이 실제로 그려진
+것을 재서 정한다(한글 라벨 폭까지 정확하다).
 
 **프로젝트 저장은 사용자의 손으로.** 화면에 그린 결과가 마음에 들면 사용자가 `Ctrl+S`(프로젝트
 저장) 한다. Claude가 프로젝트 파일을 덮어쓰지 않는다 — 들어온 변경은 전부 Ctrl+Z로 되돌릴 수

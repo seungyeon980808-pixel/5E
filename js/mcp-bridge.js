@@ -23,7 +23,9 @@
 import { state } from "./state.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { switchPage, addPage } from "./pages.js?v=1.4.0";
-import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys } from "./svg-export.js?v=1.4.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
+         getContentBounds } from "./svg-export.js?v=1.4.0";
+import { translateObject } from "./transform.js?v=1.4.0";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).
@@ -49,6 +51,40 @@ let source = null;
 let idSeq = 0;
 let lastPort = null;
 let connecting = false;   // 버튼을 눌러 재시도하는 중 — 중복 클릭 방지
+
+/* ----- 화면에 그려진 모양의 실제 범위 (fitArtboard 용) -----
+ * #canvas 의 좌표계가 곧 world mm 라(viewBox 가 mm), 렌더된 요소의 getBBox() 를
+ * 그대로 쓸 수 있다. 렌더러가 상자 밖에 그리는 것(좌표평면 축 이름, 라벨 등)까지
+ * 포함하므로 "내보내면 어디까지 나오나"에 대한 정확한 답이다.
+ * getBBox() 는 획 두께를 빼고 주므로 strokeWidth/2 만큼 넓힌다. */
+function renderedBounds(s) {
+  const svg = document.getElementById("canvas");
+  if (!svg) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const o of s.objects) {
+    if (!o || !o.id) continue;
+    let el = null;
+    try { el = svg.querySelector(`[data-id="${CSS.escape(o.id)}"]`); } catch (_) { el = null; }
+    if (!el) continue;
+    let b = null;
+    try { b = el.getBBox(); } catch (_) { continue; }
+    if (!b || !isFinite(b.x) || !isFinite(b.y) || !(b.width >= 0) || !(b.height >= 0)) continue;
+    const half = (Number(o.strokeWidth) || 0) / 2;
+    x0 = Math.min(x0, b.x - half);
+    y0 = Math.min(y0, b.y - half);
+    x1 = Math.max(x1, b.x + b.width + half);
+    y1 = Math.max(y1, b.y + b.height + half);
+  }
+  return (isFinite(x0) && x1 > x0 && y1 > y0) ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+}
+
+function unionRect(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  const x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y);
+  const x1 = Math.max(a.x + a.w, b.x + b.w), y1 = Math.max(a.y + a.h, b.y + b.h);
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
 
 /* ----- 명령 처리기 ----- */
 const COMMANDS = {
@@ -167,6 +203,62 @@ const COMMANDS = {
     switchPage(state, target.id);
     flash(`${target.name}(으)로 이동`);
     return { active: target.id, name: target.name, created: false };
+  },
+
+  /* 아트보드를 그린 내용에 맞춘다.
+   *
+   * 두 가지 사고를 한 번에 없앤다:
+   *  ① 축 이름·한글 라벨이 아트보드 밖으로 나가 내보내기에서 **잘린다**.
+   *     라벨은 평면·도형 바깥에 놓이는데, 아트보드를 손으로 정하면 그 폭을
+   *     매번 눈대중해야 한다(2026-08-03 시연에서 두 번 겪었다).
+   *  ② 여백이 넓으면 그림 자체는 작아진다 — PNG 의 실제 크기가 곧 시험지에
+   *     들어가는 크기라, 빈 종이가 그림을 밀어낸다.
+   *
+   * 글자 폭은 **화면에 실제로 그려진 SVG** 를 재서 얻는다(getObjectBBox).
+   * 서버에는 폰트 메트릭이 없으므로 이 계산은 앱만 할 수 있다. 그래서 그리기
+   * 직후가 아니라 '다 그린 뒤 따로' 부르는 도구다 — 그때는 이미 렌더가 끝나 있다.
+   */
+  fitArtboard({ margin = 2, recenter = true } = {}) {
+    const s = state.get();
+    if (!s.objects.length) throw new Error("화면에 그려진 것이 없습니다");
+    const pad = Math.max(0, Number(margin) || 0);
+    // 좌표 기준 상자와 **화면에 실제로 그려진** 상자의 합집합을 쓴다.
+    // 좌표 기준만 보면 안 되는 이유: coordplane 의 상자는 평면 사각형까지라
+    // 그 바깥에 그려지는 축 이름("전압(V)")이 빠진다 — 실측에서 53.6mm 로 재
+    // 아트보드를 잡았더니 실제 76.3mm 인 그림이 양옆으로 잘렸다(2026-08-03).
+    // 반대로 DOM 은 아직 안 그려진 객체를 놓치므로, 둘을 합쳐 '덜 자르는' 쪽으로.
+    const geo = getContentBounds(s, {}, 0);
+    const dom = renderedBounds(s);
+    const u = unionRect(geo, dom);
+    if (!u) throw new Error("크기를 잴 수 있는 객체가 없습니다");
+    const bb = { x: u.x - pad, y: u.y - pad, w: u.w + 2 * pad, h: u.h + 2 * pad };
+
+    const before = { ...s.artboard };
+    let dx = 0, dy = 0, w, h;
+    if (recenter) {
+      // 아트보드는 항상 원점 중심이라, 그림을 가운데로 옮겨야 딱 맞는다.
+      dx = -(bb.x + bb.w / 2);
+      dy = -(bb.y + bb.h / 2);
+      w = bb.w; h = bb.h;
+    } else {
+      // 좌표를 건드리지 않는 대신, 원점 기준 먼 쪽에 맞춰 넓힌다.
+      w = 2 * Math.max(Math.abs(bb.x), Math.abs(bb.x + bb.w));
+      h = 2 * Math.max(Math.abs(bb.y), Math.abs(bb.y + bb.h));
+    }
+    const round1 = (v) => Math.max(10, Math.round(v * 10) / 10);
+    w = round1(w); h = round1(h);
+
+    state.update((st) => {
+      st.undoStack.push(JSON.parse(JSON.stringify(st.objects)));
+      st.redoStack = [];
+      if (dx || dy) st.objects.forEach((o) => translateObject(o, dx, dy));
+      st.artboard = { w, h };
+    });
+    flash(`아트보드 ${w}×${h}mm`);
+    return {
+      artboard: { w, h }, before, objects: s.objects.length,
+      moved: { dx: Math.round(dx * 100) / 100, dy: Math.round(dy * 100) / 100 },
+    };
   },
 
   // 아트보드(페이지) 크기 변경 — 기출 그림의 가로세로 비율을 맞추는 데 쓴다.

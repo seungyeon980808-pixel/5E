@@ -609,6 +609,24 @@ const TOOLS = [
     },
   },
   {
+    name: "fit_artboard",
+    description:
+      "그린 내용에 맞춰 아트보드를 줄이고 그림을 가운데로 옮긴다. **export_image·save_image 직전에 부른다.** " +
+      "두 가지를 막는다 — ① 축 이름·한글 라벨은 도형 바깥에 놓이는데 아트보드를 눈대중으로 정하면 " +
+      "밖으로 나가 **잘린다** ② 여백이 넓으면 그만큼 그림이 작아진다(PNG 실제 크기가 곧 시험지에 들어가는 크기다). " +
+      "글자 폭은 앱이 화면에 그려진 것을 재므로 한글 라벨도 정확하다. 되돌리기(Ctrl+Z) 가능.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        margin: { type: "number", description: "그림 둘레에 남길 여백 mm (기본 2)" },
+        recenter: {
+          type: "boolean",
+          description: "그림을 가운데로 옮길지(기본 true). false 면 좌표를 그대로 두고 아트보드만 넓힌다",
+        },
+      },
+    },
+  },
+  {
     name: "save_image",
     description:
       "지금 화면에 그려진 그림을 **인쇄 품질 PNG 파일로 저장**한다(기본 300dpi, pHYs 기록 — " +
@@ -921,6 +939,16 @@ const HANDLERS = {
         },
       ],
     };
+  },
+
+  async fit_artboard({ margin, recenter } = {}) {
+    const r = await sendToApp("fitArtboard", { margin, recenter });
+    const mv = (r.moved && (r.moved.dx || r.moved.dy))
+      ? `, 그림을 (${r.moved.dx}, ${r.moved.dy})mm 옮겨 가운데 정렬` : "";
+    return [
+      `아트보드 ${r.before.w}×${r.before.h} → ${r.artboard.w}×${r.artboard.h}mm (객체 ${r.objects}개${mv})`,
+      "이제 export_image 로 눈 확인 → save_image 로 저장하세요.",
+    ].join("\n");
   },
 
   /* 화면 그림을 PNG 파일로 저장 — 앱이 만든 base64(pHYs 포함)를 받아 서버가 쓴다.
