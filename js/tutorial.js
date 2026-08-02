@@ -1165,12 +1165,14 @@ export function openPicker({ justFinished = null } = {}) {
 
   // 코스가 17개다. 한 줄로 늘어놓으면 어디부터 할지 알 수 없어 위계가 사라진다 →
   // 왼쪽에 단계(기본·심화·실습)를 세우고, 고른 단계의 코스만 오른쪽에 펼친다.
+  /* beta: 아직 다듬는 중인 트랙. 기본 트랙은 완성이라 표시하지 않는다 —
+   * 전부에 붙이면 '베타'가 배경이 되어 아무 뜻도 없어진다. */
   const TRACKS = [
     { name: "기본", lead: "먼저 이것부터", note: "차례대로 하시면 됩니다",
       pick: (c) => ["basics", "incline-figure", "exam-search"].includes(c.id) },
-    { name: "심화", lead: "도구 넓히기", note: "기본을 마친 뒤에",
+    { name: "심화", lead: "도구 넓히기", note: "기본을 마친 뒤에", beta: true,
       pick: (c) => ["trim-exam", "align-space", "terrain"].includes(c.id) },
-    { name: "실습 과제", lead: "그림 한 장을 끝까지", note: "골라서 하셔도 됩니다",
+    { name: "실습 과제", lead: "그림 한 장을 끝까지", note: "골라서 하셔도 됩니다", beta: true,
       pick: (c) => !!c.task },
   ];
 
@@ -1213,8 +1215,8 @@ export function openPicker({ justFinished = null } = {}) {
     });
     const t = tracks[i];
     pane.innerHTML = `<div class="tut-pane-head">
-        <span class="tut-pane-name">${t.name} — ${t.lead}</span>
-        <span class="tut-pane-note">${t.note}</span>
+        <span class="tut-pane-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""} — ${t.lead}</span>
+        <span class="tut-pane-note">${t.beta ? "아직 다듬는 중입니다 — " : ""}${t.note}</span>
       </div>
       <div class="tut-picker-list"></div>`;
     const list = pane.querySelector(".tut-picker-list");
@@ -1227,7 +1229,7 @@ export function openPicker({ justFinished = null } = {}) {
     b.type = "button";
     b.className = "tut-track-btn" + (doneN === t.items.length ? " is-cleared" : "");
     b.setAttribute("role", "tab");
-    b.innerHTML = `<span class="tut-track-name">${t.name}</span>
+    b.innerHTML = `<span class="tut-track-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""}</span>
       <span class="tut-track-lead">${t.lead}</span>
       <span class="tut-track-count">${doneN}/${t.items.length}</span>`;
     b.addEventListener("click", () => showTrack(i));

@@ -335,6 +335,23 @@ body { zoom: var(--ui-zoom, 1); }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
 /* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
 .search-trigger-label { flex: 1 1 auto; text-align: left; white-space: nowrap; }
+
+/* '베타' 꼬리표 — 아직 다듬는 중인 기능임을 이름 옆에 조용히 알린다.
+   눈에 띄되 이름을 밀어내지 않게 작고 옅게. */
+.beta-tag {
+  flex: none;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
 .search-trigger-hint {
   flex: none;
   margin-left: auto;
