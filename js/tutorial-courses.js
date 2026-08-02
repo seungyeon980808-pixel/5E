@@ -1020,26 +1020,63 @@ function hullBox(boxes, pad = 2.5) {
 }
 const boxPts = (h) => [[h.x1, h.y1], [h.x2, h.y1], [h.x2, h.y2], [h.x1, h.y2]];
 
-/* 남은 그림(우주선)의 '안쪽' 영역.
+/* 남은 그림에서 '선체'(가장 큰 조각) — 우주선 본체다.
+ * 면적 최대 조각이 곧 본체라는 규칙은 실측으로 확인했다(선체 24.1×9.2mm,
+ * 나머지는 전부 그보다 훨씬 작다). 화살표·글씨·안쪽 글자를 가르는 기준점이 된다. */
+function bodyBox() {
+  const boxes = allBoxes();
+  if (!boxes.length) return null;
+  return boxes.slice().sort((a, b) => (b.w * b.h) - (a.w * a.h))[0];
+}
+
+/* 선체 오른쪽 바깥에 붙은 것들 = 속도 화살표와 그 글씨(0.6c).
+ * 실측: 선체 오른쪽 끝 x=28.7 바깥에 16조각(x 29.1~35.2)이 정확히 화살표+글씨였다. */
+function tailBits() {
+  const body = bodyBox();
+  if (!body) return [];
+  return allBoxes().filter((b) => b.x > body.x + body.w);
+}
+
+/* 선체 '안쪽' 영역 — 선실 안 글자가 있는 자리.
  *
  * ⚠ 글자 조각만 골라내려고 크기·위치로 추리지 않는다. 실제로 재어 보니 객체화는
- *   선실 안 인물·의자까지 0.1mm 짜리 수십 조각으로 쪼개 놓아서(66조각 중 35개가
- *   '작고 안쪽'에 걸렸다), 그 규칙으로 짚으면 지우지 말아야 할 것까지 점선이 쳐진다.
- *   그래서 조각을 짚지 않고 **자리를 짚는다** — "이 안에 있는 글자를 지우세요".
- *   무엇이 글자인지는 사람이 보면 안다. 기계가 잘못 짚는 것보다 낫다. */
+ *   선실 안 인물·의자까지 0.1mm 짜리 수십 조각으로 쪼개 놓아서, 그 규칙으로 짚으면
+ *   지우지 말아야 할 것까지 점선이 쳐진다. 그래서 조각이 아니라 **자리를 짚는다**.
+ *   기준은 그림 전체가 아니라 **선체**다 — 전체로 잡으면 화살표까지 들어가 상자가
+ *   오른쪽으로 늘어나고, 정작 글자는 상자 가장자리에 걸린다(사용자 지적). */
+/* ===== 라벨러(지시선 + 이름표) 거들기 =====
+ * 이름을 고치는 정식 경로는 이름표 더블클릭 → 작은 편집 창 → Ctrl+Enter 다(text-editor.js).
+ * [자동으로 하기]는 그 결과만 똑같이 만들어 준다 — 직접 하는 길과 결과가 달라지면 안 되므로
+ * text/source/contentMode 세 필드를 편집 창이 쓰는 것과 같은 값으로 채운다. */
+const labelers = () => objects().filter((o) => o.type === "labeler");
+const labelerTextAt = (i) => { const l = labelers()[i]; return l ? String(l.text || "") : null; };
+function setLabelerText(i, text) {
+  state.update((s) => {
+    const snap = JSON.parse(JSON.stringify(s.objects));
+    const t = (s.objects || []).filter((o) => o.type === "labeler")[i];
+    if (!t) return;
+    t.text = text;
+    t.source = text;
+    t.contentMode = "plain";
+    s.undoStack.push(snap);
+    s.redoStack = [];
+  });
+}
+
 function innerRegion() {
-  const h = hullBox(allBoxes(), 0);
-  if (!h) return null;
-  const w = h.x2 - h.x1, ht = h.y2 - h.y1;
-  if (w <= 0 || ht <= 0) return null;
-  return { x1: h.x1 + w * 0.12, y1: h.y1 + ht * 0.1, x2: h.x2 - w * 0.12, y2: h.y2 - ht * 0.1 };
+  const b = bodyBox();
+  if (!b || b.w <= 0 || b.h <= 0) return null;
+  return {
+    x1: b.x + b.w * 0.06, y1: b.y + b.h * 0.08,
+    x2: b.x + b.w * 0.72, y2: b.y + b.h * 0.92,
+  };
 }
 
 const EXAM_SEARCH = {
   id: "exam-search",
   title: "기출 가져와 고쳐서 내보내기",
-  desc: "찾고 · 풀고 · 지우고 · 저장하고 · 내보내기 — 실전 한 바퀴",
-  minutes: 12,
+  desc: "찾고 · 지우고 · 저장하고 · 이름 달고 · 내보내기 — 실전 한 바퀴",
+  minutes: 16,
   practice: true,
   next: ["trim-exam"],
   steps: [
@@ -1107,7 +1144,12 @@ const EXAM_SEARCH = {
         "· 이미지 삽입 — 그림째로. 배경에 깔고 위에 덧그릴 때\n" +
         "· 오브젝트 변환 — 선 하나하나 고칠 수 있는 형태로\n" +
         "· 참고 창 — 옆에 띄워 두고 보면서 새로 그릴 때\n\n" +
-        "우리는 일부만 남기고 지울 거라 '오브젝트 변환'입니다.",
+        "우리는 일부만 남기고 지울 거라 '오브젝트 변환'입니다.\n" +
+        "다음 단계에서 누릅니다 — 지금은 눌리지 않게 막아 두었습니다.",
+      /* 세 버튼을 밝게 뚫어 놓으면 누르고 싶게 생겼고, 실제로 '이미지 삽입'이나
+       * '참고 창'을 누르면 뒤 단계가 기대하는 상태와 어긋나 흐름이 통째로 꼬인다.
+       * 읽는 단계이므로 잠근다(tutorial.js paintShield). */
+      lock: true,
     },
     {
       target: () => "#examlib-objectify",
@@ -1187,48 +1229,47 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "고치기",
-      title: "③ 우주선 안의 글자도 지웁니다",
+      title: "③ 화살표와 글자를 지웁니다",
       text:
-        "우주선 안에 남은 글자(C 같은 것)도 내 문항엔 필요 없습니다.\n" +
-        "점선으로 짚은 조각을 골라 Delete 를 누르세요.\n\n" +
-        "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각으로 들어옵니다 —\n" +
-        "  그래서 도형과 똑같이 골라서 지웁니다\n" +
-        "· 글자를 콕 눌러 고르고 Delete. 잘못 지웠으면 Ctrl+Z\n" +
-        "· 안에 있는 사람·의자는 그대로 두세요 — 지울 것은 글자뿐입니다",
-      action: (ctx) => { ctx.beforeLetters = objects().length; ctx.inner = innerRegion(); },
-      guide: (ctx) => (ctx.inner
-        ? { pts: boxPts(ctx.inner), close: true, note: "이 안의 글자", noteDy: -10 }
-        : null),
+        "두 군데가 남았습니다. 점선으로 짚은 곳입니다.\n\n" +
+        "· 오른쪽 — 속도 화살표와 0.6c 글씨. 감싸도록 끌어 고르고 Delete\n" +
+        "· 우주선 안 — C 같은 글자. 콕 눌러 고르고 Delete\n" +
+        "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각입니다 — 도형과 똑같이 지웁니다\n" +
+        "· 안에 있는 사람·의자는 그대로 두세요. 잘못 지웠으면 Ctrl+Z",
+      action: (ctx) => {
+        ctx.tailIds = tailBits().map((b) => b.id);
+        ctx.tailBox = hullBox(tailBits(), 1.5);
+        ctx.inner = innerRegion();
+        ctx.beforeLetters = objects().length;
+      },
+      guide: (ctx) => {
+        const out = [];
+        if (ctx.tailBox) out.push({ pts: boxPts(ctx.tailBox), close: true, note: "화살표와 글씨", noteDy: -10 });
+        if (ctx.inner) out.push({ pts: boxPts(ctx.inner), close: true, note: "이 안의 글자", noteDy: -10 });
+        return out.length ? out : null;
+      },
       wait: {
-        until: (ctx) => objects().length < (ctx.beforeLetters ?? Infinity),
-        hint: "글자를 고르고 Delete 를 눌러 주세요",
-      },
-    },
-    {
-      target: () => "#canvas",
-      chapter: "고치기",
-      title: "④ 내 라벨을 새로 답니다",
-      text:
-        "지운 자리에 내가 쓸 기호를 넣습니다. 이것도 대신 넣어 드릴게요.\n\n" +
-        "· 직접 하시려면: 텍스트 도구(T) → 자리 클릭 → 입력 → Ctrl+Enter\n" +
-        "· 기호만 바꾸면 같은 그림으로 다른 문항이 됩니다",
-      auto: {
-        label: "라벨 A 넣기",
-        run: () => {
-          if (!objects().some((o) => o.type === "text")) {
-            placeObjects([newText(-6, -14, "A")]);
-          }
+        /* 둘 다 해야 통과다.
+         *   · 화살표·글씨 — 짚어 둔 조각이 하나도 안 남아야 한다(확정적으로 잴 수 있다)
+         *   · 안쪽 글자   — 무엇이 글자인지 기계가 못 가리므로, 화살표 조각 수 말고도
+         *                   더 줄었는지로 본다. 헐렁하지만 [건너뛰고 다음]이 늘 열려 있다. */
+        until: (ctx) => {
+          const ids = new Set(ctx.tailIds || []);
+          const live = allBoxes();
+          const tailGone = !live.some((b) => ids.has(b.id));
+          const lettersGone = objects().length < (ctx.beforeLetters ?? Infinity) - ids.size;
+          return tailGone && lettersGone;
         },
+        hint: "점선 두 곳을 지워 주세요",
       },
     },
-
-    /* ----- 내 라이브러리에 저장해 두고 재사용 ----- */
+    /* ----- 퍼스널 오브젝트로 저장해 두고, 검색으로 다시 꺼내 쓴다 ----- */
     {
       target: () => "#canvas",
       chapter: "저장하고 다시 쓰기",
-      title: "⑤ 저장할 것을 골라 둡니다",
+      title: "④ 저장할 것을 골라 둡니다",
       text:
-        "이 우주선을 다음 문항에서도 쓰려면 내 라이브러리에 저장해 둡니다.\n" +
+        "이 우주선을 다음 문항에서도 쓰려면 <퍼스널 오브젝트>로 저장해 둡니다.\n" +
         "먼저 우주선 전체를 감싸도록 끌어 고르세요.\n\n" +
         "· 저장은 '지금 골라 둔 것'을 담습니다 — 하나만 골라 두면 그 조각 하나만 저장됩니다\n" +
         "· 전부 고르려면 Ctrl+A 를 눌러도 됩니다",
@@ -1245,11 +1286,12 @@ const EXAM_SEARCH = {
     {
       target: () => "#personal-object-save",
       chapter: "저장하고 다시 쓰기",
-      title: "⑥ [오브젝트 저장]을 누르세요",
+      title: "⑤ 퍼스널 오브젝트로 저장하기 — [오브젝트 저장]",
       text:
-        "왼쪽 맨 아래 '고급 기능' 묶음에 있습니다.\n\n" +
-        "· 이름을 정하는 창이 뜹니다 — 아무 이름이나 넣고 저장하세요\n" +
-        "· 저장한 것은 왼쪽 '퍼스널 오브젝트'와 오브젝트 검색(Ctrl+F)에서 다시 나옵니다",
+        "왼쪽 맨 아래 '고급 기능' 묶음에 [오브젝트 저장]이 있습니다. 눌러 주세요.\n\n" +
+        "· 이것이 '퍼스널 오브젝트'를 만드는 유일한 길입니다 — 지금 골라 둔 것이 그대로 담깁니다\n" +
+        "· 저장한 것은 왼쪽 '퍼스널 오브젝트' 칸과 오브젝트 검색(Ctrl+F) 양쪽에서 나옵니다\n" +
+        "· 이 컴퓨터의 브라우저에 저장되므로, 다음에 열어도 그대로 있습니다",
       demo: () => ({ kind: "clicks", at: ["#personal-object-save"] }),
       wait: {
         until: () => !!document.getElementById("po-ok"),
@@ -1259,7 +1301,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#po-name", "#po-ok"],
       chapter: "저장하고 다시 쓰기",
-      title: "⑦ 이름을 넣고 저장",
+      title: "⑥ 이름을 넣고 저장",
       text:
         "이름은 대신 넣어 드릴게요. 그다음 '저장'을 누르시면 됩니다.\n\n" +
         "· 분류는 그대로 두셔도 됩니다\n" +
@@ -1282,27 +1324,167 @@ const EXAM_SEARCH = {
       },
     },
     {
-      // 저장이 끝나면 왼쪽 '퍼스널 오브젝트' 칸에 항목이 생긴다. 그 칸은 기본이 접힘
-      // 상태(index.html: is-collapsed)라, 먼저 펴 줘야 사용자가 볼 수 있다.
-      target: () => vis("#personal-parts .personal-item-btn") || "#personal-section",
+      target: () => "#object-search-trigger",
       chapter: "저장하고 다시 쓰기",
-      title: "⑧ 라이브러리에서 여러 개 꺼내 씁니다",
+      title: "⑦ 저장한 것은 검색으로 꺼냅니다",
       text:
-        "왼쪽 '퍼스널 오브젝트' 칸에 방금 저장한 우주선이 있습니다.\n" +
-        "이름을 누를 때마다 캔버스에 하나씩 더 놓입니다. 눌러 보세요.\n\n" +
-        "· 같은 장치를 여러 개 배치하는 문항(비교 실험 등)이 순식간에 됩니다\n" +
-        "· 칸이 접혀 있으면 '퍼스널 오브젝트' 제목을 눌러 펼칩니다",
-      action: (ctx) => {
-        // 접혀 있으면 펴 준다 — 안 펴면 항목이 화면에 없어 짚을 대상 자체가 없다.
-        document.getElementById("personal-section")?.classList.remove("is-collapsed");
-        ctx.beforeInsert = objects().length;
+        "저장한 우주선을 다시 꺼내 보겠습니다. 캔버스 아래 막대의 [오브젝트 검색]입니다.\n\n" +
+        "· 단축키는 Ctrl+F 입니다\n" +
+        "· 왼쪽 '퍼스널 오브젝트' 칸에서도 꺼낼 수 있지만, 개수가 늘면 검색이 빠릅니다",
+      demo: () => ({ kind: "clicks", at: ["#object-search-trigger"] }),
+      wait: {
+        until: () => !!vis(".object-search-modal"),
+        hint: "오브젝트 검색을 눌러 주세요",
       },
-      demo: () => (vis("#personal-parts .personal-item-btn")
-        ? { kind: "clicks", at: ["#personal-parts .personal-item-btn"] } : null),
-      allowNext: true,
+    },
+    {
+      target: () => [".object-search-input", ".object-search-results"],
+      chapter: "저장하고 다시 쓰기",
+      title: "⑧ '우주선'을 찾아 캔버스에 놓습니다",
+      text:
+        "이름을 치면 아래에 후보가 나옵니다. 방금 저장한 것은 '퍼스널'로 표시됩니다.\n" +
+        "그 줄을 눌러 캔버스에 놓으세요.\n\n" +
+        "· 이름은 대신 쳐 드릴게요 — 목록에서 고르기만 하시면 됩니다\n" +
+        "· 같은 장치를 여러 개 배치하는 문항(비교 실험 등)이 순식간에 됩니다",
+      action: (ctx) => { ctx.beforeInsert = objects().length; },
+      auto: {
+        label: "'우주선' 이라고 치기",
+        stay: true,   // 창을 닫지 않는다 — 고르는 것은 사용자 몫
+        run: () => {
+          const inp = document.querySelector(".object-search-input");
+          if (!inp) return;
+          inp.value = "우주선";
+          inp.dispatchEvent(new Event("input", { bubbles: true }));
+        },
+      },
       wait: {
         until: (ctx) => objects().length > (ctx.beforeInsert || 0),
-        hint: "퍼스널 오브젝트에서 우주선을 눌러 주세요",
+        hint: "'퍼스널' 줄을 눌러 놓아 주세요",
+      },
+    },
+
+    /* ----- 이름 붙이기: 라벨러(지시선 + 이름표) -----
+     * 텍스트 도구로 글자만 놓으면 "무엇을 가리키는 글자인지"가 안 남는다. 시험지 그림에서
+     * 이름은 대상을 가리켜야 하므로 라벨러를 쓴다. 도구는 텍스트와 한 버튼에 묶여 있어
+     * (index.html #tool-text-merged → 팝오버), 버튼 → 팝오버 두 단계로 짚는다. */
+    {
+      target: () => "#tool-text-merged",
+      chapter: "이름 붙이기",
+      title: "⑨ 텍스트/라벨러 버튼을 누르세요",
+      text:
+        "왼쪽 도구 넷째 줄, 'T' 모양 버튼입니다. 누르면 둘 중에 고르는 작은 창이 뜹니다.\n\n" +
+        "· 텍스트 — 아무 데나 글자만 놓습니다\n" +
+        "· 라벨러 — 가리킬 곳을 찍고, 지시선으로 이어진 이름표를 답니다",
+      demo: () => ({ kind: "clicks", at: ["#tool-text-merged"] }),
+      wait: { click: "#tool-text-merged", hint: "텍스트/라벨러 버튼을 눌러 주세요" },
+    },
+    {
+      target: () => vis('#chooser-text [data-symbol="labeler"]') || "#chooser-text",
+      chapter: "이름 붙이기",
+      title: "⑩ '라벨러'를 고르세요",
+      text:
+        "아래쪽 항목입니다. 지시선과 이름표가 함께 들어갑니다.\n\n" +
+        "· 단축키는 Shift+T 입니다 (텍스트는 T)",
+      coachSide: "right",
+      demo: () => ({ kind: "clicks", at: ['#chooser-text [data-symbol="labeler"]'] }),
+      wait: { click: '#chooser-text [data-symbol="labeler"]', hint: "라벨러를 골라 주세요" },
+    },
+    {
+      target: () => "#canvas",
+      chapter: "이름 붙이기",
+      title: "⑪ 우주선을 찍고, 이름표 자리를 찍습니다",
+      text:
+        "두 번 누릅니다. ① 가리킬 곳(우주선 몸통) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
+        "· 두 번째 클릭에서 바로 만들어집니다\n" +
+        "· 이름은 다음 단계에서 바꿉니다 — 지금은 ㉠ 로 들어옵니다",
+      action: (ctx) => { ctx.labelers0 = countOf("labeler"); },
+      guide: () => {
+        const b = bodyBox();
+        if (!b) return null;
+        const anchor = [b.x + b.w * 0.45, b.y + b.h * 0.5];
+        const label = [b.x + b.w * 0.45, b.y - 8];
+        return [
+          { pts: aimRing(anchor, 2.5), close: true, note: "① 여기를 찍고", noteDy: 16 },
+          { pts: aimRing(label, 2.5), close: true, note: "② 여기를 찍기", noteDy: -10 },
+          { pts: [anchor, label], close: false },
+        ];
+      },
+      demo: () => {
+        const b = bodyBox();
+        if (!b) return null;
+        return { kind: "clicks", pts: [[b.x + b.w * 0.45, b.y + b.h * 0.5], [b.x + b.w * 0.45, b.y - 8]] };
+      },
+      wait: {
+        until: (ctx) => countOf("labeler") > (ctx.labelers0 || 0),
+        hint: "가리킬 곳 → 이름표 자리, 두 번 눌러 주세요",
+      },
+    },
+    {
+      target: () => "#canvas",
+      chapter: "이름 붙이기",
+      title: "⑫ 이름을 '우주선'으로 고칩니다",
+      text:
+        "만들어진 이름표를 <더블클릭>하면 글자를 고치는 작은 창이 뜹니다.\n" +
+        "'우주선'이라고 넣고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "· 아래 단추를 누르면 대신 넣어 드립니다\n" +
+        "· 글씨체·크기도 그 창에서 함께 정합니다\n" +
+        "· 앞 단계를 건너뛰셨으면 이름표가 없습니다 — 이 단계도 건너뛰세요",
+      // 인덱스는 '앞 단계에 들어올 때 세어 둔 개수' = 방금 만든 그 라벨러다.
+      // 0번으로 못 박으면 사용자가 이미 다른 라벨러를 갖고 있을 때 엉뚱한 것을 고친다.
+      auto: {
+        label: "이름을 '우주선'으로 넣기",
+        run: (ctx) => setLabelerText(ctx.labelers0 || 0, "우주선"),
+      },
+      wait: {
+        until: (ctx) => labelerTextAt(ctx.labelers0 || 0) === "우주선",
+        hint: "이름표를 더블클릭해 '우주선'이라고 넣어 주세요",
+      },
+    },
+    {
+      target: () => "#canvas",
+      chapter: "이름 붙이기",
+      title: "⑬ 우주인도 같은 방법으로 찍습니다",
+      text:
+        "선실 안에 앉아 있는 사람을 가리켜 봅니다. 라벨러를 다시 골라 두 번 누르세요.\n\n" +
+        "· 도구는 한 번 쓰면 선택 도구로 돌아옵니다 — Shift+T 로 다시 켜면 빠릅니다\n" +
+        "· ① 사람 → ② 아래쪽 빈 자리 순서입니다",
+      action: (ctx) => { ctx.labelers1 = countOf("labeler"); },
+      guide: () => {
+        const b = bodyBox();
+        if (!b) return null;
+        const anchor = [b.x + b.w * 0.2, b.y + b.h * 0.6];
+        const label = [b.x + b.w * 0.2, b.y + b.h + 8];
+        return [
+          { pts: aimRing(anchor, 2.5), close: true, note: "① 우주인", noteDy: -10 },
+          { pts: aimRing(label, 2.5), close: true, note: "② 여기를 찍기", noteDy: 16 },
+          { pts: [anchor, label], close: false },
+        ];
+      },
+      demo: () => {
+        const b = bodyBox();
+        if (!b) return null;
+        return { kind: "clicks", pts: [[b.x + b.w * 0.2, b.y + b.h * 0.6], [b.x + b.w * 0.2, b.y + b.h + 8]] };
+      },
+      wait: {
+        until: (ctx) => countOf("labeler") > (ctx.labelers1 || 0),
+        hint: "라벨러로 사람을 찍고 이름표 자리를 눌러 주세요",
+      },
+    },
+    {
+      target: () => "#canvas",
+      chapter: "이름 붙이기",
+      title: "⑭ 이름을 '우주인'으로 고칩니다",
+      text:
+        "방금 만든 이름표를 더블클릭해 '우주인'이라고 넣으세요.\n\n" +
+        "· 이렇게 이름이 붙은 그림은 그대로 문항 지문이 됩니다\n" +
+        "· 지시선 길이·각도는 오른쪽 속성에서 숫자로도 고칠 수 있습니다",
+      auto: {
+        label: "이름을 '우주인'으로 넣기",
+        run: (ctx) => setLabelerText(ctx.labelers1 || 1, "우주인"),
+      },
+      wait: {
+        until: (ctx) => labelerTextAt(ctx.labelers1 || 1) === "우주인",
+        hint: "이름표를 더블클릭해 '우주인'이라고 넣어 주세요",
       },
     },
 
@@ -1310,7 +1492,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#file-menu-btn", "#image-export"],
       chapter: "내보내기",
-      title: "⑨ 이제 내보냅니다 — 파일 메뉴",
+      title: "⑮ 이제 내보냅니다 — 파일 메뉴",
       text:
         "다 됐으면 한글에 붙일 그림으로 뽑습니다.\n" +
         "위쪽 '파일'을 누른 뒤 '이미지로 내보내기'를 고르세요.\n\n" +
@@ -1324,7 +1506,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-format", "#export-area"],
       chapter: "내보내기",
-      title: "⑩ 필요한 부분만 — 영역 지정",
+      title: "⑯ 필요한 부분만 — 영역 지정",
       text:
         "형식은 PNG 로 두세요. 시험지에 넣을 그림은 PNG 가 깔끔합니다.\n" +
         "그림 일부만 필요하면 '영역 지정'을 눌러 캔버스에서 원하는 만큼 끕니다.\n\n" +
@@ -1335,7 +1517,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-confirm", "#export-cancel"],
       chapter: "내보내기",
-      title: "⑪ 내보내기 — 또는 오늘은 취소",
+      title: "⑰ 내보내기 — 또는 오늘은 취소",
       text:
         "'내보내기'를 누르면 PNG 파일이 내려받아집니다.\n" +
         "연습이니 '취소'로 닫으셔도 됩니다 — 둘 중 아무거나 누르세요.\n\n" +

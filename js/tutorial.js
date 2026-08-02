@@ -139,6 +139,7 @@ function buildLayer() {
       <span class="tut-ghost-mod" hidden></span>
     </div>
     <div class="tut-modkey" hidden></div>
+    <div class="tut-shield" hidden></div>
     <div class="tut-halo" hidden></div>
     <div class="tut-coach" role="dialog" aria-modal="false" aria-live="polite">
       <div class="tut-coach-head">
@@ -168,6 +169,7 @@ function buildLayer() {
     },
     guide: root.querySelector(".tut-guide"),
     modKey: root.querySelector(".tut-modkey"),
+    shield: root.querySelector(".tut-shield"),
     ghost: root.querySelector(".tut-ghost"),
     ghostRing: root.querySelector(".tut-ghost-ring"),
     ghostMod: root.querySelector(".tut-ghost-mod"),
@@ -219,6 +221,22 @@ function unionRect(nodes) {
     w: Math.min(window.innerWidth, x2 + HOLE_PAD) - Math.max(0, x1 - HOLE_PAD),
     h: Math.min(window.innerHeight, y2 + HOLE_PAD) - Math.max(0, y1 - HOLE_PAD),
   };
+}
+
+/* 구멍 자리를 투명 방패로 덮는다 — step.lock 인 단계용.
+ *
+ * 왜 필요한가: 구멍은 진짜로 비어 있어서 그 안의 버튼이 눌린다. 그런데 '읽기만 하는'
+ * 단계에서도 버튼 세 개가 밝게 뚫려 있으면 **누르고 싶게 생겼고**, 실제로 누르면
+ * (예: '이미지 삽입'·'참고 창 열기') 다음 단계가 기대하는 상태와 어긋나 흐름이 꼬인다.
+ * 짚어는 주되 못 누르게 한다 — 누르면 흔들어서 "지금은 읽기만"이라고 알린다. */
+function paintShield(ui, hole) {
+  const on = !!(_run && _run.locked && hole);
+  ui.shield.hidden = !on;
+  if (!on) return;
+  Object.assign(ui.shield.style, {
+    left: hole.x + "px", top: hole.y + "px",
+    width: hole.w + "px", height: hole.h + "px",
+  });
 }
 
 /* ===== 흐림 4장 + 테두리 배치 ===== */
@@ -701,6 +719,8 @@ export function startCourse(courseId, { from = 0 } = {}) {
   // 연습 페이지는 코스 시작이 아니라 '캔버스를 처음 쓰는 단계'에서 만든다(ensurePractice).
 
   // 버튼 배선
+  // 방패를 누르면 "여기가 아니라 지금은 읽기만" — 조용히 막기만 하면 고장으로 읽힌다.
+  ui.shield.addEventListener("click", (e) => { e.stopPropagation(); nudge(); });
   ui.btnQuit.addEventListener("click", () => stopTutorial());
   ui.btnNext.addEventListener("click", () => goNext());
   ui.btnPrev.addEventListener("click", () => goPrev());
@@ -876,9 +896,13 @@ function showStep(attempt = 0) {
   const waiting = !!step.wait && !cleared;
   _run.waiting = waiting;
   _run.near = "far";
-  ui.doChip.hidden = !waiting;
+  // 읽기만 하는 단계는 짚은 자리를 못 누르게 덮는다(paintShield). 실습 단계는 당연히 연다.
+  _run.locked = !!step.lock && !waiting;
+  ui.doChip.hidden = !waiting && !_run.locked;
   ui.doChip.classList.remove("is-hit");
-  ui.doChip.textContent = (step.wait && step.wait.hint) || "직접 해 보세요";
+  ui.doChip.textContent = waiting
+    ? ((step.wait && step.wait.hint) || "직접 해 보세요")
+    : "지금은 읽기만 하세요 — 아직 누르지 않습니다";
 
   /* [다음]은 **언제나 보인다.**
    * 예전에는 실습 단계에서 아예 숨기고 12초를 버텨야 [건너뛰기]가 나타났다.
@@ -1035,6 +1059,7 @@ function reposition(force = false) {
   _run.lastKey = key;
 
   paintHole(ui, hole);
+  paintShield(ui, hole);
   // 짚을 대상이 없는 단계라도 안내 그림이 있으면 그것만은 가리지 않는다
   // (완성 미리보기를 설명 창이 덮어 버리면 보여 주는 의미가 없다).
   placeCoach(ui, hole || guideBox(ui));
