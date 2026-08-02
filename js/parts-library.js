@@ -117,7 +117,11 @@ function buildModal() {
       <div class="partslib-body">
         <div id="partslib-grid" class="partslib-grid"></div>
         <aside class="partslib-preview">
+          <!-- 그림이 맨 위. 무엇을 넣을지부터 보이고, 조절은 그 아래에서 한다. -->
           <div class="partslib-preview-head">미리보기</div>
+          <div class="partslib-preview-box"><img id="partslib-preview-img" alt="" /></div>
+          <div class="partslib-preview-name" id="partslib-preview-name"></div>
+          <div class="partslib-preview-meta" id="partslib-preview-meta"></div>
 
           <!-- 처리 방식 프리셋. 웬만하면 여기서 끝난다. -->
           <div class="partslib-opt-row" id="partslib-levels" role="group" aria-label="처리 방식"></div>
@@ -151,9 +155,6 @@ function buildModal() {
             </div>
           </div>
 
-          <div class="partslib-preview-box"><img id="partslib-preview-img" alt="" /></div>
-          <div class="partslib-preview-name" id="partslib-preview-name"></div>
-          <div class="partslib-preview-meta" id="partslib-preview-meta"></div>
           <button id="partslib-insert" type="button" class="modal-btn modal-btn-primary" disabled>넣기</button>
           <p class="partslib-insert-hint" id="partslib-insert-hint">그림 하나를 골라 주세요.</p>
         </aside>
