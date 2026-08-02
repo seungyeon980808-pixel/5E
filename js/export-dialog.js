@@ -146,8 +146,12 @@ function segValue(group, attr) {
 export function runAreaCapture(svg, state, onDone, hintText) {
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
+  /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
+   *   9000 이던 시절엔 튜토리얼이 도는 동안 흐림 4장이 마우스를 먼저 먹어
+   *   '영역 지정'을 눌러도 **캔버스에서 드래그가 되지 않았다**(사용자 지적).
+   *   설명 창(100012)보다는 아래에 둬서 안내는 계속 읽히게 한다. */
   overlay.style.cssText =
-    "position:fixed;inset:0;z-index:9000;cursor:crosshair;" +
+    "position:fixed;inset:0;z-index:100011;cursor:crosshair;" +
     "background:rgba(0,0,0,0.35);user-select:none;";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
@@ -227,7 +231,13 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     handleEls[id] = h;
   }
 
-  document.body.appendChild(overlay);
+  /* ⚠ body 가 아니라 documentElement 에 붙인다.
+   *   css/style.css 가 body{zoom:var(--ui-zoom)} 를 걸어 두어(화면 배율), body 밑에
+   *   붙이면 이 오버레이만 배율이 곱해진 좌표계에서 그려진다. 반면 아래 계산은 전부
+   *   clientX/clientY(뷰포트 실측 px)라서, 배율이 1이 아닌 화면에서는 **끄는 자리와
+   *   그려지는 사각형이 어긋났다**(사용자 지적: 배율 1.12에서 12% 어긋남).
+   *   js/tutorial.js 가 레이어를 documentElement 에 붙이는 것과 같은 이유다. */
+  document.documentElement.appendChild(overlay);
 
   let box = null;      // { l, t, r, b } client px (그리는 중엔 비정규화 가능)
   let phase = "draw";  // "draw" | "adjust"
