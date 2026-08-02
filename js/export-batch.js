@@ -18,46 +18,13 @@
 import { rasterizeExportCanvas } from "./svg-export.js?v=1.4.0";
 import { commitActivePage } from "./pages.js?v=1.4.0";
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
-import { idbAvailable, idbGet, idbSet } from "./idb-store.js?v=1.4.0";
+import {
+  FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,
+} from "./export-dir.js?v=1.4.0";
 
-const DIR_KEY = "export-dir-handle";
-const FS_SUPPORTED = typeof window !== "undefined" && !!window.showDirectoryPicker;
-
-/* ----- 저장 폴더 핸들: 세션 캐시 + IndexedDB 영속 ----- */
-let dirHandle = null;
-
-async function loadSavedDir() {
-  if (dirHandle || !FS_SUPPORTED || !idbAvailable()) return dirHandle;
-  try {
-    const h = await idbGet(DIR_KEY);
-    // 저장된 핸들은 권한이 만료돼 있을 수 있다. 여기서는 조회만 하고(사용자 제스처가
-    // 없으므로 요청은 안 한다) 실제 요청은 내보내기 직전에 한다.
-    if (h && typeof h.queryPermission === "function") dirHandle = h;
-  } catch (_) { /* 저장된 핸들이 깨졌으면 없는 것으로 본다 */ }
-  return dirHandle;
-}
-
-async function ensureDirPermission(handle) {
-  if (!handle || typeof handle.queryPermission !== "function") return false;
-  try {
-    if (await handle.queryPermission({ mode: "readwrite" }) === "granted") return true;
-    return await handle.requestPermission({ mode: "readwrite" }) === "granted";
-  } catch (_) {
-    return false;
-  }
-}
-
-async function pickDir() {
-  try {
-    const h = await window.showDirectoryPicker({ id: "5e-export", mode: "readwrite" });
-    if (!h) return null;
-    dirHandle = h;
-    if (idbAvailable()) { try { await idbSet(DIR_KEY, h); } catch (_) {} }
-    return h;
-  } catch (_) {
-    return null; // 취소 또는 미지원
-  }
-}
+/* 저장 폴더는 js/export-dir.js 가 관리한다(단일 내보내기와 같은 폴더를 쓰기 위해).
+ * 예전에는 이 파일 안에 있었는데, 단일 내보내기에서도 같은 폴더를 써야 해서 옮겼다. */
+const FS_SUPPORTED = FS_DIR_SUPPORTED;
 
 /* ----- 파일 이름 결정 -----
  * 페이지 이름이 기본값("페이지 3")이면 사용자가 지정한 적이 없다고 보고
@@ -182,13 +149,14 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
       return;
     }
     dirField.hidden = false;
-    pathEl.textContent = dirHandle ? dirHandle.name : "폴더가 지정되지 않았습니다";
-    pathEl.classList.toggle("is-empty", !dirHandle);
-    pickBtn.textContent = dirHandle ? "폴더 변경" : "폴더 연결";
-    noteEl.textContent = dirHandle
+    const _dh = currentDir();
+    pathEl.textContent = _dh ? _dh.name : "폴더가 지정되지 않았습니다";
+    pathEl.classList.toggle("is-empty", !_dh);
+    pickBtn.textContent = _dh ? "폴더 변경" : "폴더 연결";
+    noteEl.textContent = _dh
       ? `PNG · ${dpi}dpi · 같은 이름의 파일은 덮어씁니다.`
       : "저장할 폴더를 먼저 연결하십시오.";
-    confirmBtn.disabled = !dirHandle;
+    confirmBtn.disabled = !_dh;
   }
   syncDir();
 
@@ -231,9 +199,9 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
       noteEl.textContent = "내보낼 페이지를 하나 이상 선택하십시오.";
       return;
     }
-    if (FS_SUPPORTED && dirHandle && !(await ensureDirPermission(dirHandle))) {
+    if (FS_SUPPORTED && currentDir() && !(await ensureDirPermission(currentDir()))) {
       noteEl.textContent = "폴더 접근 권한이 없습니다. 폴더를 다시 연결하십시오.";
-      dirHandle = null;
+      await clearDir();
       syncDir();
       return;
     }
@@ -252,8 +220,8 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
         const result = await rasterizeExportCanvas(snap, { dpi, bounds: null, options });
         const blob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
         if (!blob) continue;
-        if (FS_SUPPORTED && dirHandle) {
-          const fh = await dirHandle.getFileHandle(name, { create: true });
+        if (FS_SUPPORTED && currentDir()) {
+          const fh = await currentDir().getFileHandle(name, { create: true });
           const w = await fh.createWritable();
           await w.write(blob);
           await w.close();
@@ -265,8 +233,8 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
       }
       close();
       showAlert(
-        dirHandle
-          ? `${targets.length}개 페이지를 '${dirHandle.name}' 폴더에 저장했습니다.`
+        currentDir()
+          ? `${targets.length}개 페이지를 '${currentDir().name}' 폴더에 저장했습니다.`
           : `${targets.length}개 페이지를 내보냈습니다.`,
         { title: "일괄 내보내기" },
       );

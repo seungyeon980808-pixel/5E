@@ -13,6 +13,9 @@
 
 import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.4.0";
 import { openBatchExport } from "./export-batch.js?v=1.4.0";
+import {
+  FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
+} from "./export-dir.js?v=1.4.0";
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 import { registerTopMenu } from "./top-menu.js?v=1.4.0";
 import { screenToWorld } from "./viewport.js?v=1.4.0";
@@ -105,6 +108,18 @@ function buildModal() {
                style="width:64px;margin-left:auto;text-align:right" disabled />
         <span class="modal-label" style="flex:none">mm</span>
       </label>
+
+      <!-- 저장 폴더: 한 번 연결해 두면 내보낼 때마다 위치를 묻지 않는다.
+           지원하지 않는 브라우저(Firefox/Safari)에서는 이 줄이 통째로 감춰지고
+           기존 다운로드 동작이 그대로 남는다. -->
+      <div class="modal-field" id="export-dir-field">
+        <span class="modal-label">저장 폴더</span>
+        <div class="batch-dir">
+          <span class="batch-dir-path is-empty" id="export-dir-path">지정하지 않음 — 내보낼 때마다 묻습니다</span>
+          <button type="button" class="modal-btn" id="export-dir-pick">폴더 연결</button>
+          <button type="button" class="modal-btn" id="export-dir-clear" hidden>해제</button>
+        </div>
+      </div>
 
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="export-cancel">취소</button>
@@ -411,8 +426,27 @@ export function initExportDialog(state, svg) {
   // isReopen: 미리보기/영역지정에서 Esc로 취소하고 이 다이얼로그로 되돌아오는 경우
   // true로 넘긴다. 이때는 사용자가 이미 입력해 둔 파일명(input이 DOM에 그대로 남아
   // 있음)을 타임스탬프로 덮어쓰지 않는다 — 새로 여는 경우(openBtn)만 리셋한다.
+  /* ----- 저장 폴더 줄 ----- */
+  const dirField = overlay.querySelector("#export-dir-field");
+  const dirPath = overlay.querySelector("#export-dir-path");
+  const dirPick = overlay.querySelector("#export-dir-pick");
+  const dirClear = overlay.querySelector("#export-dir-clear");
+  async function syncDirRow() {
+    if (!FS_DIR_SUPPORTED) { dirField.hidden = true; return; }
+    dirField.hidden = false;
+    await loadSavedDir();
+    const name = currentDirName();
+    dirPath.textContent = name || "지정하지 않음 — 내보낼 때마다 묻습니다";
+    dirPath.classList.toggle("is-empty", !name);
+    dirPick.textContent = name ? "폴더 변경" : "폴더 연결";
+    dirClear.hidden = !name;
+  }
+  dirPick.addEventListener("click", async () => { await pickDir(); syncDirRow(); });
+  dirClear.addEventListener("click", async () => { await clearDir(); syncDirRow(); });
+
   function showModal(isReopen = false) {
     overlay.hidden = false;
+    syncDirRow();
     if (!isReopen) {
       // Refresh the default name to the current minute each time the dialog opens
       // fresh (unless the user has typed a custom name this session is fine to
