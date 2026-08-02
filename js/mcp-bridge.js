@@ -23,7 +23,7 @@
 import { state } from "./state.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { switchPage, addPage } from "./pages.js?v=1.4.0";
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.4.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys } from "./svg-export.js?v=1.4.0";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).
@@ -225,6 +225,37 @@ const COMMANDS = {
     return {
       mimeType: "image/png",
       base64: dataUrl.slice(dataUrl.indexOf(",") + 1),
+      widthPx: canvas.width,
+      heightPx: canvas.height,
+      artboardMm: { w: outW, h: outH },
+      page: activePageName(s),
+      objects: s.objects.length,
+    };
+  },
+
+  /* 지금 화면을 **인쇄 품질 PNG(base64)** 로 만들어 돌려준다 — 서버가 파일로 저장하는
+   * save_image 툴의 앱쪽 절반. exportImage 와 달리 dpi 를 그대로 받고(기본 300),
+   * pHYs 청크를 새겨 한글/워드 삽입 크기가 맞는다. 파일 쓰기는 서버가 한다 —
+   * 브라우저는 임의 경로에 쓸 수 없고, 쓰면 안 되기도 하다(저장은 통제된 통로로만). */
+  async saveImagePng({ dpi } = {}) {
+    const s = state.get();
+    if (!s.objects.length) throw new Error("화면에 그려진 것이 없습니다");
+    await ensureEmbeddedFonts();
+    const useDpi = Math.min(Math.max(Math.round(dpi || 300), 72), 600);
+    const { canvas, widthMm: outW, heightMm: outH } = await rasterizeExportCanvas(s, { dpi: useDpi });
+    const dataUrl = canvas.toDataURL("image/png");
+    const raw = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    const stamped = new Uint8Array(insertPngPhys(bytes.buffer, useDpi));
+    let bin = "";
+    const CHUNK = 0x8000;   // 큰 이미지에서 호출 스택 초과를 피해 조각내어 인코딩
+    for (let i = 0; i < stamped.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, stamped.subarray(i, i + CHUNK));
+    }
+    return {
+      base64: btoa(bin),
+      dpi: useDpi,
       widthPx: canvas.width,
       heightPx: canvas.height,
       artboardMm: { w: outW, h: outH },

@@ -20,6 +20,8 @@ import { buildPart, partsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
 import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { isAbsolute, join } from "node:path";
 import { inlineImages } from "./lib/images.js";
 
 const PROTOCOL_VERSION = "2024-11-05";
@@ -607,6 +609,30 @@ const TOOLS = [
     },
   },
   {
+    name: "save_image",
+    description:
+      "지금 화면에 그려진 그림을 **인쇄 품질 PNG 파일로 저장**한다(기본 300dpi, pHYs 기록 — " +
+      "한글/워드에 실제 크기로 들어간다). ExamMaker 파이프라인용: 파일명은 페이지 이름을 " +
+      "따르므로, 페이지 이름을 파일명 규약({세트약칭}_{번호2자리})으로 먼저 맞춘다. " +
+      "export_image 로 눈 확인을 마친 뒤에 저장할 것. 같은 이름이 있으면 덮어쓴다 — " +
+      "그림을 고쳐 다시 저장하는 흐름이 그래야 성립한다.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dir: {
+          type: "string",
+          description: "저장할 폴더의 절대경로 (hwpPalette 사진 폴더, 예: C:\\...\\사진\\26-1기말). 없으면 만든다.",
+        },
+        name: {
+          type: "string",
+          description: "파일명(확장자 없이). 생략하면 현재 페이지 이름을 쓴다(권장 — 규약과 일치).",
+        },
+        dpi: { type: "number", description: "해상도 (72~600, 기본 300)." },
+      },
+      required: ["dir"],
+    },
+  },
+  {
     name: "remove_from_app",
     description: "열려 있는 화면에서 id로 객체를 지운다. 앱에서 Ctrl+Z로 되돌릴 수 있다.",
     inputSchema: {
@@ -895,6 +921,26 @@ const HANDLERS = {
         },
       ],
     };
+  },
+
+  /* 화면 그림을 PNG 파일로 저장 — 앱이 만든 base64(pHYs 포함)를 받아 서버가 쓴다.
+   * 그림 파일이 사람 손을 거치지 않고 hwpPalette 사진 폴더에 도착하는 유일한 통로. */
+  async save_image({ dir, name, dpi } = {}) {
+    if (!dir || !isAbsolute(dir)) throw new Error("dir 는 절대경로여야 합니다");
+    const r = await sendToApp("saveImagePng", { dpi });
+    // 파일명은 페이지 이름 기본 — Windows 금지 문자만 걷어낸다(규약 이름은 애초에 안전).
+    const base = String(name || r.page || "그림").replace(/[\\/:*?"<>|]/g, "_").trim();
+    if (!base) throw new Error("파일명이 비었습니다");
+    await mkdir(dir, { recursive: true });
+    const abs = join(dir, base + ".png");
+    const buf = Buffer.from(r.base64, "base64");
+    await writeFile(abs, buf);
+    return [
+      `저장했습니다: ${abs}`,
+      `  ${r.dpi}dpi, ${r.widthPx}×${r.heightPx}px, 아트보드 ${r.artboardMm.w}×${r.artboardMm.h}mm, ${Math.round(buf.length / 1024)}KB`,
+      `  페이지: ${r.page} (객체 ${r.objects}개)`,
+      "hwpPalette 사진 폴더 목록에 이 폴더가 등록돼 있어야 \\" + base + "\\ 로 삽입된다.",
+    ].join("\n");
   },
 
   async clear_app() {
