@@ -32,7 +32,8 @@ const K_DONE = "5e.tutorial.done";           // 완료한 코스 id 목록
 // 예전 버전이 남겨 둔 값이 있으면 시작할 때 지운다.
 const K_RESUME_LEGACY = "5e.tutorial.resume";
 const K_BANNER = "5e.tutorial.bannerSeen";   // 첫 방문 배너를 이미 보여줬는가
-const K_LEVEL = "5e.tutorial.level";         // 난이도 — "easy" | "hard"
+// 난이도(5e.tutorial.level)는 없앴다 — 아래 '단일 모드' 주석 참고.
+const K_LEVEL_LEGACY = "5e.tutorial.level";
 const K_MODE = "5e.mode";                    // view-mode.js 와 같은 키(Pro/Lite)
 
 function readJSON(key, fallback) {
@@ -57,21 +58,12 @@ function markDone(courseId) {
   if (!a.includes(courseId)) { a.push(courseId); writeJSON(K_DONE, a); }
 }
 
-/* ===== 난이도 =====
- * easy: 만들어지는 과정과 흐름을 눈으로 따라간다 — 실습을 요구하지 않고 앱이 대신 그린다.
- * hard: 안내를 보며 직접 만든다 — 끝에서 기출 원본과 나란히 놓고 비교한다.
- * 아무것도 안 해 본 사람에게는 easy 를 먼저 권한다(고른 값은 다음부터 기억한다). */
-function readLevel() {
-  const v = readJSON(K_LEVEL, null);
-  if (v === "easy" || v === "hard") return v;
-  return doneCourses().length ? "hard" : "easy";
-}
-export function tutorialLevel() {
-  return _run ? _run.level : readLevel();
-}
-export function isEasyLevel() {
-  return tutorialLevel() === "easy";
-}
+/* ===== 단일 모드 =====
+ * 예전에는 난이도가 둘이었다 — '쉬움'(앱이 대신 그리고 눈으로만 따라감)과 '어려움'(직접 만듦).
+ * 쉬움은 폐지했다: 관람은 손에 남지 않고, 두 갈래를 유지하느라 엔진 곳곳에
+ * "쉬움이면 판정하지 않는다" 같은 예외가 갈라져 실제 버그의 온상이었다.
+ * 지금은 **한 가지 흐름**이다 — 직접 해 보되, 못 해도 [다음]으로 언제든 나간다.
+ * 대신 해 주는 일(글자 타이핑 등)은 난이도가 아니라 단계별 [자동으로 하기] 단추로 남는다. */
 
 
 /* ===== 레이아웃 상수 ===== */
@@ -79,7 +71,11 @@ export function isEasyLevel() {
 const HOLE_PAD = 6;    // 구멍이 대상보다 얼마나 큰가 (테두리보다 커야 대상이 안 가린다)
 const COACH_GAP = 14;  // 구멍과 설명 창 사이 간격
 const EDGE = 12;       // 화면 가장자리 최소 여백
-const STUCK_MS = 12000; // 실습 단계에서 이만큼 멈춰 있으면 '건너뛰기'를 슬쩍 보여준다
+
+/* 통과했을 때 바로 넘기지 않고 이만큼 머문다(ms).
+ * 80ms 틱으로 판정하므로 조건이 참이 되는 순간 화면이 바뀌어 버려, 방금 자기가 무엇을
+ * 했는지 확인할 틈이 없었다. 초록으로 굳은 안내선과 '✓ 됐습니다'를 보고 넘어가게 한다. */
+const PASS_HOLD = 700;
 
 /* ── 단계 전환 연출 시간표 (css/tutorial.css 의 --tut-t-* 와 같은 값) ──
  * 사라짐 250ms → 테두리가 새 자리에서 먼저 pop(560ms) → 150ms 뒤 설명 창 pop → 850ms 뒤 커서.
@@ -149,13 +145,13 @@ function buildLayer() {
         <span class="tut-coach-course"></span>
         <span class="tut-coach-count"></span>
       </div>
+      <div class="tut-coach-bar" aria-hidden="true"><i></i></div>
       <h3 class="tut-coach-title"></h3>
       <div class="tut-coach-text"></div>
       <div class="tut-coach-do" hidden>직접 해 보세요</div>
       <button type="button" class="tut-coach-auto" hidden></button>
       <div class="tut-coach-foot">
         <button type="button" class="tut-btn tut-btn-quit">그만</button>
-        <button type="button" class="tut-btn tut-btn-skip" hidden>건너뛰기</button>
         <span class="tut-spacer"></span>
         <button type="button" class="tut-btn tut-btn-prev">이전</button>
         <button type="button" class="tut-btn tut-btn-primary tut-btn-next">다음</button>
@@ -179,12 +175,12 @@ function buildLayer() {
     coach: root.querySelector(".tut-coach"),
     course: root.querySelector(".tut-coach-course"),
     count: root.querySelector(".tut-coach-count"),
+    bar: root.querySelector(".tut-coach-bar > i"),
     title: root.querySelector(".tut-coach-title"),
     text: root.querySelector(".tut-coach-text"),
     doChip: root.querySelector(".tut-coach-do"),
     autoBtn: root.querySelector(".tut-coach-auto"),
     btnQuit: root.querySelector(".tut-btn-quit"),
-    btnSkip: root.querySelector(".tut-btn-skip"),
     btnPrev: root.querySelector(".tut-btn-prev"),
     btnNext: root.querySelector(".tut-btn-next"),
   };
@@ -339,6 +335,9 @@ function ctmKey() {
 function paintGuide(step) {
   const g = _run.ui.guide;
   g.textContent = "";
+  // 얼마나 가까워졌는가 — far(회색 점선) / close(굵은 파랑) / hit(초록).
+  // 판정이 조용하면 "더 가야 하는지, 잘못 잡은 건지"를 알 방법이 없다(초심자 이탈 지점).
+  g.dataset.near = (_run && _run.near) || "far";
 
   let spec = null;
   if (typeof step.guide === "function") {
@@ -441,10 +440,6 @@ const DRAG_CYCLE = 6900;   // 나타남 → 누름 → 이동 → 뗌 → 사라
 const CLICK_STEP = 1700;   // 점 하나를 찍는 데 걸리는 시간(ms)
 const CLICK_GAP = 850;     // 한 바퀴 돈 뒤 쉬는 시간(ms)
 const DEMO_RESUME_MS = 2200;
-// 쉬움 모드: 커서 시연을 잠깐 본 뒤에 그려 준다(ms).
-// 길게 두면 빠르게 넘기는 사람이 그리는 장면을 못 본다 — 짧게 두고, 그 전에 넘어가면
-// flushAutoPlay 가 대신 그려 준다(그림이 빠지는 일은 없다).
-const AUTOPLAY_DELAY = 800;
 
 const easeInOut = (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
 
@@ -674,20 +669,23 @@ export function startCourse(courseId, { from = 0 } = {}) {
 
   _run = {
     course,
-    level: readLevel(),    // 코스 시작 시점의 난이도로 끝까지 간다(중간에 바뀌면 혼란)
     index: Math.max(0, Math.min(from, course.steps.length - 1)),
-    // 여기까지는 이미 해 본 단계다. [이전]으로 돌아온 단계는 실습을 다시 요구하지 않고
-    // 읽고 [다음]으로 나올 수 있어야 한다 — 안 그러면 되돌아간 순간 갇힌다(사용자 지적).
-    maxIndex: Math.max(0, Math.min(from, course.steps.length - 1)),
+    /* 단계 상태를 두 갈래로 나눠 둔다 — 예전에는 maxIndex 한 줄로 뭉뚱그렸고,
+     * 그 탓에 "못 해서 건너뛴 단계"로 [이전]을 눌러 돌아와도 판정이 죽어 있었다
+     * (성공해도 아무 반응이 없다 = 초심자의 가장 흔한 행동이 막힌다).
+     *   seen[i]  — 한 번이라도 들어와 봤다 → 준비 동작(action)·자동 생성을 다시 하지 않는다
+     *   done[i]  — 실제로 통과했다 → 다시 요구하지 않는다. 건너뛴 단계는 false 로 남아
+     *              돌아오면 판정이 되살아난다. */
+    seen: [],
+    done: [],
+    passing: false,        // 통과 연출 중(중복 전진 방지)
+    near: "far",           // 안내선 근접 상태 — far | close | hit
     ui,
     ctx: {},               // 단계끼리 값을 주고받는 자리(그리기 전 개수 등)
     nodes: [],
     prevMode,
     practice: null,
-    autoPlayTimer: null,   // 쉬움 모드에서 '대신 그리기'를 실행할 예약
-    pendingAuto: null,     // 아직 안 돌린 그 예약의 내용(넘어갈 때 비운다)
     tick: null,
-    stuckTimer: null,
     waitOff: null,
     onResize: null,
   };
@@ -700,13 +698,12 @@ export function startCourse(courseId, { from = 0 } = {}) {
     if (btn) { btn.textContent = "Pro"; btn.classList.remove("is-on"); btn.setAttribute("aria-pressed", "false"); }
   }
 
-  if (course.practice) _run.practice = createPracticePage();
+  // 연습 페이지는 코스 시작이 아니라 '캔버스를 처음 쓰는 단계'에서 만든다(ensurePractice).
 
   // 버튼 배선
   ui.btnQuit.addEventListener("click", () => stopTutorial());
   ui.btnNext.addEventListener("click", () => goNext());
   ui.btnPrev.addEventListener("click", () => goPrev());
-  ui.btnSkip.addEventListener("click", () => goNext());
 
   _run.onResize = () => reposition();
   window.addEventListener("resize", _run.onResize);
@@ -726,32 +723,27 @@ export function startCourse(courseId, { from = 0 } = {}) {
   showStep();
 }
 
-/* step.auto 를 한 번 끝까지 실행한다.
- * repeat 형태(누를 때마다 한 걸음)는 쉬움 모드에서 사람이 누를 일이 없으므로
- * false 가 나올 때까지 한 번에 돌린다. 24는 폭주 방지용 상한이다. */
-function runAuto(auto) {
-  if (!auto) return;
-  if (auto.repeat) {
-    for (let i = 0; i < 24; i += 1) {
-      if (!auto.repeat.run(i, _run.ctx)) break;
-    }
-  } else {
-    auto.run(_run.ctx);
-  }
+/* (runAuto 는 없앴다 — 쉬움 모드가 auto 를 사람 대신 한 번에 돌리던 함수였다.
+ *  지금은 [자동으로 하기] 단추의 핸들러가 직접 한 걸음씩 실행한다.) */
+
+/* 연습 페이지를 아직 안 만들었으면 지금 만든다.
+ * 코스 시작과 동시에 만들면, 화면 설정을 만지는 '준비' 단계 내내 빈 페이지가 하나
+ * 이미 생겨 있어 어리둥절해진다 → 캔버스를 처음 쓰는 단계(step.practice)에서 만든다. */
+function ensurePractice(step) {
+  if (!_run || _run.practice || !_run.course.practice) return;
+  const flagged = _run.course.steps.some((s) => s.practice);
+  if (flagged && !step.practice) return;
+  _run.practice = createPracticePage();
 }
 
-/* 쉬움 모드에서 예약해 둔 '대신 그리기'를 지금 실행한다.
- *
- * ⚠ 왜 필요한가: 예약(AUTOPLAY_DELAY)만 믿으면 **빠르게 넘기는 사람은 그림을 못 받는다.**
- *   [다음]을 1초 안에 누르면 단계 전환이 예약을 지워 그 단계의 그림이 영영 안 그려졌고,
- *   결과가 '지형과 원만 있는 빈 그림'이었다(실제 발생). 쉬움의 약속은 "앱이 대신 그린다"
- *   이므로 그림이 사용자의 클릭 속도에 좌우되면 안 된다 → 단계를 떠나기 전에 반드시 비운다. */
-function flushAutoPlay() {
-  if (!_run || !_run.pendingAuto) return;
-  const { auto } = _run.pendingAuto;
-  _run.pendingAuto = null;
-  clearTimeout(_run.autoPlayTimer);
-  try { runAuto(auto); } catch (err) { console.warn("[튜토리얼] 쉬움 모드 자동 실행 실패", err); }
+/* 이 단계의 '얼마나 가까운가'(0~1). wait.progress 를 준 단계만 값이 나온다.
+ * 1 = 오차 범위 안(통과), 0 = 아직 멀다. 없는 단계는 null(근접 표시를 하지 않는다). */
+function stepProgress(step) {
+  if (!step || !step.wait || typeof step.wait.progress !== "function") return null;
+  try {
+    const v = step.wait.progress(_run.ctx);
+    return typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null;
+  } catch (_) { return null; }
 }
 
 function showStep(attempt = 0) {
@@ -765,17 +757,21 @@ function showStep(attempt = 0) {
   if (attempt === 0 && _run.shown) {
     _run.transitioning = true;
     stopDemo();
-    clearTimeout(_run.autoPlayTimer);   // 예약된 '대신 그리기'가 다음 단계로 새지 않게
     ui.coach.classList.remove("is-entering");
     ui.coach.classList.add("is-leaving");
     setTimeout(() => showStep(0.5), T_EXIT);   // attempt 0.5 = 퇴장 완료 후 재진입 표식
     return;
   }
 
-  // 이미 지나온 단계인가 — [이전]으로 되돌아온 경우.
-  const revisiting = _run.index < _run.maxIndex;
+  /* 한 번 들어와 봤는가 / 실제로 통과했는가 (둘은 다르다 — _run 주석 참고).
+   * ⚠ '들어와 봤는가'는 **이 방문이 시작될 때의 값**을 붙들어 둔다. showStep 은 대상을
+   *   못 찾으면 120ms 간격으로 다시 도는데, 그때마다 새로 읽으면 두 번째 바퀴부터
+   *   '이미 본 단계'가 되어 [자동으로 하기] 단추가 사라진다. */
+  if (attempt <= 0.5) _run.entrySeen = !!_run.seen[_run.index];
+  const seen = !!_run.entrySeen;
+  const cleared = !!_run.done[_run.index];
 
-  const easy = _run.level === "easy";
+  ensurePractice(step);
 
   // step.compare = 기출 도판 id. 내용(코스)은 "무엇과 비교하는가"만 적고, 창을 띄우는
   // 일은 연출(엔진)이 한다 — 그래서 tutorial-courses.js 가 이 파일을 되짚지 않는다.
@@ -795,29 +791,11 @@ function showStep(attempt = 0) {
       }
       : null);
 
-  // 난이도 '쉬움': 실습을 요구하지 않는다. 이 단계에서 할 일(step.auto)을 앱이 잠깐 뒤
-  // 대신 해 보여 주고, 사용자는 [다음]으로 흐름만 따라간다. auto.stay 가 붙은 것
-  // (비교 창처럼 스스로 열어 보는 것)은 자동으로 열지 않는다 — 큰 창이 갑자기 뜨면 놀란다.
-  const autoPlay = easy && !!stepAuto && !stepAuto.stay && !revisiting;
-
   // 단계 진입 준비는 처음 들어올 때 딱 한 번만(되돌아왔을 때 다시 돌리면 안 된다).
-  if (attempt <= 0.5 && !revisiting) {
+  if (attempt <= 0.5 && !seen) {
+    _run.seen[_run.index] = true;
     if (typeof step.action === "function") {
       try { step.action(_run.ctx); } catch (err) { console.warn("[튜토리얼] 준비 단계 실패", err); }
-    }
-    // ⚠ 자동 실행 예약은 '단계 진입' 시점에 딱 한 번 걸어야 한다. showStep 은 대상을
-    //   못 찾으면 120ms 간격으로 최대 12번 다시 도는데, 그 안에서 다시 걸면 예약이
-    //   매번 뒤로 밀려 끝내 실행되지 않는다(실제로 그랬다: 쉬움인데 아무것도 안 그려짐).
-    clearTimeout(_run.autoPlayTimer);
-    _run.pendingAuto = null;
-    if (autoPlay) {
-      // 예약해 두고, 시간이 되면 그린다. 그 전에 넘어가면 goNext 가 먼저 비운다(flushAutoPlay).
-      _run.pendingAuto = { step, auto: stepAuto };
-      _run.autoPlayTimer = setTimeout(() => {
-        if (!_run || _run.course.steps[_run.index] !== step) return;   // 그새 단계가 바뀌면 취소
-        flushAutoPlay();
-        if (_run && !_run.ui.doChip.hidden) _run.ui.doChip.textContent = "이렇게 만들어집니다";
-      }, AUTOPLAY_DELAY);
     }
   }
 
@@ -834,8 +812,21 @@ function showStep(attempt = 0) {
   }
   _run.nodes = nodes;
 
-  ui.course.textContent = course.title;
-  ui.count.textContent = `${_run.index + 1} / ${course.steps.length}`;
+  /* 진행 표시 — 챕터가 있으면 챕터 안의 번호로 센다.
+   * 코스를 합치면 단계가 스무 개 가까이 되는데, 첫 화면에 '1 / 19'가 뜨면 그 숫자만으로
+   * 이탈한다. 사람이 체감하는 덩어리(준비 / 기초 조작)로 끊어 세고, 전체 진행은
+   * 숫자가 아니라 얇은 막대로만 보여 준다. */
+  const chapter = step.chapter || "";
+  const sameChapter = course.steps.filter((s) => (s.chapter || "") === chapter);
+  const inChapter = sameChapter.indexOf(step) + 1;
+  // 챕터 이름이 코스 제목과 같으면 겹쳐 적지 않는다("기초 조작 · 기초 조작" 방지).
+  ui.course.textContent = chapter && chapter !== course.title
+    ? `${course.title} · ${chapter}`
+    : course.title;
+  ui.count.textContent = chapter
+    ? `${inChapter} / ${sameChapter.length}`
+    : `${_run.index + 1} / ${course.steps.length}`;
+  if (ui.bar) ui.bar.style.width = `${((_run.index + 1) / course.steps.length) * 100}%`;
   ui.title.textContent = step.title || "";
 
   ui.text.textContent = "";
@@ -854,7 +845,7 @@ function showStep(attempt = 0) {
   // 되돌아온 단계에서는 자동 단추를 감춘다(같은 것이 두 번 만들어지면 안 되므로).
   // 단 auto.stay 는 '열어 보는' 단추라 몇 번 열어도 무해하다 — 비교 창을 닫고
   // [이전]으로 돌아왔을 때 다시 열 수 없으면 비교 자체를 못 하게 된다.
-  const auto = stepAuto && (!revisiting || stepAuto.stay) && !autoPlay ? stepAuto : null;
+  const auto = stepAuto && (!seen || stepAuto.stay) ? stepAuto : null;
   ui.autoBtn.hidden = !auto;
   if (auto) {
     _run.autoStep = 0;
@@ -880,21 +871,28 @@ function showStep(attempt = 0) {
     ui.autoBtn.onclick = null;
   }
 
-  // 쉬움에서는 조건을 걸지 않는다 — 실습을 요구하지 않으므로 언제나 [다음]으로 나간다.
-  const waiting = !!step.wait && !revisiting && !easy;
-  ui.doChip.hidden = !waiting && !autoPlay;
-  ui.doChip.textContent = autoPlay
-    ? "앱이 대신 그려 드립니다 — 어떻게 되는지 보세요"
-    : ((step.wait && step.wait.hint) || "직접 해 보세요");
-  // allowNext: 판정이 애매해 갇힐 수 있는 단계에는 [다음]을 함께 남긴다.
-  // (예: "우주선만 남기고 지우기" — 남는 조각 수가 문항마다 달라 기준이 헐렁하다)
-  // auto.stay 는 '열어 보는' 단추라 단계 진행과 무관하다 — [다음]을 함께 남겨야 한다.
-  // (안 남기면 비교 창을 열지 않는 사람은 그 단계에서 갇힌다.)
-  ui.btnNext.hidden = (waiting && !step.allowNext) || (!!auto && !auto.stay);
-  ui.btnPrev.disabled = _run.index === 0;
-  ui.btnSkip.hidden = true;
+  /* 실습을 기다리는 단계인가. 이미 통과한 단계(done)는 다시 요구하지 않는다 —
+   * 건너뛴 단계는 done 이 아니므로 돌아오면 판정이 되살아난다. */
+  const waiting = !!step.wait && !cleared;
+  _run.waiting = waiting;
+  _run.near = "far";
+  ui.doChip.hidden = !waiting;
+  ui.doChip.classList.remove("is-hit");
+  ui.doChip.textContent = (step.wait && step.wait.hint) || "직접 해 보세요";
 
-  ui.btnNext.textContent = _run.index === course.steps.length - 1 ? "마치기" : "다음";
+  /* [다음]은 **언제나 보인다.**
+   * 예전에는 실습 단계에서 아예 숨기고 12초를 버텨야 [건너뛰기]가 나타났다.
+   * 그동안 처음 온 사람에게는 '멈춘 프로그램'이었다 — 나갈 문이 안 보이는 것이
+   * 튜토리얼에서 가장 큰 이탈 요인이다. 대신 상태로 구분한다:
+   *   · 아직 못 한 실습 단계  → 흐린 보조 단추(is-soft) + '건너뛰고 다음'
+   *   · 통과했거나 읽기 단계  → 진한 기본 단추 '다음'
+   * 판정이 헐렁한 단계에 붙이던 allowNext 는 이제 의미가 없다(항상 나갈 수 있으므로). */
+  const last = _run.index === course.steps.length - 1;
+  ui.btnNext.hidden = false;
+  ui.btnNext.classList.toggle("is-soft", waiting);
+  ui.btnNext.classList.toggle("tut-btn-primary", !waiting);
+  ui.btnNext.textContent = last ? "마치기" : (waiting ? "건너뛰고 다음" : "다음");
+  ui.btnPrev.disabled = _run.index === 0;
 
   if (waiting) bindWait(step);
   else unbindWait();
@@ -945,41 +943,73 @@ function bindWait(step) {
     const sel = step.wait.click;
     const handler = (e) => {
       const t = e.target;
-      if (t && t.closest && t.closest(sel)) {
-        // 앱 자신의 핸들러가 먼저 돌게 한 뒤 넘어간다(모달이 뜰 시간을 준다).
-        setTimeout(() => goNext(), 380);
-      }
+      if (t && t.closest && t.closest(sel)) { pass(); return; }
+      /* 엉뚱한 곳을 눌렀다 — 아무 반응이 없으면 '고장'으로 읽힌다.
+       * 짚어 준 자리를 한 번 흔들어 "여기가 아니라 저기"라고만 알려 준다.
+       * (흐림 덮개 위를 눌렀을 때만. 구멍 안이나 설명 창은 정상 조작이다.) */
+      if (t && t.closest && t.closest(".tut-dim")) nudge();
     };
     document.addEventListener("click", handler, true);
     _run.waitOff = () => document.removeEventListener("click", handler, true);
   }
-
-  // until 은 tick 에서 확인한다(checkUntil).
-  _run.stuckTimer = setTimeout(() => {
-    if (_run && _run.ui) _run.ui.btnSkip.hidden = false;
-  }, STUCK_MS);
+  // until·progress 는 tick 에서 확인한다(checkUntil).
 }
 
 function unbindWait() {
   if (!_run) return;
   if (_run.waitOff) { _run.waitOff(); _run.waitOff = null; }
-  if (_run.stuckTimer) { clearTimeout(_run.stuckTimer); _run.stuckTimer = null; }
+  if (_run.passTimer) { clearTimeout(_run.passTimer); _run.passTimer = null; }
+  _run.passing = false;
+}
+
+/* 짚어 준 자리를 한 번 흔든다 — "누를 곳은 여기입니다". */
+function nudge() {
+  if (!_run || !_run.ui) return;
+  const { halo, doChip } = _run.ui;
+  for (const el of [halo, doChip]) {
+    if (!el || el.hidden) continue;
+    el.classList.remove("is-nudge");
+    void el.offsetWidth;
+    el.classList.add("is-nudge");
+    setTimeout(() => el.classList.remove("is-nudge"), 520);
+  }
+}
+
+/* 통과 — 바로 넘기지 않고 '됐습니다'를 보여 준 뒤 넘어간다.
+ * 클릭 실습은 앱 자신의 핸들러(모달 열기 등)가 먼저 돌아야 하므로 이 대기가 그 몫도 겸한다. */
+function pass() {
+  if (!_run || _run.passing) return;
+  _run.passing = true;
+  _run.done[_run.index] = true;
+  _run.near = "hit";
+  const { doChip } = _run.ui;
+  if (doChip && !doChip.hidden) {
+    doChip.textContent = "✓ 됐습니다";
+    doChip.classList.add("is-hit");
+  }
+  _run.passTimer = setTimeout(() => {
+    if (!_run) return;
+    _run.passTimer = null;
+    goNext();
+  }, PASS_HOLD);
 }
 
 function checkUntil() {
-  if (!_run) return;
-  // 쉬움은 실습이 아니라 관람이다. 앱이 대신 그린 결과로 조건이 참이 되어 버리므로
-  // 여기서 넘기면 읽을 틈도 없이 화면이 앞질러 간다 — 넘기는 것은 사용자 몫으로 둔다.
-  if (_run.level === "easy") return;
-  if (_run.index < _run.maxIndex) return;   // 되돌아온 단계는 자동으로 넘기지 않는다
+  if (!_run || _run.passing) return;
+  const step = _run.course.steps[_run.index];
+  if (!step || !step.wait || !_run.waiting) return;
   // 마우스를 누르고 있는 동안에는 판정하지 않는다. 끄는 도중에도 상태는 계속 바뀌므로,
   // 손을 떼기 전에 통과시키면 "놓기도 전에 넘어가 버린다"(사용자 지적).
   if (isDragging()) return;
-  const step = _run.course.steps[_run.index];
-  if (!step || !step.wait || typeof step.wait.until !== "function") return;
+
+  // 근접 표시 — 값이 있는 단계만. 허용치 안이면 hit, 허용치의 2배 안이면 close.
+  const p = stepProgress(step);
+  if (p != null) _run.near = p >= 1 ? "hit" : (p > 0 ? "close" : "far");
+
+  if (typeof step.wait.until !== "function") return;
   let done = false;
   try { done = !!step.wait.until(_run.ctx); } catch (_) { done = false; }
-  if (done) goNext();
+  if (done) pass();
 }
 
 function reposition(force = false) {
@@ -1012,17 +1042,14 @@ function reposition(force = false) {
 
 function goNext() {
   if (!_run) return;
-  flushAutoPlay();   // 쉬움: 이 단계 그림을 빠뜨린 채 넘어가지 않는다
   unbindWait();
   if (_run.index >= _run.course.steps.length - 1) { finishCourse(); return; }
   _run.index += 1;
-  _run.maxIndex = Math.max(_run.maxIndex, _run.index);
   showStep();
 }
 
 function goPrev() {
   if (!_run || _run.index === 0) return;
-  flushAutoPlay();   // 되돌아가도 이 단계 그림은 남아 있어야 한다(구멍 난 그림 방지)
   unbindWait();
   _run.index -= 1;
   showStep();
@@ -1053,8 +1080,6 @@ function teardown() {
   unbindWait();
   stopDemo();
   closeCompare();
-  clearTimeout(_run.autoPlayTimer);
-  _run.pendingAuto = null;   // 그만둔 것이므로 남은 예약은 그리지 않는다
   if (_run.tick) clearInterval(_run.tick);
   if (_run.onResize) {
     window.removeEventListener("resize", _run.onResize);
@@ -1097,16 +1122,6 @@ export function openPicker({ justFinished = null } = {}) {
     <div class="tut-picker" role="dialog" aria-modal="true" aria-labelledby="tut-picker-title">
       <h2 class="tut-picker-title" id="tut-picker-title">튜토리얼</h2>
       ${head}
-      <div class="tut-level" role="radiogroup" aria-label="난이도">
-        <button type="button" class="tut-level-btn" role="radio" data-level="easy">
-          <span class="tut-level-name">쉬움</span>
-          <span class="tut-level-desc">앱이 대신 그립니다. 만들어지는 과정과 흐름을 눈으로 따라갑니다</span>
-        </button>
-        <button type="button" class="tut-level-btn" role="radio" data-level="hard">
-          <span class="tut-level-name">어려움</span>
-          <span class="tut-level-desc">안내를 보며 직접 만듭니다. 끝에서 기출 원본과 나란히 비교합니다</span>
-        </button>
-      </div>
       <div class="tut-picker-cols">
         <div class="tut-track-nav" role="tablist" aria-label="튜토리얼 단계"></div>
         <div class="tut-picker-pane"></div>
@@ -1120,7 +1135,7 @@ export function openPicker({ justFinished = null } = {}) {
   // 왼쪽에 단계(기본·심화·실습)를 세우고, 고른 단계의 코스만 오른쪽에 펼친다.
   const TRACKS = [
     { name: "기본", lead: "먼저 이것부터", note: "차례대로 하시면 됩니다",
-      pick: (c) => ["getting-ready", "basics", "incline-figure", "exam-search"].includes(c.id) },
+      pick: (c) => ["basics", "incline-figure", "exam-search"].includes(c.id) },
     { name: "심화", lead: "도구 넓히기", note: "기본을 마친 뒤에",
       pick: (c) => ["trim-exam", "align-space", "terrain"].includes(c.id) },
     { name: "실습 과제", lead: "그림 한 장을 끝까지", note: "골라서 하셔도 됩니다",
@@ -1199,22 +1214,6 @@ export function openPicker({ justFinished = null } = {}) {
 
   showTrack(cur);
 
-  // 난이도 — 고른 값은 기억한다. 코스를 시작하는 순간의 값이 그 코스에 적용된다.
-  const levelBtns = [...overlay.querySelectorAll(".tut-level-btn")];
-  const paintLevel = () => {
-    const cur = readLevel();
-    levelBtns.forEach((b) => {
-      const on = b.dataset.level === cur;
-      b.classList.toggle("is-active", on);
-      b.setAttribute("aria-checked", on ? "true" : "false");
-    });
-  };
-  levelBtns.forEach((b) => b.addEventListener("click", () => {
-    writeJSON(K_LEVEL, b.dataset.level);
-    paintLevel();
-  }));
-  paintLevel();
-
   overlay.querySelector(".tut-picker-close").addEventListener("click", closePicker);
   overlay.addEventListener("click", (e) => { if (e.target === overlay) closePicker(); });
 
@@ -1230,7 +1229,7 @@ export function closePicker() {
 }
 
 /* ===== 원본과 비교하기 =====
- * 어려움 난이도의 마지막 단계용. 왼쪽에 기출 원본 도판(assets/exam-library), 오른쪽에
+ * 코스 마지막 단계용. 왼쪽에 기출 원본 도판(assets/exam-library), 오른쪽에
  * 지금 그린 것을 나란히 놓는다. 내 그림은 내보내기와 똑같은 경로(buildExportSvg)로
  * 뽑는다 — 편집 화면의 보조선·핸들이 섞이면 비교가 안 되기 때문이다. */
 let _compare = null;
@@ -1318,7 +1317,7 @@ function maybeShowBanner() {
   const close = () => bar.remove();
   bar.querySelector(".tut-banner-yes").addEventListener("click", () => {
     close();
-    startCourse("getting-ready");   // 화면부터 눈에 맞추고 시작한다
+    startCourse("basics");   // '준비' 챕터에서 화면부터 눈에 맞추고 시작한다
   });
   // 건너뛰어도 "나중에 어디서 여는지"는 알려 주고 사라진다 —
   // 안 그러면 튜토리얼이 있다는 사실 자체를 모른 채 쓰게 된다(사용자 요구).
@@ -1361,6 +1360,7 @@ function pointAtTutorialButton() {
 
 export function initTutorial() {
   removeKey(K_RESUME_LEGACY);   // 예전 버전이 남긴 이어하기 기록을 치운다
+  removeKey(K_LEVEL_LEGACY);    // 폐지한 난이도 선택의 잔재
 
   const btn = document.getElementById("tutorial-btn");
   if (btn) btn.addEventListener("click", () => {
@@ -1384,8 +1384,10 @@ export function initTutorial() {
    *   그래서 아무 때나 가로채면 그리기 조작을 망친다. 다음 경우에만 넘긴다:
    *     · 튜토리얼이 돌고 있고, 비교 창·앱 모달이 열려 있지 않다
    *     · 글자를 입력하는 중이 아니다
-   *     · 지금 [다음]이 실제로 보인다 = 실습을 기다리는 단계가 아니다
-   *   실습 단계에서는 손으로 그려야 하므로 스페이스를 앱에 그대로 넘긴다. */
+   *     · 지금 실습을 기다리는 단계가 아니다
+   *   실습 단계에서는 손으로 그려야 하므로 스페이스를 앱에 그대로 넘긴다.
+   *   ⚠ 예전에는 '[다음]이 보이는가'로 판단했는데, 이제 [다음]은 언제나 보인다 —
+   *     그 조건을 그대로 두면 실습 중에 스페이스가 가로채여 화면 끌기가 죽는다. */
   document.addEventListener("keydown", (e) => {
     if (e.code !== "Space" && e.key !== " ") return;
     if (!_run) return;
@@ -1395,8 +1397,7 @@ export function initTutorial() {
     if (document.querySelector(".modal-overlay:not([hidden])")) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    const next = _run.ui && _run.ui.btnNext;
-    if (!next || next.hidden) return;   // 실습 대기 단계 — 앱에 양보한다
+    if (_run.waiting) return;           // 실습 대기 단계 — 앱에 양보한다
     e.preventDefault();
     goNext();
   });

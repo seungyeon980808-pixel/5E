@@ -7,13 +7,17 @@
  *   practice: true 면 시작할 때 '따라하기 연습' 페이지를 만들고 끝나면 정리를 묻는다.
  *   next:     다 끝냈을 때 이어서 추천할 코스 id.
  *
- * 단계 = { target, title, text, action, wait }
+ * 단계 = { target, title, text, action, wait, chapter, practice }
  *   target: () => 선택자(또는 요소) 하나 또는 배열. 함수인 이유는 tutorial.js 주석 참고.
  *           눌러야 할 곳과 결과가 보이는 곳이 떨어져 있으면 배열로 둘 다 짚는다.
  *   action: 이 단계로 들어올 때 한 번 실행(개수 기록 등). ctx 를 받아 단계끼리 값을 넘긴다.
  *   wait:   { click: 선택자 }  — 그 자리를 실제로 눌러야 넘어간다
  *           { until: (ctx)=>bool } — 조건이 참이 될 때까지 기다린다
+ *           { progress: (ctx)=>0~1 } — '얼마나 가까운가'. 안내선이 그에 맞춰 색을 바꾼다.
+ *             1이면 오차 범위 안(통과). 없으면 근접 표시를 하지 않는다.
  *           hint 로 안내 문구를 바꿀 수 있다.
+ *   chapter: 진행 표시를 끊어 세는 덩어리 이름("준비" / "기초 조작").
+ *   practice: 이 단계에 들어올 때 연습 페이지를 만든다(캔버스를 처음 쓰는 단계 하나에만).
  *
  * 문체: 존댓말, 짧은 단락, 글머리표는 '·'. 표는 쓰지 않는다.
  */
@@ -101,6 +105,19 @@ function newText(x, y, text, size = DEFAULT_TEXT_SIZE_MM) {
 const objectCount = () => objects().length;
 const countOf = (type) => objects().filter((o) => o.type === type).length;
 
+/* ===== 통과 오차 규격 =====
+ * 예전에는 단계마다 9mm·1.35배·8°처럼 값이 제각각이라 기준이 없었다. 아트보드 기본
+ * 90×60mm 를 기준으로 한곳에 모은다. "딱 맞출 필요는 없다"는 약속을 지키는 값이다.
+ *   pos  8mm  — 짧은 변 60mm 의 약 13%. 눈대중으로 끌어다 놓으면 들어오는 거리
+ *   size ±25% — 목표 치수 대비. 예전엔 하한만 있어 두 배로 키워도 통과했다
+ *   rot  8°   — '비스듬해졌다'가 눈에 보이기 시작하는 각
+ * 이산 속성(선 굵기·화살표 종류)은 값이 바뀌었는지만 본다 — 오차라는 개념이 없다. */
+const TOL = { pos: 8, size: 0.25, rot: 8 };
+
+/* '얼마나 가까운가'를 0~1 로. 허용치 안이면 1, 허용치의 2배 밖이면 0.
+ * 그 사이(0~1)가 안내선이 파랗게 굵어지는 구간이다 — 가까워지는 것이 손에 잡히게. */
+const nearBy = (d, tol) => Math.max(0, Math.min(1, (2 * tol - d) / tol));
+
 /* ===== 빗면 그림의 도면 (world mm) =====
  * 아트보드 기본값 90×60 → x −45..45, y −30..30 (y 는 아래로 증가).
  * 안내선과 완성 미리보기가 같은 값을 쓰도록 한곳에 모아 둔다.
@@ -162,33 +179,33 @@ function distToSegment(p, a, b) {
   return Math.hypot(dx, dy);
 }
 
-/* ===== 코스 0: 시작 준비 =====
+/* ===== '준비' 챕터 (예전의 '시작 준비' 코스) =====
  * 무엇을 배우기 전에 화면부터 눈에 맞춘다. 글씨가 깨알같거나 헐렁한 채로 화면 소개를
  * 받으면 그 소개가 헛돌기 때문이다.
  *
- * 이 코스만의 특징:
- *   · 캔버스를 안 쓴다 → 연습 페이지를 만들지 않는다(practice: false).
+ * 별도 코스였던 것을 '기초 조작' 앞에 붙였다 — 두 코스로 나눠 두면 준비만 하고 끝난 줄
+ * 알고 나가거나, 목록으로 돌아갔다가 다시 고르는 군더더기가 생겼다(2분짜리 코스는 코스가
+ * 아니라 도입부다).
+ *
+ * 이 챕터만의 특징:
+ *   · 캔버스를 안 쓴다 → 연습 페이지는 다음 챕터 첫 단계(step.practice)에서 만든다.
  *   · 짚는 대상이 전부 화면 UI(버튼·메뉴 항목·슬라이더) → 커서 시연도 화면 좌표(at/onEl)를 쓴다.
  *   · 드롭다운·모달처럼 단계 도중에 생기는 대상이라, target 은 매 틱 다시 찾힌다(tutorial.js).
  */
 
-const GETTING_READY = {
-  id: "getting-ready",
-  title: "시작 준비",
-  desc: "내 눈에 맞는 화면부터 — 2분",
-  minutes: 2,
-  practice: false,
-  next: ["basics"],
-  steps: [
+const READY_STEPS = [
     {
+      chapter: "준비",
       title: "반갑습니다",
       text:
         "5E는 시험지·학습지에 넣을 그림을 만드는 도구입니다.\n" +
         "배우기 전에 화면부터 눈에 맞추겠습니다. 30초면 됩니다.\n\n" +
         "· 글씨가 작거나 크면 무엇을 배워도 불편합니다\n" +
+        "· 해내지 못해도 [다음]으로 언제든 넘어갑니다 — 막히는 자리는 없습니다\n" +
         "· 언제든 [그만]으로 나가고, [이전]으로 되돌아올 수 있습니다",
     },
     {
+      chapter: "준비",
       target: () => "#settings-menu-btn",
       title: "위쪽 '설정'을 눌러 주세요",
       text:
@@ -200,6 +217,7 @@ const GETTING_READY = {
     {
       // 드롭다운이 열린 뒤에는 '환경 설정' 항목 하나만 짚는다. 설정 버튼까지 같이
       // 감싸면 상자가 메뉴 전체로 커져서 어디를 누를지 알 수 없다(사용자 지적).
+      chapter: "준비",
       target: () => "#open-screen",
       title: "'환경 설정'을 눌러 주세요",
       text:
@@ -209,6 +227,7 @@ const GETTING_READY = {
       wait: { click: "#open-screen", hint: "환경 설정을 눌러 주세요" },
     },
     {
+      chapter: "준비",
       target: () => ["#pref-zoom", "#pref-zoom-val"],
       title: "슬라이더를 움직여 눈에 맞추세요",
       text:
@@ -218,7 +237,7 @@ const GETTING_READY = {
       demo: () => ({ kind: "drag", onEl: "#pref-zoom", from: [0.30, 0.5], to: [0.72, 0.5] }),
       action: (ctx) => {
         // 얼마나 움직였는지 재려면 시작값이 필요하다. 되돌아왔을 때는 다시 잡지 않는다
-        // (tutorial.js 가 revisiting 이면 action 을 건너뛴다).
+        // (tutorial.js 가 이미 본 단계면 action 을 건너뛴다).
         const el = document.getElementById("pref-zoom");
         ctx.zoom0 = el ? Number(el.value) : null;
       },
@@ -232,6 +251,7 @@ const GETTING_READY = {
       },
     },
     {
+      chapter: "준비",
       target: () => "#pref-close",
       title: "이제 시작할 준비가 됐습니다",
       text:
@@ -241,10 +261,9 @@ const GETTING_READY = {
       demo: () => ({ kind: "clicks", at: ["#pref-close"] }),
       wait: { click: "#pref-close", hint: "닫기를 눌러 주세요" },
     },
-  ],
-};
+];
 
-/* ===== 코스 1: 기초 조작 =====
+/* ===== 코스 1: 기초 조작 (준비 + 조작) =====
  * 그리기를 시키지 않는다. 사각형·직선을 미리 놓아 두고 **다루는 법**부터 익힌다
  * (사용자 요구) — 고르고·옮기고·크기 바꾸고·돌리고·다듬는 리듬이 5E의 전부이기 때문.
  *
@@ -276,22 +295,69 @@ const rectObj = () => objects().find((o) => o.type === "rect");
 const lineObj = () => objects().find((o) => o.type === "line");
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 
+/* 코스 1의 '얼마나 가까운가'(0~1). 오차 규격은 TOL 한곳에서만 정한다.
+ * 통과 판정(until)도 이 값이 1인지로만 보게 해서, 기준이 두 군데로 갈라지지 않게 한다. */
+const P = {
+  // ① 옮기기 — 목표 자리 중심까지의 거리
+  move: () => {
+    const r = rectObj();
+    if (!r) return 0;
+    const cx = (B.rectTarget[0][0] + B.rectTarget[2][0]) / 2;
+    const cy = (B.rectTarget[0][1] + B.rectTarget[2][1]) / 2;
+    return nearBy(dist([r.x + r.w / 2, r.y + r.h / 2], [cx, cy]), TOL.pos);
+  },
+  // ② 크기 — 목표 가로폭 대비 ±25%. 예전엔 하한만 봐서 두 배로 키워도 통과했다.
+  resize: () => {
+    const r = rectObj();
+    if (!r) return 0;
+    const goal = B.rectBig[2][0] - B.rectBig[0][0];
+    return nearBy(Math.abs(r.w - goal), goal * TOL.size);
+  },
+  // ③ 회전 — 0도에서 얼마나 떨어졌나(양쪽 방향 모두 인정)
+  rotate: () => {
+    const r = rectObj();
+    if (!r) return 0;
+    const deg = Math.abs(((r.rotation || 0) % 360 + 360) % 360);
+    return Math.min(1, Math.min(deg, 360 - deg) / TOL.rot);
+  },
+  // ⑤ 직선 끝점 — 목표 자리까지의 거리
+  lineEnd: () => {
+    const l = lineObj();
+    if (!l || !l.p2) return 0;
+    return nearBy(dist([l.p2.x, l.p2.y], B.lineEnd), TOL.pos);
+  },
+  // ⑦ 화살표 겨냥 — 지금 겨냥 중인 자리까지의 거리
+  aim: (ctx) => {
+    const l = lineObj();
+    if (!l || !l.p2) return 0;
+    const i = Math.min(ctx.aimHit || 0, B.aimSpots.length - 1);
+    return nearBy(dist([l.p2.x, l.p2.y], B.aimSpots[i]), TOL.pos);
+  },
+};
+
 const BASICS = {
   id: "basics",
   title: "기초 조작",
-  desc: "놓인 것을 고르고·옮기고·다듬기 — 그리기는 다음에",
-  minutes: 8,
+  desc: "화면 맞추기부터 고르고·옮기고·다듬기까지 — 10분",
+  minutes: 10,
   practice: true,
   next: ["incline-figure"],
   steps: [
+    ...READY_STEPS,
     {
-      title: "화면은 다섯 구역입니다",
+      chapter: "기초 조작",
+      // 연습 페이지는 여기서 만든다 — 준비 챕터(설정 창)를 만지는 동안 빈 페이지가
+      // 이미 생겨 있으면 어리둥절하다. 캔버스를 처음 쓰는 단계가 여기다.
+      practice: true,
+      title: "준비 끝 — 이제 화면을 익힙니다",
       text:
+        "화면은 다섯 구역입니다.\n" +
         "왼쪽은 도구, 가운데는 그림, 오른쪽은 속성, 아래는 페이지, 위는 파일과 설정.\n" +
         "지금부터 하나씩 짚어 드립니다.\n\n" +
         "· 연습용 페이지를 따로 만들어 두었습니다 — 원래 작업은 건드리지 않습니다",
     },
     {
+      chapter: "기초 조작",
       target: () => "#panel-left",
       title: "왼쪽 — 도구 서랍",
       text:
@@ -303,6 +369,7 @@ const BASICS = {
         "맨 위 과목 상자를 바꾸면 목록이 통째로 바뀝니다.",
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "가운데 — 시험지에 들어갈 딱 그 영역",
       text:
@@ -312,6 +379,7 @@ const BASICS = {
         "· 지금 휠을 굴려 보셔도 됩니다 — 다음 단계에서 되돌리는 법을 배웁니다",
     },
     {
+      chapter: "기초 조작",
       target: () => "#center-view-btn",
       title: "헤맸을 땐 — 화면 고정",
       text:
@@ -322,6 +390,7 @@ const BASICS = {
       wait: { click: "#center-view-btn", hint: "과녁 단추를 눌러 주세요" },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "연습감을 놓아 드릴게요",
       text:
@@ -336,11 +405,13 @@ const BASICS = {
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "① 골라서 옮기기",
       text:
         "지금은 선택 도구(V) 상태입니다. 사각형을 누른 채 점선 자리까지 끌어 보세요.\n\n" +
-        "· 누르면 골라지고, 그대로 끌면 옮겨집니다",
+        "· 누르면 골라지고, 그대로 끌면 옮겨집니다\n" +
+        "· 가까워지면 점선이 진해지고, 들어오면 초록으로 굳습니다",
       guide: () => ({ pts: B.rectTarget, close: true, note: "여기로", noteDy: -10 }),
       demo: () => ({
         kind: "drag",
@@ -348,17 +419,13 @@ const BASICS = {
         to: [(B.rectTarget[0][0] + B.rectTarget[2][0]) / 2, (B.rectTarget[0][1] + B.rectTarget[2][1]) / 2],
       }),
       wait: {
-        until: () => {
-          const r = rectObj();
-          if (!r) return false;
-          const cx = (B.rectTarget[0][0] + B.rectTarget[2][0]) / 2;
-          const cy = (B.rectTarget[0][1] + B.rectTarget[2][1]) / 2;
-          return dist([r.x + r.w / 2, r.y + r.h / 2], [cx, cy]) <= 9;
-        },
+        progress: P.move,
+        until: () => P.move() >= 1,
         hint: "사각형을 점선 자리로 끌어 주세요",
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "② 크기 바꾸기",
       text:
@@ -373,13 +440,15 @@ const BASICS = {
         to: [B.rectBig[2][0], B.rectBig[2][1]],             // 목표 오른쪽 아래 모서리
       }),
       wait: {
-        until: () => { const r = rectObj(); return !!r && r.w >= B.rect.w * 1.35; },
+        progress: P.resize,
+        until: () => P.resize() >= 1,
         hint: "오른쪽 아래 손잡이를 끌어 키워 주세요",
       },
     },
     {
       // 도구 선택과 실제 회전을 한 단계에 넣으면, 상자가 '버튼 + 캔버스'를 함께
       // 감싸느라 커져서 정작 버튼이 강조되지 않는다(사용자 지적) → 두 단계로 나눈다.
+      chapter: "기초 조작",
       target: () => '[data-tool="rotate"]',
       title: "③ 회전 도구를 눌러 주세요",
       text:
@@ -389,6 +458,7 @@ const BASICS = {
       wait: { click: '[data-tool="rotate"]', hint: "회전 도구를 눌러 주세요" },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "사각형 안쪽을 잡고 돌리세요",
       text:
@@ -411,16 +481,13 @@ const BASICS = {
         return { kind: "drag", from: [cx + r.w * 0.3, cy], to: [cx + r.w * 0.25, cy + r.h * 0.45] };
       },
       wait: {
-        until: () => {
-          const r = rectObj();
-          if (!r) return false;
-          const deg = Math.abs(((r.rotation || 0) % 360 + 360) % 360);
-          return deg >= 8 && deg <= 352;
-        },
+        progress: P.rotate,
+        until: () => P.rotate() >= 1,
         hint: "사각형을 끌어 돌려 주세요",
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#panel-right",
       title: "④ 오른쪽에서 다듬기",
       text:
@@ -433,6 +500,7 @@ const BASICS = {
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "⑤ 직선은 양 끝의 점을 잡습니다",
       text:
@@ -453,15 +521,13 @@ const BASICS = {
         return { kind: "drag", from, to: B.lineEnd };
       },
       wait: {
-        until: () => {
-          const l = lineObj();
-          if (!l || !l.p2) return false;
-          return dist([l.p2.x, l.p2.y], B.lineEnd) <= 9;
-        },
+        progress: P.lineEnd,
+        until: () => P.lineEnd() >= 1,
         hint: "오른쪽 끝 손잡이를 점선 자리로 끌어 주세요",
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#panel-right",
       title: "⑥ 화살표 달기",
       text:
@@ -474,6 +540,7 @@ const BASICS = {
       },
     },
     {
+      chapter: "기초 조작",
       target: () => "#canvas",
       title: "⑦ 화살표 끝을 여기저기 대 보세요",
       text:
@@ -499,19 +566,19 @@ const BASICS = {
         return { kind: "drag", from, to: B.aimSpots[i] };
       },
       wait: {
+        progress: P.aim,
         // 목표 자리에 닿을 때마다 한 칸씩 올라가고, 세 번을 채우면 통과한다.
         until: (ctx) => {
-          const l = lineObj();
-          if (!l || !l.p2) return false;
           const i = ctx.aimHit || 0;
           if (i >= B.aimSpots.length) return true;
-          if (dist([l.p2.x, l.p2.y], B.aimSpots[i]) <= 8) ctx.aimHit = i + 1;
+          if (P.aim(ctx) >= 1) ctx.aimHit = i + 1;
           return (ctx.aimHit || 0) >= B.aimSpots.length;
         },
         hint: "화살표 끝을 ◎ 자리로 끌어 주세요 (3회)",
       },
     },
     {
+      chapter: "기초 조작",
       title: "완성되었습니다",
       text:
         "고르고 → 끌고 → 오른쪽에서 다듬는다. 5E에서 하는 일은 결국 이 리듬입니다.\n\n" +
@@ -1788,8 +1855,8 @@ const TASKS = [
  * 다른 점 셋:
  *   ① 목표가 실제 기출 도판이다 — `compare` 로 원본을 나란히 띄운다
  *   ② 뼈대 → 이름표 → 치수 → 마감 4국면을 모두 지난다 (치수선·점선·채움 포함)
- *   ③ 난이도 '쉬움'이면 각 단계의 auto 가 자동 실행돼 만들어지는 과정만 보게 된다
- *      (tutorial.js showStep 의 autoPlay). 그래서 **모든 제작 단계에 auto 가 있어야 한다.**
+ *   ③ 모든 제작 단계에 auto([자동으로 하기])가 있다 — 손이 많이 가는 일을 대신 해 주는
+ *      단추다. (예전의 난이도 '쉬움'이 이걸 자동 실행했으나 그 모드는 폐지했다.)
  *
  * ⚠ 좌표는 머리로 짜지 않았다. mcp-5e 로 실제 앱에 그려 놓고 export_image 로 눈으로
  *   보며 고친 결과를 그대로 옮겼다(2026-07-28). 손으로 어림한 앞 판은 글자가 지형선을
@@ -2330,7 +2397,8 @@ const EXAM_TASK_INCLINE = {
 
 export const COURSES = [
   // 기본 트랙 — 모두가 거치는 순서
-  GETTING_READY, BASICS, INCLINE_FIGURE, EXAM_SEARCH,
+  // ('시작 준비'는 코스에서 빠지고 BASICS 의 '준비' 챕터가 되었다 — READY_STEPS)
+  BASICS, INCLINE_FIGURE, EXAM_SEARCH,
   // 심화 트랙 — 도구 확장
   TRIM_EXAM, ALIGN_SPACE, TERRAIN_COURSE,
   // 실습 과제 — 시범 과제(P0)를 맨 위에 두어 기존 P1~P10 과 나란히 견줄 수 있게 한다.

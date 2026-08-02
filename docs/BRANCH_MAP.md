@@ -21,6 +21,7 @@ origin에 올린 뒤, 역할이 끝난 브랜치·워크트리를 정리했다.
 | `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages) · 기본 작업 폴더 | ✅ origin 동기 |
 | `branches/5E_ai_dev` | `feat/ai-assist` | 8250 | AI 챗봇(Cloudflare Worker 프록시) — 베타, 보류 | ⏸ main에 +2커밋, origin에는 있음 |
 | `branches/5E_solid3d_dev` | `feat/solid3d` | 8260 | 입체(경사 투영) 도구 — **2026-07-26 main에 병합 완료** | ✅ main과 동일(+0) · 지워도 된다 |
+| `branches/5E_tutorial_dev` | `fix/tutorial_detail` | 8270 | 튜토리얼 디테일 개편(쉬움 모드 폐지·단일 흐름) | 🚧 작업 중 (2026-08-02~) |
 
 **워크트리는 3개다.** 여기 없는 폴더는 없는 게 맞다.
 

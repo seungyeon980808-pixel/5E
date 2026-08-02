@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "tutorial-dev",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8270"],
+      "port": 8270
+    },
+    {
       "name": "examimg-dev",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8003"],
