@@ -40,6 +40,13 @@ const TARGET_PATH_PROP = {
   type: "string",
   description: "대상 .json 파일의 절대경로. **생략하면 지금 열려 있는 5E 화면에 바로 그린다**(기본).",
 };
+/* 묶음 — AI 는 초안까지만 그리고 위치 조정은 사람이 한다. 낱개로 넘기면 검전기 하나를
+ * 옮기는 데 16개를 골라야 해서 편집이 막힌다. 한 번에 만든 한 벌은 묶어서 넘긴다. */
+const GROUP_PROP = {
+  type: "boolean",
+  description: "만든 것들을 한 덩어리로 묶을지. 통째로 옮기기 편해진다(앱에서 해제 가능). " +
+    "낱개로 만지고 싶으면 false.",
+};
 const PAGE_PROP = {
   description: "페이지 인덱스(0부터) 또는 이름/id. 생략하면 활성 페이지. " +
     "앱에 그릴 때도 동작한다 — 없는 페이지면 그 이름/번호로 새 탭을 만들어 옮긴 뒤 그린다. " +
@@ -87,7 +94,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         objects: {
           type: "array",
           description: "추가할 객체 배열. 각 원소는 최소한 type과 기하 필드를 가져야 한다",
@@ -114,7 +121,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         box: { ...BOX, description: "회로 사각형의 좌상단과 크기(mm). wires 를 쓰면 필요 없다" },
         wires: {
           type: "array",
@@ -177,7 +184,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "평면의 중심 좌표(mm)" },
         plane: {
           type: "object",
@@ -288,7 +295,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         part: { type: "string", description: "부품 id (예: hand_grip, hand_press). 생략하면 목록만 돌려준다" },
         at: { ...XY, description: "좌상단 좌표(mm)" },
         gripAt: {
@@ -325,7 +332,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "스탠드 받침 바닥의 가운데 좌표(mm)" },
         stand: { ...BOX, description: "스탠드 상자를 직접 줄 때(생략하면 at 기준 18×34)" },
         hang: {
@@ -367,7 +374,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         from: { ...XY, description: "재기 시작하는 기준점(그림 위 실제 점). [x,y] 배열도 된다" },
         to: { ...XY, description: "재기 끝나는 기준점" },
         label: { type: "string", description: "치수 라벨(기본 \"d\"). 첨자 가능: d_1, 2t_0" },
@@ -428,7 +435,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "장면 전체의 중심(mm). 생략하면 아트보드 중앙" },
         incline: {
           type: "object",
@@ -624,7 +631,7 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        path: TARGET_PATH_PROP, page: PAGE_PROP,
+        path: TARGET_PATH_PROP, page: PAGE_PROP, group: GROUP_PROP,
         box: { ...BOX, description: "자기장 영역의 좌상단과 크기(mm)" },
         direction: {
           type: "string", enum: ["into", "out"],
@@ -773,7 +780,7 @@ const TOOLS = [
  * path를 주면 .json 파일에 쓰고, 생략하면 지금 열려 있는 5E 화면에 바로 넣는다.
  * 검증은 두 경로 모두 똑같이 거친다 — 앱에 직접 넣는다고 규칙이 느슨해지지는 않는다.
  */
-async function deliver({ path, page }, objects, label) {
+async function deliver({ path, page, group }, objects, label) {
   if (path) {
     const { abs, data } = await loadProject(path);
     const pg = pickPage(data, page);
@@ -798,13 +805,17 @@ async function deliver({ path, page }, objects, label) {
     if (n.obj) normalized.push(n.obj);
   });
   if (errors.length) throw new Error("보내지 않았습니다 — 다음을 고치세요:\n" + errors.join("\n"));
-  const res = await sendToApp("addObjects", { objects: normalized });
-  return { where: `열려 있는 앱(${info.page})`, count: res.added, total: info.objects + res.added, warnings };
+  const res = await sendToApp("addObjects", { objects: normalized, group });
+  return {
+    where: `열려 있는 앱(${info.page})`, count: res.added,
+    total: info.objects + res.added, warnings, grouped: res.grouped || 0,
+  };
 }
 
 function deliverReport(head, d, extra = []) {
   return [
     `${head} → ${d.where} (총 ${d.total}개)`,
+    ...(d.grouped ? [`  · ${d.grouped}개를 한 덩어리로 묶었습니다 — 통째로 옮길 수 있습니다(앱에서 해제 가능)`] : []),
     ...extra,
     ...(d.warnings.length ? ["", "경고:", ...d.warnings] : []),
   ].join("\n");
@@ -847,16 +858,19 @@ const HANDLERS = {
     ].join("\n");
   },
 
-  async add_objects({ path, page, objects }) {
+  async add_objects({ path, page, objects, group }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects 배열이 비었습니다");
-    const d = await deliver({ path, page }, inlineImages(objects));
+    // 묶음은 명시할 때만 — 한 번의 호출에 서로 무관한 것이 섞일 수 있다.
+    const d = await deliver({ path, page, group: group === true }, inlineImages(objects));
     return deliverReport(`${d.count}개 추가`, d);
   },
 
-  async add_circuit({ path, page, box, elements, branches, bodyScale, wires }) {
+  async add_circuit({ path, page, box, elements, branches, bodyScale, wires, group }) {
+    // 회로 한 벌은 개념적으로 한 덩어리다 — 기본으로 묶어 넘긴다(group:false 로 해제).
+    const g = group !== false;
     if (Array.isArray(wires) && wires.length) {
       const b = buildCircuitPath({ wires, bodyScale });
-      const dd = await deliver({ path, page }, b.objects);
+      const dd = await deliver({ path, page, group: g }, b.objects);
       return deliverReport(
         `배선 ${dd.count}개 객체 추가 (구간 ${wires.length}개)`, dd,
         b.warnings.length ? ["", "배치 경고:", ...b.warnings] : [],
@@ -864,20 +878,22 @@ const HANDLERS = {
     }
     if (!box) throw new Error("box 또는 wires 중 하나는 있어야 합니다");
     const built = buildCircuitLoop({ box, elements: elements || [], branches: branches || [], bodyScale });
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: g }, built.objects);
     return deliverReport(
       `회로 ${d.count}개 객체 추가 (소자 ${(elements || []).length}개 + 도선)`, d,
       built.warnings.length ? ["", "배치 경고:", ...built.warnings] : [],
     );
   },
 
-  async add_graph({ path, page, at, plane, functions, series }) {
+  async add_graph({ path, page, at, plane, functions, series, group }) {
     const planeId = newObjectId();
     const built = buildGraph({
       at, plane: plane || {}, functions: functions || [], series: series || [], planeId,
     });
     if (built.error) throw new Error(built.error);
-    const d = await deliver({ path, page }, [built.plane, ...built.graphs]);
+    // 평면·곡선은 seriesLock 이 이미 묶는다. group 은 남는 것이 있을 때만 쓰인다.
+    const d = await deliver({ path, page, group: group !== false },
+                            [built.plane, ...built.graphs]);
     return deliverReport(
       `좌표평면 1개 + 계열 ${built.graphs.length}개 추가`, d,
       [`평면 id: ${planeId} (${built.plane.w.toFixed(1)}×${built.plane.h.toFixed(1)}mm)`,
@@ -886,11 +902,11 @@ const HANDLERS = {
   },
 
   /* 오려낸 삽화 부품. part 없이 부르면 목록만 — 모델이 뭘 쓸 수 있는지 먼저 보게 한다. */
-  async add_part({ path, page, part, ...spec }) {
+  async add_part({ path, page, part, group, ...spec }) {
     if (!part) return partsSummary();
     const built = buildPart({ part, ...spec });
     if (built.error) throw new Error(built.error);
-    const d = await deliver({ path, page }, inlineImages(built.objects));
+    const d = await deliver({ path, page, group: group !== false }, inlineImages(built.objects));
     return deliverReport(`부품 ${d.count}개 객체 추가`, d, [
       ...built.notes.map((t) => `  · ${t}`),
       ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
@@ -899,21 +915,22 @@ const HANDLERS = {
 
   /* 스탠드·레일 부착. 만든 위치를 문장으로 돌려준다 — 가로대 y·x 범위를 알아야
    * 그 옆에 치수선이나 이름표를 붙일 수 있다. */
-  async add_stand_rig({ path, page, ...spec }) {
+  async add_stand_rig({ path, page, group, ...spec }) {
     const built = buildStandRig(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
     if (!built.objects.length) throw new Error("그릴 것이 없습니다 — hang 또는 rail 을 주세요");
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     return deliverReport(`장치 ${d.count}개 객체 추가`, d, built.notes.map((t) => `  · ${t}`));
   },
 
   /* 치수 표시. 만든 값(길이·오프셋·연장선 수)을 문장으로 돌려준다 —
    * 그림 판독이 약한 모델도 "치수선이 반대쪽에 붙었다"를 글로 읽고 고칠 수 있게. */
-  async add_dimension({ path, page, ...spec }) {
+  async add_dimension({ path, page, group, ...spec }) {
     const built = buildDimension(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
     if (!built.objects.length) throw new Error("그릴 치수가 없습니다 — from·to 를 주세요");
-    const d = await deliver({ path, page }, built.objects);
+    // 치수선·연장선·라벨은 따로 놀면 안 된다 — 항상 함께 움직여야 한다.
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     return deliverReport(`치수 표시 ${d.count}개 객체 추가`, d, [
       ...built.notes.map((t) => `  · ${t}`),
       ...(built.warnings.length ? ["", "경고:", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
@@ -921,10 +938,10 @@ const HANDLERS = {
   },
 
   /* 경사면 장면. 검산 리포트를 '항상' 붙인다 — 그림 판독이 약한 모델도 글로 읽고 고칠 수 있게. */
-  async add_incline_scene({ path, page, ...spec }) {
+  async add_incline_scene({ path, page, group, ...spec }) {
     const built = buildInclineScene(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     const layers = Object.entries(built.counts).filter(([, n]) => n).map(([k, n]) => `${k} ${n}`).join(" · ");
     return deliverReport(`경사면 장면 ${d.count}개 객체 추가`, d, [
       `층(§19): ${layers}`,
@@ -986,12 +1003,12 @@ const HANDLERS = {
     };
   },
 
-  async add_field_region({ path, page, ...spec }) {
+  async add_field_region({ path, page, group, ...spec }) {
     const built = buildFieldRegion(spec);
     if (built.errors.length) {
       throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
     }
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     return deliverReport(`자기장 영역 ${d.count}개 객체 추가`, d, [
       ...built.notes.map((t) => `  · ${t}`),
       ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),

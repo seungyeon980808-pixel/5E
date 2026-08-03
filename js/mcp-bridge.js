@@ -122,9 +122,10 @@ const COMMANDS = {
   },
 
   // 객체 추가 — MCP 쪽에서 이미 검증·기본값 채움이 끝난 것이 온다.
-  addObjects({ objects }) {
+  addObjects({ objects, group }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects가 비었습니다");
     const ids = [];
+    let grouped = 0;
     state.update((s) => {
       s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
       s.redoStack = [];
@@ -137,9 +138,10 @@ const COMMANDS = {
       s.selectedIds = ids;
       s.targetedId = null;
       lockPlanesToSeries(s, ids);
+      if (group) grouped = groupObjects(s, ids);
     });
     flash(`${ids.length}개 추가됨`);
-    return { added: ids.length, ids };
+    return { added: ids.length, ids, grouped };
   },
 
   // id로 지우기
@@ -379,6 +381,28 @@ function lockPlanesToSeries(s, newIds) {
     }
     (s.groups = s.groups || []).push({ id: gid, memberIds });
   }
+}
+
+/* ----- 방금 넣은 것들을 한 덩어리로 묶기 -----
+ * AI 는 초안까지만 그리고 위치 조정은 사람이 한다. 그런데 낱개로 넘기면 검전기
+ * 하나를 옮기는 데 16개, 자기장 영역은 26개를 골라야 한다 — 그게 편집을 막는
+ * 가장 큰 마찰이었다. 한 번의 호출로 만든 것은 한 단위로 보고 묶어서 넘긴다.
+ * 더 잘게 만지고 싶으면 사람이 그룹을 풀면 된다(앱에 해제 UI 가 있다).
+ *
+ * 이미 다른 묶음에 든 것(그래프의 평면·곡선)은 건드리지 않는다 — 그 묶음이 더 정확하다. */
+function groupObjects(s, newIds) {
+  const members = newIds.filter((id) => {
+    const o = s.objects.find((x) => x.id === id);
+    return o && !o.groupId;
+  });
+  if (members.length < 2) return 0;
+  const gid = "grp_" + members[0];
+  for (const id of members) {
+    const o = s.objects.find((x) => x.id === id);
+    if (o) o.groupId = gid;
+  }
+  (s.groups = s.groups || []).push({ id: gid, memberIds: members });
+  return members.length;
 }
 
 function activePageName(s) {
