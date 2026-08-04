@@ -189,11 +189,18 @@ function setupToolChoosers() {
   const PAIRS = [
     { btn: "tool-text-merged", chooser: "chooser-text" },
     { btn: "tool-angle-merged", chooser: "chooser-angle" },
-    { btn: "tool-cut-merged", chooser: "chooser-cut", hover: true },
+    { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true },
   ];
-  const closeAll = () => document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+  const closeAll = () => {
+    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+    document.querySelectorAll(".tool-btn.is-open").forEach((b) => {
+      b.classList.remove("is-open");
+      b.setAttribute("aria-expanded", "false");
+    });
+    if (_state) syncButtons(_state.get().activeTool);
+  };
   let anyBound = false;
-  PAIRS.forEach(({ btn, chooser, hover }) => {
+  PAIRS.forEach(({ btn, chooser, persistent }) => {
     const b = document.getElementById(btn), c = document.getElementById(chooser);
     if (!b || !c) return;
     anyBound = true;
@@ -201,12 +208,37 @@ function setupToolChoosers() {
     const open = () => {
       closeAll();
       c.hidden = false;
-      const r = b.getBoundingClientRect();
-      c.style.left = Math.round(r.right + 6) + "px";
-      c.style.top = Math.round(r.top) + "px";
+      c.dataset.persistent = persistent ? "true" : "false";
+      b.classList.add("is-open");
+      b.setAttribute("aria-expanded", "true");
+      // While choosing a child tool, suppress the old tool highlight. The
+      // selected child will restore its own active state after it is armed.
+      document.querySelectorAll(".tool-btn.is-active").forEach((tool) => tool.classList.remove("is-active"));
+
+      const uiZoom = Number.parseFloat(getComputedStyle(document.body).zoom) || 1;
+      const buttonRect = b.getBoundingClientRect();
+      const panelRect = document.getElementById("panel-left")?.getBoundingClientRect();
+      const popupRect = c.getBoundingClientRect();
+      const panelRight = panelRect?.right || buttonRect.right;
+      const gap = 12;
+      // Always clear the button's own right edge. On narrow layouts the
+      // panel rect can be narrower than an overflowing tool button.
+      let left = Math.max(buttonRect.right + gap, panelRight + gap);
+      let top = buttonRect.top;
+      // If the side does not fit, keep the popup below the tool panel rather
+      // than covering the button grid.
+      if (left + popupRect.width > window.innerWidth - 8) {
+        left = Math.max(8, panelRight - popupRect.width);
+        top = Math.min(buttonRect.bottom + gap, window.innerHeight - popupRect.height - 8);
+      }
+      // getBoundingClientRect() is in rendered pixels, while a fixed child
+      // of body uses the pre-zoom coordinate system. Convert back so the
+      // popup never slides over its triggering button at medium/small zoom.
+      c.style.left = Math.round(left / uiZoom) + "px";
+      c.style.top = Math.round(Math.max(8, top) / uiZoom) + "px";
     };
     const scheduleClose = () => {
-      if (!hover) return;
+      if (persistent) return;
       window.clearTimeout(closeTimer);
       closeTimer = window.setTimeout(() => {
         if (!b.matches(":hover") && !c.matches(":hover")) c.hidden = true;
@@ -214,23 +246,33 @@ function setupToolChoosers() {
     };
     b.addEventListener("click", (e) => {
       e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
-      if (hover && !c.hidden) return;
       const willOpen = c.hidden;
       closeAll();
-      if (willOpen) open();
+      if (willOpen) {
+        // A merged button is a chooser, not the previously armed drawing
+        // tool. Clear the old tool highlight while child options are open;
+        // choosing an option arms the actual tool afterwards.
+        open();
+      }
     });
-    if (hover) {
+    if (!persistent) {
       b.addEventListener("mouseenter", () => { window.clearTimeout(closeTimer); open(); });
       b.addEventListener("mouseleave", scheduleClose);
       c.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
       c.addEventListener("mouseleave", scheduleClose);
     }
     // 옵션 클릭 = 도구 선택(기존 위임이 처리) + 팝오버 닫기.
-    c.addEventListener("click", () => { closeAll(); });
+    c.addEventListener("click", () => { if (!persistent) closeAll(); });
   });
   if (anyBound) {
     // 팝오버 바깥을 누르면 닫는다(통합 버튼 자신은 stopPropagation으로 제외됨).
     document.addEventListener("click", (e) => {
+      if (e.target.closest(".tool-chooser")) return;
+      // A persistent cut chooser belongs to the armed cut tool. Canvas clicks
+      // must remain cut input and must not dismiss that chooser. Clicking a
+      // different toolbar button still closes it normally.
+      const persistentOpen = document.querySelector('.tool-chooser[data-persistent="true"]:not([hidden])');
+      if (persistentOpen && !e.target.closest(".tool-btn")) return;
       if (!e.target.closest(".tool-chooser")) closeAll();
     });
   }

@@ -434,12 +434,12 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* active tool = signature blue (mirrors state.activeTool) */
-.tool-btn.is-active {
+.tool-btn.is-active, .tool-btn.is-open {
   color: #fff;
   background: var(--btn-tool-active);
   border-color: var(--btn-tool-active);
 }
-.tool-btn.is-active kbd {
+.tool-btn.is-active kbd, .tool-btn.is-open kbd {
   color: #fff;
 }
 
