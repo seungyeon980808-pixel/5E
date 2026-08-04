@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="815.33545"
+   height="476.28574"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
+   sodipodi:docname="Lunar_eclipse_diagram-pa.svg"
+   version="1.0">
+  <defs
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient4163">
+      <stop
+         style="stop-color:#3d00b3;stop-opacity:1;"
+         offset="0"
+         id="stop4159" />
+      <stop
+         style="stop-color:#3d00b3;stop-opacity:0;"
+         offset="1"
+         id="stop4161" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4163"
+       id="linearGradient4165"
+       x1="816.91571"
+       y1="743.07102"
+       x2="912.70738"
+       y2="743.07102"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.277698,0,0,1.277698,-198.79219,-224.10788)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.1568686"
+     inkscape:cx="407.66772"
+     inkscape:cy="208.75319"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1280"
+     inkscape:window-height="720"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     showgrid="false"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-309.2885,-517.0765)">
+    <rect
+       style="opacity:1;fill:#e6e6e6;fill-opacity:1;stroke:#ccc9ce;stroke-width:1.64541364;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect5588"
+       width="168.67487"
+       height="87.968849"
+       x="637.18439"
+       y="905.53223"
+       ry="15.019071" />
+    <rect
+       style="opacity:1;fill:#e6e6e6;fill-opacity:1;stroke:#ccc9ce;stroke-width:1.68372667;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect5586"
+       width="187.45914"
+       height="82.883034"
+       x="625.1991"
+       y="517.9184"
+       ry="14.150763" />
+    <path
+       sodipodi:type="arc"
+       style="fill:none;fill-opacity:1;stroke:#ffe900;stroke-width:2.88603091;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1899"
+       sodipodi:cx="596.49506"
+       sodipodi:cy="706.89001"
+       sodipodi:rx="286.37823"
+       sodipodi:ry="131.31982"
+       d="M 882.87329 706.89001 A 286.37823 131.31982 0 1 1  310.11682,706.89001 A 286.37823 131.31982 0 1 1  882.87329 706.89001 z"
+       transform="matrix(1.416151,6.898737e-2,-7.221016e-2,1.352947,-76.72624,-242.1581)" />
+    <g
+       id="g5576"
+       transform="matrix(0.999691,2.486579e-2,-2.486579e-2,0.999691,19.00475,-17.59413)">
+      <path
+         transform="matrix(1.410923,-0.135097,0.141408,1.347952,-224.612,-116.8916)"
+         d="M 882.87329 706.89001 A 286.37823 131.31982 0 1 1  310.11682,706.89001 A 286.37823 131.31982 0 1 1  882.87329 706.89001 z"
+         sodipodi:ry="131.31982"
+         sodipodi:rx="286.37823"
+         sodipodi:cy="706.89001"
+         sodipodi:cx="596.49506"
+         id="path2788"
+         style="fill:none;fill-opacity:1;stroke:#ccc9ce;stroke-width:2.88602972;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <g
+         transform="translate(73.03534,-249.8375)"
+         id="g4657">
+        <g
+           transform="matrix(0.73655,-0.676384,0.676384,0.73655,-482.122,966.155)"
+           id="g4663">
+          <path
+             id="path4659"
+             d="M 991.3023,1070.8503 C 1011.3172,1074.8909 1037.1429,1073.6282 1037.1429,1073.6282"
+             style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             sodipodi:nodetypes="cc" />
+          <path
+             d="M 1033.5715,1079.8622 L 1033.516,1067.3942 L 1044.3413,1073.5801 L 1033.5715,1079.8622 z "
+             inkscape:randomized="0"
+             inkscape:rounded="0"
+             inkscape:flatsided="true"
+             sodipodi:arg2="3.13714"
+             sodipodi:arg1="2.0899424"
+             sodipodi:r2="3.5992222"
+             sodipodi:r1="7.1984444"
+             sodipodi:cy="1073.6122"
+             sodipodi:cx="1037.1429"
+             sodipodi:sides="3"
+             id="path4661"
+             style="opacity:1;fill:black;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4, 4;stroke-dashoffset:0;stroke-opacity:1"
+             sodipodi:type="star" />
+        </g>
+      </g>
+      <g
+         id="g3730">
+        <path
+           style="fill:#989898;fill-opacity:1;stroke:black;stroke-width:4.00000286;stroke-miterlimit:4;stroke-dasharray:none;overflow:visible"
+           id="path2355"
+           d="M 1061.0285,832.5013 C 1061.0285,845.0199 1050.8853,855.17 1038.3564,855.17 C 1025.8412,855.17 1015.6929,845.0199 1015.6929,832.5013 C 1015.6929,819.9845 1025.8395,809.8309 1038.3564,809.8309 C 1050.8853,809.8309 1061.0285,819.9828 1061.0285,832.5013 z "
+           class="st8" />
+        <path
+           style="fill:#545454;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="M 1031.977,817.3143 C 1028.8767,818.129 1027.9537,820.3241 1027.9537,824.154 C 1027.9537,824.5549 1033.3483,825.9871 1033.5864,826.1657 C 1035.2955,827.4475 1036.0433,826.8845 1037.6098,823.7516 C 1037.7369,823.4973 1042.552,827.6595 1043.2425,828.1773 C 1046.1305,830.3434 1043.7985,832.9285 1042.0354,833.8101 C 1039.5487,835.0535 1041.4916,839.2043 1040.8284,841.8568 C 1039.799,845.9747 1036.2325,847.002 1041.2308,849.5012 C 1044.4075,851.0896 1047.1823,849.3444 1048.8752,847.0872 C 1049.7439,845.9288 1048.4728,842.3535 1048.4728,841.0521 C 1048.4728,840.779 1052.743,835.1726 1053.3009,834.6147 C 1053.6869,834.2287 1054.5589,828.3757 1054.9102,826.9703 C 1055.4444,824.8337 1052.7647,822.277 1052.0939,820.9353 C 1050.6712,818.0901 1049.9197,817.1363 1046.8635,815.3026 C 1044.6151,813.9536 1042.8843,813.1008 1040.4261,812.4862 C 1038.637,812.0389 1036.2613,814.7698 1035.1957,815.3026 C 1033.5008,816.15 1034.449,816.3255 1031.977,817.3143 z "
+           id="path2357" />
+      </g>
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ffe900;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 312.13714,751.33672 C 312.72665,755.33549 314.34625,762.92131 316.17774,767.87796"
+       id="path3734"
+       sodipodi:nodetypes="cs" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4, 4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 319.97851,703.709 L 728.31999,755.37733 L 320.19035,741.82956"
+       id="path4631"
+       sodipodi:nodetypes="ccc" />
+    <g
+       id="g2828"
+       transform="matrix(0.776481,0,0,0.776481,521.2688,-198.4749)">
+      <path
+         class="st8"
+         d="M 367.79255,1225.1026 C 367.79255,1287.6375 317.12334,1338.341 254.53701,1338.341 C 192.01927,1338.341 141.32434,1287.6375 141.32434,1225.1026 C 141.32434,1162.5763 192.01069,1111.8556 254.53701,1111.8556 C 317.12334,1111.8556 367.79255,1162.5677 367.79255,1225.1026 z "
+         id="path2818"
+         style="fill:#3d00b3;stroke:black;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;overflow:visible" />
+      <path
+         class="st1"
+         d="M 202.95068,1179.1399 L 194.18859,1180.2973 L 188.93305,1191.9658 L 180.78825,1192.5574 L 173.20931,1200.1363 L 169.70276,1211.7877 L 182.51152,1214.7112 L 187.17549,1203.6257 L 191.29933,1208.2983 L 201.78468,1200.1363 L 204.69109,1210.6303 L 214.01045,1217.0518 L 209.35506,1228.7117 L 217.517,1226.9627 L 222.77254,1215.2942 L 232.11762,1215.8944 L 219.88328,1205.3833 L 230.9602,1200.1449 L 236.19002,1208.3068 L 244.38626,1217.6519 L 232.11762,1224.0649 L 240.85399,1228.7203 L 231.52605,1231.0694 L 224.52153,1229.8777 C 224.52153,1229.8777 215.19359,1237.4824 212.28718,1238.0654 C 209.35506,1238.6398 194.77158,1245.0699 194.77158,1245.0699 L 185.4265,1254.9637 L 186.04379,1264.3088 L 186.60964,1272.4878 L 189.51605,1282.3988 L 193.01402,1285.8796 L 205.84851,1284.7136 L 219.89185,1280.6326 L 232.12619,1281.1985 L 236.19859,1289.3776 L 243.77754,1301.6291 L 245.55225,1308.042 L 264.79969,1306.2845 L 271.80422,1295.7991 L 268.29767,1279.4581 L 264.19097,1264.2745 L 259.51843,1252.6145 L 256.02046,1232.7841 L 266.0257,1241.4776 L 270.13239,1226.817 L 274.01617,1222.4359 L 281.68085,1231.6181 L 291.60893,1233.3757 L 303.26885,1243.8782 L 310.23908,1249.7253 L 313.40269,1243.5695 L 311.87662,1223.2161 L 312.60536,1212.9708 L 324.874,1210.6388 L 322.53344,1203.0599 L 326.03142,1184.9613 L 321.35887,1175.0418 L 327.18883,1170.3864 L 319.61846,1159.8924 L 314.96307,1153.4709 L 300.94544,1148.8069 L 279.93187,1148.8069 L 267.69752,1141.2365 L 256.61203,1135.9724 L 254.85446,1144.7259 L 237.37316,1138.896 L 227.42793,1138.896 L 207.5975,1148.8069 L 214.60202,1152.8879 L 204.69109,1158.1435 L 204.69109,1163.9734 L 211.69562,1164.565 L 220.4577,1156.9689 L 226.27909,1162.2244 L 219.89185,1168.6374 L 207.03165,1170.978 L 202.95068,1179.1399 z "
+         id="path2820"
+         style="fill:#e3dcbb;overflow:visible" />
+      <polygon
+         transform="matrix(8.57347,0,0,8.57347,-2214.794,-1237.028)"
+         class="st1"
+         points="279.672,279.416 279.91,279.813 280.705,279.813 280.784,280.606 279.436,281.482 278.877,281.798 278.877,281.005 278.561,280.288 279.672,279.416 "
+         id="polygon2822"
+         style="fill:#e3dcbb;overflow:visible" />
+      <polygon
+         transform="matrix(8.57347,0,0,8.57347,-2214.794,-1237.028)"
+         class="st1"
+         points="297.498,281.586 297.975,283.333 296.941,285.318 297.18,285.716 298.293,284.285 298.451,281.903 297.498,281.586 "
+         id="polygon2824"
+         style="fill:#e3dcbb;overflow:visible" />
+      <polygon
+         transform="matrix(8.57347,0,0,8.57347,-2214.794,-1237.028)"
+         class="st1"
+         points="296.128,289.038 296.843,289.831 297.238,288.482 296.684,288.005 296.128,289.038 "
+         id="polygon2826"
+         style="fill:#e3dcbb;overflow:visible" />
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 498.61607,747.71932 C 496.83036,739.14789 496.5625,736.6479 499.77679,727.36218"
+       id="path4637"
+       sodipodi:nodetypes="cs" />
+    <switch
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       id="switch4097">
+      <text
+         xml:space="preserve"
+         x="477.14288"
+         y="742.36224"
+         id="text4639-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan4641-or"
+           x="477.14288"
+           y="742.36224"
+           style="line-height:1.25">୫°</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="477.14288"
+         y="742.36224"
+         id="text4639"><tspan
+           sodipodi:role="line"
+           id="tspan4641"
+           x="477.14288"
+           y="742.36224"
+           style="font-size:20px;line-height:1.25">5°</tspan></text>
+    </switch>
+    <g
+       id="g4647"
+       transform="matrix(0.908551,-0.417773,0.417773,0.908551,-361.4873,338.7573)">
+      <path
+         id="path4643"
+         d="M 991.3023,1070.8503 C 1011.3172,1074.8909 1037.1429,1073.6282 1037.1429,1073.6282"
+         style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:2;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <path
+         d="M 1033.5715,1079.8622 L 1033.516,1067.3942 L 1044.3413,1073.5801 L 1033.5715,1079.8622 z "
+         inkscape:randomized="0"
+         inkscape:rounded="0"
+         inkscape:flatsided="true"
+         sodipodi:arg2="3.13714"
+         sodipodi:arg1="2.0899424"
+         sodipodi:r2="3.5992222"
+         sodipodi:r1="7.1984444"
+         sodipodi:cy="1073.6122"
+         sodipodi:cx="1037.1429"
+         sodipodi:sides="3"
+         id="path4645"
+         style="opacity:1;fill:black;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4, 4;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="star" />
+    </g>
+    <path
+       style="fill:#ffdc00;fill-opacity:1;stroke:black;stroke-width:3.9204874;stroke-miterlimit:4;stroke-dasharray:none;overflow:visible"
+       id="path2387"
+       d="M 998.68139,902.25759 C 998.68139,914.92832 988.41488,925.20178 975.73373,925.20178 C 963.06649,925.20178 952.79476,914.92832 952.79476,902.25759 C 952.79476,889.58862 963.06475,879.31169 975.73373,879.31169 C 988.41488,879.31169 998.68139,889.58688 998.68139,902.25759 z "
+       class="st8" />
+    <switch
+       style="font-style:normal;font-weight:normal;font-size:20px;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="switch4109"
+       transform="matrix(0.94147635,0,0,0.78106114,36.455712,217.40913)">
+      <text
+         xml:space="preserve"
+         x="646.9693"
+         y="970.37756"
+         id="text5590-ml"
+         systemLanguage="ml"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5592-ml"
+           x="646.9693"
+           y="970.37756"
+           style="line-height:1.25">ആരോഹണ പര്‍വം</tspan></text>
+      <text
+         xml:space="preserve"
+         x="646.9693"
+         y="970.37756"
+         id="text5590-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5592-or"
+           x="646.9693"
+           y="970.37756"
+           style="line-height:1.25">ଉର୍ଦ୍ଧ୍ୱଗାମୀ କକ୍ଷ</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="646.9693"
+         y="970.37756"
+         id="text5590"><tspan
+           sodipodi:role="line"
+           x="646.9693"
+           y="970.37756"
+           style="font-size:42.66666794px;line-height:1.25"
+           id="tspan4155">ਵਧਦਾ ਬਿੰਦੂ</tspan></text>
+    </switch>
+    <switch
+       style="font-style:normal;font-weight:normal;font-size:20px;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="switch4117"
+       transform="matrix(0.93913226,0,0,0.69116693,38.805664,174.3753)">
+      <text
+         xml:space="preserve"
+         x="637.54071"
+         y="551.80609"
+         id="text5594-ml"
+         systemLanguage="ml"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5596-ml"
+           x="637.54071"
+           y="551.80609"
+           style="line-height:1.25">അവരോഹണ പര്‍വം</tspan></text>
+      <text
+         xml:space="preserve"
+         x="637.54071"
+         y="551.80609"
+         id="text5594-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5596-or"
+           x="637.54071"
+           y="551.80609"
+           style="line-height:1.25">ନିଚ୍ଚଗାମୀ କକ୍ଷ</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:Arial;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="637.54071"
+         y="551.80609"
+         id="text5594"><tspan
+           sodipodi:role="line"
+           id="tspan5596"
+           x="637.54071"
+           y="551.80609"
+           style="font-size:48px;line-height:1.25">ਘਟਦਾ ਬਿੰਦੂ</tspan><tspan
+           sodipodi:role="line"
+           x="637.54071"
+           y="574.06561"
+           style="font-size:48px;line-height:1.25"
+           id="tspan4153" /><tspan
+           sodipodi:role="line"
+           x="637.54071"
+           y="574.06561"
+           style="font-size:20px;line-height:1.25"
+           id="tspan4151" /></text>
+    </switch>
+    <switch
+       style="font-style:normal;font-weight:normal;font-size:28px;font-family:Arial;fill:#3d00b3;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="switch4125"
+       transform="matrix(0.8823103,0,0,0.84560872,95.745357,121.13464)">
+      <text
+         xml:space="preserve"
+         x="813.54071"
+         y="758.09186"
+         id="text5598-ml"
+         systemLanguage="ml"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5600-ml"
+           x="813.54071"
+           y="758.09186"
+           style="line-height:1.25">ഭൂമി</tspan></text>
+      <text
+         xml:space="preserve"
+         x="813.54071"
+         y="758.09186"
+         id="text5598-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5600-or"
+           x="813.54071"
+           y="758.09186"
+           style="line-height:1.25">ପୃଥିବୀ</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:35.77554321px;line-height:0%;font-family:Arial;fill:url(#linearGradient4165);fill-opacity:1;stroke:none;stroke-width:1.27769804px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="840.66711"
+         y="744.50458"
+         id="text5598"
+         transform="scale(0.96773227,1.0333437)"><tspan
+           sodipodi:role="line"
+           x="840.66711"
+           y="744.50458"
+           style="font-size:54.51511765px;line-height:1.25;fill:url(#linearGradient4165);stroke-width:1.27769804px"
+           id="tspan4175">ਪ੍ਰਿਥਵੀ</tspan></text>
+    </switch>
+    <switch
+       style="font-size:20px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#545454;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       id="switch4136">
+      <text
+         xml:space="preserve"
+         x="1027.8264"
+         y="776.66327"
+         id="text5602-ml"
+         systemLanguage="ml"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5604-ml"
+           x="1027.8264"
+           y="776.66327"
+           style="line-height:1.25">മാസം</tspan><tspan
+           sodipodi:role="line"
+           x="1030.6047"
+           y="801.66327"
+           id="tspan5610-ml"
+           style="line-height:1.25">ചന്ദ്രന്‍റെ സഞ്ചാര പഥം</tspan></text>
+      <text
+         xml:space="preserve"
+         x="1027.8264"
+         y="776.66327"
+         id="text5602-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           id="tspan5604-or"
+           x="1027.8264"
+           y="776.66327"
+           style="line-height:1.25">ମାସ</tspan><tspan
+           sodipodi:role="line"
+           x="1027.8264"
+           y="801.66327"
+           id="tspan5610-or"
+           style="line-height:1.25">ଚନ୍ଦ୍ରର କକ୍ଷପଥ</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:Arial;text-align:center;text-anchor:middle;fill:#545454;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="1027.8264"
+         y="776.66327"
+         id="text5602"><tspan
+           sodipodi:role="line"
+           id="tspan5604"
+           x="1027.8264"
+           y="776.66327"
+           style="font-weight:bold;font-size:20px;line-height:1.25;fill:#000000">ਮਹੀਨਾ</tspan><tspan
+           sodipodi:role="line"
+           x="1027.8264"
+           y="801.66327"
+           id="tspan5610"
+           style="font-size:20px;line-height:1.25">ਚੰਦ ਦਾ ਰਾਹ</tspan></text>
+    </switch>
+    <switch
+       style="font-size:20px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#fc0;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       id="switch4147">
+      <text
+         xml:space="preserve"
+         x="977.08429"
+         y="946.58368"
+         id="text5612-ml"
+         systemLanguage="ml"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           x="977.08429"
+           y="946.58368"
+           id="tspan5616-ml"
+           style="line-height:1.25">സൂര്യാ പഥം</tspan><tspan
+           sodipodi:role="line"
+           x="979.86261"
+           y="971.58368"
+           id="tspan5618-ml"
+           style="line-height:1.25">വര്‍ഷൺ</tspan></text>
+      <text
+         xml:space="preserve"
+         x="977.08429"
+         y="946.58368"
+         id="text5612-or"
+         systemLanguage="or"
+         style="line-height:0%"><tspan
+           sodipodi:role="line"
+           x="977.08429"
+           y="946.58368"
+           id="tspan5616-or"
+           style="line-height:1.25">ସୂର୍ଯ୍ୟର କକ୍ଷପଥ</tspan><tspan
+           sodipodi:role="line"
+           x="977.08429"
+           y="971.58368"
+           id="tspan5618-or"
+           style="line-height:1.25">ବର୍ଷ</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;line-height:0%;font-family:Arial;text-align:center;text-anchor:middle;fill:#ffcc00;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         x="977.08429"
+         y="946.58368"
+         id="text5612"><tspan
+           sodipodi:role="line"
+           x="977.08429"
+           y="946.58368"
+           id="tspan5616"
+           style="font-size:20px;line-height:1.25">ਸੂਰਜ ਦਾ ਰਾਹ</tspan><tspan
+           sodipodi:role="line"
+           x="977.08429"
+           y="971.58368"
+           id="tspan5618"
+           style="font-weight:bold;font-size:20px;line-height:1.25;fill:#000000;fill-opacity:1">ਸਾਲ</tspan></text>
+    </switch>
+  </g>
+</svg>

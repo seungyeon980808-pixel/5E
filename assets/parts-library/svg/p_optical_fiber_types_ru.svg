@@ -1,0 +1,24 @@
+<svg version="1.1" width="207mm" height="119mm" viewBox="0 0 207 119" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><linearGradient id="a"><stop stop-color="#9dd" offset="0"/><stop stop-color="#0bf" offset="1"/></linearGradient><linearGradient id="j" x1="77.5" x2="77.5" y1="727.5" y2="797.5" gradientTransform="matrix(.4 0 0 .4 1-281)" gradientUnits="userSpaceOnUse" xlink:href="#a"/><linearGradient id="i" x1="240" x2="486" y1="805" y2="805" gradientTransform="matrix(.4 0 0 .4 0-281)" gradientUnits="userSpaceOnUse" xlink:href="#a"/></defs><rect width="207" height="119" fill="#fff"/>
+ <g font-family="Times" font-size="4px">
+ <g stroke-width=".4"><path id="g" d="m81 36c7-6 5-21 7-21s0 15 7 21" fill="none" stroke="#f00"/><use transform="translate(0,37)" xlink:href="#g"/><use transform="translate(0,76)" xlink:href="#g"/><use transform="translate(104,76)" xlink:href="#g"/><rect id="c" x="101" y="12" width="82" height="24" fill="url(#i)" stroke="#000"/><use transform="translate(0,76)" xlink:href="#c"/><use transform="translate(0,37)" xlink:href="#c"/></g>
+ <g fill="none" stroke="#f00" stroke-width=".4"><path d="m185 73c7-6 1-14 7-14s0 8 8 14"/><path d="m185 36c7-6 5-6 8-7s2-2 6 3"/></g>
+ <g id="f"><path d="m97 36h-16v-24" fill="none" stroke="#000" stroke-width=".4"/><path d="m96 37 1-1-1-1 4 1zm-14-24-1-1-1 1 1-4z"/><text x="97" y="34" font-size="4px">t</text></g>
+ <use transform="translate(0,37)" xlink:href="#f"/><use transform="translate(0,76)" xlink:href="#f"/><use transform="translate(104)" xlink:href="#f"/><use transform="translate(104,37)" xlink:href="#f"/><use transform="translate(104,76)" xlink:href="#f"/>
+ <g id="h">
+ <g stroke="#000" stroke-width=".4"><circle cx="30" cy="24" r="12" fill="url(#j)"/><path d="m7 22v-8m0 13v7m15 2h-17m-1-24h18" fill="none"/><path d="m57 37v-28m0 15h14" stroke="#00f"/></g>
+ <path d="m8 32-1 1-1-1 1 4zm0-16-1-1-1 1 1-4z"/>
+ <g fill="#00f"><text x="71" y="23">n</text><text x="58" y="10">r</text><path d="m70 25 1-1-1-1 4 1zm-12-14-1-1-1 1 1-4z"/></g></g>
+ <use transform="translate(0,37)" xlink:href="#h"/><use transform="translate(0,76)" xlink:href="#h"/>
+ <g fill="#ffe" stroke="#000" stroke-width=".4"><path id="e" d="m57 49h8c0 6 4 6 4 12" fill="none" stroke-width=".4"/><use transform="matrix(1,0,0,-1,0,122)" xlink:href="#e"/></g>
+ <g stroke-width=".4"><path d="m52 93-1 1-1-1 1 4zm0 14-1-1-1 1 1-4zm0-55-1 1-1-1 1 4zm0 18-1-1-1 1 1-4zm0-42-1 1-1-1 1 4zm0-9-1-1-1 1 1-4z"/><path d="m51 105v5m0-15v-3m-8 11h10m0-6h-10m8-29v5m0-19v-3m-9 15h11m0-10h-11m9-29v3m0-10v-2m6 70h8v9h4v6h-4v9h-8m0-100h8v3h4v18h-4v3h-8m-17-4h14m-14-17h14" fill="none" stroke="#000"/>
+ <g fill="#ffe" stroke="#000" stroke-width=".4"><circle cx="30" cy="61" r="5"/><circle cx="30" cy="24" r="9"/><circle cx="30" cy="100" r="3"/><rect x="101" y="56" width="82" height="10"/><rect x="101" y="97" width="82" height="6"/><rect x="101" y="15" width="82" height="18"/></g>
+ <g id="b" fill="none"><path d="m101 61s2-2 13-2 13 2 13 2" stroke="#000"/><path d="m101 61s1-4 13-4c11 0 13 4 13 4" stroke="#f00"/></g>
+ <use transform="matrix(1,0,0,-1,0,122)" xlink:href="#b"/><use transform="translate(26)" xlink:href="#b"/><use transform="matrix(1,0,0,-1,26,122)" xlink:href="#b"/></g>
+ <g id="k"><path d="m153 61s2-2 13-2c4 0 7 0 9 .6" fill="none" stroke="#000" stroke-width=".4"/><path d="m153 61s1-4 13-4c3.5 0 6 .5 8 1" fill="none" stroke="#f00" stroke-width=".4"/><path d="m171 58.3 1.2-.7-.7-1.2 3.6 1.9z" fill="#f00"/><path d="m173.3 60.4 1.2-.8-.8-1.2 3.8 1.7z"/></g>
+ <use transform="matrix(1,0,0,-1,0,122)" xlink:href="#k"/><path d="m178 20.4v-1.4h-1.4l3.5-2.1z" fill="#f00"/>
+ <g id="d"><path d="m101 24h80" stroke="#00f" stroke-width=".4"/><path d="m179 25 1-1-1-1 4 1z" fill="#00f"/></g>
+ <use transform="translate(0 37)" xlink:href="#d"/><use transform="translate(-1e-6 76)" xlink:href="#d"/>
+ <g stroke-width=".4"><path d="m175.8 27.7 1.2-.7-.7-1.2 3.6 2z"/><path d="m101 24 31-9 45 12" fill="none" stroke="#000"/><path d="m101 23 13-8 16 18 17-18 17 18 14-14" fill="none" stroke="#f00"/></g>
+ <text x="1" y="26">380 µм</text><text x="1" y="63">125 µм</text><text x="48" y="23">200</text><text x="48" y="26">µм</text><text x="41" y="50">50-100</text><text x="41" y="53">µм</text><text x="1" y="102">125 µm</text><text x="41" y="91">~ 10 µм</text>
+ <g text-anchor="middle"><text x="61" y="4">Показатель<tspan x="61" y="7">преломления</tspan></text><text x="91" y="9">Входной<tspan x="91" y="12">импульс</tspan></text><text x="196" y="9">Выходной<tspan x="196" y="12">импульс</tspan></text></g>
+ <g fill="#f00" font-size="5px" font-weight="bold"><text x="73" y="41">Ступенчатый показатель преломления</text><text x="73" y="79">Градиентный показатель преломления</text><text x="73" y="117">Одномодовое волокно</text></g></g></svg>

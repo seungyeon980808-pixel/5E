@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" font-size="40" font-family="Liberation Sans,sans-serif" text-anchor="middle" fill="black">
+
+   <defs>
+<linearGradient id="gradient1" x1="0" y1="0" x2="0" y2="1">
+ <stop offset="0%" stop-color="#fee"/>
+ <stop offset="100%" stop-color="#efe"/>
+</linearGradient>
+   </defs>
+
+<rect width="1200" height="675" x="0" y="0" fill="#f0f0f0"/>
+<path fill="url(#gradient1)" stroke="#ccc" stroke-width="0.5" d="M150,80 H1140 v405 L1014.87,605.5 H150 z"/>
+
+<switch><text x="650" y="52" font-size="50" id="trsvg26-ro" systemLanguage="ro"><tspan id="trsvg1-ro">Decese prin accidente, poluarea aerului</tspan></text><text x="650" y="52" font-size="50" id="trsvg26"><tspan id="trsvg1">Death rates from accidents, air pollution</tspan></text></switch>
+<switch><text transform="translate(50,342.5) rotate(-90)" id="trsvg27-ro" systemLanguage="ro"><tspan id="trsvg2-ro">Decese per terawattoră</tspan></text><text transform="translate(50,342.5) rotate(-90)" id="trsvg27"><tspan id="trsvg2">Deaths per terawatt-hour</tspan></text></switch>
+
+<path stroke="black" stroke-width="0.25" fill="none" d=" M140,80 h1010 M140,185 h1010 M140,290 h1010 M140,395 h1010 M140,500 h1010 M140,521 h1010 M140,542 h1010 M140,563 h1010 M140,584 h1010 M140,605.5 h1010 M150,605 v10 "/>
+
+   <g transform="translate(95,3)">
+<switch><text y="92" id="trsvg28"><tspan id="trsvg3">25</tspan></text></switch>
+<switch><text y="197" id="trsvg29"><tspan id="trsvg4">20</tspan></text></switch>
+<switch><text y="302" id="trsvg30"><tspan id="trsvg5">15</tspan></text></switch>
+<switch><text y="407" id="trsvg31"><tspan id="trsvg6">10</tspan></text></switch>
+<switch><text y="512" id="trsvg32"><tspan id="trsvg7">5</tspan></text></switch>
+<switch><text y="617" id="trsvg33"><tspan id="trsvg8">0</tspan></text></switch>
+<switch><text x="1080" y="512" id="trsvg34"><tspan id="trsvg9">5</tspan></text></switch>
+<switch><text x="1080" y="617" id="trsvg35"><tspan id="trsvg10">0</tspan></text></switch>
+   </g>
+
+   <g stroke="white" stroke-width="0.5">
+<path fill="#666" d="M150,605 v-516.6 h324.32 v516.6 v10 h-2 v-10 z"/>
+<path fill="#888" d="M474.32,605 v-386.4 h27.03 v386.4 v10 h-2 v-10 z"/>
+<path fill="#8a3" d="M501.35,605 v-96.6 h18.02 v96.6 v10 h-2 v-10 z"/>
+<path fill="#ee5" stroke="#888" d="M519.37,605 v-58.8 h198.2 v58.8 v10 h-1 v-10 z"/>
+<path fill="#27b" d="M717.57,605 v-27.3 h108.11 v27.3 v10 h-2 v-10 z"/>
+<path fill="red" d="M825.68,605 v-0.84 h63.06 v0.84 v10 h-2 v-10 z"/> 
+<path fill="blue" d="M888.74,605 v-0.63 h90.09 v0.63 v10 h-2 v-10 z"/> 
+<path fill="green" d="M978.83,605 v-0.42 h36.04 v0.42 v10 h-2 v-10 z"/> 
+   </g>
+
+   <g text-anchor="start">
+<switch><text transform="translate(310,175) rotate(-45)" fill="white" text-anchor="middle" id="trsvg36-ro" systemLanguage="ro"><tspan id="trsvg11-ro">Cărbune</tspan></text><text transform="translate(310,175) rotate(-45)" fill="white" text-anchor="middle" id="trsvg36"><tspan id="trsvg11">Coal</tspan></text></switch>
+<switch><text transform="translate(515,225) rotate(-45)" id="trsvg37-ro" systemLanguage="ro"><tspan id="trsvg12-ro">Petrol</tspan></text><text transform="translate(515,225) rotate(-45)" id="trsvg37"><tspan id="trsvg12">Oil</tspan></text></switch>
+<switch><text transform="translate(525,505) rotate(-45)" id="trsvg38-ro" systemLanguage="ro"><tspan id="trsvg13-ro">Biomasă</tspan></text><text transform="translate(525,505) rotate(-45)" id="trsvg38"><tspan id="trsvg13">Biomass</tspan></text></switch>
+<switch><text transform="translate(625,540) rotate(-45)" id="trsvg39-ro" systemLanguage="ro"><tspan id="trsvg14-ro">Gaz natural</tspan></text><text transform="translate(625,540) rotate(-45)" id="trsvg39"><tspan id="trsvg14">Natural gas</tspan></text></switch>
+<g fill="#284">
+<switch><text transform="translate(770,575) rotate(-45)" id="trsvg40-ro" systemLanguage="ro"><tspan id="trsvg15-ro">Energie hidraulică</tspan></text><text transform="translate(770,575) rotate(-45)" id="trsvg40"><tspan id="trsvg15">Hydropower</tspan></text></switch>
+<switch><text transform="translate(855,583) rotate(-45)" id="trsvg41-ro" systemLanguage="ro"><tspan id="trsvg16-ro">Energie eoliană</tspan></text><text transform="translate(855,583) rotate(-45)" id="trsvg41"><tspan id="trsvg16">Wind</tspan></text></switch>
+<switch><text transform="translate(925,580) rotate(-45)" id="trsvg42-ro" systemLanguage="ro"><tspan id="trsvg17-ro">Energie nucleară</tspan></text><text transform="translate(925,580) rotate(-45)" id="trsvg42"><tspan id="trsvg17">Nuclear</tspan></text></switch>
+<switch><text transform="translate(995,580) rotate(-45)" id="trsvg43-ro" systemLanguage="ro"><tspan id="trsvg18-ro">Energie solară</tspan></text><text transform="translate(995,580) rotate(-45)" id="trsvg43"><tspan id="trsvg18">Solar</tspan></text></switch>
+</g>
+   </g>
+
+<g fill="#284" font-size="15" transform="translate(0,600)" text-anchor="middle">
+<switch><text x="857.2" id="trsvg44"><tspan id="trsvg19">▲0.04</tspan></text></switch>
+<switch><text x="933.8" id="trsvg45"><tspan id="trsvg20">▲0.03</tspan></text></switch>
+<switch><text x="996.8" id="trsvg46"><tspan id="trsvg21">▲0.02</tspan></text></switch> 
+</g>
+
+<g transform="translate(850,180)">
+<switch><text id="trsvg47-ro" systemLanguage="ro"><tspan id="trsvg22-ro">Suprafața dreptunghiurilor</tspan></text><text id="trsvg47"><tspan id="trsvg22">Areas of rectangles</tspan></text></switch>
+<switch><text y="40" id="trsvg48-ro" systemLanguage="ro"><tspan id="trsvg23-ro">arată numărul total de decese</tspan></text><text y="40" id="trsvg48"><tspan id="trsvg23">show total deaths</tspan></text></switch>
+<switch><text y="80" id="trsvg49-ro" systemLanguage="ro"><tspan id="trsvg24-ro">pentru fiecare sursă de energie</tspan></text><text y="80" id="trsvg49"><tspan id="trsvg24">from each energy source</tspan></text></switch>
+</g>
+
+<switch><text x="580" y="655" id="trsvg50-ro" systemLanguage="ro"><tspan id="trsvg25-ro">Lățimea dreptunghiurilor = electricitatea produsă global</tspan></text><text x="580" y="655" id="trsvg50"><tspan id="trsvg25">Widths of rectangles = electricity produced globally</tspan></text></switch>
+
+</svg>

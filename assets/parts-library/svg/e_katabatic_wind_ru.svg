@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.0 r9654"
+   width="800"
+   height="540"
+   sodipodi:docname="Katabatic-wind_ru.svg">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6">
+    <linearGradient
+       id="linearGradient5455">
+      <stop
+         style="stop-color:#9de8ff;stop-opacity:1;"
+         offset="0"
+         id="stop5457" />
+      <stop
+         style="stop-color:#054357;stop-opacity:1"
+         offset="1"
+         id="stop5459" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5445">
+      <stop
+         style="stop-color:#76e1e7;stop-opacity:1;"
+         offset="0"
+         id="stop5447" />
+      <stop
+         style="stop-color:#faee9f;stop-opacity:1;"
+         offset="1"
+         id="stop5449" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient5435">
+      <stop
+         style="stop-color:#6468be;stop-opacity:1;"
+         offset="0"
+         id="stop5437" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1"
+         id="stop5439" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5421">
+      <stop
+         style="stop-color:#b6ab29;stop-opacity:1;"
+         offset="0"
+         id="stop5423" />
+      <stop
+         id="stop5429"
+         offset="0.57618737"
+         style="stop-color:#956d10;stop-opacity:1;" />
+      <stop
+         style="stop-color:#c16800;stop-opacity:1;"
+         offset="1"
+         id="stop5425" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5401">
+      <stop
+         id="stop5403"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#9cdee2;stop-opacity:1;"
+         offset="0.47484651"
+         id="stop5405" />
+      <stop
+         id="stop5407"
+         offset="1"
+         style="stop-color:#2826ff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#7f7f7f;stop-opacity:0.49803922;"
+         offset="1"
+         id="stop5409" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient5353">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop5355" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop5357" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5333">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop5335" />
+      <stop
+         id="stop5337"
+         offset="0.52906978"
+         style="stop-color:#9cdee2;stop-opacity:1;" />
+      <stop
+         style="stop-color:#2826ff;stop-opacity:1;"
+         offset="1"
+         id="stop5339" />
+      <stop
+         id="stop5341"
+         offset="1"
+         style="stop-color:#7f7f7f;stop-opacity:0.49803922;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5323">
+      <stop
+         id="stop5325"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#9cdee2;stop-opacity:1;"
+         offset="0.52906978"
+         id="stop5327" />
+      <stop
+         id="stop5329"
+         offset="1"
+         style="stop-color:#2826ff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#7f7f7f;stop-opacity:0.49803922;"
+         offset="1"
+         id="stop5331" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5251">
+      <stop
+         id="stop5253"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#9cdee2;stop-opacity:1;"
+         offset="0.52906978"
+         id="stop5255" />
+      <stop
+         id="stop5257"
+         offset="1"
+         style="stop-color:#2826ff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#7f7f7f;stop-opacity:0.49803922;"
+         offset="1"
+         id="stop5259" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3791"
+       osb:paint="gradient">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3793" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop3795" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3773">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop3783" />
+      <stop
+         id="stop3787"
+         offset="0.52906978"
+         style="stop-color:#9cdee2;stop-opacity:1;" />
+      <stop
+         style="stop-color:#2826ff;stop-opacity:1;"
+         offset="1"
+         id="stop3789" />
+      <stop
+         id="stop3785"
+         offset="1"
+         style="stop-color:#7f7f7f;stop-opacity:0.49803922;" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5353"
+       id="linearGradient5359"
+       x1="2.1294069"
+       y1="346.0192"
+       x2="107.93758"
+       y2="346.0192"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5333"
+       id="linearGradient5389"
+       x1="19.342688"
+       y1="341.3031"
+       x2="19.458511"
+       y2="351.84314"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5401"
+       id="linearGradient5399"
+       x1="55.13245"
+       y1="342.05597"
+       x2="55.248272"
+       y2="352.71182"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(0.347473, -0.810771)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5401"
+       id="linearGradient5413"
+       gradientUnits="userSpaceOnUse"
+       x1="55.13245"
+       y1="342.05597"
+       x2="55.248272"
+       y2="352.71182"
+       gradientTransform="matrix(0.794258, 0, 0, 0.943182, 40.8833, 18.74)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5401"
+       id="linearGradient5417"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.660287, 0, 0, 0.954545, 67.6127, 14.6214)"
+       x1="55.13245"
+       y1="342.05597"
+       x2="55.248272"
+       y2="352.71182" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5421"
+       id="linearGradient5427"
+       x1="34.016293"
+       y1="533.97711"
+       x2="804.28516"
+       y2="430.19843"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5435"
+       id="linearGradient5441"
+       x1="633.7915"
+       y1="344.02502"
+       x2="630.08508"
+       y2="129.98137"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-2.77979)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5445"
+       id="linearGradient5451"
+       x1="329.8681"
+       y1="-2.9851303"
+       x2="328.01489"
+       y2="349.12128"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-2.77979, -4.63298)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5455"
+       id="linearGradient5461"
+       x1="242.7681"
+       y1="343.56192"
+       x2="243.69511"
+       y2="541.85345"
+       gradientUnits="userSpaceOnUse" />
+  </defs>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1366"
+     inkscape:window-height="746"
+     id="namedview4"
+     showgrid="false"
+     inkscape:zoom="1.0792192"
+     inkscape:cx="348.41997"
+     inkscape:cy="237.11392"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <rect
+     style="fill:url(#linearGradient5461);fill-opacity:1.0;fill-rule:nonzero;stroke:none"
+     id="rect5453"
+     width="597.65472"
+     height="198.29193"
+     x="-1.8531921"
+     y="344.48831" />
+  <rect
+     style="fill:url(#linearGradient5451);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     id="rect5443"
+     width="799.65216"
+     height="349.32663"
+     x="-1.8531917"
+     y="-5.7649193" />
+  <path
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-opacity:1"
+     d="m 281.72009,156.19969 90.61951,-34.91516 8.5289,21.05571 141.52636,0.26653 0.79958,26.11974 -141.79289,0.79958 -6.6632,20.78919 z"
+     id="path2987"
+     inkscape:connector-curvature="0" />
+  <rect
+     style="fill:url(#linearGradient5389);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     id="rect5381"
+     width="37.758778"
+     height="10.076729"
+     x="1.9690161"
+     y="341.12936" />
+  <rect
+     style="fill:url(#linearGradient5399);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     id="rect5391"
+     width="24.207315"
+     height="10.192554"
+     x="44.244949"
+     y="341.24521" />
+  <rect
+     y="341.36102"
+     x="75.749207"
+     height="9.6134319"
+     width="19.226862"
+     id="rect5411"
+     style="fill:url(#linearGradient5413);fill-opacity:1;fill-rule:nonzero;stroke:none" />
+  <rect
+     style="fill:url(#linearGradient5417);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     id="rect5415"
+     width="15.983777"
+     height="9.7292566"
+     x="96.59761"
+     y="341.12936" />
+  <path
+     style="fill:url(#linearGradient5427);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     d="m 37.990428,542.77979 c -14.119592,-14.36382 9.821298,-24.55044 64.861702,-31.50426 65.9799,-15.08476 167.50244,-35.24017 188.09895,-16.67872 57.23451,-24.34811 122.46991,-9.95722 138.06277,-21.31171 23.39994,-10.54571 63.53079,-19.0216 99.14575,-22.2383 12.88865,-11.22872 26.35371,-19.57543 41.69681,-18.53191 l 231.64895,-3.70638 0,113.04469 -741.276634,-10e-6 z"
+     id="path5419"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="cccccccccc" />
+  <path
+     style="fill:#232dff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+     d="m 255.74043,284.25956 54.31637,-24.09149 5.10666,12.04575 C 493.58471,278.44642 554.11859,95.898063 729.15343,54.000512 l 7.42789,-6.48617 30.64,0 -8.98607,15.53265 7.6533,13.22894 -33.48541,0 -5.97851,-10.33399 C 593.29326,85.15916 503.62133,279.33874 314.58623,285.89262 l -2.67246,14.58237 z"
+     id="path5431"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="ccccccccccccc" />
+  <path
+     style="fill:url(#linearGradient5441);fill-opacity:1;fill-rule:nonzero;stroke:none"
+     d="m 442.91279,385.2585 -234.66039,-12.04574 -2.08484,-5.90705 -2.77978,-17.95279 1.62154,-20.26928 2.31649,-3.59056 c 88.46967,3.00123 269.83258,-24.34393 392.18166,-180.22289 60.19184,-43.0798 129.30829,-50.461193 199.2181,-54.669147 l 1.85319,338.207467 -222.38299,3.70638 C 544.30311,410.53961 499.0435,394.87931 442.91279,385.2585"
+     id="path5433"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="ccccccccccc" />
+  <path
+     style="fill:#ffffff;stroke:none;stroke-width:0.80000000999999998;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;fill-opacity:1"
+     d="m 527.46465,175.61621 27.10293,-0.4633 -0.69495,136.90453 18.99522,6.71782 -32.89415,92.89122 -34.5157,-91.96463 21.31171,-8.10771 z"
+     id="path3757"
+     inkscape:connector-curvature="0" />
+  <flowRoot
+     xml:space="preserve"
+     id="flowRoot5463"
+     style="fill:#94e4d7;fill-opacity:1;stroke:none;stroke-opacity:1;font-size:22px;stroke-width:0.80000000999999998;stroke-miterlimit:4;stroke-dasharray:none;opacity:1;-inkscape-font-specification:Norasi;font-family:Norasi;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;fill-rule:nonzero;stroke-dashoffset:0;text-anchor:middle;text-align:center"><flowRegion
+       id="flowRegion5465"><rect
+         id="rect5467"
+         width="299.29044"
+         height="46.329788"
+         x="32.430851"
+         y="38.711678"
+         style="font-size:22px;fill:#94e4d7;fill-opacity:1" /></flowRegion><flowPara
+       id="flowPara5469" /></flowRoot>  <text
+     xml:space="preserve"
+     style="font-size:29.86710739px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#3350c5;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Norasi;-inkscape-font-specification:Norasi"
+     x="156.3586"
+     y="43.49934"
+     id="text5471"
+     transform="scale(0.945925, 1.05717)"><tspan
+       sodipodi:role="line"
+       id="tspan5473"
+       x="156.3586"
+       y="43.49934"
+       style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch Italic">Тёплый воздух</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:28.9621048px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#3350c5;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch Italic"
+     x="740.25787"
+     y="37.724693"
+     id="text5475"
+     transform="scale(0.818039, 1.22244)"><tspan
+       sodipodi:role="line"
+       id="tspan5477"
+       x="740.25787"
+       y="37.724693">Холодный воздух</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:29.26724243px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#3350c5;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch Italic"
+     x="361.1745"
+     y="180.38147"
+     id="text5479"
+     transform="scale(0.751694, 1.33033)"><tspan
+       sodipodi:role="line"
+       id="tspan5481"
+       x="361.1745"
+       y="180.38147"
+       style="-inkscape-font-specification:Garuda Bold;font-family:Garuda;font-weight:bold;font-style:normal;font-stretch:normal;font-variant:normal;fill:#0e39ea;fill-opacity:1">Катабатический ветер</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:28.17520142px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#0926bc;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="109.34706"
+     y="388.82846"
+     id="text5483"
+     transform="scale(0.885992, 1.12868)"><tspan
+       sodipodi:role="line"
+       id="tspan5485"
+       x="109.34706"
+       y="388.82846">Океан</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:26.6848774px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#4c3700;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="607.96588"
+     y="461.01111"
+     id="text5487"
+     transform="scale(0.905157, 1.10478)"><tspan
+       sodipodi:role="line"
+       id="tspan5489"
+       x="607.96588"
+       y="461.01111">Континент</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:22px;font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#4405cf;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold Oblique"
+     x="276.12555"
+     y="359.31381"
+     id="text5491"><tspan
+       sodipodi:role="line"
+       id="tspan5493"
+       x="276.12555"
+       y="521.01111">Шельф</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:22px;font-style:oblique;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#4204d0;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold Oblique"
+     x="694.0202"
+     y="295.37869"
+     id="text5495"><tspan
+       sodipodi:role="line"
+       id="tspan5497"
+       x="694.0202"
+       y="295.37869">Антарктический</tspan><tspan
+       sodipodi:role="line"
+       x="694.0202"
+       y="322.87869"
+       id="tspan5501">ледяной пласт</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:22.05310822px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#0416d0;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="175.99324"
+     y="305.12613"
+     id="text5505"
+     transform="scale(0.90036, 1.11067)"><tspan
+       sodipodi:role="line"
+       id="tspan5507"
+       x="172.99324"
+       y="305.12613">Полынья</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18.6027298px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#0416d0;fill-opacity:1;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="921.47083"
+     y="109.88777"
+     id="text5509"
+     transform="scale(0.772631, 1.29428)"><tspan
+       sodipodi:role="line"
+       id="tspan5511"
+       x="921.47083"
+       y="109.88777">Снег, охлаждающий</tspan><tspan
+       sodipodi:role="line"
+       x="921.47083"
+       y="133.14117"
+       id="tspan5513">воздух</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:19.82893562px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#2c36a8;fill-opacity:0.74531836;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="463.67001"
+     y="145.96703"
+     id="text5515"
+     transform="scale(0.901315, 1.10949)"><tspan
+       sodipodi:role="line"
+       id="tspan5517"
+       x="463.67001"
+       y="145.96703">Градиент давления</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:24.20539474px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#2c36a8;fill-opacity:0.74531836;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="-295.33972"
+     y="503.772"
+     id="text5519"
+     transform="matrix(0, -0.919261, 1.08783, 0, 0, 0)"><tspan
+       sodipodi:role="line"
+       id="tspan5521"
+       x="-295.33972"
+       y="503.772">Сила тяжести</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:17.63118553px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:center;text-anchor:middle;fill:#168584;fill-opacity:0.74531836;fill-rule:nonzero;stroke:none;font-family:Garuda;-inkscape-font-specification:Garuda Bold"
+     x="70.851936"
+     y="296.50021"
+     id="text5523"
+     transform="scale(0.801417, 1.24779)"><tspan
+       sodipodi:role="line"
+       id="tspan5525"
+       x="70.851929"
+       y="296.50021"
+       style="font-style:oblique;-inkscape-font-specification:Garuda Bold Oblique">Морской лёд</tspan></text>
+</svg>

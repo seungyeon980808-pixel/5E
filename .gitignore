@@ -40,3 +40,5 @@ scratch_*.json
 # .claude/skills 는 .agents/skills 를 가리키는 **절대경로 심볼릭 링크**라
 # 다른 컴퓨터에서 깨진다. 실체(.agents/skills)만 커밋한다.
 .claude/skills/
+
+__pycache__/

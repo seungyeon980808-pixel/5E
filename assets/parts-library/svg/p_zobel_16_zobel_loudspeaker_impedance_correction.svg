@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created by Certes for Wikipedia on 22 June 2009 -->
+<svg xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="300" height="300" id="Zobel (16) Zobel loudspeaker impedance correction">
+  <g>
+    <path fill="#dbdbe3" d="M0,0 300,0 300,300 0,300 z" />
+    <path fill="#b8b8c0" d="M180,50 280,50 280,250 180,250 z" />
+
+    <path fill="none" stroke="black"
+      d="M40,40 220,40 220,70
+         a7.5,7.5 0 0 1 0,15 a7.5,7.5 0 0 1 0,15 a7.5,7.5 0 0 1 0,15 a7.5,7.5 0 0 1 0,15
+         l 0,40 -10,5 20,10 -20,10 20,10 -20,10 20,10 -10,5
+         L220,260 40,260
+         M100,40 l 0,30 -10,5 20,10 -20,10 20,10 -20,10 20,10 -10,5 0,65
+         m -20,0 l 40,0 m 0,10 l -40,0 m 20,0 l 0,55
+         M55,193 l 20,0
+    "/>
+
+    <circle cx="100" cy="40"  r="3" stroke="none" fill="black"/>
+    <circle cx="100" cy="260" r="3" stroke="none" fill="black"/>
+
+<text transform="rotate(270)" y="260" x="-150"
+ font-size="15px" text-align="center" text-anchor="middle">Loudspeaker equivalent circuit</text>
+    <text font-size="20px" text-align="center" text-anchor="middle"> 
+      <tspan x="75" y="100">R</tspan>
+      <tspan x="40" y="200">C'=</tspan>
+      <tspan x="65" y="190">L</tspan>
+      <tspan x="65" y="210">R</tspan>
+      <tspan x="73" y="205" font-size="15px">2</tspan>
+      <tspan x="195" y="100">L</tspan>
+      <tspan x="195" y="200">R</tspan>
+    </text>
+  </g>
+</svg>

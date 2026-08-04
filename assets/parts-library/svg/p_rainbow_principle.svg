@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-110 -1180 2205 1470">
+ <title>Rainbow principle</title>
+ <desc>Physics of a primary and secondary rainbow illustrated by CMG Lee. Angles are based on http://www.daviddarling.info/images/rainbow_physics.jpg , and http://hyperphysics.phy-astr.gsu.edu/hbase/atmos/imgatm/lpath2.gif from http://hyperphysics.phy-astr.gsu.edu/hbase/atmos/rbowpath.html .</desc>
+ <style type="text/css">
+  #main        { font-family:Helvetica,Arial,sans-serif; font-size:60px; text-anchor:middle; stroke:none; fill:#000000; }
+  .rainbow     { fill:none; stroke-width:8px; stroke-opacity:0.75; stroke-linecap:round; filter:url(#filter_blur); }
+  .ray         { fill:none; stroke-width:4px; }
+  .all         { stroke:#000000; }
+  .red         { stroke:#ff0000; }
+  .green       { stroke:#009900; stroke-dasharray:32,4; }
+  .violet      { stroke:#6600ff; stroke-dasharray: 8,4; }
+  .secondary   { opacity:0.5; }
+  .others      { opacity:0.25; font-size:1px; }
+  .text_red    { fill:#ff0000; }
+  .text_violet { fill:#6600ff; }
+  .text_r      { fill:#cc0000; font-weight:bold; }
+ </style>
+ <defs>
+  <filter id="filter_blur">
+   <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
+  </filter>
+  <linearGradient id="grad_band" x1="0%" y1="100%" x2="100%" y2="0%">
+   <stop offset="50%" stop-color="#dddddd"/>
+   <stop offset="90%" stop-color="#ffffff"/>
+  </linearGradient>
+  <linearGradient id="grad_ground" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%"  stop-color="#00ff00"/>
+   <stop offset="20%" stop-color="#ccff99"/>
+   <stop offset="90%" stop-color="#ffffff"/>
+  </linearGradient>
+  <radialGradient id="grad_sun" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+   <stop offset="30%" stop-color="#ffff00"/>
+   <stop offset="99%" stop-color="#ffcc00"/>
+  </radialGradient>
+  <radialGradient id="grad_eye" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
+   <stop offset="30%" stop-color="#ffffff"/>
+   <stop offset="99%" stop-color="#cccccc"/>
+  </radialGradient>
+  <linearGradient id="grad_highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%"  stop-color="#eeffff" stop-opacity="1"/>
+   <stop offset="99%" stop-color="#eeffff" stop-opacity="0"/>
+  </linearGradient>
+  <radialGradient id="grad_drop" cx="50%" cy="50%" r="50%" fx="50%" fy="75%">
+   <stop offset="0%"  stop-color="#ccffff"/>
+   <stop offset="20%" stop-color="#cceeff"/>
+   <stop offset="99%" stop-color="#99ccff"/>
+  </radialGradient>
+  <g id="drop" transform="rotate(-15)" stroke="none">
+   <circle id="drop" cx="0" cy="0" r="100"  fill="url(#grad_drop)"/>
+   <ellipse cx="0" cy="-40" rx="70" ry="50" fill="url(#grad_highlight)"/>
+  </g>
+  <rect id="rect_clip" x="-4999" y="0" width="9999" height="4999"/>
+  <clipPath id="clip_primary_violet"  ><use xlink:href="#rect_clip" transform="rotate(-54)"/></clipPath>
+  <clipPath id="clip_primary_red"     ><use xlink:href="#rect_clip" transform="rotate(-55)"/></clipPath>
+  <clipPath id="clip_secondary_red"   ><use xlink:href="#rect_clip" transform="rotate(-63)"/></clipPath>
+  <clipPath id="clip_secondary_violet"><use xlink:href="#rect_clip" transform="rotate(-68)"/></clipPath>
+  <g id="primary">
+   <use xlink:href="#drop"/>
+   <path class="primary violet ray" d="M -300,-58 H -80 L 99,-13 L -24, 97"/>
+   <path class="primary green  ray" d="M -300,-60 H -80 L 94,-33 L  -7, 99"/>
+   <path class="primary red    ray" d="M -300,-62 H -82 L 85,-50 L  16, 98"/>
+   <use xlink:href="#arrow" transform="translate( -24, 97) rotate(-40.7)" class="primary violet ray"/>
+   <use xlink:href="#arrow" transform="translate(  -7, 99) rotate(-41.5)" class="primary green  ray"/>
+   <use xlink:href="#arrow" transform="translate(  16, 98) rotate(-42.4)" class="primary red    ray"/>
+   <use xlink:href="#arrow" transform="translate(-300,-60) rotate(180)"   class="primary all    ray"/>
+   <text transform="rotate(-15)"><tspan x="115" y="0" dy="0.7ex">1</tspan></text>
+  </g>
+  <g id="secondary">
+   <use xlink:href="#drop"/>
+   <path class="secondary violet ray" d="M -300,73 H -65 L 97,21 L -15,-97 L -99,18"/>
+   <path class="secondary green  ray" d="M -300,75 H -67 L 92,37 L   2,-98 L -99, 5"/>
+   <path class="secondary red    ray" d="M -300,77 H -69 L 85,52 L  18,-96 L -98,-9"/>
+   <use xlink:href="#arrow" transform="translate( -99,18) rotate(-53.5)" class="secondary violet ray"/>
+   <use xlink:href="#arrow" transform="translate( -99, 5) rotate(-52.0)" class="secondary green  ray"/>
+   <use xlink:href="#arrow" transform="translate( -99,-9) rotate(-50.4)" class="secondary red    ray"/>
+   <use xlink:href="#arrow" transform="translate(-300,75) rotate(180)"   class="secondary all    ray"/>
+   <text transform="rotate(-15)"><tspan x="110" y="50" dy="0.7ex">1</tspan><tspan x="10" y="-130" dy="0.7ex">2</tspan></text>
+  </g>
+  <path id="arrow" class="ray" d="M 0,0 h -200 l 20,-10 m -20,10 l 20,10"/>
+  <g id="eye">
+   <circle cx="0" cy="0" r="20" fill="url(#grad_eye)"/>
+   <ellipse transform="translate(14,-5) rotate(-20)" cx="0" cy="0" rx="5" ry="10" fill="#996600"/>
+   <ellipse transform="translate(16,-6) rotate(-20)" cx="0" cy="0" rx="2" ry="3"  fill="#000000"/>
+  </g>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g id="main">
+  <g transform="rotate(15)">
+   <path d="M 700,-835 L 0,0 L 800,-718" fill="url(#grad_band)"/>
+   <g transform="translate(500,0) scale(0.5,1)">
+    <g class="rainbow">
+     <circle stroke="#dddddd" stroke-width="90" cx="0" cy="0" r="465"/>
+     <circle class="secondary violet" cx="0" cy="0" r="550"/>
+     <circle class="secondary green"  cx="0" cy="0" r="540"/>
+     <circle class="secondary red"    cx="0" cy="0" r="520"/>
+     <circle class="primary   violet" cx="0" cy="0" r="390"/>
+     <circle class="primary   green"  cx="0" cy="0" r="405"/>
+     <circle class="primary   red"    cx="0" cy="0" r="415"/>
+    </g>
+    <path class="primary   violet ray" d="M 770,0 A 770,770 0 0 0 -770,0" clip-path="url(#clip_primary_violet)"/>
+    <path class="primary   red    ray" d="M 800,0 A 780,800 0 0 0 -800,0" clip-path="url(#clip_primary_red)"/>
+    <path class="secondary red    ray" d="M 960,0 A 960,960 0 0 0 -960,0" clip-path="url(#clip_secondary_red)"/>
+    <path class="secondary violet ray" d="M 990,0 A 990,990 0 0 0 -990,0" clip-path="url(#clip_secondary_violet)"/>
+   </g>
+   <g class="others">
+    <use xlink:href="#primary"   x="650"  y="-1150"/>
+    <use xlink:href="#secondary" x="1200" y="-800"/>
+    <use xlink:href="#primary"   x="1480" y="-900"/>
+    <use xlink:href="#secondary" x="1750" y="-800"/>
+    <use xlink:href="#secondary" x="1700" y="-1200"/>
+    <use xlink:href="#arrow"     x="260"  y="-1120"/>
+    <use xlink:href="#arrow"     x="200"  y="-600"/>
+   </g>
+   <path class="secondary green  ray" d="M 0,0 H  600" transform="rotate(-52.0)"/>
+   <path class="secondary violet ray" d="M 0,0 H 1430" transform="rotate(-53.5)"/><use xlink:href="#secondary" x="1060" y="-1320"/>
+   <path class="secondary red    ray" d="M 0,0 H 1210" transform="rotate(-50.4)"/><use xlink:href="#secondary" x="1000" y="-1080"/>
+   <path class="primary   red    ray" d="M 0,0 H 1710" transform="rotate(-42.4)"/><use xlink:href="#primary"   x="1390" y="-1385"/>
+   <path class="primary   violet ray" d="M 0,0 H 1910" transform="rotate(-40.7)"/><use xlink:href="#primary"   x="1625" y="-1475"/>
+   <path class="primary   green  ray" d="M 0,0 H  550" transform="rotate(-41.6)"/>
+   <path class="ray" d="M -109,0 H 1000" stroke="#000000" stroke-dasharray="96,8,8,8"/>
+   <!-- <path fill="#000000" d="M 500,-400 L 0,0 H 500"/> -->
+   <!-- <use xlink:href="#eye" transform="rotate(-25) scale(5)" fill-opacity="0.75"/> -->
+  </g>
+  <g transform="translate(20,-1040)">
+   <path transform="scale(20)" d="M 0,-7 Q 0,0 5,-5 Q 0,0 7,0 Q 0,0 5,5 Q 0,0 0,7 Q 0,0 -5,5 Q 0,0 -7,0 Q 0,0 -5,-5 Q 0,0 0,-7" fill="url(#grad_sun)"/>
+   <g transform="rotate(195)" stroke="#ffcc00">
+    <use xlink:href="#arrow" x="-120"   y="0"/>
+    <use xlink:href="#arrow" x="-120"  y="90"/>
+    <use xlink:href="#arrow" x="-120" y="-90"/>
+   </g>
+  </g>
+  <rect x="-4999" y="100" width="9999" height="600" fill="url(#grad_ground)" fill-opacity="0.5"/>
+  <text class="primary   text_violet" transform="translate( 810,-325)" x="0" y="0.6ex"><tspan>40.7</tspan><tspan dx="-0.1ex">&#176;</tspan></text>
+  <text class="primary   text_red"    transform="translate( 810,-470)" x="0" y="0.6ex"><tspan>42.4</tspan><tspan dx="-0.3ex">&#176;</tspan></text>
+  <text class="secondary text_red"    transform="translate( 880,-550)" x="0" y="0.6ex"><tspan>50.4</tspan><tspan dx="-0.3ex">&#176;</tspan></text>
+  <text class="secondary text_violet" transform="translate(1040,-610)" x="0" y="0.6ex"><tspan>53.5</tspan><tspan dx="-0.2ex">&#176;</tspan></text>
+  <g font-size="80">
+   <text transform="translate(530,-80)" x="0" y="0.6ex"
+    ><tspan>Primary</tspan><tspan x="0" dy="1em">rainbow</tspan></text>
+   <text transform="translate(290,-440)" x="0" y="0.6ex"
+    ><tspan>Secondary</tspan><tspan x="0" dy="1em">rainbow</tspan></text>
+   <text transform="translate(540,-700)" x="0" y="0.6ex"
+    ><tspan>Alexander's</tspan><tspan x="0" dy="1em">dark band</tspan></text>
+   <text transform="translate(1060,0)" x="0" y="0.6ex" text-anchor="start"
+    ><tspan class="text_r">R</tspan><tspan>ainbow&#160;</tspan
+    ><tspan class="text_r">R</tspan><tspan>im =&#160;</tspan
+    ><tspan class="text_r">R</tspan><tspan>ed&#160;</tspan
+    ></text>
+   <path d="M 530,-600 V -320 M 710,0 H 1050" stroke="#000000"/>
+  </g>
+  <path transform="translate(0,100)" d="M -10,0 c 10,-20 -10,-80 3,-90 a 5,8 0 1 1 4,1 c 20,20 -13,80 10,89" stroke="#000000"/>
+ </g>
+</svg>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1646.0519"
+   height="1620.0002"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.92.1 r15371"
+   version="1.0"
+   sodipodi:docname="Aufbau_der_Erde_schematisch.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <title
+     id="title853">Structure de la Terre</title>
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 810 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="1620 : 810 : 1"
+       inkscape:persp3d-origin="810 : 810 : 1"
+       id="perspective42" />
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3340"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 810 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="1620 : 810 : 1"
+       inkscape:persp3d-origin="810 : 810 : 1"
+       id="perspective41" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2497"
+       inkscape:persp3d-origin="400 : 266.66667 : 1"
+       inkscape:vp_z="800 : 400 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 400 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.2799099"
+     inkscape:cx="661.64234"
+     inkscape:cy="906.75275"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1262"
+     inkscape:window-height="736"
+     inkscape:window-x="18"
+     inkscape:window-y="27"
+     fit-margin-top="10"
+     fit-margin-left="10"
+     fit-margin-right="10"
+     fit-margin-bottom="10"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Structure de la Terre</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+        <dc:rights>
+          <cc:Agent>
+            <dc:title>Public Domain</dc:title>
+          </cc:Agent>
+        </dc:rights>
+        <dc:language>fr</dc:language>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Grafik"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(1254.6233,690.49516)"
+     style="display:inline">
+    <path
+       id="circle5"
+       d="m 381.42859,119.50494 c 0,441.60005 -358.400039,800.00014 -800.00009,800.00014 -441.60006,0 -800.0001,-358.40009 -800.0001,-800.00014 0,-441.60005 358.40004,-800.0001 800.0001,-800.0001 441.600051,0 800.00009,358.40005 800.00009,800.0001 z"
+       style="fill:#000000;stroke:none"
+       inkscape:connector-curvature="0" />
+    <path
+       id="circle7"
+       d="m 375.15014,119.50494 c 0,438.13435 -355.587294,793.72169 -793.72164,793.72169 -438.13435,0 -793.7217,-355.58734 -793.7217,-793.72169 0,-438.13435 355.58735,-793.72165 793.7217,-793.72165 438.134346,0 793.72164,355.5873 793.72164,793.72165 z"
+       style="fill:#9acc99;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
+    <path
+       id="circle9"
+       d="m 318.64409,119.50494 c 0,406.94301 -330.272583,737.21564 -737.21559,737.21564 -406.94301,0 -737.2156,-330.27263 -737.2156,-737.21564 0,-406.94301 330.27259,-737.2156 737.2156,-737.2156 406.943007,0 737.21559,330.27259 737.21559,737.2156 z"
+       style="fill:#a00000;fill-opacity:0;stroke:none"
+       inkscape:connector-curvature="0" />
+    <path
+       id="circle11"
+       d="m 255.85959,119.50494 c 0,372.28597 -302.145127,674.43114 -674.43109,674.43114 -372.28597,0 -674.4311,-302.14517 -674.4311,-674.43114 0,-372.28597 302.14513,-674.4311 674.4311,-674.4311 372.285963,0 674.43109,302.14513 674.43109,674.4311 z"
+       style="fill:#cdffcc;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
+    <path
+       id="circle13"
+       d="m 17.278495,119.50494 c 0,240.5892 -195.260795,435.85 -435.849995,435.85 -240.5892,0 -435.85,-195.2608 -435.85,-435.85 0,-240.5892 195.2608,-435.85 435.85,-435.85 240.5892,0 435.849995,195.2608 435.849995,435.85 z"
+       style="fill:#cecece;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
+    <path
+       id="circle15"
+       d="m -258.97331,119.50494 c 0,88.09821 -71.49998,159.5982 -159.59819,159.5982 -88.09821,0 -159.5982,-71.49999 -159.5982,-159.5982 0,-88.098206 71.49999,-159.598199 159.5982,-159.598199 88.09821,0 159.59819,71.499993 159.59819,159.598199 z"
+       style="fill:#9b9b9b;fill-opacity:1;stroke:none"
+       inkscape:connector-curvature="0" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Text"
+     style="display:inline"
+     transform="translate(26.051834,10e-5)">
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+       id="text31"
+       x="180.30754"
+       y="99.157471">
+      <tspan
+         sodipodi:role="line"
+         id="tspan3325"
+         x="180.30754"
+         y="99.157471"
+         style="font-size:48px;line-height:1">Manteau supérieur</tspan>
+      <tspan
+         sodipodi:role="line"
+         id="tspan3327"
+         x="180.30754"
+         y="147.15747"
+         style="font-size:48px;line-height:1">35-670 km</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+       id="text47"
+       x="808.70972"
+       y="275.97324">
+      <tspan
+         sodipodi:role="line"
+         id="tspan3317"
+         x="808.70972"
+         y="275.97324"
+         style="font-size:48px;line-height:1">Manteau inférieur</tspan>
+      <tspan
+         sodipodi:role="line"
+         id="tspan3319"
+         x="808.70972"
+         y="323.97324"
+         style="font-size:48px;line-height:1">670-2900 km</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+       id="text51"
+       x="810.59644"
+       y="549.38971">
+      <tspan
+         sodipodi:role="line"
+         id="tspan3309"
+         x="810.59644"
+         y="549.38971"
+         style="font-size:48px;line-height:1">Noyau externe</tspan>
+      <tspan
+         sodipodi:role="line"
+         id="tspan3311"
+         x="810.59644"
+         y="597.38971"
+         style="font-size:48px;line-height:1">2900-5100 km</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+       id="text59"
+       x="809.47144"
+       y="780.81378">
+      <tspan
+         sodipodi:role="line"
+         id="tspan5157"
+         x="809.47144"
+         y="780.81378"
+         style="font-size:48px;line-height:1">Noyau interne</tspan>
+      <tspan
+         sodipodi:role="line"
+         id="tspan5159"
+         x="809.47144"
+         y="828.81378"
+         style="font-size:48px;line-height:1">5100-6371 km</tspan>
+    </text>
+    <text
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;writing-mode:lr-tb;text-anchor:middle"
+       id="text19"
+       x="178.87785"
+       y="1496.4198">
+      <tspan
+         sodipodi:role="line"
+         id="tspan3329"
+         x="178.87785"
+         y="1496.4198"
+         style="font-size:48px;line-height:1">Croûte</tspan>
+      <tspan
+         sodipodi:role="line"
+         id="tspan3331"
+         x="178.87785"
+         y="1544.4198"
+         style="font-size:48px;line-height:1">0-35 km</tspan>
+    </text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Pfeile"
+     style="display:inline"
+     transform="translate(26.051834,10e-5)">
+    <path
+       style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+       d="m 253.65305,1391.355 -53.58867,53.5887 v 0 0 0"
+       id="path3335"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Lstart)"
+       d="M 271.51594,244.55739 210.78211,183.82356"
+       id="path4119"
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

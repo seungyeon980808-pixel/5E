@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="340"
+   height="900"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Mend"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         id="path3602"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Mendh"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         id="path2840"
+         style="fill:#64c8ff;fill-rule:evenodd;stroke:#64c8ff;stroke-width:1pt;marker-start:none" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1MendA"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         id="path2871"
+         style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;marker-start:none" />
+    </marker>
+  </defs>
+  <path
+     d="m 120,229.99998 0,50 M 95,230 l 25,-2e-5 m 150,90 -100,10 -50,0 m 0,-50 50,0 100,10 M 60,365 45,340 45,80 m 10,750 0,-410 -35,-40 0,-150 25,2e-5 m 75,100 0,50 -35,40 0,410 M 95,80 95,340 80,365"
+     id="path4243"
+     style="fill:none;stroke:#000000;stroke-width:2.5;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+  <path
+     d="m 70,30 0,100"
+     id="path4261"
+     style="fill:none;stroke:#0000ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-end:url(#Arrow1MendA)" />
+  <path
+     d="m 20,229.99998 100,0 0,150 -35,40 -30,0 -35,-40 0,-150 z"
+     id="path7027"
+     style="fill:#c8b7b7;fill-opacity:0.4;stroke:none" />
+  <path
+     d="m 70,780 0,100"
+     id="path7047"
+     style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:12, 4;stroke-dashoffset:0;marker-start:none;marker-end:url(#Arrow1Mend)" />
+  <path
+     d="m 320,304.99998 -100,0"
+     id="path7049"
+     style="fill:none;stroke:#64c8ff;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-end:url(#Arrow1Mendh)" />
+  <text
+     x="109.6"
+     y="51.6"
+     id="text2894"
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;fill:#0000ff;fill-opacity:1;stroke:none;font-family:Nimbus Sans L, Bitstream Vera Sans, sans-serif"><tspan
+       x="109.6"
+       y="51.6"
+       id="tspan2896"
+       style="font-size:32px;fill:#0000ff">Wasser</tspan></text>
+</svg>

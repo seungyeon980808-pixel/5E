@@ -1,0 +1,12 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg width="89" height="85" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<path style="fill:none;stroke:#000000" d="M 8,4 L 8,32 M 1,32 L 15,32 M 5,36 L 11,36 M 1,40 L 15,40 M 5,44 L 11,44 M 1,48 L 15,48 M 5,52 L 11,52 M 8,52 L 8,80"/>
+<circle cx="8" cy="4" r="4" stroke="none" fill="black"/>
+<path style="fill:none;stroke:#000000" d="M 8,4 L 84,4"/>
+<circle cx="84" cy="4" r="4" stroke="none" fill="black"/>
+<path style="fill:none;stroke:#000000" d="M 84,4 L 84,32 L 81,34 L 87,37 L 81,40 L 87,43 L 81,46 L 87,49 L 84,51 L 84,80"/>
+<circle cx="84" cy="80" r="4" stroke="none" fill="black"/>
+<path style="fill:none;stroke:#000000" d="M 8,80 L 84,80"/>
+<circle cx="8" cy="80" r="4" stroke="none" fill="black"/>
+</svg>

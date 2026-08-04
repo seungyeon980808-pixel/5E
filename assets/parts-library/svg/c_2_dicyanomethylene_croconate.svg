@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg preserveAspectRatio="xMidYMid" version="1.1" viewBox="0 0 97.47 118.5" xmlns="http://www.w3.org/2000/svg">
+ <text x="7.3416114" y="68.829468" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="7.3416114" y="68.829468"><tspan dx="0" dy="0" fill="#f00a0a" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+ <path d="m32.38 68.18-12.42-3.335" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <path d="m31.46 71.64-12.42-3.335" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <text x="23.034611" y="109.65947" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="23.034611" y="109.65947"><tspan dx="0" dy="0" fill="#f00a0a" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+ <text x="15.711398" y="101.29008" fill="#000000" font-family="Arial" font-size="10.44px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="15.711398" y="101.29008"><tspan dx="0" dy="0" fill="#f00a0a" font-family="Arial" font-size="10.44px" font-stretch="Normal" font-weight="400">–</tspan></tspan></text>
+ <path d="m38.4 88.71-4.642 7.977" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <text x="62.784611" y="109.65947" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="62.784611" y="109.65947" fill="#f00a0a" font-family="Arial" font-stretch="Normal" font-weight="400"><tspan dx="0" dy="0" font-size="13.62px">O</tspan><tspan dx="0" dy="-7.3232131" font-size="11.5px">–</tspan></tspan></text>
+ <path d="m58.47 88.71 4.577 7.977" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <text x="78.484612" y="68.829468" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="78.484612" y="68.829468"><tspan dx="0" dy="0" fill="#f00a0a" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+ <path d="m64.88 71.84 11.77-3.139" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <path d="m63.96 68.37 11.77-3.139" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px"/>
+ <text x="77.434608" y="21.749474" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="77.434608" y="21.749474"><tspan dx="0" dy="0" fill="#3250ff" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">N</tspan></tspan></text>
+ <g transform="translate(1.065 6.059)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px">
+  <path d="m62.44 18.96 10.13-5.885"/>
+  <path d="m64.21 22.1 10.2-5.885"/>
+  <path d="m65.97 25.17 10.2-5.885"/>
+  <path d="m46.95 32.04 17.26-9.939"/>
+ </g>
+ <text x="8.3876114" y="21.749474" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400" letter-spacing="0px" word-spacing="0px" style="line-height:125%" xml:space="preserve"><tspan x="8.3876114" y="21.749474"><tspan dx="0" dy="0" fill="#3250ff" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">N</tspan></tspan></text>
+ <g transform="translate(1.065 6.059)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px">
+  <path d="m27.85 25.17-11.05-6.408"/>
+  <path d="m29.69 22.1-11.12-6.408"/>
+  <path d="m31.45 18.96-11.05-6.408"/>
+  <path d="m46.95 32.04-17.26-9.939"/>
+  <path d="m45.12 51.98v-19.94"/>
+  <path d="m48.71 51.98v-19.94"/>
+  <path d="m30.86 63.82 16.08-11.83"/>
+  <path d="m46.95 51.98 16.41 12.1"/>
+  <path d="m63.36 64.08-5.95 18.57"/>
+  <path d="m37.34 82.65h20.07"/>
+  <path d="m39.82 78.99h15.04"/>
+  <path d="m30.86 63.82 6.473 18.83"/>
+ </g>
+</svg>

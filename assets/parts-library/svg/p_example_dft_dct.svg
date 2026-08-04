@@ -1,0 +1,310 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20001102//EN" "svg-20001102.dtd">
+<svg width="600" height="480" viewBox="0 0 600 480"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+<desc>Produced by GNUPLOT 4.0 patchlevel 0 </desc>
+
+<defs>
+
+
+	<circle id='gpDot' r='1'/>
+	<path id='gpPt0' style='stroke-width:0.222' d='M-1,0 h2 M0,-1 v2'/>
+	<path id='gpPt1' style='stroke-width:0.222' d='M-1,-1 L1,1 M1,-1 L-1,1'/>
+	<path id='gpPt2' style='stroke-width:0.222' d='M-1,0 L1,0 M0,-1 L0,1 M-1,-1 L1,1 M-1,1 L1,-1'/>
+	<rect id='gpPt3' style='stroke-width:0.222' x='-1' y='-1' width='2' height='2'/>
+	<use xlink:href='#gpPt3' id='gpPt4' style='fill:currentColor; stroke:none'/>
+	<circle id='gpPt5' style='stroke-width:0.222' cx='0' cy='0' r='1'/>
+	<use xlink:href='#gpPt5' id='gpPt6' style='fill:currentColor; stroke:none'/>
+	<path id='gpPt7' style='stroke-width:0.222' d='M0,-1.33 L-1.33,0.67 L1.33,0.67 z'/>
+	<use xlink:href='#gpPt7' id='gpPt8' style='fill:currentColor; stroke:none'/>
+	<use xlink:href='#gpPt7' id='gpPt9' transform='rotate(180)'/>
+	<use xlink:href='#gpPt9' id='gpPt10' style='fill:currentColor; stroke:none'/>
+	<use xlink:href='#gpPt3' id='gpPt11' transform='rotate(45)'/>
+	<use xlink:href='#gpPt11' id='gpPt12' style='fill:currentColor; stroke:none'/>
+</defs>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M71,131 L71,140 M71,131 L71,122 '></path>
+	<g transform="translate(71,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,131 L163,140 M163,131 L163,122 '></path>
+	<g transform="translate(163,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,131 L254,140 M254,131 L254,122 '></path>
+	<g transform="translate(254,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,131 L346,140 M346,131 L346,122 '></path>
+	<g transform="translate(346,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,131 L438,140 M438,131 L438,122 '></path>
+	<g transform="translate(438,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,131 L529,140 M529,131 L529,122 '></path>
+	<g transform="translate(529,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M71,131 L71,35 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,131 L575,131 L575,35 L25,35 L25,131 '></path>
+	<g transform="translate(300,144)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,12)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>A generic sampled signal</text>
+	</g>
+</g>
+<g style="fill:none; color:red; stroke:currentColor; stroke-width:1.00">
+	<use xlink:href='#gpPt0' transform='translate(71,131) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(117,121) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(163,112) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(208,102) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(254,93) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(300,83) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(346,73) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(392,64) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(438,54) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(483,45) scale(6.75)'/>
+	<use xlink:href='#gpPt0' transform='translate(529,35) scale(6.75)'/>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,131 L575,131 L575,35 L25,35 L25,131 M71,131 L71,140 M71,131 L71,122 '></path>
+	<g transform="translate(71,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,131 L163,140 M163,131 L163,122 '></path>
+	<g transform="translate(163,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,131 L254,140 M254,131 L254,122 '></path>
+	<g transform="translate(254,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,131 L346,140 M346,131 L346,122 '></path>
+	<g transform="translate(346,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,131 L438,140 M438,131 L438,122 '></path>
+	<g transform="translate(438,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,131 L529,140 M529,131 L529,122 '></path>
+	<g transform="translate(529,153)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M71,131 L71,35 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,131 L575,131 L575,35 L25,35 L25,131 '></path>
+	<g transform="translate(300,144)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,12)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>A generic sampled signal</text>
+	</g>
+</g>
+<g style="fill:none; color:red; stroke:currentColor; stroke-width:1.00">
+	<path d='M71,131 M117,131 L117,121 M163,131 L163,112 M208,131 L208,102 M254,131 L254,93 M300,131 
+		L300,83 M346,131 L346,73 M392,131 L392,64 M438,131 L438,54 M483,131 L483,45 M529,131 
+		L529,35 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,131 L575,131 L575,35 L25,35 L25,131 M71,289 L71,280 M71,193 L71,202 '></path>
+	<g transform="translate(71,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,289 L163,280 M163,193 L163,202 '></path>
+	<g transform="translate(163,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,289 L254,280 M254,193 L254,202 '></path>
+	<g transform="translate(254,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,289 L346,280 M346,193 L346,202 '></path>
+	<g transform="translate(346,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,289 L438,280 M438,193 L438,202 '></path>
+	<g transform="translate(438,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,289 L529,280 M529,193 L529,202 '></path>
+	<g transform="translate(529,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M71,289 L71,193 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,289 L575,289 L575,193 L25,193 L25,289 '></path>
+	<g transform="translate(300,302)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,170)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>The modulus of its DFT</text>
+	</g>
+</g>
+<g style="fill:none; color:green; stroke:currentColor; stroke-width:1.00">
+	<use xlink:href='#gpPt1' transform='translate(71,193) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(117,262) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(163,280) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(208,286) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(254,288) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(300,289) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(346,289) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(392,288) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(438,286) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(483,280) scale(6.75)'/>
+	<use xlink:href='#gpPt1' transform='translate(529,262) scale(6.75)'/>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,289 L575,289 L575,193 L25,193 L25,289 M71,289 L71,280 M71,193 L71,202 '></path>
+	<g transform="translate(71,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,289 L163,280 M163,193 L163,202 '></path>
+	<g transform="translate(163,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,289 L254,280 M254,193 L254,202 '></path>
+	<g transform="translate(254,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,289 L346,280 M346,193 L346,202 '></path>
+	<g transform="translate(346,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,289 L438,280 M438,193 L438,202 '></path>
+	<g transform="translate(438,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,289 L529,280 M529,193 L529,202 '></path>
+	<g transform="translate(529,311)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M71,289 L71,193 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,289 L575,289 L575,193 L25,193 L25,289 '></path>
+	<g transform="translate(300,302)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,170)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>The modulus of its DFT</text>
+	</g>
+</g>
+<g style="fill:none; color:green; stroke:currentColor; stroke-width:1.00">
+	<path d='M71,289 L71,193 M117,289 L117,262 M163,289 L163,280 M208,289 L208,286 M254,289 L254,288 
+		M300,289 M346,289 M392,289 L392,288 M438,289 L438,286 M483,289 L483,280 M529,289 L529,262 
+		'></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,289 L575,289 L575,193 L25,193 L25,289 M71,411 L71,420 M71,411 L71,402 '></path>
+	<g transform="translate(71,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,411 L163,420 M163,411 L163,402 '></path>
+	<g transform="translate(163,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,411 L254,420 M254,411 L254,402 '></path>
+	<g transform="translate(254,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,411 L346,420 M346,411 L346,402 '></path>
+	<g transform="translate(346,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,411 L438,420 M438,411 L438,402 '></path>
+	<g transform="translate(438,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,411 L529,420 M529,411 L529,402 '></path>
+	<g transform="translate(529,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M25,411 L575,411 M71,448 L71,352 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,448 L575,448 L575,352 L25,352 L25,448 '></path>
+	<g transform="translate(300,461)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,329)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>Its DCT</text>
+	</g>
+</g>
+<g style="fill:none; color:blue; stroke:currentColor; stroke-width:1.00">
+	<use xlink:href='#gpPt2' transform='translate(71,352) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(117,448) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(163,411) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(208,415) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(254,411) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(300,412) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(346,411) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(392,412) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(438,411) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(483,411) scale(6.75)'/>
+	<use xlink:href='#gpPt2' transform='translate(529,411) scale(6.75)'/>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,448 L575,448 L575,352 L25,352 L25,448 M71,411 L71,420 M71,411 L71,402 '></path>
+	<g transform="translate(71,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 0</text>
+	</g>
+	<path d='M163,411 L163,420 M163,411 L163,402 '></path>
+	<g transform="translate(163,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 2</text>
+	</g>
+	<path d='M254,411 L254,420 M254,411 L254,402 '></path>
+	<g transform="translate(254,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 4</text>
+	</g>
+	<path d='M346,411 L346,420 M346,411 L346,402 '></path>
+	<g transform="translate(346,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 6</text>
+	</g>
+	<path d='M438,411 L438,420 M438,411 L438,402 '></path>
+	<g transform="translate(438,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 8</text>
+	</g>
+	<path d='M529,411 L529,420 M529,411 L529,402 '></path>
+	<g transform="translate(529,442)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text> 10</text>
+	</g>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:0.50">
+	<path d='M25,411 L575,411 M71,448 L71,352 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,448 L575,448 L575,352 L25,352 L25,448 '></path>
+	<g transform="translate(300,461)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>n</text>
+	</g>
+	<g transform="translate(300,329)" style="stroke:none; fill:black; font-family:Arial; font-size:12.00; text-anchor:middle">
+		<text>Its DCT</text>
+	</g>
+</g>
+<g style="fill:none; color:blue; stroke:currentColor; stroke-width:1.00">
+	<path d='M71,411 L71,352 M117,411 L117,448 M163,411 M208,411 L208,415 M254,411 M300,411 L300,412 
+		M346,411 M392,411 L392,412 M438,411 M483,411 M529,411 '></path>
+</g>
+<g style="fill:none; color:black; stroke:currentColor; stroke-width:1.00">
+	<path d='M25,448 L575,448 L575,352 L25,352 L25,448 '></path>
+</g>
+</svg>
+

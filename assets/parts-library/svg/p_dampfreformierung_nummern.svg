@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="1920px" height="1080px">
+	<defs>
+		<linearGradient id="lg1" x1="400" y1="450" x2="400" y2="750" gradientUnits="userSpaceOnUse">
+			<stop style="stop-color:#FF99FF;stop-opacity:1" offset="0.00"/>
+			<stop style="stop-color:#FF99FF;stop-opacity:1" offset="0.30"/>
+			<stop style="stop-color:#FFFFFF;stop-opacity:1" offset="0.40"/>
+			<stop style="stop-color:#FFFFFF;stop-opacity:1" offset="0.60"/>
+			<stop style="stop-color:#FFFF99;stop-opacity:1" offset="0.70"/>
+			<stop style="stop-color:#FFFF99;stop-opacity:1" offset="1.00"/>
+		</linearGradient>
+	</defs>
+<!-- The Wikipedia parser has problems with symbols. Therefore this workarround with "display:none". -->
+	<g style="display:none;">
+		<g id="Arrow">
+			<path d="M -75,0 L 50,0" style="stroke:#000000;stroke-width:6; fill:none;"/>
+			<path d="M 75,0 L 40,-15 A 30,30,0 0 1 40,15 z" style="stroke:none; fill:#000000;"/>
+		</g>
+		<line id="H-Grid" x1="0" y1="0" x2="2000" y2="0"/>
+		<line id="V-Grid" x1="0" y1="0" x2="0" y2="1200"/>
+		<g id="Kompressor">
+			<circle cx="0" cy="0" r="75" style="fill:#BBBBBB"/>
+			<circle cx="0" cy="0" r="40" style="fill:#DDDDDD"/>
+		</g>
+		<circle id="Bullet" cx="0" cy="0" r="30" style="fill:#FF0000; stroke:none;"/>
+	</g> <!-- end "display:none" -->
+	<rect id="paper" x="0" y="0" width="1920" height="1080" style="stroke:none; fill:#ffffff;"/>
+<!-- Enable simple moving, if somewhere needed: -->
+	<g id="All" transform="translate(0,0)">
+		<g id="paintlayer" style="stroke:#000000;stroke-width:6px;stroke-linecap:round;stroke-linejoin:round;">
+			<g id="Rohre">
+				<path style="fill:#FF9999;" d="M  100,75  L 525,75  525,300 475,300 475,125 100,125"/>  
+				<path style="fill:#66CCFF;" d="M  100,200 L 425,200 425,300 375,300 375,250 100,250"/>  
+				<path style="fill:url(#lg1)" d="M  100,575 L 425,575 425,450 475,450 475,750 425,750 425,625 100,625"/>
+				<path style="fill:#FFFF99;" d="M  475,900 L 475,975 800,975 800,75 1200,75 1200,300 1150,300 1150,125 850,125 850,1025 425,1025 425,900 z"/>
+				<path style="fill:#FFFF99;" d="M 1800,375 L 1550,375 1550,525 1500,525 1500,975 1250,975 1250,300 1200,300 1200,1025 1550,1025 1550,575 1600,575 1600,425 1800,425"/>
+				<path style="fill:#66CCFF;" d="M  675,600 L 675,800 775,800 775,850 625,850 625,600"/>
+				<path style="fill:#66CCFF;" d="M 1325,525 L 1500,525 1500,575 1325,575"/>
+				<path style="fill:#66CCFF;" d="M 1800,975 L 1650,975 1650,800 1600,800 1600,1025 1800,1025"/>
+			</g>
+			<rect transform="translate( 450,375)" style="fill:#FF99FF;" id="Primaerreformer" x="-110" y="-135" rx="110" ry="110" width="220" height="270"/>
+			<rect transform="translate( 450,825)" style="fill:#FFFF99;" id="Sekundaerreformer" x="-110" y="-135" rx="110" ry="110" width="220" height="270"/>
+			<rect transform="translate( 825,550)" style="fill:#99FF99;" id="Katalysator" x="-110" y="-360" rx="110" ry="110" width="220" height="720"/>
+			<rect transform="translate(1575,700)" style="fill:#99FF99;" id="Waescher" x="-110" y="-260" rx="110" ry="110" width="220" height="520"/>
+			<use transform="translate(1200,300)" xlink:href="#Kompressor"/>
+			<use transform="translate( 150,100 )" xlink:href="#Arrow"/>
+			<use transform="translate( 150,225 )" xlink:href="#Arrow"/>
+			<use transform="translate( 150,600 )" xlink:href="#Arrow"/>
+			<use transform="translate( 450,375 )" xlink:href="#Arrow"/>
+			<use transform="translate( 450,825 )" xlink:href="#Arrow"/>
+			<use transform="translate( 650,1000)" xlink:href="#Arrow"/>
+			<use transform="translate(1000,100 )" xlink:href="#Arrow"/>
+			<use transform="translate(1375,550 )" xlink:href="#Arrow"/>
+			<use transform="translate(1775,400 )" xlink:href="#Arrow"/>
+			<use transform="translate(1775,1000)" xlink:href="#Arrow"/>
+			<use transform="translate( 650,650 ) rotate(90)" xlink:href="#Arrow"/>
+			<use transform="translate(1225,750 ) rotate(90)" xlink:href="#Arrow"/>
+		</g>
+		<g id="textlayer" style="font-size:35px;font-weight:bold; font-family:FreeSans, sans-serif;">
+			<g id="bulletlayer" style="text-anchor:middle; font-size:50px;">
+				<g transform="translate(  60,140)"><use xlink:href="#Bullet"/><text x="0" y="17">1</text></g>
+				<g transform="translate(  60,265)"><use xlink:href="#Bullet"/><text x="0" y="17">2</text></g>
+				<g transform="translate( 300,375)"><use xlink:href="#Bullet"/><text x="0" y="17">3</text></g>
+				<g transform="translate(  60,640)"><use xlink:href="#Bullet"/><text x="0" y="17">4</text></g>
+				<g transform="translate( 300,825)"><use xlink:href="#Bullet"/><text x="0" y="17">5</text></g>
+				<g transform="translate( 975,550)"><use xlink:href="#Bullet"/><text x="0" y="17">6</text></g>
+				<g transform="translate(1320,300)"><use xlink:href="#Bullet"/><text x="0" y="17">7</text></g>
+				<g transform="translate(1720,700)"><use xlink:href="#Bullet"/><text x="0" y="17">8</text></g>
+			</g>
+			<g style="text-anchor:start;">
+				<text x="250" y="110">CH₄</text>
+				<text x="250" y="235">H₂O</text>
+				<text x="250" y="610">O₂</text>
+			</g>
+			<g style="text-anchor:middle;">
+				<text x="450" y="345">CH₄ + H₂O</text>
+				<text x="450" y="425">CO + 3H₂</text>
+				<text x="450" y="795">2CH₄ + O₂</text>
+				<text x="450" y="875">2CO + 4H₂</text>
+				<text x="650" y="960">H₂ , CO</text>
+				<text x="650" y="560">H₂O</text>
+				<text x="825" y="550">500 °C</text>
+				<text x="1000" y="170">H₂ , CO₂</text>
+				<text x="1375" y="620">H₂O</text>
+				<text x="1771" y="360">H₂</text>
+				<text x="1771" y="960">H₂O , CO₂</text>
+			</g>
+		</g>
+	</g>
+</svg>

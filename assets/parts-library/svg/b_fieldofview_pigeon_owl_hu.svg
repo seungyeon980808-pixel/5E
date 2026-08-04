@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="600"
+   height="400"
+   id="svg2">
+  <defs
+     id="defs4">
+    <path
+       d="M 0,0 V -130 A 130,130 0 0 0 0,130 z"
+       id="pigeon"
+       style="opacity:0.3" />
+    <path
+       d="M 0,0 V -130 A 130,130 0 0 0 -122.16,44.4626 z"
+       id="owl"
+       style="opacity:0.3" />
+    <rect
+       width="15"
+       height="15"
+       x="0"
+       y="0"
+       id="box"
+       style="opacity:0.3" />
+  </defs>
+  <rect
+     width="800"
+     height="400"
+     x="-3.3898304"
+     y="0"
+     id="rect9"
+     style="fill:#ffffff;fill-rule:nonzero" />
+  <g
+     transform="translate(6.7796611,0.84745767)"
+     id="g11"
+     style="fill:#0000ff">
+    <g
+       transform="translate(150,200)"
+       id="g13">
+      <use
+         transform="matrix(0.98480775,-0.17364818,0.17364818,0.98480775,0,0)"
+         id="use15"
+         x="0"
+         y="0"
+         width="600"
+         height="400"
+         xlink:href="#pigeon" />
+      <use
+         transform="matrix(-0.98480775,-0.17364818,0.17364818,-0.98480775,0,0)"
+         id="use17"
+         x="0"
+         y="0"
+         width="600"
+         height="400"
+         xlink:href="#pigeon" />
+      <circle
+         cx="0"
+         cy="0"
+         r="10"
+         id="circle19"
+         style="fill:#000000" />
+    </g>
+    <g
+       transform="translate(450,200)"
+       id="g21">
+      <use
+         transform="matrix(-0.76604444,-0.64278761,0.64278761,-0.76604444,0,0)"
+         id="use23"
+         x="0"
+         y="0"
+         width="600"
+         height="400"
+         xlink:href="#owl" />
+      <use
+         transform="matrix(-0.34202014,-0.93969262,0.93969262,-0.34202014,0,0)"
+         id="use25"
+         x="0"
+         y="0"
+         width="600"
+         height="400"
+         xlink:href="#owl" />
+      <circle
+         cx="0"
+         cy="0"
+         r="10"
+         id="circle27"
+         style="fill:#000000" />
+    </g>
+    <use
+       transform="translate(-88.983051,-6.779661)"
+       id="use31"
+       style="fill:#0000ff;fill-opacity:1"
+       x="115"
+       y="357"
+       width="600"
+       height="400"
+       xlink:href="#box" />
+    <use
+       transform="translate(-328.81356,15.254237)"
+       id="use33"
+       style="fill:#0000ff;fill-opacity:0.63768119"
+       x="355"
+       y="357"
+       width="600"
+       height="400"
+       xlink:href="#box" />
+  </g>
+  <g
+     id="g35"
+     style="font-size:22px;text-anchor:middle;font-family:sans-serif">
+    <text
+       x="150"
+       y="40"
+       id="text37">Galamb</text>
+    <text
+       x="450"
+       y="40"
+       id="text39">Bagoly</text>
+  </g>
+  <g
+     transform="translate(-85.59322,-4.2372881)"
+     id="g41"
+     style="font-size:18px;text-anchor:start;font-family:sans-serif">
+    <text
+       x="140"
+       y="369.15256"
+       id="text43">Binokuláris látás</text>
+    <text
+       x="138.47458"
+       y="391.18643"
+       id="text45">Monokuláris látás</text>
+  </g>
+</svg>

@@ -1,0 +1,56 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="555" height="545" version="1.1" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg">
+<desc>Comparison of orbits of 47 Ursae Majoris and solar system</desc>
+
+<g transform="translate(263 266)">
+
+<!-- Sun (not to scale) -->
+
+<g>
+<defs>
+<radialGradient id="sungradient" gradientunits="userSpaceOnUse" cx="0.5" cy="0.5" r="0.5" fx="0.5" fy="0.5">
+<stop offset="0%" stop-color="white" />
+<stop offset="33%" stop-color="yellow" />
+<stop offset="67%" stop-color="orange" />
+<stop offset="100%" stop-color="black" />
+
+</radialGradient>
+</defs>
+<circle r="5" fill="url(#sungradient)" stroke="none" />
+</g>
+
+<!-- for orbits, scale is 50 = 1 AU -->
+
+<!-- Solar System orbits (rotation angle from argument of perihelion) -->
+
+<g stroke="dodgerblue" fill="none" stroke-width="1">
+<ellipse rx="19.3549465" ry="18.9413248" cx="3.979971" transform="rotate(-29.12478)" />
+<ellipse rx="36.1665995" ry="36.1657699" cx="0.244964697" transform="rotate(-54.85229)" />
+<ellipse rx="50.0000056" ry="49.9930243" cx="0.835511044" transform="rotate(-114.20783)" />
+<ellipse rx="76.1831155" ry="75.8500055" cx="7.11644233" transform="rotate(-286.46230)" />
+<ellipse rx="260.168151" ry="259.863335" cx="12.5902288" transform="rotate(-14.75385)" />
+</g>
+
+<g stroke="none" fill="dodgerblue" style="text-anchor: middle; font-size: 12pt; font-family: Arial; font-weight: bold;">
+<!-- not enough space to label Mercury, Venus -->
+<text x="0" y="62">Earth</text>
+<text x="0" y="97.2995578">Mars</text>
+<text x="0" y="275">Jupiter</text>
+</g>
+
+<!-- 47 Ursae Majoris orbits -->
+
+<g stroke="black" fill="none" stroke-width="1.5">
+<ellipse rx="107" ry="107" cx="0" transform="rotate(-68.9)" />
+<ellipse rx="169.5" ry="165.34722828" cx="37.29" transform="rotate(-180)" stroke-dasharray="5,4" />
+</g>
+
+<g stroke="none" fill="black" style="text-anchor: middle; font-size: 12pt; font-family: Arial; font-weight: bold;">
+<text x="0" y="120">47 UMa b</text>
+<text x="0" y="180">47 UMa c?</text>
+</g>
+
+</g>
+
+</svg>

@@ -14,12 +14,15 @@ import {
   appendObjects, validateData, summarize, newObjectId, DEFAULT_ARTBOARD,
 } from "./lib/project.js";
 import { OBJECT_TYPE_IDS, TYPE_DOC, describeType, normalizeObject } from "./lib/schema.js";
-import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension } from "./lib/builders.js";
+import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension,
+         buildFieldRegion } from "./lib/builders.js";
 import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
 import { buildPart, partsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
 import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
+import { mkdir, writeFile } from "node:fs/promises";
+import { isAbsolute, join } from "node:path";
 import { inlineImages } from "./lib/images.js";
 
 const PROTOCOL_VERSION = "2024-11-05";
@@ -36,6 +39,13 @@ const PATH_PROP = { type: "string", description: "프로젝트 .json 파일의 �
 const TARGET_PATH_PROP = {
   type: "string",
   description: "대상 .json 파일의 절대경로. **생략하면 지금 열려 있는 5E 화면에 바로 그린다**(기본).",
+};
+/* 묶음 — AI 는 초안까지만 그리고 위치 조정은 사람이 한다. 낱개로 넘기면 검전기 하나를
+ * 옮기는 데 16개를 골라야 해서 편집이 막힌다. 한 번에 만든 한 벌은 묶어서 넘긴다. */
+const GROUP_PROP = {
+  type: "boolean",
+  description: "만든 것들을 한 덩어리로 묶을지. 통째로 옮기기 편해진다(앱에서 해제 가능). " +
+    "낱개로 만지고 싶으면 false.",
 };
 const PAGE_PROP = {
   description: "페이지 인덱스(0부터) 또는 이름/id. 생략하면 활성 페이지. " +
@@ -84,7 +94,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         objects: {
           type: "array",
           description: "추가할 객체 배열. 각 원소는 최소한 type과 기하 필드를 가져야 한다",
@@ -111,7 +121,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         box: { ...BOX, description: "회로 사각형의 좌상단과 크기(mm). wires 를 쓰면 필요 없다" },
         wires: {
           type: "array",
@@ -174,7 +184,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "평면의 중심 좌표(mm)" },
         plane: {
           type: "object",
@@ -285,7 +295,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         part: { type: "string", description: "부품 id (예: hand_grip, hand_press). 생략하면 목록만 돌려준다" },
         at: { ...XY, description: "좌상단 좌표(mm)" },
         gripAt: {
@@ -322,7 +332,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "스탠드 받침 바닥의 가운데 좌표(mm)" },
         stand: { ...BOX, description: "스탠드 상자를 직접 줄 때(생략하면 at 기준 18×34)" },
         hang: {
@@ -364,7 +374,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         from: { ...XY, description: "재기 시작하는 기준점(그림 위 실제 점). [x,y] 배열도 된다" },
         to: { ...XY, description: "재기 끝나는 기준점" },
         label: { type: "string", description: "치수 라벨(기본 \"d\"). 첨자 가능: d_1, 2t_0" },
@@ -425,7 +435,7 @@ const TOOLS = [
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
+        page: PAGE_PROP, group: GROUP_PROP,
         at: { ...XY, description: "장면 전체의 중심(mm). 생략하면 아트보드 중앙" },
         incline: {
           type: "object",
@@ -607,6 +617,92 @@ const TOOLS = [
     },
   },
   {
+    name: "add_field_region",
+    description:
+      "종이면에 수직인 **균일 자기장 영역**을 그린다 — 파선 테두리 + ⊗(들어감)/⊙(나옴) 기호 격자 " +
+      "+ **범례 문장**(기본 자동). 기출에서 자기장·전자기는 87장으로 두 번째로 많은 유형이다.\n" +
+      "이 구도를 쓰는 이유: 자기장이 종이면에 수직이면 도선과 그 도선이 받는 힘을 둘 다 " +
+      "면 안의 화살표로 정직하게 그릴 수 있다. 자기장을 면 안에 그리면 힘이 면 밖으로 나가 " +
+      "화살표로 표현할 수 없다.\n" +
+      "예) 영역 안에 수평 도선과 위로 받는 힘:\n" +
+      "  add_field_region { box:{x:-30,y:-18,w:60,h:36}, direction:\"into\" }\n" +
+      "  add_objects [{type:\"line\", p1:{x:-34,y:0}, p2:{x:34,y:0}, lineMode:\"middleArrow\", strokeWidth:0.5},\n" +
+      "               {type:\"line\", p1:{x:0,y:0}, p2:{x:0,y:-14}, lineMode:\"arrow\", strokeWidth:0.6}]",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: TARGET_PATH_PROP, page: PAGE_PROP, group: GROUP_PROP,
+        box: { ...BOX, description: "자기장 영역의 좌상단과 크기(mm)" },
+        direction: {
+          type: "string", enum: ["into", "out"],
+          description: "into = ⊗ 종이면으로 들어감(기본), out = ⊙ 나옴",
+        },
+        spacing: { type: "number", description: "기호 격자 간격 mm (기본 8)" },
+        symbolSize: { type: "number", description: "기호 크기 mm (기본 간격의 0.45배)" },
+        boundary: {
+          type: "string", enum: ["dashed", "solid", "none"],
+          description: "영역 테두리 (기본 dashed — 기출 표준)",
+        },
+        label: { type: "string", description: "영역 이름(예: 영역 Ⅰ). 좌상단 안쪽에 놓인다" },
+        plane: { type: "string", description: "범례에 쓸 면 이름 (기본 \"종이면\", 수능은 \"xy 평면\")" },
+        legend: {
+          description: "범례 문장. 기본 true(자동 생성), 문자열이면 그 문장, false 면 생략(권장하지 않음)",
+        },
+        legendAt: { ...XY, description: "범례 위치(생략하면 영역 왼쪽 아래)" },
+        avoid: {
+          type: "array",
+          description:
+            "기호를 찍지 않을 사각형들 — 도선·물체가 지나가는 자리를 비운다(기출 도판도 비운다). " +
+            "예: 도선이 y=4 를 지나면 [{x:-32,y:0,w:64,h:8}]",
+          items: BOX,
+        },
+      },
+      required: ["box"],
+    },
+  },
+  {
+    name: "fit_artboard",
+    description:
+      "그린 내용에 맞춰 아트보드를 줄이고 그림을 가운데로 옮긴다. **export_image·save_image 직전에 부른다.** " +
+      "두 가지를 막는다 — ① 축 이름·한글 라벨은 도형 바깥에 놓이는데 아트보드를 눈대중으로 정하면 " +
+      "밖으로 나가 **잘린다** ② 여백이 넓으면 그만큼 그림이 작아진다(PNG 실제 크기가 곧 시험지에 들어가는 크기다). " +
+      "글자 폭은 앱이 화면에 그려진 것을 재므로 한글 라벨도 정확하다. 되돌리기(Ctrl+Z) 가능.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        margin: { type: "number", description: "그림 둘레에 남길 여백 mm (기본 2)" },
+        recenter: {
+          type: "boolean",
+          description: "그림을 가운데로 옮길지(기본 true). false 면 좌표를 그대로 두고 아트보드만 넓힌다",
+        },
+      },
+    },
+  },
+  {
+    name: "save_image",
+    description:
+      "지금 화면에 그려진 그림을 **인쇄 품질 PNG 파일로 저장**한다(기본 300dpi, pHYs 기록 — " +
+      "한글/워드에 실제 크기로 들어간다). ExamMaker 파이프라인용: 파일명은 페이지 이름을 " +
+      "따르므로, 페이지 이름을 파일명 규약({세트약칭}_{번호2자리})으로 먼저 맞춘다. " +
+      "export_image 로 눈 확인을 마친 뒤에 저장할 것. 같은 이름이 있으면 덮어쓴다 — " +
+      "그림을 고쳐 다시 저장하는 흐름이 그래야 성립한다.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        dir: {
+          type: "string",
+          description: "저장할 폴더의 절대경로 (hwpPalette 사진 폴더, 예: C:\\...\\사진\\26-1기말). 없으면 만든다.",
+        },
+        name: {
+          type: "string",
+          description: "파일명(확장자 없이). 생략하면 현재 페이지 이름을 쓴다(권장 — 규약과 일치).",
+        },
+        dpi: { type: "number", description: "해상도 (72~600, 기본 300)." },
+      },
+      required: ["dir"],
+    },
+  },
+  {
     name: "remove_from_app",
     description: "열려 있는 화면에서 id로 객체를 지운다. 앱에서 Ctrl+Z로 되돌릴 수 있다.",
     inputSchema: {
@@ -684,7 +780,7 @@ const TOOLS = [
  * path를 주면 .json 파일에 쓰고, 생략하면 지금 열려 있는 5E 화면에 바로 넣는다.
  * 검증은 두 경로 모두 똑같이 거친다 — 앱에 직접 넣는다고 규칙이 느슨해지지는 않는다.
  */
-async function deliver({ path, page }, objects, label) {
+async function deliver({ path, page, group }, objects, label) {
   if (path) {
     const { abs, data } = await loadProject(path);
     const pg = pickPage(data, page);
@@ -709,13 +805,17 @@ async function deliver({ path, page }, objects, label) {
     if (n.obj) normalized.push(n.obj);
   });
   if (errors.length) throw new Error("보내지 않았습니다 — 다음을 고치세요:\n" + errors.join("\n"));
-  const res = await sendToApp("addObjects", { objects: normalized });
-  return { where: `열려 있는 앱(${info.page})`, count: res.added, total: info.objects + res.added, warnings };
+  const res = await sendToApp("addObjects", { objects: normalized, group });
+  return {
+    where: `열려 있는 앱(${info.page})`, count: res.added,
+    total: info.objects + res.added, warnings, grouped: res.grouped || 0,
+  };
 }
 
 function deliverReport(head, d, extra = []) {
   return [
     `${head} → ${d.where} (총 ${d.total}개)`,
+    ...(d.grouped ? [`  · ${d.grouped}개를 한 덩어리로 묶었습니다 — 통째로 옮길 수 있습니다(앱에서 해제 가능)`] : []),
     ...extra,
     ...(d.warnings.length ? ["", "경고:", ...d.warnings] : []),
   ].join("\n");
@@ -758,16 +858,19 @@ const HANDLERS = {
     ].join("\n");
   },
 
-  async add_objects({ path, page, objects }) {
+  async add_objects({ path, page, objects, group }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects 배열이 비었습니다");
-    const d = await deliver({ path, page }, inlineImages(objects));
+    // 묶음은 명시할 때만 — 한 번의 호출에 서로 무관한 것이 섞일 수 있다.
+    const d = await deliver({ path, page, group: group === true }, inlineImages(objects));
     return deliverReport(`${d.count}개 추가`, d);
   },
 
-  async add_circuit({ path, page, box, elements, branches, bodyScale, wires }) {
+  async add_circuit({ path, page, box, elements, branches, bodyScale, wires, group }) {
+    // 회로 한 벌은 개념적으로 한 덩어리다 — 기본으로 묶어 넘긴다(group:false 로 해제).
+    const g = group !== false;
     if (Array.isArray(wires) && wires.length) {
       const b = buildCircuitPath({ wires, bodyScale });
-      const dd = await deliver({ path, page }, b.objects);
+      const dd = await deliver({ path, page, group: g }, b.objects);
       return deliverReport(
         `배선 ${dd.count}개 객체 추가 (구간 ${wires.length}개)`, dd,
         b.warnings.length ? ["", "배치 경고:", ...b.warnings] : [],
@@ -775,20 +878,22 @@ const HANDLERS = {
     }
     if (!box) throw new Error("box 또는 wires 중 하나는 있어야 합니다");
     const built = buildCircuitLoop({ box, elements: elements || [], branches: branches || [], bodyScale });
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: g }, built.objects);
     return deliverReport(
       `회로 ${d.count}개 객체 추가 (소자 ${(elements || []).length}개 + 도선)`, d,
       built.warnings.length ? ["", "배치 경고:", ...built.warnings] : [],
     );
   },
 
-  async add_graph({ path, page, at, plane, functions, series }) {
+  async add_graph({ path, page, at, plane, functions, series, group }) {
     const planeId = newObjectId();
     const built = buildGraph({
       at, plane: plane || {}, functions: functions || [], series: series || [], planeId,
     });
     if (built.error) throw new Error(built.error);
-    const d = await deliver({ path, page }, [built.plane, ...built.graphs]);
+    // 평면·곡선은 seriesLock 이 이미 묶는다. group 은 남는 것이 있을 때만 쓰인다.
+    const d = await deliver({ path, page, group: group !== false },
+                            [built.plane, ...built.graphs]);
     return deliverReport(
       `좌표평면 1개 + 계열 ${built.graphs.length}개 추가`, d,
       [`평면 id: ${planeId} (${built.plane.w.toFixed(1)}×${built.plane.h.toFixed(1)}mm)`,
@@ -797,11 +902,11 @@ const HANDLERS = {
   },
 
   /* 오려낸 삽화 부품. part 없이 부르면 목록만 — 모델이 뭘 쓸 수 있는지 먼저 보게 한다. */
-  async add_part({ path, page, part, ...spec }) {
+  async add_part({ path, page, part, group, ...spec }) {
     if (!part) return partsSummary();
     const built = buildPart({ part, ...spec });
     if (built.error) throw new Error(built.error);
-    const d = await deliver({ path, page }, inlineImages(built.objects));
+    const d = await deliver({ path, page, group: group !== false }, inlineImages(built.objects));
     return deliverReport(`부품 ${d.count}개 객체 추가`, d, [
       ...built.notes.map((t) => `  · ${t}`),
       ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
@@ -810,21 +915,22 @@ const HANDLERS = {
 
   /* 스탠드·레일 부착. 만든 위치를 문장으로 돌려준다 — 가로대 y·x 범위를 알아야
    * 그 옆에 치수선이나 이름표를 붙일 수 있다. */
-  async add_stand_rig({ path, page, ...spec }) {
+  async add_stand_rig({ path, page, group, ...spec }) {
     const built = buildStandRig(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
     if (!built.objects.length) throw new Error("그릴 것이 없습니다 — hang 또는 rail 을 주세요");
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     return deliverReport(`장치 ${d.count}개 객체 추가`, d, built.notes.map((t) => `  · ${t}`));
   },
 
   /* 치수 표시. 만든 값(길이·오프셋·연장선 수)을 문장으로 돌려준다 —
    * 그림 판독이 약한 모델도 "치수선이 반대쪽에 붙었다"를 글로 읽고 고칠 수 있게. */
-  async add_dimension({ path, page, ...spec }) {
+  async add_dimension({ path, page, group, ...spec }) {
     const built = buildDimension(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
     if (!built.objects.length) throw new Error("그릴 치수가 없습니다 — from·to 를 주세요");
-    const d = await deliver({ path, page }, built.objects);
+    // 치수선·연장선·라벨은 따로 놀면 안 된다 — 항상 함께 움직여야 한다.
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     return deliverReport(`치수 표시 ${d.count}개 객체 추가`, d, [
       ...built.notes.map((t) => `  · ${t}`),
       ...(built.warnings.length ? ["", "경고:", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
@@ -832,10 +938,10 @@ const HANDLERS = {
   },
 
   /* 경사면 장면. 검산 리포트를 '항상' 붙인다 — 그림 판독이 약한 모델도 글로 읽고 고칠 수 있게. */
-  async add_incline_scene({ path, page, ...spec }) {
+  async add_incline_scene({ path, page, group, ...spec }) {
     const built = buildInclineScene(spec);
     if (built.errors.length) throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
-    const d = await deliver({ path, page }, built.objects);
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
     const layers = Object.entries(built.counts).filter(([, n]) => n).map(([k, n]) => `${k} ${n}`).join(" · ");
     return deliverReport(`경사면 장면 ${d.count}개 객체 추가`, d, [
       `층(§19): ${layers}`,
@@ -895,6 +1001,48 @@ const HANDLERS = {
         },
       ],
     };
+  },
+
+  async add_field_region({ path, page, group, ...spec }) {
+    const built = buildFieldRegion(spec);
+    if (built.errors.length) {
+      throw new Error("그리지 않았습니다 — 다음을 고치세요:\n" + built.errors.join("\n"));
+    }
+    const d = await deliver({ path, page, group: group !== false }, built.objects);
+    return deliverReport(`자기장 영역 ${d.count}개 객체 추가`, d, [
+      ...built.notes.map((t) => `  · ${t}`),
+      ...(built.warnings.length ? ["", ...built.warnings.map((t) => `  ⚠ ${t}`)] : []),
+    ]);
+  },
+
+  async fit_artboard({ margin, recenter } = {}) {
+    const r = await sendToApp("fitArtboard", { margin, recenter });
+    const mv = (r.moved && (r.moved.dx || r.moved.dy))
+      ? `, 그림을 (${r.moved.dx}, ${r.moved.dy})mm 옮겨 가운데 정렬` : "";
+    return [
+      `아트보드 ${r.before.w}×${r.before.h} → ${r.artboard.w}×${r.artboard.h}mm (객체 ${r.objects}개${mv})`,
+      "이제 export_image 로 눈 확인 → save_image 로 저장하세요.",
+    ].join("\n");
+  },
+
+  /* 화면 그림을 PNG 파일로 저장 — 앱이 만든 base64(pHYs 포함)를 받아 서버가 쓴다.
+   * 그림 파일이 사람 손을 거치지 않고 hwpPalette 사진 폴더에 도착하는 유일한 통로. */
+  async save_image({ dir, name, dpi } = {}) {
+    if (!dir || !isAbsolute(dir)) throw new Error("dir 는 절대경로여야 합니다");
+    const r = await sendToApp("saveImagePng", { dpi });
+    // 파일명은 페이지 이름 기본 — Windows 금지 문자만 걷어낸다(규약 이름은 애초에 안전).
+    const base = String(name || r.page || "그림").replace(/[\\/:*?"<>|]/g, "_").trim();
+    if (!base) throw new Error("파일명이 비었습니다");
+    await mkdir(dir, { recursive: true });
+    const abs = join(dir, base + ".png");
+    const buf = Buffer.from(r.base64, "base64");
+    await writeFile(abs, buf);
+    return [
+      `저장했습니다: ${abs}`,
+      `  ${r.dpi}dpi, ${r.widthPx}×${r.heightPx}px, 아트보드 ${r.artboardMm.w}×${r.artboardMm.h}mm, ${Math.round(buf.length / 1024)}KB`,
+      `  페이지: ${r.page} (객체 ${r.objects}개)`,
+      "hwpPalette 사진 폴더 목록에 이 폴더가 등록돼 있어야 \\" + base + "\\ 로 삽입된다.",
+    ].join("\n");
   },
 
   async clear_app() {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg x="0" y="0" width="160" height="60" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" >
+<circle cx="30" cy="30" r="2" fill="white" stroke="black" />
+<path d="M 32 28 L50 10 54 14" fill="none" stroke="black" />
+<path d="M 70 30 L 80 30 92 20" fill="none" stroke="black" />
+<circle cx="80" cy="30" r="2" fill="black" />
+<circle cx="94" cy="30" r="2" fill="black" />
+<path d="M 94 30 L 110 30 " fill="none" stroke="black" />
+
+<circle cx="140" cy="30" r="10" fill="white" stroke="black" />
+<path d="M140 20 L140 25 l5 5L150 30 " fill="none" stroke="black" />
+<path d="M120 30 L135 30 l5 5L 140 50 " fill="none" stroke="black" />
+</svg>

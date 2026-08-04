@@ -1,0 +1,23 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="370" height="140" viewBox="0 0 370 140">
+<circle cx="270" cy="70" r="49.5" stroke="black" stroke-width="2" fill="white" />
+<line x1="20" y1="70" x2="70" y2="70" style="stroke:black;stroke-width:1"/>
+<line x1="85" y1="70" x2="270" y2="70" style="stroke:black;stroke-width:1"/>
+<line x1="270" y1="70" x2="260.0000" y2="21.0102" style="stroke:black;stroke-width:1"/>
+<line x1="20" y1="70" x2="260.0000" y2="21.0102" style="stroke:black;stroke-width:1"/>
+<line x1="270" y1="70" x2="260.0000" y2="118.9898" style="stroke:black;stroke-width:1"/>
+<line x1="20" y1="70" x2="260.0000" y2="118.9898" style="stroke:black;stroke-width:1"/>
+<path d="M 68,79.7980 A 40,40 0 0,0 68,60.2020" style="stroke:black;stroke-width:1;fill:white"/>
+<text x="72" y="76" font-size="20">δ</text>
+<text x="150" y="66" font-size="20" font-style="italic">D</text>
+<text x="268" y="40" font-size="14">1</text>
+<text x="266.5" y="45" font-size="10">—</text>
+<text x="268" y="54" font-size="14">2</text>
+<text x="278" y="48" font-size="20" font-style="italic">d</text>
+<line x1="270" y1="20" x2="340" y2="20" style="stroke-dasharray:1,2;stroke:black;stroke-width:1"/>
+<line x1="270" y1="120" x2="340" y2="120" style="stroke-dasharray:1,2;stroke:black;stroke-width:1"/>
+<line x1="340" y1="19.5" x2="340" y2="120.5" style="stroke:black;stroke-width:1"/>
+<text x="344" y="75" font-size="20" font-style="italic">d</text>
+</svg>

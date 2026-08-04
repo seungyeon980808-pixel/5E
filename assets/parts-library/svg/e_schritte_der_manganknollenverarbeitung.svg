@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <use transform="translate(415.12,243.95)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(276.74,487.9)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(276.74,365.93)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(276.74,243.95)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(138.37)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(138.37,487.9)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(138.37,365.93)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(138.37,243.95)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(138.37,121.98)" width="100%" height="100%" xlink:href="#a"/>
+ <path id="a" d="m331.42 96.548 40.5-40.5-40.5-40.5h-181l40.5 40.5-40.5 40.5z" fill="#d9d9d9" stroke="#305390" stroke-width="2"/>
+ <use transform="translate(0,121.98)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(0,243.95)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(0,365.93)" width="100%" height="100%" xlink:href="#a"/>
+ <use transform="translate(0,487.9)" width="100%" height="100%" xlink:href="#a"/>
+ <path id="b" d="m194.96 96.548 40.5-40.5-40.5-40.5h-181l40.5 40.5-40.5 40.5z" fill="#4472c4" stroke="#305390" stroke-width="2"/>
+ <use transform="translate(0,121.98)" width="100%" height="100%" xlink:href="#b"/>
+ <use transform="translate(0,243.95)" width="100%" height="100%" xlink:href="#b"/>
+ <use transform="translate(0,365.93)" width="100%" height="100%" xlink:href="#b"/>
+ <use transform="translate(0,487.9)" width="100%" height="100%" xlink:href="#b"/>
+ <g font-family="'Liberation Sans'" font-size="15px" font-weight="bold" text-anchor="middle">
+  <g fill="#ffffff">
+   <text x="128.61795" y="171.85658">Ressourcen-<tspan x="128.61795" y="191.85658">bewertung</tspan></text>
+   <text x="128.73047" y="415.89841">Offshore- und<tspan x="128.73047" y="435.89841">Onshore-Logistik</tspan></text>
+   <text x="128.65546" y="283.9375">Gewinnung,<tspan x="128.65546" y="303.9375">Hebung,</tspan><tspan x="128.65546" y="323.9375">Übertagebetrieb</tspan></text>
+   <text x="128.84296" y="59.880657">Exploration</text>
+   <text x="129.36797" y="547.7843">Aufbereitung</text>
+  </g>
+  <text x="292.57315" y="305.29501">Abbau</text>
+  <text x="566.15338" y="425.80841">Lagerung</text>
+  <text x="292.57315" y="547.7843">Abtrennung</text>
+  <text x="292.12314" y="51.433159">Standort-<tspan x="292.12314" y="71.433151">wahl</tspan></text>
+  <text x="422.27753" y="51.343159">Proben-<tspan x="422.27753" y="71.343155">nahme</tspan></text>
+  <text x="292.16068" y="171.85658">Ressourcen-<tspan x="292.16068" y="191.85658">modellierung</tspan></text>
+  <text x="422.71698" y="171.85658">Reserve-<tspan x="422.71698" y="191.85658">schätzung</tspan></text>
+  <text x="422.72797" y="293.83249">Vorverar-<tspan x="422.72797" y="313.83249">beitung</tspan></text>
+  <text x="566.26587" y="293.83249">Vertikaler<tspan x="566.26587" y="313.83249">Transport</tspan></text>
+  <text x="705.18042" y="296.57748">Übertage-<tspan x="705.18042" y="316.57748">betrieb</tspan></text>
+  <text x="292.22815" y="415.89841">See-<tspan x="292.22815" y="435.89841">transport</tspan></text>
+  <text x="422.69501" y="417.2709">Terminal-<tspan x="422.69501" y="437.2709">betrieb</tspan></text>
+  <text x="566.45337" y="537.7843">Metall-<tspan x="566.45337" y="557.7843">gewinnung</tspan></text>
+  <text x="422.27753" y="527.88934">Rückstands-<tspan x="422.27753" y="547.88934">hand-</tspan><tspan x="422.27753" y="567.88928">habung</tspan></text>
+ </g>
+</svg>

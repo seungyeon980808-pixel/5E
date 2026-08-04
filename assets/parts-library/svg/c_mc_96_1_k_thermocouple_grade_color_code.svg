@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="640px"
+   height="480px"
+   id="svg3874"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   sodipodi:docbase="/home/mmoss/Thermocouples"
+   sodipodi:docname="MC 96.1 K Thermocouple Grade.svg">
+  <defs
+     id="defs3876" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.77472527"
+     inkscape:cx="515.03381"
+     inkscape:cy="230.44221"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:object-points="false"
+     inkscape:grid-points="false"
+     gridspacingx="5px"
+     gridspacingy="5px"
+     gridempspacing="1"
+     gridtolerance="10000"
+     inkscape:grid-bbox="true"
+     inkscape:object-bbox="false"
+     objecttolerance="50"
+     inkscape:object-paths="false"
+     inkscape:object-nodes="false"
+     inkscape:guide-bbox="false"
+     inkscape:window-width="919"
+     inkscape:window-height="583"
+     inkscape:window-x="836"
+     inkscape:window-y="263" />
+  <metadata
+     id="metadata3879">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer">
+    <rect
+       style="fill:#9a6a36;fill-opacity:1;stroke:black;stroke-width:1.06097364;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect7381"
+       width="249.54303"
+       height="374.54303"
+       x="-0.073513187"
+       y="55.530487" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#9a6a36;fill-opacity:1;stroke:black;stroke-width:1.20800006;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path7383"
+       sodipodi:cx="375"
+       sodipodi:cy="242.5"
+       sodipodi:rx="75"
+       sodipodi:ry="187.5"
+       d="M 450 242.5 A 75 187.5 0 1 1  300,242.5 A 75 187.5 0 1 1  450 242.5 z"
+       transform="translate(-125.604,0.604)" />
+    <path
+       style="fill:#fff100;fill-opacity:1;stroke:black;stroke-width:1.208;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 250 128.125 C 239.65 128.125 231.25 149.125 231.25 175 C 231.25 200.875 239.65 221.875 250 221.875 L 520.25 221.875 L 520.25 128.125 L 250 128.125 z "
+       id="path10977" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#fff100;fill-opacity:1;stroke:black;stroke-width:4.83199978;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path12835"
+       sodipodi:cx="375"
+       sodipodi:cy="242.5"
+       sodipodi:rx="75"
+       sodipodi:ry="187.5"
+       d="M 450 242.5 A 75 187.5 0 1 1  300,242.5 A 75 187.5 0 1 1  450 242.5 z"
+       transform="matrix(0.25,0,0,0.25,426.5009,114.375)" />
+    <path
+       id="path13756"
+       d="M 250,265.94563 C 239.65,265.94563 231.25,286.94563 231.25,312.82063 C 231.25,338.69563 239.65,359.69563 250,359.69563 L 520.25,359.69563 L 520.25,265.94563 L 250,265.94563 z "
+       style="fill:#ed1c23;fill-opacity:1;stroke:black;stroke-width:1.20799994;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <path
+       transform="matrix(0.25,0,0,0.25,426.5009,252.1956)"
+       d="M 450 242.5 A 75 187.5 0 1 1  300,242.5 A 75 187.5 0 1 1  450 242.5 z"
+       sodipodi:ry="187.5"
+       sodipodi:rx="75"
+       sodipodi:cy="242.5"
+       sodipodi:cx="375"
+       id="path13758"
+       style="fill:#ed1c23;fill-opacity:1;stroke:black;stroke-width:4.83199978;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:type="arc" />
+    <text
+       xml:space="preserve"
+       style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans"
+       x="577.46484"
+       y="193.97066"
+       id="text2122"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2124"
+         x="577.46484"
+         y="193.97066"><tspan
+           x="577.46484"
+           y="193.97066"
+           id="tspan2126">+</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:72px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;font-family:Bitstream Vera Sans"
+       x="577.46484"
+       y="332.7041"
+       id="text2128"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan2130"
+         x="577.46484"
+         y="332.7041"><tspan
+           x="577.46484"
+           y="332.7041"
+           id="tspan2132">−</tspan></tspan></text>
+  </g>
+</svg>

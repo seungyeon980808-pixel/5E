@@ -1,0 +1,107 @@
+<?xml version="1.0"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="100%" height="100%" viewBox="130 -204.5 180 225">
+ <title>Solar system escape velocity vs surface temperature</title>
+ <desc>Graphs of escape velocity against surface temperature of some Solar System objects showing which gases are retained, by CMG Lee. The objects are drawn to scale, and their data points are at the black dots in the middle. Data is based on http://ircamera.as.arizona.edu/astr_250/Lectures/Lec_05sml.htm and http://www-spof.gsfc.nasa.gov/stargaze/StarFAQ12.htm .</desc>
+ <defs>
+  <linearGradient id="grad_xe" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#9966cc" stop-opacity="0.5"/><stop offset="100%" stop-color="#9966cc" stop-opacity="0.1"/></linearGradient>
+  <linearGradient id="grad_cd" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#666666" stop-opacity="0.5"/><stop offset="100%" stop-color="#666666" stop-opacity="0.1"/></linearGradient>
+  <linearGradient id="grad_on" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#00cc00" stop-opacity="0.5"/><stop offset="100%" stop-color="#00cc00" stop-opacity="0.1"/></linearGradient>
+  <linearGradient id="grad_wa" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#0066ff" stop-opacity="0.5"/><stop offset="100%" stop-color="#0066ff" stop-opacity="0.1"/></linearGradient>
+  <linearGradient id="grad_he" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#cc9900" stop-opacity="0.5"/><stop offset="100%" stop-color="#cc9900" stop-opacity="0.1"/></linearGradient>
+  <linearGradient id="grad_h2" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="99%" stop-color="#ff6699" stop-opacity="0.5"/><stop offset="100%" stop-color="#ff6699" stop-opacity="0.1"/></linearGradient>
+  <radialGradient id="grad_object" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
+   <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+   <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+  </radialGradient>
+  <circle id="object_base" cx="0" cy="0" r="2" stroke="#000000"/>
+  <g id="object_shade">
+   <use xlink:href="#object_base"/>
+   <use xlink:href="#object_base" fill="url(#grad_object)"/>
+  </g>
+  <g id="object_2" stroke-width="0.02" fill-opacity="0.5">
+   <use xlink:href="#object_shade"/>
+   <circle cx="0" cy="0" r="0.1" fill="#000000" fill-opacity="1"/>
+  </g>
+  <g id="object_1" stroke-width="0.5">
+   <use xlink:href="#object_shade"/>
+   <circle cx="0" cy="0" r="0.25" fill="#000000"/>
+  </g>
+  <rect id="gas" x="-200" y="-50" width="250" height="50"/>
+  <rect id="frame" x="160" y="-200" width="140" height="200"/>
+  <clipPath id="clip_frame"><use xlink:href="#frame"/></clipPath>
+  <g id="grid_log" stroke="#cccccc">
+   <path d="M 30.1,0 V 100 M 47.71,0 V 100 M 60.2,0 V 100 M 77.82,0 V 100 M 84.51,0 V 100 M 90.3,0 V 100 M 95.42,0 V 100" stroke-width="0.4"/>
+   <path d="M 0,0 V 100 M 69.9,0 V 100 M 100,0 V 100" stroke-width="1"/>
+  </g>
+  <pattern id="pattern_grid_log_log" patternUnits="userSpaceOnUse" width="100" height="100">
+   <use xlink:href="#grid_log"/>
+   <use xlink:href="#grid_log" transform="translate(0,100) rotate(270)"/>
+  </pattern>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g font-family="Helvetica,Arial,sans-serif" font-size="8px" text-anchor="middle" fill="#000000" stroke="none" stroke-width="0.25" stroke-linejoin="round">
+  <g clip-path="url(#clip_frame)">
+   <use xlink:href="#frame" fill="url(#pattern_grid_log_log)"/>
+   <g transform="translate(300,0)" text-anchor="end">
+    <g transform="translate(0, -59) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_xe)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg55-de" systemLanguage="de"><tspan id="trsvg1-de">Xenon</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg55"><tspan id="trsvg1">xenon</tspan></text></switch></g>
+    <g transform="translate(0, -86) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_cd)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg56-de" systemLanguage="de"><tspan id="trsvg2-de">Kohlenstoffdioxid</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg56"><tspan id="trsvg2">carbon dioxide</tspan></text></switch></g>
+    <g transform="translate(0, -97) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_on)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg57-de" systemLanguage="de"><tspan id="trsvg3-de">Stickstoff</tspan><tspan x="0" dy="-6.5" id="trsvg4-de">Sauerstoff,</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg57"><tspan id="trsvg3">nitrogen</tspan><tspan x="0" dy="-6.5" id="trsvg4">oxygen,</tspan></text></switch></g>
+    <g transform="translate(0,-112) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_wa)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg58-de" systemLanguage="de"><tspan id="trsvg5-de">Methan,</tspan><tspan x="0" dy="-7" id="trsvg6-de">Ammoniak,</tspan><tspan x="0" dy="-7" id="trsvg7-de">Wasser (gas.),</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg58"><tspan id="trsvg5">methane</tspan><tspan x="0" dy="-7" id="trsvg6">ammonia,</tspan><tspan x="0" dy="-7" id="trsvg7">water (vapour),</tspan></text></switch></g>
+    <g transform="translate(0,-143) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_he)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg59-de" systemLanguage="de"><tspan id="trsvg8-de">Helium</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-1)" x="0" y="0" id="trsvg59"><tspan id="trsvg8">helium</tspan></text></switch></g>
+    <g transform="translate(0,-156) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_h2)"/><switch><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg60-de" systemLanguage="de"><tspan id="trsvg9-de">Wasserstoff</tspan></text><text transform="matrix(0.9,0 -0.5,1 0,-2)" x="0" y="0" id="trsvg60"><tspan id="trsvg9">hydrogen</tspan></text></switch></g>
+   </g>
+   <use xlink:href="#frame" stroke="#000000" fill="none"/>
+  </g>
+  <g transform="translate(150,3)">
+   <switch><text x="0" y="0" id="trsvg61"><tspan id="trsvg10">1</tspan></text></switch>
+   <switch><text x="0" y="-30" id="trsvg62"><tspan id="trsvg11">2</tspan></text></switch>
+   <switch><text x="0" y="-48" id="trsvg63"><tspan id="trsvg12">3</tspan></text></switch>
+   <switch><text x="0" y="-60" id="trsvg64"><tspan id="trsvg13">4</tspan></text></switch>
+   <switch><text x="0" y="-70" id="trsvg65"><tspan id="trsvg14">5</tspan></text></switch>
+   <switch><text x="0" y="-78" id="trsvg66"><tspan id="trsvg15">6</tspan></text></switch>
+   <switch><text x="0" y="-90" id="trsvg67"><tspan id="trsvg16">8</tspan></text></switch>
+   <switch><text x="0" y="-100" id="trsvg68"><tspan id="trsvg17">10</tspan></text></switch>
+   <switch><text x="0" y="-130" id="trsvg69"><tspan id="trsvg18">20</tspan></text></switch>
+   <switch><text x="0" y="-148" id="trsvg70"><tspan id="trsvg19">30</tspan></text></switch>
+   <switch><text x="0" y="-160" id="trsvg71"><tspan id="trsvg20">40</tspan></text></switch>
+   <switch><text x="0" y="-170" id="trsvg72"><tspan id="trsvg21">50</tspan></text></switch>
+   <switch><text x="0" y="-178" id="trsvg73"><tspan id="trsvg22">60</tspan></text></switch>
+   <switch><text x="0" y="-190" id="trsvg74"><tspan id="trsvg23">80</tspan></text></switch>
+   <switch><text x="0" y="-200" id="trsvg75"><tspan id="trsvg24">100</tspan></text></switch>
+   <switch><text transform="rotate(-90)" x="120" y="-10" id="trsvg76-de" systemLanguage="de"><tspan id="trsvg25-de">Fluchtgeschwindigkeit / (km/s)</tspan></text><text transform="rotate(-90)" x="120" y="-10" id="trsvg76"><tspan id="trsvg25">Escape velocity (km/s)</tspan></text></switch>
+  </g>
+  <g transform="translate(0,10)">
+   <switch><text x="160" y="0" id="trsvg77"><tspan id="trsvg26">40</tspan></text></switch>
+   <switch><text x="178" y="0" id="trsvg78"><tspan id="trsvg27">60</tspan></text></switch>
+   <switch><text x="200" y="0" id="trsvg79"><tspan id="trsvg28">100</tspan></text></switch>
+   <switch><text x="230" y="0" id="trsvg80"><tspan id="trsvg29">200</tspan></text></switch>
+   <switch><text x="260" y="0" id="trsvg81"><tspan id="trsvg30">400</tspan></text></switch>
+   <switch><text x="278" y="0" id="trsvg82"><tspan id="trsvg31">600</tspan></text></switch>
+   <switch><text x="300" y="0" id="trsvg83"><tspan id="trsvg32">1000</tspan></text></switch>
+   <switch><text x="235" y="8" id="trsvg84-de" systemLanguage="de"><tspan id="trsvg33-de">Temperatur / K</tspan></text><text x="235" y="8" id="trsvg84"><tspan id="trsvg33">Temperature (K)</tspan></text></switch>
+  </g>
+  <g>
+   <g transform="translate(211,-178)"><use xlink:href="#object_2" transform="scale(10.97)" fill="#ffcc66"/><switch><text x="0" y="-3" id="trsvg85"><tspan id="trsvg34">Jupiter</tspan></text></switch></g>
+   <g transform="translate(196,-156)"><use xlink:href="#object_2" transform="scale(9.140)" fill="#ffcc00"/><switch><text x="-1" y="7" id="trsvg86"><tspan id="trsvg35">Saturn</tspan></text></switch><circle transform="rotate(130) scale(0.2,1)" cx="0" cy="0" r="35" stroke-width="17" stroke-opacity="0.5" stroke="#cc9900" fill="none"/></g>
+   <g transform="translate(188,-134)"><use xlink:href="#object_2" transform="scale(3.981)" fill="#66ffff"/><switch><text x="9" y="4" text-anchor="start" id="trsvg87"><tspan id="trsvg36">Uranus</tspan></text></switch></g>
+   <g transform="translate(181,-136)"><use xlink:href="#object_2" transform="scale(3.865)" fill="#6666ff"/><switch><text x="-4" y="12" id="trsvg88-de" systemLanguage="de"><tspan id="trsvg37-de">/</tspan><tspan x="-3" dy="5" id="trsvg38-de">Neptun</tspan></text><text x="-4" y="12" id="trsvg88"><tspan id="trsvg37">/</tspan><tspan x="-3" dy="5" id="trsvg38">Neptune</tspan></text></switch></g>
+   <g transform="translate(245,-107)"><use xlink:href="#object_1" transform="scale(1.000)" fill="#0099ff"/><switch><text x="-1" y="-3" text-anchor="end" id="trsvg89-de" systemLanguage="de"><tspan id="trsvg39-de">Erde</tspan></text><text x="-1" y="-3" text-anchor="end" id="trsvg89"><tspan id="trsvg39">Earth</tspan></text></switch></g>
+   <g transform="translate(251,-103)"><use xlink:href="#object_1" transform="scale(.9499)" fill="#ffcc00"/><switch><text x="-3" y="8" text-anchor="start" id="trsvg90"><tspan id="trsvg40">Venus</tspan></text></switch></g>
+   <g transform="translate(233, -71)"><use xlink:href="#object_1" transform="scale(.5320)" fill="#ff6666"/><switch><text x="4" y="-2" text-anchor="end" id="trsvg91"><tspan id="trsvg41">Mars</tspan></text></switch></g>
+   <switch>
+    <g systemLanguage="mt" transform="translate(245, -71)"><use xlink:href="#object_1" transform="scale(.5320)" fill="#cc66cc"/><switch><text x="6" y="6" text-anchor="end" font-size="7" id="trsvg92-de" systemLanguage="de"><tspan id="trsvg42-de">Mars</tspan><tspan x="6" dy="5" id="trsvg43-de">Bei Erd-</tspan><tspan x="6" dy="5" id="trsvg44-de">Temperatur</tspan></text><text x="6" y="6" text-anchor="end" font-size="7" id="trsvg92"><tspan id="trsvg42">Mars</tspan><tspan x="6" dy="5" id="trsvg43">at Earth's</tspan><tspan x="6" dy="5" id="trsvg44">temperature</tspan></text></switch><path d="M -12,0 H 0 V -36" fill="none" stroke="#990099" stroke-dasharray="2,1"/></g>
+   </switch>
+   <g transform="translate(208, -50)"><use xlink:href="#object_1" transform="scale(.4135)" fill="#996600"/><switch><text x="2" y="-2" text-anchor="end" id="trsvg93-de" systemLanguage="de"><tspan id="trsvg45-de">Ganymed</tspan></text><text x="2" y="-2" text-anchor="end" id="trsvg93"><tspan id="trsvg45">Ganymede</tspan></text></switch></g>
+   <g transform="translate(196, -48)"><use xlink:href="#object_1" transform="scale(.4043)" fill="#ff9900"/><switch><text x="0" y="6" text-anchor="end" id="trsvg94"><tspan id="trsvg46">Titan</tspan></text></switch></g>
+   <g transform="translate(267, -62)"><use xlink:href="#object_1" transform="scale(.3829)" fill="#999999"/><switch><text x="1" y="6" id="trsvg95-de" systemLanguage="de"><tspan id="trsvg47-de">Merkur</tspan></text><text x="1" y="6" id="trsvg95"><tspan id="trsvg47">Mercury</tspan></text></switch></g>
+   <g transform="translate(213, -39)"><use xlink:href="#object_1" transform="scale(.3783)" fill="#996600"/><switch><text x="-4" y="8" text-anchor="start" id="trsvg96"><tspan id="trsvg48">Callisto</tspan></text></switch></g>
+   <g transform="translate(204, -41)"><use xlink:href="#object_1" transform="scale(.2859)" fill="#996600"/><switch><text x="0" y="6" text-anchor="end" id="trsvg97"><tspan id="trsvg49">Io</tspan></text></switch></g>
+   <g transform="translate(243, -36)"><use xlink:href="#object_1" transform="scale(.2727)" fill="#000000"/><switch><text x="4" y="-2" id="trsvg98-de" systemLanguage="de"><tspan id="trsvg50-de">Mond</tspan></text><text x="4" y="-2" id="trsvg98"><tspan id="trsvg50">Moon</tspan></text></switch></g>
+   <g transform="translate(201, -31)"><use xlink:href="#object_1" transform="scale(.2450)" fill="#996600"/><switch><text x="0" y="8" text-anchor="start" id="trsvg99"><tspan id="trsvg51">Europa</tspan></text></switch></g>
+   <g transform="translate(178, -16)"><use xlink:href="#object_1" transform="scale(.2124)" fill="#cc9999"/><switch><text x="0" y="2" text-anchor="start" id="trsvg100"><tspan id="trsvg52">Triton</tspan></text></switch></g>
+   <g transform="translate(164,  -8)"><use xlink:href="#object_1" transform="scale(.1860)" fill="#666666"/><switch><text x="1" y="3" text-anchor="start" id="trsvg101"><tspan id="trsvg53">Pluto</tspan></text></switch></g>
+   <g transform="translate(163, -14)"><use xlink:href="#object_1" transform="scale(.1825)" fill="#996666"/><switch><text x="-2" y="-2" text-anchor="start" id="trsvg102"><tspan id="trsvg54">Eris</tspan></text></switch></g>
+  </g>
+ </g>
+</svg>

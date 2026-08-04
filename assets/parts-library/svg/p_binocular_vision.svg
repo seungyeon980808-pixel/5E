@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="616px"
+	 height="452px" viewBox="0 0 616 452" enable-background="new 0 0 616 452" xml:space="preserve">
+<g id="bg">
+	<circle id="horopter" fill="none" stroke="#A7A9AC" stroke-width="3" stroke-miterlimit="10" cx="348" cy="223" r="220"/>
+	<g id="vyplne">
+		<path opacity="0.16" fill="#ED1C24" d="M46.354,143.813l81.037,12.516l-0.109,2.734l-78.948,8.688
+			C48.333,167.75,43.833,154.25,46.354,143.813z"/>
+		<path opacity="0.26" fill="#00A651" d="M54.75,120.875l72.875,34.625l-0.234,0.828l-81.037-12.516
+			C46.354,143.813,47.417,133.667,54.75,120.875z"/>
+		<path opacity="0.26" fill="#00A651" d="M49,283.438l78.781,8.75l0.344,2.719l-81.397,12.987C46.728,307.894,45,297.5,49,283.438z"
+			/>
+		<path opacity="0.15" fill="#ED1C24" d="M46.5,307.875l81.292-12.874l1.292,4.541l-62.771,42.083
+			C66.313,341.625,51.5,333.417,46.5,307.875z"/>
+	</g>
+	<g>
+		<g>
+			<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" x1="45.5" y1="143.5" x2="46.488" y2="143.657"/>
+			
+				<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" stroke-dasharray="2.0066,2.0066" x1="48.469" y1="143.972" x2="566.688" y2="226.353"/>
+			<polyline fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" points="567.68,226.51 568.667,226.667 
+				567.679,226.821 			"/>
+			
+				<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" stroke-dasharray="2.0033,2.0033" x1="565.699" y1="227.128" x2="48.062" y2="307.65"/>
+			
+				<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" x1="47.072" y1="307.805" x2="46.083" y2="307.958"/>
+		</g>
+	</g>
+	<polyline fill="none" stroke="#ED1C24" stroke-width="2" stroke-miterlimit="10" stroke-dasharray="2" points="48.125,167.917 
+		382,131.667 66,341.5 	"/>
+	<g>
+		<g>
+			<line fill="none" stroke="#00A651" stroke-width="2" stroke-miterlimit="10" x1="55.5" y1="121.25" x2="56.4" y2="121.685"/>
+			<polyline fill="none" stroke="#00A651" stroke-width="2" stroke-miterlimit="10" stroke-dasharray="1.9993,1.9993" points="
+				58.201,122.554 127.5,156 535.67,335.445 			"/>
+			<polyline fill="none" stroke="#00A651" stroke-width="2" stroke-miterlimit="10" points="536.585,335.848 537.5,336.25 
+				536.506,336.143 			"/>
+			
+				<line fill="none" stroke="#00A651" stroke-width="2" stroke-miterlimit="10" stroke-dasharray="1.999,1.999" x1="534.519" y1="335.928" x2="50.571" y2="283.59"/>
+			
+				<line fill="none" stroke="#00A651" stroke-width="2" stroke-miterlimit="10" x1="49.578" y1="283.482" x2="48.583" y2="283.375"/>
+		</g>
+	</g>
+	<g id="oko">
+		<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M138.125,139c0,0,20.5,18.75-4.75,37.125
+			C117.5,155.667,138.125,139,138.125,139z"/>
+		<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M45.583,151c0-28.167,22.833-51,51-51
+			c21.469,0,39.839,13.265,47.362,32.046C156.75,138.125,159,150.927,159,157.625c0,12.197-6.875,21.375-22.841,25.545
+			C126.808,194.66,112.553,202,96.583,202C68.417,202,45.583,179.167,45.583,151z"/>
+	</g>
+	<g id="oko_1_">
+		<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M131.934,275.249c0,0,25.755,10.417,8.505,36.448
+			C118.422,298.065,131.934,275.249,131.934,275.249z"/>
+		<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M49.399,318.791
+			c-9.83-26.396,3.6-55.763,29.995-65.592c20.119-7.492,41.964-1.473,55.568,13.503c14.121,1.227,20.698,12.439,23.035,18.716
+			c4.257,11.431,1.017,22.431-12.49,31.91c-4.753,14.031-15.551,25.885-30.516,31.457C88.595,358.615,59.229,345.186,49.399,318.791
+			z"/>
+	</g>
+	<g id="points">
+		<polygon id="P" points="568.667,212.809 571.647,221.981 581.292,221.981 573.489,227.65 576.47,236.823 568.667,231.154 
+			560.864,236.823 563.845,227.65 556.042,221.981 565.687,221.981 		"/>
+		<circle fill="#ED1C24" stroke="#000000" stroke-width="2" stroke-miterlimit="10" cx="382" cy="131.667" r="7.333"/>
+		<circle fill="#00A651" stroke="#000000" stroke-width="2" stroke-miterlimit="10" cx="537.5" cy="336.25" r="7.5"/>
+	</g>
+</g>
+<g id="labels">
+	<text transform="matrix(1 0 0 1 553.5 356.5)" font-family="'ArialMT'" font-size="24">Q</text>
+	<text transform="matrix(1 0 0 1 395.5 133)" font-family="'ArialMT'" font-size="24">R</text>
+	<text transform="matrix(1 0 0 1 586.333 233)" font-family="'ArialMT'" font-size="24">P</text>
+	<text transform="matrix(1 0 0 1 309.5 27.5)" fill="#828282" font-family="'ArialMT'" font-size="24">horopter</text>
+	<text transform="matrix(1 0 0 1 26 152)" font-family="'ArialMT'" font-size="24">F</text>
+	<text transform="matrix(1 0 0 1 25.9995 317.332)" font-family="'ArialMT'" font-size="24">F</text>
+	<text transform="matrix(1 0 0 1 36.666 120.665)" font-family="'ArialMT'" font-size="24">L</text>
+	<text transform="matrix(1 0 0 1 29.333 281.332)" font-family="'ArialMT'" font-size="24">R</text>
+</g>
+</svg>

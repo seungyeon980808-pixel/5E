@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-50 -96 640 480">
+ <title>LaCoste suspension seismometer principle</title>
+ <desc>Simplified LaCoste suspension seismometer linkage using a zero-length spring by CMG Lee.</desc>
+ <style type="text/css">
+text { stroke:none; cursor:default; }
+.var { font-style:italic; }
+ </style>
+ <defs>
+  <pattern id="pattern_wall" patternUnits="userSpaceOnUse" width="40" height="40">
+   <path d="M 0,0 L 39,39 V 0" fill="none" stroke="#000000" stroke-width="4"/>
+  </pattern>
+  <pattern id="pattern_spring" patternUnits="userSpaceOnUse" width="80" height="40">
+   <path d="M 10,0 C 10,40 70,40 70,20 C 70,0 10,0 10,40" fill="none" stroke="#666666" stroke-width="8"/>
+  </pattern>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g font-family="Helvetica,Arial,sans-serif" font-size="80" text-anchor="middle" fill="#000000" stroke="none" stroke-width="4" stroke-linejoin="round">
+  <rect x="-39" y="-110" width="39" height="500" fill="url(#pattern_wall)"/>
+  <rect x="0" y="0" width="80" height="480" transform="translate(-9,-52) rotate(-45)" fill="url(#pattern_spring)"/>
+  <path d="M 5,300 l 20,20 h 400 v -40 h -400 z" fill="#ffffff" stroke="#000000"/>
+  <circle cx="0"   cy="300" r="10" fill="#000000"/>
+  <circle cx="500" cy="300" r="80" fill="#666666"/>
+ </g>
+</svg>

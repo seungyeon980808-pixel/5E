@@ -1,0 +1,89 @@
+<?xml version="1.0" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.7a -->
+<!-- CreationDate: 2022-03-06 22:40:38 -->
+<!-- Magnification: 2.1 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="373pt" height="344pt"
+	viewBox="210 438 2957 2724">
+  <defs>
+      <linearGradient id="Gradient1" x1="1" x2="0" y1="0" y2="0">
+        <stop offset="40%" stop-color="#80a0ff"/>
+        <stop offset="90%" stop-color="#0000ff"/>
+      </linearGradient>
+  </defs>
+  <g fill="none">
+<rect x="450" y="450" width="675" height="225" fill="#0000ff"/>
+<rect x="1125" y="450" width="1800" height="225" fill="#a0ffa0"/>
+<rect x="2475" y="2925" width="450" height="225" fill="#a0ffa0"/>
+<rect x="1800" y="2925" width="675" height="225" fill="#50a050"/>
+<rect x="450" y="2925" width="1350" height="225" style="fill:url(#Gradient1)#505050"/>
+<!-- Line -->
+<polyline points=" 1125,675 1125,450"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1125,900 2925,2700"
+	stroke="#80a0ff" stroke-width="15px"/>
+<!-- Line -->
+<polyline points=" 1125,900 2925,1800 2475,2250"
+	stroke="#50a050" stroke-width="15px"/>
+<!-- Line -->
+<rect x="450" y="2925" width="2475" height="225"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="450" y="450" width="2475" height="225"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 450,2025 1125,900 1305,2700 450,2700" fill="#babebc"/>
+<!-- Line -->
+<polyline points=" 2925,1575 450,1575"
+	stroke="#000000" stroke-width="8px" stroke-dasharray="10 30"/>
+<!-- Text -->
+<text x="325" y="2595" fill="#000000" font-family="Times" font-size="144">t</text>
+
+<text x="325" y="945" fill="#000000" font-family="Times" font-size="144">t</text>
+<text x="370" y="975" fill="#000000" font-family="Times" font-size="100">0</text>
+<text x="325" y="590" fill="#000000" font-family="Times" font-size="144">t</text>
+<text x="370" y="620" fill="#000000" font-family="Times" font-size="100">0</text>
+<text x="700" y="600" fill="#ffffff" font-family="Times" font-size="144">a</text>
+<text x="2000" y="600" fill="#000000" font-family="Times" font-size="144">d</text>
+
+<text x="325" y="1600" fill="#000000" font-family="Times" font-size="144">t</text>
+<text x="370" y="1630" fill="#000000" font-family="Times" font-size="100">1</text>
+<text x="325" y="3055" fill="#000000" font-family="Times" font-size="144">t</text>
+<text x="370" y="3085" fill="#000000" font-family="Times" font-size="100">1</text>
+<text x="700" y="3070" fill="#ffffff" font-family="Times" font-size="144">a</text>
+<text x="1600" y="3070" fill="#000000" font-family="Times" font-size="144">b</text>
+<text x="2100" y="3070" fill="#000000" font-family="Times" font-size="144">c</text>
+<text x="2650" y="3070" fill="#000000" font-family="Times" font-size="144">d</text>
+
+<text x="3050" y="810" fill="#000000" font-family="Times" font-size="144">x</text>
+<text x="2025" y="2025" fill="#000000" font-family="Times" font-size="144">C</text>
+<text x="2075" y="1350" fill="#000000" font-family="Times" font-size="144">S</text>
+<text x="800" y="2025" fill="#000000" font-family="Times" font-size="144">E</text>
+<!-- Line -->
+<defs>
+<clipPath id="cp0">
+	<path clip-rule="evenodd" d="M 210,438 H 3167 V 3162 H 210 z
+		M 3047,870 3137,900 3047,930 3157,907 3157,893z"/>
+</clipPath>
+</defs>
+<polyline points=" 450,900 3150,900" clip-path="url(#cp0)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Forward arrow to point 3150,900 -->
+<polyline points=" 3047,870 3137,900 3047,930"
+	stroke="#000000" stroke-width="8px" stroke-miterlimit="8"/>
+<!-- Line -->
+<defs>
+<clipPath id="cp1">
+	<path clip-rule="evenodd" d="M 210,438 H 3167 V 3162 H 210 z
+		M 480,2597 450,2687 420,2597 443,2707 457,2707z"/>
+</clipPath>
+</defs>
+<polyline points=" 450,900 450,2700" clip-path="url(#cp1)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Forward arrow to point 450,2700 -->
+<polyline points=" 480,2597 450,2687 420,2597"
+	stroke="#000000" stroke-width="8px" stroke-miterlimit="8"/>
+</g>
+</svg>

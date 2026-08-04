@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>기준 잡기 — 10장씩 5라운드</title>
+<style>
+  :root{--bg:#f6f8fa;--surface:#fff;--ink:#0d1117;--muted:#57606a;--line:#d0d7de;
+        --accent:#0969da;--no:#cf222e}
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0d1117;--surface:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;
+          --accent:#58a6ff;--no:#f85149}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans KR","Malgun Gothic","Segoe UI",system-ui,sans-serif;
+    padding:24px;max-width:1180px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 4px}
+  h2{font-size:15px;margin:30px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .lead{color:var(--muted);font-size:13.5px;margin:0 0 4px;line-height:1.7}
+
+  .refs{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+  .refs figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:7px;
+    padding:6px;height:84px;display:flex;align-items:center;justify-content:center}
+  .refs img{max-width:100%;max-height:100%}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    overflow:hidden;display:flex;flex-direction:column;transition:border-color .12s}
+  .card.O{border-color:var(--accent);border-width:2px}
+  .card.X{border-color:var(--no);border-width:2px;opacity:.55}
+  .thumb{background:#fff;height:180px;display:flex;align-items:center;justify-content:center;
+    padding:10px;border-bottom:1px solid var(--line);cursor:zoom-in}
+  .thumb img{max-width:100%;max-height:100%}
+  .body{padding:9px 11px;flex:1;display:flex;flex-direction:column;gap:5px}
+  .t{font-size:12.5px;line-height:1.45;word-break:break-word}
+  .m{font-size:11px;color:var(--muted)}
+  .btns{display:flex;gap:7px;padding:0 11px 11px}
+  .btns button{flex:1;font:inherit;font-weight:600;font-size:14px;cursor:pointer;
+    border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px}
+  .btns .o.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btns .x.on{background:var(--no);border-color:var(--no);color:#fff}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .foot{position:sticky;bottom:0;background:var(--bg);padding:16px 0 6px;margin-top:20px;
+    border-top:1px solid var(--line);display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  #submit{font:inherit;font-weight:600;font-size:15px;padding:12px 26px;border-radius:9px;
+    border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+  #submit:disabled{opacity:.45;cursor:default;background:var(--surface);color:var(--muted);
+    border-color:var(--line)}
+  .hist{font-size:12.5px;color:var(--muted)}
+  dialog{border:none;border-radius:12px;padding:0;background:#fff;max-width:94vw}
+  dialog img{display:block;max-width:90vw;max-height:86vh}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+</style>
+</head>
+<body>
+
+<h1>기준 잡기 — <span id="rno">1</span>라운드 / 5</h1>
+<p class="lead">
+  아래 <b>기준 10장</b>을 닮았다고 판단한 후보를 골라 왔습니다. 각 장에 O / X 를 주시면
+  그걸 반영해 다음 10장을 다시 고릅니다. 5라운드를 마치면 그 기준으로 4,326장 전체를 분류합니다.
+</p>
+
+<h2>기준 — 처음에 손으로 고른 10장</h2>
+<div class="refs" id="refs"></div>
+
+<h2>이번 라운드 후보 10장</h2>
+<div class="grid" id="grid"></div>
+
+<div class="foot">
+  <button id="submit" disabled>이 라운드 제출</button>
+  <span class="hist" id="hist"></span>
+  <span class="hist" id="left"></span>
+</div>
+
+<dialog id="zoom"><img id="zoomimg" alt="" /></dialog>
+
+<script>
+const $ = id => document.getElementById(id);
+const verdicts = {};
+let items = [];
+
+load();
+async function load(){
+  const d = await (await fetch('/api/round')).json();
+  $('rno').textContent = d.round;
+  items = d.items;
+
+  $('refs').innerHTML = d.refs.map(r =>
+    `<figure title="${esc(r.title)}"><img src="/img/${encodeURIComponent(r.file)}" alt="${esc(r.title)}" /></figure>`
+  ).join('');
+
+  $('grid').innerHTML = items.map((it, i) => `
+    <div class="card" id="c${i}">
+      <div class="thumb" data-zoom="${encodeURIComponent(it.file)}">
+        <img src="/img/${encodeURIComponent(it.file)}" alt="${esc(it.title)}" loading="lazy" />
+      </div>
+      <div class="body">
+        <div class="t">${esc(it.title)}</div>
+        <div class="m">${esc(it.subject)} · ${esc(it.part)} · ${esc(it.license)}</div>
+        <div class="m">고른 이유: ${esc(it.why)}</div>
+      </div>
+      <div class="btns">
+        <button class="o" data-i="${i}" data-v="O">넣는다</button>
+        <button class="x" data-i="${i}" data-v="X">뺀다</button>
+      </div>
+    </div>`).join('');
+
+  $('hist').textContent = d.history.length
+    ? '지난 라운드: ' + d.history.map(h => `${h.round}회 O${h.O}/X${h.X}`).join(' · ')
+    : '첫 라운드입니다';
+  update();
+}
+
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]');
+  if (b){
+    const i = +b.dataset.i, v = b.dataset.v;
+    verdicts[items[i].file] = verdicts[items[i].file] === v ? undefined : v;
+    if (!verdicts[items[i].file]) delete verdicts[items[i].file];
+    const card = $('c' + i);
+    card.className = 'card' + (verdicts[items[i].file] ? ' ' + verdicts[items[i].file] : '');
+    card.querySelector('.o').classList.toggle('on', verdicts[items[i].file] === 'O');
+    card.querySelector('.x').classList.toggle('on', verdicts[items[i].file] === 'X');
+    update();
+    return;
+  }
+  const th = e.target.closest('.thumb');
+  if (th){ $('zoomimg').src = '/img/' + th.dataset.zoom; $('zoom').showModal(); }
+});
+$('zoom').addEventListener('click', () => $('zoom').close());
+
+function update(){
+  const n = Object.keys(verdicts).length;
+  $('submit').disabled = n < items.length;
+  $('left').textContent = n < items.length
+    ? `${items.length - n}장 더 정해 주세요` : '모두 정하셨습니다';
+}
+
+$('submit').onclick = async () => {
+  $('submit').disabled = true;
+  await fetch('/api/round', { method:'POST', headers:{'Content-Type':'application/json'},
+                              body: JSON.stringify({ verdicts }) });
+  for (const k in verdicts) delete verdicts[k];
+  location.reload();
+};
+
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+</body>
+</html>

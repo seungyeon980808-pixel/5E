@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+    inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+    width="420"
+    height="360"
+    version="2.0"
+    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:svg="http://www.w3.org/2000/svg"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:cc="http://creativecommons.org/ns#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <!--<title lang="en">Earthing system diagram master file</title>-->
+    <!--<title lang="en">TN-C earthing system</title>-->
+    <title lang="en">TN-S earthing system</title>
+    <!--<title lang="en">TN-C-S earthing system</title>-->
+    <!--<title lang="en">TT earthing system</title>-->
+    <!--<title lang="en">IT earthing system</title>-->
+    <sodipodi:namedview
+        inkscape:pageshadow="2"
+        inkscape:pageopacity="1.0"
+        guidetolerance="10.0"
+        gridtolerance="10.0"
+        objecttolerance="10.0"
+        borderopacity="1.0"
+        bordercolor="#666666"
+        pagecolor="#ffffff"
+        inkscape:zoom="1"
+        inkscape:window-x="0"
+        inkscape:window-y="0"
+        inkscape:current-layer="base"
+        inkscape:showpageshadow="2"
+        inkscape:pagecheckerboard="0"
+        inkscape:deskcolor="#d1d1d1"
+        inkscape:window-maximized="1"
+        inkscape:document-units="px" />
+    <metadata>
+        <rdf:RDF>
+            <cc:Work rdf:about="">
+                <dc:format>image/svg+xml</dc:format>
+                <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+                <!--<dc:title>Earthing system diagram master file</dc:title>-->
+                <!--<dc:title>TN-C earthing system diagram</dc:title>-->
+                <dc:title>TN-S earthing system diagram</dc:title>
+                <!--<dc:title>TN-C-S earthing system diagram</dc:title>-->
+                <!--<dc:title>TT earthing system diagram</dc:title>-->
+                <!--<dc:title>IT earthing system diagram</dc:title>-->
+                <dc:date>2026-01-09</dc:date>
+                <dc:creator>
+                    <cc:Agent>
+                        <dc:title>@DiscreetParrot on wikipedia</dc:title>
+                    </cc:Agent>
+                </dc:creator>
+                <dc:language>English</dc:language>
+                <cc:license rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" />
+            </cc:Work>
+            <cc:License rdf:about="http://creativecommons.org/publicdomain/zero/1.0/">
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction" />
+                <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution" />
+                <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+            </cc:License>
+        </rdf:RDF>
+    </metadata>
+    <description>
+        <text lang="en">This diagram represents one of the earthing system arrangements defined by the IEC 60364-1 standard.</text>
+        <text lang="en">Only the star-configuration, AC, three-phase four-wire conductor arrangement is shown. It should be understood that not all installations will have a connection to every distribution conductor (Some three-phase installations may not connect to the neutral; Single-phase installations will only connect to one of the three line conductors). Three-phase three-wire distribution will not include a neutral (Non-existent from a delta configuration on the transformer secondary; Optional for distribution in the IT earthing system case with star configuration).</text>
+        <text lang="en">To give a broad overview of the diagram: The box at the top-left, as labelled, represents a generator or transformer, with the curved lines depicting transformer coils. The horizontal lines at the top represent the distribution system. The vertical lines coming down from them represent the supply connection to an individual property/installation. The dashed box with the label 'Consumer installation' beneath it represents an individual property/building and its electrical installation as a whole. The set of 'dots' (connection points) just within the dashed box represent where the external supply has entered the property and is connected to the installation. (The dot on the far right in the TT and TN systems is the 'main earthing terminal'). The solid box labelled 'Equipment' represents an example item of equipment within the installation. This equipment includes items such as sockets and light fittings, along with appliances ('loads') of either 'fixed' nature (e.g. shower; cooker; boiler; machinery), or more portable and pluggable nature (e.g. hair dryer; kettle; television). (Note that in the TN-C system case the link between neutral and earth would likely take place at a socket rather than in each appliance).</text>
+    </description>
+    <style type="text/css">
+        path, rect {
+            stroke: #000;
+            stroke-width: 1;
+            fill: none;
+            marker: none;
+            stroke-linecap: square;
+        }
+        text, tspan {
+            color: #000;
+            font-size: 16px;
+            font-family: 'Noto Serif', Caladea, serif;
+        }
+        #marker {
+            overflow: visible;
+        }
+        #marker circle {
+            fill: #000;
+        }
+        #supply path,
+        #equip-to-met {
+            marker: url(#marker);
+        }
+        #transformer-coil,
+        #dist-neutral,
+        #dist-earth,
+        #tns-supply-earth,
+        #tnc-link {
+            marker-start: url(#marker);
+        }
+        .outline {
+            stroke-dasharray: 7;
+        }
+        #trans-earth-opt,
+        #dist-neutral-opt {
+            stroke-dasharray: 1, 3;
+        }
+    </style>
+    <defs>
+        <marker
+            orient="auto"
+            refX="0"
+            refY="0"
+            id="marker"
+            viewBox="0 0 10 10"
+            markerWidth="6"
+            markerHeight="6"
+            preserveAspectRatio="xMidYMid">
+            <circle cx="0" cy="0" r="5" stroke="context-stroke" />
+        </marker>
+        <path
+            id="transformer-coil"
+            d="M 36,80 h 19 a 11,11,0,0,1,22,0 a 11,11,0,0,1,22,0 a 11,11,0,0,1,22,0 H 362"
+            inkscape:label="transformer coil"
+            sodipodi:nodetypes="cccccc" />
+        <rect id="trans-outline-std" x="16" y="54" width="124" height="130" class="outline" inkscape:label="transformer outline standard" />
+        <path id="trans-earth" d="M 36,164 V 300" inkscape:label="transformer earth" sodipodi:nodetypes="cc" />
+        <path id="equip-to-met" d="M 306,242 V 264" inkscape:label="equipment earth standard" sodipodi:nodetypes="cc" />
+        <path id="dist-neutral" d="M 36,164 H 362" inkscape:label="dist neutral" sodipodi:nodetypes="cc" />
+        <switch id="neutral-label" inkscape:label="neutral label">
+            <text x="376" y="170" systemLanguage="en">N</text>
+            <text x="376" y="170" systemLanguage="ru">Н</text>
+            <text x="376" y="170" lang="en">N</text><!--default (must be last)-->
+        </switch>
+        <switch id="pen-label" inkscape:label="pen label">
+            <text x="376" y="170" systemLanguage="en">PEN</text>
+            <text x="376" y="170" systemLanguage="ru">ПЕН</text>
+            <text x="376" y="170" lang="en">PEN</text><!--default (must be last)-->
+        </switch>
+        <g id="local-earth-electrode" inkscape:label="Local earth electrode">
+            <use href="#earth-symbol" inkscape:label="use earth symbol" transform="translate(364, 300)" />
+            <use href="#equip-to-met" inkscape:label="use equipment to MET link" />
+            <path d="M 306,242 H 384 V 300" inkscape:label="local earth link" sodipodi:nodetypes="ccc" />
+        </g>
+        <g id="earth-symbol" inkscape:label="earth symbol">
+            <path d="M 8,0 h 24 M 12,4 h 16 M 16,8 h 8" inkscape:label="earth symbol" sodipodi:nodetypes="cccccc" />
+            <switch inkscape:label="transformer earth label">
+                <text x="20" y="28" text-anchor="middle" systemLanguage="en">Earth</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="de">Erde</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="el">Γη</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="es">Tierra</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="fr">Terre</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="it">Terra</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="no">Jord</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="pl">Ziemia</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="ru">Земля</text>
+                <text x="20" y="28" text-anchor="middle" systemLanguage="sv">Jorden</text>
+                <text x="20" y="28" text-anchor="middle" lang="en">Earth</text><!--default (must be last)-->
+            </switch>
+        </g>
+    </defs>
+    <rect width="100%" height="100%" style="fill:white;display:none" inkscape:label="optional background" />
+    <g id="base" inkscape:label="Base">
+        <g id="installation" inkscape:label="installation">
+            <switch inkscape:label="equipment label">
+                <text x="250" y="302" text-anchor="middle" systemLanguage="en">Equipment</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="de">Gerät</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="el">Εξοπλισμός</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="es">Material</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="fr">Matériel</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="it">Attrezzaturas</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="no">Utstyr</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="pl">Urządzenie</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="ru">Оборудование</text>
+                <text x="250" y="302" text-anchor="middle" systemLanguage="sv">Elmateriel</text>
+                <text x="250" y="302" text-anchor="middle" lang="en">Equipment</text><!--default (must be last)-->
+            </switch>
+            <rect x="174" y="264" width="152" height="50" inkscape:label="equipment outline" />
+            <switch inkscape:label="label">
+                <text x="250" y="346" text-anchor="middle" systemLanguage="en">Consumer installation</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="de">Verbraucherinstallation</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="el">Εγκατάσταση καταναλωτή</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="es">Instalación del consumidor</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="fr">Installation du consommateur</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="it">Installazione del consumatore</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="no">Forbrukerinstallasjon</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="pl">Instalacja konsumencka</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="ru">Установка потребителем</text>
+                <text x="250" y="346" text-anchor="middle" systemLanguage="sv">Konsumentinstallation</text>
+                <text x="250" y="346" text-anchor="middle" lang="en">Consumer installation</text><!--default (must be last)-->
+            </switch>
+            <rect x="158" y="222" width="184" height="104" class="outline" inkscape:label="outline" />
+        </g>
+        <g id="supply" inkscape:label="supply">
+            <path d="M 278,164 V 242 V 280" inkscape:label="neutral" sodipodi:nodetypes="ccc" />
+            <path d="M 250,136 V 242 V 280" inkscape:label="l3" sodipodi:nodetypes="ccc" />
+            <path d="M 222,108 V 242 V 280" inkscape:label="l2" sodipodi:nodetypes="ccc" />
+            <path d="M 194,80 V 242 V 280" inkscape:label="l1" sodipodi:nodetypes="ccc" />
+        </g>
+        <g id="distribution" inkscape:label="distribution">
+            <use href="#transformer-coil" inkscape:label="l3" transform="translate(0, 56)" />
+            <use href="#transformer-coil" inkscape:label="l2" transform="translate(0, 28)" />
+            <use href="#transformer-coil" inkscape:label="l1" />
+            <switch inkscape:label="l3 label">
+                <text x="376" y="142" systemLanguage="en">L3</text>
+                <text x="376" y="142" systemLanguage="ru">Л3</text>
+                <text x="376" y="142" lang="en">L3</text><!--default (must be last)-->
+            </switch>
+            <switch inkscape:label="l3 label">
+                <text x="376" y="114" systemLanguage="en">L2</text>
+                <text x="376" y="114" systemLanguage="ru">Л2</text>
+                <text x="376" y="114" lang="en">L2</text><!--default (must be last)-->
+            </switch>
+            <switch inkscape:label="l3 label">
+                <text x="376" y="86" systemLanguage="en">L1</text>
+                <text x="376" y="86" systemLanguage="ru">Л1</text>
+                <text x="376" y="86" lang="en">L1</text><!--default (must be last)-->
+            </switch>
+        </g>
+        <g id="transformer" inkscape:label="transformer">
+            <use href="#earth-symbol" inkscape:label="earth symbol" transform="translate(16, 300)" />
+            <path d="M 36,80 V 164" inkscape:label="interlink" sodipodi:nodetypes="cc" />
+            <switch inkscape:label="label">
+                <text x="78" y="24" text-anchor="middle" systemLanguage="en">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">or Transformer</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="de">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">oder Transformator</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="el">
+                    <tspan x="78" dy="0" sodipodi:role="line">Γεννήτρια</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">ή Μετασχηματιστής</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="es">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generador</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">o Transformador</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="fr">
+                    <tspan x="78" dy="0" sodipodi:role="line">Générateur</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">ou Transformateur</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="it">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generatore</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">o Trasformatore</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="no">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">eller Transformator</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="pl">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">lub Transformator</tspan>
+                </text>
+                <text x="16" y="24" text-anchor="left" systemLanguage="ru">
+                    <tspan x="16" dy="0" sodipodi:role="line">Генератор</tspan>
+                    <tspan x="16" dy="1.2em" sodipodi:role="line">или трансформатор</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" systemLanguage="sv">
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">eller Transformator</tspan>
+                </text>
+                <text x="78" y="24" text-anchor="middle" lang="en"><!--default (must be last)-->
+                    <tspan x="78" dy="0" sodipodi:role="line">Generator</tspan>
+                    <tspan x="78" dy="1.2em" sodipodi:role="line">or Transformer</tspan>
+                </text>
+            </switch>
+        </g>
+    </g>
+    <g id="tnc-system" inkscape:label="TN-C system components" style="display:none">
+        <use href="#trans-outline-std" inkscape:label="use standard transformer outline" />
+        <use href="#trans-earth" inkscape:label="use transformer earth, standard form" />
+        <use href="#dist-neutral" inkscape:label="use dist neutral" />
+        <use href="#pen-label" inkscape:label="use pen label" />
+        <path id="tnc-link" d="M 306,264 v 16 h -28" inkscape:label="tnc path" sodipodi:nodetypes="ccc" />
+    </g>
+    <g id="tns-system" inkscape:label="TN-S system components" style="display:normal">
+        <use href="#trans-earth" inkscape:label="use transformer earth, standard form" />
+        <use href="#dist-neutral" inkscape:label="use dist neutral" />
+        <use href="#neutral-label" inkscape:label="use neutral label" />
+        <use href="#equip-to-met" inkscape:label="use standard equipment earth" />
+        <rect x="16" y="54" width="124" height="158" class="outline" inkscape:label="transformer outline extended" />
+        <path id="dist-earth" d="M 36,192 H 362" inkscape:label="distribution earth" sodipodi:nodetypes="cc" />
+        <switch inkscape:label="distribution earth label">
+            <text x="376" y="198" systemLanguage="en">PE</text>
+            <text x="376" y="198" systemLanguage="ru">ПE</text>
+            <text x="376" y="198" lang="en">PE</text><!--default (must be last)-->
+        </switch>
+        <path id="tns-supply-earth" d="M 306,192 V 242" inkscape:label="supply earth" sodipodi:nodetypes="cc" />
+    </g>
+    <g id="tncs-system" inkscape:label="TN-C-S system components" style="display:none">
+        <use href="#trans-outline-std" inkscape:label="use standard transformer outline" />
+        <use href="#trans-earth" inkscape:label="use transformer earth, standard form" />
+        <use href="#dist-neutral" inkscape:label="use dist neutral" />
+        <use href="#pen-label" inkscape:label="use pen label" />
+        <use href="#equip-to-met" inkscape:label="use standard equipment earth" />
+        <path id="tncs-link" d="M 278,242 h 28" inkscape:label="tncs link" sodipodi:nodetypes="cc" />
+    </g>
+    <g id="tt-system" inkscape:label="TT system components" style="display:none">
+        <use href="#trans-outline-std" inkscape:label="use standard transformer outline" />
+        <use href="#trans-earth" inkscape:label="use transformer earth, standard form" />
+        <use href="#dist-neutral" inkscape:label="use dist neutral" />
+        <use href="#neutral-label" inkscape:label="use neutral label" />
+        <use href="#local-earth-electrode" inkscape:label="use local earth electrode" />
+    </g>
+    <g id="it-system" inkscape:label="IT system components" style="display:none">
+        <use href="#trans-outline-std" inkscape:label="use standard transformer outline" />
+        <use id="trans-earth-opt" href="#trans-earth" inkscape:label="use transformer earth, but show optional" />
+        <use id="dist-neutral-opt" href="#dist-neutral" inkscape:label="use dist neutral" />
+        <use href="#neutral-label" inkscape:label="use neutral label" />
+        <use href="#local-earth-electrode" inkscape:label="use local earth electrode" />
+        <switch inkscape:label="impedance label">
+            <text x="54" y="225" systemLanguage="en">Impedance</text>
+            <text x="54" y="225" systemLanguage="de">Impedanz</text>
+            <text x="54" y="225" systemLanguage="el">Αντίσταση</text>
+            <text x="54" y="225" systemLanguage="es">Impedancia</text>
+            <text x="54" y="225" systemLanguage="fr">Impédance</text>
+            <text x="54" y="225" systemLanguage="it">Impedenza</text>
+            <text x="54" y="225" systemLanguage="no">Impedans</text>
+            <text x="54" y="225" systemLanguage="pl">Impedancja</text>
+            <text x="54" y="225" systemLanguage="ru">Импеданс</text>
+            <text x="54" y="225" systemLanguage="sv">Impedans</text>
+            <text x="54" y="225" lang="en">Impedance</text><!--default (must be last)-->
+        </switch>
+        <rect x="31" y="207" width="10" height="25" inkscape:label="impedance" />
+        <switch inkscape:label="optional label">
+            <text x="48" y="275" systemLanguage="en">(Optional)</text>
+            <text x="48" y="275" systemLanguage="de">(Optionale)</text>
+            <text x="40" y="275" systemLanguage="el">(Προαιρετικός)</text><!--deliberately shifted left-->
+            <text x="48" y="275" systemLanguage="es">(Opcional)</text>
+            <text x="48" y="275" systemLanguage="fr">(Optionnel)</text>
+            <text x="48" y="275" systemLanguage="it">(Opzionale)</text>
+            <text x="48" y="275" systemLanguage="no">(Valgfri)</text>
+            <text x="40" y="275" systemLanguage="pl">(Fakultatywny)</text><!--deliberately shifted left-->
+            <text x="40" y="260" systemLanguage="ru">(необязательный)</text><!--deliberately shifted up and left-->
+            <text x="48" y="275" systemLanguage="sv">(Valfri)</text>
+            <text x="48" y="275" lang="en">(Optional)</text><!--default (must be last)-->
+        </switch>
+    </g>
+</svg>

@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="149.09006mm"
+   height="54.511677mm"
+   viewBox="0 0 528.27186 193.15161"
+   id="svg4317"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="decaimento- tc-99m_2.svg">
+  <defs
+     id="defs4319">
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="marker4188"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow1Mstart">
+      <path
+         transform="matrix(0.4,0,0,0.4,4,0)"
+         style="fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;stroke-opacity:1"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         id="path4190"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mstart"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path8948"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         style="fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(0.4,0,0,0.4,4,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mstart-2"
+       style="overflow:visible"
+       inkscape:isstock="true"
+       inkscape:collect="always">
+      <path
+         inkscape:connector-curvature="0"
+         id="path8948-8"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 Z"
+         style="fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;stroke-opacity:1"
+         transform="matrix(0.4,0,0,0.4,4,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="59.146543"
+     inkscape:cy="49.773951"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-bottom="5"
+     fit-margin-right="5"
+     inkscape:window-width="1366"
+     inkscape:window-height="706"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata4322">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Camada 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-95.864072,-344.35783)">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.105;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 303.24959,442.17947 124.55272,0 0,0"
+       id="path8904-1"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#marker4188)"
+       d="m 300.6584,436.27546 -34.12844,-48.31576 0,0"
+       id="path8936"
+       inkscape:connector-curvature="0" />
+    <path
+       style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow1Mstart-2)"
+       d="m 320.21448,512.97827 -0.0518,-70.97704 0,0"
+       id="path8936-4"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:22.50000191px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="338.98819"
+       y="410.55164"
+       id="text10861-2"
+       sodipodi:linespacing="125%"
+       transform="scale(0.94644314,1.0565875)"><tspan
+         sodipodi:role="line"
+         id="tspan10863-5"
+         x="338.98819"
+         y="410.55164"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:22.50000191px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">Tc-99m</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.07485104;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 308.12922,518.75548 120.9813,0 0,0"
+       id="path8904-1-2"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:22.50000191px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="352.5112"
+       y="484.22998"
+       id="text10861-2-7"
+       sodipodi:linespacing="125%"
+       transform="scale(0.94644314,1.0565875)"><tspan
+         sodipodi:role="line"
+         id="tspan10863-5-3"
+         x="352.5112"
+         y="484.22998"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:22.50000191px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">Tc-99</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.00000191px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="460.1785"
+       y="447.43738"
+       id="text11875"
+       sodipodi:linespacing="125%"
+       transform="scale(0.94644314,1.0565875)"><tspan
+         sodipodi:role="line"
+         x="460.1785"
+         y="447.43738"
+         id="tspan11887"
+         style="font-size:20.00000191px;text-align:start;text-anchor:start">Decaimento gama</tspan><tspan
+         sodipodi:role="line"
+         x="460.1785"
+         y="472.43738"
+         style="font-size:20.00000191px;text-align:start;text-anchor:start"
+         id="tspan11895">T<tspan
+   style="font-size:20.00000191px;text-align:start;baseline-shift:sub;text-anchor:start"
+   id="tspan11899">1/2</tspan> = 6,02 h</tspan><tspan
+         sodipodi:role="line"
+         x="460.1785"
+         y="497.43738"
+         id="tspan11879"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.00000191px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start" /></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.00000024;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 148.94029,386.71485 112.40987,0 0,0"
+       id="path8904-1-4"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:22.50000191px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="177.7345"
+       y="359.37103"
+       id="text10861-2-7-5"
+       sodipodi:linespacing="125%"
+       transform="scale(0.94644314,1.0565875)"><tspan
+         sodipodi:role="line"
+         id="tspan10863-5-3-3"
+         x="177.7345"
+         y="359.37103"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:22.50000191px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">Mo-99</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.00000191px;line-height:125%;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;letter-spacing:0px;word-spacing:0px;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="120.00785"
+       y="397.0788"
+       id="text11875-3"
+       sodipodi:linespacing="125%"
+       transform="scale(0.94644314,1.0565875)"><tspan
+         sodipodi:role="line"
+         x="120.00785"
+         y="397.0788"
+         id="tspan11887-6"
+         style="font-size:20.00000191px;text-align:start;text-anchor:start">Decaimento beta</tspan><tspan
+         sodipodi:role="line"
+         x="120.00785"
+         y="422.0788"
+         style="font-size:20.00000191px;text-align:start;text-anchor:start"
+         id="tspan11895-4">T<tspan
+   style="font-size:20.00000191px;text-align:start;baseline-shift:sub;text-anchor:start"
+   id="tspan11899-1">1/2</tspan> = 66 h</tspan><tspan
+         sodipodi:role="line"
+         x="120.00785"
+         y="447.0788"
+         id="tspan11879-1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:20.00000191px;font-family:sans-serif;-inkscape-font-specification:sans-serif;text-align:start;text-anchor:start" /></text>
+  </g>
+</svg>

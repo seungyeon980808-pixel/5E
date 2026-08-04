@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="460"
+   height="200"
+   id="svg2421">
+  <defs
+     id="defs2423" />
+  <g
+     id="layer1"
+     style="display:inline">
+    <path
+       d="M 213.44697,74.516316 L 456.80555,74.516316 L 456.80555,188.1924 L 273.40147,182.96232 L 213.44697,74.516316 z"
+       id="path3242"
+       style="fill:#bdd9ff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:inline" />
+    <path
+       d="M 3.1944443,3.4827993 C 38.428079,3.4827993 138.93556,1.1595668 165.82071,20.907041 C 196.08857,43.139158 247.71465,136.48785 302.31061,163.78584 C 338.45908,181.86008 440.39773,178.41184 456.80556,178.81425 L 456.80556,196.60149 L 3.1944443,196.60149 L 3.1944443,3.4827993 z"
+       id="path3216"
+       style="fill:#bdffa3;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:inline" />
+  </g>
+  <g
+     id="layer2"
+     style="display:inline">
+    <path
+       d="M 3.194446,3.4828032 C 38.428076,3.4828032 138.93555,1.1595632 165.8207,20.907037 C 196.08856,43.139157 247.71464,136.48785 302.3106,163.78584 C 338.45907,181.86008 440.39772,178.41184 456.80555,178.81425"
+       id="path3238"
+       style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:inline" />
+    <path
+       d="M 456.80555,74.516318 L 212.83093,74.516318 L 3.1828733,16.57409"
+       id="path3244"
+       style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:inline" />
+  </g>
+  <g
+     id="layer4">
+    <text
+       x="335.08759"
+       y="68.773331"
+       transform="scale(0.9999985,1.0000015)"
+       id="text3265"
+       xml:space="preserve"
+       style="font-size:15.9999752px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"><tspan
+         x="335.08759"
+         y="68.773331"
+         id="tspan3267">River level</tspan></text>
+    <text
+       x="110.00682"
+       y="10.305781"
+       transform="matrix(0.965903,0.2589041,-0.2589041,0.965903,0,0)"
+       id="text3269"
+       xml:space="preserve"
+       style="font-size:15.99999905px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"><tspan
+         x="110.00682"
+         y="10.305781"
+         id="tspan3271">Water table</tspan></text>
+  </g>
+</svg>

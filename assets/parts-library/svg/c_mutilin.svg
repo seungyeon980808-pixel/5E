@@ -1,0 +1,633 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="128.89662"
+   height="154.2879"
+   viewbox="0 5 228 213"
+   version="1.1"
+   id="svg210"
+   sodipodi:docname="mutilin.svg"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs214">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath1148">
+      <rect
+         style="fill:none;stroke-width:1.01305"
+         id="rect1150"
+         width="137.41045"
+         height="154.11778"
+         x="67.383171"
+         y="30.25601" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath1464">
+      <rect
+         style="fill:none;stroke-width:1.01305"
+         id="rect1466"
+         width="135.04582"
+         height="156.9339"
+         x="69.747787"
+         y="29.487982" />
+    </clipPath>
+  </defs>
+  <sodipodi:namedview
+     id="namedview212"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="3.9061033"
+     inkscape:cx="105.73197"
+     inkscape:cy="73.474759"
+     inkscape:window-width="1435"
+     inkscape:window-height="1040"
+     inkscape:window-x="182"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg210" />
+  <style
+     type="text/css"
+     id="style2"><![CDATA[ circle { stroke: #FFFFFF; fill: #FFFFFF; }
+text { font-family: "Liberation Sans", Helvetica, Arial, sans-serif; font-size: 14px; } line { stroke: #000000; stroke-width: 1.0; } ]]></style>
+  <g
+     id="g208"
+     transform="matrix(0.97415952,0,0,1,-67.957227,-30)"
+     clip-path="url(#clipPath1464)">
+    <g
+       transform="translate(0,-107)"
+       id="g206">
+      <!-- molecule starts here -->
+      <line
+         x1="117.3"
+         y1="157.60001"
+         x2="117.3"
+         y2="138.5"
+         id="line4" />
+      <line
+         x1="113.6"
+         y1="159.10001"
+         x2="113.6"
+         y2="137"
+         id="line6" />
+      <line
+         x1="119.4"
+         y1="179.10001"
+         x2="119.4"
+         y2="180.89999"
+         id="line8" />
+      <line
+         x1="115.5"
+         y1="178.8"
+         x2="115.5"
+         y2="181.2"
+         id="line10" />
+      <line
+         x1="111.7"
+         y1="178.5"
+         x2="111.7"
+         y2="181.5"
+         id="line12" />
+      <line
+         x1="107.8"
+         y1="178.2"
+         x2="107.8"
+         y2="181.8"
+         id="line14" />
+      <line
+         x1="103.9"
+         y1="177.89999"
+         x2="103.9"
+         y2="182.10001"
+         id="line16" />
+      <line
+         x1="100.1"
+         y1="177.60001"
+         x2="100.1"
+         y2="182.39999"
+         id="line18" />
+      <circle
+         cx="98.400002"
+         cy="180"
+         r="6.3000002"
+         id="circle20" />
+      <polygon
+         points="111.4,159.9 121.7,180 115.7,158.3 "
+         style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linejoin:round"
+         id="polygon22" />
+      <line
+         x1="145.2"
+         y1="233.39999"
+         x2="143.5"
+         y2="233.8"
+         id="line24" />
+      <line
+         x1="144.5"
+         y1="229.60001"
+         x2="142.3"
+         y2="230.2"
+         id="line26" />
+      <line
+         x1="143.8"
+         y1="225.89999"
+         x2="141"
+         y2="226.60001"
+         id="line28" />
+      <line
+         x1="143.2"
+         y1="222.10001"
+         x2="139.7"
+         y2="223"
+         id="line30" />
+      <line
+         x1="142.5"
+         y1="218.39999"
+         x2="138.5"
+         y2="219.39999"
+         id="line32" />
+      <line
+         x1="141.8"
+         y1="214.60001"
+         x2="137.2"
+         y2="215.8"
+         id="line34" />
+      <circle
+         cx="139.10001"
+         cy="213.7"
+         r="6.3000002"
+         id="circle36" />
+      <line
+         x1="121.7"
+         y1="259"
+         x2="115.9"
+         y2="281.10001"
+         id="line38" />
+      <circle
+         cx="115.9"
+         cy="281.10001"
+         r="6.3000002"
+         id="circle40" />
+      <line
+         x1="103"
+         y1="219.5"
+         x2="103.7"
+         y2="221.10001"
+         id="line42" />
+      <line
+         x1="99.400002"
+         y1="220.60001"
+         x2="100.3"
+         y2="222.8"
+         id="line44" />
+      <line
+         x1="95.900002"
+         y1="221.7"
+         x2="96.900002"
+         y2="224.39999"
+         id="line46" />
+      <line
+         x1="92.300003"
+         y1="222.7"
+         x2="93.599998"
+         y2="226"
+         id="line48" />
+      <line
+         x1="88.699997"
+         y1="223.8"
+         x2="90.199997"
+         y2="227.7"
+         id="line50" />
+      <line
+         x1="85.099998"
+         y1="224.89999"
+         x2="86.800003"
+         y2="229.3"
+         id="line52" />
+      <circle
+         cx="84.5"
+         cy="227.60001"
+         r="6.3000002"
+         id="circle56" />
+      <line
+         x1="105.4"
+         y1="219.5"
+         x2="105.4"
+         y2="196.3"
+         id="line58" />
+      <line
+         x1="121.7"
+         y1="180"
+         x2="105.4"
+         y2="196.3"
+         id="line60" />
+      <polygon
+         points="152.2,158.2 144.9,180 156.3,160 "
+         style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linejoin:round"
+         id="polygon62" />
+      <circle
+         cx="154.2"
+         cy="159.10001"
+         r="6.3000002"
+         id="circle64" />
+      <line
+         x1="144.89999"
+         y1="180"
+         x2="121.7"
+         y2="180"
+         id="line66" />
+      <line
+         x1="157.10001"
+         y1="257.5"
+         x2="146.60001"
+         y2="278.5"
+         id="line68" />
+      <line
+         x1="153.7"
+         y1="255.8"
+         x2="143.2"
+         y2="276.79999"
+         id="line70" />
+      <circle
+         cx="144.89999"
+         cy="277.60001"
+         r="6.3000002"
+         id="circle72" />
+      <line
+         x1="119.6"
+         y1="237.10001"
+         x2="121"
+         y2="238.2"
+         id="line74" />
+      <line
+         x1="117.1"
+         y1="240"
+         x2="118.9"
+         y2="241.39999"
+         id="line76" />
+      <line
+         x1="114.5"
+         y1="242.89999"
+         x2="116.8"
+         y2="244.7"
+         id="line78" />
+      <line
+         x1="111.9"
+         y1="245.8"
+         x2="114.8"
+         y2="248"
+         id="line80" />
+      <line
+         x1="109.4"
+         y1="248.7"
+         x2="112.7"
+         y2="251.2"
+         id="line82" />
+      <line
+         x1="106.8"
+         y1="251.7"
+         x2="110.6"
+         y2="254.5"
+         id="line84" />
+      <circle
+         cx="107.7"
+         cy="254.39999"
+         r="6.3000002"
+         id="circle86" />
+      <polygon
+         points="124,259 121.7,235.8 119.4,259 "
+         style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linejoin:round"
+         id="polygon88" />
+      <line
+         x1="139.10001"
+         y1="242.8"
+         x2="121.7"
+         y2="259"
+         id="line90" />
+      <line
+         x1="121.7"
+         y1="235.8"
+         x2="105.4"
+         y2="219.5"
+         id="line92" />
+      <line
+         x1="161.2"
+         y1="242.8"
+         x2="139.10001"
+         y2="242.8"
+         id="line94" />
+      <line
+         x1="182.10001"
+         y1="230"
+         x2="178.60001"
+         y2="253.2"
+         id="line96" />
+      <line
+         x1="155.39999"
+         y1="256.70001"
+         x2="178.60001"
+         y2="253.2"
+         id="line98" />
+      <line
+         x1="163.60001"
+         y1="196.3"
+         x2="163"
+         y2="194.7"
+         id="line100" />
+      <line
+         x1="167.2"
+         y1="195.2"
+         x2="166.3"
+         y2="193"
+         id="line102" />
+      <line
+         x1="170.8"
+         y1="194.10001"
+         x2="169.7"
+         y2="191.39999"
+         id="line104" />
+      <line
+         x1="174.39999"
+         y1="193.10001"
+         x2="173.10001"
+         y2="189.8"
+         id="line106" />
+      <line
+         x1="177.89999"
+         y1="192"
+         x2="176.39999"
+         y2="188.10001"
+         id="line108" />
+      <line
+         x1="181.5"
+         y1="190.89999"
+         x2="179.8"
+         y2="186.5"
+         id="line110" />
+      <circle
+         cx="182.10001"
+         cy="188.10001"
+         r="6.3000002"
+         id="circle112" />
+      <line
+         x1="161.2"
+         y1="196.3"
+         x2="144.89999"
+         y2="180"
+         id="line114" />
+      <line
+         x1="144.89999"
+         y1="235.8"
+         x2="155.39999"
+         y2="256.70001"
+         id="line116" />
+      <line
+         x1="144.89999"
+         y1="235.8"
+         x2="121.7"
+         y2="235.8"
+         id="line118" />
+      <polygon
+         points="163.5,242.8 161.2,219.5 158.9,242.8 "
+         style="fill:#000000;stroke:#000000;stroke-width:1;stroke-linejoin:round"
+         id="polygon120" />
+      <line
+         x1="161.2"
+         y1="219.5"
+         x2="182.10001"
+         y2="230"
+         id="line122" />
+      <line
+         x1="161.2"
+         y1="219.5"
+         x2="161.2"
+         y2="196.3"
+         id="line124" />
+      <line
+         x1="161.2"
+         y1="219.5"
+         x2="144.89999"
+         y2="235.8"
+         id="line126" />
+      <circle
+         cx="49.599998"
+         cy="207.89999"
+         r="6.3000002"
+         id="circle132" />
+      <circle
+         cx="27.6"
+         cy="249.7"
+         r="6.3000002"
+         id="circle138" />
+      <text
+         text-anchor="end"
+         x="22.700001"
+         y="255.3"
+         id="text146"><tspan
+           id="tspan144" /></text>
+      <text
+         x="177.2"
+         y="193.7"
+         id="text158"><tspan
+           id="tspan152">C</tspan><tspan
+           id="tspan154">H</tspan><tspan
+           font-size="9px"
+           dy="4.5"
+           id="tspan156">3</tspan></text>
+      <text
+         x="102.8"
+         y="260"
+         id="text162"><tspan
+           id="tspan160">C</tspan></text>
+      <text
+         text-anchor="end"
+         x="102.8"
+         y="260"
+         id="text168"><tspan
+           id="tspan164">H</tspan><tspan
+           font-size="9px"
+           dy="4.5"
+           id="tspan166">3</tspan></text>
+      <text
+         x="140"
+         y="283.20001"
+         id="text172"><tspan
+           id="tspan170">O</tspan></text>
+      <text
+         x="149.3"
+         y="164.7"
+         id="text178"><tspan
+           id="tspan174">O</tspan><tspan
+           id="tspan176">H</tspan></text>
+      <text
+         x="69.599998"
+         y="231.2"
+         id="text182"><tspan
+           id="tspan180">HO</tspan></text>
+      <text
+         x="111"
+         y="286.70001"
+         id="text190"><tspan
+           id="tspan184">C</tspan><tspan
+           id="tspan186">H</tspan><tspan
+           font-size="9px"
+           dy="4.5"
+           id="tspan188">3</tspan></text>
+      <text
+         x="134.2"
+         y="219.3"
+         id="text194"><tspan
+           id="tspan192">H</tspan></text>
+      <text
+         x="93.5"
+         y="185.60001"
+         id="text198"><tspan
+           id="tspan196">C</tspan></text>
+      <text
+         text-anchor="end"
+         x="93.5"
+         y="185.60001"
+         id="text204"><tspan
+           id="tspan200">H</tspan><tspan
+           font-size="9px"
+           dy="4.5"
+           id="tspan202">3</tspan></text>
+    </g>
+    <!-- end of transform block -->
+  </g>
+</svg>
+<!-- found XY values for adjusting width, height and viewbox: -->
+
+<!-- max_X:  228  -->
+
+<!-- max_Y:  325  -->
+
+<!-- min_Y:  112  -->
+
+<!-- yshift: -107  -->
+
+<!-- appendix: actual & original XY coordinates (SVG units, Angstroms) -->
+
+<!-- atom   1:   27.6  249.7   S    16.3800 -19.1800 -->
+
+<!-- atom   2:   50.8  249.7   C    17.7800 -19.1800 -->
+
+<!-- atom   3:   62.4  227.6   C    18.4800 -17.8500 -->
+
+<!-- atom   4:   49.6  207.9   O    17.7100 -16.6600 -->
+
+<!-- atom   5:  161.2  219.5   C    24.4300 -17.3600 -->
+
+<!-- atom   6:  144.9  235.8   C    23.4500 -18.3400 -->
+
+<!-- atom   7:  161.2  196.3   C    24.4300 -15.9600 -->
+
+<!-- atom   8:  182.1  230.0   C    25.6900 -17.9900 -->
+
+<!-- atom   9:  161.2  242.8   C    24.4300 -18.7600 -->
+
+<!-- atom  10:  121.7  235.8   C    22.0500 -18.3400 -->
+
+<!-- atom  11:  155.4  256.7   C    24.0800 -19.6000 -->
+
+<!-- atom  12:  144.9  180.0   C    23.4500 -14.9800 -->
+
+<!-- atom  13:  182.1  188.1   C    25.6900 -15.4700 -->
+
+<!-- atom  14:  178.6  253.2   C    25.4800 -19.3900 -->
+
+<!-- atom  15:  139.1  242.8   C    23.1000 -18.7600 -->
+
+<!-- atom  16:  105.4  219.5   C    21.0700 -17.3600 -->
+
+<!-- atom  17:  121.7  259.0   C    22.0500 -19.7400 -->
+
+<!-- atom  18:  107.7  254.4   C    21.2100 -19.4600 -->
+
+<!-- atom  19:  144.9  277.6   O    23.4500 -20.8600 -->
+
+<!-- atom  20:  121.7  180.0   C    22.0500 -14.9800 -->
+
+<!-- atom  21:  154.2  159.1   O    24.0100 -13.7200 -->
+
+<!-- atom  22:  105.4  196.3   C    21.0700 -15.9600 -->
+
+<!-- atom  23:   84.5  227.6   O    19.8100 -17.8500 -->
+
+<!-- atom  24:  115.9  281.1   C    21.7000 -21.0700 -->
+
+<!-- atom  25:  139.1  213.7   H    23.1000 -17.0100 -->
+
+<!-- atom  26:  113.6  159.1   C    21.5600 -13.7200 -->
+
+<!-- atom  27:   98.4  180.0   C    20.6500 -14.9800 -->
+
+<!-- atom  28:  113.6  137.0   C    21.5600 -12.3900 -->
+
+<!-- bond   1:   1   2     27.6    249.7     50.8    249.7 -->
+
+<!-- bond   2:   2   3     50.8    249.7     62.4    227.6 -->
+
+<!-- bond   3:   3   4     62.4    227.6     49.6    207.9 -->
+
+<!-- bond   4:   7  12    161.2    196.3    144.9    180.0 -->
+
+<!-- bond   5:   7  13    161.2    196.3    182.1    188.1 -->
+
+<!-- bond   6:   8  14    182.1    230.0    178.6    253.2 -->
+
+<!-- bond   7:   9  15    161.2    242.8    139.1    242.8 -->
+
+<!-- bond   8:  10  16    121.7    235.8    105.4    219.5 -->
+
+<!-- bond   9:  10  17    121.7    235.8    121.7    259.0 -->
+
+<!-- bond  10:  10  18    121.7    235.8    107.7    254.4 -->
+
+<!-- bond  11:  11  19    155.4    256.7    144.9    277.6 -->
+
+<!-- bond  12:  12  20    144.9    180.0    121.7    180.0 -->
+
+<!-- bond  13:  12  21    144.9    180.0    154.2    159.1 -->
+
+<!-- bond  14:  16  22    105.4    219.5    105.4    196.3 -->
+
+<!-- bond  15:  16  23    105.4    219.5     84.5    227.6 -->
+
+<!-- bond  16:  17  24    121.7    259.0    115.9    281.1 -->
+
+<!-- bond  17:  11  14    155.4    256.7    178.6    253.2 -->
+
+<!-- bond  18:  15  17    139.1    242.8    121.7    259.0 -->
+
+<!-- bond  19:  20  22    121.7    180.0    105.4    196.3 -->
+
+<!-- bond  20:   6  25    144.9    235.8    139.1    213.7 -->
+
+<!-- bond  21:   5   6    161.2    219.5    144.9    235.8 -->
+
+<!-- bond  22:   5   7    161.2    219.5    161.2    196.3 -->
+
+<!-- bond  23:   5   8    161.2    219.5    182.1    230.0 -->
+
+<!-- bond  24:   5   9    161.2    219.5    161.2    242.8 -->
+
+<!-- bond  25:   6  10    144.9    235.8    121.7    235.8 -->
+
+<!-- bond  26:   6  11    144.9    235.8    155.4    256.7 -->
+
+<!-- bond  27:  20  26    121.7    180.0    113.6    159.1 -->
+
+<!-- bond  28:  20  27    121.7    180.0     98.4    180.0 -->
+
+<!-- bond  29:  26  28    113.6    159.1    113.6    137.0 -->
+
+<!-- bond  30:   3  23     62.4    227.6     84.5    227.6 -->
+

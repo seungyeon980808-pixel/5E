@@ -23,8 +23,12 @@ export const LINEART_LEVELS = [
 
 const DRAW = "path,circle,ellipse,rect,polygon,polyline,line";
 
+/* `switch` 는 여기 있으면 안 된다. 일러스트레이터 내보내기는 **그림 전체**를
+ * `<switch><g>…</g></switch>` 로 감싸므로, 통째로 지우면 아무것도 안 남는다
+ * (실측: 라이브러리 등록본 31장이 L0 에서도 빈 결과였다). 대신 아래에서 껍데기만 벗긴다.
+ * 진짜 글자 대체물은 `foreignObject` 쪽이다. */
 const DROP_TAGS = [
-  "text", "flowRoot", "switch", "tspan", "textPath", "linearGradient",
+  "text", "flowRoot", "foreignObject", "tspan", "textPath", "linearGradient",
   "radialGradient", "filter", "pattern", "metadata", "title", "desc",
   "style", "image", "mask",
 ];
@@ -62,7 +66,13 @@ function cacheSet(key, value) {
 
 /* ===== 유틸 ===== */
 
+/* level 은 보통 "L2" 같은 이름이지만, 고급 기능에서 세부값을 직접 줄 때는
+   { id, drop, dropLine, tiny } 객체를 그대로 넘긴다. 이름표만 다를 뿐 쓰임은 같다. */
 function levelOf(id) {
+  if (id && typeof id === "object") {
+    const base = LINEART_LEVELS.find((l) => l.id === id.id) || LINEART_LEVELS[2];
+    return { ...base, ...id, id: id.id || "custom" };
+  }
   return LINEART_LEVELS.find((l) => l.id === id) || LINEART_LEVELS[2];
 }
 
@@ -89,7 +99,9 @@ export function toLineArt(svgText, opts = {}) {
   const targetMm = Number(o.targetMm) > 0 ? Number(o.targetMm) : 45;
   const lineMm = Number(o.lineMm) > 0 ? Number(o.lineMm) : 0.35;
 
-  const key = `${lv.id}|${fill}|${targetMm}|${lineMm}|${svgText}`;
+  // 고급 기능에서 세부값을 직접 주면 id 가 전부 "custom" 이라, 이름만으로 키를 만들면
+  // 값을 바꿔도 캐시가 옛 결과를 돌려준다. 실제로 결과를 가르는 값을 전부 넣는다.
+  const key = `${lv.id}|${lv.drop}|${lv.dropLine}|${lv.tiny}|${fill}|${targetMm}|${lineMm}|${svgText}`;
   const cached = cacheGet(key);
   if (cached) return cached;
 
@@ -136,6 +148,13 @@ export function toLineArt(svgText, opts = {}) {
     const sw = W * (lineMm / targetMm);
 
     /* --- 색·글자·장식 요소 제거 --- */
+    /* `switch` 껍데기 벗기기 — 자식을 제자리에 풀어 놓고 껍데기만 없앤다.
+     * 안쪽부터 처리해야 중첩된 것도 남지 않는다. */
+    const sw2 = [...svg.querySelectorAll("switch")].reverse();
+    for (const el of sw2) {
+      while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+      el.remove();
+    }
     for (const t of DROP_TAGS) svg.querySelectorAll(t).forEach((el) => el.remove());
 
     /* 글자(윤곽선으로 변환된 것) 골라내기 — 작은 것 중 path/polygon 만.

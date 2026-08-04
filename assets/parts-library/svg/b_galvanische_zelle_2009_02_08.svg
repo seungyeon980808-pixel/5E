@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="550" height="600" version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<path d="m481.87 219.08v-104.09h-417.21v104.09" fill="none" stroke="#000" stroke-width="3"/>
+	<rect transform="scale(-1,1)" x="-90.69" y="214.61" width="51.162" height="309.66" ry="0" fill="#757575"/>
+	<rect transform="scale(-1,1)" x="-507.45" y="214.08" width="51.162" height="309.66" ry="0" fill="#eb6f00"/>
+	<path d="m390.06 243.86c21.862 0 39.472 17.757 39.472 39.8v136.31h-26.5v-106.51c0-22.065-17.635-39.847-39.518-39.847h-177.07c-21.883 0-39.518 17.781-39.518 39.847v106.51h-26.454v-136.31c0-22.044 17.564-39.8 39.426-39.8z" fill="#a4bfca"/>
+	<path d="m541.98 370.32 0.37063 184.16c0 21.896-17.622 39.518-39.518 39.518h-149.27c-21.896 0-39.564-17.622-39.564-39.518l0.37062-184.16z" fill="#40c7ff" opacity=".5"/>
+	<path d="m541.98 302.11 0.37063 252.35c0 21.896-17.622 39.518-39.518 39.518h-149.27c-21.896 0-39.564-17.622-39.564-39.518l0.37062-252.35" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.1256"/>
+	<path d="m235.62 370.32 0.37063 184.16c0 21.896-17.622 39.518-39.518 39.518h-149.27c-21.896 0-39.518-17.622-39.518-39.518l0.3243-184.16z" fill="#d2d2d2" opacity=".5"/>
+	<path d="m235.62 302.11 0.37063 252.35c0 21.896-17.622 39.518-39.518 39.518h-149.27c-21.896 0-39.518-17.622-39.518-39.518l0.3243-252.35" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.1256"/>
+	<g transform="translate(4.4294)" stroke-width="3">
+		<g fill="none">
+			<g stroke="#000">
+				<path d="m270.57 114.59v-67.715"/>
+				<path d="m269.62 113.88-75.764-45.067"/>
+				<path d="m270.16 114.19-41.978-60.929"/>
+				<path d="m270.87 115.22 50.307-58.052"/>
+				<path d="m270.86 115.73 80.222-35.087"/>
+			</g>
+			<path d="m270.16 115.56 30.958-87.113" stroke="#f00"/>
+		</g>
+		<path d="m379.86 7.28 0.37063 115.96h-219.32l0.27797-115.96zm-11.443 9.868h-195.74l-0.27797 96.224h9.312c-3.2e-4 -0.0618 0-0.12349 0-0.18531 0-31.214 39.807-56.567 88.858-56.567s88.858 25.353 88.858 56.567c0 0.0619 3.1e-4 0.12349 0 0.18531h9.312z" fill="#d2d2d2" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+	</g>
+	<path d="m403.03 418.52v-105.63c0-21.883-17.635-39.518-39.518-39.518h-177.07c-21.883 0-39.518 17.635-39.518 39.518v105.63m-26.454 0v-135.19c0-21.862 17.564-39.472 39.426-39.472h230.16c21.862 0 39.472 17.61 39.472 39.472v135.19" fill="none" stroke="#000" stroke-linecap="square" stroke-linejoin="round" stroke-width="3"/>
+	<g font-family="DejaVu Sans" font-size="20">
+		<text x="275" y="267.125" text-anchor="middle">Ionenbrücke</text>
+		<text x="275" y="104" text-anchor="middle">Voltmeter</text>
+		<text transform="rotate(-90)"><tspan x="-503" y="488">edlere Elektrode</tspan></text>
+		<text transform="rotate(-90)" y="2"><tspan x="-504" y="71.23214">unedlere Elektrode</tspan></text>
+		<text x="-11.160714" y="-10.267858"><tspan x="324" y="512">Ionen der</tspan><tspan x="324" dy="20">edleren</tspan><tspan x="324" dy="20">Elektrode in Lösung</tspan></text>
+		<text x="16.517857" y="-10.267858" text-anchor="end"><tspan x="229" y="512">Ionen der</tspan><tspan x="229" dy="20">unedleren</tspan><tspan x="229" dy="20">Elektrode in Lösung</tspan></text>
+	</g>
+</svg>

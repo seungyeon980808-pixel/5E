@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="644" height="600" viewBox="0 0 644 600">
+<title>Valknut symbol in a form equivalent to a three-link chain (modern only)</title>
+<g transform="translate(-122,-305)scale(4,4)" style="fill:none;stroke-width:15.88">
+<polygon stroke="maroon" points="79.3968,196.176 174.647,196.176 127.022,113.677"/>
+<polygon stroke="#737373" points="47.647,214.489 142.897,214.489 95.2718,132.015"/>
+<polygon stroke="navy" points="47.647,177.837 142.897,177.837 95.2718,95.3378"/>
+<line stroke="maroon" x1="127.022" y1="113.677" x2="97.9134" y2="164.096"/>
+<line stroke="#737373" x1="113.788" y1="164.096" x2="129.663" y2= "191.578"/></g></svg>

@@ -1,0 +1,637 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="460"
+   height="535"
+   viewBox="0 0 460 535"
+   id="svg2101"
+   xml:space="preserve"><metadata
+   id="metadata188"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs186" />
+<text
+   transform="translate(24.7715,160.5857)"
+   id="text8198"
+   style="font-size:25px;font-family:Nimbus Sans L, Sans-Serif">Pin</text>
+<text
+   transform="translate(71.0088,160.5857)"
+   id="text5"
+   style="font-size:25px;font-family:Nimbus Sans L, Sans-Serif">Signal</text>
+<text
+   transform="translate(231.1318,160.5857)"
+   id="text8214"
+   style="font-size:25px;font-family:Nimbus Sans L, Sans-Serif">Pin</text>
+<text
+   transform="translate(278.0088,160.5857)"
+   id="text9"
+   style="font-size:25px;font-family:Nimbus Sans L, Sans-Serif">Signal</text>
+
+<text
+   transform="translate(240.6709,184.6965)"
+   id="text8232"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">13</text>
+<text
+   transform="translate(240.4014,204.7073)"
+   id="text8260"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">14</text>
+<text
+   transform="translate(240.5928,224.717)"
+   id="text8264"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">15</text>
+<text
+   transform="translate(240.4639,244.7278)"
+   id="text8268"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">16</text>
+<text
+   transform="translate(240.6709,264.7375)"
+   id="text8272"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">17</text>
+<text
+   transform="translate(240.5303,284.7483)"
+   id="text8276"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">18</text>
+<text
+   transform="translate(240.5459,304.7581)"
+   id="text8280"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">19</text>
+<text
+   transform="translate(240.6865,324.7688)"
+   id="text8284"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">20</text>
+<text
+   transform="translate(240.8545,344.7786)"
+   id="text8288"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">21</text>
+<text
+   transform="translate(240.999,364.7893)"
+   id="text8292"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">22</text>
+<text
+   transform="translate(240.9404,384.7991)"
+   id="text8298"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">23</text>
+<text
+   transform="translate(240.6709,404.8098)"
+   id="text8304"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">24</text>
+<text
+   transform="translate(239.8467,424.8196)"
+   id="text8484"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C3</text>
+<text
+   transform="translate(239.5771,444.8303)"
+   id="text8488"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C4</text>
+<rect
+   width="20"
+   height="20"
+   x="240.354"
+   y="468.388"
+   id="rect13846"
+   style="fill:#c0ffff" /><rect
+   width="20"
+   height="20"
+   x="240.354"
+   y="488.388"
+   id="rect13848"
+   style="fill:#ffc4ff" /><rect
+   width="20"
+   height="20"
+   x="240.354"
+   y="508.388"
+   id="rect13850"
+   style="fill:#ffc0c0" />
+<text
+   transform="translate(43.3589,184.6965)"
+   id="text8308"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">1</text>
+<text
+   transform="translate(43.3589,207.5549)"
+   id="text8312"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">2</text>
+<text
+   transform="translate(43.3589,227.2932)"
+   id="text8316"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">3</text>
+<text
+   transform="translate(43.3589,247.0315)"
+   id="text8320"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">4</text>
+<text
+   transform="translate(43.3589,266.7698)"
+   id="text8324"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">5</text>
+<text
+   transform="translate(43.3589,286.5081)"
+   id="text8328"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">6</text>
+<text
+   transform="translate(43.3589,306.2463)"
+   id="text8332"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">7</text>
+<text
+   transform="translate(43.3589,325.9846)"
+   id="text8336"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">8</text>
+<text
+   transform="translate(43.3589,345.7229)"
+   id="text8340"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">9</text>
+<text
+   transform="translate(38.9097,365.4612)"
+   id="text8344"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">10</text>
+<text
+   transform="translate(39.3511,385.1995)"
+   id="text8348"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">11</text>
+<text
+   transform="translate(38.9097,404.9377)"
+   id="text8352"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">12</text>
+<text
+   transform="translate(37.5815,423.8997)"
+   id="text8476"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C1</text>
+<text
+   transform="translate(37.5815,444.8303)"
+   id="text8480"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C2</text>
+<text
+   transform="translate(37.5815,462.4993)"
+   id="text8510"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C5</text>
+<rect
+   width="20"
+   height="20"
+   x="38.598"
+   y="468.388"
+   id="rect12949"
+   style="fill:#c4ffd2" /><rect
+   width="20"
+   height="20"
+   x="38.598"
+   y="488.388"
+   id="rect13838"
+   style="fill:#ffffc0" /><rect
+   width="20"
+   height="20"
+   x="38.598"
+   y="508.388"
+   id="rect13842"
+   style="fill:#c0c0ff" />
+<text
+   transform="translate(71.0088,184.6145)"
+   id="text8236"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 2 -</text>
+<text
+   transform="translate(71.0088,204.47)"
+   id="text8356"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 2 +</text>
+<text
+   transform="translate(71.0273,224.3254)"
+   id="text8360"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Abschirmung Daten 2,4</text>
+<text
+   transform="translate(71.0088,244.1809)"
+   id="text8364"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 4 -</text>
+<text
+   transform="translate(71.0088,264.0364)"
+   id="text8368"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 4 +</text>
+<text
+   transform="translate(71.0088,283.8909)"
+   id="text8372"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">DDC Takt</text>
+<text
+   transform="translate(71.0088,303.7463)"
+   id="text8376"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">DDC Daten</text>
+<text
+   transform="translate(71.0088,323.6018)"
+   id="text8380"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">V-Sync</text>
+<text
+   transform="translate(71.0088,343.4573)"
+   id="text8384"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 1 -</text>
+<text
+   transform="translate(71.0088,363.3127)"
+   id="text8388"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 1 +</text>
+<text
+   transform="translate(71.0273,383.1682)"
+   id="text8392"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Abschirmung Daten 1,3</text>
+<text
+   transform="translate(71.0088,403.0237)"
+   id="text8396"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 3 -</text>
+<text
+   transform="translate(71.0088,422.8792)"
+   id="text8492"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Rot</text>
+<text
+   transform="translate(71.0088,442.7336)"
+   id="text8496"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Grün</text>
+<text
+   transform="translate(71.0088,462.5891)"
+   id="text8514"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Masse</text>
+<text
+   transform="translate(71.0088,482.4446)"
+   id="text14739"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten (Link 1)</text>
+<text
+   transform="translate(71.0273,502.3)"
+   id="text14743"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Abschirmung</text>
+<text
+   transform="translate(71.0088,522.1555)"
+   id="text14747"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten (Link 2)</text>
+
+<text
+   transform="translate(278.0098,185.2844)"
+   id="text8400"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 3 +</text>
+<text
+   transform="translate(278.0098,205.0735)"
+   id="text8404"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">+ 5V</text>
+<text
+   transform="translate(278.0098,224.8625)"
+   id="text8408"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Masse für +5V</text>
+<text
+   transform="translate(278.0098,244.6516)"
+   id="text8448"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Hotplug-Detect</text>
+<text
+   transform="translate(278.0098,264.4407)"
+   id="text8416"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 0 -</text>
+<text
+   transform="translate(278.0098,284.2297)"
+   id="text8420"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 0 +</text>
+<text
+   transform="translate(278.0273,304.0188)"
+   id="text8424"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Abschirmung Daten 0,5</text>
+<text
+   transform="translate(278.0098,323.8079)"
+   id="text8428"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 5 -</text>
+<text
+   transform="translate(278.0098,343.5969)"
+   id="text8432"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Daten 5 +</text>
+<text
+   transform="translate(278.0273,363.386)"
+   id="text8436"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Abschirmung Takt</text>
+<text
+   transform="translate(278.0098,383.175)"
+   id="text8440"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Takt +</text>
+<text
+   transform="translate(278.0098,402.9641)"
+   id="text8444"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Takt -</text>
+<text
+   transform="translate(278.0098,422.7532)"
+   id="text8500"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Blau</text>
+<text
+   transform="translate(278.0098,442.5422)"
+   id="text8504"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">H-Sync</text>
+<text
+   transform="translate(278.0098,482.1204)"
+   id="text14759"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Plug &amp; Play</text>
+<text
+   transform="translate(278.0098,501.9094)"
+   id="text14755"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Takt</text>
+<text
+   transform="translate(278.0273,521.6985)"
+   id="text14751"
+   style="font-size:12px;font-family:Nimbus Sans L, Sans-Serif">Analog</text>
+
+<path
+   d="m 28.003,168.535 397.683,0.644 v -0.644"
+   id="path8230"
+   style="fill:none;stroke:#000000;stroke-width:0.5" /><path
+   d="m 270.977,137.444 -0.311,390.881"
+   id="path8456"
+   style="fill:none;stroke:#000000;stroke-width:0.5" /><path
+   d="m 227.127,137.79 0.455,390.534"
+   id="path8458"
+   style="fill:none;stroke:#000000;stroke-width:0.5" /><path
+   d="M 66.22,529.588 V 137.789 l 0,0"
+   id="path8460"
+   style="fill:none;stroke:#000000;stroke-width:0.5" /><path
+   d="m 20.435,5.804 c -6.952,0 -12.631,5.685 -12.631,12.631 V 80.38 c 0,6.945 1.675,18.06 3.721,24.698 l 3.679,11.946 c 2.046,6.635 9.4,12.067 16.351,12.067 h 396.387 c 6.949,0 14.305,-5.429 16.346,-12.071 l 3.676,-11.939 c 2.044,-6.64 3.713,-17.753 3.713,-24.699 V 18.435 c 0,-6.946 -5.68,-12.631 -12.63,-12.631 H 20.435 l 0,0 0,0 z"
+   id="path2921"
+   style="fill:#ffffff;stroke:#000000;stroke-width:3.60870004" /><rect
+   width="32.479"
+   height="32.478001"
+   x="396.91299"
+   y="14.224"
+   id="rect2927"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.478001"
+   height="32.478001"
+   x="360.345"
+   y="14.224"
+   id="rect2929"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="323.45401"
+   y="14.224"
+   id="rect2931"
+   style="fill:#ffffc0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="287.13501"
+   y="14.224"
+   id="rect2933"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="250.61501"
+   y="14.224"
+   id="rect2935"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="213.92101"
+   y="14.224"
+   id="rect2937"
+   style="fill:#c0ffff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="176.80099"
+   y="14.224"
+   id="rect2939"
+   style="fill:#c0ffff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.478001"
+   x="140.343"
+   y="14.224"
+   id="rect2941"
+   style="fill:#ffc0c0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="396.91299"
+   y="50.912998"
+   id="rect2945"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="359.992"
+   y="50.912998"
+   id="rect2947"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="323.45401"
+   y="50.912998"
+   id="rect2949"
+   style="fill:#ffffc0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="287.13501"
+   y="50.912998"
+   id="rect2951"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="250.61501"
+   y="50.912998"
+   id="rect2953"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.478001"
+   height="32.474998"
+   x="213.655"
+   y="50.912998"
+   id="rect2955"
+   style="fill:#c0ffff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="176.80099"
+   y="50.912998"
+   id="rect2957"
+   style="fill:#c0ffff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.474998"
+   x="140.343"
+   y="50.912998"
+   id="rect2959"
+   style="fill:#c0ffff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="396.91299"
+   y="87.600998"
+   id="rect2963"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.478001"
+   height="32.477001"
+   x="360.345"
+   y="87.600998"
+   id="rect2965"
+   style="fill:#c0ffcf;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="323.45401"
+   y="87.600998"
+   id="rect2967"
+   style="fill:#ffffc0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="287.35199"
+   y="87.600998"
+   id="rect2969"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="250.61501"
+   y="87.600998"
+   id="rect2971"
+   style="fill:#c0c0ff;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="213.16901"
+   y="87.600998"
+   id="rect2973"
+   style="fill:#ffffc0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="176.80099"
+   y="87.600998"
+   id="rect2975"
+   style="fill:#ffc0ff;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="32.479"
+   height="32.477001"
+   x="140.343"
+   y="87.600998"
+   id="rect2977"
+   style="fill:#ffc0ff;fill-opacity:0.94120017;stroke:#000000;stroke-width:1.80439997" /><polygon
+   points="29.163,60.833 29.163,71.053 109.757,71.053 109.757,60.833 "
+   id="polygon2981"
+   style="fill:#ffc0c0;stroke:#000000" /><rect
+   width="22.555"
+   height="22.554001"
+   x="81.790001"
+   y="31.066"
+   id="rect2983"
+   style="fill:#ffc0c0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="22.556"
+   height="22.556999"
+   x="34.583"
+   y="31.059999"
+   id="rect2985"
+   style="fill:#ffc0c0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="22.556"
+   height="22.556"
+   x="34.576"
+   y="78.264"
+   id="rect2987"
+   style="fill:#ffc0c0;stroke:#000000;stroke-width:1.80439997" /><rect
+   width="22.556"
+   height="22.556999"
+   x="81.782997"
+   y="78.268997"
+   id="rect2989"
+   style="fill:#ffc0c0;stroke:#000000;stroke-width:1.80439997" />
+<text
+   transform="translate(405.8477,37.7463)"
+   id="text6672"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">1</text>
+<text
+   transform="translate(370.0713,37.7463)"
+   id="text6676"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">2</text>
+<text
+   transform="translate(332.1055,37.7463)"
+   id="text6735"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">3</text>
+<text
+   transform="translate(297.3252,37.7463)"
+   id="text6739"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">4</text>
+<text
+   transform="translate(261.2178,37.7463)"
+   id="text6747"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">5</text>
+<text
+   transform="translate(222.3384,37.7463)"
+   id="text6751"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">6</text>
+<text
+   transform="translate(185.5298,37.7463)"
+   id="text6755"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">7</text>
+<text
+   transform="translate(150.8154,37.7463)"
+   id="text6759"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">8</text>
+<text
+   transform="translate(405.8457,74.4319)"
+   id="text6763"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">9</text>
+<text
+   transform="translate(364.5098,74.4319)"
+   id="text6767"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">10</text>
+<text
+   transform="translate(327.0957,74.4319)"
+   id="text6771"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">11</text>
+<text
+   transform="translate(291.7637,74.4319)"
+   id="text6743"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">12</text>
+<text
+   transform="translate(255.6562,74.4319)"
+   id="text6775"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">13</text>
+<text
+   transform="translate(216.7773,74.4319)"
+   id="text6783"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">14</text>
+<text
+   transform="translate(179.9683,74.4319)"
+   id="text6779"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">15</text>
+<text
+   transform="translate(145.2539,74.4319)"
+   id="text6787"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">16</text>
+<text
+   transform="translate(400.2852,111.1721)"
+   id="text6795"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">17</text>
+<text
+   transform="translate(364.5107,111.1721)"
+   id="text6799"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">18</text>
+<text
+   transform="translate(326.543,111.1721)"
+   id="text6803"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">19</text>
+<text
+   transform="translate(291.7627,111.1721)"
+   id="text6807"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">20</text>
+<text
+   transform="translate(255.6572,111.1721)"
+   id="text6811"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">21</text>
+<text
+   transform="translate(216.7769,111.1721)"
+   id="text6815"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">22</text>
+<text
+   transform="translate(179.9683,111.1721)"
+   id="text6819"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">23</text>
+<text
+   transform="translate(145.2539,111.1721)"
+   id="text6823"
+   style="font-size:20px;font-family:Nimbus Sans L, Sans-Serif">24</text>
+<text
+   transform="translate(82.7427,47.803)"
+   id="text1951"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C1</text>
+<text
+   transform="translate(35.5947,47.7981)"
+   id="text1955"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C2</text>
+<text
+   transform="translate(82.645,95.0071)"
+   id="text1959"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C3</text>
+<text
+   transform="translate(35.2583,95.0022)"
+   id="text1967"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C4</text>
+<text
+   transform="translate(113.4873,71.5754)"
+   id="text8194"
+   style="font-size:16px;font-family:Nimbus Sans L, Sans-Serif">C5</text>
+
+</svg>

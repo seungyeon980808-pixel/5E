@@ -1,4 +1,4 @@
-/* ===== PARTS LIBRARY (부품 라이브러리 — 퍼블릭 도메인 과학 도해 검색·선화 삽입) =====
+/* ===== IMAGE LIBRARY (이미지 라이브러리 — 퍼블릭 도메인 과학 도해 검색·삽입) [베타] =====
 //
 // 정적 파일 라이브러리: assets/parts-library/manifest.json + svg/*.svg. 서버·API 없음.
 // 기출 문항 검색(js/exam-library.js)과 나란히 서는 창이라, 그 파일의 규약을 그대로 따른다.
@@ -14,9 +14,8 @@
 // 자기완결된다(기출 라이브러리가 dataURL로 넣는 것과 같은 이유). */
 
 import { toLineArt, LINEART_LEVELS } from "./lineart.js?v=1.4.0";
-// [선 객체로 넣기] — svgAsset(<image> 한 장)은 자르기 도구가 못 자른다(cut-geometry.js
-// isCuttable 이 벡터 원시형만 받는다). 그래서 진짜 편집 객체로 푸는 경로를 함께 둔다.
-import { svgToObjects } from "./svg-to-objects.js?v=1.4.0";
+// 넣는 방식은 둘이다: 선화로 바꿔 넣기(프리셋 세밀/표준/단순)와 원본 그대로 넣기(원본).
+// 세포 그림처럼 색·음영이 뜻을 갖는 그림은 선만 남기면 못 알아보므로 원본 경로가 필요하다.
 import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
 
 const LIB_BASE = "assets/parts-library/";
@@ -75,6 +74,7 @@ function aspectOf(viewBox) {
 function prepareItems(items) {
   for (const it of items) {
     const hay = `${it.id} ${it.name} ${(it.keywords || []).join(" ")} `
+      + `${(it.sourceTags || []).join(" ")} `
       + `${it.part || ""} ${it.subjectLabel || ""}`.toLowerCase();
     it._hay = hay.toLowerCase();
     it._hayNs = it._hay.replace(/\s+/g, ""); // "동물세포"처럼 붙여 써도 매치되게
@@ -98,7 +98,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-partslib" role="dialog" aria-modal="true" aria-labelledby="partslib-title">
       <div class="partslib-title-row">
-        <h2 class="modal-title" id="partslib-title">이미지 라이브러리</h2>
+        <h2 class="modal-title" id="partslib-title">이미지 라이브러리<span class="partslib-beta">베타</span></h2>
         <p id="partslib-status" class="objectify-status partslib-status-inline" role="status"></p>
       </div>
       <div class="partslib-filter-row">
@@ -117,19 +117,46 @@ function buildModal() {
       <div class="partslib-body">
         <div id="partslib-grid" class="partslib-grid"></div>
         <aside class="partslib-preview">
-          <div class="partslib-preview-head">선화 미리보기</div>
-          <div class="partslib-opt-row" id="partslib-levels" role="group" aria-label="선화 위계"></div>
-          <div class="partslib-opt-row" id="partslib-fills" role="group" aria-label="채우기">
-            <button type="button" class="partslib-opt" data-fill="none" title="선만 남기고 속은 비웁니다">채우기 없음</button>
-            <button type="button" class="partslib-opt" data-fill="white" title="속을 흰색으로 채워 뒤 그림을 가립니다">흰 채우기</button>
-          </div>
+          <!-- 그림이 맨 위. 무엇을 넣을지부터 보이고, 조절은 그 아래에서 한다. -->
+          <div class="partslib-preview-head">미리보기</div>
           <div class="partslib-preview-box"><img id="partslib-preview-img" alt="" /></div>
           <div class="partslib-preview-name" id="partslib-preview-name"></div>
           <div class="partslib-preview-meta" id="partslib-preview-meta"></div>
-          <button id="partslib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지로 넣기</button>
-          <button id="partslib-insert-obj" type="button" class="modal-btn" disabled
-                  title="선 하나하나를 편집 가능한 객체로 넣습니다. 자르기(가위)·부분 삭제·색 변경이 됩니다.">선 객체로 넣기</button>
-          <p class="partslib-insert-hint">이미지는 가볍고, 선 객체는 <b>가위로 자르고 지울 수 있습니다</b>.</p>
+
+          <!-- 처리 방식 프리셋. 웬만하면 여기서 끝난다. -->
+          <div class="partslib-opt-row" id="partslib-levels" role="group" aria-label="처리 방식"></div>
+
+          <!-- 고급 기능: 켜면 위 프리셋은 잠기고 세부값을 직접 만진다 -->
+          <button type="button" id="partslib-adv-toggle" class="partslib-adv-toggle"
+                  aria-expanded="false" aria-controls="partslib-adv">고급 기능</button>
+          <div id="partslib-adv" class="partslib-adv" hidden>
+            <label class="partslib-adv-row">
+              <span>작은 조각 정리</span>
+              <input type="range" id="pl-adv-tiny" min="0" max="120" step="5" value="35" />
+              <output id="pl-adv-tiny-out">보통</output>
+            </label>
+            <label class="partslib-adv-row">
+              <span>선 굵기</span>
+              <input type="range" id="pl-adv-line" min="20" max="60" step="5" value="35" />
+              <output id="pl-adv-line-out">0.35mm</output>
+            </label>
+            <label class="partslib-adv-row">
+              <span>넣는 폭</span>
+              <input type="range" id="pl-adv-width" min="20" max="90" step="5" value="45" />
+              <output id="pl-adv-width-out">45mm</output>
+            </label>
+            <label class="partslib-adv-check">
+              <input type="checkbox" id="pl-adv-dropline" checked />
+              <span>지시선·글자 제거</span>
+            </label>
+            <div class="partslib-opt-row" id="partslib-fills" role="group" aria-label="채우기">
+              <button type="button" class="partslib-opt" data-fill="none" title="선만 남기고 속은 비웁니다">채우기 없음</button>
+              <button type="button" class="partslib-opt" data-fill="white" title="속을 흰색으로 채워 뒤 그림을 가립니다">흰 채우기</button>
+            </div>
+          </div>
+
+          <button id="partslib-insert" type="button" class="modal-btn modal-btn-primary" disabled>넣기</button>
+          <p class="partslib-insert-hint" id="partslib-insert-hint">그림 하나를 골라 주세요.</p>
         </aside>
       </div>
       <div class="modal-actions">
@@ -157,15 +184,35 @@ export function initPartsLibrary(state) {
   const previewName = overlay.querySelector("#partslib-preview-name");
   const previewMeta = overlay.querySelector("#partslib-preview-meta");
   const insertBtn = overlay.querySelector("#partslib-insert");
-  const insertObjBtn = overlay.querySelector("#partslib-insert-obj");
+  const insertHint = overlay.querySelector("#partslib-insert-hint");
+  const advToggle = overlay.querySelector("#partslib-adv-toggle");
+  const advPanel = overlay.querySelector("#partslib-adv");
+  const advTiny = overlay.querySelector("#pl-adv-tiny");
+  const advLine = overlay.querySelector("#pl-adv-line");
+  const advWidth = overlay.querySelector("#pl-adv-width");
+  const advDropLine = overlay.querySelector("#pl-adv-dropline");
 
   // 현재 선택/변환 상태
   let selectedId = null;
   let level = "L2";
   let fill = "none";
+  let advanced = false;   // 고급 기능을 켰는가 — 켜면 프리셋은 잠긴다
   let converted = null;   // toLineArt 결과 { svg, dataUri, kept, viewBox, strokeWidth }
   let previewToken = 0;   // 비동기 변환 경합 방지 — 마지막 요청 결과만 화면에 반영
   let _busy = false;      // 삽입 진행 중
+
+  /* 원본 그대로 넣기. 선화로 바꾸지 않고 받은 SVG 를 그대로 쓴다 —
+     세포 그림처럼 색과 음영이 뜻을 갖는 그림은 선만 남기면 못 알아본다. */
+  const RAW = "RAW";
+  const widthMm = () => Number(advWidth.value) || DEFAULT_W_MM;
+  const advLevel = () => ({
+    id: "custom",
+    drop: Number(advTiny.value) > 0,
+    dropLine: advDropLine.checked,
+    tiny: Number(advTiny.value) / 1000,
+  });
+  const tinyLabel = (v) =>
+    v === 0 ? "안 함" : v <= 20 ? "약하게" : v <= 50 ? "보통" : v <= 85 ? "세게" : "아주 세게";
 
   const filterValues = () => ({ subject: subjectSelect.value, part: partSelect.value });
   const setStatus = (msg, isError = false) => {
@@ -174,7 +221,16 @@ export function initPartsLibrary(state) {
   };
   const close = () => { overlay.hidden = true; };
 
-  /* ----- 위계 버튼(전부/세밀/표준/단순)은 변환 모듈이 알려 준 목록대로 만든다 ----- */
+  /* ----- 처리 방식 프리셋 — 맨 앞에 [원본], 그 뒤로 변환 모듈이 알려 준 위계 ----- */
+  {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "partslib-opt";
+    b.dataset.level = RAW;
+    b.textContent = "원본";
+    b.title = "선화로 바꾸지 않고 원본 그대로 넣습니다 (색·음영 유지)";
+    levelRow.appendChild(b);
+  }
   for (const lv of LEVELS) {
     const b = document.createElement("button");
     b.type = "button";
@@ -185,8 +241,11 @@ export function initPartsLibrary(state) {
     levelRow.appendChild(b);
   }
   function syncOptionMarks() {
+    // 고급을 켜면 프리셋은 잠근다 — 두 곳에서 같은 값을 다투지 않게
+    levelRow.classList.toggle("is-locked", advanced);
     levelRow.querySelectorAll("[data-level]").forEach((b) => {
-      b.classList.toggle("is-on", b.dataset.level === level);
+      b.disabled = advanced;
+      b.classList.toggle("is-on", !advanced && b.dataset.level === level);
     });
     fillRow.querySelectorAll("[data-fill]").forEach((b) => {
       b.classList.toggle("is-on", b.dataset.fill === fill);
@@ -229,10 +288,9 @@ export function initPartsLibrary(state) {
     converted = null;
     previewImg.removeAttribute("src");
     previewImg.classList.add("is-empty");
-    previewName.textContent = msg || "부품을 고르면 선화로 바꿔 보여 줍니다.";
+    previewName.textContent = msg || "그림을 고르면 여기에 보여 줍니다.";
     previewMeta.textContent = "";
     insertBtn.disabled = true;
-    insertObjBtn.disabled = true;
   }
 
   async function refreshPreview() {
@@ -241,31 +299,64 @@ export function initPartsLibrary(state) {
     const token = ++previewToken;
     converted = null;
     insertBtn.disabled = true;
-    insertObjBtn.disabled = true;
     previewName.textContent = `${item.name} — 변환 중…`;
     // 출처·라이선스는 변환 성공 여부와 무관하게 항상 보인다.
     renderPreviewMeta(item);
     try {
       const svgText = await loadSvgText(item);
       if (token !== previewToken) return;   // 그 사이 다른 부품/설정을 골랐다
-      const out = toLineArt(svgText, { level, fill, targetMm: DEFAULT_W_MM });
+
+      let out;
+      if (!advanced && level === RAW) {
+        out = rawAsset(svgText);            // 원본 그대로 — 변환하지 않는다
+        if (!out) throw new Error("원본을 읽지 못했습니다.");
+      } else {
+        out = toLineArt(svgText, {
+          level: advanced ? advLevel() : level,
+          fill,
+          targetMm: widthMm(),
+          lineMm: advanced ? Number(advLine.value) / 100 : 0.35,
+        });
+        if (!out || !out.dataUri) throw new Error("변환 결과가 없습니다.");
+      }
       if (token !== previewToken) return;
-      if (!out || !out.dataUri) throw new Error("변환 결과가 없습니다.");
       converted = out;
       previewImg.src = out.dataUri;
       previewImg.classList.remove("is-empty");
       const kept = Number.isFinite(out.kept) ? ` · 선 ${out.kept}개` : "";
       previewName.textContent = `${item.name}${kept}`;
+      insertHint.textContent = out.raw
+        ? "원본 그대로 넣습니다 — 색과 음영이 남습니다."
+        : `선화로 바꿔 ${widthMm()}mm 폭으로 넣습니다.`;
       insertBtn.disabled = _busy;
-      insertObjBtn.disabled = _busy;
     } catch (e) {
       if (token !== previewToken) return;
       converted = null;
       previewImg.removeAttribute("src");
       previewImg.classList.add("is-empty");
-      previewName.textContent = `${item.name} — 선화 변환 실패: ${e && e.message ? e.message : e}`;
+      previewName.textContent = `${item.name} — 변환 실패: ${e && e.message ? e.message : e}`;
+      insertHint.textContent = "다른 처리 방식을 골라 보세요.";
       insertBtn.disabled = true;
-      insertObjBtn.disabled = true;
+    }
+  }
+
+  /* 원본 SVG 를 손대지 않고 그대로 쓸 수 있게 감싼다.
+     toLineArt 와 같은 모양({dataUri, viewBox})으로 돌려줘야 삽입부가 갈라지지 않는다. */
+  function rawAsset(svgText) {
+    try {
+      const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+      const svg = doc.documentElement;
+      if (!svg || svg.tagName.toLowerCase() !== "svg") return null;
+      let vb = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+      if (vb.length !== 4 || vb.some((n) => !Number.isFinite(n))) {
+        const w = parseFloat(svg.getAttribute("width")) || 100;
+        const h = parseFloat(svg.getAttribute("height")) || 100;
+        vb = [0, 0, w, h];
+      }
+      const b64 = btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(svg))));
+      return { dataUri: `data:image/svg+xml;base64,${b64}`, viewBox: vb, raw: true };
+    } catch {
+      return null;
     }
   }
 
@@ -353,59 +444,12 @@ export function initPartsLibrary(state) {
 
   /* ----- [캔버스에 넣기]: 변환 결과 dataUri를 svgAsset 객체의 src로 -----
      스냅샷 1개 = Undo 1스텝 (js/templates.js instantiate()와 같은 형태). */
-  /* ----- [선 객체로 넣기] : 선화를 polyline/ellipse/rect 객체 여럿으로 풀어 넣는다 -----
-   * 이미지 한 장으로 넣으면 자르기(가위)·부분 삭제가 안 된다. 여기서는 SVG 경로를
-   * 그대로 5E 객체로 옮기므로(래스터 재추적이 아님) 정밀도 손실 없이 전부 편집된다.
-   * 한 groupId 로 묶어 통째로 옮기고, Shift+G 로 풀어 낱개로 자를 수 있다. */
-  function insertAsObjects() {
-    const item = byId.get(selectedId);
-    if (!item || !converted || !converted.svg) return;
-    const s0 = state.get();
-    const ab = s0.artboard || { w: 90, h: 60 };
-    const w = DEFAULT_W_MM;
-    const h = w / aspectOf(converted.viewBox);
-    const x = ab.w / 2 - w / 2;
-    const y = ab.h / 2 - h / 2;
-
-    _busy = true;
-    insertBtn.disabled = true;
-    insertObjBtn.disabled = true;
-    try {
-      const built = svgToObjects(converted.svg, {
-        x, y, widthMm: w,
-        strokeWidth: converted.strokeWidth != null ? 0.35 : 0.35,
-        layerId: s0.activeLayerId,
-        startOrder: s0.objects.length,
-      });
-      if (!built || !built.objects || !built.objects.length) {
-        setStatus("선 객체로 풀지 못했습니다. 이미지로 넣어 보세요.", true);
-        return;
-      }
-      state.update((s) => {
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
-        s.redoStack = [];
-        for (const o of built.objects) s.objects.push(o);
-        s.selectedIds = built.objects.map((o) => o.id);
-        s.targetedId = null;
-        s.activeTool = "V";
-      });
-      setStatus(`선 객체 ${built.count}개로 넣었습니다.` + (built.reduced ? " (점이 많아 표본을 줄였습니다)" : ""));
-      close();
-    } catch (e) {
-      setStatus(`삽입 실패: ${e && e.message ? e.message : e}`, true);
-    } finally {
-      _busy = false;
-      insertBtn.disabled = !converted;
-      insertObjBtn.disabled = !converted;
-    }
-  }
-
   function insertSelected() {
     const item = byId.get(selectedId);
     if (!item || !converted || !converted.dataUri) return;
     const s0 = state.get();
     const ab = s0.artboard || { w: 90, h: 60 };
-    const w = DEFAULT_W_MM;
+    const w = widthMm();                          // 고급에서 정한 폭 (기본 45mm)
     const h = w / aspectOf(converted.viewBox);   // 비율은 변환 결과 viewBox를 따른다
     const x = ab.w / 2 - w / 2;                  // 아트보드 중앙
     const y = ab.h / 2 - h / 2;
@@ -413,7 +457,6 @@ export function initPartsLibrary(state) {
 
     _busy = true;
     insertBtn.disabled = true;
-    insertObjBtn.disabled = true;
     try {
       state.update((s) => {
         // 삽입 직전 상태를 스냅샷 — Ctrl+Z 한 번으로 이 부품만 사라진다.
@@ -424,8 +467,8 @@ export function initPartsLibrary(state) {
           type: "svgAsset",
           src: converted.dataUri,
           partId: item.id,
-          lineLevel: level,
-          lineFill: fill,
+          lineLevel: converted.raw ? "RAW" : (advanced ? "custom" : level),
+          lineFill: converted.raw ? null : fill,
           x, y, w, h,
           rotation: 0,
           locked: false,
@@ -443,13 +486,12 @@ export function initPartsLibrary(state) {
     } finally {
       _busy = false;
       insertBtn.disabled = !converted;
-      insertObjBtn.disabled = !converted;
     }
   }
 
   /* ----- manifest 로드 (첫 오픈 시 1회) ----- */
   async function loadManifest() {
-    setStatus("부품 목록 불러오는 중…");
+    setStatus("이미지 목록 불러오는 중…");
     try {
       const res = await fetch(LIB_BASE + "manifest.json", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -493,8 +535,40 @@ export function initPartsLibrary(state) {
     syncOptionMarks();
     refreshPreview();
   });
+
+  /* ----- 고급 기능 — 켜면 프리셋을 잠그고 세부값을 직접 만진다 ----- */
+  function syncAdvLabels() {
+    overlay.querySelector("#pl-adv-tiny-out").textContent = tinyLabel(Number(advTiny.value));
+    overlay.querySelector("#pl-adv-line-out").textContent =
+      (Number(advLine.value) / 100).toFixed(2) + "mm";
+    overlay.querySelector("#pl-adv-width-out").textContent = advWidth.value + "mm";
+  }
+  advToggle.addEventListener("click", () => {
+    advanced = !advanced;
+    advPanel.hidden = !advanced;
+    advToggle.setAttribute("aria-expanded", String(advanced));
+    advToggle.classList.toggle("is-on", advanced);
+    // 고급을 켜는 순간, 지금 보고 있던 프리셋 값을 슬라이더 초기값으로 옮겨 준다.
+    // 그래야 켜자마자 그림이 딴판으로 바뀌지 않는다.
+    if (advanced) {
+      const lv = LEVELS.find((l) => l.id === level);
+      if (lv) {
+        advTiny.value = String(Math.round((lv.tiny || 0) * 1000));
+        advDropLine.checked = !!lv.dropLine;
+      }
+      syncAdvLabels();
+    }
+    syncOptionMarks();
+    refreshPreview();
+  });
+  for (const el of [advTiny, advLine, advWidth]) {
+    el.addEventListener("input", syncAdvLabels);
+    el.addEventListener("change", refreshPreview);
+  }
+  advDropLine.addEventListener("change", refreshPreview);
+  syncAdvLabels();
+
   insertBtn.addEventListener("click", insertSelected);
-  insertObjBtn.addEventListener("click", insertAsObjects);
   queryInput.addEventListener("input", runSearch);
   subjectSelect.addEventListener("change", () => { populatePartOptions(); runSearch(); });
   partSelect.addEventListener("change", runSearch);

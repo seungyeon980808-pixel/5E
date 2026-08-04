@@ -23,7 +23,9 @@
 import { state } from "./state.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { switchPage, addPage } from "./pages.js?v=1.4.0";
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.4.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
+         getContentBounds } from "./svg-export.js?v=1.4.0";
+import { translateObject } from "./transform.js?v=1.4.0";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).
@@ -49,6 +51,40 @@ let source = null;
 let idSeq = 0;
 let lastPort = null;
 let connecting = false;   // 버튼을 눌러 재시도하는 중 — 중복 클릭 방지
+
+/* ----- 화면에 그려진 모양의 실제 범위 (fitArtboard 용) -----
+ * #canvas 의 좌표계가 곧 world mm 라(viewBox 가 mm), 렌더된 요소의 getBBox() 를
+ * 그대로 쓸 수 있다. 렌더러가 상자 밖에 그리는 것(좌표평면 축 이름, 라벨 등)까지
+ * 포함하므로 "내보내면 어디까지 나오나"에 대한 정확한 답이다.
+ * getBBox() 는 획 두께를 빼고 주므로 strokeWidth/2 만큼 넓힌다. */
+function renderedBounds(s) {
+  const svg = document.getElementById("canvas");
+  if (!svg) return null;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const o of s.objects) {
+    if (!o || !o.id) continue;
+    let el = null;
+    try { el = svg.querySelector(`[data-id="${CSS.escape(o.id)}"]`); } catch (_) { el = null; }
+    if (!el) continue;
+    let b = null;
+    try { b = el.getBBox(); } catch (_) { continue; }
+    if (!b || !isFinite(b.x) || !isFinite(b.y) || !(b.width >= 0) || !(b.height >= 0)) continue;
+    const half = (Number(o.strokeWidth) || 0) / 2;
+    x0 = Math.min(x0, b.x - half);
+    y0 = Math.min(y0, b.y - half);
+    x1 = Math.max(x1, b.x + b.width + half);
+    y1 = Math.max(y1, b.y + b.height + half);
+  }
+  return (isFinite(x0) && x1 > x0 && y1 > y0) ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+}
+
+function unionRect(a, b) {
+  if (!a) return b || null;
+  if (!b) return a;
+  const x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y);
+  const x1 = Math.max(a.x + a.w, b.x + b.w), y1 = Math.max(a.y + a.h, b.y + b.h);
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
 
 /* ----- 명령 처리기 ----- */
 const COMMANDS = {
@@ -86,9 +122,10 @@ const COMMANDS = {
   },
 
   // 객체 추가 — MCP 쪽에서 이미 검증·기본값 채움이 끝난 것이 온다.
-  addObjects({ objects }) {
+  addObjects({ objects, group }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects가 비었습니다");
     const ids = [];
+    let grouped = 0;
     state.update((s) => {
       s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
       s.redoStack = [];
@@ -101,9 +138,10 @@ const COMMANDS = {
       s.selectedIds = ids;
       s.targetedId = null;
       lockPlanesToSeries(s, ids);
+      if (group) grouped = groupObjects(s, ids);
     });
     flash(`${ids.length}개 추가됨`);
-    return { added: ids.length, ids };
+    return { added: ids.length, ids, grouped };
   },
 
   // id로 지우기
@@ -169,6 +207,62 @@ const COMMANDS = {
     return { active: target.id, name: target.name, created: false };
   },
 
+  /* 아트보드를 그린 내용에 맞춘다.
+   *
+   * 두 가지 사고를 한 번에 없앤다:
+   *  ① 축 이름·한글 라벨이 아트보드 밖으로 나가 내보내기에서 **잘린다**.
+   *     라벨은 평면·도형 바깥에 놓이는데, 아트보드를 손으로 정하면 그 폭을
+   *     매번 눈대중해야 한다(2026-08-03 시연에서 두 번 겪었다).
+   *  ② 여백이 넓으면 그림 자체는 작아진다 — PNG 의 실제 크기가 곧 시험지에
+   *     들어가는 크기라, 빈 종이가 그림을 밀어낸다.
+   *
+   * 글자 폭은 **화면에 실제로 그려진 SVG** 를 재서 얻는다(getObjectBBox).
+   * 서버에는 폰트 메트릭이 없으므로 이 계산은 앱만 할 수 있다. 그래서 그리기
+   * 직후가 아니라 '다 그린 뒤 따로' 부르는 도구다 — 그때는 이미 렌더가 끝나 있다.
+   */
+  fitArtboard({ margin = 2, recenter = true } = {}) {
+    const s = state.get();
+    if (!s.objects.length) throw new Error("화면에 그려진 것이 없습니다");
+    const pad = Math.max(0, Number(margin) || 0);
+    // 좌표 기준 상자와 **화면에 실제로 그려진** 상자의 합집합을 쓴다.
+    // 좌표 기준만 보면 안 되는 이유: coordplane 의 상자는 평면 사각형까지라
+    // 그 바깥에 그려지는 축 이름("전압(V)")이 빠진다 — 실측에서 53.6mm 로 재
+    // 아트보드를 잡았더니 실제 76.3mm 인 그림이 양옆으로 잘렸다(2026-08-03).
+    // 반대로 DOM 은 아직 안 그려진 객체를 놓치므로, 둘을 합쳐 '덜 자르는' 쪽으로.
+    const geo = getContentBounds(s, {}, 0);
+    const dom = renderedBounds(s);
+    const u = unionRect(geo, dom);
+    if (!u) throw new Error("크기를 잴 수 있는 객체가 없습니다");
+    const bb = { x: u.x - pad, y: u.y - pad, w: u.w + 2 * pad, h: u.h + 2 * pad };
+
+    const before = { ...s.artboard };
+    let dx = 0, dy = 0, w, h;
+    if (recenter) {
+      // 아트보드는 항상 원점 중심이라, 그림을 가운데로 옮겨야 딱 맞는다.
+      dx = -(bb.x + bb.w / 2);
+      dy = -(bb.y + bb.h / 2);
+      w = bb.w; h = bb.h;
+    } else {
+      // 좌표를 건드리지 않는 대신, 원점 기준 먼 쪽에 맞춰 넓힌다.
+      w = 2 * Math.max(Math.abs(bb.x), Math.abs(bb.x + bb.w));
+      h = 2 * Math.max(Math.abs(bb.y), Math.abs(bb.y + bb.h));
+    }
+    const round1 = (v) => Math.max(10, Math.round(v * 10) / 10);
+    w = round1(w); h = round1(h);
+
+    state.update((st) => {
+      st.undoStack.push(JSON.parse(JSON.stringify(st.objects)));
+      st.redoStack = [];
+      if (dx || dy) st.objects.forEach((o) => translateObject(o, dx, dy));
+      st.artboard = { w, h };
+    });
+    flash(`아트보드 ${w}×${h}mm`);
+    return {
+      artboard: { w, h }, before, objects: s.objects.length,
+      moved: { dx: Math.round(dx * 100) / 100, dy: Math.round(dy * 100) / 100 },
+    };
+  },
+
   // 아트보드(페이지) 크기 변경 — 기출 그림의 가로세로 비율을 맞추는 데 쓴다.
   // 원본이 정사각형에 가까운데 90×60으로 그리면 도형이 전부 눌려 보이기 때문.
   setArtboard({ w, h }) {
@@ -232,6 +326,37 @@ const COMMANDS = {
       objects: s.objects.length,
     };
   },
+
+  /* 지금 화면을 **인쇄 품질 PNG(base64)** 로 만들어 돌려준다 — 서버가 파일로 저장하는
+   * save_image 툴의 앱쪽 절반. exportImage 와 달리 dpi 를 그대로 받고(기본 300),
+   * pHYs 청크를 새겨 한글/워드 삽입 크기가 맞는다. 파일 쓰기는 서버가 한다 —
+   * 브라우저는 임의 경로에 쓸 수 없고, 쓰면 안 되기도 하다(저장은 통제된 통로로만). */
+  async saveImagePng({ dpi } = {}) {
+    const s = state.get();
+    if (!s.objects.length) throw new Error("화면에 그려진 것이 없습니다");
+    await ensureEmbeddedFonts();
+    const useDpi = Math.min(Math.max(Math.round(dpi || 300), 72), 600);
+    const { canvas, widthMm: outW, heightMm: outH } = await rasterizeExportCanvas(s, { dpi: useDpi });
+    const dataUrl = canvas.toDataURL("image/png");
+    const raw = atob(dataUrl.slice(dataUrl.indexOf(",") + 1));
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+    const stamped = new Uint8Array(insertPngPhys(bytes.buffer, useDpi));
+    let bin = "";
+    const CHUNK = 0x8000;   // 큰 이미지에서 호출 스택 초과를 피해 조각내어 인코딩
+    for (let i = 0; i < stamped.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, stamped.subarray(i, i + CHUNK));
+    }
+    return {
+      base64: btoa(bin),
+      dpi: useDpi,
+      widthPx: canvas.width,
+      heightPx: canvas.height,
+      artboardMm: { w: outW, h: outH },
+      page: activePageName(s),
+      objects: s.objects.length,
+    };
+  },
 };
 
 /* ----- 좌표·함수 묶기(seriesLock) -----
@@ -256,6 +381,28 @@ function lockPlanesToSeries(s, newIds) {
     }
     (s.groups = s.groups || []).push({ id: gid, memberIds });
   }
+}
+
+/* ----- 방금 넣은 것들을 한 덩어리로 묶기 -----
+ * AI 는 초안까지만 그리고 위치 조정은 사람이 한다. 그런데 낱개로 넘기면 검전기
+ * 하나를 옮기는 데 16개, 자기장 영역은 26개를 골라야 한다 — 그게 편집을 막는
+ * 가장 큰 마찰이었다. 한 번의 호출로 만든 것은 한 단위로 보고 묶어서 넘긴다.
+ * 더 잘게 만지고 싶으면 사람이 그룹을 풀면 된다(앱에 해제 UI 가 있다).
+ *
+ * 이미 다른 묶음에 든 것(그래프의 평면·곡선)은 건드리지 않는다 — 그 묶음이 더 정확하다. */
+function groupObjects(s, newIds) {
+  const members = newIds.filter((id) => {
+    const o = s.objects.find((x) => x.id === id);
+    return o && !o.groupId;
+  });
+  if (members.length < 2) return 0;
+  const gid = "grp_" + members[0];
+  for (const id of members) {
+    const o = s.objects.find((x) => x.id === id);
+    if (o) o.groupId = gid;
+  }
+  (s.groups = s.groups || []).push({ id: gid, memberIds: members });
+  return members.length;
 }
 
 function activePageName(s) {

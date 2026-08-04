@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 26.458333 26.458334"
+   version="1.1"
+   id="svg2902"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="IEEE 315-1975 (1993) 8.2.4.2.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview2904"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     inkscape:zoom="2.828427"
+     inkscape:cx="26.516505"
+     inkscape:cy="120.91526"
+     inkscape:window-width="1019"
+     inkscape:window-height="868"
+     inkscape:window-x="572"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g838" />
+  <defs
+     id="defs2899">
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect38428"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+        />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect38424"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+        />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect3009"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+        />
+    <pattern
+       id="EMFhbasepattern"
+       patternUnits="userSpaceOnUse"
+       width="6"
+       height="6"
+       x="0"
+       y="0" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath18">
+      <path
+         d="M 0,1.5259e-5 H 74.88 V 74.880015 H 0 Z"
+         id="path16"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath28">
+      <path
+         d="M 0,7.629e-6 H 74.88 V 74.880008 H 0 Z"
+         id="path26"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath18-4">
+      <path
+         d="M 0,1.5259e-5 H 74.88 V 74.880015 H 0 Z"
+         id="path16-7"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath28-0">
+      <path
+         d="M 0,7.629e-6 H 74.88 V 74.880008 H 0 Z"
+         id="path26-1"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath40">
+      <path
+         d="M -1.907e-6,1.5259e-5 H 74.879998 V 74.880015 H -1.907e-6 Z"
+         id="path38"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+    <mask
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1"
+       height="1"
+       id="mask44">
+      <image
+         width="1"
+         height="1"
+         style="image-rendering:optimizeSpeed"
+         preserveAspectRatio="none"
+         xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADEAAAAOCAAAAACj26u4AAAAAXNCSVQI5gpbmQAAAFFJREFUKJHdkDEOwDAIA89V//9ld0ikNgTaTBnKBPLJGOAfpVpyEN3ws+bBmaNmriLcpuMrpGIfU92AU4M9pfFWAUb9Sc5SKfnO+4ql2x6u4gKCXw0T3CYBwwAAAABJRU5ErkJggg=="
+         id="image46" />
+    </mask>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath60">
+      <path
+         d="M 1.116e-6,0 H 74.880001 V 74.88 H 1.116e-6 Z"
+         id="path58"
+         inkscape:connector-curvature="0"
+         style="clip-rule:evenodd" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g3205"
+       transform="matrix(-1,0,0,-1.6112039,26.724466,34.099505)" />
+    <g
+       id="g838"
+       transform="matrix(0.35277777,0,0,-0.35277777,-13.444401,31.493486)">
+      <g
+         id="g1538"
+         transform="translate(0.49718444,0.35228984)">
+        <path
+           sodipodi:nodetypes="cccc"
+           inkscape:connector-curvature="0"
+           id="path34"
+           style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.907246"
+           d="m 73.06856,47.908278 -4.04102,3.749749 0.498237,-5.350341 z" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 69.31123,44.110347 c 5.150579,0 10.299872,0 15.449808,0"
+           id="path38422"
+           inkscape:path-effect="#path-effect38424"
+           inkscape:original-d="m 69.31123,44.110347 c 5.150579,-7.5e-4 15.449808,0 15.449808,0" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:0.75;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="m 72.557856,43.778891 c -2.249601,5.093558 -4.5,10.188925 -6.75,15.283388"
+           id="path38426"
+           inkscape:path-effect="#path-effect38428"
+           inkscape:original-d="m 72.557856,43.778891 c -2.24925,5.093713 -6.75,15.283388 -6.75,15.283388"
+           sodipodi:nodetypes="cc" />
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,210 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="800px" height="600px"
+     viewBox="0 0 800 600" preserveAspectRatio="none"
+	 xmlns="http://www.w3.org/2000/svg" version="1.1"
+	 xmlns:xlink="http://www.w3.org/1999/xlink">
+<style>
+
+text {
+	font-family : Verdana, Tahoma, sans-serif;
+	font-size : 12px;
+	fill : black;
+	stroke : none;
+}
+
+#percentage_numbers text {
+	text-anchor : end;
+}
+#x_axis_numbers text {
+	text-anchor : middle;
+}
+
+</style>
+<desc>US Crude Oil Proved Reserves</desc>
+<defs>
+	<!-- The lines in the graph are scaled significantly. Make sure the stroke width is set appropriately. -->
+	<line id="horizontal_line" x1="1995.9" x2="2014" y1="0" y2="0" stroke="#333" stroke-width="0.5" />
+	<line id="vertical_line" x1="0" x2="0" y1="350" y2="-5" stroke="#333" stroke-width=".02" />
+	<line id="vertical_tick" x1="0" x2="0" y1="0" y2="-5" stroke="#333" stroke-width=".02" />
+</defs>
+
+
+<!-- background -->
+<rect x="0" y="0" 
+    width="800px" 
+    height="600px" 
+    style="fill:#ffffff"/>
+
+
+
+
+<!--
+	ORDER OF TRANSFORMATIONS:
+	(1)	Shift origin from (x, y) to (0, 0) (e.g., from [2004, 0] to [0, 0])
+	(2)	Scale as appropriate
+	(3)	Shift back to viewport's origin
+	(4)	Shift away from edge as desired
+	
+	In working out your calculations, opt for a number that divides nicely into 100s (e.g., 1, 2, 2.5, 5, 10, 20, 25, etc.)
+	
+	CALCULATIONS:
+	Horizontal	=	Width/Range
+				=	800/ 2010-1900
+				~	 6
+	Vertical	=	[-1 * Height]/Range
+				=	-600 / (350 - 0) 
+				~	-12
+-->
+<g transform="translate(85 -35)">	
+	<g transform="translate(0 580) scale(39 -1.4) translate(-1996 0)">
+		<!-- Horizontal gridlines -->
+		<g>
+			<use xlink:href="#horizontal_line" x="0" y="50" />
+			<use xlink:href="#horizontal_line" x="0" y="100" />
+			<use xlink:href="#horizontal_line" x="0" y="150" />
+			<use xlink:href="#horizontal_line" x="0" y="200" />
+			<use xlink:href="#horizontal_line" x="0" y="250" />
+			<use xlink:href="#horizontal_line" x="0" y="300" />
+			<use xlink:href="#horizontal_line" x="0" y="350" />
+		</g>
+
+		<g transform="translate (0.5 0)">
+		<!-- cumulative capacity -->
+		<path style="fill:red; stroke:#0070C0; stroke-width:0.5" d="
+M	1996	0
+L	1996	6.100
+M	1997	0
+L	1997	7.600
+M	1998	0
+L	1998	10.200
+M	1999	0
+L	1999	13.600
+M	2000	0
+L	2000	17.400
+M	2001	0
+L	2001	23.900
+M	2002	0
+L	2002	31.100
+M	2003	0
+L	2003	39.431
+M	2004	0
+L	2004	47.620
+M	2005	0
+L	2005	59.091
+M	2006	0
+L	2006	73.938
+M	2007	0
+L	2007	93.889
+M	2008	0
+L	2008	120.624
+M	2009	0
+L	2009	158.975
+M	2010	0
+L	2010	198.001
+M	2011	0
+L	2011	238.126
+M	2012	0
+L	2012	283.048
+M	2013	0
+L	2013	318.137
+
+" />
+		</g>
+		<g>
+			<use xlink:href="#horizontal_line" x="0" y="0" />
+		</g>
+
+		<!-- Vertical ticks -->
+		<g>
+			<use xlink:href="#vertical_line" x="1996" y="0" />
+			<use xlink:href="#vertical_tick" x="1997" y="0" />
+			<use xlink:href="#vertical_tick" x="1998" y="0" />
+			<use xlink:href="#vertical_tick" x="1999" y="0" />
+			<use xlink:href="#vertical_tick" x="2000" y="0" />
+			<use xlink:href="#vertical_tick" x="2001" y="0" />
+			<use xlink:href="#vertical_tick" x="2002" y="0" />
+			<use xlink:href="#vertical_tick" x="2003" y="0" />
+			<use xlink:href="#vertical_tick" x="2004" y="0" />
+			<use xlink:href="#vertical_tick" x="2005" y="0" />
+			<use xlink:href="#vertical_tick" x="2006" y="0" />
+			<use xlink:href="#vertical_tick" x="2007" y="0" />
+			<use xlink:href="#vertical_tick" x="2008" y="0" />
+			<use xlink:href="#vertical_tick" x="2009" y="0" />
+			<use xlink:href="#vertical_tick" x="2010" y="0" />
+			<use xlink:href="#vertical_tick" x="2011" y="0" />
+			<use xlink:href="#vertical_tick" x="2012" y="0" />
+			<use xlink:href="#vertical_tick" x="2013" y="0" />
+			<use xlink:href="#vertical_line" x="2014" y="0" />
+		</g>
+	</g>
+		<!-- Text can't be scaled or it goes strange. Its location must be calculated directly. -->
+	<text x="340" y="75" text-anchor="middle">
+			<tspan font-size="24" >Global Wind Power Cumulative Capacity (Data:GWEC)</tspan></text>
+	<!-- Y-axis -->
+
+	<g transform="translate(-180 350) rotate(270)" text-anchor="middle">
+		<text x="16" y="135" text-anchor="middle">
+			<tspan font-size="20" >Cumulative Capacity (Gigawatts)</tspan></text>
+	</g>
+
+		<text x="350" y="625" text-anchor="middle">
+			<tspan font-size="20" >Year</tspan></text>
+
+	<g id="percentage_numbers" transform="translate(-7 0)" text-anchor="end">
+
+		<text x="0" y="94">350</text>
+		<text x="0" y="164">300</text>
+		<text x="0" y="234">250</text>
+		<text x="0" y="304">200</text>
+		<text x="0" y="374">150</text>
+		<text x="0" y="444">100</text>
+		<text x="0" y="514">50</text>
+		<text x="0" y="584">0</text>
+
+	</g>
+
+	<!-- X-axis -->
+	<g id="x_axis_numbers" transform="translate(0 60)" text-anchor="middle">
+	<text x="18" y="545">1996</text>
+	<text x="57" y="545">1997</text>
+	<text x="96" y="545">1998</text>
+	<text x="136" y="545">1999</text>
+	<text x="175" y="545">2000</text>
+	<text x="214" y="545">2001</text>
+	<text x="253" y="545">2002</text>
+	<text x="292" y="545">2003</text>
+	<text x="331" y="545">2004</text>
+	<text x="371" y="545">2005</text>
+	<text x="410" y="545">2006</text>
+	<text x="449" y="545">2007</text>
+	<text x="488" y="545">2008</text>
+	<text x="527" y="545">2009</text>
+	<text x="566" y="545">2010</text>
+	<text x="605" y="545">2011</text>
+	<text x="644" y="545">2012</text>
+	<text x="683" y="545">2013</text>
+	</g>
+		
+	<g id="data_legend" transform="translate(0 60)" text-anchor="middle">
+	<text x="18" y="505">6.1</text>
+	<text x="57" y="503">7.6</text>
+	<text x="96" y="500">10.2</text>
+	<text x="136" y="495">13.6</text>
+	<text x="175" y="490">17.4</text>
+	<text x="214" y="481">23.9</text>
+	<text x="253" y="470">31.1</text>
+	<text x="292" y="462">39.4</text>
+	<text x="331" y="447">47.6</text>
+	<text x="371" y="431">59.1</text>
+	<text x="410" y="411">73.9</text>
+	<text x="449" y="376">93.9</text>
+	<text x="486" y="345">120.6</text>
+	<text x="525" y="291">159.0</text>
+	<text x="564" y="236">198.0</text>
+	<text x="603" y="183">238.1</text>
+	<text x="642" y="118">283.0</text>
+	<text x="680" y="69">318.1</text>
+	</g>
+</g>
+</svg>

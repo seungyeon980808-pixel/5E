@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="3.88654in" height="3.06874in" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 4170 3293"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:12.6733;stroke-linecap:round;stroke-linejoin:round}
+    .fil2 {fill:none}
+    .fil1 {fill:black}
+    .fil0 {fill:white}
+    .fil3 {fill:black;fill-rule:nonzero}
+    .fnt1 {font-weight:normal;font-size:134.121px;font-family:'DejaVu Sans'}
+    .fnt0 {font-style:italic;font-weight:normal;font-size:178.833px;font-family:'DejaVu Sans'}
+    .fnt2 {font-style:italic;font-weight:normal;font-size:208.636px;font-family:'DejaVu Sans'}
+   ]]>
+  </style>
+ </defs>
+ <g>
+  <rect class="fil0" width="4170" height="3293"/>
+  <text x="1069" y="1149"  class="fil1 fnt0">R</text>
+  <text x="1194" y="1189"  class="fil1 fnt1">S</text>
+  <text x="211" y="1324"  class="fil1 fnt0">v</text>
+  <text x="317" y="1364"  class="fil1 fnt1">in</text>
+  <g>
+   <path class="fil2 str0" d="M917 1295c0,-117 -95,-211 -211,-211 -117,0 -211,95 -211,211 0,117 95,211 211,211 117,0 211,-95 211,-211z"/>
+   <line class="fil2 str0" x1="653" y1="1190" x2="759" y2= "1190" />
+   <line class="fil2 str0" x1="706" y1="1242" x2="706" y2= "1137" />
+   <line class="fil2 str0" x1="653" y1="1401" x2="759" y2= "1401" />
+  </g>
+  <line class="fil2 str0" x1="706" y1="1718" x2="706" y2= "1506" />
+  <g>
+   <line class="fil2 str0" x1="622" y1="1718" x2="791" y2= "1718" />
+   <line class="fil2 str0" x1="650" y1="1766" x2="763" y2= "1766" />
+   <line class="fil2 str0" x1="677" y1="1814" x2="735" y2= "1814" />
+  </g>
+  <path class="fil2 str0" d="M706 1084l0 -211 211 0 35 -74 70 148 70 -148 70 148 70 -148 70 148 35 -74 211 0 0 211 74 35 -148 70 148 70 -148 70 148 70 -148 70 74 35 0 211 845 0 0 -211m0 -422l0 -211 1479 0 0 211"/>
+  <text x="1684" y="1324"  class="fil1 fnt0">r</text>
+  <text x="1757" y="1364"  class="fil1 fnt1">π</text>
+  <g>
+   <text x="1034" y="503"  class="fil1 fnt0">i</text>
+   <text x="1169" y="503"  class="fil1 fnt0"> = </text>
+   <text x="1084" y="543"  class="fil1 fnt1">b</text>
+   <text x="1464" y="345"  class="fil1 fnt0">v</text>
+   <text x="1692" y="345"  class="fil1 fnt0"> </text>
+   <text x="1853" y="345"  class="fil1 fnt0"> v</text>
+   <text x="2236" y="345"  class="fil1 fnt0">   </text>
+   <text x="1570" y="386"  class="fil1 fnt1">in</text>
+   <text x="2016" y="386"  class="fil1 fnt1">out</text>
+   <text x="1749" y="247"  class="fil1 fnt2">_</text>
+   <text x="1520" y="636"  class="fil1 fnt0">R</text>
+   <text x="1729" y="636"  class="fil1 fnt0"> + r</text>
+   <text x="1644" y="676"  class="fil1 fnt1">S</text>
+   <text x="2066" y="676"  class="fil1 fnt1">π</text>
+   <line class="fil2 str0" x1="1453" y1="444" x2="2256" y2= "444" />
+  </g>
+  <g>
+   <path class="fil3" d="M921 708l0 13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm344 13l-344 0 0 -13 344 0 0 13zm-41 26l0 -64 120 32 -120 32zm41 -26l0 -13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+  </g>
+  <circle class="fil1 str0" cx="1974" cy="1718" r="21"/>
+  <text x="1650" y="2623"  class="fil1 fnt0">R</text>
+  <text x="1774" y="2663"  class="fil1 fnt1">L</text>
+  <polyline class="fil2 str0" points="1974,1718 1974,2140 1974,2351 2047,2387 1900,2457 2047,2527 1900,2598 2047,2668 1900,2739 1974,2774 1974,2985 "/>
+  <g>
+   <line class="fil2 str0" x1="1889" y1="2985" x2="2058" y2= "2985" />
+   <line class="fil2 str0" x1="1917" y1="3033" x2="2030" y2= "3033" />
+   <line class="fil2 str0" x1="1945" y1="3082" x2="2002" y2= "3082" />
+  </g>
+  <circle class="fil1 str0" cx="1974" cy="2140" r="21"/>
+  <line class="fil2 str0" x1="1551" y1="2140" x2="1974" y2= "2140" />
+  <circle class="fil0 str0" cx="1551" cy="2140" r="27"/>
+  <text x="1130" y="2168"  class="fil1 fnt0">v</text>
+  <text x="1236" y="2208"  class="fil1 fnt1">out</text>
+  <g>
+   <path class="fil3" d="M2138 2351l-13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm-13 344l0 -344 13 0 0 344 -13 0zm-26 -41l64 0 -32 120 -32 -120zm26 41l13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+  </g>
+  <g>
+   <text x="2218" y="2464"  class="fil1 fnt0">v</text>
+   <text x="2324" y="2504"  class="fil1 fnt1">out</text>
+   <text x="2284" y="2755"  class="fil1 fnt0">R</text>
+   <text x="2408" y="2796"  class="fil1 fnt1">L</text>
+   <line class="fil2 str0" x1="2216" y1="2563" x2="2554" y2= "2563" />
+  </g>
+  <g>
+   <g>
+    <path class="fil3" d="M2402 1168l-13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm-13 175l0 -175 13 0 0 175 -13 0zm-26 -41l64 0 -32 120 -32 -120zm26 41l13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+   </g>
+   <polygon class="fil2 str0" points="2185,1295 2396,1084 2607,1295 2396,1506 "/>
+  </g>
+  <polyline class="fil2 str0" points="2396,1718 3241,1718 3241,1506 3167,1471 3315,1401 3167,1330 3315,1260 3167,1190 3315,1119 3241,1084 3241,873 "/>
+  <text x="3374" y="1324"  class="fil1 fnt0">r</text>
+  <text x="3447" y="1364"  class="fil1 fnt1">O</text>
+  <g>
+   <text x="2632" y="1978"  class="fil1 fnt0">v</text>
+   <text x="2738" y="2018"  class="fil1 fnt1">out</text>
+   <line class="fil2 str0" x1="2630" y1="2077" x2="2968" y2= "2077" />
+   <text x="2710" y="2270"  class="fil1 fnt0">r</text>
+   <text x="2784" y="2310"  class="fil1 fnt1">O</text>
+  </g>
+  <g>
+   <path class="fil3" d="M2607 1796l0 13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm344 13l-344 0 0 -13 344 0 0 13zm-41 26l0 -64 120 32 -120 32zm41 -26l0 -13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+  </g>
+  <text x="2677" y="1343"  class="fil1 fnt0">β</text>
+  <text x="2791" y="1343"  class="fil1 fnt0">i</text>
+  <text x="2840" y="1383"  class="fil1 fnt1">b</text>
+  <g>
+   <line class="fil2 str0" x1="3790" y1="1084" x2="3959" y2= "1084" />
+   <line class="fil2 str0" x1="3818" y1="1132" x2="3931" y2= "1132" />
+   <line class="fil2 str0" x1="3846" y1="1181" x2="3903" y2= "1181" />
+  </g>
+  <circle class="fil1 str0" cx="3241" cy="873" r="21"/>
+  <circle class="fil1 str0" cx="2396" cy="1718" r="21"/>
+ </g>
+</svg>

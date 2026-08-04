@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="240mm" height="240mm" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 240 120">
+ <defs>
+  <font id="FontID0" font-variant="normal" style="fill-rule:nonzero" font-weight="400">
+	<font-face 
+		font-family="Arial">
+	</font-face>
+   <missing-glyph><path d="M0 0z"/></missing-glyph>
+   <glyph unicode="H" horiz-adv-x="722"><path d="M80.0009 0l0 715.832 94.8323 0 0 -294.001 372 0 0 294.001 94.8323 0 0 -715.832 -94.8323 0 0 337.334 -372 0 0 -337.334 -94.8323 0z"/></glyph>
+   <glyph unicode="O" horiz-adv-x="777"><path d="M48.3323 348.666c0,118.834 31.8331,211.834 95.6684,279 63.8308,67.1662 146.167,100.836 247.167,100.836 65.9966,0 125.665,-15.8365 178.667,-47.3361 52.9974,-31.6641 93.4982,-75.6649 121.333,-132.167 27.8307,-56.3328 41.6659,-120.497 41.6659,-191.999 0,-72.6674 -14.5024,-137.668 -43.8317,-194.832 -29.3338,-57.3335 -70.8352,-100.667 -124.504,-130.165 -53.829,-29.5028 -111.665,-44.1697 -173.833,-44.1697 -67.4998,0 -127.666,16.1656 -180.664,48.8348 -53.1664,32.5002 -93.3336,76.999 -120.671,133.332 -27.3326,56.1683 -40.9988,115.832 -40.9988,178.667zm97.6697 -1.49871c0,-86.3337 23.1655,-154.167 69.4966,-203.833 46.5,-49.6665 104.67,-74.4997 174.669,-74.4997 71.3333,0 130.001,24.9978 175.998,75.1668 46.002,50.1645 69.1675,121.333 69.1675,213.497 0,58.1695 -10.0018,109.001 -29.6673,152.504 -19.6656,43.4982 -48.5013,77.1636 -86.3337,101.165 -37.997,23.8326 -80.499,35.8312 -127.666,35.8312 -67.1662,0 -124.833,-22.9965 -173.166,-69.163 -48.3323,-46.002 -72.4984,-123.001 -72.4984,-230.668z"/></glyph>
+  </font>
+  <style type="text/css">
+   <![CDATA[
+    @font-face { font-family:"Arial";src:url("#FontID0") format(svg)}
+    .str0 {stroke:black;stroke-width:1.24064}
+    .fil1 {fill:none}
+    .fil0 {fill:black}
+    .fnt0 {font-weight:normal;font-size:17.9888;font-family:'Arial'}
+   ]]>
+  </style>
+   <clipPath id="id0">
+    <rect x="3" y="2" width="230" height="113"/>
+   </clipPath>
+ </defs>
+ <g id="Livello_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g style="clip-path:url(#id0)">
+   <text x="16.6962" y="74.4029" id="Embedding_x0020_36" class="fil0 fnt0">O</text>
+   <text x="3.97904" y="74.4029" id="Embedding_x0020_36" class="fil0 fnt0">H</text>
+   <text x="206.832" y="74.4029" id="Embedding_x0020_36" class="fil0 fnt0">O</text>
+   <text x="219.859" y="74.4029" id="Embedding_x0020_36" class="fil0 fnt0">H</text>
+   <text x="48.3338" y="19.5059" id="Embedding_x0020_36" class="fil0 fnt0">O</text>
+   <text x="175.194" y="19.5059" id="Embedding_x0020_36" class="fil0 fnt0">O</text>
+   <text x="79.9714" y="111.001" id="Embedding_x0020_36" class="fil0 fnt0">O</text>
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="54.8474" y1="49.9008" x2="31.5844" y2= "63.2374" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="86.485" y1="68.1998" x2="54.8474" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="118.433" y1="49.9008" x2="86.485" y2= "68.1998" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="150.07" y1="68.1998" x2="118.433" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="181.708" y1="49.9008" x2="150.07" y2= "68.1998" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="204.971" y1="63.2374" x2="181.708" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="51.7457" y1="22.9176" x2="51.7457" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="57.9491" y1="22.9176" x2="57.9491" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="178.606" y1="22.9176" x2="178.606" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="184.81" y1="22.9176" x2="184.81" y2= "49.9008" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="89.5867" y1="95.4932" x2="89.5867" y2= "68.1998" />
+   <line id="Embedding_x0020_36" class="fil1 str0" x1="83.3833" y1="95.4932" x2="83.3833" y2= "68.1998" />
+  </g>
+  <g>
+   <polygon class="fil1" points="3.97904,3.06784 232.887,3.06784 232.887,115.653 3.97904,115.653 "/>
+  </g>
+ </g>
+</svg>

@@ -1,0 +1,603 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   id="svg4912"
+   x="0px"
+   y="0px"
+   viewBox="0 0 802.8 769.8"
+   style="enable-background:new 0 0 802.8 769.8;"
+   xml:space="preserve"
+   sodipodi:docname="Geologic_Clock_with_events_and_periods_ca.svg"
+   inkscape:version="1.3.1 (91b66b0783, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"><sodipodi:namedview
+   id="namedview96"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   showgrid="false"
+   inkscape:zoom="1.0756041"
+   inkscape:cx="284.02644"
+   inkscape:cy="461.13621"
+   inkscape:window-width="1920"
+   inkscape:window-height="1012"
+   inkscape:window-x="3832"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="layer1"
+   inkscape:showpageshadow="2"
+   inkscape:deskcolor="#d1d1d1" /><metadata
+   id="metadata156"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata>
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#707780;}
+	.st1{fill:#DA008A;}
+	.st2{fill:#FF2A65;}
+	.st3{fill:#3A00FF;}
+	.st4{fill:#0076FF;}
+	.st5{fill:#53D092;}
+	.st6{fill:#A6E389;}
+	.st7{fill:none;stroke:#772E88;stroke-width:6;}
+	.st8{fill:none;stroke:#23348F;stroke-width:6;}
+	.st9{fill:none;stroke:#05B2EC;stroke-width:6;}
+	.st10{fill:none;stroke:#05BB38;stroke-width:6;}
+	.st11{fill:none;stroke:#F2F207;stroke-width:6;}
+	.st12{fill:none;stroke:#E96E34;stroke-width:6;}
+	.st13{fill:#D7DFEB;}
+	.st14{fill:none;stroke:#882020;stroke-width:6;}
+	.st15{fill:none;stroke:#0F0000;stroke-width:2.5;stroke-linecap:square;}
+	.st16{font-family:'ArialMT';}
+	.st17{font-size:14px;}
+	.st18{font-size:12px;}
+	.st19{fill:#FFFFFF;}
+	.st20{font-family:'Arial-BoldMT';}
+	.st21{fill:none;stroke:#000000;stroke-width:2;stroke-linecap:round;}
+	.st22{fill:none;stroke:#772E88;stroke-width:2;stroke-linecap:round;}
+	.st23{fill:none;stroke:#05BB38;stroke-width:2;stroke-linecap:round;}
+	.st24{fill:none;stroke:#F2F207;stroke-width:2;stroke-linecap:round;}
+	.st25{fill:#FF0A00;stroke:#FF0A00;stroke-width:2;stroke-linecap:round;}
+	.st26{fill:none;stroke:#FF0A00;stroke-width:5.9198;}
+	.st27{fill:none;stroke:#05B2EC;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+	.st28{fill:none;stroke:#05BB38;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+</style>
+<defs
+   id="defs5">
+	
+	
+		
+</defs>
+
+<g
+   id="layer1"
+   transform="translate(73.439519,-279.0454)">
+	<path
+   id="path3957"
+   class="st0"
+   d="m 343.9,453.7 c -146.6,0 -265.5,118.9 -265.5,265.5 0,146.6 118.9,265.5 265.5,265.5 146.6,0 265.5,-118.9 265.5,-265.5 0,-146.6 -118.9,-265.5 -265.5,-265.5 z m 0,23.5 c 133.7,0 242,108.3 242,242 0,133.7 -108.3,242 -242,242 -133.7,0 -242,-108.3 -242,-242 0,-133.7 108.3,-242 242,-242 z" />
+	<path
+   id="path3761"
+   class="st1"
+   d="m 548,589.2 -88.5,56.4 c 13.6,21.3 21.4,46.5 21.4,73.6 0,61.9 -41.1,114.3 -97.5,131.2 l 30.3,100.5 C 435,944.5 455.2,935.2 474,923.3 586.6,851.5 619.8,701.9 548,589.2 Z" />
+	<path
+   id="path3763"
+   class="st2"
+   d="m 343.9,477.2 v 105 c 48.6,0 91.2,25.3 115.6,63.4 L 548,589.2 c -44.5,-69.8 -121.4,-112 -204.1,-112 z" />
+	<path
+   id="path3765"
+   class="st3"
+   d="m 181.2,540.1 c -69.1,62.7 -95.9,159.5 -69,248.9 38.5,128 173.5,200.5 301.5,162 L 383.4,850.5 c -12.5,3.8 -25.8,5.8 -39.5,5.8 -75.7,0 -137,-61.3 -137,-137 0,-40.2 17.3,-76.3 44.9,-101.4 z" />
+	<path
+   id="path3767"
+   class="st4"
+   d="m 255.2,494 c -27.6,10.9 -53,26.7 -74.8,46.7 l 70.9,77.4 c 12.3,-11.2 26.6,-20.3 42.3,-26.5 z" />
+	<path
+   id="path3773"
+   class="st5"
+   d="m 314.4,479 c -20.3,2.5 -40.2,7.5 -59.2,15 l 38.5,97.7 c 10.6,-4.2 21.8,-7.1 33.5,-8.5 z" />
+	<path
+   id="path3777"
+   class="st6"
+   d="m 343.9,477.2 c -9.9,0 -19.7,0.6 -29.5,1.8 l 12.8,104.2 c 5.5,-0.7 11,-1 16.7,-1 z" />
+	
+		<path
+   id="path3972"
+   class="st7"
+   d="M 544.44346,532.15917 A 274.24048,274.24048 0 0 1 567.83286,877.46729 274.24048,274.24048 0 0 1 234.52358,970.68575 274.24048,274.24048 0 0 1 75.38277,663.34398 274.24048,274.24048 0 0 1 343.87668,444.95026" />
+	
+		<path
+   id="path3974"
+   class="st8"
+   d="M 274.4201,997.7656 A 287.10272,287.10272 0 0 1 58.91382,684.20208 287.10272,287.10272 0 0 1 343.87653,432.08838" />
+	
+		<path
+   id="path3976"
+   class="st9"
+   d="M 73.95402,856.72346 A 302.94107,302.94107 0 0 1 85.57678,560.90482 302.94107,302.94107 0 0 1 343.8765,416.25003" />
+	
+		<path
+   id="path3978"
+   class="st10"
+   d="M 82.58133,538.30466 A 317.79721,317.79721 0 0 1 343.8765,401.39389" />
+	
+		<path
+   id="path3980"
+   class="st11"
+   d="M 148.16306,450.37322 A 332.51587,332.51587 0 0 1 343.8765,386.67523" />
+	
+		<path
+   id="path3982"
+   class="st12"
+   d="M 237.50027,388.49478 A 347.38446,347.38446 0 0 1 343.87653,371.80664" />
+	<path
+   id="path3850"
+   class="st13"
+   d="m 297.8,605.4 3.9,8.5 c -42.9,17.2 -71.3,58.9 -71.3,105.3 0,62.6 50.9,113.5 113.5,113.5 62.6,0 113.5,-50.9 113.5,-113.5 0,-62.6 -50.9,-113.5 -113.5,-113.5 v 9 c 57.8,0 104.5,46.7 104.5,104.5 0,57.8 -46.7,104.5 -104.5,104.5 -57.8,0 -104.5,-46.7 -104.5,-104.5 0,-42.9 26.2,-81.4 66,-97.1 l 4.3,9.4 16.6,-23.3 z" />
+	
+		<path
+   id="path4501"
+   class="st14"
+   d="m 341.72496,357.93097 a 361.26672,361.26672 0 0 1 2.15169,-0.006" />
+	<path
+   id="path4491"
+   class="st15"
+   d="M 343.9,587.7 V 347.2" />
+	<text
+   y="327.78311"
+   x="420.85681"
+   class="st16 st17"
+   id="text24"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="text-align:center;text-anchor:middle"
+     y="327.78311"
+     x="420.85681"
+     id="tspan957">4.550 Ma:</tspan><tspan
+     style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-align:center;text-anchor:middle"
+     y="344.44974"
+     x="420.85681"
+     id="tspan959">Formació de la terra</tspan></text>
+	
+	<text
+   class="st16 st18"
+   id="text46"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="362.19131"><tspan
+     style="fill:#882020;fill-opacity:1"
+     id="tspan8">Homínids</tspan></text>
+	<text
+   class="st16 st18"
+   id="text48"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="376.69131"><tspan
+     style="fill:#e96e34;fill-opacity:1"
+     id="tspan7">Mamífers</tspan></text>
+	<text
+   class="st16 st18"
+   id="text50"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="391.19131"><tspan
+     style="fill:#f2f207;fill-opacity:1"
+     id="tspan6">Plantes terrestres</tspan></text>
+	<text
+   class="st16 st18"
+   id="text52"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="405.69131"><tspan
+     style="fill:#05bb38;fill-opacity:1"
+     id="tspan5">Animals</tspan></text>
+	<text
+   class="st16 st18"
+   id="text54"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="420.19131"><tspan
+     sodipodi:role="line"
+     id="tspan2"
+     x="350.87689"
+     y="420.19131"
+     style="fill:#05b2ec;fill-opacity:1">Vida multicel·lular</tspan></text>
+	<text
+   class="st16 st18"
+   id="text56"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="434.69131"><tspan
+     style="fill:#23348f;fill-opacity:1"
+     id="tspan4">Eucariotes</tspan></text>
+	<text
+   class="st16 st18"
+   id="text58"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="350.87689"
+   y="449.19131"><tspan
+     style="fill:#772e88;fill-opacity:1;stroke:none;stroke-opacity:1"
+     id="tspan3">Procariotes</tspan></text>
+	<text
+   transform="rotate(22.711094)"
+   class="st19 st20 st17"
+   id="text60"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.00004"
+   x="573.16852"
+   y="346.51764">Hadeà</text>
+	<text
+   transform="rotate(-67.974724)"
+   class="st19 st20 st17"
+   id="text62"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.999979"
+   x="-529.82489"
+   y="779.63702">Arqueà</text>
+	<text
+   transform="rotate(63.050591)"
+   class="st19 st20 st17"
+   id="text64"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.999992"
+   x="764.54993"
+   y="210.65259">Proterozoic</text>
+	<text
+   transform="rotate(56.626164)"
+   class="st19 st20 st17"
+   id="text66"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1"
+   x="567.84058"
+   y="111.65152">Paleozoic</text>
+	<text
+   transform="rotate(73.513136)"
+   class="st19 st20 st17"
+   id="text68"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.00002"
+   x="565.47321"
+   y="-128.78755">Mesozoic</text>
+	<text
+   transform="rotate(86.019814)"
+   class="st19 st20 st17"
+   id="text70"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="518.90137"
+   y="-291.56277">Cenozoic</text>
+	<text
+   y="425.75854"
+   x="495.60132"
+   class="st16 st17"
+   id="text72"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="font-size:13.3333px;text-align:center;text-anchor:middle"
+     y="425.75854"
+     x="495.60132"
+     id="tspan943">4.527 Ma:</tspan><tspan
+     style="font-size:13.3333px;text-align:center;text-anchor:middle"
+     y="442.42517"
+     x="495.60132"
+     id="tspan945">Formació de la lluna</tspan></text>
+	
+	<path
+   id="path4586"
+   class="st21"
+   d="m 435.5,444.7 c -2.8103,6.08898 -20.61452,10.22841 -67.02469,7.63047 -3.1328,-0.17536 -7.68224,-1.0856 -9.35366,0.98574"
+   sodipodi:nodetypes="csc" />
+	<text
+   transform="rotate(7.7649915)"
+   class="st19 st16 st18"
+   id="text77"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="406.5787"
+   y="417.30237">4.600 Ma</text>
+	<text
+   class="st19 st20 st18"
+   id="text79"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="486.87677"
+   y="553.19128">4 Ga</text>
+	<text
+   transform="rotate(45.964293)"
+   class="st19 st16 st18"
+   id="text81"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.999991"
+   x="737.40039"
+   y="4.7591581">4.000 Ma</text>
+	<text
+   class="st19 st20 st18"
+   id="text83"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="-504.05283"
+   y="892.03711"
+   transform="rotate(-62.618607)"
+   inkscape:transform-center-x="6.043116">3.000 Ma</text>
+	<text
+   transform="rotate(-19.873471)"
+   class="st19 st16 st18"
+   id="text85"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.99997"
+   x="48.917732"
+   y="1052.451">2.500 Ma</text>
+	<text
+   class="st19 st20 st18"
+   id="text87"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="682.03015"
+   y="652.62128"
+   transform="rotate(34.67989)">2.000 Ma</text>
+	<text
+   class="st19 st20 st18"
+   id="text89"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   x="-615.73553"
+   y="289.72888"
+   transform="rotate(-73.148849)">1.000 Ma</text>
+	<text
+   transform="rotate(-45)"
+   class="st19 st16 st18"
+   id="text91"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.99999"
+   x="-275.58923"
+   y="502.42715">541 Ma</text>
+	<text
+   transform="rotate(-23.2836)"
+   class="st19 st16 st18"
+   id="text93"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:1.00004"
+   x="19.926277"
+   y="548.50024">252 Ma</text>
+	<text
+   transform="rotate(-8.1057936)"
+   class="st19 st16 st18"
+   id="text95"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.999991"
+   x="228.97473"
+   y="511.42178">66 Ma</text>
+	<text
+   y="474.58438"
+   x="550.1991"
+   class="st16 st17"
+   id="text97"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;text-anchor:start"><tspan
+     style="font-size:13.3333px;text-align:start;text-anchor:start"
+     y="474.58438"
+     x="550.1991"
+     id="tspan947">4.000 Ma: Final del</tspan><tspan
+     style="font-size:13.3333px;text-align:start;text-anchor:start"
+     y="491.25098"
+     x="550.1991"
+     id="tspan949">Gran bombardeig tardà;</tspan><tspan
+     style="font-size:13.3333px;text-align:start;text-anchor:start"
+     y="507.9176"
+     x="550.1991"
+     id="tspan951">primers indicis de vida</tspan></text>
+	
+	
+	<path
+   id="path4694"
+   class="st21"
+   d="m 537.07249,534.72751 c 10.72664,-14.12896 29.77159,-11.53219 29.1117,-24.38055"
+   sodipodi:nodetypes="cc" />
+	
+	
+	
+	<path
+   id="path4711"
+   class="st22"
+   d="m 605.9,808.2 c 27.5,-23.8 43.6,-55.4 42.8,-87.7" />
+	<text
+   y="1005.3465"
+   x="542.89941"
+   class="st16 st17"
+   id="text111"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle"
+     y="1005.3465"
+     x="542.89941"
+     id="tspan975">c. 2.300 Ma:</tspan><tspan
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle"
+     y="1022.0132"
+     x="542.89941"
+     id="tspan977">Primer gran increment de nivells atmosfèrics d'oxigen;</tspan><tspan
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-anchor:middle"
+     y="1038.6798"
+     x="542.89941"
+     id="tspan979">primer esdeveniment de Bola de neu (Glaciació Huroniana)</tspan></text>
+	
+	
+	<path
+   id="path4721"
+   class="st22"
+   d="m 377.6,1016.6 c -15.7,-0.3 -32.9,-10.5 -40.1,-22.1" />
+	
+	
+	
+	<text
+   y="446.6752"
+   x="17.184099"
+   class="st16 st17"
+   id="text124"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="text-align:center;text-anchor:middle"
+     y="446.6752"
+     x="17.184099"
+     id="tspan933">c. 540 Ma:</tspan><tspan
+     style="text-align:center;text-anchor:middle"
+     y="463.20584"
+     x="17.184099"
+     id="tspan935">Explosió del Cambrià</tspan></text>
+	
+	<path
+   id="path4743"
+   class="st23"
+   d="M 130.8,480.8 C 117.2,462.7 102.5,461.2 82.2,460.3" />
+	<text
+   y="389.98029"
+   x="60.851326"
+   class="st16 st17"
+   id="text129"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="text-align:center;text-anchor:middle"
+     y="389.98029"
+     x="60.851326"
+     id="tspan929">c. 380 Ma:</tspan><tspan
+     style="text-align:center;text-anchor:middle"
+     y="406.51093"
+     x="60.851326"
+     id="tspan931">Primers vertebrats terrestres</tspan></text>
+	
+	<path
+   id="path4751"
+   class="st24"
+   d="m 182.6,427.8 c -5.4,-9.2 -17,-20.5 -35.7,-23.1" />
+	<text
+   y="327.9711"
+   x="204.49675"
+   class="st16 st17"
+   id="text134"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="text-align:center;text-anchor:middle"
+     y="327.9711"
+     x="204.49675"
+     id="tspan1005">230-66 Ma:</tspan><tspan
+     style="text-align:center;text-anchor:middle"
+     y="344.63773"
+     x="204.49675"
+     id="tspan1007">Dinosaures</tspan></text>
+	
+	<path
+   id="path4759"
+   class="st25"
+   d="m 239.9,343.2 29.5,21.5 z" />
+	<text
+   y="292.77594"
+   x="291.03979"
+   class="st16 st17"
+   id="text139"
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"><tspan
+     style="font-size:13.3333px;text-align:center;text-anchor:middle"
+     y="292.77594"
+     x="291.03979"
+     id="tspan1009">2 Ma:</tspan><tspan
+     style="font-size:13.3333px;text-align:center;text-anchor:middle"
+     y="309.44257"
+     x="291.03979"
+     id="tspan1011">Primers Homínins</tspan></text>
+	
+	<path
+   id="path4770"
+   class="st21"
+   d="M 340.2,353.3 306.47587,313.44077"
+   sodipodi:nodetypes="cc"
+   style="stroke:#882020;stroke-opacity:1" />
+	
+		<path
+   id="path9223"
+   class="st26"
+   d="m 240.101,374.83447 a 336.03714,349.58344 0 0 1 60.17222,-12.74351" />
+	<path
+   id="path3271"
+   class="st1"
+   d="M 518.3,551.5 443,624.6 c 4.5,4.8 6.9,7.7 9,10.5 2.1,2.8 4.2,5.5 7.5,10.6 L 548,589.4 c -6.8,-11.7 -21.7,-29.7 -29.7,-37.9 z" />
+	
+	
+	
+	
+		<path
+   id="path1019"
+   class="st27"
+   d="m 91.4,549.2 -9.9,14.6 -28.2,-3.1 z" />
+	
+		<path
+   id="path1019-2"
+   class="st28"
+   d="m 89.3,525.4 -6.1,8 -15.548551,-26.22971 z"
+   sodipodi:nodetypes="cccc" />
+<text
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.2245px;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   id="text146-0"
+   class="st16 st17"
+   x="-3.8554077"
+   y="549.24701"><tspan
+     id="tspan937-3"
+     x="-3.8554077"
+     y="549.24701"
+     style="font-size:13.3333px;text-align:center;text-anchor:middle">c. 716–660 Ma:</tspan><tspan
+     id="tspan939-1"
+     x="-3.8554077"
+     y="565.91364"
+     style="font-size:13.3333px;text-align:center;text-anchor:middle">Glaciació Sturtiana</tspan><tspan
+     id="tspan941-7"
+     x="-3.8554077"
+     y="582.48224"
+     style="font-size:12px;text-align:center;text-anchor:middle">(període de Bola de neu)</tspan></text><text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:13.3333px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+   x="633.1402"
+   y="679.28558"
+   id="text13"><tspan
+     sodipodi:role="line"
+     id="tspan13"
+     x="633.1402"
+     y="679.28558"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial">c. 3.200 Ma:</tspan><tspan
+     sodipodi:role="line"
+     x="633.1402"
+     y="696.07379"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial"
+     id="tspan14">Primers indicis</tspan><tspan
+     sodipodi:role="line"
+     x="633.1402"
+     y="712.86206"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial"
+     id="tspan15">de la fotosíntesi</tspan></text><text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:13.3333px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+   x="5.1013131"
+   y="491.48413"
+   id="text16"><tspan
+     sodipodi:role="line"
+     id="tspan16"
+     x="5.1013131"
+     y="491.48413"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;text-anchor:middle">c. 650–635 Ma:</tspan><tspan
+     sodipodi:role="line"
+     x="5.1013131"
+     y="508.27234"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;text-anchor:middle"
+     id="tspan17">Glaciació Marinoana</tspan><tspan
+     sodipodi:role="line"
+     x="5.1013131"
+     y="525.06061"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;text-align:center;text-anchor:middle"
+     id="tspan18">(Període de Bola de neu)</tspan></text><text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:13.3333px;line-height:1.25;font-family:sans-serif;fill:#000000;fill-opacity:1;stroke:none"
+   x="-55.775028"
+   y="998.64099"
+   id="text10"><tspan
+     sodipodi:role="line"
+     id="tspan10"
+     x="-55.775028"
+     y="998.64099"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic'">Llegenda:</tspan><tspan
+     sodipodi:role="line"
+     x="-55.775028"
+     y="1015.3968"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic'"
+     id="tspan20"><tspan
+   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Arial;-inkscape-font-specification:'Arial Bold Italic'"
+   id="tspan21">Ma</tspan>  - Milions d'anys d'avui</tspan><tspan
+     sodipodi:role="line"
+     x="-55.775028"
+     y="1032.1852"
+     style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic'"
+     id="tspan11"><tspan
+   style="font-style:italic;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:Arial;-inkscape-font-specification:'Arial Bold Italic'"
+   id="tspan19">c.</tspan>    - &quot;al voltant de&quot;</tspan></text></g>
+</svg>

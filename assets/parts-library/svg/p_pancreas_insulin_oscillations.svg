@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="491.52457"
+   height="152.4554"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="C:\Users\Mikael\Pictures\Internet\Wikipedia"
+   sodipodi:docname="Pancreas insulin oscillations.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4">
+    <linearGradient
+       y2="278.4183"
+       x2="338.45941"
+       y1="304.0188"
+       x1="333.4592"
+       gradientTransform="matrix(0.9997,-2.38e-2,-2.38e-2,-0.9997,-72.901888,800.87159)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient2183"
+       xlink:href="#XMLID_45_"
+       inkscape:collect="always" />
+    <linearGradient
+       y2="273.9552"
+       x2="336.85272"
+       y1="285.60535"
+       x1="335.52158"
+       gradientTransform="matrix(0.9997,-2.38e-2,-2.38e-2,-0.9997,-72.40189,811.37159)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient2180"
+       xlink:href="#XMLID_45_"
+       inkscape:collect="always" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="375"
+     inkscape:cy="172.12274"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1008"
+     inkscape:window-height="718"
+     inkscape:window-x="0"
+     inkscape:window-y="14" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-46.102948,-503.52016)">
+    <g
+       style="fill:#ff6600;stroke:none;overflow:visible"
+       id="g10337"
+       transform="matrix(1.9962324,-0.4866239,0.4073279,1.6709438,-539.61632,-147.19459)">
+      <path
+         id="path775"
+         style="fill:#ff6600;stroke:none"
+         d="" />
+      <path
+         sodipodi:nodetypes="ccccccsscccccccssscccsccccccscccsscssssccssc"
+         d="M 229.36201,544.75079 C 230.54241,544.02184 231.63015,542.99344 232.61433,541.74499 C 234.74273,552.29323 251.11984,546.51992 252.494,538.90992 C 278.3737,488.60234 231.234,547.83005 196.14824,525.36631 C 199.15599,531.72072 206.59307,542.83007 211.06403,538.06267 C 210.971,538.48938 211.07861,539.19246 211.04098,539.41155 C 212.07042,538.86639 212.63874,537.7844 212.87862,536.68525 C 212.26777,539.49011 219.43905,543.97835 221.44534,544.98504 C 224.3814,546.45591 227.04911,546.17803 229.36201,544.75079 z M 228.64626,532.97386 C 229.82666,532.24491 230.9144,531.21651 231.89858,529.96806 C 234.02698,540.5163 250.40409,534.74299 251.77825,527.13299 C 257.0359,532.10966 273.0012,532.85448 272.97987,523.27632 C 279.42515,528.30073 298.80496,529.61015 294.12414,517.38266 C 299.94032,524.72084 304.7565,521.84675 304.55547,514.14408 C 310.54887,520.02919 318.8031,512.50362 320.53845,506.84991 C 319.07698,511.61117 330.35437,509.47315 331.89148,508.32922 C 334.1382,506.65783 333.97867,504.20247 335.35615,502.22469 C 335.94822,501.38062 339.22215,498.52306 339.43698,497.71826 C 342.10512,487.80764 330.05865,483.02466 321.93546,487.11301 C 322.63566,488.43218 323.62497,489.17962 324.66726,490.25618 C 319.90848,486.25953 309.81794,491.41713 307.25287,489.00369 C 308.68993,490.35612 310.23818,492.19765 311.78521,493.27491 C 307.70317,489.40925 299.61929,489.52114 294.67135,491.09226 C 296.77061,492.31884 298.57955,494.1149 300.32314,495.41693 C 294.82335,491.11354 288.40961,491.28475 281.83869,492.58769 C 283.44954,493.69166 285.30329,495.60605 287.05758,496.80962 C 282.36604,491.41657 274.79488,490.74485 268.16324,491.54711 C 268.77498,493.49813 269.534,495.68664 270.68015,497.44493 C 266.1649,490.51364 253.43091,488.08166 246.57639,492.09567 C 248.58995,494.42703 250.73244,497.1469 250.54636,500.17317 C 245.56308,490.9792 235.07117,486.7738 225.23736,491.62813 C 228.16963,494.59607 230.26871,499.17551 231.27563,502.8536 C 229.48116,496.30749 221.8843,490.76186 214.82631,491.52199 C 211.35021,491.89778 196.22547,495.54804 201.39506,500.86744 C 195.68777,498.2632 189.37181,502.1417 190.12023,508.2421 C 190.37317,510.30551 191.68101,512.111 191.95212,514.22286 C 192.15781,515.83508 191.52683,516.88813 191.43689,518.25283 C 191.28623,520.52881 192.67378,522.41617 193.78874,524.77129 C 196.79649,531.1257 205.87732,531.05314 210.34828,526.28574 C 210.25525,526.71245 206.29289,531.83808 206.25526,532.05716 C 207.2847,531.51201 211.43169,534.96512 211.67157,533.86597 C 211.06073,536.67083 218.7233,532.20142 220.72959,533.20811 C 223.66565,534.67898 226.33336,534.4011 228.64626,532.97386 z "
+         style="fill:#ff6600;stroke:none;stroke-width:0.60000002"
+         id="path2178" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="131.90584"
+       y="519.46716"
+       id="text11310"><tspan
+         sodipodi:role="line"
+         id="tspan11312"
+         x="131.90584"
+         y="519.46716"
+         style="font-size:20px">Pancreas</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 176.26815,591.22142 C 191.93209,634.43859 209.28743,646.36474 230.26815,591.22142 C 246.64052,533.48259 266.57689,545.24193 288.26815,591.22142 C 303.4055,626.7273 316.51657,661.41279 347.26815,590.22142 C 367.78753,540.16114 378.75228,537.84014 407.26815,589.22142 C 430.36969,638.50879 434.23854,649.18698 465.26815,589.22142"
+       id="path6228"
+       sodipodi:nodetypes="cccccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 315.10116,651.89581 L 315.10116,634.89581"
+       id="path10242" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 314.10116,644.89581 L 435.10116,643.89581 L 435.10116,634.89581 L 435.10116,649.89581"
+       id="path10244"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="347.10117"
+       y="628.89581"
+       id="text10246"><tspan
+         sodipodi:role="line"
+         id="tspan10248"
+         x="347.10117"
+         y="628.89581"
+         style="font-size:18px">3-6 min</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 479.51196,634.423 L 476.52435,550.4352 L 468.61441,561.50013 L 476.52435,550.4352 C 478.02838,550.92294 480.24736,550.52825 481.03645,551.89842 C 484.80322,558.43897 484.80139,559.27709 486.1179,561.85727"
+       id="path2253"
+       sodipodi:nodetypes="ccccsc" />
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="485.76813"
+       y="585.67706"
+       id="text2255"><tspan
+         sodipodi:role="line"
+         id="tspan2257"
+         x="485.76813"
+         y="585.67706">insulin </tspan><tspan
+         sodipodi:role="line"
+         x="485.76813"
+         y="605.67706"
+         id="tspan2259">release</tspan></text>
+  </g>
+</svg>

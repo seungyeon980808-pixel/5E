@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1200"
+   height="675"
+   font-family="Liberation Sans,sans-serif"
+   font-size="40"
+   text-anchor="middle"
+   fill="black"
+   version="1.1"
+   id="svg20"
+   sodipodi:docname="1880-_Global_average_sea_level_rise_(SLR)_-_annually-vi.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs20" />
+  <sodipodi:namedview
+     id="namedview20"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.1691667"
+     inkscape:cx="600"
+     inkscape:cy="337.41981"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg20" />
+  <rect
+     width="1200"
+     height="675"
+     x="0"
+     y="0"
+     fill="#fafafa"
+     id="rect1" />
+  <rect
+     width="975"
+     height="546"
+     x="110"
+     y="50"
+     fill="white"
+     id="rect2" />
+  <g
+     stroke="none"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="g2">
+    <path
+       id="UPPER"
+       fill="#eaeaff"
+       d=" M975,596 H110 L110,481 L117,472 L123,500 L130,492 L136,461 L143,464 L149,469 L156,477 L162,474 L169,472  L175,469 L182,472 L188,467 L195,460 L201,473 L208,455 L214,467 L221,460 L227,447 L234,436  L240,446 L247,448 L253,441 L260,429 L266,445 L273,456 L279,447 L286,449 L292,453 L299,446  L305,446 L312,434 L318,438 L325,436 L331,427 L338,415 L344,419 L351,426 L357,429 L364,426  L370,424 L377,421 L383,422 L390,420 L396,431 L403,427 L409,417 L416,420 L422,427 L429,425  L435,419 L442,419 L448,411 L455,405 L461,413 L468,404 L474,410 L481,402 L487,397 L494,389  L500,399 L507,381 L513,381 L520,381 L526,390 L533,386 L539,375 L546,372 L552,365 L559,368  L565,366 L572,351 L578,355 L585,349 L591,353 L598,353 L604,360 L611,340 L617,338 L624,338  L630,332 L637,323 L643,331 L650,333 L656,345 L663,328 L669,336 L676,334 L682,333 L689,322  L695,325 L702,317 L708,303 L715,312 L721,294 L728,297 L734,298 L741,301 L747,291 L754,298  L760,290 L767,271 L773,280 L780,267 L786,268 L793,284 L799,283 L806,282 L812,275 L819,268  L825,265 L832,261 L838,259 L845,262 L851,254 L858,250 L864,243 L871,233 L877,247 L884,234  L890,233 L897,224 L903,220 L910,206 L916,207 L923,207 L929,200 L936,197 L942,184 L949,175  L955,163 L962,160 L968,145 L975,157  " />
+    <path
+       id="LOWER"
+       fill="white"
+       d=" M975,596 H110 L110,555 L117,546 L123,571 L130,562 L136,529 L143,531 L149,533 L156,541 L162,538 L169,536  L175,532 L182,535 L188,530 L195,522 L201,539 L208,521 L214,532 L221,524 L227,507 L234,496  L240,502 L247,502 L253,494 L260,481 L266,497 L273,503 L279,492 L286,494 L292,497 L299,491  L305,491 L312,477 L318,482 L325,479 L331,469 L338,457 L344,459 L351,465 L357,468 L364,465  L370,464 L377,461 L383,462 L390,460 L396,471 L403,469 L409,459 L416,460 L422,465 L429,462  L435,456 L442,457 L448,448 L455,441 L461,449 L468,441 L474,447 L481,438 L487,434 L494,426  L500,433 L507,414 L513,414 L520,414 L526,423 L533,419 L539,408 L546,401 L552,393 L559,394  L565,390 L572,375 L578,379 L585,372 L591,376 L598,374 L604,382 L611,361 L617,358 L624,358  L630,353 L637,343 L643,351 L650,353 L656,366 L663,348 L669,357 L676,354 L682,353 L689,343  L695,346 L702,338 L708,324 L715,333 L721,315 L728,317 L734,319 L741,321 L747,312 L754,319  L760,310 L767,291 L773,299 L780,287 L786,288 L793,304 L799,303 L806,302 L812,295 L819,288  L825,284 L832,280 L838,280 L845,282 L851,274 L858,270 L864,264 L871,253 L877,268 L884,255  L890,253 L897,245 L903,241 L910,227 L916,228 L923,227 L929,221 L936,218 L942,204 L949,196  L955,184 L962,183 L968,170 L975,184  " />
+  </g>
+  <path
+     stroke="black"
+     stroke-width="0.25"
+     stroke-dasharray="10,19.89"
+     d=" M100,50 h995 M100,89 h995 M100,128 h995 M100,167 h995 M100,206 h995 M100,245 h995 M100,284 h995 M100,323 h995 M100,362 h995 M100,401 h995 M100,440 h995 M100,479 h995 M100,518 h995 M100,557 h995 M100,596 h995 "
+     id="path2" />
+  <g
+     font-size="35"
+     id="g9">
+    <g
+       transform="translate(1145,0)"
+       id="g4">
+      <text
+         y="140"
+         id="text2">10&quot;</text>
+      <text
+         y="335"
+         id="text3">5&quot;</text>
+      <text
+         y="530"
+         id="text4">0&quot;</text>
+    </g>
+    <g
+       transform="translate(55,0)"
+       id="g8">
+      <text
+         y="140"
+         id="text5">254</text>
+      <text
+         y="170"
+         font-size="30"
+         id="text6">mm</text>
+      <text
+         y="335"
+         id="text7">127</text>
+      <text
+         y="530"
+         id="text8">0</text>
+    </g>
+  </g>
+  <path
+     stroke="black"
+     stroke-width="0.25"
+     d=" M110,50 v556 M175,50 v556 M240,50 v556 M305,50 v556 M370,50 v556 M435,50 v556 M500,50 v556 M565,50 v556 M630,50 v556 M695,50 v556 M760,50 v556 M825,50 v556 M890,50 v556 M955,50 v556 M1020,50 v556 M1085,50 v556 "
+     id="path9" />
+  <g
+     font-size="35"
+     transform="translate(0,650)"
+     id="g16">
+    <text
+       x="110"
+       id="text9">1880</text>
+    <text
+       x="240"
+       id="text10">1900</text>
+    <text
+       x="370"
+       id="text11">1920</text>
+    <text
+       x="500"
+       id="text12">1940</text>
+    <text
+       x="630"
+       id="text13">1960</text>
+    <text
+       x="760"
+       id="text14">1980</text>
+    <text
+       x="890"
+       id="text15">2000</text>
+    <text
+       x="1020"
+       id="text16">2020</text>
+  </g>
+  <g
+     stroke-width="4"
+     fill="none"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="g17">
+    <path
+       id="TIDEGAUGES"
+       stroke="#27b"
+       d=" M110,518 L117,509 L123,535 L130,527 L136,495 L143,497 L149,501 L156,509 L162,506 L169,504  L175,501 L182,504 L188,499 L195,491 L201,506 L208,488 L214,500 L221,492 L227,477 L234,466  L240,474 L247,475 L253,468 L260,455 L266,471 L273,480 L279,469 L286,471 L292,475 L299,468  L305,468 L312,456 L318,460 L325,458 L331,448 L338,436 L344,439 L351,446 L357,448 L364,446  L370,444 L377,440 L383,442 L390,440 L396,451 L403,448 L409,438 L416,440 L422,446 L429,444  L435,438 L442,438 L448,429 L455,423 L461,431 L468,422 L474,428 L481,420 L487,416 L494,408  L500,416 L507,397 L513,397 L520,397 L526,407 L533,403 L539,391 L546,387 L552,379 L559,381  L565,378 L572,363 L578,367 L585,360 L591,365 L598,364 L604,371 L611,351 L617,348 L624,348  L630,343 L637,333 L643,341 L650,343 L656,355 L663,338 L669,346 L676,344 L682,343 L689,333  L695,335 L702,328 L708,314 L715,323 L721,305 L728,307 L734,309 L741,311 L747,301 L754,309  L760,300 L767,280 L773,289 L780,277 L786,278 L793,294 L799,293 L806,292 L812,285 L819,278  L825,274 L832,270 L838,270 L845,272 L851,264 L858,260 L864,254 L871,243 L877,258 L884,245  L890,243 L897,234 L903,231 L910,217 L916,217 L923,217 L929,210 L936,208 L942,194 L949,185  L955,174 L962,171 L968,158 L975,171  " />
+    <path
+       id="SATELLITE"
+       stroke="#284"
+       stroke-dasharray="8,6"
+       d=" M845,272 L851,267 L858,261 L864,256 L871,254 L877,254 L884,251  L890,248 L897,240 L903,235 L910,229 L916,227 L923,223 L929,218 L936,219 L942,213 L949,207  L955,205 L962,207 L968,192 L975,188 L981,183 L988,170 L994,165 L1001,163 L1007,158 L1014,148  L1020,144 L1027,136  " />
+  </g>
+  <g
+     font-size="50px"
+     transform="translate(470.52744,166.82965)"
+     id="g18">
+    <text
+       id="text17"
+       style="font-size:42.6667px">Mức dâng mực nước biển</text>
+    <text
+       y="50"
+       id="text18"
+       style="font-size:42.6667px">trung bình toàn cầu</text>
+  </g>
+  <g
+     text-anchor="start"
+     font-size="35"
+     id="g20">
+    <text
+       x="550.98718"
+       y="438.13187"
+       fill="#2277bb"
+       id="text19">Thủy triều đo</text>
+    <text
+       x="906.84247"
+       y="273.28937"
+       fill="#228844"
+       id="text20">Vệ tinh</text>
+  </g>
+  <!-- Cover edges of plot area -->
+  <rect
+     width="975"
+     height="546"
+     x="110"
+     y="50"
+     stroke="#888888"
+     stroke-width="1"
+     fill="none"
+     id="rect20" />
+</svg>

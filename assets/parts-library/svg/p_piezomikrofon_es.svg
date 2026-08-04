@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:ns2="http://ns.adobe.com/Extensibility/1.0/"
+   xmlns:ns1="http://ns.adobe.com/Flows/1.0/"
+   xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.0"
+   width="806"
+   height="454"
+   viewBox="0 0 806 454"
+   id="svg2466"
+   xml:space="preserve"><defs
+   id="defs2576" />
+	<style
+   type="text/css"
+   id="style2468" />
+	
+		<g
+   id="layer1">
+			<path
+   d="M 285.265,135.364 C 285.302,137.576 285.359,144.262 285.359,155.458 C 600.527,155.458 629.297,159.959 629.297,175.146 C 629.297,191.684 629.297,218.605 629.297,245.427 C 629.297,246.5 629.297,247.166 629.297,248.24 C 629.297,275.061 629.297,301.983 629.297,318.521 C 629.297,333.708 600.527,338.209 285.359,338.209 C 285.359,349.405 285.427,354.778 285.39,357.928 C 626.053,357.913 649.515,348.816 649.515,320.553 C 649.515,305.882 649.515,276.782 649.515,248.24 C 649.515,247.13 649.515,246.537 649.515,245.427 C 649.515,216.885 649.515,187.786 649.515,173.114 C 649.515,144.852 625.928,135.378 285.265,135.364 z "
+   style="fill:#d3d7cf;stroke:#babdb6"
+   id="path4307" />
+			<rect
+   width="11.554"
+   height="172.285"
+   x="293.41699"
+   y="160.338"
+   style="fill:#c4a000"
+   id="rect8389" /> 
+			<g
+   id="g12301">
+				<path
+   d="M 75.827,121.458 L 52.171,135.114 C 65.06,166.493 72.202,200.854 72.202,236.895 C 72.202,277.103 63.333,315.245 47.483,349.458 L 71.764,363.489 C 86.743,324.631 95.045,281.843 95.045,236.895 C 95.046,196.209 88.226,157.294 75.827,121.458 z "
+   style="opacity:0.27999998;fill:#204a87"
+   id="path3312" />
+				<path
+   d="M 144.89,79.239 L 121.452,92.802 C 135.038,137.703 142.483,186.242 142.483,236.896 C 142.483,291.889 133.714,344.399 117.827,392.459 L 141.64,406.209 C 156.939,353.603 165.328,296.519 165.328,236.896 C 165.327,181.646 158.12,128.583 144.89,79.239 z "
+   style="opacity:0.27999998;fill:#3465a4"
+   id="path3316" />
+				<path
+   d="M 213.077,42.208 L 186.202,57.708 C 201.169,113.742 209.327,174.062 209.327,236.896 C 209.327,304.129 199.982,368.494 182.952,427.802 L 209.858,443.365 C 227.967,379.194 237.889,309.598 237.889,236.896 C 237.89,168.623 229.14,103.082 213.077,42.208 z "
+   style="opacity:0.27999998;fill:#729fcf"
+   id="path3320" />
+				<g
+   id="g12297">
+					
+						<line
+   id="path10355"
+   fill="none"
+   stroke="#3465A4"
+   stroke-width="5"
+   stroke-dasharray="10 5"
+   x1="25.249001"
+   y1="248.48801"
+   x2="266.67499"
+   y2="248.48801"
+   style="fill:none;stroke:#3465a4;stroke-width:5;stroke-dasharray:10, 5" />
+					<polygon
+   points="252.66,239.99 275.744,249.043 252.625,257.912 252.66,239.99 "
+   style="fill:#3465a4"
+   id="path11326" />
+				</g>
+			</g>
+			<g
+   id="g13310">
+				
+					<line
+   id="path13312"
+   fill="none"
+   stroke="#555753"
+   stroke-width="5"
+   stroke-dasharray="10 5"
+   x1="659.20203"
+   y1="245.202"
+   x2="780.41998"
+   y2="245.202"
+   style="fill:none;stroke:#555753;stroke-width:5;stroke-dasharray:10, 5" />
+				<polygon
+   points="766.404,236.704 789.488,245.758 766.37,254.627 766.404,236.704 "
+   style="fill:#555753"
+   id="path13314" />
+			</g>
+			<rect
+   width="20"
+   height="180"
+   x="444.5"
+   y="156.5"
+   style="fill:#d3d7cf;stroke:#babdb6"
+   id="rect2485" /> 
+			<polygon
+   points="339.875,306.535 305,246.13 339.875,185.723 409.624,185.723 444.5,246.13 409.624,306.535 339.875,306.535 "
+   style="fill:none;stroke:#000000;stroke-width:3"
+   id="polygon2487" />
+			<g
+   id="switch2489">
+				<foreignObject
+   id="foreignObject2491"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M321.974,252.578" />
+						</ns1:region>
+						<ns1:flow
+   font-size="24"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">+</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_1_" />
+				</foreignObject>
+				<text
+   transform="translate(321.9741,252.5781)"
+   id="XMLID_1_"><tspan
+     x="0"
+     y="0"
+     style="font-size:24px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2494">+</tspan></text>
+
+			</g>
+			<g
+   id="switch2496">
+				<foreignObject
+   id="foreignObject2498"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M344.316,211.746" />
+						</ns1:region>
+						<ns1:flow
+   font-size="29"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">-</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_2_" />
+				</foreignObject>
+				<text
+   transform="translate(344.3164,211.7456)"
+   id="XMLID_2_"><tspan
+     x="0"
+     y="0"
+     style="font-size:29px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2501">-</tspan></text>
+
+			</g>
+			<g
+   id="switch2503">
+				<foreignObject
+   id="foreignObject2505"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M344.316,294.952" />
+						</ns1:region>
+						<ns1:flow
+   font-size="29"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">-</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_3_" />
+				</foreignObject>
+				<text
+   transform="translate(344.3164,294.9521)"
+   id="XMLID_3_"><tspan
+     x="0"
+     y="0"
+     style="font-size:29px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2508">-</tspan></text>
+
+			</g>
+			<g
+   id="switch2510">
+				<foreignObject
+   id="foreignObject2512"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M392.854,211.746" />
+						</ns1:region>
+						<ns1:flow
+   font-size="24"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">+</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_4_" />
+				</foreignObject>
+				<text
+   transform="translate(392.8535,211.7456)"
+   id="XMLID_4_"><tspan
+     x="0"
+     y="0"
+     style="font-size:24px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2515">+</tspan></text>
+
+			</g>
+			<g
+   id="switch2517">
+				<foreignObject
+   id="foreignObject2519"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M392.854,294.952" />
+						</ns1:region>
+						<ns1:flow
+   font-size="24"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">+</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_5_" />
+				</foreignObject>
+				<text
+   transform="translate(392.8535,294.9521)"
+   id="XMLID_5_"><tspan
+     x="0"
+     y="0"
+     style="font-size:24px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2522">+</tspan></text>
+
+			</g>
+			<g
+   id="switch2524">
+				<foreignObject
+   id="foreignObject2526"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M413.654,253.349" />
+						</ns1:region>
+						<ns1:flow
+   font-size="29"
+   font-family="'Myriad-Roman'">
+							<ns1:p><ns1:span
+     stroke-width="2"
+     stroke="#5C3566">-</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_6_" />
+				</foreignObject>
+				<text
+   transform="translate(413.6543,253.3486)"
+   id="XMLID_6_"><tspan
+     x="0"
+     y="0"
+     style="font-size:29px;stroke:#5c3566;stroke-width:2;font-family:Myriad-Roman"
+     id="tspan2529">-</tspan></text>
+
+			</g>
+			<line
+   i:knockout="Off"
+   fill="none"
+   stroke="#5C3566"
+   stroke-width="5"
+   x1="310.07901"
+   y1="255.5"
+   x2="310.07901"
+   y2="327.5"
+   id="line2531"
+   style="fill:none;stroke:#5c3566;stroke-width:5" />
+			<line
+   i:knockout="Off"
+   fill="none"
+   stroke="#5C3566"
+   stroke-width="5"
+   x1="308"
+   y1="327.5"
+   x2="679.5"
+   y2="327.5"
+   id="line2533"
+   style="fill:none;stroke:#5c3566;stroke-width:5" />
+			<line
+   i:knockout="Off"
+   fill="none"
+   stroke="#5C3566"
+   stroke-width="5"
+   x1="444.5"
+   y1="246.13"
+   x2="537"
+   y2="246.13"
+   id="line2535"
+   style="fill:none;stroke:#5c3566;stroke-width:5" />
+			<line
+   i:knockout="Off"
+   fill="none"
+   stroke="#5C3566"
+   stroke-width="5"
+   x1="534.5"
+   y1="246.13"
+   x2="534.5"
+   y2="273.5"
+   id="line2537"
+   style="fill:none;stroke:#5c3566;stroke-width:5" />
+			<line
+   i:knockout="Off"
+   fill="none"
+   stroke="#5C3566"
+   stroke-width="5"
+   x1="532"
+   y1="273.5"
+   x2="678.5"
+   y2="273.5"
+   id="line2539"
+   style="fill:none;stroke:#5c3566;stroke-width:5" />
+			<line
+   id="path12309"
+   fill="none"
+   stroke="#000000"
+   stroke-width="3"
+   x1="299.74701"
+   y1="170.717"
+   x2="342.98199"
+   y2="66.166"
+   style="fill:none;stroke:#000000;stroke-width:3" />
+			<g
+   id="switch2542">
+				<foreignObject
+   id="foreignObject2544"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="0.9659 -0.2588 0.2588 0.9659 0 0">
+							<ns1:path
+   d="M68.375,200.971" />
+						</ns1:region>
+						<ns1:flow
+   font-size="31"
+   font-family="'ArialMT'">
+							<ns1:p><ns1:span>Onda sonora</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_7_" />
+				</foreignObject>
+				<text
+   transform="matrix(0.9659,-0.2588,0.2588,0.9659,68.375,200.9712)"
+   id="XMLID_7_"><tspan
+     x="0"
+     y="0"
+     style="font-size:31px;font-family:ArialMT"
+     id="tspan2547">Onda sonora</tspan></text>
+
+			</g>
+			<g
+   id="switch2549">
+				<foreignObject
+   id="foreignObject2551"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M300.5,57.5" />
+						</ns1:region>
+						<ns1:flow
+   font-size="31"
+   font-family="'ArialMT'">
+							<ns1:p><ns1:span>Membrana</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_8_" />
+				</foreignObject>
+				<text
+   transform="translate(250.0,57.5)"
+   id="XMLID_8_"><tspan
+     x="0"
+     y="0"
+     style="font-size:31px;font-family:ArialMT"
+     id="tspan2554">Membrana</tspan></text>
+
+			</g>
+			<g
+   id="switch2556">
+				<foreignObject
+   id="foreignObject2558"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M696.5,282.354" />
+						</ns1:region>
+						<ns1:flow
+   font-size="31"
+   font-family="'ArialMT'">
+							<ns1:p><ns1:span>Señal</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_9_" />
+				</foreignObject>
+				<text
+   transform="translate(696.5,282.3535)"
+   id="XMLID_9_"><tspan
+     x="0"
+     y="0"
+     style="font-size:31px;font-family:ArialMT"
+     id="tspan2561">Señal</tspan></text>
+
+			</g>
+			<line
+   id="path5547"
+   fill="none"
+   stroke="#000000"
+   stroke-width="3"
+   x1="356.02399"
+   y1="183.5"
+   x2="453.5"
+   y2="102.482"
+   style="fill:none;stroke:#000000;stroke-width:3" />
+			<g
+   id="switch2564">
+				<foreignObject
+   id="foreignObject2566"
+   overflow="visible"
+   height="1"
+   width="1"
+   y="0"
+   x="0"
+   requiredExtensions="http://ns.adobe.com/Flows/1.0/">
+					<ns1:flowDef>
+						<ns1:region
+   textMatrix="1 0 0 1 0 0">
+							<ns1:path
+   d="M462.5,57.5" />
+						</ns1:region>
+						<ns1:flow
+   font-size="31"
+   font-family="'ArialMT'">
+							<ns1:p><ns1:span>Elemento</ns1:span></ns1:p>
+							<ns1:p><ns1:span>Piezoeléctrico</ns1:span></ns1:p>
+						</ns1:flow>
+					</ns1:flowDef>
+					<ns2:targetRef
+   xlink:href="#XMLID_10_" />
+				</foreignObject>
+				<text
+   transform="translate(462.5,57.5)"
+   id="XMLID_10_"><tspan
+     x="0"
+     y="0"
+     style="font-size:31px;font-family:ArialMT"
+     id="tspan2569">Elemento</tspan><tspan
+     x="0"
+     y="38.400002"
+     style="font-size:31px;font-family:ArialMT"
+     id="tspan2571">Piezoeléctrico</tspan></text>
+
+			</g>
+			<rect
+   width="803"
+   height="451"
+   x="1.5"
+   y="1.5"
+   style="fill:none;stroke:#ffffff;stroke-width:3"
+   id="rect2573" /> 
+		</g>
+	</svg>

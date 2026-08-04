@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+	xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="426px" height="288px" viewBox="-3 -2.136 142 96" enable-background="new">
+<g style="fill: none; stroke: #000000">
+	<line x1="122.415" y1="28.641" x2="134.297" y2="35.502" />
+	<line x1="48.989" y1="29.412" x2="61.884" y2="36.861" />
+	<line x1="34.164" y1="37.98" x2="34.164" y2="52.844" />
+	<line x1="61.884" y1="53.963" x2="48.989" y2="61.412" />
+	<line x1="48.343" y1="65.25" x2="48.343" y2="78.846" />
+	<line x1="31.16" y1="55.32" x2="19.107" y2="62.281" />
+	<polyline points="65.534,35.502 82.725,25.574 99.915,35.502 111.797,28.64" />
+	<polygon points="65.534,35.502 65.534,55.32 48.343,65.25 31.16,55.32 31.16,35.502 48.343,25.574" />
+</g>
+<g style="fill: #000000; stroke: none">
+	<polygon points="84.375,12.357 83.175,25.574 82.725,25.574 82.274,25.574 81.074,12.357" />
+	
+	<g style="font-family: 'DejaVu Sans'; font-size: 12px">
+		<text text-anchor="end" x="18.469" y="69">HO</text>
+		<text text-anchor="start" x="43.543" y="89.75">OH</text>
+		<text text-anchor="start" x="77.925" y="10.374">OH</text>
+		<g transform="translate(117.105 29.774)">
+			<text text-anchor="middle">N</text>
+			<text text-anchor="middle" y="-10">H</text>
+		</g>
+	</g>
+</g>
+</svg>

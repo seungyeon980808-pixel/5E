@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Originally created with Inkscape (http://www.inkscape.org/), but ravaged by Incnis Mrsi thereafter.
+	Danish language by Sten Porse -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="171.51422"
+   height="418.74265"
+   id="Palearctic-legend-da"
+   version="1.0">
+  <defs>
+    <style type="text/css">
+      <![CDATA[
+	text { font-size:11.5px; font-style:normal; font-variant:normal; font-weight:normal; font-stretch:normal; text-align:start; line-height:100%; writing-mode:lr-tb; text-anchor:start; fill:#000000; fill-opacity:1; stroke:none; font-family:"Liberation Sans",sans-serif; }
+	.h1 { font-size:16px; font-weight:bold; }
+      ]]>
+     </style>
+  </defs>
+
+  <g id="Palearctic">
+    <text id="text2414" class="h1" x="39" y="13">Palæarktis</text>
+  </g>
+  <g id="NorthernEurope">
+    <text id="text2434" x="41" y="56">Nordeuropa</text>
+    <rect y="40.75" x="0" height="22" width="33" id="rect4814"
+       style="fill:#d49b9b;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  </g>
+  <g id="EasternEurope">
+    <rect
+       style="fill:#cf9090;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4816" width="33" height="22" x="0" y="72.75" />
+    <text id="text2461" x="41" y="88">Østeuropa</text>
+  </g>
+  <g id="AsiaTemperate">
+    <rect y="104.75" x="0" height="22" width="33" id="rect6417"
+       style="fill:#cb8282;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.064;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text6419" x="41" y="120">Tempereret Asien</text>
+  </g>
+  <g id="EasternAsia">
+    <rect y="136.75" x="0" height="22" width="33" id="rect4818"
+       style="fill:#c57373;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.064;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text2467" x="41" y="152">Østasien</text>
+  </g>
+  <g id="MiddleAsia">
+    <rect y="168.75" x="0" height="22" width="33" id="rect4822"
+       style="fill:#bf6464;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text2479" x="41" y="184">Mellemasien</text>
+  </g>
+  <g id="SouthwesternEurope">
+    <rect
+       style="fill:#b75a5a;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect4824" width="33" height="22" x="0" y="200.75" />
+    <text id="text2485" x="41" y="216">Sydvesteuropa</text>
+  </g>
+  <g id="MiddleEurope">
+    <rect y="232.75" x="0" height="22" width="33" id="rect6347"
+       style="fill:#a74949;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text6349" x="41" y="248">Mellemeuropa</text>
+  </g>
+  <g id="Caucasus">
+    <rect
+       style="fill:#bf6464;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect6355" width="33" height="22" x="0" y="264.75" />
+    <text id="text6357" x="41" y="280">Kaukasus</text>
+  </g>
+  <g id="WesternAsia">
+    <rect y="296.75" x="0" height="22" width="33" id="rect7022"
+       style="fill:#b04c4c;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text7024" x="41" y="312">Vestasien</text>
+  </g>
+  <g id="SoutheasternEurope">
+    <rect
+       style="fill:#8f3e3e;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect7030" width="33" height="22" x="0" y="328.75" />
+    <text id="text7032" x="41" y="344">Sydøsteuropa</text>
+  </g>
+  <g id="NorthernAfrica">
+    <rect y="360.75" x="0" height="22" width="33" id="rect5852"
+       style="fill:#803737;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text id="text5854" x="41" y="376">Nordafrika</text>
+  </g>
+  <g id="Macronesia">
+    <rect
+       style="fill:#773333;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.06400000000000000;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect5860" width="33" height="22" x="0" y="392.75" />
+    <text id="text5862" x="41" y="408">Makronesien</text>
+  </g>
+</svg>

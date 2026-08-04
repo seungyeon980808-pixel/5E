@@ -1,0 +1,7 @@
+<svg width="207mm" height="120mm" version="1.1" viewBox="0 0 207 120" xmlns="http://www.w3.org/2000/svg">
+ <rect width="207" height="120" fill="#fff"/>
+ <g fill="none" stroke="#000" stroke-width=".3"><path d="m205.5 106.7v2m-101.7-2v2m51.4-2v2m-101.7-2v2m-50.4-2v2"/><path d="m3 107h9.6v-11.3l.1 11.3h4v-44l.1 44h3.8l.1-48.4v48.4h3.8l.1-13.6v13.6h49l.1-20.4 .4 3.1v17.3h65.6l.1-44.3v44.3h3.8l.1-103.2v103.2h4v-38.7l.1 38.7h57.7"/><path d="m34 29h4m8 0h4m8 0h4m-20-8v4m0 8v4m12-16v4m0 8v4" stroke-width=".5"/></g>
+ <g style="font-family:'Arial';-inkscape-font-specification:'Arial'" font-size="6px" text-anchor="middle"><text x="205" y="114">0</text><text x="155" y="114">1</text><text x="104" y="114">2</text><text x="53" y="114">3</text><text x="3" y="114">4</text><text x="103" y="119">Химический сдвиг, м. д.</text><text x="48" y="13">Этанол</text><text x="74" y="85" fill="#f00">H</text><text x="68" y="31">O<tspan fill="#f00">H</tspan></text>
+ <g fill="#0c0"><text x="54" y="20">H</text><text x="18" y="58">H</text><text x="54" y="42">H</text></g>
+ <g fill="#06f"><text x="140" y="9">H</text><text x="42" y="20">H</text><text x="31" y="31">H</text><text x="42" y="42">H</text></g>
+ <text x="42" y="31">C</text><text x="54" y="31">C</text></g></svg>

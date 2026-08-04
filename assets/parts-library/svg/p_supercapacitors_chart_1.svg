@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.0" width="775" height="480" id="svg2" sodipodi:version="0.32" inkscape:version="0.46" sodipodi:docname="Supercapacitors_chart_1.svg" inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata id="metadata82">
+    <rdf:RDF>
+      <cc:Work rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview inkscape:window-height="750" inkscape:window-width="1280" inkscape:pageshadow="2" inkscape:pageopacity="0.0" guidetolerance="10.0" gridtolerance="10.0" objecttolerance="10.0" borderopacity="1.0" bordercolor="#666666" pagecolor="#ffffff" id="base" showgrid="false" inkscape:zoom="0.70193548" inkscape:cx="387.5" inkscape:cy="240" inkscape:window-x="-8" inkscape:window-y="-8" inkscape:current-layer="svg2"/>
+  <defs id="defs5">
+    <inkscape:perspective sodipodi:type="inkscape:persp3d" inkscape:vp_x="0 : 240 : 1" inkscape:vp_y="0 : 1000 : 0" inkscape:vp_z="775 : 240 : 1" inkscape:persp3d-origin="387.5 : 160 : 1" id="perspective84"/>
+    <linearGradient id="linearGradient3832">
+      <stop style="stop-color: rgb(51, 153, 255); stop-opacity: 1;" offset="0" id="stop3834"/>
+      <stop style="stop-color: rgb(51, 153, 255); stop-opacity: 1;" offset="0.5" id="stop3836"/>
+      <stop style="stop-color: rgb(51, 153, 255); stop-opacity: 0;" offset="1" id="stop3838"/>
+    </linearGradient>
+    <linearGradient id="linearGradient3820">
+      <stop style="stop-color: red; stop-opacity: 1;" offset="0" id="stop3822"/>
+      <stop style="stop-color: red; stop-opacity: 1;" offset="0.5" id="stop3824"/>
+      <stop style="stop-color: red; stop-opacity: 0;" offset="1" id="stop3826"/>
+    </linearGradient>
+    <linearGradient id="linearGradient3805">
+      <stop style="stop-color: yellow; stop-opacity: 1;" offset="0" id="stop3807"/>
+      <stop style="stop-color: yellow; stop-opacity: 1;" offset="0.5" id="stop3812"/>
+      <stop style="stop-color: yellow; stop-opacity: 0;" offset="1" id="stop3809"/>
+    </linearGradient>
+    <linearGradient id="linearGradient3781">
+      <stop style="stop-color: rgb(0, 204, 0); stop-opacity: 1;" offset="0" id="stop3783"/>
+      <stop style="stop-color: rgb(0, 204, 0); stop-opacity: 1;" offset="0.5" id="stop3814"/>
+      <stop style="stop-color: rgb(0, 204, 0); stop-opacity: 0;" offset="1" id="stop3785"/>
+    </linearGradient>
+    <radialGradient cx="181" cy="43" r="56" fx="181" fy="43" id="radialGradient3787" xlink:href="#linearGradient3781" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.965517, 0, 0, 0.482759, 6.24138, 22.2414)"/>
+    <radialGradient cx="181" cy="43" r="56" fx="181" fy="43" id="radialGradient3799" xlink:href="#linearGradient3781" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.965517, 0, 0, 0.482759, -108.475, 101.038)"/>
+    <radialGradient cx="181" cy="43" r="56" fx="181" fy="43" id="radialGradient3803" xlink:href="#linearGradient3805" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.965517, 0, 0, 0.482759, 6.24138, 22.2414)"/>
+    <radialGradient cx="181" cy="43" r="56" fx="181" fy="43" id="radialGradient3818" xlink:href="#linearGradient3820" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.965517, 0, 0, 0.482759, 6.24138, 22.2414)"/>
+    <radialGradient cx="181" cy="43" r="56" fx="181" fy="43" id="radialGradient3830" xlink:href="#linearGradient3832" gradientUnits="userSpaceOnUse" gradientTransform="matrix(0.965517, 0, 0, 0.482759, 6.24138, 22.2414)"/>
+  </defs>
+  
+  <path d="M 138,30 L 138,371" style="fill: none; fill-opacity: 0.75; fill-rule: evenodd; stroke: black; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1;" id="path1873"/>
+  
+  <use transform="translate(580)" id="use2760" x="0" y="0" width="706" height="423" xlink:href="#path1873"/>
+  
+  <path d="M 138.52734,30.000008 L 717.47264,30.000008" style="fill: none; fill-opacity: 0.75; fill-rule: evenodd; stroke: black; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1;" id="path2780"/>
+  
+  <use transform="translate(0, 341.116)" id="use2782" x="0" y="0" width="706" height="423" xlink:href="#path2780"/>
+  
+  <path d="M 331.33333,30 L 331.33333,371" style="fill: none; fill-opacity: 0.75; fill-rule: evenodd; stroke: rgb(180, 180, 180); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: 10, 10; stroke-dashoffset: 0pt; stroke-opacity: 1;" id="path2784"/>
+  
+  <use transform="translate(193.333)" id="use2786" x="0" y="0" width="706" height="423" xlink:href="#path2784"/>
+  
+  <path d="M 138.52734,98.223206 L 717.47264,98.223206" style="fill: none; fill-opacity: 0.75; fill-rule: evenodd; stroke: rgb(180, 180, 180); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: 10, 10; stroke-dashoffset: 0pt; stroke-opacity: 1;" id="path2788"/>
+  
+  <use transform="translate(0, 68.2232)" id="use2790" x="0" y="0" width="706" height="423" xlink:href="#path2788"/>
+  <use transform="translate(0, 136.446)" id="use2792" x="0" y="0" width="706" height="423" xlink:href="#path2788"/>
+  <use transform="translate(0, 204.67)" id="use2794" x="0" y="0" width="706" height="423" xlink:href="#path2788"/>
+  
+  <text x="-201.088" y="45.7481" transform="matrix(0, -1, 1, 0, 0, 0)" style="font-size: 28px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2796" xml:space="preserve"><tspan x="-201.088" y="45.7481" id="tspan2798">Energiedichte Wh/kg</tspan></text>
+  <text x="427.439" y="459.418" style="font-size: 28px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2800" xml:space="preserve"><tspan x="427.439" y="459.418" id="tspan2802">Leistungsdichte in W/kg</tspan></text>
+  
+  <text x="137.152" y="411.815" style="font-size: 24px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2808" xml:space="preserve"><tspan x="137.152" y="411.815" id="tspan2810">10</tspan></text>
+  <text x="330.486" y="411.815" style="font-size: 24px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2812" xml:space="preserve"><tspan x="330.486" y="411.815" id="tspan2814">100</tspan></text>
+  <text x="523.819" y="411.815" style="font-size: 24px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2816" xml:space="preserve"><tspan x="523.819" y="411.815" id="tspan2818">1000</tspan></text>
+  <text x="717.152" y="411.815" style="font-size: 24px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2822" xml:space="preserve"><tspan x="717.152" y="411.815" id="tspan2824">10000</tspan></text>
+  
+  <text x="126.347" y="176.338" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2826" xml:space="preserve"><tspan x="126.347" y="176.338"  id="tspan2828">10</tspan></text>
+  <text x="126.347" y="108.115" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2830" xml:space="preserve"><tspan x="126.347" y="108.115"  id="tspan2832">100</tspan></text>
+  <text x="126.347" y="39.8916" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2834" xml:space="preserve"><tspan x="126.347" y="39.8916"  id="tspan2836">1000</tspan></text>
+  <text x="130.147" y="244.732" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2842" xml:space="preserve"><tspan x="130.147" y="244.732"  id="tspan2844">1</tspan></text>
+  <text x="130.147" y="312.784" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2846" xml:space="preserve"><tspan x="130.147" y="312.784"  id="tspan2848">0,1</tspan></text>
+  <text x="130.147" y="381.008" style="font-size: 24px; font-style: normal; font-weight: normal; text-anchor: end; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2850" xml:space="preserve"><tspan x="130.147" y="381.008"  id="tspan2852">0,01</tspan></text>
+  
+  <text x="203.829" y="221.919" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2854" xml:space="preserve"><tspan x="203.829" y="221.919" id="tspan2856">10 h</tspan></text>
+  <text x="435.623" y="149.794" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2858" xml:space="preserve"><tspan x="435.623" y="149.794" id="tspan2860">1 h</tspan></text>
+  <text x="601.782" y="148.144" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2862" xml:space="preserve"><tspan x="601.782" y="148.144" id="tspan2864">1 s</tspan></text>
+  <text x="632.92" y="294.051" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2866" xml:space="preserve"><tspan x="632.92" y="294.051" id="tspan2868">0,03 s</tspan></text>
+  
+  <path d="M 237 43 A 56 28 0 1 1  125,43 A 56 28 0 1 1  237 43 z" transform="matrix(2.94287, -0.888452, 0.388414, 1.54637, -243.921, 211.237)" style="fill: url(#radialGradient3803) rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2.5; stroke-linecap: round; stroke-miterlimit: 4; stroke-dasharray: 10, 10; stroke-dashoffset: 0pt; stroke-opacity: 1;" id="path3801"/>
+  
+  <text x="298.831" y="116.041" style="font-size: 12px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2874" xml:space="preserve">
+	  <tspan x="298.831" y="116.041" style="font-size: 20px; text-align: center; text-anchor: middle;" id="tspan2876">konventionelle</tspan>
+	  <tspan x="298.831" y="141.041" style="font-size: 20px; text-align: center; text-anchor: middle;" id="tspan2878">Batterien</tspan>
+  </text>
+  
+  <path d="M 237 43 A 56 28 0 1 1  125,43 A 56 28 0 1 1  237 43 z" transform="matrix(1.69643, 0, 0, 1.69643, 302.947, 137.054)" style="fill: url(#radialGradient3818) rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2.5; stroke-linecap: round; stroke-miterlimit: 4; stroke-dasharray: 10, 10; stroke-dashoffset: 0pt; stroke-opacity: 1;" id="path3816"/>
+  
+  <text x="609.21" y="215.663" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2880" xml:space="preserve">
+  	<tspan x="609.21" y="215.663" id="tspan2884">Ultracapacitors</tspan>
+  </text>
+  
+  <path d="M 237 43 A 56 28 0 1 1  125,43 A 56 28 0 1 1  237 43 z" transform="matrix(1.03571, 0, 0, 1.03571, 458.536, 292.464)" style="fill: url(#radialGradient3830) rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2.5; stroke-linecap: round; stroke-miterlimit: 4; stroke-dasharray: 10, 10; stroke-dashoffset: 0pt; stroke-opacity: 1;" id="path3828"/>
+  
+  <text x="643.6" y="331.171" style="font-size: 20px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: black; fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: DejaVu Sans;" id="text2888" xml:space="preserve">
+  	<tspan x="643.6" y="331.171" id="tspan2890">konventionelle</tspan>
+  	<tspan x="643.6" y="356.171" id="tspan2892">Kondensatoren</tspan>
+  </text>
+</svg>

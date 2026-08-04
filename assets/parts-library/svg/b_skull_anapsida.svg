@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"    "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" width="1134.436" height="516.967" overflow="visible">
+  <switch>
+    <foreignObject width="1" height="1" x="0" y="0" requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"/>
+    <g>
+      <g id="レイヤー_1">
+        <linearGradient id="XMLID_17_" x1="574.8721" x2="598.7578" y1="471.918" y2="471.918" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_17_)" stroke="#000" stroke-width="2.5" d="M574.872 471.918c0-15.704 5.347-28.435 11.942-28.435 6.597 0 11.943 12.73 11.943 28.435s-11.943 28.435-11.943 28.435-11.942-12.731-11.942-28.435z"/>
+        <linearGradient id="XMLID_18_" x1="519.1396" x2="543.0254" y1="468.5059" y2="468.5059" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_18_)" stroke="#000" stroke-width="2.5" d="M519.14 468.506c0-15.704 5.347-28.435 11.943-28.435 6.596 0 11.943 12.73 11.943 28.435s-11.943 28.435-11.943 28.435-11.943-12.731-11.943-28.435z"/>
+        <linearGradient id="XMLID_19_" x1="470.2314" x2="494.1172" y1="468.5049" y2="468.5049" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_19_)" stroke="#000" stroke-width="2.5" d="M470.231 468.506c0-15.704 5.347-28.436 11.943-28.436 6.595 0 11.943 12.731 11.943 28.436s-11.943 28.435-11.943 28.435-11.943-12.731-11.943-28.435z"/>
+        <linearGradient id="XMLID_20_" x1="413.3618" x2="437.2471" y1="471.918" y2="471.918" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_20_)" stroke="#000" stroke-width="2.5" d="M413.362 471.918c0-15.704 5.347-28.435 11.943-28.435s11.942 12.73 11.942 28.435-11.942 28.435-11.942 28.435-11.943-12.731-11.943-28.435z"/>
+        <linearGradient id="XMLID_21_" x1="359.9043" x2="383.7896" y1="474.1924" y2="474.1924" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_21_)" stroke="#000" stroke-width="2.5" d="M359.904 474.193c0-15.705 5.347-28.436 11.942-28.436s11.943 12.73 11.943 28.436c0 15.704-11.943 28.435-11.943 28.435s-11.942-12.731-11.942-28.435z"/>
+        <linearGradient id="XMLID_22_" x1="304.1719" x2="328.0571" y1="476.4678" y2="476.4678" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_22_)" stroke="#000" stroke-width="2.5" d="M304.172 476.468c0-15.704 5.347-28.435 11.942-28.435s11.943 12.73 11.943 28.435-11.943 28.435-11.943 28.435-11.942-12.731-11.942-28.435z"/>
+        <linearGradient id="XMLID_23_" x1="248.439" x2="272.3242" y1="481.0166" y2="481.0166" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_23_)" stroke="#000" stroke-width="2.5" d="M248.439 481.018c0-15.705 5.347-28.436 11.943-28.436s11.942 12.73 11.942 28.436c0 15.704-11.942 28.435-11.942 28.435s-11.943-12.731-11.943-28.435z"/>
+        <linearGradient id="XMLID_24_" x1="189.2939" x2="213.1797" y1="485.5674" y2="485.5674" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_24_)" stroke="#000" stroke-width="2.5" d="M189.294 485.567c0-15.705 5.348-28.436 11.943-28.436s11.942 12.73 11.942 28.436c0 15.703-11.942 28.435-11.942 28.435s-11.943-12.731-11.943-28.435z"/>
+        <linearGradient id="XMLID_25_" x1="131.2871" x2="155.1729" y1="486.7041" y2="486.7041" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_25_)" stroke="#000" stroke-width="2.5" d="M131.287 486.704c0-15.704 5.347-28.435 11.943-28.435s11.943 12.73 11.943 28.435-11.943 28.436-11.943 28.436-11.943-12.732-11.943-28.436z"/>
+        <linearGradient id="XMLID_26_" x1="72.1426" x2="96.0278" y1="482.2725" y2="482.2725" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_26_)" stroke="#000" stroke-width="2.5" d="M72.143 482.273c0-15.705 5.347-28.436 11.942-28.436 6.596 0 11.943 12.73 11.943 28.436 0 15.704-11.943 28.435-11.943 28.435s-11.942-12.73-11.942-28.435z"/>
+        <linearGradient id="XMLID_27_" x1="30.0586" x2="53.9443" y1="470.8994" y2="470.8994" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#bcb1a9"/>
+          <stop offset="1" stop-color="#7e6247"/>
+        </linearGradient>
+        <path fill="url(#XMLID_27_)" stroke="#000" stroke-width="2.5" d="M30.059 470.899c0-15.704 5.347-28.436 11.943-28.436s11.943 12.731 11.943 28.436-11.943 28.435-11.943 28.435-11.943-12.73-11.943-28.435z"/>
+        <path fill="#FFF" stroke="#000" stroke-linecap="round" stroke-width="7.5" d="M1109.229 250.476c0 151.595 38.444 207.882-148.729 228.146-32.148 3.48-71.255 2.002-117.754 7.555-77.901 9.301-168.003-15.817-285.77-15.811-105.728.007-166.93 2.498-260.882 8.371-111.606 6.975-227.399 11.16-250.735-7.949-30.396-24.89-43.108-22.955-41.47-42.415 1.057-12.549 4.853-27.531 4.25-45.375C7.055 350.883 252.097 11.453 557.055 11.453c352.736 0 552.174-68.607 552.174 239.023z"/>
+        <defs>
+          <path id="XMLID_12_" d="M1109.229 250.476c0 151.595 38.444 207.882-148.729 228.146-32.148 3.48-71.255 2.002-117.754 7.555-77.901 9.301-168.003-15.817-285.77-15.811-105.728.007-166.93 2.498-260.882 8.371-111.606 6.975-227.399 11.16-250.735-7.949-30.396-24.89-43.108-22.955-41.47-42.415 1.057-12.549 4.853-27.531 4.25-45.375C7.055 350.883 252.097 11.453 557.055 11.453c352.736 0 552.174-68.607 552.174 239.023z"/>
+        </defs>
+        <linearGradient id="XMLID_28_" x1="558.1191" x2="558.1191" y1="4.9258" y2="488.2432" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#efe8d9"/>
+          <stop offset="1" stop-color="#ccb17e"/>
+        </linearGradient>
+        <use xlink:href="#XMLID_12_" fill="url(#XMLID_28_)"/>
+        <clipPath id="XMLID_29_">
+          <use xlink:href="#XMLID_12_"/>
+        </clipPath>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M1133.811 68.682c-26.087-5.435-245.087-10.515-273.913 34.783-32.445-47.642-214.131-61.957-241.305-42.392-25-27.174-148.914-23.913-177.175 6.522-55.435 17.391-71.739 70.652-80.435 89.13-50 26.087-139.13 142.392-142.391 156.521-30.435-6.521-131.12 42.207-137.641 53.076" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M218.639 313.261c64 25 165 36 197 59s206.001-4 263.001 139" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M549.889 231.386c98.001 1 185.001 76 253.001 94s90 53 112 54c33 27 69 99 71 136" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M1024.841 503.679c-8.772-31.328-10.338-34.879-.014-59.215 10.321-24.328 13.896-27.677 31.874-58.497 34.44-59.042 5.367-130.338 73.402-120.383" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M159.36 175.491c-53.014 51.618-93.471 181.361-79.52 189.731 13.951 8.371 6.975 113.003 33.482 138.114" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M388.784 41.49c45.46-7.513-18.102 38.41 20.888 42.159" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M557.732.906c35.089-3.76-30.075 31.328-13.785 41.354" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M360.771 156.649c13.752 0 65.596 7.137 79.348 16.305" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-width="1.25" d="M415.701 372.323c13.889-15.74 61.12-30.914 71.274-39.799" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M859.89 103.386c13 32 18 132-57 222" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M584.218 127.74c16.667-14.583 16.667-40.625 34.375-66.667" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M914.89 379.386c31.25-12.5 31.667-20.079 65.001-16.954 33.333 3.125 70.436-.088 81.31 16.036" clip-path="url(#XMLID_29_)"/>
+        <path fill="none" stroke="#000" stroke-linecap="round" stroke-width="1.25" d="M441.951 67.657c8.667 4.666 17.477 40.684 33.644 46.518" clip-path="url(#XMLID_29_)"/>
+        <linearGradient id="XMLID_30_" x1="501.0923" x2="501.0923" y1="343.5479" y2="71.2729" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#9f9f9a"/>
+          <stop offset="1" stop-color="#5b5347"/>
+        </linearGradient>
+        <path fill="url(#XMLID_30_)" stroke="#000" stroke-width="5" d="M638.979 207.41c0 36.744-23.851 136.138-133.152 136.138-177.191 0-143.533-78.853-133.152-136.138 6.522-35.991 66.15-136.138 133.152-136.138 92.371 0 133.152 15.245 133.152 136.138z"/>
+        <linearGradient id="XMLID_31_" x1="105.6392" x2="105.6392" y1="410.5918" y2="304.1846" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stop-color="#9f9f9a"/>
+          <stop offset="1" stop-color="#5b5347"/>
+        </linearGradient>
+        <path fill="url(#XMLID_31_)" stroke="#000" stroke-width="5" d="M165.318 357.388c6.71 28.983-26.523 53.204-59.24 53.204-46.96 0-67.396-18.646-59.239-53.204 6.414-27.174 39.772-53.203 59.239-53.203 32.717 0 53.261 27.383 59.24 53.203z"/>
+      </g>
+    </g>
+  </switch>
+</svg>

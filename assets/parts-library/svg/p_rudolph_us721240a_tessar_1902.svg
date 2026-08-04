@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="190" height="200" version="1.1" viewBox="0 0 190 200" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g stroke="#000">
+  <g fill-opacity=".26667" stroke-linecap="round" stroke-linejoin="bevel" stroke-width=".5">
+   <path d="m32.42 5a215 215 0 0 0-22.42 95 215 215 0 0 0 22.262 95h10.738v-190z" fill="#08f" stroke-opacity=".53333"/>
+   <path d="m54.844 5a742 742 0 0 1 7.1562 95 742 742 0 0 1-6.9902 95h19.99l14.703-14.703a208 208 0 0 1-16.703-80.297 208 208 0 0 1 16.449-80.551l-14.449-14.449z" fill="#08f" stroke-opacity=".53333"/>
+   <path d="m135 15-6.2305 6.2305a1113 1113 0 0 1 4.2305 78.77 1113 1113 0 0 1-3.9551 79.045l5.9551 5.9551h24.346a252 252 0 0 1-15.346-85 252 252 0 0 1 15.186-85z" fill="#04f" stroke-opacity=".53333"/>
+   <path d="m159.28 15a252 252 0 0 0-15.279 85 252 252 0 0 0 15.02 85h4.2598a367 367 0 0 0 10.721-85 367 367 0 0 0-10.344-85z" fill="#08f" stroke-opacity=".53333"/>
+  </g>
+  <g fill="none">
+   <path d="m-50 100h300" stroke-dasharray="16, 4, 2, 4" stroke-width="2"/>
+   <path d="m104 0v40" stroke-width="3"/>
+   <path d="m104 160v40" stroke-width="3"/>
+  </g>
+ </g>
+</svg>

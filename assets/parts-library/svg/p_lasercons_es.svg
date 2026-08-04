@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   width="465.99606"
+   height="223.16063"
+   id="svg2"
+   style="display:inline"
+   sodipodi:docname="Lasercons.svg"
+   inkscape:version="0.92.1 r15371">
+  <metadata
+     id="metadata52">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1000"
+     id="namedview50"
+     showgrid="false"
+     inkscape:zoom="2.17"
+     inkscape:cx="166.76397"
+     inkscape:cy="111.58031"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer5" />
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="TriangleOutL"
+       style="overflow:visible">
+      <path
+         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         transform="scale(0.8,0.8)"
+         id="path4897"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Tail"
+       style="overflow:visible">
+      <g
+         transform="scale(-1.2,-1.2)"
+         id="g4790">
+        <path
+           d="M -3.8048674,-3.9585227 0.54352094,0"
+           id="path4792"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           d="M -1.2866832,-3.9585227 3.0617053,0"
+           id="path4794"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           d="M 1.3053582,-3.9585227 5.6537466,0"
+           id="path4796"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           d="M -3.8048674,4.1775838 0.54352094,0.21974226"
+           id="path4798"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           d="M -1.2866832,4.1775838 3.0617053,0.21974226"
+           id="path4800"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           d="M 1.3053582,4.1775838 5.6537466,0.21974226"
+           id="path4802"
+           style="fill:none;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+      </g>
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Send"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.2,0,0,-0.2,-1.2,0)"
+         id="path4769"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         id="path4757"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+  </defs>
+  <g
+     transform="translate(68.226547,-846.92187)"
+     id="layer5"
+     style="display:inline">
+    <rect
+       width="465.49606"
+       height="222.66063"
+       x="-67.976547"
+       y="847.17188"
+       id="rect7303"
+       style="display:inline;fill:#fffcf3;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <text
+       x="160.60818"
+       y="876.6676"
+       id="text7406"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:16px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="160.60818"
+         y="876.6676"
+         id="tspan7408"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.33333397px;font-family:Serif;-inkscape-font-specification:'Serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle">Láser de estado sólido Nd:YAG</tspan></text>
+    <text
+       x="120.79994"
+       y="930.89581"
+       id="text7406-1"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="120.79994"
+         y="930.89581"
+         id="tspan7408-4"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:9.33333302px;font-family:Serif;-inkscape-font-specification:'Serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;writing-mode:lr-tb;text-anchor:middle">Tubo de destello (fuente de bombeo)</tspan></text>
+    <text
+       x="121.32094"
+       y="996.11499"
+       id="text7406-1-5"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="121.32094"
+         y="996.11499"
+         id="tspan7408-4-5">Cristal ND:YAG (medio activo)</tspan></text>
+    <text
+       x="122.21489"
+       y="1047.006"
+       id="text7406-1-5-6"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="122.21489"
+         y="1047.006"
+         id="tspan7408-4-5-9">Resonador óptico</tspan></text>
+    <text
+       x="264.62421"
+       y="906.77637"
+       id="text7406-1-5-6-5"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="264.62421"
+         y="906.77637"
+         id="tspan7408-4-5-9-9">Espejo</tspan></text>
+    <text
+       x="37.864193"
+       y="902.13556"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       id="text4589"> </text>
+    <text
+       x="329.14618"
+       y="965.10529"
+       id="text7406-1-5-6-5-9"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:start;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="329.14618"
+         y="978.85529"
+         id="tspan7580">Salida</tspan></text>
+    <path
+       d="m -21.49739,1005.7974 v 37.6602 h 86.659037"
+       id="path7582"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       inkscape:connector-curvature="0" />
+    <path
+       d="m 269.66077,1005.7974 v 37.2553 h -90.70852"
+       id="path7584"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:1;font-family:Arial;-inkscape-font-specification:'Arial, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:center;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+       x="-8.3918037"
+       y="916.09155"
+       id="text4587"><tspan
+         sodipodi:role="line"
+         id="tspan4585"
+         x="-8.3918037"
+         y="947.1217"></tspan></text>
+    <g
+       id="g4615"
+       transform="translate(-5.1634044,8.5044308)">
+      <text
+         style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+         xml:space="preserve"
+         id="text7406-1-5-6-5-2"
+         y="896.36469"
+         x="-6.4803391">Espejo</text>
+      <text
+         style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+         xml:space="preserve"
+         id="text7406-1-5-6-5-2-1"
+         y="907.50116"
+         x="-7.5101523">altamente</text>
+      <text
+         style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+         xml:space="preserve"
+         id="text7406-1-5-6-5-2-6"
+         y="918.73914"
+         x="-7.8138824">reflectante</text>
+    </g>
+    <text
+       x="264.93536"
+       y="918.91675"
+       id="text7406-1-5-6-5-6"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="264.93536"
+         y="918.91675"
+         id="tspan7408-4-5-9-9-1">parcialmente</tspan><tspan
+         x="264.93536"
+         y="918.91675"
+         id="tspan4647" /></text>
+    <text
+       x="263.11298"
+       y="929.5473"
+       id="text7406-1-5-6-5-0"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:center;text-anchor:middle;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="263.11298"
+         y="929.5473"
+         id="tspan7408-4-5-9-9-7">reflectante</tspan></text>
+    <text
+       x="327.16684"
+       y="978.42633"
+       id="text7406-1-5-6-5-9-9"
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:11px;font-family:Serif;-inkscape-font-specification:Serif;text-align:start;text-anchor:start;display:inline;fill:#000000;fill-opacity:1;stroke:none"><tspan
+         x="327.16684"
+         y="992.17633"
+         id="tspan7580-4">de láser</tspan></text>
+  </g>
+  <g
+     transform="translate(68.226547,-846.92187)"
+     id="layer4"
+     style="display:inline">
+    <path
+       d="m -11.336428,962.24063 c 0,0 103.206738,7.39538 318.823358,-3.77987 l 0,-13.50585 4.81011,0 14.19615,24.58846 -14.36073,24.8735 -4.7277,0 0,-14.01646 c 0,0 -142.89531,-12.40782 -319.069872,-3.20467 l 0.328684,-14.95511 z"
+       id="path7331"
+       style="fill:#ff7e79;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline" />
+    <path
+       d="m 36.651417,957.14603 c 170.586933,0 171.901663,0 171.901663,0 l -2.95815,25.30865 -171.981423,0 3.03791,-25.30865 z"
+       id="path7356"
+       style="fill:#f5bad4;fill-opacity:0.70722429;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline" />
+  </g>
+  <g
+     transform="translate(68.226547,-846.92187)"
+     id="layer1"
+     style="display:inline">
+    <path
+       d="m 257.7324,940.58858 12.1613,0 0,59.08091 -12.24347,0 c 0,0 5.91631,-29.08851 0.0822,-59.08091 z"
+       id="path7307-9"
+       style="fill:#bfcbe2;fill-opacity:0.70722429;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline" />
+    <path
+       d="m -8.871298,940.21881 -12.161304,0 0,59.08092 12.243474,0 c 0,0 -5.91631,-29.08852 -0.08217,-59.08092 z"
+       id="path7307"
+       style="fill:#bfcbe2;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline" />
+    <rect
+       width="17.073532"
+       height="12.022315"
+       x="35.085098"
+       y="936.40399"
+       id="rect7372"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <rect
+       width="16.607836"
+       height="11.45368"
+       x="191.6268"
+       y="936.95734"
+       id="rect7372-4"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline" />
+    <path
+       d="m 52.355137,938.32282 139.302373,0 0,8.04836 -139.504843,0 0,-7.94712"
+       id="path7404"
+       style="fill:#dff1f3;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>

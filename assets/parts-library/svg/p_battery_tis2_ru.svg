@@ -1,0 +1,7 @@
+<svg width="173mm" height="135mm" version="1.1" viewBox="0 0 173 135" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <rect width="173" height="135" fill="#fff"/><rect x="104" y="46" width="67" height="74" fill="#0ff"/><rect x="72" y="46" width="32" height="74" fill="#bbb"/><rect x="2" y="46" width="70" height="74" fill="#f88"/><path d="m57 61h62m-62 30h62m-51-15h51m-31 47v-14m58-65v-6" stroke="#000"/>
+ <g style="font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman'" font-size="12px" text-anchor="middle">
+ <g id="b"><circle cx="26" cy="64" r="7" fill="#ff0"/><text x="26" y="67" font-size="8px">Li<tspan dy="-4" font-size="6px">+</tspan></text></g>
+ <use transform="translate(26 12)" xlink:href="#b"/><use transform="translate(9 30)" xlink:href="#b"/>
+ <g id="c" fill="none"><path d="m86 32c0-6-4-22-2-22s1 4 2 4 1-4 2-4" stroke="#f00"/><path d="m78 6-8-4m5 8-9-3m9 8-11 5" stroke="#fd5"/><path d="m82 32v-9c-7-9-1-17 6-17m-51 40v-14h51m-61 9h6" stroke="#000"/></g>
+ <path id="a" d="m116 64 11-3-11-3 3 3z"/><use transform="matrix(-1 0 0 1 176 0)" xlink:href="#c"/><use transform="translate(0 15)" xlink:href="#a"/><use transform="translate(0 30)" xlink:href="#a"/><use transform="rotate(-90 128 101)" xlink:href="#a"/><text x="139" y="115">Катод: TiS<tspan dy="2" font-size="10px">2</tspan></text><text x="87" y="130">Электролит</text><text x="36" y="115" >Анод</text></g></svg>

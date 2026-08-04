@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="583.42792mm"
+   height="321.35596mm"
+   viewBox="0 0 583.42792 321.35596"
+   version="1.1"
+   id="svg5"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs2">
+    <marker
+       style="overflow:visible"
+       id="Arrow1Lend"
+       refX="0"
+       refY="0"
+       orient="auto">
+      <path
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 0,0 5,-5 -12.5,0 5,5 Z"
+         id="path1128" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(155.28415,20.224776)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 400.26142,247.20267 H -109.76459 V 36.674679 h 512.0951"
+       id="path2548" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M -56.893756,43.966727 V 36.651456"
+       id="path2663" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 11.138262,43.875286 V 36.651454"
+       id="path2665" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 169.55959,44.149607 V 36.651456"
+       id="path2667" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 326.60933,43.966725 V 36.651454"
+       id="path2669" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m -56.070788,240.74751 v 6.4923"
+       id="path2784" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 10.952778,240.34886 V 247.138"
+       id="path2998" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 91.387915,240.15488 V 247.138"
+       id="path3000" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 169.81865,240.15488 v 7.04779"
+       id="path3002" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="M 250.12445,239.96091 V 247.138"
+       id="path3004" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 327.32667,240.09022 v 7.11245"
+       id="path3006" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.8;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m -109.83803,232.06063 c 5.639,-2.16416 11.277851,-4.32826 17.419635,-8.30598 6.141783,-3.97771 12.786356,-9.76885 18.94342,-15.62112 6.157063,-5.85226 11.826284,-11.76532 18.410094,-19.355 6.58381,-7.58967 14.081811,-16.8555 21.488584,-27.8285 7.406774,-10.97301 14.721752,-23.6523 23.317413,-33.65009 8.5956615,-9.9978 18.4708833,-17.31278 28.224894,-20.54373 9.754011,-3.23094 19.385395,-2.37754 27.980968,4.0236 8.595573,6.40113 16.154378,18.34892 23.286934,28.28569 7.132557,9.93677 13.838082,17.86148 21.336342,25.29872 7.498261,7.43724 15.788736,14.38661 26.213136,21.58 10.4244,7.1934 22.98203,14.63044 35.29619,21.21422 12.31416,6.58379 24.38413,12.31398 36.02772,16.82507 11.64358,4.51109 22.86009,7.80289 35.54002,10.36322 12.67993,2.56034 26.82252,4.38912 42.42859,5.4864 15.60607,1.09728 32.67468,1.46303 46.26898,1.34109 13.59431,-0.12193 23.71356,-0.73153 33.83278,-1.34112"
+       id="path4453" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m -99.419232,201.94173 c 6.465805,-10.51771 12.931523,-21.03528 19.871688,-30.17389 6.940164,-9.13861 14.354038,-16.89731 21.165024,-20.17338 6.810986,-3.27607 13.017952,-2.06916 18.837276,2.75889 5.819324,4.82805 11.25042,13.27642 16.121432,22.02705 4.871013,8.75062 9.181404,17.80244 12.845433,26.94102 3.6640295,9.13858 6.6813623,18.363 9.0953019,25.51859 2.41393952,7.15559 4.2243427,12.24196 6.0346666,17.32811"
+       id="path4661" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.8;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 119.12639,220.56337 c 4.31065,-2.41397 8.62121,-4.82788 13.7508,-9.44022 5.12958,-4.61234 11.07804,-11.4229 17.54396,-18.79405 6.46592,-7.37114 13.44888,-15.30241 20.99247,-23.10463 7.54358,-7.80221 15.64728,-15.47487 23.70813,-22.84601 8.06085,-7.37115 16.07815,-14.44017 25.04439,-19.31123 8.96625,-4.87105 18.88014,-7.54349 31.03623,-8.36248 12.15609,-0.819 26.5528,0.2155 37.63119,2.19845 11.07839,1.98295 18.8371,4.91401 26.38073,9.18161 7.54363,4.2676 14.87129,9.87111 21.68211,15.47497 6.81082,5.60386 13.10412,11.20748 19.18207,16.81127 6.07795,5.60379 11.9402,11.20742 17.41467,16.42326 5.47447,5.21584 10.56083,10.04356 15.64702,14.87113"
+       id="path4907" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:4,2;stroke-dashoffset:0"
+       d="m -109.65515,144.91746 c 4.41979,9.75402 8.83934,19.50751 13.060929,30.23679 4.221588,10.72928 8.244832,22.43326 10.988103,30.69358 2.743272,8.26031 4.206297,13.0761 5.669257,17.89168"
+       id="path5305" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m -98.956566,206.18286 c 3.152247,-1.14721 6.304279,-2.29435 10.021795,-2.83067 3.717517,-0.53632 8.000014,-0.46184 11.51572,2.3909 3.515705,2.85273 6.264315,8.48307 9.83457,15.71036 3.570255,7.22729 7.961814,16.05085 12.353301,24.87426"
+       id="path5593" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.50000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:4.00000011,2.00000006;stroke-dashoffset:0"
+       d="m -86.099586,245.78016 c 1.594857,-2.97419 3.189735,-5.94842 5.172635,-9.4185 1.9829,-3.47008 4.353616,-7.43564 7.220219,-11.20749 2.866602,-3.77186 6.228704,-7.34948 9.547948,-10.17298 3.319244,-2.82351 6.595142,-4.89249 10.474811,-6.14257 3.879669,-1.25008 8.362472,-1.68112 11.552361,-0.81884 3.189889,0.86228 5.08646,3.01747 6.74601,5.66854 1.65955,2.65107 3.081978,5.79765 4.612243,9.7419 1.530264,3.94425 3.168206,8.68567 4.547614,12.82391 1.379409,4.13824 2.500132,7.67282 3.620778,11.20716"
+       id="path6181" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m -78.987155,245.65086 c 4.741746,-2.11224 9.483366,-4.22442 14.97937,-7.28495 5.496005,-3.06054 11.746198,-7.06928 17.479282,-11.1859 5.733084,-4.11662 10.948763,-8.34089 17.069848,-12.91015 6.121086,-4.56925 13.147163,-9.48319 18.104361,-12.73769 4.9571983,-3.2545 7.8451629,-4.84935 11.9187742,-6.29342 4.0736113,-1.44406 9.3322906,-2.73718 14.4620288,-2.62934 5.129739,0.10783 10.12979,1.61647 14.181768,4.1814 4.051979,2.56493 7.155459,6.18566 10.345316,10.6472 3.189857,4.46154 6.465752,9.76331 8.858113,15.08697 2.39236,5.32366 3.901026,10.66865 5.086443,14.78527 1.185416,4.11662 2.04751,7.00464 2.909532,9.89242"
+       id="path6845" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.50000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:4.00000011,2.00000006;stroke-dashoffset:0"
+       d="m -37.603042,246.45814 c 4.065878,-2.92383 8.13162,-5.84756 12.776644,-9.70603 4.645023,-3.85847 9.86889,-8.65129 14.9768542,-12.63956 5.1079641,-3.98827 10.09935218,-7.17146 15.3976626,-8.89047 5.2983102,-1.71902 10.9027152,-1.97368 16.0482932,-0.62746 5.145577,1.34623 9.831648,4.29298 13.961114,7.51969 4.129466,3.22672 7.70186,6.73293 10.89263,10.3348 3.190771,3.60186 5.999639,7.299 8.808334,10.99591"
+       id="path7395" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 31.072375,243.67362 c 8.778515,-2.13367 17.556839,-4.26729 25.938992,-6.49237 8.382154,-2.22509 16.36783,-4.54155 25.542511,-6.97999 9.17468,-2.43845 19.537772,-4.99874 28.529512,-7.83345 8.99174,-2.8347 16.61166,-5.94362 24.32324,-9.38793 7.71157,-3.44431 15.51437,-7.2238 22.82971,-10.72907 7.31535,-3.50527 14.1428,-6.73611 20.42182,-9.20503 6.27903,-2.46892 12.00912,-4.17575 19.17218,-4.1757 7.16307,6e-5 15.75818,1.70689 23.25649,4.11493 7.49831,2.40804 13.89904,5.51697 20.02563,8.4431 6.1266,2.92613 11.97871,5.66931 18.01387,8.56497 6.03516,2.89566 12.25301,5.94362 19.53788,9.78419 7.28487,3.84058 15.63631,8.4735 22.37251,12.34453 6.73619,3.87104 11.85678,6.97998 16.97714,10.08877"
+       id="path7831" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.50000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:4.00000011,2.00000006;stroke-dashoffset:0"
+       d="m 82.096389,241.8448 c 8.900451,-1.7679 17.800696,-3.53575 27.158241,-5.63892 9.35754,-2.10317 19.17199,-4.54154 29.26106,-7.37624 10.08907,-2.8347 20.45216,-6.06555 31.30326,-9.81467 10.85109,-3.74913 22.18952,-8.01628 33.40639,-11.88731 11.21688,-3.87104 22.31149,-7.34572 30.66315,-9.84511 8.35167,-2.4994 13.95994,-4.02339 20.29993,-5.15115 6.34,-1.12777 13.41128,-1.85928 20.75712,-2.1031 7.34585,-0.24383 14.96577,1e-5 23.24611,0.70906 8.28035,0.70905 17.22059,1.88323 26.15233,3.28937 8.93175,1.40613 17.85445,3.04411 27.42401,5.04856 9.56956,2.00444 19.78538,4.37521 30.00111,6.74595"
+       id="path7963" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+       d="m 145.24841,242.54725 c 11.72497,-1.72426 23.44971,-3.44849 33.14854,-5.12963 9.69883,-1.68114 17.37148,-3.31912 25.86339,-5.12958 8.49191,-1.81046 17.80255,-3.79327 28.29888,-6.0779 10.49633,-2.28462 22.17749,-4.87086 32.37217,-7.52192 10.19468,-2.65106 18.90166,-5.3666 26.12196,-8.53493 7.2203,-3.16832 12.95312,-6.78905 19.51534,-10.94011 6.56221,-4.15106 13.95316,-8.83204 21.12353,-13.42817 7.17038,-4.59612 14.11976,-9.10713 21.92282,-13.37441 7.80306,-4.26729 16.4593,-8.29061 25.11559,-12.31395"
+       id="path7967" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.50000001;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:4.00000011,2.00000006;stroke-dashoffset:0"
+       d="m 334.82705,240.21954 c 4.52604,-8.27619 9.05214,-16.55247 13.90157,-26.31601 4.84944,-9.76353 10.02201,-21.01387 14.2895,-30.92824 4.2675,-9.91438 7.62967,-18.49222 10.12982,-25.69091 2.50014,-7.19869 4.13812,-13.01783 5.77618,-18.83727"
+       id="path8175" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-215.63434"
+       y="-122.10752"
+       id="text10079"
+       transform="rotate(-90)"><tspan
+         id="tspan10077"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math';stroke-width:0.264583"
+         x="-215.63434"
+         y="-122.10752">Equivalent width</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="20.586885"
+       y="99.781349"
+       id="text20891"><tspan
+         id="tspan20889"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="20.586885"
+         y="99.781349">H I</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="254.39192"
+       y="114.26485"
+       id="text24951"><tspan
+         id="tspan24949"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="254.39192"
+         y="114.26485">Ca II</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-62.693222"
+       y="145.81818"
+       id="text26473"><tspan
+         id="tspan26471"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-62.693222"
+         y="145.81818">He I</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-104.5919"
+       y="147.88724"
+       id="text28391"><tspan
+         id="tspan28389"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-104.5919"
+         y="147.88724">He II</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-87.799088"
+       y="198.06223"
+       id="text29319"><tspan
+         id="tspan29317"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-87.799088"
+         y="198.06223">Si IV</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-48.72699"
+       y="202.20036"
+       id="text30577"><tspan
+         id="tspan30575"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-48.72699"
+         y="202.20036">Si III</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="2.4825141"
+       y="210.99391"
+       id="text32363"><tspan
+         id="tspan32361"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="2.4825141"
+         y="210.99391">Si II</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="1.4479803"
+       y="188.23415"
+       id="text32763"><tspan
+         id="tspan32761"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="1.4479803"
+         y="188.23415">Mg II</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="183.52623"
+       y="184.61327"
+       id="text33559"><tspan
+         id="tspan33557"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="183.52623"
+         y="184.61327">Fe II</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="262.66821"
+       y="186.16507"
+       id="text34091"><tspan
+         id="tspan34089"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="262.66821"
+         y="186.16507">Fe I</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="322.67123"
+       y="176.85423"
+       id="text35217"><tspan
+         id="tspan35215"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="322.67123"
+         y="176.85423">Ca I</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="361.46634"
+       y="134.95555"
+       id="text37123"><tspan
+         id="tspan37121"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="361.46634"
+         y="134.95555">TiO</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="-63.210487"
+       y="260.65161"
+       id="text40019"><tspan
+         id="tspan40017"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="-63.210487"
+         y="260.65161">B0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="4.8102245"
+       y="259.09979"
+       id="text43323"><tspan
+         id="tspan43321"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="4.8102245"
+         y="259.09979">A0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="85.245361"
+       y="258.84119"
+       id="text44911"><tspan
+         id="tspan44909"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="85.245361"
+         y="258.84119">F0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="161.80098"
+       y="260.13434"
+       id="text46399"><tspan
+         id="tspan46397"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="161.80098"
+         y="260.13434">G0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="243.5293"
+       y="258.32388"
+       id="text47921"><tspan
+         id="tspan47919"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="243.5293"
+         y="258.32388">K0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:10.58330002px;line-height:1.25;font-family:'Cambria Math';fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-stretch:normal;font-variant:normal;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+       x="319.56766"
+       y="259.09979"
+       id="text49233"><tspan
+         id="tspan49231"
+         style="stroke-width:0.264583;-inkscape-font-specification:'Cambria Math, Normal';font-family:'Cambria Math';font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:10.58330002px;font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+         x="319.56766"
+         y="259.09979">M0</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="314.88623"
+       y="31.690266"
+       id="text50865"><tspan
+         id="tspan50863"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="314.88623"
+         y="31.690266">3600</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="158.19849"
+       y="32.636055"
+       id="text52519"><tspan
+         id="tspan52517"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="158.19849"
+         y="32.636055">6000</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-3.9021931"
+       y="31.128624"
+       id="text54503"><tspan
+         id="tspan54501"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="-3.9021931"
+         y="31.128624">10000</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="-71.379646"
+       y="32.163155"
+       id="text55683"><tspan
+         id="tspan55681"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.5833px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="-71.379646"
+         y="32.163155">25000</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="85.762619"
+       y="279.27328"
+       id="text59911"><tspan
+         id="tspan59909"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="85.762619"
+         y="279.27328">Spectral class</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;line-height:1.25;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
+       x="77.486336"
+       y="7.1904159"
+       id="text61619"><tspan
+         id="tspan61617"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.7556px;font-family:'Cambria Math';-inkscape-font-specification:'Cambria Math, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583"
+         x="77.486336"
+         y="7.1904159">Temperature, K</tspan></text>
+  </g>
+</svg>

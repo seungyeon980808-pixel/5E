@@ -1,0 +1,10 @@
+<svg width="170mm" height="106mm" version="1.1" viewBox="0 0 170 106" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="170" height="106" fill="#fff"/>
+ <g fill="none" stroke="#000"><path d="m77 8h88m-144 12h144m-144 12h144m-144 12h144m-144 12h144m-144 12h144m-144 12h144m-18 12v-90m-18 90v-90m-18 90v-90m-36 90v-83m-18 83v-72m-18 72v-72" stroke-dasharray=".5" stroke-width=".2"/></g>
+ <g fill="none" stroke-width=".7"><path id="b" d="m21 79c25-12 34-39 47-60 8-12 12-13 25-13" stroke="#00f"/>
+ <path d="m23 6h12" stroke="#00f"/><use transform="matrix(-1 0 0 1 186 0)" xlink:href="#b"/>
+ <g stroke-dasharray="2 .5"><path d="m165 89c-19-2-40-4-56-20-10-9-16-21-24-31-3-4-5-6-10-6s-7 2-10 6c-8 10-14 22-24 31-6 6-20 13-20 13m2-70h11" stroke="#d0a"/><path d="m21 89c19-2 40-4 56-20 10-9 16-21 24-31 3-4 5-6 10-6s7 2 10 6c8 10 14 22 24 31 6 6 20 13 20 13m-142-64h11" stroke="#990"/><path d="m93 92v-90" stroke="#000" stroke-width=".3"/></g>
+ <rect x="21" y="2" width="144" height="90" stroke="#000"/><path d="m111 27v4m-36-2h36m-36-2v4" stroke="#000"/></g>
+ <g font-family="Times" font-size="6.5px">
+ <g text-anchor="middle"><text x="21" y="98">-2,0</text><text x="39" y="98">-1,5</text><text x="57" y="98">-1,0</text><text x="75" y="98">-0,5</text><text x="93" y="98">0,0</text><text x="111" y="98">0,5</text><text x="129" y="98">1,0</text><text x="147" y="98">1,5</text><text x="165" y="98">2,0</text><text x="93" y="104">z/R</text><text transform="rotate(-90)" x="-48" y="8">B<tspan dy="2" font-size="5px">z</tspan><tspan dy="-2">[μ</tspan><tspan dy="2" font-size="5px">0</tspan><tspan dy="-2">I/(2R)]</tspan></text><text x="96" y="28">d</text></g>
+ <g text-anchor="end"><text x="19" y="10">1,4</text><text x="19" y="22">1,2</text><text x="19" y="34">1,0</text><text x="19" y="46">0,8</text><text x="19" y="58">0,6</text><text x="19" y="70">0,4</text><text x="19" y="82">0,2</text><text x="19" y="94">0,0</text></g>
+ <g font-size="5px"><text x="36" y="7">Кольца Гельмгольца</text><text x="36" y="13">Кольцо 1</text><text x="36" y="19">Кольцо 2</text></g></g></svg>

@@ -1,0 +1,860 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="900"
+   height="270"
+   viewBox="0 0 900 270"
+   id="svg2">
+  <defs
+     id="defs131" />
+  <g
+     transform="translate(-1.015801,0)"
+     style="fill:#bfc9db;fill-opacity:1"
+     id="g2272">
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="0"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="H" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="38.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Li" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="38.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Be" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="77"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Na" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="77"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Mg" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="115.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="K" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="115.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Ca" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="154"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Rb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="154"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Sr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="192.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Cs" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="192.5"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Ba" />
+    <rect
+       width="26.5"
+       height="37"
+       x="0"
+       y="231"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Fr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="28"
+       y="231"
+       style="fill:#bfc9db;fill-opacity:1;stroke:none"
+       id="Ra" />
+  </g>
+  <g
+     style="fill:#eed1b1;fill-opacity:1"
+     id="g2240">
+    <rect
+       width="26.5"
+       height="37"
+       x="56"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="La" />
+    <rect
+       width="26.5"
+       height="37"
+       x="84"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Ce" />
+    <rect
+       width="26.5"
+       height="37"
+       x="112"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Pr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="140"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Nd" />
+    <rect
+       width="26.5"
+       height="37"
+       x="168"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Pm" />
+    <rect
+       width="26.5"
+       height="37"
+       x="196"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Sm" />
+    <rect
+       width="26.5"
+       height="37"
+       x="224"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Eu" />
+    <rect
+       width="26.5"
+       height="37"
+       x="252"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Gd" />
+    <rect
+       width="26.5"
+       height="37"
+       x="280"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Tb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="308"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Dy" />
+    <rect
+       width="26.5"
+       height="37"
+       x="336"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Ho" />
+    <rect
+       width="26.5"
+       height="37"
+       x="364"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Er" />
+    <rect
+       width="26.5"
+       height="37"
+       x="392"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Tm" />
+    <rect
+       width="26.5"
+       height="37"
+       x="420"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Yb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="448"
+       y="192.5"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Lu" />
+    <rect
+       width="26.5"
+       height="37"
+       x="56"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Ac" />
+    <rect
+       width="26.5"
+       height="37"
+       x="84"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Th" />
+    <rect
+       width="26.5"
+       height="37"
+       x="112"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Pa" />
+    <rect
+       width="26.5"
+       height="37"
+       x="140"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="U" />
+    <rect
+       width="26.5"
+       height="37"
+       x="168"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Np" />
+    <rect
+       width="26.5"
+       height="37"
+       x="196"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Pu" />
+    <rect
+       width="26.5"
+       height="37"
+       x="224"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Am" />
+    <rect
+       width="26.5"
+       height="37"
+       x="252"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Cm" />
+    <rect
+       width="26.5"
+       height="37"
+       x="280"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Bk" />
+    <rect
+       width="26.5"
+       height="37"
+       x="308"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Cf" />
+    <rect
+       width="26.5"
+       height="37"
+       x="336"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Es" />
+    <rect
+       width="26.5"
+       height="37"
+       x="364"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Fm" />
+    <rect
+       width="26.5"
+       height="37"
+       x="392"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Md" />
+    <rect
+       width="26.5"
+       height="37"
+       x="420"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="No" />
+    <rect
+       width="26.5"
+       height="37"
+       x="448"
+       y="231"
+       style="fill:#eed1b1;fill-opacity:1;stroke:none"
+       id="Lr" />
+  </g>
+  <g
+     style="fill:#f4d8d9;fill-opacity:1"
+     id="g2287">
+    <rect
+       width="26.5"
+       height="37"
+       x="448"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Sc" />
+    <rect
+       width="26.5"
+       height="37"
+       x="476"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ti" />
+    <rect
+       width="26.5"
+       height="37"
+       x="504"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="V" />
+    <rect
+       width="26.5"
+       height="37"
+       x="532"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Cr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="560"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Mn" />
+    <rect
+       width="26.5"
+       height="37"
+       x="588"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Fe" />
+    <rect
+       width="26.5"
+       height="37"
+       x="616"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Co" />
+    <rect
+       width="26.5"
+       height="37"
+       x="644"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ni" />
+    <rect
+       width="26.5"
+       height="37"
+       x="672"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Cu" />
+    <rect
+       width="26.5"
+       height="37"
+       x="700"
+       y="115.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Zn" />
+    <rect
+       width="26.5"
+       height="37"
+       x="448"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Y" />
+    <rect
+       width="26.5"
+       height="37"
+       x="476"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Zr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="504"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Nb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="532"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Mo" />
+    <rect
+       width="26.5"
+       height="37"
+       x="560"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Tc" />
+    <rect
+       width="26.5"
+       height="37"
+       x="588"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ru" />
+    <rect
+       width="26.5"
+       height="37"
+       x="616"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Rh" />
+    <rect
+       width="26.5"
+       height="37"
+       x="644"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Pd" />
+    <rect
+       width="26.5"
+       height="37"
+       x="672"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ag" />
+    <rect
+       width="26.5"
+       height="37"
+       x="700"
+       y="154"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Cd" />
+    <rect
+       width="26.5"
+       height="37"
+       x="476"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Hf" />
+    <rect
+       width="26.5"
+       height="37"
+       x="504"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ta" />
+    <rect
+       width="26.5"
+       height="37"
+       x="532"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="W" />
+    <rect
+       width="26.5"
+       height="37"
+       x="560"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Re" />
+    <rect
+       width="26.5"
+       height="37"
+       x="588"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Os" />
+    <rect
+       width="26.5"
+       height="37"
+       x="616"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ir" />
+    <rect
+       width="26.5"
+       height="37"
+       x="644"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Pt" />
+    <rect
+       width="26.5"
+       height="37"
+       x="672"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Au" />
+    <rect
+       width="26.5"
+       height="37"
+       x="700"
+       y="192.5"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Hg" />
+    <rect
+       width="26.5"
+       height="37"
+       x="476"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Rf" />
+    <rect
+       width="26.5"
+       height="37"
+       x="504"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Db" />
+    <rect
+       width="26.5"
+       height="37"
+       x="532"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Sg" />
+    <rect
+       width="26.5"
+       height="37"
+       x="560"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Bh" />
+    <rect
+       width="26.5"
+       height="37"
+       x="588"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Hs" />
+    <rect
+       width="26.5"
+       height="37"
+       x="616"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Mt" />
+    <rect
+       width="26.5"
+       height="37"
+       x="644"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Ds" />
+    <rect
+       width="26.5"
+       height="37"
+       x="672"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Rg" />
+    <rect
+       width="26.5"
+       height="37"
+       x="700"
+       y="231"
+       style="fill:#f4d8d9;fill-opacity:1;stroke:none"
+       id="Uub" />
+  </g>
+  <g
+     style="fill:#bddeb2;fill-opacity:1"
+     id="g2327">
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="B" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="C" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="N" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="O" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="F" />
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Al" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Si" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="P" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="S" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Cl" />
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Ga" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Ge" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="As" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Se" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Br" />
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="In" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Sn" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Sb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Te" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="I" />
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Tl" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Pb" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Bi" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Po" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="At" />
+    <rect
+       width="26.5"
+       height="37"
+       x="728"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uut" />
+    <rect
+       width="26.5"
+       height="37"
+       x="756"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uuq" />
+    <rect
+       width="26.5"
+       height="37"
+       x="784"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uup" />
+    <rect
+       width="26.5"
+       height="37"
+       x="812"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uuh" />
+    <rect
+       width="26.5"
+       height="37"
+       x="840"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uus" />
+  </g>
+  <g
+     style="fill:#bddeb2;fill-opacity:1"
+     id="g2359">
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="0"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="He" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="38.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Ne" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="77"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Ar" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="115.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Kr" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="154"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Xe" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="192.5"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Rn" />
+    <rect
+       width="26.5"
+       height="37"
+       x="868"
+       y="231"
+       style="fill:#bddeb2;fill-opacity:1;stroke:none"
+       id="Uuo" />
+  </g>
+</svg>

@@ -1,0 +1,182 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-694 -80 1792 1792">
+ <title>Universe blocks timeline visualisation</title>
+ <desc>Visualisation of the history of Earth and the Universe as a stack of 1.38 million blocks, each representing 10000 years, by CMG Lee. The blocks are arranged by column, then by row, then by plane into the graphic. Each row represents 1 million years and each layer represents 100 million years.</desc>
+ <defs>
+  <path id="marker" d="M 0,0 V 10" stroke-width="4"/>
+  <path id="tick" d="M 0,0 H 10"/>
+  <path id="grid_1" d="M 0,0 V 1000"/>
+  <g id="grid_5">
+   <use xlink:href="#grid_1"/>
+   <use xlink:href="#grid_1" transform="translate(10,0)"/>
+   <use xlink:href="#grid_1" transform="translate(20,0)"/>
+   <use xlink:href="#grid_1" transform="translate(30,0)"/>
+   <use xlink:href="#grid_1" transform="translate(40,0)"/>
+   <use xlink:href="#grid_1" transform="translate(50,0)"/>
+  </g>
+  <g id="grid_10">
+   <use xlink:href="#grid_1"/>
+   <use xlink:href="#grid_5"/>
+   <use xlink:href="#grid_5" transform="translate(50,0)"/>
+  </g>
+  <g id="grid_50">
+   <use xlink:href="#grid_1"/>
+   <use xlink:href="#grid_10"/>
+   <use xlink:href="#grid_10" transform="translate(100,0)"/>
+   <use xlink:href="#grid_10" transform="translate(200,0)"/>
+   <use xlink:href="#grid_10" transform="translate(300,0)"/>
+   <use xlink:href="#grid_10" transform="translate(400,0)"/>
+  </g>
+  <g id="grid_100">
+   <use xlink:href="#grid_1"/>
+   <use xlink:href="#grid_50"/>
+   <use xlink:href="#grid_50" transform="translate(500,0)"/>
+  </g>
+  <g id="grid_138">
+   <use xlink:href="#grid_100"/>
+   <use xlink:href="#grid_10" transform="translate(1000,0)"/>
+   <use xlink:href="#grid_10" transform="translate(1100,0)"/>
+   <use xlink:href="#grid_10" transform="translate(1200,0)"/>
+   <use xlink:href="#grid_5"  transform="translate(1300,0)"/>
+   <use xlink:href="#grid_1"  transform="translate(1350,0)"/>
+   <use xlink:href="#grid_1"  transform="translate(1360,0)"/>
+   <use xlink:href="#grid_1"  transform="translate(1370,0)"/>
+   <use xlink:href="#grid_1"  transform="translate(1380,0)"/>
+  </g>
+  <g id="grid_half">
+   <use xlink:href="#grid_138" transform="matrix(-0.5,0.5,0,1,0,0)"/>
+   <use xlink:href="#grid_100" transform="matrix(0,1,-0.69,0.69,0,0)"/>
+   <use xlink:href="#grid_100"/>
+  </g>
+  <g id="grid" fill="#000000">
+   <use xlink:href="#grid_half"/>
+   <use xlink:href="#grid_half" transform="matrix(0,-1,-1,0,1000,1000)"/>
+   <path d="M 0,0    v 1000 l -690,690 v -1000 z" fill-opacity="0.5"/>
+   <path d="M 0,1000 h 1000 l -690,690 h -1000 z" fill-opacity="0.2"/>
+   <g>
+    <g transform="translate(0,-30)">
+     <text transform="translate(100,-20)" x="0" y="0"><tspan>100 000</tspan><tspan x="0" dy="20">(0.1 million)</tspan><tspan x="0" dy="20">years ago</tspan></text>
+     <text transform="translate(200,  0)" x="0" y="0"><tspan>0.2</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(300,  0)" x="0" y="0"><tspan>0.3</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(400,  0)" x="0" y="0"><tspan>0.4</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(500,  0)" x="0" y="0"><tspan>0.5</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(600,  0)" x="0" y="0"><tspan>0.6</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(700,  0)" x="0" y="0"><tspan>0.7</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(800,  0)" x="0" y="0"><tspan>0.8</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(900,  0)" x="0" y="0"><tspan>0.9</tspan><tspan x="0" dy="20">mya</tspan></text>
+     <text transform="translate(1000, 0)" x="0" y="0"><tspan>1 million</tspan><tspan x="0" dy="20">years ago</tspan></text>
+    </g>
+    <g transform="translate(1010,-3)" text-anchor="start">
+     <text transform="translate(0,100)"  x="0" y="10"><tspan>10 mya</tspan></text>
+     <text transform="translate(0,200)"  x="0" y="10"><tspan>20 mya</tspan></text>
+     <text transform="translate(0,300)"  x="0" y="10"><tspan>30 mya</tspan></text>
+     <text transform="translate(0,400)"  x="0" y="10"><tspan>40 mya</tspan></text>
+     <text transform="translate(0,500)"  x="0" y="10"><tspan>50 mya</tspan></text>
+     <text transform="translate(0,600)"  x="0" y="10"><tspan>60 mya</tspan></text>
+     <text transform="translate(0,700)"  x="0" y="10"><tspan>70 mya</tspan></text>
+     <text transform="translate(0,800)"  x="0" y="10"><tspan>80 mya</tspan></text>
+     <text transform="translate(0,900)"  x="0" y="10"><tspan>90 mya</tspan></text>
+     <text transform="translate(-8,999)" x="0" y="10"><tspan>100 mya</tspan></text>
+    </g>
+    <g transform="translate(1015,1000)" text-anchor="start">
+     <text transform="translate(-45, 45)"  x="0" y="10"><tspan>1 billion</tspan><tspan x="0" dy="20">years ago</tspan></text>
+     <text transform="translate(-100,100)" x="0" y="10"><tspan>2 bya</tspan></text>
+     <text transform="translate(-150,150)" x="0" y="10"><tspan>3 bya</tspan></text>
+     <text transform="translate(-200,200)" x="0" y="10"><tspan>4 bya</tspan></text>
+     <text transform="translate(-227,227)" x="0" y="10"><tspan>4.54 bya (age of Earth)</tspan></text>
+     <text transform="translate(-250,250)" x="0" y="10"><tspan>5 bya</tspan></text>
+     <text transform="translate(-300,300)" x="0" y="10"><tspan>6 bya</tspan></text>
+     <text transform="translate(-350,350)" x="0" y="10"><tspan>7 bya</tspan></text>
+     <text transform="translate(-400,400)" x="0" y="10"><tspan>8 bya</tspan></text>
+     <text transform="translate(-450,450)" x="0" y="10"><tspan>9 bya</tspan></text>
+     <text transform="translate(-500,500)" x="0" y="10"><tspan>10 bya</tspan></text>
+     <text transform="translate(-550,550)" x="0" y="10"><tspan>11 bya</tspan></text>
+     <text transform="translate(-600,600)" x="0" y="10"><tspan>12 bya</tspan></text>
+     <text transform="translate(-650,650)" x="0" y="10"><tspan>13 bya</tspan></text>
+     <text transform="translate(-690,690)" x="0" y="10"><tspan>13.8 billion years ago (the Big Bang)</tspan></text>
+    </g>
+    <g transform="translate(1000,1000)" stroke-opacity="0.5">
+     <use xlink:href="#tick" transform="translate(-50, 50)" />
+     <use xlink:href="#tick" transform="translate(-100,100)"/>
+     <use xlink:href="#tick" transform="translate(-150,150)"/>
+     <use xlink:href="#tick" transform="translate(-200,200)"/>
+     <use xlink:href="#tick" transform="translate(-227,227)"/>
+     <use xlink:href="#tick" transform="translate(-250,250)"/>
+     <use xlink:href="#tick" transform="translate(-300,300)"/>
+     <use xlink:href="#tick" transform="translate(-350,350)"/>
+     <use xlink:href="#tick" transform="translate(-400,400)"/>
+     <use xlink:href="#tick" transform="translate(-450,450)"/>
+     <use xlink:href="#tick" transform="translate(-500,500)"/>
+     <use xlink:href="#tick" transform="translate(-550,550)"/>
+     <use xlink:href="#tick" transform="translate(-600,600)"/>
+     <use xlink:href="#tick" transform="translate(-650,650)"/>
+     <use xlink:href="#tick" transform="translate(-690,690)"/>
+    </g>
+   </g>
+  </g>
+ </defs>
+ <g font-family="sans-serif" font-size="20" letter-spacing="-1" text-anchor="middle" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="-9999" y="-9999" width="19999" height="19999" fill="#ffffff"/>
+  <g stroke="#000000" fill="#000000">
+   <use xlink:href="#grid" stroke-opacity="0.25"/>
+   <path d="M -230,230 v 1000 h 1000 l -460,460 h -1000 v -1000 z" fill="#333333" fill-opacity="0.5"/>
+   <text x="0" y="1490" stroke="none" fill="#ffffff">Before the formation of the Solar System</text>
+   <path d="M -225,225 v 1000 h 1000 l -5,5 h -1000 v -1000 z" fill="#ffff00" fill-opacity="0.5"/>
+   <text x="260" y="1245" stroke="none" fill="#ffff00">Formation of the Sun, Earth and Moon</text>
+   <path d="M -200,200 v 1000 h 1000 l -25,25 h -1000 v -1000 z" fill="#CB0381" fill-opacity="0.5"/>
+   <text x="290" y="1220" stroke="none">Hadean (oldest minerals and first life forms)</text>
+   <path d="M -125,125 v 1000 h 1000 l -75,75 h -1000 v -1000 z" fill="#FE007C" fill-opacity="0.5"/>
+   <text x="330" y="1170" stroke="none">Archean (simple single-celled life)</text>
+   <path d="M -80,80 v 1000 h 1000 l -45,45 h -1000 v -1000 z" fill="#FE5B71" fill-opacity="0.5"/>
+   <text x="400" y="1110" stroke="none">Paleoproterozoic (oxygen and complex single-celled life)</text>
+   <path d="M -50,50 v 1000 h 1000 l -30,30 h -1000 v -1000 z" fill="#FEB872" fill-opacity="0.5"/>
+   <text x="440" y="1072" stroke="none">Mesoproterozoic (green algae)</text>
+   <path d="M -30,30 v 410 l 5,-5 v 590 h 1000 l -25,25 h -1000 v -1000 z" fill="#FEB757" fill-opacity="0.5"/>
+   <text x="470" y="1044" stroke="none">Neoproterozoic (multi-celled organisms)</text>
+   <path d="M -15,15 v 510 l 5,-5 v 490 h 1000 l -15,15 h -1000 v -590 l -5,5 v -410 z" fill="#92C3A0" fill-opacity="0.5"/>
+   <text x="480" y="1023" stroke="none">Paleozoic (complex animals)</text>
+   <path d="M -5,5 v 670 l 5,-5 h 40 v -10 h 960 v 340 l -10,10 h -1000 v -490 l -5,5 v -510 z" fill="#07CAEA" fill-opacity="0.5"/>
+   <text x="500" y="830" stroke="none">Mesozoic (dinosaurs and reptiles)</text>
+   <path d="M 0,240 H 30 v -10 H 1000 V 660 H 40 v 10 H 0 l -5,5 v -430 z" fill="#FEA163" fill-opacity="0.5"/>
+   <text x="500" y="430" stroke="none">Paleogene (mammals and flowering plants)</text>
+   <path d="M 0,30 H 590 v -10 H 1000 V 230 H 30 v 10 H 0 l -5,5 v -210 z" fill="#FEDD2D" fill-opacity="0.5"/>
+   <text x="730" y="130" stroke="none">Neogene (large mammals and cool climate)</text>
+   <path d="M 0,0 H 1000 V 20 H 590 v 10 H 0 l -5,5 v -30 z" fill="#FEF691" fill-opacity="0.5"/>
+   <text x="750" y="17" stroke="none">Quaternary (hominids and ice ages)</text>
+   <use xlink:href="#marker" transform="translate(40,660)" stroke="#cc0000"/>
+   <use xlink:href="#marker" transform="translate(500,0)"  stroke="#006600"/>
+   <use xlink:href="#marker" transform="translate(200,0)"  stroke="#0000ff"/>
+   <use xlink:href="#marker" transform="translate(50,0)"   stroke="#cc0000"/>
+   <use xlink:href="#marker" transform="translate(40,0)"   stroke="#006600"/>
+   <use xlink:href="#marker" transform="translate(29,0)"   stroke="#0000ff"/>
+   <use xlink:href="#marker" transform="translate(25,0)"   stroke="#cc0000"/>
+   <use xlink:href="#marker" transform="translate(10,0)"   stroke="#006600"/>
+   <use xlink:href="#marker" transform="translate(5.5,0)"  stroke="#0000ff"/>
+   <use xlink:href="#marker" transform="translate(0,0)"    stroke="#000000"/>
+   <g transform="translate(0,4)" fill="none">
+    <path d="M  40,655 V 240 a  40,40  0 0 0  -40,-40 H -225" stroke="#cc0000"/>
+    <path d="M 500,10        a 150,150 0 0 1 -150,150 H -225" stroke="#006600"/>
+    <path d="M 200,10        a 130,130 0 0 1 -130,130 H -225" stroke="#0000ff"/>
+    <path d="M  50,10        a 110,110 0 0 1 -110,110 H -225" stroke="#cc0000"/>
+    <path d="M  40,10        a  90,90  0 0 1  -90,90  H -225" stroke="#006600"/>
+    <path d="M  29,10        a  70,70  0 0 1  -70,70  H -225" stroke="#0000ff"/>
+    <path d="M  25,10        a  50,50  0 0 1  -50,50  H -225" stroke="#cc0000"/>
+    <path d="M  10,10        a  30,30  0 0 1  -30,30  H -225" stroke="#006600"/>
+    <path d="M 5.5,10        a  10,10  0 0 1  -10,10  H -225" stroke="#0000ff"/>
+    <path d="M 0,-8 V -40"                                    stroke="#000000"/>
+   </g>
+   <g transform="translate(-230,30)" text-anchor="end" stroke="none">
+    <text x="0"   y="180">Chicxulub impact extinction event</text>
+    <text x="0"   y="140">Earliest Homo sapiens</text>
+    <text x="0"   y="120">Earliest Homo sapiens sapiens</text>
+    <text x="0"   y="100">Colonisation of Asia and Oceania</text>
+    <text x="0"   y="80">Earliest known cave paintings</text>
+    <text x="0"   y="60">Neanderthal extinction</text>
+    <text x="0"   y="40">Earliest known permanent settlement</text>
+    <text x="0"   y="20">Agriculture and end of last ice age</text>
+    <text x="0"   y="0">Writing invented: history begins</text>
+    <text x="260" y="-70" font-size="40">Today</text>
+   </g>
+  </g>
+ </g>
+</svg>

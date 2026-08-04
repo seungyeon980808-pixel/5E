@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730.39 560.42">
+  <defs>
+    <marker id="a" orient="auto" overflow="visible">
+      <path fill="#333345" stroke="#333345" stroke-width=".4pt" d="M1.96 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"/>
+    </marker>
+  </defs>
+  <path fill="#eff9f9" stroke="#08a" stroke-width="3.5" d="M466.48 40c-25.34.97-51.77 1.24-75.32 10.62-27.94 11.13-54.8 28.75-73.55 52.28-19.7 24.75-29.7 56.77-36.3 87.73-11.2 52.6-14.2 108.4-4.4 161.27 4.2 22.65 14 44.54 26.6 63.8 19.2 29.16 44 55.45 72.7 75.32 17.8 12.28 38.1 22.04 59.4 25.7 55.8 9.58 117.3 10.76 169.3-11.52 31-13.26 60-37.87 74.5-68.23 22.2-46.46 12-102.74 9.8-154.2-2.1-50.1.5-104.1-22.1-148.86-18.6-36.7-50.2-70-87.7-86.8-34.3-15.4-75-8.5-112.5-7.1z"/>
+  <g fill="#d88ebf" transform="translate(86.5 -255.256)">
+    <ellipse cx="82.25" cy="607.3" transform="rotate(-34)" rx="8" ry="3.75"/>
+    <ellipse cx="567.85" cy="355" transform="rotate(21)" ry="3.75" rx="8"/>
+    <ellipse cx="416.25" cy="719.7" ry="3.75" rx="8"/>
+    <ellipse cx="-526" cy="628.8" transform="rotate(-80)" ry="3.75" rx="8"/>
+    <ellipse cx="715.5" cy="158" transform="rotate(35)" rx="8" ry="3.75"/>
+    <ellipse cx="-739.36" cy="-77" rx="8" ry="3.75" transform="rotate(-118)"/>
+    <ellipse cx="463.06" cy="395" transform="rotate(79)" ry="3.75" rx="8"/>
+    <ellipse cx="15.17" cy="463" rx="8" ry="3.75" transform="rotate(-34.89)"/>
+    <ellipse cx="159.13" cy="606" transform="rotate(-10)" rx="8" ry="3.75"/>
+    <ellipse cx="486" cy="507.7" transform="rotate(14.3)" rx="8" ry="3.75"/>
+  </g>
+  <path fill="#1c818a" d="M418.4 172.8c-10.87-1.73-22.68 7.12-28.67 16.34-8.22 12.62-8.54 30.43-4.55 44.95 3 10.9 9.64 23.2 20.2 27.2 11.72 4.5 27.77 1 36.87-7.6 10.6-10.1 14.6-28.3 11.1-42.5-4.1-16.9-17.82-35.9-34.96-38.6z"/>
+  <g fill="none" stroke-width="1.5" marker-end="url(#a)" transform="translate(86.5 -255.256)" stroke="#333345">
+    <path d="M154.72 472.36h154.74"/>
+    <path d="M154.72 612.18H346"/>
+    <path d="M154.72 512.36h30.64"/>
+    <path d="M154.72 432.36h104.06"/>
+  </g>
+  <g fill="#333345" font-size="26.75" font-family="URW Gothic L" font-weight="bold" text-anchor="end">
+    <text x="238.76" y="364.554">
+      <tspan x="238.7" y="364.554">Mitocondrias</tspan><tspan x="238.7" y="225.984">Núcleo</tspan><tspan x="238.7" y="265.7">Membrana</tspan><tspan x="238.7" y="292.55">celular</tspan><tspan x="238.7" y="185.984">Citoplasma</tspan>
+    </text>
+  </g>
+</svg>

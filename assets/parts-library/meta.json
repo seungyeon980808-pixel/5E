@@ -1,5 +1,350 @@
 [
   {
+    "id": "b_202406_lesser_brown_scorpion",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202406 Lesser brown scorpion)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "lesser",
+      "brown",
+      "scorpion"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202406_Lesser_brown_scorpion.svg",
+    "sourceTitle": "202406 Lesser brown scorpion.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202407_pacific_bluefin_tuna",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202407 Pacific bluefin tuna)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "pacific",
+      "bluefin",
+      "tuna"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202407_Pacific_bluefin_tuna.svg",
+    "sourceTitle": "202407 Pacific bluefin tuna.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202407_pacific_oyster",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202407 Pacific oyster)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "pacific",
+      "oyster"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202407_Pacific_oyster.svg",
+    "sourceTitle": "202407 Pacific oyster.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202408_japanese_flying_squid",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202408 Japanese flying squid)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "japanese",
+      "flying",
+      "squid"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202408_Japanese_flying_squid.svg",
+    "sourceTitle": "202408 Japanese flying squid.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202409_horsehair_crab",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202409 Horsehair crab)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "horsehair",
+      "crab"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202409_Horsehair_crab.svg",
+    "sourceTitle": "202409 Horsehair crab.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202409_red_king_crab",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202409 Red king crab)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "red",
+      "king",
+      "crab"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202409_Red_king_crab.svg",
+    "sourceTitle": "202409 Red king crab.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_202409_snow_crab",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "해양·절지동물 (202409 Snow crab)",
+    "keywords": [
+      "해양·절지동물",
+      "해양",
+      "절지동물",
+      "snow",
+      "crab"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202409_Snow_crab.svg",
+    "sourceTitle": "202409 Snow crab.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_flower",
+    "subject": "b",
+    "part": "동식물학",
+    "name": "꽃의 구조",
+    "keywords": [
+      "꽃",
+      "암술",
+      "수술",
+      "씨방",
+      "flower"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Mature_flower_diagram.svg",
+    "sourceTitle": "Mature flower diagram.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "b_202410_dna",
+    "subject": "b",
+    "part": "생명 도해",
+    "name": "DNA (202410 DNA)",
+    "keywords": [
+      "DNA"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202410_DNA.svg",
+    "sourceTitle": "202410 DNA.svg",
+    "defaultLevel": "L3",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_cancer_stem_cells_text_resized",
+    "subject": "b",
+    "part": "생명 도해",
+    "name": "세포 신호 도해 (Cancer stem cells text resized)",
+    "keywords": [
+      "세포 신호 도해",
+      "세포",
+      "신호",
+      "도해",
+      "cancer",
+      "stem",
+      "cells",
+      "text",
+      "resized"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Cancer%20stem%20cells%20text%20resized.svg",
+    "sourceTitle": "Cancer stem cells text resized.svg",
+    "defaultLevel": "L3",
+    "artist": "Peter Znamenskiy"
+  },
+  {
+    "id": "b_complex_iii_reaction_es",
+    "subject": "b",
+    "part": "생명 도해",
+    "name": "대사 도해 (Complex III reaction-es)",
+    "keywords": [
+      "대사 도해",
+      "대사",
+      "도해",
+      "complex",
+      "iii",
+      "reaction"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Complex_III_reaction-es.svg",
+    "sourceTitle": "Complex III reaction-es.svg",
+    "defaultLevel": "L3",
+    "artist": "Complex_III_reaction.svg: Fvasconcellos 02:19, 19 September 2007 (UTC) derivative work: Lucien (es·m·com) This is a retouched picture, which means that it has been digitally altered from its original version. Modifications: Translation to spanish. The original can be viewed here: Complex III reaction.svg: . Modifications made by Lucien leGrey."
+  },
+  {
+    "id": "b_diagram_showing_how_growth_factor_inhibitors_stop_the_signal_inside_the_cell_cruk_131_hi",
+    "subject": "b",
+    "part": "생명 도해",
+    "name": "세포 신호 도해 (Diagram showing how growth factor inhibitors stop the signal inside the cell CRUK 131-hi)",
+    "keywords": [
+      "세포 신호 도해",
+      "세포",
+      "신호",
+      "도해",
+      "diagram",
+      "showing",
+      "how",
+      "growth",
+      "factor",
+      "inhibitors"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Diagram%20showing%20how%20growth%20factor%20inhibitors%20stop%20the%20signal%20inside%20the%20cell%20CRUK%20131-hi.svg",
+    "sourceTitle": "Diagram showing how growth factor inhibitors stop the signal inside the cell CRUK 131-hi.svg",
+    "defaultLevel": "L3",
+    "artist": "Original by Cancer Research UK with translations to Hindi by"
+  },
+  {
+    "id": "b_metabolism_ru",
+    "subject": "b",
+    "part": "생명 도해",
+    "name": "대사 도해 (Metabolism-ru)",
+    "keywords": [
+      "대사 도해",
+      "대사",
+      "도해",
+      "metabolism"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Metabolism-ru.svg",
+    "sourceTitle": "Metabolism-ru.svg",
+    "defaultLevel": "L3",
+    "artist": "Д.Ильин: vectorization, translation"
+  },
+  {
+    "id": "b_gap_cell_junction_es",
+    "subject": "b",
+    "part": "세포",
+    "name": "세포연접 (Gap cell junction-es)",
+    "keywords": [
+      "세포연접",
+      "gap",
+      "cell",
+      "junction"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Gap_cell_junction-es.svg",
+    "sourceTitle": "Gap cell junction-es.svg",
+    "defaultLevel": "L3",
+    "artist": "Traducido por Kalpo, basado en una imagen de Mariana Ruiz LadyofHats."
+  },
+  {
+    "id": "b_majoreventsinmeiosis_variant_int",
+    "subject": "b",
+    "part": "세포",
+    "name": "감수분열 (MajorEventsInMeiosis variant int)",
+    "keywords": [
+      "감수분열",
+      "majoreventsinmeiosis",
+      "variant",
+      "int"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:MajorEventsInMeiosis_variant_int.svg",
+    "sourceTitle": "MajorEventsInMeiosis variant int.svg",
+    "defaultLevel": "L3",
+    "artist": "internationalization: PatríciaR. Original image from NCBI; original vector version by Jakov"
+  },
+  {
+    "id": "b_meiosi",
+    "subject": "b",
+    "part": "세포",
+    "name": "감수분열 (Meiosi)",
+    "keywords": [
+      "감수분열",
+      "meiosi"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Meiosi.svg",
+    "sourceTitle": "Meiosi.svg",
+    "defaultLevel": "L3",
+    "artist": "Original version National Institutes of Health"
+  },
+  {
+    "id": "b_plant_cell_wall_diagram_en",
+    "subject": "b",
+    "part": "세포",
+    "name": "식물 세포벽 (Plant cell wall diagram-en)",
+    "keywords": [
+      "식물 세포벽",
+      "식물",
+      "세포벽",
+      "plant",
+      "cell",
+      "wall",
+      "diagram"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Plant_cell_wall_diagram-en.svg",
+    "sourceTitle": "Plant cell wall diagram-en.svg",
+    "defaultLevel": "L3",
+    "artist": "LadyofHats"
+  },
+  {
+    "id": "b_pseudostratified_columnar_epithelium_numbered",
+    "subject": "b",
+    "part": "세포",
+    "name": "상피조직 (Pseudostratified Columnar Epithelium – Numbered)",
+    "keywords": [
+      "상피조직",
+      "pseudostratified",
+      "columnar",
+      "epithelium",
+      "numbered"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Pseudostratified_Columnar_Epithelium_–_Numbered.svg",
+    "sourceTitle": "Pseudostratified Columnar Epithelium – Numbered.svg",
+    "defaultLevel": "L3",
+    "artist": "HynekJanac"
+  },
+  {
+    "id": "b_sinapsi_mut_ca",
+    "subject": "b",
+    "part": "세포",
+    "name": "시냅스 (Sinapsi-mut-ca)",
+    "keywords": [
+      "시냅스",
+      "sinapsi",
+      "mut"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Sinapsi-mut-ca.svg",
+    "sourceTitle": "Sinapsi-mut-ca.svg",
+    "defaultLevel": "L3",
+    "artist": "Imartin6"
+  },
+  {
     "id": "b_animal_cell",
     "subject": "b",
     "part": "세포학",
@@ -33,6 +378,22 @@
     "defaultLevel": "L2"
   },
   {
+    "id": "b_plant_cell",
+    "subject": "b",
+    "part": "세포학",
+    "name": "식물 세포",
+    "keywords": [
+      "식물세포",
+      "엽록체",
+      "세포벽",
+      "plant cell"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Plant_cell_structure-en.svg",
+    "sourceTitle": "Plant cell structure-en.svg",
+    "defaultLevel": "L3"
+  },
+  {
     "id": "b_prokaryote",
     "subject": "b",
     "part": "세포학",
@@ -50,37 +411,773 @@
     "defaultLevel": "L2"
   },
   {
-    "id": "b_plant_cell",
+    "id": "b_201305_dissecting_scissors",
     "subject": "b",
-    "part": "세포학",
-    "name": "식물 세포",
+    "part": "실험 기구",
+    "name": "가위 (201305 dissecting scissors)",
     "keywords": [
-      "식물세포",
-      "엽록체",
-      "세포벽",
-      "plant cell"
+      "가위",
+      "dissecting",
+      "scissors"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:201305%20dissecting%20scissors.svg",
+    "sourceTitle": "201305 dissecting scissors.svg",
+    "defaultLevel": "L2",
+    "artist": "DataBase Center for Life Science (DBCLS)"
+  },
+  {
+    "id": "b_202012_cell_culture_dish",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "배양접시 (202012 Cell culture dish)",
+    "keywords": [
+      "배양접시",
+      "cell",
+      "culture",
+      "dish"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202012_Cell_culture_dish.svg",
+    "sourceTitle": "202012 Cell culture dish.svg",
+    "defaultLevel": "L2",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "b_adson_forceps",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "겸자 (Adson forceps)",
+    "keywords": [
+      "겸자",
+      "adson",
+      "forceps"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Adson%20forceps.svg",
+    "sourceTitle": "Adson forceps.svg",
+    "defaultLevel": "L2",
+    "artist": "-- Stevegray"
+  },
+  {
+    "id": "b_deschamps_needle",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "봉합바늘 (Deschamps needle)",
+    "keywords": [
+      "봉합바늘",
+      "deschamps",
+      "needle"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Deschamps%20needle.svg",
+    "sourceTitle": "Deschamps needle.svg",
+    "defaultLevel": "L2",
+    "artist": "Olek Remesz (wiki-pl: Orem , commons: Orem )"
+  },
+  {
+    "id": "b_dessin_scalpel",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "메스 (Dessin scalpel)",
+    "keywords": [
+      "메스",
+      "dessin",
+      "scalpel"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dessin%20scalpel.svg",
+    "sourceTitle": "Dessin scalpel.svg",
+    "defaultLevel": "L2",
+    "artist": "Petit B"
+  },
+  {
+    "id": "b_dessin_scalpel_2",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "메스 (Dessin scalpel 2)",
+    "keywords": [
+      "메스",
+      "dessin",
+      "scalpel"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dessin%20scalpel%202.svg",
+    "sourceTitle": "Dessin scalpel 2.svg",
+    "defaultLevel": "L2",
+    "artist": "Petit B"
+  },
+  {
+    "id": "b_dessin_scalpel_3",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "메스 (Dessin scalpel 3)",
+    "keywords": [
+      "메스",
+      "dessin",
+      "scalpel"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dessin%20scalpel%203.svg",
+    "sourceTitle": "Dessin scalpel 3.svg",
+    "defaultLevel": "L2",
+    "artist": "Petit B"
+  },
+  {
+    "id": "b_endobutton_02_fr",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "기타 의료기구 (Endobutton 02-fr)",
+    "keywords": [
+      "기타 의료기구",
+      "기타",
+      "의료기구",
+      "endobutton"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Endobutton%2002-fr.svg",
+    "sourceTitle": "Endobutton 02-fr.svg",
+    "defaultLevel": "L2",
+    "artist": "Kuebi = Armin Kübelbeck"
+  },
+  {
+    "id": "b_farabeuf_retractor",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "견인기 (Farabeuf retractor)",
+    "keywords": [
+      "견인기",
+      "farabeuf",
+      "retractor"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Farabeuf%20retractor.svg",
+    "sourceTitle": "Farabeuf retractor.svg",
+    "defaultLevel": "L2",
+    "artist": "Olek Remesz (wiki-pl: Orem , commons: Orem )"
+  },
+  {
+    "id": "b_gigli_saw",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "실톱 (Gigli saw)",
+    "keywords": [
+      "실톱",
+      "gigli",
+      "saw"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Gigli_saw.svg",
+    "sourceTitle": "Gigli saw.svg",
+    "defaultLevel": "L2",
+    "artist": "Orem (Olek Remesz)"
+  },
+  {
+    "id": "b_hemostat",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "겸자 (Hemostat)",
+    "keywords": [
+      "겸자",
+      "hemostat"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Hemostat.svg",
+    "sourceTitle": "Hemostat.svg",
+    "defaultLevel": "L2",
+    "artist": "algotruneman"
+  },
+  {
+    "id": "b_kleszczyki_klem",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "겸자 (Kleszczyki Klem)",
+    "keywords": [
+      "겸자",
+      "kleszczyki",
+      "klem"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kleszczyki%20Klem.svg",
+    "sourceTitle": "Kleszczyki Klem.svg",
+    "defaultLevel": "L2",
+    "artist": "Orem (Olek Remesz)"
+  },
+  {
+    "id": "b_npwt_diagram",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "기타 의료기구 (NPWT diagram)",
+    "keywords": [
+      "기타 의료기구",
+      "기타",
+      "의료기구",
+      "npwt",
+      "diagram"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:NPWT%20diagram.svg",
+    "sourceTitle": "NPWT diagram.svg",
+    "defaultLevel": "L2",
+    "artist": "A loose necktie"
+  },
+  {
+    "id": "b_scalpelgrip_palmar_plain",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "메스 (ScalpelGrip Palmar-Plain)",
+    "keywords": [
+      "메스",
+      "scalpelgrip",
+      "palmar",
+      "plain"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:ScalpelGrip%20Palmar-Plain.svg",
+    "sourceTitle": "ScalpelGrip Palmar-Plain.svg",
+    "defaultLevel": "L2",
+    "artist": "GregorDS"
+  },
+  {
+    "id": "b_scalpelgrip_pencil_plain",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "메스 (ScalpelGrip Pencil-Plain)",
+    "keywords": [
+      "메스",
+      "scalpelgrip",
+      "pencil",
+      "plain"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:ScalpelGrip%20Pencil-Plain.svg",
+    "sourceTitle": "ScalpelGrip Pencil-Plain.svg",
+    "defaultLevel": "L2",
+    "artist": "GregorDS"
+  },
+  {
+    "id": "b_surgical_raspator",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "골막기 (Surgical raspator)",
+    "keywords": [
+      "골막기",
+      "surgical",
+      "raspator"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Surgical%20raspator.svg",
+    "sourceTitle": "Surgical raspator.svg",
+    "defaultLevel": "L2",
+    "artist": "Olek Remesz (wiki-pl: Orem , commons: Orem )"
+  },
+  {
+    "id": "b_szczypczyki_chirurgiczne",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "겸자 (Szczypczyki chirurgiczne)",
+    "keywords": [
+      "겸자",
+      "szczypczyki",
+      "chirurgiczne"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Szczypczyki%20chirurgiczne.svg",
+    "sourceTitle": "Szczypczyki chirurgiczne.svg",
+    "defaultLevel": "L2",
+    "artist": "Olek Remesz (wiki-pl: Orem , commons: Orem )"
+  },
+  {
+    "id": "c_202004_50ml_tube",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "원심관 (202004 50ml tube)",
+    "keywords": [
+      "원심관",
+      "tube"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202004_50ml_tube.svg",
+    "sourceTitle": "202004 50ml tube.svg",
+    "defaultLevel": "L2",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "c_202004_petri_dish_with_medium_blue",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "배양접시 (202004 petri dish with medium blue)",
+    "keywords": [
+      "배양접시",
+      "petri",
+      "dish",
+      "with",
+      "medium",
+      "blue"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202004_petri_dish_with_medium_blue.svg",
+    "sourceTitle": "202004 petri dish with medium blue.svg",
+    "defaultLevel": "L2",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "c_202004_twissors",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "핀셋 (202004 twissors)",
+    "keywords": [
+      "핀셋",
+      "twissors"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202004_twissors.svg",
+    "sourceTitle": "202004 twissors.svg",
+    "defaultLevel": "L2",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "c_202012_cell_culture_plate_size_6_wells",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "배양접시 (202012 Cell culture plate size 6 wells)",
+    "keywords": [
+      "배양접시",
+      "cell",
+      "culture",
+      "plate",
+      "size",
+      "wells"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202012%20Cell%20culture%20plate%20size%206%20wells.svg",
+    "sourceTitle": "202012 Cell culture plate size 6 wells.svg",
+    "defaultLevel": "L2",
+    "artist": "DataBase Center for Life Science (DBCLS)"
+  },
+  {
+    "id": "c_backhaus_clamp",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "겸자 (Backhaus clamp)",
+    "keywords": [
+      "겸자",
+      "backhaus",
+      "clamp"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Backhaus%20clamp.svg",
+    "sourceTitle": "Backhaus clamp.svg",
+    "defaultLevel": "L2",
+    "artist": "Olek Remesz (wiki-pl: Orem , commons: Orem )"
+  },
+  {
+    "id": "c_handheld_medical_tube_sealer_1",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "튜브 실러 (Handheld medical tube sealer 1)",
+    "keywords": [
+      "튜브 실러",
+      "튜브",
+      "실러",
+      "handheld",
+      "medical",
+      "tube",
+      "sealer"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Handheld%20medical%20tube%20sealer%201.svg",
+    "sourceTitle": "Handheld medical tube sealer 1.svg",
+    "defaultLevel": "L2",
+    "artist": "Einar Bollvag"
+  },
+  {
+    "id": "c_handheld_medical_tube_sealer_2",
+    "subject": "b",
+    "part": "실험 기구",
+    "name": "튜브 실러 (Handheld medical tube sealer 2)",
+    "keywords": [
+      "튜브 실러",
+      "튜브",
+      "실러",
+      "handheld",
+      "medical",
+      "tube",
+      "sealer"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Handheld%20medical%20tube%20sealer%202.svg",
+    "sourceTitle": "Handheld medical tube sealer 2.svg",
+    "defaultLevel": "L2",
+    "artist": "Einar Bollvag"
+  },
+  {
+    "id": "b_central_nervous_system",
+    "subject": "b",
+    "part": "인체",
+    "name": "신경계 (Central nervous system)",
+    "keywords": [
+      "신경계",
+      "central",
+      "nervous",
+      "system"
     ],
     "license": "Public domain",
-    "source": "https://upload.wikimedia.org/wikipedia/commons/d/d8/Plant_cell_structure-en.svg",
-    "sourceTitle": "Plant cell structure-en.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Central_nervous_system.svg",
+    "sourceTitle": "Central nervous system.svg",
     "defaultLevel": "L3"
   },
   {
-    "id": "b_flower",
-    "subject": "b",
-    "part": "동식물학",
-    "name": "꽃의 구조",
+    "id": "c_1000_ml_erlenmeyer_flask",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "삼각플라스크 (1000 ml Erlenmeyer flask)",
     "keywords": [
-      "꽃",
-      "암술",
-      "수술",
-      "씨방",
-      "flower"
+      "삼각플라스크",
+      "erlenmeyer",
+      "flask"
     ],
     "license": "Public domain",
-    "source": "https://upload.wikimedia.org/wikipedia/commons/7/7f/Mature_flower_diagram.svg",
-    "sourceTitle": "Mature flower diagram.svg",
-    "defaultLevel": "L2"
+    "source": "https://commons.wikimedia.org/wiki/File:1000%20ml%20Erlenmeyer%20flask.svg",
+    "sourceTitle": "1000 ml Erlenmeyer flask.svg",
+    "defaultLevel": "L2",
+    "artist": "File:Beakers.svg : Xavax derivative work Andrew c"
+  },
+  {
+    "id": "c_202004_flask_yellow",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "삼각플라스크 (202004 flask yellow)",
+    "keywords": [
+      "삼각플라스크",
+      "flask",
+      "yellow"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202004_flask_yellow.svg",
+    "sourceTitle": "202004 flask yellow.svg",
+    "defaultLevel": "L2",
+    "artist": "DBCLS"
+  },
+  {
+    "id": "c_202004_micropipette",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "피펫 (202004 micropipette)",
+    "keywords": [
+      "피펫",
+      "micropipette"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:202004%20micropipette.svg",
+    "sourceTitle": "202004 micropipette.svg",
+    "defaultLevel": "L2",
+    "artist": "DataBase Center for Life Science (DBCLS)"
+  },
+  {
+    "id": "c_abdampfschale",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증발접시 (Abdampfschale)",
+    "keywords": [
+      "증발접시",
+      "abdampfschale"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Abdampfschale.svg",
+    "sourceTitle": "Abdampfschale.svg",
+    "defaultLevel": "L2",
+    "artist": "Muskid"
+  },
+  {
+    "id": "c_allihn_condenser",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "냉각관 (Allihn condenser)",
+    "keywords": [
+      "냉각관",
+      "allihn",
+      "condenser"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Allihn%20condenser.svg",
+    "sourceTitle": "Allihn condenser.svg",
+    "defaultLevel": "L2",
+    "artist": "Original: Quantockgoblin Vector: Jxjl"
+  },
+  {
+    "id": "c_aspirator_setup",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "아스피레이터 (Aspirator setup)",
+    "keywords": [
+      "아스피레이터",
+      "aspirator",
+      "setup"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Aspirator%20setup.svg",
+    "sourceTitle": "Aspirator setup.svg",
+    "defaultLevel": "L2",
+    "artist": "Jalanpalmer"
+  },
+  {
+    "id": "c_beakers",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "비커 (Beakers)",
+    "keywords": [
+      "비커",
+      "beakers"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Beakers.svg",
+    "sourceTitle": "Beakers.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_beakers_de",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "비커 (Beakers de)",
+    "keywords": [
+      "비커",
+      "beakers"
+    ],
+    "license": "CC BY 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Beakers%20de.svg",
+    "sourceTitle": "Beakers de.svg",
+    "defaultLevel": "L2",
+    "artist": "Lucasbosch"
+  },
+  {
+    "id": "c_beakers_en",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "비커 (Beakers en)",
+    "keywords": [
+      "비커",
+      "beakers"
+    ],
+    "license": "CC BY 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Beakers%20en.svg",
+    "sourceTitle": "Beakers en.svg",
+    "defaultLevel": "L2",
+    "artist": "Lucasbosch"
+  },
+  {
+    "id": "c_bolley_separatory_funnel",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (Bolley separatory funnel)",
+    "keywords": [
+      "분액깔때기",
+      "bolley",
+      "separatory",
+      "funnel"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bolley%20separatory%20funnel.svg",
+    "sourceTitle": "Bolley separatory funnel.svg",
+    "defaultLevel": "L2",
+    "artist": "Episcophagus"
+  },
+  {
+    "id": "c_bunsenbrenner",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (Bunsenbrenner)",
+    "keywords": [
+      "분젠버너",
+      "bunsenbrenner"
+    ],
+    "license": "CC BY-SA 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Bunsenbrenner.svg",
+    "sourceTitle": "Bunsenbrenner.svg",
+    "defaultLevel": "L2",
+    "artist": "Tobias Rütten, Metoc"
+  },
+  {
+    "id": "c_burette",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "뷰렛 (Burette)",
+    "keywords": [
+      "뷰렛",
+      "burette"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Burette.svg",
+    "sourceTitle": "Burette.svg",
+    "defaultLevel": "L2",
+    "artist": "Mysid (original by Quantockgoblin )"
+  },
+  {
+    "id": "c_burette_vertical",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "뷰렛 (Burette vertical)",
+    "keywords": [
+      "뷰렛",
+      "burette",
+      "vertical"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Burette%20vertical.svg",
+    "sourceTitle": "Burette vertical.svg",
+    "defaultLevel": "L2",
+    "artist": "Lucasbosch"
+  },
+  {
+    "id": "c_claisen_bridge",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Claisen bridge)",
+    "keywords": [
+      "증류장치",
+      "claisen",
+      "bridge"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Claisen%20bridge.svg",
+    "sourceTitle": "Claisen bridge.svg",
+    "defaultLevel": "L2",
+    "artist": "Durfo"
+  },
+  {
+    "id": "c_claisen_head",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Claisen head)",
+    "keywords": [
+      "증류장치",
+      "claisen",
+      "head"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Claisen%20head.svg",
+    "sourceTitle": "Claisen head.svg",
+    "defaultLevel": "L2",
+    "artist": "Durfo"
+  },
+  {
+    "id": "c_dean_stark_apparatus",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Dean-Stark apparatus)",
+    "keywords": [
+      "증류장치",
+      "dean",
+      "stark",
+      "apparatus"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Dean-Stark%20apparatus.svg",
+    "sourceTitle": "Dean-Stark apparatus.svg",
+    "defaultLevel": "L2",
+    "artist": "Vectorization: Slashme"
+  },
+  {
+    "id": "c_dekantieren",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "비커 (Dekantieren)",
+    "keywords": [
+      "비커",
+      "dekantieren"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Dekantieren.svg",
+    "sourceTitle": "Dekantieren.svg",
+    "defaultLevel": "L2",
+    "artist": "Andi schmitt"
+  },
+  {
+    "id": "c_destillierbr_cke",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Destillierbrücke)",
+    "keywords": [
+      "증류장치",
+      "destillierbr",
+      "cke"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Destillierbr%C3%BCcke.svg",
+    "sourceTitle": "Destillierbrücke.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_destillierbr_cke_in_versuchsaufbau",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "냉각관 (Destillierbrücke in Versuchsaufbau)",
+    "keywords": [
+      "냉각관",
+      "destillierbr",
+      "cke",
+      "versuchsaufbau"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Destillierbr%C3%BCcke%20in%20Versuchsaufbau.svg",
+    "sourceTitle": "Destillierbrücke in Versuchsaufbau.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_destillierbr_cke_mit_wasserk_hlung",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "냉각관 (Destillierbrücke mit Wasserkühlung)",
+    "keywords": [
+      "냉각관",
+      "destillierbr",
+      "cke",
+      "mit",
+      "wasserk",
+      "hlung"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Destillierbr%C3%BCcke%20mit%20Wasserk%C3%BChlung.svg",
+    "sourceTitle": "Destillierbrücke mit Wasserkühlung.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_destillierbr_cke_ohne_k_hlung",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "냉각관 (Destillierbrücke ohne Kühlung)",
+    "keywords": [
+      "냉각관",
+      "destillierbr",
+      "cke",
+      "ohne",
+      "hlung"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Destillierbr%C3%BCcke%20ohne%20K%C3%BChlung.svg",
+    "sourceTitle": "Destillierbrücke ohne Kühlung.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_destillierbr_cke_v5",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Destillierbrücke V5)",
+    "keywords": [
+      "증류장치",
+      "destillierbr",
+      "cke"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Destillierbr%C3%BCcke%20V5.svg",
+    "sourceTitle": "Destillierbrücke V5.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
   },
   {
     "id": "c_distillation",
@@ -96,6 +1193,1236 @@
     "license": "Public domain",
     "source": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Simple_distillation_apparatus.svg",
     "sourceTitle": "Simple distillation apparatus.svg",
+    "defaultLevel": "L2"
+  },
+  {
+    "id": "c_distillation_connector",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Distillation connector)",
+    "keywords": [
+      "증류장치",
+      "distillation",
+      "connector"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Distillation%20connector.svg",
+    "sourceTitle": "Distillation connector.svg",
+    "defaultLevel": "L2",
+    "artist": "NalesnikLD"
+  },
+  {
+    "id": "c_distillation_cow",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Distillation cow)",
+    "keywords": [
+      "증류장치",
+      "distillation",
+      "cow"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Distillation%20cow.svg",
+    "sourceTitle": "Distillation cow.svg",
+    "defaultLevel": "L2",
+    "artist": "Harkonnen2, Oryginał: pl:Wikipedysta:Polimerek"
+  },
+  {
+    "id": "c_entleuchtete_brennerflamme",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (Entleuchtete Brennerflamme)",
+    "keywords": [
+      "분젠버너",
+      "entleuchtete",
+      "brennerflamme"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Entleuchtete%20Brennerflamme.svg",
+    "sourceTitle": "Entleuchtete Brennerflamme.svg",
+    "defaultLevel": "L2",
+    "artist": "Teclubrenner.svg : Benedikt.Seidl derivative work: Matt ( ta"
+  },
+  {
+    "id": "c_erlenmeyer_flasks_fr",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "삼각플라스크 (Erlenmeyer flasks FR)",
+    "keywords": [
+      "삼각플라스크",
+      "erlenmeyer",
+      "flasks"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Erlenmeyer%20flasks%20FR.svg",
+    "sourceTitle": "Erlenmeyer flasks FR.svg",
+    "defaultLevel": "L2",
+    "artist": "Erlenmeyer_flasks_DE.svg : Sponk ( talk ) translated by: Spo"
+  },
+  {
+    "id": "c_evaporating_dish",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증발접시 (Evaporating dish)",
+    "keywords": [
+      "증발접시",
+      "evaporating",
+      "dish"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Evaporating%20dish.svg",
+    "sourceTitle": "Evaporating dish.svg",
+    "defaultLevel": "L2",
+    "artist": "Polimerek (png); user: Marek M (svg)"
+  },
+  {
+    "id": "c_fernbach_flask",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "삼각플라스크 (Fernbach Flask)",
+    "keywords": [
+      "삼각플라스크",
+      "fernbach",
+      "flask"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Fernbach%20Flask.svg",
+    "sourceTitle": "Fernbach Flask.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_fractional_distillation_lab_apparatus_be",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Fractional distillation lab apparatus be)",
+    "keywords": [
+      "증류장치",
+      "fractional",
+      "distillation",
+      "lab",
+      "apparatus"
+    ],
+    "license": "CC BY-SA 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Fractional%20distillation%20lab%20apparatus%20be.svg",
+    "sourceTitle": "Fractional distillation lab apparatus be.svg",
+    "defaultLevel": "L2",
+    "artist": "User:Georgmay"
+  },
+  {
+    "id": "c_funnel_mech",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "깔때기 (Funnel Mech)",
+    "keywords": [
+      "깔때기",
+      "funnel",
+      "mech"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Funnel%20Mech.svg",
+    "sourceTitle": "Funnel Mech.svg",
+    "defaultLevel": "L2",
+    "artist": "REisemann3937"
+  },
+  {
+    "id": "c_funnel_types_v_1",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "깔때기 (Funnel Types V.1)",
+    "keywords": [
+      "깔때기",
+      "funnel",
+      "types"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Funnel%20Types%20V.1.svg",
+    "sourceTitle": "Funnel Types V.1.svg",
+    "defaultLevel": "L2",
+    "artist": "Jü"
+  },
+  {
+    "id": "c_glass_evaporating_dish",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증발접시 (Glass evaporating dish)",
+    "keywords": [
+      "증발접시",
+      "glass",
+      "evaporating",
+      "dish"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Glass%20evaporating%20dish.svg",
+    "sourceTitle": "Glass evaporating dish.svg",
+    "defaultLevel": "L2",
+    "artist": "CLauterb"
+  },
+  {
+    "id": "c_glasscylinder",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (GlassCylinder)",
+    "keywords": [
+      "눈금실린더",
+      "glasscylinder"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:GlassCylinder.svg",
+    "sourceTitle": "GlassCylinder.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_graduated_cylinder_low_form_250ml",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Graduated Cylinder low form 250ml)",
+    "keywords": [
+      "눈금실린더",
+      "graduated",
+      "cylinder",
+      "low",
+      "form"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Graduated%20Cylinder%20low%20form%20250ml.svg",
+    "sourceTitle": "Graduated Cylinder low form 250ml.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_graduated_cylinder_tall_form_250ml",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Graduated Cylinder tall form 250ml)",
+    "keywords": [
+      "눈금실린더",
+      "graduated",
+      "cylinder",
+      "tall",
+      "form"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Graduated%20Cylinder%20tall%20form%20250ml.svg",
+    "sourceTitle": "Graduated Cylinder tall form 250ml.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_graduated_cylinders_diagrams",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Graduated cylinders-diagrams)",
+    "keywords": [
+      "눈금실린더",
+      "graduated",
+      "cylinders",
+      "diagrams"
+    ],
+    "license": "GFDL",
+    "source": "https://commons.wikimedia.org/wiki/File:Graduated%20cylinders-diagrams.svg",
+    "sourceTitle": "Graduated cylinders-diagrams.svg",
+    "defaultLevel": "L2",
+    "artist": "Wersję rastrową wykonał użytkownik polskiego projektu wikipe"
+  },
+  {
+    "id": "c_graduatedcylinder",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (GraduatedCylinder)",
+    "keywords": [
+      "눈금실린더",
+      "graduatedcylinder"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:GraduatedCylinder.svg",
+    "sourceTitle": "GraduatedCylinder.svg",
+    "defaultLevel": "L2",
+    "artist": "Xavax"
+  },
+  {
+    "id": "c_hydro_aspirator",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "아스피레이터 (Hydro aspirator)",
+    "keywords": [
+      "아스피레이터",
+      "hydro",
+      "aspirator"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Hydro%20aspirator.svg",
+    "sourceTitle": "Hydro aspirator.svg",
+    "defaultLevel": "L2",
+    "artist": "Jalanpalmer"
+  },
+  {
+    "id": "c_kugelrohr",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Kugelrohr)",
+    "keywords": [
+      "증류장치",
+      "kugelrohr"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Kugelrohr.svg",
+    "sourceTitle": "Kugelrohr.svg",
+    "defaultLevel": "L2",
+    "artist": "Durfo"
+  },
+  {
+    "id": "c_lab_gas_drying_column",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "건조관 (Lab gas drying column)",
+    "keywords": [
+      "건조관",
+      "lab",
+      "gas",
+      "drying",
+      "column"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Lab%20gas%20drying%20column.svg",
+    "sourceTitle": "Lab gas drying column.svg",
+    "defaultLevel": "L2",
+    "artist": "Cjp24"
+  },
+  {
+    "id": "c_labeqx_bunsen_burner_blue",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (LabEqx–Bunsen burner blue)",
+    "keywords": [
+      "분젠버너",
+      "labeqx",
+      "bunsen",
+      "burner",
+      "blue"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:LabEqx%E2%80%93Bunsen%20burner%20blue.svg",
+    "sourceTitle": "LabEqx–Bunsen burner blue.svg",
+    "defaultLevel": "L2",
+    "artist": "chris 論"
+  },
+  {
+    "id": "c_labeqx_bunsen_burner_yellow",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (LabEqx–Bunsen burner yellow)",
+    "keywords": [
+      "분젠버너",
+      "labeqx",
+      "bunsen",
+      "burner",
+      "yellow"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:LabEqx%E2%80%93Bunsen%20burner%20yellow.svg",
+    "sourceTitle": "LabEqx–Bunsen burner yellow.svg",
+    "defaultLevel": "L2",
+    "artist": "chris 論"
+  },
+  {
+    "id": "c_labeqx_graduated_cylinder",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (LabEqx–graduated cylinder)",
+    "keywords": [
+      "눈금실린더",
+      "labeqx",
+      "graduated",
+      "cylinder"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:LabEqx%E2%80%93graduated%20cylinder.svg",
+    "sourceTitle": "LabEqx–graduated cylinder.svg",
+    "defaultLevel": "L2",
+    "artist": "chris 論"
+  },
+  {
+    "id": "c_labeqx_stand_with_double_socket_and_universal_clamp",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "스탠드 (LabEqx–stand with double socket and universal clamp)",
+    "keywords": [
+      "스탠드",
+      "labeqx",
+      "stand",
+      "with",
+      "double",
+      "socket",
+      "and"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:LabEqx%E2%80%93stand%20with%20double%20socket%20and%20universal%20clamp.svg",
+    "sourceTitle": "LabEqx–stand with double socket and universal clamp.svg",
+    "defaultLevel": "L2",
+    "artist": "chris 論"
+  },
+  {
+    "id": "c_labeqx_universal_clamp",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "클램프·집게 (LabEqx–universal clamp)",
+    "keywords": [
+      "클램프·집게",
+      "클램프",
+      "집게",
+      "labeqx",
+      "universal",
+      "clamp"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:LabEqx%E2%80%93universal%20clamp.svg",
+    "sourceTitle": "LabEqx–universal clamp.svg",
+    "defaultLevel": "L2",
+    "artist": "chris 論"
+  },
+  {
+    "id": "c_laboratory_gas_burner",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (Laboratory gas burner)",
+    "keywords": [
+      "분젠버너",
+      "laboratory",
+      "gas",
+      "burner"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Laboratory%20gas%20burner.svg",
+    "sourceTitle": "Laboratory gas burner.svg",
+    "defaultLevel": "L2",
+    "artist": "CLauter~commonswiki"
+  },
+  {
+    "id": "c_measuring_cylinder",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Measuring cylinder)",
+    "keywords": [
+      "눈금실린더",
+      "measuring",
+      "cylinder"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Measuring%20cylinder.svg",
+    "sourceTitle": "Measuring cylinder.svg",
+    "defaultLevel": "L2",
+    "artist": "Lucasbosch"
+  },
+  {
+    "id": "c_messzylinder_100_1",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Messzylinder 100 1)",
+    "keywords": [
+      "눈금실린더",
+      "messzylinder"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Messzylinder%20100%201.svg",
+    "sourceTitle": "Messzylinder 100 1.svg",
+    "defaultLevel": "L2",
+    "artist": "Arbeitsding"
+  },
+  {
+    "id": "c_messzylinder_500_5",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Messzylinder 500 5)",
+    "keywords": [
+      "눈금실린더",
+      "messzylinder"
+    ],
+    "license": "CC BY 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Messzylinder%20500%205.svg",
+    "sourceTitle": "Messzylinder 500 5.svg",
+    "defaultLevel": "L2",
+    "artist": "Arbeitsding"
+  },
+  {
+    "id": "c_nernstverteilungssatz",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (NERNSTVerteilungssatz)",
+    "keywords": [
+      "분액깔때기",
+      "nernstverteilungssatz"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:NERNSTVerteilungssatz.svg",
+    "sourceTitle": "NERNSTVerteilungssatz.svg",
+    "defaultLevel": "L2",
+    "artist": "Johannes Schneider"
+  },
+  {
+    "id": "c_philipsbecher_farbig",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "비커 (Philipsbecher (farbig))",
+    "keywords": [
+      "비커",
+      "philipsbecher",
+      "farbig"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Philipsbecher%20%28farbig%29.svg",
+    "sourceTitle": "Philipsbecher (farbig).svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_rette_r_hrer",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "뷰렛 (Bürette+Rührer)",
+    "keywords": [
+      "뷰렛",
+      "rette",
+      "hrer"
+    ],
+    "license": "GFDL",
+    "source": "https://commons.wikimedia.org/wiki/File:B%C3%BCrette%2BR%C3%BChrer.svg",
+    "sourceTitle": "Bürette+Rührer.svg",
+    "defaultLevel": "L2",
+    "artist": "Matthias M."
+  },
+  {
+    "id": "c_sch_tteltrichter_grafik",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (Schütteltrichter Grafik)",
+    "keywords": [
+      "분액깔때기",
+      "sch",
+      "tteltrichter",
+      "grafik"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Sch%C3%BCtteltrichter%20Grafik.svg",
+    "sourceTitle": "Schütteltrichter Grafik.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_scheidetrichter_anleitung_teil_1",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (Scheidetrichter Anleitung Teil 1)",
+    "keywords": [
+      "분액깔때기",
+      "scheidetrichter",
+      "anleitung",
+      "teil"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Scheidetrichter%20Anleitung%20Teil%201.svg",
+    "sourceTitle": "Scheidetrichter Anleitung Teil 1.svg",
+    "defaultLevel": "L2",
+    "artist": "HaJo88"
+  },
+  {
+    "id": "c_separatory_funnel_tag",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (Separatory funnel-tag)",
+    "keywords": [
+      "분액깔때기",
+      "separatory",
+      "funnel",
+      "tag"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Separatory%20funnel-tag.svg",
+    "sourceTitle": "Separatory funnel-tag.svg",
+    "defaultLevel": "L2",
+    "artist": "Shakki"
+  },
+  {
+    "id": "c_separatoryfunnel",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (SeparatoryFunnel)",
+    "keywords": [
+      "분액깔때기",
+      "separatoryfunnel"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:SeparatoryFunnel.svg",
+    "sourceTitle": "SeparatoryFunnel.svg",
+    "defaultLevel": "L2",
+    "artist": "No machine-readable author provided. Borb assumed (based on "
+  },
+  {
+    "id": "c_simple_distillation_apparatus_bn",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "증류장치 (Simple distillation apparatus (bn))",
+    "keywords": [
+      "증류장치",
+      "simple",
+      "distillation",
+      "apparatus"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Simple%20distillation%20apparatus%20%28bn%29.svg",
+    "sourceTitle": "Simple distillation apparatus (bn).svg",
+    "defaultLevel": "L2",
+    "artist": "Original png by User:Quantockgoblin , SVG (bn) adaptation by"
+  },
+  {
+    "id": "c_simple_funnel",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "깔때기 (Simple funnel)",
+    "keywords": [
+      "깔때기",
+      "simple",
+      "funnel"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Simple%20funnel.svg",
+    "sourceTitle": "Simple funnel.svg",
+    "defaultLevel": "L2",
+    "artist": "NalesnikLD"
+  },
+  {
+    "id": "c_skeitregter",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분액깔때기 (Skeitregter)",
+    "keywords": [
+      "분액깔때기",
+      "skeitregter"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Skeitregter.svg",
+    "sourceTitle": "Skeitregter.svg",
+    "defaultLevel": "L2",
+    "artist": "Jcwf"
+  },
+  {
+    "id": "c_standzylinder",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "눈금실린더 (Standzylinder)",
+    "keywords": [
+      "눈금실린더",
+      "standzylinder"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Standzylinder.svg",
+    "sourceTitle": "Standzylinder.svg",
+    "defaultLevel": "L2",
+    "artist": "Leyo"
+  },
+  {
+    "id": "c_stativ",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "스탠드 (Stativ)",
+    "keywords": [
+      "스탠드",
+      "stativ"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Stativ.svg",
+    "sourceTitle": "Stativ.svg",
+    "defaultLevel": "L2",
+    "artist": "Roland Mattern"
+  },
+  {
+    "id": "c_teclubrenner",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (Teclubrenner)",
+    "keywords": [
+      "분젠버너",
+      "teclubrenner"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Teclubrenner.svg",
+    "sourceTitle": "Teclubrenner.svg",
+    "defaultLevel": "L2",
+    "artist": "Benedikt.Seidl"
+  },
+  {
+    "id": "c_teclubrenner_bunsenbrenner_geschlossen",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "분젠버너 (Teclubrenner-Bunsenbrenner geschlossen)",
+    "keywords": [
+      "분젠버너",
+      "teclubrenner",
+      "bunsenbrenner",
+      "geschlossen"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Teclubrenner-Bunsenbrenner%20geschlossen.svg",
+    "sourceTitle": "Teclubrenner-Bunsenbrenner geschlossen.svg",
+    "defaultLevel": "L2",
+    "artist": "A.Spielhoff"
+  },
+  {
+    "id": "c_test_tube_partition",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "시험관 (Test tube partition)",
+    "keywords": [
+      "시험관",
+      "test",
+      "tube",
+      "partition"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Test%20tube%20partition.svg",
+    "sourceTitle": "Test tube partition.svg",
+    "defaultLevel": "L2",
+    "artist": "Durfo"
+  },
+  {
+    "id": "c_test_tubes_comparison_microbiology_and_normal_empty",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "시험관 (Test tubes comparison microbiology and normal empty)",
+    "keywords": [
+      "시험관",
+      "test",
+      "tubes",
+      "comparison",
+      "microbiology",
+      "and",
+      "normal"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Test%20tubes%20comparison%20microbiology%20and%20normal%20empty.svg",
+    "sourceTitle": "Test tubes comparison microbiology and normal empty.svg",
+    "defaultLevel": "L2",
+    "artist": "Reagenzglas.svg : Talos . The original uploader was Talos at"
+  },
+  {
+    "id": "c_thermometer",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "온도계 (Thermometer)",
+    "keywords": [
+      "온도계",
+      "thermometer"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Thermometer.svg",
+    "sourceTitle": "Thermometer.svg",
+    "defaultLevel": "L2",
+    "artist": "Werneuchen"
+  },
+  {
+    "id": "c_thermometer_c",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "온도계 (Thermometer C)",
+    "keywords": [
+      "온도계",
+      "thermometer"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Thermometer%20C.svg",
+    "sourceTitle": "Thermometer C.svg",
+    "defaultLevel": "L2",
+    "artist": "Htmlzycq"
+  },
+  {
+    "id": "c_thermometer_cf_fi",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "온도계 (Thermometer CF-fi)",
+    "keywords": [
+      "온도계",
+      "thermometer"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Thermometer%20CF-fi.svg",
+    "sourceTitle": "Thermometer CF-fi.svg",
+    "defaultLevel": "L2",
+    "artist": "Thermometer CF.svg : Gringer / derivative work: Olli"
+  },
+  {
+    "id": "c_tiegelzange",
+    "subject": "c",
+    "part": "실험 기구",
+    "name": "클램프·집게 (Tiegelzange)",
+    "keywords": [
+      "클램프·집게",
+      "클램프",
+      "집게",
+      "tiegelzange"
+    ],
+    "license": "CC BY 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Tiegelzange.svg",
+    "sourceTitle": "Tiegelzange.svg",
+    "defaultLevel": "L2",
+    "artist": "WissensDürster"
+  },
+  {
+    "id": "p_abbe_prism",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Abbe-prism)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "abbe",
+      "prism"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Abbe-prism.svg",
+    "sourceTitle": "Abbe-prism.svg",
+    "defaultLevel": "L2",
+    "artist": "Raiyan"
+  },
+  {
+    "id": "p_convex_lens_perfect",
+    "subject": "p",
+    "part": "광학",
+    "name": "렌즈·거울 작도 (Convex lens - perfect)",
+    "keywords": [
+      "렌즈·거울 작도",
+      "렌즈",
+      "거울",
+      "작도",
+      "convex",
+      "lens",
+      "perfect"
+    ],
+    "license": "CC0",
+    "source": "https://commons.wikimedia.org/wiki/File:Convex_lens_-_perfect.svg",
+    "sourceTitle": "Convex lens - perfect.svg",
+    "defaultLevel": "L2",
+    "artist": "Chetvorno"
+  },
+  {
+    "id": "p_convex_mirror_finding_ray",
+    "subject": "p",
+    "part": "광학",
+    "name": "렌즈·거울 작도 (Convex mirror finding ray)",
+    "keywords": [
+      "렌즈·거울 작도",
+      "렌즈",
+      "거울",
+      "작도",
+      "convex",
+      "mirror",
+      "finding",
+      "ray"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Convex_mirror_finding_ray.svg",
+    "sourceTitle": "Convex mirror finding ray.svg",
+    "defaultLevel": "L2",
+    "artist": "No machine-readable author provided. Fffred~commonswiki assumed (based on copyright claims)."
+  },
+  {
+    "id": "p_diagram_reflector_klevtsovcassegrain",
+    "subject": "p",
+    "part": "광학",
+    "name": "망원경 광학계 (Diagram Reflector KlevtsovCassegrain)",
+    "keywords": [
+      "망원경 광학계",
+      "망원경",
+      "광학계",
+      "diagram",
+      "reflector",
+      "klevtsovcassegrain"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Diagram_Reflector_KlevtsovCassegrain.svg",
+    "sourceTitle": "Diagram Reflector KlevtsovCassegrain.svg",
+    "defaultLevel": "L2",
+    "artist": "HHahn"
+  },
+  {
+    "id": "p_emmetropia_gm",
+    "subject": "p",
+    "part": "광학",
+    "name": "눈의 굴절 이상 (Emmetropia-GM)",
+    "keywords": [
+      "눈의 굴절 이상",
+      "눈의",
+      "굴절",
+      "이상",
+      "emmetropia"
+    ],
+    "license": "CC SA 1.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Emmetropia-GM.svg",
+    "sourceTitle": "Emmetropia-GM.svg",
+    "defaultLevel": "L2",
+    "artist": "Gmeyer"
+  },
+  {
+    "id": "p_geomopticsreflection",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (GeomOpticsReflection)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "geomopticsreflection"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:GeomOpticsReflection.svg",
+    "sourceTitle": "GeomOpticsReflection.svg",
+    "defaultLevel": "L2",
+    "artist": "And1mu"
+  },
+  {
+    "id": "p_glass_reverse",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Glass reverse)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "glass",
+      "reverse"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Glass_reverse.svg",
+    "sourceTitle": "Glass reverse.svg",
+    "defaultLevel": "L2",
+    "artist": "Raoul NK"
+  },
+  {
+    "id": "p_hypermetropia",
+    "subject": "p",
+    "part": "광학",
+    "name": "눈의 굴절 이상 (Hypermetropia)",
+    "keywords": [
+      "눈의 굴절 이상",
+      "눈의",
+      "굴절",
+      "이상",
+      "hypermetropia"
+    ],
+    "license": "CC SA 1.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Hypermetropia.svg",
+    "sourceTitle": "Hypermetropia.svg",
+    "defaultLevel": "L2",
+    "artist": "CryptWizard"
+  },
+  {
+    "id": "p_hypermetropia_and_myopia",
+    "subject": "p",
+    "part": "광학",
+    "name": "눈의 굴절 이상 (Hypermetropia and Myopia)",
+    "keywords": [
+      "눈의 굴절 이상",
+      "눈의",
+      "굴절",
+      "이상",
+      "hypermetropia",
+      "and",
+      "myopia"
+    ],
+    "license": "CC SA 1.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Hypermetropia%20and%20Myopia.svg",
+    "sourceTitle": "Hypermetropia and Myopia.svg",
+    "defaultLevel": "L2",
+    "artist": "Myopia-2-3.svg : * Myopia.svg : CryptWizard derivative work: Professor Garantulis ( talk ) Hypermetropia.svg : CryptWizard derivative work: EugeneZelenko derivative work: Xavax"
+  },
+  {
+    "id": "p_odraz_vlnoplocha_rovinna",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Odraz vlnoplocha rovinna)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "odraz",
+      "vlnoplocha",
+      "rovinna"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Odraz_vlnoplocha_rovinna.svg",
+    "sourceTitle": "Odraz vlnoplocha rovinna.svg",
+    "defaultLevel": "L2",
+    "artist": "Pajs"
+  },
+  {
+    "id": "p_opticke_zobrazeni_dalekohled_cassegrain",
+    "subject": "p",
+    "part": "광학",
+    "name": "망원경 광학계 (Opticke zobrazeni dalekohled cassegrain)",
+    "keywords": [
+      "망원경 광학계",
+      "망원경",
+      "광학계",
+      "opticke",
+      "zobrazeni",
+      "dalekohled",
+      "cassegrain"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Opticke_zobrazeni_dalekohled_cassegrain.svg",
+    "sourceTitle": "Opticke zobrazeni dalekohled cassegrain.svg",
+    "defaultLevel": "L2",
+    "artist": "Pajs"
+  },
+  {
+    "id": "p_plenoptic_function_b",
+    "subject": "p",
+    "part": "광학",
+    "name": "렌즈·거울 작도 (Plenoptic function b)",
+    "keywords": [
+      "렌즈·거울 작도",
+      "렌즈",
+      "거울",
+      "작도",
+      "plenoptic",
+      "function"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Plenoptic_function_b.svg",
+    "sourceTitle": "Plenoptic function b.svg",
+    "defaultLevel": "L2",
+    "artist": "Qef"
+  },
+  {
+    "id": "p_reflection_angles_bs",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Reflection angles-bs)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "reflection",
+      "angles"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Reflection_angles-bs.svg",
+    "sourceTitle": "Reflection angles-bs.svg",
+    "defaultLevel": "L2",
+    "artist": "Arvelius (derivative by Srđan)"
+  },
+  {
+    "id": "p_reflection_refraction_angles",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Reflection refraction angles)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "reflection",
+      "refraction",
+      "angles"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Reflection_refraction_angles.svg",
+    "sourceTitle": "Reflection refraction angles.svg",
+    "defaultLevel": "L2",
+    "artist": "Wjh31"
+  },
+  {
+    "id": "p_reflexion_amplitudenverhalten",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Reflexion - Amplitudenverhalten)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "reflexion",
+      "amplitudenverhalten"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Reflexion_-_Amplitudenverhalten.svg",
+    "sourceTitle": "Reflexion - Amplitudenverhalten.svg",
+    "defaultLevel": "L2",
+    "artist": "Cepheiden"
+  },
+  {
+    "id": "p_schmidt_telescope_psf",
+    "subject": "p",
+    "part": "광학",
+    "name": "망원경 광학계 (Schmidt telescope (PSF))",
+    "keywords": [
+      "망원경 광학계",
+      "망원경",
+      "광학계",
+      "schmidt",
+      "telescope",
+      "psf"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Schmidt_telescope_(PSF).svg",
+    "sourceTitle": "Schmidt telescope (PSF).svg",
+    "defaultLevel": "L2",
+    "artist": "Schmidt_telescope_(PSF).png: Pearson Scott Foresman derivative work: Malyszkz (talk)"
+  },
+  {
+    "id": "p_snells_lag",
+    "subject": "p",
+    "part": "광학",
+    "name": "반사·굴절 도해 (Snells lag)",
+    "keywords": [
+      "반사·굴절 도해",
+      "반사",
+      "굴절",
+      "도해",
+      "snells",
+      "lag"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Snells_lag.svg",
+    "sourceTitle": "Snells lag.svg",
+    "defaultLevel": "L2",
+    "artist": "Johan Arvelius"
+  },
+  {
+    "id": "c_dosimeter",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "선량계 (Dosimeter)",
+    "keywords": [
+      "선량계",
+      "dosimeter"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Dosimeter.svg",
+    "sourceTitle": "Dosimeter.svg",
+    "defaultLevel": "L2",
+    "artist": "uploader of original file (see below): Tungsten derivative work (vectorization): Master Uegly"
+  },
+  {
+    "id": "p_abbe_error",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "마이크로미터 (Abbe error)",
+    "keywords": [
+      "마이크로미터",
+      "abbe",
+      "error"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Abbe%20error.svg",
+    "sourceTitle": "Abbe error.svg",
+    "defaultLevel": "L2",
+    "artist": "cmglee, Dnu72 and Anasofiapaixao"
+  },
+  {
+    "id": "p_lecture_micrometre",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "마이크로미터 (Lecture micrometre)",
+    "keywords": [
+      "마이크로미터",
+      "lecture",
+      "micrometre"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Lecture%20micrometre.svg",
+    "sourceTitle": "Lecture micrometre.svg",
+    "defaultLevel": "L2",
+    "artist": "Cdang"
+  },
+  {
+    "id": "p_micrometer",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "마이크로미터 (Micrometer)",
+    "keywords": [
+      "마이크로미터",
+      "micrometer"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Micrometer.svg",
+    "sourceTitle": "Micrometer.svg",
+    "defaultLevel": "L2",
+    "artist": "derivative work: Anasofiapaixao Micrometer_caliper_parts_000"
+  },
+  {
+    "id": "p_mikrometr",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "마이크로미터 (Mikrometr)",
+    "keywords": [
+      "마이크로미터",
+      "mikrometr"
+    ],
+    "license": "CC BY-SA 3.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Mikrometr.svg",
+    "sourceTitle": "Mikrometr.svg",
+    "defaultLevel": "L2",
+    "artist": "Malyszkz"
+  },
+  {
+    "id": "p_vernier_caliper",
+    "subject": "p",
+    "part": "실험 기구",
+    "name": "버니어캘리퍼스 (Vernier caliper)",
+    "keywords": [
+      "버니어캘리퍼스",
+      "vernier",
+      "caliper"
+    ],
+    "license": "CC BY 2.5",
+    "source": "https://commons.wikimedia.org/wiki/File:Vernier%20caliper.svg",
+    "sourceTitle": "Vernier caliper.svg",
+    "defaultLevel": "L2",
+    "artist": "Joaquim Alves Gaspar , modified by ed g2s"
+  },
+  {
+    "id": "p_bloque_en_plano_inclinado_con_fuerza_horizontal",
+    "subject": "p",
+    "part": "역학",
+    "name": "경사면 역학 (Bloque en plano inclinado con fuerza horizontal)",
+    "keywords": [
+      "경사면 역학",
+      "경사면",
+      "역학",
+      "bloque",
+      "plano",
+      "inclinado",
+      "con",
+      "fuerza",
+      "horizontal"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Bloque%20en%20plano%20inclinado%20con%20fuerza%20horizontal.svg",
+    "sourceTitle": "Bloque en plano inclinado con fuerza horizontal.svg",
+    "defaultLevel": "L2",
+    "artist": "Cristian Quinzacara"
+  },
+  {
+    "id": "p_pendulum",
+    "subject": "p",
+    "part": "역학",
+    "name": "단진자",
+    "keywords": [
+      "단진자",
+      "진자",
+      "추",
+      "pendulum"
+    ],
+    "license": "Public domain",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Simple_gravity_pendulum.svg",
+    "sourceTitle": "Simple gravity pendulum.svg",
     "defaultLevel": "L2"
   },
   {
@@ -115,22 +2442,6 @@
     "defaultLevel": "L2"
   },
   {
-    "id": "p_pendulum",
-    "subject": "p",
-    "part": "역학",
-    "name": "단진자",
-    "keywords": [
-      "단진자",
-      "진자",
-      "추",
-      "pendulum"
-    ],
-    "license": "Public domain",
-    "source": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Simple_gravity_pendulum.svg",
-    "sourceTitle": "Simple gravity pendulum.svg",
-    "defaultLevel": "L2"
-  },
-  {
     "id": "p_pendulum_height",
     "subject": "p",
     "part": "역학",
@@ -145,6 +2456,61 @@
     "source": "https://upload.wikimedia.org/wikipedia/commons/1/11/Simple_pendulum_height.svg",
     "sourceTitle": "Simple pendulum height.svg",
     "defaultLevel": "L2"
+  },
+  {
+    "id": "p_poue_exercise11",
+    "subject": "p",
+    "part": "역학",
+    "name": "경사면 역학 (PoUE exercise11)",
+    "keywords": [
+      "경사면 역학",
+      "경사면",
+      "역학",
+      "poue",
+      "exercise"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:PoUE_exercise11.svg",
+    "sourceTitle": "PoUE exercise11.svg",
+    "defaultLevel": "L2",
+    "artist": "Biotactics"
+  },
+  {
+    "id": "p_veer_massa",
+    "subject": "p",
+    "part": "역학",
+    "name": "용수철 진자 (Veer-massa)",
+    "keywords": [
+      "용수철 진자",
+      "용수철",
+      "진자",
+      "veer",
+      "massa"
+    ],
+    "license": "CC BY-SA 4.0",
+    "source": "https://commons.wikimedia.org/wiki/File:Veer-massa.svg",
+    "sourceTitle": "Veer-massa.svg",
+    "defaultLevel": "L2",
+    "artist": "Paulus 2"
+  },
+  {
+    "id": "p_electret_microphone_construction",
+    "subject": "p",
+    "part": "전기자기학",
+    "name": "마이크 구조 (Electret microphone construction)",
+    "keywords": [
+      "마이크 구조",
+      "마이크",
+      "구조",
+      "electret",
+      "microphone",
+      "construction"
+    ],
+    "license": "Public domain",
+    "source": "https://commons.wikimedia.org/wiki/File:Electret%20microphone%20construction.svg",
+    "sourceTitle": "Electret microphone construction.svg",
+    "defaultLevel": "L2",
+    "artist": "CLI"
   },
   {
     "id": "p_ohms_law",

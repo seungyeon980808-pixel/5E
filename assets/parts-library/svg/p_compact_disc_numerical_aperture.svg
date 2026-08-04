@@ -1,0 +1,61 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" 
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg" 
+ xmlns:xlink="http://www.w3.org/1999/xlink" 
+ width='400px' height='484px'>
+
+<title>Numerical aperture of Compact-Disc readout</title>
+
+<defs>
+<radialGradient id="lightCone" cx="50%" cy="0" r="150%">
+        <stop offset="20%" stop-color="red" stop-opacity="1"/>
+        <stop offset="40%" stop-color="red" stop-opacity="0.8"/>
+        <stop offset="80%" style="stop-color:white;stop-opacity:0"/>
+      </radialGradient>
+
+	<marker id="yArrow" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto">
+	<path d="M 0 0 L 4 4 L 0 8 Q 3,4 0,0 " style="fill: black; stroke: black;" />
+	</marker>
+
+</defs>
+
+<g transform="translate(100,25)">
+
+<rect x="-300" y="0" width="800" height="360" style="fill:lightblue;stroke:black;stroke-width:2;
+fill-opacity:0.4;"/>
+
+<path id="focusCone" d="M0,0 L120,360 L170,460 L-170,460 L-120,360 L0,0" style="fill:url(#lightCone);stroke:black;stroke-width:2;"/>
+
+<g style="fill:none; stroke-width:2; stroke:black;" >
+<path id="normalRight" d="M120,260 v200"  />
+<path id="normalAxis" d="M0,0 v500"  />
+<path d="M0,80 a80 80 0 0 0 26 -4" />
+<path d="M120,280 a80 80 0 0 0 -26 4" />
+<path d="M120,430 a80 80 0 0 0 33 -6" stroke-width="4" />
+</g>
+
+<g id="measureArrows" style="marker-end: url(#yArrow); fill:none; stroke-width:2; stroke:black;" >
+<path d="M250,155 v-150" />
+<path d="M250,180 v175" />
+<path d="M100,385 h15" />
+<path d="M20,385 h-15" />
+</g>
+
+<g style="font-family=sans-serif; font-size: 16pt; fill:black; text-anchor:middle">
+<text x="60" y="390">0.36 mm</text>
+<text x="250" y="175">1.2 mm</text>
+<text x="150" y="100">n = 1.55</text>
+</g>
+
+<g style="font-family=sans-serif; font-size: 16pt; fill:black; text-anchor:end">
+<text x="145" y="450">27</text>
+<circle cx="148" cy="438" r="2.5" stroke-width="1.5" fill="none" stroke="black" />
+<text x="22" y="100">17</text>
+<circle cx="25" cy="88" r="2.5" stroke-width="1.5" fill="none" stroke="black" />
+</g>
+
+
+</g>
+
+</svg>
