@@ -1119,10 +1119,11 @@ export function initTransform(svg, state) {
     }
 
     // PageUp ??bring selected objects forward one step in z-order
-    if (e.key === "PageUp") {
+    if (e.key === "PageUp" || e.code === "PageUp") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
+        const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
         const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1139,7 +1140,7 @@ export function initTransform(svg, state) {
           const box0 = groupBBox(members, svg);
           if (box0) {
             const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
-            const r = (5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const r = (rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
             const rot = (x, y) => ({
               x: px + cosT * (x - px) - sinT * (y - py),
               y: py + sinT * (x - px) + cosT * (y - py),
@@ -1160,20 +1161,20 @@ export function initTransform(svg, state) {
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
-                  obj.startAngle = (obj.startAngle || 0) - 5;
+                  obj.startAngle = (obj.startAngle || 0) - rotationStep;
                 } else if (obj.type === "rightangle") {
                   const c = rot(obj.x, obj.y);
                   obj.x = c.x; obj.y = c.y;
-                  obj.angle = (obj.angle || 0) + 5;
+                  obj.angle = (obj.angle || 0) + rotationStep;
                 } else if (obj.type === "text") {
                   const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
                   obj.x = c.x; obj.y = c.y;
-                  obj.rotation = (obj.rotation || 0) + 5;
+                  obj.rotation = (obj.rotation || 0) + rotationStep;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
                   obj.y = c.y - obj.h / 2;
-                  obj.rotation = (obj.rotation || 0) + 5;
+                  obj.rotation = (obj.rotation || 0) + rotationStep;
                 }
               });
               s2.undoStack.push(snap); s2.redoStack = [];
@@ -1187,10 +1188,10 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, 5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
-            if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) + rotationStep; changed = true; return; }
             if (!FLIP_TYPES.has(o.type)) return;
-            o.rotation = (o.rotation ?? 0) + 5;
+            o.rotation = (o.rotation ?? 0) + rotationStep;
             changed = true;
           });
           if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
@@ -1217,10 +1218,11 @@ export function initTransform(svg, state) {
     }
 
     // PageDown ??send selected objects backward one step in z-order
-    if (e.key === "PageDown") {
+    if (e.key === "PageDown" || e.code === "PageDown") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
+        const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
         const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1237,7 +1239,7 @@ export function initTransform(svg, state) {
           const box0 = groupBBox(members, svg);
           if (box0) {
             const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
-            const r = (-5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const r = (-rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
             const rot = (x, y) => ({
               x: px + cosT * (x - px) - sinT * (y - py),
               y: py + sinT * (x - px) + cosT * (y - py),
@@ -1258,20 +1260,20 @@ export function initTransform(svg, state) {
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
-                  obj.startAngle = (obj.startAngle || 0) + 5; // screen-CCW = math +
+                  obj.startAngle = (obj.startAngle || 0) + rotationStep; // screen-CCW = math +
                 } else if (obj.type === "rightangle") {
                   const c = rot(obj.x, obj.y);
                   obj.x = c.x; obj.y = c.y;
-                  obj.angle = (obj.angle || 0) - 5;
+                  obj.angle = (obj.angle || 0) - rotationStep;
                 } else if (obj.type === "text") {
                   const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
                   obj.x = c.x; obj.y = c.y;
-                  obj.rotation = (obj.rotation || 0) - 5;
+                  obj.rotation = (obj.rotation || 0) - rotationStep;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
                   obj.y = c.y - obj.h / 2;
-                  obj.rotation = (obj.rotation || 0) - 5;
+                  obj.rotation = (obj.rotation || 0) - rotationStep;
                 }
               });
               s2.undoStack.push(snap); s2.redoStack = [];
@@ -1285,10 +1287,10 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
-            if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) - rotationStep; changed = true; return; }
             if (!FLIP_TYPES.has(o.type)) return;
-            o.rotation = (o.rotation ?? 0) - 5;
+            o.rotation = (o.rotation ?? 0) - rotationStep;
             changed = true;
           });
           if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
