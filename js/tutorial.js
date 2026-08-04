@@ -1171,7 +1171,7 @@ export function openPicker({ justFinished = null } = {}) {
     { name: "기본", lead: "먼저 이것부터", note: "차례대로 하시면 됩니다",
       pick: (c) => ["basics", "incline-figure", "exam-search"].includes(c.id) },
     { name: "심화", lead: "도구 넓히기", note: "기본을 마친 뒤에", beta: true,
-      pick: (c) => ["trim-exam", "align-space", "terrain"].includes(c.id) },
+      pick: (c) => ["advanced-lines", "advanced-shapes", "advanced-assets", "advanced-files", "advanced-graph", "advanced-graph-annot"].includes(c.id) },
     { name: "실습 과제", lead: "그림 한 장을 끝까지", note: "골라서 하셔도 됩니다", beta: true,
       pick: (c) => !!c.task },
   ];

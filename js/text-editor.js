@@ -24,7 +24,7 @@ import { pickSelectableObjectAtPoint } from "./pick.js?v=1.4.0";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=1.4.0";
+import { isSpaceHeld } from "./tools.js?v=1.5.3";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -178,7 +178,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
 
   const hint = document.createElement("div");
   hint.className = "unified-editor-hint";
-  hint.textContent = "Enter 줄바꿈 · Ctrl+Enter 확인";
+  hint.textContent = "Enter 확인 · Ctrl+Enter 줄바꿈 · Tab 글꼴 변경";
 
   const ta = document.createElement("textarea");
   ta.className = "unified-text-input labeler-text-input";
@@ -300,6 +300,15 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
     });
   };
 
+  const cycleFont = () => {
+    if (!fontSel) return;
+    const options = Array.from(fontSel.options);
+    if (!options.length) return;
+    const index = Math.max(0, options.findIndex((opt) => opt.value === fontSel.value));
+    fontSel.value = options[(index + 1) % options.length].value;
+    refreshPreview();
+  };
+
   ok.addEventListener("click", commit);
   cancel.addEventListener("click", _closeSmallEditor);
   // Keep canvas shortcuts/marquee from reacting while interacting with the editor.
@@ -307,7 +316,8 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
   ta.addEventListener("keydown", (ke) => {
     ke.stopPropagation();                                   // shield window shortcuts
     if (ke.key === "Escape") { ke.preventDefault(); _closeSmallEditor(); }
-    else if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) { ke.preventDefault(); commit(); }
+    else if (ke.key === "Tab" && fontSel) { ke.preventDefault(); cycleFont(); }
+    else if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) { ke.preventDefault(); commit(); }
     // plain Enter → newline (native textarea behavior, multiline)
   });
   // Keyboard events from the font/size controls must not reach canvas shortcuts;
@@ -315,7 +325,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
   box.addEventListener("keydown", (ke) => {
     ke.stopPropagation();
     if (ke.key === "Escape") { ke.preventDefault(); _closeSmallEditor(); }
-    else if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) { ke.preventDefault(); commit(); }
+    else if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) { ke.preventDefault(); commit(); }
   });
 
   // Same separated structure as the text-tool dialog: 미리보기 → 글꼴/크기 → 입력 →
@@ -598,6 +608,15 @@ function _currentUnifiedStyle() {
     underline: false,
     strikeout: false,
   };
+}
+
+function _cycleUnifiedFont() {
+  if (!_textFontSelect) return;
+  const options = Array.from(_textFontSelect.options);
+  if (!options.length) return;
+  const index = Math.max(0, options.findIndex((opt) => opt.value === _textFontSelect.value));
+  _textFontSelect.value = options[(index + 1) % options.length].value;
+  _applyUnifiedStyleToDraft();
 }
 
 /* ----- run-list slicing: return the [start,end) character window of a run list
@@ -1171,7 +1190,7 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   // Discoverability: state the commit/newline keys (same wording as the labeler).
   const hint = document.createElement("div");
   hint.className = "unified-editor-hint";
-  hint.textContent = "Enter 줄바꿈 · Ctrl+Enter 확인";
+  hint.textContent = "Enter 확인 · Ctrl+Enter 줄바꿈 · Tab 글꼴 변경";
 
   // 라벨은 수식이 될 수 없으므로 수식 패널을 만들지 않는다. 심볼 팔레트(구간/물리량)는
   // 텍스트 도구와 동일하게 항상 포함한다.
@@ -1192,7 +1211,7 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   if (_textFormulaPanel) _textBox.append(_textFormulaPanel);
   _textBox.append(actions);
   _textBox.addEventListener("keydown", (ke) => {
-    if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) {
+    if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) {
       ke.preventDefault();
       _commitText();
     }
@@ -1228,9 +1247,12 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   _textEditor.addEventListener("keydown", (ke) => {
     ke.stopPropagation();
     if (ke.key === "Escape") { ke.preventDefault(); _textCancelled = true; _cancelText(); }
-    // Ctrl/⌘+Enter commits; plain Enter falls through to the textarea's native
-    // newline (multiline). This matches the labeler editor so behavior is uniform.
-    else if (ke.key === "Enter" && (ke.ctrlKey || ke.metaKey)) { ke.preventDefault(); _commitText(); }
+    else if (ke.key === "Tab") { ke.preventDefault(); _cycleUnifiedFont(); }
+    else if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) {
+      ke.preventDefault();
+      _commitText();
+    }
+    // Ctrl/⌘+Enter falls through to the textarea's native newline behavior.
   });
   _syncDraftFromUnifiedEditor();
 }

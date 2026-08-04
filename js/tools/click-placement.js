@@ -33,7 +33,7 @@ import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable, getSymbolProps,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=1.4.0";
+} from "../tools.js?v=1.5.3";
 
 // SERIES(계열 추가): 클릭으로 점을 찍어 좌표평면 위에 직선/꺾은선 계열(funcgraph,
 // sourceKind:"points")을 만든다. 폴리라인(P)과 같은 클릭 라이프사이클(더블클릭/Enter로
@@ -434,6 +434,8 @@ function commitClickShape(shape) {
     shape.order = s.objects.length;
     shape.layerId = s.activeLayerId;
     s.objects.push(shape);
+    s.selectedIds = [shape.id];
+    s.targetedId = null;
     s.undoStack.push(snap);
     s.redoStack = [];
     s.draft = null;

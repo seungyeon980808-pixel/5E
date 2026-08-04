@@ -16,7 +16,7 @@
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
 import { setSnapPreview, pendulumBBox } from "./render.js?v=1.4.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.4.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.3";
 import { isObjectSelectable } from "./pick.js?v=1.4.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
@@ -636,7 +636,8 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // Closed polyline and closed curve have no x/y/w/h ??derive the box from the point cloud,
   // run the SAME per-handle math, then scale ALL points about the anchored corner.
   const isPoly  = isClosedPoly(obj);
-  const isCurve = isClosedCurve(obj);
+  // 지연 자르기 자유곡선도 전체 경계 상자로 크기 조절합니다.
+  const isCurve = isClosedCurve(obj) || (obj.type === "curve" && obj.delayedCut === true && obj.closed !== true);
   const box0 = (isPoly || isCurve) ? polyBBox(orig.points) : orig;
   const ratio = box0.w / box0.h;
   let { x, y, w, h } = box0;

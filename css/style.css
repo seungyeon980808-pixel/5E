@@ -515,12 +515,12 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex; align-items: center;
   /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
      컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
-  height: 23px; margin-left: -2px; padding: 0 10px;
+  height: 23px; margin-left: 8px; margin-right: 6px; padding: 0 6px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
   background: var(--btn-tool-bg);
-  border: 1px solid var(--c-border); border-radius: 999px;
+  border: 1px solid var(--c-border); border-radius: 6px;
   cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
 .mode-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -2527,3 +2527,46 @@ textarea.unified-text-input {
 .text-ctx-item:disabled { opacity: 0.4; cursor: default; }
 .text-ctx-item:disabled:hover { background: transparent; color: inherit; }
 .text-ctx-item.is-danger:hover:not(:disabled) { background: #b03a4a; color: #fff; }
+
+/* delayed cut action stays inside the right inspector so the final commit is
+ * visible where object properties are edited. */
+#delayed-cut-action {
+  position: sticky; top: 8px; z-index: 8;
+  margin: 8px 10px 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-panel));
+  box-shadow: 0 4px 14px rgba(0,0,0,.16);
+}
+
+/* 자르기/지연 자르기의 입력 모드는 키 충돌 없이 탭으로 선택한다. */
+#cut-mode-tabs {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px;
+  margin:8px 10px 10px; padding:4px; border:1px solid var(--border); border-radius:7px;
+  background:var(--btn-tool-bg);
+}
+#cut-mode-tabs[hidden] { display:none; }
+#cut-mode-tabs .cut-mode-tabs-title {
+  grid-column:1 / -1; padding:3px 5px 4px;
+  color:var(--text-secondary); font-size:11px; font-weight:700;
+}
+#cut-mode-tabs button {
+  appearance:none; width:100%; min-width:0; border:0; border-radius:4px; padding:6px 4px;
+  background:transparent; color:var(--text-secondary); cursor:pointer;
+  font:600 11px/1 "IBM Plex Sans KR",system-ui,sans-serif; white-space:nowrap;
+}
+#cut-mode-tabs button:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
+#cut-mode-tabs button.is-active {
+  color:#fff; background:var(--accent); box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+#delayed-cut-action[hidden] { display: none; }
+.delayed-cut-action-title { font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.delayed-cut-action-mode { color: var(--accent); font-size: 12px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+.delayed-cut-action-status { color: var(--text-secondary); font-size: 12px; line-height: 1.4; margin-bottom: 9px; }
+.delayed-cut-confirm, .delayed-cut-cancel {
+  width: 100%; min-height: 34px; border-radius: 7px; cursor: pointer; font-weight: 700;
+}
+.delayed-cut-confirm { border: 1px solid var(--accent); background: var(--accent); color: #fff; }
+.delayed-cut-confirm:disabled { opacity: .45; cursor: not-allowed; }
+.delayed-cut-cancel { margin-top: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
