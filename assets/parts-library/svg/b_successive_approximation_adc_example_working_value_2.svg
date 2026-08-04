@@ -1,0 +1,1315 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="945"
+   height="720"
+   overflow="hidden"
+   version="1.1"
+   id="svg118"
+   sodipodi:docname="Slide12.SVG"
+   inkscape:version="1.3.1 (91b66b0783, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview118"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.2402778"
+     inkscape:cx="640.17917"
+     inkscape:cy="360"
+     inkscape:window-width="1920"
+     inkscape:window-height="1166"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg118" />
+  <defs
+     id="defs6">
+    <clipPath
+       id="clip0">
+      <rect
+         x="0"
+         y="0"
+         width="1280"
+         height="720"
+         id="rect1" />
+    </clipPath>
+    <linearGradient
+       x1="90.000099"
+       y1="680.5"
+       x2="90.000099"
+       y2="713.5"
+       gradientUnits="userSpaceOnUse"
+       spreadMethod="reflect"
+       id="fill1">
+      <stop
+         offset="0"
+         stop-color="#F7BDA4"
+         id="stop1" />
+      <stop
+         offset="0.5"
+         stop-color="#F5B195"
+         id="stop2" />
+      <stop
+         offset="1"
+         stop-color="#F8A581"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       x1="90.000099"
+       y1="5.5000501"
+       x2="90.000099"
+       y2="37.5"
+       gradientUnits="userSpaceOnUse"
+       spreadMethod="reflect"
+       id="fill2">
+      <stop
+         offset="0"
+         stop-color="#F7BDA4"
+         id="stop4" />
+      <stop
+         offset="0.5"
+         stop-color="#F5B195"
+         id="stop5" />
+      <stop
+         offset="1"
+         stop-color="#F8A581"
+         id="stop6" />
+    </linearGradient>
+  </defs>
+  <g
+     clip-path="url(#clip0)"
+     id="g118">
+    <rect
+       x="0"
+       y="0"
+       width="1280"
+       height="720"
+       fill="#ffffff"
+       id="rect6" />
+    <path
+       d="m 101.5,338.5 h 27.029"
+       stroke="#000000"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path6" />
+    <path
+       d="m 757,299 v 39.368"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path7" />
+    <path
+       d="M 0,0 59.0655,1.69113"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(-1,0,0,1,757.065,299)"
+       id="path8" />
+    <path
+       d="M 0,0 1.04987e-4,660.034"
+       stroke="#5b9bd5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(1,0,0,-1,749.5,678.534)"
+       id="path9" />
+    <path
+       d="M 0,0 0.735118,660.034"
+       stroke="#5b9bd5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(1,0,0,-1,369.5,680.534)"
+       id="path10" />
+    <path
+       d="M 0,0 0.735118,660.034"
+       stroke="#5b9bd5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(1,0,0,-1,495.5,680.534)"
+       id="path11" />
+    <path
+       d="M 0,0 0.735118,660.034"
+       stroke="#5b9bd5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(1,0,0,-1,244.5,680.534)"
+       id="path12" />
+    <path
+       d="M 0,0 1.04987e-4,660.034"
+       stroke="#5b9bd5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       transform="matrix(1,0,0,-1,620.5,680.534)"
+       id="path13" />
+    <path
+       d="m 116.5,62.5001 668.47,10e-5"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path14" />
+    <path
+       d="M 116.5,101.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path15" />
+    <path
+       d="M 116.5,142.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path16" />
+    <path
+       d="M 116.5,181.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path17" />
+    <path
+       d="M 116.5,220.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path18" />
+    <path
+       d="M 116.5,260.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path19" />
+    <path
+       d="M 116.5,299.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path20" />
+    <path
+       d="M 116.5,339.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path21" />
+    <path
+       d="M 116.5,380.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path22" />
+    <path
+       d="M 116.5,419.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path23" />
+    <path
+       d="M 116.5,459.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path24" />
+    <path
+       d="M 116.5,499.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path25" />
+    <path
+       d="M 116.5,539.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path26" />
+    <path
+       d="M 116.5,581.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path27" />
+    <path
+       d="M 116.5,618.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path28" />
+    <path
+       d="M 116.5,658.5 H 784.97"
+       stroke="#a5a5a5"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path29" />
+    <path
+       d="M 610.5,619.5 H 621 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path30" />
+    <path
+       d="M 610.5,619.5 H 621 v 0.298 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path31" />
+    <path
+       d="M 485.5,579.5 H 496 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path32" />
+    <path
+       d="M 610.5,540.5 H 621 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path33" />
+    <path
+       d="M 610.5,540.5 H 621 v 0.298 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path34" />
+    <path
+       d="M 485.5,579.5 H 496 v -39 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path35" />
+    <path
+       d="M 360.5,500.5 H 371 v 79 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path36" />
+    <path
+       d="M 610.5,460.5 H 621 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path37" />
+    <path
+       d="M 610.5,460.5 H 621 v 0.298 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path38" />
+    <path
+       d="M 485.5,420.5 H 496 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path39" />
+    <path
+       d="M 610.5,380.5 H 621 v 39 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path40" />
+    <path
+       d="M 610.5,381.148 H 621 V 381 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path41" />
+    <path
+       d="M 485.5,420.5 H 496 v -39 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path42" />
+    <path
+       d="M 360.5,500.5 H 371 v -80 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path43" />
+    <path
+       d="M 235.5,341.5 H 246 v 159 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path44" />
+    <path
+       d="M 610.5,301.5 H 621 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path45" />
+    <path
+       d="m 610,301.164 h 10.5 V 301 H 631"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path46" />
+    <path
+       d="m 485,261 h 10.5 v 40 H 506"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path47" />
+    <path
+       d="M 610.5,222.5 H 621 v 39 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path48" />
+    <path
+       d="M 610.5,222.148 H 621 V 222 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path49" />
+    <path
+       d="M 485.5,261.5 H 496 v -39 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path50" />
+    <path
+       d="m 360,182 h 10.5 v 79 H 381"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path51" />
+    <path
+       d="M 610.5,142.5 H 621 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path52" />
+    <path
+       d="M 610.5,142.664 H 621 V 142.5 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path53" />
+    <path
+       d="M 485.5,102.5 H 496 v 40 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path54" />
+    <path
+       d="M 610.5,63.5001 H 621 V 102.5 h 10.5"
+       stroke="#70ad47"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path55" />
+    <path
+       d="M 610.5,63.1476 H 621 v -0.1475 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path56" />
+    <path
+       d="M 485.5,102.5 H 496 V 63.5001 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path57" />
+    <path
+       d="M 360.5,182.5 H 371 v -80 h 10.5"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path58" />
+    <path
+       d="m 235,341 h 10.5 V 182 H 256"
+       stroke="#000000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path59" />
+    <path
+       d="m 128.5,324.5 h 107 v 33 h -107 z"
+       stroke="#ffffff"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       fill-rule="evenodd"
+       id="path60" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(155.848,347)"
+       id="text60">1000</text>
+    <path
+       d="m 256.5,166.5 h 104 v 32 h -104 z"
+       stroke="#ffffff"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       fill-rule="evenodd"
+       id="path61" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(282.246,189)"
+       id="text61">1100</text>
+    <path
+       d="m 381,86 h 104 v 32 H 381 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path62" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(407.449,110)"
+       id="text62">1110</text>
+    <path
+       d="M 506,47 H 610 V 78 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path63" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,70)"
+       id="text63">1111</text>
+    <path
+       d="M 631,47 H 736 V 78 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path64" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,70)"
+       id="text64">1111</text>
+    <path
+       d="m 631,86 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path65" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,110)"
+       id="text65">1110</text>
+    <path
+       d="m 506,126 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path66" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,149)"
+       id="text66">1101</text>
+    <path
+       d="m 631,126 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path67" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,149)"
+       id="text67">1101</text>
+    <path
+       d="m 631,166 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path68" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,189)"
+       id="text68">1100</text>
+    <path
+       d="m 381.5,245.5 h 104 v 32 h -104 z"
+       stroke="#ffffff"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       fill-rule="evenodd"
+       id="path69" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(407.449,269)"
+       id="text69">1010</text>
+    <path
+       d="m 506,206 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path70" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,229)"
+       id="text70">1011</text>
+    <path
+       d="m 631,206 h 105 v 31 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path71" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,229)"
+       id="text71">1011</text>
+    <path
+       d="m 631,245 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path72" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,269)"
+       id="text72">1010</text>
+    <path
+       d="m 506,285 h 104 v 32 H 506 Z"
+       stroke="#ffffff"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       fill-rule="evenodd"
+       id="path73" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,308)"
+       id="text73">1001</text>
+    <path
+       d="m 631,285 h 105 v 32 H 631 Z"
+       stroke="#ffffff"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       fill-rule="evenodd"
+       id="path74" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,308)"
+       id="text74">1001</text>
+    <path
+       d="m 631,325 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path75" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,348)"
+       id="text75">1000</text>
+    <path
+       d="m 256,484 h 104 v 32 H 256 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path76" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(282.246,508)"
+       id="text76">0100</text>
+    <path
+       d="m 381,405 h 104 v 31 H 381 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path77" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(407.449,428)"
+       id="text77">0110</text>
+    <path
+       d="m 506,365 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path78" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,388)"
+       id="text78">0111</text>
+    <path
+       d="m 631,365 h 105 v 31 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path79" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,388)"
+       id="text79">0111</text>
+    <path
+       d="m 631,404 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path80" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,428)"
+       id="text80">0110</text>
+    <path
+       d="m 506,444 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path81" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,468)"
+       id="text81">0101</text>
+    <path
+       d="m 631,445 h 105 v 31 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path82" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,468)"
+       id="text82">0101</text>
+    <path
+       d="m 631,484 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path83" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,508)"
+       id="text83">0100</text>
+    <path
+       d="m 381,564 h 104 v 31 H 381 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path84" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(407.449,587)"
+       id="text84">0010</text>
+    <path
+       d="m 506,524 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path85" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,547)"
+       id="text85">0011</text>
+    <path
+       d="m 631,524 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path86" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,547)"
+       id="text86">0011</text>
+    <path
+       d="m 631,564 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path87" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,587)"
+       id="text87">0010</text>
+    <path
+       d="m 506,603 h 104 v 32 H 506 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path88" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(532.651,627)"
+       id="text88">0001</text>
+    <path
+       d="m 631,604 h 105 v 31 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path89" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,627)"
+       id="text89">0001</text>
+    <path
+       d="m 631,643 h 105 v 32 H 631 Z"
+       fill="#a5a5a5"
+       fill-rule="evenodd"
+       fill-opacity="0.501961"
+       id="path90" />
+    <text
+       fill="#ffffff"
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(657.854,667)"
+       id="text90">0000</text>
+    <path
+       d="M 62.5001,443.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path91" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,467)"
+       id="text91">5V</text>
+    <path
+       d="M 62.5001,483.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path92" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,506)"
+       id="text92">4V</text>
+    <path
+       d="M 62.5001,523.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path93" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,546)"
+       id="text93">3V</text>
+    <path
+       d="M 62.5001,562.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path94" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,586)"
+       id="text94">2V</text>
+    <path
+       d="M 62.5001,602.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path95" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,626)"
+       id="text95">1V</text>
+    <path
+       d="M 62.5001,642.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path96" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,666)"
+       id="text96">0V</text>
+    <path
+       d="M 62.5001,45.5001 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path97" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,69)"
+       id="text97">15V</text>
+    <path
+       d="M 62.5001,85.5001 H 117.5 V 117.5 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path98" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,108)"
+       id="text98">14V</text>
+    <path
+       d="M 62.5001,125.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path99" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,148)"
+       id="text99">13V</text>
+    <path
+       d="M 62.5001,164.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path100" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,188)"
+       id="text100">12V</text>
+    <path
+       d="M 62.5001,204.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path101" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,228)"
+       id="text101">11V</text>
+    <path
+       d="M 62.5001,244.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path102" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(69.7574,267)"
+       id="text102">10V</text>
+    <path
+       d="M 62.5001,284.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path103" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,307)"
+       id="text103">9V</text>
+    <path
+       d="M 62.5001,323.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path104" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,347)"
+       id="text104">8V</text>
+    <path
+       d="M 62.5001,363.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path105" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,387)"
+       id="text105">7V</text>
+    <path
+       d="M 62.5001,403.5 H 117.5 v 32 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path106" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(76.1741,426)"
+       id="text106">6V</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(153.71,702)"
+       id="text107">Initial</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(289.618,704)"
+       id="text108">First</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(398.783,704)"
+       id="text109">Second</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(533.098,702)"
+       id="text110">Third</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(648.975,701)"
+       id="text111">Fourth</text>
+    <path
+       d="M 62.5001,680.5 H 117.5 v 33 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="url(#fill1)"
+       fill-rule="evenodd"
+       id="path111"
+       style="fill:url(#fill1)" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(67.6745,704)"
+       id="text112">CLK:</text>
+    <path
+       d="m 757.5,338.5 h 27.029"
+       stroke="#000000"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path112" />
+    <path
+       d="m 758.5,147.5 h 27.029"
+       stroke="#ffc000"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path113" />
+    <path
+       d="M 758,146 V 278.994"
+       stroke="#ffc000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path114" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(139.225,233)"
+       id="text114">INPUT</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(139.225,262)"
+       id="text115">= 9.4V</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="24px"
+       transform="translate(762.273,308)"
+       id="text116">OUTPUT = 1001</text>
+    <path
+       d="M 130,280 H 758.792"
+       stroke="#ffc000"
+       stroke-width="2"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path116" />
+    <path
+       d="m 113.5,280.5 h 27.029"
+       stroke="#ffc000"
+       stroke-linejoin="round"
+       stroke-miterlimit="10"
+       stroke-dasharray="4, 3"
+       fill="none"
+       fill-rule="evenodd"
+       id="path117" />
+    <path
+       d="M 62.5001,5.50005 H 117.5 V 37.5 H 62.5001 Z"
+       stroke="#ed7d31"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="url(#fill2)"
+       fill-rule="evenodd"
+       id="path118"
+       style="fill:url(#fill2)" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="25px"
+       transform="translate(68.0417,28)"
+       id="text118">VDC</text>
+  </g>
+</svg>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1"
+  width="844px" height="404px" viewBox="-211 -91 422 202" >
+<title>Interferometer comparison</title>
+<desc>Self-mixing interferometer 
+vs 
+Michelson interferometer
+</desc>
+<defs>
+    <marker id="a1" viewBox="0 0 15 10" refX="15" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<path d="M0,0 l15,5 l-15,5 A4,4 0 0,0 0,0" fill="red" />
+	</marker>
+</defs>
+<g style="stroke:black;stroke-width:1;fill:none" transform="translate(-110,0)">
+    <path d="M-70,0 h50 h70 h2 M80,0 h-30 h-1 M5,0 v-50 v-1 M5,-70 v20 v100 v1 M5,75 v-25 v-1" stroke="red" marker-mid="url(#a1)"/>
+    <rect x="-100" y="-90" width="200" height="180" stroke-dasharray="7,7"/>
+    <rect x="-90" y="-5" width="20" height="10" fill="black"/>
+    <path d="M-90,-8 h20 v16 h-20 z"/>  <rect x="-55" y="-4" width="8" height="8"/>
+    <rect x="-20" y="-2" width="50" height="4" transform="rotate(-45,5,0)" fill="black" fill-opacity=".7"/>
+    <path id="mirror" d="M-30,-70 h70 M-30,-70 l10,-5 M-20,-70 l10,-5 M-10,-70 l10,-5 M0,-70 l10,-5 M10,-70 l10,-5 M20,-70 l10,-5 M30,-70 l10,-5" />
+    <use xlink:href="#mirror" transform="rotate(90,5,0) translate(0,-5)" />
+    <rect x="-5" y="75" width="20" height="10" />
+</g>
+<g style="stroke:black;stroke-width:1;fill:none" transform="translate(110,0)">
+    <path d="M-50,0 h-20 h-10 M-45,0 a22.5,15 0 0,0 45,0 a22.5,15 0 0,0 -45,0 M5,0 h35 h1 M80,0 h-40 h-1" stroke="red" marker-mid="url(#a1)"/>
+    <rect x="-100" y="-70" width="200" height="150" stroke-dasharray="7,7"/>
+    <rect x="-90" y="-10" width="10" height="20" />
+    <rect x="-50" y="-20" width="5" height="40" fill="black" />
+    <rect x="0" y="-20" width="5" height="40" fill="black" />
+    <path d="M80,-40 v80 M80,-35 l5,10 M80,-25 l5,10 M80,-15 l5,10 M80,-5 l5,10 M80,5 l5,10 M80,15 l5,10 M80,25 l5,10 M80,35 l5,10
+        M80,-35 l5,-10 M80,-25 l5,-10 M80,-15 l5,-10 M80,-5 l5,-10 M80,5 l5,-10 M80,15 l5,-10 M80,25 l5,-10 M80,35 l5,-10" />
+</g>
+<text style="font-size:10;stroke:none;fill:black;text-anchor:middle;font-family:Times" >
+    <tspan x="-110" y="105">Michelson interferometer</tspan>
+    <tspan x="-190" y="-10">LD</tspan> <tspan x="-85" y="83">PD</tspan>
+    <tspan x="110" y="95">Self-mixing interferometer</tspan>
+    <tspan x="25" y="-20">PD</tspan>    <tspan x="90" y="-30">LD</tspan>
+</text>
+<text style="font-size:9;stroke:none;fill:black;text-anchor:middle;font-family:Times" >
+    <tspan x="-160" y="-8">isolator</tspan> <tspan x="-140" y="30">beam splitter</tspan>
+    <tspan x="-105" y="-78">reference mirror</tspan> <tspan x="-30" y="-48">target</tspan> <tspan x="-30" y="-40">mirror</tspan>
+    <tspan x="190" y="-48">target</tspan>
+</text>
+</svg>

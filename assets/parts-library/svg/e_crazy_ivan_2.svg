@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   width="1120.5"
+   height="564"
+   version="1.0"
+   sodipodi:docbase="C:\Documents and Settings\Martin\桌面"
+   sodipodi:docname="Crazy_Ivan-2.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5">
+    <marker
+       inkscape:stockid="Dot_s"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Dot_s"
+       style="overflow:visible">
+      <path
+         id="path3615"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#ff0000;stroke-width:8pt;marker-start:none;marker-end:none"
+         transform="matrix(0.2,0,0,0.2,1.48,0.2)" />
+    </marker>
+    <marker
+       inkscape:stockid="Dot_m"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Dot_m"
+       style="overflow:visible">
+      <path
+         id="path3612"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="Dot_l"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Dot_l"
+       style="overflow:visible">
+      <path
+         id="path3609"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.8,0,0,0.8,5.92,0.8)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="712"
+     inkscape:window-width="1024"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="0.6219132"
+     inkscape:cx="607.75491"
+     inkscape:cy="259.05066"
+     inkscape:window-x="0"
+     inkscape:window-y="22"
+     inkscape:current-layer="g2175"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     width="1120.5px"
+     height="564px" />
+  <g
+     id="g2175"
+     transform="matrix(1.5,0,0,1.5,1.9073486e-5,2.0000028)">
+    <g
+       id="g2190"
+       transform="translate(-4.5007323e-6,-1.3333333)">
+      <path
+         style="fill:#999999;fill-opacity:1;stroke:#000000;stroke-width:1.08915257;stroke-opacity:1"
+         d="M 217.83688,204.63681 L 213.37297,200.17289 L 197.159,202.14913 C 177.14219,204.58886 119.2589,204.95218 100.34773,202.75679 C 75.239391,199.84196 58.715289,195.21576 56.125074,190.3759 C 52.340454,183.30427 68.945311,177.09032 99.657647,174.08493 C 109.52774,173.11908 112.87299,172.41209 112.87299,171.29198 C 112.87299,170.46711 114.076,168.5892 115.54636,167.11884 C 118.17619,164.489 118.52289,164.44546 136.83435,164.44546 C 155.1458,164.44546 155.49249,164.489 158.12232,167.11884 C 159.59268,168.5892 160.7957,170.23518 160.7957,170.77658 C 160.7957,171.31798 166.79966,172.10352 174.13782,172.52222 C 186.70369,173.23919 209.76507,175.83316 214.82275,177.0985 C 216.76166,177.58357 217.48663,176.75646 219.52539,171.73329 C 221.25608,167.46915 221.7326,164.71183 221.21534,161.95464 C 220.64115,158.8939 220.95772,157.65193 222.77534,155.83431 C 225.67347,152.93617 229.8794,152.91402 245.29279,155.7157 C 256.13543,157.68656 262.09206,157.87893 312.74278,157.894 C 367.12948,157.9102 368.32853,157.86466 369.66024,155.73224 C 377.00468,151.50932 432.81668,153.04857 435.72894,155.26546 C 437.73595,157.27248 437.84477,158.38744 436.313,161.24961 C 435.23687,163.26037 433.70169,163.35631 402.60338,163.35631 C 374.5323,163.35631 369.89252,163.12628 369.09144,161.69486 C 368.27271,160.23186 361.14368,160.06924 309.40622,160.33342 L 250.65079,160.63343 L 241.12071,163.6945 L 231.59062,166.75559 L 231.59062,174.11733 C 231.59062,180.61242 231.91117,181.75779 234.3135,183.84659 C 237.77531,186.8566 237.77531,189.84579 234.3135,192.56884 C 231.90003,194.46728 231.59062,195.52825 231.59062,201.90569 L 231.59062,209.10072 L 226.9457,209.10072 C 222.96023,209.10072 221.66705,208.46698 217.83688,204.63681 z "
+         id="path2161"
+         sodipodi:nodetypes="cccsssssssssssssssccssscccccsscccc" />
+      <text
+         xml:space="preserve"
+         style="font-size:18.89474487px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:NSimSun"
+         x="82.947815"
+         y="147.44"
+         id="text2448"><tspan
+           sodipodi:role="line"
+           id="tspan2450"
+           x="82.947815"
+           y="147.44">蘇聯海軍軍艦</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:18.97732353px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:NSimSun"
+         x="212.53464"
+         y="70.151245"
+         id="text3435"><tspan
+           sodipodi:role="line"
+           id="tspan3437"
+           x="212.53464"
+           y="70.151245">拖曳式陣列聲納</tspan><tspan
+           sodipodi:role="line"
+           x="212.53464"
+           y="93.8729"
+           id="tspan3439">聽測後方擋音區、去除死角</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:19.65694809px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:NSimSun"
+         x="512.52936"
+         y="145.26097"
+         id="text3441"><tspan
+           sodipodi:role="line"
+           id="tspan3443"
+           x="512.52936"
+           y="145.26097">美國海軍潛艇</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:21.83979607px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:NSimSun"
+         x="387.35355"
+         y="319.11267"
+         id="text3445"><tspan
+           sodipodi:role="line"
+           id="tspan3447"
+           x="387.35355"
+           y="319.11267">現形</tspan></text>
+      <path
+         sodipodi:nodetypes="ccscccccccccscccccsscccccccc"
+         id="path9599"
+         d="M 527.29555,208.60973 C 501.45873,208.64085 487.3921,207.31795 483.00485,205.33022 C 469.3626,198.98702 469.19048,187.2008 482.64188,180.47316 C 487.90335,177.84166 488.93588,177.7382 513.40886,177.39025 L 538.73166,177.03021 L 538.73166,168.40474 L 538.73166,159.77926 L 552.89064,159.77926 L 567.04962,159.77926 L 567.04962,168.49248 L 567.04962,177.2057 L 612.11252,177.2057 C 649.63357,177.2057 657.96016,177.48258 661.86425,178.86002 C 667.45258,180.8317 667.19111,181.12814 670.60786,168.94668 L 673.17921,159.77926 L 680.01782,159.77926 L 686.85641,159.77926 L 686.85641,173.32027 C 686.85641,185.90473 687.01029,186.91013 689.03471,187.55265 C 692.19764,188.55653 692.19764,196.7569 689.03471,197.58402 C 687.23156,198.05556 686.85641,199.06965 686.85641,203.47239 L 686.85641,208.79113 L 680.49632,208.79113 C 674.80044,208.79113 674.00902,208.51191 672.91807,206.11755 L 671.6999,203.44397 L 663.83925,206.11755 C 656.07848,208.75716 655.49036,208.79113 617.55396,208.79113 C 540.15939,209.13391 574.70608,209.00389 527.29555,208.60973 z "
+         style="fill:#666666;fill-opacity:1;stroke:#000000;stroke-width:1.08915257;stroke-opacity:1" />
+      <path
+         style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:3.06999993;stroke-linecap:butt;stroke-linejoin:miter;marker-mid:none;marker-end:url(#Dot_s);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 320.1082,100.98894 C 386.55054,147.88668 386.55054,147.88668 386.55054,147.88668"
+         id="path3360" />
+      <path
+         style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:3.06999993;stroke-linecap:butt;stroke-linejoin:miter;marker-mid:none;marker-end:url(#Dot_s);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 438.98644,311.32103 L 466.27287,311.08998 L 548.299,208.55971 L 548.299,208.55971"
+         id="path7280"
+         sodipodi:nodetypes="cccc" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>그림 골라내기</title>
+<style>
+  :root{
+    --bg:#f6f8fa; --surface:#fff; --ink:#0d1117; --muted:#57606a;
+    --line:#d0d7de; --accent:#0969da; --no:#cf222e; --hold:#9a6700;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{ --bg:#0d1117; --surface:#161b22; --ink:#e6edf3; --muted:#8b949e;
+           --line:#30363d; --accent:#58a6ff; --no:#f85149; --hold:#d29922; }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans KR","Malgun Gothic","Segoe UI",system-ui,sans-serif;
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+
+  /* ===== 위: 진행 상황 ===== */
+  header{
+    display:flex; align-items:center; gap:16px; flex-wrap:wrap;
+    padding:10px 18px; border-bottom:1px solid var(--line); background:var(--surface);
+  }
+  .pos{font-size:15px; font-weight:600; font-variant-numeric:tabular-nums}
+  .pos small{color:var(--muted); font-weight:400}
+  .tally{display:flex; gap:14px; font-size:13px; font-variant-numeric:tabular-nums}
+  .tally b{font-weight:600}
+  .t-o b{color:var(--accent)} .t-x b{color:var(--no)} .t-s b{color:var(--hold)}
+  .bar{flex:1 1 180px; height:5px; background:var(--line); border-radius:3px; overflow:hidden; min-width:120px}
+  .bar i{display:block; height:100%; background:var(--accent); width:0; transition:width .15s}
+  .path{font-size:11.5px; color:var(--muted); font-family:"IBM Plex Mono",Consolas,monospace}
+
+  /* ===== 가운데: 그림 ===== */
+  main{
+    flex:1; display:flex; align-items:center; justify-content:center;
+    padding:14px; min-height:0; position:relative;
+  }
+  #stage{
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    max-width:100%; max-height:100%; padding:12px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #img{max-width:100%; max-height:calc(100vh - 260px); display:block}
+  #done{display:none; text-align:center}
+  #done h2{margin:0 0 8px; font-size:22px}
+  #done p{margin:0; color:var(--muted)}
+
+  /* ===== 아래: 정보 + 버튼 ===== */
+  .info{
+    padding:8px 18px 0; text-align:center; max-width:900px; margin:0 auto; width:100%;
+  }
+  .fname{
+    font-family:"IBM Plex Mono",Consolas,monospace; font-size:13px;
+    word-break:break-all; margin-bottom:4px;
+  }
+  .sub{font-size:12.5px; color:var(--muted); display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+  .sub a{color:var(--accent)}
+  .badge{border:1px solid var(--line); border-radius:999px; padding:1px 9px}
+  .prev{color:var(--muted); font-size:12.5px; min-height:18px; margin-top:4px}
+
+  footer{padding:12px 18px 18px; display:flex; gap:12px; justify-content:center; align-items:center; flex-wrap:wrap}
+  button{
+    font:inherit; font-weight:600; cursor:pointer; border-radius:9px;
+    border:1px solid var(--line); background:var(--surface); color:var(--ink);
+    padding:12px 20px; transition:transform .06s;
+  }
+  button:active{transform:translateY(1px)}
+  button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .big{min-width:150px; font-size:17px; padding:14px 26px}
+  #btnO{border-color:var(--accent); color:var(--accent)}
+  #btnX{border-color:var(--no); color:var(--no)}
+  #btnS{color:var(--hold)}
+  kbd{
+    font-family:"IBM Plex Mono",Consolas,monospace; font-size:11px; font-weight:400;
+    border:1px solid var(--line); border-bottom-width:2px; border-radius:4px;
+    padding:0 5px; margin-left:7px; color:var(--muted);
+  }
+  .small{padding:8px 14px; font-size:13px; font-weight:400}
+  .hint{width:100%; text-align:center; font-size:12px; color:var(--muted); margin-top:2px}
+  @media (prefers-reduced-motion:reduce){ *{transition:none !important} }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="pos"><span id="pos">0</span> <small>/ <span id="total">0</span></small></span>
+  <span class="bar"><i id="bar"></i></span>
+  <span class="tally">
+    <span class="t-o">넣기 <b id="cO">0</b></span>
+    <span class="t-x">빼기 <b id="cX">0</b></span>
+    <span class="t-s">보류 <b id="cS">0</b></span>
+  </span>
+  <span class="path" id="dir"></span>
+</header>
+
+<main>
+  <div id="stage"><img id="img" alt="" decoding="async" /></div>
+  <div id="done">
+    <h2>다 보셨습니다</h2>
+    <p>엑셀은 이미 저장돼 있습니다. 아래 <b>엑셀 저장</b>을 한 번 더 눌러도 됩니다.</p>
+  </div>
+</main>
+
+<div class="info">
+  <div class="fname" id="fname">—</div>
+  <div class="sub" id="sub"></div>
+  <div class="prev" id="prev"></div>
+</div>
+
+<footer>
+  <button class="big" id="btnO">넣는다 O<kbd>O</kbd></button>
+  <button class="big" id="btnX">뺀다 X<kbd>X</kbd></button>
+  <button class="small" id="btnS">보류<kbd>S</kbd></button>
+  <button class="small" id="btnZ">되돌리기<kbd>Z</kbd></button>
+  <button class="small" id="btnSave">엑셀 저장</button>
+  <div class="hint" id="hint"></div>
+</footer>
+
+<script>
+/* ===== 상태 ===== */
+let files = [], marks = {}, meta = {}, idx = 0, history = [], xlsxPath = '';
+const $ = id => document.getElementById(id);
+
+/* ===== 시작 ===== */
+init();
+let clusterSize = {}, reasons = {};
+
+async function init(){
+  const d = await (await fetch('/api/list')).json();
+  marks = d.marks || {}; meta = d.meta || {}; xlsxPath = d.xlsx;
+  clusterSize = d.clusterSize || {}; reasons = d.reasons || {};
+  // 걸러진 줄만 본다 — A 등급 · 닮은 그림은 대표 한 장 · 아직 안 정한 것
+  files = (d.queue && d.queue.length) ? d.queue : d.files.filter(f => !marks[f]);
+  $('total').textContent = files.length;
+  $('dir').textContent = d.dir;
+  $('hint').textContent =
+    `A등급·중복 제거·미판정 ${files.length}장만 보여 줍니다 (전체 ${d.total}장) · 엑셀 ${d.xlsx}`;
+  setCounts(d.counts);
+  idx = 0;
+  show();
+}
+
+/* ===== 그리기 ===== */
+function show(){
+  const atEnd = idx >= files.length;
+  $('stage').style.display = atEnd ? 'none' : 'flex';
+  $('done').style.display  = atEnd ? 'block' : 'none';
+  for (const b of ['btnO','btnX','btnS']) $(b).disabled = atEnd;
+  $('pos').textContent = Math.min(idx + 1, files.length);
+  $('bar').style.width = (files.length ? (idx / files.length * 100) : 0) + '%';
+  if (atEnd){ $('fname').textContent = '—'; $('sub').innerHTML = ''; return; }
+
+  const name = files[idx];
+  $('img').src = '/img/' + encodeURIComponent(name);
+  $('fname').textContent = name;
+
+  const m = meta[name] || {};
+  const bits = [];
+  if (m.name) bits.push(`<span class="badge">${esc(m.name)}</span>`);
+  if (m.subjectLabel) bits.push(`<span class="badge">${esc(m.subjectLabel)}</span>`);
+  if (m.part) bits.push(`<span class="badge">${esc(m.part)}</span>`);
+  if (m.license) bits.push(`<span class="badge">${esc(m.license)}</span>`);
+  if (m.tags && m.tags.length) bits.push(esc(m.tags.slice(0,4).join(' · ')));
+  if (m.source) bits.push(`<a href="${esc(m.source)}" target="_blank" rel="noopener">출처</a>`);
+  // 닮은 그림이 여러 장이면 그 사실을 알려 준다 — 대표 한 장만 보여 주고 있다는 뜻
+  const cs = clusterSize[name] || 1;
+  if (cs > 1) bits.push(`<span class="badge">닮은 그림 ${cs}장 중 대표</span>`);
+  $('sub').innerHTML = bits.join('');
+
+  const last = history[history.length - 1];
+  $('prev').textContent = last ? `직전: ${last.file} → ${label(last.mark)} (Z로 되돌리기)` : '';
+
+  preload();
+}
+
+/* 다음 몇 장을 미리 받아 둔다 — 넘길 때 끊기지 않게 */
+function preload(){
+  for (let k = 1; k <= 6; k++){
+    const n = files[idx + k];
+    if (n) new Image().src = '/img/' + encodeURIComponent(n);
+  }
+}
+
+const label = m => m === 'O' ? '넣기' : m === 'X' ? '빼기' : '보류';
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ===== 판정 ===== */
+async function mark(m){
+  if (idx >= files.length) return;
+  const name = files[idx];
+  history.push({ file: name, mark: m, idx });
+  marks[name] = { mark: m };
+  idx++;
+  show();                                   // 먼저 넘기고 (체감 속도)
+  const r = await fetch('/api/mark', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ file:name, mark:m })
+  }).then(r => r.json()).catch(() => null);
+  if (r) setCounts(r.counts);
+}
+
+async function undo(){
+  const last = history.pop();
+  if (!last) return;
+  delete marks[last.file];
+  idx = last.idx;
+  show();
+  const r = await fetch('/api/mark', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ file:last.file, mark:null })
+  }).then(r => r.json()).catch(() => null);
+  if (r) setCounts(r.counts);
+}
+
+function setCounts(c){
+  if (!c) return;
+  $('cO').textContent = c.O || 0;
+  $('cX').textContent = c.X || 0;
+  $('cS').textContent = c.S || 0;
+}
+
+/* ===== 입력 ===== */
+$('btnO').onclick = () => mark('O');
+$('btnX').onclick = () => mark('X');
+$('btnS').onclick = () => mark('S');
+$('btnZ').onclick = undo;
+$('btnSave').onclick = async () => {
+  const r = await (await fetch('/api/save', {method:'POST'})).json();
+  $('hint').textContent = '저장했습니다 → ' + r.xlsx;
+};
+
+/* e.code 를 쓴다 — 한글 입력 상태에서도 O/X 가 그대로 먹는다 */
+addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const c = e.code;
+  if (c === 'KeyO' || c === 'Digit1' || c === 'ArrowRight'){ e.preventDefault(); mark('O'); }
+  else if (c === 'KeyX' || c === 'Digit2' || c === 'ArrowLeft'){ e.preventDefault(); mark('X'); }
+  else if (c === 'KeyS' || c === 'Space'){ e.preventDefault(); mark('S'); }
+  else if (c === 'KeyZ' || c === 'Backspace'){ e.preventDefault(); undo(); }
+});
+</script>
+</body>
+</html>

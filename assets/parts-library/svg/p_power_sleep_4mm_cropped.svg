@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<svg version="1.1" baseProfile="tiny" width="42.02mm" height="57.63mm" viewBox="0 0 4202 5763" preserveAspectRatio="xMidYMid" fill-rule="evenodd" clip-path="url(#presentation_clip_path)" stroke-width="28.222" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg" xmlns:ooo="http://xml.openoffice.org/svg/export" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve">
+ <defs class="ClipPathGroup">
+  <clipPath id="presentation_clip_path" clipPathUnits="userSpaceOnUse">
+   <rect x="0" y="0" width="4202" height="5763"/>
+  </clipPath>
+ </defs>
+<g class="SlideGroup">
+  <g>
+   <g id="id1" class="Slide" clip-path="url(#presentation_clip_path)">
+    <g class="Page">
+     <g class="com.sun.star.drawing.ClosedBezierShape">
+      <g id="id3">
+       <path fill="rgb(0,0,0)" stroke="none" d="M 914,1204 C 771,1396 661,1590 579,1796 498,2001 446,2219 419,2457 406,2568 400,2677 400,2783 400,3130 471,3453 617,3789 712,4009 825,4202 963,4375 1100,4548 1262,4702 1455,4845 1647,4987 1841,5098 2047,5179 2252,5260 2470,5312 2708,5339 2745,5344 2783,5347 2820,5350 2746,5302 2671,5250 2597,5194 2290,4967 2032,4721 1813,4444 1593,4168 1412,3861 1260,3510 1026,2970 914,2451 914,1894 914,1727 924,1558 944,1383 955,1291 967,1202 983,1114 959,1143 937,1173 914,1204 Z M 1342,1429 C 1263,2115 1352,2717 1627,3351 1735,3600 1859,3824 2003,4030 2226,4349 2498,4624 2836,4874 3264,5191 3682,5386 4200,5510 L 4200,5510 C 3693,5730 3212,5801 2663,5738 2113,5675 1661,5496 1217,5167 773,4838 470,4457 250,3950 30,3442 -41,2961 22,2412 85,1863 264,1410 593,966 922,522 1302,220 1809,0 1546,462 1402,900 1342,1429 Z"/>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

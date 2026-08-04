@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="380" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke-linecap="round" stroke-width="2.4">
+  <path d="m85.018 299.83 6.7569 8.7e-4c4.0714 0 8.1428 0 12.359-35.13 4.2161-35.13 8.5767-105.39 12.97-140.52 4.3934-35.127 8.8207-35.127 14.426-13.21 5.6051 21.917 12.388 65.749 20.274 100.88 7.8859 35.129 16.874 61.554 35.99 74.766s48.358 13.212 77.6 13.212l287.28-8.7e-4" stroke="#000"/>
+  <g>
+   <path d="m85.018 299.83h34.691c5.6122 0 11.224 0 17.043-34.779s11.845-104.34 17.604-139.11c5.759-34.775 11.253-34.775 18.433 4e-3 7.1804 34.778 16.048 104.33 30.241 139.11 14.193 34.778 33.71 34.778 53.228 34.778l296.42-9.5e-4" stroke="#f00"/>
+   <path d="m552.68 299.83c-79.438 0-158.09 0-212.76-11.684-54.664-11.684-84.555-35.052-106.21-46.736-21.653-11.684-34.107-11.684-45.877-5.3149-11.77 6.3693-20.008 17.818-28.44 29.099-8.4315 11.281-16.973 22.287-25.871 28.464-8.8973 6.1774-15.943 6.1774-23.568 6.1774l-24.94-6e-3" stroke="#218a21"/>
+   <path d="m552.67 299.83-297.97 4.9e-4c-6.1948 0-12.39 0-16.753-45.031-4.3634-45.031-6.8954-135.09-9.3053-180.12-2.4099-45.031-4.6978-45.031-7.0142-0.0038-2.3164 45.027-4.6618 135.09-8.2221 180.13-3.5602 45.032-8.3352 45.032-13.11 45.032h-115.28" stroke="#2fcc2f"/>
+   <path d="m552.68 296.73c-61.984-1.8498-123.18-3.6995-178.18-10.524-54.992-6.8248-102.99-18.625-134.16-24.525-31.164-5.9-45.493-5.9-57.886-2.8008s-22.852 9.2981-33.59 16.633c-10.738 7.3351-21.753 15.806-30.206 20.041-8.453 4.2354-14.343 4.2354-20.234 4.2354l-13.411 0.0401" stroke="#6959cc"/>
+  </g>
+ </g>
+ <path d="m61.513 261.72h-4.3454m4.3454-38.11h-4.3454m4.3454-38.11h-4.3454m4.3454-38.11h-4.3454m4.3454-38.11h-4.3454m4.3454-38.11h-4.3454m495.51 241.62v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-58.457-4.3454v4.3454m-81.962-284.08h-4.3454m4.3454 266.77h-4.3454m27.85 12.963v4.3454m490.65-4.3454h-520.56m6.3977-286.78v293.18" fill="none" stroke="#000" stroke-linecap="round"/>
+ <g font-family="'Liberation Sans', Arial, sans-serif">font-size="15"
+  <switch transform="translate(381 173)" fill="#6959cc">
+   <text systemLanguage="en,de"><tspan>El Chichón</tspan></text>
+   <text><tspan>El Chichón</tspan></text>
+  </switch>
+  <switch transform="translate(381 158)" fill="#218a21">
+   <text systemLanguage="en"><tspan>Pinatubo, aged</tspan></text>
+   <text systemLanguage="de"><tspan>Pinatubo, später</tspan></text>
+   <text><tspan>Pinatubo, aged</tspan></text>
+  </switch>
+  <switch transform="translate(381 143)" fill="#2fcc2f">
+   <text systemLanguage="en"><tspan>Pinatubo, early</tspan></text>
+   <text systemLanguage="de"><tspan>Pinatubo, anfangs</tspan></text>
+   <text><tspan>Pinatubo, early</tspan></text>
+  </switch>
+  <switch transform="translate(381 128)" fill="#ff0000">
+   <text systemLanguage="en,de"><tspan>Hunga Tonga</tspan></text>
+   <text><tspan>Hunga</tspan></text>
+  </switch>
+  <switch transform="translate(381 112)">
+   <text systemLanguage="en"><tspan>Background</tspan></text>
+   <text systemLanguage="de"><tspan>Hintergrund</tspan></text>
+   <text><tspan>Background</tspan></text>
+  </switch>
+  <g text-anchor="middle">
+   <switch transform="translate(317 351)">
+    <text systemLanguage="en,de"><tspan>Radius (µm)</tspan></text>
+    <text><tspan>Radius (µm)</tspan></text>
+   </switch>
+   <switch transform="rotate(-90 103.22 69.017)">
+    <text systemLanguage="en"><tspan>Number size dsitribution (cm⁻³ µm⁻¹)</tspan></text>
+    <text systemLanguage="de"><tspan>Anzahlverteilung (cm⁻³ µm⁻¹)</tspan></text>
+    <text><tspan>Number size dsitribution (cm⁻³ µm⁻¹)</tspan></text>
+   </switch>
+   <switch transform="translate(85 336)">
+    <text systemLanguage="en"><tspan>0.00</tspan></text>
+    <text systemLanguage="de"><tspan>0,00</tspan></text>
+    <text><tspan>0.00</tspan></text>
+   </switch>
+   <switch transform="translate(144 336)">
+    <text systemLanguage="en"><tspan>0.25</tspan></text>
+    <text systemLanguage="de"><tspan>0,25</tspan></text>
+    <text><tspan>0.25</tspan></text>
+   </switch>
+   <switch transform="translate(202 336)">
+    <text systemLanguage="en"><tspan>0.50</tspan></text>
+    <text systemLanguage="de"><tspan>0,50</tspan></text>
+    <text><tspan>0.50</tspan></text>
+   </switch>
+   <switch transform="translate(260 336)">
+    <text systemLanguage="en"><tspan>0.75</tspan></text>
+    <text systemLanguage="de"><tspan>0,75</tspan></text>
+    <text><tspan>0.75</tspan></text>
+   </switch>
+   <switch transform="translate(319 336)">
+    <text systemLanguage="en"><tspan>1.00</tspan></text>
+    <text systemLanguage="de"><tspan>1,00</tspan></text>
+    <text><tspan>1.00</tspan></text>
+   </switch>
+   <switch transform="translate(377 336)">
+    <text systemLanguage="en"><tspan>1.25</tspan></text>
+    <text systemLanguage="de"><tspan>1,25</tspan></text>
+    <text><tspan>1.25</tspan></text>
+   </switch>
+   <switch transform="translate(436 336)">
+    <text systemLanguage="en"><tspan>1.50</tspan></text>
+    <text systemLanguage="de"><tspan>1,50</tspan></text>
+    <text><tspan>1.50</tspan></text>
+   </switch>
+   <switch transform="translate(494 336)">
+    <text systemLanguage="en"><tspan>1.75</tspan></text>
+    <text systemLanguage="de"><tspan>1,75</tspan></text>
+    <text><tspan>1.75</tspan></text>
+   </switch>
+   <switch transform="translate(553 336)">
+    <text systemLanguage="en"><tspan>2.00</tspan></text>
+    <text systemLanguage="de"><tspan>2,00</tspan></text>
+    <text><tspan>2.00</tspan></text>
+   </switch>
+  </g>
+  <g text-anchor="end">
+   <text x="53.161945" y="38.295364"><tspan x="53.161945" y="38.295364">7</tspan></text>
+   <text x="53.161945" y="76.405388"><tspan x="53.161945" y="76.405388">6</tspan></text>
+   <text x="53.161945" y="114.51547"><tspan x="53.161945" y="114.51547">5</tspan></text>
+   <text x="53.161945" y="152.62549"><tspan x="53.161945" y="152.62549">4</tspan></text>
+   <text x="53.161945" y="190.73555"><tspan x="53.161945" y="190.73555">3</tspan></text>
+   <text x="53.161945" y="228.84558"><tspan x="53.161945" y="228.84558">2</tspan></text>
+   <text x="53.161945" y="266.95569"><tspan x="53.161945" y="266.95569">1</tspan></text>
+   <text x="53.161945" y="305.06943"><tspan x="53.161945" y="305.06943">0</tspan></text>
+  </g>
+ </g>
+</svg>

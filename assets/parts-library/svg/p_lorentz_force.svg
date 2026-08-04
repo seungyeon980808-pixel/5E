@@ -1,0 +1,5 @@
+<svg width="175mm" height="141mm" version="1.1" viewBox="0 0 175 141" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="175" height="141" fill="#fff"/><rect x="43" width="132" height="141" fill="#ccf"/><circle cx="140" cy="104" r="2" fill="#00f"/><circle cx="140" cy="104" r="9" fill="none" stroke="#00f"/><path d="m9 71h29m5 0h121" fill="none" stroke="#000"/>
+ <g font-family="Times" font-size="17px"><text x="2" y="84" font-style="italic">q</text><text x="65" y="129"><tspan font-style="italic">q</tspan> &gt; 0</text><text x="63" y="21"><tspan font-style="italic">q</tspan> &lt; 0</text><text x="91" y="84"><tspan font-style="italic">q</tspan> = 0</text>
+ <g font-weight="bold"><text x="148" y="122" fill="#00f">B</text><text x="19" y="68">v</text></g></g>
+ <g id="a"><path d="m102.3 10c3 36-26 61-59 61" fill="none" stroke="#000"/><path d="m100.8 12.4 1.4-2.5 2.4 1.4-4-7.2z"/></g>
+ <path d="m35 69 2 2-2 2 8-2zm127 0l2 2-2 2 8-2z"/><circle cx="6" cy="71" r="3" fill="none" stroke="#000"/><use transform="matrix(1 0 0-1 0 142)" xlink:href="#a"/></svg>

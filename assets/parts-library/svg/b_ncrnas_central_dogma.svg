@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   width="837.35504"
+   height="435.57278"
+   id="svg2"
+   sodipodi:docname="ncRNAs-central-dogma.svg"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview4455"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="1.5978885"
+     inkscape:cx="418.36461"
+     inkscape:cy="217.4745"
+     inkscape:window-width="2492"
+     inkscape:window-height="1376"
+     inkscape:window-x="1988"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="StopL"
+       style="overflow:visible">
+      <path
+         d="M 0,5.65 0,-5.65"
+         transform="scale(0.8,0.8)"
+         id="path4217"
+         style="fill:none;stroke:#000000;stroke-width:1pt" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path3834"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend-3"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path3834-4"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend-5"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path3834-9"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend-5-3"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path3834-9-8"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-41.370495,-337.50143)"
+     id="layer1">
+    <text
+       x="39.26112"
+       y="360.40768"
+       id="text3023"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="39.26112"
+         y="360.40768"
+         id="tspan3025">mDNA</tspan></text>
+    <text
+       x="48.13612"
+       y="531.02667"
+       id="text3027"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="48.13612"
+         y="531.02667"
+         id="tspan3029">uDNA</tspan></text>
+    <text
+       x="55.26112"
+       y="644.3783"
+       id="text3031"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="55.26112"
+         y="644.3783"
+         id="tspan3033">rDNA</tspan></text>
+    <text
+       x="54.930763"
+       y="747.28229"
+       id="text3035"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="54.930763"
+         y="747.28229"
+         id="tspan3037">tDNA</tspan></text>
+    <path
+       d="m 138.36987,350.0103 161.62441,83.84266"
+       id="path3039"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)" />
+    <text
+       x="278.57141"
+       y="463.07645"
+       id="text4253"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="278.57141"
+         y="463.07645"
+         id="tspan4255">pre-mRNA</tspan></text>
+    <path
+       d="m 372.0996,473.10621 161.62441,83.84266"
+       id="path3039-9"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)" />
+    <text
+       x="520"
+       y="589.50507"
+       id="text4281"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="520"
+         y="589.50507"
+         id="tspan4283">mRNA</tspan></text>
+    <text
+       x="761.59271"
+       y="712.36224"
+       id="text4285"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="761.59271"
+         y="712.36224"
+         id="tspan4287">nascent</tspan><tspan
+         x="761.59271"
+         y="752.36224"
+         id="tspan4289">protein</tspan></text>
+    <text
+       x="756.42865"
+       y="386.64789"
+       id="text4291"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="756.42865"
+         y="386.64789"
+         id="tspan4293">localised</tspan><tspan
+         x="756.42865"
+         y="426.64789"
+         id="tspan4295">protein</tspan></text>
+    <path
+       d="M 597.81389,596.67764 759.4383,680.5203"
+       id="path3039-9-9"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend)" />
+    <path
+       d="M 820.42977,683.07647 818.28691,444.50504"
+       id="path4321"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend-5)" />
+    <text
+       x="256.07367"
+       y="528.03448"
+       id="text4509"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="256.07367"
+         y="528.03448"
+         id="tspan4511">spliceosome</tspan></text>
+    <text
+       x="519.29156"
+       y="644.1908"
+       id="text4509-0"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="519.29156"
+         y="644.1908"
+         id="tspan4511-1">ribosome</tspan></text>
+    <text
+       x="546.99469"
+       y="747.28229"
+       id="text4534"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="546.99469"
+         y="747.28229"
+         id="tspan4536">tRNA</tspan></text>
+    <text
+       x="576.19"
+       y="695.62665"
+       id="text4538"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="576.19"
+         y="695.62665"
+         id="tspan4540">+</tspan></text>
+    <path
+       d="m 137.14286,519.8315 109.28571,0"
+       id="path4542"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend-5)" />
+    <path
+       d="m 137.14286,632.36218 370.71428,1.42858"
+       id="path4730"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend-5)" />
+    <path
+       d="m 137.14286,736.6479 398.57143,-0.71429"
+       id="path4918"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lend-5)" />
+    <text
+       x="240.18639"
+       y="772.19922"
+       id="text4509-0-9"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="240.18639"
+         y="772.19922"
+         id="tspan4511-1-6">RNase P</tspan></text>
+    <text
+       x="146.61496"
+       y="664.3421"
+       id="text4509-0-6"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="146.61496"
+         y="664.3421"
+         id="tspan4511-1-7">RNase MRP+snoRNP</tspan></text>
+    <text
+       x="135.18639"
+       y="567.19922"
+       id="text4509-0-4"
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:32px;line-height:125%;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1"><tspan
+         x="135.18639"
+         y="567.19922"
+         id="tspan4511-1-4">snRNP</tspan></text>
+    <text
+       x="745.1864"
+       y="531.48499"
+       id="text4509-0-7"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="745.1864"
+         y="531.48499"
+         id="tspan4511-1-61">SRP</tspan><tspan
+         x="745.1864"
+         y="571.48499"
+         id="tspan5154" /></text>
+    <text
+       x="706.4364"
+       y="564.3421"
+       id="text4509-0-64"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="706.4364"
+         y="564.3421"
+         id="tspan4511-1-2">tmRNA</tspan></text>
+    <text
+       x="223.51335"
+       y="380.93137"
+       id="text3032"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#007d00;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="223.51335"
+         y="380.93137"
+         id="tspan3034">transcription</tspan></text>
+    <text
+       x="445.69415"
+       y="499.2048"
+       id="text3032-2"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#007d00;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="445.69415"
+         y="499.2048"
+         id="tspan3034-4">splicing</tspan></text>
+    <text
+       x="657.12274"
+       y="619.91907"
+       id="text3032-6"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#007d00;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="657.12274"
+         y="619.91907"
+         id="tspan3034-1">translation</tspan></text>
+    <text
+       x="502.82977"
+       y="-831.0379"
+       transform="matrix(0,1,-1,0,0,0)"
+       id="text3032-9"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#007d00;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="502.82977"
+         y="-831.0379"
+         id="tspan3034-9">transport</tspan></text>
+    <path
+       d="M 590.3426,556.2567 589.52988,418.29332"
+       id="path4321-4"
+       style="fill:none;stroke:#000000;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#StopL);marker-end:none" />
+    <text
+       x="486.04684"
+       y="405.7684"
+       id="text4509-0-9-5"
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:#ff0000;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="486.04684"
+         y="405.7684"
+         id="tspan4511-1-6-9">RISC (miRNA)</tspan></text>
+  </g>
+</svg>

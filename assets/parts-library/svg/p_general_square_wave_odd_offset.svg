@@ -1,0 +1,1884 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45+0.46pre2+devel"
+   width="720"
+   height="460"
+   sodipodi:docname="General Square Wave (Odd, Offset).svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="C:\Documents and Settings\JJB\My Documents\My Pictures\Electronics\Illustrations\Maths\Functions">
+  <sodipodi:namedview
+     inkscape:window-height="874"
+     inkscape:window-width="1404"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10000"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="1"
+     inkscape:cx="331.89835"
+     inkscape:cy="148.92693"
+     inkscape:window-x="28"
+     inkscape:window-y="0"
+     inkscape:current-layer="layer2"
+     width="720px"
+     height="460px"
+     showgrid="true"
+     inkscape:grid-points="true"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       id="GridFromPre046Settings"
+       type="xygrid"
+       originx="0px"
+       originy="70px"
+       spacingx="5px"
+       spacingy="5px"
+       color="#0000ff"
+       empcolor="#0000ff"
+       opacity="0.2"
+       empopacity="0.4"
+       empspacing="5" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata2112">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2102">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-50 : 600 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 600 : 1"
+       inkscape:persp3d-origin="300 : 400 : 1"
+       id="perspective12332" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-50 : 600 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 600 : 1"
+       inkscape:persp3d-origin="300 : 400 : 1"
+       id="perspective8081" />
+    <font
+       id="SVGTimesFont"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face2105"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z"
+         id="missing-glyph2107" />
+      <glyph
+         unicode="-"
+         id="glyph2109"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319" />
+    </font>
+    <clipPath
+       id="cp22">
+      <polygon
+         id="polygon2006"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp1">
+      <polygon
+         id="polygon9"
+         points="-33554400,-33554400 -33554400,33554400 33554400,33554400 33554400,-33554400 -33554400,-33554400 " />
+    </clipPath>
+    <clipPath
+       id="cp3">
+      <polygon
+         id="polygon1797"
+         points="73,190 73,203.563 95,203.563 95,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp4">
+      <polygon
+         id="polygon1806"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp5">
+      <polygon
+         id="polygon1821"
+         points="73,190 73,203.563 95,203.563 95,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp6">
+      <polygon
+         id="polygon1830"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp7">
+      <polygon
+         id="polygon1845"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp8">
+      <polygon
+         id="polygon1852"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp9">
+      <polygon
+         id="polygon1867"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp10">
+      <polygon
+         id="polygon1874"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp11">
+      <polygon
+         id="polygon1889"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp12">
+      <polygon
+         id="polygon1896"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp13">
+      <polygon
+         id="polygon1907"
+         points="74,190 74,204 95,204 95,190 74,190 " />
+    </clipPath>
+    <clipPath
+       id="cp14">
+      <polygon
+         id="polygon1916"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp15">
+      <polygon
+         id="polygon1931"
+         points="74,190 74,204 95,204 95,190 74,190 " />
+    </clipPath>
+    <clipPath
+       id="cp16">
+      <polygon
+         id="polygon1940"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp17">
+      <polygon
+         id="polygon1955"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp18">
+      <polygon
+         id="polygon1962"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp19">
+      <polygon
+         id="polygon1977"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp20">
+      <polygon
+         id="polygon1984"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp21">
+      <polygon
+         id="polygon1999"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <font
+       id="font3074"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face3065"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph3067"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph3069"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath3082">
+      <polygon
+         id="polygon2799"
+         points="90,14 90,227 433,227 433,14 90,14 " />
+    </clipPath>
+    <font
+       id="font4654"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face4645"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph4647"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph4649"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="font5037"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face5028"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph5030"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph5032"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="font4163"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face4154"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph4156"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph4158"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="SVGCourierFont"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face6313"
+         font-family="SVGCourier"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph6315"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph6317"
+         d="M1184 469H717V0H602V469H135V584H602V1047H717V584H1184V469Z"
+         unicode="+" />
+    </font>
+    <font
+       id="font6598"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face6589"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph6591"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph6593"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath6606">
+      <polygon
+         id="polygon6345"
+         points="74,14 74,237 433,237 433,14 74,14 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3093">
+      <polygon
+         id="polygon2817"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3107">
+      <polygon
+         id="polygon2839"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3121">
+      <polygon
+         id="polygon2861"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3135">
+      <polygon
+         id="polygon2883"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3149">
+      <polygon
+         id="polygon2905"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3161">
+      <polygon
+         id="polygon2923"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3175">
+      <polygon
+         id="polygon2945"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3191">
+      <polygon
+         id="polygon2971"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3204">
+      <polygon
+         id="polygon2991"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3217">
+      <polygon
+         id="polygon3011"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6613">
+      <polygon
+         id="polygon6356"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6618">
+      <polygon
+         id="polygon6363"
+         points="73,127 73,141 87,141 87,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6632">
+      <polygon
+         id="polygon6385"
+         points="73,127 73,141 87,141 87,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6646">
+      <polygon
+         id="polygon6407"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6659">
+      <polygon
+         id="polygon6427"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6684">
+      <polygon
+         id="polygon6465"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6698">
+      <polygon
+         id="polygon6487"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6712">
+      <polygon
+         id="polygon6509"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6728">
+      <polygon
+         id="polygon6535"
+         points="73,127 73,141 88,141 88,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6741">
+      <polygon
+         id="polygon6555"
+         points="73,127 73,141 88,141 88,127 73,127 " />
+    </clipPath>
+    <font
+       id="font7718"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face7709"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph7711"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph7713"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath7904">
+      <polygon
+         id="polygon7884"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp2">
+      <polygon
+         id="polygon8435"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <font
+       id="font9179"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face9170"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph9172"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph9174"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath9187">
+      <polygon
+         id="polygon8852"
+         points="74,13 74,235 433,235 433,13 74,13 " />
+    </clipPath>
+    <font
+       id="font10460"
+       horiz-adv-x="1024">
+      <font-face
+         font-weight="normal"
+         id="font-face10451"
+         font-family="SVGTimes"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph10453"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph10455"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath10472">
+      <polygon
+         id="polygon10121"
+         points="74,13 74,235 433,235 433,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6583">
+      <polygon
+         points="74,13 74,236 434,236 434,13 74,13 "
+         id="polygon6562" />
+    </clipPath>
+    <font
+       horiz-adv-x="1024"
+       id="font16163">
+      <font-face
+         id="font-face16154"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph16156"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph16158"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <font
+       horiz-adv-x="1024"
+       id="font16609">
+      <font-face
+         id="font-face16600"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph16602"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph16604"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath16621">
+      <polygon
+         points="74,13 74,235 433,235 433,13 74,13 "
+         id="polygon16344" />
+    </clipPath>
+    <clipPath
+       id="clipPath16751">
+      <polygon
+         id="polygon16547"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16737">
+      <polygon
+         id="polygon16525"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16722">
+      <polygon
+         id="polygon16501"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16709">
+      <polygon
+         id="polygon16481"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16696">
+      <polygon
+         id="polygon16461"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16683">
+      <polygon
+         id="polygon16441"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16667">
+      <polygon
+         id="polygon16415"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16653">
+      <polygon
+         id="polygon16393"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16639">
+      <polygon
+         id="polygon16371"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath16628">
+      <polygon
+         id="polygon16355"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <font
+       horiz-adv-x="1024"
+       id="font3302">
+      <font-face
+         id="font-face3293"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph3295"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph3297"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="cp24">
+      <polygon
+         id="polygon3284"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp23">
+      <polygon
+         id="polygon3277"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3456">
+      <polygon
+         id="polygon3262"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3451">
+      <polygon
+         id="polygon3255"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3442">
+      <polygon
+         id="polygon3240"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3437">
+      <polygon
+         id="polygon3233"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3428">
+      <polygon
+         id="polygon3218"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3419">
+      <polygon
+         id="polygon3203"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3413">
+      <polygon
+         id="polygon3194"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3404">
+      <polygon
+         id="polygon3179"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3399">
+      <polygon
+         id="polygon3172"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3391">
+      <polygon
+         id="polygon3159"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3386">
+      <polygon
+         id="polygon3152"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3378">
+      <polygon
+         id="polygon3139"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3373">
+      <polygon
+         id="polygon3132"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3365">
+      <polygon
+         id="polygon3119"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3357">
+      <polygon
+         id="polygon3106"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3351">
+      <polygon
+         id="polygon3097"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3343">
+      <polygon
+         id="polygon3084"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3337">
+      <polygon
+         id="polygon3075"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3329">
+      <polygon
+         id="polygon3062"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3323">
+      <polygon
+         id="polygon3053"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3318">
+      <polygon
+         id="polygon3046"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3310">
+      <polygon
+         id="polygon3033"
+         points="74,13 74,235 433,235 433,13 74,13 " />
+    </clipPath>
+    <font
+       horiz-adv-x="1024"
+       id="font6944">
+      <font-face
+         id="font-face6935"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph6937"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph6939"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath7087">
+      <polygon
+         id="polygon6926"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7082">
+      <polygon
+         id="polygon6919"
+         points="73,125 73,139 80,139 80,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7073">
+      <polygon
+         id="polygon6904"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7068">
+      <polygon
+         id="polygon6897"
+         points="73,125 73,139 80,139 80,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7059">
+      <polygon
+         id="polygon6882"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7054">
+      <polygon
+         id="polygon6875"
+         points="73,125 73,139 80,139 80,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7045">
+      <polygon
+         id="polygon6860"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7036">
+      <polygon
+         id="polygon6845"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7030">
+      <polygon
+         id="polygon6836"
+         points="73,125 73,139 87,139 87,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7021">
+      <polygon
+         id="polygon6821"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7016">
+      <polygon
+         id="polygon6814"
+         points="73,125 73,139 88,139 88,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7007">
+      <polygon
+         id="polygon6799"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath7002">
+      <polygon
+         id="polygon6792"
+         points="73,125 73,139 88,139 88,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6993">
+      <polygon
+         id="polygon6777"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6984">
+      <polygon
+         id="polygon6762"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6978">
+      <polygon
+         id="polygon6753"
+         points="73,125 73,139 95,139 95,125 73,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6969">
+      <polygon
+         id="polygon6738"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6963">
+      <polygon
+         id="polygon6729"
+         points="74,125 74,139 95,139 95,125 74,125 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6958">
+      <polygon
+         id="polygon6722"
+         points="74,13 74,234 434,234 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6952">
+      <polygon
+         id="polygon6713"
+         points="76,13 76,234 433,234 433,13 76,13 " />
+    </clipPath>
+  </defs>
+  <g
+     clip-path="url(#cp3)"
+     id="g8871"
+     transform="matrix(1.364137,0,0,1.406645,-19.376016,57.579514)">
+    <clipPath
+       id="clipPath9201">
+      <polygon
+         id="polygon8874"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text8876"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text8878"
+       y="137"
+       x="80.5">3</text>
+  </g>
+  <g
+     clip-path="url(#cp5)"
+     id="g8895"
+     transform="matrix(1.364137,0,0,1.406645,58.936361,57.579514)">
+    <clipPath
+       id="clipPath9216">
+      <polygon
+         id="polygon8898"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text8900"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text8902"
+       y="137"
+       x="80.5">2</text>
+  </g>
+  <g
+     clip-path="url(#cp7)"
+     id="g8919"
+     transform="matrix(1.364137,0,0,1.406645,137.24874,57.579514)">
+    <clipPath
+       id="clipPath9231">
+      <polygon
+         id="polygon8922"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text8924"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text8926"
+       y="137"
+       x="80.5">1</text>
+  </g>
+  <g
+     clip-path="url(#cp9)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g8943">
+    <clipPath
+       id="clipPath9246">
+      <polygon
+         id="polygon8946"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8948"
+       points="265,124 265,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8950"
+       points="276.438,124 276.438,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8952"
+       points="287.938,124 287.938,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8954"
+       points="299.438,124 299.438,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8956"
+       points="310.938,124 310.938,120 " />
+  </g>
+  <g
+     clip-path="url(#cp10)"
+     id="g8958"
+     transform="matrix(1.364137,0,0,1.406645,298.64797,57.579514)">
+    <clipPath
+       id="clipPath9255">
+      <polygon
+         id="polygon8961"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+  </g>
+  <g
+     clip-path="url(#cp11)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g8965">
+    <clipPath
+       id="clipPath9260">
+      <polygon
+         id="polygon8968"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8970"
+       points="322.375,124 322.375,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8972"
+       points="333.875,124 333.875,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8974"
+       points="345.375,124 345.375,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8976"
+       points="356.813,124 356.813,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8978"
+       points="368.313,124 368.313,120 " />
+  </g>
+  <g
+     clip-path="url(#cp13)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g8987">
+    <clipPath
+       id="clipPath9274">
+      <polygon
+         id="polygon8990"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8992"
+       points="379.813,124 379.813,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8994"
+       points="391.25,124 391.25,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8996"
+       points="402.75,124 402.75,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline8998"
+       points="414.25,124 414.25,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9000"
+       points="425.75,124 425.75,120 " />
+  </g>
+  <g
+     clip-path="url(#cp17)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g9029">
+    <clipPath
+       id="clipPath9301">
+      <polygon
+         id="polygon9032"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9034"
+       points="253.5,219.5 255.875,219.5 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9036"
+       points="253.5,212.688 255.875,212.688 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9038"
+       points="253.5,205.875 255.875,205.875 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9040"
+       points="253.5,199 255.875,199 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9042"
+       points="253.5,192.188 257.5,192.188 " />
+  </g>
+  <g
+     clip-path="url(#cp19)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g9053">
+    <clipPath
+       id="clipPath9316">
+      <polygon
+         id="polygon9056"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9058"
+       points="253.5,185.375 255.875,185.375 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9060"
+       points="253.5,178.563 255.875,178.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9062"
+       points="253.5,171.75 255.875,171.75 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9064"
+       points="253.5,164.938 255.875,164.938 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9066"
+       points="253.5,158.063 257.5,158.063 " />
+  </g>
+  <g
+     clip-path="url(#cp21)"
+     transform="matrix(1.364137,0,0,1.406645,-21.116655,57.614261)"
+     id="g9077">
+    <clipPath
+       id="clipPath9331">
+      <polygon
+         id="polygon9080"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9082"
+       points="253.5,151.25 255.875,151.25 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9084"
+       points="253.5,144.438 255.875,144.438 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9086"
+       points="253.5,137.625 255.875,137.625 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9088"
+       points="253.5,130.813 255.875,130.813 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.13535678px;stroke-opacity:1"
+       id="polyline9090"
+       points="253.5,124 257.5,124 " />
+  </g>
+  <g
+     clip-path="url(#cp3)"
+     transform="translate(714,63)"
+     id="g10133">
+    <clipPath
+       id="clipPath10481">
+      <polygon
+         id="polygon10136"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10138"
+       points="83.9375,124 83.9375,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10140"
+       points="94.5,124 94.5,120 " />
+  </g>
+  <g
+     clip-path="url(#cp5)"
+     transform="translate(714,63)"
+     id="g10151">
+    <clipPath
+       id="clipPath10493">
+      <polygon
+         id="polygon10154"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10156"
+       points="105.125,124 105.125,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10158"
+       points="115.75,124 115.75,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10160"
+       points="126.313,124 126.313,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10162"
+       points="136.938,124 136.938,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10164"
+       points="147.5,124 147.5,120 " />
+  </g>
+  <g
+     clip-path="url(#cp7)"
+     transform="translate(714,63)"
+     id="g10175">
+    <clipPath
+       id="clipPath10508">
+      <polygon
+         id="polygon10178"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10180"
+       points="158.125,124 158.125,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10182"
+       points="168.688,124 168.688,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10184"
+       points="179.313,124 179.313,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10186"
+       points="189.938,124 189.938,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10188"
+       points="200.5,124 200.5,120 " />
+  </g>
+  <g
+     clip-path="url(#cp9)"
+     transform="translate(714,63)"
+     id="g10199">
+    <clipPath
+       id="clipPath10523">
+      <polygon
+         id="polygon10202"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10204"
+       points="211.125,124 211.125,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10206"
+       points="221.688,124 221.688,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10208"
+       points="232.313,124 232.313,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10210"
+       points="242.875,124 242.875,121.563 " />
+    <polyline
+       style="fill:none;stroke:#000000;stroke-width:0.1875px;stroke-opacity:1"
+       id="polyline10212"
+       points="253.5,124 253.5,120 " />
+  </g>
+  <g
+     clip-path="url(#cp11)"
+     id="g10229"
+     transform="translate(943.992,62.9753)">
+    <clipPath
+       id="clipPath10541">
+      <polygon
+         id="polygon10232"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10234"
+       y="137"
+       x="74">1</text>
+  </g>
+  <g
+     clip-path="url(#cp13)"
+     id="g10251"
+     transform="translate(996.984,62.9753)">
+    <clipPath
+       id="clipPath10555">
+      <polygon
+         id="polygon10254"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10256"
+       y="137"
+       x="74">2</text>
+  </g>
+  <g
+     clip-path="url(#cp15)"
+     id="g10273"
+     transform="translate(1049.976,62.9753)">
+    <clipPath
+       id="clipPath10569">
+      <polygon
+         id="polygon10276"
+         points="73,126 73,140 80,140 80,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10278"
+       y="137"
+       x="74">3</text>
+  </g>
+  <g
+     clip-path="url(#cp17)"
+     id="g10297"
+     transform="translate(878.5,142.67554)">
+    <clipPath
+       id="clipPath10584">
+      <polygon
+         id="polygon10300"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text10302"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10304"
+       y="137"
+       x="80.5">3</text>
+  </g>
+  <g
+     clip-path="url(#cp19)"
+     id="g10321"
+     transform="translate(878.5,113.10879)">
+    <clipPath
+       id="clipPath10599">
+      <polygon
+         id="polygon10324"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text10326"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10328"
+       y="137"
+       x="80.5">2</text>
+  </g>
+  <g
+     clip-path="url(#cp21)"
+     id="g10345"
+     transform="translate(878.5,83.54204)">
+    <clipPath
+       id="clipPath10614">
+      <polygon
+         id="polygon10348"
+         points="73,126 73,140 87,140 87,126 73,126 " />
+    </clipPath>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:SVGTimes"
+       id="text10350"
+       y="137"
+       x="74">-</text>
+    <text
+       font-size="10px"
+       style="font-size:10px;fill:#000000;font-family:Times New Roman"
+       id="text10352"
+       y="137"
+       x="80.5">1</text>
+  </g>
+  <g
+     inkscape:label="Grid"
+     style="display:inline"
+     id="layer1"
+     inkscape:groupmode="layer">
+    <g
+       id="g4519">
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 680.01518,89.5 L 699.4171,89.5"
+         id="path3301" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 698.9322,149.5 L 60,149.5"
+         id="path3303" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 61.000193,209.5 L 698.99981,209.5"
+         id="path3305" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 699.43322,269.5 L 60.5,269.5"
+         id="path3307" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1"
+         d="M 60.5,330 L 699.4322,330"
+         id="path3309" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 60.59888,389.5 L 699.59869,389.5"
+         id="path3311" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         id="path3339"
+         d="M 379.50001,410 L 379.50001,10.002955" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         id="path3343"
+         d="M 679.50001,409.37064 L 679.50001,10.5" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 699.5,29.500008 L 60.567805,29.500008"
+         id="path8393" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:0.99999964;stroke-opacity:1"
+         id="path3335"
+         d="M 79.5,409.37669 L 79.5,10.49991" />
+      <rect
+         style="fill:none;stroke:#000000;stroke-width:1.99999964;stroke-opacity:1"
+         id="rect3248"
+         width="640"
+         y="9.9949808"
+         x="60"
+         height="400.00778" />
+      <path
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-opacity:1"
+         d="M 529.49999,409.3669 L 529.49999,10.49991"
+         id="path4388" />
+      <g
+         id="g4445">
+        <g
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           transform="translate(0,-0.5)"
+           id="g4426">
+          <path
+             style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             id="path4416"
+             d="M 60,360 L 70,360" />
+          <path
+             style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             id="path4418"
+             d="M 60,345 L 65,345" />
+          <path
+             style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             id="path4420"
+             d="M 60,375 L 65,375" />
+        </g>
+        <use
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           id="use4431"
+           width="720"
+           transform="translate(0,-60)"
+           y="0"
+           xlink:href="#g4426"
+           x="0"
+           height="460" />
+        <use
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           id="use4433"
+           width="720"
+           transform="translate(0,-120)"
+           y="0"
+           xlink:href="#g4426"
+           x="0"
+           height="460" />
+        <use
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           id="use4435"
+           width="720"
+           transform="translate(0,-180)"
+           y="0"
+           xlink:href="#g4426"
+           x="0"
+           height="460" />
+        <use
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           id="use4437"
+           width="720"
+           transform="translate(0,-240)"
+           y="0"
+           xlink:href="#g4426"
+           x="0"
+           height="460" />
+        <use
+           style="fill:none;stroke:#000000;stroke-opacity:1"
+           id="use4439"
+           width="720"
+           transform="translate(0,-300)"
+           y="0"
+           xlink:href="#g4426"
+           x="0"
+           height="460" />
+      </g>
+      <use
+         id="use4458"
+         width="720"
+         transform="matrix(-1,0,0,1,759,0)"
+         y="0"
+         xlink:href="#g4445"
+         x="0"
+         height="460" />
+      <g
+         id="g4499">
+        <g
+           style="stroke:#000000;stroke-opacity:1"
+           id="g4476"
+           transform="translate(-12,0)">
+          <path
+             style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             id="path4464"
+             d="M 128.5,9.97619 L 128.5,19.5" />
+          <path
+             style="opacity:1;fill:#204a87;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             d="M 109.5,10.5 L 109.5,15.5"
+             id="path6492" />
+          <path
+             style="opacity:1;fill:#204a87;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             d="M 146.5,10 L 146.5,15"
+             id="path6496" />
+          <path
+             style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+             d="M 165.5,10 L 165.5,30"
+             id="path9137" />
+        </g>
+        <use
+           id="use4483"
+           width="720"
+           transform="translate(76,0.52381)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           id="use4487"
+           width="720"
+           transform="translate(301,0)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           id="use4491"
+           width="720"
+           transform="translate(376,0.5)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           style="display:inline"
+           id="use2507"
+           width="720"
+           transform="translate(151,0)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           style="display:inline"
+           id="use2509"
+           width="720"
+           transform="translate(451,0)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           style="display:inline"
+           id="use8296"
+           width="720"
+           transform="translate(226,0.52381)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+        <use
+           style="display:inline"
+           id="use8298"
+           width="720"
+           transform="translate(526,0.52381)"
+           y="0"
+           xlink:href="#g4476"
+           x="0"
+           height="460" />
+      </g>
+      <use
+         id="use4514"
+         width="720"
+         transform="matrix(1,0,0,-1,0,420)"
+         y="0"
+         xlink:href="#g4499"
+         x="0"
+         height="460" />
+      <path
+         id="path2505"
+         d="M 230,409.37104 L 230,10.49991"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1" />
+      <path
+         id="path2527"
+         d="M 60.021258,89.5 L 699.48794,89.5"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1.00000012;stroke-opacity:1" />
+      <polyline
+         id="polyline16357"
+         points="81.25,164.625 81.25,160.625 "
+         style="fill:none;stroke:#000000;stroke-width:0.11134429px;stroke-opacity:1"
+         transform="matrix(1.7387888,0,0,1.6308715,-61.213049,1.2992838)" />
+    </g>
+  </g>
+  <g
+     inkscape:label="Labels"
+     style="display:inline"
+     id="layer2"
+     inkscape:groupmode="layer">
+    <text
+       style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"
+       id="text3283"
+       sodipodi:linespacing="125%"
+       y="335"
+       x="48.914063"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan3285"
+         y="335"
+         x="48.914063" /></text>
+    <text
+       style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       id="text3327"
+       sodipodi:linespacing="125%"
+       y="435"
+       x="529.51978"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan3329"
+         y="435"
+         x="529.51978">T</tspan></text>
+    <text
+       style="font-size:24px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"
+       id="text7794"
+       sodipodi:linespacing="125%"
+       y="455"
+       x="410.04688"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan7796"
+         y="455"
+         x="410.04688">t/s</tspan></text>
+    <text
+       style="font-size:20px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       id="text8399"
+       sodipodi:linespacing="125%"
+       y="96.5"
+       x="51.214844"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan8401"
+         y="96.5"
+         x="51.214844">A</tspan></text>
+    <text
+       style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       id="text2511"
+       sodipodi:linespacing="125%"
+       y="435"
+       x="228.86353"
+       xml:space="preserve"><tspan
+         sodipodi:role="line"
+         id="tspan2513"
+         y="435"
+         x="228.86353">0</tspan></text>
+    <g
+       id="g18732" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="51.133514"
+       y="337.39236"
+       id="text8859"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan8861"
+         x="51.133514"
+         y="337.39236">0</tspan></text>
+    <g
+       style="display:inline"
+       id="g18740"
+       transform="translate(334.5,97.5)">
+      <text
+         xml:space="preserve"
+         x="49.886719"
+         y="327.90625"
+         sodipodi:linespacing="125%"
+         id="text18742"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"><tspan
+           x="49.886719"
+           y="327.90625"
+           id="tspan18744"
+           sodipodi:role="line">T</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text18746"
+         y="344"
+         x="45"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif"
+         xml:space="preserve"><tspan
+           y="344"
+           x="45"
+           id="tspan18748"
+           sodipodi:role="line">2</tspan></text>
+      <path
+         id="path18750"
+         d="M 39.1875,331 L 49.5,331"
+         style="opacity:1;fill:#4e9a06;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif"
+       x="635.68903"
+       y="429.59442"
+       id="text8870"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan8872" /></text>
+    <g
+       style="display:inline"
+       id="g8874"
+       transform="translate(635,95.5)">
+      <text
+         xml:space="preserve"
+         x="44.386719"
+         y="329.90625"
+         sodipodi:linespacing="125%"
+         id="text8877"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"><tspan
+           x="44.386719"
+           y="329.90625"
+           id="tspan8879"
+           sodipodi:role="line">3T</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text8881"
+         y="346"
+         x="44.5"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif"
+         xml:space="preserve"><tspan
+           y="346"
+           x="44.5"
+           id="tspan8883"
+           sodipodi:role="line">2</tspan></text>
+      <path
+         id="path8885"
+         d="M 34.17235,333 L 54.48485,333"
+         style="opacity:1;fill:#4e9a06;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+    <g
+       style="display:inline"
+       id="g8888"
+       transform="translate(35,100.5)">
+      <text
+         xml:space="preserve"
+         x="55.386719"
+         y="324.90625"
+         sodipodi:linespacing="125%"
+         id="text8890"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"><tspan
+           x="55.386719"
+           y="324.90625"
+           id="tspan8892"
+           sodipodi:role="line">T</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text8894"
+         y="341"
+         x="50.5"
+         style="font-size:14px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif"
+         xml:space="preserve"><tspan
+           y="341"
+           x="50.5"
+           id="tspan8896"
+           sodipodi:role="line">2</tspan></text>
+      <path
+         id="path8898"
+         d="M 44.6875,328 L 55,328"
+         style="opacity:1;fill:#4e9a06;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    </g>
+    <path
+       style="opacity:1;fill:#4e9a06;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;display:inline"
+       d="M 75,428.40625 L 65,428.40625"
+       id="path18754" />
+    <text
+       style="font-size:24px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:DejaVu Serif"
+       id="text12334"
+       sodipodi:linespacing="125%"
+       y="25"
+       x="-209.95313"
+       xml:space="preserve"
+       transform="matrix(0,-1,1,0,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan12336"
+         y="25"
+         x="-209.95313">f(t)</tspan></text>
+  </g>
+  <g
+     inkscape:label="Plot"
+     style="display:inline"
+     id="layer3"
+     inkscape:groupmode="layer">
+    <g
+       id="g3752"
+       style="stroke:#000000;stroke-width:1.16790259;stroke-opacity:1;display:inline"
+       transform="matrix(1.7387518,0,0,1.6865885,653.35341,-162.40987)" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#cc0000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 61,90 L 80,90 L 80,330 L 230,330 L 230,90 L 380,90 L 380,330 L 530,330 L 530,90 L 680,90 L 680,330 L 699,330"
+       id="path8083"
+       sodipodi:nodetypes="cccccccccccc" />
+  </g>
+</svg>

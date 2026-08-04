@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="700"
+   height="520"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45+devel+devel"
+   sodipodi:docname="Anatomy_of_an_egg_unlabeled_horizontal.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata2608">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="753"
+     inkscape:window-width="1280"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.69142857"
+     inkscape:cx="260"
+     inkscape:cy="350"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:current-layer="svg2" />
+  <desc
+     id="desc4">Anatomy of an egg</desc>
+  <defs
+     id="defs6">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-50 : 600 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 600 : 1"
+       inkscape:persp3d-origin="300 : 400 : 1"
+       id="perspective2610" />
+    <marker
+       markerUnits="strokeWidth"
+       refX="2"
+       refY="2"
+       markerWidth="2"
+       markerHeight="2"
+       orient="auto"
+       viewBox="0 0 4 4"
+       id="dot">
+      <circle
+         cx="2"
+         cy="2"
+         r="2"
+         id="circle9"
+         sodipodi:cx="2"
+         sodipodi:cy="2"
+         sodipodi:rx="2"
+         sodipodi:ry="2" />
+    </marker>
+    <clipPath
+       id="clip">
+      <rect
+         width="525"
+         height="702"
+         x="0"
+         y="0"
+         id="rect12" />
+    </clipPath>
+    <clipPath
+       id="clap">
+      <circle
+         cx="267"
+         cy="395"
+         r="130"
+         id="circle15"
+         sodipodi:cx="267"
+         sodipodi:cy="395"
+         sodipodi:rx="130"
+         sodipodi:ry="130" />
+    </clipPath>
+  </defs>
+  <g
+     transform="matrix(0,-1,1,0,-2,520)"
+     id="g2263">
+    <path
+       d="M 260,22 C 385,22 500,222 500,442 C 500,607 380,682 260,682 C 140,682 20,607 20,442 C 20,222 135,22 260,22 z"
+       style="fill:none;stroke:#b7cae8;stroke-width:40"
+       id="path17" />
+    <path
+       d="M 260,22 C 385,22 500,222 500,442 C 500,607 380,682 260,682 C 140,682 20,607 20,442 C 20,222 135,22 260,22 z"
+       style="fill:none;stroke:#cd853f;stroke-width:30"
+       id="path19" />
+    <path
+       d="M 260,22 C 385,22 500,222 500,442 C 500,607 380,682 260,682 C 140,682 20,607 20,442 C 20,222 135,22 260,22 z"
+       style="fill:none;stroke:#f3f9fe;stroke-width:15"
+       id="path21" />
+    <path
+       d="M 260,22 C 385,22 500,222 500,442 C 500,607 380,682 260,682 C 140,682 20,607 20,442 C 20,222 135,22 260,22 z"
+       style="fill:#ffffff;stroke:#679dd2;stroke-width:5"
+       id="path23" />
+    <path
+       d="M 260,32 C 390,32 490,247 490,442 C 490,531 450,617 385,617 C 335,617 315,591 260,591 C 205,591 185,617 135,617 C 70,617 30,532 30,443 C 30,247 130,32 260,32 z"
+       style="fill:#e9f8ff;stroke:#679dd2;stroke-width:0"
+       id="path25" />
+    <path
+       d="M 260,32 C 370,32 460,247 460,442 C 460,531 405,612 365,612 C 330,612 315,591 260,591 C 205,591 195,612 155,612 C 115,612 64,532 64,443 C 64,247 150,32 260,32 z"
+       style="fill:#bee7fb;stroke:#679dd2;stroke-width:0"
+       id="path27" />
+    <path
+       d="M 295,257 C 255,247 275,222 275,202 C 275,187 265,177 265,177 C 265,176.91966 275,162 275,147 C 275,132 260,112 260,112 C 260,112 270,97 270,87 C 270,77 265,72 265,72 C 255,62 265,32 280,37 C 270,32 250,32 240,37 C 255.06289,37.38468 240.76083,60.529003 240,72 C 240,82 245,87 250,92 C 250,92 240,102 240,117 C 240,137 255,152 255,152 C 250,162 245,177 245,192 C 245,202 250,207 255,212 C 255,222 250,247 225,257"
+       style="fill:#ffffff"
+       id="path29" />
+    <path
+       d="M 240,592 C 255,592 255,582 255,582 C 220,587 220,567 220,562 C 230,557 240,562 250,567 C 250,566.75465 245,562 245,552 C 245,542 270,547 265,537 L 285,537 C 275,542 295,547 270,552 C 292.3178,549.76822 300,557 300,562 C 300,572 260,582 275,592"
+       style="fill:#ffffff"
+       id="path31" />
+    <path
+       d="M 260,32 C 390,32 490,247 490,442 C 490,531 450,617 385,617 C 335,617 315,591 260,591 C 205,591 185,617 135,617 C 70,617 30,532 30,443 C 30,247 130,32 260,32 z"
+       style="fill:none;stroke:#679dd2;stroke-width:5"
+       id="path33" />
+    <circle
+       cx="267"
+       cy="395"
+       r="145"
+       style="fill:#ffffff"
+       id="circle35"
+       sodipodi:cx="267"
+       sodipodi:cy="395"
+       sodipodi:rx="145"
+       sodipodi:ry="145" />
+    <circle
+       cx="267"
+       cy="395"
+       r="137"
+       style="fill:#cd853f"
+       id="circle37"
+       sodipodi:cx="267"
+       sodipodi:cy="395"
+       sodipodi:rx="137"
+       sodipodi:ry="137" />
+    <circle
+       cx="267"
+       cy="395"
+       r="130"
+       style="fill:#ffa500"
+       id="circle39"
+       sodipodi:cx="267"
+       sodipodi:cy="395"
+       sodipodi:rx="130"
+       sodipodi:ry="130" />
+    <circle
+       cx="267"
+       cy="395"
+       r="125"
+       style="fill:#facd8d"
+       id="circle41"
+       sodipodi:cx="267"
+       sodipodi:cy="395"
+       sodipodi:rx="125"
+       sodipodi:ry="125" />
+    <path
+       d="M 415,342 C 415,342 380,342 380,342 C 390,362 360,377 360,397 C 360,422 380,437 375,457 C 375,457 415,457 415,457"
+       style="fill:#ffa500"
+       clip-path="url(#clap)"
+       id="path43" />
+    <path
+       d="M 410,347 C 355,372 355,437 410,462"
+       style="fill:#facd8d"
+       clip-path="url(#clap)"
+       id="path45" />
+    <path
+       d="M 267,287 C 335,286 358,332 358,358 C 358,375 345,391 326,391 C 305,391 295,371 270,371 C 250,371 243,385 243,395 C 243,404 250,419 270,419 C 295,419 303,400 326,400 C 342,400 358,414 358,435 C 358,468 328,502 267,502 C 215.27416,502 158,459 158,395 C 158,331 215,288 267,287 z"
+       style="fill:#ffa500"
+       id="path47" />
+    <path
+       d="M 323,382 C 325,373 314,352 280,352 C 255,352 225,367 225,395 C 225,429 255,441 280,441 C 310,441 328,423 323,409 C 322,421 307,437 280,437 C 256,437 229,422 229,395 C 229,373 256,356 280,356 C 308,356 323,375 323,382 z"
+       style="fill:#facd8d"
+       id="path49" />
+    <path
+       d="M 329,380 C 333,361 315,338 275,338 C 243,338 208,364 208,395 C 208,429 243,454 277,454 C 308,454 334,437 329,412 C 329,432 305,448 277,448 C 242,448 212,424 212,395 C 212,370 243,343 275,343 C 308,343 328,360 329,380 z"
+       style="fill:#facd8d"
+       id="path51" />
+    <path
+       d="M 335,376 C 339,362 327,324 272,324 C 247,324 195,345 195,395 C 195,433 227,467 277,467 C 307,467 341,445 335,415 C 334,443 306,462 277,462 C 239,462 199,435 200,395 C 201,350 248,330 272,330 C 320,330 335,361 335,376 z"
+       style="fill:#facd8d"
+       id="path53" />
+    <path
+       d="M 340,372 C 346,341 319,311 272,311 C 217,311 182,350 182,395 C 182,445 225,480 272,480 C 323,480 348,444 340,417 C 340,445 316,473 272,473 C 214,473 188,429 188,395 C 188,360 217,318 272,318 C 313,318 340,345 340,372 z"
+       style="fill:#facd8d"
+       id="path55" />
+    <path
+       d="M 345,367 C 353,347 338,296 268,296 C 227,296 168,325 168,395 C 168,455 218,496 268,496 C 325,496 357,451 345,420 C 348,451 321,487 268,487 C 212,487 174,440 174,395 C 174,350 216,303 268,303 C 323,303 349,344 345,367 z"
+       style="fill:#facd8d"
+       id="path57" />
+    <ellipse
+       cx="385"
+       cy="403"
+       rx="7"
+       ry="25"
+       style="fill:#ec1d23"
+       id="ellipse59"
+       sodipodi:cx="385"
+       sodipodi:cy="403"
+       sodipodi:rx="7"
+       sodipodi:ry="25" />
+  </g>
+</svg>

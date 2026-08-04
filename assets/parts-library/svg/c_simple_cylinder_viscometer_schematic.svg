@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="415.89145"
+   height="493.22812"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="simple_viscometer.svg"
+   inkscape:export-filename="/home/olivier/aero/documents/cc/figures/fluid_mechanics/pressure_distribution.png"
+   inkscape:export-xdpi="19.328585"
+   inkscape:export-ydpi="19.328585">
+  <defs
+     id="defs4">
+    <marker
+       style="overflow:visible"
+       id="DistanceStart"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DistanceStart">
+      <g
+         id="g2300">
+        <path
+           style="fill:none;stroke:#ffffff;stroke-width:1.14999998;stroke-linecap:square"
+           d="M 0,0 2,0"
+           id="path2306"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:#000000;fill-rule:evenodd;stroke:none"
+           d="M 0,0 13,4 9,0 13,-4 0,0 z"
+           id="path2302"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:square"
+           d="M 0,-4 0,40"
+           id="path2304"
+           inkscape:connector-curvature="0" />
+      </g>
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DistanceEnd"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DistanceEnd">
+      <g
+         id="g2301">
+        <path
+           style="fill:none;stroke:#ffffff;stroke-width:1.14999998;stroke-linecap:square"
+           d="M 0,0 -2,0"
+           id="path2316"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:#000000;fill-rule:evenodd;stroke:none"
+           d="M 0,0 -13,4 -9,0 -13,-4 0,0 z"
+           id="path2312"
+           inkscape:connector-curvature="0" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:square"
+           d="M 0,-4 0,40"
+           id="path2314"
+           inkscape:connector-curvature="0" />
+      </g>
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend-2"
+       style="overflow:visible">
+      <path
+         id="path3787-9"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6,-0.6)"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.70000002"
+     inkscape:cx="191.39177"
+     inkscape:cy="210.37094"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:showpageshadow="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="734"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     fit-margin-top="50"
+     fit-margin-left="50"
+     fit-margin-right="50"
+     fit-margin-bottom="50"
+     inkscape:object-nodes="true"
+     inkscape:snap-global="true"
+     inkscape:snap-object-midpoints="true"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:snap-smooth-nodes="true"
+     inkscape:snap-center="true" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(1474.8294,-712.84024)">
+    <path
+       sodipodi:type="arc"
+       style="fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-width:0.76194143;stroke-opacity:1"
+       id="path5993"
+       sodipodi:cx="304.561"
+       sodipodi:cy="701.474"
+       sodipodi:rx="65.154839"
+       sodipodi:ry="21.718279"
+       d="m 369.71584,701.474 c 0,11.99467 -29.17081,21.71828 -65.15484,21.71828 -35.98402,0 -65.15483,-9.72361 -65.15483,-21.71828 0,-11.99468 29.17081,-21.71828 65.15483,-21.71828 35.98403,0 65.15484,9.7236 65.15484,21.71828 z"
+       transform="matrix(1.3100775,0,0,1.3148004,-1737.9617,113.2838)"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       transform="translate(-1643.5242,334.1081)"
+       d="m 369.71584,701.474 c 0,11.99467 -29.17081,21.71828 -65.15484,21.71828 -35.98402,0 -65.15483,-9.72361 -65.15483,-21.71828 0,-11.99468 29.17081,-21.71828 65.15483,-21.71828 35.98403,0 65.15484,9.7236 65.15484,21.71828 z"
+       sodipodi:ry="21.718279"
+       sodipodi:rx="65.154839"
+       sodipodi:cy="701.474"
+       sodipodi:cx="304.561"
+       id="path5989"
+       style="fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+       sodipodi:type="arc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       transform="matrix(1.3100775,0,0,1.3148004,-1737.9617,-56.421828)"
+       d="m 369.71584,701.474 c 0,11.99467 -29.17081,21.71828 -65.15484,21.71828 -35.98402,0 -65.15483,-9.72361 -65.15483,-21.71828 0,-11.99468 29.17081,-21.71828 65.15483,-21.71828 35.98403,0 65.15484,9.7236 65.15484,21.71828 z"
+       sodipodi:ry="21.718279"
+       sodipodi:rx="65.154839"
+       sodipodi:cy="701.474"
+       sodipodi:cx="304.561"
+       id="path5991"
+       style="fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-width:0.76194143;stroke-opacity:1"
+       sodipodi:type="arc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       id="path6007"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -1273.815,1035.5974 0,-250.53116 -130.3031,-0.002 0,250.51786"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+       id="path5973"
+       sodipodi:cx="304.561"
+       sodipodi:cy="701.474"
+       sodipodi:rx="65.154839"
+       sodipodi:ry="21.718279"
+       d="m 369.71584,701.474 c 0,11.99467 -29.17081,21.71828 -65.15484,21.71828 -35.98402,0 -65.15483,-9.72361 -65.15483,-21.71828 0,-11.99468 29.17081,-21.71828 65.15483,-21.71828 35.98403,0 65.15484,9.7236 65.15484,21.71828 z"
+       transform="translate(-1643.5242,83.590238)"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       style="fill:none;stroke:#000000;stroke-opacity:1"
+       d="m -1273.8084,865.87647 c 0,11.99467 -29.1708,21.71828 -65.1548,21.71828 -35.9841,0 -65.1549,-9.72361 -65.1549,-21.71828"
+       id="path5979"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="csc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       style="opacity:0.83999999;fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -1186.9375,931.78125 0,169.71875 c 0,15.7706 38.2331,28.5625 85.375,28.5625 47.1418,0 85.3437,-12.7919 85.3437,-28.5625 l 0,-169.71875 c 10e-5,15.7706 -38.2019,28.5625 -85.3437,28.5625 -47.1419,0 -85.375,-12.7919 -85.375,-28.5625 z"
+       id="path5981"
+       transform="translate(-237.39189,-65.912338)"
+       inkscape:connector-curvature="0" />
+    <path
+       transform="matrix(0.4044202,0,0,0.39534882,-1462.1338,507.73732)"
+       d="m 337.13842,720.28258 c -31.16308,5.99734 -71.01115,2.43825 -89.00316,-7.94944 -17.99201,-10.3877 -7.31475,-23.67039 23.84833,-29.66772 20.15898,-3.8796 44.99586,-3.8796 65.15484,0"
+       sodipodi:ry="21.718279"
+       sodipodi:rx="65.154839"
+       sodipodi:cy="701.474"
+       sodipodi:cx="304.561"
+       id="path6012"
+       style="fill:#f3f3f7;fill-opacity:1;stroke:#000000;stroke-width:5.00176573;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend-2)"
+       sodipodi:type="arc"
+       sodipodi:start="1.0471976"
+       sodipodi:end="5.2359878"
+       sodipodi:open="true"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DistanceStart);marker-end:url(#DistanceEnd)"
+       d="m -1179.5227,865.87647 -0.01,169.72093"
+       id="path6204"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="path6611"
+       d="m -1273.8084,1130.0313 -130.3097,0"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DistanceStart);marker-end:url(#DistanceEnd)"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-start:url(#DistanceStart);marker-end:url(#DistanceEnd)"
+       d="m -1253.6053,1130.0313 -20.2031,0"
+       id="path6613"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text4469-5"
+       y="959.55951"
+       x="-1162.4093"
+       style="font-size:21.66271782px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Italic"
+       xml:space="preserve"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L Italic"
+         y="959.55951"
+         x="-1162.4093"
+         id="tspan4471-0"
+         sodipodi:role="line">75 cm<tspan
+   style="font-size:14.08096409px;font-style:normal;baseline-shift:sub"
+   id="tspan4473-6" /></tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text4469-5-8"
+       y="1153.9255"
+       x="-1364.8253"
+       style="font-size:21.66271782px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Italic"
+       xml:space="preserve"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L Italic"
+         y="1153.9255"
+         x="-1364.8253"
+         id="tspan4471-0-3"
+         sodipodi:role="line">15 cm</tspan></text>
+    <text
+       sodipodi:linespacing="125%"
+       id="text4469-5-8-3"
+       y="1156.0684"
+       x="-1290.811"
+       style="font-size:21.66271782px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Italic"
+       xml:space="preserve"
+       inkscape:export-filename="/home/olivier/aero/cours fluid mech/notes/1/images/viscometer.png"
+       inkscape:export-xdpi="183.09984"
+       inkscape:export-ydpi="183.09984"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L Italic"
+         y="1156.0684"
+         x="-1290.811"
+         id="tspan4471-0-3-7"
+         sodipodi:role="line">1 mm</tspan></text>
+  </g>
+</svg>

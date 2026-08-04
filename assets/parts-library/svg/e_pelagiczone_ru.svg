@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 15.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Ebene_1"
+   x="0px"
+   y="0px"
+   width="521.55px"
+   height="1500px"
+   viewBox="0 0 521.55 1500"
+   enable-background="new 0 0 521.55 1500"
+   xml:space="preserve"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="Pelagiczone ru.svg"><metadata
+   id="metadata67"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
+   id="defs65" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1366"
+   inkscape:window-height="705"
+   id="namedview63"
+   showgrid="false"
+   inkscape:zoom="1"
+   inkscape:cx="260.77499"
+   inkscape:cy="750"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Ebene_1" />
+<filter
+   id="filter2898"
+   color-interpolation-filters="sRGB">
+	<feGaussianBlur
+   id="feGaussianBlur2900"
+   stdDeviation="16.771329479768788" />
+	<feColorMatrix
+   id="feColorMatrix2902"
+   result="fbSourceGraphic"
+   values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 6 -2.5 ">
+		</feColorMatrix>
+</filter>
+<linearGradient
+   id="rect8_1_"
+   gradientUnits="userSpaceOnUse"
+   x1="282.4858"
+   y1="-787.7002"
+   x2="282.4858"
+   y2="-906.4003"
+   gradientTransform="matrix(1.0154184,0,0,1,-21.291162,902.5)">
+	<stop
+   offset="0"
+   style="stop-color:#C1F3E7"
+   id="stop7" />
+	<stop
+   offset="1"
+   style="stop-color:#C0EED3"
+   id="stop9" />
+</linearGradient>
+<rect
+   id="rect8"
+   x="-2.0829999"
+   y="-3.8759999"
+   width="535.2677"
+   height="119.86"
+   style="fill:url(#rect8_1_)" />
+<linearGradient
+   id="rect1318_1_"
+   gradientUnits="userSpaceOnUse"
+   x1="-485.584"
+   y1="1302.2031"
+   x2="-486.2139"
+   y2="1929.4838"
+   gradientTransform="matrix(1.0243982,0,0,-1.2739,768.10827,2570.9995)">
+	<stop
+   offset="0"
+   style="stop-color:#000000"
+   id="stop13" />
+	<stop
+   offset="0.2561"
+   style="stop-color:#06141D;stop-opacity:0.9961"
+   id="stop15" />
+	<stop
+   offset="0.5086"
+   style="stop-color:#0C2533;stop-opacity:0.9922"
+   id="stop17" />
+	<stop
+   offset="0.7961"
+   style="stop-color:#0F5077;stop-opacity:0.9922"
+   id="stop19" />
+	<stop
+   offset="1"
+   style="stop-color:#3CB7FF;stop-opacity:0.9922"
+   id="stop21" />
+</linearGradient>
+<path
+   id="rect1318"
+   d="m 87.14719,103.78 c -3.339693,0.187 -2.610547,4.334 -5.423406,5.031 -9.144102,-5.688 -18.635318,0.89 -28.755038,-3 -4.50427,-1.052 -3.373581,3.382 -7.188758,3 -3.48963,-1.603 -7.632409,-2.568 -10.269656,-5 -3.404392,0.352 -4.454977,2.995 -6.161795,5 -9.755146,-6.71 -19.8912964,2.507 -27.728071,-4 -2.8272364,0.581 0.7486579,2.489 -2.150466,3 l 0.54429178,12.69 v 1361 H 535.63848 v -1360.7 c 11.38699,6.245 1.93788,-13.973 0,-11.031 -4.13148,-3.36 -14.25531,-6.196 -18.48539,-1 -4.89245,-0.569 -7.28117,-3.576 -11.29661,-5 -3.11274,-0.031 -0.99308,5.031 -4.10787,5 -15.31822,-7.525 -36.78591,3.88 -47.24041,-5 -4.65935,-0.538 -2.742,5.33 -7.18876,5 -6.54691,-2.839 -14.57059,-4.337 -19.51235,1 -0.6398,-4.169 -10.33539,-5.092 -16.43145,-1 -2.30246,-2.423 -6.82316,-2.689 -9.2427,-5 -4.08731,-0.316 -2.77999,4.625 -6.16179,5 -6.26757,-3.257 -15.90769,-4.222 -20.53931,1 -6.23779,-9.196 -19.2289,4.328 -25.67414,-6 -4.42827,0.019 -3.78436,4.981 -8.21572,5 -5.87425,-3.836 -13.6915,-3.42 -18.48538,1 -2.67423,-3.336 -11.42088,-6.454 -14.37753,-1 -4.52891,-0.922 -8.16951,-2.711 -11.29662,-5 -3.96716,0.134 -4.04932,4.056 -7.18876,5 -8.48889,-5.796 -18.42273,0.856 -27.72807,-3 -4.50426,-1.052 -3.37358,3.382 -7.18875,3 -4.78258,-0.343 -6.77798,-3.4 -10.26966,-5 -3.7854,0.682 -5.68733,3.791 -6.16179,5 -6.20185,-3.149 -13.79009,-3.769 -19.51235,0 -4.69016,-3.964 -13.67713,-3.424 -18.48538,0 -0.59153,-3.758 -7.13844,-1.716 -8.21573,-5 -3.77102,-0.004 -3.93533,3.501 -6.16179,5 -14.83452,-6.494 -33.49038,2.792 -46.21345,-5 -3.40439,0.352 -4.45601,2.995 -6.16179,5 -8.78775,-5.981 -19.03071,0.945 -28.75504,-3 -4.00209,-0.23 -5.32585,2.148 -8.215729,3 -3.484495,-1.275 -6.520206,-2.985 -9.242691,-5 -0.26085,-0.025 -0.515537,-0.044 -0.738389,-0.031 l 0,0 0.0041,0.041 z"
+   style="fill:url(#rect1318_1_)"
+   inkscape:connector-curvature="0" />
+<path
+   id="path2793"
+   fill="none"
+   stroke="#FFFFFF"
+   stroke-width="4.7"
+   d="M-512.43,248.71c1051.3-2.148,1044.8-2.148,1044.8-2.148" />
+<path
+   id="path4247"
+   fill="none"
+   stroke="#FFFFFF"
+   stroke-width="4.7"
+   d="M-513.5,692.22c1051.3-2.146,1044.8-2.146,1044.8-2.146" />
+<path
+   id="path4249"
+   fill="none"
+   stroke="#FFFFFF"
+   stroke-width="4.7"
+   d="M-22.869,1231.3c536.29-2.146,533.001-2.146,533.001-2.146" />
+<linearGradient
+   id="path7281_1_"
+   gradientUnits="userSpaceOnUse"
+   x1="281.7749"
+   y1="616.3081"
+   x2="281.7749"
+   y2="229.3877"
+   gradientTransform="matrix(1.0389592,0,0,1,-27.913371,890.30851)">
+	<stop
+   offset="0"
+   style="stop-color:#54503E"
+   id="stop28" />
+	<stop
+   offset="1"
+   style="stop-color:#84785F"
+   id="stop30" />
+</linearGradient>
+<path
+   id="path7281"
+   d="m 189.29195,1119.7085 c -1.7413,-0.256 -4.35532,3.571 -8.31479,13.53 -5.04311,12.688 -21.51892,58.023 -33.00877,53.688 -23.78593,-8.978 -32.03007,-5.444 -52.353151,-15.031 -7.272714,-3.431 -48.95264,6.497 -50.085105,12.906 -6.203625,35.114 -30.511115,-26.479 -34.151627,-15.031 -11.60829177,36.506 -9.5864772,28.406 -17.4742553,20.907 v 315.939 H 535.77341 v -346.34 c -26.54021,5.665 -63.79417,22.735 -73.63623,18.095 -14.53712,-6.856 -27.47943,-35.776 -42.11629,-15.062 -4.25038,6.012 -25.27579,31.316 -22.77502,-6.438 3.6696,-55.39 -26.94125,-43.196 -34.13397,4.312 -4.93713,32.609 -14.04777,-19.691 -22.77398,21.469 -3.80052,17.936 -17.42439,39.72 -17.07737,40.812 1.1044,3.476 21.58022,113.81 5.6966,113.81 -11.43685,0 -35.15214,23.088 -39.84823,40.812 -2.36364,8.925 -20.48827,38.864 -20.48827,36.53 0,-21.934 -0.61195,-45.31 -5.68103,-64.438 -3.50961,-13.243 1.78908,-163.84 -21.6301,-141.75 -12.68049,11.963 -35.9085,-26.266 -38.70642,-23.625 -14.50387,13.6 -5.77662,-64 -13.31946,-65.1 l 0.008,0.01 z"
+   style="fill:url(#path7281_1_)"
+   inkscape:connector-curvature="0" />
+<path
+   id="path5707"
+   fill="none"
+   stroke="#FFFFFF"
+   stroke-width="4.7"
+   d="M-140.91,135.95c1051.3-2.148,1044.8-2.148,1044.8-2.148" />
+<text
+   id="text32"
+   font-weight="bold"
+   font-size="36"
+   x="119.02734"
+   y="202.97951"
+   style="font-size:36px;font-weight:bold;text-align:start;text-anchor:start;fill:#ffffff;font-family:DejaVu Sans"><tspan
+     style="text-align:start;text-anchor:start"
+     id="tspan3025">Мезопелагиаль</tspan></text>
+
+
+
+
+
+
+<text
+   id="text36"
+   transform="translate(132.9268,474.3916)"
+   font-weight="bold"
+   font-size="36"
+   x="-12.867188"
+   y="0"
+   style="font-size:36px;font-weight:bold;text-align:start;text-anchor:start;fill:#ffffff;font-family:DejaVu Sans">Батипелагиаль</text>
+
+
+
+
+
+<text
+   id="text38"
+   transform="translate(121.167,924.0684)"
+   font-weight="bold"
+   font-size="36"
+   x="-12.867188"
+   y="0"
+   style="font-size:36px;font-weight:bold;text-align:start;text-anchor:start;fill:#ffffff;font-family:DejaVu Sans">Абисопелагиаль</text>
+
+
+
+
+
+<text
+   id="text40"
+   transform="matrix(1 0 0 1 3.8584 159.5596)"
+   fill="#FFFFFF"
+   font-family="DejaVu Sans"
+   font-weight="bold"
+   font-size="20">200 м</text>
+
+
+
+
+
+<text
+   id="text42"
+   transform="matrix(1 0 0 1 5.6812 272.9424)"
+   fill="#FFFFFF"
+   font-family="DejaVu Sans"
+   font-weight="bold"
+   font-size="20">1 000 м</text>
+
+
+
+
+
+<text
+   id="text44"
+   transform="matrix(1 0 0 1 6.5527 720.8516)"
+   fill="#FFFFFF"
+   font-family="DejaVu Sans"
+   font-weight="bold"
+   font-size="20">4 000 м</text>
+
+
+
+
+
+<text
+   id="text46"
+   font-weight="bold"
+   font-size="20"
+   x="403.39651"
+   y="158.7861"
+   style="font-size:20px;font-weight:bold;fill:#ffffff;font-family:DejaVu Sans">650 футы</text>
+
+
+
+
+
+<text
+   id="text48"
+   font-weight="bold"
+   font-size="20"
+   x="379.58325"
+   y="273.81351"
+   style="font-size:20px;font-weight:bold;fill:#ffffff;font-family:DejaVu Sans">3 000 футы</text>
+
+
+
+
+
+<text
+   id="text50"
+   font-weight="bold"
+   font-size="20"
+   x="365.19009"
+   y="717.94861"
+   style="font-size:20px;font-weight:bold;fill:#ffffff;font-family:DejaVu Sans">13 000 футы</text>
+
+
+
+
+
+<path
+   id="path52"
+   fill="#FFFFFF"
+   d="M614.24-35.667" />
+<path
+   id="path54"
+   d="M614.24-77.833" />
+<text
+   id="text63"
+   transform="translate(207.2861,126.9678)"
+   font-weight="bold"
+   font-size="20"
+   x="-7.9345703"
+   y="0"
+   style="font-size:20px;font-weight:bold;text-align:start;text-anchor:start;fill:#ffffff;font-family:DejaVu Sans">Эпипелагиаль</text>
+
+
+
+
+
+<g
+   id="circle78"
+   filter="url(#filter2898)">
+	
+		<radialGradient
+   id="SVGID_1_"
+   cx="478.8501"
+   cy="553.9658"
+   r="40.1418"
+   gradientTransform="matrix(1 0 0 1 -20.9995 -510.4316)"
+   gradientUnits="userSpaceOnUse">
+		<stop
+   offset="0"
+   style="stop-color:#FAFAF6"
+   id="stop49" />
+		<stop
+   offset="0.5212"
+   style="stop-color:#FAF9F4"
+   id="stop51" />
+		<stop
+   offset="0.7089"
+   style="stop-color:#FAF7ED"
+   id="stop53" />
+		<stop
+   offset="0.8427"
+   style="stop-color:#FAF4E2"
+   id="stop55" />
+		<stop
+   offset="0.9501"
+   style="stop-color:#FBEFD1;stop-opacity:0.92"
+   id="stop57" />
+		<stop
+   offset="1"
+   style="stop-color:#FBECC6"
+   id="stop59" />
+	</radialGradient>
+	<circle
+   fill="url(#SVGID_1_)"
+   cx="457.851"
+   cy="43.534"
+   r="40.142"
+   id="circle61" />
+</g>
+<text
+   y="1324.0133"
+   x="154.85268"
+   style="font-size:36px;font-weight:bold;fill:#ffffff;font-family:DejaVu Sans"
+   id="text38-1"
+   font-weight="bold"
+   font-size="36">Ультраабиссаль</text>
+
+
+
+
+</svg><!-- Translated to Українська by SVGTranslate 1.05 -->
+

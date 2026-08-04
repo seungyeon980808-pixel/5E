@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>자동 1차 분류</title>
+<style>
+  :root{--bg:#f6f8fa;--surface:#fff;--ink:#0d1117;--muted:#57606a;--line:#d0d7de;--accent:#0969da}
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#0d1117;--surface:#161b22;--ink:#e6edf3;--muted:#8b949e;--line:#30363d;--accent:#58a6ff}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"IBM Plex Sans KR","Malgun Gothic","Segoe UI",system-ui,sans-serif;
+    padding:28px;max-width:760px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 6px}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.7}
+  .bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin:16px 0 8px}
+  .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+  .stat{font-size:14px;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:20px 0}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:12px 14px}
+  .card b{display:block;font-size:26px;font-variant-numeric:tabular-nums;line-height:1.2}
+  .card span{font-size:12.5px;color:var(--muted)}
+  .A b{color:#0969da} .C b{color:#cf222e} .F b{color:#9a6700}
+  button{font:inherit;font-weight:600;cursor:pointer;border-radius:9px;border:1px solid var(--line);
+    background:var(--surface);color:var(--ink);padding:11px 20px}
+  button:disabled{opacity:.5;cursor:default}
+  button.go{border-color:var(--accent);color:var(--accent)}
+  #log{font-family:"IBM Plex Mono",Consolas,monospace;font-size:11.5px;color:var(--muted);
+    margin-top:18px;max-height:150px;overflow:auto;white-space:pre-wrap}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<h1>자동 1차 분류</h1>
+<p class="lead">
+  그림을 하나씩 실제로 그려 보고 <b>잉크가 덮은 넓이 · 검은 선의 비율 · 색의 진하기</b>를 잽니다.
+  손으로 고른 10장을 재서 기준을 잡았습니다 — 그것들은 흰 바탕에 검은 선이 주인인 그림입니다.<br />
+  <b>A</b> 흑백 선화(쓸 만함) · <b>B</b> 선은 있으나 색이 섞임 · <b>C</b> 채색·빈 그림 · <b>F</b> 안 그려짐
+</p>
+
+<div class="bar"><i id="bar"></i></div>
+<div class="stat"><span id="pos">0</span> / <span id="tot">0</span> · <span id="eta">—</span></div>
+
+<div class="grid">
+  <div class="card A"><b id="gA">0</b><span>A · 흑백 선화</span></div>
+  <div class="card"><b id="gB">0</b><span>B · 색 섞임</span></div>
+  <div class="card C"><b id="gC">0</b><span>C · 버릴 것</span></div>
+  <div class="card F"><b id="gF">0</b><span>F · 안 그려짐</span></div>
+</div>
+
+<button class="go" id="go">분류 시작</button>
+<button id="stop" disabled>멈춤</button>
+<a href="/" style="margin-left:14px;font-size:14px">← 골라내기로</a>
+
+<div id="log"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const S = 128;                       // 잰다 = 128px 로 줄여 그린다. 충분하고 빠르다.
+const cv = document.createElement('canvas'); cv.width = cv.height = S;
+const cx = cv.getContext('2d', { willReadFrequently: true });
+let stop = false;
+
+/* 그림 지문(dHash) — 9×8 로 줄여 좌우 밝기 차이를 64비트로 적는다.
+   제목이 전혀 달라도 그림이 같으면 지문이 거의 같다.
+   ("Measuring cylinder" 와 "Mischzylinder" 가 같은 눈금실린더인 걸 제목으론 못 잡는다) */
+const hw = 9, hh = 8;
+const hc = document.createElement('canvas'); hc.width = hw; hc.height = hh;
+const hx = hc.getContext('2d', { willReadFrequently: true });
+
+function dhash(im){
+  hx.fillStyle = '#fff'; hx.fillRect(0, 0, hw, hh);
+  hx.drawImage(im, 0, 0, hw, hh);              // 비율을 일부러 무시한다 — 판형 차이에 둔감해진다
+  const d = hx.getImageData(0, 0, hw, hh).data;
+  const g = [];
+  for (let i = 0; i < d.length; i += 4) g.push((d[i] * 3 + d[i+1] * 6 + d[i+2]) / 10);
+  let bits = '';
+  for (let y = 0; y < hh; y++)
+    for (let x = 0; x < hw - 1; x++)
+      bits += g[y * hw + x] > g[y * hw + x + 1] ? '1' : '0';
+  let hex = '';
+  for (let i = 0; i < 64; i += 4) hex += parseInt(bits.slice(i, i + 4), 2).toString(16);
+  return hex;
+}
+
+/* 한 장을 그려 보고 잰다 */
+function measure(file){
+  return new Promise(resolve => {
+    const im = new Image();
+    const url = '/img/' + encodeURIComponent(file) + '?x=1';
+    let tries = 0, settled = false;
+    const done = ok => { if (!settled){ settled = true; resolve(ok); } };
+    // 한 번 실패했다고 바로 포기하지 않는다. 서버가 잠깐 밀리면 onerror 가 난다
+    // (단일 스레드 서버였을 때 4,326장 중 4,130장이 이렇게 헛되이 실패했다).
+    im.onerror = () => {
+      if (tries++ < 2) setTimeout(() => { im.src = url + '&r=' + tries; }, 300);
+      else done({ fail: true });
+    };
+    im.onload = () => {
+      try{
+        cx.fillStyle = '#fff'; cx.fillRect(0, 0, S, S);
+        // 비율 유지해서 가운데 맞춤
+        const r = Math.min(S / (im.naturalWidth || S), S / (im.naturalHeight || S));
+        const w = Math.max(1, (im.naturalWidth || S) * r), h = Math.max(1, (im.naturalHeight || S) * r);
+        cx.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
+        const d = cx.getImageData(0, 0, S, S).data;
+        let ink = 0, dark = 0, satSum = 0;
+        for (let i = 0; i < d.length; i += 4){
+          const R = d[i], G = d[i+1], B = d[i+2];
+          const mx = Math.max(R, G, B), mn = Math.min(R, G, B);
+          if (mx > 245 && mn > 245) continue;          // 흰 바탕은 잉크가 아니다
+          ink++;
+          if (mx < 110) dark++;                         // 검은 선
+          satSum += mx ? (mx - mn) / mx : 0;
+        }
+        const px = S * S;
+        done(ink ? {
+          ink:  +(ink / px).toFixed(4),
+          dark: +(dark / ink).toFixed(4),
+          sat:  +(satSum / ink).toFixed(4),
+          hash: dhash(im),                     // 그림 지문 — 닮은 그림 찾기용
+          w: im.naturalWidth, h: im.naturalHeight
+        } : { ink: 0, dark: 0, sat: 0 });
+      } catch(e){ done({ fail: true }); }
+    };
+    im.src = url;
+    setTimeout(() => done({ fail: true }), 15000);       // 안 뜨면 포기
+  });
+}
+
+/* 한 페이지에서 수백 장을 넘게 그리면 브라우저가 더 이상 SVG 를 안 그린다.
+   (실측: 4,326장 중 196장만 성공하고 나머지는 전부 onerror. 그런데 같은 파일을
+   새 페이지에서 열면 멀쩡히 그려진다 — 파일도 서버도 아닌 페이지의 한계다.)
+   그래서 CHUNK 장마다 페이지를 새로 고치고 이어서 잰다. 진행 상태는 서버에 있다. */
+const CHUNK = 120;
+
+async function run(){
+  stop = false; $('go').disabled = true; $('stop').disabled = false;
+  const u = await (await fetch('/api/unscored')).json();
+  const files = u.files.slice(0, CHUNK);
+  $('tot').textContent = u.total;
+  if (!files.length){
+    log('다 쟀습니다.'); $('go').disabled = false; $('stop').disabled = true;
+    history.replaceState(null, '', '/autoscan');       // 자동 반복 끝
+    return;
+  }
+  log(`이번 묶음 ${files.length}장 · 남은 것 ${u.files.length}장`);
+
+  let buf = {}, n = 0, t0 = performance.now();
+  for (const f of files){
+    if (stop) break;
+    buf[f] = await measure(f);
+    n++;
+    if (n % 30 === 0 || n === files.length){
+      const r = await post(buf); buf = {};
+      const el = (performance.now() - t0) / 1000;
+      $('pos').textContent = r.done;
+      $('bar').style.width = (r.done / u.total * 100) + '%';
+      $('eta').textContent = `초당 ${(n/el).toFixed(1)}장 · 남은 시간 약 `
+        + `${Math.ceil((u.files.length - n) / (n/el) / 60)}분`;
+      setGrades(r.grades);
+    }
+  }
+  if (Object.keys(buf).length) setGrades((await post(buf)).grades);
+
+  if (stop){
+    log('멈췄습니다. 다시 누르면 이어서 합니다.');
+    $('go').disabled = false; $('stop').disabled = true;
+    return;
+  }
+  log('묶음 끝 — 페이지를 새로 고쳐 이어서 잽니다');
+  location.href = '/autoscan?auto=1';                  // ← 지친 페이지를 버린다
+}
+
+// ?auto=1 이면 열리자마자 이어서 잰다
+if (new URLSearchParams(location.search).get('auto')) addEventListener('load', run);
+
+const post = b => fetch('/api/score', {
+  method:'POST', headers:{'Content-Type':'application/json'},
+  body: JSON.stringify({ scores: b })
+}).then(r => r.json());
+
+function setGrades(g){
+  if (!g) return;
+  $('gA').textContent = g.A || 0; $('gB').textContent = g.B || 0;
+  $('gC').textContent = g.C || 0; $('gF').textContent = g.F || 0;
+}
+function log(s){ $('log').textContent = s + '\n' + $('log').textContent; }
+
+$('go').onclick = run;
+$('stop').onclick = () => { stop = true; };
+fetch('/api/list').then(r => r.json()).then(d => {
+  $('tot').textContent = d.total; setGrades(d.gradeCounts);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="150"
+   version="1.1"
+   id="svg9319"
+   sodipodi:docname="Plasmid_ml.svg"
+   inkscape:version="0.92.1 r15371">
+  <metadata
+     id="metadata9323">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1360"
+     inkscape:window-height="741"
+     id="namedview9321"
+     showgrid="false"
+     inkscape:zoom="3.2880465"
+     inkscape:cx="123.55622"
+     inkscape:cy="116.96697"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg9319" />
+  <defs
+     id="defs9290">
+    <radialGradient
+       r="0.65"
+       gradientUnits="objectBoundingBox"
+       id="cl">
+      <stop
+         stop-color="#8dff70"
+         stop-opacity="1"
+         offset="0"
+         id="stop9285" />
+      <stop
+         stop-color="#26901d"
+         stop-opacity="0.8"
+         offset="1"
+         id="stop9287" />
+    </radialGradient>
+  </defs>
+  <rect
+     x="7"
+     y="41"
+     width="299"
+     height="99"
+     stroke="#000"
+     stroke-width="2.5"
+     fill="url(#cl)"
+     ry="49.5"
+     id="rect9292" />
+  <g
+     fill="none"
+     stroke-width="1.5"
+     stroke="#050080"
+     id="g9309">
+    <circle
+       cx="255.3"
+       cy="102.5"
+       r="24"
+       stroke-width="3"
+       id="circle9294" />
+    <circle
+       cx="255.3"
+       cy="102.5"
+       r="29"
+       stroke-width="3"
+       id="circle9296" />
+    <circle
+       cx="212.6"
+       cy="65.5"
+       r="12"
+       id="circle9298" />
+    <circle
+       cx="212.6"
+       cy="65.5"
+       r="14.6"
+       id="circle9300" />
+    <circle
+       cx="192.6"
+       cy="104.2"
+       r="12"
+       id="circle9302" />
+    <circle
+       cx="192.6"
+       cy="104.2"
+       r="14.6"
+       id="circle9304" />
+    <path
+       d="M 35.38163,85.05646 C 53.73207,91.26788 71.22828,102.30757 91.21034,101.84625 C 97.50572,101.72275 104.58956,100.69108 108.58224,95.2135 C 112.46226,91.01677 110.99487,84.33368 106.41034,81.31482 C 95.67634,70.68066 75.88669,72.40861 67.17493,84.76362 C 61.42325,92.08079 65.04631,102.64556 71.4254,108.29694 C 80.45146,116.80061 93.681,117.30157 105.3638,116.452 C 112.82666,116.03968 120.40162,115.41771 127.79287,116.89054 C 133.94649,118.85967 131.93153,126.64156 127.44148,129.23362 C 123.40646,132.94655 116.59372,133.3892 112.802,129.09597 C 107.5167,122.85718 110.64985,111.87921 118.44634,109.3494 C 127.40138,104.40921 139.48352,104.20033 145.64305,94.97286 C 149.92689,84.75327 144.43317,73.12385 136.14565,66.73261 C 126.49768,59.28849 113.63586,57.82442 101.80974,58.07171 C 89.31957,58.50802 76.96189,60.67002 64.48389,61.25871 C 46.64967,64.00598 32.21296,80.27902 30.47857,98.04524 C 30.28054,107.10288 36.6813,117.1623 46.29445,117.87784 C 54.51931,118.08141 60.12556,109.73898 60.48913,102.18152 C 61.21691,91.6449 58.38524,80.35174 51.17695,72.40845 C 46.07477,66.5905 37.14103,62.90212 29.94657,67.12489 C 25.06153,69.35876 25.01398,75.9357 28.04284,79.70833 C 29.78352,82.21614 32.31068,84.45191 35.38163,85.05646"
+       stroke="#7a0000"
+       stroke-width="3"
+       id="k" />
+    <use
+       xlink:href="#k"
+       transform="translate(3.1,-3.9)"
+       id="use9307" />
+  </g>
+  <g
+     font-size="18"
+     font-family="Bitstream Vera Sans"
+     id="g9315">
+    <text
+       x="5.6000004"
+       y="15.200001"
+       id="text9311">ബാക്ടീരിയ ഡി.എൻ.എ</text>
+    <text
+       x="222.89999"
+       y="17.200001"
+       id="text9313">പ്ലാസ്മിഡുകൾ</text>
+  </g>
+  <path
+     d="M 230.6,53.2 L 274.6,24.2 M 277.6,73.2 L 281.6,27.2 M 80,50.5 L 49.2,24"
+     stroke="#000"
+     stroke-width="2"
+     id="path9317" />
+</svg>

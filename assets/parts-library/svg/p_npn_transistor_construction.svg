@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="470.87152"
+   height="221.28711"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="C:\Documents and Settings\KARTHIK1\My Documents\Electronic Diagrams"
+   sodipodi:docname="NPN Transistor Construction.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="375"
+     inkscape:cy="37.874338"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1280"
+     inkscape:window-height="774"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     width="500px"
+     height="500px" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-11.177742,-8.7186511)">
+    <g
+       id="g2285">
+      <rect
+         ry="0"
+         y="64.362183"
+         x="104"
+         height="79"
+         width="277"
+         id="rect2160"
+         style="fill:#00ff00;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+      <rect
+         ry="0"
+         y="63.529236"
+         x="222.16705"
+         height="79.665871"
+         width="30.665874"
+         id="rect2162"
+         style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:0.33412611;stroke-opacity:1" />
+      <rect
+         y="79.362183"
+         x="94"
+         height="51"
+         width="9"
+         id="rect2164"
+         style="fill:#800000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+      <rect
+         y="78.862183"
+         x="380.5"
+         height="51"
+         width="9"
+         id="rect2166"
+         style="fill:#800000;fill-opacity:1;stroke:#000000;stroke-opacity:1" />
+      <path
+         id="path2168"
+         d="M 93,104.36218 L 40,105.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         id="path2170"
+         d="M 441.5,102.86218 L 388.5,103.86218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="translate(-56,-386)"
+         d="M 101 490.86218 A 7 7.5 0 1 1  87,490.86218 A 7 7.5 0 1 1  101 490.86218 z"
+         sodipodi:ry="7.5"
+         sodipodi:rx="7"
+         sodipodi:cy="490.86218"
+         sodipodi:cx="94"
+         id="path2172"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="translate(350,-386.5)"
+         d="M 101 490.86218 A 7 7.5 0 1 1  87,490.86218 A 7 7.5 0 1 1  101 490.86218 z"
+         sodipodi:ry="7.5"
+         sodipodi:rx="7"
+         sodipodi:cy="490.86218"
+         sodipodi:cx="94"
+         id="path2174"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         id="path2246"
+         d="M 238,154.36218 L 238,202.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <rect
+         y="142.716"
+         x="229.35382"
+         height="13.292345"
+         width="17.292345"
+         id="rect2176"
+         style="fill:#800000;fill-opacity:1;stroke:#000000;stroke-width:0.70765471;stroke-opacity:1" />
+      <path
+         transform="translate(144,-287.5)"
+         d="M 101 490.86218 A 7 7.5 0 1 1  87,490.86218 A 7 7.5 0 1 1  101 490.86218 z"
+         sodipodi:ry="7.5"
+         sodipodi:rx="7"
+         sodipodi:cy="490.86218"
+         sodipodi:cx="94"
+         id="path2249"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <text
+         transform="scale(0.9209604,1.085823)"
+         id="text2251"
+         y="107.16505"
+         x="168.43658"
+         style="font-size:33.79117203px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="107.16505"
+           x="168.43658"
+           id="tspan2253"
+           sodipodi:role="line">n</tspan></text>
+      <text
+         transform="scale(1.0003759,0.9996243)"
+         id="text2255"
+         y="94.397667"
+         x="170.75096"
+         style="font-size:23.17381668px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="94.397667"
+           x="170.75096"
+           id="tspan2257"
+           sodipodi:role="line">+</tspan></text>
+      <text
+         transform="scale(0.9209604,1.085823)"
+         id="text2259"
+         y="107.50941"
+         x="331.85083"
+         style="font-size:33.79117203px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="107.50941"
+           x="331.85083"
+           id="tspan2261"
+           sodipodi:role="line">n</tspan></text>
+      <text
+         transform="scale(0.9772173,1.0233138)"
+         id="text2263"
+         y="110.77945"
+         x="231.07471"
+         style="font-size:25.68539429px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="110.77945"
+           x="231.07471"
+           id="tspan2265"
+           sodipodi:role="line">p</tspan></text>
+      <text
+         transform="scale(1.0708042,0.9338776)"
+         id="text2267"
+         y="112.65252"
+         x="216.20741"
+         style="font-size:39.59363556px;font-style:normal;font-weight:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="112.65252"
+           x="216.20741"
+           id="tspan2269"
+           sodipodi:role="line">-</tspan></text>
+      <text
+         transform="scale(1.0032578,0.9967528)"
+         id="text2271"
+         y="93.592918"
+         x="9.4509659"
+         style="font-size:17.22438622px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="93.592918"
+           x="9.4509659"
+           id="tspan2273"
+           sodipodi:role="line">Emitter</tspan></text>
+      <text
+         transform="scale(1.0032578,0.9967528)"
+         id="text2275"
+         y="230.51117"
+         x="215.51308"
+         style="font-size:17.22438622px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="230.51117"
+           x="215.51308"
+           id="tspan2277"
+           sodipodi:role="line">Base</tspan></text>
+      <text
+         transform="scale(1.0032578,0.9967528)"
+         id="text2279"
+         y="93.064812"
+         x="403.89935"
+         style="font-size:17.22438622px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="93.064812"
+           x="403.89935"
+           id="tspan2281"
+           sodipodi:role="line">Collector</tspan></text>
+      <text
+         transform="scale(0.9456249,1.0575018)"
+         id="text2283"
+         y="26.149246"
+         x="94.883293"
+         style="font-size:23.56604767px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="26.149246"
+           x="94.883293"
+           id="tspan2285"
+           sodipodi:role="line">NPN Transistor Construction</tspan></text>
+    </g>
+  </g>
+</svg>

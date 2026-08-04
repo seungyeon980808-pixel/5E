@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="225"
+   height="450"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="D:\Eigene Dateien\Michael\Eigene Bilder\_Zeichnungen\SVG\EL"
+   sodipodi:docname="MFrey RLC Zeigerdiagramm 006.svg"
+   version="1.0"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.8"
+     inkscape:cx="116.48218"
+     inkscape:cy="126.82867"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     gridspacingx="5px"
+     gridspacingy="5px"
+     gridempcolor="#ff3f00"
+     gridempopacity="0.37647059"
+     gridtolerance="10000"
+     inkscape:grid-bbox="false"
+     inkscape:grid-points="true"
+     inkscape:window-width="910"
+     inkscape:window-height="977"
+     inkscape:window-x="242"
+     inkscape:window-y="20"
+     inkscape:guide-bbox="false"
+     width="225px"
+     height="450px" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-48.5,-130.8622)">
+    <flowRoot
+       xml:space="preserve"
+       id="flowRoot1894"
+       transform="translate(-12.6035,-12.04554)"><flowRegion
+         id="flowRegion1896"><rect
+           id="rect1898"
+           width="50.507626"
+           height="29.294424"
+           x="181.82745"
+           y="94.737572" /></flowRegion><flowPara
+         id="flowPara1900"
+         style="font-size:20px">SRG8</flowPara></flowRoot>    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 73.5,530.8622 C 73.5,530.8622 183.5,530.8622 183.5,530.8622"
+       id="path7072"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 208.5,530.8622 C 208.5,530.8622 208.5,170.8622 208.5,170.8622"
+       id="path7082"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 198.5,390.8622 C 198.5,390.8622 198.5,155.8622 198.5,155.8622"
+       id="path7090"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 73.5,530.8622 C 73.5,530.8622 183.5,420.8622 183.5,420.8622"
+       id="path7092"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 198.5,530.8622 L 183.5,535.8622 L 183.5,525.8622 L 198.5,530.8622"
+       id="path8063"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 208.5,155.8622 L 213.5,170.8622 L 203.5,170.8622 L 208.5,155.8622 z "
+       id="path9036" />
+    <path
+       style="fill:#0000ff;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 198.5,405.8622 L 203.5,390.8622 L 193.5,390.8622 L 198.5,405.8622 z "
+       id="path9038" />
+    <path
+       style="fill:#0000ff;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 198.5,405.8622 L 178.5,415.8622 L 188.5,425.8622 L 198.5,405.8622"
+       id="path9040"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 238.5,540.8622 L 223.5,545.8622 L 223.5,535.8622 L 238.5,540.8622"
+       id="path10011"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 73.5,540.8622 C 73.5,540.8622 223.5,540.8622 223.5,540.8622"
+       id="path10013"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="123.5"
+       y="573.76843"
+       id="text10984"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         x="123.5"
+         y="573.76843"
+         style="font-size:32px;fill:#ff0000"
+         id="tspan2188">I</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="128.5"
+       y="518.76843"
+       id="text10988"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan10990"
+         x="128.5"
+         y="518.76843"
+         style="font-size:32px;fill:#0000ff">U</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="152.5"
+       y="523.76843"
+       id="text10992"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan10994"
+         x="152.5"
+         y="523.76843"
+         style="font-size:16px;fill:#0000ff">R</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="215.5"
+       y="373.57312"
+       id="text10996"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan10998"
+         x="215.5"
+         y="373.57312"
+         style="font-size:32px;fill:#0000ff">U</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="239.5"
+       y="378.57312"
+       id="text11000"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan11002"
+         x="239.5"
+         y="378.57312"
+         style="font-size:16px;fill:#0000ff">L</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="156.5"
+       y="298.76843"
+       id="text11004"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan11006"
+         x="156.5"
+         y="298.76843"
+         style="font-size:32px;fill:#0000ff">U</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="178.5"
+       y="303.76843"
+       id="text11008"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan11010"
+         x="178.5"
+         y="303.76843"
+         style="font-size:16px;fill:#0000ff">C</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+       x="123.5"
+       y="454.37781"
+       id="text11012"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan11014"
+         x="123.5"
+         y="454.37781"
+         style="font-size:32px;fill:#0000ff">U</tspan></text>
+  </g>
+</svg>

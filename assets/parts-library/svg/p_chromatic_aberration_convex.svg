@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="500"
+   height="350"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <g
+     id="layer1">
+    <path
+       d="M 140.26171,38.226681 L 122.5139,38.32868 C 99.204058,157.92335 100.26658,190.55057 122.5139,308.11587 L 140.26171,308.06487 C 162.50904,190.49957 163.57157,157.82135 140.26171,38.226681 z "
+       style="color:black;fill:#aef;fill-opacity:0.68627451;fill-rule:nonzero;stroke:black;stroke-width:0.81599152;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path2882" />
+    <path
+       d="M 131.38536,12.703805 L 131.38536,337.29623"
+       style="color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:#999;stroke-width:1.63198304;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path3800" />
+    <path
+       d="M 12.377709,172.12483 L 487.61606,172.12483"
+       style="color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:#999;stroke-width:1.63198304;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:1.631983, 3.263966;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path2913" />
+    <g
+       transform="matrix(1.631983,0,0,1.631983,-146.3043,-261.1912)"
+       id="g2895">
+      <path
+         d="M 97.363421,192.35863 L 169.94814,192.35863 L 388.42313,310.76948"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:red;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2887" />
+      <path
+         d="M 97.313535,193.37655 L 169.8558,193.37655 L 388.43948,328.26174"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:lime;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2889" />
+      <path
+         d="M 97.320406,194.3741 L 169.92789,194.3741 L 388.42278,346.60546"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:blue;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2893" />
+    </g>
+    <g
+       transform="matrix(1.631983,0,0,-1.631983,-146.3894,605.5995)"
+       id="g2902">
+      <path
+         d="M 97.363421,192.35863 L 169.94814,192.35863 L 388.42313,310.76948"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:red;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2904" />
+      <path
+         d="M 97.313535,193.37655 L 169.8558,193.37655 L 388.43948,328.26174"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:lime;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2906" />
+      <path
+         d="M 97.320406,194.3741 L 169.92789,194.3741 L 388.42278,346.60546"
+         style="opacity:1;color:black;fill:none;fill-opacity:0.68627451;fill-rule:nonzero;stroke:blue;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+         id="path2908" />
+    </g>
+  </g>
+</svg>

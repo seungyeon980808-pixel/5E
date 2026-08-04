@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="456.5788"
+   height="310"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.48.2 r9819"
+   sodipodi:docname="Resonant_Cavity_Magnetron_Diagram_ru.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2502"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="39.180484"
+     inkscape:cy="156.07298"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer2"
+     showgrid="false"
+     inkscape:window-width="1273"
+     inkscape:window-height="994"
+     inkscape:window-x="48"
+     inkscape:window-y="44"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3321"
+       visible="true"
+       enabled="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Vanessa Ezekowitz</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:source>http://en.wikipedia.org/wiki/Image:Resonant_Cavity_Magnetron_Diagram.png</dc:source>
+        <dc:description>SVG-ified version of above image originally drawn by Ian Dunster (based on an image from &quot;Radar&quot; by J.T. Morgan); modified to include Russian captions by Mikhail Yakshin.</dc:description>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     style="display:inline"
+     transform="translate(-99.50509,-78.07512)">
+    <path
+       transform="translate(-0.1785714,0)"
+       style="fill:#fb1832;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 328.1913,166.78593 C 287.48229,169.2014 255.17857,203.01439 255.17857,244.32646 C 255.17857,287.20503 289.97857,322.00504 332.85715,322.00504 C 375.73572,322.00504 410.53572,287.20503 410.53572,244.32646 C 410.53572,203.98943 379.73886,170.80168 340.39107,167.00911 L 338.88393,166.87111"
+       id="path3476"
+       sodipodi:nodetypes="ccssc" />
+    <path
+       id="path3323"
+       style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 339.33036,182.36218 L 338.50508,181.36218 L 338.50508,141.36218 L 342.43179,141.36218 L 342.31635,167.2244 L 338.83928,166.91575 M 339.72693,166.59101 L 339.70961,182.9398 L 339.70961,182.9398 C 346.40579,186.42219 348.40723,192.68159 346.98978,199.02484 C 345.57233,205.36808 341.20984,208.75463 335.92083,209.51312 L 335.90944,216.25018 C 341.4371,216.61194 346.55414,218.92192 350.68313,222.39052 L 354.88007,217.72406 C 350.46149,211.12282 352.5515,202.20022 359.33604,197.99086 C 366.12059,193.7815 375.04319,195.8715 379.25255,202.65605 C 383.46191,209.44059 381.37191,218.36319 374.58736,222.57255 C 370.01602,225.40877 364.70135,225.5476 360.30658,222.65805 L 355.54364,227.30049 C 358.87878,231.19476 360.89027,236.07586 361.12621,241.24996 L 367.32143,241.11218 L 367.00374,240.9878 C 368.59063,233.10965 376.42933,228.36247 384.18311,230.26706 C 391.93691,232.17166 396.68409,240.01035 394.77949,247.76415 C 392.8749,255.51793 385.03621,260.26512 377.28241,258.36052 C 372.058,257.07723 368.24146,253.37602 367.10461,248.00103 L 361.04386,247.90033 C 360.6648,253.04612 358.51523,257.80755 355.25738,261.81815 L 360.35714,267.09432 L 360.17597,266.80813 C 367.06251,262.80761 375.81315,265.52919 379.52749,272.59689 C 383.24183,279.6646 380.52026,288.41525 373.45255,292.12959 C 366.38485,295.84393 357.6342,293.12236 353.91986,286.05464 C 351.41718,281.29251 351.65807,275.98149 354.79078,271.73525 L 350.16088,266.93728 C 346.16815,270.40436 340.98572,272.51015 335.30432,272.62531 L 335.18509,279.74924 C 342.96536,281.27916 347.79623,289.06656 345.9748,296.8403 C 344.15336,304.61406 336.36597,309.44493 328.59222,307.62349 C 320.81847,305.80206 315.9876,298.01467 317.80904,290.24092 C 319.03629,285.00306 322.69641,281.14709 327.81555,279.97866 L 327.70781,272.29742 C 323.03068,271.64516 318.55455,269.41958 314.90789,266.16023 L 315.26786,265.93361 L 310.35815,271.33965 C 314.81731,278.06057 312.58577,286.94882 305.73519,291.04984 C 298.88461,295.15085 289.99635,292.91932 285.89534,286.06874 C 281.79432,279.21816 284.02585,270.3299 290.87644,266.22889 C 295.49227,263.46567 300.80847,263.41131 305.23993,266.31909 L 310.50661,261.77994 C 306.93657,257.7341 305.10072,252.71421 304.77938,247.40229 L 298,247.36218 L 298.26618,247.54492 C 296.51844,255.45379 288.61347,260.08978 280.88736,258.07586 C 273.16124,256.06194 268.52524,248.15698 270.53916,240.43086 C 272.55308,232.70474 280.45804,228.06875 288.18416,230.08267 C 293.38993,231.43962 297.15381,235.19436 298.26171,240.37949 L 305,240.36218 L 304.78182,240.3868 C 305.30675,235.10323 307.50562,230.25963 310.87165,226.32987 L 305.92647,221.806 C 298.68967,225.77636 290.01389,222.8248 286.48736,215.66154 C 282.96083,208.49827 285.91238,199.82249 293.07565,196.29596 C 300.23891,192.76943 308.91469,195.72098 312.44122,202.88425 C 314.81736,207.71077 314.4364,213.01358 311.19737,217.40653 L 315.64223,222.10482 C 319.00495,218.93097 323.46377,216.91401 328.22875,215.87306 L 328.41995,209.25611 C 321.00263,207.16828 316.74309,199.05427 319.11771,191.43128 C 320.53189,186.89149 323.98166,183.79713 328.07551,181.97435 L 328,141.36218 L 324,141.36218 L 324,166.98718 L 327.58929,166.73718"
+       sodipodi:nodetypes="cccccccccssscccccssscccccssscccccsssccccssscccccssscccccssscccczcccccccccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:15px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Nimbus Sans L;-inkscape-font-specification:Nimbus Sans L"
+       x="140"
+       y="115.36218"
+       id="text3285"
+       sodipodi:linespacing="120%"><tspan
+         sodipodi:role="line"
+         x="140"
+         y="115.36218"
+         id="tspan3289">Boucle de câble coaxial </tspan><tspan
+         sodipodi:role="line"
+         x="140"
+         y="133.36218"
+         id="tspan3077">servant de sortie au signal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:15px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Nimbus Sans L;-inkscape-font-specification:Nimbus Sans L"
+       x="150.71428"
+       y="202.98718"
+       id="text3291"
+       sodipodi:linespacing="120%"><tspan
+         sodipodi:role="line"
+         id="tspan3293"
+         x="150.71428"
+         y="202.98718">Anode en cuivre</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:15px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Nimbus Sans L;-inkscape-font-specification:Nimbus Sans L"
+       x="376.51785"
+       y="145.66574"
+       id="text3297"
+       sodipodi:linespacing="120%"><tspan
+         sodipodi:role="line"
+         id="tspan3299"
+         x="376.51785"
+         y="145.66574">Cavité résonante</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:15px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Nimbus Sans L;-inkscape-font-specification:Nimbus Sans L"
+       x="374.10715"
+       y="340.30862"
+       id="text3301"
+       sodipodi:linespacing="120%"><tspan
+         sodipodi:role="line"
+         x="374.10715"
+         y="340.30862"
+         id="tspan3305">Alimentation du</tspan><tspan
+         sodipodi:role="line"
+         x="374.10715"
+         y="358.30862"
+         id="tspan3081">filament de la cathode</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:15px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:120.00000477%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Nimbus Sans L;-inkscape-font-specification:Nimbus Sans L"
+       x="215.625"
+       y="332.36218"
+       id="text3307"
+       sodipodi:linespacing="120%"><tspan
+         sodipodi:role="line"
+         id="tspan3309"
+         x="215.625"
+         y="332.36218">Cathode</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.98618066;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 324,162.36218 C 282.75031,166.79481 250.58898,201.93218 250.58898,244.57612 C 250.58898,290.2185 287.43208,327.2616 332.82803,327.2616 C 378.22399,327.2616 415.06709,290.2185 415.06709,244.57612 C 415.06709,202.44039 383.66775,167.63336 343.1269,162.5337 L 342.41072,162.36218"
+       id="path2509"
+       sodipodi:nodetypes="ccssc" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path3349"
+       sodipodi:cx="332.94644"
+       sodipodi:cy="244.23718"
+       sodipodi:rx="3.5714285"
+       sodipodi:ry="3.5714285"
+       d="m 336.51787,244.23718 c 0,1.97245 -1.59898,3.57143 -3.57143,3.57143 -1.97244,0 -3.57143,-1.59898 -3.57143,-3.57143 0,-1.97244 1.59899,-3.57143 3.57143,-3.57143 1.97245,0 3.57143,1.59899 3.57143,3.57143 z"
+       transform="translate(0,0.2678571)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path3351"
+       sodipodi:cx="332.76785"
+       sodipodi:cy="244.23718"
+       sodipodi:rx="10.089286"
+       sodipodi:ry="10.089286"
+       d="m 342.85714,244.23718 c 0,5.57216 -4.51713,10.08929 -10.08929,10.08929 -5.57216,0 -10.08928,-4.51713 -10.08928,-10.08929 0,-5.57216 4.51712,-10.08928 10.08928,-10.08928 5.57216,0 10.08929,4.51712 10.08929,10.08928 z"
+       transform="translate(0.1785714,8.9285715e-2)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path3353"
+       sodipodi:cx="332.76785"
+       sodipodi:cy="244.32646"
+       sodipodi:rx="13.75"
+       sodipodi:ry="13.75"
+       d="m 346.51785,244.32646 c 0,7.59392 -6.15608,13.75 -13.75,13.75 -7.59391,0 -13.75,-6.15608 -13.75,-13.75 0,-7.59391 6.15609,-13.75 13.75,-13.75 7.59392,0 13.75,6.15609 13.75,13.75 z"
+       transform="translate(0.1785714,8.9285715e-2)" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.24244213px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 326.95159,166.94768 L 326.93236,181.9731"
+       id="path3479"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 333.35715,248.36218 L 333.35715,349.36218"
+       id="path3483" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:4, 1;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 330.35715,247.36218 L 330.35715,347.36218"
+       id="path3485" />
+    <g
+       id="g3530"
+       transform="translate(-1.1023709e-6,-0.3571433)">
+      <path
+         id="path3487"
+         d="M 371,333.36218 L 340,333.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3528"
+         d="M 342,333.36218 L 342,330.36219 L 335,333.36218 L 342,336.36218 L 342,333.36218 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       style="display:inline"
+       id="g3534"
+       transform="matrix(-0.707823,0.7063898,-0.7063898,-0.707823,795.17526,253.94209)">
+      <path
+         id="path3536"
+         d="M 424.0637,333.60625 L 340,333.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3538"
+         d="M 342,333.36218 L 342,330.36219 L 335,333.36218 L 342,336.36218 L 342,333.36218 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       style="display:inline"
+       id="g3540"
+       transform="matrix(-0.866975,-0.4983517,0.4983517,-0.866975,394.99704,683.81844)">
+      <path
+         id="path3542"
+         d="M 371,333.36218 L 340,333.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3544"
+         d="M 342,333.36218 L 342,330.36219 L 335,333.36218 L 342,336.36218 L 342,333.36218 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       style="display:inline"
+       id="g3546"
+       transform="matrix(0.5249766,-0.8511166,0.8511166,0.5249766,-88.554423,311.2873)">
+      <path
+         id="path3548"
+         d="M 392.45595,333.53993 L 340,333.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3550"
+         d="M 342,333.36218 L 342,330.36219 L 335,333.36218 L 342,336.36218 L 342,333.36218 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       style="display:inline"
+       id="g3552"
+       transform="matrix(-0.9992841,-3.7832707e-2,3.7832707e-2,-0.9992841,652.50175,533.34883)">
+      <path
+         id="path3554"
+         d="M 340,333.36218 L 354.03658,333.19968 L 403.74314,378.71904"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3556"
+         d="M 342,333.36218 L 342,330.36219 L 335,333.36218 L 342,336.36218 L 342,333.36218 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:bevel;stroke-opacity:1"
+       d="M 334,180.36218 L 334,129.36218 L 332,131.36218 L 332,182.36218 C 328.80733,184.69896 328.78233,189.23258 331.53572,190.91576 C 334.2891,192.59893 339.23894,192.28043 338.91071,185.48718 L 339,175.36218 L 337,175.36218 L 337,185.36218 C 337,189.42166 334.53992,190.14066 333,189.2729 C 331.54493,188.45294 331.04461,185.82501 334,183.36218 L 334,180.36218 z"
+       id="path3329"
+       sodipodi:nodetypes="cccczccccscc" />
+  </g>
+</svg>

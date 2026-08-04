@@ -1,0 +1,54 @@
+<svg width="844" height="536" version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<defs><clipPath id="clip"><path d="M33 448C215 392 380 295 533 14H823V512H33Z"/></clipPath></defs>
+	<rect width="844" height="536" fill="#FFF"/>
+	<g fill="none">
+		<path d="M33 14h790m0 83h-790m0 83h790m0 83h-790m0 83h790m0 83h-790M112 14v498m79 0v-498m79 0v498m79 0v-498m79 0v498m79 0v-498m79 0v498m79 0v-498m79 0v498m79 0v-498" stroke="#888"/>
+		<g stroke-width="2">
+			<path d="m33 480 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320m0-32-790-320m0-32 790 320" stroke="#92D050" stroke-width="2" clip-path="url(#clip)"/>
+			<path d="M33 504c237-12 552-17 790-136M33 498.4C270 479 585 467 823 226M33 492.8C270 465 588 440 823 82M33 487C270 461 581 392 784 14M33 480.8C325 440 562 313 723 14M33 475C120 450 455 425 671 14M33 468.6C263 412 444 343 630 14M33 462.6C230 410 422 325 593 14M33 456.8C260 395 419 275 561 14M33 448C215 392 380 295 533 14" stroke="#1F497D"/>
+			<path d="M428 512v-166M443.8 390.4l-161-65.62V512" stroke="#F00"/>
+			<path d="M33 14h-4m4 83h-4m4 83h-4m4 83h-4m4 83h-4m4 83h-4m0 83h794M33 14v502m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4m79-4v4" stroke="#000"/>
+		</g>
+	</g>
+	<circle cx="428" cy="384" r="5"/>
+	<g font-family="'Liberation Serif', 'Times New Roman', serif" font-size="13">
+		<text text-anchor="end">
+			<tspan x="28" y="18">30</tspan>
+			<tspan x="28" y="101">25</tspan>
+			<tspan x="28" y="184">20</tspan>
+			<tspan x="28" y="267">15</tspan>
+			<tspan x="28" y="350">10</tspan>
+			<tspan x="28" y="433">5</tspan>
+			<tspan x="28" y="516">0</tspan>
+			<tspan y="0">&#xA0;</tspan>
+		</text>
+		<text y="529" text-anchor="middle">
+			<tspan x="35">0</tspan>
+			<tspan x="114">5</tspan>
+			<tspan x="193">10</tspan>
+			<tspan x="272">15</tspan>
+			<tspan x="351">20</tspan>
+			<tspan x="430">25</tspan>
+			<tspan x="509">30</tspan>
+			<tspan x="588">35</tspan>
+			<tspan x="667">40</tspan>
+			<tspan x="746">45</tspan>
+			<tspan x="825">50</tspan>
+		</text>
+		<path d="M610 431h38v18h-38zM592 368h38v18h-38zM570 318h38v18h-38zM557 272h38v18h-38zM548 221h38v18h-38zM538 181h38v18h-38zM525 144h38v18h-38zM524 108h38v18h-38zM510 66h38v18h-38z" fill="#FFF"/>
+		<g font-size="16" font-weight="bold">
+			<text x="48" y="53">X (g/kg)</text>
+			<text x="759" y="530">T (°C)</text>
+			<text x="614" y="445">10%</text>
+			<text x="596" y="382">20%</text>
+			<text x="574" y="332">30%</text>
+			<text x="561" y="286">40%</text>
+			<text x="552" y="235">50%</text>
+			<text x="542" y="195">60%</text>
+			<text x="529" y="158">70%</text>
+			<text x="528" y="122">80%</text>
+			<text x="514" y="80">90%</text>
+			<text x="449" y="64">100%</text>
+		</g>
+	</g>
+</svg>

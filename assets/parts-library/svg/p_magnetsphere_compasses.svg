@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<svg baseProfile="full" height="600" version="1.1" width="600" xmlns="http://www.w3.org/2000/svg" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>Magnetsphere_compasses</title>
+  <desc>https://commons.wikimedia.org/wiki/File:Magnetsphere_compasses.svg
+rights: Creative Commons Attribution ShareAlike license</desc>
+  <defs>
+    <g id="needle">
+      <path d="M -6.000,0.000 L 0.000,16.000 L 6.000,0.000 L 0.000,-16.000 Z" fill="#00cc00" stroke="none"/>
+      <path d="M -6.000,0.000 L 0.000,16.000 L 6.000,0.000 Z" fill="#ff0000" stroke="none"/>
+      <path d="M -6.000,0.000 L 0.000,16.000 L 6.000,0.000 L 0.000,-16.000 Z" fill="none" stroke="#000000" stroke-linejoin="miter" stroke-miterlimit="10" stroke-width="2"/>
+      <circle cx="0" cy="0" fill="#ffffff" r="2.500" stroke="#000000" stroke-width="2"/>
+    </g>
+    <radialGradient cx="0" cy="17.0" fx="-34.0" fy="51.0" gradientUnits="userSpaceOnUse" id="magnetGrad0" r="118.99999999999999">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.7"/>
+      <stop offset="0.04" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="0.11" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="0.22" stop-color="#ffffff" stop-opacity="0.2"/>
+      <stop offset="0.7" stop-color="#666666" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.6"/>
+    </radialGradient>
+  </defs>
+  <rect fill="#ffffff" height="600" id="background" stroke="none" width="600" x="0" y="0"/>
+  <g id="image" transform="translate(300, 300) scale(1,-1)">
+    <g id="needles">
+      <use transform="translate(-280.000,-280.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-280.000) rotate(-63.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-280.000) rotate(-55.19)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-280.000) rotate(-45.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-280.000) rotate(-35.29)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-280.000) rotate(-24.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-280.000) rotate(-12.22)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-280.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-280.000) rotate(12.22)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-280.000) rotate(24.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-280.000) rotate(35.29)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-280.000) rotate(45.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-280.000) rotate(55.19)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-280.000) rotate(63.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-280.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-240.000) rotate(-79.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-240.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-240.000) rotate(-62.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-240.000) rotate(-52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-240.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-240.000) rotate(-27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-240.000) rotate(-14.23)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-240.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-240.000) rotate(14.23)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-240.000) rotate(27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-240.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-240.000) rotate(52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-240.000) rotate(62.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-240.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-240.000) rotate(79.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-200.000) rotate(-89.45)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-200.000) rotate(-81.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-200.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-200.000) rotate(-60.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-200.000) rotate(-47.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-200.000) rotate(-33.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-200.000) rotate(-17.02)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-200.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-200.000) rotate(17.02)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-200.000) rotate(33.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-200.000) rotate(47.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-200.000) rotate(60.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-200.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-200.000) rotate(81.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-200.000) rotate(89.45)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-160.000) rotate(-101.44)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-160.000) rotate(-93.18)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-160.000) rotate(-83.35)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-160.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-160.000) rotate(-57.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-160.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-160.000) rotate(-21.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-160.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-160.000) rotate(21.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-160.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-160.000) rotate(57.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-160.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-160.000) rotate(83.35)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-160.000) rotate(-266.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-160.000) rotate(-258.56)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-120.000) rotate(-116.20)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-120.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-120.000) rotate(-98.84)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-120.000) rotate(-86.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-120.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-120.000) rotate(-52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-120.000) rotate(-27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-120.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-120.000) rotate(27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-120.000) rotate(52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-120.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-120.000) rotate(86.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-120.000) rotate(-261.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-120.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-120.000) rotate(-243.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-80.000) rotate(-134.31)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-80.000) rotate(-127.87)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-80.000) rotate(-119.54)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-80.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-80.000) rotate(-93.18)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-80.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-80.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-80.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-80.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-80.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-80.000) rotate(-266.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-80.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-80.000) rotate(-240.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-80.000) rotate(-232.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-80.000) rotate(-225.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,-40.000) rotate(-155.92)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,-40.000) rotate(-152.10)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,-40.000) rotate(-146.89)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,-40.000) rotate(-139.40)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,-40.000) rotate(-127.87)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,-40.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,-40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,-40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,-40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,-40.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,-40.000) rotate(-232.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,-40.000) rotate(-220.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,-40.000) rotate(-213.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,-40.000) rotate(-207.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,-40.000) rotate(-204.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,0.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,0.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,0.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,0.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,0.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,0.000) rotate(-180.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,40.000) rotate(-204.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,40.000) rotate(-207.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,40.000) rotate(-213.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,40.000) rotate(-220.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,40.000) rotate(-232.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,40.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,40.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,40.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,40.000) rotate(-127.87)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,40.000) rotate(-139.40)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,40.000) rotate(-146.89)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,40.000) rotate(-152.10)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,40.000) rotate(-155.92)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,80.000) rotate(-225.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,80.000) rotate(-232.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,80.000) rotate(-240.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,80.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,80.000) rotate(-266.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,80.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,80.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,80.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,80.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,80.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,80.000) rotate(-93.18)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,80.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,80.000) rotate(-119.54)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,80.000) rotate(-127.87)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,80.000) rotate(-134.31)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,120.000) rotate(-243.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,120.000) rotate(-251.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,120.000) rotate(-261.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,120.000) rotate(86.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,120.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,120.000) rotate(52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,120.000) rotate(27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,120.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,120.000) rotate(-27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,120.000) rotate(-52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,120.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,120.000) rotate(-86.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,120.000) rotate(-98.84)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,120.000) rotate(-108.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,120.000) rotate(-116.20)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,160.000) rotate(-258.56)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,160.000) rotate(-266.82)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,160.000) rotate(83.35)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,160.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,160.000) rotate(57.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,160.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,160.000) rotate(21.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,160.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,160.000) rotate(-21.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,160.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,160.000) rotate(-57.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,160.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,160.000) rotate(-83.35)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,160.000) rotate(-93.18)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,160.000) rotate(-101.44)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,200.000) rotate(89.45)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,200.000) rotate(81.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,200.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,200.000) rotate(60.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,200.000) rotate(47.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,200.000) rotate(33.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,200.000) rotate(17.02)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,200.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,200.000) rotate(-17.02)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,200.000) rotate(-33.11)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,200.000) rotate(-47.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,200.000) rotate(-60.46)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,200.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,200.000) rotate(-81.16)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,200.000) rotate(-89.45)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,240.000) rotate(79.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,240.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,240.000) rotate(62.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,240.000) rotate(52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,240.000) rotate(40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,240.000) rotate(27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,240.000) rotate(14.23)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,240.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,240.000) rotate(-14.23)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,240.000) rotate(-27.90)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,240.000) rotate(-40.60)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,240.000) rotate(-52.13)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,240.000) rotate(-62.43)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,240.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,240.000) rotate(-79.66)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-280.000,280.000) rotate(71.57)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-240.000,280.000) rotate(63.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-200.000,280.000) rotate(55.19)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-160.000,280.000) rotate(45.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-120.000,280.000) rotate(35.29)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-80.000,280.000) rotate(24.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(-40.000,280.000) rotate(12.22)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(0.000,280.000) rotate(0.00)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(40.000,280.000) rotate(-12.22)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(80.000,280.000) rotate(-24.08)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(120.000,280.000) rotate(-35.29)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(160.000,280.000) rotate(-45.69)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(200.000,280.000) rotate(-55.19)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(240.000,280.000) rotate(-63.80)" x="0" xlink:href="#needle" y="0"/>
+      <use transform="translate(280.000,280.000) rotate(-71.57)" x="0" xlink:href="#needle" y="0"/>
+    </g>
+    <g id="magnet0" transform="translate(0.000,0.000) rotate(0.00)">
+      <circle cx="0" cy="0" fill="#00cc00" r="85.0" stroke="none"/>
+      <path d="M -85.0,0 A 85.0,85.0 0 0 0 85.0,0 L -85.0,0 Z" fill="#ff0000" stroke="none"/>
+      <circle cx="0" cy="0" fill="url(#magnetGrad0)" r="85.0" stroke="#000000" stroke-width="4.0" transform="rotate(-0.0)"/>
+      <text fill="#000000" font-family="Bitstream Vera Sans" font-size="120px" stroke="none" text-anchor="middle" transform="translate(0, -18.7) scale(0.425,-0.425)" y="118.99999999999999">S</text>
+      <text fill="#000000" font-family="Bitstream Vera Sans" font-size="120px" stroke="none" text-anchor="middle" transform="translate(0, -18.7) scale(0.425,-0.425)" y="-118.99999999999999">N</text>
+    </g>
+  </g>
+</svg>

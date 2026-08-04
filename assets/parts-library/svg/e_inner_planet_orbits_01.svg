@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="600" version="1.1" viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <g id="c">
+  <path id="a" d="m3.004 0v6" stroke="#000" stroke-linecap="round" stroke-width=".006"/>
+  <g id="d">
+   <path id="b" d="m1 0v6" stroke="#b3b3b3" stroke-linecap="round" stroke-width=".006"/>
+   <use transform="translate(1)" xlink:href="#b"/>
+  </g>
+  <use transform="translate(3)" xlink:href="#d"/>
+ </g>
+ <use transform="rotate(-90,3,3)" xlink:href="#c"/>
+ <g fill="none" stroke-width=".018">
+  <circle cx="2.8982" cy="3.2148" r="2.3113" stroke="#f63"/>
+  <circle cx="3.0232" cy="3" r="1.5231" stroke="#006da2"/>
+  <circle cx="3" cy="3" r="1.1012" stroke="#963"/>
+  <circle cx="3.1139" cy="3" r=".58685" stroke="#aab37b"/>
+ </g>
+ <circle cx="2.0002" cy="5.3444" r=".051429" fill="#f63"/>
+ <circle cx="4.5097" cy="2.6683" r=".051429" fill="#006da2"/>
+ <circle cx="3.8332" cy="2.28" r=".051429" fill="#963"/>
+ <circle cx="3.6784" cy="3.1603" r=".051429" fill="#aab37b"/>
+ <circle cx="3" cy="3" r=".085704" fill="#fada2b"/>
+ <g transform="matrix(.01 0 0 .01 .21577 1.8174)" font-family="DejaVu Sans" font-size="15" font-weight="bold">
+  <g text-anchor="end">
+   <switch transform="translate(338,144)" fill="#8e9a59">
+    <text systemLanguage="en">Mercury</text>
+    <text systemLanguage="de">Merkur</text>
+    <text>Mercury</text>
+   </switch>
+   <switch transform="translate(353,54)" fill="#996633">
+    <text systemLanguage="en">Venus</text>
+    <text systemLanguage="de">Venus</text>
+    <text>Venus</text>
+   </switch>
+  </g>
+  <switch transform="translate(435,79.2)" fill="#006da2">
+   <text systemLanguage="en">Earth</text>
+   <text systemLanguage="de">Erde</text>
+   <text>Earth</text>
+  </switch>
+  <switch transform="translate(186,347)" fill="#f63d00">
+   <text systemLanguage="en">Mars</text>
+   <text systemLanguage="de">Mars</text>
+   <text>Mars</text>
+  </switch>
+ </g>
+</svg>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="320"
+   height="320"
+   id="svg2">
+  <defs
+     id="defs5" />
+  <path
+     d="M 12.51123,236.25 L 87.51123,311.25 L 112.51123,311.25 L 287.51123,136.25 L 287.51123,111.25 L 212.51123,36.25 L 187.51123,36.25 L 12.51123,206.25 L 12.51123,236.25 z"
+     id="cadre0"
+     style="fill:#808080;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:10px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path
+     d="M 12.51123,211.25 L 87.51123,286.25 L 112.51123,286.25 L 287.51123,111.25 L 287.51123,86.25 L 212.51123,11.25 L 187.51123,11.25 L 12.51123,181.25 L 12.51123,211.25 z"
+     id="cadre1"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:10px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <text
+     x="200.01123"
+     y="308.75"
+     id="text2392"
+     xml:space="preserve"
+     style="font-size:100px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Courier 10 Pitch;-inkscape-font-specification:Courier 10 Pitch Bold"><tspan
+       x="200.01123"
+       y="308.75"
+       id="tspan2392">℃</tspan></text>
+  <path
+     d="M 180.01123,28.75 L 270.01123,118.75 L 180.01123,28.75 z M 165.01123,63.75 L 235.01123,133.75 L 165.01123,63.75 z M 130.01123,78.75 L 220.01123,168.75 L 130.01123,78.75 z M 115.01123,113.75 L 185.01123,183.75 L 115.01123,113.75 z M 80.01123,128.75 L 170.01123,218.75 L 80.01123,128.75 z M 65.01123,163.75 L 135.01123,233.75 L 65.01123,163.75 z M 30.01123,178.75 L 120.01123,268.75 L 30.01123,178.75 z"
+     id="bleu"
+     style="fill:#000080;fill-opacity:1;fill-rule:evenodd;stroke:#000080;stroke-width:10px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path
+     d="M 240.01123,38.75 L 170.01123,108.75 L 65.01123,213.75 C 51.45273,213.75 40.2851,222.95759 36.57373,235.3125 L 73.44873,272.1875 C 85.80364,268.47613 95.01123,257.3085 95.01123,243.75 L 200.01123,138.75 L 270.01123,68.75 L 240.01123,38.75 z"
+     id="path3167"
+     style="fill:#7b7b7b;fill-opacity:0.65909095;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <g
+     transform="matrix(10,0,0,10,-4.98877,-6.25)"
+     id="g2387">
+    <path
+       d="M 25,2.875 C 24.414604,2.875 23.883901,3.116099 23.5,3.5 L 16.5,10.5 C 16.883901,10.116099 17.414604,9.875 18,9.875 C 19.170792,9.8750002 20.125,10.829208 20.125,12 C 20.125,12.585396 19.883901,13.116099 19.5,13.5 L 26.5,6.5 C 26.883901,6.116099 27.125,5.585396 27.125,5 C 27.125,3.829208 26.170792,2.875 25,2.875 z"
+       id="gris"
+       style="fill:#808080;fill-opacity:0.91411043;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       d="M 18,9.875 C 17.414604,9.875 16.883901,10.116099 16.5,10.5 L 6,21 C 4.344,21 3,22.344 3,24 C 3,25.656 4.344,27 6,27 C 7.656,27 9,25.656 9,24 L 19.5,13.5 C 19.883901,13.116099 20.125,12.585396 20.125,12 C 20.125,10.829208 19.170792,9.8750002 18,9.875 z"
+       id="rouge"
+       style="fill:#ff0000;fill-opacity:0.92331292;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 25,2.875 C 24.414604,2.875 23.883901,3.116099 23.5,3.5 L 16.5,10.5 L 6,21 C 4.344,21 3,22.344 3,24 C 3,25.656 4.344,27 6,27 C 7.656,27 9,25.656 9,24 L 19.5,13.5 L 26.5,6.5 C 26.883901,6.116099 27.125,5.585396 27.125,5 C 27.125,3.829208 26.170792,2.875 25,2.875 z"
+       id="contour"
+       style="fill:none;fill-opacity:0.91411043;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       d="M 7,23 L 26,4 L 25.5,3.5 L 6.5,22.5 L 7,23 z"
+       id="reflet"
+       style="fill:#ffffff;fill-opacity:0.81288344;fill-rule:evenodd;stroke:#000000;stroke-width:0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>

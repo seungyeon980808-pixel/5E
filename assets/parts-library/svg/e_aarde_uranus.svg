@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="129" height="126" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Aarde Uranus</title>
+<g stroke="black" stroke-width="0.8">
+<circle cx="63.1" cy="63" r="62.3" fill="#667BB4" />
+<circle cx="113" cy="32.1" r="15.4" fill="#0093DD" /></g>
+<g fill="white" font-family="DejaVu Sans, Arial" font-size="14" letter-spacing="0.3">
+<text x="59.9" y="73" text-anchor="middle">Uranus</text>
+<text x="96.8" y="34" text-anchor="middle" font-weight="bold">Aarde</text></g>
+</svg>

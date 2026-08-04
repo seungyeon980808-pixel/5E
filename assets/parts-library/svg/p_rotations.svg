@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.0"
+   width="220"
+   height="240"
+   id="svg1901">
+  <defs
+     id="defs1903">
+    <linearGradient
+       id="linearGradient9488">
+      <stop
+         style="stop-color:#00a607;stop-opacity:1"
+         offset="0"
+         id="stop9490" />
+      <stop
+         style="stop-color:#e6ffb6;stop-opacity:0.15306123"
+         offset="1"
+         id="stop9492" />
+    </linearGradient>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow2Lend">
+      <path
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path3414" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow1Lend">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         id="path3396" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow1Lstart">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         transform="matrix(0.8,0,0,0.8,10,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         id="path3393" />
+    </marker>
+    <radialGradient
+       cx="357.75"
+       cy="307.86218"
+       r="60.25"
+       fx="357.75"
+       fy="307.86218"
+       id="radialGradient9496"
+       xlink:href="#linearGradient9488"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,1.0041494,0,-1.2774364)" />
+  </defs>
+  <g
+     transform="translate(-200.69612,-135.22156)"
+     style="opacity:1"
+     id="layer1">
+    <path
+       d="M 231.01435,247.68671 C 231.07553,211.46155 261.53188,181.42543 297.68454,181.49058 C 334.39231,181.55674 364.82762,212.42052 364.75755,249.05579 C 364.68643,286.24617 333.4152,317.08066 296.29732,317.00569 C 261.92068,316.93625 232.23008,290.42675 227.99999,256.36212"
+       transform="translate(11,11)"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       id="path3603" />
+    <path
+       d="M 223.84656,246.89635 C 224.31823,206.74231 258.40887,173.7812 298.48492,174.25623 C 339.15782,174.73832 372.54387,209.27127 372.05848,249.86619 C 371.56595,291.05796 336.5907,324.86893 295.47691,324.37318 C 287.50361,324.27703 279.55326,322.91767 272.00007,320.36221"
+       transform="translate(11,11)"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       id="path3607" />
+    <path
+       d="M 216.9144,247.3248 C 217.11863,202.82292 254.63438,166.02319 299.05075,166.23166 C 344.12183,166.44321 381.39116,204.44073 381.17544,249.4263 C 381.09143,266.94491 375.3646,284.24054 365.00005,298.36212"
+       transform="translate(11,11)"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       id="path3611" />
+    <path
+       d="M 209.16938,247.53957 C 209.22942,199.34086 249.72606,159.34643 297.83311,159.41128 C 326.17917,159.44949 353.37687,173.41464 369.99985,196.36198"
+       transform="translate(11,11)"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       id="path3613" />
+    <path
+       d="M 201.19997,247.46352 C 200.82462,206.19852 227.90517,168.45573 266.99967,155.36229"
+       transform="translate(11,11)"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       id="path3615" />
+    <text
+       x="250.5"
+       y="162.86218"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8472"
+       xml:space="preserve"><tspan
+         x="250.5"
+         y="162.86218"
+         id="tspan8474">f</tspan></text>
+    <text
+       x="381.5"
+       y="191.86218"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8476"
+       xml:space="preserve"><tspan
+         x="381.5"
+         y="191.86218"
+         id="tspan8478">f</tspan></text>
+    <text
+       x="393"
+       y="314.86218"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8480"
+       xml:space="preserve"><tspan
+         x="393"
+         y="314.86218"
+         id="tspan8482">f</tspan></text>
+    <text
+       x="287"
+       y="365.36218"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8484"
+       xml:space="preserve"><tspan
+         x="287"
+         y="365.36218"
+         id="tspan8486">f</tspan></text>
+    <text
+       x="221.5"
+       y="306.86218"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8488"
+       xml:space="preserve"><tspan
+         x="221.5"
+         y="306.86218"
+         id="tspan8490">f</tspan></text>
+    <text
+       x="394.5"
+       y="179.36218"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8492"
+       xml:space="preserve"><tspan
+         x="394.5"
+         y="179.36218"
+         id="tspan8494">2</tspan></text>
+    <text
+       x="405.5"
+       y="301.86218"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8496"
+       xml:space="preserve"><tspan
+         x="405.5"
+         y="301.86218"
+         id="tspan8498">3</tspan></text>
+    <text
+       x="299.5"
+       y="353.36218"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8500"
+       xml:space="preserve"><tspan
+         x="299.5"
+         y="353.36218"
+         id="tspan8502">4</tspan></text>
+    <text
+       x="234"
+       y="293.86218"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text8504"
+       xml:space="preserve"><tspan
+         x="234"
+         y="293.86218"
+         id="tspan8506">5</tspan></text>
+  </g>
+</svg>

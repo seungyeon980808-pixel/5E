@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 11.0, SVG Export Plug-In  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"    "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg  xmlns="&ns_svg;" xmlns:xlink="&ns_xlink;" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+	 width="802" height="706" viewBox="-0.5 -0.11133 802 706" xml:space="preserve">
+	<defs>
+	</defs>
+	<g>
+		<linearGradient id="XMLID_1_" gradientUnits="userSpaceOnUse" x1="188.85986" y1="122.99707" x2="188.85986" y2="291.65283">
+			<stop  offset="0" style="stop-color:#E19A00"/>
+			<stop  offset="0.16058" style="stop-color:#E09600"/>
+			<stop  offset="0.32205" style="stop-color:#DF8A00"/>
+			<stop  offset="0.48401" style="stop-color:#DC7600"/>
+			<stop  offset="0.64642" style="stop-color:#D95900"/>
+			<stop  offset="0.80913" style="stop-color:#D43500"/>
+			<stop  offset="0.97007" style="stop-color:#CE0900"/>
+			<stop  offset="1" style="stop-color:#CD0000"/>
+			<a:midPointStop  offset="0" style="stop-color:#E19A00"/>
+			<a:midPointStop  offset="0.70621" style="stop-color:#E19A00"/>
+			<a:midPointStop  offset="1" style="stop-color:#CD0000"/>
+		</linearGradient>
+		<path fill="url(#XMLID_1_)" d="M223.69727,190.72461c0-21.354-16.17725-67.72754-35.41797-67.72754
+			c-19.24023,0-34.25684,46.37354-34.25684,67.72754c0,21.35498,15.0166,100.92822,34.25684,100.92822
+			C207.52002,291.65283,223.69727,212.07959,223.69727,190.72461z"/>
+		<path fill="#BA0000" d="M205.11426,248.31543c0-22.1416-7.54834-41.30957-16.52539-41.30957
+			c-8.97656,0-15.9834,19.16797-15.9834,41.30957c0,22.14111,7.00684,49.3374,15.9834,49.3374
+			C197.56592,297.65283,205.11426,270.45654,205.11426,248.31543z"/>
+		<linearGradient id="XMLID_2_" gradientUnits="userSpaceOnUse" x1="612.08008" y1="0" x2="612.08008" y2="282.57422">
+			<stop  offset="0" style="stop-color:#E19A00"/>
+			<stop  offset="0.16058" style="stop-color:#E09600"/>
+			<stop  offset="0.32205" style="stop-color:#DF8A00"/>
+			<stop  offset="0.48401" style="stop-color:#DC7600"/>
+			<stop  offset="0.64642" style="stop-color:#D95900"/>
+			<stop  offset="0.80913" style="stop-color:#D43500"/>
+			<stop  offset="0.97007" style="stop-color:#CE0900"/>
+			<stop  offset="1" style="stop-color:#CD0000"/>
+			<a:midPointStop  offset="0" style="stop-color:#E19A00"/>
+			<a:midPointStop  offset="0.70621" style="stop-color:#E19A00"/>
+			<a:midPointStop  offset="1" style="stop-color:#CD0000"/>
+		</linearGradient>
+		<path fill="url(#XMLID_2_)" d="M532.7793,123.05566C532.7793,54.32861,568.2832,0,612.08008,0
+			s79.30078,54.32861,79.30078,123.05566s-35.50391,159.51855-79.30078,159.51855S532.7793,191.78271,532.7793,123.05566z"/>
+		
+			<rect id="brennerohr_3_" x="172.89893" y="279.57422" fill="#FFFFFF" stroke="#000000" stroke-width="2" width="31.78809" height="224.46094"/> 
+		<rect x="0.5" y="588.48438" fill="#FFFFFF" stroke="#000000" width="111.5" height="26"/> 
+		
+			<rect id="rechteck_ums_oval_3_" x="172.89893" y="504.03516" fill="#FFFFFF" stroke="#000000" width="31.78809" height="53.53906"/> 
+		<path id="oval_3_" fill="#FFFFFF" stroke="#000000" d="M202.14795,547.34766c0,3.31445-2.68652,6-6,6h-14.70947
+			c-3.31348,0-6-2.68555-6-6V514.2627c0-3.31348,2.68652-6,6-6h14.70947c3.31348,0,6,2.68652,6,6V547.34766z"/>
+		<g>
+			<g>
+				<path fill="#FFFFFF" d="M208.58594,578.98438v-21.41016h-12.5v-19.88867H181.5v19.88867H169v21.41016h-6.70703v9.5h-61.05518
+					c0,0-16.90381,0.04492-16.90381,12.81738c0,13.03809,16.90381,13.18262,16.90381,13.18262h61.05518v9.5H169v24.58984h39.58594
+					v-24.58984h6.70703v-45H208.58594z"/>
+			</g>
+			<g>
+				<path fill="none" stroke="#000000" stroke-width="2" d="M208.58594,578.98438v-21.41016h-12.5v-19.88867H181.5v19.88867H169
+					v21.41016h-6.70703v9.5h-61.05518c0,0-16.90381,0.04492-16.90381,12.81738c0,13.03809,16.90381,13.18262,16.90381,13.18262
+					h61.05518v9.5H169v24.58984h39.58594v-24.58984h6.70703v-45H208.58594z"/>
+			</g>
+		</g>
+		<rect x="193.89355" y="598.35449" fill="#FFFFFF" stroke="#000000" width="37.04785" height="6.83984"/> 
+		<rect x="181.45996" y="578.83984" fill="#FFFFFF" stroke="#000000" width="14.54004" height="44.7959"/> 
+		<circle stroke="#000000" cx="188.72998" cy="602.08691" r="12.33301"/> 
+		<rect x="226.875" y="582.52441" fill="#FFFFFF" stroke="#000000" width="8.375" height="38.5"/> 
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="588.32422" x2="235.25" y2="588.32422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="592.07422" x2="235.25" y2="592.07422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="596.94922" x2="235.25" y2="596.94922"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="602.84961" x2="235.25" y2="602.84961"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="608" x2="235.25" y2="608"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="613.25781" x2="235.25" y2="613.25781"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="616.50781" x2="235.25" y2="616.50781"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="618.82422" x2="235.25" y2="618.82422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="226.875" y1="585.25781" x2="235.25" y2="585.25781"/>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="83.29297,683.38867 83.29297,704.88867 294.29297,704.88867 
+			294.29297,683.38867 "/>
+		<polygon fill="#FFFFFF" stroke="#000000" stroke-width="2" points="294.29297,683.38867 209,648.57422 168.5,648.57422 
+			83.29297,683.38867 "/>
+		<g id="rohre_3_">
+			<g>
+				<polygon fill="#FFFFFF" points="186.17383,535.91016 186.17334,598.86523 80,598.86523 80,604.10449 191.4126,604.10449 
+					191.41309,535.91016 "/>
+			</g>
+			<g>
+				<polygon fill="none" stroke="#000000" points="186.17383,535.91016 186.17334,598.86523 80,598.86523 80,604.10449 
+					191.4126,604.10449 191.41309,535.91016 "/>
+			</g>
+		</g>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="159.59814,503.47461 169,503.47461 169,555.39941 "/>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="217.85498,503.5 208.45313,503.5 208.45313,555.42578 "/>
+		
+			<rect id="brennerohr_2_" x="596.3125" y="279.57422" fill="#FFFFFF" stroke="#000000" stroke-width="2" width="31.78906" height="224.46191"/> 
+		<rect x="689" y="588.48438" fill="#FFFFFF" stroke="#000000" width="111.5" height="26"/> 
+		
+			<rect id="rechteck_ums_oval_2_" x="596.3125" y="504.03613" fill="#FFFFFF" stroke="#000000" width="31.78906" height="53.53809"/> 
+		<path id="oval_2_" display="none" fill="#FFFFFF" stroke="#000000" d="M598.85156,547.34766c0,3.31445,2.6875,6,6,6h14.70898
+			c3.31445,0,6-2.68555,6-6V514.2627c0-3.31348-2.68555-6-6-6h-14.70898c-3.3125,0-6,2.68652-6,6V547.34766z"/>
+		<g>
+			<g>
+				<path fill="#FFFFFF" d="M699.76172,588.48438h-61.05469v-9.5H632v-21.41016h-12.5v-19.88867h-14.58594v19.88867h-12.5v21.41016
+					h-6.70703v45h6.70703v24.58984H632v-24.58984h6.70703v-9.5h61.05469c0,0,16.9043-0.14453,16.9043-13.18262
+					C716.66602,588.5293,699.76172,588.48438,699.76172,588.48438z"/>
+			</g>
+			<g>
+				<path fill="none" stroke="#000000" stroke-width="2" d="M699.76172,588.48438h-61.05469v-9.5H632v-21.41016h-12.5v-19.88867
+					h-14.58594v19.88867h-12.5v21.41016h-6.70703v45h6.70703v24.58984H632v-24.58984h6.70703v-9.5h61.05469
+					c0,0,16.9043-0.14453,16.9043-13.18262C716.66602,588.5293,699.76172,588.48438,699.76172,588.48438z"/>
+			</g>
+		</g>
+		<rect x="570.05859" y="598.35449" fill="#FFFFFF" stroke="#000000" width="37.04688" height="6.83984"/> 
+		<rect x="605" y="578.83984" fill="#FFFFFF" stroke="#000000" width="14.53906" height="44.7959"/> 
+		<circle stroke="#000000" cx="612.27051" cy="602.08691" r="12.33301"/> 
+		<rect x="565.75" y="582.52441" fill="#FFFFFF" stroke="#000000" width="8.375" height="38.5"/> 
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="588.32422" x2="565.75" y2="588.32422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="592.07422" x2="565.75" y2="592.07422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="596.94922" x2="565.75" y2="596.94922"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="602.84961" x2="565.75" y2="602.84961"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="608" x2="565.75" y2="608"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="613.25781" x2="565.75" y2="613.25781"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="616.50781" x2="565.75" y2="616.50781"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="618.82422" x2="565.75" y2="618.82422"/>
+		<line fill="#FFFFFF" stroke="#000000" x1="574.125" y1="585.25781" x2="565.75" y2="585.25781"/>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="717.70703,683.38867 717.70703,704.88867 
+			506.70703,704.88867 506.70703,683.38867 "/>
+		<polygon fill="#FFFFFF" stroke="#000000" stroke-width="2" points="506.70703,683.38867 592,648.57422 632.5,648.57422 
+			717.70703,683.38867 "/>
+		<g id="rohre_2_">
+			<g>
+				<polygon fill="#FFFFFF" points="614.82617,598.86523 614.82617,535.91016 609.58594,535.91016 609.58789,604.10449 
+					721,604.10449 721,598.86523 "/>
+			</g>
+			<g>
+				<polygon fill="none" stroke="#000000" points="614.82617,598.86523 614.82617,535.91016 609.58594,535.91016 
+					609.58789,604.10449 721,604.10449 721,598.86523 "/>
+			</g>
+		</g>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="641.40234,503.47363 632,503.47363 632,555.39941 "/>
+		<polyline fill="#FFFFFF" stroke="#000000" stroke-width="2" points="583.14453,503.5 592.54688,503.5 592.54688,555.42578 "/>
+		<line fill="none" stroke="#000000" stroke-width="2" x1="211.50049" y1="391.80469" x2="589.49902" y2="391.80469"/>
+		<circle fill="#FFFFFF" cx="401.36206" cy="391.94531" r="21.25024"/> 
+		<circle fill="#FFFFFF" stroke="#000000" cx="401.3623" cy="391.94531" r="13.37402"/> 
+		<text transform="matrix(1 0 0 1 396.29932 396.88428)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="16">1</tspan></text>
+		<line fill="none" stroke="#000000" stroke-width="2" x1="211.50049" y1="535.88867" x2="589.49902" y2="535.88867"/>
+		<circle fill="#FFFFFF" cx="401.36206" cy="536.52441" r="21.25024"/> 
+		<circle fill="#FFFFFF" stroke="#000000" cx="401.3623" cy="536.52441" r="13.37402"/> 
+		<text transform="matrix(1 0 0 1 396.87939 540.88379)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="16">2</tspan></text>
+		<line fill="none" stroke="#000000" stroke-width="2" x1="240.16699" y1="601.88867" x2="560.83203" y2="601.88867"/>
+		<circle fill="#FFFFFF" cx="401.36206" cy="602.52441" r="21.25024"/> 
+		<circle fill="#FFFFFF" stroke="#000000" cx="401.3623" cy="602.52441" r="13.37402"/> 
+		<text transform="matrix(1 0 0 1 396.87939 606.88379)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="16">3</tspan></text>
+		<circle fill="#FFFFFF" stroke="#000000" cx="46.31641" cy="555.19727" r="13.37402"/> 
+		<text transform="matrix(1 0 0 1 41.8335 559.55664)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="16">4</tspan></text>
+		<circle fill="#FFFFFF" stroke="#000000" cx="757.81543" cy="555.19727" r="13.37402"/> 
+		<text transform="matrix(1 0 0 1 753.33203 559.55664)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="16">4</tspan></text>
+		<line fill="none" stroke="#000000" x1="45.73975" y1="570.63086" x2="45.73975" y2="586.21289"/>
+		<line fill="none" stroke="#000000" x1="757.57324" y1="570.63086" x2="757.57324" y2="586.21289"/>
+	</g>
+</svg>

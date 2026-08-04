@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 578 380" version="1.1">
+	<style type="text/css">
+		circle, ellipse, path, line {stroke-width:2}
+		text {font-family:sans-serif}
+	</style>
+	<circle cx="152" cy="190" r="151" fill="silver" stroke="gray"/>
+	<text x="152" y="198" text-anchor="middle" style="font-size:27px">Föld</text>
+	<circle cx="171" cy="190" r="170" fill="none" stroke="brown"/>
+	<ellipse cx="152" cy="190" rx="151" ry="189" fill="none" stroke="red"/>
+	<path fill="none" stroke="green" d="M 49,31 C 111,-12 342,84 341,190 340,293 107,398 47,349 -14,298 -15,75 49,31 z"/>
+	<line x1="360" x2="416" y1="134" y2="134" stroke="brown"/>
+	<line x1="360" x2="416" y1="190" y2="190" stroke="red"/>
+	<line x1="360" x2="416" y1="246" y2="246" stroke="green"/>
+	<g style="font-size:16px" transform="translate(-20)">
+		<text x="440" y="140">1. módus</text>
+		<text x="440" y="196">2. módus</text>
+		<text x="440" y="252">3. módus</text>
+		<g transform="translate(190) scale(0.75, 1)">
+			<text x="440" y="140">(7,83 Hz)</text>
+			<text x="440" y="196">(14,1 Hz)</text>
+			<text x="440" y="252">(20,3 Hz)</text>
+		</g>
+	</g>
+</svg>

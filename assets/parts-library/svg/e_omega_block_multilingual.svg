@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+   width="139.6mm"
+   height="110.4mm"
+   viewBox="0 0 139.6 110.4"
+   version="1.1"
+   id="svg1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <marker
+       style="overflow:visible"
+       id="ArrowWide"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1;stroke-linecap:butt"
+         d="M 3,-3 0,0 3,3"
+         transform="rotate(180,0.125,0)"
+         id="path4" />
+    </marker>
+  </defs>
+  <g
+     id="layer1"
+     transform="translate(-24.556382,-10.741397)">
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:1.4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1"
+       cx="94.73111"
+       cy="43.220573"
+       r="12.508348" />
+    <switch
+       style="font-size:17.6px;text-align:end;writing-mode:lr-tb;direction:ltr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-opacity:1"
+       id="switch1">
+      <text
+         xml:space="preserve"
+         x="94.73111"
+         y="49.632763"
+         id="text1-fr"
+         systemLanguage="fr"><tspan
+           id="tspan1-fr"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="94.73111"
+           y="49.632763">A</tspan></text>
+      <text
+         xml:space="preserve"
+         x="94.73111"
+         y="49.632763"
+         id="text1-en"
+         systemLanguage="en"><tspan
+           id="tspan1-en"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="94.73111"
+           y="49.632763">H</tspan></text>
+      <text
+         xml:space="preserve"
+         x="94.73111"
+         y="49.632763"
+         id="text1-de"
+         systemLanguage="de"><tspan
+           id="tspan1-de"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="94.73111"
+           y="49.632763">H</tspan></text>
+      <text
+         xml:space="preserve"
+         x="94.73111"
+         y="49.632763"
+         id="text1"><tspan
+           id="tspan1"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="94.73111"
+           y="49.632763">H</tspan></text>
+    </switch>
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:1.4;stroke-dasharray:none;stroke-opacity:1"
+       id="circle1"
+       cx="55.853851"
+       cy="80.020073"
+       r="12.508348" />
+    <switch
+       style="font-size:17.6px;text-align:end;writing-mode:lr-tb;direction:ltr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-opacity:1"
+       id="switch2">
+      <text
+         xml:space="preserve"
+         x="55.51313"
+         y="86.432266"
+         id="text2-fr"
+         systemLanguage="fr"><tspan
+           id="tspan2-fr"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="55.51313"
+           y="86.432266">D</tspan></text>
+      <text
+         xml:space="preserve"
+         x="55.51313"
+         y="86.432266"
+         id="text2-en"
+         systemLanguage="en"><tspan
+           id="tspan2-en"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="55.51313"
+           y="86.432266">L</tspan></text>
+      <text
+         xml:space="preserve"
+         x="55.51313"
+         y="86.432266"
+         id="text2-de"
+         systemLanguage="de"><tspan
+           id="tspan2-de"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="55.51313"
+           y="86.432266">T</tspan></text>
+      <text
+         xml:space="preserve"
+         x="55.51313"
+         y="86.432266"
+         id="text2"><tspan
+           id="tspan2"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="55.51313"
+           y="86.432266">L</tspan></text>
+    </switch>
+    <circle
+       style="fill:none;stroke:#000000;stroke-width:1.4;stroke-dasharray:none;stroke-opacity:1"
+       id="circle2"
+       cx="131.16875"
+       cy="84.718376"
+       r="12.508348" />
+    <switch
+       style="font-size:17.6px;text-align:end;writing-mode:lr-tb;direction:ltr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-opacity:1"
+       id="switch3">
+      <text
+         xml:space="preserve"
+         x="130.82802"
+         y="91.130569"
+         id="text3-fr"
+         systemLanguage="fr"><tspan
+           id="tspan3-fr"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="130.82802"
+           y="91.130569">D</tspan></text>
+      <text
+         xml:space="preserve"
+         x="130.82802"
+         y="91.130569"
+         id="text3-en"
+         systemLanguage="en"><tspan
+           id="tspan3-en"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="130.82802"
+           y="91.130569">L</tspan></text>
+      <text
+         xml:space="preserve"
+         x="130.82802"
+         y="91.130569"
+         id="text3-de"
+         systemLanguage="de"><tspan
+           id="tspan3-de"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="130.82802"
+           y="91.130569">T</tspan></text>
+      <text
+         xml:space="preserve"
+         x="130.82802"
+         y="91.130569"
+         id="text3"><tspan
+           id="tspan3"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.6px;font-family: sans-serif;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+           x="130.82802"
+           y="91.130569">L</tspan></text>
+    </switch>
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 34.901695,74.166102 c 2.861938,11.522583 6.926489,22.191698 19.464406,26.847458 12.265025,4.24087 63.190009,6.0019 77.857629,4.16437 8.24166,-1.26508 17.98292,-3.19527 22.32927,-10.540643"
+       id="path3" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.999999;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWide)"
+       d="M 74.333897,41.469444 C 69.54846,67.126014 91.150128,75.872946 63.930508,97.006061"
+       id="path5" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.999999;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWide)"
+       d="M 115.10847,34.755765 C 111.32329,26.900691 103.90694,21.148463 94.969,20.97147 85.913569,21.118701 79.101058,26.849496 75.172881,34.755765"
+       id="path6" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:0.999999;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#ArrowWide)"
+       d="M 118.3153,97.654711 C 94.207452,73.201316 116.80822,67.313759 115.55225,41.266381"
+       id="path7" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 94.267519,105.45029 2.402665,0.089"
+       id="path8" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 40.124364,88.827328 0.440467,0.692164"
+       id="path9" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="M 77.673672,71.963771 77.547826,71.208685"
+       id="path10" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 109.85912,65.846828 -0.20975,0.545338"
+       id="path11" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 55.428988,67.496593 h -0.53485"
+       id="path12" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 130.63222,72.321415 h -0.409"
+       id="path13" />
+    <path
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#ArrowWide)"
+       d="m 94.669347,30.663637 h 0.409"
+       id="path15" />
+  </g>
+</svg>

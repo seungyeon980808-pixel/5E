@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="828.51794"
+   height="150.51122"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docbase="C:\Documents and Settings\Gibus\Bureau"
+   sodipodi:docname="littoral.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="G:\Wikipédia\littoral.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"
+   version="1.0">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 99.044716 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="681.25012 : 99.044716 : 1"
+       inkscape:persp3d-origin="340.62506 : 66.029811 : 1"
+       id="perspective42" />
+    <linearGradient
+       id="linearGradient4130">
+      <stop
+         style="stop-color:#24aadb;stop-opacity:1;"
+         offset="0"
+         id="stop4132" />
+      <stop
+         style="stop-color:#00ffff;stop-opacity:0;"
+         offset="1"
+         id="stop4134" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4130"
+       id="linearGradient4161"
+       x1="362.64478"
+       y1="265.45334"
+       x2="362.64478"
+       y2="154.47757"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.7469213,90.913731,42.996188)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="424.882"
+     inkscape:cy="71.602391"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1280"
+     inkscape:window-height="750"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Paysage"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-11.924067,-91.198479)">
+    <path
+       style="opacity:1;fill:#fff2a6;fill-opacity:1;fill-rule:evenodd;stroke:#fff2a6;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 382.84782,241.20969 C 382.84782,241.20969 284.37643,226.47625 222.50458,176.97877 C 160.63274,127.4813 112.12693,108.87971 112.12693,108.87971 L 114.14724,241.20969 L 382.84782,241.20969 z"
+       id="path2160"
+       sodipodi:nodetypes="csccc" />
+    <path
+       style="opacity:1;fill:url(#linearGradient4161);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 623.39015,241.42922 C 617.44075,241.52996 383.92496,241.07767 383.92496,241.07767 C 383.92496,241.07767 278.09154,222.5273 222.44902,176.71387 C 173.9398,136.77367 116.45138,109.70524 114.33679,110.17515 C 114.33679,110.17515 546.35126,108.2656 623.39015,108.63643 L 623.39015,241.42922 z"
+       id="path4146"
+       sodipodi:nodetypes="ccscsc" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Légende"
+     transform="translate(-11.924067,-91.198479)"
+     sodipodi:insensitive="true">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.95385742px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 50.49415,117.99552 L 651.28025,117.99552"
+       id="path7096" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.95385742px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 52.178351,140.20754 L 652.96445,140.20754"
+       id="path7102" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.95385742px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 52.178351,186.50879 L 652.96445,186.50879"
+       id="path7104" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.95385742px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 53.301155,213.76899 L 654.08726,213.76899"
+       id="path7106" />
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="11.660395"
+       y="132.0726"
+       id="text7124"><tspan
+         sodipodi:role="line"
+         id="tspan7126"
+         x="11.660395"
+         y="132.0726">supralittoral</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="11.294184"
+       y="167.19688"
+       id="text7128"><tspan
+         sodipodi:role="line"
+         id="tspan7130"
+         x="11.294184"
+         y="167.19688">médiolittoral</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="11.260004"
+       y="202.55222"
+       id="text7132"><tspan
+         sodipodi:role="line"
+         id="tspan7134"
+         x="11.260004"
+         y="202.55222">infralittoral</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="20.203051"
+       y="99.788322"
+       id="text7136"><tspan
+         sodipodi:role="line"
+         id="tspan7138"
+         x="20.203051"
+         y="99.788322"
+         style="font-size:12px">Etages :</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="655.36389"
+       y="118.75768"
+       id="text7140"><tspan
+         sodipodi:role="line"
+         id="tspan7142"
+         x="655.36389"
+         y="118.75768">PMGVE : Pleine Mer de Grande Vive-Eau</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="655.36389"
+       y="143.28831"
+       id="text7144"><tspan
+         sodipodi:role="line"
+         id="tspan7146"
+         x="655.36389"
+         y="143.28831">PMPVE : Pleine Mer de Petite Vive-Eau</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="655.40295"
+       y="188.53326"
+       id="text7148"><tspan
+         sodipodi:role="line"
+         id="tspan7150"
+         x="655.40295"
+         y="188.53326">BMPVE : Basse Mer de Petite Vive-Eau</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="655.40295"
+       y="215.92104"
+       id="text7152"><tspan
+         sodipodi:role="line"
+         id="tspan7154"
+         x="655.40295"
+         y="215.92104">BMGVE : Basse Mer de Grande Vive-Eau</tspan></text>
+  </g>
+</svg>

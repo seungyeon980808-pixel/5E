@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 15.0.2, SVG Export Plug-In  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+]>
+<svg version="1.1"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+	 x="0px" y="0px" width="425px" height="269px" viewBox="1 0.354 425 269"
+	 overflow="visible" enable-background="new 1 0.354 425 269" xml:space="preserve">
+<defs>
+</defs>
+<rect y="213.151" fill="#6DCFF6" width="426.896" height="56.693"/>
+<g>
+	<g>
+		<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="213.698" y1="213.151" x2="319.633" y2="107.217"/>
+		<g>
+			<path d="M323.9,102.949c-1.263,2.753-2.483,6.516-2.681,9.407l-2.146-4.579l-4.579-2.146
+				C317.385,105.433,321.147,104.213,323.9,102.949z"/>
+		</g>
+	</g>
+</g>
+<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="319.633" y1="107.217" x2="425.567" y2="1.282"/>
+<g>
+	<g>
+		<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="0.9" y1="0.354" x2="107.299" y2="106.752"/>
+		<g>
+			<path d="M111.567,111.02c-2.753-1.263-6.516-2.483-9.407-2.681l4.579-2.146l2.146-4.579
+				C109.083,104.505,110.303,108.268,111.567,111.02z"/>
+		</g>
+	</g>
+</g>
+<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="107.299" y1="106.752" x2="213.698" y2="213.151"/>
+<g>
+	<g>
+		<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="213.698" y1="43.651" x2="213.698" y2="45.151"/>
+		
+			<line fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="2.957,2.957" x1="213.698" y1="48.108" x2="213.698" y2="247.708"/>
+		<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="213.698" y1="249.187" x2="213.698" y2="250.687"/>
+	</g>
+</g>
+<g>
+	<g>
+		<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="213.698" y1="213.151" x2="225.671" y2="241.498"/>
+		<g>
+			<path d="M227.432,245.668c-1.557-1.655-3.826-3.564-5.779-4.518l3.787-0.199l2.783-2.576
+				C227.545,240.439,227.331,243.398,227.432,245.668z"/>
+		</g>
+	</g>
+</g>
+<line fill="none" stroke="#000000" stroke-miterlimit="10" x1="225.671" y1="241.498" x2="237.644" y2="269.845"/>
+<path fill="none" stroke="#000000" stroke-miterlimit="10" d="M221.974,232.741c-2.543,1.075-5.34,1.67-8.275,1.67"/>
+<path fill="none" stroke="#000000" stroke-miterlimit="10" d="M198.666,198.119c1.924-1.923,4.214-3.48,6.758-4.556
+	c2.543-1.076,5.34-1.671,8.275-1.671s5.732,0.595,8.275,1.671c2.544,1.076,4.834,2.633,6.758,4.556"/>
+<text transform="matrix(0.7071 0.7071 -0.7071 0.7071 50.1001 40.6514)" font-family="'Helvetica'" font-size="14">Incident ray</text>
+<text transform="matrix(1 0 0 1 191.666 37.687)" font-family="'Helvetica'" font-size="14">Normal</text>
+<text transform="matrix(0.7071 -0.7071 0.7071 0.7071 324.8916 92.687)" font-family="'Helvetica'" font-size="14">Reflected ray</text>
+<text transform="matrix(1 0 0 1 237.6436 250.6865)" font-family="'Helvetica'" font-size="14">Refracted ray</text>
+<text transform="matrix(1 0 0 1 196.666 186.5557)" font-family="'Helvetica-Oblique'" font-size="13">θ</text>
+<text transform="matrix(0.583 0 0 0.583 204.6191 190.8848)" font-family="'Helvetica-Oblique'" font-size="13">i</text>
+<text transform="matrix(1 0 0 1 220.9736 186.5557)" font-family="'Helvetica-Oblique'" font-size="13">θ</text>
+<text transform="matrix(0.583 0 0 0.583 228.9268 190.8848)" font-family="'Helvetica-Oblique'" font-size="13">r</text>
+<text transform="matrix(1 0 0 1 213.8359 252.6865)" font-family="'Helvetica-Oblique'" font-size="13">θ</text>
+<text transform="matrix(0.583 0 0 0.583 221.7891 257.0156)" font-family="'Helvetica-Oblique'" font-size="13">R</text>
+</svg>

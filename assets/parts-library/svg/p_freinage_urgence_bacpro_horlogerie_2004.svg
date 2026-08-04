@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="300.90518"
+   height="69.387062"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   version="1.0"
+   sodipodi:docname="freinage_urgence.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mend"
+       style="overflow:visible">
+      <path
+         id="path3167"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="215.48355"
+     inkscape:cy="48.571428"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="905"
+     inkscape:window-height="667"
+     inkscape:window-x="110"
+     inkscape:window-y="99" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Schéma d'un freinage d'urgence</dc:title>
+        <dc:date>17 mars 2009</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Christophe Dang Ngoc Chan</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/publicdomain/" />
+        <dc:source>Bac pro horlogerie, session 2004, épreuve Mathématiques et sciences physiques</dc:source>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>emergency braking</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(8.203125e-2,-974.92483)">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Mend);stroke-opacity:1"
+       d="M 5,1024.505 L 282.28571,1024.505"
+       id="path2383"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="6.3344803"
+       y="1044.1121"
+       id="text3933"><tspan
+         sodipodi:role="line"
+         id="tspan3935"
+         x="6.3344803"
+         y="1044.1121">A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="265.87762"
+       y="1044.3119"
+       id="text3937"><tspan
+         sodipodi:role="line"
+         id="tspan3939"
+         x="265.87762"
+         y="1044.3119">B</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 12.879445,1018.7746 L 12.879445,1029.8863"
+       id="path3941" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 271.73103,1019.0271 L 271.73103,1030.1388"
+       id="path3943" />
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="-0.73828125"
+       y="994.17688"
+       id="text3945"><tspan
+         sodipodi:role="line"
+         id="tspan3947"
+         x="-0.73828125"
+         y="994.17688"
+         style="font-size:16px"><tspan
+   style="font-size:16px;font-style:italic;-inkscape-font-specification:Times New Roman Italic"
+   id="tspan3949">t</tspan> = 0 s</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="-0.14941406"
+       y="1012.319"
+       id="text3951"><tspan
+         sodipodi:role="line"
+         id="tspan3953"
+         x="-0.14941406"
+         y="1012.319"
+         dy="0 0 -2.5253813 0 0 0 0 -2.5253813"><tspan
+           style="font-size:16px;font-style:italic"
+           id="tspan2404">v</tspan><tspan
+           style="font-size:12px"
+           id="tspan3955"
+           dy="2.5253813">A</tspan><tspan
+           style="font-size:16px"
+           id="tspan2407"> = </tspan><tspan
+           style="font-size:16px;font-style:italic"
+           id="tspan2402">v</tspan><tspan
+           style="font-size:12px"
+           id="tspan3957"
+           dy="2.5253813">0</tspan><tspan
+           style="font-size:16px"
+           id="tspan2405"> = 13,8 m/s</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="234.14346"
+       y="1012.7908"
+       id="text3967"><tspan
+         sodipodi:role="line"
+         id="tspan3969"
+         x="234.14346"
+         y="1012.7908"
+         dy="0 0 -2.5253813"><tspan
+           style="font-size:16px;font-style:italic"
+           id="tspan2406">v</tspan><tspan
+           style="font-size:12px"
+           id="tspan3971"
+           dy="2.5253813">B</tspan><tspan
+           style="font-size:16px"
+           id="tspan2411"> = 0 m/s</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       x="124.28571"
+       y="990.17706"
+       id="text3973"><tspan
+         sodipodi:role="line"
+         id="tspan3975"
+         x="124.28571"
+         y="990.17706"><tspan
+           style="font-size:16px;font-style:italic"
+           id="tspan3979">a</tspan><tspan
+           style="font-size:16px"
+           id="tspan2409"> = -4 m/s</tspan><tspan
+           style="font-size:12px"
+           id="tspan3977"
+           dy="-7.1428576">2</tspan></tspan></text>
+  </g>
+</svg>

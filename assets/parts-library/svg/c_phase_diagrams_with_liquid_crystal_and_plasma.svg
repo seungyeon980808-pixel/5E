@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generator: Adobe Illustrator 13.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 14948)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" id="svg2" sodipodi:version="0.32" sodipodi:modified="true" sodipodi:docname="Phase-diag.svg" inkscape:version="0.48.0 r9654" inkscape:output_extension="org.inkscape.output.svg.inkscape" x="0px" y="0px" width="650px" height="420px" viewBox="0 0 575 443" enable-background="new 0 0 575 443" xml:space="preserve">
+<g id="XMLID_8_">
+	<g>
+		<polygon fill="#FF8080" points="589.893,104 589.893,405 574.893,405 558.893,405 508.893,405 508.893,395 588.623,104   "/>
+		<path fill="#FF8080" d="M588.623,104l-79.73,291c0-161.399,35.779-292,80-292L588.623,104z"/>
+	</g>
+</g>
+<g id="XMLID_5_">
+	<g>
+		<path fill="#FF00FF" d="M508.893,396v9H-5.168v-2.55c0,0,93.801-8.96,149.521-97.33l1.399,0.54    c3.57-10.93,39.46-111.06,158.2-118.02l0.94-0.4h228.039C518.092,240.219,508.893,314.15,508.893,396z"/>
+	</g>
+</g>
+<g id="XMLID_4_">
+	<g>
+		<path fill="#8000FF" d="M589.893,34v70h-1c-21.801,0-41.54,31.73-55.961,83.24H304.893l-0.381-1.24V34H589.893z"/>
+	</g>
+</g>
+<g id="XMLID_6_">
+	<g>
+		
+			<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="395.552" y1="57.0994" x2="395.552" y2="31.0992" gradientTransform="matrix(1 0 0 -1 27.3999 231.0991)">
+			<stop offset="0" style="stop-color:#8000FF"/>
+			<stop offset="1" style="stop-color:#FF00FF"/>
+		</linearGradient>
+		<path fill="url(#SVGID_1_)" d="M311.123,168.99l230.829-10.54c-6.39,16.89-12.06,37.15-16.819,60.07l-216.141-15.3l-5.04-15.58    l0.561-1.641L311.123,168.99z"/>
+	</g>
+</g>
+<g id="XMLID_3_">
+	<g>
+		<path fill="#00FFFF" d="M304.512,34v152l-0.561,1.641c-118.74,6.96-154.629,107.09-158.2,118.02l-2.51-0.649    c-10.939-3.521-20.33-24.75-27.33-57.95C116.803,129.49,157.603,35,207.893,35v-1H304.512z"/>
+	</g>
+</g>
+<g id="XMLID_2_">
+	<g>
+		<path fill="#00FF00" d="M207.893,35v1c-50.29,0-91.09,94.49-91.98,212.061c-10.609-50.261-15.75-127.96-12.54-213.12l1.521,0.06    H207.893z"/>
+	</g>
+</g>
+<path fill="none" stroke="#009600" stroke-width="3.3383" stroke-linecap="round" d="M103.532,29.823  c-5.831,143.155,11.929,266.235,39.707,275.183"/>
+<g id="XMLID_1_">
+	<g>
+		<path fill="#0000FF" d="M142.439,307.248l0.39,0.25c-55.81,87.312-148.8,96.19-148.8,96.19h-1.94V35.238h110l0.521,0.02    C97.168,177.048,114.867,298.368,142.439,307.248z"/>
+	</g>
+</g>
+<sodipodi:namedview height="420px" width="650px" id="base" inkscape:showpageshadow="false" inkscape:current-layer="svg2" inkscape:window-y="-4" inkscape:window-x="-4" inkscape:pageshadow="2" inkscape:window-width="1280" inkscape:pageopacity="0.0" inkscape:window-height="964" inkscape:window-maximized="1" showgrid="false" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" inkscape:cy="284.1908" inkscape:cx="192.32065" inkscape:zoom="1">
+	</sodipodi:namedview>
+<path fill="#0000FF" enable-background="new    " d="M-30.107,1"/>
+<path id="path2332" d="M-11.645,26.516l4.52-12.292l4.521,12.292C-5.274,24.552-8.926,24.564-11.645,26.516z"/>
+<path id="path2329" d="M594.709,399.8L607,404.32l-12.291,4.521C596.672,406.171,596.661,402.519,594.709,399.8z"/>
+<path id="path1308" d="M508.893,404.338"/>
+<path id="path2371" sodipodi:nodetypes="cs" fill="none" stroke="#AF0000" stroke-width="3.3383" stroke-linecap="round" d="  M-5.164,402.454c0,0,93.792-8.969,149.52-97.33"/>
+<path id="path2373" sodipodi:nodetypes="cs" fill="none" stroke="#0000AF" stroke-width="3.3383" stroke-linecap="round" d="  M303.952,187.642c-125.607,7.355-158.504,118.985-158.504,118.985"/>
+<svg:switch><svg:text transform="matrix(1 0 0 1 575.8928 427.9998)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg17-fr" systemLanguage="fr"><svg:tspan id="trsvg1-fr">T</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 575.8928 427.9998)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg17"><tspan id="trsvg1">溫度</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(0 -1 1 0 -19.3855 81.0974)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg18-fr" systemLanguage="fr"><svg:tspan id="trsvg2-fr">P</svg:tspan></svg:text><svg:text transform="matrix(0 -1 1 0 -19.3855 81.0974)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg18"><tspan id="trsvg2">壓力</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 91.2048 322.9988)" fill="#FFFFFF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="14" id="trsvg19-fr" systemLanguage="fr"><svg:tspan id="trsvg3-fr">point triple</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 91.2048 313.9988)" fill="#FFFFFF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="14" id="trsvg19"><tspan id="trsvg3">三相點</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 10.7776 169.1492)" fill="#FFFF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg20-fr" systemLanguage="fr"><svg:tspan id="trsvg4-fr">solide</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 14.7776 169.1492)" fill="#FFFF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg20"><tspan id="trsvg4">固體</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 158.2297 171.864)" fill="#FF0000" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg21-fr" systemLanguage="fr"><svg:tspan id="trsvg5-fr">liquide</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 158.2297 171.864)" fill="#FF0000" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg21"><tspan id="trsvg5">液體</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 207.2712 340.3572)" fill="#00FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg22-fr" systemLanguage="fr"><svg:tspan id="trsvg6-fr">gazeux</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 207.2712 340.3572)" fill="#00FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg22"><tspan id="trsvg6">氣體</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 360.053 108.9585)" fill="#80FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="34.1309" id="trsvg20-fr" systemLanguage="fr"><svg:tspan id="trsvg7-fr">fluide</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 372.053 124.9585)" fill="#80FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="34.1309" id="trsvg20"><tspan id="trsvg7">超臨界流體</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 360.053 138.9585)" fill="#80FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="34.1309" id="trsvg20-fr" systemLanguage="fr"><svg:tspan id="trsvg7-fr">supercritique</svg:tspan></svg:text></svg:switch>
+<line fill="none" stroke="#000000" x1="-7.107" y1="25" x2="-7.107" y2="405"/>
+<path id="path2385" sodipodi:ry="7.601398" sodipodi:rx="7.601398" sodipodi:cy="235.59767" sodipodi:cx="243.06796" sodipodi:type="arc" fill="#AF0000" stroke="#320000" stroke-width="3.06" stroke-linecap="round" stroke-linejoin="round" d="  M150.175,305.723c0,3.43-2.781,6.21-6.212,6.21c-3.43,0-6.21-2.78-6.21-6.21c0-3.432,2.78-6.211,6.21-6.211  C147.394,299.512,150.175,302.293,150.175,305.723z"/>
+<path fill="none" stroke="#AF0000" stroke-width="3.3383" stroke-linecap="round" d="M508.893,396c0-161.397,35.78-292,80-292"/>
+<svg:switch><svg:text transform="matrix(1 0 0 1 104.2297 63.2488)" fill="#FF00FF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="22" id="trsvg24-fr" systemLanguage="fr"><svg:tspan id="trsvg8-fr">cristal</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 104.2297 63.2488)" fill="#FF00FF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg24"><tspan id="trsvg8">液</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 104.2297 96.449)" fill="#FF00FF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="22" id="trsvg25-fr" systemLanguage="fr"><svg:tspan id="trsvg9-fr">liqui de</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 104.2297 106.449)" fill="#FF00FF" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg25"><tspan id="trsvg9">晶</tspan></svg:text></svg:switch>
+<path fill="none" stroke="#009600" stroke-width="3.3383" stroke-linecap="round" d="M116.893,251c0-119.391,41.147-216,92-216"/>
+<line fill="none" x1="300.893" y1="34" x2="589.893" y2="34"/>
+<line fill="none" x1="508.893" y1="424" x2="508.893" y2="331"/>
+<g id="XMLID_7_">
+	<g>
+		
+			<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="290.4924" y1="119.7795" x2="261.4924" y2="119.7795" gradientTransform="matrix(1 0 0 -1 27.3999 231.0991)">
+			<stop offset="0" style="stop-color:#8000FF"/>
+			<stop offset="1" style="stop-color:#00FFFF"/>
+		</linearGradient>
+		<polygon fill="url(#SVGID_2_)" points="330.342,34 319.113,176.2 304.893,188.24 303.952,188.64 284.733,172.69 277.893,34   "/>
+	</g>
+</g>
+<path id="path2387" sodipodi:ry="7.601398" sodipodi:rx="7.601398" sodipodi:cy="235.59767" sodipodi:cx="243.06796" sodipodi:type="arc" fill="#E10000" stroke="#640000" stroke-width="3.06" stroke-linecap="round" stroke-linejoin="round" d="  M310.696,187.913c0,3.43-2.78,6.21-6.21,6.21c-3.431,0-6.211-2.779-6.211-6.21s2.78-6.211,6.211-6.211  C307.915,181.702,310.696,184.482,310.696,187.913z"/>
+<line fill="none" stroke="#000000" x1="-8.107" y1="405" x2="599.893" y2="405"/>
+<svg:switch><svg:text transform="matrix(1 0 0 1 533.7776 263.5339)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg26-fr" systemLanguage="fr"><svg:tspan id="trsvg10-fr"> </svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 533.7776 263.5339)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg26"><tspan id="trsvg10">電</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(0 -1 1 0 558.4915 354.8086)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="34.1309" id="trsvg22-fr" systemLanguage="fr"><svg:tspan id="trsvg9-fr">plasma</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 533.7776 306.7341)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg22"><svg:tspan id="trsvg9">漿</svg:tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 533.7776 349.9333)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg28-fr" systemLanguage="fr"><svg:tspan id="trsvg12-fr"> </svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 533.7776 349.9333)" fill="#008080" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="36" id="trsvg28"><tspan id="trsvg12">體</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 256.5901 179.78)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="14" id="trsvg29-fr" systemLanguage="fr"><svg:tspan id="trsvg13-fr">point critique</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 256.5901 181.78)" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="14" id="trsvg29"><tspan id="trsvg13">臨界點</tspan></svg:text></svg:switch>
+<path id="path3216" fill="none" stroke="#808080" stroke-width="1.875" stroke-dasharray="7.5,7.5" d="M126.893,201.238h114"/>
+<path id="path3216_3_" fill="none" stroke="#A6A6A6" stroke-width="1.875" stroke-dasharray="7.5,7.5" d="M-8.107,201.238h127"/>
+<path id="path3216_4_" fill="none" stroke="#000000" stroke-width="1.875" stroke-dasharray="7.5,7.5" d="M246.893,201.238h356"/>
+<svg:switch><svg:text transform="matrix(1 0 0 1 63.1296 219.8015)" fill="#80FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg30-fr" systemLanguage="fr"><svg:tspan id="trsvg14-fr">fusion</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 73.1296 219.8015)" fill="#80FF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg30"><tspan id="trsvg14">熔點</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 122.1296 220.8015)" fill="#FF7000" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg31-fr" systemLanguage="fr"><svg:tspan id="trsvg15-fr"> </svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 122.1296 220.8015)" fill="#FF7000" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg31"><tspan id="trsvg15">清晰點</tspan></svg:text></svg:switch>
+<svg:switch><svg:text transform="matrix(1 0 0 1 230.1296 220.8015)" fill="#FFFF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg32-fr" systemLanguage="fr"><svg:tspan id="trsvg16-fr">ébullition</svg:tspan></svg:text><svg:text transform="matrix(1 0 0 1 238.1296 220.8015)" fill="#FFFF00" font-family="'AdobeMingStd-Light-B5pc-H'" font-size="18" id="trsvg32"><tspan id="trsvg16">沸點</tspan></svg:text></svg:switch>
+</svg>

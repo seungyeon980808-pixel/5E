@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="88.178574mm"
+   height="32.238094mm"
+   viewBox="0 0 88.178574 32.238094"
+   version="1.1"
+   id="svg8">
+  <defs
+     id="defs2" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(-29.467375,-34.529762)">
+    <rect
+       style="opacity:0.2;fill:none;stroke:#006464;stroke-width:2;stroke-miterlimit:3;stroke-dasharray:none"
+       id="rect10"
+       width="86.178574"
+       height="30.238094"
+       x="30.467375"
+       y="35.529762" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="40.065475"
+       y="55.184521"
+       id="text837"><tspan
+         id="tspan835"
+         x="40.065475"
+         y="55.184521"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583">9.81<tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.46667px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal"
+   id="tspan843"> </tspan>m/s</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:8.46667px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="102.49786"
+       y="49.311226"
+       id="text841"><tspan
+         id="tspan839"
+         x="102.49786"
+         y="49.311226"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:8.46667px;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.264583">2</tspan></text>
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.257204px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 38.001099,55.188809 71.500731,0.541918 v 0 h 0.49826"
+       id="path845" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.257204px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 38.001099,47.303017 71.500731,0.541917 v 0 h 0.49826"
+       id="path845-6" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.257204px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 38.0009,44.128599 71.50073,0.541917 v 0 h 0.49826"
+       id="path845-65" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.283887px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 76.038181,51 v 8"
+       id="path868" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.283887px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 41.132291,51 v 8"
+       id="path868-9" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.283887px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 108.14194,51 v 8"
+       id="path868-1" />
+    <path
+       style="fill:none;stroke:#ff0000;stroke-width:0.283887px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 71.093694,51 v 8.000001"
+       id="path868-8" />
+  </g>
+</svg>

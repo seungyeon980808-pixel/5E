@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="400"
+   height="400">
+   <defs>
+      <marker id="start_arrow" markerUnits="strokeWidth" orient="auto" viewBox="0 0 100 100" markerWidth="5" markerHeight="5" refX="50" refY="50">
+           <path d="m0,50l100,40l-30,-40l30,-40l-100,40z" fill="#00FF00" stroke="#00FF00" stroke-width="10"/>
+      </marker>
+      <marker id="end_arrow" markerUnits="strokeWidth" orient="auto" viewBox="0 0 100 100" markerWidth="5" markerHeight="5" refX="50" refY="50">
+          <path d="m100,50l-100,40l30,-40l-30,-40l100,40z" fill="#00FF00" stroke="#00FF00" stroke-width="10"/>
+      </marker>
+      <radialGradient id="waves" gradientUnits="objectBoundingBox" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#808080" />
+          <stop offset="10%" stop-color="#ffffff" />
+          <stop offset="20%" stop-color="#a0a0a0" />
+          <stop offset="30%" stop-color="#e0e0e0" />
+          <stop offset="40%" stop-color="#b0b0b0" />
+          <stop offset="50%" stop-color="#d6d6d6" />
+          <stop offset="60%" stop-color="#b4b4b4" />
+          <stop offset="70%" stop-color="#d0d0d0" />
+          <stop offset="80%" stop-color="#b6b6b6" />
+          <stop offset="90%" stop-color="#c8c8c8" />
+          <stop offset="100%" stop-color="#b8b8b8" />
+      </radialGradient>
+      <linearGradient id="flow" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ffffff" />
+          <stop offset="100%" stop-color="#cccccc" />
+      </linearGradient>
+      <svg id="window" viewBox="0 0 150 100" width="150" height="100">
+          <path d="m 50 0 a 200 200 45 0,1 -50 90 a 200 200 45 0,0 100 0 a 200 200 45 0,0 50 -90 a 200 200 45 0,1 -100 0"  stroke-width="1" stroke="#ff0000" fill="#f0f0f0" fill-opacity="0.6"/>
+      </svg>
+   </defs>
+  <g id="layer1">
+      <rect id="bg" width="100%" height="100%" stroke="none" fill="none" />
+      <circle r="500" cx ="50.5" cy="50.5" fill="url(#waves)" />
+      <line x1="50.5" y1="50.5" x2="401" y2="350" stroke-width="1" stroke="#ff0000" />
+      <svg id="src" x="40.5" y="40.5" stroke-width="1" stroke="#000000" fill="#ffffff">
+          <circle r="5" cx="10" cy="10" />
+          <path d="M 10 0 L 10 20 M 0 10 L 20 10" />
+      </svg>
+      <use xlink:href="#window" x="290" y="260" transform="scale(.5)"/>
+      <use xlink:href="#window" x="240" y="211"/><!-- 240-145=95 211-130=81 -->
+      <line x1="50.5" y1="50.5" x2="401" y2="285" stroke-width="1" stroke="#ff0000" />
+      <path d="M 50.5 50.5 L 401 516 L 401 216 z" stroke-width="1" stroke="#ff0000" fill="url(#flow)" fill-opacity="0.4" />
+  </g>
+  <g id="lines" font-size="12px" fill="#00FF00" stroke="#00FF00">
+      <!--<line x1="43.5" y1="53.5" x2="3.5" y2="69.5" stroke-dasharray="8 4" /> 5 2
+      <line x1="195.5" y1="155.5" x2="90.5" y2="200.5" stroke-dasharray="8 4" />
+      <line x1="330.5" y1="270.5" x2="150.5" y2="340.5" stroke-dasharray="8 4" /> -->
+      <line x1="13" y1="70" x2="138" y2="177" marker-start="url(#start_arrow)" marker-end="url(#end_arrow)" />
+      <line x1="5" y1="72" x2="265" y2="293" marker-start="url(#start_arrow)" marker-end="url(#end_arrow)" />
+      <line x1="180" y1="135" x2="157" y2="173" marker-start="url(#start_arrow)" marker-end="url(#end_arrow)" />
+      <line x1="302" y1="218" x2="256" y2="300" marker-start="url(#start_arrow)" marker-end="url(#end_arrow)" />
+  </g>
+  <g id="captions" font-size="12px" font-family="serif" font-style="italic" fill="#000000" stroke="none">
+      <text x="58" y="46">S</text>
+      <text x="130" y="42" transform="rotate(40)">d</text>
+      <text x="295" y="50" transform="rotate(40)">
+          <tspan font-family="sans-serif" font-style="normal">2 x </tspan>
+          <tspan>d</tspan>
+      </text>
+      <text x="172" y="158">a</text>
+      <text x="283" y="265">
+          <tspan font-family="sans-serif" font-style="normal">2 x </tspan>
+          <tspan>a</tspan>
+      </text>
+  </g>
+</svg>

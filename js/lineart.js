@@ -23,8 +23,12 @@ export const LINEART_LEVELS = [
 
 const DRAW = "path,circle,ellipse,rect,polygon,polyline,line";
 
+/* `switch` 는 여기 있으면 안 된다. 일러스트레이터 내보내기는 **그림 전체**를
+ * `<switch><g>…</g></switch>` 로 감싸므로, 통째로 지우면 아무것도 안 남는다
+ * (실측: 라이브러리 등록본 31장이 L0 에서도 빈 결과였다). 대신 아래에서 껍데기만 벗긴다.
+ * 진짜 글자 대체물은 `foreignObject` 쪽이다. */
 const DROP_TAGS = [
-  "text", "flowRoot", "switch", "tspan", "textPath", "linearGradient",
+  "text", "flowRoot", "foreignObject", "tspan", "textPath", "linearGradient",
   "radialGradient", "filter", "pattern", "metadata", "title", "desc",
   "style", "image", "mask",
 ];
@@ -144,6 +148,13 @@ export function toLineArt(svgText, opts = {}) {
     const sw = W * (lineMm / targetMm);
 
     /* --- 색·글자·장식 요소 제거 --- */
+    /* `switch` 껍데기 벗기기 — 자식을 제자리에 풀어 놓고 껍데기만 없앤다.
+     * 안쪽부터 처리해야 중첩된 것도 남지 않는다. */
+    const sw2 = [...svg.querySelectorAll("switch")].reverse();
+    for (const el of sw2) {
+      while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+      el.remove();
+    }
     for (const t of DROP_TAGS) svg.querySelectorAll(t).forEach((el) => el.remove());
 
     /* 글자(윤곽선으로 변환된 것) 골라내기 — 작은 것 중 path/polygon 만.

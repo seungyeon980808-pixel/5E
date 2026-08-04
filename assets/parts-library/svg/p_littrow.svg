@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" width="444.05mm" height="325.66mm" viewBox="-161.52 -241.41 444.05 325.66" fill-rule="nonzero" stroke-miterlimit="10" style="font-family: &apos;Times New Roman&apos;; font-weight:normal" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--Created by TpX drawing tool-->
+  <defs/>
+  <rect x="-159.52" y="-89.63" width="108.35" height="108.35" stroke="black" stroke-width="1.20" fill="none"/>
+  <path d="M 57.18,-89.63 A 76.61 76.61 0 0 0 57.29,18.83" stroke="black" stroke-width="1.20" fill="none"/>
+  <path d="M 57.18,18.72 A 76.61 76.61 0 0 0 57.18,-89.63" stroke="black" stroke-width="1.20" fill="none"/>
+  <polyline stroke="black" stroke-width="1.20" stroke-dasharray="1.2,0.5" fill="none" points="171.66,14.63 280.01,-93.72"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="-51.17,-35.46 40.00,-65.00"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="-51.17,-35.46 42.10,-5.11"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="75.00,-65.00 250.00,-65.00"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="74.82,-7.15 193.44,-7.15"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="249.71,-63.53 249.71,-239.41"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="192.89,-6.27 192.89,-239.41"/>
+  <text x="-159.52" y="72.89" font-size="43.34" xml:space="preserve" text-anchor="start" fill="black" font-family="Times New Roman, serif">Diode</text>
+  <text x="3.00" y="72.89" font-size="43.34" xml:space="preserve" text-anchor="start" fill="black" font-family="Times New Roman, serif">Linse</text>
+  <text x="165.52" y="72.89" font-size="43.34" xml:space="preserve" text-anchor="start" fill="black" font-family="Times New Roman, serif">Gitter</text>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="219.70,-89.63 219.70,-197.98"/>
+  <polygon stroke="black" stroke-width="0.60" fill="black" points="219.70,-197.98 219.00,-195.18 219.70,-197.98 220.40,-195.18 219.70,-197.98"/>
+  <polyline stroke="black" stroke-width="0.60" fill="none" points="165.52,-35.46 111.35,-35.46"/>
+  <polygon stroke="black" stroke-width="0.60" fill="black" points="111.35,-35.46 114.15,-34.76 111.35,-35.46 114.15,-36.16 111.35,-35.46"/>
+  <text x="122.19" y="-46.29" font-size="21.67" xml:space="preserve" text-anchor="start" fill="black" font-family="Times New Roman, serif">m=1</text>
+  <text x="198.03" y="-208.81" font-size="21.67" xml:space="preserve" text-anchor="start" fill="black" font-family="Times New Roman, serif">m=0</text>
+  <polyline stroke="black" stroke-width="1.20" fill="none" points="172.01,15.22 280.53,-92.37"/>
+</svg>

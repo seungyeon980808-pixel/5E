@@ -41,10 +41,55 @@ def main():
         print("meta.json 이 없다 — 먼저 만들어야 한다"); return 1
     meta = {m["id"]: m for m in json.loads(meta_path.read_text(encoding="utf-8"))}
 
+    # harvest.json 은 수집기(harvest_parts.py)가 쓴 것 — 기계가 모은 정보.
+    # meta.json 과 겹치면 **사람이 적은 쪽이 이긴다.** 손으로 고친 게 재생성으로 날아가면 안 된다.
+    harvest_path = LIB / "harvest.json"
+    harvest = {}
+    if harvest_path.exists():
+        harvest = {h["id"]: h for h in json.loads(harvest_path.read_text(encoding="utf-8"))}
+
+    # 골라내기(tools/triage) 결과가 있으면 반영한다 — X 한 것, 자동 분류에서 떨어진 것,
+    # 닮은 그림의 대표가 아닌 것을 빼고 만든다. 결과가 없으면 전부 넣는다(예전 그대로).
+    tri = HERE.parent / "_work" / "triage"
+    drop, reason = set(), {}
+    if (tri / "marks.json").exists():
+        for name, m in json.loads((tri / "marks.json").read_text(encoding="utf-8")).items():
+            if m.get("mark") == "X":
+                drop.add(name); reason[name] = "X"
+    if (tri / "clusters.json").exists():
+        cl = json.loads((tri / "clusters.json").read_text(encoding="utf-8"))
+        for lead, members in cl.items():
+            for name in members:
+                if name != lead and name not in drop:
+                    drop.add(name); reason[name] = "중복"
+    if (tri / "grades.json").exists():
+        # 자동 1차 분류에서 A 를 못 받은 것(구조식·회로도·규격기호·색면·너무 단순)은 뺀다
+        for name, g in json.loads((tri / "grades.json").read_text(encoding="utf-8")).items():
+            if g != "A" and name not in drop:
+                drop.add(name); reason[name] = f"{g}등급"
+    if (tri / "scores.json").exists():
+        sc = json.loads((tri / "scores.json").read_text(encoding="utf-8"))
+        for name, v in sc.items():
+            if v.get("fail") and name not in drop:
+                drop.add(name); reason[name] = "안그려짐"
+
+    # 사람이 골라낸 것은 자동 분류를 이긴다 — meta.json 과 같은 원칙이다.
+    # 수집 페이지에서 직접 고른 그림이 "중복"·"F등급" 같은 자동 판정에 걸려 사라지면 안 된다.
+    keep_path = LIB / "keep.json"
+    if keep_path.exists():
+        keep = set(json.loads(keep_path.read_text(encoding="utf-8")))
+        back = drop & keep
+        drop -= keep
+        if back:
+            print(f"  사람이 고른 것 {len(back)}장은 자동 판정을 무시하고 남긴다")
+
     items, missing, orphan = [], [], []
     for f in sorted(SVG_DIR.glob("*.svg")):
         pid = f.stem
-        m = meta.get(pid)
+        if f.name in drop:
+            continue
+        h = harvest.get(pid, {})
+        m = {**h, **meta.get(pid, {})} if (h or pid in meta) else None
         if not m:
             orphan.append(pid)
             continue
@@ -58,6 +103,9 @@ def main():
             "part": m.get("part", "기타"),
             "name": m.get("name", pid),
             "keywords": m.get("keywords", []),
+            # Commons 카테고리 원문. 한글 keywords 와 **함께** 색인해서
+            # 한글로도 영문 카테고리로도 찾히게 한다.
+            "sourceTags": m.get("sourceTags", []),
             "license": m.get("license", "unknown"),
             "source": m.get("source", ""),
             "elements": len(DRAW_RE.findall(text)),   # 복잡도 — 위계 기본값 힌트
@@ -82,6 +130,10 @@ def main():
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
     print(f"manifest {len(items)}건 생성 → assets/parts-library/manifest.json")
+    if drop:
+        import collections as _c
+        why = _c.Counter(reason.values())
+        print(f"  뺀 것 {len(drop)}장 — " + " · ".join(f"{k} {v}" for k, v in why.most_common()))
     by = {}
     for it in items:
         by.setdefault(it["subjectLabel"], []).append(it)

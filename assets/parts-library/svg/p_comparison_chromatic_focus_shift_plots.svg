@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-345 -920 608 608">
+ <title>Comparison of chromatic focus shift plots for visible and near infrared wavelengths of a typical simple lens, achromatic doublet, apochromatic lens and superachromat lens</title>
+ <desc>Comparison of chromatic focus shift plots for visible and near infrared wavelengths of a typical simple lens (1 wavelength with no focus error), achromatic doublet (2 wavelengths), apochromatic lens (3 wavelengths) and superachromat lens (4 wavelengths) by CMG Lee. Data is from http://www.telescope-optics.net/chromatic.htm and http://commons.wikimedia.org/wiki/Chromatic_focus_shift_plots , and background spectrum is from http://commons.wikimedia.org/wiki/File:Linear_visible_spectrum.svg .</desc>
+ <defs>
+  <linearGradient id="grad_spectrum" x1="0%" y1="100%" x2="0%" y2="0%">
+   <stop offset="0.000000" stop-color="#020005"/>
+   <stop offset="0.013514" stop-color="#020006"/>
+   <stop offset="0.027027" stop-color="#030008"/>
+   <stop offset="0.040541" stop-color="#04000a"/>
+   <stop offset="0.054054" stop-color="#06000d"/>
+   <stop offset="0.067568" stop-color="#080110"/>
+   <stop offset="0.081081" stop-color="#0c0117"/>
+   <stop offset="0.094595" stop-color="#11021f"/>
+   <stop offset="0.108108" stop-color="#17032a"/>
+   <stop offset="0.121622" stop-color="#1f053a"/>
+   <stop offset="0.135135" stop-color="#25084b"/>
+   <stop offset="0.148649" stop-color="#290a5c"/>
+   <stop offset="0.162162" stop-color="#2b0e6f"/>
+   <stop offset="0.175676" stop-color="#291380"/>
+   <stop offset="0.189189" stop-color="#1f237b"/>
+   <stop offset="0.202703" stop-color="#132e74"/>
+   <stop offset="0.216216" stop-color="#09376c"/>
+   <stop offset="0.229730" stop-color="#0a3e66"/>
+   <stop offset="0.243243" stop-color="#0c4667"/>
+   <stop offset="0.256757" stop-color="#0e4f6a"/>
+   <stop offset="0.270270" stop-color="#10596c"/>
+   <stop offset="0.283784" stop-color="#11636d"/>
+   <stop offset="0.297297" stop-color="#146e6f"/>
+   <stop offset="0.310811" stop-color="#177970"/>
+   <stop offset="0.324324" stop-color="#178672"/>
+   <stop offset="0.337838" stop-color="#1a9574"/>
+   <stop offset="0.351351" stop-color="#1da375"/>
+   <stop offset="0.364865" stop-color="#1db273"/>
+   <stop offset="0.378378" stop-color="#20c070"/>
+   <stop offset="0.391892" stop-color="#22cb6b"/>
+   <stop offset="0.405405" stop-color="#21d662"/>
+   <stop offset="0.418919" stop-color="#23e054"/>
+   <stop offset="0.432432" stop-color="#36e842"/>
+   <stop offset="0.445946" stop-color="#50ed28"/>
+   <stop offset="0.459459" stop-color="#73eb22"/>
+   <stop offset="0.472973" stop-color="#8fe722"/>
+   <stop offset="0.486486" stop-color="#a5e221"/>
+   <stop offset="0.500000" stop-color="#b9dc22"/>
+   <stop offset="0.513514" stop-color="#cbd621"/>
+   <stop offset="0.527027" stop-color="#dcce20"/>
+   <stop offset="0.540541" stop-color="#ecc420"/>
+   <stop offset="0.554054" stop-color="#f2b735"/>
+   <stop offset="0.567568" stop-color="#f5ab42"/>
+   <stop offset="0.581081" stop-color="#f69f49"/>
+   <stop offset="0.594595" stop-color="#f7944b"/>
+   <stop offset="0.608108" stop-color="#f98848"/>
+   <stop offset="0.621622" stop-color="#fa7b42"/>
+   <stop offset="0.635135" stop-color="#fb6c39"/>
+   <stop offset="0.648649" stop-color="#fd5b2e"/>
+   <stop offset="0.662162" stop-color="#fc471f"/>
+   <stop offset="0.675676" stop-color="#f7300f"/>
+   <stop offset="0.689189" stop-color="#ea220d"/>
+   <stop offset="0.702703" stop-color="#d42215"/>
+   <stop offset="0.716216" stop-color="#bf2318"/>
+   <stop offset="0.729730" stop-color="#a92309"/>
+   <stop offset="0.743243" stop-color="#981f07"/>
+   <stop offset="0.756757" stop-color="#871b06"/>
+   <stop offset="0.770270" stop-color="#771805"/>
+   <stop offset="0.783784" stop-color="#671504"/>
+   <stop offset="0.797297" stop-color="#591303"/>
+   <stop offset="0.810811" stop-color="#4d1103"/>
+   <stop offset="0.824324" stop-color="#420e02"/>
+   <stop offset="0.837838" stop-color="#370c01"/>
+   <stop offset="0.851351" stop-color="#2e0a01"/>
+   <stop offset="0.864865" stop-color="#270801"/>
+   <stop offset="0.878378" stop-color="#210600"/>
+   <stop offset="0.891892" stop-color="#1e0400"/>
+   <stop offset="0.905405" stop-color="#1a0300"/>
+   <stop offset="0.918919" stop-color="#170200"/>
+   <stop offset="0.932432" stop-color="#130100"/>
+   <stop offset="0.945946" stop-color="#100100"/>
+   <stop offset="0.959459" stop-color="#0c0100"/>
+   <stop offset="0.972973" stop-color="#080100"/>
+   <stop offset="0.986486" stop-color="#060100"/>
+   <stop offset="1.000000" stop-color="#040100"/>
+  </linearGradient>
+  <rect id="arena" x="-250" y="-900" width="500" height="500"/>
+  <clipPath id="clip_arena">
+   <use xlink:href="#arena"/>
+  </clipPath>
+  <path id="x_1" d="M 0 -900 V -400"/>
+  <path id="y_1" d="M -250 0 H 250"/>
+  <g id="x_5">
+   <use xlink:href="#x_1" stroke-opacity="0.5"/>
+   <use xlink:href="#x_1" transform="translate(50,0)"/>
+   <use xlink:href="#x_1" transform="translate(100,0)"/>
+   <use xlink:href="#x_1" transform="translate(150,0)"/>
+   <use xlink:href="#x_1" transform="translate(200,0)"/>
+  </g>
+  <g id="y_2">
+   <use xlink:href="#y_1" stroke-opacity="0.5"/>
+   <use xlink:href="#y_1" transform="translate(0,50)"/>
+  </g>
+  <path id="graph_1" d="M 250,-760 Q 105,-520 -130,-400"/>
+  <path id="graph_2" d="M 250,-732 C -60,-650 -112,-610 -112,-555 S -30,-460 250,-464" stroke-dasharray="1,7"/>
+  <path id="graph_3" d="M 110,-900 C 0,-830 -30,-750 0,-650 S 100,-450 -100,-400" stroke-dasharray="9,7"/>
+  <path id="graph_4" d="M -35,-900 C 80,-840 -32,-770 -17,-650 S 60,-490 -25,-400" stroke-dasharray="9,7,1,7"/>
+  <g id="labels">
+   <text x="-245" y="-470" dy="0.7ex" text-anchor="start" fill="#0000ff">1. Simple lens</text>
+   <text x="245"  y="-450" dy="0.7ex" text-anchor="end" fill="#006600">2. Achromat</text>
+   <text x="245"  y="-820" dy="0.7ex" text-anchor="end" fill="#ff9900">3. Apochromat</text>
+   <text x="-245" y="-840" dy="0.7ex" text-anchor="start" fill="#cc0000">4. Superachromat</text>
+  </g>
+ </defs>
+
+ <g id="main" font-family="sans-serif" font-size="32" letter-spacing="-2" text-anchor="middle" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+  <g clip-path="url(#clip_arena)">
+   <use xlink:href="#arena" fill="#000000"/>
+   <rect x="-250" y="-750" width="500" height="370" fill="url(#grad_spectrum)" clip-path="url(#clip_arena)"/>
+   <use xlink:href="#arena" fill="#ffffff" fill-opacity="0.5"/>
+
+   <g stroke-width="8" stroke="#999999" fill="none">
+    <use xlink:href="#graph_1"/>
+    <use xlink:href="#graph_2"/>
+    <use xlink:href="#graph_3"/>
+    <use xlink:href="#graph_4"/>
+   </g>
+   <g stroke-width="4" fill="none">
+    <use xlink:href="#graph_1" stroke="#0000ff"/>
+    <use xlink:href="#graph_2" stroke="#006600"/>
+    <use xlink:href="#graph_3" stroke="#ff9900"/>
+    <use xlink:href="#graph_4" stroke="#cc0000"/>
+   </g>
+
+   <g stroke="#000000" stroke-opacity="0.25">
+    <use xlink:href="#x_1" stroke-opacity="1"/>
+    <use xlink:href="#x_5"/>
+    <use xlink:href="#x_5" transform="translate(-250,0)"/>
+    <use xlink:href="#y_2"/>
+    <use xlink:href="#y_2" transform="translate(0,-900)"/>
+    <use xlink:href="#y_2" transform="translate(0,-800)"/>
+    <use xlink:href="#y_2" transform="translate(0,-700)"/>
+    <use xlink:href="#y_2" transform="translate(0,-600)"/>
+    <use xlink:href="#y_2" transform="translate(0,-500)"/>
+   </g>
+
+   <use xlink:href="#labels" stroke="#999999" stroke-width="4"/>
+   <use xlink:href="#labels" stroke="none"/>
+  </g>
+  <use xlink:href="#arena" stroke="#000000"/>
+  <g stroke="none" fill="#000000">
+   <text x="-280" y="-900" dy="0.7ex">900</text>
+   <text x="-280" y="-800" dy="0.7ex">800</text>
+   <text x="-280" y="-700" dy="0.7ex">700</text>
+   <text x="-280" y="-600" dy="0.7ex">600</text>
+   <text x="-280" y="-500" dy="0.7ex">500</text>
+   <text x="-280" y="-400" dy="0.7ex">400</text>
+   <text transform="translate(-330,-650) rotate(-90)" x="0" y="0" dy="0.7ex">Wavelength (nm)</text>
+   <text x="0" y="-335" dy="0.7ex">Focus error (arbitrary units)</text>
+   <text x="0"    y="-370" dy="0.7ex">0</text>
+   <text x="-250" y="-370" dy="0.7ex">-10</text>
+   <text x="245"  y="-370" dy="0.7ex">10</text>
+   <text x="170"  y="-530" dy="0.7ex" font-style="italic" font-weight="bold">Visible</text>
+   <text x="170"  y="-780" dy="0.7ex" font-style="italic" font-weight="bold">Near IR</text>
+  </g>
+ </g>
+</svg>

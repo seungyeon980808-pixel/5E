@@ -1,0 +1,404 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg1"
+   width="231"
+   height="891"
+   viewBox="0 0 231 891"
+   sodipodi:docname="Moon_pool_diagrams.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showguides="true"
+     inkscape:zoom="1"
+     inkscape:cx="140.5"
+     inkscape:cy="378.5"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <g
+     inkscape:groupmode="layer"
+     inkscape:label="pixel"
+     id="g1" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="vector_sub"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       x="10.759079"
+       y="845"
+       id="text29"><tspan
+         sodipodi:role="line"
+         id="tspan29"
+         x="10.759079"
+         y="845"
+         style="font-size:13.3333px;stroke:none">D) A moon pool below the</tspan><tspan
+         sodipodi:role="line"
+         x="10.759079"
+         y="861.66663"
+         id="tspan30"
+         style="font-size:13.3333px;stroke:none">waterline in a airtight</tspan><tspan
+         sodipodi:role="line"
+         x="10.759079"
+         y="878.33325"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan31">submerged chamber</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="vector_chamber"
+     style="display:inline">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       x="10.775731"
+       y="587.3631"
+       id="text34"><tspan
+         sodipodi:role="line"
+         id="tspan32"
+         x="10.775731"
+         y="587.3631"
+         style="font-size:13.3333px;stroke:none">C) A moon pool below the</tspan><tspan
+         sodipodi:role="line"
+         x="10.775731"
+         y="604.02972"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan34">waterline in a airtight chamber,</tspan><tspan
+         sodipodi:role="line"
+         x="10.775731"
+         y="620.69635"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan35">in a ship or floating structure</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="vector_ship">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       x="10.775735"
+       y="390.1131"
+       id="text38"><tspan
+         sodipodi:role="line"
+         x="10.775735"
+         y="390.1131"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan37">B) An open moon pool at the</tspan><tspan
+         sodipodi:role="line"
+         x="10.775735"
+         y="406.77972"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan39">waterline, in a ship or floating</tspan><tspan
+         sodipodi:role="line"
+         x="10.775735"
+         y="423.44635"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan38">structure</tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="vector _cat">
+    <g
+       id="g48"
+       style="display:inline"
+       transform="translate(0.7335885)">
+      <path
+         style="display:inline;fill:#0000fe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 10.064553,640.78827 v 188.8934 H 219.43496 V 649.21582 c -5.02008,-7.18036 -10.07379,-9.99145 -18.69949,-10.00214 -15.5864,-0.0193 -30.94025,9.69464 -45.57149,9.61129 -9.68121,-0.0552 -17.79312,-8.0625 -27.46956,-8.37131 -12.31926,-0.39315 -23.21687,8.1613 -35.531135,8.16468 -9.539777,0.003 -18.713965,-8.31276 -28.000497,-8.22961 -8.339785,0.0747 -28.382388,8.14455 -35.886974,8.14901 -7.742658,0.005 -18.211261,-7.74947 -18.211261,-7.74947 z"
+         id="path29"
+         sodipodi:nodetypes="ccccssssssc" />
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         id="rect25"
+         width="10.783379"
+         height="36.681164"
+         x="72.21328"
+         y="792.48993" />
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         id="rect26"
+         width="10.783379"
+         height="36.681164"
+         x="144.21327"
+         y="792.48993" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.5;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 127.625,756.1875 c 0,0 0.28114,-5.52703 0.0937,-8.28125 -0.18805,-2.76315 -1.046,-5.4546 -1.21875,-8.21875 -0.17417,-2.78693 -0.29457,-5.62456 0.1875,-8.375 0.39467,-2.25175 1.17361,-4.45106 2.1875,-6.5 1.20447,-2.43407 3.2154,-4.39187 4.5625,-6.75 1.1556,-2.0229 2.37932,-4.067 3,-6.3125 0.697,-2.52158 0.61276,-5.19996 0.75,-7.8125 0.11804,-2.247 0.0937,-4.50012 0.0625,-6.75 -0.0469,-3.37699 -0.0584,-6.76256 -0.375,-10.125 -0.15606,-1.65738 -0.22776,-3.35683 -0.75,-4.9375 -0.61397,-1.85832 -1.72924,-3.51767 -2.75,-5.1875 -1.10025,-1.79987 -2.59359,-3.34731 -3.625,-5.1875 -0.96703,-1.72533 -1.80518,-3.54351 -2.375,-5.4375 -0.52398,-1.7416 -0.81454,-3.56045 -0.9375,-5.375 -0.15081,-2.22562 0.0816,-4.46314 0.25,-6.6875 0.16625,-2.19545 0.75,-6.5625 0.75,-6.5625"
+         id="path26"
+         sodipodi:nodetypes="csssssssssssssssc" />
+      <path
+         style="fill:#804000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 10.53125,829.45581 h 208.93702 v -5.21237 l -9.65577,0.21237 -1.5,-1.1875 -5.75,-0.1875 -1.1875,1.25 -1,-1.375 -0.8125,0.0625 -0.625,-0.5625 -4,0.4375 -1.0625,-0.875 -8.875,-0.25 -1.25,1.4375 -2.5625,-0.125 -0.375,0.9375 -4.8125,0.25 -0.25,0.75 -7.75,-0.0625 -1.3125,0.6875 -3.75,-0.1875 -1.625,1.5 -10,0.125 -0.6875,0.875 -2.375,0.0625 -0.8125,1.0625 -2.1875,-0.9375 -4.25,-0.0625 -1,-1 -1.75,-0.125 -0.6875,-0.8125 -6.1875,-0.125 -0.5,0.9375 -0.75,0.25 -0.3125,1 -1.5625,-0.34375 -0.40625,-0.59375 -0.8125,-0.15625 -0.46875,-1.03125 -0.90625,0.6875 -0.5,-0.53125 -2.3125,-0.78125 -2.125,0.15625 -1.875,0.46875 0.125,-0.6875 -1.375,-0.25 -0.9375,-1.03125 -10.96875,-0.0312 -0.53125,0.96875 -8.59375,-0.0312 -2.09375,1.53125 -10.96875,-0.0312 -1.762876,1.87938 -8.816737,0.17678 -1.082758,-0.61872 -5.590563,0.13259 -0.596621,-0.92808 -4.529903,-0.0442 -0.574524,-1.06066 -15.09231,0.41985 -1.06066,-0.86179 -7.711884,0.57453 -1.06066,-1.17115 -2.519068,0.17678 -0.486136,-1.06066 -20.152543,-0.0221 -2.032932,1.10486 z"
+         id="path24"
+         sodipodi:nodetypes="cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:'Arial Italic';display:inline;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         x="25.584097"
+         y="665.87183"
+         id="text24-0"><tspan
+           sodipodi:role="line"
+           id="tspan24-8"
+           x="25.584097"
+           y="665.87183"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:Arial;fill:#ffffff;fill-opacity:1;stroke:none">air and power</tspan><tspan
+           sodipodi:role="line"
+           x="25.584097"
+           y="680.901"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;font-family:Arial;-inkscape-font-specification:Arial;fill:#ffffff;fill-opacity:1;stroke:none"
+           id="tspan25">supply, etc</tspan></text>
+      <path
+         id="path11-1"
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 103.8402,673.62849 h 16.11329 v 3.02344 l 6.5,-3.1875 -6.5,-3.28125 v 3.01171 H 103.8402 Z" />
+      <path
+         id="path11-3"
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 195.24219,700.61218 v -51.70593 h -3.02344 l 3.1875,-6.5 3.28125,6.5 h -3.01172 v 51.70593 z"
+         sodipodi:nodetypes="cccccccc" />
+      <path
+         id="path25"
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 196.30469,728.40551 v 51.70593 h -3.02344 l 3.1875,6.5 3.28125,-6.5 h -3.01172 v -51.70593 z"
+         sodipodi:nodetypes="cccccccc" />
+      <text
+         xml:space="preserve"
+         style="font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;display:inline;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         x="191.60938"
+         y="718.73175"
+         id="text11-5"><tspan
+           sodipodi:role="line"
+           id="tspan11-0"
+           x="191.60938"
+           y="718.73175"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic'">d</tspan></text>
+      <path
+         style="display:inline;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.5;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 100.03125,786.84375 2.5,2.03125 H 136.5 l 3.78125,-3.03125 H 158.625 V 752.00806 H 68.059027 v 35.88567 z"
+         id="path27" />
+      <path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 138.5,783.8125 v 8.8125 h 24.75 V 747.41187 H 64.081552 v 45.25483 h 35.885669 v -8.83883 H 73.1875 V 756.2949 h 81.09436 v 27.53297 h -15.86571"
+         id="path28" />
+      <path
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:#ffffff;stroke-width:1;stroke-linecap:square;stroke-dasharray:2, 2;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 168.08016,788.5221 h 42.07285"
+         id="path13-3"
+         sodipodi:nodetypes="cc" />
+      <rect
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         id="rect29"
+         width="18.195618"
+         height="8.0413818"
+         x="118.5625"
+         y="639.125"
+         ry="0.53125" />
+    </g>
+    <g
+       id="g47"
+       transform="translate(0.5951765)"
+       style="display:inline">
+      <path
+         style="fill:#0000fe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 10.219617,486.30736 v 85.44471 H 219.59003 v -77.01716 c -5.02008,-7.18036 -10.08771,-10.49211 -18.69949,-10.00214 -13.64186,0.77617 -25.33056,5.28026 -25.33056,5.28026 L 56.716454,486.7917 c -9.62665,1.44547 -20.78099,7.26067 -28.285576,7.26513 -7.742658,0.005 -18.211261,-7.74947 -18.211261,-7.74947 z"
+         id="path8"
+         sodipodi:nodetypes="ccccsccsc" />
+      <path
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 95.826338,559.40936 v -7.36335 h 37.948942 v 7.17532 c 6.11911,0.19576 14.3998,-3.56769 20.00805,-7.42005 7.46312,-5.12649 18.43754,-12.5031 21.96876,-23.24046 0.01,-0.0294 0.0175,-0.0594 0.0288,-0.0882 2.78387,-7.08534 4.02179,-27.34387 1.68199,-39.57777 V 444.04479 H 52.810655 v 44.74488 c -1.768967,13.28816 -2.978189,26.74885 0.854445,39.62751 3.880872,10.74167 14.087227,18.57598 23.635892,24.3624 5.593591,3.24963 11.482832,6.5513 18.525346,6.62978 z"
+         id="path23"
+         sodipodi:nodetypes="ccccsssccccssc" />
+      <path
+         style="display:inline;fill:#fffdfe;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 133.77528,549 v 10.22133 c 6.11911,0.19576 14.66497,-3.03736 20.27322,-6.88972 7.46312,-5.12649 18.17237,-13.03343 21.70359,-23.77079 0.01,-0.0294 0.0175,-0.0594 0.0288,-0.0882 2.78387,-7.08534 4.02179,-27.34387 1.68199,-39.57777 V 444.04479 H 79.94726 m -9.369165,0 h -17.76744 v 44.74488 c -1.768967,13.28816 -2.978189,26.74885 0.854445,39.62751 3.880872,10.74167 14.087227,18.57598 23.635892,24.3624 5.593591,3.24963 11.482832,6.5513 18.525346,6.62978 V 549.0625"
+         id="path7"
+         sodipodi:nodetypes="ccsssccccccsscc" />
+      <text
+         xml:space="preserve"
+         style="font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         x="194.5625"
+         y="523.75"
+         id="text11"><tspan
+           sodipodi:role="line"
+           id="tspan11"
+           x="194.5625"
+           y="523.75"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic'">d</tspan></text>
+      <path
+         id="path11"
+         style="fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 197.30469,531.32422 v 16.11328 h -3.02344 l 3.1875,6.5 3.28125,-6.5 h -3.01172 v -16.11328 z" />
+      <path
+         id="path12"
+         style="fill:#fffdfe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 197.30469,508.88507 v -16.11328 h -3.02344 l 3.1875,-6.5 3.28125,6.5 h -3.01172 v 16.11328 z" />
+      <path
+         id="path12-6"
+         style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 107.25142,509.23165 -13.529295,8.75191 1.642178,2.53859 -7.188924,0.85413 3.675429,-6.28553 1.635813,2.52875 13.529299,-8.75191 z" />
+      <path
+         style="fill:#fffdfe;fill-opacity:1;stroke:#ffffff;stroke-width:1;stroke-linecap:square;stroke-dasharray:2, 2;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 162.59037,553.67533 h 42.07285"
+         id="path13"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 79.875,528.4375 v -5.5625 h 73 V 549 h -19.09972"
+         id="path14"
+         sodipodi:nodetypes="ccccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 79.875,543.75 v 5.3125 h 15.951338"
+         id="path15"
+         sodipodi:nodetypes="ccc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="M 79.875,544.95836 H 70.710678 V 488.875 H 52.6875"
+         id="path16" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="M 79.726289,500.58741 V 488.80966 H 177.57219"
+         id="path17" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 79.875,530.5 v 11.3125"
+         id="path18" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 79.875,530.5 v 11.3125"
+         id="path19"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="M 88.84375,549.0625 V 545.625"
+         id="path20" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="M 88.84375,533.0625 V 543.75"
+         id="path21"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         d="M 88.84375,531.0625 V 522.875"
+         id="path22" />
+      <text
+         xml:space="preserve"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Italic';fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+         x="110.48544"
+         y="509.82401"
+         id="text24"><tspan
+           sodipodi:role="line"
+           id="tspan24"
+           x="110.48544"
+           y="509.82401"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;fill:#000000;fill-opacity:1;stroke:none">air lock</tspan></text>
+    </g>
+    <g
+       id="g46"
+       transform="translate(-2.359307)">
+      <path
+         style="fill:#0000fe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 13.174104,323.20377 v 48.62794 H 222.54451 v -40.20039 c -5.02008,-7.18036 -10.08771,-10.49211 -18.69949,-10.00214 -13.64186,0.77617 -24.54367,4.9167 -37.53598,8.76752 l -29.62771,-4.57748 H 98.515174 c 0,0 -35.529262,-2.62886 -38.844233,-2.13111 -9.62665,1.44547 -20.78099,7.26067 -28.285576,7.26513 -7.742658,0.005 -18.211261,-7.74947 -18.211261,-7.74947 z"
+         id="path4"
+         sodipodi:nodetypes="ccccscccssc" />
+      <path
+         style="fill:#fffdfe;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 55.021257,277.14052 h 37.294338 v 9.00877 h -14.62713 v 27.12315 h 20.72984 v 35.06636 c -12.457259,-0.0144 -31.9495,-15.3902 -37.972417,-23.53902 -2.780774,-3.7623 -6.061415,-14.04961 -5.908973,-22.18286 0.159169,-8.49218 0.484342,-25.4764 0.484342,-25.4764 z"
+         id="path5"
+         sodipodi:nodetypes="cccccccssc" />
+      <path
+         style="fill:#fffdfe;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 111.78615,286.48832 v -9.20249 h 68.15366 c 0.84889,12.35439 3.09749,25.02143 -0.47948,36.49577 -2.08849,6.69956 -5.61792,12.73032 -10.75392,17.46656 -4.46969,4.12179 -22.42004,18.14706 -32.26176,17.60355 v -35.41259 h 21.91882 v -26.98755 z"
+         id="path6"
+         sodipodi:nodetypes="cccssccccc" />
+    </g>
+    <g
+       id="g45"
+       transform="translate(-2.182046)">
+      <path
+         style="fill:#0000fe;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+         d="m 13.259422,130.69096 c 23.553052,16.1295 34.809693,-1.25376 49.111855,-1.50692 16.375758,-0.28986 21.041155,8.3764 32.467252,8.63054 12.135431,0.26991 23.566821,-7.85373 35.755071,-7.67159 11.84922,0.17707 22.67165,8.45826 34.52214,8.49354 13.71168,0.0408 26.27747,-9.69434 40.00184,-9.58948 11.19555,0.0855 16.98709,9.86347 16.98709,9.86347 v 65.75645 H 13.327919 Z"
+         id="path3"
+         sodipodi:nodetypes="cssssscccc" />
+      <g
+         id="g3">
+        <path
+           id="path1"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+           d="m 33.515625,77.882812 c 0,0 -1.768399,10.747486 -1.935547,16.175782 -0.155288,5.043138 0.206606,10.109746 0.871094,15.111326 0.91241,6.86769 2.799874,13.57171 4.261719,20.34375 1.130665,5.23785 2.031321,10.53479 3.488281,15.69141 l 3.123047,8.42969 c -4.58041,3.48533 -7.277011,8.90452 -7.294922,14.66015 -7.6e-5,10.21406 8.280078,18.49422 18.494141,18.49414 10.214063,8e-5 18.494216,-8.28008 18.49414,-18.49414 -0.0024,-5.67166 -2.607058,-11.02863 -7.066406,-14.5332 0.135815,-0.27979 3.668536,-7.55382 5.732422,-11.17188 1.948616,-3.41598 3.653767,-7.06274 6.294922,-9.97656 2.472498,-2.72776 5.454627,-5.07849 8.71875,-6.78125 2.997231,-1.56354 6.345076,-2.49575 9.6875,-3.00195 2.139,-0.32394 6.490234,0 6.490234,0 v -8.81641 H 75.945312 V 87.181641 h 9.007813 v -9.298829 z"
+           sodipodi:nodetypes="csssccccccssssccccccc" />
+        <path
+           id="path2"
+           style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+           d="m 94.738281,78.367188 v 8.814453 h 62.189449 v 26.929689 h -26.05859 v 9.10547 c 18.59602,-0.54623 26.82319,10.92406 33.71094,24.50781 l 3.48047,6.68555 c -4.40879,3.38914 -7.00001,8.62857 -7.01758,14.18945 1.9e-4,9.92455 8.04615,17.96964 17.9707,17.96875 9.92379,-1.9e-4 17.96856,-8.04496 17.96875,-17.96875 -5.6e-4,-5.36561 -2.39889,-10.45024 -6.53906,-13.86328 l 0.14453,-3.47656 c 3.78817,-9.30756 5.84307,-17.29849 7.50781,-25.71875 3.07691,-15.56303 5.2025,-31.282142 1.55078,-47.173832 z"
+           sodipodi:nodetypes="cccccccccccccscc" />
+      </g>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       x="11.096908"
+       y="221.08945"
+       id="text42"><tspan
+         sodipodi:role="line"
+         x="11.096908"
+         y="221.08945"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan40">A) An open moon pool above</tspan><tspan
+         sodipodi:role="line"
+         x="11.096908"
+         y="237.75607"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan42">the waterline, in a catamaran or</tspan><tspan
+         sodipodi:role="line"
+         x="11.096908"
+         y="254.4227"
+         style="font-size:13.3333px;stroke:none"
+         id="tspan43">a semi-submersible platform</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:Arial;display:inline;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:fill markers stroke"
+       x="115.10938"
+       y="25.207001"
+       id="text42-1"><tspan
+         sodipodi:role="line"
+         x="115.10938"
+         y="25.207001"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-align:center;text-anchor:middle;stroke:none"
+         id="tspan42-0">Moon pools in four different</tspan><tspan
+         sodipodi:role="line"
+         x="115.10938"
+         y="41.873627"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-align:center;text-anchor:middle;stroke:none"
+         id="tspan43-2">situations, shown in cross-</tspan><tspan
+         sodipodi:role="line"
+         x="115.10938"
+         y="58.540249"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.3333px;font-family:Arial;-inkscape-font-specification:'Arial Bold';text-align:center;text-anchor:middle;stroke:none"
+         id="tspan45">section</tspan></text>
+  </g>
+</svg>

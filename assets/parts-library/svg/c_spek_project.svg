@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="spek.svg"
+   viewBox="0 0 160 96"
+   height="96"
+   width="160"
+   id="svg2"
+   version="1.1">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6">
+    <filter
+       height="2.4027638"
+       y="-0.70138189"
+       width="2.4027638"
+       x="-0.70138189"
+       id="filter1001"
+       style="color-interpolation-filters:sRGB"
+       inkscape:collect="always">
+      <feGaussianBlur
+         id="feGaussianBlur1003"
+         stdDeviation="4.0772373"
+         inkscape:collect="always" />
+    </filter>
+  </defs>
+  <sodipodi:namedview
+     inkscape:current-layer="g10"
+     inkscape:window-maximized="1"
+     inkscape:window-y="-8"
+     inkscape:window-x="-8"
+     inkscape:cy="58.508656"
+     inkscape:cx="108.85421"
+     inkscape:zoom="4.2573721"
+     showgrid="false"
+     id="namedview4"
+     inkscape:window-height="747"
+     inkscape:window-width="1366"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff" />
+  <g
+     id="g10"
+     inkscape:label="Image"
+     inkscape:groupmode="layer">
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="ellipse1011"
+       cx="-108.78649"
+       cy="69.544342"
+       rx="16.76297"
+       ry="15.629476"
+       transform="matrix(-0.98465822,0.17449411,0.17449411,0.98465822,0,0)" />
+    <ellipse
+       transform="rotate(10.04922)"
+       ry="15.629476"
+       rx="16.76297"
+       cy="42.040691"
+       cx="46.414719"
+       id="path1007"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    <ellipse
+       transform="scale(1,-1)"
+       ry="35.5"
+       rx="44.5"
+       cy="-55"
+       cx="79"
+       id="path14"
+       style="fill:#ffdfc6;fill-opacity:1;stroke:#e9a293;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    <circle
+       r="4.0692039"
+       cy="54.103802"
+       cx="68.6782"
+       id="circle22"
+       style="fill:#a72929;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    <circle
+       style="fill:#a72929;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="circle24"
+       cx="89.107269"
+       cy="54.103802"
+       r="4.0692039" />
+    <path
+       sodipodi:open="true"
+       d="m 65.328344,43.775089 a 2.8027682,1.7439446 0 0 1 2.784448,-1.000286 2.8027682,1.7439446 0 0 1 2.462989,1.285943"
+       sodipodi:arc-type="arc"
+       sodipodi:end="6.0213859"
+       sodipodi:start="3.577925"
+       sodipodi:ry="1.7439446"
+       sodipodi:rx="2.8027682"
+       sodipodi:cy="44.512112"
+       sodipodi:cx="67.868515"
+       sodipodi:type="arc"
+       id="path26"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    <path
+       transform="scale(-1,1)"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="path28"
+       sodipodi:type="arc"
+       sodipodi:cx="-88.904907"
+       sodipodi:cy="44.512112"
+       sodipodi:rx="2.8027682"
+       sodipodi:ry="1.7439446"
+       sodipodi:start="3.577925"
+       sodipodi:end="6.0213859"
+       sodipodi:arc-type="arc"
+       d="m -91.445078,43.775089 a 2.8027682,1.7439446 0 0 1 2.784448,-1.000286 2.8027682,1.7439446 0 0 1 2.462989,1.285943"
+       sodipodi:open="true" />
+    <path
+       sodipodi:open="true"
+       d="m -134.48005,41.062904 a 55.496906,35.98888 0 0 1 27.74846,-31.1672841 55.496906,35.98888 0 0 1 55.496904,0 55.496906,35.98888 0 0 1 27.748453,31.1672841"
+       sodipodi:arc-type="arc"
+       sodipodi:end="0"
+       sodipodi:start="3.1415927"
+       sodipodi:ry="35.98888"
+       sodipodi:rx="55.496906"
+       sodipodi:cy="41.062904"
+       sodipodi:cx="-78.983139"
+       sodipodi:type="arc"
+       id="path30"
+       style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       transform="scale(-1,1)" />
+    <circle
+       r="6.9757786"
+       cy="65.688576"
+       cx="53.397923"
+       id="path32"
+       style="fill:#ffaba0;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;filter:url(#filter1001)" />
+    <circle
+       style="fill:#ffaba0;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;filter:url(#filter1001)"
+       id="circle1005"
+       cx="104.38754"
+       cy="65.688576"
+       r="6.9757786" />
+    <ellipse
+       style="fill:#ffaea2;fill-opacity:1;stroke:#d86b66;stroke-width:0.999999;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="ellipse16"
+       cx="79"
+       cy="-71.5"
+       rx="15.5"
+       ry="13.000002"
+       transform="scale(1,-1)" />
+    <circle
+       r="2.6574392"
+       cy="71.626297"
+       cx="74.117645"
+       id="path18"
+       style="fill:#a72929;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1" />
+    <circle
+       style="fill:#a72929;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="circle20"
+       cx="83.460205"
+       cy="71.626297"
+       r="2.6574392" />
+  </g>
+</svg>

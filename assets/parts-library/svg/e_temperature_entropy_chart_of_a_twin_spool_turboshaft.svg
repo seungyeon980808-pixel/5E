@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="516.42596"
+   height="486.77484"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="ts_twin_spool_turboshaft.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs4">
+    <marker
+       style="overflow:visible"
+       id="DotM"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DotM">
+      <path
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         d="m -2.5,-1 c 0,2.76 -2.24,5 -5,5 -2.76,0 -5,-2.24 -5,-5 0,-2.76 2.24,-5 5,-5 2.76,0 5,2.24 5,5 z"
+         id="path4817"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Mstart"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Mstart">
+      <path
+         transform="scale(0.6,0.6)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path3776"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Arrow2Mstart-6"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Mstart">
+      <path
+         transform="scale(0.6,0.6)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         id="path3776-5"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35355339"
+     inkscape:cx="291.21798"
+     inkscape:cy="392.86187"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1600"
+     inkscape:window-height="868"
+     inkscape:window-x="1280"
+     inkscape:window-y="0"
+     inkscape:showpageshadow="false"
+     inkscape:snap-bbox="true"
+     inkscape:bbox-paths="false"
+     inkscape:bbox-nodes="true"
+     inkscape:object-nodes="true"
+     inkscape:window-maximized="1"
+     inkscape:snap-bbox-edge-midpoints="false"
+     inkscape:snap-bbox-midpoints="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:snap-grids="true"
+     inkscape:snap-to-guides="true"
+     inkscape:object-paths="true"
+     inkscape:snap-global="true"
+     fit-margin-top="50"
+     fit-margin-left="50"
+     fit-margin-right="50"
+     fit-margin-bottom="50"
+     showborder="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-smooth-nodes="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4664"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       originx="-678.30543px"
+       originy="-2591.4737px" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="958.64635,-510.12455"
+       id="guide12112" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="958.64635,-599.78605"
+       id="guide12116" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-585.53483,-2086.2664)">
+    <path
+       inkscape:connector-curvature="0"
+       style="fill:none;stroke:#000000;stroke-width:1.39999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.2, 4.2;stroke-dashoffset:0;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       d="m 910.48722,2302.0964 c -1.7833,-5.245 -3.3829,-9.803 -4.9882,-14.5562 -2.4702,-7.3141 -4.9535,-15.0904 -8.1393,-26.5435"
+       id="use4891"
+       sodipodi:nodetypes="csc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-ydpi="199.88383" />
+    <g
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png"
+       transform="translate(-677.22668,3550.8499)"
+       id="use4893">
+      <text
+         xml:space="preserve"
+         style="font-size:22.17599678px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         x="1712.0336"
+         y="-1028.097"
+         id="text4201"
+         inkscape:export-filename="/home/fetchelavache/tropebil/aero/introduction_vol_spatial/sources/Physique/Gravité, pesanteur/g_variation_lat.png"
+         inkscape:export-xdpi="91.650002"
+         inkscape:export-ydpi="91.650002"><tspan
+           sodipodi:role="line"
+           id="tspan4203"
+           x="1712.0336"
+           y="-1028.097"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">s</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:22.17599678px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+         x="1311.4531"
+         y="-1400.1027"
+         id="text4205"
+         inkscape:export-filename="/home/fetchelavache/tropebil/aero/introduction_vol_spatial/sources/Physique/Gravité, pesanteur/g_variation_lat.png"
+         inkscape:export-xdpi="91.650002"
+         inkscape:export-ydpi="91.650002"><tspan
+           sodipodi:role="line"
+           id="tspan4207"
+           x="1311.4531"
+           y="-1400.1027"
+           style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">T</tspan></text>
+      <path
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#000000;stroke-width:0.68789011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 1338.4259,-1413.3136 0,360.1106"
+         id="path4209" />
+      <path
+         sodipodi:nodetypes="cc"
+         inkscape:connector-curvature="0"
+         style="fill:none;stroke:#000000;stroke-width:0.68789011;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 1729.1798,-1053.203 -390.7539,0"
+         id="path4211" />
+    </g>
+    <path
+       inkscape:connector-curvature="0"
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:none;marker-end:none"
+       d="m 1021.138,2286.2444 c -81.96791,63.7695 -249.31091,119.9601 -340.08021,137.2177"
+       id="use4897"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png" />
+    <path
+       inkscape:connector-curvature="0"
+       id="use4899"
+       d="m 743.13502,2300.1186 c -18.4052,7.5846 -33.0298,13.028 -62.0772,20.8086"
+       style="fill:none;stroke:#000000;stroke-width:1.03183532;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:url(#Arrow2Mstart-6);marker-end:none"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-ydpi="199.88383" />
+    <path
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="cc"
+       id="use4905"
+       d="m 897.35972,2354.038 c 0,-38.3302 0,-54.7111 0,-93.0413"
+       style="fill:none;stroke:#000000;stroke-width:1.39999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-ydpi="199.88383" />
+    <path
+       inkscape:export-ydpi="199.88383"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="csc"
+       id="use4909"
+       d="m 926.95402,2341.5662 c -2.6169,-5.475 -4.6434,-9.6171 -6.3535,-13.2276 -3.9346,-8.3075 -6.1935,-13.8009 -10.1133,-26.2422"
+       style="fill:none;stroke:#000000;stroke-width:1.37578034;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.12734106, 4.12734106;stroke-dashoffset:0;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:connector-curvature="0"
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       style="fill:none;stroke:#000000;stroke-width:1.03183532;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:none;marker-end:none"
+       d="m 838.65549,2316.353 c -39.221,22.3889 -107.2421,50.0608 -157.5977,61.2828"
+       id="use4917"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png" />
+    <path
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="cc"
+       id="use4919"
+       d="m 722.74572,2308.2564 c 0,35.3841 0.1631,21.5398 0.1631,56.9239"
+       style="fill:none;stroke:#000000;stroke-width:1.37578022;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-ydpi="199.88383"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:export-ydpi="199.88383"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="csc"
+       id="use4921"
+       d="m 743.13502,2300.1186 c -5.0698,9.2434 -8.7611,19.0898 -11.7305,29.1901 -3.4679,11.7961 -5.9512,23.9385 -8.4957,35.8716"
+       style="fill:none;stroke:#000000;stroke-width:1.37578034;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.12734106, 4.12734106;stroke-dashoffset:0;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="cc"
+       id="use4923"
+       d="m 702.51952,2372.28 c 0,0 0.1631,46.6604 0.1631,46.6604"
+       style="fill:none;stroke:#000000;stroke-width:1.37578022;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-ydpi="199.88383"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:export-ydpi="199.88383"
+       inkscape:export-xdpi="199.88383"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_twin_spool.png"
+       sodipodi:nodetypes="csc"
+       id="use4925"
+       d="m 722.90882,2365.1803 c -4.3737,5.1622 -8.8494,13.1967 -12.8102,24.5427 -2.8028,8.029 -5.3477,17.7163 -7.416,29.2174"
+       style="fill:none;stroke:#000000;stroke-width:1.37578034;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.12734106, 4.12734106;stroke-dashoffset:0;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:connector-curvature="0" />
+    <text
+       inkscape:export-ydpi="150.02603"
+       inkscape:export-xdpi="150.02603"
+       inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+       id="use3241"
+       y="2454.2683"
+       x="694.64545"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L"
+         y="2454.2683"
+         x="694.64545"
+         id="tspan11827"
+         sodipodi:role="line">A</tspan></text>
+    <text
+       inkscape:export-ydpi="150.02603"
+       inkscape:export-xdpi="150.02603"
+       inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+       xml:space="preserve"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="727.35193"
+       y="2386.1035"
+       id="use3243"><tspan
+         sodipodi:role="line"
+         id="tspan11815"
+         x="727.35193"
+         y="2386.1035"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">B</tspan></text>
+    <text
+       inkscape:export-ydpi="150.02603"
+       inkscape:export-xdpi="150.02603"
+       inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+       xml:space="preserve"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="740.43445"
+       y="2284.6873"
+       id="use3245"><tspan
+         sodipodi:role="line"
+         id="tspan11803"
+         x="740.43445"
+         y="2284.6873"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">C</tspan></text>
+    <text
+       inkscape:export-ydpi="150.02603"
+       inkscape:export-xdpi="150.02603"
+       inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+       xml:space="preserve"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="868.04138"
+       y="2192.7419"
+       id="use3247"><tspan
+         sodipodi:role="line"
+         id="tspan11791"
+         x="868.04138"
+         y="2192.7419"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">D</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1.39999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:url(#Arrow2Mstart-6);marker-end:none"
+       d="m 883.91739,2200.8574 c -23.51,21.5236 -52.1551,45.1232 -77.1653,62.2052 -20.526,14.0193 -42.0469,26.6141 -63.6171,37.056"
+       id="use3888"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-ydpi="199.8837" />
+    <path
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png"
+       sodipodi:nodetypes="ccc"
+       id="use3912"
+       d="m 897.35969,2260.9967 c -2.69,-7.7541 -4.8993,-15.2562 -6.6209,-22.5186 -2.9447,-12.652 -4.9295,-26.6191 -6.8214,-37.6207"
+       style="fill:none;stroke:#000000;stroke-width:1.39999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.2, 4.2;stroke-dashoffset:0;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:none;marker-end:none"
+       d="m 980.2937,2192.9338 c -32.36345,31.4986 -88.12521,76.0002 -134.06522,99.4764"
+       id="use3914"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png"
+       inkscape:connector-curvature="0" />
+    <path
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       style="fill:none;stroke:#000000;stroke-width:1.39999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#DotM);marker-mid:url(#Arrow2Mstart);marker-end:url(#DotM)"
+       d="m 883.91739,2270.138 c 0,-38.3302 0,-31.0605 0,-69.3907"
+       id="use3916"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png"
+       inkscape:connector-curvature="0" />
+    <text
+       id="use3918"
+       y="2242.2632"
+       x="899.2002"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-ydpi="199.8837"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L"
+         y="2242.2632"
+         x="899.2002"
+         id="tspan4285"
+         sodipodi:role="line">E</tspan></text>
+    <text
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png"
+       id="use3920"
+       y="2357.9585"
+       x="936.07642"
+       style="font-size:24.23723793px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L"
+         y="2357.9585"
+         x="936.07642"
+         id="tspan4289"
+         sodipodi:role="line">F</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:none;marker-mid:url(#Arrow2Mstart-6);marker-end:none"
+       d="m 906.6452,2178.9027 c -8.9316,8.9526 -13.5745,13.5748 -22.7278,21.9547"
+       id="use3924"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-ydpi="199.8837" />
+    <text
+       inkscape:export-ydpi="199.8837"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_intercooler_rechauffe.png"
+       transform="matrix(0.69061972,-0.72321809,0.72321809,0.69061972,0,0)"
+       sodipodi:linespacing="125%"
+       id="use3926"
+       y="2172.3318"
+       x="-963.591"
+       style="font-size:40px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L Italic"
+       xml:space="preserve"><tspan
+         style="font-size:16px"
+         y="2172.3318"
+         x="-963.591"
+         id="tspan4421"
+         sodipodi:role="line">p<tspan
+   id="tspan4423"
+   style="font-size:10.40014648px;baseline-shift:sub">D</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:125%;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L Italic"
+       x="-361.97324"
+       y="2496.1453"
+       id="use3936"
+       sodipodi:linespacing="125%"
+       transform="matrix(0.85242796,-0.52284469,0.52284469,0.85242796,0,0)"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/ts_gp_generateur_gaz.png"
+       inkscape:export-xdpi="199.8837"
+       inkscape:export-ydpi="199.8837"><tspan
+         sodipodi:role="line"
+         id="tspan4449"
+         x="-361.97324"
+         y="2496.1453"
+         style="font-size:16px">p<tspan
+   style="font-size:10.40014648px;baseline-shift:sub"
+   id="tspan4451">A</tspan></tspan></text>
+  </g>
+</svg>

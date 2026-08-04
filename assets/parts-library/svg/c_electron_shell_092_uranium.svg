@@ -1,0 +1,120 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg>
+<svg version="1.1" baseProfile="full" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" zoomAndPan="magnify"
+id="Electron shell Uranium"
+viewBox="-1000 -1150 2000 2150"
+width="800"
+height="860">
+<defs>
+<circle id="electron" fill="#77868b" stroke="none" r="30"/>
+</defs>
+
+<circle fill="#f9c" r="200" stroke="#343434" stroke-width="10"/>
+<g font-size="100" font-weight="bold" font="arial">
+<text x="-750" y="-1000" text-anchor="end">92</text>
+<text x="-750" y="-1000">: Uranium</text>
+<text x="900" y="-1000" text-anchor="end">2,8,18,32,21,9,2</text>
+<text x="0" y="50" font-size="150" text-anchor="middle">U</text>
+</g>
+
+<g stroke="#77868b" stroke-width="8" fill="none"><circle id="shell_1" r="300"/>
+<use id="electron_0_shell_1" xlink:href="#electron" y="-300"/>
+<use id="electron_1_shell_1" xlink:href="#electron_0_shell_1" transform="rotate(180)"/>
+<circle id="shell_2" r="400"/>
+<use id="electron_0_shell_2" xlink:href="#electron" y="-400"/>
+<use id="electron_1_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(45)"/>
+<use id="electron_2_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(90)"/>
+<use id="electron_3_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(135)"/>
+<use id="electron_4_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(180)"/>
+<use id="electron_5_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(225)"/>
+<use id="electron_6_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(270)"/>
+<use id="electron_7_shell_2" xlink:href="#electron_0_shell_2" transform="rotate(315)"/>
+<circle id="shell_3" r="500"/>
+<use id="electron_0_shell_3" xlink:href="#electron" y="-500"/>
+<use id="electron_1_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(20)"/>
+<use id="electron_2_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(40)"/>
+<use id="electron_3_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(60)"/>
+<use id="electron_4_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(80)"/>
+<use id="electron_5_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(100)"/>
+<use id="electron_6_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(120)"/>
+<use id="electron_7_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(140)"/>
+<use id="electron_8_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(160)"/>
+<use id="electron_9_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(180)"/>
+<use id="electron_10_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(200)"/>
+<use id="electron_11_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(220)"/>
+<use id="electron_12_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(240)"/>
+<use id="electron_13_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(260)"/>
+<use id="electron_14_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(280)"/>
+<use id="electron_15_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(300)"/>
+<use id="electron_16_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(320)"/>
+<use id="electron_17_shell_3" xlink:href="#electron_0_shell_3" transform="rotate(340)"/>
+<circle id="shell_4" r="600"/>
+<use id="electron_0_shell_4" xlink:href="#electron" y="-600"/>
+<use id="electron_1_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(11.250000)"/>
+<use id="electron_2_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(22.500000)"/>
+<use id="electron_3_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(33.750000)"/>
+<use id="electron_4_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(45.000000)"/>
+<use id="electron_5_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(56.250000)"/>
+<use id="electron_6_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(67.500000)"/>
+<use id="electron_7_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(78.750000)"/>
+<use id="electron_8_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(90.000000)"/>
+<use id="electron_9_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(101.250000)"/>
+<use id="electron_10_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(112.500000)"/>
+<use id="electron_11_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(123.750000)"/>
+<use id="electron_12_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(135.000000)"/>
+<use id="electron_13_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(146.250000)"/>
+<use id="electron_14_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(157.500000)"/>
+<use id="electron_15_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(168.750000)"/>
+<use id="electron_16_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(180.000000)"/>
+<use id="electron_17_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(191.250000)"/>
+<use id="electron_18_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(202.500000)"/>
+<use id="electron_19_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(213.750000)"/>
+<use id="electron_20_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(225.000000)"/>
+<use id="electron_21_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(236.250000)"/>
+<use id="electron_22_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(247.500000)"/>
+<use id="electron_23_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(258.750000)"/>
+<use id="electron_24_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(270.000000)"/>
+<use id="electron_25_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(281.250000)"/>
+<use id="electron_26_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(292.500000)"/>
+<use id="electron_27_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(303.750000)"/>
+<use id="electron_28_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(315.000000)"/>
+<use id="electron_29_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(326.250000)"/>
+<use id="electron_30_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(337.500000)"/>
+<use id="electron_31_shell_4" xlink:href="#electron_0_shell_4" transform="rotate(348.750000)"/>
+<circle id="shell_5" r="700"/>
+<use id="electron_0_shell_5" xlink:href="#electron" y="-700"/>
+<use id="electron_1_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(17.142857)"/>
+<use id="electron_2_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(34.285714)"/>
+<use id="electron_3_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(51.428571)"/>
+<use id="electron_4_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(68.571429)"/>
+<use id="electron_5_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(85.714286)"/>
+<use id="electron_6_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(102.857143)"/>
+<use id="electron_7_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(120.000000)"/>
+<use id="electron_8_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(137.142857)"/>
+<use id="electron_9_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(154.285714)"/>
+<use id="electron_10_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(171.428571)"/>
+<use id="electron_11_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(188.571429)"/>
+<use id="electron_12_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(205.714286)"/>
+<use id="electron_13_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(222.857143)"/>
+<use id="electron_14_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(240.000000)"/>
+<use id="electron_15_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(257.142857)"/>
+<use id="electron_16_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(274.285714)"/>
+<use id="electron_17_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(291.428571)"/>
+<use id="electron_18_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(308.571429)"/>
+<use id="electron_19_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(325.714286)"/>
+<use id="electron_20_shell_5" xlink:href="#electron_0_shell_5" transform="rotate(342.857143)"/>
+<circle id="shell_6" r="800"/>
+<use id="electron_0_shell_6" xlink:href="#electron" y="-800"/>
+<use id="electron_1_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(40)"/>
+<use id="electron_2_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(80)"/>
+<use id="electron_3_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(120)"/>
+<use id="electron_4_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(160)"/>
+<use id="electron_5_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(200)"/>
+<use id="electron_6_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(240)"/>
+<use id="electron_7_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(280)"/>
+<use id="electron_8_shell_6" xlink:href="#electron_0_shell_6" transform="rotate(320)"/>
+<circle id="shell_7" r="900"/>
+<use id="electron_0_shell_7" xlink:href="#electron" y="-900"/>
+<use id="electron_1_shell_7" xlink:href="#electron_0_shell_7" transform="rotate(180)"/>
+</g>
+</svg>

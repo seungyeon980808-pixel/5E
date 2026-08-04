@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg2" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="696" width="1018" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:dc="http://purl.org/dc/elements/1.1/">
+
+ <defs id="defs4">
+
+  <radialGradient id="radialGradient3804" cx="74.29" gradientUnits="userSpaceOnUse" cy="750" r="595.7">
+
+   <stop id="stop3808" stop-color="#5fb9d3" offset="0"/>
+
+   <stop id="stop3810" stop-color="#67d6ff" offset="0.5"/>
+
+   <stop id="stop3812" stop-color="#3564bf" offset="0.6739"/>
+
+   <stop id="stop3816" stop-color="#264583" offset="0.7506"/>
+
+   <stop id="stop3814" stop-color="#000" offset="1"/>
+
+  </radialGradient>
+
+  <marker id="StopLJ" refY="0" refX="0" orient="auto">
+
+   <path id="path5784" d="M0,5.65,0-5.65" transform="scale(0.8,0.8)" stroke="#CCC" stroke-width="1pt" fill="none"/>
+
+  </marker>
+
+  <marker id="StopLs" refY="0" refX="0" orient="auto">
+
+   <path id="path5787" d="M0,5.65,0-5.65" transform="scale(0.8,0.8)" stroke="#CCC" stroke-width="1pt" fill="none"/>
+
+  </marker>
+
+ </defs>
+
+ <metadata id="metadata7">
+
+  <rdf:RDF>
+
+   <cc:Work rdf:about="">
+
+    <dc:format>image/svg+xml</dc:format>
+
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+
+    <dc:title/>
+
+   </cc:Work>
+
+  </rdf:RDF>
+
+ </metadata>
+
+ <g id="layer4" transform="translate(69.71,73.716)">
+
+  <path id="rect3783" fill-rule="nonzero" fill="#000" d="m-69.71-74.29h1018v696.6h-1018v-696.6z"/>
+
+ </g>
+
+ <g id="layer3" transform="translate(69.71,73.716)">
+
+  <path id="path3768" d="m670,750c0,329-266.7,595.7-595.7,595.7s-595.7-266.7-595.7-595.7,266.7-595.7,595.7-595.7c329-0.3,595.7,266.4,595.7,595.4z" fill-rule="nonzero" fill="url(#radialGradient3804)"/>
+
+ </g>
+
+ <g id="layer7" transform="translate(69.71,73.716)">
+
+  <path id="path3849-8-8" style="marker-end:none;marker-start:none;marker-mid:none;" fill-opacity="0.25098" transform="matrix(1.0082,0,0,1.0082,-1.8539,-0.70605)" fill="#CCC" d="m204,303.7c28.35,25.92,48.38,59.66,57.57,96.96l-188.7,46.5z"/>
+
+ </g>
+
+ <g id="layer9" transform="translate(69.71,73.716)">
+
+  <path id="path3849-8-2-0" style="marker-end:url(#StopLs);marker-start:url(#StopLJ);marker-mid:none;" fill-opacity="0.25098" transform="matrix(1.0082,0,0,1.0082,-1.8536,-0.70581)" fill="#333" d="m73.02,252.8c48.48,0,95.2,18.19,131,50.9l-131.1,143.4z"/>
+
+ </g>
+
+ <g id="layer5" transform="translate(69.71,73.716)">
+
+  <path id="path3786" stroke-linejoin="miter" d="m2264-202.9s-692.3,178.5-1851,471.4c-110.6,28-223,55.8-341.6,181.5" stroke="#FF0" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="3" fill="none"/>
+
+  <path id="path3788" stroke-linejoin="miter" d="M592.7-120.4,56.4,466.6" stroke-dashoffset="0" stroke="#FF0" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="12,12" stroke-width="3" fill="none"/>
+
+  <text id="text3790" style="letter-spacing:0px;word-spacing:0px;" font-weight="normal" font-variant="normal" font-size="36px" font-stretch="normal" line-height="125%" font-style="normal" y="-19.428713" x="535.42426" font-family="DejaVu Sans" xml:space="preserve" fill="#ffff00"><tspan id="tspan3792" y="-19.428713" x="535.42426">scheinbare Position</tspan></text>
+
+  <text id="text3794" style="letter-spacing:0px;word-spacing:0px;" font-weight="normal" font-variant="normal" font-size="36px" font-stretch="normal" line-height="125%" font-style="normal" y="101.14286" x="690.28992" font-family="DejaVu Sans" xml:space="preserve" fill="#ffff00"><tspan id="tspan3796" y="101.14286" x="690.28992">tatsächlicher </tspan><tspan id="tspan3798" y="146.14285" x="690.28992">Lichtweg</tspan></text>
+
+ </g>
+
+ <g id="g6340" transform="translate(69.71,73.716)">
+
+  <path id="path6342" style="marker-end:none;marker-start:none;marker-mid:none;" fill-opacity="0.25098" transform="matrix(1.0082,0,0,1.0082,-1.8539,-0.70605)" fill="#FFF" d="m73.76,323.6c56.37,0.42,105.3,38.94,119,93.64l-119.9,29.9z"/>
+
+ </g>
+
+ <g id="layer11" transform="translate(69.71,73.716)">
+
+  <path id="path3786-2" stroke-linejoin="miter" d="m1884-10.71s-692.3,178.5-1851,471.4" stroke="#008000" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="3" fill="none"/>
+
+  <text id="text3840" style="letter-spacing:0px;text-anchor:end;word-spacing:0px;text-align:end;" line-height="125%" font-weight="normal" font-size="36px" font-style="normal" font-stretch="normal" font-variant="normal" y="333.7157" x="924.20087" font-family="DejaVu Sans" xml:space="preserve" fill="#008000"><tspan id="tspan3842" y="333.7157" x="924.20087">reale Position</tspan><tspan id="tspan6378" y="378.7157" x="924.20087">(gerade Linie zum Stern)</tspan></text>
+
+  <path id="path5694" stroke-linejoin="miter" d="m72.73-72.76,0,540.4" stroke="#A40" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="2" fill="none"/>
+
+  <text id="text5696" style="letter-spacing:0px;word-spacing:0px;" font-weight="normal" font-variant="normal" font-size="36px" font-stretch="normal" line-height="125%" font-style="normal" y="-21.000145" x="84.428284" font-family="DejaVu Sans" xml:space="preserve" fill="#d45500"><tspan id="tspan5698" y="-21.000145" x="84.428284">Zenith/Lot</tspan></text>
+
+ </g>
+
+ <g id="layer10" font-size="36px" font-weight="normal" transform="translate(69.71,73.716)" font-style="normal" font-stretch="normal" font-variant="normal" font-family="DejaVu Sans">
+
+  <text id="text3851" style="letter-spacing:0px;word-spacing:0px;" line-height="125%" y="376.49417" x="200.4998" xml:space="preserve" fill="#333333"><tspan id="tspan3853" y="376.49417" x="200.4998">r</tspan></text>
+
+  <text id="text6344" style="letter-spacing:0px;word-spacing:0px;" xml:space="preserve" line-height="125%" y="311.66043" x="121.12187" fill="#cccccc"><tspan id="tspan6346" x="121.12187" y="311.66043">z</tspan></text>
+
+  <text id="text6353" style="letter-spacing:0px;word-spacing:0px;" xml:space="preserve" line-height="125%" y="390.58786" x="113.98029" fill="#000000"><tspan id="tspan6355" x="113.98029" y="390.58786">z'</tspan></text>
+
+ </g>
+
+ <g id="layer6" transform="translate(69.71,73.716)">
+
+  <path id="path3849-8" stroke-linejoin="miter" style="marker-end:none;marker-start:none;marker-mid:none;" fill="none" transform="matrix(1.0082,0,0,1.0082,-1.8514,-0.70888)" stroke-dashoffset="0" stroke="#333" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="1.98373" d="m205.2,303.7c27.81,25.66,47.56,58.86,56.84,95.55"/>
+
+ </g>
+
+ <g id="layer8" transform="translate(69.71,73.716)">
+
+  <path id="path3849-8-2" stroke-linejoin="miter" style="marker-end:none;marker-start:none;marker-mid:none;" fill="none" transform="matrix(1.0082,0,0,1.0082,-1.8539,-0.70605)" stroke-dashoffset="0" stroke="#CCC" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="1.98373" d="m74.28,252c47.9,0.35,94,18.3,129.5,50.44"/>
+
+ </g>
+
+ <g id="g5926" transform="translate(69.71,73.716)">
+
+  <path id="path5928" stroke-linejoin="miter" style="marker-end:none;marker-start:none;marker-mid:none;" d="m73.76,323.6c56.19,0.41,105,38.71,118.8,93.19" transform="matrix(1.0082,0,0,1.0082,-1.8539,-0.70605)" stroke-dashoffset="0" stroke="#000" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="1.98373" fill="none"/>
+
+ </g>
+
+ <g id="layer2" transform="translate(69.71,73.716)">
+
+  <path id="path2997" stroke-linejoin="miter" d="m371.4,750c0,164.9-133.7,298.6-298.6,298.6s-298.6-133.7-298.6-298.6,133.7-298.6,298.6-298.6,298.6,133.7,298.6,298.6z" fill-rule="nonzero" transform="translate(3.4286,0)" stroke="#2b1100" stroke-linecap="butt" stroke-miterlimit="4" stroke-dasharray="none" stroke-width="2.7" fill="#784421"/>
+
+  <text id="text6382" style="letter-spacing:0px;text-anchor:middle;word-spacing:0px;text-align:center;" font-weight="normal" xml:space="preserve" font-size="36px" font-style="normal" font-stretch="normal" font-variant="normal" y="572.284" x="78.803673" font-family="DejaVu Sans" line-height="125%" fill="#917c6f"><tspan id="tspan6386" x="78.803673" y="572.284">Erde</tspan></text>
+
+ </g>
+
+</svg>

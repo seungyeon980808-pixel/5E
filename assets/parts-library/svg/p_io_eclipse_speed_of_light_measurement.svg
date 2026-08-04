@@ -1,0 +1,503 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-200 -1950 7424 3712">
+ <title>Io eclipse speed of light measurement</title>
+ <desc>Illustration of measurement of the speed of light using the eclipse of Io by Jupiter, by CMG Lee. Assumptions: Earth, Jupiter and Io are points and have circular orbits.
+
+  _-"-_ E
+ /    /\-_  d
+/ rE /  \ "-_    Using the cosine rule, d^2 =      rE^2 + rJ^2 - 2 rE rJ cos a
+|   /)a_|_____-_                 Hence, d   = sqrt(rE^2 + rJ^2 - 2 rE rJ cos a)
+\ S     /        J
+ \  |- - rJ - -|
+  "-.-"
+
+ </desc>
+ <defs>
+  <path id="arrowhead" d="M -20,40 Q 0,20 0,0 Q 0,20 20,40 M -40,0 H 40" fill="none"/>
+  <path id="arrow" d="M 0,0 v 150 M -30,50 L 0,0 L 30,50" fill="none"/>
+
+  <g id="plan" stroke-dasharray="20,20">
+   <circle cx="0" cy="0" r="149.6" stroke="#0000ff" fill="none"/>
+   <circle cx="0" cy="0" r="778.3" stroke="#ff0000" fill="none"/>
+   <circle cx="0" cy="0" r="20" fill="#ffcc00"/>
+   <circle cx="778.3" cy="0" r="20" fill="#ff0000"/>
+   <text x="778.3" y="100" fill="#000000">Jupiter</text>
+   <text x="0" y="100" fill="#000000">Sun</text>
+  </g>
+  <circle id="earth" cx="0" cy="0" r="20" fill="#0000ff"/>
+  <text id="earth_label" x="0" y="0" fill="#000000">Earth</text>
+
+  <path id="grid_x_1" d="M 0,0 V -1000"/>
+  <path id="grid_y_1" d="M 0,0 H 7200"/>
+  <g id="grid_x_5">
+   <use xlink:href="#grid_x_1" transform="translate(20,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(40,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(60,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(80,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(100,0)" stroke-opacity="0.3"/>
+  </g>
+  <g id="grid_y_5">
+   <use xlink:href="#grid_y_1" transform="translate(0,0)" stroke-opacity="0.3"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,20)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,40)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,60)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,80)"/>
+  </g>
+  <g id="graph" stroke="#000000">
+   <g stroke-opacity="0.1">
+
+   <use xlink:href="#grid_x_5" transform="translate(0,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(1900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(2900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(3900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(4900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(5900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6100,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6200,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6300,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6400,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6500,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6600,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6700,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6800,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(6900,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(7000,0)"/>
+   <use xlink:href="#grid_x_5" transform="translate(7100,0)"/>
+
+   <use xlink:href="#grid_y_5" transform="translate(0,-100)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-200)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-300)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-400)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-500)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-600)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-700)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-800)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-900)"/>
+   <use xlink:href="#grid_y_5" transform="translate(0,-1000)"/>
+   </g>
+   <use xlink:href="#grid_y_1" stroke="#cc9900"/>
+   <g stroke="none">
+    <g transform="translate(6900,0)" text-anchor="end">
+     <text x="0" y="-830">Jupiter-Sun</text>
+     <text x="0" y="-530">Earth-Jupiter</text>
+     <text x="0" y="-210">Earth-Sun</text>
+    </g>
+    <g transform="translate(0,100)">
+
+   <text x="0" y="0">0</text>
+   <text x="200" y="0">10</text>
+   <text x="400" y="0">20</text>
+   <text x="600" y="0">30</text>
+   <text x="800" y="0">40</text>
+   <text x="1000" y="0">50</text>
+   <text x="1200" y="0">60</text>
+   <text x="1400" y="0">70</text>
+   <text x="1600" y="0">80</text>
+   <text x="1800" y="0">90</text>
+   <text x="2000" y="0">100</text>
+   <text x="2200" y="0">110</text>
+   <text x="2400" y="0">120</text>
+   <text x="2600" y="0">130</text>
+   <text x="2800" y="0">140</text>
+   <text x="3000" y="0">150</text>
+   <text x="3200" y="0">160</text>
+   <text x="3400" y="0">170</text>
+   <text x="3600" y="0">180</text>
+   <text x="3800" y="0">190</text>
+   <text x="4000" y="0">200</text>
+   <text x="4200" y="0">210</text>
+   <text x="4400" y="0">220</text>
+   <text x="4600" y="0">230</text>
+   <text x="4800" y="0">240</text>
+   <text x="5000" y="0">250</text>
+   <text x="5200" y="0">260</text>
+   <text x="5400" y="0">270</text>
+   <text x="5600" y="0">280</text>
+   <text x="5800" y="0">290</text>
+   <text x="6000" y="0">300</text>
+   <text x="6200" y="0">310</text>
+   <text x="6400" y="0">320</text>
+   <text x="6600" y="0">330</text>
+   <text x="6800" y="0">340</text>
+   <text x="7000" y="0">350</text>
+     <text x="3600" y="120">Angle swept by Earth-Sun line relative to Jupiter-Sun line in degrees</text>
+    </g>
+    <g transform="translate(-100,30)">
+
+   <text x="0" y="-100">100</text>
+   <text x="0" y="-200">200</text>
+   <text x="0" y="-300">300</text>
+   <text x="0" y="-400">400</text>
+   <text x="0" y="-500">500</text>
+   <text x="0" y="-600">600</text>
+   <text x="0" y="-700">700</text>
+   <text x="0" y="-800">800</text>
+   <text x="0" y="-900">900</text>
+   <text x="0" y="-1000">1000</text>
+     <text x="0" y="0">0</text>
+     <text x="-90" y="-1120" text-anchor="start">Distance in million km</text>
+    </g>
+   </g>
+   <g stroke-width="10">
+    <g transform="translate(0,20) scale(1,1.05)" stroke="#00cc00">
+     <use xlink:href="#grid_x_1"/>
+     <use xlink:href="#grid_x_1" transform="translate(1800,0)"/>
+     <use xlink:href="#grid_x_1" transform="translate(3600,0)"/>
+     <use xlink:href="#grid_x_1" transform="translate(5400,0)"/>
+    </g>
+    <path d="M 0,-149.6 H 7200" stroke="#0000ff"/>
+    <path d="M 0,-778.3 H 7200" stroke="#ff0000"/>
+    <path d="M 0,-628 L 34,-628 L 69,-629 L 104,-629 L 139,-630 L 174,-630 L 209,-631 L 244,-632 L 278,-634 L 313,-635 L 348,-637 L 383,-638 L 418,-640 L 453,-642 L 488,-645 L 523,-647 L 557,-649 L 592,-652 L 627,-655 L 662,-658 L 697,-661 L 732,-664 L 767,-667 L 802,-670 L 836,-674 L 871,-677 L 906,-681 L 941,-685 L 976,-689 L 1011,-692 L 1046,-696 L 1081,-701 L 1115,-705 L 1150,-709 L 1185,-713 L 1220,-717 L 1255,-722 L 1290,-726 L 1325,-731 L 1360,-735 L 1394,-739 L 1429,-744 L 1464,-748 L 1499,-753 L 1534,-758 L 1569,-762 L 1604,-767 L 1638,-771 L 1673,-776 L 1708,-780 L 1743,-785 L 1778,-789 L 1813,-794 L 1848,-798 L 1883,-803 L 1917,-807 L 1952,-811 L 1987,-816 L 2022,-820 L 2057,-824 L 2092,-828 L 2127,-832 L 2162,-836 L 2196,-840 L 2231,-844 L 2266,-848 L 2301,-852 L 2336,-856 L 2371,-859 L 2406,-863 L 2441,-867 L 2475,-870 L 2510,-873 L 2545,-877 L 2580,-880 L 2615,-883 L 2650,-886 L 2685,-889 L 2720,-891 L 2754,-894 L 2789,-897 L 2824,-899 L 2859,-902 L 2894,-904 L 2929,-906 L 2964,-908 L 2999,-910 L 3033,-912 L 3068,-914 L 3103,-916 L 3138,-917 L 3173,-919 L 3208,-920 L 3243,-921 L 3277,-922 L 3312,-923 L 3347,-924 L 3382,-925 L 3417,-926 L 3452,-926 L 3487,-927 L 3522,-927 L 3556,-927 L 3591,-927 L 3626,-927 L 3661,-927 L 3696,-927 L 3731,-927 L 3766,-926 L 3801,-925 L 3835,-925 L 3870,-924 L 3905,-923 L 3940,-922 L 3975,-921 L 4010,-919 L 4045,-918 L 4080,-916 L 4114,-915 L 4149,-913 L 4184,-911 L 4219,-909 L 4254,-907 L 4289,-905 L 4324,-903 L 4359,-900 L 4393,-898 L 4428,-895 L 4463,-893 L 4498,-890 L 4533,-887 L 4568,-884 L 4603,-881 L 4638,-878 L 4672,-875 L 4707,-872 L 4742,-868 L 4777,-865 L 4812,-861 L 4847,-857 L 4882,-854 L 4916,-850 L 4951,-846 L 4986,-842 L 5021,-838 L 5056,-834 L 5091,-830 L 5126,-826 L 5161,-822 L 5195,-818 L 5230,-813 L 5265,-809 L 5300,-805 L 5335,-800 L 5370,-796 L 5405,-791 L 5440,-787 L 5474,-782 L 5509,-778 L 5544,-773 L 5579,-769 L 5614,-764 L 5649,-760 L 5684,-755 L 5719,-751 L 5753,-746 L 5788,-742 L 5823,-737 L 5858,-733 L 5893,-728 L 5928,-724 L 5963,-719 L 5998,-715 L 6032,-711 L 6067,-707 L 6102,-702 L 6137,-698 L 6172,-694 L 6207,-690 L 6242,-687 L 6276,-683 L 6311,-679 L 6346,-675 L 6381,-672 L 6416,-669 L 6451,-665 L 6486,-662 L 6521,-659 L 6555,-656 L 6590,-653 L 6625,-651 L 6660,-648 L 6695,-646 L 6730,-643 L 6765,-641 L 6800,-639 L 6834,-637 L 6869,-636 L 6904,-634 L 6939,-633 L 6974,-632 L 7009,-631 L 7044,-630 L 7079,-629 L 7113,-629 L 7148,-628 L 7183,-628 L 7218,-628" stroke="#000000" fill="none"/>
+   </g>
+  </g>
+ </defs>
+
+ <g font-family="sans-serif" font-size="80" letter-spacing="-2" text-anchor="middle" stroke-width="5" stroke-linejoin="round">
+  <rect x="-999" y="-4999" width="9999" height="9999" fill="#ffffff"/>
+
+  <g text-anchor="end">
+   <text x="7200" y="-1850">Diameters not to scale</text>
+   <text x="7200" y="-1750">Orbits to scale</text>
+  </g>
+  <g transform="translate(600,-1100)">
+   <g>
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth" transform="translate(149.6,0)"/>
+    <use xlink:href="#earth_label" transform="translate(149.6,-50)"/>
+    <path d="M 149.6,0 L 778.3,0" stroke="#000000"/>
+   </g>
+   <g transform="translate(1800,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth" transform="translate(0,-149.6)"/>
+    <use xlink:href="#earth_label" transform="translate(0,-200)"/>
+    <path d="M 0,-149.6 L 778.3,0" stroke="#000000"/>
+   </g>
+   <g transform="translate(3600,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth" transform="translate(-149.6,0)"/>
+    <use xlink:href="#earth_label" transform="translate(-149.6,-50)"/>
+    <path d="M -149.6,0 L 778.3,0" stroke="#000000"/>
+   </g>
+   <g transform="translate(5400,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth" transform="translate(0,149.6)"/>
+    <use xlink:href="#earth_label" transform="translate(0,250)"/>
+    <path d="M 0,149.6 L 778.3,0" stroke="#000000"/>
+   </g>
+  </g>
+
+  <g transform="translate(0,-180) scale(1,-2.5)" stroke="#00cc00" stroke-width="10">
+   <use xlink:href="#arrow"/>
+   <use xlink:href="#arrow" transform="translate(1800,0)"/>
+   <use xlink:href="#arrow" transform="translate(3600,0)"/>
+   <use xlink:href="#arrow" transform="translate(5400,0)"/>
+  </g>
+
+  <g>
+   <g stroke="none">
+    <text x="7000" y="-400" text-anchor="end">Time</text>
+    <text x="7200" y="-230" text-anchor="end">Time of eclipse if observed from Sun</text>
+    <text x="7200" y="160" text-anchor="end">Time of eclipse observed from Earth</text>
+    <text x="-100" y="160" text-anchor="start">−8 min 19 s (drawn exaggerated 200×)</text>
+    <text x="3000" y="160">      +8 min 19 s (drawn exaggerated 200×)</text>
+    <text x="5000" y="160">1.769 days (Io's orbital period)</text>
+    <text x="3600" y="350">Approximately 1 year (time between smallest Earth-Jupiter distances)</text>
+   </g>
+   <g stroke="#000000">
+    <use xlink:href="#arrow" transform="translate(7180,-430) rotate(90)"/>
+    <path d="M 7160,0 L 7100,90 M 7183,-150 L 7100,-220"/>
+    <path d="M -22, 50 h -100 M 0,   50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(-22, 50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(0,   50) rotate(-90)"/>
+    <path d="M 3591,50 h -100 M 3614,50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(3591,50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(3614,50) rotate(-90)"/>
+    <path d="M 5440,50 h -100 M 5474,50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(5440,50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(5474,50) rotate(-90)"/>
+    <path d="M 0,250 H 7200"/>
+    <use xlink:href="#arrowhead" transform="translate(0,   250) rotate(-90)"/>
+    <use xlink:href="#arrowhead" transform="translate(7200,250) rotate(90)"/>
+   </g>
+   <path d="M 0,0 V -150 M 34,0 V -150 M 69,0 V -150 M 104,0 V -150 M 139,0 V -150 M 174,0 V -150 M 209,0 V -150 M 244,0 V -150 M 278,0 V -150 M 313,0 V -150 M 348,0 V -150 M 383,0 V -150 M 418,0 V -150 M 453,0 V -150 M 488,0 V -150 M 523,0 V -150 M 557,0 V -150 M 592,0 V -150 M 627,0 V -150 M 662,0 V -150 M 697,0 V -150 M 732,0 V -150 M 767,0 V -150 M 802,0 V -150 M 836,0 V -150 M 871,0 V -150 M 906,0 V -150 M 941,0 V -150 M 976,0 V -150 M 1011,0 V -150 M 1046,0 V -150 M 1081,0 V -150 M 1115,0 V -150 M 1150,0 V -150 M 1185,0 V -150 M 1220,0 V -150 M 1255,0 V -150 M 1290,0 V -150 M 1325,0 V -150 M 1360,0 V -150 M 1394,0 V -150 M 1429,0 V -150 M 1464,0 V -150 M 1499,0 V -150 M 1534,0 V -150 M 1569,0 V -150 M 1604,0 V -150 M 1638,0 V -150 M 1673,0 V -150 M 1708,0 V -150 M 1743,0 V -150 M 1778,0 V -150 M 1813,0 V -150 M 1848,0 V -150 M 1883,0 V -150 M 1917,0 V -150 M 1952,0 V -150 M 1987,0 V -150 M 2022,0 V -150 M 2057,0 V -150 M 2092,0 V -150 M 2127,0 V -150 M 2162,0 V -150 M 2196,0 V -150 M 2231,0 V -150 M 2266,0 V -150 M 2301,0 V -150 M 2336,0 V -150 M 2371,0 V -150 M 2406,0 V -150 M 2441,0 V -150 M 2475,0 V -150 M 2510,0 V -150 M 2545,0 V -150 M 2580,0 V -150 M 2615,0 V -150 M 2650,0 V -150 M 2685,0 V -150 M 2720,0 V -150 M 2754,0 V -150 M 2789,0 V -150 M 2824,0 V -150 M 2859,0 V -150 M 2894,0 V -150 M 2929,0 V -150 M 2964,0 V -150 M 2999,0 V -150 M 3033,0 V -150 M 3068,0 V -150 M 3103,0 V -150 M 3138,0 V -150 M 3173,0 V -150 M 3208,0 V -150 M 3243,0 V -150 M 3277,0 V -150 M 3312,0 V -150 M 3347,0 V -150 M 3382,0 V -150 M 3417,0 V -150 M 3452,0 V -150 M 3487,0 V -150 M 3522,0 V -150 M 3556,0 V -150 M 3591,0 V -150 M 3626,0 V -150 M 3661,0 V -150 M 3696,0 V -150 M 3731,0 V -150 M 3766,0 V -150 M 3801,0 V -150 M 3835,0 V -150 M 3870,0 V -150 M 3905,0 V -150 M 3940,0 V -150 M 3975,0 V -150 M 4010,0 V -150 M 4045,0 V -150 M 4080,0 V -150 M 4114,0 V -150 M 4149,0 V -150 M 4184,0 V -150 M 4219,0 V -150 M 4254,0 V -150 M 4289,0 V -150 M 4324,0 V -150 M 4359,0 V -150 M 4393,0 V -150 M 4428,0 V -150 M 4463,0 V -150 M 4498,0 V -150 M 4533,0 V -150 M 4568,0 V -150 M 4603,0 V -150 M 4638,0 V -150 M 4672,0 V -150 M 4707,0 V -150 M 4742,0 V -150 M 4777,0 V -150 M 4812,0 V -150 M 4847,0 V -150 M 4882,0 V -150 M 4916,0 V -150 M 4951,0 V -150 M 4986,0 V -150 M 5021,0 V -150 M 5056,0 V -150 M 5091,0 V -150 M 5126,0 V -150 M 5161,0 V -150 M 5195,0 V -150 M 5230,0 V -150 M 5265,0 V -150 M 5300,0 V -150 M 5335,0 V -150 M 5370,0 V -150 M 5405,0 V -150 M 5440,0 V -150 M 5474,0 V -150 M 5509,0 V -150 M 5544,0 V -150 M 5579,0 V -150 M 5614,0 V -150 M 5649,0 V -150 M 5684,0 V -150 M 5719,0 V -150 M 5753,0 V -150 M 5788,0 V -150 M 5823,0 V -150 M 5858,0 V -150 M 5893,0 V -150 M 5928,0 V -150 M 5963,0 V -150 M 5998,0 V -150 M 6032,0 V -150 M 6067,0 V -150 M 6102,0 V -150 M 6137,0 V -150 M 6172,0 V -150 M 6207,0 V -150 M 6242,0 V -150 M 6276,0 V -150 M 6311,0 V -150 M 6346,0 V -150 M 6381,0 V -150 M 6416,0 V -150 M 6451,0 V -150 M 6486,0 V -150 M 6521,0 V -150 M 6555,0 V -150 M 6590,0 V -150 M 6625,0 V -150 M 6660,0 V -150 M 6695,0 V -150 M 6730,0 V -150 M 6765,0 V -150 M 6800,0 V -150 M 6834,0 V -150 M 6869,0 V -150 M 6904,0 V -150 M 6939,0 V -150 M 6974,0 V -150 M 7009,0 V -150 M 7044,0 V -150 M 7079,0 V -150 M 7113,0 V -150 M 7148,0 V -150 M 7183,0 V -150 M 7218,0 V -150 " stroke="#cc9900"/>
+   <path d="M 0,0 H -22 V -100 M 34,0 H 11 V -100 M 69,0 H 47 V -100 M 104,0 H 81 V -100 M 139,0 H 116 V -100 M 174,0 H 151 V -100 M 209,0 H 186 V -100 M 244,0 H 221 V -100 M 278,0 H 257 V -100 M 313,0 H 292 V -100 M 348,0 H 327 V -100 M 383,0 H 362 V -100 M 418,0 H 397 V -100 M 453,0 H 432 V -100 M 488,0 H 467 V -100 M 523,0 H 503 V -100 M 557,0 H 538 V -100 M 592,0 H 573 V -100 M 627,0 H 608 V -100 M 662,0 H 644 V -100 M 697,0 H 679 V -100 M 732,0 H 714 V -100 M 767,0 H 750 V -100 M 802,0 H 785 V -100 M 836,0 H 821 V -100 M 871,0 H 856 V -100 M 906,0 H 891 V -100 M 941,0 H 927 V -100 M 976,0 H 962 V -100 M 1011,0 H 998 V -100 M 1046,0 H 1033 V -100 M 1081,0 H 1069 V -100 M 1115,0 H 1104 V -100 M 1150,0 H 1140 V -100 M 1185,0 H 1175 V -100 M 1220,0 H 1211 V -100 M 1255,0 H 1246 V -100 M 1290,0 H 1282 V -100 M 1325,0 H 1317 V -100 M 1360,0 H 1353 V -100 M 1394,0 H 1388 V -100 M 1429,0 H 1424 V -100 M 1464,0 H 1460 V -100 M 1499,0 H 1495 V -100 M 1534,0 H 1531 V -100 M 1569,0 H 1566 V -100 M 1604,0 H 1602 V -100 M 1638,0 H 1637 V -100 M 1673,0 H 1673 V -100 M 1708,0 H 1708 V -100 M 1743,0 H 1744 V -100 M 1778,0 H 1780 V -100 M 1813,0 H 1815 V -100 M 1848,0 H 1851 V -100 M 1883,0 H 1886 V -100 M 1917,0 H 1922 V -100 M 1952,0 H 1957 V -100 M 1987,0 H 1993 V -100 M 2022,0 H 2028 V -100 M 2057,0 H 2064 V -100 M 2092,0 H 2099 V -100 M 2127,0 H 2135 V -100 M 2162,0 H 2170 V -100 M 2196,0 H 2206 V -100 M 2231,0 H 2241 V -100 M 2266,0 H 2277 V -100 M 2301,0 H 2312 V -100 M 2336,0 H 2348 V -100 M 2371,0 H 2383 V -100 M 2406,0 H 2419 V -100 M 2441,0 H 2454 V -100 M 2475,0 H 2489 V -100 M 2510,0 H 2525 V -100 M 2545,0 H 2560 V -100 M 2580,0 H 2596 V -100 M 2615,0 H 2631 V -100 M 2650,0 H 2666 V -100 M 2685,0 H 2702 V -100 M 2720,0 H 2737 V -100 M 2754,0 H 2772 V -100 M 2789,0 H 2807 V -100 M 2824,0 H 2843 V -100 M 2859,0 H 2878 V -100 M 2894,0 H 2913 V -100 M 2929,0 H 2948 V -100 M 2964,0 H 2983 V -100 M 2999,0 H 3019 V -100 M 3033,0 H 3054 V -100 M 3068,0 H 3089 V -100 M 3103,0 H 3124 V -100 M 3138,0 H 3159 V -100 M 3173,0 H 3194 V -100 M 3208,0 H 3229 V -100 M 3243,0 H 3264 V -100 M 3277,0 H 3299 V -100 M 3312,0 H 3334 V -100 M 3347,0 H 3369 V -100 M 3382,0 H 3404 V -100 M 3417,0 H 3439 V -100 M 3452,0 H 3474 V -100 M 3487,0 H 3509 V -100 M 3522,0 H 3544 V -100 M 3556,0 H 3579 V -100 M 3591,0 H 3614 V -100 M 3626,0 H 3649 V -100 M 3661,0 H 3684 V -100 M 3696,0 H 3719 V -100 M 3731,0 H 3753 V -100 M 3766,0 H 3788 V -100 M 3801,0 H 3823 V -100 M 3835,0 H 3858 V -100 M 3870,0 H 3892 V -100 M 3905,0 H 3927 V -100 M 3940,0 H 3962 V -100 M 3975,0 H 3997 V -100 M 4010,0 H 4031 V -100 M 4045,0 H 4066 V -100 M 4080,0 H 4101 V -100 M 4114,0 H 4135 V -100 M 4149,0 H 4170 V -100 M 4184,0 H 4204 V -100 M 4219,0 H 4239 V -100 M 4254,0 H 4273 V -100 M 4289,0 H 4308 V -100 M 4324,0 H 4343 V -100 M 4359,0 H 4377 V -100 M 4393,0 H 4412 V -100 M 4428,0 H 4446 V -100 M 4463,0 H 4481 V -100 M 4498,0 H 4515 V -100 M 4533,0 H 4549 V -100 M 4568,0 H 4584 V -100 M 4603,0 H 4618 V -100 M 4638,0 H 4653 V -100 M 4672,0 H 4687 V -100 M 4707,0 H 4722 V -100 M 4742,0 H 4756 V -100 M 4777,0 H 4790 V -100 M 4812,0 H 4824 V -100 M 4847,0 H 4859 V -100 M 4882,0 H 4893 V -100 M 4916,0 H 4927 V -100 M 4951,0 H 4962 V -100 M 4986,0 H 4996 V -100 M 5021,0 H 5030 V -100 M 5056,0 H 5064 V -100 M 5091,0 H 5099 V -100 M 5126,0 H 5133 V -100 M 5161,0 H 5167 V -100 M 5195,0 H 5202 V -100 M 5230,0 H 5236 V -100 M 5265,0 H 5270 V -100 M 5300,0 H 5304 V -100 M 5335,0 H 5338 V -100 M 5370,0 H 5373 V -100 M 5405,0 H 5407 V -100 M 5440,0 H 5441 V -100 M 5474,0 H 5475 V -100 M 5509,0 H 5509 V -100 M 5544,0 H 5543 V -100 M 5579,0 H 5578 V -100 M 5614,0 H 5612 V -100 M 5649,0 H 5646 V -100 M 5684,0 H 5680 V -100 M 5719,0 H 5714 V -100 M 5753,0 H 5748 V -100 M 5788,0 H 5783 V -100 M 5823,0 H 5817 V -100 M 5858,0 H 5851 V -100 M 5893,0 H 5885 V -100 M 5928,0 H 5920 V -100 M 5963,0 H 5954 V -100 M 5998,0 H 5988 V -100 M 6032,0 H 6022 V -100 M 6067,0 H 6056 V -100 M 6102,0 H 6091 V -100 M 6137,0 H 6125 V -100 M 6172,0 H 6159 V -100 M 6207,0 H 6193 V -100 M 6242,0 H 6228 V -100 M 6276,0 H 6262 V -100 M 6311,0 H 6296 V -100 M 6346,0 H 6331 V -100 M 6381,0 H 6365 V -100 M 6416,0 H 6399 V -100 M 6451,0 H 6434 V -100 M 6486,0 H 6468 V -100 M 6521,0 H 6502 V -100 M 6555,0 H 6537 V -100 M 6590,0 H 6571 V -100 M 6625,0 H 6606 V -100 M 6660,0 H 6640 V -100 M 6695,0 H 6675 V -100 M 6730,0 H 6709 V -100 M 6765,0 H 6744 V -100 M 6800,0 H 6778 V -100 M 6834,0 H 6813 V -100 M 6869,0 H 6848 V -100 M 6904,0 H 6882 V -100 M 6939,0 H 6917 V -100 M 6974,0 H 6952 V -100 M 7009,0 H 6986 V -100 M 7044,0 H 7021 V -100 M 7079,0 H 7056 V -100 M 7113,0 H 7091 V -100 M 7148,0 H 7125 V -100 M 7183,0 H 7160 V -100 M 7218,0 H 7195 V -100 " stroke="#0000ff" fill="#ffcc00"/>
+  </g>
+
+  <use xlink:href="#graph" transform="translate(0,1500)"/>
+ </g>
+</svg>
+<!-- Perl script to create above; please do not remove.
+#!/usr/bin/perl
+use strict;
+use Math::Trig; # for cos and pi
+
+sub cosd { return cos($_[0] * pi / 180); }
+sub round { return sprintf("%d", $_[0]); }
+
+my $width     = 7200;
+my $t_scale   = 200;
+my $tS_height = -150;
+my $tE_height = -100;
+my $rE        = 149.6; # million km
+my $rJ        = 778.3; # million km
+my $deg_per_day      = 360 / 365.2422; # days per tropical year
+my $deg_per_s        = $deg_per_day / 86400;
+my $deg_per_eclipse  = $deg_per_day * 1.769; # Io's orbital period in days
+my $out_d  = ""; # distance curve
+my $out_tS = ""; # time-from-sun   ticks
+my $out_tE = ""; # time-from-earth ticks
+my $out_grid_x_lines  = "";
+my $out_grid_y_lines  = "";
+my $out_grid_x_labels = "";
+my $out_grid_y_labels = "";
+
+for (my $a = 0; $a < 360 + $deg_per_eclipse; $a += $deg_per_eclipse) {
+ my $x = &round($a * $width / 360);
+ my $d = &round(sqrt($rE ** 2 + $rJ ** 2 - 2 * $rE * $rJ * cos(deg2rad($a))));
+ my $s = ($d - $rJ) * 1e9 / 2.998e8; # difference from Sun-Jupiter time in secs
+ my $t = &round(($a + $s * $deg_per_s * $t_scale) * $width / 360);
+ $out_d .= ($a ? qq` L ` : qq`M `) . qq`${x},-${d}`;
+ $out_tS .= qq`M ${x},0 V ${tS_height} `;
+ $out_tE .= qq`M ${x},0 H ${t} V ${tE_height} `;
+ print "$a:$s\n";
+}
+
+for (my $a = 0; $a < 360; $a += 5) {
+ my $x = $a * 20;
+ $out_grid_x_lines .= qq`
+   <use xlink:href="#grid_x_5" transform="translate(${x},0)"/>`;
+ if ($a % 10 == 0) {
+  $out_grid_x_labels .= qq`
+   <text x="${x}" y="0">${a}</text>`;
+ }
+}
+for (my $d = 100; $d <= 1000; $d += 100) {
+ my $y = -$d;
+ $out_grid_y_lines .= qq`
+   <use xlink:href="#grid_y_5" transform="translate(0,${y})"/>`;
+ $out_grid_y_labels .= qq`
+   <text x="0" y="${y}">${d}</text>`;
+}
+my $out_ascii_art = '
+  _-"-_ E
+ /    /\-_  d
+/ rE /  \ "-_    Using the cosine rule, d^2 =      rE^2 + rJ^2 - 2 rE rJ cos a
+|   /)a_|_____-_                 Hence, d   = sqrt(rE^2 + rJ^2 - 2 rE rJ cos a)
+\ S     /        J
+ \  |- - rJ - -|
+  "-.-"
+';
+my $double_dash = "-" . "-";
+my $file_out = $0; $file_out =~ s/[^\.]*$/svg/;
+open (FILE_OUT, ">$file_out");
+print FILE_OUT qq`<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-200 -1950 7424 3712">
+ <title>Io eclipse speed of light measurement</title>
+ <desc>Illustration of measurement of the speed of light using the eclipse of Io by Jupiter, by CMG Lee. Assumptions: Earth, Jupiter and Io are points and have circular orbits.
+${out_ascii_art}
+ </desc>
+ <defs>
+  <path id="arrowhead" d="M -20,40 Q 0,20 0,0 Q 0,20 20,40 M -40,0 H 40" fill="none"/>
+  <path id="arrow" d="M 0,0 v 150 M -30,50 L 0,0 L 30,50" fill="none"/>
+
+  <g id="plan" stroke-dasharray="20,20">
+   <circle cx="0" cy="0" r="${rE}" stroke="#0000ff" fill="none"/>
+   <circle cx="0" cy="0" r="${rJ}" stroke="#ff0000" fill="none"/>
+   <circle cx="0" cy="0" r="20" fill="#ffcc00"/>
+   <circle cx="${rJ}" cy="0" r="20" fill="#ff0000"/>
+   <text x="${rJ}" y="100" fill="#000000">Jupiter</text>
+   <text x="0" y="100" fill="#000000">Sun</text>
+  </g>
+  <circle id="earth" cx="0" cy="0" r="20" fill="#0000ff"/>
+  <text id="earth_label" x="0" y="0" fill="#000000">Earth</text>
+
+  <path id="grid_x_1" d="M 0,0 V -1000"/>
+  <path id="grid_y_1" d="M 0,0 H 7200"/>
+  <g id="grid_x_5">
+   <use xlink:href="#grid_x_1" transform="translate(20,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(40,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(60,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(80,0)"/>
+   <use xlink:href="#grid_x_1" transform="translate(100,0)" stroke-opacity="0.3"/>
+  </g>
+  <g id="grid_y_5">
+   <use xlink:href="#grid_y_1" transform="translate(0,0)" stroke-opacity="0.3"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,20)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,40)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,60)"/>
+   <use xlink:href="#grid_y_1" transform="translate(0,80)"/>
+  </g>
+  <g id="graph" stroke="#000000">
+   <g stroke-opacity="0.1">
+${out_grid_x_lines}
+${out_grid_y_lines}
+   </g>
+   <use xlink:href="#grid_y_1" stroke="#cc9900"/>
+   <g stroke="none">
+    <g transform="translate(6900,0)" text-anchor="end">
+     <text x="0" y="-830">Jupiter-Sun</text>
+     <text x="0" y="-530">Earth-Jupiter</text>
+     <text x="0" y="-210">Earth-Sun</text>
+    </g>
+    <g transform="translate(0,100)">
+${out_grid_x_labels}
+     <text x="3600" y="120">Angle swept by Earth-Sun line relative to Jupiter-Sun line in degrees</text>
+    </g>
+    <g transform="translate(-100,30)">
+${out_grid_y_labels}
+     <text x="0" y="0">0</text>
+     <text x="-90" y="-1120" text-anchor="start">Distance in million km</text>
+    </g>
+   </g>
+   <g stroke-width="10">
+    <g transform="translate(0,20) scale(1,1.05)" stroke="#00cc00">
+     <use xlink:href="#grid_x_1"/>
+     <use xlink:href="#grid_x_1" transform="translate(1800,0)"/>
+     <use xlink:href="#grid_x_1" transform="translate(3600,0)"/>
+     <use xlink:href="#grid_x_1" transform="translate(5400,0)"/>
+    </g>
+    <path d="M 0,-${rE} H ${width}" stroke="#0000ff"/>
+    <path d="M 0,-${rJ} H ${width}" stroke="#ff0000"/>
+    <path d="${out_d}" stroke="#000000" fill="none"/>
+   </g>
+  </g>
+ </defs>
+
+ <g font-family="sans-serif" font-size="80" letter-spacing="-2" text-anchor="middle" stroke-width="5" stroke-linejoin="round">
+  <rect x="-999" y="-4999" width="9999" height="9999" fill="#ffffff"/>
+
+  <g text-anchor="end">
+   <text x="7200" y="-1850">Diameters not to scale</text>
+   <text x="7200" y="-1750">Orbits to scale</text>
+  </g>
+  <g transform="translate(600,-1100)">
+   <g>
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth"       transform="translate(${rE},0)"/>
+    <use xlink:href="#earth_label" transform="translate(${rE},-50)"/>
+    <path d="M ${rE},0 L ${rJ},0" stroke="#000000"/>
+   </g>
+   <g transform="translate(1800,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth"       transform="translate(0,-${rE})"/>
+    <use xlink:href="#earth_label" transform="translate(0,-200)"/>
+    <path d="M 0,-${rE} L ${rJ},0" stroke="#000000"/>
+   </g>
+   <g transform="translate(3600,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth"       transform="translate(-${rE},0)"/>
+    <use xlink:href="#earth_label" transform="translate(-${rE},-50)"/>
+    <path d="M -${rE},0 L ${rJ},0" stroke="#000000"/>
+   </g>
+   <g transform="translate(5400,0)">
+    <use xlink:href="#plan"/>
+    <use xlink:href="#earth"       transform="translate(0,${rE})"/>
+    <use xlink:href="#earth_label" transform="translate(0,250)"/>
+    <path d="M 0,${rE} L ${rJ},0" stroke="#000000"/>
+   </g>
+  </g>
+
+  <g transform="translate(0,-180) scale(1,-2.5)" stroke="#00cc00" stroke-width="10">
+   <use xlink:href="#arrow"/>
+   <use xlink:href="#arrow" transform="translate(1800,0)"/>
+   <use xlink:href="#arrow" transform="translate(3600,0)"/>
+   <use xlink:href="#arrow" transform="translate(5400,0)"/>
+  </g>
+
+  <g>
+   <g stroke="none">
+    <text x="7000" y="-400" text-anchor="end"  >Time</text>
+    <text x="7200" y="-230" text-anchor="end"  >Time of eclipse if observed from Sun</text>
+    <text x="7200" y="160"  text-anchor="end"  >Time of eclipse observed from Earth</text>
+    <text x="-100" y="160"  text-anchor="start">&#8722;8 min 19 s (drawn exaggerated ${t_scale}&#215;)</text>
+    <text x="3000" y="160"                     >      +8 min 19 s (drawn exaggerated ${t_scale}&#215;)</text>
+    <text x="5000" y="160"                     >1.769 days (Io's orbital period)</text>
+    <text x="3600" y="350"                     >Approximately 1 year (time between smallest Earth-Jupiter distances)</text>
+   </g>
+   <g stroke="#000000">
+    <use xlink:href="#arrow" transform="translate(7180,-430) rotate(90)"/>
+    <path d="M 7160,0 L 7100,90 M 7183,-150 L 7100,-220"/>
+    <path d="M -22, 50 h -100 M 0,   50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(-22, 50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(0,   50) rotate(-90)"/>
+    <path d="M 3591,50 h -100 M 3614,50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(3591,50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(3614,50) rotate(-90)"/>
+    <path d="M 5440,50 h -100 M 5474,50 h 100"/>
+    <use xlink:href="#arrowhead" transform="translate(5440,50) rotate(90)"/>
+    <use xlink:href="#arrowhead" transform="translate(5474,50) rotate(-90)"/>
+    <path d="M 0,250 H 7200"/>
+    <use xlink:href="#arrowhead" transform="translate(0,   250) rotate(-90)"/>
+    <use xlink:href="#arrowhead" transform="translate(7200,250) rotate(90)"/>
+   </g>
+   <path d="${out_tS}" stroke="#cc9900"/>
+   <path d="${out_tE}" stroke="#0000ff" fill="#ffcc00"/>
+  </g>
+
+  <use xlink:href="#graph" transform="translate(0,1500)"/>
+ </g>
+</svg>
+
+<!${double_dash} Perl script to create above; please do not remove.
+`;
+open (FILE_IN, $0);
+while (<FILE_IN>) { print FILE_OUT $_; }
+close FILE_IN;
+print FILE_OUT "# ${double_dash}>";
+close FILE_OUT;
+# -->

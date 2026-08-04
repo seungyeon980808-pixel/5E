@@ -1,0 +1,1296 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Digital by H.Neemann -->
+
+<!-- created: Sun Jan 14 16:55:56 CET 2024 -->
+
+<svg
+   width="76.858742mm"
+   height="86.442032mm"
+   viewBox="-1063 -391 512.39161 576.28021"
+   version="1.1"
+   id="svg422"
+   sodipodi:docname="XOR_with_AOI_logic_in_CMOS.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs426" />
+  <sodipodi:namedview
+     id="namedview424"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.2182593"
+     inkscape:cx="377.17751"
+     inkscape:cy="164.16867"
+     inkscape:window-width="1920"
+     inkscape:window-height="1007"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg422" />
+  <path
+     d="M -991.82715,41.280244 V 1.2802439 h 40 40 V 41.280244"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path2"
+     style="stroke-linecap:square" />
+  <path
+     d="m -771.82715,-258.71976 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path4"
+     style="stroke-linecap:square" />
+  <path
+     d="m -631.82715,-258.71976 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path6"
+     style="stroke-linecap:square" />
+  <path
+     d="m -951.82715,-178.71976 v 80.000004 h 140 v -40.000004 h 100"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path8"
+     style="stroke-linecap:square" />
+  <path
+     d="m -651.82715,101.28024 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path10"
+     style="stroke-linecap:square" />
+  <path
+     d="M -811.82715,-98.719756 V 101.28024 h 60"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path12"
+     style="stroke-linecap:square" />
+  <path
+     d="m -731.82715,-258.71976 v -40 h 40 40 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path16"
+     style="stroke-linecap:square" />
+  <path
+     d="m -991.82715,-298.71976 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path18"
+     style="stroke-linecap:square" />
+  <path
+     d="m -991.82715,81.280244 v 59.999996 h 80 180 40 20 v -40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path20"
+     style="stroke-linecap:square" />
+  <path
+     d="m -891.82715,81.280244 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path22"
+     style="stroke-linecap:square" />
+  <path
+     d="m -1031.8271,81.280244 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path24"
+     style="stroke-linecap:square" />
+  <path
+     d="m -731.82715,-218.71976 v 40 h 40 40 v -40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path26"
+     style="stroke-linecap:square" />
+  <path
+     d="m -951.82715,-298.71976 v -40 h 260 v -40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path28"
+     style="stroke-linecap:square" />
+  <path
+     d="m -651.82715,21.280244 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path30"
+     style="stroke-linecap:square" />
+  <path
+     d="m -731.82715,61.280244 v -120 h 40 20 60"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path32"
+     style="stroke-linecap:square" />
+  <path
+     d="m -991.82715,-218.71976 h 20"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path36"
+     style="stroke-linecap:square" />
+  <path
+     d="m -691.82715,141.28024 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path38"
+     style="stroke-linecap:square" />
+  <path
+     d="m -691.82715,-98.719756 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path40"
+     style="stroke-linecap:square" />
+  <path
+     d="m -691.82715,-178.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path42"
+     style="stroke-linecap:square" />
+  <path
+     d="m -691.82715,-338.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path44"
+     style="stroke-linecap:square" />
+  <path
+     d="m -951.82715,-258.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path46"
+     style="stroke-linecap:square" />
+  <path
+     d="M -951.82715,-98.719756 V 1.2802439"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path48"
+     style="stroke-linecap:square" />
+  <path
+     d="m -731.82715,101.28024 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path50"
+     style="stroke-linecap:square" />
+  <path
+     d="m -671.82715,21.280244 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path52"
+     style="stroke-linecap:square" />
+  <path
+     d="m -671.82715,-58.719756 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path54"
+     style="stroke-linecap:square" />
+  <path
+     d="M -911.82715,81.280244 V 141.28024"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path56"
+     style="stroke-linecap:square" />
+  <path
+     d="m -701.82715,181.28024 h 20"
+     stroke="#000000"
+     stroke-width="6"
+     fill="none"
+     id="path58"
+     style="stroke-linecap:square" />
+  <path
+     d="m -736.82715,81.280244 h 5"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path60"
+     style="stroke-linecap:square" />
+  <path
+     d="m -666.82715,81.280244 h -5"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path62"
+     style="stroke-linecap:square" />
+  <path
+     d="m -666.82715,1.2802439 h -5"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path64"
+     style="stroke-linecap:square" />
+  <path
+     d="m -703.82715,-118.71976 h 6"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path66"
+     style="stroke-linecap:square" />
+  <path
+     d="m -743.82715,-238.71976 h 6"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path68"
+     style="stroke-linecap:square" />
+  <path
+     d="m -639.82715,-238.71976 h -6"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path70"
+     style="stroke-linecap:square" />
+  <path
+     d="m -963.82715,-198.71976 h 6"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path72"
+     style="stroke-linecap:square" />
+  <path
+     d="m -963.82715,-278.71976 h 6"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path74"
+     style="stroke-linecap:square" />
+  <path
+     d="m -996.82715,61.280244 h 5"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path76"
+     style="stroke-linecap:square" />
+  <path
+     d="m -906.82715,61.280244 h -5"
+     stroke="#000000"
+     stroke-width="2"
+     fill="none"
+     id="path78"
+     style="stroke-linecap:square" />
+  <path
+     d="m -743.82715,76.280244 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path80"
+     style="stroke-linecap:square" />
+  <path
+     d="M -750.82715,61.280244 V 101.28024"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path82"
+     style="stroke-linecap:square" />
+  <path
+     d="m -659.82715,76.280244 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path84"
+     style="stroke-linecap:square" />
+  <path
+     d="M -652.82715,61.280244 V 101.28024"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path86"
+     style="stroke-linecap:square" />
+  <path
+     d="m -659.82715,-3.7197561 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path88"
+     style="stroke-linecap:square" />
+  <path
+     d="m -652.82715,-18.719756 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path90"
+     style="stroke-linecap:square" />
+  <path
+     d="m -703.82715,-123.71976 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path92"
+     style="stroke-linecap:square" />
+  <path
+     d="m -710.82715,-138.71976 v 40.000004"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path94"
+     style="stroke-linecap:square" />
+  <path
+     d="m -743.82715,-243.71976 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path96"
+     style="stroke-linecap:square" />
+  <path
+     d="m -750.82715,-258.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path98"
+     style="stroke-linecap:square" />
+  <path
+     d="m -639.82715,-243.71976 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path100"
+     style="stroke-linecap:square" />
+  <path
+     d="m -632.82715,-258.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path102"
+     style="stroke-linecap:square" />
+  <path
+     d="m -691.82715,-384.71976 v 6"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path104"
+     style="stroke-linecap:square" />
+  <path
+     d="m -963.82715,-203.71976 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path106"
+     style="stroke-linecap:square" />
+  <path
+     d="m -970.82715,-218.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path108"
+     style="stroke-linecap:square" />
+  <path
+     d="m -963.82715,-283.71976 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path110"
+     style="stroke-linecap:square" />
+  <path
+     d="m -970.82715,-298.71976 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path112"
+     style="stroke-linecap:square" />
+  <path
+     d="m -1003.8271,56.280244 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path114"
+     style="stroke-linecap:square" />
+  <path
+     d="m -1010.8271,41.280244 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path116"
+     style="stroke-linecap:square" />
+  <path
+     d="m -899.82715,56.280244 v 10"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path118"
+     style="stroke-linecap:square" />
+  <path
+     d="m -892.82715,41.280244 v 40"
+     stroke="#000000"
+     stroke-width="4"
+     fill="none"
+     id="path120"
+     style="stroke-linecap:square" />
+  <g
+     id="g144"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <circle
+       cx="-680"
+       cy="0"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle122" />
+    <circle
+       cx="-680"
+       cy="-100"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle124" />
+    <circle
+       cx="-540"
+       cy="-100"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle126" />
+    <circle
+       cx="-420"
+       cy="-300"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle128" />
+    <circle
+       cx="-640"
+       cy="140"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle130" />
+    <circle
+       cx="-420"
+       cy="140"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle132" />
+    <circle
+       cx="-460"
+       cy="140"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle134" />
+    <circle
+       cx="-420"
+       cy="-180"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle136" />
+    <circle
+       cx="-420"
+       cy="-340"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle138" />
+    <circle
+       cx="-420"
+       cy="-60"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle140" />
+    <circle
+       cx="-400"
+       cy="-60"
+       r="4"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle142" />
+  </g>
+  <g
+     id="g166"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -460,60 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path154" />
+    <path
+       d="m -460,100 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path156" />
+    <path
+       d="m -468,80 5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path158" />
+    <circle
+       cx="-480"
+       cy="100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle160" />
+    <circle
+       cx="-460"
+       cy="60"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle162" />
+    <circle
+       cx="-460"
+       cy="100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle164" />
+  </g>
+  <g
+     id="g180"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -400,60 h 12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path168" />
+    <path
+       d="m -400,100 h 12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path170" />
+    <path
+       d="m -392,80 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path172" />
+    <circle
+       cx="-380"
+       cy="100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle174" />
+    <circle
+       cx="-400"
+       cy="60"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle176" />
+    <circle
+       cx="-400"
+       cy="100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle178" />
+  </g>
+  <g
+     id="g194"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -400,-20 h 12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path182" />
+    <path
+       d="m -400,20 h 12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path184" />
+    <path
+       d="m -392,0 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path186" />
+    <circle
+       cx="-380"
+       cy="20"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle188" />
+    <circle
+       cx="-400"
+       cy="-20"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle190" />
+    <circle
+       cx="-400"
+       cy="20"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle192" />
+  </g>
+  <g
+     id="g198"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <circle
+       cx="-420"
+       cy="180"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle196" />
+  </g>
+  <g
+     id="g206"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -360,100 14,8 V 92 Z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path200" />
+    <text
+       text-anchor="start"
+       x="-341"
+       y="106.75"
+       fill="#000000"
+       style="font-size:18px"
+       id="text202">B</text>
+    <circle
+       cx="-360"
+       cy="100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle204" />
+  </g>
+  <g
+     id="g214"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -360,20 14,8 V 12 Z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path208" />
+    <text
+       text-anchor="start"
+       x="-341"
+       y="26.75"
+       fill="#000000"
+       style="font-size:18px"
+       id="text210">A</text>
+    <circle
+       cx="-360"
+       cy="20"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle212" />
+  </g>
+  <g
+     id="g228"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -420,-140 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path216" />
+    <path
+       d="m -420,-100 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path218" />
+    <path
+       d="m -421,-120 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path220" />
+    <circle
+       cx="-440"
+       cy="-140"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle222" />
+    <circle
+       cx="-420"
+       cy="-140"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle224" />
+    <circle
+       cx="-420"
+       cy="-100"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle226" />
+  </g>
+  <g
+     id="g242"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -460,-260 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path230" />
+    <path
+       d="m -460,-220 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path232" />
+    <path
+       d="m -461,-240 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path234" />
+    <circle
+       cx="-480"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle236" />
+    <circle
+       cx="-460"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle238" />
+    <circle
+       cx="-460"
+       cy="-220"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle240" />
+  </g>
+  <g
+     id="g250"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -500,-260 -14,-8 v 16 z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path244" />
+    <text
+       text-anchor="end"
+       x="-519"
+       y="-253.25"
+       fill="#000000"
+       style="font-size:18px"
+       id="text246">B</text>
+    <circle
+       cx="-500"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle248" />
+  </g>
+  <g
+     id="g264"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -380,-260 h 12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path252" />
+    <path
+       d="m -380,-220 h 12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path254" />
+    <path
+       d="m -379,-240 5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path256" />
+    <circle
+       cx="-360"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle258" />
+    <circle
+       cx="-380"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle260" />
+    <circle
+       cx="-380"
+       cy="-220"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle262" />
+  </g>
+  <g
+     id="g272"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -340,-260 14,8 v -16 z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path266" />
+    <text
+       text-anchor="start"
+       x="-321"
+       y="-253.25"
+       fill="#000000"
+       style="font-size:18px"
+       id="text268">A</text>
+    <circle
+       cx="-340"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle270" />
+  </g>
+  <g
+     id="g278"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -430,-376 10,-13 10,13"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path274" />
+    <circle
+       cx="-420"
+       cy="-380"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle276" />
+  </g>
+  <g
+     id="g290"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <circle
+       cx="-324"
+       cy="-60"
+       r="9"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="circle280" />
+    <circle
+       cx="-324"
+       cy="-60"
+       r="15"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="circle282" />
+    <text
+       text-anchor="start"
+       x="-295"
+       y="-51"
+       fill="#000000"
+       style="font-size:24px"
+       id="text286"><tspan
+         style="font-style:italic"
+         id="tspan284">Y</tspan></text>
+    <circle
+       cx="-340"
+       cy="-60"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle288" />
+  </g>
+  <g
+     id="g344"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -680,-220 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path332" />
+    <path
+       d="m -680,-180 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path334" />
+    <path
+       d="m -681,-200 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path336" />
+    <circle
+       cx="-700"
+       cy="-220"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle338" />
+    <circle
+       cx="-680"
+       cy="-220"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle340" />
+    <circle
+       cx="-680"
+       cy="-180"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle342" />
+  </g>
+  <g
+     id="g352"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -720,-220 -14,-8 v 16 z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path346" />
+    <text
+       text-anchor="end"
+       x="-739"
+       y="-213.25"
+       fill="#000000"
+       style="font-size:18px"
+       id="text348">B</text>
+    <circle
+       cx="-720"
+       cy="-220"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle350" />
+  </g>
+  <g
+     id="g366"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -680,-300 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path354" />
+    <path
+       d="m -680,-260 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path356" />
+    <path
+       d="m -681,-280 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path358" />
+    <circle
+       cx="-700"
+       cy="-300"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle360" />
+    <circle
+       cx="-680"
+       cy="-300"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle362" />
+    <circle
+       cx="-680"
+       cy="-260"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle364" />
+  </g>
+  <g
+     id="g374"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -720,-300 -14,-8 v 16 z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path368" />
+    <text
+       text-anchor="end"
+       x="-739"
+       y="-293.25"
+       fill="#000000"
+       style="font-size:18px"
+       id="text370">A</text>
+    <circle
+       cx="-720"
+       cy="-300"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle372" />
+  </g>
+  <g
+     id="g388"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -720,40 h -12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path376" />
+    <path
+       d="m -720,80 h -12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path378" />
+    <path
+       d="m -728,60 5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path380" />
+    <circle
+       cx="-740"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle382" />
+    <circle
+       cx="-720"
+       cy="40"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle384" />
+    <circle
+       cx="-720"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle386" />
+  </g>
+  <g
+     id="g402"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -640,40 h 12 v 5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path390" />
+    <path
+       d="m -640,80 h 12 v -5"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path392" />
+    <path
+       d="m -632,60 -5,-2 v 4 z"
+       stroke="#000000"
+       stroke-width="2"
+       fill="#000000"
+       fill-opacity="1"
+       id="path394" />
+    <circle
+       cx="-620"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle396" />
+    <circle
+       cx="-640"
+       cy="40"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle398" />
+    <circle
+       cx="-640"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle400" />
+  </g>
+  <g
+     id="g410"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -600,80 14,8 V 72 Z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path404" />
+    <text
+       text-anchor="start"
+       x="-581"
+       y="86.75"
+       fill="#000000"
+       style="font-size:18px"
+       id="text406">B</text>
+    <circle
+       cx="-600"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle408" />
+  </g>
+  <g
+     id="g418"
+     style="stroke-linecap:square"
+     transform="translate(-271.82715,1.2802439)">
+    <path
+       d="m -760,80 -14,-8 v 16 z"
+       stroke="#000000"
+       stroke-width="4"
+       fill="none"
+       id="path412" />
+    <text
+       text-anchor="end"
+       x="-779"
+       y="86.75"
+       fill="#000000"
+       style="font-size:18px"
+       id="text414">A</text>
+    <circle
+       cx="-760"
+       cy="80"
+       r="2"
+       stroke="#000000"
+       stroke-width="4"
+       fill="#000000"
+       id="circle416" />
+  </g>
+</svg>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/ svg10.dtd">
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="220"
+   height="140"
+   id="svg4029">
+  <defs
+     id="defs4031" />
+  <g
+     id="layer1">
+    <g
+       transform="translate(-390,-38.75)"
+       id="g3936">
+      <g
+         id="g3979"
+         style="stroke:#f2f2cc;stroke-width:2px;stroke-linejoin:round">
+        <path
+           d="M 410,140 L 520,140 L 520,165 L 410,165 L 410,140 z"
+           id="path3940"
+           style="fill:#e48c4f;fill-opacity:1" />
+        <path
+           d="M 480,52.5 L 590,52.5 L 520,140 L 410,140 L 480,52.5 z"
+           id="path3942"
+           style="fill:#e4a24f;fill-opacity:1" />
+        <path
+           d="M 520,140 L 590,52.5 L 590,77.5 L 520,165 L 520,140 z"
+           id="path3983"
+           style="fill:#bd7441;fill-opacity:1" />
+      </g>
+      <g
+         id="g3975"
+         style="stroke:#aaaaaa;stroke-width:2px;stroke-linejoin:round">
+        <path
+           d="M 527.75,130.3125 L 540.9375,113.84375 L 540.9375,138.84375 L 527.75,155.3125 L 527.75,130.3125 z M 548.375,104.5 L 561.5625,88.03125 L 561.5625,113.03125 L 548.375,129.5 L 548.375,104.5 z M 569.0625,78.65625 L 582.25,62.1875 L 582.25,87.1875 L 569.0625,103.65625 L 569.0625,78.65625 z"
+           id="path3946"
+           style="fill:#777777" />
+        <path
+           d="M 472.25,62.1875 L 459.0625,78.65625 L 484.0625,78.65625 L 497.25,62.1875 L 472.25,62.1875 z M 557.25,62.1875 L 544.0625,78.65625 L 569.0625,78.65625 L 582.25,62.1875 L 557.25,62.1875 z M 451.5625,88.03125 L 438.4375,104.46875 L 463.4375,104.46875 L 476.5625,88.03125 L 451.5625,88.03125 z M 536.5625,88.03125 L 523.4375,104.46875 L 548.4375,104.46875 L 561.5625,88.03125 L 536.5625,88.03125 z M 430.9375,113.84375 L 417.75,130.3125 L 442.75,130.3125 L 455.9375,113.84375 L 430.9375,113.84375 z M 515.9375,113.84375 L 502.75,130.3125 L 527.75,130.3125 L 540.9375,113.84375 L 515.9375,113.84375 z"
+           id="path3950"
+           style="fill:#999999" />
+      </g>
+    </g>
+  </g>
+</svg>

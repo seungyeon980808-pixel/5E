@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 13.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 14948)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+]>
+<svg version="1.1" id="Layer_1" xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="280.25px"
+	 height="238.694px" viewBox="0 0 280.25 238.694" enable-background="new 0 0 280.25 238.694" xml:space="preserve">
+<metadata>
+	<sfw  xmlns="&ns_sfw;">
+		<slices></slices>
+		<sliceSourceBounds  x="26" y="28.75" width="280.25" height="238.694" bottomLeftOrigin="true"></sliceSourceBounds>
+	</sfw>
+</metadata>
+<path fill="none" stroke="#000000" d="M61.625,91.569v30c2.5,5,1.5,7.5,1.5,7.5"/>
+<path fill="none" stroke="#000000" d="M71.625,98.818"/>
+<path fill="none" stroke="#000000" d="M71.625,91.569v7.25c0,0-0.2,1.513,2,2.625c10.625,5.375,21,11.125,21,11.125"/>
+<path fill="none" stroke="#000000" d="M71.447,121.319c-2.5,5-1.5,7.5-1.5,7.5"/>
+<path fill="#C69C6D" stroke="#000000" d="M72.75,88.319c0,2.899-2.351,5.25-5.25,5.25h-1.625c-2.899,0-5.25-2.351-5.25-5.25l0,0
+	c0-2.899,2.351-5.25,5.25-5.25H67.5C70.399,83.069,72.75,85.419,72.75,88.319L72.75,88.319z"/>
+<g id="Mittari">
+	<path fill="none" stroke="#000000" d="M65.25,82.694v-40c2.5-2.5,0-2.5,2.5,0v40"/>
+	<path fill="none" stroke="#000000" d="M65.25,93.569v19c0,5.125,2.5,7.5,2.5,0V93.444"/>
+	<line fill="none" stroke="#FF0000" x1="66.25" y1="97.694" x2="66.25" y2="115.944"/>
+</g>
+<path fill="none" stroke="#000000" d="M91.125,119.194c-6.625-3.625-18.375-10.375-18.875-8.875l-0.5,0.875l-0.125,10.375"/>
+<g id="Jäähdytin">
+	<line fill="none" stroke="#000000" x1="99.689" y1="114.066" x2="195.765" y2="162.291"/>
+	<line fill="none" stroke="#000000" stroke-width="0.5" x1="99.016" y1="115.407" x2="195.092" y2="163.631"/>
+	<path fill="none" stroke="#000000" d="M191.279,171.228l-15.641-7.851c-3.355,1.113-4.469-2.243-5.59-0.009"/>
+	<path fill="#C69C6D" stroke="#000000" d="M95.203,123.003c-0.62,1.233-2.122,1.731-3.356,1.112l0,0
+		c-1.234-0.619-1.732-2.121-1.113-3.355l4.486-8.938c0.62-1.234,2.122-1.732,3.356-1.113l0,0c1.234,0.62,1.732,2.122,1.113,3.356
+		L95.203,123.003z"/>
+	<path fill="#C69C6D" stroke="#000000" d="M195.748,173.471c-0.62,1.234-2.122,1.732-3.356,1.113l0,0
+		c-1.233-0.62-1.732-2.123-1.112-3.356l4.485-8.938c0.62-1.233,2.122-1.731,3.356-1.112l0,0c1.234,0.619,1.732,2.121,1.112,3.355
+		L195.748,173.471z"/>
+	<g id="XMLID_1_">
+		<g>
+			<path fill="#ED1C24" d="M163.49,165.994c1.04,2.41,3.38,2.07,4.1,1.9c-4.17,15.06,2.72,16.3-1.26,28.55
+				c-4,12.33-3.83,18.33-3.83,18.33l-4.17-1.79c0-0.93,0.18-6.91,3.84-18.21C166.17,182.454,159.19,181.274,163.49,165.994z"/>
+			<path fill="#ED1C24" d="M107.84,138.354c0.99,1.78,2.81,1.7,3.65,1.56l0.01,0.03c-5,12.5-6.83,20.67-4.33,33.17s2.5,20,2.5,20
+				l-4.18-0.65c-0.04-1.84-0.36-8.859-2.49-19.52C100.53,160.583,102.95,150.664,107.84,138.354z"/>
+		</g>
+		<g>
+			<line fill="none" stroke="#000000" stroke-width="0.5" x1="95.88" y1="121.664" x2="191.95" y2="169.884"/>
+			<path fill="none" stroke="#000000" d="M95.2,123.003l11.17,5.61c1.12,3.35,4.47,2.24,3.35,4.47c-1.12,2.24-2.24,4.471-2.24,4.471
+				c0.1,0.3,0.22,0.569,0.36,0.8c0.99,1.78,2.81,1.7,3.65,1.56c0.29-0.05,0.46-0.109,0.46-0.109l2.24-4.471
+				c1.12-2.239,2.23,1.12,5.59,0.011l42.451,21.3c1.119,3.359,4.47,2.25,3.35,4.479c-1.12,2.24-2.24,4.471-2.24,4.471
+				c0.05,0.14,0.101,0.279,0.15,0.399c1.04,2.41,3.38,2.07,4.1,1.9c0.141-0.03,0.22-0.061,0.22-0.061l2.24-4.47"/>
+			<path fill="none" stroke="#000000" d="M108,137.944c-0.06,0.14-0.11,0.28-0.16,0.41c-4.89,12.31-7.31,22.229-4.84,34.59
+				c2.13,10.66,2.45,17.68,2.49,19.52c0.01,0.32,0.01,0.48,0.01,0.48"/>
+			<path fill="none" stroke="#000000" d="M111.5,139.944c-5,12.5-6.83,20.67-4.33,33.17s2.5,20,2.5,20"/>
+			<path fill="none" stroke="#000000" d="M167.67,167.614c-0.03,0.1-0.05,0.19-0.08,0.28c-4.17,15.06,2.72,16.3-1.26,28.55
+				c-4,12.33-3.83,18.33-3.83,18.33"/>
+			<path fill="none" stroke="#000000" d="M163.5,165.944c0,0.02-0.01,0.03-0.01,0.05c-4.3,15.28,2.68,16.46-1.32,28.78
+				c-3.66,11.3-3.84,17.28-3.84,18.21c0,0.09,0,0.13,0,0.13"/>
+		</g>
+	</g>
+</g>
+<g id="Tislauskolvi_1_">
+	<path fill="none" stroke="#000000" d="M217.792,198.069c0,0,0.5-0.25,0.75,2.625s-1.213,6.277-1.213,6.277
+		c-5.385,2.467-9.162,8.242-9.162,14.973c0,8.975,6.716,16.25,15,16.25s15-7.275,15-16.25c0-6.977-4.059-12.926-9.756-15.229"/>
+	<path fill="none" stroke="#000000" d="M227.982,197.694c0,0-0.5-0.25-0.75,2.625s1.214,6.277,1.214,6.277"/>
+	<ellipse fill="none" stroke="#000000" cx="222.854" cy="197.506" rx="5.188" ry="1.063"/>
+</g>
+<path fill="none" stroke="#000000" d="M196.416,172.944l15,7.833c8.961,6.213,7.532,13.603,7.584,14.667c0,0,2.334,5.668,2.5,8.001"
+	/>
+<path fill="none" stroke="#000000" d="M229.333,182.278c-2.833,2.167-2.584,4.145-2.584,4.145c1.098,3.006,1.054,6.358,0.876,9.146
+	c0,0-2.458,5.709-2.458,7.709"/>
+<path fill="none" stroke="#000000" d="M223.261,179.841"/>
+<path fill="none" stroke="#000000" d="M200.333,165.403l15,7.833c2.248,0.838,8.083,6.821,7.928,6.605c0,0,1.238,2.603,4.072-0.23"
+	/>
+<g id="Tislauskolvi_2_">
+	<path fill="none" stroke="#000000" d="M61.375,124.819c0,0,0.5-0.25,0.75,2.625s-1.213,6.277-1.213,6.277
+		c-5.385,2.467-9.162,8.242-9.162,14.973c0,8.975,6.716,16.25,15,16.25s15-7.275,15-16.25c0-6.977-4.059-12.926-9.756-15.229"/>
+	<path fill="none" stroke="#000000" d="M71.565,124.444c0,0-0.5-0.25-0.75,2.625s1.214,6.277,1.214,6.277"/>
+	<ellipse fill="none" stroke="#000000" cx="66.438" cy="124.256" rx="5.188" ry="1.063"/>
+</g>
+<text transform="matrix(1 0 0 1 1.333 59.4438)" font-family="'ArialMT'" font-size="8">lämpömittari</text>
+<text transform="matrix(1 0 0 1 133.6665 120.7778)" font-family="'ArialMT'" font-size="8">jäähdytin</text>
+<text transform="matrix(1 0 0 1 2.333 137.4438)" font-family="'ArialMT'" font-size="8">tislauskolvi</text>
+<text transform="matrix(1 0 0 1 133.3335 210.1118)" font-family="'ArialMT'" font-size="8">sisään</text>
+<text transform="matrix(1 0 0 1 99.667 209.4438)" font-family="'ArialMT'" font-size="8">ulos</text>
+<text transform="matrix(1 0 0 1 98.9995 225.1108)" font-family="'ArialMT'" font-size="8">jäähdytysvesi</text>
+<text transform="matrix(1 0 0 1 243.75 219.2769)" font-family="'ArialMT'" font-size="8">tislekolvi</text>
+<text transform="matrix(1 0 0 1 235.334 167.4438)" font-family="'ArialMT'" font-size="8">ilma-aukko</text>
+<text transform="matrix(1 0 0 1 0 15.4438)" font-family="'ArialMT'" font-size="18">tislauslaitteisto:</text>
+<line fill="none" x1="243.25" y1="132.194" x2="280.25" y2="132.194"/>
+</svg>

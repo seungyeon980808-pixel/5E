@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="624.54" height="600">
+  
+    <circle cx="312.27" cy="300" r="285" fill="none" stroke="#000" stroke-width="5"/>
+    <circle cx="246.05" cy="313.44" r="14" stroke="#fff" stroke-width="3.471"/>
+    <circle cx="354.78" cy="285.75" r="14" stroke="#fff" stroke-width="3.471"/>
+    <g fill="none"  stroke="#000">
+      <path stroke-dasharray="5, 17.5" stroke-width="5" d="m0 300.48 597.27-.48055h27.272M312.27 0l-.48055 600"/>
+      <path stroke-width="8.5" d="M544.08 134.2C188.79 112.57 103.54 300.4 43.73 395.46"/>
+    </g>
+    <path fill="none" stroke="#000" stroke-width="8.5" d="M597.07 289.35C349.5 477.36 150.09 418.33 28 320.342"/>
+    <g stroke="#fff" stroke-width="3.471">
+      <circle cx="169.26" cy="363.56" r="14"/>
+      <circle cx="287.5" cy="269.1" r="14"/>
+      <circle cx="357.5" cy="264.68" r="14"/>
+      <circle cx="426.82" cy="161.04" r="14"/>
+      <circle cx="502.26" cy="218.81" r="14"/>
+      <circle cx="532.84" cy="266.38" r="14"/>
+      <circle cx="489.34" cy="320.75" r="14"/>
+    </g>
+    <g fill="none" stroke="#000" stroke-width="4.5">
+      <circle cx="175.68" cy="103.3" r="14.5"/>
+      <circle cx="188.93" cy="179.75" r="14.5"/>
+      <circle cx="276.6" cy="153.59" r="14.5"/>
+      <circle cx="339.8" cy="106.7" r="14.5"/>
+      <circle cx="213.39" cy="433.92" r="14.5"/>
+      <circle cx="328.92" cy="488.29" r="14.5"/>
+      <circle cx="379.89" cy="442.08" r="14.5"/>
+      <circle cx="424.75" cy="476.74" r="14.5"/>
+      <circle cx="353.05" cy="550.13" r="14.5"/>
+      <circle cx="473.34" cy="429.84" r="14.5"/>
+    </g>
+  
+</svg>

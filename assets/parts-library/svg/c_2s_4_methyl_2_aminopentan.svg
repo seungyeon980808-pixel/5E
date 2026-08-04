@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="xMidYMid" version="1.1" viewBox="63.07 167.19 79.93 32.81" xmlns="http://www.w3.org/2000/svg">
+ <clipPath>
+  <rect x=".3" y=".3" width="539.4" height="719.15"></rect>
+ </clipPath>
+ <text display="none" text-rendering="geometricPrecision" xml:space="preserve"><tspan x="110.47" y="196.25999" fill="#000000" font-family="Arial" font-size="7.5px" font-style="italic">(S)</tspan></text>
+ <text fill="#000000" font-family="Arial" text-rendering="geometricPrecision" xml:space="preserve"><tspan x="124.37" y="197.25" font-size="10px">CH</tspan><tspan dy="2.27" font-size="7.5px">3</tspan></text>
+ <path d="m115.5 186.5v-0.35l0.32-0.16 8.15 4.71-0.3 0.52z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+ <path d="m115.19 185.99 0.31 0.16v0.35l-12.47 7.2v-0.69z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+ <path d="m103.03 193.01v0.69l-12.47-7.2v-0.35l0.31-0.17z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+ <text fill="#000000" font-family="Arial" text-anchor="end" text-rendering="geometricPrecision" xml:space="preserve" x="81.690002" y="197.25"><tspan font-size="10px">H</tspan><tspan dy="2.27" font-size="7.5px">3</tspan><tspan dy="-2.27" font-size="10px">C</tspan></text>
+ <path d="m90.27 185.98 0.29 0.17v0.35l-7.82 4.52-0.3-0.52z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+ <text fill="#000000" font-family="Arial" text-rendering="geometricPrecision" xml:space="preserve"><tspan x="86.959999" y="175.64999" font-size="10px">CH</tspan><tspan dy="2.27" font-size="7.5px">3</tspan></text>
+ <path d="m90.87 185.98-0.31 0.17-0.29-0.17v-8.57h0.6z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+ <text fill="#000000" font-family="Arial" text-rendering="geometricPrecision" xml:space="preserve"><tspan x="111.9" y="175.64999" font-size="10px">NH</tspan><tspan dy="2.27" font-size="7.5px">2</tspan></text>
+ <path d="m115.82 185.99-0.32 0.16-0.31-0.16-1.18-9.58h3z" fill-rule="evenodd" shape-rendering="geometricPrecision" stroke-width="0"></path>
+</svg>

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  width="400"
+  height="195">
+  <defs>
+    <!-- punta grigia -->
+    <marker
+      id="punta_grigia"
+      orient="auto"
+      viewBox="0 0 2 2"
+      markerWidth="8"
+      markerHeight="8"
+      refY="1">
+      <path
+        d="M0 0l2 1-2 1z"
+        style="fill:#888"/>
+    </marker>
+    <!-- freccia grigia -->
+    <path
+      d="M0 0h163"
+      id="freccia_grigia" 
+      style="fill:none;marker-end:url(#punta_grigia);stroke:#888;stroke-dasharray:4"/>
+    <!-- fila di frecce -->
+    <g id="fila_di_frecce">
+      <use
+        xlink:href="#freccia_grigia"
+        y="-35"/>
+      <use
+        xlink:href="#freccia_grigia"
+        y="0"/>
+      <use
+        xlink:href="#freccia_grigia"
+        y="35"/>
+    </g>
+    <!-- punta blu -->
+    <marker
+      id="punta_blu"
+      orient="auto"
+      viewBox="0 0 2 2"
+      markerWidth="4.4"
+      markerHeight="3.3"
+      refY="1">
+      <path
+        d="M0 0l2 1-2 1z"
+        style="fill:#00f"/>
+    </marker>
+    <!-- punta nera -->
+    <marker
+      id="punta_nera"
+      orient="auto"
+      viewBox="0 0 2 2"
+      markerWidth="6"
+      markerHeight="4"
+      refY="1">
+      <path d="M0 0l2 1-2 1z"/>
+    </marker>
+    <!-- freccia nera -->
+    <path
+      d="M-3-22h8"
+      id="freccia_nera" 
+      style="fill:none;marker-end:url(#punta_nera);stroke:#000"/>
+  </defs>
+  <!-- polo N -->
+  <g style="stroke:#000;stroke-linejoin:bevel;stroke-width:1.5">
+    <path
+      d="M90 120h-70l40 65h70l-40-65v-110l40 65v110z"
+      style="fill:#ccd"/>
+    <path
+      d="M90 120v-110h-70q-15 27.5 0 55t0 55z"
+      style="fill:#eef"/>
+  </g>
+  <!-- file di frecce -->
+  <!--
+    122.72727 = 1350/11
+    118.181818 = 1300/11
+  -->
+  <use
+    xlink:href="#fila_di_frecce"
+    x="122.72727"
+    y="118.181818"/>
+  <use
+    xlink:href="#fila_di_frecce"
+    x="110"
+    y="97.5"/>
+  <!--
+    97.27273 = 1070/11
+    76.818182 = 845/11
+  -->
+  <use
+    xlink:href="#fila_di_frecce"
+    x="97.27273"
+    y="76.818182"/>
+  <!-- quadrato blu -->
+  <path
+    d="M150 10v110l40 65v-110z"
+    style="fill:none;stroke:#00f;stroke-width:1.5"/>
+  <!-- freccia blu -->
+  <path
+    d="M170 97.5h35"
+    style="fill:none;marker-end:url(#punta_blu);stroke:#00f;stroke-width:3"/>
+  <!-- polo S -->
+  <g style="stroke:#000;stroke-linejoin:bevel;stroke-width:1.5">
+    <path
+      d="M340 120h-70l40 65h70l-40-65q15-27.5 0-55t0-55l40 65q-15 27.5 0 55t0 55z"
+      style="fill:#ccd"/>
+    <path
+      d="M340 120q15-27.5 0-55t0-55h-70v110z"
+      style="fill:#eef"/>
+  </g>
+  <!-- nomi dei vettori -->
+  <g transform="translate(211,87.5)">
+    <text
+      style="font-family:serif;font-size:26px;font-style:italic;text-anchor:middle"
+      >A</text>
+    <use xlink:href="#freccia_nera"/>
+  </g>
+  <g transform="translate(250,33)">
+    <text
+      style="font-family:serif;font-size:26px;font-style:italic;text-anchor:middle"
+      >B</text>
+    <use xlink:href="#freccia_nera"/>
+  </g>
+  <!-- lettere sui poli -->
+  <g style="font-family:sans-serif;font-size:30px;font-weight:bold;text-anchor:middle">
+    <text
+      style="fill:#f00"
+      x="55"
+      y="75"
+      >N</text>
+    <text
+      style="fill:#00f"
+      x="305"
+      y="75"
+      >S</text>
+  </g>
+</svg>

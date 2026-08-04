@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg5415" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://www.w3.org/2000/svg" height="500" width="500" version="1.1" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="0 0 500.00001 500.00001">
+ <metadata id="metadata5420">
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g id="layer7" stroke="#000">
+  <g stroke-opacity=".26667" fill-rule="evenodd" fill-opacity=".13333" stroke-linecap="round">
+   <path id="path5967" d="m250 10a288.1 288.1 0 0 0 -233.51 120h117.4a116.7 116.7 0 0 1 116.11 -105 116.7 116.7 0 0 1 115.99 105h117.22a288.1 288.1 0 0 0 -233.21 -120z" fill="#08f"/>
+   <path id="circle5971" d="m250 80a185.4 185.4 0 0 0 -114.58 39.91 116.7 116.7 0 0 0 -1.43 10.09h65.736a51.5 51.5 0 0 1 50.27 -40.5 51.5 51.5 0 0 1 50.25 40.5h65.814a116.7 116.7 0 0 0 -1.56 -10.36 185.4 185.4 0 0 0 -114.5 -39.64z" fill="#0ff"/>
+   <path id="rect6022" d="m200 135.7v25.543a100 100 0 0 1 50 -13.543 100 100 0 0 1 50 13.504v-25.504h-16.156a100 100 0 0 1 -33.844 6 100 100 0 0 1 -33.758 -6h-16.242z" fill="#08f"/>
+   <path id="circle6016" d="m250 147.7a100 100 0 0 0 -50.96 14.09 58.5 58.5 0 0 0 50.96 29.91 58.5 58.5 0 0 0 50.99 -29.89 100 100 0 0 0 -50.99 -14.11z" fill="#0ff"/>
+   <path id="circle6045" d="m250 194.2a435.3 435.3 0 0 0 -93.35 10.432v9.6953h2.7578a435.3 435.3 0 0 1 90.59 -10.13 435.3 435.3 0 0 1 92.014 10.127h1.3359v-9.4473a435.3 435.3 0 0 0 -93.35 -10.68z" fill="#08f"/>
+   <path id="circle6068" d="m250 204.2a435.3 435.3 0 0 0 -92.32 10.45 229.4 229.4 0 0 0 92.32 19.55 229.4 229.4 0 0 0 92.5 -19.79 435.3 435.3 0 0 0 -92.5 -10.21z" fill="#0ff"/>
+   <path id="circle6126" d="m250 322.2a370.4 370.4 0 0 0 -142.75 28.695l-33.764 58.479h0.46289a370.4 370.4 0 0 1 176.05 -45.18 370.4 370.4 0 0 1 176.45 44.83h0.0586l-33.264-57.613a370.4 370.4 0 0 0 -143.24 -29.22z" fill="#0ff"/>
+  </g>
+  <g stroke-opacity=".26667" fill-rule="evenodd" fill-opacity=".13333" stroke-linecap="round" fill="#08f">
+   <path id="circle6109" d="m250 364.2a370.4 370.4 0 0 0 -176.51 45.17 370.4 370.4 0 0 0 176.51 44.83 370.4 370.4 0 0 0 176.51 -45.17 370.4 370.4 0 0 0 -176.51 -44.83z"/>
+   <path id="rect6140" d="m106.75 269.2v82.215a370.4 370.4 0 0 1 143.25 -29.22 370.4 370.4 0 0 1 143.25 28.879v-81.879h-56.086a127 127 0 0 1 -87.162 35 127 127 0 0 1 -87.293 -35h-55.955z"/>
+   <path id="circle6101" d="m250 456.2a1479 1479 0 0 0 -190 13.71v9.3633a1200 1200 0 0 0 190 16.924 1200 1200 0 0 0 190 -16.762v-8.125a1479 1479 0 0 0 -190 -15.1z"/>
+  </g>
+  <path id="path6175" d="m250-50v600" stroke-dasharray="16,4,2,4" stroke-width="2" fill="none"/>
+ </g>
+</svg>

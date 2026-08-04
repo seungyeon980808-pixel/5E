@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="4.4523869mm"
+   height="2.7147377mm"
+   viewBox="0 0 4.4523869 2.7147377"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   sodipodi:docname="VCC and VEE from KiCad.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="23.689562"
+     inkscape:cx="10.15215"
+     inkscape:cy="3.5669718"
+     inkscape:window-width="1920"
+     inkscape:window-height="1027"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g903" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-19.544574,-4.024249)">
+    <g
+       style="fill:none;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+       id="g903"
+       transform="translate(-87.331233,-64.479551)">
+      <text
+         x="178.0022"
+         y="177.7572"
+         textLength="0.45719999"
+         font-size="2px"
+         lengthAdjust="spacingAndGlyphs"
+         text-anchor="start"
+         opacity="0"
+         stroke-opacity="0"
+         id="text860" />
+      <g
+         class="stroked-text"
+         id="g861">
+        <desc
+           id="desc860" />
+      </g>
+      <text
+         x="178.0022"
+         y="174.7572"
+         textLength="0.45719999"
+         font-size="2px"
+         lengthAdjust="spacingAndGlyphs"
+         text-anchor="start"
+         opacity="0"
+         stroke-opacity="0"
+         id="text861" />
+      <g
+         class="stroked-text"
+         id="g862">
+        <desc
+           id="desc861" />
+      </g>
+      <text
+         x="178.0022"
+         y="171.7572"
+         textLength="0.45719999"
+         font-size="2px"
+         lengthAdjust="spacingAndGlyphs"
+         text-anchor="start"
+         opacity="0"
+         stroke-opacity="0"
+         id="text862" />
+      <g
+         class="stroked-text"
+         id="g863">
+        <desc
+           id="desc862" />
+      </g>
+      <text
+         x="178.0022"
+         y="168.7572"
+         textLength="0.45719999"
+         font-size="2px"
+         lengthAdjust="spacingAndGlyphs"
+         text-anchor="start"
+         opacity="0"
+         stroke-opacity="0"
+         id="text863" />
+      <g
+         class="stroked-text"
+         id="g864">
+        <desc
+           id="desc863" />
+      </g>
+      <path
+         d="m 197.0022,191.5072 v 3"
+         id="path864" />
+      <path
+         d="m 261.0022,191.5072 v 6.5"
+         id="path865" />
+      <g
+         id="g3">
+        <g
+           id="g2"
+           transform="translate(3.5740072,0.02233755)">
+          <path
+             style="fill:none;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             d="m 103.378,69.85 0.762,-1.27"
+             id="path866" />
+          <path
+             style="fill:none;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             d="M 104.14,71.12 V 68.58"
+             id="path867" />
+          <path
+             style="fill:none;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             d="m 104.14,68.58 0.762,1.27"
+             id="path868" />
+          <path
+             d="m 104.14,71.12 v 0"
+             id="path869" />
+        </g>
+        <g
+           id="g1">
+          <path
+             style="fill:none;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             d="M 110.49,71.12 V 68.58"
+             id="path902" />
+          <path
+             style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.1524;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             d="m 111.252,69.85 h -1.524 l 0.762,-1.27 z"
+             id="path903" />
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

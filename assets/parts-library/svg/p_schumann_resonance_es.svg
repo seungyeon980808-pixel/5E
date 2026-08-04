@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 671.27344 380"
+   version="1.1"
+   id="svg36"
+   sodipodi:docname="Schumann_resonance_es.svg"
+   width="671.27344"
+   height="380"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs40" />
+  <sodipodi:namedview
+     id="namedview38"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.5181999"
+     inkscape:cx="316.82258"
+     inkscape:cy="188.05166"
+     inkscape:window-width="1920"
+     inkscape:window-height="1012"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg36" />
+  <style
+     type="text/css"
+     id="style2">
+		circle, ellipse, path, line {stroke-width:2}
+		text {font-family:sans-serif}
+	</style>
+  <circle
+     cx="152"
+     cy="190"
+     r="151"
+     fill="#c0c0c0"
+     stroke="#808080"
+     id="circle4" />
+  <text
+     x="152"
+     y="198"
+     text-anchor="middle"
+     style="font-size:27px"
+     id="text6">Tierra</text>
+  <circle
+     cx="171"
+     cy="190"
+     fill="none"
+     stroke="brown"
+     id="circle8"
+     r="170"
+     style="stroke:#103ddb;stroke-opacity:1" />
+  <ellipse
+     cx="152"
+     cy="190"
+     rx="151"
+     ry="189"
+     fill="none"
+     stroke="#ff0000"
+     id="ellipse10" />
+  <path
+     fill="none"
+     stroke="green"
+     d="M 49,31 C 111,-12 342,84 341,190 340,293 107,398 47,349 -14,298 -15,75 49,31 Z"
+     id="path12"
+     style="stroke:#008e00;stroke-opacity:1" />
+  <line
+     x1="360"
+     x2="416"
+     y1="126"
+     y2="126"
+     stroke="brown"
+     id="line14"
+     style="stroke:#103ddb;stroke-opacity:1" />
+  <line
+     x1="360"
+     x2="416"
+     y1="190"
+     y2="190"
+     stroke="#ff0000"
+     id="line16" />
+  <line
+     x1="360"
+     x2="416"
+     y1="254"
+     y2="254"
+     stroke="green"
+     id="line18"
+     style="stroke:#008e00;stroke-opacity:1" />
+  <g
+     style="font-size:24px"
+     id="g34">
+    <text
+       x="522"
+       y="120"
+       id="text20"><tspan
+         sodipodi:role="line"
+         id="tspan9382"
+         x="522"
+         y="120">Modo</tspan><tspan
+         sodipodi:role="line"
+         id="tspan9384"
+         x="522"
+         y="150">fundamental</tspan></text>
+    <text
+       x="522"
+       y="188"
+       id="text22"><tspan
+         sodipodi:role="line"
+         id="tspan22652"
+         x="522"
+         y="188">Segundo</tspan><tspan
+         sodipodi:role="line"
+         id="tspan22654"
+         x="522"
+         y="218">modo</tspan></text>
+    <text
+       x="522"
+       y="252"
+       id="text24"><tspan
+         sodipodi:role="line"
+         id="tspan24024"
+         x="522"
+         y="252">Tercer</tspan><tspan
+         sodipodi:role="line"
+         id="tspan24026"
+         x="522"
+         y="282">modo</tspan></text>
+    <g
+       transform="matrix(0.75,0,0,1,103,0)"
+       id="g32">
+      <text
+         x="440"
+         y="132"
+         id="text26">(7.83Hz)</text>
+      <text
+         x="440"
+         y="196"
+         id="text28">(14.1Hz)</text>
+      <text
+         x="440"
+         y="260"
+         id="text30">(20.3Hz)</text>
+    </g>
+  </g>
+</svg>

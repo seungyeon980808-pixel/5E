@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="650"
+   height="245"
+   id="svg2575">
+  <defs
+     id="defs2704" />
+  <text
+     x="225.34961"
+     y="27.12207"
+     id="text2623"
+     xml:space="preserve"
+     style="font-size:12px;text-align:center;line-height:125%;text-anchor:middle;opacity:1;fill:#000000;stroke:none;stroke-width:1px;font-family:Sans"><tspan
+       x="225.34961"
+       y="27.12207"
+       id="tspan2625" /></text>
+  <g
+     id="g3033">
+    <rect
+       width="385"
+       height="91"
+       x="203.08791"
+       y="90.811028"
+       id="rect2579"
+       style="fill:#eeeeff;stroke:#000000;stroke-width:1;stroke-dasharray:3, 3" />
+    <rect
+       width="84"
+       height="59"
+       x="74.087906"
+       y="6.8110318"
+       id="rect2581"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="65"
+       height="45"
+       x="203.08791"
+       y="11.811031"
+       id="rect2583"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="85"
+       height="45"
+       x="298.08792"
+       y="11.811031"
+       id="rect2585"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="85"
+       height="45"
+       x="228.08791"
+       y="110.81103"
+       id="rect2587"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="80"
+       height="45"
+       x="488.08792"
+       y="110.81103"
+       id="rect2589"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="85"
+       height="59"
+       x="358.08792"
+       y="105.81103"
+       id="rect2591"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <rect
+       width="40"
+       height="30"
+       x="258.08792"
+       y="210.81104"
+       id="rect2593"
+       style="fill:#ddddff;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 28.087904,19.811032 L 71.087904,20.811032"
+       id="path2595"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 159.0879,20.811032 L 201.0879,21.811032"
+       id="path2597"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 158.0879,45.811032 L 201.0879,46.811032"
+       id="path2599"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 268.0879,35.811032 L 295.0879,36.811032"
+       id="path2601"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 384.0879,36.811032 L 403.0879,36.811032 L 403.0879,74.811032 L 273.0879,74.811032 L 273.0879,107.81103"
+       id="path2603"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 598.0879,131.81103 L 598.0879,225.81103 L 300.0879,225.81103"
+       id="path2605"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 258.0879,224.81103 L 43.087904,224.81103 L 43.087904,50.811032 L 71.087904,50.811032"
+       id="path2607"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 313.0879,130.80219 L 356.0879,131.61574"
+       id="path2609"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 444.0879,130.80219 L 486.0879,131.61574"
+       id="path2611"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <path
+       d="M 568.0879,130.80219 L 614.0879,131.61574"
+       id="path2613"
+       style="fill:none;stroke:#000000;stroke-width:1" />
+    <text
+       x="116.12892"
+       y="25.784664"
+       id="text2615"
+       xml:space="preserve"
+       style="font-size:12px;text-align:center;line-height:125%;text-anchor:middle;fill:#000000;stroke:none;stroke-width:1px;font-family:Sans"><tspan
+         x="116.12892"
+         y="25.784664"
+         id="tspan2617">Phase</tspan><tspan
+         x="116.12892"
+         y="40.784664"
+         id="tspan2619">frequency</tspan><tspan
+         x="116.12892"
+         y="55.784664"
+         id="tspan2621">detector</tspan></text>
+    <text
+       x="380.08792"
+       y="202.81104"
+       id="text2655"
+       xml:space="preserve"
+       style="font-size:20px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Sans"><tspan
+         x="380.08792"
+         y="202.81104"
+         id="tspan2657">VCO</tspan></text>
+    <text
+       x="8.087904"
+       y="27.811031"
+       id="text2659"
+       xml:space="preserve"
+       style="font-size:18px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Serif"><tspan
+         x="8.087904"
+         y="27.811031"
+         id="tspan2661">f<tspan
+   y="31.811031"
+   id="tspan2663"
+   style="font-size:10px;font-style:italic">in</tspan></tspan></text>
+    <text
+       x="167.08791"
+       y="14.811031"
+       id="text2665"
+       xml:space="preserve"
+       style="font-size:18px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Serif"><tspan
+         x="167.08791"
+         y="14.811031"
+         id="tspan2667"
+         style="font-size:10px">UP</tspan></text>
+    <text
+       x="160.53223"
+       y="62.536839"
+       id="text2669"
+       xml:space="preserve"
+       style="font-size:13.24542904px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Serif"><tspan
+         x="160.53223"
+         y="62.536839"
+         id="tspan2671"
+         style="font-size:10px">DOWN</tspan></text>
+    <text
+       x="618.08789"
+       y="136.81104"
+       id="text2673"
+       xml:space="preserve"
+       style="font-size:18px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Serif"><tspan
+         x="618.08789"
+         y="136.81104"
+         id="tspan2675">f<tspan
+   y="139.81104"
+   id="tspan2677"
+   style="font-size:10px;font-style:italic">out</tspan></tspan></text>
+    <text
+       x="265.08792"
+       y="229.81104"
+       id="text2679"
+       xml:space="preserve"
+       style="font-size:14px;text-align:start;line-height:125%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1px;font-family:Serif"><tspan
+         x="265.08792"
+         y="229.81104"
+         id="tspan2681">÷N</tspan></text>
+    <path
+       d="M 72.538621,20.536411 L 62.538621,14.536411 L 62.538621,26.536411 L 72.538621,20.536411 z"
+       id="path2683"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 202.0879,21.811032 L 193.0879,15.811032 L 193.0879,27.811032 L 202.0879,21.811032 z"
+       id="path2685"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 202.0879,46.811032 L 193.0879,40.811032 L 193.0879,52.811032 L 202.0879,46.811032 z"
+       id="path2687"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 72.087904,50.811032 L 62.087904,44.811032 L 62.087904,56.811032 L 72.087904,50.811032 z"
+       id="path2689"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 297.0879,36.811032 L 287.0879,29.811032 L 287.0879,41.811032 L 297.0879,36.811032 z"
+       id="path2691"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 357.0879,131.81103 L 347.0879,124.81103 L 347.0879,136.81103 L 357.0879,131.81103 z"
+       id="path2693"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 487.0879,131.81103 L 477.0879,125.81103 L 477.0879,137.81103 L 487.0879,131.81103 z"
+       id="path2695"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 618.0879,131.81103 L 608.0879,125.81103 L 608.0879,137.81103 L 618.0879,131.81103 z"
+       id="path2697"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 299.0879,225.81103 L 308.0879,219.81103 L 308.0879,231.81103 L 299.0879,225.81103 z"
+       id="path2699"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <path
+       d="M 273.0879,109.81103 L 280.0879,99.811032 L 268.0879,99.811032 L 273.0879,109.81103 z"
+       id="path2701"
+       style="fill:#000000;stroke:#000000;stroke-width:1px" />
+    <text
+       x="235.55861"
+       y="31.284664"
+       id="text2787"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="235.55861"
+         y="31.284664"
+         id="tspan2789">Pompa di</tspan><tspan
+         x="235.55861"
+         y="46.284664"
+         id="tspan2791">carica</tspan></text>
+    <text
+       x="340.39221"
+       y="30.579514"
+       id="text2793"
+       xml:space="preserve"
+       style="font-size:10.68832111px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="340.39221"
+         y="30.579514"
+         id="tspan2795">Filtro</tspan><tspan
+         x="340.39221"
+         y="43.939915"
+         id="tspan2797">passa-basso</tspan></text>
+    <text
+       x="270.38113"
+       y="129.4707"
+       id="text2799"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="270.38113"
+         y="129.4707"
+         id="tspan2803"
+         style="font-size:11px">Circuito di</tspan><tspan
+         x="270.38113"
+         y="143.2207"
+         id="tspan2807"
+         style="font-size:11px">polarizzazione</tspan></text>
+    <text
+       x="400.34183"
+       y="124.78466"
+       id="text2809"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="400.34183"
+         y="124.78466"
+         id="tspan2811">Oscillatore</tspan><tspan
+         x="400.34183"
+         y="139.78467"
+         id="tspan2813">controllato</tspan><tspan
+         x="400.34183"
+         y="154.78467"
+         id="tspan2815">in tensione</tspan></text>
+    <text
+       x="528.07037"
+       y="130.28467"
+       id="text2817"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="528.07037"
+         y="130.28467"
+         id="tspan2819">Convertitore</tspan><tspan
+         x="528.07037"
+         y="145.28467"
+         id="tspan2821">di uscita</tspan></text>
+  </g>
+</svg>

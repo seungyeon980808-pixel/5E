@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   id="svg2449"
+   sodipodi:version="0.32"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   width="301"
+   height="376"
+   version="1.0"
+   sodipodi:docname="Buoyancy-bn.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <metadata
+     id="metadata2454">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2452">
+    <linearGradient
+       id="linearGradient4997"
+       inkscape:collect="always">
+      <stop
+         id="stop4999"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1" />
+      <stop
+         id="stop5001"
+         offset="1"
+         style="stop-color:#7e8080;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4971">
+      <stop
+         style="stop-color:#38b3d2;stop-opacity:1;"
+         offset="0"
+         id="stop4973" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="1"
+         id="stop4975" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4775">
+      <stop
+         style="stop-color:#38b3d2;stop-opacity:1;"
+         offset="0"
+         id="stop4777" />
+      <stop
+         style="stop-color:#38b3d2;stop-opacity:0;"
+         offset="1"
+         id="stop4779" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective2456" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4971"
+       id="linearGradient4977"
+       x1="103.15585"
+       y1="332.05194"
+       x2="103.15585"
+       y2="153.87018"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(44.761905,-7.1212121)" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4997"
+       id="radialGradient5005"
+       cx="122.18739"
+       cy="183.5845"
+       fx="122.18739"
+       fy="183.5845"
+       r="44.041126"
+       gradientTransform="matrix(-1.5641237,5.874588e-2,-4.570493e-2,-1.2169033,361.92036,372.87177)"
+       gradientUnits="userSpaceOnUse"
+       spreadMethod="reflect" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="974"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="-27.930717"
+     inkscape:cy="290.62088"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:current-layer="svg2449"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     inkscape:pagecheckerboard="0"
+     inkscape:window-maximized="1" />
+  <path
+     style="opacity:1;fill:#a1edf3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.38202238;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     d="M -0.023236919,375.97551 L -0.00052066568,170.14477 L 91.58849,169.69115 C 92.127683,179.95827 96.576808,190.53975 101.76107,199.23233 C 101.76107,199.23233 118.24417,215.62475 118.24417,215.62475 C 136.70876,227.89997 159.09018,227.53813 177.57399,215.25011 C 177.57399,215.25011 193.45179,199.11829 193.45179,199.11829 L 203.78772,170.30219 L 301.0057,170.4704 L 300.78302,375.86009 L -0.023236919,375.97551 z"
+     id="path5281"
+     sodipodi:nodetypes="ccccccccccc" />
+  <path
+     style="fill:#c9c9c9;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1"
+     d="M 135.91342,29.90909 L 136.01515,71.008658 L 118.92424,71.110389 L 148.01948,120.95887 L 177.01299,71.110389 L 159.92208,71.008658 L 159.92208,29.807359 L 135.91342,29.90909 z"
+     id="path2460" />
+  <path
+     sodipodi:type="arc"
+     style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#01a0c7;stroke-width:2.65260506;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path5237"
+     sodipodi:cx="31.819805"
+     sodipodi:cy="98.460587"
+     sodipodi:rx="27.223612"
+     sodipodi:ry="28.637825"
+     d="M 59.043417,98.460587 A 27.223612,28.637825 0 1 1 4.5961933,98.460585"
+     sodipodi:start="0"
+     sodipodi:end="3.1415927"
+     sodipodi:open="true"
+     transform="matrix(1.985384,0,0,1.9806711,84.787559,-29.049892)" />
+  <path
+     style="fill:#edb32d;fill-rule:evenodd;stroke:#edb32d;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;fill-opacity:1;stroke-miterlimit:4;stroke-dasharray:3, 1;stroke-dashoffset:0"
+     d="M 103.56277,123.70563 L 66.939394,92.575757"
+     id="path3262" />
+  <path
+     sodipodi:type="arc"
+     style="opacity:1;fill:url(#radialGradient5005);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path3264"
+     sodipodi:cx="147.91776"
+     sodipodi:cy="167.95888"
+     sodipodi:rx="43.541126"
+     sodipodi:ry="43.642857"
+     d="M 191.45888,167.95888 A 43.541126,43.642857 0 1 1 104.37663,167.95888 A 43.541126,43.642857 0 1 1 191.45888,167.95888 z"
+     transform="matrix(1.0086125,0,0,1.0028642,-1.2647483,-0.5324677)" />
+  <rect
+     style="opacity:1;fill:#edb32d;fill-opacity:0.20930232;stroke:#edb32d;stroke-width:0.99400002;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:2.982, 0.994;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect3260"
+     width="88.715584"
+     height="88.919052"
+     x="103.41927"
+     y="123.5881" />
+  <path
+     style="opacity:1;fill:url(#linearGradient4977);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="M 135.86255,324.829 L 135.96428,283.72943 L 118.87337,283.6277 L 147.96861,233.77922 L 176.96212,283.6277 L 159.87121,283.72943 L 159.87121,324.93073 L 135.86255,324.829 z"
+     id="path4773" />
+  <path
+     style="fill:#01a0c7;fill-opacity:1;fill-rule:evenodd;stroke:#01a0c7;stroke-width:5.12528419;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 0.12606581,168.46416 L 93.742359,168.46416"
+     id="path5235" />
+  <path
+     style="fill:#01a0c7;fill-opacity:1;fill-rule:evenodd;stroke:#01a0c7;stroke-width:5.27452946;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 201.97935,168.46416 L 301.12713,168.46416"
+     id="path5239" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#c9c9c9;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="100.95509"
+     y="25.739504"
+     id="text5241"><tspan
+       sodipodi:role="line"
+       id="tspan5243"
+       x="100.95509"
+       y="25.739504"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">অভিকর্ষ</tspan></text>
+  <g
+     id="g5307"
+     transform="translate(-2.9497474,8.2426407)">
+    <text
+       id="text5245"
+       y="58.105244"
+       x="12.374369"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#edb32d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         y="58.105244"
+         x="12.374369"
+         id="tspan5247"
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">m</tspan></text>
+    <text
+       id="text5249"
+       y="64.947754"
+       x="38.506989"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#edb32d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         y="64.947754"
+         x="38.506989"
+         id="tspan5251"
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">বস্তু</tspan></text>
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#edb32d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="8.9653587"
+     y="86.666801"
+     id="text5253"><tspan
+       sodipodi:role="line"
+       id="tspan5255"
+       x="8.9653587"
+       y="86.666801"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">(বস্তুর ভর)</tspan></text>
+  <path
+     style="opacity:1;fill:#a1edf4;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     d="M 187.75715,212.77114 C 187.75715,212.56875 187.67382,212.52114 187.31965,212.52114 C 186.96776,212.52114 186.88215,212.47297 186.88215,212.27498 C 186.88215,212.0456 186.77905,212.02644 185.36877,211.99373 L 183.8554,211.95864 L 185.3231,210.64614 C 186.87627,209.25721 189.1662,206.85156 190.7057,204.99155 L 191.63215,203.87222 L 191.63215,204.38418 C 191.63215,204.8128 191.67284,204.89614 191.88215,204.89614 C 192.08453,204.89614 192.13215,204.97947 192.13215,205.33364 C 192.13215,205.6878 192.08453,205.77114 191.88215,205.77114 C 191.64548,205.77114 191.63215,205.85447 191.63215,207.33364 C 191.63215,208.8128 191.64548,208.89614 191.88215,208.89614 C 192.08453,208.89614 192.13215,208.97947 192.13215,209.33364 C 192.13215,209.6878 192.08453,209.77114 191.88215,209.77114 C 191.6473,209.77114 191.63215,209.85447 191.63215,211.14614 L 191.63215,212.52114 L 191.25715,212.52114 C 190.96548,212.52114 190.88215,212.46558 190.88215,212.27114 C 190.88215,212.03446 190.79882,212.02114 189.31817,212.02114 L 187.7542,212.02114 L 187.83415,212.52114 C 187.87812,212.79614 187.87879,213.02114 187.83563,213.02114 C 187.79247,213.02114 187.75715,212.90864 187.75715,212.77114 z"
+     id="path5285" />
+  <path
+     style="opacity:1;fill:#a1edf3;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:5;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     d="M 104.16745,212.58023 C 104.07045,212.47516 104.00245,211.87916 103.97995,210.937 C 103.94591,209.51136 103.93462,209.45721 103.6634,209.41869 C 103.43416,209.38613 103.38215,209.29946 103.38215,208.94994 C 103.38215,208.57449 103.42151,208.52114 103.6985,208.52114 L 104.01485,208.52114 L 103.97975,206.98989 L 103.94465,205.45864 L 103.44465,205.47998 C 103.16965,205.49171 103.04309,205.47352 103.1634,205.43956 C 103.31716,205.39615 103.38215,205.25055 103.38215,204.94947 C 103.38215,204.57874 103.42316,204.52114 103.68711,204.52114 C 103.94748,204.52114 103.99773,204.45456 104.03086,204.06572 L 104.06965,203.6103 L 105.19465,204.96919 C 106.48633,206.52942 109.92223,210.07419 111.30303,211.27114 C 112.3642,212.191 112.50064,212.52114 111.81965,212.52114 C 111.46549,212.52114 111.38215,212.47352 111.38215,212.27114 C 111.38215,212.03447 111.29882,212.02114 109.81965,212.02114 C 108.34049,212.02114 108.25715,212.03447 108.25715,212.27114 C 108.25715,212.47352 108.17382,212.52114 107.81965,212.52114 C 107.46549,212.52114 107.38215,212.47352 107.38215,212.27114 C 107.38215,212.0351 107.29882,212.02114 105.89007,212.02114 L 104.39799,212.02114 L 104.35882,212.38312 C 104.3272,212.67537 104.29033,212.71334 104.16745,212.58023 L 104.16745,212.58023 z"
+     id="path5287" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="87.121323"
+     y="350.35355"
+     id="text5291"><tspan
+       sodipodi:role="line"
+       id="tspan5293"
+       x="87.121323"
+       y="350.35355"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">    প্লবতা</tspan></text>
+  <g
+     id="g5313"
+     transform="translate(7.9999998,8.7499998)">
+    <text
+       id="text5295"
+       y="203"
+       x="19"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         y="203"
+         x="19"
+         id="tspan5297"
+         sodipodi:role="line"
+         style="font-size:28px;line-height:1.25">ρ</tspan></text>
+    <text
+       id="text5299"
+       y="214.57538"
+       x="34"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         y="214.57538"
+         x="34"
+         id="tspan5301"
+         sodipodi:role="line"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">তরল</tspan></text>
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="15.720564"
+     y="235.00758"
+     id="text5319"><tspan
+       sodipodi:role="line"
+       id="tspan5321"
+       x="15.720564"
+       y="235.00758"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">(তরলের ঘনত্ব)</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="132.2876"
+     y="153.29454"
+     id="text5325"><tspan
+       sodipodi:role="line"
+       id="tspan5327"
+       x="132.2876"
+       y="153.29454"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:28px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">ρ</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#4d4d4d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="145.87338"
+     y="165.22346"
+     id="text5329"><tspan
+       sodipodi:role="line"
+       id="tspan5331"
+       x="145.87338"
+       y="165.22346"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">বস্তু</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:0%;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#666666;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     x="119.12122"
+     y="182.33949"
+     id="text5337"><tspan
+       sodipodi:role="line"
+       id="tspan5339"
+       x="119.12122"
+       y="182.33949"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12px;line-height:1.25;font-family:'Noto Sans Bengali';-inkscape-font-specification:'Noto Sans Bengali'">(বস্তুর ঘনত্ব)</tspan></text>
+</svg>

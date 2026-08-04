@@ -1,0 +1,15 @@
+<svg style="font-family:'DejaVu Sans';font-size:1.3px;text-anchor:middle" version="1.1" viewBox="0 0 22 4" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<linearGradient id="a" x1="3" x2="19" y1="1" y2="1" gradientUnits="userSpaceOnUse">
+			<stop style="stop-color:#000" offset="0"/>
+			<stop style="stop-color:#ff0" offset="1"/>
+		</linearGradient>
+	</defs>
+	<path d="m0 3h20v1l2-2-2-2v1h-20z" style="fill:url(#a)"/>
+	<text x="3" y="1">14</text>
+	<text x="7" y="1">15</text>
+	<text x="11" y="1">16</text>
+	<text x="15" y="1">17</text>
+	<text x="11" y="4">in 100 h</text>
+	<text x="19" y="1">18</text>
+</svg>

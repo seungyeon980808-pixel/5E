@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 841.9 595.3" style="enable-background:new 0 0 841.9 595.3;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#312783;stroke-width:21;stroke-miterlimit:10;}
+	.st1{fill:#FFFFFF;stroke:#8391B6;stroke-width:4.5933;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#8391B6;stroke-width:1.1483;stroke-miterlimit:10;}
+	.st3{fill:none;stroke:#8391B6;stroke-width:1.1749;stroke-miterlimit:10;}
+	.st4{fill:#FFFFFF;stroke:#8391B6;stroke-width:5.1269;stroke-miterlimit:10;}
+	.st5{fill:#FFFFFF;stroke:#8391B6;stroke-width:1.1483;stroke-miterlimit:10;}
+</style>
+		<circle class="st0" cx="420.9" cy="297.6" r="222"/>
+				<path class="st1" d="M363.4,181l-0.8,176.7c0,9.5-8,17.2-17.8,17.2h0c-9.8,0-17.7-7.8-17.6-17.3l0.8-176.7"/>
+				<line class="st2" x1="337.8" y1="356.5" x2="339.1" y2="189.2"/>
+				<line class="st3" x1="344.7" y1="364.5" x2="346" y2="189.3"/>
+				<line class="st2" x1="352.3" y1="356.8" x2="353.7" y2="189.5"/>
+				<ellipse transform="matrix(1.209058e-03 -1 1 1.209058e-03 164.2471 526.6743)" class="st4" cx="345.8" cy="181.1" rx="4.8" ry="20.2"/>
+			<path class="st1" d="M458.9,237.2l-0.6,74.3l-11.3,34.7l-11.4,34.9c-8,24.4,2.2,54.8,18.3,54.7l23-0.1l23-0.1
+				c16.1-0.1,26-30.5,17.9-54.8L506.2,346l-11.6-34.8c-0.3-0.8-0.5-1.6-0.8-2.3l0.6-71.5"/>
+			
+				<ellipse transform="matrix(4.906856e-03 -1 1 4.906856e-03 233.6349 715.3385)" class="st4" cx="476.2" cy="240.3" rx="4.8" ry="20.2"/>
+			<path class="st5" d="M500.2,426.1c0,2.8-10.7,5.1-23.9,5.1c-13.2,0-23.9-2.3-23.9-5.1"/>
+			<path class="st5" d="M452,422.6c0-2.8,10.6-5.3,23.8-5.5c13.2-0.2,23.9,2,24,4.8"/>
+</svg>
