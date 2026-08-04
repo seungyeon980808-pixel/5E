@@ -187,8 +187,8 @@ function setupButtons() {
  * 있어도 이 옵션 버튼을 querySelector로 찾아 click()하므로 그대로 작동한다. */
 function setupToolChoosers() {
   const PAIRS = [
-    { btn: "tool-text-merged", chooser: "chooser-text" },
-    { btn: "tool-angle-merged", chooser: "chooser-angle" },
+    { btn: "tool-text-merged", chooser: "chooser-text", persistent: true },
+    { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true },
     { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true },
   ];
   const closeAll = () => {
@@ -241,7 +241,9 @@ function setupToolChoosers() {
       if (persistent) return;
       window.clearTimeout(closeTimer);
       closeTimer = window.setTimeout(() => {
-        if (!b.matches(":hover") && !c.matches(":hover")) c.hidden = true;
+        // Use the shared closer so the temporary blue "open" state is also
+        // removed when the pointer leaves without choosing a child tool.
+        if (!b.matches(":hover") && !c.matches(":hover")) closeAll();
       }, 160);
     };
     b.addEventListener("click", (e) => {
