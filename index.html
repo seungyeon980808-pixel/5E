@@ -41,7 +41,7 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=1.4.0" />
+  <link rel="stylesheet" href="css/style.css?v=1.5.1" />
   <link rel="stylesheet" href="css/inspector.css?v=1.4.0" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.0" />
@@ -75,11 +75,9 @@
             <button class="tool-btn" type="button" data-tool="rotate" title="회전 (R)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5 A6.5 6.5 0 1 0 16.5 10"/><polyline points="14,3 16.5,5.5 14,8"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-tool="CUT" title="자르기 (E)">
+            <button class="tool-btn" type="button" id="tool-cut-merged" aria-haspopup="true"
+                    title="자르기 / 지연 자르기 / 지우개" aria-label="자르기, 지연 자르기, 지우개 선택">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></kbd>
-            </button>
-            <button class="tool-btn" type="button" data-tool="ERASE" title="지우개 (Shift+E)">
-              <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.2 15.5 L3.5 10.8 L10.8 3.5 L15.5 8.2 Z"/><line x1="7" y1="15.5" x2="16.5" y2="15.5"/><line x1="6.2" y1="8.1" x2="10.9" y2="12.8"/></svg></kbd>
             </button>
             <!-- 2줄: 타원 / 삼각형 / 사각형 -->
             <button class="tool-btn" type="button" data-tool="O" title="타원 (O)">
@@ -148,6 +146,20 @@
               <button class="tool-chooser-opt" type="button" data-symbol="rightangle" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4 L5 15 L16 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11 L9 11 L9 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 <span class="chooser-txt"><b>직각</b><small>직각 표시 (Shift+A)</small></span>
+              </button>
+            </div>
+            <div class="tool-chooser" id="chooser-cut" hidden role="menu" aria-label="자르기 / 지연 자르기 / 지우개 선택">
+              <button class="tool-chooser-opt" type="button" data-tool="CUT" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></span>
+                <span class="chooser-txt"><b>자르기</b><small>즉시 자르기 (E)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-tool="DELAYED_CUT" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/><circle cx="14.8" cy="14.2" r="3.1" fill="var(--bg-panel, #fff)"/><path d="M14.8 12.7v1.7l1.1.7"/></svg></span>
+                <span class="chooser-txt"><b>지연 자르기</b><small>선을 모은 뒤 확정 (Ctrl+E)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-tool="ERASE" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.2 15.5 L3.5 10.8 L10.8 3.5 L15.5 8.2 Z"/><line x1="7" y1="15.5" x2="16.5" y2="15.5"/><line x1="6.2" y1="8.1" x2="10.9" y2="12.8"/></svg></span>
+                <span class="chooser-txt"><b>지우개</b><small>지우기 (Shift+E)</small></span>
               </button>
             </div>
           </div>
@@ -418,7 +430,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
-  <script type="module" src="js/main.js?v=1.4.0"></script>
+  <script type="module" src="js/main.js?v=1.4.4"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.0"></script>
 </body>

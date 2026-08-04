@@ -30,8 +30,8 @@ import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.4.0";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.4.0";
 import { nextObjectId } from "./tools/id.js?v=1.4.0";
 import { setupFreeDraw } from "./tools/free-draw.js?v=1.4.0";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.4.0";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.4.0";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.5.2";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.5.2";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
@@ -58,11 +58,11 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.4.0";
+} from "./text-editor.js?v=1.5.1";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.4.0";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.5.1";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
 import { guideCursorAt } from "./ruler.js?v=1.4.0";
@@ -189,23 +189,42 @@ function setupToolChoosers() {
   const PAIRS = [
     { btn: "tool-text-merged", chooser: "chooser-text" },
     { btn: "tool-angle-merged", chooser: "chooser-angle" },
+    { btn: "tool-cut-merged", chooser: "chooser-cut", hover: true },
   ];
   const closeAll = () => document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
   let anyBound = false;
-  PAIRS.forEach(({ btn, chooser }) => {
+  PAIRS.forEach(({ btn, chooser, hover }) => {
     const b = document.getElementById(btn), c = document.getElementById(chooser);
     if (!b || !c) return;
     anyBound = true;
-    b.addEventListener("click", (e) => {
-      e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
-      const willOpen = c.hidden;
+    let closeTimer = 0;
+    const open = () => {
       closeAll();
-      if (!willOpen) return;
       c.hidden = false;
       const r = b.getBoundingClientRect();
       c.style.left = Math.round(r.right + 6) + "px";
       c.style.top = Math.round(r.top) + "px";
+    };
+    const scheduleClose = () => {
+      if (!hover) return;
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        if (!b.matches(":hover") && !c.matches(":hover")) c.hidden = true;
+      }, 160);
+    };
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
+      if (hover && !c.hidden) return;
+      const willOpen = c.hidden;
+      closeAll();
+      if (willOpen) open();
     });
+    if (hover) {
+      b.addEventListener("mouseenter", () => { window.clearTimeout(closeTimer); open(); });
+      b.addEventListener("mouseleave", scheduleClose);
+      c.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
+      c.addEventListener("mouseleave", scheduleClose);
+    }
     // 옵션 클릭 = 도구 선택(기존 위임이 처리) + 팝오버 닫기.
     c.addEventListener("click", () => { closeAll(); });
   });
@@ -270,6 +289,8 @@ function syncButtons(activeTool) {
   if (tm) tm.classList.toggle("is-active", activeTool === "T" || _activeSymbolId === "labeler");
   const am = document.getElementById("tool-angle-merged");
   if (am) am.classList.toggle("is-active", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
+  const cm = document.getElementById("tool-cut-merged");
+  if (cm) cm.classList.toggle("is-active", activeTool === "CUT" || activeTool === "DELAYED_CUT" || activeTool === "ERASE");
 }
 
 // Mirrors transform.js's own F-key precondition (selected, unlocked, type "triangle")
@@ -282,13 +303,18 @@ function hasFlippableTriangleSelected() {
   });
 }
 
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / Ctrl+E(지연 자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
-    if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyE" || e.key.toLowerCase() === "e")) {
+      e.preventDefault();
+      setActiveTool("DELAYED_CUT");
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
+    if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
     // 모달(함수 입력·좌표평면 상세 등)이 열린 동안, 포커스가 그 안의 BUTTON에 있을 때도
     // v/s/t/f 등 도구 단축키가 뒤편 캔버스 도구를 바꾸지 않게 차단(transform.js의 Delete/
     // Ctrl+Z 가드와 동일 패턴). 특히 F는 그래프 모달을 모달 위에 겹쳐 열어버렸다.
@@ -475,6 +501,18 @@ function setupDrawing() {
     let hitId = null;
     _state.update((s) => {
       hitId = pickSelectableObjectAtPoint(s, p);
+      // Some compound symbols (points/optics and angle markers) are rendered
+      // from several child SVG nodes. Their geometric hit-test can miss when
+      // the click lands on a child path or on a transparent hit twin, even
+      // though the renderer already identifies the owning object with data-id.
+      // Use that DOM identity as a bounded fallback, never as a cross-layer
+      // bypass: the object still has to belong to the active visible layer.
+      if (hitId === null) {
+        const domId = e.target?.closest?.("[data-id]")?.dataset?.id;
+        const domObj = domId && s.objects.find((o) => o.id === domId);
+        const domLayer = domObj && (s.layers || []).find((layer) => layer.id === (domObj.layerId ?? 1));
+        if (domObj && domLayer && domLayer.visible !== false && (domObj.layerId ?? 1) === s.activeLayerId) hitId = domId;
+      }
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
         // V: defer selection to mouseup so marquee can run
@@ -608,6 +646,8 @@ function setupDrawing() {
         shape.order = s.objects.length;
         shape.layerId = s.activeLayerId;
         s.objects.push(shape);
+        s.selectedIds = [shape.id];
+        s.targetedId = null;
         s.undoStack.push(snap);
         s.redoStack = [];
         s.activeTool = "V"; // auto-return to select right after drawing (DESIGN 4-3)

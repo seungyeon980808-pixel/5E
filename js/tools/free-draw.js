@@ -15,7 +15,7 @@
 import { screenToWorld } from "../viewport.js?v=1.4.0";
 import { simplifyRDP } from "../geometry.js?v=1.4.0";
 import { nextObjectId } from "./id.js?v=1.4.0";
-import { isSpaceHeld } from "../tools.js?v=1.4.0";
+import { isSpaceHeld } from "../tools.js?v=1.5.3";
 
 let _svg = null;
 let _state = null;

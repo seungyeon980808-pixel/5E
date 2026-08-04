@@ -268,7 +268,6 @@ const PREF_TABS = [
   { id: "tools",   label: "편집 도구" },
   { id: "storage", label: "저장" },
   { id: "library", label: "라이브러리" },
-  { id: "advanced",label: "고급" },
 ];
 
 function prefStyles() {
@@ -350,12 +349,6 @@ function openPreferencesDialog() {
           <button type="button" class="modal-btn" id="pref-memo-clear">문항별 메모 전체 지우기</button>
         </div>
         <p class="pref-note">메모는 백업 파일에도 함께 저장됩니다.</p>
-      </section>
-
-      <section class="pref-panel" data-panel="advanced" role="tabpanel">
-        <p class="pref-soon">아직 비어 있는 탭입니다. 단축키 바꾸기, 이미지 객체화의 기본 인식값,
-          실험 기능 켜기가 여기로 들어올 예정입니다. 지금은 단축키 설정이 준비 중이라
-          옮길 것이 없습니다.</p>
       </section>
 
       <div class="modal-actions">

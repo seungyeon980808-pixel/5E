@@ -186,6 +186,12 @@ export function render(state) {
     if (_layer && _layer.visible === false) continue;
     const el = renderObject(obj);
     if (!el) continue;
+    // 지연 자르기 가이드는 별도의 빨간 점선 레이어가 그립니다.
+    // 기본 렌더를 그대로 노출하면 일반 곡선 스타일(검은 선/면)이 섞여
+    // 사용자가 그은 절단 경로가 칠해진 영역처럼 보일 수 있으므로,
+    // 선택·이동용 hit twin만 남기고 시각적인 본체는 숨깁니다.
+    const _isDelayedGuide = obj.delayedCut === true;
+    if (_isDelayedGuide) el.setAttribute("opacity", "0");
     const _isActive = _layerId === state.activeLayerId;
     if (!_isActive) el.setAttribute("opacity", "0.5");
     if (isLockedTracingImage(obj)) el.setAttribute("pointer-events", "none");
@@ -1004,6 +1010,10 @@ function renderHandles(sel, scene, zoom, activeTool) {
 
   const _closedPoly  = sel.type === "polyline" && sel.closed === true;
   const _closedCurve = sel.type === "curve"    && sel.closed === true;
+  // 지연 자르기 자유곡선은 일반 곡선처럼 하나의 경로로 다룹니다.
+  // 자유곡선의 모든 샘플점을 편집 핸들로 노출하면 선택 직후 작은 사각형이
+  // 과도하게 늘어서므로, 전체 곡선을 조절하는 8개 핸들만 표시합니다.
+  const _delayedOpenCurve = sel.type === "curve" && sel.delayedCut === true && !sel.closed;
   const _anglearc = sel.type === "anglearc";
   const _rightangle = sel.type === "rightangle";
   // Open polyline/curve normally shows per-vertex handles (edit each point), but under
@@ -1011,12 +1021,12 @@ function renderHandles(sel, scene, zoom, activeTool) {
   // bbox center like other shapes — cut pieces are open polylines and must rotate too.
   const _openPolyRot = (sel.type === "polyline" || sel.type === "curve") && !sel.closed && activeTool === "rotate";
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus (+ derived-box cases)
-  if (SIZE_TYPES.has(sel.type) || _anglearc || _rightangle || _closedPoly || _closedCurve || _openPolyRot) {
+  if (SIZE_TYPES.has(sel.type) || _anglearc || _rightangle || _closedPoly || _closedCurve || _delayedOpenCurve || _openPolyRot) {
     // Closed polyline/curve and anglearc reuse branch-A handles on a derived
     // (axis-aligned) bbox; none has x/y/w/h or a rotation field, so derive the
     // box and pin deg to 0 (anglearc's rotation lives in startAngle, not a box).
     let x, y, w, h, deg;
-    if (_closedPoly || _closedCurve || _anglearc || _rightangle || _openPolyRot) {
+    if (_closedPoly || _closedCurve || _anglearc || _rightangle || _delayedOpenCurve || _openPolyRot) {
       const bb = singleObjBBox(sel, scene);
       // points가 빈 배열인 폴리라인/커브(옛 프로젝트 파일·객체화 산출물) 등은 bb가 null —
       // 다른 호출부(예: 283-298행)처럼 방어해 핸들을 그리지 않고 빠진다. 방어 없이

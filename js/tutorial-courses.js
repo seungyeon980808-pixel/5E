@@ -26,7 +26,7 @@ import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
 } from "./state.js?v=1.4.0";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH } from "./tools.js?v=1.4.0";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH } from "./tools.js?v=1.5.3";
 import { TEMPLATES } from "./templates.js?v=1.4.0";
 import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
@@ -104,6 +104,108 @@ function newText(x, y, text, size = DEFAULT_TEXT_SIZE_MM) {
 }
 const objectCount = () => objects().length;
 const countOf = (type) => objects().filter((o) => o.type === type).length;
+
+/* ===== 심화 튜토리얼 공용 타깃 =====
+ * 인스펙터의 선 모드·라벨 입력은 선택된 객체에 따라 동적으로 생기므로 고정 id를
+ * 붙일 수 없다. 기본 튜토리얼과 같은 원칙으로 '현재 실제로 보이는 컨트롤'만 짚는다. */
+function advancedSelectedLine() {
+  const s = state.get();
+  const id = (s.selectedIds || [])[0];
+  const o = s.objects.find((x) => x.id === id);
+  if (o && o.type === "line") return o;
+  // 드로잉 직후 선택 갱신보다 판정 tick이 먼저 도는 경우가 있다.
+  // 이때도 방금 완성한 선을 인식하도록 마지막 선을 안전한 대체 대상으로 쓴다.
+  return [...s.objects].reverse().find((x) => x.type === "line") || null;
+}
+function advancedInspectorField(label) {
+  const rows = [...document.querySelectorAll("#panel-right .insp-row")];
+  const row = rows.find((r) => r.querySelector(".insp-field-label")?.textContent.trim() === label);
+  if (!row) return null;
+  const input = row.querySelector("input, select, textarea");
+  return vis(input);
+}
+function advancedInspectorRow(label) {
+  const rows = [...document.querySelectorAll("#panel-right .insp-row")];
+  const row = rows.find((r) => r.querySelector(".insp-field-label")?.textContent.trim() === label);
+  return vis(row);
+}
+function advancedLineModeButton(mode) {
+  const labels = {
+    solid: "Solid line",
+    arrow: "Arrow",
+    middleArrow: "Middle arrow",
+    midInward: "Inward double arrow",
+    lengthArrow: "Length arrow",
+    scaleBar: "축척 막대 (지도·현미경) — 다시 누르면 모양 순환",
+  };
+  return vis(`#panel-right button[aria-label="${labels[mode] || mode}"]`)
+    || vis(`#panel-right button[title="${labels[mode] || mode}"]`);
+}
+function advancedLineHas(mode, label) {
+  const o = advancedSelectedLine();
+  return !!o && o.lineMode === mode && (!label || String(o.dimensionLabel || "").trim() === label);
+}
+function advancedLineVariant(variant) {
+  const o = advancedSelectedLine();
+  return !!o && o.arrowVariant === variant;
+}
+function advancedDimensionVariant(variant) {
+  const o = advancedSelectedLine();
+  return !!o && o.lineMode === "lengthArrow" && o.dimensionVariant === variant;
+}
+function advancedSelectedPolyline() {
+  const s = state.get();
+  const id = (s.selectedIds || [])[0];
+  const o = s.objects.find((x) => x.id === id);
+  return o && o.type === "polyline" ? o : null;
+}
+function advancedDashLine() {
+  return objects().find((o) => o.type === "line" && (o.dashLength || 0) > 0);
+}
+function advancedTextHas(text) {
+  return objects().some((o) => o.type === "text" && String(o.text || o.source || "").trim() === text);
+}
+function advancedBoxLabelHas(text) {
+  return objects().some((o) => (o.type === "rect" || o.type === "ellipse") &&
+    String(o.labelInner || "").trim() === text);
+}
+function advancedSelectedLineAxis(axis) {
+  const lines = objects().filter((o) => o.type === "line" && o.p1 && o.p2);
+  // Ctrl 스냅은 축 성분을 정확히 0으로 만들지만, 저장·복원·브라우저 배율에
+  // 따라 작은 오차가 남을 수 있으므로 튜토리얼 판정은 눈에 보이는 수준으로 넉넉히 둔다.
+  return lines.some((o) => {
+    const dx = Math.abs(o.p2.x - o.p1.x), dy = Math.abs(o.p2.y - o.p1.y);
+    return axis === "horizontal" ? dy <= 2.5 : dx <= 2.5;
+  });
+}
+function advancedLineAxisAfter(beforeCount, axis) {
+  const lines = objects().filter((o) => o.type === "line" && o.p1 && o.p2);
+  const recent = lines.slice(Math.max(0, Number(beforeCount) || 0));
+  return recent.some((o) => {
+    const dx = Math.abs(o.p2.x - o.p1.x), dy = Math.abs(o.p2.y - o.p1.y);
+    return axis === "horizontal" ? dy <= 2.5 : dx <= 2.5;
+  });
+}
+function advancedSelectedObjects() {
+  const ids = new Set(state.get().selectedIds || []);
+  return objects().filter((o) => ids.has(o.id));
+}
+function advancedField(label) {
+  return advancedInspectorField(label);
+}
+function advancedFilledShape() {
+  return objects().find((o) => ["rect", "ellipse", "triangle", "polyline"].includes(o.type) && !o.fillNone);
+}
+function advancedSvgAssets() { return objects().filter((o) => o.type === "svgAsset"); }
+function advancedGraphs() { return objects().filter((o) => o.type === "coordplane"); }
+function advancedType(selector, value) {
+  const el = document.querySelector(selector);
+  if (!el) return false;
+  el.value = value;
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  return true;
+}
 
 /* ===== 통과 오차 규격 =====
  * 예전에는 단계마다 9mm·1.35배·8°처럼 값이 제각각이라 기준이 없었다. 아트보드 기본
@@ -2797,10 +2899,312 @@ const EXAM_TASK_INCLINE = {
   ],
 };
 
+/* ===================================================================
+ * 심화 트랙 — 1단계
+ *
+ * 기본 트랙에서 직선과 화살표를 이미 그렸으므로, 여기서는 '선을 만드는 법'을
+ * 반복하지 않고 선의 의미를 바꾸는 법을 배운다. 모든 실습 단계는 최종 객체 상태를
+ * 확인한다. 선을 그리기 시작만 한 상태나 인스펙터를 열기만 한 상태는 통과시키지 않는다.
+ * =================================================================== */
+const LEGACY_ADVANCED_LINES = {
+  id: "advanced-lines",
+  title: "1 · 직선과 치수선",
+  desc: "한 줄을 목적에 맞는 치수선으로 바꾸기",
+  minutes: 8,
+  practice: true,
+  next: ["advanced-shapes"],
+  steps: [
+    {
+      chapter: "직선의 역할",
+      title: "이번에는 선의 종류를 골라 씁니다",
+      text:
+        "기본에서 직선은 이미 그려 보셨습니다.\n" +
+        "이번에는 같은 직선 도구로 만든 선을 목적에 맞게 바꿉니다.\n\n" +
+        "· 일반 직선 — 경계나 구조를 그릴 때\n" +
+        "· 화살표 — 힘·속도·진행 방향을 나타낼 때\n" +
+        "· 길이 표시 — 실제 거리나 치수를 적을 때\n" +
+        "· 축척 막대 — 지도·현미경처럼 비율을 나타낼 때\n\n" +
+        "각 단계마다 선 하나를 완성한 뒤, 오른쪽 속성에서 용도를 바꿔 보겠습니다.",
+    },
+    {
+      chapter: "직선의 역할",
+      target: () => '[data-tool="L"]',
+      title: "직선 도구를 눌러 주세요",
+      text:
+        "왼쪽 도구 서랍의 세 번째 줄 첫 번째 버튼입니다.\n" +
+        "직선은 두 점을 차례로 지정해 만듭니다.",
+      demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }),
+      wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" },
+    },
+    {
+      chapter: "직선의 역할",
+      target: () => "#canvas",
+      practice: true,
+      title: "경사면의 바닥선을 그려 주세요",
+      text:
+        "점선의 양 끝을 차례로 클릭하세요.\n" +
+        "첫 번째 점을 누르고, 두 번째 점을 누르면 선이 완성됩니다.\n" +
+        "아직 치수선으로 바꾸지 않습니다.",
+      guide: () => ({ pts: [[-34, 18], [34, 18]], close: false, note: "두 점을 차례로", noteDy: -5 }),
+      demo: () => ({ kind: "clicks", at: [[-34, 18], [34, 18]] }),
+      action: (ctx) => { ctx.lines0 = countOf("line"); },
+      wait: {
+        until: (ctx) => countOf("line") > (ctx.lines0 || 0),
+        hint: "점선의 양 끝을 차례로 클릭해 주세요",
+      },
+    },
+    {
+      chapter: "직선의 역할",
+      target: () => "#canvas",
+      title: "수평선이 완성됐는지 확인해 주세요",
+      text:
+        "선이 끝까지 만들어졌다면 다음 단계로 넘어갑니다.\n" +
+        "첫 번째 점만 찍은 상태에서는 아직 완성된 것이 아닙니다.",
+      wait: { until: () => objects().some((o) => o.type === "line" && o.p1 && o.p2), hint: "두 번째 점까지 지정해 선을 완성해 주세요" },
+    },
+    {
+      chapter: "길이 표시",
+      target: () => '[data-tool="L"]',
+      title: "두 번째 선을 치수선으로 만들 준비를 합니다",
+      text:
+        "이번에는 높이를 표시할 보조선을 만들겠습니다.\n" +
+        "직선 도구를 다시 눌러 주세요.",
+      demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }),
+      wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" },
+    },
+    {
+      chapter: "길이 표시",
+      target: () => "#canvas",
+      title: "높이를 표시할 선을 그려 주세요",
+      text:
+        "왼쪽 아래 점에서 위쪽 점까지 선을 만들어 주세요.\n" +
+        "두 점을 모두 지정해야 다음 단계로 넘어갑니다.",
+      guide: () => ({ pts: [[-24, 18], [-24, -12]], close: false, note: "높이 h", noteDy: -4 }),
+      demo: () => ({ kind: "clicks", at: [[-24, 18], [-24, -12]] }),
+      action: (ctx) => { ctx.heightLine0 = countOf("line"); },
+      wait: {
+        until: (ctx) => countOf("line") > (ctx.heightLine0 || 0) && !!advancedSelectedLine(),
+        hint: "두 점을 차례로 클릭해 높이선을 완성해 주세요",
+      },
+    },
+    {
+      chapter: "길이 표시",
+      target: () => advancedLineModeButton("lengthArrow") || "#panel-right",
+      title: "오른쪽에서 ‘길이 표시’를 고르세요",
+      text:
+        "오른쪽 속성의 선 모양에서 양쪽에 표시가 있는 버튼을 고릅니다.\n" +
+        "이 버튼은 선을 거리 표시용 치수선으로 바꿉니다.\n\n" +
+        "선이 선택되어 있어야 오른쪽 속성이 나타납니다.",
+      wait: {
+        until: () => advancedLineHas("lengthArrow"),
+        hint: "오른쪽 선 모양에서 ‘길이 표시’를 눌러 주세요",
+      },
+    },
+    {
+      chapter: "길이 표시",
+      target: () => advancedInspectorField("라벨") || "#panel-right",
+      title: "치수 라벨을 입력하세요",
+      text:
+        "길이 표시 선이 선택된 상태에서 오른쪽 ‘라벨’ 칸을 찾습니다.\n" +
+        "이 선은 높이를 나타내므로 `h`를 입력하고 Enter를 눌러 주세요.",
+      wait: {
+        until: () => advancedLineHas("lengthArrow", "h"),
+        hint: "‘라벨’ 칸에 h를 입력하고 Enter를 눌러 주세요",
+      },
+    },
+    {
+      chapter: "축척과 화살표",
+      target: () => '[data-tool="L"]',
+      title: "이번에는 경사 방향의 선을 만듭니다",
+      text:
+        "경사면의 실제 길이를 표시할 선입니다.\n" +
+        "경사면과 같은 방향으로 두 점을 지정해 주세요.",
+      demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }),
+      wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" },
+    },
+    {
+      chapter: "축척과 화살표",
+      target: () => "#canvas",
+      title: "경사면의 길이를 표시할 선을 그려 주세요",
+      text: "점선의 양 끝을 차례로 클릭하세요. 이번에는 경사면과 같은 방향입니다.",
+      guide: () => ({ pts: [[-24, 5], [10, 18]], close: false, note: "경사면 길이", noteDy: -5 }),
+      demo: () => ({ kind: "clicks", at: [[-24, 5], [10, 18]] }),
+      action: (ctx) => { ctx.slopeLine0 = countOf("line"); },
+      wait: {
+        until: (ctx) => countOf("line") > (ctx.slopeLine0 || 0) && !!advancedSelectedLine(),
+        hint: "두 점을 차례로 클릭해 경사 방향 선을 완성해 주세요",
+      },
+    },
+    {
+      chapter: "축척과 화살표",
+      target: () => advancedLineModeButton("lengthArrow") || "#panel-right",
+      title: "경사 방향도 길이 표시로 바꿔 주세요",
+      text: "이번 선도 오른쪽 속성에서 ‘길이 표시’를 선택합니다.",
+      wait: {
+        until: () => advancedLineHas("lengthArrow"),
+        hint: "오른쪽 선 모양에서 ‘길이 표시’를 눌러 주세요",
+      },
+    },
+    {
+      chapter: "축척과 화살표",
+      target: () => advancedInspectorField("라벨") || "#panel-right",
+      title: "경사면 길이 라벨을 입력하세요",
+      text: "이번 치수선의 이름은 `l`입니다. 라벨 칸에 l을 입력하고 Enter를 눌러 주세요.",
+      wait: {
+        until: () => advancedLineHas("lengthArrow", "l"),
+        hint: "‘라벨’ 칸에 l을 입력하고 Enter를 눌러 주세요",
+      },
+    },
+    {
+      chapter: "마무리",
+      title: "치수선의 쓰임을 확인했습니다",
+      text:
+        "완성된 그림에는 일반 직선, 높이 h, 경사면 길이 l이 있습니다.\n\n" +
+        "· 구조를 그리는 선은 일반 직선\n" +
+        "· 거리를 표시하는 선은 길이 표시\n" +
+        "· 치수선은 라벨과 방향까지 맞아야 완성\n\n" +
+        "다음 단계에서는 도형을 자르고 채우고, 여러 객체의 속성을 한꺼번에 통일합니다.\n" +
+        "다 보셨으면 [마치기]를 눌러 주세요.",
+    },
+  ],
+};
+
+/* ===== 심화 1 개정판: 역학 그림을 한 장씩 완성하기 ===== */
+const ADVANCED_LINES = {
+  id: "advanced-lines",
+  title: "1 · 역학 그림의 선과 치수선",
+  desc: "점선 바닥부터 경사면·물체·마찰구간·치수선까지 한 흐름으로 완성하기",
+  minutes: 12,
+  practice: true,
+  next: ["advanced-shapes"],
+  steps: [
+    { chapter: "바닥과 수평면", title: "이번 단계에서는 한 장의 역학 그림을 완성합니다", text: "레퍼런스와 같은 순서로 진행합니다.\n\n① Ctrl을 누른 채 바닥 수평면 → ② 선택된 선을 점선3으로 변경 → ③ 꺾은선 경사면 → ④ 물체와 라벨 → ⑤ 마찰구간과 설명 → ⑥ 화살표와 치수선\n\n방금 만든 선은 자동으로 선택된 상태에서 다음 동작으로 이어집니다." },
+    { chapter: "바닥과 수평면", target: () => '[data-tool="L"]', title: "직선 도구를 눌러 주세요", text: "직선 도구는 두 점을 차례로 클릭해 만듭니다. 이번에는 첫 선을 바닥 기준선으로 사용합니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
+    { chapter: "바닥과 수평면", target: () => "#canvas", practice: true, coachSide: "above", title: "Ctrl을 누른 채 바닥 수평면을 그려 주세요", text: "첫 점을 클릭한 뒤 Ctrl 키를 계속 누른 상태로 두 번째 점을 클릭하세요. 화면 위 안내에도 `Ctrl 누른 채 → 수평`이 표시됩니다. 이 한 줄이 가장 아래의 바닥 수평면이 됩니다.", guide: () => ({ pts: [[-40, 22], [40, 22]], close: false, note: "Ctrl 누른 채 → 수평", noteDy: -5 }), demo: () => ({ kind: "clicks", at: [[-40, 22], [40, 22]], mod: "Ctrl 누른 채" }), action: (c) => { c.ground0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.ground0 || 0) && advancedLineAxisAfter(c.ground0, "horizontal"), hint: "Ctrl 키를 누른 채 두 번째 점을 눌러 바닥 수평면을 완성해 주세요" } },
+    { chapter: "바닥과 수평면", target: () => ["#canvas", advancedInspectorRow("선 종류") || "#panel-right"], title: "오른쪽 인스펙터에서 점선3을 선택해 주세요", text: "방금 만든 바닥 수평면은 자동으로 선택되어 있습니다. 오른쪽 인스펙터의 ‘선 종류’ 영역에서 세 번째 점선 프리셋인 ‘점선3’을 클릭하세요. 다른 점선이 아니라 점선3 버튼을 선택합니다.", guide: () => ({ pts: [[-40, 22], [40, 22]], close: false, note: "선택된 바닥선", noteDy: -5 }), wait: { until: () => !!advancedDashLine(), hint: "오른쪽 ‘선 종류’에서 점선3을 클릭해 주세요" } },
+    { chapter: "경사면", target: () => '[data-tool="P"]', title: "꺾은선 도구로 경사면을 그립니다", text: "수평면에서 왼쪽 경사면으로 이어지는 여러 점을 하나의 꺾은선으로 만듭니다. 꼭짓점을 차례로 클릭하고 마지막 점은 더블클릭해 끝내세요.", demo: () => ({ kind: "clicks", at: ['[data-tool="P"]'] }), wait: { click: '[data-tool="P"]', hint: "꺾은선 도구를 눌러 주세요" } },
+    { chapter: "경사면", target: () => "#canvas", title: "바닥 수평면에서 바로 경사면을 이어 주세요", text: "가장 아래에 만든 점선 수평면을 기준으로 왼쪽 높은 지점 → 내려오는 지점 → 수평 구간 → 오른쪽 상승 지점 순서로 찍습니다. 별도의 작은 수평선을 추가하지 않습니다. 마지막 점을 더블클릭해 꺾은선을 확정하세요.", guide: () => ({ pts: [[-34, 4], [-24, 22], [8, 22], [18, 10]], close: false, note: "경사면", noteDy: -5 }), demo: () => ({ kind: "clicks", pts: [[-34, 4], [-24, 22], [8, 22], [18, 10]] }), action: (c) => { c.slope0 = countOf("polyline"); }, wait: { until: (c) => countOf("polyline") > (c.slope0 || 0), hint: "바닥 수평면에서 경사면을 이어 찍고 마지막 점을 더블클릭해 주세요" } },
+    { chapter: "경사면", target: () => roundRowEl(), title: "경사면의 모서리를 부드럽게 처리해 주세요", text: "꺾은선의 형태는 유지하되, 오른쪽 ‘경사면처리’를 켜서 물리 그림처럼 자연스럽게 연결합니다.", action: () => { const o = objects().find((x) => x.type === "polyline" && !x.closed); if (o) state.update((s) => { s.selectedIds = [o.id]; }); }, wait: { until: () => objects().some((o) => o.type === "polyline" && !o.closed && o.rounded), hint: "경사면처리를 켜 주세요" } },
+    { chapter: "물체와 라벨", target: () => '[data-tool="RECT"]', title: "경사면 위에 물체를 놓습니다", text: "사각형 도구로 경사면 왼쪽에 물체를 그립니다. 완성 후에는 선택 상태가 유지됩니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="RECT"]'] }), wait: { click: '[data-tool="RECT"]', hint: "사각형 도구를 눌러 주세요" } },
+    { chapter: "물체와 라벨", target: () => "#canvas", title: "질량이 있는 물체를 그려 주세요", text: "경사면 위에 작은 사각형을 드래그하세요. 너무 길게 만들지 말고 경사면 위에 놓일 정도로 만듭니다.", guide: () => ({ pts: [[-33, -16], [-24, -8]], close: true, note: "물체", noteDy: -4 }), demo: () => ({ kind: "drag", from: [-33, -16], to: [-24, -8] }), action: (c) => { c.block0 = countOf("rect"); }, wait: { until: (c) => countOf("rect") > (c.block0 || 0), hint: "경사면 위에 사각형 물체를 드래그해 주세요" } },
+    { chapter: "물체와 라벨", target: () => ["#canvas", advancedInspectorRow("안쪽") || "#panel-right"], title: "물체 자체의 ‘안쪽’ 라벨 기능을 사용해 주세요", text: "별도의 텍스트 도구나 라벨러를 만들지 않습니다. 선택된 사각형의 오른쪽 인스펙터에서 ‘안쪽’ 체크를 켜고, 바로 옆 입력칸에 `m`을 입력한 뒤 Enter를 누릅니다. 이 기능은 물체 안에 라벨을 고정해 줍니다.", guide: () => ({ pts: [[-33, -16], [-24, -8]], close: true, note: "물체", noteDy: -4 }), wait: { until: () => advancedBoxLabelHas("m"), hint: "오른쪽 ‘안쪽’ 라벨을 켜고 m을 입력해 주세요" } },
+    { chapter: "마찰구간", target: () => '[data-tool="RECT"]', title: "마찰구간을 표시할 사각형을 만듭니다", text: "수평면 가운데에 얇고 긴 사각형을 그려 마찰구간의 범위를 표시합니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="RECT"]'] }), wait: { click: '[data-tool="RECT"]', hint: "사각형 도구를 눌러 주세요" } },
+    { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간을 놓아 주세요", text: "수평면 위에 얇은 사각형을 드래그하세요. 다음 단계에서 속을 회색으로 채웁니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "마찰구간", noteDy: -4 }), demo: () => ({ kind: "drag", from: [-2, 6.5], to: [10, 9.5] }), action: (c) => { c.friction0 = countOf("rect"); }, wait: { until: (c) => countOf("rect") > (c.friction0 || 0), hint: "수평면 가운데에 얇은 사각형을 그려 주세요" } },
+    { chapter: "마찰구간", target: () => ["#canvas", "#panel-right"], title: "마찰구간의 속을 채워 주세요", text: "방금 만든 얇은 사각형이 선택된 상태에서 오른쪽 ‘면’의 채우기를 켜고 회색 계열을 선택합니다. 선택이 풀렸다면 캔버스의 회색 구간을 먼저 클릭해 다시 선택할 수 있습니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "선택된 마찰구간", noteDy: -4 }), wait: { until: () => objects().some((o) => o.type === "rect" && !o.fillNone), hint: "마찰구간 사각형을 선택하고 오른쪽 ‘면’에서 채우기를 켜 주세요" } },
+    { chapter: "마찰구간", target: () => vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged", title: "마찰구간에 설명을 붙입니다", text: "텍스트 도구로 마찰구간 아래를 클릭하고 `마찰구간`을 입력한 뒤 Ctrl+Enter로 확정하세요.", demo: () => ({ kind: "clicks", at: [vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged"] }), auto: { label: "텍스트 도구 켜기", run: () => setActiveTool("T") }, wait: { until: () => state.get().activeTool === "T", hint: "텍스트 도구를 눌러 주세요" } },
+    { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간 텍스트를 입력해 주세요", text: "회색 구간 아래를 클릭하고 `마찰구간`을 입력하세요.", guide: () => ({ pts: [[-2, 13], [10, 17]], close: true, note: "마찰구간", noteDy: -4 }), wait: { until: () => advancedTextHas("마찰구간"), hint: "회색 구간 아래를 클릭해 마찰구간을 입력해 주세요" } },
+    { chapter: "화살표", target: () => '[data-tool="L"]', title: "진행 방향을 표시할 직선을 만듭니다", text: "물체 오른쪽에서 아래쪽을 향하는 짧은 선을 만들고, Ctrl로 15° 단위 방향을 맞춰 봅니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
+    { chapter: "화살표", target: () => "#canvas", title: "Ctrl을 누른 채 진행 방향선을 그려 주세요", text: "물체 오른쪽에서 경사면을 따라 두 점을 클릭하세요. Ctrl을 누르면 경사 방향에 가까운 이산 각도로 맞춰집니다.", guide: () => ({ pts: [[-22, -10], [-16, -6]], close: false, note: "진행 방향", noteDy: -4 }), demo: () => ({ kind: "clicks", at: [[-22, -10], [-16, -6]], mod: "Ctrl 누른 채" }), action: (c) => { c.arrow0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.arrow0 || 0) && !!advancedSelectedLine(), hint: "Ctrl을 누른 채 두 번째 점을 눌러 선을 완성해 주세요" } },
+    { chapter: "화살표", target: () => ["#canvas", advancedLineModeButton("arrow") || "#panel-right"], title: "한쪽 화살표를 선택해 주세요", text: "진행 방향선이 선택된 상태에서 오른쪽 ‘화살표 종류’의 한쪽 화살표를 클릭합니다. 선택이 풀렸다면 캔버스의 진행 방향선을 먼저 클릭한 뒤 다시 인스펙터를 조작할 수 있습니다.", wait: { until: () => advancedLineHas("arrow") && advancedLineVariant("right"), hint: "진행 방향선을 선택하고 오른쪽에서 한쪽 화살표를 눌러 주세요" } },
+    { chapter: "화살표", target: () => '[data-tool="L"]', title: "양쪽 화살표를 시연할 선을 만듭니다", text: "이번에는 수평면 위에 짧은 보조선을 만들고, 양쪽에서 안쪽을 향하는 화살표로 바꿉니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
+    { chapter: "화살표", target: () => "#canvas", title: "양쪽 화살표 선을 그려 주세요", text: "마찰구간 위쪽에서 왼쪽과 오른쪽으로 두 점을 클릭하세요.", guide: () => ({ pts: [[-2, 3], [10, 3]], close: false, note: "양쪽 화살표", noteDy: -4 }), demo: () => ({ kind: "clicks", at: [[-2, 3], [10, 3]] }), action: (c) => { c.doubleArrow0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.doubleArrow0 || 0) && !!advancedSelectedLine(), hint: "두 점을 차례로 클릭해 선을 완성해 주세요" } },
+    { chapter: "화살표", target: () => ["#canvas", advancedLineModeButton("midInward") || "#panel-right"], title: "양쪽 화살표 종류를 선택해 주세요", text: "양쪽 화살표 선이 선택된 상태에서 오른쪽 ‘안쪽 양쪽 화살표’를 클릭합니다. 이 선은 양 끝 화살촉이 가운데를 향합니다.", wait: { until: () => advancedLineHas("midInward"), hint: "양쪽 화살표 선을 선택하고 안쪽 양쪽 화살표를 눌러 주세요" } },
+    { chapter: "길이 표시", target: () => '[data-tool="L"]', title: "첫 번째 길이표시를 준비합니다", text: "왼쪽의 물체 구간을 표시할 수평 치수선을 만듭니다. 이번에는 한쪽 길이화살표를 사용합니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
+    { chapter: "길이 표시", target: () => "#canvas", title: "왼쪽에서 오른쪽으로 치수선을 그려 주세요", text: "물체 아래쪽에서 왼쪽 점 → 오른쪽 점 순서로 클릭합니다. 방향이 읽히도록 왼쪽에서 오른쪽으로 시작하세요.", guide: () => ({ pts: [[-34, 0], [-24, 0]], close: false, note: "d", noteDy: -4 }), demo: () => ({ kind: "clicks", at: [[-34, 0], [-24, 0]] }), action: (c) => { c.massDim0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.massDim0 || 0) && !!advancedSelectedLine(), hint: "왼쪽 점을 먼저 클릭하고 오른쪽 점을 클릭해 주세요" } },
+    { chapter: "길이 표시", target: () => ["#canvas", advancedLineModeButton("lengthArrow") || "#panel-right"], title: "한쪽 길이화살표로 바꿔 주세요", text: "왼쪽 치수선이 선택된 상태에서 ‘길이 표시’를 한 번 눌러 기본 치수선으로 바꾼 뒤, 같은 버튼을 다시 눌러 한쪽 끝 막대가 있는 형태를 선택합니다.", wait: { until: () => advancedDimensionVariant("rightBar"), hint: "왼쪽 치수선을 선택하고 길이 표시 버튼을 두 번 눌러 주세요" } },
+    { chapter: "길이 표시", target: () => ["#canvas", advancedInspectorRow("라벨") || "#panel-right"], title: "질량이 있는 부분의 치수 라벨을 입력하세요", text: "왼쪽 치수선이 선택된 상태에서 오른쪽 ‘라벨’ 칸에 `d`를 입력하고 Enter를 누릅니다.", wait: { until: () => advancedLineHas("lengthArrow", "d"), hint: "왼쪽 치수선을 선택하고 라벨 칸에 d를 입력해 주세요" } },
+    { chapter: "길이 표시", target: () => '[data-tool="L"]', title: "마찰구간의 길이표시를 준비합니다", text: "마지막으로 마찰구간 전체를 표시할 수평 치수선을 만듭니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
+    { chapter: "길이 표시", target: () => "#canvas", title: "마찰구간의 길이를 왼쪽에서 오른쪽으로 표시해 주세요", text: "회색 마찰구간의 왼쪽 끝에서 오른쪽 끝까지 두 점을 클릭합니다.", guide: () => ({ pts: [[-2, 11], [10, 11]], close: false, note: "l", noteDy: -4 }), demo: () => ({ kind: "clicks", at: [[-2, 11], [10, 11]] }), action: (c) => { c.frictionDim0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.frictionDim0 || 0) && !!advancedSelectedLine(), hint: "마찰구간의 양 끝을 왼쪽에서 오른쪽 순서로 클릭해 주세요" } },
+    { chapter: "길이 표시", target: () => ["#canvas", advancedLineModeButton("lengthArrow") || "#panel-right"], title: "양쪽 길이화살표로 바꿔 주세요", text: "마찰구간 치수선이 선택된 상태에서 길이 표시 버튼을 반복해 양 끝 막대가 모두 있는 ‘양쪽 길이화살표’를 선택합니다.", wait: { until: () => advancedDimensionVariant("bothBars"), hint: "마찰구간 치수선을 선택하고 양쪽 끝 막대 형태를 눌러 주세요" } },
+    { chapter: "길이 표시", target: () => ["#canvas", advancedInspectorRow("라벨") || "#panel-right"], title: "마찰구간 길이 라벨을 입력하세요", text: "마지막 치수선이 선택된 상태에서 오른쪽 ‘라벨’ 칸에 `l`을 입력하고 Enter를 누릅니다.", wait: { until: () => advancedLineHas("lengthArrow", "l"), hint: "마찰구간 치수선을 선택하고 라벨 칸에 l을 입력해 주세요" } },
+    { chapter: "마무리", title: "역학 그림의 선과 치수선이 연결되었습니다", text: "바닥 점선, 수평면, 경사면처리된 꺾은선, 물체 m, 마찰구간, 진행 방향 화살표, 양쪽 화살표, 한쪽 길이화살표 d, 양쪽 길이화살표 l을 한 그림 안에서 완성했습니다.\n\n특히 Ctrl 스냅은 수평·수직선과 경사 방향을 정돈할 때 사용합니다. 그림을 확인한 뒤 [마치기]를 눌러 주세요." },
+  ],
+};
+
+/* ===== 심화 2: 도형 편집과 전체 통일 ===== */
+const ADVANCED_SHAPES = {
+  id: "advanced-shapes", title: "2 · 도형 편집과 전체 통일",
+  desc: "도형을 자르고 채운 뒤 여러 객체의 속성을 맞추기", minutes: 9,
+  practice: true, next: ["advanced-assets"],
+  steps: [
+    { chapter: "도형 만들기", target: () => '[data-tool="RECT"]', title: "사각형 도구를 눌러 주세요",
+      text: "사각형부터 시작합니다. 왼쪽 두 번째 줄 세 번째 버튼을 눌러 주세요.", demo:()=>({kind:"clicks",at:['[data-tool="RECT"]']}), wait:{click:'[data-tool="RECT"]',hint:"사각형 도구를 눌러 주세요"} },
+    { chapter: "도형 만들기", practice: true, title: "사각형·원·삼각형을 나란히 그립니다",
+      text: "이번에는 세 도형을 한 그림 안에 만듭니다.\n· 사각형은 표나 상자\n· 원은 점·물체\n· 삼각형은 경사면을 나타낼 때 자주 씁니다.",
+      target: () => "#canvas", guide: () => ({ pts: [[-36,-18],[-20,-18],[-20,-5],[-36,-5]], close:true, note:"사각형", noteDy:-4 }),
+      demo: () => ({ kind:"drag", from:[-36,-18], to:[-20,-5] }), action: c => { c.shape0 = objects().length; },
+      wait: { until: c => objects().length > (c.shape0||0) && objects().some(o=>o.type==="rect"), hint:"사각형을 그려 주세요" } },
+    { chapter: "도형 만들기", target: () => '[data-tool="O"]', title: "원 도구를 눌러 주세요",
+      text: "왼쪽 두 번째 줄 첫 번째 버튼입니다. 원을 드래그해 만듭니다.", demo:()=>({kind:"clicks",at:['[data-tool="O"]']}), wait:{click:'[data-tool="O"]',hint:"원 도구를 눌러 주세요"} },
+    { chapter: "도형 만들기", target:()=>"#canvas", title:"원을 그려 주세요", text:"점선 상자 안에서 드래그하세요.", guide:()=>({pts:[[ -8,-17],[6,-5]],close:true,note:"원",noteDy:-4}), demo:()=>({kind:"drag",from:[-8,-17],to:[6,-5]}), action:c=>{c.ellipse0=countOf("ellipse")}, wait:{until:c=>countOf("ellipse")>(c.ellipse0||0),hint:"원을 드래그해 주세요"} },
+    { chapter: "도형 만들기", target:()=> '[data-tool="Y"]', title:"직각삼각형 도구를 눌러 주세요", text:"세 번째 도형은 직각삼각형입니다.", demo:()=>({kind:"clicks",at:['[data-tool="Y"]']}), wait:{click:'[data-tool="Y"]',hint:"직각삼각형 도구를 눌러 주세요"} },
+    { chapter: "도형 만들기", target:()=>"#canvas", title:"삼각형을 그려 주세요", text:"점선 안에서 드래그하면 직각삼각형이 만들어집니다.", guide:()=>({pts:[[18,-16],[36,-3]],close:true,note:"삼각형",noteDy:-4}), demo:()=>({kind:"drag",from:[18,-16],to:[36,-3]}), action:c=>{c.tri0=countOf("triangle")}, wait:{until:c=>countOf("triangle")>(c.tri0||0),hint:"삼각형을 드래그해 주세요"} },
+    { chapter:"자르기", target:()=> '[data-tool="CUT"]', title:"자르기 도구를 눌러 주세요", text:"자르기는 선을 가로질러 도형을 두 조각으로 나누는 도구입니다. Shift를 누르면 곧은 선으로 자릅니다.", demo:()=>({kind:"clicks",at:['[data-tool="CUT"]']}), wait:{click:'[data-tool="CUT"]',hint:"자르기 도구를 눌러 주세요"} },
+    { chapter:"자르기", target:()=>"#canvas", title:"원을 가로질러 잘라 주세요", text:"원을 가로지르도록 드래그하세요. 시작점과 끝점이 원 밖에 있어야 합니다.", guide:()=>({pts:[[ -14,-11],[12,-11]],close:false,note:"원을 가로질러",noteDy:-4}), demo:()=>({kind:"drag",from:[-14,-11],to:[12,-11]}), action:c=>{c.cut0=objects().length}, wait:{until:c=>objects().length>(c.cut0||0),hint:"원을 가로질러 잘라 주세요"} },
+    { chapter:"채우기", target:()=>"#panel-right", title:"도형의 속을 채워 주세요", text:"잘린 조각 하나를 선택한 뒤 오른쪽 ‘면’에서 채우기를 켭니다. 색이 바뀌는 것을 확인하세요.", wait:{until:()=>!!advancedFilledShape(),hint:"도형을 선택하고 채우기를 켜 주세요"} },
+    { chapter:"채우기", target:()=>"#panel-right", title:"채우기 종류를 바꿔 보세요", text:"색만 바꾸는 것과 무늬를 바꾸는 것은 다릅니다. 점·엑스·헤칭 중 하나를 선택해 주세요.", wait:{until:()=>{const o=advancedFilledShape();return !!o&&o.fillStyle&&o.fillStyle!=="solid"},hint:"‘채우기 종류’에서 무늬를 골라 주세요"} },
+    { chapter:"통일 수정", target:()=>"#canvas", title:"직선과 도형을 일부러 어긋나게 놓습니다", text:"세 직선을 만들어 서로 다른 높이와 각도로 놓아 주세요. 다음 단계에서 한꺼번에 정리합니다.", guide:()=>({pts:[[-30,11],[-16,11],[-12,4],[2,4],[10,15],[26,15]],close:false,note:"직선 세 개",noteDy:-5}), action:c=>{c.lines0=countOf("line")}, wait:{until:c=>countOf("line")>=(c.lines0||0)+3,hint:"직선을 세 개 그려 주세요"} },
+    { chapter:"통일 수정", target:()=>"#bulk-edit-open", title:"전체 통일·수정을 열어 주세요", text:"여러 객체를 한 번에 정리하는 창입니다. 먼저 객체를 모두 선택한 뒤 열어 주세요.", demo:()=>({kind:"clicks",at:["#bulk-edit-open"]}), wait:{until:()=>!!vis("#bulk-apply"),hint:"객체를 선택하고 전체 통일·수정을 눌러 주세요"} },
+    { chapter:"통일 수정", target:()=>bulkRow(0)||"#bulk-gap-rows", title:"직선의 줄을 맞춰 주세요", text:"‘좌우 정렬’을 적용하면 서로 다른 높이의 직선이 한 줄에 놓입니다. 정렬을 먼저 합니다.", wait:{until:()=>{const ls=objects().filter(o=>o.type==="line");if(ls.length<3)return false;const ys=ls.map(o=>(o.p1.y+o.p2.y)/2);return Math.max(...ys)-Math.min(...ys)<1.5},hint:"좌우 정렬을 체크하고 적용해 주세요"} },
+    { chapter:"통일 수정", target:()=>bulkRow(2)||"#bulk-gap-rows", title:"직선 사이의 간격을 맞춰 주세요", text:"이번에는 ‘좌우 간격 통일’을 적용합니다. 정렬과 간격은 서로 다른 기능입니다.", wait:{until:()=>{const ls=objects().filter(o=>o.type==="line").sort((a,b)=>Math.min(a.p1.x,a.p2.x)-Math.min(b.p1.x,b.p2.x));if(ls.length<3)return false;const g=ls.map(l=>Math.max(l.p1.x,l.p2.x)-Math.min(l.p1.x,l.p2.x));return g.length===3},hint:"좌우 간격 통일을 적용해 주세요"} },
+    { chapter:"속성 복사", target:()=>"#canvas", title:"기준 직선의 각도를 정합니다", text:"직선 하나를 선택하고 오른쪽 회전 값을 바꾸거나 회전 손잡이로 기울여 주세요. 이 직선이 기준입니다.", action:c=>{c.beforeRot=objects().filter(o=>o.type==="line").map(o=>o.rotation||0)}, wait:{until:(c)=>{const a=objects().filter(o=>o.type==="line").map(o=>o.rotation||0);return a.some((v,i)=>Math.abs(v-(((c.beforeRot||[])[i])||0))>8)},hint:"직선 하나의 각도를 8도 이상 바꿔 주세요"} },
+    { chapter:"속성 복사", target:()=>"#canvas", title:"속성 복사로 다른 직선에도 같은 각도를 적용합니다", text:"기준 직선 하나만 선택하고 Shift+C를 누릅니다.\n그다음 나머지 직선을 선택하고 Shift+V를 누릅니다.\n속성 복사는 위치와 길이는 건드리지 않고 각도와 선 모양만 복사합니다.", wait:{until:()=>{const a=objects().filter(o=>o.type==="line").map(o=>Math.round((o.rotation||0)*10)/10);return a.length>=3&&new Set(a).size===1},hint:"기준 직선에서 Shift+C, 나머지 직선에서 Shift+V를 눌러 주세요"} },
+    { chapter:"마무리", title:"도형 편집과 통일 수정이 끝났습니다", text:"도형은 자르고 채울 수 있고, 여러 객체는 정렬·간격·속성 복사로 한꺼번에 정리할 수 있습니다. 다 보셨으면 [마치기]를 눌러 주세요." },
+  ],
+};
+
+/* ===== 심화 3~6: 이미지·파일·그래프 =====
+ * 창 안의 입력은 긴 검색어·수식처럼 오타가 학습 목표가 아닌 경우 자동 입력을 쓴다.
+ * 반대로 도구 선택·캔버스 클릭·확정 버튼은 사용자가 직접 눌러야 통과한다. */
+const ADVANCED_ASSETS = {
+  id:"advanced-assets", title:"3 · 이미지 요소 추출과 배열하기", desc:"이미지 라이브러리에서 필요한 부분만 골라 도판으로 배열하기", minutes:8, practice:true, next:["advanced-files"],
+  steps:[
+    {chapter:"이미지 고르기",practice:true,title:"이미지 라이브러리를 열어 주세요",text:"왼쪽 아래 ‘이미지 라이브러리’를 눌러 복잡한 실험기구 그림을 찾습니다.",target:()=>"#parts-library-open",demo:()=>({kind:"clicks",at:["#parts-library-open"]}),wait:{click:"#parts-library-open",hint:"이미지 라이브러리를 눌러 주세요"}},
+    {chapter:"이미지 고르기",title:"복잡한 그림을 검색합니다",text:"검색창에 ‘실험’ 또는 화면에 보이는 분야 이름을 입력합니다. 검색어 입력은 대신 해 드릴 수 있습니다.",target:()=>"#partslib-query",auto:{label:"실험 그림 검색하기",run:()=>advancedType("#partslib-query","실험")},wait:{until:()=>!!vis("#partslib-grid .partslib-card"),hint:"검색 결과에서 그림을 골라 주세요"}},
+    {chapter:"이미지 고르기",title:"그림을 골라 캔버스에 넣어 주세요",text:"카드를 누른 뒤 미리보기를 확인하고 ‘이미지로 넣기’를 누릅니다.",target:()=>"#partslib-grid",wait:{until:()=>advancedSvgAssets().length>=1,hint:"카드를 고르고 ‘이미지로 넣기’를 눌러 주세요"}},
+    {chapter:"필요한 부분",title:"필요한 부분만 남깁니다",text:"이미지에서 시험지에 쓸 실험기구 하나만 남기도록 영역을 지정합니다. 대상 전체가 영역 안에 들어오게 하세요.",target:()=>"#canvas",demo:()=>({kind:"drag",from:[-32,-20],to:[0,4]}),action:c=>{c.assets0=advancedSvgAssets().length},wait:{until:(c)=>advancedSvgAssets().length>(c.assets0||0),hint:"필요한 부분을 영역으로 지정해 주세요"}},
+    {chapter:"배열",title:"여러 개를 나란히 놓습니다",text:"추출한 요소를 여러 개 복제해 일부러 들쭉날쭉하게 배열합니다. 저장·검색 방법은 기본에서 배웠으므로 이번에는 배열에 집중합니다.",target:()=>"#canvas",action:c=>{c.assetCount0=advancedSvgAssets().length},wait:{until:(c)=>advancedSvgAssets().length>=(c.assetCount0||0)+3,hint:"요소를 세 개 이상 배열해 주세요"}},
+    {chapter:"배열",title:"가로 정렬과 간격 통일을 적용합니다",text:"요소를 모두 선택하고 전체 통일·수정에서 가로 정렬, 좌우 간격 통일 순서로 적용합니다.",target:()=>"#bulk-edit-open",wait:{until:()=>{const a=advancedSelectedObjects().filter(o=>o.type==="svgAsset");return a.length>=3&&a.every(o=>Number.isFinite(o.x))},hint:"요소를 모두 선택하고 정렬·간격 통일을 적용해 주세요"}},
+    {chapter:"마무리",title:"이미지 도판이 정리되었습니다",text:"복잡한 원본에서 필요한 요소만 뽑고, 여러 개를 도판처럼 배열했습니다. 다 보셨으면 [마치기]를 눌러 주세요."},
+  ],
+};
+
+const ADVANCED_FILES = {
+  id:"advanced-files", title:"4 · 여러 페이지와 프로젝트 복원", desc:"여러 그림을 페이지로 관리하고 다시 수정하기", minutes:7, practice:true, next:["advanced-graph"],
+  steps:[
+    {chapter:"페이지",practice:true,title:"두 번째 페이지를 만들어 주세요",text:"하단 페이지 탭 오른쪽의 + 버튼을 눌러 새 페이지를 만듭니다.",target:()=>"#page-tab-bar .page-add-btn",demo:()=>({kind:"clicks",at:["#page-tab-bar .page-add-btn"]}),action:c=>{c.pages0=(state.get().pages||[]).length},wait:{until:(c)=>((state.get().pages||[]).length>(c.pages0||0)),hint:"페이지 추가 버튼을 눌러 주세요"}},
+    {chapter:"페이지",title:"페이지마다 다른 그림을 만듭니다",text:"현재 페이지에 도형 하나를 만들고, 첫 페이지로 돌아가 다른 그림이 남아 있는지 확인합니다.",target:()=>"#canvas",action:c=>{c.obj0=objects().length},wait:{until:(c)=>objects().length>(c.obj0||0),hint:"현재 페이지에 그림을 하나 만들어 주세요"}},
+    {chapter:"개별 저장",title:"현재 페이지를 이미지로 저장합니다",text:"파일 메뉴에서 이미지로 내보내기를 선택하고 확인 버튼까지 눌러 주세요.",target:()=>"#image-export",wait:{until:()=>!!vis("#export-overlay"),hint:"이미지로 내보내기를 열어 주세요"}},
+    {chapter:"일괄 저장",title:"여러 페이지를 한꺼번에 저장합니다",text:"내보내기 창의 ‘모든 페이지 내보내기’를 눌러 필요한 페이지를 선택합니다.",target:()=>"#export-all-pages",wait:{click:"#export-all-pages",hint:"모든 페이지 내보내기를 눌러 주세요"}},
+    {chapter:"프로젝트",title:"프로젝트 파일로 저장합니다",text:"이미지 파일은 결과물이고, 프로젝트 파일은 다시 편집할 원본입니다. 파일 메뉴에서 프로젝트 저장을 눌러 주세요.",target:()=>"#project-save",wait:{click:"#project-save",hint:"프로젝트 저장을 눌러 주세요"}},
+    {chapter:"프로젝트",title:"저장한 프로젝트를 다시 불러옵니다",text:"파일 메뉴의 프로젝트 불러오기를 눌러 저장한 파일을 선택합니다. 페이지와 그림이 그대로인지 확인합니다.",target:()=>"#project-open",wait:{click:"#project-open",hint:"프로젝트 불러오기를 눌러 주세요"}},
+    {chapter:"마무리",title:"페이지와 프로젝트를 관리했습니다",text:"여러 페이지를 따로 저장하고, 프로젝트 파일로 다시 이어서 수정하는 흐름을 익혔습니다. 다 보셨으면 [마치기]를 눌러 주세요."},
+  ],
+};
+
+const ADVANCED_GRAPH = {
+  id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, next:["advanced-graph-annot"],
+  steps:[
+    {chapter:"좌표평면",practice:true,title:"좌표·함수 생성을 열어 주세요",text:"왼쪽 고급 기능에서 ‘좌표/함수 생성’을 누릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"좌표/함수 생성을 눌러 주세요"}},
+    {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 정합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 예시는 시간–속도 그래프입니다.",target:()=>"#gm-tab-coord",wait:{until:()=>!!vis("#gm-xpos")&&!!vis("#gm-ypos"),hint:"좌표 탭에서 범위와 눈금을 확인해 주세요"}},
+    {chapter:"함수",title:"함수식을 하나 추가합니다",text:"함수 탭에서 ‘함수식 추가’를 누르고 `sin(x)`를 입력합니다. 수식 입력은 자동으로 넣을 수 있지만, 추가 버튼과 적용 버튼은 직접 누릅니다.",target:()=>"#gm-tab-func-btn",demo:()=>({kind:"clicks",at:["#gm-tab-func-btn"]}),wait:{until:()=>!!vis("#gm-add-series"),hint:"함수 탭을 눌러 주세요"}},
+    {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 식 칸에 sin(x)를 입력하고 그래프 미리보기를 확인합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>{document.querySelector("#gm-add-series")?.click();advancedType("#gm-expr","sin(x)")}},wait:{until:()=>advancedGraphs().length===0 || !!vis("#gm-series-editor"),hint:"함수식을 확인해 주세요"}},
+    {chapter:"함수",title:"두 번째 함수를 추가합니다",text:"이번에는 `cos(x)`를 추가해 두 함수를 한 좌표평면에 비교합니다.",target:()=>"#gm-add-series",auto:{label:"cos(x) 입력하기",run:()=>{document.querySelector("#gm-add-series")?.click();advancedType("#gm-expr","cos(x)")}},wait:{until:()=>!!vis("#gm-chips"),hint:"두 번째 함수가 추가됐는지 확인해 주세요"}},
+    {chapter:"완성",title:"그래프를 캔버스에 만들어 주세요",text:"오른쪽 아래 ‘만들기’를 눌러 그래프를 캔버스에 넣습니다.",target:()=>"#gm-confirm",wait:{until:()=>advancedGraphs().length>=1,hint:"그래프 만들기를 눌러 주세요"}},
+    {chapter:"마무리",title:"좌표평면과 함수 그래프가 완성됐습니다",text:"다음 단계에서는 이 그래프에 표시점·가이드라인·라벨·화살표를 추가합니다. 다 보셨으면 [마치기]를 눌러 주세요."},
+  ],
+};
+
+const ADVANCED_GRAPH_ANNOT = {
+  id:"advanced-graph-annot", title:"6 · 그래프 표시 요소와 주석", desc:"표시점·가이드라인·라벨·화살표·격자·눈금 완성하기", minutes:9, practice:false, next:[],
+  steps:[
+    {chapter:"표시",title:"그래프 만들기 창을 다시 엽니다",text:"방금 만든 그래프를 수정하려면 그래프 객체를 선택한 뒤 좌표/함수 생성을 엽니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-annot"),hint:"그래프를 선택하고 좌표/함수 생성을 눌러 주세요"}},
+    {chapter:"표시",title:"표시 탭을 열어 주세요",text:"그래프의 표시점·수선의 발·화살표·가이드라인을 여기서 추가합니다.",target:()=>"#gm-tab-annot-btn",demo:()=>({kind:"clicks",at:["#gm-tab-annot-btn"]}),wait:{until:()=>!!vis("#gm-ann-marker"),hint:"표시 탭을 눌러 주세요"}},
+    {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다. 점은 곡선 위에 놓아야 합니다.",target:()=>"#gm-ann-marker",wait:{until:()=>!!vis("#gm-ann-marker-list"),hint:"표시점을 누르고 그래프 미리보기를 클릭해 주세요"}},
+    {chapter:"표시",title:"수선의 발과 가이드라인을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다. 별도의 두 점을 잇는 가이드라인도 하나 추가합니다.",target:()=>"#gm-ann-guide",wait:{until:()=>!!vis("#gm-ann-guide-list"),hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},
+    {chapter:"표시",title:"진행 방향 화살표를 추가합니다",text:"곡선의 진행 방향을 보여 주는 화살표를 지정 위치에 놓습니다.",target:()=>"#gm-ann-arrow",wait:{until:()=>!!vis("#gm-ann-arrow-list"),hint:"화살표 도구를 선택하고 곡선을 클릭해 주세요"}},
+    {chapter:"표시",title:"라벨러 표시점을 붙입니다",text:"중요한 상태점에 A·B 같은 이름을 붙입니다. 라벨 입력은 표시점과 연결된 편집 칸에서 합니다.",target:()=>"#gm-ann-labelpt",wait:{until:()=>!!vis("#gm-ann-labelpt-list"),hint:"라벨러 표시점을 선택하고 그래프를 클릭해 주세요"}},
+    {chapter:"완성",title:"격자와 눈금을 확인하고 적용합니다",text:"격자·눈금·원점은 그래프를 읽는 기준입니다. 필요한 것만 남긴 뒤 ‘적용’을 눌러 캔버스에 반영합니다.",target:()=>"#gm-showgrid",wait:{until:()=>advancedGraphs().some(o=>((o.series||o.graphSeries||[]).length>=1)),hint:"격자와 눈금을 조정하고 적용을 눌러 주세요"}},
+    {chapter:"마무리",title:"심화 튜토리얼을 모두 마쳤습니다",text:"직선과 치수선, 도형 편집, 이미지 배열, 파일 관리, 함수 그래프와 그래프 주석까지 익혔습니다. 결과물을 저장해 두고 [마치기]를 눌러 주세요."},
+  ],
+};
+
 export const COURSES = [
   // 기본 트랙 — 모두가 거치는 순서
   // ('시작 준비'는 코스에서 빠지고 BASICS 의 '준비' 챕터가 되었다 — READY_STEPS)
   BASICS, INCLINE_FIGURE, EXAM_SEARCH,
+  ADVANCED_LINES,
+  ADVANCED_SHAPES, ADVANCED_ASSETS, ADVANCED_FILES, ADVANCED_GRAPH, ADVANCED_GRAPH_ANNOT,
   // 심화 트랙 — 도구 확장
   TRIM_EXAM, ALIGN_SPACE, TERRAIN_COURSE,
   // 실습 과제 — 시범 과제(P0)를 맨 위에 두어 기존 P1~P10 과 나란히 견줄 수 있게 한다.
