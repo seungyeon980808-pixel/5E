@@ -1,0 +1,30 @@
+{
+  "case_id": "v22-dev-physics-circuit-move-bulb",
+  "attempt": 1,
+  "subject": "physics",
+  "operations": ["move", "style_cleanup"],
+  "scores": {
+    "core_structure": 25,
+    "scientific_accuracy": 20,
+    "proportion_layout": 14,
+    "kice_lineart": 14,
+    "restrained_gray": 10,
+    "no_forbidden_marks": 10,
+    "editability": 5
+  },
+  "hard_gates": {
+    "requested_changes_complete": true,
+    "locked_invariants_preserved": true,
+    "severe_science_error": false,
+    "forbidden_mark_count": 0,
+    "unlisted_object_count": 0,
+    "critical_structure_broken": false
+  },
+  "failure_tags": [],
+  "evidence": [
+    "bulb center moved from the lower-right segment to the lower horizontal midpoint",
+    "the conductor meets the bulb at left and right with no new branch or bypass",
+    "battery and open-switch position and topology remain source-equivalent",
+    "minor battery-plate and stroke-width drift is visible but not structurally material"
+  ]
+}

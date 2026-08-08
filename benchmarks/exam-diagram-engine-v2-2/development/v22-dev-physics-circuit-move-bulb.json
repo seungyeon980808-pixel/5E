@@ -1,0 +1,41 @@
+{
+  "case_id": "v22-dev-physics-circuit-move-bulb",
+  "split": "development",
+  "subject": "physics",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/physics/series-circuit-switch.png",
+  "user_instruction": "전구만 아래쪽 도선의 중앙으로 옮기고, 나머지 회로 구조와 부품 배치는 유지한 평가원식 흑백 선화로 수정한다.",
+  "source_inventory": [
+    "one battery with distinct long and short plates",
+    "one open switch with two separated contacts",
+    "one bulb",
+    "one series wire path interrupted only by battery and switch"
+  ],
+  "source_annotations_to_remove": ["upper-left source text", "red leader arrow", "lower-right panel marker"],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the single bulb",
+      "change": "move its center horizontally from the lower-right portion to the center of the lower conductor; keep it connected in series"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color and apply KICE black line art without changing scientific geometry beyond the bulb move"
+    }
+  ],
+  "locked_invariants": [
+    "battery position, plate geometry, and terminals remain unchanged",
+    "open switch position, angle, and gap remain unchanged",
+    "bulb size, circular shape, and internal crossed filaments remain unchanged",
+    "the wire remains one series path with no crossing, branch, or bypass",
+    "canvas aspect ratio and cleared annotation spaces remain unchanged"
+  ],
+  "expected_assertions": [
+    "the bulb center lies near the horizontal midpoint of the lower conductor",
+    "the lower conductor meets the bulb on both sides with no gap or branch",
+    "all non-bulb scientific elements match the source",
+    "all source annotations and red color are absent"
+  ],
+  "allowed_gray_regions": [],
+  "critical_uncertainties": []
+}

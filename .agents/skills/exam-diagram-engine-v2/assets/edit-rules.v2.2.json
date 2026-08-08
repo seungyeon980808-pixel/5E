@@ -1,0 +1,40 @@
+{
+  "engine_version": "2.2.0",
+  "rules_revision": 2,
+  "global": [
+    "Use the supplied source image as the edit target, not merely as inspiration.",
+    "Change only properties explicitly named by the requested operations.",
+    "Preserve every unmentioned object, count, relation, proportion, crop, and empty region.",
+    "Remove source annotations without expanding nearby scientific objects into the cleared space.",
+    "Add no conventional apparatus, supports, paths, particles, scenery, or decoration."
+  ],
+  "operation_rules": {
+    "style_cleanup": "Change only rendering style; preserve all scientific geometry and topology pixel-positionally as closely as practical.",
+    "move": "Move only the named target; preserve its size, shape, orientation, internals, and undeclared connections.",
+    "resize": "Resize only the named target using the declared anchor and aspect-ratio policy.",
+    "reorder": "Reorder only the named instances or panels; preserve their internal geometry and states.",
+    "duplicate": "Copy only the named source instance, exactly the declared number of times, at declared positions.",
+    "delete": "Remove only the named instance and explicitly declared incident relations; do not reflow unless requested.",
+    "replace_state": "Change only the declared state variable and reuse the source master geometry.",
+    "connect": "Add only the declared connection between exact endpoints; preserve every other edge and junction semantic.",
+    "disconnect": "Remove only the declared connection and leave a visible separation gap; preserve every other edge."
+  },
+  "mandatory_forbidden": [
+    "text", "letters", "korean_characters", "digits", "mathematical_symbols",
+    "labels", "captions", "leader_lines", "arrowheads", "direction_arrows",
+    "watermarks", "empty_annotation_boxes", "unlisted_objects", "decorative_context",
+    "realistic_lighting", "highlights", "reflections", "shadows", "gradients", "excessive_3d"
+  ],
+  "promotion_policy": {
+    "minimum_independent_cases": 2,
+    "minimum_stability_repetitions": 3,
+    "require_full_regression": true,
+    "final_may_modify_rules": false
+  },
+  "flat_gray_policy": {
+    "evidence": ["v22-dev-chemistry-distillation-move-receiver attempts 1-3"],
+    "finding": "prompt-only constant-gray constraints produced gradients in three consecutive attempts",
+    "rule": "A candidate with non-flat gray may be normalized only with explicit masks for every allowed physical region. Global threshold or palette normalization is forbidden when it erases or merges a required region.",
+    "release_gate": "If required region masks are unavailable, retain the original as OVER_SHADE and do not pass the output."
+  }
+}

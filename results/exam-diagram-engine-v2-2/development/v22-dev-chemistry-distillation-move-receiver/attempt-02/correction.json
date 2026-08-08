@@ -1,0 +1,8 @@
+{
+  "parent_attempt": 1,
+  "failure_tags": [
+    "OVER_SHADE"
+  ],
+  "observed_failure": "liquid and nominally white regions contain smooth gray gradients and lighting-like tonal variation",
+  "single_change": "use binary white plus exactly one constant flat light-gray fill; every pixel inside each allowed liquid region must have the same gray value, and every other interior must be pure white with no tonal variation"
+}

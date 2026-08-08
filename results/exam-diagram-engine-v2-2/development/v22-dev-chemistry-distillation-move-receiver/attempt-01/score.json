@@ -1,0 +1,15 @@
+{
+  "engine_version": "2.2.0",
+  "case_id": "v22-dev-chemistry-distillation-move-receiver",
+  "attempt": 1,
+  "total": 80.0,
+  "score_threshold_pass": false,
+  "hard_gate_pass": false,
+  "passed": false,
+  "validation_errors": [],
+  "failure_tags": [
+    "EDIT_OVERREACH",
+    "SOURCE_DRIFT",
+    "OVER_SHADE"
+  ]
+}

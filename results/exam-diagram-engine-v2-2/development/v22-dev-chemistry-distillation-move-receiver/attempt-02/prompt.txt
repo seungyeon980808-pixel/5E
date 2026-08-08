@@ -1,0 +1,67 @@
+Use case: precise-object-edit
+Asset type: label-free Korean KICE assessment science diagram for later 5E editing
+
+PRIMARY RULE
+Edit the supplied source image itself. Change only the requested properties. Everything else is locked.
+
+USER INSTRUCTION
+받는 용기만 오른쪽으로 더 멀리 옮기고, 전달관을 그 위치까지 연장한다. 나머지 장치의 구조와 배치는 유지하여 평가원식 흑백 선화로 정리한다.
+
+SOURCE AUTHORITY
+- Use the supplied source image as the edit target, not merely as inspiration.
+- Change only properties explicitly named by the requested operations.
+- Preserve every unmentioned object, count, relation, proportion, crop, and empty region.
+- Remove source annotations without expanding nearby scientific objects into the cleared space.
+- Add no conventional apparatus, supports, paths, particles, scenery, or decoration.
+
+CLOSED SOURCE INVENTORY
+- one round distillation flask containing one liquid region
+- one neck stopper block and one plain thermometer stem
+- one delivery tube from the flask neck toward the receiver
+- one open receiver containing one collected-liquid region
+- one rectangular heater below the flask
+No scientific object outside this inventory may appear unless a duplicate operation explicitly authorizes it.
+
+REQUESTED ATOMIC CHANGES
+- 1. move on [the single receiver and its contained collected-liquid region]: move them horizontally right by about one receiver-neck width without resizing
+  Operation guardrail: Move only the named target; preserve its size, shape, orientation, internals, and undeclared connections.
+- 2. connect on [the existing delivery tube endpoint and moved receiver opening]: extend the existing tube horizontally to retain the same endpoint alignment above the open receiver; do not add a second tube
+  Operation guardrail: Add only the declared connection between exact endpoints; preserve every other edge and junction semantic.
+- 3. style_cleanup on [entire source image]: remove annotations and color and use black line art with flat gray only for the two liquid regions
+  Operation guardrail: Change only rendering style; preserve all scientific geometry and topology pixel-positionally as closely as practical.
+
+LOCKED INVARIANTS
+- flask, neck block, thermometer, liquid, and heater positions and proportions remain unchanged
+- receiver shape, opening, neck width, and collected-liquid amount remain unchanged
+- delivery tube still begins at the same flask-neck point and has one continuous unbranched path
+- the receiver remains visibly open and separate from the delivery tube with a white gap
+- heater remains directly below the flask
+
+EXPECTED POST-EDIT ASSERTIONS
+- receiver lies farther right than in the source without changing size
+- delivery tube is longer and remains one continuous path
+- tube endpoint stays aligned above but does not enter or close the receiver opening
+- all other apparatus geometry matches the source
+- no annotation or decorative apparatus remains
+
+SUBJECT GUARDRAIL
+Preserve vessel openings, liquid boundaries, stoppers, support order, and tube endpoints; add no common lab accessories.
+
+STYLE CLEANUP
+- Pure white background and clean black two-dimensional linework.
+- White interiors by default; uniform flat gray only in: liquid in flask, collected liquid in receiver.
+- Remove these source annotations: upper-left source text.
+- Preserve the cleared annotation areas as empty space.
+- No lighting, highlights, reflections, shadows, gradients, texture, decorative hatching, or excessive perspective.
+- Leave clear margins and separable shapes for later 5E labels.
+
+ZERO-TOLERANCE NEGATIVES
+- Generate exactly zero of: text, letters, korean_characters, digits, mathematical_symbols, labels, captions, leader_lines, arrowheads, direction_arrows, watermarks, empty_annotation_boxes, unlisted_objects, decorative_context, realistic_lighting, highlights, reflections, shadows, gradients, excessive_3d.
+- Do not improve, redesign, complete, substitute, or scientifically embellish the apparatus.
+- Change only the requested properties. Preserve every other source property.
+
+
+TARGETED CORRECTION FOR THIS ATTEMPT
+Observed failure: liquid and nominally white regions contain smooth gray gradients and lighting-like tonal variation
+Make exactly this one corrective change: use binary white plus exactly one constant flat light-gray fill; every pixel inside each allowed liquid region must have the same gray value, and every other interior must be pure white with no tonal variation
+Retain every other instruction and locked invariant above. Do not compensate by redesigning another object.

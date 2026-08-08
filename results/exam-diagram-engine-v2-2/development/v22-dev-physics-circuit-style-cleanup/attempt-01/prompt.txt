@@ -1,0 +1,54 @@
+Use case: precise-object-edit
+Asset type: label-free Korean KICE assessment science diagram for later 5E editing
+
+PRIMARY RULE
+Edit the supplied source image itself. Change only the requested properties. Everything else is locked.
+
+USER INSTRUCTION
+원본 회로의 구조와 배치를 그대로 유지하고, 문자와 빨간 화살표만 제거하여 평가원식 흑백 선화로 정리한다.
+
+SOURCE AUTHORITY
+- Use the supplied source image as the edit target, not merely as inspiration.
+- Change only properties explicitly named by the requested operations.
+- Preserve every unmentioned object, count, relation, proportion, crop, and empty region.
+- Remove source annotations without expanding nearby scientific objects into the cleared space.
+- Add no conventional apparatus, supports, paths, particles, scenery, or decoration.
+
+CLOSED SOURCE INVENTORY
+- one battery with distinct long and short plates
+- one open switch with two separated contacts
+- one bulb
+- one series wire path interrupted only by battery and switch
+No scientific object outside this inventory may appear unless a duplicate operation explicitly authorizes it.
+
+REQUESTED ATOMIC CHANGES
+- 1. style_cleanup on [entire source image]: remove annotations and color while preserving all scientific geometry, topology, and empty regions
+  Operation guardrail: Change only rendering style; preserve all scientific geometry and topology pixel-positionally as closely as practical.
+
+LOCKED INVARIANTS
+- battery remains on the lower-left part of the loop
+- switch remains open and is the only switch gap
+- bulb remains on the lower-right conductor
+- upper and lower conductors terminate at different battery plates
+- no wire crossing or bypass is introduced
+
+EXPECTED POST-EDIT ASSERTIONS
+- all three scientific components remain present exactly once
+- the circuit topology and component positions match the source
+- all source annotations and red color are absent
+
+SUBJECT GUARDRAIL
+Preserve terminal endpoints, junction/crossing semantics, continuity, contact state, and shared geometry across state panels.
+
+STYLE CLEANUP
+- Pure white background and clean black two-dimensional linework.
+- White interiors by default; uniform flat gray only in: none.
+- Remove these source annotations: upper-left source text, red leader arrow, lower-right panel marker.
+- Preserve the cleared annotation areas as empty space.
+- No lighting, highlights, reflections, shadows, gradients, texture, decorative hatching, or excessive perspective.
+- Leave clear margins and separable shapes for later 5E labels.
+
+ZERO-TOLERANCE NEGATIVES
+- Generate exactly zero of: text, letters, korean_characters, digits, mathematical_symbols, labels, captions, leader_lines, arrowheads, direction_arrows, watermarks, empty_annotation_boxes, unlisted_objects, decorative_context, realistic_lighting, highlights, reflections, shadows, gradients, excessive_3d.
+- Do not improve, redesign, complete, substitute, or scientifically embellish the apparatus.
+- Change only the requested properties. Preserve every other source property.

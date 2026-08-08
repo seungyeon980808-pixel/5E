@@ -1,0 +1,54 @@
+{
+  "engine_version": "2.2.0",
+  "evaluated_cases": 3,
+  "passed": 2,
+  "pass_rate": 0.6667,
+  "attempts": 5,
+  "passing_attempts": 2,
+  "attempt_pass_rate": 0.4,
+  "by_subject": {
+    "chemistry": {
+      "failed": 1,
+      "total": 1,
+      "pass_rate": 0.0
+    },
+    "physics": {
+      "passed": 2,
+      "total": 2,
+      "pass_rate": 1.0
+    }
+  },
+  "by_operation": {
+    "connect": {
+      "failed": 1,
+      "total": 1,
+      "pass_rate": 0.0
+    },
+    "move": {
+      "failed": 1,
+      "passed": 1,
+      "total": 2,
+      "pass_rate": 0.5
+    },
+    "style_cleanup": {
+      "failed": 1,
+      "passed": 2,
+      "total": 3,
+      "pass_rate": 0.6667
+    }
+  },
+  "failure_tag_counts": {
+    "EDIT_OVERREACH": 1,
+    "SOURCE_DRIFT": 1,
+    "OVER_SHADE": 1,
+    "MODEL_VARIANCE": 1,
+    "MASK_REQUIRED": 1
+  },
+  "evidence_files": [
+    "results\\exam-diagram-engine-v2-2\\development\\v22-dev-chemistry-distillation-move-receiver\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\development\\v22-dev-chemistry-distillation-move-receiver\\attempt-02\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\development\\v22-dev-chemistry-distillation-move-receiver\\attempt-03\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\development\\v22-dev-physics-circuit-move-bulb\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\development\\v22-dev-physics-circuit-style-cleanup\\attempt-01\\evaluation.json"
+  ]
+}

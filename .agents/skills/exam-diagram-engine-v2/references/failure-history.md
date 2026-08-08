@@ -16,6 +16,14 @@
 - `CATEGORY_COLLAPSE`: distinct required regions or states became visually indistinguishable.
 - `TEXT_RESIDUE`: a glyph-like tick, pointer, character, digit, or arrow survived illustration-only mode.
 - `MODEL_VARIANCE`: the same explicit corrective constraint failed repeatedly; retain the failure instead of weakening evaluation.
+- `MASK_REQUIRED`: flat-gray cleanup requires a declared physical-region mask; global normalization would erase or merge scientific regions.
+
+## V2.2 reference-edit evidence
+
+- Circuit style cleanup preserved topology and removed annotations on the first attempt.
+- Moving one circuit component while locking all other components preserved the series topology on the first attempt.
+- Moving a chemistry receiver and extending its tube succeeded at the requested relation but changed receiver proportions and produced gradients in three consecutive attempts.
+- Global palette normalization reduced the gradient but erased the liquid-region encoding. V2.2 therefore requires region-aware masks for such cleanup and keeps the original edit failed.
 
 ## Session 1 evidence
 

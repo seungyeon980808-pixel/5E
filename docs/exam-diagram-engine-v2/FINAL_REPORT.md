@@ -2,11 +2,11 @@
 
 ## Release outcome
 
-`PASS — Engine V2.1 within the V2 package satisfies every requested completion gate for the frozen benchmark.`
+`NOT COMPLETE — the end-to-end raw-input engine has not satisfied the requested completion gates.`
 
-The original stochastic V2.0 adapter remains preserved as a failed baseline (15/24, 62.5%). V2.1 adds a deterministic vector scene adapter for diagrams that can be represented without semantic loss by geometric primitives. The image-generation adapter remains available for genuinely organic reference material, but its historical V2.0 score is not substituted for the V2.1 release evidence.
+The original stochastic V2.0 adapter remains the only frozen evidence covering raw reference/text/sketch generation and scored 15/24 (62.5%). V2.1 proves that a correct, pre-authored scene JSON can be rendered deterministically; it does not prove that raw pixels or prose are converted into that correct scene. Its 24/24 result is renderer validation only and must not be reported as complete engine accuracy.
 
-## Frozen-final results
+## V2.1 renderer-only results
 
 | Dimension | Passed | Total | Rate | Required |
 |---|---:|---:|---:|---:|
@@ -62,4 +62,4 @@ The vector adapter structurally has no text, glyph, gradient, lighting, shadow, 
 
 ## Scope note
 
-The benchmark proves the complete Codex analysis-contract-render-evaluate procedure for the curated input modes. The deterministic renderer does not automatically understand raw pixels or prose by itself; Codex performs the documented analysis and writes the reviewed scene contract. This is the intended Skill interface and is why scene preflight remains mandatory.
+The benchmark proves only scene-contract rendering. Raw-input analysis and reference-guided edit accuracy remain under development. V2.2 narrows the next validation target to `reference image + explicit edit instruction`; no 5E production integration should use it until a new blind benchmark passes.

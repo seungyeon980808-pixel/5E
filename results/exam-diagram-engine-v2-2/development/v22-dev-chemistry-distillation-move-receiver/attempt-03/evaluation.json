@@ -1,0 +1,15 @@
+{
+  "case_id": "v22-dev-chemistry-distillation-move-receiver",
+  "attempt": 3,
+  "subject": "chemistry",
+  "operations": ["move", "connect", "style_cleanup"],
+  "scores": {"core_structure": 21, "scientific_accuracy": 20, "proportion_layout": 11, "kice_lineart": 12, "restrained_gray": 3, "no_forbidden_marks": 10, "editability": 4},
+  "hard_gates": {"requested_changes_complete": true, "locked_invariants_preserved": false, "severe_science_error": false, "forbidden_mark_count": 0, "unlisted_object_count": 0, "critical_structure_broken": false},
+  "failure_tags": ["EDIT_OVERREACH", "SOURCE_DRIFT", "OVER_SHADE", "MODEL_VARIANCE", "MASK_REQUIRED"],
+  "evidence": [
+    "third independent generation again contains smooth gray gradients",
+    "receiver was redrawn instead of translated as a rigid source instance",
+    "global normalization reduced the palette from 256 gray values to three but erased both liquid fills",
+    "region-aware masks are required before normalization can preserve scientific categories"
+  ]
+}

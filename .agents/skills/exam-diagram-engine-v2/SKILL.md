@@ -1,24 +1,24 @@
 ---
 name: exam-diagram-engine-v2
-description: Create and validate label-free Korean KICE-style science diagrams for physics, chemistry, biology, and Earth science from (1) a reference image, (2) a written problem description, or (3) a hand-drawn sketch plus description. Use when Codex must analyze scientific structure, compile a constrained image-generation prompt, generate or revise monochrome exam line art, score it with the V2 rubric, preserve failure/correction history, or prepare an image for later editing in 5E.
+description: Edit a supplied science reference image according to explicit user instructions while preserving every unmentioned object, relation, proportion, and layout feature, and convert the result to label-free Korean KICE-style line art. Use when Codex must perform reference-guided diagram revision, style cleanup as a zero-geometry-change edit, compile a closed-change prompt, validate instruction compliance and source preservation, or iteratively improve the edit specification from retained failures.
 ---
 
 # Exam Diagram Engine V2
 
-Produce a scientifically faithful, label-free diagram rather than an attractive illustration.
+Produce a scientifically faithful, label-free edit rather than inventing a new illustration. V2.2 narrows the supported product surface to `reference image + edit instruction`. Style-only conversion is the same workflow with zero scientific geometry changes.
 
 ## Required workflow
 
-1. Classify `input_mode` as `reference_image`, `description_only`, or `sketch_plus_description`.
-2. Read [references/common-style.md](references/common-style.md), [references/input-modes.md](references/input-modes.md), and the relevant subject section in [references/subject-rules.md](references/subject-rules.md).
-3. Analyze the input into the structure contract before writing an image prompt. Never infer an omitted apparatus merely because it is common in that experiment.
-4. Save a request JSON that conforms to [assets/request.schema.json](assets/request.schema.json).
-5. Run `python scripts/engine.py compile --request <request.json> --out-dir <case-dir>`.
+1. Read [references/common-style.md](references/common-style.md), [references/instruction-edit.md](references/instruction-edit.md), and the relevant subject section in [references/subject-rules.md](references/subject-rules.md).
+2. Inspect the exact source image and enumerate visible scientific objects, topology, contacts, counts, proportions, panels, crop edges, and intentional empty regions.
+3. Parse the user instruction into atomic edit operations. Treat every property outside the explicit change set as locked.
+4. Save an edit request conforming to [assets/edit-request.schema.json](assets/edit-request.schema.json).
+5. Run `python scripts/edit_engine.py compile --request <request.json> --rules assets/edit-rules.v2.2.json --out-dir <case-dir>`.
 6. Stop before generation if preflight reports an error or unresolved critical uncertainty.
-7. Choose a rendering adapter. Prefer the deterministic vector adapter for apparatus, exact repeated counts, sparse topology, and scenes expressible without semantic loss. Use the built-in image generation tool for organic structures that cannot be represented faithfully by the vector contract. For reference conversion or sketch interpretation, inspect every local input image first.
+7. Invoke the image editing adapter with the source as the edit target and the compiled prompt. Never regenerate from text alone. The deterministic vector renderer remains a downstream option only after a separately reviewed scene contract exists.
 8. Save the generated original, then run the repository normalizer if flat grayscale cleanup is needed. Never use normalization to excuse a structure or science failure.
 9. Evaluate original and normalized outputs separately using [references/evaluation.md](references/evaluation.md). Record the first attempt even when it fails.
-10. Revise one failure cause at a time. Preserve the failed prompt, output, evaluation, correction reason, and successor link.
+10. Revise one failure cause at a time. Preserve the failed prompt, output, evaluation, correction reason, and successor link. Promote a rule only from repeated development failures, then rerun every preserved passing assertion.
 
 ## Non-negotiable gates
 
@@ -29,11 +29,12 @@ Produce a scientifically faithful, label-free diagram rather than an attractive 
 - Reject any result with a severe scientific error, any forbidden glyph/arrow, an unmapped category, or a score below 85.
 - Leave clear margins and separable shapes for 5E post-editing.
 
-## Input routing
+## Change routing
 
-- For a reference image, make that image the sole authority for composition and visible structure; use text only to disambiguate scientific meaning.
-- For description only, derive a minimal closed-world scene graph from explicit facts and expose unresolved ambiguities instead of inventing details.
-- For a sketch plus description, take geometry and layout from the sketch, scientific identity and constraints from the description, and resolve conflicts explicitly in favor of scientific correctness without silently redesigning the layout.
+- `style_cleanup`: remove annotations/color/texture and apply KICE line art; change zero scientific geometry.
+- `move`, `resize`, `reorder`, `duplicate`, `delete`, `replace_state`, `connect`, `disconnect`: modify only the named targets and properties.
+- Reject ambiguous targets, contradictory operations, edits that require an unlisted apparatus, and edits whose scientific result cannot be determined from the source plus instruction.
+- Read [references/instruction-edit.md](references/instruction-edit.md) for operation-specific invariants and evaluation order.
 
 ## Commands
 
@@ -43,6 +44,8 @@ python scripts/engine.py inspect-image --image run/case-id/generated.png --out r
 python scripts/engine.py score --evaluation run/case-id/evaluation.json --out run/case-id/score.json
 python scripts/engine.py validate-benchmark --development benchmarks/development.json --final benchmarks/final.json
 python scripts/engine.py summarize --evaluations results --out report.json
+python scripts/edit_engine.py compile --request edit-request.json --rules assets/edit-rules.v2.2.json --out-dir run/case-id
+python scripts/edit_engine.py summarize --results results/edit-v2.2/development --out results/edit-v2.2/development-summary.json
 python scripts/vector_renderer.py validate --scene scene.json --out validation.json
 python scripts/vector_renderer.py render --scene scene.json --out generated.png --report render.json
 ```

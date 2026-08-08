@@ -23,13 +23,10 @@ The scene must conform to `assets/vector-scene.schema.json`. Validation rejects 
 
 ## Release status
 
-- Version: 2.1.0 within the V2 package.
-- Development: 36/36 pass.
-- Frozen final: 24/24 pass.
-- Three input modes: 8/8 each.
-- Four subjects: 6/6 each.
-- Stability: all 12 hard cases pass 3/3 with byte-identical outputs.
-- Severe science errors and forbidden marks: zero.
+- V2.0 raw-input frozen final: 15/24 (62.5%), failed.
+- V2.1 reviewed-scene renderer: 24/24, renderer-only validation.
+- V2.2 reference-guided edit engine: development pilot in progress; not released and not approved for 5E production integration.
+- Do not interpret V2.1 byte-identical rendering as raw-image understanding accuracy.
 
 ## Artifact map
 

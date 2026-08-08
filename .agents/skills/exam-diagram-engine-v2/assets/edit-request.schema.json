@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://5e.local/schemas/exam-diagram-engine-v2-2-edit-request.json",
+  "type": "object",
+  "required": ["case_id", "split", "subject", "source_image", "user_instruction", "source_inventory", "operations", "locked_invariants", "expected_assertions", "allowed_gray_regions"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+    "split": {"enum": ["development", "final", "stability"]},
+    "subject": {"enum": ["physics", "chemistry", "biology", "earth_science"]},
+    "source_image": {"type": "string", "minLength": 1},
+    "user_instruction": {"type": "string", "minLength": 3},
+    "source_inventory": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "source_annotations_to_remove": {"type": "array", "items": {"type": "string"}},
+    "operations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["type", "target", "change"],
+        "properties": {
+          "type": {"enum": ["style_cleanup", "move", "resize", "reorder", "duplicate", "delete", "replace_state", "connect", "disconnect"]},
+          "target": {"type": "string", "minLength": 1},
+          "change": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "locked_invariants": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
+    "expected_assertions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
+    "allowed_gray_regions": {"type": "array", "items": {"type": "string"}},
+    "critical_uncertainties": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
