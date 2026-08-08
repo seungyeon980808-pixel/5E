@@ -1,0 +1,39 @@
+{
+  "case_id": "v2-sketch-earth-02-subduction-boundary",
+  "split": "development",
+  "input_mode": "sketch_plus_description",
+  "subject": "earth_science",
+  "title": "해양판 섭입 경계 단면",
+  "difficulty": "hard",
+  "scenario_family": "subduction-boundary",
+  "required_objects": [
+    "oceanic plate",
+    "continental plate",
+    "mantle region",
+    "trench",
+    "volcanic cone"
+  ],
+  "required_relations": [
+    "oceanic plate bends beneath continental plate",
+    "trench lies at their surface contact"
+  ],
+  "scientific_invariants": [
+    "subducting slab remains continuous",
+    "volcano stands on continental side"
+  ],
+  "allowed_gray_regions": [
+    "mantle region"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/sketch/earth_science/subduction-boundary.png",
+  "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+}

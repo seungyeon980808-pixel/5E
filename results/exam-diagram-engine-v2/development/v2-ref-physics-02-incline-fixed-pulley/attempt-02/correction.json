@@ -1,0 +1,9 @@
+{
+  "attempt": 2,
+  "parent_attempt": 1,
+  "failure_tags": ["SCIENCE_ERROR", "TOPOLOGY_LOSS"],
+  "observed_failure": "The string entered the pulley disk instead of remaining tangent and continuous around the rim.",
+  "single_change": "Specify the string path as upper-left tangent, upper circumferential arc, and right vertical tangent, with zero interior crossing.",
+  "regression_cases_rerun": ["example-series-circuit", "v2-ref-physics-01-series-circuit-switch", "v2-ref-physics-02-incline-fixed-pulley"],
+  "result": "pass"
+}

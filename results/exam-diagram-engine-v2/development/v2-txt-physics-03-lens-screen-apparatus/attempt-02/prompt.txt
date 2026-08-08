@@ -1,0 +1,32 @@
+Use case: scientific-educational
+Asset type: label-free Korean KICE assessment science diagram for later 5E editing
+Primary request: 광원-볼록 렌즈-스크린 장치
+
+Create one clear raster diagram on a pure white background with black 2D linework. Use no unstated convention. Construct only the minimum closed-world scene described here; add zero conventional accessories.
+
+CLOSED OBJECT INVENTORY — preserve exact type and count; zero other objects:
+- one source object.
+- one convex lens on a stand.
+- one screen on a stand.
+- one baseline.
+
+REQUIRED PHYSICAL RELATIONS AND TOPOLOGY:
+- left-to-right order is source, lens, screen.
+- no light rays in illustration-only output.
+
+SCIENTIFIC HARD INVARIANTS:
+- all three centers share one horizontal optical axis.
+
+Relations and invariants constrain geometry; they are not additional drawable objects. Do not draw an optical axis, guide line, trajectory, force line, or boundary unless it is explicitly listed in the closed inventory.
+
+STYLE:
+- clean black outer contours with slightly thinner black internal lines;
+- white interiors by default; uniform flat gray allowed only for: none;
+- simple front, section, elevation, or restrained oblique assessment drawing;
+- preserve relative scale and intentional empty space; leave at least 7% clear outer margin where the input is not intentionally cropped;
+- keep repeated-state master geometry identical and vary only stated variables.
+
+ZERO-TOLERANCE:
+- zero text, letters, Korean characters, digits, numbers, units, mathematical or chemical symbols, labels, captions, panel markers, watermarks, QR codes, leader lines, empty annotation boxes, arrowheads, arrows, or semantic direction lines;
+- no unlisted object, conventional accessory, background context, decoration, realistic lighting, highlight, reflection, shadow, gradient, bloom, texture, stippling, hatching, or excessive 3D perspective;
+- do not add, remove, merge, substitute, complete, beautify, or reinterpret scientific objects, categories, contacts, paths, states, or cropped boundaries.

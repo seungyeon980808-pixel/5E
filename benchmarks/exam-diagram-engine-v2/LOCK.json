@@ -1,0 +1,7 @@
+{
+  "benchmark_version": "2.0.0",
+  "development_sha256": "716da5cbca67e9ae8398c3a5267b4448e64ad083ac275d8760a7eff8fa5abc2d",
+  "final_sha256": "9b1aab440f3af36a7dfcf197f0cb345a25fac71cb4e3e04a96dfb863fece7db9",
+  "final_frozen_at": "2026-08-08T00:00:00+09:00",
+  "policy": "Final cases are evaluation-only for engine V2 and must not drive prompt or specification changes."
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "평가원 과학 도식 엔진 V2"
+  short_description: "무라벨 평가원식 과학 선화를 설계·생성·검증합니다"
+  default_prompt: "Use $exam-diagram-engine-v2 to create and validate a label-free KICE-style science diagram from my reference, description, or sketch."

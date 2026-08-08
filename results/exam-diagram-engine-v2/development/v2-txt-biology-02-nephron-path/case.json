@@ -1,0 +1,35 @@
+{
+  "case_id": "v2-txt-biology-02-nephron-path",
+  "split": "development",
+  "input_mode": "description_only",
+  "subject": "biology",
+  "title": "신소체와 세뇨관 연결",
+  "difficulty": "hard",
+  "scenario_family": "nephron-path",
+  "required_objects": [
+    "one renal corpuscle",
+    "one continuous tubule",
+    "one collecting duct",
+    "two vessel stubs"
+  ],
+  "required_relations": [
+    "tubule starts at corpuscle and joins collecting duct",
+    "vessel stubs connect only to corpuscle"
+  ],
+  "scientific_invariants": [
+    "tubule remains continuous",
+    "collecting duct is not merged with vessels"
+  ],
+  "allowed_gray_regions": [],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

@@ -1,0 +1,863 @@
+{
+  "benchmark_version": "2.0.0",
+  "engine_version": "2.0.0",
+  "split": "final",
+  "frozen": true,
+  "frozen_at": "2026-08-08T00:00:00+09:00",
+  "prohibition": "Do not use these cases to modify V2 specifications or prompts.",
+  "cases": [
+    {
+      "case_id": "v2-ref-physics-04-spring-two-states",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "title": "용수철 길이 두 상태 비교",
+      "difficulty": "hard",
+      "scenario_family": "spring-two-states",
+      "required_objects": [
+        "two equal panels",
+        "two identical supports",
+        "two springs",
+        "two identical masses"
+      ],
+      "required_relations": [
+        "one spring hangs from each support and holds one mass"
+      ],
+      "scientific_invariants": [
+        "only spring length and mass height differ",
+        "coil count remains equal"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/physics/spring-two-states.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-physics-05-coil-compass",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "title": "코일과 나침반 연결 장치",
+      "difficulty": "hard",
+      "scenario_family": "coil-compass",
+      "required_objects": [
+        "one coil with two terminals",
+        "one compass",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each coil terminal connects to a different battery terminal"
+      ],
+      "scientific_invariants": [
+        "compass needle is an arrowhead-free rod",
+        "wire endpoints remain visible"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/physics/coil-compass.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-chemistry-04-particle-two-states",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "title": "두 종류 입자의 전후 상태",
+      "difficulty": "hard",
+      "scenario_family": "particle-two-states",
+      "required_objects": [
+        "two equal containers",
+        "six round particles per panel",
+        "four angular particles per panel"
+      ],
+      "required_relations": [
+        "particles are contained by their own panel only"
+      ],
+      "scientific_invariants": [
+        "species counts stay constant",
+        "round and angular species remain distinguishable"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/chemistry/particle-two-states.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-chemistry-05-electrolysis-vessel",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "title": "두 전극이 담긴 전기 분해 용기",
+      "difficulty": "medium",
+      "scenario_family": "electrolysis-vessel",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "two electrodes",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each electrode connects to a different battery terminal",
+        "electrodes enter liquid without touching"
+      ],
+      "scientific_invariants": [
+        "no polarity symbols",
+        "electrodes remain separated"
+      ],
+      "allowed_gray_regions": [
+        "electrolyte"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/chemistry/electrolysis-vessel.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-biology-04-plant-stem-transport",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "title": "뿌리-줄기-잎 관다발 구조",
+      "difficulty": "hard",
+      "scenario_family": "plant-stem-transport",
+      "required_objects": [
+        "one root system",
+        "one stem",
+        "three leaves",
+        "two continuous vascular paths"
+      ],
+      "required_relations": [
+        "both vascular paths run continuously from roots through stem to leaves"
+      ],
+      "scientific_invariants": [
+        "paths do not merge",
+        "no directional arrows"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/biology/plant-stem-transport.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-biology-05-chromosome-pairs",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "title": "동원체 위치가 다른 염색체 쌍",
+      "difficulty": "medium",
+      "scenario_family": "chromosome-pairs",
+      "required_objects": [
+        "one cell boundary",
+        "four replicated chromosomes"
+      ],
+      "required_relations": [
+        "all chromosomes are contained by the cell boundary"
+      ],
+      "scientific_invariants": [
+        "two homologous pairs remain",
+        "centromere positions distinguish the pairs"
+      ],
+      "allowed_gray_regions": [
+        "one homologous pair"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/biology/chromosome-pairs.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-earth-04-eclipse-alignment",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "title": "태양-지구-달의 일직선 배치",
+      "difficulty": "medium",
+      "scenario_family": "eclipse-alignment",
+      "required_objects": [
+        "one sun disk",
+        "one earth disk",
+        "one moon disk"
+      ],
+      "required_relations": [
+        "left-to-right order is sun, earth, moon"
+      ],
+      "scientific_invariants": [
+        "centers lie on one horizontal line",
+        "no rays, arrows, glow, or starfield"
+      ],
+      "allowed_gray_regions": [
+        "one uniform half of earth disk"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/earth_science/eclipse-alignment.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-earth-05-river-valley-section",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "title": "하천 계곡 횡단면",
+      "difficulty": "hard",
+      "scenario_family": "river-valley-section",
+      "required_objects": [
+        "one valley boundary",
+        "one river channel",
+        "three sediment layers",
+        "six rounded clasts"
+      ],
+      "required_relations": [
+        "river occupies the lowest channel",
+        "clasts lie only in the channel bed"
+      ],
+      "scientific_invariants": [
+        "six clasts exactly",
+        "layer boundaries do not become texture"
+      ],
+      "allowed_gray_regions": [
+        "river water"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/earth_science/river-valley-section.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-txt-physics-04-spring-two-states",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "title": "용수철 길이 두 상태 비교",
+      "difficulty": "hard",
+      "scenario_family": "spring-two-states",
+      "required_objects": [
+        "two equal panels",
+        "two identical supports",
+        "two springs",
+        "two identical masses"
+      ],
+      "required_relations": [
+        "one spring hangs from each support and holds one mass"
+      ],
+      "scientific_invariants": [
+        "only spring length and mass height differ",
+        "coil count remains equal"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-physics-05-coil-compass",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "title": "코일과 나침반 연결 장치",
+      "difficulty": "hard",
+      "scenario_family": "coil-compass",
+      "required_objects": [
+        "one coil with two terminals",
+        "one compass",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each coil terminal connects to a different battery terminal"
+      ],
+      "scientific_invariants": [
+        "compass needle is an arrowhead-free rod",
+        "wire endpoints remain visible"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-chemistry-04-particle-two-states",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "title": "두 종류 입자의 전후 상태",
+      "difficulty": "hard",
+      "scenario_family": "particle-two-states",
+      "required_objects": [
+        "two equal containers",
+        "six round particles per panel",
+        "four angular particles per panel"
+      ],
+      "required_relations": [
+        "particles are contained by their own panel only"
+      ],
+      "scientific_invariants": [
+        "species counts stay constant",
+        "round and angular species remain distinguishable"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-chemistry-05-electrolysis-vessel",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "title": "두 전극이 담긴 전기 분해 용기",
+      "difficulty": "medium",
+      "scenario_family": "electrolysis-vessel",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "two electrodes",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each electrode connects to a different battery terminal",
+        "electrodes enter liquid without touching"
+      ],
+      "scientific_invariants": [
+        "no polarity symbols",
+        "electrodes remain separated"
+      ],
+      "allowed_gray_regions": [
+        "electrolyte"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-biology-04-plant-stem-transport",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "title": "뿌리-줄기-잎 관다발 구조",
+      "difficulty": "hard",
+      "scenario_family": "plant-stem-transport",
+      "required_objects": [
+        "one root system",
+        "one stem",
+        "three leaves",
+        "two continuous vascular paths"
+      ],
+      "required_relations": [
+        "both vascular paths run continuously from roots through stem to leaves"
+      ],
+      "scientific_invariants": [
+        "paths do not merge",
+        "no directional arrows"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-biology-05-chromosome-pairs",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "title": "동원체 위치가 다른 염색체 쌍",
+      "difficulty": "medium",
+      "scenario_family": "chromosome-pairs",
+      "required_objects": [
+        "one cell boundary",
+        "four replicated chromosomes"
+      ],
+      "required_relations": [
+        "all chromosomes are contained by the cell boundary"
+      ],
+      "scientific_invariants": [
+        "two homologous pairs remain",
+        "centromere positions distinguish the pairs"
+      ],
+      "allowed_gray_regions": [
+        "one homologous pair"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-earth-04-eclipse-alignment",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "title": "태양-지구-달의 일직선 배치",
+      "difficulty": "medium",
+      "scenario_family": "eclipse-alignment",
+      "required_objects": [
+        "one sun disk",
+        "one earth disk",
+        "one moon disk"
+      ],
+      "required_relations": [
+        "left-to-right order is sun, earth, moon"
+      ],
+      "scientific_invariants": [
+        "centers lie on one horizontal line",
+        "no rays, arrows, glow, or starfield"
+      ],
+      "allowed_gray_regions": [
+        "one uniform half of earth disk"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-earth-05-river-valley-section",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "title": "하천 계곡 횡단면",
+      "difficulty": "hard",
+      "scenario_family": "river-valley-section",
+      "required_objects": [
+        "one valley boundary",
+        "one river channel",
+        "three sediment layers",
+        "six rounded clasts"
+      ],
+      "required_relations": [
+        "river occupies the lowest channel",
+        "clasts lie only in the channel bed"
+      ],
+      "scientific_invariants": [
+        "six clasts exactly",
+        "layer boundaries do not become texture"
+      ],
+      "allowed_gray_regions": [
+        "river water"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-sketch-physics-04-spring-two-states",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "title": "용수철 길이 두 상태 비교",
+      "difficulty": "hard",
+      "scenario_family": "spring-two-states",
+      "required_objects": [
+        "two equal panels",
+        "two identical supports",
+        "two springs",
+        "two identical masses"
+      ],
+      "required_relations": [
+        "one spring hangs from each support and holds one mass"
+      ],
+      "scientific_invariants": [
+        "only spring length and mass height differ",
+        "coil count remains equal"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/physics/spring-two-states.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-physics-05-coil-compass",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "title": "코일과 나침반 연결 장치",
+      "difficulty": "hard",
+      "scenario_family": "coil-compass",
+      "required_objects": [
+        "one coil with two terminals",
+        "one compass",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each coil terminal connects to a different battery terminal"
+      ],
+      "scientific_invariants": [
+        "compass needle is an arrowhead-free rod",
+        "wire endpoints remain visible"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/physics/coil-compass.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-chemistry-04-particle-two-states",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "title": "두 종류 입자의 전후 상태",
+      "difficulty": "hard",
+      "scenario_family": "particle-two-states",
+      "required_objects": [
+        "two equal containers",
+        "six round particles per panel",
+        "four angular particles per panel"
+      ],
+      "required_relations": [
+        "particles are contained by their own panel only"
+      ],
+      "scientific_invariants": [
+        "species counts stay constant",
+        "round and angular species remain distinguishable"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/chemistry/particle-two-states.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-chemistry-05-electrolysis-vessel",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "title": "두 전극이 담긴 전기 분해 용기",
+      "difficulty": "medium",
+      "scenario_family": "electrolysis-vessel",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "two electrodes",
+        "one battery",
+        "two wires"
+      ],
+      "required_relations": [
+        "each electrode connects to a different battery terminal",
+        "electrodes enter liquid without touching"
+      ],
+      "scientific_invariants": [
+        "no polarity symbols",
+        "electrodes remain separated"
+      ],
+      "allowed_gray_regions": [
+        "electrolyte"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/chemistry/electrolysis-vessel.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-biology-04-plant-stem-transport",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "title": "뿌리-줄기-잎 관다발 구조",
+      "difficulty": "hard",
+      "scenario_family": "plant-stem-transport",
+      "required_objects": [
+        "one root system",
+        "one stem",
+        "three leaves",
+        "two continuous vascular paths"
+      ],
+      "required_relations": [
+        "both vascular paths run continuously from roots through stem to leaves"
+      ],
+      "scientific_invariants": [
+        "paths do not merge",
+        "no directional arrows"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/biology/plant-stem-transport.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-biology-05-chromosome-pairs",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "title": "동원체 위치가 다른 염색체 쌍",
+      "difficulty": "medium",
+      "scenario_family": "chromosome-pairs",
+      "required_objects": [
+        "one cell boundary",
+        "four replicated chromosomes"
+      ],
+      "required_relations": [
+        "all chromosomes are contained by the cell boundary"
+      ],
+      "scientific_invariants": [
+        "two homologous pairs remain",
+        "centromere positions distinguish the pairs"
+      ],
+      "allowed_gray_regions": [
+        "one homologous pair"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/biology/chromosome-pairs.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-earth-04-eclipse-alignment",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "title": "태양-지구-달의 일직선 배치",
+      "difficulty": "medium",
+      "scenario_family": "eclipse-alignment",
+      "required_objects": [
+        "one sun disk",
+        "one earth disk",
+        "one moon disk"
+      ],
+      "required_relations": [
+        "left-to-right order is sun, earth, moon"
+      ],
+      "scientific_invariants": [
+        "centers lie on one horizontal line",
+        "no rays, arrows, glow, or starfield"
+      ],
+      "allowed_gray_regions": [
+        "one uniform half of earth disk"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/earth_science/eclipse-alignment.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-earth-05-river-valley-section",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "title": "하천 계곡 횡단면",
+      "difficulty": "hard",
+      "scenario_family": "river-valley-section",
+      "required_objects": [
+        "one valley boundary",
+        "one river channel",
+        "three sediment layers",
+        "six rounded clasts"
+      ],
+      "required_relations": [
+        "river occupies the lowest channel",
+        "clasts lie only in the channel bed"
+      ],
+      "scientific_invariants": [
+        "six clasts exactly",
+        "layer boundaries do not become texture"
+      ],
+      "allowed_gray_regions": [
+        "river water"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/earth_science/river-valley-section.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    }
+  ]
+}
