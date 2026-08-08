@@ -1,0 +1,126 @@
+{
+  "case_id": "v21-sketch-physics-lever-balance",
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "fulcrum-p1",
+      "type": "polygon",
+      "role": "support",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "points": [
+        [
+          0.46,
+          0.72
+        ],
+        [
+          0.54,
+          0.72
+        ],
+        [
+          0.5,
+          0.6
+        ]
+      ]
+    },
+    {
+      "id": "beam-p2",
+      "type": "polyline",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 3,
+      "points": [
+        [
+          0.18,
+          0.52
+        ],
+        [
+          0.82,
+          0.66
+        ]
+      ]
+    },
+    {
+      "id": "load-left-p3",
+      "type": "rect",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "bbox": [
+        0.2,
+        0.43,
+        0.3,
+        0.535
+      ]
+    },
+    {
+      "id": "load-right-p4",
+      "type": "rect",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "bbox": [
+        0.7,
+        0.55,
+        0.78,
+        0.646
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "fulcrum",
+      "kind": "triangular fulcrum",
+      "primitive_ids": [
+        "fulcrum-p1"
+      ]
+    },
+    {
+      "id": "beam",
+      "kind": "rigid lever beam",
+      "primitive_ids": [
+        "beam-p2"
+      ]
+    },
+    {
+      "id": "load-left",
+      "kind": "rectangular load",
+      "primitive_ids": [
+        "load-left-p3"
+      ]
+    },
+    {
+      "id": "load-right",
+      "kind": "rectangular load",
+      "primitive_ids": [
+        "load-right-p4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "beam",
+      "to": "fulcrum",
+      "kind": "supported_by"
+    },
+    {
+      "from": "load-left",
+      "to": "beam",
+      "kind": "supported_by"
+    },
+    {
+      "from": "load-right",
+      "to": "beam",
+      "kind": "supported_by"
+    }
+  ]
+}

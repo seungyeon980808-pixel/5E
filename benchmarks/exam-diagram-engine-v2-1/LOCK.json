@@ -1,0 +1,19 @@
+{
+  "benchmark": "exam-diagram-engine-v2-1",
+  "version": "2.1.0",
+  "development_sha256": "1863638095a62c6d00b0aeb0a1c3adf4df80a953451bc65872021ba304eda1f6",
+  "final_sha256": "26c5c626c420dbe8c2e44fe5ceeb8358549ed0fb8723dce98a769ba981d58a50",
+  "development_cases": 36,
+  "final_cases": 24,
+  "combined_input_modes": {
+    "reference_image": 20,
+    "description_only": 20,
+    "sketch_plus_description": 20
+  },
+  "combined_subjects": {
+    "physics": 15,
+    "chemistry": 15,
+    "biology": 15,
+    "earth_science": 15
+  }
+}

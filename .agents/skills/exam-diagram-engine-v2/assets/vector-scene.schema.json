@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://5e.local/schemas/exam-diagram-engine-v2-vector-scene.json",
+  "title": "Exam Diagram Engine V2.1 deterministic vector scene",
+  "type": "object",
+  "required": ["case_id", "canvas", "primitives", "instances", "connections"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,79}$"},
+    "canvas": {
+      "type": "object",
+      "required": ["width", "height", "background", "minimum_margin_fraction"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 256, "maximum": 4096},
+        "height": {"type": "integer", "minimum": 256, "maximum": 4096},
+        "background": {"const": "white"},
+        "minimum_margin_fraction": {"type": "number", "minimum": 0.02, "maximum": 0.25}
+      },
+      "additionalProperties": false
+    },
+    "primitives": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "role"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "type": {"enum": ["line", "polyline", "polygon", "rect", "ellipse", "arc", "path"]},
+          "role": {"enum": ["apparatus", "boundary", "connector", "material_region", "particle", "anatomy", "geology", "panel", "support"]},
+          "points": {"type": "array", "items": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "minimum": 0, "maximum": 1}}},
+          "bbox": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+          "commands": {"type": "array", "items": {"type": "array"}},
+          "start": {"type": "number"},
+          "end": {"type": "number"},
+          "stroke": {"enum": ["none", "black"]},
+          "fill": {"enum": ["none", "white", "gray", "black"]},
+          "line_width": {"type": "number", "minimum": 0.5, "maximum": 8}
+        },
+        "additionalProperties": false
+      }
+    },
+    "instances": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "primitive_ids"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "minLength": 1},
+          "primitive_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": {"type": "string"},
+          "to": {"type": "string"},
+          "kind": {"enum": ["wire", "tube", "string", "continuous_path", "contained_by", "supported_by", "touching", "adjacent", "not_connected"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

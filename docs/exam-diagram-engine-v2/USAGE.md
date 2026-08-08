@@ -4,6 +4,17 @@ The reusable package is `.agents/skills/exam-diagram-engine-v2`. Invoke it in a 
 
 The Skill first produces a reviewable request contract, then compiles a generation prompt. It deliberately keeps model credentials out of the repository and uses Codex's built-in image generation capability. The PNG output and JSON sidecar can be imported into 5E; labels, symbols, and arrows are added later in 5E.
 
+For geometry-expressible scenes, V2.1 prefers the deterministic vector adapter. Start from `assets/example-vector-scene.json`, preserve the closed instance inventory, and render only after validation:
+
+```powershell
+python .agents/skills/exam-diagram-engine-v2/scripts/vector_renderer.py validate `
+  --scene .agents/skills/exam-diagram-engine-v2/assets/example-vector-scene.json
+
+python .agents/skills/exam-diagram-engine-v2/scripts/vector_renderer.py render `
+  --scene .agents/skills/exam-diagram-engine-v2/assets/example-vector-scene.json `
+  --out generated.png --report render.json
+```
+
 Example local compile:
 
 ```powershell

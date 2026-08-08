@@ -1,0 +1,169 @@
+{
+  "case_id": "v21-ref-physics-hydraulic-pistons",
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "fluid-p1",
+      "type": "path",
+      "role": "material_region",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.2,
+          0.62
+        ],
+        [
+          "L",
+          0.2,
+          0.82
+        ],
+        [
+          "L",
+          0.8,
+          0.82
+        ],
+        [
+          "L",
+          0.8,
+          0.52
+        ],
+        [
+          "L",
+          0.7,
+          0.52
+        ],
+        [
+          "L",
+          0.7,
+          0.76
+        ],
+        [
+          "L",
+          0.3,
+          0.76
+        ],
+        [
+          "L",
+          0.3,
+          0.62
+        ],
+        [
+          "Z"
+        ]
+      ]
+    },
+    {
+      "id": "vessel-p2",
+      "type": "path",
+      "role": "boundary",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.2,
+          0.28
+        ],
+        [
+          "L",
+          0.2,
+          0.82
+        ],
+        [
+          "L",
+          0.8,
+          0.82
+        ],
+        [
+          "L",
+          0.8,
+          0.28
+        ]
+      ]
+    },
+    {
+      "id": "piston-small-p3",
+      "type": "rect",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "white",
+      "line_width": 2.4,
+      "bbox": [
+        0.18,
+        0.54,
+        0.32,
+        0.61
+      ]
+    },
+    {
+      "id": "piston-large-p4",
+      "type": "rect",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "white",
+      "line_width": 2.4,
+      "bbox": [
+        0.68,
+        0.44,
+        0.82,
+        0.51
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "fluid",
+      "kind": "continuous liquid",
+      "primitive_ids": [
+        "fluid-p1"
+      ]
+    },
+    {
+      "id": "vessel",
+      "kind": "connected vessel",
+      "primitive_ids": [
+        "vessel-p2"
+      ]
+    },
+    {
+      "id": "piston-small",
+      "kind": "small piston",
+      "primitive_ids": [
+        "piston-small-p3"
+      ]
+    },
+    {
+      "id": "piston-large",
+      "kind": "large piston",
+      "primitive_ids": [
+        "piston-large-p4"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "fluid",
+      "to": "vessel",
+      "kind": "contained_by"
+    },
+    {
+      "from": "piston-small",
+      "to": "fluid",
+      "kind": "touching"
+    },
+    {
+      "from": "piston-large",
+      "to": "fluid",
+      "kind": "touching"
+    }
+  ]
+}

@@ -33,3 +33,16 @@ The final split, prompts, input assets, and specification hashes were frozen in 
 | `v2-sketch-earth-04-eclipse-alignment` | 99 | invented enclosing frame |
 
 These failures identify V2 limitations; they are not correction inputs for V2. A successor cycle must derive changes from new development cases and use a newly frozen, uncontaminated final set.
+
+## V2.1 successor correction
+
+V2.1 did not rewrite the stochastic prompt from the frozen failures. It introduced a general closed-inventory vector adapter and evaluated it on 20 new scenario families.
+
+Development-only findings were:
+
+| Finding | Correction before V2.1 final freeze |
+|---|---|
+| A pendulum string and lever load were declared connected but their coordinates left a visible gap | Moved endpoints to the shared support/contact coordinates |
+| The ocean-water polygon produced an extra approximation outline distinct from the scientific seafloor curve | Made the water polygon fill-only and retained one explicit seafloor boundary |
+
+After these changes, the 36-case development split passed 36/36. The renderer, core rules, final manifest, 24 final scene contracts, and 16 final input assets were then frozen. No final-result correction was made. The frozen final split passed 24/24, and the stability suite passed 36/36 regenerations.

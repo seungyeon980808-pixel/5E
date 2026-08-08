@@ -27,6 +27,19 @@ Mode-specific evidence:
 
 The Skill invokes the built-in image generation tool; the CLI intentionally does not embed credentials or a model SDK. A calling Codex session must inspect referenced local images before invoking the tool and save the returned image beside the compiled artifacts.
 
+## Deterministic vector adapter (V2.1)
+
+For apparatus, repeated counts, sparse topology, and other scenes that can be expressed as clean geometric primitives, prefer `assets/vector-scene.schema.json` and `scripts/vector_renderer.py`. The adapter supports only lines, polylines, polygons, rectangles, ellipses, arcs, and Bézier paths. It has no text, glyph, gradient, lighting, shadow, or arrow primitive.
+
+Every primitive must belong to exactly one instance in the closed inventory. Connections may reference only declared instances. Validation precedes rendering:
+
+```powershell
+python scripts/vector_renderer.py validate --scene scene.json --out validation.json
+python scripts/vector_renderer.py render --scene scene.json --out generated.png --report render.json
+```
+
+Use the image-generation adapter only when a reference contains organic structure that cannot be faithfully represented by the vector contract. Do not silently simplify a scientifically meaningful curve or texture merely to force it into vector primitives.
+
 ## 5E handoff
 
 The engine returns a PNG and its sidecar contract. 5E can import the PNG as an image object; labels, symbols, and arrows are added later by the user. UI automation and desktop packaging are outside V2 scope.

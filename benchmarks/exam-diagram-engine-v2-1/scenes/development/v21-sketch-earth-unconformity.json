@@ -1,0 +1,204 @@
+{
+  "case_id": "v21-sketch-earth-unconformity",
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "upper-1-p1",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.1,
+          0.28
+        ],
+        [
+          0.9,
+          0.28
+        ]
+      ]
+    },
+    {
+      "id": "upper-2-p2",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.1,
+          0.38
+        ],
+        [
+          0.9,
+          0.38
+        ]
+      ]
+    },
+    {
+      "id": "upper-3-p3",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.1,
+          0.48
+        ],
+        [
+          0.9,
+          0.48
+        ]
+      ]
+    },
+    {
+      "id": "surface-p4",
+      "type": "path",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.6,
+      "commands": [
+        [
+          "M",
+          0.1,
+          0.58
+        ],
+        [
+          "C",
+          0.28,
+          0.52,
+          0.4,
+          0.62,
+          0.55,
+          0.56
+        ],
+        [
+          "C",
+          0.68,
+          0.5,
+          0.78,
+          0.61,
+          0.9,
+          0.55
+        ]
+      ]
+    },
+    {
+      "id": "lower-1-p5",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.12,
+          0.82
+        ],
+        [
+          0.48,
+          0.58
+        ]
+      ]
+    },
+    {
+      "id": "lower-2-p6",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.22,
+          0.82
+        ],
+        [
+          0.58,
+          0.58
+        ]
+      ]
+    },
+    {
+      "id": "lower-3-p7",
+      "type": "polyline",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2,
+      "points": [
+        [
+          0.32,
+          0.82
+        ],
+        [
+          0.6799999999999999,
+          0.58
+        ]
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "upper-1",
+      "kind": "horizontal upper layer",
+      "primitive_ids": [
+        "upper-1-p1"
+      ]
+    },
+    {
+      "id": "upper-2",
+      "kind": "horizontal upper layer",
+      "primitive_ids": [
+        "upper-2-p2"
+      ]
+    },
+    {
+      "id": "upper-3",
+      "kind": "horizontal upper layer",
+      "primitive_ids": [
+        "upper-3-p3"
+      ]
+    },
+    {
+      "id": "surface",
+      "kind": "erosional surface",
+      "primitive_ids": [
+        "surface-p4"
+      ]
+    },
+    {
+      "id": "lower-1",
+      "kind": "tilted lower layer",
+      "primitive_ids": [
+        "lower-1-p5"
+      ]
+    },
+    {
+      "id": "lower-2",
+      "kind": "tilted lower layer",
+      "primitive_ids": [
+        "lower-2-p6"
+      ]
+    },
+    {
+      "id": "lower-3",
+      "kind": "tilted lower layer",
+      "primitive_ids": [
+        "lower-3-p7"
+      ]
+    }
+  ],
+  "connections": []
+}

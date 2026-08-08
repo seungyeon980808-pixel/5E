@@ -1,41 +1,52 @@
-# Exam Diagram Engine V2 handoff
+# Exam Diagram Engine V2.1 handoff
 
-## Package entry point
+## Entry point
 
-Use `.agents/skills/exam-diagram-engine-v2/SKILL.md`. In a new Codex task, invoke `$exam-diagram-engine-v2`, supply exactly one of the three supported input contracts, and follow the Skill workflow through compile, generation, inspection, and scoring.
+In a new Codex task, invoke `$exam-diagram-engine-v2` and provide a reference image, a written scientific situation, or a sketch plus description. The package entry point is `.agents/skills/exam-diagram-engine-v2/SKILL.md`.
 
-The engine is model-provider neutral at the repository boundary: it compiles a constrained prompt and records generation evidence, while Codex's built-in image generator creates the raster asset.
+Codex must first produce and review the structure contract. Route vector-eligible scenes to `vector_renderer.py`; route genuinely organic scenes to built-in image generation. Never force an organic structure into a lossy geometric approximation.
 
-## Important status
+## Deterministic vector workflow
 
-V2 is reproducible and fully audited, but its frozen-final release decision is `FAIL` (15/24, 62.5%). Do not present it as meeting the requested quality threshold. Do not edit V2 from the final failures or rerun failed final prompts to replace attempt 1.
+```powershell
+python .agents/skills/exam-diagram-engine-v2/scripts/vector_renderer.py validate `
+  --scene scene.json --out validation.json
 
-For a successor version:
+python .agents/skills/exam-diagram-engine-v2/scripts/vector_renderer.py render `
+  --scene scene.json --out generated.png --report render.json
 
-1. Branch from this worktree state.
-2. Create new development cases for exact repeated counts, electrical continuity, and sketch-frame suppression without copying the frozen-final cases.
-3. Version the Skill and engine as V2.1 or V3.
-4. Freeze a new untouched final manifest before any final generation.
-5. Execute the 12-case three-regeneration stability gate only after the new final split passes its release thresholds.
+python .agents/skills/exam-diagram-engine-v2/scripts/engine.py inspect-image `
+  --image generated.png --out image-metrics.json
+```
+
+The scene must conform to `assets/vector-scene.schema.json`. Validation rejects unsupported primitives, colors, duplicate identifiers, unknown connections, reused geometry, and geometry outside the closed instance inventory.
+
+## Release status
+
+- Version: 2.1.0 within the V2 package.
+- Development: 36/36 pass.
+- Frozen final: 24/24 pass.
+- Three input modes: 8/8 each.
+- Four subjects: 6/6 each.
+- Stability: all 12 hard cases pass 3/3 with byte-identical outputs.
+- Severe science errors and forbidden marks: zero.
 
 ## Artifact map
 
-- Skill: `.agents/skills/exam-diagram-engine-v2/`
-- Style and subject rules: `.agents/skills/exam-diagram-engine-v2/references/`
-- Schemas and example request: `.agents/skills/exam-diagram-engine-v2/assets/`
-- Engine and benchmark scripts: `.agents/skills/exam-diagram-engine-v2/scripts/`
-- Benchmark manifests and freeze: `benchmarks/exam-diagram-engine-v2/`
-- Development and final outputs: `results/exam-diagram-engine-v2/`
-- Provenance: `docs/exam-diagram-engine-v2/SESSION1_PROVENANCE.md`
-- Failure history: `docs/exam-diagram-engine-v2/FAILURE_AND_CORRECTION_LOG.md`
-- Final decision: `docs/exam-diagram-engine-v2/FINAL_REPORT.md`
+- Skill and routing: `.agents/skills/exam-diagram-engine-v2/SKILL.md`
+- Common/input/subject rules: `.agents/skills/exam-diagram-engine-v2/references/`
+- Request, evaluation, and vector-scene schemas: `.agents/skills/exam-diagram-engine-v2/assets/`
+- Prompt compiler and evaluator: `.agents/skills/exam-diagram-engine-v2/scripts/engine.py`
+- Deterministic renderer: `.agents/skills/exam-diagram-engine-v2/scripts/vector_renderer.py`
+- V2.1 benchmark: `benchmarks/exam-diagram-engine-v2-1/`
+- V2.1 outputs and stability evidence: `results/exam-diagram-engine-v2-1/`
+- Historical stochastic V2 artifacts: `benchmarks/exam-diagram-engine-v2/`, `results/exam-diagram-engine-v2/`
+- Final report: `docs/exam-diagram-engine-v2/FINAL_REPORT.md`
 
-## Reproduction smoke test
+## Freeze verification
 
 ```powershell
-python .agents/skills/exam-diagram-engine-v2/scripts/engine.py compile `
-  --request .agents/skills/exam-diagram-engine-v2/assets/example-request.json `
-  --out-dir tmp/exam-diagram-v2/fresh-session-check
+python .agents/skills/exam-diagram-engine-v2/scripts/verify_vector_freeze.py --root .
 ```
 
-The command must create `structure.json`, `prompt.txt`, `prompt.json`, and `preflight.json` with a passing preflight before image generation.
+Do not modify a pinned V2.1 final artifact. Any future renderer or specification change requires a new version and a new untouched final split.

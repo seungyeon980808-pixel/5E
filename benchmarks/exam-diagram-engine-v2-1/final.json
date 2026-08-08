@@ -1,0 +1,471 @@
+{
+  "benchmark": "exam-diagram-engine-v2-1",
+  "version": "2.1.0",
+  "split": "final",
+  "frozen": true,
+  "cases": [
+    {
+      "case_id": "v21-ref-physics-floating-cylinder",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "scenario_family": "floating-cylinder",
+      "difficulty": "medium",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "one cylinder"
+      ],
+      "scientific_invariants": [
+        "liquid line crosses the cylinder below its midpoint"
+      ],
+      "scene_contract": "scenes/final/v21-ref-physics-floating-cylinder.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-physics-floating-cylinder.png"
+    },
+    {
+      "case_id": "v21-txt-physics-floating-cylinder",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "scenario_family": "floating-cylinder",
+      "difficulty": "medium",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "one cylinder"
+      ],
+      "scientific_invariants": [
+        "liquid line crosses the cylinder below its midpoint"
+      ],
+      "scene_contract": "scenes/final/v21-txt-physics-floating-cylinder.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-physics-floating-cylinder",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "scenario_family": "floating-cylinder",
+      "difficulty": "medium",
+      "required_objects": [
+        "one vessel",
+        "one liquid region",
+        "one cylinder"
+      ],
+      "scientific_invariants": [
+        "liquid line crosses the cylinder below its midpoint"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-physics-floating-cylinder.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-physics-floating-cylinder.png"
+    },
+    {
+      "case_id": "v21-ref-physics-cart-track-collision",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "scenario_family": "cart-track-collision",
+      "difficulty": "hard",
+      "required_objects": [
+        "two equal panels",
+        "four carts",
+        "eight wheels",
+        "two tracks"
+      ],
+      "scientific_invariants": [
+        "cart count and identity remain equal across states"
+      ],
+      "scene_contract": "scenes/final/v21-ref-physics-cart-track-collision.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-physics-cart-track-collision.png"
+    },
+    {
+      "case_id": "v21-txt-physics-cart-track-collision",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "scenario_family": "cart-track-collision",
+      "difficulty": "hard",
+      "required_objects": [
+        "two equal panels",
+        "four carts",
+        "eight wheels",
+        "two tracks"
+      ],
+      "scientific_invariants": [
+        "cart count and identity remain equal across states"
+      ],
+      "scene_contract": "scenes/final/v21-txt-physics-cart-track-collision.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-physics-cart-track-collision",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "scenario_family": "cart-track-collision",
+      "difficulty": "hard",
+      "required_objects": [
+        "two equal panels",
+        "four carts",
+        "eight wheels",
+        "two tracks"
+      ],
+      "scientific_invariants": [
+        "cart count and identity remain equal across states"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-physics-cart-track-collision.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-physics-cart-track-collision.png"
+    },
+    {
+      "case_id": "v21-ref-chemistry-chromatography",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "scenario_family": "chromatography",
+      "difficulty": "medium",
+      "required_objects": [
+        "one chamber",
+        "one solvent region",
+        "one paper strip",
+        "three spots"
+      ],
+      "scientific_invariants": [
+        "lowest spot lies above solvent surface"
+      ],
+      "scene_contract": "scenes/final/v21-ref-chemistry-chromatography.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-chemistry-chromatography.png"
+    },
+    {
+      "case_id": "v21-txt-chemistry-chromatography",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "scenario_family": "chromatography",
+      "difficulty": "medium",
+      "required_objects": [
+        "one chamber",
+        "one solvent region",
+        "one paper strip",
+        "three spots"
+      ],
+      "scientific_invariants": [
+        "lowest spot lies above solvent surface"
+      ],
+      "scene_contract": "scenes/final/v21-txt-chemistry-chromatography.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-chemistry-chromatography",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "scenario_family": "chromatography",
+      "difficulty": "medium",
+      "required_objects": [
+        "one chamber",
+        "one solvent region",
+        "one paper strip",
+        "three spots"
+      ],
+      "scientific_invariants": [
+        "lowest spot lies above solvent surface"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-chemistry-chromatography.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-chemistry-chromatography.png"
+    },
+    {
+      "case_id": "v21-ref-chemistry-diffusion-membrane",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "scenario_family": "diffusion-membrane",
+      "difficulty": "hard",
+      "required_objects": [
+        "one container",
+        "one membrane",
+        "five round particles",
+        "three angular particles"
+      ],
+      "scientific_invariants": [
+        "particles occur on both sides without direction marks"
+      ],
+      "scene_contract": "scenes/final/v21-ref-chemistry-diffusion-membrane.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-chemistry-diffusion-membrane.png"
+    },
+    {
+      "case_id": "v21-txt-chemistry-diffusion-membrane",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "scenario_family": "diffusion-membrane",
+      "difficulty": "hard",
+      "required_objects": [
+        "one container",
+        "one membrane",
+        "five round particles",
+        "three angular particles"
+      ],
+      "scientific_invariants": [
+        "particles occur on both sides without direction marks"
+      ],
+      "scene_contract": "scenes/final/v21-txt-chemistry-diffusion-membrane.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-chemistry-diffusion-membrane",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "scenario_family": "diffusion-membrane",
+      "difficulty": "hard",
+      "required_objects": [
+        "one container",
+        "one membrane",
+        "five round particles",
+        "three angular particles"
+      ],
+      "scientific_invariants": [
+        "particles occur on both sides without direction marks"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-chemistry-diffusion-membrane.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-chemistry-diffusion-membrane.png"
+    },
+    {
+      "case_id": "v21-ref-biology-digestive-path",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "scenario_family": "digestive-path",
+      "difficulty": "medium",
+      "required_objects": [
+        "one mouth",
+        "one esophagus",
+        "one stomach",
+        "one intestinal path",
+        "one terminal tract"
+      ],
+      "scientific_invariants": [
+        "digestive tube is one continuous path"
+      ],
+      "scene_contract": "scenes/final/v21-ref-biology-digestive-path.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-biology-digestive-path.png"
+    },
+    {
+      "case_id": "v21-txt-biology-digestive-path",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "scenario_family": "digestive-path",
+      "difficulty": "medium",
+      "required_objects": [
+        "one mouth",
+        "one esophagus",
+        "one stomach",
+        "one intestinal path",
+        "one terminal tract"
+      ],
+      "scientific_invariants": [
+        "digestive tube is one continuous path"
+      ],
+      "scene_contract": "scenes/final/v21-txt-biology-digestive-path.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-biology-digestive-path",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "scenario_family": "digestive-path",
+      "difficulty": "medium",
+      "required_objects": [
+        "one mouth",
+        "one esophagus",
+        "one stomach",
+        "one intestinal path",
+        "one terminal tract"
+      ],
+      "scientific_invariants": [
+        "digestive tube is one continuous path"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-biology-digestive-path.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-biology-digestive-path.png"
+    },
+    {
+      "case_id": "v21-ref-biology-mitosis-cell",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "scenario_family": "mitosis-cell",
+      "difficulty": "hard",
+      "required_objects": [
+        "one cell boundary",
+        "two spindle poles",
+        "four paired chromosomes",
+        "eight spindle fibers"
+      ],
+      "scientific_invariants": [
+        "chromosomes align between two poles"
+      ],
+      "scene_contract": "scenes/final/v21-ref-biology-mitosis-cell.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-biology-mitosis-cell.png"
+    },
+    {
+      "case_id": "v21-txt-biology-mitosis-cell",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "scenario_family": "mitosis-cell",
+      "difficulty": "hard",
+      "required_objects": [
+        "one cell boundary",
+        "two spindle poles",
+        "four paired chromosomes",
+        "eight spindle fibers"
+      ],
+      "scientific_invariants": [
+        "chromosomes align between two poles"
+      ],
+      "scene_contract": "scenes/final/v21-txt-biology-mitosis-cell.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-biology-mitosis-cell",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "scenario_family": "mitosis-cell",
+      "difficulty": "hard",
+      "required_objects": [
+        "one cell boundary",
+        "two spindle poles",
+        "four paired chromosomes",
+        "eight spindle fibers"
+      ],
+      "scientific_invariants": [
+        "chromosomes align between two poles"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-biology-mitosis-cell.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-biology-mitosis-cell.png"
+    },
+    {
+      "case_id": "v21-ref-earth-crater-cross-section",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "scenario_family": "crater-cross-section",
+      "difficulty": "medium",
+      "required_objects": [
+        "one crater surface",
+        "two subsurface layers"
+      ],
+      "scientific_invariants": [
+        "layers bend downward beneath one bowl-shaped crater"
+      ],
+      "scene_contract": "scenes/final/v21-ref-earth-crater-cross-section.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-earth-crater-cross-section.png"
+    },
+    {
+      "case_id": "v21-txt-earth-crater-cross-section",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "scenario_family": "crater-cross-section",
+      "difficulty": "medium",
+      "required_objects": [
+        "one crater surface",
+        "two subsurface layers"
+      ],
+      "scientific_invariants": [
+        "layers bend downward beneath one bowl-shaped crater"
+      ],
+      "scene_contract": "scenes/final/v21-txt-earth-crater-cross-section.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-earth-crater-cross-section",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "scenario_family": "crater-cross-section",
+      "difficulty": "medium",
+      "required_objects": [
+        "one crater surface",
+        "two subsurface layers"
+      ],
+      "scientific_invariants": [
+        "layers bend downward beneath one bowl-shaped crater"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-earth-crater-cross-section.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-earth-crater-cross-section.png"
+    },
+    {
+      "case_id": "v21-ref-earth-glacier-valley",
+      "split": "final",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "scenario_family": "glacier-valley",
+      "difficulty": "hard",
+      "required_objects": [
+        "one U-shaped valley",
+        "one ice region",
+        "three moraine clasts"
+      ],
+      "scientific_invariants": [
+        "ice occupies the valley and clasts lie at its base"
+      ],
+      "scene_contract": "scenes/final/v21-ref-earth-glacier-valley.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-earth-glacier-valley.png"
+    },
+    {
+      "case_id": "v21-txt-earth-glacier-valley",
+      "split": "final",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "scenario_family": "glacier-valley",
+      "difficulty": "hard",
+      "required_objects": [
+        "one U-shaped valley",
+        "one ice region",
+        "three moraine clasts"
+      ],
+      "scientific_invariants": [
+        "ice occupies the valley and clasts lie at its base"
+      ],
+      "scene_contract": "scenes/final/v21-txt-earth-glacier-valley.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-earth-glacier-valley",
+      "split": "final",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "scenario_family": "glacier-valley",
+      "difficulty": "hard",
+      "required_objects": [
+        "one U-shaped valley",
+        "one ice region",
+        "three moraine clasts"
+      ],
+      "scientific_invariants": [
+        "ice occupies the valley and clasts lie at its base"
+      ],
+      "scene_contract": "scenes/final/v21-sketch-earth-glacier-valley.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-earth-glacier-valley.png"
+    }
+  ]
+}

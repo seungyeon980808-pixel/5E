@@ -1,0 +1,16 @@
+{
+  "vector_engine_version": "2.1.0",
+  "scene_sha256": "c9c85c022ffaf5546b80af99ea4f445d8774f9c41d75bd4b04146a2f8c5f1595",
+  "output_sha256": "9976d0cf952137a1c26ea432df3da27fbabe2959f1bc4b8927494ff229b959d9",
+  "width": 1200,
+  "height": 800,
+  "mode": "L",
+  "primitive_count": 15,
+  "instance_count": 15,
+  "forbidden_primitive_types": 0,
+  "palette_contract": [
+    "white",
+    "black",
+    "flat gray"
+  ]
+}

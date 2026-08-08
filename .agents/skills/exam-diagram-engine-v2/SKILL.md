@@ -15,7 +15,7 @@ Produce a scientifically faithful, label-free diagram rather than an attractive 
 4. Save a request JSON that conforms to [assets/request.schema.json](assets/request.schema.json).
 5. Run `python scripts/engine.py compile --request <request.json> --out-dir <case-dir>`.
 6. Stop before generation if preflight reports an error or unresolved critical uncertainty.
-7. Generate with the built-in image generation tool. For reference conversion or sketch interpretation, inspect every local input image first and pass it as an edit/reference input. Keep the compiled prompt unchanged except for tool-required wrapper text.
+7. Choose a rendering adapter. Prefer the deterministic vector adapter for apparatus, exact repeated counts, sparse topology, and scenes expressible without semantic loss. Use the built-in image generation tool for organic structures that cannot be represented faithfully by the vector contract. For reference conversion or sketch interpretation, inspect every local input image first.
 8. Save the generated original, then run the repository normalizer if flat grayscale cleanup is needed. Never use normalization to excuse a structure or science failure.
 9. Evaluate original and normalized outputs separately using [references/evaluation.md](references/evaluation.md). Record the first attempt even when it fails.
 10. Revise one failure cause at a time. Preserve the failed prompt, output, evaluation, correction reason, and successor link.
@@ -43,6 +43,8 @@ python scripts/engine.py inspect-image --image run/case-id/generated.png --out r
 python scripts/engine.py score --evaluation run/case-id/evaluation.json --out run/case-id/score.json
 python scripts/engine.py validate-benchmark --development benchmarks/development.json --final benchmarks/final.json
 python scripts/engine.py summarize --evaluations results --out report.json
+python scripts/vector_renderer.py validate --scene scene.json --out validation.json
+python scripts/vector_renderer.py render --scene scene.json --out generated.png --report render.json
 ```
 
 Read [references/interface.md](references/interface.md) for request/output contracts and [references/failure-history.md](references/failure-history.md) before revising a recurrent failure.
