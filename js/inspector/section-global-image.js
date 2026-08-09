@@ -4,6 +4,7 @@
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
 import { startImageCompare } from "../image-compare.js?v=1.4.0";
+import { startSmartCutoutForImage } from "../image-cutout.js?v=1.4.0";
 
 export function buildGlobalImageSection(ctx) {
   const { state, pushSnap, snapObjectsAlways } = ctx;
@@ -215,6 +216,15 @@ export function buildGlobalImageSection(ctx) {
         s2.redoStack = [];
       });
     });
+
+    const smartCutoutBtn = document.createElement("button");
+    smartCutoutBtn.type = "button";
+    smartCutoutBtn.className = "modal-btn smart-cutout-start";
+    smartCutoutBtn.style.width = "100%";
+    smartCutoutBtn.textContent = "스마트 누끼";
+    smartCutoutBtn.title = "남길 물체를 자유롭게 둘러싼 뒤 감도를 조절해 배경을 투명하게 제거";
+    smartCutoutBtn.addEventListener("click", () => startSmartCutoutForImage(id));
+    bgBody.appendChild(smartCutoutBtn);
 
     // ----- 비교 · 삭제 (한 줄, 나란히 — 아트보드 프리셋처럼 작게 insp-ab-preset) -----
     const btnRow = document.createElement("div");

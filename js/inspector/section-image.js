@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startRectErase, startPathErase, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.4.0";
+import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.4.0";
 import { makeSection } from "./widgets.js?v=1.4.0";
 import { startImageCompare } from "../image-compare.js?v=1.4.0";
 
@@ -60,6 +60,12 @@ export function buildImageSection(ctx) {
   imgCutoutBlock.className = "insp-body";
   imgCutoutBlock.style.cssText = "padding:0;margin:2px 0 4px;display:flex;flex-direction:column;gap:4px;";
 
+  const imgSmartCutoutBtn = document.createElement("button");
+  imgSmartCutoutBtn.type = "button";
+  imgSmartCutoutBtn.className = "modal-btn smart-cutout-start";
+  imgSmartCutoutBtn.style.width = "100%";
+  imgSmartCutoutBtn.textContent = "스마트 누끼";
+
   const imgRectEraseBtn = document.createElement("button");
   imgRectEraseBtn.type = "button";
   imgRectEraseBtn.className = "modal-btn";
@@ -78,11 +84,13 @@ export function buildImageSection(ctx) {
   imgClearCutBtn.style.width = "100%";
   imgClearCutBtn.textContent = "지운 영역 초기화";
 
+  imgCutoutBlock.appendChild(imgSmartCutoutBtn);
   imgCutoutBlock.appendChild(imgRectEraseBtn);
   imgCutoutBlock.appendChild(imgPathEraseBtn);
   imgCutoutBlock.appendChild(imgClearCutBtn);
   imgBody.appendChild(imgCutoutBlock);
 
+  imgSmartCutoutBtn.addEventListener("click", () => startSmartCutout());
   imgRectEraseBtn.addEventListener("click", () => startRectErase());
   imgPathEraseBtn.addEventListener("click", () => startPathErase());
   imgClearCutBtn.addEventListener("click", () => clearCutouts());
