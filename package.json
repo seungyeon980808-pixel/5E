@@ -16,7 +16,7 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "package:win": "electron-builder --win nsis"
+    "package:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {
     "electron": "^37.0.0",

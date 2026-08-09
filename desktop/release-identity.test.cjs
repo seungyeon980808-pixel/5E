@@ -16,6 +16,7 @@ test("Windows package, visible footer and release notes share one final identity
   assert.equal(pkg.version, "1.5.0");
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[""].version, pkg.version);
+  assert.match(pkg.scripts["package:win"], /--publish never/);
   assert.match(index, /5E<\/strong> <strong>v1\.5\.0 · 2026\.08\.10<\/strong>/);
   assert.match(main, /\[5E v1\.5\.0\]/);
   assert.match(notes, /정식 Windows 배포 버전은 `v1\.5\.0`입니다/);
