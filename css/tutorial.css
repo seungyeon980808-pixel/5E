@@ -76,6 +76,22 @@
 }
 /* 닫힌 도형은 안쪽을 아주 옅게 채워 '이 영역'이라는 게 읽히게 한다. */
 .tut-guide-shape.is-closed { fill: color-mix(in srgb, var(--accent) 12%, transparent); }
+.tut-guide-shape.is-path { stroke-width: 1.5; }
+.tut-guide-shape.is-silhouette {
+  stroke-width: 2.2;
+  stroke-dasharray: 8 5;
+  fill: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.tut-guide-shape.is-ctrl-zone {
+  stroke: #126dff;
+  stroke-width: 3;
+  stroke-dasharray: 4 3;
+  opacity: 1;
+}
+.tut-guide-note.is-ctrl-note {
+  fill: #126dff;
+  font-weight: 700;
+}
 
 /* ----- 근접 표시 (far → close → hit) -----
    판정이 조용하면 "더 가야 하는지, 잘못 잡은 건지"를 알 수 없다. 손이 움직이는 동안
@@ -205,6 +221,9 @@
   transition: transform 120ms var(--tut-ease-out);
 }
 .tut-ghost.is-pressed .tut-ghost-arrow { transform: scale(0.88); }
+.tut-ghost.is-click-offset .tut-ghost-arrow { transform: translate(18px, 18px); }
+.tut-ghost.is-click-offset.is-pressed .tut-ghost-arrow { transform: translate(18px, 18px) scale(0.88); }
+.tut-ghost.is-click-offset .tut-ghost-mod { left: 44px; top: 48px; }
 
 /* 누르고 있는 동안 커서 끝에 퍼지는 고리 */
 .tut-ghost-ring {
@@ -302,6 +321,27 @@
 .tut-coach[data-side="below"] { transform-origin: center top; }
 .tut-coach[data-side="above"] { transform-origin: center bottom; }
 .tut-coach[data-side="center"]{ transform-origin: center center; }
+.tut-coach.is-panel-safe .tut-coach-text { font-size: 0.94em; }
+.tut-coach.is-canvas-safe { padding: 0.78em 0.82em 0.7em; }
+.tut-coach.is-canvas-safe {
+  left: auto !important;
+  right: 8px !important;
+  width: min(280px, calc(100vw - 16px)) !important;
+  max-width: calc(100vw - 16px) !important;
+  overflow: hidden;
+}
+.tut-coach.is-canvas-safe .tut-coach-head { min-width: 0; }
+.tut-coach.is-canvas-safe .tut-coach-course {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tut-coach.is-canvas-safe .tut-coach-title,
+.tut-coach.is-canvas-safe .tut-coach-text { overflow-wrap: anywhere; }
+.tut-coach.is-canvas-safe .tut-coach-title { font-size: 1.05em; }
+.tut-coach.is-canvas-safe .tut-coach-text { font-size: 0.86em; margin-bottom: 0.6em; }
+.tut-coach.is-canvas-safe .tut-coach-foot { margin-top: 0.55em; }
 
 /* 단계 전환: 제자리에서 사라지고(빠른 fade-out) → 새 위치에서 확 떠오른다(pop). */
 .tut-coach.is-leaving {
