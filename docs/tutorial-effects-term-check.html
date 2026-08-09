@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5E 튜토리얼 효과·용어 확인표</title>
+  <style>
+    :root {
+      --bg: #0b0f15;
+      --panel: #141a23;
+      --panel-2: #192231;
+      --line: #2d3949;
+      --text: #edf3fb;
+      --muted: #9caabd;
+      --blue: #3185ff;
+      --blue-soft: #8dbaff;
+      --green: #58d68d;
+      --orange: #ffbd66;
+      --shadow: 0 18px 50px rgba(0, 0, 0, .35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; color: var(--text); background:
+        radial-gradient(circle at 12% 0%, rgba(49,133,255,.18), transparent 34rem),
+        var(--bg); font: 15px/1.65 Inter, "IBM Plex Sans KR", system-ui, sans-serif;
+    }
+    main { width: min(1180px, calc(100% - 36px)); margin: 0 auto; padding: 56px 0 80px; }
+    .eyebrow { color: var(--blue-soft); font-weight: 700; letter-spacing: .12em; font-size: 12px; text-transform: uppercase; }
+    h1 { margin: 10px 0 12px; font-size: clamp(32px, 5vw, 58px); line-height: 1.1; letter-spacing: -.04em; }
+    .lead { max-width: 760px; margin: 0; color: var(--muted); font-size: 18px; }
+    .rule { height: 1px; background: var(--line); margin: 38px 0 28px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 22px; }
+    .legend span, .tag { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); font-size: 12px; }
+    .legend .active { border-color: var(--blue); color: var(--blue-soft); background: rgba(49,133,255,.12); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card { overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: rgba(20,26,35,.9); box-shadow: var(--shadow); }
+    .card-head { padding: 20px 22px 14px; border-bottom: 1px solid var(--line); }
+    .card-head h2 { margin: 8px 0 4px; font-size: 22px; letter-spacing: -.025em; }
+    .card-head p { margin: 0; color: var(--muted); }
+    .demo { min-height: 190px; position: relative; overflow: hidden; background: #0f141c; }
+    .info { padding: 18px 22px 22px; display: grid; gap: 10px; }
+    .info-row { display: grid; grid-template-columns: 92px 1fr; gap: 10px; }
+    .info-row b { color: var(--blue-soft); font-size: 12px; padding-top: 2px; }
+    .info-row span { color: #d8e1ed; }
+    code { color: #bcd6ff; background: #202d40; border-radius: 5px; padding: 2px 5px; font-size: .9em; }
+    .request { margin-top: 26px; padding: 24px; border: 1px solid rgba(49,133,255,.45); border-radius: 18px; background: linear-gradient(135deg, rgba(49,133,255,.16), rgba(20,26,35,.9)); }
+    .request h2 { margin: 0 0 10px; }
+    .request p { margin: 7px 0; color: #d8e1ed; }
+    .request strong { color: #fff; }
+    .footnote { margin-top: 24px; color: var(--muted); font-size: 13px; }
+
+    /* Mock 1: coach window */
+    .mock-coach { position: absolute; width: min(340px, 72%); right: 7%; top: 22px; padding: 17px; border: 1px solid #3b4c63; border-radius: 14px; background: #171e28; box-shadow: 0 15px 35px #0008; }
+    .mock-coach .course { color: var(--blue-soft); font-size: 12px; }
+    .mock-coach h3 { margin: 11px 0 4px; font-size: 19px; }
+    .mock-coach p { margin: 0; color: #aeb9c8; font-size: 13px; }
+    .mock-coach .do { display: inline-block; margin-top: 14px; border: 1px solid var(--blue); border-radius: 999px; padding: 4px 12px; color: var(--blue-soft); font-weight: 700; }
+
+    /* Mock 2: target halo */
+    .toolbar { position: absolute; left: 8%; top: 54px; display: flex; gap: 18px; align-items: center; }
+    .tool { width: 70px; height: 70px; display: grid; place-items: center; border: 1px solid #4b596a; border-radius: 11px; background: #161d27; color: #b9c4d1; font-size: 28px; }
+    .tool.target { border: 3px solid var(--blue); box-shadow: 0 0 0 4px rgba(49,133,255,.23), 0 0 24px rgba(49,133,255,.42); }
+    .mock-coach-side { position: absolute; left: 62%; top: 68px; color: var(--blue-soft); font-size: 13px; }
+
+    /* Mock 3: modifier badge */
+    .canvas { position: absolute; inset: 0; background: linear-gradient(#111823 1px, transparent 1px) 0 0/28px 28px; }
+    .mod-badge { position: absolute; left: 50%; top: 46px; transform: translateX(-50%); border-radius: 999px; padding: 7px 18px; background: #6ea8ff; color: white; box-shadow: 0 10px 28px #0007; font-size: 17px; font-weight: 700; }
+    .mod-badge kbd { margin-right: 8px; border: 2px solid #e9f2ff; border-radius: 7px; padding: 1px 9px; font: 700 16px ui-monospace, monospace; }
+    .action-note { position: absolute; left: 50%; top: 107px; transform: translateX(-50%); color: #eef5ff; font-weight: 800; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000; white-space: nowrap; }
+
+    /* Mock 4: ghost cursor */
+    .ghost-path { position: absolute; left: 18%; right: 19%; top: 90px; height: 2px; background: repeating-linear-gradient(90deg, var(--blue) 0 8px, transparent 8px 14px); transform: rotate(-15deg); opacity: .75; }
+    .ghost { position: absolute; left: 65%; top: 59px; width: 28px; height: 38px; background: #f4f7fb; clip-path: polygon(0 0, 0 100%, 29% 70%, 47% 100%, 61% 93%, 42% 63%, 92% 63%); filter: drop-shadow(2px 3px 2px #000); }
+    .ghost-ring { position: absolute; left: 61%; top: 82px; width: 42px; height: 42px; border: 3px solid var(--blue-soft); border-radius: 50%; box-shadow: 0 0 0 7px rgba(49,133,255,.2); }
+    .ghost-label { position: absolute; left: 10%; bottom: 20px; color: var(--muted); font-size: 12px; }
+
+    /* Mock 5: target-shape guide */
+    .shape-guide { position: absolute; inset: 0; background: #101720; }
+    .shape-guide .source-line { position: absolute; left: 8%; top: 128px; width: 170px; border-top: 4px solid #e7edf5; }
+    .shape-guide .shape-target { position: absolute; right: 12%; top: 42px; width: 220px; height: 108px; border: 3px dashed var(--blue-soft); border-radius: 2px; background: rgba(49,133,255,.1); }
+    .shape-guide .shape-target::after { content: "목표 형상"; position: absolute; inset: 0; display: grid; place-items: center; color: #eaf3ff; font-weight: 800; text-shadow: 2px 2px 0 #000; }
+    .shape-guide .shape-arrow { position: absolute; left: 31%; top: 94px; width: 34%; border-top: 3px dashed var(--blue-soft); }
+    .shape-guide .shape-arrow::after { content: ""; position: absolute; right: -1px; top: -7px; width: 11px; height: 11px; border-top: 3px solid var(--blue-soft); border-right: 3px solid var(--blue-soft); transform: rotate(45deg); }
+    .shape-guide .shape-note { position: absolute; left: 8%; bottom: 20px; color: var(--muted); font-size: 12px; }
+
+    /* Mock 5: canvas guide */
+    .guide-line { position: absolute; left: 12%; right: 12%; top: 94px; border-top: 3px dashed var(--blue-soft); }
+    .guide-line::before, .guide-line::after { content: ""; position: absolute; top: -8px; width: 13px; height: 13px; border: 3px solid var(--blue-soft); border-radius: 50%; background: #0f141c; }
+    .guide-line::before { left: -2px; } .guide-line::after { right: -2px; }
+    .guide-label { position: absolute; left: 50%; top: 105px; transform: translateX(-50%); color: var(--blue-soft); font-size: 12px; }
+
+    /* Mock 6: completion */
+    .success { position: absolute; left: 50%; top: 63px; transform: translateX(-50%); padding: 13px 24px; border: 1px solid rgba(88,214,141,.65); border-radius: 999px; background: rgba(38,116,72,.25); color: var(--green); font-size: 21px; font-weight: 800; box-shadow: 0 0 28px rgba(88,214,141,.18); }
+    .success-sub { position: absolute; left: 50%; top: 121px; transform: translateX(-50%); color: #b9d8c4; white-space: nowrap; font-size: 12px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } main { width: min(100% - 24px, 620px); padding-top: 32px; } .info-row { grid-template-columns: 84px 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">5E Tutorial / Advanced 234</div>
+    <h1>효과와 용어를<br>한눈에 맞춰보기</h1>
+    <p class="lead">튜토리얼 화면에서 보이는 효과를 “버튼”, “가이드라인”, “안내창”처럼 뭉뚱그리지 않고, 실제 동작과 코드 명칭을 비교하는 확인표입니다.</p>
+    <div class="rule"></div>
+    <div class="legend"><span class="active">사용자에게 설명할 용어</span><span>실제 화면 효과</span><span>현재 코드 대응명</span><span>요청서 문장</span></div>
+
+    <section class="grid" aria-label="튜토리얼 효과 비교표">
+      <article class="card">
+        <header class="card-head"><span class="tag">화면 설명</span><h2>코치창</h2><p>현재 단계의 제목·설명·진행 버튼을 담는 안내창</p></header>
+        <div class="demo"><div class="mock-coach"><div class="course">1 · 역학 그림의 선과 치수선 · 바닥과 수평면</div><h3>직선 도구를 눌러 주세요</h3><p>직선 도구는 두 점을 차례로 클릭해 만듭니다.</p><span class="do">직접 해 보세요</span></div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>코치창</strong> / 단계 안내창</span></div><div class="info-row"><b>실제 동작</b><span>현재 단계의 설명과 [이전]·[다음]·[그만]을 표시</span></div><div class="info-row"><b>코드</b><span><code>tut-coach</code></span></div><div class="info-row"><b>요청 문장</b><span>“단계 안내는 코치창에 표시한다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">첨부 이미지 1</span><h2>대상 강조선</h2><p>클릭해야 하는 실제 UI 요소 주위의 파란 하이라이트</p></header>
+        <div class="demo"><div class="toolbar"><div class="tool target">╱</div><div class="tool">∿</div><div class="tool">□</div></div><div class="mock-coach-side">← 여기 클릭</div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>대상 강조선</strong> / 클릭 대상 하이라이트</span></div><div class="info-row"><b>실제 동작</b><span><code>target</code> 요소를 파란 테두리로 감쌈</span></div><div class="info-row"><b>코드</b><span><code>tut-halo</code></span></div><div class="info-row"><b>요청 문장</b><span>“클릭 대상에는 파란 대상 강조선을 표시한다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">첨부 이미지 2</span><h2>보조키 안내 배지</h2><p>Ctrl·Shift처럼 누르고 있어야 하는 조건을 알려주는 표시</p></header>
+        <div class="demo"><div class="canvas"></div><div class="mod-badge"><kbd>Ctrl</kbd>누른 채</div><div class="action-note">Ctrl 누른 채 → 수평</div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>보조키 안내 배지</strong> / 조작 조건 배지</span></div><div class="info-row"><b>실제 동작</b><span>Ctrl·Shift 등의 입력 조건을 파란 캡슐로 표시</span></div><div class="info-row"><b>코드</b><span><code>tut-modkey</code> / <code>demo.mod</code></span></div><div class="info-row"><b>요청 문장</b><span>“수평선을 그릴 때 Ctrl 보조키 안내 배지를 표시한다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">동작 시연</span><h2>유령 커서</h2><p>사용자가 해야 할 클릭·드래그 위치와 순서를 반복 재생</p></header>
+        <div class="demo"><div class="ghost-path"></div><div class="ghost-ring"></div><div class="ghost"></div><div class="ghost-label">시작점 → 끝점으로 드래그</div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>유령 커서</strong> / 마우스 동작 시연</span></div><div class="info-row"><b>실제 동작</b><span>클릭 위치에서 눌림을 보여주거나 드래그 경로를 이동</span></div><div class="info-row"><b>코드</b><span><code>tut-ghost</code> / <code>demo</code></span></div><div class="info-row"><b>요청 문장</b><span>“사용자 동작을 유령 커서로 한 번 시연한다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">형상 시연</span><h2>목표 형상 가이드</h2><p>선 경로뿐 아니라 최종적으로 만들어야 할 오브젝트 실루엣까지 표시</p></header>
+        <div class="demo"><div class="shape-guide"><div class="source-line"></div><div class="shape-arrow"></div><div class="shape-target"></div><div class="shape-note">선 경로 → 결과 오브젝트 실루엣</div></div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>목표 형상 가이드</strong> / 오브젝트 실루엣 가이드</span></div><div class="info-row"><b>실제 동작</b><span>그리는 경로와 함께 결과물의 크기·비율·범위를 반투명 실루엣으로 표시</span></div><div class="info-row"><b>코드</b><span>신규 개념: <code>shapeGuide</code> 또는 <code>guide.shape</code></span></div><div class="info-row"><b>요청 문장</b><span>“선 경로와 목표 오브젝트 실루엣을 함께 보여준다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">캔버스 작업 위치</span><h2>작업 위치 가이드선</h2><p>캔버스에서 어디를 클릭·드래그할지 보여주는 점선</p></header>
+        <div class="demo"><div class="canvas"></div><div class="guide-line"></div><div class="guide-label">두 점을 차례로 클릭</div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>작업 위치 가이드선</strong> / 캔버스 안내선</span></div><div class="info-row"><b>실제 동작</b><span>캔버스 위 작업 위치·경로를 파란 점선으로 표시</span></div><div class="info-row"><b>코드</b><span><code>tut-guide</code> / <code>guide</code></span></div><div class="info-row"><b>요청 문장</b><span>“캔버스 작업 위치에는 파란 점선 가이드선을 표시한다.”</span></div></div>
+      </article>
+
+      <article class="card">
+        <header class="card-head"><span class="tag">완료 피드백</span><h2>완료 피드백</h2><p>사용자의 실제 동작이 올바르게 끝났음을 알려주는 표시</p></header>
+        <div class="demo"><div class="success">✓ 됐습니다</div><div class="success-sub">잠시 후 다음 단계로 이동합니다</div></div>
+        <div class="info"><div class="info-row"><b>권장 용어</b><span><strong>완료 피드백</strong> / 단계 통과 표시</span></div><div class="info-row"><b>실제 동작</b><span><code>wait</code> 조건 충족 후 성공 상태를 보여주고 다음 단계로 이동</span></div><div class="info-row"><b>코드</b><span><code>tut-coach-do.is-hit</code> / <code>pass()</code></span></div><div class="info-row"><b>요청 문장</b><span>“실제 동작이 완료되면 완료 피드백을 표시한다.”</span></div></div>
+      </article>
+    </section>
+
+    <section class="request">
+      <h2>요청서에 바로 쓸 수 있는 통합 문장</h2>
+      <p><strong>“클릭해야 하는 UI 요소에는 대상 강조선을 표시하고, Ctrl·Shift 입력이 필요한 단계에는 보조키 안내 배지를 표시한다. 캔버스 작업에는 작업 위치 가이드선과 목표 형상 가이드를 함께 표시하며, 사용자의 실제 동작은 유령 커서로 한 번 시연한다. 단계 설명과 진행 버튼은 코치창에 표시하고, 성공 시 완료 피드백을 보여준다.”</strong></p>
+      <p>이 문서에서 “버튼”은 실제로 클릭하는 UI 컨트롤에만 사용하고, 파란 캡슐형 안내는 “배지”, 파란 점선 경로는 “가이드선”, 결과물의 반투명 윤곽은 “목표 형상 가이드”로 구분한다.</p>
+    </section>
+    <p class="footnote">정적 비교용 모형입니다. 실제 구현의 대응명은 <code>js/tutorial.js</code>와 <code>js/tutorial-courses.js</code>에 정의되어 있습니다.</p>
+  </main>
+</body>
+</html>

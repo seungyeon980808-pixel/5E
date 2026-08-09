@@ -129,6 +129,24 @@ function advancedInspectorRow(label) {
   const row = rows.find((r) => r.querySelector(".insp-field-label")?.textContent.trim() === label);
   return vis(row);
 }
+function advancedInspectorCheckbox(label) {
+  const rows = [...document.querySelectorAll("#panel-right .insp-row")];
+  const row = rows.find((r) => r.textContent.replace(/\s+/g, " ").includes(label));
+  return row ? vis(row.querySelector('input[type="checkbox"]')) : null;
+}
+function advancedFillToggle() {
+  const boxes = [...document.querySelectorAll("#panel-right input[type=checkbox]")];
+  const box = boxes.find((input) => {
+    const row = input.closest(".insp-row");
+    return row && row.textContent.replace(/\s+/g, " ").includes("채우기 없음");
+  });
+  if (!box || !box.isConnected) return null;
+  const r = box.getBoundingClientRect();
+  return r.width > 0 && r.height > 0 ? box : null;
+}
+function advancedDashButton(label) {
+  return vis(`#panel-right button[title="${label}"]`);
+}
 function advancedLineModeButton(mode) {
   const labels = {
     solid: "Solid line",
@@ -161,6 +179,12 @@ function advancedSelectedPolyline() {
 }
 function advancedDashLine() {
   return objects().find((o) => o.type === "line" && (o.dashLength || 0) > 0);
+}
+function advancedDash3Line() {
+  const line = advancedSelectedLine();
+  return !!line && line.type === "line" &&
+    Math.abs((line.dashLength || 0) - 1.0) < 0.01 &&
+    Math.abs((line.dashGap || 0) - 0.3) < 0.01;
 }
 function advancedTextHas(text) {
   return objects().some((o) => o.type === "text" && String(o.text || o.source || "").trim() === text);
@@ -279,6 +303,52 @@ function distToSegment(p, a, b) {
   const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / len2));
   const dx = p.x - (a.x + t * vx), dy = p.y - (a.y + t * vy);
   return Math.hypot(dx, dy);
+}
+
+/* Shift-drag snap check for the open polyline used by advanced-lines. */
+function advancedSlopeSegments() {
+  const slope = objects()
+    .filter((o) => o.type === "polyline" && Array.isArray(o.points) && o.points.length >= 2)
+    .sort((a, b) => b.points.length - a.points.length)[0];
+  if (!slope) return [];
+  return slope.points.slice(0, -1).map((p, i) => [p, slope.points[i + 1]])
+    .filter(([a, b]) => a && b && Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(b.x) && Number.isFinite(b.y));
+}
+
+function advancedRectCorners(rect) {
+  if (!rect || !Number.isFinite(rect.x) || !Number.isFinite(rect.y)) return [];
+  const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+  const rad = (rect.rotation || 0) * Math.PI / 180;
+  const c = Math.cos(rad), s = Math.sin(rad);
+  return [[rect.x, rect.y], [rect.x + rect.w, rect.y], [rect.x + rect.w, rect.y + rect.h], [rect.x, rect.y + rect.h]]
+    .map(([x, y]) => ({ x: cx + (x - cx) * c - (y - cy) * s, y: cy + (x - cx) * s + (y - cy) * c }));
+}
+
+function advancedRectSnappedToSlope(rect) {
+  const corners = advancedRectCorners(rect);
+  const segments = advancedSlopeSegments();
+  if (corners.length !== 4 || !segments.length) return false;
+  const angleGap = (a, b) => {
+    let d = Math.abs(a - b) % Math.PI;
+    return Math.min(d, Math.PI - d);
+  };
+  for (let i = 0; i < corners.length; i += 1) {
+    const a = corners[i], b = corners[(i + 1) % corners.length];
+    const edgeAngle = Math.atan2(b.y - a.y, b.x - a.x);
+    for (const [p, q] of segments) {
+      const slopeAngle = Math.atan2(q.y - p.y, q.x - p.x);
+      if (angleGap(edgeAngle, slopeAngle) > 7 * Math.PI / 180) continue;
+      if (distToSegment(a, p, q) <= 2.5 && distToSegment(b, p, q) <= 2.5) return true;
+    }
+  }
+  return false;
+}
+
+function advancedFrictionRectAtTarget(rect) {
+  if (!rect || !Number.isFinite(rect.x) || !Number.isFinite(rect.y)) return false;
+  // The friction band must land in the marked middle zone, not merely exist.
+  return Math.abs(rect.x - (-2)) <= 2 && Math.abs(rect.y - 6.5) <= 2 &&
+    Math.abs(rect.w - 12) <= 2.5 && Math.abs(rect.h - 3) <= 2;
 }
 
 /* ===== '준비' 챕터 (예전의 '시작 준비' 코스) =====
@@ -3090,7 +3160,7 @@ const ADVANCED_LINES = {
     { chapter: "물체와 라벨", target: () => ["#canvas", advancedInspectorRow("안쪽") || "#panel-right"], title: "물체 자체의 ‘안쪽’ 라벨 기능을 사용해 주세요", text: "별도의 텍스트 도구나 라벨러를 만들지 않습니다. 선택된 사각형의 오른쪽 인스펙터에서 ‘안쪽’ 체크를 켜고, 바로 옆 입력칸에 `m`을 입력한 뒤 Enter를 누릅니다. 이 기능은 물체 안에 라벨을 고정해 줍니다.", guide: () => ({ pts: [[-33, -16], [-24, -8]], close: true, note: "물체", noteDy: -4 }), wait: { until: () => advancedBoxLabelHas("m"), hint: "오른쪽 ‘안쪽’ 라벨을 켜고 m을 입력해 주세요" } },
     { chapter: "마찰구간", target: () => '[data-tool="RECT"]', title: "마찰구간을 표시할 사각형을 만듭니다", text: "수평면 가운데에 얇고 긴 사각형을 그려 마찰구간의 범위를 표시합니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="RECT"]'] }), wait: { click: '[data-tool="RECT"]', hint: "사각형 도구를 눌러 주세요" } },
     { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간을 놓아 주세요", text: "수평면 위에 얇은 사각형을 드래그하세요. 다음 단계에서 속을 회색으로 채웁니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "마찰구간", noteDy: -4 }), demo: () => ({ kind: "drag", from: [-2, 6.5], to: [10, 9.5] }), action: (c) => { c.friction0 = countOf("rect"); }, wait: { until: (c) => countOf("rect") > (c.friction0 || 0), hint: "수평면 가운데에 얇은 사각형을 그려 주세요" } },
-    { chapter: "마찰구간", target: () => ["#canvas", "#panel-right"], title: "마찰구간의 속을 채워 주세요", text: "방금 만든 얇은 사각형이 선택된 상태에서 오른쪽 ‘면’의 채우기를 켜고 회색 계열을 선택합니다. 선택이 풀렸다면 캔버스의 회색 구간을 먼저 클릭해 다시 선택할 수 있습니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "선택된 마찰구간", noteDy: -4 }), wait: { until: () => objects().some((o) => o.type === "rect" && !o.fillNone), hint: "마찰구간 사각형을 선택하고 오른쪽 ‘면’에서 채우기를 켜 주세요" } },
+    { chapter: "마찰구간", target: () => ["#canvas", advancedFillToggle() || "#panel-right"], title: "마찰구간의 속을 채워 주세요", text: "방금 만든 얇은 사각형이 선택된 상태입니다. 오른쪽 인스펙터의 ‘채우기 없음’ 체크를 해제하고 회색 계열을 선택합니다. 실제로 클릭할 체크박스만 파란 대상 강조선으로 표시합니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "선택된 마찰구간", noteDy: -4 }), wait: { until: () => objects().some((o) => o.type === "rect" && !o.fillNone), hint: "오른쪽 인스펙터의 ‘채우기 없음’을 해제해 주세요" } },
     { chapter: "마찰구간", target: () => vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged", title: "마찰구간에 설명을 붙입니다", text: "텍스트 도구로 마찰구간 아래를 클릭하고 `마찰구간`을 입력한 뒤 Ctrl+Enter로 확정하세요.", demo: () => ({ kind: "clicks", at: [vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged"] }), auto: { label: "텍스트 도구 켜기", run: () => setActiveTool("T") }, wait: { until: () => state.get().activeTool === "T", hint: "텍스트 도구를 눌러 주세요" } },
     { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간 텍스트를 입력해 주세요", text: "회색 구간 아래를 클릭하고 `마찰구간`을 입력하세요.", guide: () => ({ pts: [[-2, 13], [10, 17]], close: true, note: "마찰구간", noteDy: -4 }), wait: { until: () => advancedTextHas("마찰구간"), hint: "회색 구간 아래를 클릭해 마찰구간을 입력해 주세요" } },
     { chapter: "화살표", target: () => '[data-tool="L"]', title: "진행 방향을 표시할 직선을 만듭니다", text: "물체 오른쪽에서 아래쪽을 향하는 짧은 선을 만들고, Ctrl로 15° 단위 방향을 맞춰 봅니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
@@ -3112,6 +3182,176 @@ const ADVANCED_LINES = {
 };
 
 /* ===== 심화 2: 도형 편집과 전체 통일 ===== */
+/* ===== 심화234 사용자 코멘트 반영 기준 =====
+ * path는 클릭·드래그 경로, shape는 완성 오브젝트의 실루엣이다.
+ * 기존 단계 순서는 유지하고, 코멘트가 지정한 표시·조작 조건만 명시적으로 보강한다.
+ */
+const ADVANCED_LINES_COMMENTED = (() => {
+  const steps = ADVANCED_LINES.steps;
+  const silhouette = (pts, note) => ({ pts, close: true, note, noteDy: -4 });
+  const inspector = (label) => advancedInspectorRow(label) || "#panel-right";
+  const repeatTarget = (selector, count) => Array.from({ length: count }, () => selector);
+
+  steps[3].target = () => advancedDashButton("점선3") || inspector("선 종류");
+  steps[3].coachSide = "left";
+  steps[3].coachAvoid = () => "#panel-right";
+  steps[3].wait = { until: () => advancedDash3Line(), hint: "파란 강조선이 있는 점선3 버튼을 클릭해 주세요" };
+
+  steps[5].guide = () => ({
+    // 닫힌 실루엣이 아닌 열린 선 경로만 표시한다. 그래야 사다리꼴이
+    // 아니라 사용자가 그대로 따라 찍을 수 있는 경사면 윤곽으로 보인다.
+    path: [{
+      pts: [[-38, -14], [-24, 0], [-10, 0], [4, -9], [20, -9], [34, 6], [38, 6]],
+      note: "경사면 선 경로",
+      noteDy: -5,
+    }],
+  });
+  steps[5].demo = () => ({
+    kind: "clicks",
+    pts: [[-38, -14], [-24, 0], [-10, 0], [4, -9], [20, -9], [34, 6], [38, 6]],
+    mod: "Ctrl 누른 채",
+  });
+  steps[5].text = "바닥 수평면과 붙이지 않고, 왼쪽 높은 지점에서 내려온 뒤 낮은 수평 구간 → 다시 올라간 수평 구간 → 오른쪽으로 내려오는 수평 구간을 하나의 열린 선으로 그리세요. 각 번호 지점을 순서대로 클릭하고, 수평 구간에서는 Ctrl을 눌러 맞춘 뒤 마지막 점에서 Enter로 확정합니다.";
+  steps[5].demo = () => ({ kind: "clicks", pts: [[-38, -14], [-24, 0], [-10, 0], [4, -9], [20, -9], [34, 6], [38, 6]], mod: "수평 구간에서만 Ctrl 누른 채" });
+  steps[5].text = "바닥 수평면과 같은 좌우 범위 안에서 열린 경사면을 그리세요. 경사 구간은 자유롭게 연결하고, 수평 구간을 그릴 때만 Ctrl을 누르세요. 번호 지점을 순서대로 클릭한 뒤 마지막 점에서 Enter로 확정합니다.";
+  steps[5].action = (c) => { c.slope0 = countOf("polyline"); c.slopeConfirmedByEnter = false; };
+  steps[5].wait = {
+    key: "Enter",
+    keyFlag: "slopeConfirmedByEnter",
+    until: (c) => countOf("polyline") > (c.slope0 || 0) && !!c.slopeConfirmedByEnter,
+    hint: "번호가 표시된 7개 지점을 순서대로 찍은 뒤 Enter로 경사면을 확정해 주세요",
+  };
+
+  steps[5].wait.hint = "경사 구간은 자유롭게 그리고 수평 구간에서만 Ctrl을 누른 뒤 7개 지점을 Enter로 확정해 주세요";
+
+  steps[8].guide = () => ({
+    path: [{ pts: [[-33, -16], [-24, -7]], note: "드래그 경로", noteDy: -4 }],
+    shape: silhouette([[-33, -16], [-24, -16], [-24, -7], [-33, -7]], "정사각형 물체"),
+  });
+  steps[8].demo = () => ({ kind: "drag", from: [-33, -16], to: [-24, -7], mod: "Shift 누른 채" });
+
+  steps[9].target = () => advancedInspectorField("안쪽") || inspector("안쪽");
+  steps[9].coachSide = "left";
+  steps[9].coachAvoid = () => "#panel-right";
+  steps[9].demo = () => ({ kind: "clicks", at: [advancedInspectorField("안쪽") || inspector("안쪽")], mod: "m 입력" });
+  steps[9].text = "코치창이 인스펙터를 가리지 않도록 오른쪽 인스펙터만 강조합니다. ‘안쪽’ 라벨을 켜고 m 입력란에 m을 입력한 뒤 Enter로 확정하세요. 라벨은 스냅으로 경사면의 지정 위치에 붙입니다.";
+
+  steps[11].guide = () => ({
+    path: [{ pts: [[-2, 6.5], [10, 9.5]], note: "배치 경로", noteDy: -4 }],
+    shape: silhouette([[-2, 6.5], [10, 6.5], [10, 9.5], [-2, 9.5]], "수평 마찰구간"),
+  });
+  steps[12].target = () => ["#canvas", advancedFillToggle() || advancedInspectorCheckbox("채우기 없음") || inspector("채우기")];
+  steps[12].coachSide = "left";
+  steps[12].coachAvoid = () => "#panel-right";
+  steps[12].text = "마찰구간의 선과 면 중 실제로 클릭해야 하는 ‘채우기’ 영역만 파란 대상 강조선으로 표시합니다. 선택 후 정해진 위치에 스냅되도록 안내합니다.";
+
+  steps[17].target = () => [advancedLineModeButton("arrow"), advancedInspectorField("선 굵기")];
+  steps[17].coachSide = "left";
+  steps[17].coachAvoid = () => "#panel-right";
+  steps[17].action = (c) => { c.arrowStroke0 = advancedSelectedLine()?.strokeWidth || 0.1; };
+  steps[17].text = "오른쪽 인스펙터에서 한쪽 화살표 버튼을 눌러 진행 방향을 표시하고, 선 굵기도 한 단계 올리세요. 두 컨트롤 모두 파란 대상 강조선으로 표시됩니다.";
+  steps[17].wait = { until: (c) => {
+    const line = advancedSelectedLine();
+    return !!line && advancedLineHas("arrow") && advancedLineVariant("right") &&
+      (line.strokeWidth || 0) >= (c.arrowStroke0 || 0) + 0.09;
+  }, hint: "한쪽 화살표를 누르고 선 굵기를 한 단계 올려 주세요" };
+
+  steps[19].guide = () => ({
+    path: [{ pts: [[-24, -8], [-24, 18]], note: "수직 거리", noteDy: -4 }],
+    shape: silhouette([[-25, -8], [-23, -8], [-23, 18], [-25, 18]], "물체 아래 → 수평면"),
+  });
+  steps[19].demo = () => ({ kind: "clicks", pts: [[-24, -8], [-24, 18]], mod: "Ctrl 누른 채" });
+
+  steps[20].target = () => advancedLineModeButton("midInward") || inspector("화살표 종류");
+  steps[20].coachSide = "left";
+  steps[20].coachAvoid = () => "#panel-right";
+  steps[20].demo = () => ({ kind: "clicks", at: repeatTarget(advancedLineModeButton("midInward") || inspector("화살표 종류"), 3) });
+  steps[20].text = "양쪽 화살표 종류를 총 3번 눌러 원하는 형태를 선택합니다. 각 클릭 위치를 유령 커서와 번호 1·2·3으로 반복 시연합니다.";
+
+  steps[26].guide = () => ({
+    path: [{ pts: [[-2, 11], [10, 11]], note: "마찰구간 전체 길이", noteDy: -4 }],
+    shape: silhouette([[-2, 10.2], [10, 10.2], [10, 11.8], [-2, 11.8]], "l"),
+  });
+  steps[26].demo = () => ({ kind: "clicks", pts: [[-2, 11], [10, 11]], mod: "Ctrl 누른 채" });
+
+  steps[27].target = () => advancedLineModeButton("lengthArrow") || inspector("길이 표시");
+  steps[27].coachSide = "left";
+  steps[27].coachAvoid = () => "#panel-right";
+  steps[27].demo = () => ({ kind: "clicks", at: repeatTarget(advancedLineModeButton("lengthArrow") || inspector("길이 표시"), 4) });
+  steps[27].text = "길이 표시 버튼을 총 4번 누르면 양쪽 끝 막대가 있는 형태가 됩니다. 유령 커서와 클릭 번호 1·2·3·4로 조작 횟수를 보여 주고, 인스펙터의 실제 버튼에만 대상 강조선을 표시합니다.";
+
+  /* Draw the friction band away from its final zone first; the following
+   * step now makes the Shift-snap placement explicit before filling it. */
+  steps[11].guide = () => ({
+    path: [{ pts: [[-18, 2], [-6, 5]], note: "임시 마찰구간", noteDy: -4 }],
+    shape: silhouette([[-18, 2], [-6, 2], [-6, 5], [-18, 5]], "먼저 임시 위치에 그리기"),
+  });
+  steps[11].demo = () => ({ kind: "drag", from: [-18, 2], to: [-6, 5], mod: "Shift 누른 채" });
+  steps[11].text = "마찰구간을 먼저 임시 위치에 그립니다. 다음 단계에서 이 사각형을 지정된 마찰 영역으로 이동해 스냅합니다.";
+
+  /* Missing interaction between object creation and its physical label:
+   * grab the object and attach it to the slope with Shift snap. */
+  steps.splice(9, 0, {
+    chapter: "물체 배치",
+    target: () => "#canvas",
+    coachSide: "above",
+    title: "물체를 경사면에 스냅해 붙여 주세요",
+    text: "사각형 물체를 마우스로 잡고 경사면 선분 위로 끌어가세요. Shift 키를 누른 채 놓으면 물체의 면이 경사면에 맞춰 회전·정렬되며 붙습니다. 시작점 1에서 물체를 잡고, 끝점 2의 목표 형상에 맞춰 주세요.",
+    guide: () => {
+      const r = objects().find((o) => o.type === "rect");
+      const from = r ? [r.x + r.w / 2, r.y + r.h / 2] : [-28.5, -11.5];
+      const to = [-28.5, -5.5];
+      return {
+        path: [{ pts: [from, to], note: "Shift 스냅 이동 경로", noteDy: -5 }],
+        shape: { pts: [[-35, -9], [-29, -3], [-22.6, -9.4], [-28.6, -15.4]], note: "경사면에 붙는 물체", noteDy: -3 },
+      };
+    },
+    demo: () => ({ kind: "drag", from: [-28.5, -11.5], to: [-28.5, -5.5], mod: "Shift 누른 채" }),
+    action: (c) => { c.snapRectId = objects().find((o) => o.type === "rect")?.id || null; },
+    wait: {
+      until: (c) => {
+        const r = objects().find((o) => o.type === "rect" && (!c.snapRectId || o.id === c.snapRectId));
+        return !!r && advancedRectSnappedToSlope(r);
+      },
+      hint: "사각형을 잡고 Shift를 누른 채 경사면 선분 위로 끌어 스냅해 주세요.",
+    },
+  });
+
+  // The friction rectangle is deliberately placed after the object-snap step,
+  // then must be moved into this marked zone before the fill step is unlocked.
+  steps.splice(13, 0, {
+    chapter: "마찰구간 배치",
+    target: () => "#canvas",
+    coachSide: "above",
+    title: "마찰구간을 지정 영역에 스냅해 주세요",
+    text: "방금 임시 위치에 만든 마찰구간을 잡고 파란 목표 영역으로 끌어가세요. Shift를 누른 채 놓아 지정된 위치에 스냅되면 다음 단계로 넘어갑니다.",
+    guide: () => {
+      const rects = objects().filter((o) => o.type === "rect");
+      const r = rects[rects.length - 1];
+      const from = r ? [r.x + r.w / 2, r.y + r.h / 2] : [-12, 3.5];
+      const to = [4, 8];
+      return {
+        path: [{ pts: [from, to], note: "Shift 스냅 이동", noteDy: -5 }],
+        shape: { pts: [[-2, 6.5], [10, 6.5], [10, 9.5], [-2, 9.5]], note: "마찰구간 목표 영역", noteDy: -4 },
+      };
+    },
+    demo: () => ({ kind: "drag", from: [-12, 3.5], to: [4, 8], mod: "Shift 누른 채" }),
+    action: (c) => {
+      const rects = objects().filter((o) => o.type === "rect");
+      c.frictionRectId = rects[rects.length - 1]?.id || null;
+    },
+    wait: {
+      until: (c) => {
+        const r = objects().find((o) => o.type === "rect" && o.id === c.frictionRectId);
+        return advancedFrictionRectAtTarget(r);
+      },
+      hint: "마찰구간을 파란 목표 영역으로 Shift 드래그해 스냅해 주세요.",
+    },
+  });
+
+  return ADVANCED_LINES;
+})();
+
 const ADVANCED_SHAPES = {
   id: "advanced-shapes", title: "2 · 도형 편집과 전체 통일",
   desc: "도형을 자르고 채운 뒤 여러 객체의 속성을 맞추기", minutes: 9,
@@ -3203,7 +3443,7 @@ export const COURSES = [
   // 기본 트랙 — 모두가 거치는 순서
   // ('시작 준비'는 코스에서 빠지고 BASICS 의 '준비' 챕터가 되었다 — READY_STEPS)
   BASICS, INCLINE_FIGURE, EXAM_SEARCH,
-  ADVANCED_LINES,
+  ADVANCED_LINES_COMMENTED,
   ADVANCED_SHAPES, ADVANCED_ASSETS, ADVANCED_FILES, ADVANCED_GRAPH, ADVANCED_GRAPH_ANNOT,
   // 심화 트랙 — 도구 확장
   TRIM_EXAM, ALIGN_SPACE, TERRAIN_COURSE,

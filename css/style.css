@@ -2539,6 +2539,7 @@ textarea.unified-text-input {
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-panel));
   box-shadow: 0 4px 14px rgba(0,0,0,.16);
 }
+.tutorial-beta-tag { margin-left: 6px; vertical-align: middle; }
 
 /* 자르기/지연 자르기의 입력 모드는 키 충돌 없이 탭으로 선택한다. */
 #cut-mode-tabs {

@@ -174,6 +174,7 @@ function buildLayer() {
     ghostRing: root.querySelector(".tut-ghost-ring"),
     ghostMod: root.querySelector(".tut-ghost-mod"),
     halo: root.querySelector(".tut-halo"),
+    halos: [root.querySelector(".tut-halo")],
     coach: root.querySelector(".tut-coach"),
     course: root.querySelector(".tut-coach-course"),
     count: root.querySelector(".tut-coach-count"),
@@ -223,6 +224,38 @@ function unionRect(nodes) {
   };
 }
 
+function paddedRect(node) {
+  if (!node || !node.isConnected) return null;
+  const r = node.getBoundingClientRect();
+  if (r.width <= 0 || r.height <= 0) return null;
+  return {
+    x: Math.max(0, r.left - HOLE_PAD),
+    y: Math.max(0, r.top - HOLE_PAD),
+    w: Math.min(window.innerWidth, r.right + HOLE_PAD) - Math.max(0, r.left - HOLE_PAD),
+    h: Math.min(window.innerHeight, r.bottom + HOLE_PAD) - Math.max(0, r.top - HOLE_PAD),
+  };
+}
+
+function paintHalos(ui, nodes) {
+  const rects = (nodes || []).map(paddedRect).filter(Boolean);
+  while (ui.halos.length < rects.length) {
+    const halo = document.createElement("div");
+    halo.className = "tut-halo";
+    halo.hidden = true;
+    ui.root.appendChild(halo);
+    ui.halos.push(halo);
+  }
+  ui.halos.forEach((halo, index) => {
+    const rect = rects[index];
+    halo.hidden = !rect;
+    if (!rect) return;
+    Object.assign(halo.style, {
+      left: rect.x + "px", top: rect.y + "px",
+      width: rect.w + "px", height: rect.h + "px",
+    });
+  });
+}
+
 /* 구멍 자리를 투명 방패로 덮는다 — step.lock 인 단계용.
  *
  * 왜 필요한가: 구멍은 진짜로 비어 있어서 그 안의 버튼이 눌린다. 그런데 '읽기만 하는'
@@ -240,14 +273,14 @@ function paintShield(ui, hole) {
 }
 
 /* ===== 흐림 4장 + 테두리 배치 ===== */
-function paintHole(ui, hole) {
+function paintHole(ui, hole, nodes = []) {
   const vw = window.innerWidth, vh = window.innerHeight;
   const { top, bottom, left, right } = ui.dims;
 
   // 짚을 대상을 끝내 못 찾은 단계는 화면을 아예 안 덮는다(먹통처럼 보이지 않게).
   if (_run && _run.noTarget) {
     for (const d of [top, bottom, left, right]) Object.assign(d.style, { width: "0px", height: "0px" });
-    ui.halo.hidden = true;
+    paintHalos(ui, []);
     return;
   }
 
@@ -255,7 +288,7 @@ function paintHole(ui, hole) {
     // 짚을 곳이 없는 단계(환영·마무리) — 화면 전체를 한 장으로 덮는다.
     Object.assign(top.style, { left: "0px", top: "0px", width: vw + "px", height: vh + "px" });
     for (const d of [bottom, left, right]) Object.assign(d.style, { width: "0px", height: "0px" });
-    ui.halo.hidden = true;
+    paintHalos(ui, []);
     return;
   }
   Object.assign(top.style,    { left: "0px", top: "0px", width: vw + "px", height: hole.y + "px" });
@@ -263,15 +296,48 @@ function paintHole(ui, hole) {
   Object.assign(left.style,   { left: "0px", top: hole.y + "px", width: hole.x + "px", height: hole.h + "px" });
   Object.assign(right.style,  { left: (hole.x + hole.w) + "px", top: hole.y + "px", width: Math.max(0, vw - hole.x - hole.w) + "px", height: hole.h + "px" });
 
-  ui.halo.hidden = false;
-  Object.assign(ui.halo.style, {
-    left: hole.x + "px", top: hole.y + "px",
-    width: hole.w + "px", height: hole.h + "px",
-  });
+  paintHalos(ui, nodes);
 }
 
 /* ===== 설명 창 자리잡기 — 대상을 가리지 않는 쪽을 고른다 ===== */
-function placeCoach(ui, hole) {
+function resolveCoachAvoid(step, nodes) {
+  const picked = [];
+  if (step && typeof step.coachAvoid === "function") {
+    try {
+      const value = step.coachAvoid();
+      const list = Array.isArray(value) ? value : [value];
+      list.forEach((item) => {
+        const node = typeof item === "string" ? document.querySelector(item) : item;
+        if (node && node.isConnected) picked.push(node);
+      });
+    } catch (_) { /* fall through to automatic inspector protection */ }
+  }
+  // Any target inside the right inspector automatically protects the whole panel.
+  if (!picked.length && (nodes || []).some((node) => node.closest && node.closest("#panel-right"))) {
+    const panel = document.querySelector("#panel-right");
+    if (panel) picked.push(panel);
+  }
+  return unionRect(picked);
+}
+
+function prepareCoachForAvoid(ui, avoid) {
+  const coach = ui.coach;
+  coach.classList.toggle("is-panel-safe", !!avoid);
+  coach.style.width = "";
+  if (!avoid) return;
+
+  // The inspector is generally a full-height right panel. Fit the coach into the
+  // remaining side before measuring/placing it, so it cannot fall below and cover
+  // the controls on narrow screens or at a larger UI zoom.
+  const available = avoid.x - EDGE - COACH_GAP;
+  const rendered = coach.getBoundingClientRect().width;
+  if (available > 240 && rendered > available) {
+    const base = parseFloat(getComputedStyle(coach).width) || rendered;
+    coach.style.width = Math.max(240, Math.floor(base * available / rendered)) + "px";
+  }
+}
+
+function placeCoach(ui, hole, avoid = null) {
   const coach = ui.coach;
   const vw = window.innerWidth, vh = window.innerHeight;
   const cw = coach.offsetWidth, ch = coach.offsetHeight;
@@ -284,6 +350,19 @@ function placeCoach(ui, hole) {
   }
 
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  if (avoid) {
+    const leftRoom = avoid.x - COACH_GAP - EDGE >= cw;
+    const rightRoom = vw - (avoid.x + avoid.w) - COACH_GAP - EDGE >= cw;
+    if (leftRoom || rightRoom) {
+      const useLeft = leftRoom || !rightRoom;
+      coach.dataset.side = useLeft ? "left" : "right";
+      const x = useLeft ? avoid.x - COACH_GAP - cw : avoid.x + avoid.w + COACH_GAP;
+      const y = clamp(hole ? hole.y : (vh - ch) / 2, EDGE, vh - ch - EDGE);
+      coach.style.left = Math.round(x) + "px";
+      coach.style.top = Math.round(y) + "px";
+      return;
+    }
+  }
   const fits = {
     right:  vw - (hole.x + hole.w) - COACH_GAP - EDGE >= cw,
     left:   hole.x - COACH_GAP - EDGE >= cw,
@@ -342,6 +421,65 @@ function placeCoach(ui, hole) {
  * ⚠ 안내선은 state.objects 에 넣지 않는다. 넣으면 사용자 작업물·실행취소·내보내기에
  *   섞여 들어간다. 튜토리얼 레이어 위에만 그리므로 저장·내보낸 그림에는 남지 않는다.
  */
+// 최종 렌더링 결과를 기준으로 코치창과 실제 인스펙터의 겹침을 보정한다.
+function enforceCoachPanelSafety(ui) {
+  const coach = ui && ui.coach;
+  const panel = document.querySelector("#panel-right");
+  if (!coach || !panel) return;
+  const pr = panel.getBoundingClientRect();
+  if (pr.width <= 0 || pr.height <= 0) return;
+  const cr = coach.getBoundingClientRect();
+  if (!(cr.right > pr.left && cr.left < pr.right && cr.bottom > pr.top && cr.top < pr.bottom)) return;
+
+  const gap = COACH_GAP;
+  const edge = EDGE;
+  const leftWidth = pr.left - edge - gap;
+  const rightWidth = window.innerWidth - pr.right - edge - gap;
+  if (leftWidth >= 200) {
+    if (cr.width > leftWidth) coach.style.width = Math.floor(leftWidth) + "px";
+    coach.dataset.side = "left";
+    coach.style.left = Math.round(pr.left - gap - coach.offsetWidth) + "px";
+  } else if (rightWidth >= 200) {
+    if (cr.width > rightWidth) coach.style.width = Math.floor(rightWidth) + "px";
+    coach.dataset.side = "right";
+    coach.style.left = Math.round(pr.right + gap) + "px";
+  } else {
+    coach.style.width = Math.max(180, Math.floor(Math.max(180, leftWidth))) + "px";
+    coach.dataset.side = "left";
+    coach.style.left = Math.max(edge, Math.round(pr.left - gap - coach.offsetWidth)) + "px";
+  }
+  const next = coach.getBoundingClientRect();
+  const top = Math.max(edge, Math.min(next.top, window.innerHeight - next.height - edge));
+  coach.style.top = Math.round(top) + "px";
+}
+
+// 캔버스만 조작하는 단계는 안내창이 작업면을 덮지 않도록 오른쪽 패널에
+// 작게 도킹한다. 반대로 인스펙터도 조작 대상인 단계는 이 함수를 건너뛰고
+// enforceCoachPanelSafety가 인스펙터를 비워 둔다.
+function dockCanvasCoachInPanel(ui, nodes) {
+  const coach = ui && ui.coach;
+  const canvas = document.getElementById("canvas");
+  const panel = document.querySelector("#panel-right");
+  if (!coach || !canvas || !panel) return;
+
+  const targets = nodes || [];
+  const usesCanvas = targets.some((node) => node === canvas || (node.contains && node.contains(canvas)));
+  const usesInspector = targets.some((node) => node.closest && node.closest("#panel-right"));
+  coach.classList.remove("is-canvas-safe");
+  if (!usesCanvas || usesInspector) return;
+
+  const pr = panel.getBoundingClientRect();
+  if (pr.width < 200 || pr.height < 180) return;
+  const edge = 8;
+  coach.classList.add("is-canvas-safe");
+  coach.dataset.side = "right";
+  coach.style.width = Math.floor(pr.width - edge * 2) + "px";
+  coach.style.left = Math.round(pr.left + edge) + "px";
+  const cr = coach.getBoundingClientRect();
+  const top = Math.max(edge, Math.min(pr.top + edge, window.innerHeight - cr.height - edge));
+  coach.style.top = Math.round(top) + "px";
+}
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 function canvasCTM() {
@@ -369,7 +507,9 @@ function paintGuide(step) {
     // ctx 를 넘긴다 — "몇 번째 자리를 겨냥 중인가"처럼 진행에 따라 달라지는 안내가 있다.
     try { spec = step.guide(_run ? _run.ctx : {}); } catch (_) { spec = null; }
   }
-  const shapes = !spec ? [] : (Array.isArray(spec) ? spec : [spec]);
+  // A guide can describe two different things at once:
+  // path = the route/click order; shape = the final object's silhouette.
+  const shapes = !spec ? [] : guideShapes(spec);
   const c = shapes.length ? canvasCTM() : null;
   if (!c) { g.style.display = "none"; return; }
   g.style.display = "block";
@@ -381,17 +521,47 @@ function paintGuide(step) {
     return [r.x, r.y];
   };
 
+  const guideDemo = demoSpec(step);
+  const ctrlOnly = guideDemo && typeof guideDemo.mod === "string" && guideDemo.mod.includes("수평");
+  const guideClickPoints = guideDemo && guideDemo.kind === "clicks" && Array.isArray(guideDemo.pts)
+    ? guideDemo.pts.map((p) => toScreen(p[0], p[1])) : [];
+
   for (const sh of shapes) {
     if (!sh || !Array.isArray(sh.pts) || sh.pts.length < 2) continue;
     const screen = sh.pts.map(([x, y]) => toScreen(x, y));
     const node = document.createElementNS(SVG_NS, sh.close ? "polygon" : "polyline");
     node.setAttribute("points", screen.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" "));
-    node.setAttribute("class", "tut-guide-shape" + (sh.close ? " is-closed" : ""));
+    const role = sh.role || (sh.close ? "shape" : "path");
+    node.setAttribute("class", "tut-guide-shape" +
+      (sh.close ? " is-closed" : "") +
+      (role === "shape" ? " is-silhouette" : " is-path"));
     g.appendChild(node);
 
+    if (ctrlOnly && !sh.close && screen.length > 1) {
+      for (let i = 0; i < screen.length - 1; i += 1) {
+        const a = screen[i], b = screen[i + 1];
+        if (Math.abs(b[1] - a[1]) > Math.max(3, Math.abs(b[0] - a[0]) * 0.08)) continue;
+        const zone = document.createElementNS(SVG_NS, "line");
+        zone.setAttribute("class", "tut-guide-shape is-ctrl-zone");
+        zone.setAttribute("x1", a[0].toFixed(1)); zone.setAttribute("y1", a[1].toFixed(1));
+        zone.setAttribute("x2", b[0].toFixed(1)); zone.setAttribute("y2", b[1].toFixed(1));
+        g.appendChild(zone);
+        const label = document.createElementNS(SVG_NS, "text");
+        label.setAttribute("class", "tut-guide-note is-ctrl-note");
+        label.setAttribute("x", ((a[0] + b[0]) / 2).toFixed(1));
+        label.setAttribute("y", (Math.min(a[1], b[1]) - 8).toFixed(1));
+        label.setAttribute("text-anchor", "middle");
+        label.textContent = "Ctrl: 수평 구간";
+        g.appendChild(label);
+      }
+    }
+
     if (sh.note) {
-      const cx = screen.reduce((a, p) => a + p[0], 0) / screen.length;
-      const cy = screen.reduce((a, p) => a + p[1], 0) / screen.length;
+      let cx = screen.reduce((a, p) => a + p[0], 0) / screen.length;
+      let cy = screen.reduce((a, p) => a + p[1], 0) / screen.length;
+      // Keep explanatory labels out of numbered click targets and the cursor.
+      const closePoint = guideClickPoints.find((p) => Math.hypot(p[0] - cx, p[1] - cy) < 46);
+      if (closePoint) cy -= 28;
       const t = document.createElementNS(SVG_NS, "text");
       t.setAttribute("class", "tut-guide-note");
       t.setAttribute("x", cx.toFixed(1));
@@ -405,12 +575,17 @@ function paintGuide(step) {
   // 안내선(①② 번호·경로 점선)은 캔버스 좌표 시연에만 그린다. 화면 UI 시연(at/onEl)은
   // 이미 테두리가 그 버튼을 짚고 있어서 캔버스에 점을 찍으면 엉뚱한 자리에 나온다.
   const dmRaw = demoSpec(step);
-  const dm = dmRaw && !dmRaw.at && !dmRaw.onEl ? dmRaw : null;
+  // at은 UI 셀렉터일 수도 있지만, 캔버스 클릭 좌표 배열일 수도 있다.
+  // 좌표 배열은 클릭 순서를 표시하는 데 사용해야 하므로 제외하지 않는다.
+  const dm = dmRaw && !dmRaw.onEl ? dmRaw : null;
 
   // 클릭 시연은 '몇 번째로 누르는 곳인지'를 자리마다 번호로 박아 둔다.
   // 커서가 깜빡이는 사이에도 순서가 남아 있어야 두 점 찍기가 명확해진다.
-  if (dm && dm.kind === "clicks" && Array.isArray(dm.pts)) {
-    dm.pts.forEach((p, i) => {
+  const clickPts = dm && dm.kind === "clicks"
+    ? (Array.isArray(dm.pts) ? dm.pts : (Array.isArray(dm.at) ? dm.at.filter(Array.isArray) : null))
+    : null;
+  if (clickPts) {
+    clickPts.forEach((p, i) => {
       const [x, y] = toScreen(p[0], p[1]);
       const ring = document.createElementNS(SVG_NS, "circle");
       ring.setAttribute("class", "tut-click-dot");
@@ -437,7 +612,39 @@ function paintGuide(step) {
     path.setAttribute("x1", a[0].toFixed(1)); path.setAttribute("y1", a[1].toFixed(1));
     path.setAttribute("x2", b[0].toFixed(1)); path.setAttribute("y2", b[1].toFixed(1));
     g.appendChild(path);
+
+    // A route alone does not make the grab and drop targets unambiguous.
+    [a, b].forEach((p, i) => {
+      const ring = document.createElementNS(SVG_NS, "circle");
+      ring.setAttribute("class", "tut-click-dot");
+      ring.setAttribute("cx", p[0].toFixed(1));
+      ring.setAttribute("cy", p[1].toFixed(1));
+      ring.setAttribute("r", "11");
+      g.appendChild(ring);
+      const num = document.createElementNS(SVG_NS, "text");
+      num.setAttribute("class", "tut-click-num");
+      num.setAttribute("x", p[0].toFixed(1));
+      num.setAttribute("y", (p[1] + 4).toFixed(1));
+      num.setAttribute("text-anchor", "middle");
+      num.textContent = String(i + 1);
+      g.appendChild(num);
+    });
   }
+}
+
+function guideShapes(spec) {
+  if (!spec) return [];
+  if (Array.isArray(spec)) return spec;
+  if (Array.isArray(spec.path) || spec.shape) {
+    const path = Array.isArray(spec.path)
+      ? spec.path.map((item) => Array.isArray(item) ? { pts: item, close: false, role: "path" } : { ...item, role: "path" })
+      : [];
+    const shape = spec.shape
+      ? (Array.isArray(spec.shape) ? spec.shape : [spec.shape]).map((item) => ({ ...item, role: "shape" }))
+      : [];
+    return [...path, ...shape];
+  }
+  return [spec];
 }
 
 /* ===== 가상 커서 시연 =====
@@ -599,6 +806,7 @@ function drawDemoFrame() {
   ui.ghost.hidden = false;
   ui.ghost.style.opacity = String(Math.max(0, Math.min(1, fade)));
   ui.ghost.style.transform = `translate(${pos[0].toFixed(1)}px, ${pos[1].toFixed(1)}px)`;
+  ui.ghost.classList.toggle("is-click-offset", spec.kind === "clicks");
   ui.ghost.classList.toggle("is-pressed", pressed);
 }
 
@@ -941,11 +1149,12 @@ function showStep(attempt = 0) {
   _run.shown = true;
 
   // 테두리가 새 자리에서 먼저 뜬다.
-  if (!ui.halo.hidden) {
-    ui.halo.classList.remove("is-entering");
-    void ui.halo.offsetWidth;
-    ui.halo.classList.add("is-entering");
-    setTimeout(() => { if (_run) ui.halo.classList.remove("is-entering"); }, T_ENTER + 50);
+  for (const halo of ui.halos || [ui.halo]) {
+    if (!halo || halo.hidden) continue;
+    halo.classList.remove("is-entering");
+    void halo.offsetWidth;
+    halo.classList.add("is-entering");
+    setTimeout(() => { if (_run) halo.classList.remove("is-entering"); }, T_ENTER + 50);
   }
 
   // 80ms 뒤 설명 창이 떠오른다 (첫 등장은 스태거 없이 바로).
@@ -969,6 +1178,7 @@ function showStep(attempt = 0) {
 function bindWait(step) {
   unbindWait();
   if (!step.wait) return;
+  const offs = [];
 
   if (step.wait.click) {
     const sel = step.wait.click;
@@ -981,8 +1191,19 @@ function bindWait(step) {
       if (t && t.closest && t.closest(".tut-dim")) nudge();
     };
     document.addEventListener("click", handler, true);
-    _run.waitOff = () => document.removeEventListener("click", handler, true);
+    offs.push(() => document.removeEventListener("click", handler, true));
   }
+  if (step.wait.key) {
+    const handler = (e) => {
+      if (!e || e.key !== step.wait.key) return;
+      const target = e.target;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      _run.ctx[step.wait.keyFlag || "lastTutorialKey"] = true;
+    };
+    window.addEventListener("keydown", handler, true);
+    offs.push(() => window.removeEventListener("keydown", handler, true));
+  }
+  if (offs.length) _run.waitOff = () => offs.forEach((off) => off());
   // until·progress 는 tick 에서 확인한다(checkUntil).
 }
 
@@ -996,8 +1217,8 @@ function unbindWait() {
 /* 짚어 준 자리를 한 번 흔든다 — "누를 곳은 여기입니다". */
 function nudge() {
   if (!_run || !_run.ui) return;
-  const { halo, doChip } = _run.ui;
-  for (const el of [halo, doChip]) {
+  const { doChip } = _run.ui;
+  for (const el of [...(_run.ui.halos || [_run.ui.halo]), doChip]) {
     if (!el || el.hidden) continue;
     el.classList.remove("is-nudge");
     void el.offsetWidth;
@@ -1051,8 +1272,10 @@ function reposition(force = false) {
   // 것까지 따라가야 한다(querySelector 몇 번이라 비용은 무시할 수준).
   const fresh = resolveTargets(_run.course.steps[_run.index] || {});
   if (fresh.length) _run.nodes = fresh;
-  const hole = unionRect(_run.nodes);
   const step = _run.course.steps[_run.index] || {};
+  const hole = unionRect(_run.nodes);
+  const avoid = resolveCoachAvoid(step, _run.nodes);
+  prepareCoachForAvoid(ui, avoid);
 
   // 안내선은 한 단계 안에서도 내용이 바뀐다(예: 겨냥 실습의 '1→2→3번째 자리').
   // 구멍이 그대로면 다시 안 그리는 규칙에 묶어 두면 문구가 옛것으로 남는다 →
@@ -1061,15 +1284,29 @@ function reposition(force = false) {
   paintModKey(step, hole);
 
   // 구멍·설명 창 자리는 실제로 바뀌었을 때만 손댄다(전환 애니메이션이 튀지 않게).
-  const key = (hole ? `${hole.x}|${hole.y}|${hole.w}|${hole.h}` : "none") + "#" + ctmKey();
-  if (!force && key === _run.lastKey) return;
+  const targetKey = _run.nodes.map((node) => {
+    const rect = paddedRect(node);
+    return rect ? `${rect.x}|${rect.y}|${rect.w}|${rect.h}` : "none";
+  }).join(",");
+  const key = (hole ? `${hole.x}|${hole.y}|${hole.w}|${hole.h}` : "none") +
+    "#" + targetKey +
+    "#" + (avoid ? `${avoid.x}|${avoid.y}|${avoid.w}|${avoid.h}` : "no-avoid") + "#" + ctmKey();
+  if (!force && key === _run.lastKey) {
+    // 인스펙터 행은 단계 진입 직후 비동기로 렌더링될 수 있다. 이 경우
+    // targetKey가 같아도 패널이 새로 생겼는지 반드시 다시 확인한다.
+    enforceCoachPanelSafety(ui);
+    dockCanvasCoachInPanel(ui, _run.nodes);
+    return;
+  }
   _run.lastKey = key;
 
-  paintHole(ui, hole);
+  paintHole(ui, hole, _run.nodes);
   paintShield(ui, hole);
   // 짚을 대상이 없는 단계라도 안내 그림이 있으면 그것만은 가리지 않는다
   // (완성 미리보기를 설명 창이 덮어 버리면 보여 주는 의미가 없다).
-  placeCoach(ui, hole || guideBox(ui));
+  placeCoach(ui, hole || guideBox(ui), avoid);
+  enforceCoachPanelSafety(ui);
+  dockCanvasCoachInPanel(ui, _run.nodes);
 }
 
 function goNext() {
@@ -1393,6 +1630,13 @@ function pointAtTutorialButton() {
 /* ===== 배선 ===== */
 
 export function initTutorial() {
+  const tutorialButton = document.getElementById("tutorial-btn");
+  if (tutorialButton && !tutorialButton.querySelector(".tutorial-beta-tag")) {
+    const beta = document.createElement("span");
+    beta.className = "beta-tag tutorial-beta-tag";
+    beta.textContent = "베타";
+    tutorialButton.appendChild(beta);
+  }
   removeKey(K_RESUME_LEGACY);   // 예전 버전이 남긴 이어하기 기록을 치운다
   removeKey(K_LEVEL_LEGACY);    // 폐지한 난이도 선택의 잔재
 

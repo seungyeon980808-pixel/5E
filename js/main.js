@@ -65,7 +65,7 @@ import { localizeShortcutLabels } from "./platform.js?v=1.4.0";
 import { initModalDrag } from "./modal-drag.js?v=1.4.0";
 import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
-import { initTutorial } from "./tutorial.js?v=1.4.0";
+import { initTutorial } from "./tutorial.js?v=1.5.2";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
