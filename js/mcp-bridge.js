@@ -21,6 +21,9 @@
  */
 
 import { state } from "./state.js?v=1.4.0";
+import {
+  serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
+} from "./project-io.js?v=1.4.1-exampool";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { switchPage, addPage } from "./pages.js?v=1.4.0";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
@@ -121,6 +124,28 @@ const COMMANDS = {
     };
   },
 
+  // ExamPool이 사용자가 편집한 현재 페이지·객체·아트보드를 같은 5E 프로젝트로
+  // 다시 저장할 수 있도록 전체 직렬화 결과를 돌려준다. 인증 정보나 파일 경로는 포함하지 않는다.
+  getProject() {
+    return serializeProject(state.get());
+  },
+
+  // ExamPool의 문항 프로젝트를 통째로 열어 pages[]를 실제 5E 탭으로 복원한다.
+  loadProject({ project }) {
+    if (!project || typeof project !== "object") throw new Error("project 데이터가 없습니다");
+    const migrated = migrateProject(project);
+    if (!Array.isArray(migrated.pages) || !migrated.pages.length) {
+      throw new Error("프로젝트에 페이지가 없습니다");
+    }
+    applyLoadedProject(state, migrated);
+    flash(`프로젝트 ${migrated.pages.length}장 불러오기`);
+    return {
+      pages: migrated.pages.length,
+      active: state.get().activePageId,
+      name: activePageName(state.get()),
+    };
+  },
+
   // 객체 추가 — MCP 쪽에서 이미 검증·기본값 채움이 끝난 것이 온다.
   addObjects({ objects, group }) {
     if (!Array.isArray(objects) || !objects.length) throw new Error("objects가 비었습니다");
@@ -189,6 +214,17 @@ const COMMANDS = {
     else if (typeof page === "string") target = list.find((p) => p.id === page || p.name === page);
     if (!target) {
       if (!create) throw new Error(`페이지를 찾을 수 없습니다: ${page} (현재 ${list.length}장)`);
+      // ExamPool이 여러 그림을 한 프로젝트의 탭으로 만들 때, 새 문서의 비어 있는
+      // 기본 페이지를 남겨 두지 않고 첫 번째 요청 이름으로 재사용한다.
+      if (list.length === 1 && !(s.objects || []).length && typeof page === "string") {
+        state.update((st) => {
+          const current = (st.pages || []).find((p) => p.id === st.activePageId);
+          if (current) current.name = page;
+        });
+        flash("첫 페이지 이름 지정");
+        const renamed = state.get();
+        return { active: renamed.activePageId, name: activePageName(renamed), created: false };
+      }
       addPage(state);
       // 이름을 지정해 만든 경우 새 탭 이름을 그대로 붙인다(pages.js의 renamePage는
       // 사용자에게 입력을 묻는 대화상자라 여기서 쓸 수 없다).

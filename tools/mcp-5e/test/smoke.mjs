@@ -206,8 +206,10 @@ if (/hand_grip/.test(partList)) {
   const partFile = path.join(OUT, "mcp5e_part.json");
   await call("create_project", { path: partFile, artboard: { w: 60, h: 40 }, overwrite: true });
   const t2 = await call("add_part", {
-    path: partFile, part: "hand_grip", gripAt: { x: 0, y: 0 }, w: 12,
-    between: [{ type: "rect", x: 0, y: -4, w: 8, h: 8, fillLevel: 255, labelInner: "m" }],
+    path: partFile, part: "hand_grip", purpose: "reference-reconstruction", mode: "diagram",
+    examId: "p1_2025_06_19", panelRef: "p1_2025_06_19#panel-1",
+    context: "inclined-block-grip", gripAt: { x: 0, y: 0 }, w: 12,
+    between: [{ type: "rect", x: 0, y: -4, w: 8, h: 8, fillLevel: 255 }],
   });
   if (!/3개 객체/.test(t2)) { failed++; console.log("FAIL  add_part: 뒤·물체·앞 3개가 아닙니다"); }
   await call("validate_project", { path: partFile });
