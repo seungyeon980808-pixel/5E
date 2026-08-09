@@ -81,17 +81,29 @@ const CUT_MODES = [
 function modeForActiveTool() { return isDelayedActive() ? _delayedMode : _cutMode; }
 function setMode(mode) {
   if (!CUT_MODES.some(([value]) => value === mode)) return;
-  if (isDelayedActive()) setDelayedMode(mode); else if (isActive()) setCutMode(mode);
+  // The tabs belong to the currently armed cut tool only.  Do not let a
+  // stale/floating inspector tab change a mode while another tool is armed.
+  if (isDelayedActive()) setDelayedMode(mode);
+  else if (isActive()) setCutMode(mode);
+}
+function cycleMode(backward = false) {
+  const current = modeForActiveTool();
+  const index = CUT_MODES.findIndex(([value]) => value === current);
+  const step = backward ? -1 : 1;
+  const next = CUT_MODES[(index + step + CUT_MODES.length) % CUT_MODES.length][0];
+  setMode(next);
 }
 function syncModeTabs() {
   if (!_modeTabs) return;
   const visible = isActive() || isDelayedActive();
   _modeTabs.hidden = !visible;
+  _modeTabs.setAttribute("aria-hidden", String(!visible));
   const mode = modeForActiveTool();
   _modeTabs.querySelectorAll("[data-cut-mode]").forEach((b) => {
     const on = b.dataset.cutMode === mode;
     b.classList.toggle("is-active", on);
     b.setAttribute("aria-selected", String(on));
+    b.tabIndex = visible ? 0 : -1;
   });
 }
 function ensureModeTabs() {
@@ -100,6 +112,7 @@ function ensureModeTabs() {
   if (!panel) return;
   _modeTabs = document.createElement("div");
   _modeTabs.id = "cut-mode-tabs";
+  _modeTabs.dataset.toolScope = "CUT,DELAYED_CUT";
   _modeTabs.setAttribute("role", "tablist");
   const title = document.createElement("div");
   title.className = "cut-mode-tabs-title";
@@ -108,7 +121,14 @@ function ensureModeTabs() {
   for (const [value, label] of CUT_MODES) {
     const b = document.createElement("button");
     b.type = "button"; b.role = "tab"; b.dataset.cutMode = value; b.textContent = label;
-    b.addEventListener("click", () => setMode(value));
+    b.addEventListener("click", (e) => {
+      // Keep a mode-tab click inside the selected cut tool.  In particular,
+      // it must not bubble into inspector/object-selection handlers.
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isActive() && !isDelayedActive()) return;
+      setMode(value);
+    });
     _modeTabs.appendChild(b);
   }
   panel.prepend(_modeTabs);
@@ -655,6 +675,11 @@ export function initCutTool(svg, state) {
       e.preventDefault();
       if (isDelayedActive()) { _delayedDraft = null; _delayedEdit = null; renderDelayedCuts(); updateDelayedAction(); }
       else { _drawing = null; clearOverlay(); }
+    } else if (e.key === "Tab") {
+      // Tab is reserved for the cut-mode tabs while a cut tool is armed.
+      // Do not let browser focus move through the left popup's tool options.
+      e.preventDefault();
+      cycleMode(e.shiftKey);
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (isDelayedActive()) {
