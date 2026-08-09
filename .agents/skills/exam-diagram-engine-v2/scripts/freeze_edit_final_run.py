@@ -36,12 +36,13 @@ def main() -> int:
     root = Path(args.root).resolve()
     data_freeze_path = root / "benchmarks/exam-diagram-engine-v2-2/FINAL_DATA_FREEZE.json"
     data_freeze = json.loads(data_freeze_path.read_text(encoding="utf-8"))
+    rules = json.loads((root / ".agents/skills/exam-diagram-engine-v2/assets/edit-rules.v2.2.json").read_text(encoding="utf-8"))
     pinned = dict(data_freeze["pinned_files"])
     for relative in CORE_FILES:
         pinned[relative] = digest(root / relative)
     record = {
         "benchmark_version": "2.2.0",
-        "rules_revision": 3,
+        "rules_revision": rules["rules_revision"],
         "purpose": "Immutable engine and previously frozen final data for one-shot final validation.",
         "pinned_file_count": len(pinned),
         "pinned_files": dict(sorted(pinned.items())),
