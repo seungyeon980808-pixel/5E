@@ -21,6 +21,7 @@
 
 import { screenToWorld } from "./viewport.js?v=1.4.0";
 import { tightenBoxObject } from "./cut-geometry.js?v=1.4.0";
+import { smartCutoutRgba } from "./smart-cutout.js?v=1.4.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -29,7 +30,7 @@ let _svg = null;
 let _idCounter = 0;
 
 // erase-mode session (null when idle)
-let _mode = null;          // "rect" | "path"
+let _mode = null;          // "rect" | "path" | "smart"
 let _imageId = null;       // id of the image being erased
 let _dragging = false;     // a drag gesture is in progress
 let _rectStart = null;     // {x,y} fraction of the rect drag start
@@ -46,6 +47,12 @@ let _preview = null;
 function sessionObj(s = _state?.get()) {
   const o = s && s.imageEditSession;
   return o && o.type === "image" && o.mode === "edit-session" ? o : null;
+}
+
+function gestureObj(s = _state?.get()) {
+  if (_imageId === IMAGE_EDIT_SESSION_ID) return sessionObj(s);
+  const o = s?.objects?.find((item) => item.id === _imageId);
+  return o?.type === "image" ? o : null;
 }
 
 /* ----- world <-> local-fraction conversion (origin = top-left, pre-rotation) ----- */
@@ -166,12 +173,15 @@ function pushCutout(cutout) {
 }
 
 /* ----- enter / exit erase mode ----- */
-function enterMode(mode) {
+function enterMode(mode, imageId = IMAGE_EDIT_SESSION_ID) {
   const s = _state.get();
-  if (!sessionObj(s)) return; // guarded by the inspector, but stay safe
+  const target = imageId === IMAGE_EDIT_SESSION_ID
+    ? sessionObj(s)
+    : s.objects?.find((item) => item.id === imageId && item.type === "image");
+  if (!target) return;
   exitMode(); // clear any prior session first
   _mode = mode;
-  _imageId = IMAGE_EDIT_SESSION_ID;
+  _imageId = imageId;
   _dragging = false;
   _rectStart = null;
   _rectPending = null;
@@ -179,11 +189,15 @@ function enterMode(mode) {
   queueMicrotask(() => {
     if (_mode === mode) showBanner(mode === "rect"
       ? "사각형으로 지울 영역을 드래그하세요. Ctrl+Enter로 이미지 삽입"
-      : "자유 영역을 둘러싸세요. 마우스를 놓으면 닫힌 영역이 지워집니다");
+      : mode === "smart"
+        ? "남길 물체보다 조금 넓게 자유롭게 둘러싸세요. 마우스를 놓으면 누끼 미리보기가 열립니다"
+        : "자유 영역을 둘러싸세요. 마우스를 놓으면 닫힌 영역이 지워집니다");
   });
   showBanner(mode === "rect"
     ? "지울 영역을 드래그하십시오. Enter 확정, Esc 취소"
-    : "지울 부분을 드래그하십시오. Enter 확정, Esc 취소");
+    : mode === "smart"
+      ? "남길 물체 주위를 자유롭게 둘러싸세요. Esc 취소"
+      : "지울 부분을 드래그하십시오. Enter 확정, Esc 취소");
 }
 function exitMode() {
   _mode = null;
@@ -199,6 +213,8 @@ function exitMode() {
 /* ===== public API (called by inspector.js) ===== */
 export function startRectErase() { enterMode("rect"); }
 export function startPathErase() { enterMode("path"); }
+export function startSmartCutout() { enterMode("smart"); }
+export function startSmartCutoutForImage(imageId) { enterMode("smart", imageId); }
 export function clearCutouts() {
   const o = sessionObj();
   if (!o || !Array.isArray(o.cutouts) || o.cutouts.length === 0) return;
@@ -222,6 +238,138 @@ function loadRaster(src) {
     img.onerror = () => reject(new Error("Unable to decode image"));
     img.src = src;
   });
+}
+
+function croppedPlacement(obj, bbox, width, height) {
+  const fx = bbox.x / width, fy = bbox.y / height;
+  const fw = bbox.w / width, fh = bbox.h / height;
+  const oldCx = obj.x + obj.w / 2, oldCy = obj.y + obj.h / 2;
+  const unrotatedCx = obj.x + (fx + fw / 2) * obj.w;
+  const unrotatedCy = obj.y + (fy + fh / 2) * obj.h;
+  const angle = (obj.rotation || 0) * Math.PI / 180;
+  const dx = unrotatedCx - oldCx, dy = unrotatedCy - oldCy;
+  const cx = oldCx + dx * Math.cos(angle) - dy * Math.sin(angle);
+  const cy = oldCy + dx * Math.sin(angle) + dy * Math.cos(angle);
+  const w = obj.w * fw, h = obj.h * fh;
+  return { x: cx - w / 2, y: cy - h / 2, w, h };
+}
+
+async function openSmartCutoutDialog(points, targetId, targetSnapshot) {
+  if (!targetSnapshot || points.length < 3) return;
+  const editableSrc = Array.isArray(targetSnapshot.cutouts) && targetSnapshot.cutouts.length
+    ? await renderSessionToDataUrl(targetSnapshot)
+    : targetSnapshot.src;
+  const img = await loadRaster(editableSrc);
+  const sourceCanvas = document.createElement("canvas");
+  sourceCanvas.width = img.naturalWidth || img.width || 1;
+  sourceCanvas.height = img.naturalHeight || img.height || 1;
+  const sourceCtx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  if (!sourceCtx) throw new Error("누끼 처리용 캔버스를 만들 수 없습니다.");
+  sourceCtx.drawImage(img, 0, 0, sourceCanvas.width, sourceCanvas.height);
+  const source = sourceCtx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
+  const previewScale = Math.min(1, 900 / Math.max(sourceCanvas.width, sourceCanvas.height));
+  const previewSourceCanvas = document.createElement("canvas");
+  previewSourceCanvas.width = Math.max(1, Math.round(sourceCanvas.width * previewScale));
+  previewSourceCanvas.height = Math.max(1, Math.round(sourceCanvas.height * previewScale));
+  const previewSourceCtx = previewSourceCanvas.getContext("2d", { willReadFrequently: true });
+  previewSourceCtx.drawImage(sourceCanvas, 0, 0, previewSourceCanvas.width, previewSourceCanvas.height);
+  const previewSource = previewSourceCtx.getImageData(0, 0, previewSourceCanvas.width, previewSourceCanvas.height);
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay smart-cutout-overlay";
+  overlay.innerHTML = `<section class="modal smart-cutout-modal" role="dialog" aria-modal="true" aria-labelledby="smart-cutout-title">
+    <h2 class="modal-title" id="smart-cutout-title">스마트 누끼</h2>
+    <p class="smart-cutout-help">감도를 높이면 배경과 비슷한 색을 더 넓게 제거합니다.</p>
+    <div class="smart-cutout-preview"><canvas aria-label="스마트 누끼 결과 미리보기"></canvas></div>
+    <label class="smart-cutout-range"><span>감도</span><input type="range" min="0" max="100" value="50" step="1"><output>50</output></label>
+    <p class="smart-cutout-status" aria-live="polite">미리보기를 계산하고 있습니다.</p>
+    <div class="modal-actions"><button type="button" class="modal-btn" data-smart-cancel>취소</button><button type="button" class="modal-btn modal-btn-primary" data-smart-apply>누끼 확정</button></div>
+  </section>`;
+  document.body.appendChild(overlay);
+
+  const preview = overlay.querySelector("canvas");
+  const slider = overlay.querySelector("input[type=range]");
+  const output = overlay.querySelector("output");
+  const status = overlay.querySelector(".smart-cutout-status");
+  const applyButton = overlay.querySelector("[data-smart-apply]");
+  preview.width = previewSourceCanvas.width;
+  preview.height = previewSourceCanvas.height;
+  const previewCtx = preview.getContext("2d");
+  let latest = null;
+  let renderFrame = 0;
+  let closed = false;
+
+  const render = () => {
+    renderFrame = 0;
+    if (closed) return;
+    const sensitivity = Number(slider.value);
+    output.value = String(sensitivity);
+    latest = smartCutoutRgba(previewSource.data, preview.width, preview.height, points, sensitivity);
+    previewCtx.putImageData(new ImageData(latest.data, preview.width, preview.height), 0, 0);
+    applyButton.disabled = !latest.bbox;
+    status.textContent = latest.bbox
+      ? "체크무늬로 보이는 부분이 투명하게 제거됩니다."
+      : "남은 물체가 없습니다. 감도를 낮춰 주세요.";
+  };
+  const scheduleRender = () => {
+    if (renderFrame) cancelAnimationFrame(renderFrame);
+    renderFrame = requestAnimationFrame(render);
+  };
+  const onKeyDown = (event) => {
+    if (event.key !== "Escape" || closed) return;
+    event.preventDefault();
+    close();
+  };
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    if (renderFrame) cancelAnimationFrame(renderFrame);
+    window.removeEventListener("keydown", onKeyDown, true);
+    overlay.remove();
+  };
+
+  slider.addEventListener("input", scheduleRender);
+  overlay.querySelector("[data-smart-cancel]").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
+  window.addEventListener("keydown", onKeyDown, true);
+  applyButton.addEventListener("click", () => {
+    if (!latest?.bbox) return;
+    status.textContent = "원본 해상도로 누끼를 확정하고 있습니다.";
+    const finalResult = smartCutoutRgba(source.data, sourceCanvas.width, sourceCanvas.height, points, Number(slider.value));
+    if (!finalResult.bbox) return;
+    const full = document.createElement("canvas");
+    full.width = sourceCanvas.width; full.height = sourceCanvas.height;
+    full.getContext("2d").putImageData(new ImageData(finalResult.data, full.width, full.height), 0, 0);
+    const crop = document.createElement("canvas");
+    crop.width = finalResult.bbox.w; crop.height = finalResult.bbox.h;
+    crop.getContext("2d").drawImage(full,
+      finalResult.bbox.x, finalResult.bbox.y, finalResult.bbox.w, finalResult.bbox.h,
+      0, 0, finalResult.bbox.w, finalResult.bbox.h);
+    const src = crop.toDataURL("image/png");
+    const objectSnapshot = targetId === IMAGE_EDIT_SESSION_ID
+      ? null
+      : JSON.parse(JSON.stringify(_state.get().objects));
+    _state.update((state) => {
+      const current = targetId === IMAGE_EDIT_SESSION_ID
+        ? sessionObj(state)
+        : state.objects.find((item) => item.id === targetId && item.type === "image");
+      if (!current) return;
+      const placement = croppedPlacement(current, finalResult.bbox, full.width, full.height);
+      current.src = src;
+      current.x = placement.x; current.y = placement.y;
+      current.w = placement.w; current.h = placement.h;
+      current.cutouts = [];
+      if (objectSnapshot) {
+        state.undoStack.push(objectSnapshot);
+        state.redoStack = [];
+        state.selectedIds = [current.id];
+        state.targetedId = null;
+      }
+    });
+    close();
+  });
+  render();
+  slider.focus();
 }
 
 async function renderSessionToDataUrl(session) {
@@ -350,6 +498,21 @@ function commitPath() {
   clearPreview();
 }
 
+function commitSmartPath() {
+  const pts = _pathPoints || [];
+  const targetId = _imageId;
+  const target = gestureObj();
+  const targetSnapshot = target ? JSON.parse(JSON.stringify(target)) : null;
+  const selection = pts.length >= 3
+    ? smoothClosedLassoPoints(pts).map((point) => ({ x: point.x, y: point.y }))
+    : [];
+  exitMode();
+  if (selection.length < 3 || !targetSnapshot) return;
+  openSmartCutoutDialog(selection, targetId, targetSnapshot).catch((error) => {
+    alert(`스마트 누끼를 처리하지 못했습니다.\n${error?.message || error}`);
+  });
+}
+
 /* ===== init: capture-phase mouse/key interception (preempts select/draw/move) ===== */
 export function initImageCutout(state, svg) {
   _state = state;
@@ -359,7 +522,8 @@ export function initImageCutout(state, svg) {
     const btn = e.target?.closest?.(".image-edit-tool-btn");
     if (!btn || !sessionObj()) return;
     const label = btn.textContent || "";
-    if (label.includes("사각형")) enterMode("rect");
+    if (label.includes("스마트 누끼")) enterMode("smart");
+    else if (label.includes("사각형")) enterMode("rect");
     else if (label.includes("자유")) enterMode("path");
   }, true);
 
@@ -367,7 +531,7 @@ export function initImageCutout(state, svg) {
   // mode can never get stuck on a stale object (interaction-safety requirement).
   state.subscribe((s) => {
     if (!_mode) return;
-    if (!sessionObj(s)) exitMode();
+    if (!gestureObj(s)) exitMode();
   });
 
   const worldAt = (e) => screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
@@ -378,7 +542,7 @@ export function initImageCutout(state, svg) {
     if (e.button !== 0) return;         // let middle/right (pan) through
     e.preventDefault();
     e.stopPropagation();
-    const obj = sessionObj();
+    const obj = gestureObj();
     if (!obj) { exitMode(); return; }
     const w0 = worldAt(e);
     const f = worldToFraction(obj, w0.x, w0.y);
@@ -396,7 +560,7 @@ export function initImageCutout(state, svg) {
   window.addEventListener("mousemove", (e) => {
     if (!_mode || !_dragging) return;
     e.stopPropagation();
-    const obj = sessionObj();
+    const obj = gestureObj();
     if (!obj) { exitMode(); return; }
     const w = worldAt(e);
     const f = worldToFraction(obj, w.x, w.y);
@@ -419,6 +583,7 @@ export function initImageCutout(state, svg) {
     _dragging = false;
     if (_mode === "rect") commitRect();
     else if (_mode === "path") commitPath();
+    else if (_mode === "smart") commitSmartPath();
   }, true);
 
   // Enter 확정 / Esc 취소. Also swallow bare tool-shortcut keys so erase mode can
@@ -428,7 +593,9 @@ export function initImageCutout(state, svg) {
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); exitMode(); return; }
     if (e.key === "Enter" && !e.ctrlKey && !e.metaKey) {
       e.preventDefault(); e.stopPropagation();
-      if (_mode === "rect") commitRect(); else commitPath();
+      if (_mode === "rect") commitRect();
+      else if (_mode === "path") commitPath();
+      else commitSmartPath();
       return;
     }
     // let modifier combos (Ctrl+Z, etc.) pass; block plain single keys.
