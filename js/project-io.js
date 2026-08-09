@@ -43,6 +43,7 @@ const APPARATUS_TEMPLATE_IDS = {
   transistor: "E010",
   device_box: "E011",
   bar_magnet: "E012",
+  electroscope: "E013",
   speaker: "W001",
   thermometer: "M010",
   phototube: "O010",
@@ -192,6 +193,10 @@ function migrateObjectList(objects) {
         if (next.kind === "pulley") next.variant = next.variant ?? "basic";
         if (next.kind === "clamp") next.flipped = next.flipped ?? false;
         if (next.kind === "scale") next.displayText = next.displayText ?? "0.99 N";
+        if (next.kind === "electroscope") {
+          next.leafSpread = next.leafSpread ?? 0.55;
+          next.lockAspect = next.lockAspect ?? true;
+        }
       }
       if (next.type === "coordplane") {
         // 좌표평면(§3-1): 박스 + 표시 범위 + 격자/눈금/숫자라벨. labelType은 위

@@ -80,9 +80,11 @@ function isInsideCutoutPoly(obj, p) {
   const q = localPointForSizeObject(obj, p);          // 회전을 푼 월드 좌표
   const fx = (q.x - obj.x) / obj.w, fy = (q.y - obj.y) / obj.h;
   for (const c of cuts) {
-    if (!c || c.type !== "poly") continue;
+    if (!c || (c.type !== "poly" && c.type !== "outside-poly")) continue;
     const pts = Array.isArray(c.points) ? c.points : [];
-    if (pts.length >= 3 && pointInPolygon(fx, fy, pts)) return true;
+    if (pts.length < 3) continue;
+    const inside = pointInPolygon(fx, fy, pts);
+    if ((c.type === "poly" && inside) || (c.type === "outside-poly" && !inside)) return true;
   }
   return false;
 }

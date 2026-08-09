@@ -353,7 +353,7 @@ export function cutFreehand(o, path) {
 // 래스터/SVG는 점 배열로 나눌 수 없다. 대신 **같은 상자·같은 그림**을 가진 조각 둘을
 // 만들고, 각자 반대쪽을 `cutouts`(객체 상자의 0~1 분수 다각형 마스크)로 지운다.
 // 마스크는 objectBoundingBox 단위라 이동·크기변경·회전에 자동으로 따라붙는다.
-// 분할 수학은 cutFreehand와 동일(닫힌 사각형 × 절단 경로, 2교차만 지원). */
+// 경계를 두 번 통과하면 두 조각으로 분할하고, 경계 안의 닫힌 경로는 내부 구멍으로 만든다. */
 let _cutoutSeq = 0;
 
 export function isBoxCuttable(o) {
@@ -373,6 +373,16 @@ function makeBoxPiece(o, erasePoly) {
   base.cutouts = [...prev, { id: `cut_${Date.now().toString(36)}_${++_cutoutSeq}`, type: "poly", points: erasePoly }];
   return base;
 }
+// 내부에서 도려낸 조각: 바깥 전체를 지우고 선택한 다각형 안쪽만 남긴 복제.
+// outside-poly를 기존 cutout보다 먼저 두어, 원본에 이미 지운 영역이 있었다면 그 영역은
+// 안쪽 조각에서도 다시 살아나지 않고 그대로 지워진 상태를 유지한다.
+function makeBoxKeepPiece(o, keepPoly) {
+  const base = JSON.parse(JSON.stringify(o));
+  delete base.id; delete base.groupId;
+  const prev = Array.isArray(base.cutouts) ? base.cutouts : [];
+  base.cutouts = [{ id: `cut_${Date.now().toString(36)}_${++_cutoutSeq}`, type: "outside-poly", points: keepPoly }, ...prev];
+  return base;
+}
 // 상자형의 교차점(빨간 점 미리보기용). 못 구하면 [].
 function boxCrossingPoints(o, path) {
   if (!(o.w > 0) || !(o.h > 0)) return [];
@@ -387,7 +397,27 @@ export function cutBoxObject(o, path) {
   if (cut.length < 2) return null;
   const pts = rectPolygon(o);                     // 회전 반영한 닫힌 사각형 4점(월드)
   const crossings = dedupeCrossings(crossingsForPts(pts, true, cut));
-  if (crossings.length !== 2) return null;        // 관통(2교차)만 분할 — 그 외 원본 유지
+  if (crossings.length === 0 && cut.length >= 3) {
+    // 이미지 내부에서 닫힌 자유 경로를 그린 경우에는 상자 양 끝을 관통시키지 않아도
+    // 그 내부를 투명하게 도려낸다. 경로의 모든 점이 상자 안에 있을 때만 적용해,
+    // 상자를 빙 둘러 그은 경로나 우연히 스친 경로가 이미지 전체를 지우는 일을 막는다.
+    const hole = cut.map((p) => worldToFrac(o, p));
+    const inside = hole.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1);
+    if (!inside) return null;
+    let twiceArea = 0;
+    for (let i = 0; i < hole.length; i++) {
+      const a = hole[i], b = hole[(i + 1) % hole.length];
+      twiceArea += a.x * b.y - b.x * a.y;
+    }
+    if (Math.abs(twiceArea) <= 0.0002) return null;
+    // 첫 조각은 구멍이 난 나머지, 둘째 조각은 도려낸 내부다. 두 마스크를 합치면
+    // 원본 픽셀이 빠짐없이 보존되며, cut-tool.js는 둘째 조각만 선택한다.
+    const remainder = makeBoxPiece(o, hole);
+    const extractedBase = makeBoxKeepPiece(o, hole);
+    const extracted = tightenBoxObject(extractedBase) || extractedBase;
+    return [remainder, extracted];
+  }
+  if (crossings.length !== 2) return null;
   crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
   const [c0, c1] = crossings;
   const arcA = [];
@@ -433,6 +463,7 @@ function cutoutFracBBox(cut) {
     if (![x, y, w, h].every(Number.isFinite)) return null;
     return { x0: Math.min(x, x + w), y0: Math.min(y, y + h), x1: Math.max(x, x + w), y1: Math.max(y, y + h) };
   }
+  if (cut.type === "outside-poly") return { x0: 0, y0: 0, x1: 1, y1: 1 };
   const pts = Array.isArray(cut.points) ? cut.points : [];
   if (!pts.length) return null;
   const pad = (cut.type === "path" || cut.type === "lasso") ? (cut.brushWidth || 0.03) / 2 : 0;
@@ -449,6 +480,7 @@ function fracErasedBy(cut, bb, u, v) {
   if (cut.type === "rect") return true;                       // bbox == 사각형 자체
   const pts = cut.points;
   if (cut.type === "poly") return pts.length >= 3 && pointInPolygon(u, v, pts);
+  if (cut.type === "outside-poly") return pts.length < 3 || !pointInPolygon(u, v, pts);
   // path/lasso: 채운 다각형 + 브러시 두께만큼의 테두리 획
   if (pts.length < 3) return false;
   if (pointInPolygon(u, v, pts)) return true;
@@ -462,7 +494,7 @@ function fracErasedBy(cut, bb, u, v) {
 function visibleFracBBox(cutouts) {
   const cuts = [];
   for (const c of cutouts) {
-    if (!c || (c.type !== "poly" && c.type !== "rect" && c.type !== "path" && c.type !== "lasso")) continue;
+    if (!c || (c.type !== "poly" && c.type !== "outside-poly" && c.type !== "rect" && c.type !== "path" && c.type !== "lasso")) continue;
     const bb = cutoutFracBBox(c);
     if (bb) cuts.push({ c, bb });
   }

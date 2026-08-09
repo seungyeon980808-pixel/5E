@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://5e.local/schemas/image-conversion-manifest.schema.json",
+  "title": "5E assessment-style image conversion manifest",
+  "type": "object",
+  "required": ["id", "subject", "mode", "components", "connections", "remove", "style"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "subject": {
+      "enum": ["physics", "chemistry", "biology", "earth_science"]
+    },
+    "mode": { "enum": ["illustration_only", "exam_ready"] },
+    "source": {
+      "type": "object",
+      "properties": {
+        "file": { "type": "string" },
+        "page": { "type": ["integer", "null"], "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "count", "region"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "type": "string" },
+          "count": { "type": "integer", "minimum": 1 },
+          "region": {
+            "enum": ["top", "bottom", "left", "right", "center", "top_left", "top_right", "bottom_left", "bottom_right", "full"]
+          },
+          "order": { "type": "integer", "minimum": 0 },
+          "repeat_layout": {
+            "type": "object",
+            "properties": {
+              "rows": { "type": "integer", "minimum": 1 },
+              "columns": { "type": "integer", "minimum": 1 },
+              "row_counts": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0 }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "connections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "kind"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "kind": { "enum": ["wire", "tube", "vessel", "support", "continuous_path", "adjacent", "contained_by"] },
+          "waypoints": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "remove": {
+      "type": "array",
+      "items": {
+        "enum": ["text", "numbers", "symbols", "labels", "leader_lines", "arrows", "guide_lines", "characters", "background", "logos", "decorations"]
+      },
+      "uniqueItems": true
+    },
+    "style": {
+      "type": "object",
+      "required": ["background", "palette", "gradient", "shadow"],
+      "properties": {
+        "background": { "const": "white" },
+        "palette": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 },
+          "minItems": 2,
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "gradient": { "const": false },
+        "shadow": { "const": false },
+        "texture_line_budget": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

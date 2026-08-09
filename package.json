@@ -1,0 +1,33 @@
+{
+  "name": "5e-desktop",
+  "version": "1.5.0-beta.1",
+  "private": true,
+  "description": "5E science diagram editor for Windows with a local Codex image assistant",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "desktop": "node_modules\\electron\\dist\\electron.exe .",
+    "test": "node --test desktop/**/*.test.cjs",
+    "test:desktop": "node desktop/run-smoke.cjs",
+    "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
+    "benchmark:image": "node desktop/benchmark-image-turn.cjs",
+    "benchmark:scene": "node desktop/benchmark-scene-turn.cjs",
+    "benchmark:scene:repeatability": "node desktop/benchmark-scene-repeatability.cjs",
+    "verify:scene:repeatability": "node desktop/benchmark-scene-repeatability.cjs --verify",
+    "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
+    "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
+    "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
+    "package:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.5e.editor",
+    "productName": "5E",
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md"],
+    "win": { "icon": "assets/icon-512.png", "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+  }
+}

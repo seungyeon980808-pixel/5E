@@ -20,7 +20,7 @@ import {
 import { withBoxLabel, withLineLabel } from "./labels.js?v=1.4.0";
 import { resolveFill } from "./fill.js?v=1.4.0";
 import { getSvgAsset } from "../svg-assets.js?v=1.4.0";
-import { normalizeSrcRect } from "../cut-geometry.js?v=1.4.0";
+import { normalizeSrcRect } from "../cut-geometry.js?v=1.4.2";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.
@@ -729,7 +729,19 @@ function renderImage(obj) {
  *   poly : {points[]}                   — 채운 다각형(가위로 이미지를 반 자를 때) */
 function appendCutoutShapes(mask, cutouts) {
   for (const cut of cutouts) {
-    if (cut && cut.type === "poly") {
+    if (cut && cut.type === "outside-poly") {
+      const pts = Array.isArray(cut.points) ? cut.points : [];
+      if (pts.length < 3) continue;
+      const outside = document.createElementNS(SVG_NS, "rect");
+      outside.setAttribute("x", "0"); outside.setAttribute("y", "0");
+      outside.setAttribute("width", "1"); outside.setAttribute("height", "1");
+      outside.setAttribute("fill", "#000000");
+      mask.appendChild(outside);
+      const keep = document.createElementNS(SVG_NS, "polygon");
+      keep.setAttribute("points", pts.map((p) => `${p.x},${p.y}`).join(" "));
+      keep.setAttribute("fill", "#ffffff");
+      mask.appendChild(keep);
+    } else if (cut && cut.type === "poly") {
       const pts = Array.isArray(cut.points) ? cut.points : [];
       if (pts.length < 3) continue;
       const poly = document.createElementNS(SVG_NS, "polygon");

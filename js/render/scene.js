@@ -20,7 +20,7 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.4.0";
+} from "./shapes.js?v=1.4.2";
 import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.4.0";
 import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.4.0";
 import { renderCircuit } from "./circuit.js?v=1.4.0";
@@ -145,25 +145,6 @@ export function render(state) {
   artboard.setAttribute("vector-effect", "non-scaling-stroke");
   artboard.setAttribute("pointer-events", "none");
   scene.appendChild(artboard);
-
-  // 아트보드 드래그 리사이즈 핸들: 모드가 켜졌을 때만 우하단 모서리(w/2, h/2)에.
-  // 크기는 zoom 무관 고정(선택 핸들과 같은 10 CSS px 관례). js/artboard-resize.js가
-  // data-artboard-handle 을 잡아 드래그를 처리한다.
-  if (state.artboardResizeMode) {
-    const hz = 6 / getZoom();
-    const hx = _abW / 2, hy = _abH / 2;
-    const hd = document.createElementNS(SVG_NS, "rect");
-    hd.setAttribute("x", hx - hz);
-    hd.setAttribute("y", hy - hz);
-    hd.setAttribute("width", hz * 2);
-    hd.setAttribute("height", hz * 2);
-    hd.setAttribute("fill", "#0969da");
-    hd.setAttribute("stroke", "#ffffff");
-    hd.setAttribute("stroke-width", 1 / getZoom());
-    hd.setAttribute("cursor", "nwse-resize");
-    hd.dataset.artboardHandle = "br";
-    scene.appendChild(hd);
-  }
 
   // ----- grid layer (between artboard and objects; never exported) -----
   if (state.grid && state.grid.visible) {
@@ -587,6 +568,7 @@ export function render(state) {
       scene.appendChild(box);
     } catch (_) { /* not laid out yet */ }
   }
+
 }
 
 function renderPositionLockMarker(obj, scene, zoom) {

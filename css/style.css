@@ -171,6 +171,31 @@ body {
   overflow: hidden;
 }
 
+/* Electron에서는 Windows 기본 회색 제목 표시줄 대신 5E의 중립 패널색을 사용한다.
+   웹판에는 나타나지 않으며, 우측 140px은 운영체제 창 버튼 영역으로 비워 둔다. */
+.desktop-titlebar { display: none; }
+.desktop-shell .desktop-titlebar {
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 150px 0 11px;
+  color: color-mix(in srgb, var(--text-primary) 72%, var(--text-secondary));
+  background: #0e1512;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-strong) 72%, #0e1512);
+  font-size: 11px;
+  letter-spacing: .01em;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.desktop-titlebar-mark {
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+}
+
 /* ===== APP LAYOUT (3-panel, DESIGN §7) ===== */
 .app {
   flex: 1 1 auto;
@@ -304,6 +329,17 @@ body { zoom: var(--ui-zoom, 1); }
   cursor: pointer;
 }
 .object-search-trigger:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+.bottom-icon-trigger,
+.grid-toggle-btn {
+  display: inline-grid;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.bottom-icon-trigger svg,
+.grid-toggle-btn svg { width: 17px; height: 17px; }
 
 /* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
 .subject-select {
@@ -2131,6 +2167,28 @@ textarea.unified-text-input {
   font-size: 12px;
   color: var(--text-label);
 }
+.image-workflow-hub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 58%, var(--bg-panel));
+}
+.image-workflow-hub .object-search-trigger {
+  min-height: 27px;
+  padding: 3px 7px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 10.5px;
+}
+.image-workflow-hub .object-search-trigger:hover { border-color: var(--border); }
+.image-workflow-hub .image-workflow-ai {
+  color: color-mix(in srgb, var(--accent) 82%, var(--text-primary));
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.image-workflow-divider { width: 1px; height: 19px; margin: 0 2px; background: var(--border); }
 .canvas-bottom-bar label {
   display: flex;
   align-items: center;
@@ -2364,10 +2422,12 @@ textarea.unified-text-input {
 
 /* 하단 바: 격자 토글 버튼(누름 상태 = 과목 accent) + 세부(진하기/간격) */
 .grid-toggle-btn {
-  padding: 3px 10px; font-family: inherit; font-size: 12px; font-weight: 500;
+  display: inline-grid; width: 29px; height: 29px; padding: 0; place-items: center; flex: 0 0 auto;
+  font-family: inherit; font-size: 12px; font-weight: 500; line-height: 1;
   color: var(--c-sub); background: var(--btn-tool-bg);
   border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
 }
+.grid-toggle-btn svg { display: block; width: 17px; height: 17px; margin: 0; }
 .grid-toggle-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
 .grid-toggle-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
 /* 중앙 고정 토글(⌖): 비활성=어두운 버튼, 활성=과목 강조색 (grid-toggle-btn과 동일 톤) */

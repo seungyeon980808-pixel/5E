@@ -17,7 +17,7 @@ import { OBJECT_TYPE_IDS, TYPE_DOC, describeType, normalizeObject } from "./lib/
 import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension,
          buildFieldRegion } from "./lib/builders.js";
 import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
-import { buildPart, partsSummary } from "./lib/parts.js";
+import { buildSafePart, safePartsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
 import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
@@ -280,23 +280,30 @@ const TOOLS = [
   {
     name: "add_part",
     description:
-      "기출 원본에서 오려낸 삽화 부품(손·사람 등)을 넣는다. **삽화는 그리지 않는다** — " +
-      "5E로 그릴 수 없는 그림(손·사람·차량)은 기출 PDF의 600dpi 원본에서 오려 둔 것을 쓴다. " +
-      "part 를 빼고 부르면 쓸 수 있는 부품 목록이 온다.\n" +
-      "**쥔 그림은 두 조각이다**: 손바닥은 물체 뒤, 손가락은 물체 앞에 와야 쥔 것으로 보인다. " +
-      "between 에 쥐는 대상(블록 등)을 주면 뒤 조각 → 그 객체 → 앞 조각 순서로 들어가 " +
-      "저절로 그렇게 된다. gripAt 에 물체의 모서리 좌표를 주면 쥐는 선이 거기에 맞는다.\n" +
-      "크기를 안 주면 **기출 인쇄 크기 그대로**(손은 가로 6mm)다. 시험지 도판은 작다 — " +
-      "키우기 전에 원본 크기를 먼저 보라.\n" +
-      "예) 한 변 8mm 인 블록을 쥔 손:\n" +
-      '  { part:"hand_grip", gripAt:{x:0,y:0}, w:12,\n' +
-      '    between:[{ type:"rect", x:0, y:-4, w:8, h:8, fillLevel:255, label:"m", labelType:"quantity" }] }',
+      "감사된 기출 장면에서만 출처 잠금된 손 삽화 부품을 넣는다. 범용 손 생성기가 아니다. " +
+      "part를 빼고 부르면 허용 부품과 제약 목록이 온다. purpose, examId, panelRef, context를 " +
+      "모두 정확히 지정해야 하며 diagram 모드의 문자·숫자·기호·화살표 금지를 강제한다. " +
+      "원본 래스터 해시를 검증하고, hand_grip의 고립 표식은 원본을 고치지 않고 cutout으로 가린다.\n" +
+      "예) 감사된 2025년 6월 19번 경사 블록을 쥔 손:\n" +
+      '  { part:"hand_grip", purpose:"reference-reconstruction", mode:"diagram",\n' +
+      '    examId:"p1_2025_06_19", panelRef:"p1_2025_06_19#panel-1",\n' +
+      '    context:"inclined-block-grip", gripAt:{x:0,y:0}, w:12,\n' +
+      '    between:[{ type:"rect", x:0, y:-4, w:8, h:8, fillLevel:255 }] }',
     inputSchema: {
       type: "object",
       properties: {
         path: TARGET_PATH_PROP,
         page: PAGE_PROP, group: GROUP_PROP,
         part: { type: "string", description: "부품 id (예: hand_grip, hand_press). 생략하면 목록만 돌려준다" },
+        purpose: { type: "string", enum: ["reference-reconstruction"], description: "기존 감사 장면 재구성 전용" },
+        mode: { type: "string", enum: ["diagram"], description: "문자 없는 그림형만 허용" },
+        examId: { type: "string", description: "감사 매니페스트의 정확한 문항 id" },
+        panelRef: { type: "string", description: "감사 매니페스트의 정확한 panel ref" },
+        context: {
+          type: "string",
+          enum: ["inclined-block-grip", "dashed-two-finger-spring-compression"],
+          description: "부품별로 승인된 접촉·동작 문맥",
+        },
         at: { ...XY, description: "좌상단 좌표(mm)" },
         gripAt: {
           ...XY,
@@ -305,10 +312,7 @@ const TOOLS = [
         },
         w: { type: "number", description: "가로 mm. 생략하면 기출 인쇄 크기(비율 유지)" },
         h: { type: "number", description: "세로 mm" },
-        layer: {
-          type: "string", enum: ["both", "back", "front"],
-          description: "both(기본)=두 조각 다. 사이에 넣을 것이 복잡해 따로 부를 때만 back/front 를 쓴다",
-        },
+        layer: { type: "string", enum: ["both"], description: "안전 래퍼는 양쪽 조각을 항상 함께 사용" },
         between: {
           type: "array",
           description: "뒤 조각과 앞 조각 사이에 낄 객체들(= 쥐는 대상). add_objects 와 같은 형식",
@@ -598,6 +602,28 @@ const TOOLS = [
       "지금 화면에 그려져 있는 것을 읽어 온다(객체 id·타입·좌표·아트보드 범위). 사용자가 " +
       "'이거 옆에 화살표 하나만 더' 처럼 현재 그림을 기준으로 말할 때 먼저 호출한다.",
     inputSchema: { type: "object", properties: {} },
+  },
+  {
+    name: "save_project",
+    description:
+      "현재 열려 있는 5E 편집 상태 전체를 지정한 .json 프로젝트 파일에 저장한다. " +
+      "ExamPool에서 '편집 내용 가져오기'를 누를 때 PNG와 편집 가능한 원본을 함께 갱신하는 용도다.",
+    inputSchema: {
+      type: "object",
+      properties: { path: PATH_PROP },
+      required: ["path"],
+    },
+  },
+  {
+    name: "load_project",
+    description:
+      "저장된 5E 프로젝트의 pages[] 전체를 현재 앱에 열어 각 페이지를 탭으로 복원한다. " +
+      "ExamPool에서 여러 그림을 한 번에 편집할 때 사용한다.",
+    inputSchema: {
+      type: "object",
+      properties: { path: PATH_PROP },
+      required: ["path"],
+    },
   },
   {
     name: "export_image",
@@ -903,8 +929,8 @@ const HANDLERS = {
 
   /* 오려낸 삽화 부품. part 없이 부르면 목록만 — 모델이 뭘 쓸 수 있는지 먼저 보게 한다. */
   async add_part({ path, page, part, group, ...spec }) {
-    if (!part) return partsSummary();
-    const built = buildPart({ part, ...spec });
+    if (!part) return safePartsSummary();
+    const built = buildSafePart({ part, ...spec });
     if (built.error) throw new Error(built.error);
     const d = await deliver({ path, page, group: group !== false }, inlineImages(built.objects));
     return deliverReport(`부품 ${d.count}개 객체 추가`, d, [
@@ -985,6 +1011,28 @@ const HANDLERS = {
   async read_app() {
     const s = await sendToApp("getState");
     return JSON.stringify(s, null, 2);
+  },
+
+  async save_project({ path }) {
+    const abs = resolveProjectPath(path);
+    const data = await sendToApp("getProject");
+    const checked = validateData(data);
+    if (!checked.ok) {
+      throw new Error("현재 5E 프로젝트를 저장할 수 없습니다:\n" + checked.errors.join("\n"));
+    }
+    await saveProject(abs, data);
+    const total = (data.pages || []).reduce((n, page) => n + (page.objects || []).length, 0);
+    return `저장했습니다: ${abs} (페이지 ${data.pages.length}개, 객체 ${total}개)`;
+  },
+
+  async load_project({ path }) {
+    const { abs, data } = await loadProject(path);
+    const checked = validateData(data);
+    if (!checked.ok) {
+      throw new Error("5E 프로젝트를 열 수 없습니다:\n" + checked.errors.join("\n"));
+    }
+    const result = await sendToApp("loadProject", { project: data });
+    return `열었습니다: ${abs} (탭 ${result.pages}개, 현재 ${result.name})`;
   },
 
   /* 그림을 이미지로 받아 본다. 응답에 image 파트를 실어야 하므로 문자열이 아니라

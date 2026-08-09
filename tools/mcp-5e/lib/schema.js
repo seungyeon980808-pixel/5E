@@ -28,7 +28,7 @@ export const OPTICS_KINDS = [
   "object_arrow", "point_light", "screen", "pulley", "node",
 ];
 export const APPARATUS_KINDS = ["wire", "compass", "pulley", "clamp", "scale", "transistor",
-  "device_box", "speaker", "phototube", "slit", "thermometer", "bar_magnet", "fringe_pattern"];
+  "device_box", "speaker", "phototube", "slit", "thermometer", "bar_magnet", "fringe_pattern", "electroscope"];
 export const CIRCUIT_ELEMENTS = [
   "resistor", "dc_source", "ac_source", "capacitor", "inductor",
   "diode", "lamp", "ammeter", "voltmeter", "galvanometer", "motor", "led", "unknown",
@@ -54,6 +54,7 @@ const APPARATUS_TEMPLATE_IDS = {
   wire: "E001", compass: "E002", pulley: "M001", clamp: "M004", scale: "M003",
   transistor: "E010", device_box: "E011", bar_magnet: "E012",
   speaker: "W001", thermometer: "M010", phototube: "O010", slit: "O011", fringe_pattern: "O012",
+  electroscope: "E013",
 };
 
 // 기구별 기본 크기 (templates.js DEFAULT_SIZES 발췌)
@@ -63,6 +64,7 @@ const APPARATUS_SIZES = {
   device_box: { w: 26, h: 14 }, speaker: { w: 18, h: 14 }, phototube: { w: 16, h: 20 },
   slit: { w: 4, h: 22 }, thermometer: { w: 7, h: 22 }, bar_magnet: { w: 26, h: 9 },
   fringe_pattern: { w: 7, h: 22 },
+  electroscope: { w: 22, h: 34 },
 };
 
 /* ----- 기하 분류 ----- */
@@ -119,6 +121,7 @@ const DEFAULTS = {
     if (kind === "pulley") d.variant = o.variant || "basic";
     if (kind === "clamp") d.flipped = false;
     if (kind === "scale") d.displayText = "0.99 N";
+    if (kind === "electroscope") d.leafSpread = Number.isFinite(o.leafSpread) ? o.leafSpread : 0.55;
     if (kind !== "wire") d.lockAspect = true;
     return d;
   },

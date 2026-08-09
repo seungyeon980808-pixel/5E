@@ -113,9 +113,11 @@ export function buildApparatusSection(ctx) {
     { min: 0, max: 1, step: 0.05 });
   const stripes = numberRow(body, "무늬 줄 수", (v) => commit(state, "stripes", Math.round(v)),
     { min: 1, max: 21, step: 2 });
+  const leafSpread = numberRow(body, "금속박 벌어짐(0~1)", (v) => commit(state, "leafSpread", v),
+    { min: 0, max: 1, step: 0.05 });
 
   const ALL = [slitCount, slitLen, slitGap, termCount, termSide, plusMinus, emit,
-    facing, waves, north, npn, circled, level, stripes];
+    facing, waves, north, npn, circled, level, stripes, leafSpread];
 
   // 갈래 → 보여줄 줄. 여기 없는 갈래(도선·나침반·도르래…)는 섹션 자체가 숨는다.
   const BY_KIND = {
@@ -126,6 +128,7 @@ export function buildApparatusSection(ctx) {
     transistor: [npn, circled],
     thermometer: [level],
     fringe_pattern: [stripes],
+    electroscope: [leafSpread],
   };
 
   function syncApparatus(obj) {
@@ -149,6 +152,7 @@ export function buildApparatusSection(ctx) {
     circled.cb.checked = !!obj.circled;
     level.inp.value = obj.level ?? 0.55;
     stripes.inp.value = obj.stripes || 5;
+    leafSpread.inp.value = obj.leafSpread ?? 0.55;
   }
 
   return { secApparatus: section, syncApparatus };

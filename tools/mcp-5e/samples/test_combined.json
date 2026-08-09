@@ -1,0 +1,152 @@
+{
+  "version": "0.17",
+  "pages": [
+    {
+      "id": "page_test_combined",
+      "name": "Test - Combined Demo",
+      "meta": { "number": "", "points": "" },
+      "objects": [
+        {
+          "rotation": 0,
+          "lockAspect": true,
+          "axisVariant": "cross",
+          "xMin": -6,
+          "xMax": 6,
+          "yMin": -3,
+          "yMax": 3,
+          "gridStepX": 1,
+          "gridStepY": 1,
+          "tickStepX": 1,
+          "tickStepY": 1,
+          "showAxisLines": true,
+          "showGrid": true,
+          "showTicks": true,
+          "showTickLabels": true,
+          "tickLabelSize": 2.4,
+          "labelX": "t",
+          "labelY": "v",
+          "showAxisLabels": true,
+          "axisLabelSize": 3.2,
+          "showOrigin": true,
+          "labelOrigin": "O",
+          "labelType": "quantity",
+          "type": "coordplane",
+          "x": -60,
+          "y": -15,
+          "w": 50,
+          "h": 30,
+          "id": "obj_test_plane",
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "strokeWidth": 0.2,
+          "order": 0
+        },
+        {
+          "expr": "sin(x)",
+          "domainMin": -6,
+          "domainMax": 6,
+          "planeId": "obj_test_plane",
+          "points": [
+            {"x": -25, "y": 3.73}, {"x": -21.875, "y": 6.28}, {"x": -18.75, "y": 7.72},
+            {"x": -15.625, "y": 7.72}, {"x": -12.5, "y": 6.28}, {"x": -9.375, "y": 3.73},
+            {"x": -6.25, "y": 0}, {"x": -3.125, "y": -3.73}, {"x": 0, "y": -7.72},
+            {"x": 3.125, "y": -7.72}, {"x": 6.25, "y": -3.73}, {"x": 9.375, "y": 0},
+            {"x": 12.5, "y": 3.73}, {"x": 15.625, "y": 7.72}, {"x": 18.75, "y": 7.72},
+            {"x": 21.875, "y": 6.28}, {"x": 25, "y": 3.73}
+          ],
+          "closed": false,
+          "strokeWidth": 0.3,
+          "label": "v=sin(t)",
+          "labelShow": true,
+          "type": "funcgraph",
+          "id": "obj_test_graph",
+          "locked": false,
+          "positionLocked": false,
+          "layerId": 1,
+          "strokeLevel": 0,
+          "order": 1
+        },
+        {
+          "element": "resistor", "label": "R", "labelType": "quantity",
+          "height": 3.2, "type": "circuit",
+          "p1": {"x": -15, "y": 5}, "p2": {"x": 0, "y": 5},
+          "strokeWidth": 0.2, "id": "obj_test_r",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 2
+        },
+        {
+          "element": "dc_source", "label": "V", "labelType": "quantity",
+          "type": "circuit",
+          "p1": {"x": 0, "y": -5}, "p2": {"x": 0, "y": 5},
+          "strokeWidth": 0.2, "id": "obj_test_v",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 3
+        },
+        {
+          "rotation": 0, "lineMode": "solid", "lineStyle": "solid",
+          "type": "line", "arrowHead": "none",
+          "p1": {"x": 0, "y": 5}, "p2": {"x": 15, "y": 5},
+          "strokeWidth": 0.2, "id": "obj_test_w1",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 4
+        },
+        {
+          "rotation": 0, "lineMode": "solid", "lineStyle": "solid",
+          "type": "line", "arrowHead": "none",
+          "p1": {"x": 15, "y": 5}, "p2": {"x": 15, "y": -5},
+          "strokeWidth": 0.2, "id": "obj_test_w2",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 5
+        },
+        {
+          "rotation": 0, "lineMode": "solid", "lineStyle": "solid",
+          "type": "line", "arrowHead": "none",
+          "p1": {"x": 15, "y": -5}, "p2": {"x": -15, "y": -5},
+          "strokeWidth": 0.2, "id": "obj_test_w3",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 6
+        },
+        {
+          "rotation": 0, "lineMode": "solid", "lineStyle": "solid",
+          "type": "line", "arrowHead": "none",
+          "p1": {"x": -15, "y": -5}, "p2": {"x": -15, "y": 0},
+          "strokeWidth": 0.2, "id": "obj_test_w4",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 7
+        },
+        {
+          "rotation": 0, "lineMode": "solid", "lineStyle": "solid",
+          "type": "line", "arrowHead": "none",
+          "p1": {"x": -15, "y": 0}, "p2": {"x": -15, "y": 5},
+          "strokeWidth": 0.2, "id": "obj_test_w5",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 8
+        },
+        {
+          "text": "5E Test Demo",
+          "fontSize": 5,
+          "fontFamily": "\"Arial\", sans-serif",
+          "fontWeight": "bold",
+          "type": "text",
+          "x": 30,
+          "y": -25,
+          "id": "obj_test_title",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 9
+        },
+        {
+          "text": "Graph + Circuit + Shapes",
+          "fontSize": 3.5,
+          "fontFamily": "\"Arial\", sans-serif",
+          "type": "text",
+          "x": 30,
+          "y": -19,
+          "id": "obj_test_sub",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 10
+        }
+      ],
+      "guides": [],
+      "layers": [
+        {"id": 1, "name": "Layer 1", "visible": true},
+        {"id": 2, "name": "Layer 2", "visible": true},
+        {"id": 3, "name": "Layer 3", "visible": true}
+      ],
+      "artboard": {"w": 140, "h": 80}
+    }
+  ],
+  "activePageId": "page_test_combined"
+}

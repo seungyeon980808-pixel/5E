@@ -1,0 +1,49 @@
+{
+  "id": "physics-coil-circuit-001",
+  "subject": "physics",
+  "mode": "illustration_only",
+  "source": {
+    "file": "physics_coil_circuit_reference.png",
+    "page": 266
+  },
+  "components": [
+    { "id": "power_supply", "kind": "bench_power_supply", "count": 1, "region": "top", "order": 0 },
+    { "id": "switch", "kind": "switch_board", "count": 1, "region": "top_left", "order": 1 },
+    { "id": "resistor", "kind": "resistor_board", "count": 1, "region": "bottom_left", "order": 2 },
+    { "id": "coil", "kind": "solenoid", "count": 1, "region": "bottom_right", "order": 3 },
+    {
+      "id": "compasses",
+      "kind": "blank_compass_face",
+      "count": 8,
+      "region": "bottom_right",
+      "order": 4,
+      "repeat_layout": { "rows": 2, "columns": 4, "row_counts": [4, 4] }
+    }
+  ],
+  "connections": [
+    { "from": "power_supply", "to": "switch", "kind": "wire" },
+    { "from": "switch", "to": "resistor", "kind": "wire" },
+    { "from": "resistor", "to": "coil", "kind": "wire" },
+    { "from": "coil", "to": "power_supply", "kind": "wire" }
+  ],
+  "remove": [
+    "text",
+    "numbers",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "guide_lines",
+    "characters",
+    "background",
+    "logos",
+    "decorations"
+  ],
+  "style": {
+    "background": "white",
+    "palette": [0, 96, 176, 224, 255],
+    "gradient": false,
+    "shadow": false,
+    "texture_line_budget": 0
+  }
+}

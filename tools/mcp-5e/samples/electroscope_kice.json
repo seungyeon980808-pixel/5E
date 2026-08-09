@@ -1,0 +1,104 @@
+{
+  "version": "0.17",
+  "pages": [
+    {
+      "id": "page_electroscope_kice",
+      "name": "검전기 - 평가원 스타일",
+      "meta": { "number": "", "points": "" },
+      "objects": [
+        {
+          "type": "apparatus", "kind": "electroscope",
+          "x": -35, "y": -17, "w": 22, "h": 34,
+          "leafSpread": 0.55,
+          "strokeWidth": 0.25,
+          "strokeLevel": 0,
+          "id": "obj_escope_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 0
+        },
+        {
+          "type": "apparatus", "kind": "electroscope",
+          "x": 8, "y": -17, "w": 22, "h": 34,
+          "leafSpread": 0.88,
+          "strokeWidth": 0.25,
+          "strokeLevel": 0,
+          "id": "obj_escope_b",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 1
+        },
+        {
+          "type": "rect",
+          "x": -44, "y": -25, "w": 42, "h": 3,
+          "rotation": 0,
+          "fillLevel": 220, "fillNone": false, "fillStyle": "solid",
+          "label": "", "labelType": "quantity",
+          "strokeWidth": 0.5,
+          "id": "obj_rod_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "strokeLevel": 0, "order": 2
+        },
+        {
+          "type": "text",
+          "x": -44, "y": -29,
+          "text": "(+) 대전 막대",
+          "fontSize": 3.2,
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_label_rod_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 3
+        },
+        {
+          "type": "text",
+          "x": -44, "y": -22,
+          "text": "금속판",
+          "fontSize": 3.0,
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_label_plate_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 4
+        },
+        {
+          "type": "text",
+          "x": -44, "y": 14,
+          "text": "금속박",
+          "fontSize": 3.0,
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_label_leaf_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 5
+        },
+        {
+          "type": "text",
+          "x": -24, "y": 21,
+          "text": "(가) 대전되지 않은 검전기",
+          "fontSize": 3.5,
+          "fontWeight": "bold",
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_caption_a",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 6
+        },
+        {
+          "type": "text",
+          "x": 19, "y": 21,
+          "text": "(나) 대전 막대를 가까이 한 검전기",
+          "fontSize": 3.5,
+          "fontWeight": "bold",
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_caption_b",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 7
+        },
+        {
+          "type": "text",
+          "x": -24, "y": 26,
+          "text": "그림 1. 검전기의 정전기 유도",
+          "fontSize": 3.5,
+          "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+          "id": "obj_title",
+          "locked": false, "positionLocked": false, "layerId": 1, "order": 8
+        }
+      ],
+      "guides": [],
+      "layers": [
+        {"id": 1, "name": "Layer 1", "visible": true},
+        {"id": 2, "name": "Layer 2", "visible": true},
+        {"id": 3, "name": "Layer 3", "visible": true}
+      ],
+      "artboard": { "w": 120, "h": 70 }
+    }
+  ],
+  "activePageId": "page_electroscope_kice"
+}

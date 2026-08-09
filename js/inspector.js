@@ -26,7 +26,7 @@ import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.4.0"
 import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.4.0";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.4.0";
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.4.0";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.4.0";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.4.3";
 import { buildLayersSection } from "./inspector/section-layers.js?v=1.4.0";
 import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.4.0";
 

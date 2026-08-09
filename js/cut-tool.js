@@ -33,6 +33,15 @@ let _bboxLayer = null;   // 전체 오브젝트 bbox 표시 <g>
 let _bboxRaf = 0;
 let _space = false;
 let _idc = 0;
+
+export function preferredCutSelectionIds(pieces) {
+  const all = (pieces || []).map((piece) => piece?.id).filter(Boolean);
+  const extracted = (pieces || [])
+    .filter((piece) => (piece?.cutouts || []).some((cut) => cut?.type === "outside-poly"))
+    .map((piece) => piece.id)
+    .filter(Boolean);
+  return extracted.length ? extracted : all;
+}
 let _pendingCuts = [];
 let _pendingSeq = 0;
 let _delayedDraft = null;  // { start, current, free[] }
@@ -594,7 +603,7 @@ function applyCut(path) {
     const snapshot = JSON.parse(JSON.stringify(s.objects));
     const map = new Map(results.map((r) => [r.id, r.pieces]));
     const out = [];
-    const addedIds = [];
+    const addedPieces = [];
     for (const o of s.objects) {
       const pieces = map.get(o.id);
       if (!pieces) { out.push(o); continue; }
@@ -603,13 +612,13 @@ function applyCut(path) {
         piece.layerId = o.layerId;
         piece.order = o.order;
         out.push(piece);
-        addedIds.push(piece.id);
+        addedPieces.push(piece);
       }
     }
     s.objects = out;
     s.undoStack.push(snapshot);
     s.redoStack = [];
-    s.selectedIds = addedIds;
+    s.selectedIds = preferredCutSelectionIds(addedPieces);
     s.targetedId = null;
   });
 }
