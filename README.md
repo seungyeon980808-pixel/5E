@@ -12,7 +12,7 @@
 <p><strong>과학교사를 위한 시험용 이미지 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://seungyeon980808-pixel.github.io/5E/">▶ 바로 써보기</a></p>
 
 <p><a href="https://github.com/seungyeon980808-pixel/5E/releases/latest">최신 릴리즈 <strong>v1.4.0</strong> — 무엇이 바뀌었나</a></p>
-<p><a href="docs/RELEASE_NOTES_v1.5.0.md"><strong>v1.5.0 릴리즈 노트</strong> — 배포 준비 중인 변경 전체 보기</a></p>
+<p><a href="docs/RELEASE_NOTES_v1.5.0.html"><strong>v1.5.0 릴리즈 노트</strong> — 배포 준비 중인 변경 전체 보기</a></p>
 
 </div>
 
@@ -413,7 +413,7 @@ python -m http.server 8000
 
 | 판 | 무엇이 들어갔나 |
 |---|---|
-| [**v1.5.0**](docs/RELEASE_NOTES_v1.5.0.md) *(배포 준비 중)* | 이미지 작업대 · 다중 참고 이미지와 영역 요청 · 분리형 자르기 · 드래그 아트보드 · 투명 배경 · Windows 설치판 · `.5e` 프로젝트 · 평가원 도식 Engine V2 |
+| [**v1.5.0**](docs/RELEASE_NOTES_v1.5.0.html) *(배포 준비 중)* | 이미지 작업대 · 다중 참고 이미지와 영역 요청 · 분리형 자르기 · 드래그 아트보드 · 투명 배경 · Windows 설치판 · `.5e` 프로젝트 · 평가원 도식 Engine V2 |
 | [v1.4.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.4.0) | 과목별 과학 부품 확장 · 3D 도구 · 용수철·파동·전자기 도구 개선 · 정렬과 라벨 가림 개선 |
 | [**v1.3.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.3.0) | 입체 도구(실험) · 용수철 재설계 · 전기력선/자기력선/정상파 · 정렬·간격 통일 · 라벨 가림 개선 · MCP 도구 |
 | [v1.2.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.2.0) | 표시 탭 · 라벨러 표시점 · 평가원 화살촉 · 자간/장평 · 페이지 일괄 내보내기 |

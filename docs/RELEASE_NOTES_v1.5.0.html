@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>5E v1.5.0 릴리즈 노트</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #dbe4ef;
+      --paper: #f7f9fc;
+      --card: #ffffff;
+      --navy: #0d1524;
+      --blue: #2f81f7;
+      --green: #20a84b;
+      --purple: #8357e8;
+      --amber: #d99500;
+      --shadow: 0 24px 70px rgba(15, 23, 42, .12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(47,129,247,.10), transparent 25rem),
+        radial-gradient(circle at 90% 24%, rgba(131,87,232,.08), transparent 28rem),
+        var(--paper);
+      font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+      line-height: 1.75;
+      word-break: keep-all;
+    }
+    a { color: inherit; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      background: var(--navy);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: -30% -10%;
+      background:
+        radial-gradient(circle at 18% 40%, rgba(47,129,247,.35), transparent 24%),
+        radial-gradient(circle at 75% 10%, rgba(131,87,232,.28), transparent 22%);
+      pointer-events: none;
+    }
+    .hero-inner, .layout, .footer-inner { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+    .hero-inner { position: relative; padding: 68px 0 54px; }
+    .eyebrow { margin: 0 0 14px; color: #78b3ff; font-size: 13px; font-weight: 800; letter-spacing: .14em; }
+    h1 { max-width: 900px; margin: 0; font-size: clamp(38px, 7vw, 74px); line-height: 1.08; letter-spacing: -.045em; }
+    .lead { max-width: 780px; margin: 24px 0 0; color: #b8c5d9; font-size: clamp(17px, 2.3vw, 22px); }
+    .badges { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 28px; }
+    .badge { padding: 7px 11px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; background: rgba(255,255,255,.06); color: #dbeafe; font-size: 12px; font-weight: 700; }
+    .beta { color: #ffd978; border-color: rgba(255,217,120,.35); background: rgba(217,149,0,.12); }
+    .hero-art { margin-top: 40px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.25); }
+    .hero-art img { display: block; width: 100%; height: auto; }
+    .layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 46px; padding: 54px 0 100px; }
+    .toc { position: sticky; top: 24px; align-self: start; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.88); backdrop-filter: blur(18px); box-shadow: 0 12px 30px rgba(15,23,42,.06); }
+    .toc strong { display: block; margin-bottom: 10px; font-size: 13px; color: var(--muted); letter-spacing: .06em; }
+    .toc a { display: block; padding: 7px 0; color: #334155; font-size: 14px; text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    main { min-width: 0; }
+    section { scroll-margin-top: 24px; margin-bottom: 68px; }
+    h2 { margin: 0 0 18px; font-size: clamp(28px, 4.2vw, 43px); line-height: 1.24; letter-spacing: -.035em; }
+    h3 { margin: 32px 0 10px; font-size: 22px; letter-spacing: -.02em; }
+    p { margin: 0 0 16px; }
+    ul, ol { padding-left: 1.35em; }
+    li { margin: 7px 0; }
+    .summary-grid, .stat-grid, .mode-grid, .limit-grid { display: grid; gap: 14px; }
+    .summary-grid { grid-template-columns: repeat(3, 1fr); }
+    .stat-grid { grid-template-columns: repeat(4, 1fr); }
+    .mode-grid, .limit-grid { grid-template-columns: repeat(2, 1fr); }
+    .card { padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); box-shadow: 0 12px 32px rgba(15,23,42,.05); }
+    .card .kicker { color: var(--blue); font-size: 12px; font-weight: 800; letter-spacing: .08em; }
+    .card h3 { margin: 6px 0 8px; }
+    .card p:last-child { margin-bottom: 0; }
+    .stat { text-align: center; }
+    .stat b { display: block; color: var(--green); font-size: 31px; line-height: 1.15; }
+    .stat span { display: block; margin-top: 7px; color: var(--muted); font-size: 13px; }
+    .visual { margin: 28px 0 18px; overflow: hidden; border-radius: 20px; box-shadow: var(--shadow); background: #fff; }
+    .visual img { display: block; width: 100%; height: auto; }
+    .caption { margin: -2px 4px 24px; color: var(--muted); font-size: 13px; text-align: center; }
+    .callout { margin: 24px 0; padding: 20px 22px; border-left: 4px solid var(--blue); border-radius: 0 14px 14px 0; background: #eaf3ff; }
+    .callout.warn { border-color: var(--amber); background: #fff7df; }
+    .callout strong { display: block; margin-bottom: 4px; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 20px 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #fff; font-size: 14px; }
+    th, td { padding: 13px 15px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #eef4fb; color: #334155; font-size: 12px; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: 0; }
+    code { padding: .16em .4em; border-radius: 5px; background: #e9eef5; font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+    .check { color: var(--green); font-weight: 800; }
+    footer { color: #aebdd2; background: var(--navy); }
+    .footer-inner { padding: 34px 0; font-size: 13px; }
+    .print-only { display: none; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .summary-grid, .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .hero-inner, .layout, .footer-inner { width: min(100% - 24px, 1180px); }
+      .hero-inner { padding-top: 44px; }
+      .layout { gap: 28px; padding-top: 28px; }
+      .summary-grid, .stat-grid, .mode-grid, .limit-grid { grid-template-columns: 1fr; }
+      .card { padding: 18px; }
+      th, td { padding: 10px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .toc { display: none; }
+      .layout { display: block; width: 100%; }
+      .hero { print-color-adjust: exact; }
+      section { break-inside: avoid; }
+      .visual { box-shadow: none; }
+      .print-only { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="eyebrow">5E RELEASE NOTES · AUGUST 2026</p>
+      <h1>그림을 가져오고,<br />고치고, 다시 쓰는 5E</h1>
+      <p class="lead">v1.5.0은 이미지·기출문제·AI·편집기를 하나의 작업 흐름으로 연결하고, 자르기와 아트보드부터 Windows 설치판과 평가원 도식 엔진까지 크게 다시 정리한 판입니다.</p>
+      <div class="badges">
+        <span class="badge beta">현재 검증 빌드 v1.5.0-beta.1</span>
+        <span class="badge">상세 변경 10개 장</span>
+        <span class="badge">SVG 도해 10개</span>
+        <span class="badge">Node 138/138</span>
+        <span class="badge">Desktop 40/40</span>
+      </div>
+      <figure class="hero-art"><img src="images/release-v1.5.0/01-overview.svg" alt="v1.5.0 작업 흐름" /></figure>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="목차">
+      <strong>CONTENTS</strong>
+      <a href="#overview">한눈에 보기</a>
+      <a href="#ai">AI 이미지 작업대</a>
+      <a href="#references">다중 참고 이미지</a>
+      <a href="#cut">분리형 자르기</a>
+      <a href="#artboard">드래그 아트보드</a>
+      <a href="#background">투명 배경</a>
+      <a href="#workflow">라이브러리 연결</a>
+      <a href="#desktop">.5e와 Windows</a>
+      <a href="#tools">튜토리얼·도구</a>
+      <a href="#engine">Engine V2</a>
+      <a href="#verification">검증 결과</a>
+      <a href="#limits">알려진 제한</a>
+      <a href="#upgrade">업그레이드</a>
+    </nav>
+
+    <main>
+      <section id="overview">
+        <h2>이번 판에서 가장 크게 달라진 것</h2>
+        <div class="summary-grid">
+          <article class="card"><span class="kicker">WORKFLOW</span><h3>한곳에서 이어지는 작업</h3><p>외부 이미지, 내부 이미지, 기출문제를 불러와 AI와 편집기로 곧바로 넘깁니다.</p></article>
+          <article class="card"><span class="kicker">EDITING</span><h3>삭제가 아닌 분리</h3><p>이미지 내부를 도려내도 사라지지 않고 두 개의 독립 객체로 남습니다.</p></article>
+          <article class="card"><span class="kicker">ENGINE</span><h3>입력에 맞춘 세 경로</h3><p>로컬 벡터, 빠른 장면, 이미지 생성 중 안전한 경로를 선택합니다.</p></article>
+        </div>
+        <div class="callout"><strong>릴리즈 범위</strong>v1.4.0이 과학 부품과 그리기 도구를 넓혔다면, v1.5.0은 밖의 그림을 5E 안으로 가져와 비교하고 부분 수정한 뒤 프로젝트로 보존하는 흐름을 완성했습니다.</div>
+      </section>
+
+      <section id="ai">
+        <h2>AI 이미지 생성 — 작은 보조 창에서 작업대로</h2>
+        <p>AI 기능을 중앙 모달형 <strong>이미지 작업대</strong>로 다시 만들었습니다. 왼쪽에는 생성 결과와 참고 이미지, 오른쪽에는 대화와 요청 입력을 배치해 결과를 보면서 지시를 이어갑니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/02-ai-workspace.svg" alt="AI 이미지 작업대" /></figure>
+        <h3>대화와 생성은 다른 동작입니다</h3>
+        <p>요구사항이 확정되지 않았다면 보내기 버튼으로 대화만 이어갑니다. 실제 그림이 필요할 때만 <strong>이미지 생성</strong>을 누릅니다. 상투적인 요청문을 자동으로 작성하지 않으며 사용자의 문장이 요청 기록에 그대로 남습니다.</p>
+        <ol>
+          <li>요청과 참고 자료 정리</li><li>구조와 배치 분석</li><li>이미지 서버 생성 대기</li><li>투명 배경과 편집용 결과 정리</li>
+        </ol>
+        <p>이미지가 도착하면 대화에 완료 안내를 남기고 <strong>캔버스로 출력</strong> 버튼으로 현재 페이지에 삽입합니다. 이미지 생성 뒤 작업이 잠기던 문제도 turn 종료 확인과 복구 절차로 고쳤습니다.</p>
+        <div class="mode-grid">
+          <article class="card"><span class="kicker">그림형</span><h3>문자 없이 구조만</h3><p>문자·숫자·기호·라벨·지시선·화살표를 만들지 않습니다. 5E에서 정확한 표기를 나중에 붙입니다.</p></article>
+          <article class="card"><span class="kicker">완성형</span><h3>필요한 표기까지</h3><p>사용자가 요청한 표기만 포함하고 장식적 효과와 불필요한 명암을 억제합니다.</p></article>
+        </div>
+        <h3>연결과 모델 선택</h3>
+        <ul>
+          <li>로그인하면 자동으로 연결하며 불필요한 연결 중지 조작을 줄였습니다.</li>
+          <li>로그인 계정, 잔여 한도, 누적 토큰을 한 줄에서 확인합니다.</li>
+          <li>Luna를 기본 권장 모델로 사용하며 다른 모델에는 지연 가능성 안내를 표시합니다.</li>
+          <li>모델, 추론 수준, Fast 속도 설정을 작업대에서 선택합니다.</li>
+          <li>작업마다 사용한 입력·출력 토큰과 소요 시간을 대화 하단에 기록합니다.</li>
+        </ul>
+      </section>
+
+      <section id="references">
+        <h2>참고 이미지를 여러 장 쓰고, 영역마다 따로 지시합니다</h2>
+        <p>참고 자료는 <strong>이미지 불러오기</strong>, <strong>이미지 라이브러리</strong>, <strong>기출문제 라이브러리</strong>의 세 경로에서 가져옵니다. 파일 탐색기와 화면 영역 캡처도 같은 불러오기 메뉴에 들어갑니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/03-reference-regions.svg" alt="다중 참고 이미지와 영역 요청" /></figure>
+        <ul>
+          <li>여러 이미지를 동시에 선택해 AI 작업대로 전달합니다.</li>
+          <li>이미지 위를 드래그하면 번호가 붙은 요청 영역이 만들어집니다.</li>
+          <li>영역별 요청은 접이식 목록에서 언제든 수정하거나 삭제합니다.</li>
+          <li>참고 이미지뿐 아니라 생성 결과의 특정 영역에도 수정 요청을 답니다.</li>
+          <li>이미지 비교에서는 좌우 자료를 골라 1대1로 확대 비교합니다.</li>
+          <li>확대·축소·수정 버튼은 제목 옆에 모아 세로 공간을 줄였습니다.</li>
+        </ul>
+        <h3>전송 성능 정리</h3>
+        <p>이미 보낸 이미지는 대화마다 반복 전송하지 않고, 동일 픽셀 자료는 중복 제거합니다. 큰 이미지는 선화 여부에 맞춰 축소·압축하고 여러 자료는 개요·관련 영역·접촉 시트로 제한합니다. 완전히 같은 요청과 입력의 성공 결과는 캐시에서 즉시 다시 엽니다.</p>
+      </section>
+
+      <section id="cut">
+        <h2>자르기 — 도려낸 부분이 사라지지 않습니다</h2>
+        <p>기존 가위는 이미지를 양 끝까지 가르는 데 적합했지만 내부의 특정 부분만 떼어내기 어려웠습니다. 이제 닫힌 영역도 분리할 수 있으며, 결과는 삭제되지 않습니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/04-cut-separate.svg" alt="자르기 결과가 두 객체로 분리됨" /></figure>
+        <ul>
+          <li>바깥 부분과 도려낸 부분이 각각 독립 이미지 객체가 됩니다.</li>
+          <li>작업이 끝나면 도려낸 부분만 선택된 상태가 됩니다.</li>
+          <li>이동·회전·크기·레이어·삭제를 두 조각에 따로 적용합니다.</li>
+          <li>지연 자르기는 결과를 확인한 뒤 오른쪽 패널에서 확정합니다.</li>
+          <li>선택 조건, 팝업 조건, undo 동작도 함께 정리했습니다.</li>
+        </ul>
+        <p>스마트 오려내기는 비슷한 색과 연결된 픽셀을 기준으로 대상을 찾습니다. 민감도를 조절하고 미리보기에서 확인한 뒤 분리합니다.</p>
+      </section>
+
+      <section id="artboard">
+        <h2>아트보드 — 드래그한 위치가 새 작업 영역이 됩니다</h2>
+        <p>드래그로 영역 지정은 모서리를 늘이는 기능이 아닙니다. 내보내기 범위를 고르듯 캔버스에서 사각형을 끌면 그 좌표와 크기가 새 아트보드가 됩니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/05-artboard-drag.svg" alt="드래그 아트보드 지정" /></figure>
+        <ul>
+          <li>커서가 닿는 지점과 실제 선택 사각형의 좌표를 맞췄습니다.</li>
+          <li>선택 중 너비와 높이를 mm로 표시합니다.</li>
+          <li><code>Enter</code> 또는 크기 팝업 옆의 <strong>지정</strong> 버튼으로 확정합니다.</li>
+          <li>객체를 자르지 않고 아트보드 영역만 다시 정의합니다.</li>
+          <li>Ctrl+A 전체 선택, 내보내기 확정, 한국어 자동 줄바꿈도 보강했습니다.</li>
+        </ul>
+      </section>
+
+      <section id="background">
+        <h2>이미지 배경 — 흰 사각형을 실제 투명 영역으로</h2>
+        <p>AI 생성 결과와 외부 이미지의 흰 배경 때문에 다른 도형 위에 올렸을 때 큰 사각형처럼 보이던 문제를 정리했습니다. 캔버스 삽입 전 배경을 분석해 실제 RGBA 투명 이미지로 만듭니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/06-transparent-background.svg" alt="흰 배경 투명화 전후" /></figure>
+        <ul>
+          <li>미리보기에서는 결과 확인이 쉽도록 흰 판 위에 표시합니다.</li>
+          <li>캔버스에서는 선 바깥 영역이 실제로 투명해 뒤쪽 도형이 보입니다.</li>
+          <li>후처리에 실패한 이미지는 성공 캐시에 저장하지 않습니다.</li>
+          <li>배경 제거 알고리즘 버전을 캐시 키에 넣어 오래된 결과 오염을 막습니다.</li>
+        </ul>
+      </section>
+
+      <section id="workflow">
+        <h2>이미지·기출문제·AI 기능이 한 줄로 이어집니다</h2>
+        <ul>
+          <li>오브젝트 검색은 돋보기 아이콘으로 줄여 격자 왼쪽에 배치했습니다.</li>
+          <li><strong>기출문항 검색</strong>을 <strong>기출문제 라이브러리</strong>로 통일했습니다.</li>
+          <li>이미지·기출 라이브러리의 선택 자료를 AI 작업대로 바로 보냅니다.</li>
+          <li>라이브러리만 닫아도 뒤의 AI 작업대는 그대로 유지됩니다.</li>
+          <li>복수 선택한 이미지를 한꺼번에 전달할 수 있습니다.</li>
+          <li>이미지를 불러오면 추가 버튼 없이 참고 이미지 영역에 바로 표시됩니다.</li>
+          <li>격자 아이콘과 버튼 정렬, 글자 크기와 위계도 통일했습니다.</li>
+        </ul>
+      </section>
+
+      <section id="desktop">
+        <h2><code>.5e</code> 프로젝트와 Windows 설치판</h2>
+        <p>프로젝트 저장 확장자를 <code>.5e</code>로 바꿨습니다. 내부는 안전한 JSON 구조를 유지해 기존 저장·불러오기·자동 저장 흐름과 호환됩니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/07-project-desktop.svg" alt="웹과 Windows의 5E 프로젝트 호환" /></figure>
+        <p>Windows 설치판은 웹판과 별개의 편집기가 아닙니다. 같은 편집기와 프로젝트 형식을 Electron에서 열고, AI 연결·창 캡처처럼 데스크톱에서만 가능한 기능을 안전한 preload 경계 뒤에 둡니다.</p>
+        <ul>
+          <li>NSIS 설치 파일과 바탕화면 바로가기</li>
+          <li>Photoshop식 시작 로딩 화면</li>
+          <li>GitHub Actions 기반 Windows 패키징</li>
+          <li>설치 파일과 SHA-256 체크섬 배포 절차</li>
+          <li>코드 서명 정책과 SmartScreen 안내</li>
+          <li>웹판 AI 버튼에서 설치판 안내와 GitHub Release 연결</li>
+        </ul>
+      </section>
+
+      <section id="tools">
+        <h2>회전·튜토리얼·과학 부품 보강</h2>
+        <figure class="visual"><img src="images/release-v1.5.0/08-tutorial-tools.svg" alt="심화 튜토리얼과 도구 보강" /></figure>
+        <h3>30° 빠른 회전</h3>
+        <p><code>PageUp</code>/<code>PageDown</code>의 5° 회전에 더해 <code>Shift+PageUp</code>/<code>Shift+PageDown</code>으로 30°씩 회전합니다. 회전된 객체를 다시 변형할 때 선택 상자와 스마트 가이드가 원래 축으로 튀던 문제도 고쳤습니다.</p>
+        <h3>심화 튜토리얼 2·3·4</h3>
+        <p>저장·검색·라벨러·중앙 불러오기·화면 비우기·감싸기 시연을 실제 작업 흐름으로 연결하고, 읽기 단계에서 오조작해 과정에 갇히는 문제를 막았습니다.</p>
+        <h3>검전기와 MCP</h3>
+        <p>검전기를 정식 장치 부품으로 추가하고 잎 벌어짐과 종횡비를 프로젝트 저장 규칙에 포함했습니다. MCP에는 출처가 검증된 손·학생·우주선 자산과 안전한 부품 생성 규칙을 보강했습니다.</p>
+      </section>
+
+      <section id="engine">
+        <h2>평가원 과학 도식 Engine V2</h2>
+        <p>Engine V2는 단일 프롬프트가 아니라 입력을 분석하고 적합한 경로를 고른 뒤 결과를 평가·교정하는 패키지입니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/09-engine-paths.svg" alt="Engine V2 세 생성 경로" /></figure>
+        <table>
+          <thead><tr><th>경로</th><th>적합한 입력</th><th>검증 속도</th><th>성격</th></tr></thead>
+          <tbody>
+            <tr><td><strong>로컬 벡터</strong></td><td>정확히 등록된 반복 구조 19종</td><td>약 1ms</td><td>모델 호출 없이 편집 객체 생성</td></tr>
+            <tr><td><strong>빠른 장면</strong></td><td>참고 이미지 없는 단순 회로·장치·그래프</td><td>중앙값 약 7.2초</td><td>Luna가 JSON을 만들고 5E가 렌더링</td></tr>
+            <tr><td><strong>이미지 생성</strong></td><td>교과서·기출·손그림·복잡한 삽화</td><td>수십 초~수분</td><td>원격 이미지 서버 지연에 따라 변동</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn"><strong>7초 변환으로 오해하면 안 됩니다</strong>대부분의 교과서 그림이 7초 안에 평가원 스타일로 바뀌는 것은 아닙니다. 빠른 두 경로는 참고 이미지 없이 구조가 명확한 일부 도식에만 적용됩니다. 원형 보존이 필요한 변환과 사람·생물·복잡 장치는 이미지 생성 경로를 사용합니다.</div>
+        <h3>이미지 생성 지연을 줄인 방법</h3>
+        <ul>
+          <li>대화 thread와 렌더 thread 분리</li>
+          <li>렌더마다 짧은 임시 thread 사용</li>
+          <li>이미지 도구 호출 1회 제한과 자동 재시도 금지</li>
+          <li>중복 첨부 전송 제거와 참고 이미지 최적화</li>
+          <li>이미지 도착 뒤 남은 turn 종료와 다음 작업 잠금 해제</li>
+          <li>취소 후 원격 작업이 겹치지 않도록 single-flight 적용</li>
+        </ul>
+        <h3>검증 결과를 숨기지 않습니다</h3>
+        <p>Engine V2.2 동결 최종 24사례 중 22사례가 통과해 <strong>91.7%</strong>를 기록했습니다. 정확 컴파일 결과는 21/24, <strong>87.5%</strong>였습니다. 개발 36사례는 27/36, <strong>75%</strong>로 화학·지구과학의 복잡한 수정에 약점이 남았습니다.</p>
+        <p>성공 결과뿐 아니라 실패 프롬프트, 구조 손실·과도한 회색·편집 범위 초과 같은 실패 유형, 교정 이력과 freeze 해시도 저장했습니다.</p>
+      </section>
+
+      <section id="verification">
+        <h2>통합 검증 결과</h2>
+        <figure class="visual"><img src="images/release-v1.5.0/10-validation.svg" alt="v1.5.0 통합 검증 결과" /></figure>
+        <div class="stat-grid">
+          <article class="card stat"><b>138/138</b><span>전체 Node</span></article>
+          <article class="card stat"><b>40/40</b><span>Desktop</span></article>
+          <article class="card stat"><b>20/20</b><span>Engine Python</span></article>
+          <article class="card stat"><b>0</b><span>Freeze mismatch</span></article>
+        </div>
+        <table>
+          <thead><tr><th>검증</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td>로컬 자산 재현</td><td class="check">19사례 × 3회 = 57/57</td></tr>
+            <tr><td>빠른 장면 반복성</td><td class="check">9사례 × 3회 = 27/27</td></tr>
+            <tr><td>기출 자산 감사</td><td class="check">PNG 3,961개 · atlas 936행</td></tr>
+            <tr><td>MCP smoke</td><td class="check">통과</td></tr>
+            <tr><td>Windows NSIS x64</td><td class="check">패키징 성공</td></tr>
+          </tbody>
+        </table>
+        <p>대량 생성 중간 결과 1,909파일·341MiB는 Git 이력에서 제외했습니다. 재현 코드, 사례 정의, freeze, 요약 JSON, 실패·교정 이력만 저장소에 남겼습니다.</p>
+      </section>
+
+      <section id="limits">
+        <h2>알려진 제한</h2>
+        <div class="limit-grid">
+          <article class="card"><h3>원격 생성 속도</h3><p>서버 상태에 따라 수십 초에서 수분까지 달라집니다. Luna·낮은 추론·Fast가 권장값이지만 시간을 보장하지 않습니다.</p></article>
+          <article class="card"><h3>과학적 정확성</h3><p>참고 이미지 변환 결과는 자동 보장되지 않습니다. 구조·연결·접촉 관계를 생성 뒤 확인해야 합니다.</p></article>
+          <article class="card"><h3>초고속 경로 범위</h3><p>엄격한 19개 패턴만 로컬에서 즉시 생성합니다. 표현이나 부품이 달라지면 다른 경로로 전환합니다.</p></article>
+          <article class="card"><h3>배포와 보안</h3><p>자동 업데이트와 코드 서명은 아직 없습니다. SmartScreen 경고와 lockfile high severity 경고 1건이 남아 있습니다.</p></article>
+        </div>
+        <div class="callout"><strong>예전 AI 브랜치</strong>구형 <code>feat/ai-assist</code>의 Cloudflare Worker와 채팅 UI는 포함하지 않았습니다. v1.5.0은 Windows Desktop의 로컬 Codex 연결을 사용합니다.</div>
+      </section>
+
+      <section id="upgrade">
+        <h2>업그레이드 안내</h2>
+        <ol>
+          <li>웹판 모듈이 갱신되지 않으면 <code>Ctrl+F5</code>로 새로고침합니다.</li>
+          <li>Windows판은 기존 5E를 종료한 뒤 새 설치 파일을 실행합니다.</li>
+          <li>기존 프로젝트 JSON과 <code>.5e</code> 파일은 그대로 열 수 있습니다.</li>
+          <li>AI 기능에는 Codex 설치와 로그인이 필요합니다. 일반 편집 기능은 AI 없이 동작합니다.</li>
+          <li>GitHub Release의 SHA-256 값과 설치 파일 체크섬을 비교할 수 있습니다.</li>
+        </ol>
+        <div class="callout"><strong>배포 상태</strong>현재 Windows 검증 빌드는 <code>v1.5.0-beta.1</code>입니다. 공개 태그와 설치 파일은 최종 배포 절차에서 같은 버전으로 맞춥니다.</div>
+        <p><strong>v1.5.0은 AI가 그림을 대신 완성하는 판이 아니라, 그림을 가져와 비교하고 부분을 지정해 요청한 뒤 5E에서 끝까지 고칠 수 있게 만든 판입니다.</strong></p>
+      </section>
+    </main>
+  </div>
+
+  <footer><div class="footer-inner">5E — 과학교사를 위한 시험용 이미지 제작기 · v1.5.0 release notes · 2026</div></footer>
+</body>
+</html>
