@@ -66,6 +66,7 @@ function renderObjectById(state, id) {
 
 /* ===== SNAP PREVIEW STATE: transient render data, never persisted ===== */
 let snapPreview = null;
+let smartGuides = [];
 
 export function setSnapPreview(preview) {
   const validPoint = (point) => point
@@ -73,6 +74,38 @@ export function setSnapPreview(preview) {
   snapPreview = preview && validPoint(preview.from) && validPoint(preview.to)
     ? preview
     : null;
+}
+
+// Transient PowerPoint-style alignment guides. They are display-only and never
+// enter document state or export output.
+export function setSmartGuides(guides) {
+  smartGuides = Array.isArray(guides) ? guides.filter((guide) =>
+    guide && (guide.axis === "x" || guide.axis === "y")
+    && Number.isFinite(guide.position) && Number.isFinite(guide.from) && Number.isFinite(guide.to)
+  ) : [];
+}
+
+function renderSmartGuides(scene, zoom) {
+  if (!smartGuides.length) return;
+  const scale = zoom > 0 ? zoom : 1;
+  const group = document.createElementNS(SVG_NS, "g");
+  group.id = "smart-guides";
+  group.setAttribute("pointer-events", "none");
+  for (const guide of smartGuides) {
+    const line = document.createElementNS(SVG_NS, "line");
+    if (guide.axis === "x") {
+      line.setAttribute("x1", guide.position); line.setAttribute("x2", guide.position);
+      line.setAttribute("y1", guide.from); line.setAttribute("y2", guide.to);
+    } else {
+      line.setAttribute("x1", guide.from); line.setAttribute("x2", guide.to);
+      line.setAttribute("y1", guide.position); line.setAttribute("y2", guide.position);
+    }
+    line.setAttribute("stroke", "#d63384");
+    line.setAttribute("stroke-width", 1.2 / scale);
+    line.setAttribute("stroke-dasharray", `${5 / scale} ${3 / scale}`);
+    group.appendChild(line);
+  }
+  scene.appendChild(group);
 }
 
 /* ===== SNAP PREVIEW OVERLAY: closest pair only, zoom-invariant styling ===== */
@@ -511,6 +544,7 @@ export function render(state) {
   }
 
   /* ===== SNAP PREVIEW OVERLAY HOOK: same transient layer as selection handles ===== */
+  renderSmartGuides(scene, getZoom());
   renderSnapPreview(scene, getZoom());
 
   // ----- live drag preview (ephemeral; not in state.objects yet) -----
