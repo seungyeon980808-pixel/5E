@@ -41,8 +41,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $tag = "${{ github.ref_name }}"
           $assets = @(
             (Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1).FullName
             (Resolve-Path -LiteralPath release/SHA256SUMS.txt).Path
           )
-          & gh release create "${{ github.ref_name }}" @assets --generate-notes --title "5E ${{ github.ref_name }}"
+          $notesPath = "docs/RELEASE_NOTES_$tag.md"
+          if (Test-Path -LiteralPath $notesPath) {
+            $firstLine = Get-Content -LiteralPath $notesPath -Encoding utf8 -TotalCount 1
+            $releaseTitle = if ($firstLine -match '^<!-- release-title: (.+) -->$') { $Matches[1] } else { "5E $tag" }
+            & gh release create $tag @assets --notes-file $notesPath --title $releaseTitle
+          } else {
+            & gh release create $tag @assets --generate-notes --title "5E $tag"
+          }
