@@ -9,7 +9,7 @@
 import {
   binarize, connectedComponents, traceContours,
   fitComponentRect, fitStrokedRegion, mergeBandFills,
-} from "file:///C:/Users/user/Desktop/project/51_5E/5E_objline_dev/js/image-vectorize.js";
+} from "../js/image-vectorize.js";
 
 /* ===== 합성 이미지 헬퍼 (test-ellipse/test-smooth 스타일 준수) ===== */
 function makeImage(w, h) {

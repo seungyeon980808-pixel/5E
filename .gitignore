@@ -52,3 +52,4 @@ __pycache__/
 /docs/training/eval-repro-*.png
 /docs/training/eval-repro-batch-*.png
 /docs/training/codex-mcp-electroscope-test.png
+/docs/training/eval-repro-*.svg
