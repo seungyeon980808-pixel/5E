@@ -1,0 +1,78 @@
+{
+  "case_id": "v22-dev-chemistry-gas-over-water-move-jar",
+  "split": "development",
+  "subject": "chemistry",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/chemistry/gas-over-water.png",
+  "scenario_family": "gas-over-water",
+  "user_instruction": "집기병만 오른쪽으로 옮기고 수조 속 관 끝과의 관계를 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "reaction flask",
+    "stopper",
+    "delivery tube",
+    "water trough",
+    "inverted gas jar"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the inverted gas jar",
+      "change": "move right without resizing while keeping its mouth submerged"
+    },
+    {
+      "type": "connect",
+      "target": "the delivery tube endpoint",
+      "change": "extend inside the trough to terminate under the moved jar"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "tube starts at flask and terminates inside inverted jar under water",
+    "jar opening is below water surface",
+    "gas region is above water inside jar",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "집기병만 오른쪽으로 옮기고 수조 속 관 끝과의 관계를 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [
+    "water in trough and jar"
+  ],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.48,
+        0.02,
+        1.0,
+        0.96
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

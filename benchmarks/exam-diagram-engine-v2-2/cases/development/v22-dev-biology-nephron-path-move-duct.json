@@ -1,0 +1,76 @@
+{
+  "case_id": "v22-dev-biology-nephron-path-move-duct",
+  "split": "development",
+  "subject": "biology",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/biology/nephron-path.png",
+  "scenario_family": "nephron-path",
+  "user_instruction": "오른쪽 집합관만 더 오른쪽으로 옮기고 세뇨관 연결을 연장한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one renal corpuscle",
+    "one continuous tubule",
+    "one collecting duct",
+    "two vessel stubs"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the collecting duct",
+      "change": "move right without resizing"
+    },
+    {
+      "type": "connect",
+      "target": "the continuous tubule",
+      "change": "extend its terminal segment to the moved collecting duct"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "tubule starts at corpuscle and joins collecting duct",
+    "vessel stubs connect only to corpuscle",
+    "tubule remains continuous",
+    "collecting duct is not merged with vessels",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "오른쪽 집합관만 더 오른쪽으로 옮기고 세뇨관 연결을 연장한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.38,
+        0.12,
+        0.94,
+        0.94
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

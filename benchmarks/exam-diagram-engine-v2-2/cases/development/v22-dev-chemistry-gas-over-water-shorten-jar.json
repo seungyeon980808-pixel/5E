@@ -1,0 +1,73 @@
+{
+  "case_id": "v22-dev-chemistry-gas-over-water-shorten-jar",
+  "split": "development",
+  "subject": "chemistry",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/chemistry/gas-over-water.png",
+  "scenario_family": "gas-over-water",
+  "user_instruction": "집기병만 높이를 줄이고 입구가 물속에 잠긴 상태를 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "reaction flask",
+    "stopper",
+    "delivery tube",
+    "water trough",
+    "inverted gas jar"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "resize",
+      "target": "the inverted gas jar",
+      "change": "reduce height from the top while preserving width and submerged opening position"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "tube starts at flask and terminates inside inverted jar under water",
+    "jar opening is below water surface",
+    "gas region is above water inside jar",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "집기병만 높이를 줄이고 입구가 물속에 잠긴 상태를 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [
+    "water in trough and jar"
+  ],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.5,
+        0.04,
+        0.82,
+        0.88
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

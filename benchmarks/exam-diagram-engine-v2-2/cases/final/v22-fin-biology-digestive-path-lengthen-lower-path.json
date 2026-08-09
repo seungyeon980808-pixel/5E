@@ -1,0 +1,56 @@
+{
+  "case_id": "v22-fin-biology-digestive-path-lengthen-lower-path",
+  "split": "final",
+  "subject": "biology",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-biology-digestive-path.png",
+  "scenario_family": "digestive-path",
+  "user_instruction": "아래쪽 굽은 관의 끝을 더 아래로 연장한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one mouth",
+    "one esophagus",
+    "one stomach",
+    "one intestinal path",
+    "one terminal tract"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "resize",
+      "target": "the lower winding digestive path",
+      "change": "lengthen downward while preserving continuity and width"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "digestive tube is one continuous path",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "아래쪽 굽은 관의 끝을 더 아래로 연장한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.24,
+        0.46,
+        0.76,
+        1.0
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

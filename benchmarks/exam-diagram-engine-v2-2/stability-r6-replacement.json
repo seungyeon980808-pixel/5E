@@ -1,0 +1,9 @@
+{
+  "benchmark_version": "2.2-r6-stability-replacement",
+  "source_split": "development",
+  "purpose": "Replacement for the geometrically impossible closed-switch stability fixture.",
+  "repetitions": 3,
+  "cases": [
+    "cases/development/v22-dev-physics-series-circuit-switch-move-bulb.json"
+  ]
+}

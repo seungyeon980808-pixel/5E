@@ -1,0 +1,73 @@
+{
+  "case_id": "v22-dev-chemistry-separatory-funnel-remove-stopper",
+  "split": "development",
+  "subject": "chemistry",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/chemistry/separatory-funnel.png",
+  "scenario_family": "separatory-funnel",
+  "user_instruction": "분별 깔때기의 위 마개만 제거하여 입구를 열린 상태로 만든다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one stoppered separatory funnel",
+    "one stopcock",
+    "one receiving beaker",
+    "one support stand"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "delete",
+      "target": "the top stopper",
+      "change": "remove only the stopper and leave a visibly open funnel mouth"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "funnel is supported above the beaker",
+    "two liquid layers remain physically separate",
+    "stopcock is below the lower layer",
+    "two horizontal liquid interfaces are visible",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "분별 깔때기의 위 마개만 제거하여 입구를 열린 상태로 만든다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [
+    "lower liquid layer"
+  ],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.42,
+        0.1,
+        0.58,
+        0.25
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

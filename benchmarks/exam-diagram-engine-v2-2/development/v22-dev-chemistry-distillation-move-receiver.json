@@ -44,5 +44,11 @@
     "no annotation or decorative apparatus remains"
   ],
   "allowed_gray_regions": ["liquid in flask", "collected liquid in receiver"],
+  "spatial_contract": {
+    "edit_masks": [[0.56, 0.24, 1.0, 0.92]],
+    "annotation_masks": [[0.0, 0.0, 0.22, 0.14]],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
   "critical_uncertainties": []
 }

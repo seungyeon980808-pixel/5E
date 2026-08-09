@@ -37,5 +37,11 @@
     "all source annotations and red color are absent"
   ],
   "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [[0.34, 0.44, 0.86, 0.82]],
+    "annotation_masks": [[0.0, 0.0, 0.24, 0.2], [0.82, 0.87, 0.92, 0.97]],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
   "critical_uncertainties": []
 }

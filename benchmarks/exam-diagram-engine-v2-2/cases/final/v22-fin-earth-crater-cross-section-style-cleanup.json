@@ -1,0 +1,41 @@
+{
+  "case_id": "v22-fin-earth-crater-cross-section-style-cleanup",
+  "split": "final",
+  "subject": "earth_science",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-earth-crater-cross-section.png",
+  "scenario_family": "crater-cross-section",
+  "user_instruction": "과학 구조와 배치를 그대로 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one crater surface",
+    "two subsurface layers"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color while preserving all scientific geometry and topology"
+    }
+  ],
+  "locked_invariants": [
+    "layers bend downward beneath one bowl-shaped crater",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "과학 구조와 배치를 그대로 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.62,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

@@ -1,0 +1,77 @@
+{
+  "case_id": "v22-dev-physics-incline-fixed-pulley-lower-mass",
+  "split": "development",
+  "subject": "physics",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/physics/incline-fixed-pulley.png",
+  "scenario_family": "incline-fixed-pulley",
+  "user_instruction": "매달린 추만 아래로 옮기고 줄을 연장하여 연결을 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "inclined plane",
+    "one block",
+    "one fixed pulley",
+    "one hanging mass",
+    "one continuous string"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the hanging mass",
+      "change": "move downward without resizing"
+    },
+    {
+      "type": "connect",
+      "target": "the vertical string segment",
+      "change": "extend to the moved mass without changing pulley tangency"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "one continuous string starts at the block, is tangent to the upper-left pulley rim, follows the upper circumference, exits vertically at the right rim, and ends at the hanging mass",
+    "string never crosses the pulley interior",
+    "block contacts the incline",
+    "pulley is fixed above the incline",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "매달린 추만 아래로 옮기고 줄을 연장하여 연결을 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.58,
+        0.18,
+        0.82,
+        0.94
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}
