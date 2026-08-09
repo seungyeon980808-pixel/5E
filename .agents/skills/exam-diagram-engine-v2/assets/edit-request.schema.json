@@ -8,6 +8,7 @@
     "split": {"enum": ["development", "final", "stability"]},
     "subject": {"enum": ["physics", "chemistry", "biology", "earth_science"]},
     "source_image": {"type": "string", "minLength": 1},
+    "scenario_family": {"type": "string", "minLength": 1},
     "user_instruction": {"type": "string", "minLength": 3},
     "source_inventory": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
     "source_annotations_to_remove": {"type": "array", "items": {"type": "string"}},
@@ -26,6 +27,17 @@
     "locked_invariants": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
     "expected_assertions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 3}},
     "allowed_gray_regions": {"type": "array", "items": {"type": "string"}},
+    "spatial_contract": {
+      "type": "object",
+      "required": ["edit_masks", "annotation_masks"],
+      "properties": {
+        "edit_masks": {"type": "array", "items": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}},
+        "annotation_masks": {"type": "array", "items": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}},
+        "minimum_locked_edge_f1": {"type": "number", "minimum": 0, "maximum": 1},
+        "maximum_annotation_ink_fraction": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
     "critical_uncertainties": {"type": "array", "items": {"type": "string"}}
   },
   "additionalProperties": false

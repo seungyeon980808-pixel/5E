@@ -29,6 +29,7 @@ EDIT_FAILURE_TAGS = {
     "STRUCTURE_LOSS", "SCIENCE_ERROR", "TOPOLOGY_LOSS", "CATEGORY_ENCODING",
     "RATIO_LAYOUT", "OVER_SHADE", "3DIFICATION", "EXTRA_TEXT_SYMBOL",
     "EXTRA_CONTEXT", "EDIT_UNSUITABLE", "MODEL_VARIANCE", "MASK_REQUIRED", "BENCHMARK_DEFECT",
+    "CATEGORY_COLLAPSE", "TEXT_RESIDUE",
 }
 
 
@@ -78,6 +79,14 @@ def validate_request(request: dict, rules: dict) -> tuple[list[str], list[str]]:
             errors.append(f"operations[{index}] needs target and change")
     if request.get("critical_uncertainties"):
         errors.append("critical uncertainties must be resolved before generation")
+    spatial = request.get("spatial_contract")
+    if spatial:
+        for mask_kind in ("edit_masks", "annotation_masks"):
+            for index, box in enumerate(spatial.get(mask_kind, [])):
+                if not isinstance(box, list) or len(box) != 4 or any(not isinstance(value, (int, float)) or not 0 <= value <= 1 for value in box):
+                    errors.append(f"spatial_contract.{mask_kind}[{index}] must contain four normalized numbers")
+                elif box[0] >= box[2] or box[1] >= box[3]:
+                    errors.append(f"spatial_contract.{mask_kind}[{index}] must satisfy left < right and top < bottom")
     if len(request["operations"]) > 1:
         warnings.append("multiple operations increase edit drift; stage independent changes when possible")
     allowed = set(rules.get("operation_rules", {}))
@@ -209,6 +218,8 @@ def command_score(args) -> int:
         and gates.get("forbidden_mark_count") == 0
         and gates.get("unlisted_object_count") == 0
         and gates.get("critical_structure_broken") is False
+        and gates.get("style_contract_broken", False) is False
+        and gates.get("category_encoding_valid", True) is True
     )
     result = {
         "engine_version": ENGINE_VERSION,
@@ -273,8 +284,15 @@ def _evaluation_files(root: Path):
 
 def command_summarize(args) -> int:
     rows = []
+    allowed_case_ids = None
+    if getattr(args, "manifest", None):
+        manifest_path = Path(args.manifest)
+        manifest = read_json(manifest_path)
+        allowed_case_ids = {read_json(manifest_path.parent / relative)["case_id"] for relative in manifest["cases"]}
     for path in _evaluation_files(Path(args.results)):
         evaluation = read_json(path)
+        if allowed_case_ids is not None and evaluation.get("case_id") not in allowed_case_ids:
+            continue
         score_path = path.with_name("score.json")
         score = read_json(score_path) if score_path.exists() else {"passed": False, "total": 0}
         rows.append((evaluation, score, str(path)))
@@ -335,6 +353,7 @@ def build_parser() -> argparse.ArgumentParser:
     summary_parser = sub.add_parser("summarize")
     summary_parser.add_argument("--results", required=True)
     summary_parser.add_argument("--out", required=True)
+    summary_parser.add_argument("--manifest")
     summary_parser.set_defaults(func=command_summarize)
     return parser
 

@@ -61,9 +61,30 @@ A visually attractive result fails if it changes one locked property. Record `ED
 
 ## Flat-gray safeguard
 
-Three consecutive development attempts on `v22-dev-chemistry-distillation-move-receiver` produced gradients despite an explicit constant-fill constraint. Treat this as model variance, not a reason to keep lengthening the prompt.
+The 36-case development baseline produced 19 `OVER_SHADE` failures across chemistry, biology, and earth science. Prompt-only constant-gray constraints remained unreliable after targeted retries.
 
-- Preserve the original attempt as failed when gray is not flat.
-- Permit palette flattening only with explicit masks for every allowed physical region.
-- Reject global thresholding when it removes a liquid, material, organ, or layer distinction.
-- Score the normalized derivative separately; post-processing cannot repair source drift, topology, or scientific geometry.
+- Preserve and score the raw generated image first.
+- Reject missing regions, wrong categories, broken contacts, and source drift before tonal cleanup.
+- Permit flattening only with explicit masks for every already-correct physical gray region.
+- Reject global thresholding when it removes or merges a liquid, material, organ, or layer distinction.
+- Score the mask derivative separately; post-processing cannot repair source drift, topology, category assignment, or scientific geometry.
+
+Thirteen first-attempt outputs and eight structurally corrected retries were safely flattened only after independent review confirmed their category assignment and geometry. The failed parents remain part of the evidence history.
+
+## Causal retry templates
+
+- Contact failure: specify the exact touching corner and surface. Avoid vague phrases such as `place on the incline`.
+- Endpoint failure: specify where the open terminal must lie, including containment such as `inside the shortened inverted jar`.
+- Group-move failure: name the complete rigid group and lock every internal shape and relation.
+- Category failure: name both the region that must become white and the only region allowed gray.
+
+## Locality, category, and deletion safeguards
+
+- Treat each normalized edit mask as a strict locality fence. Scientific ink outside the mask is locked, not merely advisory.
+- For a moved endpoint with a connector, adjust only the named connector segment. Do not shift or redraw the connected organ, vessel, container, or surrounding path to make the edit look smoother.
+- Before removing color, inventory every distinction encoded by filled versus unfilled and by black, gray, or white fills. Style cleanup must preserve the distinction even when the geometry is unchanged.
+- When deleting a connected object, trace every incident edge to its first preserved endpoint or junction and remove the entire incident segment. A dangling line or V-shaped remnant is `TOPOLOGY_LOSS`.
+- These safeguards are promoted from development evidence: rigid-move drift in the incline, lens, lung-panel, and fault cases; endpoint loss in the gas-over-water case; and category loss in distillation and subduction cases.
+- Relative-offset failure: move the target outline and all internal boundaries together and quantify a visible offset relative to layer thickness.
+
+Each retry corrects one causal class. Rewriting the whole scene prompt is prohibited because it obscures which rule caused the improvement.

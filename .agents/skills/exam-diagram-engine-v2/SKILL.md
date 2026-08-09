@@ -16,9 +16,9 @@ Produce a scientifically faithful, label-free edit rather than inventing a new i
 5. Run `python scripts/edit_engine.py compile --request <request.json> --rules assets/edit-rules.v2.2.json --out-dir <case-dir>`.
 6. Stop before generation if preflight reports an error or unresolved critical uncertainty.
 7. Invoke the image editing adapter with the source as the edit target and the compiled prompt. Never regenerate from text alone. The deterministic vector renderer remains a downstream option only after a separately reviewed scene contract exists.
-8. Save the generated original, then run the repository normalizer if flat grayscale cleanup is needed. Never use normalization to excuse a structure or science failure.
+8. Save and score the generated original first. If and only if structure, topology, category assignment, and the requested edit pass, flatten gray through explicit physical-region masks. Never use tonal cleanup to excuse a structure or science failure.
 9. Evaluate original and normalized outputs separately using [references/evaluation.md](references/evaluation.md). Record the first attempt even when it fails.
-10. Revise one failure cause at a time. Preserve the failed prompt, output, evaluation, correction reason, and successor link. Promote a rule only from repeated development failures, then rerun every preserved passing assertion.
+10. Revise one failure cause at a time using the causal retry templates in [references/instruction-edit.md](references/instruction-edit.md). Preserve the failed prompt, output, evaluation, correction reason, and successor link. Promote a rule only from repeated development failures, then rerun every preserved passing assertion.
 
 ## Non-negotiable gates
 

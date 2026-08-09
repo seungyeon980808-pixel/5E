@@ -1,21 +1,24 @@
 {
   "engine_version": "2.2.0",
-  "rules_revision": 2,
+  "rules_revision": 6,
   "global": [
     "Use the supplied source image as the edit target, not merely as inspiration.",
     "Change only properties explicitly named by the requested operations.",
     "Preserve every unmentioned object, count, relation, proportion, crop, and empty region.",
     "Remove source annotations without expanding nearby scientific objects into the cleared space.",
-    "Add no conventional apparatus, supports, paths, particles, scenery, or decoration."
+    "Add no conventional apparatus, supports, paths, particles, scenery, or decoration.",
+    "Treat every declared edit mask as a strict locality fence: preserve the position and geometry of all scientific ink outside it, including neighboring containers, anatomy, paths, and empty space.",
+    "Before color removal, inventory every source distinction encoded by filled versus unfilled, black versus gray versus white, or different material fills; preserve those scientific categories in the monochrome output.",
+    "Perform an exact before-and-after census of the closed source inventory. An inventory object remains scientific even when it is small, triangular, colored, or adjacent to a removable arrow or label."
   ],
   "operation_rules": {
-    "style_cleanup": "Change only rendering style; preserve all scientific geometry and topology pixel-positionally as closely as practical.",
-    "move": "Move only the named target; preserve its size, shape, orientation, internals, and undeclared connections.",
+    "style_cleanup": "Change only rendering style; preserve all scientific geometry and topology pixel-positionally as closely as practical. Never collapse two source categories that differ by filled/unfilled or black/gray/white encoding.",
+    "move": "Move only the named target; preserve its size, shape, orientation, internals, and undeclared connections. A named container or panel moves together with every explicitly named interior content as one rigid group. Keep every non-target object outside the edit mask at its source coordinates; if one connector must follow, redraw only the named connector segment and do not shift the connected container or anatomy.",
     "resize": "Resize only the named target using the declared anchor and aspect-ratio policy.",
     "reorder": "Reorder only the named instances or panels; preserve their internal geometry and states.",
     "duplicate": "Copy only the named source instance, exactly the declared number of times, at declared positions.",
-    "delete": "Remove only the named instance and explicitly declared incident relations; do not reflow unless requested.",
-    "replace_state": "Change only the declared state variable and reuse the source master geometry.",
+    "delete": "Remove only the named instance and explicitly declared incident relations; trace each incident edge from the deleted instance to its first preserved endpoint or junction and remove that complete incident segment. Leave zero dangling stubs, V-shapes, or free endpoints, and do not reflow anything else.",
+    "replace_state": "Change only the declared state variable and reuse the exact source component as the master geometry. For a hinged or rotating part, retain the same blade or segment, pivot it at the source hinge, and move only its free endpoint; never substitute dots, boxes, bridges, or a different conventional symbol.",
     "connect": "Add only the declared connection between exact endpoints; preserve every other edge and junction semantic.",
     "disconnect": "Remove only the declared connection and leave a visible separation gap; preserve every other edge."
   },
@@ -32,9 +35,25 @@
     "final_may_modify_rules": false
   },
   "flat_gray_policy": {
-    "evidence": ["v22-dev-chemistry-distillation-move-receiver attempts 1-3"],
-    "finding": "prompt-only constant-gray constraints produced gradients in three consecutive attempts",
-    "rule": "A candidate with non-flat gray may be normalized only with explicit masks for every allowed physical region. Global threshold or palette normalization is forbidden when it erases or merges a required region.",
+    "evidence": [
+      "19 OVER_SHADE failures across chemistry, biology, and earth science in the 36-case development baseline",
+      "13 structure-correct attempt-01 outputs corrected with explicit physical-region masks",
+      "8 targeted structural retries scored as OVER_SHADE before their separately audited mask derivatives"
+    ],
+    "finding": "Prompt-only constant-gray constraints are unreliable across subjects; tonal cleanup is safe only after structure, topology, category assignment, and requested edits pass visual review.",
+    "rule": "Score the generated original first. A non-flat candidate may be normalized only when every other hard gate passes and explicit masks identify each already-correct physical gray region. Global threshold or palette normalization is forbidden.",
     "release_gate": "If required region masks are unavailable, retain the original as OVER_SHADE and do not pass the output."
+  },
+  "targeted_retry_policy": {
+    "evidence": "Nine development failures were corrected by one causal edit each without rewriting the complete scene.",
+    "rule": "On failure, retain the parent artifact and issue one English causal correction that names the failed relation plus all locked non-target objects. Re-evaluate structure before any tonal post-processing.",
+    "relation_templates": [
+      "contact: name the exact object corner or surface that must touch",
+      "terminal: name the exact endpoint and containing target region",
+      "rigid_move: translate the complete target group and lock its internal geometry",
+      "category: explicitly name regions that become white and the single region allowed gray",
+      "relative_offset: move all target boundaries together and quantify the visible offset",
+      "normalized_target_box: after a repeated qualitative-position failure, declare one normalized target bounding box and the exact target corner-to-surface contact"
+    ]
   }
 }
