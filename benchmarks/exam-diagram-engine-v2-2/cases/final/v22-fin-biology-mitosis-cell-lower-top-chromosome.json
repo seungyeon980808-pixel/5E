@@ -1,0 +1,60 @@
+{
+  "case_id": "v22-fin-biology-mitosis-cell-lower-top-chromosome",
+  "split": "final",
+  "subject": "biology",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-biology-mitosis-cell.png",
+  "scenario_family": "mitosis-cell",
+  "user_instruction": "가장 위 염색체만 아래로 옮기고 방추사 연결을 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one cell boundary",
+    "two spindle poles",
+    "four paired chromosomes",
+    "eight spindle fibers"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the top chromosome",
+      "change": "move downward without resizing"
+    },
+    {
+      "type": "connect",
+      "target": "its spindle fibers",
+      "change": "adjust endpoints to remain attached to both poles"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "chromosomes align between two poles",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "가장 위 염색체만 아래로 옮기고 방추사 연결을 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.26,
+        0.18,
+        0.74,
+        0.62
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

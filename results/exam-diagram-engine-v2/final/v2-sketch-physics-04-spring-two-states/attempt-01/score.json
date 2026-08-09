@@ -1,0 +1,10 @@
+{
+  "engine_version": "2.0.0",
+  "case_id": "v2-sketch-physics-04-spring-two-states",
+  "attempt": 1,
+  "total": 83.0,
+  "threshold": 85,
+  "hard_gate_pass": false,
+  "verdict": "FAIL",
+  "validation_errors": []
+}

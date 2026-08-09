@@ -1,0 +1,41 @@
+{
+  "case_id": "v2-sketch-chemistry-01-simple-distillation",
+  "split": "development",
+  "input_mode": "sketch_plus_description",
+  "subject": "chemistry",
+  "title": "단순 증류 장치",
+  "difficulty": "hard",
+  "scenario_family": "simple-distillation",
+  "required_objects": [
+    "round flask",
+    "stopper",
+    "thermometer",
+    "delivery tube",
+    "receiver",
+    "heater"
+  ],
+  "required_relations": [
+    "flask neck holds stopper and thermometer",
+    "delivery tube runs from flask to receiver"
+  ],
+  "scientific_invariants": [
+    "heater lies directly below flask",
+    "receiver remains open and separate"
+  ],
+  "allowed_gray_regions": [
+    "liquid in flask",
+    "collected liquid"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/sketch/chemistry/simple-distillation.png",
+  "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+}

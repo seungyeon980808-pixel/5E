@@ -1,0 +1,53 @@
+{
+  "image": "C:\\Users\\user\\Desktop\\project\\51_5E\\worktrees\\exam-diagram-engine-v2\\results\\exam-diagram-engine-v2\\development\\v2-txt-earth-02-subduction-boundary\\attempt-01\\generated.png",
+  "width": 1536,
+  "height": 1024,
+  "pixel_count": 1572864,
+  "nonwhite_fraction": 0.3846416473388672,
+  "colored_pixel_fraction": 0.0008525848388671875,
+  "luminance_level_count": 256,
+  "luminance_levels_preview": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+  ],
+  "border_nonwhite_fraction": 0.0,
+  "channel_means": [
+    229.77310180664062,
+    229.60321807861328,
+    229.71657943725586
+  ],
+  "notes": [
+    "Palette and border metrics are supporting evidence only.",
+    "Text, arrows, structure, topology, and science require visual review."
+  ]
+}

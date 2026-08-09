@@ -1,0 +1,10 @@
+{
+  "engine_version": "2.0.0",
+  "case_id": "v2-ref-chemistry-03-gas-over-water",
+  "attempt": 1,
+  "total": 97.0,
+  "threshold": 85,
+  "hard_gate_pass": true,
+  "verdict": "PASS",
+  "validation_errors": []
+}

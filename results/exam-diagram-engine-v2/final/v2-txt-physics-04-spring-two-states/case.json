@@ -1,0 +1,34 @@
+{
+  "case_id": "v2-txt-physics-04-spring-two-states",
+  "split": "final",
+  "input_mode": "description_only",
+  "subject": "physics",
+  "title": "용수철 길이 두 상태 비교",
+  "difficulty": "hard",
+  "scenario_family": "spring-two-states",
+  "required_objects": [
+    "two equal panels",
+    "two identical supports",
+    "two springs",
+    "two identical masses"
+  ],
+  "required_relations": [
+    "one spring hangs from each support and holds one mass"
+  ],
+  "scientific_invariants": [
+    "only spring length and mass height differ",
+    "coil count remains equal"
+  ],
+  "allowed_gray_regions": [],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

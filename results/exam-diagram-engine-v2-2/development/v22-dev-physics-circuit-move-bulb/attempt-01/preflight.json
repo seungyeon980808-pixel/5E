@@ -1,0 +1,12 @@
+{
+  "engine_version": "2.2.0",
+  "rules_revision": 1,
+  "case_id": "v22-dev-physics-circuit-move-bulb",
+  "passed": true,
+  "errors": [],
+  "warnings": [
+    "multiple operations increase edit drift; stage independent changes when possible"
+  ],
+  "request_sha256": "009912f506939016518acff8af20026644f936d067d4a529230b5cdb163ef372",
+  "rules_sha256": "6f00f193a3cfb0650b6dede390cfd1ce9759108fbeff835a3aefbe0a3dfc1f0c"
+}

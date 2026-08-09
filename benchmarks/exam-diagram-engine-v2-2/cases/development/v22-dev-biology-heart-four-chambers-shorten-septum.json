@@ -1,0 +1,74 @@
+{
+  "case_id": "v22-dev-biology-heart-four-chambers-shorten-septum",
+  "split": "development",
+  "subject": "biology",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/biology/heart-four-chambers.png",
+  "scenario_family": "heart-four-chambers",
+  "user_instruction": "아래쪽 세로 중격의 끝만 위로 올려 길이를 줄이고 네 방의 구분은 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one heart outline",
+    "two atria",
+    "two ventricles",
+    "one septum",
+    "four major vessel stubs"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "resize",
+      "target": "the ventricular septum",
+      "change": "shorten only its lower end while preserving its top junction and chamber separation"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "each atrium lies above its ventricle",
+    "septum separates left and right ventricles",
+    "four chambers remain distinct",
+    "vessel stubs terminate at the heart boundary",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "아래쪽 세로 중격의 끝만 위로 올려 길이를 줄이고 네 방의 구분은 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [
+    "one ventricular wall region"
+  ],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.32,
+        0.34,
+        0.68,
+        0.88
+      ]
+    ],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

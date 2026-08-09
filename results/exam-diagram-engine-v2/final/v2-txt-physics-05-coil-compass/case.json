@@ -1,0 +1,34 @@
+{
+  "case_id": "v2-txt-physics-05-coil-compass",
+  "split": "final",
+  "input_mode": "description_only",
+  "subject": "physics",
+  "title": "코일과 나침반 연결 장치",
+  "difficulty": "hard",
+  "scenario_family": "coil-compass",
+  "required_objects": [
+    "one coil with two terminals",
+    "one compass",
+    "one battery",
+    "two wires"
+  ],
+  "required_relations": [
+    "each coil terminal connects to a different battery terminal"
+  ],
+  "scientific_invariants": [
+    "compass needle is an arrowhead-free rod",
+    "wire endpoints remain visible"
+  ],
+  "allowed_gray_regions": [],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

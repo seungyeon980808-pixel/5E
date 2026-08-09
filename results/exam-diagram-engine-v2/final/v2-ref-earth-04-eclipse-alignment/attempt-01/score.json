@@ -1,0 +1,10 @@
+{
+  "engine_version": "2.0.0",
+  "case_id": "v2-ref-earth-04-eclipse-alignment",
+  "attempt": 1,
+  "total": 100.0,
+  "threshold": 85,
+  "hard_gate_pass": true,
+  "verdict": "PASS",
+  "validation_errors": []
+}

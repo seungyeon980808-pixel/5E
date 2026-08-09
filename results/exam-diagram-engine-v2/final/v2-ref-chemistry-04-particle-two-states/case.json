@@ -1,0 +1,34 @@
+{
+  "case_id": "v2-ref-chemistry-04-particle-two-states",
+  "split": "final",
+  "input_mode": "reference_image",
+  "subject": "chemistry",
+  "title": "두 종류 입자의 전후 상태",
+  "difficulty": "hard",
+  "scenario_family": "particle-two-states",
+  "required_objects": [
+    "two equal containers",
+    "six round particles per panel",
+    "four angular particles per panel"
+  ],
+  "required_relations": [
+    "particles are contained by their own panel only"
+  ],
+  "scientific_invariants": [
+    "species counts stay constant",
+    "round and angular species remain distinguishable"
+  ],
+  "allowed_gray_regions": [],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/reference/chemistry/particle-two-states.png",
+  "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+}

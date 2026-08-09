@@ -1,0 +1,36 @@
+{
+  "case_id": "v2-sketch-earth-04-eclipse-alignment",
+  "split": "final",
+  "input_mode": "sketch_plus_description",
+  "subject": "earth_science",
+  "title": "태양-지구-달의 일직선 배치",
+  "difficulty": "medium",
+  "scenario_family": "eclipse-alignment",
+  "required_objects": [
+    "one sun disk",
+    "one earth disk",
+    "one moon disk"
+  ],
+  "required_relations": [
+    "left-to-right order is sun, earth, moon"
+  ],
+  "scientific_invariants": [
+    "centers lie on one horizontal line",
+    "no rays, arrows, glow, or starfield"
+  ],
+  "allowed_gray_regions": [
+    "one uniform half of earth disk"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/sketch/earth_science/eclipse-alignment.png",
+  "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+}

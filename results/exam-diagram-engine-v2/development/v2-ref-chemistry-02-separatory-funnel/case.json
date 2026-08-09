@@ -1,0 +1,38 @@
+{
+  "case_id": "v2-ref-chemistry-02-separatory-funnel",
+  "split": "development",
+  "input_mode": "reference_image",
+  "subject": "chemistry",
+  "title": "분별 깔때기의 두 액체층",
+  "difficulty": "medium",
+  "scenario_family": "separatory-funnel",
+  "required_objects": [
+    "one stoppered separatory funnel",
+    "one stopcock",
+    "one receiving beaker",
+    "one support stand"
+  ],
+  "required_relations": [
+    "funnel is supported above the beaker",
+    "two liquid layers remain physically separate"
+  ],
+  "scientific_invariants": [
+    "stopcock is below the lower layer",
+    "two horizontal liquid interfaces are visible"
+  ],
+  "allowed_gray_regions": [
+    "lower liquid layer"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/reference/chemistry/separatory-funnel.png",
+  "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+}

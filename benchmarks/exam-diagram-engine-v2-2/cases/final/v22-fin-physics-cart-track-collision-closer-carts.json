@@ -1,0 +1,55 @@
+{
+  "case_id": "v22-fin-physics-cart-track-collision-closer-carts",
+  "split": "final",
+  "subject": "physics",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-physics-cart-track-collision.png",
+  "scenario_family": "cart-track-collision",
+  "user_instruction": "충돌 전 왼쪽의 두 수레만 서로 더 가깝게 옮긴다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "two equal panels",
+    "four carts",
+    "eight wheels",
+    "two tracks"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the two pre-collision carts",
+      "change": "move toward each other equally without resizing or changing wheel contact"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "cart count and identity remain equal across states",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "충돌 전 왼쪽의 두 수레만 서로 더 가깝게 옮긴다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.06,
+        0.34,
+        0.52,
+        0.74
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

@@ -1,0 +1,76 @@
+{
+  "engine_version": "2.1.0",
+  "passed": true,
+  "errors": [],
+  "benchmark": {
+    "development": 36,
+    "final": 24,
+    "combined_input_modes": {
+      "reference_image": 20,
+      "description_only": 20,
+      "sketch_plus_description": 20
+    },
+    "combined_subjects": {
+      "physics": 15,
+      "chemistry": 15,
+      "biology": 15,
+      "earth_science": 15
+    }
+  },
+  "final": {
+    "evaluated": 24,
+    "passed": 24,
+    "pass_rate": 1.0,
+    "by_input_mode": {
+      "reference_image": {
+        "passed": 8,
+        "total": 8,
+        "pass_rate": 1.0
+      },
+      "description_only": {
+        "passed": 8,
+        "total": 8,
+        "pass_rate": 1.0
+      },
+      "sketch_plus_description": {
+        "passed": 8,
+        "total": 8,
+        "pass_rate": 1.0
+      }
+    },
+    "by_subject": {
+      "physics": {
+        "passed": 6,
+        "total": 6,
+        "pass_rate": 1.0
+      },
+      "chemistry": {
+        "passed": 6,
+        "total": 6,
+        "pass_rate": 1.0
+      },
+      "biology": {
+        "passed": 6,
+        "total": 6,
+        "pass_rate": 1.0
+      },
+      "earth_science": {
+        "passed": 6,
+        "total": 6,
+        "pass_rate": 1.0
+      }
+    },
+    "severe_science_errors": 0,
+    "passing_with_forbidden_marks": 0
+  },
+  "stability": {
+    "representative_hard_cases": 12,
+    "gate_passed": true,
+    "all_byte_identical": true
+  },
+  "freeze": {
+    "checked": 46,
+    "mismatches": []
+  },
+  "manual_audit": "PASS"
+}

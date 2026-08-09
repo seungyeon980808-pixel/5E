@@ -1,0 +1,114 @@
+{
+  "engine_version": "2.2.0",
+  "evaluated_cases": 24,
+  "passed": 22,
+  "pass_rate": 0.9167,
+  "attempts": 30,
+  "passing_attempts": 22,
+  "attempt_pass_rate": 0.7333,
+  "by_subject": {
+    "biology": {
+      "passed": 5,
+      "failed": 1,
+      "total": 6,
+      "pass_rate": 0.8333
+    },
+    "chemistry": {
+      "passed": 6,
+      "total": 6,
+      "pass_rate": 1.0
+    },
+    "earth_science": {
+      "passed": 6,
+      "total": 6,
+      "pass_rate": 1.0
+    },
+    "physics": {
+      "failed": 1,
+      "passed": 5,
+      "total": 6,
+      "pass_rate": 0.8333
+    }
+  },
+  "by_operation": {
+    "connect": {
+      "passed": 2,
+      "total": 2,
+      "pass_rate": 1.0
+    },
+    "delete": {
+      "failed": 1,
+      "total": 1,
+      "pass_rate": 0.0
+    },
+    "disconnect": {
+      "passed": 1,
+      "total": 1,
+      "pass_rate": 1.0
+    },
+    "duplicate": {
+      "passed": 2,
+      "total": 2,
+      "pass_rate": 1.0
+    },
+    "move": {
+      "passed": 7,
+      "failed": 1,
+      "total": 8,
+      "pass_rate": 0.875
+    },
+    "replace_state": {
+      "passed": 1,
+      "total": 1,
+      "pass_rate": 1.0
+    },
+    "resize": {
+      "passed": 3,
+      "total": 3,
+      "pass_rate": 1.0
+    },
+    "style_cleanup": {
+      "passed": 22,
+      "failed": 2,
+      "total": 24,
+      "pass_rate": 0.9167
+    }
+  },
+  "failure_tag_counts": {
+    "TOPOLOGY_LOSS": 1,
+    "EDIT_NOT_APPLIED": 1,
+    "SOURCE_DRIFT": 1
+  },
+  "evidence_files": [
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-digestive-path-lengthen-lower-path\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-digestive-path-move-mouth-left\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-digestive-path-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-mitosis-cell-lower-top-chromosome\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-mitosis-cell-remove-bottom-chromosome\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-biology-mitosis-cell-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-duplicate-middle-spot\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-duplicate-middle-spot\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-raise-top-spot\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-raise-top-spot\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-chromatography-style-cleanup\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-diffusion-membrane-duplicate-circle\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-diffusion-membrane-move-diamond\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-chemistry-diffusion-membrane-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-crater-cross-section-deepen-crater\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-crater-cross-section-narrow-crater\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-crater-cross-section-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-move-middle-clast\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-move-middle-clast\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-raise-ice\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-raise-ice\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-earth-glacier-valley-style-cleanup\\attempt-01\\flat-gray-final\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-cart-track-collision-closer-carts\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-cart-track-collision-separate-after\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-cart-track-collision-style-cleanup\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-floating-cylinder-move-cylinder-left\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-floating-cylinder-sink-cylinder\\attempt-01\\evaluation.json",
+    "results\\exam-diagram-engine-v2-2\\final\\v22-fin-physics-floating-cylinder-style-cleanup\\attempt-01\\evaluation.json"
+  ]
+}

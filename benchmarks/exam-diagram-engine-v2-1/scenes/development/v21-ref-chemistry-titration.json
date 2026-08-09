@@ -1,0 +1,196 @@
+{
+  "case_id": "v21-ref-chemistry-titration",
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "stand-p1",
+      "type": "rect",
+      "role": "support",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.5,
+      "bbox": [
+        0.18,
+        0.16,
+        0.205,
+        0.84
+      ]
+    },
+    {
+      "id": "burette-p2",
+      "type": "path",
+      "role": "apparatus",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.44,
+          0.16
+        ],
+        [
+          "L",
+          0.44,
+          0.62
+        ],
+        [
+          "L",
+          0.45,
+          0.68
+        ],
+        [
+          "L",
+          0.46,
+          0.62
+        ],
+        [
+          "L",
+          0.46,
+          0.16
+        ],
+        [
+          "Z"
+        ]
+      ]
+    },
+    {
+      "id": "clamp-p3",
+      "type": "polyline",
+      "role": "support",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "points": [
+        [
+          0.2,
+          0.28
+        ],
+        [
+          0.44,
+          0.28
+        ]
+      ]
+    },
+    {
+      "id": "flask-p4",
+      "type": "path",
+      "role": "boundary",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.41,
+          0.7
+        ],
+        [
+          "L",
+          0.34,
+          0.84
+        ],
+        [
+          "L",
+          0.59,
+          0.84
+        ],
+        [
+          "L",
+          0.51,
+          0.7
+        ]
+      ]
+    },
+    {
+      "id": "solution-p5",
+      "type": "polygon",
+      "role": "material_region",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 1.5,
+      "points": [
+        [
+          0.37,
+          0.79
+        ],
+        [
+          0.56,
+          0.79
+        ],
+        [
+          0.59,
+          0.84
+        ],
+        [
+          0.34,
+          0.84
+        ]
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "stand",
+      "kind": "vertical stand",
+      "primitive_ids": [
+        "stand-p1"
+      ]
+    },
+    {
+      "id": "burette",
+      "kind": "plain burette",
+      "primitive_ids": [
+        "burette-p2"
+      ]
+    },
+    {
+      "id": "clamp",
+      "kind": "clamp",
+      "primitive_ids": [
+        "clamp-p3"
+      ]
+    },
+    {
+      "id": "flask",
+      "kind": "conical flask",
+      "primitive_ids": [
+        "flask-p4"
+      ]
+    },
+    {
+      "id": "solution",
+      "kind": "solution",
+      "primitive_ids": [
+        "solution-p5"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "burette",
+      "to": "clamp",
+      "kind": "supported_by"
+    },
+    {
+      "from": "clamp",
+      "to": "stand",
+      "kind": "supported_by"
+    },
+    {
+      "from": "solution",
+      "to": "flask",
+      "kind": "contained_by"
+    },
+    {
+      "from": "burette",
+      "to": "flask",
+      "kind": "not_connected"
+    }
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "engine_version": "2.0.0",
+  "evaluated": 24,
+  "passed": 15,
+  "pass_rate": 0.625,
+  "records": [
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-biology-04-plant-stem-transport",
+      "attempt": 1,
+      "total": 97.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-biology-04-plant-stem-transport\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-biology-05-chromosome-pairs",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-biology-05-chromosome-pairs\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-chemistry-04-particle-two-states",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-chemistry-04-particle-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-chemistry-05-electrolysis-vessel",
+      "attempt": 1,
+      "total": 73.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-chemistry-05-electrolysis-vessel\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-earth-04-eclipse-alignment",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-earth-04-eclipse-alignment\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-earth-05-river-valley-section",
+      "attempt": 1,
+      "total": 96.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-earth-05-river-valley-section\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-physics-04-spring-two-states",
+      "attempt": 1,
+      "total": 87.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-physics-04-spring-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-ref-physics-05-coil-compass",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-ref-physics-05-coil-compass\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-biology-04-plant-stem-transport",
+      "attempt": 1,
+      "total": 94.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-biology-04-plant-stem-transport\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-biology-05-chromosome-pairs",
+      "attempt": 1,
+      "total": 99.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-biology-05-chromosome-pairs\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-chemistry-04-particle-two-states",
+      "attempt": 1,
+      "total": 97.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-chemistry-04-particle-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-chemistry-05-electrolysis-vessel",
+      "attempt": 1,
+      "total": 63.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-chemistry-05-electrolysis-vessel\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-earth-04-eclipse-alignment",
+      "attempt": 1,
+      "total": 99.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-earth-04-eclipse-alignment\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-earth-05-river-valley-section",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-earth-05-river-valley-section\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-physics-04-spring-two-states",
+      "attempt": 1,
+      "total": 83.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-physics-04-spring-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-sketch-physics-05-coil-compass",
+      "attempt": 1,
+      "total": 77.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-sketch-physics-05-coil-compass\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-biology-04-plant-stem-transport",
+      "attempt": 1,
+      "total": 96.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-biology-04-plant-stem-transport\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-biology-05-chromosome-pairs",
+      "attempt": 1,
+      "total": 79.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-biology-05-chromosome-pairs\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-chemistry-04-particle-two-states",
+      "attempt": 1,
+      "total": 96.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-chemistry-04-particle-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-chemistry-05-electrolysis-vessel",
+      "attempt": 1,
+      "total": 91.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-chemistry-05-electrolysis-vessel\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-earth-04-eclipse-alignment",
+      "attempt": 1,
+      "total": 96.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-earth-04-eclipse-alignment\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-earth-05-river-valley-section",
+      "attempt": 1,
+      "total": 100.0,
+      "threshold": 85,
+      "hard_gate_pass": true,
+      "verdict": "PASS",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-earth-05-river-valley-section\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-physics-04-spring-two-states",
+      "attempt": 1,
+      "total": 84.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-physics-04-spring-two-states\\attempt-01\\score.json"
+    },
+    {
+      "engine_version": "2.0.0",
+      "case_id": "v2-txt-physics-05-coil-compass",
+      "attempt": 1,
+      "total": 71.0,
+      "threshold": 85,
+      "hard_gate_pass": false,
+      "verdict": "FAIL",
+      "validation_errors": [],
+      "path": "results\\exam-diagram-engine-v2\\final\\v2-txt-physics-05-coil-compass\\attempt-01\\score.json"
+    }
+  ]
+}

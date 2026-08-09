@@ -1,0 +1,54 @@
+{
+  "case_id": "v22-fin-physics-floating-cylinder-sink-cylinder",
+  "split": "final",
+  "subject": "physics",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-physics-floating-cylinder.png",
+  "scenario_family": "floating-cylinder",
+  "user_instruction": "원기둥만 더 깊이 잠기게 아래로 옮기고 용기와 액체는 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one vessel",
+    "one liquid region",
+    "one cylinder"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the floating cylinder",
+      "change": "move downward without resizing so the liquid line crosses above its midpoint"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "liquid line crosses the cylinder below its midpoint",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "원기둥만 더 깊이 잠기게 아래로 옮기고 용기와 액체는 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.24,
+        0.2,
+        0.68,
+        0.8
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

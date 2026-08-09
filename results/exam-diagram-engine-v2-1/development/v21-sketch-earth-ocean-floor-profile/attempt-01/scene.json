@@ -1,0 +1,147 @@
+{
+  "case_id": "v21-sketch-earth-ocean-floor-profile",
+  "canvas": {
+    "width": 1200,
+    "height": 800,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "water-p1",
+      "type": "polygon",
+      "role": "material_region",
+      "stroke": "none",
+      "fill": "gray",
+      "line_width": 1.5,
+      "points": [
+        [
+          0.06,
+          0.15
+        ],
+        [
+          0.94,
+          0.15
+        ],
+        [
+          0.94,
+          0.3
+        ],
+        [
+          0.82,
+          0.34
+        ],
+        [
+          0.82,
+          0.68
+        ],
+        [
+          0.66,
+          0.72
+        ],
+        [
+          0.57,
+          0.72
+        ],
+        [
+          0.5,
+          0.42
+        ],
+        [
+          0.43,
+          0.72
+        ],
+        [
+          0.34,
+          0.72
+        ],
+        [
+          0.18,
+          0.68
+        ],
+        [
+          0.18,
+          0.34
+        ],
+        [
+          0.06,
+          0.3
+        ]
+      ]
+    },
+    {
+      "id": "seafloor-p2",
+      "type": "path",
+      "role": "geology",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 3,
+      "commands": [
+        [
+          "M",
+          0.06,
+          0.3
+        ],
+        [
+          "C",
+          0.18,
+          0.34,
+          0.18,
+          0.68,
+          0.34,
+          0.72
+        ],
+        [
+          "C",
+          0.43,
+          0.72,
+          0.45,
+          0.48,
+          0.5,
+          0.42
+        ],
+        [
+          "C",
+          0.55,
+          0.48,
+          0.57,
+          0.72,
+          0.66,
+          0.72
+        ],
+        [
+          "C",
+          0.82,
+          0.68,
+          0.82,
+          0.34,
+          0.94,
+          0.3
+        ]
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "water",
+      "kind": "ocean water",
+      "primitive_ids": [
+        "water-p1"
+      ]
+    },
+    {
+      "id": "seafloor",
+      "kind": "ocean-floor profile",
+      "primitive_ids": [
+        "seafloor-p2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "water",
+      "to": "seafloor",
+      "kind": "touching"
+    }
+  ]
+}

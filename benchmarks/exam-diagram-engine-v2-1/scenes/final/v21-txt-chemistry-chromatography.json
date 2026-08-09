@@ -1,0 +1,182 @@
+{
+  "case_id": "v21-txt-chemistry-chromatography",
+  "canvas": {
+    "width": 900,
+    "height": 900,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "chamber-p1",
+      "type": "path",
+      "role": "boundary",
+      "stroke": "black",
+      "fill": "none",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.18,
+          0.16
+        ],
+        [
+          "L",
+          0.18,
+          0.84
+        ],
+        [
+          "L",
+          0.82,
+          0.84
+        ],
+        [
+          "L",
+          0.82,
+          0.16
+        ]
+      ]
+    },
+    {
+      "id": "solvent-p2",
+      "type": "rect",
+      "role": "material_region",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 1.5,
+      "bbox": [
+        0.185,
+        0.7,
+        0.815,
+        0.835
+      ]
+    },
+    {
+      "id": "paper-p3",
+      "type": "rect",
+      "role": "material_region",
+      "stroke": "black",
+      "fill": "white",
+      "line_width": 2,
+      "bbox": [
+        0.38,
+        0.22,
+        0.62,
+        0.78
+      ]
+    },
+    {
+      "id": "spot-low-p4",
+      "type": "ellipse",
+      "role": "particle",
+      "stroke": "black",
+      "fill": "black",
+      "line_width": 1.5,
+      "bbox": [
+        0.47,
+        0.61,
+        0.53,
+        0.67
+      ]
+    },
+    {
+      "id": "spot-mid-p5",
+      "type": "ellipse",
+      "role": "particle",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 1.5,
+      "bbox": [
+        0.45,
+        0.45,
+        0.51,
+        0.51
+      ]
+    },
+    {
+      "id": "spot-high-p6",
+      "type": "ellipse",
+      "role": "particle",
+      "stroke": "black",
+      "fill": "white",
+      "line_width": 1.5,
+      "bbox": [
+        0.52,
+        0.31,
+        0.58,
+        0.37
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "chamber",
+      "kind": "open chamber",
+      "primitive_ids": [
+        "chamber-p1"
+      ]
+    },
+    {
+      "id": "solvent",
+      "kind": "solvent",
+      "primitive_ids": [
+        "solvent-p2"
+      ]
+    },
+    {
+      "id": "paper",
+      "kind": "chromatography paper",
+      "primitive_ids": [
+        "paper-p3"
+      ]
+    },
+    {
+      "id": "spot-low",
+      "kind": "sample spot",
+      "primitive_ids": [
+        "spot-low-p4"
+      ]
+    },
+    {
+      "id": "spot-mid",
+      "kind": "separated spot",
+      "primitive_ids": [
+        "spot-mid-p5"
+      ]
+    },
+    {
+      "id": "spot-high",
+      "kind": "separated spot",
+      "primitive_ids": [
+        "spot-high-p6"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "solvent",
+      "to": "chamber",
+      "kind": "contained_by"
+    },
+    {
+      "from": "paper",
+      "to": "solvent",
+      "kind": "touching"
+    },
+    {
+      "from": "spot-low",
+      "to": "paper",
+      "kind": "contained_by"
+    },
+    {
+      "from": "spot-mid",
+      "to": "paper",
+      "kind": "contained_by"
+    },
+    {
+      "from": "spot-high",
+      "to": "paper",
+      "kind": "contained_by"
+    }
+  ]
+}

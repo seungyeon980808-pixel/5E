@@ -1,0 +1,37 @@
+{
+  "case_id": "v2-txt-physics-01-series-circuit-switch",
+  "split": "development",
+  "input_mode": "description_only",
+  "subject": "physics",
+  "title": "전지-스위치-전구 직렬 회로",
+  "difficulty": "medium",
+  "scenario_family": "series-circuit-switch",
+  "required_objects": [
+    "battery",
+    "open switch",
+    "bulb",
+    "three wire segments"
+  ],
+  "required_relations": [
+    "one series path with the switch gap as the only break",
+    "the upper and lower left conductors terminate at different battery plates",
+    "wire crossings: zero"
+  ],
+  "scientific_invariants": [
+    "battery long and short plates remain distinct and interrupt the left conductor",
+    "no line bypasses the battery plates",
+    "switch contacts do not touch"
+  ],
+  "allowed_gray_regions": [],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

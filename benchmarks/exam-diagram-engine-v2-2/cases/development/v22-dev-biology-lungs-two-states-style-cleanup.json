@@ -1,0 +1,60 @@
+{
+  "case_id": "v22-dev-biology-lungs-two-states-style-cleanup",
+  "split": "development",
+  "subject": "biology",
+  "source_image": "benchmarks/exam-diagram-engine-v2/inputs/reference/biology/lungs-two-states.png",
+  "scenario_family": "lungs-two-states",
+  "user_instruction": "과학 구조와 배치를 그대로 유지한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "two equal torso panels",
+    "two pairs of lungs",
+    "two diaphragm curves",
+    "two tracheae"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color while preserving all scientific geometry and topology"
+    }
+  ],
+  "locked_invariants": [
+    "each trachea branches to its pair of lungs",
+    "viewpoint and torso size remain identical",
+    "only lung size and diaphragm curvature differ",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "과학 구조와 배치를 그대로 유지한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [
+    "lung interiors"
+  ],
+  "spatial_contract": {
+    "edit_masks": [],
+    "annotation_masks": [
+      [
+        0,
+        0,
+        0.25,
+        0.2
+      ],
+      [
+        0.82,
+        0.86,
+        0.94,
+        0.98
+      ]
+    ],
+    "minimum_locked_edge_f1": 0.62,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

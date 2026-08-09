@@ -1,0 +1,34 @@
+{
+  "case_id": "v2-txt-biology-05-chromosome-pairs",
+  "split": "final",
+  "input_mode": "description_only",
+  "subject": "biology",
+  "title": "동원체 위치가 다른 염색체 쌍",
+  "difficulty": "medium",
+  "scenario_family": "chromosome-pairs",
+  "required_objects": [
+    "one cell boundary",
+    "four replicated chromosomes"
+  ],
+  "required_relations": [
+    "all chromosomes are contained by the cell boundary"
+  ],
+  "scientific_invariants": [
+    "two homologous pairs remain",
+    "centromere positions distinguish the pairs"
+  ],
+  "allowed_gray_regions": [
+    "one homologous pair"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

@@ -1,0 +1,45 @@
+Use case: scientific-educational
+Asset type: label-free Korean KICE assessment science diagram for later editing in 5E
+Primary request: 전지 한 개, 열린 스위치 한 개, 전구 한 개가 도선으로 직렬 연결된 무라벨 회로를 그린다.
+
+ROLE AND OUTPUT
+Create one clean raster diagram on a pure white background using black 2D linework. Construct only the minimum closed-world scene specified below. Do not add conventional accessories or implied laboratory context.
+
+CLOSED OBJECT INVENTORY
+- battery: battery with long and short plates inserted into the left side of the loop; exact count 1; panel 1; bbox [0.120, 0.380, 0.250, 0.620]; cropped edges none; named terminals upper_plate, lower_plate; no polarity symbols; the left conductor is interrupted by the battery; no bypass line beside or behind it.
+- switch: open switch with two terminals; exact count 1; panel 1; bbox [0.400, 0.180, 0.580, 0.340]; cropped edges none; named terminals left_contact, right_contact; contact arm does not touch far terminal.
+- bulb: unlabeled lamp symbol; exact count 1; panel 1; bbox [0.720, 0.380, 0.860, 0.620]; cropped edges none; named terminals upper_terminal, lower_terminal; empty interior except filament structure.
+- wire: orthogonal wire path; exact count 3; panel 1; bbox [0.180, 0.250, 0.800, 0.780]; cropped edges none; named terminals none; three segments terminate only at listed components.
+The inventory is closed: zero objects outside this list.
+
+TOPOLOGY AND CONTACTS
+- battery.upper_plate -> switch.left_contact: wire; upper-left path.
+- switch.right_contact -> bulb.upper_terminal: wire; upper-right path; open gap exists only between the two switch contacts.
+- bulb.lower_terminal -> battery.lower_plate: wire; lower return path.
+Preserve every listed endpoint, branch, terminal, crossing/non-connection, containment, support, and contact exactly.
+
+LAYOUT
+- Canvas: landscape; exact panel count 1.
+- Preserve all normalized bounding boxes, crop edges, relative scale, overlap order, and asymmetry.
+- Keep at least 8% clear margin except at declared cropped edges.
+- Intentional empty regions: clear upper and lower exterior margin for later labels. Do not fill them or enlarge nearby objects into them.
+
+SCIENTIFIC INVARIANTS
+- There is exactly one series loop and exactly one open gap at the switch.
+- The battery interrupts the left conductor and is part of the loop; no wire bypasses either battery plate.
+- No two crossing wires and no hidden junctions.
+
+CATEGORY MAP
+- No category encoding beyond black outlines and white interiors.
+Every category must remain visually distinct using only its declared encoding.
+
+STYLE
+- Pure white background; clean black outer contours; slightly thinner black internal structure lines.
+- White interiors by default. Uniform flat gray is allowed only in: none.
+- Orthographic, section, elevation, or restrained oblique assessment drawing; no realistic product rendering.
+- Leave clear whitespace for labels and supplementary marks to be added later in 5E.
+
+ZERO-TOLERANCE NEGATIVES
+- Generate exactly zero of: arrowheads, arrows, captions, decorative_context, digits, direction_arrows, empty_annotation_boxes, korean_characters, labels, leader_lines, letters, mathematical_symbols, qr_codes, symbols, text, watermarks.
+- No realistic lighting, highlights, reflections, shadows, gradients, bloom, photographic texture, decorative stippling, hatching, or excessive 3D perspective.
+- Do not add, remove, merge, substitute, complete, beautify, or reinterpret any scientific object, path, state, or cropped boundary.

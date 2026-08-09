@@ -1,0 +1,12 @@
+{
+  "case_id": "v2-ref-physics-02-incline-fixed-pulley",
+  "attempt": 1,
+  "engine_version": "2.0.0",
+  "output": "generated.png",
+  "scores": {"core_structure": 18, "scientific_accuracy": 10, "proportion_layout": 13, "kice_lineart": 14, "restrained_gray": 10, "no_forbidden_marks": 10, "editability": 5},
+  "hard_gates": {"severe_science_error": true, "forbidden_mark_count": 0, "unlisted_object_count": 0, "critical_structure_broken": true, "category_encoding_valid": true},
+  "failure_tags": ["SCIENCE_ERROR", "TOPOLOGY_LOSS"],
+  "evidence": ["The inclined string segment crosses into the pulley disk and does not visibly continue around its circumference to the vertical segment.", "Object count, general layout, monochrome style, and forbidden-mark gate otherwise pass."],
+  "generator": "built-in image generation",
+  "created_at": "2026-08-08T01:20:00+09:00"
+}

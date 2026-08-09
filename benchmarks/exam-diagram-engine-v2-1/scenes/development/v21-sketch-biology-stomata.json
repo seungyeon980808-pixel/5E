@@ -1,0 +1,154 @@
+{
+  "case_id": "v21-sketch-biology-stomata",
+  "canvas": {
+    "width": 900,
+    "height": 900,
+    "background": "white",
+    "minimum_margin_fraction": 0.05
+  },
+  "primitives": [
+    {
+      "id": "guard-left-p1",
+      "type": "path",
+      "role": "anatomy",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.47,
+          0.2
+        ],
+        [
+          "C",
+          0.25,
+          0.28,
+          0.25,
+          0.72,
+          0.47,
+          0.8
+        ],
+        [
+          "C",
+          0.37,
+          0.63,
+          0.37,
+          0.37,
+          0.47,
+          0.2
+        ],
+        [
+          "Z"
+        ]
+      ]
+    },
+    {
+      "id": "guard-right-p2",
+      "type": "path",
+      "role": "anatomy",
+      "stroke": "black",
+      "fill": "gray",
+      "line_width": 2.4,
+      "commands": [
+        [
+          "M",
+          0.53,
+          0.2
+        ],
+        [
+          "C",
+          0.75,
+          0.28,
+          0.75,
+          0.72,
+          0.53,
+          0.8
+        ],
+        [
+          "C",
+          0.63,
+          0.63,
+          0.63,
+          0.37,
+          0.53,
+          0.2
+        ],
+        [
+          "Z"
+        ]
+      ]
+    },
+    {
+      "id": "pore-p3",
+      "type": "path",
+      "role": "material_region",
+      "stroke": "black",
+      "fill": "white",
+      "line_width": 1.5,
+      "commands": [
+        [
+          "M",
+          0.49,
+          0.27
+        ],
+        [
+          "C",
+          0.45,
+          0.4,
+          0.45,
+          0.6,
+          0.49,
+          0.73
+        ],
+        [
+          "C",
+          0.51,
+          0.6,
+          0.51,
+          0.4,
+          0.49,
+          0.27
+        ],
+        [
+          "Z"
+        ]
+      ]
+    }
+  ],
+  "instances": [
+    {
+      "id": "guard-left",
+      "kind": "left guard cell",
+      "primitive_ids": [
+        "guard-left-p1"
+      ]
+    },
+    {
+      "id": "guard-right",
+      "kind": "right guard cell",
+      "primitive_ids": [
+        "guard-right-p2"
+      ]
+    },
+    {
+      "id": "pore",
+      "kind": "stomatal pore",
+      "primitive_ids": [
+        "pore-p3"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "pore",
+      "to": "guard-left",
+      "kind": "adjacent"
+    },
+    {
+      "from": "pore",
+      "to": "guard-right",
+      "kind": "adjacent"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent_attempt": 2,
+  "failure_tags": ["OVER_SHADE", "MODEL_VARIANCE"],
+  "observed_failure": "the same explicit constant-flat-gray constraint failed again",
+  "single_change": "repeat the exact binary-white plus one constant-flat-gray palette constraint with no tonal variation; make no additional structural correction in this attempt"
+}

@@ -1,0 +1,1355 @@
+{
+  "benchmark_version": "2.0.0",
+  "engine_version": "2.0.0",
+  "split": "development",
+  "mutable_for_engine_iteration": true,
+  "cases": [
+    {
+      "case_id": "v2-ref-physics-01-series-circuit-switch",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "title": "전지-스위치-전구 직렬 회로",
+      "difficulty": "medium",
+      "scenario_family": "series-circuit-switch",
+      "required_objects": [
+        "battery",
+        "open switch",
+        "bulb",
+        "three wire segments"
+      ],
+      "required_relations": [
+        "one series path with the switch gap as the only break",
+        "the upper and lower left conductors terminate at different battery plates",
+        "wire crossings: zero"
+      ],
+      "scientific_invariants": [
+        "battery long and short plates remain distinct and interrupt the left conductor",
+        "no line bypasses the battery plates",
+        "switch contacts do not touch"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/physics/series-circuit-switch.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-physics-02-incline-fixed-pulley",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "title": "경사면의 물체와 고정 도르래",
+      "difficulty": "hard",
+      "scenario_family": "incline-fixed-pulley",
+      "required_objects": [
+        "inclined plane",
+        "one block",
+        "one fixed pulley",
+        "one hanging mass",
+        "one continuous string"
+      ],
+      "required_relations": [
+        "one continuous string starts at the block, is tangent to the upper-left pulley rim, follows the upper circumference, exits vertically at the right rim, and ends at the hanging mass"
+      ],
+      "scientific_invariants": [
+        "string never crosses the pulley interior",
+        "block contacts the incline",
+        "pulley is fixed above the incline"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/physics/incline-fixed-pulley.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-physics-03-lens-screen-apparatus",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "title": "광원-볼록 렌즈-스크린 장치",
+      "difficulty": "medium",
+      "scenario_family": "lens-screen-apparatus",
+      "required_objects": [
+        "one source object",
+        "one convex lens on a stand",
+        "one screen on a stand",
+        "one baseline"
+      ],
+      "required_relations": [
+        "left-to-right order is source, lens, screen",
+        "no light rays in illustration-only output"
+      ],
+      "scientific_invariants": [
+        "all three centers share one horizontal optical axis"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/physics/lens-screen-apparatus.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-chemistry-01-simple-distillation",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "title": "단순 증류 장치",
+      "difficulty": "hard",
+      "scenario_family": "simple-distillation",
+      "required_objects": [
+        "round flask",
+        "stopper",
+        "thermometer",
+        "delivery tube",
+        "receiver",
+        "heater"
+      ],
+      "required_relations": [
+        "flask neck holds stopper and thermometer",
+        "delivery tube runs from flask to receiver"
+      ],
+      "scientific_invariants": [
+        "heater lies directly below flask",
+        "receiver remains open and separate"
+      ],
+      "allowed_gray_regions": [
+        "liquid in flask",
+        "collected liquid"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/chemistry/simple-distillation.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-chemistry-02-separatory-funnel",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "title": "분별 깔때기의 두 액체층",
+      "difficulty": "medium",
+      "scenario_family": "separatory-funnel",
+      "required_objects": [
+        "one stoppered separatory funnel",
+        "one stopcock",
+        "one receiving beaker",
+        "one support stand"
+      ],
+      "required_relations": [
+        "funnel is supported above the beaker",
+        "two liquid layers remain physically separate"
+      ],
+      "scientific_invariants": [
+        "stopcock is below the lower layer",
+        "two horizontal liquid interfaces are visible"
+      ],
+      "allowed_gray_regions": [
+        "lower liquid layer"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/chemistry/separatory-funnel.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-chemistry-03-gas-over-water",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "title": "수상 치환 기체 포집",
+      "difficulty": "hard",
+      "scenario_family": "gas-over-water",
+      "required_objects": [
+        "reaction flask",
+        "stopper",
+        "delivery tube",
+        "water trough",
+        "inverted gas jar"
+      ],
+      "required_relations": [
+        "tube starts at flask and terminates inside inverted jar under water"
+      ],
+      "scientific_invariants": [
+        "jar opening is below water surface",
+        "gas region is above water inside jar"
+      ],
+      "allowed_gray_regions": [
+        "water in trough and jar"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/chemistry/gas-over-water.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-biology-01-heart-four-chambers",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "title": "심장 네 방과 주요 혈관 단면",
+      "difficulty": "hard",
+      "scenario_family": "heart-four-chambers",
+      "required_objects": [
+        "one heart outline",
+        "two atria",
+        "two ventricles",
+        "one septum",
+        "four major vessel stubs"
+      ],
+      "required_relations": [
+        "each atrium lies above its ventricle",
+        "septum separates left and right ventricles"
+      ],
+      "scientific_invariants": [
+        "four chambers remain distinct",
+        "vessel stubs terminate at the heart boundary"
+      ],
+      "allowed_gray_regions": [
+        "one ventricular wall region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/biology/heart-four-chambers.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-biology-02-nephron-path",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "title": "신소체와 세뇨관 연결",
+      "difficulty": "hard",
+      "scenario_family": "nephron-path",
+      "required_objects": [
+        "one renal corpuscle",
+        "one continuous tubule",
+        "one collecting duct",
+        "two vessel stubs"
+      ],
+      "required_relations": [
+        "tubule starts at corpuscle and joins collecting duct",
+        "vessel stubs connect only to corpuscle"
+      ],
+      "scientific_invariants": [
+        "tubule remains continuous",
+        "collecting duct is not merged with vessels"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/biology/nephron-path.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-biology-03-lungs-two-states",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "title": "폐와 가로막 두 상태 비교",
+      "difficulty": "medium",
+      "scenario_family": "lungs-two-states",
+      "required_objects": [
+        "two equal torso panels",
+        "two pairs of lungs",
+        "two diaphragm curves",
+        "two tracheae"
+      ],
+      "required_relations": [
+        "each trachea branches to its pair of lungs"
+      ],
+      "scientific_invariants": [
+        "viewpoint and torso size remain identical",
+        "only lung size and diaphragm curvature differ"
+      ],
+      "allowed_gray_regions": [
+        "lung interiors"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/biology/lungs-two-states.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-earth-01-volcano-cross-section",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "title": "화산체와 마그마 통로 단면",
+      "difficulty": "hard",
+      "scenario_family": "volcano-cross-section",
+      "required_objects": [
+        "one volcanic cone",
+        "one crater",
+        "one main conduit",
+        "one magma chamber",
+        "three strata"
+      ],
+      "required_relations": [
+        "conduit continuously connects crater to chamber",
+        "strata are cut by conduit"
+      ],
+      "scientific_invariants": [
+        "chamber remains below all strata",
+        "crater is open at the summit"
+      ],
+      "allowed_gray_regions": [
+        "magma chamber and conduit"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/earth_science/volcano-cross-section.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-earth-02-subduction-boundary",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "title": "해양판 섭입 경계 단면",
+      "difficulty": "hard",
+      "scenario_family": "subduction-boundary",
+      "required_objects": [
+        "oceanic plate",
+        "continental plate",
+        "mantle region",
+        "trench",
+        "volcanic cone"
+      ],
+      "required_relations": [
+        "oceanic plate bends beneath continental plate",
+        "trench lies at their surface contact"
+      ],
+      "scientific_invariants": [
+        "subducting slab remains continuous",
+        "volcano stands on continental side"
+      ],
+      "allowed_gray_regions": [
+        "mantle region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/earth_science/subduction-boundary.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-ref-earth-03-faulted-strata",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "title": "단층으로 어긋난 지층",
+      "difficulty": "medium",
+      "scenario_family": "faulted-strata",
+      "required_objects": [
+        "four strata",
+        "one inclined fault plane",
+        "one ground surface"
+      ],
+      "required_relations": [
+        "each stratum is offset across the same fault plane"
+      ],
+      "scientific_invariants": [
+        "layer order remains unchanged",
+        "offset direction is consistent for all layers"
+      ],
+      "allowed_gray_regions": [
+        "second stratum"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference/earth_science/faulted-strata.png",
+      "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+    },
+    {
+      "case_id": "v2-txt-physics-01-series-circuit-switch",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "title": "전지-스위치-전구 직렬 회로",
+      "difficulty": "medium",
+      "scenario_family": "series-circuit-switch",
+      "required_objects": [
+        "battery",
+        "open switch",
+        "bulb",
+        "three wire segments"
+      ],
+      "required_relations": [
+        "one series path with the switch gap as the only break",
+        "the upper and lower left conductors terminate at different battery plates",
+        "wire crossings: zero"
+      ],
+      "scientific_invariants": [
+        "battery long and short plates remain distinct and interrupt the left conductor",
+        "no line bypasses the battery plates",
+        "switch contacts do not touch"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-physics-02-incline-fixed-pulley",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "title": "경사면의 물체와 고정 도르래",
+      "difficulty": "hard",
+      "scenario_family": "incline-fixed-pulley",
+      "required_objects": [
+        "inclined plane",
+        "one block",
+        "one fixed pulley",
+        "one hanging mass",
+        "one continuous string"
+      ],
+      "required_relations": [
+        "one continuous string starts at the block, is tangent to the upper-left pulley rim, follows the upper circumference, exits vertically at the right rim, and ends at the hanging mass"
+      ],
+      "scientific_invariants": [
+        "string never crosses the pulley interior",
+        "block contacts the incline",
+        "pulley is fixed above the incline"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-physics-03-lens-screen-apparatus",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "title": "광원-볼록 렌즈-스크린 장치",
+      "difficulty": "medium",
+      "scenario_family": "lens-screen-apparatus",
+      "required_objects": [
+        "one source object",
+        "one convex lens on a stand",
+        "one screen on a stand",
+        "one baseline"
+      ],
+      "required_relations": [
+        "left-to-right order is source, lens, screen",
+        "no light rays in illustration-only output"
+      ],
+      "scientific_invariants": [
+        "all three centers share one horizontal optical axis"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-chemistry-01-simple-distillation",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "title": "단순 증류 장치",
+      "difficulty": "hard",
+      "scenario_family": "simple-distillation",
+      "required_objects": [
+        "round flask",
+        "stopper",
+        "thermometer",
+        "delivery tube",
+        "receiver",
+        "heater"
+      ],
+      "required_relations": [
+        "flask neck holds stopper and thermometer",
+        "delivery tube runs from flask to receiver"
+      ],
+      "scientific_invariants": [
+        "heater lies directly below flask",
+        "receiver remains open and separate"
+      ],
+      "allowed_gray_regions": [
+        "liquid in flask",
+        "collected liquid"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-chemistry-02-separatory-funnel",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "title": "분별 깔때기의 두 액체층",
+      "difficulty": "medium",
+      "scenario_family": "separatory-funnel",
+      "required_objects": [
+        "one stoppered separatory funnel",
+        "one stopcock",
+        "one receiving beaker",
+        "one support stand"
+      ],
+      "required_relations": [
+        "funnel is supported above the beaker",
+        "two liquid layers remain physically separate"
+      ],
+      "scientific_invariants": [
+        "stopcock is below the lower layer",
+        "two horizontal liquid interfaces are visible"
+      ],
+      "allowed_gray_regions": [
+        "lower liquid layer"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-chemistry-03-gas-over-water",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "title": "수상 치환 기체 포집",
+      "difficulty": "hard",
+      "scenario_family": "gas-over-water",
+      "required_objects": [
+        "reaction flask",
+        "stopper",
+        "delivery tube",
+        "water trough",
+        "inverted gas jar"
+      ],
+      "required_relations": [
+        "tube starts at flask and terminates inside inverted jar under water"
+      ],
+      "scientific_invariants": [
+        "jar opening is below water surface",
+        "gas region is above water inside jar"
+      ],
+      "allowed_gray_regions": [
+        "water in trough and jar"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-biology-01-heart-four-chambers",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "title": "심장 네 방과 주요 혈관 단면",
+      "difficulty": "hard",
+      "scenario_family": "heart-four-chambers",
+      "required_objects": [
+        "one heart outline",
+        "two atria",
+        "two ventricles",
+        "one septum",
+        "four major vessel stubs"
+      ],
+      "required_relations": [
+        "each atrium lies above its ventricle",
+        "septum separates left and right ventricles"
+      ],
+      "scientific_invariants": [
+        "four chambers remain distinct",
+        "vessel stubs terminate at the heart boundary"
+      ],
+      "allowed_gray_regions": [
+        "one ventricular wall region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-biology-02-nephron-path",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "title": "신소체와 세뇨관 연결",
+      "difficulty": "hard",
+      "scenario_family": "nephron-path",
+      "required_objects": [
+        "one renal corpuscle",
+        "one continuous tubule",
+        "one collecting duct",
+        "two vessel stubs"
+      ],
+      "required_relations": [
+        "tubule starts at corpuscle and joins collecting duct",
+        "vessel stubs connect only to corpuscle"
+      ],
+      "scientific_invariants": [
+        "tubule remains continuous",
+        "collecting duct is not merged with vessels"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-biology-03-lungs-two-states",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "title": "폐와 가로막 두 상태 비교",
+      "difficulty": "medium",
+      "scenario_family": "lungs-two-states",
+      "required_objects": [
+        "two equal torso panels",
+        "two pairs of lungs",
+        "two diaphragm curves",
+        "two tracheae"
+      ],
+      "required_relations": [
+        "each trachea branches to its pair of lungs"
+      ],
+      "scientific_invariants": [
+        "viewpoint and torso size remain identical",
+        "only lung size and diaphragm curvature differ"
+      ],
+      "allowed_gray_regions": [
+        "lung interiors"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-earth-01-volcano-cross-section",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "title": "화산체와 마그마 통로 단면",
+      "difficulty": "hard",
+      "scenario_family": "volcano-cross-section",
+      "required_objects": [
+        "one volcanic cone",
+        "one crater",
+        "one main conduit",
+        "one magma chamber",
+        "three strata"
+      ],
+      "required_relations": [
+        "conduit continuously connects crater to chamber",
+        "strata are cut by conduit"
+      ],
+      "scientific_invariants": [
+        "chamber remains below all strata",
+        "crater is open at the summit"
+      ],
+      "allowed_gray_regions": [
+        "magma chamber and conduit"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-earth-02-subduction-boundary",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "title": "해양판 섭입 경계 단면",
+      "difficulty": "hard",
+      "scenario_family": "subduction-boundary",
+      "required_objects": [
+        "oceanic plate",
+        "continental plate",
+        "mantle region",
+        "trench",
+        "volcanic cone"
+      ],
+      "required_relations": [
+        "oceanic plate bends beneath continental plate",
+        "trench lies at their surface contact"
+      ],
+      "scientific_invariants": [
+        "subducting slab remains continuous",
+        "volcano stands on continental side"
+      ],
+      "allowed_gray_regions": [
+        "mantle region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-txt-earth-03-faulted-strata",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "title": "단층으로 어긋난 지층",
+      "difficulty": "medium",
+      "scenario_family": "faulted-strata",
+      "required_objects": [
+        "four strata",
+        "one inclined fault plane",
+        "one ground surface"
+      ],
+      "required_relations": [
+        "each stratum is offset across the same fault plane"
+      ],
+      "scientific_invariants": [
+        "layer order remains unchanged",
+        "offset direction is consistent for all layers"
+      ],
+      "allowed_gray_regions": [
+        "second stratum"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "instruction": "Construct the minimum diagram satisfying only the written constraints."
+    },
+    {
+      "case_id": "v2-sketch-physics-01-series-circuit-switch",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "title": "전지-스위치-전구 직렬 회로",
+      "difficulty": "medium",
+      "scenario_family": "series-circuit-switch",
+      "required_objects": [
+        "battery",
+        "open switch",
+        "bulb",
+        "three wire segments"
+      ],
+      "required_relations": [
+        "one series path with the switch gap as the only break",
+        "the upper and lower left conductors terminate at different battery plates",
+        "wire crossings: zero"
+      ],
+      "scientific_invariants": [
+        "battery long and short plates remain distinct and interrupt the left conductor",
+        "no line bypasses the battery plates",
+        "switch contacts do not touch"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/physics/series-circuit-switch.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-physics-02-incline-fixed-pulley",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "title": "경사면의 물체와 고정 도르래",
+      "difficulty": "hard",
+      "scenario_family": "incline-fixed-pulley",
+      "required_objects": [
+        "inclined plane",
+        "one block",
+        "one fixed pulley",
+        "one hanging mass",
+        "one continuous string"
+      ],
+      "required_relations": [
+        "one continuous string starts at the block, is tangent to the upper-left pulley rim, follows the upper circumference, exits vertically at the right rim, and ends at the hanging mass"
+      ],
+      "scientific_invariants": [
+        "string never crosses the pulley interior",
+        "block contacts the incline",
+        "pulley is fixed above the incline"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/physics/incline-fixed-pulley.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-physics-03-lens-screen-apparatus",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "title": "광원-볼록 렌즈-스크린 장치",
+      "difficulty": "medium",
+      "scenario_family": "lens-screen-apparatus",
+      "required_objects": [
+        "one source object",
+        "one convex lens on a stand",
+        "one screen on a stand",
+        "one baseline"
+      ],
+      "required_relations": [
+        "left-to-right order is source, lens, screen",
+        "no light rays in illustration-only output"
+      ],
+      "scientific_invariants": [
+        "all three centers share one horizontal optical axis"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/physics/lens-screen-apparatus.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-chemistry-01-simple-distillation",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "title": "단순 증류 장치",
+      "difficulty": "hard",
+      "scenario_family": "simple-distillation",
+      "required_objects": [
+        "round flask",
+        "stopper",
+        "thermometer",
+        "delivery tube",
+        "receiver",
+        "heater"
+      ],
+      "required_relations": [
+        "flask neck holds stopper and thermometer",
+        "delivery tube runs from flask to receiver"
+      ],
+      "scientific_invariants": [
+        "heater lies directly below flask",
+        "receiver remains open and separate"
+      ],
+      "allowed_gray_regions": [
+        "liquid in flask",
+        "collected liquid"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/chemistry/simple-distillation.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-chemistry-02-separatory-funnel",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "title": "분별 깔때기의 두 액체층",
+      "difficulty": "medium",
+      "scenario_family": "separatory-funnel",
+      "required_objects": [
+        "one stoppered separatory funnel",
+        "one stopcock",
+        "one receiving beaker",
+        "one support stand"
+      ],
+      "required_relations": [
+        "funnel is supported above the beaker",
+        "two liquid layers remain physically separate"
+      ],
+      "scientific_invariants": [
+        "stopcock is below the lower layer",
+        "two horizontal liquid interfaces are visible"
+      ],
+      "allowed_gray_regions": [
+        "lower liquid layer"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/chemistry/separatory-funnel.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-chemistry-03-gas-over-water",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "title": "수상 치환 기체 포집",
+      "difficulty": "hard",
+      "scenario_family": "gas-over-water",
+      "required_objects": [
+        "reaction flask",
+        "stopper",
+        "delivery tube",
+        "water trough",
+        "inverted gas jar"
+      ],
+      "required_relations": [
+        "tube starts at flask and terminates inside inverted jar under water"
+      ],
+      "scientific_invariants": [
+        "jar opening is below water surface",
+        "gas region is above water inside jar"
+      ],
+      "allowed_gray_regions": [
+        "water in trough and jar"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/chemistry/gas-over-water.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-biology-01-heart-four-chambers",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "title": "심장 네 방과 주요 혈관 단면",
+      "difficulty": "hard",
+      "scenario_family": "heart-four-chambers",
+      "required_objects": [
+        "one heart outline",
+        "two atria",
+        "two ventricles",
+        "one septum",
+        "four major vessel stubs"
+      ],
+      "required_relations": [
+        "each atrium lies above its ventricle",
+        "septum separates left and right ventricles"
+      ],
+      "scientific_invariants": [
+        "four chambers remain distinct",
+        "vessel stubs terminate at the heart boundary"
+      ],
+      "allowed_gray_regions": [
+        "one ventricular wall region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/biology/heart-four-chambers.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-biology-02-nephron-path",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "title": "신소체와 세뇨관 연결",
+      "difficulty": "hard",
+      "scenario_family": "nephron-path",
+      "required_objects": [
+        "one renal corpuscle",
+        "one continuous tubule",
+        "one collecting duct",
+        "two vessel stubs"
+      ],
+      "required_relations": [
+        "tubule starts at corpuscle and joins collecting duct",
+        "vessel stubs connect only to corpuscle"
+      ],
+      "scientific_invariants": [
+        "tubule remains continuous",
+        "collecting duct is not merged with vessels"
+      ],
+      "allowed_gray_regions": [],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/biology/nephron-path.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-biology-03-lungs-two-states",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "title": "폐와 가로막 두 상태 비교",
+      "difficulty": "medium",
+      "scenario_family": "lungs-two-states",
+      "required_objects": [
+        "two equal torso panels",
+        "two pairs of lungs",
+        "two diaphragm curves",
+        "two tracheae"
+      ],
+      "required_relations": [
+        "each trachea branches to its pair of lungs"
+      ],
+      "scientific_invariants": [
+        "viewpoint and torso size remain identical",
+        "only lung size and diaphragm curvature differ"
+      ],
+      "allowed_gray_regions": [
+        "lung interiors"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/biology/lungs-two-states.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-earth-01-volcano-cross-section",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "title": "화산체와 마그마 통로 단면",
+      "difficulty": "hard",
+      "scenario_family": "volcano-cross-section",
+      "required_objects": [
+        "one volcanic cone",
+        "one crater",
+        "one main conduit",
+        "one magma chamber",
+        "three strata"
+      ],
+      "required_relations": [
+        "conduit continuously connects crater to chamber",
+        "strata are cut by conduit"
+      ],
+      "scientific_invariants": [
+        "chamber remains below all strata",
+        "crater is open at the summit"
+      ],
+      "allowed_gray_regions": [
+        "magma chamber and conduit"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/earth_science/volcano-cross-section.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-earth-02-subduction-boundary",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "title": "해양판 섭입 경계 단면",
+      "difficulty": "hard",
+      "scenario_family": "subduction-boundary",
+      "required_objects": [
+        "oceanic plate",
+        "continental plate",
+        "mantle region",
+        "trench",
+        "volcanic cone"
+      ],
+      "required_relations": [
+        "oceanic plate bends beneath continental plate",
+        "trench lies at their surface contact"
+      ],
+      "scientific_invariants": [
+        "subducting slab remains continuous",
+        "volcano stands on continental side"
+      ],
+      "allowed_gray_regions": [
+        "mantle region"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/earth_science/subduction-boundary.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    },
+    {
+      "case_id": "v2-sketch-earth-03-faulted-strata",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "title": "단층으로 어긋난 지층",
+      "difficulty": "medium",
+      "scenario_family": "faulted-strata",
+      "required_objects": [
+        "four strata",
+        "one inclined fault plane",
+        "one ground surface"
+      ],
+      "required_relations": [
+        "each stratum is offset across the same fault plane"
+      ],
+      "scientific_invariants": [
+        "layer order remains unchanged",
+        "offset direction is consistent for all layers"
+      ],
+      "allowed_gray_regions": [
+        "second stratum"
+      ],
+      "forbidden": [
+        "text",
+        "digits",
+        "symbols",
+        "labels",
+        "leader_lines",
+        "arrows",
+        "unlisted_objects"
+      ],
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch/earth_science/faulted-strata.png",
+      "instruction": "Use the sketch for layout and the written constraints for scientific meaning."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "case_id": "v2-ref-biology-01-heart-four-chambers",
+  "split": "development",
+  "input_mode": "reference_image",
+  "subject": "biology",
+  "title": "심장 네 방과 주요 혈관 단면",
+  "difficulty": "hard",
+  "scenario_family": "heart-four-chambers",
+  "required_objects": [
+    "one heart outline",
+    "two atria",
+    "two ventricles",
+    "one septum",
+    "four major vessel stubs"
+  ],
+  "required_relations": [
+    "each atrium lies above its ventricle",
+    "septum separates left and right ventricles"
+  ],
+  "scientific_invariants": [
+    "four chambers remain distinct",
+    "vessel stubs terminate at the heart boundary"
+  ],
+  "allowed_gray_regions": [
+    "one ventricular wall region"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "input_asset": "inputs/reference/biology/heart-four-chambers.png",
+  "instruction": "Preserve the supplied source composition and structure while removing its color and annotations."
+}

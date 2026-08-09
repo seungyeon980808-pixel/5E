@@ -1,0 +1,31 @@
+{
+  "case_id": "v22-dev-chemistry-distillation-move-receiver",
+  "attempt": 1,
+  "subject": "chemistry",
+  "operations": ["move", "connect", "style_cleanup"],
+  "scores": {
+    "core_structure": 21,
+    "scientific_accuracy": 20,
+    "proportion_layout": 11,
+    "kice_lineart": 11,
+    "restrained_gray": 3,
+    "no_forbidden_marks": 10,
+    "editability": 4
+  },
+  "hard_gates": {
+    "requested_changes_complete": true,
+    "locked_invariants_preserved": false,
+    "severe_science_error": false,
+    "forbidden_mark_count": 0,
+    "unlisted_object_count": 0,
+    "critical_structure_broken": false
+  },
+  "failure_tags": ["EDIT_OVERREACH", "SOURCE_DRIFT", "OVER_SHADE"],
+  "evidence": [
+    "receiver moved right and the single delivery tube was extended",
+    "tube endpoint remains separated above the receiver",
+    "receiver body and neck proportions changed beyond the requested move",
+    "flask and receiver fills contain tonal gradients instead of uniform flat gray",
+    "heater interior also contains unintended tonal variation"
+  ]
+}

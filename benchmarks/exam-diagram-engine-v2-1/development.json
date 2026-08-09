@@ -1,0 +1,680 @@
+{
+  "benchmark": "exam-diagram-engine-v2-1",
+  "version": "2.1.0",
+  "split": "development",
+  "frozen": false,
+  "cases": [
+    {
+      "case_id": "v21-ref-physics-pendulum-two-states",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "scenario_family": "pendulum-two-states",
+      "difficulty": "medium",
+      "required_objects": [
+        "two supports",
+        "two equal strings",
+        "two identical pendulum bobs"
+      ],
+      "scientific_invariants": [
+        "only pendulum angle differs"
+      ],
+      "scene_contract": "scenes/development/v21-ref-physics-pendulum-two-states.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-physics-pendulum-two-states.png"
+    },
+    {
+      "case_id": "v21-txt-physics-pendulum-two-states",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "scenario_family": "pendulum-two-states",
+      "difficulty": "medium",
+      "required_objects": [
+        "two supports",
+        "two equal strings",
+        "two identical pendulum bobs"
+      ],
+      "scientific_invariants": [
+        "only pendulum angle differs"
+      ],
+      "scene_contract": "scenes/development/v21-txt-physics-pendulum-two-states.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-physics-pendulum-two-states",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "scenario_family": "pendulum-two-states",
+      "difficulty": "medium",
+      "required_objects": [
+        "two supports",
+        "two equal strings",
+        "two identical pendulum bobs"
+      ],
+      "scientific_invariants": [
+        "only pendulum angle differs"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-physics-pendulum-two-states.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-physics-pendulum-two-states.png"
+    },
+    {
+      "case_id": "v21-ref-physics-lever-balance",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "scenario_family": "lever-balance",
+      "difficulty": "medium",
+      "required_objects": [
+        "one lever beam",
+        "one fulcrum",
+        "two loads"
+      ],
+      "scientific_invariants": [
+        "beam is continuous and supported at one pivot"
+      ],
+      "scene_contract": "scenes/development/v21-ref-physics-lever-balance.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-physics-lever-balance.png"
+    },
+    {
+      "case_id": "v21-txt-physics-lever-balance",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "scenario_family": "lever-balance",
+      "difficulty": "medium",
+      "required_objects": [
+        "one lever beam",
+        "one fulcrum",
+        "two loads"
+      ],
+      "scientific_invariants": [
+        "beam is continuous and supported at one pivot"
+      ],
+      "scene_contract": "scenes/development/v21-txt-physics-lever-balance.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-physics-lever-balance",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "scenario_family": "lever-balance",
+      "difficulty": "medium",
+      "required_objects": [
+        "one lever beam",
+        "one fulcrum",
+        "two loads"
+      ],
+      "scientific_invariants": [
+        "beam is continuous and supported at one pivot"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-physics-lever-balance.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-physics-lever-balance.png"
+    },
+    {
+      "case_id": "v21-ref-physics-hydraulic-pistons",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "physics",
+      "scenario_family": "hydraulic-pistons",
+      "difficulty": "hard",
+      "required_objects": [
+        "one connected vessel",
+        "one liquid region",
+        "two pistons"
+      ],
+      "scientific_invariants": [
+        "both pistons contact one continuous liquid"
+      ],
+      "scene_contract": "scenes/development/v21-ref-physics-hydraulic-pistons.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-physics-hydraulic-pistons.png"
+    },
+    {
+      "case_id": "v21-txt-physics-hydraulic-pistons",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "physics",
+      "scenario_family": "hydraulic-pistons",
+      "difficulty": "hard",
+      "required_objects": [
+        "one connected vessel",
+        "one liquid region",
+        "two pistons"
+      ],
+      "scientific_invariants": [
+        "both pistons contact one continuous liquid"
+      ],
+      "scene_contract": "scenes/development/v21-txt-physics-hydraulic-pistons.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-physics-hydraulic-pistons",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "physics",
+      "scenario_family": "hydraulic-pistons",
+      "difficulty": "hard",
+      "required_objects": [
+        "one connected vessel",
+        "one liquid region",
+        "two pistons"
+      ],
+      "scientific_invariants": [
+        "both pistons contact one continuous liquid"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-physics-hydraulic-pistons.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-physics-hydraulic-pistons.png"
+    },
+    {
+      "case_id": "v21-ref-chemistry-filtration",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "scenario_family": "filtration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one funnel",
+        "one filter paper",
+        "one receiver",
+        "one filtrate region"
+      ],
+      "scientific_invariants": [
+        "funnel stem enters receiver without a stopper"
+      ],
+      "scene_contract": "scenes/development/v21-ref-chemistry-filtration.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-chemistry-filtration.png"
+    },
+    {
+      "case_id": "v21-txt-chemistry-filtration",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "scenario_family": "filtration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one funnel",
+        "one filter paper",
+        "one receiver",
+        "one filtrate region"
+      ],
+      "scientific_invariants": [
+        "funnel stem enters receiver without a stopper"
+      ],
+      "scene_contract": "scenes/development/v21-txt-chemistry-filtration.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-chemistry-filtration",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "scenario_family": "filtration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one funnel",
+        "one filter paper",
+        "one receiver",
+        "one filtrate region"
+      ],
+      "scientific_invariants": [
+        "funnel stem enters receiver without a stopper"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-chemistry-filtration.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-chemistry-filtration.png"
+    },
+    {
+      "case_id": "v21-ref-chemistry-titration",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "scenario_family": "titration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one stand",
+        "one clamp",
+        "one burette",
+        "one conical flask",
+        "one solution region"
+      ],
+      "scientific_invariants": [
+        "burette tip remains above the open flask"
+      ],
+      "scene_contract": "scenes/development/v21-ref-chemistry-titration.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-chemistry-titration.png"
+    },
+    {
+      "case_id": "v21-txt-chemistry-titration",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "scenario_family": "titration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one stand",
+        "one clamp",
+        "one burette",
+        "one conical flask",
+        "one solution region"
+      ],
+      "scientific_invariants": [
+        "burette tip remains above the open flask"
+      ],
+      "scene_contract": "scenes/development/v21-txt-chemistry-titration.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-chemistry-titration",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "scenario_family": "titration",
+      "difficulty": "medium",
+      "required_objects": [
+        "one stand",
+        "one clamp",
+        "one burette",
+        "one conical flask",
+        "one solution region"
+      ],
+      "scientific_invariants": [
+        "burette tip remains above the open flask"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-chemistry-titration.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-chemistry-titration.png"
+    },
+    {
+      "case_id": "v21-ref-chemistry-calorimetry",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "chemistry",
+      "scenario_family": "calorimetry",
+      "difficulty": "hard",
+      "required_objects": [
+        "one insulated cup",
+        "one liquid region",
+        "one lid",
+        "one unmarked thermometer"
+      ],
+      "scientific_invariants": [
+        "thermometer enters liquid through lid"
+      ],
+      "scene_contract": "scenes/development/v21-ref-chemistry-calorimetry.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-chemistry-calorimetry.png"
+    },
+    {
+      "case_id": "v21-txt-chemistry-calorimetry",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "chemistry",
+      "scenario_family": "calorimetry",
+      "difficulty": "hard",
+      "required_objects": [
+        "one insulated cup",
+        "one liquid region",
+        "one lid",
+        "one unmarked thermometer"
+      ],
+      "scientific_invariants": [
+        "thermometer enters liquid through lid"
+      ],
+      "scene_contract": "scenes/development/v21-txt-chemistry-calorimetry.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-chemistry-calorimetry",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "chemistry",
+      "scenario_family": "calorimetry",
+      "difficulty": "hard",
+      "required_objects": [
+        "one insulated cup",
+        "one liquid region",
+        "one lid",
+        "one unmarked thermometer"
+      ],
+      "scientific_invariants": [
+        "thermometer enters liquid through lid"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-chemistry-calorimetry.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-chemistry-calorimetry.png"
+    },
+    {
+      "case_id": "v21-ref-biology-stomata",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "scenario_family": "stomata",
+      "difficulty": "medium",
+      "required_objects": [
+        "two guard cells",
+        "one central pore"
+      ],
+      "scientific_invariants": [
+        "guard cells are paired around one open pore"
+      ],
+      "scene_contract": "scenes/development/v21-ref-biology-stomata.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-biology-stomata.png"
+    },
+    {
+      "case_id": "v21-txt-biology-stomata",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "scenario_family": "stomata",
+      "difficulty": "medium",
+      "required_objects": [
+        "two guard cells",
+        "one central pore"
+      ],
+      "scientific_invariants": [
+        "guard cells are paired around one open pore"
+      ],
+      "scene_contract": "scenes/development/v21-txt-biology-stomata.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-biology-stomata",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "scenario_family": "stomata",
+      "difficulty": "medium",
+      "required_objects": [
+        "two guard cells",
+        "one central pore"
+      ],
+      "scientific_invariants": [
+        "guard cells are paired around one open pore"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-biology-stomata.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-biology-stomata.png"
+    },
+    {
+      "case_id": "v21-ref-biology-onion-cells",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "scenario_family": "onion-cells",
+      "difficulty": "medium",
+      "required_objects": [
+        "eight epidermal cells",
+        "eight nuclei"
+      ],
+      "scientific_invariants": [
+        "each cell contains exactly one nucleus"
+      ],
+      "scene_contract": "scenes/development/v21-ref-biology-onion-cells.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-biology-onion-cells.png"
+    },
+    {
+      "case_id": "v21-txt-biology-onion-cells",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "scenario_family": "onion-cells",
+      "difficulty": "medium",
+      "required_objects": [
+        "eight epidermal cells",
+        "eight nuclei"
+      ],
+      "scientific_invariants": [
+        "each cell contains exactly one nucleus"
+      ],
+      "scene_contract": "scenes/development/v21-txt-biology-onion-cells.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-biology-onion-cells",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "scenario_family": "onion-cells",
+      "difficulty": "medium",
+      "required_objects": [
+        "eight epidermal cells",
+        "eight nuclei"
+      ],
+      "scientific_invariants": [
+        "each cell contains exactly one nucleus"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-biology-onion-cells.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-biology-onion-cells.png"
+    },
+    {
+      "case_id": "v21-ref-biology-seed-germination",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "biology",
+      "scenario_family": "seed-germination",
+      "difficulty": "hard",
+      "required_objects": [
+        "one seed",
+        "one primary root",
+        "one shoot",
+        "two young leaves"
+      ],
+      "scientific_invariants": [
+        "root emerges downward and shoot upward"
+      ],
+      "scene_contract": "scenes/development/v21-ref-biology-seed-germination.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-biology-seed-germination.png"
+    },
+    {
+      "case_id": "v21-txt-biology-seed-germination",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "biology",
+      "scenario_family": "seed-germination",
+      "difficulty": "hard",
+      "required_objects": [
+        "one seed",
+        "one primary root",
+        "one shoot",
+        "two young leaves"
+      ],
+      "scientific_invariants": [
+        "root emerges downward and shoot upward"
+      ],
+      "scene_contract": "scenes/development/v21-txt-biology-seed-germination.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-biology-seed-germination",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "biology",
+      "scenario_family": "seed-germination",
+      "difficulty": "hard",
+      "required_objects": [
+        "one seed",
+        "one primary root",
+        "one shoot",
+        "two young leaves"
+      ],
+      "scientific_invariants": [
+        "root emerges downward and shoot upward"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-biology-seed-germination.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-biology-seed-germination.png"
+    },
+    {
+      "case_id": "v21-ref-earth-anticline",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "scenario_family": "anticline",
+      "difficulty": "medium",
+      "required_objects": [
+        "four folded layer boundaries"
+      ],
+      "scientific_invariants": [
+        "all layers form one upward arch without crossing"
+      ],
+      "scene_contract": "scenes/development/v21-ref-earth-anticline.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-earth-anticline.png"
+    },
+    {
+      "case_id": "v21-txt-earth-anticline",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "scenario_family": "anticline",
+      "difficulty": "medium",
+      "required_objects": [
+        "four folded layer boundaries"
+      ],
+      "scientific_invariants": [
+        "all layers form one upward arch without crossing"
+      ],
+      "scene_contract": "scenes/development/v21-txt-earth-anticline.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-earth-anticline",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "scenario_family": "anticline",
+      "difficulty": "medium",
+      "required_objects": [
+        "four folded layer boundaries"
+      ],
+      "scientific_invariants": [
+        "all layers form one upward arch without crossing"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-earth-anticline.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-earth-anticline.png"
+    },
+    {
+      "case_id": "v21-ref-earth-unconformity",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "scenario_family": "unconformity",
+      "difficulty": "medium",
+      "required_objects": [
+        "three horizontal layers",
+        "one erosional surface",
+        "three tilted layers"
+      ],
+      "scientific_invariants": [
+        "horizontal layers overlie truncated tilted layers"
+      ],
+      "scene_contract": "scenes/development/v21-ref-earth-unconformity.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-earth-unconformity.png"
+    },
+    {
+      "case_id": "v21-txt-earth-unconformity",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "scenario_family": "unconformity",
+      "difficulty": "medium",
+      "required_objects": [
+        "three horizontal layers",
+        "one erosional surface",
+        "three tilted layers"
+      ],
+      "scientific_invariants": [
+        "horizontal layers overlie truncated tilted layers"
+      ],
+      "scene_contract": "scenes/development/v21-txt-earth-unconformity.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-earth-unconformity",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "scenario_family": "unconformity",
+      "difficulty": "medium",
+      "required_objects": [
+        "three horizontal layers",
+        "one erosional surface",
+        "three tilted layers"
+      ],
+      "scientific_invariants": [
+        "horizontal layers overlie truncated tilted layers"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-earth-unconformity.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-earth-unconformity.png"
+    },
+    {
+      "case_id": "v21-ref-earth-ocean-floor-profile",
+      "split": "development",
+      "input_mode": "reference_image",
+      "subject": "earth_science",
+      "scenario_family": "ocean-floor-profile",
+      "difficulty": "hard",
+      "required_objects": [
+        "one symmetric ocean-floor profile",
+        "one water region"
+      ],
+      "scientific_invariants": [
+        "central ridge lies between two deep basins"
+      ],
+      "scene_contract": "scenes/development/v21-ref-earth-ocean-floor-profile.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/reference_image/v21-ref-earth-ocean-floor-profile.png"
+    },
+    {
+      "case_id": "v21-txt-earth-ocean-floor-profile",
+      "split": "development",
+      "input_mode": "description_only",
+      "subject": "earth_science",
+      "scenario_family": "ocean-floor-profile",
+      "difficulty": "hard",
+      "required_objects": [
+        "one symmetric ocean-floor profile",
+        "one water region"
+      ],
+      "scientific_invariants": [
+        "central ridge lies between two deep basins"
+      ],
+      "scene_contract": "scenes/development/v21-txt-earth-ocean-floor-profile.json",
+      "evaluation": "V2_100_POINT_RUBRIC"
+    },
+    {
+      "case_id": "v21-sketch-earth-ocean-floor-profile",
+      "split": "development",
+      "input_mode": "sketch_plus_description",
+      "subject": "earth_science",
+      "scenario_family": "ocean-floor-profile",
+      "difficulty": "hard",
+      "required_objects": [
+        "one symmetric ocean-floor profile",
+        "one water region"
+      ],
+      "scientific_invariants": [
+        "central ridge lies between two deep basins"
+      ],
+      "scene_contract": "scenes/development/v21-sketch-earth-ocean-floor-profile.json",
+      "evaluation": "V2_100_POINT_RUBRIC",
+      "input_asset": "inputs/sketch_plus_description/v21-sketch-earth-ocean-floor-profile.png"
+    }
+  ]
+}

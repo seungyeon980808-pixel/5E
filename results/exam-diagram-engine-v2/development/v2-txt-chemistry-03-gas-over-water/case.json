@@ -1,0 +1,37 @@
+{
+  "case_id": "v2-txt-chemistry-03-gas-over-water",
+  "split": "development",
+  "input_mode": "description_only",
+  "subject": "chemistry",
+  "title": "수상 치환 기체 포집",
+  "difficulty": "hard",
+  "scenario_family": "gas-over-water",
+  "required_objects": [
+    "reaction flask",
+    "stopper",
+    "delivery tube",
+    "water trough",
+    "inverted gas jar"
+  ],
+  "required_relations": [
+    "tube starts at flask and terminates inside inverted jar under water"
+  ],
+  "scientific_invariants": [
+    "jar opening is below water surface",
+    "gas region is above water inside jar"
+  ],
+  "allowed_gray_regions": [
+    "water in trough and jar"
+  ],
+  "forbidden": [
+    "text",
+    "digits",
+    "symbols",
+    "labels",
+    "leader_lines",
+    "arrows",
+    "unlisted_objects"
+  ],
+  "evaluation": "V2_100_POINT_RUBRIC",
+  "instruction": "Construct the minimum diagram satisfying only the written constraints."
+}

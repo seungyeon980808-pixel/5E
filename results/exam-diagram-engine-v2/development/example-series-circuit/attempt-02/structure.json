@@ -1,0 +1,147 @@
+{
+  "case_id": "example-series-circuit",
+  "input_mode": "description_only",
+  "subject": "physics",
+  "description": "전지 한 개, 열린 스위치 한 개, 전구 한 개가 도선으로 직렬 연결된 무라벨 회로를 그린다.",
+  "objects": [
+    {
+      "id": "battery",
+      "kind": "battery with long and short plates inserted into the left side of the loop",
+      "count": 1,
+      "panel": 1,
+      "bbox": [
+        0.12,
+        0.38,
+        0.25,
+        0.62
+      ],
+      "details": [
+        "no polarity symbols",
+        "the left conductor is interrupted by the battery; no bypass line beside or behind it"
+      ],
+      "terminals": [
+        "upper_plate",
+        "lower_plate"
+      ]
+    },
+    {
+      "id": "switch",
+      "kind": "open switch with two terminals",
+      "count": 1,
+      "panel": 1,
+      "bbox": [
+        0.4,
+        0.18,
+        0.58,
+        0.34
+      ],
+      "details": [
+        "contact arm does not touch far terminal"
+      ],
+      "terminals": [
+        "left_contact",
+        "right_contact"
+      ]
+    },
+    {
+      "id": "bulb",
+      "kind": "unlabeled lamp symbol",
+      "count": 1,
+      "panel": 1,
+      "bbox": [
+        0.72,
+        0.38,
+        0.86,
+        0.62
+      ],
+      "details": [
+        "empty interior except filament structure"
+      ],
+      "terminals": [
+        "upper_terminal",
+        "lower_terminal"
+      ]
+    },
+    {
+      "id": "wire",
+      "kind": "orthogonal wire path",
+      "count": 3,
+      "panel": 1,
+      "bbox": [
+        0.18,
+        0.25,
+        0.8,
+        0.78
+      ],
+      "details": [
+        "three segments terminate only at listed components"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "battery",
+      "from_terminal": "upper_plate",
+      "to": "switch",
+      "to_terminal": "left_contact",
+      "kind": "wire",
+      "details": "upper-left path"
+    },
+    {
+      "from": "switch",
+      "from_terminal": "right_contact",
+      "to": "bulb",
+      "to_terminal": "upper_terminal",
+      "kind": "wire",
+      "details": "upper-right path; open gap exists only between the two switch contacts"
+    },
+    {
+      "from": "bulb",
+      "from_terminal": "lower_terminal",
+      "to": "battery",
+      "to_terminal": "lower_plate",
+      "kind": "wire",
+      "details": "lower return path"
+    }
+  ],
+  "layout": {
+    "canvas": "landscape",
+    "panel_count": 1,
+    "empty_regions": [
+      "clear upper and lower exterior margin for later labels"
+    ],
+    "overlap_order": [],
+    "minimum_margin_fraction": 0.08
+  },
+  "scientific_invariants": [
+    "There is exactly one series loop and exactly one open gap at the switch.",
+    "The battery interrupts the left conductor and is part of the loop; no wire bypasses either battery plate.",
+    "No two crossing wires and no hidden junctions."
+  ],
+  "allowed_gray_regions": [],
+  "category_encoding": [],
+  "state_variables": [
+    "switch is open"
+  ],
+  "ambiguities": [],
+  "forbidden": [
+    "arrowheads",
+    "arrows",
+    "captions",
+    "decorative_context",
+    "digits",
+    "direction_arrows",
+    "empty_annotation_boxes",
+    "korean_characters",
+    "labels",
+    "leader_lines",
+    "letters",
+    "mathematical_symbols",
+    "qr_codes",
+    "symbols",
+    "text",
+    "watermarks"
+  ],
+  "source_images": [],
+  "conflict_resolutions": []
+}

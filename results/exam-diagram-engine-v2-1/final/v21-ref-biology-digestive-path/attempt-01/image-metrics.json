@@ -1,0 +1,10 @@
+{
+  "width": 800,
+  "height": 1000,
+  "mode": "L",
+  "white_fraction": 0.990315,
+  "black_fraction": 0.0058275,
+  "gray_fraction": 0.0038575,
+  "palette_min": 0,
+  "palette_max": 255
+}

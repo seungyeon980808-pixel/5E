@@ -1,0 +1,55 @@
+{
+  "case_id": "v22-fin-chemistry-chromatography-duplicate-middle-spot",
+  "split": "final",
+  "subject": "chemistry",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-chemistry-chromatography.png",
+  "scenario_family": "chromatography",
+  "user_instruction": "가운데 회색 반점과 같은 반점을 그 위에 하나 추가한다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one chamber",
+    "one solvent region",
+    "one paper strip",
+    "three spots"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "duplicate",
+      "target": "the middle flat-gray spot",
+      "change": "add exactly one same-size flat-gray copy above it on the paper"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "lowest spot lies above solvent surface",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "가운데 회색 반점과 같은 반점을 그 위에 하나 추가한다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.34,
+        0.26,
+        0.66,
+        0.62
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}

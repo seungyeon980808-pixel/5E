@@ -1,0 +1,55 @@
+{
+  "case_id": "v22-fin-chemistry-diffusion-membrane-move-diamond",
+  "split": "final",
+  "subject": "chemistry",
+  "source_image": "benchmarks/exam-diagram-engine-v2-1/inputs/reference_image/v21-ref-chemistry-diffusion-membrane.png",
+  "scenario_family": "diffusion-membrane",
+  "user_instruction": "왼쪽 아래 마름모 입자 하나만 막 오른쪽으로 옮긴다. 문자·화살표·색은 제거하고 평가원식 흑백 선화로 정리한다.",
+  "source_inventory": [
+    "one container",
+    "one membrane",
+    "five round particles",
+    "three angular particles"
+  ],
+  "source_annotations_to_remove": [
+    "all source text",
+    "all source arrows and leaders",
+    "all panel markers"
+  ],
+  "operations": [
+    {
+      "type": "move",
+      "target": "the lower-left diamond particle",
+      "change": "move across the membrane into the lower-right chamber without resizing"
+    },
+    {
+      "type": "style_cleanup",
+      "target": "entire source image",
+      "change": "remove annotations and color without changing geometry outside the declared edit masks"
+    }
+  ],
+  "locked_invariants": [
+    "particles occur on both sides without direction marks",
+    "all source properties outside the requested operations remain unchanged"
+  ],
+  "expected_assertions": [
+    "왼쪽 아래 마름모 입자 하나만 막 오른쪽으로 옮긴다.",
+    "all locked source objects and relations remain unchanged",
+    "zero text, symbols, leader lines, or arrows remain"
+  ],
+  "allowed_gray_regions": [],
+  "spatial_contract": {
+    "edit_masks": [
+      [
+        0.2,
+        0.22,
+        0.82,
+        0.82
+      ]
+    ],
+    "annotation_masks": [],
+    "minimum_locked_edge_f1": 0.72,
+    "maximum_annotation_ink_fraction": 0.015
+  },
+  "critical_uncertainties": []
+}
