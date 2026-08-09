@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <rect width="760" height="300" rx="18" fill="#080b10"/><g opacity=".12" fill="#e6edf3" font-family="Georgia,serif" font-style="italic"><text x="60" y="75" transform="rotate(-22 60 75)">sciEnce Educational</text><text x="530" y="245" transform="rotate(-22 530 245)">Exam Easy Editor</text></g>
+  <text x="26" y="35" fill="#f0f6fc" font-size="18" font-weight="700">드래그한 위치가 새 아트보드가 됩니다</text><text x="26" y="56" fill="#8b949e" font-size="11">커서 시작점과 선택 사각형의 좌표를 일치시켰습니다.</text>
+  <rect x="120" y="80" width="500" height="175" fill="#f8fafc" opacity=".18" stroke="#2f81f7" stroke-width="3"/><rect x="120" y="80" width="500" height="175" fill="#f8fafc"/>
+  <g transform="translate(265 104)" stroke="#111827" fill="none" stroke-width="2"><path d="M0 112h235"/><path d="M40 15v97M205 15v97"/><ellipse cx="123" cy="40" rx="54" ry="10"/><path d="M69 40v48q0 12 14 12h80q14 0 14-12V40"/><path d="M123 50v38m0 0-20 33m20-33 20 33"/></g>
+  <circle cx="120" cy="80" r="6" fill="#2f81f7"/><circle cx="620" cy="255" r="6" fill="#2f81f7"/><path d="M83 71l36 9M657 268l-36-13" stroke="#58a6ff" stroke-width="2"/>
+  <g transform="translate(292 245)"><rect width="177" height="35" rx="8" fill="#14284a" stroke="#2f81f7"/><text x="16" y="22" fill="#f0f6fc" font-size="12" font-weight="650">160 × 56 mm</text><rect x="111" y="5" width="59" height="25" rx="6" fill="#2f81f7"/><text x="140" y="22" text-anchor="middle" fill="white" font-size="11" font-weight="700">지정</text></g>
+</svg>
