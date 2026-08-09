@@ -197,8 +197,10 @@
 .partslib-source { color: var(--accent); text-decoration: none; }
 .partslib-source:hover { text-decoration: underline; }
 
-.partslib-preview .modal-btn { margin-top: auto; padding: 6px 12px; font-size: 13px; }
+.partslib-preview .modal-btn { padding: 6px 12px; font-size: 13px; }
 .partslib-preview .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.partslib-primary-actions { display: flex; gap: 6px; margin-top: auto; }
+.partslib-primary-actions .modal-btn { flex: 1; }
 
 /* ----- 좁은 화면: 미리보기를 아래로 내린다 ----- */
 @media (max-width: 900px) {

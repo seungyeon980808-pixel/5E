@@ -184,7 +184,14 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
   const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
   const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
-  dim.append(wInput, sepX, hInput, sepU);
+  const confirmButton = document.createElement("button");
+  confirmButton.type = "button";
+  confirmButton.textContent = "지정";
+  confirmButton.title = "선택한 영역을 새 아트보드로 지정";
+  confirmButton.style.cssText =
+    "margin-left:6px;padding:2px 7px;border:1px solid rgba(255,255,255,.55);border-radius:3px;" +
+    "color:#fff;background:rgba(8,24,45,.34);font:inherit;font-weight:700;cursor:pointer;";
+  dim.append(wInput, sepX, hInput, sepU, confirmButton);
   overlay.appendChild(dim);
   [wInput, hInput].forEach((inp) => {
     inp.addEventListener("focus", () => { inp.select(); inp.style.background = "rgba(255,255,255,0.40)"; });
@@ -196,6 +203,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   dim.addEventListener("mousedown", (e) => {
     if (e.target === dim || e.target === sepX || e.target === sepU) { e.preventDefault(); wInput.focus(); }
   });
+  confirmButton.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
 
   // 8개 리사이즈 핸들: [id, x비율, y비율] (0=좌/상, .5=중앙, 1=우/하).
   const HANDLES = [
@@ -215,7 +223,10 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     handleEls[id] = h;
   }
 
-  document.body.appendChild(overlay);
+  // body에는 화면 배율용 CSS zoom이 적용된다. fixed 오버레이를 body에 붙이면
+  // clientX/clientY가 다시 확대되어 커서와 선택 시작점이 어긋난다. 문서 루트에
+  // 직접 붙여 브라우저의 실제 화면 좌표계를 그대로 사용한다.
+  document.documentElement.appendChild(overlay);
 
   let box = null;      // { l, t, r, b } client px (그리는 중엔 비정규화 가능)
   let phase = "draw";  // "draw" | "adjust"

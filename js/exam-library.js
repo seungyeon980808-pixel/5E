@@ -138,7 +138,7 @@ function buildModal() {
   overlay.innerHTML = `
     <div class="modal modal-examlib" role="dialog" aria-modal="true" aria-labelledby="examlib-title">
       <div class="examlib-title-row">
-        <h2 class="modal-title" id="examlib-title">기출 문항 검색</h2>
+        <h2 class="modal-title" id="examlib-title">기출문제 라이브러리</h2>
         <p id="examlib-status" class="objectify-status examlib-status-inline" role="status"></p>
       </div>
       <div class="examlib-filter-row">
@@ -170,6 +170,8 @@ function buildModal() {
         <div class="examlib-selected-actions">
           <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
           <button id="examlib-objectify" type="button" class="modal-btn modal-btn-primary" disabled>오브젝트 변환</button>
+          <button id="examlib-ai" type="button" class="modal-btn" disabled
+                  title="선택한 기출 이미지를 AI 생성·변환의 참고 이미지로 보냅니다">AI로 재구성</button>
           <button id="examlib-refwin" type="button" class="modal-btn modal-btn-primary" disabled
                   title="선택한 문항을 별도 창으로 띄웁니다 (듀얼 모니터용)">참고 창 열기</button>
         </div>
@@ -183,7 +185,7 @@ function buildModal() {
   return overlay;
 }
 
-export function initExamLibrary(state) {
+export function initExamLibrary(state, { openAi } = {}) {
   const openButton = document.getElementById("exam-library-open");
   if (!openButton) return;
 
@@ -199,6 +201,7 @@ export function initExamLibrary(state) {
   const grid = overlay.querySelector("#examlib-grid");
   const insertBtn = overlay.querySelector("#examlib-insert");
   const objectifyBtn = overlay.querySelector("#examlib-objectify");
+  const aiBtn = overlay.querySelector("#examlib-ai");
   const refwinBtn = overlay.querySelector("#examlib-refwin");
 
   const filterValues = () => ({
@@ -213,7 +216,11 @@ export function initExamLibrary(state) {
     status.textContent = msg;
     status.classList.toggle("is-error", isError);
   };
-  const close = () => { overlay.hidden = true; };
+  const close = () => {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "exam" } }));
+  };
 
   /* ----- 그리드 선택 상태(카드 클릭 → 상단 액션 버튼이 대상으로 삼음) -----
      클릭할 때마다 켜고 끄는 토글이다(Ctrl/⌘를 눌러야 하는 방식은 Mac에서 우클릭과
@@ -226,8 +233,11 @@ export function initExamLibrary(state) {
     // 오브젝트 변환은 편집 모달을 띄우는 대화형이라 한 번에 하나만 다룰 수 있다.
     objectifyBtn.disabled = !ready || n > 1;
     objectifyBtn.title = n > 1 ? "오브젝트 변환은 한 문항씩만 됩니다." : "";
+    aiBtn.disabled = !ready || typeof openAi !== "function";
+    aiBtn.title = "선택한 기출 이미지를 AI 생성·변환의 참고 이미지로 보냅니다.";
     refwinBtn.disabled = !ready;
     insertBtn.textContent = n > 1 ? `이미지 삽입 (${n})` : "이미지 삽입";
+    aiBtn.textContent = n > 1 ? `AI로 재구성 (${n})` : "AI로 재구성";
     refwinBtn.textContent = n > 1 ? `참고 창 열기 (${n})` : "참고 창 열기";
   }
   function syncCardMarks() {
@@ -420,6 +430,14 @@ export function initExamLibrary(state) {
   objectifyBtn.addEventListener("click", () => {
     const item = selectedItems()[0];
     if (item) objectifyItem(item, objectifyBtn);
+  });
+  aiBtn.addEventListener("click", () => {
+    const items = selectedItems();
+    if (!items.length || typeof openAi !== "function") return;
+    close();
+    void openAi({
+      references: items.map((item) => ({ src: imageUrl(item), name: item.title || item.file })),
+    });
   });
   refwinBtn.addEventListener("click", () => {
     const items = selectedItems();

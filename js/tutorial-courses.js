@@ -899,12 +899,12 @@ const EXAM_SEARCH = {
     },
     {
       target: () => "#exam-library-open",
-      title: "기출문항 검색 열기",
+      title: "기출문제 라이브러리 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
         "· 단축키는 Ctrl+Shift+F 입니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출문항 검색을 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "기출문제 라이브러리를 눌러 주세요" },
     },
     {
       target: () => ["#examlib-query", "#examlib-status"],
@@ -1186,10 +1186,10 @@ const TRIM_EXAM = {
     },
     {
       target: () => "#exam-library-open",
-      title: "기출문항 검색 열기",
+      title: "기출문제 라이브러리 열기",
       text: "캔버스 아래 막대에 있습니다. 눌러 주세요. (Ctrl+Shift+F)",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출문항 검색을 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "기출문제 라이브러리를 눌러 주세요" },
     },
     {
       target: () => ["#examlib-query", "#examlib-status"],

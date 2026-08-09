@@ -140,6 +140,7 @@ export const TEMPLATES = {
   clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
   scale: { kind: "shape", category: "역학", label: "저울", keywords: ["저울", "디지털저울", "scale", "balance"], create: { tool: "APPARATUS", kind: "scale" } },
   bar_magnet: { kind: "shape", category: "전자기학", label: "막대자석", keywords: ["자석", "막대자석", "N극", "S극", "magnet"], create: { tool: "APPARATUS", kind: "bar_magnet" } },
+  electroscope: { kind: "shape", category: "전자기학", label: "검전기", keywords: ["검전기", "금속박", "정전기", "electroscope"], create: { tool: "APPARATUS", kind: "electroscope" } },
   speaker: { kind: "shape", category: "역학", label: "스피커", keywords: ["스피커", "음원", "소리", "음파", "speaker"], create: { tool: "APPARATUS", kind: "speaker" } },
   thermometer: { kind: "shape", category: "열역학", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer" } },
   phototube: { kind: "shape", category: "광학", label: "광전관", keywords: ["광전관", "광전 효과", "광전자", "phototube"], create: { tool: "APPARATUS", kind: "phototube" } },
@@ -418,6 +419,7 @@ const APPARATUS_ICON_BOX = {
   slit: { w: 4, h: 22 },
   thermometer: { w: 7, h: 22 },
   bar_magnet: { w: 26, h: 9 },
+  electroscope: { w: 22, h: 34 },
   fringe_pattern: { w: 7, h: 22 },
 };
 
@@ -503,6 +505,7 @@ function iconSampleObject(id, def) {
     if (c.kind === "pulley") sample.variant = "basic";
     if (c.kind === "clamp") sample.flipped = false;
     if (c.kind === "scale") sample.displayText = "0.99 N";
+    if (c.kind === "electroscope") sample.leafSpread = 0.55;
     return sample;
   }
   if (c.tool === "GROUNDARC") {

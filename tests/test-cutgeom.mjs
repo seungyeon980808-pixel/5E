@@ -1,5 +1,5 @@
 // 자르기 기하(가위/칼) 검증. 상대경로로 import → 어느 워크트리에서 실행해도 그 폴더의 모듈을 본다.
-import { cutScissors, cutKnife, isCuttable }
+import { cutScissors, cutKnife, cutBoxObject, isCuttable }
   from "../js/cut-geometry.js";
 
 let pass = 0, fail = 0;
@@ -21,6 +21,22 @@ console.log("가위 (scissors)");
     const L = r[0].points, R = r[1].points;
     check("절단점 공유(15,0)", Math.abs(L[L.length-1].x - 15) < 0.5 && Math.abs(R[0].x - 15) < 0.5, `${L[L.length-1].x},${R[0].x}`);
   }
+}
+
+console.log("이미지 내부 도려내기");
+{
+  const image = { id: "img", type: "image", x: 0, y: 0, w: 100, h: 80, rotation: 0, cutouts: [] };
+  const r = cutBoxObject(image, [{ x: 30, y: 20 }, { x: 70, y: 20 }, { x: 70, y: 55 }, { x: 30, y: 55 }]);
+  check("상자 끝을 관통하지 않은 닫힌 경로는 안쪽·바깥쪽 2개 조각으로 분리", r && r.length === 2, `got ${r && r.length}`);
+  check("바깥 조각은 선택 영역만 제외", r && r[0].cutouts?.some((c) => c.type === "poly"));
+  check("안쪽 조각은 선택 영역만 보존", r && r[1].cutouts?.some((c) => c.type === "outside-poly"));
+  check("안쪽 조각의 선택 상자가 도려낸 영역에 맞게 축소", r && r[1].w < image.w && r[1].h < image.h);
+  check("원본 이미지는 직접 변경하지 않음", image.cutouts.length === 0);
+}
+{
+  const image = { id: "img", type: "image", x: 0, y: 0, w: 100, h: 80, rotation: 0, cutouts: [] };
+  const r = cutBoxObject(image, [{ x: -20, y: 20 }, { x: -5, y: 20 }, { x: -5, y: 55 }, { x: -20, y: 55 }]);
+  check("상자 밖의 비관통 경로는 안전하게 무시", r === null);
 }
 {
   // line 중간 클릭 → line 2개

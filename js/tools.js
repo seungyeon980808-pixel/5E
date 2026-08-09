@@ -45,11 +45,11 @@ import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=1.4.0";
+} from "./pick.js?v=1.4.2";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.4.0";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.4.2";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -103,6 +103,7 @@ const APPARATUS_TEMPLATE_IDS = {
   pulley: "M001",
   clamp: "M004",
   scale: "M003",
+  electroscope: "E013",
 };
 const CIRCUIT_CAP_GAP_DEFAULT = 2; // capacitor plate gap default (mm); mirrors render.js
 
@@ -808,6 +809,9 @@ function makeShape(type, a, b) {
       shape.facing = "right";
     } else if (shape.kind === "bar_magnet") {
       shape.northSide = "left";
+    } else if (shape.kind === "electroscope") {
+      shape.leafSpread = 0.55;
+      shape.lockAspect = true;
     } else if (shape.kind === "transistor") {
       shape.variant = "npn";
     } else if (shape.kind === "compass") {

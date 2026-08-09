@@ -214,6 +214,7 @@ function renderApparatus(obj) {
   else if (kind === "thermometer") drawThermometer(g, obj, sw, color);
   else if (kind === "bar_magnet") drawBarMagnet(g, obj, sw, color);
   else if (kind === "fringe_pattern") drawFringePattern(g, obj, sw, color);
+  else if (kind === "electroscope") drawElectroscope(g, obj, sw, color);
 
   const rot = obj.rotation ?? 0;
   if (rot) {
@@ -221,6 +222,34 @@ function renderApparatus(obj) {
     g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
   }
   return g;
+}
+
+/* 검전기 의미 객체. 몸체 구성은 고정하고 금속박 벌어짐만 leafSpread로 바꾼다. */
+function drawElectroscope(g, obj, sw, color) {
+  const x = obj.x, y = obj.y, w = obj.w, h = obj.h, cx = x + w / 2;
+  const plate = document.createElementNS(SVG_NS, "rect");
+  plate.setAttribute("x", x + w * 0.25); plate.setAttribute("y", y + h * 0.03);
+  plate.setAttribute("width", w * 0.5); plate.setAttribute("height", h * 0.06);
+  plate.setAttribute("rx", h * 0.02); plate.setAttribute("fill", "#e6e6e6");
+  plate.setAttribute("stroke", color); plate.setAttribute("stroke-width", sw); g.appendChild(plate);
+  oLine(g, cx, y + h * 0.09, cx, y + h * 0.59, sw * 1.15, color);
+  const stopper = document.createElementNS(SVG_NS, "rect");
+  stopper.setAttribute("x", x + w * 0.34); stopper.setAttribute("y", y + h * 0.23);
+  stopper.setAttribute("width", w * 0.32); stopper.setAttribute("height", h * 0.1);
+  stopper.setAttribute("rx", h * 0.015); stopper.setAttribute("fill", "#d9d9d9");
+  stopper.setAttribute("stroke", color); stopper.setAttribute("stroke-width", sw); g.appendChild(stopper);
+  const jar = document.createElementNS(SVG_NS, "path");
+  jar.setAttribute("d", `M ${x + w * 0.2} ${y + h * 0.31} L ${x + w * 0.14} ${y + h * 0.91} ` +
+    `Q ${x + w * 0.14} ${y + h * 0.96} ${x + w * 0.2} ${y + h * 0.96} ` +
+    `L ${x + w * 0.8} ${y + h * 0.96} Q ${x + w * 0.86} ${y + h * 0.96} ${x + w * 0.86} ${y + h * 0.91} ` +
+    `L ${x + w * 0.8} ${y + h * 0.31}`);
+  jar.setAttribute("fill", "none"); jar.setAttribute("stroke", color);
+  jar.setAttribute("stroke-width", sw); g.appendChild(jar);
+  const spread = Math.max(0, Math.min(1, obj.leafSpread ?? 0.55));
+  const hingeY = y + h * 0.58, leafY = y + h * 0.86;
+  const dx = w * (0.04 + spread * 0.22);
+  oLine(g, cx, hingeY, cx - dx, leafY, sw * 1.8, color);
+  oLine(g, cx, hingeY, cx + dx, leafY, sw * 1.8, color);
 }
 
 function drawWire(g, obj, sw, color) {

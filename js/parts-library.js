@@ -20,6 +20,7 @@ import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
 
 const LIB_BASE = "assets/parts-library/";
 const MAX_RENDER = 60;      // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
+const MAX_SELECT = 10;      // AI 참고 이미지로 한 번에 보낼 수 있는 최대 개수
 const DEFAULT_W_MM = 45;    // 삽입 기본 폭(mm) — 미리보기 변환의 targetMm과 같은 값
 const FALLBACK_LEVELS = [
   { id: "L0", label: "전부", desc: "색만 벗김" },
@@ -155,7 +156,11 @@ function buildModal() {
             </div>
           </div>
 
-          <button id="partslib-insert" type="button" class="modal-btn modal-btn-primary" disabled>넣기</button>
+          <div class="partslib-primary-actions">
+            <button id="partslib-ai" type="button" class="modal-btn" disabled
+                    title="선택한 이미지를 AI 생성·변환의 참고 이미지로 보냅니다">AI로 변환</button>
+            <button id="partslib-insert" type="button" class="modal-btn modal-btn-primary" disabled>넣기</button>
+          </div>
           <p class="partslib-insert-hint" id="partslib-insert-hint">그림 하나를 골라 주세요.</p>
         </aside>
       </div>
@@ -167,7 +172,7 @@ function buildModal() {
   return overlay;
 }
 
-export function initPartsLibrary(state) {
+export function initPartsLibrary(state, { openAi } = {}) {
   const openButton = document.getElementById("parts-library-open");
   if (!openButton) return;   // 마크업은 다른 곳에서 넣는다 — 없으면 조용히 넘어간다
 
@@ -184,6 +189,7 @@ export function initPartsLibrary(state) {
   const previewName = overlay.querySelector("#partslib-preview-name");
   const previewMeta = overlay.querySelector("#partslib-preview-meta");
   const insertBtn = overlay.querySelector("#partslib-insert");
+  const aiBtn = overlay.querySelector("#partslib-ai");
   const insertHint = overlay.querySelector("#partslib-insert-hint");
   const advToggle = overlay.querySelector("#partslib-adv-toggle");
   const advPanel = overlay.querySelector("#partslib-adv");
@@ -193,7 +199,8 @@ export function initPartsLibrary(state) {
   const advDropLine = overlay.querySelector("#pl-adv-dropline");
 
   // 현재 선택/변환 상태
-  let selectedId = null;
+  let selectedIds = [];
+  let activeId = null;
   let level = "L2";
   let fill = "none";
   let advanced = false;   // 고급 기능을 켰는가 — 켜면 프리셋은 잠긴다
@@ -219,7 +226,11 @@ export function initPartsLibrary(state) {
     status.textContent = msg;
     status.classList.toggle("is-error", isError);
   };
-  const close = () => { overlay.hidden = true; };
+  const close = () => {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "parts" } }));
+  };
 
   /* ----- 처리 방식 프리셋 — 맨 앞에 [원본], 그 뒤로 변환 모듈이 알려 준 위계 ----- */
   {
@@ -291,14 +302,16 @@ export function initPartsLibrary(state) {
     previewName.textContent = msg || "그림을 고르면 여기에 보여 줍니다.";
     previewMeta.textContent = "";
     insertBtn.disabled = true;
+    aiBtn.disabled = true;
   }
 
   async function refreshPreview() {
-    const item = byId.get(selectedId);
+    const item = byId.get(activeId);
     if (!item) { clearPreview(); return; }
     const token = ++previewToken;
     converted = null;
     insertBtn.disabled = true;
+    aiBtn.disabled = true;
     previewName.textContent = `${item.name} — 변환 중…`;
     // 출처·라이선스는 변환 성공 여부와 무관하게 항상 보인다.
     renderPreviewMeta(item);
@@ -329,6 +342,7 @@ export function initPartsLibrary(state) {
         ? "원본 그대로 넣습니다 — 색과 음영이 남습니다."
         : `선화로 바꿔 ${widthMm()}mm 폭으로 넣습니다.`;
       insertBtn.disabled = _busy;
+      aiBtn.disabled = _busy || typeof openAi !== "function";
     } catch (e) {
       if (token !== previewToken) return;
       converted = null;
@@ -337,6 +351,7 @@ export function initPartsLibrary(state) {
       previewName.textContent = `${item.name} — 변환 실패: ${e && e.message ? e.message : e}`;
       insertHint.textContent = "다른 처리 방식을 골라 보세요.";
       insertBtn.disabled = true;
+      aiBtn.disabled = true;
     }
   }
 
@@ -381,23 +396,43 @@ export function initPartsLibrary(state) {
   /* ----- 결과 그리드 (카드 클릭 = 선택 → 오른쪽 미리보기) ----- */
   function syncCardMarks() {
     grid.querySelectorAll(".partslib-card").forEach((c) => {
-      c.classList.toggle("is-selected", c.dataset.id === selectedId);
+      c.classList.toggle("is-selected", selectedIds.includes(c.dataset.id));
     });
   }
 
   function selectCard(id) {
     const item = byId.get(id);
     if (!item) return;
-    selectedId = id;
-    level = item.defaultLevel || "L2";   // 기본 위계는 항목이 정한 값
+    const selectedAt = selectedIds.indexOf(id);
+    if (selectedAt >= 0) {
+      selectedIds.splice(selectedAt, 1);
+      if (activeId === id) activeId = selectedIds.at(-1) || null;
+    } else {
+      if (selectedIds.length >= MAX_SELECT) {
+        setStatus(`한 번에 ${MAX_SELECT}개까지만 선택할 수 있습니다.`);
+        return;
+      }
+      selectedIds.push(id);
+      activeId = id;
+    }
+    if (!activeId) {
+      syncCardMarks();
+      clearPreview();
+      return;
+    }
+    const activeItem = byId.get(activeId);
+    level = activeItem?.defaultLevel || "L2";   // 기본 위계는 항목이 정한 값
     fill = "none";                       // 채우기 기본은 없음
     syncCardMarks();
     syncOptionMarks();
     refreshPreview();
+    aiBtn.textContent = selectedIds.length > 1 ? `AI로 변환 (${selectedIds.length})` : "AI로 변환";
   }
 
   function renderResults(list) {
-    selectedId = null;
+    selectedIds = [];
+    activeId = null;
+    aiBtn.textContent = "AI로 변환";
     clearPreview();
     grid.innerHTML = "";
     const shown = list.slice(0, MAX_RENDER);
@@ -445,7 +480,7 @@ export function initPartsLibrary(state) {
   /* ----- [캔버스에 넣기]: 변환 결과 dataUri를 svgAsset 객체의 src로 -----
      스냅샷 1개 = Undo 1스텝 (js/templates.js instantiate()와 같은 형태). */
   function insertSelected() {
-    const item = byId.get(selectedId);
+    const item = byId.get(activeId);
     if (!item || !converted || !converted.dataUri) return;
     const s0 = state.get();
     const ab = s0.artboard || { w: 90, h: 60 };
@@ -457,6 +492,7 @@ export function initPartsLibrary(state) {
 
     _busy = true;
     insertBtn.disabled = true;
+    aiBtn.disabled = true;
     try {
       state.update((s) => {
         // 삽입 직전 상태를 스냅샷 — Ctrl+Z 한 번으로 이 부품만 사라진다.
@@ -486,6 +522,7 @@ export function initPartsLibrary(state) {
     } finally {
       _busy = false;
       insertBtn.disabled = !converted;
+      aiBtn.disabled = !converted || typeof openAi !== "function";
     }
   }
 
@@ -569,6 +606,17 @@ export function initPartsLibrary(state) {
   syncAdvLabels();
 
   insertBtn.addEventListener("click", insertSelected);
+  aiBtn.addEventListener("click", () => {
+    const items = selectedIds.map((id) => byId.get(id)).filter(Boolean);
+    if (!items.length || typeof openAi !== "function") return;
+    close();
+    void openAi({
+      references: items.map((item) => ({
+        src: item.id === activeId && converted?.dataUri ? converted.dataUri : svgUrl(item),
+        name: item.name || `${item.id}.svg`,
+      })),
+    });
+  });
   queryInput.addEventListener("input", runSearch);
   subjectSelect.addEventListener("change", () => { populatePartOptions(); runSearch(); });
   partSelect.addEventListener("change", runSearch);

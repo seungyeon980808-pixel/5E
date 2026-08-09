@@ -213,7 +213,7 @@ details[open] > .insp-summary::before {
   border-color: var(--insp-accent);
 }
 
-/* 아트보드 "드래그로 조절" 토글 버튼 — 프리셋과 같은 톤, 켜지면 강조색으로 채움 */
+/* 아트보드 "드래그로 영역 지정" 버튼 — 캡처 중에는 강조색으로 채움 */
 .insp-ab-drag-btn {
   width: 100%;
   margin-top: 6px;

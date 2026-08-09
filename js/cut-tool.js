@@ -10,10 +10,10 @@
 // 스토어 교체(Undo 1스텝)만 담당. */
 
 import { screenToWorld } from "./viewport.js?v=1.4.0";
-import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.4.0";
+import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.4.2";
 import { snapLineEnd } from "./geometry.js?v=1.4.0";
 import { simplifyRDP } from "./geometry.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { getObjectBBox } from "./pick.js?v=1.4.2";
 
 import { snapKey } from "./platform.js?v=1.4.0";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -28,6 +28,15 @@ let _bboxLayer = null;   // 전체 오브젝트 bbox 표시 <g>
 let _bboxRaf = 0;
 let _space = false;
 let _idc = 0;
+
+export function preferredCutSelectionIds(pieces) {
+  const all = (pieces || []).map((piece) => piece?.id).filter(Boolean);
+  const extracted = (pieces || [])
+    .filter((piece) => (piece?.cutouts || []).some((cut) => cut?.type === "outside-poly"))
+    .map((piece) => piece.id)
+    .filter(Boolean);
+  return extracted.length ? extracted : all;
+}
 
 /* 하단 안내 패널은 공용 tool-hint.js가 전담한다(자르기 포함 전 도구 공통 슬롯). */
 
@@ -170,7 +179,7 @@ function applyCut(path) {
     const snapshot = JSON.parse(JSON.stringify(s.objects));
     const map = new Map(results.map((r) => [r.id, r.pieces]));
     const out = [];
-    const addedIds = [];
+    const addedPieces = [];
     for (const o of s.objects) {
       const pieces = map.get(o.id);
       if (!pieces) { out.push(o); continue; }
@@ -179,13 +188,15 @@ function applyCut(path) {
         piece.layerId = o.layerId;
         piece.order = o.order;
         out.push(piece);
-        addedIds.push(piece.id);
+        addedPieces.push(piece);
       }
     }
     s.objects = out;
     s.undoStack.push(snapshot);
     s.redoStack = [];
-    s.selectedIds = addedIds;
+    // 내부를 둘러 도려낸 경우에는 사용자가 지정한 안쪽 조각만 바로 이동할 수 있게 선택.
+    // 경계 관통 분할은 outside-poly가 없으므로 기존처럼 생성된 모든 조각을 선택한다.
+    s.selectedIds = preferredCutSelectionIds(addedPieces);
     s.targetedId = null;
   });
 }

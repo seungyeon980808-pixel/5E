@@ -84,15 +84,16 @@ export function buildArtboardSection(ctx) {
   });
   abBody.appendChild(abPresets);
 
-  // 드래그로 조절 토글: 켜면 캔버스 아트보드 우하단에 핸들이 떠서 마우스로 크기 조절.
-  // 실제 드래그 처리는 js/artboard-resize.js. 여기선 모드 플래그만 토글한다.
+  // 내보내기 영역 지정처럼 사각형을 그리면 그 위치·크기가 새 아트보드가 된다.
+  // 실제 캡처와 객체 재중앙 배치는 js/artboard-resize.js가 처리한다.
   const abDragBtn = document.createElement("button");
   abDragBtn.type = "button";
   abDragBtn.className = "insp-ab-drag-btn";
-  abDragBtn.textContent = "드래그로 조절";
-  abDragBtn.title = "캔버스에서 아트보드 우하단 모서리를 잡고 끌어 크기를 조절합니다";
+  abDragBtn.textContent = "드래그로 영역 지정";
+  abDragBtn.title = "캔버스에서 드래그한 사각형을 새 아트보드로 지정합니다";
   abDragBtn.addEventListener("click", () => {
-    state.update((s) => { s.artboardResizeMode = !s.artboardResizeMode; });
+    if (state.get().artboardResizeMode) return;
+    state.update((s) => { s.artboardResizeMode = true; });
     abDragBtn.setAttribute("aria-pressed", String(state.get().artboardResizeMode));
     abDragBtn.classList.toggle("is-active", state.get().artboardResizeMode);
   });
@@ -102,7 +103,7 @@ export function buildArtboardSection(ctx) {
 
   // Refresh inputs from state (skip while the user is typing in one).
   function refreshArtboard(s) {
-    // 드래그 조절 버튼 상태 동기화(드래그 중엔 실시간으로 W/H가 바뀐다).
+    // 영역 캡처 오버레이가 열려 있는 동안 버튼 상태를 표시한다.
     const on = s.artboardResizeMode === true;
     abDragBtn.classList.toggle("is-active", on);
     abDragBtn.setAttribute("aria-pressed", String(on));
