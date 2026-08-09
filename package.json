@@ -6,7 +6,7 @@
   "main": "desktop/main.cjs",
   "scripts": {
     "desktop": "node_modules\\electron\\dist\\electron.exe .",
-    "test": "node --test desktop/**/*.test.cjs",
+    "test": "node desktop/run-unit-tests.cjs",
     "test:desktop": "node desktop/run-smoke.cjs",
     "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
     "benchmark:image": "node desktop/benchmark-image-turn.cjs",
