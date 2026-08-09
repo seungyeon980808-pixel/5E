@@ -1,0 +1,5747 @@
+{
+  "schemaVersion": "5e-illustration-asset-candidates@1",
+  "generatedBy": "scripts/engine-v2/audit-illustration-assets.mjs",
+  "sourceFingerprint": "sha256:2ca1219eaa1aef285dff46b50e8e60a150c4aefe9abb92d762d645bf142d01c5",
+  "scope": {
+    "examLibraryItems": 3961,
+    "declaredExamLibraryItems": 3961,
+    "atlasRows": 936,
+    "atlasCoverageOfLibrary": 23.63,
+    "examItemsWithoutVisualAtlas": 3025,
+    "targetUniqueExamRows": 89,
+    "targetBlockerMentions": 110,
+    "reliableInferenceBoundary": "Visual taxonomy is asserted only for hand-authored atlas notes. The remaining exam manifest rows are inventory/context only, not negative evidence."
+  },
+  "provenancePolicy": {
+    "candidateMeaning": "Frequency-backed opportunity, not permission to copy exam pixels and not proof that every occurrence shares identical geometry.",
+    "sourceRequirements": [
+      "examId",
+      "panelRef",
+      "blocker",
+      "taxonomy evidence status"
+    ],
+    "rasterPolicy": "No raster was generated, copied, modified, or embedded by this audit.",
+    "unknownPolicy": "Unknown pose/orientation/contact/action remains unknown; rules never fill it from aesthetic expectation."
+  },
+  "totals": {
+    "person": 63,
+    "vehicle": 28,
+    "hand": 19
+  },
+  "byBlocker": {
+    "person": {
+      "mentions": 63,
+      "uniqueExamRows": 63,
+      "bySubjectFamily": [
+        {
+          "key": "physics",
+          "count": 51
+        },
+        {
+          "key": "chemistry",
+          "count": 8
+        },
+        {
+          "key": "earth_science",
+          "count": 3
+        },
+        {
+          "key": "biology",
+          "count": 1
+        }
+      ],
+      "bySubjectSubtype": [
+        {
+          "key": "역학",
+          "count": 27
+        },
+        {
+          "key": "현대물리학",
+          "count": 23
+        },
+        {
+          "key": "광학",
+          "count": 8
+        },
+        {
+          "key": "역동적인화학반응",
+          "count": 4
+        },
+        {
+          "key": "전자기학",
+          "count": 3
+        },
+        {
+          "key": "원자의세계",
+          "count": 1
+        },
+        {
+          "key": "항상성과몸의조절",
+          "count": 1
+        }
+      ],
+      "subtype": [
+        {
+          "key": "student_group",
+          "count": 32
+        },
+        {
+          "key": "astronaut_or_space_observer",
+          "count": 12
+        },
+        {
+          "key": "apparatus_operator",
+          "count": 5
+        },
+        {
+          "key": "vehicle_occupant",
+          "count": 5
+        },
+        {
+          "key": "anatomical_fragment",
+          "count": 2
+        },
+        {
+          "key": "contextual_person",
+          "count": 2
+        },
+        {
+          "key": "teacher",
+          "count": 2
+        },
+        {
+          "key": "generic_person",
+          "count": 1
+        },
+        {
+          "key": "observer",
+          "count": 1
+        },
+        {
+          "key": "unknown",
+          "count": 1
+        }
+      ],
+      "pose": [
+        {
+          "key": "unknown",
+          "count": 31
+        },
+        {
+          "key": "seated",
+          "count": 16
+        },
+        {
+          "key": "standing",
+          "count": 9
+        },
+        {
+          "key": "anatomical_fragment",
+          "count": 2
+        },
+        {
+          "key": "running",
+          "count": 2
+        },
+        {
+          "key": "hand_raised",
+          "count": 1
+        },
+        {
+          "key": "pulling",
+          "count": 1
+        },
+        {
+          "key": "pushing",
+          "count": 1
+        }
+      ],
+      "orientation": [
+        {
+          "key": "unknown",
+          "count": 63
+        }
+      ],
+      "contact": [
+        {
+          "key": "not_described",
+          "count": 30
+        },
+        {
+          "key": "inside_vehicle",
+          "count": 14
+        },
+        {
+          "key": "seated_at_table_or_desk",
+          "count": 14
+        },
+        {
+          "key": "beside_projectile",
+          "count": 2
+        },
+        {
+          "key": "standing_on_scale_or_platform",
+          "count": 2
+        },
+        {
+          "key": "pushing_object",
+          "count": 1
+        }
+      ],
+      "action": [
+        {
+          "key": "dialogue",
+          "count": 32
+        },
+        {
+          "key": "demonstrate_or_observe",
+          "count": 10
+        },
+        {
+          "key": "not_described",
+          "count": 10
+        },
+        {
+          "key": "stand",
+          "count": 4
+        },
+        {
+          "key": "pull",
+          "count": 3
+        },
+        {
+          "key": "run",
+          "count": 2
+        },
+        {
+          "key": "eat",
+          "count": 1
+        },
+        {
+          "key": "push",
+          "count": 1
+        }
+      ],
+      "metadataCoverage": {
+        "panelAttribution": {
+          "known": 62,
+          "unknown": 1,
+          "knownRate": 98.41
+        },
+        "pose": {
+          "known": 32,
+          "unknown": 31,
+          "knownRate": 50.79
+        },
+        "orientation": {
+          "known": 0,
+          "unknown": 63,
+          "knownRate": 0
+        },
+        "contact": {
+          "known": 33,
+          "unknown": 30,
+          "knownRate": 52.38
+        },
+        "action": {
+          "known": 53,
+          "unknown": 10,
+          "knownRate": 84.13
+        }
+      }
+    },
+    "vehicle": {
+      "mentions": 28,
+      "uniqueExamRows": 28,
+      "bySubjectFamily": [
+        {
+          "key": "physics",
+          "count": 26
+        },
+        {
+          "key": "chemistry",
+          "count": 2
+        }
+      ],
+      "bySubjectSubtype": [
+        {
+          "key": "역학",
+          "count": 20
+        },
+        {
+          "key": "현대물리학",
+          "count": 12
+        },
+        {
+          "key": "광학",
+          "count": 3
+        },
+        {
+          "key": "역동적인화학반응",
+          "count": 1
+        },
+        {
+          "key": "전자기학",
+          "count": 1
+        },
+        {
+          "key": "화학의첫걸음",
+          "count": 1
+        }
+      ],
+      "subtype": [
+        {
+          "key": "spacecraft_or_rocket",
+          "count": 18
+        },
+        {
+          "key": "road_car_or_truck",
+          "count": 4
+        },
+        {
+          "key": "road_bus",
+          "count": 3
+        },
+        {
+          "key": "bicycle_wheel",
+          "count": 1
+        },
+        {
+          "key": "cart",
+          "count": 1
+        },
+        {
+          "key": "military_ship",
+          "count": 1
+        }
+      ],
+      "pose": [
+        {
+          "key": "not_applicable",
+          "count": 28
+        }
+      ],
+      "orientation": [
+        {
+          "key": "unknown",
+          "count": 18
+        },
+        {
+          "key": "rightward",
+          "count": 5
+        },
+        {
+          "key": "multiple_unspecified",
+          "count": 2
+        },
+        {
+          "key": "opposed_directions",
+          "count": 2
+        },
+        {
+          "key": "circular_path",
+          "count": 1
+        }
+      ],
+      "contact": [
+        {
+          "key": "space",
+          "count": 18
+        },
+        {
+          "key": "road_or_lane",
+          "count": 3
+        },
+        {
+          "key": "not_described",
+          "count": 2
+        },
+        {
+          "key": "track_or_ground",
+          "count": 2
+        },
+        {
+          "key": "circular_path",
+          "count": 1
+        },
+        {
+          "key": "water",
+          "count": 1
+        },
+        {
+          "key": "wheel_only",
+          "count": 1
+        }
+      ],
+      "action": [
+        {
+          "key": "moving",
+          "count": 18
+        },
+        {
+          "key": "not_described",
+          "count": 5
+        },
+        {
+          "key": "static_context",
+          "count": 3
+        },
+        {
+          "key": "orbital_motion",
+          "count": 1
+        },
+        {
+          "key": "rebound_or_collision",
+          "count": 1
+        }
+      ],
+      "metadataCoverage": {
+        "panelAttribution": {
+          "known": 28,
+          "unknown": 0,
+          "knownRate": 100
+        },
+        "pose": {
+          "known": 28,
+          "unknown": 0,
+          "knownRate": 100
+        },
+        "orientation": {
+          "known": 10,
+          "unknown": 18,
+          "knownRate": 35.71
+        },
+        "contact": {
+          "known": 26,
+          "unknown": 2,
+          "knownRate": 92.86
+        },
+        "action": {
+          "known": 23,
+          "unknown": 5,
+          "knownRate": 82.14
+        }
+      }
+    },
+    "hand": {
+      "mentions": 19,
+      "uniqueExamRows": 19,
+      "bySubjectFamily": [
+        {
+          "key": "physics",
+          "count": 12
+        },
+        {
+          "key": "chemistry",
+          "count": 5
+        },
+        {
+          "key": "earth_science",
+          "count": 2
+        }
+      ],
+      "bySubjectSubtype": [
+        {
+          "key": "역학",
+          "count": 8
+        },
+        {
+          "key": "역동적인화학반응",
+          "count": 4
+        },
+        {
+          "key": "전자기학",
+          "count": 2
+        },
+        {
+          "key": "고체지구",
+          "count": 1
+        },
+        {
+          "key": "광학",
+          "count": 1
+        },
+        {
+          "key": "화학의첫걸음",
+          "count": 1
+        }
+      ],
+      "subtype": [
+        {
+          "key": "solid_or_not_described",
+          "count": 16
+        },
+        {
+          "key": "gloved",
+          "count": 2
+        },
+        {
+          "key": "dashed_ghost",
+          "count": 1
+        }
+      ],
+      "pose": [
+        {
+          "key": "grip",
+          "count": 12
+        },
+        {
+          "key": "press",
+          "count": 3
+        },
+        {
+          "key": "unknown",
+          "count": 3
+        },
+        {
+          "key": "touch",
+          "count": 1
+        }
+      ],
+      "orientation": [
+        {
+          "key": "unknown",
+          "count": 9
+        },
+        {
+          "key": "target_vertical",
+          "count": 5
+        },
+        {
+          "key": "target_inclined",
+          "count": 3
+        },
+        {
+          "key": "target_horizontal",
+          "count": 2
+        }
+      ],
+      "contact": [
+        {
+          "key": "rod_or_tube",
+          "count": 6
+        },
+        {
+          "key": "block",
+          "count": 4
+        },
+        {
+          "key": "instrument_or_tool",
+          "count": 2
+        },
+        {
+          "key": "spring",
+          "count": 2
+        },
+        {
+          "key": "burette_or_flask",
+          "count": 1
+        },
+        {
+          "key": "knife",
+          "count": 1
+        },
+        {
+          "key": "not_described",
+          "count": 1
+        },
+        {
+          "key": "pump_bottle",
+          "count": 1
+        },
+        {
+          "key": "skin_or_cotton",
+          "count": 1
+        }
+      ],
+      "action": [
+        {
+          "key": "grip",
+          "count": 12
+        },
+        {
+          "key": "press",
+          "count": 3
+        },
+        {
+          "key": "unknown",
+          "count": 3
+        },
+        {
+          "key": "touch",
+          "count": 1
+        }
+      ],
+      "metadataCoverage": {
+        "panelAttribution": {
+          "known": 18,
+          "unknown": 1,
+          "knownRate": 94.74
+        },
+        "pose": {
+          "known": 16,
+          "unknown": 3,
+          "knownRate": 84.21
+        },
+        "orientation": {
+          "known": 10,
+          "unknown": 9,
+          "knownRate": 52.63
+        },
+        "contact": {
+          "known": 18,
+          "unknown": 1,
+          "knownRate": 94.74
+        },
+        "action": {
+          "known": 16,
+          "unknown": 3,
+          "knownRate": 84.21
+        }
+      }
+    }
+  },
+  "existingAssets": [
+    {
+      "id": "hand_grip",
+      "files": [
+        "hand_grip.png",
+        "hand_grip_back.png",
+        "hand_grip_front.png"
+      ],
+      "filesPresent": true,
+      "dimensionsPx": [
+        143,
+        110
+      ],
+      "dimensionsMm": [
+        6.05,
+        4.66
+      ],
+      "split": {
+        "axis": "x",
+        "px": 97
+      },
+      "source": {
+        "examId": "p1_2025_06_19",
+        "raw": {
+          "src": "p3_Im1.png",
+          "box": [
+            165,
+            276,
+            315,
+            386
+          ],
+          "dpi": 600,
+          "note": "p1_2025_06 19번 도판"
+        }
+      },
+      "eligibleOccurrenceIds": [
+        "p1_2023_09_20#hand",
+        "p1_2025_06_19#hand",
+        "p1_2027_06_18#hand"
+      ],
+      "matchingBasis": "one hand gripping a block on an incline; same contact family",
+      "doNotGeneralize": [
+        "Do not use for pressing, touching, gloved laboratory work, or two-hand actions.",
+        "Do not assume the crop fits a vertical rod or tool without a separate compositing check.",
+        "The source-derived pixels may contain a tiny source-specific mark; require text/symbol contamination review before diagram-mode use.",
+        "The back/front split only authorizes layering; it does not prove a new pose or viewing angle."
+      ]
+    },
+    {
+      "id": "hand_press",
+      "files": [
+        "hand_press.png"
+      ],
+      "filesPresent": true,
+      "dimensionsPx": [
+        318,
+        228
+      ],
+      "dimensionsMm": [
+        13.46,
+        9.65
+      ],
+      "split": null,
+      "source": {
+        "examId": "p1_2024_11_08",
+        "raw": {
+          "src": "p1_Im1.png",
+          "box": [
+            368,
+            6,
+            686,
+            234
+          ],
+          "dpi": 600,
+          "note": "p1_2024_11 8번 도판 — 두 손가락으로 누름(가상선)"
+        }
+      },
+      "eligibleOccurrenceIds": [
+        "p1_2024_11_08#hand"
+      ],
+      "matchingBasis": "dashed/ghost two-finger spring-compression pose; exact source scene only",
+      "doNotGeneralize": [
+        "Do not convert the dashed ghost hand to a solid hand.",
+        "Do not use for gripping, pointing, touching, or laboratory handling.",
+        "Do not infer that every spring-compression scene uses the same hand silhouette."
+      ]
+    }
+  ],
+  "supplementalEvidence": {
+    "speechBubble": {
+      "blockerMentions": 31,
+      "uniqueExamRows": 31,
+      "sourceExamIds": [
+        "p1_2023_09_01",
+        "p1_2023_06_02",
+        "p1_2023_11_02",
+        "p1_2023_09_03",
+        "p2_2023_11_02",
+        "p1_2024_09_02",
+        "p2_2024_09_02",
+        "p2_2024_11_02",
+        "p1_2025_09_03",
+        "p1_2025_11_04",
+        "p1_2025_06_06",
+        "p2_2025_11_01",
+        "p2_2025_06_02",
+        "p2_2025_09_02",
+        "p1_2026_11_01",
+        "p1_2026_06_02",
+        "p1_2026_09_04",
+        "p2_2026_06_02",
+        "p2_2026_09_02",
+        "p2_2026_11_04",
+        "p1_2027_06_02",
+        "p2_2027_06_02",
+        "c2_2023_06_02",
+        "c1_2024_09_01",
+        "c2_2025_11_01",
+        "c2_2026_06_01",
+        "c2_2026_11_02",
+        "c2_2027_06_04",
+        "e2_2026_06_03",
+        "e2_2026_09_01",
+        "e2_2026_11_01"
+      ],
+      "sourcePanelRefs": [
+        "p1_2023_09_01#panel-1",
+        "p1_2023_06_02#panel-1",
+        "p1_2023_11_02#panel-1",
+        "p1_2023_09_03#panel-1",
+        "p2_2023_11_02#panel-1",
+        "p1_2024_09_02#panel-1",
+        "p2_2024_09_02#panel-1",
+        "p2_2024_11_02#panel-2",
+        "p1_2025_09_03#panel-1",
+        "p1_2025_11_04#panel-1",
+        "p1_2025_06_06#panel-2",
+        "p2_2025_11_01#panel-3",
+        "p2_2025_06_02#panel-1",
+        "p2_2025_09_02#panel-1",
+        "p1_2026_11_01#panel-2",
+        "p1_2026_06_02#panel-1",
+        "p1_2026_09_04#panel-1",
+        "p2_2026_06_02#panel-1",
+        "p2_2026_09_02#panel-3",
+        "p2_2026_11_04#panel-2",
+        "p1_2027_06_02#panel-1",
+        "p2_2027_06_02#panel-2",
+        "c2_2023_06_02#panel-2",
+        "c1_2024_09_01#panel-1",
+        "c2_2025_11_01#panel-1",
+        "c2_2026_06_01#panel-1",
+        "c2_2026_11_02#panel-1",
+        "c2_2027_06_04#panel-1",
+        "e2_2026_06_03#panel-1",
+        "e2_2026_09_01#panel-1",
+        "e2_2026_11_01#panel-2"
+      ],
+      "implementationBoundary": "Blank outline geometry only. Runtime requires speechBubbleEvidence:source|request; text and labels remain separate 5E edits."
+    }
+  },
+  "candidates": [
+    {
+      "id": "existing_hand_grip",
+      "status": "implemented_safe_wrapper_provenance_locked",
+      "blocker": "hand",
+      "exactUseCase": "Layered one-hand grip around an incline block, entering from the same side as the source pose.",
+      "evidenceCount": 3,
+      "occurrenceIds": [
+        "p1_2023_09_20#hand",
+        "p1_2025_06_19#hand",
+        "p1_2027_06_18#hand"
+      ],
+      "sourceExamIds": [
+        "p1_2023_09_20",
+        "p1_2025_06_19",
+        "p1_2027_06_18"
+      ],
+      "sourcePanelRefs": [
+        "p1_2023_09_20#panel-1",
+        "p1_2025_06_19#panel-1",
+        "p1_2027_06_18#panel-1"
+      ],
+      "existingAssetId": "hand_grip",
+      "implementation": {
+        "module": "tools/mcp-5e/lib/parts.js",
+        "entry": "buildSafePart",
+        "policyVersion": "5e-safe-exam-parts@1"
+      },
+      "provenanceMode": "existing source-derived crop; pinned source hashes, exact audited panels, and non-destructive contamination cutout enforced by wrapper",
+      "constraints": [
+        "solid line",
+        "single hand",
+        "block contact",
+        "inclined target context"
+      ],
+      "doNotGeneralize": [
+        "Do not use for pressing, touching, gloved laboratory work, or two-hand actions.",
+        "Do not assume the crop fits a vertical rod or tool without a separate compositing check.",
+        "The source-derived pixels may contain a tiny source-specific mark; require text/symbol contamination review before diagram-mode use.",
+        "The back/front split only authorizes layering; it does not prove a new pose or viewing angle."
+      ]
+    },
+    {
+      "id": "existing_hand_press",
+      "status": "implemented_safe_wrapper_exact_scene_only",
+      "blocker": "hand",
+      "exactUseCase": "Dashed/ghost two-finger hand compressing the spring in the source arrangement.",
+      "evidenceCount": 1,
+      "occurrenceIds": [
+        "p1_2024_11_08#hand"
+      ],
+      "sourceExamIds": [
+        "p1_2024_11_08"
+      ],
+      "sourcePanelRefs": [
+        "p1_2024_11_08#panel-1"
+      ],
+      "existingAssetId": "hand_press",
+      "implementation": {
+        "module": "tools/mcp-5e/lib/parts.js",
+        "entry": "buildSafePart",
+        "policyVersion": "5e-safe-exam-parts@1"
+      },
+      "provenanceMode": "existing source-derived crop; exact source scene only",
+      "constraints": [
+        "dashed ghost line",
+        "two-finger press",
+        "spring compression"
+      ],
+      "doNotGeneralize": [
+        "Do not convert the dashed ghost hand to a solid hand.",
+        "Do not use for gripping, pointing, touching, or laboratory handling.",
+        "Do not infer that every spring-compression scene uses the same hand silhouette."
+      ]
+    },
+    {
+      "id": "candidate_student_trio_seated_dialogue",
+      "status": "implemented_code_native",
+      "blocker": "person",
+      "exactUseCase": "Three seated students at a desk/round table; labels remain separate and blank bubble outlines are opt-in only for a source-confirmed bubble scene.",
+      "evidenceCount": 13,
+      "occurrenceIds": [
+        "c1_2024_09_01#person",
+        "c2_2025_11_01#person",
+        "c2_2026_06_01#person",
+        "c2_2026_11_02#person",
+        "c2_2027_06_04#person",
+        "e2_2026_06_03#person",
+        "e2_2026_09_01#person",
+        "e2_2026_11_01#person",
+        "p1_2023_06_02#person",
+        "p1_2023_09_03#person",
+        "p1_2026_11_01#person",
+        "p2_2023_06_01#person",
+        "p2_2024_11_02#person"
+      ],
+      "sourceExamIds": [
+        "c1_2024_09_01",
+        "c2_2025_11_01",
+        "c2_2026_06_01",
+        "c2_2026_11_02",
+        "c2_2027_06_04",
+        "e2_2026_06_03",
+        "e2_2026_09_01",
+        "e2_2026_11_01",
+        "p1_2023_06_02",
+        "p1_2023_09_03",
+        "p1_2026_11_01",
+        "p2_2023_06_01",
+        "p2_2024_11_02"
+      ],
+      "sourcePanelRefs": [
+        "c1_2024_09_01#panel-1",
+        "c2_2025_11_01#panel-1",
+        "c2_2026_06_01#panel-1",
+        "c2_2026_11_02#panel-1",
+        "c2_2027_06_04#panel-1",
+        "e2_2026_06_03#panel-1",
+        "e2_2026_09_01#panel-1",
+        "e2_2026_11_01#panel-2",
+        "p1_2023_06_02#panel-1",
+        "p1_2023_09_03#panel-1",
+        "p1_2026_11_01#panel-2",
+        "p2_2023_06_01#panel-1",
+        "p2_2024_11_02#panel-2"
+      ],
+      "existingAssetId": null,
+      "implementation": {
+        "module": "js/ai-illustration-assets.js",
+        "assetId": "student_trio_seated_dialogue",
+        "sourcePixelsEmbedded": false
+      },
+      "provenanceMode": "new original line-art redraw informed by frequency; never crop or trace a single exam pixel source",
+      "constraints": [
+        "three students",
+        "seated",
+        "table/desk contact",
+        "dialogue layout",
+        "no embedded text",
+        "blank bubble outlines require speechBubbleEvidence:source|request"
+      ],
+      "doNotGeneralize": [
+        "Do not reuse for standing, portrait-only, teacher, or apparatus-operation poses.",
+        "Do not bake A/B/C labels or speech-bubble text into the raster/SVG asset.",
+        "Use pose variants rather than cloning one identical student three times."
+      ]
+    },
+    {
+      "id": "candidate_spacecraft_flat_shell_family",
+      "status": "implemented_code_native",
+      "blocker": "vehicle",
+      "exactUseCase": "Flat evaluation-style spacecraft/rocket shell with optional window and internal apparatus layers.",
+      "evidenceCount": 18,
+      "occurrenceIds": [
+        "p1_2023_06_17#vehicle",
+        "p1_2023_09_11#vehicle",
+        "p1_2023_11_12#vehicle",
+        "p1_2024_06_09#vehicle",
+        "p1_2024_11_12#vehicle",
+        "p1_2025_06_07#vehicle",
+        "p1_2025_09_11#vehicle",
+        "p1_2025_11_09#vehicle",
+        "p1_2026_06_11#vehicle",
+        "p1_2026_09_12#vehicle",
+        "p1_2026_11_08#vehicle",
+        "p1_2027_06_12#vehicle",
+        "p2_2023_11_07#vehicle",
+        "p2_2024_09_02#vehicle",
+        "p2_2025_06_04#vehicle",
+        "p2_2025_11_07#vehicle",
+        "p2_2026_11_10#vehicle",
+        "p2_2027_06_05#vehicle"
+      ],
+      "sourceExamIds": [
+        "p1_2023_06_17",
+        "p1_2023_09_11",
+        "p1_2023_11_12",
+        "p1_2024_06_09",
+        "p1_2024_11_12",
+        "p1_2025_06_07",
+        "p1_2025_09_11",
+        "p1_2025_11_09",
+        "p1_2026_06_11",
+        "p1_2026_09_12",
+        "p1_2026_11_08",
+        "p1_2027_06_12",
+        "p2_2023_11_07",
+        "p2_2024_09_02",
+        "p2_2025_06_04",
+        "p2_2025_11_07",
+        "p2_2026_11_10",
+        "p2_2027_06_05"
+      ],
+      "sourcePanelRefs": [
+        "p1_2023_06_17#panel-1",
+        "p1_2023_09_11#panel-1",
+        "p1_2023_11_12#panel-1",
+        "p1_2024_06_09#panel-1",
+        "p1_2024_11_12#panel-1",
+        "p1_2025_06_07#panel-1",
+        "p1_2025_09_11#panel-1",
+        "p1_2025_11_09#panel-1",
+        "p1_2026_06_11#panel-1",
+        "p1_2026_09_12#panel-1",
+        "p1_2026_11_08#panel-1",
+        "p1_2027_06_12#panel-1",
+        "p2_2023_11_07#panel-1",
+        "p2_2024_09_02#panel-1",
+        "p2_2025_06_04#panel-1",
+        "p2_2025_11_07#panel-1",
+        "p2_2026_11_10#panel-1",
+        "p2_2027_06_05#panel-1",
+        "p2_2027_06_05#panel-2"
+      ],
+      "existingAssetId": null,
+      "implementation": {
+        "module": "js/ai-illustration-assets.js",
+        "assetId": "spacecraft_flat_shell",
+        "sourcePixelsEmbedded": false
+      },
+      "provenanceMode": "new parametric shell or original redraw; exam occurrences are structural references, not crop sources",
+      "constraints": [
+        "flat projection",
+        "separate shell/window/occupant/apparatus layers",
+        "no embedded labels",
+        "left/right variants explicit"
+      ],
+      "doNotGeneralize": [
+        "Do not merge occupants, light sources, mirrors, scales, or experiment-specific paths into the generic shell.",
+        "Do not treat road vehicles, carts, military ships, or bicycle wheels as the same family.",
+        "A flat atlas projection does not prove identical profile geometry; maintain more than one shell proportion variant."
+      ]
+    }
+  ],
+  "deferredClusters": [
+    {
+      "id": "defer_student_trio_standing_dialogue",
+      "status": "insufficient_or_heterogeneous_evidence_do_not_build_yet",
+      "blocker": "person",
+      "evidenceCount": 1,
+      "occurrenceIds": [
+        "p1_2025_06_06#person"
+      ],
+      "sourceExamIds": [
+        "p1_2025_06_06"
+      ],
+      "sourcePanelRefs": [
+        "p1_2025_06_06#panel-2"
+      ],
+      "reason": "Only one occurrence satisfies all strict pose/group/action fields; other board-dialogue notes do not state standing pose.",
+      "doNotGeneralize": [
+        "Do not turn pose-unknown student groups into standing groups."
+      ]
+    },
+    {
+      "id": "defer_astronaut_observer",
+      "status": "insufficient_or_heterogeneous_evidence_do_not_build_yet",
+      "blocker": "person",
+      "evidenceCount": 12,
+      "occurrenceIds": [
+        "p1_2024_09_06#person",
+        "p1_2025_06_07#person",
+        "p1_2025_11_09#person",
+        "p1_2026_06_11#person",
+        "p1_2026_09_12#person",
+        "p1_2026_11_08#person",
+        "p1_2027_06_12#person",
+        "p2_2023_11_07#person",
+        "p2_2025_06_04#person",
+        "p2_2025_11_07#person",
+        "p2_2026_11_10#person",
+        "p2_2027_06_05#person"
+      ],
+      "sourceExamIds": [
+        "p1_2024_09_06",
+        "p1_2025_06_07",
+        "p1_2025_11_09",
+        "p1_2026_06_11",
+        "p1_2026_09_12",
+        "p1_2026_11_08",
+        "p1_2027_06_12",
+        "p2_2023_11_07",
+        "p2_2025_06_04",
+        "p2_2025_11_07",
+        "p2_2026_11_10",
+        "p2_2027_06_05"
+      ],
+      "sourcePanelRefs": [
+        "p1_2024_09_06#panel-1",
+        "p1_2025_06_07#panel-1",
+        "p1_2025_11_09#panel-1",
+        "p1_2026_06_11#panel-1",
+        "p1_2026_09_12#panel-1",
+        "p1_2026_11_08#panel-1",
+        "p1_2027_06_12#panel-1",
+        "p2_2023_11_07#panel-1",
+        "p2_2025_06_04#panel-1",
+        "p2_2025_11_07#panel-1",
+        "p2_2026_11_10#panel-1",
+        "p2_2027_06_05#panel-1",
+        "p2_2027_06_05#panel-2"
+      ],
+      "reason": "Rows often combine an embedded occupant and an external observer in one panel, while direction and exact pose are usually absent.",
+      "doNotGeneralize": [
+        "Do not collapse seated occupants, standing external astronauts, and ordinary observers into one figure."
+      ]
+    },
+    {
+      "id": "defer_road_vehicle_family",
+      "status": "insufficient_or_heterogeneous_evidence_do_not_build_yet",
+      "blocker": "vehicle",
+      "evidenceCount": 7,
+      "occurrenceIds": [
+        "c1_2025_09_01#vehicle",
+        "p1_2024_06_18#vehicle",
+        "p1_2024_11_01#vehicle",
+        "p1_2024_11_19#vehicle",
+        "p1_2026_11_03#vehicle",
+        "p2_2024_06_10#vehicle",
+        "p2_2024_09_15#vehicle"
+      ],
+      "sourceExamIds": [
+        "c1_2025_09_01",
+        "p1_2024_06_18",
+        "p1_2024_11_01",
+        "p1_2024_11_19",
+        "p1_2026_11_03",
+        "p2_2024_06_10",
+        "p2_2024_09_15"
+      ],
+      "sourcePanelRefs": [
+        "c1_2025_09_01#panel-1",
+        "p1_2024_06_18#panel-1",
+        "p1_2024_11_01#panel-1",
+        "p1_2024_11_19#panel-1",
+        "p1_2026_11_03#panel-1",
+        "p2_2024_06_10#panel-1",
+        "p2_2024_09_15#panel-1"
+      ],
+      "reason": "The notes mix bus interior, bus front, side-road cars, autonomous sedan, and truck scenes; one shared silhouette is not evidenced.",
+      "doNotGeneralize": [
+        "Do not reuse one bus/car profile for front, interior, truck, and side views."
+      ]
+    },
+    {
+      "id": "defer_vertical_hand_grip",
+      "status": "insufficient_or_heterogeneous_evidence_do_not_build_yet",
+      "blocker": "hand",
+      "evidenceCount": 4,
+      "occurrenceIds": [
+        "c1_2025_09_13#hand",
+        "p2_2025_09_06#hand",
+        "p2_2025_11_10#hand",
+        "p2_2027_06_10#hand"
+      ],
+      "sourceExamIds": [
+        "c1_2025_09_13",
+        "p2_2025_09_06",
+        "p2_2025_11_10",
+        "p2_2027_06_10"
+      ],
+      "sourcePanelRefs": [
+        "c1_2025_09_13#panel-1",
+        "p2_2025_09_06#panel-1",
+        "p2_2025_11_10#panel-1",
+        "p2_2027_06_10#panel-3"
+      ],
+      "reason": "Repeated vertical contact exists, but targets include rod, tube, charged-object apparatus, and burette/flask with different occlusion geometry.",
+      "doNotGeneralize": [
+        "Do not assume the existing incline-block grip crop fits a vertical target."
+      ]
+    },
+    {
+      "id": "defer_gloved_lab_hands",
+      "status": "insufficient_or_heterogeneous_evidence_do_not_build_yet",
+      "blocker": "hand",
+      "evidenceCount": 2,
+      "occurrenceIds": [
+        "c1_2025_09_01#hand",
+        "c1_2025_09_13#hand"
+      ],
+      "sourceExamIds": [
+        "c1_2025_09_01",
+        "c1_2025_09_13"
+      ],
+      "sourcePanelRefs": [
+        "c1_2025_09_01#panel-2",
+        "c1_2025_09_13#panel-1"
+      ],
+      "reason": "Only two gloved scenes are described and their actions differ (cotton-on-skin versus two-hand burette/flask handling).",
+      "doNotGeneralize": [
+        "Do not use one gloved-hand pose for chemically distinct contacts and hand counts."
+      ]
+    }
+  ],
+  "occurrences": [
+    {
+      "occurrenceId": "b1_2026_06_10#person",
+      "examId": "b1_2026_06_10",
+      "file": "b1_2026_06_10.png",
+      "subject": "b1",
+      "subjectLabel": "생명1",
+      "subjectFamily": "biology",
+      "subjectSubtypes": [
+        "항상성과몸의조절"
+      ],
+      "tags": [
+        "뉴런과흥분전도",
+        "무릎 반사",
+        "반사",
+        "신경계"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "b1_2026_06_10#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "anatomical_fragment",
+        "pose": "anatomical_fragment",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "unknown"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "An anatomical fragment is not a generic person asset."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2024_09_01#person",
+      "examId": "c1_2024_09_01",
+      "file": "c1_2024_09_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2024_09_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2024_11_01#hand",
+      "examId": "c1_2024_11_01",
+      "file": "c1_2024_11_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피",
+        "산화환원반응"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2024_11_01#panel-1",
+          "index": 0,
+          "label": "좌",
+          "kind": "illustration",
+          "matchedByNote": true
+        },
+        {
+          "ref": "c1_2024_11_01#panel-2",
+          "index": 1,
+          "label": "우",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "press",
+        "orientation": "unknown",
+        "contact": "pump_bottle",
+        "action": "press",
+        "handCount": "two_or_two_fingers"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2025_09_01#hand",
+      "examId": "c1_2025_09_01",
+      "file": "c1_2025_09_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2025_09_01#panel-2",
+          "index": 1,
+          "label": "우",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "gloved",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "skin_or_cotton",
+        "action": "unknown",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Hand pose is not recoverable from the note; exclude from asset matching."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2025_09_01#vehicle",
+      "examId": "c1_2025_09_01",
+      "file": "c1_2025_09_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2025_09_01#panel-1",
+          "index": 0,
+          "label": "좌",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_bus",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2025_09_13#hand",
+      "examId": "c1_2025_09_13",
+      "file": "c1_2025_09_13.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "화학의첫걸음",
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "몰과양적관계",
+        "용액의농도",
+        "중화반응"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2025_09_13#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "gloved",
+        "pose": "grip",
+        "orientation": "target_vertical",
+        "contact": "burette_or_flask",
+        "action": "grip",
+        "handCount": "two_or_two_fingers"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "c1_2026_09_01#person",
+      "examId": "c1_2026_09_01",
+      "file": "c1_2026_09_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "원자의세계",
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피",
+        "주기율표와주기성"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2026_09_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "teacher",
+        "pose": "hand_raised",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2026_11_01#hand",
+      "examId": "c1_2026_11_01",
+      "file": "c1_2026_11_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "unresolved_row_level_only",
+      "panelRefs": [
+        {
+          "ref": "c1_2026_11_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": false
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "unknown",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Panel attribution is unresolved; do not crop or reuse until a human identifies the exact panel.",
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Hand pose is not recoverable from the note; exclude from asset matching."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2026_11_01#person",
+      "examId": "c1_2026_11_01",
+      "file": "c1_2026_11_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응엔탈피"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2026_11_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "contextual_person",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "eat",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c1_2027_06_01#hand",
+      "examId": "c1_2027_06_01",
+      "file": "c1_2027_06_01.png",
+      "subject": "c1",
+      "subjectLabel": "화학1",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c1_2027_06_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "unknown",
+        "contact": "instrument_or_tool",
+        "action": "grip",
+        "handCount": "two_or_two_fingers"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2023_06_02#person",
+      "examId": "c2_2023_06_02",
+      "file": "c2_2023_06_02.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2023_06_02#panel-2",
+          "index": 1,
+          "label": "우",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2025_11_01#person",
+      "examId": "c2_2025_11_01",
+      "file": "c2_2025_11_01.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응속도"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2025_11_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2026_06_01#person",
+      "examId": "c2_2026_06_01",
+      "file": "c2_2026_06_01.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2026_06_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2026_11_02#person",
+      "examId": "c2_2026_11_02",
+      "file": "c2_2026_11_02.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "역동적인화학반응"
+      ],
+      "tags": [
+        "반응속도"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2026_11_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2026_11_10#vehicle",
+      "examId": "c2_2026_11_10",
+      "file": "c2_2026_11_10.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [
+        "화학의첫걸음"
+      ],
+      "tags": [
+        "몰과양적관계"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2026_11_10#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "bicycle_wheel",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "wheel_only",
+        "action": "moving",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "c2_2027_06_04#person",
+      "examId": "c2_2027_06_04",
+      "file": "c2_2027_06_04.png",
+      "subject": "c2",
+      "subjectLabel": "화학2",
+      "subjectFamily": "chemistry",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "c2_2027_06_04#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "e1_2026_11_04#hand",
+      "examId": "e1_2026_11_04",
+      "file": "e1_2026_11_04.png",
+      "subject": "e1",
+      "subjectLabel": "지구1",
+      "subjectFamily": "earth_science",
+      "subjectSubtypes": [
+        "고체지구"
+      ],
+      "tags": [
+        "블록 다이어그램",
+        "습곡",
+        "지사해석",
+        "지질 구조",
+        "지질구조",
+        "지층 형성 순서"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "oblique",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "e1_2026_11_04#panel-3",
+          "index": 2,
+          "label": "Ⅲ",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "unknown",
+        "contact": "knife",
+        "action": "grip",
+        "handCount": "two_or_two_fingers"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "e2_2026_06_03#person",
+      "examId": "e2_2026_06_03",
+      "file": "e2_2026_06_03.png",
+      "subject": "e2",
+      "subjectLabel": "지구2",
+      "subjectFamily": "earth_science",
+      "subjectSubtypes": [],
+      "tags": [
+        "조력 발전",
+        "조류 발전",
+        "파력 발전",
+        "해양 에너지"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "e2_2026_06_03#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "e2_2026_09_01#person",
+      "examId": "e2_2026_09_01",
+      "file": "e2_2026_09_01.png",
+      "subject": "e2",
+      "subjectLabel": "지구2",
+      "subjectFamily": "earth_science",
+      "subjectSubtypes": [],
+      "tags": [
+        "광물 자원",
+        "금속·비금속",
+        "학생 대화"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "e2_2026_09_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "e2_2026_09_09#hand",
+      "examId": "e2_2026_09_09",
+      "file": "e2_2026_09_09.png",
+      "subject": "e2",
+      "subjectLabel": "지구2",
+      "subjectFamily": "earth_science",
+      "subjectSubtypes": [],
+      "tags": [
+        "관측",
+        "실험 삽화",
+        "외행성",
+        "행성"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "e2_2026_09_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "unknown",
+        "contact": "rod_or_tube",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "e2_2026_11_01#person",
+      "examId": "e2_2026_11_01",
+      "file": "e2_2026_11_01.png",
+      "subject": "e2",
+      "subjectLabel": "지구2",
+      "subjectFamily": "earth_science",
+      "subjectSubtypes": [],
+      "tags": [
+        "가스수화물",
+        "망가니즈 단괴",
+        "해양 자원"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "e2_2026_11_01#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_06_02#person",
+      "examId": "p1_2023_06_02",
+      "file": "p1_2023_06_02.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "전자기학"
+      ],
+      "tags": [
+        "자성체"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_06_03#vehicle",
+      "examId": "p1_2023_06_03",
+      "file": "p1_2023_06_03.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_06_03#panel-2",
+          "index": 1,
+          "label": "(나)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "military_ship",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "water",
+        "action": "not_described",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_06_17#person",
+      "examId": "p1_2023_06_17",
+      "file": "p1_2023_06_17.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_06_17#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "observer",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_06_17#vehicle",
+      "examId": "p1_2023_06_17",
+      "file": "p1_2023_06_17.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_06_17#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "rightward",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_06_19#hand",
+      "examId": "p1_2023_06_19",
+      "file": "p1_2023_06_19.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "역학적에너지보존",
+        "용수철",
+        "자유낙하"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_06_19#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "press",
+        "orientation": "unknown",
+        "contact": "block",
+        "action": "press",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_01#person",
+      "examId": "p1_2023_09_01",
+      "file": "p1_2023_09_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "teacher",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_03#person",
+      "examId": "p1_2023_09_03",
+      "file": "p1_2023_09_03.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "빛의이중성"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_03#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_05#person",
+      "examId": "p1_2023_09_05",
+      "file": "p1_2023_09_05.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "굴절"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_05#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p1_2023_09_05#panel-2",
+          "index": 1,
+          "label": "(나)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "anatomical_fragment",
+        "pose": "anatomical_fragment",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "unknown"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "An anatomical fragment is not a generic person asset."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_11#person",
+      "examId": "p1_2023_09_11",
+      "file": "p1_2023_09_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "vehicle_occupant",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "stand",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_11#vehicle",
+      "examId": "p1_2023_09_11",
+      "file": "p1_2023_09_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "multiple_unspecified",
+        "contact": "space",
+        "action": "static_context",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_09_20#hand",
+      "examId": "p1_2023_09_20",
+      "file": "p1_2023_09_20.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동",
+        "마찰력",
+        "빗면",
+        "자유낙하"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_09_20#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_inclined",
+        "contact": "block",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [
+        "existing_hand_grip"
+      ],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p1_2023_11_02#person",
+      "examId": "p1_2023_11_02",
+      "file": "p1_2023_11_02.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "간섭"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_11_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_11_12#person",
+      "examId": "p1_2023_11_12",
+      "file": "p1_2023_11_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "mixed",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_11_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p1_2023_11_12#panel-2",
+          "index": 1,
+          "label": "panel-2",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "vehicle_occupant",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2023_11_12#vehicle",
+      "examId": "p1_2023_11_12",
+      "file": "p1_2023_11_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "mixed",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2023_11_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "rightward",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_06_09#person",
+      "examId": "p1_2024_06_09",
+      "file": "p1_2024_06_09.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_06_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "vehicle_occupant",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_06_09#vehicle",
+      "examId": "p1_2024_06_09",
+      "file": "p1_2024_06_09.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_06_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_06_18#vehicle",
+      "examId": "p1_2024_06_18",
+      "file": "p1_2024_06_18.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_06_18#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_car_or_truck",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "road_or_lane",
+        "action": "moving",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_09_02#person",
+      "examId": "p1_2024_09_02",
+      "file": "p1_2024_09_02.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "질량에너지등가"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_09_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_09_06#person",
+      "examId": "p1_2024_09_06",
+      "file": "p1_2024_09_06.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_09_06#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_09_17#hand",
+      "examId": "p1_2024_09_17",
+      "file": "p1_2024_09_17.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "용수철",
+        "자유낙하",
+        "충돌"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_09_17#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "unknown",
+        "orientation": "target_horizontal",
+        "contact": "spring",
+        "action": "unknown",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Hand pose is not recoverable from the note; exclude from asset matching."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_11_01#vehicle",
+      "examId": "p1_2024_11_01",
+      "file": "p1_2024_11_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_bus",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "static_context",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_11_07#vehicle",
+      "examId": "p1_2024_11_07",
+      "file": "p1_2024_11_07.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "운동량보존",
+        "충돌"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_07#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "cart",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "track_or_ground",
+        "action": "rebound_or_collision",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_11_08#hand",
+      "examId": "p1_2024_11_08",
+      "file": "p1_2024_11_08.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "용수철",
+        "운동량보존",
+        "자유낙하"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_08#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "dashed_ghost",
+        "pose": "press",
+        "orientation": "target_horizontal",
+        "contact": "spring",
+        "action": "press",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [
+        "existing_hand_press"
+      ],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p1_2024_11_12#person",
+      "examId": "p1_2024_11_12",
+      "file": "p1_2024_11_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "unresolved_row_level_only",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": false
+        }
+      ],
+      "taxonomy": {
+        "subtype": "unknown",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "demonstrate_or_observe",
+        "groupSize": "unknown"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Panel attribution is unresolved; do not crop or reuse until a human identifies the exact panel.",
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2024_11_12#vehicle",
+      "examId": "p1_2024_11_12",
+      "file": "p1_2024_11_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "opposed_directions",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p1_2024_11_19#vehicle",
+      "examId": "p1_2024_11_19",
+      "file": "p1_2024_11_19.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2024_11_19#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_car_or_truck",
+        "pose": "not_applicable",
+        "orientation": "multiple_unspecified",
+        "contact": "road_or_lane",
+        "action": "not_described",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p1_2025_06_06#person",
+      "examId": "p1_2025_06_06",
+      "file": "p1_2025_06_06.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "파동의성질"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_06_06#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_06_07#person",
+      "examId": "p1_2025_06_07",
+      "file": "p1_2025_06_07.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_06_07#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_06_07#vehicle",
+      "examId": "p1_2025_06_07",
+      "file": "p1_2025_06_07.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_06_07#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "rightward",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_06_19#hand",
+      "examId": "p1_2025_06_19",
+      "file": "p1_2025_06_19.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "마찰력",
+        "빗면",
+        "실연결물체",
+        "자유낙하"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_06_19#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_inclined",
+        "contact": "block",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [
+        "existing_hand_grip"
+      ],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p1_2025_09_03#person",
+      "examId": "p1_2025_09_03",
+      "file": "p1_2025_09_03.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "스펙트럼",
+        "원자모형"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_09_03#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_09_11#person",
+      "examId": "p1_2025_09_11",
+      "file": "p1_2025_09_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_09_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "vehicle_occupant",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_09_11#vehicle",
+      "examId": "p1_2025_09_11",
+      "file": "p1_2025_09_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_09_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_11_01#person",
+      "examId": "p1_2025_11_01",
+      "file": "p1_2025_11_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_11_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_11_04#person",
+      "examId": "p1_2025_11_04",
+      "file": "p1_2025_11_04.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "빛의이중성"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_11_04#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_11_09#person",
+      "examId": "p1_2025_11_09",
+      "file": "p1_2025_11_09.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_11_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2025_11_09#vehicle",
+      "examId": "p1_2025_11_09",
+      "file": "p1_2025_11_09.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2025_11_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_01#hand",
+      "examId": "p1_2026_06_01",
+      "file": "p1_2026_06_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "unknown",
+        "contact": "instrument_or_tool",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_02#person",
+      "examId": "p1_2026_06_02",
+      "file": "p1_2026_06_02.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "질량에너지등가"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_04#person",
+      "examId": "p1_2026_06_04",
+      "file": "p1_2026_06_04.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "마찰력"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_04#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p1_2026_06_04#panel-2",
+          "index": 1,
+          "label": "(나)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "apparatus_operator",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "standing_on_scale_or_platform",
+        "action": "pull",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_05#hand",
+      "examId": "p1_2026_06_05",
+      "file": "p1_2026_06_05.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "전자기학"
+      ],
+      "tags": [
+        "자성체"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "oblique",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_05#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "unknown",
+        "contact": "rod_or_tube",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_11#person",
+      "examId": "p1_2026_06_11",
+      "file": "p1_2026_06_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_06_11#vehicle",
+      "examId": "p1_2026_06_11",
+      "file": "p1_2026_06_11.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_06_11#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "opposed_directions",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_09_04#person",
+      "examId": "p1_2026_09_04",
+      "file": "p1_2026_09_04.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "스펙트럼"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_09_04#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_09_07#person",
+      "examId": "p1_2026_09_07",
+      "file": "p1_2026_09_07.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "충격량",
+        "충돌"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_09_07#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "apparatus_operator",
+        "pose": "pushing",
+        "orientation": "unknown",
+        "contact": "pushing_object",
+        "action": "push",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_09_12#person",
+      "examId": "p1_2026_09_12",
+      "file": "p1_2026_09_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_09_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_09_12#vehicle",
+      "examId": "p1_2026_09_12",
+      "file": "p1_2026_09_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_09_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "not_described",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_11_01#person",
+      "examId": "p1_2026_11_01",
+      "file": "p1_2026_11_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "질량에너지등가"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_11_01#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_11_03#vehicle",
+      "examId": "p1_2026_11_03",
+      "file": "p1_2026_11_03.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파",
+        "파동의성질"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_11_03#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_car_or_truck",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "road_or_lane",
+        "action": "static_context",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_11_08#person",
+      "examId": "p1_2026_11_08",
+      "file": "p1_2026_11_08.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_11_08#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_11_08#vehicle",
+      "examId": "p1_2026_11_08",
+      "file": "p1_2026_11_08.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_11_08#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2026_11_09#person",
+      "examId": "p1_2026_11_09",
+      "file": "p1_2026_11_09.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "도르래",
+        "마찰력",
+        "작용반작용"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2026_11_09#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "apparatus_operator",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "standing_on_scale_or_platform",
+        "action": "pull",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2027_06_01#person",
+      "examId": "p1_2027_06_01",
+      "file": "p1_2027_06_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "전자기파"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2027_06_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "contextual_person",
+        "pose": "running",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "run",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2027_06_02#person",
+      "examId": "p1_2027_06_02",
+      "file": "p1_2027_06_02.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "행성운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2027_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2027_06_12#person",
+      "examId": "p1_2027_06_12",
+      "file": "p1_2027_06_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2027_06_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2027_06_12#vehicle",
+      "examId": "p1_2027_06_12",
+      "file": "p1_2027_06_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "현대물리학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2027_06_12#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p1_2027_06_18#hand",
+      "examId": "p1_2027_06_18",
+      "file": "p1_2027_06_18.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "전자기학"
+      ],
+      "tags": [
+        "뉴턴운동법칙",
+        "마찰력",
+        "빗면",
+        "자유낙하",
+        "저항과회로"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p1_2027_06_18#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_inclined",
+        "contact": "block",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [
+        "existing_hand_grip"
+      ],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p2_2023_06_01#person",
+      "examId": "p2_2023_06_01",
+      "file": "p2_2023_06_01.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2023_06_01#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2023_06_02#person",
+      "examId": "p2_2023_06_02",
+      "file": "p2_2023_06_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "뉴턴운동법칙"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2023_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "apparatus_operator",
+        "pose": "pulling",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "pull",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2023_11_02#person",
+      "examId": "p2_2023_11_02",
+      "file": "p2_2023_11_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "원자모형"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2023_11_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2023_11_07#person",
+      "examId": "p2_2023_11_07",
+      "file": "p2_2023_11_07.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "mixed",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2023_11_07#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "beside_projectile",
+        "action": "not_described",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2023_11_07#vehicle",
+      "examId": "p2_2023_11_07",
+      "file": "p2_2023_11_07.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "mixed",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2023_11_07#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "not_described",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2024_06_10#person",
+      "examId": "p2_2024_06_10",
+      "file": "p2_2024_06_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "뉴턴운동법칙"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_06_10#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p2_2024_06_10#panel-2",
+          "index": 1,
+          "label": "(나)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "vehicle_occupant",
+        "pose": "running",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "run",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2024_06_10#vehicle",
+      "examId": "p2_2024_06_10",
+      "file": "p2_2024_06_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "뉴턴운동법칙"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_06_10#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_bus",
+        "pose": "not_applicable",
+        "orientation": "rightward",
+        "contact": "track_or_ground",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2024_09_02#person",
+      "examId": "p2_2024_09_02",
+      "file": "p2_2024_09_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_09_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2024_09_02#vehicle",
+      "examId": "p2_2024_09_02",
+      "file": "p2_2024_09_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_09_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2024_09_15#vehicle",
+      "examId": "p2_2024_09_15",
+      "file": "p2_2024_09_15.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_09_15#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "road_car_or_truck",
+        "pose": "not_applicable",
+        "orientation": "circular_path",
+        "contact": "circular_path",
+        "action": "orbital_motion",
+        "occupant": "not_described"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p2_2024_11_02#person",
+      "examId": "p2_2024_11_02",
+      "file": "p2_2024_11_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "원자모형"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2024_11_02#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "seated",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [
+        "candidate_student_trio_seated_dialogue"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_06_02#person",
+      "examId": "p2_2025_06_02",
+      "file": "p2_2025_06_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "seated_at_table_or_desk",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_06_04#person",
+      "examId": "p2_2025_06_04",
+      "file": "p2_2025_06_04.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "전자기학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동",
+        "전자기유도",
+        "포물선운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_06_04#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "stand",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_06_04#vehicle",
+      "examId": "p2_2025_06_04",
+      "file": "p2_2025_06_04.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "전자기학"
+      ],
+      "tags": [
+        "등가속도운동",
+        "등속직선운동",
+        "전자기유도",
+        "포물선운동"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_06_04#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_06_07#hand",
+      "examId": "p2_2025_06_07",
+      "file": "p2_2025_06_07.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_06_07#panel-1",
+          "index": 0,
+          "label": "좌",
+          "kind": "scene",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p2_2025_06_07#panel-2",
+          "index": 1,
+          "label": "중",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "touch",
+        "orientation": "target_vertical",
+        "contact": "rod_or_tube",
+        "action": "touch",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p2_2025_09_02#person",
+      "examId": "p2_2025_09_02",
+      "file": "p2_2025_09_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "광학"
+      ],
+      "tags": [
+        "간섭"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "none",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_09_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_09_06#hand",
+      "examId": "p2_2025_09_06",
+      "file": "p2_2025_09_06.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "실연결물체",
+        "일과에너지"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_09_06#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_vertical",
+        "contact": "rod_or_tube",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p2_2025_11_01#person",
+      "examId": "p2_2025_11_01",
+      "file": "p2_2025_11_01.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "현대물리학"
+      ],
+      "tags": [
+        "원자모형"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "mixed",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_11_01#panel-3",
+          "index": 2,
+          "label": "학생",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_11_07#person",
+      "examId": "p2_2025_11_07",
+      "file": "p2_2025_11_07.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_11_07#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "stand",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_11_07#vehicle",
+      "examId": "p2_2025_11_07",
+      "file": "p2_2025_11_07.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_11_07#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2025_11_10#hand",
+      "examId": "p2_2025_11_10",
+      "file": "p2_2025_11_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동"
+      ],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2025_11_10#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_vertical",
+        "contact": "rod_or_tube",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    },
+    {
+      "occurrenceId": "p2_2026_06_02#person",
+      "examId": "p2_2026_06_02",
+      "file": "p2_2026_06_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등속직선운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_06_02#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_06_10#person",
+      "examId": "p2_2026_06_10",
+      "file": "p2_2026_06_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "등가속도운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_06_10#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "apparatus_operator",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "beside_projectile",
+        "action": "demonstrate_or_observe",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_09_02#person",
+      "examId": "p2_2026_09_02",
+      "file": "p2_2026_09_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학",
+        "광학"
+      ],
+      "tags": [
+        "등속직선운동",
+        "파동의성질"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_09_02#panel-3",
+          "index": 2,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_09_17#person",
+      "examId": "p2_2026_09_17",
+      "file": "p2_2026_09_17.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "뉴턴운동법칙",
+        "등가속도운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_09_17#panel-1",
+          "index": 0,
+          "label": "(가)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "generic_person",
+        "pose": "standing",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "stand",
+        "groupSize": "two_or_more"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_11_04#person",
+      "examId": "p2_2026_11_04",
+      "file": "p2_2026_11_04.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "전자기학"
+      ],
+      "tags": [
+        "저항과회로"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_11_04#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_11_10#person",
+      "examId": "p2_2026_11_10",
+      "file": "p2_2026_11_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "자유낙하"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_11_10#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2026_11_10#vehicle",
+      "examId": "p2_2026_11_10",
+      "file": "p2_2026_11_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "자유낙하"
+      ],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2026_11_10#panel-1",
+          "index": 0,
+          "label": "panel-1",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "rightward",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2027_06_02#person",
+      "examId": "p2_2027_06_02",
+      "file": "p2_2027_06_02.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [
+        "역학"
+      ],
+      "tags": [
+        "행성운동"
+      ],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2027_06_02#panel-2",
+          "index": 1,
+          "label": "하",
+          "kind": "illustration",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "student_group",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "not_described",
+        "action": "dialogue",
+        "groupSize": "three"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2027_06_05#person",
+      "examId": "p2_2027_06_05",
+      "file": "p2_2027_06_05.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "person",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2027_06_05#panel-1",
+          "index": 0,
+          "label": "좌",
+          "kind": "scene",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p2_2027_06_05#panel-2",
+          "index": 1,
+          "label": "우",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "astronaut_or_space_observer",
+        "pose": "unknown",
+        "orientation": "unknown",
+        "contact": "inside_vehicle",
+        "action": "demonstrate_or_observe",
+        "groupSize": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2027_06_05#vehicle",
+      "examId": "p2_2027_06_05",
+      "file": "p2_2027_06_05.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "vehicle",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2027_06_05#panel-1",
+          "index": 0,
+          "label": "좌",
+          "kind": "scene",
+          "matchedByNote": true
+        },
+        {
+          "ref": "p2_2027_06_05#panel-2",
+          "index": 1,
+          "label": "우",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "spacecraft_or_rocket",
+        "pose": "not_applicable",
+        "orientation": "unknown",
+        "contact": "space",
+        "action": "moving",
+        "occupant": "present"
+      },
+      "reusableCandidateIds": [
+        "candidate_spacecraft_flat_shell_family"
+      ],
+      "doNotGeneralize": [
+        "Orientation is not stated in atlas metadata; do not mirror or rotate by assumption.",
+        "Keep vehicle shell and occupant as separate provenance/components; do not bake a source person or label into a generic shell."
+      ]
+    },
+    {
+      "occurrenceId": "p2_2027_06_10#hand",
+      "examId": "p2_2027_06_10",
+      "file": "p2_2027_06_10.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "subjectFamily": "physics",
+      "subjectSubtypes": [],
+      "tags": [],
+      "blocker": "hand",
+      "blockerType": "illustration",
+      "atlasProjection": "flat",
+      "atlasRepro": "partial",
+      "panelAttribution": "resolved_from_panel_note",
+      "panelRefs": [
+        {
+          "ref": "p2_2027_06_10#panel-3",
+          "index": 2,
+          "label": "(다)",
+          "kind": "scene",
+          "matchedByNote": true
+        }
+      ],
+      "taxonomy": {
+        "subtype": "solid_or_not_described",
+        "pose": "grip",
+        "orientation": "target_vertical",
+        "contact": "rod_or_tube",
+        "action": "grip",
+        "handCount": "one_or_unspecified"
+      },
+      "reusableCandidateIds": [],
+      "doNotGeneralize": []
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "schema": "5e-fast-scene-correction-history@1",
+  "benchmark": "fast-scene-repeatability.v1.json",
+  "policy": "Failed live runs are retained with the exact request, raw response, hashes, timings and zero-image/tool evidence. If a field was overwritten before recovery, its value remains null with explicit recovery provenance; values are never estimated. Only affected cases are rerun after the smallest safe prompt or motif-contract correction.",
+  "corrections": [
+    {
+      "caseId": "earth-observatory-optics",
+      "initialPromptVersion": "5e-fast-scene-prompt@2",
+      "initialMotifCatalogVersion": "5e-motif-catalog@1",
+      "exactRequest": "지구과학 관측 장치의 광학 부품 배치를 160×90 mm 아트보드에 단순화해 줘. 가로 광축을 따라 왼쪽에 큰 볼록렌즈 1개, 중앙 오른쪽에 45도로 기울어진 평면거울 1개, 가장 오른쪽에 세로 스크린 1개를 서로 겹치지 않게 놓아. 광선 화살표와 문자·숫자·기호·라벨은 그리지 말고, 검은 선과 필요한 최소 회색만 사용해.",
+      "failure": "All three responses substituted a generic line/polyline for the requested plane_mirror optics element. JSON compilation remained valid, supported and warning-free, but the required optical component was absent.",
+      "initialRuns": [
+        {
+          "run": 1,
+          "pass": false,
+          "timingsMs": { "total": 30059.77, "model": 29894.87, "compileWall": 0.34 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "e5e9072a5682853833c2ed9d7295f122a80ed2dac296b5b2ce564b0ba94b0400",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"optics\",\"opticsKind\":\"convex_lens\",\"box\":[-60,-18,8,36]},{\"type\":\"line\",\"from\":[8,-10],\"to\":[26,8]},{\"type\":\"optics\",\"opticsKind\":\"screen\",\"box\":[52,-18,5,36]}]}"
+        },
+        {
+          "run": 2,
+          "pass": false,
+          "timingsMs": { "total": 10190.46, "model": 10019.34, "compileWall": 0.287 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "ff6cd80251860f2a8e54c398e8826552b7abe1bd32e4d3f33e7084e2c7a212a5",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"optics\",\"opticsKind\":\"convex_lens\",\"box\":[-58,-25,8,50]},{\"type\":\"polyline\",\"points\":[[12,-12],[42,18]],\"closed\":false,\"dashed\":false,\"arrow\":\"none\"},{\"type\":\"optics\",\"opticsKind\":\"screen\",\"box\":[58,-22,3,44]}]}"
+        },
+        {
+          "run": 3,
+          "pass": false,
+          "timingsMs": { "total": 8718.04, "model": 8551.49, "compileWall": 0.136 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "6d8dd6efb32a50c94129de5741193618994431b0ebdcb264946f10869611e9a3",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"optics\",\"opticsKind\":\"convex_lens\",\"box\":[-58,-22,10,44]},{\"type\":\"line\",\"from\":[8,-14],\"to\":[22,0]},{\"type\":\"optics\",\"opticsKind\":\"screen\",\"box\":[52,-22,4,44]}]}"
+        }
+      ],
+      "correction": "The exact request now requires all three components to be optics elements and explicitly forbids replacing opticsKind=plane_mirror with line, polyline or curve.",
+      "replacementPromptVersion": "5e-fast-scene-prompt@3",
+      "replacementMotifCatalogVersion": "5e-motif-catalog@2",
+      "rerunResult": { "passes": 3, "runs": 3 }
+    },
+    {
+      "caseId": "chemistry-panel-flow",
+      "initialPromptVersion": "5e-fast-scene-prompt@2",
+      "initialMotifCatalogVersion": "5e-motif-catalog@1",
+      "exactRequest": "감사된 panel_flow 모티프 하나만 사용해 3단계 입자 상태 비교를 만들어 줘. panelType은 particlebox, panelCount는 3으로 하고, 왼쪽부터 기체 12개, 액체 12개, 고체 12개 상태를 사용해. 패널 사이에는 평범한 연결선만 두고 화살표·문자·숫자·기호·라벨은 넣지 마. 모티프 요청은 장면의 유일한 요소여야 한다.",
+      "initialPanelFlowContract": "panel_flow states documented only vessel fields (liquid, piston, fixture, weight, stopcock and ticks); particle state/count/mix were missing.",
+      "failure": "All three responses correctly selected panel_flow and particlebox panels, but omitted each particle state. The deterministic expander therefore applied its gas default to all three panels.",
+      "initialRuns": [
+        {
+          "run": 1,
+          "pass": false,
+          "timingsMs": { "total": 6906.5, "model": 6709.21, "compileWall": 0.961 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "66304df61680d77c0d34a809dedf4da26e9a57e1dd7c8225c3aea0edce07eec2",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"panel_flow\",\"options\":{\"panelCount\":3,\"panelType\":\"particlebox\",\"states\":[{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false}]}}]}"
+        },
+        {
+          "run": 2,
+          "pass": false,
+          "timingsMs": { "total": 6867.21, "model": 6667.32, "compileWall": 0.287 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "66304df61680d77c0d34a809dedf4da26e9a57e1dd7c8225c3aea0edce07eec2",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"panel_flow\",\"options\":{\"panelCount\":3,\"panelType\":\"particlebox\",\"states\":[{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0.3,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false}]}}]}"
+        },
+        {
+          "run": 3,
+          "pass": false,
+          "timingsMs": { "total": 6691.95, "model": 6526.15, "compileWall": 0.266 },
+          "valid": true,
+          "supported": true,
+          "warnings": [],
+          "errors": [],
+          "imageCalls": 0,
+          "toolCalls": 0,
+          "responseSha256": "1ad4c5665a74e054f1db2b6808a18653aa41e03d24585be5bdd34bafe589ff62",
+          "responseText": "{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"panel_flow\",\"options\":{\"panelCount\":3,\"panelType\":\"particlebox\",\"states\":[{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false},{\"liquid\":0,\"hasPiston\":false,\"pistonAt\":0,\"hasFix\":false,\"hasWeight\":false,\"hasStopcock\":false,\"hasTicks\":false}]}}]}"
+        }
+      ],
+      "correction": "AI_MOTIF_PROMPT_REFERENCE now documents state, count, mix and tone for panel_flow state entries and explicitly requires state/count for particlebox panels.",
+      "replacementPromptVersion": "5e-fast-scene-prompt@3",
+      "replacementMotifCatalogVersion": "5e-motif-catalog@2",
+      "rerunResult": { "passes": 3, "runs": 3 }
+    },
+    {"caseId":"physics-series-circuit","initialPromptVersion":"5e-fast-scene-prompt@6","initialMotifCatalogVersion":"5e-motif-catalog@4","replacementPromptVersion":"5e-fast-scene-prompt@6","replacementMotifCatalogVersion":"5e-motif-catalog@4","rerunResult":{"passes":3,"runs":3},"confirmedActiveVersion":{"promptVersion":"5e-fast-scene-prompt@7","motifCatalogVersion":"5e-motif-catalog@5"},"exactRequest":"160×90 mm 아트보드 안에 단순 직렬 회로를 구성해 줘. 왼쪽에 직류 전원 1개, 위쪽에 열린 스위치 1개, 오른쪽에 저항 1개, 아래쪽에 전구 1개를 놓고, 네 부품을 사각 루프의 검은 도선으로 끊김 없이 연결해. 문자·숫자·기호·라벨·화살표는 만들지 말고 장식과 명암도 넣지 마.","modelInputSha256":"95fc4e445fce0bd621ac421a8efbf9ef4db49e3dabd54f5805028aee5289730b","initialResult":{"passes":0,"runs":3},"priorCaseSummary":{"passCount":0,"runCount":3,"reproducible":false,"imageCalls":0,"toolCalls":0,"medianTotalMs":5988.68,"medianModelMs":5505.37,"medianCompileMs":0.209,"uniqueResponseHashes":1,"uniqueSceneHashes":0},"failure":"All three responses repeated the root 160×90 artboard inside simple_series_circuit options. The strict compiler rejected duplicate ownership before expansion.","recovery":{"completeness":"complete","source":"Codex session JSONL balanced priorCase snapshot, rollout 019fe6a4-8033 line 1171."},"initialRuns":[{"run":1,"pass":false,"timingsMs":{"total":7359.12,"model":5505.37,"finalMessage":5465.59,"compileWall":0.471,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"6796ace4a9270a556b2756ed0910e20e3b3cefbdd27ef1f8e4bd311ce5279611","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"simple_series_circuit\",\"options\":{\"switchState\":\"open\",\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a0-def4-75b0-b7c7-22e50e51cb00","turnId":"019fe6a0-e60b-76d2-adf2-2b1818feedbe"},{"run":2,"pass":false,"timingsMs":{"total":5456.91,"model":5232.93,"finalMessage":5211.66,"compileWall":0.204,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"6796ace4a9270a556b2756ed0910e20e3b3cefbdd27ef1f8e4bd311ce5279611","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"simple_series_circuit\",\"options\":{\"switchState\":\"open\",\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a0-fba8-72f3-8ce8-f15770158013","turnId":"019fe6a0-fc70-77e0-a552-72d5a978dba0"},{"run":3,"pass":false,"timingsMs":{"total":5988.68,"model":5790.03,"finalMessage":5723.21,"compileWall":0.209,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"6796ace4a9270a556b2756ed0910e20e3b3cefbdd27ef1f8e4bd311ce5279611","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"simple_series_circuit\",\"options\":{\"switchState\":\"open\",\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a1-10f9-7793-a09a-3103b325b546","turnId":"019fe6a1-11a9-7313-96b0-488aeee7f0ff"}],"correction":"Canonicalize identical root/options artboards, continue rejecting conflicts, and stop advertising options.artboard in the motif prompt."},
+    {"caseId":"physics-pulley-spring","initialPromptVersion":"5e-fast-scene-prompt@6","initialMotifCatalogVersion":"5e-motif-catalog@4","replacementPromptVersion":"5e-fast-scene-prompt@6","replacementMotifCatalogVersion":"5e-motif-catalog@4","rerunResult":{"passes":3,"runs":3},"confirmedActiveVersion":{"promptVersion":"5e-fast-scene-prompt@7","motifCatalogVersion":"5e-motif-catalog@5"},"exactRequest":"160×90 mm 아트보드 중앙의 상단 고정 도르래 1개를 그리고 줄이 도르래를 지나 양쪽으로 수직으로 내려오게 해. 줄의 왼쪽 끝에는 직사각형 추 1개를 매달고, 오른쪽 줄 끝은 세로 용수철의 위쪽 끝에 연결하며 용수철 아래쪽 끝에는 같은 크기의 직사각형 추 1개를 매달아. 접촉과 연결 관계가 분명해야 한다. 문자·숫자·기호·라벨·화살표·그림자는 만들지 마.","modelInputSha256":"d609ec47fe079cbb01f424a7b403bae55c61b6e33303e8830c7447ee1514c23e","initialResult":{"passes":0,"runs":3},"priorCaseSummary":{"passCount":0,"runCount":3,"reproducible":false,"imageCalls":0,"toolCalls":0,"medianTotalMs":5682.95,"medianModelMs":5488.29,"medianCompileMs":0.083,"uniqueResponseHashes":2,"uniqueSceneHashes":0},"failure":"All three fixed_pulley_spring_loads responses repeated the root artboard inside motif options and failed before expansion.","recovery":{"completeness":"all original fields except per-run finalMessage timing","missingFields":["initialRuns[0..2].timingsMs.finalMessage"],"source":"Codex priorCase output plus logs_2.sqlite; unavailable values remain null."},"initialRuns":[{"run":1,"pass":false,"timingsMs":{"total":5682.95,"model":5474.38,"finalMessage":null,"compileWall":0.187,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"1038f3df0b6d3e71d9e70abedddeaaa6c0bc87e53f4e6efaf8f730ce7c2f8ead","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"fixed_pulley_spring_loads\",\"options\":{\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a1-2861-7e53-92f9-15283ca77693","turnId":"019fe6a1-291a-75b0-a2dc-c5232597cae6"},{"run":2,"pass":false,"timingsMs":{"total":5665.52,"model":5488.29,"finalMessage":null,"compileWall":0.083,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"1038f3df0b6d3e71d9e70abedddeaaa6c0bc87e53f4e6efaf8f730ce7c2f8ead","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"fixed_pulley_spring_loads\",\"options\":{\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a1-3e98-7b71-98e3-c02b1833ef53","turnId":"019fe6a1-3f2f-7761-bd35-4c6349446367"},{"run":3,"pass":false,"timingsMs":{"total":6113.52,"model":5906.93,"finalMessage":null,"compileWall":0.079,"compileReported":0},"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"c1d361267c023603bed03b592e24086b1488b181d6f0432d034399ca81cd3287","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"fixed_pulley_spring_loads\",\"options\":{\"springTurns\":10,\"springRadius\":2.5,\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a1-54b3-7b11-abb1-7ee91043e6b6","turnId":"019fe6a1-5570-7052-a851-870c948f4176"}],"correction":"Canonicalize identical duplicate artboards and remove options.artboard from the model-facing motif reference."},
+    {"caseId":"earth-observatory-optics","initialPromptVersion":"5e-fast-scene-prompt@6","initialMotifCatalogVersion":"5e-motif-catalog@4","replacementPromptVersion":"5e-fast-scene-prompt@6","replacementMotifCatalogVersion":"5e-motif-catalog@4","rerunResult":{"passes":3,"runs":3},"confirmedActiveVersion":{"promptVersion":"5e-fast-scene-prompt@7","motifCatalogVersion":"5e-motif-catalog@5"},"exactRequest":"지구과학 관측 장치의 광학 부품 배치를 160×90 mm 아트보드에 단순화해 줘. 가로 광축을 따라 왼쪽에 큰 볼록렌즈 1개, 중앙 오른쪽에 45도로 기울어진 평면거울 1개, 가장 오른쪽에 세로 스크린 1개를 서로 겹치지 않게 놓아. 세 부품은 모두 optics 요소로 작성해야 하며, 특히 평면거울은 반드시 type=optics, opticsKind=plane_mirror, rotation=45인 요소로 만들고 일반 line·polyline·curve로 대체하지 마. 광선 화살표와 문자·숫자·기호·라벨은 그리지 말고, 검은 선과 필요한 최소 회색만 사용해.","modelInputSha256":"539c4f5805f1e81c1a5542cae136421a281f335226dbc3b187cc0c24448eb395","initialResult":{"passes":2,"runs":3},"priorCaseSummary":{"passCount":2,"runCount":3,"reproducible":true,"imageCalls":0,"toolCalls":0,"medianTotalMs":7620.09,"medianModelMs":7401.79,"medianCompileMs":0.283,"uniqueResponseHashes":3,"uniqueSceneHashes":2},"failure":"One response selected the exact motif but repeated the root artboard in options, causing the duplicate-artboard exception.","recovery":{"completeness":"raw responses, hashes, thread/turn IDs and prior summary recovered; exact per-run timings were overwritten","missingFields":["initialRuns[0..2].timingsMs"],"source":"Codex session output plus logs_2.sqlite; unavailable values remain null."},"initialRuns":[{"run":1,"pass":true,"timingsMs":null,"valid":true,"supported":true,"warnings":[],"errors":[],"imageCalls":0,"toolCalls":0,"responseSha256":"61ff230758b5cb90cdd6fff132bf52052226181630ca44365cebe703187c13d2","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"optics\",\"opticsKind\":\"convex_lens\",\"box\":[-58,-20,12,40]},{\"type\":\"optics\",\"opticsKind\":\"plane_mirror\",\"box\":[0,-15,6,30],\"rotation\":45},{\"type\":\"optics\",\"opticsKind\":\"screen\",\"box\":[52,-20,4,40]}]}","threadId":"019fe6a1-6ca3-7cf2-b77b-1ef4c6596f06","turnId":"019fe6a1-6d53-7461-a5da-41611a371f86"},{"run":2,"pass":false,"timingsMs":null,"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"fa17f2d720074f66cc4a5c9c9144b69c085aca92e8a0ae90b12cbe9f26085c43","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"lens_mirror_screen_bench\",\"options\":{\"lensKind\":\"convex_lens\",\"mirrorRotation\":45,\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a1-9fd2-7141-b781-3eb1dcfece1c","turnId":"019fe6a1-a07a-73b3-9444-e13c8b16e9fd"},{"run":3,"pass":true,"timingsMs":null,"valid":true,"supported":true,"warnings":[],"errors":[],"imageCalls":0,"toolCalls":0,"responseSha256":"a20d9482ad437df365830406745b5bfd2e89b108ec9aa5bba833691df98f7e00","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"optics\",\"opticsKind\":\"convex_lens\",\"box\":[-58,-20,10,40]},{\"type\":\"optics\",\"opticsKind\":\"plane_mirror\",\"box\":[5,-16,8,32],\"rotation\":45},{\"type\":\"optics\",\"opticsKind\":\"screen\",\"box\":[55,-20,4,40]}]}","threadId":"019fe6a1-b8c3-7e21-bd7a-29505317f716","turnId":"019fe6a1-b980-7a01-8c70-8e946e6264c1"}],"correction":"Require lens_mirror_screen_bench as the sole motif with only lensKind and mirrorRotation options; canonicalize identical duplicate artboards."},
+    {"caseId":"chemistry-vessel-particles","initialPromptVersion":"5e-fast-scene-prompt@6","initialMotifCatalogVersion":"5e-motif-catalog@4","replacementPromptVersion":"5e-fast-scene-prompt@6","replacementMotifCatalogVersion":"5e-motif-catalog@4","rerunResult":{"passes":3,"runs":3},"confirmedActiveVersion":{"promptVersion":"5e-fast-scene-prompt@7","motifCatalogVersion":"5e-motif-catalog@5"},"exactRequest":"160×90 mm 아트보드에 서로 떨어진 두 용기를 배치해 줘. 왼쪽에는 액체가 높이의 약 45%까지 담긴 비커 1개를 놓고, 오른쪽에는 기체 입자 16개가 고르게 퍼진 밀폐 직사각형 입자 용기 1개를 놓아. 입자는 원형이고 운동 화살표는 없어야 한다. 문자·숫자·기호·라벨·그림자·광택은 만들지 마.","modelInputSha256":"4afed9c257edb7196c515aa86fc64546bc3c24523b3cd56f41ec10021c746ce6","initialResult":{"passes":1,"runs":3},"priorCaseSummary":{"passCount":1,"runCount":3,"reproducible":false,"imageCalls":0,"toolCalls":0,"medianTotalMs":6642.25,"medianModelMs":6434.5,"medianCompileMs":0.323,"uniqueResponseHashes":3,"uniqueSceneHashes":2},"failure":"One ordinary particle box exceeded the +80 boundary by 15 mm; another exact-motif response repeated the root artboard inside options.","recovery":{"completeness":"raw responses, hashes, thread/turn IDs and prior summary recovered; exact per-run timings were overwritten","missingFields":["initialRuns[0..2].timingsMs"],"source":"Codex session output plus logs_2.sqlite; unavailable values remain null."},"initialRuns":[{"run":1,"pass":true,"timingsMs":null,"valid":true,"supported":true,"warnings":[],"errors":[],"imageCalls":0,"toolCalls":0,"responseSha256":"15bd0e1bff470b949b80f68328631d4f1fe4d985d7846f1395cdee2311894e90","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"vessel\",\"vesselKind\":\"beaker\",\"box\":[-65,-27,42,54],\"liquid\":0.45,\"hasPiston\":false,\"pistonAt\":0.3,\"hasStopcock\":false,\"hasTicks\":false},{\"type\":\"particlebox\",\"box\":[15,-27,50,54],\"state\":\"gas\",\"count\":16,\"particleRadius\":1.5,\"particleShape\":\"circle\",\"mix\":false,\"seed\":1,\"motion\":\"none\"}]}","threadId":"019fe6a1-d689-7c00-9a1f-33eba3826fd0","turnId":"019fe6a1-d727-78e3-84b6-1fbfae9218c3"},{"run":2,"pass":false,"timingsMs":null,"valid":true,"supported":true,"warnings":[{"code":"outside_artboard","path":"$.objects.repeatability_chemistry-vessel-particles_002_particles_gas","message":"Object extends outside the artboard.","bbox":{"x":15,"y":-25,"w":80,"h":50}}],"errors":[],"imageCalls":0,"toolCalls":0,"responseSha256":"c3213065c227860c853800018b3b01590566566456adfa915b8458730a674a4e","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"vessel\",\"vesselKind\":\"beaker\",\"box\":[-65,-25,42,50],\"liquid\":0.45,\"hasPiston\":false,\"pistonAt\":0.3,\"hasStopcock\":false,\"hasTicks\":false},{\"type\":\"particlebox\",\"box\":[15,-25,80,50],\"state\":\"gas\",\"count\":16,\"particleRadius\":2,\"particleShape\":\"circle\",\"mix\":false,\"seed\":1,\"motion\":\"none\"}]}","threadId":"019fe6a1-f35c-7b60-8adb-df84230b8631","turnId":"019fe6a1-f418-70b1-84bd-a41820e3802e"},{"run":3,"pass":false,"timingsMs":null,"valid":false,"supported":false,"warnings":[],"errors":[{"code":"compile_exception","path":"$","message":"Set motif artboard at the scene root or in options, not both."}],"imageCalls":0,"toolCalls":0,"responseSha256":"9defae9b1e27c222bd603b1547555d2d1b35ec2f846e8fdaa1635c1ab4dc7177","responseText":"{\"schema\":\"5e-fast-scene@1\",\"mode\":\"diagram\",\"artboard\":{\"w\":160,\"h\":90},\"elements\":[{\"type\":\"motif\",\"motif\":\"vessel_particle_comparison\",\"options\":{\"vesselKind\":\"beaker\",\"liquid\":0.45,\"particleState\":\"gas\",\"particleCount\":16,\"particleShape\":\"circle\",\"mix\":false,\"artboard\":{\"w\":160,\"h\":90}}}]}","threadId":"019fe6a2-0d56-7390-9b84-b869fc422c01","turnId":"019fe6a2-0e12-7963-acb4-3d8253dd6a6e"}],"correction":"Require vessel_particle_comparison as the sole motif with only its six fixed fields; retain safe duplicate-artboard canonicalization."}
+  ]
+}
