@@ -1,0 +1,9 @@
+# Cloudflare Worker 설정 (wrangler CLI로 배포할 때 사용)
+# 대시보드로 배포하면 이 파일은 없어도 됩니다. README.md 참고.
+
+name = "5e-ai-proxy"
+main = "worker.js"
+compatibility_date = "2026-07-01"
+
+# 토큰은 여기에 적지 않습니다. 아래 명령으로 secret 등록:
+#   npx wrangler secret put POLLINATIONS_TOKEN
