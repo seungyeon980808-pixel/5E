@@ -129,8 +129,8 @@
       <p class="lead">v1.5.0은 이미지·기출문제·AI·편집기를 하나의 작업 흐름으로 연결하고, 자르기와 아트보드부터 Windows 설치판과 평가원 도식 엔진까지 크게 다시 정리한 판입니다.</p>
       <div class="badges">
         <span class="badge beta">현재 검증 빌드 v1.5.0-beta.1</span>
-        <span class="badge">상세 변경 10개 장</span>
-        <span class="badge">SVG 도해 10개</span>
+        <span class="badge">상세 변경 14개 장</span>
+        <span class="badge">SVG 도해 14개</span>
         <span class="badge">Node 138/138</span>
         <span class="badge">Desktop 40/40</span>
       </div>
@@ -148,8 +148,12 @@
       <a href="#artboard">드래그 아트보드</a>
       <a href="#background">투명 배경</a>
       <a href="#workflow">라이브러리 연결</a>
+      <a href="#library">이미지 자료실</a>
+      <a href="#objectify">이미지 객체화</a>
       <a href="#desktop">.5e와 Windows</a>
+      <a href="#productivity">편집·내보내기</a>
       <a href="#tools">튜토리얼·도구</a>
+      <a href="#mcp">MCP 자동화</a>
       <a href="#engine">Engine V2</a>
       <a href="#verification">검증 결과</a>
       <a href="#limits">알려진 제한</a>
@@ -165,6 +169,7 @@
           <article class="card"><span class="kicker">ENGINE</span><h3>입력에 맞춘 세 경로</h3><p>로컬 벡터, 빠른 장면, 이미지 생성 중 안전한 경로를 선택합니다.</p></article>
         </div>
         <div class="callout"><strong>릴리즈 범위</strong>v1.4.0이 과학 부품과 그리기 도구를 넓혔다면, v1.5.0은 밖의 그림을 5E 안으로 가져와 비교하고 부분 수정한 뒤 프로젝트로 보존하는 흐름을 완성했습니다.</div>
+        <p><code>v1.4.0</code> 이후 병합 커밋을 제외하고도 48개 커밋이 들어갔습니다. 이미지 자산 4,431개와 벤치마크·실험 결과 1,270개를 포함해 6,211개 경로가 바뀌었으며, 이 문서는 UI뿐 아니라 수집 도구·객체화·자동화 계약·테스트와 배포 기반까지 함께 설명합니다.</p>
       </section>
 
       <section id="ai">
@@ -259,6 +264,36 @@
         </ul>
       </section>
 
+      <section id="library">
+        <h2>이미지 라이브러리 — 부품 목록에서 출처가 있는 자료실로</h2>
+        <p>기존 부품 라이브러리를 <strong>이미지 라이브러리 베타</strong>로 확장했습니다. 미리보기만 나열하지 않고 과목·형태·사용 조건·출처와 가공 이력을 함께 관리합니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/11-image-library.svg" alt="이미지 라이브러리 검색 카드와 출처 정보" /></figure>
+        <ul>
+          <li>카드 미리보기를 위쪽에 배치하고 다크 모드 대비를 고쳤습니다.</li>
+          <li>과목·형태·용도 메타데이터로 이미지와 장치 부품을 함께 찾습니다.</li>
+          <li>한 장 또는 여러 장을 캔버스와 AI 참고 자료로 곧바로 보냅니다.</li>
+          <li>공개 도해의 제목, 저작자·기관, 원본 URL, 라이선스와 가공 이력을 출처 페이지에서 확인합니다.</li>
+          <li>작가·스타일·실험기구별 수집기, 중복 판정, 선화 정규화와 수동 선별 도구를 추가했습니다.</li>
+          <li>아직 품질이 고정되지 않은 이미지와 심화·실습 트랙에는 베타 꼬리표를 붙였습니다.</li>
+        </ul>
+        <div class="callout"><strong>수집과 재현은 다릅니다</strong>기출 3,961개와 atlas 936행을 감사했지만, 수집된 모든 그림이 네이티브 부품으로 즉시 재현된다는 뜻은 아닙니다. 자동 재현 범위는 별도 감사표와 안전 규칙으로 관리합니다.</div>
+      </section>
+
+      <section id="objectify">
+        <h2>이미지 객체화 — 픽셀을 다시 고칠 수 있는 도형으로</h2>
+        <p>그림을 한 장의 PNG로만 두지 않고 선·원·사각형·회색 면을 찾아 선택 가능한 5E 객체로 변환하는 기능을 보강했습니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/12-objectify.svg" alt="픽셀 이미지가 네이티브 객체로 분리되는 과정" /></figure>
+        <ul>
+          <li>안티앨리어싱이 섞인 검정선과 회색선을 구분합니다.</li>
+          <li>가는 직선, 꺾인 선, 원호를 line·polyline·curve로 추출합니다.</li>
+          <li>채운 원, 링, 회전 타원을 ellipse로 다시 만듭니다.</li>
+          <li>축 정렬·회전 사각형과 사각 링의 회전값·테두리 굵기를 보존합니다.</li>
+          <li>삼각형과 불규칙 윤곽은 폴리곤·곡선으로 안전하게 폴백합니다.</li>
+          <li>밝은 내부 면과 어두운 테두리를 병합해 중복 객체와 회색 유령을 줄입니다.</li>
+        </ul>
+        <p>결과는 선택·이동·회전·채움·선 굵기 변경이 가능한 일반 객체가 됩니다. 글자, 복잡 삽화, 겹친 사진처럼 확실하지 않은 입력에는 의미를 억지로 부여하지 않습니다.</p>
+      </section>
+
       <section id="desktop">
         <h2><code>.5e</code> 프로젝트와 Windows 설치판</h2>
         <p>프로젝트 저장 확장자를 <code>.5e</code>로 바꿨습니다. 내부는 안전한 JSON 구조를 유지해 기존 저장·불러오기·자동 저장 흐름과 호환됩니다.</p>
@@ -274,6 +309,22 @@
         </ul>
       </section>
 
+      <section id="productivity">
+        <h2>자주 쓰는 편집과 내보내기를 한 단계씩 줄였습니다</h2>
+        <figure class="visual"><img src="images/release-v1.5.0/13-productivity.svg" alt="전체 선택, 회전, 저장 폴더, 도움말 개선" /></figure>
+        <ul>
+          <li><code>Ctrl+A</code>로 현재 페이지의 모든 객체를 선택합니다.</li>
+          <li>5° 회전과 <code>Shift</code> 조합 30° 회전을 구분합니다.</li>
+          <li>내보내기 저장 폴더를 한 번 연결하면 PNG·SVG·일괄 내보내기에서 계속 사용합니다.</li>
+          <li>내보내기 전 영역과 파일 형식을 다시 확인하는 확정 단계를 추가했습니다.</li>
+          <li>중앙 불러오기, 화면 비우기, 객체 감싸기 시연을 실제 동작에 맞췄습니다.</li>
+          <li>한국어 버튼과 설명이 글자 단위로 어색하게 잘리지 않도록 줄바꿈을 조정했습니다.</li>
+          <li>도움말은 단순 호버가 아니라 실제 도구를 선택했을 때 표시합니다.</li>
+          <li>회전 객체의 선택 상자와 스마트 가이드가 원래 축으로 튀는 문제를 고쳤습니다.</li>
+          <li>수식 원본 <code>source</code> 누락은 손상된 저장 대신 명시적인 오류로 차단합니다.</li>
+        </ul>
+      </section>
+
       <section id="tools">
         <h2>회전·튜토리얼·과학 부품 보강</h2>
         <figure class="visual"><img src="images/release-v1.5.0/08-tutorial-tools.svg" alt="심화 튜토리얼과 도구 보강" /></figure>
@@ -283,6 +334,23 @@
         <p>저장·검색·라벨러·중앙 불러오기·화면 비우기·감싸기 시연을 실제 작업 흐름으로 연결하고, 읽기 단계에서 오조작해 과정에 갇히는 문제를 막았습니다.</p>
         <h3>검전기와 MCP</h3>
         <p>검전기를 정식 장치 부품으로 추가하고 잎 벌어짐과 종횡비를 프로젝트 저장 규칙에 포함했습니다. MCP에는 출처가 검증된 손·학생·우주선 자산과 안전한 부품 생성 규칙을 보강했습니다.</p>
+      </section>
+
+      <section id="mcp">
+        <h2>MCP 자동화 — 생성에서 저장까지 한 계약으로</h2>
+        <p>외부 Codex 세션과 Python 도구가 5E를 안정적으로 조작하도록 MCP 서버·브리지·객체 스키마를 확장했습니다.</p>
+        <figure class="visual"><img src="images/release-v1.5.0/14-mcp-workflow.svg" alt="MCP 생성, 그룹, 맞춤, 저장 흐름" /></figure>
+        <ul>
+          <li><code>group</code>으로 여러 객체 초안을 묶어 함께 이동·회전합니다.</li>
+          <li><code>fit_artboard</code>가 그림 경계와 지정 여백에 아트보드를 맞춥니다.</li>
+          <li><code>add_field_region</code>이 파선 테두리, 기호 격자, 선택적 범례를 가진 균일장 영역을 만듭니다.</li>
+          <li><code>save_image</code>가 현재 화면을 인쇄 품질 PNG로 저장합니다.</li>
+          <li>검전기와 감사된 손·학생·우주선 부품 계약을 추가했습니다.</li>
+          <li>프로젝트 저장에서 새로운 장치 속성과 그룹 관계를 보존합니다.</li>
+          <li>JavaScript 서버와 함께 Python stdio 클라이언트를 제공합니다.</li>
+          <li>schema validation, 샘플 JSON, smoke test로 잘못된 객체를 편집기 진입 전에 차단합니다.</li>
+        </ul>
+        <div class="callout"><strong>임의 JSON 삽입이 아닙니다</strong>MCP 요청은 5E 객체 스키마와 검증 경계를 통과해야만 캔버스에 반영됩니다. 자동화 결과도 사람이 다시 선택하고 고칠 수 있는 객체로 남습니다.</div>
       </section>
 
       <section id="engine">

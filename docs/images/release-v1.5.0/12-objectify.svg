@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <rect width="820" height="430" rx="18" fill="#f4f7fb"/>
+  <text x="34" y="48" fill="#0f172a" font-size="24" font-weight="700">이미지를 다시 편집 가능한 5E 객체로</text>
+  <text x="34" y="72" fill="#64748b" font-size="12">픽셀을 그대로 두지 않고 획·도형·회색 영역을 분리해 선택 가능한 객체로 바꿉니다.</text>
+  <rect x="38" y="103" width="260" height="246" rx="15" fill="#fff" stroke="#cbd5e1"/>
+  <text x="58" y="132" fill="#64748b" font-size="12">원본 이미지</text>
+  <g opacity=".9"><rect x="60" y="153" width="216" height="162" fill="#f8fafc"/>
+    <path d="M82 283h169M110 271v-70M212 271v-70" stroke="#29303a" stroke-width="8" opacity=".23"/>
+    <path d="M82 282h169M110 270v-70M212 270v-70" stroke="#111827" stroke-width="3"/>
+    <circle cx="160" cy="196" r="31" fill="#cbd5e1" stroke="#111827" stroke-width="3"/>
+    <rect x="128" y="239" width="64" height="42" fill="#e5e7eb" stroke="#111827" stroke-width="3"/>
+  </g>
+  <path d="M326 221h78" stroke="#2f81f7" stroke-width="5"/><path d="M404 221l-18-12v24z" fill="#2f81f7"/><text x="365" y="197" text-anchor="middle" fill="#2f81f7" font-size="12" font-weight="700">객체화</text>
+  <rect x="431" y="103" width="351" height="246" rx="15" fill="#0d1117"/>
+  <text x="452" y="132" fill="#8b949e" font-size="12">분리된 네이티브 객체</text>
+  <g fill="none" stroke="#f0f6fc" stroke-width="3"><path d="M465 284h281"/><path d="M495 270v-70"/><path d="M706 270v-70"/><circle cx="600" cy="196" r="31" fill="#30363d"/><rect x="568" y="239" width="64" height="42" fill="#21262d"/></g>
+  <g font-size="10" font-weight="700"><rect x="453" y="300" width="64" height="22" rx="11" fill="#14284a"/><text x="485" y="315" text-anchor="middle" fill="#58a6ff">선 3개</text><rect x="525" y="300" width="64" height="22" rx="11" fill="#2a1e4c"/><text x="557" y="315" text-anchor="middle" fill="#a78bfa">원 1개</text><rect x="597" y="300" width="74" height="22" rx="11" fill="#113c25"/><text x="634" y="315" text-anchor="middle" fill="#3fb950">사각형 1개</text><rect x="679" y="300" width="84" height="22" rx="11" fill="#3b2b0b"/><text x="721" y="315" text-anchor="middle" fill="#e3b341">회색 면 2개</text></g>
+  <g transform="translate(53 373)"><circle cx="8" cy="-4" r="8" fill="#2f81f7"/><path d="M4-4l3 3 6-7" fill="none" stroke="white" stroke-width="2"/><text x="24" y="0" fill="#334155" font-size="12">안티앨리어싱·가는 선·회전 도형을 구분하고 실패하면 안전한 윤곽선으로 폴백</text></g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'IBM Plex Sans KR','Malgun Gothic',sans-serif">
+  <rect width="820" height="430" rx="18" fill="#f7f9fc"/>
+  <text x="34" y="48" fill="#0f172a" font-size="24" font-weight="700">MCP가 초안을 만들고, 묶고, 맞추고, 저장합니다</text>
+  <text x="34" y="72" fill="#64748b" font-size="12">한 번의 호출로 끝내지 않고 5E 객체 계약을 따라 검증 가능한 단계로 나눴습니다.</text>
+  <g font-size="12" font-weight="700">
+    <rect x="35" y="111" width="136" height="74" rx="13" fill="#14284a"/><text x="103" y="143" text-anchor="middle" fill="#58a6ff">1 · 생성</text><text x="103" y="164" text-anchor="middle" fill="#f8fafc" font-size="10">장치 · 그래프 · 균일장</text>
+    <path d="M179 148h43" stroke="#2f81f7" stroke-width="4"/><path d="M222 148l-13-8v16z" fill="#2f81f7"/>
+    <rect x="231" y="111" width="136" height="74" rx="13" fill="#2a1e4c"/><text x="299" y="143" text-anchor="middle" fill="#a78bfa">2 · 그룹</text><text x="299" y="164" text-anchor="middle" fill="#f8fafc" font-size="10">초안을 한 덩어리로</text>
+    <path d="M375 148h43" stroke="#8357e8" stroke-width="4"/><path d="M418 148l-13-8v16z" fill="#8357e8"/>
+    <rect x="427" y="111" width="136" height="74" rx="13" fill="#113c25"/><text x="495" y="143" text-anchor="middle" fill="#3fb950">3 · 맞춤</text><text x="495" y="164" text-anchor="middle" fill="#f8fafc" font-size="10">fit_artboard · 여백</text>
+    <path d="M571 148h43" stroke="#20a84b" stroke-width="4"/><path d="M614 148l-13-8v16z" fill="#20a84b"/>
+    <rect x="623" y="111" width="162" height="74" rx="13" fill="#3b2b0b"/><text x="704" y="143" text-anchor="middle" fill="#e3b341">4 · 저장</text><text x="704" y="164" text-anchor="middle" fill="#f8fafc" font-size="10">PNG · 프로젝트 · 체크</text>
+  </g>
+  <rect x="35" y="219" width="750" height="135" rx="16" fill="#0d1117"/>
+  <text x="57" y="247" fill="#8b949e" font-size="11">새로 보강된 도구와 계약</text>
+  <g transform="translate(58 267)"><rect width="150" height="62" rx="10" fill="#161b22" stroke="#30363d"/><path d="M15 47h52V14h52v33h16" fill="none" stroke="#58a6ff" stroke-width="2" stroke-dasharray="5 4"/><text x="75" y="57" text-anchor="middle" fill="#c9d1d9" font-size="9">균일장 영역 · 기호 격자</text></g>
+  <g transform="translate(226 267)"><rect width="150" height="62" rx="10" fill="#161b22" stroke="#30363d"/><rect x="20" y="13" width="38" height="30" rx="5" fill="none" stroke="#a78bfa" stroke-width="2"/><circle cx="94" cy="28" r="17" fill="none" stroke="#a78bfa" stroke-width="2"/><path d="M58 28h19" stroke="#a78bfa" stroke-width="2"/><text x="75" y="57" text-anchor="middle" fill="#c9d1d9" font-size="9">group · 공통 변형</text></g>
+  <g transform="translate(394 267)"><rect width="150" height="62" rx="10" fill="#161b22" stroke="#30363d"/><path d="M28 12v33h93V12" fill="none" stroke="#3fb950" stroke-width="2"/><path d="M45 12v33M104 12v33" stroke="#3fb950" stroke-width="2"/><text x="75" y="57" text-anchor="middle" fill="#c9d1d9" font-size="9">검전기 · 안전 부품 스키마</text></g>
+  <g transform="translate(562 267)"><rect width="200" height="62" rx="10" fill="#161b22" stroke="#30363d"/><path d="M24 16h36v29H24z" fill="#f8fafc"/><path d="M48 16l12 12H48z" fill="#cbd5e1"/><text x="44" y="39" text-anchor="middle" fill="#2f81f7" font-size="9" font-weight="700">PNG</text><text x="78" y="27" fill="#e3b341" font-size="10" font-weight="700">save_image</text><text x="78" y="44" fill="#c9d1d9" font-size="9">인쇄 품질로 파일 저장</text></g>
+  <text x="38" y="391" fill="#64748b" font-size="11">수식 source 누락은 오류로 차단 · Python stdio 클라이언트 · schema validation · sample과 smoke test 포함</text>
+</svg>
