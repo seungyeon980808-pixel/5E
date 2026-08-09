@@ -8,25 +8,25 @@
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.4.0";
-import { render } from "./render.js?v=1.4.0";
+import { render } from "./render.js?v=1.4.3";
 import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.4.0";
 import { initTools } from "./tools.js?v=1.4.0";
-import { initCutTool } from "./cut-tool.js?v=1.4.0";
+import { initCutTool } from "./cut-tool.js?v=1.4.2";
 import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
-import { initArtboardResize } from "./artboard-resize.js?v=1.4.0";
-import { initInspector } from "./inspector.js?v=1.4.0";
+import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
+import { initInspector } from "./inspector.js?v=1.4.3";
 import { initProjectIO } from "./project-io.js?v=1.4.0";
-import { initExportDialog } from "./export-dialog.js?v=1.4.0";
+import { initExportDialog } from "./export-dialog.js?v=1.4.11";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
 import { initSettings } from "./settings.js?v=1.4.0";
 import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
 import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
-import { initExamLibrary } from "./exam-library.js?v=1.4.0";
+import { initExamLibrary } from "./exam-library.js?v=1.4.12";
 // 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
 // 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
-import { initPartsLibrary } from "./parts-library.js?v=1.4.0";
+import { initPartsLibrary } from "./parts-library.js?v=1.4.12";
 import { initTemplates } from "./templates.js?v=1.4.0";
 import { initObjectSearch } from "./search.js?v=1.4.0";
 import { initCommandPalette } from "./command-palette.js?v=1.4.0";
@@ -66,6 +66,8 @@ import { initModalDrag } from "./modal-drag.js?v=1.4.0";
 import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.4.0";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
+import { initAiPanel } from "./ai-panel.js?v=1.5.3";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -174,7 +176,7 @@ initEraseTool(state, svg);
 /* ----- transform: body-drag move + Undo/Redo (must come after initTools) ----- */
 initTransform(svg, state);
 
-/* ----- artboard 드래그 리사이즈: 우하단 핸들로 페이지 크기 조절(모드일 때만) ----- */
+/* ----- artboard 영역 지정: 드래그한 사각형을 새 페이지 영역으로 적용 ----- */
 initArtboardResize(svg, state);
 
 /* ----- inspector: right-panel controls wired to selected object ----- */
@@ -240,6 +242,8 @@ initPages(state);
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 initAutosave(state);
+const aiPanel = initAiPanel(state);
+initAiInstallGuide({ openDesktopPanel: () => aiPanel?.open() });
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
@@ -257,8 +261,9 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-initExamLibrary(state);
-initPartsLibrary(state);
+const openAiWithReference = (options) => aiPanel?.open(options);
+initExamLibrary(state, { openAi: openAiWithReference });
+initPartsLibrary(state, { openAi: openAiWithReference });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);
@@ -463,7 +468,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v1.4.0] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v1.5.0-beta.1] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +

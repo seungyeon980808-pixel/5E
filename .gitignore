@@ -42,3 +42,13 @@ scratch_*.json
 .claude/skills/
 
 __pycache__/
+
+# Windows desktop build outputs belong in GitHub Releases, not Git history.
+/release/
+/release-*/
+
+# Generated AI reproduction galleries are retained locally, not in Git history.
+/docs/training/image-reproduction/
+/docs/training/eval-repro-*.png
+/docs/training/eval-repro-batch-*.png
+/docs/training/codex-mcp-electroscope-test.png

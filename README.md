@@ -11,7 +11,7 @@
 
 <p><strong>과학교사를 위한 시험용 이미지 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://seungyeon980808-pixel.github.io/5E/">▶ 바로 써보기</a></p>
 
-<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/latest">최신 릴리즈 <strong>v1.3.0</strong> — 무엇이 바뀌었나</a></p>
+<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/latest">최신 릴리즈 <strong>v1.4.0</strong> — 무엇이 바뀌었나</a></p>
 
 </div>
 
@@ -19,11 +19,12 @@
 
 **5E**(sciEnceEducationalExamEasyEditor)는 과학 교사가 시험지·학습지에 넣을 그림을 만드는 웹 도구입니다.
 파워포인트나 그림판 대신, **평가원 지면에 그대로 얹을 수 있는 벡터 그림**을 빠르게 만들도록 설계했습니다.
-설치가 필요 없고, 만든 파일은 내 컴퓨터에만 남습니다(서버로 올라가지 않습니다).
+웹 편집기는 설치 없이 사용할 수 있고, 만든 프로젝트는 기본적으로 내 컴퓨터에만 남습니다. Windows 데스크톱판의 AI 이미지 기능을 사용자가 직접 실행한 경우에만 입력한 설명과 첨부 이미지가 로컬 Codex를 통해 해당 계정의 AI 서비스로 전달됩니다.
 
 - **대상** — 과학(물리·화학·생명·지구과학) 교사, 시험지·학습지 제작자
 - **스택** — 바닐라 JS + SVG, 빌드 없음. GitHub Pages 정적 배포
 - **저장** — 프로젝트 JSON · 전체 백업 ZIP · 브라우저 자동 저장
+- **Windows 배포** — 설치 파일은 GitHub Releases에서 제공하며 [코드 서명 정책](docs/CODE_SIGNING_POLICY.md)을 공개합니다.
 
 ## 목차
 
