@@ -13,7 +13,7 @@ import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } fro
 import { initTools } from "./tools.js?v=1.4.0";
 import { initCutTool } from "./cut-tool.js?v=1.4.2";
 import { initEraseTool } from "./erase-tool.js?v=1.4.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
+import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
 import { initProjectIO } from "./project-io.js?v=1.4.0";
