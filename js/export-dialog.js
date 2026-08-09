@@ -213,6 +213,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   okBtn.style.cssText =
     "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
     "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
+  okBtn.textContent = "지정";
   okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
   okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
   dim.append(wInput, sepX, hInput, sepU, okBtn);
