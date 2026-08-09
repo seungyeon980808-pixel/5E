@@ -1,0 +1,16 @@
+{
+  "defects": [
+    {
+      "case_id": "v22-dev-physics-series-circuit-switch-close-switch",
+      "tag": "BENCHMARK_DEFECT",
+      "evidence": "The source blade from pivot to free tip is shorter than the pivot-to-opposite-contact distance, so rotation without resizing cannot close the switch.",
+      "replacement": "v22-dev-physics-series-circuit-switch-move-bulb"
+    },
+    {
+      "case_id": "v22-dev-physics-incline-fixed-pulley-move-block",
+      "tag": "BENCHMARK_DEFECT",
+      "evidence": "The source block bounding box is x=245..325, y=285..350 on a source incline from (95,390) to (430,175); the block lies inside the ramp and does not contact its inclined boundary.",
+      "replacement": "v22-dev-physics-incline-fixed-pulley-lower-mass"
+    }
+  ]
+}
