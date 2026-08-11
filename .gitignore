@@ -47,6 +47,9 @@ __pycache__/
 /release/
 /release-*/
 
+# Local image-generation validation outputs may include user-provided references.
+/outputs/
+
 # Generated AI reproduction galleries are retained locally, not in Git history.
 /docs/training/image-reproduction/
 /docs/training/eval-repro-*.png

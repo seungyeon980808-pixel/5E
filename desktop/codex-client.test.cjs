@@ -25,6 +25,8 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.equal((main.match(/rpc\("turn\/start"/g) || []).length, 1, "backend must not retry a turn implicitly");
   assert.match(main, /imageGeneration/);
   assert.match(main, /contextIsolation: true/);
+  assert.match(main, /FIVE_E_DEV_USER_DATA/);
+  assert.match(main, /FIVE_E_DISABLE_GPU/);
   assert.match(main, /nodeIntegration: false/);
   assert.match(main, /Menu\.setApplicationMenu\(null\)/);
   assert.match(main, /win\.setMenu\(null\)/);
@@ -40,7 +42,10 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(preload, /codex:account/);
   assert.match(preload, /desktop-shell/);
   assert.match(preload, /capture:sources/);
+  assert.match(preload, /local-images:pick-folder/);
+  assert.match(preload, /local-images:list/);
   assert.match(main, /desktopCapturer\.getSources/);
+  assert.match(main, /LOCAL_IMAGE_EXTENSIONS/);
 });
 
 test("image prompt includes the no-label drawing rule", () => {
@@ -88,8 +93,9 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /item\.phase === "commentary"/);
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
-  assert.match(markup, /data-ai-open-internal/);
-  assert.match(markup, /data-ai-open-exam/);
+  assert.match(markup, /data-ai-reference-search/);
+  assert.match(markup, /이미지 검색…/);
+  assert.match(markup, /화면 캡처/);
   assert.match(markup, /이미지 불러오기/);
   assert.match(markup, /작업 취소/);
   assert.match(markup, /data-ai-chat-send/);
@@ -99,7 +105,8 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);
-  assert.match(panel, /5e:library-closed/);
+  assert.match(panel, /createAiReferenceSearch/);
+  assert.match(panel, /클립보드 이미지/);
   assert.match(markup, /data-ai-speed/);
   assert.match(markup, /기출문제 라이브러리/);
   assert.match(markup, /data-ai-compare/);

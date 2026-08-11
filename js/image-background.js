@@ -1,7 +1,31 @@
 /* AI 선화의 흰색 래스터 배경을 투명 알파로 바꾼다.
  * 순백/근백색의 무채색 픽셀만 제거하므로 검은 선과 의미 있는 회색·색상은 보존한다. */
 
-export const IMAGE_BACKGROUND_VERSION = "image-background-v2";
+export const IMAGE_BACKGROUND_VERSION = "image-background-v3-exam-palette";
+
+export const EXAM_GRAY_PALETTE = Object.freeze([0, 176, 255]);
+
+export function quantizeExamLineart(rgba, {
+  palette = EXAM_GRAY_PALETTE,
+  whiteCutoff = 248,
+} = {}) {
+  if (!rgba || typeof rgba.length !== "number") return rgba;
+  const tones = Array.from(new Set((palette || EXAM_GRAY_PALETTE).map(Number)))
+    .filter((value) => Number.isFinite(value) && value >= 0 && value <= 255)
+    .sort((a, b) => a - b);
+  if (!tones.includes(0) || !tones.includes(255)) throw new Error("평가원 팔레트에는 검정과 흰색이 필요합니다.");
+  for (let i = 0; i + 3 < rgba.length; i += 4) {
+    if (rgba[i + 3] === 0) continue;
+    const luminance = Math.round(rgba[i] * .2126 + rgba[i + 1] * .7152 + rgba[i + 2] * .0722);
+    const target = luminance >= whiteCutoff
+      ? 255
+      : tones.reduce((best, tone) => Math.abs(tone - luminance) < Math.abs(best - luminance) ? tone : best, tones[0]);
+    rgba[i] = target;
+    rgba[i + 1] = target;
+    rgba[i + 2] = target;
+  }
+  return rgba;
+}
 
 export function makeNearWhiteTransparent(rgba, { threshold = 235, neutralTolerance = 12 } = {}) {
   if (!rgba || typeof rgba.length !== "number") return rgba;
@@ -141,7 +165,7 @@ function loadImage(src) {
   });
 }
 
-export async function transparentizeGeneratedImage(src) {
+export async function transparentizeGeneratedImage(src, { examPalette = true } = {}) {
   const img = await loadImage(src);
   const canvas = document.createElement("canvas");
   canvas.width = img.naturalWidth || img.width || 1;
@@ -152,6 +176,7 @@ export async function transparentizeGeneratedImage(src) {
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   removeEmbeddedCheckerboard(pixels.data, canvas.width, canvas.height);
   removeConnectedLightBackground(pixels.data, canvas.width, canvas.height);
+  if (examPalette) quantizeExamLineart(pixels.data);
   makeNearWhiteTransparent(pixels.data);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.putImageData(pixels, 0, 0);
