@@ -5,12 +5,21 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const electron = process.env.FIVE_E_SMOKE_EXE || path.join(root, "node_modules", "electron", "dist", "electron.exe");
-const launchArgs = process.env.FIVE_E_SMOKE_EXE ? [] : [root];
+const launchArgs = process.env.FIVE_E_SMOKE_EXE
+  ? []
+  : [root, "--no-sandbox", "--disable-gpu", "--disable-gpu-compositing"];
 const marker = path.join(os.tmpdir(), `5e-desktop-smoke-${process.pid}.json`);
+const smokeUserData = path.join(os.tmpdir(), `5e-desktop-smoke-profile-${process.pid}`);
 
 const run = spawnSync(electron, launchArgs, {
   cwd: root,
-  env: { ...process.env, FIVE_E_SMOKE_TEST: "1", FIVE_E_SMOKE_RESULT: marker },
+  env: {
+    ...process.env,
+    FIVE_E_SMOKE_TEST: "1",
+    FIVE_E_SMOKE_RESULT: marker,
+    FIVE_E_SMOKE_USER_DATA: smokeUserData,
+    FIVE_E_DISABLE_GPU: "1",
+  },
   encoding: "utf8",
   timeout: Number(process.env.FIVE_E_SMOKE_TIMEOUT) || 30_000,
 });

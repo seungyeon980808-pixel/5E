@@ -21,7 +21,8 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   const index = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(panel, /ai-image-transport\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-request-plan\.js\?v=1\.5\.3/);
-  assert.match(panel, /ai-prompt\.js\?v=1\.5\.3/);
+  assert.match(panel, /ai-prompt\.js\?v=1\.5\.5/);
+  assert.doesNotMatch(panel, /ai-structure-lock\.js/);
   assert.match(panel, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-motif-catalog\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-local-asset-router\.js\?v=1\.5\.3/);
@@ -29,8 +30,8 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.3/);
-  assert.match(index, /js\/main\.js\?v=1\.5\.3-ai-fastpath/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.6/);
+  assert.match(index, /js\/main\.js\?v=1\.5\.6-reference-search/);
 });
 
 test("common scientific diagrams use the local editable scene path with exact-cache and raster fallback", () => {

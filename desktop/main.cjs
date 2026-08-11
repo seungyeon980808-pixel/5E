@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage } = require("electron");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
@@ -12,6 +12,10 @@ const {
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 
+const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
+if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
+if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
+
 let win;
 let splash;
 let server;
@@ -21,6 +25,7 @@ let turnId = null;
 let activeTurnThreadId = null;
 let recoveryTerminatingTurnId = null;
 let initialized = false;
+let initializingPromise = null;
 let codexSendInvocationCount = 0;
 const pending = new Map();
 const turnAttachmentPaths = new Map();
@@ -29,6 +34,57 @@ const autoFinalizingImageTurns = new Set();
 const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
+const localImageRoots = new Set();
+const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
+
+function isPathInside(root, candidate) {
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function allowedLocalImagePath(filePath) {
+  const resolved = path.resolve(String(filePath || ""));
+  return LOCAL_IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())
+    && Array.from(localImageRoots).some((root) => isPathInside(root, resolved));
+}
+
+function imageDataUrl(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const mime = ext === ".svg" ? "image/svg+xml"
+    : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg"
+      : ext === ".webp" ? "image/webp"
+        : ext === ".gif" ? "image/gif"
+          : ext === ".bmp" ? "image/bmp" : "image/png";
+  return `data:${mime};base64,${fs.readFileSync(filePath).toString("base64")}`;
+}
+
+function collectLocalImages(root, limit = 5000) {
+  const output = [];
+  const pending = [path.resolve(root)];
+  while (pending.length && output.length < limit) {
+    const folder = pending.pop();
+    let entries = [];
+    try { entries = fs.readdirSync(folder, { withFileTypes: true }); } catch { continue; }
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue;
+      const fullPath = path.join(folder, entry.name);
+      if (entry.isDirectory()) pending.push(fullPath);
+      else if (entry.isFile() && LOCAL_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+        let stat;
+        try { stat = fs.statSync(fullPath); } catch { continue; }
+        output.push({
+          path: fullPath,
+          name: entry.name,
+          relativePath: path.relative(root, fullPath),
+          size: stat.size,
+          modifiedAt: stat.mtimeMs,
+        });
+        if (output.length >= limit) break;
+      }
+    }
+  }
+  return output.sort((a, b) => a.relativePath.localeCompare(b.relativePath, "ko"));
+}
 
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 function withTimeout(promise, ms, label) {
@@ -205,6 +261,7 @@ function handleServerProcessTermination(child, {
   turnId = null;
   activeTurnThreadId = null;
   initialized = false;
+  initializingPromise = null;
   turnPerformance.clear();
   autoFinalizingImageTurns.clear();
   cleanupAllAttachments();
@@ -262,7 +319,7 @@ function startServer() {
     return { ok: true, state: "running" };
   } catch (error) { return { ok: false, state: "missing", message: error.message }; }
 }
-function stopServer() { if (server) server.kill(); server = null; threadId = null; turnId = null; activeTurnThreadId = null; initialized = false; turnPerformance.clear(); autoFinalizingImageTurns.clear(); cleanupAllAttachments(); return { ok: true, state: "stopped" }; }
+function stopServer() { if (server) server.kill(); server = null; threadId = null; turnId = null; activeTurnThreadId = null; initialized = false; initializingPromise = null; turnPerformance.clear(); autoFinalizingImageTurns.clear(); cleanupAllAttachments(); return { ok: true, state: "stopped" }; }
 function rpc(method, params) {
   if (!server) throw new Error("Codex App Server가 실행되지 않았습니다.");
   const id = ++rpcId;
@@ -274,9 +331,14 @@ function notify(method, params = {}) {
 }
 async function ensureInitialized() {
   if (initialized) return;
-  await rpc("initialize", { clientInfo: { name: "5e-desktop", title: "5E", version: app.getVersion() }, capabilities: { experimentalApi: true } });
-  notify("initialized");
-  initialized = true;
+  if (!initializingPromise) {
+    initializingPromise = (async () => {
+      await rpc("initialize", { clientInfo: { name: "5e-desktop", title: "5E", version: app.getVersion() }, capabilities: { experimentalApi: true } });
+      notify("initialized");
+      initialized = true;
+    })().finally(() => { initializingPromise = null; });
+  }
+  await initializingPromise;
 }
 function loginStatus() {
   const launch = codexInvocation(["login", "status"]);
@@ -500,11 +562,14 @@ function createWindow() {
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
             const aiSourceEntrypointsReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
-              !!panel?.querySelector("[data-ai-open-internal]") && !!panel?.querySelector("[data-ai-open-exam]");
-            panel?.querySelector("[data-ai-load-menu]")?.click();
-            const aiLoadMenuReady = !panel?.querySelector("[data-ai-load-options]")?.hidden &&
-              panel?.querySelector("[data-ai-capture]")?.textContent?.trim() === "캡처" &&
-              panel?.querySelector(".ai-load-menu .ai-file-button")?.textContent?.trim() === "파일 탐색기";
+              !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-capture]");
+            panel?.querySelector("[data-ai-reference-search]")?.click();
+            const aiLoadMenuReady = await waitFor(() => {
+              const search = document.querySelector(".ai-reference-search-dialog");
+              return search?.querySelectorAll("[data-ai-search-source]").length === 3 &&
+                search.querySelector("input[type=search]") === document.activeElement;
+            }, 4000);
+            document.querySelector("[data-ai-search-close]")?.click();
             panel?.querySelector("[data-ai-capture]")?.click();
             await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
             document.querySelector(".ai-capture-source")?.click();
@@ -515,13 +580,9 @@ function createWindow() {
               cropDialog.querySelectorAll(".ai-crop-mask").length === 4 &&
               !!cropDialog.querySelector("[data-ai-crop-apply]");
             cropDialog?.querySelector(".ai-crop-foot button")?.click();
-            if (!panel?.querySelector("[data-ai-load-options]")?.hidden) panel?.querySelector("[data-ai-load-menu]")?.click();
             const cancelButton = panel?.querySelector("[data-ai-interrupt]");
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
-            panel?.querySelector("[data-ai-open-exam]")?.click();
-            const examOpenedFromAi = await waitFor(() => document.getElementById("examlib-close")?.offsetParent !== null, 4000);
-            document.getElementById("examlib-close")?.click();
-            const aiReturnsAfterLibraryClose = examOpenedFromAi && await waitFor(() => panel?.hidden === false, 2000);
+            const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
             panel.hidden = true;
             const stateModule = await import("./js/state.js?v=1.4.0");
             stateModule.state.update((s) => {
@@ -600,6 +661,10 @@ function createWindow() {
             let aiReferencesOpenImmediately = false;
             let aiLocalAssetZeroRoundTripWorks = false;
             let aiLocalApparatusZeroRoundTripWorks = false;
+            let aiQualityControlsReady = false;
+            let aiOutputControlsReady = false;
+            let aiTaskTabsIsolated = false;
+            let aiBatchControlReady = false;
             document.getElementById("exam-library-open")?.click();
             if (await waitFor(() => document.querySelector(".examlib-card"))) {
               const examCards = Array.from(document.querySelectorAll(".examlib-card")).slice(0, 2);
@@ -673,6 +738,22 @@ function createWindow() {
             }
             button?.click();
             if (await waitFor(() => panel?.hidden === false, 2000)) {
+              aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
+              aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 2;
+              aiBatchControlReady = !!panel.querySelector("[data-ai-batch]") && !!panel.querySelector("[data-ai-batch-panel]");
+              const originalTab = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on");
+              const originalInputValue = panel.querySelector("[data-ai-input]")?.value || "";
+              panel.querySelector("[data-ai-tab-new]")?.click();
+              const isolatedInput = panel.querySelector("[data-ai-input]");
+              if (isolatedInput) isolatedInput.value = "tab isolation smoke";
+              originalTab?.click();
+              const originalRestored = panel.querySelector("[data-ai-input]")?.value === originalInputValue;
+              const createdTab = Array.from(panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab")).at(-1);
+              createdTab?.click();
+              aiTaskTabsIsolated = originalRestored && panel.querySelector("[data-ai-input]")?.value === "tab isolation smoke";
+              // Local zero-round-trip diagrams are now an explicit user choice;
+              // textbook raster conversion is never auto-routed to 5E assets.
+              panel.querySelector('[data-ai-output-engine="asset"]')?.click();
               const localRequests = [
                 "한반도 물리 해안선 지도를 그려 줘",
                 "one closed rectangular series circuit with exactly one dc source on the left, one open switch on the top, one resistor on the right, and one lamp on the bottom, no labels or arrows",
@@ -745,6 +826,10 @@ function createWindow() {
               aiReferencesOpenImmediately,
               aiLocalAssetZeroRoundTripWorks,
               aiLocalApparatusZeroRoundTripWorks,
+              aiQualityControlsReady,
+              aiOutputControlsReady,
+              aiTaskTabsIsolated,
+              aiBatchControlReady,
               aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
                 panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
               buttonText: button?.textContent?.trim() || "",
@@ -763,7 +848,8 @@ function createWindow() {
           result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
           result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
           result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
-          result.aiLocalApparatusZeroRoundTripWorks && result.codexSendInvocationsDuringLocalSmoke === 0 &&
+          result.aiLocalApparatusZeroRoundTripWorks && result.aiQualityControlsReady && result.aiOutputControlsReady &&
+          result.aiTaskTabsIsolated && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
@@ -848,6 +934,41 @@ ipcMain.handle("capture:sources", async () => {
     fetchWindowIcons: true,
   });
   return sources.map((source) => ({ id: source.id, name: source.name, data: source.thumbnail.toDataURL() }));
+});
+ipcMain.handle("local-images:pick-folder", async () => {
+  const result = await dialog.showOpenDialog(win, {
+    title: "검색할 로컬 이미지 폴더 선택",
+    properties: ["openDirectory"],
+  });
+  const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");
+  if (folder) localImageRoots.add(folder);
+  return { folder };
+});
+ipcMain.handle("local-images:list", async (_, folder) => {
+  const resolved = path.resolve(String(folder || ""));
+  if (!resolved || !fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
+    throw new Error("로컬 이미지 폴더를 찾을 수 없습니다.");
+  }
+  if (!localImageRoots.has(resolved)) throw new Error("먼저 폴더 선택 창에서 로컬 폴더를 연결하세요.");
+  return { folder: resolved, items: collectLocalImages(resolved) };
+});
+ipcMain.handle("local-images:thumbnail", async (_, filePath) => {
+  if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
+  const resolved = path.resolve(filePath);
+  if (path.extname(resolved).toLowerCase() === ".svg") return imageDataUrl(resolved);
+  const source = nativeImage.createFromPath(resolved);
+  if (source.isEmpty()) return imageDataUrl(resolved);
+  const size = source.getSize();
+  const scale = Math.min(1, 260 / Math.max(size.width, size.height, 1));
+  return source.resize({
+    width: Math.max(1, Math.round(size.width * scale)),
+    height: Math.max(1, Math.round(size.height * scale)),
+    quality: "good",
+  }).toDataURL();
+});
+ipcMain.handle("local-images:read", async (_, filePath) => {
+  if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
+  return imageDataUrl(path.resolve(filePath));
 });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("before-quit", stopServer);

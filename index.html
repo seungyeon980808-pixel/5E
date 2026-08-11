@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.0" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.4.13" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.6" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -381,21 +381,20 @@
           <button class="ai-close" type="button" data-ai-close aria-label="AI 창 닫기" title="닫기">×</button>
         </div>
       </header>
+      <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
+        <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
+        <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 탭을 만듭니다">＋ 탭</button>
+      </nav>
       <div class="ai-media-toolbar">
         <div class="ai-source-group" role="group" aria-label="참고 이미지 가져오기">
-          <div class="ai-load-menu-wrap">
-            <button type="button" data-ai-load-menu aria-expanded="false">이미지 불러오기 <span aria-hidden="true">▾</span></button>
-            <div class="ai-load-menu" data-ai-load-options hidden>
-              <button type="button" data-ai-capture>캡처</button>
-              <label class="ai-file-button">
-                <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
-                파일 탐색기
-              </label>
-            </div>
-          </div>
-          <button type="button" data-ai-open-internal title="5E 이미지 라이브러리에서 선택합니다">이미지 라이브러리</button>
-          <button type="button" data-ai-open-exam title="기출문제 라이브러리에서 선택합니다">기출문제 라이브러리</button>
+          <label class="ai-file-button ai-source-primary">
+            <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
+            이미지 불러오기
+          </label>
+          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">⌕ 이미지 검색…</button>
+          <button type="button" data-ai-capture>화면 캡처</button>
           <button type="button" data-ai-compare title="참고 이미지와 생성 결과를 좌우로 비교합니다">이미지 비교</button>
+          <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 동시에 변환합니다">여러 장 변환</button>
         </div>
         <div class="ai-actions" aria-label="AI 연결 및 대화 관리">
           <div class="ai-account-summary" aria-label="로그인 계정과 사용량">
@@ -436,6 +435,10 @@
             </div>
             <p class="ai-empty" data-ai-empty>생성된 이미지가 여기에 표시됩니다.</p>
           </div>
+          <section class="ai-batch-panel" data-ai-batch-panel hidden aria-label="여러 장 변환 진행 상황">
+            <div class="ai-batch-head"><strong>여러 장 변환</strong><span data-ai-batch-summary></span></div>
+            <div class="ai-batch-grid" data-ai-batch-grid></div>
+          </section>
           <details class="ai-reference-section">
             <summary>참고 이미지 <span data-ai-reference-count>0</span><small>영역 요청 확인·수정</small></summary>
             <div class="ai-reference-list" data-ai-attachment-list>
@@ -449,8 +452,19 @@
             <p class="ai-log-empty" data-ai-log-empty>대화로 요구사항을 정리한 뒤 이미지를 생성하세요.</p>
           </div>
           <div class="ai-input">
-            <div class="ai-mode-row" role="group" aria-label="이미지 생성 방식">
-              <span>생성 방식</span>
+            <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
+              <span>그림 복잡도</span>
+              <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
+              <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
+              <button type="button" data-ai-quality="complex" title="해부도, 혈관, 복합 회로·배관 · 약 2~4분">복잡<small>검수 포함</small></button>
+            </div>
+            <div class="ai-mode-row" role="group" aria-label="출력 방식">
+              <span>출력 방식</span>
+              <button type="button" class="is-on" data-ai-output-engine="raster" title="교과서 그림처럼 세부적인 평가원식 선화로 생성합니다">교과서 선화</button>
+              <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+            </div>
+            <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
+              <span>라벨</span>
               <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
               <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
             </div>
@@ -535,7 +549,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
-  <script type="module" src="js/main.js?v=1.5.3-ai-fastpath"></script>
+  <script type="module" src="js/main.js?v=1.5.6-reference-search"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>
 </body>

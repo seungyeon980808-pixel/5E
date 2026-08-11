@@ -1,6 +1,6 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
-import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.3";
-import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.4.8";
+import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
+import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
 import { parseAiEvent } from "./ai-events.js?v=1.5.3";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
@@ -36,6 +36,14 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.6";
+import {
+  AI_OUTPUT_ENGINES,
+  AI_QUALITY_MODES,
+  normalizeOutputEngine,
+  normalizeQualityMode,
+  qualityModeCacheVersion,
+} from "./ai-quality-mode.js?v=1.5.5";
 
 const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}`;
@@ -81,6 +89,9 @@ function snapshotImageItem(item) {
     sceneSource: item?.sceneSource || "",
     sceneCompileSource: item?.sceneCompileSource || "",
     sceneResult: item?.sceneResult || null,
+    engine: item?.engine || null,
+    postprocessOk: item?.postprocessOk === true,
+    nextCommentNumber: item?.nextCommentNumber || ((item?.comments || []).length + 1),
     comments: (item?.comments || []).map((comment) => ({ ...comment })),
   };
 }
@@ -140,9 +151,8 @@ export function initAiPanel(state) {
   const chatButton = panel.querySelector("[data-ai-chat-send]");
   const newButton = panel.querySelector("[data-ai-new]");
   const compareButton = panel.querySelector("[data-ai-compare]");
-  const loadMenuButton = panel.querySelector("[data-ai-load-menu]");
-  const loadOptions = panel.querySelector("[data-ai-load-options]");
   const captureButton = panel.querySelector("[data-ai-capture]");
+  const referenceSearchButton = panel.querySelector("[data-ai-reference-search]");
   const loginButton = panel.querySelector("[data-ai-login]");
   const modelSelect = panel.querySelector("[data-ai-model]");
   const modelWarning = panel.querySelector("[data-ai-model-warning]");
@@ -152,6 +162,14 @@ export function initAiPanel(state) {
   const limitText = panel.querySelector("[data-ai-limit]");
   const accountTokensText = panel.querySelector("[data-ai-account-tokens]");
   const modeButtons = Array.from(panel.querySelectorAll("[data-ai-mode]"));
+  const qualityButtons = Array.from(panel.querySelectorAll("[data-ai-quality]"));
+  const outputEngineButtons = Array.from(panel.querySelectorAll("[data-ai-output-engine]"));
+  const batchButton = panel.querySelector("[data-ai-batch]");
+  const batchPanel = panel.querySelector("[data-ai-batch-panel]");
+  const batchGrid = panel.querySelector("[data-ai-batch-grid]");
+  const batchSummary = panel.querySelector("[data-ai-batch-summary]");
+  const tabList = panel.querySelector("[data-ai-tab-list]");
+  const tabNewButton = panel.querySelector("[data-ai-tab-new]");
 
   let attachments = [];
   let generatedImages = [];
@@ -182,7 +200,14 @@ export function initAiPanel(state) {
   let availableModels = [];
   let modelsLoaded = false;
   let selectedMode = localStorage.getItem("5e.aiMode") || "diagram";
-  let libraryReturnPending = false;
+  let selectedQualityMode = normalizeQualityMode(localStorage.getItem("5e.aiQualityMode") || AI_QUALITY_MODES.STANDARD);
+  let selectedOutputEngine = normalizeOutputEngine(localStorage.getItem("5e.aiOutputEngine") || AI_OUTPUT_ENGINES.RASTER);
+  let taskTabSerial = 0;
+  let activeTaskTabId = null;
+  const taskTabs = new Map();
+  const batchRuns = new Map();
+  const unclaimedBatchEvents = [];
+  let batchActive = false;
   let conversationMessages = [];
   let outputCache = null;
   try { outputCache = createExactOutputCacheStore(); } catch {}
@@ -310,10 +335,14 @@ export function initAiPanel(state) {
     sendButton.disabled = on;
     chatButton.disabled = on;
     if (newButton) newButton.disabled = on;
-    for (const control of [modelSelect, effortSelect, speedSelect, loadMenuButton, captureButton, file]) {
+    for (const control of [modelSelect, effortSelect, speedSelect, referenceSearchButton, captureButton, file]) {
       if (control) control.disabled = on;
     }
     modeButtons.forEach((button) => { button.disabled = on; });
+    qualityButtons.forEach((button) => { button.disabled = on; });
+    outputEngineButtons.forEach((button) => { button.disabled = on; });
+    if (batchButton) batchButton.disabled = on || attachments.length < 2;
+    if (tabNewButton) tabNewButton.disabled = on;
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
     const cancelButton = panel.querySelector("[data-ai-interrupt]");
     cancelButton.disabled = !on;
@@ -326,11 +355,26 @@ export function initAiPanel(state) {
       button.setAttribute("aria-pressed", String(active));
     });
   };
+  const syncQualityMode = () => {
+    qualityButtons.forEach((button) => {
+      const active = button.dataset.aiQuality === selectedQualityMode;
+      button.classList.toggle("is-on", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  };
+  const syncOutputEngine = () => {
+    outputEngineButtons.forEach((button) => {
+      const active = button.dataset.aiOutputEngine === selectedOutputEngine;
+      button.classList.toggle("is-on", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  };
   const syncReferenceSummary = () => {
     referenceCount.textContent = String(attachments.length);
     const empty = attachmentList.querySelector("[data-ai-reference-empty]");
     if (empty) empty.hidden = attachments.length > 0;
     if (attachments.length && referenceSection) referenceSection.open = true;
+    if (batchButton) batchButton.disabled = busy || attachments.length < 2;
   };
 
   const selectedModel = () => availableModels.find((item) => (item.model || item.id) === modelSelect.value);
@@ -669,6 +713,11 @@ export function initAiPanel(state) {
     attachments.push(item);
     attachmentList.appendChild(makeImageCard(item));
     syncReferenceSummary();
+    const tab = taskTabs.get(activeTaskTabId);
+    if (tab && /^작업 \d+$/.test(tab.title) && attachments.length === 1) {
+      tab.title = String(name || tab.title).replace(/\.[^.]+$/, "").slice(0, 22) || tab.title;
+      renderTaskTabs();
+    }
     return item;
   };
   const attachReference = async ({ src, name = "참고 이미지", prompt = "" } = {}) => {
@@ -683,6 +732,11 @@ export function initAiPanel(state) {
       addLog(error.message || String(error), "error");
     }
   };
+  const referenceSearch = createAiReferenceSearch({
+    desktop: window.fiveEDesktop,
+    onAdd: (reference) => addReferenceData(reference),
+    onStatus: (text, kind) => setStatus(text, kind),
+  });
 
   const addPreview = async (src, { isCurrent = () => true, alreadyEditable = false } = {}) => {
     if (!src) return false;
@@ -733,6 +787,372 @@ export function initAiPanel(state) {
     generatedImages.push(item);
     previews.prepend(makeImageCard(item));
     return item;
+  };
+
+  const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
+  const captureActiveTaskTab = () => {
+    const tab = taskTabs.get(activeTaskTabId);
+    if (!tab) return;
+    tab.attachments = attachments.map(taskItemCopy);
+    tab.generated = generatedImages.map(taskItemCopy);
+    tab.conversationMessages = conversationMessages.map((message) => ({ ...message }));
+    tab.uiMessages = Array.from(log.querySelectorAll(".ai-msg")).map((node) => ({
+      text: node.textContent || "",
+      kind: node.classList.contains("user") ? "user" : node.classList.contains("error") ? "error" : "assistant",
+    }));
+    tab.input = input.value;
+    tab.conversationId = conversationId;
+    tab.mode = selectedMode;
+    tab.qualityMode = selectedQualityMode;
+    tab.outputEngine = selectedOutputEngine;
+  };
+
+  const renderTaskTabs = () => {
+    if (!tabList) return;
+    tabList.replaceChildren();
+    for (const tab of taskTabs.values()) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ai-task-tab";
+      button.dataset.tabId = tab.id;
+      button.classList.toggle("is-on", tab.id === activeTaskTabId);
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
+      const label = document.createElement("span");
+      label.textContent = tab.title;
+      const closeTab = document.createElement("i");
+      closeTab.textContent = "×";
+      closeTab.title = "탭 닫기";
+      closeTab.onclick = (event) => {
+        event.stopPropagation();
+        if (busy || taskTabs.size <= 1) return;
+        taskTabs.delete(tab.id);
+        if (activeTaskTabId === tab.id) {
+          activeTaskTabId = taskTabs.keys().next().value;
+          restoreTaskTab(activeTaskTabId);
+        } else renderTaskTabs();
+      };
+      button.append(label, closeTab);
+      button.onclick = () => {
+        if (busy || tab.id === activeTaskTabId) return;
+        captureActiveTaskTab();
+        restoreTaskTab(tab.id);
+      };
+      tabList.appendChild(button);
+    }
+  };
+
+  const resetVisualLists = () => {
+    attachmentList.replaceChildren();
+    const emptyReference = document.createElement("p");
+    emptyReference.className = "ai-reference-empty";
+    emptyReference.dataset.aiReferenceEmpty = "";
+    emptyReference.textContent = "여러 이미지를 추가하고 각각 필요한 영역에 요청을 남길 수 있습니다.";
+    attachmentList.appendChild(emptyReference);
+    previews.querySelectorAll(".ai-image-card, [data-ai-empty]").forEach((node) => node.remove());
+  };
+
+  function restoreTaskTab(tabId) {
+    const tab = taskTabs.get(tabId);
+    if (!tab) return;
+    activeTaskTabId = tab.id;
+    currentRequestEpoch += 1;
+    currentTurnId = null;
+    currentRenderThreadId = null;
+    awaitingTurnId = false;
+    queuedTurnEvents = [];
+    conversationId = tab.conversationId || null;
+    conversationMessages = (tab.conversationMessages || []).map((message) => ({ ...message }));
+    selectedMode = tab.mode || "diagram";
+    selectedQualityMode = normalizeQualityMode(tab.qualityMode);
+    selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
+    attachments = (tab.attachments || []).map(taskItemCopy);
+    generatedImages = (tab.generated || []).map(taskItemCopy);
+    latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+    input.value = tab.input || "";
+    log.replaceChildren();
+    for (const message of tab.uiMessages || []) addLog(message.text, message.kind);
+    if (!log.children.length) {
+      const emptyLog = document.createElement("p");
+      emptyLog.className = "ai-log-empty";
+      emptyLog.dataset.aiLogEmpty = "";
+      emptyLog.textContent = "대화로 요구사항을 정리한 뒤 이미지를 생성하세요.";
+      log.appendChild(emptyLog);
+    }
+    resetVisualLists();
+    for (const item of attachments) attachmentList.appendChild(makeImageCard(item));
+    for (const item of generatedImages) previews.appendChild(makeImageCard(item));
+    if (!generatedImages.length) {
+      const empty = document.createElement("p");
+      empty.className = "ai-empty";
+      empty.dataset.aiEmpty = "";
+      empty.textContent = "생성된 이미지가 여기에 표시됩니다.";
+      previews.appendChild(empty);
+    }
+    syncMode();
+    syncQualityMode();
+    syncOutputEngine();
+    syncReferenceSummary();
+    renderTaskTabs();
+  }
+
+  const createTaskTab = ({ activate = true } = {}) => {
+    if (busy) return null;
+    captureActiveTaskTab();
+    const id = `task-${++taskTabSerial}`;
+    taskTabs.set(id, {
+      id,
+      title: `작업 ${taskTabSerial}`,
+      attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
+      conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
+    });
+    if (activate) restoreTaskTab(id);
+    else renderTaskTabs();
+    return id;
+  };
+
+  let batchQueue = [];
+  let batchRunningCount = 0;
+  const BATCH_CONCURRENCY = 5;
+
+  const updateBatchSummary = () => {
+    if (!batchSummary) return;
+    const jobs = Array.from(new Map(
+      Array.from(batchRuns.values()).filter((job) => job.root === true).map((job) => [job.id, job]),
+    ).values());
+    const complete = jobs.filter((job) => job.state === "complete").length;
+    const failed = jobs.filter((job) => job.state === "failed").length;
+    batchSummary.textContent = `${complete}/${jobs.length} 완료${failed ? ` · ${failed} 실패` : ""} · 최대 ${BATCH_CONCURRENCY}개 동시`;
+    if (jobs.length && complete + failed === jobs.length) {
+      batchActive = false;
+      if (batchButton) batchButton.disabled = attachments.length < 2 || busy;
+      try {
+        const history = JSON.parse(localStorage.getItem("5e.aiBatchHistory.v1") || "[]");
+        history.push({
+          at: new Date().toISOString(),
+          qualityMode: selectedQualityMode,
+          jobs: jobs.map((job) => ({ name: job.name, state: job.state, elapsedMs: job.elapsedMs || null, passes: job.pass || 1 })),
+        });
+        localStorage.setItem("5e.aiBatchHistory.v1", JSON.stringify(history.slice(-20)));
+      } catch {}
+    }
+  };
+
+  const updateBatchCard = (job, text) => {
+    if (!job.card) return;
+    job.card.dataset.state = job.state;
+    job.statusNode.textContent = text || job.state;
+    if (job.resultData) {
+      job.imageNode.src = job.resultData;
+      job.imageNode.hidden = false;
+    }
+    updateBatchSummary();
+  };
+
+  const addBatchResultToTab = (job) => {
+    if (!job.resultData || job.addedToTab) return;
+    job.addedToTab = true;
+    const item = {
+      id: `generated-${++imageSerial}`,
+      name: `${job.name} · ${job.qualityMode === AI_QUALITY_MODES.COMPLEX ? "복잡" : job.qualityMode === AI_QUALITY_MODES.SIMPLE ? "단순" : "보통"}`,
+      data: job.resultData,
+      kind: "generated",
+      engine: IMAGE_ENGINE_IDS.RASTER,
+      postprocessOk: true,
+      comments: [],
+      nextCommentNumber: 1,
+    };
+    if (activeTaskTabId === job.taskTabId) {
+      generatedImages.push(item);
+      latestGeneratedSrc = item.data;
+      previews.querySelector("[data-ai-empty]")?.remove();
+      previews.prepend(makeImageCard(item));
+      captureActiveTaskTab();
+    } else {
+      const tab = taskTabs.get(job.taskTabId);
+      if (tab) tab.generated.push(taskItemCopy(item));
+    }
+  };
+
+  const releaseBatchSlot = (job) => {
+    if (!job.slotHeld) return;
+    job.slotHeld = false;
+    batchRunningCount = Math.max(0, batchRunningCount - 1);
+    pumpBatchQueue();
+  };
+
+  const startBatchPass = async (job, pass = 1) => {
+    job.pass = pass;
+    job.state = pass === 1 ? "running" : "correcting";
+    updateBatchCard(job, pass === 1 ? "생성 중…" : "구조 교정 중…");
+    const revision = pass > 1;
+    const sourceItem = { ...job.source, kind: "reference", comments: job.source.comments || [] };
+    const previousResult = job.resultData;
+    const outgoing = [sourceItem];
+    if (revision && previousResult) {
+      outgoing.push({
+        id: `${job.id}-draft`, name: "직전 생성 결과", data: previousResult,
+        kind: "generated", sourceKind: "line-art", comments: [],
+      });
+    }
+    job.resultData = null;
+    job.pendingImagePromise = null;
+    try {
+      const transport = await Promise.all(outgoing.map(prepareTransportItem));
+      const comments = commentPrompt([sourceItem]);
+      const request = revision
+        ? `${job.request}${comments}\n원본과 직전 결과를 객체별로 비교하고 형태·개수·분기·연결이 달라진 부분만 교정해 줘. 맞는 영역은 그대로 보존해 줘.`
+        : `${job.request}${comments}`;
+      const result = await window.fiveEDesktop.send({
+        text: buildImagePrompt({
+          request,
+          mode: job.mode,
+          revision,
+          qualityMode: job.qualityMode,
+        }),
+        attachments: transport,
+        conversationId: null,
+        purpose: "image",
+        ephemeralRender: true,
+        model: job.model,
+        effort: job.effort,
+        serviceTier: job.serviceTier,
+      });
+      job.turnId = result.turnId || null;
+      job.threadId = result.renderThreadId || result.threadId || null;
+      if (job.turnId) batchRuns.set(job.turnId, job);
+      for (let index = unclaimedBatchEvents.length - 1; index >= 0; index -= 1) {
+        const pending = unclaimedBatchEvents[index];
+        if ((pending.turnId && pending.turnId === job.turnId) || (pending.threadId && pending.threadId === job.threadId)) {
+          unclaimedBatchEvents.splice(index, 1);
+          void dispatchBatchEvent(job, pending);
+        }
+      }
+    } catch (error) {
+      job.state = "failed";
+      job.error = error.message || String(error);
+      job.elapsedMs = Math.round(performance.now() - job.startedAt);
+      updateBatchCard(job, `실패 · ${job.error}`);
+      releaseBatchSlot(job);
+    }
+  };
+
+  async function dispatchBatchEvent(job, event) {
+    if (!job || job.state === "complete" || job.state === "failed") return;
+    if (event.kind === "progress") {
+      updateBatchCard(job, event.title || (job.pass > 1 ? "구조 교정 중…" : "생성 중…"));
+      return;
+    }
+    if (event.kind === "performance") {
+      job.performance = { ...job.performance, ...event.metrics };
+      return;
+    }
+    if (event.kind === "image" && event.src) {
+      job.pendingImagePromise = (async () => {
+        try {
+          job.resultData = await transparentizeGeneratedImage(event.src, { examPalette: true });
+          updateBatchCard(job, job.pass > 1 ? "교정 결과 정리 중…" : "결과 정리 중…");
+        } catch (error) {
+          job.error = error.message || String(error);
+        }
+      })();
+      await job.pendingImagePromise;
+      return;
+    }
+    if (event.kind === "error") {
+      job.error = event.text || "이미지 생성 오류";
+      return;
+    }
+    if (event.kind !== "done") return;
+    if (job.pendingImagePromise) await job.pendingImagePromise;
+    if (event.status === "failed" || !job.resultData) {
+      job.state = "failed";
+      job.elapsedMs = Math.round(performance.now() - job.startedAt);
+      updateBatchCard(job, `실패 · ${job.error || event.error || "결과 없음"}`);
+      releaseBatchSlot(job);
+      return;
+    }
+    if (job.qualityMode === AI_QUALITY_MODES.COMPLEX && job.pass === 1) {
+      if (job.turnId) batchRuns.delete(job.turnId);
+      await startBatchPass(job, 2);
+      return;
+    }
+    job.state = "complete";
+    job.elapsedMs = Math.round(performance.now() - job.startedAt);
+    updateBatchCard(job, job.pass > 1
+      ? `완료 · ${(job.elapsedMs / 1000).toFixed(1)}초 · 2회 · 구조 확인 필요`
+      : `완료 · ${(job.elapsedMs / 1000).toFixed(1)}초`);
+    addBatchResultToTab(job);
+    releaseBatchSlot(job);
+  }
+
+  async function startQueuedBatchJob(job) {
+    job.slotHeld = true;
+    batchRunningCount += 1;
+    job.startedAt = performance.now();
+    await startBatchPass(job, 1);
+  }
+
+  function pumpBatchQueue() {
+    while (batchRunningCount < BATCH_CONCURRENCY && batchQueue.length) {
+      const job = batchQueue.shift();
+      void startQueuedBatchJob(job);
+    }
+  }
+
+  const runBatch = () => {
+    if (batchActive || busy || attachments.length < 2) return;
+    if (selectedOutputEngine !== AI_OUTPUT_ENGINES.RASTER) {
+      setStatus("여러 장 변환은 교과서 선화 출력에서 사용해 주세요.", "warn");
+      return;
+    }
+    captureActiveTaskTab();
+    const request = input.value.trim() || "각 참고 이미지에서 주 과학 그림만 남기고 글자·라벨·지시선·화살표·강조 원·페이지 배경을 모두 제거하여 평가원식 무라벨 흑백 선화로 변환해 줘.";
+    batchActive = true;
+    batchQueue = [];
+    batchRunningCount = 0;
+    batchRuns.clear();
+    if (batchPanel) batchPanel.hidden = false;
+    if (batchGrid) batchGrid.replaceChildren();
+    const roots = attachments.map((source, index) => {
+      const job = {
+        id: `batch-${Date.now()}-${index + 1}`,
+        root: true,
+        taskTabId: activeTaskTabId,
+        name: source.name,
+        source: taskItemCopy(source),
+        request,
+        mode: selectedMode,
+        qualityMode: selectedQualityMode,
+        model: modelSelect.value || null,
+        effort: effortSelect.value || null,
+        serviceTier: speedSelect.value || null,
+        state: "queued",
+        resultData: null,
+      };
+      const card = document.createElement("article");
+      card.className = "ai-batch-card";
+      card.dataset.state = "queued";
+      const title = document.createElement("strong");
+      title.textContent = source.name;
+      const statusNode = document.createElement("span");
+      statusNode.textContent = "대기 중";
+      const imageNode = document.createElement("img");
+      imageNode.alt = `${source.name} 변환 결과`;
+      imageNode.hidden = true;
+      card.append(title, statusNode, imageNode);
+      batchGrid?.appendChild(card);
+      job.card = card;
+      job.statusNode = statusNode;
+      job.imageNode = imageNode;
+      batchRuns.set(job.id, job);
+      return job;
+    });
+    batchQueue.push(...roots);
+    if (batchButton) batchButton.disabled = true;
+    setStatus(`참고 이미지 ${roots.length}개를 최대 ${BATCH_CONCURRENCY}개씩 동시에 변환합니다.`, "busy");
+    updateBatchSummary();
+    pumpBatchQueue();
   };
 
   const allImages = () => [...attachments, ...generatedImages];
@@ -918,8 +1338,6 @@ export function initAiPanel(state) {
   };
 
   const openCaptureChooser = async () => {
-    loadOptions.hidden = true;
-    loadMenuButton.setAttribute("aria-expanded", "false");
     if (!window.fiveEDesktop?.captureSources) {
       setStatus("캡처는 데스크톱 앱에서만 사용할 수 있습니다.", "warn");
       return;
@@ -1019,7 +1437,9 @@ export function initAiPanel(state) {
     return buildExactOutputCacheDescriptor({
       styleVersion: localAsset
         ? `${LOCAL_ASSET_ROUTER_VERSION}+${MOTIF_CATALOG_VERSION}`
-        : engine === IMAGE_ENGINE_IDS.FAST_SCENE ? FAST_SCENE_PROMPT_VERSION : RASTER_STYLE_VERSION,
+        : engine === IMAGE_ENGINE_IDS.FAST_SCENE
+          ? FAST_SCENE_PROMPT_VERSION
+          : `${RASTER_STYLE_VERSION}+${qualityModeCacheVersion(runInput.qualityMode)}`,
       mode: runInput.mode,
       prompt,
       references,
@@ -1027,7 +1447,15 @@ export function initAiPanel(state) {
       model: runInput.model,
       effort: runInput.effort,
       serviceTier: runInput.serviceTier,
-      outputOptions: { engine, transparentBackground: true, localAsset },
+      outputOptions: {
+        engine,
+        outputEngine: normalizeOutputEngine(runInput.outputEngine),
+        qualityMode: normalizeQualityMode(runInput.qualityMode),
+        complexPass: Number(runInput.complexPass || 1),
+        transparentBackground: true,
+        examPalette: engine === IMAGE_ENGINE_IDS.RASTER,
+        localAsset,
+      },
       engineVersion: localAsset
         ? `${LOCAL_ASSET_ROUTER_VERSION}+${MOTIF_CATALOG_VERSION}+${FAST_SCENE_PANEL_COMPILE_VERSION}`
         : engine === IMAGE_ENGINE_IDS.FAST_SCENE
@@ -1072,7 +1500,6 @@ export function initAiPanel(state) {
     }
   };
   const open = async ({ reference, references = [], prompt } = {}) => {
-    libraryReturnPending = false;
     panel.hidden = false;
     await refresh();
     const incoming = [...references, ...(reference ? [reference] : [])];
@@ -1112,6 +1539,9 @@ export function initAiPanel(state) {
       attachments: attachments.map(snapshotImageItem),
       generated: generatedImages.map(snapshotImageItem),
       mode: selectedMode,
+      qualityMode: selectedQualityMode,
+      outputEngine: selectedOutputEngine,
+      complexPass: 1,
       model: modelSelect.value || null,
       effort: effortSelect.value || null,
       serviceTier: speedSelect.value || null,
@@ -1126,12 +1556,16 @@ export function initAiPanel(state) {
     setBusy(true);
     imageReceived = false;
     currentTurnType = type;
+    const requestedEngine = options.forceEngine
+      || (normalizeOutputEngine(runInput.outputEngine) === AI_OUTPUT_ENGINES.ASSET
+        ? IMAGE_ENGINE_IDS.FAST_SCENE
+        : IMAGE_ENGINE_IDS.RASTER);
     currentEngine = type === "image"
       ? chooseImageEngine({
         request: `${request}${requestComments}`,
         mode: runInput.mode,
         references: planningReferences,
-        force: options.forceEngine || "auto",
+        force: requestedEngine,
       }).engine
       : IMAGE_ENGINE_IDS.RASTER;
     currentRunInput = runInput;
@@ -1176,7 +1610,7 @@ export function initAiPanel(state) {
       let outgoingItems = [];
       let outgoingAttachments = [];
       let requestWithVisualPlan = renderRequest;
-      const localAssetMatch = type === "image" && !revisionImage
+      const localAssetMatch = type === "image" && currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE && !revisionImage
         ? matchLocalAssetRequest({
           request: renderRequest,
           mode: runInput.mode,
@@ -1365,7 +1799,12 @@ export function initAiPanel(state) {
               mode: runInput.mode,
               revisionScene: revisionImage?.sceneSource || "",
             })
-            : buildImagePrompt({ request: requestWithVisualPlan, mode: runInput.mode, revision: Boolean(revisionImage) }))
+            : buildImagePrompt({
+              request: requestWithVisualPlan,
+              mode: runInput.mode,
+              revision: Boolean(revisionImage),
+              qualityMode: runInput.qualityMode,
+            }))
           : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode }),
         attachments: outgoingAttachments,
         conversationId: type === "chat" ? conversationId : null,
@@ -1439,71 +1878,28 @@ export function initAiPanel(state) {
     localStorage.setItem("5e.aiMode", selectedMode);
     syncMode();
   }));
-  panel.querySelector("[data-ai-open-internal]").addEventListener("click", () => {
-    libraryReturnPending = true;
-    panel.hidden = true;
-    document.getElementById("parts-library-open")?.click();
-  });
-  panel.querySelector("[data-ai-open-exam]").addEventListener("click", () => {
-    libraryReturnPending = true;
-    panel.hidden = true;
-    document.getElementById("exam-library-open")?.click();
-  });
-  window.addEventListener("5e:library-closed", () => {
-    if (!libraryReturnPending) return;
-    libraryReturnPending = false;
-    panel.hidden = false;
-    input.focus();
-  });
+  qualityButtons.forEach((button) => button.addEventListener("click", () => {
+    selectedQualityMode = normalizeQualityMode(button.dataset.aiQuality);
+    localStorage.setItem("5e.aiQualityMode", selectedQualityMode);
+    syncQualityMode();
+  }));
+  outputEngineButtons.forEach((button) => button.addEventListener("click", () => {
+    selectedOutputEngine = normalizeOutputEngine(button.dataset.aiOutputEngine);
+    localStorage.setItem("5e.aiOutputEngine", selectedOutputEngine);
+    syncOutputEngine();
+    setStatus(selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
+      ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
+      : "교과서 선화 출력은 세부 묘사를 래스터 이미지로 생성합니다.", "ok");
+  }));
   compareButton.onclick = openComparison;
-  loadMenuButton.onclick = () => {
-    const open = loadOptions.hidden;
-    loadOptions.hidden = !open;
-    loadMenuButton.setAttribute("aria-expanded", String(open));
-  };
+  referenceSearchButton.onclick = () => { void referenceSearch.open(); };
   captureButton.onclick = () => { void openCaptureChooser(); };
   newButton.onclick = () => {
     if (busy) return;
-    currentRequestEpoch += 1;
-    currentTurnId = null;
-    currentRenderThreadId = null;
-    awaitingTurnId = false;
-    queuedTurnEvents = [];
-    serverTurnFinished = false;
-    previewPending = false;
-    conversationId = null;
-    forceNewConversation = true;
-    localStorage.removeItem("5e.aiConversationId");
-    conversationMessages = [];
-    localStorage.removeItem("5e.aiConversationMessages");
-    log.replaceChildren();
-    const emptyLog = document.createElement("p");
-    emptyLog.className = "ai-log-empty";
-    emptyLog.dataset.aiLogEmpty = "";
-    emptyLog.textContent = "대화로 요구사항을 정리한 뒤 이미지를 생성하세요.";
-    log.appendChild(emptyLog);
-    attachments.forEach((item) => item.card?.remove());
-    generatedImages.forEach((item) => item.card?.remove());
-    attachments = [];
-    generatedImages = [];
-    latestGeneratedSrc = null;
-    currentEngine = IMAGE_ENGINE_IDS.RASTER;
-    currentSceneResponse = "";
-    currentCacheRequest = null;
-    currentRequestSnapshot = null;
-    currentRunInput = null;
-    syncReferenceSummary();
-    if (!previews.querySelector("[data-ai-empty]")) {
-      const empty = document.createElement("p");
-      empty.className = "ai-empty";
-      empty.dataset.aiEmpty = "";
-      empty.textContent = "생성된 이미지가 여기에 표시됩니다.";
-      previews.appendChild(empty);
-    }
-    setGenerating(false);
-    setBusy(false);
-    input.value = "";
+    createTaskTab();
   };
+  if (tabNewButton) tabNewButton.onclick = () => createTaskTab();
+  if (batchButton) batchButton.onclick = runBatch;
   chatButton.onclick = () => submit("chat");
   sendButton.title = "이미지 생성 · Shift+클릭하면 캐시를 사용하지 않고 새 변형을 생성합니다.";
   sendButton.onclick = (event) => submit("image", { bypassCache: event.shiftKey === true });
@@ -1523,13 +1919,51 @@ export function initAiPanel(state) {
     const dataUrls = await Promise.all(selectedFiles.map(blobToDataUrl));
     selectedFiles.forEach((selected, index) => addReferenceData({ name: selected.name, data: dataUrls[index] }));
     file.value = "";
-    loadOptions.hidden = true;
-    loadMenuButton.setAttribute("aria-expanded", "false");
     if (selectedFiles.length) setStatus(`참고 이미지 ${selectedFiles.length}개 추가됨`, "ok");
   };
 
   const finishCurrentTurnUi = (eventEpoch = currentRequestEpoch) => {
     if (eventEpoch !== currentRequestEpoch || !serverTurnFinished || previewPending) return;
+    const needsComplexCorrection = currentTurnType === "image"
+      && currentEngine === IMAGE_ENGINE_IDS.RASTER
+      && imageReceived
+      && normalizeQualityMode(currentRunInput?.qualityMode) === AI_QUALITY_MODES.COMPLEX
+      && Number(currentRunInput?.complexPass || 1) === 1
+      && !currentRunInput?.complexCorrectionScheduled;
+    if (needsComplexCorrection) {
+      currentRunInput.complexCorrectionScheduled = true;
+      const correctionInput = {
+        ...currentRunInput,
+        generated: generatedImages.map(snapshotImageItem),
+        complexPass: 2,
+        complexCorrectionScheduled: true,
+      };
+      const correctionRequest = currentRequestSnapshot?.request || "원본과 직전 결과를 대조하여 구조가 달라진 부분만 교정해 줘.";
+      setBusy(false);
+      setStatus("복잡 그림 구조 검수 중…", "busy");
+      setGenerating(true, "원본과 결과를 대조하고 있습니다", "형태·부품 수·연결이 달라진 부분만 한 번 더 교정합니다.", "analyze");
+      addLog("복잡 모드 1차 결과를 원본과 대조한 뒤 구조 교정 1회를 진행합니다.");
+      setTimeout(() => {
+        if (eventEpoch !== currentRequestEpoch) return;
+        void submit("image", {
+          requestOverride: `${correctionRequest}\n원본과 직전 생성 결과를 객체별로 비교하고, 원본과 달라진 형태·개수·분기·연결만 교정해 줘. 맞는 영역은 그대로 보존해 줘.`,
+          discussionContextOverride: currentRequestSnapshot?.discussionContext || "",
+          runInputSnapshot: correctionInput,
+          forceEngine: IMAGE_ENGINE_IDS.RASTER,
+          bypassCache: true,
+          silentUserLog: true,
+        });
+      }, 0);
+      return;
+    }
+    const completedComplexCorrection = currentTurnType === "image"
+      && currentEngine === IMAGE_ENGINE_IDS.RASTER
+      && normalizeQualityMode(currentRunInput?.qualityMode) === AI_QUALITY_MODES.COMPLEX
+      && Number(currentRunInput?.complexPass || 1) === 2;
+    if (completedComplexCorrection) {
+      setStatus("복잡 변환 완료 · 원본 구조 확인 필요", "warn");
+      addLog("복잡 모드는 구조 교정을 마쳤지만 자동 확정하지 않습니다. 원본과 객체 수·분기·연결을 비교한 뒤 사용하세요.");
+    }
     setBusy(false);
     currentTurnDone = true;
     addTokenFooter(currentTurnUsage);
@@ -1659,6 +2093,14 @@ export function initAiPanel(state) {
           return;
         }
 
+        if (normalizeOutputEngine(currentRunInput?.outputEngine) === AI_OUTPUT_ENGINES.ASSET) {
+          setGenerating(false);
+          setBusy(false);
+          setStatus("5E 에셋으로 표현할 수 없는 요청입니다.", "warn");
+          addLog("선택한 요청은 현재 지원되는 5E 에셋 범위를 벗어났습니다. 출력 방식을 ‘교과서 선화’로 바꾸면 래스터 이미지로 생성할 수 있습니다.", "error");
+          return;
+        }
+
         const snapshot = currentRequestSnapshot;
         addLog("이 요청은 빠른 벡터 도식 범위를 벗어나 고정밀 이미지 경로로 자동 전환합니다.");
         setStatus("고정밀 이미지 경로로 전환 중…", "busy");
@@ -1696,6 +2138,21 @@ export function initAiPanel(state) {
   window.fiveEDesktop?.onEvent((message) => {
     const event = parseAiEvent(message);
     const turnScoped = ["progress", "image", "assistant", "tokens", "performance", "error", "done", "finalization"].includes(event.kind);
+    if (batchActive && turnScoped && (event.turnId || event.threadId)) {
+      const batchJob = (event.turnId && batchRuns.get(event.turnId))
+        || Array.from(batchRuns.values()).find((job) => event.threadId && job.threadId === event.threadId);
+      if (batchJob) {
+        void dispatchBatchEvent(batchJob, event);
+        return;
+      }
+      const belongsToCurrent = (event.turnId && event.turnId === currentTurnId)
+        || (event.threadId && currentRenderThreadId && event.threadId === currentRenderThreadId);
+      if (!belongsToCurrent) {
+        unclaimedBatchEvents.push(event);
+        if (unclaimedBatchEvents.length > 100) unclaimedBatchEvents.shift();
+        return;
+      }
+    }
     if (turnScoped && (event.turnId || event.threadId)) {
       if (awaitingTurnId && !currentTurnId) {
         queuedTurnEvents.push({ event });
@@ -1729,17 +2186,38 @@ export function initAiPanel(state) {
   });
   panel.querySelector("[data-ai-close]").addEventListener("click", close);
   panel.addEventListener("mousedown", (event) => { if (event.target === panel) close(); });
-  document.addEventListener("mousedown", (event) => {
-    if (!event.target.closest(".ai-load-menu-wrap")) {
-      loadOptions.hidden = true;
-      loadMenuButton.setAttribute("aria-expanded", "false");
-    }
+  document.addEventListener("paste", (event) => {
+    if (panel.hidden || event.target.closest("input, textarea, select, [contenteditable=true]")) return;
+    const item = Array.from(event.clipboardData?.items || []).find((entry) => entry.type.startsWith("image/"));
+    const pasted = item?.getAsFile();
+    if (!pasted) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    void blobToDataUrl(pasted).then((data) => {
+      addReferenceData({ data, name: pasted.name || "클립보드 이미지", sourceKind: "clipboard" });
+      setStatus("붙여넣은 이미지가 AI 참고로 추가되었습니다.", "ok");
+    });
+  }, true);
+  panel.addEventListener("dragover", (event) => {
+    if (Array.from(event.dataTransfer?.items || []).some((item) => item.kind === "file")) event.preventDefault();
+  });
+  panel.addEventListener("drop", (event) => {
+    const dropped = Array.from(event.dataTransfer?.files || []).filter((item) => item.type.startsWith("image/"));
+    if (!dropped.length) return;
+    event.preventDefault();
+    void Promise.all(dropped.map(blobToDataUrl)).then((dataUrls) => {
+      dropped.forEach((item, index) => addReferenceData({ data: dataUrls[index], name: item.name, sourceKind: "drop" }));
+      setStatus(`끌어놓은 이미지 ${dropped.length}개가 AI 참고로 추가되었습니다.`, "ok");
+    });
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden) close();
   });
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
+  if (!taskTabs.size) createTaskTab();
   syncMode();
+  syncQualityMode();
+  syncOutputEngine();
   syncReferenceSummary();
   setBusy(false);
   refresh();
