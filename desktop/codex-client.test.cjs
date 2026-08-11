@@ -101,7 +101,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(markup, /data-ai-chat-send/);
   assert.match(markup, /data-ai-mode="diagram"/);
   assert.match(markup, />그림형<\/button>/);
-  assert.match(markup, /v1\.5\.1 · 2026\.08\.11/);
+  assert.match(markup, /v1\.5\.2 · 2026\.08\.11/);
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);

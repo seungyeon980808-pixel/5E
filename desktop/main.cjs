@@ -584,6 +584,17 @@ function createWindow() {
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
             const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
             panel.hidden = true;
+            document.getElementById("tool-cut-merged")?.click();
+            const cutChooserVisible = await waitFor(() => {
+              const chooser = document.getElementById("chooser-cut");
+              return !!chooser && chooser.hidden === false;
+            });
+            document.querySelector('#chooser-cut [data-tool="DELAYED_CUT"]')?.click();
+            const delayedCutUiReachable = await waitFor(() =>
+              document.getElementById("tool-cut-merged")?.classList.contains("is-active") &&
+              document.getElementById("cut-mode-tabs")?.hidden === false &&
+              document.getElementById("delayed-cut-action")?.hidden === false);
+            document.querySelector('[data-tool="V"]')?.click();
             const stateModule = await import("./js/state.js?v=1.4.0");
             stateModule.state.update((s) => {
               s.objects.push({
@@ -808,6 +819,8 @@ function createWindow() {
               aiCaptureCropReady,
               aiCancelIsContextual,
               aiReturnsAfterLibraryClose,
+              cutChooserVisible,
+              delayedCutUiReachable,
               artboardAreaOverlayOpened,
               artboardConfirmButtonPresent,
               artboardAreaCaptureWorks,
@@ -845,6 +858,7 @@ function createWindow() {
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
           result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
           result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
+          result.cutChooserVisible && result.delayedCutUiReachable &&
           result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
           result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
           result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&

@@ -5,9 +5,10 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const electron = process.env.FIVE_E_SMOKE_EXE || path.join(root, "node_modules", "electron", "dist", "electron.exe");
+const smokeFlags = ["--no-sandbox", "--disable-gpu", "--disable-gpu-compositing"];
 const launchArgs = process.env.FIVE_E_SMOKE_EXE
-  ? []
-  : [root, "--no-sandbox", "--disable-gpu", "--disable-gpu-compositing"];
+  ? smokeFlags
+  : [root, ...smokeFlags];
 const marker = path.join(os.tmpdir(), `5e-desktop-smoke-${process.pid}.json`);
 const smokeUserData = path.join(os.tmpdir(), `5e-desktop-smoke-profile-${process.pid}`);
 
