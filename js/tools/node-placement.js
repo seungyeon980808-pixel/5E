@@ -20,7 +20,7 @@ import { nextObjectId } from "./id.js?v=1.4.0";
 // Keep the placement helper on the exact same tools module instance as the
 // main tool registry. Loading a second query-version would split the active
 // optics kind/space state and make point placement appear inert.
-import { isSpaceHeld, getOpticsKind } from "../tools.js?v=1.5.3";
+import { isSpaceHeld, getOpticsKind } from "../tools.js?v=1.5.4";
 
 const DEFAULT_STROKE_WIDTH = 0.2;     // mirrors tools.js default line width (DESIGN 3-2)
 /* 새 점의 지름 = 이 값 × 선 굵기.

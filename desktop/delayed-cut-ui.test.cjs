@@ -12,6 +12,15 @@ test("delayed cut is reachable from the visible cut chooser and keyboard", () =>
 
   assert.match(index, /id="tool-cut-merged"/);
   assert.match(index, /id="chooser-cut"/);
+  const toolListStart = index.indexOf('id="tool-list"');
+  const toolListEnd = index.indexOf('id="subject-section"');
+  const chooserStart = index.indexOf('id="chooser-cut"');
+  const aiPanelStart = index.indexOf('id="ai-image-panel"');
+  assert.ok(toolListStart >= 0 && toolListEnd > toolListStart);
+  assert.ok(chooserStart > toolListStart && chooserStart < toolListEnd,
+    "cut chooser must be rendered inside the visible left tool list");
+  assert.ok(chooserStart < aiPanelStart,
+    "cut chooser must not be nested in the hidden AI image panel");
   assert.match(index, /data-tool="CUT"/);
   assert.match(index, /data-tool="DELAYED_CUT"/);
   assert.match(index, /data-tool="ERASE"/);

@@ -271,9 +271,9 @@ function setupToolChoosers() {
     // 팝오버 바깥을 누르면 닫는다(통합 버튼 자신은 stopPropagation으로 제외됨).
     document.addEventListener("click", (e) => {
       if (e.target.closest(".tool-chooser")) return;
-      // A persistent cut chooser belongs to the armed cut tool. Canvas clicks
-      // must remain cut input and must not dismiss that chooser. Clicking a
-      // different toolbar button still closes it normally.
+      // A persistent chooser belongs to the armed child tool. Canvas clicks
+      // must remain drawing input and must not dismiss it. Another toolbar
+      // button still closes it normally.
       const persistentOpen = document.querySelector('.tool-chooser[data-persistent="true"]:not([hidden])');
       if (persistentOpen && !e.target.closest(".tool-btn")) return;
       if (!e.target.closest(".tool-chooser")) closeAll();

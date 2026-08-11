@@ -153,6 +153,20 @@
                 <span class="chooser-txt"><b>직각</b><small>직각 표시 (Shift+A)</small></span>
               </button>
             </div>
+            <div class="tool-chooser" id="chooser-cut" hidden role="menu" aria-label="자르기 / 지연 자르기 / 지우개 선택">
+              <button class="tool-chooser-opt" type="button" data-tool="CUT" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></span>
+                <span class="chooser-txt"><b>자르기</b><small>즉시 자르기 (E)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-tool="DELAYED_CUT" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/><circle cx="14.8" cy="14.2" r="3.1" fill="var(--bg-panel, #fff)"/><path d="M14.8 12.7v1.7l1.1.7"/></svg></span>
+                <span class="chooser-txt"><b>지연 자르기</b><small>선을 모은 뒤 확정 (Ctrl+E)</small></span>
+              </button>
+              <button class="tool-chooser-opt" type="button" data-tool="ERASE" role="menuitem">
+                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.2 15.5 L3.5 10.8 L10.8 3.5 L15.5 8.2 Z"/><line x1="7" y1="15.5" x2="16.5" y2="15.5"/><line x1="6.2" y1="8.1" x2="10.9" y2="12.8"/></svg></span>
+                <span class="chooser-txt"><b>지우개</b><small>지우기 (Shift+E)</small></span>
+              </button>
+            </div>
           </div>
         </div>
         <!-- ===== 과목별 오브젝트: 과목 선택 → 파트별 라이브러리(현재는 빈 자리) =====
@@ -470,20 +484,6 @@
               <textarea data-ai-input placeholder="요구사항을 입력하세요. Enter로 전송하고 Shift+Enter로 줄을 바꿉니다."></textarea>
               <button type="button" data-ai-chat-send title="메시지 보내기" aria-label="메시지 보내기">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg>
-              </button>
-            </div>
-            <div class="tool-chooser" id="chooser-cut" hidden role="menu" aria-label="자르기 / 지연 자르기 / 지우개 선택">
-              <button class="tool-chooser-opt" type="button" data-tool="CUT" role="menuitem">
-                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></span>
-                <span class="chooser-txt"><b>자르기</b><small>즉시 자르기 (E)</small></span>
-              </button>
-              <button class="tool-chooser-opt" type="button" data-tool="DELAYED_CUT" role="menuitem">
-                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/><circle cx="14.8" cy="14.2" r="3.1" fill="var(--bg-panel, #fff)"/><path d="M14.8 12.7v1.7l1.1.7"/></svg></span>
-                <span class="chooser-txt"><b>지연 자르기</b><small>선을 모은 뒤 확정 (Ctrl+E)</small></span>
-              </button>
-              <button class="tool-chooser-opt" type="button" data-tool="ERASE" role="menuitem">
-                <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.2 15.5 L3.5 10.8 L10.8 3.5 L15.5 8.2 Z"/><line x1="7" y1="15.5" x2="16.5" y2="15.5"/><line x1="6.2" y1="8.1" x2="10.9" y2="12.8"/></svg></span>
-                <span class="chooser-txt"><b>지우개</b><small>지우기 (Shift+E)</small></span>
               </button>
             </div>
             <div class="ai-conversation-actions">

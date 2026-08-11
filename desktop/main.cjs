@@ -12,6 +12,10 @@ const {
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 
+const APP_ID = "com.5e.editor";
+const APP_ICON_PATH = path.join(__dirname, "..", "assets", "icon.ico");
+app.setAppUserModelId(APP_ID);
+
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
 if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
@@ -478,6 +482,7 @@ function createWindow() {
     alwaysOnTop: true,
     center: true,
     backgroundColor: "#111820",
+    icon: APP_ICON_PATH,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   splash.loadFile(path.join(__dirname, "splash.html"));
@@ -488,6 +493,7 @@ function createWindow() {
     minHeight: 700,
     show: false,
     backgroundColor: "#0e1512",
+    icon: APP_ICON_PATH,
     titleBarStyle: "hidden",
     titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
@@ -521,6 +527,14 @@ function createWindow() {
               }
               return false;
             };
+            const startupDialogTitles = new Set(["작업 복구", "찾아 주셔서 고맙습니다"]);
+            const dismissStartupDialogs = () => {
+              for (const title of document.querySelectorAll(".modal-overlay .modal-title")) {
+                if (!startupDialogTitles.has(title.textContent?.trim())) continue;
+                title.closest(".modal-overlay")?.querySelector(".modal-btn")?.click();
+              }
+            };
+            dismissStartupDialogs();
             const button = document.getElementById("ai-image-install-open");
             const panel = document.getElementById("ai-image-panel");
             button?.click();
@@ -584,18 +598,104 @@ function createWindow() {
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
             const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
             panel.hidden = true;
-            document.getElementById("tool-cut-merged")?.click();
-            const cutChooserVisible = await waitFor(() => {
-              const chooser = document.getElementById("chooser-cut");
-              return !!chooser && chooser.hidden === false;
+            dismissStartupDialogs();
+            await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
+              .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
+            const stateModule = await import("./js/state.js?v=1.4.0");
+            const textChooser = document.getElementById("chooser-text");
+            const textChooserButton = document.getElementById("tool-text-merged");
+            const angleChooser = document.getElementById("chooser-angle");
+            const angleChooserButton = document.getElementById("tool-angle-merged");
+            const cutChooser = document.getElementById("chooser-cut");
+            const cutChooserButton = document.getElementById("tool-cut-merged");
+            const isActuallyVisible = (element) => {
+              if (!element || element.hidden) return false;
+              const style = getComputedStyle(element);
+              const rect = element.getBoundingClientRect();
+              return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 &&
+                rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.bottom > 0 &&
+                rect.left < innerWidth && rect.top < innerHeight;
+            };
+            const choosePersistentTool = async ({ button, chooser, selector, expectedTool }) => {
+              if (!isActuallyVisible(chooser)) button?.click();
+              const opened = await waitFor(() => isActuallyVisible(chooser));
+              const option = chooser?.querySelector(selector);
+              option?.click();
+              const activated = await waitFor(() => stateModule.state.get().activeTool === expectedTool);
+              const persisted = await waitFor(() => isActuallyVisible(chooser));
+              const optionActive = await waitFor(() => option?.classList.contains("is-active"));
+              const parentActive = button?.classList.contains("is-active") && button?.classList.contains("is-open");
+              return { opened, activated, persisted, optionActive, parentActive };
+            };
+            const textChoice = await choosePersistentTool({
+              button: textChooserButton, chooser: textChooser, selector: '[data-tool="T"]', expectedTool: "T",
             });
-            document.querySelector('#chooser-cut [data-tool="DELAYED_CUT"]')?.click();
-            const delayedCutUiReachable = await waitFor(() =>
+            document.body.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+            const textChooserSurvivesCanvasClick = isActuallyVisible(textChooser);
+            textChooserButton?.click();
+            const textChooserToggleCloses = await waitFor(() => !isActuallyVisible(textChooser));
+            const labelerChoice = await choosePersistentTool({
+              button: textChooserButton, chooser: textChooser, selector: '[data-symbol="labeler"]', expectedTool: "LABELER",
+            });
+            angleChooserButton?.click();
+            const chooserSwitchesFromTextToAngle = await waitFor(() =>
+              !isActuallyVisible(textChooser) && isActuallyVisible(angleChooser));
+            const angleChoice = await choosePersistentTool({
+              button: angleChooserButton, chooser: angleChooser, selector: '[data-symbol="anglearc"]', expectedTool: "ARC",
+            });
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", code: "Tab", bubbles: true, cancelable: true }));
+            const angleTabToggleWorks = await waitFor(() =>
+              stateModule.state.get().activeTool === "RIGHTANGLE" &&
+              angleChooser?.querySelector('[data-symbol="rightangle"]')?.classList.contains("is-active") &&
+              angleChooserButton?.classList.contains("is-active") && isActuallyVisible(angleChooser));
+            cutChooserButton?.click();
+            const chooserSwitchesFromAngleToCut = await waitFor(() =>
+              !isActuallyVisible(angleChooser) && isActuallyVisible(cutChooser));
+            const chooseCutTool = (tool) => choosePersistentTool({
+              button: cutChooserButton, chooser: cutChooser, selector: '[data-tool="' + tool + '"]', expectedTool: tool,
+            });
+            const eraseChoice = await chooseCutTool("ERASE");
+            const cutChoice = await chooseCutTool("CUT");
+            const cutModes = [];
+            for (const mode of ["freehand", "line", "polyline", "rect"]) {
+              document.querySelector('#cut-mode-tabs [data-cut-mode="' + mode + '"]')?.click();
+              cutModes.push(await waitFor(() =>
+                document.querySelector('#cut-mode-tabs [data-cut-mode="' + mode + '"]')?.getAttribute("aria-selected") === "true"));
+            }
+            const delayedChoice = await chooseCutTool("DELAYED_CUT");
+            const delayedModes = [];
+            for (const mode of ["freehand", "line", "polyline", "rect"]) {
+              document.querySelector('#cut-mode-tabs [data-cut-mode="' + mode + '"]')?.click();
+              delayedModes.push(await waitFor(() =>
+                document.querySelector('#cut-mode-tabs [data-cut-mode="' + mode + '"]')?.getAttribute("aria-selected") === "true"));
+            }
+            const cutChooserVisible = eraseChoice.opened && cutChoice.opened && delayedChoice.opened;
+            const cutChooserInToolPanel = cutChooser?.closest("#tool-list") !== null &&
+              cutChooser?.closest("#ai-image-panel") === null;
+            const textChooserBehavior = [textChoice, labelerChoice].every((choice) =>
+              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentActive) &&
+              textChooserSurvivesCanvasClick && textChooserToggleCloses;
+            const angleChooserBehavior = angleChoice.opened && angleChoice.activated && angleChoice.persisted &&
+              angleChoice.optionActive && angleChoice.parentActive && angleTabToggleWorks;
+            const chooserPanelSwitchingWorks = chooserSwitchesFromTextToAngle && chooserSwitchesFromAngleToCut;
+            const cutChooserPersistsAfterChoice = [eraseChoice, cutChoice, delayedChoice].every((choice) =>
+              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentActive);
+            const eraseToolReachable = eraseChoice.activated;
+            const cutToolReachable = cutChoice.activated && cutModes.every(Boolean);
+            const delayedCutUiReachable = delayedChoice.activated && delayedModes.every(Boolean) &&
               document.getElementById("tool-cut-merged")?.classList.contains("is-active") &&
               document.getElementById("cut-mode-tabs")?.hidden === false &&
-              document.getElementById("delayed-cut-action")?.hidden === false);
+              document.getElementById("delayed-cut-action")?.hidden === false;
+            const visibleModalOverlaysBeforeCutShortcuts = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"))
+              .map((node) => ({ id: node.id, className: node.className, title: node.querySelector(".modal-title")?.textContent?.trim() || "" }));
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", shiftKey: true, bubbles: true }));
+            const eraseShortcutWorks = stateModule.state.get().activeTool === "ERASE";
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ctrlKey: true, bubbles: true }));
+            const delayedShortcutWorks = stateModule.state.get().activeTool === "DELAYED_CUT";
             document.querySelector('[data-tool="V"]')?.click();
-            const stateModule = await import("./js/state.js?v=1.4.0");
+            const chooserClosesOnOtherTool = await waitFor(() => !isActuallyVisible(cutChooser) &&
+              stateModule.state.get().activeTool === "V" &&
+              document.querySelector('[data-tool="V"]')?.classList.contains("is-active"));
             stateModule.state.update((s) => {
               s.objects.push({
                 id: "smoke-artboard-object", type: "rect",
@@ -778,10 +878,10 @@ function createWindow() {
                 panel.querySelector("[data-ai-new]")?.click();
                 panel.querySelector('[data-ai-mode="diagram"]')?.click();
                 const aiInput = panel.querySelector("[data-ai-input]");
-                let historyLength = 0;
+                let historyTail = "";
                 try {
                   const history = JSON.parse(localStorage.getItem("5e.aiPerformance.v1") || "[]");
-                  historyLength = Array.isArray(history) ? history.length : 0;
+                  historyTail = JSON.stringify(Array.isArray(history) ? history.at(-1) || null : null);
                 } catch {}
                 if (aiInput) aiInput.value = localRequest;
                 panel.querySelector("[data-ai-send]")?.click();
@@ -791,8 +891,10 @@ function createWindow() {
                 await waitFor(() => {
                   try {
                     const history = JSON.parse(localStorage.getItem("5e.aiPerformance.v1") || "[]");
-                    if (!Array.isArray(history) || history.length <= historyLength) return false;
-                    localMetric = history.at(-1) || null;
+                    if (!Array.isArray(history)) return false;
+                    const nextMetric = history.at(-1) || null;
+                    if (JSON.stringify(nextMetric) === historyTail) return false;
+                    localMetric = nextMetric;
                     return true;
                   } catch { return false; }
                 }, 4000);
@@ -802,6 +904,15 @@ function createWindow() {
               aiLocalAssetZeroRoundTripWorks = localResults.length === localRequests.length && localResults.every(Boolean);
               aiLocalApparatusZeroRoundTripWorks = localResults.slice(1).length === 5 && localResults.slice(1).every(Boolean);
               panel.querySelector("[data-ai-close]")?.click();
+            }
+            if (${process.env.FIVE_E_SMOKE_CUT_SCREENSHOT === "1" ? "true" : "false"}) {
+              dismissStartupDialogs();
+              panel.hidden = true;
+              panel.style.display = "none";
+              await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+              if (!cutChooser?.hidden) cutChooserButton?.click();
+              cutChooserButton?.click();
+              await waitFor(() => isActuallyVisible(cutChooser), 2000);
             }
             resolve({
               codexStatusReadable,
@@ -820,7 +931,23 @@ function createWindow() {
               aiCancelIsContextual,
               aiReturnsAfterLibraryClose,
               cutChooserVisible,
+              cutChooserInToolPanel,
+              textChooserBehavior,
+              textChoice,
+              labelerChoice,
+              angleChooserBehavior,
+              angleChoice,
+              activeToolAfterAngleTab: angleTabToggleWorks ? "RIGHTANGLE" : stateModule.state.get().activeTool,
+              angleTabToggleWorks,
+              chooserPanelSwitchingWorks,
+              cutChooserPersistsAfterChoice,
+              chooserClosesOnOtherTool,
+              eraseToolReachable,
+              cutToolReachable,
               delayedCutUiReachable,
+              eraseShortcutWorks,
+              delayedShortcutWorks,
+              visibleModalOverlaysBeforeCutShortcuts,
               artboardAreaOverlayOpened,
               artboardConfirmButtonPresent,
               artboardAreaCaptureWorks,
@@ -854,11 +981,15 @@ function createWindow() {
         })`);
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
+        result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
         const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
           result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
           result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
-          result.cutChooserVisible && result.delayedCutUiReachable &&
+          result.cutChooserVisible && result.cutChooserInToolPanel && result.textChooserBehavior && result.angleChooserBehavior &&
+          result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
+          result.chooserClosesOnOtherTool && result.eraseToolReachable &&
+          result.cutToolReachable && result.delayedCutUiReachable && result.eraseShortcutWorks && result.delayedShortcutWorks &&
           result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
           result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
           result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
@@ -867,7 +998,7 @@ function createWindow() {
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          !result.installDialogOpened && result.menuBarVisible === false;
+          !result.installDialogOpened && result.menuBarVisible === false && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
@@ -912,7 +1043,9 @@ function createWindow() {
           (process.env.FIVE_E_IMAGE_E2E !== "1" ||
             (result.imageE2e?.generated && result.imageE2e?.previewReady && result.imageE2e?.inserted));
         if (process.env.FIVE_E_SMOKE_SCREENSHOT) {
-          await win.webContents.executeJavaScript(`document.getElementById("ai-image-install-open")?.click()`);
+          if (process.env.FIVE_E_SMOKE_CUT_SCREENSHOT !== "1") {
+            await win.webContents.executeJavaScript(`document.getElementById("ai-image-install-open")?.click()`);
+          }
           await new Promise((resolve) => setTimeout(resolve, 900));
           const capture = await win.webContents.capturePage();
           fs.writeFileSync(process.env.FIVE_E_SMOKE_SCREENSHOT, capture.toPNG());
