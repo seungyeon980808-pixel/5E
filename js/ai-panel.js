@@ -1501,7 +1501,10 @@ export function initAiPanel(state) {
   };
   const open = async ({ reference, references = [], prompt } = {}) => {
     panel.hidden = false;
-    await refresh();
+    // 참고 이미지는 AI 연결 상태 조회와 무관하므로 즉시 불러온다.
+    // 연결 확인을 먼저 기다리면 로컬 라이브러리 이미지도 몇 초 뒤에 나타나
+    // 사용자가 버튼이 동작하지 않은 것으로 오해할 수 있다.
+    const refreshPromise = refresh();
     const incoming = [...references, ...(reference ? [reference] : [])];
     if (incoming.length) {
       setStatus("참고 이미지 불러오는 중…", "busy");
@@ -1519,6 +1522,7 @@ export function initAiPanel(state) {
       const loadedCount = loaded.filter((result) => result.status === "fulfilled").length;
       setStatus(`참고 이미지 ${loadedCount}개 추가됨`, loadedCount ? "ok" : "error");
     }
+    await refreshPromise;
     const lastIncoming = incoming.at(-1);
     if (prompt || lastIncoming?.prompt) input.value = prompt || lastIncoming.prompt;
     input.focus();
