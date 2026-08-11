@@ -16,7 +16,7 @@
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
 import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.4.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.3";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.4";
 import { isObjectSelectable } from "./pick.js?v=1.4.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
