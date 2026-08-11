@@ -468,7 +468,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[5E v1.5.4] Press S (or click the toolbar button) to arm the\n" +
+    "[5E v1.5.5] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +

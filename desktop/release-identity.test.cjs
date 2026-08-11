@@ -12,10 +12,10 @@ test("Windows package, visible footer and desktop guide share one release identi
   const main = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
   const desktopGuide = fs.readFileSync(path.join(root, "docs", "DESKTOP_WINDOWS.md"), "utf8");
 
-  assert.equal(pkg.version, "1.5.4");
+  assert.equal(pkg.version, "1.5.5");
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages[""].version, pkg.version);
-  assert.match(index, /5E<\/strong> <strong>v1\.5\.4 · 2026\.08\.11<\/strong>/);
-  assert.match(main, /\[5E v1\.5\.4\]/);
-  assert.match(desktopGuide, /release\/5E Setup 1\.5\.4\.exe/);
+  assert.match(index, /5E<\/strong> <strong>v1\.5\.5 · 2026\.08\.12<\/strong>/);
+  assert.match(main, /\[5E v1\.5\.5\]/);
+  assert.match(desktopGuide, /release\/5E Setup 1\.5\.5\.exe/);
 });
