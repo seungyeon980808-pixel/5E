@@ -30,8 +30,8 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.6/);
-  assert.match(index, /js\/main\.js\?v=1\.5\.6-reference-search/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.6-pdf-search/);
+  assert.match(index, /js\/main\.js\?v=1\.5\.6-pdf-search/);
 });
 
 test("common scientific diagrams use the local editable scene path with exact-cache and raster fallback", () => {

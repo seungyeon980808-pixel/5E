@@ -66,8 +66,8 @@ import { initModalDrag } from "./modal-drag.js?v=1.4.0";
 import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.4.0";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
-import { initAiPanel } from "./ai-panel.js?v=1.5.6";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.5.6-pdf-search";
+import { initAiPanel } from "./ai-panel.js?v=1.5.6-pdf-search";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");

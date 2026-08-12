@@ -9,9 +9,7 @@ test("AI image feature is launched from the image workflow hub", () => {
   assert.match(html, /id="ai-image-install-open"/);
   assert.match(html, /id="ai-image-install-open"[\s\S]*?AI 이미지 생성[\s\S]*?<\/button>/);
   assert.match(html, /id="ai-image-panel"[^>]*hidden/);
-  assert.match(guide, /Windows용 5E 데스크톱 앱/);
-  assert.match(guide, /releases\/latest/);
-  assert.match(guide, /Assets/);
-  assert.match(guide, /window\.fiveEDesktop/);
+  assert.doesNotMatch(guide, /releases\/latest/);
+  assert.doesNotMatch(guide, /window\.fiveEDesktop/);
   assert.match(guide, /openDesktopPanel\(\)/);
 });
