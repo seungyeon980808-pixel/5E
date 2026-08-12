@@ -56,14 +56,3 @@ __pycache__/
 /docs/training/eval-repro-batch-*.png
 /docs/training/codex-mcp-electroscope-test.png
 /docs/training/eval-repro-*.svg
-
-# Engine benchmark run artifacts are retained locally; compact root summaries
-# and benchmark freeze/case definitions remain versioned.
-/results/exam-diagram-engine-v2-2/development/
-/results/exam-diagram-engine-v2-2/final/
-/results/exam-diagram-engine-v2-2/revision4-compile-regression/
-/results/exam-diagram-engine-v2-2/stability-r4/
-/results/exam-diagram-engine-v2-2/stability-r5-targeted/
-/results/exam-diagram-engine-v2-2/stability-r6-incline/
-/results/exam-diagram-engine-v2-2/stability-r6-replacement/
-/results/exam-diagram-engine-v2-2/stability-r7-concise-incline/

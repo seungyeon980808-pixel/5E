@@ -155,12 +155,6 @@ body {
   font-family: "IBM Plex Sans KR", system-ui, sans-serif;
   color: var(--c-text);
   background: var(--bg-app);
-  /* 한국어 줄바꿈: 어절(단어) 중간에서 끊지 않는다.
-     기본값은 한글을 글자 단위로 끊어서 "고르 / 세요"처럼 잘린다(사용자 지적).
-     keep-all 로 어절을 묶고, 줄보다 긴 토큰(URL·긴 영문)만 break-word 로 푼다.
-     body 에 두어 앱의 모든 안내창·모달·툴팁이 함께 따라오게 한다. */
-  word-break: keep-all;
-  overflow-wrap: break-word;
   display: flex;
   flex-direction: column;
   /* zoom은 100vh 계산에 관여하지 않고 그려진 결과만 확대한다 — height를 그대로
@@ -371,23 +365,6 @@ body { zoom: var(--ui-zoom, 1); }
 .search-trigger-ico { width: 15px; height: 15px; flex: none; }
 /* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
 .search-trigger-label { flex: 1 1 auto; text-align: left; white-space: nowrap; }
-
-/* '베타' 꼬리표 — 아직 다듬는 중인 기능임을 이름 옆에 조용히 알린다.
-   눈에 띄되 이름을 밀어내지 않게 작고 옅게. */
-.beta-tag {
-  flex: none;
-  margin-left: 5px;
-  padding: 1px 5px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--accent);
-  font-size: 10px;
-  font-weight: 600;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
 .search-trigger-hint {
   flex: none;
   margin-left: auto;
@@ -470,12 +447,12 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* active tool = signature blue (mirrors state.activeTool) */
-.tool-btn.is-active, .tool-btn.is-open {
+.tool-btn.is-active {
   color: #fff;
   background: var(--btn-tool-active);
   border-color: var(--btn-tool-active);
 }
-.tool-btn.is-active kbd, .tool-btn.is-open kbd {
+.tool-btn.is-active kbd {
   color: #fff;
 }
 
@@ -551,12 +528,12 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex; align-items: center;
   /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
      컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
-  height: 23px; margin-left: 8px; margin-right: 6px; padding: 0 6px;
+  height: 23px; margin-left: -2px; padding: 0 10px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
   background: var(--btn-tool-bg);
-  border: 1px solid var(--c-border); border-radius: 6px;
+  border: 1px solid var(--c-border); border-radius: 999px;
   cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
 .mode-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -1528,59 +1505,6 @@ body { zoom: var(--ui-zoom, 1); }
   color: #fff;
   background: var(--accent);
   border-color: var(--accent);
-}
-
-/* ===== SMART CUTOUT ===== */
-.smart-cutout-start { font-weight: 600; }
-.smart-cutout-modal {
-  width: min(720px, calc(100vw - 32px));
-  max-height: min(820px, calc(100vh - 32px));
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.smart-cutout-help,
-.smart-cutout-status {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 12px;
-}
-.smart-cutout-preview {
-  min-height: 260px;
-  max-height: 58vh;
-  display: grid;
-  place-items: center;
-  overflow: auto;
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  background-color: #fff;
-  background-image:
-    linear-gradient(45deg, #d9dde2 25%, transparent 25%),
-    linear-gradient(-45deg, #d9dde2 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #d9dde2 75%),
-    linear-gradient(-45deg, transparent 75%, #d9dde2 75%);
-  background-size: 20px 20px;
-  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
-}
-.smart-cutout-preview canvas {
-  display: block;
-  max-width: 100%;
-  max-height: 56vh;
-  image-rendering: auto;
-}
-.smart-cutout-range {
-  display: grid;
-  grid-template-columns: 42px 1fr 38px;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-primary);
-  font-size: 12px;
-}
-.smart-cutout-range input { width: 100%; }
-.smart-cutout-range output {
-  text-align: right;
-  font: 12px "IBM Plex Mono", monospace;
-  color: var(--text-secondary);
 }
 .image-edit-tool-btn {
   display: inline-flex;
@@ -2640,47 +2564,3 @@ textarea.unified-text-input {
 .text-ctx-item:disabled { opacity: 0.4; cursor: default; }
 .text-ctx-item:disabled:hover { background: transparent; color: inherit; }
 .text-ctx-item.is-danger:hover:not(:disabled) { background: #b03a4a; color: #fff; }
-
-/* delayed cut action stays inside the right inspector so the final commit is
- * visible where object properties are edited. */
-#delayed-cut-action {
-  position: sticky; top: 8px; z-index: 8;
-  margin: 8px 10px 12px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--border));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-panel));
-  box-shadow: 0 4px 14px rgba(0,0,0,.16);
-}
-.tutorial-beta-tag { margin-left: 6px; vertical-align: middle; }
-
-/* 자르기/지연 자르기의 입력 모드는 키 충돌 없이 탭으로 선택한다. */
-#cut-mode-tabs {
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px;
-  margin:8px 10px 10px; padding:4px; border:1px solid var(--border); border-radius:7px;
-  background:var(--btn-tool-bg);
-}
-#cut-mode-tabs[hidden] { display:none; }
-#cut-mode-tabs .cut-mode-tabs-title {
-  grid-column:1 / -1; padding:3px 5px 4px;
-  color:var(--text-secondary); font-size:11px; font-weight:700;
-}
-#cut-mode-tabs button {
-  appearance:none; width:100%; min-width:0; border:0; border-radius:4px; padding:6px 4px;
-  background:transparent; color:var(--text-secondary); cursor:pointer;
-  font:600 11px/1 "IBM Plex Sans KR",system-ui,sans-serif; white-space:nowrap;
-}
-#cut-mode-tabs button:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
-#cut-mode-tabs button.is-active {
-  color:#fff; background:var(--accent); box-shadow:0 1px 2px rgba(0,0,0,.18);
-}
-#delayed-cut-action[hidden] { display: none; }
-.delayed-cut-action-title { font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
-.delayed-cut-action-mode { color: var(--accent); font-size: 12px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
-.delayed-cut-action-status { color: var(--text-secondary); font-size: 12px; line-height: 1.4; margin-bottom: 9px; }
-.delayed-cut-confirm, .delayed-cut-cancel {
-  width: 100%; min-height: 34px; border-radius: 7px; cursor: pointer; font-weight: 700;
-}
-.delayed-cut-confirm { border: 1px solid var(--accent); background: var(--accent); color: #fff; }
-.delayed-cut-confirm:disabled { opacity: .45; cursor: not-allowed; }
-.delayed-cut-cancel { margin-top: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }

@@ -22,7 +22,7 @@
 //               tool. The registry only names which tool + variant to arm.
 
 import { state } from "./state.js?v=1.4.0";
-import { armSymbol } from "./tools.js?v=1.5.3";
+import { armSymbol } from "./tools.js?v=1.4.0";
 import { renderObject } from "./render.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
 import { getSvgAsset } from "./svg-assets.js?v=1.4.0";

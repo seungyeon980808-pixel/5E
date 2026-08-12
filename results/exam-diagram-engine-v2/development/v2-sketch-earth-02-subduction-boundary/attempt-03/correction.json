@@ -1,1 +1,0 @@
-{"from_attempt":2,"to_attempt":3,"failure_tags":["EXTRA_CONTEXT","OVER_SHADE"],"root_cause":"The generic duplicate-collapse rule did not apply to the outer section border.","change":"Required exactly one stroke for each earth-science section frame and stratum boundary.","regression_guard":"Nested frames increment the unlisted-object hard gate."}

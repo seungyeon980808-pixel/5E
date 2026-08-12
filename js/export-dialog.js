@@ -13,9 +13,6 @@
 
 import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.4.0";
 import { openBatchExport } from "./export-batch.js?v=1.4.0";
-import {
-  FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
-} from "./export-dir.js?v=1.4.0";
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 import { registerTopMenu } from "./top-menu.js?v=1.4.0";
 import { screenToWorld } from "./viewport.js?v=1.4.0";
@@ -109,18 +106,6 @@ function buildModal() {
         <span class="modal-label" style="flex:none">mm</span>
       </label>
 
-      <!-- 저장 폴더: 한 번 연결해 두면 내보낼 때마다 위치를 묻지 않는다.
-           지원하지 않는 브라우저(Firefox/Safari)에서는 이 줄이 통째로 감춰지고
-           기존 다운로드 동작이 그대로 남는다. -->
-      <div class="modal-field" id="export-dir-field">
-        <span class="modal-label">저장 폴더</span>
-        <div class="batch-dir">
-          <span class="batch-dir-path is-empty" id="export-dir-path">지정하지 않음 — 내보낼 때마다 묻습니다</span>
-          <button type="button" class="modal-btn" id="export-dir-pick">폴더 연결</button>
-          <button type="button" class="modal-btn" id="export-dir-clear" hidden>해제</button>
-        </div>
-      </div>
-
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="export-cancel">취소</button>
         <button type="button" class="modal-btn" id="export-preview">미리보기</button>
@@ -161,16 +146,12 @@ function segValue(group, attr) {
 export function runAreaCapture(svg, state, onDone, hintText) {
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
-  /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
-   *   9000 이던 시절엔 튜토리얼이 도는 동안 흐림 4장이 마우스를 먼저 먹어
-   *   '영역 지정'을 눌러도 **캔버스에서 드래그가 되지 않았다**(사용자 지적).
-   *   설명 창(100012)보다는 아래에 둬서 안내는 계속 읽히게 한다. */
   overlay.style.cssText =
-    "position:fixed;inset:0;z-index:100011;cursor:crosshair;" +
+    "position:fixed;inset:0;z-index:9000;cursor:crosshair;" +
     "background:rgba(0,0,0,0.35);user-select:none;";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
-  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · [내보내기] 또는 Enter 로 확정 · Esc 취소";
+  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · Enter 확정 · Esc 취소";
   const hint = document.createElement("div");
   hint.textContent = HINT_DRAW;
   hint.style.cssText =
@@ -203,20 +184,14 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
   const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
   const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
-  /* 확정 단추 — 크기 표시 바로 옆.
-   * Enter 로만 확정하게 두면 "다 골라 놓고 어떻게 끝내는지 몰라" 멈춘다(사용자 지적).
-   * 눌러서 끝내는 길을 눈에 보이게 둔다. Enter 는 그대로 살려 둔다(빠른 길). */
-  const okBtn = document.createElement("button");
-  okBtn.type = "button";
-  okBtn.id = "capture-confirm";
-  okBtn.textContent = "내보내기";
-  okBtn.style.cssText =
-    "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
-    "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
-  okBtn.textContent = "지정";
-  okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
-  okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
-  dim.append(wInput, sepX, hInput, sepU, okBtn);
+  const confirmButton = document.createElement("button");
+  confirmButton.type = "button";
+  confirmButton.textContent = "지정";
+  confirmButton.title = "선택한 영역을 새 아트보드로 지정";
+  confirmButton.style.cssText =
+    "margin-left:6px;padding:2px 7px;border:1px solid rgba(255,255,255,.55);border-radius:3px;" +
+    "color:#fff;background:rgba(8,24,45,.34);font:inherit;font-weight:700;cursor:pointer;";
+  dim.append(wInput, sepX, hInput, sepU, confirmButton);
   overlay.appendChild(dim);
   [wInput, hInput].forEach((inp) => {
     inp.addEventListener("focus", () => { inp.select(); inp.style.background = "rgba(255,255,255,0.40)"; });
@@ -228,6 +203,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   dim.addEventListener("mousedown", (e) => {
     if (e.target === dim || e.target === sepX || e.target === sepU) { e.preventDefault(); wInput.focus(); }
   });
+  confirmButton.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
 
   // 8개 리사이즈 핸들: [id, x비율, y비율] (0=좌/상, .5=중앙, 1=우/하).
   const HANDLES = [
@@ -247,12 +223,9 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     handleEls[id] = h;
   }
 
-  /* ⚠ body 가 아니라 documentElement 에 붙인다.
-   *   css/style.css 가 body{zoom:var(--ui-zoom)} 를 걸어 두어(화면 배율), body 밑에
-   *   붙이면 이 오버레이만 배율이 곱해진 좌표계에서 그려진다. 반면 아래 계산은 전부
-   *   clientX/clientY(뷰포트 실측 px)라서, 배율이 1이 아닌 화면에서는 **끄는 자리와
-   *   그려지는 사각형이 어긋났다**(사용자 지적: 배율 1.12에서 12% 어긋남).
-   *   js/tutorial.js 가 레이어를 documentElement 에 붙이는 것과 같은 이유다. */
+  // body에는 화면 배율용 CSS zoom이 적용된다. fixed 오버레이를 body에 붙이면
+  // clientX/clientY가 다시 확대되어 커서와 선택 시작점이 어긋난다. 문서 루트에
+  // 직접 붙여 브라우저의 실제 화면 좌표계를 그대로 사용한다.
   document.documentElement.appendChild(overlay);
 
   let box = null;      // { l, t, r, b } client px (그리는 중엔 비정규화 가능)
@@ -427,27 +400,8 @@ export function initExportDialog(state, svg) {
   // isReopen: 미리보기/영역지정에서 Esc로 취소하고 이 다이얼로그로 되돌아오는 경우
   // true로 넘긴다. 이때는 사용자가 이미 입력해 둔 파일명(input이 DOM에 그대로 남아
   // 있음)을 타임스탬프로 덮어쓰지 않는다 — 새로 여는 경우(openBtn)만 리셋한다.
-  /* ----- 저장 폴더 줄 ----- */
-  const dirField = overlay.querySelector("#export-dir-field");
-  const dirPath = overlay.querySelector("#export-dir-path");
-  const dirPick = overlay.querySelector("#export-dir-pick");
-  const dirClear = overlay.querySelector("#export-dir-clear");
-  async function syncDirRow() {
-    if (!FS_DIR_SUPPORTED) { dirField.hidden = true; return; }
-    dirField.hidden = false;
-    await loadSavedDir();
-    const name = currentDirName();
-    dirPath.textContent = name || "지정하지 않음 — 내보낼 때마다 묻습니다";
-    dirPath.classList.toggle("is-empty", !name);
-    dirPick.textContent = name ? "폴더 변경" : "폴더 연결";
-    dirClear.hidden = !name;
-  }
-  dirPick.addEventListener("click", async () => { await pickDir(); syncDirRow(); });
-  dirClear.addEventListener("click", async () => { await clearDir(); syncDirRow(); });
-
   function showModal(isReopen = false) {
     overlay.hidden = false;
-    syncDirRow();
     if (!isReopen) {
       // Refresh the default name to the current minute each time the dialog opens
       // fresh (unless the user has typed a custom name this session is fine to

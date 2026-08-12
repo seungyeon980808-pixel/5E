@@ -19,9 +19,6 @@
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
 import { renderObject, makeFillPattern } from "./render.js?v=1.4.0";
-import {
-  FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
-} from "./export-dir.js?v=1.4.0";
 import { getObjectBBox } from "./pick.js?v=1.4.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -44,7 +41,7 @@ function _crc32(bytes) {
   for (let i = 0; i < bytes.length; i++) c = _CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
   return (c ^ 0xFFFFFFFF) >>> 0;
 }
-function insertPngPhys(buffer, dpi) {
+export function insertPngPhys(buffer, dpi) {
   const src = new Uint8Array(buffer);
   // PNG 시그니처(8) + IHDR(길이4+타입4+데이터13+CRC4 = 25) 뒤(=33)에 삽입.
   const PNG_SIG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -167,10 +164,6 @@ function downloadBlob(blob, filename) {
  * Must be called synchronously at the start of the export (before any other
  * await) so it runs inside the click's transient user activation. */
 async function pickSaveHandle(filename, { mime, ext, description }) {
-  /* 내보내기 폴더가 연결돼 있으면 저장 위치를 묻지 않는다 —
-   * 매번 어디에 둘지 고르는 것이 실제 작업에서 가장 성가신 단계였다(사용자 요구).
-   * 연결이 없거나 권한이 끊겼으면 아래 기존 경로(저장 위치 묻기)로 그대로 간다. */
-  if (await hasExportDir()) return "dir";
   if (!window.showSaveFilePicker) return undefined;
   try {
     return await window.showSaveFilePicker({
@@ -187,29 +180,6 @@ async function writeHandle(handle, blob) {
   const writable = await handle.createWritable();
   await writable.write(blob);
   await writable.close();
-}
-
-/* 연결된 내보내기 폴더가 실제로 쓸 수 있는 상태인가. 권한이 끊겼으면 false. */
-async function hasExportDir() {
-  if (!FS_DIR_SUPPORTED) return false;
-  const h = await loadSavedDir();
-  if (!h) return false;
-  return ensureDirPermission(h);
-}
-
-/* 폴더가 연결돼 있으면 거기에 쓰고, 아니면 평소대로 내려받는다. */
-async function saveBlob(handle, blob, name) {
-  if (handle === "dir") {
-    if (await writeToDir(name, blob)) return;
-    downloadBlob(blob, name);          // 폴더 쓰기가 실패하면 잃어버리지 않게 내려받는다
-    return;
-  }
-  if (handle) {
-    try { await writeHandle(handle, blob); }
-    catch (_) { downloadBlob(blob, name); }
-    return;
-  }
-  downloadBlob(blob, name);
 }
 
 /* ----- resolve the world rectangle to export ----- */
@@ -333,7 +303,12 @@ export async function exportSvg(state, filename, bounds = null, options = {}) {
   // XML prolog keeps the file valid as a standalone .svg document.
   const doc = `<?xml version="1.0" encoding="UTF-8"?>\n${source}`;
   const blob = new Blob([doc], { type: "image/svg+xml" });
-  await saveBlob(handle, blob, name);
+  if (handle) {
+    try { await writeHandle(handle, blob); }
+    catch (_) { downloadBlob(blob, name); } // write failed → fall back to download
+  } else {
+    downloadBlob(blob, name);
+  }
 }
 
 /* ----- rasterizeExportCanvas: SVG → white-background canvas at a DPI ----- */
@@ -424,6 +399,10 @@ export async function exportPng(state, filename, dpi, bounds = null, options = {
   result.canvas.toBlob(async (rawBlob) => {
     if (!rawBlob) return;
     const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록 → HWP/워드 삽입 크기 정상
-    saveBlob(handle, blob, name);
+    if (handle) {
+      writeHandle(handle, blob).catch(() => downloadBlob(blob, name));
+    } else {
+      downloadBlob(blob, name);
+    }
   }, "image/png");
 }

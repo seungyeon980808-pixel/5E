@@ -15,9 +15,8 @@
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.4.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.4";
-import { isObjectSelectable } from "./pick.js?v=1.4.0";
+import { setSnapPreview, pendulumBBox } from "./render.js?v=1.4.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.4.0";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
@@ -636,8 +635,7 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // Closed polyline and closed curve have no x/y/w/h ??derive the box from the point cloud,
   // run the SAME per-handle math, then scale ALL points about the anchored corner.
   const isPoly  = isClosedPoly(obj);
-  // 지연 자르기 자유곡선도 전체 경계 상자로 크기 조절합니다.
-  const isCurve = isClosedCurve(obj) || (obj.type === "curve" && obj.delayedCut === true && obj.closed !== true);
+  const isCurve = isClosedCurve(obj);
   const box0 = (isPoly || isCurve) ? polyBBox(orig.points) : orig;
   const ratio = box0.w / box0.h;
   let { x, y, w, h } = box0;
@@ -797,61 +795,6 @@ function groupBBox(objs, svg) {
   }
   if (!isFinite(minX)) return null;
   return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-}
-
-/* ----- Smart alignment guides: edge/center matching while dragging ----- */
-function resolveSmartAlignment(moveObjIds, origObjs, raw, scale, state, svg) {
-  const moving = moveObjIds.map((id) => origObjs[id]).filter(Boolean);
-  const base = groupBBox(moving, svg);
-  if (!base) return { dx: raw.dx, dy: raw.dy, guides: [] };
-  const moved = { x: base.x + raw.dx, y: base.y + raw.dy, w: base.w, h: base.h };
-  const anchorValues = (box, axis) => axis === "x"
-    ? [box.x, box.x + box.w / 2, box.x + box.w]
-    : [box.y, box.y + box.h / 2, box.y + box.h];
-  // Keep the detection window comfortable at every zoom level.  The previous
-  // range was only a few screen pixels, so the guide was almost impossible to
-  // encounter during an ordinary drag.
-  const safeScale = Math.max(Number(scale) || 1, 1e-6);
-  const previewDistance = 32 / safeScale;
-  const attachDistance = 12 / safeScale;
-  const excluded = new Set(moveObjIds);
-  let bestX = null, bestY = null;
-  const consider = (axis, movedValue, targetValue, targetBox) => {
-    const distance = Math.abs(targetValue - movedValue);
-    if (distance > previewDistance) return;
-    const candidate = { delta: targetValue - movedValue, distance, targetValue, targetBox };
-    if (axis === "x") {
-      if (!bestX || candidate.distance < bestX.distance) bestX = candidate;
-    } else if (!bestY || candidate.distance < bestY.distance) bestY = candidate;
-  };
-  const snapshot = state.get();
-  for (const target of snapshot.objects) {
-    if (!target?.id || excluded.has(target.id)) continue;
-    const layer = (snapshot.layers || []).find((item) => item.id === (target.layerId ?? 1));
-    if (layer?.visible === false) continue;
-    const targetBox = objWorldBBox(target, svg);
-    if (!targetBox) continue;
-    for (const movedValue of anchorValues(moved, "x")) {
-      for (const targetValue of anchorValues(targetBox, "x")) consider("x", movedValue, targetValue, targetBox);
-    }
-    for (const movedValue of anchorValues(moved, "y")) {
-      for (const targetValue of anchorValues(targetBox, "y")) consider("y", movedValue, targetValue, targetBox);
-    }
-  }
-  const dx = bestX && bestX.distance <= attachDistance ? raw.dx + bestX.delta : raw.dx;
-  const dy = bestY && bestY.distance <= attachDistance ? raw.dy + bestY.delta : raw.dy;
-  const guides = [];
-  if (bestX) {
-    const from = Math.min(moved.y, bestX.targetBox.y) - 6 / safeScale;
-    const to = Math.max(moved.y + moved.h, bestX.targetBox.y + bestX.targetBox.h) + 6 / safeScale;
-    guides.push({ axis: "x", position: bestX.targetValue, from, to });
-  }
-  if (bestY) {
-    const from = Math.min(moved.x, bestY.targetBox.x) - 6 / safeScale;
-    const to = Math.max(moved.x + moved.w, bestY.targetBox.x + bestY.targetBox.w) + 6 / safeScale;
-    guides.push({ axis: "y", position: bestY.targetValue, from, to });
-  }
-  return { dx, dy, guides };
 }
 
 /* ----- whole-group resize: uniform scale about the opposite corner -----
@@ -1024,19 +967,6 @@ export function initTransform(svg, state) {
       return;
     }
 
-    /* Ctrl+A — 지금 화면에서 고를 수 있는 것을 전부 고른다.
-     *
-     * '고를 수 있는 것'의 기준은 마우스로 찍을 때와 같아야 한다(pick.js isObjectSelectable):
-     * 활성 레이어 · 보이는 레이어 · 선택금지가 아닌 것. 다른 기준을 새로 세우면
-     * "클릭으로는 안 골라지는데 Ctrl+A로는 골라지는" 물건이 생긴다.
-     * 브라우저 기본 동작(문서 전체 선택)은 막는다. */
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !e.shiftKey && !e.altKey) {
-      e.preventDefault();
-      const ids = (s.objects || []).filter((o) => isObjectSelectable(s, o)).map((o) => o.id);
-      state.update((s2) => { s2.selectedIds = ids; });
-      return;
-    }
-
     // Ctrl+C ??copy selected objects into module-level clipboard
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && !e.shiftKey) {
       if (!selectedIds.length) return;
@@ -1174,13 +1104,10 @@ export function initTransform(svg, state) {
     }
 
     // PageUp ??bring selected objects forward one step in z-order
-    if (e.key === "PageUp" || e.code === "PageUp") {
+    if (e.key === "PageUp") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
-        // Chrome reserves Ctrl+PageUp/Down for tab switching. Shift is delivered
-        // to the canvas reliably, so it is the 30° rotation modifier.
-        const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
         const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1197,7 +1124,7 @@ export function initTransform(svg, state) {
           const box0 = groupBBox(members, svg);
           if (box0) {
             const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
-            const r = (rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const r = (5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
             const rot = (x, y) => ({
               x: px + cosT * (x - px) - sinT * (y - py),
               y: py + sinT * (x - px) + cosT * (y - py),
@@ -1218,20 +1145,20 @@ export function initTransform(svg, state) {
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
-                  obj.startAngle = (obj.startAngle || 0) - rotationStep;
+                  obj.startAngle = (obj.startAngle || 0) - 5;
                 } else if (obj.type === "rightangle") {
                   const c = rot(obj.x, obj.y);
                   obj.x = c.x; obj.y = c.y;
-                  obj.angle = (obj.angle || 0) + rotationStep;
+                  obj.angle = (obj.angle || 0) + 5;
                 } else if (obj.type === "text") {
                   const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
                   obj.x = c.x; obj.y = c.y;
-                  obj.rotation = (obj.rotation || 0) + rotationStep;
+                  obj.rotation = (obj.rotation || 0) + 5;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
                   obj.y = c.y - obj.h / 2;
-                  obj.rotation = (obj.rotation || 0) + rotationStep;
+                  obj.rotation = (obj.rotation || 0) + 5;
                 }
               });
               s2.undoStack.push(snap); s2.redoStack = [];
@@ -1245,10 +1172,10 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
-            if (o.type === "rightangle") { o.angle = (o.angle || 0) + rotationStep; changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, 5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) + 5; changed = true; return; }
             if (!FLIP_TYPES.has(o.type)) return;
-            o.rotation = (o.rotation ?? 0) + rotationStep;
+            o.rotation = (o.rotation ?? 0) + 5;
             changed = true;
           });
           if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
@@ -1275,12 +1202,10 @@ export function initTransform(svg, state) {
     }
 
     // PageDown ??send selected objects backward one step in z-order
-    if (e.key === "PageDown" || e.code === "PageDown") {
+    if (e.key === "PageDown") {
       if (!selectedIds.length) return;
       e.preventDefault();
       if (s.activeTool === "rotate") {
-        // See the matching PageUp handler: Shift is the browser-safe 30° modifier.
-        const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
         const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1297,7 +1222,7 @@ export function initTransform(svg, state) {
           const box0 = groupBBox(members, svg);
           if (box0) {
             const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
-            const r = (-rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const r = (-5 * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
             const rot = (x, y) => ({
               x: px + cosT * (x - px) - sinT * (y - py),
               y: py + sinT * (x - px) + cosT * (y - py),
@@ -1318,20 +1243,20 @@ export function initTransform(svg, state) {
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
-                  obj.startAngle = (obj.startAngle || 0) + rotationStep; // screen-CCW = math +
+                  obj.startAngle = (obj.startAngle || 0) + 5; // screen-CCW = math +
                 } else if (obj.type === "rightangle") {
                   const c = rot(obj.x, obj.y);
                   obj.x = c.x; obj.y = c.y;
-                  obj.angle = (obj.angle || 0) - rotationStep;
+                  obj.angle = (obj.angle || 0) - 5;
                 } else if (obj.type === "text") {
                   const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
                   obj.x = c.x; obj.y = c.y;
-                  obj.rotation = (obj.rotation || 0) - rotationStep;
+                  obj.rotation = (obj.rotation || 0) - 5;
                 } else {
                   const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
                   obj.x = c.x - obj.w / 2;
                   obj.y = c.y - obj.h / 2;
-                  obj.rotation = (obj.rotation || 0) - rotationStep;
+                  obj.rotation = (obj.rotation || 0) - 5;
                 }
               });
               s2.undoStack.push(snap); s2.redoStack = [];
@@ -1345,10 +1270,10 @@ export function initTransform(svg, state) {
           ids.forEach(id => {
             const o = s2.objects.find((o) => o.id === id);
             if (!isMutable(o)) return;
-            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
-            if (o.type === "rightangle") { o.angle = (o.angle || 0) - rotationStep; changed = true; return; }
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -5); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) - 5; changed = true; return; }
             if (!FLIP_TYPES.has(o.type)) return;
-            o.rotation = (o.rotation ?? 0) - rotationStep;
+            o.rotation = (o.rotation ?? 0) - 5;
             changed = true;
           });
           if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
@@ -1860,15 +1785,9 @@ export function initTransform(svg, state) {
       state,
       svg,
     );
-    // Smart guides are the default for box/center alignment. Shift keeps the
-    // existing endpoint/shape magnet behavior without competing corrections.
-    const aligned = e.shiftKey
-      ? { dx: snapped.dx, dy: snapped.dy, guides: [] }
-      : resolveSmartAlignment(_moveObjIds, _moveOrigObjs, { dx: snapped.dx, dy: snapped.dy }, getRenderScale(), state, svg);
-    const dx = aligned.dx, dy = aligned.dy;
+    const dx = snapped.dx, dy = snapped.dy;
 
     /* ===== SNAP PREVIEW HOOK: publish transient pair before the repaint ===== */
-    setSmartGuides(aligned.guides);
     setSnapPreview(snapped.preview);
     state.update((s) => {
       _moveObjIds.forEach(id => {
@@ -1889,7 +1808,6 @@ export function initTransform(svg, state) {
 
   /* -- pointer/mouse release: commit or discard the pending undo snapshot -- */
   const finishGesture = () => {
-    setSmartGuides([]);
     if (_rotating) {
       _rotating = false;
       if (_rotDidMove && _rotPendingSnap) {

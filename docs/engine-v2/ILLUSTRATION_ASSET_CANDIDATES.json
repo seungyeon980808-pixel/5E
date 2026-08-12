@@ -1,7 +1,7 @@
 {
   "schemaVersion": "5e-illustration-asset-candidates@1",
   "generatedBy": "scripts/engine-v2/audit-illustration-assets.mjs",
-  "sourceFingerprint": "sha256:216e38cbd8b23de2cd0a453a0c0a846bd95ded433993c7f9a2f9263332fe1757",
+  "sourceFingerprint": "sha256:2ca1219eaa1aef285dff46b50e8e60a150c4aefe9abb92d762d645bf142d01c5",
   "scope": {
     "examLibraryItems": 3961,
     "declaredExamLibraryItems": 3961,

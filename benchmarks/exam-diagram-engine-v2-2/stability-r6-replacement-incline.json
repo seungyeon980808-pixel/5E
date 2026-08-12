@@ -1,9 +1,0 @@
-{
-  "benchmark_version": "2.2-r6-stability-replacement-incline",
-  "source_split": "development",
-  "purpose": "Replacement for the invalid incline-contact stability fixture.",
-  "repetitions": 3,
-  "cases": [
-    "cases/development/v22-dev-physics-incline-fixed-pulley-lower-mass.json"
-  ]
-}

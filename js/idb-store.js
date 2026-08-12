@@ -58,14 +58,3 @@ export async function idbSet(key, value) {
     tx.onabort = () => reject(tx.error || new Error("IndexedDB tx aborted"));
   });
 }
-
-export async function idbDel(key) {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    tx.objectStore(STORE).delete(key);
-    tx.oncomplete = () => resolve(true);
-    tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error || new Error("IndexedDB tx aborted"));
-  });
-}

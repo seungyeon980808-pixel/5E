@@ -30,8 +30,8 @@ import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.4.0";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.4.0";
 import { nextObjectId } from "./tools/id.js?v=1.4.0";
 import { setupFreeDraw } from "./tools/free-draw.js?v=1.4.0";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.5.2";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.5.2";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.4.0";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.4.0";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
@@ -58,11 +58,11 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.5.1";
+} from "./text-editor.js?v=1.4.0";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.5.1";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.4.0";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
 import { guideCursorAt } from "./ruler.js?v=1.4.0";
@@ -188,94 +188,31 @@ function setupButtons() {
  * 있어도 이 옵션 버튼을 querySelector로 찾아 click()하므로 그대로 작동한다. */
 function setupToolChoosers() {
   const PAIRS = [
-    { btn: "tool-text-merged", chooser: "chooser-text", persistent: true },
-    { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true },
-    { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true },
+    { btn: "tool-text-merged", chooser: "chooser-text" },
+    { btn: "tool-angle-merged", chooser: "chooser-angle" },
   ];
-  const closeAll = () => {
-    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
-    document.querySelectorAll(".tool-btn.is-open").forEach((b) => {
-      b.classList.remove("is-open");
-      b.setAttribute("aria-expanded", "false");
-    });
-    if (_state) syncButtons(_state.get().activeTool);
-  };
+  const closeAll = () => document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
   let anyBound = false;
-  PAIRS.forEach(({ btn, chooser, persistent }) => {
+  PAIRS.forEach(({ btn, chooser }) => {
     const b = document.getElementById(btn), c = document.getElementById(chooser);
     if (!b || !c) return;
     anyBound = true;
-    let closeTimer = 0;
-    const open = () => {
-      closeAll();
-      c.hidden = false;
-      c.dataset.persistent = persistent ? "true" : "false";
-      b.classList.add("is-open");
-      b.setAttribute("aria-expanded", "true");
-      // While choosing a child tool, suppress the old tool highlight. The
-      // selected child will restore its own active state after it is armed.
-      document.querySelectorAll(".tool-btn.is-active").forEach((tool) => tool.classList.remove("is-active"));
-
-      const uiZoom = Number.parseFloat(getComputedStyle(document.body).zoom) || 1;
-      const buttonRect = b.getBoundingClientRect();
-      const panelRect = document.getElementById("panel-left")?.getBoundingClientRect();
-      const popupRect = c.getBoundingClientRect();
-      const panelRight = panelRect?.right || buttonRect.right;
-      const gap = 12;
-      // Always clear the button's own right edge. On narrow layouts the
-      // panel rect can be narrower than an overflowing tool button.
-      let left = Math.max(buttonRect.right + gap, panelRight + gap);
-      let top = buttonRect.top;
-      // If the side does not fit, keep the popup below the tool panel rather
-      // than covering the button grid.
-      if (left + popupRect.width > window.innerWidth - 8) {
-        left = Math.max(8, panelRight - popupRect.width);
-        top = Math.min(buttonRect.bottom + gap, window.innerHeight - popupRect.height - 8);
-      }
-      // getBoundingClientRect() is in rendered pixels, while a fixed child
-      // of body uses the pre-zoom coordinate system. Convert back so the
-      // popup never slides over its triggering button at medium/small zoom.
-      c.style.left = Math.round(left / uiZoom) + "px";
-      c.style.top = Math.round(Math.max(8, top) / uiZoom) + "px";
-    };
-    const scheduleClose = () => {
-      if (persistent) return;
-      window.clearTimeout(closeTimer);
-      closeTimer = window.setTimeout(() => {
-        // Use the shared closer so the temporary blue "open" state is also
-        // removed when the pointer leaves without choosing a child tool.
-        if (!b.matches(":hover") && !c.matches(":hover")) closeAll();
-      }, 160);
-    };
     b.addEventListener("click", (e) => {
       e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
       const willOpen = c.hidden;
       closeAll();
-      if (willOpen) {
-        // A merged button is a chooser, not the previously armed drawing
-        // tool. Clear the old tool highlight while child options are open;
-        // choosing an option arms the actual tool afterwards.
-        open();
-      }
+      if (!willOpen) return;
+      c.hidden = false;
+      const r = b.getBoundingClientRect();
+      c.style.left = Math.round(r.right + 6) + "px";
+      c.style.top = Math.round(r.top) + "px";
     });
-    if (!persistent) {
-      b.addEventListener("mouseenter", () => { window.clearTimeout(closeTimer); open(); });
-      b.addEventListener("mouseleave", scheduleClose);
-      c.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
-      c.addEventListener("mouseleave", scheduleClose);
-    }
     // 옵션 클릭 = 도구 선택(기존 위임이 처리) + 팝오버 닫기.
-    c.addEventListener("click", () => { if (!persistent) closeAll(); });
+    c.addEventListener("click", () => { closeAll(); });
   });
   if (anyBound) {
     // 팝오버 바깥을 누르면 닫는다(통합 버튼 자신은 stopPropagation으로 제외됨).
     document.addEventListener("click", (e) => {
-      if (e.target.closest(".tool-chooser")) return;
-      // A persistent cut chooser belongs to the armed cut tool. Canvas clicks
-      // must remain cut input and must not dismiss that chooser. Clicking a
-      // different toolbar button still closes it normally.
-      const persistentOpen = document.querySelector('.tool-chooser[data-persistent="true"]:not([hidden])');
-      if (persistentOpen && !e.target.closest(".tool-btn")) return;
       if (!e.target.closest(".tool-chooser")) closeAll();
     });
   }
@@ -334,8 +271,6 @@ function syncButtons(activeTool) {
   if (tm) tm.classList.toggle("is-active", activeTool === "T" || _activeSymbolId === "labeler");
   const am = document.getElementById("tool-angle-merged");
   if (am) am.classList.toggle("is-active", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
-  const cm = document.getElementById("tool-cut-merged");
-  if (cm) cm.classList.toggle("is-active", activeTool === "CUT" || activeTool === "DELAYED_CUT" || activeTool === "ERASE");
 }
 
 // Mirrors transform.js's own F-key precondition (selected, unlocked, type "triangle")
@@ -348,18 +283,13 @@ function hasFlippableTriangleSelected() {
   });
 }
 
-/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / Ctrl+E(지연 자르기) / T ----- */
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyE" || e.key.toLowerCase() === "e")) {
-      e.preventDefault();
-      setActiveTool("DELAYED_CUT");
-      return;
-    }
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
     if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     // 모달(함수 입력·좌표평면 상세 등)이 열린 동안, 포커스가 그 안의 BUTTON에 있을 때도
     // v/s/t/f 등 도구 단축키가 뒤편 캔버스 도구를 바꾸지 않게 차단(transform.js의 Delete/
     // Ctrl+Z 가드와 동일 패턴). 특히 F는 그래프 모달을 모달 위에 겹쳐 열어버렸다.
@@ -546,18 +476,6 @@ function setupDrawing() {
     let hitId = null;
     _state.update((s) => {
       hitId = pickSelectableObjectAtPoint(s, p);
-      // Some compound symbols (points/optics and angle markers) are rendered
-      // from several child SVG nodes. Their geometric hit-test can miss when
-      // the click lands on a child path or on a transparent hit twin, even
-      // though the renderer already identifies the owning object with data-id.
-      // Use that DOM identity as a bounded fallback, never as a cross-layer
-      // bypass: the object still has to belong to the active visible layer.
-      if (hitId === null) {
-        const domId = e.target?.closest?.("[data-id]")?.dataset?.id;
-        const domObj = domId && s.objects.find((o) => o.id === domId);
-        const domLayer = domObj && (s.layers || []).find((layer) => layer.id === (domObj.layerId ?? 1));
-        if (domObj && domLayer && domLayer.visible !== false && (domObj.layerId ?? 1) === s.activeLayerId) hitId = domId;
-      }
       if (hitId === null) {
         if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
         // V: defer selection to mouseup so marquee can run
@@ -691,8 +609,6 @@ function setupDrawing() {
         shape.order = s.objects.length;
         shape.layerId = s.activeLayerId;
         s.objects.push(shape);
-        s.selectedIds = [shape.id];
-        s.targetedId = null;
         s.undoStack.push(snap);
         s.redoStack = [];
         s.activeTool = "V"; // auto-return to select right after drawing (DESIGN 4-3)

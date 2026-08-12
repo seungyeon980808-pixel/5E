@@ -1,7 +1,0 @@
-{
-  "parent_attempt": 3,
-  "artifact": "normalized.png",
-  "passed": false,
-  "failure_tags": ["CATEGORY_ENCODING", "MASK_REQUIRED"],
-  "evidence": ["global palette normalization erased the two required liquid regions", "the derivative cannot replace the failed original"]
-}

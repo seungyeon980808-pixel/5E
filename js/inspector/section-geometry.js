@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.5.3";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.4.0";
 import { boxLabelSlots } from "../render.js?v=1.4.0";
 import { makeSection } from "./widgets.js?v=1.4.0";
 import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.4.0";

@@ -1,4 +1,4 @@
-/* ===== PROJECT I/O (save / open editable 5E project source) ===== */
+/* ===== PROJECT I/O (save / open editable source as JSON) ===== */
 //
 // This is the *editable source* format — the data needed to reconstruct the
 // drawing — and is separate from image export (built later). We serialize only
@@ -32,10 +32,8 @@ const SCHEMA_VERSION = "0.17";
 // Default artboard size for files saved before the artboard field existed.
 const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
-// The .5e container is UTF-8 JSON so project files stay inspectable and old
-// .json saves remain readable. Only the user-facing extension changes.
-const DEFAULT_FILENAME = "physics_drawing.5e";
-const PROJECT_FILE_ACCEPT = ".5e,.json,application/json";
+// Default download filename for a saved project.
+const DEFAULT_FILENAME = "physics_drawing.json";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -361,7 +359,7 @@ export function serialize(s) {
   };
 }
 
-/* ----- saveProject: write the current drawing as a .5e file -----
+/* ----- saveProject: write the current drawing as a .json file -----
  * Chromium/Edge(showSaveFilePicker): 사용자가 저장 폴더 + 파일명을 직접 고른다(요구:
  * "어디에 어떻게 저장될지 정할 수 있어야"). 그 외 브라우저·취소 외 오류 → 기존처럼
  * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
@@ -374,7 +372,7 @@ async function saveProject(state) {
     try {
       const handle = await window.showSaveFilePicker({
         suggestedName: DEFAULT_FILENAME,
-        types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".5e"] } }],
+        types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".json"] } }],
       });
       const writable = await handle.createWritable();
       await writable.write(blob);
@@ -458,7 +456,7 @@ export function applyLoaded(state, data) {
   });
 }
 
-/* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
+/* ----- openProject: read a .json file and load it into state ----- */
 function openProject(state, file) {
   const reader = new FileReader();
   reader.onload = async () => {
@@ -620,10 +618,10 @@ export function initProjectIO(state, svg) {
     else finishImagePlacement(state);
   }, true);
 
-  // Hidden file input for 5E projects. Legacy .json files remain supported.
+  // Hidden file input for project JSON, created here so index.html stays markup-only.
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = PROJECT_FILE_ACCEPT;
+  fileInput.accept = ".json,application/json";
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 
@@ -743,9 +741,9 @@ export function initProjectIO(state, svg) {
       e.preventDefault();
       const file = e.dataTransfer.files && e.dataTransfer.files[0];
       if (!file) return;
-      // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
-      // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.
-      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name)) {
+      // JSON 프로젝트 파일도 드래그앤드랍 지원(요구): 상단 '열기'와 동일하게 로드(현재 작업 대체).
+      // 일부 OS에서 .json의 MIME이 비어 있을 수 있어 확장자도 함께 본다.
+      if (file.type === "application/json" || /\.json$/i.test(file.name)) {
         openProject(state, file);
         return;
       }
