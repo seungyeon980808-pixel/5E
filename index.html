@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.2" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.7" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.8-pdf-search" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -403,7 +403,7 @@
             <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
             이미지 불러오기
           </label>
-          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">⌕ 이미지 검색…</button>
+          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 이미지와 PDF를 검색합니다">⌕ 이미지·PDF 검색…</button>
           <button type="button" data-ai-capture>화면 캡처</button>
           <button type="button" data-ai-compare title="참고 이미지와 생성 결과를 좌우로 비교합니다">이미지 비교</button>
           <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 동시에 변환합니다">여러 장 변환</button>
@@ -567,7 +567,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
-  <script type="module" src="js/main.js?v=1.5.9-delayed-cut-cache"></script>
+  <script type="module" src="js/main.js?v=1.5.10-pdf-search"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>
 </body>

@@ -46,7 +46,8 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(preload, /local-images:pick-folder/);
   assert.match(preload, /local-images:list/);
   assert.match(main, /desktopCapturer\.getSources/);
-  assert.match(main, /LOCAL_IMAGE_EXTENSIONS/);
+  assert.match(main, /collectLocalAssets/);
+  assert.match(main, /PDF_EXTENSIONS/);
 });
 
 test("image prompt includes the no-label drawing rule", () => {
@@ -95,7 +96,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
   assert.match(markup, /data-ai-reference-search/);
-  assert.match(markup, /이미지 검색…/);
+  assert.match(markup, /이미지·PDF 검색…/);
   assert.match(markup, /화면 캡처/);
   assert.match(markup, /이미지 불러오기/);
   assert.match(markup, /작업 취소/);

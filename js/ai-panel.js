@@ -36,7 +36,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.6";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.7";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -1610,7 +1610,7 @@ export function initAiPanel(state) {
 
   const refresh = async ({ autoConnect = true } = {}) => {
     if (!window.fiveEDesktop) {
-      setStatus("데스크톱 앱에서만 사용 가능", "warn");
+      setStatus("PDF 검색은 웹에서도 사용 가능 · AI 생성은 데스크톱 전용", "warn");
       return;
     }
     try {

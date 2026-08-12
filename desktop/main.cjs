@@ -11,6 +11,12 @@ const {
 } = require("./codex-turn-runtime.cjs");
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
+const {
+  collectLocalAssets,
+  isAllowedLocalAsset,
+  IMAGE_EXTENSIONS,
+  PDF_EXTENSIONS,
+} = require("./local-assets.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", "icon.ico");
@@ -39,17 +45,9 @@ const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImageRoots = new Set();
-const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
-
-function isPathInside(root, candidate) {
-  const relative = path.relative(path.resolve(root), path.resolve(candidate));
-  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
-}
 
 function allowedLocalImagePath(filePath) {
-  const resolved = path.resolve(String(filePath || ""));
-  return LOCAL_IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())
-    && Array.from(localImageRoots).some((root) => isPathInside(root, resolved));
+  return isAllowedLocalAsset(localImageRoots, filePath, IMAGE_EXTENSIONS);
 }
 
 function imageDataUrl(filePath) {
@@ -60,34 +58,6 @@ function imageDataUrl(filePath) {
         : ext === ".gif" ? "image/gif"
           : ext === ".bmp" ? "image/bmp" : "image/png";
   return `data:${mime};base64,${fs.readFileSync(filePath).toString("base64")}`;
-}
-
-function collectLocalImages(root, limit = 5000) {
-  const output = [];
-  const pending = [path.resolve(root)];
-  while (pending.length && output.length < limit) {
-    const folder = pending.pop();
-    let entries = [];
-    try { entries = fs.readdirSync(folder, { withFileTypes: true }); } catch { continue; }
-    for (const entry of entries) {
-      if (entry.name.startsWith(".")) continue;
-      const fullPath = path.join(folder, entry.name);
-      if (entry.isDirectory()) pending.push(fullPath);
-      else if (entry.isFile() && LOCAL_IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
-        let stat;
-        try { stat = fs.statSync(fullPath); } catch { continue; }
-        output.push({
-          path: fullPath,
-          name: entry.name,
-          relativePath: path.relative(root, fullPath),
-          size: stat.size,
-          modifiedAt: stat.mtimeMs,
-        });
-        if (output.length >= limit) break;
-      }
-    }
-  }
-  return output.sort((a, b) => a.relativePath.localeCompare(b.relativePath, "ko"));
 }
 
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
@@ -1202,7 +1172,7 @@ ipcMain.handle("capture:sources", async () => {
 });
 ipcMain.handle("local-images:pick-folder", async () => {
   const result = await dialog.showOpenDialog(win, {
-    title: "검색할 로컬 이미지 폴더 선택",
+    title: "검색할 로컬 이미지·PDF 폴더 선택",
     properties: ["openDirectory"],
   });
   const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");
@@ -1215,7 +1185,8 @@ ipcMain.handle("local-images:list", async (_, folder) => {
     throw new Error("로컬 이미지 폴더를 찾을 수 없습니다.");
   }
   if (!localImageRoots.has(resolved)) throw new Error("먼저 폴더 선택 창에서 로컬 폴더를 연결하세요.");
-  return { folder: resolved, items: collectLocalImages(resolved) };
+  const assets = collectLocalAssets(resolved);
+  return { folder: resolved, items: assets.images, pdfs: assets.pdfs };
 });
 ipcMain.handle("local-images:thumbnail", async (_, filePath) => {
   if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
@@ -1234,6 +1205,12 @@ ipcMain.handle("local-images:thumbnail", async (_, filePath) => {
 ipcMain.handle("local-images:read", async (_, filePath) => {
   if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
   return imageDataUrl(path.resolve(filePath));
+});
+ipcMain.handle("local-pdfs:read", async (_, filePath) => {
+  if (!isAllowedLocalAsset(localImageRoots, filePath, PDF_EXTENSIONS)) {
+    throw new Error("허용되지 않은 PDF 경로입니다.");
+  }
+  return fs.promises.readFile(path.resolve(filePath));
 });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("before-quit", stopServer);

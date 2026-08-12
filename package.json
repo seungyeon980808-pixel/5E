@@ -26,7 +26,7 @@
     "appId": "com.5e.editor",
     "productName": "5E",
     "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
+    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "vendor/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
     "win": { "icon": "assets/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
   }

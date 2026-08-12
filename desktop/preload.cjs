@@ -16,6 +16,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   listLocalImages: (folder) => ipcRenderer.invoke("local-images:list", folder),
   localImageThumbnail: (filePath) => ipcRenderer.invoke("local-images:thumbnail", filePath),
   readLocalImage: (filePath) => ipcRenderer.invoke("local-images:read", filePath),
+  readLocalPdf: (filePath) => ipcRenderer.invoke("local-pdfs:read", filePath),
   onEvent: (callback) => ipcRenderer.on("codex:event", (_, value) => callback(value)),
   onLog: (callback) => ipcRenderer.on("codex:log", (_, value) => callback(value)),
   onState: (callback) => ipcRenderer.on("codex:state", (_, value) => callback(value))
