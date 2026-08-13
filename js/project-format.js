@@ -15,11 +15,13 @@ const SESSION_FIELDS = [
 // Reserved root fields are current/transient state or legacy drawing inputs.
 const ROOT_RESERVED_FIELDS = new Set([
   "version", "pages", "activePageId",
-  "objects", "guides", "layers", "artboard", ...SESSION_FIELDS,
+  "meta", "objects", "guides", "layers", "artboard", ...SESSION_FIELDS,
 ]);
 const PAGE_RESERVED_FIELDS = new Set([
   "id", "name", "meta", "objects", "guides", "layers", "artboard", ...SESSION_FIELDS,
 ]);
+const META_RESERVED_FIELDS = new Set(["number", "points", ...SESSION_FIELDS]);
+const ARTBOARD_RESERVED_FIELDS = new Set(["w", "h", ...SESSION_FIELDS]);
 
 function extensionFields(record, reservedFields) {
   return Object.fromEntries(
@@ -41,13 +43,16 @@ function sanitizeGuides(guides) {
 function sanitizeArtboard(artboard) {
   const validWidth = artboard && Number.isFinite(artboard.w) && artboard.w > 0;
   const validHeight = artboard && Number.isFinite(artboard.h) && artboard.h > 0;
-  return validWidth && validHeight
-    ? { w: artboard.w, h: artboard.h }
-    : { ...DEFAULT_ARTBOARD };
+  return {
+    ...extensionFields(artboard, ARTBOARD_RESERVED_FIELDS),
+    w: validWidth && validHeight ? artboard.w : DEFAULT_ARTBOARD.w,
+    h: validWidth && validHeight ? artboard.h : DEFAULT_ARTBOARD.h,
+  };
 }
 
 function sanitizeMeta(meta) {
   return {
+    ...extensionFields(meta, META_RESERVED_FIELDS),
     number: meta && typeof meta.number === "string" ? meta.number : "",
     points: meta && typeof meta.points === "string" ? meta.points : "",
   };
@@ -83,6 +88,7 @@ export function migrate(data) {
   }
   if (!Array.isArray(data.objects)) return data;
   const page = migratePage({
+    meta: data.meta,
     name: "페이지 1",
     objects: data.objects,
     guides: data.guides,

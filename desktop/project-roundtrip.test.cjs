@@ -12,7 +12,7 @@ function currentProject() {
     pages: [{
       id: "page-current",
       name: "Current",
-      meta: { number: "1", points: "2" },
+      meta: { number: "1", points: "2", rubric: { band: "future" }, selectedIds: ["transient"] },
       pageExtension: { layout: "future-grid" },
       groups: [{ id: "derived-group", memberIds: ["object-current"] }],
       undoStack: [[{ id: "stale-history" }]],
@@ -33,7 +33,7 @@ function currentProject() {
       }],
       guides: [],
       layers: [{ id: 1, name: "Layer", visible: true }],
-      artboard: { w: 100, h: 70 },
+      artboard: { w: 100, h: 70, print: { bleed: 3 }, viewBox: { transient: true } },
     }],
   };
 }
@@ -42,6 +42,7 @@ function legacyProject() {
   return {
     version: "0.16",
     rootExtension: { owner: "legacy-plugin", revision: 2 },
+    meta: { number: "L", points: 7, rubric: { band: "legacy" }, draft: { transient: true } },
     objects: [{
       id: "object-legacy",
       type: "line",
@@ -49,7 +50,7 @@ function legacyProject() {
     }],
     guides: [],
     layers: [{ id: 1, name: "Layer", visible: true }],
-    artboard: { w: 90, h: 60 },
+    artboard: { w: -1, h: 60, print: { bleed: 2 }, selectedIds: ["transient"] },
   };
 }
 
@@ -81,6 +82,18 @@ test("preserves current page extensions when a current project is loaded and sav
 
   // Then
   assert.deepEqual(saved.pages[0].pageExtension, project.pages[0].pageExtension);
+});
+
+test("preserves current nested extensions while normalizing known fields", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.pages[0].meta, { number: "1", points: "2", rubric: { band: "future" } });
+  assert.deepEqual(saved.pages[0].artboard, { w: 100, h: 70, print: { bleed: 3 } });
 });
 
 test("omits derived and transient page fields when a current project is loaded and saved", async () => {
@@ -122,6 +135,19 @@ test("preserves legacy root extensions when a legacy project is loaded and saved
 
   // Then
   assert.deepEqual(saved.rootExtension, project.rootExtension);
+});
+
+test("moves legacy nested extensions into the page and normalizes known fields", async () => {
+  // Given
+  const project = legacyProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.pages[0].meta, { number: "L", points: "", rubric: { band: "legacy" } });
+  assert.deepEqual(saved.pages[0].artboard, { w: 90, h: 60, print: { bleed: 2 } });
+  assert.equal(Object.hasOwn(saved, "meta"), false);
 });
 
 test("preserves legacy object extensions when a legacy project is loaded and saved", async () => {
