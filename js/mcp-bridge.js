@@ -680,7 +680,8 @@ export async function initMcpBridge() {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) retryNow(); });
   window.addEventListener("focus", retryNow);
   const port = await findPort();
-  if (port) connect(port);
+  const claim = new URLSearchParams(location.search).get("claim") === "1";
+  if (port) connect(port, claim);
   else { setBadge("disconnected"); scheduleReconnect(); }   // 나중에 서버가 떠도 알아서 붙는다
 }
 
