@@ -1,0 +1,20 @@
+{
+  "schema": "5e-package-assets-policy-v1",
+  "assetRoot": "assets",
+  "requiredRuntime": [
+    "desktop/main.cjs",
+    "desktop/preload.cjs",
+    "index.html",
+    "js/main.js",
+    "js/pdf-document-index.mjs",
+    "vendor/pdfjs/pdf.min.mjs",
+    "vendor/pdfjs/pdf.worker.min.mjs"
+  ],
+  "forbiddenBuildPatterns": [
+    "assets/**/*"
+  ],
+  "forbiddenAssetRoots": [
+    "assets/exam-library",
+    "assets/parts-library"
+  ]
+}
