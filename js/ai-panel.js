@@ -16,7 +16,7 @@ import {
 } from "./ai-request-plan.js?v=1.5.8-local-privacy-completion";
 import { buildPlanningSafeAnnotationPrompt } from "./ai-image-annotations.js?v=1.5.13-phase0-privacy";
 import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.4-phase5-native-graph";
-import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.4-phase5-native-graph";
+import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.5-phase5-fail-closed";
 import { knownUnsupportedGraphFeatures, mustKeepNativeFailure, nativeSceneFailureReport,
   outputEngineForce } from "./ai-native-graph-policy.mjs?v=1.5.0-phase5-native-graph";
 import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
@@ -45,7 +45,7 @@ import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.15-phase
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.2-phase4-labels";
 import { buildDiagramOutputProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
-import { absoluteDifferencePixels } from "./image-difference.mjs?v=1.5.0-phase5-native-graph";
+import { absoluteDifferencePixels, boundedComparisonSize } from "./image-difference.mjs?v=1.5.1-phase5-bounded-compare";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -1447,8 +1447,10 @@ export function initAiPanel(state) {
     };
     const renderDifference = async () => {
       await Promise.all([imageReady(overlayLeft), imageReady(overlayRight)]);
-      const width = Math.max(overlayLeft.naturalWidth, overlayRight.naturalWidth, 1);
-      const height = Math.max(overlayLeft.naturalHeight, overlayRight.naturalHeight, 1);
+      const { width, height } = boundedComparisonSize([
+        { width: overlayLeft.naturalWidth, height: overlayLeft.naturalHeight },
+        { width: overlayRight.naturalWidth, height: overlayRight.naturalHeight },
+      ]);
       const pixels = absoluteDifferencePixels(
         containedPixels(overlayLeft, width, height),
         containedPixels(overlayRight, width, height),
@@ -1457,10 +1459,14 @@ export function initAiPanel(state) {
       differenceCanvas.height = height;
       differenceCanvas.getContext("2d").putImageData(new ImageData(pixels, width, height), 0, 0);
     };
+    const renderDifferenceSafely = () => void renderDifference().catch(() => {
+      differenceCanvas.hidden = true;
+      modeHint.textContent = "차이 이미지를 계산하지 못했습니다. 더 작은 이미지를 선택해 주세요.";
+    });
     const updateOverlay = () => {
       if (selection.left) overlayLeft.src = selection.left.data;
       if (selection.right) overlayRight.src = selection.right.data;
-      if (overlayStage.dataset.mode === "difference" && !overlayStage.hidden) void renderDifference();
+      if (overlayStage.dataset.mode === "difference" && !overlayStage.hidden) renderDifferenceSafely();
     };
 
     const makePane = (initial, side) => {
@@ -1518,7 +1524,7 @@ export function initAiPanel(state) {
           : "두 이미지를 같은 크기로 나란히 비교합니다.";
       if (mode !== "side") {
         overlayStage.dataset.mode = mode;
-        if (mode === "difference") void renderDifference();
+        if (mode === "difference") renderDifferenceSafely();
       }
     });
     dialog.append(head, modeControls, modeHint, panes, overlayStage);
@@ -2449,6 +2455,7 @@ export function initAiPanel(state) {
           setBusy(false);
           setStatus("편집 가능한 그래프로 표현할 수 없는 요청입니다.", "warn");
           addLog(report.message, "error");
+          finishCurrentTurnUi(eventEpoch);
           return;
         }
 

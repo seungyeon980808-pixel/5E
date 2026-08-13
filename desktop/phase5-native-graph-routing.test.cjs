@@ -24,6 +24,11 @@ test("automatic routing keeps graph images native and general reference transfor
   assert.equal(graph.rule, "chart-or-graph");
   assert.equal(chooseImageEngine({ request: "이 참고 이미지에서 문자만 제거해 줘", references: [{}] }).engine,
     IMAGE_ENGINE_IDS.RASTER);
+  for (const request of ["로그 축으로 함수를 그려 줘", "draw a polar plot", "use a logarithmic axis"]) {
+    const unsupportedGraph = chooseImageEngine({ request });
+    assert.equal(unsupportedGraph.engine, IMAGE_ENGINE_IDS.FAST_SCENE);
+    assert.equal(unsupportedGraph.rule, "chart-or-graph");
+  }
 });
 
 test("native graph failure policy reports unsupported features and forbids silent graph fallback", async () => {
@@ -70,16 +75,21 @@ test("product compilation is strict and comparison offers overlay and difference
   assert.match(panel, /compileFastSceneWithMotifs\(input, \{ \.\.\.options, strict: true \}\)/);
   assert.match(panel, /mustKeepNativeFailure\(/);
   assert.match(panel, /nativeSceneFailureReport\(/);
+  assert.match(panel, /addLog\(report\.message, "error"\);\s*finishCurrentTurnUi\(eventEpoch\);\s*return;/);
   assert.match(panel, /data-compare-view="overlay"/);
   assert.match(panel, /data-compare-view="difference"/);
   assert.match(panel, /검은 영역은 두 이미지가 다른 픽셀입니다/);
   assert.match(css, /\.ai-compare-overlay-stage\[data-mode="difference"\]/);
+  assert.match(css, /\.ai-compare-panes\[hidden\]\s*\{\s*display:\s*none/);
 });
 
 test("difference view computes a white-identical and dark-mismatch pixel image", async () => {
-  const { absoluteDifferencePixels } = await import("../js/image-difference.mjs");
+  const { absoluteDifferencePixels, boundedComparisonSize } = await import("../js/image-difference.mjs");
   const left = new Uint8ClampedArray([255, 255, 255, 255, 0, 0, 0, 255]);
   const right = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
   assert.deepEqual([...absoluteDifferencePixels(left, right)], [255, 255, 255, 255, 0, 0, 0, 255]);
   assert.throws(() => absoluteDifferencePixels(left, right.subarray(0, 4)), /same length/);
+  const bounded = boundedComparisonSize([{ width: 12000, height: 8000 }, { width: 9000, height: 12000 }]);
+  assert.ok(bounded.width <= 1600 && bounded.height <= 1600);
+  assert.ok(bounded.width * bounded.height <= 2_000_000);
 });

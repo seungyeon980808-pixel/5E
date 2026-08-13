@@ -117,7 +117,7 @@ const FAST_RULES = Object.freeze([
   },
   {
     id: "chart-or-graph",
-    pattern: /그래프|좌표(?:축|평면)?|곡선|산점도|막대\s*그래프|원\s*그래프|이중\s*(?:축|y축)|좌우\s*y축|에너지\s*준위|상평형\s*(?:그림|곡선)|적정\s*곡선/,
+    pattern: /그래프|좌표(?:축|평면)?|곡선|산점도|막대\s*그래프|원\s*그래프|이중\s*(?:축|y축)|좌우\s*y축|로그\s*(?:축|척도)|대수\s*(?:축|척도)|축\s*(?:교점|원점|위치)|극좌표|polar\s*(?:plot|graph)?|logarithmic\s*(?:axis|scale)|axisAt|에너지\s*준위|상평형\s*(?:그림|곡선)|적정\s*곡선/,
   },
   {
     id: "repeated-panel-flow",

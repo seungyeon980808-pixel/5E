@@ -17,3 +17,13 @@ export function absoluteDifferencePixels(left, right) {
   }
   return output;
 }
+
+export function boundedComparisonSize(sizes, { maxEdge = 1600, maxPixels = 2_000_000 } = {}) {
+  const width = Math.max(1, ...sizes.map((size) => Number(size?.width) || 0));
+  const height = Math.max(1, ...sizes.map((size) => Number(size?.height) || 0));
+  const scale = Math.min(1, maxEdge / width, maxEdge / height, Math.sqrt(maxPixels / (width * height)));
+  return {
+    width: Math.max(1, Math.floor(width * scale)),
+    height: Math.max(1, Math.floor(height * scale)),
+  };
+}

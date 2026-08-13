@@ -763,6 +763,7 @@
 .ai-compare-view-modes button:focus-visible { outline: 2px solid var(--accent, #2f81f7); outline-offset: 2px; }
 .ai-compare-view-hint { margin: 6px 12px 0; color: var(--muted, #8b949e); font-size: 12px; }
 .ai-compare-panes { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; flex: 1; }
+.ai-compare-panes[hidden] { display: none; }
 .ai-compare-pane { display: flex; min-width: 0; flex-direction: column; padding: 12px; }
 .ai-compare-pane + .ai-compare-pane { border-left: 1px solid var(--border, #30363d); }
 .ai-compare-main { min-height: 0; flex: 1; width: 100%; object-fit: contain; background: #fff; border-radius: 6px; }
