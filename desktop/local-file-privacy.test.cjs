@@ -18,13 +18,20 @@ const requestPlanModule = import("../js/ai-request-plan.js");
 function createReferenceStatusFixture() {
   const makeElement = () => ({
     attributes: new Map(), dataset: {}, hidden: true, textContent: "",
+    children: [],
     setAttribute(name, value) { this.attributes.set(name, value); },
     getAttribute(name) { return this.attributes.get(name); },
+    replaceChildren(...children) { this.children = children; },
   });
   const summary = makeElement();
   const grid = makeElement();
+  grid.ownerDocument = { createElement: makeElement };
+  const empty = makeElement();
+  empty.dataset.aiSearchState = "empty";
+  empty.textContent = "검색 결과가 없습니다.";
+  grid.replaceChildren(empty);
   const root = { querySelector: (selector) => selector === "[data-ai-search-summary]" ? summary : grid };
-  return { grid, root, summary };
+  return { empty, grid, root, summary };
 }
 
 test("local source activation skips every request transport", async () => {
@@ -187,7 +194,7 @@ test("the image pipeline delegates cache and remote planning to the private inpu
 test("remote catalog loading stays visible and accessible inside the dialog", async () => {
   // Given
   const { createReferenceLoadStatus } = await dialogModule;
-  const { grid, root, summary } = createReferenceStatusFixture();
+  const { empty, grid, root, summary } = createReferenceStatusFixture();
   const status = createReferenceLoadStatus(root);
 
   // When
@@ -200,6 +207,10 @@ test("remote catalog loading stays visible and accessible inside the dialog", as
   assert.equal(summary.getAttribute("aria-busy"), "true");
   assert.equal(grid.getAttribute("aria-busy"), "true");
   assert.ok(summary.textContent);
+  assert.equal(grid.children.length, 1);
+  assert.notEqual(grid.children[0], empty);
+  assert.equal(grid.children[0].dataset.aiSearchState, "loading");
+  assert.ok(grid.children[0].textContent);
 });
 
 test("remote catalog failure stays visible and accessible inside the dialog", async () => {

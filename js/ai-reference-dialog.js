@@ -39,7 +39,15 @@ export function createReferenceLoadStatus(root) {
     summary.setAttribute("aria-atomic", "true");
     summary.setAttribute("aria-busy", String(busy));
     grid.setAttribute("aria-busy", String(busy));
-    if (message) summary.textContent = message;
+    if (message) {
+      summary.textContent = message;
+      const notice = grid.ownerDocument.createElement("p");
+      notice.className = "ai-reference-search-empty";
+      notice.dataset.aiSearchState = state;
+      notice.setAttribute("aria-hidden", "true");
+      notice.textContent = message;
+      grid.replaceChildren(notice);
+    }
   };
   return {
     loading: () => update("loading", "이미지 검색 목록을 불러오는 중…"),
