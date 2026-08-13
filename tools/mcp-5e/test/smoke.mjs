@@ -87,6 +87,20 @@ await call("add_graph", {
     { expr: "0.4*x", dashLength: 1.2, dashGap: 0.8 },
   ],
 });
+await call("add_scene", {
+  path: graphFile,
+  scene: {
+    schema: "5e-fast-scene@1", mode: "complete", artboard: { w: 90, h: 60 },
+    elements: [{
+      type: "graph", box: [-40, -25, 34, 22], xRange: [0, 4], yRange: [0, 4],
+      grid: false, ticks: true, axisLabels: true, xLabel: "t(s)", yLabel: "v(m/s)",
+      axisStrokeWidth: 0.3, seriesStrokeWidth: 0.55,
+      markers: [{ x: 2, y: 2, label: "A", labelRole: "label" }],
+      series: [{ kind: "line", points: [[0, 0], [4, 4]], label: "v", labelRole: "quantity" }],
+    }],
+  },
+  strict: true,
+});
 await call("validate_project", { path: graphFile });
 
 /* ----- 3) 저수준 객체 + 광학 심볼 ----- */

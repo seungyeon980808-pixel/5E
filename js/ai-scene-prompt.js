@@ -1,7 +1,7 @@
 import { FAST_SCENE_SCHEMA_ID } from "./ai-scene-fastpath.js?v=1.5.3";
 import { AI_MOTIF_PROMPT_REFERENCE } from "./ai-motif-catalog.js?v=1.5.3";
 
-export const FAST_SCENE_PROMPT_VERSION = "5e-fast-scene-prompt@7";
+export const FAST_SCENE_PROMPT_VERSION = "5e-fast-scene-prompt@8";
 
 const TYPE_REFERENCE = `
 Supported element forms (coordinates are millimetres, centred artboard):
@@ -14,7 +14,9 @@ Supported element forms (coordinates are millimetres, centred artboard):
 - {"type":"optics","opticsKind":"convex_lens|concave_lens|convex_mirror|concave_mirror|plane_mirror|point_light|screen|node","box":[x,y,w,h]}
 - {"type":"vessel","vesselKind":"beaker|flask|test_tube|cylinder_graduated|funnel|u_tube|burette|round|box","box":[x,y,w,h],"liquid":0.5,"hasPiston":false,"pistonAt":0.3,"hasStopcock":false,"hasTicks":false}
 - {"type":"particlebox","box":[x,y,w,h],"state":"solid|liquid|gas","count":12,"particleRadius":1,"particleShape":"circle|square","mix":false,"seed":1,"motion":"none"}
-- {"type":"graph","box":[x,y,w,h],"xRange":[-5,5],"yRange":[-5,5],"axisVariant":"cross|quadrant|halfcross|single","grid":false,"showNumbers":false,"series":[{"style":"smooth","points":[[x,y],...]}]}
+- {"type":"graph","box":[x,y,w,h],"xRange":[-5,5],"yRange":[-5,5],"axisVariant":"cross|quadrant|halfcross|single","grid":false,"showNumbers":false,"series":[{"kind":"line|curve|scatter|bar","points":[[x,y],...] }]}
+- complete graph fields: xLabel,yLabel,originLabel,tickTextX,tickTextY,xStep,yStep,frame,y2Range,y2Label,tickTextY2,y2Step,markers,guides,guideLines,labels,arrows,legends,axisBreaks,panelLabel. Use bands:[{axis:"x|y",from,to,level,label}] for shaded intervals; leaders/dimensions/ranges:[{from:[x,y],to:[x,y],label,variant}] for editable callouts and interval marks. Omit step fields for an automatic readable interval. A point may be {x,y,label,labelRole:"label|quantity",labelSize,labelAngle,labelDistance}. A series may use axis:"y2", dashed, markers, label, labelRole:"label|quantity", area:{from,to,base,label}, barWidth, fillStyle:"white|gray|hatch". Typography rule: names/categories/point labels such as A, B, C, (가), 단열 are upright; only physical-quantity symbols such as x, t, v, I, P, V, E, f are italic. Units, numbers, parentheses, and Korean descriptions are upright. Use labelRole:"quantity" only when a label itself is a physical quantity; labels default to upright.
+- pie graph: {"type":"graph","chartKind":"pie","box":[x,y,w,h],"values":[{"value":3,"label":"3/5","tone":"white|gray"},...]}
 - {"type":"pedigree","box":[x,y,w,h],"gen2Kids":3,"gen3Kids":2,"gen3Parent":1,"affected":[],"carrier":[],"showNumbers":false}
 - complete mode only: {"type":"annotation","at":[x,y],"text":"...","fontSize":3.5}
 `;
