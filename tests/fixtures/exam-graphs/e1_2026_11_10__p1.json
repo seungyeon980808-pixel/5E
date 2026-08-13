@@ -1,0 +1,15 @@
+{
+  "sourceId":"e1_2026_11_10.png#1","sourceCrop":[0,0,1,1],"graphBox":[0.34,0.041885,0.63,0.827225],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":115,"h":112},"elements":[{
+    "type":"graph","box":[-40,-43,80,80.2],"xRange":[0,5],"yRange":[0,80],"axisVariant":"quadrant","grid":false,"ticks":false,"frame":true,"strokeWidth":0.75,"axisStrokeWidth":0.45,"seriesStrokeWidth":0.75,"labelHangulScale":1,
+    "xLabel":"평균 광도 →","yLabel":"평균 나이\n(억 년)","axisLabelSize":9,"axisLabelSizeX":9,"axisLabelSizeY":9,"tickLabelSize":9.3,
+    "series":[{"kind":"scatter","points":[[1.1,65],[3.8,20]]}],
+    "labels":[{"x":1.1,"y":65,"label":"A","labelAngle":90,"labelDistance":4},{"x":3.8,"y":20,"label":"B","labelAngle":90,"labelDistance":4},{"x":-0.12,"y":0,"label":"50","labelAngle":180,"labelDistance":3},{"x":-0.12,"y":50,"label":"100","labelAngle":180,"labelDistance":3}],
+    "arrows":[{"x":4.55,"y":-3,"dx":1,"dy":0}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.03},{"kind":"axes","variant":"quadrant"},{"kind":"axis_range","x":[0,5],"y":[0,80]},
+    {"kind":"series_geometry","count":1,"kinds":["scatter"]},{"kind":"point_positions","points":[{"series":0,"index":0,"at":[1.1,65]},{"series":0,"index":1,"at":[3.8,20]}]},
+    {"kind":"arrows","count":1,"items":[{"at":[4.55,-3],"delta":[1,0]}]},{"kind":"labels","values":["평균 광도","평균 나이","억 년","A","B","50","100"],"positions":[{"value":"A","at":[1.1,65]},{"value":"B","at":[3.8,20]},{"value":"50","at":[-0.12,0]},{"value":"100","at":[-0.12,50]}]}
+  ]
+}

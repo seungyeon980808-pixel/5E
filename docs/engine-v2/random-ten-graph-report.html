@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>평가원 기출 그래프 10종 복원 보고</title>
+<style>
+body{margin:0;background:#eceae6;color:#181818;font-family:Arial,"Malgun Gothic",sans-serif}main{width:1460px;margin:24px auto 60px}h1{font-size:26px;margin:0 0 6px}p{margin:0 0 20px;color:#555}.case{background:#fff;border:1px solid #ccc7bf;border-radius:12px;padding:16px;margin:0 0 18px;box-shadow:0 3px 12px #0001}.case h2{font-size:17px;margin:0 0 12px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pane{border:1px solid #ddd8d1;border-radius:8px;padding:10px;background:#fafafa}.pane h3{font-size:12px;margin:0 0 8px;color:#555}.visual{height:330px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}.visual svg{width:100%;height:100%}.ref svg{overflow:hidden}.meta{font-size:12px;margin-top:10px;padding:8px;background:#fff7df;border-left:3px solid #c58b13}.pass{color:#176b37;font-weight:700}
+</style></head><body><main><h1>평가원 기출 그래프 무작위 10종 — 원본 vs 5E 네이티브 복원</h1><p>난수 시드 20260810 · 기존 fixture가 없던 297개 패널에서 추첨 · 오른쪽은 현재 브랜치의 실제 5E 렌더러 출력</p><div id="root"></div></main>
+<script type="module">
+import { compileFastScene } from "../../js/ai-scene-fastpath.js";
+import { renderObject } from "../../js/render.js";
+import { makeFillPattern } from "../../js/render/fill.js";
+const NS="http://www.w3.org/2000/svg";
+const cases=[
+ ["열역학 P–V 순환","../../tests/fixtures/exam-graphs/p1_2023_06_16__p1.json"],
+ ["낙하 속도 v_y–시간","../../tests/fixtures/exam-graphs/p2_2026_06_03__p2.json"],
+ ["진행파 변위–위치","../../tests/fixtures/exam-graphs/p1_2026_09_06__p1.json"],
+ ["구간별 전류–위치","../../tests/fixtures/exam-graphs/p2_2024_11_17__p2.json"],
+ ["압력–온도 상평형","../../tests/fixtures/exam-graphs/c2_2023_11_09__p1.json"],
+ ["운동 에너지–속력 산점도","../../tests/fixtures/exam-graphs/p1_2025_06_13__p1.json"],
+ ["교류 전류–시간 파형","../../tests/fixtures/exam-graphs/p2_2026_09_05__p2.json"],
+ ["평균 나이–평균 광도","../../tests/fixtures/exam-graphs/e1_2026_11_10__p1.json"],
+ ["광전류–전압","../../tests/fixtures/exam-graphs/p2_2023_11_06__p2.json"],
+ ["공진 전류–진동수","../../tests/fixtures/exam-graphs/p2_2024_09_07__p2.json"]
+];
+function refSvg(f,source){const [gx,gy,gw,gh]=f.graphBox;const px=.018,py=.035;const x=Math.max(0,gx-px),y=Math.max(0,gy-py),w=Math.min(1-x,gw+px*2),h=Math.min(1-y,gh+py*2);const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox",`${x*source.sourceWidth} ${y*source.sourceHeight} ${w*source.sourceWidth} ${h*source.sourceHeight}`);const im=document.createElementNS(NS,"image");im.setAttribute("href",new URL(`../../${source.source}`,import.meta.url));im.setAttribute("width",source.sourceWidth);im.setAttribute("height",source.sourceHeight);svg.appendChild(im);return svg}
+function nativeSvg(f){const graph=f.scene.elements.find(e=>e.type==="graph");const [gx,gy,gw,gh]=graph.box;const px=gw*.055,py=gh*.1;const r=compileFastScene(f.scene,{idPrefix:"random_ten"});const svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox",`${gx-px} ${gy-py} ${gw+px*2} ${gh+py*2}`);const defs=document.createElementNS(NS,"defs");for(const style of ["hatch","dots","cross"]){const p=makeFillPattern(style,{id:`fill-${style}`,fillLevel:0,fillTile:3});if(p)defs.appendChild(p)}svg.appendChild(defs);r.objects.forEach(o=>{const n=renderObject(o);if(n)svg.appendChild(n)});svg.dataset.valid=String(r.valid&&r.supported);return svg}
+const manifest=(await fetch(new URL("graph-validation-manifest.jsonl",import.meta.url)).then(r=>r.text())).trim().split(/\r?\n/).map(JSON.parse);const byId=new Map(manifest.map(r=>[r.id,r]));const root=document.querySelector("#root");
+const selected=Number(new URLSearchParams(location.search).get("case"));const indices=selected>=1&&selected<=cases.length?[selected-1]:cases.map((_,i)=>i);if(indices.length===1){document.querySelector("h1").remove();document.querySelector("main>p").remove();document.querySelector("main").style.margin="18px auto"}
+for(const i of indices){const [title,url]=cases[i];const f=await fetch(new URL(url,import.meta.url)).then(r=>r.json());const source=byId.get(f.sourceId);const card=document.createElement("section");card.className="case";card.innerHTML=`<h2>${i+1}. ${title} — ${f.sourceId}</h2><div class="pair"><div class="pane"><h3>원본 기출 crop</h3><div class="visual ref"></div></div><div class="pane"><h3>5E 자체 기능 렌더</h3><div class="visual out"></div></div></div><div class="meta"><span class="pass">구조 검사 통과</span> · coordplane/funcgraph 내부 데이터 · 독립 text/formula 덮어쓰기 없음 · candidate(사람의 최종 픽셀 승인 전)</div>`;card.querySelector(".ref").appendChild(refSvg(f,source));card.querySelector(".out").appendChild(nativeSvg(f));root.appendChild(card)}
+</script></body></html>

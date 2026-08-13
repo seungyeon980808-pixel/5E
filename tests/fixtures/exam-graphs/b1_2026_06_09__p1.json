@@ -1,0 +1,15 @@
+{
+  "sourceId":"b1_2026_06_09.png#1","sourceCrop":[0,0,1,1],
+  "graphBox":[0.335938,0.066116,0.605469,0.694215],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":120,"h":110},"elements":[{
+    "type":"graph","box":[-45,-38,60,65],"xRange":[0,4],"yRange":[0,8],"axisVariant":"quadrant","grid":false,
+    "originLabel":"0","yLabel":"뼈 생장량(상댓값)",
+    "series":[{"kind":"bar","barWidth":0.58,"fillStyle":"gray","points":[{"x":0.8,"y":6,"label":"Ⅰ"},{"x":2,"y":3,"label":"Ⅱ"},{"x":3.2,"y":7,"label":"Ⅲ"}]}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.025},{"kind":"axes","variant":"quadrant"},
+    {"kind":"axis_range","x":[0,4],"y":[0,8]},{"kind":"series_geometry","count":1,"kinds":["bar"]},
+    {"kind":"point_positions","points":[{"series":0,"index":0,"at":[0.8,6]},{"series":0,"index":1,"at":[2,3]},{"series":0,"index":2,"at":[3.2,7]}]},
+    {"kind":"labels","values":["뼈 생장량(상댓값)","Ⅰ","Ⅱ","Ⅲ"]}
+  ]
+}

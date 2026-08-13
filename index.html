@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.2" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.6" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.6-pdf-crop-workspace-3" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -403,7 +403,7 @@
             <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
             이미지 불러오기
           </label>
-          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">⌕ 이미지 검색…</button>
+          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 이미지와 PDF를 검색합니다">⌕ 이미지·PDF 검색…</button>
           <button type="button" data-ai-capture>화면 캡처</button>
           <button type="button" data-ai-compare title="참고 이미지와 생성 결과를 좌우로 비교합니다">이미지 비교</button>
           <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 동시에 변환합니다">여러 장 변환</button>
@@ -466,19 +466,25 @@
           <div class="ai-input">
             <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
               <span>그림 복잡도</span>
-              <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
-              <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
-              <button type="button" data-ai-quality="complex" title="해부도, 혈관, 복합 회로·배관 · 약 2~4분">복잡<small>검수 포함</small></button>
+              <div class="ai-mode-options">
+                <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
+                <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
+                <button type="button" data-ai-quality="complex" title="해부도, 혈관, 복합 회로·배관 · 약 2~4분">복잡<small>검수 포함</small></button>
+              </div>
             </div>
             <div class="ai-mode-row" role="group" aria-label="출력 방식">
               <span>출력 방식</span>
-              <button type="button" class="is-on" data-ai-output-engine="raster" title="교과서 그림처럼 세부적인 평가원식 선화로 생성합니다">교과서 선화</button>
-              <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+              <div class="ai-mode-options">
+                <button type="button" class="is-on" data-ai-output-engine="raster" title="교과서 그림처럼 세부적인 평가원식 선화로 생성합니다">교과서 선화</button>
+                <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+              </div>
             </div>
             <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
               <span>라벨</span>
-              <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
-              <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
+              <div class="ai-mode-options">
+                <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
+                <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
+              </div>
             </div>
             <div class="ai-chat-composer">
               <textarea data-ai-input placeholder="요구사항을 입력하세요. Enter로 전송하고 Shift+Enter로 줄을 바꿉니다."></textarea>
@@ -561,7 +567,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
-  <script type="module" src="js/main.js?v=1.5.9-delayed-cut-cache"></script>
+  <script type="module" src="js/main.js?v=1.5.9-delayed-cut-cache-pdf-crop-responsive-2"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>
 </body>

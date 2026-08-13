@@ -216,6 +216,8 @@ function migrateObjectList(objects) {
         next.showAxisLines = next.showAxisLines ?? true;
         next.showGrid = next.showGrid ?? false;
         next.showTicks = next.showTicks ?? true;
+        next.showTickX = next.showTickX ?? true;
+        next.showTickY = next.showTickY ?? true;
         next.showTickLabels = next.showTickLabels ?? false;
         next.tickLabelSize = next.tickLabelSize ?? 2.6;
         // 눈금 라벨 모드(그래프 도구): 없음/숫자/문자. 구파일은 showTickLabels로 유도.
@@ -241,10 +243,14 @@ function migrateObjectList(objects) {
         next.guideLines = Array.isArray(next.guideLines) ? next.guideLines : [];
         next.legends = Array.isArray(next.legends) ? next.legends : [];
         next.annLabelPoints = Array.isArray(next.annLabelPoints) ? next.annLabelPoints : [];
+        next.ranges = Array.isArray(next.ranges) ? next.ranges : [];
+        next.dimensions = Array.isArray(next.dimensions) ? next.dimensions : [];
+        next.leaders = Array.isArray(next.leaders) ? next.leaders : [];
         // 그래프 도구: 눈금/격자 칸 수 캡(gridCountX/Y)은 spread로 보존. 격자 초과분만 백필.
         next.gridOver = Number.isFinite(next.gridOver) ? next.gridOver : (next.gridCountX !== undefined ? 0.5 : 0);
         next.labelScale = Number.isFinite(next.labelScale) ? next.labelScale : 1; // 글씨 크기 배율
         next.labelX = next.labelX ?? "x"; next.labelY = next.labelY ?? "y";
+        next.labelYLayout = next.labelYLayout ?? "horizontal";
         next.showAxisLabels = next.showAxisLabels ?? true;
         next.axisLabelSize = next.axisLabelSize ?? 3.5;
         next.showOrigin = next.showOrigin ?? true;

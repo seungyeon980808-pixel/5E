@@ -49,6 +49,21 @@ function insertAtCursor(input, text) {
   input.focus();
 }
 
+// 축 이름용 네이티브 분수 입력. 선택 문자열이 있으면 분자로 감싸고, 없으면 분자 칸에
+// 커서를 둔다. 저장값은 coordplane.labelX/labelY 안의 `\\frac{}{}`이므로 별도 수식 객체가
+// 생기지 않으며 그래프를 다시 열었을 때 그대로 편집된다.
+function insertFractionAtCursor(input) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? start;
+  const selected = input.value.slice(start, end);
+  const inserted = `\\frac{${selected}}{}`;
+  input.value = input.value.slice(0, start) + inserted + input.value.slice(end);
+  const caret = selected ? start + inserted.length - 1 : start + "\\frac{".length;
+  input.setSelectionRange(caret, caret);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  input.focus();
+}
+
 let _overlay = null, _els = null;
 let _mode = "create";             // "create" | "edit"
 let _planeId = null;              // edit 대상 coordplane id
@@ -73,14 +88,14 @@ function defaultCfg() {
   return {
     variant: "quadrant", xNeg: 0, xPos: 5, yNeg: 0, yPos: 5,
     tickStepX: 1, tickStepY: 1,    // 한 칸이 나타내는 값(숫자 눈금 라벨 전용; 물리 칸은 불변)
-    labelX: "x", labelY: "y", showX: true, showY: true,
+    labelX: "x", labelY: "y", labelYLayout: "horizontal", showX: true, showY: true,
     // 오른쪽 세로축(y2) — 생명과학 자료해석 문항의 좌우 이중 y축. 끄면(기본) 평면에
     // y2 필드 자체를 안 넣으므로, 옛 그래프는 물론 새로 만든 보통 그래프도 종전과 동일하다.
     y2On: false, labelY2: "", y2Pos: null,   // y2Pos = 오른쪽 축 마지막 눈금 값(null=왼쪽과 같음)
     y2ShowTick: false,                       // 기출 관례: 오른쪽 눈금 숫자가 없는 경우가 많다
     y2TickText: "",                          // 직접 문자 눈금(쉼표 구분, 아래→위)
     origin: "0", showOrigin: true,
-    showGrid: true, showTicks: true,
+    showGrid: true, showTicks: true, showTickX: true, showTickY: true,
     tickMode: "none",             // "none" | "number" | "multiple" | "text"
     tickTextX: "", tickTextY: "", // 직접 모드: 쉼표 구분 입력 원문
     tickBaseX: "", tickBaseY: "", // 배수 모드: 기준 문자(t_0 → t₀, 2t₀, 3t₀… 자동)
@@ -103,6 +118,9 @@ function defaultCfg() {
     annArrows: [],                // 자유 화살촉 [{x,y, tx,ty}] (head, tail로 방향)
     guideLines: [],               // 가이드라인 [{x1,y1,x2,y2}] (두 점 점선)
     legends: [],                  // 범례 박스 [{x,y, rows:[{dash,text}]}]
+    ranges: [],                   // 범위 막대 [{from:{x,y},to:{x,y},label,variant}]
+    dimensions: [],               // 치수선 [{from:{x,y},to:{x,y},label,variant}]
+    leaders: [],                  // 지시선 [{from:{x,y},to:{x,y},label}]
     // 라벨러 표시점(요구 ⑥): 점 + A·B·C… 순서 라벨. dist(mm)·angle(도, 0=오른쪽·+=반시계)·
     // size(mm, 15pt 기본)로 라벨 위치·크기를 조절. text는 직접 수정 가능.
     annLabelPoints: [],            // [{x,y, text, dist, angle, size}]
@@ -192,6 +210,8 @@ function applyCfg(plane, cfg) {
   plane.gridOver = plane.gridOverXPos;            // 구코드 호환(단일값 폴백)
   plane.showGrid = cfg.showGrid;
   plane.showTicks = cfg.showTicks;
+  plane.showTickX = cfg.showTickX !== false;
+  plane.showTickY = cfg.showTickY !== false;
   // 눈금 라벨: 없음/숫자/배수(기준 문자 자동)/직접(쉼표). 배수·직접은 렌더상 "text" 모드.
   plane.graphTickMode = cfg.tickMode;   // cfg 레벨 모드(재편집 복원용; 배수↔직접 구분)
   plane.tickBaseX = cfg.tickBaseX; plane.tickBaseY = cfg.tickBaseY;
@@ -233,6 +253,7 @@ function applyCfg(plane, cfg) {
   plane.showAxisLabelY = cfg.showY;
   plane.labelX = cfg.labelX;
   plane.labelY = cfg.labelY;
+  plane.labelYLayout = cfg.labelYLayout === "vertical" ? "vertical" : "horizontal";
   plane.showOrigin = cfg.showOrigin;
   plane.labelOrigin = cfg.origin;
   plane.labelType = "quantity";
@@ -261,6 +282,9 @@ function applyCfg(plane, cfg) {
   plane.guideLines = arr(cfg.guideLines);
   plane.legends = arr(cfg.legends);
   plane.annLabelPoints = arr(cfg.annLabelPoints);
+  plane.ranges = arr(cfg.ranges);
+  plane.dimensions = arr(cfg.dimensions);
+  plane.leaders = arr(cfg.leaders);
   plane.graphCfg = { xNeg, xPos, yNeg, yPos, tickStepX: plane.tickStepX, tickStepY: plane.tickStepY };   // 재편집 시 범위·간격 복원용 스펙
   return plane;
 }
@@ -635,6 +659,7 @@ function bakeBars(s, plane) {
     bars: {
       items: rects,
       labelSize: endLabelSizeOf(plane),
+      labelUpright: true,
       strokeWidth: Number.isFinite(s.strokeWidth) ? s.strokeWidth : 0.3,
       ...barFillFields(s.fillStyle),
     },
@@ -2102,6 +2127,9 @@ function syncCfgControls() {
   const negNote = _els.overlay.querySelector("#gm-neg-note");
   if (negNote) negNote.style.display = (showNegRow && (!xNegOn || !yNegOn)) ? "" : "none";
   _els.labelX.value = c.labelX; _els.labelY.value = c.labelY;
+  _els.labelYLayout.querySelectorAll("button[data-layout]").forEach((b) => {
+    b.classList.toggle("on", b.dataset.layout === (c.labelYLayout === "vertical" ? "vertical" : "horizontal"));
+  });
   // 오른쪽 세로축(y2)
   _els.y2On.checked = !!c.y2On;
   _els.y2Rows.style.display = c.y2On ? "" : "none";
@@ -2321,10 +2349,21 @@ function build() {
               <div class="gm-ax-cell">
                 <textarea id="gm-labelx" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 시간(s)"
                   style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:36px;">x</textarea>
+                <button type="button" class="gm-label-frac" data-label-target="x" title="선택한 글자를 분자로 만들거나 빈 분수를 삽입합니다">분수</button>
               </div>
               <div class="gm-ax-cell">
                 <textarea id="gm-labely" class="gm-ta" rows="1" spellcheck="false" placeholder="예: 속도(m/s)"
                   style="flex:1;min-width:0;resize:none;field-sizing:content;min-height:36px;">y</textarea>
+                <button type="button" class="gm-label-frac" data-label-target="y" title="선택한 글자를 분자로 만들거나 빈 분수를 삽입합니다">분수</button>
+              </div>
+
+              <div class="gm-ax-lbl">세로축 글자</div>
+              <div class="gm-ax-cell" style="grid-column:span 2;">
+                <div class="gm-variant-seg" id="gm-labely-layout" aria-label="세로축 글자 방향">
+                  <button type="button" data-layout="horizontal" title="분수와 일반 축 이름을 가로로 표시">가로</button>
+                  <button type="button" data-layout="vertical" title="평가원식으로 글자를 한 자씩 세로로 표시">세로</button>
+                </div>
+                <span style="font-size:11px;color:var(--text-secondary);">분수는 가로 모드에서 사용합니다.</span>
               </div>
 
               <div class="gm-ax-note" id="gm-neg-note">ㅏ자는 x축에 음의 방향이 없습니다 — 십자로 바꾸면 열립니다.</div>
@@ -2769,6 +2808,7 @@ function build() {
     yNeg: overlay.querySelector("#gm-yneg"), yPos: overlay.querySelector("#gm-ypos"),
     xStep: overlay.querySelector("#gm-xstep"), yStep: overlay.querySelector("#gm-ystep"),
     labelX: overlay.querySelector("#gm-labelx"), labelY: overlay.querySelector("#gm-labely"),
+    labelYLayout: overlay.querySelector("#gm-labely-layout"),
     y2On: overlay.querySelector("#gm-y2-on"), y2Rows: overlay.querySelector("#gm-y2-rows"),
     labelY2: overlay.querySelector("#gm-labely2"), y2Pos: overlay.querySelector("#gm-y2-pos"),
     y2ShowTick: overlay.querySelector("#gm-y2-showtick"), y2TickText: overlay.querySelector("#gm-y2-ticktext"),
@@ -2924,6 +2964,15 @@ function build() {
   });
   _els.labelX.addEventListener("input", () => { _cfg.labelX = _els.labelX.value; refreshPreview(); });
   _els.labelY.addEventListener("input", () => { _cfg.labelY = _els.labelY.value; refreshPreview(); });
+  _els.overlay.querySelectorAll(".gm-label-frac").forEach((btn) => {
+    btn.addEventListener("click", () => insertFractionAtCursor(btn.dataset.labelTarget === "x" ? _els.labelX : _els.labelY));
+  });
+  _els.labelYLayout.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-layout]");
+    if (!btn) return;
+    _cfg.labelYLayout = btn.dataset.layout === "vertical" ? "vertical" : "horizontal";
+    syncCfgControls(); refreshPreview();
+  });
   // 축 이름 칸에 포커스가 오면(탭 이동 포함) 기존 글자를 통째로 선택 → 바로 덮어쓸 수 있게(요구 1).
   // 일부 브라우저가 focus 직후 선택을 지우므로 setTimeout(0)으로 한 틱 뒤에 선택한다.
   [_els.labelX, _els.labelY].forEach((el) => el.addEventListener("focus", () => {
@@ -3320,6 +3369,7 @@ function loadFromPlane(plane) {
   cfg.tickTextX = Array.isArray(plane.tickTextX) ? plane.tickTextX.join(", ") : "";
   cfg.tickTextY = Array.isArray(plane.tickTextY) ? plane.tickTextY.join(", ") : "";
   cfg.tickBaseX = plane.tickBaseX || ""; cfg.tickBaseY = plane.tickBaseY || "";
+  cfg.labelYLayout = plane.labelYLayout === "vertical" ? "vertical" : "horizontal";
   // 글씨 크기: 신규 분리 필드 우선, 없으면 구 labelScale로 폴백(둘 다에 적용).
   cfg.axisLabelScale = Number.isFinite(plane.axisLabelScale) ? plane.axisLabelScale : (Number.isFinite(plane.labelScale) ? plane.labelScale : 1);
   cfg.tickLabelScale = Number.isFinite(plane.tickLabelScale) ? plane.tickLabelScale : (Number.isFinite(plane.labelScale) ? plane.labelScale : 1);
@@ -3341,6 +3391,8 @@ function loadFromPlane(plane) {
   cfg.gridOverYNeg = Number.isFinite(plane.gridOverYNeg) ? plane.gridOverYNeg : goFallback;
   // 눈금 숫자 이동 오프셋 복원(요구 ②).
   cfg.tickMovable = !!plane.tickMovable;
+  cfg.showTickX = plane.showTickX !== false;
+  cfg.showTickY = plane.showTickY !== false;
   const restoreOffs = (arr) => Array.isArray(arr) ? arr.map((o) => (o && (Number.isFinite(o.dx) || Number.isFinite(o.dy))) ? { dx: o.dx || 0, dy: o.dy || 0 } : { dx: 0, dy: 0 }) : [];
   cfg.tickOffX = restoreOffs(plane.tickOffX);
   cfg.tickOffY = restoreOffs(plane.tickOffY);
@@ -3352,6 +3404,9 @@ function loadFromPlane(plane) {
   cfg.guideLines = rArr(plane.guideLines);
   cfg.legends = rArr(plane.legends);
   cfg.annLabelPoints = rArr(plane.annLabelPoints);
+  cfg.ranges = rArr(plane.ranges);
+  cfg.dimensions = rArr(plane.dimensions);
+  cfg.leaders = rArr(plane.leaders);
   // 계열 묶기는 평면의 seriesLock(신규) 우선, 없으면 자식 계열의 positionLocked로 유도.
   cfg.lockPosition = (plane.seriesLock !== undefined)
     ? !!plane.seriesLock

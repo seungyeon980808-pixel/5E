@@ -1,0 +1,17 @@
+{
+  "sourceId":"p1_2026_09_06.png#1","sourceCrop":[0,0,0.566,1],"graphBox":[0.13111,0.145833,0.430566,0.802083],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":165,"h":82},"elements":[{
+    "type":"graph","box":[-72,-24,120,49.94],"xRange":[-0.5,6.5],"yRange":[-1.8,1.8],"axisVariant":"cross","grid":false,"ticks":false,"strokeWidth":0.8,"axisStrokeWidth":0.55,"seriesStrokeWidth":0.8,"labelHangulScale":1,
+    "originLabel":"0","xLabel":"x(m)","yLabel":"A의 변위(m)","axisLabelSize":6,"axisLabelSizeX":6,"axisLabelSizeY":6,"tickLabelSize":6,
+    "series":[{"kind":"curve","curvature":1,"points":[[-0.5,1.15],[0,1.5],[0.5,1.15],[1,0],[1.5,-1.15],[2,-1.5],[2.5,-1.15],[3,0],[3.5,1.15],[4,1.5],[4.5,1.15],[5,0],[5.5,-1.15]]}],
+    "guideLines":[{"from":[0,1.5],"to":[4,1.5]},{"from":[0,-1.5],"to":[2,-1.5]}],
+    "labels":[{"x":1,"y":-0.18,"label":"1","labelAngle":-90,"labelDistance":2},{"x":3,"y":-0.18,"label":"3","labelAngle":-90,"labelDistance":2},{"x":5,"y":-0.18,"label":"5","labelAngle":-90,"labelDistance":2},{"x":-0.2,"y":1.5,"label":"1.5","labelAngle":180,"labelDistance":3},{"x":-0.2,"y":-1.5,"label":"-1.5","labelAngle":180,"labelDistance":3},{"x":2.1,"y":1.72,"label":"진행 방향","labelAngle":90,"labelDistance":3}],
+    "arrows":[{"x":2.75,"y":1.72,"dx":1,"dy":0}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.03},{"kind":"axes","variant":"cross"},{"kind":"axis_range","x":[-0.5,6.5],"y":[-1.8,1.8]},
+    {"kind":"series_geometry","count":1,"kinds":["curve"]},{"kind":"guides","count":2,"items":[{"from":[0,1.5],"to":[4,1.5]},{"from":[0,-1.5],"to":[2,-1.5]}]},
+    {"kind":"arrows","count":1,"items":[{"at":[2.75,1.72],"delta":[1,0]}]},
+    {"kind":"labels","values":["A의 변위(m)","x(m)","1.5","-1.5","진행 방향"],"positions":[{"value":"1","at":[1,-0.18]},{"value":"3","at":[3,-0.18]},{"value":"5","at":[5,-0.18]},{"value":"1.5","at":[-0.2,1.5]},{"value":"-1.5","at":[-0.2,-1.5]},{"value":"진행 방향","at":[2.1,1.72]}]}
+  ]
+}

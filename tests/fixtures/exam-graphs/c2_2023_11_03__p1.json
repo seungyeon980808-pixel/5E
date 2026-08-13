@@ -1,0 +1,13 @@
+{
+  "sourceId":"c2_2023_11_03.png#1","sourceCrop":[0,0,1,1],"graphBox":[0.151515,0.055172,0.812672,0.768966],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":135,"h":105},"elements":[{
+    "type":"graph","box":[-58,-42,108,81.708],"xRange":[0,10],"yRange":[0,7],"axisVariant":"quadrant","grid":false,"ticks":false,"xLabel":"반응의 진행","yLabel":"엔탈피",
+    "series":[{"kind":"curve","points":[[0,1.2],[2.4,1.2],[3,1.7],[3.7,4.4],[4.6,6.15],[5.2,6.1],[6,4.8],[6.8,3.1],[7.4,2.75],[10,2.75]]}],
+    "labels":[{"x":1.15,"y":1.55,"label":"A(g)"},{"x":7.75,"y":3.25,"label":"B(g)"}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.02},{"kind":"axes","variant":"quadrant"},{"kind":"axis_range","x":[0,10],"y":[0,7]},
+    {"kind":"series_geometry","count":1,"kinds":["curve"]},{"kind":"point_positions","points":[{"series":0,"index":0,"at":[0,1.2]},{"series":0,"index":2,"at":[3,1.7]},{"series":0,"index":4,"at":[4.6,6.15]},{"series":0,"index":8,"at":[7.4,2.75]},{"series":0,"index":9,"at":[10,2.75]}]},
+    {"kind":"labels","values":["반응의 진행","엔탈피","A(g)","B(g)"],"positions":[{"value":"A(g)","at":[1.15,1.55]},{"value":"B(g)","at":[7.75,3.25]}]}
+  ]
+}

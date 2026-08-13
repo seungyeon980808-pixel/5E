@@ -55,6 +55,8 @@ const VESSEL_KINDS = new Set([
 const PARTICLE_STATES = new Set(["solid", "liquid", "gas"]);
 const PARTICLE_SHAPES = new Set(["circle", "square"]);
 const GRAPH_VARIANTS = new Set(["cross", "quadrant", "halfcross", "single"]);
+const GRAPH_SERIES_KINDS = new Set(["line", "curve", "scatter", "bar"]);
+const GRAPH_AXIS_IDS = new Set(["y", "y2"]);
 
 const KIND_ALIASES = Object.freeze({
   block: "rect",
@@ -99,8 +101,13 @@ const TYPE_FIELDS = Object.freeze({
   ],
   particlebox: ["state", "count", "particleRadius", "particleShape", "mix", "seed", "motion"],
   graph: [
-    "xRange", "yRange", "axisVariant", "grid", "ticks", "showNumbers",
-    "axisLabels", "series",
+    "xRange", "yRange", "xStep", "yStep", "y2Step", "axisVariant", "grid", "ticks", "ticksX", "ticksY", "showNumbers", "axisStrokeWidth", "seriesStrokeWidth",
+    "axisLabels", "xLabel", "yLabel", "yLabelLayout", "originLabel", "tickTextX", "tickTextY",
+    "axisLabelScale", "tickLabelScale", "axisLabelSize", "axisLabelSizeX", "axisLabelSizeY", "tickLabelSize", "labelHangulScale",
+    "frame", "y2Range", "y2Label", "tickTextY2", "series", "markers", "guides",
+    "guideLines", "labels", "arrows", "legends", "axisBreaks", "panelLabel", "panelLabelAt",
+    "bands", "leaders", "dimensions", "ranges",
+    "chartKind", "values", "startAngle",
   ],
   pedigree: [
     "gen2Kids", "gen3Kids", "gen3Parent", "symbolRadius", "affected", "carrier",
@@ -271,7 +278,7 @@ function rotation(el, path, ctx) {
 
 function strokeWidth(el, path, ctx) {
   if (el.strokeWidth == null) return 0.35;
-  return numeric(el.strokeWidth, `${path}.strokeWidth`, ctx, { min: 0.15, max: 0.8, clamp: true }) ?? 0.35;
+  return numeric(el.strokeWidth, `${path}.strokeWidth`, ctx, { min: 0.15, max: 2, clamp: true }) ?? 0.35;
 }
 
 function canonicalKind(el) {
@@ -390,16 +397,27 @@ function objectBBox(obj) {
 }
 
 function translateObject(obj, dx, dy) {
+  const moved = (p) => ({ ...p, x: p.x + dx, y: p.y + dy });
   if (Number.isFinite(obj.x)) obj.x += dx;
   if (Number.isFinite(obj.y)) obj.y += dy;
   if (obj.p1 && Number.isFinite(obj.p1.x) && Number.isFinite(obj.p1.y)) {
-    obj.p1 = { ...obj.p1, x: obj.p1.x + dx, y: obj.p1.y + dy };
+    obj.p1 = moved(obj.p1);
   }
   if (obj.p2 && Number.isFinite(obj.p2.x) && Number.isFinite(obj.p2.y)) {
-    obj.p2 = { ...obj.p2, x: obj.p2.x + dx, y: obj.p2.y + dy };
+    obj.p2 = moved(obj.p2);
   }
   if (Array.isArray(obj.points)) {
-    obj.points = obj.points.map((p) => ({ ...p, x: p.x + dx, y: p.y + dy }));
+    obj.points = obj.points.map(moved);
+  }
+  // GraphSpec adjunct geometry is baked in world coordinates just like points[].
+  // Keep it attached when a legacy top-left scene is normalized to centred 5E space.
+  if (Array.isArray(obj.markers)) obj.markers = obj.markers.map(moved);
+  if (Array.isArray(obj.guideSegs)) obj.guideSegs = obj.guideSegs.map((seg) => Array.isArray(seg) ? seg.map(moved) : seg);
+  if (Array.isArray(obj.arrowMarks)) obj.arrowMarks = obj.arrowMarks.map(moved);
+  if (Array.isArray(obj.arrowPolys)) obj.arrowPolys = obj.arrowPolys.map((poly) => ({ ...poly, points: Array.isArray(poly.points) ? poly.points.map(moved) : poly.points }));
+  if (obj.area && Number.isFinite(obj.area.baseY)) obj.area = { ...obj.area, baseY: obj.area.baseY + dy };
+  if (obj.bars && Array.isArray(obj.bars.items)) {
+    obj.bars = { ...obj.bars, items: obj.bars.items.map((bar) => ({ ...bar, x: bar.x + dx, y: bar.y + dy })) };
   }
 }
 
@@ -646,6 +664,13 @@ function graphPointToWorld(p, b, xr, yr, path, ctx) {
   };
 }
 
+function graphControlPointToWorld(p, b, xr, yr) {
+  return {
+    x: b.x + ((p.x - xr[0]) / (xr[1] - xr[0])) * b.w,
+    y: b.y + b.h - ((p.y - yr[0]) / (yr[1] - yr[0])) * b.h,
+  };
+}
+
 function addDiagramAxes(ctx, b, xr, yr, variant, stroke, path) {
   const before = ctx.objects.length;
   const addAxis = (p1, p2, tag) => addObject(ctx, {
@@ -673,32 +698,385 @@ function addDiagramAxes(ctx, b, xr, yr, variant, stroke, path) {
   if (ctx.objects.length === before) ctx.warnings.push(issue("graph_axes_missing", path, "Neither zero axis intersects the graph range."));
 }
 
+function graphText(value, max = 160) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function graphNiceStep(range, targetDivisions = 8) {
+  const span = Math.abs(range[1] - range[0]);
+  if (!(span > 0)) return 1;
+  const raw = span / targetDivisions;
+  const power = 10 ** Math.floor(Math.log10(raw));
+  const normalized = raw / power;
+  const choices = [1, 2, 2.5, 5, 10];
+  const factor = choices.reduce((best, value) => (
+    Math.abs(value - normalized) < Math.abs(best - normalized) ? value : best
+  ), choices[0]);
+  return factor * power;
+}
+
+function graphStep(value, range, path, ctx) {
+  if (value == null) return graphNiceStep(range);
+  return numeric(value, path, ctx, { min: 0.000001, max: 10000 }) || graphNiceStep(range);
+}
+
+function graphTickText(value, path, ctx) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("tick_text_type", path, "Graph tick text must be an array."));
+    return [];
+  }
+  return value.slice(0, 64).map((item) => graphText(String(item ?? ""), 48));
+}
+
+function graphPoint(value, path, ctx) {
+  const raw = Array.isArray(value) ? { x: value[0], y: value[1] } : value;
+  if (!isPlainObject(raw)) {
+    ctx.errors.push(issue("graph_point_type", path, "Graph point must be [x,y] or an object with x and y."));
+    return null;
+  }
+  const x = numeric(raw.x, `${path}.x`, ctx, { min: -10000, max: 10000 });
+  const y = numeric(raw.y, `${path}.y`, ctx, { min: -10000, max: 10000 });
+  if (x == null || y == null) return null;
+  return {
+    x, y,
+    label: graphText(raw.label, 80),
+    labelSize: raw.labelSize == null ? undefined : numeric(raw.labelSize, `${path}.labelSize`, ctx, { min: 1.5, max: 12, clamp: true }),
+    labelAngle: raw.labelAngle == null ? undefined : numeric(raw.labelAngle, `${path}.labelAngle`, ctx, { min: -360, max: 360, clamp: true }),
+    labelDistance: raw.labelDistance == null ? undefined : numeric(raw.labelDistance, `${path}.labelDistance`, ctx, { min: 0, max: 40, clamp: true }),
+    labelRotation: raw.labelRotation == null ? undefined : numeric(raw.labelRotation, `${path}.labelRotation`, ctx, { min: -360, max: 360, clamp: true }),
+    labelMarker: raw.labelMarker === true,
+    labelRole: raw.labelRole === "quantity" ? "quantity" : "label",
+  };
+}
+
+function graphPointList(value, path, ctx, min = 1) {
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("graph_points_required", path, "Graph points must be an array."));
+    return null;
+  }
+  if (value.length > LIMITS.maxPointsPerElement) {
+    ctx.errors.push(issue("too_many_points", path, `No more than ${LIMITS.maxPointsPerElement} graph points are allowed.`));
+    return null;
+  }
+  const out = value.map((p, i) => graphPoint(p, `${path}[${i}]`, ctx)).filter(Boolean);
+  if (out.length < min) {
+    ctx.errors.push(issue("not_enough_graph_points", path, `At least ${min} graph point(s) are required.`));
+    return null;
+  }
+  return out;
+}
+
+function graphMathPointList(value, path, ctx) {
+  if (value == null) return [];
+  return graphPointList(value, path, ctx, 1) || [];
+}
+
+function graphBezierHandles(value, points, path, ctx) {
+  if (value == null) return null;
+  if (!Array.isArray(value) || value.length !== points.length || points.length < 2) {
+    ctx.errors.push(issue("graph_handles_length", path, "Bezier handles must match the graph point count."));
+    return null;
+  }
+  const fields = ["ix", "iy", "ox", "oy"];
+  const out = [];
+  value.forEach((raw, index) => {
+    const item = isPlainObject(raw) ? raw : {};
+    const handle = {};
+    fields.forEach((field) => {
+      handle[field] = numeric(item[field] ?? 0, `${path}[${index}].${field}`, ctx, { min: -10000, max: 10000 }) ?? 0;
+    });
+    out.push(handle);
+  });
+  return out;
+}
+
+function graphLabelPoints(items, defaultSize = 3) {
+  return items.filter((p) => p.label).map((p) => ({
+    x: p.x, y: p.y, text: p.label,
+    size: p.labelSize || defaultSize,
+    angle: Number.isFinite(p.labelAngle) ? p.labelAngle : -55,
+    dist: Number.isFinite(p.labelDistance) ? p.labelDistance : 2.4,
+    rotation: Number.isFinite(p.labelRotation) ? p.labelRotation : 0,
+    showMarker: p.labelMarker === true,
+    upright: p.labelRole !== "quantity",
+  }));
+}
+
+// Keep bar output byte-for-byte compatible with graph-modal.js:barFillFields.
+// The public GraphSpec uses readable aliases; the native funcgraph renderer uses
+// the shared fill engine's fillStyle + fillLevel pair and remembers the alias in
+// barFill so reopening the graph modal selects the same option.
+function graphBarFill(alias) {
+  const value = alias || "gray";
+  if (value === "white") return { alias: "white", fillStyle: "solid", fillLevel: 255 };
+  if (value === "gray") return { alias: "gray", fillStyle: "solid", fillLevel: 170 };
+  if (["hatch", "dots", "cross"].includes(value)) return { alias: value, fillStyle: value, fillLevel: 0 };
+  return { alias: "gray", fillStyle: "solid", fillLevel: 170 };
+}
+
+function graphGuides(value, path, ctx) {
+  return graphMathPointList(value, path, ctx).map((p) => ({ x: p.x, y: p.y }));
+}
+
+function graphGuideLines(value, path, ctx) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("guide_lines_type", path, "Graph guideLines must be an array."));
+    return [];
+  }
+  const out = [];
+  value.slice(0, 256).forEach((item, i) => {
+    const ip = `${path}[${i}]`;
+    const a = graphPoint(item && (item.from ?? [item.x1, item.y1]), `${ip}.from`, ctx);
+    const b = graphPoint(item && (item.to ?? [item.x2, item.y2]), `${ip}.to`, ctx);
+    if (a && b) out.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
+  });
+  return out;
+}
+
+function graphLabels(value, path, ctx, defaultSize = 3) {
+  return graphMathPointList(value, path, ctx).filter((p) => p.label).map((p) => ({
+    x: p.x, y: p.y, text: p.label,
+    size: p.labelSize || defaultSize,
+    angle: Number.isFinite(p.labelAngle) ? p.labelAngle : -55,
+    dist: Number.isFinite(p.labelDistance) ? p.labelDistance : 2.4,
+    rotation: Number.isFinite(p.labelRotation) ? p.labelRotation : 0,
+    showMarker: p.labelMarker === true,
+    upright: p.labelRole !== "quantity",
+  }));
+}
+
+function graphArrows(value, path, ctx) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("graph_arrows_type", path, "Graph arrows must be an array."));
+    return [];
+  }
+  const out = [];
+  value.slice(0, 128).forEach((item, i) => {
+    const ip = `${path}[${i}]`;
+    const p = graphPoint(item, ip, ctx);
+    if (!p) return;
+    const dx = numeric(item.dx ?? 1, `${ip}.dx`, ctx, { min: -10000, max: 10000 });
+    const dy = numeric(item.dy ?? 0, `${ip}.dy`, ctx, { min: -10000, max: 10000 });
+    if (dx != null && dy != null && Math.hypot(dx, dy) > 1e-9) out.push({ x: p.x, y: p.y, dx, dy });
+  });
+  return out;
+}
+
+function graphLegends(value, path, ctx) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("graph_legends_type", path, "Graph legends must be an array."));
+    return [];
+  }
+  const out = [];
+  value.slice(0, 8).forEach((item, i) => {
+    if (!isPlainObject(item)) return;
+    const rows = Array.isArray(item.rows) ? item.rows.slice(0, 12).map((row) => ({
+      text: graphText(row && row.text, 80),
+      dash: row && row.dash === "dash" ? "dash" : (row && row.dash === "dot" ? "dot" : "solid"),
+    })).filter((row) => row.text) : [];
+    const x = numeric(item.x ?? 0.75, `${path}[${i}].x`, ctx, { min: -10000, max: 10000 });
+    const y = numeric(item.y ?? 0.8, `${path}[${i}].y`, ctx, { min: -10000, max: 10000 });
+    if (x != null && y != null && rows.length) out.push({ x, y, rows });
+  });
+  return out;
+}
+
+function graphBands(value, path, ctx) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue("graph_bands_type", path, "Graph bands must be an array."));
+    return [];
+  }
+  const out = [];
+  value.slice(0, 64).forEach((item, i) => {
+    const ip = `${path}[${i}]`;
+    if (!isPlainObject(item)) return;
+    const axis = item.axis === "y" ? "y" : "x";
+    const from = numeric(item.from, `${ip}.from`, ctx, { min: -10000, max: 10000 });
+    const to = numeric(item.to, `${ip}.to`, ctx, { min: -10000, max: 10000 });
+    if (from == null || to == null || from === to) return;
+    out.push({
+      axis, from, to,
+      level: Number.isFinite(item.level) ? Math.max(0, Math.min(255, item.level)) : 225,
+      label: graphText(item.label, 80),
+    });
+  });
+  return out;
+}
+
+function graphPositionedSegments(value, path, ctx, kind) {
+  if (value == null) return [];
+  if (!Array.isArray(value)) {
+    ctx.errors.push(issue(`graph_${kind}_type`, path, `Graph ${kind} must be an array.`));
+    return [];
+  }
+  const out = [];
+  value.slice(0, 128).forEach((item, i) => {
+    const ip = `${path}[${i}]`;
+    if (!isPlainObject(item)) return;
+    const from = graphPoint(item.from, `${ip}.from`, ctx);
+    const to = graphPoint(item.to, `${ip}.to`, ctx);
+    if (!from || !to) return;
+    out.push({
+      from, to, label: graphText(item.label, 120),
+      variant: ["basic", "leftBar", "rightBar", "bothBars"].includes(item.variant) ? item.variant : "basic",
+    });
+  });
+  return out;
+}
+
+function addGraphLine(ctx, el, path, p1, p2, tag, overrides = {}) {
+  return addObject(ctx, {
+    ...baseObject("line", el, path, ctx), p1, p2, rotation: 0,
+    lineMode: "solid", lineStyle: "solid", arrowHead: "none",
+    dashLength: 0, dashGap: 0, ...overrides,
+  }, tag);
+}
+
+function compilePieGraph(el, path, ctx, b) {
+  const values = Array.isArray(el.values) ? el.values : [];
+  if (values.length < 2 || values.length > 24) {
+    ctx.errors.push(issue("pie_values", `${path}.values`, "Pie graphs require 2 to 24 values."));
+    return;
+  }
+  const parsed = values.map((item, i) => {
+    const raw = typeof item === "number" ? { value: item } : item;
+    if (!isPlainObject(raw)) return null;
+    const value = numeric(raw.value, `${path}.values[${i}].value`, ctx, { min: 0.000001, max: 1e9 });
+    return value == null ? null : { value, label: graphText(raw.label, 80), tone: raw.tone === "gray" ? "gray" : "white" };
+  });
+  if (parsed.some((item) => !item)) return;
+  const total = parsed.reduce((sum, item) => sum + item.value, 0);
+  const cx = b.x + b.w / 2, cy = b.y + b.h / 2, rx = b.w / 2, ry = b.h / 2;
+  let angle = ((Number(el.startAngle) || -90) * Math.PI) / 180;
+  parsed.forEach((item, i) => {
+    const next = angle + (item.value / total) * Math.PI * 2;
+    const steps = Math.max(4, Math.ceil(Math.abs(next - angle) / (Math.PI / 18)));
+    const pts = [{ x: cx, y: cy }];
+    for (let step = 0; step <= steps; step += 1) {
+      const a = angle + ((next - angle) * step) / steps;
+      pts.push({ x: cx + Math.cos(a) * rx, y: cy + Math.sin(a) * ry });
+    }
+    addObject(ctx, {
+      ...baseObject("polyline", el, path, ctx), points: pts, closed: true,
+      fillNone: false, fillLevel: item.tone === "gray" ? 220 : 255, fillStyle: "solid",
+      arrowHead: "none", rotation: 0,
+    }, `pie_sector_${i + 1}`);
+    if (ctx.mode === "complete" && item.label) {
+      const mid = (angle + next) / 2;
+      addObject(ctx, {
+        type: "text", x: cx + Math.cos(mid) * rx * 0.58, y: cy + Math.sin(mid) * ry * 0.58,
+        text: item.label, fontSize: 3, fontWeight: "normal", rotation: 0,
+        locked: false, positionLocked: false, layerId: ctx.layerId,
+      }, `pie_label_${i + 1}`);
+    }
+    angle = next;
+  });
+}
+
 function compileGraph(el, path, ctx) {
   const b = box(el, path, ctx);
+  if (!b) return;
+  if (el.chartKind === "pie") {
+    compilePieGraph(el, path, ctx, b);
+    return;
+  }
   const xr = numberRange(el.xRange, [-5, 5], `${path}.xRange`, ctx);
   const yr = numberRange(el.yRange, [-5, 5], `${path}.yRange`, ctx);
+  const y2r = el.y2Range == null ? null : numberRange(el.y2Range, yr, `${path}.y2Range`, ctx);
   const variant = enumValue(el.axisVariant, GRAPH_VARIANTS, "cross", `${path}.axisVariant`, ctx);
-  if (!b || !xr || !yr || !variant) return;
+  if (!xr || !yr || !variant || (el.y2Range != null && !y2r)) return;
   const complete = ctx.mode === "complete";
+  const xLabel = graphText(el.xLabel, 120) || (el.axisLabels === true ? "x" : "");
+  const yLabel = graphText(el.yLabel, 120) || (el.axisLabels === true ? "y" : "");
+  const tx = graphTickText(el.tickTextX, `${path}.tickTextX`, ctx);
+  const ty = graphTickText(el.tickTextY, `${path}.tickTextY`, ctx);
+  const ty2 = graphTickText(el.tickTextY2, `${path}.tickTextY2`, ctx);
+  const xStep = graphStep(el.xStep, xr, `${path}.xStep`, ctx);
+  const yStep = graphStep(el.yStep, yr, `${path}.yStep`, ctx);
+  const y2Step = y2r ? graphStep(el.y2Step, y2r, `${path}.y2Step`, ctx) : null;
+  // Same cell-relative sizing used by graph-modal.js:setLabelSizes. Labels stay
+  // part of coordplane/funcgraph; no independent text object is introduced.
+  const cell = b.w / Math.max(1e-9, xr[1] - xr[0]);
+  const axisScale = numeric(el.axisLabelScale ?? 1, `${path}.axisLabelScale`, ctx, { min: 0.5, max: 2, clamp: true }) ?? 1;
+  const tickScale = numeric(el.tickLabelScale ?? 1, `${path}.tickLabelScale`, ctx, { min: 0.5, max: 2, clamp: true }) ?? 1;
+  const autoAxisLabelSize = Math.max(1, Math.round((cell * 0.8 * axisScale - 0.35) * 10) / 10);
+  const autoTickLabelSize = Math.max(1, Math.round((cell * 0.68 * tickScale - 0.35) * 10) / 10);
+  // 같은 외형 크기의 그래프라도 데이터 범위가 0–5인지 0–100인지에 따라 자동 글자 크기가
+  // 20배 달라지면 소형 선택지·큰 범위 과학 그래프를 재현할 수 없다. 명시 크기는 실제 mm로
+  // 저장하고, 생략했을 때만 기존 셀 비례 자동값을 사용한다.
+  const axisLabelSize = el.axisLabelSize == null
+    ? autoAxisLabelSize
+    : (numeric(el.axisLabelSize, `${path}.axisLabelSize`, ctx, { min: 1, max: 12, clamp: true }) ?? autoAxisLabelSize);
+  const tickLabelSize = el.tickLabelSize == null
+    ? autoTickLabelSize
+    : (numeric(el.tickLabelSize, `${path}.tickLabelSize`, ctx, { min: 1, max: 12, clamp: true }) ?? autoTickLabelSize);
+  const labelHangulScale = numeric(el.labelHangulScale ?? 0.72, `${path}.labelHangulScale`, ctx, { min: 0.5, max: 1.5, clamp: true }) ?? 0.72;
+  const axisLabelSizeX = numeric(el.axisLabelSizeX ?? axisLabelSize, `${path}.axisLabelSizeX`, ctx, { min: 1, max: 12, clamp: true }) ?? axisLabelSize;
+  const axisLabelSizeY = numeric(el.axisLabelSizeY ?? axisLabelSize, `${path}.axisLabelSizeY`, ctx, { min: 1, max: 12, clamp: true }) ?? axisLabelSize;
+  const axisStrokeWidth = numeric(el.axisStrokeWidth ?? el.strokeWidth ?? 0.35, `${path}.axisStrokeWidth`, ctx, { min: 0.15, max: 2, clamp: true }) ?? 0.35;
+  const seriesStrokeWidth = numeric(el.seriesStrokeWidth ?? el.strokeWidth ?? 0.35, `${path}.seriesStrokeWidth`, ctx, { min: 0.15, max: 2, clamp: true }) ?? 0.35;
   const plane = addObject(ctx, {
     ...baseObject("coordplane", el, path, ctx), ...b,
-    rotation: 0, lockAspect: true, axisVariant: variant,
+    rotation: 0, lockAspect: true, axisVariant: variant, strokeWidth: axisStrokeWidth,
     xMin: xr[0], xMax: xr[1], yMin: yr[0], yMax: yr[1],
-    gridStepX: 1, gridStepY: 1, tickStepX: 1, tickStepY: 1,
+    gridStepX: xStep, gridStepY: yStep, tickStepX: xStep, tickStepY: yStep,
     showAxisLines: complete,
     showGrid: el.grid !== false,
     showTicks: complete && el.ticks !== false,
-    showTickLabels: complete && bool(el.showNumbers),
-    tickLabelMode: complete && bool(el.showNumbers) ? "number" : "none",
-    showAxisLabels: complete && bool(el.axisLabels),
-    showAxisLabelX: complete && bool(el.axisLabels),
-    showAxisLabelY: complete && bool(el.axisLabels),
-    labelX: complete && bool(el.axisLabels) ? "x" : "",
-    labelY: complete && bool(el.axisLabels) ? "y" : "",
-    showOrigin: false, labelOrigin: "", exportable: true,
+    showTickX: complete && el.ticks !== false && el.ticksX !== false,
+    showTickY: complete && el.ticks !== false && el.ticksY !== false,
+    showTickLabels: complete && (bool(el.showNumbers) || tx.length > 0 || ty.length > 0),
+    tickLabelMode: complete && (tx.length > 0 || ty.length > 0) ? "text" : (complete && bool(el.showNumbers) ? "number" : "none"),
+    tickTextX: tx, tickTextY: ty,
+    showAxisLabels: complete && !!(xLabel || yLabel),
+    showAxisLabelX: complete && !!xLabel,
+    showAxisLabelY: complete && !!yLabel,
+    labelX: complete ? xLabel : "", labelY: complete ? yLabel : "",
+    labelYLayout: el.yLabelLayout === "vertical" ? "vertical" : "horizontal",
+    axisLabelScale: axisScale, tickLabelScale: tickScale, labelScale: tickScale,
+    axisLabelSize, axisLabelSizeX, axisLabelSizeY, tickLabelSize, labelHangulScale,
+    showOrigin: complete && !!graphText(el.originLabel, 8),
+    labelOrigin: complete ? graphText(el.originLabel, 8) : "",
+    showFrame: !!el.frame,
+    annMarkers: graphGuides(el.markers, `${path}.markers`, ctx),
+    annGuides: graphGuides(el.guides, `${path}.guides`, ctx),
+    guideLines: graphGuideLines(el.guideLines, `${path}.guideLines`, ctx),
+    annLabelPoints: graphLabels(el.labels, `${path}.labels`, ctx, tickLabelSize),
+    annArrows: graphArrows(el.arrows, `${path}.arrows`, ctx),
+    legends: graphLegends(el.legends, `${path}.legends`, ctx),
+    bands: graphBands(el.bands, `${path}.bands`, ctx),
+    leaders: graphPositionedSegments(el.leaders, `${path}.leaders`, ctx, "leaders"),
+    dimensions: graphPositionedSegments(el.dimensions, `${path}.dimensions`, ctx, "dimensions"),
+    ranges: graphPositionedSegments(el.ranges, `${path}.ranges`, ctx, "ranges"),
+    axisBreaks: Array.isArray(el.axisBreaks) ? el.axisBreaks.slice(0, 16).map((item) => ({
+      axis: item && item.axis === "y" ? "y" : "x",
+      at: Number(item && item.at) || 0,
+      size: Math.max(0.2, Math.min(3, Number(item && item.size) || 0.7)),
+    })) : [],
+    y2: y2r ? {
+      enabled: true, y2Min: y2r[0], y2Max: y2r[1], gridStepY2: y2Step, tickStepY2: y2Step,
+      labelY2: complete ? graphText(el.y2Label, 120) : "", tickTextY2: ty2,
+      showTickY2: complete && (bool(el.showNumbers) || ty2.length > 0),
+    } : undefined,
+    seriesLock: true, richLabels: true, gridToData: true, exportable: true,
   }, "graph_plane");
   if (!plane) return;
   if (!complete) addDiagramAxes(ctx, b, xr, yr, variant, plane.strokeWidth, path);
+
+  // 선택지 번호도 별도 text를 덧씌우지 않는다. 좌표평면이 소유하는 라벨 데이터로
+  // 저장해야 평면 이동·크기 변경·재편집 때 함께 움직이고 GraphSpec 왕복도 유지된다.
+  const panelLabel = complete ? graphText(el.panelLabel, 40) : "";
+  const panelAt = el.panelLabelAt == null ? null : graphPoint(el.panelLabelAt, `${path}.panelLabelAt`, ctx);
+  if (panelLabel) plane.annLabelPoints.push({
+    x: panelAt ? panelAt.x : xr[0] - xStep * 0.48,
+    y: panelAt ? panelAt.y : yr[1], text: panelLabel,
+    size: tickLabelSize, angle: 0, dist: 0, rotation: 0, showMarker: false,
+  });
 
   const series = el.series == null ? [] : el.series;
   if (!Array.isArray(series)) {
@@ -715,17 +1093,97 @@ function compileGraph(el, path, ctx) {
       ctx.errors.push(issue("series_type", sp, "Graph series must be an object."));
       return;
     }
-    const data = points(s.points, `${sp}.points`, ctx);
+    const kindRaw = s.kind || (s.style === "straight" ? "line" : "curve");
+    const kind = enumValue(kindRaw, GRAPH_SERIES_KINDS, "curve", `${sp}.kind`, ctx);
+    const axis = enumValue(s.axis, GRAPH_AXIS_IDS, "y", `${sp}.axis`, ctx);
+    if (!kind || !axis) return;
+    if (axis === "y2" && !y2r) {
+      ctx.errors.push(issue("y2_axis_missing", `${sp}.axis`, "A y2 series requires graph.y2Range."));
+      return;
+    }
+    const minPoints = kind === "scatter" || kind === "bar" ? 1 : 2;
+    const data = graphPointList(s.points, `${sp}.points`, ctx, minPoints);
     if (!data) return;
-    const mapped = data.map((p, pi) => graphPointToWorld(p, b, xr, yr, `${sp}.points[${pi}]`, ctx));
-    const width = numeric(s.strokeWidth ?? el.strokeWidth ?? 0.35, `${sp}.strokeWidth`, ctx, { min: 0.15, max: 0.8, clamp: true }) ?? 0.35;
-    addObject(ctx, {
-      type: "funcgraph", planeId: plane.id, points: mapped, closed: false,
-      strokeLevel: 0, strokeWidth: width, dashLength: s.dashed ? 2.2 : 0,
-      dashGap: s.dashed ? 1.6 : 0, label: "", labelShow: false,
-      sourceKind: "points", curveStyle: s.style === "straight" ? "straight" : "smooth",
-      locked: false, positionLocked: false, layerId: ctx.layerId,
-    }, `graph_series_${i + 1}`);
+    const axisRange = axis === "y2" ? y2r : yr;
+    const mapped = data.map((p, pi) => graphPointToWorld(p, b, xr, axisRange, `${sp}.points[${pi}]`, ctx));
+    const width = numeric(s.strokeWidth ?? seriesStrokeWidth, `${sp}.strokeWidth`, ctx, { min: 0.15, max: 2, clamp: true }) ?? seriesStrokeWidth;
+    const pointLabels = kind === "bar" ? [] : graphLabelPoints(data, tickLabelSize);
+    if (pointLabels.length) plane.annLabelPoints.push(...pointLabels);
+    if (kind === "scatter") {
+      plane.annMarkers.push(...data.map((p) => ({ x: p.x, y: p.y })));
+      return;
+    }
+    if (kind === "bar") {
+      const span = xr[1] - xr[0];
+      const defaultWidth = span / Math.max(8, data.length * 2);
+      const barWidth = numeric(s.barWidth ?? defaultWidth, `${sp}.barWidth`, ctx, { min: span / 1000, max: span, clamp: true }) ?? defaultWidth;
+      const base = Number.isFinite(s.base) ? s.base : 0;
+      const items = [], barPoints = [];
+      data.forEach((p) => {
+        const left = p.x - barWidth / 2, right = p.x + barWidth / 2;
+        const q = [
+          graphPointToWorld({ x: left, y: base }, b, xr, axisRange, sp, ctx),
+          graphPointToWorld({ x: left, y: p.y }, b, xr, axisRange, sp, ctx),
+          graphPointToWorld({ x: right, y: p.y }, b, xr, axisRange, sp, ctx),
+          graphPointToWorld({ x: right, y: base }, b, xr, axisRange, sp, ctx),
+        ];
+        barPoints.push(...q);
+        items.push({ x: q[1].x, y: q[1].y, w: q[2].x - q[1].x, h: q[0].y - q[1].y, label: p.label || "" });
+      });
+      const fill = graphBarFill(s.fillStyle);
+      addObject(ctx, {
+        type: "funcgraph", planeId: plane.id, axis, points: barPoints, mathPoints: data.map((p) => ({ x: p.x, y: p.y })), labelHangulScale,
+        sourceKind: "bar", curveStyle: "straight", closed: false, strokeLevel: 0, strokeWidth: width,
+        dashLength: 0, dashGap: 0, label: "", labelShow: false, endLabel: "",
+        barItems: data.map((p) => ({ label: p.label || "", value: p.y })),
+        // Explicit GraphSpec points still own x placement. Preserve the chosen
+        // width for rendering, and store the native modal alias for round-trip.
+        barWidthRatio: barWidth, barFill: fill.alias,
+        bars: { items, fillStyle: fill.fillStyle, fillLevel: fill.fillLevel, strokeWidth: width, labelSize: tickLabelSize, labelUpright: true },
+        locked: false, positionLocked: true, layerId: ctx.layerId,
+      }, `graph_bar_${i + 1}`);
+      return;
+    }
+    const explicitDashLength = s.dashLength == null ? null : numeric(s.dashLength, `${sp}.dashLength`, ctx, { min: 0, max: 20, clamp: true });
+    const explicitDashGap = s.dashGap == null ? null : numeric(s.dashGap, `${sp}.dashGap`, ctx, { min: 0, max: 20, clamp: true });
+    const obj = {
+      type: "funcgraph", planeId: plane.id, axis, points: mapped, labelHangulScale,
+      mathPoints: data.map((p) => ({ x: p.x, y: p.y })), closed: false,
+      strokeLevel: 0, strokeWidth: width,
+      dashLength: explicitDashLength ?? (s.dashed ? 2.2 : 0),
+      dashGap: explicitDashGap ?? (s.dashed ? 1.6 : 0), label: "", labelShow: false,
+      endLabel: complete ? graphText(s.label, 120) : "",
+      endLabelUpright: s.labelRole !== "quantity",
+      sourceKind: "points", curveStyle: kind === "line" ? "straight" : "smooth",
+      curvature: numeric(s.curvature ?? 1, `${sp}.curvature`, ctx, { min: 0.1, max: 3, clamp: true }) ?? 1,
+      markers: s.markers === true ? mapped.map((p) => ({ x: p.x, y: p.y })) : [],
+      markerXs: s.markers === true ? data.map((p) => ({ x: p.x, y: p.y })) : [],
+      locked: false, positionLocked: true, layerId: ctx.layerId,
+    };
+    const handlesMath = kind === "curve" ? graphBezierHandles(s.handles, data, `${sp}.handles`, ctx) : null;
+    if (handlesMath) {
+      obj.handlesMath = handlesMath.map((handle) => ({ ...handle }));
+      obj.handles = data.map((point, index) => {
+        const handle = handlesMath[index];
+        // 제어점은 앵커와 달리 표시 범위 밖에 있어도 곡선 접선을 만드는 유효 데이터다.
+        // 범위로 clamp하면 경계에서 곡률이 꺾이므로 그대로 월드 좌표로 투영한다.
+        const inPoint = graphControlPointToWorld({ x: point.x + handle.ix, y: point.y + handle.iy }, b, xr, axisRange);
+        const outPoint = graphControlPointToWorld({ x: point.x + handle.ox, y: point.y + handle.oy }, b, xr, axisRange);
+        return { inX: inPoint.x, inY: inPoint.y, outX: outPoint.x, outY: outPoint.y };
+      });
+    }
+    if (isPlainObject(s.area)) {
+      const base = Number.isFinite(s.area.base) ? s.area.base : 0;
+      obj.area = {
+        from: Number.isFinite(s.area.from) ? s.area.from : undefined,
+        to: Number.isFinite(s.area.to) ? s.area.to : undefined,
+        baseY: graphPointToWorld({ x: xr[0], y: base }, b, xr, axisRange, `${sp}.area.base`, ctx).y,
+        level: Number.isFinite(s.area.level) ? Math.max(0, Math.min(255, s.area.level)) : 220,
+        edges: s.area.edges !== false,
+        label: complete ? graphText(s.area.label, 80) : "",
+      };
+    }
+    addObject(ctx, obj, `graph_series_${i + 1}`);
   });
 }
 

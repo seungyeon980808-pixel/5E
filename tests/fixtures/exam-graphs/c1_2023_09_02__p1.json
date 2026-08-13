@@ -1,0 +1,15 @@
+{
+  "sourceId":"c1_2023_09_02.png#1","sourceCrop":[0,0,1,1],"graphBox":[0.156757,0.03125,0.821622,0.834821],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":160,"h":100},"elements":[{
+    "type":"graph","box":[-64,-40,104,64],"xRange":[0,6],"yRange":[0,6],"axisVariant":"quadrant","grid":false,
+    "xLabel":"원자가 전자가 느끼는 유효 핵전하(상댓값)","yLabel":"원자 반지름(pm)",
+    "series":[{"kind":"scatter","points":[[1,5],[2,3.8],[3,3.2],[4,2.3],[5,1.7]]}],
+    "labels":[{"x":2,"y":4.15,"label":"X"}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.02},{"kind":"axes","variant":"quadrant"},
+    {"kind":"axis_range","x":[0,6],"y":[0,6]},{"kind":"series_geometry","count":1,"kinds":["scatter"]},
+    {"kind":"point_positions","points":[{"series":0,"index":0,"at":[1,5]},{"series":0,"index":1,"at":[2,3.8]},{"series":0,"index":2,"at":[3,3.2]},{"series":0,"index":3,"at":[4,2.3]},{"series":0,"index":4,"at":[5,1.7]}]},
+    {"kind":"labels","values":["원자가 전자가 느끼는 유효 핵전하(상댓값)","원자 반지름(pm)","X"],"positions":[{"value":"X","at":[2,4.15]}]}
+  ]
+}
