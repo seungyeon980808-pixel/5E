@@ -68,6 +68,9 @@ function sourcePattern(value, base = "") {
   }
   const negative = value.startsWith("!");
   const rawPattern = negative ? value.slice(1) : value;
+  if (/[\\{}\[\]]/.test(rawPattern) || /[@+?!*]\(/.test(rawPattern)) {
+    throw new AuditInputError("UNSUPPORTED_GLOB_SYNTAX", "UNSUPPORTED_GLOB_SYNTAX");
+  }
   const filter = normalizeScopedPath(rawPattern, "BUILD_PATTERN_OUTSIDE_ROOT", { allowGlob: true });
   const pattern = base ? path.posix.join(base, filter) : filter;
   return { pattern, negative };
@@ -91,12 +94,13 @@ function parseFileSet(fileSet) {
 
 function parseBuildFiles(value) {
   const entries = Array.isArray(value) ? value : [value];
-  const matchers = entries.flatMap((entry) =>
-    typeof entry === "string" ? [sourcePattern(entry)] : parseFileSet(entry));
-  return Object.freeze(matchers.map(Object.freeze));
+  const defaultScope = entries.filter((entry) => typeof entry === "string").map((entry) => sourcePattern(entry));
+  const fileSetScopes = entries.filter((entry) => typeof entry !== "string").map(parseFileSet);
+  const scopes = defaultScope.length > 0 ? [defaultScope, ...fileSetScopes] : fileSetScopes;
+  return Object.freeze(scopes.map((scope) => Object.freeze(scope.map(Object.freeze))));
 }
 
-function isIncluded(matchers, relativePath) {
+function scopeIncludes(matchers, relativePath) {
   let included = false;
   for (const matcher of matchers) {
     if (globMatches(matcher.pattern, relativePath)) included = !matcher.negative;
@@ -104,4 +108,12 @@ function isIncluded(matchers, relativePath) {
   return included;
 }
 
-module.exports = { AuditInputError, globMatches, isIncluded, normalizeScopedPath, parseBuildFiles };
+function isIncluded(scopes, relativePath) {
+  return scopes.some((scope) => scopeIncludes(scope, relativePath));
+}
+
+function flattenScopes(scopes) {
+  return scopes.flat();
+}
+
+module.exports = { AuditInputError, flattenScopes, globMatches, isIncluded, normalizeScopedPath, parseBuildFiles };

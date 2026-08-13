@@ -16,6 +16,8 @@ The baseline starts from commit `0684bcf` on `codex/stabilize-reference-workflow
 
 The final package audit is intentionally non-strict in the Phase 0 runner. It emits a deterministic JSON report containing sorted `package.json` build sources, included asset-family file counts and bytes, required runtime presence/inclusion, and machine-readable policy violations.
 
+The audit intentionally supports a fail-closed FileMatcher subset: ordered positive/negative patterns, directory inclusions, `*`, `?`, and `**`, plus string, array, and `{ from, to, filter }` FileSet forms. Brace expansion, character classes, extglobs, and escaped glob syntax are rejected as unsupported instead of being approximated.
+
 `npm run audit:package-assets:strict` is expected to fail at this baseline. The current package rule includes `assets/**/*`, which is forbidden by the Phase 0 policy and also includes the forbidden `assets/exam-library` and `assets/parts-library` roots. This expected failure records packaging debt; it is not bypassed or silently treated as success.
 
 ## Future synthetic fixture plan

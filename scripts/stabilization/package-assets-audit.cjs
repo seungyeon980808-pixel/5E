@@ -1,6 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { isIncluded, normalizeScopedPath, parseBuildFiles } = require("./package-file-matcher.cjs");
+const { AuditInputError, flattenScopes, isIncluded, normalizeScopedPath, parseBuildFiles } = require("./package-file-matcher.cjs");
 
 const REPORT_SCHEMA = "5e-package-source-audit-v1";
 const DEFAULT_ROOT = path.resolve(__dirname, "..", "..");
@@ -33,18 +33,40 @@ function normalizePolicy(policy) {
   return normalized;
 }
 
+function realpathInside(canonicalRoot, absolutePath) {
+  const canonicalPath = fs.realpathSync.native(absolutePath);
+  const relative = path.relative(canonicalRoot, canonicalPath);
+  if (relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative))) {
+    return canonicalPath;
+  }
+  throw new AuditInputError("PACKAGE_PATH_OUTSIDE_ROOT", "PACKAGE_PATH_OUTSIDE_ROOT");
+}
+
 function listFiles(root, relativeRoot) {
   const absoluteRoot = path.join(root, ...relativeRoot.split("/"));
-  if (!fs.existsSync(absoluteRoot)) return [];
+  try {
+    fs.lstatSync(absoluteRoot);
+  } catch (error) {
+    if (error.code === "ENOENT") return [];
+    throw error;
+  }
+  realpathInside(root, absoluteRoot);
   const files = [];
+  const visitedDirectories = new Set();
   const visit = (absoluteDirectory, relativeDirectory) => {
+    const canonicalDirectory = realpathInside(root, absoluteDirectory);
+    if (visitedDirectories.has(canonicalDirectory)) return;
+    visitedDirectories.add(canonicalDirectory);
     const entries = fs.readdirSync(absoluteDirectory, { withFileTypes: true })
       .sort((left, right) => compareText(left.name, right.name));
     for (const entry of entries) {
       const absoluteEntry = path.join(absoluteDirectory, entry.name);
       const relativeEntry = path.posix.join(relativeDirectory, entry.name);
-      if (entry.isDirectory()) visit(absoluteEntry, relativeEntry);
-      else if (entry.isFile()) files.push({ path: relativeEntry, bytes: fs.statSync(absoluteEntry).size });
+      fs.lstatSync(absoluteEntry);
+      realpathInside(root, absoluteEntry);
+      const stats = fs.statSync(absoluteEntry);
+      if (stats.isDirectory()) visit(absoluteEntry, relativeEntry);
+      else if (stats.isFile()) files.push({ path: relativeEntry, bytes: stats.size });
     }
   };
   visit(absoluteRoot, relativeRoot);
@@ -71,16 +93,18 @@ function collectAssetFamilies(root, assetRoot, matchers) {
 }
 
 function auditPackageSources({ root = DEFAULT_ROOT, policy }) {
-  const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  const matchers = parseBuildFiles(packageJson.build.files);
+  const canonicalRoot = fs.realpathSync.native(root);
+  const packageJson = JSON.parse(fs.readFileSync(path.join(canonicalRoot, "package.json"), "utf8"));
+  const matcherScopes = parseBuildFiles(packageJson.build.files);
+  const matchers = flattenScopes(matcherScopes);
   const normalizedPolicy = normalizePolicy(policy);
   const buildFiles = matchers.map(({ pattern, negative }) => `${negative ? "!" : ""}${pattern}`).sort(compareText);
   const requiredRuntime = normalizedPolicy.requiredRuntime.map((runtimePath) => ({
     path: runtimePath,
-    present: fs.existsSync(path.join(root, ...runtimePath.split("/"))),
-    included: isIncluded(matchers, runtimePath),
+    present: fs.existsSync(path.join(canonicalRoot, ...runtimePath.split("/"))),
+    included: isIncluded(matcherScopes, runtimePath),
   }));
-  const assetFamilies = collectAssetFamilies(root, normalizedPolicy.assetRoot, matchers);
+  const assetFamilies = collectAssetFamilies(canonicalRoot, normalizedPolicy.assetRoot, matcherScopes);
   const violations = [];
   for (const pattern of normalizedPolicy.forbiddenBuildPatterns) {
     if (matchers.some((matcher) => !matcher.negative && matcher.pattern === pattern)) {
@@ -88,7 +112,7 @@ function auditPackageSources({ root = DEFAULT_ROOT, policy }) {
     }
   }
   for (const forbiddenRoot of normalizedPolicy.forbiddenAssetRoots) {
-    if (isIncluded(matchers, `${forbiddenRoot}/__package_audit_probe__`)) {
+    if (isIncluded(matcherScopes, `${forbiddenRoot}/__package_audit_probe__`)) {
       violations.push({ code: "FORBIDDEN_ASSET_ROOT", value: forbiddenRoot });
     }
   }

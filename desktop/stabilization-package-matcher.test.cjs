@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
@@ -33,6 +34,10 @@ function audit(buildFiles, files, policy = BASE_POLICY) {
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
+}
+
+function directoryLink(target, linkPath) {
+  fs.symlinkSync(target, linkPath, process.platform === "win32" ? "junction" : "dir");
 }
 
 test("build.files string **/* includes nested files and exposes forbidden assets", () => {
@@ -127,5 +132,84 @@ test("policy paths cannot be absolute or traverse outside the audited root", () 
   // When / Then
   for (const policy of policies) {
     assert.throws(() => audit(["index.html"], files, policy), { code: "POLICY_PATH_OUTSIDE_ROOT" });
+  }
+});
+
+test("unsupported minimatch constructs fail closed with a stable error", () => {
+  // Given
+  const patterns = ["assets/{one,two}/**/*", "assets/[ab]/**/*", "assets/@(one|two)/**/*", "assets/\\*.png"];
+
+  // When / Then
+  for (const pattern of patterns) {
+    assert.throws(
+      () => audit(["index.html", pattern], { "index.html": "app" }),
+      { code: "UNSUPPORTED_GLOB_SYNTAX" },
+    );
+  }
+});
+
+test("unsupported glob syntax makes the CLI exit 2 before emitting a report", () => {
+  // Given
+  const root = fixture(["assets/{one,two}/**/*"], { "index.html": "app" });
+  const policyPath = path.join(root, "policy.json");
+  fs.writeFileSync(policyPath, JSON.stringify(BASE_POLICY));
+  const cli = path.join(__dirname, "..", "scripts", "stabilization", "package-assets-audit.cjs");
+
+  try {
+    // When
+    const result = spawnSync(process.execPath, [cli, "--root", root, "--policy", policyPath], { encoding: "utf8" });
+
+    // Then
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, "");
+    assert.equal(JSON.parse(result.stderr).code, "UNSUPPORTED_GLOB_SYNTAX");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("default string patterns and FileSets remain independent union scopes", () => {
+  // Given
+  const files = { "index.html": "app", "assets/exam-parts/a.svg": "ok" };
+
+  // When
+  const report = audit([
+    "assets/exam-parts/**/*",
+    { from: "assets", filter: ["**/*", "!exam-parts/**/*"] },
+  ], files);
+
+  // Then
+  assert.deepEqual(report.assetFamilies, [{ path: "assets/exam-parts", files: 1, bytes: 2 }]);
+});
+
+test("top-level assetRoot junctions cannot escape the canonical audit root", () => {
+  // Given
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "5e-package-outside-"));
+  const root = fixture(["assets/**/*", "index.html"], { "index.html": "app" });
+  fs.writeFileSync(path.join(outside, "secret.png"), "secret");
+  directoryLink(outside, path.join(root, "assets"));
+
+  try {
+    // When / Then
+    assert.throws(() => auditPackageSources({ root, policy: BASE_POLICY }), { code: "PACKAGE_PATH_OUTSIDE_ROOT" });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("nested asset junctions cannot escape the canonical audit root", () => {
+  // Given
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "5e-package-outside-"));
+  const root = fixture(["assets/**/*", "index.html"], { "index.html": "app", "assets/root.png": "ok" });
+  fs.writeFileSync(path.join(outside, "secret.png"), "secret");
+  directoryLink(outside, path.join(root, "assets", "escape"));
+
+  try {
+    // When / Then
+    assert.throws(() => auditPackageSources({ root, policy: BASE_POLICY }), { code: "PACKAGE_PATH_OUTSIDE_ROOT" });
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
   }
 });
