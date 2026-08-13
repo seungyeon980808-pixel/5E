@@ -1,0 +1,13 @@
+{
+  "sourceId":"b1_2026_09_09.png#1","sourceCrop":[0,0,1,1],"graphBox":[0.339223,0.069767,0.614841,0.674419],
+  "scene":{"schema":"5e-fast-scene@1","mode":"complete","artboard":{"w":135,"h":105},"elements":[{
+    "type":"graph","box":[-50,-38,72,60],"xRange":[0,4],"yRange":[0,8],"axisVariant":"quadrant","grid":false,"originLabel":"0","yLabel":"항균 효과(상댓값)",
+    "series":[{"kind":"bar","barWidth":0.52,"fillStyle":"gray","points":[{"x":0.8,"y":0.2,"label":"Ⅰ"},{"x":2,"y":2.7,"label":"Ⅱ"},{"x":3.2,"y":7.3,"label":"Ⅲ"}]}]
+  }]},
+  "assertions":[
+    {"kind":"panel_crop"},{"kind":"graph_aspect_ratio","tolerance":0.02},{"kind":"axes","variant":"quadrant"},
+    {"kind":"axis_range","x":[0,4],"y":[0,8]},{"kind":"series_geometry","count":1,"kinds":["bar"]},
+    {"kind":"point_positions","points":[{"series":0,"index":0,"at":[0.8,0.2]},{"series":0,"index":1,"at":[2,2.7]},{"series":0,"index":2,"at":[3.2,7.3]}]},
+    {"kind":"labels","values":["항균 효과(상댓값)","Ⅰ","Ⅱ","Ⅲ"]}
+  ]
+}
