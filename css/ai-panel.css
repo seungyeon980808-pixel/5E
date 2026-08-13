@@ -732,6 +732,7 @@
   height: min(820px, calc(100vh - 56px));
   flex-direction: column;
   overflow: hidden;
+  color: var(--text-primary, #e6edf3);
   background: var(--bg-panel, #161b22);
   border: 1px solid var(--border-strong, #30363d);
   border-radius: 10px;
@@ -740,12 +741,20 @@
 .ai-compare-head { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border, #30363d); }
 .ai-compare-head strong { flex: 1; }
 .ai-compare-head button { border: 0; color: inherit; background: transparent; font-size: 22px; cursor: pointer; }
+.ai-compare-head button:focus-visible {
+  outline: 2px solid var(--accent, #2f81f7);
+  outline-offset: 2px;
+}
 .ai-compare-panes { display: grid; grid-template-columns: 1fr 1fr; min-height: 0; flex: 1; }
 .ai-compare-pane { display: flex; min-width: 0; flex-direction: column; padding: 12px; }
 .ai-compare-pane + .ai-compare-pane { border-left: 1px solid var(--border, #30363d); }
 .ai-compare-main { min-height: 0; flex: 1; width: 100%; object-fit: contain; background: #fff; border-radius: 6px; }
 .ai-compare-picker { display: flex; gap: 7px; padding-top: 10px; overflow-x: auto; }
 .ai-compare-picker button { position: relative; flex: 0 0 74px; height: 58px; padding: 2px; overflow: hidden; background: #fff; border: 2px solid transparent; border-radius: 5px; cursor: pointer; }
+.ai-compare-picker button:focus-visible {
+  outline: 2px solid var(--accent, #2f81f7);
+  outline-offset: 2px;
+}
 .ai-compare-picker button.is-on { border-color: var(--accent, #2f81f7); }
 .ai-compare-picker img { width: 100%; height: 100%; object-fit: contain; }
 
@@ -981,6 +990,18 @@
 .ai-pdf-page-viewer > header > strong { min-width: 0; flex: 1; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .ai-pdf-page-viewer > header > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .ai-pdf-page-viewer button[data-ai-pdf-add-crop] { color: #fff; background: var(--accent, #2f81f7); border-color: var(--accent, #2f81f7); }
+.ai-reference-search-dialog button:disabled {
+  color: var(--text-secondary, #8b949e);
+  background: var(--btn-tool, #21262d);
+  border-color: var(--border, #30363d);
+  opacity: .6;
+  cursor: not-allowed;
+}
+.ai-pdf-crop-selection:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 2px var(--accent, #2f81f7);
+}
 .ai-pdf-page-viewer button:focus-visible,
 .ai-pdf-crop-dimensions input:focus-visible {
   outline: 2px solid var(--accent, #2f81f7);

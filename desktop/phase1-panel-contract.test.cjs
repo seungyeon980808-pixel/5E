@@ -68,3 +68,13 @@ test("Given keyboard and narrow-screen users, When the panel is navigated, Then 
   assert.match(styles, /#ai-image-panel[^\n]*:focus-visible/);
   assert.match(styles, /@media \(max-width: 960px\)[\s\S]*\.ai-reference-section/);
 });
+
+test("Given comparison and PDF dialogs, When controls change state, Then foreground focus and disabled states stay visible", () => {
+  // Given the standalone comparison dialog and keyboard-operable PDF workspace.
+  // When their visual state contracts are inspected.
+  // Then text, focus, and disabled semantics have explicit token-driven styles.
+  assert.match(styles, /\.ai-compare-dialog\s*\{[^}]*color:\s*var\(--text-primary/s);
+  assert.match(styles, /\.ai-compare-head button:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent/s);
+  assert.match(styles, /\.ai-reference-search-dialog button:disabled\s*\{[^}]*color:\s*var\(--text-secondary[^}]*opacity:\s*\.6[^}]*cursor:\s*not-allowed/s);
+  assert.match(styles, /\.ai-pdf-crop-selection:focus-visible\s*\{[^}]*outline:\s*3px solid/s);
+});
