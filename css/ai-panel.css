@@ -985,7 +985,7 @@
 .ai-reference-search-card small { display: -webkit-box; overflow: hidden; color: var(--text-secondary, #8b949e); font-size: 11px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .ai-pdf-workspace { display: grid; min-width: 0; min-height: 0; flex: 1; grid-template-columns: minmax(0, 7fr) minmax(300px, 3fr); overflow: hidden; border: 1px solid var(--border, #30363d); border-radius: 8px; }
 .ai-pdf-workspace[hidden] { display: none; }
-.ai-pdf-page-viewer { display: flex; min-width: 0; min-height: 0; flex-direction: column; background: color-mix(in srgb, var(--bg-input, #0d1117) 82%, #fff); }
+.ai-pdf-page-viewer { position: relative; display: flex; min-width: 0; min-height: 0; flex-direction: column; background: color-mix(in srgb, var(--bg-input, #0d1117) 82%, #fff); }
 .ai-pdf-page-viewer > header { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 8px 12px; border-bottom: 1px solid var(--border, #30363d); }
 .ai-pdf-page-viewer > header > strong { min-width: 0; flex: 1; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .ai-pdf-page-viewer > header > div { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
@@ -1077,7 +1077,7 @@
   .ai-pdf-page-viewer > header { align-items: flex-start; flex-direction: column; }
   .ai-pdf-page-viewer > header > div { justify-content: flex-start; }
   .ai-pdf-page-stage { padding: 8px; }
-  .ai-pdf-crop-preview { top: 8px; right: 8px; bottom: auto; max-width: min(190px, 48vw); }
+  .ai-pdf-crop-preview { right: 8px; bottom: 8px; max-width: min(190px, 48vw); }
   .ai-pdf-crop-preview canvas { max-width: 100%; max-height: 96px; }
   .ai-reference-search-dialog > footer span { display: none; }
   .ai-reference-search-card span,

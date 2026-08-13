@@ -25,8 +25,7 @@ export function createReferenceDialog({ legacyLibraryUiEnabled = false } = {}) {
         </div></header><div class="ai-pdf-page-stage">
           <p data-ai-pdf-page-empty>오른쪽 검색 결과를 선택하면 PDF 페이지를 크게 볼 수 있습니다.</p>
           <div class="ai-pdf-page-wrap" data-ai-pdf-page-wrap hidden><img alt="선택한 PDF 페이지" draggable="false"><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-selection" data-ai-pdf-crop-selection tabindex="0" role="group" aria-label="선택 영역. 방향키로 이동하고 Shift와 방향키로 크기를 조절합니다"></i></div>
-          <aside class="ai-pdf-crop-preview" data-ai-pdf-crop-preview hidden><span>선택 영역 확대 미리보기</span><canvas aria-label="선택 영역 확대 미리보기"></canvas></aside>
-        </div></div>
+        </div><aside class="ai-pdf-crop-preview" data-ai-pdf-crop-preview hidden><span>선택 영역 확대 미리보기</span><canvas aria-label="선택 영역 확대 미리보기"></canvas></aside></div>
         <aside class="ai-pdf-result-pane"><header><strong data-ai-pdf-result-title>PDF 원문 검색 결과</strong></header><div data-ai-pdf-result-list></div></aside>
       </section>
     </div>

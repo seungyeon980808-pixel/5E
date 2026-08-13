@@ -43,8 +43,10 @@ test("workspace exposes local suggestions and a separate explicit confirmation",
   assert.match(dialog, /data-ai-pdf-suggest-question[^>]*>문항 전체 제안/);
   assert.match(dialog, /data-ai-pdf-suggest-figure[^>]*>도판 영역 제안/);
   assert.match(dialog, /data-ai-pdf-crop-preview/);
+  assert.match(dialog, /data-ai-pdf-page-wrap[^>]*>[\s\S]*?<\/div>\s*<\/div><aside class="ai-pdf-crop-preview"/);
   assert.match(workspace, /suggestPageRegions/);
   assert.match(workspace, /preview\.show/);
   assert.match(workspace, /onAddCrop/);
-  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.ai-pdf-crop-preview\s*\{[^}]*top:\s*8px;[^}]*bottom:\s*auto;/);
+  assert.match(css, /\.ai-pdf-page-viewer\s*\{[^}]*position:\s*relative;/);
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.ai-pdf-crop-preview\s*\{[^}]*bottom:\s*8px;/);
 });

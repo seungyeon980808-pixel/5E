@@ -2,7 +2,7 @@ import { idbGet, idbSet } from "./idb-store.js";
 import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
 import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.11-phase3-regions";
-import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.11-phase3-regions";
+import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.12-phase3-preview";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
 import { createBrowserFolderConnector, createDesktopFolderConnector, createFolderConnectionSession, readWebImage,
