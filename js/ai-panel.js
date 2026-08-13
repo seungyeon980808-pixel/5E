@@ -36,7 +36,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-pdf-crop";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-pdf-crop-coordinates";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -688,7 +688,9 @@ export function initAiPanel(state) {
     zoomIn.title = "미리보기 확대";
     zoomIn.setAttribute("aria-label", "미리보기 확대");
     const applyZoom = () => {
-      img.style.height = `${Math.round((item.kind === "reference" ? 145 : 430) * zoomLevel)}px`;
+      img.style.height = item.kind === "reference"
+        ? `calc(var(--ai-reference-preview-height) * ${zoomLevel})`
+        : `${Math.round(430 * zoomLevel)}px`;
       zoomValue.textContent = `${Math.round(zoomLevel * 100)}%`;
       zoomOut.disabled = zoomLevel <= 0.6;
       zoomIn.disabled = zoomLevel >= 2;

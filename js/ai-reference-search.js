@@ -159,10 +159,11 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   function renderCropBox() {
     const wrap = overlay?.querySelector("[data-ai-pdf-page-wrap]");
     if (!wrap) return;
+    const image = wrap.querySelector("img");
     const masks = wrap.querySelectorAll(".ai-pdf-crop-mask");
     const selection = wrap.querySelector(".ai-pdf-crop-selection");
-    const width = wrap.clientWidth;
-    const height = wrap.clientHeight;
+    const width = image.clientWidth;
+    const height = image.clientHeight;
     if (!cropBox || !width || !height) {
       masks.forEach((mask, index) => Object.assign(mask.style, index ? { width: "0px", height: "0px" }
         : { left: "0px", top: "0px", width: `${width}px`, height: `${height}px` }));
@@ -489,8 +490,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     };
     overlay.querySelector("[data-ai-pdf-add-whole]").onclick = addWholePreview;
     overlay.querySelector("[data-ai-pdf-add-crop]").onclick = addCroppedPreview;
+    const image = pageWrap.querySelector("img");
     const cropPoint = (event) => {
-      const rect = pageWrap.getBoundingClientRect();
+      const rect = image.getBoundingClientRect();
       return {
         x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
         y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height))),

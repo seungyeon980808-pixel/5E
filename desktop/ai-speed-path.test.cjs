@@ -29,10 +29,29 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-local-asset-router\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-remote-input-plan\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
+  assert.match(panel, /ai-reference-search\.js\?v=1\.5\.8-pdf-crop-coordinates/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.11-pdf-crop/);
-  assert.match(index, /js\/main\.js\?v=1\.5\.9-delayed-cut-cache-pdf-crop/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.11-pdf-crop-responsive-2/);
+  assert.match(index, /css\/ai-panel\.css\?v=1\.5\.6-pdf-crop-workspace-3/);
+  assert.match(index, /js\/main\.js\?v=1\.5\.9-delayed-cut-cache-pdf-crop-responsive-2/);
+});
+
+test("the MCP bridge can import the PNG density helper", () => {
+  const svgExport = fs.readFileSync(path.join(__dirname, "..", "js", "svg-export.js"), "utf8");
+  assert.match(svgExport, /export\s+function\s+insertPngPhys\s*\(/);
+});
+
+test("AI reference crops remain fully visible in a 720px workspace", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
+  const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
+  assert.match(css, /@media\s*\(max-height:\s*760px\)[\s\S]*?--ai-reference-preview-height:\s*100px;/);
+  assert.match(panel, /calc\(var\(--ai-reference-preview-height\) \* \$\{zoomLevel\}\)/);
+});
+
+test("PDF crop pointer coordinates use the rendered image bounds", () => {
+  const search = fs.readFileSync(path.join(__dirname, "..", "js", "ai-reference-search.js"), "utf8");
+  assert.match(search, /const image = pageWrap\.querySelector\("img"\);[\s\S]*?const rect = image\.getBoundingClientRect\(\);/);
 });
 
 test("common scientific diagrams use the local editable scene path with exact-cache and raster fallback", () => {

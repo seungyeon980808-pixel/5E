@@ -334,9 +334,12 @@
   100% { transform: translateX(360%); }
 }
 .ai-preview-card { display: flex; flex-direction: column; gap: 7px; padding: 9px; border: 1px solid var(--border, #30363d); border-radius: 7px; }
-.ai-reference-card { min-width: 0; padding: 7px; }
+.ai-reference-card { --ai-reference-preview-height: 145px; min-width: 0; padding: 7px; }
 .ai-reference-card .ai-preview-stage { min-height: 0; }
-.ai-reference-card .ai-preview-stage > img { height: 145px; }
+.ai-reference-card .ai-preview-stage > img { height: var(--ai-reference-preview-height); }
+@media (max-height: 760px) {
+  .ai-reference-card { --ai-reference-preview-height: 100px; }
+}
 .ai-image-card-head { display: flex; align-items: center; gap: 7px; }
 .ai-image-card-head strong { flex: 1; min-width: 0; overflow: hidden; font-size: var(--ai-type-control); text-overflow: ellipsis; white-space: nowrap; }
 .ai-image-card-head span { color: var(--text-secondary, #8b949e); font-size: var(--ai-type-caption); }
