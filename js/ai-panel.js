@@ -11,7 +11,7 @@ import {
   compactConversation,
   markImagesSent,
   selectOutgoingImageItems,
-} from "./ai-request-plan.js?v=1.5.3";
+} from "./ai-request-plan.js?v=1.5.8-local-privacy-parity";
 import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
 import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
 import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
@@ -36,7 +36,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-pdf-crop-coordinates";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-local-privacy-parity";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
