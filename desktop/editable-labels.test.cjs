@@ -5,11 +5,13 @@ const { installSvgDom } = require("../tests/stabilization/harness/svg-dom.cjs");
 test("PDF crop provenance is explicit, normalized and omits absolute paths", async () => {
   const { buildReferenceProvenance } = await import("../js/reference-provenance.mjs");
   const result = buildReferenceProvenance({
-    id: "pdf-7:4", sourceId: "pdf-7", name: "과학시험.pdf", relativePath: "C:\\Users\\teacher\\과학시험.pdf",
+    id: "desktop:C:\\Users\\teacher\\과학시험.pdf:4", sourceId: "desktop:C:\\Users\\teacher\\과학시험.pdf",
+    name: "과학시험.pdf", relativePath: "C:\\Users\\teacher\\과학시험.pdf",
     pageNumber: 4, metadata: { question: "12번" },
   }, { x: .2, y: .3, w: .5, h: .4, selectionKind: "figure-suggestion", sourceWidth: 1200, sourceHeight: 1600 });
 
   assert.equal(result.fileName, "과학시험.pdf");
+  assert.match(result.documentId, /^local-document-[0-9a-f]{8}$/);
   assert.equal(result.pageNumber, 4);
   assert.deepEqual(result.questionInfo, { value: "12번", source: "pdf-metadata", confirmedByUser: false });
   assert.deepEqual(result.crop, { units: "normalized", x: .2, y: .3, w: .5, h: .4,

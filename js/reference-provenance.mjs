@@ -14,6 +14,17 @@ function finite(value, fallback = 0) {
   return Number.isFinite(Number(value)) ? Number(value) : fallback;
 }
 
+function documentIdOf(item) {
+  const raw = scalar(item?.sourceId || item?.id, 600);
+  if (!raw) return null;
+  let hash = 2166136261;
+  for (let index = 0; index < raw.length; index += 1) {
+    hash ^= raw.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `local-document-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
 function normalizedCrop(crop) {
   const x = Math.max(0, Math.min(1, finite(crop.x)));
   const y = Math.max(0, Math.min(1, finite(crop.y)));
@@ -33,7 +44,7 @@ export function buildReferenceProvenance(item, crop = null) {
   const result = {
     schema: SCHEMA,
     sourceKind: item?.kind === "pdf-page" ? (crop ? "local-pdf-crop" : "local-pdf") : "local-image",
-    documentId: scalar(item?.sourceId || item?.id, 120) || null,
+    documentId: documentIdOf(item),
     fileName: fileNameOf(item),
     pageNumber: Number.isInteger(item?.pageNumber) ? item.pageNumber : null,
     questionInfo: question ? { value: question, source: "pdf-metadata", confirmedByUser: false } : null,
