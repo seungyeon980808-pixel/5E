@@ -1,22 +1,7 @@
-const CROP_STEP = 0.01;
-const MIN_CROP_SIZE = 0.01;
-const roundCrop = (value) => Math.round(value * 1000) / 1000;
-const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
-
-export function adjustCropBoxWithKeyboard(box, key, { shiftKey = false } = {}) {
-  const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0],
-    ArrowUp: [0, -1], ArrowDown: [0, 1] }[key];
-  if (!box || !direction) return null;
-  const next = { ...box };
-  if (shiftKey) {
-    if (direction[0]) next.w = clamp(box.w + direction[0] * CROP_STEP, MIN_CROP_SIZE, 1 - box.x);
-    if (direction[1]) next.h = clamp(box.h + direction[1] * CROP_STEP, MIN_CROP_SIZE, 1 - box.y);
-  } else {
-    next.x = clamp(box.x + direction[0] * CROP_STEP, 0, 1 - box.w);
-    next.y = clamp(box.y + direction[1] * CROP_STEP, 0, 1 - box.h);
-  }
-  return Object.fromEntries(Object.entries(next).map(([name, value]) => [name, roundCrop(value)]));
-}
+import { adjustCropBoxWithKeyboard } from "./pdf-crop-state.mjs";
+import { imageDataFromElement, suggestPageRegions } from "./pdf-region-suggestions.mjs";
+import { createCropPreview } from "./pdf-crop-preview.js";
+export { adjustCropBoxWithKeyboard } from "./pdf-crop-state.mjs";
 
 export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, onSelect } = {}) {
   const workspace = root.querySelector("[data-ai-pdf-workspace]");
@@ -30,8 +15,13 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   const resultTitle = workspace.querySelector("[data-ai-pdf-result-title]");
   const resultList = workspace.querySelector("[data-ai-pdf-result-list]");
   const dimensions = workspace.querySelector("[data-ai-pdf-crop-dimensions]");
+  const suggestionButtons = {
+    question: workspace.querySelector("[data-ai-pdf-suggest-question]"),
+    figure: workspace.querySelector("[data-ai-pdf-suggest-figure]"),
+  };
   const masks = wrap.querySelectorAll(".ai-pdf-crop-mask");
   const selection = wrap.querySelector(".ai-pdf-crop-selection");
+  const preview = createCropPreview(workspace);
   let item = null;
   let data = "";
   let renderedKey = "";
@@ -39,6 +29,8 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   let cropBox = null;
   let dragStart = null;
   let query = "";
+  let cropLabel = "사용자 선택";
+  let regionSuggestions = new Map();
 
   const keyOf = (value) => value ? `local:${value.id || value.path || value.file}` : "";
   const nameOf = (suffix = "") => {
@@ -63,6 +55,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
       masks.forEach((mask, index) => Object.assign(mask.style, index ? { width: "0px", height: "0px" }
         : { left: "0px", top: "0px", width: `${width}px`, height: `${height}px` }));
       selection.style.display = "none";
+      preview.clear();
       return;
     }
     const x = cropBox.x * width, y = cropBox.y * height;
@@ -72,6 +65,19 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     Object.assign(masks[2].style, { left: `${x + w}px`, top: `${y}px`, width: `${Math.max(0, width - x - w)}px`, height: `${h}px` });
     Object.assign(masks[3].style, { left: "0px", top: `${y + h}px`, width: `${width}px`, height: `${Math.max(0, height - y - h)}px` });
     Object.assign(selection.style, { display: "block", left: `${x}px`, top: `${y}px`, width: `${w}px`, height: `${h}px` });
+    preview.show(image, cropBox, cropLabel);
+  }
+
+  function analyzeRegions() {
+    try {
+      regionSuggestions = new Map(suggestPageRegions(imageDataFromElement(image))
+        .map((region) => [region.kind, region]));
+    } catch {
+      regionSuggestions = new Map();
+    }
+    Object.entries(suggestionButtons).forEach(([kind, button]) => {
+      if (button) button.disabled = !regionSuggestions.has(kind);
+    });
   }
 
   function renderPreview() {
@@ -82,11 +88,14 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     wholeButton.disabled = !item || !data;
     applyButton.hidden = !cropMode;
     applyButton.disabled = !cropBox || !data;
+    Object.entries(suggestionButtons).forEach(([kind, button]) => {
+      if (button) button.disabled = !data || !regionSuggestions.has(kind);
+    });
     empty.hidden = !!item;
     wrap.hidden = !item;
     title.textContent = item ? item.kind === "pdf-page" ? `${item.name} · ${item.pageNumber}쪽` : item.name
       : "검색 결과를 선택하세요";
-    if (!item) { image.removeAttribute("src"); return; }
+    if (!item) { image.removeAttribute("src"); regionSuggestions.clear(); preview.clear(); return; }
     const key = keyOf(item);
     if (renderedKey === key && data) {
       if (image.src !== data) image.src = data;
@@ -95,6 +104,8 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     }
     renderedKey = key;
     data = "";
+    regionSuggestions.clear();
+    preview.clear();
     image.removeAttribute("src");
     empty.hidden = false;
     empty.textContent = "선택한 페이지를 크게 불러오는 중…";
@@ -104,7 +115,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
       data = loaded;
       image.src = loaded;
       empty.hidden = true;
-      image.addEventListener("load", () => { renderPreview(); renderCropBox(); }, { once: true });
+      image.addEventListener("load", () => { analyzeRegions(); renderPreview(); renderCropBox(); }, { once: true });
       renderPreview();
     }).catch((error) => {
       if (!empty.isConnected || item !== requested) return;
@@ -175,10 +186,21 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   cropButton.onclick = () => {
     cropMode = !cropMode;
     cropBox = cropMode ? { x: 0.1, y: 0.1, w: 0.8, h: 0.8 } : null;
+    cropLabel = "사용자 선택";
     dragStart = null;
     renderPreview();
     if (cropMode) requestAnimationFrame(() => selection.focus?.());
   };
+  Object.entries(suggestionButtons).forEach(([kind, button]) => {
+    if (!button) return;
+    button.onclick = () => {
+      const region = regionSuggestions.get(kind);
+      if (!region) return;
+      cropMode = true; cropBox = { ...region.box }; cropLabel = region.label; dragStart = null;
+      renderPreview();
+      requestAnimationFrame(() => selection.focus?.());
+    };
+  });
   wholeButton.onclick = () => { if (item && data) onAddWhole({ name: nameOf("PDF 페이지"), data, item }); };
   applyButton.onclick = () => {
     if (!cropBox || !data || !image.naturalWidth || !image.naturalHeight) return;
@@ -187,7 +209,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     const canvas = document.createElement("canvas");
     canvas.width = sw; canvas.height = sh;
     canvas.getContext("2d")?.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
-    onAddCrop({ name: nameOf("선택 영역"), data: canvas.toDataURL("image/png"), item });
+    onAddCrop({ name: nameOf(cropLabel), data: canvas.toDataURL("image/png"), item });
   };
   const cropPoint = (event) => {
     const rect = image.getBoundingClientRect();
@@ -198,6 +220,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     const next = adjustCropBoxWithKeyboard(cropBox, event.key, event);
     if (!next) return;
     event.preventDefault();
+    cropLabel = "사용자 선택";
     cropBox = next;
     applyButton.disabled = !data;
     renderCropBox();
@@ -205,6 +228,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   wrap.addEventListener("pointerdown", (event) => {
     if (!cropMode || event.button !== 0 || event.target.tagName !== "IMG") return;
     event.preventDefault(); dragStart = cropPoint(event); cropBox = { x: dragStart.x, y: dragStart.y, w: 0, h: 0 };
+    cropLabel = "사용자 선택";
     wrap.setPointerCapture?.(event.pointerId); renderCropBox();
   });
   wrap.addEventListener("pointermove", (event) => {
@@ -222,7 +246,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   wrap.addEventListener("pointercancel", () => { dragStart = null; });
   window.addEventListener("resize", renderCropBox);
   return {
-    clear: () => { item = null; data = ""; renderedKey = ""; cropMode = false; cropBox = null; },
+    clear: () => { item = null; data = ""; renderedKey = ""; cropMode = false; cropBox = null; regionSuggestions.clear(); preview.clear(); },
     dispose: () => window.removeEventListener("resize", renderCropBox),
     render,
   };

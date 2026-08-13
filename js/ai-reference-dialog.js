@@ -17,12 +17,15 @@ export function createReferenceDialog({ legacyLibraryUiEnabled = false } = {}) {
       <section class="ai-pdf-workspace" data-ai-pdf-workspace hidden>
         <div class="ai-pdf-page-viewer"><header><strong data-ai-pdf-page-title>검색 결과를 선택하세요</strong><div>
           <span class="ai-pdf-crop-dimensions" data-ai-pdf-crop-dimensions role="status" aria-live="polite"></span>
+          <button type="button" data-ai-pdf-suggest-question disabled>문항 전체 제안</button>
+          <button type="button" data-ai-pdf-suggest-figure disabled>도판 영역 제안</button>
           <button type="button" data-ai-pdf-crop-toggle aria-pressed="false" disabled>선택 영역 지정</button>
           <button type="button" data-ai-pdf-add-whole disabled>PDF 페이지 추가</button>
           <button type="button" data-ai-pdf-add-crop hidden disabled>선택 영역을 시험문제용 도판으로 변환</button>
         </div></header><div class="ai-pdf-page-stage">
           <p data-ai-pdf-page-empty>오른쪽 검색 결과를 선택하면 PDF 페이지를 크게 볼 수 있습니다.</p>
           <div class="ai-pdf-page-wrap" data-ai-pdf-page-wrap hidden><img alt="선택한 PDF 페이지" draggable="false"><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-mask"></i><i class="ai-pdf-crop-selection" data-ai-pdf-crop-selection tabindex="0" role="group" aria-label="선택 영역. 방향키로 이동하고 Shift와 방향키로 크기를 조절합니다"></i></div>
+          <aside class="ai-pdf-crop-preview" data-ai-pdf-crop-preview hidden><span>선택 영역 확대 미리보기</span><canvas aria-label="선택 영역 확대 미리보기"></canvas></aside>
         </div></div>
         <aside class="ai-pdf-result-pane"><header><strong data-ai-pdf-result-title>PDF 원문 검색 결과</strong></header><div data-ai-pdf-result-list></div></aside>
       </section>
