@@ -5,7 +5,7 @@ import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.9-phase0-ui";
 import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.9-phase0-ui";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
-import { readWebImage, sourcesFromDesktopResult, sourcesFromWebFiles } from "./local-reference-sources.mjs";
+import { createBrowserFolderConnector, createDesktopFolderConnector, readWebImage, sourcesFromWebFiles } from "./local-reference-sources.mjs";
 import {
   activateReferenceSource,
   handoffLocalReference,
@@ -32,6 +32,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   let locals = [];
   let pdfPages = [];
   let localFolder = "";
+  let localNotices = [];
   let loaded = false;
   let indexing = false;
   let pdfWorkspace = null;
@@ -49,6 +50,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       locals = next.images;
       pdfPages = next.pages;
       localFolder = next.folderLabel;
+      localNotices = next.notices;
       indexing = next.indexing;
       render();
     },
@@ -89,14 +91,18 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   }
 
   async function cachedPages(pdf, onProgress) {
-    const cacheKey = `pdf-index:${pdf.id}:${pdf.size || 0}:${pdf.modifiedAt || 0}`;
+    const cacheKey = `pdf-index:v2:${pdf.id}:${pdf.size || 0}:${pdf.modifiedAt || 0}`;
     try {
       const cached = await idbGet(cacheKey);
-      if (Array.isArray(cached)) return cached.map((page) => ({ ...page, source: pdf }));
+      if (Array.isArray(cached?.pages) && Array.isArray(cached.progress)) {
+        cached.progress.forEach(onProgress);
+        return cached.pages.map((page) => ({ ...page, source: pdf }));
+      }
     } catch {}
-    const pages = await extractPdfPages(pdf, onProgress);
+    const progress = [];
+    const pages = await extractPdfPages(pdf, (event) => { progress.push(event); onProgress(event); });
     const stored = pages.map(({ source: ignored, ...page }) => page);
-    try { await idbSet(cacheKey, stored); } catch {}
+    try { await idbSet(cacheKey, { pages: stored, progress }); } catch {}
     return pages;
   }
 
@@ -125,8 +131,15 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   function render() {
     if (!overlay) return;
     const folderBar = overlay.querySelector("[data-ai-local-folder]");
+    const folderLabel = folderBar.querySelector("span");
     folderBar.hidden = source !== SOURCES.LOCAL;
-    folderBar.querySelector("span").textContent = localFolder || "연결된 로컬 이미지·PDF 폴더가 없습니다.";
+    folderLabel.textContent = localNotices.length
+      ? localNotices.join(" · ").replaceAll("검색 가능한 텍스트 없음", "검색 가능한 텍스트 없음")
+      : localFolder || "연결된 로컬 이미지·PDF 폴더가 없습니다.";
+    folderLabel.style.whiteSpace = localNotices.length ? "normal" : "";
+    folderLabel.style.wordBreak = localNotices.length ? "keep-all" : "";
+    folderLabel.style.overflowWrap = localNotices.length ? "anywhere" : "";
+    folderLabel.style.textOverflow = localNotices.length ? "clip" : "";
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
       const active = button.dataset.aiSearchSource === source;
       button.classList.toggle("is-on", active);
@@ -177,13 +190,14 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   }
 
   async function pickLocal() {
-    if (desktop?.pickLocalImageFolder) {
-      const picked = await desktop.pickLocalImageFolder();
-      if (!picked?.folder) return;
-      const result = await desktop.listLocalImages(picked.folder);
-      await acceptAssets(sourcesFromDesktopResult(result, desktop), result.folder);
-    } else overlay.querySelector("[data-ai-web-folder]").click();
+    const result = await folderConnector.reconnect();
+    if (result.status === "connected") await acceptAssets(result.assets, result.folderLabel);
+    else if (result.status === "unsupported") overlay.querySelector("[data-ai-web-folder]").click();
+    else if (result.status === "denied") status("폴더 읽기 권한이 거부되었습니다. 폴더를 다시 연결하세요.", "warn");
   }
+
+  const folderConnector = desktop?.pickLocalImageFolder
+    ? createDesktopFolderConnector(desktop) : createBrowserFolderConnector(globalThis);
 
   async function open() {
     close(); selected.clear(); query = "";

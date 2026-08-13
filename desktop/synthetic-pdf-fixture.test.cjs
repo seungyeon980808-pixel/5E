@@ -3,8 +3,10 @@ const assert = require("node:assert/strict");
 const { createHash } = require("node:crypto");
 const {
   SYNTHETIC_PDF_PROVENANCE,
+  createLargeSyntheticPdfSource,
   createSyntheticPdf,
   createSyntheticPdfSource,
+  createTextlessSyntheticPdfSource,
 } = require("../tests/stabilization/fixtures/pdf/generate-synthetic-pdf.cjs");
 
 globalThis.DOMMatrix ??= class DOMMatrix {};
@@ -31,9 +33,45 @@ test("generated synthetic PDF bytes and provenance are deterministic", () => {
     createHash("sha256").update(first).digest("hex"),
     "9527a5ee75f5e32ab0439b07e2f23df27b18f748c8834e32d092884167cdb53b",
   );
-  assert.equal(source.name, "aster-physics-exam-q07.pdf");
+  assert.equal(source.name, "별빛-물리-모의시험-07번.pdf");
   assert.equal(SYNTHETIC_PDF_PROVENANCE.copyrightStatus, "original-synthetic");
   assert.equal(SYNTHETIC_PDF_PROVENANCE.sourceMaterial, "none");
+});
+
+test("runtime-generated large PDF reports every indexing step deterministically", async () => {
+  // Given
+  const { clearPdfDocumentCache, extractPdfPages } = await import("../js/pdf-document-index.mjs");
+  const source = createLargeSyntheticPdfSource(48);
+  const progress = [];
+  clearPdfDocumentCache();
+
+  // When
+  const pages = await extractPdfPages(source, (event) => progress.push(event));
+
+  // Then
+  assert.equal(source.size < 256 * 1024, true);
+  assert.equal(pages.length, 48);
+  assert.deepEqual(progress.map(({ pageNumber }) => pageNumber),
+    Array.from({ length: 48 }, (_, index) => index + 1));
+  assert.deepEqual(progress.at(-1), { pageNumber: 48, pageCount: 48, searchable: true });
+});
+
+test("runtime-generated scanned PDF reports only textless pages", async () => {
+  // Given
+  const { clearPdfDocumentCache, extractPdfPages } = await import("../js/pdf-document-index.mjs");
+  const source = createTextlessSyntheticPdfSource(2);
+  const progress = [];
+  clearPdfDocumentCache();
+
+  // When
+  const pages = await extractPdfPages(source, (event) => progress.push(event));
+
+  // Then
+  assert.deepEqual(pages, []);
+  assert.deepEqual(progress, [
+    { pageNumber: 1, pageCount: 2, searchable: false },
+    { pageNumber: 2, pageCount: 2, searchable: false },
+  ]);
 });
 
 test("vendored PDF.js indexes text pages and reports textless page progress", async () => {
@@ -45,9 +83,9 @@ test("vendored PDF.js indexes text pages and reports textless page progress", as
 
   // Then
   assert.deepEqual(progress, [
-    { pageNumber: 1, pageCount: 3 },
-    { pageNumber: 2, pageCount: 3 },
-    { pageNumber: 3, pageCount: 3 },
+    { pageNumber: 1, pageCount: 3, searchable: true },
+    { pageNumber: 2, pageCount: 3, searchable: true },
+    { pageNumber: 3, pageCount: 3, searchable: false },
   ]);
   assert.deepEqual(pages.map((page) => page.pageNumber), [1, 2]);
   assert.match(pages[0].text, /Exam Aster Subject Physics Question 7/);
@@ -129,7 +167,7 @@ test("PDF search ranks filename and metadata fields", async () => {
   const pages = await extractFixturePages();
 
   // When
-  const resultIds = ["q07", "Field Physics", "Aster 2026", "7 8"]
+  const resultIds = ["별빛", "Field Physics", "Aster 2026", "7 8"]
     .map((query) => rankPdfPages(pages, query).map((page) => page.id));
 
   // Then

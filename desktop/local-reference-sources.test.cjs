@@ -38,7 +38,7 @@ test("web and desktop entry points are both wired into the search UI", () => {
   assert.match(workspace, /setAttribute\("aria-pressed"/);
   assert.match(search, /event\.key === "Escape"/);
   assert.match(search, /sourcesFromWebFiles/);
-  assert.match(search, /sourcesFromDesktopResult/);
+  assert.match(search, /createDesktopFolderConnector/);
   assert.match(search, /PDF 검색 가능 페이지/);
   assert.match(workspace, /Windows 폴더 선택창에서는 파일이 표시되지 않습니다/);
   assert.match(dialog, /data-ai-pdf-workspace/);
@@ -69,4 +69,84 @@ test("PDF empty-state text preserves Korean words before overflow fallback", () 
 
   // Then
   assert.match(css, /\.ai-pdf-result-empty\s*\{[^}]*word-break:\s*keep-all;[^}]*overflow-wrap:\s*anywhere;[^}]*\}/s);
+});
+
+test("textless PDF notices wrap without hiding the Korean outcome", () => {
+  // Given / When
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const search = fs.readFileSync(path.join(__dirname, "..", "js", "ai-reference-search.js"), "utf8");
+
+  // Then
+  assert.match(search, /folderLabel\.style\.whiteSpace = localNotices\.length \? "normal" : ""/);
+  assert.match(search, /folderLabel\.style\.wordBreak = localNotices\.length \? "keep-all" : ""/);
+  assert.match(search, /folderLabel\.style\.overflowWrap = localNotices\.length \? "anywhere" : ""/);
+});
+
+test("browser folder reconnect re-requests read permission through the public connector", async () => {
+  // Given
+  const { createBrowserFolderConnector } = await import("../js/local-reference-sources.mjs");
+  const permissions = ["granted", "prompt"];
+  const requests = [];
+  const file = { name: "별빛.pdf", size: 4, lastModified: 1, arrayBuffer: async () => new ArrayBuffer(4) };
+  const handle = {
+    name: "시험",
+    queryPermission: async () => permissions.shift(),
+    requestPermission: async (options) => { requests.push(options); return "granted"; },
+    values: async function* values() { yield { kind: "file", name: file.name, getFile: async () => file }; },
+  };
+  const connector = createBrowserFolderConnector({ showDirectoryPicker: async () => handle });
+  await connector.connect();
+
+  // When
+  const result = await connector.reconnect();
+
+  // Then
+  assert.equal(result.status, "connected");
+  assert.equal(result.folderLabel, "시험");
+  assert.deepEqual(result.assets.pdfs.map((item) => item.relativePath), ["시험/별빛.pdf"]);
+  assert.deepEqual(requests, [{ mode: "read" }]);
+});
+
+test("browser folder connector distinguishes denied and cancelled outcomes", async () => {
+  // Given
+  const { createBrowserFolderConnector } = await import("../js/local-reference-sources.mjs");
+  const deniedHandle = {
+    name: "거부",
+    queryPermission: async () => "prompt",
+    requestPermission: async () => "denied",
+  };
+  const denied = createBrowserFolderConnector({ showDirectoryPicker: async () => deniedHandle });
+  const cancelled = createBrowserFolderConnector({
+    showDirectoryPicker: async () => { throw new DOMException("cancelled", "AbortError"); },
+  });
+
+  // When / Then
+  assert.deepEqual(await denied.connect(), { status: "denied" });
+  assert.deepEqual(await cancelled.connect(), { status: "cancelled" });
+});
+
+test("desktop folder reconnect uses the same outcome seam and returns the newest listing", async () => {
+  // Given
+  const { createDesktopFolderConnector } = await import("../js/local-reference-sources.mjs");
+  const folders = ["C:\\old", "C:\\new"];
+  const desktop = {
+    pickLocalImageFolder: async () => ({ folder: folders.shift() }),
+    listLocalImages: async (folder) => ({
+      folder,
+      items: [],
+      pdfs: [{ path: `${folder}\\latest.pdf`, name: "latest.pdf", relativePath: "latest.pdf" }],
+    }),
+    readLocalPdf: async () => new Uint8Array(),
+  };
+  const connector = createDesktopFolderConnector(desktop);
+  await connector.connect();
+
+  // When
+  const result = await connector.reconnect();
+
+  // Then
+  assert.equal(result.status, "connected");
+  assert.equal(result.folderLabel, "C:\\new");
+  assert.deepEqual(result.assets.pdfs.map((item) => item.path), ["C:\\new\\latest.pdf"]);
 });

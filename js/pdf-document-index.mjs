@@ -77,7 +77,7 @@ export async function extractPdfPages(source, onProgress) {
         source,
       });
     }
-    onProgress?.({ pageNumber, pageCount: pdf.numPages });
+    onProgress?.({ pageNumber, pageCount: pdf.numPages, searchable: Boolean(text) });
   }
   return pages;
 }

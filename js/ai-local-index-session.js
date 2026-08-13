@@ -10,10 +10,11 @@ export function createLocalIndexSession(loadPages, publish, reportError) {
     const images = assets.images || [];
     const pdfs = assets.pdfs || [];
     const pages = [];
+    const notices = [];
     const current = () => sessionEpoch === epoch;
     const update = (folderLabel, indexing) => {
       if (!current()) return false;
-      publish({ images, pages: [...pages], folderLabel, indexing });
+      publish({ images, pages: [...pages], folderLabel, indexing, notices: [...notices] });
       return true;
     };
 
@@ -22,14 +23,23 @@ export function createLocalIndexSession(loadPages, publish, reportError) {
       const pdf = pdfs[index];
       if (!update(`${pdf.relativePath} 분석 중 (${index + 1}/${pdfs.length})`, true)) return false;
       let lastRenderedPage = 0;
+      const textlessPages = [];
       try {
-        const indexed = await loadPages(pdf, ({ pageNumber, pageCount }) => {
+        const indexed = await loadPages(pdf, ({ pageNumber, pageCount, searchable }) => {
           if (!current()) return;
+          if (searchable === false) {
+            textlessPages.push(pageNumber);
+            notices.push(`${pdf.relativePath} ${pageNumber}쪽: 검색 가능한 텍스트 없음`);
+          }
           if (pageNumber !== pageCount && pageNumber - lastRenderedPage < 5) return;
           lastRenderedPage = pageNumber;
           update(`${pdf.relativePath} · ${pageNumber}/${pageCount}쪽 분석 중 (${index + 1}/${pdfs.length})`, true);
         });
         if (!current()) return false;
+        if (!indexed.length && textlessPages.length) {
+          notices.splice(notices.length - textlessPages.length, 0,
+            `${pdf.relativePath}: 검색 가능한 텍스트 없음`);
+        }
         pages.push(...indexed);
         update(`${pdf.relativePath} 분석 완료 (${index + 1}/${pdfs.length})`, true);
       } catch (error) {

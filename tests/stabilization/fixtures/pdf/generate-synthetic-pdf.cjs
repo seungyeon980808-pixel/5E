@@ -55,12 +55,93 @@ function createSyntheticPdf() {
   return Buffer.from(body, "ascii");
 }
 
+function serializePageObjects(objects) {
+  let body = "%PDF-1.4\n% Synthetic fixture; independently authored by 5E contributors.\n";
+  const offsets = [0];
+  for (const [index, object] of objects.entries()) {
+    offsets.push(Buffer.byteLength(body, "ascii"));
+    body += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  }
+  const xrefOffset = Buffer.byteLength(body, "ascii");
+  body += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+  body += offsets.slice(1).map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`).join("");
+  body += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
+  return Buffer.from(body, "ascii");
+}
+
+function createLargeSyntheticPdf(pageCount = 48) {
+  if (!Number.isInteger(pageCount) || pageCount < 1 || pageCount > 200) {
+    throw new RangeError("pageCount must be an integer from 1 through 200");
+  }
+  const fontId = 3 + pageCount * 2;
+  const kids = Array.from({ length: pageCount }, (_, index) => `${3 + index * 2} 0 R`).join(" ");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    `<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>`,
+  ];
+  for (let index = 0; index < pageCount; index += 1) {
+    const pageId = 3 + index * 2;
+    const contentId = pageId + 1;
+    const text = `BT /F1 12 Tf 36 250 Td (Large Synthetic Exam Subject Physics Question ${index + 1} marker) Tj ET`;
+    objects.push(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 300] /Resources << /Font << /F1 ${fontId} 0 R >> >> /Contents ${contentId} 0 R >>`,
+      `<< /Length ${Buffer.byteLength(text, "ascii")} >>\nstream\n${text}\nendstream`,
+    );
+  }
+  objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+  return serializePageObjects(objects);
+}
+
+function createTextlessSyntheticPdf(pageCount = 2) {
+  if (!Number.isInteger(pageCount) || pageCount < 1 || pageCount > 20) {
+    throw new RangeError("pageCount must be an integer from 1 through 20");
+  }
+  const kids = Array.from({ length: pageCount }, (_, index) => `${3 + index * 2} 0 R`).join(" ");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    `<< /Type /Pages /Kids [${kids}] /Count ${pageCount} >>`,
+  ];
+  for (let index = 0; index < pageCount; index += 1) {
+    const pageId = 3 + index * 2;
+    const content = `q 0.4 w 12 ${24 + index} m 388 ${276 - index} l S Q`;
+    objects.push(
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 300] /Contents ${pageId + 1} 0 R >>`,
+      `<< /Length ${Buffer.byteLength(content, "ascii")} >>\nstream\n${content}\nendstream`,
+    );
+  }
+  return serializePageObjects(objects);
+}
+
 function createSyntheticPdfSource() {
   const bytes = createSyntheticPdf();
   return {
     id: "synthetic-pdf-fixture",
-    name: "aster-physics-exam-q07.pdf",
-    relativePath: "synthetic/aster-physics-exam-q07.pdf",
+    name: "별빛-물리-모의시험-07번.pdf",
+    relativePath: "synthetic/별빛-물리-모의시험-07번.pdf",
+    size: bytes.length,
+    modifiedAt: Date.UTC(2000, 0, 1),
+    read: async () => Buffer.from(bytes),
+  };
+}
+
+function createLargeSyntheticPdfSource(pageCount = 48) {
+  const bytes = createLargeSyntheticPdf(pageCount);
+  return {
+    id: `large-synthetic-pdf-${pageCount}`,
+    name: "대형-물리-모의시험.pdf",
+    relativePath: "synthetic/대형-물리-모의시험.pdf",
+    size: bytes.length,
+    modifiedAt: Date.UTC(2000, 0, 1),
+    read: async () => Buffer.from(bytes),
+  };
+}
+
+function createTextlessSyntheticPdfSource(pageCount = 2) {
+  const bytes = createTextlessSyntheticPdf(pageCount);
+  return {
+    id: `textless-synthetic-pdf-${pageCount}`,
+    name: "스캔-물리-모의시험.pdf",
+    relativePath: "synthetic/스캔-물리-모의시험.pdf",
     size: bytes.length,
     modifiedAt: Date.UTC(2000, 0, 1),
     read: async () => Buffer.from(bytes),
@@ -69,6 +150,9 @@ function createSyntheticPdfSource() {
 
 module.exports = {
   SYNTHETIC_PDF_PROVENANCE,
+  createLargeSyntheticPdfSource,
   createSyntheticPdf,
   createSyntheticPdfSource,
+  createTextlessSyntheticPdf,
+  createTextlessSyntheticPdfSource,
 };
