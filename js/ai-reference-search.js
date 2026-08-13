@@ -1,30 +1,24 @@
 import { idbGet, idbSet } from "./idb-store.js";
 import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
-import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.9-phase0-ui";
-import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.9-phase0-ui";
+import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.10-phase1-local-ui";
+import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.10-phase1-local-ui";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
-import { createBrowserFolderConnector, createDesktopFolderConnector, createFolderConnectionSession,
-  readWebImage, sourcesFromWebFiles } from "./local-reference-sources.mjs";
-import {
-  activateReferenceSource,
-  handoffLocalReference,
-  loadRemoteReferenceCatalog,
-  REFERENCE_SOURCES as SOURCES,
-  remoteReferenceToDataUrl,
-} from "./ai-reference-source-policy.js";
+import { createBrowserFolderConnector, createDesktopFolderConnector, createFolderConnectionSession, readWebImage,
+  sourcesFromWebFiles } from "./local-reference-sources.mjs";
+import { activateReferenceSource, handoffLocalReference, loadRemoteReferenceCatalog,
+  REFERENCE_SOURCES as SOURCES, remoteReferenceToDataUrl } from "./ai-reference-source-policy.js";
+import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 
 const MAX_RESULTS = 60;
 const MAX_SELECT = 10;
-
 function textOf(item) {
   return [item.title, item.name, item.relativePath, item.subjectLabel, item.part, item.exam,
     ...(item.tags || []), ...(item.parts || []), ...(item.keywords || [])]
     .filter(Boolean).join(" ").toLocaleLowerCase("ko");
 }
-
-export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
+export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibraryUiEnabled = false } = {}) {
   let overlay;
   let source = SOURCES.LOCAL;
   let query = "";
@@ -41,6 +35,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   let referenceLoadStatus = null;
   let referenceAddControl = null;
   let parentDialog = null;
+  let releaseModalFocus = null;
   const selected = new Map();
   const objectUrls = new Set();
   const status = (text, kind = "ok") => onStatus?.(text, kind);
@@ -57,15 +52,13 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     },
     (pdf, error) => status(`${pdf.name}: ${error.message || error}`, "warn"),
   );
-
   async function ensureRemoteData() {
-    if (loaded) return;
+    if (!legacyLibraryUiEnabled || loaded) return;
     const catalog = await loadRemoteReferenceCatalog();
     parts = catalog.parts;
     exams = catalog.exams;
     loaded = true;
   }
-
   function currentItems() {
     const needle = query.trim().toLocaleLowerCase("ko");
     if (source === SOURCES.LOCAL) {
@@ -77,8 +70,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     const list = source === SOURCES.EXAM ? exams : parts;
     return (needle ? list.filter((item) => textOf(item).includes(needle)) : list).slice(0, MAX_RESULTS);
   }
-
   function close() {
+    const releaseFocus = releaseModalFocus;
+    releaseModalFocus = null;
     localIndexSession.cancel();
     indexing = false;
     pdfWorkspace?.dispose();
@@ -89,8 +83,8 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     objectUrls.clear();
     overlay?.remove();
     overlay = null;
+    releaseFocus?.();
   }
-
   async function cachedPages(pdf, onProgress) {
     const cacheKey = `pdf-index:v2:${pdf.id}:${pdf.size || 0}:${pdf.modifiedAt || 0}`;
     try {
@@ -106,12 +100,10 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     try { await idbSet(cacheKey, { pages: stored, progress }); } catch {}
     return pages;
   }
-
   async function acceptAssets(assets, folderLabel) {
     pdfWorkspace?.clear();
     await localIndexSession.accept(assets, folderLabel);
   }
-
   function imageSource(item) {
     if (item.file) {
       if (!item.objectUrl) {
@@ -122,13 +114,11 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     }
     return desktop?.localImageThumbnail?.(item.path);
   }
-
   async function fullLocalImage(item) {
     if (item.kind === "pdf-page") return renderPdfPage(item.source, item.pageNumber, 1800);
     if (item.file) return readWebImage(item);
     return desktop?.readLocalImage?.(item.path) || imageSource(item);
   }
-
   function render() {
     if (!overlay) return;
     const folderBar = overlay.querySelector("[data-ai-local-folder]");
@@ -136,7 +126,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     folderBar.hidden = source !== SOURCES.LOCAL;
     folderLabel.textContent = localNotices.length
       ? localNotices.join(" · ").replaceAll("검색 가능한 텍스트 없음", "검색 가능한 텍스트 없음")
-      : localFolder || "연결된 로컬 이미지·PDF 폴더가 없습니다.";
+      : localFolder || "연결된 내 PDF·이미지 폴더가 없습니다.";
     folderLabel.style.whiteSpace = localNotices.length ? "normal" : "";
     folderLabel.style.wordBreak = localNotices.length ? "keep-all" : "";
     folderLabel.style.overflowWrap = localNotices.length ? "anywhere" : "";
@@ -152,10 +142,10 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     searchAdd.hidden = localWorkspace;
     referenceAddControl?.selection(localWorkspace ? 0 : selected.size);
     overlay.querySelector("[data-ai-search-footnote]").textContent = localWorkspace
-      ? "검색 결과를 선택한 뒤 왼쪽 교과서 페이지에서 시험에 쓸 영역을 크롭하세요."
+      ? "검색 결과를 선택한 뒤 왼쪽 PDF 페이지에서 선택 영역을 지정하세요."
       : "선택한 이미지만 AI 참고 이미지로 추가됩니다.";
     const summary = overlay.querySelector("[data-ai-search-summary]");
-    summary.textContent = indexing ? "PDF 텍스트를 분석하고 있습니다…"
+    summary.textContent = indexing ? "PDF 원문을 분석하고 있습니다…"
       : source === SOURCES.LOCAL && !query.trim()
         ? `이미지 ${locals.length}개 · PDF 검색 가능 페이지 ${pdfPages.length}쪽 · 검색어를 입력하세요`
         : source === SOURCES.LOCAL
@@ -165,7 +155,6 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       hasFolder: Boolean(localFolder), indexing });
     referenceGrid?.render(items, source, selected, !localWorkspace);
   }
-
   async function addSelected() {
     const records = Array.from(selected.values());
     if (!records.length) return referenceAddControl?.warning("추가할 이미지를 선택하세요.");
@@ -186,23 +175,22 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     } catch (error) {
       referenceLoadStatus?.error(error);
       referenceAddControl?.error();
-      button.textContent = "AI 참고로 추가";
+      button.textContent = "참고 자료로 추가";
     }
   }
-
   async function pickLocal() {
     const result = await folderConnection.reconnect();
     if (result.status === "unsupported") overlay.querySelector("[data-ai-web-folder]").click();
     else if (result.status === "denied") status("폴더 읽기 권한이 거부되었습니다. 폴더를 다시 연결하세요.", "warn");
   }
-
   const folderConnector = desktop?.pickLocalImageFolder
     ? createDesktopFolderConnector(desktop) : createBrowserFolderConnector(globalThis);
   const folderConnection = createFolderConnectionSession(folderConnector, acceptAssets);
-
   async function open() {
+    const returnFocus = document.activeElement;
     close(); selected.clear(); query = "";
-    overlay = createReferenceDialog();
+    if (!legacyLibraryUiEnabled) source = SOURCES.LOCAL;
+    overlay = createReferenceDialog({ legacyLibraryUiEnabled });
     referenceLoadStatus = createReferenceLoadStatus(overlay);
     referenceAddControl = createReferenceAddControl(overlay);
     parentDialog = document.querySelector("#ai-image-panel [aria-modal=true]");
@@ -214,17 +202,16 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       onAddWhole: ({ name, data, item }) => {
         handoffLocalReference({ name, data, sourceKind: item.kind === "pdf-page" ? "local-pdf" : "local" },
           "confirmed", onAdd);
-        status("전체 페이지를 AI 참고 이미지로 추가했습니다.", "ok"); close();
+        status("PDF 페이지를 AI 참고 이미지로 추가했습니다.", "ok"); close();
       },
       onAddCrop: ({ name, data }) => {
         handoffLocalReference({ name, data, sourceKind: "local-pdf-crop" }, "confirmed", onAdd);
-        status("선택한 교과서 영역을 AI 참고 이미지로 추가했습니다.", "ok"); close();
+        status("선택 영역을 시험문제용 도판 변환 대상으로 추가했습니다.", "ok"); close();
       },
     });
     referenceGrid = createReferenceGrid({ root: overlay, imageSource, onChange: render, onStatus: status });
     overlay.querySelector("[data-ai-search-close]").onclick = close;
     overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-    overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
       button.onclick = () => {
         const nextSource = button.dataset.aiSearchSource;
@@ -254,7 +241,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       await acceptAssets(sourcesFromWebFiles(files), files[0]?.webkitRelativePath?.split("/")[0] || "선택한 파일");
     };
     overlay.querySelector("[data-ai-search-add]").onclick = () => void addSelected();
-    render(); input.focus();
+    render();
+    // Modal focus handles event.key === "Escape" and restores the opening control.
+    releaseModalFocus = installModalFocus({ root: overlay, initialFocus: input, returnFocus, onRequestClose: close });
   }
 
   return { open, close };

@@ -1,3 +1,23 @@
+const CROP_STEP = 0.01;
+const MIN_CROP_SIZE = 0.01;
+const roundCrop = (value) => Math.round(value * 1000) / 1000;
+const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+
+export function adjustCropBoxWithKeyboard(box, key, { shiftKey = false } = {}) {
+  const direction = { ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+    ArrowUp: [0, -1], ArrowDown: [0, 1] }[key];
+  if (!box || !direction) return null;
+  const next = { ...box };
+  if (shiftKey) {
+    if (direction[0]) next.w = clamp(box.w + direction[0] * CROP_STEP, MIN_CROP_SIZE, 1 - box.x);
+    if (direction[1]) next.h = clamp(box.h + direction[1] * CROP_STEP, MIN_CROP_SIZE, 1 - box.y);
+  } else {
+    next.x = clamp(box.x + direction[0] * CROP_STEP, 0, 1 - box.w);
+    next.y = clamp(box.y + direction[1] * CROP_STEP, 0, 1 - box.h);
+  }
+  return Object.fromEntries(Object.entries(next).map(([name, value]) => [name, roundCrop(value)]));
+}
+
 export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, onSelect } = {}) {
   const workspace = root.querySelector("[data-ai-pdf-workspace]");
   const empty = workspace.querySelector("[data-ai-pdf-page-empty]");
@@ -9,6 +29,9 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   const applyButton = workspace.querySelector("[data-ai-pdf-add-crop]");
   const resultTitle = workspace.querySelector("[data-ai-pdf-result-title]");
   const resultList = workspace.querySelector("[data-ai-pdf-result-list]");
+  const dimensions = workspace.querySelector("[data-ai-pdf-crop-dimensions]");
+  const masks = wrap.querySelectorAll(".ai-pdf-crop-mask");
+  const selection = wrap.querySelector(".ai-pdf-crop-selection");
   let item = null;
   let data = "";
   let renderedKey = "";
@@ -19,15 +42,23 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
 
   const keyOf = (value) => value ? `local:${value.id || value.path || value.file}` : "";
   const nameOf = (suffix = "") => {
-    const base = !item ? "PDF 참고 이미지"
+    const base = !item ? "참고 이미지"
       : item.kind === "pdf-page" ? `${item.name} ${item.pageNumber}쪽` : item.name;
     return suffix ? `${base} · ${suffix}` : base;
   };
 
+  function updateCropDescription() {
+    const description = cropBox
+      ? `선택 영역 너비 ${Math.round(cropBox.w * 100)}%, 높이 ${Math.round(cropBox.h * 100)}%, 위치 x ${Math.round(cropBox.x * 100)}%, y ${Math.round(cropBox.y * 100)}%`
+      : "";
+    if (dimensions) dimensions.textContent = description;
+    if (description) selection.setAttribute("aria-valuetext", description);
+    else selection.removeAttribute("aria-valuetext");
+  }
+
   function renderCropBox() {
-    const masks = wrap.querySelectorAll(".ai-pdf-crop-mask");
-    const selection = wrap.querySelector(".ai-pdf-crop-selection");
     const width = image.clientWidth, height = image.clientHeight;
+    updateCropDescription();
     if (!cropBox || !width || !height) {
       masks.forEach((mask, index) => Object.assign(mask.style, index ? { width: "0px", height: "0px" }
         : { left: "0px", top: "0px", width: `${width}px`, height: `${height}px` }));
@@ -126,23 +157,29 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     workspace.hidden = !visible;
     if (!visible) return;
     query = searchQuery;
-    resultTitle.textContent = query.trim() ? `검색 결과 ${results.length}개` : "PDF 본문 검색 결과";
+    resultTitle.textContent = query.trim() ? `검색 결과 ${results.length}개` : "PDF 원문 검색 결과";
     resultList.replaceChildren();
     if (results.length) results.forEach(renderResult);
     else {
       const message = document.createElement("p");
       message.className = "ai-pdf-result-empty";
       message.textContent = !hasFolder
-        ? "이미지·PDF 폴더 선택을 눌러 교과서 폴더를 연결하세요. Windows 폴더 선택창에서는 파일이 표시되지 않습니다."
-        : indexing ? "PDF 본문을 분석하고 있습니다."
-          : query.trim() ? "일치하는 본문이 없습니다." : "검색어를 입력하면 관련 페이지가 여기에 표시됩니다.";
+        ? "내 PDF·이미지 폴더 선택을 눌러 폴더를 연결하세요. Windows 폴더 선택창에서는 파일이 표시되지 않습니다."
+        : indexing ? "PDF 원문을 분석하고 있습니다."
+          : query.trim() ? "일치하는 원문이 없습니다." : "검색어를 입력하면 관련 PDF 페이지가 여기에 표시됩니다.";
       resultList.appendChild(message);
     }
     renderPreview();
   }
 
-  cropButton.onclick = () => { cropMode = !cropMode; cropBox = null; dragStart = null; renderPreview(); };
-  wholeButton.onclick = () => { if (item && data) onAddWhole({ name: nameOf("전체 페이지"), data, item }); };
+  cropButton.onclick = () => {
+    cropMode = !cropMode;
+    cropBox = cropMode ? { x: 0.1, y: 0.1, w: 0.8, h: 0.8 } : null;
+    dragStart = null;
+    renderPreview();
+    if (cropMode) requestAnimationFrame(() => selection.focus?.());
+  };
+  wholeButton.onclick = () => { if (item && data) onAddWhole({ name: nameOf("PDF 페이지"), data, item }); };
   applyButton.onclick = () => {
     if (!cropBox || !data || !image.naturalWidth || !image.naturalHeight) return;
     const sx = Math.round(cropBox.x * image.naturalWidth), sy = Math.round(cropBox.y * image.naturalHeight);
@@ -157,6 +194,14 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
       y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height))) };
   };
+  selection.addEventListener("keydown", (event) => {
+    const next = adjustCropBoxWithKeyboard(cropBox, event.key, event);
+    if (!next) return;
+    event.preventDefault();
+    cropBox = next;
+    applyButton.disabled = !data;
+    renderCropBox();
+  });
   wrap.addEventListener("pointerdown", (event) => {
     if (!cropMode || event.button !== 0 || event.target.tagName !== "IMG") return;
     event.preventDefault(); dragStart = cropPoint(event); cropBox = { x: dragStart.x, y: dragStart.y, w: 0, h: 0 };
