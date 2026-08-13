@@ -39,10 +39,12 @@ test("blank pages do not invent a region that could be silently confirmed", asyn
 test("workspace exposes local suggestions and a separate explicit confirmation", () => {
   const dialog = fs.readFileSync(path.join(__dirname, "..", "js", "ai-reference-dialog.js"), "utf8");
   const workspace = fs.readFileSync(path.join(__dirname, "..", "js", "ai-pdf-workspace.js"), "utf8");
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
   assert.match(dialog, /data-ai-pdf-suggest-question[^>]*>문항 전체 제안/);
   assert.match(dialog, /data-ai-pdf-suggest-figure[^>]*>도판 영역 제안/);
   assert.match(dialog, /data-ai-pdf-crop-preview/);
   assert.match(workspace, /suggestPageRegions/);
   assert.match(workspace, /preview\.show/);
   assert.match(workspace, /onAddCrop/);
+  assert.match(css, /@media \(max-width: 700px\)[\s\S]*?\.ai-pdf-crop-preview\s*\{[^}]*top:\s*8px;[^}]*bottom:\s*auto;/);
 });

@@ -1077,6 +1077,8 @@
   .ai-pdf-page-viewer > header { align-items: flex-start; flex-direction: column; }
   .ai-pdf-page-viewer > header > div { justify-content: flex-start; }
   .ai-pdf-page-stage { padding: 8px; }
+  .ai-pdf-crop-preview { top: 8px; right: 8px; bottom: auto; max-width: min(190px, 48vw); }
+  .ai-pdf-crop-preview canvas { max-width: 100%; max-height: 96px; }
   .ai-reference-search-dialog > footer span { display: none; }
   .ai-reference-search-card span,
   .ai-reference-search-card small { font-size: 10px; }
