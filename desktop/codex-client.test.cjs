@@ -10,7 +10,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /app-server/);
   assert.match(main, /notify\("initialized"\)/);
   assert.match(main, /thread\/resume/);
-  assert.match(main, /turn\/interrupt", \{ threadId: activeTurnThreadId, turnId \}/);
+  assert.match(main, /turn\/interrupt", \{ threadId: activeTurn\.threadId, turnId: targetTurnId \}/);
   assert.match(main, /model\/list/);
   assert.match(main, /account\/rateLimits\/read/);
   assert.match(main, /account\/usage\/read/);
@@ -39,6 +39,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.ok(fs.existsSync(path.join(__dirname, "splash.html")));
   assert.match(preload, /contextBridge\.exposeInMainWorld/);
   assert.match(preload, /codex:models/);
+  assert.match(preload, /interrupt: \(turnId\) => ipcRenderer\.invoke\("codex:interrupt", turnId\)/);
   assert.match(preload, /codex:account/);
   assert.match(preload, /desktop-shell/);
   assert.match(preload, /capture:sources/);

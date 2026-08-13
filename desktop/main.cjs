@@ -24,10 +24,9 @@ let win;
 let splash;
 let server;
 let rpcId = 0;
-let threadId = null;
-let turnId = null;
-let activeTurnThreadId = null;
-let recoveryTerminatingTurnId = null;
+const activeTurns = new Map();
+const recoveryTerminatingTurnIds = new Set();
+let pendingTurnStarts = 0;
 let initialized = false;
 let initializingPromise = null;
 let codexSendInvocationCount = 0;
@@ -35,6 +34,7 @@ const pending = new Map();
 const turnAttachmentPaths = new Map();
 const turnPerformance = new TurnPerformanceRegistry();
 const autoFinalizingImageTurns = new Set();
+const MAX_CONCURRENT_TURNS = 5;
 const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
@@ -98,20 +98,22 @@ function withTimeout(promise, ms, label) {
   ]);
 }
 function sendImageFinalization(turnId, state, extra = {}) {
-  send("codex:event", { method: "5e/image-finalization", params: { turnId, state, ...extra } });
+  const clientRequestId = activeTurns.get(turnId)?.clientRequestId || null;
+  send("codex:event", { method: "5e/image-finalization", params: { turnId, clientRequestId, state, ...extra } });
 }
 function releaseActiveTurn(completedTurnId) {
   cleanupAttachments(completedTurnId);
   autoFinalizingImageTurns.delete(completedTurnId);
-  if (turnId === completedTurnId) {
-    turnId = null;
-    activeTurnThreadId = null;
-  }
+  recoveryTerminatingTurnIds.delete(completedTurnId);
+  activeTurns.delete(completedTurnId);
 }
 function sendSyntheticPerformance(completedTurnId) {
   const performance = turnPerformance.snapshot(completedTurnId, Date.now());
   if (!performance) return;
-  send("codex:event", { method: "5e/performance", params: performance });
+  send("codex:event", {
+    method: "5e/performance",
+    params: { ...performance, clientRequestId: activeTurns.get(completedTurnId)?.clientRequestId || null },
+  });
   turnPerformance.delete(completedTurnId);
 }
 function terminateProcessTreeAndWait(child, timeoutMs = 4_000) {
@@ -171,7 +173,7 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
   }
 
   const deadline = Date.now() + IMAGE_FINALIZE_TIMEOUT_MS;
-  while (autoFinalizingImageTurns.has(completedTurnId) && turnId === completedTurnId && Date.now() < deadline) {
+  while (autoFinalizingImageTurns.has(completedTurnId) && activeTurns.has(completedTurnId) && Date.now() < deadline) {
     try {
       const response = await withTimeout(
         rpc("thread/read", { threadId: renderThreadId, includeTurns: true }),
@@ -180,15 +182,24 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
       );
       const status = readTurnTerminalStatus(response, completedTurnId);
       if (status) {
-        releaseActiveTurn(completedTurnId);
         sendSyntheticPerformance(completedTurnId);
         sendImageFinalization(completedTurnId, "confirmed", { status });
+        releaseActiveTurn(completedTurnId);
         return;
       }
     } catch {}
     await delay(IMAGE_FINALIZE_POLL_MS);
   }
-  if (!autoFinalizingImageTurns.has(completedTurnId) || turnId !== completedTurnId) return;
+  if (!autoFinalizingImageTurns.has(completedTurnId) || !activeTurns.has(completedTurnId)) return;
+
+  // A shared App Server may have other healthy turns in flight. Never terminate
+  // the whole process to recover one stuck image turn; release only that slot.
+  if (activeTurns.size > 1) {
+    sendSyntheticPerformance(completedTurnId);
+    sendImageFinalization(completedTurnId, "recovered", { status: "interrupted" });
+    releaseActiveTurn(completedTurnId);
+    return;
+  }
 
   // A missing turn/completed notification or a stuck interrupt must not leave the
   // editor locked forever. Terminate the local App Server and wait for its process
@@ -196,19 +207,19 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
   sendImageFinalization(completedTurnId, "recovering");
   const child = server;
   let stopped = false;
-  recoveryTerminatingTurnId = completedTurnId;
+  recoveryTerminatingTurnIds.add(completedTurnId);
   try {
     stopped = await terminateProcessTreeAndWait(child);
   } finally {
-    if (recoveryTerminatingTurnId === completedTurnId) recoveryTerminatingTurnId = null;
+    recoveryTerminatingTurnIds.delete(completedTurnId);
   }
   if (!stopped) {
     sendImageFinalization(completedTurnId, "recoveryFailed", { message: "App Server did not exit" });
     return;
   }
-  releaseActiveTurn(completedTurnId);
   sendSyntheticPerformance(completedTurnId);
   sendImageFinalization(completedTurnId, "recovered", { status: "interrupted" });
+  releaseActiveTurn(completedTurnId);
 }
 
 function codexInvocation(args) {
@@ -243,31 +254,34 @@ function handleServerProcessTermination(child, {
   signal = null,
 } = {}) {
   if (server !== child) return;
-  const failure = createProcessFailureFinalization({
-    activeTurnId: turnId,
-    recoveryTerminatingTurnId,
-    error,
-    code,
-    signal,
-  });
-  // Preserve the active turn identity until the renderer has received its
-  // terminal signal and the last performance snapshot has been emitted.
-  if (failure) {
-    sendImageFinalization(failure.turnId, failure.state, {
-      status: failure.status,
-      message: failure.message,
+  const activeTurnIds = Array.from(activeTurns.keys());
+  for (const activeTurnId of activeTurnIds) {
+    const failure = createProcessFailureFinalization({
+      activeTurnId,
+      recoveryTerminatingTurnId: recoveryTerminatingTurnIds.has(activeTurnId) ? activeTurnId : null,
+      error,
+      code,
+      signal,
     });
-    sendSyntheticPerformance(failure.turnId);
-    releaseActiveTurn(failure.turnId);
+    // Preserve each turn identity until the renderer receives its terminal
+    // signal and its final performance snapshot.
+    if (failure) {
+      sendImageFinalization(failure.turnId, failure.state, {
+        status: failure.status,
+        message: failure.message,
+      });
+      sendSyntheticPerformance(failure.turnId);
+      releaseActiveTurn(failure.turnId);
+    }
   }
   server = null;
-  threadId = null;
-  turnId = null;
-  activeTurnThreadId = null;
+  activeTurns.clear();
+  pendingTurnStarts = 0;
   initialized = false;
   initializingPromise = null;
   turnPerformance.clear();
   autoFinalizingImageTurns.clear();
+  recoveryTerminatingTurnIds.clear();
   cleanupAllAttachments();
   const terminalError = error instanceof Error
     ? error
@@ -291,20 +305,19 @@ function startServer() {
         const p = pending.get(msg.id); pending.delete(msg.id);
         if (msg.error) p.reject(new Error(msg.error.message || "Codex request failed")); else p.resolve(msg.result);
       }
-      if (msg.method === "turn/completed" && msg.params?.turn?.id) {
-        releaseActiveTurn(msg.params.turn.id);
-      }
       const performanceObservation = turnPerformance.observe(msg);
       attachGeneratedImageData(msg);
+      const eventTurnId = msg.params?.turnId || msg.params?.turn?.id || performanceObservation?.performance?.turnId || null;
+      const activeTurn = eventTurnId ? activeTurns.get(eventTurnId) : null;
+      if (activeTurn?.clientRequestId && msg.params) msg.params.clientRequestId = activeTurn.clientRequestId;
       send("codex:event", msg);
-      const eventTurnId = msg.params?.turnId || performanceObservation?.performance?.turnId || null;
       if (shouldAutoFinalizeImageTurn({
         message: msg,
         observation: performanceObservation,
-        activeTurnId: turnId,
+        activeTurnId: activeTurn ? eventTurnId : null,
         alreadyFinalizing: autoFinalizingImageTurns.has(eventTurnId),
       })) {
-        const renderThreadId = activeTurnThreadId;
+        const renderThreadId = activeTurn?.threadId;
         autoFinalizingImageTurns.add(eventTurnId);
         // The generated file is the terminal result for an image-only turn. Stop any
         // trailing narration, then verify the server-side turn is terminal before a
@@ -312,8 +325,14 @@ function startServer() {
         void autoFinalizeImageTurn(renderThreadId, eventTurnId);
       }
       if (performanceObservation?.completed) {
-        send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
+        send("codex:event", {
+          method: "5e/performance",
+          params: { ...performanceObservation.performance, clientRequestId: activeTurn?.clientRequestId || null },
+        });
         turnPerformance.delete(performanceObservation.performance.turnId);
+      }
+      if (msg.method === "turn/completed" && msg.params?.turn?.id) {
+        releaseActiveTurn(msg.params.turn.id);
       }
     });
     child.stderr.on("data", (b) => send("codex:log", { level: "error", message: String(b).trim() }));
@@ -323,7 +342,19 @@ function startServer() {
     return { ok: true, state: "running" };
   } catch (error) { return { ok: false, state: "missing", message: error.message }; }
 }
-function stopServer() { if (server) server.kill(); server = null; threadId = null; turnId = null; activeTurnThreadId = null; initialized = false; initializingPromise = null; turnPerformance.clear(); autoFinalizingImageTurns.clear(); cleanupAllAttachments(); return { ok: true, state: "stopped" }; }
+function stopServer() {
+  if (server) server.kill();
+  server = null;
+  activeTurns.clear();
+  pendingTurnStarts = 0;
+  initialized = false;
+  initializingPromise = null;
+  turnPerformance.clear();
+  autoFinalizingImageTurns.clear();
+  recoveryTerminatingTurnIds.clear();
+  cleanupAllAttachments();
+  return { ok: true, state: "stopped" };
+}
 function rpc(method, params) {
   if (!server) throw new Error("Codex App Server가 실행되지 않았습니다.");
   const id = ++rpcId;
@@ -387,89 +418,112 @@ async function sendTurn(payload = {}) {
     model = null,
     effort = null,
     serviceTier = null,
+    clientRequestId = null,
   } = payload;
-  if (turnId) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
+  if (activeTurns.size + pendingTurnStarts >= MAX_CONCURRENT_TURNS) {
+    throw new Error(`동시에 실행할 수 있는 AI 작업은 최대 ${MAX_CONCURRENT_TURNS}개입니다.`);
+  }
+  pendingTurnStarts += 1;
   const startedAt = Date.now();
   const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
-  startServer();
-  await ensureInitialized();
-  if (plan.resetChatThread) threadId = null;
-
-  let requestThreadId = null;
-  if (plan.ephemeralRender) {
-    const started = await rpc("thread/start", buildEphemeralThreadStartParams({
-      purpose: plan.purpose,
-      model,
-      serviceTier,
-      cwd: app.getPath("userData"),
-    }));
-    requestThreadId = started?.thread?.id || null;
-  } else {
-    if (plan.resumeConversationId && plan.resumeConversationId !== threadId) {
-      try {
-        const resumed = await rpc("thread/resume", { threadId: plan.resumeConversationId, approvalPolicy: "never", sandbox: "read-only" });
-        threadId = resumed?.thread?.id || plan.resumeConversationId;
-      } catch { threadId = null; }
-    }
-    if (!threadId) {
-      const started = await rpc("thread/start", { model: model || null, serviceTier: serviceTier || null, cwd: app.getPath("userData"), approvalPolicy: "never", sandbox: "read-only", ephemeral: false, serviceName: "5e-chat" });
-      threadId = started?.thread?.id || null;
-    }
-    requestThreadId = threadId;
-  }
-  if (!requestThreadId) throw new Error("Codex 대화를 시작하지 못했습니다.");
-
-  const safeAttachments = Array.isArray(attachments) ? attachments : [];
-  const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
-  const failedAttachment = preparedResults.find((result) => result.status === "rejected");
-  if (failedAttachment) {
-    await Promise.all(preparedResults
-      .filter((result) => result.status === "fulfilled")
-      .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
-    throw failedAttachment.reason;
-  }
-  const preparedAttachments = preparedResults.map((result) => result.value);
-  const paths = preparedAttachments.map((attachment) => attachment.file);
-  const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
-  const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
-  let result;
   try {
-    // Exactly one backend turn is started. Any image retry must be an explicit agent/tool decision.
-    result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null });
-  } catch (error) {
-    await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
-    throw error;
+    startServer();
+    await ensureInitialized();
+
+    let requestThreadId = null;
+    if (plan.ephemeralRender) {
+      const started = await rpc("thread/start", buildEphemeralThreadStartParams({
+        purpose: plan.purpose,
+        model,
+        serviceTier,
+        cwd: app.getPath("userData"),
+      }));
+      requestThreadId = started?.thread?.id || null;
+    } else if (plan.resumeConversationId) {
+      try {
+        const resumed = await rpc("thread/resume", {
+          threadId: plan.resumeConversationId,
+          approvalPolicy: "never",
+          sandbox: "read-only",
+        });
+        requestThreadId = resumed?.thread?.id || plan.resumeConversationId;
+      } catch { requestThreadId = null; }
+    }
+    if (!requestThreadId && !plan.ephemeralRender) {
+      const started = await rpc("thread/start", {
+        model: model || null,
+        serviceTier: serviceTier || null,
+        cwd: app.getPath("userData"),
+        approvalPolicy: "never",
+        sandbox: "read-only",
+        ephemeral: false,
+        serviceName: "5e-chat",
+      });
+      requestThreadId = started?.thread?.id || null;
+    }
+    if (!requestThreadId) throw new Error("Codex 대화를 시작하지 못했습니다.");
+
+    const safeAttachments = Array.isArray(attachments) ? attachments : [];
+    const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
+    const failedAttachment = preparedResults.find((result) => result.status === "rejected");
+    if (failedAttachment) {
+      await Promise.all(preparedResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
+      throw failedAttachment.reason;
+    }
+    const preparedAttachments = preparedResults.map((result) => result.value);
+    const paths = preparedAttachments.map((attachment) => attachment.file);
+    const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
+    const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
+    let result;
+    try {
+      result = await rpc("turn/start", {
+        threadId: requestThreadId,
+        input,
+        model: model || null,
+        effort: effort || null,
+        serviceTier: serviceTier || null,
+      });
+    } catch (error) {
+      await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
+      throw error;
+    }
+    const requestTurnId = result?.turn?.id || null;
+    if (!requestTurnId) {
+      await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
+      throw new Error("Codex 작업을 시작하지 못했습니다.");
+    }
+    activeTurns.set(requestTurnId, {
+      turnId: requestTurnId,
+      threadId: requestThreadId,
+      clientRequestId: typeof clientRequestId === "string" ? clientRequestId : null,
+      purpose: plan.purpose,
+    });
+    if (paths.length) turnAttachmentPaths.set(requestTurnId, paths);
+    const performance = turnPerformance.register({
+      turnId: requestTurnId,
+      threadId: requestThreadId,
+      purpose: plan.purpose,
+      startedAt,
+      prepareEndedAt: Date.now(),
+      attachmentCount: preparedAttachments.length,
+      attachmentBytes,
+    });
+    return {
+      threadId: plan.ephemeralRender ? null : requestThreadId,
+      conversationId: plan.ephemeralRender ? plan.preservedConversationId : requestThreadId,
+      renderThreadId: plan.ephemeralRender ? requestThreadId : null,
+      ephemeralRender: plan.ephemeralRender,
+      purpose: plan.purpose,
+      turnId: requestTurnId,
+      clientRequestId,
+      result,
+      performance,
+    };
+  } finally {
+    pendingTurnStarts = Math.max(0, pendingTurnStarts - 1);
   }
-  const requestTurnId = result?.turn?.id || null;
-  if (!requestTurnId) {
-    await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
-    throw new Error("Codex 작업을 시작하지 못했습니다.");
-  }
-  turnId = requestTurnId;
-  activeTurnThreadId = requestThreadId;
-  if (requestTurnId && paths.length) turnAttachmentPaths.set(requestTurnId, paths);
-  const performance = turnPerformance.register({
-    turnId: requestTurnId,
-    threadId: requestThreadId,
-    purpose: plan.purpose,
-    startedAt,
-    prepareEndedAt: Date.now(),
-    attachmentCount: preparedAttachments.length,
-    attachmentBytes,
-  });
-  const preservedConversationId = plan.ephemeralRender
-    ? (threadId || plan.preservedConversationId || null)
-    : requestThreadId;
-  return {
-    threadId: plan.ephemeralRender ? null : requestThreadId,
-    conversationId: preservedConversationId,
-    renderThreadId: plan.ephemeralRender ? requestThreadId : null,
-    ephemeralRender: plan.ephemeralRender,
-    purpose: plan.purpose,
-    turnId: requestTurnId,
-    result,
-    performance,
-  };
 }
 
 function createWindow() {
@@ -775,6 +829,7 @@ function createWindow() {
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
             let aiTaskTabsIsolated = false;
+            let aiBusyTabCreationWorks = false;
             let aiBatchControlReady = false;
             document.getElementById("exam-library-open")?.click();
             if (await waitFor(() => document.querySelector(".examlib-card"))) {
@@ -885,6 +940,27 @@ function createWindow() {
                 } catch {}
                 if (aiInput) aiInput.value = localRequest;
                 panel.querySelector("[data-ai-send]")?.click();
+                let busyOriginTabId = null;
+                if (localResults.length === 0) {
+                  const tabsBefore = panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab").length;
+                  const activeTabBefore = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on")?.dataset.tabId;
+                  busyOriginTabId = activeTabBefore || null;
+                  const addTabButton = panel.querySelector("[data-ai-tab-new]");
+                  const addTabEnabledWhileBusy = addTabButton?.disabled === false;
+                  addTabButton?.click();
+                  const activeTabAfter = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on")?.dataset.tabId;
+                  aiBusyTabCreationWorks = addTabEnabledWhileBusy &&
+                    panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab").length === tabsBefore + 1 &&
+                    activeTabAfter === activeTabBefore;
+                }
+                if (busyOriginTabId) {
+                  const switchedToNewTab = await waitFor(() =>
+                    panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on")?.dataset.tabId !== busyOriginTabId, 4000);
+                  const originTab = panel.querySelector('[data-ai-tab-list] .ai-task-tab[data-tab-id="' + busyOriginTabId + '"]');
+                  originTab?.click();
+                  aiBusyTabCreationWorks = aiBusyTabCreationWorks && switchedToNewTab &&
+                    panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on")?.dataset.tabId === busyOriginTabId;
+                }
                 const localPreviewReady = await waitFor(() =>
                   !!panel.querySelector("[data-ai-previews] .ai-preview-card img[src^='data:image/svg+xml']"), 4000);
                 let localMetric = null;
@@ -969,6 +1045,7 @@ function createWindow() {
               aiQualityControlsReady,
               aiOutputControlsReady,
               aiTaskTabsIsolated,
+              aiBusyTabCreationWorks,
               aiBatchControlReady,
               aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
                 panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
@@ -994,7 +1071,7 @@ function createWindow() {
           result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
           result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
           result.aiLocalApparatusZeroRoundTripWorks && result.aiQualityControlsReady && result.aiOutputControlsReady &&
-          result.aiTaskTabsIsolated && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
+          result.aiTaskTabsIsolated && result.aiBusyTabCreationWorks && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
@@ -1039,9 +1116,39 @@ function createWindow() {
             } catch (error) { finish({ generated: false, error: error?.message || String(error) }); }
           })`);
         }
+        if (process.env.FIVE_E_PARALLEL_TURN_E2E === "1") {
+          result.parallelTurnE2e = await win.webContents.executeJavaScript(`(async () => {
+            const requestIds = ["parallel-smoke-a", "parallel-smoke-b"];
+            try {
+              const turns = await Promise.all(requestIds.map((clientRequestId, index) => window.fiveEDesktop.send({
+                text: "Return one minimal valid editable-scene description for a blank rectangle. No image generation tool. Variant " + (index + 1) + ".",
+                attachments: [],
+                conversationId: null,
+                purpose: "scene",
+                ephemeralRender: true,
+                effort: "low",
+                clientRequestId,
+              })));
+              const status = await window.fiveEDesktop.status();
+              const turnIds = turns.map((turn) => turn.turnId).filter(Boolean);
+              await Promise.all(turnIds.map((turnId) => window.fiveEDesktop.interrupt(turnId)));
+              return {
+                started: turnIds.length === 2,
+                distinct: new Set(turnIds).size === 2,
+                activeTogether: Number(status.activeTurns) >= 2,
+                maxConcurrentTurns: status.maxConcurrentTurns,
+              };
+            } catch (error) {
+              return { started: false, error: error?.message || String(error) };
+            }
+          })()`);
+        }
         const finalOk = ok && result.codexStatusReadable && result.codexServerLifecycle &&
           (process.env.FIVE_E_IMAGE_E2E !== "1" ||
-            (result.imageE2e?.generated && result.imageE2e?.previewReady && result.imageE2e?.inserted));
+            (result.imageE2e?.generated && result.imageE2e?.previewReady && result.imageE2e?.inserted)) &&
+          (process.env.FIVE_E_PARALLEL_TURN_E2E !== "1" ||
+            (result.parallelTurnE2e?.started && result.parallelTurnE2e?.distinct &&
+              result.parallelTurnE2e?.activeTogether && result.parallelTurnE2e?.maxConcurrentTurns === MAX_CONCURRENT_TURNS));
         if (process.env.FIVE_E_SMOKE_SCREENSHOT) {
           if (process.env.FIVE_E_SMOKE_CUT_SCREENSHOT !== "1") {
             await win.webContents.executeJavaScript(`document.getElementById("ai-image-install-open")?.click()`);
@@ -1061,7 +1168,12 @@ function createWindow() {
     });
   }
 }
-ipcMain.handle("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
+ipcMain.handle("codex:status", async () => ({
+  server: !!server,
+  activeTurns: activeTurns.size,
+  maxConcurrentTurns: MAX_CONCURRENT_TURNS,
+  login: await loginStatus(),
+}));
 ipcMain.handle("codex:start", () => startServer());
 ipcMain.handle("codex:stop", () => stopServer());
 ipcMain.handle("codex:models", () => listModels());
@@ -1070,9 +1182,15 @@ ipcMain.handle("codex:send", (_, payload) => {
   codexSendInvocationCount += 1;
   return sendTurn(payload);
 });
-ipcMain.handle("codex:interrupt", async () => server && activeTurnThreadId && turnId
-  ? rpc("turn/interrupt", { threadId: activeTurnThreadId, turnId }).catch(() => null)
-  : null);
+ipcMain.handle("codex:interrupt", async (_, requestedTurnId) => {
+  const targetTurnId = typeof requestedTurnId === "string"
+    ? requestedTurnId
+    : requestedTurnId?.turnId;
+  const activeTurn = targetTurnId ? activeTurns.get(targetTurnId) : null;
+  return server && activeTurn
+    ? rpc("turn/interrupt", { threadId: activeTurn.threadId, turnId: targetTurnId }).catch(() => null)
+    : null;
+});
 ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
 ipcMain.handle("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({
