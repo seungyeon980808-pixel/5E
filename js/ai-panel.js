@@ -46,6 +46,7 @@ import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.2-phase4-labels";
 import { buildDiagramOutputProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
 import { absoluteDifferencePixels, boundedComparisonSize } from "./image-difference.mjs?v=1.5.1-phase5-bounded-compare";
+import { finalizeTurnUiState } from "./ai-turn-finalization.mjs?v=1.5.0-phase5-native-finalization";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -2310,13 +2311,18 @@ export function initAiPanel(state) {
       setStatus("복잡 변환 완료 · 원본 구조 확인 필요", "warn");
       addLog("복잡 모드는 구조 교정을 마쳤지만 자동 확정하지 않습니다. 원본과 객체 수·분기·연결을 비교한 뒤 사용하세요.");
     }
-    setBusy(false);
     currentTurnDone = true;
-    addTokenFooter(currentTurnUsage);
-    if (currentTurnId) tabRunsByTurnId.delete(currentTurnId);
-    if (currentRunInput?.clientRequestId) tabRunsByClientRequestId.delete(currentRunInput.clientRequestId);
-    void loadAccountOverview();
-    activatePendingTabIfReady();
+    finalizeTurnUiState({
+      turnId: currentTurnId,
+      clientRequestId: currentRunInput?.clientRequestId,
+      usage: currentTurnUsage,
+      byTurn: tabRunsByTurnId,
+      byClient: tabRunsByClientRequestId,
+      setBusy,
+      addTokenFooter,
+      loadAccountOverview,
+      activatePendingTab: activatePendingTabIfReady,
+    });
   };
 
   const dispatchAiEvent = (event, eventEpoch = currentRequestEpoch) => {

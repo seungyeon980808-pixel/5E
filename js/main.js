@@ -67,7 +67,7 @@ import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.5.14-phase1-legacy-ui";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.5.6-pdf-search";
-import { initAiPanel } from "./ai-panel.js?v=1.5.26-phase5-exclusive-compare";
+import { initAiPanel } from "./ai-panel.js?v=1.5.27-phase5-finalization-proof";
 
 const legacyLibraryUiEnabled = resolveLegacyLibraryUiEnabled(window);
 const svg = document.getElementById("canvas");

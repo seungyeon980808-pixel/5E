@@ -93,3 +93,24 @@ test("difference view computes a white-identical and dark-mismatch pixel image",
   assert.ok(bounded.width <= 1600 && bounded.height <= 1600);
   assert.ok(bounded.width * bounded.height <= 2_000_000);
 });
+
+test("native failure finalization releases turn ownership and pending UI work", async () => {
+  const { finalizeTurnUiState } = await import("../js/ai-turn-finalization.mjs");
+  const byTurn = new Map([["turn-1", {}]]);
+  const byClient = new Map([["client-1", {}]]);
+  const calls = [];
+  finalizeTurnUiState({
+    turnId: "turn-1",
+    clientRequestId: "client-1",
+    usage: { inputTokens: 10 },
+    byTurn,
+    byClient,
+    setBusy: (value) => calls.push(["busy", value]),
+    addTokenFooter: (usage) => calls.push(["tokens", usage.inputTokens]),
+    loadAccountOverview: () => calls.push(["account"]),
+    activatePendingTab: () => calls.push(["tab"]),
+  });
+  assert.equal(byTurn.has("turn-1"), false);
+  assert.equal(byClient.has("client-1"), false);
+  assert.deepEqual(calls, [["busy", false], ["tokens", 10], ["account"], ["tab"]]);
+});
