@@ -14,6 +14,7 @@ import {
   selectImageTransportItems,
   selectOutgoingImageItems,
 } from "./ai-request-plan.js?v=1.5.8-local-privacy-completion";
+import { buildPlanningSafeAnnotationPrompt } from "./ai-image-annotations.js?v=1.5.13-phase0-privacy";
 import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
 import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
 import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
@@ -38,7 +39,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.9-phase0-ui";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.10-phase0-privacy";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -1135,7 +1136,7 @@ export function initAiPanel(state) {
     try {
       const batchTransportItems = selectImageTransportItems(outgoing);
       const transport = await Promise.all(batchTransportItems.map(prepareTransportItem));
-      const comments = commentPrompt([sourceItem]);
+      const comments = buildPlanningSafeAnnotationPrompt(batchTransportItems);
       const request = revision
         ? `${job.request}${comments}\n원본과 직전 결과를 객체별로 비교하고 형태·개수·분기·연결이 달라진 부분만 교정해 줘. 맞는 영역은 그대로 보존해 줘.`
         : `${job.request}${comments}`;
@@ -1529,19 +1530,6 @@ export function initAiPanel(state) {
     setStatus("캡처할 화면 또는 창을 선택하세요.", "ok");
   };
 
-  const commentPrompt = (images = allImages()) => {
-    const lines = [];
-    for (const item of images) {
-      const comments = item.comments.filter((comment) => comment.text.trim());
-      if (!comments.length) continue;
-      lines.push(`[${item.kind === "reference" ? "참고 이미지" : "생성 결과"}: ${item.name}]`);
-      for (const comment of comments) {
-        lines.push(`- 영역 ${comment.number} (가로 ${comment.x}%, 세로 ${comment.y}%, 너비 ${comment.w}%, 높이 ${comment.h}%): ${comment.text.trim()}`);
-      }
-    }
-    return lines.length ? `\n\n이미지 영역 코멘트:\n${lines.join("\n")}` : "";
-  };
-
   const describeRemoteInputPlan = (plan) => {
     const lines = [];
     for (const [index, visual] of (plan?.visuals || []).entries()) {
@@ -1688,7 +1676,6 @@ export function initAiPanel(state) {
       serviceTier: speedSelect.value || null,
     };
     const rawRevisionImage = runInput.generated.at(-1) || null;
-    const requestComments = commentPrompt([...runInput.attachments, ...runInput.generated]);
     const annotatedHistory = runInput.generated
       .filter((item) => item !== rawRevisionImage && item.comments.some((comment) => String(comment?.text || "").trim()))
       .map((item) => ({ ...item, kind: "reference", name: `이전 생성 결과 · ${item.name}` }));
@@ -1696,6 +1683,10 @@ export function initAiPanel(state) {
       references: [...runInput.attachments, ...annotatedHistory],
       latestResult: rawRevisionImage,
     });
+    const requestComments = buildPlanningSafeAnnotationPrompt([
+      ...planningReferences,
+      ...(revisionImage ? [revisionImage] : []),
+    ]);
     const requestEpoch = ++currentRequestEpoch;
     setBusy(true);
     imageReceived = false;

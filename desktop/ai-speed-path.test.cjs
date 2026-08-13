@@ -29,12 +29,13 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-local-asset-router\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-remote-input-plan\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
-  assert.match(panel, /ai-reference-search\.js\?v=1\.5\.9-phase0-ui/);
+  assert.match(panel, /ai-image-annotations\.js\?v=1\.5\.13-phase0-privacy/);
+  assert.match(panel, /ai-reference-search\.js\?v=1\.5\.10-phase0-privacy/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.12-phase0-ui/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.13-phase0-privacy/);
   assert.match(index, /css\/ai-panel\.css\?v=1\.5\.9-responsive-controls/);
-  assert.match(index, /js\/main\.js\?v=1\.5\.10-phase0-ui/);
+  assert.match(index, /js\/main\.js\?v=1\.5\.11-phase0-privacy/);
 });
 
 test("the MCP bridge can import the PNG density helper", () => {

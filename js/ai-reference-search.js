@@ -4,6 +4,7 @@ import { rankPdfPages } from "./pdf-search.mjs";
 import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.9-phase0-ui";
 import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.9-phase0-ui";
 import { createReferenceGrid } from "./ai-reference-grid.js";
+import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
 import { readWebImage, sourcesFromDesktopResult, sourcesFromWebFiles } from "./local-reference-sources.mjs";
 import {
   activateReferenceSource,
@@ -42,6 +43,17 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   const objectUrls = new Set();
   const status = (text, kind = "ok") => onStatus?.(text, kind);
   const keyOf = (item, itemSource = source) => `${itemSource}:${item.id || item.path || item.file}`;
+  const localIndexSession = createLocalIndexSession(
+    cachedPages,
+    (next) => {
+      locals = next.images;
+      pdfPages = next.pages;
+      localFolder = next.folderLabel;
+      indexing = next.indexing;
+      render();
+    },
+    (pdf, error) => status(`${pdf.name}: ${error.message || error}`, "warn"),
+  );
 
   async function ensureRemoteData() {
     if (loaded) return;
@@ -64,6 +76,8 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   }
 
   function close() {
+    localIndexSession.cancel();
+    indexing = false;
     pdfWorkspace?.dispose();
     pdfWorkspace = null;
     parentDialog?.removeAttribute("aria-hidden");
@@ -86,36 +100,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     return pages;
   }
 
-  async function indexPdfs(pdfs) {
-    indexing = true;
-    pdfPages = [];
-    render();
-    for (let index = 0; index < pdfs.length; index += 1) {
-      const pdf = pdfs[index];
-      localFolder = `${pdf.relativePath} 분석 중 (${index + 1}/${pdfs.length})`;
-      render();
-      let lastRenderedPage = 0;
-      try {
-        pdfPages.push(...await cachedPages(pdf, ({ pageNumber, pageCount }) => {
-          if (pageNumber !== pageCount && pageNumber - lastRenderedPage < 5) return;
-          lastRenderedPage = pageNumber;
-          localFolder = `${pdf.relativePath} · ${pageNumber}/${pageCount}쪽 분석 중 (${index + 1}/${pdfs.length})`;
-          render();
-        }));
-      }
-      catch (error) { status(`${pdf.name}: ${error.message || error}`, "warn"); }
-    }
-    indexing = false;
-    render();
-  }
-
   async function acceptAssets(assets, folderLabel) {
-    locals = assets.images;
-    localFolder = folderLabel;
     pdfWorkspace?.clear();
-    await indexPdfs(assets.pdfs);
-    localFolder = `${folderLabel} · PDF ${assets.pdfs.length}개 / 검색 가능 페이지 ${pdfPages.length}쪽`;
-    render();
+    await localIndexSession.accept(assets, folderLabel);
   }
 
   function imageSource(item) {
