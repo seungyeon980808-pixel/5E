@@ -229,10 +229,10 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
         const activation = activateReferenceSource(nextSource, {
           currentSource: source,
           selection: selected,
+          onSourceActivate: () => { source = nextSource; render(); },
           loadRemote: ensureRemoteData,
           onRemoteLoad: () => { referenceLoadStatus.loading(); referenceAddControl?.loading(); },
         });
-        source = nextSource; render();
         void activation
           .then(() => { if (source === nextSource) {
             render(); referenceLoadStatus.ready(); referenceAddControl?.ready();

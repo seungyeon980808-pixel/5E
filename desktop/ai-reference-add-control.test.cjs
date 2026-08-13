@@ -62,8 +62,7 @@ test("reference coordinator binds Add state to selection and remote loading", ()
   // Then the initial control and every remote state are fail-closed at the dialog boundary.
   assert.match(dialog, /data-ai-search-add disabled/);
   assert.match(search, /referenceAddControl\?\.selection\(localWorkspace \? 0 : selected\.size\)/);
-  assert.match(search, /activateReferenceSource\(nextSource,\s*\{\s*currentSource:\s*source,\s*selection:\s*selected/s);
-  assert.match(search, /const activation = activateReferenceSource[\s\S]*source = nextSource; render\(\)/);
+  assert.match(search, /activateReferenceSource\(nextSource,\s*\{\s*currentSource:\s*source,\s*selection:\s*selected,\s*onSourceActivate:/s);
   for (const state of ["loading", "ready", "error", "warning"]) {
     assert.match(search, new RegExp(`referenceAddControl\\?\\.${state}\\(`));
   }

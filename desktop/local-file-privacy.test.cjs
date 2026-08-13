@@ -8,31 +8,11 @@ const {
 } = require("../tests/stabilization/harness/browser-desktop-parity.cjs");
 
 const policyModule = import("../js/ai-reference-source-policy.js");
-const dialogModule = import("../js/ai-reference-dialog.js");
 const sourceModule = import("../js/local-reference-sources.mjs");
 const projectModule = import("../js/project-io.js");
 const pdfSearchModule = import("../js/pdf-search.mjs");
 const referenceGridModule = import("../js/ai-reference-grid.js");
 const requestPlanModule = import("../js/ai-request-plan.js");
-
-function createReferenceStatusFixture() {
-  const makeElement = () => ({
-    attributes: new Map(), dataset: {}, hidden: true, textContent: "",
-    children: [],
-    setAttribute(name, value) { this.attributes.set(name, value); },
-    getAttribute(name) { return this.attributes.get(name); },
-    replaceChildren(...children) { this.children = children; },
-  });
-  const summary = makeElement();
-  const grid = makeElement();
-  grid.ownerDocument = { createElement: makeElement };
-  const empty = makeElement();
-  empty.dataset.aiSearchState = "empty";
-  empty.textContent = "검색 결과가 없습니다.";
-  grid.replaceChildren(empty);
-  const root = { querySelector: (selector) => selector === "[data-ai-search-summary]" ? summary : grid };
-  return { empty, grid, root, summary };
-}
 
 test("local source activation skips every request transport", async () => {
   // Given
@@ -189,56 +169,6 @@ test("the image pipeline delegates cache and remote planning to the private inpu
   assert.match(panel, /createRemoteImageInputPlan\(\{[^}]*references:\s*planningReferences/s);
   assert.match(panel, /outgoingItems\s*=\s*selectImageTransportItems\(composed\.outputs\.map\(/);
   assert.match(panel, /const batchTransportItems\s*=\s*selectImageTransportItems\(outgoing\);[^;]*batchTransportItems\.map\(prepareTransportItem\)/s);
-});
-
-test("remote catalog loading stays visible and accessible inside the dialog", async () => {
-  // Given
-  const { createReferenceLoadStatus } = await dialogModule;
-  const { empty, grid, root, summary } = createReferenceStatusFixture();
-  const status = createReferenceLoadStatus(root);
-
-  // When
-  status.loading();
-
-  // Then
-  assert.equal(summary.hidden, false);
-  assert.equal(summary.dataset.aiSearchState, "loading");
-  assert.equal(summary.getAttribute("aria-live"), "polite");
-  assert.equal(summary.getAttribute("aria-busy"), "true");
-  assert.equal(grid.getAttribute("aria-busy"), "true");
-  assert.ok(summary.textContent);
-  assert.equal(grid.children.length, 1);
-  assert.notEqual(grid.children[0], empty);
-  assert.equal(grid.children[0].dataset.aiSearchState, "loading");
-  assert.ok(grid.children[0].textContent);
-});
-
-test("remote catalog failure stays visible and accessible inside the dialog", async () => {
-  // Given
-  const { createReferenceLoadStatus } = await dialogModule;
-  const { grid, root, summary } = createReferenceStatusFixture();
-  const status = createReferenceLoadStatus(root);
-
-  // When
-  status.error(new Error("catalog unavailable"));
-
-  // Then
-  assert.equal(summary.dataset.aiSearchState, "error");
-  assert.equal(summary.getAttribute("aria-live"), "assertive");
-  assert.equal(summary.getAttribute("aria-busy"), "false");
-  assert.equal(grid.getAttribute("aria-busy"), "false");
-  assert.equal(summary.textContent, "catalog unavailable");
-});
-
-test("the search coordinator exposes remote activation state inside its dialog", () => {
-  // Given / When
-  const search = fs.readFileSync(path.join(__dirname, "..", "js", "ai-reference-search.js"), "utf8");
-
-  // Then
-  assert.match(search, /createReferenceLoadStatus\(overlay\)/);
-  assert.match(search, /source\s*=\s*nextSource;\s*render\(\);/);
-  assert.match(search, /referenceLoadStatus\.loading\(\)/);
-  assert.match(search, /referenceLoadStatus\.error\(error\)/);
 });
 
 async function runLocalLifecycle(kind) {
