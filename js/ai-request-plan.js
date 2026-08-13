@@ -1,3 +1,5 @@
+import { referenceMayTransmit } from "./ai-reference-source-policy.js";
+
 const DEFAULT_CONTEXT_CHARS = 6000;
 const DEFAULT_CONTEXT_MESSAGES = 12;
 
@@ -30,7 +32,8 @@ export function selectOutgoingImageItems({
   // its result. Include the latest result once in either path, then let the
   // per-conversation sent marker deduplicate later chat turns.
   const revisionImage = latestGenerated;
-  const candidates = uniqueImageItems([...references, ...annotatedGenerated, ...(revisionImage ? [revisionImage] : [])]);
+  const candidates = uniqueImageItems([...references, ...annotatedGenerated, ...(revisionImage ? [revisionImage] : [])])
+    .filter(referenceMayTransmit);
 
   // A render thread is deliberately fresh, so it receives each active source once.
   if (type === "image") return candidates;
