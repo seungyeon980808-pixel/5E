@@ -72,6 +72,7 @@ test("product compilation is strict and comparison offers overlay and difference
   assert.match(panel, /nativeSceneFailureReport\(/);
   assert.match(panel, /data-compare-view="overlay"/);
   assert.match(panel, /data-compare-view="difference"/);
+  assert.match(panel, /검은 영역은 두 이미지가 다른 픽셀입니다/);
   assert.match(css, /\.ai-compare-overlay-stage\[data-mode="difference"\]/);
 });
 

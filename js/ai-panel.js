@@ -1408,6 +1408,9 @@ export function initAiPanel(state) {
       <button type="button" class="is-on" aria-pressed="true" data-compare-view="side">나란히</button>
       <button type="button" aria-pressed="false" data-compare-view="overlay">겹쳐 보기</button>
       <button type="button" aria-pressed="false" data-compare-view="difference">차이 보기</button>`;
+    const modeHint = document.createElement("p");
+    modeHint.className = "ai-compare-view-hint";
+    modeHint.textContent = "두 이미지를 같은 크기로 나란히 비교합니다.";
     const panes = document.createElement("div");
     panes.className = "ai-compare-panes";
     const overlayStage = document.createElement("div");
@@ -1508,12 +1511,17 @@ export function initAiPanel(state) {
       overlayLeft.hidden = mode === "difference";
       overlayRight.hidden = mode === "difference";
       differenceCanvas.hidden = mode !== "difference";
+      modeHint.textContent = mode === "difference"
+        ? "검은 영역은 두 이미지가 다른 픽셀입니다."
+        : mode === "overlay"
+          ? "두 이미지를 반투명하게 겹쳐 위치와 형태 차이를 확인합니다."
+          : "두 이미지를 같은 크기로 나란히 비교합니다.";
       if (mode !== "side") {
         overlayStage.dataset.mode = mode;
         if (mode === "difference") void renderDifference();
       }
     });
-    dialog.append(head, modeControls, panes, overlayStage);
+    dialog.append(head, modeControls, modeHint, panes, overlayStage);
     overlay.appendChild(dialog);
     document.documentElement.appendChild(overlay);
     const closeDialog = installOverlayFocus({ overlay, dialog, title, closeButton, returnFocus });
