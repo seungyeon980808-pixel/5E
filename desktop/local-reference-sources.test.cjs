@@ -150,3 +150,47 @@ test("desktop folder reconnect uses the same outcome seam and returns the newest
   assert.equal(result.folderLabel, "C:\\new");
   assert.deepEqual(result.assets.pdfs.map((item) => item.path), ["C:\\new\\latest.pdf"]);
 });
+
+test("a slow folder connection cannot replace a newer accepted connection", async () => {
+  // Given
+  const { createFolderConnectionSession } = await import("../js/local-reference-sources.mjs");
+  const pending = [];
+  const accepted = [];
+  const connector = { reconnect: () => new Promise((resolve) => pending.push(resolve)) };
+  const session = createFolderConnectionSession(connector,
+    async (assets, label) => accepted.push({ assets, label }));
+
+  // When
+  const slow = session.reconnect();
+  const fast = session.reconnect();
+  pending[1]({ status: "connected", assets: { images: [{ id: "new" }] }, folderLabel: "new" });
+  await fast;
+  pending[0]({ status: "connected", assets: { images: [{ id: "old" }] }, folderLabel: "old" });
+  await slow;
+
+  // Then
+  assert.deepEqual(accepted, [{ assets: { images: [{ id: "new" }] }, label: "new" }]);
+});
+
+test("a denied browser handle is discarded before the next explicit reconnect", async () => {
+  // Given
+  const { createBrowserFolderConnector } = await import("../js/local-reference-sources.mjs");
+  const denied = { name: "denied", queryPermission: async () => "denied" };
+  const granted = { name: "granted", queryPermission: async () => "granted",
+    values: async function* values() {} };
+  const picked = [denied, granted];
+  let pickerCalls = 0;
+  const connector = createBrowserFolderConnector({
+    showDirectoryPicker: async () => { pickerCalls += 1; return picked.shift(); },
+  });
+
+  // When
+  const first = await connector.reconnect();
+  const second = await connector.reconnect();
+
+  // Then
+  assert.equal(first.status, "denied");
+  assert.equal(second.status, "connected");
+  assert.equal(second.folderLabel, "granted");
+  assert.equal(pickerCalls, 2);
+});

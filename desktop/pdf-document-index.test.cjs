@@ -52,3 +52,26 @@ test("shared PDF engine accepts the Node Buffer returned by desktop file reads",
   const pages = await extractPdfPages(source);
   assert.match(pages[0].text, /Desktop PDF text/);
 });
+
+test("a rejected PDF document load is evicted so the same source can retry", async () => {
+  // Given
+  const { extractPdfPages, clearPdfDocumentCache } = await import("../js/pdf-document-index.mjs");
+  let reads = 0;
+  const source = {
+    id: "retry-after-read-failure", name: "retry.pdf", size: 3, modifiedAt: 3,
+    read: async () => {
+      reads += 1;
+      if (reads === 1) throw new Error("synthetic first-read failure");
+      return onePagePdf("Retry succeeds");
+    },
+  };
+  await clearPdfDocumentCache();
+
+  // When
+  await assert.rejects(extractPdfPages(source), /synthetic first-read failure/);
+  const pages = await extractPdfPages(source);
+
+  // Then
+  assert.equal(reads, 2);
+  assert.match(pages[0].text, /Retry succeeds/);
+});

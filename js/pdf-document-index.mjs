@@ -13,13 +13,15 @@ function sourceKey(source) {
 async function loadDocument(source) {
   const key = sourceKey(source);
   if (!documents.has(key)) {
-    documents.set(key, Promise.resolve(source.read()).then((data) => {
+    const pending = Promise.resolve(source.read()).then((data) => {
       const view = ArrayBuffer.isView(data)
         ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
         : new Uint8Array(data);
       const bytes = new Uint8Array(view);
       return getDocument({ data: bytes, standardFontDataUrl, cMapUrl, cMapPacked: true }).promise;
-    }));
+    });
+    documents.set(key, pending);
+    pending.catch(() => { if (documents.get(key) === pending) documents.delete(key); });
   }
   return documents.get(key);
 }
@@ -95,5 +97,7 @@ export async function renderPdfPage(source, pageNumber, maxWidth = 1400) {
 }
 
 export function clearPdfDocumentCache() {
+  const pending = Array.from(documents.values(), async (document) => (await document).destroy());
   documents.clear();
+  return Promise.allSettled(pending);
 }

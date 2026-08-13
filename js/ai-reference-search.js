@@ -5,7 +5,8 @@ import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.9-phase0-ui";
 import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.9-phase0-ui";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
-import { createBrowserFolderConnector, createDesktopFolderConnector, readWebImage, sourcesFromWebFiles } from "./local-reference-sources.mjs";
+import { createBrowserFolderConnector, createDesktopFolderConnector, createFolderConnectionSession,
+  readWebImage, sourcesFromWebFiles } from "./local-reference-sources.mjs";
 import {
   activateReferenceSource,
   handoffLocalReference,
@@ -190,14 +191,14 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   }
 
   async function pickLocal() {
-    const result = await folderConnector.reconnect();
-    if (result.status === "connected") await acceptAssets(result.assets, result.folderLabel);
-    else if (result.status === "unsupported") overlay.querySelector("[data-ai-web-folder]").click();
+    const result = await folderConnection.reconnect();
+    if (result.status === "unsupported") overlay.querySelector("[data-ai-web-folder]").click();
     else if (result.status === "denied") status("폴더 읽기 권한이 거부되었습니다. 폴더를 다시 연결하세요.", "warn");
   }
 
   const folderConnector = desktop?.pickLocalImageFolder
     ? createDesktopFolderConnector(desktop) : createBrowserFolderConnector(globalThis);
+  const folderConnection = createFolderConnectionSession(folderConnector, acceptAssets);
 
   async function open() {
     close(); selected.clear(); query = "";

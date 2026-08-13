@@ -59,14 +59,22 @@ export function createBrowserFolderConnector(browser) {
   async function connect() {
     if (typeof browser?.showDirectoryPicker !== "function") return { status: "unsupported" };
     try {
-      handle = await browser.showDirectoryPicker({ id: "5e-local-reference", mode: "read" });
-      return await readBrowserFolder(handle);
+      const selected = await browser.showDirectoryPicker({ id: "5e-local-reference", mode: "read" });
+      const result = await readBrowserFolder(selected);
+      handle = result.status === "connected" ? selected : undefined;
+      return result;
     } catch (error) {
       if (error?.name === "AbortError") return { status: "cancelled" };
       throw error;
     }
   }
-  return { connect, reconnect: () => handle ? readBrowserFolder(handle) : connect() };
+  async function reconnect() {
+    if (!handle) return connect();
+    const result = await readBrowserFolder(handle);
+    if (result.status === "denied") handle = undefined;
+    return result;
+  }
+  return { connect, reconnect };
 }
 
 export function createDesktopFolderConnector(desktop) {
@@ -81,6 +89,18 @@ export function createDesktopFolderConnector(desktop) {
     };
   }
   return { connect, reconnect: connect };
+}
+
+export function createFolderConnectionSession(connector, accept) {
+  let epoch = 0;
+  async function reconnect() {
+    const current = ++epoch;
+    const result = await connector.reconnect();
+    if (current !== epoch) return { status: "superseded" };
+    if (result.status === "connected") await accept(result.assets, result.folderLabel);
+    return current === epoch ? result : { status: "superseded" };
+  }
+  return { reconnect };
 }
 
 export function sourcesFromDesktopResult(result, desktop) {
