@@ -1,10 +1,10 @@
 {
   "schema": "5e-synthetic-graph-cases@1",
-  "provenance": "Independently authored numeric and pixel data; no exam source.",
+  "provenance": "Independently authored numeric data; no exam source.",
   "cases": [{
     "fixtureId": "synthetic-dual-panel-curve-bars",
     "interpretation": {
-      "schema": "5e-editable-scene@1", "mode": "complete", "artboard": { "w": 200, "h": 100 },
+      "schema": "5e-fast-scene@1", "mode": "complete", "artboard": { "w": 200, "h": 100 },
       "elements": [
         {
           "type": "graph", "box": [-90, -35, 80, 70], "xRange": [0, 4], "yRange": [0, 4],
@@ -28,10 +28,19 @@
       "panels": 2, "panelGap": 20, "series": 4, "points": 10,
       "extrema": [[1,3],[2,1],[3,3]], "intersections": 4,
       "barWidth": 0.5, "barGap": 1, "strokeWidth": 0.4, "dashPeriod": 3,
-      "labels": ["한글", "\\frac{x}{2}"],
-      "referencePixels": [0,0,0,255,255,255,255,255],
-      "renderedPixels": [0,0,0,255,250,250,250,255],
-      "maxDifferentChannels": 3
+      "labels": ["한글", "\\frac{x}{2}"]
     }
+  }, {
+    "fixtureId": "synthetic-log-axis", "expectedSupport": false,
+    "interpretation": { "schema": "5e-fast-scene@1", "mode": "complete", "artboard": { "w": 100, "h": 70 },
+      "elements": [{ "type": "graph", "box": [-40,-25,80,50], "scale": "log", "series": [{ "points": [[1,1],[10,2]] }] }] }
+  }, {
+    "fixtureId": "synthetic-polar", "expectedSupport": false,
+    "interpretation": { "schema": "5e-fast-scene@1", "mode": "complete", "artboard": { "w": 100, "h": 70 },
+      "elements": [{ "type": "polar", "box": [-40,-25,80,50], "series": [{ "points": [[0,1],[1,2]] }] }] }
+  }, {
+    "fixtureId": "synthetic-axis-at", "expectedSupport": false,
+    "interpretation": { "schema": "5e-fast-scene@1", "mode": "complete", "artboard": { "w": 100, "h": 70 },
+      "elements": [{ "type": "graph", "box": [-40,-25,80,50], "axisAt": { "x": 2, "y": 3 }, "series": [{ "points": [[0,1],[1,2]] }] }] }
   }]
 }
