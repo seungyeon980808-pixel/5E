@@ -1,0 +1,25 @@
+{
+  "schema": "5e-graph-failure-ledger@1",
+  "entries": [
+    {
+      "fixtureId": "synthetic-log-axis",
+      "sourceCategory": "synthetic",
+      "graphType": "logarithmic-axis",
+      "failureType": "unsupported-scale",
+      "currentlySupported": false,
+      "requiredFeature": "native logarithmic axis scale",
+      "workaround": "manual tick labels on a linear axis",
+      "regressionTestStatus": "expected-failure"
+    },
+    {
+      "fixtureId": "synthetic-dual-panel-curve-bars",
+      "sourceCategory": "synthetic",
+      "graphType": "dual-panel-mixed-series",
+      "failureType": "none",
+      "currentlySupported": true,
+      "requiredFeature": "none",
+      "workaround": "none",
+      "regressionTestStatus": "covered"
+    }
+  ]
+}
