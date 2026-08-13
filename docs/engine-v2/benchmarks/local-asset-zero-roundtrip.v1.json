@@ -1,6 +1,6 @@
 {
   "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
-  "generatedAt": "2026-08-09T12:44:28.797Z",
+  "generatedAt": "2026-08-11T05:38:49.006Z",
   "runner": "desktop/benchmark-local-assets.cjs",
   "environment": {
     "node": "v24.16.0",
@@ -33,11 +33,11 @@
       "imageGeneration": 0,
       "tools": 0
     },
-    "medianMatchMs": 0.239,
-    "medianCompileMs": 0.105,
-    "medianTotalMs": 0.7255,
-    "medianDirectVerificationMs": 0.0708,
-    "medianCompilerReportedMs": 0.0823
+    "medianMatchMs": 0.4334,
+    "medianCompileMs": 0.2468,
+    "medianTotalMs": 1.2744,
+    "medianDirectVerificationMs": 0.1285,
+    "medianCompilerReportedMs": 0.1819
   },
   "ok": true,
   "errors": [],
@@ -105,6 +105,444 @@
         "spacecraft-simple-flat-shell",
         "spacecraft-wide-window-equipped"
       ]
+    },
+    {
+      "generatedAt": "2026-08-09T12:44:28.797Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.239,
+        "medianCompileMs": 0.105,
+        "medianTotalMs": 0.7255,
+        "medianDirectVerificationMs": 0.0708,
+        "medianCompilerReportedMs": 0.0823
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
+    },
+    {
+      "generatedAt": "2026-08-10T01:12:51.486Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.3389,
+        "medianCompileMs": 0.1175,
+        "medianTotalMs": 0.7769,
+        "medianDirectVerificationMs": 0.0775,
+        "medianCompilerReportedMs": 0.085
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
+    },
+    {
+      "generatedAt": "2026-08-10T01:30:09.738Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.3309,
+        "medianCompileMs": 0.1213,
+        "medianTotalMs": 0.8043,
+        "medianDirectVerificationMs": 0.0769,
+        "medianCompilerReportedMs": 0.0886
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
+    },
+    {
+      "generatedAt": "2026-08-10T03:05:16.063Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.3635,
+        "medianCompileMs": 0.1105,
+        "medianTotalMs": 0.7919,
+        "medianDirectVerificationMs": 0.082,
+        "medianCompilerReportedMs": 0.0963
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
+    },
+    {
+      "generatedAt": "2026-08-10T05:42:26.674Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.3521,
+        "medianCompileMs": 0.1542,
+        "medianTotalMs": 0.8956,
+        "medianDirectVerificationMs": 0.0767,
+        "medianCompilerReportedMs": 0.1007
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
+    },
+    {
+      "generatedAt": "2026-08-11T05:26:14.108Z",
+      "schemaVersion": "5e-local-asset-zero-roundtrip-benchmark@1",
+      "summary": {
+        "caseCount": 19,
+        "runCount": 57,
+        "passedCases": 19,
+        "passedRuns": 57,
+        "deterministicCases": 19,
+        "allMatched": true,
+        "allValidSupported": true,
+        "zeroDiagramViolations": true,
+        "zeroRoundTrip": true,
+        "externalCalls": {
+          "model": 0,
+          "imageGeneration": 0,
+          "tools": 0
+        },
+        "medianMatchMs": 0.4704,
+        "medianCompileMs": 0.2231,
+        "medianTotalMs": 1.0957,
+        "medianDirectVerificationMs": 0.1482,
+        "medianCompilerReportedMs": 0.1885
+      },
+      "failureHistory": [],
+      "correctionHistory": [
+        {
+          "date": "2026-08-09",
+          "caseId": "simple-series-circuit-open",
+          "failedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽 직류 전원, 위쪽 열린 스위치, 오른쪽 저항, 아래쪽 전구를 각각 하나씩 배치해.",
+          "failureReason": "series-circuit-component-count-not-exact",
+          "correction": "각 부품 바로 옆에 '하나'를 명시하여 임의 개수 추론을 제거했다.",
+          "correctedPrompt": "단일 사각형 직렬 회로를 닫힌 배선 루프로 그려 줘. 왼쪽에 직류 전원 하나, 위쪽에 열린 스위치 하나, 오른쪽에 저항 하나, 아래쪽에 전구 하나를 배치해."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "vessel-particle-comparison-locked",
+          "failedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45, 입자 상자는 혼합하지 않은 원형 기체 입자 16개.",
+          "failureReason": "vessel-particle-locked-state-incomplete",
+          "correction": "입자 모양·상태·개수를 각각 독립된 명시 구문으로 분리했다.",
+          "correctedPrompt": "비커 하나와 입자 상자 하나를 나란히 비교해. 비커의 액체 채움 비율은 0.45이다. 입자 상자는 혼합하지 않은 원형 입자이고 기체 상태의 입자이며 입자 수는 16이다."
+        },
+        {
+          "date": "2026-08-09",
+          "caseId": "logistic-population-graph-fixed",
+          "failedPrompt": "개체군의 일반적인 단일 로지스틱 S자형 성장 곡선을 문자 숫자 라벨 없이 그려 줘.",
+          "failureReason": "logistic-generic-single-unlabeled-curve-not-explicit",
+          "correction": "고정 문법이 요구하는 '일반적인 단일 곡선' 관계를 명시했다.",
+          "correctedPrompt": "개체군 로지스틱 S자형 성장 곡선을 일반적인 단일 곡선으로 문자와 숫자 없이 그려 줘."
+        }
+      ],
+      "caseIds": [
+        "map-world",
+        "map-pacific",
+        "map-east-asia",
+        "map-korean-peninsula",
+        "student-trio-no-bubbles",
+        "student-trio-three-blank-bubbles",
+        "spacecraft-simple-flat-shell",
+        "spacecraft-wide-window-equipped",
+        "panel-flow-empty-box",
+        "panel-flow-ordered-particles",
+        "dual-axis-blank-five-divisions",
+        "orthogonal-wiring-closed-rectangle",
+        "diagonal-wiring-closed-triangle",
+        "contour-bundle-five-nested",
+        "simple-series-circuit-open",
+        "fixed-pulley-spring-loads",
+        "lens-mirror-screen-exact",
+        "vessel-particle-comparison-locked",
+        "logistic-population-graph-fixed"
+      ]
     }
   ],
   "cases": [
@@ -132,11 +570,11 @@
         "directResult": "2a4565dbf02144c61b601a3dff1ff2673d89391cdd4e67cb130c01e07fbd5c50"
       },
       "mediansMs": {
-        "match": 0.6405,
-        "compile": 3.2791,
-        "total": 4.8841,
-        "directVerification": 2.2929,
-        "compilerReported": 1.2138
+        "match": 0.4457,
+        "compile": 6.0677,
+        "total": 7.3112,
+        "directVerification": 3.0408,
+        "compilerReported": 2.8632
       },
       "failures": [],
       "runs": [
@@ -351,11 +789,11 @@
             "directResult": "2a4565dbf02144c61b601a3dff1ff2673d89391cdd4e67cb130c01e07fbd5c50"
           },
           "timingsMs": {
-            "match": 1.3537,
-            "compile": 7.9023,
-            "total": 13.8477,
-            "directVerification": 2.2929,
-            "compilerReported": 3.1493
+            "match": 2.442,
+            "compile": 10.7109,
+            "total": 16.6437,
+            "directVerification": 2.8796,
+            "compilerReported": 4.7037
           },
           "externalCalls": {
             "model": 0,
@@ -592,11 +1030,11 @@
             "directResult": "2a4565dbf02144c61b601a3dff1ff2673d89391cdd4e67cb130c01e07fbd5c50"
           },
           "timingsMs": {
-            "match": 0.6405,
-            "compile": 3.2791,
-            "total": 4.8841,
-            "directVerification": 2.6885,
-            "compilerReported": 1.2138
+            "match": 0.4457,
+            "compile": 3.1254,
+            "total": 5.5825,
+            "directVerification": 6.0547,
+            "compilerReported": 1.0666
           },
           "externalCalls": {
             "model": 0,
@@ -833,11 +1271,11 @@
             "directResult": "2a4565dbf02144c61b601a3dff1ff2673d89391cdd4e67cb130c01e07fbd5c50"
           },
           "timingsMs": {
-            "match": 0.0514,
-            "compile": 3.1162,
-            "total": 4.234,
-            "directVerification": 1.8383,
-            "compilerReported": 1.2134
+            "match": 0.0544,
+            "compile": 6.0677,
+            "total": 7.3112,
+            "directVerification": 3.0408,
+            "compilerReported": 2.8632
           },
           "externalCalls": {
             "model": 0,
@@ -889,11 +1327,11 @@
         "directResult": "eaf5c6a9218493937bd4bdbe98400af2275f55ed446e4e889eb15abb34d78143"
       },
       "mediansMs": {
-        "match": 0.239,
-        "compile": 2.8704,
-        "total": 4.083,
-        "directVerification": 1.6195,
-        "compilerReported": 0.7588
+        "match": 0.3456,
+        "compile": 4.4707,
+        "total": 7.5121,
+        "directVerification": 1.6529,
+        "compilerReported": 1.656
       },
       "failures": [],
       "runs": [
@@ -1108,11 +1546,11 @@
             "directResult": "eaf5c6a9218493937bd4bdbe98400af2275f55ed446e4e889eb15abb34d78143"
           },
           "timingsMs": {
-            "match": 0.7693,
-            "compile": 2.5998,
-            "total": 4.083,
-            "directVerification": 1.5884,
-            "compilerReported": 0.7588
+            "match": 1.0817,
+            "compile": 4.4707,
+            "total": 7.5121,
+            "directVerification": 1.6032,
+            "compilerReported": 1.1313
           },
           "externalCalls": {
             "model": 0,
@@ -1349,11 +1787,11 @@
             "directResult": "eaf5c6a9218493937bd4bdbe98400af2275f55ed446e4e889eb15abb34d78143"
           },
           "timingsMs": {
-            "match": 0.239,
-            "compile": 3.0759,
-            "total": 4.1874,
-            "directVerification": 1.6195,
-            "compilerReported": 1.2918
+            "match": 0.3456,
+            "compile": 5.7726,
+            "total": 7.8434,
+            "directVerification": 1.6529,
+            "compilerReported": 2.2826
           },
           "externalCalls": {
             "model": 0,
@@ -1590,11 +2028,11 @@
             "directResult": "eaf5c6a9218493937bd4bdbe98400af2275f55ed446e4e889eb15abb34d78143"
           },
           "timingsMs": {
-            "match": 0.0492,
-            "compile": 2.8704,
-            "total": 3.6116,
-            "directVerification": 2.6844,
-            "compilerReported": 0.6402
+            "match": 0.0575,
+            "compile": 3.4675,
+            "total": 4.8094,
+            "directVerification": 2.2012,
+            "compilerReported": 1.656
           },
           "externalCalls": {
             "model": 0,
@@ -1646,11 +2084,11 @@
         "directResult": "6a790b42b41c3988d49c5a8a50acd692d6acf0f3d0ad3601a6416e12c1995ac0"
       },
       "mediansMs": {
-        "match": 0.1928,
-        "compile": 1.6466,
-        "total": 2.4806,
-        "directVerification": 1.2057,
-        "compilerReported": 0.6067
+        "match": 0.1894,
+        "compile": 2.016,
+        "total": 2.7578,
+        "directVerification": 1.4346,
+        "compilerReported": 0.8412
       },
       "failures": [],
       "runs": [
@@ -1865,11 +2303,11 @@
             "directResult": "6a790b42b41c3988d49c5a8a50acd692d6acf0f3d0ad3601a6416e12c1995ac0"
           },
           "timingsMs": {
-            "match": 0.4325,
-            "compile": 2.6983,
-            "total": 3.9533,
-            "directVerification": 1.9745,
-            "compilerReported": 1.1451
+            "match": 0.5862,
+            "compile": 2.016,
+            "total": 3.2202,
+            "directVerification": 1.4346,
+            "compilerReported": 0.9413
           },
           "externalCalls": {
             "model": 0,
@@ -2106,11 +2544,11 @@
             "directResult": "6a790b42b41c3988d49c5a8a50acd692d6acf0f3d0ad3601a6416e12c1995ac0"
           },
           "timingsMs": {
-            "match": 0.1928,
-            "compile": 1.6466,
-            "total": 2.3463,
-            "directVerification": 1.2057,
-            "compilerReported": 0.6067
+            "match": 0.1894,
+            "compile": 2.0558,
+            "total": 2.7578,
+            "directVerification": 2.412,
+            "compilerReported": 0.8412
           },
           "externalCalls": {
             "model": 0,
@@ -2347,11 +2785,11 @@
             "directResult": "6a790b42b41c3988d49c5a8a50acd692d6acf0f3d0ad3601a6416e12c1995ac0"
           },
           "timingsMs": {
-            "match": 0.0969,
-            "compile": 1.6238,
-            "total": 2.4806,
-            "directVerification": 1.0807,
-            "compilerReported": 0.5894
+            "match": 0.0609,
+            "compile": 1.7316,
+            "total": 2.3906,
+            "directVerification": 1.2393,
+            "compilerReported": 0.6077
           },
           "externalCalls": {
             "model": 0,
@@ -2403,11 +2841,11 @@
         "directResult": "1cf350f6b390cf3a5a547a75b502f9d49b113a1d64f4f0d4a98cd7d5f3d5df15"
       },
       "mediansMs": {
-        "match": 0.1558,
-        "compile": 0.804,
-        "total": 1.4145,
-        "directVerification": 0.5078,
-        "compilerReported": 0.1648
+        "match": 0.1819,
+        "compile": 1.1739,
+        "total": 1.7203,
+        "directVerification": 0.5217,
+        "compilerReported": 0.1819
       },
       "failures": [],
       "runs": [
@@ -2622,11 +3060,11 @@
             "directResult": "1cf350f6b390cf3a5a547a75b502f9d49b113a1d64f4f0d4a98cd7d5f3d5df15"
           },
           "timingsMs": {
-            "match": 0.3806,
-            "compile": 0.7426,
-            "total": 1.4536,
-            "directVerification": 0.4175,
-            "compilerReported": 0.1642
+            "match": 0.4334,
+            "compile": 1.3133,
+            "total": 2.2454,
+            "directVerification": 0.5505,
+            "compilerReported": 0.2958
           },
           "externalCalls": {
             "model": 0,
@@ -2863,11 +3301,11 @@
             "directResult": "1cf350f6b390cf3a5a547a75b502f9d49b113a1d64f4f0d4a98cd7d5f3d5df15"
           },
           "timingsMs": {
-            "match": 0.1558,
-            "compile": 0.9755,
-            "total": 1.4145,
-            "directVerification": 0.5397,
-            "compilerReported": 0.1648
+            "match": 0.1819,
+            "compile": 1.1739,
+            "total": 1.7203,
+            "directVerification": 0.4937,
+            "compilerReported": 0.1819
           },
           "externalCalls": {
             "model": 0,
@@ -3104,11 +3542,11 @@
             "directResult": "1cf350f6b390cf3a5a547a75b502f9d49b113a1d64f4f0d4a98cd7d5f3d5df15"
           },
           "timingsMs": {
-            "match": 0.0573,
-            "compile": 0.804,
-            "total": 1.1972,
-            "directVerification": 0.5078,
-            "compilerReported": 0.1946
+            "match": 0.0439,
+            "compile": 0.7949,
+            "total": 1.1476,
+            "directVerification": 0.5217,
+            "compilerReported": 0.1806
           },
           "externalCalls": {
             "model": 0,
@@ -3160,11 +3598,11 @@
         "directResult": "419fe4701d7e9e5535f468c5c5f15b8d4ac88f65bec8a1ec02ae10c3783cd8ec"
       },
       "mediansMs": {
-        "match": 0.7441,
-        "compile": 0.4298,
-        "total": 1.2235,
-        "directVerification": 0.2893,
-        "compilerReported": 0.3537
+        "match": 0.8241,
+        "compile": 0.5618,
+        "total": 1.475,
+        "directVerification": 0.3097,
+        "compilerReported": 0.4683
       },
       "failures": [],
       "runs": [
@@ -3393,11 +3831,11 @@
             "directResult": "419fe4701d7e9e5535f468c5c5f15b8d4ac88f65bec8a1ec02ae10c3783cd8ec"
           },
           "timingsMs": {
-            "match": 1.0265,
-            "compile": 1.3784,
-            "total": 2.8386,
-            "directVerification": 0.4904,
-            "compilerReported": 1.1109
+            "match": 1.3991,
+            "compile": 1.5201,
+            "total": 3.3991,
+            "directVerification": 0.4623,
+            "compilerReported": 1.1919
           },
           "externalCalls": {
             "model": 0,
@@ -3693,11 +4131,11 @@
             "directResult": "419fe4701d7e9e5535f468c5c5f15b8d4ac88f65bec8a1ec02ae10c3783cd8ec"
           },
           "timingsMs": {
-            "match": 0.7441,
-            "compile": 0.4298,
-            "total": 1.2235,
-            "directVerification": 0.2893,
-            "compilerReported": 0.3537
+            "match": 0.8241,
+            "compile": 0.5618,
+            "total": 1.475,
+            "directVerification": 0.3097,
+            "compilerReported": 0.4683
           },
           "externalCalls": {
             "model": 0,
@@ -3993,11 +4431,11 @@
             "directResult": "419fe4701d7e9e5535f468c5c5f15b8d4ac88f65bec8a1ec02ae10c3783cd8ec"
           },
           "timingsMs": {
-            "match": 0.0301,
-            "compile": 0.3496,
-            "total": 0.455,
-            "directVerification": 0.166,
-            "compilerReported": 0.2721
+            "match": 0.0498,
+            "compile": 0.3798,
+            "total": 0.4783,
+            "directVerification": 0.2111,
+            "compilerReported": 0.3001
           },
           "externalCalls": {
             "model": 0,
@@ -4095,11 +4533,11 @@
         "directResult": "e9db7ea1046577e69002cd0f3e64d50d1eb4bd91db658e2b9fc25b21d21759a0"
       },
       "mediansMs": {
-        "match": 0.1632,
-        "compile": 0.3412,
-        "total": 0.8243,
-        "directVerification": 0.291,
-        "compilerReported": 0.2773
+        "match": 0.2479,
+        "compile": 0.2539,
+        "total": 0.5219,
+        "directVerification": 0.3351,
+        "compilerReported": 0.2084
       },
       "failures": [],
       "runs": [
@@ -4356,11 +4794,11 @@
             "directResult": "e9db7ea1046577e69002cd0f3e64d50d1eb4bd91db658e2b9fc25b21d21759a0"
           },
           "timingsMs": {
-            "match": 0.3786,
-            "compile": 0.3412,
-            "total": 0.8243,
-            "directVerification": 0.291,
-            "compilerReported": 0.2773
+            "match": 0.799,
+            "compile": 0.6049,
+            "total": 1.6142,
+            "directVerification": 0.4951,
+            "compilerReported": 0.4604
           },
           "externalCalls": {
             "model": 0,
@@ -4702,11 +5140,11 @@
             "directResult": "e9db7ea1046577e69002cd0f3e64d50d1eb4bd91db658e2b9fc25b21d21759a0"
           },
           "timingsMs": {
-            "match": 0.1632,
-            "compile": 0.7252,
-            "total": 0.9069,
-            "directVerification": 0.4832,
-            "compilerReported": 0.6372
+            "match": 0.2479,
+            "compile": 0.2436,
+            "total": 0.5219,
+            "directVerification": 0.2,
+            "compilerReported": 0.1896
           },
           "externalCalls": {
             "model": 0,
@@ -5048,11 +5486,11 @@
             "directResult": "e9db7ea1046577e69002cd0f3e64d50d1eb4bd91db658e2b9fc25b21d21759a0"
           },
           "timingsMs": {
-            "match": 0.0635,
-            "compile": 0.2731,
-            "total": 0.3718,
-            "directVerification": 0.1867,
-            "compilerReported": 0.2227
+            "match": 0.0483,
+            "compile": 0.2539,
+            "total": 0.3282,
+            "directVerification": 0.3351,
+            "compilerReported": 0.2084
           },
           "externalCalls": {
             "model": 0,
@@ -5164,11 +5602,11 @@
         "directResult": "5f7658930c6b51cb60f027272431c1042b5a78b765a20fe7dc6a870d3b45c990"
       },
       "mediansMs": {
-        "match": 0.5666,
-        "compile": 0.0635,
-        "total": 0.6325,
-        "directVerification": 0.0243,
-        "compilerReported": 0.0302
+        "match": 0.6666,
+        "compile": 0.088,
+        "total": 0.7829,
+        "directVerification": 0.0477,
+        "compilerReported": 0.0611
       },
       "failures": [],
       "runs": [
@@ -5343,11 +5781,11 @@
             "directResult": "5f7658930c6b51cb60f027272431c1042b5a78b765a20fe7dc6a870d3b45c990"
           },
           "timingsMs": {
-            "match": 1.5173,
-            "compile": 0.0757,
-            "total": 1.7445,
-            "directVerification": 0.0406,
-            "compilerReported": 0.0416
+            "match": 4.3098,
+            "compile": 0.1057,
+            "total": 4.6065,
+            "directVerification": 0.0477,
+            "compilerReported": 0.0634
           },
           "externalCalls": {
             "model": 0,
@@ -5553,11 +5991,11 @@
             "directResult": "5f7658930c6b51cb60f027272431c1042b5a78b765a20fe7dc6a870d3b45c990"
           },
           "timingsMs": {
-            "match": 0.5666,
-            "compile": 0.0479,
-            "total": 0.6325,
-            "directVerification": 0.0243,
-            "compilerReported": 0.0302
+            "match": 0.6666,
+            "compile": 0.088,
+            "total": 0.7829,
+            "directVerification": 0.0307,
+            "compilerReported": 0.0611
           },
           "externalCalls": {
             "model": 0,
@@ -5763,11 +6201,11 @@
             "directResult": "5f7658930c6b51cb60f027272431c1042b5a78b765a20fe7dc6a870d3b45c990"
           },
           "timingsMs": {
-            "match": 0.0248,
-            "compile": 0.0635,
-            "total": 0.1075,
-            "directVerification": 0.0212,
-            "compilerReported": 0.0255
+            "match": 0.0509,
+            "compile": 0.0867,
+            "total": 0.1747,
+            "directVerification": 0.0641,
+            "compilerReported": 0.0353
           },
           "externalCalls": {
             "model": 0,
@@ -5830,11 +6268,11 @@
         "directResult": "d65b1f015003e588348bf8df0e7d3fbcfdb6d97d06de7a5d36e876ed35da7e7a"
       },
       "mediansMs": {
-        "match": 0.1803,
-        "compile": 0.1011,
-        "total": 0.2975,
-        "directVerification": 0.0557,
-        "compilerReported": 0.0615
+        "match": 0.2768,
+        "compile": 0.1428,
+        "total": 0.7046,
+        "directVerification": 0.0738,
+        "compilerReported": 0.0962
       },
       "failures": [],
       "runs": [
@@ -6056,11 +6494,11 @@
             "directResult": "d65b1f015003e588348bf8df0e7d3fbcfdb6d97d06de7a5d36e876ed35da7e7a"
           },
           "timingsMs": {
-            "match": 0.5205,
-            "compile": 0.102,
-            "total": 0.7255,
-            "directVerification": 0.0573,
-            "compilerReported": 0.0658
+            "match": 0.8051,
+            "compile": 0.1428,
+            "total": 1.0951,
+            "directVerification": 0.0738,
+            "compilerReported": 0.0962
           },
           "externalCalls": {
             "model": 0,
@@ -6334,11 +6772,11 @@
             "directResult": "d65b1f015003e588348bf8df0e7d3fbcfdb6d97d06de7a5d36e876ed35da7e7a"
           },
           "timingsMs": {
-            "match": 0.1803,
-            "compile": 0.1011,
-            "total": 0.2975,
-            "directVerification": 0.0557,
-            "compilerReported": 0.0615
+            "match": 0.2768,
+            "compile": 0.3475,
+            "total": 0.7046,
+            "directVerification": 0.1914,
+            "compilerReported": 0.1985
           },
           "externalCalls": {
             "model": 0,
@@ -6612,11 +7050,11 @@
             "directResult": "d65b1f015003e588348bf8df0e7d3fbcfdb6d97d06de7a5d36e876ed35da7e7a"
           },
           "timingsMs": {
-            "match": 0.0407,
-            "compile": 0.0944,
-            "total": 0.1501,
-            "directVerification": 0.051,
-            "compilerReported": 0.0595
+            "match": 0.0903,
+            "compile": 0.1379,
+            "total": 0.2554,
+            "directVerification": 0.0707,
+            "compilerReported": 0.0864
           },
           "externalCalls": {
             "model": 0,
@@ -6710,11 +7148,11 @@
         "directResult": "0ed8ff31ca167e7621fd6ae1a5aacec734e0027089cbfe25d889961d4fb887ea"
       },
       "mediansMs": {
-        "match": 0.7428,
-        "compile": 0.0576,
-        "total": 0.823,
-        "directVerification": 0.0375,
-        "compilerReported": 0.0519
+        "match": 2.1046,
+        "compile": 0.1578,
+        "total": 2.3593,
+        "directVerification": 0.0818,
+        "compilerReported": 0.1314
       },
       "failures": [],
       "runs": [
@@ -6938,11 +7376,11 @@
             "directResult": "0ed8ff31ca167e7621fd6ae1a5aacec734e0027089cbfe25d889961d4fb887ea"
           },
           "timingsMs": {
-            "match": 2.6217,
-            "compile": 0.081,
-            "total": 2.9246,
-            "directVerification": 0.0529,
-            "compilerReported": 0.054
+            "match": 7.4009,
+            "compile": 0.1398,
+            "total": 7.9195,
+            "directVerification": 0.0765,
+            "compilerReported": 0.1033
           },
           "externalCalls": {
             "model": 0,
@@ -7179,11 +7617,11 @@
             "directResult": "0ed8ff31ca167e7621fd6ae1a5aacec734e0027089cbfe25d889961d4fb887ea"
           },
           "timingsMs": {
-            "match": 0.7428,
-            "compile": 0.0476,
-            "total": 0.823,
-            "directVerification": 0.0272,
-            "compilerReported": 0.0401
+            "match": 2.1046,
+            "compile": 0.1578,
+            "total": 2.3593,
+            "directVerification": 0.0818,
+            "compilerReported": 0.1314
           },
           "externalCalls": {
             "model": 0,
@@ -7420,11 +7858,11 @@
             "directResult": "0ed8ff31ca167e7621fd6ae1a5aacec734e0027089cbfe25d889961d4fb887ea"
           },
           "timingsMs": {
-            "match": 0.0491,
-            "compile": 0.0576,
-            "total": 0.1157,
-            "directVerification": 0.0375,
-            "compilerReported": 0.0519
+            "match": 0.1752,
+            "compile": 0.1657,
+            "total": 0.3606,
+            "directVerification": 0.1062,
+            "compilerReported": 0.1456
           },
           "externalCalls": {
             "model": 0,
@@ -7482,11 +7920,11 @@
         "directResult": "fce5f874daab33e5a487d809172a9281c23d7ae26b1a7a1b28dc4a7ce7a457ba"
       },
       "mediansMs": {
-        "match": 0.1336,
-        "compile": 0.0663,
-        "total": 0.2087,
-        "directVerification": 0.0429,
-        "compilerReported": 0.0611
+        "match": 0.3418,
+        "compile": 0.1489,
+        "total": 0.5088,
+        "directVerification": 0.1285,
+        "compilerReported": 0.1374
       },
       "failures": [],
       "runs": [
@@ -7728,11 +8166,11 @@
             "directResult": "fce5f874daab33e5a487d809172a9281c23d7ae26b1a7a1b28dc4a7ce7a457ba"
           },
           "timingsMs": {
-            "match": 0.3855,
-            "compile": 0.1944,
-            "total": 0.6068,
-            "directVerification": 0.0429,
-            "compilerReported": 0.1874
+            "match": 0.9434,
+            "compile": 0.5441,
+            "total": 1.5824,
+            "directVerification": 0.1285,
+            "compilerReported": 0.5222
           },
           "externalCalls": {
             "model": 0,
@@ -7987,11 +8425,11 @@
             "directResult": "fce5f874daab33e5a487d809172a9281c23d7ae26b1a7a1b28dc4a7ce7a457ba"
           },
           "timingsMs": {
-            "match": 0.1336,
-            "compile": 0.0663,
-            "total": 0.2087,
-            "directVerification": 0.0471,
-            "compilerReported": 0.0611
+            "match": 0.3418,
+            "compile": 0.1489,
+            "total": 0.5088,
+            "directVerification": 0.1411,
+            "compilerReported": 0.1374
           },
           "externalCalls": {
             "model": 0,
@@ -8246,11 +8684,11 @@
             "directResult": "fce5f874daab33e5a487d809172a9281c23d7ae26b1a7a1b28dc4a7ce7a457ba"
           },
           "timingsMs": {
-            "match": 0.0657,
-            "compile": 0.0527,
-            "total": 0.1261,
-            "directVerification": 0.0341,
-            "compilerReported": 0.0477
+            "match": 0.1409,
+            "compile": 0.0841,
+            "total": 0.2423,
+            "directVerification": 0.0436,
+            "compilerReported": 0.0779
           },
           "externalCalls": {
             "model": 0,
@@ -8291,15 +8729,15 @@
       "canonicalHashes": {
         "matcher": "a418c414d95a1fefdf52e68b0f4a60f11613bafc1cfbb1af0e38816728e83a1b",
         "scene": "3b6786d031215568f5f4efa525d22b82f2f7280f763c8d1de2dee0c6ee5e48fa",
-        "result": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-        "directResult": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+        "result": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+        "directResult": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
       },
       "mediansMs": {
-        "match": 0.4748,
-        "compile": 0.1528,
-        "total": 0.6689,
-        "directVerification": 0.138,
-        "compilerReported": 0.1188
+        "match": 0.7464,
+        "compile": 0.2542,
+        "total": 1.0848,
+        "directVerification": 0.1629,
+        "compilerReported": 0.2098
       },
       "failures": [],
       "runs": [
@@ -8426,8 +8864,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-                "directResultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+                "resultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+                "directResultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
               },
               "expected": "equal"
             },
@@ -8495,15 +8933,15 @@
           "hashes": {
             "matcher": "a418c414d95a1fefdf52e68b0f4a60f11613bafc1cfbb1af0e38816728e83a1b",
             "scene": "3b6786d031215568f5f4efa525d22b82f2f7280f763c8d1de2dee0c6ee5e48fa",
-            "result": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-            "directResult": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+            "result": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+            "directResult": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
           },
           "timingsMs": {
-            "match": 2.2598,
-            "compile": 0.5942,
-            "total": 3.1464,
-            "directVerification": 0.1798,
-            "compilerReported": 0.5674
+            "match": 1.7433,
+            "compile": 2.4904,
+            "total": 4.5461,
+            "directVerification": 1.1284,
+            "compilerReported": 2.4573
           },
           "externalCalls": {
             "model": 0,
@@ -8643,8 +9081,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-                "directResultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+                "resultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+                "directResultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
               },
               "expected": "equal"
             },
@@ -8712,15 +9150,15 @@
           "hashes": {
             "matcher": "a418c414d95a1fefdf52e68b0f4a60f11613bafc1cfbb1af0e38816728e83a1b",
             "scene": "3b6786d031215568f5f4efa525d22b82f2f7280f763c8d1de2dee0c6ee5e48fa",
-            "result": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-            "directResult": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+            "result": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+            "directResult": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
           },
           "timingsMs": {
-            "match": 0.4748,
-            "compile": 0.1528,
-            "total": 0.6689,
-            "directVerification": 0.1039,
-            "compilerReported": 0.1188
+            "match": 0.7464,
+            "compile": 0.2542,
+            "total": 1.0848,
+            "directVerification": 0.1629,
+            "compilerReported": 0.2098
           },
           "externalCalls": {
             "model": 0,
@@ -8860,8 +9298,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-                "directResultHash": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+                "resultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+                "directResultHash": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
               },
               "expected": "equal"
             },
@@ -8929,15 +9367,15 @@
           "hashes": {
             "matcher": "a418c414d95a1fefdf52e68b0f4a60f11613bafc1cfbb1af0e38816728e83a1b",
             "scene": "3b6786d031215568f5f4efa525d22b82f2f7280f763c8d1de2dee0c6ee5e48fa",
-            "result": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb",
-            "directResult": "e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb"
+            "result": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02",
+            "directResult": "04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02"
           },
           "timingsMs": {
-            "match": 0.0395,
-            "compile": 0.1137,
-            "total": 0.1625,
-            "directVerification": 0.138,
-            "compilerReported": 0.108
+            "match": 0.0704,
+            "compile": 0.1854,
+            "total": 0.2699,
+            "directVerification": 0.133,
+            "compilerReported": 0.1777
           },
           "externalCalls": {
             "model": 0,
@@ -9027,11 +9465,11 @@
         "directResult": "1fcc22116502bf7cf897fe25a12b04e84114188ea796c91ee746e7bd6ebe5f0e"
       },
       "mediansMs": {
-        "match": 0.2319,
-        "compile": 0.0933,
-        "total": 0.3549,
-        "directVerification": 0.0563,
-        "compilerReported": 0.059
+        "match": 0.383,
+        "compile": 0.1556,
+        "total": 0.5879,
+        "directVerification": 0.0682,
+        "compilerReported": 0.0965
       },
       "failures": [],
       "runs": [
@@ -9392,11 +9830,11 @@
             "directResult": "1fcc22116502bf7cf897fe25a12b04e84114188ea796c91ee746e7bd6ebe5f0e"
           },
           "timingsMs": {
-            "match": 1.156,
-            "compile": 0.1184,
-            "total": 1.59,
-            "directVerification": 0.0855,
-            "compilerReported": 0.0695
+            "match": 1.592,
+            "compile": 0.2098,
+            "total": 2.2065,
+            "directVerification": 0.1158,
+            "compilerReported": 0.1316
           },
           "externalCalls": {
             "model": 0,
@@ -9770,11 +10208,11 @@
             "directResult": "1fcc22116502bf7cf897fe25a12b04e84114188ea796c91ee746e7bd6ebe5f0e"
           },
           "timingsMs": {
-            "match": 0.2319,
-            "compile": 0.0933,
-            "total": 0.3549,
-            "directVerification": 0.0563,
-            "compilerReported": 0.059
+            "match": 0.383,
+            "compile": 0.1556,
+            "total": 0.5879,
+            "directVerification": 0.0682,
+            "compilerReported": 0.0965
           },
           "externalCalls": {
             "model": 0,
@@ -10148,11 +10586,11 @@
             "directResult": "1fcc22116502bf7cf897fe25a12b04e84114188ea796c91ee746e7bd6ebe5f0e"
           },
           "timingsMs": {
-            "match": 0.0336,
-            "compile": 0.0572,
-            "total": 0.104,
-            "directVerification": 0.0437,
-            "compilerReported": 0.0491
+            "match": 0.0627,
+            "compile": 0.0816,
+            "total": 0.1634,
+            "directVerification": 0.0553,
+            "compilerReported": 0.0714
           },
           "externalCalls": {
             "model": 0,
@@ -10231,11 +10669,11 @@
         "directResult": "83421e75dffd9e532f3cd8f961a8a689d59b94b81df8a33baf43fd89c90dc205"
       },
       "mediansMs": {
-        "match": 0.0452,
-        "compile": 0.0517,
-        "total": 0.0924,
-        "directVerification": 0.0373,
-        "compilerReported": 0.0352
+        "match": 0.0652,
+        "compile": 0.0523,
+        "total": 0.1276,
+        "directVerification": 0.0393,
+        "compilerReported": 0.0464
       },
       "failures": [],
       "runs": [
@@ -10551,11 +10989,11 @@
             "directResult": "83421e75dffd9e532f3cd8f961a8a689d59b94b81df8a33baf43fd89c90dc205"
           },
           "timingsMs": {
-            "match": 0.0475,
-            "compile": 0.0523,
-            "total": 0.1122,
-            "directVerification": 0.0373,
-            "compilerReported": 0.0352
+            "match": 0.1081,
+            "compile": 0.0754,
+            "total": 0.1994,
+            "directVerification": 0.0393,
+            "compilerReported": 0.0513
           },
           "externalCalls": {
             "model": 0,
@@ -10884,11 +11322,11 @@
             "directResult": "83421e75dffd9e532f3cd8f961a8a689d59b94b81df8a33baf43fd89c90dc205"
           },
           "timingsMs": {
-            "match": 0.0452,
-            "compile": 0.039,
-            "total": 0.0924,
-            "directVerification": 0.0424,
-            "compilerReported": 0.0342
+            "match": 0.0652,
+            "compile": 0.0523,
+            "total": 0.1276,
+            "directVerification": 0.0529,
+            "compilerReported": 0.0464
           },
           "externalCalls": {
             "model": 0,
@@ -11217,11 +11655,11 @@
             "directResult": "83421e75dffd9e532f3cd8f961a8a689d59b94b81df8a33baf43fd89c90dc205"
           },
           "timingsMs": {
-            "match": 0.0249,
-            "compile": 0.0517,
-            "total": 0.0841,
-            "directVerification": 0.0309,
-            "compilerReported": 0.0466
+            "match": 0.0346,
+            "compile": 0.0479,
+            "total": 0.0915,
+            "directVerification": 0.0375,
+            "compilerReported": 0.0426
           },
           "externalCalls": {
             "model": 0,
@@ -11264,11 +11702,11 @@
         "directResult": "f9fdf748d42afbee38f7b41bf47803195f7e5a16a7a6ffd4c305aff95f7a1890"
       },
       "mediansMs": {
-        "match": 0.64,
-        "compile": 0.0933,
-        "total": 0.7836,
-        "directVerification": 0.0708,
-        "compilerReported": 0.057
+        "match": 0.8574,
+        "compile": 0.1184,
+        "total": 1.2744,
+        "directVerification": 0.0667,
+        "compilerReported": 0.0953
       },
       "failures": [],
       "runs": [
@@ -11445,11 +11883,11 @@
             "directResult": "f9fdf748d42afbee38f7b41bf47803195f7e5a16a7a6ffd4c305aff95f7a1890"
           },
           "timingsMs": {
-            "match": 1.5645,
-            "compile": 0.0933,
-            "total": 1.8689,
-            "directVerification": 0.0708,
-            "compilerReported": 0.0638
+            "match": 1.827,
+            "compile": 0.1184,
+            "total": 2.2327,
+            "directVerification": 0.0667,
+            "compilerReported": 0.0865
           },
           "externalCalls": {
             "model": 0,
@@ -11639,11 +12077,11 @@
             "directResult": "f9fdf748d42afbee38f7b41bf47803195f7e5a16a7a6ffd4c305aff95f7a1890"
           },
           "timingsMs": {
-            "match": 0.64,
-            "compile": 0.105,
-            "total": 0.7836,
-            "directVerification": 0.0745,
-            "compilerReported": 0.057
+            "match": 0.8574,
+            "compile": 0.3357,
+            "total": 1.2744,
+            "directVerification": 0.2569,
+            "compilerReported": 0.208
           },
           "externalCalls": {
             "model": 0,
@@ -11833,11 +12271,11 @@
             "directResult": "f9fdf748d42afbee38f7b41bf47803195f7e5a16a7a6ffd4c305aff95f7a1890"
           },
           "timingsMs": {
-            "match": 0.0323,
-            "compile": 0.0546,
-            "total": 0.1011,
-            "directVerification": 0.0615,
-            "compilerReported": 0.0465
+            "match": 0.091,
+            "compile": 0.114,
+            "total": 0.2301,
+            "directVerification": 0.0584,
+            "compilerReported": 0.0953
           },
           "externalCalls": {
             "model": 0,
@@ -11879,11 +12317,11 @@
         "directResult": "f0cb5bc47cfa45fb0696aa305f26b47e43a542e62cf82cadb4b7c8680243d082"
       },
       "mediansMs": {
-        "match": 1.2228,
-        "compile": 0.196,
-        "total": 1.4997,
-        "directVerification": 0.1053,
-        "compilerReported": 0.1823
+        "match": 1.1436,
+        "compile": 0.1122,
+        "total": 1.2852,
+        "directVerification": 0.0753,
+        "compilerReported": 0.0996
       },
       "failures": [],
       "runs": [
@@ -12096,11 +12534,11 @@
             "directResult": "f0cb5bc47cfa45fb0696aa305f26b47e43a542e62cf82cadb4b7c8680243d082"
           },
           "timingsMs": {
-            "match": 1.3989,
-            "compile": 0.196,
-            "total": 1.7614,
-            "directVerification": 0.0625,
-            "compilerReported": 0.1823
+            "match": 4.0101,
+            "compile": 0.2984,
+            "total": 4.5911,
+            "directVerification": 0.0753,
+            "compilerReported": 0.2775
           },
           "externalCalls": {
             "model": 0,
@@ -12326,11 +12764,11 @@
             "directResult": "f0cb5bc47cfa45fb0696aa305f26b47e43a542e62cf82cadb4b7c8680243d082"
           },
           "timingsMs": {
-            "match": 1.2228,
-            "compile": 0.2197,
-            "total": 1.4997,
-            "directVerification": 0.1569,
-            "compilerReported": 0.1957
+            "match": 1.1436,
+            "compile": 0.1122,
+            "total": 1.2852,
+            "directVerification": 0.0726,
+            "compilerReported": 0.0996
           },
           "externalCalls": {
             "model": 0,
@@ -12556,11 +12994,11 @@
             "directResult": "f0cb5bc47cfa45fb0696aa305f26b47e43a542e62cf82cadb4b7c8680243d082"
           },
           "timingsMs": {
-            "match": 0.0733,
-            "compile": 0.0759,
-            "total": 0.1722,
-            "directVerification": 0.1053,
-            "compilerReported": 0.0644
+            "match": 0.1133,
+            "compile": 0.0943,
+            "total": 0.2262,
+            "directVerification": 0.0961,
+            "compilerReported": 0.0707
           },
           "externalCalls": {
             "model": 0,
@@ -12600,11 +13038,11 @@
         "directResult": "0681469075d089e4b43aefb5c57f05e5e9b248090c75c4e801306e6868db00ef"
       },
       "mediansMs": {
-        "match": 0.5052,
-        "compile": 0.0983,
-        "total": 0.6351,
-        "directVerification": 0.0744,
-        "compilerReported": 0.0774
+        "match": 1.7509,
+        "compile": 0.3256,
+        "total": 2.0902,
+        "directVerification": 0.2436,
+        "compilerReported": 0.2462
       },
       "failures": [],
       "runs": [
@@ -12834,11 +13272,11 @@
             "directResult": "0681469075d089e4b43aefb5c57f05e5e9b248090c75c4e801306e6868db00ef"
           },
           "timingsMs": {
-            "match": 1.6595,
-            "compile": 0.5383,
-            "total": 2.6676,
-            "directVerification": 0.1636,
-            "compilerReported": 0.4259
+            "match": 2.1199,
+            "compile": 0.3256,
+            "total": 2.7962,
+            "directVerification": 0.1005,
+            "compilerReported": 0.2645
           },
           "externalCalls": {
             "model": 0,
@@ -13081,11 +13519,11 @@
             "directResult": "0681469075d089e4b43aefb5c57f05e5e9b248090c75c4e801306e6868db00ef"
           },
           "timingsMs": {
-            "match": 0.5052,
-            "compile": 0.0983,
-            "total": 0.6351,
-            "directVerification": 0.0606,
-            "compilerReported": 0.0774
+            "match": 1.7509,
+            "compile": 0.2468,
+            "total": 2.0902,
+            "directVerification": 2.5778,
+            "compilerReported": 0.2083
           },
           "externalCalls": {
             "model": 0,
@@ -13328,11 +13766,11 @@
             "directResult": "0681469075d089e4b43aefb5c57f05e5e9b248090c75c4e801306e6868db00ef"
           },
           "timingsMs": {
-            "match": 0.0348,
-            "compile": 0.0773,
-            "total": 0.136,
-            "directVerification": 0.0744,
-            "compilerReported": 0.0612
+            "match": 0.2239,
+            "compile": 0.367,
+            "total": 0.7025,
+            "directVerification": 0.2436,
+            "compilerReported": 0.2462
           },
           "externalCalls": {
             "model": 0,
@@ -13375,11 +13813,11 @@
         "directResult": "8ea64974f814fcdcbd2d20d06c156861541702e712b0b5466cd29478e771c42d"
       },
       "mediansMs": {
-        "match": 0.4744,
-        "compile": 0.0409,
-        "total": 0.5272,
-        "directVerification": 0.029,
-        "compilerReported": 0.0351
+        "match": 0.9544,
+        "compile": 0.0908,
+        "total": 1.0696,
+        "directVerification": 0.0383,
+        "compilerReported": 0.0826
       },
       "failures": [],
       "runs": [
@@ -13543,11 +13981,11 @@
             "directResult": "8ea64974f814fcdcbd2d20d06c156861541702e712b0b5466cd29478e771c42d"
           },
           "timingsMs": {
-            "match": 0.9991,
-            "compile": 0.0998,
-            "total": 1.1729,
-            "directVerification": 0.0265,
-            "compilerReported": 0.0925
+            "match": 3.0004,
+            "compile": 0.1621,
+            "total": 3.335,
+            "directVerification": 0.0682,
+            "compilerReported": 0.1503
           },
           "externalCalls": {
             "model": 0,
@@ -13724,11 +14162,11 @@
             "directResult": "8ea64974f814fcdcbd2d20d06c156861541702e712b0b5466cd29478e771c42d"
           },
           "timingsMs": {
-            "match": 0.4744,
-            "compile": 0.0409,
-            "total": 0.5272,
-            "directVerification": 0.029,
-            "compilerReported": 0.0351
+            "match": 0.9544,
+            "compile": 0.0908,
+            "total": 1.0696,
+            "directVerification": 0.0383,
+            "compilerReported": 0.0826
           },
           "externalCalls": {
             "model": 0,
@@ -13905,11 +14343,11 @@
             "directResult": "8ea64974f814fcdcbd2d20d06c156861541702e712b0b5466cd29478e771c42d"
           },
           "timingsMs": {
-            "match": 0.0305,
-            "compile": 0.028,
-            "total": 0.0649,
-            "directVerification": 0.0314,
-            "compilerReported": 0.0234
+            "match": 0.0741,
+            "compile": 0.0484,
+            "total": 0.1329,
+            "directVerification": 0.0243,
+            "compilerReported": 0.0422
           },
           "externalCalls": {
             "model": 0,
@@ -13956,11 +14394,11 @@
         "directResult": "2fa32ec12720ac6c8554b10ac57db8edecb2e02c2d305c86098a1978c0e58929"
       },
       "mediansMs": {
-        "match": 0.3801,
-        "compile": 0.0415,
-        "total": 0.4354,
-        "directVerification": 0.0281,
-        "compilerReported": 0.0332
+        "match": 0.8519,
+        "compile": 0.0693,
+        "total": 0.9451,
+        "directVerification": 0.0368,
+        "compilerReported": 0.0591
       },
       "failures": [],
       "runs": [
@@ -14162,11 +14600,11 @@
             "directResult": "2fa32ec12720ac6c8554b10ac57db8edecb2e02c2d305c86098a1978c0e58929"
           },
           "timingsMs": {
-            "match": 0.7825,
-            "compile": 0.0916,
-            "total": 0.973,
-            "directVerification": 0.0281,
-            "compilerReported": 0.0823
+            "match": 2.0785,
+            "compile": 0.1743,
+            "total": 2.4166,
+            "directVerification": 0.0368,
+            "compilerReported": 0.1614
           },
           "externalCalls": {
             "model": 0,
@@ -14381,11 +14819,11 @@
             "directResult": "2fa32ec12720ac6c8554b10ac57db8edecb2e02c2d305c86098a1978c0e58929"
           },
           "timingsMs": {
-            "match": 0.3801,
-            "compile": 0.0415,
-            "total": 0.4354,
-            "directVerification": 0.0258,
-            "compilerReported": 0.0332
+            "match": 0.8519,
+            "compile": 0.0693,
+            "total": 0.9451,
+            "directVerification": 0.0297,
+            "compilerReported": 0.0591
           },
           "externalCalls": {
             "model": 0,
@@ -14600,11 +15038,11 @@
             "directResult": "2fa32ec12720ac6c8554b10ac57db8edecb2e02c2d305c86098a1978c0e58929"
           },
           "timingsMs": {
-            "match": 0.0309,
-            "compile": 0.0281,
-            "total": 0.0671,
-            "directVerification": 0.0315,
-            "compilerReported": 0.0217
+            "match": 0.0549,
+            "compile": 0.0352,
+            "total": 0.1018,
+            "directVerification": 0.0384,
+            "compilerReported": 0.0284
           },
           "externalCalls": {
             "model": 0,
@@ -14640,15 +15078,15 @@
       "canonicalHashes": {
         "matcher": "af73e22507de5ef9f32d643576491a3d775352847914266ee086d019d3e47313",
         "scene": "e7aeb54e5e17f257869f564caaf0ac7e7093f3be450c65c6f0e63fcb8f15cf27",
-        "result": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-        "directResult": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+        "result": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+        "directResult": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
       },
       "mediansMs": {
-        "match": 0.1748,
-        "compile": 0.2043,
-        "total": 0.3404,
-        "directVerification": 0.0546,
-        "compilerReported": 0.1971
+        "match": 0.6679,
+        "compile": 0.3712,
+        "total": 0.9719,
+        "directVerification": 0.1341,
+        "compilerReported": 0.3474
       },
       "failures": [],
       "runs": [
@@ -14755,8 +15193,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-                "directResultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+                "resultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+                "directResultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
               },
               "expected": "equal"
             },
@@ -14859,15 +15297,15 @@
           "hashes": {
             "matcher": "af73e22507de5ef9f32d643576491a3d775352847914266ee086d019d3e47313",
             "scene": "e7aeb54e5e17f257869f564caaf0ac7e7093f3be450c65c6f0e63fcb8f15cf27",
-            "result": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-            "directResult": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+            "result": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+            "directResult": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
           },
           "timingsMs": {
-            "match": 0.3871,
-            "compile": 0.2043,
-            "total": 0.6494,
-            "directVerification": 0.0546,
-            "compilerReported": 0.1971
+            "match": 1.0205,
+            "compile": 0.9878,
+            "total": 2.0988,
+            "directVerification": 0.1247,
+            "compilerReported": 0.9789
           },
           "externalCalls": {
             "model": 0,
@@ -14987,8 +15425,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-                "directResultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+                "resultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+                "directResultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
               },
               "expected": "equal"
             },
@@ -15091,15 +15529,15 @@
           "hashes": {
             "matcher": "af73e22507de5ef9f32d643576491a3d775352847914266ee086d019d3e47313",
             "scene": "e7aeb54e5e17f257869f564caaf0ac7e7093f3be450c65c6f0e63fcb8f15cf27",
-            "result": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-            "directResult": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+            "result": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+            "directResult": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
           },
           "timingsMs": {
-            "match": 0.1748,
-            "compile": 0.0725,
-            "total": 0.2574,
-            "directVerification": 0.054,
-            "compilerReported": 0.0666
+            "match": 0.6679,
+            "compile": 0.2634,
+            "total": 0.9719,
+            "directVerification": 0.1341,
+            "compilerReported": 0.2054
           },
           "externalCalls": {
             "model": 0,
@@ -15219,8 +15657,8 @@
               "name": "high-level-direct-parity",
               "pass": true,
               "actual": {
-                "resultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-                "directResultHash": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+                "resultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+                "directResultHash": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
               },
               "expected": "equal"
             },
@@ -15323,15 +15761,15 @@
           "hashes": {
             "matcher": "af73e22507de5ef9f32d643576491a3d775352847914266ee086d019d3e47313",
             "scene": "e7aeb54e5e17f257869f564caaf0ac7e7093f3be450c65c6f0e63fcb8f15cf27",
-            "result": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa",
-            "directResult": "f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa"
+            "result": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612",
+            "directResult": "39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612"
           },
           "timingsMs": {
-            "match": 0.0211,
-            "compile": 0.3033,
-            "total": 0.3404,
-            "directVerification": 0.0803,
-            "compilerReported": 0.2964
+            "match": 0.1341,
+            "compile": 0.3712,
+            "total": 0.5536,
+            "directVerification": 0.2347,
+            "compilerReported": 0.3474
           },
           "externalCalls": {
             "model": 0,
