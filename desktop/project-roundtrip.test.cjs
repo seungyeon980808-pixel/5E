@@ -1,0 +1,139 @@
+const assert = require("node:assert/strict");
+const test = require("node:test");
+
+const projectIo = import("../js/project-io.js");
+const storeModule = import("../js/store.js");
+
+function currentProject() {
+  return {
+    version: "0.17",
+    activePageId: "page-current",
+    rootExtension: { owner: "future-editor", revision: 4 },
+    pages: [{
+      id: "page-current",
+      name: "Current",
+      meta: { number: "1", points: "2" },
+      pageExtension: { layout: "future-grid" },
+      objects: [{
+        id: "object-current",
+        type: "image",
+        src: "data:image/png;base64,AA==",
+        objectExtension: { renderer: "future-image" },
+      }],
+      guides: [],
+      layers: [{ id: 1, name: "Layer", visible: true }],
+      artboard: { w: 100, h: 70 },
+    }],
+  };
+}
+
+function legacyProject() {
+  return {
+    version: "0.16",
+    rootExtension: { owner: "legacy-plugin", revision: 2 },
+    objects: [{
+      id: "object-legacy",
+      type: "line",
+      objectExtension: { renderer: "legacy-line" },
+    }],
+    guides: [],
+    layers: [{ id: 1, name: "Layer", visible: true }],
+    artboard: { w: 90, h: 60 },
+  };
+}
+
+async function roundTrip(project) {
+  const [{ applyLoaded, migrate, serialize }, { createStore }] = await Promise.all([projectIo, storeModule]);
+  const state = createStore({ activeLayerId: 1 });
+
+  applyLoaded(state, migrate(structuredClone(project)));
+  return JSON.parse(JSON.stringify(serialize(state.get())));
+}
+
+test("preserves current root extensions when a current project is loaded and saved", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.rootExtension, project.rootExtension);
+});
+
+test("preserves current page extensions when a current project is loaded and saved", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.pages[0].pageExtension, project.pages[0].pageExtension);
+});
+
+test("preserves current object extensions when a current project is loaded and saved", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.pages[0].objects[0].objectExtension, project.pages[0].objects[0].objectExtension);
+});
+
+test("preserves legacy root extensions when a legacy project is loaded and saved", async () => {
+  // Given
+  const project = legacyProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.rootExtension, project.rootExtension);
+});
+
+test("preserves legacy object extensions when a legacy project is loaded and saved", async () => {
+  // Given
+  const project = legacyProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(saved.pages[0].objects[0].objectExtension, project.objects[0].objectExtension);
+});
+
+test("preserves intentional object-field absence when a current project is loaded and saved", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.equal(Object.hasOwn(saved.pages[0].objects[0], "srcRect"), false);
+});
+
+test("omits transient root fields when a current project is loaded and saved", async () => {
+  // Given
+  const project = { ...currentProject(), viewBox: { x: 4, y: 5, w: 60, h: 40 } };
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.equal(Object.hasOwn(saved, "viewBox"), false);
+});
+
+test("omits legacy drawing fields from the current root when a legacy project is loaded and saved", async () => {
+  // Given
+  const project = legacyProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.equal(Object.hasOwn(saved, "objects"), false);
+});
