@@ -62,9 +62,12 @@ function globMatches(pattern, relativePath) {
   return visit(0, 0);
 }
 
-function sourcePattern(value, base = "") {
+function sourcePattern(value) {
   if (typeof value !== "string") {
     throw new AuditInputError("UNSUPPORTED_FILE_SET", "UNSUPPORTED_FILE_SET: filter must be string");
+  }
+  if (value.startsWith("!!") || value.startsWith("!(")) {
+    throw new AuditInputError("UNSUPPORTED_GLOB_SYNTAX", "UNSUPPORTED_GLOB_SYNTAX");
   }
   const negative = value.startsWith("!");
   const rawPattern = negative ? value.slice(1) : value;
@@ -72,32 +75,16 @@ function sourcePattern(value, base = "") {
     throw new AuditInputError("UNSUPPORTED_GLOB_SYNTAX", "UNSUPPORTED_GLOB_SYNTAX");
   }
   const filter = normalizeScopedPath(rawPattern, "BUILD_PATTERN_OUTSIDE_ROOT", { allowGlob: true });
-  const pattern = base ? path.posix.join(base, filter) : filter;
-  return { pattern, negative };
-}
-
-function parseFileSet(fileSet) {
-  if (!fileSet || Array.isArray(fileSet) || typeof fileSet !== "object") {
-    throw new AuditInputError("UNSUPPORTED_FILE_SET", "UNSUPPORTED_FILE_SET: expected object");
-  }
-  const allowedKeys = new Set(["from", "to", "filter"]);
-  if (Object.keys(fileSet).some((key) => !allowedKeys.has(key))) {
-    throw new AuditInputError("UNSUPPORTED_FILE_SET", "UNSUPPORTED_FILE_SET: unknown key");
-  }
-  const from = normalizeScopedPath(fileSet.from ?? "", "FILE_SET_OUTSIDE_ROOT", { allowEmpty: true });
-  normalizeScopedPath(fileSet.to ?? "", "FILE_SET_OUTSIDE_ROOT", { allowEmpty: true });
-  const filters = fileSet.filter === undefined
-    ? ["**/*"]
-    : Array.isArray(fileSet.filter) ? fileSet.filter : [fileSet.filter];
-  return filters.map((filter) => sourcePattern(filter, from));
+  return { pattern: filter, negative };
 }
 
 function parseBuildFiles(value) {
   const entries = Array.isArray(value) ? value : [value];
-  const defaultScope = entries.filter((entry) => typeof entry === "string").map((entry) => sourcePattern(entry));
-  const fileSetScopes = entries.filter((entry) => typeof entry !== "string").map(parseFileSet);
-  const scopes = defaultScope.length > 0 ? [defaultScope, ...fileSetScopes] : fileSetScopes;
-  return Object.freeze(scopes.map((scope) => Object.freeze(scope.map(Object.freeze))));
+  if (entries.some((entry) => typeof entry !== "string")) {
+    throw new AuditInputError("UNSUPPORTED_FILE_SET", "UNSUPPORTED_FILE_SET");
+  }
+  const scope = entries.map((entry) => Object.freeze(sourcePattern(entry)));
+  return Object.freeze([Object.freeze(scope)]);
 }
 
 function scopeIncludes(matchers, relativePath) {

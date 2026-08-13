@@ -44,13 +44,17 @@ function realpathInside(canonicalRoot, absolutePath) {
 
 function listFiles(root, relativeRoot) {
   const absoluteRoot = path.join(root, ...relativeRoot.split("/"));
+  let rootStats;
   try {
-    fs.lstatSync(absoluteRoot);
+    rootStats = fs.lstatSync(absoluteRoot);
   } catch (error) {
     if (error.code === "ENOENT") return [];
     throw error;
   }
   realpathInside(root, absoluteRoot);
+  if (rootStats.isSymbolicLink()) {
+    throw new AuditInputError("PACKAGE_ASSET_LINK_UNSUPPORTED", "PACKAGE_ASSET_LINK_UNSUPPORTED");
+  }
   const files = [];
   const visitedDirectories = new Set();
   const visit = (absoluteDirectory, relativeDirectory) => {
@@ -62,8 +66,11 @@ function listFiles(root, relativeRoot) {
     for (const entry of entries) {
       const absoluteEntry = path.join(absoluteDirectory, entry.name);
       const relativeEntry = path.posix.join(relativeDirectory, entry.name);
-      fs.lstatSync(absoluteEntry);
+      const linkStats = fs.lstatSync(absoluteEntry);
       realpathInside(root, absoluteEntry);
+      if (linkStats.isSymbolicLink()) {
+        throw new AuditInputError("PACKAGE_ASSET_LINK_UNSUPPORTED", "PACKAGE_ASSET_LINK_UNSUPPORTED");
+      }
       const stats = fs.statSync(absoluteEntry);
       if (stats.isDirectory()) visit(absoluteEntry, relativeEntry);
       else if (stats.isFile()) files.push({ path: relativeEntry, bytes: stats.size });
@@ -71,6 +78,26 @@ function listFiles(root, relativeRoot) {
   };
   visit(absoluteRoot, relativeRoot);
   return files;
+}
+
+function runtimeStatus(root, runtimePath, matcherScopes) {
+  const absolutePath = path.join(root, ...runtimePath.split("/"));
+  let linkStats;
+  try {
+    linkStats = fs.lstatSync(absolutePath);
+  } catch (error) {
+    if (error.code === "ENOENT") return { path: runtimePath, present: false, included: isIncluded(matcherScopes, runtimePath) };
+    throw error;
+  }
+  try {
+    realpathInside(root, absolutePath);
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+    throw new AuditInputError("REQUIRED_RUNTIME_NOT_FILE", "REQUIRED_RUNTIME_NOT_FILE");
+  }
+  const stats = linkStats.isSymbolicLink() ? fs.statSync(absolutePath) : linkStats;
+  if (!stats.isFile()) throw new AuditInputError("REQUIRED_RUNTIME_NOT_FILE", "REQUIRED_RUNTIME_NOT_FILE");
+  return { path: runtimePath, present: true, included: isIncluded(matcherScopes, runtimePath) };
 }
 
 function assetFamily(assetRoot, relativePath) {
@@ -99,11 +126,8 @@ function auditPackageSources({ root = DEFAULT_ROOT, policy }) {
   const matchers = flattenScopes(matcherScopes);
   const normalizedPolicy = normalizePolicy(policy);
   const buildFiles = matchers.map(({ pattern, negative }) => `${negative ? "!" : ""}${pattern}`).sort(compareText);
-  const requiredRuntime = normalizedPolicy.requiredRuntime.map((runtimePath) => ({
-    path: runtimePath,
-    present: fs.existsSync(path.join(canonicalRoot, ...runtimePath.split("/"))),
-    included: isIncluded(matcherScopes, runtimePath),
-  }));
+  const requiredRuntime = normalizedPolicy.requiredRuntime
+    .map((runtimePath) => runtimeStatus(canonicalRoot, runtimePath, matcherScopes));
   const assetFamilies = collectAssetFamilies(canonicalRoot, normalizedPolicy.assetRoot, matcherScopes);
   const violations = [];
   for (const pattern of normalizedPolicy.forbiddenBuildPatterns) {

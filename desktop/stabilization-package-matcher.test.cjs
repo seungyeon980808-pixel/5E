@@ -80,7 +80,7 @@ test("ordered negation permits a later positive pattern to re-include files", ()
   assert.equal(report.violations.some(({ code }) => code === "UNAPPROVED_ASSET_ROOT"), false);
 });
 
-test("FileSet from/filter forms resolve sources and reject unsupported keys", () => {
+test("FileSet forms fail closed instead of approximating source or destination mapping", () => {
   // Given
   const files = {
     "index.html": "app",
@@ -88,18 +88,12 @@ test("FileSet from/filter forms resolve sources and reject unsupported keys", ()
     "assets/exam-library/no.svg": "no",
   };
 
-  // When
-  const report = audit(
-    { from: "assets", to: "assets", filter: ["**/*", "!exam-library/**/*"] },
-    files,
-  );
-
-  // Then
-  assert.deepEqual(report.assetFamilies, [{ path: "assets/exam-parts", files: 1, bytes: 2 }]);
+  // When / Then
   assert.throws(
-    () => audit({ from: "assets", filter: "**/*", extra: true }, files),
+    () => audit({ from: "assets", to: "assets", filter: ["**/*", "!exam-library/**/*"] }, files),
     { code: "UNSUPPORTED_FILE_SET" },
   );
+  assert.throws(() => audit(["index.html", { from: "assets" }], files), { code: "UNSUPPORTED_FILE_SET" });
 });
 
 test("every included unapproved first-level asset family is a violation", () => {
@@ -168,18 +162,15 @@ test("unsupported glob syntax makes the CLI exit 2 before emitting a report", ()
   }
 });
 
-test("default string patterns and FileSets remain independent union scopes", () => {
+test("mixed default string patterns and FileSets fail closed", () => {
   // Given
   const files = { "index.html": "app", "assets/exam-parts/a.svg": "ok" };
 
-  // When
-  const report = audit([
+  // When / Then
+  assert.throws(() => audit([
     "assets/exam-parts/**/*",
     { from: "assets", filter: ["**/*", "!exam-parts/**/*"] },
-  ], files);
-
-  // Then
-  assert.deepEqual(report.assetFamilies, [{ path: "assets/exam-parts", files: 1, bytes: 2 }]);
+  ], files), { code: "UNSUPPORTED_FILE_SET" });
 });
 
 test("top-level assetRoot junctions cannot escape the canonical audit root", () => {
@@ -211,5 +202,83 @@ test("nested asset junctions cannot escape the canonical audit root", () => {
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
     fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("FileSet source junctions fail closed before source or destination mapping", () => {
+  // Given
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "5e-fileset-outside-"));
+  fs.writeFileSync(path.join(outside, "a.png"), "a");
+  const root = fixture({ from: "source", to: "mapped-assets", filter: "**/*" }, {});
+  directoryLink(outside, path.join(root, "source"));
+  const policyPath = path.join(root, "policy.json");
+  fs.writeFileSync(policyPath, JSON.stringify(BASE_POLICY));
+  const cli = path.join(__dirname, "..", "scripts", "stabilization", "package-assets-audit.cjs");
+
+  try {
+    // When
+    const result = spawnSync(process.execPath, [cli, "--root", root, "--policy", policyPath], { encoding: "utf8" });
+
+    // Then
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, "");
+    assert.equal(JSON.parse(result.stderr).code, "UNSUPPORTED_FILE_SET");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("repeated negation and negation extglob syntax fail closed", () => {
+  // Given
+  const patterns = ["!!assets/**/*", "!(assets)/**/*"];
+
+  // When / Then
+  for (const pattern of patterns) {
+    assert.throws(
+      () => audit(["index.html", pattern], { "index.html": "app" }),
+      { code: "UNSUPPORTED_GLOB_SYNTAX" },
+    );
+  }
+});
+
+test("required runtime entries must resolve to canonical files inside the audit root", () => {
+  // Given
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "5e-runtime-outside-"));
+  fs.writeFileSync(path.join(outside, "main.js"), "outside");
+  const escapedRoot = fixture(["runtime/**/*"], {});
+  directoryLink(outside, path.join(escapedRoot, "runtime"));
+  const directoryRoot = fixture(["runtime"], { "runtime/child.js": "inside" });
+
+  try {
+    // When / Then
+    assert.throws(
+      () => auditPackageSources({ root: escapedRoot, policy: { ...BASE_POLICY, requiredRuntime: ["runtime/main.js"] } }),
+      { code: "PACKAGE_PATH_OUTSIDE_ROOT" },
+    );
+    assert.throws(
+      () => auditPackageSources({ root: directoryRoot, policy: { ...BASE_POLICY, requiredRuntime: ["runtime"] } }),
+      { code: "REQUIRED_RUNTIME_NOT_FILE" },
+    );
+  } finally {
+    fs.rmSync(escapedRoot, { recursive: true, force: true });
+    fs.rmSync(directoryRoot, { recursive: true, force: true });
+    fs.rmSync(outside, { recursive: true, force: true });
+  }
+});
+
+test("asset-tree aliases are rejected even when they resolve inside the audit root", () => {
+  // Given
+  const root = fixture(["assets/**/*"], { "assets/source/a.png": "a" });
+  directoryLink(path.join(root, "assets", "source"), path.join(root, "assets", "alias"));
+
+  try {
+    // When / Then
+    assert.throws(
+      () => auditPackageSources({ root, policy: BASE_POLICY }),
+      { code: "PACKAGE_ASSET_LINK_UNSUPPORTED" },
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
