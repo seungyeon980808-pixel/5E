@@ -38,7 +38,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-local-privacy-completion";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.9-phase0-ui";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,

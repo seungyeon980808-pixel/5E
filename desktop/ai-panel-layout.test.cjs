@@ -5,6 +5,18 @@ const test = require("node:test");
 
 const read = (file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 
+function block(source, prelude) {
+  const start = source.indexOf(prelude);
+  assert.notEqual(start, -1, `missing ${prelude}`);
+  const open = source.indexOf("{", start);
+  let depth = 0;
+  for (let index = open; index < source.length; index += 1) {
+    if (source[index] === "{") depth += 1;
+    if (source[index] === "}" && --depth === 0) return source.slice(open + 1, index);
+  }
+  throw new Error(`unclosed ${prelude}`);
+}
+
 test("AI conversation controls use a readable aligned option grid", () => {
   const html = read("index.html");
   const css = read("css/ai-panel.css");
@@ -17,4 +29,30 @@ test("AI conversation controls use a readable aligned option grid", () => {
   assert.match(css, /\.ai-mode-options\s*\{[^}]*repeat\(2, minmax\(0, 1fr\)\)/s);
   assert.match(css, /\.ai-quality-row \.ai-mode-options\s*\{[^}]*repeat\(3, minmax\(0, 1fr\)\)/s);
   assert.match(css, /\.ai-conversation-actions button\s*\{[^}]*min-height:\s*38px/s);
+});
+
+test("narrow AI workspaces stack both panes under one bounded scroll owner", () => {
+  // Given the responsive rules that apply at both 680px and 800px.
+  const css = read("css/ai-panel.css");
+
+  // When the final max-width 1080px cascade is resolved.
+  const compact = block(css, "@media (max-width: 760px)");
+  const responsive = block(css, "@media (max-width: 1080px)");
+  const workspace = block(responsive, ".ai-workspace");
+  const results = block(responsive, ".ai-results");
+  const conversation = block(responsive, ".ai-conversation");
+
+  // Then results stack above a visible composer, with the workspace owning overflow.
+  assert.match(workspace, /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.match(workspace, /grid-template-areas:\s*"results"\s*"conversation"/);
+  assert.match(workspace, /grid-template-rows:\s*auto auto/);
+  assert.match(workspace, /min-height:\s*0/);
+  assert.match(workspace, /overflow-y:\s*auto/);
+  assert.match(results, /min-height:\s*min\(/);
+  assert.match(conversation, /display:\s*flex/);
+  assert.match(conversation, /min-height:\s*min\(/);
+  assert.match(compact, /grid-template-areas:\s*"results"\s*"conversation"/);
+  assert.doesNotMatch(compact, /\.ai-conversation\s*\{[^}]*display:\s*none/s);
+  assert.doesNotMatch(responsive, /minmax\(600px,\s*1fr\)/);
+  assert.doesNotMatch(responsive, /\.ai-conversation\s*\{[^}]*display:\s*none/s);
 });

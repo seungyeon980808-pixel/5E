@@ -21,7 +21,7 @@ export function createReferenceDialog() {
         <aside class="ai-pdf-result-pane"><header><strong data-ai-pdf-result-title>PDF 본문 검색 결과</strong></header><div data-ai-pdf-result-list></div></aside>
       </section>
     </div>
-    <footer><span data-ai-search-footnote>선택한 이미지만 AI 참고 이미지로 추가됩니다.</span><button type="button" data-ai-search-add>AI 참고로 추가</button></footer>
+    <footer><span data-ai-search-footnote>선택한 이미지만 AI 참고 이미지로 추가됩니다.</span><button type="button" data-ai-search-add disabled>AI 참고로 추가</button></footer>
   </section>`;
   document.documentElement.appendChild(overlay);
   return overlay;
@@ -53,5 +53,29 @@ export function createReferenceLoadStatus(root) {
     loading: () => update("loading", "이미지 검색 목록을 불러오는 중…"),
     ready: () => update("ready"),
     error: (error) => update("error", error?.message || String(error)),
+  };
+}
+
+export function createReferenceAddControl(root) {
+  const button = root.querySelector("[data-ai-search-add]");
+  const summary = root.querySelector("[data-ai-search-summary]");
+  let selectedCount = 0;
+  let state = "ready";
+  const sync = () => { button.disabled = state !== "ready" || selectedCount === 0; };
+  const setState = (nextState) => { state = nextState; sync(); };
+  sync();
+  return {
+    selection: (count) => { selectedCount = count; sync(); },
+    loading: () => setState("loading"),
+    ready: () => setState("ready"),
+    error: () => setState("error"),
+    warning: (message) => {
+      summary.hidden = false;
+      summary.dataset.aiSearchState = "warning";
+      summary.setAttribute("role", "status");
+      summary.setAttribute("aria-live", "polite");
+      summary.setAttribute("aria-atomic", "true");
+      summary.textContent = message;
+    },
   };
 }

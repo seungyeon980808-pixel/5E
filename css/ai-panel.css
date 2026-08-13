@@ -679,8 +679,7 @@
 
 @media (max-width: 760px) {
   #ai-image-panel .modal-ai { height: calc((100vh - 24px) / var(--ui-zoom, 1)); }
-  .ai-workspace { grid-template-columns: 1fr; grid-template-areas: "results"; }
-  .ai-conversation { display: none; }
+  .ai-workspace { grid-template-columns: minmax(0, 1fr); grid-template-areas: "results" "conversation"; }
   .ai-previews { grid-template-columns: 1fr; }
   .ai-head { padding: 15px; }
   .ai-actions, .ai-input { padding-left: 15px; padding-right: 15px; }
@@ -690,7 +689,21 @@
 @media (max-width: 1080px) {
   .ai-account-summary span { display: none; }
   .ai-account-summary strong { max-width: 150px; }
-  .ai-workspace { grid-template-columns: minmax(600px, 1fr) 330px; }
+  .ai-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    grid-template-areas: "results" "conversation";
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .ai-results { min-height: min(320px, 55dvh); }
+  .ai-conversation {
+    display: flex;
+    min-height: min(460px, 70dvh);
+    border-top: 1px solid var(--border, #30363d);
+    border-left: 0;
+  }
 }
 
 .ai-capture-dialog { width: min(900px, calc(100vw - 70px)); max-height: min(700px, calc(100vh - 70px)); }

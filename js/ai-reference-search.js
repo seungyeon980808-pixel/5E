@@ -1,8 +1,8 @@
 import { idbGet, idbSet } from "./idb-store.js";
 import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
-import { createPdfWorkspace } from "./ai-pdf-workspace.js";
-import { createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.8-local-privacy-completion";
+import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.9-phase0-ui";
+import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.9-phase0-ui";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { readWebImage, sourcesFromDesktopResult, sourcesFromWebFiles } from "./local-reference-sources.mjs";
 import {
@@ -36,6 +36,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   let pdfWorkspace = null;
   let referenceGrid = null;
   let referenceLoadStatus = null;
+  let referenceAddControl = null;
   let parentDialog = null;
   const selected = new Map();
   const objectUrls = new Set();
@@ -63,6 +64,8 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   }
 
   function close() {
+    pdfWorkspace?.dispose();
+    pdfWorkspace = null;
     parentDialog?.removeAttribute("aria-hidden");
     parentDialog = null;
     objectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -146,6 +149,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     const localWorkspace = source === SOURCES.LOCAL;
     const searchAdd = overlay.querySelector("[data-ai-search-add]");
     searchAdd.hidden = localWorkspace;
+    referenceAddControl?.selection(localWorkspace ? 0 : selected.size);
     overlay.querySelector("[data-ai-search-footnote]").textContent = localWorkspace
       ? "검색 결과를 선택한 뒤 왼쪽 교과서 페이지에서 시험에 쓸 영역을 크롭하세요."
       : "선택한 이미지만 AI 참고 이미지로 추가됩니다.";
@@ -163,9 +167,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
 
   async function addSelected() {
     const records = Array.from(selected.values());
-    if (!records.length) return status("추가할 이미지를 선택하세요.", "warn");
+    if (!records.length) return referenceAddControl?.warning("추가할 이미지를 선택하세요.");
     const button = overlay.querySelector("[data-ai-search-add]");
-    button.disabled = true;
+    referenceAddControl?.loading();
     button.textContent = "불러오는 중…";
     try {
       for (const record of records) {
@@ -179,8 +183,8 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       status(`참고 이미지 ${records.length}개를 추가했습니다.`, "ok");
       close();
     } catch (error) {
-      status(error.message || String(error), "error");
-      button.disabled = false;
+      referenceLoadStatus?.error(error);
+      referenceAddControl?.error();
       button.textContent = "AI 참고로 추가";
     }
   }
@@ -198,6 +202,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     close(); selected.clear(); query = "";
     overlay = createReferenceDialog();
     referenceLoadStatus = createReferenceLoadStatus(overlay);
+    referenceAddControl = createReferenceAddControl(overlay);
     parentDialog = document.querySelector("#ai-image-panel [aria-modal=true]");
     parentDialog?.setAttribute("aria-hidden", "true");
     pdfWorkspace = createPdfWorkspace({
@@ -224,13 +229,15 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
         source = nextSource; render();
         void activateReferenceSource(nextSource, {
           loadRemote: ensureRemoteData,
-          onRemoteLoad: () => referenceLoadStatus.loading(),
+          onRemoteLoad: () => { referenceLoadStatus.loading(); referenceAddControl?.loading(); },
         })
-          .then(() => { if (source === nextSource) { render(); referenceLoadStatus.ready(); } })
+          .then(() => { if (source === nextSource) {
+            render(); referenceLoadStatus.ready(); referenceAddControl?.ready();
+          } })
           .catch((error) => {
             if (source !== nextSource) return;
             referenceLoadStatus.error(error);
-            status(error.message || String(error), "error");
+            referenceAddControl?.error();
           });
       };
     });

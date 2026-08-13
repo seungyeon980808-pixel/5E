@@ -175,6 +175,10 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     renderPreview();
   });
   wrap.addEventListener("pointercancel", () => { dragStart = null; });
-  window.addEventListener("resize", renderCropBox, { once: true });
-  return { clear: () => { item = null; data = ""; renderedKey = ""; cropMode = false; cropBox = null; }, render };
+  window.addEventListener("resize", renderCropBox);
+  return {
+    clear: () => { item = null; data = ""; renderedKey = ""; cropMode = false; cropBox = null; },
+    dispose: () => window.removeEventListener("resize", renderCropBox),
+    render,
+  };
 }
