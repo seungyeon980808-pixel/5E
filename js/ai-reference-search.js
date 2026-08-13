@@ -181,7 +181,11 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
   async function pickLocal() {
     const result = await folderConnection.reconnect();
     if (result.status === "unsupported") overlay.querySelector("[data-ai-web-folder]").click();
-    else if (result.status === "denied") status("폴더 읽기 권한이 거부되었습니다. 폴더를 다시 연결하세요.", "warn");
+    else if (result.status === "denied") {
+      const message = "폴더 읽기 권한이 거부되었습니다. 폴더를 다시 연결하세요.";
+      status(message, "warn");
+      referenceLoadStatus?.error(new Error(message));
+    }
   }
   const folderConnector = desktop?.pickLocalImageFolder
     ? createDesktopFolderConnector(desktop) : createBrowserFolderConnector(globalThis);
@@ -235,7 +239,10 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
     });
     const input = overlay.querySelector("input[type=search]");
     input.oninput = () => { query = input.value; render(); };
-    overlay.querySelector("[data-ai-local-pick]").onclick = () => void pickLocal().catch((error) => status(error.message || String(error), "error"));
+    overlay.querySelector("[data-ai-local-pick]").onclick = () => void pickLocal().catch((error) => {
+      status(error.message || String(error), "error");
+      referenceLoadStatus?.error(error);
+    });
     overlay.querySelector("[data-ai-web-folder]").onchange = async (event) => {
       const files = event.target.files;
       await acceptAssets(sourcesFromWebFiles(files), files[0]?.webkitRelativePath?.split("/")[0] || "선택한 파일");

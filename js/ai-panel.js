@@ -39,7 +39,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.11-phase1-local-reference";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.12-phase1-local-reference";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import {
   AI_OUTPUT_ENGINES,
