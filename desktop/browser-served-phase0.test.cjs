@@ -98,9 +98,28 @@ test("HTTP-served AI panel and Electron IPC enforce identical local-reference tr
   assert.deepEqual(report.desktop, report.browser);
   assert.equal(report.browser.single.calls, 1);
   assert.equal(report.browser.batch.calls, 3);
+  assert.deepEqual(report.browser.single.purposes, ["image"]);
+  assert.deepEqual(report.browser.batch.purposes, ["image", "image", "image"]);
+  assert.deepEqual(report.browser.single.attachmentNames, [
+    "ai-input-1-overview.png",
+    "ai-input-3-crop.png",
+    "ai-input-4-contact-sheet.png",
+  ]);
+  assert.equal(report.browser.single.requestPromptCount, 1);
+  assert.equal(report.browser.batch.requestPromptCount, 3);
   for (const flow of [report.browser.single, report.browser.batch]) {
-    assert.deepEqual(flow.blocked, { name: false, bytes: false, comment: false });
-    assert.deepEqual(flow.confirmed, { name: true, bytes: true, comment: true });
-    assert.deepEqual(flow.automatic, { name: true, bytes: true, comment: true });
+    assert.deepEqual(flow.blocked, {
+      nameInPrompt: false, nameInAttachments: false, commentInPrompt: false, pixels: 0,
+    });
+    assert.equal(flow.confirmed.nameInPrompt, true);
+    assert.equal(flow.confirmed.commentInPrompt, true);
+    assert.ok(flow.confirmed.pixels > 0);
+    assert.equal(flow.automatic.nameInPrompt, true);
+    assert.equal(flow.automatic.commentInPrompt, true);
+    assert.ok(flow.automatic.pixels > 0);
   }
+  assert.equal(report.browser.single.confirmed.nameInAttachments, false);
+  assert.equal(report.browser.single.automatic.nameInAttachments, false);
+  assert.equal(report.browser.batch.confirmed.nameInAttachments, true);
+  assert.equal(report.browser.batch.automatic.nameInAttachments, true);
 });

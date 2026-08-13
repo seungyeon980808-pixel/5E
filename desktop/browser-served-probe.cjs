@@ -21,23 +21,6 @@ function finish(report, exitCode = 0) {
   app.exit(exitCode);
 }
 
-function summary(payloads, markers) {
-  const serialized = JSON.stringify(payloads);
-  const names = payloads.flatMap((payload) => (payload.attachments || []).map((item) => item.name));
-  const flag = (name, comment) => ({
-    name: serialized.includes(name),
-    bytes: serialized.includes(markers[name]),
-    comment: serialized.includes(comment),
-  });
-  return {
-    calls: payloads.length,
-    attachmentNames: names,
-    blocked: flag("blocked-local-name.png", "blocked-local-comment"),
-    confirmed: flag("confirmed-crop-name.png", "confirmed-crop-comment"),
-    automatic: flag("automatic-picker-name.png", "automatic-picker-comment"),
-  };
-}
-
 function createWindow(electron) {
   const window = new BrowserWindow({ show: false, webPreferences: {
     contextIsolation: true, nodeIntegration: false, sandbox: true,
@@ -70,7 +53,9 @@ async function runFlows(adapterKind) {
     electronPayloads = [];
     const result = await window.webContents.executeJavaScript(`import("./desktop/browser-served-panel-flow.mjs")
       .then((module) => module.runPanelTransportFlow(${JSON.stringify(mode)}, ${JSON.stringify(adapterKind)}))`);
-    outcomes[mode] = summary(electron ? electronPayloads : result.captured, result.markers);
+    const payloads = electron ? electronPayloads : result.captured;
+    outcomes[mode] = await window.webContents.executeJavaScript(`import("./desktop/browser-served-panel-flow.mjs")
+      .then((module) => module.summarizeCapturedPayloads(${JSON.stringify(payloads)}))`);
   }
   if (!electron && captureDirectory) {
     await window.webContents.executeJavaScript(`import("./desktop/browser-served-panel-flow.mjs")
