@@ -97,18 +97,17 @@ export function auditSyntheticGraphCase(fixture, seams = {}) {
 }
 
 export function auditFailureCases(fixtures, ledger) {
-  const entries = new Map(ledger.entries.map((entry) => [entry.fixtureId, entry]));
   return fixtures.map((fixture) => {
     const result = compileFastScene(fixture.interpretation, { idPrefix: fixture.fixtureId, strict: true });
     const actualSupport = result.supported;
-    const entry = entries.get(fixture.fixtureId);
     const expectedSupport = fixture.expectedSupport ?? true;
-    const ledgerMatches = entry == null || entry.currentlySupported === expectedSupport;
-    return { fixtureId: fixture.fixtureId, actualSupport, matched: actualSupport === expectedSupport && ledgerMatches };
+    const matches = ledger.entries.filter((entry) => entry.fixtureId === fixture.fixtureId);
+    const ledgerMatches = expectedSupport ? matches.length === 0 : matches.length === 1 && matches[0].currentlySupported === false;
+    return { fixtureId: fixture.fixtureId, actualSupport, valid: result.valid, matched: actualSupport === expectedSupport && ledgerMatches };
   });
 }
 
-export function auditFailureLedger(ledger) {
+export function auditFailureLedger(ledger, fixtures = []) {
   const entries = Array.isArray(ledger?.entries) ? ledger.entries : [];
   const errors = [];
   entries.forEach((entry, index) => {
@@ -116,6 +115,16 @@ export function auditFailureLedger(ledger) {
       if (!Object.hasOwn(entry, field) || entry[field] === "") errors.push(`${index}:${field}`);
     }
     if (typeof entry.currentlySupported !== "boolean") errors.push(`${index}:currentlySupported:type`);
+  });
+  const unsupportedIds = new Set(fixtures.filter((fixture) => fixture.expectedSupport === false).map((fixture) => fixture.fixtureId));
+  const counts = new Map(entries.map((entry) => [entry.fixtureId, entries.filter((item) => item.fixtureId === entry.fixtureId).length]));
+  for (const fixtureId of unsupportedIds) {
+    const count = counts.get(fixtureId) || 0;
+    if (count !== 1) errors.push(`fixture:${fixtureId}:${count === 0 ? "missing" : `duplicate:${count}`}`);
+  }
+  entries.forEach((entry, index) => {
+    if (!unsupportedIds.has(entry.fixtureId)) errors.push(`${index}:fixtureId:orphan`);
+    if (entry.currentlySupported !== false) errors.push(`${index}:currentlySupported:unsupported`);
   });
   return { entries: entries.length, valid: errors.length === 0, errors };
 }

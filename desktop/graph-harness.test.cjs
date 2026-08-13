@@ -117,12 +117,18 @@ test("synthetic graph failure ledger requires every contract field", async () =>
   const { cases: fixtures } = fixtureData();
 
   // When / Then
-  assert.deepEqual(auditFailureLedger(ledger), { entries: 2, valid: true, errors: [] });
+  assert.deepEqual(auditFailureLedger(ledger, fixtures.cases), { entries: 3, valid: true, errors: [] });
   assert.deepEqual(auditFailureCases(fixtures.cases, ledger).map(({ fixtureId, matched }) => ({ fixtureId, matched })), [
     { fixtureId: "synthetic-dual-panel-curve-bars", matched: true },
     { fixtureId: "synthetic-log-axis", matched: true },
     { fixtureId: "synthetic-polar", matched: true },
     { fixtureId: "synthetic-axis-at", matched: true },
   ]);
-  assert.equal(auditFailureLedger({ entries: [{ fixtureId: "incomplete" }] }).valid, false);
+  const missing = auditFailureLedger({ entries: ledger.entries.filter(({ fixtureId }) => fixtureId !== "synthetic-axis-at") }, fixtures.cases);
+  const duplicate = auditFailureLedger({ entries: [...ledger.entries, ledger.entries[0]] }, fixtures.cases);
+  const orphan = auditFailureLedger({ entries: [...ledger.entries, { ...ledger.entries[0], fixtureId: "synthetic-orphan" }] }, fixtures.cases);
+  assert.ok(missing.errors.includes("fixture:synthetic-axis-at:missing"));
+  assert.ok(duplicate.errors.includes("fixture:synthetic-log-axis:duplicate:2"));
+  assert.ok(orphan.errors.includes("3:fixtureId:orphan"));
+  assert.equal(auditFailureLedger({ entries: [{ fixtureId: "incomplete" }] }, fixtures.cases).valid, false);
 });

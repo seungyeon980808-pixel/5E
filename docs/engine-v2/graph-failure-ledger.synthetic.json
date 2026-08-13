@@ -12,14 +12,24 @@
       "regressionTestStatus": "expected-failure"
     },
     {
-      "fixtureId": "synthetic-dual-panel-curve-bars",
+      "fixtureId": "synthetic-polar",
       "sourceCategory": "synthetic",
-      "graphType": "dual-panel-mixed-series",
-      "failureType": "none",
-      "currentlySupported": true,
-      "requiredFeature": "none",
-      "workaround": "none",
-      "regressionTestStatus": "covered"
+      "graphType": "polar-coordinate",
+      "failureType": "unsupported-element",
+      "currentlySupported": false,
+      "requiredFeature": "native polar coordinate plane and series",
+      "workaround": "manually author radial axes and curves",
+      "regressionTestStatus": "expected-failure"
+    },
+    {
+      "fixtureId": "synthetic-axis-at",
+      "sourceCategory": "synthetic",
+      "graphType": "offset-axis-origin",
+      "failureType": "unsupported-axis-origin",
+      "currentlySupported": false,
+      "requiredFeature": "explicit x and y axis crossing coordinates",
+      "workaround": "manually position axis lines",
+      "regressionTestStatus": "expected-failure"
     }
   ]
 }
