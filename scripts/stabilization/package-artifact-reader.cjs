@@ -52,6 +52,7 @@ function readAsar(archivePath) {
   catch { throw new ArtifactInputError("INVALID_ASAR_HEADER"); }
   const files = [];
   const nodes = new Map();
+  const unpackedRoot = path.resolve(`${archivePath}.unpacked`);
   const visit = (node, parent = "") => {
     for (const name of Object.keys(node.files || {}).sort(compareText)) {
       if (!name || name === "." || name === ".." || name.includes("/") || name.includes("\\")) {
@@ -67,16 +68,22 @@ function readAsar(archivePath) {
         const bytes = Number(child.size);
         if (!Number.isSafeInteger(bytes) || bytes < 0) throw new ArtifactInputError("INVALID_ASAR_ENTRY");
         if (child.unpacked) {
-          const unpackedRoot = `${archivePath}.unpacked`;
-          const external = path.resolve(unpackedRoot, ...relative.split("/"));
-          const outside = path.relative(path.resolve(unpackedRoot), external);
-          if (outside === ".." || outside.startsWith(`..${path.sep}`) || path.isAbsolute(outside)) {
-            throw new ArtifactInputError("INVALID_ASAR_PATH");
+          if (!fs.existsSync(unpackedRoot) || fs.lstatSync(unpackedRoot).isSymbolicLink()) {
+            throw new ArtifactInputError("ARTIFACT_LINK_UNSUPPORTED");
           }
-          if (!fs.existsSync(external) || fs.lstatSync(external).isSymbolicLink() || !fs.statSync(external).isFile()) {
+          const canonicalRoot = fs.realpathSync.native(unpackedRoot);
+          const external = path.resolve(unpackedRoot, ...relative.split("/"));
+          if (!fs.existsSync(external)) throw new ArtifactInputError("INVALID_ASAR_ENTRY");
+          const canonicalExternal = fs.realpathSync.native(external);
+          const outside = path.relative(canonicalRoot, canonicalExternal);
+          if (outside === ".." || outside.startsWith(`..${path.sep}`) || path.isAbsolute(outside)) {
+            throw new ArtifactInputError("ARTIFACT_PATH_OUTSIDE_ROOT");
+          }
+          if (fs.lstatSync(external).isSymbolicLink() || !fs.statSync(canonicalExternal).isFile()) {
             throw new ArtifactInputError("INVALID_ASAR_ENTRY");
           }
-          if (fs.statSync(external).size !== bytes) throw new ArtifactInputError("INVALID_ASAR_ENTRY");
+          if (fs.statSync(canonicalExternal).size !== bytes) throw new ArtifactInputError("INVALID_ASAR_ENTRY");
+          child.canonicalExternal = canonicalExternal;
         } else {
           const offset = Number(child.offset ?? (bytes === 0 ? "0" : Number.NaN));
           if (!Number.isSafeInteger(offset) || offset < 0 || headerEnd + offset + bytes > archive.length) {
@@ -95,7 +102,7 @@ function readAsar(archivePath) {
     read(relativePath) {
       const node = nodes.get(relativePath);
       if (!node) throw new ArtifactInputError("ASAR_FILE_MISSING");
-      if (node.unpacked) return fs.readFileSync(path.join(`${archivePath}.unpacked`, ...relativePath.split("/")));
+      if (node.unpacked) return fs.readFileSync(node.canonicalExternal);
       const offset = Number(node.offset ?? (node.size === 0 ? "0" : Number.NaN));
       return archive.subarray(headerEnd + offset, headerEnd + offset + node.size);
     },

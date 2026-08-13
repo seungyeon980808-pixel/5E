@@ -37,6 +37,12 @@ function auditPackageArtifact({ artifactPath, policy, webIdentity }) {
   for (const required of policy.requiredFiles) {
     if (!paths.has(required)) violations.push({ code: "REQUIRED_ARTIFACT_FILE_MISSING", value: required });
   }
+  for (const tree of policy.requiredTrees || []) {
+    for (const filename of tree.files) {
+      const required = path.posix.join(tree.root, filename);
+      if (!paths.has(required)) violations.push({ code: "REQUIRED_ARTIFACT_FILE_MISSING", value: required });
+    }
+  }
   const packageJson = parseJsonFile(artifact, "package.json");
   const buildIdentity = parseJsonFile(artifact, "build-identity.json");
   const desktop = {
