@@ -56,3 +56,29 @@ test("narrow AI workspaces stack both panes under one bounded scroll owner", () 
   assert.doesNotMatch(responsive, /minmax\(600px,\s*1fr\)/);
   assert.doesNotMatch(responsive, /\.ai-conversation\s*\{[^}]*display:\s*none/s);
 });
+
+test("narrow AI headers and toolbars keep every control reachable", () => {
+  // Given the 680px and 800px responsive cascade.
+  const responsive = block(read("css/ai-panel.css"), "@media (max-width: 960px)");
+
+  // When header and toolbar layout contracts are resolved.
+  const head = block(responsive, ".ai-head");
+  const title = block(responsive, ".ai-head .modal-title");
+  const status = block(responsive, ".ai-status");
+  const toolbar = block(responsive, ".ai-media-toolbar");
+  const sources = block(responsive, ".ai-source-group");
+  const actions = block(responsive, ".ai-actions");
+
+  // Then the title stays whole, status truncates beside close, and both control groups wrap in view.
+  assert.match(head, /grid-template-columns:\s*minmax\(0,\s*1fr\) auto/);
+  assert.match(title, /white-space:\s*nowrap/);
+  assert.match(title, /word-break:\s*keep-all/);
+  assert.match(status, /overflow:\s*hidden/);
+  assert.match(status, /text-overflow:\s*ellipsis/);
+  assert.match(status, /white-space:\s*nowrap/);
+  assert.match(toolbar, /flex-wrap:\s*wrap/);
+  assert.match(sources, /flex:\s*1 1 100%/);
+  assert.match(sources, /flex-wrap:\s*wrap/);
+  assert.match(actions, /flex:\s*1 1 100%/);
+  assert.match(actions, /flex-wrap:\s*wrap/);
+});

@@ -66,3 +66,14 @@ test("reference coordinator binds Add state to selection and remote loading", ()
     assert.match(search, new RegExp(`referenceAddControl\\?\\.${state}\\(`));
   }
 });
+
+test("remote Add visually distinguishes disabled and ready states", () => {
+  // Given the reference-dialog footer styling.
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
+
+  // When ready, disabled, and keyboard-focus selectors are inspected.
+  // Then ready is accented while disabled is muted and unmistakably unavailable.
+  assert.match(css, /\.ai-reference-search-dialog > footer button\s*\{[^}]*background:\s*var\(--accent/s);
+  assert.match(css, /\.ai-reference-search-dialog > footer button:disabled\s*\{[^}]*color:\s*var\(--text-secondary[^}]*background:\s*var\(--btn-tool[^}]*border-color:\s*var\(--border[^}]*opacity:\s*\.6[^}]*cursor:\s*not-allowed/s);
+  assert.match(css, /\.ai-reference-search-dialog > footer button:focus-visible\s*\{[^}]*outline:\s*2px solid var\(--accent/s);
+});
