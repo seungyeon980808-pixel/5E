@@ -289,7 +289,7 @@ export function initProjectIO(state, svg) {
       // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
       // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.
       if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name)) {
-        openProject(state, file);
+        openProject(state, file, applyLoaded);
         return;
       }
       if (!file.type.startsWith("image/")) return;
