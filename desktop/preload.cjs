@@ -10,7 +10,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   account: () => ipcRenderer.invoke("codex:account"),
   login: () => ipcRenderer.invoke("codex:login"),
   send: (payload) => ipcRenderer.invoke("codex:send", payload),
-  interrupt: () => ipcRenderer.invoke("codex:interrupt"),
+  interrupt: (turnId) => ipcRenderer.invoke("codex:interrupt", turnId),
   captureSources: () => ipcRenderer.invoke("capture:sources"),
   pickLocalImageFolder: () => ipcRenderer.invoke("local-images:pick-folder"),
   listLocalImages: (folder) => ipcRenderer.invoke("local-images:list", folder),

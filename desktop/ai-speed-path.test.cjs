@@ -22,6 +22,7 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-image-transport\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-request-plan\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-prompt\.js\?v=1\.5\.5/);
+  assert.match(panel, /ai-events\.js\?v=1\.5\.4/);
   assert.doesNotMatch(panel, /ai-structure-lock\.js/);
   assert.match(panel, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-motif-catalog\.js\?v=1\.5\.3/);
@@ -30,7 +31,7 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.7/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.9/);
   assert.match(index, /js\/main\.js\?v=1\.5\.9-delayed-cut-cache/);
 });
 

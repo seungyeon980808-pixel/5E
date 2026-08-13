@@ -1,7 +1,7 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
 import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
 import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
-import { parseAiEvent } from "./ai-events.js?v=1.5.3";
+import { parseAiEvent } from "./ai-events.js?v=1.5.4";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
   createCheapImageSignature,
@@ -205,6 +205,9 @@ export function initAiPanel(state) {
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
+  const tabRunsByClientRequestId = new Map();
+  const tabRunsByTurnId = new Map();
+  let pendingActivationTabId = null;
   const batchRuns = new Map();
   const unclaimedBatchEvents = [];
   let batchActive = false;
@@ -342,11 +345,19 @@ export function initAiPanel(state) {
     qualityButtons.forEach((button) => { button.disabled = on; });
     outputEngineButtons.forEach((button) => { button.disabled = on; });
     if (batchButton) batchButton.disabled = on || attachments.length < 2;
-    if (tabNewButton) tabNewButton.disabled = on;
+    if (tabNewButton) {
+      tabNewButton.disabled = false;
+      tabNewButton.title = on
+        ? "새 탭을 추가해 최대 5개 작업을 동시에 진행합니다."
+        : "독립된 참고 이미지와 대화를 사용하는 새 탭을 만듭니다";
+    }
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
     const cancelButton = panel.querySelector("[data-ai-interrupt]");
     cancelButton.disabled = !on;
     cancelButton.hidden = !on;
+    const activeTab = taskTabs.get(activeTaskTabId);
+    if (activeTab?.runtime) activeTab.runtime.busy = on;
+    if (taskTabs.size) renderTaskTabs();
   };
   const syncMode = () => {
     modeButtons.forEach((button) => {
@@ -790,6 +801,35 @@ export function initAiPanel(state) {
   };
 
   const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
+  const idleTabRuntime = () => ({
+    busy: false,
+    imageReceived: false,
+    currentTurnType: "chat",
+    currentTurnUsage: null,
+    currentTurnPerformance: null,
+    currentTurnDone: false,
+    currentTurnId: null,
+    currentRenderThreadId: null,
+    awaitingTurnId: false,
+    queuedTurnEvents: [],
+    currentRequestEpoch: 0,
+    serverTurnFinished: false,
+    previewPending: false,
+    currentTurnStartedAt: 0,
+    currentEngine: IMAGE_ENGINE_IDS.RASTER,
+    currentSceneResponse: "",
+    currentCacheRequest: null,
+    currentRequestSnapshot: null,
+    currentRunInput: null,
+    generatingVisible: false,
+    progressTitle: "이미지 생성 준비 중",
+    progressDetail: "요청의 구조와 배치를 분석하고 있습니다.",
+    progressPhase: "analyze",
+    statusText: "AI 사용 가능",
+    statusKind: "ok",
+    tokenFooterText: "",
+  });
+
   const captureActiveTaskTab = () => {
     const tab = taskTabs.get(activeTaskTabId);
     if (!tab) return;
@@ -805,6 +845,34 @@ export function initAiPanel(state) {
     tab.mode = selectedMode;
     tab.qualityMode = selectedQualityMode;
     tab.outputEngine = selectedOutputEngine;
+    tab.runtime = {
+      busy,
+      imageReceived,
+      currentTurnType,
+      currentTurnUsage,
+      currentTurnPerformance,
+      currentTurnDone,
+      currentTurnId,
+      currentRenderThreadId,
+      awaitingTurnId,
+      queuedTurnEvents: queuedTurnEvents.map((queued) => ({ ...queued })),
+      currentRequestEpoch,
+      serverTurnFinished,
+      previewPending,
+      currentTurnStartedAt,
+      currentEngine,
+      currentSceneResponse,
+      currentCacheRequest,
+      currentRequestSnapshot,
+      currentRunInput,
+      generatingVisible: !generating.hidden,
+      progressTitle: progressTitle.textContent || "이미지 생성 준비 중",
+      progressDetail: progressDetail.textContent || "요청의 구조와 배치를 분석하고 있습니다.",
+      progressPhase: progressStage?.dataset.aiProgressStage || "analyze",
+      statusText: status.textContent || "",
+      statusKind: status.dataset.kind || "",
+      tokenFooterText: tokenFooterNode?.textContent || "",
+    };
   };
 
   const renderTaskTabs = () => {
@@ -816,6 +884,8 @@ export function initAiPanel(state) {
       button.className = "ai-task-tab";
       button.dataset.tabId = tab.id;
       button.classList.toggle("is-on", tab.id === activeTaskTabId);
+      button.classList.toggle("is-busy", Boolean(tab.runtime?.busy));
+      button.classList.toggle("has-completed-run", Boolean(tab.runtime?.pendingCompletion));
       button.setAttribute("role", "tab");
       button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
       const label = document.createElement("span");
@@ -825,7 +895,7 @@ export function initAiPanel(state) {
       closeTab.title = "탭 닫기";
       closeTab.onclick = (event) => {
         event.stopPropagation();
-        if (busy || taskTabs.size <= 1) return;
+        if (tab.runtime?.busy || taskTabs.size <= 1) return;
         taskTabs.delete(tab.id);
         if (activeTaskTabId === tab.id) {
           activeTaskTabId = taskTabs.keys().next().value;
@@ -834,7 +904,12 @@ export function initAiPanel(state) {
       };
       button.append(label, closeTab);
       button.onclick = () => {
-        if (busy || tab.id === activeTaskTabId) return;
+        if (tab.id === activeTaskTabId) return;
+        if (awaitingTurnId || previewPending) {
+          setStatus("현재 탭의 요청을 서버에 등록하는 중입니다. 잠시 후 자동으로 전환합니다.", "busy");
+          pendingActivationTabId = tab.id;
+          return;
+        }
         captureActiveTaskTab();
         restoreTaskTab(tab.id);
       };
@@ -856,11 +931,28 @@ export function initAiPanel(state) {
     const tab = taskTabs.get(tabId);
     if (!tab) return;
     activeTaskTabId = tab.id;
-    currentRequestEpoch += 1;
-    currentTurnId = null;
-    currentRenderThreadId = null;
-    awaitingTurnId = false;
-    queuedTurnEvents = [];
+    const runtime = tab.runtime || idleTabRuntime();
+    tab.runtime = runtime;
+    busy = Boolean(runtime.busy);
+    imageReceived = Boolean(runtime.imageReceived);
+    currentTurnType = runtime.currentTurnType || "chat";
+    currentTurnUsage = runtime.currentTurnUsage || null;
+    currentTurnPerformance = runtime.currentTurnPerformance || null;
+    currentTurnDone = Boolean(runtime.currentTurnDone);
+    currentTurnId = runtime.currentTurnId || null;
+    currentRenderThreadId = runtime.currentRenderThreadId || null;
+    awaitingTurnId = Boolean(runtime.awaitingTurnId);
+    queuedTurnEvents = Array.isArray(runtime.queuedTurnEvents) ? runtime.queuedTurnEvents.map((queued) => ({ ...queued })) : [];
+    currentRequestEpoch = Number(runtime.currentRequestEpoch) || 0;
+    serverTurnFinished = Boolean(runtime.serverTurnFinished);
+    previewPending = Boolean(runtime.previewPending);
+    currentTurnStartedAt = Number(runtime.currentTurnStartedAt) || 0;
+    currentEngine = runtime.currentEngine || IMAGE_ENGINE_IDS.RASTER;
+    currentSceneResponse = runtime.currentSceneResponse || "";
+    currentCacheRequest = runtime.currentCacheRequest || null;
+    currentRequestSnapshot = runtime.currentRequestSnapshot || null;
+    currentRunInput = runtime.currentRunInput || null;
+    tokenFooterNode = null;
     conversationId = tab.conversationId || null;
     conversationMessages = (tab.conversationMessages || []).map((message) => ({ ...message }));
     selectedMode = tab.mode || "diagram";
@@ -879,6 +971,12 @@ export function initAiPanel(state) {
       emptyLog.textContent = "대화로 요구사항을 정리한 뒤 이미지를 생성하세요.";
       log.appendChild(emptyLog);
     }
+    if (runtime.tokenFooterText) {
+      tokenFooterNode = document.createElement("div");
+      tokenFooterNode.className = "ai-turn-usage";
+      tokenFooterNode.textContent = runtime.tokenFooterText;
+      log.appendChild(tokenFooterNode);
+    }
     resetVisualLists();
     for (const item of attachments) attachmentList.appendChild(makeImageCard(item));
     for (const item of generatedImages) previews.appendChild(makeImageCard(item));
@@ -893,11 +991,27 @@ export function initAiPanel(state) {
     syncQualityMode();
     syncOutputEngine();
     syncReferenceSummary();
+    setGenerating(
+      Boolean(runtime.generatingVisible),
+      runtime.progressTitle,
+      runtime.progressDetail,
+      runtime.progressPhase,
+    );
+    setBusy(Boolean(runtime.busy));
+    setStatus(runtime.statusText || (runtime.busy ? "이미지 생성 중…" : "AI 사용 가능"), runtime.statusKind || (runtime.busy ? "busy" : "ok"));
+    tab.runtime.pendingCompletion = false;
     renderTaskTabs();
+    const pendingEvents = Array.isArray(tab.pendingEvents) ? tab.pendingEvents.splice(0) : [];
+    if (pendingEvents.length) {
+      queueMicrotask(() => {
+        if (activeTaskTabId !== tab.id) return;
+        for (const event of pendingEvents) dispatchAiEvent(event, currentRequestEpoch);
+      });
+    }
   }
 
   const createTaskTab = ({ activate = true } = {}) => {
-    if (busy) return null;
+    const activateImmediately = activate && !awaitingTurnId && !previewPending;
     captureActiveTaskTab();
     const id = `task-${++taskTabSerial}`;
     taskTabs.set(id, {
@@ -905,10 +1019,27 @@ export function initAiPanel(state) {
       title: `작업 ${taskTabSerial}`,
       attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
       conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
+      runtime: idleTabRuntime(), pendingEvents: [],
     });
-    if (activate) restoreTaskTab(id);
-    else renderTaskTabs();
+    if (activateImmediately) restoreTaskTab(id);
+    else {
+      renderTaskTabs();
+      if (activate) {
+        pendingActivationTabId = id;
+        setStatus("새 탭을 추가했습니다 · 현재 요청 등록 후 자동으로 전환합니다.", "busy");
+      }
+    }
     return id;
+  };
+
+  const activatePendingTabIfReady = () => {
+    if (!pendingActivationTabId || awaitingTurnId || previewPending) return false;
+    const nextTabId = pendingActivationTabId;
+    pendingActivationTabId = null;
+    if (!taskTabs.has(nextTabId) || nextTabId === activeTaskTabId) return false;
+    captureActiveTaskTab();
+    restoreTaskTab(nextTabId);
+    return true;
   };
 
   let batchQueue = [];
@@ -1017,6 +1148,7 @@ export function initAiPanel(state) {
         model: job.model,
         effort: job.effort,
         serviceTier: job.serviceTier,
+        clientRequestId: job.id,
       });
       job.turnId = result.turnId || null;
       job.threadId = result.renderThreadId || result.threadId || null;
@@ -1698,6 +1830,7 @@ export function initAiPanel(state) {
               addLog("이전에 완료된 동일 결과를 즉시 불러왔습니다. 캔버스로 출력할 수 있습니다.");
               setBusy(false);
               addTokenFooter(null);
+              activatePendingTabIfReady();
               return;
             }
           }
@@ -1744,6 +1877,7 @@ export function initAiPanel(state) {
           addLog(`이미지가 완성되었습니다. 원격 생성 없이 내부 검증 자산을 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개로 구성했습니다.`);
           setBusy(false);
           addTokenFooter(null);
+          activatePendingTabIfReady();
           return;
         }
 
@@ -1795,6 +1929,9 @@ export function initAiPanel(state) {
       const purpose = type === "image"
         ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE ? "scene" : "image")
         : "chat";
+      const clientRequestId = `tab-run-${activeTaskTabId}-${requestEpoch}-${Date.now()}`;
+      if (currentRunInput) currentRunInput.clientRequestId = clientRequestId;
+      tabRunsByClientRequestId.set(clientRequestId, activeTaskTabId);
       const result = await window.fiveEDesktop.send({
         text: type === "image"
           ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE
@@ -1818,10 +1955,12 @@ export function initAiPanel(state) {
         model: runInput.model,
         effort: runInput.effort,
         serviceTier: runInput.serviceTier,
+        clientRequestId,
       });
       if (requestEpoch !== currentRequestEpoch) return;
       currentTurnId = result.turnId || null;
       currentRenderThreadId = result.renderThreadId || result.threadId || null;
+      if (currentTurnId) tabRunsByTurnId.set(currentTurnId, activeTaskTabId);
       awaitingTurnId = false;
       currentTurnPerformance = { ...currentTurnPerformance, ...(result.performance || {}) };
       const pendingEvents = queuedTurnEvents;
@@ -1833,6 +1972,7 @@ export function initAiPanel(state) {
           dispatchAiEvent(queued.event, requestEpoch);
         }
       }
+      activatePendingTabIfReady();
       if (type === "chat") {
         forceNewConversation = false;
         conversationId = result.threadId || result.conversationId || conversationId;
@@ -1845,12 +1985,15 @@ export function initAiPanel(state) {
       }
     } catch (error) {
       if (requestEpoch !== currentRequestEpoch) return;
+      const failedClientRequestId = currentRunInput?.clientRequestId;
+      if (failedClientRequestId) tabRunsByClientRequestId.delete(failedClientRequestId);
       awaitingTurnId = false;
       queuedTurnEvents = [];
       addLog(error.message, "error");
       setStatus("요청 실패", "error");
       setGenerating(false);
       setBusy(false);
+      activatePendingTabIfReady();
     }
   };
 
@@ -1916,7 +2059,7 @@ export function initAiPanel(state) {
   panel.querySelector("[data-ai-interrupt]").onclick = async () => {
     if (!busy) return;
     setStatus("작업 취소 중…", "busy");
-    await window.fiveEDesktop?.interrupt();
+    await window.fiveEDesktop?.interrupt(currentTurnId);
   };
   file.onchange = async () => {
     const selectedFiles = Array.from(file.files || []).filter((selected) => selected.type.startsWith("image/"));
@@ -1971,7 +2114,10 @@ export function initAiPanel(state) {
     setBusy(false);
     currentTurnDone = true;
     addTokenFooter(currentTurnUsage);
+    if (currentTurnId) tabRunsByTurnId.delete(currentTurnId);
+    if (currentRunInput?.clientRequestId) tabRunsByClientRequestId.delete(currentRunInput.clientRequestId);
     void loadAccountOverview();
+    activatePendingTabIfReady();
   };
 
   const dispatchAiEvent = (event, eventEpoch = currentRequestEpoch) => {
@@ -2006,6 +2152,7 @@ export function initAiPanel(state) {
         if (serverTurnFinished) setGenerating(false);
         else setGenerating(true, "이미지 준비 완료", "서버 작업 종료를 확인하고 있습니다.", "finish");
         finishCurrentTurnUi(eventEpoch);
+        activatePendingTabIfReady();
       });
     } else if (event.kind === "assistant") {
       if (currentTurnType === "image" && currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE) {
@@ -2142,8 +2289,10 @@ export function initAiPanel(state) {
   window.fiveEDesktop?.onEvent((message) => {
     const event = parseAiEvent(message);
     const turnScoped = ["progress", "image", "assistant", "tokens", "performance", "error", "done", "finalization"].includes(event.kind);
-    if (batchActive && turnScoped && (event.turnId || event.threadId)) {
-      const batchJob = (event.turnId && batchRuns.get(event.turnId))
+    const mayBelongToBatch = !event.clientRequestId || String(event.clientRequestId).startsWith("batch-");
+    if (batchActive && mayBelongToBatch && turnScoped && (event.turnId || event.threadId || event.clientRequestId)) {
+      const batchJob = (event.clientRequestId && batchRuns.get(event.clientRequestId))
+        || (event.turnId && batchRuns.get(event.turnId))
         || Array.from(batchRuns.values()).find((job) => event.threadId && job.threadId === event.threadId);
       if (batchJob) {
         void dispatchBatchEvent(batchJob, event);
@@ -2154,6 +2303,24 @@ export function initAiPanel(state) {
       if (!belongsToCurrent) {
         unclaimedBatchEvents.push(event);
         if (unclaimedBatchEvents.length > 100) unclaimedBatchEvents.shift();
+        return;
+      }
+    }
+    if (turnScoped) {
+      const routedTabId = (event.clientRequestId && tabRunsByClientRequestId.get(event.clientRequestId))
+        || (event.turnId && tabRunsByTurnId.get(event.turnId));
+      if (routedTabId && routedTabId !== activeTaskTabId) {
+        const routedTab = taskTabs.get(routedTabId);
+        if (routedTab) {
+          routedTab.pendingEvents = routedTab.pendingEvents || [];
+          routedTab.pendingEvents.push(event);
+          if (routedTab.pendingEvents.length > 120) routedTab.pendingEvents.shift();
+          if (event.kind === "done" || (event.kind === "finalization" && ["confirmed", "recovered", "recoveryFailed"].includes(event.state))) {
+            routedTab.runtime = routedTab.runtime || idleTabRuntime();
+            routedTab.runtime.pendingCompletion = true;
+          }
+          renderTaskTabs();
+        }
         return;
       }
     }
