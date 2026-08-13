@@ -774,9 +774,9 @@
 .ai-compare-picker button.is-on { border-color: var(--accent, #2f81f7); }
 .ai-compare-picker img { width: 100%; height: 100%; object-fit: contain; }
 .ai-compare-overlay-stage { position: relative; min-height: 0; flex: 1; margin: 12px; overflow: hidden; background: #fff; border-radius: 6px; }
-.ai-compare-overlay-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.ai-compare-overlay-stage[data-mode="overlay"] img:last-child { opacity: .5; }
-.ai-compare-overlay-stage[data-mode="difference"] img:last-child { mix-blend-mode: difference; }
+.ai-compare-overlay-stage img, .ai-compare-difference-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.ai-compare-overlay-stage[data-mode="overlay"] img:nth-of-type(2) { opacity: .5; }
+.ai-compare-overlay-stage[data-mode="difference"] { background: #fff; }
 
 .ai-label-dialog {
   display: flex;

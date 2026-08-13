@@ -45,6 +45,7 @@ import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.15-phase
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.2-phase4-labels";
 import { buildDiagramOutputProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
+import { absoluteDifferencePixels } from "./image-difference.mjs?v=1.5.0-phase5-native-graph";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -1415,13 +1416,48 @@ export function initAiPanel(state) {
     overlayStage.hidden = true;
     const overlayLeft = document.createElement("img");
     const overlayRight = document.createElement("img");
+    const differenceCanvas = document.createElement("canvas");
+    differenceCanvas.className = "ai-compare-difference-canvas";
+    differenceCanvas.hidden = true;
     overlayLeft.alt = "왼쪽 비교 이미지";
     overlayRight.alt = "오른쪽 비교 이미지";
-    overlayStage.append(overlayLeft, overlayRight);
+    overlayStage.append(overlayLeft, overlayRight, differenceCanvas);
     const selection = { left: null, right: null };
+    const imageReady = (image) => image.complete && image.naturalWidth
+      ? Promise.resolve()
+      : new Promise((resolve, reject) => {
+        image.addEventListener("load", resolve, { once: true });
+        image.addEventListener("error", reject, { once: true });
+      });
+    const containedPixels = (image, width, height) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, width, height);
+      const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+      return context.getImageData(0, 0, width, height).data;
+    };
+    const renderDifference = async () => {
+      await Promise.all([imageReady(overlayLeft), imageReady(overlayRight)]);
+      const width = Math.max(overlayLeft.naturalWidth, overlayRight.naturalWidth, 1);
+      const height = Math.max(overlayLeft.naturalHeight, overlayRight.naturalHeight, 1);
+      const pixels = absoluteDifferencePixels(
+        containedPixels(overlayLeft, width, height),
+        containedPixels(overlayRight, width, height),
+      );
+      differenceCanvas.width = width;
+      differenceCanvas.height = height;
+      differenceCanvas.getContext("2d").putImageData(new ImageData(pixels, width, height), 0, 0);
+    };
     const updateOverlay = () => {
       if (selection.left) overlayLeft.src = selection.left.data;
       if (selection.right) overlayRight.src = selection.right.data;
+      if (overlayStage.dataset.mode === "difference" && !overlayStage.hidden) void renderDifference();
     };
 
     const makePane = (initial, side) => {
@@ -1469,7 +1505,13 @@ export function initAiPanel(state) {
       });
       panes.hidden = mode !== "side";
       overlayStage.hidden = mode === "side";
-      if (mode !== "side") overlayStage.dataset.mode = mode;
+      overlayLeft.hidden = mode === "difference";
+      overlayRight.hidden = mode === "difference";
+      differenceCanvas.hidden = mode !== "difference";
+      if (mode !== "side") {
+        overlayStage.dataset.mode = mode;
+        if (mode === "difference") void renderDifference();
+      }
     });
     dialog.append(head, modeControls, panes, overlayStage);
     overlay.appendChild(dialog);

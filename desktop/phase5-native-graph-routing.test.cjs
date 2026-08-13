@@ -74,3 +74,11 @@ test("product compilation is strict and comparison offers overlay and difference
   assert.match(panel, /data-compare-view="difference"/);
   assert.match(css, /\.ai-compare-overlay-stage\[data-mode="difference"\]/);
 });
+
+test("difference view computes a white-identical and dark-mismatch pixel image", async () => {
+  const { absoluteDifferencePixels } = await import("../js/image-difference.mjs");
+  const left = new Uint8ClampedArray([255, 255, 255, 255, 0, 0, 0, 255]);
+  const right = new Uint8ClampedArray([255, 255, 255, 255, 255, 255, 255, 255]);
+  assert.deepEqual([...absoluteDifferencePixels(left, right)], [255, 255, 255, 255, 0, 0, 0, 255]);
+  assert.throws(() => absoluteDifferencePixels(left, right.subarray(0, 4)), /same length/);
+});
