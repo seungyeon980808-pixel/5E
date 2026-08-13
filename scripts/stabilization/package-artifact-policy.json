@@ -1,0 +1,13 @@
+{
+  "schema": "5e-package-artifact-policy@1",
+  "allowedRoots": [
+    "package.json", "build-identity.json", "index.html", "css", "js", "desktop", "fonts", "vendor/pdfjs",
+    "assets/apple-touch-icon.png", "assets/favicon.png", "assets/icon-192.png", "assets/icon-512.png",
+    "assets/icon.ico", "assets/logo.svg", "assets/og-image.png", "assets/exam-parts", "assets/svg_object"
+  ],
+  "requiredFiles": [
+    "package.json", "index.html", "desktop/main.cjs", "desktop/preload.cjs", "js/main.js",
+    "fonts/lmroman10-regular.woff2", "vendor/pdfjs/pdf.min.mjs", "vendor/pdfjs/pdf.worker.min.mjs"
+  ],
+  "forbiddenRoots": ["assets/exam-library", "assets/parts-library"]
+}

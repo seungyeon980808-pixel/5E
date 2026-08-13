@@ -5,6 +5,7 @@ const root = path.resolve(__dirname, "..", "..");
 const steps = Object.freeze([
   ["test"],
   ["run", "test:graph"],
+  ["run", "test:stabilization-harness"],
   ["run", "test:desktop"],
   ["run", "audit:exam-graphs:strict"],
   ["run", "audit:package-assets"],

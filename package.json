@@ -10,6 +10,7 @@
     "test:phase0": "node scripts/stabilization/run-phase0.cjs",
     "test:desktop": "node desktop/run-smoke.cjs",
     "test:graph": "node --test tests/test-ai-exam-graphs.mjs tests/test-ai-scene-fastpath.mjs",
+    "test:stabilization-harness": "node --test desktop/label-harness.test.cjs desktop/graph-harness.test.cjs desktop/package-artifact-audit.test.cjs",
     "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
     "benchmark:image": "node desktop/benchmark-image-turn.cjs",
     "benchmark:scene": "node desktop/benchmark-scene-turn.cjs",
@@ -22,11 +23,14 @@
     "audit:exam-graphs:strict": "node scripts/engine-v2/audit-exam-graphs.mjs --strict",
     "audit:package-assets": "node scripts/stabilization/package-assets-audit.cjs",
     "audit:package-assets:strict": "node scripts/stabilization/package-assets-audit.cjs --strict",
+    "audit:package-artifact": "node scripts/stabilization/package-artifact-audit.cjs",
+    "audit:package-artifact:strict": "node scripts/stabilization/package-artifact-audit.cjs --strict",
     "build:exam-graph-ledger": "node scripts/engine-v2/build-exam-graph-ledger.mjs",
     "audit:exam-graph-fixtures": "node scripts/engine-v2/audit-exam-graph-fixtures.mjs",
     "audit:exam-graph-fixtures:strict": "node scripts/engine-v2/audit-exam-graph-fixtures.mjs --strict",
     "measure:exam-graphs": "python scripts/engine-v2/measure_exam_graphs.py",
     "build:exam-graph-gallery": "node scripts/engine-v2/build-exam-graph-gallery.mjs",
+    "package:stage": "node scripts/stabilization/stage-package-report.cjs",
     "package:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {

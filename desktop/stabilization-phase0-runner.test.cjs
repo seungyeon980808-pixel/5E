@@ -32,6 +32,7 @@ test("Phase 0 runner invokes every npm gate in order on the host platform", () =
     assert.deepEqual(fs.readFileSync(log, "utf8").trim().split(/\r?\n/), [
       "test",
       "run test:graph",
+      "run test:stabilization-harness",
       "run test:desktop",
       "run audit:exam-graphs:strict",
       "run audit:package-assets",

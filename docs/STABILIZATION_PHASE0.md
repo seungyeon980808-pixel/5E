@@ -10,9 +10,14 @@ The baseline starts from commit `0684bcf` on `codex/stabilize-reference-workflow
 
 1. `npm test`
 2. `npm run test:graph`
-3. `npm run test:desktop`
-4. `npm run audit:exam-graphs:strict`
-5. `npm run audit:package-assets`
+3. `npm run test:stabilization-harness`
+4. `npm run test:desktop`
+5. `npm run audit:exam-graphs:strict`
+6. `npm run audit:package-assets`
+
+The unit-test gate includes a synthetic-only stabilization harness for diagram labels,
+native graph compilation, and packaged-artifact inspection. It never calls a network
+AI service and does not require a pre-existing release directory.
 
 The final package audit is intentionally non-strict in the Phase 0 runner. It emits a deterministic JSON report containing sorted `package.json` build sources, included asset-family file counts and bytes, required runtime presence/inclusion, and machine-readable policy violations.
 
@@ -29,9 +34,29 @@ The PDF and adapter-parity fixtures are implemented and executable:
 
 The remaining fixture work is still planned:
 
-- `tests/stabilization/fixtures/labels/synthetic-label-cases.json`: authored label placement and collision cases with no source-exam content.
-- `tests/stabilization/fixtures/graphs/synthetic-graph-cases.json`: authored graph topology, geometry, and unsupported-type cases.
 - `tests/stabilization/harness/common-fixtures.cjs`: temporary-directory, stable hashing, canonical JSON, and cross-platform path helpers shared by all three fixture families.
+
+Implemented synthetic harnesses now cover exact crop/transmission pixel comparison,
+label-free request planning, OCR strings and normalized bounds, editable 5E text and
+leader objects, uncertainty, edits, comparison layout, and retry recovery. The graph
+harness keeps interpretation input separate from the existing deterministic native
+compiler and checks structure, geometry, deterministic pixel overlay/diff descriptors,
+stroke/dash/clipping, Korean/math labels, and the required failure-ledger fields.
+
+## Packaged-artifact audit
+
+`npm run audit:package-artifact -- --artifact <path>` inspects an unpacked application
+directory, an `app.asar`, or a staged desktop directory containing `resources/app.asar`.
+It reports sorted per-file sizes, logical file bytes, physical artifact bytes, forbidden
+and unapproved paths, required PDF/font/UI runtime omissions, and web/desktop version
+and commit parity. Invalid ASAR headers and traversal-like paths fail closed.
+
+`npm run package:stage` runs electron-builder's directory target, injects the current
+commit into packaged `package.json` metadata, and prints the non-strict artifact report.
+Generated `release/` output is not committed. The report remains non-strict while the
+Phase 0 broad `assets/**/*` packaging debt exists, so current debt stays visible without
+blocking the deterministic synthetic gate. Use `--strict` directly on the artifact audit
+for a release candidate.
 
 No copyrighted textbook, exam, answer-key, or publisher source fixture may be added to the repository. Tests must generate minimal geometry/text themselves or use clearly licensed synthetic material whose provenance is recorded.
 
