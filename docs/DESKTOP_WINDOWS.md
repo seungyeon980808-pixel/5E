@@ -12,7 +12,7 @@ Codex CLI가 PATH에 없거나 로그인하지 않은 경우 AI 패널이 각각
 
 ## 설치 패키지
 
-`npm run package:win`은 정식 `release/5E Setup 1.5.7.exe` NSIS 설치 파일을 만든다. 설치 후 5E는 기존 `index.html`과 ES 모듈을 그대로 사용하고, AI 기능만 안전한 preload IPC로 추가된다.
+`npm run package:win`은 정식 `release/5E Setup 1.5.8.exe` NSIS 설치 파일을 만든다. 설치 후 5E는 기존 `index.html`과 ES 모듈을 그대로 사용하고, AI 기능만 안전한 preload IPC로 추가된다.
 
 ## 보안과 제한
 

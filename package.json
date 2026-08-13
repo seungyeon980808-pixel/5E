@@ -1,6 +1,6 @@
 {
   "name": "5e-desktop",
-  "version": "1.5.7",
+  "version": "1.5.8",
   "private": true,
   "description": "5E science diagram editor for Windows with a local Codex image assistant",
   "main": "desktop/main.cjs",

@@ -1,6 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
+// PDF.js only needs these browser geometry types while its module initializes;
+// text extraction in these tests does not invoke their rendering methods.
+globalThis.DOMMatrix ??= class DOMMatrix {};
+globalThis.ImageData ??= class ImageData {};
+globalThis.Path2D ??= class Path2D {};
+
 function onePagePdf(text) {
   const stream = `BT /F1 18 Tf 72 720 Td (${text}) Tj ET`;
   const objects = [
