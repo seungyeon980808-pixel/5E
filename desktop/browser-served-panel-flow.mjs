@@ -30,7 +30,8 @@ function references() {
     { src: pixelData("#f00"), name: "blocked-local-name.png", sourceKind: "local-pdf-crop",
       comments: [{ number: 1, x: 1, y: 2, w: 3, h: 4, text: "blocked-local-comment" }] },
     { src: pixelData("#0f0"), name: "confirmed-crop-name.png", sourceKind: "local-pdf-crop-confirmed",
-      comments: [{ number: 1, x: 5, y: 6, w: 7, h: 8, text: "confirmed-crop-comment" }] },
+      comments: [{ number: 1, x: 5, y: 6, w: 7, h: 8, text: "confirmed-crop-comment" }],
+      referenceProvenance: { schema: "5e-reference-provenance@1", privateMarker: "phase4-provenance-must-stay-local" } },
     { src: pixelData("#00f"), name: "automatic-picker-name.png", sourceKind: "auto",
       comments: [{ number: 1, x: 9, y: 10, w: 11, h: 12, text: "automatic-picker-comment" }] },
   ];
@@ -82,6 +83,7 @@ export async function summarizeCapturedPayloads(payloads) {
     calls: payloads.length,
     purposes: payloads.map((payload) => payload.purpose),
     requestPromptCount: payloads.filter((payload) => payload.text.includes("phase0-transport-request")).length,
+    provenanceInPayload: JSON.stringify(payloads).includes("phase4-provenance-must-stay-local"),
     attachmentNames,
     blocked: flag("blocked-local-name.png", "blocked-local-comment", "red"),
     confirmed: flag("confirmed-crop-name.png", "confirmed-crop-comment", "green"),

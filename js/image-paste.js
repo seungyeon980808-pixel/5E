@@ -1,6 +1,7 @@
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
 import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.4.0";
+import { labelObjectsForImage } from "./editable-labels.mjs?v=1.5.0-phase4-labels";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
@@ -58,7 +59,7 @@ function fitToArtboard(natural, artboard) {
   return { w: natural.w * scale, h: natural.h * scale };
 }
 
-function insertImageObject(state, src, size, place) {
+function buildImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
   // place.at 지정 시 그 지점(예: 아트보드 원점)을 기준으로, 아니면 마지막 마우스/뷰포트 중앙.
@@ -69,34 +70,46 @@ function insertImageObject(state, src, size, place) {
   const y = target.y - fitted.h / 2 + off.dy;
   const id = `obj_${Date.now().toString(36)}_img${++_idCounter}`;
 
+  const image = {
+    id,
+    type: "image",
+    src,
+    x,
+    y,
+    w: fitted.w,
+    h: fitted.h,
+    rotation: 0,
+    mode: "edit",
+    opacity: 1,
+    aspectLocked: true,
+    exportable: true,
+    locked: false,
+    positionLocked: false,
+    imageSelectionLocked: false,
+    layerId: s0.activeLayerId,
+    order: s0.objects.length,
+    cutouts: [],
+  };
+  if (place?.provenance) image.referenceProvenance = structuredClone(place.provenance);
+  return image;
+}
+
+function commitObjects(state, objects) {
   state.update((s) => {
     s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
     if (s.undoStack.length > MAX_UNDO) s.undoStack.splice(0, s.undoStack.length - MAX_UNDO);
     s.redoStack = [];
-    s.objects.push({
-      id,
-      type: "image",
-      src,
-      x,
-      y,
-      w: fitted.w,
-      h: fitted.h,
-      rotation: 0,
-      mode: "edit",
-      opacity: 1,
-      aspectLocked: true,
-      exportable: true,
-      locked: false,
-      positionLocked: false,
-      imageSelectionLocked: false,
-      layerId: s.activeLayerId,
-      order: s.objects.length,
-      cutouts: [],
-    });
-    s.selectedIds = [id];
+    s.objects.push(...objects);
+    s.selectedIds = objects.map(({ id }) => id);
     s.targetedId = null;
     s.activeTool = "V";
   });
+}
+
+function insertImageObject(state, src, size, place) {
+  const image = buildImageObject(state, src, size, place);
+  commitObjects(state, [image]);
+  return image;
 }
 
 /* 외부 모듈용(기출 라이브러리·이미지 불러오기 등): dataURL을 즉시 이미지 객체로 삽입.
@@ -105,7 +118,19 @@ function insertImageObject(state, src, size, place) {
 export async function insertImageFromSrc(state, src, opts) {
   const natural = await loadImageSize(src);
   const scaled = await downscaleIfNeeded(src, natural);
-  insertImageObject(state, scaled.src, scaled.size, opts);
+  return insertImageObject(state, scaled.src, scaled.size, opts).id;
+}
+
+export async function insertImageLabelBundleFromSrc(state, src, { candidates = [], provenance = null, ...place } = {}) {
+  const natural = await loadImageSize(src);
+  const scaled = await downscaleIfNeeded(src, natural);
+  const image = buildImageObject(state, scaled.src, scaled.size, place);
+  const bundleId = `bundle_${Date.now().toString(36)}_${++_idCounter}`;
+  image.referenceProvenance = provenance ? structuredClone(provenance) : null;
+  image.labelBundleId = bundleId;
+  const labels = labelObjectsForImage(candidates, image, bundleId);
+  commitObjects(state, [image, ...labels]);
+  return { imageId: image.id, labelIds: labels.map(({ id }) => id), bundleId };
 }
 
 export function initImagePaste(state, svg) {

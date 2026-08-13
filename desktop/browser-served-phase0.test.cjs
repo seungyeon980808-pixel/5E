@@ -108,6 +108,7 @@ test("HTTP-served AI panel and Electron IPC enforce identical local-reference tr
   assert.equal(report.browser.single.requestPromptCount, 1);
   assert.equal(report.browser.batch.requestPromptCount, 3);
   for (const flow of [report.browser.single, report.browser.batch]) {
+    assert.equal(flow.provenanceInPayload, false, "project provenance must stay out of prompts and attachments");
     assert.deepEqual(flow.blocked, {
       nameInPrompt: false, nameInAttachments: false, commentInPrompt: false, pixels: 0,
     });

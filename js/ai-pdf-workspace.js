@@ -30,6 +30,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
   let dragStart = null;
   let query = "";
   let cropLabel = "사용자 선택";
+  let cropSelectionKind = "manual";
   let regionSuggestions = new Map();
 
   const keyOf = (value) => value ? `local:${value.id || value.path || value.file}` : "";
@@ -187,6 +188,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     cropMode = !cropMode;
     cropBox = cropMode ? { x: 0.1, y: 0.1, w: 0.8, h: 0.8 } : null;
     cropLabel = "사용자 선택";
+    cropSelectionKind = "manual";
     dragStart = null;
     renderPreview();
     if (cropMode) requestAnimationFrame(() => selection.focus?.());
@@ -196,7 +198,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     button.onclick = () => {
       const region = regionSuggestions.get(kind);
       if (!region) return;
-      cropMode = true; cropBox = { ...region.box }; cropLabel = region.label; dragStart = null;
+      cropMode = true; cropBox = { ...region.box }; cropLabel = region.label; cropSelectionKind = `${region.kind}-suggestion`; dragStart = null;
       renderPreview();
       requestAnimationFrame(() => selection.focus?.());
     };
@@ -209,7 +211,8 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     const canvas = document.createElement("canvas");
     canvas.width = sw; canvas.height = sh;
     canvas.getContext("2d")?.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
-    onAddCrop({ name: nameOf(cropLabel), data: canvas.toDataURL("image/png"), item });
+    onAddCrop({ name: nameOf(cropLabel), data: canvas.toDataURL("image/png"), item,
+      crop: { ...cropBox, selectionKind: cropSelectionKind, sourceWidth: image.naturalWidth, sourceHeight: image.naturalHeight } });
   };
   const cropPoint = (event) => {
     const rect = image.getBoundingClientRect();
@@ -221,6 +224,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     if (!next) return;
     event.preventDefault();
     cropLabel = "사용자 선택";
+    cropSelectionKind = "manual";
     cropBox = next;
     applyButton.disabled = !data;
     renderCropBox();
@@ -229,6 +233,7 @@ export function createPdfWorkspace({ root, loadPreview, onAddWhole, onAddCrop, o
     if (!cropMode || event.button !== 0 || event.target.tagName !== "IMG") return;
     event.preventDefault(); dragStart = cropPoint(event); cropBox = { x: dragStart.x, y: dragStart.y, w: 0, h: 0 };
     cropLabel = "사용자 선택";
+    cropSelectionKind = "manual";
     wrap.setPointerCapture?.(event.pointerId); renderCropBox();
   });
   wrap.addEventListener("pointermove", (event) => {

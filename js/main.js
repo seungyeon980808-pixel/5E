@@ -16,14 +16,14 @@ import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
-import { initProjectIO } from "./project-io.js?v=1.4.0";
+import { initProjectIO } from "./project-io.js?v=1.5.0-phase4-labels";
 import { initExportDialog } from "./export-dialog.js?v=1.4.11";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
 import { initSettings } from "./settings.js?v=1.4.0";
 import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
-import { initImagePaste } from "./image-paste.js?v=1.4.0";
+import { initImagePaste } from "./image-paste.js?v=1.5.0-phase4-labels";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
-import { initExamLibrary } from "./exam-library.js?v=1.5.14-phase1-legacy-ui";
+import { initExamLibrary } from "./exam-library.js?v=1.5.15-phase4-labels";
 // 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
 // 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
 import { initPartsLibrary } from "./parts-library.js?v=1.4.12";
@@ -67,7 +67,7 @@ import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.5.14-phase1-legacy-ui";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.5.6-pdf-search";
-import { initAiPanel } from "./ai-panel.js?v=1.5.18-phase3-preview";
+import { initAiPanel } from "./ai-panel.js?v=1.5.20-phase4-labels";
 
 const legacyLibraryUiEnabled = resolveLegacyLibraryUiEnabled(window);
 const svg = document.getElementById("canvas");

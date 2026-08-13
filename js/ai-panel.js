@@ -1,4 +1,4 @@
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { insertImageFromSrc, insertImageLabelBundleFromSrc } from "./image-paste.js?v=1.5.0-phase4-labels";
 import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
 import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
 import { parseAiEvent } from "./ai-events.js?v=1.5.4";
@@ -39,8 +39,10 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.14-phase3-preview";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.15-phase4-labels";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
+import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.0-phase4-labels";
+import { buildDiagramOutputProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -95,6 +97,14 @@ function snapshotImageItem(item) {
     sceneResult: item?.sceneResult || null,
     engine: item?.engine || null,
     postprocessOk: item?.postprocessOk === true,
+    mode: item?.mode || "diagram",
+    referenceProvenance: item?.referenceProvenance ? structuredClone(item.referenceProvenance) : null,
+    labelSource: item?.labelSource ? {
+      name: item.labelSource.name || "원본",
+      data: item.labelSource.data || null,
+      sourceKind: item.labelSource.sourceKind || "auto",
+      referenceProvenance: item.labelSource.referenceProvenance ? structuredClone(item.labelSource.referenceProvenance) : null,
+    } : null,
     nextCommentNumber: item?.nextCommentNumber || ((item?.comments || []).length + 1),
     comments: (item?.comments || []).map((comment) => ({ ...comment })),
   };
@@ -680,9 +690,27 @@ export function initAiPanel(state) {
           }
           return;
         }
-        void insertImageFromSrc(state, item.data)
+        void insertImageFromSrc(state, item.data, { provenance: item.referenceProvenance })
           .catch((error) => addLog(`캔버스 삽입 실패: ${error.message}`, "error"));
       };
+      if (!item.sceneResult && item.mode === "diagram" && item.labelSource?.data) {
+        const labels = document.createElement("button");
+        labels.type = "button";
+        labels.className = "ai-editable-labels";
+        labels.textContent = "편집 가능한 라벨 배치";
+        labels.onclick = () => openEditableLabelWorkspace({
+          source: item.labelSource,
+          result: item,
+          returnFocus: labels,
+          onInsert: async (candidates) => {
+            const inserted = await insertImageLabelBundleFromSrc(state, item.data, {
+              candidates, provenance: item.referenceProvenance,
+            });
+            addLog(`도판과 편집 가능한 라벨 ${inserted.labelIds.length}개를 캔버스에 삽입했습니다.`);
+          },
+        });
+        stage.appendChild(labels);
+      }
       stage.appendChild(output);
     }
 
@@ -735,10 +763,11 @@ export function initAiPanel(state) {
     return card;
   };
 
-  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", comments = [] }) => {
+  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", comments = [], referenceProvenance = null }) => {
     const copiedComments = Array.isArray(comments) ? comments.map((comment) => ({ ...comment })) : [];
     const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind,
-      comments: copiedComments, nextCommentNumber: Math.max(0, ...copiedComments.map((comment) => Number(comment.number) || 0)) + 1 };
+      comments: copiedComments, referenceProvenance: referenceProvenance ? structuredClone(referenceProvenance) : null,
+      nextCommentNumber: Math.max(0, ...copiedComments.map((comment) => Number(comment.number) || 0)) + 1 };
     attachments.push(item);
     attachmentList.appendChild(makeImageCard(item));
     syncReferenceSummary();
@@ -788,6 +817,9 @@ export function initAiPanel(state) {
       data: editableSrc,
       kind: "generated",
       postprocessOk,
+      mode: currentRunInput?.mode || "diagram",
+      labelSource: currentRunInput?.labelSource ? structuredClone(currentRunInput.labelSource) : null,
+      referenceProvenance: buildDiagramOutputProvenance(currentRunInput?.labelSource?.referenceProvenance, currentRunInput),
       comments: [],
       nextCommentNumber: 1,
     };
@@ -1118,6 +1150,9 @@ export function initAiPanel(state) {
       kind: "generated",
       engine: IMAGE_ENGINE_IDS.RASTER,
       postprocessOk: true,
+      mode: job.mode || "diagram",
+      labelSource: snapshotImageItem(job.source),
+      referenceProvenance: buildDiagramOutputProvenance(job.source?.referenceProvenance, job),
       comments: [],
       nextCommentNumber: 1,
     };
@@ -1700,7 +1735,8 @@ export function initAiPanel(state) {
       for (const result of loaded) {
         if (result.status === "fulfilled") {
           addReferenceData({ data: result.value.data, name: result.value.item.name || "참고 이미지",
-            sourceKind: result.value.item.sourceKind, comments: result.value.item.comments });
+            sourceKind: result.value.item.sourceKind, comments: result.value.item.comments,
+            referenceProvenance: result.value.item.referenceProvenance });
         } else {
           addLog(result.reason?.message || String(result.reason), "error");
         }
@@ -1763,7 +1799,10 @@ export function initAiPanel(state) {
         force: requestedEngine,
       }).engine
       : IMAGE_ENGINE_IDS.RASTER;
-    currentRunInput = runInput;
+    currentRunInput = {
+      ...runInput,
+      labelSource: planningReferences[0] ? snapshotImageItem(planningReferences[0]) : null,
+    };
     currentSceneResponse = "";
     currentCacheRequest = null;
     currentTurnUsage = null;

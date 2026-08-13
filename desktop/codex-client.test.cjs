@@ -77,7 +77,7 @@ test("AI panel auto-connects, reports progress, and routes contextual output act
   assert.match(panel, /const canCompare = attachments\.length > 0 && generatedImages\.length > 0;/);
   assert.match(panel, /output\.className = "ai-canvas-output"/);
   assert.match(panel, /item\.sceneResult\?\.objects\?\.length[\s\S]*insertFastSceneIntoState\(state, item\.sceneResult\)/);
-  assert.match(panel, /insertImageFromSrc\(state, item\.data\)/);
+  assert.match(panel, /insertImageFromSrc\(state, item\.data, \{ provenance: item\.referenceProvenance \}\)/);
   assert.match(panel, /setGenerating\(true/);
   assert.match(panel, /parseAiEvent/);
   assert.match(events, /item\?\.type === "imageGeneration"/);

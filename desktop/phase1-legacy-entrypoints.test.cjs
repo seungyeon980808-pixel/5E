@@ -121,7 +121,8 @@ test("changed module imports share the Phase 1 cache identity", () => {
   const tutorial = source(path.join("js", "tutorial.js"));
 
   // When / Then
-  for (const moduleName of ["exam-library", "search", "command-palette", "tutorial"]) {
+  assert.match(main, /\.\/exam-library\.js\?v=1\.5\.15-phase4-labels/, "exam-library");
+  for (const moduleName of ["search", "command-palette", "tutorial"]) {
     assert.match(main, new RegExp(`\\./${moduleName}\\.js\\?v=1\\.5\\.14-phase1-legacy-ui`), moduleName);
   }
   assert.match(tutorial, /\.\/tutorial-courses\.js\?v=1\.5\.14-phase1-legacy-ui/);

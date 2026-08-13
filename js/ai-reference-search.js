@@ -1,7 +1,7 @@
 import { idbGet, idbSet } from "./idb-store.js";
 import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
-import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.11-phase3-regions";
+import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.12-phase4-labels";
 import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.12-phase3-preview";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
@@ -10,6 +10,7 @@ import { createBrowserFolderConnector, createDesktopFolderConnector, createFolde
 import { activateReferenceSource, handoffLocalReference, loadRemoteReferenceCatalog,
   REFERENCE_SOURCES as SOURCES, remoteReferenceToDataUrl } from "./ai-reference-source-policy.js";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
+import { buildReferenceProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
 
 const MAX_RESULTS = 60;
 const MAX_SELECT = 10;
@@ -205,11 +206,12 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
       onSelect: render,
       onAddWhole: ({ name, data, item }) => {
         handoffLocalReference({ name, data, sourceKind: item.kind === "pdf-page" ? "local-pdf" : "local" },
-          "confirmed", onAdd);
+          "confirmed", (reference) => onAdd({ ...reference, referenceProvenance: buildReferenceProvenance(item) }));
         status("PDF 페이지를 AI 참고 이미지로 추가했습니다.", "ok"); close();
       },
-      onAddCrop: ({ name, data }) => {
-        handoffLocalReference({ name, data, sourceKind: "local-pdf-crop" }, "confirmed", onAdd);
+      onAddCrop: ({ name, data, item, crop }) => {
+        handoffLocalReference({ name, data, sourceKind: "local-pdf-crop" }, "confirmed",
+          (reference) => onAdd({ ...reference, referenceProvenance: buildReferenceProvenance(item, crop) }));
         status("선택 영역을 시험문제용 도판 변환 대상으로 추가했습니다.", "ok"); close();
       },
     });

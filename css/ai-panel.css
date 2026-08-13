@@ -447,6 +447,18 @@
   border-color: var(--accent, #2f81f7) !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, .22);
 }
+.ai-editable-labels {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  color: var(--text-primary, #e6edf3);
+  background: color-mix(in srgb, var(--bg-panel, #161b22) 88%, transparent);
+  border: 1px solid var(--accent, #2f81f7);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .22);
+}
+.ai-editable-labels:focus-visible,
+.ai-canvas-output:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 .ai-result-actions {
   display: flex;
   flex: none;
@@ -757,6 +769,42 @@
 }
 .ai-compare-picker button.is-on { border-color: var(--accent, #2f81f7); }
 .ai-compare-picker img { width: 100%; height: 100%; object-fit: contain; }
+
+.ai-label-dialog {
+  display: flex;
+  width: min(1120px, calc(100vw - 56px));
+  max-height: min(840px, calc(100vh - 56px));
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text-primary, #e6edf3);
+  background: var(--bg-panel, #161b22);
+  border: 1px solid var(--border-strong, #30363d);
+  border-radius: 10px;
+  box-shadow: 0 20px 70px rgba(0,0,0,.55);
+}
+.ai-label-dialog > header { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--border, #30363d); }
+.ai-label-dialog > header strong { flex: 1; }
+.ai-label-dialog > header button { color: inherit; background: transparent; border: 0; font-size: 22px; }
+.ai-label-intro { margin: 0; padding: 10px 15px; color: var(--text-secondary, #8b949e); word-break: keep-all; }
+.ai-label-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-height: 220px; padding: 0 15px; }
+.ai-label-layout figure { display: flex; min-width: 0; min-height: 0; margin: 0; flex-direction: column; gap: 6px; }
+.ai-label-layout figcaption { font-weight: 650; }
+.ai-label-layout figure > div { display: grid; min-height: 0; flex: 1; place-items: center; overflow: hidden; background: #fff; border-radius: 6px; }
+.ai-label-layout img { display: block; width: 100%; height: min(330px, 36vh); object-fit: contain; cursor: crosshair; }
+.ai-label-controls { min-height: 0; margin: 12px 15px 0; padding: 10px; overflow: auto; background: var(--bg-input, #0d1117); border: 1px solid var(--border, #30363d); border-radius: 7px; }
+.ai-label-controls > div:first-child { display: flex; align-items: center; gap: 9px; }
+.ai-label-controls [data-label-status] { color: var(--text-secondary, #8b949e); font-size: 11px; }
+.ai-label-candidate { display: grid; grid-template-columns: minmax(130px, 1fr) repeat(5, auto); gap: 6px; margin-top: 8px; }
+.ai-label-candidate input { min-width: 0; }
+.ai-label-candidate[data-confirmed="true"] { border-left: 3px solid #3fb950; padding-left: 7px; }
+.ai-label-candidate button[data-done="true"] { border-color: #3fb950; }
+.ai-label-dialog button,
+.ai-label-dialog input { min-height: 34px; padding: 6px 9px; color: var(--text-primary, #e6edf3); background: var(--btn-tool, #21262d); border: 1px solid var(--border, #30363d); border-radius: 5px; font: inherit; }
+.ai-label-dialog button:focus-visible,
+.ai-label-dialog input:focus-visible { outline: 2px solid var(--accent, #2f81f7); outline-offset: 2px; }
+.ai-label-dialog > footer { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 15px; }
+.ai-label-dialog [data-label-insert] { color: #fff; background: var(--accent, #2f81f7); border-color: var(--accent, #2f81f7); }
+.ai-label-dialog [data-label-insert]:disabled { color: var(--text-secondary, #8b949e); background: var(--btn-tool, #21262d); border-color: var(--border, #30363d); opacity: .65; }
 
 .ai-attachment {
   display: flex;
@@ -1082,4 +1130,12 @@
   .ai-reference-search-dialog > footer span { display: none; }
   .ai-reference-search-card span,
   .ai-reference-search-card small { font-size: 10px; }
+  .ai-label-overlay { padding: 10px; }
+  .ai-label-dialog { width: calc(100vw - 20px); max-height: calc(100vh - 20px); }
+  .ai-label-layout { grid-template-columns: minmax(0, 1fr); min-height: 0; overflow: auto; }
+  .ai-label-layout img { height: min(190px, 24vh); }
+  .ai-label-candidate { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ai-label-candidate input { grid-column: 1 / -1; }
+  .ai-label-candidate button { white-space: normal; word-break: keep-all; }
+  .ai-label-intro { font-size: 11px; }
 }

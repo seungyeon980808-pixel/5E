@@ -12,8 +12,8 @@
 
 import { screenToWorld } from "./viewport.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.4.0";
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.5.0-phase4-labels";
+import { insertImageFromSrc } from "./image-paste.js?v=1.5.0-phase4-labels";
 import { addPage } from "./pages.js?v=1.4.0";
 import { applyLoadedState, migrate, serialize } from "./project-format.js?v=1.4.0";
 import { openProject, saveProject } from "./project-file-access.js?v=1.4.0";
