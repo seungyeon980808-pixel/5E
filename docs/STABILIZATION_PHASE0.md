@@ -27,14 +27,13 @@ The audit intentionally supports a fail-closed FileMatcher subset: ordered posit
 
 ## Synthetic fixture status
 
-The PDF and adapter-parity fixtures are implemented and executable:
+The PDF and common browser/adapter fixtures are implemented and executable:
 
-- `tests/stabilization/fixtures/pdf/generate-synthetic-pdf.cjs` creates deterministic, independently authored PDF pages with searchable and textless content, vector shapes, an embedded raster, metadata, rotation, and edge-crop cases. `desktop/synthetic-pdf-fixture.test.cjs` verifies their provenance, indexing, search, geometry, crop, and corruption behavior.
+- `tests/stabilization/fixtures/pdf/generate-synthetic-pdf.cjs` creates deterministic, independently authored PDF pages with the Korean filename `별빛-물리-모의시험-07번.pdf`, searchable and textless content, vector shapes, an embedded raster, metadata, rotation, and edge-crop cases. It also generates a bounded 48-page PDF for deterministic multi-event indexing progress and a fully textless two-page PDF for file- and page-level `검색 가능한 텍스트 없음` behavior. `desktop/synthetic-pdf-fixture.test.cjs` verifies provenance, indexing, search terms and ordering, geometry, crop, corruption, and both generated variants.
 - `tests/stabilization/harness/browser-desktop-parity.cjs` provides shared browser/Electron outcome and forbidden-transport assertions used by `desktop/local-file-privacy.test.cjs`.
-
-The remaining fixture work is still planned:
-
-- `tests/stabilization/harness/common-fixtures.cjs`: temporary-directory, stable hashing, canonical JSON, and cross-platform path helpers shared by all three fixture families.
+- `tests/stabilization/harness/common-fixtures.cjs` provides canonical JSON, stable fixture hashes, and automatically cleaned temporary directories for reusable fixture tests.
+- `desktop/browser-served-phase0.test.cjs` serves the real application and generated PDF over an ephemeral local HTTP server, exercises it in Electron Chromium, and asserts empty renderer-console and unhandled-exception captures. Its browser and Electron adapter outcomes match, including the rule that only a confirmed selected crop reaches transport planning.
+- `desktop/local-reference-sources.test.cjs` verifies browser permission request, denial, cancellation, and reconnect outcomes through the public connector, plus desktop reconnect using the newest folder selection. `desktop/ai-local-index-session.test.cjs` verifies newest-session publication and the Korean textless notices, including legacy PDF-cache invalidation.
 
 Implemented synthetic harnesses now cover exact crop/transmission pixel comparison,
 label-free request planning, OCR strings and normalized bounds, editable 5E text and
