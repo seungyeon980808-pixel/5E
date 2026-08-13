@@ -12,6 +12,7 @@ const { auditPackageSources } = auditModule;
 const POLICY = Object.freeze({
   schema: "5e-package-assets-policy-v1",
   assetRoot: "assets",
+  allowedAssetRoots: ["assets", "assets/alpha", "assets/exam-parts", "assets/svg_object", "assets/zeta"],
   requiredRuntime: ["index.html", "desktop/main.cjs"],
   forbiddenBuildPatterns: ["assets/**/*"],
   forbiddenAssetRoots: ["assets/exam-library", "assets/parts-library"],

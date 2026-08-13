@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { isIncluded, normalizeScopedPath, parseBuildFiles } = require("./package-file-matcher.cjs");
 
 const REPORT_SCHEMA = "5e-package-source-audit-v1";
 const DEFAULT_ROOT = path.resolve(__dirname, "..", "..");
@@ -9,25 +10,27 @@ function compareText(left, right) {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-function normalizeRelative(value) {
-  const normalized = String(value).replaceAll("\\", "/").replace(/^\.\//, "");
-  return path.posix.normalize(normalized).replace(/^\/$/, "");
-}
-
-function patternIncludesPath(pattern, relativePath) {
-  const normalizedPattern = normalizeRelative(pattern);
-  const normalizedPath = normalizeRelative(relativePath);
-  for (const suffix of ["/**/*", "/**"]) {
-    if (normalizedPattern.endsWith(suffix)) {
-      const root = normalizedPattern.slice(0, -suffix.length);
-      return normalizedPath.startsWith(`${root}/`);
+function normalizePolicy(policy) {
+  const assetRoot = normalizeScopedPath(policy.assetRoot, "POLICY_PATH_OUTSIDE_ROOT");
+  const paths = (values) => [...values]
+    .map((value) => normalizeScopedPath(value, "POLICY_PATH_OUTSIDE_ROOT", { allowGlob: true }))
+    .sort(compareText);
+  const normalized = {
+    schema: policy.schema,
+    assetRoot,
+    allowedAssetRoots: paths(policy.allowedAssetRoots),
+    requiredRuntime: paths(policy.requiredRuntime),
+    forbiddenBuildPatterns: paths(policy.forbiddenBuildPatterns),
+    forbiddenAssetRoots: paths(policy.forbiddenAssetRoots),
+  };
+  for (const root of [...normalized.allowedAssetRoots, ...normalized.forbiddenAssetRoots]) {
+    if (root !== assetRoot && !root.startsWith(`${assetRoot}/`)) {
+      const error = new Error("POLICY_ASSET_ROOT_MISMATCH");
+      error.code = "POLICY_ASSET_ROOT_MISMATCH";
+      throw error;
     }
   }
-  if (normalizedPattern.endsWith("/*")) {
-    const root = normalizedPattern.slice(0, -2);
-    return path.posix.dirname(normalizedPath) === root;
-  }
-  return normalizedPattern === normalizedPath;
+  return normalized;
 }
 
 function listFiles(root, relativeRoot) {
@@ -54,10 +57,10 @@ function assetFamily(assetRoot, relativePath) {
   return remainder.includes("/") ? `${assetRoot}/${firstSegment}` : assetRoot;
 }
 
-function collectAssetFamilies(root, assetRoot, buildFiles) {
+function collectAssetFamilies(root, assetRoot, matchers) {
   const families = new Map();
   for (const file of listFiles(root, assetRoot)) {
-    if (!buildFiles.some((pattern) => patternIncludesPath(pattern, file.path))) continue;
+    if (!isIncluded(matchers, file.path)) continue;
     const familyPath = assetFamily(assetRoot, file.path);
     const family = families.get(familyPath) || { path: familyPath, files: 0, bytes: 0 };
     family.files += 1;
@@ -69,20 +72,29 @@ function collectAssetFamilies(root, assetRoot, buildFiles) {
 
 function auditPackageSources({ root = DEFAULT_ROOT, policy }) {
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  const buildFiles = [...packageJson.build.files].map(normalizeRelative).sort(compareText);
-  const requiredRuntime = [...policy.requiredRuntime].map(normalizeRelative).sort(compareText).map((runtimePath) => ({
+  const matchers = parseBuildFiles(packageJson.build.files);
+  const normalizedPolicy = normalizePolicy(policy);
+  const buildFiles = matchers.map(({ pattern, negative }) => `${negative ? "!" : ""}${pattern}`).sort(compareText);
+  const requiredRuntime = normalizedPolicy.requiredRuntime.map((runtimePath) => ({
     path: runtimePath,
     present: fs.existsSync(path.join(root, ...runtimePath.split("/"))),
-    included: buildFiles.some((pattern) => patternIncludesPath(pattern, runtimePath)),
+    included: isIncluded(matchers, runtimePath),
   }));
+  const assetFamilies = collectAssetFamilies(root, normalizedPolicy.assetRoot, matchers);
   const violations = [];
-  for (const pattern of policy.forbiddenBuildPatterns.map(normalizeRelative)) {
-    if (buildFiles.includes(pattern)) violations.push({ code: "FORBIDDEN_BUILD_PATTERN", value: pattern });
+  for (const pattern of normalizedPolicy.forbiddenBuildPatterns) {
+    if (matchers.some((matcher) => !matcher.negative && matcher.pattern === pattern)) {
+      violations.push({ code: "FORBIDDEN_BUILD_PATTERN", value: pattern });
+    }
   }
-  for (const forbiddenRoot of policy.forbiddenAssetRoots.map(normalizeRelative)) {
-    const probe = `${forbiddenRoot}/__package_audit_probe__`;
-    if (buildFiles.some((pattern) => patternIncludesPath(pattern, probe))) {
+  for (const forbiddenRoot of normalizedPolicy.forbiddenAssetRoots) {
+    if (isIncluded(matchers, `${forbiddenRoot}/__package_audit_probe__`)) {
       violations.push({ code: "FORBIDDEN_ASSET_ROOT", value: forbiddenRoot });
+    }
+  }
+  for (const family of assetFamilies) {
+    if (!normalizedPolicy.allowedAssetRoots.includes(family.path)) {
+      violations.push({ code: "UNAPPROVED_ASSET_ROOT", value: family.path });
     }
   }
   for (const runtime of requiredRuntime) {
@@ -90,14 +102,7 @@ function auditPackageSources({ root = DEFAULT_ROOT, policy }) {
     else if (!runtime.included) violations.push({ code: "REQUIRED_RUNTIME_EXCLUDED", value: runtime.path });
   }
   violations.sort((left, right) => compareText(left.code, right.code) || compareText(left.value, right.value));
-  return {
-    schema: REPORT_SCHEMA,
-    policySchema: policy.schema,
-    buildFiles,
-    assetFamilies: collectAssetFamilies(root, normalizeRelative(policy.assetRoot), buildFiles),
-    requiredRuntime,
-    violations,
-  };
+  return { schema: REPORT_SCHEMA, policySchema: normalizedPolicy.schema, buildFiles, assetFamilies, requiredRuntime, violations };
 }
 
 function parseArguments(argv) {
@@ -125,9 +130,9 @@ if (require.main === module) {
   try {
     runCli();
   } catch (error) {
-    process.stderr.write(`${JSON.stringify({ schema: REPORT_SCHEMA, error: error.message })}\n`);
+    process.stderr.write(`${JSON.stringify({ schema: REPORT_SCHEMA, code: error.code, error: error.message })}\n`);
     process.exitCode = 2;
   }
 }
 
-module.exports = { auditPackageSources, patternIncludesPath, runCli };
+module.exports = { auditPackageSources, runCli };

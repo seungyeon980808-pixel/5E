@@ -1,6 +1,11 @@
 {
   "schema": "5e-package-assets-policy-v1",
   "assetRoot": "assets",
+  "allowedAssetRoots": [
+    "assets",
+    "assets/exam-parts",
+    "assets/svg_object"
+  ],
   "requiredRuntime": [
     "desktop/main.cjs",
     "desktop/preload.cjs",

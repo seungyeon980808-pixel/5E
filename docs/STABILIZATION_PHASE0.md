@@ -30,6 +30,12 @@ Future harness work should add only generated or independently authored fixtures
 
 No copyrighted textbook, exam, answer-key, or publisher source fixture may be added to the repository. Tests must generate minimal geometry/text themselves or use clearly licensed synthetic material whose provenance is recorded.
 
+## Project compatibility and local-file privacy invariants
+
+The future common harness must verify both current and legacy `.5e` save/load roundtrips. Loading and saving must preserve unknown fields so a newer or extended project is not silently truncated, and equivalent fixtures must produce equivalent observable outcomes in the browser and Electron adapters.
+
+PDF, image, and `.5e` file bytes remain local by default. Local inputs and test fixtures must never be uploaded, network-requested, attached to a model, or transmitted through a tool before an explicit, user-confirmed AI crop handoff. Merely opening, indexing, searching, previewing, saving, or testing a local file does not authorize external transmission.
+
 ## Ownership boundaries
 
 - **Packaging/assets:** owns `scripts/stabilization/package-assets-*`, the packaging policy, build-source counts, and installer inclusion/exclusion decisions. It does not rewrite PDF/search or graph behavior.
