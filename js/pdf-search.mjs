@@ -26,10 +26,20 @@ function snippetOf(text, terms, radius = 80) {
   return `${start ? "…" : ""}${compact.slice(start, end)}${end < compact.length ? "…" : ""}`;
 }
 
+function searchableText(page) {
+  const metadata = page.metadata || {};
+  return [
+    page.text, page.name, page.relativePath,
+    metadata.title, metadata.author, metadata.subject, metadata.keywords,
+    metadata.creator, metadata.producer, metadata.exam, metadata.question,
+  ].filter(Boolean).join(" ");
+}
+
 export function rankPdfPages(pages, query, limit = 60) {
   const terms = queryTerms(query);
   if (!terms.length) return [];
-  const documents = pages.map((page) => ({ page, words: wordsOf(page.text) }));
+  const documents = pages.map((page) => ({ page, text: searchableText(page) }))
+    .map(({ page, text }) => ({ page, text, words: wordsOf(text) }));
   const averageLength = documents.reduce((sum, item) => sum + item.words.length, 0)
     / Math.max(1, documents.length);
   const documentFrequency = new Map(terms.map((term) => [
@@ -38,7 +48,7 @@ export function rankPdfPages(pages, query, limit = 60) {
   ]));
   const k1 = 1.2;
   const b = 0.75;
-  const ranked = documents.flatMap(({ page, words }) => {
+  const ranked = documents.flatMap(({ page, text, words }) => {
     const frequencies = terms.map((term) => termFrequency(words, term));
     if (frequencies.some((frequency) => frequency === 0)) return [];
     const score = terms.reduce((sum, term, index) => {
@@ -50,7 +60,7 @@ export function rankPdfPages(pages, query, limit = 60) {
       return sum + inverseFrequency * ((frequency * (k1 + 1))
         / (frequency + k1 * (1 - b + b * normalizedLength)));
     }, 0);
-    return [{ ...page, score, snippet: snippetOf(page.text, terms) }];
+    return [{ ...page, score, snippet: snippetOf(text, terms) }];
   }).sort((left, right) => right.score - left.score || left.id.localeCompare(right.id, "ko"));
   const bestScore = ranked[0]?.score || 1;
   return ranked.slice(0, limit).map((item) => ({

@@ -34,13 +34,35 @@ function pageText(content) {
   return text.replace(/[ \t]+\n/g, "\n").replace(/[ \t]{2,}/g, " ").trim();
 }
 
+function metadataScalar(value) {
+  if (typeof value === "string") return value.slice(0, 1000);
+  return typeof value === "number" && Number.isFinite(value) ? String(value).slice(0, 1000) : "";
+}
+
+export function normalizePdfMetadata(info) {
+  const custom = info?.Custom || {};
+  return {
+    title: metadataScalar(info?.Title),
+    author: metadataScalar(info?.Author),
+    subject: metadataScalar(info?.Subject),
+    keywords: metadataScalar(info?.Keywords),
+    creator: metadataScalar(info?.Creator),
+    producer: metadataScalar(info?.Producer),
+    exam: metadataScalar(custom.Exam),
+    question: metadataScalar(custom.Question),
+  };
+}
+
 export async function extractPdfPages(source, onProgress) {
   const pdf = await loadDocument(source);
+  const { info } = await pdf.getMetadata();
+  const metadata = normalizePdfMetadata(info);
   const pages = [];
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
     const page = await pdf.getPage(pageNumber);
     const text = pageText(await page.getTextContent());
     if (text) {
+      const viewport = page.getViewport({ scale: 1 });
       pages.push({
         id: `${source.id}:${pageNumber}`,
         sourceId: source.id,
@@ -48,6 +70,10 @@ export async function extractPdfPages(source, onProgress) {
         relativePath: source.relativePath || source.name,
         pageNumber,
         text,
+        metadata,
+        rotation: page.rotate,
+        width: viewport.width,
+        height: viewport.height,
         source,
       });
     }
