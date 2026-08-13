@@ -66,7 +66,7 @@ function sourcePattern(value) {
   if (typeof value !== "string") {
     throw new AuditInputError("UNSUPPORTED_FILE_SET", "UNSUPPORTED_FILE_SET: filter must be string");
   }
-  if (value.startsWith("!!") || value.startsWith("!(")) {
+  if (value.startsWith("#") || value.startsWith("!!") || value.startsWith("!(")) {
     throw new AuditInputError("UNSUPPORTED_GLOB_SYNTAX", "UNSUPPORTED_GLOB_SYNTAX");
   }
   const negative = value.startsWith("!");

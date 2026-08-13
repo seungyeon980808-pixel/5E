@@ -162,6 +162,26 @@ test("unsupported glob syntax makes the CLI exit 2 before emitting a report", ()
   }
 });
 
+test("leading minimatch comments make the CLI exit 2 before emitting a report", () => {
+  // Given
+  const root = fixture(["#assets/**/*"], { "index.html": "app" });
+  const policyPath = path.join(root, "policy.json");
+  fs.writeFileSync(policyPath, JSON.stringify(BASE_POLICY));
+  const cli = path.join(__dirname, "..", "scripts", "stabilization", "package-assets-audit.cjs");
+
+  try {
+    // When
+    const result = spawnSync(process.execPath, [cli, "--root", root, "--policy", policyPath], { encoding: "utf8" });
+
+    // Then
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, "");
+    assert.equal(JSON.parse(result.stderr).code, "UNSUPPORTED_GLOB_SYNTAX");
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("mixed default string patterns and FileSets fail closed", () => {
   // Given
   const files = { "index.html": "app", "assets/exam-parts/a.svg": "ok" };
