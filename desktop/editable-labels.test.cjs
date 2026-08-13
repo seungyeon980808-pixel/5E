@@ -50,6 +50,16 @@ test("label overlay descriptors expose every user-selected coordinate", async ()
   }]);
 });
 
+test("contain geometry excludes letterbox space and preserves both axes", async () => {
+  const { containedImageRect, normalizedContainedPoint } = await import("../js/editable-labels.mjs");
+  const rect = containedImageRect({ left: 10, top: 20, width: 628, height: 128 }, { width: 900, height: 560 });
+  assert.deepEqual(Object.fromEntries(Object.entries(rect).map(([key, value]) => [key, Math.round(value * 100) / 100])),
+    { left: 221.14, top: 20, width: 205.71, height: 128 });
+  assert.equal(normalizedContainedPoint({ x: 50, y: 84 }, rect), null, "left letterbox click is rejected");
+  assert.deepEqual(normalizedContainedPoint({ x: rect.left + rect.width * .68, y: rect.top + rect.height * .51 }, rect),
+    { x: .68, y: .51 });
+});
+
 test("confirmed candidates compile to rendered editable labeler objects with separate provenance", async () => {
   const { labelObjectsForImage } = await import("../js/editable-labels.mjs");
   installSvgDom();

@@ -1,12 +1,15 @@
-import { createEditableLabelSession, labelOverlayDescriptors } from "./editable-labels.mjs?v=1.5.1-phase4-labels";
+import { containedImageRect, createEditableLabelSession, labelOverlayDescriptors,
+  normalizedContainedPoint } from "./editable-labels.mjs?v=1.5.2-phase4-labels";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 
 function normalizedPoint(event, image) {
-  const rect = image.getBoundingClientRect();
-  return {
-    x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
-    y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height))),
-  };
+  return normalizedContainedPoint({ x: event.clientX, y: event.clientY }, imageContentRect(image));
+}
+
+function imageContentRect(image) {
+  return containedImageRect(image.getBoundingClientRect(), {
+    width: image.naturalWidth, height: image.naturalHeight,
+  });
 }
 
 function sourceBounds(point) {
@@ -43,19 +46,25 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   resultImage.src = result.data;
   const closeButton = dialog.querySelector("[data-label-close]");
   let releaseFocus = null;
-  const close = () => { releaseFocus?.(); overlay.remove(); };
+  let disposeGeometry = () => {};
+  const close = () => { disposeGeometry(); releaseFocus?.(); overlay.remove(); };
   releaseFocus = installModalFocus({ root: overlay, initialFocus: closeButton, returnFocus, onRequestClose: close });
 
   const setPending = (id, kind, message) => { pending = { id, kind }; status.textContent = message; render(); };
-  const percent = (value) => `${value * 100}%`;
   const renderMarks = () => {
+    if (!sourceImage.complete || !resultImage.complete) return;
     const descriptors = labelOverlayDescriptors(session.list());
+    const sourceStage = sourceImage.parentElement.getBoundingClientRect();
+    const resultStage = resultImage.parentElement.getBoundingClientRect();
+    const sourceRect = imageContentRect(sourceImage);
+    const resultRect = imageContentRect(resultImage);
     sourceMarks.replaceChildren(...descriptors.filter((item) => item.original).map((item) => {
       const mark = document.createElement("span");
       mark.className = "ai-label-source-mark";
       mark.dataset.confirmed = String(item.confirmed);
-      Object.assign(mark.style, { left: percent(item.original.x), top: percent(item.original.y),
-        width: percent(item.original.w), height: percent(item.original.h) });
+      Object.assign(mark.style, { left: `${sourceRect.left - sourceStage.left + item.original.x * sourceRect.width}px`,
+        top: `${sourceRect.top - sourceStage.top + item.original.y * sourceRect.height}px`,
+        width: `${item.original.w * sourceRect.width}px`, height: `${item.original.h * sourceRect.height}px` });
       return mark;
     }));
     resultMarks.replaceChildren(...descriptors.filter((item) => item.target || item.labelPosition).map((item) => {
@@ -65,28 +74,37 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
       if (item.target) {
         const target = document.createElement("span");
         target.className = "ai-label-result-target";
-        Object.assign(target.style, { left: percent(item.target.x), top: percent(item.target.y) });
+        Object.assign(target.style, { left: `${resultRect.left - resultStage.left + item.target.x * resultRect.width}px`,
+          top: `${resultRect.top - resultStage.top + item.target.y * resultRect.height}px` });
         mark.append(target);
       }
       if (item.target && item.labelPosition) {
-        const dx = item.labelPosition.x - item.target.x;
-        const dy = item.labelPosition.y - item.target.y;
+        const dx = (item.labelPosition.x - item.target.x) * resultRect.width;
+        const dy = (item.labelPosition.y - item.target.y) * resultRect.height;
         const line = document.createElement("span");
         line.className = "ai-label-result-line";
-        Object.assign(line.style, { left: percent(item.target.x), top: percent(item.target.y),
-          width: `${Math.hypot(dx, dy) * 100}%`, transform: `rotate(${Math.atan2(dy, dx)}rad)` });
+        Object.assign(line.style, { left: `${resultRect.left - resultStage.left + item.target.x * resultRect.width}px`,
+          top: `${resultRect.top - resultStage.top + item.target.y * resultRect.height}px`,
+          width: `${Math.hypot(dx, dy)}px`, transform: `rotate(${Math.atan2(dy, dx)}rad)` });
         mark.append(line);
       }
       if (item.labelPosition) {
         const label = document.createElement("span");
         label.className = "ai-label-result-text";
         label.textContent = item.text || "?";
-        Object.assign(label.style, { left: percent(item.labelPosition.x), top: percent(item.labelPosition.y) });
+        label.dataset.align = item.labelPosition.x > .78 ? "end" : item.labelPosition.x < .22 ? "start" : "center";
+        Object.assign(label.style, { left: `${resultRect.left - resultStage.left + item.labelPosition.x * resultRect.width}px`,
+          top: `${resultRect.top - resultStage.top + item.labelPosition.y * resultRect.height}px` });
         mark.append(label);
       }
       return mark;
     }));
   };
+  const resizeObserver = typeof ResizeObserver === "function" ? new ResizeObserver(renderMarks) : null;
+  resizeObserver?.observe(sourceImage.parentElement);
+  resizeObserver?.observe(resultImage.parentElement);
+  window.addEventListener("resize", renderMarks);
+  disposeGeometry = () => { resizeObserver?.disconnect(); window.removeEventListener("resize", renderMarks); };
   const candidateRow = (candidate) => {
     const row = document.createElement("article");
     row.className = "ai-label-candidate";
@@ -130,6 +148,7 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   const applyPoint = (kind, event, image) => {
     if (!pending || pending.kind !== kind) return;
     const point = normalizedPoint(event, image);
+    if (!point) { status.textContent = "흰 여백이 아닌 실제 이미지 안쪽을 선택해 주세요."; return; }
     if (kind === "original") session.setOriginal(pending.id, sourceBounds(point));
     else if (kind === "target") session.setTarget(pending.id, point);
     else session.setLabelPosition(pending.id, point);

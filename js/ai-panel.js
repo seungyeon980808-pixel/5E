@@ -41,7 +41,7 @@ import {
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
 import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.15-phase4-labels";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
-import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.1-phase4-labels";
+import { openEditableLabelWorkspace } from "./ai-label-workspace.js?v=1.5.2-phase4-labels";
 import { buildDiagramOutputProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
 import {
   AI_OUTPUT_ENGINES,

@@ -45,6 +45,30 @@ export function labelOverlayDescriptors(candidates = []) {
   }));
 }
 
+export function containedImageRect(box, natural) {
+  const boxWidth = Math.max(1, Number(box?.width) || 1);
+  const boxHeight = Math.max(1, Number(box?.height) || 1);
+  const naturalWidth = Math.max(1, Number(natural?.width) || 1);
+  const naturalHeight = Math.max(1, Number(natural?.height) || 1);
+  const scale = Math.min(boxWidth / naturalWidth, boxHeight / naturalHeight);
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+  return {
+    left: (Number(box?.left) || 0) + (boxWidth - width) / 2,
+    top: (Number(box?.top) || 0) + (boxHeight - height) / 2,
+    width, height,
+  };
+}
+
+export function normalizedContainedPoint(value, rect) {
+  const x = Number(value?.x), y = Number(value?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)
+      || x < rect.left || x > rect.left + rect.width
+      || y < rect.top || y > rect.top + rect.height) return null;
+  const rounded = (number) => Math.round(number * 1e12) / 1e12;
+  return { x: rounded((x - rect.left) / rect.width), y: rounded((y - rect.top) / rect.height) };
+}
+
 export function labelObjectsForImage(candidates, image, bundleId) {
   return candidates.filter((item) => item.confirmed).map((item, index) => ({
     id: `${bundleId}_label_${index + 1}`,
