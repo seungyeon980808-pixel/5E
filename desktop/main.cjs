@@ -599,15 +599,32 @@ function createWindow() {
             const resultRect = panel?.querySelector(".ai-results")?.getBoundingClientRect();
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
-            const aiSourceEntrypointsReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
-              !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-capture]");
+            const advancedSettings = panel?.querySelector(".ai-advanced-settings");
+            const compareAction = panel?.querySelector("[data-ai-compare]");
+            const aiAdvancedSettingsCollapsed = advancedSettings?.open === false;
+            const aiDefaultSurfaceReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
+              !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-send]") &&
+              compareAction?.hidden === true && compareAction?.disabled === true &&
+              !panel?.querySelector(".ai-canvas-output");
+            const aiAdvancedHooksReady = !!advancedSettings?.querySelector("[data-ai-capture]") &&
+              !!advancedSettings.querySelector("[data-ai-batch]") &&
+              !!advancedSettings.querySelector("[data-ai-model]") &&
+              !!advancedSettings.querySelector("[data-ai-effort]") &&
+              !!advancedSettings.querySelector("[data-ai-speed]") &&
+              advancedSettings.querySelectorAll("[data-ai-quality]").length === 3 &&
+              advancedSettings.querySelectorAll("[data-ai-output-engine]").length === 2 &&
+              !!advancedSettings.querySelector("[data-ai-tabs]");
+            const aiLegacyEntrypointsAbsent = !document.getElementById("exam-library-open") &&
+              !document.getElementById("parts-library-open");
             panel?.querySelector("[data-ai-reference-search]")?.click();
-            const aiLoadMenuReady = await waitFor(() => {
+            const aiLocalPickerReady = await waitFor(() => {
               const search = document.querySelector(".ai-reference-search-dialog");
-              return search?.querySelectorAll("[data-ai-search-source]").length === 3 &&
+              return !!search?.querySelector("[data-ai-local-pick]") &&
+                search.querySelectorAll("[data-ai-search-source]").length === 0 &&
                 search.querySelector("input[type=search]") === document.activeElement;
             }, 4000);
             document.querySelector("[data-ai-search-close]")?.click();
+            if (advancedSettings) advancedSettings.open = true;
             panel?.querySelector("[data-ai-capture]")?.click();
             await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
             document.querySelector(".ai-capture-source")?.click();
@@ -620,7 +637,8 @@ function createWindow() {
             cropDialog?.querySelector(".ai-crop-foot button")?.click();
             const cancelButton = panel?.querySelector("[data-ai-interrupt]");
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
-            const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
+            let aiCompareIsContextual = compareAction?.hidden === true && compareAction?.disabled === true;
+            const aiReturnsAfterPickerClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
             panel.hidden = true;
             dismissStartupDialogs();
             await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
@@ -787,91 +805,14 @@ function createWindow() {
             const internalCutRendersBoth = !!remainderNode?.querySelector('mask polygon[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask rect[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask polygon[fill="#ffffff"]');
-            let examLibraryAiReferenceWorks = false;
-            let imageLibraryAiReferenceWorks = false;
-            let aiMultipleReferencesReady = false;
-            let aiComparisonReady = false;
-            let aiAreaCommentReady = false;
-            let aiAreaCommentTracksZoom = false;
-            let aiReferencesOpenImmediately = false;
             let aiLocalAssetZeroRoundTripWorks = false;
             let aiLocalApparatusZeroRoundTripWorks = false;
+            let aiNativeGraphInsertWorks = false;
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
             let aiTaskTabsIsolated = false;
             let aiBusyTabCreationWorks = false;
             let aiBatchControlReady = false;
-            document.getElementById("exam-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".examlib-card"))) {
-              const examCards = Array.from(document.querySelectorAll(".examlib-card")).slice(0, 2);
-              examCards.forEach((card) => card.click());
-              const examAiButton = document.getElementById("examlib-ai");
-              if (examAiButton && !examAiButton.disabled) {
-                examAiButton.click();
-                examLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= examCards.length);
-                panel.querySelector("[data-ai-close]")?.click();
-              }
-            }
-            document.getElementById("parts-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".partslib-card"))) {
-              const partCards = Array.from(document.querySelectorAll(".partslib-card")).slice(0, 2);
-              partCards.forEach((card) => card.click());
-              const imageAiReady = await waitFor(() => {
-                const candidate = document.getElementById("partslib-ai");
-                return candidate && !candidate.disabled;
-              });
-              if (imageAiReady) {
-                document.getElementById("partslib-ai")?.click();
-                imageLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= 4);
-                aiMultipleReferencesReady = imageLibraryAiReferenceWorks;
-                const referenceDetails = panel.querySelector(".ai-reference-section");
-                aiReferencesOpenImmediately = !!referenceDetails?.open;
-                const commentCard = panel.querySelector(".ai-reference-card");
-                const commentStage = commentCard?.querySelector(".ai-preview-stage");
-                const commentImage = commentStage?.querySelector("img");
-                const commentButton = commentCard?.querySelector(".ai-preview-actions button:last-child");
-                if (commentStage && commentImage && commentButton) {
-                  commentButton.click();
-                  const rect = commentStage.getBoundingClientRect();
-                  commentImage.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .2, clientY: rect.top + rect.height * .2 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  const selection = commentCard.querySelector(".ai-selection-box");
-                  aiAreaCommentReady = !!selection && !!commentCard.querySelector(".ai-comment-row input");
-                  if (selection) {
-                    const beforeStage = commentStage.getBoundingClientRect();
-                    const beforeSelection = selection.getBoundingClientRect();
-                    const before = {
-                      x: (beforeSelection.left - beforeStage.left) / beforeStage.width,
-                      y: (beforeSelection.top - beforeStage.top) / beforeStage.height,
-                      w: beforeSelection.width / beforeStage.width,
-                      h: beforeSelection.height / beforeStage.height,
-                    };
-                    commentCard.querySelector(".ai-preview-actions button:first-child")?.click();
-                    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                    const afterStage = commentStage.getBoundingClientRect();
-                    const afterImage = commentImage.getBoundingClientRect();
-                    const afterSelection = selection.getBoundingClientRect();
-                    const after = {
-                      x: (afterSelection.left - afterStage.left) / afterStage.width,
-                      y: (afterSelection.top - afterStage.top) / afterStage.height,
-                      w: afterSelection.width / afterStage.width,
-                      h: afterSelection.height / afterStage.height,
-                    };
-                    aiAreaCommentTracksZoom = Math.abs(afterStage.height - afterImage.height) < 4 &&
-                      Object.keys(before).every((key) => Math.abs(before[key] - after[key]) < .02);
-                  }
-                }
-                panel.querySelector("[data-ai-compare]")?.click();
-                aiComparisonReady = await waitFor(() =>
-                  document.querySelectorAll(".ai-compare-pane").length === 2 &&
-                  document.querySelectorAll(".ai-compare-picker button").length >= 4);
-                document.querySelector(".ai-compare-head button")?.click();
-                panel.querySelector("[data-ai-close]")?.click();
-              }
-            }
             button?.click();
             if (await waitFor(() => panel?.hidden === false, 2000)) {
               aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
@@ -933,6 +874,15 @@ function createWindow() {
                 }
                 const localPreviewReady = await waitFor(() =>
                   !!panel.querySelector("[data-ai-previews] .ai-preview-card img[src^='data:image/svg+xml']"), 4000);
+                if (localResults.length === 0 && localPreviewReady) {
+                  const objectsBeforeInsert = stateModule.state.get().objects.length;
+                  const insertButton = panel.querySelector("[data-ai-previews] .ai-preview-card .ai-canvas-output");
+                  insertButton?.click();
+                  aiNativeGraphInsertWorks = !!insertButton && await waitFor(() =>
+                    stateModule.state.get().objects.length > objectsBeforeInsert, 4000);
+                  aiCompareIsContextual = aiCompareIsContextual &&
+                    compareAction?.hidden === true && compareAction?.disabled === true;
+                }
                 let localMetric = null;
                 await waitFor(() => {
                   try {
@@ -971,11 +921,15 @@ function createWindow() {
               aiAutoConnectControlsSimplified,
               aiProgressUiReady,
               aiResultsPlacedLeft,
-              aiSourceEntrypointsReady,
-              aiLoadMenuReady,
+              aiAdvancedSettingsCollapsed,
+              aiDefaultSurfaceReady,
+              aiAdvancedHooksReady,
+              aiLegacyEntrypointsAbsent,
+              aiLocalPickerReady,
               aiCaptureCropReady,
               aiCancelIsContextual,
-              aiReturnsAfterLibraryClose,
+              aiCompareIsContextual,
+              aiReturnsAfterPickerClose,
               cutChooserVisible,
               cutChooserInToolPanel,
               textChooserBehavior,
@@ -1003,49 +957,46 @@ function createWindow() {
               internalCutSeparates,
               internalCutSelectsExtracted,
               internalCutRendersBoth,
-              examLibraryAiReferenceWorks,
-              imageLibraryAiReferenceWorks,
-              aiMultipleReferencesReady,
-              aiComparisonReady,
-              aiAreaCommentReady,
-              aiAreaCommentTracksZoom,
-              aiReferencesOpenImmediately,
               aiLocalAssetZeroRoundTripWorks,
               aiLocalApparatusZeroRoundTripWorks,
+              aiNativeGraphInsertWorks,
               aiQualityControlsReady,
               aiOutputControlsReady,
               aiTaskTabsIsolated,
               aiBusyTabCreationWorks,
               aiBatchControlReady,
-              aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
-                panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
+              aiComposerFlowReady: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
+                !!panel.querySelector(".ai-conversation [data-ai-send]") &&
+                !!advancedSettings?.querySelector("[data-ai-chat-send]"),
+              aiEntryNamesWorkflow: !!button?.textContent?.trim() &&
+                button.textContent.trim() === button.getAttribute("aria-label") &&
+                button.textContent.trim() === panel.querySelector(".modal-title")?.textContent?.trim(),
               buttonText: button?.textContent?.trim() || "",
               panelOpened: panelWasOpened,
-              installDialogOpened: Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
-                .some((node) => node.textContent?.trim() === "AI 이미지 생성/변환"),
             });
           }));
         })`);
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
-        const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
+        const ok = result.aiEntryNamesWorkflow && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
           result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
-          result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
+          result.aiAdvancedSettingsCollapsed && result.aiDefaultSurfaceReady && result.aiAdvancedHooksReady &&
+          result.aiLegacyEntrypointsAbsent && result.aiLocalPickerReady && result.aiCaptureCropReady &&
+          result.aiCancelIsContextual && result.aiCompareIsContextual && result.aiReturnsAfterPickerClose &&
           result.cutChooserVisible && result.cutChooserInToolPanel && result.textChooserBehavior && result.angleChooserBehavior &&
           result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
           result.chooserClosesOnOtherTool && result.eraseToolReachable &&
           result.cutToolReachable && result.delayedCutUiReachable && result.eraseShortcutWorks && result.delayedShortcutWorks &&
-          result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
-          result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
-          result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
-          result.aiLocalApparatusZeroRoundTripWorks && result.aiQualityControlsReady && result.aiOutputControlsReady &&
+          result.aiComposerFlowReady && result.aiLocalAssetZeroRoundTripWorks &&
+          result.aiLocalApparatusZeroRoundTripWorks && result.aiNativeGraphInsertWorks &&
+          result.aiQualityControlsReady && result.aiOutputControlsReady &&
           result.aiTaskTabsIsolated && result.aiBusyTabCreationWorks && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          !result.installDialogOpened && result.menuBarVisible === false && result.appIconReadable;
+          result.menuBarVisible === false && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
@@ -1059,7 +1010,7 @@ function createWindow() {
                 imageItemSeen = true;
                 const previewReady = /^data:image\\//.test(item.imageDataUrl || "");
                 await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                const insertButton = document.querySelector(".ai-preview-card button");
+                const insertButton = document.querySelector(".ai-preview-card .ai-canvas-output");
                 insertButton?.click();
                 const deadline = Date.now() + 5000;
                 while (Date.now() < deadline && document.querySelectorAll("#scene image[data-id]").length <= imagesBefore) {

@@ -58,13 +58,11 @@ test("image prompt includes the no-label drawing rule", () => {
   assert.doesNotMatch(prompt, /docs\//);
 });
 
-test("AI panel auto-connects, shows progress, and filters image-generation events", () => {
+test("AI panel auto-connects, reports progress, and routes contextual output actions", () => {
   const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
   const events = fs.readFileSync(path.join(__dirname, "..", "js", "ai-events.js"), "utf8");
   const markup = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const styles = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
-  const examLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "exam-library.js"), "utf8");
-  const imageLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "parts-library.js"), "utf8");
   assert.match(panel, /5e\.aiConversationId/);
   assert.match(panel, /fiveEDesktop\.start\(\)/);
   assert.match(panel, /fiveEDesktop\.models\(\)/);
@@ -73,21 +71,13 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(panel, /serviceTier: speedSelect\.value/);
   assert.match(panel, /loadAccountOverview/);
   assert.match(panel, /addTokenFooter/);
-  assert.match(panel, /영역 코멘트/);
-  assert.match(panel, /미리보기 축소/);
-  assert.match(panel, /미리보기 확대/);
-  assert.match(panel, /수정 요청 영역 지정/);
   assert.match(panel, /pointerdown/);
   assert.match(panel, /openComparison/);
   assert.match(panel, /attachments\.push/);
-  assert.match(panel, /캔버스로 출력/);
-  assert.match(panel, /이미지가 완성되었습니다/);
-  assert.doesNotMatch(examLibrary, /prompt:\s*"이 기출문제 이미지를 참고하여/);
-  assert.doesNotMatch(imageLibrary, /prompt:\s*"이 참고 이미지의 핵심 구조와 비율은 유지하고/);
-  assert.match(examLibrary, /references:\s*items\.map/);
-  assert.match(imageLibrary, /selectedIds\.map/);
-  assert.match(examLibrary, /5e:library-closed/);
-  assert.match(imageLibrary, /5e:library-closed/);
+  assert.match(panel, /const canCompare = attachments\.length > 0 && generatedImages\.length > 0;/);
+  assert.match(panel, /output\.className = "ai-canvas-output"/);
+  assert.match(panel, /item\.sceneResult\?\.objects\?\.length[\s\S]*insertFastSceneIntoState\(state, item\.sceneResult\)/);
+  assert.match(panel, /insertImageFromSrc\(state, item\.data\)/);
   assert.match(panel, /setGenerating\(true/);
   assert.match(panel, /parseAiEvent/);
   assert.match(events, /item\?\.type === "imageGeneration"/);
@@ -95,25 +85,31 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /item\.phase === "commentary"/);
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
-  assert.match(markup, /data-ai-reference-search/);
-  assert.match(markup, /이미지·PDF 검색…/);
-  assert.match(markup, /화면 캡처/);
-  assert.match(markup, /이미지 불러오기/);
-  assert.match(markup, /작업 취소/);
-  assert.match(markup, /data-ai-chat-send/);
-  assert.match(markup, /data-ai-mode="diagram"/);
-  assert.match(markup, />그림형<\/button>/);
+  const advancedStart = markup.indexOf('<details class="ai-advanced-settings"');
+  const advancedEnd = markup.indexOf("</details>", advancedStart);
+  assert.notEqual(advancedStart, -1);
+  assert.notEqual(advancedEnd, -1);
+  const advanced = markup.slice(advancedStart, advancedEnd + "</details>".length);
+  const defaultSurface = `${markup.slice(0, advancedStart)}${markup.slice(advancedEnd + "</details>".length)}`;
+  assert.doesNotMatch(advanced.split(">")[0], /\bopen\b/);
+  assert.match(defaultSurface, /input type="file"[^>]*accept="image\/\*"/);
+  assert.match(defaultSurface, /data-ai-reference-search/);
+  assert.match(defaultSurface, /data-ai-send/);
+  for (const hook of [
+    "data-ai-chat-send", "data-ai-mode", "data-ai-speed", "data-ai-capture",
+    "data-ai-quality", "data-ai-output-engine", "data-ai-batch", "data-ai-tabs",
+  ]) {
+    assert.match(advanced, new RegExp(`${hook}(?:=|\\s|>)`), hook);
+  }
+  assert.match(advanced, /data-ai-output-engine="asset"/);
   assert.match(markup, /v1\.5\.8 · 2026\.08\.13/);
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);
   assert.match(panel, /createAiReferenceSearch/);
   assert.match(panel, /클립보드 이미지/);
-  assert.match(markup, /data-ai-speed/);
-  assert.match(markup, /기출문제 라이브러리/);
-  assert.match(markup, /data-ai-compare/);
-  assert.match(markup, /data-ai-capture/);
-  assert.match(markup, /파일 탐색기/);
+  assert.match(markup, /data-ai-compare[^>]*hidden[^>]*disabled/);
+  assert.doesNotMatch(markup, /id="(?:exam-library-open|parts-library-open)"/);
   assert.match(markup, /multiple/);
   assert.ok(
     markup.indexOf('data-ai-previews') < markup.indexOf('class="ai-reference-section"'),
