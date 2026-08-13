@@ -14,6 +14,17 @@ function currentProject() {
       name: "Current",
       meta: { number: "1", points: "2" },
       pageExtension: { layout: "future-grid" },
+      groups: [{ id: "derived-group", memberIds: ["object-current"] }],
+      undoStack: [[{ id: "stale-history" }]],
+      redoStack: [[{ id: "stale-future" }]],
+      selectedIds: ["object-current"],
+      selectedGuideId: "stale-guide",
+      targetedId: "object-current",
+      draft: { type: "line" },
+      draftText: { text: "stale" },
+      activeTool: "R",
+      activeLayerId: 1,
+      viewBox: { x: 1, y: 2, w: 30, h: 20 },
       objects: [{
         id: "object-current",
         type: "image",
@@ -70,6 +81,25 @@ test("preserves current page extensions when a current project is loaded and sav
 
   // Then
   assert.deepEqual(saved.pages[0].pageExtension, project.pages[0].pageExtension);
+});
+
+test("omits derived and transient page fields when a current project is loaded and saved", async () => {
+  // Given
+  const project = currentProject();
+
+  // When
+  const saved = await roundTrip(project);
+
+  // Then
+  assert.deepEqual(
+    [
+      "groups", "undoStack", "redoStack", "selectedIds", "selectedGuideId", "targetedId",
+      "draft", "draftText", "activeTool", "activeLayerId", "viewBox",
+    ].filter(
+      (field) => Object.hasOwn(saved.pages[0], field),
+    ),
+    [],
+  );
 });
 
 test("preserves current object extensions when a current project is loaded and saved", async () => {

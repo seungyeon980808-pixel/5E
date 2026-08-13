@@ -6,16 +6,20 @@ export const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 const SCHEMA_VERSION = "0.17";
 const ROOT_EXTENSIONS = Symbol("projectRootExtensions");
 const PAGE_EXTENSIONS = Symbol("projectPageExtensions");
+const SESSION_FIELDS = [
+  "groups", "undoStack", "redoStack", "selectedIds", "selectedGuideId", "targetedId",
+  "draft", "draftText", "activeTool", "activeLayerId", "viewBox",
+];
 // Root and page extensions stay opaque in live state, then serialize re-emits
 // them. Object extensions remain directly on the copied object records.
 // Reserved root fields are current/transient state or legacy drawing inputs.
 const ROOT_RESERVED_FIELDS = new Set([
   "version", "pages", "activePageId",
-  "objects", "guides", "layers", "artboard", "groups",
-  "undoStack", "redoStack", "selectedIds", "selectedGuideId", "targetedId",
-  "draft", "draftText", "activeTool", "activeLayerId", "viewBox",
+  "objects", "guides", "layers", "artboard", ...SESSION_FIELDS,
 ]);
-const PAGE_RESERVED_FIELDS = new Set(["id", "name", "meta", "objects", "guides", "layers", "artboard"]);
+const PAGE_RESERVED_FIELDS = new Set([
+  "id", "name", "meta", "objects", "guides", "layers", "artboard", ...SESSION_FIELDS,
+]);
 
 function extensionFields(record, reservedFields) {
   return Object.fromEntries(
