@@ -56,23 +56,29 @@ async function readBrowserFolder(handle) {
 
 export function createBrowserFolderConnector(browser) {
   let handle;
+  let epoch = 0;
+  async function readSelected(selected, current) {
+    const result = await readBrowserFolder(selected);
+    if (current !== epoch) return { status: "superseded" };
+    handle = result.status === "connected" ? selected : undefined;
+    return result;
+  }
   async function connect() {
     if (typeof browser?.showDirectoryPicker !== "function") return { status: "unsupported" };
+    const current = ++epoch;
     try {
       const selected = await browser.showDirectoryPicker({ id: "5e-local-reference", mode: "read" });
-      const result = await readBrowserFolder(selected);
-      handle = result.status === "connected" ? selected : undefined;
-      return result;
+      return await readSelected(selected, current);
     } catch (error) {
+      if (current !== epoch) return { status: "superseded" };
       if (error?.name === "AbortError") return { status: "cancelled" };
       throw error;
     }
   }
   async function reconnect() {
     if (!handle) return connect();
-    const result = await readBrowserFolder(handle);
-    if (result.status === "denied") handle = undefined;
-    return result;
+    const current = ++epoch;
+    return readSelected(handle, current);
   }
   return { connect, reconnect };
 }

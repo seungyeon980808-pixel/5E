@@ -194,3 +194,35 @@ test("a denied browser handle is discarded before the next explicit reconnect", 
   assert.equal(second.folderLabel, "granted");
   assert.equal(pickerCalls, 2);
 });
+
+test("a slow browser connect cannot replace the connector handle selected by a newer connect", async () => {
+  // Given
+  const { createBrowserFolderConnector } = await import("../js/local-reference-sources.mjs");
+  let releaseSlowPermission;
+  const slowPermission = new Promise((resolve) => { releaseSlowPermission = resolve; });
+  const folder = (name, queryPermission) => ({
+    name,
+    queryPermission,
+    values: async function* values() {},
+  });
+  const picked = [
+    folder("slow-A", () => slowPermission),
+    folder("fast-B", async () => "granted"),
+  ];
+  const connector = createBrowserFolderConnector({
+    showDirectoryPicker: async () => picked.shift(),
+  });
+
+  // When
+  const slow = connector.connect();
+  const fast = connector.connect();
+  const fastResult = await fast;
+  releaseSlowPermission("granted");
+  const slowResult = await slow;
+  const thirdResult = await connector.reconnect();
+
+  // Then
+  assert.equal(fastResult.folderLabel, "fast-B");
+  assert.deepEqual(slowResult, { status: "superseded" });
+  assert.equal(thirdResult.folderLabel, "fast-B");
+});
