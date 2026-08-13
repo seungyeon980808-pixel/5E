@@ -18,6 +18,17 @@ export function uniqueImageItems(items = []) {
   return result;
 }
 
+export function selectImagePlanningInput({ references = [], latestResult = null } = {}) {
+  return {
+    references: selectImageTransportItems(references),
+    latestResult: referenceMayTransmit(latestResult) ? latestResult : null,
+  };
+}
+
+export function selectImageTransportItems(items = []) {
+  return uniqueImageItems(items.filter(referenceMayTransmit));
+}
+
 export function selectOutgoingImageItems({
   type,
   references = [],
@@ -31,9 +42,14 @@ export function selectOutgoingImageItems({
   // The render thread is ephemeral and the discussion thread has never seen
   // its result. Include the latest result once in either path, then let the
   // per-conversation sent marker deduplicate later chat turns.
-  const revisionImage = latestGenerated;
-  const candidates = uniqueImageItems([...references, ...annotatedGenerated, ...(revisionImage ? [revisionImage] : [])])
-    .filter(referenceMayTransmit);
+  const planningInput = selectImagePlanningInput({
+    references: [...references, ...annotatedGenerated],
+    latestResult: latestGenerated,
+  });
+  const candidates = uniqueImageItems([
+    ...planningInput.references,
+    ...(planningInput.latestResult ? [planningInput.latestResult] : []),
+  ]);
 
   // A render thread is deliberately fresh, so it receives each active source once.
   if (type === "image") return candidates;

@@ -10,8 +10,10 @@ import {
 import {
   compactConversation,
   markImagesSent,
+  selectImagePlanningInput,
+  selectImageTransportItems,
   selectOutgoingImageItems,
-} from "./ai-request-plan.js?v=1.5.8-local-privacy-parity";
+} from "./ai-request-plan.js?v=1.5.8-local-privacy-completion";
 import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
 import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
 import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
@@ -36,7 +38,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-local-privacy-parity";
+import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.8-local-privacy-completion";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -1131,7 +1133,8 @@ export function initAiPanel(state) {
     job.resultData = null;
     job.pendingImagePromise = null;
     try {
-      const transport = await Promise.all(outgoing.map(prepareTransportItem));
+      const batchTransportItems = selectImageTransportItems(outgoing);
+      const transport = await Promise.all(batchTransportItems.map(prepareTransportItem));
       const comments = commentPrompt([sourceItem]);
       const request = revision
         ? `${job.request}${comments}\n원본과 직전 결과를 객체별로 비교하고 형태·개수·분기·연결이 달라진 부분만 교정해 줘. 맞는 영역은 그대로 보존해 줘.`
@@ -1684,12 +1687,15 @@ export function initAiPanel(state) {
       effort: effortSelect.value || null,
       serviceTier: speedSelect.value || null,
     };
-    const revisionImage = runInput.generated.at(-1) || null;
+    const rawRevisionImage = runInput.generated.at(-1) || null;
     const requestComments = commentPrompt([...runInput.attachments, ...runInput.generated]);
     const annotatedHistory = runInput.generated
-      .filter((item) => item !== revisionImage && item.comments.some((comment) => String(comment?.text || "").trim()))
+      .filter((item) => item !== rawRevisionImage && item.comments.some((comment) => String(comment?.text || "").trim()))
       .map((item) => ({ ...item, kind: "reference", name: `이전 생성 결과 · ${item.name}` }));
-    const planningReferences = [...runInput.attachments, ...annotatedHistory];
+    const { references: planningReferences, latestResult: revisionImage } = selectImagePlanningInput({
+      references: [...runInput.attachments, ...annotatedHistory],
+      latestResult: rawRevisionImage,
+    });
     const requestEpoch = ++currentRequestEpoch;
     setBusy(true);
     imageReceived = false;
@@ -1892,14 +1898,14 @@ export function initAiPanel(state) {
           prompt: annotatedRequest,
         });
         const composed = await composeRemoteImageInputPlan(inputPlan);
-        outgoingItems = composed.outputs.map((output, index) => ({
+        outgoingItems = selectImageTransportItems(composed.outputs.map((output, index) => ({
           id: `planned-${requestEpoch}-${index + 1}`,
           name: output.name,
           data: output.dataUrl,
           kind: "reference",
           sourceKind: output.reusedSource ? (output.descriptor?.source?.sourceKind || "auto") : "capture",
           comments: [],
-        }));
+        })));
         outgoingAttachments = await Promise.all(outgoingItems.map(prepareTransportItem));
         requestWithVisualPlan = `${renderRequest}${describeRemoteInputPlan(inputPlan)}`;
         currentTurnPerformance = {

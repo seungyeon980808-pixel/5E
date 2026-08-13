@@ -8,11 +8,24 @@ const {
 } = require("../tests/stabilization/harness/browser-desktop-parity.cjs");
 
 const policyModule = import("../js/ai-reference-source-policy.js");
+const dialogModule = import("../js/ai-reference-dialog.js");
 const sourceModule = import("../js/local-reference-sources.mjs");
 const projectModule = import("../js/project-io.js");
 const pdfSearchModule = import("../js/pdf-search.mjs");
 const referenceGridModule = import("../js/ai-reference-grid.js");
 const requestPlanModule = import("../js/ai-request-plan.js");
+
+function createReferenceStatusFixture() {
+  const makeElement = () => ({
+    attributes: new Map(), dataset: {}, hidden: true, textContent: "",
+    setAttribute(name, value) { this.attributes.set(name, value); },
+    getAttribute(name) { return this.attributes.get(name); },
+  });
+  const summary = makeElement();
+  const grid = makeElement();
+  const root = { querySelector: (selector) => selector === "[data-ai-search-summary]" ? summary : grid };
+  return { grid, root, summary };
+}
 
 test("local source activation skips every request transport", async () => {
   // Given
@@ -114,6 +127,107 @@ test("request planning after Generate keeps an ordinary explicitly selected imag
 
   // Then
   assert.deepEqual(outgoing, [selected]);
+});
+
+test("the image remote-plan boundary excludes every unconfirmed local reference", async () => {
+  // Given
+  const { selectImagePlanningInput } = await requestPlanModule;
+  const unconfirmed = { id: "crop", data: "data:image/png;base64,TE9DQUw=", sourceKind: "local-pdf-crop" };
+  const confirmed = { ...unconfirmed, id: "confirmed", sourceKind: "local-pdf-crop-confirmed" };
+  const picked = { id: "picker", data: "data:image/png;base64,UElDS0VS", sourceKind: "auto" };
+
+  // When
+  const input = selectImagePlanningInput({ references: [unconfirmed, confirmed, picked], latestResult: unconfirmed });
+
+  // Then
+  assert.deepEqual(input, { references: [confirmed, picked], latestResult: null });
+});
+
+test("single-render direct transport drops unconfirmed local bytes and retains confirmed and picker inputs", async () => {
+  // Given
+  const { selectImageTransportItems } = await requestPlanModule;
+  const local = { id: "local", data: "data:image/png;base64,TE9DQUw=", sourceKind: "local-pdf-crop" };
+  const confirmed = { ...local, id: "confirmed", sourceKind: "local-pdf-crop-confirmed" };
+  const picker = { id: "picker", data: "data:image/png;base64,UElDS0VS", sourceKind: "auto" };
+
+  // When
+  const selected = selectImageTransportItems([local, confirmed, picker]);
+
+  // Then
+  assert.deepEqual(selected, [confirmed, picker]);
+});
+
+test("batch direct transport drops unconfirmed local bytes and retains confirmed picker and draft inputs", async () => {
+  // Given
+  const { selectImageTransportItems } = await requestPlanModule;
+  const local = { id: "local", data: "data:image/png;base64,TE9DQUw=", sourceKind: "local-pdf" };
+  const confirmed = { ...local, id: "confirmed", sourceKind: "local-pdf-confirmed" };
+  const picker = { id: "picker", data: "data:image/png;base64,UElDS0VS", sourceKind: "auto" };
+  const draft = { id: "draft", data: "data:image/png;base64,RFJBRlQ=", sourceKind: "line-art" };
+
+  // When
+  const selected = selectImageTransportItems([local, confirmed, picker, draft]);
+
+  // Then
+  assert.deepEqual(selected, [confirmed, picker, draft]);
+});
+
+test("the image pipeline delegates cache and remote planning to the private input", () => {
+  // Given / When
+  const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
+
+  // Then
+  assert.match(panel, /\{\s*references: planningReferences,\s*latestResult: revisionImage\s*\}\s*=\s*selectImagePlanningInput\(/s);
+  assert.match(panel, /makeCacheDescriptor\(\{[^}]*references:\s*planningReferences/s);
+  assert.match(panel, /createRemoteImageInputPlan\(\{[^}]*references:\s*planningReferences/s);
+  assert.match(panel, /outgoingItems\s*=\s*selectImageTransportItems\(composed\.outputs\.map\(/);
+  assert.match(panel, /const batchTransportItems\s*=\s*selectImageTransportItems\(outgoing\);[^;]*batchTransportItems\.map\(prepareTransportItem\)/s);
+});
+
+test("remote catalog loading stays visible and accessible inside the dialog", async () => {
+  // Given
+  const { createReferenceLoadStatus } = await dialogModule;
+  const { grid, root, summary } = createReferenceStatusFixture();
+  const status = createReferenceLoadStatus(root);
+
+  // When
+  status.loading();
+
+  // Then
+  assert.equal(summary.hidden, false);
+  assert.equal(summary.dataset.aiSearchState, "loading");
+  assert.equal(summary.getAttribute("aria-live"), "polite");
+  assert.equal(summary.getAttribute("aria-busy"), "true");
+  assert.equal(grid.getAttribute("aria-busy"), "true");
+  assert.ok(summary.textContent);
+});
+
+test("remote catalog failure stays visible and accessible inside the dialog", async () => {
+  // Given
+  const { createReferenceLoadStatus } = await dialogModule;
+  const { grid, root, summary } = createReferenceStatusFixture();
+  const status = createReferenceLoadStatus(root);
+
+  // When
+  status.error(new Error("catalog unavailable"));
+
+  // Then
+  assert.equal(summary.dataset.aiSearchState, "error");
+  assert.equal(summary.getAttribute("aria-live"), "assertive");
+  assert.equal(summary.getAttribute("aria-busy"), "false");
+  assert.equal(grid.getAttribute("aria-busy"), "false");
+  assert.equal(summary.textContent, "catalog unavailable");
+});
+
+test("the search coordinator exposes remote activation state inside its dialog", () => {
+  // Given / When
+  const search = fs.readFileSync(path.join(__dirname, "..", "js", "ai-reference-search.js"), "utf8");
+
+  // Then
+  assert.match(search, /createReferenceLoadStatus\(overlay\)/);
+  assert.match(search, /source\s*=\s*nextSource;\s*render\(\);/);
+  assert.match(search, /referenceLoadStatus\.loading\(\)/);
+  assert.match(search, /referenceLoadStatus\.error\(error\)/);
 });
 
 async function runLocalLifecycle(kind) {

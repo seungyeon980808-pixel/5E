@@ -862,7 +862,7 @@
 .ai-pdf-text-result-head strong { font-size: 12px; }
 .ai-pdf-text-result small { display: -webkit-box; overflow: hidden; color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.55; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .ai-pdf-text-result mark { padding: 0 1px; color: var(--text-primary, #e6edf3); background: color-mix(in srgb, #d29922 48%, transparent); }
-.ai-pdf-result-empty { margin: 0; padding: 36px 20px; color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.6; text-align: center; }
+.ai-pdf-result-empty { margin: 0; padding: 36px 20px; color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.6; text-align: center; word-break: keep-all; overflow-wrap: anywhere; }
 .ai-reference-search-empty { grid-column: 1 / -1; padding: 60px 20px; color: var(--text-secondary, #8b949e); text-align: center; }
 .ai-reference-search-dialog > footer { justify-content: flex-end; border-top: 1px solid var(--border, #30363d); border-bottom: 0; }
 .ai-reference-search-dialog > footer span { flex: 1; color: var(--text-secondary, #8b949e); font-size: 11px; }

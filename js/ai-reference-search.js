@@ -2,7 +2,7 @@ import { idbGet, idbSet } from "./idb-store.js";
 import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
 import { createPdfWorkspace } from "./ai-pdf-workspace.js";
-import { createReferenceDialog } from "./ai-reference-dialog.js";
+import { createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.8-local-privacy-completion";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { readWebImage, sourcesFromDesktopResult, sourcesFromWebFiles } from "./local-reference-sources.mjs";
 import {
@@ -35,6 +35,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   let indexing = false;
   let pdfWorkspace = null;
   let referenceGrid = null;
+  let referenceLoadStatus = null;
   let parentDialog = null;
   const selected = new Map();
   const objectUrls = new Set();
@@ -196,6 +197,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   async function open() {
     close(); selected.clear(); query = "";
     overlay = createReferenceDialog();
+    referenceLoadStatus = createReferenceLoadStatus(overlay);
     parentDialog = document.querySelector("#ai-image-panel [aria-modal=true]");
     parentDialog?.setAttribute("aria-hidden", "true");
     pdfWorkspace = createPdfWorkspace({
@@ -217,12 +219,20 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
     overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); });
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
-      button.onclick = () => void activateReferenceSource(button.dataset.aiSearchSource, {
-        loadRemote: ensureRemoteData,
-        onRemoteLoad: () => status("이미지 검색 목록을 불러오는 중…", "busy"),
-      })
-        .then((nextSource) => { source = nextSource; render(); })
-        .catch((error) => status(error.message || String(error), "error"));
+      button.onclick = () => {
+        const nextSource = button.dataset.aiSearchSource;
+        source = nextSource; render();
+        void activateReferenceSource(nextSource, {
+          loadRemote: ensureRemoteData,
+          onRemoteLoad: () => referenceLoadStatus.loading(),
+        })
+          .then(() => { if (source === nextSource) { render(); referenceLoadStatus.ready(); } })
+          .catch((error) => {
+            if (source !== nextSource) return;
+            referenceLoadStatus.error(error);
+            status(error.message || String(error), "error");
+          });
+      };
     });
     const input = overlay.querySelector("input[type=search]");
     input.oninput = () => { query = input.value; render(); };

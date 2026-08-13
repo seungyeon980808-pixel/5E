@@ -26,3 +26,24 @@ export function createReferenceDialog() {
   document.documentElement.appendChild(overlay);
   return overlay;
 }
+
+export function createReferenceLoadStatus(root) {
+  const summary = root.querySelector("[data-ai-search-summary]");
+  const grid = root.querySelector("[data-ai-search-grid]");
+  const update = (state, message = "") => {
+    const busy = state === "loading";
+    summary.hidden = false;
+    summary.dataset.aiSearchState = state;
+    summary.setAttribute("role", "status");
+    summary.setAttribute("aria-live", state === "error" ? "assertive" : "polite");
+    summary.setAttribute("aria-atomic", "true");
+    summary.setAttribute("aria-busy", String(busy));
+    grid.setAttribute("aria-busy", String(busy));
+    if (message) summary.textContent = message;
+  };
+  return {
+    loading: () => update("loading", "이미지 검색 목록을 불러오는 중…"),
+    ready: () => update("ready"),
+    error: (error) => update("error", error?.message || String(error)),
+  };
+}

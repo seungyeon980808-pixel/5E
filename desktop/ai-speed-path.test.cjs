@@ -20,7 +20,7 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   const scenePrompt = fs.readFileSync(path.join(__dirname, "..", "js", "ai-scene-prompt.js"), "utf8");
   const index = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   assert.match(panel, /ai-image-transport\.js\?v=1\.5\.3/);
-  assert.match(panel, /ai-request-plan\.js\?v=1\.5\.8-local-privacy-parity/);
+  assert.match(panel, /ai-request-plan\.js\?v=1\.5\.8-local-privacy-completion/);
   assert.match(panel, /ai-prompt\.js\?v=1\.5\.5/);
   assert.match(panel, /ai-events\.js\?v=1\.5\.4/);
   assert.doesNotMatch(panel, /ai-structure-lock\.js/);
@@ -29,12 +29,12 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-local-asset-router\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-remote-input-plan\.js\?v=1\.5\.3/);
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
-  assert.match(panel, /ai-reference-search\.js\?v=1\.5\.8-local-privacy-parity/);
+  assert.match(panel, /ai-reference-search\.js\?v=1\.5\.8-local-privacy-completion/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.11-local-privacy-parity/);
-  assert.match(index, /css\/ai-panel\.css\?v=1\.5\.6-pdf-crop-workspace-3/);
-  assert.match(index, /js\/main\.js\?v=1\.5\.9-local-privacy-parity/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.11-local-privacy-completion/);
+  assert.match(index, /css\/ai-panel\.css\?v=1\.5\.6-local-privacy-completion/);
+  assert.match(index, /js\/main\.js\?v=1\.5\.9-local-privacy-completion/);
 });
 
 test("the MCP bridge can import the PNG density helper", () => {

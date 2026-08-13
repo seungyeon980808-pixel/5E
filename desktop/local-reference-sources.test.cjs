@@ -58,3 +58,15 @@ test("desktop folder picker explains that Windows hides files in directory mode"
   assert.match(main, /PDF 파일은 표시되지 않습니다 — 현재 폴더를 선택하세요/);
   assert.match(main, /properties: \["openDirectory"\]/);
 });
+
+test("PDF empty-state text preserves Korean words before overflow fallback", () => {
+  // Given
+  const fs = require("node:fs");
+  const path = require("node:path");
+
+  // When
+  const css = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
+
+  // Then
+  assert.match(css, /\.ai-pdf-result-empty\s*\{[^}]*word-break:\s*keep-all;[^}]*overflow-wrap:\s*anywhere;[^}]*\}/s);
+});
