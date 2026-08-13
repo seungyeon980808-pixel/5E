@@ -23,13 +23,13 @@ import { initSettings } from "./settings.js?v=1.4.0";
 import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
 import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
-import { initExamLibrary } from "./exam-library.js?v=1.4.12";
+import { initExamLibrary } from "./exam-library.js?v=1.5.14-phase1-legacy-ui";
 // 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
 // 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
 import { initPartsLibrary } from "./parts-library.js?v=1.4.12";
 import { initTemplates } from "./templates.js?v=1.4.0";
-import { initObjectSearch } from "./search.js?v=1.4.0";
-import { initCommandPalette } from "./command-palette.js?v=1.4.0";
+import { initObjectSearch, resolveLegacyLibraryUiEnabled } from "./search.js?v=1.5.14-phase1-legacy-ui";
+import { initCommandPalette } from "./command-palette.js?v=1.5.14-phase1-legacy-ui";
 import { initSubjectObjects } from "./subject-objects.js?v=1.4.0";
 import { initToolHint } from "./tool-hint.js?v=1.5.2";
 import { initTooltips } from "./tooltip.js?v=1.4.0";
@@ -65,10 +65,11 @@ import { localizeShortcutLabels } from "./platform.js?v=1.4.0";
 import { initModalDrag } from "./modal-drag.js?v=1.4.0";
 import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
-import { initTutorial } from "./tutorial.js?v=1.5.2";
+import { initTutorial } from "./tutorial.js?v=1.5.14-phase1-legacy-ui";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.5.6-pdf-search";
 import { initAiPanel } from "./ai-panel.js?v=1.5.13-phase0-privacy";
 
+const legacyLibraryUiEnabled = resolveLegacyLibraryUiEnabled(window);
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
 
@@ -262,8 +263,10 @@ initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
 const openAiWithReference = (options) => aiPanel?.open(options);
-initExamLibrary(state, { openAi: openAiWithReference });
-initPartsLibrary(state, { openAi: openAiWithReference });
+if (legacyLibraryUiEnabled) {
+  initExamLibrary(state, { openAi: openAiWithReference, legacyLibraryUiEnabled });
+  initPartsLibrary(state, { openAi: openAiWithReference });
+}
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);
@@ -275,7 +278,7 @@ initTemplates(svg);
 initObjectSearch();
 
 /* ----- command palette: Ctrl+K 통합 실행기(명령 + 오브젝트 검색) ----- */
-initCommandPalette();
+initCommandPalette({ legacyLibraryUiEnabled });
 
 /* ----- 과목별 오브젝트: 과목 선택 + 파트 아코디언 + 과목별 강조색 테마 ----- */
 initSubjectObjects();
@@ -304,7 +307,7 @@ initReferenceWindows(state);
 
 /* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
-initTutorial();
+initTutorial({ legacyLibraryUiEnabled });
 
 /* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
    앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로

@@ -23,7 +23,7 @@ import { state } from "./state.js?v=1.4.0";
 import { addPage, switchPage } from "./pages.js?v=1.4.0";
 import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { buildExportSvg } from "./svg-export.js?v=1.4.0";
-import { COURSES, getCourse } from "./tutorial-courses.js?v=1.4.0";
+import { getTutorialCourses, getCourse } from "./tutorial-courses.js?v=1.5.14-phase1-legacy-ui";
 
 /* ===== 저장 (localStorage) ===== */
 
@@ -88,6 +88,15 @@ const DEMO_DELAY = 850;
 
 /* ===== 지금 돌고 있는 튜토리얼 (하나만 살아 있어야 한다) ===== */
 let _run = null;
+let _legacyLibraryUiEnabled = false;
+
+function availableCourse(id) {
+  return getCourse(id, { legacyLibraryUiEnabled: _legacyLibraryUiEnabled });
+}
+
+function availableCourses() {
+  return getTutorialCourses({ legacyLibraryUiEnabled: _legacyLibraryUiEnabled });
+}
 
 /* 마우스를 누르고 있는가 — 끄는 도중에 단계가 넘어가지 않게 하는 잠금.
  *
@@ -892,7 +901,7 @@ async function cleanupPracticePage(info) {
 /* ===== 코스 진행 ===== */
 
 export function startCourse(courseId, { from = 0 } = {}) {
-  const course = getCourse(courseId);
+  const course = availableCourse(courseId);
   if (!course) return;
   stopTutorial({ silent: true });   // 겹쳐 남는 흐림 방지 — 항상 먼저 끈다
   closePicker();
@@ -1375,9 +1384,9 @@ export function openPicker({ justFinished = null } = {}) {
   const overlay = document.createElement("div");
   overlay.className = "tut-picker-overlay";
 
-  const finished = justFinished ? getCourse(justFinished) : null;
+  const finished = justFinished ? availableCourse(justFinished) : null;
   const suggested = finished
-    ? (finished.next || []).map(getCourse).filter(Boolean).filter((c) => !done.includes(c.id))
+    ? (finished.next || []).map(availableCourse).filter(Boolean).filter((c) => !done.includes(c.id))
     : [];
 
   const head = finished
@@ -1414,7 +1423,7 @@ export function openPicker({ justFinished = null } = {}) {
   ];
 
   const tracks = TRACKS
-    .map((t) => ({ ...t, items: COURSES.filter(t.pick) }))
+    .map((t) => ({ ...t, items: availableCourses().filter(t.pick) }))
     .filter((t) => t.items.length);
 
   const nav = overlay.querySelector(".tut-track-nav");
@@ -1506,6 +1515,7 @@ export function closePicker() {
 let _compare = null;
 
 export function openCompare(examId, { note = "", examOnly = false } = {}) {
+  if (!_legacyLibraryUiEnabled) return;
   closeCompare();
 
   const overlay = document.createElement("div");
@@ -1629,7 +1639,8 @@ function pointAtTutorialButton() {
 
 /* ===== 배선 ===== */
 
-export function initTutorial() {
+export function initTutorial({ legacyLibraryUiEnabled = false } = {}) {
+  _legacyLibraryUiEnabled = legacyLibraryUiEnabled === true;
   const tutorialButton = document.getElementById("tutorial-btn");
   if (tutorialButton && !tutorialButton.querySelector(".tutorial-beta-tag")) {
     const beta = document.createElement("span");

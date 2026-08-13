@@ -3439,7 +3439,7 @@ const ADVANCED_GRAPH_ANNOT = {
   ],
 };
 
-export const COURSES = [
+const ALL_COURSES = [
   // 기본 트랙 — 모두가 거치는 순서
   // ('시작 준비'는 코스에서 빠지고 BASICS 의 '준비' 챕터가 되었다 — READY_STEPS)
   BASICS, INCLINE_FIGURE, EXAM_SEARCH,
@@ -3452,6 +3452,26 @@ export const COURSES = [
   ...TASKS,
 ];
 
-export function getCourse(id) {
-  return COURSES.find((c) => c.id === id) || null;
+const LEGACY_LIBRARY_COURSE_IDS = new Set([
+  "exam-search",
+  "trim-exam",
+  "advanced-assets",
+  "task-exam-incline",
+]);
+
+export function getTutorialCourses({ legacyLibraryUiEnabled = false } = {}) {
+  if (legacyLibraryUiEnabled) return [...ALL_COURSES];
+
+  const visible = ALL_COURSES.filter(({ id }) => !LEGACY_LIBRARY_COURSE_IDS.has(id));
+  const visibleIds = new Set(visible.map(({ id }) => id));
+  return visible.map((course) => ({
+    ...course,
+    next: (course.next || []).filter((id) => visibleIds.has(id)),
+  }));
+}
+
+export const COURSES = getTutorialCourses();
+
+export function getCourse(id, options = {}) {
+  return getTutorialCourses(options).find((course) => course.id === id) || null;
 }

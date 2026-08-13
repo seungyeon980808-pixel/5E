@@ -185,7 +185,8 @@ function buildModal() {
   return overlay;
 }
 
-export function initExamLibrary(state, { openAi } = {}) {
+export function initExamLibrary(state, { openAi, legacyLibraryUiEnabled = false } = {}) {
+  if (!legacyLibraryUiEnabled) return;
   const openButton = document.getElementById("exam-library-open");
   if (!openButton) return;
 

@@ -104,7 +104,14 @@ const COMMANDS = [
   { id: "tutorial",    label: "튜토리얼", keywords: ["tutorial", "튜토리얼", "따라하기", "도움말", "help", "처음"], shortcutLabel: "", run: () => clickById("tutorial-btn") },
 ];
 
-export function initCommandPalette() {
+export function getCommandPaletteCommands({ legacyLibraryUiEnabled = false } = {}) {
+  return legacyLibraryUiEnabled
+    ? [...COMMANDS]
+    : COMMANDS.filter(({ id }) => id !== "examSearch");
+}
+
+export function initCommandPalette({ legacyLibraryUiEnabled = false } = {}) {
+  const commands = getCommandPaletteCommands({ legacyLibraryUiEnabled });
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.hidden = true;
@@ -154,7 +161,7 @@ export function initCommandPalette() {
 
     matches = [];
     // (a) 명령: 레지스트리에서 라벨/키워드 매치
-    for (const cmd of COMMANDS) {
+    for (const cmd of commands) {
       if (!query || [cmd.label, ...(cmd.keywords || [])]
         .some((v) => String(v).toLocaleLowerCase().includes(query))) {
         matches.push({ kind: "command", id: cmd.id, cmd });

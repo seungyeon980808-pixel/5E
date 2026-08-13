@@ -9,6 +9,21 @@ import {
 import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.4.0";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
+const LEGACY_LIBRARY_UI_QUERY = "__5e_dev_legacy_library_ui";
+
+export function resolveLegacyLibraryUiEnabled(runtime = globalThis) {
+  const desktop = runtime?.fiveEDesktop;
+  if (desktop) {
+    return desktop.capabilities?.legacyLibraryUiEnabled === true;
+  }
+
+  const location = runtime?.location;
+  const localBrowser = location?.protocol === "http:"
+    && (location.hostname === "localhost" || location.hostname === "127.0.0.1");
+  if (!localBrowser) return false;
+
+  return new URLSearchParams(location.search).get(LEGACY_LIBRARY_UI_QUERY) === "1";
+}
 
 function isTypingTarget(target) {
   return target instanceof HTMLElement && (
