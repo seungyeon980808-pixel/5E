@@ -4,6 +4,7 @@ GlobalWorkerOptions.workerSrc = new URL("../vendor/pdfjs/pdf.worker.min.mjs", im
 
 const documents = new Map();
 const standardFontDataUrl = new URL("../vendor/pdfjs/standard_fonts/", import.meta.url).href;
+const cMapUrl = new URL("../vendor/pdfjs/cmaps/", import.meta.url).href;
 
 function sourceKey(source) {
   return `${source.id}:${source.size || 0}:${source.modifiedAt || 0}`;
@@ -13,8 +14,11 @@ async function loadDocument(source) {
   const key = sourceKey(source);
   if (!documents.has(key)) {
     documents.set(key, Promise.resolve(source.read()).then((data) => {
-      const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
-      return getDocument({ data: bytes, standardFontDataUrl }).promise;
+      const view = ArrayBuffer.isView(data)
+        ? new Uint8Array(data.buffer, data.byteOffset, data.byteLength)
+        : new Uint8Array(data);
+      const bytes = new Uint8Array(view);
+      return getDocument({ data: bytes, standardFontDataUrl, cMapUrl, cMapPacked: true }).promise;
     }));
   }
   return documents.get(key);

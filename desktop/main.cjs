@@ -907,7 +907,7 @@ ipcMain.handle("capture:sources", async () => {
 });
 ipcMain.handle("local-images:pick-folder", async () => {
   const result = await dialog.showOpenDialog(win, {
-    title: "검색할 로컬 이미지·PDF 폴더 선택",
+    title: "PDF 파일은 표시되지 않습니다 — 현재 폴더를 선택하세요",
     properties: ["openDirectory"],
   });
   const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");

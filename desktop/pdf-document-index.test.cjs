@@ -35,3 +35,14 @@ test("shared PDF engine extracts searchable text page-by-page", async () => {
   assert.equal(pages[0].pageNumber, 1);
   assert.match(pages[0].text, /Light lens refraction/);
 });
+
+test("shared PDF engine accepts the Node Buffer returned by desktop file reads", async () => {
+  const { extractPdfPages, clearPdfDocumentCache } = await import("../js/pdf-document-index.mjs");
+  clearPdfDocumentCache();
+  const source = {
+    id: "desktop-buffer", name: "desktop.pdf", size: 2, modifiedAt: 2,
+    read: async () => Buffer.from(onePagePdf("Desktop PDF text")),
+  };
+  const pages = await extractPdfPages(source);
+  assert.match(pages[0].text, /Desktop PDF text/);
+});
