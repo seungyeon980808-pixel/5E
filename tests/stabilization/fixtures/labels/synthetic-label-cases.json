@@ -21,9 +21,9 @@
     { "text": "미상", "bounds": [0.6, 0.5, 0.2, 0.2], "uncertain": true }
   ],
   "edits": [
-    { "kind": "edit", "id": "label-1-text", "text": "수정 A" },
-    { "kind": "move", "id": "label-1-leader", "dx": 8, "dy": 3 },
-    { "kind": "delete", "id": "label-2-text" }
+    { "kind": "edit", "id": "label-1", "text": "수정 A" },
+    { "kind": "move", "id": "label-1", "dx": 8, "dy": 3 },
+    { "kind": "delete", "id": "label-2" }
   ],
   "attempts": [{ "ok": false }, { "ok": true }]
 }

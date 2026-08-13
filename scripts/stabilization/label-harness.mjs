@@ -1,3 +1,9 @@
+import { applyLoaded, migrate, serialize } from "../../js/project-io.js";
+import { renderObject, singleObjBBox } from "../../js/render.js";
+import { createStore } from "../../js/store.js";
+import { translateObject } from "../../js/transform.js";
+import { createInspectorContext } from "../../js/inspector/context.js";
+
 const UNCERTAIN_CONFIDENCE = 0.6;
 
 export function compareCropPixels(sourcePixels, transmittedPixels) {
@@ -39,49 +45,50 @@ export function normalizeOcrLabels(items, image) {
 }
 
 export function createEditableLabelObjects(labels, image) {
-  return labels.flatMap((label, index) => {
+  return labels.map((label, index) => {
     const number = index + 1;
-    const center = [
-      (label.bounds[0] + label.bounds[2] / 2) * image.width,
-      (label.bounds[1] + label.bounds[3] / 2) * image.height,
-    ];
+    const p2 = {
+      x: (label.bounds[0] + label.bounds[2] / 2) * image.width,
+      y: (label.bounds[1] + label.bounds[3] / 2) * image.height,
+    };
     const text = label.uncertain ? `${label.text} (?)` : label.text;
-    return [
-      {
-        id: `label-${number}-text`, type: "text", text,
-        x: center[0], y: center[1], fontSize: 3.7, uncertain: label.uncertain,
-        locked: false, positionLocked: false,
-      },
-      {
-        id: `label-${number}-leader`, type: "labeler", text,
-        p1: [label.target[0] * image.width, label.target[1] * image.height],
-        p2: center, labelType: "label", labelSize: 3.7,
-        uncertain: label.uncertain, locked: false, positionLocked: false,
-      },
-    ];
+    return {
+      id: `label-${number}`, type: "labeler", text,
+      p1: { x: label.target[0] * image.width, y: label.target[1] * image.height },
+      p2, labelType: "label", labelSize: 3.7, strokeLevel: 0, strokeWidth: 0.2,
+      uncertain: label.uncertain, locked: false, positionLocked: false,
+      layerId: 1, order: index,
+    };
   });
 }
 
-export function applyLabelEdits(objects, edits) {
-  let result = objects.map((object) => structuredClone(object));
+export function applyLabelEdits(state, edits) {
+  const inspector = createInspectorContext(state);
+  const paths = [];
   for (const edit of edits) {
     if (edit.kind === "delete") {
-      result = result.filter(({ id }) => id !== edit.id);
+      state.update((live) => { live.objects = live.objects.filter(({ id }) => id !== edit.id); });
+      paths.push("store-delete");
       continue;
     }
-    result = result.map((object) => {
-      if (object.id !== edit.id) return object;
-      if (edit.kind === "edit") return { ...object, text: edit.text };
-      if (edit.kind === "move") {
-        const moved = { ...object };
-        if (Array.isArray(object.p2)) moved.p2 = [object.p2[0] + edit.dx, object.p2[1] + edit.dy];
-        else { moved.x = object.x + edit.dx; moved.y = object.y + edit.dy; }
-        return moved;
-      }
-      throw new TypeError(`Unsupported label edit: ${edit.kind}`);
-    });
+    state.update((live) => { live.selectedIds = [edit.id]; });
+    if (edit.kind === "edit") {
+      inspector.commitSelectedObject((object) => {
+        if (object.text === edit.text) return false;
+        object.text = edit.text;
+        return true;
+      });
+      paths.push("inspector");
+      continue;
+    }
+    if (edit.kind === "move") {
+      state.update((live) => { translateObject(live.objects.find(({ id }) => id === edit.id), edit.dx, edit.dy); });
+      paths.push("transform");
+      continue;
+    }
+    throw new TypeError(`Unsupported label edit: ${edit.kind}`);
   }
-  return result;
+  return { objects: structuredClone(state.get().objects), paths };
 }
 
 export function recoveryStates(attempts) {
@@ -97,6 +104,15 @@ export function recoveryStates(attempts) {
 export function runSyntheticLabelCase(fixture) {
   const ocr = normalizeOcrLabels(fixture.ocr, fixture.image);
   const objects = createEditableLabelObjects(ocr, fixture.image);
+  const pageId = "synthetic-label-page";
+  const state = createStore({ activeLayerId: 1 });
+  applyLoaded(state, migrate({
+    version: "0.17", activePageId: pageId,
+    pages: [{ id: pageId, name: "Synthetic", objects, guides: [], layers: [{ id: 1, name: "Labels" }], artboard: fixture.image }],
+  }));
+  const persisted = structuredClone(serialize(state.get()).pages[0].objects);
+  const nodes = persisted.map((object) => renderObject(object));
+  const edits = applyLabelEdits(state, fixture.edits);
   const sourceCropPixels = cropRgba(fixture.pixelSource, fixture.crop);
   return {
     crop: compareCropPixels(sourceCropPixels, fixture.transmittedPixels),
@@ -105,8 +121,13 @@ export function runSyntheticLabelCase(fixture) {
       transportPixels: [...fixture.transmittedPixels],
     },
     ocr,
-    objects,
-    edited: applyLabelEdits(objects, fixture.edits),
+    generated: objects,
+    objects: persisted,
+    persisted,
+    rendered: nodes.map((node) => ({ tag: node.tagName, leaders: node.querySelectorAll("line").length, text: node.textContent })),
+    inspectorBounds: persisted.map((object) => singleObjBBox(object, null)),
+    edited: edits.objects,
+    editPaths: edits.paths,
     comparison: { sourceId: fixture.sourceId, resultId: fixture.resultId, layout: "side-by-side" },
     recovery: recoveryStates(fixture.attempts),
   };
