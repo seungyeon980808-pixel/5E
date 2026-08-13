@@ -26,7 +26,7 @@ test("delayed cut is reachable from the visible cut chooser and keyboard", () =>
   assert.match(index, /data-tool="ERASE"/);
   assert.match(index, /지연 자르기/);
   assert.match(index, /style\.css\?v=1\.5\.8/);
-  assert.match(index, /main\.js\?v=1\.5\.21-phase4-labels/);
+  assert.match(index, /main\.js\?v=1\.5\.22-phase4-labels/);
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /tools\.js\?v=1\.5\.4/);
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /cut-tool\.js\?v=1\.5\.8/);
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /tool-hint\.js\?v=1\.5\.2/);

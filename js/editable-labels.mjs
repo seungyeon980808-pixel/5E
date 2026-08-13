@@ -34,6 +34,17 @@ export function createEditableLabelSession(initial = []) {
   };
 }
 
+export function labelOverlayDescriptors(candidates = []) {
+  return candidates.map((item) => ({
+    id: String(item.id || ""),
+    text: String(item.text || ""),
+    confirmed: item.confirmed === true,
+    original: bounds(item.original),
+    target: point(item.target),
+    labelPosition: point(item.labelPosition),
+  }));
+}
+
 export function labelObjectsForImage(candidates, image, bundleId) {
   return candidates.filter((item) => item.confirmed).map((item, index) => ({
     id: `${bundleId}_label_${index + 1}`,

@@ -40,6 +40,16 @@ test("manual label candidates require explicit complete confirmation", async () 
   assert.equal(session.get(candidate.id).confirmed, false, "editing invalidates confirmation");
 });
 
+test("label overlay descriptors expose every user-selected coordinate", async () => {
+  const { labelOverlayDescriptors } = await import("../js/editable-labels.mjs");
+  assert.deepEqual(labelOverlayDescriptors([{ id: "c1", text: "가속도", confirmed: false,
+    original: { x: .1, y: .2, w: .08, h: .05 }, target: { x: .4, y: .5 }, labelPosition: { x: .6, y: .3 } }]), [{
+    id: "c1", text: "가속도", confirmed: false,
+    original: { x: .1, y: .2, w: .08, h: .05 },
+    target: { x: .4, y: .5 }, labelPosition: { x: .6, y: .3 },
+  }]);
+});
+
 test("confirmed candidates compile to rendered editable labeler objects with separate provenance", async () => {
   const { labelObjectsForImage } = await import("../js/editable-labels.mjs");
   installSvgDom();

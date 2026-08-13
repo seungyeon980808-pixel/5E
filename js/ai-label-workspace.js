@@ -1,4 +1,4 @@
-import { createEditableLabelSession } from "./editable-labels.mjs?v=1.5.0-phase4-labels";
+import { createEditableLabelSession, labelOverlayDescriptors } from "./editable-labels.mjs?v=1.5.1-phase4-labels";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 
 function normalizedPoint(event, image) {
@@ -22,8 +22,8 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   overlay.innerHTML = `<section class="ai-label-dialog" role="dialog" aria-modal="true">
     <header><strong>편집 가능한 라벨 배치</strong><button type="button" data-label-close aria-label="닫기">×</button></header>
     <p class="ai-label-intro">자동 OCR로 확정하지 않습니다. 원본 위치와 결과의 지시선·라벨 위치를 직접 지정해 주세요.</p>
-    <div class="ai-label-layout"><figure><figcaption>원본</figcaption><div><img data-label-source alt="라벨 원본"></div></figure>
-      <figure><figcaption>라벨 없는 결과</figcaption><div><img data-label-result alt="라벨 없는 도판 결과"></div></figure></div>
+    <div class="ai-label-layout"><figure><figcaption>원본</figcaption><div class="ai-label-image-stage"><img data-label-source alt="라벨 원본"><div data-label-source-marks aria-hidden="true"></div></div></figure>
+      <figure><figcaption>라벨 없는 결과</figcaption><div class="ai-label-image-stage"><img data-label-result alt="라벨 없는 도판 결과"><div data-label-result-marks aria-hidden="true"></div></div></figure></div>
     <section class="ai-label-controls"><div><button type="button" data-label-add>라벨 추가</button><span data-label-status role="status" aria-live="polite">라벨을 추가해 시작하세요.</span></div><div data-label-list></div></section>
     <footer><button type="button" data-label-cancel>취소</button><button type="button" data-label-insert disabled>도판 + 라벨을 캔버스에 삽입</button></footer>
   </section>`;
@@ -37,6 +37,8 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   const list = dialog.querySelector("[data-label-list]");
   const status = dialog.querySelector("[data-label-status]");
   const insert = dialog.querySelector("[data-label-insert]");
+  const sourceMarks = dialog.querySelector("[data-label-source-marks]");
+  const resultMarks = dialog.querySelector("[data-label-result-marks]");
   sourceImage.src = source.data;
   resultImage.src = result.data;
   const closeButton = dialog.querySelector("[data-label-close]");
@@ -45,13 +47,59 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   releaseFocus = installModalFocus({ root: overlay, initialFocus: closeButton, returnFocus, onRequestClose: close });
 
   const setPending = (id, kind, message) => { pending = { id, kind }; status.textContent = message; render(); };
+  const percent = (value) => `${value * 100}%`;
+  const renderMarks = () => {
+    const descriptors = labelOverlayDescriptors(session.list());
+    sourceMarks.replaceChildren(...descriptors.filter((item) => item.original).map((item) => {
+      const mark = document.createElement("span");
+      mark.className = "ai-label-source-mark";
+      mark.dataset.confirmed = String(item.confirmed);
+      Object.assign(mark.style, { left: percent(item.original.x), top: percent(item.original.y),
+        width: percent(item.original.w), height: percent(item.original.h) });
+      return mark;
+    }));
+    resultMarks.replaceChildren(...descriptors.filter((item) => item.target || item.labelPosition).map((item) => {
+      const mark = document.createElement("span");
+      mark.className = "ai-label-result-mark";
+      mark.dataset.confirmed = String(item.confirmed);
+      if (item.target) {
+        const target = document.createElement("span");
+        target.className = "ai-label-result-target";
+        Object.assign(target.style, { left: percent(item.target.x), top: percent(item.target.y) });
+        mark.append(target);
+      }
+      if (item.target && item.labelPosition) {
+        const dx = item.labelPosition.x - item.target.x;
+        const dy = item.labelPosition.y - item.target.y;
+        const line = document.createElement("span");
+        line.className = "ai-label-result-line";
+        Object.assign(line.style, { left: percent(item.target.x), top: percent(item.target.y),
+          width: `${Math.hypot(dx, dy) * 100}%`, transform: `rotate(${Math.atan2(dy, dx)}rad)` });
+        mark.append(line);
+      }
+      if (item.labelPosition) {
+        const label = document.createElement("span");
+        label.className = "ai-label-result-text";
+        label.textContent = item.text || "?";
+        Object.assign(label.style, { left: percent(item.labelPosition.x), top: percent(item.labelPosition.y) });
+        mark.append(label);
+      }
+      return mark;
+    }));
+  };
   const candidateRow = (candidate) => {
     const row = document.createElement("article");
     row.className = "ai-label-candidate";
     row.dataset.confirmed = String(candidate.confirmed);
     const input = document.createElement("input");
     input.type = "text"; input.value = candidate.text; input.placeholder = "라벨 문자열"; input.setAttribute("aria-label", "라벨 문자열");
-    input.oninput = () => { session.updateText(candidate.id, input.value); render(); };
+    input.oninput = () => {
+      session.updateText(candidate.id, input.value);
+      row.dataset.confirmed = "false";
+      confirm.textContent = "확인 필요";
+      insert.disabled = !session.ready();
+      renderMarks();
+    };
     const action = (text, kind, message) => {
       const button = document.createElement("button");
       button.type = "button"; button.textContent = text;
@@ -77,6 +125,7 @@ export function openEditableLabelWorkspace({ source, result, onInsert, returnFoc
   function render() {
     list.replaceChildren(...session.list().map(candidateRow));
     insert.disabled = !session.ready();
+    renderMarks();
   }
   const applyPoint = (kind, event, image) => {
     if (!pending || pending.kind !== kind) return;
