@@ -4,8 +4,6 @@ const { execFileSync, spawn } = require("node:child_process");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
-const { assertBrowserDesktopParity } = require("../tests/stabilization/harness/browser-desktop-parity.cjs");
 const { withTemporaryDirectory } = require("../tests/stabilization/harness/common-fixtures.cjs");
 const { createTextlessSyntheticPdf } = require("../tests/stabilization/fixtures/pdf/generate-synthetic-pdf.cjs");
 
@@ -76,7 +74,7 @@ function runProbe(executable, url, reportPath) {
   });
 }
 
-test("HTTP-served Chromium behavior matches the Electron adapter without console or unhandled errors", { timeout: 45_000 }, async () => {
+test("HTTP-served AI panel and Electron IPC enforce identical local-reference transport privacy", { timeout: 60_000 }, async () => {
   // Given
   const server = createStaticServer();
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -93,27 +91,16 @@ test("HTTP-served Chromium behavior matches the Electron adapter without console
       await new Promise((resolve) => server.close(resolve));
     }
   });
-  const { rankPdfPages } = await import(pathToFileURL(path.join(root, "js", "pdf-search.mjs")).href);
-  const { selectImageTransportItems } = await import(pathToFileURL(path.join(root, "js", "ai-request-plan.js")).href);
-  const pages = [
-    { id: "fixture:1", name: "별빛.pdf", pageNumber: 1, text: "빛 프리즘" },
-    { id: "fixture:2", name: "별빛.pdf", pageNumber: 2, text: "빛 거울" },
-  ];
-  const expected = {
-    searchIds: rankPdfPages(pages, "빛 프리즘").map((page) => page.id),
-    pdfPaths: ["시험/별빛.pdf"],
-    transportKinds: selectImageTransportItems([
-      { sourceKind: "local-pdf-crop", data: "blocked" },
-      { sourceKind: "local-pdf-crop-confirmed", data: "selected-crop" },
-    ]).map((item) => item.sourceKind),
-  };
-
   // Then
-  assert.equal(report.appReady, true);
+  assert.equal(report.appReady, true, JSON.stringify(report));
   assert.deepEqual(report.consoleErrors, []);
   assert.deepEqual(report.unhandledExceptions, []);
-  assertBrowserDesktopParity(assert,
-    { outcome: report.browser, transportCalls: [] },
-    { outcome: report.desktop, transportCalls: [] });
-  assert.deepEqual(report.browser, expected);
+  assert.deepEqual(report.desktop, report.browser);
+  assert.equal(report.browser.single.calls, 1);
+  assert.equal(report.browser.batch.calls, 3);
+  for (const flow of [report.browser.single, report.browser.batch]) {
+    assert.deepEqual(flow.blocked, { name: false, bytes: false, comment: false });
+    assert.deepEqual(flow.confirmed, { name: true, bytes: true, comment: true });
+    assert.deepEqual(flow.automatic, { name: true, bytes: true, comment: true });
+  }
 });

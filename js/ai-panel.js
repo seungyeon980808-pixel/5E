@@ -724,8 +724,10 @@ export function initAiPanel(state) {
     return card;
   };
 
-  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto" }) => {
-    const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind, comments: [], nextCommentNumber: 1 };
+  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", comments = [] }) => {
+    const copiedComments = Array.isArray(comments) ? comments.map((comment) => ({ ...comment })) : [];
+    const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind,
+      comments: copiedComments, nextCommentNumber: Math.max(0, ...copiedComments.map((comment) => Number(comment.number) || 0)) + 1 };
     attachments.push(item);
     attachmentList.appendChild(makeImageCard(item));
     syncReferenceSummary();
@@ -1639,7 +1641,8 @@ export function initAiPanel(state) {
       })));
       for (const result of loaded) {
         if (result.status === "fulfilled") {
-          addReferenceData({ data: result.value.data, name: result.value.item.name || "참고 이미지" });
+          addReferenceData({ data: result.value.data, name: result.value.item.name || "참고 이미지",
+            sourceKind: result.value.item.sourceKind, comments: result.value.item.comments });
         } else {
           addLog(result.reason?.message || String(result.reason), "error");
         }
