@@ -686,7 +686,7 @@
   .ai-input-hint { display: none; }
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 960px) {
   .ai-account-summary span { display: none; }
   .ai-account-summary strong { max-width: 150px; }
   .ai-workspace {

@@ -32,12 +32,12 @@ test("AI conversation controls use a readable aligned option grid", () => {
 });
 
 test("narrow AI workspaces stack both panes under one bounded scroll owner", () => {
-  // Given the responsive rules that apply at both 680px and 800px.
+  // Given the responsive rules that must apply at both 680px and 800px.
   const css = read("css/ai-panel.css");
 
-  // When the final max-width 1080px cascade is resolved.
+  // When the narrow cascade is resolved without capturing the 1080px desktop host.
   const compact = block(css, "@media (max-width: 760px)");
-  const responsive = block(css, "@media (max-width: 1080px)");
+  const responsive = block(css, "@media (max-width: 960px)");
   const workspace = block(responsive, ".ai-workspace");
   const results = block(responsive, ".ai-results");
   const conversation = block(responsive, ".ai-conversation");
