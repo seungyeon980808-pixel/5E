@@ -5,7 +5,7 @@
   "description": "5E science diagram editor for Windows with a local Codex image assistant",
   "main": "desktop/main.cjs",
   "scripts": {
-    "desktop": "node_modules\\electron\\dist\\electron.exe .",
+    "desktop": "electron .",
     "test": "node desktop/run-unit-tests.cjs",
     "test:phase0": "node scripts/stabilization/run-phase0.cjs",
     "test:desktop": "node desktop/run-smoke.cjs",
@@ -34,15 +34,43 @@
     "package:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {
-    "electron": "^37.0.0",
+    "electron": "43.4.0",
     "electron-builder": "^26.0.0"
   },
   "build": {
     "appId": "com.5e.editor",
     "productName": "5E",
-    "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "vendor/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
-    "win": { "icon": "assets/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "fonts/**/*",
+      "vendor/**/*",
+      "desktop/**/*",
+      "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
+      "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
+      "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   }
 }
