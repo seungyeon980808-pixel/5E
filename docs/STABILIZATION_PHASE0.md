@@ -1,6 +1,6 @@
 # Stabilization Phase 0 baseline
 
-Phase 0 establishes a repeatable, non-mutating baseline before PDF, label, graph, or package-content stabilization changes. It does not alter product behavior or remove assets.
+Phase 0 combines a repeatable, non-mutating baseline runner with the limited verified safety fixes documented below: local-first privacy, browser/Electron parity, and `.5e` roundtrip preservation. The runner itself does not mutate product state; the safety fixes intentionally tighten those product behaviors. Phase 0 removes no assets and does not package, release, or deploy the product.
 
 ## Verified baseline
 
