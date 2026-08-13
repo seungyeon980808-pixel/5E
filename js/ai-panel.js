@@ -15,8 +15,10 @@ import {
   selectOutgoingImageItems,
 } from "./ai-request-plan.js?v=1.5.8-local-privacy-completion";
 import { buildPlanningSafeAnnotationPrompt } from "./ai-image-annotations.js?v=1.5.13-phase0-privacy";
-import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
-import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
+import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.4-phase5-native-graph";
+import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.4-phase5-native-graph";
+import { knownUnsupportedGraphFeatures, mustKeepNativeFailure, nativeSceneFailureReport,
+  outputEngineForce } from "./ai-native-graph-policy.mjs?v=1.5.0-phase5-native-graph";
 import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
 import {
   compileFastSceneWithMotifs,
@@ -49,7 +51,7 @@ import {
   normalizeOutputEngine,
   normalizeQualityMode,
   qualityModeCacheVersion,
-} from "./ai-quality-mode.js?v=1.5.5";
+} from "./ai-quality-mode.js?v=1.5.6-phase5-native-graph";
 
 const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}`;
@@ -62,14 +64,14 @@ export function compilePanelScene(input, options) {
       // Compile the original request so audited motif shortcuts retain their
       // direct compiler metadata and semantic object grouping. The expanded
       // scene remains the canonical editable/revision source.
-      result: compileFastSceneWithMotifs(input, options),
+      result: compileFastSceneWithMotifs(input, { ...options, strict: true }),
       source: JSON.stringify(expanded),
       compileSource: typeof input === "string" ? input : JSON.stringify(input),
       expansionError: null,
     };
   } catch (error) {
     return {
-      result: compileFastScene(input, options),
+      result: compileFastScene(input, { ...options, strict: true }),
       source: String(input || ""),
       compileSource: String(input || ""),
       expansionError: error,
@@ -207,6 +209,7 @@ export function initAiPanel(state) {
   let currentTurnStartedAt = 0;
   let latestGeneratedSrc = null;
   let currentEngine = IMAGE_ENGINE_IDS.RASTER;
+  let currentRouteDecision = { engine: IMAGE_ENGINE_IDS.RASTER, reason: "initial" };
   let currentSceneResponse = "";
   let currentCacheRequest = null;
   let currentRequestSnapshot = null;
@@ -215,7 +218,7 @@ export function initAiPanel(state) {
   let modelsLoaded = false;
   let selectedMode = localStorage.getItem("5e.aiMode") || "diagram";
   let selectedQualityMode = normalizeQualityMode(localStorage.getItem("5e.aiQualityMode") || AI_QUALITY_MODES.STANDARD);
-  let selectedOutputEngine = normalizeOutputEngine(localStorage.getItem("5e.aiOutputEngine") || AI_OUTPUT_ENGINES.RASTER);
+  let selectedOutputEngine = normalizeOutputEngine(localStorage.getItem("5e.aiOutputEngine") || AI_OUTPUT_ENGINES.AUTO);
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -869,6 +872,7 @@ export function initAiPanel(state) {
     previewPending: false,
     currentTurnStartedAt: 0,
     currentEngine: IMAGE_ENGINE_IDS.RASTER,
+    currentRouteDecision: { engine: IMAGE_ENGINE_IDS.RASTER, reason: "initial" },
     currentSceneResponse: "",
     currentCacheRequest: null,
     currentRequestSnapshot: null,
@@ -913,6 +917,7 @@ export function initAiPanel(state) {
       previewPending,
       currentTurnStartedAt,
       currentEngine,
+      currentRouteDecision,
       currentSceneResponse,
       currentCacheRequest,
       currentRequestSnapshot,
@@ -1008,6 +1013,8 @@ export function initAiPanel(state) {
     previewPending = Boolean(runtime.previewPending);
     currentTurnStartedAt = Number(runtime.currentTurnStartedAt) || 0;
     currentEngine = runtime.currentEngine || IMAGE_ENGINE_IDS.RASTER;
+    currentRouteDecision = runtime.currentRouteDecision
+      || { engine: currentEngine, reason: "restored" };
     currentSceneResponse = runtime.currentSceneResponse || "";
     currentCacheRequest = runtime.currentCacheRequest || null;
     currentRequestSnapshot = runtime.currentRequestSnapshot || null;
@@ -1299,7 +1306,7 @@ export function initAiPanel(state) {
 
   const runBatch = () => {
     if (batchActive || busy || attachments.length < 2) return;
-    if (selectedOutputEngine !== AI_OUTPUT_ENGINES.RASTER) {
+    if (selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET) {
       setStatus("여러 장 변환은 시험문제용 도판 출력에서 사용해 주세요.", "warn");
       return;
     }
@@ -1392,10 +1399,32 @@ export function initAiPanel(state) {
     closeButton.textContent = "×";
     closeButton.title = "비교 닫기";
     head.append(title, closeButton);
+    const modeControls = document.createElement("div");
+    modeControls.className = "ai-compare-view-modes";
+    modeControls.setAttribute("role", "group");
+    modeControls.setAttribute("aria-label", "비교 표시 방식");
+    modeControls.innerHTML = `
+      <button type="button" class="is-on" aria-pressed="true" data-compare-view="side">나란히</button>
+      <button type="button" aria-pressed="false" data-compare-view="overlay">겹쳐 보기</button>
+      <button type="button" aria-pressed="false" data-compare-view="difference">차이 보기</button>`;
     const panes = document.createElement("div");
     panes.className = "ai-compare-panes";
+    const overlayStage = document.createElement("div");
+    overlayStage.className = "ai-compare-overlay-stage";
+    overlayStage.dataset.mode = "overlay";
+    overlayStage.hidden = true;
+    const overlayLeft = document.createElement("img");
+    const overlayRight = document.createElement("img");
+    overlayLeft.alt = "왼쪽 비교 이미지";
+    overlayRight.alt = "오른쪽 비교 이미지";
+    overlayStage.append(overlayLeft, overlayRight);
+    const selection = { left: null, right: null };
+    const updateOverlay = () => {
+      if (selection.left) overlayLeft.src = selection.left.data;
+      if (selection.right) overlayRight.src = selection.right.data;
+    };
 
-    const makePane = (initial) => {
+    const makePane = (initial, side) => {
       const pane = document.createElement("div");
       pane.className = "ai-compare-pane";
       const label = document.createElement("strong");
@@ -1404,10 +1433,12 @@ export function initAiPanel(state) {
       const picker = document.createElement("div");
       picker.className = "ai-compare-picker";
       const choose = (item) => {
+        selection[side] = item;
         main.src = item.data;
         main.alt = item.name;
         label.textContent = item.name;
         picker.querySelectorAll("button").forEach((button) => button.classList.toggle("is-on", button.dataset.imageId === item.id));
+        updateOverlay();
       };
       for (const item of images) {
         const button = document.createElement("button");
@@ -1427,8 +1458,20 @@ export function initAiPanel(state) {
     };
     const leftInitial = attachments[0] || images[0];
     const rightInitial = generatedImages.at(-1) || images.find((item) => item !== leftInitial) || images[1];
-    panes.append(makePane(leftInitial), makePane(rightInitial));
-    dialog.append(head, panes);
+    panes.append(makePane(leftInitial, "left"), makePane(rightInitial, "right"));
+    modeControls.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-compare-view]");
+      if (!button) return;
+      const mode = button.dataset.compareView;
+      modeControls.querySelectorAll("button").forEach((item) => {
+        item.classList.toggle("is-on", item === button);
+        item.setAttribute("aria-pressed", String(item === button));
+      });
+      panes.hidden = mode !== "side";
+      overlayStage.hidden = mode === "side";
+      if (mode !== "side") overlayStage.dataset.mode = mode;
+    });
+    dialog.append(head, modeControls, panes, overlayStage);
     overlay.appendChild(dialog);
     document.documentElement.appendChild(overlay);
     const closeDialog = installOverlayFocus({ overlay, dialog, title, closeButton, returnFocus });
@@ -1787,20 +1830,19 @@ export function initAiPanel(state) {
     setBusy(true);
     imageReceived = false;
     currentTurnType = type;
-    const requestedEngine = options.forceEngine
-      || (normalizeOutputEngine(runInput.outputEngine) === AI_OUTPUT_ENGINES.ASSET
-        ? IMAGE_ENGINE_IDS.FAST_SCENE
-        : IMAGE_ENGINE_IDS.RASTER);
-    currentEngine = type === "image"
+    const requestedEngine = options.forceEngine || outputEngineForce(normalizeOutputEngine(runInput.outputEngine));
+    currentRouteDecision = type === "image"
       ? chooseImageEngine({
         request: `${request}${requestComments}`,
         mode: runInput.mode,
         references: planningReferences,
         force: requestedEngine,
-      }).engine
-      : IMAGE_ENGINE_IDS.RASTER;
+      })
+      : { engine: IMAGE_ENGINE_IDS.RASTER, reason: "chat" };
+    currentEngine = currentRouteDecision.engine;
     currentRunInput = {
       ...runInput,
+      routeDecision: { ...currentRouteDecision },
       labelSource: planningReferences.length === 1 ? snapshotImageItem(planningReferences[0]) : null,
     };
     currentSceneResponse = "";
@@ -1838,7 +1880,7 @@ export function initAiPanel(state) {
     const renderRequest = discussionContext
       ? `지금까지 확정된 대화 내용:\n${discussionContext}\n\n이번 생성 요청:\n${annotatedRequest}`
       : annotatedRequest;
-    currentRequestSnapshot = { request, discussionContext, annotatedRequest, renderRequest, runInput };
+    currentRequestSnapshot = { request, discussionContext, annotatedRequest, renderRequest, runInput: currentRunInput };
     try {
       const clientPrepareStartedAt = performance.now();
       let outgoingItems = [];
@@ -2132,9 +2174,12 @@ export function initAiPanel(state) {
     selectedOutputEngine = normalizeOutputEngine(button.dataset.aiOutputEngine);
     localStorage.setItem("5e.aiOutputEngine", selectedOutputEngine);
     syncOutputEngine();
-    setStatus(selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
-      ? "편집 가능한 그래프 출력은 지원되는 그래프와 장치만 벡터로 생성합니다."
-      : "시험문제용 도판 출력은 세부 묘사를 래스터 이미지로 생성합니다.", "ok");
+    const outputMessage = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
+      ? "편집 가능한 그래프만 사용합니다. 지원되지 않는 요소는 정확히 알려드립니다."
+      : selectedOutputEngine === AI_OUTPUT_ENGINES.RASTER
+        ? "시험문제용 도판을 래스터 이미지로 생성합니다."
+        : "자동 선택은 그래프를 편집 가능한 오브젝트로, 일반 그림 변환을 시험문제용 도판으로 만듭니다.";
+    setStatus(outputMessage, "ok");
   }));
   compareButton.onclick = openComparison;
   referenceSearchButton.onclick = () => { void referenceSearch.open(); };
@@ -2342,11 +2387,18 @@ export function initAiPanel(state) {
           return;
         }
 
-        if (normalizeOutputEngine(currentRunInput?.outputEngine) === AI_OUTPUT_ENGINES.ASSET) {
+        if (mustKeepNativeFailure({
+          outputEngine: normalizeOutputEngine(currentRunInput?.outputEngine),
+          routeDecision: currentRunInput?.routeDecision || currentRouteDecision,
+        })) {
+          const report = nativeSceneFailureReport(
+            compiled,
+            knownUnsupportedGraphFeatures(currentRequestSnapshot?.renderRequest || currentRequestSnapshot?.request),
+          );
           setGenerating(false);
           setBusy(false);
           setStatus("편집 가능한 그래프로 표현할 수 없는 요청입니다.", "warn");
-          addLog("선택한 요청은 현재 지원되는 편집 가능한 그래프 범위를 벗어났습니다. 출력 방식을 ‘시험문제용 도판’으로 바꾸면 래스터 이미지로 생성할 수 있습니다.", "error");
+          addLog(report.message, "error");
           return;
         }
 

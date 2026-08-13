@@ -283,7 +283,7 @@ export function chooseImageEngine({ request = "", mode = "diagram", references =
   }
 
   if (outputMode === "diagram" && references.length && REFERENCE_EDIT.test(text)) {
-    return { engine: IMAGE_ENGINE_IDS.FAST_SCENE, reason: "reference-structure-edit" };
+    return { engine: IMAGE_ENGINE_IDS.RASTER, reason: "reference-transform" };
   }
 
   return { engine: IMAGE_ENGINE_IDS.RASTER, reason: "unclassified-fallback" };

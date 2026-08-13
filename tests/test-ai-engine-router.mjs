@@ -8,7 +8,7 @@ import { insertFastSceneIntoState } from "../js/ai-scene-preview.js";
 test("common assessment apparatus routes to the fast vector scene", () => {
   assert.equal(chooseImageEngine({ request: "도르래와 두 블록의 배치를 바꿔 줘" }).engine, IMAGE_ENGINE_IDS.FAST_SCENE);
   assert.equal(chooseImageEngine({ request: "전지와 저항이 있는 회로를 구성해 줘" }).engine, IMAGE_ENGINE_IDS.FAST_SCENE);
-  assert.equal(chooseImageEngine({ request: "이 참고 이미지에서 문자만 제거해 줘", references: [{}] }).engine, IMAGE_ENGINE_IDS.FAST_SCENE);
+  assert.equal(chooseImageEngine({ request: "이 참고 이미지에서 문자만 제거해 줘", references: [{}] }).engine, IMAGE_ENGINE_IDS.RASTER);
 });
 
 test("new audited motifs and supported apparatus route to the fast scene", () => {
@@ -178,7 +178,7 @@ test("scene prompt is one-shot, tool-free and carries a prior editable scene", (
     mode: "diagram",
     revisionScene: '{"schema":"5e-fast-scene@1","elements":[]}',
   });
-  assert.equal(FAST_SCENE_PROMPT_VERSION, "5e-fast-scene-prompt@7");
+  assert.equal(FAST_SCENE_PROMPT_VERSION, "5e-fast-scene-prompt@9");
   assert.match(prompt, /Return exactly one compact JSON object/);
   assert.match(prompt, /No markdown fence, prose, analysis, tool call/);
   assert.match(prompt, /Current editable scene JSON/);

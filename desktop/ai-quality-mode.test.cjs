@@ -16,7 +16,7 @@ test("quality and output choices are explicit and safe by default", async () => 
   assert.equal(modes.normalizeQualityMode("complex"), "complex");
   assert.equal(modes.normalizeQualityMode("unknown"), "standard");
   assert.equal(modes.normalizeOutputEngine("asset"), "asset");
-  assert.equal(modes.normalizeOutputEngine("automatic"), "raster");
+  assert.equal(modes.normalizeOutputEngine("automatic"), "auto");
   for (const mode of ["simple", "standard", "complex"]) {
     const rule = modes.qualityModeRule(mode);
     assert.match(rule, /어떤 경우에도 바꾸지 않는다/);
@@ -51,6 +51,7 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   }
   assert.match(html, /data-ai-output-engine="raster"/);
   assert.match(html, /data-ai-output-engine="asset"/);
+  assert.match(html, /data-ai-output-engine="auto"/);
   assert.match(html, /data-ai-batch/);
   assert.match(html, /data-ai-tab-list/);
   assert.match(panel, /const BATCH_CONCURRENCY = 5/);

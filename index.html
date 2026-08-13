@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.2" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.17-phase4-labels" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.18-phase5-native-graph" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -435,7 +435,8 @@
             <div class="ai-mode-row" role="group" aria-label="출력 방식">
               <span>출력 방식</span>
               <div class="ai-mode-options">
-                <button type="button" class="is-on" data-ai-output-engine="raster" title="평가원식 선화 도판을 이미지로 만듭니다">시험문제용 도판</button>
+                <button type="button" class="is-on" data-ai-output-engine="auto" title="그래프는 편집 가능한 오브젝트로, 일반 그림은 도판 이미지로 자동 선택합니다">자동<small>권장</small></button>
+                <button type="button" data-ai-output-engine="raster" title="평가원식 선화 도판을 이미지로 만듭니다">시험문제용 도판</button>
                 <button type="button" data-ai-output-engine="asset" title="지원되는 그래프를 편집 가능한 5E 오브젝트로 만듭니다">편집 가능한 그래프</button>
               </div>
             </div>
@@ -567,7 +568,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
-  <script type="module" src="js/main.js?v=1.5.23-phase4-labels"></script>
+  <script type="module" src="js/main.js?v=1.5.24-phase5-native-graph"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>
 </body>

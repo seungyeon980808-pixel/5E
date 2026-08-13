@@ -1,7 +1,7 @@
 import { FAST_SCENE_SCHEMA_ID } from "./ai-scene-fastpath.js?v=1.5.3";
 import { AI_MOTIF_PROMPT_REFERENCE } from "./ai-motif-catalog.js?v=1.5.3";
 
-export const FAST_SCENE_PROMPT_VERSION = "5e-fast-scene-prompt@8";
+export const FAST_SCENE_PROMPT_VERSION = "5e-fast-scene-prompt@9";
 
 const TYPE_REFERENCE = `
 Supported element forms (coordinates are millimetres, centred artboard):
@@ -47,6 +47,7 @@ Scientific and structural rules:
 6. If the subject fundamentally requires an unsupported illustration (human/hand/anatomy/animal/plant/realistic vehicle or machinery), emit one element with type "unsupported_illustration" instead of approximating it. There are only three audited exceptions: student_trio_seated_dialogue for exactly three seated students at one table, spacecraft_flat_shell for the explicitly requested flat shell options, and verified_map_outline for exactly world, Pacific, East Asia or the Korean Peninsula. Do not generalize those exceptions to another pose, person count, vehicle, or geography.
 7. Prefer one audited motif shortcut when it exactly matches the requested panel flow, dual-axis plot, wiring, contour bundle, explicitly generic schematic coastline, strict repeated apparatus assembly, generic unlabeled logistic curve, strict illustration exception, or one verified map variant. Do not use an apparatus motif for a different topology, part count or optical sequence. Never combine a motif shortcut with ordinary elements. verified_map_outline must be the whole output: do not add markers, paths, apparatus or any overlay in the same scene; the user adds those later in 5E.
 8. Region-comment percentages are measured from the preview's top-left. Convert horizontal p% to x=-W/2+(p/100)*W and vertical q% to y=-H/2+(q/100)*H before matching the requested object; do not draw the selection rectangle or its number.
+9. Never approximate a logarithmic axis, polar coordinate plot, or custom axis crossing with an ordinary linear Cartesian graph. Preserve the unsupported requirement explicitly: use graph.scale:"log", type:"polar", or graph.axisAt respectively so the strict product validator can report the exact missing feature instead of silently drawing a different graph.
 ${prior ? `Current editable scene JSON. Modify this instead of rebuilding unaffected parts:\n${prior.slice(0, 120000)}\n` : ""}
 User request and reference-image instructions:
 ${String(request || "").trim()}

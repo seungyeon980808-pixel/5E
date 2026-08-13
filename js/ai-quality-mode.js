@@ -5,6 +5,7 @@ export const AI_QUALITY_MODES = Object.freeze({
 });
 
 export const AI_OUTPUT_ENGINES = Object.freeze({
+  AUTO: "auto",
   RASTER: "raster",
   ASSET: "asset",
 });
@@ -38,7 +39,8 @@ export function normalizeQualityMode(value) {
 }
 
 export function normalizeOutputEngine(value) {
-  return value === AI_OUTPUT_ENGINES.ASSET ? value : AI_OUTPUT_ENGINES.RASTER;
+  if (value === AI_OUTPUT_ENGINES.ASSET || value === AI_OUTPUT_ENGINES.RASTER) return value;
+  return AI_OUTPUT_ENGINES.AUTO;
 }
 
 export function qualityModeRule(value, { revision = false } = {}) {

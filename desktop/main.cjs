@@ -612,7 +612,8 @@ function createWindow() {
               !!advancedSettings.querySelector("[data-ai-effort]") &&
               !!advancedSettings.querySelector("[data-ai-speed]") &&
               advancedSettings.querySelectorAll("[data-ai-quality]").length === 3 &&
-              advancedSettings.querySelectorAll("[data-ai-output-engine]").length === 2 &&
+              advancedSettings.querySelectorAll("[data-ai-output-engine]").length === 3 &&
+              !!advancedSettings.querySelector('[data-ai-output-engine="auto"].is-on') &&
               !!advancedSettings.querySelector("[data-ai-tabs]");
             const aiLegacyEntrypointsAbsent = !document.getElementById("exam-library-open") &&
               !document.getElementById("parts-library-open");
@@ -816,7 +817,8 @@ function createWindow() {
             button?.click();
             if (await waitFor(() => panel?.hidden === false, 2000)) {
               aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
-              aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 2;
+              aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 3 &&
+                !!panel.querySelector('[data-ai-output-engine="auto"].is-on');
               aiBatchControlReady = !!panel.querySelector("[data-ai-batch]") && !!panel.querySelector("[data-ai-batch-panel]");
               const originalTab = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on");
               const originalInputValue = panel.querySelector("[data-ai-input]")?.value || "";
@@ -828,21 +830,22 @@ function createWindow() {
               const createdTab = Array.from(panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab")).at(-1);
               createdTab?.click();
               aiTaskTabsIsolated = originalRestored && panel.querySelector("[data-ai-input]")?.value === "tab isolation smoke";
-              // Local zero-round-trip diagrams are now an explicit user choice;
-              // textbook raster conversion is never auto-routed to 5E assets.
-              panel.querySelector('[data-ai-output-engine="asset"]')?.click();
+              // Automatic routing keeps supported graphs and audited apparatus
+              // native while ordinary reference transformations remain raster.
+              panel.querySelector('[data-ai-output-engine="auto"]')?.click();
               const localRequests = [
+                "one generic unlabeled logistic S-shaped population curve without labels text numbers 그래프",
                 "한반도 물리 해안선 지도를 그려 줘",
                 "one closed rectangular series circuit with exactly one dc source on the left, one open switch on the top, one resistor on the right, and one lamp on the bottom, no labels or arrows",
                 "one ceiling-fixed pulley with one continuous rope, one blank rectangular load on the left branch, and on the right branch one spring followed by one blank rectangular load of the same shape, no labels or arrows",
                 "optical bench with exactly one convex lens on the left, one plane mirror at 45 degrees in the center, and one screen on the right, no rays labels or arrows",
                 "beaker and particle box side by side comparison: beaker liquid fill fraction 0.45, gas 16 circular particles, unmixed, no labels or arrows",
-                "one generic unlabeled logistic S-shaped population curve without labels text numbers",
               ];
               const localResults = [];
               for (const localRequest of localRequests) {
                 panel.querySelector("[data-ai-new]")?.click();
                 panel.querySelector('[data-ai-mode="diagram"]')?.click();
+                if (localResults.length === 1) panel.querySelector('[data-ai-output-engine="asset"]')?.click();
                 const aiInput = panel.querySelector("[data-ai-input]");
                 let historyTail = "";
                 try {
