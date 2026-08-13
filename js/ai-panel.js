@@ -40,6 +40,7 @@ import {
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
 import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.10-phase0-privacy";
+import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
@@ -215,6 +216,8 @@ export function initAiPanel(state) {
   const unclaimedBatchEvents = [];
   let batchActive = false;
   let conversationMessages = [];
+  let dialogSerial = 0;
+  let releasePanelFocus = null;
   let outputCache = null;
   try { outputCache = createExactOutputCacheStore(); } catch {}
   try {
@@ -896,6 +899,9 @@ export function initAiPanel(state) {
     if (!tabList) return;
     tabList.replaceChildren();
     for (const tab of taskTabs.values()) {
+      const item = document.createElement("div");
+      item.className = "ai-task-tab-item";
+      item.setAttribute("role", "presentation");
       const button = document.createElement("button");
       button.type = "button";
       button.className = "ai-task-tab";
@@ -907,9 +913,13 @@ export function initAiPanel(state) {
       button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
       const label = document.createElement("span");
       label.textContent = tab.title;
-      const closeTab = document.createElement("i");
+      const closeTab = document.createElement("button");
+      closeTab.type = "button";
+      closeTab.className = "ai-task-tab-close";
       closeTab.textContent = "×";
       closeTab.title = "탭 닫기";
+      closeTab.setAttribute("aria-label", `${tab.title} 탭 닫기`);
+      closeTab.disabled = Boolean(tab.runtime?.busy || taskTabs.size <= 1);
       closeTab.onclick = (event) => {
         event.stopPropagation();
         if (tab.runtime?.busy || taskTabs.size <= 1) return;
@@ -919,7 +929,7 @@ export function initAiPanel(state) {
           restoreTaskTab(activeTaskTabId);
         } else renderTaskTabs();
       };
-      button.append(label, closeTab);
+      button.append(label);
       button.onclick = () => {
         if (tab.id === activeTaskTabId) return;
         if (awaitingTurnId || previewPending) {
@@ -930,7 +940,8 @@ export function initAiPanel(state) {
         captureActiveTaskTab();
         restoreTaskTab(tab.id);
       };
-      tabList.appendChild(button);
+      item.append(button, closeTab);
+      tabList.appendChild(item);
     }
   };
 
@@ -1307,12 +1318,30 @@ export function initAiPanel(state) {
   };
 
   const allImages = () => [...attachments, ...generatedImages];
+  const installOverlayFocus = ({ overlay, dialog, title, closeButton, returnFocus }) => {
+    title.id = `ai-transient-dialog-title-${++dialogSerial}`;
+    dialog.setAttribute("aria-labelledby", title.id);
+    let releaseFocus = null;
+    const closeDialog = () => {
+      if (!overlay.isConnected) return;
+      overlay.remove();
+      releaseFocus?.();
+    };
+    releaseFocus = installModalFocus({
+      root: overlay,
+      initialFocus: closeButton,
+      returnFocus,
+      onRequestClose: closeDialog,
+    });
+    return closeDialog;
+  };
   const openComparison = () => {
     const images = allImages();
     if (!attachments.length || !generatedImages.length) {
       setStatus("확정한 원본과 생성 결과가 있어야 비교할 수 있습니다.", "warn");
       return;
     }
+    const returnFocus = document.activeElement;
     const overlay = document.createElement("div");
     overlay.className = "ai-compare-overlay";
     const dialog = document.createElement("section");
@@ -1366,12 +1395,14 @@ export function initAiPanel(state) {
     panes.append(makePane(leftInitial), makePane(rightInitial));
     dialog.append(head, panes);
     overlay.appendChild(dialog);
-    closeButton.onclick = () => overlay.remove();
-    overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) overlay.remove(); });
     document.documentElement.appendChild(overlay);
+    const closeDialog = installOverlayFocus({ overlay, dialog, title, closeButton, returnFocus });
+    closeButton.onclick = closeDialog;
+    overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) closeDialog(); });
   };
 
   const openCaptureCrop = (source) => {
+    const returnFocus = document.activeElement;
     const overlay = document.createElement("div");
     overlay.className = "ai-compare-overlay";
     const dialog = document.createElement("section");
@@ -1426,7 +1457,7 @@ export function initAiPanel(state) {
 
     let start = null;
     let box = null;
-    const closeCrop = () => overlay.remove();
+    const closeCrop = installOverlayFocus({ overlay, dialog, title, closeButton, returnFocus });
     const point = (event) => {
       const rect = wrap.getBoundingClientRect();
       return { x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)), y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)) };
@@ -1505,6 +1536,7 @@ export function initAiPanel(state) {
       return;
     }
     panel.hidden = false;
+    const returnFocus = document.activeElement;
     const overlay = document.createElement("div");
     overlay.className = "ai-compare-overlay";
     const dialog = document.createElement("section");
@@ -1532,14 +1564,15 @@ export function initAiPanel(state) {
       const name = document.createElement("span");
       name.textContent = source.name;
       button.append(image, name);
-      button.onclick = () => { overlay.remove(); openCaptureCrop(source); };
+      button.onclick = () => { closeDialog(); openCaptureCrop(source); };
       grid.appendChild(button);
     }
     dialog.append(head, grid);
     overlay.appendChild(dialog);
-    closeButton.onclick = () => overlay.remove();
-    overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) overlay.remove(); });
     document.documentElement.appendChild(overlay);
+    const closeDialog = installOverlayFocus({ overlay, dialog, title, closeButton, returnFocus });
+    closeButton.onclick = closeDialog;
+    overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) closeDialog(); });
     setStatus("캡처할 화면 또는 창을 선택하세요.", "ok");
   };
 
@@ -1637,8 +1670,22 @@ export function initAiPanel(state) {
       setStatus(`상태 확인 실패: ${error.message}`, "error");
     }
   };
+  const close = () => {
+    panel.hidden = true;
+    releasePanelFocus?.();
+    releasePanelFocus = null;
+  };
   const open = async ({ reference, references = [], prompt } = {}) => {
+    const returnFocus = panel.hidden ? document.activeElement : null;
     panel.hidden = false;
+    if (!releasePanelFocus) {
+      releasePanelFocus = installModalFocus({
+        root: panel,
+        initialFocus: input,
+        returnFocus,
+        onRequestClose: close,
+      });
+    }
     // 참고 이미지는 AI 연결 상태 조회와 무관하므로 즉시 불러온다.
     // 연결 확인을 먼저 기다리면 로컬 라이브러리 이미지도 몇 초 뒤에 나타나
     // 사용자가 버튼이 동작하지 않은 것으로 오해할 수 있다.
@@ -1664,9 +1711,8 @@ export function initAiPanel(state) {
     await refreshPromise;
     const lastIncoming = incoming.at(-1);
     if (prompt || lastIncoming?.prompt) input.value = prompt || lastIncoming.prompt;
-    input.focus();
+    if (!panel.hidden) input.focus();
   };
-  const close = () => { panel.hidden = true; };
 
   const submit = async (type, options = {}) => {
     if (busy || !window.fiveEDesktop) return refresh();

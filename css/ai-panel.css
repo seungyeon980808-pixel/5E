@@ -866,6 +866,14 @@
   border-bottom: 1px solid var(--border, #30363d);
 }
 .ai-task-tab-list { display: flex; gap: 5px; min-width: 0; }
+.ai-task-tab-item {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border, #30363d);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--bg-input, #0d1117);
+}
 .ai-task-tab,
 .ai-task-tabs > button {
   display: inline-flex;
@@ -882,9 +890,20 @@
   font-size: 11.5px;
   cursor: pointer;
 }
+.ai-task-tab-item .ai-task-tab { border: 0; border-radius: 0; }
 .ai-task-tab > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ai-task-tab.is-on { color: #fff; border-color: var(--accent, #2f81f7); background: color-mix(in srgb, var(--accent, #2f81f7) 22%, var(--bg-input, #0d1117)); }
-.ai-task-tab > i { font-style: normal; opacity: .75; }
+.ai-task-tab-item:has(.ai-task-tab.is-on) { border-color: var(--accent, #2f81f7); }
+.ai-task-tab.is-on { color: #fff; background: color-mix(in srgb, var(--accent, #2f81f7) 22%, var(--bg-input, #0d1117)); }
+.ai-task-tab-close {
+  width: 28px;
+  padding: 0;
+  color: var(--text-secondary, #8b949e);
+  background: transparent;
+  border: 0;
+  border-left: 1px solid var(--border, #30363d);
+  cursor: pointer;
+}
+.ai-task-tab-close:disabled { opacity: .35; cursor: not-allowed; }
 .ai-task-tab.is-busy::before,
 .ai-task-tab.has-completed-run::before {
   content: "";
