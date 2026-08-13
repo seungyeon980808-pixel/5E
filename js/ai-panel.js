@@ -144,7 +144,6 @@ export function initAiPanel(state) {
   const previews = panel.querySelector("[data-ai-previews]");
   const attachmentList = panel.querySelector("[data-ai-attachment-list]");
   const referenceCount = panel.querySelector("[data-ai-reference-count]");
-  const referenceSection = panel.querySelector(".ai-reference-section");
   const generating = panel.querySelector("[data-ai-generating]");
   const progressTitle = panel.querySelector("[data-ai-progress-title]");
   const progressDetail = panel.querySelector("[data-ai-progress-detail]");
@@ -154,6 +153,7 @@ export function initAiPanel(state) {
   const chatButton = panel.querySelector("[data-ai-chat-send]");
   const newButton = panel.querySelector("[data-ai-new]");
   const compareButton = panel.querySelector("[data-ai-compare]");
+  const resultActions = panel.querySelector(".ai-result-actions");
   const captureButton = panel.querySelector("[data-ai-capture]");
   const referenceSearchButton = panel.querySelector("[data-ai-reference-search]");
   const loginButton = panel.querySelector("[data-ai-login]");
@@ -336,6 +336,12 @@ export function initAiPanel(state) {
     if (generating) generating.dataset.aiPhase = phase;
     if (eCount) eCount.textContent = String(({ analyze: 1, compose: 2, render: 3, finish: 4 })[phase] || 1);
   };
+  const syncResultActions = () => {
+    const canCompare = attachments.length > 0 && generatedImages.length > 0;
+    compareButton.hidden = !canCompare;
+    compareButton.disabled = busy || !canCompare;
+    if (resultActions) resultActions.hidden = !canCompare;
+  };
   const setBusy = (on) => {
     busy = on;
     sendButton.disabled = on;
@@ -361,6 +367,7 @@ export function initAiPanel(state) {
     const activeTab = taskTabs.get(activeTaskTabId);
     if (activeTab?.runtime) activeTab.runtime.busy = on;
     if (taskTabs.size) renderTaskTabs();
+    syncResultActions();
   };
   const syncMode = () => {
     modeButtons.forEach((button) => {
@@ -387,8 +394,8 @@ export function initAiPanel(state) {
     referenceCount.textContent = String(attachments.length);
     const empty = attachmentList.querySelector("[data-ai-reference-empty]");
     if (empty) empty.hidden = attachments.length > 0;
-    if (attachments.length && referenceSection) referenceSection.open = true;
     if (batchButton) batchButton.disabled = busy || attachments.length < 2;
+    syncResultActions();
   };
 
   const selectedModel = () => availableModels.find((item) => (item.model || item.id) === modelSelect.value);
@@ -645,6 +652,7 @@ export function initAiPanel(state) {
         empty.textContent = "생성된 이미지가 여기에 표시됩니다.";
         previews.appendChild(empty);
       }
+      syncResultActions();
     };
     head.appendChild(remove);
 
@@ -658,19 +666,19 @@ export function initAiPanel(state) {
       const output = document.createElement("button");
       output.type = "button";
       output.className = "ai-canvas-output";
-      output.textContent = "캔버스로 출력";
+      output.textContent = "캔버스에 삽입";
       output.onclick = () => {
         if (item.sceneResult?.objects?.length) {
           try {
             const inserted = insertFastSceneIntoState(state, item.sceneResult);
-            addLog(`편집 가능한 벡터 오브젝트 ${inserted.added}개를 캔버스에 출력했습니다.`);
+            addLog(`편집 가능한 벡터 오브젝트 ${inserted.added}개를 캔버스에 삽입했습니다.`);
           } catch (error) {
-            addLog(`캔버스 출력 실패: ${error.message}`, "error");
+            addLog(`캔버스 삽입 실패: ${error.message}`, "error");
           }
           return;
         }
         void insertImageFromSrc(state, item.data)
-          .catch((error) => addLog(`캔버스 출력 실패: ${error.message}`, "error"));
+          .catch((error) => addLog(`캔버스 삽입 실패: ${error.message}`, "error"));
       };
       stage.appendChild(output);
     }
@@ -782,6 +790,7 @@ export function initAiPanel(state) {
     };
     generatedImages.push(item);
     previews.prepend(makeImageCard(item));
+    syncResultActions();
     return item;
   };
 
@@ -804,6 +813,7 @@ export function initAiPanel(state) {
     };
     generatedImages.push(item);
     previews.prepend(makeImageCard(item));
+    syncResultActions();
     return item;
   };
 
@@ -929,7 +939,7 @@ export function initAiPanel(state) {
     const emptyReference = document.createElement("p");
     emptyReference.className = "ai-reference-empty";
     emptyReference.dataset.aiReferenceEmpty = "";
-    emptyReference.textContent = "여러 이미지를 추가하고 각각 필요한 영역에 요청을 남길 수 있습니다.";
+    emptyReference.textContent = "이미지를 추가하거나 PDF에서 영역을 선택하세요.";
     attachmentList.appendChild(emptyReference);
     previews.querySelectorAll(".ai-image-card, [data-ai-empty]").forEach((node) => node.remove());
   };
@@ -1105,6 +1115,7 @@ export function initAiPanel(state) {
       latestGeneratedSrc = item.data;
       previews.querySelector("[data-ai-empty]")?.remove();
       previews.prepend(makeImageCard(item));
+      syncResultActions();
       captureActiveTaskTab();
     } else {
       const tab = taskTabs.get(job.taskTabId);
@@ -1243,7 +1254,7 @@ export function initAiPanel(state) {
   const runBatch = () => {
     if (batchActive || busy || attachments.length < 2) return;
     if (selectedOutputEngine !== AI_OUTPUT_ENGINES.RASTER) {
-      setStatus("여러 장 변환은 교과서 선화 출력에서 사용해 주세요.", "warn");
+      setStatus("여러 장 변환은 시험문제용 도판 출력에서 사용해 주세요.", "warn");
       return;
     }
     captureActiveTaskTab();
@@ -1298,8 +1309,8 @@ export function initAiPanel(state) {
   const allImages = () => [...attachments, ...generatedImages];
   const openComparison = () => {
     const images = allImages();
-    if (images.length < 2) {
-      setStatus("비교할 이미지를 두 개 이상 추가해 주세요.", "warn");
+    if (!attachments.length || !generatedImages.length) {
+      setStatus("확정한 원본과 생성 결과가 있어야 비교할 수 있습니다.", "warn");
       return;
     }
     const overlay = document.createElement("div");
@@ -1829,7 +1840,7 @@ export function initAiPanel(state) {
               persistPerformance(currentTurnPerformance);
               setGenerating(false);
               setStatus("동일 요청 결과를 즉시 불러왔습니다.", "ok");
-              addLog("이전에 완료된 동일 결과를 즉시 불러왔습니다. 캔버스로 출력할 수 있습니다.");
+              addLog("이전에 완료된 동일 결과를 즉시 불러왔습니다. 캔버스에 삽입할 수 있습니다.");
               setBusy(false);
               addTokenFooter(null);
               activatePendingTabIfReady();
@@ -2037,8 +2048,8 @@ export function initAiPanel(state) {
     localStorage.setItem("5e.aiOutputEngine", selectedOutputEngine);
     syncOutputEngine();
     setStatus(selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
-      ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
-      : "교과서 선화 출력은 세부 묘사를 래스터 이미지로 생성합니다.", "ok");
+      ? "편집 가능한 그래프 출력은 지원되는 그래프와 장치만 벡터로 생성합니다."
+      : "시험문제용 도판 출력은 세부 묘사를 래스터 이미지로 생성합니다.", "ok");
   }));
   compareButton.onclick = openComparison;
   referenceSearchButton.onclick = () => { void referenceSearch.open(); };
@@ -2050,12 +2061,12 @@ export function initAiPanel(state) {
   if (tabNewButton) tabNewButton.onclick = () => createTaskTab();
   if (batchButton) batchButton.onclick = runBatch;
   chatButton.onclick = () => submit("chat");
-  sendButton.title = "이미지 생성 · Shift+클릭하면 캐시를 사용하지 않고 새 변형을 생성합니다.";
+  sendButton.title = "도판 만들기 · Shift+클릭하면 캐시를 사용하지 않고 새 변형을 만듭니다.";
   sendButton.onclick = (event) => submit("image", { bypassCache: event.shiftKey === true });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      chatButton.click();
+      sendButton.click();
     }
   });
   panel.querySelector("[data-ai-interrupt]").onclick = async () => {
@@ -2143,7 +2154,7 @@ export function initAiPanel(state) {
           await storeCurrentOutput({ data: added.data });
         }
         setStatus(serverTurnFinished ? "생성 완료" : "서버 작업 종료 확인 중", serverTurnFinished ? "ok" : "busy");
-        addLog("이미지가 완성되었습니다. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.");
+        addLog("도판이 완성되었습니다. 생성 결과에서 확인하거나 캔버스에 삽입할 수 있습니다.");
       }).catch((error) => {
         if (!isCurrent()) return;
         addLog(error.message || String(error), "error");
@@ -2232,7 +2243,7 @@ export function initAiPanel(state) {
               sceneSource: compiledScene.source,
               sceneCompileSource: compiledScene.compileSource,
             });
-            addLog(`이미지가 완성되었습니다. 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개로 캔버스에 출력할 수 있습니다.`);
+            addLog(`도판이 완성되었습니다. 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개를 캔버스에 삽입할 수 있습니다.`);
             setStatus("빠른 벡터 도식 생성 완료", "ok");
           }).catch((error) => {
             addLog(error.message || String(error), "error");
@@ -2249,8 +2260,8 @@ export function initAiPanel(state) {
         if (normalizeOutputEngine(currentRunInput?.outputEngine) === AI_OUTPUT_ENGINES.ASSET) {
           setGenerating(false);
           setBusy(false);
-          setStatus("5E 에셋으로 표현할 수 없는 요청입니다.", "warn");
-          addLog("선택한 요청은 현재 지원되는 5E 에셋 범위를 벗어났습니다. 출력 방식을 ‘교과서 선화’로 바꾸면 래스터 이미지로 생성할 수 있습니다.", "error");
+          setStatus("편집 가능한 그래프로 표현할 수 없는 요청입니다.", "warn");
+          addLog("선택한 요청은 현재 지원되는 편집 가능한 그래프 범위를 벗어났습니다. 출력 방식을 ‘시험문제용 도판’으로 바꾸면 래스터 이미지로 생성할 수 있습니다.", "error");
           return;
         }
 
