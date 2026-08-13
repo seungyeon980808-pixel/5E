@@ -1,0 +1,39 @@
+{
+  "schema": "5e-independent-graph-visual-oracle@1",
+  "provenance": "Independently authored synthetic SVG expectations; no compiler output is read to build this oracle at runtime.",
+  "width": 440,
+  "height": 240,
+  "bounds": { "xMin": -110, "yMin": -60, "scale": 2 },
+  "clips": {
+    "left-panel": [-90, -35, 80, 70],
+    "right-panel": [10, -35, 80, 70]
+  },
+  "primitives": [
+    {
+      "selector": { "objectSuffix": "_002_graph_series_1", "tag": "path", "index": 0 },
+      "kind": "path",
+      "d": "M -90 35 C -90 35 -77.31828071113371 -16.931079648934976 -70 -17.5 C -63.80088695045488 -17.981916683938277 -56.666666666666664 17.5 -50 17.5 C -43.333333333333336 17.5 -36.19911304954511 -17.981916683938277 -30 -17.5 C -22.68171928886629 -16.931079648934976 -10 35 -10 35",
+      "fill": "none", "stroke": "#000000", "strokeWidth": 0.4, "dash": [2, 1], "clip": "left-panel"
+    },
+    {
+      "selector": { "objectSuffix": "_003_graph_series_2", "tag": "path", "index": 0 },
+      "kind": "path", "d": "M -90 0 L -10 0",
+      "fill": "none", "stroke": "#000000", "strokeWidth": 0.35, "dash": [], "clip": "left-panel"
+    },
+    {
+      "selector": { "objectSuffix": "_005_graph_bar_1", "tag": "path", "index": 0 },
+      "kind": "path", "d": "M 23.333333333333332 35 L 23.333333333333332 7 L 36.666666666666664 7 L 36.666666666666664 35 Z",
+      "fill": "#aaaaaa", "stroke": "#000000", "strokeWidth": 0.35, "dash": [], "clip": "right-panel"
+    },
+    {
+      "selector": { "objectSuffix": "_005_graph_bar_1", "tag": "path", "index": 1 },
+      "kind": "path", "d": "M 63.33333333333333 35 L 63.33333333333333 -21 L 76.66666666666667 -21 L 76.66666666666667 35 Z",
+      "fill": "#aaaaaa", "stroke": "#000000", "strokeWidth": 0.35, "dash": [], "clip": "right-panel"
+    },
+    {
+      "selector": { "objectSuffix": "_001_graph_plane", "tag": "text", "text": "한글" },
+      "kind": "text", "text": "한글", "x": -54.62341655275749, "y": -12.46971509370642,
+      "fill": "#000000", "fontSize": 8.64, "clip": "left-panel"
+    }
+  ]
+}

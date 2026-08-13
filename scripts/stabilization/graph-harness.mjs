@@ -1,4 +1,7 @@
 import { compileFastScene } from "../../js/ai-scene-fastpath.js";
+import visualProofModule from "../../tests/stabilization/harness/graph-visual-proof.cjs";
+
+const { createGraphVisualProof } = visualProofModule;
 
 const LEDGER_FIELDS = Object.freeze([
   "fixtureId", "sourceCategory", "graphType", "failureType",
@@ -38,37 +41,11 @@ function stableCompilerResult(result) {
   return copy;
 }
 
-function multisetDifference(reference, rendered) {
-  const counts = new Map();
-  for (const token of reference) counts.set(token, (counts.get(token) || 0) + 1);
-  let difference = 0;
-  for (const token of rendered) {
-    const count = counts.get(token) || 0;
-    if (count === 0) difference += 1;
-    else counts.set(token, count - 1);
-  }
-  return difference + [...counts.values()].reduce((sum, count) => sum + count, 0);
-}
-
-function insideAnyPanel(point, panels, tolerance = 1e-6) {
-  return panels.some(({ box }) => point.x >= box[0] - tolerance && point.x <= box[0] + box[2] + tolerance
-    && point.y >= box[1] - tolerance && point.y <= box[1] + box[3] + tolerance);
-}
-
-function expectedVisualTokens(objects) {
-  return objects.flatMap((object) => {
-    const tokens = [`tag:${object.type === "coordplane" || object.type === "funcgraph" ? "g" : object.type}`];
-    if (object.id) tokens.push(`data:id=${object.id}`);
-    return tokens;
-  }).sort();
-}
-
 export function auditSyntheticGraphCase(fixture, seams = {}) {
   const scene = fixture.interpretation;
   const expected = fixture.expected;
   const first = compileFastScene(scene, { idPrefix: fixture.fixtureId });
   const second = compileFastScene(scene, { idPrefix: fixture.fixtureId });
-  const referenceTokens = expectedVisualTokens(second.objects);
   if (seams.compilerBreak) first.objects.splice(0, 1);
   const panels = scene.elements.filter(({ type }) => type === "graph");
   const series = panels.flatMap((panel) => panel.series || []);
@@ -83,11 +60,12 @@ export function auditSyntheticGraphCase(fixture, seams = {}) {
   const labels = panels.flatMap((panel) => panel.labels || []);
   const labelText = labels.map(({ label }) => label);
   const nativeCurve = nativeSeries.find(({ curveStyle }) => curve && curveStyle === "smooth");
-  const renderedTokens = first.objects.flatMap((object) => seams.svgTokens(seams.renderObject(object)));
-  const repeatedTokens = second.objects.flatMap((object) => seams.svgTokens(seams.renderObject(object)));
-  if (seams.rendererBreak) renderedTokens.splice(0);
-  const visualDifference = multisetDifference(referenceTokens, renderedTokens);
-  const compiledPoints = nativeSeries.flatMap((item) => item.points || []);
+  const renderedRoots = first.objects.map((object) => seams.renderObject(object));
+  const repeatedRoots = second.objects.map((object) => seams.renderObject(object));
+  const visual = createGraphVisualProof({
+    roots: renderedRoots, repeatedRoots, oracle: seams.visualOracle,
+    damage: seams.visualDamage, artifactDir: seams.artifactDir,
+  });
   return {
     fixtureId: fixture.fixtureId,
     compiler: {
@@ -114,15 +92,7 @@ export function auditSyntheticGraphCase(fixture, seams = {}) {
       labelAnchors: labels.every((label) => planes.some((plane) => plane.annLabelPoints.some((item) => item.text === label.label && equal(item.x, label.x) && equal(item.y, label.y)))),
       panelGap: equal(panels[1].box[0] - panels[0].box[0] - panels[0].box[2], expected.panelGap),
     },
-    visual: {
-      deterministic: JSON.stringify(renderedTokens) === JSON.stringify(repeatedTokens),
-      overlay: referenceTokens.every((token) => renderedTokens.includes(token)),
-      difference: visualDifference > 0 && visualDifference < renderedTokens.length,
-      strokeWidth: equal(nativeCurve?.strokeWidth, expected.strokeWidth),
-      dashPeriod: equal((nativeCurve?.dashLength || 0) + (nativeCurve?.dashGap || 0), expected.dashPeriod),
-      unclipped: compiledPoints.every((point) => insideAnyPanel(point, panels)),
-      cjkAndMath: expected.labels.every((label) => labelText.includes(label)),
-    },
+    visual,
   };
 }
 
