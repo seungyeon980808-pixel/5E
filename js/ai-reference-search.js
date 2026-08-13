@@ -226,11 +226,14 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
       button.onclick = () => {
         const nextSource = button.dataset.aiSearchSource;
-        source = nextSource; render();
-        void activateReferenceSource(nextSource, {
+        const activation = activateReferenceSource(nextSource, {
+          currentSource: source,
+          selection: selected,
           loadRemote: ensureRemoteData,
           onRemoteLoad: () => { referenceLoadStatus.loading(); referenceAddControl?.loading(); },
-        })
+        });
+        source = nextSource; render();
+        void activation
           .then(() => { if (source === nextSource) {
             render(); referenceLoadStatus.ready(); referenceAddControl?.ready();
           } })

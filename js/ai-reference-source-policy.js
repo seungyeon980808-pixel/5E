@@ -11,7 +11,10 @@ const CONFIRMED_LOCAL_SOURCE_KINDS = new Set(
   Array.from(LOCAL_SOURCE_KINDS, (sourceKind) => `${sourceKind}-confirmed`),
 );
 
-export async function activateReferenceSource(source, { loadRemote, onRemoteLoad } = {}) {
+export async function activateReferenceSource(source, {
+  loadRemote, onRemoteLoad, currentSource, selection,
+} = {}) {
+  if (source !== currentSource) selection?.clear();
   switch (source) {
     case REFERENCE_SOURCES.LOCAL:
       return source;
