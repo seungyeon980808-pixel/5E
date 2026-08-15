@@ -74,11 +74,6 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
           EXPECTED_SHA: ${{ github.sha }}
         run: node scripts/stabilization/stable-release-cli.cjs bundle
-      - name: Stage trusted environment validator with the bundle
-        shell: pwsh
-        run: |
-          Copy-Item -LiteralPath scripts/stabilization/stable-release-environment.cjs -Destination release/stable-release-environment.cjs
-          Copy-Item -LiteralPath scripts/stabilization/strict-json.cjs -Destination release/strict-json.cjs
       - name: Transfer only the verified release bundle
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
@@ -89,8 +84,6 @@ jobs:
             ${{ steps.bundle.outputs.notes }}
             ${{ steps.bundle.outputs.plan }}
             ${{ steps.bundle.outputs.audit }}
-            release/stable-release-environment.cjs
-            release/strict-json.cjs
           if-no-files-found: error
           retention-days: 1
 
@@ -103,24 +96,17 @@ jobs:
       actions: read
       contents: write
     steps:
-      - name: Download verified release bundle
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          name: stable-release-${{ github.sha }}
-          path: release
-      - name: Revalidate protected environment before using write permission
-        env:
-          STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}
-          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
-          GITHUB_API_URL: ${{ github.api_url }}
-        run: node release/stable-release-environment.cjs
       - name: Freshly fetch exact publish SHA, full history, tags, and main
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-          clean: false
+      - name: Download verified release bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: stable-release-${{ github.sha }}
+          path: release
       - name: Revalidate exact publish inputs
         id: publish
         env:
@@ -132,7 +118,7 @@ jobs:
           STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY_NAME: ${{ github.repository }}
           GITHUB_API_URL: ${{ github.api_url }}
-        run: node release/stable-release-environment.cjs
+        run: node scripts/stabilization/stable-release-environment.cjs
       - name: Create protected draft stable release
         shell: pwsh
         env:

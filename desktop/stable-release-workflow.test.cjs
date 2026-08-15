@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { auditStableReleaseWorkflow } = require("../scripts/stabilization/stable-release-workflow-contract.cjs");
+const { parseWorkflow } = require("../scripts/stabilization/workflow-yaml-subset.cjs");
 
 const root = path.join(__dirname, "..");
 const workflow = path.join(root, ".github", "workflows", "windows-release.yml");
@@ -25,6 +26,19 @@ test("stable workflow has exact read-only verification and protected draft publi
   assert.deepEqual(auditStableReleaseWorkflow(workflow), []);
 });
 
+test("Given a fresh publish workspace, checkout occurs before the verified bundle download", () => {
+  const parsed = parseWorkflow(fs.readFileSync(workflow, "utf8"));
+  const actions = parsed.jobs["publish-draft"].steps.filter((step) => step.uses).map((step) => step.uses.split("@")[0]);
+  assert.deepEqual(actions.slice(0, 2), ["actions/checkout", "actions/download-artifact"]);
+});
+
+test("stable workflow rejects downloading the bundle before checkout", (t) => {
+  const checkout = "      - name: Freshly fetch exact publish SHA, full history, tags, and main\n        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n        with:\n          ref: ${{ github.sha }}\n          fetch-depth: 0\n          persist-credentials: false";
+  const download = "      - name: Download verified release bundle\n        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16\n        with:\n          name: stable-release-${{ github.sha }}\n          path: release";
+  const errors = mutate(t, (source) => replace(source, `${checkout}\n${download}`, `${download}\n${checkout}`));
+  assert.ok(errors.includes("publish-draft:PUBLISH_WORKSPACE_ORDER_INVALID"), errors.join("\n"));
+});
+
 for (const [name, transform, expected] of [
   ["global write permission", (s) => replace(s, "permissions:\n  contents: read", "permissions:\n  contents: write"), "PERMISSIONS_NOT_READ_ONLY"],
   ["verification write permission", (s) => replace(s, "  verify-and-build:\n", "  verify-and-build:\n    permissions:\n      contents: write\n"), "verify-and-build:JOB_SCHEMA_INVALID"],
@@ -33,9 +47,9 @@ for (const [name, transform, expected] of [
   ["missing read-only protection gate", (s) => replace(s, "  verify-publish-environment:", "  untrusted-environment-gate:"), "JOB_SET_INVALID"],
   ["build bypasses protection gate", (s) => replace(s, "    needs: verify-publish-environment", "    needs: []"), "verify-and-build:JOB_SCHEMA_INVALID"],
   ["protection API token removed", (s) => replace(s, "STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}", "STABLE_RELEASE_ENVIRONMENT_TOKEN: ''"), "verify-publish-environment:STEP_SCHEMA_INVALID"],
-  ["publish protection revalidation removed", (s) => replace(s, "run: node release/stable-release-environment.cjs", "run: echo skipped"), "publish-draft:STEP_SCHEMA_INVALID"],
+  ["publish protection revalidation removed", (s) => replace(s, "      - name: Revalidate protected environment immediately before draft creation\n        env:\n          STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}\n          GITHUB_REPOSITORY_NAME: ${{ github.repository }}\n          GITHUB_API_URL: ${{ github.api_url }}\n        run: node scripts/stabilization/stable-release-environment.cjs", "      - name: Revalidate protected environment immediately before draft creation\n        run: echo skipped"), "publish-draft:STEP_SCHEMA_INVALID"],
   ["mutable action", (s) => replace(s, "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683", "actions/checkout@v4"), "verify-publish-environment:STEP_SCHEMA_INVALID"],
-  ["shallow publish checkout", (s) => replace(s, "      - name: Freshly fetch exact publish SHA, full history, tags, and main\n        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n        with:\n          ref: ${{ github.sha }}\n          fetch-depth: 0\n          persist-credentials: false\n          clean: false", "      - name: Freshly fetch exact publish SHA, full history, tags, and main\n        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n        with:\n          ref: ${{ github.sha }}\n          fetch-depth: 1\n          persist-credentials: false\n          clean: false"), "publish-draft:STEP_SCHEMA_INVALID"],
+  ["shallow publish checkout", (s) => replace(s, "      - name: Freshly fetch exact publish SHA, full history, tags, and main\n        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n        with:\n          ref: ${{ github.sha }}\n          fetch-depth: 0\n          persist-credentials: false", "      - name: Freshly fetch exact publish SHA, full history, tags, and main\n        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683\n        with:\n          ref: ${{ github.sha }}\n          fetch-depth: 1\n          persist-credentials: false"), "publish-draft:STEP_SCHEMA_INVALID"],
   ["removed release verification", (s) => replace(s, "run: npm run verify:release", "run: npm test"), "verify-and-build:STEP_SCHEMA_INVALID"],
   ["reordered audit and package", (s) => replace(s,
     "      - name: Build exact Windows package\n        run: npm run package:win -- \"-c.extraMetadata.buildCommit=${{ github.sha }}\"\n      - name: Strictly audit packaged application\n        shell: pwsh\n        run: |\n          $version = node -p \"require('./package.json').version\"\n          node scripts/stabilization/package-artifact-audit.cjs --strict --artifact release/win-unpacked --web-version $version --web-commit $env:GITHUB_SHA > release/package-artifact-audit.json",

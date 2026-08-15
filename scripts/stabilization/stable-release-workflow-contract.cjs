@@ -41,18 +41,16 @@ const EXPECTED = Object.freeze({
         { run: "npm run package:win -- \"-c.extraMetadata.buildCommit=${{ github.sha }}\"" },
         { shell: "pwsh", run: "$version = node -p \"require('./package.json').version\"\nnode scripts/stabilization/package-artifact-audit.cjs --strict --artifact release/win-unpacked --web-version $version --web-commit $env:GITHUB_SHA > release/package-artifact-audit.json" },
         { id: "bundle", env, run: "node scripts/stabilization/stable-release-cli.cjs bundle" },
-        { shell: "pwsh", run: "Copy-Item -LiteralPath scripts/stabilization/stable-release-environment.cjs -Destination release/stable-release-environment.cjs\nCopy-Item -LiteralPath scripts/stabilization/strict-json.cjs -Destination release/strict-json.cjs" },
-        { uses: UPLOAD, with: { name: ARTIFACT, path: "${{ steps.bundle.outputs.installer }}\n${{ steps.bundle.outputs.checksum }}\n${{ steps.bundle.outputs.notes }}\n${{ steps.bundle.outputs.plan }}\n${{ steps.bundle.outputs.audit }}\nrelease/stable-release-environment.cjs\nrelease/strict-json.cjs", "if-no-files-found": "error", "retention-days": 1 } },
+        { uses: UPLOAD, with: { name: ARTIFACT, path: "${{ steps.bundle.outputs.installer }}\n${{ steps.bundle.outputs.checksum }}\n${{ steps.bundle.outputs.notes }}\n${{ steps.bundle.outputs.plan }}\n${{ steps.bundle.outputs.audit }}", "if-no-files-found": "error", "retention-days": 1 } },
       ],
     },
     "publish-draft": {
       metadata: { needs: "verify-and-build", "runs-on": "windows-latest", "timeout-minutes": 15, environment: "stable-release", permissions: { actions: "read", contents: "write" } },
       steps: [
+        { uses: CHECKOUT, with: { ref: SHA, "fetch-depth": 0, "persist-credentials": false } },
         { uses: DOWNLOAD, with: { name: ARTIFACT, path: "release" } },
-        { env: protectionEnv, run: "node release/stable-release-environment.cjs" },
-        { uses: CHECKOUT, with: { ref: SHA, "fetch-depth": 0, "persist-credentials": false, clean: false } },
         { id: "publish", env, run: "node scripts/stabilization/stable-release-cli.cjs publish" },
-        { env: protectionEnv, run: "node release/stable-release-environment.cjs" },
+        { env: protectionEnv, run: "node scripts/stabilization/stable-release-environment.cjs" },
         { shell: "pwsh", env: { GH_TOKEN: "${{ github.token }}" }, run: "gh release create \"${{ steps.publish.outputs.tag }}\" \"${{ steps.publish.outputs.installer }}\" \"${{ steps.publish.outputs.checksum }}\" --verify-tag --target \"${{ steps.publish.outputs.commit }}\" --draft --latest --notes-file \"${{ steps.publish.outputs.notes }}\" --title \"5E ${{ steps.publish.outputs.tag }}\"" },
       ],
     },
@@ -63,6 +61,12 @@ function machineStep(step) {
   if (!step || typeof step !== "object") return step;
   const { name, ...fields } = step;
   return fields;
+}
+
+function auditPublishWorkspaceOrder(steps) {
+  const checkout = steps.findIndex((step) => step?.uses === CHECKOUT);
+  const download = steps.findIndex((step) => step?.uses === DOWNLOAD);
+  return checkout >= 0 && download > checkout ? [] : ["publish-draft:PUBLISH_WORKSPACE_ORDER_INVALID"];
 }
 
 function auditStableReleaseWorkflow(file) {
@@ -80,6 +84,7 @@ function auditStableReleaseWorkflow(file) {
     errors.push("JOB_SET_INVALID");
     return errors.sort();
   }
+  errors.push(...auditPublishWorkspaceOrder(workflow.jobs["publish-draft"]?.steps || []));
   for (const [name, expected] of Object.entries(EXPECTED.jobs)) {
     const { steps = [], ...metadata } = workflow.jobs[name] || {};
     if (!isDeepStrictEqual(metadata, expected.metadata)) errors.push(`${name}:JOB_SCHEMA_INVALID`);
