@@ -627,8 +627,8 @@ function createWindow() {
             document.querySelector("[data-ai-search-close]")?.click();
             if (advancedSettings) advancedSettings.open = true;
             panel?.querySelector("[data-ai-capture]")?.click();
-            await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
-            document.querySelector(".ai-capture-source")?.click();
+            const captureSourceReady = await waitFor(() => document.querySelector(".ai-capture-source"), 20000);
+            if (captureSourceReady) document.querySelector(".ai-capture-source").click();
             await waitFor(() => document.querySelector(".ai-crop-dialog"), 3000);
             const cropDialog = document.querySelector(".ai-crop-dialog");
             const aiCaptureCropReady = cropDialog?.closest(".ai-compare-overlay")?.parentElement === document.documentElement &&

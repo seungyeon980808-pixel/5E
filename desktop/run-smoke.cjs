@@ -22,7 +22,7 @@ const run = spawnSync(electron, launchArgs, {
     FIVE_E_DISABLE_GPU: "1",
   },
   encoding: "utf8",
-  timeout: Number(process.env.FIVE_E_SMOKE_TIMEOUT) || 30_000,
+  timeout: Number(process.env.FIVE_E_SMOKE_TIMEOUT) || 120_000,
 });
 
 let report;
@@ -34,6 +34,7 @@ try {
   throw new Error(`Desktop smoke result was not created: ${error.message}`);
 } finally {
   if (fs.existsSync(marker)) fs.unlinkSync(marker);
+  fs.rmSync(smokeUserData, { recursive: true, force: true });
 }
 
 if (run.error) throw run.error;

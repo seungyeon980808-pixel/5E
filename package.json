@@ -9,6 +9,7 @@
     "test": "node desktop/run-unit-tests.cjs",
     "test:phase0": "node scripts/stabilization/run-phase0.cjs",
     "test:desktop": "node desktop/run-smoke.cjs",
+    "verify:release": "node scripts/stabilization/run-release-verify.cjs",
     "test:graph": "node --test tests/test-ai-exam-graphs.mjs tests/test-ai-scene-fastpath.mjs",
     "test:stabilization-harness": "node --test desktop/label-harness.test.cjs desktop/graph-harness.test.cjs desktop/package-artifact-audit.test.cjs desktop/package-artifact-security.test.cjs",
     "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
