@@ -32,12 +32,19 @@ function load() {
   return require("../scripts/stabilization/rc-package-orchestrator.cjs");
 }
 
+function writeOutputs(output) {
+  fs.mkdirSync(path.join(output, "win-unpacked", "resources"), { recursive: true });
+  fs.writeFileSync(path.join(output, "5E-Setup-1.6.0-rc.1-windows-x64.exe"), "installer");
+  fs.writeFileSync(path.join(output, "win-unpacked", "5E.exe"), "runtime");
+  fs.writeFileSync(path.join(output, "win-unpacked", "resources", "app.asar"), "asar");
+}
+
 function successfulRunner(calls, mutate) {
   return (file, args, options) => {
     calls.push({ file, args, options });
     const output = args.find((arg) => arg.startsWith("-c.directories.output=")).split("=").slice(1).join("=");
-    fs.writeFileSync(path.join(output, "builder.marker"), "completed");
-    mutate?.(options.cwd);
+    writeOutputs(output);
+    mutate?.(options.cwd, output);
     return { status: 0 };
   };
 }
@@ -58,10 +65,11 @@ test("RC packaging binds one NSIS and dir build to the clean full SHA", (t) => {
     `-c.extraMetadata.buildCommit=${receipt.commit}`,
   ]);
   assert.match(receipt.commit, SHA);
-  assert.equal(receipt.state, "builder_completed_unverified");
+  assert.equal(receipt.state, "outputs_validated");
   assert.equal(receipt.version, "1.6.0-rc.1");
   assert.equal(receipt.output, item.output);
   assert.equal(receipt.ownershipReceipt, path.join(item.output, ".5e-rc-build-owner.json"));
+  assert.equal(receipt.outputs.installer, path.join(item.output, "5E-Setup-1.6.0-rc.1-windows-x64.exe"));
 });
 
 for (const [name, prepare, code] of [
@@ -196,15 +204,66 @@ test("builder success without its owned output cannot claim completion", (t) => 
   assert.throws(() => load().packageRc({ ...item, runCommand: runner }), /OUTPUT_OWNERSHIP_LOST|OUTPUT_MISSING/);
 });
 
-test("zero-status builder with no artifacts returns only an unverified completion", (t) => {
+test("zero-status builder with no artifacts cannot claim validated outputs", (t) => {
   // Given: the child returns zero but adds nothing beyond the ownership receipt.
   const item = fixture(t);
-  // When: orchestration completes without Todo8 artifact verification.
-  const receipt = load().packageRc({ ...item, runCommand: () => ({ status: 0 }) });
-  // Then: it cannot claim a built or audited candidate.
-  assert.equal(receipt.state, "builder_completed_unverified");
-  assert.deepEqual(fs.readdirSync(item.output), [".5e-rc-build-owner.json"]);
+  // When/Then: builder success is insufficient without the exact Todo8 output contract.
+  assert.throws(() => load().packageRc({ ...item, runCommand: () => ({ status: 0 }) }), /INSTALLER_COUNT_INVALID/);
 });
+
+test("RC packaging rejects an extra root installer after builder success", (t) => {
+  // Given: the builder emits the canonical output tree plus a second distributable EXE.
+  const item = fixture(t);
+  const runner = successfulRunner([], (_root, output) => fs.writeFileSync(path.join(output, "extra.exe"), "extra"));
+  // When/Then: post-builder cardinality fails and the owned failure receipt records the gate.
+  assert.throws(() => load().packageRc({ ...item, runCommand: runner }), /INSTALLER_COUNT_INVALID:2/);
+  assert.ok(fs.existsSync(path.join(item.output, ".5e-rc-build-failure.json")));
+});
+
+test("output validation cannot mutate the owned receipt", (t) => {
+  const item = fixture(t);
+  const validateOutputs = () => {
+    fs.appendFileSync(path.join(item.output, ".5e-rc-build-owner.json"), " ");
+    return {};
+  };
+  assert.throws(() => load().packageRc({ ...item, runCommand: successfulRunner([]), validateOutputs }), /OUTPUT_OWNERSHIP_LOST/);
+});
+
+test("output validation cannot mutate the frozen Git source", (t) => {
+  const item = fixture(t);
+  const validateOutputs = () => {
+    fs.writeFileSync(path.join(item.root, "late-validator-source.txt"), "dirty");
+    return {};
+  };
+  assert.throws(() => load().packageRc({ ...item, runCommand: successfulRunner([]), validateOutputs }), /GIT_STATE_CHANGED/);
+});
+
+for (const [name, mutate] of [
+  ["installer", (output) => {
+    const installer = path.join(output, "5E-Setup-1.6.0-rc.1-windows-x64.exe");
+    fs.rmSync(installer);
+    fs.writeFileSync(installer, "replacement");
+  }],
+  ["parent", (output) => {
+    const unpacked = path.join(output, "win-unpacked");
+    fs.renameSync(unpacked, `${unpacked}-old`);
+    fs.mkdirSync(path.join(unpacked, "resources"), { recursive: true });
+    fs.writeFileSync(path.join(unpacked, "5E.exe"), "replacement");
+    fs.writeFileSync(path.join(unpacked, "resources", "app.asar"), "replacement");
+  }],
+]) {
+  test(`integrated output validation rejects a validator-time ${name} swap`, (t) => {
+    const item = fixture(t);
+    let changed = false;
+    const validateOutputs = (output) => require("../scripts/stabilization/rc-package-outputs.cjs").validateCandidateOutputs(output, {
+      inspectFile: () => {
+        if (!changed) { changed = true; mutate(output); }
+        return { reparse: false, sparse: false, allocatedBytes: "4096", streams: [] };
+      },
+    });
+    assert.throws(() => load().packageRc({ ...item, runCommand: successfulRunner([]), validateOutputs }), /IDENTITY_CHANGED/);
+  });
+}
 
 test("RC packaging rejects post-build source mutation", (t) => {
   // Given: the builder boundary creates an untracked source file after preflight.

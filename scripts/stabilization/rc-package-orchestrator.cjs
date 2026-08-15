@@ -3,6 +3,7 @@ const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const preflight = require("./rc-package-preflight.cjs");
+const outputs = require("./rc-package-outputs.cjs");
 
 const BUILD_TIMEOUT_MS = 20 * 60 * 1000;
 
@@ -54,6 +55,7 @@ function packageRc({
   runCommand = defaultRunCommand,
   readGitState = preflight.readGitState,
   readPackage = preflight.readPackage,
+  validateOutputs = outputs.validateCandidateOutputs,
   beforeReserve,
 }) {
   const worktree = preflight.validateWorktree(root);
@@ -77,13 +79,18 @@ function packageRc({
     const end = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
     if (end.sha !== start.sha || end.status !== start.status) throw new Error("GIT_STATE_CHANGED");
     classifyBuilder(result);
+    preflight.validateReservedOutput(worktree, safeOutput, owner);
+    const validatedOutputs = validateOutputs(safeOutput);
+    const finalState = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
+    if (finalState.sha !== start.sha || finalState.status !== start.status) throw new Error("GIT_STATE_CHANGED");
     const ownershipReceipt = preflight.validateReservedOutput(worktree, safeOutput, owner);
     return Object.freeze({
-      state: "builder_completed_unverified",
+      state: "outputs_validated",
       commit: start.sha,
       version,
       output: safeOutput,
       ownershipReceipt,
+      outputs: validatedOutputs,
     });
   } catch (error) {
     recordFailure(worktree, safeOutput, owner, error.message);
