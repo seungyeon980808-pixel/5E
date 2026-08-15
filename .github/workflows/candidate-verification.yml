@@ -1,0 +1,80 @@
+name: Candidate Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: candidate-verification-${{ github.event.pull_request.number || inputs.candidate_sha || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pull-request-verify:
+    if: github.event_name == 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout pull request head SHA
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Set up Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 20
+          cache: npm
+      - name: Validate checked-out pull request SHA
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/stabilization/verify-workflow-checkout.cjs pr
+      - name: Install dependencies
+        run: npm ci
+      - name: Run the complete release verification gate
+        run: npm run verify:release
+
+  manual-candidate-verify:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout workflow validation source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          path: .workflow-source
+      - name: Set up Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: .workflow-source/package-lock.json
+      - name: Validate candidate SHA input
+        env:
+          EXPECTED_SHA: ${{ inputs.candidate_sha }}
+        run: node .workflow-source/scripts/stabilization/verify-workflow-checkout.cjs input
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+          path: .candidate
+      - name: Validate checked-out candidate identity
+        env:
+          EXPECTED_SHA: ${{ inputs.candidate_sha }}
+        run: node .workflow-source/scripts/stabilization/verify-workflow-checkout.cjs manual .candidate
+      - name: Install dependencies
+        run: npm ci
+        working-directory: .candidate
+      - name: Run the complete release verification gate
+        run: npm run verify:release
+        working-directory: .candidate
