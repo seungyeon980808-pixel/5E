@@ -1,4 +1,4 @@
-name: Windows Release
+name: Windows Stable Release
 
 on:
   push:
@@ -6,51 +6,90 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: stable-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-release:
+  verify-and-build:
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - name: Checkout exact tagged commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 20
           cache: npm
-
+      - name: Reject non-stable or mismatched release identity
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/stabilization/stable-release-cli.cjs preflight
       - name: Install dependencies
         run: npm ci
-
-      - name: Run unit tests
-        run: npm test
-
-      - name: Build Windows installer
-        run: npm run package:win
-
-      - name: Write SHA-256 checksum
+      - name: Run complete release verification
+        run: npm run verify:release
+      - name: Build exact Windows package
+        run: npm run package:win -- "-c.extraMetadata.buildCommit=${{ github.sha }}"
+      - name: Strictly audit packaged application
         shell: pwsh
         run: |
-          $installer = Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1
-          if (-not $installer) { throw "Windows installer was not created" }
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installer.FullName).Hash.ToLowerInvariant()
-          "$hash  $($installer.Name)" | Set-Content -Encoding ascii release/SHA256SUMS.txt
+          $version = node -p "require('./package.json').version"
+          node scripts/stabilization/package-artifact-audit.cjs --strict --artifact release/win-unpacked --web-version $version --web-commit $env:GITHUB_SHA > release/package-artifact-audit.json
+      - name: Validate exact bundle and write checksum plan
+        id: bundle
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/stabilization/stable-release-cli.cjs bundle
+      - name: Transfer only the verified release bundle
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
+        with:
+          name: stable-release-${{ github.sha }}
+          path: |
+            ${{ steps.bundle.outputs.installer }}
+            ${{ steps.bundle.outputs.checksum }}
+            ${{ steps.bundle.outputs.notes }}
+            ${{ steps.bundle.outputs.plan }}
+            ${{ steps.bundle.outputs.audit }}
+          if-no-files-found: error
+          retention-days: 1
 
-      - name: Publish GitHub Release
+  publish-draft:
+    needs: verify-and-build
+    runs-on: windows-latest
+    timeout-minutes: 15
+    environment: stable-release
+    permissions:
+      contents: write
+    steps:
+      - name: Freshly fetch exact publish SHA, full history, tags, and main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download verified release bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: stable-release-${{ github.sha }}
+          path: release
+      - name: Revalidate exact publish inputs
+        id: publish
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          EXPECTED_SHA: ${{ github.sha }}
+        run: node scripts/stabilization/stable-release-cli.cjs publish
+      - name: Create protected draft stable release
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          $tag = "${{ github.ref_name }}"
-          $assets = @(
-            (Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1).FullName
-            (Resolve-Path -LiteralPath release/SHA256SUMS.txt).Path
-          )
-          $notesPath = "docs/RELEASE_NOTES_$tag.md"
-          if (Test-Path -LiteralPath $notesPath) {
-            $firstLine = Get-Content -LiteralPath $notesPath -Encoding utf8 -TotalCount 1
-            $releaseTitle = if ($firstLine -match '^<!-- release-title: (.+) -->$') { $Matches[1] } else { "5E $tag" }
-            & gh release create $tag @assets --notes-file $notesPath --title $releaseTitle
-          } else {
-            & gh release create $tag @assets --generate-notes --title "5E $tag"
-          }
+        run: gh release create "${{ steps.publish.outputs.tag }}" "${{ steps.publish.outputs.installer }}" "${{ steps.publish.outputs.checksum }}" --verify-tag --target "${{ steps.publish.outputs.commit }}" --draft --latest --notes-file "${{ steps.publish.outputs.notes }}" --title "5E ${{ steps.publish.outputs.tag }}"
