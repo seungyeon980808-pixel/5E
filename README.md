@@ -11,8 +11,9 @@
 
 <p><strong>과학교사를 위한 시험문제용 도판 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://seungyeon980808-pixel.github.io/5E/">▶ 바로 써보기</a></p>
 
-<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.0">최신 릴리즈 <strong>v1.5.0</strong> — 무엇이 바뀌었나</a></p>
-<p><a href="docs/RELEASE_NOTES_v1.5.0.html"><strong>v1.5.0 릴리즈 노트</strong> — 전체 변경 보기</a></p>
+<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8">공개 안정판 <strong>v1.5.8</strong> — 무엇이 바뀌었나</a></p>
+<p><a href="docs/RELEASE_NOTES_v1.5.8.md"><strong>v1.5.8 릴리즈 노트</strong> — 전체 변경 보기</a></p>
+<p><strong>v1.6.0-rc.1</strong>은 로컬 비공개 검증 후보입니다. <code>v1.6.0-rc.1</code> 태그와 GitHub Release는 아직 만들지 않았습니다.</p>
 
 </div>
 
@@ -408,6 +409,8 @@ python -m http.server 8000
 
 | 판 | 무엇이 들어갔나 |
 |---|---|
+| **v1.6.0-rc.1 (비공개 RC)** | 안정화 검증 중 · 태그와 GitHub Release 미생성 · 실제 계정 및 깨끗한 Windows 설치 UAT 보류 |
+| [**v1.5.8**](docs/RELEASE_NOTES_v1.5.8.md) | 현재 공개 안정판 · PDF 교과서 검색·크롭 · AI 그래프 통합 · 웹/Windows 코드 기준 통합 |
 | [**v1.5.0**](docs/RELEASE_NOTES_v1.5.0.html) | 이미지 작업대 · 다중 참고 이미지와 영역 요청 · 분리형 자르기 · 드래그 아트보드 · 투명 배경 · Windows 설치판 · `.5e` 프로젝트 · 평가원 도식 Engine V2 |
 | [v1.4.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.4.0) | 과목별 과학 부품 확장 · 3D 도구 · 용수철·파동·전자기 도구 개선 · 정렬과 라벨 가림 개선 |
 | [**v1.3.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.3.0) | 입체 도구(실험) · 용수철 재설계 · 전기력선/자기력선/정상파 · 정렬·간격 통일 · 라벨 가림 개선 · MCP 도구 |

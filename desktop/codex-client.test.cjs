@@ -102,7 +102,7 @@ test("AI panel auto-connects, reports progress, and routes contextual output act
     assert.match(advanced, new RegExp(`${hook}(?:=|\\s|>)`), hook);
   }
   assert.match(advanced, /data-ai-output-engine="asset"/);
-  assert.match(markup, /v1\.5\.8 · 2026\.08\.13/);
+  assert.match(markup, /v1\.6\.0-rc\.1 · 2026\.08\.15/);
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);
