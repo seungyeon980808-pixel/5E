@@ -13,7 +13,7 @@
 
 <p><a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8">공개 안정판 <strong>v1.5.8</strong> — 무엇이 바뀌었나</a></p>
 <p><a href="docs/RELEASE_NOTES_v1.5.8.md"><strong>v1.5.8 릴리즈 노트</strong> — 전체 변경 보기</a></p>
-<p><strong>v1.6.0-rc.1</strong>은 로컬 비공개 검증 후보입니다. <code>v1.6.0-rc.1</code> 태그와 GitHub Release는 아직 만들지 않았습니다.</p>
+<p><strong>v1.6.0-rc.1</strong>은 로컬 비공개 검증 후보입니다. <code>v1.6.0-rc.1</code> 태그와 GitHub Release는 아직 만들지 않았습니다. 검증 경계와 보류된 UAT는 <a href="docs/RC_HANDOFF.md">비공개 RC 인계 문서</a>를 따릅니다.</p>
 
 </div>
 
