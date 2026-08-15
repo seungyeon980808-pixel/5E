@@ -73,6 +73,22 @@ test("publish revalidates freshly fetched refs and accepts an unchanged verified
   assert.equal(fs.existsSync(item.ghMarker), false, "validation must not invoke gh or publish");
 });
 
+test("bundle rejects an empty canonical installer before writing a checksum", (t) => {
+  const item = fixture(t);
+  const installer = path.join(item.release, "5E-Setup-1.6.0-windows-x64.exe");
+  fs.truncateSync(installer, 0);
+  fs.rmSync(path.join(item.release, "SHA256SUMS.txt"));
+  fs.rmSync(path.join(item.release, "stable-release-plan.json"));
+  assert.throws(() => run("bundle", item.context), { code: "INSTALLER_FILE_INVALID" });
+  assert.equal(fs.existsSync(path.join(item.release, "SHA256SUMS.txt")), false);
+});
+
+test("publish rejects a canonical installer truncated after bundling", (t) => {
+  const item = fixture(t);
+  fs.truncateSync(path.join(item.release, "5E-Setup-1.6.0-windows-x64.exe"), 0);
+  assert.throws(() => run("publish", item.context), { code: "INSTALLER_FILE_INVALID" });
+});
+
 for (const [name, change, code] of [
   ["tag moved during approval", (item) => {
     fs.writeFileSync(path.join(item.seed, "later.txt"), "later");

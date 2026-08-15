@@ -13,7 +13,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify-publish-environment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout trusted environment validator
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up Node.js 20
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 20
+      - name: Require protected stable-release environment
+        env:
+          STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: node scripts/stabilization/stable-release-environment.cjs
+
   verify-and-build:
+    needs: verify-publish-environment
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
@@ -50,6 +74,11 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
           EXPECTED_SHA: ${{ github.sha }}
         run: node scripts/stabilization/stable-release-cli.cjs bundle
+      - name: Stage trusted environment validator with the bundle
+        shell: pwsh
+        run: |
+          Copy-Item -LiteralPath scripts/stabilization/stable-release-environment.cjs -Destination release/stable-release-environment.cjs
+          Copy-Item -LiteralPath scripts/stabilization/strict-json.cjs -Destination release/strict-json.cjs
       - name: Transfer only the verified release bundle
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808
         with:
@@ -60,6 +89,8 @@ jobs:
             ${{ steps.bundle.outputs.notes }}
             ${{ steps.bundle.outputs.plan }}
             ${{ steps.bundle.outputs.audit }}
+            release/stable-release-environment.cjs
+            release/strict-json.cjs
           if-no-files-found: error
           retention-days: 1
 
@@ -69,25 +100,39 @@ jobs:
     timeout-minutes: 15
     environment: stable-release
     permissions:
+      actions: read
       contents: write
     steps:
+      - name: Download verified release bundle
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
+        with:
+          name: stable-release-${{ github.sha }}
+          path: release
+      - name: Revalidate protected environment before using write permission
+        env:
+          STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: node release/stable-release-environment.cjs
       - name: Freshly fetch exact publish SHA, full history, tags, and main
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Download verified release bundle
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16
-        with:
-          name: stable-release-${{ github.sha }}
-          path: release
+          clean: false
       - name: Revalidate exact publish inputs
         id: publish
         env:
           RELEASE_TAG: ${{ github.ref_name }}
           EXPECTED_SHA: ${{ github.sha }}
         run: node scripts/stabilization/stable-release-cli.cjs publish
+      - name: Revalidate protected environment immediately before draft creation
+        env:
+          STABLE_RELEASE_ENVIRONMENT_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY_NAME: ${{ github.repository }}
+          GITHUB_API_URL: ${{ github.api_url }}
+        run: node release/stable-release-environment.cjs
       - name: Create protected draft stable release
         shell: pwsh
         env:

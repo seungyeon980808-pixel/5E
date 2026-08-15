@@ -65,6 +65,15 @@ function sha256(file) {
   return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
 }
 
+function requireNonemptyInstaller(file) {
+  let stat;
+  try { stat = fs.lstatSync(file, { bigint: true }); }
+  catch { throw Object.assign(new Error("INSTALLER_FILE_INVALID"), { code: "INSTALLER_FILE_INVALID" }); }
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0n) {
+    throw Object.assign(new Error("INSTALLER_FILE_INVALID"), { code: "INSTALLER_FILE_INVALID" });
+  }
+}
+
 function bundle(ctx) {
   const identity = resolveIdentity(ctx);
   const installers = fs.readdirSync(ctx.release).filter((name) => name.toLowerCase().endsWith(".exe")).sort();
@@ -72,7 +81,8 @@ function bundle(ctx) {
   const notesSource = path.join(ctx.root, "docs", notesName);
   const report = readJson(path.join(ctx.release, "package-artifact-audit.json"));
   const installer = installers.length === 1 ? path.join(ctx.release, installers[0]) : null;
-  const hash = installer && fs.existsSync(installer) ? sha256(installer) : null;
+  if (installer) requireNonemptyInstaller(installer);
+  const hash = installer ? sha256(installer) : null;
   if (hash) fs.writeFileSync(path.join(ctx.release, "SHA256SUMS.txt"), `${hash}  ${installers[0]}\n`, "ascii");
   const plan = createStableReleasePlan({
     ...identity,
@@ -121,6 +131,7 @@ function publish(ctx) {
   for (const name of [plan.installer, plan.checksum, plan.notes, "package-artifact-audit.json"]) {
     if (!fs.existsSync(path.join(ctx.release, name))) throw Object.assign(new Error(`PUBLISH_FILE_MISSING: ${name}`), { code: "PUBLISH_FILE_MISSING" });
   }
+  requireNonemptyInstaller(path.join(ctx.release, plan.installer));
   const expectedLine = `${sha256(path.join(ctx.release, plan.installer))}  ${plan.installer}\n`;
   const checksumPassed = fs.readFileSync(path.join(ctx.release, plan.checksum), "ascii") === expectedLine;
   const checked = createStableReleasePlan({
