@@ -17,7 +17,7 @@ function fixture(t) {
   const output = path.join(root, "release-candidates", "candidate");
   fs.mkdirSync(path.join(root, "node_modules", "electron-builder", "out", "cli"), { recursive: true });
   fs.mkdirSync(path.dirname(output));
-  fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ version: "1.6.0-rc.1" }));
+  fs.writeFileSync(path.join(root, "package.json"), JSON.stringify({ version: "1.6.0-rc.1", devDependencies: { electron: "43.4.0" } }));
   fs.writeFileSync(path.join(root, ".gitignore"), "node_modules/\nrelease-candidates/\n");
   fs.writeFileSync(path.join(root, "node_modules", "electron-builder", "out", "cli", "cli.js"), "builder");
   git(root, ["init", "-q"]);
@@ -25,7 +25,14 @@ function fixture(t) {
   git(root, ["config", "user.name", "Fixture"]);
   git(root, ["add", "."]);
   git(root, ["commit", "-qm", "fixture"]);
-  return { root, output };
+  return {
+    root, output,
+    createProvenance: (_context, hooks) => {
+      hooks.beforeCommit();
+      return { state: "candidate_manifest_validated", manifest: path.join(output, "RC_MANIFEST.json") };
+    },
+    clock: (() => { const values = ["2026-08-15T00:00:00.000Z", "2026-08-15T00:01:00.000Z"]; return () => values.shift(); })(),
+  };
 }
 
 function writeOutputs(output) {
@@ -44,7 +51,7 @@ function builder(events) {
   };
 }
 
-test("Given clean source and outputs, When packaging completes, Then policy audits bracket the builder and bind the receipt", (t) => {
+test("Given clean source and outputs, When packaging completes, Then audits and provenance bind the receipt in order", (t) => {
   const item = fixture(t);
   const events = [];
   const reports = Object.freeze({
@@ -59,11 +66,23 @@ test("Given clean source and outputs, When packaging completes, Then policy audi
       return reports;
     },
   });
-  const receipt = packageRc({ ...item, runCommand: builder(events), createAuditSession });
-  assert.deepEqual(events, ["source-audit", "builder", "artifact-audit"]);
-  assert.equal(receipt.state, "artifact_policy_validated");
+  const createProvenance = (context, hooks) => {
+    events.push("provenance");
+    assert.deepEqual(context.policyReports, reports);
+    assert.equal(context.build.startCommit, context.commit);
+    assert.equal(context.build.endCommit, context.commit);
+    assert.equal(context.finalRcArtifact, true);
+    assert.equal(context.evidenceClassification, "final-rc-artifact");
+    assert.deepEqual([context.build.startedAt, context.build.endedAt], ["2026-08-15T00:00:00.000Z", "2026-08-15T00:01:00.000Z"]);
+    hooks.beforeCommit();
+    return { state: "candidate_manifest_validated", manifest: path.join(item.output, "RC_MANIFEST.json") };
+  };
+  const receipt = packageRc({ ...item, runCommand: builder(events), createAuditSession, createProvenance });
+  assert.deepEqual(events, ["source-audit", "builder", "artifact-audit", "provenance"]);
+  assert.equal(receipt.state, "candidate_manifest_validated");
   assert.deepEqual(receipt.policyReports, reports);
   assert.deepEqual(receipt.policyReports.installer, { metadata: "pending", asarAudited: false });
+  assert.equal(receipt.provenance.manifest, path.join(item.output, "RC_MANIFEST.json"));
 });
 
 test("Given source policy rejection, When packaging starts, Then builder and output reservation never run", (t) => {
@@ -99,5 +118,40 @@ for (const [name, mutate, code] of [
       auditArtifact() { mutate(item); return { source: {}, artifact: {} }; },
     });
     assert.throws(() => packageRc({ ...item, createAuditSession, runCommand: builder([]) }), new RegExp(code));
+  });
+}
+
+test("Given a provenance step without a validated receipt, When packaging returns, Then success is denied", (t) => {
+  const item = fixture(t);
+  const createAuditSession = () => ({ auditSource: () => ({}), auditArtifact: () => ({}) });
+  assert.throws(() => packageRc({
+    ...item, createAuditSession, runCommand: builder([]), createProvenance: () => ({ state: "written_only" }),
+  }), /PROVENANCE_RECEIPT_INVALID/);
+});
+
+for (const [name, mutate, code] of [
+  ["Git source", (item) => fs.appendFileSync(path.join(item.root, "package.json"), " "), "GIT_STATE_CHANGED"],
+  ["ownership receipt", (item) => fs.appendFileSync(path.join(item.output, ".5e-rc-build-owner.json"), " "), "OUTPUT_OWNERSHIP_LOST"],
+  ["validated installer", (item) => fs.appendFileSync(path.join(item.output, "5E-Setup-1.6.0-rc.1-windows-x64.exe"), "x"), "PROVENANCE_SNAPSHOT_CHANGED"],
+]) {
+  test(`Given provenance ${name} mutation, When final invariants run, Then packaging fails closed`, (t) => {
+    const item = fixture(t);
+    const createAuditSession = () => ({
+      auditSource: () => ({ violations: [] }),
+      auditArtifact: () => ({ source: {}, stagedPayload: {}, installer: { asarAudited: false } }),
+    });
+    const validateOutputs = (output) => {
+      return {
+        installer: path.join(output, "5E-Setup-1.6.0-rc.1-windows-x64.exe"),
+        unpackedExecutable: path.join(output, "win-unpacked", "5E.exe"),
+        asar: path.join(output, "win-unpacked", "resources", "app.asar"),
+      };
+    };
+    const createProvenance = (_context, hooks) => {
+      mutate(item);
+      hooks.beforeCommit();
+      return { state: "candidate_manifest_validated" };
+    };
+    assert.throws(() => packageRc({ ...item, createAuditSession, createProvenance, validateOutputs, runCommand: builder([]) }), new RegExp(code));
   });
 }

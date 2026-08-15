@@ -5,6 +5,8 @@ const { spawnSync } = require("node:child_process");
 const preflight = require("./rc-package-preflight.cjs");
 const outputs = require("./rc-package-outputs.cjs");
 const audits = require("./rc-package-audits.cjs");
+const provenance = require("./rc-package-provenance.cjs");
+const provenanceFiles = require("./rc-provenance-files.cjs");
 
 const BUILD_TIMEOUT_MS = 20 * 60 * 1000;
 
@@ -58,12 +60,15 @@ function packageRc({
   readPackage = preflight.readPackage,
   validateOutputs = outputs.validateCandidateOutputs,
   createAuditSession = audits.createAuditSession,
+  createProvenance = provenance.createCandidateProvenance,
+  clock = () => new Date().toISOString(),
   beforeReserve,
 }) {
   const worktree = preflight.validateWorktree(root);
   const start = preflight.validateGitState(readGitState(worktree, [output]));
   const dependencies = preflight.validateNodeModules(worktree);
-  const version = preflight.validateVersion(readPackage(worktree));
+  const packageJson = readPackage(worktree);
+  const version = preflight.validateVersion(packageJson);
   const safeOutput = preflight.validateOutputPath(worktree, output);
   const cli = preflight.validateBuilderCli(worktree, dependencies);
   const auditSession = createAuditSession({ root: worktree, output: safeOutput, commit: start.sha, version });
@@ -80,8 +85,10 @@ function packageRc({
   try {
     preflight.validateReservedOutput(worktree, safeOutput, owner);
     let result;
+    const buildStartedAt = clock();
     try { result = runCommand(process.execPath, args, { cwd: worktree }); }
     catch (error) { result = { error }; }
+    const buildEndedAt = clock();
     const end = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
     if (end.sha !== start.sha || end.status !== start.status) throw new Error("GIT_STATE_CHANGED");
     classifyBuilder(result);
@@ -90,15 +97,36 @@ function packageRc({
     const policyReports = auditSession.auditArtifact(validatedOutputs);
     const finalState = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
     if (finalState.sha !== start.sha || finalState.status !== start.status) throw new Error("GIT_STATE_CHANGED");
-    const ownershipReceipt = preflight.validateReservedOutput(worktree, safeOutput, owner);
+    preflight.validateReservedOutput(worktree, safeOutput, owner);
+    const payloadSnapshot = provenanceFiles.captureFiles(Object.values(validatedOutputs));
+    let ownershipReceipt;
+    let sealedOutputs;
+    let sealed = false;
+    const sealBeforeCommit = () => {
+      provenanceFiles.revalidate(payloadSnapshot);
+      sealedOutputs = validateOutputs(safeOutput);
+      const sealedState = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
+      if (sealedState.sha !== start.sha || sealedState.status !== start.status) throw new Error("GIT_STATE_CHANGED");
+      ownershipReceipt = preflight.validateReservedOutput(worktree, safeOutput, owner);
+      sealed = true;
+    };
+    const provenanceReceipt = createProvenance({
+      output: safeOutput, outputs: validatedOutputs, policyReports, version, commit: start.sha,
+      arch: "x64", electronVersion: packageJson.devDependencies?.electron,
+      finalRcArtifact: true, evidenceClassification: "final-rc-artifact",
+      build: { startedAt: buildStartedAt, endedAt: buildEndedAt, startCommit: start.sha, endCommit: finalState.sha },
+    }, { beforeCommit: sealBeforeCommit });
+    if (provenanceReceipt?.state !== "candidate_manifest_validated") throw new Error("PROVENANCE_RECEIPT_INVALID");
+    if (!sealed) throw new Error("PROVENANCE_PRECOMMIT_SEAL_MISSING");
     return Object.freeze({
-      state: "artifact_policy_validated",
+      state: "candidate_manifest_validated",
       commit: start.sha,
       version,
       output: safeOutput,
       ownershipReceipt,
-      outputs: validatedOutputs,
+      outputs: sealedOutputs,
       policyReports,
+      provenance: provenanceReceipt,
     });
   } catch (error) {
     recordFailure(worktree, safeOutput, owner, error.message);
