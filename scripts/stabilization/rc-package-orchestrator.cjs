@@ -4,6 +4,7 @@ const { randomUUID } = require("node:crypto");
 const { spawnSync } = require("node:child_process");
 const preflight = require("./rc-package-preflight.cjs");
 const outputs = require("./rc-package-outputs.cjs");
+const audits = require("./rc-package-audits.cjs");
 
 const BUILD_TIMEOUT_MS = 20 * 60 * 1000;
 
@@ -56,6 +57,7 @@ function packageRc({
   readGitState = preflight.readGitState,
   readPackage = preflight.readPackage,
   validateOutputs = outputs.validateCandidateOutputs,
+  createAuditSession = audits.createAuditSession,
   beforeReserve,
 }) {
   const worktree = preflight.validateWorktree(root);
@@ -64,6 +66,10 @@ function packageRc({
   const version = preflight.validateVersion(readPackage(worktree));
   const safeOutput = preflight.validateOutputPath(worktree, output);
   const cli = preflight.validateBuilderCli(worktree, dependencies);
+  const auditSession = createAuditSession({ root: worktree, output: safeOutput, commit: start.sha, version });
+  auditSession.auditSource();
+  const auditedState = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
+  if (auditedState.sha !== start.sha || auditedState.status !== start.status) throw new Error("GIT_STATE_CHANGED");
   const args = [
     cli, "--win", "nsis", "dir", "--x64", "--publish", "never",
     `-c.directories.output=${safeOutput}`,
@@ -81,16 +87,18 @@ function packageRc({
     classifyBuilder(result);
     preflight.validateReservedOutput(worktree, safeOutput, owner);
     const validatedOutputs = validateOutputs(safeOutput);
+    const policyReports = auditSession.auditArtifact(validatedOutputs);
     const finalState = preflight.validateGitState(readGitState(worktree, [safeOutput]), false);
     if (finalState.sha !== start.sha || finalState.status !== start.status) throw new Error("GIT_STATE_CHANGED");
     const ownershipReceipt = preflight.validateReservedOutput(worktree, safeOutput, owner);
     return Object.freeze({
-      state: "outputs_validated",
+      state: "artifact_policy_validated",
       commit: start.sha,
       version,
       output: safeOutput,
       ownershipReceipt,
       outputs: validatedOutputs,
+      policyReports,
     });
   } catch (error) {
     recordFailure(worktree, safeOutput, owner, error.message);

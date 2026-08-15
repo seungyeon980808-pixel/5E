@@ -25,7 +25,11 @@ function fixture(t) {
   git(root, ["config", "user.name", "Fixture"]);
   git(root, ["add", "package.json", ".gitignore"]);
   git(root, ["commit", "-qm", "fixture"]);
-  return { root, output };
+  const createAuditSession = () => ({
+    auditSource: () => ({ violations: [] }),
+    auditArtifact: () => ({ source: {}, artifact: {} }),
+  });
+  return { root, output, createAuditSession };
 }
 
 function ownerPath(output) {

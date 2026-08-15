@@ -25,7 +25,11 @@ function fixture(t, version = "1.6.0-rc.1") {
   git(root, ["config", "user.name", "Fixture"]);
   git(root, ["add", "package.json", ".gitignore"]);
   git(root, ["commit", "-qm", "fixture"]);
-  return { root, output: path.join(root, "release-candidates", "candidate"), sandbox };
+  const createAuditSession = () => ({
+    auditSource: () => ({ schema: "source", violations: [] }),
+    auditArtifact: () => ({ source: { schema: "source", violations: [] }, artifact: { schema: "artifact", violations: [] } }),
+  });
+  return { root, output: path.join(root, "release-candidates", "candidate"), sandbox, createAuditSession };
 }
 
 function load() {
@@ -65,7 +69,7 @@ test("RC packaging binds one NSIS and dir build to the clean full SHA", (t) => {
     `-c.extraMetadata.buildCommit=${receipt.commit}`,
   ]);
   assert.match(receipt.commit, SHA);
-  assert.equal(receipt.state, "outputs_validated");
+  assert.equal(receipt.state, "artifact_policy_validated");
   assert.equal(receipt.version, "1.6.0-rc.1");
   assert.equal(receipt.output, item.output);
   assert.equal(receipt.ownershipReceipt, path.join(item.output, ".5e-rc-build-owner.json"));
