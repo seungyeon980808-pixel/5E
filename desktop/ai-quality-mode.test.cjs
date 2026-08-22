@@ -58,8 +58,4 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   assert.match(panel, /복잡 변환 완료 · 원본 구조 확인 필요/);
   assert.match(panel, /normalizeQualityMode\(currentRunInput\?\.qualityMode\) === AI_QUALITY_MODES\.COMPLEX/);
   assert.match(panel, /AI_OUTPUT_ENGINES\.RASTER/);
-  assert.doesNotMatch(panel, /tabNewButton\.disabled = on/);
-  assert.match(panel, /const activateImmediately = activate && !awaitingTurnId && !previewPending/);
-  assert.match(panel, /if \(activateImmediately\) restoreTaskTab\(id\)/);
-  assert.match(panel, /최대 5개 작업을 동시에 진행합니다/);
 });

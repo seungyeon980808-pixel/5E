@@ -11,7 +11,7 @@ import { state } from "./state.js?v=1.4.0";
 import { render } from "./render.js?v=1.4.3";
 import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.4.0";
 import { initTools } from "./tools.js?v=1.5.4";
-import { initCutTool } from "./cut-tool.js?v=1.5.8";
+import { initCutTool } from "./cut-tool.js?v=1.5.3";
 import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
@@ -66,8 +66,8 @@ import { initModalDrag } from "./modal-drag.js?v=1.4.0";
 import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.5.2";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.5.6-pdf-search";
-import { initAiPanel } from "./ai-panel.js?v=1.5.11-pdf-crop-responsive-2";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
+import { initAiPanel } from "./ai-panel.js?v=1.5.7";
 
 const svg = document.getElementById("canvas");
 const zoomReadout = document.getElementById("zoom-readout");
@@ -468,7 +468,7 @@ if (_APP_DEBUG_ENABLED) {
   })();
 
   console.info(
-    "[시범공개] [5E v1.5.8] Press S (or click the toolbar button) to arm the\n" +
+    "[시범공개] [5E v1.5.3] Press S (or click the toolbar button) to arm the\n" +
       "rectangle tool, then drag on the canvas to draw. Press 'd' to toggle the\n" +
       "live coord-debug overlay (pointer?봶orld mapping). Verify with:\n" +
       "  phyDraw.objects()        // array of committed shape objects\n" +

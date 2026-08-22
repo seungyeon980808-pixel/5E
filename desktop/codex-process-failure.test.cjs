@@ -40,8 +40,7 @@ test("main reports terminal failure before process state is cleared and marks in
   const main = fs.readFileSync(path.join(__dirname, "main.cjs"), "utf8");
   assert.match(main, /createProcessFailureFinalization/);
   assert.match(main, /sendImageFinalization\(failure\.turnId, failure\.state/);
-  assert.match(main, /recoveryTerminatingTurnIds\.add\(completedTurnId\)/);
-  assert.match(main, /for \(const activeTurnId of activeTurnIds\)/);
+  assert.match(main, /recoveryTerminatingTurnId = completedTurnId/);
   const handler = main.slice(main.indexOf("function handleServerProcessTermination"), main.indexOf("function startServer"));
   assert.ok(handler.indexOf("sendImageFinalization(failure.turnId") >= 0);
   assert.ok(handler.indexOf("sendImageFinalization(failure.turnId") < handler.indexOf("server = null"));

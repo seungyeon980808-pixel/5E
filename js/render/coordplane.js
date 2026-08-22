@@ -224,37 +224,6 @@ function renderCoordplane(obj) {
   const skipTickX = (v) => legacyTrim && atEdgeX(v);
   const skipTickY = (v) => (gcYpos == null && !gridToData) && atEdgeY(v);
 
-  // Frame rendering also needs this rectangle when the grid itself is hidden.
-  // Start with the graph's full data box, then let the grid calculation below
-  // narrow/extend it to the exact visible grid bounds when appropriate.
-  let rectLeft = left, rectRight = right, rectTop = top, rectBot = bottom;
-
-  // 평가원 그래프의 회색 구간 띠. 수학 좌표(from/to)를 유지하므로 평면의 범위나
-  // 크기를 바꿔도 같은 데이터 구간을 따라간다. 격자보다 먼저 그려 선을 가리지 않는다.
-  (obj.bands || []).forEach((band, bi) => {
-    if (!band || !Number.isFinite(band.from) || !Number.isFinite(band.to)) return;
-    const vertical = band.axis !== "y";
-    const a = vertical ? worldXFromMathX(P, band.from) : worldYFromMathY(P, band.from);
-    const b = vertical ? worldXFromMathX(P, band.to) : worldYFromMathY(P, band.to);
-    const bandRect = document.createElementNS(SVG_NS, "rect");
-    bandRect.setAttribute("x", vertical ? Math.min(a, b) : left);
-    bandRect.setAttribute("y", vertical ? top : Math.min(a, b));
-    bandRect.setAttribute("width", vertical ? Math.abs(b - a) : obj.w);
-    bandRect.setAttribute("height", vertical ? obj.h : Math.abs(b - a));
-    bandRect.setAttribute("fill", grayHex(Number.isFinite(band.level) ? band.level : 225));
-    bandRect.setAttribute("stroke", "none");
-    bandRect.setAttribute("data-graph-band", String(bi));
-    g.appendChild(bandRect);
-    if (band.label) {
-      const label = renderGraphLabel(band.label, {
-        x: vertical ? (a + b) / 2 : (left + right) / 2,
-        y: vertical ? top + Math.max(2.5, obj.h * 0.06) : (a + b) / 2,
-        size: 2.8, color, anchor: "middle", vAlign: "middle", halo: true, hangulScale: obj.labelHangulScale,
-      });
-      if (label) g.appendChild(label);
-    }
-  });
-
   // ----- GRID (light, dashed — 평가원 style) -----
   // Every grid line spans the SAME grid rectangle so the ends line up cleanly
   // (no dashes poking into the one-cell axis margin, #3). The rectangle is bounded
@@ -287,10 +256,10 @@ function renderCoordplane(obj) {
       yLoK = Math.round(gYlo / ky.step); yHiK = Math.round(gYhi / ky.step);
     }
     // 격자 사각형 경계 = 마지막 눈금 + gridOver 칸(사진4: 데이터 밖으로 반 칸 더).
-    rectLeft  = xBoth ? worldXFromMathX(P, (xLoK - goXN) * kx.step) : worldX0;
-    rectRight = worldXFromMathX(P, (xHiK + goXP) * kx.step);
-    rectTop   = worldYFromMathY(P, (yHiK + goYP) * ky.step);
-    rectBot   = yBoth ? worldYFromMathY(P, (yLoK - goYN) * ky.step) : worldY0;
+    const rectLeft  = xBoth ? worldXFromMathX(P, (xLoK - goXN) * kx.step) : worldX0;
+    const rectRight = worldXFromMathX(P, (xHiK + goXP) * kx.step);
+    const rectTop   = worldYFromMathY(P, (yHiK + goYP) * ky.step);
+    const rectBot   = yBoth ? worldYFromMathY(P, (yLoK - goYN) * ky.step) : worldY0;
     if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) {
       for (let k = xLoK; k <= xHiK; k++) {
         if ((!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
@@ -324,44 +293,6 @@ function renderCoordplane(obj) {
     }
   }
 
-  // 기출 산점도·막대그래프에서 자주 쓰는 사각 프레임. 축/격자와 같은 coordplane
-  // 속성으로 보존하므로 AI 변환 뒤에도 그래프 모달을 통한 재편집과 크기 변경을 따른다.
-  if (obj.showFrame) {
-    const frame = document.createElementNS(SVG_NS, "rect");
-    frame.setAttribute("x", rectLeft); frame.setAttribute("y", rectTop);
-    frame.setAttribute("width", Math.max(0, rectRight - rectLeft));
-    frame.setAttribute("height", Math.max(0, rectBot - rectTop));
-    frame.setAttribute("fill", "none"); frame.setAttribute("stroke", color);
-    frame.setAttribute("stroke-width", sw); frame.setAttribute("data-graph-frame", "true");
-    g.appendChild(frame);
-  }
-
-  // 축 생략 기호(≈ 모양의 두 사선). 위치는 수학 좌표로 저장해 평면 이동·리사이즈에도
-  // 정확히 따라간다. x축/y축 각각 독립적으로 여러 개를 둘 수 있다.
-  (obj.axisBreaks || []).forEach((br, bi) => {
-    if (!br || !Number.isFinite(br.at)) return;
-    const size = Number.isFinite(br.size) ? Math.max(0.2, br.size) : 0.7;
-    const group = document.createElementNS(SVG_NS, "g");
-    group.setAttribute("data-axis-break", `${br.axis === "y" ? "y" : "x"}:${bi}`);
-    const slash = (x1, y1, x2, y2) => {
-      const line = document.createElementNS(SVG_NS, "line");
-      line.setAttribute("x1", x1); line.setAttribute("y1", y1);
-      line.setAttribute("x2", x2); line.setAttribute("y2", y2);
-      line.setAttribute("stroke", color); line.setAttribute("stroke-width", sw);
-      line.setAttribute("stroke-linecap", "round"); group.appendChild(line);
-    };
-    if (br.axis === "y") {
-      const cy = worldYFromMathY(P, br.at), cx = worldX0;
-      slash(cx - size * 0.65, cy + size, cx + size * 0.65, cy);
-      slash(cx - size * 0.65, cy, cx + size * 0.65, cy - size);
-    } else {
-      const cx = worldXFromMathX(P, br.at), cy = worldY0;
-      slash(cx - size, cy + size * 0.65, cx, cy - size * 0.65);
-      slash(cx, cy + size * 0.65, cx + size, cy - size * 0.65);
-    }
-    g.appendChild(group);
-  });
-
   // ----- TICK MARKS on the visible axes (skip the origin + box-edge ends) -----
   // 눈금은 '데이터 쪽(안쪽)으로만' 뻗는다(요구): ㄴ자면 x축 눈금은 위로만(아래로 안 튀어나옴),
   // y축 눈금은 오른쪽으로만(왼쪽으로 안 튀어나옴). 반대쪽으로는 그 방향에 데이터가 있을 때만
@@ -369,7 +300,7 @@ function renderCoordplane(obj) {
   const tIn = sw * 4.8;              // 안쪽(데이터 쪽) 길이 — 눈금을 조금 더 길게(요구)
   const tickSw = sw * 0.8;           // 요구: 눈금 굵기를 축선보다 20% 얇게(축·격자는 sw 그대로)
   if (obj.showTicks) {
-    if (xAxisVisible && obj.showTickX !== false) {
+    if (xAxisVisible) {
       const up = tIn, down = yBoth ? tIn : 0;       // 위=항상, 아래=y음수범위일 때만
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
@@ -377,7 +308,7 @@ function renderCoordplane(obj) {
         addLine(vx, worldY0 - up, vx, worldY0 + down, tickColor, tickSw);  // -y = 위(안쪽)
       }
     }
-    if (hasYArm && yAxisVisible && obj.showTickY !== false) {
+    if (hasYArm && yAxisVisible) {
       const rightLen = tIn, leftLen = xBoth ? tIn : 0; // 오른쪽=항상, 왼쪽=x음수범위일 때만
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
@@ -398,7 +329,7 @@ function renderCoordplane(obj) {
     if (rich) {
       // 눈금 숫자도 halo를 켠다 — 예전엔 흰 사각형 블록이 대신 가려 줬는데 그 블록을
       // 없앴으므로(glyph 윤곽만 남김), 격자 파선이 숫자를 뚫고 지나가지 않게 하려면 필요하다.
-      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale });
+      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
       if (node) g.appendChild(node);
     } else {
       node = document.createElementNS(SVG_NS, "text");
@@ -470,7 +401,7 @@ function renderCoordplane(obj) {
     if (!text) return;
     if (rich) {
       // 혼합 라벨러: 한글 정자 + 영문 이탤릭 + 줄바꿈 + 수식 + halo.
-      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale });
+      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
       if (gl) g.appendChild(gl);
       return;
     }
@@ -495,9 +426,6 @@ function renderCoordplane(obj) {
   const posY = obj.labelYPos && Number.isFinite(obj.labelYPos.fx) ? obj.labelYPos : null;
   const addAxisName = (which, text, lx, ly, anchor, baseline) => {
     if (!text) return;
-    const axisNameSize = which === "x"
-      ? Math.max(obj.axisLabelSizeX || nameSize, 1)
-      : Math.max(obj.axisLabelSizeY || nameSize, 1);
     const off = which === "x" ? offX : offY;
     const pos = which === "x" ? posX : posY;
     const px = pos ? obj.x + pos.fx * obj.w : lx + (off.dx || 0);
@@ -506,24 +434,10 @@ function renderCoordplane(obj) {
     const anc = pos ? "middle" : anchor;
     const bl = pos ? "middle" : baseline;
     let el = null;
-    if (rich && which === "y" && obj.labelYLayout === "vertical") {
-      // 평가원식 세로 축 제목: 탭으로 나눈 문자열을 세로 열로 쌓는다.
-      // 예: "평균 수면 시간\t(상댓값)" → 본문 열 + 단위/설명 열. 독립 text
-      // 객체가 아니라 coordplane 라벨 데이터이므로 이동·재편집 시 축에 종속된다.
-      const columns = String(text).split("\t").map((column) => Array.from(column.replace(/\s+/g, "")).join("\n"));
-      el = document.createElementNS(SVG_NS, "g");
-      columns.forEach((column, index) => {
-        const shift = (columns.length - 1 - index) * axisNameSize * 1.15;
-        const node = renderGraphLabel(column, {
-          x: px - shift, y: py, size: axisNameSize, color, anchor: "middle", vAlign: "top",
-          halo: true, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale,
-        });
-        if (node) el.appendChild(node);
-      });
-    } else if (rich) el = renderGraphLabel(text, { x: px, y: py, size: axisNameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale });
+    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true, haloRatio: obj.haloRatio });
     else {
       el = document.createElementNS(SVG_NS, "text");
-      el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", axisNameSize);
+      el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", nameSize);
       applyObjectLabelFont(el, obj.labelType); el.setAttribute("fill", color);
       el.setAttribute("text-anchor", anc); el.setAttribute("dominant-baseline", bl);
       fillTextWithRomanRuns(el, text);
@@ -599,7 +513,7 @@ function renderCoordplane(obj) {
       wrap.setAttribute("transform", `rotate(-90 ${lx} ${ly})`);
       let el2 = null;
       if (rich) {
-        el2 = renderGraphLabel(y2c.labelY2, { x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale });
+        el2 = renderGraphLabel(y2c.labelY2, { x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio });
       } else {
         el2 = document.createElementNS(SVG_NS, "text");
         el2.setAttribute("x", lx); el2.setAttribute("y", ly); el2.setAttribute("font-size", nameSize);
@@ -670,13 +584,11 @@ function renderCoordplane(obj) {
   (obj.annLabelPoints || []).forEach((lp, li) => {
     if (!lp || !Number.isFinite(lp.x) || !Number.isFinite(lp.y)) return;
     const wx = wmX(lp.x), wy = wmY(lp.y);
-    if (lp.showMarker === true) {
-      const c = document.createElementNS(SVG_NS, "circle");
-      c.setAttribute("cx", wx); c.setAttribute("cy", wy);
-      c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
-      if (Number.isFinite(li)) c.setAttribute("data-labelpt", String(li));   // 미리보기 드래그용(향후)
-      g.appendChild(c);
-    }
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", wx); c.setAttribute("cy", wy);
+    c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
+    if (Number.isFinite(li)) c.setAttribute("data-labelpt", String(li));   // 미리보기 드래그용(향후)
+    g.appendChild(c);
     const dist = Number.isFinite(lp.dist) ? lp.dist : 5;
     const angleDeg = Number.isFinite(lp.angle) ? lp.angle : 45;
     const rad = (angleDeg * Math.PI) / 180;
@@ -684,72 +596,10 @@ function renderCoordplane(obj) {
     const size = Number.isFinite(lp.size) ? lp.size : 5.29; // 15pt ≈ 5.29mm
     // 점 이름(A·B·C…)은 변수가 아니라 이름표 — 기울임 없이 정자로 쓴다(요구).
     const lbl = renderGraphLabel(String(lp.text ?? ""), {
-      x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: lp.upright !== false,
-      haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale,
+      x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
+      haloRatio: obj.haloRatio,
     });
-    if (lbl) {
-      if (Number.isFinite(lp.rotation) && Math.abs(lp.rotation) > 1e-9) {
-        lbl.setAttribute("transform", `rotate(${lp.rotation} ${lx} ${ly})`);
-      }
-      g.appendChild(lbl);
-    }
-  });
-  // 그래프 내부 범위선·치수선·지시선. 이들은 별도 line/text 객체를 캔버스 위에
-  // 덧씌우지 않고 coordplane의 수학 좌표 데이터로 저장된다. 따라서 평면을 다시
-  // 편집하거나 크기를 바꿔도 축과 같은 좌표계에서 재계산된다.
-  const appendMathLine = (a, b, width = annSw) => {
-    const l = document.createElementNS(SVG_NS, "line");
-    l.setAttribute("x1", wmX(a.x)); l.setAttribute("y1", wmY(a.y));
-    l.setAttribute("x2", wmX(b.x)); l.setAttribute("y2", wmY(b.y));
-    l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", width);
-    l.setAttribute("stroke-linecap", "round"); g.appendChild(l); return l;
-  };
-  const appendSpan = (item, role, forceBars = false) => {
-    if (!item || !item.from || !item.to) return;
-    const a = item.from, b = item.to;
-    if (![a.x, a.y, b.x, b.y].every(Number.isFinite)) return;
-    appendMathLine(a, b);
-    const ax = wmX(a.x), ay = wmY(a.y), bx = wmX(b.x), by = wmY(b.y);
-    const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy) || 1;
-    const ux = dx / len, uy = dy / len, nx = -uy, ny = ux;
-    const variant = item.variant || "basic";
-    const leftBar = forceBars || variant === "leftBar" || variant === "bothBars";
-    const rightBar = forceBars || variant === "rightBar" || variant === "bothBars";
-    const cap = Math.max(1.1, annSw * 4);
-    const appendCap = (x, y) => {
-      const l = document.createElementNS(SVG_NS, "line");
-      l.setAttribute("x1", x - nx * cap); l.setAttribute("y1", y - ny * cap);
-      l.setAttribute("x2", x + nx * cap); l.setAttribute("y2", y + ny * cap);
-      l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw);
-      g.appendChild(l);
-    };
-    if (leftBar) appendCap(ax, ay); else appendArrow(g, ax, ay, -ux, -uy, annSw, annColor);
-    if (rightBar) appendCap(bx, by); else appendArrow(g, bx, by, ux, uy, annSw, annColor);
-    if (item.label) {
-      const size = Number.isFinite(item.size) ? item.size : Math.max(nameSize * 0.82, 2.4);
-      const lbl = renderGraphLabel(item.label, {
-        x: (ax + bx) / 2 + nx * size * 0.7,
-        y: (ay + by) / 2 + ny * size * 0.7,
-        size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
-        haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale,
-      });
-      if (lbl) { lbl.setAttribute("data-graph-span", role); g.appendChild(lbl); }
-    }
-  };
-  (obj.ranges || []).forEach((item) => appendSpan(item, "range", true));
-  (obj.dimensions || []).forEach((item) => appendSpan(item, "dimension", false));
-  (obj.leaders || []).forEach((item) => {
-    if (!item || !item.from || !item.to) return;
-    appendMathLine(item.from, item.to);
-    if (!item.label) return;
-    const x = wmX(item.to.x), y = wmY(item.to.y);
-    const size = Number.isFinite(item.size) ? item.size : Math.max(nameSize * 0.82, 2.4);
-    const lbl = renderGraphLabel(item.label, {
-      x: x + size * 0.45, y: y - size * 0.45,
-      size, color: annColor, anchor: "start", vAlign: "bottom", halo: true, upright: true,
-      haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale,
-    });
-    if (lbl) { lbl.setAttribute("data-graph-leader", "true"); g.appendChild(lbl); }
+    if (lbl) g.appendChild(lbl);
   });
   // 범례 박스: 선 견본 + 글씨 여러 줄. anchor(x,y)=박스 좌상단(math). 크기는 world mm.
   (obj.legends || []).forEach((lg, li) => {
@@ -808,7 +658,7 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
     }
     g.appendChild(l);
     const lbl = renderGraphLabel(String(r.text || ""), {
-      x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false, upright: true, hangulScale: obj.labelHangulScale,
+      x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
     });
     if (lbl) {
       // 자간 +50%(요구): formula/한글 런의 <text>에 letter-spacing 적용(textContent 기반이라 반영됨).
@@ -1048,7 +898,7 @@ function renderFuncgraph(obj) {
           y: (mid.y + area.baseY) / 2,
           size: area.labelSize || Math.max((obj.strokeWidth || 0.3) * 11, 2.8),
           color: grayHex(obj.strokeLevel), anchor: "middle", vAlign: "middle", halo: true,
-          haloRatio: Number.isFinite(area.haloRatio) ? area.haloRatio : obj.haloRatio, hangulScale: obj.labelHangulScale,
+          haloRatio: Number.isFinite(area.haloRatio) ? area.haloRatio : obj.haloRatio,
         });
         if (lbl) g.appendChild(lbl);
       }
@@ -1107,9 +957,6 @@ function renderFuncgraph(obj) {
       const lbl = renderGraphLabel(r.label, {
         x: bm.x + ux * lblSize * 0.45, y: bm.y + uy * lblSize * 0.45,
         size: lblSize, color: edge, anchor: "middle", vAlign: "top",
-        // 막대 아래 글자는 변수가 아니라 범주 이름표다. 평가원 도판의 A·B·C와
-        // Ⅰ·Ⅱ·Ⅲ 모두 정자이므로 기본을 정자로 두고, 특수한 수식 범주만 false로 끌 수 있다.
-        upright: bars.labelUpright !== false, hangulScale: obj.labelHangulScale,
       });
       if (lbl) g.appendChild(lbl);
     });
@@ -1147,7 +994,7 @@ function renderFuncgraph(obj) {
     const ly = last.y + ny * size * 0.18;
     const lbl = renderGraphLabel(obj.endLabel, {
       x: lx, y: ly, size, color: grayHex(obj.strokeLevel),
-      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, upright: obj.endLabelUpright !== false, haloRatio: obj.haloRatio, hangulScale: obj.labelHangulScale,
+      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio,
     });
     if (lbl) g.appendChild(lbl);
   }

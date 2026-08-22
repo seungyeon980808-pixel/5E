@@ -1,6 +1,6 @@
 {
   "name": "5e-desktop",
-  "version": "1.5.8",
+  "version": "1.5.3",
   "private": true,
   "description": "5E science diagram editor for Windows with a local Codex image assistant",
   "main": "desktop/main.cjs",
@@ -8,7 +8,6 @@
     "desktop": "node_modules\\electron\\dist\\electron.exe .",
     "test": "node desktop/run-unit-tests.cjs",
     "test:desktop": "node desktop/run-smoke.cjs",
-    "test:graph": "node --test tests/test-ai-exam-graphs.mjs tests/test-ai-scene-fastpath.mjs",
     "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
     "benchmark:image": "node desktop/benchmark-image-turn.cjs",
     "benchmark:scene": "node desktop/benchmark-scene-turn.cjs",
@@ -17,13 +16,6 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "audit:exam-graphs": "node scripts/engine-v2/audit-exam-graphs.mjs --check",
-    "audit:exam-graphs:strict": "node scripts/engine-v2/audit-exam-graphs.mjs --strict",
-    "build:exam-graph-ledger": "node scripts/engine-v2/build-exam-graph-ledger.mjs",
-    "audit:exam-graph-fixtures": "node scripts/engine-v2/audit-exam-graph-fixtures.mjs",
-    "audit:exam-graph-fixtures:strict": "node scripts/engine-v2/audit-exam-graph-fixtures.mjs --strict",
-    "measure:exam-graphs": "python scripts/engine-v2/measure_exam_graphs.py",
-    "build:exam-graph-gallery": "node scripts/engine-v2/build-exam-graph-gallery.mjs",
     "package:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {
@@ -34,7 +26,7 @@
     "appId": "com.5e.editor",
     "productName": "5E",
     "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "vendor/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
+    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
     "win": { "icon": "assets/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
   }

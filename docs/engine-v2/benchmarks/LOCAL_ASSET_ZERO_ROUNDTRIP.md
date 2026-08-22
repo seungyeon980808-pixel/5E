@@ -1,6 +1,6 @@
 # Strict local asset zero-round-trip benchmark
 
-Generated: 2026-08-11T05:38:49.006Z
+Generated: 2026-08-09T12:44:28.797Z
 
 This benchmark invokes no model, image generator, tool, or UI. It measures only the strict request matcher
 and deterministic code-native compilation. Every case is run three times.
@@ -11,32 +11,32 @@ and deterministic code-native compilation. Every case is run three times.
 - Runs: 57/57 passed
 - Deterministic cases: 19/19
 - External calls: model 0, imageGeneration 0, tools 0
-- Median matcher: 0.4334 ms
-- Median compile: 0.2468 ms
-- Median production path total (match + high-level compile): 1.2744 ms
-- Median direct-compiler parity check (verification overhead, not production total): 0.1285 ms
+- Median matcher: 0.239 ms
+- Median compile: 0.105 ms
+- Median production path total (match + high-level compile): 0.7255 ms
+- Median direct-compiler parity check (verification overhead, not production total): 0.0708 ms
 
 | Case | Objects | Passed runs | Deterministic | Match ms | Compile ms | Total ms |
 | --- | ---: | ---: | :---: | ---: | ---: | ---: |
-| map-world | 120 | 3/3 | yes | 0.4457 | 6.0677 | 7.3112 |
-| map-pacific | 120 | 3/3 | yes | 0.3456 | 4.4707 | 7.5121 |
-| map-east-asia | 111 | 3/3 | yes | 0.1894 | 2.016 | 2.7578 |
-| map-korean-peninsula | 23 | 3/3 | yes | 0.1819 | 1.1739 | 1.7203 |
-| student-trio-no-bubbles | 24 | 3/3 | yes | 0.8241 | 0.5618 | 1.475 |
-| student-trio-three-blank-bubbles | 27 | 3/3 | yes | 0.2479 | 0.2539 | 0.5219 |
-| spacecraft-simple-flat-shell | 3 | 3/3 | yes | 0.6666 | 0.088 | 0.7829 |
-| spacecraft-wide-window-equipped | 9 | 3/3 | yes | 0.2768 | 0.1428 | 0.7046 |
-| panel-flow-empty-box | 5 | 3/3 | yes | 2.1046 | 0.1578 | 2.3593 |
-| panel-flow-ordered-particles | 5 | 3/3 | yes | 0.3418 | 0.1489 | 0.5088 |
-| dual-axis-blank-five-divisions | 16 | 3/3 | yes | 0.7464 | 0.2542 | 1.0848 |
-| orthogonal-wiring-closed-rectangle | 8 | 3/3 | yes | 0.383 | 0.1556 | 0.5879 |
-| diagonal-wiring-closed-triangle | 6 | 3/3 | yes | 0.0652 | 0.0523 | 0.1276 |
-| contour-bundle-five-nested | 5 | 3/3 | yes | 0.8574 | 0.1184 | 1.2744 |
-| simple-series-circuit-open | 8 | 3/3 | yes | 1.1436 | 0.1122 | 1.2852 |
-| fixed-pulley-spring-loads | 7 | 3/3 | yes | 1.7509 | 0.3256 | 2.0902 |
-| lens-mirror-screen-exact | 3 | 3/3 | yes | 0.9544 | 0.0908 | 1.0696 |
-| vessel-particle-comparison-locked | 2 | 3/3 | yes | 0.8519 | 0.0693 | 0.9451 |
-| logistic-population-graph-fixed | 4 | 3/3 | yes | 0.6679 | 0.3712 | 0.9719 |
+| map-world | 120 | 3/3 | yes | 0.6405 | 3.2791 | 4.8841 |
+| map-pacific | 120 | 3/3 | yes | 0.239 | 2.8704 | 4.083 |
+| map-east-asia | 111 | 3/3 | yes | 0.1928 | 1.6466 | 2.4806 |
+| map-korean-peninsula | 23 | 3/3 | yes | 0.1558 | 0.804 | 1.4145 |
+| student-trio-no-bubbles | 24 | 3/3 | yes | 0.7441 | 0.4298 | 1.2235 |
+| student-trio-three-blank-bubbles | 27 | 3/3 | yes | 0.1632 | 0.3412 | 0.8243 |
+| spacecraft-simple-flat-shell | 3 | 3/3 | yes | 0.5666 | 0.0635 | 0.6325 |
+| spacecraft-wide-window-equipped | 9 | 3/3 | yes | 0.1803 | 0.1011 | 0.2975 |
+| panel-flow-empty-box | 5 | 3/3 | yes | 0.7428 | 0.0576 | 0.823 |
+| panel-flow-ordered-particles | 5 | 3/3 | yes | 0.1336 | 0.0663 | 0.2087 |
+| dual-axis-blank-five-divisions | 16 | 3/3 | yes | 0.4748 | 0.1528 | 0.6689 |
+| orthogonal-wiring-closed-rectangle | 8 | 3/3 | yes | 0.2319 | 0.0933 | 0.3549 |
+| diagonal-wiring-closed-triangle | 6 | 3/3 | yes | 0.0452 | 0.0517 | 0.0924 |
+| contour-bundle-five-nested | 5 | 3/3 | yes | 0.64 | 0.0933 | 0.7836 |
+| simple-series-circuit-open | 8 | 3/3 | yes | 1.2228 | 0.196 | 1.4997 |
+| fixed-pulley-spring-loads | 7 | 3/3 | yes | 0.5052 | 0.0983 | 0.6351 |
+| lens-mirror-screen-exact | 3 | 3/3 | yes | 0.4744 | 0.0409 | 0.5272 |
+| vessel-particle-comparison-locked | 2 | 3/3 | yes | 0.3801 | 0.0415 | 0.4354 |
+| logistic-population-graph-fixed | 4 | 3/3 | yes | 0.1748 | 0.2043 | 0.3404 |
 
 ## Exact requests
 
@@ -126,7 +126,7 @@ and deterministic code-native compilation. Every case is run three times.
 - Motif: `dual_axis_plot`
 - Options: `{"tickCount":5,"leftSeries":[],"rightSeries":[],"grid":false}`
 - Scene hash: `3b6786d031215568f5f4efa525d22b82f2f7280f763c8d1de2dee0c6ee5e48fa`
-- Result hash: `04cf8e233a4bc4a1a7b5ceeb06f28b4d3f667a4be78c1bd9c1d316797a97de02`
+- Result hash: `e243babbdb4afc2cc7bf64d6a6066ce9f4a4e7f9f8a87550dbe07a5438b8b4bb`
 
 ### orthogonal-wiring-closed-rectangle
 
@@ -190,7 +190,7 @@ and deterministic code-native compilation. Every case is run three times.
 - Motif: `logistic_population_graph`
 - Options: `{}`
 - Scene hash: `e7aeb54e5e17f257869f564caaf0ac7e7093f3be450c65c6f0e63fcb8f15cf27`
-- Result hash: `39e6961164aa8fc84f1b75a8190580b2154584a65c37740c3b44d618f10b5612`
+- Result hash: `f9f920d3c1f28359bf07dce0e93a7e83a0880fabccc5a55f41fda548a4120eaa`
 
 ## Failures and corrections
 

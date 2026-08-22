@@ -44,7 +44,7 @@ function _crc32(bytes) {
   for (let i = 0; i < bytes.length; i++) c = _CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
   return (c ^ 0xFFFFFFFF) >>> 0;
 }
-export function insertPngPhys(buffer, dpi) {
+function insertPngPhys(buffer, dpi) {
   const src = new Uint8Array(buffer);
   // PNG 시그니처(8) + IHDR(길이4+타입4+데이터13+CRC4 = 25) 뒤(=33)에 삽입.
   const PNG_SIG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];

@@ -1381,17 +1381,6 @@ body { zoom: var(--ui-zoom, 1); }
 .gm-ax-head i { font: italic 700 13px "Times New Roman", serif; }
 .gm-ax-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
 .gm-ax-cell { display: flex; align-items: center; gap: 7px; min-width: 0; }
-.gm-label-frac {
-  flex: 0 0 auto;
-  padding: 4px 7px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--bg-input);
-  color: var(--text-primary);
-  font-size: 11px;
-  cursor: pointer;
-}
-.gm-label-frac:hover { border-color: var(--accent); color: var(--accent); }
 .gm-ax-note {
   grid-column: 2 / -1;
   font-size: 11.5px; color: var(--text-secondary); margin-top: -2px;

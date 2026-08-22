@@ -24,7 +24,6 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
 import { inlineImages } from "./lib/images.js";
-import { compileFastScene, FAST_SCENE_SCHEMA_ID } from "../../js/ai-scene-fastpath.js";
 
 const PROTOCOL_VERSION = "2024-11-05";
 
@@ -103,29 +102,6 @@ const TOOLS = [
         },
       },
       required: ["objects"],
-    },
-  },
-  {
-    name: "add_scene",
-    description:
-      "평가원 도해용 5E fast-scene 장면을 검증·컴파일해 편집 가능한 네이티브 객체로 추가한다. " +
-      `schema는 ${FAST_SCENE_SCHEMA_ID}, 그래프는 elements의 type:\"graph\"로 보낸다. ` +
-      "축·계열·표시점·안내선·라벨은 coordplane/funcgraph 내부 자산으로 변환되며 별도 텍스트를 덧씌우지 않는다.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        path: TARGET_PATH_PROP,
-        page: PAGE_PROP,
-        group: GROUP_PROP,
-        scene: { type: "object", description: `${FAST_SCENE_SCHEMA_ID} JSON 객체` },
-        objects: {
-          type: "array",
-          description: "같은 패널에 함께 넣을 기존 5E 네이티브 객체. GraphSpec 결과와 한 번에 검증·삽입한다.",
-          items: { type: "object" },
-        },
-        strict: { type: "boolean", description: "알 수 없는 필드도 오류로 처리(기본 true)" },
-      },
-      required: ["scene"],
     },
   },
   {
@@ -913,31 +889,6 @@ const HANDLERS = {
     // 묶음은 명시할 때만 — 한 번의 호출에 서로 무관한 것이 섞일 수 있다.
     const d = await deliver({ path, page, group: group === true }, inlineImages(objects));
     return deliverReport(`${d.count}개 추가`, d);
-  },
-
-  async add_scene({ path, page, scene, objects, group, strict }) {
-    const compiled = compileFastScene(scene, {
-      strict: strict !== false,
-      mode: scene?.mode || "complete",
-      idPrefix: "mcp_scene",
-    });
-    if (!compiled.valid || !compiled.supported) {
-      const details = [...compiled.errors, ...compiled.unsupported]
-        .map((item) => `${item.path}: ${item.message}`);
-      throw new Error("5E 장면 명세를 변환하지 못했습니다:\n" + details.join("\n"));
-    }
-    const native = Array.isArray(objects) ? inlineImages(objects) : [];
-    const combined = [...native, ...compiled.objects];
-    if (!combined.length) throw new Error("scene에서 생성된 5E 객체가 없습니다");
-    // deliver가 결합 배열 전체를 먼저 검증하므로 한 객체라도 틀리면 아무것도 삽입하지 않는다.
-    const d = await deliver({ path, page, group: group === true }, combined);
-    return deliverReport(
-      `${FAST_SCENE_SCHEMA_ID} 요소 ${compiled.stats.inputElements}개 + 기존 객체 ${native.length}개를 편집 객체 ${d.count}개로 변환`,
-      d,
-      compiled.warnings.length
-        ? ["", "명세 경고:", ...compiled.warnings.map((item) => `${item.path}: ${item.message}`)]
-        : [],
-    );
   },
 
   async add_circuit({ path, page, box, elements, branches, bodyScale, wires, group }) {

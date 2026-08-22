@@ -18,7 +18,7 @@ import { renderFormula, measureFormula } from "../formula.js?v=1.4.0";
 function el(tag) { return document.createElementNS(SVG_NS, tag); }
 
 // 한글(자모·완성형) 판정. 공백·숫자·라틴은 비한글(=수식 런)으로 흘러 formula가 처리.
-const HANGUL_RE = /[가-힣ᄀ-ᇿ㄰-㆏㈀-㋿]/;
+const HANGUL_RE = /[가-힣ᄀ-ᇿ㄰-㆏]/;
 // 한글은 같은 font-size라도 라틴/수식보다 커 보인다 → 더 줄여 시각 균형(요구: 한글 더 작게).
 const KO_SCALE = 0.72;
 // 기호(영문·괄호·수식) 런은 한글과 같은 크기면 더 커 보인다 → 기본값에서 2pt 축소(요구).
@@ -40,46 +40,11 @@ function measureKo(text, sizeMm) {
 
 // 한 줄을 한글 / 수식(이탤릭) / 단위(괄호 안, 정자) 런으로 분해. 인접 동종 문자는 합친다.
 // kind: "ko"(한글 정자) | "math"(formula 이탤릭) | "unit"(formula 정자 — 괄호+괄호 안 라틴)
-// frac/vec/sqrt는 중괄호 안에 한글이 있더라도 명령 전체를 한 런으로 보존해야 한다.
-// 예전 문자별 분해는 `\\frac{거리}{시간}`을 `\\frac{` / `거리` / `}{` / `시간` / `}`로
-// 찢어 formula.js가 분수 AST를 만들 수 없게 했다. 독립 formula 객체를 얹지 않고도 축 라벨
-// 자체가 분수를 소유하도록, 구조 명령의 균형 중괄호 범위를 먼저 찾는다.
-function structuredFormulaEnd(text, start) {
-  const rest = text.slice(start);
-  const m = rest.match(/^(?:\\\\)?(frac|vec|sqrt)\s*\{/);
-  if (!m) return -1;
-  let i = start + m[0].length - 1;
-  const consumeGroup = () => {
-    if (text[i] !== "{") return false;
-    let depth = 0;
-    for (; i < text.length; i++) {
-      if (text[i] === "{") depth++;
-      else if (text[i] === "}" && --depth === 0) { i++; return true; }
-    }
-    return false;
-  };
-  if (!consumeGroup()) return -1;
-  if (m[1] === "frac") {
-    while (text[i] === " ") i++;
-    if (!consumeGroup()) return -1;
-  }
-  return i;
-}
-
 function splitRuns(line) {
   const runs = [];
   let cur = "", curKind = null, depth = 0;
   const push = () => { if (cur !== "") runs.push({ kind: curKind, text: cur }); cur = ""; };
-  for (let i = 0; i < line.length;) {
-    const formulaEnd = depth === 0 ? structuredFormulaEnd(line, i) : -1;
-    if (formulaEnd > i) {
-      push();
-      runs.push({ kind: "formula", text: line.slice(i, formulaEnd) });
-      curKind = null;
-      i = formulaEnd;
-      continue;
-    }
-    const ch = line[i++];
+  for (const ch of line) {
     let kind;
     if (ch === "(") { depth++; kind = "unit"; }
     else if (ch === ")") kind = "unit";
@@ -107,13 +72,13 @@ function recolorFormula(g, color) {
 // ascent/descent는 실제 렌더 내용 기준(한글은 koSize) — 줄바꿈 간격을 촘촘히 쌓기 위함(요구).
 // upright=true면 영문·수식 런까지 정자로 렌더한다(요구: 라벨러 표시점 A·B·C…는 기울임 없음).
 // 점 이름은 변수가 아니라 '이름표'라 이탤릭이 어울리지 않는다 — 단위 런과 같은 처리로 통일.
-function buildLine(line, size, color, upright = false, hangulScale = KO_SCALE) {
+function buildLine(line, size, color, upright = false) {
   const g = el("g");
   let cx = 0, asc = 0, desc = 0;
   for (const run of splitRuns(line)) {
     if (run.text === "") continue;
     if (run.kind === "ko") {
-      const koSize = size * hangulScale;             // 그래프별 원본 비율을 허용한다.
+      const koSize = size * KO_SCALE;                // 한글만 살짝 축소(요구)
       const t = el("text");
       t.setAttribute("x", cx);
       t.setAttribute("y", 0);
@@ -130,23 +95,21 @@ function buildLine(line, size, color, upright = false, hangulScale = KO_SCALE) {
     } else {
       // 영문/수식 런: formula.js(첨자·분수·그리스·함수정자)로 렌더.
       // math=변수 이탤릭 / unit(괄호·단위)=정자 — fontStyle만 바꾸면 formula가 둘 다 처리.
-      const formulaHasKorean = run.kind === "formula" && HANGUL_RE.test(run.text);
-      const style = (run.kind === "unit" || upright || formulaHasKorean) ? "normal" : "italic";
+      const style = (run.kind === "unit" || upright) ? "normal" : "italic";
       const mSize = Math.max(1, size - MATH_TRIM_MM);   // 기호는 한글 대비 2pt 작게(요구)
-      const formulaFamily = formulaHasKorean ? TEXT_FONT_FAMILY : EQUATION_FONT_FAMILY;
-      const fh = { family: formulaFamily, weight: "normal", style };
+      const fh = { family: EQUATION_FONT_FAMILY, weight: "normal", style };
       const m = measureFormula(run.text, mSize, fh);
       // halo:false 필수 — renderFormula의 기본 halo는 글리프에 '흰색 stroke'를 건다. 그런데
       // 바로 아래 recolorFormula가 stroke를 라벨 색(검정)으로 덮어써서, 흰 테두리가 '검은
       // 테두리'로 바뀌어 글자가 굵은 슬랩체처럼 뭉개진다(눈금 숫자 굵기 버그).
       // 축 이름처럼 halo가 필요한 경우는 renderGraphLabel이 applyHalo로 따로 씌우므로
       // (그쪽은 stroke를 흰색으로 다시 설정) 여기서 formula 자체 halo는 꺼야 한다.
-      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: mSize, fontFamily: formulaFamily, fontStyle: style, halo: false });
+      const fg = renderFormula({ source: run.text, x: cx, y: -m.ascent, fontSize: mSize, fontFamily: EQUATION_FONT_FAMILY, fontStyle: style, halo: false });
       recolorFormula(fg, color);
       // 단위 런 정자 강제: resolveTextFontStyle이 수식 글꼴을 무조건 이탤릭으로 되돌리므로
       // (state.js — 일반 수식 객체용 규칙), 여기서 글리프 스타일만 정자로 덮어쓴다.
       // 폭은 위 measureFormula가 이미 normal 기준으로 쟀으니 어긋나지 않는다.
-      if (run.kind === "unit" || upright || formulaHasKorean) {
+      if (run.kind === "unit" || upright) {
         fg.querySelectorAll("text, tspan").forEach((t) => t.setAttribute("font-style", "normal"));
       }
       g.appendChild(fg);
@@ -188,9 +151,9 @@ const INTERLINE_GAP = 0.12;
 export function renderGraphLabel(source, opts = {}) {
   const text = source == null ? "" : String(source);
   if (text.trim() === "") return null;
-  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false, haloRatio, hangulScale = KO_SCALE } = opts;
+  const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false, haloRatio } = opts;
 
-  const lines = text.split("\n").map((l) => buildLine(l, size, color, upright, hangulScale));
+  const lines = text.split("\n").map((l) => buildLine(l, size, color, upright));
   const n = lines.length;
   const gap = size * INTERLINE_GAP;
   // 상대 baseline: 이전 줄 descent + 여백 + 현재 줄 ascent 만큼 내려간다(각 줄 실제 높이 기준).
