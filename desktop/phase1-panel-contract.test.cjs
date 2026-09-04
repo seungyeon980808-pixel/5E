@@ -39,7 +39,8 @@ test("Given the diagram panel, When it opens, Then only the source and primary r
   for (const hook of [
     "data-ai-tabs", "data-ai-tab-new", "data-ai-capture", "data-ai-batch",
     "data-ai-model", "data-ai-effort", "data-ai-speed", "data-ai-quality",
-    "data-ai-output-engine", "data-ai-mode", "data-ai-chat-send",
+    "data-ai-output-engine", "data-ai-treatment", "data-ai-background", "data-ai-output-scale",
+    "data-ai-mode", "data-ai-chat-send",
   ]) {
     const attribute = new RegExp(`${hook}(?:=|\\s|>)`);
     assert.doesNotMatch(defaultSurface, attribute);
@@ -54,7 +55,7 @@ test("Given a generated diagram, When a confirmed source also exists, Then compa
   assert.match(html, /data-ai-output-engine="asset"[^>]*>편집 가능한 그래프<\/button>/);
   assert.match(html, /data-ai-compare[^>]*hidden[^>]*disabled[^>]*>원본과 비교<\/button>/);
 
-  assert.match(panel, /const canCompare = attachments\.length > 0 && generatedImages\.length > 0;/);
+  assert.match(panel, /const canCompare = generatedImages\.length > 0 && \(attachments\.length > 0 \|\| generatedImages\.length > 1\);/);
   assert.match(panel, /compareButton\.hidden = !canCompare;/);
   assert.match(panel, /compareButton\.disabled = busy \|\| !canCompare;/);
   assert.match(panel, /캔버스에 삽입/);

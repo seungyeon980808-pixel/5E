@@ -74,7 +74,7 @@ test("AI panel auto-connects, reports progress, and routes contextual output act
   assert.match(panel, /pointerdown/);
   assert.match(panel, /openComparison/);
   assert.match(panel, /attachments\.push/);
-  assert.match(panel, /const canCompare = attachments\.length > 0 && generatedImages\.length > 0;/);
+  assert.match(panel, /const canCompare = generatedImages\.length > 0 && \(attachments\.length > 0 \|\| generatedImages\.length > 1\);/);
   assert.match(panel, /output\.className = "ai-canvas-output"/);
   assert.match(panel, /item\.sceneResult\?\.objects\?\.length[\s\S]*insertFastSceneIntoState\(state, item\.sceneResult\)/);
   assert.match(panel, /insertImageFromSrc\(state, item\.data, \{ provenance: item\.referenceProvenance \}\)/);
@@ -97,7 +97,8 @@ test("AI panel auto-connects, reports progress, and routes contextual output act
   assert.match(defaultSurface, /data-ai-send/);
   for (const hook of [
     "data-ai-chat-send", "data-ai-mode", "data-ai-speed", "data-ai-capture",
-    "data-ai-quality", "data-ai-output-engine", "data-ai-batch", "data-ai-tabs",
+    "data-ai-quality", "data-ai-output-engine", "data-ai-treatment", "data-ai-background",
+    "data-ai-output-scale", "data-ai-batch", "data-ai-tabs",
   ]) {
     assert.match(advanced, new RegExp(`${hook}(?:=|\\s|>)`), hook);
   }

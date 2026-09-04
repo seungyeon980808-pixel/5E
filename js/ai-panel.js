@@ -65,6 +65,13 @@ import {
   transformImageBatch,
   transformImageDataUrl,
 } from "./image-transform-options.mjs";
+import {
+  activateImageRevision,
+  activeImageRevision,
+  appendImageRevision,
+  beginImageRevision,
+  revisionComparison,
+} from "./image-revision-history.mjs";
 
 const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}+${IMAGE_TRANSFORM_VERSION}`;
@@ -372,7 +379,7 @@ export function initAiPanel(state) {
     if (eCount) eCount.textContent = String(({ analyze: 1, compose: 2, render: 3, finish: 4 })[phase] || 1);
   };
   const syncResultActions = () => {
-    const canCompare = attachments.length > 0 && generatedImages.length > 0;
+    const canCompare = generatedImages.length > 0 && (attachments.length > 0 || generatedImages.length > 1);
     compareButton.hidden = !canCompare;
     compareButton.disabled = busy || !canCompare;
     if (resultActions) resultActions.hidden = !canCompare;
@@ -388,6 +395,9 @@ export function initAiPanel(state) {
     modeButtons.forEach((button) => { button.disabled = on; });
     qualityButtons.forEach((button) => { button.disabled = on; });
     outputEngineButtons.forEach((button) => { button.disabled = on; });
+    treatmentButtons.forEach((button) => { button.disabled = on; });
+    backgroundButtons.forEach((button) => { button.disabled = on; });
+    if (outputScaleInput) outputScaleInput.disabled = on;
     if (batchButton) batchButton.disabled = on || attachments.length < 2;
     if (tabNewButton) {
       tabNewButton.disabled = false;
@@ -669,6 +679,27 @@ export function initAiPanel(state) {
     });
   };
 
+  const syncRevisionCards = () => {
+    for (const item of generatedImages) {
+      item.card?.classList.toggle("is-active-revision", item.active === true);
+      const button = item.card?.querySelector("[data-ai-revision-activate]");
+      if (button) {
+        button.disabled = busy || item.active === true;
+        button.textContent = item.active === true ? "현재 버전" : "이 버전 사용";
+      }
+    }
+  };
+
+  const activateGeneratedRevision = (id) => {
+    const next = activateImageRevision(generatedImages, id);
+    const activeById = new Map(next.map((item) => [item.id, item.active]));
+    generatedImages.forEach((item) => { item.active = activeById.get(item.id) === true; });
+    latestGeneratedSrc = activeImageRevision(generatedImages)?.data || null;
+    syncRevisionCards();
+    syncResultActions();
+    setStatus("선택한 이전 결과를 현재 수정 기준으로 복원했습니다.", "ok");
+  };
+
   const makeImageCard = (item) => {
     const card = document.createElement("article");
     card.className = `ai-preview-card ai-image-card ${item.kind === "reference" ? "ai-reference-card" : "ai-generated-card"}`;
@@ -689,7 +720,11 @@ export function initAiPanel(state) {
       if (item.kind === "reference") attachments = attachments.filter((candidate) => candidate !== item);
       else {
         generatedImages = generatedImages.filter((candidate) => candidate !== item);
-        latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+        if (item.active && generatedImages.length) {
+          generatedImages.forEach((candidate) => { candidate.active = false; });
+          generatedImages.at(-1).active = true;
+        }
+        latestGeneratedSrc = activeImageRevision(generatedImages)?.data || null;
       }
       card.remove();
       if (item.kind === "reference") syncReferenceSummary();
@@ -703,6 +738,15 @@ export function initAiPanel(state) {
       syncResultActions();
     };
     head.appendChild(remove);
+    if (item.kind === "generated") {
+      const activate = document.createElement("button");
+      activate.type = "button";
+      activate.dataset.aiRevisionActivate = "";
+      activate.textContent = item.active ? "현재 버전" : "이 버전 사용";
+      activate.disabled = busy || item.active === true;
+      activate.onclick = () => activateGeneratedRevision(item.id);
+      head.appendChild(activate);
+    }
 
     const stage = document.createElement("div");
     stage.className = "ai-preview-stage";
@@ -851,7 +895,7 @@ export function initAiPanel(state) {
     if (!isCurrent()) return false;
     latestGeneratedSrc = editableSrc;
     previews.querySelector("[data-ai-empty]")?.remove();
-    const item = {
+    let item = {
       id: `generated-${++imageSerial}`,
       name: name || buildImageOutputFilename(
         currentRunInput?.labelSource?.name || attachments.at(-1)?.name || "diagram",
@@ -869,10 +913,12 @@ export function initAiPanel(state) {
       comments: [],
       nextCommentNumber: 1,
     };
-    generatedImages.push(item);
-    previews.prepend(makeImageCard(item));
+    generatedImages = appendImageRevision(generatedImages, item);
+    const activeItem = activeImageRevision(generatedImages);
+    previews.prepend(makeImageCard(activeItem));
+    syncRevisionCards();
     syncResultActions();
-    return item;
+    return activeItem;
   };
 
   const addScenePreview = (sceneResult, sceneSource, sceneCompileSource = sceneSource) => {
@@ -883,7 +929,7 @@ export function initAiPanel(state) {
     });
     latestGeneratedSrc = data;
     previews.querySelector("[data-ai-empty]")?.remove();
-    const item = {
+    let item = {
       id: `generated-${++imageSerial}`,
       name: `생성 결과 ${generatedImages.length + 1}`,
       data,
@@ -895,10 +941,12 @@ export function initAiPanel(state) {
       comments: [],
       nextCommentNumber: 1,
     };
-    generatedImages.push(item);
-    previews.prepend(makeImageCard(item));
+    generatedImages = appendImageRevision(generatedImages, item);
+    const activeItem = activeImageRevision(generatedImages);
+    previews.prepend(makeImageCard(activeItem));
+    syncRevisionCards();
     syncResultActions();
-    return item;
+    return activeItem;
   };
 
   const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
@@ -1079,7 +1127,8 @@ export function initAiPanel(state) {
     selectedOutputScale = normalizeOutputScale(tab.outputScale || 2);
     attachments = (tab.attachments || []).map(taskItemCopy);
     generatedImages = (tab.generated || []).map(taskItemCopy);
-    latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+    if (generatedImages.length && !generatedImages.some((item) => item.active)) generatedImages.at(-1).active = true;
+    latestGeneratedSrc = activeImageRevision(generatedImages)?.data || null;
     input.value = tab.input || "";
     log.replaceChildren();
     for (const message of tab.uiMessages || []) addLog(message.text, message.kind);
@@ -1204,7 +1253,7 @@ export function initAiPanel(state) {
   const addBatchResultToTab = (job) => {
     if (!job.resultData || job.addedToTab) return;
     job.addedToTab = true;
-    const item = {
+    let item = {
       id: `generated-${++imageSerial}`,
       name: buildImageOutputFilename(job.name, {
         treatment: job.treatment || IMAGE_TREATMENTS.AI_REDRAW,
@@ -1221,7 +1270,8 @@ export function initAiPanel(state) {
       nextCommentNumber: 1,
     };
     if (activeTaskTabId === job.taskTabId) {
-      generatedImages.push(item);
+      generatedImages = appendImageRevision(generatedImages, item);
+      item = activeImageRevision(generatedImages);
       latestGeneratedSrc = item.data;
       previews.querySelector("[data-ai-empty]")?.remove();
       previews.prepend(makeImageCard(item));
@@ -1229,7 +1279,7 @@ export function initAiPanel(state) {
       captureActiveTaskTab();
     } else {
       const tab = taskTabs.get(job.taskTabId);
-      if (tab) tab.generated.push(taskItemCopy(item));
+      if (tab) tab.generated = appendImageRevision(tab.generated, taskItemCopy(item));
     }
   };
 
@@ -1480,7 +1530,7 @@ export function initAiPanel(state) {
   };
   const openComparison = () => {
     const images = allImages();
-    if (!attachments.length || !generatedImages.length) {
+    if (!generatedImages.length || (!attachments.length && generatedImages.length < 2)) {
       setStatus("확정한 원본과 생성 결과가 있어야 비교할 수 있습니다.", "warn");
       return;
     }
@@ -1601,8 +1651,9 @@ export function initAiPanel(state) {
       choose(initial);
       return pane;
     };
-    const leftInitial = attachments[0] || images[0];
-    const rightInitial = generatedImages.at(-1) || images.find((item) => item !== leftInitial) || images[1];
+    const revisionPair = revisionComparison(generatedImages);
+    const leftInitial = revisionPair.before || attachments[0] || images[0];
+    const rightInitial = revisionPair.after || images.find((item) => item !== leftInitial) || images[1];
     panes.append(makePane(leftInitial, "left"), makePane(rightInitial, "right"));
     modeControls.addEventListener("click", (event) => {
       const button = event.target.closest("[data-compare-view]");
@@ -1974,7 +2025,7 @@ export function initAiPanel(state) {
       effort: effortSelect.value || null,
       serviceTier: speedSelect.value || null,
     };
-    const rawRevisionImage = runInput.generated.at(-1) || null;
+    const rawRevisionImage = activeImageRevision(runInput.generated);
     const annotatedHistory = runInput.generated
       .filter((item) => item !== rawRevisionImage && item.comments.some((comment) => String(comment?.text || "").trim()))
       .map((item) => ({ ...item, kind: "reference", name: `이전 생성 결과 · ${item.name}` }));
@@ -2004,6 +2055,7 @@ export function initAiPanel(state) {
       ...runInput,
       routeDecision: { ...currentRouteDecision },
       labelSource: planningReferences.length === 1 ? snapshotImageItem(planningReferences[0]) : null,
+      revisionContext: beginImageRevision(runInput.generated, entered),
     };
     currentSceneResponse = "";
     currentCacheRequest = null;
