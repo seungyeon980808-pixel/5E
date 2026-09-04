@@ -3,6 +3,7 @@ const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const {
   resolveTurnPlan,
   shouldAutoFinalizeImageTurn,
@@ -11,6 +12,7 @@ const {
 } = require("./codex-turn-runtime.cjs");
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
+const { writeExportFile } = require("./export-file.cjs");
 const {
   collectLocalAssets,
   isAllowedLocalAsset,
@@ -34,6 +36,44 @@ const activeTurns = new Map();
 const recoveryTerminatingTurnIds = new Set();
 let pendingTurnStarts = 0;
 let initialized = false;
+let exportFolder = null;
+let exportFolderLoaded = false;
+function exportFolderConfigPath() {
+  return path.join(app.getPath("userData"), "export-folder.json");
+}
+async function ensureExportFolderLoaded() {
+  if (exportFolderLoaded) return exportFolder;
+  exportFolderLoaded = true;
+  try {
+    const data = JSON.parse(await fs.promises.readFile(exportFolderConfigPath(), "utf8"));
+    const candidate = await fs.promises.realpath(path.resolve(String(data?.path || "")));
+    const stat = await fs.promises.stat(candidate);
+    exportFolder = stat.isDirectory() ? candidate : null;
+  } catch (_) {
+    exportFolder = null;
+  }
+  return exportFolder;
+}
+async function persistExportFolder() {
+  const config = exportFolderConfigPath();
+  await fs.promises.mkdir(path.dirname(config), { recursive: true });
+  if (!exportFolder) {
+    await fs.promises.unlink(config).catch((error) => {
+      if (error.code !== "ENOENT") throw error;
+    });
+    return;
+  }
+  const temp = `${config}.${process.pid}.tmp`;
+  await fs.promises.writeFile(temp, JSON.stringify({ path: exportFolder }), { mode: 0o600 });
+  await fs.promises.unlink(config).catch((error) => {
+    if (error.code !== "ENOENT") throw error;
+  });
+  await fs.promises.rename(temp, config);
+}
+function isTrustedExportSender(event) {
+  const expected = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
+  return !!win && !win.isDestroyed() && event.sender === win.webContents && event.senderFrame?.url === expected;
+}
 let initializingPromise = null;
 let codexSendInvocationCount = 0;
 const pending = new Map();
@@ -536,6 +576,9 @@ function createWindow() {
   win.once("ready-to-show", revealMainWindow);
   win.webContents.once("did-fail-load", revealMainWindow);
   win.loadFile(path.join(__dirname, "..", "index.html"));
+  win.webContents.on("will-navigate", (event, url) => {
+    if (url !== pathToFileURL(path.join(__dirname, "..", "index.html")).href) event.preventDefault();
+  });
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {
@@ -667,8 +710,9 @@ function createWindow() {
               const activated = await waitFor(() => stateModule.state.get().activeTool === expectedTool);
               const persisted = await waitFor(() => isActuallyVisible(chooser));
               const optionActive = await waitFor(() => option?.classList.contains("is-active"));
-              const parentActive = button?.classList.contains("is-active") && button?.classList.contains("is-open");
-              return { opened, activated, persisted, optionActive, parentActive };
+              const parentInactive = !button?.classList.contains("is-active") && button?.classList.contains("is-open");
+              const visualDistinct = getComputedStyle(button).backgroundColor !== getComputedStyle(option).backgroundColor;
+              return { opened, activated, persisted, optionActive, parentInactive, visualDistinct };
             };
             const textChoice = await choosePersistentTool({
               button: textChooserButton, chooser: textChooser, selector: '[data-tool="T"]', expectedTool: "T",
@@ -690,7 +734,7 @@ function createWindow() {
             const angleTabToggleWorks = await waitFor(() =>
               stateModule.state.get().activeTool === "RIGHTANGLE" &&
               angleChooser?.querySelector('[data-symbol="rightangle"]')?.classList.contains("is-active") &&
-              angleChooserButton?.classList.contains("is-active") && isActuallyVisible(angleChooser));
+              !angleChooserButton?.classList.contains("is-active") && isActuallyVisible(angleChooser));
             cutChooserButton?.click();
             const chooserSwitchesFromAngleToCut = await waitFor(() =>
               !isActuallyVisible(angleChooser) && isActuallyVisible(cutChooser));
@@ -716,17 +760,17 @@ function createWindow() {
             const cutChooserInToolPanel = cutChooser?.closest("#tool-list") !== null &&
               cutChooser?.closest("#ai-image-panel") === null;
             const textChooserBehavior = [textChoice, labelerChoice].every((choice) =>
-              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentActive) &&
+              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentInactive && choice.visualDistinct) &&
               textChooserSurvivesCanvasClick && textChooserToggleCloses;
             const angleChooserBehavior = angleChoice.opened && angleChoice.activated && angleChoice.persisted &&
-              angleChoice.optionActive && angleChoice.parentActive && angleTabToggleWorks;
+              angleChoice.optionActive && angleChoice.parentInactive && angleChoice.visualDistinct && angleTabToggleWorks;
             const chooserPanelSwitchingWorks = chooserSwitchesFromTextToAngle && chooserSwitchesFromAngleToCut;
             const cutChooserPersistsAfterChoice = [eraseChoice, cutChoice, delayedChoice].every((choice) =>
-              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentActive);
+              choice.opened && choice.activated && choice.persisted && choice.optionActive && choice.parentInactive && choice.visualDistinct);
             const eraseToolReachable = eraseChoice.activated;
             const cutToolReachable = cutChoice.activated && cutModes.every(Boolean);
             const delayedCutUiReachable = delayedChoice.activated && delayedModes.every(Boolean) &&
-              document.getElementById("tool-cut-merged")?.classList.contains("is-active") &&
+              !document.getElementById("tool-cut-merged")?.classList.contains("is-active") &&
               document.getElementById("cut-mode-tabs")?.hidden === false &&
               document.getElementById("delayed-cut-action")?.hidden === false;
             const visibleModalOverlaysBeforeCutShortcuts = Array.from(document.querySelectorAll(".modal-overlay:not([hidden])"))
@@ -979,6 +1023,79 @@ function createWindow() {
             });
           }));
         })`);
+        result.rcFeedbackBehavior = await win.webContents.executeJavaScript(`(async () => {
+          try {
+          const waitFor = async (test, timeout = 3000) => {
+            const started = Date.now();
+            while (Date.now() - started < timeout) {
+              if (test()) return true;
+              await new Promise((done) => setTimeout(done, 25));
+            }
+            return false;
+          };
+          const stateModule = await import("./js/state.js?v=1.4.0");
+          const initialPageCount = stateModule.state.get().pages.length;
+          document.getElementById("page-add")?.click();
+          const pageAdded = await waitFor(() => stateModule.state.get().pages.length === initialPageCount + 1);
+          document.getElementById("undo-btn")?.click();
+          const pageUndo = await waitFor(() => stateModule.state.get().pages.length === initialPageCount);
+          document.getElementById("redo-btn")?.click();
+          const pageRedo = await waitFor(() => stateModule.state.get().pages.length === initialPageCount + 1);
+          const tabs = Array.from(document.querySelectorAll("#page-tabs .page-tab"));
+          const beforeOrder = stateModule.state.get().pages.map((page) => page.id).join(",");
+          if (tabs.length > 1) {
+            const transfer = new DataTransfer();
+            tabs[0].dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: transfer }));
+            tabs.at(-1).dispatchEvent(new DragEvent("drop", { bubbles: true, cancelable: true, dataTransfer: transfer }));
+            tabs[0].dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: transfer }));
+          }
+          const pageReordered = await waitFor(() => stateModule.state.get().pages.map((page) => page.id).join(",") !== beforeOrder);
+          document.getElementById("undo-btn")?.click();
+          await waitFor(() => stateModule.state.get().pages.map((page) => page.id).join(",") === beforeOrder);
+          document.getElementById("undo-btn")?.click();
+          await waitFor(() => stateModule.state.get().pages.length === initialPageCount);
+
+          const saved = structuredClone({
+            objects: stateModule.state.get().objects,
+            selectedIds: stateModule.state.get().selectedIds,
+            targetedId: stateModule.state.get().targetedId,
+            undoStack: stateModule.state.get().undoStack,
+            redoStack: stateModule.state.get().redoStack,
+          });
+          stateModule.state.update((s) => {
+            s.objects.push({ id: "rc-cut-object", type: "rect", x: 0, y: 0, w: 10, h: 10, rotation: 0, stroke: "#000", strokeWidth: 0.4, fill: "none" });
+            s.selectedIds = ["rc-cut-object"];
+          });
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "x", code: "KeyX", ctrlKey: true, bubbles: true, cancelable: true }));
+          const keyboardCut = !stateModule.state.get().objects.some((object) => object.id === "rc-cut-object");
+          window.dispatchEvent(new KeyboardEvent("keydown", { key: "v", code: "KeyV", ctrlKey: true, bubbles: true, cancelable: true }));
+          const keyboardPaste = await waitFor(() => stateModule.state.get().selectedIds.some((id) => id !== "rc-cut-object"));
+          stateModule.state.update((s) => Object.assign(s, structuredClone(saved)));
+
+          const graphTrigger = document.getElementById("graph-tool-open");
+          graphTrigger?.focus();
+          graphTrigger?.click();
+          const graphOverlay = document.getElementById("graph-modal-overlay");
+          const graphOpened = await waitFor(() => graphOverlay?.hidden === false);
+          graphOverlay?.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
+          const graphEscape = await waitFor(() => graphOverlay?.hidden === true && document.activeElement === graphTrigger);
+
+          document.getElementById("image-export")?.click();
+          const exportOverlay = document.getElementById("export-overlay");
+          const exportOpened = await waitFor(() => exportOverlay?.hidden === false);
+          const exportName = exportOverlay?.querySelector("#export-filename");
+          if (exportName) exportName.value = "rc-state-preserved";
+          exportOverlay?.querySelector("#export-all-pages")?.click();
+          const batchOverlay = document.getElementById("batch-export-overlay");
+          const batchOpened = await waitFor(() => batchOverlay?.hidden === false);
+          batchOverlay?.querySelector("#batch-cancel")?.click();
+          const batchReturns = await waitFor(() => exportOverlay?.hidden === false && exportName?.value === "rc-state-preserved");
+          exportOverlay?.querySelector("#export-cancel")?.click();
+          return { pageAdded, pageUndo, pageRedo, pageReordered, keyboardCut, keyboardPaste, graphOpened, graphEscape, exportOpened, batchOpened, batchReturns };
+          } catch (error) {
+            return { error: error?.stack || error?.message || String(error) };
+          }
+        })()`);
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
@@ -999,6 +1116,7 @@ function createWindow() {
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
+          Object.values(result.rcFeedbackBehavior).every(Boolean) &&
           result.menuBarVisible === false && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
@@ -1132,6 +1250,39 @@ ipcMain.handle("local-images:pick-folder", async () => {
   const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");
   if (folder) localImageRoots.add(folder);
   return { folder };
+});
+ipcMain.handle("export:get-folder", async (event) => {
+  if (!isTrustedExportSender(event)) return { status: "failed", message: "허용되지 않은 요청입니다." };
+  await ensureExportFolderLoaded();
+  return exportFolder
+    ? { status: "selected", path: exportFolder, name: path.basename(exportFolder) }
+    : { status: "empty" };
+});
+ipcMain.handle("export:pick-folder", async (event) => {
+  if (!isTrustedExportSender(event)) return { status: "failed", message: "허용되지 않은 요청입니다." };
+  const result = await dialog.showOpenDialog(win, { title: "내보내기 폴더 선택", properties: ["openDirectory", "createDirectory"] });
+  if (result.canceled || !result.filePaths[0]) return { status: "cancelled" };
+  exportFolder = await fs.promises.realpath(path.resolve(result.filePaths[0]));
+  exportFolderLoaded = true;
+  await persistExportFolder();
+  return { status: "selected", path: exportFolder, name: path.basename(exportFolder) };
+});
+ipcMain.handle("export:clear-folder", async (event) => {
+  if (!isTrustedExportSender(event)) return { status: "failed", message: "허용되지 않은 요청입니다." };
+  exportFolder = null;
+  exportFolderLoaded = true;
+  await persistExportFolder();
+  return { status: "empty" };
+});
+ipcMain.handle("export:save-file", async (event, payload) => {
+  if (!isTrustedExportSender(event)) return { status: "failed", message: "허용되지 않은 요청입니다." };
+  await ensureExportFolderLoaded();
+  if (!exportFolder) return { status: "failed", message: "저장 폴더가 지정되지 않았습니다." };
+  try {
+    return await writeExportFile(exportFolder, payload?.name, payload?.bytes || []);
+  } catch (error) {
+    return { status: "failed", path: exportFolder, message: error.message };
+  }
 });
 ipcMain.handle("local-images:list", async (_, folder) => {
   const resolved = path.resolve(String(folder || ""));

@@ -17,6 +17,15 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   localImageThumbnail: (filePath) => ipcRenderer.invoke("local-images:thumbnail", filePath),
   readLocalImage: (filePath) => ipcRenderer.invoke("local-images:read", filePath),
   readLocalPdf: (filePath) => ipcRenderer.invoke("local-pdfs:read", filePath),
+  getExportFolder: () => ipcRenderer.invoke("export:get-folder"),
+  pickExportFolder: () => ipcRenderer.invoke("export:pick-folder"),
+  clearExportFolder: () => ipcRenderer.invoke("export:clear-folder"),
+  saveExportFile: (name, bytes) => {
+    if (!(bytes instanceof Uint8Array) || bytes.byteLength > 256 * 1024 * 1024) {
+      return Promise.resolve({ status: "failed", message: "저장할 파일 데이터가 올바르지 않습니다." });
+    }
+    return ipcRenderer.invoke("export:save-file", { name, bytes });
+  },
   onEvent: (callback) => ipcRenderer.on("codex:event", (_, value) => callback(value)),
   onLog: (callback) => ipcRenderer.on("codex:log", (_, value) => callback(value)),
   onState: (callback) => ipcRenderer.on("codex:state", (_, value) => callback(value))

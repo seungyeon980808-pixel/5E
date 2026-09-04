@@ -19,8 +19,9 @@ import { rasterizeExportCanvas } from "./svg-export.js?v=1.4.0";
 import { commitActivePage } from "./pages.js?v=1.4.0";
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 import {
-  FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,
+  FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir, writeToDir,
 } from "./export-dir.js?v=1.4.0";
+import { sanitizeExportBaseName } from "./export-policy.js?v=1.6.0";
 
 /* 저장 폴더는 js/export-dir.js 가 관리한다(단일 내보내기와 같은 폴더를 쓰기 위해).
  * 예전에는 이 파일 안에 있었는데, 단일 내보내기에서도 같은 폴더를 써야 해서 옮겼다. */
@@ -30,22 +31,9 @@ const FS_SUPPORTED = FS_DIR_SUPPORTED;
  * 페이지 이름이 기본값("페이지 3")이면 사용자가 지정한 적이 없다고 보고
  * <파일이름>_p3 을 쓴다. 그 외에는 페이지 이름을 그대로 파일명으로 쓴다.
  * 파일 시스템에서 못 쓰는 문자만 걸러내고, 겹치면 _2, _3 을 붙인다. */
-const DEFAULT_PAGE_NAME = /^페이지\s*\d+$/;
-
-function sanitize(name) {
-  return String(name)
-    .replace(/[\\/:*?"<>|]/g, "_")   // Windows 금지 문자
-    .replace(/^\.+/, "")
-    .trim()
-    .slice(0, 80);
-}
-
 export function pageFileBase(page, index, base, pad) {
   const name = (page && page.name ? page.name : "").trim();
-  if (name && !DEFAULT_PAGE_NAME.test(name)) {
-    const clean = sanitize(name);
-    if (clean) return clean;
-  }
+  if (name) return sanitizeExportBaseName(name, `${base}_p${index + 1}`);
   const num = (page && page.meta && page.meta.number)
     ? page.meta.number
     : String(index + 1).padStart(pad, "0");
@@ -100,7 +88,7 @@ function buildModal() {
 }
 
 /* ----- openBatchExport: 모달을 열고 사용자가 확정하면 내보낸다 ----- */
-export async function openBatchExport({ state, dpi, options, baseName }) {
+export async function openBatchExport({ state, dpi, options, baseName, onCancel }) {
   if (!overlay) buildModal();
 
   commitActivePage(state);          // 활성 페이지의 미저장 편집을 page 기록에 반영
@@ -170,12 +158,15 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
 
   // 한 번 열릴 때마다 핸들러를 새로 걸고 닫을 때 모두 뗀다(상태가 매번 다르다).
   const off = [];
+  let writing = false;
   const on = (el, ev, fn) => { el.addEventListener(ev, fn); off.push(() => el.removeEventListener(ev, fn)); };
 
-  function close() {
+  function close(cancelled = false) {
+    if (cancelled && writing) return;
     overlay.hidden = true;
     off.forEach((f) => f());
     off.length = 0;
+    if (cancelled) onCancel?.();
   }
 
   on(pickBtn, "click", async () => {
@@ -189,9 +180,9 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
     boxes.forEach((c) => { c.checked = turnOn; });
   });
 
-  on(cancelBtn, "click", close);
-  on(overlay, "click", (e) => { if (e.target === overlay) close(); });
-  on(document, "keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });
+  on(cancelBtn, "click", () => close(true));
+  on(overlay, "click", (e) => { if (e.target === overlay) close(true); });
+  on(document, "keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(true); });
 
   on(confirmBtn, "click", async () => {
     const targets = selected();
@@ -208,6 +199,7 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
 
     confirmBtn.disabled = true;
     cancelBtn.disabled = true;
+    writing = true;
     const origLabel = confirmBtn.textContent;
     try {
       for (let i = 0; i < targets.length; i++) {
@@ -218,13 +210,13 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
         const snap = { ...s, objects: p.objects, guides: p.guides, layers: p.layers, artboard: p.artboard };
         const name = fileNames[idx];
         const result = await rasterizeExportCanvas(snap, { dpi, bounds: null, options });
-        const blob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
-        if (!blob) continue;
+        const blob = await new Promise((resolve, reject) => result.canvas.toBlob(
+          (value) => value ? resolve(value) : reject(new Error("PNG 파일을 만들지 못했습니다.")),
+          "image/png",
+        ));
         if (FS_SUPPORTED && currentDir()) {
-          const fh = await currentDir().getFileHandle(name, { create: true });
-          const w = await fh.createWritable();
-          await w.write(blob);
-          await w.close();
+          const saved = await writeToDir(name, blob);
+          if (saved?.status !== "saved") throw Object.assign(new Error(saved?.message || "파일 쓰기 실패"), { destination: saved?.path });
         } else {
           downloadBlob(blob, name);
           // 연속 다운로드가 브라우저에 막히지 않도록 살짝 간격을 둔다.
@@ -238,12 +230,13 @@ export async function openBatchExport({ state, dpi, options, baseName }) {
           : `${targets.length}개 페이지를 내보냈습니다.`,
         { title: "일괄 내보내기" },
       );
-    } catch (_) {
-      showAlert("일괄 내보내기 중 오류가 발생했습니다.", { title: "일괄 내보내기" });
+    } catch (error) {
+      showAlert(`일괄 내보내기 중 오류가 발생했습니다.\n${error.destination ? `저장 위치: ${error.destination}\n` : ""}원인: ${error.message}`, { title: "일괄 내보내기" });
     }
     confirmBtn.textContent = origLabel;
     confirmBtn.disabled = false;
     cancelBtn.disabled = false;
+    writing = false;
   });
 }
 

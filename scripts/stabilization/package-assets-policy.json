@@ -9,6 +9,7 @@
   "requiredRuntime": [
     "desktop/main.cjs",
     "desktop/preload.cjs",
+    "desktop/export-file.cjs",
     "index.html",
     "js/main.js",
     "js/pdf-document-index.mjs",

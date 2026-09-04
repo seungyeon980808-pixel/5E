@@ -23,9 +23,9 @@ import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
 } from "./export-dir.js?v=1.4.0";
 import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { rasterDimensions } from "./export-policy.js?v=1.6.0";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
-const MM_PER_INCH = 25.4;
 
 /* ----- PNG pHYs(DPI) 청크 삽입 -----
  * canvas.toBlob은 해상도(pHYs)를 기록하지 않아 뷰어가 96dpi로 오인 → 한글/워드에 약 3배
@@ -179,7 +179,9 @@ async function pickSaveHandle(filename, { mime, ext, description }) {
     });
   } catch (e) {
     if (e && e.name === "AbortError") return null; // user cancelled
-    return undefined;                               // permission/other → fall back
+    const error = new Error(e?.message || "저장 위치를 열 수 없습니다.");
+    error.destination = filename;
+    throw error;
   }
 }
 
@@ -200,16 +202,26 @@ async function hasExportDir() {
 /* 폴더가 연결돼 있으면 거기에 쓰고, 아니면 평소대로 내려받는다. */
 async function saveBlob(handle, blob, name) {
   if (handle === "dir") {
-    if (await writeToDir(name, blob)) return;
-    downloadBlob(blob, name);          // 폴더 쓰기가 실패하면 잃어버리지 않게 내려받는다
-    return;
+    const result = await writeToDir(name, blob);
+    if (!result || result.status !== "saved") {
+      const error = new Error(result?.message || "연결된 폴더에 파일을 쓸 수 없습니다.");
+      error.destination = result?.path || name;
+      throw error;
+    }
+    return result;
   }
   if (handle) {
-    try { await writeHandle(handle, blob); }
-    catch (_) { downloadBlob(blob, name); }
-    return;
+    try {
+      await writeHandle(handle, blob);
+    } catch (cause) {
+      const error = new Error(cause?.message || "선택한 위치에 파일을 저장할 수 없습니다.");
+      error.destination = handle.name || name;
+      throw error;
+    }
+    return { status: "saved", name, path: handle.name || name };
   }
   downloadBlob(blob, name);
+  return { status: "saved", name, path: `다운로드/${name}` };
 }
 
 /* ----- resolve the world rectangle to export ----- */
@@ -326,14 +338,14 @@ export async function exportSvg(state, filename, bounds = null, options = {}) {
   const name = filename || getDefaultExportFilename("svg");
   // Ask for the save location first, while still inside the user gesture.
   const handle = await pickSaveHandle(name, { mime: "image/svg+xml", ext: ".svg", description: "SVG 이미지" });
-  if (handle === null) return; // user cancelled the save dialog
+  if (handle === null) return { status: "cancelled" }; // user cancelled the save dialog
   await ensureEmbeddedFonts(); // 편집 화면과 같은 웹폰트로 내보내지도록 임베딩 준비
   const svg = buildExportSvg(state.get(), bounds, options);
   const source = new XMLSerializer().serializeToString(svg);
   // XML prolog keeps the file valid as a standalone .svg document.
   const doc = `<?xml version="1.0" encoding="UTF-8"?>\n${source}`;
   const blob = new Blob([doc], { type: "image/svg+xml" });
-  await saveBlob(handle, blob, name);
+  return saveBlob(handle, blob, name);
 }
 
 /* ----- rasterizeExportCanvas: SVG → white-background canvas at a DPI ----- */
@@ -346,8 +358,9 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
   const { x, y, w, h } = exportRegion(s, bounds);
 
   // mm → px at the requested DPI (25.4mm = 1 inch).
-  const pixelW = Math.round((w / MM_PER_INCH) * dpi);
-  const pixelH = Math.round((h / MM_PER_INCH) * dpi);
+  const dimensions = rasterDimensions(w, h, dpi);
+  const pixelW = dimensions.width;
+  const pixelH = dimensions.height;
 
   const svg = buildExportSvg(s, bounds, options);
 
@@ -411,19 +424,13 @@ export async function exportPng(state, filename, dpi, bounds = null, options = {
   // Ask for the save location first, while still inside the user gesture (before
   // the async rasterization below, which would otherwise lose the activation).
   const handle = await pickSaveHandle(name, { mime: "image/png", ext: ".png", description: "PNG 이미지" });
-  if (handle === null) return; // user cancelled the save dialog
+  if (handle === null) return { status: "cancelled" }; // user cancelled the save dialog
 
   await ensureEmbeddedFonts();
-  let result;
-  try {
-    result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
-  } catch (_) {
-    alert("PNG로 내보내는 중 오류가 발생했습니다.");
-    return;
-  }
-  result.canvas.toBlob(async (rawBlob) => {
-    if (!rawBlob) return;
-    const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록 → HWP/워드 삽입 크기 정상
-    saveBlob(handle, blob, name);
-  }, "image/png");
+  const result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
+  const rawBlob = await new Promise((resolve, reject) => {
+    result.canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("PNG 파일을 만들지 못했습니다.")), "image/png");
+  });
+  const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록 → HWP/워드 삽입 크기 정상
+  return saveBlob(handle, blob, name);
 }

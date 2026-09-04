@@ -20,6 +20,7 @@ import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 import { registerTopMenu } from "./top-menu.js?v=1.4.0";
 import { screenToWorld } from "./viewport.js?v=1.4.0";
 import { openExamPreview } from "./exam-preview.js?v=1.4.0";
+import { defaultExportBaseName, sanitizeExportBaseName } from "./export-policy.js?v=1.6.0";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -28,10 +29,7 @@ const defaultNameBase = () => formatExportTimestamp();
 // 파일시스템에서 쓸 수 없는 문자(경로 구분자 등)를 걸러낸다. 이런 문자가 섞인 이름으로
 // showSaveFilePicker를 부르면 브라우저가 조용히 실패해(취소와 구분 안 됨) 안내 없이
 // 기본 다운로드 폴더로 대체 저장되므로, 저장 직전에 여기서 미리 치환해 둔다.
-const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/g;
-function sanitizeFilename(name) {
-  return String(name || "").replace(INVALID_FILENAME_CHARS, "_").trim();
-}
+function sanitizeFilename(name) { return sanitizeExportBaseName(name, defaultNameBase()); }
 
 /* ----- dropdown: exclusive with 설정 (shared top-menu) + hover descriptions ----- */
 const DEFAULT_FILE_DESC = "파일 작업을 선택하세요.";
@@ -66,7 +64,7 @@ function buildModal() {
   overlay.id = "export-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="export-title" style="width:min(400px, calc(100vw - 32px))">
+    <div class="modal export-modal" role="dialog" aria-modal="true" aria-labelledby="export-title" style="width:min(400px, calc(100vw - 32px))">
       <h2 class="modal-title" id="export-title">이미지로 내보내기
         <button type="button" class="export-help-btn" aria-label="이미지로 내보내기 도움말"
                 title="아트보드를 이미지 파일로 저장합니다.&#10;· PNG — 한글(HWP)·PPT 등에 바로 붙여 넣는 그림 파일&#10;· SVG — 확대해도 깨지지 않는 벡터 파일(일러스트 편집용)&#10;여백·배율은 아래 옵션으로 조정합니다.">?</button>
@@ -92,6 +90,7 @@ function buildModal() {
           <button type="button" class="seg-btn" data-dpi="200">200 dpi</button>
           <button type="button" class="seg-btn is-active" data-dpi="300">300 dpi</button>
           <button type="button" class="seg-btn" data-dpi="400">400 dpi</button>
+          <button type="button" class="seg-btn" data-dpi="600">600 dpi</button>
         </div>
       </div>
 
@@ -452,7 +451,7 @@ export function initExportDialog(state, svg) {
       // Refresh the default name to the current minute each time the dialog opens
       // fresh (unless the user has typed a custom name this session is fine to
       // overwrite — the field is always reset to the live timestamp on open).
-      filenameInput.value = defaultNameBase();
+      filenameInput.value = defaultExportBaseName(state.get(), defaultNameBase());
     }
     filenameInput.focus();
     filenameInput.select();
@@ -469,7 +468,7 @@ export function initExportDialog(state, svg) {
 
   // Open from the dropdown item.
   const openBtn = document.getElementById("image-export");
-  if (openBtn) openBtn.addEventListener("click", showModal);
+  if (openBtn) openBtn.addEventListener("click", () => showModal(false));
 
   // Cancel / overlay-click / Escape close without exporting.
   overlay.querySelector("#export-cancel").addEventListener("click", hideModal);
@@ -493,24 +492,47 @@ export function initExportDialog(state, svg) {
   });
 
   // Export the current settings, optionally cropped to a world-coord rectangle.
-  function doExport(bounds) {
+  async function doExport(bounds) {
     const name = sanitizeFilename(filenameInput.value) || defaultNameBase();
     const format = segValue(formatGroup, "data-format");
     const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
     // 영역을 손수 지정했으면 그것이 우선. 아니면 "내용에 맞춤" 설정을 따른다.
     const region = bounds || fitBounds(options);
     if (format === "svg") {
-      exportSvg(state, `${name}.svg`, region, options);
+      return exportSvg(state, `${name}.svg`, region, options);
     } else {
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
-      exportPng(state, `${name}.png`, dpi, region, options);
+      return exportPng(state, `${name}.png`, dpi, region, options);
+    }
+  }
+
+  async function runExportWithFeedback(bounds, { reopenOnCancel = false, reopenOnFailure = false } = {}) {
+    try {
+      const result = await doExport(bounds);
+      if (result?.status === "cancelled") {
+        if (reopenOnCancel) showModal(true);
+        return result;
+      }
+      hideModal();
+      await showAlert(`저장했습니다.\n${result?.path || result?.name || ""}`, { title: "이미지 내보내기" });
+      return result;
+    } catch (error) {
+      if (reopenOnFailure) showModal(true);
+      const destination = error?.destination ? `\n저장 위치: ${error.destination}` : "";
+      await showAlert(`저장하지 못했습니다.${destination}\n원인: ${error?.message || "알 수 없는 오류"}`, { title: "이미지 내보내기" });
+      return { status: "failed", error };
     }
   }
 
   // Full-artboard export (unchanged behavior: bounds = null).
-  overlay.querySelector("#export-confirm").addEventListener("click", () => {
-    doExport(null);
-    hideModal();
+  const confirmBtn = overlay.querySelector("#export-confirm");
+  confirmBtn.addEventListener("click", async () => {
+    confirmBtn.disabled = true;
+    try {
+      await runExportWithFeedback(null);
+    } finally {
+      confirmBtn.disabled = false;
+    }
   });
 
   // [복사]: 현재 설정(dpi·참고이미지)으로 PNG를 클립보드에 — 한글/PPT에 바로 Ctrl+V.
@@ -569,7 +591,7 @@ export function initExportDialog(state, svg) {
       const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
       const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
       hideModal();
-      openBatchExport({ state, dpi, options, baseName: base });
+      openBatchExport({ state, dpi, options, baseName: base, onCancel: () => showModal(true) });
     });
   }
 
@@ -579,7 +601,7 @@ export function initExportDialog(state, svg) {
     areaBtn.addEventListener("click", () => {
       hideModal();
       runAreaCapture(svg, state, (bounds) => {
-        if (bounds) doExport(bounds);
+        if (bounds) void runExportWithFeedback(bounds, { reopenOnCancel: true, reopenOnFailure: true });
         else showModal(true); // cancelled → reopen the dialog where we left off(입력값 유지)
       });
     });

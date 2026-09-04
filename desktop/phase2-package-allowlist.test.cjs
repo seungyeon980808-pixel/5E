@@ -18,6 +18,7 @@ const APPROVED_BUILD_FILES = Object.freeze([
   "desktop/ai-thread-profile.cjs",
   "desktop/codex-process-failure.cjs",
   "desktop/local-assets.cjs",
+  "desktop/export-file.cjs",
   "fonts/**/*",
   "vendor/pdfjs/LICENSE",
   "vendor/pdfjs/pdf.min.mjs",

@@ -18,12 +18,17 @@ import { idbAvailable, idbGet, idbSet, idbDel } from "./idb-store.js?v=1.4.0";
 const DIR_KEY = "export-dir-handle";
 
 export const FS_DIR_SUPPORTED =
-  typeof window !== "undefined" && !!window.showDirectoryPicker;
+  typeof window !== "undefined" && (!!window.showDirectoryPicker || !!window.fiveEDesktop?.pickExportFolder);
 
 let dirHandle = null;
 
 /* 저장해 둔 폴더 핸들을 되살린다(권한 요청은 하지 않는다 — 제스처가 없으므로). */
 export async function loadSavedDir() {
+  if (window.fiveEDesktop?.getExportFolder) {
+    const result = await window.fiveEDesktop.getExportFolder();
+    dirHandle = result?.status === "selected" ? { desktop: true, name: result.name, path: result.path } : null;
+    return dirHandle;
+  }
   if (dirHandle || !FS_DIR_SUPPORTED || !idbAvailable()) return dirHandle;
   try {
     const h = await idbGet(DIR_KEY);
@@ -36,6 +41,7 @@ export function currentDir() { return dirHandle; }
 export function currentDirName() { return dirHandle ? (dirHandle.name || "") : ""; }
 
 export async function ensureDirPermission(handle = dirHandle) {
+  if (handle?.desktop) return true;
   if (!handle || typeof handle.queryPermission !== "function") return false;
   try {
     if (await handle.queryPermission({ mode: "readwrite" }) === "granted") return true;
@@ -45,6 +51,12 @@ export async function ensureDirPermission(handle = dirHandle) {
 
 /* 폴더 고르기. 사용자 제스처(클릭) 안에서 불러야 한다. */
 export async function pickDir() {
+  if (window.fiveEDesktop?.pickExportFolder) {
+    const result = await window.fiveEDesktop.pickExportFolder();
+    if (result?.status !== "selected") return null;
+    dirHandle = { desktop: true, name: result.name, path: result.path };
+    return dirHandle;
+  }
   if (!FS_DIR_SUPPORTED) return null;
   try {
     const h = await window.showDirectoryPicker({ id: "5e-export", mode: "readwrite" });
@@ -59,6 +71,7 @@ export async function pickDir() {
 
 /* 연결 해제 — 다음 내보내기부터는 다시 '저장 위치 묻기'로 돌아간다. */
 export async function clearDir() {
+  if (window.fiveEDesktop?.clearExportFolder) await window.fiveEDesktop.clearExportFolder();
   dirHandle = null;
   if (idbAvailable()) { try { await idbDel(DIR_KEY); } catch (_) {} }
 }
@@ -70,12 +83,17 @@ export async function writeToDir(filename, blob) {
   if (!h) return false;
   if (!(await ensureDirPermission(h))) return false;
   try {
+    if (h.desktop && window.fiveEDesktop?.saveExportFile) {
+      const result = await window.fiveEDesktop.saveExportFile(filename, new Uint8Array(await blob.arrayBuffer()));
+      if (result?.status !== "saved") throw Object.assign(new Error(result?.message || "파일 쓰기에 실패했습니다."), { destination: result?.path || `${h.path}\\${filename}` });
+      return result;
+    }
     const fh = await h.getFileHandle(filename, { create: true });
     const w = await fh.createWritable();
     await w.write(blob);
     await w.close();
-    return true;
-  } catch (_) {
-    return false;
+    return { status: "saved", name: filename, folderName: h.name, path: `${h.name}/${filename}` };
+  } catch (error) {
+    return { status: "failed", name: filename, folderName: h.name, path: error.destination || `${h.name}/${filename}`, message: error.message };
   }
 }
