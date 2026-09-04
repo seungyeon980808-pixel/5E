@@ -1091,13 +1091,16 @@ function createWindow() {
             });
           });
           const unchangedUndoDepth = stateModule.state.get().undoStack.length;
+          const unchangedObjectBefore = structuredClone(stateModule.state.get().objects.find((object) => object.id === "rc-unchanged-labeler"));
           textEditor.openLabelerTextEditor("rc-unchanged-labeler");
           const unchangedEditorOpened = await waitFor(() => stateModule.state.get().draftText?.editingId === "rc-unchanged-labeler");
+          const unchangedPrefill = document.querySelector(".unified-text-input.text-formula-source-input")?.value === "A";
           textEditor.commitActiveText();
           const unchangedEditClearsDraft = await waitFor(() =>
             stateModule.state.get().draftText === null &&
             stateModule.state.get().objects.some((object) => object.id === "rc-unchanged-labeler") &&
             stateModule.state.get().undoStack.length === unchangedUndoDepth);
+          const unchangedObjectPreserved = JSON.stringify(stateModule.state.get().objects.find((object) => object.id === "rc-unchanged-labeler")) === JSON.stringify(unchangedObjectBefore);
           stateModule.state.update((s) => Object.assign(s, structuredClone(beforeUnchangedEdit)));
 
           const graphTrigger = document.getElementById("graph-tool-open");
@@ -1119,7 +1122,7 @@ function createWindow() {
           batchOverlay?.querySelector("#batch-cancel")?.click();
           const batchReturns = await waitFor(() => exportOverlay?.hidden === false && exportName?.value === "rc-state-preserved");
           exportOverlay?.querySelector("#export-cancel")?.click();
-          return { pageAdded, pageUndo, pageRedo, pageReordered, keyboardCut, keyboardPaste, unchangedEditorOpened, unchangedEditClearsDraft, graphOpened, graphEscape, exportOpened, batchOpened, batchReturns };
+          return { pageAdded, pageUndo, pageRedo, pageReordered, keyboardCut, keyboardPaste, unchangedEditorOpened, unchangedPrefill, unchangedEditClearsDraft, unchangedObjectPreserved, graphOpened, graphEscape, exportOpened, batchOpened, batchReturns };
           } catch (error) {
             return { error: error?.stack || error?.message || String(error) };
           }
@@ -1129,7 +1132,8 @@ function createWindow() {
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
         const requiredRcFeedbackChecks = [
           "pageAdded", "pageUndo", "pageRedo", "pageReordered",
-          "keyboardCut", "keyboardPaste", "unchangedEditorOpened", "unchangedEditClearsDraft",
+          "keyboardCut", "keyboardPaste", "unchangedEditorOpened", "unchangedPrefill",
+          "unchangedEditClearsDraft", "unchangedObjectPreserved",
           "graphOpened", "graphEscape", "exportOpened", "batchOpened", "batchReturns",
         ];
         const rcFeedbackBehaviorOk = !result.rcFeedbackBehavior?.error &&
