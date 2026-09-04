@@ -1513,12 +1513,13 @@ function _commitText() {
         const textChanged = formulaMode
           ? (o.contentMode !== "formula" || o.source !== normalizedSource || o.rawSource !== rawSource)
           : (o.contentMode === "formula" || (o.text ?? "") !== val ||
-             JSON.stringify(o.textRuns || []) !== JSON.stringify(normalizeTextRuns(dt)));
+             JSON.stringify(normalizeTextRuns(o)) !== JSON.stringify(normalizeTextRuns(dt)));
         const fontChanged = (o.fontFamily || DEFAULT_TEXT_FONT) !== (dt.fontFamily || DEFAULT_TEXT_FONT);
         const sizeChanged = o.labelSize !== dt.fontSize;
         const weightChanged = (o.fontWeight || "normal") !== (dt.fontWeight || "normal");
         const italicChanged = !!o.italic !== italicNext;
         if (!textChanged && !fontChanged && !sizeChanged && !weightChanged && !italicChanged) {
+          s.draftText = null;
           return;
         }
         const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1553,7 +1554,7 @@ function _commitText() {
         const textChanged = formulaMode
           ? (o.type !== "formula" || o.source !== normalizedSource || o.rawSource !== rawSource)
           : (o.type !== "text" || (o.text ?? "") !== val ||
-             JSON.stringify(o.textRuns || []) !== JSON.stringify(normalizeTextRuns(dt)));
+             JSON.stringify(normalizeTextRuns(o)) !== JSON.stringify(normalizeTextRuns(dt)));
         const styleChanged =
           o.fontSize !== dt.fontSize ||
           o.fontFamily !== dt.fontFamily ||
@@ -1562,6 +1563,7 @@ function _commitText() {
           o.underline !== dt.underline ||
           o.strikeout !== dt.strikeout;
         if (!textChanged && !styleChanged) {
+          s.draftText = null;
           return;
         }
         const snap = JSON.parse(JSON.stringify(s.objects));

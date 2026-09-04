@@ -1072,6 +1072,34 @@ function createWindow() {
           const keyboardPaste = await waitFor(() => stateModule.state.get().selectedIds.some((id) => id !== "rc-cut-object"));
           stateModule.state.update((s) => Object.assign(s, structuredClone(saved)));
 
+          const textEditor = await import("./js/text-editor.js?v=1.5.1");
+          const beforeUnchangedEdit = structuredClone({
+            objects: stateModule.state.get().objects,
+            selectedIds: stateModule.state.get().selectedIds,
+            targetedId: stateModule.state.get().targetedId,
+            undoStack: stateModule.state.get().undoStack,
+            redoStack: stateModule.state.get().redoStack,
+          });
+          stateModule.state.update((s) => {
+            s.objects.push({
+              id: "rc-unchanged-labeler", type: "labeler",
+              p1: { x: 0, y: 0 }, p2: { x: 12, y: 6 }, text: "A",
+              labelType: "label", fontFamily: "Dotum", labelSize: 3.2,
+              fontWeight: "normal", italic: false, strokeLevel: 0,
+              strokeWidth: 0.4, locked: false, positionLocked: false,
+              layerId: 1, order: s.objects.length,
+            });
+          });
+          const unchangedUndoDepth = stateModule.state.get().undoStack.length;
+          textEditor.openLabelerTextEditor("rc-unchanged-labeler");
+          const unchangedEditorOpened = await waitFor(() => stateModule.state.get().draftText?.editingId === "rc-unchanged-labeler");
+          textEditor.commitActiveText();
+          const unchangedEditClearsDraft = await waitFor(() =>
+            stateModule.state.get().draftText === null &&
+            stateModule.state.get().objects.some((object) => object.id === "rc-unchanged-labeler") &&
+            stateModule.state.get().undoStack.length === unchangedUndoDepth);
+          stateModule.state.update((s) => Object.assign(s, structuredClone(beforeUnchangedEdit)));
+
           const graphTrigger = document.getElementById("graph-tool-open");
           graphTrigger?.focus();
           graphTrigger?.click();
@@ -1091,7 +1119,7 @@ function createWindow() {
           batchOverlay?.querySelector("#batch-cancel")?.click();
           const batchReturns = await waitFor(() => exportOverlay?.hidden === false && exportName?.value === "rc-state-preserved");
           exportOverlay?.querySelector("#export-cancel")?.click();
-          return { pageAdded, pageUndo, pageRedo, pageReordered, keyboardCut, keyboardPaste, graphOpened, graphEscape, exportOpened, batchOpened, batchReturns };
+          return { pageAdded, pageUndo, pageRedo, pageReordered, keyboardCut, keyboardPaste, unchangedEditorOpened, unchangedEditClearsDraft, graphOpened, graphEscape, exportOpened, batchOpened, batchReturns };
           } catch (error) {
             return { error: error?.stack || error?.message || String(error) };
           }
@@ -1099,6 +1127,13 @@ function createWindow() {
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
+        const requiredRcFeedbackChecks = [
+          "pageAdded", "pageUndo", "pageRedo", "pageReordered",
+          "keyboardCut", "keyboardPaste", "unchangedEditorOpened", "unchangedEditClearsDraft",
+          "graphOpened", "graphEscape", "exportOpened", "batchOpened", "batchReturns",
+        ];
+        const rcFeedbackBehaviorOk = !result.rcFeedbackBehavior?.error &&
+          requiredRcFeedbackChecks.every((key) => result.rcFeedbackBehavior?.[key] === true);
         const ok = result.aiEntryNamesWorkflow && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
           result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
@@ -1116,7 +1151,7 @@ function createWindow() {
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          Object.values(result.rcFeedbackBehavior).every(Boolean) &&
+          rcFeedbackBehaviorOk &&
           result.menuBarVisible === false && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
