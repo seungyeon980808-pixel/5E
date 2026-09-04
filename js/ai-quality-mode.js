@@ -45,7 +45,7 @@ export function normalizeOutputEngine(value) {
 
 export function qualityModeRule(value, { revision = false } = {}) {
   const mode = normalizeQualityMode(value);
-  const invariant = "원본의 주 객체 종류·개수·실루엣·연결·접촉·겹침·좌우/상하 순서와 상대 비율은 어떤 경우에도 바꾸지 않는다.";
+  const invariant = "원본의 주 객체 종류·개수·실루엣·연결·접촉·겹침·좌우/상하 순서와 상대 비율은 어떤 경우에도 바꾸지 않는다. 화살표 방향·극성·축·눈금·수식·라벨 텍스트는 읽히는 그대로 보존한다.";
   if (mode === AI_QUALITY_MODES.SIMPLE) {
     return `단순 모드(고품질 1회 변환): 먼저 원본의 주 객체 외곽, 내부 경계, 구멍, 접촉점과 반복 세부를 빠짐없이 확인한다. ${invariant} 장면을 새로 해석하지 말고 원본의 주 객체만 정밀한 선화로 옮긴다. 사진 필터처럼 거친 가장자리만 따지 말고 평가원 인쇄 도판 수준으로 선을 매끈하게 정돈한다. 흐림·노이즈·사진 질감을 새로운 내부 무늬로 발명하지 말고, 내부선은 물체 식별에 필요한 대표 경계만 원본보다 성기게 남긴다. 형태를 단순화하거나 다른 물체로 치환하지 않는다.`;
   }

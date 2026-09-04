@@ -54,9 +54,20 @@ import {
   normalizeQualityMode,
   qualityModeCacheVersion,
 } from "./ai-quality-mode.js?v=1.5.6-phase5-native-graph";
+import {
+  IMAGE_BACKGROUND_MODES,
+  IMAGE_TRANSFORM_VERSION,
+  IMAGE_TREATMENTS,
+  buildImageOutputFilename,
+  normalizeBackgroundMode,
+  normalizeImageTreatment,
+  normalizeOutputScale,
+  transformImageBatch,
+  transformImageDataUrl,
+} from "./image-transform-options.mjs";
 
 const RASTER_STYLE_VERSION = "kice-raster-v2";
-const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}`;
+const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}+${IMAGE_TRANSFORM_VERSION}`;
 const FAST_SCENE_PANEL_COMPILE_VERSION = "motif-direct-v1";
 
 export function compilePanelScene(input, options) {
@@ -182,6 +193,9 @@ export function initAiPanel(state) {
   const modeButtons = Array.from(panel.querySelectorAll("[data-ai-mode]"));
   const qualityButtons = Array.from(panel.querySelectorAll("[data-ai-quality]"));
   const outputEngineButtons = Array.from(panel.querySelectorAll("[data-ai-output-engine]"));
+  const treatmentButtons = Array.from(panel.querySelectorAll("[data-ai-treatment]"));
+  const backgroundButtons = Array.from(panel.querySelectorAll("[data-ai-background]"));
+  const outputScaleInput = panel.querySelector("[data-ai-output-scale]");
   const batchButton = panel.querySelector("[data-ai-batch]");
   const batchPanel = panel.querySelector("[data-ai-batch-panel]");
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
@@ -221,6 +235,9 @@ export function initAiPanel(state) {
   let selectedMode = localStorage.getItem("5e.aiMode") || "diagram";
   let selectedQualityMode = normalizeQualityMode(localStorage.getItem("5e.aiQualityMode") || AI_QUALITY_MODES.STANDARD);
   let selectedOutputEngine = normalizeOutputEngine(localStorage.getItem("5e.aiOutputEngine") || AI_OUTPUT_ENGINES.AUTO);
+  let selectedTreatment = normalizeImageTreatment(localStorage.getItem("5e.aiTreatment") || IMAGE_TREATMENTS.AI_REDRAW);
+  let selectedBackground = normalizeBackgroundMode(localStorage.getItem("5e.aiBackground") || IMAGE_BACKGROUND_MODES.WHITE);
+  let selectedOutputScale = normalizeOutputScale(localStorage.getItem("5e.aiOutputScale") || 2);
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -407,6 +424,19 @@ export function initAiPanel(state) {
       button.classList.toggle("is-on", active);
       button.setAttribute("aria-pressed", String(active));
     });
+  };
+  const syncTransformOptions = () => {
+    treatmentButtons.forEach((button) => {
+      const active = button.dataset.aiTreatment === selectedTreatment;
+      button.classList.toggle("is-on", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    backgroundButtons.forEach((button) => {
+      const active = button.dataset.aiBackground === selectedBackground;
+      button.classList.toggle("is-on", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    if (outputScaleInput) outputScaleInput.value = String(selectedOutputScale);
   };
   const syncReferenceSummary = () => {
     referenceCount.textContent = String(attachments.length);
@@ -801,13 +831,18 @@ export function initAiPanel(state) {
     onStatus: (text, kind) => setStatus(text, kind),
   });
 
-  const addPreview = async (src, { isCurrent = () => true, alreadyEditable = false } = {}) => {
+  const addPreview = async (src, { isCurrent = () => true, alreadyEditable = false, name = null } = {}) => {
     if (!src) return false;
     let editableSrc = src;
     let postprocessOk = alreadyEditable;
     if (!alreadyEditable) {
       try {
-        editableSrc = await transparentizeGeneratedImage(src);
+        const transparent = await transparentizeGeneratedImage(src);
+        editableSrc = (await transformImageDataUrl(transparent, {
+          treatment: IMAGE_TREATMENTS.ORIGINAL,
+          background: currentRunInput?.backgroundMode || selectedBackground,
+          scale: currentRunInput?.outputScale || selectedOutputScale,
+        })).data;
         postprocessOk = true;
       } catch (error) {
         if (isCurrent()) addLog(`배경 자동 투명화 실패: ${error.message}`, "error");
@@ -818,7 +853,13 @@ export function initAiPanel(state) {
     previews.querySelector("[data-ai-empty]")?.remove();
     const item = {
       id: `generated-${++imageSerial}`,
-      name: `생성 결과 ${generatedImages.length + 1}`,
+      name: name || buildImageOutputFilename(
+        currentRunInput?.labelSource?.name || attachments.at(-1)?.name || "diagram",
+        {
+          treatment: currentRunInput?.treatment || IMAGE_TREATMENTS.AI_REDRAW,
+          revision: generatedImages.length + 1,
+        },
+      ),
       data: editableSrc,
       kind: "generated",
       postprocessOk,
@@ -836,7 +877,10 @@ export function initAiPanel(state) {
 
   const addScenePreview = (sceneResult, sceneSource, sceneCompileSource = sceneSource) => {
     if (!sceneResult?.valid || !sceneResult?.supported || !sceneResult.objects?.length) return false;
-    const data = fastSceneToSvgDataUrl(sceneResult);
+    const data = fastSceneToSvgDataUrl(sceneResult, {
+      backgroundMode: currentRunInput?.backgroundMode || selectedBackground,
+      outputScale: currentRunInput?.outputScale || selectedOutputScale,
+    });
     latestGeneratedSrc = data;
     previews.querySelector("[data-ai-empty]")?.remove();
     const item = {
@@ -903,6 +947,9 @@ export function initAiPanel(state) {
     tab.mode = selectedMode;
     tab.qualityMode = selectedQualityMode;
     tab.outputEngine = selectedOutputEngine;
+    tab.treatment = selectedTreatment;
+    tab.backgroundMode = selectedBackground;
+    tab.outputScale = selectedOutputScale;
     tab.runtime = {
       busy,
       imageReceived,
@@ -1027,6 +1074,9 @@ export function initAiPanel(state) {
     selectedMode = tab.mode || "diagram";
     selectedQualityMode = normalizeQualityMode(tab.qualityMode);
     selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
+    selectedTreatment = normalizeImageTreatment(tab.treatment);
+    selectedBackground = normalizeBackgroundMode(tab.backgroundMode);
+    selectedOutputScale = normalizeOutputScale(tab.outputScale || 2);
     attachments = (tab.attachments || []).map(taskItemCopy);
     generatedImages = (tab.generated || []).map(taskItemCopy);
     latestGeneratedSrc = generatedImages.at(-1)?.data || null;
@@ -1059,6 +1109,7 @@ export function initAiPanel(state) {
     syncMode();
     syncQualityMode();
     syncOutputEngine();
+    syncTransformOptions();
     syncReferenceSummary();
     setGenerating(
       Boolean(runtime.generatingVisible),
@@ -1088,6 +1139,7 @@ export function initAiPanel(state) {
       title: `작업 ${taskTabSerial}`,
       attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
       conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
+      treatment: selectedTreatment, backgroundMode: selectedBackground, outputScale: selectedOutputScale,
       runtime: idleTabRuntime(), pendingEvents: [],
     });
     if (activateImmediately) restoreTaskTab(id);
@@ -1154,7 +1206,10 @@ export function initAiPanel(state) {
     job.addedToTab = true;
     const item = {
       id: `generated-${++imageSerial}`,
-      name: `${job.name} · ${job.qualityMode === AI_QUALITY_MODES.COMPLEX ? "복잡" : job.qualityMode === AI_QUALITY_MODES.SIMPLE ? "단순" : "보통"}`,
+      name: buildImageOutputFilename(job.name, {
+        treatment: job.treatment || IMAGE_TREATMENTS.AI_REDRAW,
+        revision: 1,
+      }),
       data: job.resultData,
       kind: "generated",
       engine: IMAGE_ENGINE_IDS.RASTER,
@@ -1256,7 +1311,12 @@ export function initAiPanel(state) {
     if (event.kind === "image" && event.src) {
       job.pendingImagePromise = (async () => {
         try {
-          job.resultData = await transparentizeGeneratedImage(event.src, { examPalette: true });
+          const transparent = await transparentizeGeneratedImage(event.src, { examPalette: true });
+          job.resultData = (await transformImageDataUrl(transparent, {
+            treatment: IMAGE_TREATMENTS.ORIGINAL,
+            background: job.backgroundMode,
+            scale: job.outputScale,
+          })).data;
           updateBatchCard(job, job.pass > 1 ? "교정 결과 정리 중…" : "결과 정리 중…");
         } catch (error) {
           job.error = error.message || String(error);
@@ -1330,6 +1390,9 @@ export function initAiPanel(state) {
         request,
         mode: selectedMode,
         qualityMode: selectedQualityMode,
+        treatment: selectedTreatment,
+        backgroundMode: selectedBackground,
+        outputScale: selectedOutputScale,
         model: modelSelect.value || null,
         effort: effortSelect.value || null,
         serviceTier: speedSelect.value || null,
@@ -1354,6 +1417,42 @@ export function initAiPanel(state) {
       batchRuns.set(job.id, job);
       return job;
     });
+    if (selectedTreatment !== IMAGE_TREATMENTS.AI_REDRAW) {
+      if (batchButton) batchButton.disabled = true;
+      setStatus(`참고 이미지 ${roots.length}개를 로컬에서 변환합니다.`, "busy");
+      updateBatchSummary();
+      void transformImageBatch(roots.map((job) => job.source), {
+        treatment: selectedTreatment,
+        background: selectedBackground,
+        scale: selectedOutputScale,
+      }, {
+        concurrency: 1,
+        onStart: ({ index }) => {
+          const job = roots[index];
+          job.startedAt = performance.now();
+          job.state = "running";
+          updateBatchCard(job, selectedTreatment === IMAGE_TREATMENTS.CLEANUP ? "정리 중…" : "원본 준비 중…");
+        },
+        onProgress: ({ index, result }) => {
+          const job = roots[index];
+          job.elapsedMs = Math.round(performance.now() - job.startedAt);
+          if (result.status === "complete") {
+            job.resultData = result.data;
+            job.state = "complete";
+            updateBatchCard(job, `완료 · ${(job.elapsedMs / 1000).toFixed(1)}초`);
+            addBatchResultToTab(job);
+          } else {
+            job.state = "failed";
+            job.error = result.error;
+            updateBatchCard(job, `실패 · ${job.error}`);
+          }
+        },
+      }).then((results) => {
+        const failed = results.filter((result) => result.status === "failed").length;
+        setStatus(failed ? `일괄 변환 완료 · ${failed}개 실패` : `일괄 변환 ${results.length}개 완료`, failed ? "warn" : "ok");
+      });
+      return;
+    }
     batchQueue.push(...roots);
     if (batchButton) batchButton.disabled = true;
     setStatus(`참고 이미지 ${roots.length}개를 최대 ${BATCH_CONCURRENCY}개씩 동시에 변환합니다.`, "busy");
@@ -1758,7 +1857,8 @@ export function initAiPanel(state) {
         outputEngine: normalizeOutputEngine(runInput.outputEngine),
         qualityMode: normalizeQualityMode(runInput.qualityMode),
         complexPass: Number(runInput.complexPass || 1),
-        transparentBackground: true,
+        backgroundMode: normalizeBackgroundMode(runInput.backgroundMode),
+        outputScale: normalizeOutputScale(runInput.outputScale),
         examPalette: engine === IMAGE_ENGINE_IDS.RASTER,
         localAsset,
       },
@@ -1866,6 +1966,9 @@ export function initAiPanel(state) {
       mode: selectedMode,
       qualityMode: selectedQualityMode,
       outputEngine: selectedOutputEngine,
+      treatment: selectedTreatment,
+      backgroundMode: selectedBackground,
+      outputScale: selectedOutputScale,
       complexPass: 1,
       model: modelSelect.value || null,
       effort: effortSelect.value || null,
@@ -2238,6 +2341,26 @@ export function initAiPanel(state) {
         : "자동 선택은 그래프를 편집 가능한 오브젝트로, 일반 그림 변환을 시험문제용 도판으로 만듭니다.";
     setStatus(outputMessage, "ok");
   }));
+  treatmentButtons.forEach((button) => button.addEventListener("click", () => {
+    selectedTreatment = normalizeImageTreatment(button.dataset.aiTreatment);
+    localStorage.setItem("5e.aiTreatment", selectedTreatment);
+    syncTransformOptions();
+    setStatus(selectedTreatment === IMAGE_TREATMENTS.AI_REDRAW
+      ? "평가원 스타일 AI 재도판 모드입니다."
+      : selectedTreatment === IMAGE_TREATMENTS.CLEANUP
+        ? "이미지를 로컬에서 정리하고 선명하게 만듭니다."
+        : "원본 픽셀과 위치 관계를 유지합니다.", "ok");
+  }));
+  backgroundButtons.forEach((button) => button.addEventListener("click", () => {
+    selectedBackground = normalizeBackgroundMode(button.dataset.aiBackground);
+    localStorage.setItem("5e.aiBackground", selectedBackground);
+    syncTransformOptions();
+  }));
+  outputScaleInput?.addEventListener("change", () => {
+    selectedOutputScale = normalizeOutputScale(outputScaleInput.value);
+    localStorage.setItem("5e.aiOutputScale", String(selectedOutputScale));
+    syncTransformOptions();
+  });
   compareButton.onclick = openComparison;
   referenceSearchButton.onclick = () => { void referenceSearch.open(); };
   captureButton.onclick = () => { void openCaptureChooser(); };
@@ -2249,7 +2372,67 @@ export function initAiPanel(state) {
   if (batchButton) batchButton.onclick = runBatch;
   chatButton.onclick = () => submit("chat");
   sendButton.title = "도판 만들기 · Shift+클릭하면 캐시를 사용하지 않고 새 변형을 만듭니다.";
-  sendButton.onclick = (event) => submit("image", { bypassCache: event.shiftKey === true });
+  const runLocalTransform = async () => {
+    if (busy) return;
+    const source = attachments.at(-1);
+    if (!source) {
+      setStatus("먼저 변환할 이미지나 PDF 도판 후보를 추가하세요.", "warn");
+      return;
+    }
+    const ownerTabId = activeTaskTabId;
+    const jobOptions = Object.freeze({
+      treatment: selectedTreatment,
+      background: selectedBackground,
+      scale: selectedOutputScale,
+    });
+    previewPending = true;
+    setBusy(true);
+    setGenerating(true, jobOptions.treatment === IMAGE_TREATMENTS.CLEANUP ? "이미지를 정리하고 있습니다" : "원본을 준비하고 있습니다",
+      "선과 기호를 보존하며 배경과 출력 크기를 적용합니다.", "render");
+    currentRunInput = {
+      attachments: attachments.map(snapshotImageItem),
+      generated: generatedImages.map(snapshotImageItem),
+      mode: selectedMode,
+      qualityMode: selectedQualityMode,
+      outputEngine: selectedOutputEngine,
+      treatment: jobOptions.treatment,
+      backgroundMode: jobOptions.background,
+      outputScale: jobOptions.scale,
+      labelSource: snapshotImageItem(source),
+    };
+    try {
+      const result = await transformImageDataUrl(source.data, {
+        ...jobOptions,
+      });
+      const label = jobOptions.treatment === IMAGE_TREATMENTS.CLEANUP ? "정리·선명화" : "원본 유지";
+      if (activeTaskTabId === ownerTabId) {
+        await addPreview(result.data, {
+          alreadyEditable: true,
+          name: buildImageOutputFilename(source.name, {
+            treatment: jobOptions.treatment,
+            revision: generatedImages.length + 1,
+          }),
+        });
+      }
+      setStatus(`${label} 완료 · ${result.plan.width}×${result.plan.height}px`, "ok");
+      addLog(`${source.name}을(를) ${label} 모드로 처리했습니다.${result.plan.capped ? " 메모리 보호 상한을 적용했습니다." : ""}`);
+    } catch (error) {
+      setStatus("로컬 이미지 변환 실패", "error");
+      addLog(error.message || String(error), "error");
+    } finally {
+      previewPending = false;
+      setGenerating(false);
+      setBusy(false);
+      activatePendingTabIfReady();
+    }
+  };
+  sendButton.onclick = (event) => {
+    if (selectedTreatment === IMAGE_TREATMENTS.AI_REDRAW) {
+      void submit("image", { bypassCache: event.shiftKey === true });
+    } else {
+      void runLocalTransform();
+    }
+  };
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -2602,6 +2785,7 @@ export function initAiPanel(state) {
   syncMode();
   syncQualityMode();
   syncOutputEngine();
+  syncTransformOptions();
   syncReferenceSummary();
   setBusy(false);
   refresh();

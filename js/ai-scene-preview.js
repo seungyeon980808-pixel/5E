@@ -10,16 +10,29 @@ function clone(value) {
     : JSON.parse(JSON.stringify(value));
 }
 
-export function fastSceneToSvgDataUrl({ objects = [], artboard = { w: 160, h: 90 } } = {}) {
+export function fastSceneToSvgDataUrl(
+  { objects = [], artboard = { w: 160, h: 90 } } = {},
+  { backgroundMode = "transparent", outputScale = 1 } = {},
+) {
   const w = Math.max(20, Number(artboard.w) || 160);
   const h = Math.max(20, Number(artboard.h) || 90);
+  const scale = Math.min(4, Math.max(1, Number(outputScale) || 1));
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("xmlns", SVG_NS);
   svg.setAttribute("viewBox", `${-w / 2} ${-h / 2} ${w} ${h}`);
-  svg.setAttribute("width", String(Math.round(w * 8)));
-  svg.setAttribute("height", String(Math.round(h * 8)));
+  svg.setAttribute("width", String(Math.round(w * 8 * scale)));
+  svg.setAttribute("height", String(Math.round(h * 8 * scale)));
   const defs = document.createElementNS(SVG_NS, "defs");
   svg.appendChild(defs);
+  if (backgroundMode === "white") {
+    const background = document.createElementNS(SVG_NS, "rect");
+    background.setAttribute("x", String(-w / 2));
+    background.setAttribute("y", String(-h / 2));
+    background.setAttribute("width", String(w));
+    background.setAttribute("height", String(h));
+    background.setAttribute("fill", "white");
+    svg.appendChild(background);
+  }
   for (const obj of objects) {
     const pattern = makeFillPattern(obj);
     if (pattern) defs.appendChild(pattern);

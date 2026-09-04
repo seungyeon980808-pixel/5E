@@ -424,6 +424,25 @@
             </div>
           </div>
           <div class="ai-advanced-modes">
+            <div class="ai-mode-row" role="group" aria-label="변환 모드">
+              <span>변환 모드</span>
+              <div class="ai-mode-options">
+                <button type="button" data-ai-treatment="original" title="원본 픽셀과 배치를 유지하고 배경·해상도만 적용합니다">원본 유지<small>무변형</small></button>
+                <button type="button" data-ai-treatment="cleanup" title="노이즈를 줄이고 대비와 선명도를 보수적으로 안정화합니다">정리·선명화<small>로컬 처리</small></button>
+                <button type="button" class="is-on" data-ai-treatment="ai-redraw" title="구조와 과학 기호를 보존하며 평가원 스타일로 다시 그립니다">AI 재도판<small>평가원 스타일</small></button>
+              </div>
+            </div>
+            <div class="ai-mode-row" role="group" aria-label="배경 선택">
+              <span>배경</span>
+              <div class="ai-mode-options">
+                <button type="button" class="is-on" data-ai-background="white">흰색</button>
+                <button type="button" data-ai-background="transparent">투명 PNG</button>
+              </div>
+              <label class="ai-scale-setting">출력 배율
+                <input type="number" data-ai-output-scale min="1" max="4" step="0.5" value="2" inputmode="decimal">
+                <small>1–4배 · 긴 변 4096px · 최대 16MP</small>
+              </label>
+            </div>
             <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
               <span>그림 복잡도</span>
               <div class="ai-mode-options">

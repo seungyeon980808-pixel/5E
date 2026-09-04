@@ -22,6 +22,7 @@ test("quality and output choices are explicit and safe by default", async () => 
     assert.match(rule, /어떤 경우에도 바꾸지 않는다/);
   }
   assert.match(modes.qualityModeRule("simple"), /형태를 단순화하거나 다른 물체로 치환하지 않는다/);
+  assert.match(modes.qualityModeRule("standard"), /화살표 방향·극성·축·눈금·수식·라벨 텍스트/);
   assert.match(modes.qualityModeRule("simple"), /고품질 1회 변환/);
   assert.match(modes.qualityModeRule("complex", { revision: true }), /맞는 영역은 그대로 보존/);
 });
@@ -59,6 +60,8 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   assert.match(panel, /복잡 변환 완료 · 원본 구조 확인 필요/);
   assert.match(panel, /normalizeQualityMode\(currentRunInput\?\.qualityMode\) === AI_QUALITY_MODES\.COMPLEX/);
   assert.match(panel, /AI_OUTPUT_ENGINES\.RASTER/);
+  assert.match(panel, /backgroundMode:\s*normalizeBackgroundMode\(runInput\.backgroundMode\)/);
+  assert.match(panel, /outputScale:\s*normalizeOutputScale\(runInput\.outputScale\)/);
   assert.doesNotMatch(panel, /tabNewButton\.disabled = on/);
   assert.match(panel, /const activateImmediately = activate && !awaitingTurnId && !previewPending/);
   assert.match(panel, /if \(activateImmediately\) restoreTaskTab\(id\)/);

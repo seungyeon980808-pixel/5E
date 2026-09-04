@@ -21,7 +21,7 @@ test("AI conversation controls preserve a flexible results-and-composer split", 
   const html = read("index.html");
   const css = read("css/ai-panel.css");
 
-  assert.equal((html.match(/class="ai-mode-options"/g) || []).length, 3);
+  assert.equal((html.match(/class="ai-mode-options"/g) || []).length, 5);
   assert.match(css, /--ai-type-control:\s*12px/);
   assert.match(css, /--ai-type-body:\s*12\.5px/);
   assert.match(css, /grid-template-columns:\s*minmax\(0,\s*1fr\) minmax\(320px,\s*360px\)/);

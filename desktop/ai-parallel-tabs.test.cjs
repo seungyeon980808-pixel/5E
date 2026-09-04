@@ -27,5 +27,9 @@ test("five tab turns can run concurrently and route back to their owning tabs", 
   assert.match(panel, /routedTab\.pendingEvents\.push\(event\)/);
   assert.match(panel, /restoreTaskTab\(tab\.id\)/);
   assert.match(panel, /window\.fiveEDesktop\?\.interrupt\(currentTurnId\)/);
+  assert.match(panel, /const ownerTabId = activeTaskTabId/);
+  assert.match(panel, /previewPending = true/);
+  assert.match(panel, /if \(activeTaskTabId === ownerTabId\)/);
+  assert.match(panel, /activatePendingTabIfReady\(\)/);
   assert.doesNotMatch(main, /if \(turnId\) throw new Error\("이전 AI 작업/);
 });
