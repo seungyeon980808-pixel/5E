@@ -32,7 +32,7 @@ test("Given the diagram panel, When it opens, Then only the source and primary r
 
   assert.doesNotMatch(advanced.split(">")[0], /\bopen\b/);
   assert.match(defaultSurface, /input type="file"/);
-  assert.match(defaultSurface, /data-ai-reference-search[^>]*>자료 연결<\/button>/);
+  assert.match(defaultSurface, /data-ai-reference-search[^>]*>폴더 연결<\/button>/);
   assert.match(defaultSurface, /data-ai-send>도판 만들기<\/button>/);
   assert.match(advanced, /<summary>고급 설정<\/summary>/);
 

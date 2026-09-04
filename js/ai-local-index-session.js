@@ -14,7 +14,7 @@ export function createLocalIndexSession(loadPages, publish, reportError) {
     const current = () => sessionEpoch === epoch;
     const update = (folderLabel, indexing) => {
       if (!current()) return false;
-      publish({ images, pages: [...pages], folderLabel, indexing, notices: [...notices] });
+      publish({ images, pdfs, pages: [...pages], folderLabel, indexing, notices: [...notices] });
       return true;
     };
 

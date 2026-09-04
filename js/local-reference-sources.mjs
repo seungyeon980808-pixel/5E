@@ -5,6 +5,26 @@ function fileId(file, relativePath) {
   return `web:${relativePath}:${file.size}:${file.lastModified}`;
 }
 
+function sourceLabel(item) {
+  return String(item.relativePath || item.name || "").replaceAll("\\", "/");
+}
+
+function compareSources(left, right) {
+  const leftLabel = sourceLabel(left).toLowerCase();
+  const rightLabel = sourceLabel(right).toLowerCase();
+  if (leftLabel < rightLabel) return -1;
+  if (leftLabel > rightLabel) return 1;
+  return String(left.id || "").localeCompare(String(right.id || ""));
+}
+
+function withSourceLabel(item) {
+  return { ...item, sourceLabel: sourceLabel(item) };
+}
+
+function folderInventory(images, pdfs) {
+  return [...images, ...pdfs].sort(compareSources);
+}
+
 export function sourcesFromWebFiles(files) {
   const images = [];
   const pdfs = [];
@@ -12,19 +32,21 @@ export function sourcesFromWebFiles(files) {
     const rawFile = file.file || file;
     const relativePath = file.webkitRelativePath || file.relativePath || file.name;
     if (IMAGE_PATTERN.test(file.name)) {
-      images.push({
+      images.push(withSourceLabel({
         id: fileId(file, relativePath), name: file.name, relativePath,
         size: file.size, modifiedAt: file.lastModified, file: rawFile, kind: "image",
-      });
+      }));
     } else if (PDF_PATTERN.test(file.name)) {
-      pdfs.push({
+      pdfs.push(withSourceLabel({
         id: fileId(file, relativePath), name: file.name, relativePath,
         size: file.size, modifiedAt: file.lastModified, file: rawFile, kind: "pdf",
         read: () => rawFile.arrayBuffer(),
-      });
+      }));
     }
   }
-  return { images, pdfs };
+  images.sort(compareSources);
+  pdfs.sort(compareSources);
+  return { images, pdfs, files: folderInventory(images, pdfs) };
 }
 
 async function collectWebFiles(handle, prefix = handle.name) {
@@ -110,12 +132,17 @@ export function createFolderConnectionSession(connector, accept) {
 }
 
 export function sourcesFromDesktopResult(result, desktop) {
-  const pdfs = (result.pdfs || []).map((item) => ({
+  const images = (result.items || []).map((item) => withSourceLabel({
+    ...item,
+    kind: "image",
+  })).sort(compareSources);
+  const pdfs = (result.pdfs || []).map((item) => withSourceLabel({
     ...item,
     id: `desktop:${item.path}`,
+    kind: "pdf",
     read: () => desktop.readLocalPdf(item.path),
-  }));
-  return { images: result.items || [], pdfs };
+  })).sort(compareSources);
+  return { images, pdfs, files: folderInventory(images, pdfs) };
 }
 
 export function readWebImage(item) {

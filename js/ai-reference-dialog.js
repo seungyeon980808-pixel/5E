@@ -6,11 +6,21 @@ function legacySourceNavigation(enabled) {
 export function createReferenceDialog({ legacyLibraryUiEnabled = false } = {}) {
   const overlay = document.createElement("div");
   overlay.className = "ai-compare-overlay ai-reference-search-overlay";
-  overlay.innerHTML = `<section class="ai-reference-search-dialog" role="dialog" aria-modal="true" aria-label="내 PDF·이미지">
-    <header><strong>내 PDF·이미지</strong><button type="button" data-ai-search-close aria-label="닫기">×</button></header>
+  overlay.innerHTML = `<section class="ai-reference-search-dialog" role="dialog" aria-modal="true" aria-label="PDF·이미지 폴더 연결">
+    <header><strong>폴더 연결</strong><button type="button" data-ai-search-close aria-label="닫기">×</button></header>
     ${legacySourceNavigation(legacyLibraryUiEnabled)}
     <div class="ai-reference-search-query"><span aria-hidden="true">⌕</span><input type="search" placeholder="이미지 이름 또는 PDF 원문 검색어" aria-label="이미지 이름 또는 PDF 원문 검색어"></div>
-    <div class="ai-local-folder" data-ai-local-folder hidden><span></span><button type="button" data-ai-local-pick>내 PDF·이미지 폴더 선택</button><input data-ai-web-folder type="file" accept="image/*,.pdf" webkitdirectory multiple hidden></div>
+    <div class="ai-local-folder" data-ai-local-folder hidden><span>연결된 폴더가 없습니다.</span><button type="button" data-ai-local-pick>PDF·이미지 폴더 선택</button><input data-ai-web-folder type="file" accept="image/*,.pdf" webkitdirectory multiple hidden></div>
+    <section class="ai-pdf-candidate-workspace" data-ai-pdf-candidates hidden aria-label="PDF 도판 후보 검토">
+      <header>
+        <label>PDF 파일 <select data-ai-pdf-candidate-source aria-label="도판 후보를 찾을 PDF 선택"></select></label>
+        <button type="button" data-ai-pdf-candidate-scan>PDF 전체 도판 찾기</button>
+        <span data-ai-pdf-candidate-status role="status" aria-live="polite"></span>
+        <button type="button" data-ai-pdf-candidate-merge disabled>선택 병합</button>
+        <button type="button" data-ai-pdf-candidate-add disabled>선택 도판 추가</button>
+      </header>
+      <div class="ai-pdf-candidate-grid" data-ai-pdf-candidate-grid></div>
+    </section>
     <div class="ai-reference-search-summary" data-ai-search-summary></div>
     <div class="ai-reference-search-body">
       <div class="ai-reference-search-grid" data-ai-search-grid></div>

@@ -15,6 +15,35 @@ test("web folders expose images and PDFs through the shared source shape", async
   assert.equal((await result.pdfs[0].read()).byteLength, 4);
 });
 
+test("folder inventories are deterministic and expose every supported source file", async () => {
+  // Given a folder whose enumeration order differs from its visible source order.
+  const { sourcesFromWebFiles } = await import("../js/local-reference-sources.mjs");
+  const files = [
+    { name: "z-last.png", webkitRelativePath: "lesson/z-last.png", size: 3, lastModified: 3 },
+    {
+      name: "middle.pdf",
+      webkitRelativePath: "lesson/middle.pdf",
+      size: 4,
+      lastModified: 2,
+      arrayBuffer: async () => new ArrayBuffer(4),
+    },
+    { name: "a-first.jpg", webkitRelativePath: "lesson/a-first.jpg", size: 2, lastModified: 1 },
+  ];
+
+  // When the folder is normalized for the reference workspace.
+  const result = sourcesFromWebFiles(files);
+
+  // Then the UI receives one stable, path-sorted inventory with explicit kinds and provenance.
+  assert.deepEqual(
+    result.files.map(({ relativePath, kind, sourceLabel }) => ({ relativePath, kind, sourceLabel })),
+    [
+      { relativePath: "lesson/a-first.jpg", kind: "image", sourceLabel: "lesson/a-first.jpg" },
+      { relativePath: "lesson/middle.pdf", kind: "pdf", sourceLabel: "lesson/middle.pdf" },
+      { relativePath: "lesson/z-last.png", kind: "image", sourceLabel: "lesson/z-last.png" },
+    ],
+  );
+});
+
 test("desktop PDF sources read bytes only through the desktop bridge", async () => {
   const { sourcesFromDesktopResult } = await import("../js/local-reference-sources.mjs");
   const calls = [];

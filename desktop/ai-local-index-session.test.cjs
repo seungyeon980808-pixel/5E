@@ -38,6 +38,7 @@ test("a superseded local PDF selection cannot publish late progress pages or sta
   assert.equal(published.length, publishedAfterSecond, "stale progress or completion rendered after the new folder");
   assert.deepEqual(published.at(-1), {
     images: [{ id: "image-b" }],
+    pdfs: [{ id: "b", name: "b.pdf", relativePath: "B/b.pdf" }],
     pages: [{ id: "b:1", text: "new" }],
     folderLabel: "B · PDF 1개 / 검색 가능 페이지 1쪽",
     indexing: false,

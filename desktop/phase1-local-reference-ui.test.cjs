@@ -11,11 +11,13 @@ function withFakeDocument(callback) {
   return Promise.resolve(callback(appended)).finally(() => { global.document = previous; });
 }
 
-test("production reference dialog exposes only my PDF and images", async () => {
+test("production reference dialog exposes only the connected PDF and image folder", async () => {
   const { createReferenceDialog } = await import("../js/ai-reference-dialog.js");
   await withFakeDocument(() => {
     const dialog = createReferenceDialog();
-    assert.match(dialog.innerHTML, /내 PDF·이미지/);
+    assert.match(dialog.innerHTML, /PDF·이미지 폴더 연결/);
+    assert.match(dialog.innerHTML, /<strong>폴더 연결<\/strong>/);
+    assert.match(dialog.innerHTML, /연결된 폴더가 없습니다/);
     assert.match(dialog.innerHTML, /data-ai-local-pick/);
     assert.doesNotMatch(dialog.innerHTML, /data-ai-search-source="(?:parts|exam)"/);
     assert.doesNotMatch(dialog.innerHTML, />일러스트 이미지<|>기출문제</);

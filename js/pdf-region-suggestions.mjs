@@ -72,16 +72,30 @@ function coarseComponents(mask, width, height) {
   return components;
 }
 
+export function suggestDiagramCandidates(imageData) {
+  const { data, width, height } = imageData || {};
+  if (!data || !width || !height || data.length < width * height * 4) return [];
+  const mask = inkMask(imageData);
+  return coarseComponents(mask, width, height)
+    .filter((box) => {
+      const boxWidth = (box.right - box.left) / width;
+      const boxHeight = (box.bottom - box.top) / height;
+      const area = boxWidth * boxHeight;
+      return boxWidth >= 0.12 && boxHeight >= 0.08 && area <= 0.8;
+    })
+    .sort((left, right) => left.top - right.top || left.left - right.left)
+    .map((bounds) => paddedBox(bounds, width, height, 0.015));
+}
+
 export function suggestPageRegions(imageData) {
   const { data, width, height } = imageData || {};
   if (!data || !width || !height || data.length < width * height * 4) return [];
   const mask = inkMask(imageData), question = occupiedBounds(mask, width, height);
   if (!question || question.count < Math.max(12, width * height * 0.0005)) return [];
   const regions = [{ kind: "question", label: "문항 전체", box: paddedBox(question, width, height) }];
-  const figure = coarseComponents(mask, width, height)
-    .filter((box) => (box.right - box.left) / width >= 0.12 && (box.bottom - box.top) / height >= 0.08)
-    .sort((a, b) => ((b.right - b.left) * (b.bottom - b.top)) - ((a.right - a.left) * (a.bottom - a.top)))[0];
-  if (figure) regions.push({ kind: "figure", label: "도판 영역", box: paddedBox(figure, width, height, 0.015) });
+  const figure = suggestDiagramCandidates(imageData)
+    .sort((left, right) => (right.w * right.h) - (left.w * left.h))[0];
+  if (figure) regions.push({ kind: "figure", label: "도판 영역", box: figure });
   return regions;
 }
 

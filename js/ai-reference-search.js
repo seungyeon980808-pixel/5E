@@ -1,7 +1,10 @@
 import { idbGet, idbSet } from "./idb-store.js";
-import { extractPdfPages, renderPdfPage } from "./pdf-document-index.mjs";
+import { extractPdfPageInventory, extractPdfPages, renderPdfPage, renderPdfPageImageData,
+  renderPdfRegion } from "./pdf-document-index.mjs";
 import { rankPdfPages } from "./pdf-search.mjs";
 import { createPdfWorkspace } from "./ai-pdf-workspace.js?v=1.5.12-phase4-labels";
+import { createPdfCandidateGallery } from "./ai-pdf-candidate-gallery.js";
+import { discoverPdfCandidates } from "./pdf-candidate-workflow.mjs";
 import { createReferenceAddControl, createReferenceDialog, createReferenceLoadStatus } from "./ai-reference-dialog.js?v=1.5.12-phase3-preview";
 import { createReferenceGrid } from "./ai-reference-grid.js";
 import { createLocalIndexSession } from "./ai-local-index-session.js?v=1.5.10-phase0-privacy";
@@ -11,6 +14,7 @@ import { activateReferenceSource, handoffLocalReference, loadRemoteReferenceCata
   REFERENCE_SOURCES as SOURCES, remoteReferenceToDataUrl } from "./ai-reference-source-policy.js";
 import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import { buildReferenceProvenance } from "./reference-provenance.mjs?v=1.5.0-phase4-labels";
+import { createReferenceSelectionSession } from "./reference-selection-session.mjs";
 
 const MAX_RESULTS = 60;
 const MAX_SELECT = 10;
@@ -26,18 +30,21 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
   let parts = [];
   let exams = [];
   let locals = [];
+  let localPdfs = [];
   let pdfPages = [];
   let localFolder = "";
   let localNotices = [];
   let loaded = false;
   let indexing = false;
   let pdfWorkspace = null;
+  let pdfCandidateGallery = null;
   let referenceGrid = null;
   let referenceLoadStatus = null;
   let referenceAddControl = null;
   let parentDialog = null;
   let releaseModalFocus = null;
-  const selected = new Map();
+  const selectionSession = createReferenceSelectionSession({ limit: MAX_SELECT });
+  const selected = selectionSession.map();
   const objectUrls = new Set();
   const status = (text, kind = "ok") => onStatus?.(text, kind);
   const keyOf = (item, itemSource = source) => `${itemSource}:${item.id || item.path || item.file}`;
@@ -45,10 +52,13 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
     cachedPages,
     (next) => {
       locals = next.images;
+      localPdfs = next.pdfs;
       pdfPages = next.pages;
+      selectionSession.setAvailable(SOURCES.LOCAL, [...locals, ...pdfPages]);
       localFolder = next.folderLabel;
       localNotices = next.notices;
       indexing = next.indexing;
+      pdfCandidateGallery?.setSources(localPdfs, { autoScan: localPdfs.length === 1 && !indexing });
       render();
     },
     (pdf, error) => status(`${pdf.name}: ${error.message || error}`, "warn"),
@@ -78,6 +88,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
     indexing = false;
     pdfWorkspace?.dispose();
     pdfWorkspace = null;
+    pdfCandidateGallery = null;
     parentDialog?.removeAttribute("aria-hidden");
     parentDialog = null;
     objectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -193,7 +204,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
   const folderConnection = createFolderConnectionSession(folderConnector, acceptAssets);
   async function open() {
     const returnFocus = document.activeElement;
-    close(); selected.clear(); query = "";
+    close(); query = "";
     if (!legacyLibraryUiEnabled) source = SOURCES.LOCAL;
     overlay = createReferenceDialog({ legacyLibraryUiEnabled });
     referenceLoadStatus = createReferenceLoadStatus(overlay);
@@ -215,6 +226,48 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
         status("선택 영역을 시험문제용 도판 변환 대상으로 추가했습니다.", "ok"); close();
       },
     });
+    pdfCandidateGallery = createPdfCandidateGallery({
+      root: overlay,
+      scanPdf: async (pdf, onProgress) => {
+        const pages = await extractPdfPageInventory(pdf);
+        return discoverPdfCandidates({
+          source: pdf,
+          pages,
+          loadPageImageData: renderPdfPageImageData,
+          onProgress,
+        });
+      },
+      loadPreview: (candidate) => renderPdfRegion(
+        candidate.source,
+        candidate.pageNumber,
+        candidate.box,
+        420,
+      ),
+      onAddCandidates: async (candidates) => {
+        for (const candidate of candidates) {
+          const data = await renderPdfRegion(candidate.source, candidate.pageNumber, candidate.box, 1800);
+          const item = {
+            ...candidate,
+            kind: "pdf-page",
+            name: candidate.source.name,
+            relativePath: candidate.source.relativePath || candidate.source.name,
+          };
+          const name = candidate.outputName || `${candidate.source.name} ${candidate.pageNumber}쪽 후보 ${candidate.candidateIndex}`;
+          handoffLocalReference({ name, data, sourceKind: "local-pdf-crop" }, "confirmed",
+            (reference) => onAdd({
+              ...reference,
+              referenceProvenance: buildReferenceProvenance(item, {
+                ...candidate.box,
+                selectionKind: "auto-candidate",
+              }),
+            }));
+        }
+        status(`도판 후보 ${candidates.length}개를 변환 대상으로 추가했습니다.`, "ok");
+        close();
+      },
+      onStatus: status,
+    });
+    pdfCandidateGallery.setSources(localPdfs, { autoScan: localPdfs.length === 1 && !indexing });
     referenceGrid = createReferenceGrid({ root: overlay, imageSource, onChange: render, onStatus: status });
     overlay.querySelector("[data-ai-search-close]").onclick = close;
     overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
@@ -255,5 +308,13 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus, legacyLibrar
     releaseModalFocus = installModalFocus({ root: overlay, initialFocus: input, returnFocus, onRequestClose: close });
   }
 
-  return { open, close };
+  return {
+    open,
+    close,
+    snapshotSelection: () => selectionSession.snapshot(),
+    restoreSelection: (snapshot) => {
+      selectionSession.restore(snapshot, SOURCES.LOCAL, [...locals, ...pdfPages]);
+      render();
+    },
+  };
 }
