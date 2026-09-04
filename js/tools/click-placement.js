@@ -25,10 +25,11 @@ import { resolveEndpointSnap } from "../snap.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.4.0";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 import { nextObjectId } from "./id.js?v=1.4.0";
-import { openLabelerTextEditor } from "../text-editor.js?v=1.4.0";
+import { openNewLabelerTextEditor } from "../text-editor.js?v=1.5.1";
 import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.4.0";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.4.0";
 import { snapKey } from "../platform.js?v=1.4.0";
+import { createPointerLoupe } from "../pointer-loupe.js?v=1.6.0";
 import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable, getSymbolProps,
@@ -46,10 +47,12 @@ let _state = null;
 let clickTool = null;     // armed click-to-click tool ("L"/"P"/"C"/"CIRCUIT") while drafting, else null
 let draftPoints = [];     // world-space vertices placed so far
 let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
+let labelerLoupe = null;
 
 export function setupClickDrawing(svg, state) {
   _svg = svg;
   _state = state;
+  labelerLoupe = createPointerLoupe(svg, "labeler-pointer-loupe");
 
   // Each click appends a vertex. Line auto-commits at 2 points; polyline keeps going.
   _svg.addEventListener("click", (e) => {
@@ -95,6 +98,7 @@ export function setupClickDrawing(svg, state) {
       setSnapPreview(null); // Shift released mid-draw: drop the stale overlay
     }
     mouseWorld = cur;
+    if (clickTool === "LABELER" && draftPoints.length > 0) labelerLoupe?.update(e.clientX, e.clientY, cur);
     updateDraftPreview();
   });
 
@@ -340,11 +344,11 @@ function commitLabeler() {
   const lab = makeLabelerDraft(draftPoints[0], draftPoints[1]);
   const d = Math.hypot(lab.p2.x - lab.p1.x, lab.p2.y - lab.p1.y);
   if (d < MIN_SIZE) { resetClickDraft(); return; } // zero-length placement: discard
-  commitClickShape(lab);                 // assigns lab.id and pushes it into state
-  // Two-click placement is preserved; right after committing, open the multiline
-  // text editor (like the text tool) so the user types the label content directly.
-  _state.update((s) => { s.selectedIds = lab.id ? [lab.id] : []; s.targetedId = null; });
-  if (lab.id) openLabelerTextEditor(lab.id);
+  // 기하만 먼저 확정하지 않는다. 입력 완료 시 라벨러 생성+undo 한 단계를 함께 커밋하고,
+  // 취소하거나 빈 값이면 캔버스에는 아무 객체도 남기지 않는다.
+  clearClickLocals();
+  _state.update((s) => { s.draft = null; });
+  queueMicrotask(() => openNewLabelerTextEditor(lab));
 }
 
 // POLYLINE / CURVE: needs ≥2 vertices; otherwise the draft is discarded.
@@ -449,6 +453,7 @@ export function clearClickLocals() {
   clickTool = null;
   mouseWorld = null;
   setSnapPreview(null); // drop any transient endpoint-snap overlay
+  labelerLoupe?.hide();
 }
 
 /* ----- Feature C: snap a line being DRAWN to other objects (Shift-gated) -----

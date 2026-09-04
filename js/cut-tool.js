@@ -20,6 +20,7 @@ import { resolveEndpointSnap } from "./snap.js?v=1.4.0";
 import { setSnapPreview } from "./render.js?v=1.4.0";
 
 import { snapKey } from "./platform.js?v=1.4.0";
+import { createPointerLoupe } from "./pointer-loupe.js?v=1.6.0";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록
@@ -33,6 +34,7 @@ let _bboxLayer = null;   // 전체 오브젝트 bbox 표시 <g>
 let _bboxRaf = 0;
 let _space = false;
 let _idc = 0;
+let _loupe = null;
 
 export function preferredCutSelectionIds(pieces) {
   const all = (pieces || []).map((piece) => piece?.id).filter(Boolean);
@@ -453,12 +455,12 @@ function modifierPoint(start, current, e) {
     return snap && snap.attach ? { x: snap.target.x, y: snap.target.y } : current;
   }
   setSnapPreview(null);
-  return e.ctrlKey ? snapAngle(start, current) : current;
+  return snapKey(e) ? snapAngle(start, current) : current;
 }
 function pointForMode(start, current, e, mode) {
   if (mode === "line") return modifierPoint(start, current, e);
   setSnapPreview(null);
-  return e.ctrlKey ? snapAngle(start, current) : current;
+  return snapKey(e) ? snapAngle(start, current) : current;
 }
 /* ----- 그은 경로 계산: 자유곡선은 자유 입력, 직선은 기존 직선의 보정 규칙 ----- */
 function pathFromEvent(e, finalize) {
@@ -503,6 +505,7 @@ function onDown(e) {
 
 function onMove(e) {
   const p = worldPos(e);
+  if ((isActive() && _drawing) || (isDelayedActive() && _delayedDraft)) _loupe?.update(e.clientX, e.clientY, p);
   if (_delayedEdit) {
     const dx = p.x - _delayedEdit.start.x, dy = p.y - _delayedEdit.start.y;
     const cut = _pendingCuts.find((c) => c.id === _delayedEdit.id);
@@ -550,6 +553,7 @@ function onMove(e) {
 }
 
 function onUp(e) {
+  _loupe?.hide();
   if (_delayedEdit) {
     _delayedEdit = null; renderDelayedCuts(); updateDelayedAction();
     // mouseup 직후 브라우저가 발생시키는 click만 막고, 다음 정상 클릭은 살립니다.
@@ -645,9 +649,13 @@ function applyCut(path) {
 
 export function initCutTool(svg, state) {
   _state = state; _svg = svg;
+  _loupe = createPointerLoupe(svg, "cut-pointer-loupe");
   ensureDelayedAction();
   ensureModeTabs();
-  state.subscribe((s) => { syncUI(s.activeTool); renderDelayedCuts(); updateDelayedAction(); syncModeTabs(); });
+  state.subscribe((s) => {
+    syncUI(s.activeTool); renderDelayedCuts(); updateDelayedAction(); syncModeTabs();
+    if (s.activeTool !== "CUT" && s.activeTool !== "DELAYED_CUT") _loupe?.hide();
+  });
   syncUI(state.get().activeTool);
   svg.addEventListener("mousedown", onDown);
   // 기존 직선(L)·꺾은선(P)과 같은 click-to-click 입력 경로입니다.
@@ -673,6 +681,7 @@ export function initCutTool(svg, state) {
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key === "Escape") {
       e.preventDefault();
+      _loupe?.hide();
       if (isDelayedActive()) { _delayedDraft = null; _delayedEdit = null; renderDelayedCuts(); updateDelayedAction(); }
       else { _drawing = null; clearOverlay(); }
     } else if (e.key === "Tab") {

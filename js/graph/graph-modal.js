@@ -65,6 +65,7 @@ function insertFractionAtCursor(input) {
 }
 
 let _overlay = null, _els = null;
+let _returnFocus = null;
 let _mode = "create";             // "create" | "edit"
 let _planeId = null;              // edit 대상 coordplane id
 let _cfg = null;                  // 좌표 틀 설정(진실 원본 — DOM 리스너가 여기에 쓴다)
@@ -3295,11 +3296,6 @@ function build() {
   setupHelpPopovers(overlay);
   overlay.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    // 고급 패널이 펼쳐져 있으면 그것부터 접는다(전체 모달은 유지).
-    if (_els.advPanel && !_els.advPanel.hidden) {
-      e.preventDefault(); e.stopPropagation();
-      _els.advPanel.hidden = true; if (_els.advCaret) _els.advCaret.textContent = "▾"; return;
-    }
     e.preventDefault(); e.stopPropagation(); hide();
   });
   // PageUp/PageDown = 선택된 라벨러 표시점의 라벨 각도 15°씩 회전(요구).
@@ -3326,7 +3322,13 @@ function build() {
 }
 
 // Escape 등으로 모달을 닫을 때 열려 있는 도움말(?) 팝오버가 화면에 남는 버그 수정 — 함께 정리.
-function hide() { if (_overlay) _overlay.hidden = true; _placeMode = null; closeHelpPopover(); }
+function hide() {
+  if (_overlay) _overlay.hidden = true;
+  _placeMode = null;
+  closeHelpPopover();
+  if (_returnFocus?.isConnected) _returnFocus.focus({ preventScroll: true });
+  _returnFocus = null;
+}
 
 // funcgraph에 저장된 요소 원본 math 스펙 → 계열 편집 상태로.
 function loadElements(fg) {
@@ -3468,6 +3470,7 @@ function loadFromPlane(plane) {
 /* ----- PUBLIC: 열기. planeId 없으면 새로 만들기, 있으면 그 그래프를 편집.
  *   startTab: "coord"(기본) | "func" — F 단축키/버튼 진입점이 시작 탭을 지정. 확정: 둘 다 좌표 먼저. ----- */
 export function openGraphModal(planeId = null, startTab = "coord") {
+  _returnFocus = document.activeElement;
   if (!_overlay) _overlay = build();
   const plane = planeId ? state.get().objects.find((o) => o.id === planeId && o.type === "coordplane") : null;
   if (plane) {
@@ -3491,4 +3494,6 @@ export function openGraphModal(planeId = null, startTab = "coord") {
   renderChips();
   syncSeriesEditor();
   refreshPreview();
+  const firstField = _overlay.querySelector('input:not([disabled]), textarea:not([disabled]), button:not([disabled])');
+  firstField?.focus({ preventScroll: true });
 }

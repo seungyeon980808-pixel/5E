@@ -30,7 +30,7 @@ test("delayed cut is reachable from the visible cut chooser and keyboard", () =>
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /tools\.js\?v=1\.5\.4/);
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /cut-tool\.js\?v=1\.6\.0-rc\.1/);
   assert.match(fs.readFileSync(path.join(root, "js", "main.js"), "utf8"), /tool-hint\.js\?v=1\.5\.2/);
-  assert.match(tools, /setActiveTool\("DELAYED_CUT"\)/);
+  assert.match(tools, /activateChooserToolShortcut\("chooser-cut", "tool-cut-merged", '\[data-tool="DELAYED_CUT"\]'\)/);
   assert.match(cutTool, /activeTool === "DELAYED_CUT"/);
   assert.match(cutTool, /class="delayed-cut-confirm"/);
 });

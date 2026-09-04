@@ -156,7 +156,7 @@ export function initTools(svg, state) {
 
 /* ----- tool selection: the one path that changes the armed tool ----- */
 export function setActiveTool(tool) {
-  if (_state.get().activeTool === tool) return;
+  if (_state.get().activeTool === tool) { syncButtons(tool); return; }
   /* 팔레트가 얹어둔 추가 필드를 여기서 버린다. 곡선·꺾은선이 심볼 도구가 되면서
    * (지구과학 전선·등치선·산점) 팔레트로 '한랭 전선'을 고른 뒤 C 키로 맨 곡선을
    * 그리면 옛 필드가 따라붙는 사고가 가능해졌다. armSymbol 은 이 함수를 부른 **뒤에**
@@ -323,6 +323,7 @@ function syncButtons(activeTool) {
   // Plain tool buttons: one button ↔ one tool (unchanged behavior).
   document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.tool === activeTool);
+    btn.setAttribute("aria-pressed", btn.dataset.tool === activeTool ? "true" : "false");
   });
   // Symbol buttons share a placement tool but each has a UNIQUE data-symbol, so
   // exactly one highlights — keyed on the armed symbol id, not the shared tool.
@@ -331,11 +332,20 @@ function syncButtons(activeTool) {
   });
   // 통합 버튼(텍스트·라벨러 / 각도·직각)은 data-tool/data-symbol이 없으니 직접 하이라이트한다.
   const tm = document.getElementById("tool-text-merged");
-  if (tm) tm.classList.toggle("is-active", activeTool === "T" || _activeSymbolId === "labeler");
+  if (tm) tm.classList.toggle("is-armed-group", activeTool === "T" || _activeSymbolId === "labeler");
   const am = document.getElementById("tool-angle-merged");
-  if (am) am.classList.toggle("is-active", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
+  if (am) am.classList.toggle("is-armed-group", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
   const cm = document.getElementById("tool-cut-merged");
-  if (cm) cm.classList.toggle("is-active", activeTool === "CUT" || activeTool === "DELAYED_CUT" || activeTool === "ERASE");
+  if (cm) cm.classList.toggle("is-armed-group", activeTool === "CUT" || activeTool === "DELAYED_CUT" || activeTool === "ERASE");
+}
+
+function activateChooserToolShortcut(chooserId, triggerId, selector) {
+  const chooser = document.getElementById(chooserId);
+  const option = chooser?.querySelector(selector);
+  if (!chooser || !option) return false;
+  if (chooser.hidden) document.getElementById(triggerId)?.click();
+  option.click();
+  return true;
 }
 
 // Mirrors transform.js's own F-key precondition (selected, unlocked, type "triangle")
@@ -355,7 +365,7 @@ function setupKeyboard() {
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyE" || e.key.toLowerCase() === "e")) {
       e.preventDefault();
-      setActiveTool("DELAYED_CUT");
+      activateChooserToolShortcut("chooser-cut", "tool-cut-merged", '[data-tool="DELAYED_CUT"]');
       return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
@@ -382,8 +392,8 @@ function setupKeyboard() {
     else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
     else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
     else if (key === "c") setActiveTool("C");
-    else if (key === "e" && e.shiftKey) setActiveTool("ERASE"); // 지우개(올가미) — 이미지·SVG자산에 투명 구멍 (erase-tool.js)
-    else if (key === "e") setActiveTool("CUT");           // 자르기(가위) — 자유곡선/Shift 직선/Shift+Ctrl 각도스냅 (cut-tool.js)
+    else if (key === "e" && e.shiftKey) activateChooserToolShortcut("chooser-cut", "tool-cut-merged", '[data-tool="ERASE"]'); // 지우개(올가미)
+    else if (key === "e") activateChooserToolShortcut("chooser-cut", "tool-cut-merged", '[data-tool="CUT"]');
     else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
     else if (key === "t") setActiveTool("T");
     else if (key === "f") {

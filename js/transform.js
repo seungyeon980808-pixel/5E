@@ -23,6 +23,8 @@ import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
 
 import { snapKey, modKey } from "./platform.js?v=1.4.0";
+import { capturePageHistory, isPageHistoryEntry, restorePageHistory } from "./page-history.js?v=1.6.0";
+import { cutSelectedObjects } from "./clipboard-commands.js?v=1.6.0";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -115,10 +117,11 @@ export function rebuildGroups(s) {
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
     const prev = s.undoStack.pop();
+    const current = isPageHistoryEntry(prev) ? capturePageHistory(s) : cloneObjects(s.objects);
     s.redoStack.push(current);
-    s.objects = prev;
+    if (isPageHistoryEntry(prev)) restorePageHistory(s, prev);
+    else s.objects = prev;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
     rebuildGroups(s);
@@ -128,10 +131,11 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
     const next = s.redoStack.pop();
+    const current = isPageHistoryEntry(next) ? capturePageHistory(s) : cloneObjects(s.objects);
     s.undoStack.push(current);
-    s.objects = next;
+    if (isPageHistoryEntry(next)) restorePageHistory(s, next);
+    else s.objects = next;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
     rebuildGroups(s);
@@ -1044,6 +1048,16 @@ export function initTransform(svg, state) {
         .map(id => s.objects.find(o => o.id === id))
         .filter(Boolean)
         .map(obj => JSON.parse(JSON.stringify(obj)));
+      return;
+    }
+
+    // Ctrl/Cmd+X — 선택한 잠금 해제 객체를 복사한 뒤 한 단계로 제거한다.
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x" && !e.shiftKey && !e.altKey) {
+      let cut = null;
+      state.update((s2) => { cut = cutSelectedObjects(s2); });
+      if (!cut) return;
+      e.preventDefault();
+      _clipboard = cut;
       return;
     }
 

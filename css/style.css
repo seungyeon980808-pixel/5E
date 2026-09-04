@@ -470,13 +470,18 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 /* active tool = signature blue (mirrors state.activeTool) */
-.tool-btn.is-active, .tool-btn.is-open {
+.tool-btn.is-active {
   color: #fff;
   background: var(--btn-tool-active);
   border-color: var(--btn-tool-active);
 }
-.tool-btn.is-active kbd, .tool-btn.is-open kbd {
+.tool-btn.is-active kbd {
   color: #fff;
+}
+.tool-btn.is-open {
+  color: var(--c-text);
+  background: var(--btn-tool-hover);
+  border-color: var(--c-border);
 }
 
 /* ===== 통합 도구 선택 팝오버(텍스트·라벨러 / 각도·직각) ===== */
@@ -1390,6 +1395,49 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-primary);
   font-size: 11px;
   cursor: pointer;
+}
+.unified-style-error {
+  min-width: 120px;
+  color: var(--danger, var(--text-secondary));
+  font-size: 11px;
+}
+.pointer-loupe {
+  position: fixed;
+  z-index: 100002;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  pointer-events: none;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg-canvas, #fff);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.pointer-loupe[hidden] { display: none; }
+.pointer-loupe > svg { width: 100%; height: 100%; display: block; }
+.pointer-loupe::before,
+.pointer-loupe::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  background: var(--accent);
+  opacity: 0.65;
+}
+.pointer-loupe::before { left: 50%; top: 42%; width: 1px; height: 16%; }
+.pointer-loupe::after { top: 50%; left: 42%; height: 1px; width: 16%; }
+.tool-btn.is-armed-group:not(.is-open) {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+#export-overlay .export-modal { gap: 12px; }
+#export-overlay .export-modal > .modal-title { margin-bottom: 0; }
+#export-overlay .modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  background: var(--bg-panel);
 }
 .gm-label-frac:hover { border-color: var(--accent); color: var(--accent); }
 .gm-ax-note {

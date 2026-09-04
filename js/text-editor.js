@@ -11,7 +11,7 @@
 import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.4.0";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
-  TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
+  ptToMm, mmToPt, MIN_TEXT_PT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
@@ -25,6 +25,7 @@ import { pickSelectableObjectAtPoint } from "./pick.js?v=1.4.0";
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
 import { isSpaceHeld } from "./tools.js?v=1.5.4";
+import { clampTextSize, parseTextSize, MIN_TEXT_SIZE_PT, MAX_TEXT_SIZE_PT } from "./text-size.js?v=1.6.0";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives
@@ -109,6 +110,21 @@ export function openLabelerTextEditor(objId) {
     editingId: o.id,
     editingType: "labeler",
   }, 0, 0, prefill, { title: "라벨 텍스트 입력" });
+}
+
+export function openNewLabelerTextEditor(labeler) {
+  if (_textEditor) _commitText();
+  const draft = JSON.parse(JSON.stringify(labeler));
+  const anchor = draft.p2 || draft.p1;
+  _openUnifiedTextEditor({
+    x: anchor.x, y: anchor.y,
+    text: "", contentMode: "plain",
+    fontSize: draft.labelSize || DEFAULT_TEXT_SIZE_MM,
+    fontFamily: draft.fontFamily || DEFAULT_TEXT_FONT,
+    fontWeight: draft.fontWeight || "normal",
+    italic: false, underline: false, strikeout: false,
+    editingType: "labeler-new", labelerDraft: draft,
+  }, 0, 0, "", { title: "라벨 텍스트 입력" });
 }
 export function openAngleArcLabelEditor(objId) {
   _openSmallTextEditor(objId, { type: "anglearc", field: "label", title: "각도 라벨/기호 입력", selectAll: true });
@@ -602,7 +618,7 @@ function _currentUnifiedStyle() {
   const dt = _state.get()?.draftText;
   return {
     fontFamily: _textFontSelect?.value || DEFAULT_TEXT_FONT,
-    fontSize: ptToMm(Math.max(MIN_TEXT_PT, parseFloat(_textSizeInput?.value) || mmToPt(DEFAULT_TEXT_SIZE_MM))),
+    fontSize: ptToMm(clampTextSize(_textSizeInput?.value, mmToPt(DEFAULT_TEXT_SIZE_MM))),
     fontWeight: _textBoldInput?.getAttribute("aria-pressed") === "true" ? "bold" : "normal",
     italic: dt?.italic ?? false,
     underline: false,
@@ -945,15 +961,20 @@ function _buildUnifiedStyleControls() {
 
   const sizeLabel = document.createElement("label");
   sizeLabel.textContent = "크기";
-  _textSizeInput = document.createElement("select");
+  _textSizeInput = document.createElement("input");
+  _textSizeInput.type = "number";
+  _textSizeInput.min = String(MIN_TEXT_SIZE_PT);
+  _textSizeInput.max = String(MAX_TEXT_SIZE_PT);
+  _textSizeInput.step = "0.1";
+  _textSizeInput.inputMode = "decimal";
+  _textSizeInput.setAttribute("aria-label", "글씨 크기(포인트)");
+  _textSizeInput.setAttribute("aria-describedby", "unified-text-size-error");
   _textSizeInput.className = "unified-style-size";
-  TEXT_SIZE_PRESETS.forEach((pt) => {
-    const opt = document.createElement("option");
-    opt.value = String(pt);
-    opt.textContent = String(pt);
-    _textSizeInput.appendChild(opt);
-  });
   sizeLabel.appendChild(_textSizeInput);
+  const sizeError = document.createElement("span");
+  sizeError.id = "unified-text-size-error";
+  sizeError.className = "unified-style-error";
+  sizeError.setAttribute("aria-live", "polite");
 
   // 기울임 토글은 제거됨 — 수식 글꼴은 항상 이탤릭(글자)/정자(숫자)로 렌더된다.
   _textBoldInput = document.createElement("button");
@@ -961,7 +982,7 @@ function _buildUnifiedStyleControls() {
   _textBoldInput.className = "unified-style-toggle";
   _textBoldInput.textContent = "굵게";
 
-  controls.append(fontLabel, sizeLabel, _textBoldInput);
+  controls.append(fontLabel, sizeLabel, _textBoldInput, sizeError);
   // Capture the caret range BEFORE the control steals focus. Both pointerdown and
   // mousedown fire ahead of the native <select> popup / button focus, so the range
   // the user picked is cached even when the dropdown later collapses the textarea.
@@ -975,7 +996,20 @@ function _buildUnifiedStyleControls() {
 
   const applyStyle = () => _applyUnifiedStyleToDraft();
   _textFontSelect.addEventListener("change", applyStyle);
-  _textSizeInput.addEventListener("change", applyStyle);
+  const validateSize = () => {
+    const result = parseTextSize(_textSizeInput.value);
+    _textSizeInput.setAttribute("aria-invalid", result.ok ? "false" : "true");
+    sizeError.textContent = result.ok ? "" : result.message;
+    if (result.ok) applyStyle();
+    return result;
+  };
+  _textSizeInput.addEventListener("input", validateSize);
+  _textSizeInput.addEventListener("change", validateSize);
+  _textSizeInput.addEventListener("blur", () => {
+    const result = validateSize();
+    if (!result.ok) _textSizeInput.value = String(clampTextSize(_textSizeInput.value, mmToPt(_state.get().draftText?.fontSize || DEFAULT_TEXT_SIZE_MM)));
+    validateSize();
+  });
   _textBoldInput.addEventListener("click", () => {
     _textBoldInput.setAttribute("aria-pressed", _textBoldInput.getAttribute("aria-pressed") !== "true");
     applyStyle();
@@ -1015,14 +1049,8 @@ function _syncUnifiedStyleControls() {
   }
   if (_textSizeInput) {
     const pt = String(Math.round(mmToPt(dt.fontSize || DEFAULT_TEXT_SIZE_MM) * 10) / 10);
-    const hasOption = Array.from(_textSizeInput.options).some((opt) => opt.value === pt);
-    if (!hasOption) {
-      const opt = document.createElement("option");
-      opt.value = pt;
-      opt.textContent = pt;
-      _textSizeInput.appendChild(opt);
-    }
     _textSizeInput.value = pt;
+    _textSizeInput.setAttribute("aria-invalid", "false");
   }
   if (_textItalicInput) _textItalicInput.setAttribute("aria-pressed", dt.italic === true ? "true" : "false");
   if (_textBoldInput) _textBoldInput.setAttribute("aria-pressed", (dt.fontWeight || "normal") === "bold" ? "true" : "false");
@@ -1441,6 +1469,7 @@ function _commitText() {
   const val = dt ? (dt.text ?? _textEditor.value) : _textEditor.value;
   const rawSource = String(val || "").trim();
   const isLabeler = dt && dt.editingType === "labeler";
+  const isNewLabeler = dt && dt.editingType === "labeler-new";
   // 라벨러도 텍스트 도구와 동일하게 수식으로 승격될 수 있다(확정 항목 ①):
   // 수식이면 라벨러 객체에 contentMode/source/rawSource로 저장되고
   // renderLabeler가 renderFormula로 그린다.
@@ -1451,7 +1480,26 @@ function _commitText() {
   if (!dt) return;
 
   _state.update((s) => {
-    if (isLabeler) {
+    if (isNewLabeler) {
+      if (rawSource && dt.labelerDraft) {
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        const o = JSON.parse(JSON.stringify(dt.labelerDraft));
+        o.id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
+        o.order = s.objects.length;
+        o.layerId = s.activeLayerId;
+        o.text = rawSource;
+        o.fontFamily = dt.fontFamily || DEFAULT_TEXT_FONT;
+        o.labelSize = dt.fontSize;
+        o.fontWeight = dt.fontWeight || "normal";
+        if (formulaMode) { o.contentMode = "formula"; o.source = normalizedSource; o.rawSource = rawSource; }
+        s.objects.push(o);
+        s.undoStack.push(snap);
+        s.redoStack = [];
+        s.selectedIds = [o.id];
+        s.targetedId = null;
+        s.activeTool = "V";
+      }
+    } else if (isLabeler) {
       // 라벨러 커밋 대상: 기존 라벨러 객체(항상 editingId 존재, 새로 만들지 않음).
       // 수식 → contentMode/source/rawSource (+ text에 원문 보관: 구버전 로더 호환),
       // 일반 → text + textRuns(styled 심볼 보존). fontFamily/labelSize(mm) 공통 갱신.

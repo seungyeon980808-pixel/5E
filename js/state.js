@@ -353,7 +353,7 @@ export const state = createStore({
   // selectedIds: array of selected object ids; empty = nothing selected.
   selectedIds: [],
 
-  // undoStack / redoStack: each entry is a deep-cloned objects array snapshot.
+  // undoStack / redoStack: object-array snapshots or tagged structural snapshots.
   // Populated by transform.js; nothing else should touch these directly.
   undoStack: [],
   redoStack: [],

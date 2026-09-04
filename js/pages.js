@@ -13,6 +13,7 @@
 
 import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { rebuildGroups } from "./transform.js?v=1.4.0";
+import { capturePageHistory, pushPageHistory, syncActivePageRecord } from "./page-history.js?v=1.6.0";
 
 let _seq = 0;
 function newPageId() {
@@ -35,12 +36,7 @@ function findPage(s, id) {
 // 현재 top-level 4필드를 활성 page 기록에 반영한다(전환·저장·일괄내보내기 전에 호출).
 // 다른 모듈이 s.objects 등을 재할당(filter/undo)하므로 참조가 갈라진다 → 명시적 write-back.
 function writeBackActive(s) {
-  const p = findPage(s, s.activePageId);
-  if (!p) return;
-  p.objects = s.objects;
-  p.guides = s.guides;
-  p.layers = s.layers;
-  p.artboard = s.artboard;
+  syncActivePageRecord(s);
 }
 
 // 외부(project-io serialize, export-dialog 일괄내보내기)에서 활성 페이지 동기화가
@@ -87,7 +83,7 @@ function pagesSignature(s) {
 }
 
 /* ----- 전환 ----- */
-export function switchPage(state, targetId) {
+export function switchPage(state, targetId, { preserveHistory = false } = {}) {
   state.update((s) => {
     if (s.activePageId === targetId) return;
     const t = findPage(s, targetId);
@@ -103,8 +99,10 @@ export function switchPage(state, targetId) {
     // 그룹 객체를 클릭해도 낱개로만 선택된다 — 전환마다 새 페이지 objects 기준으로 재구축.
     rebuildGroups(s);
     // v1: 전환은 undo 대상이 아니다 → 히스토리/선택/드래프트를 새 페이지 기준으로 초기화.
-    s.undoStack = [];
-    s.redoStack = [];
+    if (!preserveHistory) {
+      s.undoStack = [];
+      s.redoStack = [];
+    }
     s.selectedIds = [];
     s.selectedGuideId = null;
     s.targetedId = null;
@@ -120,6 +118,7 @@ export function switchPage(state, targetId) {
 export function addPage(state) {
   const id = newPageId();
   state.update((s) => {
+    const before = capturePageHistory(s);
     writeBackActive(s);
     const n = (s.pages || []).length + 1;
     s.pages.push({
@@ -131,23 +130,23 @@ export function addPage(state) {
       layers: defaultLayers(),
       artboard: { ...s.artboard },
     });
+    pushPageHistory(s, before);
   });
-  switchPage(state, id);
+  switchPage(state, id, { preserveHistory: true });
 }
 
 /* ----- 복제(활성 페이지 깊은 복사) ----- */
-function duplicatePage(state) {
+export function duplicatePage(state, sourceId = state.get().activePageId) {
   const id = newPageId();
   state.update((s) => {
+    const before = capturePageHistory(s);
     writeBackActive(s);
-    const cur = findPage(s, s.activePageId);
+    const cur = findPage(s, sourceId);
     if (!cur) return;
-    const clone = JSON.parse(JSON.stringify({
-      objects: cur.objects, guides: cur.guides, layers: cur.layers,
-      artboard: cur.artboard, meta: cur.meta,
-    }));
+    const clone = JSON.parse(JSON.stringify(cur));
     const idx = s.pages.indexOf(cur);
     s.pages.splice(idx + 1, 0, {
+      ...clone,
       id,
       name: `${cur.name} 복사`,
       meta: clone.meta || { number: "", points: "" },
@@ -156,8 +155,9 @@ function duplicatePage(state) {
       layers: clone.layers || defaultLayers(),
       artboard: clone.artboard || { ...s.artboard },
     });
+    pushPageHistory(s, before);
   });
-  switchPage(state, id);
+  switchPage(state, id, { preserveHistory: true });
 }
 
 /* ----- 삭제(최소 1개 유지) ----- */
@@ -166,7 +166,7 @@ async function deletePage(state, id) {
   if ((s0.pages || []).length <= 1) return;
   const p0 = findPage(s0, id);
   if (!p0) return;
-  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n되돌릴 수 없습니다.`, {
+  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n삭제 후에도 실행 취소할 수 있습니다.`, {
     title: "페이지 삭제", okText: "삭제", cancelText: "취소",
   });
   if (!ok) return;
@@ -180,13 +180,15 @@ async function deletePage(state, id) {
   const idx = s.pages.indexOf(p);
   const neighbor = s.pages[idx + 1] || s.pages[idx - 1];
 
+  const before = capturePageHistory(s);
   if (wasActive && neighbor) {
     // 이웃 페이지를 top-level로 끌어온 뒤 대상 제거.
-    switchPage(state, neighbor.id);
+    switchPage(state, neighbor.id, { preserveHistory: true });
   }
   state.update((st) => {
     st.pages = st.pages.filter((pg) => pg.id !== id);
     if (!findPage(st, st.activePageId)) st.activePageId = st.pages[0] ? st.pages[0].id : null;
+    pushPageHistory(st, before);
   });
 }
 
@@ -201,19 +203,30 @@ async function renamePage(state, id) {
   const trimmed = name.trim();
   state.update((s) => {
     const pg = findPage(s, id);
-    if (pg) pg.name = trimmed || pg.name;
+    if (pg && trimmed && trimmed !== pg.name) {
+      const before = capturePageHistory(s);
+      pg.name = trimmed;
+      pushPageHistory(s, before);
+    }
   });
 }
 
 /* ----- 순서변경(페이지를 좌/우로) ----- */
-function movePage(state, id, dir) {
+function movePageTo(state, id, targetIndex) {
   state.update((s) => {
     const idx = s.pages.findIndex((p) => p.id === id);
-    const to = idx + dir;
-    if (idx < 0 || to < 0 || to >= s.pages.length) return;
+    const to = Math.max(0, Math.min(s.pages.length - 1, targetIndex));
+    if (idx < 0 || idx === to) return;
+    const before = capturePageHistory(s);
     const [p] = s.pages.splice(idx, 1);
     s.pages.splice(to, 0, p);
+    pushPageHistory(s, before);
   });
+}
+
+function movePage(state, id, dir) {
+  const idx = state.get().pages.findIndex((page) => page.id === id);
+  movePageTo(state, id, idx + dir);
 }
 
 /* ===== 탭 바 DOM (엑셀 시트 탭 방식) ===== */
@@ -243,8 +256,26 @@ function buildBar(state) {
     const tab = e.target.closest(".page-tab");
     if (!tab) return;
     e.preventDefault();
-    switchPage(state, tab.dataset.id);       // 우클릭한 탭을 활성화한 뒤 메뉴를 연다.
     openContextMenu(state, tab.dataset.id, e.clientX, e.clientY);
+  });
+  _tabsEl.addEventListener("dragstart", (e) => {
+    const tab = e.target.closest(".page-tab");
+    if (!tab) return;
+    tab.classList.add("is-dragging");
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", tab.dataset.id);
+  });
+  _tabsEl.addEventListener("dragend", (e) => e.target.closest(".page-tab")?.classList.remove("is-dragging"));
+  _tabsEl.addEventListener("dragover", (e) => {
+    if (e.target.closest(".page-tab")) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }
+  });
+  _tabsEl.addEventListener("drop", (e) => {
+    const target = e.target.closest(".page-tab");
+    if (!target) return;
+    e.preventDefault();
+    const sourceId = e.dataTransfer.getData("text/plain");
+    const targetIndex = state.get().pages.findIndex((page) => page.id === target.dataset.id);
+    if (sourceId) movePageTo(state, sourceId, targetIndex);
   });
 }
 
@@ -254,7 +285,7 @@ function renderTabs(state) {
   const active = s.activePageId;
   _tabsEl.innerHTML = (s.pages || []).map((p) => {
     const isActive = p.id === active;
-    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}"
+    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}" draggable="true"
         role="tab" aria-selected="${isActive}" title="${escapeHtml(p.name)} · 더블클릭 이름 변경 · 우클릭 메뉴">
         <span class="page-tab-name">${escapeHtml(p.name)}</span>
       </div>`;
@@ -279,7 +310,7 @@ function openContextMenu(state, id, x, y) {
   const count = (s.pages || []).length;
   const items = [
     { label: "이름 변경", act: () => renamePage(state, id) },
-    { label: "복제", act: () => duplicatePage(state) },
+    { label: "복제", act: () => duplicatePage(state, id) },
     { sep: true },
     { label: "왼쪽으로 이동", disabled: idx <= 0, act: () => movePage(state, id, -1) },
     { label: "오른쪽으로 이동", disabled: idx >= count - 1, act: () => movePage(state, id, +1) },
