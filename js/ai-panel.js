@@ -209,6 +209,8 @@ export function initAiPanel(state) {
   const batchSummary = panel.querySelector("[data-ai-batch-summary]");
   const tabList = panel.querySelector("[data-ai-tab-list]");
   const tabNewButton = panel.querySelector("[data-ai-tab-new]");
+  const sourceQueueHost = panel.querySelector("[data-ai-source-queue-host]");
+  const referenceSection = panel.querySelector(".ai-reference-section");
 
   let attachments = [];
   let generatedImages = [];
@@ -251,6 +253,10 @@ export function initAiPanel(state) {
   const tabRunsByClientRequestId = new Map();
   const tabRunsByTurnId = new Map();
   let pendingActivationTabId = null;
+  if (sourceQueueHost) {
+    if (referenceSection) sourceQueueHost.appendChild(referenceSection);
+    if (batchPanel) sourceQueueHost.appendChild(batchPanel);
+  }
   const batchRuns = new Map();
   const unclaimedBatchEvents = [];
   let batchActive = false;

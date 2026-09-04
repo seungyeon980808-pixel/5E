@@ -116,6 +116,6 @@ test("AI panel auto-connects, reports progress, and routes contextual output act
     markup.indexOf('data-ai-previews') < markup.indexOf('class="ai-reference-section"'),
     "generated results must stay above the collapsible reference images",
   );
-  assert.match(styles, /grid-template-areas: "results conversation"/);
+  assert.match(styles, /\.ai-sources\s*\{[^}]*grid-column:\s*3/s);
   assert.match(styles, /\.ai-status\[data-kind="ok"\].*var\(--accent/);
 });

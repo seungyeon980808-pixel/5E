@@ -64,10 +64,10 @@ test("Given a generated diagram, When a confirmed source also exists, Then compa
 
 test("Given keyboard and narrow-screen users, When the panel is navigated, Then focus and compact source states remain explicit", () => {
   assert.match(html, /<details class="ai-reference-section">/);
-  assert.match(styles, /\.ai-workspace\s*\{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) minmax\(320px, 360px\);/);
+  assert.match(styles, /\.modal-ai\s*\{[\s\S]*?grid-template-columns: minmax\(520px, 1fr\) minmax\(280px, 320px\) minmax\(300px, 360px\);/);
   assert.match(styles, /\.ai-advanced-settings > summary:focus-visible/);
   assert.match(styles, /#ai-image-panel[^\n]*:focus-visible/);
-  assert.match(styles, /@media \(max-width: 960px\)[\s\S]*\.ai-reference-section/);
+  assert.match(styles, /@media \(max-width: 1180px\)[\s\S]*\.ai-sources/);
 });
 
 test("Given comparison and PDF dialogs, When controls change state, Then foreground focus and disabled states stay visible", () => {
