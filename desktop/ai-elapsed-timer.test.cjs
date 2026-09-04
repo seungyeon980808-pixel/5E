@@ -70,6 +70,7 @@ test("AI panel displays turn and batch elapsed state and restores it with tabs",
   assert.match(panel, /setStatus\("요청 실패", "error"\);[\s\S]{0,160}finishTurnTimer\("failed"\)/);
   assert.match(panel, /event\.state === "recoveryFailed"[\s\S]{0,420}currentTurnTerminalStatus = "failed";[\s\S]{0,120}finishCurrentTurnUi/);
   assert.match(panel, /finalizeTurnUiState\([\s\S]{0,420}syncElapsedTicker\(\)/);
+  assert.match(panel, /AI 연결이 종료되어 현재 작업을 끝냈습니다[\s\S]{0,160}finishTurnTimer\("failed"\)/);
   const batchStart = panel.indexOf("const runBatch = () =>");
   const clearPreviousBatch = panel.indexOf("batchRuns.clear()", batchStart);
   const activateNextBatch = panel.indexOf("batchActive = true", batchStart);

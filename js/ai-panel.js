@@ -2917,6 +2917,7 @@ export function initAiPanel(state) {
       setStatus("AI 연결이 종료되었습니다. 다음 요청에서 자동으로 다시 연결합니다.", "error");
       addLog(current.message || "AI 연결이 종료되어 현재 작업을 끝냈습니다.", "error");
       addTokenFooter(currentTurnUsage);
+      finishTurnTimer("failed");
     } else if (current.state !== "running" && !busy) setStatus("AI 자동 연결 대기", "warn");
   });
   panel.querySelector("[data-ai-close]").addEventListener("click", close);
