@@ -407,6 +407,16 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--accent, #2f81f7) 15%, var(--bg-panel, #161b22));
 }
+.ai-elapsed {
+  margin-left: auto;
+  min-width: 58px;
+  color: var(--text-primary, #e6edf3);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.ai-elapsed[data-state="idle"] { display: none; }
 .ai-progress-track i {
   display: block;
   width: 38%;

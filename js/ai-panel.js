@@ -72,6 +72,12 @@ import {
   beginImageRevision,
   revisionComparison,
 } from "./image-revision-history.mjs";
+import {
+  createElapsedTicker,
+  createMonotonicTimer,
+  formatElapsedTime,
+} from "./ai-elapsed-timer.mjs";
+import { performCanvasInsertion } from "./ai-canvas-insertion.mjs";
 
 const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}+${IMAGE_TRANSFORM_VERSION}`;
@@ -181,6 +187,7 @@ export function initAiPanel(state) {
   const progressTitle = panel.querySelector("[data-ai-progress-title]");
   const progressDetail = panel.querySelector("[data-ai-progress-detail]");
   const progressStage = panel.querySelector("[data-ai-progress-stage]");
+  const elapsedTime = panel.querySelector("[data-ai-elapsed]");
   const eCount = panel.querySelector("[data-ai-e-count]");
   const sendButton = panel.querySelector("[data-ai-send]");
   const chatButton = panel.querySelector("[data-ai-chat-send]");
@@ -239,6 +246,7 @@ export function initAiPanel(state) {
   let currentCacheRequest = null;
   let currentRequestSnapshot = null;
   let currentRunInput = null;
+  let currentTurnTerminalStatus = "complete";
   let availableModels = [];
   let modelsLoaded = false;
   let selectedMode = localStorage.getItem("5e.aiMode") || "diagram";
@@ -253,6 +261,9 @@ export function initAiPanel(state) {
   const tabRunsByClientRequestId = new Map();
   const tabRunsByTurnId = new Map();
   let pendingActivationTabId = null;
+  const turnTimer = createMonotonicTimer();
+  const batchTimer = createMonotonicTimer();
+  const elapsedTicker = createElapsedTicker({ render: () => renderElapsedTimers() });
   if (sourceQueueHost) {
     if (referenceSection) sourceQueueHost.appendChild(referenceSection);
     if (batchPanel) sourceQueueHost.appendChild(batchPanel);
@@ -766,17 +777,25 @@ export function initAiPanel(state) {
       output.className = "ai-canvas-output";
       output.textContent = "캔버스에 삽입";
       output.onclick = () => {
-        if (item.sceneResult?.objects?.length) {
-          try {
-            const inserted = insertFastSceneIntoState(state, item.sceneResult);
-            addLog(`편집 가능한 벡터 오브젝트 ${inserted.added}개를 캔버스에 삽입했습니다.`);
-          } catch (error) {
-            addLog(`캔버스 삽입 실패: ${error.message}`, "error");
-          }
-          return;
-        }
-        void insertImageFromSrc(state, item.data, { provenance: item.referenceProvenance })
-          .catch((error) => addLog(`캔버스 삽입 실패: ${error.message}`, "error"));
+        void performCanvasInsertion({
+          insert: async () => {
+            if (item.sceneResult?.objects?.length) {
+              const inserted = insertFastSceneIntoState(state, item.sceneResult);
+              return { ...inserted, selectedIds: inserted.ids, label: `편집 가능한 벡터 오브젝트 ${inserted.added}개` };
+            }
+            const insertedId = await insertImageFromSrc(state, item.data, { provenance: item.referenceProvenance });
+            return { ids: [insertedId], selectedIds: [insertedId], label: "이미지 1개" };
+          },
+          onSuccess: (inserted) => {
+            addLog(`${inserted.label}를 캔버스에 삽입하고 선택했습니다.`);
+            setStatus("캔버스 삽입 완료", "ok");
+          },
+          onFailure: (message) => {
+            addLog(message, "error");
+            setStatus(message, "error");
+          },
+          close,
+        });
       };
       if (!item.sceneResult && item.mode === "diagram" && item.labelSource?.data) {
         const labels = document.createElement("button");
@@ -788,10 +807,28 @@ export function initAiPanel(state) {
           result: item,
           returnFocus: labels,
           onInsert: async (candidates) => {
-            const inserted = await insertImageLabelBundleFromSrc(state, item.data, {
-              candidates, provenance: item.referenceProvenance,
+            const outcome = await performCanvasInsertion({
+              insert: async () => {
+                const inserted = await insertImageLabelBundleFromSrc(state, item.data, {
+                  candidates, provenance: item.referenceProvenance,
+                });
+                return {
+                  ...inserted,
+                  selectedIds: [inserted.imageId, ...inserted.labelIds],
+                  label: `도판과 편집 가능한 라벨 ${inserted.labelIds.length}개`,
+                };
+              },
+              onSuccess: (inserted) => {
+                addLog(`${inserted.label}를 캔버스에 삽입하고 선택했습니다.`);
+                setStatus("캔버스 삽입 완료", "ok");
+              },
+              onFailure: (message) => {
+                addLog(message, "error");
+                setStatus(message, "error");
+              },
+              close,
             });
-            addLog(`도판과 편집 가능한 라벨 ${inserted.labelIds.length}개를 캔버스에 삽입했습니다.`);
+            if (!outcome.ok) throw outcome.error;
           },
         });
         stage.appendChild(labels);
@@ -977,6 +1014,8 @@ export function initAiPanel(state) {
     currentCacheRequest: null,
     currentRequestSnapshot: null,
     currentRunInput: null,
+    currentTurnTerminalStatus: "complete",
+    elapsedTimer: { status: "idle", startedAt: null, finalElapsedMs: 0 },
     generatingVisible: false,
     progressTitle: "이미지 생성 준비 중",
     progressDetail: "요청의 구조와 배치를 분석하고 있습니다.",
@@ -1025,6 +1064,8 @@ export function initAiPanel(state) {
       currentCacheRequest,
       currentRequestSnapshot,
       currentRunInput,
+      currentTurnTerminalStatus,
+      elapsedTimer: turnTimer.snapshot(),
       generatingVisible: !generating.hidden,
       progressTitle: progressTitle.textContent || "이미지 생성 준비 중",
       progressDetail: progressDetail.textContent || "요청의 구조와 배치를 분석하고 있습니다.",
@@ -1122,6 +1163,8 @@ export function initAiPanel(state) {
     currentCacheRequest = runtime.currentCacheRequest || null;
     currentRequestSnapshot = runtime.currentRequestSnapshot || null;
     currentRunInput = runtime.currentRunInput || null;
+    currentTurnTerminalStatus = runtime.currentTurnTerminalStatus || "complete";
+    turnTimer.restore(runtime.elapsedTimer);
     tokenFooterNode = null;
     conversationId = tab.conversationId || null;
     conversationMessages = (tab.conversationMessages || []).map((message) => ({ ...message }));
@@ -1174,6 +1217,8 @@ export function initAiPanel(state) {
     );
     setBusy(Boolean(runtime.busy));
     setStatus(runtime.statusText || (runtime.busy ? "이미지 생성 중…" : "AI 사용 가능"), runtime.statusKind || (runtime.busy ? "busy" : "ok"));
+    renderElapsedTimers();
+    syncElapsedTicker();
     tab.runtime.pendingCompletion = false;
     renderTaskTabs();
     const pendingEvents = Array.isArray(tab.pendingEvents) ? tab.pendingEvents.splice(0) : [];
@@ -1222,6 +1267,32 @@ export function initAiPanel(state) {
   let batchRunningCount = 0;
   const BATCH_CONCURRENCY = 5;
 
+  function renderElapsedTimers() {
+    if (elapsedTime) {
+      const snapshot = turnTimer.snapshot();
+      elapsedTime.textContent = formatElapsedTime(turnTimer.elapsedMs());
+      elapsedTime.dataset.state = snapshot.status;
+    }
+    for (const job of batchRuns.values()) {
+      if (!job.statusNode || !["running", "correcting"].includes(job.state)) continue;
+      job.statusNode.textContent = `${job.baseStatusText || "처리 중…"} · ${formatElapsedTime(performance.now() - job.startedAt)}`;
+    }
+    if (batchActive) updateBatchSummary();
+  }
+
+  function syncElapsedTicker() {
+    const turnRunning = turnTimer.snapshot().status === "running";
+    if (!panel.hidden && (turnRunning || batchActive)) elapsedTicker.start();
+    else elapsedTicker.stop();
+  }
+
+  function finishTurnTimer(status = currentTurnTerminalStatus) {
+    currentTurnTerminalStatus = status;
+    turnTimer.finish(status);
+    renderElapsedTimers();
+    syncElapsedTicker();
+  }
+
   const updateBatchSummary = () => {
     if (!batchSummary) return;
     const jobs = Array.from(new Map(
@@ -1229,9 +1300,11 @@ export function initAiPanel(state) {
     ).values());
     const complete = jobs.filter((job) => job.state === "complete").length;
     const failed = jobs.filter((job) => job.state === "failed").length;
-    batchSummary.textContent = `${complete}/${jobs.length} 완료${failed ? ` · ${failed} 실패` : ""} · 최대 ${BATCH_CONCURRENCY}개 동시`;
-    if (jobs.length && complete + failed === jobs.length) {
+    let finalized = false;
+    if (jobs.length && complete + failed === jobs.length && batchActive) {
       batchActive = false;
+      finalized = true;
+      batchTimer.finish(failed ? "failed" : "complete");
       if (batchButton) batchButton.disabled = attachments.length < 2 || busy;
       try {
         const history = JSON.parse(localStorage.getItem("5e.aiBatchHistory.v1") || "[]");
@@ -1243,12 +1316,15 @@ export function initAiPanel(state) {
         localStorage.setItem("5e.aiBatchHistory.v1", JSON.stringify(history.slice(-20)));
       } catch {}
     }
+    batchSummary.textContent = `${complete}/${jobs.length} 완료${failed ? ` · ${failed} 실패` : ""} · 전체 ${formatElapsedTime(batchTimer.elapsedMs())} · 최대 ${BATCH_CONCURRENCY}개 동시`;
+    if (finalized) syncElapsedTicker();
   };
 
   const updateBatchCard = (job, text) => {
     if (!job.card) return;
     job.card.dataset.state = job.state;
-    job.statusNode.textContent = text || job.state;
+    job.baseStatusText = text || job.state;
+    job.statusNode.textContent = job.baseStatusText;
     if (job.resultData) {
       job.imageNode.src = job.resultData;
       job.imageNode.hidden = false;
@@ -1430,7 +1506,6 @@ export function initAiPanel(state) {
     }
     captureActiveTaskTab();
     const request = input.value.trim() || "각 참고 이미지에서 주 과학 그림만 남기고 글자·라벨·지시선·화살표·강조 원·페이지 배경을 모두 제거하여 평가원식 무라벨 흑백 선화로 변환해 줘.";
-    batchActive = true;
     batchQueue = [];
     batchRunningCount = 0;
     batchRuns.clear();
@@ -1473,6 +1548,9 @@ export function initAiPanel(state) {
       batchRuns.set(job.id, job);
       return job;
     });
+    batchActive = true;
+    batchTimer.start();
+    syncElapsedTicker();
     if (selectedTreatment !== IMAGE_TREATMENTS.AI_REDRAW) {
       if (batchButton) batchButton.disabled = true;
       setStatus(`참고 이미지 ${roots.length}개를 로컬에서 변환합니다.`, "busy");
@@ -1963,13 +2041,16 @@ export function initAiPanel(state) {
     }
   };
   const close = () => {
+    captureActiveTaskTab();
     panel.hidden = true;
+    elapsedTicker.stop();
     releasePanelFocus?.();
     releasePanelFocus = null;
   };
   const open = async ({ reference, references = [], prompt } = {}) => {
     const returnFocus = panel.hidden ? document.activeElement : null;
     panel.hidden = false;
+    syncElapsedTicker();
     if (!releasePanelFocus) {
       releasePanelFocus = installModalFocus({
         root: panel,
@@ -2045,6 +2126,9 @@ export function initAiPanel(state) {
     ]);
     const requestEpoch = ++currentRequestEpoch;
     setBusy(true);
+    turnTimer.start();
+    currentTurnTerminalStatus = "complete";
+    syncElapsedTicker();
     imageReceived = false;
     currentTurnType = type;
     const requestedEngine = options.forceEngine || outputEngineForce(normalizeOutputEngine(runInput.outputEngine));
@@ -2188,6 +2272,7 @@ export function initAiPanel(state) {
               addLog("이전에 완료된 동일 결과를 즉시 불러왔습니다. 캔버스에 삽입할 수 있습니다.");
               setBusy(false);
               addTokenFooter(null);
+              finishTurnTimer("complete");
               activatePendingTabIfReady();
               return;
             }
@@ -2235,6 +2320,7 @@ export function initAiPanel(state) {
           addLog(`이미지가 완성되었습니다. 원격 생성 없이 내부 검증 자산을 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개로 구성했습니다.`);
           setBusy(false);
           addTokenFooter(null);
+          finishTurnTimer("complete");
           activatePendingTabIfReady();
           return;
         }
@@ -2351,6 +2437,7 @@ export function initAiPanel(state) {
       setStatus("요청 실패", "error");
       setGenerating(false);
       setBusy(false);
+      finishTurnTimer("failed");
       activatePendingTabIfReady();
     }
   };
@@ -2444,6 +2531,9 @@ export function initAiPanel(state) {
       scale: selectedOutputScale,
     });
     previewPending = true;
+    turnTimer.start();
+    currentTurnTerminalStatus = "complete";
+    syncElapsedTicker();
     setBusy(true);
     setGenerating(true, jobOptions.treatment === IMAGE_TREATMENTS.CLEANUP ? "이미지를 정리하고 있습니다" : "원본을 준비하고 있습니다",
       "선과 기호를 보존하며 배경과 출력 크기를 적용합니다.", "render");
@@ -2475,9 +2565,11 @@ export function initAiPanel(state) {
       setStatus(`${label} 완료 · ${result.plan.width}×${result.plan.height}px`, "ok");
       addLog(`${source.name}을(를) ${label} 모드로 처리했습니다.${result.plan.capped ? " 메모리 보호 상한을 적용했습니다." : ""}`);
     } catch (error) {
+      currentTurnTerminalStatus = "failed";
       setStatus("로컬 이미지 변환 실패", "error");
       addLog(error.message || String(error), "error");
     } finally {
+      finishTurnTimer(currentTurnTerminalStatus);
       previewPending = false;
       setGenerating(false);
       setBusy(false);
@@ -2499,6 +2591,8 @@ export function initAiPanel(state) {
   });
   panel.querySelector("[data-ai-interrupt]").onclick = async () => {
     if (!busy) return;
+    finishTurnTimer("cancelled");
+    captureActiveTaskTab();
     setStatus("작업 취소 중…", "busy");
     await window.fiveEDesktop?.interrupt(currentTurnId);
   };
@@ -2553,6 +2647,7 @@ export function initAiPanel(state) {
       addLog("복잡 모드는 구조 교정을 마쳤지만 자동 확정하지 않습니다. 원본과 객체 수·분기·연결을 비교한 뒤 사용하세요.");
     }
     currentTurnDone = true;
+    finishTurnTimer(currentTurnTerminalStatus);
     finalizeTurnUiState({
       turnId: currentTurnId,
       clientRequestId: currentRunInput?.clientRequestId,
@@ -2564,6 +2659,7 @@ export function initAiPanel(state) {
       loadAccountOverview,
       activatePendingTab: activatePendingTabIfReady,
     });
+    syncElapsedTicker();
   };
 
   const dispatchAiEvent = (event, eventEpoch = currentRequestEpoch) => {
@@ -2627,28 +2723,42 @@ export function initAiPanel(state) {
         setGenerating(false);
         setStatus("AI 작업 종료 확인 실패", "error");
         if (event.message) addLog(`작업 종료 복구 실패: ${event.message}`, "error");
-        if (event.status === "failed") {
-          serverTurnFinished = true;
-          previewPending = false;
-          currentTurnDone = true;
-          finishCurrentTurnUi(eventEpoch);
-        }
+        serverTurnFinished = true;
+        previewPending = false;
+        currentTurnDone = true;
+        currentTurnTerminalStatus = "failed";
+        finishCurrentTurnUi(eventEpoch);
       } else if (event.state === "confirmed" || event.state === "recovered") {
         serverTurnFinished = true;
         currentTurnDone = true;
+        currentTurnTerminalStatus = event.status === "failed"
+          ? "failed"
+          : event.status === "interrupted" && !imageReceived ? "cancelled" : "complete";
         if (imageReceived && !previewPending) {
           setGenerating(false);
           setStatus("생성 완료", "ok");
+        } else if (!imageReceived) {
+          setGenerating(false);
+          setStatus(
+            currentTurnTerminalStatus === "failed" ? "작업 실패"
+              : currentTurnTerminalStatus === "cancelled" ? "작업 취소됨" : "작업 완료",
+            currentTurnTerminalStatus === "failed" ? "error"
+              : currentTurnTerminalStatus === "cancelled" ? "warn" : "ok",
+          );
         }
         finishCurrentTurnUi(eventEpoch);
       }
     } else if (event.kind === "error") {
+      currentTurnTerminalStatus = "failed";
       addLog(event.text, "error");
       setGenerating(false);
       setStatus("작업 실패", "error");
     } else if (event.kind === "done") {
       serverTurnFinished = true;
       currentTurnDone = true;
+      currentTurnTerminalStatus = event.status === "failed"
+        ? "failed"
+        : event.status === "interrupted" && !imageReceived ? "cancelled" : "complete";
       if (currentTurnType === "image" && currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE && event.status === "completed") {
         const compiledScene = compilePanelScene(currentSceneResponse, {
           mode: currentRunInput?.mode || selectedMode,
