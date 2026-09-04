@@ -30,3 +30,28 @@ test("desktop export refuses to overwrite a hard-linked leaf", async (t) => {
   await assert.rejects(() => writeExportFile(root, "report.png", Buffer.from("changed")), /안전하지 않은/);
   assert.equal(await fs.promises.readFile(outside, "utf8"), "safe");
 });
+
+test("desktop export restores the original when replacement fails", async (t) => {
+  const root = await fs.promises.mkdtemp(path.join(os.tmpdir(), "5e-export-rollback-"));
+  t.after(() => fs.promises.rm(root, { recursive: true, force: true }));
+  const target = path.join(root, "report.png");
+  await fs.promises.writeFile(target, "original");
+  const realRename = fs.promises.rename;
+  let injected = false;
+  fs.promises.rename = async (from, to) => {
+    if (!injected && path.basename(from).startsWith(".5e-export-") && !path.basename(from).startsWith(".5e-export-backup-") && to === target) {
+      injected = true;
+      const error = new Error("injected replacement failure");
+      error.code = "EACCES";
+      throw error;
+    }
+    return realRename(from, to);
+  };
+  try {
+    await assert.rejects(() => writeExportFile(root, "report.png", Buffer.from("replacement")), /injected replacement failure/);
+  } finally {
+    fs.promises.rename = realRename;
+  }
+  assert.equal(await fs.promises.readFile(target, "utf8"), "original");
+  assert.deepEqual(await fs.promises.readdir(root), ["report.png"]);
+});

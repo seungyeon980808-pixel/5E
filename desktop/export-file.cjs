@@ -35,13 +35,25 @@ async function writeExportFile(directory, name, bytes) {
     if (error.code !== "ENOENT") throw error;
   }
   const temp = path.join(root, `.5e-export-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`);
+  const backup = path.join(root, `.5e-export-backup-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`);
+  let originalMoved = false;
   try {
     await fs.promises.writeFile(temp, buffer, { flag: "wx" });
-    // 검증 뒤 대상이 링크로 바뀌어도 unlink는 링크 자체만 지우므로 바깥 파일을 따라가지 않는다.
-    if (exists) await fs.promises.unlink(target);
+    // Windows cannot rename over an existing leaf. Move the verified original
+    // aside first so a failed replacement can restore it without data loss.
+    if (exists) {
+      await fs.promises.rename(target, backup);
+      originalMoved = true;
+    }
     await fs.promises.rename(temp, target);
+    if (originalMoved) await fs.promises.unlink(backup).catch(() => {});
   } catch (error) {
     await fs.promises.unlink(temp).catch(() => {});
+    if (originalMoved) {
+      await fs.promises.rename(backup, target).catch((restoreError) => {
+        error.message = `${error.message} (원본 복구 실패: ${restoreError.message})`;
+      });
+    }
     throw error;
   }
   return { status: "saved", path: target, name: leaf, folderName: path.basename(root) };
