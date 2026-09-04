@@ -4,7 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const electron = process.env.FIVE_E_SMOKE_EXE || require("electron");
+const electron = process.env.FIVE_E_SMOKE_EXE || process.env.FIVE_E_ELECTRON_BINARY || require("electron");
 const smokeFlags = ["--no-sandbox", "--disable-gpu", "--disable-gpu-compositing"];
 const launchArgs = process.env.FIVE_E_SMOKE_EXE
   ? smokeFlags

@@ -599,6 +599,8 @@ function createWindow() {
             const resultRect = panel?.querySelector(".ai-results")?.getBoundingClientRect();
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
+            const aiResultsPlacedFirst = !!resultRect && !!conversationRect &&
+              (innerWidth > 1180 ? aiResultsPlacedLeft : resultRect.top <= conversationRect.top);
             const advancedSettings = panel?.querySelector(".ai-advanced-settings");
             const compareAction = panel?.querySelector("[data-ai-compare]");
             const aiAdvancedSettingsCollapsed = advancedSettings?.open === false;
@@ -924,6 +926,7 @@ function createWindow() {
               aiAutoConnectControlsSimplified,
               aiProgressUiReady,
               aiResultsPlacedLeft,
+              aiResultsPlacedFirst,
               aiAdvancedSettingsCollapsed,
               aiDefaultSurfaceReady,
               aiAdvancedHooksReady,
@@ -984,7 +987,7 @@ function createWindow() {
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
         const ok = result.aiEntryNamesWorkflow && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
-          result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
+          result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedFirst &&
           result.aiAdvancedSettingsCollapsed && result.aiDefaultSurfaceReady && result.aiAdvancedHooksReady &&
           result.aiLegacyEntrypointsAbsent && result.aiLocalPickerReady && result.aiCaptureCropReady &&
           result.aiCancelIsContextual && result.aiCompareIsContextual && result.aiReturnsAfterPickerClose &&

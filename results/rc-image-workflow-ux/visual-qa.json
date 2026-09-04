@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-04",
+  "surface": "Electron renderer with production index.html, CSS, preload, state, and canvas insertion modules",
+  "method": "DOM geometry and computed-style inspection; repository guidance says browser screenshots time out",
+  "runner": "desktop/ai-panel-visual-qa.cjs",
+  "checks": [
+    "three-pane order",
+    "result pane dominance",
+    "horizontal overflow",
+    "independent scroll ownership",
+    "bottom input visibility",
+    "modal viewport containment",
+    "keyboard focus",
+    "accessible button names",
+    "loading state",
+    "error state",
+    "successful insertion selection and panel handoff",
+    "failed insertion recovery with panel retention"
+  ],
+  "viewports": [
+    {
+      "viewport": { "width": 1366, "height": 768 },
+      "mode": "three-pane",
+      "modal": { "left": 60, "top": 42, "width": 1246, "height": 684, "right": 1306, "bottom": 726 },
+      "panes": {
+        "results": { "left": 61, "top": 110, "width": 605, "height": 615, "right": 666, "bottom": 725 },
+        "conversation": { "left": 666, "top": 110, "width": 301, "height": 615, "right": 967, "bottom": 725 },
+        "sources": { "left": 967, "top": 110, "width": 338, "height": 615, "right": 1305, "bottom": 725 }
+      },
+      "passed": true
+    },
+    {
+      "viewport": { "width": 1440, "height": 900 },
+      "mode": "three-pane",
+      "modal": { "left": 62, "top": 46, "width": 1316, "height": 808, "right": 1378, "bottom": 854 },
+      "panes": {
+        "results": { "left": 63, "top": 114, "width": 675, "height": 739, "right": 738, "bottom": 853 },
+        "conversation": { "left": 738, "top": 114, "width": 301, "height": 739, "right": 1039, "bottom": 853 },
+        "sources": { "left": 1039, "top": 114, "width": 338, "height": 739, "right": 1377, "bottom": 853 }
+      },
+      "passed": true
+    },
+    {
+      "viewport": { "width": 1920, "height": 1080 },
+      "mode": "three-pane",
+      "modal": { "left": 133, "top": 70, "width": 1654, "height": 940, "right": 1787, "bottom": 1010 },
+      "panes": {
+        "results": { "left": 134, "top": 139, "width": 1013, "height": 870, "right": 1147, "bottom": 1009 },
+        "conversation": { "left": 1147, "top": 139, "width": 301, "height": 870, "right": 1448, "bottom": 1009 },
+        "sources": { "left": 1448, "top": 139, "width": 338, "height": 870, "right": 1786, "bottom": 1009 }
+      },
+      "passed": true
+    },
+    {
+      "viewport": { "width": 960, "height": 800 },
+      "mode": "stacked",
+      "order": ["results", "conversation", "sources"],
+      "passed": true
+    }
+  ],
+  "sharedAssertions": {
+    "orderCorrect": true,
+    "resultDominant": true,
+    "noHorizontalOverflow": true,
+    "independentScroll": true,
+    "bottomInputVisibleAtDesktopSizes": true,
+    "modalFitsViewport": true,
+    "keyboardFocus": true,
+    "unnamedButtons": [],
+    "loadingVisible": true,
+    "errorVisible": true,
+    "insertionSuccess": true,
+    "insertionFailureRecovery": true
+  },
+  "knownNonBlockingWarnings": [
+    "The standalone QA runner does not register the production codex:status IPC handler; panel refresh logged expected no-handler warnings without affecting DOM or insertion checks."
+  ]
+}
