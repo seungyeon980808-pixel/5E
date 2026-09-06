@@ -20,6 +20,7 @@ import {
 } from "./state.js?v=1.4.0";
 import { registerTopMenu } from "./top-menu.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { installModalFocus } from "./modal-focus.js?v=1.5.10-phase1-local-ui";
 import {
   PREVIEW_BG_KEY,
   loadPreviewBackgrounds,
@@ -273,27 +274,44 @@ const PREF_TABS = [
 function prefStyles() {
   return `
     .pref-modal { width:min(560px, calc(100vw - 32px)); }
-    .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
+    .pref-tabs { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(72px, 100%), 1fr));
+                 gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
     .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
-                padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
-                font: 600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+                 padding:7px 4px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
+                 min-width:0; white-space:nowrap; word-break:keep-all;
+                 font: 600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
     .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
     .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
-    .pref-panel { display:none; min-height:180px; }
+    .pref-panel { display:none; flex:0 0 auto; min-height:180px; container-type:inline-size; }
     .pref-panel.is-on { display:block; }
     .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
     .pref-row .modal-label { margin:0; flex:0 0 auto; }
-    .pref-zoom { flex:1 1 auto; }
+    .pref-zoom { flex:1 1 auto; min-width:0; }
     .pref-zoom-val { flex:0 0 52px; text-align:right; font: 600 12px/1 "IBM Plex Mono",monospace;
                      color:var(--text-primary); }
-    .pref-note { margin:0 0 12px; font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+    .pref-note { margin:0 0 12px; font-size: 12px; line-height:1.6; color:var(--text-secondary);
+                 word-break:keep-all; text-wrap:pretty; }
+    .pref-nowrap { white-space:nowrap; }
     .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
     .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
                  font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+    @media (max-width:420px) {
+      .pref-zoom-row { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:8px 10px; }
+      .pref-zoom-row .pref-zoom { grid-column:1 / -1; grid-row:2; width:100%; }
+      .pref-zoom-row .pref-zoom-val { grid-column:2; grid-row:1; }
+    }
+    @container (max-width:120px) {
+      .pref-zoom-row { grid-template-columns:minmax(0, 1fr); }
+      .pref-zoom-row .modal-label { grid-column:1; grid-row:1; }
+      .pref-zoom-row .pref-zoom-val { grid-column:1; grid-row:2; text-align:left; }
+      .pref-zoom-row .pref-zoom { grid-column:1; grid-row:3; }
+      .pref-nowrap { white-space:normal; }
+    }
   `;
 }
 
-function openPreferencesDialog() {
+function openPreferencesDialog(event) {
+  const returnFocus = document.getElementById("settings-menu-btn") || event?.currentTarget || document.activeElement;
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   const zoom0 = currentUiZoom();
@@ -301,15 +319,17 @@ function openPreferencesDialog() {
     <div class="modal pref-modal" role="dialog" aria-modal="true" aria-labelledby="pref-title">
       <style>${prefStyles()}</style>
       <h2 class="modal-title" id="pref-title">환경 설정</h2>
-      <div class="pref-tabs" role="tablist">
+      <div class="pref-tabs" role="tablist" aria-label="환경 설정 범주">
         ${PREF_TABS.map((t, i) => `<button type="button" class="pref-tab${i === 0 ? " is-on" : ""}"
-           role="tab" data-tab="${t.id}" aria-selected="${i === 0}">${t.label}</button>`).join("")}
+           id="pref-tab-${t.id}" role="tab" data-tab="${t.id}" aria-selected="${i === 0}"
+           aria-controls="pref-panel-${t.id}" tabindex="${i === 0 ? 0 : -1}">${t.label}</button>`).join("")}
       </div>
 
-      <section class="pref-panel is-on" data-panel="screen" role="tabpanel">
-        <p class="pref-note">글씨와 도구 패널의 크기를 한꺼번에 키우거나 줄입니다. 움직이는 즉시 적용됩니다.</p>
-        <div class="pref-row">
-          <span class="modal-label">화면 크기</span>
+      <section class="pref-panel is-on" id="pref-panel-screen" data-panel="screen" role="tabpanel"
+               aria-labelledby="pref-tab-screen">
+        <p class="pref-note"><span class="pref-nowrap">글씨·패널 크기 조절</span> · <span class="pref-nowrap">즉시 적용</span></p>
+        <div class="pref-row pref-zoom-row">
+          <label class="modal-label" for="pref-zoom">화면 크기</label>
           <input id="pref-zoom" class="pref-zoom" type="range" min="50" max="300" step="1"
                  value="${Math.round(zoom0 * 100)}" />
           <output class="pref-zoom-val" id="pref-zoom-val">${Math.round(zoom0 * 100)}%</output>
@@ -317,10 +337,11 @@ function openPreferencesDialog() {
         <div class="pref-actions">
           <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
         </div>
-        <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
+        <p class="pref-note"><span class="pref-nowrap">브라우저 확대와 별도</span> · <span class="pref-nowrap">5E 화면에만 적용</span></p>
       </section>
 
-      <section class="pref-panel" data-panel="tools" role="tabpanel">
+      <section class="pref-panel" id="pref-panel-tools" data-panel="tools" role="tabpanel"
+               aria-labelledby="pref-tab-tools">
         <p class="pref-note">새로 만드는 오브젝트에 적용될 기본값입니다 — 선 굵기, 글꼴과 글씨 크기,
           격자·자·각도기 눈금 간격 등을 정합니다.</p>
         <div class="pref-actions">
@@ -329,7 +350,8 @@ function openPreferencesDialog() {
         <p class="pref-note">여기서 정한 값은 이미 만들어 둔 오브젝트에는 영향을 주지 않습니다.</p>
       </section>
 
-      <section class="pref-panel" data-panel="storage" role="tabpanel">
+      <section class="pref-panel" id="pref-panel-storage" data-panel="storage" role="tabpanel"
+               aria-labelledby="pref-tab-storage">
         <p class="pref-note">개인 설정·퍼스널 라이브러리·현재 작업을 한 파일로 묶어 백업하고,
           다른 PC에서 그 파일로 복원합니다.</p>
         <div class="pref-actions">
@@ -338,7 +360,8 @@ function openPreferencesDialog() {
         </div>
       </section>
 
-      <section class="pref-panel" data-panel="library" role="tabpanel">
+      <section class="pref-panel" id="pref-panel-library" data-panel="library" role="tabpanel"
+               aria-labelledby="pref-tab-library">
         <p class="pref-note">기출 문항 참고 창에 적어 둔 <b>문항별 메모</b>는 이 브라우저에 보관됩니다.
           같은 문항을 다시 열면 메모가 그대로 나옵니다.</p>
         <div class="pref-row">
@@ -357,18 +380,43 @@ function openPreferencesDialog() {
     </div>`;
   document.body.appendChild(overlay);
 
-  const close = () => overlay.remove();
+  let releaseFocus = null;
+  const close = () => { releaseFocus?.(); overlay.remove(); };
   overlay.querySelector("#pref-close").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
-  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  releaseFocus = installModalFocus({
+    root: overlay,
+    initialFocus: overlay.querySelector(".pref-tab.is-on"),
+    returnFocus,
+    onRequestClose: close,
+  });
 
   // --- 탭 전환 ---
   const tabs = [...overlay.querySelectorAll(".pref-tab")];
   const panels = [...overlay.querySelectorAll(".pref-panel")];
-  tabs.forEach((tab) => tab.addEventListener("click", () => {
-    tabs.forEach((t) => { const on = t === tab; t.classList.toggle("is-on", on); t.setAttribute("aria-selected", String(on)); });
-    panels.forEach((p) => p.classList.toggle("is-on", p.dataset.panel === tab.dataset.tab));
-  }));
+  const activateTab = (nextTab, moveFocus = false) => {
+    tabs.forEach((tab) => {
+      const on = tab === nextTab;
+      tab.classList.toggle("is-on", on);
+      tab.setAttribute("aria-selected", String(on));
+      tab.tabIndex = on ? 0 : -1;
+    });
+    panels.forEach((panel) => panel.classList.toggle("is-on", panel.dataset.panel === nextTab.dataset.tab));
+    if (moveFocus) nextTab.focus();
+  };
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      let nextIndex = null;
+      if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+      else if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+      else if (event.key === "Home") nextIndex = 0;
+      else if (event.key === "End") nextIndex = tabs.length - 1;
+      if (nextIndex === null) return;
+      event.preventDefault();
+      activateTab(tabs[nextIndex], true);
+    });
+  });
 
   // --- 화면: 자유 배율 ---
   const zoomInput = overlay.querySelector("#pref-zoom");
@@ -415,12 +463,14 @@ function openPreferencesDialog() {
     countEl.textContent = "0개";
   });
 }
-function openExportDialog() {
+function openExportDialog(event) {
+  const returnFocus = document.getElementById("settings-menu-btn") || event?.currentTarget || document.activeElement;
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
-      <h2 class="modal-title">전체 저장 (백업)</h2>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sx-title"
+         style="width:min(340px, calc(100vw - 32px))">
+      <h2 class="modal-title" id="sx-title">전체 저장 (백업)</h2>
       <p class="objectify-description" style="margin:0 0 8px;">
         저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 <b>한 파일</b>로 내려받습니다.
         '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
@@ -443,10 +493,16 @@ function openExportDialog() {
       </div>
     </div>`;
   document.body.appendChild(overlay);
-  const close = () => overlay.remove();
+  let releaseFocus = null;
+  const close = () => { releaseFocus?.(); overlay.remove(); };
   overlay.querySelector("#sx-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
-  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  releaseFocus = installModalFocus({
+    root: overlay,
+    initialFocus: overlay.querySelector("#sx-ok"),
+    returnFocus,
+    onRequestClose: close,
+  });
   overlay.querySelector("#sx-ok").addEventListener("click", async () => {
     // 설정 항목은 data-i가 붙은 체크박스만(프로젝트 체크박스는 data-i가 없어 제외됨).
     const keys = [...overlay.querySelectorAll("input[data-i]")]
@@ -498,7 +554,7 @@ function isEmptyListValue(raw) {
 // showConfirm으로 먼저 확인받는다(감사 finding 1: 확인 없이 통째로 덮어써 데이터 소실).
 // async로 바뀌었으므로 호출부(importSettingsFile)도 await해야 한다.
 // 반환: { applied, failed, skipped } — skipped는 사용자가 교체를 취소한 키.
-async function applyImportedSettings(data) {
+export async function applyImportedSettings(data) {
   const applied = [];
   const failed = [];
   const skipped = [];
@@ -549,8 +605,7 @@ async function applyImportedSettings(data) {
     try {
       localStorage.setItem(key, value);
       applied.push(key);
-      // (라이브러리 재렌더는 위 ②에서 importLibraryString이 처리한다 — 여기까지 오지 않는다.
-      //  SUBJECT_KEY/SCREEN_KEY의 실시간 반영은 범위를 넘어 후속 과제로 남김.)
+      // 라이브러리 재렌더는 위 ②에서 importLibraryString이 처리한다 — 여기까지 오지 않는다.
     } catch (_) {
       failed.push(key);
     }
@@ -558,6 +613,17 @@ async function applyImportedSettings(data) {
 
   // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
   if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
+  // 같은 탭의 localStorage 변경은 storage 이벤트를 발생시키지 않는다. 따라서 복원한
+  // 과목·화면 설정을 현재 UI에도 직접 반영해, 성공 안내와 실제 화면이 어긋나지 않게 한다.
+  if (applied.includes(SUBJECT_KEY)) {
+    const subjectSelect = document.getElementById("subject-select");
+    if (subjectSelect) {
+      subjectSelect.value = data[SUBJECT_KEY];
+      subjectSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  }
+  if (applied.includes(SCREEN_KEY)) applyScreenSize(data[SCREEN_KEY]);
+  if (applied.includes(UI_ZOOM_KEY)) applyUiZoom(data[UI_ZOOM_KEY]);
 
   return { applied, failed, skipped };
 }
