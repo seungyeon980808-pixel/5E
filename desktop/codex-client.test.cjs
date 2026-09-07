@@ -10,7 +10,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /app-server/);
   assert.match(main, /notify\("initialized"\)/);
   assert.match(main, /thread\/resume/);
-  assert.match(main, /turn\/interrupt", \{ threadId: activeTurnThreadId, turnId \}/);
+  assert.match(main, /turn\/interrupt", \{[\s\S]*?threadId: admission\.threadId,[\s\S]*?turnId: admission\.turnId/);
   assert.match(main, /model\/list/);
   assert.match(main, /account\/rateLimits\/read/);
   assert.match(main, /account\/usage\/read/);
@@ -21,7 +21,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /method: "5e\/performance"/);
   assert.match(main, /threadId: plan\.ephemeralRender \? null : requestThreadId/);
   assert.match(main, /Promise\.allSettled\(safeAttachments\.map/);
-  assert.match(main, /fs\.promises\.unlink\(result\.value\.file\)/);
+  assert.match(main, /unlinkAttachmentPaths\(admission\.attachmentPaths\)/);
   assert.equal((main.match(/rpc\("turn\/start"/g) || []).length, 1, "backend must not retry a turn implicitly");
   assert.match(main, /imageGeneration/);
   assert.match(main, /contextIsolation: true/);

@@ -53,7 +53,8 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   assert.match(html, /data-ai-output-engine="asset"/);
   assert.match(html, /data-ai-batch/);
   assert.match(html, /data-ai-tab-list/);
-  assert.match(panel, /const BATCH_CONCURRENCY = 5/);
+  assert.match(panel, /const BATCH_CONCURRENCY = 1/);
+  assert.match(panel, /1개씩 순차 처리/);
   assert.doesNotMatch(panel, /createStructureLockedLineart/);
   assert.match(panel, /복잡 변환 완료 · 원본 구조 확인 필요/);
   assert.match(panel, /normalizeQualityMode\(currentRunInput\?\.qualityMode\) === AI_QUALITY_MODES\.COMPLEX/);

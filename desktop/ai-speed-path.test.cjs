@@ -40,7 +40,8 @@ test("common scientific diagrams use the local editable scene path with exact-ca
   assert.match(panel, /createRemoteImageInputPlan\(/);
   assert.match(panel, /createExactOutputCacheKey\(/);
   assert.match(panel, /outputCache\.get\(key\)/);
-  assert.match(panel, /storeCurrentOutput\(/);
+  assert.match(panel, /stageCurrentOutput\(/);
+  assert.match(panel, /commitCurrentOutput\(/);
   assert.match(panel, /purpose = type === "image"[\s\S]*?"scene"/);
   assert.match(panel, /buildFastScenePrompt\(/);
   assert.match(panel, /compileFastScene\(/);

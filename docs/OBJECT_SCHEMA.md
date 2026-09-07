@@ -17,6 +17,9 @@
 - 근거는 전부 실제 코드(생성 경로·렌더러·변환 코드)이며, 추정한 항목은 `(확인 필요)`로 표시했다.
 - "생성 시 기본값"은 도구/템플릿 생성 코드 기준. 인스펙터에서 나중에 붙는 속성은 `(인스펙터 추가)`로 표시 — 생성 직후 객체에는 없는 필드다.
 - 좌표·길이 단위는 전부 world mm (1 world unit = 1 mm).
+- 텍스트·라벨 크기도 저장값은 mm다. 인스펙터/편집 UI의 입력·표시는 pt일 수 있으며
+  `ptToMm`/`mmToPt`로 변환해 **pt 입력을 mm로 저장**한다. 즉 pt는 편집 표면 단위이지
+  프로젝트 객체의 저장 단위가 아니다.
 
 <!-- ===== TYPE INDEX ===== -->
 
@@ -29,20 +32,20 @@
 
 | # | type | 분류 | 지오메트리 | 생성 경로 |
 |---|------|------|-----------|----------|
-| 1 | `rect` | 박스(branch A) | x/y/w/h | tools.js `makeShape` (R 드래그), image-import-mock.js `baseShape` |
+| 1 | `rect` | 박스(branch A) | x/y/w/h | tools.js `makeShape` (R 드래그), image-objectify.js (분석 결과 삽입) |
 | 2 | `ellipse` | 박스 | x/y/w/h | tools.js `makeShape` (O) |
 | 3 | `triangle` | 박스 | x/y/w/h + flipX/flipY | tools.js `makeShape` (Y) |
-| 4 | `line` | 끝점(branch B) | p1/p2 | tools.js `makeLine` (L 두 클릭), image-import-mock.js `baseLine` |
-| 5 | `polyline` | 점열 | points[] | tools.js `makePolyline` (P 클릭-클릭), image-import-mock.js `basePolyline` |
+| 4 | `line` | 끝점(branch B) | p1/p2 | tools.js `makeLine` (L 두 클릭), image-objectify.js (가는 획 분석 결과) |
+| 5 | `polyline` | 점열 | points[] | tools.js `makePolyline` (P 클릭-클릭), image-objectify.js (윤곽/가는 획 분석 결과) |
 | 6 | `curve` | 점열(Catmull-Rom) | points[] | tools.js `makeCurve` (C), tools.js `setupFreeDraw` (F 자유곡선 → closed) |
-| 7 | `text` | 텍스트 | x/y (앵커) | tools.js `_commitText` (T), image-import-mock.js `baseText` |
+| 7 | `text` | 텍스트 | x/y (앵커) | tools.js `_commitText` (T), image-objectify.js (텍스트 대체 옵션) |
 | 8 | `formula` | 수식 | x/y + w/h(측정값) | tools.js `_commitText`(수식 모드), tools.js `commitFormulaEditor` (FX) |
 | 9 | `image` | 래스터 | x/y/w/h | image-paste.js `insertImageObject` (Ctrl+V), image-cutout.js, project-io.js(이미지 삽입) |
 | 10 | `svgAsset` | 내장 SVG 심볼 | x/y/w/h | tools.js `makeShape` (SVGASSET 도구; 도르래/수레, svg-assets.js 레지스트리) |
 | 11 | `axes` | 좌표축(atomic) | x/y/w/h | templates.js `TEMPLATES.axes.make` (뷰 중앙에 즉시 생성) |
-| 12 | `anglearc` | 각도 호 | 꼭짓점 x/y + radius/각도 | tools.js `makeAngleArcDraft` (ARC 도구), image-import-mock.js `baseAngleArc` |
+| 12 | `anglearc` | 각도 호 | 꼭짓점 x/y + radius/각도 | tools.js `makeAngleArcDraft` (ARC 도구) |
 | 13 | `rightangle` | 직각 표시 | 꼭짓점 x/y + size/angle | tools.js `makeRightAngleDraft` (RIGHTANGLE) |
-| 14 | `labeler` | 지시선+이름 | p1/p2 | tools.js `makeLabelerDraft` (LABELER), image-import-mock.js `baseLabeler` |
+| 14 | `labeler` | 지시선+이름 | p1/p2 | tools.js `makeLabelerDraft` (LABELER) |
 | 15 | `circuit` | 회로 소자 | p1/p2 (양 단자) | tools.js `makeCircuit` (CIRCUIT + element 변형) |
 | 16 | `optics` | 광학/역학 박스 심볼 | x/y/w/h + kind | tools.js `makeShape` (OPTICS + kind), tools.js `setupNodePlacement` (점 단일 클릭) |
 | 17 | `apparatus` | 실험 기구 | x/y/w/h + kind | tools.js `makeShape` (APPARATUS + kind) |

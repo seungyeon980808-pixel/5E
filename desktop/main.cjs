@@ -31,6 +31,7 @@ let recoveryTerminatingTurnId = null;
 let initialized = false;
 let initializingPromise = null;
 let codexSendInvocationCount = 0;
+let activeTurnAdmission = null;
 const pending = new Map();
 const turnAttachmentPaths = new Map();
 const turnPerformance = new TurnPerformanceRegistry();
@@ -100,13 +101,48 @@ function withTimeout(promise, ms, label) {
 function sendImageFinalization(turnId, state, extra = {}) {
   send("codex:event", { method: "5e/image-finalization", params: { turnId, state, ...extra } });
 }
+function acquireTurnAdmission() {
+  if (activeTurnAdmission) {
+    throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
+  }
+  const admission = {
+    cancelled: false,
+    threadId: null,
+    turnId: null,
+    attachmentPaths: [],
+    queuedEvents: [],
+    interruptPromise: null,
+  };
+  activeTurnAdmission = admission;
+  return admission;
+}
+function turnCancellationError() {
+  const error = new Error("AI 작업 준비가 취소되었습니다.");
+  error.code = "AI_TURN_CANCELLED";
+  return error;
+}
+function requireCurrentAdmission(admission) {
+  if (activeTurnAdmission !== admission || admission.cancelled) throw turnCancellationError();
+}
+async function unlinkAttachmentPaths(paths) {
+  await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
+}
+async function releasePreparingAdmission(admission) {
+  await unlinkAttachmentPaths(admission.attachmentPaths);
+  admission.attachmentPaths = [];
+  if (activeTurnAdmission === admission && !admission.turnId) activeTurnAdmission = null;
+}
 function releaseActiveTurn(completedTurnId) {
+  const admission = activeTurnAdmission;
+  if (!admission || admission.turnId !== completedTurnId) return false;
   cleanupAttachments(completedTurnId);
   autoFinalizingImageTurns.delete(completedTurnId);
   if (turnId === completedTurnId) {
     turnId = null;
     activeTurnThreadId = null;
   }
+  activeTurnAdmission = null;
+  return true;
 }
 function sendSyntheticPerformance(completedTurnId) {
   const performance = turnPerformance.snapshot(completedTurnId, Date.now());
@@ -236,6 +272,38 @@ function attachGeneratedImageData(msg) {
   } catch {}
 }
 
+function notificationTurnId(message, performanceObservation = null) {
+  return message?.params?.turnId
+    || message?.params?.turn?.id
+    || performanceObservation?.performance?.turnId
+    || null;
+}
+
+function handleServerNotification(msg) {
+  const performanceObservation = turnPerformance.observe(msg);
+  attachGeneratedImageData(msg);
+  send("codex:event", msg);
+  const eventTurnId = notificationTurnId(msg, performanceObservation);
+  if (shouldAutoFinalizeImageTurn({
+    message: msg,
+    observation: performanceObservation,
+    activeTurnId: turnId,
+    alreadyFinalizing: autoFinalizingImageTurns.has(eventTurnId),
+  })) {
+    const renderThreadId = activeTurnThreadId;
+    autoFinalizingImageTurns.add(eventTurnId);
+    // The generated file is the terminal result for an image-only turn. Stop any
+    // trailing narration, then verify the server-side turn is terminal before a
+    // subsequent render is allowed to start.
+    void autoFinalizeImageTurn(renderThreadId, eventTurnId);
+  }
+  if (performanceObservation?.completed) {
+    send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
+    turnPerformance.delete(performanceObservation.performance.turnId);
+  }
+  if (msg.method === "turn/completed" && eventTurnId) releaseActiveTurn(eventTurnId);
+}
+
 function handleServerProcessTermination(child, {
   state,
   error = null,
@@ -268,6 +336,8 @@ function handleServerProcessTermination(child, {
   initializingPromise = null;
   turnPerformance.clear();
   autoFinalizingImageTurns.clear();
+  if (activeTurnAdmission) void unlinkAttachmentPaths(activeTurnAdmission.attachmentPaths);
+  activeTurnAdmission = null;
   cleanupAllAttachments();
   const terminalError = error instanceof Error
     ? error
@@ -291,30 +361,18 @@ function startServer() {
         const p = pending.get(msg.id); pending.delete(msg.id);
         if (msg.error) p.reject(new Error(msg.error.message || "Codex request failed")); else p.resolve(msg.result);
       }
-      if (msg.method === "turn/completed" && msg.params?.turn?.id) {
-        releaseActiveTurn(msg.params.turn.id);
+      if (!msg.method) return;
+      const eventTurnId = notificationTurnId(msg);
+      if (eventTurnId) {
+        const admission = activeTurnAdmission;
+        if (!admission) return;
+        if (!admission.turnId) {
+          admission.queuedEvents.push(msg);
+          return;
+        }
+        if (eventTurnId !== admission.turnId) return;
       }
-      const performanceObservation = turnPerformance.observe(msg);
-      attachGeneratedImageData(msg);
-      send("codex:event", msg);
-      const eventTurnId = msg.params?.turnId || performanceObservation?.performance?.turnId || null;
-      if (shouldAutoFinalizeImageTurn({
-        message: msg,
-        observation: performanceObservation,
-        activeTurnId: turnId,
-        alreadyFinalizing: autoFinalizingImageTurns.has(eventTurnId),
-      })) {
-        const renderThreadId = activeTurnThreadId;
-        autoFinalizingImageTurns.add(eventTurnId);
-        // The generated file is the terminal result for an image-only turn. Stop any
-        // trailing narration, then verify the server-side turn is terminal before a
-        // subsequent render is allowed to start.
-        void autoFinalizeImageTurn(renderThreadId, eventTurnId);
-      }
-      if (performanceObservation?.completed) {
-        send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
-        turnPerformance.delete(performanceObservation.performance.turnId);
-      }
+      handleServerNotification(msg);
     });
     child.stderr.on("data", (b) => send("codex:log", { level: "error", message: String(b).trim() }));
     child.on("error", (error) => handleServerProcessTermination(child, { state: "missing", error }));
@@ -323,7 +381,21 @@ function startServer() {
     return { ok: true, state: "running" };
   } catch (error) { return { ok: false, state: "missing", message: error.message }; }
 }
-function stopServer() { if (server) server.kill(); server = null; threadId = null; turnId = null; activeTurnThreadId = null; initialized = false; initializingPromise = null; turnPerformance.clear(); autoFinalizingImageTurns.clear(); cleanupAllAttachments(); return { ok: true, state: "stopped" }; }
+function stopServer() {
+  if (server) server.kill();
+  server = null;
+  threadId = null;
+  turnId = null;
+  activeTurnThreadId = null;
+  initialized = false;
+  initializingPromise = null;
+  turnPerformance.clear();
+  autoFinalizingImageTurns.clear();
+  if (activeTurnAdmission) void unlinkAttachmentPaths(activeTurnAdmission.attachmentPaths);
+  activeTurnAdmission = null;
+  cleanupAllAttachments();
+  return { ok: true, state: "stopped" };
+}
 function rpc(method, params) {
   if (!server) throw new Error("Codex App Server가 실행되지 않았습니다.");
   const id = ++rpcId;
@@ -388,88 +460,110 @@ async function sendTurn(payload = {}) {
     effort = null,
     serviceTier = null,
   } = payload;
-  if (turnId) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
+  const admission = acquireTurnAdmission();
   const startedAt = Date.now();
-  const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
-  startServer();
-  await ensureInitialized();
-  if (plan.resetChatThread) threadId = null;
-
-  let requestThreadId = null;
-  if (plan.ephemeralRender) {
-    const started = await rpc("thread/start", buildEphemeralThreadStartParams({
-      purpose: plan.purpose,
-      model,
-      serviceTier,
-      cwd: app.getPath("userData"),
-    }));
-    requestThreadId = started?.thread?.id || null;
-  } else {
-    if (plan.resumeConversationId && plan.resumeConversationId !== threadId) {
-      try {
-        const resumed = await rpc("thread/resume", { threadId: plan.resumeConversationId, approvalPolicy: "never", sandbox: "read-only" });
-        threadId = resumed?.thread?.id || plan.resumeConversationId;
-      } catch { threadId = null; }
-    }
-    if (!threadId) {
-      const started = await rpc("thread/start", { model: model || null, serviceTier: serviceTier || null, cwd: app.getPath("userData"), approvalPolicy: "never", sandbox: "read-only", ephemeral: false, serviceName: "5e-chat" });
-      threadId = started?.thread?.id || null;
-    }
-    requestThreadId = threadId;
-  }
-  if (!requestThreadId) throw new Error("Codex 대화를 시작하지 못했습니다.");
-
-  const safeAttachments = Array.isArray(attachments) ? attachments : [];
-  const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
-  const failedAttachment = preparedResults.find((result) => result.status === "rejected");
-  if (failedAttachment) {
-    await Promise.all(preparedResults
-      .filter((result) => result.status === "fulfilled")
-      .map((result) => fs.promises.unlink(result.value.file).catch(() => {})));
-    throw failedAttachment.reason;
-  }
-  const preparedAttachments = preparedResults.map((result) => result.value);
-  const paths = preparedAttachments.map((attachment) => attachment.file);
-  const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
-  const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
-  let result;
   try {
+    const plan = resolveTurnPlan({ ...payload, conversationId, resetConversation });
+    startServer();
+    await ensureInitialized();
+    requireCurrentAdmission(admission);
+    if (plan.resetChatThread) threadId = null;
+
+    let requestThreadId = null;
+    if (plan.ephemeralRender) {
+      const started = await rpc("thread/start", buildEphemeralThreadStartParams({
+        purpose: plan.purpose,
+        model,
+        serviceTier,
+        cwd: app.getPath("userData"),
+      }));
+      requestThreadId = started?.thread?.id || null;
+    } else {
+      if (plan.resumeConversationId && plan.resumeConversationId !== threadId) {
+        try {
+          const resumed = await rpc("thread/resume", { threadId: plan.resumeConversationId, approvalPolicy: "never", sandbox: "read-only" });
+          threadId = resumed?.thread?.id || plan.resumeConversationId;
+        } catch { threadId = null; }
+      }
+      requireCurrentAdmission(admission);
+      if (!threadId) {
+        const started = await rpc("thread/start", { model: model || null, serviceTier: serviceTier || null, cwd: app.getPath("userData"), approvalPolicy: "never", sandbox: "read-only", ephemeral: false, serviceName: "5e-chat" });
+        threadId = started?.thread?.id || null;
+      }
+      requestThreadId = threadId;
+    }
+    requireCurrentAdmission(admission);
+    if (!requestThreadId) throw new Error("Codex 대화를 시작하지 못했습니다.");
+    admission.threadId = requestThreadId;
+
+    const safeAttachments = Array.isArray(attachments) ? attachments : [];
+    const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
+    const preparedAttachments = preparedResults
+      .filter((result) => result.status === "fulfilled")
+      .map((result) => result.value);
+    admission.attachmentPaths = preparedAttachments.map((attachment) => attachment.file);
+    const failedAttachment = preparedResults.find((result) => result.status === "rejected");
+    if (failedAttachment) throw failedAttachment.reason;
+    requireCurrentAdmission(admission);
+    const paths = admission.attachmentPaths;
+    const attachmentBytes = preparedAttachments.reduce((sum, attachment) => sum + attachment.bytes, 0);
+    const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
     // Exactly one backend turn is started. Any image retry must be an explicit agent/tool decision.
-    result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null });
+    const result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null });
+    const requestTurnId = result?.turn?.id || null;
+    if (!requestTurnId) throw new Error("Codex 작업을 시작하지 못했습니다.");
+    admission.turnId = requestTurnId;
+    turnId = requestTurnId;
+    activeTurnThreadId = requestThreadId;
+    if (paths.length) turnAttachmentPaths.set(requestTurnId, paths);
+    const performance = turnPerformance.register({
+      turnId: requestTurnId,
+      threadId: requestThreadId,
+      purpose: plan.purpose,
+      startedAt,
+      prepareEndedAt: Date.now(),
+      attachmentCount: preparedAttachments.length,
+      attachmentBytes,
+    });
+    const queuedEvents = admission.queuedEvents.splice(0);
+    for (const message of queuedEvents) {
+      if (notificationTurnId(message) === requestTurnId) handleServerNotification(message);
+    }
+    if (admission.cancelled) void interruptActiveTurn();
+    const preservedConversationId = plan.ephemeralRender
+      ? (threadId || plan.preservedConversationId || null)
+      : requestThreadId;
+    return {
+      threadId: plan.ephemeralRender ? null : requestThreadId,
+      conversationId: preservedConversationId,
+      renderThreadId: plan.ephemeralRender ? requestThreadId : null,
+      ephemeralRender: plan.ephemeralRender,
+      purpose: plan.purpose,
+      turnId: requestTurnId,
+      result,
+      performance,
+    };
   } catch (error) {
-    await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
+    if (activeTurnAdmission === admission && !admission.turnId) await releasePreparingAdmission(admission);
     throw error;
   }
-  const requestTurnId = result?.turn?.id || null;
-  if (!requestTurnId) {
-    await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
-    throw new Error("Codex 작업을 시작하지 못했습니다.");
+}
+
+function interruptActiveTurn() {
+  const admission = activeTurnAdmission;
+  if (!admission) return Promise.resolve({ ok: false, state: "idle" });
+  admission.cancelled = true;
+  if (!admission.threadId || !admission.turnId) {
+    return Promise.resolve({ ok: true, state: "cancelling" });
   }
-  turnId = requestTurnId;
-  activeTurnThreadId = requestThreadId;
-  if (requestTurnId && paths.length) turnAttachmentPaths.set(requestTurnId, paths);
-  const performance = turnPerformance.register({
-    turnId: requestTurnId,
-    threadId: requestThreadId,
-    purpose: plan.purpose,
-    startedAt,
-    prepareEndedAt: Date.now(),
-    attachmentCount: preparedAttachments.length,
-    attachmentBytes,
-  });
-  const preservedConversationId = plan.ephemeralRender
-    ? (threadId || plan.preservedConversationId || null)
-    : requestThreadId;
-  return {
-    threadId: plan.ephemeralRender ? null : requestThreadId,
-    conversationId: preservedConversationId,
-    renderThreadId: plan.ephemeralRender ? requestThreadId : null,
-    ephemeralRender: plan.ephemeralRender,
-    purpose: plan.purpose,
-    turnId: requestTurnId,
-    result,
-    performance,
-  };
+  if (!admission.interruptPromise) {
+    admission.interruptPromise = rpc("turn/interrupt", {
+      threadId: admission.threadId,
+      turnId: admission.turnId,
+    }).then((result) => ({ ok: true, state: "interrupt-requested", result }))
+      .catch((error) => ({ ok: false, state: "interrupt-failed", message: error.message }));
+  }
+  return admission.interruptPromise;
 }
 
 function createWindow() {
@@ -1070,9 +1164,7 @@ ipcMain.handle("codex:send", (_, payload) => {
   codexSendInvocationCount += 1;
   return sendTurn(payload);
 });
-ipcMain.handle("codex:interrupt", async () => server && activeTurnThreadId && turnId
-  ? rpc("turn/interrupt", { threadId: activeTurnThreadId, turnId }).catch(() => null)
-  : null);
+ipcMain.handle("codex:interrupt", () => interruptActiveTurn());
 ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
 ipcMain.handle("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({

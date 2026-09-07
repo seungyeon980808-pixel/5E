@@ -252,13 +252,21 @@ function renderTabs(state) {
   if (!_tabsEl) return;
   const s = state.get();
   const active = s.activePageId;
-  _tabsEl.innerHTML = (s.pages || []).map((p) => {
+  const tabs = (s.pages || []).map((p) => {
     const isActive = p.id === active;
-    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}"
-        role="tab" aria-selected="${isActive}" title="${escapeHtml(p.name)} · 더블클릭 이름 변경 · 우클릭 메뉴">
-        <span class="page-tab-name">${escapeHtml(p.name)}</span>
-      </div>`;
-  }).join("");
+    const tab = document.createElement("div");
+    tab.className = `page-tab${isActive ? " is-active" : ""}`;
+    tab.dataset.id = p.id;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(isActive));
+    tab.title = `${p.name} · 더블클릭 이름 변경 · 우클릭 메뉴`;
+    const name = document.createElement("span");
+    name.className = "page-tab-name";
+    name.textContent = p.name;
+    tab.append(name);
+    return tab;
+  });
+  _tabsEl.replaceChildren(...tabs);
 }
 
 /* ===== 우클릭 컨텍스트 메뉴 (복제·순서·삭제) ===== */
@@ -313,9 +321,4 @@ function openContextMenu(state, id, x, y) {
   document.addEventListener("mousedown", _onDocDown, true);
   document.addEventListener("keydown", _onDocKey, true);
   window.addEventListener("blur", closeContextMenu);
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }

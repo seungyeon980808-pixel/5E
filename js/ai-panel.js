@@ -49,6 +49,38 @@ const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}`;
 const FAST_SCENE_PANEL_COMPILE_VERSION = "motif-direct-v1";
 
+export function cacheEntryCompletesRequest(entry, {
+  engine = IMAGE_ENGINE_IDS.RASTER,
+  qualityMode = AI_QUALITY_MODES.STANDARD,
+} = {}) {
+  const output = entry?.output;
+  if (!output || output.complete !== true || output.cancelled === true || output.partial === true) return false;
+  if (["failed", "error", "cancelled", "canceled", "running"].includes(String(output.status || "complete").toLowerCase())) return false;
+  const needsCorrection = engine === IMAGE_ENGINE_IDS.RASTER
+    && normalizeQualityMode(qualityMode) === AI_QUALITY_MODES.COMPLEX;
+  return !needsCorrection || Number(output.complexPass) === 2;
+}
+
+export function resolveAiTerminalOutcome({
+  status,
+  imageReceived = false,
+  cancelRequested = false,
+} = {}) {
+  const normalized = String(status || "completed").toLowerCase();
+  if (["failed", "error"].includes(normalized)) return "failed";
+  if (cancelRequested) return "cancelled";
+  if (["cancelled", "canceled"].includes(normalized)) return "cancelled";
+  if (normalized === "interrupted") return imageReceived ? "completed" : "cancelled";
+  return normalized === "completed" ? "completed" : "failed";
+}
+
+export function aiTerminalStatusView(outcome, { imageReceived = false } = {}) {
+  if (outcome === "failed") return { text: "작업 실패", kind: "error" };
+  if (outcome === "cancelled") return { text: "작업 취소됨", kind: "warn" };
+  if (outcome === "completed" && imageReceived) return { text: "생성 완료", kind: "ok" };
+  return null;
+}
+
 export function compilePanelScene(input, options) {
   try {
     const expanded = expandAiMotifScene(input);
@@ -195,6 +227,9 @@ export function initAiPanel(state) {
   let currentEngine = IMAGE_ENGINE_IDS.RASTER;
   let currentSceneResponse = "";
   let currentCacheRequest = null;
+  let pendingCacheOutput = null;
+  let currentCancelRequested = false;
+  let currentTerminalOutcome = null;
   let currentRequestSnapshot = null;
   let currentRunInput = null;
   let availableModels = [];
@@ -913,7 +948,7 @@ export function initAiPanel(state) {
 
   let batchQueue = [];
   let batchRunningCount = 0;
-  const BATCH_CONCURRENCY = 5;
+  const BATCH_CONCURRENCY = 1;
 
   const updateBatchSummary = () => {
     if (!batchSummary) return;
@@ -922,7 +957,7 @@ export function initAiPanel(state) {
     ).values());
     const complete = jobs.filter((job) => job.state === "complete").length;
     const failed = jobs.filter((job) => job.state === "failed").length;
-    batchSummary.textContent = `${complete}/${jobs.length} 완료${failed ? ` · ${failed} 실패` : ""} · 최대 ${BATCH_CONCURRENCY}개 동시`;
+    batchSummary.textContent = `${complete}/${jobs.length} 완료${failed ? ` · ${failed} 실패` : ""} · 1개씩 순차 처리`;
     if (jobs.length && complete + failed === jobs.length) {
       batchActive = false;
       if (batchButton) batchButton.disabled = attachments.length < 2 || busy;
@@ -1150,7 +1185,7 @@ export function initAiPanel(state) {
     });
     batchQueue.push(...roots);
     if (batchButton) batchButton.disabled = true;
-    setStatus(`참고 이미지 ${roots.length}개를 최대 ${BATCH_CONCURRENCY}개씩 동시에 변환합니다.`, "busy");
+    setStatus(`참고 이미지 ${roots.length}개를 1개씩 순차 변환합니다.`, "busy");
     updateBatchSummary();
     pumpBatchQueue();
   };
@@ -1464,16 +1499,36 @@ export function initAiPanel(state) {
     });
   };
 
-  const storeCurrentOutput = async (output) => {
-    if (!outputCache || !currentCacheRequest?.key || !output) return;
+  const stageCurrentOutput = (output) => {
+    pendingCacheOutput = output ? { ...output } : null;
+  };
+
+  const commitCurrentOutput = async () => {
+    const cache = outputCache;
+    const cacheRequest = currentCacheRequest;
+    const output = pendingCacheOutput
+      ? {
+        ...pendingCacheOutput,
+        engine: cacheRequest?.engine,
+        complete: true,
+        complexPass: Number(currentRunInput?.complexPass || 1),
+      }
+      : null;
+    pendingCacheOutput = null;
+    if (!cache || !cacheRequest?.key || !output || currentCancelRequested) return false;
+    if (!cacheEntryCompletesRequest({ output }, {
+      engine: cacheRequest.engine,
+      qualityMode: currentRunInput?.qualityMode,
+    })) return false;
     try {
-      await outputCache.put({
-        key: currentCacheRequest.key,
-        descriptor: currentCacheRequest.descriptor,
-        output: { ...output, engine: currentCacheRequest.engine, complete: true },
+      const result = await cache.put({
+        key: cacheRequest.key,
+        descriptor: cacheRequest.descriptor,
+        output,
         status: "complete",
       });
-    } catch {}
+      return result?.stored === true;
+    } catch { return false; }
   };
 
   const refresh = async ({ autoConnect = true } = {}) => {
@@ -1575,6 +1630,9 @@ export function initAiPanel(state) {
     currentRunInput = runInput;
     currentSceneResponse = "";
     currentCacheRequest = null;
+    pendingCacheOutput = null;
+    currentCancelRequested = false;
+    currentTerminalOutcome = null;
     currentTurnUsage = null;
     currentTurnPerformance = null;
     currentTurnDone = false;
@@ -1643,11 +1701,19 @@ export function initAiPanel(state) {
           localAssetMatch,
         });
         const key = createExactOutputCacheKey(descriptor);
-        currentCacheRequest = { key, descriptor, engine: currentEngine };
+        const requestCache = { key, descriptor, engine: currentEngine };
+        currentCacheRequest = options.cacheRequestOverride || requestCache;
         const bypassCache = options.bypassCache === true || /새\s*변형|다시\s*생성|다르게\s*생성|재생성/.test(request);
         if (outputCache && !bypassCache) {
           let cached = null;
           try { cached = await outputCache.get(key); } catch {}
+          if (cached?.hit && !cacheEntryCompletesRequest(cached.entry, {
+            engine: currentEngine,
+            qualityMode: runInput.qualityMode,
+          })) {
+            try { await outputCache.delete(key); } catch {}
+            cached = null;
+          }
           if (cached?.hit && cached.entry?.output) {
             let cachedItem = null;
             if (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE && cached.entry.output.sceneSource) {
@@ -1715,11 +1781,12 @@ export function initAiPanel(state) {
           }
           const item = addScenePreview(compiled, compiledScene.source, compiledScene.compileSource);
           if (!item) throw new Error("검증된 내부 도식을 미리보기에 추가하지 못했습니다.");
-          await storeCurrentOutput({
+          stageCurrentOutput({
             data: item.data,
             sceneSource: compiledScene.source,
             sceneCompileSource: compiledScene.compileSource,
           });
+          await commitCurrentOutput();
           imageReceived = true;
           serverTurnFinished = true;
           currentTurnDone = true;
@@ -1847,8 +1914,10 @@ export function initAiPanel(state) {
       if (requestEpoch !== currentRequestEpoch) return;
       awaitingTurnId = false;
       queuedTurnEvents = [];
-      addLog(error.message, "error");
-      setStatus("요청 실패", "error");
+      const cancelled = currentCancelRequested || error?.code === "AI_TURN_CANCELLED" || /작업 준비가 취소/.test(error?.message || "");
+      pendingCacheOutput = null;
+      addLog(error.message, cancelled ? "" : "error");
+      setStatus(cancelled ? "작업 취소됨" : "요청 실패", cancelled ? "warn" : "error");
       setGenerating(false);
       setBusy(false);
     }
@@ -1915,6 +1984,8 @@ export function initAiPanel(state) {
   });
   panel.querySelector("[data-ai-interrupt]").onclick = async () => {
     if (!busy) return;
+    currentCancelRequested = true;
+    pendingCacheOutput = null;
     setStatus("작업 취소 중…", "busy");
     await window.fiveEDesktop?.interrupt();
   };
@@ -1928,6 +1999,17 @@ export function initAiPanel(state) {
 
   const finishCurrentTurnUi = (eventEpoch = currentRequestEpoch) => {
     if (eventEpoch !== currentRequestEpoch || !serverTurnFinished || previewPending) return;
+    if (currentTerminalOutcome !== "completed") {
+      pendingCacheOutput = null;
+      setGenerating(false);
+      setBusy(false);
+      currentTurnDone = true;
+      const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived });
+      if (terminalView) setStatus(terminalView.text, terminalView.kind);
+      addTokenFooter(currentTurnUsage);
+      void loadAccountOverview();
+      return;
+    }
     const needsComplexCorrection = currentTurnType === "image"
       && currentEngine === IMAGE_ENGINE_IDS.RASTER
       && imageReceived
@@ -1936,6 +2018,8 @@ export function initAiPanel(state) {
       && !currentRunInput?.complexCorrectionScheduled;
     if (needsComplexCorrection) {
       currentRunInput.complexCorrectionScheduled = true;
+      const correctionCacheRequest = currentCacheRequest;
+      pendingCacheOutput = null;
       const correctionInput = {
         ...currentRunInput,
         generated: generatedImages.map(snapshotImageItem),
@@ -1955,6 +2039,7 @@ export function initAiPanel(state) {
           runInputSnapshot: correctionInput,
           forceEngine: IMAGE_ENGINE_IDS.RASTER,
           bypassCache: true,
+          cacheRequestOverride: correctionCacheRequest,
           silentUserLog: true,
         });
       }, 0);
@@ -1970,6 +2055,7 @@ export function initAiPanel(state) {
     }
     setBusy(false);
     currentTurnDone = true;
+    void commitCurrentOutput();
     addTokenFooter(currentTurnUsage);
     void loadAccountOverview();
   };
@@ -1991,9 +2077,11 @@ export function initAiPanel(state) {
       setGenerating(true, "생성 결과를 정리하고 있습니다", "배경을 투명하게 정리하고 편집용 이미지를 준비합니다.", "finish");
       void addPreview(event.src, { isCurrent }).then(async (added) => {
         if (!added || !isCurrent()) return;
-        if (currentEngine === IMAGE_ENGINE_IDS.RASTER && added.postprocessOk) {
-          await storeCurrentOutput({ data: added.data });
+        const terminalAllowsSuccess = currentTerminalOutcome === null || currentTerminalOutcome === "completed";
+        if (currentEngine === IMAGE_ENGINE_IDS.RASTER && added.postprocessOk && terminalAllowsSuccess && !currentCancelRequested) {
+          stageCurrentOutput({ data: added.data });
         }
+        if (!terminalAllowsSuccess || currentCancelRequested) return;
         setStatus(serverTurnFinished ? "생성 완료" : "서버 작업 종료 확인 중", serverTurnFinished ? "ok" : "busy");
         addLog("이미지가 완성되었습니다. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.");
       }).catch((error) => {
@@ -2035,27 +2123,39 @@ export function initAiPanel(state) {
         setStatus("AI 작업 종료 확인 실패", "error");
         if (event.message) addLog(`작업 종료 복구 실패: ${event.message}`, "error");
         if (event.status === "failed") {
+          currentTerminalOutcome = "failed";
           serverTurnFinished = true;
           previewPending = false;
           currentTurnDone = true;
           finishCurrentTurnUi(eventEpoch);
         }
       } else if (event.state === "confirmed" || event.state === "recovered") {
+        currentTerminalOutcome = resolveAiTerminalOutcome({
+          status: event.status,
+          imageReceived,
+          cancelRequested: currentCancelRequested,
+        });
         serverTurnFinished = true;
         currentTurnDone = true;
-        if (imageReceived && !previewPending) {
-          setGenerating(false);
-          setStatus("생성 완료", "ok");
-        }
+        const terminalView = aiTerminalStatusView(currentTerminalOutcome, { imageReceived });
+        if (terminalView) setStatus(terminalView.text, terminalView.kind);
+        if (!previewPending) setGenerating(false);
         finishCurrentTurnUi(eventEpoch);
       }
     } else if (event.kind === "error") {
+      currentTerminalOutcome = "failed";
+      pendingCacheOutput = null;
       addLog(event.text, "error");
       setGenerating(false);
       setStatus("작업 실패", "error");
     } else if (event.kind === "done") {
       serverTurnFinished = true;
       currentTurnDone = true;
+      currentTerminalOutcome = resolveAiTerminalOutcome({
+        status: event.status,
+        imageReceived,
+        cancelRequested: currentCancelRequested,
+      });
       if (currentTurnType === "image" && currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE && event.status === "completed") {
         const compiledScene = compilePanelScene(currentSceneResponse, {
           mode: currentRunInput?.mode || selectedMode,
@@ -2078,7 +2178,7 @@ export function initAiPanel(state) {
           Promise.resolve().then(async () => {
             const item = addScenePreview(compiled, compiledScene.source, compiledScene.compileSource);
             if (!item) throw new Error("빠른 벡터 결과를 미리보기에 추가하지 못했습니다.");
-            await storeCurrentOutput({
+            stageCurrentOutput({
               data: item.data,
               sceneSource: compiledScene.source,
               sceneCompileSource: compiledScene.compileSource,
@@ -2124,11 +2224,17 @@ export function initAiPanel(state) {
       }
       if (!imageReceived) setGenerating(false);
       if (event.status === "failed") {
+        pendingCacheOutput = null;
         if (event.error) addLog(String(event.error), "error");
         setStatus("작업 실패", "error");
       } else if (event.status === "interrupted") {
+        if (currentCancelRequested) pendingCacheOutput = null;
         if (!previewPending) setGenerating(false);
-        setStatus(imageReceived && currentTurnType === "image" ? (previewPending ? "생성 결과 정리 중" : "생성 완료") : "작업 취소됨", imageReceived ? "ok" : "warn");
+        setStatus(currentCancelRequested
+          ? "작업 취소됨"
+          : imageReceived && currentTurnType === "image"
+            ? (previewPending ? "생성 결과 정리 중" : "생성 완료")
+            : "작업 취소됨", currentCancelRequested || !imageReceived ? "warn" : "ok");
       } else if (imageReceived && currentTurnType === "image") {
         if (!previewPending) setGenerating(false);
         setStatus(previewPending ? "생성 결과 정리 중" : "생성 완료", previewPending ? "busy" : "ok");
@@ -2175,6 +2281,8 @@ export function initAiPanel(state) {
   window.fiveEDesktop?.onState((current) => {
     if (current.state === "running" && !busy) setStatus("AI 사용 가능", "ok");
     else if (current.state !== "running" && busy) {
+      pendingCacheOutput = null;
+      currentTerminalOutcome = "failed";
       serverTurnFinished = true;
       previewPending = false;
       currentTurnDone = true;

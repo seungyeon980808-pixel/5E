@@ -14,7 +14,7 @@ test("a completed image ends its render turn and the panel treats that interrupt
   assert.match(main, /sendImageFinalization\(completedTurnId, "confirmed"/);
   assert.match(main, /sendImageFinalization\(completedTurnId, "recovered"/);
   assert.match(main, /\["\/PID", String\(child\.pid\), "\/T", "\/F"\]/);
-  assert.match(main, /if \(turnId\) throw new Error\("이전 AI 작업을 종료하고 있습니다/);
+  assert.match(main, /const admission = acquireTurnAdmission\(\);/);
   assert.match(panel, /if \(newButton\) newButton\.disabled = on/);
   assert.match(panel, /newButton\.onclick = \(\) => \{\s*if \(busy\) return;/);
   assert.match(panel, /currentTurnId = result\.turnId \|\| null/);

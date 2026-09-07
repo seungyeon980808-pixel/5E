@@ -101,26 +101,68 @@ function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));
 }
 
+function isDocumentHistoryEntry(entry) {
+  return entry?.kind === "document"
+    && Array.isArray(entry.objects)
+    && Array.isArray(entry.guides)
+    && entry.artboard !== null
+    && typeof entry.artboard === "object"
+    && Array.isArray(entry.layers);
+}
+
+function cloneDocumentHistoryEntry(s) {
+  return {
+    kind: "document",
+    objects: cloneObjects(s.objects),
+    guides: cloneObjects(s.guides || []),
+    artboard: JSON.parse(JSON.stringify(s.artboard)),
+    layers: cloneObjects(s.layers || []),
+  };
+}
+
+function inverseForHistoryEntry(s, entry) {
+  return isDocumentHistoryEntry(entry) ? cloneDocumentHistoryEntry(s) : cloneObjects(s.objects);
+}
+
+function restoreHistoryEntry(s, entry) {
+  if (Array.isArray(entry)) {
+    s.objects = entry;
+    return true;
+  }
+  if (!isDocumentHistoryEntry(entry)) return false;
+  s.objects = entry.objects;
+  s.guides = entry.guides;
+  s.artboard = entry.artboard;
+  s.layers = entry.layers;
+  return true;
+}
+
 export function rebuildGroups(s) {
-  const map = {};
+  const map = new Map();
   s.objects.forEach(o => {
     if (o.groupId) {
-      if (!map[o.groupId]) map[o.groupId] = [];
-      map[o.groupId].push(o.id);
+      const members = map.get(o.groupId);
+      if (members) members.push(o.id);
+      else map.set(o.groupId, [o.id]);
     }
   });
-  s.groups = Object.entries(map).map(([id, memberIds]) => ({ id, memberIds }));
+  s.groups = Array.from(map, ([id, memberIds]) => ({ id, memberIds }));
 }
 
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const prev = s.undoStack.pop();
+    const prev = s.undoStack[s.undoStack.length - 1];
+    if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev)) return;
+    const current = inverseForHistoryEntry(s, prev);
+    s.undoStack.pop();
     s.redoStack.push(current);
-    s.objects = prev;
+    restoreHistoryEntry(s, prev);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -128,12 +170,17 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const next = s.redoStack.pop();
+    const next = s.redoStack[s.redoStack.length - 1];
+    if (!Array.isArray(next) && !isDocumentHistoryEntry(next)) return;
+    const current = inverseForHistoryEntry(s, next);
+    s.redoStack.pop();
     s.undoStack.push(current);
-    s.objects = next;
+    restoreHistoryEntry(s, next);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -1081,7 +1128,8 @@ export function initTransform(svg, state) {
     }
 
     // Delete ??remove all selected objects with undo snapshot
-    if (e.key === "Delete") {
+    if (e.isComposing) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
       if (!selectedIds.length) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
