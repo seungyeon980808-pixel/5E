@@ -381,98 +381,173 @@
     <span class="app-footer-credit">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
   </footer>
 
-  <div id="ai-image-panel" class="modal-overlay" aria-label="AI 이미지 생성" hidden>
-    <section class="modal modal-ai" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
+  <div id="ai-image-panel" class="modal-overlay" aria-label="AI 과학 도식 작업실" hidden>
+    <section class="modal modal-ai ai-workbench" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
       <header class="ai-head">
+        <button class="ai-close" type="button" data-ai-close aria-label="AI 작업실을 닫고 캔버스로 돌아가기">← 캔버스로</button>
         <div class="ai-title-line">
-          <h2 class="modal-title" id="ai-image-title">AI 이미지 생성</h2>
-          <p class="ai-subtitle">참고 이미지를 바탕으로 과학 도식을 생성하거나 배치와 형태를 수정합니다.</p>
+          <h2 class="modal-title" id="ai-image-title">이미지 수정 작업실</h2>
+          <p class="ai-subtitle">기본은 평가원식 도식 · 바꿀 부분에만 코멘트를 남기세요.</p>
         </div>
         <div class="ai-head-status">
           <span class="ai-status" data-ai-status>상태 확인 중…</span>
-          <button class="ai-close" type="button" data-ai-close aria-label="AI 창 닫기" title="닫기">×</button>
+          <span class="ai-runtime-summary" data-ai-runtime-summary>권장 생성 Sol · 보통 / 검수 Sol · 높음</span>
         </div>
       </header>
-      <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
-        <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
-        <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 탭을 만듭니다">＋ 탭</button>
-      </nav>
+
       <div class="ai-media-toolbar">
-        <div class="ai-source-group" role="group" aria-label="참고 이미지 가져오기">
+        <div class="ai-source-group" role="group" aria-label="원본 이미지 추가">
           <label class="ai-file-button ai-source-primary">
             <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
-            이미지 불러오기
+            ＋ 이미지 추가
           </label>
-          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">⌕ 이미지 검색…</button>
+          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">이미지 검색</button>
           <button type="button" data-ai-capture>화면 캡처</button>
-          <button type="button" data-ai-compare title="참고 이미지와 생성 결과를 좌우로 비교합니다">이미지 비교</button>
-          <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 1개씩 순차 변환합니다">여러 장 변환</button>
         </div>
-        <div class="ai-actions" aria-label="AI 연결 및 대화 관리">
-          <div class="ai-account-summary" aria-label="로그인 계정과 사용량">
-            <strong data-ai-account>계정 확인 중…</strong>
-            <span data-ai-limit>잔여 한도 확인 중…</span>
-            <span data-ai-account-tokens>누적 토큰 확인 중…</span>
-          </div>
-          <button type="button" data-ai-login>Codex 로그인</button>
-          <label class="ai-setting-label">모델
-            <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
-          </label>
-          <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>Luna 외 모델은 생성 시간이 길어질 수 있습니다.</span>
-          <label class="ai-setting-label">추론
-            <select data-ai-effort aria-label="추론 수준 선택"><option value="medium">보통</option></select>
-          </label>
-          <label class="ai-setting-label">속도
-            <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
-          </label>
-          <button type="button" data-ai-new>새 작업</button>
+        <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
+          <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">원본과 비교</button>
+          <button type="button" data-ai-layout-mode="source" aria-pressed="false">원본</button>
+          <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true">결과 크게</button>
+          <span class="ai-toolbar-divider" aria-hidden="true"></span>
+          <button type="button" data-ai-sync-zoom="out" aria-label="원본과 결과 함께 축소">−</button>
+          <output data-ai-sync-zoom-value aria-label="비교 배율">100%</output>
+          <button type="button" data-ai-sync-zoom="in" aria-label="원본과 결과 함께 확대">＋</button>
+          <button type="button" data-ai-sync-zoom="fit">맞춤</button>
+          <button type="button" data-ai-compare title="별도 창에서 참고 이미지와 생성 결과를 비교합니다">전체 비교</button>
         </div>
       </div>
+
       <div class="ai-workspace">
-        <section class="ai-results" aria-label="생성 결과">
-          <div class="ai-section-label">생성 결과</div>
-          <div class="ai-previews" data-ai-previews>
-            <div class="ai-generating" data-ai-generating hidden>
-              <div class="ai-e-loader" aria-hidden="true">
-                <div class="ai-e-cloud"><i>E</i><i>E</i><i>E</i><i>E</i><i>E</i></div>
-                <div class="ai-e-core">E<span data-ai-e-count>1</span></div>
-              </div>
-              <strong data-ai-progress-title>이미지 생성 준비 중</strong>
-              <span data-ai-progress-detail>요청의 구조와 배치를 분석하고 있습니다.</span>
-              <div class="ai-progress-steps" data-ai-progress-stage="analyze" aria-label="이미지 생성 진행 단계">
-                <span data-stage="analyze">분석</span><span data-stage="compose">구성</span><span data-stage="render">렌더링</span><span data-stage="finish">마무리</span>
-              </div>
-              <div class="ai-progress-track" aria-hidden="true"><i></i></div>
-              <small>복잡한 그림은 몇 분 정도 걸릴 수 있습니다. 창을 닫아도 작업은 계속됩니다.</small>
-            </div>
-            <p class="ai-empty" data-ai-empty>생성된 이미지가 여기에 표시됩니다.</p>
+        <aside class="ai-task-rail" aria-label="작업 목록">
+          <div class="ai-rail-heading">
+            <strong>작업</strong>
+            <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다">＋ 새 작업</button>
           </div>
-          <section class="ai-batch-panel" data-ai-batch-panel hidden aria-label="여러 장 변환 진행 상황">
-            <div class="ai-batch-head"><strong>여러 장 변환</strong><span data-ai-batch-summary></span></div>
-            <div class="ai-batch-grid" data-ai-batch-grid></div>
-          </section>
-          <details class="ai-reference-section">
-            <summary>참고 이미지 <span data-ai-reference-count>0</span><small>영역 요청 확인·수정</small></summary>
-            <div class="ai-reference-list" data-ai-attachment-list>
-              <p class="ai-reference-empty" data-ai-reference-empty>여러 이미지를 추가하고 각각 필요한 영역에 요청을 남길 수 있습니다.</p>
-            </div>
+          <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
+            <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
+          </nav>
+          <details class="ai-batch-section">
+            <summary>여러 장 변환 <span data-ai-batch-summary></span></summary>
+            <p class="ai-batch-note">검수 포함 변환은 그림별 새 작업으로 실행하세요. 대기열 결과는 독립 검수되지 않습니다.</p>
+            <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 1개씩 순차 변환합니다">대기열 시작</button>
+            <section class="ai-batch-panel" data-ai-batch-panel hidden aria-label="여러 장 변환 진행 상황">
+              <div class="ai-batch-head"><strong>변환 대기열</strong></div>
+              <div class="ai-batch-grid" data-ai-batch-grid></div>
+            </section>
           </details>
-        </section>
-        <section class="ai-conversation" aria-label="요청 및 진행 기록">
-          <div class="ai-section-label">대화</div>
-          <div class="ai-log" data-ai-log>
-            <p class="ai-log-empty" data-ai-log-empty>대화로 요구사항을 정리한 뒤 이미지를 생성하세요.</p>
+        </aside>
+
+        <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
+          <header class="ai-compare-heading">
+            <div>
+              <span>이미지 작업 영역</span>
+              <strong>그림 위에 수정할 부분을 표시하세요</strong>
+            </div>
+            <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
+              <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
+              <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
+              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">영역 코멘트</button>
+            </div>
+          </header>
+          <div class="ai-comparison-grid">
+            <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
+              <header class="ai-pane-head">
+                <div><span>첨부</span><strong>원본·표현 참고</strong></div>
+                <label>첨부 선택 <select data-ai-source-select aria-label="살펴볼 첨부 선택"></select></label>
+              </header>
+              <details class="ai-reference-section" open>
+                <summary>참고 이미지 <span data-ai-reference-count>0</span><small>이미지 역할은 최초 요청 전에 선택</small></summary>
+                <div class="ai-reference-list" data-ai-attachment-list>
+                  <p class="ai-reference-empty" data-ai-reference-empty>이미지를 추가하면 원본이 여기에 표시됩니다.</p>
+                </div>
+              </details>
+            </section>
+
+            <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
+              <header class="ai-pane-head">
+                <div><span>결과</span><strong>생성 이미지</strong></div>
+                <label>버전 <select data-ai-candidate-select aria-label="생성 결과 버전 선택"></select></label>
+              </header>
+              <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
+              <div class="ai-previews" data-ai-previews>
+                <div class="ai-generating" data-ai-generating hidden>
+                  <div class="ai-e-loader" aria-hidden="true">
+                    <div class="ai-e-cloud"><i>E</i><i>E</i><i>E</i><i>E</i><i>E</i></div>
+                    <div class="ai-e-core">E<span data-ai-e-count>1</span></div>
+                  </div>
+                  <strong data-ai-progress-title>이미지 생성 준비 중</strong>
+                  <span data-ai-progress-detail>요청의 구조와 배치를 분석하고 있습니다.</span>
+                  <div class="ai-progress-steps" data-ai-progress-stage="analyze" aria-label="이미지 생성 진행 단계">
+                    <span data-stage="analyze">분석</span><span data-stage="compose">구성</span><span data-stage="render">렌더링</span><span data-stage="finish">마무리</span>
+                  </div>
+                  <div class="ai-progress-track" aria-hidden="true"><i></i></div>
+                  <small>복잡한 그림은 몇 분 정도 걸릴 수 있습니다. 창을 닫아도 작업은 계속됩니다.</small>
+                </div>
+                <p class="ai-empty" data-ai-empty>이미지를 추가하고 ‘평가원식으로 만들기’를 누르세요.</p>
+              </div>
+            </section>
           </div>
-          <div class="ai-input">
+        </section>
+
+        <section class="ai-conversation" aria-label="코멘트와 Codex 대화">
+          <nav class="ai-side-tabs" aria-label="오른쪽 패널">
+            <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">코멘트 <span data-ai-comments-count>0</span></button>
+            <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
+          </nav>
+          <div class="ai-side-content">
+            <section class="ai-comments-panel" data-ai-comments-panel aria-label="위치별 코멘트">
+              <div class="ai-review-overview">
+                <div class="ai-review-summary" data-ai-review-summary data-state="idle" aria-live="polite">
+                  <strong>검수 대기</strong><span>생성 후 요청 반영 여부와 원본 구조를 확인합니다.</span>
+                </div>
+                <details class="ai-review-panel" aria-labelledby="ai-review-title">
+                  <summary id="ai-review-title">검수 상세 보기</summary>
+                  <header class="ai-review-head">
+                    <span class="ai-review-model">독립 검수 · Sol 높음</span>
+                    <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 생성 후 검수</label>
+                  </header>
+                  <div class="ai-review-meta" data-ai-review-meta hidden></div>
+                  <div class="ai-review-checks" data-ai-review-checks></div>
+                  <div class="ai-review-issues" data-ai-review-issues></div>
+                  <details class="ai-file-inspection" data-ai-pixel-inspection hidden>
+                    <summary>파일 검사 <span data-ai-pixel-inspection-summary></span></summary>
+                    <dl data-ai-pixel-inspection-list></dl>
+                  </details>
+                </details>
+              </div>
+              <section class="ai-comments-list-section" aria-label="수정 코멘트 목록">
+                <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>지정하지 않은 부분은 유지</span></header>
+                <div class="ai-comments-list" data-ai-comments aria-live="polite"><p class="ai-comments-empty">그림에서 점을 찍거나 영역을 둘러싸고 수정할 내용을 남기세요.</p></div>
+              </section>
+              <section class="ai-comment-compose" aria-label="선택한 코멘트 편집">
+                <header><strong>코멘트 편집</strong><button type="button" data-ai-comment-delete disabled>삭제</button></header>
+                <textarea data-ai-comment-editor aria-label="선택한 코멘트 내용" placeholder="예: 가열판의 검정 면을 흰 면과 윤곽선으로 바꿔 주세요."></textarea>
+                <div class="ai-comment-compose-foot"><span data-ai-comment-status>코멘트는 선택한 이미지 버전에 연결됩니다.</span><button type="button" data-ai-comment-save disabled>저장</button></div>
+              </section>
+            </section>
+            <section class="ai-chat-panel" data-ai-chat-panel aria-label="Codex와 대화" hidden>
+              <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>위치별 수정은 코멘트에, 전체적인 질문은 여기에 남깁니다.</p></header>
+              <div class="ai-log" data-ai-log role="log" aria-label="Codex 대화와 진행 기록"><p class="ai-log-empty" data-ai-log-empty>질문이나 전체 그림에 대한 추가 요구사항을 남길 수 있습니다.</p></div>
+              <section class="ai-input" aria-label="Codex 대화 입력">
+                <div class="ai-chat-composer">
+                  <textarea data-ai-input aria-label="Codex 대화 입력" placeholder="추가 요구사항이 없으면 평가원식 도식으로 생성합니다."></textarea>
+                  <button type="button" data-ai-chat-send title="대화 보내기 · 이미지 생성은 별도" aria-label="대화 보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg></button>
+                </div>
+                <p class="ai-chat-send-note">보내기는 대화만 · 그림 변경은 코멘트 반영하기</p>
+              </section>
+            </section>
+          </div>
+          <details class="ai-advanced-settings">
+            <summary>계정 및 고급 설정 <span data-ai-advanced-summary>생성 설정 확인 중</span></summary>
             <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
-              <span>그림 복잡도</span>
+              <span>복잡도</span>
               <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
               <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
               <button type="button" data-ai-quality="complex" title="해부도, 혈관, 복합 회로·배관 · 약 2~4분">복잡<small>검수 포함</small></button>
             </div>
             <div class="ai-mode-row" role="group" aria-label="출력 방식">
-              <span>출력 방식</span>
-              <button type="button" class="is-on" data-ai-output-engine="raster" title="교과서 그림처럼 세부적인 평가원식 선화로 생성합니다">교과서 선화</button>
+              <span>출력</span>
+              <button type="button" class="is-on" data-ai-output-engine="raster" title="그림형 선택 시 흰 배경 PNG를 후처리 없이 생성합니다">교과서 선화</button>
               <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
             </div>
             <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
@@ -480,18 +555,59 @@
               <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
               <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
             </div>
-            <div class="ai-chat-composer">
-              <textarea data-ai-input placeholder="요구사항을 입력하세요. Enter로 전송하고 Shift+Enter로 줄을 바꿉니다."></textarea>
-              <button type="button" data-ai-chat-send title="메시지 보내기" aria-label="메시지 보내기">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg>
-              </button>
+            <div class="ai-actions" aria-label="AI 연결 및 생성 설정">
+              <div class="ai-account-summary" aria-label="로그인 계정과 사용량">
+                <strong data-ai-account>계정 확인 중…</strong>
+                <span data-ai-limit>잔여 한도 확인 중…</span>
+                <span data-ai-account-tokens>누적 토큰 확인 중…</span>
+              </div>
+              <button type="button" data-ai-login>Codex 로그인</button>
+              <label class="ai-setting-label">생성 모델
+                <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
+              </label>
+              <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>권장 기본값은 Sol · 보통입니다. 모델별 품질·시간은 검증 중입니다.</span>
+              <label class="ai-setting-label">추론
+                <select data-ai-effort aria-label="추론 수준 선택"><option value="medium">보통</option></select>
+              </label>
+              <label class="ai-setting-label">속도
+                <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
+              </label>
+              <button type="button" data-ai-new>현재 작업 초기화</button>
             </div>
+          </details>
+          <footer class="ai-workbench-actions">
+            <p data-ai-white-png-note>기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존</p>
+              <section class="ai-mark-policy" data-ai-mark-policy aria-label="표시선 처리">
+                <p class="ai-mark-policy-note">물체 윤곽·관·도선·실제 눈금선은 보존. 숫자·단위는 제거.</p>
+                <div class="ai-mark-policy-fields">
+                  <label for="ai-mark-arrows">화살표
+                    <select id="ai-mark-arrows" data-ai-mark-arrows>
+                      <option value="structural" selected>구조 표시만 유지</option>
+                      <option value="keep">모두 유지</option>
+                      <option value="remove">모두 제거</option>
+                    </select>
+                  </label>
+                  <label for="ai-mark-trends">추세선
+                    <select id="ai-mark-trends" data-ai-mark-trends>
+                      <option value="keep" selected>유지</option>
+                      <option value="remove">제거</option>
+                    </select>
+                  </label>
+                  <label for="ai-mark-leaders">보조선·지시선
+                    <select id="ai-mark-leaders" data-ai-mark-leaders>
+                      <option value="remove" selected>제거</option>
+                      <option value="keep">유지</option>
+                    </select>
+                  </label>
+                </div>
+              </section>
+            <button type="button" class="modal-btn modal-btn-primary" data-ai-comments-apply disabled>코멘트 반영하기</button>
             <div class="ai-conversation-actions">
-              <span>영역 코멘트는 이미지와 함께 자동 전달됩니다.</span>
+              <button type="button" class="modal-btn modal-btn-primary" data-ai-send hidden>평가원식으로 만들기</button>
               <button type="button" data-ai-interrupt title="현재 진행 중인 AI 요청을 취소합니다" hidden>작업 취소</button>
-              <button type="button" class="modal-btn modal-btn-primary" data-ai-send>이미지 생성</button>
             </div>
-          </div>
+            <div class="ai-output-actions"><button type="button" data-ai-save-selected disabled>PNG 저장</button><button type="button" data-ai-insert-selected disabled>페이지에 넣고 닫기</button></div>
+          </footer>
         </section>
       </div>
     </section>
@@ -561,6 +677,7 @@
   </script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
+  <script type="module" src="js/ai-workbench.js?v=1.0.0"></script>
   <script type="module" src="js/main.js?v=1.5.9-delayed-cut-cache"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>

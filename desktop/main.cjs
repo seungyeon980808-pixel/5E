@@ -22,23 +22,7 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
-let server;
-let rpcId = 0;
-let threadId = null;
-let turnId = null;
-let activeTurnThreadId = null;
-let recoveryTerminatingTurnId = null;
-let initialized = false;
-let initializingPromise = null;
 let codexSendInvocationCount = 0;
-let activeTurnAdmission = null;
-const pending = new Map();
-const turnAttachmentPaths = new Map();
-const turnPerformance = new TurnPerformanceRegistry();
-const autoFinalizingImageTurns = new Set();
-const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
-const IMAGE_FINALIZE_POLL_MS = 500;
-const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImageRoots = new Set();
 const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
 
@@ -90,6 +74,29 @@ function collectLocalImages(root, limit = 5000) {
   }
   return output.sort((a, b) => a.relativePath.localeCompare(b.relativePath, "ko"));
 }
+
+function codexInvocation(args) {
+  if (process.platform !== "win32") return { file: "codex", args };
+  return { file: process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe", args: ["/d", "/s", "/c", "codex", ...args] };
+}
+
+function createCodexRuntime(clientScope = "") {
+let server;
+let rpcId = 0;
+let threadId = null;
+let turnId = null;
+let activeTurnThreadId = null;
+let recoveryTerminatingTurnId = null;
+let initialized = false;
+let initializingPromise = null;
+let activeTurnAdmission = null;
+const pending = new Map();
+const turnAttachmentPaths = new Map();
+const turnPerformance = new TurnPerformanceRegistry();
+const autoFinalizingImageTurns = new Set();
+const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
+const IMAGE_FINALIZE_POLL_MS = 500;
+const RPC_CHECK_TIMEOUT_MS = 1_500;
 
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 function withTimeout(promise, ms, label) {
@@ -247,11 +254,9 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
   sendImageFinalization(completedTurnId, "recovered", { status: "interrupted" });
 }
 
-function codexInvocation(args) {
-  if (process.platform !== "win32") return { file: "codex", args };
-  return { file: process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe", args: ["/d", "/s", "/c", "codex", ...args] };
+function send(event, payload) {
+  if (win && !win.isDestroyed()) win.webContents.send(event, { ...payload, clientScope });
 }
-function send(event, payload) { if (win && !win.isDestroyed()) win.webContents.send(event, payload); }
 function rejectPending(error) { for (const p of pending.values()) p.reject(error); pending.clear(); }
 function cleanupAttachments(id) {
   for (const file of turnAttachmentPaths.get(id) || []) void fs.promises.unlink(file).catch(() => {});
@@ -356,6 +361,7 @@ function startServer() {
     const child = server;
     const rl = createInterface({ input: child.stdout });
     rl.on("line", (line) => {
+      if (server !== child) return;
       let msg; try { msg = JSON.parse(line); } catch { return; }
       if (msg.id != null && pending.has(msg.id)) {
         const p = pending.get(msg.id); pending.delete(msg.id);
@@ -382,6 +388,7 @@ function startServer() {
   } catch (error) { return { ok: false, state: "missing", message: error.message }; }
 }
 function stopServer() {
+  rejectPending(new Error("Codex App Server가 중지되었습니다."));
   if (server) server.kill();
   server = null;
   threadId = null;
@@ -564,6 +571,25 @@ function interruptActiveTurn() {
       .catch((error) => ({ ok: false, state: "interrupt-failed", message: error.message }));
   }
   return admission.interruptPromise;
+}
+
+  return {
+    startServer, stopServer, listModels, accountOverview, sendTurn, interruptActiveTurn,
+    status: async () => ({ server: !!server, login: await loginStatus() }),
+  };
+}
+
+const codexRuntimes = new Map();
+function runtimeFor(payload = {}) {
+  const clientScope = payload?.clientScope ?? "";
+  if (typeof clientScope !== "string" || clientScope.length > 128) {
+    throw new Error("AI 작업 식별자가 올바르지 않습니다.");
+  }
+  if (!codexRuntimes.has(clientScope)) codexRuntimes.set(clientScope, createCodexRuntime(clientScope));
+  return codexRuntimes.get(clientScope);
+}
+function stopAllServers() {
+  for (const runtime of codexRuntimes.values()) runtime.stopServer();
 }
 
 function createWindow() {
@@ -1155,16 +1181,16 @@ function createWindow() {
     });
   }
 }
-ipcMain.handle("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
-ipcMain.handle("codex:start", () => startServer());
-ipcMain.handle("codex:stop", () => stopServer());
-ipcMain.handle("codex:models", () => listModels());
-ipcMain.handle("codex:account", () => accountOverview());
+ipcMain.handle("codex:status", (_, payload) => runtimeFor(payload).status());
+ipcMain.handle("codex:start", (_, payload) => runtimeFor(payload).startServer());
+ipcMain.handle("codex:stop", (_, payload) => runtimeFor(payload).stopServer());
+ipcMain.handle("codex:models", (_, payload) => runtimeFor(payload).listModels());
+ipcMain.handle("codex:account", (_, payload) => runtimeFor(payload).accountOverview());
 ipcMain.handle("codex:send", (_, payload) => {
   codexSendInvocationCount += 1;
-  return sendTurn(payload);
+  return runtimeFor(payload).sendTurn(payload);
 });
-ipcMain.handle("codex:interrupt", () => interruptActiveTurn());
+ipcMain.handle("codex:interrupt", (_, payload) => runtimeFor(payload).interruptActiveTurn());
 ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
 ipcMain.handle("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({
@@ -1210,4 +1236,4 @@ ipcMain.handle("local-images:read", async (_, filePath) => {
   return imageDataUrl(path.resolve(filePath));
 });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
-app.on("before-quit", stopServer);
+app.on("before-quit", stopAllServers);

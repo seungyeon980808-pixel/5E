@@ -45,7 +45,14 @@ function isEditingFieldTarget(target) {
 function loadImageSize(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+    img.onload = () => {
+      const w = Number(img.naturalWidth), h = Number(img.naturalHeight);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+        reject(new Error("이미지 크기를 확인할 수 없습니다."));
+        return;
+      }
+      resolve({ w, h });
+    };
     img.onerror = () => reject(new Error("Unable to decode image"));
     img.src = src;
   });
@@ -62,8 +69,10 @@ function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
   // place.at 지정 시 그 지점(예: 아트보드 원점)을 기준으로, 아니면 마지막 마우스/뷰포트 중앙.
-  const target = (place && place.at) ? place.at : (getLastMouseWorld() ||
-    { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
+  const target = place?.centerArtboard
+    ? { x: s0.artboard.w / 2, y: s0.artboard.h / 2 }
+    : (place && place.at) ? place.at : (getLastMouseWorld() ||
+      { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
   const off = (place && place.offset) || { dx: 0, dy: 0 };
   const x = target.x - fitted.w / 2 + off.dx;
   const y = target.y - fitted.h / 2 + off.dy;
@@ -92,20 +101,90 @@ function insertImageObject(state, src, size, place) {
       layerId: s.activeLayerId,
       order: s.objects.length,
       cutouts: [],
+      ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
     });
     s.selectedIds = [id];
     s.targetedId = null;
     s.activeTool = "V";
   });
+  return id;
 }
 
 /* 외부 모듈용(기출 라이브러리·이미지 불러오기 등): dataURL을 즉시 이미지 객체로 삽입.
  * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다.
  * opts.at={x,y} = 삽입 기준점(예: 아트보드 원점), opts.offset={dx,dy} = 카스케이드용. */
-export async function insertImageFromSrc(state, src, opts) {
-  const natural = await loadImageSize(src);
-  const scaled = await downscaleIfNeeded(src, natural);
-  insertImageObject(state, scaled.src, scaled.size, opts);
+export async function insertImageFromSrc(state, src, opts = {}) {
+  // Capture intent before decoding. UI state (page, selected object, even opts)
+  // can change while Image.onload/downscaling is pending.
+  const options = { ...opts,
+    ...(opts?.at ? { at: { ...opts.at } } : {}),
+    ...(opts?.offset ? { offset: { ...opts.offset } } : {}),
+  };
+  if (typeof src !== "string" || !src.trim()) throw new Error("삽입할 이미지가 없습니다.");
+  const hasAiMetadata = options.aiTaskId != null || options.aiCandidateId != null;
+  if (hasAiMetadata && (![options.aiTaskId, options.aiCandidateId].every(value => typeof value === "string" && value.trim()))) {
+    throw new Error("이미지 작업·버전 정보를 확인할 수 없습니다.");
+  }
+  if (options.replaceId && !hasAiMetadata) throw new Error("교체할 이미지 작업 정보가 없습니다.");
+
+  const initial = state.get();
+  const pageId = initial.activePageId ?? null;
+  const pageRecord = initial.pages?.find(page => page.id === pageId) ?? null;
+  const objectsAtStart = initial.objects;
+  const initialTarget = options.replaceId ? initial.objects.find(obj => obj.id === options.replaceId) : null;
+  const targetSource = initialTarget?.src;
+  const targetCandidateId = initialTarget?.aiCandidateId;
+  let invalidated = false;
+  function assertContext(s) {
+    if (invalidated || (s.activePageId ?? null) !== pageId
+      || (s.pages?.find(page => page.id === pageId) ?? null) !== pageRecord
+      || s.objects !== objectsAtStart) {
+      throw new Error("이미지를 준비하는 동안 페이지가 변경되었습니다. 다시 시도해 주세요.");
+    }
+    if (!options.replaceId) return null;
+    const target = s.objects.find(obj => obj.id === options.replaceId);
+    if (!target || target !== initialTarget || target.type !== "image"
+      || target.aiTaskId !== options.aiTaskId || target.src !== targetSource
+      || target.aiCandidateId !== targetCandidateId
+      || s.selectedIds?.length !== 1 || s.selectedIds[0] !== target.id) {
+      throw new Error("교체 대상 이미지나 선택이 변경되었습니다. 다시 선택해 주세요.");
+    }
+    if (target.locked || target.positionLocked || target.imageSelectionLocked) {
+      throw new Error("잠긴 이미지는 교체할 수 없습니다.");
+    }
+    return target;
+  }
+  assertContext(initial);
+  // Latch temporary page/selection changes too (switch away and back is not
+  // permission to complete an earlier operation). Always release the listener.
+  const unsubscribe = state.subscribe?.((s) => {
+    try { assertContext(s); } catch { invalidated = true; }
+  });
+  try {
+    const natural = await loadImageSize(src);
+    assertContext(state.get());
+    if (options.replaceId) {
+      state.update((s) => {
+        const target = assertContext(s);
+        const undo = JSON.parse(JSON.stringify(s.objects));
+        s.undoStack.push(undo);
+        if (s.undoStack.length > MAX_UNDO) s.undoStack.splice(0, s.undoStack.length - MAX_UNDO);
+        s.redoStack = [];
+        // Geometry, layer, grouping, clipping and other image settings remain.
+        target.src = src;
+        target.aiCandidateId = options.aiCandidateId;
+        s.selectedIds = [target.id];
+        s.targetedId = null;
+        s.activeTool = "V";
+      });
+      return options.replaceId;
+    }
+    const scaled = options.preserveBytes ? { src, size: natural } : await downscaleIfNeeded(src, natural);
+    assertContext(state.get());
+    return insertImageObject(state, scaled.src, scaled.size, options);
+  } finally {
+    if (typeof unsubscribe === "function") unsubscribe();
+  }
 }
 
 export function initImagePaste(state, svg) {

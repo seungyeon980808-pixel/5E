@@ -7,8 +7,10 @@
  * returned crop/contact-sheet descriptors with Canvas or OffscreenCanvas.
  */
 
-export const REMOTE_INPUT_PLAN_VERSION = "remote-input-v2";
-export const EXACT_OUTPUT_CACHE_SCHEMA = "5e-ai-output-v2";
+import { getReferenceRole } from "./ai-reference-roles.js";
+
+export const REMOTE_INPUT_PLAN_VERSION = "remote-input-v3";
+export const EXACT_OUTPUT_CACHE_SCHEMA = "5e-ai-output-v3";
 
 export const DEFAULT_REMOTE_INPUT_OPTIONS = Object.freeze({
   maxOutgoingImages: 4,
@@ -289,10 +291,12 @@ export function pruneOutgoingAttachments(items = [], {
       continue;
     }
 
-    const duplicate = byHash.get(hash);
+    // Equal pixels with different semantic roles must never collapse together.
+    const duplicateKey = `${getReferenceRole(item)}:${hash}`;
+    const duplicate = byHash.get(duplicateKey);
     if (!duplicate) {
       const copy = { ...item, comments: [...(item.comments || [])], exactImageHash: hash };
-      byHash.set(hash, copy);
+      byHash.set(duplicateKey, copy);
       kept.push(copy);
       continue;
     }
@@ -303,7 +307,7 @@ export function pruneOutgoingAttachments(items = [], {
       : { ...duplicate, comments: mergeComments(duplicate.comments, item.comments), exactImageHash: hash };
     const index = kept.indexOf(duplicate);
     if (index >= 0) kept[index] = winner;
-    byHash.set(hash, winner);
+    byHash.set(duplicateKey, winner);
     removed.push({ item: itemWins ? duplicate : item, reason: "duplicate", keptId: winner.id ?? null });
   }
 
@@ -416,6 +420,9 @@ export function createRemoteImageInputPlan({
   settings.maxContactSheetTiles = positiveInteger(settings.maxContactSheetTiles, DEFAULT_REMOTE_INPUT_OPTIONS.maxContactSheetTiles);
 
   const cleaned = pruneOutgoingAttachments(references, { latestResult, includeGenerated: false });
+  if (cleaned.items.some(item => getReferenceRole(item) === 'STYLE_REFERENCE')) {
+    throw new TypeError('Style references require the separate-role white PNG path, not a contact sheet');
+  }
   const dedupedAt = now();
   const latestCleaned = latestResult
     ? pruneOutgoingAttachments([latestResult], { latestResult, includeGenerated: true }).items[0] || null
@@ -532,6 +539,7 @@ export function buildExactOutputCacheDescriptor({
   const referenceSignatures = cleaned.items.map((item, index) => ({
     order: index,
     role: item.primary || (primaryReferenceId && item.id === primaryReferenceId) ? "primary" : "reference",
+    referenceRole: getReferenceRole(item),
     signature: item.exactImageHash || exactImageHash(item),
   }));
   const itemComments = cleaned.items.flatMap((item) => (item.comments || [])
