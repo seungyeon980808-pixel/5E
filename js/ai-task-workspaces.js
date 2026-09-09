@@ -12,6 +12,60 @@ export function createTaskBridge(base, clientScope) {
   return bridge;
 }
 
+export function createTaskPersistence({
+  store,
+  capture,
+  snapshot,
+  warn,
+  delayMs = 350,
+  setTimer = setTimeout,
+  clearTimer = clearTimeout,
+} = {}) {
+  let timer = null;
+  let dirty = false;
+  let outage = false;
+  let queue = Promise.resolve();
+  const captureAndQueue = () => {
+    if (!dirty) return queue;
+    dirty = false;
+    let value;
+    let captureError;
+    try {
+      capture();
+      value = structuredClone(snapshot());
+    } catch (error) {
+      captureError = error;
+    }
+    const write = async () => {
+      try {
+        if (captureError) throw captureError;
+        if (!store) throw new Error('IndexedDB unavailable');
+        await store.put(value);
+        outage = false;
+      } catch (error) {
+        if (!outage) warn(error);
+        outage = true;
+      }
+    };
+    queue = queue.then(write, write);
+    return queue;
+  };
+  const flush = () => {
+    if (timer) clearTimer(timer);
+    timer = null;
+    return captureAndQueue();
+  };
+  return {
+    schedule() {
+      dirty = true;
+      if (timer) clearTimer(timer);
+      timer = setTimer(() => { timer = null; void captureAndQueue(); }, delayMs);
+    },
+    flush,
+    settled: () => queue,
+  };
+}
+
 export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   const original = document.getElementById('ai-image-panel');
   if (!original) return;

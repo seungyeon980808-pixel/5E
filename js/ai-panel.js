@@ -1,4 +1,4 @@
-import { createTaskWorkspaces } from './ai-task-workspaces.js';
+import { createTaskPersistence, createTaskWorkspaces } from './ai-task-workspaces.js';
 import { setupAiWorkbench } from './ai-workbench.js';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -196,6 +196,16 @@ export function aiTerminalStatusView(outcome, { imageReceived = false } = {}) {
   if (outcome === "cancelled") return { text: "작업 취소됨", kind: "warn" };
   if (outcome === "completed" && imageReceived) return { text: "생성 완료", kind: "ok" };
   return null;
+}
+
+export function candidateReviewOnTerminal(candidate, outcome) {
+  if (outcome !== "cancelled" || candidate?.reviewState !== "generating") return null;
+  return {
+    ...candidate.reviewMeta,
+    state: "cancelled",
+    candidateId: candidate.id,
+    report: candidate.reviewReport,
+  };
 }
 
 export function compilePanelScene(input, options) {
@@ -1362,10 +1372,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   let commentController = null;
   let workspaceReady = Promise.resolve();
-  let persistenceTimer = null;
-  let storageFailed = false;
   const taskStore = typeof indexedDB !== "undefined" ? new IndexedDBOutputCacheBackend({databaseName:clientScope ? `5e-ai-image-tasks-${clientScope}` : "5e-ai-image-tasks",storeName:"tasks"}) : null;
-  const persistTasks = () => { clearTimeout(persistenceTimer); persistenceTimer=setTimeout(async()=>{try{captureActiveTaskTab(); if(!taskStore)throw new Error("IndexedDB unavailable"); await taskStore.put({key:"workspace",tabs:[...taskTabs.values()],activeTaskTabId,taskTabSerial,imageSerial});}catch(error){if(!storageFailed){storageFailed=true;addLog(`작업 임시저장 실패: ${error.message}. 창을 새로고침하지 마세요.`,"error");}}},350); };
   const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
   const captureActiveTaskTab = () => {
     const tab = taskTabs.get(activeTaskTabId);
@@ -1385,6 +1392,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.outputEngine = selectedOutputEngine;
     tab.markPolicy = readMarkPolicy();
   };
+  const taskPersistence = createTaskPersistence({
+    store: taskStore,
+    capture: captureActiveTaskTab,
+    snapshot: () => ({key:"workspace",tabs:[...taskTabs.values()],activeTaskTabId,taskTabSerial,imageSerial}),
+    warn: error => addLog(`작업 임시저장 실패: ${error.message}. 창을 새로고침하지 마세요.`, "error"),
+  });
+  const persistTasks = () => taskPersistence.schedule();
 
   const renderTaskTabs = () => {
     if (!tabList) return;
@@ -2262,7 +2276,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
-  const close = () => { captureActiveTaskTab();persistTasks();panel.hidden = true; };
+  const close = () => { captureActiveTaskTab();persistTasks();void taskPersistence.flush();panel.hidden = true; };
 
   const submit = async (type, options = {}) => {
     if (busy || !desktop) return refresh();
@@ -2817,6 +2831,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
     if (currentTerminalOutcome !== "completed") {
       pendingCacheOutput = null;
+      const cancelledReview = candidateReviewOnTerminal(currentReviewCandidate, currentTerminalOutcome);
+      if (cancelledReview) dispatchReviewEvent(cancelledReview, currentReviewCandidate);
       setGenerating(false);
       setBusy(false);
       currentTurnDone = true;
@@ -3235,8 +3251,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   panel.addEventListener('input',()=>persistTasks());
   panel.addEventListener('5e:ai-review',()=>{commentController.render();syncSelectedOutputActions();persistTasks();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')void taskPersistence.flush();});
+  window.addEventListener('pagehide',()=>{void taskPersistence.flush();});
   if (!taskTabs.size) createTaskTab();
-  workspaceReady=(async()=>{try{const saved=await taskStore?.get('workspace');if(Array.isArray(saved?.tabs)){taskTabs.clear();for(const tab of saved.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(saved.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(saved.imageSerial)||0);if(taskTabs.size)restoreTaskTab(taskTabs.has(saved.activeTaskTabId)?saved.activeTaskTabId:taskTabs.keys().next().value);else{activeTaskTabId=null;renderTaskTabs();}}}catch(error){storageFailed=true;addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
+  workspaceReady=(async()=>{try{const saved=await taskStore?.get('workspace');if(Array.isArray(saved?.tabs)){taskTabs.clear();for(const tab of saved.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(saved.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(saved.imageSerial)||0);if(taskTabs.size)restoreTaskTab(taskTabs.has(saved.activeTaskTabId)?saved.activeTaskTabId:taskTabs.keys().next().value);else{activeTaskTabId=null;renderTaskTabs();}}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
     reviewModelSelect.replaceChildren(new Option(AI_IMAGE_REVIEW_MODEL, AI_IMAGE_REVIEW_MODEL));
     reviewModelSelect.value = AI_IMAGE_REVIEW_MODEL;

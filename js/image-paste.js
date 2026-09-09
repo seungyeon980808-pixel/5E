@@ -65,12 +65,17 @@ function fitToArtboard(natural, artboard) {
   return { w: natural.w * scale, h: natural.h * scale };
 }
 
+function targetStateFingerprint(target) {
+  const { src, ...state } = target;
+  return JSON.stringify(state);
+}
+
 function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
   // place.at 지정 시 그 지점(예: 아트보드 원점)을 기준으로, 아니면 마지막 마우스/뷰포트 중앙.
   const target = place?.centerArtboard
-    ? { x: s0.artboard.w / 2, y: s0.artboard.h / 2 }
+    ? { x: 0, y: 0 }
     : (place && place.at) ? place.at : (getLastMouseWorld() ||
       { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
   const off = (place && place.offset) || { dx: 0, dy: 0 };
@@ -132,18 +137,20 @@ export async function insertImageFromSrc(state, src, opts = {}) {
   const pageRecord = initial.pages?.find(page => page.id === pageId) ?? null;
   const objectsAtStart = initial.objects;
   const initialTarget = options.replaceId ? initial.objects.find(obj => obj.id === options.replaceId) : null;
+  const targetSnapshot = initialTarget ? targetStateFingerprint(initialTarget) : null;
   const targetSource = initialTarget?.src;
   const targetCandidateId = initialTarget?.aiCandidateId;
-  let invalidated = false;
+  let invalidationError = null;
   function assertContext(s) {
-    if (invalidated || (s.activePageId ?? null) !== pageId
+    if (invalidationError) throw invalidationError;
+    if ((s.activePageId ?? null) !== pageId
       || (s.pages?.find(page => page.id === pageId) ?? null) !== pageRecord
       || s.objects !== objectsAtStart) {
       throw new Error("이미지를 준비하는 동안 페이지가 변경되었습니다. 다시 시도해 주세요.");
     }
     if (!options.replaceId) return null;
     const target = s.objects.find(obj => obj.id === options.replaceId);
-    if (!target || target !== initialTarget || target.type !== "image"
+    if (!target || target !== initialTarget || targetStateFingerprint(target) !== targetSnapshot || target.type !== "image"
       || target.aiTaskId !== options.aiTaskId || target.src !== targetSource
       || target.aiCandidateId !== targetCandidateId
       || s.selectedIds?.length !== 1 || s.selectedIds[0] !== target.id) {
@@ -158,7 +165,7 @@ export async function insertImageFromSrc(state, src, opts = {}) {
   // Latch temporary page/selection changes too (switch away and back is not
   // permission to complete an earlier operation). Always release the listener.
   const unsubscribe = state.subscribe?.((s) => {
-    try { assertContext(s); } catch { invalidated = true; }
+    try { assertContext(s); } catch (error) { invalidationError ??= error; }
   });
   try {
     const natural = await loadImageSize(src);
