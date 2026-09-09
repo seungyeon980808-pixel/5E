@@ -1,4 +1,5 @@
 import { enforcePngAcceptance } from '../js/ai-png-inspection.js';
+import { candidateReviewOnTerminal } from '../js/ai-panel.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
@@ -32,4 +33,12 @@ test('chromatic PNG from actual trial cannot override file contract with visual 
 test('missing historical file metrics cannot restore a certified pass',()=>{
  const d={state:'passed',report:{verdict:'pass',checks:[],issues:[]}};
  assert.equal(enforcePngAcceptance(d,{pixelInspection:{opaque:true}}).state,'needs-attention');assert.equal(d.state,'passed');
+});
+test('actual cancellation retires only the current generating candidate and preserves its output',()=>{
+ const report={verdict:'uncertain',checks:[],issues:[]};
+ const current={id:'current',data:'PNG-BYTES',reviewState:'generating',reviewReport:report,reviewMeta:{generationCount:1,reviewCount:0,model:'model',effort:'high'}};
+ assert.deepEqual(candidateReviewOnTerminal(current,'cancelled'),{...current.reviewMeta,state:'cancelled',candidateId:'current',report});
+ assert.equal(current.data,'PNG-BYTES');assert.equal(current.reviewState,'generating');
+ assert.equal(candidateReviewOnTerminal({...current,reviewState:'passed'},'cancelled'),null);
+ assert.equal(candidateReviewOnTerminal(current,'failed'),null);
 });

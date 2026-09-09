@@ -1,6 +1,5 @@
 function editorPanelSource(source) {
   const replacements = [
-    ['흰 배경 PNG · 첫 생성 1회 · 자동 검수·교정 없음 · 후처리 없음', '첫 PNG 원본 보관 · 자동 검수·교정 없음'],
     ['if (!panel) return;', 'if (!panel) return;\n  const background = createBackgroundOptions(panel);\n  const taskFeedback = createTaskFeedback(panel);'],
     ['stage.appendChild(img);', 'stage.appendChild(img);\n    background.register(item, img);'],
     ['void insertImageFromSrc(state, item.data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null})',
@@ -19,9 +18,10 @@ function editorPanelSource(source) {
   if (reviewStart < 0 || reviewEnd < 0) throw new Error('Scoped review source changed');
   source = source.slice(0, reviewStart) + "          return scopedDialog('수정 결과 확인', '원하는 대로 수정되었는지 비교해 주세요. 이 결과를 사용해도 원본은 남아 있습니다.', { content: simplifyComparison(comparison), accept: '이 결과 사용' });\n" + source.slice(reviewEnd);
   const saveStart = source.indexOf('    if (item.kind === "generated" && !item.sceneResult) {');
-  const saveEnd = source.indexOf('    actions.classList.add("ai-preview-actions-head");', saveStart);
+  const saveTail = '      actions.appendChild(savePng);\n    }\n';
+  const saveEnd = source.indexOf(saveTail, saveStart);
   if (saveStart < 0 || saveEnd < 0) throw new Error('AI PNG action source changed');
-  source = source.slice(0, saveStart) + source.slice(saveEnd);
+  source = source.slice(0, saveStart) + source.slice(saveEnd + saveTail.length);
   return 'import { simplifyComparison } from "/editor-review.js";\nimport { createTaskFeedback } from "/editor-feedback.js";\nimport { createBackgroundOptions } from "/editor-background.js";\n' + source;
 }
 module.exports = { editorPanelSource };

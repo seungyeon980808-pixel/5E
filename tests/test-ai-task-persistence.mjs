@@ -1,0 +1,134 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createTaskPersistence } from '../js/ai-task-workspaces.js';
+
+class FakeClock {
+  constructor() { this.nextId = 1; this.timers = new Map(); }
+  setTimeout = (callback) => {
+    const id = this.nextId++;
+    this.timers.set(id, callback);
+    return id;
+  };
+  clearTimeout = (id) => this.timers.delete(id);
+  fire() {
+    const pending = [...this.timers.values()];
+    this.timers.clear();
+    for (const callback of pending) callback();
+  }
+}
+
+const deferred = () => {
+  let resolve;
+  let reject;
+  const promise = new Promise((onResolve, onReject) => { resolve = onResolve; reject = onReject; });
+  return { promise, resolve, reject };
+};
+
+test('pending task changes flush immediately when the page is hidden', async () => {
+  const clock = new FakeClock();
+  const writes = [];
+  let value = { activeTaskTabId: 'task-a', tabs: [{ id: 'task-a', input: 'latest comment' }] };
+  const persistence = createTaskPersistence({
+    store: { put: async snapshot => writes.push(snapshot) },
+    capture: () => {},
+    snapshot: () => value,
+    warn: () => assert.fail('storage should stay available'),
+    setTimer: clock.setTimeout,
+    clearTimer: clock.clearTimeout,
+  });
+
+  persistence.schedule();
+  assert.equal(writes.length, 0, 'the ordinary debounce should still defer the write');
+  await persistence.flush();
+  assert.equal(writes.length, 1, 'page lifecycle flush must start the pending IndexedDB write');
+  assert.deepEqual(writes[0], value);
+});
+
+test('slow writes are serialized and keep immutable task, image, version, and comment snapshots', async () => {
+  const clock = new FakeClock();
+  const first = deferred();
+  const writes = [];
+  let value = {
+    activeTaskTabId: 'task-a',
+    tabs: [{ id: 'task-a', generated: [{ id: 'v1', data: 'png-a', comments: [{ number: 1, text: 'old' }] }] }],
+  };
+  const persistence = createTaskPersistence({
+    store: { put: snapshot => { writes.push(snapshot); return writes.length === 1 ? first.promise : Promise.resolve(); } },
+    capture: () => {},
+    snapshot: () => value,
+    warn: () => assert.fail('storage should stay available'),
+    setTimer: clock.setTimeout,
+    clearTimer: clock.clearTimeout,
+  });
+
+  persistence.schedule();
+  clock.fire();
+  await Promise.resolve();
+  assert.equal(writes.length, 1);
+
+  value.tabs[0].generated[0].comments[0].text = 'mutated after capture';
+  value = {
+    activeTaskTabId: 'task-b',
+    tabs: [
+      { id: 'task-a', generated: [{ id: 'v1', data: 'png-a', comments: [{ number: 1, text: 'old' }] }] },
+      { id: 'task-b', generated: [{ id: 'v2', data: 'png-b', comments: [{ number: 2, text: 'new' }] }] },
+    ],
+  };
+  persistence.schedule();
+  clock.fire();
+  await Promise.resolve();
+  assert.equal(writes.length, 1, 'a second backend write must wait for the first one');
+  assert.equal(writes[0].tabs[0].generated[0].comments[0].text, 'old');
+
+  first.resolve();
+  await persistence.settled();
+  assert.equal(writes.length, 2);
+  assert.equal(writes[1].activeTaskTabId, 'task-b');
+  assert.deepEqual(writes[1].tabs.map(tab => tab.generated[0].data), ['png-a', 'png-b']);
+});
+
+test('a recovered store reports a later independent outage', async () => {
+  const clock = new FakeClock();
+  const warnings = [];
+  let attempt = 0;
+  const persistence = createTaskPersistence({
+    store: { put: async () => { attempt += 1; if (attempt !== 2) throw new Error(`failure-${attempt}`); } },
+    capture: () => {},
+    snapshot: () => ({ key: 'workspace', attempt }),
+    warn: error => warnings.push(error.message),
+    setTimer: clock.setTimeout,
+    clearTimer: clock.clearTimeout,
+  });
+
+  for (let index = 0; index < 3; index += 1) {
+    persistence.schedule();
+    clock.fire();
+    await persistence.settled();
+  }
+  assert.deepEqual(warnings, ['failure-1', 'failure-3']);
+});
+
+test('an uncloneable pending snapshot warns without escaping the lifecycle callback', async () => {
+  const clock = new FakeClock();
+  const warnings = [];
+  let value = { key: 'workspace', invalid: () => {} };
+  const persistence = createTaskPersistence({
+    store: { put: async () => {} },
+    capture: () => {},
+    snapshot: () => value,
+    warn: error => warnings.push(error.name),
+    setTimer: clock.setTimeout,
+    clearTimer: clock.clearTimeout,
+  });
+
+  persistence.schedule();
+  assert.doesNotThrow(() => clock.fire());
+  await persistence.settled();
+  assert.deepEqual(warnings, ['DataCloneError']);
+
+  value = { key: 'workspace', tabs: [] };
+  persistence.schedule();
+  clock.fire();
+  await persistence.settled();
+  assert.deepEqual(warnings, ['DataCloneError'], 'a cloneable later state should recover normally');
+});

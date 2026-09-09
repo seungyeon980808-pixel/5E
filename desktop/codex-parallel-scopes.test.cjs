@@ -148,3 +148,64 @@ test("first-image finalization only interrupts and releases its owning scope", a
     assert.equal(b.turnId, "turn-2-1");
   } finally { h.quit(); }
 });
+
+test("a scoped server disconnect releases only its own turn, deduplicates exit, and drops late output", async () => {
+  const h = harness();
+  try {
+    const [a, b] = await Promise.all(["a", "b"].map((clientScope) =>
+      h.invoke("send", { clientScope, text: "draw", purpose: "image" })));
+    h.children[0].emit("error", new Error("pipe closed"));
+    h.children[0].exitCode = 17;
+    h.children[0].emit("exit", 17, null);
+
+    const failures = h.events.filter(({ payload }) =>
+      payload.method === "5e/image-finalization" && payload.params.turnId === a.turnId);
+    assert.equal(failures.length, 1);
+    assert.equal(failures[0].payload.clientScope, "a");
+    assert.equal(failures[0].payload.params.state, "recoveryFailed");
+    assert.equal(failures[0].payload.params.message, "pipe closed");
+    await assert.rejects(h.invoke("send", { clientScope: "b", text: "duplicate" }), /이전 AI 작업/);
+    h.emit(1, { method: "turn/completed", params: { turn: { id: b.turnId, status: "completed" } } });
+    await assert.doesNotReject(h.invoke("send", { clientScope: "b", text: "next" }));
+
+    const restarted = await h.invoke("send", { clientScope: "a", text: "restart" });
+    h.events.length = 0;
+    h.emit(0, { method: "turn/completed", params: { turn: { id: a.turnId, status: "completed" } } });
+    assert.equal(h.events.some(({ payload }) => payload.params?.turn?.id === a.turnId), false);
+    assert.notEqual(restarted.turnId, a.turnId);
+  } finally {
+    h.quit();
+  }
+  assert.ok(h.children.every((child) => child.killed || child.exitCode != null));
+});
+
+test("a hung repeated interrupt stays deduplicated and does not block its concurrent scope", async () => {
+  const h = harness();
+  try {
+    const [a, b] = await Promise.all(["a", "b"].map((clientScope) =>
+      h.invoke("send", { clientScope, text: "draw", purpose: "image" })));
+    const originalWrite = h.children[0].stdin.write;
+    h.children[0].stdin.write = (line) => {
+      const call = JSON.parse(line);
+      if (call.method === "turn/interrupt") {
+        h.children[0].calls.push(call);
+        return true;
+      }
+      return originalWrite(line);
+    };
+
+    const first = h.invoke("interrupt", { clientScope: "a" });
+    const repeated = h.invoke("interrupt", { clientScope: "a" });
+    assert.strictEqual(first, repeated);
+    assert.equal(h.children[0].calls.filter((call) => call.method === "turn/interrupt").length, 1);
+    await assert.rejects(h.invoke("send", { clientScope: "a", text: "duplicate" }), /이전 AI 작업/);
+
+    h.emit(1, { method: "turn/completed", params: { turn: { id: b.turnId, status: "completed" } } });
+    assert.notEqual((await h.invoke("send", { clientScope: "b", text: "next" })).turnId, b.turnId);
+    await h.invoke("stop", { clientScope: "a" });
+    assert.equal((await first).state, "interrupt-failed");
+  } finally {
+    h.quit();
+  }
+  assert.ok(h.children.every((child) => child.killed));
+});

@@ -67,7 +67,7 @@ test('loading another document with the same page ID invalidates a pending inser
   const f=fixture(),pending=f.insert(f.state,'new',{preserveBytes:true});f.state.update(s=>{s.pages=plain(s.pages);s.objects=s.pages[0].objects});const before=plain(f.value);f.finish();await assert.rejects(pending,/페이지/);assert.deepEqual(plain(f.value),before);
 });
 test('selection change and reselection cannot revive a replacement',async()=>{
-  const f=fixture(),pending=f.insert(f.state,'new',replaceOptions());f.state.update(s=>s.selectedIds=[]);f.state.update(s=>s.selectedIds=['image-1']);const before=plain(f.value);f.finish();await assert.rejects(pending);assert.deepEqual(plain(f.value),before);
+  const f=fixture(),pending=f.insert(f.state,'new',replaceOptions());f.state.update(s=>s.selectedIds=[]);f.state.update(s=>s.selectedIds=['image-1']);const before=plain(f.value);f.finish();await assert.rejects(pending,/교체 대상/);assert.deepEqual(plain(f.value),before);
 });
 test('replacement requires exactly the original selected task object',async()=>{
   for(const mutate of [f=>f.value.selectedIds=['image-1','other'],f=>f.target.aiTaskId='other-task',f=>f.value.selectedIds=[]]){const f=fixture();mutate(f);const before=plain(f.value);await assert.rejects(f.insert(f.state,'new',replaceOptions()));assert.equal(f.images.length,0);assert.deepEqual(plain(f.value),before);}
@@ -76,6 +76,13 @@ test('same-id object replacement or source mutation while waiting aborts without
   for(const mutate of [s=>{s.objects[0]=plain(s.objects[0])},s=>{s.objects[0].src='another-source'},s=>{s.objects[0].aiCandidateId='other-version'}]){
     const f=fixture(),pending=f.insert(f.state,'new',replaceOptions());f.state.update(mutate);const before=plain(f.value);f.finish();await assert.rejects(pending);assert.deepEqual(plain(f.value),before);assert.equal(f.value.objects.length,1);
   }
+});
+test('in-place target mutation while decoding aborts an obsolete replacement before it changes source bytes',async()=>{
+  const f=fixture(),pending=f.insert(f.state,'new',replaceOptions());
+  f.state.update(s=>{s.objects[0].x=999;});
+  const before=plain(f.value);f.finish();
+  await assert.rejects(pending,/교체 대상/);
+  assert.deepEqual(plain(f.value),before);
 });
 test('page changes during the second image/downscale await are also rejected',async()=>{
   const f=fixture(),pending=f.insert(f.state,'large-image');f.finish(0,{w:5000,h:4000});await Promise.resolve();assert.equal(f.images.length,2);f.state.update(s=>s.activePageId='page-2');const before=plain(f.value);f.finish(1,{w:5000,h:4000});await assert.rejects(pending,/페이지/);assert.deepEqual(plain(f.value),before);assert.equal(f.canvasCount,1);assert.equal(f.subscriptions.size,0);
@@ -96,10 +103,11 @@ test('actual serialize/JSON/migrate/load preparation preserves source and AI pro
   const project=plain(io.serialize(f.value));const prepared=io.prepareLoadedProject(project);const object=prepared.active.objects.find(o=>o.id===id);assert.equal(object.src,'data:image/png;base64,EXACT');assert.equal(object.aiTaskId,'task-1');assert.equal(object.aiCandidateId,'v7');assert.equal(object.layerId,7);assert.equal(prepared.activePageId,'page-1');
 });
 
-test('AI insertion uses the page center even if viewport or stale pointer is elsewhere',async()=>{
+test('AI insertion uses the origin-centered artboard center even if viewport or stale pointer is elsewhere',async()=>{
   const f=fixture();f.value.viewBox={x:-999,y:500,w:90,h:60};
   const pending=f.insert(f.state,'page-centered',{preserveBytes:true,centerArtboard:true,aiTaskId:'task-1',aiCandidateId:'v2'});
   f.finish();const id=await pending;const image=f.value.objects.find(o=>o.id===id);
-  assert.equal(image.x+image.w/2,45);assert.equal(image.y+image.h/2,30);
-  assert.ok(image.x>=0&&image.y>=0&&image.x+image.w<=90&&image.y+image.h<=60);
+  assert.equal(image.x,-36);assert.equal(image.y,-27);
+  assert.equal(image.x+image.w/2,0);assert.equal(image.y+image.h/2,0);
+  assert.ok(image.x>=-45&&image.y>=-30&&image.x+image.w<=45&&image.y+image.h<=30);
 });
