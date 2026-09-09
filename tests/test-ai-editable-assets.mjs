@@ -82,3 +82,21 @@ test('stale preparation and stale callback at commit never mutate object/undo st
     assert.deepEqual(state.get(), before);
   }
 });
+test('per-object label modes and global suppression agree with native inserted labels', async () => {
+  const { src } = await fixture();
+  for (const mode of ['leader', 'text', 'none']) {
+    const prepared = await prepareEditableAssets(src, [{ ...region, labelMode: mode }]);
+    const state = stateFixture();
+    insertEditableAssets(state, prepared, { isCurrent: () => true });
+    const labels = state.get().objects.filter(o => o.type === 'labeler');
+    assert.equal(labels.length, mode === 'none' ? 0 : 1);
+    if (mode === 'text') assert.deepEqual(labels[0].p1, labels[0].p2);
+    if (mode === 'leader') assert.notDeepEqual(labels[0].p1, labels[0].p2);
+    prepared.labelsDisabled = true;
+    const disabledState = stateFixture();
+    insertEditableAssets(disabledState, prepared, { isCurrent: () => true });
+    assert.equal(disabledState.get().objects.filter(o => o.type === 'labeler').length, 0);
+    assert.equal(prepared.assets[0].labelMode, mode);
+    assert.equal(prepared.assets[0].label, region.label);
+  }
+});

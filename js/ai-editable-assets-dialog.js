@@ -1,4 +1,4 @@
-import { prepareEditableAssets } from './ai-editable-assets.js';
+import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
 import { renderLabeler } from './render/annotations.js?v=1.4.0';
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.4.0';
@@ -27,13 +27,14 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       <button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>
     </div><p class="aea-hint" id="aea-hint"${automatic ? ' hidden' : ''}></p>
     <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
-      <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
+      <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
     <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 그룹으로 넣기'}</button></div></footer>`;
   const find = selector => dialog.querySelector(selector);
   const source = find('.aea-source'), overlay = find('.aea-overlay'), preview = find('.aea-preview');
   const status = find('.aea-status'), list = find('.aea-list');
   let regions = [], selected = null, mode = 'region', revision = 0, prepared = automatic ? structuredClone(initialPrepared) : null;
+  let labelsDisabled = false;
   let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false;
   let finish;
   const result = new Promise(resolve => { finish = resolve; });
@@ -53,7 +54,8 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   const active = () => regions.find(region => region.id === selected);
   const controls = () => {
     dialog.setAttribute('aria-busy', String(busy));
-    dialog.querySelectorAll('[data-mode], .aea-list input, .aea-list button, [data-action="clear-keep"]').forEach(node => { node.disabled = busy || !width; });
+    dialog.querySelectorAll('[data-mode], .aea-list input, .aea-list select, [data-disable-labels], .aea-list button, [data-action="clear-keep"]').forEach(node => { node.disabled = busy || !width; });
+    dialog.querySelectorAll('.aea-list input, .aea-list select').forEach(node => { node.disabled = busy || !width || labelsDisabled; });
     find('[data-action="preview"]').disabled = busy || !regions.length || !width;
     find('[data-action="insert"]').disabled = busy || !prepared || !current();
     find('[data-action="clear-keep"]').hidden = !active()?.keepRects.length;
@@ -63,7 +65,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   const previewLabelPadding = () => Math.max(16, Math.ceil(DEFAULT_TEXT_SIZE_MM / labelScale()));
   const labelNode = asset => {
     const scale = labelScale();
-    return renderLabeler({ p1: asset.anchor, p2: asset.labelPoint, text: asset.label, labelType: 'label',
+    return renderLabeler({ p1: effectiveAssetLabelMode(asset) === 'text' ? asset.labelPoint : asset.anchor, p2: asset.labelPoint, text: asset.label, labelType: 'label',
       fontFamily: DEFAULT_TEXT_FONT, labelSize: DEFAULT_TEXT_SIZE_MM / scale, strokeLevel: 0, strokeWidth: 0.2 / scale });
   };
   const draw = () => {
@@ -72,7 +74,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       const chosen = region.id === selected;
       overlay.append(svgNode('rect', { x: region.x, y: region.y, width: region.width, height: region.height, class: chosen ? 'aea-region is-selected' : 'aea-region' }));
       for (const rect of region.keepRects) overlay.append(svgNode('rect', { ...rect, class: 'aea-keep' }));
-      if (region.label.trim()) overlay.append(labelNode(region));
+      if (effectiveAssetLabelMode(region, labelsDisabled) !== 'none') overlay.append(labelNode(region));
       if (chosen) overlay.append(svgNode('circle', { cx: region.anchor.x, cy: region.anchor.y, r: Math.max(3, width / 180), class: 'aea-anchor' }));
     }
   };
@@ -80,7 +82,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     preview.replaceChildren();
     for (const asset of prepared.assets) {
       preview.append(svgNode('image', { href: asset.data, x: asset.x, y: asset.y, width: asset.width, height: asset.height }));
-      if (asset.label.trim()) preview.append(labelNode(asset));
+      if (effectiveAssetLabelMode(asset, labelsDisabled) !== 'none') preview.append(labelNode(asset));
     }
   };
   const invalidate = () => {
@@ -107,6 +109,17 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
         row.querySelector('[data-action="download-asset"]')?.setAttribute('aria-label', `${input.value || `물체 ${index + 1}`} PNG 저장`);
         drawPrepared(); controls();
       };
+      const labelMode = document.createElement('select');
+      labelMode.setAttribute('aria-label', '객체 ' + (index + 1) + ' 라벨 방식');
+      for (const [value, text] of [['leader', '지시선 라벨'], ['text', '텍스트 라벨'], ['none', '사용 안 함']]) {
+        const option = document.createElement('option'); option.value = value; option.textContent = text; labelMode.append(option);
+      }
+      labelMode.value = region.labelMode || 'leader';
+      labelMode.onchange = () => {
+        region.labelMode = labelMode.value;
+        if (prepared) { prepared.assets[index].labelMode = labelMode.value; drawPrepared(); }
+        draw(); controls();
+      };
       const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제'; remove.setAttribute('aria-label', `객체 ${index + 1} 삭제`);
       remove.onclick = () => { regions = regions.filter(item => item !== region); if (selected === region.id) selected = regions.at(-1)?.id ?? null; renderList(); invalidate(); };
       if (automatic) {
@@ -114,6 +127,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
         download.onclick = () => { const link = document.createElement('a'); link.href = prepared.assets[index].data; link.download = `${region.label.replace(/[\\/:*?"<>|]+/g, '-')}.png`; link.click(); };
         row.append(choose, input, download);
       } else row.append(choose, input, remove);
+      row.append(labelMode);
       list.append(row);
     }
     find('.aea-count').textContent = String(regions.length); find('.aea-empty').hidden = !!regions.length;
@@ -156,23 +170,28 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     if (showingPreview) { showingPreview = false; source.hidden = false; overlay.toggleAttribute("hidden", automatic); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
     if (automatic) {
       drawPrepared(); showingPreview = true; source.hidden = true; overlay.toggleAttribute('hidden', true); preview.toggleAttribute('hidden', false);
-      find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 이름은 페이지에 함께 들어가며 여기서 수정할 수 있습니다.`; return;
+      find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 라벨 방식과 표시 여부를 선택한 뒤 페이지에 넣으세요.`; return;
     }
     busy = true; status.textContent = '객체 바깥 배경을 투명하게 만드는 중…'; controls();
     const version = revision;
     try {
       const output = await prepareEditableAssets(dataUrl, structuredClone(regions), { threshold: 240 });
       if (!current() || version !== revision) return;
-      prepared = output; preview.replaceChildren();
+      prepared = output; prepared.labelsDisabled = labelsDisabled; preview.replaceChildren();
       for (const asset of output.assets) {
         preview.append(svgNode('image', { href: asset.data, x: asset.x, y: asset.y, width: asset.width, height: asset.height }));
-        if (asset.label.trim()) preview.append(labelNode(asset));
+        if (effectiveAssetLabelMode(asset, labelsDisabled) !== 'none') preview.append(labelNode(asset));
       }
       showingPreview = true; source.hidden = true; overlay.toggleAttribute("hidden", true); preview.toggleAttribute("hidden", false);
       find('[data-action="preview"]').textContent = '선택으로 돌아가기';
       status.textContent = `${output.assets.length}개 객체 · 체크무늬는 투명 영역입니다. 흰색 내부와 라벨을 확인한 뒤 넣으세요.`;
     } catch (error) { if (!closed) status.textContent = error instanceof Error ? error.message : '미리보기를 만들지 못했습니다.'; }
     finally { busy = false; if (!closed) controls(); }
+  };
+  find('[data-disable-labels]').onchange = event => {
+    labelsDisabled = event.target.checked;
+    if (prepared) { prepared.labelsDisabled = labelsDisabled; drawPrepared(); }
+    draw(); controls();
   };
   dialog.addEventListener('click', async event => {
     const button = event.target.closest('button'); if (!button || button.disabled) return;

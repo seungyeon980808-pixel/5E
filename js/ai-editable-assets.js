@@ -1,6 +1,10 @@
 import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js';
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.4.0';
 
+export function effectiveAssetLabelMode(asset, labelsDisabled = false) {
+  return labelsDisabled || !asset.label?.trim() || asset.labelMode === 'none' ? 'none' : asset.labelMode === 'text' ? 'text' : 'leader';
+}
+
 let serial = 0;
 function fromUrl(url) {
   if (typeof url !== 'string' || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url)) throw new TypeError('원본은 PNG 데이터여야 합니다.');
@@ -36,7 +40,7 @@ function normalizeRegions(regions, width, height) {
     if (r.label != null && (typeof r.label !== 'string' || r.label.length > 1000)) throw new TypeError('라벨은 1000자 이하의 텍스트여야 합니다.');
     if (r.keepRects != null && (!Array.isArray(r.keepRects) || r.keepRects.length > 100)) throw new TypeError('보존 영역을 확인해 주세요.');
     const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
-    return { ...bounds, id, label: r.label ?? '', anchor: point(r.anchor, width, height, center),
+    return { ...bounds, id, label: r.label ?? '', labelMode: r.labelMode === 'text' || r.labelMode === 'none' ? r.labelMode : 'leader', anchor: point(r.anchor, width, height, center),
       labelPoint: point(r.labelPoint, width, height, { x: center.x, y: bounds.y }),
       keepRects: (r.keepRects ?? []).map(k => rect(k, width, height)) };
   });
@@ -118,11 +122,12 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
     objects.push({ ...common, id: imageId, type: 'image', src: asset.data, ...map(asset), w: asset.width * scale, h: asset.height * scale,
       rotation: 0, mode: 'edit', opacity: 1, aspectLocked: true, exportable: true, imageSelectionLocked: false, cutouts: [] });
     const memberIds = [imageId];
-    if (asset.label.trim()) {
+    const labelMode = effectiveAssetLabelMode(asset, prepared.labelsDisabled);
+    if (labelMode !== 'none') {
       const id = `${imageId}_label`;
       const anchor = point(asset.anchor, prepared.width, prepared.height, null), labelPoint = point(asset.labelPoint, prepared.width, prepared.height, null);
       if (!anchor || !labelPoint) throw new TypeError('라벨 좌표가 없습니다.');
-      objects.push({ ...common, id, type: 'labeler', p1: map(anchor), p2: map(labelPoint), text: asset.label, labelType: 'label',
+      objects.push({ ...common, id, type: 'labeler', p1: map(labelMode === 'text' ? labelPoint : anchor), p2: map(labelPoint), text: asset.label, labelType: 'label',
         fontFamily: DEFAULT_TEXT_FONT, labelSize: DEFAULT_TEXT_SIZE_MM, strokeLevel: 0, strokeWidth: 0.2 });
       memberIds.push(id);
     }
