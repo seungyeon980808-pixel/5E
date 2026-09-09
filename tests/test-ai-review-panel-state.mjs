@@ -7,7 +7,7 @@ const source=await fs.readFile(new URL('../js/ai-panel.js',import.meta.url),'utf
 const body=source.substring(source.indexOf('  const handleReviewLifecycle ='),source.indexOf('  imageReview = createAiImageReviewController'));
 function setup(candidate) {
   const states=[],old={id:'old',reviewState:'correcting',reviewReport:{verdict:'fail',checks:[],issues:[{message:'old error'}]},reviewMeta:{generationCount:1,reviewCount:1}};
-  const ctx={enforcePngAcceptance,generatedImages:[old,candidate],currentTurnDone:false,currentReviewCandidate:null,pendingCacheOutput:null,AI_IMAGE_REVIEW_MODEL:'gpt-5.6-sol',AI_IMAGE_REVIEW_EFFORT:'high',dispatchReviewEvent(detail,item){states.push(detail);if(item){item.reviewState=detail.state;item.reviewReport=detail.report}return detail},setGenerating(){},setStatus(){},addLog(){},stageCurrentOutput(output){ctx.pendingCacheOutput=output},commitCurrentOutput(){},setBusy(){},captureActiveTaskTab(){},loadAccountOverview(){}};
+  const ctx={enforcePngAcceptance,generatedImages:[old,candidate],currentTurnDone:false,currentReviewCandidate:null,pendingCacheOutput:null,AI_IMAGE_REVIEW_MODEL:'gpt-5.6-sol',AI_IMAGE_REVIEW_EFFORT:'high',dispatchReviewEvent(detail,item){states.push(detail);if(item){item.reviewState=detail.state;item.reviewReport=detail.report}return detail},setTaskState(){},setGenerating(){},setStatus(){},addLog(){},stageCurrentOutput(output){ctx.pendingCacheOutput=output},commitCurrentOutput(){},setBusy(){},captureActiveTaskTab(){},loadAccountOverview(){}};
   return {ctx,states,old,handle:new Function('ctx',`with(ctx){${body};return handleReviewLifecycle;}`)(ctx)};
 }
 test('terminal review retires old correcting version without overwriting its failure',()=>{

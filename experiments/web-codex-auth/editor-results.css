@@ -51,3 +51,8 @@
     text-overflow: clip;
   }
 }
+@media (max-width: 600px) {
+  #ai-image-panel[data-ai-result-view="single"] .ai-workspace { display:block; overflow:auto; }
+  #ai-image-panel[data-ai-result-view="single"] .ai-results { height:540px; }
+  #ai-image-panel[data-ai-result-view="single"] .ai-conversation { min-height:540px; }
+}

@@ -1807,3 +1807,12 @@
 #ai-image-panel .mode-side-by-side .ai-image-card-head { height: 40px; min-height: 40px; flex: 0 0 40px; }
 
 #ai-image-panel .ai-confirm-dialog.ai-confirm-dialog-wide { width: min(900px, calc(100vw - 40px)); }
+#ai-image-panel { --ai-task-success:#3fb950; }
+:root[data-theme="light"] #ai-image-panel { --ai-task-success:#1a7f37; }
+#ai-image-panel .ai-task-tab[data-work-state="completed"] { background:color-mix(in srgb,var(--ai-task-success) 10%,var(--bg-input)); }
+#ai-image-panel .ai-task-tab-status { flex:0 0 14px; color:var(--ai-task-success); }
+#ai-image-panel:not([data-ai-result-view="multiple"]) .mode-result .ai-generated-card { overflow:auto; }
+#ai-image-panel .ai-task-tab[data-work-state="busy"] .ai-task-tab-status { color:var(--accent); }
+#ai-image-panel .ai-task-tab[data-work-state="failed"] .ai-task-tab-status { color:var(--ai-task-error); }
+#ai-image-panel { --ai-task-error:#f85149; }
+:root[data-theme="light"] #ai-image-panel { --ai-task-error:#cf222e; }

@@ -190,7 +190,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const availableWidth = Math.max(40, card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
     const availableHeight = Math.max(40, card.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - fixedHeight - gap * Math.max(0, card.children.length - 1));
     const ratio = image.naturalWidth / image.naturalHeight;
-    return {stage, ratio, height: Math.min(availableHeight, availableWidth / ratio)};
+    return {stage, ratio, height: panel.dataset.aiResultView !== 'multiple' && card.classList.contains('ai-generated-card') && results?.classList.contains('mode-result') ? availableWidth / ratio : Math.min(availableHeight, availableWidth / ratio)};
   }
 
   function fitCardStage(card) {

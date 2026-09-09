@@ -546,6 +546,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const setStatus = (text, kind = "") => {
     status.textContent = text;
     status.dataset.kind = kind;
+    if (busy && kind === "error") setTaskState("failed");
   };
   const emptyReviewReport = () => ({ verdict: "uncertain", checks: [], issues: [] });
   const scopedAppliedReviewReport = () => ({
@@ -610,6 +611,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }
     }, 1000);
     busy = on;
+    if (on) setTaskState("busy");
+    else if (taskTabs.get(activeTaskTabId)?.workState === "busy") setTaskState("idle");
     panel.dataset.aiBusy = String(on);
     navigationChanged();
     sendButton.disabled = on;
@@ -1287,6 +1290,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           captureActiveTaskTab(); persistTasks(); syncSelectedOutputActions();
         }
       });
+      if (epoch === currentRequestEpoch && done) setTaskState("completed");
       if (epoch === currentRequestEpoch) setStatus(done ? '선택 영역 수정 적용 완료 · 저장 또는 페이지 삽입 가능' : '선택 영역 수정 취소 · 원본 유지', done ? 'ok' : 'warn');
     } catch (error) {
       if (epoch === currentRequestEpoch) setStatus('선택 영역 수정 차단: ' + (error.message || error) + ' 지원하지 않는 PNG 치수·형식·메타데이터는 적용하지 않습니다.', 'error');
@@ -1437,6 +1441,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (normalized.state === "passed" && candidate?.data) {
       currentReviewCandidate = candidate;
       stageCurrentOutput({ data: candidate.data, reviewVerified: true, reviewReport: normalized.report });
+      setTaskState("completed");
       setStatus("Sol 독립 검수 통과 · 생성 완료", "ok");
       addLog("원본 참고와 현재 후보의 구조 하드 게이트가 모두 통과되었습니다.");
       void commitCurrentOutput();
@@ -1493,6 +1498,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   const persistTasks = () => taskPersistence.schedule();
 
+  function setTaskState(workState) {
+    const tab = taskTabs.get(activeTaskTabId);
+    if (!tab || tab.workState === workState) return;
+    tab.workState = workState;
+    renderTaskTabs();
+    persistTasks();
+  }
+
   const renderTaskTabs = () => {
     if (!tabList) return;
     tabList.replaceChildren();
@@ -1501,6 +1514,32 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.type = "button";
       button.className = "ai-task-tab";
       button.dataset.tabId = tab.id;
+      button.dataset.workState = tab.workState || "idle";
+      const stateLabel = { busy: "작업 중", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
+      button.setAttribute("aria-label", `${tab.title} · ${stateLabel}`);
+      button.title = `${tab.title} · ${stateLabel}`;
+      if (["completed", "busy", "failed"].includes(tab.workState)) {
+        const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        check.setAttribute("viewBox", "0 0 24 24");
+        check.setAttribute("width", "14");
+        check.setAttribute("height", "14");
+        check.setAttribute("aria-hidden", "true");
+        check.classList.add("ai-task-tab-status");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const iconPath = {
+          completed: "m20 6-11 11-5-5",
+          busy: "M12 8v4l3 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
+          failed: "M12 8v4 M12 16h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
+        };
+        path.setAttribute("d", iconPath[tab.workState]);
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", "currentColor");
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linecap", "round");
+        path.setAttribute("stroke-linejoin", "round");
+        check.append(path);
+        button.append(check);
+      }
       button.classList.toggle("is-on", tab.id === activeTaskTabId);
       button.setAttribute("role", "tab");
       button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
@@ -2607,6 +2646,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
               };
               persistPerformance(currentTurnPerformance);
               setGenerating(false);
+              setTaskState("completed");
               setStatus("동일 요청 결과를 즉시 불러왔습니다.", "ok");
               addLog("이전에 완료된 동일 결과를 즉시 불러왔습니다. 캔버스로 출력할 수 있습니다.");
               setBusy(false);
@@ -2656,6 +2696,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           setGenerating(false);
           setStatus("내부 검증 도식 생성 완료", "ok");
           addLog(`이미지가 완성되었습니다. 원격 생성 없이 내부 검증 자산을 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개로 구성했습니다.`);
+          setTaskState("completed");
           setBusy(false);
           addTokenFooter(null);
           return;
@@ -2871,7 +2912,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!await scopedDialog('현재 작업 초기화', '이 작업의 이미지와 대화를 비웁니다. 다른 작업과 원본 파일은 유지됩니다.', {accept: '초기화'})) return;
     if (busy || activeTaskTabId !== taskId) return;
     const tab = taskTabs.get(taskId);
-    Object.assign(tab, {attachments:[], generated:[], conversationMessages:[], uiMessages:[], input:'', conversationId:null, selectedCandidateId:null});
+    Object.assign(tab, {workState:"idle", attachments:[], generated:[], conversationMessages:[], uiMessages:[], input:'', conversationId:null, selectedCandidateId:null});
     restoreTaskTab(activeTaskTabId);
     persistTasks();
   };
@@ -2926,6 +2967,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const finishCurrentTurnUi = (eventEpoch = currentRequestEpoch) => {
     if (eventEpoch !== currentRequestEpoch || !serverTurnFinished || previewPending) return;
     if (currentImageOutputError) {
+      setTaskState("failed");
       currentTerminalOutcome = "failed";
       pendingCacheOutput = null;
       setGenerating(false);
@@ -2936,6 +2978,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       return;
     }
     if (currentTerminalOutcome !== "completed") {
+      setTaskState(currentTerminalOutcome === "failed" ? "failed" : "idle");
       pendingCacheOutput = null;
       const cancelledReview = candidateReviewOnTerminal(currentReviewCandidate, currentTerminalOutcome);
       if (cancelledReview) dispatchReviewEvent(cancelledReview, currentReviewCandidate);
@@ -2951,6 +2994,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (currentRunInput?.approvedFirstPng && currentReviewCandidate) {
       dispatchReviewEvent({ state: "first-generated", candidateId: currentReviewCandidate.id, report: { verdict: "", checks: [], issues: [] }, generationCount: 1, reviewCount: 0, model: currentRunInput.model, effort: currentRunInput.effort, elapsedMs: Date.now() - currentTurnStartedAt }, currentReviewCandidate);
       setGenerating(false); setBusy(false); currentTurnDone = true;
+      setTaskState("completed");
       setStatus("PNG 생성 완료 · 원본과 비교해 품질을 확인해 주세요.", "ok");
       persistPerformance(currentTurnPerformance);
       panel.dispatchEvent(new CustomEvent("5e:ai-first-png-timing", { detail: { ...currentTurnPerformance } }));
@@ -3018,6 +3062,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }, 0);
       return;
     }
+    setTaskState(imageReceived || currentTurnType === "chat" ? "completed" : "failed");
     const completedComplexCorrection = currentTurnType === "image"
       && currentEngine === IMAGE_ENGINE_IDS.RASTER
       && normalizeQualityMode(currentRunInput?.qualityMode) === AI_QUALITY_MODES.COMPLEX
@@ -3387,7 +3432,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')void taskPersistence.flush();});
   window.addEventListener('pagehide',()=>{void taskPersistence.flush();});
   if (!taskTabs.size) createTaskTab();
-  workspaceReady=(async()=>{try{const saved=await taskStore?.get('workspace');if(Array.isArray(saved?.tabs)){taskTabs.clear();for(const tab of saved.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(saved.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(saved.imageSerial)||0);if(taskTabs.size)restoreTaskTab(taskTabs.has(saved.activeTaskTabId)?saved.activeTaskTabId:taskTabs.keys().next().value);else{activeTaskTabId=null;renderTaskTabs();}}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
+  workspaceReady=(async()=>{try{const saved=await taskStore?.get('workspace');if(Array.isArray(saved?.tabs)){taskTabs.clear();for(const tab of saved.tabs){if(tab.workState === "busy")tab.workState = "idle";taskTabs.set(tab.id,tab);}taskTabSerial=Math.max(taskTabSerial,Number(saved.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(saved.imageSerial)||0);if(taskTabs.size)restoreTaskTab(taskTabs.has(saved.activeTaskTabId)?saved.activeTaskTabId:taskTabs.keys().next().value);else{activeTaskTabId=null;renderTaskTabs();}}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
     reviewModelSelect.replaceChildren(new Option(AI_IMAGE_REVIEW_MODEL, AI_IMAGE_REVIEW_MODEL));
     reviewModelSelect.value = AI_IMAGE_REVIEW_MODEL;
