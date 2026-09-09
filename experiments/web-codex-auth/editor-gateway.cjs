@@ -9,7 +9,7 @@ const path = require('node:path');
 const projectRoot = path.resolve(__dirname, '../..');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.otf': 'font/otf', '.ico': 'image/x-icon' };
 const authActions = new Set(['session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
-function createGateway({ authPort = 19383 } = {}) {
+function createGateway({ authPort = 19383, allowAnonymousEditor = false } = {}) {
   const upstream = `http://127.0.0.1:${authPort}`;
   async function auth(req, action) {
     const cookieName = `fivee_auth_${authPort}=`;
@@ -52,8 +52,8 @@ function createGateway({ authPort = 19383 } = {}) {
         const cookie = response.headers.get('set-cookie');
         if (cookie) res.setHeader('Set-Cookie', cookie);
         const state = await response.json();
-        if (response.status === 401 || (response.ok && !state.signedIn)) return redirect('/login');
-        if (!response.ok) return reply(503, '인증 서버에 연결할 수 없습니다. 잠시 후 새로고침해 주세요.', 'text/plain');
+        if (!allowAnonymousEditor && (response.status === 401 || (response.ok && !state.signedIn))) return redirect('/login');
+        if (!response.ok && !(allowAnonymousEditor && response.status === 401)) return reply(503, '인증 서버에 연결할 수 없습니다. 잠시 후 새로고침해 주세요.', 'text/plain');
         if (url.pathname !== '/editor/') return redirect('/editor/');
         let html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
         html = html.replace('</head>', '<link rel="stylesheet" href="/editor-session.css"><link rel="stylesheet" href="/editor-background.css"><link rel="stylesheet" href="/editor-results.css"><script src="/editor-bridge.js"></script><script src="/editor-session.js" type="module"></script></head>');

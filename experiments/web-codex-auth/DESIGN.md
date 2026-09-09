@@ -33,3 +33,6 @@ Keep original workbench tokens/layout. Candidate review leads with before/after 
 Comparison grid uses inherited controls with 200px minimum cards, 320px rows and 8px gaps, explicit active result border.
 
 Below600px comparison mode stacks results above comments in a scrollable workspace; result section and comment section use540px minimum working area. Candidate preview refits on width changes.
+
+## Remote trial device login
+The explicitly authorized remote trial may use chatgptDeviceCode; local browser login remains the default. While waiting, show the verification code in the existing 24px monospace token, a 44px secondary copy button, a polite copy status, and the existing OpenAI link. Instructions explain copying then entering the code on OpenAI, and returning to this tab. Clear code and copy status on completion, cancellation, expiry, or connection failure. Clipboard denial leaves the selectable code visible with manual-copy guidance. No new colors, motion, dependencies, or editor redesign. This trial does not promise persistent login or permanent code-free access.

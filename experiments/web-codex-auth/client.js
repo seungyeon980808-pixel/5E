@@ -23,6 +23,11 @@ async function request(action, popup) {
     byId('status').textContent = labels[result.state] || '연결 상태를 확인하고 있습니다.';
     byId('browser-login').hidden = !result.authUrl;
     byId('auth-link').href = result.authUrl || '#';
+    const userCode = result.authUrl && result.state === 'waiting' ? result.userCode || '' : '';
+    if (byId('code').textContent !== userCode) byId('copy-status').textContent = '';
+    byId('code').textContent = userCode;
+    byId('device-login').hidden = !userCode;
+    byId('browser-instructions').hidden = !!userCode;
     if (action === 'login' && popup) {
       if (result.authUrl) popup.location.replace(result.authUrl);
       else popup.close();
@@ -36,6 +41,9 @@ async function request(action, popup) {
     byId('status').textContent = '연결이 끊겼습니다.';
     if (popup) popup.close();
     byId('browser-login').hidden = true;
+    byId('code').textContent = '';
+    byId('copy-status').textContent = '';
+    byId('device-login').hidden = true;
     for (const id of ['login', 'cancel', 'logout']) byId(id).hidden = true;
     byId('reload').hidden = false;
   } finally {
@@ -51,4 +59,14 @@ byId('login').addEventListener('click', () => {
 });
 for (const id of ['cancel', 'logout']) byId(id).addEventListener('click', () => request(id));
 byId('reload').addEventListener('click', () => request('session'));
+byId('copy-code').addEventListener('click', async () => {
+  const code = byId('code').textContent;
+  if (!code) return;
+  try {
+    await navigator.clipboard.writeText(code);
+    if (byId('code').textContent === code) byId('copy-status').textContent = '코드를 복사했습니다.';
+  } catch {
+    if (byId('code').textContent === code) byId('copy-status').textContent = '코드를 직접 선택해 복사해 주세요.';
+  }
+});
 request('session');

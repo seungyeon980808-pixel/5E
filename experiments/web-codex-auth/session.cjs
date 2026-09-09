@@ -1,7 +1,9 @@
 const { Generation, RequestError } = require('./generation.cjs');
 const { DesktopBridge } = require('./desktop-bridge.cjs');
 class Session {
-  constructor(runtime, { loginTimeout = 600000, generationTimeout } = {}) {
+  constructor(runtime, { loginTimeout = 600000, generationTimeout, loginMode = 'chatgpt' } = {}) {
+    if (!['chatgpt', 'chatgptDeviceCode'].includes(loginMode)) throw new Error('Unsupported login mode');
+    this.loginMode = loginMode;
     this.runtime = runtime;
     this.bridge = new DesktopBridge(this);
     this.generation = new Generation(runtime, { generationTimeout });
@@ -24,21 +26,23 @@ class Session {
     if (signedIn) { this.state = 'signed-in'; this.clearLogin(); }
     else if (this.state === 'signed-in' || this.state === 'completed') this.state = 'signed-out';
     return { state: this.state, signedIn, generationEnabled: true,
-      ...(this.login ? { authUrl: this.login.authUrl } : {}) };
+      ...(this.state === 'waiting' && this.login ? { authUrl: this.login.authUrl, ...(this.login.userCode ? { userCode: this.login.userCode } : {}) } : {}) };
   }
   async start() {
     if ((await this.status()).signedIn || this.login) return this.status();
-    const result = await this.runtime.rpc('account/login/start', { type: 'chatgpt' });
+    const result = await this.runtime.rpc('account/login/start', { type: this.loginMode });
     let authUrl;
-    try { authUrl = new URL(result.authUrl); } catch {}
-    if (result.type !== 'chatgpt' || typeof result.loginId !== 'string' ||
+    const device = this.loginMode === 'chatgptDeviceCode';
+    try { authUrl = new URL(device ? result.verificationUrl : result.authUrl); } catch {}
+    if (result.type !== this.loginMode || typeof result.loginId !== 'string' ||
+        (device && (typeof result.userCode !== 'string' || !/^[A-Za-z0-9-]{1,64}$/.test(result.userCode))) ||
         !authUrl || authUrl.protocol !== 'https:' ||
         !['auth.openai.com', 'chatgpt.com'].includes(authUrl.hostname) ||
         authUrl.username || authUrl.password || authUrl.port) {
       this.runtime.close();
       throw new Error('Unexpected login response');
     }
-    this.login = result;
+    this.login = { loginId: result.loginId, authUrl: authUrl.href, ...(device ? { userCode: result.userCode } : {}) };
     this.state = 'waiting';
     this.timer = setTimeout(() => {
       void this.run(async () => { await this.cancel(); this.state = 'local-timeout'; }).catch(() => { this.state = 'error'; });
