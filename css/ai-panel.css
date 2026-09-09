@@ -1610,6 +1610,7 @@
 #ai-image-panel .ai-advanced-settings .ai-actions { max-height:none; }
 #ai-image-panel .ai-workbench-actions { flex:0 0 auto; display:flex; flex-direction:column; gap:6px; padding:10px 13px; border-top:1px solid var(--border-strong); background:var(--bg-panel); }
 #ai-image-panel .ai-workbench-actions [data-ai-white-png-note] { margin:0 0 2px; font-size:9px; line-height:1.5; }
+#ai-image-panel .ai-output-actions .ai-selected-output-note { grid-column:1 / -1; width:100%; margin:0; padding:7px 8px; color:var(--text-primary); background:var(--bg-input); border-left:2px solid var(--accent); font-size:11px; line-height:1.5; overflow-wrap:anywhere; }
 #ai-image-panel .ai-workbench-actions > [data-ai-comments-apply] { width:100%; min-height:33px; color:#fff; background:var(--accent); border:1px solid var(--accent); font-size:12px; }
 #ai-image-panel .ai-workbench-actions .ai-conversation-actions { display:flex; gap:6px; margin:0; }
 #ai-image-panel .ai-workbench-actions .ai-conversation-actions [data-ai-send] { flex:1; min-height:32px; font-size:11px; }

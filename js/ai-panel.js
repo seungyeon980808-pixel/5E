@@ -6,6 +6,9 @@ import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
 import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1";
 import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3";
 import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js";
+import { insertEditableAssets } from "./ai-editable-assets.js";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js";
 import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
 import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
 import { parseAiEvent } from "./ai-events.js?v=1.5.3";
@@ -166,6 +169,19 @@ const RASTER_STYLE_VERSION = "kice-raster-v2";
 const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}+${REMOTE_COMPOSITOR_VERSION}+${AI_IMAGE_TRANSPORT_VERSION}+${IMAGE_BACKGROUND_VERSION}`;
 const FAST_SCENE_PANEL_COMPILE_VERSION = "motif-direct-v1";
 
+export const AI_ASSET_GENERATION_MODES = Object.freeze({ SINGLE: 'single', SEPARATED: 'separated' });
+export const candidateUsesSeparatedAssets = item => item?.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED;
+export const separatedCandidateNextAction = item => {
+  if (!candidateUsesSeparatedAssets(item)) return 'ordinary-insert';
+  return String(item?.separatedAssetsError || '').trim()
+    ? 'manual-regions'
+    : 'confirm-separated-result';
+};
+export const imagePromptForRun = runInput => runInput?.approvedFirstPng
+  && runInput.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
+  && Array.isArray(runInput.generated) && runInput.generated.length === 0
+  ? `${APPROVED_FIRST_PROMPT}\n\n${SEPARATED_ASSETS_PROMPT}` : null;
+
 export function cacheEntryCompletesRequest(entry, {
   engine = IMAGE_ENGINE_IDS.RASTER,
   qualityMode = AI_QUALITY_MODES.STANDARD,
@@ -255,11 +271,13 @@ export function snapshotImageItem(item) {
     postprocessOk: item?.postprocessOk === true,
     pixelInspection: item?.pixelInspection || null,
     pixelInspectionError: item?.pixelInspectionError || null,
+    separatedAssetsError: typeof item?.separatedAssetsError === 'string' ? item.separatedAssetsError : '',
     reviewState: item?.reviewState || "idle",
     reviewReport: item?.reviewReport ? JSON.parse(JSON.stringify(item.reviewReport)) : null,
     reviewMeta: item?.reviewMeta ? { ...item.reviewMeta } : null,
     structureRecord: item?.structureRecord ? JSON.parse(JSON.stringify(item.structureRecord)) : null,
     rendererPrompt: typeof item?.rendererPrompt === "string" ? item.rendererPrompt : "",
+    generationMode: candidateUsesSeparatedAssets(item) ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE,
     markPolicy: normalizeMarkPolicy(item?.markPolicy),
     nextCommentNumber: item?.nextCommentNumber || ((item?.comments || []).length + 1),
     comments: (item?.comments || []).map((comment) => ({ ...comment })),
@@ -343,6 +361,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const modeButtons = Array.from(panel.querySelectorAll("[data-ai-mode]"));
   const qualityButtons = Array.from(panel.querySelectorAll("[data-ai-quality]"));
   const outputEngineButtons = Array.from(panel.querySelectorAll("[data-ai-output-engine]"));
+  const generationModeRow = document.createElement('label');
+  generationModeRow.className = 'ai-separated-mode';
+  generationModeRow.innerHTML = '<span>이미지 구성</span><select data-ai-generation-mode aria-label="이미지 구성 방식"><option value="single">한 장</option><option value="separated">물체별 분리 (실험)</option></select><small>실험 기능 · 최대 16개 · 붙거나 겹친 부품은 하나의 묶음으로 나올 수 있습니다. 내부 선을 벡터로 바꾸지는 않습니다.</small>';
+  const generationModeSelect = generationModeRow.querySelector('select');
+  const generationModeAnchor = panel.querySelector('[data-ai-white-png-note]');
+  if (!generationModeAnchor) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
+  generationModeAnchor.before(generationModeRow);
   const batchButton = panel.querySelector("[data-ai-batch]");
   const batchPanel = panel.querySelector("[data-ai-batch-panel]");
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
@@ -397,6 +422,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let selectedMode = KICE_IMAGE_MODE;
   let selectedQualityMode = normalizeQualityMode(localStorage.getItem("5e.aiQualityMode") || AI_QUALITY_MODES.STANDARD);
   let selectedOutputEngine = KICE_IMAGE_OUTPUT_ENGINE;
+  let selectedAssetGenerationMode = AI_ASSET_GENERATION_MODES.SINGLE;
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -475,7 +501,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   const addLog = (text, kind = "assistant") => {
     if (!text) return null;
-    if (text === APPROVED_FIRST_REQUEST || text === APPROVED_FIRST_PROMPT) {
+    if (text === APPROVED_FIRST_REQUEST || text === APPROVED_FIRST_PROMPT || text === SEPARATED_ASSETS_PROMPT) {
       text = "이미지 변환을 요청했습니다.";
       kind = "assistant";
     }
@@ -589,7 +615,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     sendButton.disabled = on;
     chatButton.disabled = on;
     if (newButton) newButton.disabled = false;
-    for (const control of [modelSelect, effortSelect, speedSelect, referenceSearchButton, captureButton, file, reviewModeCheckbox, reviewModelSelect, reviewEffortSelect, ...markControls]) {
+    for (const control of [modelSelect, effortSelect, speedSelect, generationModeSelect, referenceSearchButton, captureButton, file, reviewModeCheckbox, reviewModelSelect, reviewEffortSelect, ...markControls]) {
       if (control) control.disabled = on;
     }
     modeButtons.forEach((button) => { button.disabled = on; });
@@ -615,7 +641,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const note = panel.querySelector("[data-ai-white-png-note]");
     if (note) {
       note.hidden = !white;
-      note.textContent = "흰 배경 PNG · 첫 생성 1회 · 자동 검수·교정 없음 · 후처리 없음";
+      note.textContent = "첫 생성 PNG · 자동 검수·교정 없음 · 결과별 분리 상태는 선택 결과 안내에서 확인";
       if (attachments.some(item=>item.referenceRole==='STYLE_REFERENCE')) note.textContent += ' · 표현 참고: 새 작업의 첫 변환·자동 교정만 지원';
     }
     chatButton.hidden = white && !panel.querySelector('[data-ai-chat-panel]');
@@ -902,6 +928,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (item.kind === "generated") {
       card.dataset.aiCandidateId = item.id;
       card.dataset.aiReviewState = item.reviewState || "idle";
+      card.dataset.aiGenerationMode = candidateUsesSeparatedAssets(item)
+        ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     }
     item.card = card;
     const head = document.createElement("div");
@@ -972,6 +1000,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       output.textContent = "페이지에 넣기";
       output.onclick = () => {
         if (busy || output.disabled) return;
+        if (candidateUsesSeparatedAssets(item)) { void openGroupsForItem(item, true); return; }
         if (item.sceneResult?.objects?.length) {
           try {
             const inserted = insertFastSceneIntoState(state, item.sceneResult);
@@ -982,7 +1011,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           }
           return;
         }
-        const target=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId===activeTaskTabId) : null;
+        const target=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&!o.editableAssetRegionId&&o.aiTaskId===activeTaskTabId) : null;
         if (target && !window.confirm("선택한 페이지 이미지를 이 버전으로 교체할까요? 위치와 크기는 유지합니다. 취소하면 아무것도 변경하지 않습니다.")) return;
         const replace = Boolean(target);
         setBusy(true);
@@ -1066,17 +1095,78 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   function selectedOutputItem() {
     return generatedImages.find((item) => item.id === selectedCandidateId) || generatedImages.at(-1) || null;
   }
+  async function openGroupsForItem(item, separated = false) {
+    const epoch = currentRequestEpoch;
+    const taskId = activeTaskTabId;
+    const candidateId = item.id;
+    const source = item.data;
+    const pageId = state.get().activePageId;
+    const pageSnapshot = () => JSON.stringify({ objects: state.get().objects, artboard: state.get().artboard, layer: state.get().activeLayerId });
+    const originalPage = pageSnapshot();
+    const isCurrent = () => !panel.hidden && panel.id === 'ai-image-panel'
+      && !busy && epoch === currentRequestEpoch && taskId === activeTaskTabId
+      && selectedOutputItem()?.id === candidateId && selectedOutputItem()?.data === source
+      && state.get().activePageId === pageId && pageSnapshot() === originalPage;
+    try {
+      if (separated) {
+        item.separatedAssetsError = '';
+        captureActiveTaskTab();
+        persistTasks();
+      }
+      setStatus(separated ? '분리 결과를 확인하는 중…' : '편집용 그룹을 준비하는 중…', 'busy');
+      const initialPrepared = separated ? await prepareSeparatedAssets(source) : null;
+      if (!isCurrent()) throw new Error('분리 결과를 준비하는 동안 페이지·작업 또는 후보가 변경되었습니다.');
+      const inserted = await openEditableAssetsDialog({
+        dataUrl: source, isCurrent, artboard: { ...state.get().artboard }, initialPrepared,
+        onInsert: prepared => insertEditableAssets(state, prepared, { isCurrent, aiTaskId: taskId, aiCandidateId: candidateId }),
+      });
+      if (inserted) { captureActiveTaskTab(); persistTasks(); close(); }
+      else if (isCurrent()) setStatus('원본 PNG를 유지했습니다.', 'ok');
+    } catch (error) {
+      const message = error.message || String(error);
+      if (separated) {
+        item.separatedAssetsError = message;
+        captureActiveTaskTab();
+        persistTasks();
+        syncSelectedOutputActions();
+        setStatus('분리 결과를 자동으로 읽지 못했습니다. 원본 PNG의 배경은 아직 제거되지 않았습니다. 아래에서 영역을 직접 지정해 분리할 수 있습니다.', 'error');
+      } else {
+        setStatus(`편집용 그룹 준비 실패: ${message} 원본 PNG는 그대로 유지됩니다.`, 'error');
+      }
+    }
+  }
   function syncSelectedOutputActions() {
     const item = selectedOutputItem();
     const save = panel.querySelector('[data-ai-save-selected]');
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
+    const groups = panel.querySelector('[data-ai-editable-groups]');
+    const recovery = panel.querySelector('[data-ai-separated-recovery]');
+    const outputNote = panel.querySelector('[data-ai-selected-output-note]');
+    const nextAction = separatedCandidateNextAction(item);
+    if (groups) {
+      groups.hidden = candidateUsesSeparatedAssets(item);
+      groups.disabled = busy || !item || Boolean(item.sceneResult);
+      groups.textContent = candidateUsesSeparatedAssets(item) ? '분리 결과 확인' : '편집용 그룹 준비';
+    }
+    if (recovery) {
+      recovery.hidden = nextAction !== 'manual-regions';
+      recovery.disabled = busy || nextAction !== 'manual-regions';
+    }
+    if (outputNote) {
+      outputNote.hidden = nextAction === 'ordinary-insert';
+      outputNote.textContent = nextAction === 'manual-regions'
+        ? `자동 분리 실패: ${item.separatedAssetsError} 원본 PNG의 배경은 아직 제거되지 않았습니다. 아래 버튼에서 영역을 직접 지정해 분리할 수 있습니다.`
+        : '분리용 원본 PNG입니다. 배경 제거와 개별 객체 분리는 “분리 결과 확인”에서 확인한 뒤 진행됩니다.';
+    }
     if (scoped) scoped.disabled = busy || !item || Boolean(item.sceneResult);
     if (save) save.disabled = busy || !item || Boolean(item.sceneResult);
     if (insert) {
       insert.disabled = busy || !item || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
-      const replacement = state.get().selectedIds?.length === 1 && state.get().objects.some((object) => object.type === 'image' && object.aiTaskId === activeTaskTabId && state.get().selectedIds?.includes(object.id));
-      insert.textContent = replacement ? '선택 이미지 교체 후 닫기' : '페이지에 넣고 닫기';
+      const replacement = !candidateUsesSeparatedAssets(item) && state.get().selectedIds?.length === 1 && state.get().objects.some((object) => object.type === 'image' && !object.editableAssetRegionId && object.aiTaskId === activeTaskTabId && state.get().selectedIds?.includes(object.id));
+      insert.textContent = candidateUsesSeparatedAssets(item)
+        ? '분리 결과 확인'
+        : replacement ? '선택 이미지 교체 후 닫기' : '페이지에 넣고 닫기';
     }
   }
 
@@ -1265,6 +1355,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       reviewMeta: reviewMeta ? { ...reviewMeta } : null,
       structureRecord: currentRunInput?.structureRecord ? JSON.parse(JSON.stringify(currentRunInput.structureRecord)) : null,
       rendererPrompt: typeof rendererPrompt === "string" ? rendererPrompt : "",
+      generationMode: currentRunInput?.generationMode === 'separated' ? 'separated' : 'single',
       markPolicy: normalizeMarkPolicy(currentRunInput?.markPolicy),
       comments: [],
       nextCommentNumber: 1,
@@ -1307,6 +1398,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       data,
       kind: "generated",
       engine: IMAGE_ENGINE_IDS.FAST_SCENE,
+      generationMode: AI_ASSET_GENERATION_MODES.SINGLE,
       sceneResult,
       sceneSource: String(sceneSource || ""),
       sceneCompileSource: String(sceneCompileSource || sceneSource || ""),
@@ -1390,6 +1482,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.mode = selectedMode;
     tab.qualityMode = selectedQualityMode;
     tab.outputEngine = selectedOutputEngine;
+    tab.generationMode = selectedAssetGenerationMode;
     tab.markPolicy = readMarkPolicy();
   };
   const taskPersistence = createTaskPersistence({
@@ -1471,6 +1564,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedMode = tab.mode || KICE_IMAGE_MODE;
     selectedQualityMode = normalizeQualityMode(tab.qualityMode);
     selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
+    selectedAssetGenerationMode = tab.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
+      ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
+    generationModeSelect.value = selectedAssetGenerationMode;
     attachments = (tab.attachments || []).map(taskItemCopy);
     generatedImages = (tab.generated || []).map(taskItemCopy);
     for (const item of generatedImages) {
@@ -1541,6 +1637,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       title: `작업 ${taskTabSerial}`,
       attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
       conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
+      generationMode: selectedAssetGenerationMode,
     });
     if (activate) restoreTaskTab(id);
     else renderTaskTabs();
@@ -2308,6 +2405,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       complexPass: 1,
       selectedCandidateId,
       markPolicy: readMarkPolicy(),
+      generationMode: selectedAssetGenerationMode,
       model: modelSelect.value || null,
       effort: effortSelect.value || null,
       serviceTier: speedSelect.value || null,
@@ -2650,7 +2748,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         : "chat";
       currentTurnPerformance = { ...currentTurnPerformance, aiRequestStartedAt: performance.now(), model: runInput.model, effort: runInput.effort, serviceTier: runInput.serviceTier };
       const result = await desktop.send({
-        text: runInput.approvedFirstPng ? APPROVED_FIRST_PROMPT : type === "image"
+        text: imagePromptForRun(runInput) || (runInput.approvedFirstPng ? APPROVED_FIRST_PROMPT : type === "image"
           ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE
             ? buildFastScenePrompt({
               request: requestWithVisualPlan,
@@ -2668,7 +2766,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
               referenceRoleContract,
               markPolicyContract: buildMarkPolicyContract(runInput.markPolicy),
             }))
-          : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode }),
+          : buildDiscussionPrompt({ request: annotatedRequest, mode: runInput.mode })),
         attachments: outgoingAttachments,
         conversationId: type === "chat" ? conversationId : null,
         resetConversation: type === "chat" && forceNewConversation,
@@ -2756,6 +2854,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
       : "그림형은 흰 배경 PNG를 한 번 생성하며 후처리하지 않습니다.", "ok");
   }));
+  generationModeSelect.addEventListener('change', () => {
+    if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }
+    selectedAssetGenerationMode = generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED
+      ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
+    captureActiveTaskTab(); persistTasks();
+    setStatus(selectedAssetGenerationMode === AI_ASSET_GENERATION_MODES.SEPARATED
+      ? '다음 첫 변환을 최대 16개 물체 분리용 이미지로 생성합니다.' : '다음 변환을 한 장의 이미지로 생성합니다.', 'ok');
+  });
   compareButton.onclick = openComparison;
   referenceSearchButton.onclick = () => { void referenceSearch.open(); };
   captureButton.onclick = () => { void openCaptureChooser(); };
@@ -3237,6 +3343,33 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click',()=>submit('image'));
   // Per-card action rows are intentionally hidden by the workbench CSS.
   // Keep the real scoped-edit action in the visible, fixed selected-result footer.
+  const editableGroups = document.createElement('button');
+  editableGroups.type = 'button';
+  editableGroups.dataset.aiEditableGroups = '';
+  editableGroups.textContent = '편집용 그룹 준비';
+  editableGroups.addEventListener('click', async () => {
+    const item = selectedOutputItem();
+    if (busy || !item || item.sceneResult) return;
+    await openGroupsForItem(item, candidateUsesSeparatedAssets(item));
+  });
+  panel.querySelector('[data-ai-insert-selected]')?.after(editableGroups);
+  const separatedRecovery = document.createElement('button');
+  separatedRecovery.type = 'button'; separatedRecovery.dataset.aiSeparatedRecovery = '';
+  separatedRecovery.textContent = '영역을 직접 지정해서 분리';
+  separatedRecovery.hidden = true;
+  separatedRecovery.addEventListener('click', () => {
+    const item = selectedOutputItem();
+    if (busy || !item || separatedCandidateNextAction(item) !== 'manual-regions') return;
+    void openGroupsForItem(item, false);
+  });
+  editableGroups.after(separatedRecovery);
+  const selectedOutputNote = document.createElement('p');
+  selectedOutputNote.className = 'ai-selected-output-note';
+  selectedOutputNote.dataset.aiSelectedOutputNote = '';
+  selectedOutputNote.setAttribute('role', 'status');
+  selectedOutputNote.setAttribute('aria-live', 'polite');
+  selectedOutputNote.hidden = true;
+  separatedRecovery.after(selectedOutputNote);
   const scoped = document.createElement('button');
   scoped.type = 'button'; scoped.dataset.aiInputMutator = ''; scoped.dataset.aiScopedEditSelected = '';
   scoped.textContent = '선택 영역 수정';
