@@ -1,0 +1,19 @@
+.web-generation{--gen-gap:16px;--gen-pad:24px;--gen-radius:12px;box-sizing:border-box;width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;padding:var(--gen-pad);border:1px solid var(--border-strong);border-radius:var(--gen-radius);background:var(--bg-panel);color:var(--text-primary);font:16px/1.65 system-ui,sans-serif;word-break:keep-all}
+.web-generation::backdrop{background:rgb(0 0 0 / 55%)}
+.web-generation header{display:flex;align-items:center;justify-content:space-between;gap:var(--gen-gap);margin-bottom:var(--gen-gap)}
+.web-generation h2{font-size:24px;line-height:1.4;margin:0}
+.web-generation form{display:grid;gap:8px}
+.web-generation label{font-weight:600}
+.web-generation textarea{min-height:120px;resize:vertical;width:100%;box-sizing:border-box;background:var(--bg-main,var(--bg-panel));color:var(--text-primary);border:1px solid var(--border-strong);border-radius:8px;padding:8px;font:inherit}
+.web-generation input{width:100%;min-width:0;font:inherit}
+.web-generation input::file-selector-button,.web-generation button,.web-generation a{box-sizing:border-box;min-height:44px;border:1px solid var(--border-strong);border-radius:8px;padding:8px 16px;background:var(--bg-panel);color:var(--text-primary);font:inherit;cursor:pointer}
+.web-generation [data-generate],.web-generation [data-insert]{background:#0969da;color:#fff;border-color:#0969da}
+.web-generation button:disabled{opacity:.55;cursor:default}
+.web-generation :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.web-generation-help{color:var(--text-primary);font-size:13px;margin:8px 0}
+.web-generation-actions{display:flex;flex-wrap:wrap;gap:8px}
+.web-generation [data-status]{margin:16px 0 0}
+.web-generation [data-result]{margin-top:16px}
+.web-generation img{display:block;width:100%;height:240px;object-fit:contain;margin-bottom:16px;background:#fff;border-radius:8px}
+.web-generation [hidden]{display:none!important}
+@media(max-width:480px){.web-generation{--gen-pad:16px}.web-generation h2{font-size:24px}}
