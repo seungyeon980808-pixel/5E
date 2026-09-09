@@ -49,6 +49,7 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
         try { await session.runtime.init(); } catch (error) { sessions.delete(newId); session.close(); rmSync(directory, { recursive: true, force: true }); throw error; }
         id = newId;
       }
+      if (!entry && req.url === '/api/bridge-status') { req.resume(); return json(200, { login: { loggedIn: false }, server: false }); }
       if (!entry) return json(401, { error: 'Session expired. Reload the page.' });
       entry.touched = Date.now();
       res.setHeader('Set-Cookie', `${cookieName}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800`);

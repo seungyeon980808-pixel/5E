@@ -64,7 +64,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false } = {}) 
       if (url.pathname === '/login' || url.pathname === '/account') {
         let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
         html = html.replace(/ data-editor-url="[^"]*"/, url.pathname === '/login' ? ' data-editor-url="/editor/"' : '');
-        html = html.replace('로컬 인증 실험입니다.<br>이미지 변환 기능은 꺼져 있습니다.<br>원격 무설치 사용은 검증 전입니다.', '로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.');
+        html = html.replace('로컬 인증 실험입니다.<br>이미지 변환 기능은 꺼져 있습니다.<br>원격 무설치 사용은 검증 전입니다.', url.pathname === '/account' ? '로그인을 완료한 뒤 편집기로 돌아가세요.<br>AI 이미지 생성과 수정을 시험할 수 있습니다.' : '로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.');
         if (url.pathname === '/account') html = html.replace('</section>', '<a href="/editor/">5E 편집기 열기</a></section>');
         return reply(200, html, 'text/html');
       }

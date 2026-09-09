@@ -52,6 +52,10 @@ test('trial editor can open without starting Codex or logging in', async () => {
     const response = await fetch(`http://127.0.0.1:${gateway.address().port}/editor/`);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /js\/main.js/);
+    const origin = 'http://127.0.0.1:' + gateway.address().port;
+    const status = await fetch(origin + '/api/bridge-status', { method: 'POST', headers: { Origin: origin, 'X-5E-Request': '1', 'Content-Type': 'application/json' }, body: JSON.stringify({ clientScope: '' }) });
+    assert.equal(status.status, 200);
+    assert.deepEqual(await status.json(), { login: { loggedIn: false }, server: false });
     assert.equal(starts, 0);
   } finally { await close(gateway); await close(auth); }
 });
