@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5E 이미지 처리 격리 QA</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; }
+    body { margin: 24px; color: #172033; background: #f4f7fb; }
+    main { max-width: 960px; margin: 0 auto; }
+    h1 { margin-bottom: 4px; }
+    .boundary { padding: 12px; border: 1px solid #9aa8ba; background: #fff; }
+    #status { font-weight: 700; }
+    #status[data-state="passed"] { color: #08743b; }
+    #status[data-state="failed"] { color: #b42318; }
+    #checks { padding: 0; list-style: none; }
+    #checks li { margin: 8px 0; padding: 10px 12px; border-left: 4px solid #9aa8ba; background: #fff; }
+    #checks li[data-pass="true"] { border-left-color: #08743b; }
+    #checks li[data-pass="false"] { border-left-color: #b42318; }
+    .previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    figure { margin: 0; padding: 12px; border: 1px solid #c7d0dc; background: #fff; }
+    img { display: block; max-width: 100%; image-rendering: pixelated; background: repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 50% / 16px 16px; }
+    figcaption { margin-top: 8px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>5E 이미지 처리 격리 QA</h1>
+    <p class="boundary">제품 AI 패널을 수정하지 않고 fixture와 공개 처리 함수만 실제 브라우저에서 검증합니다.</p>
+    <p id="status" role="status" aria-live="polite" data-state="running">검증 중</p>
+    <ul id="checks"></ul>
+    <section>
+      <h2>원본과 처리 결과</h2>
+      <div id="previews" class="previews"></div>
+    </section>
+  </main>
+  <script type="module">
+    import { imageBackgroundFixtures, pixelAt } from "../tests/fixtures/image-background-fixtures.mjs";
+    import { processImageBackgroundPixels } from "../js/image-background.js";
+    import { prepareSeparatedAssets } from "../js/ai-separated-assets.js";
+    import { insertEditableAssets } from "../js/ai-editable-assets.js";
+    import { compositeRgbaWithinMask } from "../js/ai-scoped-edit.js";
+    import { decodeScopedPng, encodeScopedPng } from "../js/ai-scoped-edit-png.js";
+    import {
+      createScopedEditSession,
+      confirmScopedEditSession,
+      prepareScopedEditProposal,
+      acceptScopedEditProposal,
+      discardScopedEditProposal,
+    } from "../js/ai-scoped-edit-session.js";
+    import { suggestImageText } from "../js/image-ocr.js";
+    import { serialize, prepareLoadedProject } from "../js/project-io.js?v=image-features-qa";
+
+    const report = { status: "running", surface: "isolated-browser-fixture", checks: [] };
+    window.__IMAGE_FEATURE_QA__ = report;
+    const checks = document.querySelector("#checks");
+    const previews = document.querySelector("#previews");
+    const status = document.querySelector("#status");
+
+    function assert(condition, message) {
+      if (!condition) throw new Error(message);
+    }
+    function equalBytes(actual, expected, message) {
+      assert(actual.length === expected.length, `${message}: byte length`);
+      for (let index = 0; index < actual.length; index += 1) {
+        if (actual[index] !== expected[index]) throw new Error(`${message}: byte ${index}`);
+      }
+    }
+    function pngDataUrl(bytes) {
+      let raw = "";
+      for (let index = 0; index < bytes.length; index += 0x8000) {
+        raw += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+      }
+      return `data:image/png;base64,${btoa(raw)}`;
+    }
+    async function fetchedDataUrl(path) {
+      const response = await fetch(path);
+      assert(response.ok, `fixture fetch failed: ${response.status}`);
+      return pngDataUrl(new Uint8Array(await response.arrayBuffer()));
+    }
+    function preview(title, src) {
+      const figure = document.createElement("figure");
+      const image = document.createElement("img");
+      image.src = src;
+      image.alt = title;
+      const caption = document.createElement("figcaption");
+      caption.textContent = title;
+      figure.append(image, caption);
+      previews.append(figure);
+    }
+    async function check(name, run) {
+      const item = document.createElement("li");
+      item.textContent = `${name}: 실행 중`;
+      checks.append(item);
+      try {
+        const evidence = await run();
+        report.checks.push({ name, pass: true, evidence });
+        item.dataset.pass = "true";
+        item.textContent = `${name}: 통과 - ${JSON.stringify(evidence)}`;
+      } catch (error) {
+        const entry = { name, pass: false, error: error?.message || String(error) };
+        report.checks.push(entry);
+        item.dataset.pass = "false";
+        item.textContent = `${name}: 실패 - ${entry.error}`;
+      }
+    }
+
+    let insertedState = null;
+    let savedProject = null;
+
+    await check("배경 제거와 내부 흰색·회색 보존", async () => {
+      const fixture = imageBackgroundFixtures().openBeaker;
+      const source = new Uint8ClampedArray(fixture.data);
+      const result = processImageBackgroundPixels(source, fixture.width, fixture.height, { examPalette: false });
+      equalBytes(source, fixture.data, "source must remain reusable");
+      assert(pixelAt(result, fixture.points.exterior)[3] === 0, "exterior stayed opaque");
+      equalBytes(pixelAt(result, fixture.points.openInteriorWhite), [255, 255, 255, 255], "open interior");
+      equalBytes(pixelAt(result, fixture.points.paleLiquid), [226, 226, 226, 255], "pale liquid");
+      assert(result.reviewRequired && result.reviewReasons.includes("open-light-region"), "ambiguity was not surfaced");
+      preview("원본 열린 비커", pngDataUrl(await encodeScopedPng({
+        width: fixture.width, height: fixture.height, data: new Uint8Array(fixture.data),
+      })));
+      preview("외부만 투명화한 결과", pngDataUrl(await encodeScopedPng({
+        width: fixture.width, height: fixture.height, data: new Uint8Array(result.data),
+      })));
+      return {
+        sourcePreserved: true,
+        exteriorAlpha: 0,
+        interiorRgba: pixelAt(result, fixture.points.openInteriorWhite),
+        paleLiquidRgba: pixelAt(result, fixture.points.paleLiquid),
+        reviewReasons: result.reviewReasons,
+      };
+    });
+
+    await check("객체 분리·개별 이동·단일 undo·저장 재열기", async () => {
+      const sourceUrl = await fetchedDataUrl("../tests/fixtures/separated-assets/lab-assemblies-atlas.png");
+      preview("비커·온도계·받침대 atlas 원본", sourceUrl);
+      const prepared = await prepareSeparatedAssets(sourceUrl, { layout: "auto", maxAssets: null });
+      assert(prepared.assets.length >= 3, "independent assemblies were not exposed");
+      assert(prepared.unassignedForegroundPixelCount === 0 && prepared.stats.assignmentVerified, "foreground pixels were lost");
+      prepared.labelsDisabled = true;
+      const value = {
+        activePageId: "qa-page",
+        artboard: { w: 90, h: 70 },
+        objects: [{ id: "existing", type: "rect", layerId: 1 }],
+        undoStack: [],
+        redoStack: [],
+        groups: [],
+        selectedIds: [],
+        targetedId: null,
+        activeLayerId: 1,
+        activeTool: "V",
+        guides: [],
+        layers: [{ id: 1, name: "레이어 1", visible: true }],
+        pages: [{
+          id: "qa-page",
+          name: "페이지 1",
+          meta: { number: "", points: "" },
+          objects: [],
+          guides: [],
+          layers: [{ id: 1, name: "레이어 1", visible: true }],
+          artboard: { w: 90, h: 70 },
+        }],
+      };
+      const store = { get: () => value, update: mutate => mutate(value) };
+      insertEditableAssets(store, prepared, {
+        isCurrent: current => current.activePageId === "qa-page",
+        aiTaskId: "qa-task",
+        aiCandidateId: "qa-candidate",
+      });
+      const images = value.objects.filter(object => object.type === "image");
+      assert(images.length === prepared.assets.length, "each asset was not inserted independently");
+      assert(new Set(images.map(object => object.groupId)).size === images.length, "asset groups were merged");
+      const secondX = images[1].x;
+      images[0].x += 7;
+      assert(images[1].x === secondX, "moving one asset moved another");
+      savedProject = serialize(value);
+      const reopened = prepareLoadedProject(JSON.parse(JSON.stringify(savedProject)));
+      assert(reopened.active.objects.filter(object => object.type === "image").length === images.length, "saved assets did not reopen");
+      assert(reopened.groups.length === images.length, "saved groups were not reconstructed");
+      const beforeUndoCount = value.objects.length;
+      value.objects = value.undoStack.pop();
+      assert(value.objects.length === 1 && beforeUndoCount > 1, "single undo did not restore pre-insert objects");
+      insertedState = { assetCount: images.length, beforeUndoCount, afterUndoCount: value.objects.length };
+      for (const [index, asset] of prepared.assets.entries()) preview(`분리 객체 ${index + 1}`, asset.data);
+      return {
+        assetCount: images.length,
+        foreground: prepared.foregroundPixelCount,
+        unassigned: prepared.unassignedForegroundPixelCount,
+        reviewRequired: prepared.reviewRequired,
+        movedIndependently: true,
+        undoSnapshots: 1,
+        reopenedGroups: reopened.groups.length,
+      };
+    });
+
+    await check("선택 영역 적용·폐기와 영역 밖 RGBA 보존", async () => {
+      const width = 4;
+      const height = 2;
+      const sourceRgba = Uint8Array.from([
+        9, 8, 7, 0, 1, 2, 3, 255, 4, 5, 6, 255, 10, 11, 12, 64,
+        13, 14, 15, 0, 16, 17, 18, 255, 19, 20, 21, 255, 22, 23, 24, 1,
+      ]);
+      const candidateRgba = new Uint8Array(sourceRgba);
+      candidateRgba.set([200, 201, 202, 0], 0);
+      candidateRgba.set([101, 102, 103, 255], 4);
+      candidateRgba.set([111, 112, 113, 255], 8);
+      candidateRgba.set([210, 211, 212, 1], 28);
+      const mask = Uint8Array.of(0, 1, 1, 0, 0, 1, 1, 0);
+      const expected = compositeRgbaWithinMask(
+        { width, height, data: sourceRgba },
+        { width, height, data: candidateRgba },
+        mask,
+      );
+      const sourcePng = await encodeScopedPng({ width, height, data: sourceRgba });
+      const candidatePng = await encodeScopedPng({ width, height, data: candidateRgba });
+      const current = { taskId: "qa-task", candidateId: "qa-candidate", epoch: 1, selectionRevision: 1, sourcePng };
+      const getCurrent = () => current;
+      const options = {
+        ...current,
+        rectangles: [
+          { x0: 1, y0: 0, x1: 3, y1: 1, coordinateSpace: "selected-result-pixels" },
+          { x0: 1, y0: 1, x1: 3, y1: 2, coordinateSpace: "selected-result-pixels" },
+        ],
+      };
+      const session = await createScopedEditSession(options);
+      confirmScopedEditSession(session, getCurrent);
+      const proposal = await prepareScopedEditProposal(session, candidatePng, getCurrent);
+      assert(proposal.outsideUnchanged, "proposal did not prove outside preservation");
+      const accepted = acceptScopedEditProposal(session, proposal, getCurrent);
+      const decoded = await decodeScopedPng(accepted);
+      equalBytes(decoded.data, expected, "accepted scoped composite");
+      let duplicateBlocked = false;
+      try { acceptScopedEditProposal(session, proposal, getCurrent); } catch { duplicateBlocked = true; }
+      assert(duplicateBlocked, "duplicate apply was accepted");
+
+      const cancelledSession = await createScopedEditSession(options);
+      confirmScopedEditSession(cancelledSession, getCurrent);
+      const cancelledProposal = await prepareScopedEditProposal(cancelledSession, candidatePng, getCurrent);
+      discardScopedEditProposal(cancelledSession, cancelledProposal);
+      let cancelledBlocked = false;
+      try { acceptScopedEditProposal(cancelledSession, cancelledProposal, getCurrent); } catch { cancelledBlocked = true; }
+      assert(cancelledBlocked, "discarded proposal was applied");
+      return {
+        outsideUnchanged: proposal.outsideUnchanged,
+        changedPixels: proposal.changedPixelCount,
+        hiddenRgbPreserved: Array.from(decoded.data.slice(0, 4)),
+        duplicateBlocked,
+        discardedBlocked: cancelledBlocked,
+      };
+    });
+
+    await check("OCR 실패 시 원본 유지", async () => {
+      const original = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10);
+      const before = new Uint8Array(original);
+      const result = await suggestImageText(original, { mode: "suggest", language: "kor" }, {
+        engine: {
+          id: "offline-fixture",
+          async recognize() { throw Object.assign(new Error("offline"), { code: "NETWORK_DOWN" }); },
+        },
+      });
+      equalBytes(original, before, "OCR mutated original bytes");
+      assert(result.status === "failed", "OCR failure was not explicit");
+      assert(result.originalPreserved && !result.replacementAllowed && result.suggestions.length === 0, "OCR failure allowed replacement");
+      return {
+        status: result.status,
+        errorCode: result.error.code,
+        originalPreserved: result.originalPreserved,
+        replacementAllowed: result.replacementAllowed,
+      };
+    });
+
+    report.status = report.checks.every(entry => entry.pass) ? "passed" : "failed";
+    report.summary = {
+      passed: report.checks.filter(entry => entry.pass).length,
+      failed: report.checks.filter(entry => !entry.pass).length,
+      productUiIntegrated: false,
+      savedProjectSchema: savedProject?.version || null,
+      insertion: insertedState,
+    };
+    status.dataset.state = report.status;
+    status.textContent = report.status === "passed"
+      ? `${report.summary.passed}개 브라우저 시나리오 통과`
+      : `${report.summary.failed}개 브라우저 시나리오 실패`;
+    document.documentElement.dataset.qaStatus = report.status;
+    window.dispatchEvent(new CustomEvent("image-feature-qa-complete", { detail: report }));
+  </script>
+</body>
+</html>
