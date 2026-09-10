@@ -1,0 +1,22 @@
+{
+  "name": "5e-track-e-image-ocr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated, reproducible OCR feasibility benchmark for 5E Track E",
+  "scripts": {
+    "fixtures": "node build-fixtures.mjs --check",
+    "fixtures:write": "node build-fixtures.mjs --write",
+    "benchmark": "node benchmark.mjs",
+    "test": "node --test ../../tests/test-image-ocr.mjs benchmark-process.test.mjs && npm run fixtures"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2",
+    "onnxruntime-node": "1.23.2",
+    "ppu-paddle-ocr": "6.5.1",
+    "tesseract.js": "7.0.0"
+  }
+}

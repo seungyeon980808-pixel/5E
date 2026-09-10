@@ -1,0 +1,2527 @@
+{
+  "schema": "5e-image-ocr-benchmark@1",
+  "track": "E",
+  "measuredAt": "2026-09-10T11:17:08.381Z",
+  "fixtureManifests": [
+    {
+      "file": "tests/fixtures/image-ocr/manifest.json",
+      "sha256": "930790ef9ee943013cd72c693d3bfd9086533d418f46857ce671255d07d11feb"
+    },
+    {
+      "file": "tests/fixtures/image-ocr/supplemental/manifest.json",
+      "sha256": "73832bbd1d156810e76c325575d4077a83ae3745eebdfab16ac8eaff8a5c9231"
+    }
+  ],
+  "packageLockSha256": "1223eaf658752687c74016d7377e168baad68a54d3f082593dcfb74162a6e1d5",
+  "sourceFiles": [
+    {
+      "file": "benchmark.mjs",
+      "sha256": "424d735d49a92381669b4f4018f6242fe0fbc9fa44ba2b7e4cdcf06d4a4af160"
+    },
+    {
+      "file": "benchmark-candidate.mjs",
+      "sha256": "29b109c5016148b2f1f452543d1e20339ff6d7e5dd665fde98d78dc54edf6253"
+    },
+    {
+      "file": "benchmark-paddle-candidate.mjs",
+      "sha256": "bc347fd004549f7aebeb108e30ad67408fc8290f52ff56abec46233a4840e255"
+    },
+    {
+      "file": "benchmark-process.mjs",
+      "sha256": "ae96f76c973f2158f0374f26add48f2543e04b0ac9e42126b5fa3031902ae260"
+    },
+    {
+      "file": "benchmark-failures.mjs",
+      "sha256": "524abfd1ef98dff3719aa24fe3c1099b7571ee76d4bca65185a117a170bb7c8c"
+    },
+    {
+      "file": "benchmark-resources.mjs",
+      "sha256": "41e0a2afd0886eff390e1bc8c4c3a4bce8eb234fff3fd5027a7a949ec3b7a8fb"
+    },
+    {
+      "file": "metrics.mjs",
+      "sha256": "d6a1a5c0c9f3195bcd8737f7c654920e6bdcc0b56344a302858088c10e366b3f"
+    },
+    {
+      "file": "models.mjs",
+      "sha256": "bce7ad45766b1bd99a28050e009f8db63fc982ce062f1b783a1ae2357e940ace"
+    },
+    {
+      "file": "fixture-spec.mjs",
+      "sha256": "48e15e72bf48928553803d524148aaf1004594f0549320cee934708d48e8ac61"
+    },
+    {
+      "file": "build-fixtures.mjs",
+      "sha256": "629662e322e3628c5edb78dc1668b22d03de4a65efeabe74b2e034137166e546"
+    }
+  ],
+  "protocol": {
+    "engines": [
+      "tesseract.js@7.0.0",
+      "ppu-paddle-ocr@6.5.1 + onnxruntime-node@1.23.2"
+    ],
+    "profiles": [
+      "fast",
+      "best"
+    ],
+    "languages": [
+      "kor",
+      "kor+eng"
+    ],
+    "iterationsPerFixture": 3,
+    "candidateProcessTimeoutMs": 120000,
+    "timedOutCandidateDisposition": "status=unavailable, code=CANDIDATE_PROCESS_TIMEOUT, process tree terminated",
+    "fixtureCount": 11,
+    "scoring": "NFC and layout-whitespace normalization, then Unicode-code-point Levenshtein distance; exact accuracy is exact fixtures / fixtures; character accuracy is max(0, 1 - aggregate edit distance / expected characters).",
+    "paidApiCalls": 0,
+    "imageAiCalls": 0
+  },
+  "dependency": {
+    "tesseractRuntime": {
+      "packages": [
+        {
+          "name": "bmp-js",
+          "version": "0.1.0",
+          "installedFileBytes": 645720
+        },
+        {
+          "name": "idb-keyval",
+          "version": "6.3.0",
+          "installedFileBytes": 55849
+        },
+        {
+          "name": "is-url",
+          "version": "1.2.4",
+          "installedFileBytes": 6582
+        },
+        {
+          "name": "node-fetch",
+          "version": "2.7.0",
+          "installedFileBytes": 162253
+        },
+        {
+          "name": "opencollective-postinstall",
+          "version": "2.0.3",
+          "installedFileBytes": 3687
+        },
+        {
+          "name": "regenerator-runtime",
+          "version": "0.13.11",
+          "installedFileBytes": 27759
+        },
+        {
+          "name": "tesseract.js",
+          "version": "7.0.0",
+          "installedFileBytes": 1411341
+        },
+        {
+          "name": "tesseract.js-core",
+          "version": "7.0.0",
+          "installedFileBytes": 45262431
+        },
+        {
+          "name": "tr46",
+          "version": "0.0.3",
+          "installedFileBytes": 268388
+        },
+        {
+          "name": "wasm-feature-detect",
+          "version": "1.9.0",
+          "installedFileBytes": 34200
+        },
+        {
+          "name": "webidl-conversions",
+          "version": "3.0.1",
+          "installedFileBytes": 12370
+        },
+        {
+          "name": "whatwg-url",
+          "version": "5.0.0",
+          "installedFileBytes": 49886
+        },
+        {
+          "name": "zlibjs",
+          "version": "0.3.1",
+          "installedFileBytes": 3731492
+        }
+      ],
+      "installedFileBytes": 51671958
+    },
+    "paddleWrapperRuntime": {
+      "packages": [
+        {
+          "name": "@napi-rs/canvas",
+          "version": "1.0.9",
+          "installedFileBytes": 125557
+        },
+        {
+          "name": "@techstark/opencv-js",
+          "version": "5.0.0-release.1",
+          "installedFileBytes": 14731296
+        },
+        {
+          "name": "ppu-ocv",
+          "version": "4.0.0",
+          "installedFileBytes": 131128
+        },
+        {
+          "name": "ppu-paddle-ocr",
+          "version": "6.5.1",
+          "installedFileBytes": 279100
+        }
+      ],
+      "installedFileBytes": 15267081
+    },
+    "paddleNodeInferenceRuntime": {
+      "packages": [
+        {
+          "name": "adm-zip",
+          "version": "0.5.18",
+          "installedFileBytes": 125500
+        },
+        {
+          "name": "boolean",
+          "version": "3.2.0",
+          "installedFileBytes": 12474
+        },
+        {
+          "name": "define-data-property",
+          "version": "1.1.4",
+          "installedFileBytes": 30851
+        },
+        {
+          "name": "define-properties",
+          "version": "1.2.1",
+          "installedFileBytes": 12890
+        },
+        {
+          "name": "detect-node",
+          "version": "2.1.0",
+          "installedFileBytes": 2761
+        },
+        {
+          "name": "es-define-property",
+          "version": "1.0.1",
+          "installedFileBytes": 10217
+        },
+        {
+          "name": "es-errors",
+          "version": "1.3.0",
+          "installedFileBytes": 12324
+        },
+        {
+          "name": "es6-error",
+          "version": "4.1.1",
+          "installedFileBytes": 9858
+        },
+        {
+          "name": "escape-string-regexp",
+          "version": "4.0.0",
+          "installedFileBytes": 3790
+        },
+        {
+          "name": "global-agent",
+          "version": "3.0.0",
+          "installedFileBytes": 125107
+        },
+        {
+          "name": "globalthis",
+          "version": "1.0.4",
+          "installedFileBytes": 23665
+        },
+        {
+          "name": "gopd",
+          "version": "1.2.0",
+          "installedFileBytes": 9869
+        },
+        {
+          "name": "has-property-descriptors",
+          "version": "1.0.2",
+          "installedFileBytes": 10911
+        },
+        {
+          "name": "json-stringify-safe",
+          "version": "5.0.1",
+          "installedFileBytes": 12722
+        },
+        {
+          "name": "matcher",
+          "version": "3.0.0",
+          "installedFileBytes": 8819
+        },
+        {
+          "name": "object-keys",
+          "version": "1.1.1",
+          "installedFileBytes": 26544
+        },
+        {
+          "name": "onnxruntime-common",
+          "version": "1.23.2",
+          "installedFileBytes": 557286
+        },
+        {
+          "name": "onnxruntime-node",
+          "version": "1.23.2",
+          "installedFileBytes": 258351454
+        },
+        {
+          "name": "roarr",
+          "version": "2.15.4",
+          "installedFileBytes": 67677
+        },
+        {
+          "name": "semver",
+          "version": "7.8.5",
+          "installedFileBytes": 101065
+        },
+        {
+          "name": "semver-compare",
+          "version": "1.0.0",
+          "installedFileBytes": 4051
+        },
+        {
+          "name": "serialize-error",
+          "version": "7.0.1",
+          "installedFileBytes": 6902
+        },
+        {
+          "name": "sprintf-js",
+          "version": "1.1.3",
+          "installedFileBytes": 39879
+        },
+        {
+          "name": "type-fest",
+          "version": "0.13.1",
+          "installedFileBytes": 88495
+        }
+      ],
+      "installedFileBytes": 259655111
+    },
+    "browserCommon": [
+      {
+        "file": "tesseract.js/dist/tesseract.esm.min.js",
+        "bytes": 63220,
+        "gzipBytes": 10652,
+        "brotliBytes": 8363,
+        "sha256": "64871d76c75609fd5413b88a8171e2ef40deedd77d5875ba23df104b2d05eb29"
+      },
+      {
+        "file": "tesseract.js/dist/worker.min.js",
+        "bytes": 111307,
+        "gzipBytes": 33805,
+        "brotliBytes": 27550,
+        "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d"
+      }
+    ],
+    "browserCores": [
+      {
+        "file": "tesseract.js-core/tesseract-core-lstm.wasm.js",
+        "bytes": 3896484,
+        "gzipBytes": 1453570,
+        "brotliBytes": 1121324,
+        "sha256": "eef5f8b2f8e20e150680b20adaec4a60babafee3adbe8a94583c81fee46e8680"
+      },
+      {
+        "file": "tesseract.js-core/tesseract-core-simd-lstm.wasm.js",
+        "bytes": 3899472,
+        "gzipBytes": 1454316,
+        "brotliBytes": 1121440,
+        "sha256": "c58b46a4c796c0b8afccf77591d5b875b6896b45d402bbce8caa6f5362447b38"
+      },
+      {
+        "file": "tesseract.js-core/tesseract-core-relaxedsimd-lstm.wasm.js",
+        "bytes": 3905767,
+        "gzipBytes": 1455779,
+        "brotliBytes": 1123820,
+        "sha256": "861a536cf9ef8e63cb644d57bab39c388f37f7d6b6f60024b741c5f6b39a59b3"
+      }
+    ],
+    "browserCommonCompressedTotals": {
+      "uncompressedBytes": 174527,
+      "gzipBytes": 44457,
+      "brotliBytes": 35913
+    },
+    "fixtureRendererExcludedFromRuntime": "@resvg/resvg-js@2.6.2 is used only to reproduce fixtures."
+  },
+  "candidates": [
+    {
+      "schema": "5e-image-ocr-candidate-run@1",
+      "candidate": "tesseract-js-fast/kor",
+      "engine": "tesseract.js@7.0.0",
+      "profile": "fast",
+      "language": "kor",
+      "languageCodes": [
+        "kor"
+      ],
+      "iterationsPerFixture": 3,
+      "pageSegmentationMode": "SINGLE_LINE",
+      "models": [
+        {
+          "language": "kor",
+          "bytes": 1677415,
+          "sha256": "6b85e11d9bbf07863b97b3523b1b112844c43e713df8b66418a081fd1060b3b2",
+          "repository": "tesseract-ocr/tessdata_fast",
+          "revision": "87416418657359cb625c412a48b6e1d6d41c29bd"
+        }
+      ],
+      "aggregate": {
+        "cases": 11,
+        "exactCases": 4,
+        "exactAccuracy": 0.363636,
+        "expectedCharacters": 87,
+        "editDistance": 24,
+        "characterAccuracy": 0.724138,
+        "characterErrorRate": 0.275862
+      },
+      "categories": {
+        "ambiguous-glyph": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 14,
+          "editDistance": 7,
+          "characterAccuracy": 0.5,
+          "characterErrorRate": 0.5
+        },
+        "blurred": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 5,
+          "editDistance": 1,
+          "characterAccuracy": 0.8,
+          "characterErrorRate": 0.2
+        },
+        "chemical": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 6,
+          "characterAccuracy": 0.333333,
+          "characterErrorRate": 0.666667
+        },
+        "clean": {
+          "cases": 3,
+          "exactCases": 2,
+          "exactAccuracy": 0.666667,
+          "expectedCharacters": 14,
+          "editDistance": 1,
+          "characterAccuracy": 0.928571,
+          "characterErrorRate": 0.071429
+        },
+        "decimal": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 14,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "faint": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 8,
+          "editDistance": 2,
+          "characterAccuracy": 0.75,
+          "characterErrorRate": 0.25
+        },
+        "korean": {
+          "cases": 8,
+          "exactCases": 3,
+          "exactAccuracy": 0.375,
+          "expectedCharacters": 50,
+          "editDistance": 11,
+          "characterAccuracy": 0.78,
+          "characterErrorRate": 0.22
+        },
+        "numeric": {
+          "cases": 5,
+          "exactCases": 1,
+          "exactAccuracy": 0.2,
+          "expectedCharacters": 53,
+          "editDistance": 16,
+          "characterAccuracy": 0.698113,
+          "characterErrorRate": 0.301887
+        },
+        "required-label": {
+          "cases": 3,
+          "exactCases": 1,
+          "exactAccuracy": 0.333333,
+          "expectedCharacters": 13,
+          "editDistance": 2,
+          "characterAccuracy": 0.846154,
+          "characterErrorRate": 0.153846
+        },
+        "scientific": {
+          "cases": 2,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 19,
+          "editDistance": 11,
+          "characterAccuracy": 0.421053,
+          "characterErrorRate": 0.578947
+        },
+        "short": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 3,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "small": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 6,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "subscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 6,
+          "characterAccuracy": 0.333333,
+          "characterErrorRate": 0.666667
+        },
+        "superscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 10,
+          "editDistance": 5,
+          "characterAccuracy": 0.5,
+          "characterErrorRate": 0.5
+        },
+        "unit": {
+          "cases": 3,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 25,
+          "editDistance": 9,
+          "characterAccuracy": 0.64,
+          "characterErrorRate": 0.36
+        }
+      },
+      "cases": [
+        {
+          "id": "korean-clean",
+          "categories": [
+            "korean",
+            "clean"
+          ],
+          "expected": "광합성 속도",
+          "actual": "광합성 속도",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              24.01,
+              6.937,
+              8.922
+            ],
+            "median": 8.922,
+            "min": 6.937,
+            "max": 24.01
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "korean-numeric",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit"
+          ],
+          "expected": "온도 25 ℃",
+          "actual": "온도 25",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              7.285,
+              7.174,
+              6.704
+            ],
+            "median": 7.174,
+            "min": 6.704,
+            "max": 7.285
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 7,
+            "actualCharacters": 5,
+            "editDistance": 2,
+            "characterAccuracy": 0.714286,
+            "characterErrorRate": 0.285714,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 5
+              },
+              {
+                "operation": "delete",
+                "expected": "℃",
+                "actual": null,
+                "expectedIndex": 6
+              }
+            ]
+          }
+        },
+        {
+          "id": "ambiguous-glyphs",
+          "categories": [
+            "numeric",
+            "ambiguous-glyph"
+          ],
+          "expected": "O0 I1 l1 S5 B8",
+          "actual": "001111 55 88",
+          "confidence": 91,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              12.014,
+              11.764,
+              11.806
+            ],
+            "median": 11.806,
+            "min": 11.764,
+            "max": 12.014
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 14,
+            "actualCharacters": 12,
+            "editDistance": 7,
+            "characterAccuracy": 0.5,
+            "characterErrorRate": 0.5,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": "O",
+                "actual": null,
+                "expectedIndex": 0
+              },
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 2
+              },
+              {
+                "operation": "substitute",
+                "expected": "I",
+                "actual": "0",
+                "expectedIndex": 3
+              },
+              {
+                "operation": "substitute",
+                "expected": " ",
+                "actual": "1",
+                "expectedIndex": 5
+              },
+              {
+                "operation": "substitute",
+                "expected": "l",
+                "actual": "1",
+                "expectedIndex": 6
+              },
+              {
+                "operation": "substitute",
+                "expected": "S",
+                "actual": "5",
+                "expectedIndex": 9
+              },
+              {
+                "operation": "substitute",
+                "expected": "B",
+                "actual": "8",
+                "expectedIndex": 12
+              }
+            ]
+          }
+        },
+        {
+          "id": "decimal-values",
+          "categories": [
+            "numeric",
+            "decimal"
+          ],
+          "expected": "0.01 1.00 10.0",
+          "actual": "0.01 1.00 10.0",
+          "confidence": 88,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              12.46,
+              12.776,
+              11.926
+            ],
+            "median": 12.46,
+            "min": 11.926,
+            "max": 12.776
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 14,
+            "actualCharacters": 14,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "scientific-units",
+          "categories": [
+            "korean",
+            "numeric",
+            "scientific",
+            "unit",
+            "superscript"
+          ],
+          "expected": "속력 12 m/s²",
+          "actual": "속력 12 07/9@2",
+          "confidence": 62,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              9.731,
+              9.908,
+              9.685
+            ],
+            "median": 9.731,
+            "min": 9.685,
+            "max": 9.908
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 10,
+            "actualCharacters": 12,
+            "editDistance": 5,
+            "characterAccuracy": 0.5,
+            "characterErrorRate": 0.5,
+            "misreads": [
+              {
+                "operation": "insert",
+                "expected": null,
+                "actual": "0",
+                "expectedIndex": 6
+              },
+              {
+                "operation": "substitute",
+                "expected": "m",
+                "actual": "7",
+                "expectedIndex": 6
+              },
+              {
+                "operation": "insert",
+                "expected": null,
+                "actual": "9",
+                "expectedIndex": 8
+              },
+              {
+                "operation": "substitute",
+                "expected": "s",
+                "actual": "@",
+                "expectedIndex": 8
+              },
+              {
+                "operation": "substitute",
+                "expected": "²",
+                "actual": "2",
+                "expectedIndex": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "chemical-subscripts",
+          "categories": [
+            "scientific",
+            "chemical",
+            "subscript"
+          ],
+          "expected": "H₂O + CO₂",
+          "actual": "20 + 0,",
+          "confidence": 18,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              8.786,
+              9.003,
+              8.785
+            ],
+            "median": 8.786,
+            "min": 8.785,
+            "max": 9.003
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 9,
+            "actualCharacters": 7,
+            "editDistance": 6,
+            "characterAccuracy": 0.333333,
+            "characterErrorRate": 0.666667,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": "H",
+                "actual": null,
+                "expectedIndex": 0
+              },
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": "2",
+                "expectedIndex": 1
+              },
+              {
+                "operation": "substitute",
+                "expected": "O",
+                "actual": "0",
+                "expectedIndex": 2
+              },
+              {
+                "operation": "delete",
+                "expected": "C",
+                "actual": null,
+                "expectedIndex": 6
+              },
+              {
+                "operation": "substitute",
+                "expected": "O",
+                "actual": "0",
+                "expectedIndex": 7
+              },
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": ",",
+                "expectedIndex": 8
+              }
+            ]
+          }
+        },
+        {
+          "id": "small-korean",
+          "categories": [
+            "korean",
+            "small"
+          ],
+          "expected": "물체의 운동",
+          "actual": "물체의 운동",
+          "confidence": 93,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              4.865,
+              5.016,
+              5.069
+            ],
+            "median": 5.016,
+            "min": 4.865,
+            "max": 5.069
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "faint-korean-unit",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit",
+            "faint"
+          ],
+          "expected": "전압 3.0 V",
+          "actual": "전압 3.0",
+          "confidence": 60,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              7.73,
+              8.514,
+              7.56
+            ],
+            "median": 7.73,
+            "min": 7.56,
+            "max": 8.514
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 8,
+            "actualCharacters": 6,
+            "editDistance": 2,
+            "characterAccuracy": 0.75,
+            "characterErrorRate": 0.25,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 6
+              },
+              {
+                "operation": "delete",
+                "expected": "V",
+                "actual": null,
+                "expectedIndex": 7
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-dilute-hydrochloric-acid",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "문은 염산",
+          "confidence": 61,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              5.997,
+              6.204,
+              6.3
+            ],
+            "median": 6.204,
+            "min": 5.997,
+            "max": 6.3
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 1,
+            "characterAccuracy": 0.8,
+            "characterErrorRate": 0.2,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "문",
+                "expectedIndex": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-distilled-water",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label",
+            "short"
+          ],
+          "expected": "증류수",
+          "actual": "증류수",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              4.113,
+              4.114,
+              4.059
+            ],
+            "median": 4.113,
+            "min": 4.059,
+            "max": 4.114
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 3,
+            "actualCharacters": 3,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "blurred-korean-label",
+          "categories": [
+            "korean",
+            "blurred",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "문은 염산",
+          "confidence": 59,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              6.417,
+              6.385,
+              6.379
+            ],
+            "median": 6.385,
+            "min": 6.379,
+            "max": 6.417
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 1,
+            "characterAccuracy": 0.8,
+            "characterErrorRate": 0.2,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "문",
+                "expectedIndex": 0
+              }
+            ]
+          }
+        }
+      ],
+      "runtime": {
+        "initializationMs": 64.295,
+        "recognitionMedianSumMs": 88.327,
+        "totalWallMs": 349.173,
+        "userCpuMs": 525.319,
+        "systemCpuMs": 24.221
+      },
+      "memory": {
+        "baseline": {
+          "rssBytes": 54919168,
+          "heapUsedBytes": 5611936,
+          "externalBytes": 2332300,
+          "arrayBuffersBytes": 155020
+        },
+        "afterInitialization": {
+          "rssBytes": 122011648,
+          "heapUsedBytes": 6033560,
+          "externalBytes": 2425610,
+          "arrayBuffersBytes": 155020
+        },
+        "afterTermination": {
+          "rssBytes": 159612928,
+          "heapUsedBytes": 6187256,
+          "externalBytes": 2465917,
+          "arrayBuffersBytes": 195327
+        },
+        "processPeakRssBytes": 159612928,
+        "processPeakRssUnitSource": "process.resourceUsage().maxRSS KiB"
+      },
+      "environment": {
+        "node": "v24.20.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "cpu": "Apple M5",
+        "logicalCpuCount": 10,
+        "totalMemoryBytes": 17179869184
+      },
+      "status": "measured",
+      "feasible": true,
+      "download": {
+        "modelBytes": 1677415,
+        "browserColdUncompressedBytesRange": [
+          5748426,
+          5757709
+        ],
+        "note": "Range loads one compatible LSTM core. HTTP compression and cache behavior depend on deployment; modelBytes are exact raw pinned downloads."
+      }
+    },
+    {
+      "schema": "5e-image-ocr-candidate-run@1",
+      "candidate": "tesseract-js-fast/kor+eng",
+      "engine": "tesseract.js@7.0.0",
+      "profile": "fast",
+      "language": "kor+eng",
+      "languageCodes": [
+        "kor",
+        "eng"
+      ],
+      "iterationsPerFixture": 3,
+      "pageSegmentationMode": "SINGLE_LINE",
+      "models": [
+        {
+          "language": "kor",
+          "bytes": 1677415,
+          "sha256": "6b85e11d9bbf07863b97b3523b1b112844c43e713df8b66418a081fd1060b3b2",
+          "repository": "tesseract-ocr/tessdata_fast",
+          "revision": "87416418657359cb625c412a48b6e1d6d41c29bd"
+        },
+        {
+          "language": "eng",
+          "bytes": 4113088,
+          "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2",
+          "repository": "tesseract-ocr/tessdata_fast",
+          "revision": "87416418657359cb625c412a48b6e1d6d41c29bd"
+        }
+      ],
+      "aggregate": {
+        "cases": 11,
+        "exactCases": 4,
+        "exactAccuracy": 0.363636,
+        "expectedCharacters": 87,
+        "editDistance": 19,
+        "characterAccuracy": 0.781609,
+        "characterErrorRate": 0.218391
+      },
+      "categories": {
+        "ambiguous-glyph": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 14,
+          "editDistance": 7,
+          "characterAccuracy": 0.5,
+          "characterErrorRate": 0.5
+        },
+        "blurred": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 5,
+          "editDistance": 2,
+          "characterAccuracy": 0.6,
+          "characterErrorRate": 0.4
+        },
+        "chemical": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 3,
+          "characterAccuracy": 0.666667,
+          "characterErrorRate": 0.333333
+        },
+        "clean": {
+          "cases": 3,
+          "exactCases": 2,
+          "exactAccuracy": 0.666667,
+          "expectedCharacters": 14,
+          "editDistance": 2,
+          "characterAccuracy": 0.857143,
+          "characterErrorRate": 0.142857
+        },
+        "decimal": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 14,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "faint": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 8,
+          "editDistance": 2,
+          "characterAccuracy": 0.75,
+          "characterErrorRate": 0.25
+        },
+        "korean": {
+          "cases": 8,
+          "exactCases": 3,
+          "exactAccuracy": 0.375,
+          "expectedCharacters": 50,
+          "editDistance": 9,
+          "characterAccuracy": 0.82,
+          "characterErrorRate": 0.18
+        },
+        "numeric": {
+          "cases": 5,
+          "exactCases": 1,
+          "exactAccuracy": 0.2,
+          "expectedCharacters": 53,
+          "editDistance": 12,
+          "characterAccuracy": 0.773585,
+          "characterErrorRate": 0.226415
+        },
+        "required-label": {
+          "cases": 3,
+          "exactCases": 1,
+          "exactAccuracy": 0.333333,
+          "expectedCharacters": 13,
+          "editDistance": 4,
+          "characterAccuracy": 0.692308,
+          "characterErrorRate": 0.307692
+        },
+        "scientific": {
+          "cases": 2,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 19,
+          "editDistance": 4,
+          "characterAccuracy": 0.789474,
+          "characterErrorRate": 0.210526
+        },
+        "short": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 3,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "small": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 6,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "subscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 3,
+          "characterAccuracy": 0.666667,
+          "characterErrorRate": 0.333333
+        },
+        "superscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 10,
+          "editDistance": 1,
+          "characterAccuracy": 0.9,
+          "characterErrorRate": 0.1
+        },
+        "unit": {
+          "cases": 3,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 25,
+          "editDistance": 5,
+          "characterAccuracy": 0.8,
+          "characterErrorRate": 0.2
+        }
+      },
+      "cases": [
+        {
+          "id": "korean-clean",
+          "categories": [
+            "korean",
+            "clean"
+          ],
+          "expected": "광합성 속도",
+          "actual": "광합성 속도",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              22.554,
+              6.973,
+              6.834
+            ],
+            "median": 6.973,
+            "min": 6.834,
+            "max": 22.554
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "korean-numeric",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit"
+          ],
+          "expected": "온도 25 ℃",
+          "actual": "온도 25",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              6.718,
+              6.412,
+              6.272
+            ],
+            "median": 6.412,
+            "min": 6.272,
+            "max": 6.718
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 7,
+            "actualCharacters": 5,
+            "editDistance": 2,
+            "characterAccuracy": 0.714286,
+            "characterErrorRate": 0.285714,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 5
+              },
+              {
+                "operation": "delete",
+                "expected": "℃",
+                "actual": null,
+                "expectedIndex": 6
+              }
+            ]
+          }
+        },
+        {
+          "id": "ambiguous-glyphs",
+          "categories": [
+            "numeric",
+            "ambiguous-glyph"
+          ],
+          "expected": "O0 I1 l1 S5 B8",
+          "actual": "001111 55 88",
+          "confidence": 91,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              16.409,
+              16.185,
+              16.052
+            ],
+            "median": 16.185,
+            "min": 16.052,
+            "max": 16.409
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 14,
+            "actualCharacters": 12,
+            "editDistance": 7,
+            "characterAccuracy": 0.5,
+            "characterErrorRate": 0.5,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": "O",
+                "actual": null,
+                "expectedIndex": 0
+              },
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 2
+              },
+              {
+                "operation": "substitute",
+                "expected": "I",
+                "actual": "0",
+                "expectedIndex": 3
+              },
+              {
+                "operation": "substitute",
+                "expected": " ",
+                "actual": "1",
+                "expectedIndex": 5
+              },
+              {
+                "operation": "substitute",
+                "expected": "l",
+                "actual": "1",
+                "expectedIndex": 6
+              },
+              {
+                "operation": "substitute",
+                "expected": "S",
+                "actual": "5",
+                "expectedIndex": 9
+              },
+              {
+                "operation": "substitute",
+                "expected": "B",
+                "actual": "8",
+                "expectedIndex": 12
+              }
+            ]
+          }
+        },
+        {
+          "id": "decimal-values",
+          "categories": [
+            "numeric",
+            "decimal"
+          ],
+          "expected": "0.01 1.00 10.0",
+          "actual": "0.01 1.00 10.0",
+          "confidence": 95,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              16.796,
+              16.49,
+              16.72
+            ],
+            "median": 16.72,
+            "min": 16.49,
+            "max": 16.796
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 14,
+            "actualCharacters": 14,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "scientific-units",
+          "categories": [
+            "korean",
+            "numeric",
+            "scientific",
+            "unit",
+            "superscript"
+          ],
+          "expected": "속력 12 m/s²",
+          "actual": "속력 12 m/s?",
+          "confidence": 94,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              13.45,
+              13.521,
+              13.301
+            ],
+            "median": 13.45,
+            "min": 13.301,
+            "max": 13.521
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 10,
+            "actualCharacters": 10,
+            "editDistance": 1,
+            "characterAccuracy": 0.9,
+            "characterErrorRate": 0.1,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "²",
+                "actual": "?",
+                "expectedIndex": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "chemical-subscripts",
+          "categories": [
+            "scientific",
+            "chemical",
+            "subscript"
+          ],
+          "expected": "H₂O + CO₂",
+          "actual": "H,0 + CO,",
+          "confidence": 86,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              12.284,
+              12.288,
+              12.329
+            ],
+            "median": 12.288,
+            "min": 12.284,
+            "max": 12.329
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 9,
+            "actualCharacters": 9,
+            "editDistance": 3,
+            "characterAccuracy": 0.666667,
+            "characterErrorRate": 0.333333,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": ",",
+                "expectedIndex": 1
+              },
+              {
+                "operation": "substitute",
+                "expected": "O",
+                "actual": "0",
+                "expectedIndex": 2
+              },
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": ",",
+                "expectedIndex": 8
+              }
+            ]
+          }
+        },
+        {
+          "id": "small-korean",
+          "categories": [
+            "korean",
+            "small"
+          ],
+          "expected": "물체의 운동",
+          "actual": "물체의 운동",
+          "confidence": 93,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              4.672,
+              5.586,
+              5.674
+            ],
+            "median": 5.586,
+            "min": 4.672,
+            "max": 5.674
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "faint-korean-unit",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit",
+            "faint"
+          ],
+          "expected": "전압 3.0 V",
+          "actual": "전압 3.0",
+          "confidence": 60,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              12.357,
+              15.204,
+              11.624
+            ],
+            "median": 12.357,
+            "min": 11.624,
+            "max": 15.204
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 8,
+            "actualCharacters": 6,
+            "editDistance": 2,
+            "characterAccuracy": 0.75,
+            "characterErrorRate": 0.25,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 6
+              },
+              {
+                "operation": "delete",
+                "expected": "V",
+                "actual": null,
+                "expectedIndex": 7
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-dilute-hydrochloric-acid",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "Be 염산",
+          "confidence": 74,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              10.906,
+              10.516,
+              9.773
+            ],
+            "median": 10.516,
+            "min": 9.773,
+            "max": 10.906
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 2,
+            "characterAccuracy": 0.6,
+            "characterErrorRate": 0.4,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "B",
+                "expectedIndex": 0
+              },
+              {
+                "operation": "substitute",
+                "expected": "은",
+                "actual": "e",
+                "expectedIndex": 1
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-distilled-water",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label",
+            "short"
+          ],
+          "expected": "증류수",
+          "actual": "증류수",
+          "confidence": 96,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              4.218,
+              4.613,
+              4.264
+            ],
+            "median": 4.264,
+            "min": 4.218,
+            "max": 4.613
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 3,
+            "actualCharacters": 3,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "blurred-korean-label",
+          "categories": [
+            "korean",
+            "blurred",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "He 염산",
+          "confidence": 79,
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              11.898,
+              11.453,
+              11.533
+            ],
+            "median": 11.533,
+            "min": 11.453,
+            "max": 11.898
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 2,
+            "characterAccuracy": 0.6,
+            "characterErrorRate": 0.4,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "H",
+                "expectedIndex": 0
+              },
+              {
+                "operation": "substitute",
+                "expected": "은",
+                "actual": "e",
+                "expectedIndex": 1
+              }
+            ]
+          }
+        }
+      ],
+      "runtime": {
+        "initializationMs": 81.99,
+        "recognitionMedianSumMs": 116.284,
+        "totalWallMs": 451.803,
+        "userCpuMs": 654.438,
+        "systemCpuMs": 16.553
+      },
+      "memory": {
+        "baseline": {
+          "rssBytes": 54870016,
+          "heapUsedBytes": 5612152,
+          "externalBytes": 2332300,
+          "arrayBuffersBytes": 155020
+        },
+        "afterInitialization": {
+          "rssBytes": 148029440,
+          "heapUsedBytes": 6036352,
+          "externalBytes": 2425610,
+          "arrayBuffersBytes": 155020
+        },
+        "afterTermination": {
+          "rssBytes": 172064768,
+          "heapUsedBytes": 6166952,
+          "externalBytes": 2465917,
+          "arrayBuffersBytes": 195327
+        },
+        "processPeakRssBytes": 172064768,
+        "processPeakRssUnitSource": "process.resourceUsage().maxRSS KiB"
+      },
+      "environment": {
+        "node": "v24.20.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "cpu": "Apple M5",
+        "logicalCpuCount": 10,
+        "totalMemoryBytes": 17179869184
+      },
+      "status": "measured",
+      "feasible": true,
+      "download": {
+        "modelBytes": 5790503,
+        "browserColdUncompressedBytesRange": [
+          9861514,
+          9870797
+        ],
+        "note": "Range loads one compatible LSTM core. HTTP compression and cache behavior depend on deployment; modelBytes are exact raw pinned downloads."
+      }
+    },
+    {
+      "schema": "5e-image-ocr-candidate-run@1",
+      "candidate": "tesseract-js-best/kor",
+      "engine": "tesseract.js@7.0.0",
+      "profile": "best",
+      "language": "kor",
+      "languageCodes": [
+        "kor"
+      ],
+      "status": "unavailable",
+      "feasible": false,
+      "models": [
+        {
+          "language": "kor",
+          "bytes": 12528128,
+          "sha256": "f888d4038348a0c3d25151e7f452bda0d74ca275b18cab146798bcbb94084fff",
+          "repository": "tesseract-ocr/tessdata_best",
+          "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec"
+        }
+      ],
+      "aggregate": null,
+      "categories": {},
+      "cases": [],
+      "runtime": {
+        "totalWallMs": 94.867
+      },
+      "memory": null,
+      "failure": {
+        "stage": "worker-initialization",
+        "code": "TESSERACT_WASM_MISSING_SYMBOL",
+        "diagnostic": "Aborted(missing function: _ZN9tesseract13DotProductSSEEPKfS1_i)",
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "timeoutMs": 120000,
+        "termination": null,
+        "scope": "Observed with the pinned profile on this benchmark runtime; not generalized to native Tesseract or every browser."
+      },
+      "download": {
+        "modelBytes": 12528128,
+        "browserColdUncompressedBytesRange": [
+          16599139,
+          16608422
+        ],
+        "note": "Range loads one compatible LSTM core. HTTP compression and cache behavior depend on deployment; modelBytes are exact raw pinned downloads."
+      }
+    },
+    {
+      "schema": "5e-image-ocr-candidate-run@1",
+      "candidate": "tesseract-js-best/kor+eng",
+      "engine": "tesseract.js@7.0.0",
+      "profile": "best",
+      "language": "kor+eng",
+      "languageCodes": [
+        "kor",
+        "eng"
+      ],
+      "status": "unavailable",
+      "feasible": false,
+      "models": [
+        {
+          "language": "kor",
+          "bytes": 12528128,
+          "sha256": "f888d4038348a0c3d25151e7f452bda0d74ca275b18cab146798bcbb94084fff",
+          "repository": "tesseract-ocr/tessdata_best",
+          "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec"
+        },
+        {
+          "language": "eng",
+          "bytes": 15400601,
+          "sha256": "8280aed0782fe27257a68ea10fe7ef324ca0f8d85bd2fd145d1c2b560bcb66ba",
+          "repository": "tesseract-ocr/tessdata_best",
+          "revision": "e12c65a915945e4c28e237a9b52bc4a8f39a0cec"
+        }
+      ],
+      "aggregate": null,
+      "categories": {},
+      "cases": [],
+      "runtime": {
+        "totalWallMs": 143.352
+      },
+      "memory": null,
+      "failure": {
+        "stage": "worker-initialization",
+        "code": "TESSERACT_WASM_MISSING_SYMBOL",
+        "diagnostic": "Aborted(missing function: _ZN9tesseract13DotProductSSEEPKfS1_i)",
+        "exitCode": 1,
+        "signal": null,
+        "timedOut": false,
+        "timeoutMs": 120000,
+        "termination": null,
+        "scope": "Observed with the pinned profile on this benchmark runtime; not generalized to native Tesseract or every browser."
+      },
+      "download": {
+        "modelBytes": 27928729,
+        "browserColdUncompressedBytesRange": [
+          31999740,
+          32009023
+        ],
+        "note": "Range loads one compatible LSTM core. HTTP compression and cache behavior depend on deployment; modelBytes are exact raw pinned downloads."
+      }
+    },
+    {
+      "schema": "5e-image-ocr-candidate-run@1",
+      "candidate": "ppu-paddle-ocr-v5-korean/canvas-native",
+      "engine": "ppu-paddle-ocr@6.5.1 + onnxruntime-node@1.23.2",
+      "profile": "PP-OCRv5 Korean mobile",
+      "language": "kor+eng",
+      "iterationsPerFixture": 3,
+      "processingEngine": "canvas-native",
+      "inferenceProvider": "cpu",
+      "models": [
+        {
+          "name": "detection",
+          "bytes": 4896928,
+          "sha256": "30acfc4e21f2a23669d01a75aaeb92190f96874613108a0f7086bed264420abc",
+          "repository": "snowfluke/ppu-paddle-ocr-models",
+          "revision": "bf1d5edb0335d3262be7caf13f766ba274b4cadd",
+          "path": "detection/PP-OCRv5_mobile_det_infer.ort"
+        },
+        {
+          "name": "recognition",
+          "bytes": 13443278,
+          "sha256": "ee0dfde503d787c91fd0455daae2eb85311b4b5bdcddf85a54d8c1e0adc157de",
+          "repository": "snowfluke/ppu-paddle-ocr-models",
+          "revision": "bf1d5edb0335d3262be7caf13f766ba274b4cadd",
+          "path": "recognition/multi/korean/v5/korean_PP-OCRv5_mobile_rec_infer.onnx"
+        },
+        {
+          "name": "dictionary",
+          "bytes": 47452,
+          "sha256": "a3792cbb41215a43e555e16ff4a7f7b18db5dd80cd058637098f0d872f2dd9d6",
+          "repository": "snowfluke/ppu-paddle-ocr-models",
+          "revision": "bf1d5edb0335d3262be7caf13f766ba274b4cadd",
+          "path": "recognition/multi/korean/v5/ppocrv5_korean_dict.txt"
+        }
+      ],
+      "aggregate": {
+        "cases": 11,
+        "exactCases": 4,
+        "exactAccuracy": 0.363636,
+        "expectedCharacters": 87,
+        "editDistance": 12,
+        "characterAccuracy": 0.862069,
+        "characterErrorRate": 0.137931
+      },
+      "categories": {
+        "ambiguous-glyph": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 14,
+          "editDistance": 2,
+          "characterAccuracy": 0.857143,
+          "characterErrorRate": 0.142857
+        },
+        "blurred": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 5,
+          "editDistance": 1,
+          "characterAccuracy": 0.8,
+          "characterErrorRate": 0.2
+        },
+        "chemical": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 2,
+          "characterAccuracy": 0.777778,
+          "characterErrorRate": 0.222222
+        },
+        "clean": {
+          "cases": 3,
+          "exactCases": 2,
+          "exactAccuracy": 0.666667,
+          "expectedCharacters": 14,
+          "editDistance": 1,
+          "characterAccuracy": 0.928571,
+          "characterErrorRate": 0.071429
+        },
+        "decimal": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 14,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "faint": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 8,
+          "editDistance": 2,
+          "characterAccuracy": 0.75,
+          "characterErrorRate": 0.25
+        },
+        "korean": {
+          "cases": 8,
+          "exactCases": 3,
+          "exactAccuracy": 0.375,
+          "expectedCharacters": 50,
+          "editDistance": 8,
+          "characterAccuracy": 0.84,
+          "characterErrorRate": 0.16
+        },
+        "numeric": {
+          "cases": 5,
+          "exactCases": 1,
+          "exactAccuracy": 0.2,
+          "expectedCharacters": 53,
+          "editDistance": 8,
+          "characterAccuracy": 0.849057,
+          "characterErrorRate": 0.150943
+        },
+        "required-label": {
+          "cases": 3,
+          "exactCases": 1,
+          "exactAccuracy": 0.333333,
+          "expectedCharacters": 13,
+          "editDistance": 2,
+          "characterAccuracy": 0.846154,
+          "characterErrorRate": 0.153846
+        },
+        "scientific": {
+          "cases": 2,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 19,
+          "editDistance": 4,
+          "characterAccuracy": 0.789474,
+          "characterErrorRate": 0.210526
+        },
+        "short": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 3,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "small": {
+          "cases": 1,
+          "exactCases": 1,
+          "exactAccuracy": 1,
+          "expectedCharacters": 6,
+          "editDistance": 0,
+          "characterAccuracy": 1,
+          "characterErrorRate": 0
+        },
+        "subscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 9,
+          "editDistance": 2,
+          "characterAccuracy": 0.777778,
+          "characterErrorRate": 0.222222
+        },
+        "superscript": {
+          "cases": 1,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 10,
+          "editDistance": 2,
+          "characterAccuracy": 0.8,
+          "characterErrorRate": 0.2
+        },
+        "unit": {
+          "cases": 3,
+          "exactCases": 0,
+          "exactAccuracy": 0,
+          "expectedCharacters": 25,
+          "editDistance": 6,
+          "characterAccuracy": 0.76,
+          "characterErrorRate": 0.24
+        }
+      },
+      "cases": [
+        {
+          "id": "korean-clean",
+          "categories": [
+            "korean",
+            "clean"
+          ],
+          "expected": "광합성 속도",
+          "actual": "광합성 속도",
+          "confidence": 0.9972672263781229,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              47.021,
+              13.466,
+              11.888
+            ],
+            "median": 13.466,
+            "min": 11.888,
+            "max": 47.021
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "korean-numeric",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit"
+          ],
+          "expected": "온도 25 ℃",
+          "actual": "온도 25",
+          "confidence": 0.9660032153129577,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              8.81,
+              9.832,
+              10.216
+            ],
+            "median": 9.832,
+            "min": 8.81,
+            "max": 10.216
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 7,
+            "actualCharacters": 5,
+            "editDistance": 2,
+            "characterAccuracy": 0.714286,
+            "characterErrorRate": 0.285714,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 5
+              },
+              {
+                "operation": "delete",
+                "expected": "℃",
+                "actual": null,
+                "expectedIndex": 6
+              }
+            ]
+          }
+        },
+        {
+          "id": "ambiguous-glyphs",
+          "categories": [
+            "numeric",
+            "ambiguous-glyph"
+          ],
+          "expected": "O0 I1 l1 S5 B8",
+          "actual": "O0 11 11 S5 B8",
+          "confidence": 0.9492217004299164,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              13.369,
+              13.242,
+              12.796
+            ],
+            "median": 13.242,
+            "min": 12.796,
+            "max": 13.369
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 14,
+            "actualCharacters": 14,
+            "editDistance": 2,
+            "characterAccuracy": 0.857143,
+            "characterErrorRate": 0.142857,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "I",
+                "actual": "1",
+                "expectedIndex": 3
+              },
+              {
+                "operation": "substitute",
+                "expected": "l",
+                "actual": "1",
+                "expectedIndex": 6
+              }
+            ]
+          }
+        },
+        {
+          "id": "decimal-values",
+          "categories": [
+            "numeric",
+            "decimal"
+          ],
+          "expected": "0.01 1.00 10.0",
+          "actual": "0.01 1.00 10.0",
+          "confidence": 0.9853853711060115,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              13.593,
+              13.586,
+              13.142
+            ],
+            "median": 13.586,
+            "min": 13.142,
+            "max": 13.593
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 14,
+            "actualCharacters": 14,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "scientific-units",
+          "categories": [
+            "korean",
+            "numeric",
+            "scientific",
+            "unit",
+            "superscript"
+          ],
+          "expected": "속력 12 m/s²",
+          "actual": "속력 12m/s2",
+          "confidence": 0.99552021920681,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              10.695,
+              11.31,
+              10.695
+            ],
+            "median": 10.695,
+            "min": 10.695,
+            "max": 11.31
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 10,
+            "actualCharacters": 9,
+            "editDistance": 2,
+            "characterAccuracy": 0.8,
+            "characterErrorRate": 0.2,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 5
+              },
+              {
+                "operation": "substitute",
+                "expected": "²",
+                "actual": "2",
+                "expectedIndex": 9
+              }
+            ]
+          }
+        },
+        {
+          "id": "chemical-subscripts",
+          "categories": [
+            "scientific",
+            "chemical",
+            "subscript"
+          ],
+          "expected": "H₂O + CO₂",
+          "actual": "H2O + CO2",
+          "confidence": 0.8716287480460273,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              9.832,
+              9.871,
+              9.328
+            ],
+            "median": 9.832,
+            "min": 9.328,
+            "max": 9.871
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 9,
+            "actualCharacters": 9,
+            "editDistance": 2,
+            "characterAccuracy": 0.777778,
+            "characterErrorRate": 0.222222,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": "2",
+                "expectedIndex": 1
+              },
+              {
+                "operation": "substitute",
+                "expected": "₂",
+                "actual": "2",
+                "expectedIndex": 8
+              }
+            ]
+          }
+        },
+        {
+          "id": "small-korean",
+          "categories": [
+            "korean",
+            "small"
+          ],
+          "expected": "물체의 운동",
+          "actual": "물체의 운동",
+          "confidence": 0.9347918828328451,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              7.2,
+              6.687,
+              6.874
+            ],
+            "median": 6.874,
+            "min": 6.687,
+            "max": 7.2
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 6,
+            "actualCharacters": 6,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "faint-korean-unit",
+          "categories": [
+            "korean",
+            "numeric",
+            "unit",
+            "faint"
+          ],
+          "expected": "전압 3.0 V",
+          "actual": "전압3.0V",
+          "confidence": 0.9940333763758341,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              9.211,
+              9.367,
+              12.602
+            ],
+            "median": 9.367,
+            "min": 9.211,
+            "max": 12.602
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 8,
+            "actualCharacters": 6,
+            "editDistance": 2,
+            "characterAccuracy": 0.75,
+            "characterErrorRate": 0.25,
+            "misreads": [
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 2
+              },
+              {
+                "operation": "delete",
+                "expected": " ",
+                "actual": null,
+                "expectedIndex": 6
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-dilute-hydrochloric-acid",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "붉은 염산",
+          "confidence": 0.9621074557304382,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              9.679,
+              9.136,
+              9.406
+            ],
+            "median": 9.406,
+            "min": 9.136,
+            "max": 9.679
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 1,
+            "characterAccuracy": 0.8,
+            "characterErrorRate": 0.2,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "붉",
+                "expectedIndex": 0
+              }
+            ]
+          }
+        },
+        {
+          "id": "korean-distilled-water",
+          "categories": [
+            "korean",
+            "clean",
+            "required-label",
+            "short"
+          ],
+          "expected": "증류수",
+          "actual": "증류수",
+          "confidence": 0.99928351243337,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              7.271,
+              7.965,
+              7.142
+            ],
+            "median": 7.271,
+            "min": 7.142,
+            "max": 7.965
+          },
+          "score": {
+            "exact": true,
+            "expectedCharacters": 3,
+            "actualCharacters": 3,
+            "editDistance": 0,
+            "characterAccuracy": 1,
+            "characterErrorRate": 0,
+            "misreads": []
+          }
+        },
+        {
+          "id": "blurred-korean-label",
+          "categories": [
+            "korean",
+            "blurred",
+            "required-label"
+          ],
+          "expected": "묽은 염산",
+          "actual": "맑은 염산",
+          "confidence": 0.9237330555915833,
+          "confidenceScale": "0..1",
+          "outputStable": true,
+          "runtimeMs": {
+            "samples": [
+              7.844,
+              7.813,
+              8.409
+            ],
+            "median": 7.844,
+            "min": 7.813,
+            "max": 8.409
+          },
+          "score": {
+            "exact": false,
+            "expectedCharacters": 5,
+            "actualCharacters": 5,
+            "editDistance": 1,
+            "characterAccuracy": 0.8,
+            "characterErrorRate": 0.2,
+            "misreads": [
+              {
+                "operation": "substitute",
+                "expected": "묽",
+                "actual": "맑",
+                "expectedIndex": 0
+              }
+            ]
+          }
+        }
+      ],
+      "runtime": {
+        "initializationMs": 85.444,
+        "recognitionMedianSumMs": 111.415,
+        "totalWallMs": 457.025,
+        "userCpuMs": 1759.455,
+        "systemCpuMs": 36.291
+      },
+      "memory": {
+        "baseline": {
+          "rssBytes": 297238528,
+          "heapUsedBytes": 18596888,
+          "externalBytes": 76973641,
+          "arrayBuffersBytes": 25478321
+        },
+        "afterInitialization": {
+          "rssBytes": 358154240,
+          "heapUsedBytes": 19220488,
+          "externalBytes": 113748997,
+          "arrayBuffersBytes": 30490614
+        },
+        "afterTermination": {
+          "rssBytes": 429178880,
+          "heapUsedBytes": 26635368,
+          "externalBytes": 202955918,
+          "arrayBuffersBytes": 16834719
+        },
+        "processPeakRssBytes": 429637632,
+        "processPeakRssUnitSource": "process.resourceUsage().maxRSS KiB"
+      },
+      "download": {
+        "modelBytes": 18387658,
+        "note": "Exact pinned detection, Korean recognition, and dictionary bytes; package/runtime transfer size is reported separately."
+      },
+      "environment": {
+        "node": "v24.20.0",
+        "platform": "darwin",
+        "architecture": "arm64",
+        "cpu": "Apple M5",
+        "logicalCpuCount": 10,
+        "totalMemoryBytes": 17179869184
+      },
+      "status": "measured",
+      "feasible": true
+    }
+  ],
+  "summary": {
+    "measuredCandidates": 3,
+    "unavailableCandidates": 2,
+    "timedOutCandidates": 0,
+    "automaticReplacementEnabled": false,
+    "activationDecision": "off"
+  },
+  "environment": {
+    "node": "v24.20.0",
+    "platform": "darwin",
+    "release": "25.6.0",
+    "architecture": "arm64",
+    "cpu": "Apple M5",
+    "logicalCpuCount": 10,
+    "totalMemoryBytes": 17179869184
+  },
+  "limitations": [
+    "Tesseract Node worker-thread measurements use the same WebAssembly OCR core but are not browser-device timings.",
+    "The Paddle probe uses native ONNX Runtime CPU for reproducibility; browser canvas/ONNX support is documented but browser timings were not measured.",
+    "Synthetic single-line fixtures do not establish accuracy on arbitrary scans, handwriting, rotated labels, or full diagrams.",
+    "Peak RSS is process.resourceUsage().maxRSS for one isolated candidate process; concurrent visitors were not tested.",
+    "Confidence is recorded as engine evidence and is not an acceptance or replacement gate.",
+    "An unavailable or timed-out profile remains in the result set with its exact runtime diagnostic; it is not an accuracy result.",
+    "Every candidate child has a bounded deadline; timeout evidence records the deadline and requested process-tree termination method."
+  ]
+}
