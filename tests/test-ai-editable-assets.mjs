@@ -47,6 +47,23 @@ function stateFixture() {
   let updates = 0;
   return { get: () => value, update: fn => { updates++; fn(value); }, updates: () => updates };
 }
+test('manual correction accepts every region allowed by the separation contract without truncation', async () => {
+  const width = 63, height = 7, data = new Uint8Array(width * height * 4).fill(255);
+  const src = url(await encodeScopedPng({ width, height, data }));
+  const regions = Array.from({ length: 21 }, (_, index) => ({
+    id: `region_${index + 1}`, x: index * 3, y: 0, width: 3, height, label: '', labelMode: 'none',
+  }));
+
+  const prepared = await prepareEditableAssets(src, regions);
+  const state = stateFixture();
+  const inserted = insertEditableAssets(state, prepared, { isCurrent: () => true });
+
+  assert.equal(prepared.assets.length, 21);
+  assert.equal(inserted.groupIds.length, 21);
+  assert.equal(inserted.added, 21);
+  assert.equal(state.get().undoStack.length, 1);
+});
+
 test('single atomic insertion gives independent groups, native labels, provenance and one undo snapshot', async () => {
   const { src } = await fixture();
   const prepared = await prepareEditableAssets(src, [region, { id: 'b', x: 7, y: 0, width: 2, height: 7, label: 'B', anchor: { x: 8, y: 3 }, labelPoint: { x: 8, y: 0 } }]);

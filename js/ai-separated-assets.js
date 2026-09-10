@@ -1,7 +1,34 @@
+import {
+  GRID_ASSET_COUNT,
+  GRID_SIZE,
+  gridAssignments,
+  mergeAssignments,
+  summarizeAssignments,
+  whitespaceAssignments,
+} from './ai-separated-assets-assignments.js';
 import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js';
 
-const GRID_SIZE = 4;
 const WHITE_THRESHOLD = 240;
+
+function separationOptions(options) {
+  if (options === undefined) options = {};
+  if (!options || typeof options !== 'object' || Array.isArray(options)) throw new TypeError('분리 옵션을 확인해 주세요.');
+  const layout = options.layout === undefined ? 'auto' : options.layout;
+  const maxAssets = options.maxAssets === undefined ? null : options.maxAssets;
+  if (layout !== 'auto' && layout !== 'grid') throw new RangeError('분리 배치는 auto 또는 grid여야 합니다.');
+  if (maxAssets !== null && (!Number.isInteger(maxAssets) || maxAssets < 1 || maxAssets > 256)) throw new RangeError('최대 객체 수는 1~256의 정수 또는 null이어야 합니다.');
+  return { layout, maxAssets };
+}
+
+function reviewError(ErrorType, message, reason, details = {}) {
+  const error = new ErrorType(message);
+  error.code = reason;
+  error.reviewRequired = true;
+  error.reviewReasons = [reason];
+  error.manualCorrectionAvailable = true;
+  Object.assign(error, details);
+  return error;
+}
 
 export const SEPARATED_ASSETS_PROMPT = `
 승인된 공통 스타일 지침은 그대로 적용한다. 출력 품질, 해상도, 모델, 사용자의 요청을 바꾸지 않는다. 공통 지침의 원본 전체 구성 대신 아래 아틀라스 배치만 적용하며, 그 밖의 스타일과 의미 보존 규칙은 바꾸지 않는다.
@@ -37,10 +64,6 @@ function isAcceptedFrameBackground(data, pixel) {
   const offset = pixel * 4;
   const red = data[offset], green = data[offset + 1], blue = data[offset + 2];
   return Math.min(red, green, blue) >= 250 && Math.max(red, green, blue) - Math.min(red, green, blue) <= 3 && data[offset + 3] === 255;
-}
-
-function cellBounds(index, length) {
-  return [Math.floor(index * length / GRID_SIZE), Math.floor((index + 1) * length / GRID_SIZE)];
 }
 
 function frameIsTransparent(source) {
@@ -99,98 +122,90 @@ function detectBackground(source, transparent) {
   return background;
 }
 
-function foregroundBounds(background, source, region) {
-  let left = region.x + region.width, top = region.y + region.height, right = -1, bottom = -1, foregroundPixelCount = 0;
-  for (let y = region.y; y < region.y + region.height; y++) for (let x = region.x; x < region.x + region.width; x++) {
-    if (background[y * source.width + x]) continue;
-    left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y); foregroundPixelCount++;
-  }
-  if (right < left) return null;
-  const x = Math.max(0, left - 1), y = Math.max(0, top - 1);
-  return { x, y, width: Math.min(source.width - 1, right + 1) - x + 1, height: Math.min(source.height - 1, bottom + 1) - y + 1, foregroundPixelCount };
-}
-
-function fixedGridBounds(source, background) {
-  const regions = [];
-  for (let row = 0; row < GRID_SIZE; row++) for (let column = 0; column < GRID_SIZE; column++) {
-    const [x, right] = cellBounds(column, source.width), [y, bottom] = cellBounds(row, source.height);
-    const width = right - x, height = bottom - y, gutter = Math.min(3, Math.floor(Math.min(width, height) / 3));
-    for (let localY = 0; localY < height; localY++) for (let localX = 0; localX < width; localX++) {
-      if ((localX < gutter || localX >= width - gutter || localY < gutter || localY >= height - gutter) && !background[(y + localY) * source.width + x + localX]) return null;
-    }
-    const bounds = foregroundBounds(background, source, { x, y, width, height });
-    if (bounds) regions.push(bounds);
-  }
-  return regions;
-}
-
-function projectionBands(counts, minimumGap) {
-  const bands = [];
-  let start = -1, lastForeground = -1, gapStart = -1;
-  for (let position = 0; position < counts.length; position++) {
-    if (counts[position] > 0) {
-      if (start < 0) start = position;
-      if (gapStart >= 0 && position - gapStart >= minimumGap) { bands.push([start, gapStart]); start = position; }
-      lastForeground = position;
-      gapStart = -1;
-    } else if (start >= 0 && gapStart < 0) gapStart = position;
-  }
-  if (start >= 0) bands.push([start, lastForeground + 1]);
-  return bands;
-}
-
-function whitespaceBounds(source, background) {
-  const rowCounts = new Uint32Array(source.height);
-  for (let y = 0; y < source.height; y++) for (let x = 0; x < source.width; x++) if (!background[y * source.width + x]) rowCounts[y]++;
-  const rowGap = Math.max(3, Math.round(source.height * 0.015));
-  const columnGap = Math.max(3, Math.round(source.width * 0.015));
-  const regions = [];
-  for (const [top, bottom] of projectionBands(rowCounts, rowGap)) {
-    const columnCounts = new Uint32Array(source.width);
-    for (let y = top; y < bottom; y++) for (let x = 0; x < source.width; x++) if (!background[y * source.width + x]) columnCounts[x]++;
-    for (const [left, right] of projectionBands(columnCounts, columnGap)) {
-      const bounds = foregroundBounds(background, source, { x: left, y: top, width: right - left, height: bottom - top });
-      if (bounds) regions.push(bounds);
-    }
-  }
-  return regions;
-}
-
-async function encodeAsset(source, background, bounds, transparent) {
+async function encodeAsset(source, owners, bounds) {
   const data = new Uint8Array(bounds.width * bounds.height * 4);
-  let removedPixelCount = 0;
+  let removedPixelCount = 0, preservedPixelCount = 0;
   for (let localY = 0; localY < bounds.height; localY++) for (let localX = 0; localX < bounds.width; localX++) {
-    const sourceX = bounds.x + localX, sourceY = bounds.y + localY;
-    const sourceOffset = (sourceY * source.width + sourceX) * 4, outputOffset = (localY * bounds.width + localX) * 4;
+    const sourceX = bounds.x + localX, sourceY = bounds.y + localY, sourcePixel = sourceY * source.width + sourceX;
+    const sourceOffset = sourcePixel * 4, outputOffset = (localY * bounds.width + localX) * 4;
     data.set(source.data.subarray(sourceOffset, sourceOffset + 4), outputOffset);
-    const backgroundPixel = background[sourceY * source.width + sourceX] === 1;
-    if (!transparent && backgroundPixel) { data[outputOffset + 3] = 0; removedPixelCount++; }
+    if (owners[sourcePixel] !== bounds.owner) {
+      if (data[outputOffset + 3] !== 0) removedPixelCount++;
+      else preservedPixelCount++;
+      data[outputOffset + 3] = 0;
+    } else preservedPixelCount++;
   }
   const encoded = await encodeScopedPng({ width: bounds.width, height: bounds.height, data }, { metadata: source.metadata });
   const decoded = await decodeScopedPng(encoded);
   if (!decoded.data.every((value, index) => value === data[index])) throw new Error('분리한 객체의 원본 픽셀 보존 검증에 실패했습니다.');
-  return { ...bounds, data: toUrl(encoded), stats: { removedPixelCount, preservedPixelCount: bounds.width * bounds.height - removedPixelCount, foregroundPixelCount: bounds.foregroundPixelCount, rgbaVerified: true } };
+  const { owner, ...sourceBounds } = bounds;
+  return { ...sourceBounds, sourceBounds: { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height },
+    foregroundPixelCount: bounds.foregroundPixelCount, assignedForegroundPixelCount: bounds.foregroundPixelCount, data: toUrl(encoded),
+    stats: { removedPixelCount, preservedPixelCount, foregroundPixelCount: bounds.foregroundPixelCount,
+      assignedForegroundPixelCount: bounds.foregroundPixelCount, rgbaVerified: true } };
 }
 
-export async function prepareSeparatedAssets(dataUrl) {
+function manualRegion(asset) {
+  return { id: asset.id, x: asset.x, y: asset.y, width: asset.width, height: asset.height, label: asset.label,
+    labelMode: asset.labelMode, anchor: { ...asset.anchor }, labelPoint: { ...asset.labelPoint }, keepRects: [] };
+}
+
+export async function prepareSeparatedAssets(dataUrl, options) {
+  const { layout, maxAssets } = separationOptions(options);
   const source = await decodeScopedPng(fromUrl(dataUrl));
   if (Math.floor(Math.min(source.width, source.height) / GRID_SIZE / 3) < 2) throw new RangeError('4×4 객체 분리에 필요한 이미지 해상도가 부족합니다.');
   const transparent = frameIsTransparent(source);
   const backgroundMode = assertOuterFrame(source, transparent);
   const background = detectBackground(source, transparent);
+  const grid = gridAssignments(source, background);
   const foregroundPixelCount = background.reduce((total, value) => total + (value ? 0 : 1), 0);
-  if (!foregroundPixelCount) throw new Error('분리할 객체가 없습니다. 이미지 안에 객체를 배치해 주세요.');
-  const fixedBounds = fixedGridBounds(source, background);
-  const layoutMode = fixedBounds ? 'fixed-grid' : 'whitespace';
-  const bounds = fixedBounds || whitespaceBounds(source, background);
-  if (bounds.length > GRID_SIZE * GRID_SIZE) throw new Error('분리 결과가 16개를 넘습니다. 결과를 확인하고 객체 수를 줄여 주세요.');
-  const assignedForegroundPixelCount = bounds.reduce((total, item) => total + item.foregroundPixelCount, 0);
-  if (assignedForegroundPixelCount !== foregroundPixelCount) throw new Error('분리 과정에서 일부 원본 픽셀을 할당하지 못했습니다. 결과를 확인해 주세요.');
-  const assets = [];
-  for (const item of bounds) {
-    const encoded = await encodeAsset(source, background, item, transparent), number = assets.length + 1;
-    const center = { x: encoded.x + encoded.width / 2, y: encoded.y + encoded.height / 2 };
-    assets.push({ id: `separated_${number}`, ...encoded, label: `객체 ${number}`, anchor: center, labelPoint: { x: center.x, y: encoded.y } });
+  if (!foregroundPixelCount) throw reviewError(Error, '분리할 객체가 없습니다. 이미지 안에 객체를 배치해 주세요.', 'empty-foreground');
+
+  const useGrid = layout === 'grid' || !grid.boundaryForeground;
+  const initial = useGrid ? grid : whitespaceAssignments(source, background);
+  const assignment = mergeAssignments(source, initial, !useGrid);
+  const summary = summarizeAssignments(source, background, assignment);
+  if (summary.unassignedForegroundPixelCount) throw reviewError(Error, '분리 과정에서 일부 원본 픽셀을 할당하지 못했습니다. 결과를 확인해 주세요.', 'foreground-unassigned', summary);
+  if (maxAssets !== null && summary.items.length > maxAssets) {
+    throw reviewError(RangeError, `분리 결과가 최대 객체 수 ${maxAssets}개를 넘습니다. 결과를 확인하고 직접 영역을 선택해 주세요.`, 'asset-limit-exceeded',
+      { maxAssets, detectedAssetCount: summary.items.length, foregroundPixelCount: summary.foregroundPixelCount });
   }
-  return { width: source.width, height: source.height, assets, stats: { removedPixelCount: assets.reduce((total, asset) => total + asset.stats.removedPixelCount, 0), preservedPixelCount: assets.reduce((total, asset) => total + asset.stats.preservedPixelCount, 0), foregroundPixelCount, assignedForegroundPixelCount, rgbaVerified: true, backgroundMode, layoutMode } };
+
+  const assets = [];
+  for (const item of summary.items) {
+    const encoded = await encodeAsset(source, assignment.owners, item), number = assets.length + 1;
+    const center = { x: encoded.x + encoded.width / 2, y: encoded.y + encoded.height / 2 };
+    assets.push({ id: `separated_${number}`, ...encoded, label: `객체 ${number}`, labelMode: 'leader', anchor: center, labelPoint: { x: center.x, y: encoded.y },
+      semanticGroupingVerified: false });
+  }
+
+  const reviewReasons = ['semantic-grouping-unverified'];
+  const addReason = reason => { if (!reviewReasons.includes(reason)) reviewReasons.push(reason); };
+  const layoutMode = useGrid ? 'fixed-grid' : 'whitespace';
+  if (backgroundMode === 'near-white') addReason('near-white-background');
+  if (!useGrid) addReason('whitespace-layout');
+  if (grid.boundaryForeground) addReason('grid-boundary-foreground');
+  if (assignment.mergeCount) addReason('nearby-parts-merged');
+  if (assets.length > GRID_ASSET_COUNT) addReason('asset-count-exceeds-grid');
+  const stats = {
+    removedPixelCount: assets.reduce((total, asset) => total + asset.stats.removedPixelCount, 0),
+    preservedPixelCount: assets.reduce((total, asset) => total + asset.stats.preservedPixelCount, 0),
+    foregroundPixelCount: summary.foregroundPixelCount,
+    assignedForegroundPixelCount: summary.assignedForegroundPixelCount,
+    unassignedForegroundPixelCount: summary.unassignedForegroundPixelCount,
+    rgbaVerified: true,
+    assignmentVerified: summary.unassignedForegroundPixelCount === 0,
+    backgroundMode,
+    layoutMode,
+  };
+  return { width: source.width, height: source.height, assets,
+    foregroundPixelCount: summary.foregroundPixelCount,
+    assignedForegroundPixelCount: summary.assignedForegroundPixelCount,
+    unassignedForegroundPixelCount: summary.unassignedForegroundPixelCount,
+    semanticGroupingVerified: false,
+    reviewRequired: true,
+    reviewReasons,
+    manualCorrectionAvailable: true,
+    manualRegions: assets.map(manualRegion),
+    stats };
 }
