@@ -4,14 +4,16 @@ import { decodeScopedPng, applyScopedPngEdit } from './ai-scoped-edit-png.js';
 // Private byte snapshots must never be exposed as writable views.
 const sessions = new WeakMap();
 const proposals = new WeakMap();
+const usesSharedBuffer = value => typeof SharedArrayBuffer !== 'undefined'
+  && value.buffer instanceof SharedArrayBuffer;
 const byteCopy = (value, label) => {
-  if (!(value instanceof Uint8Array) || !value.length
-    || (typeof SharedArrayBuffer !== 'undefined' && value.buffer instanceof SharedArrayBuffer)) {
+  if (!(value instanceof Uint8Array) || !value.length || usesSharedBuffer(value)) {
     throw new TypeError(`${label} must be a nonempty, non-shared Uint8Array.`);
   }
   return new Uint8Array(value);
 };
 const sameBytes = (a, b) => a instanceof Uint8Array && b instanceof Uint8Array
+  && !usesSharedBuffer(a) && !usesSharedBuffer(b)
   && a.length === b.length && a.every((v, i) => v === b[i]);
 function identity(value) {
   if (!value || typeof value.taskId !== 'string' || !value.taskId

@@ -39,6 +39,23 @@ test('composite allows arbitrary candidate changes only inside a disjoint explic
   assert.equal(isRgbaOutsideMaskUnchanged(original, image(3, 2, output), mask), true);
 });
 
+test('a candidate line crossing both mask edges is clipped at exact pixel boundaries', () => {
+  const original = image(7, 1, [
+    10,11,12,0, 20,21,22,255, 30,31,32,255, 40,41,42,255,
+    50,51,52,255, 60,61,62,255, 70,71,72,0,
+  ], Uint8Array);
+  const candidate = image(7, 1, new Array(28).fill(0), Uint8Array);
+  const mask = rectangleToBinaryMask(7, 1, { x0: 2, y0: 0, x1: 5, y1: 1 });
+  const output = compositeRgbaWithinMask(original, candidate, mask);
+
+  assert.deepEqual([...output], [
+    10,11,12,0, 20,21,22,255, 0,0,0,0, 0,0,0,0,
+    0,0,0,0, 60,61,62,255, 70,71,72,0,
+  ]);
+  assert.equal(isRgbaOutsideMaskUnchanged(original, image(7, 1, output, Uint8Array), mask), true);
+  // This proves byte clipping only; arbitrary candidate pixels inside the mask still require semantic review.
+});
+
 test('outside verifier rejects one-channel changes, including hidden transparent RGB', () => {
   const original = image(2, 1, [11,12,13,0, 20,21,22,128]);
   const changedHiddenRgb = image(2, 1, [12,12,13,0, 20,21,22,128]);
