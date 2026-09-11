@@ -832,6 +832,7 @@ const BASICS = {
     },
     {
       chapter: "편집과 저장",
+      target: () => "#canvas", allowPan: true,
       title: "완성되었습니다",
       text:
         "고르고 → 끌고 → 오른쪽에서 다듬는다. 5E에서 하는 일은 결국 이 리듬입니다.\n\n" +
