@@ -14,10 +14,16 @@ test('result comparison source is guarded and preserves existing candidate event
   assert.match(transformed, /!candidateSelect \|\| panel.dataset.aiBusy === 'true'/);
   assert.throws(() => editorResultsSource('source changed'), /source changed/);
 });
-test('restored task starts on newest while manual candidate selection handler stays intact', () => {
+test('restored task keeps the persisted candidate instead of replacing it with the newest result', () => {
   const transformed = panelResultsSource(panel);
-  assert.match(transformed, /selectedCandidateId = generatedImages.at\(-1\)\?\.id \|\| null;/);
-  assert.doesNotMatch(transformed, /selectedCandidateId = tab.selectedCandidateId/);
+  const restore = transformed.match(/selectedCandidateId = tab\.selectedCandidateId \|\| generatedImages\.at\(-1\)\?\.id \|\| null;/)?.[0];
+  assert.ok(restore);
+  const context = {
+    tab: { selectedCandidateId: 'chosen-before-restart' },
+    generatedImages: [{ id: 'older' }, { id: 'newest' }],
+  };
+  vm.runInNewContext(`let selectedCandidateId; ${restore}; globalThis.result = selectedCandidateId;`, context);
+  assert.equal(context.result, 'chosen-before-restart');
   assert.match(transformed, /selectedCandidateId = item.id;/);
   assert.throws(() => panelResultsSource('source changed'), /source changed/);
 });

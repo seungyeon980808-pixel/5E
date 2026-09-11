@@ -37,6 +37,7 @@ export function createDesktopHandoff({
   isDesktop = () => Boolean(globalThis.fiveEDesktop),
   onPrompt,
   saveProject,
+  confirmDownload,
   openExternal,
   openDesktopPanel,
   openProjectChooser,
@@ -84,9 +85,22 @@ export function createDesktopHandoff({
     const safeUrl = validReleaseUrl(releaseUrl);
     if (!safeUrl) return { kind: "blocked" };
     if (typeof saveProject !== "function") return { kind: "save-unavailable" };
-    let saved;
-    try { saved = await saveProject(); } catch (_) { return { kind: "save-failed" }; }
-    if (saved !== true) return { kind: "save-cancelled" };
+    let saveOutcome;
+    try { saveOutcome = await saveProject(); } catch (_) { return { kind: "save-failed" }; }
+    if (!active(token)) return { kind: "stale" };
+    switch (saveOutcome?.kind) {
+      case "cancelled": return { kind: "save-cancelled" };
+      case "download-requested": {
+        if (typeof confirmDownload !== "function") return { kind: "download-unconfirmed" };
+        let confirmed;
+        try { confirmed = await confirmDownload(); } catch (_) { return { kind: "download-unconfirmed" }; }
+        if (!active(token)) return { kind: "stale" };
+        if (confirmed !== true) return { kind: "download-unconfirmed" };
+        break;
+      }
+      case "saved": break;
+      default: return { kind: "save-failed" };
+    }
     let opened = true;
     try { if (typeof openExternal === "function") opened = await openExternal(safeUrl); } catch (_) { opened = false; }
     if (opened === false) return { kind: "blocked" };
@@ -132,6 +146,10 @@ export function initAiInstallGuide(options = {}) {
   const guide = createDesktopHandoff({
     ...options,
     isDesktop: options.isDesktop || (() => Boolean(window.fiveEDesktop)),
+    confirmDownload: options.confirmDownload || (() => showConfirm(
+      "다운로드한 5E 프로젝트 파일이 기기에 저장된 것을 확인했나요? 파일이 보이지 않으면 취소하고 편집기로 돌아가 다운로드 상태를 확인해 주세요.",
+      { title: "프로젝트 파일 확인", okText: "파일 확인 후 설치 계속", cancelText: "편집기로 돌아가기" },
+    )),
     openExternal: options.openExternal || ((url) => Boolean(window.open(url, "_blank", "noopener,noreferrer"))),
     onPrompt: options.onPrompt || ((prompt) => {
       void showConfirm(prompt.message, { title: prompt.title, okText: "프로젝트 저장 후 설치", cancelText: "나중에" })

@@ -78,13 +78,13 @@ test("Given a deferred prompt, when the reminder period has not elapsed, then a 
   assert.equal(second.reportLocalFolderIntent().kind, "suppressed");
 });
 
-test("Given a saved web project, when installation is requested, then save completes before the release opens", async () => {
+test("Given a confirmed web project save, when installation is requested, then save completes before the release opens", async () => {
   const { createDesktopHandoff } = loadHandoff();
   const calls = [];
   const handoff = createDesktopHandoff({
     storage: storage(),
     onPrompt() {},
-    saveProject: async () => { calls.push("save"); return true; },
+    saveProject: async () => { calls.push("save"); return { kind: "saved" }; },
     openExternal: (url) => { calls.push(url); return true; },
   });
   handoff.reportAiSuccess();
@@ -99,7 +99,7 @@ test("Given unavailable, cancelled, or failed project export, when installation 
   const { createDesktopHandoff } = loadHandoff();
   const cases = [
     { outcome: "save-unavailable" },
-    { outcome: "save-cancelled", saveProject: async () => false },
+    { outcome: "save-cancelled", saveProject: async () => ({ kind: "cancelled" }) },
     { outcome: "save-failed", saveProject: async () => { throw new Error("save failed"); } },
   ];
   for (const expected of cases) {
@@ -118,7 +118,69 @@ test("Given unavailable, cancelled, or failed project export, when installation 
     assert.equal(result.kind, expected.outcome);
     assert.equal(opened, false);
     assert.equal(handoff.status().installStarted, false);
+    assert.equal(handoff.status().promptVisible, true);
   }
+});
+
+test("Given a browser download request, when the user confirms the file exists, then confirmation precedes the release opening", async () => {
+  const { createDesktopHandoff } = loadHandoff();
+  const calls = [];
+  const handoff = createDesktopHandoff({
+    storage: storage(),
+    onPrompt() {},
+    saveProject: async () => { calls.push("download"); return { kind: "download-requested" }; },
+    confirmDownload: async () => { calls.push("confirm"); return true; },
+    openExternal: (url) => { calls.push(url); return true; },
+  });
+  handoff.reportAiSuccess();
+
+  const result = await handoff.install();
+
+  assert.deepEqual(calls, ["download", "confirm", "https://github.com/seungyeon980808-pixel/5E/releases/latest"]);
+  assert.equal(result.kind, "release-opened");
+});
+
+test("Given a browser download request, when the file is not confirmed, then the editor handoff remains active", async () => {
+  const { createDesktopHandoff } = loadHandoff();
+  let opened = false;
+  const handoff = createDesktopHandoff({
+    storage: storage(),
+    onPrompt() {},
+    saveProject: async () => ({ kind: "download-requested" }),
+    confirmDownload: async () => false,
+    openExternal: () => { opened = true; },
+  });
+  handoff.reportAiSuccess();
+
+  const result = await handoff.install();
+
+  assert.equal(result.kind, "download-unconfirmed");
+  assert.equal(opened, false);
+  assert.equal(handoff.status().installStarted, false);
+  assert.equal(handoff.status().promptVisible, true);
+});
+
+test("Given installation is waiting for a save, when the prompt becomes stale, then the release stays closed", async () => {
+  const { createDesktopHandoff } = loadHandoff();
+  let finishSave;
+  let opened = false;
+  const handoff = createDesktopHandoff({
+    storage: storage(),
+    onPrompt() {},
+    saveProject: () => new Promise(resolve => { finishSave = resolve; }),
+    openExternal: () => { opened = true; },
+  });
+  handoff.reportAiSuccess();
+  const installation = handoff.install();
+  await new Promise(resolve => setImmediate(resolve));
+
+  handoff.dismiss();
+  finishSave({ kind: "saved" });
+  const result = await installation;
+
+  assert.equal(result.kind, "stale");
+  assert.equal(opened, false);
+  assert.equal(handoff.status().installStarted, false);
 });
 
 test("Given an unsafe configured release URL, when installation is requested, then it is blocked before project export", async () => {
@@ -128,7 +190,7 @@ test("Given an unsafe configured release URL, when installation is requested, th
     storage: storage(),
     onPrompt() {},
     releaseUrl: "javascript:alert(1)",
-    saveProject: async () => { saved = true; return true; },
+    saveProject: async () => { saved = true; return { kind: "saved" }; },
     openExternal() { throw new Error("must not open"); },
   });
   handoff.reportAiSuccess();
@@ -185,7 +247,7 @@ test("Given malformed stored state or a stale prompt action, when a new signal f
   const handoff = createDesktopHandoff({
     storage: persistentStorage,
     onPrompt: (prompt) => prompts.push(prompt),
-    saveProject: async () => { saves += 1; return true; },
+    saveProject: async () => { saves += 1; return { kind: "saved" }; },
     openExternal() { throw new Error("stale action must not open"); },
   });
   handoff.reportAiSuccess();

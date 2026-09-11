@@ -55,6 +55,6 @@ function editorResultsSource(source) {
 function panelResultsSource(source) {
   const before = 'selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;';
   if (!source.includes(before)) throw new Error('AI restored result source changed');
-  return source.replace(before, 'selectedCandidateId = generatedImages.at(-1)?.id || null;');
+  return source;
 }
 module.exports = { editorResultsSource, panelResultsSource };

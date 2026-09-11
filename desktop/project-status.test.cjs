@@ -58,7 +58,8 @@ test('cancelled file picker leaves status and document untouched', async () => {
   const f = fixture();
   f.update(s => s.pages[0].objects.push({ id: 'one' }));
   const h = saveHarness(f, async () => { throw { name: 'AbortError' }; });
-  await h.save();
+  const outcome = await h.save();
+  assert.equal(outcome.kind, 'cancelled');
   assert.equal(f.status.text(), '미저장 변경');
   assert.equal(h.downloads(), 0);
   assert.equal(f.data.pages[0].objects.length, 1);
@@ -78,14 +79,16 @@ test('real async save marks only captured content after writer close', async () 
   assert.equal(f.status.text(), '미저장 변경');
   f.update(s => s.pages[0].objects.push({ id: 'two' }));
   finish();
-  await pending;
+  const outcome = await pending;
+  assert.equal(outcome.kind, 'saved');
   assert.equal(written.pages[0].objects.length, 1);
   assert.equal(f.status.text(), '미저장 변경');
 });
 test('unsupported picker routes through existing project download', async () => {
   const f = fixture();
   const h = saveHarness(f);
-  await h.save();
+  const outcome = await h.save();
+  assert.equal(outcome.kind, 'download-requested');
   assert.equal(h.downloads(), 1);
   assert.match(f.status.text(), /다운로드 요청됨/);
 });

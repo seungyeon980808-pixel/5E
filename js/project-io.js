@@ -384,9 +384,9 @@ export async function saveProject(state) {
       await writable.write(blob);
       await writable.close();
       markProjectStatus(state, statusToken, "file");
-      return true;
+      return { kind: "saved" };
     } catch (e) {
-      if (e && e.name === "AbortError") return false;   // 사용자가 저장 취소 → 아무것도 안 함
+      if (e && e.name === "AbortError") return { kind: "cancelled" };   // 사용자가 저장 취소 → 아무것도 안 함
       // 권한 거부/기타 오류 → 아래 기본 다운로드로 폴백
     }
   }
@@ -401,7 +401,7 @@ export async function saveProject(state) {
   markProjectStatus(state, statusToken, "download");
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  return true;
+  return { kind: "download-requested" };
 }
 
 /* ----- defaultLayers: fresh 3-layer set for pages saved without layers ----- */
