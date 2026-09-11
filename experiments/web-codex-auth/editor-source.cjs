@@ -1,6 +1,6 @@
 function editorPanelSource(source) {
   const replacements = [
-    ['setStatus(cancelled ? "작업 취소됨" : "요청 실패", cancelled ? "warn" : "error");', 'setStatus(cancelled ? "작업 취소됨" : error.status === 429 ? error.message : "요청 실패", cancelled ? "warn" : "error");'],
+    ['setStatus(cancelled ? "작업 취소됨" : error?.code === "AI_TASK_CHECKPOINT_FAILED" ? "임시저장 실패 · AI 요청을 보내지 않았습니다" : "요청 실패", cancelled ? "warn" : "error");', 'setStatus(cancelled ? "작업 취소됨" : error?.code === "AI_TASK_CHECKPOINT_FAILED" ? "임시저장 실패 · AI 요청을 보내지 않았습니다" : error.status === 429 ? error.message : "요청 실패", cancelled ? "warn" : "error");'],
     ['if (!panel) return;', 'if (!panel) return;\n  const taskFeedback = createTaskFeedback(panel);\n  const webOutputProcessing = panel.querySelector(\'[data-ai-output-processing]\');\n  const webOutputHost = panel.querySelector(\'.ai-conversation\');\n  if (!webOutputProcessing) throw new Error(\'결과 처리 옵션을 표시할 위치가 없습니다.\');\n  if (webOutputHost && webOutputProcessing.parentElement !== webOutputHost) {\n    const webSideTabs = webOutputHost.querySelector(\'.ai-side-tabs\');\n    if (webSideTabs) webSideTabs.after(webOutputProcessing);\n    else webOutputHost.prepend(webOutputProcessing);\n  }'],
     ['preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId', 'preserveBytes:true,at:{x:0,y:0},aiTaskId:activeTaskTabId'],
     ['const setStatus = (text, kind = "") => {', 'const setStatus = (text, kind = "") => {\n    taskFeedback(text, kind);'],
