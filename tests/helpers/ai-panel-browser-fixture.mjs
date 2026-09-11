@@ -32,6 +32,7 @@ function createPanel(document) {
   appendControl(document, panel, 'span', 'data-ai-progress-stage');
   appendControl(document, panel, 'span', 'data-ai-e-count');
   appendControl(document, panel, 'button', 'data-ai-send');
+  appendControl(document, panel, 'textarea', 'data-ai-chat-input');
   appendControl(document, panel, 'button', 'data-ai-chat-send');
   appendControl(document, panel, 'button', 'data-ai-new');
   appendControl(document, panel, 'button', 'data-ai-compare');
@@ -80,12 +81,12 @@ function restoreGlobals(saved) {
   }
 }
 
-export function installAiPanelBrowserFixture({ workspace } = {}) {
+export function installAiPanelBrowserFixture({ workspace, indexedDbOptions } = {}) {
   const document = new TestDocument();
   const desktop = createDesktop();
   const storage = new MemoryStorage();
   const sessionStorage = new MemoryStorage();
-  const indexedDB = createIndexedDb(workspace);
+  const indexedDB = createIndexedDb(workspace, indexedDbOptions);
   const windowListeners = new Map();
   const requestAnimationFrame = callback => {
     const handle = { cancelled: false };

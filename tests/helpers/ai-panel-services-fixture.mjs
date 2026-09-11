@@ -6,7 +6,7 @@ export class MemoryStorage {
   clear() { this.values.clear(); }
 }
 
-export function createIndexedDb(workspace) {
+export function createIndexedDb(workspace, { beforePut } = {}) {
   const databases = new Map();
   const recordsFor = (databaseName, storeName) => {
     const key = `${databaseName}:${storeName}`;
@@ -22,9 +22,9 @@ export function createIndexedDb(workspace) {
       const records = recordsFor(databaseName, storeName);
       const requestFor = operation => {
         const request = {};
-        queueMicrotask(() => {
+        queueMicrotask(async () => {
           try {
-            request.result = operation();
+            request.result = await operation();
             request.onsuccess?.();
             queueMicrotask(() => transaction.oncomplete?.());
           } catch (error) {
@@ -36,7 +36,11 @@ export function createIndexedDb(workspace) {
       };
       transaction.objectStore = () => ({
         get: key => requestFor(() => structuredClone(records.get(key))),
-        put: value => requestFor(() => { records.set(value.key, structuredClone(value)); return value.key; }),
+        put: value => requestFor(async () => {
+          await beforePut?.(structuredClone(value));
+          records.set(value.key, structuredClone(value));
+          return value.key;
+        }),
         delete: key => requestFor(() => records.delete(key)),
         getAll: () => requestFor(() => structuredClone([...records.values()])),
         clear: () => requestFor(() => records.clear()),

@@ -3057,6 +3057,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const purpose = type === "image"
         ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE ? "scene" : "image")
         : "chat";
+      try {
+        await taskPersistence.checkpoint();
+      } catch (error) {
+        const checkpointError = new Error(`작업 복구 정보를 저장하지 못해 AI 요청을 보내지 않았습니다: ${error.message}`);
+        checkpointError.code = "AI_TASK_CHECKPOINT_FAILED";
+        throw checkpointError;
+      }
+      if (requestEpoch !== currentRequestEpoch || currentCancelRequested) throw new Error("작업 준비가 취소되었습니다.");
       currentTurnPerformance = { ...currentTurnPerformance, aiRequestStartedAt: performance.now(), model: runInput.model, effort: runInput.effort, serviceTier: runInput.serviceTier };
       const result = await desktop.send({
         text: imagePromptForRun(runInput) || (runInput.approvedFirstPng ? APPROVED_FIRST_PROMPT : type === "image"
@@ -3118,7 +3126,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const cancelled = currentCancelRequested || error?.code === "AI_TURN_CANCELLED" || /작업 준비가 취소/.test(error?.message || "");
       pendingCacheOutput = null;
       addLog(error.message, cancelled ? "" : "error");
-      setStatus(cancelled ? "작업 취소됨" : "요청 실패", cancelled ? "warn" : "error");
+      setStatus(cancelled ? "작업 취소됨" : error?.code === "AI_TASK_CHECKPOINT_FAILED" ? "임시저장 실패 · AI 요청을 보내지 않았습니다" : "요청 실패", cancelled ? "warn" : "error");
       setGenerating(false);
       setBusy(false);
     }

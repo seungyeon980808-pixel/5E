@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Run deployment and pack contracts
-        run: node --test tests/test-pdf-deployment-candidate.mjs tests/test-pdf-pack-release-model.mjs tests/test-pdf-pack-store.mjs tests/test-pdf-remote-pack.mjs tests/test-stage-distribution-server.mjs
+        run: node --test tests/test-pdf-deployment-candidate.mjs tests/test-pdf-pack-release-model.mjs tests/test-pdf-pack-store.mjs tests/test-pdf-release-pack-fetch.mjs tests/test-pdf-remote-pack.mjs tests/test-stage-distribution-server.mjs
 
       - name: Fetch and verify frozen PDF pack
         shell: pwsh
