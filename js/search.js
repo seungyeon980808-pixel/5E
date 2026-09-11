@@ -65,11 +65,10 @@ export function initObjectSearch() {
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
       .map(([id, def]) => ({ id, def }))
       .sort((a, b) => rank(a.def.category) - rank(b.def.category));
-    // 퍼스널 오브젝트: 이름/분류 매치 → 목록 끝에 '퍼스널' 그룹으로
     for (const it of listPersonalItems()) {
       if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
       matches.push({ id: it.id, personal: true,
-        def: { label: it.name, category: `퍼스널 · ${it.category}`, kind: "atomic" } });
+        def: { label: it.name, category: `내 오브젝트 · ${it.category}`, kind: "atomic" } });
     }
     highlighted = matches.length ? 0 : -1;
     results.replaceChildren();
@@ -117,7 +116,7 @@ export function initObjectSearch() {
         label.textContent = match.def.label;
         const badge = document.createElement("span");
         badge.className = "object-search-badge";
-        badge.textContent = match.personal ? "퍼스널" : (match.def.kind === "atomic" ? "즉시" : "드래그");
+        badge.textContent = match.personal ? "내 오브젝트" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
         if (icon) sizeIconViewBox(icon);

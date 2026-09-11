@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const source=readFileSync(new URL('../js/ai-panel.js',import.meta.url),'utf8');
-const handler=source.slice(source.indexOf('      closeTab.onclick ='),source.indexOf('      button.append(label, closeTab);'));
+const handler=source.slice(source.indexOf('      closeTab.onclick ='),source.indexOf('      button.append(copy, closeTab);'));
 function fixture(confirmed=true) {
   const tab={id:'target',title:'빈 작업'};const taskTabs=new Map([[tab.id,tab]]);
   const calls=[];const closeTab={};const state={busy:false};

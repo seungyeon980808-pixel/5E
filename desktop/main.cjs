@@ -757,6 +757,15 @@ function createWindow() {
             const labelerChoice = await choosePersistentTool({
               button: textChooserButton, chooser: textChooser, selector: '[data-symbol="labeler"]', expectedTool: "LABELER",
             });
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "v", code: "KeyV", bubbles: true }));
+            const chooserClosesOnSelectShortcut = await waitFor(() =>
+              stateModule.state.get().activeTool === "V" &&
+              !isActuallyVisible(textChooser) &&
+              !textChooserButton?.classList.contains("is-open") &&
+              textChooserButton?.getAttribute("aria-expanded") === "false");
+            await choosePersistentTool({
+              button: textChooserButton, chooser: textChooser, selector: '[data-symbol="labeler"]', expectedTool: "LABELER",
+            });
             angleChooserButton?.click();
             const chooserSwitchesFromTextToAngle = await waitFor(() =>
               !isActuallyVisible(textChooser) && isActuallyVisible(angleChooser));
@@ -1061,6 +1070,7 @@ function createWindow() {
               angleTabToggleWorks,
               chooserPanelSwitchingWorks,
               cutChooserPersistsAfterChoice,
+              chooserClosesOnSelectShortcut,
               chooserClosesOnOtherTool,
               eraseToolReachable,
               cutToolReachable,
@@ -1108,7 +1118,7 @@ function createWindow() {
           result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
           result.cutChooserVisible && result.cutChooserInToolPanel && result.textChooserBehavior && result.angleChooserBehavior &&
           result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
-          result.chooserClosesOnOtherTool && result.eraseToolReachable &&
+          result.chooserClosesOnSelectShortcut && result.chooserClosesOnOtherTool && result.eraseToolReachable &&
           result.cutToolReachable && result.delayedCutUiReachable && result.eraseShortcutWorks && result.delayedShortcutWorks &&
           result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
           result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&

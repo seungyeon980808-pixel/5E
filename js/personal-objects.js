@@ -3,7 +3,7 @@
  * · 저장: 캔버스에서 선택 → 고급 기능 [오브젝트 저장] → 이름·분류 입력.
  *   저장 시 현재 과목 모드(p/c/b/e)가 함께 기록되어 그 과목에서만 보인다.
  *   (과목 정보가 없는 예전 항목은 모든 과목에서 보인다)
- * · 사용: 좌측 '퍼스널 오브젝트' 분류 아코디언 또는 [오브젝트 저장소](썸네일
+ * · 사용: 좌측 '내 오브젝트' 분류 아코디언 또는 [오브젝트 저장소](썸네일
  *   미리보기 모달)에서 클릭 → 뷰 중앙에 삽입(id·groupId 재부여, Undo 1스텝).
  * · 검색: 오브젝트 검색(Ctrl+F)에도 노출(현재 과목 것만).
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
@@ -118,7 +118,7 @@ function visibleItems() {
 
 /* ---------- 검색(search.js) 연동 ---------- */
 export function listPersonalItems() {
-  return visibleItems().map((it) => ({ id: it.id, name: it.name, category: it.category || DEFAULT_CATEGORY }));
+  return load().map((it) => ({ id: it.id, name: it.name, category: it.category || DEFAULT_CATEGORY }));
 }
 export function insertPersonalItem(id) {
   if (!_state) return;
@@ -151,7 +151,7 @@ function askNameCategory(existingCategories, done) {
       <h2 class="modal-title">오브젝트 저장</h2>
       <p class="objectify-description" style="margin:0 0 10px;">
         생성한 오브젝트를 다음 작업에서도 사용할 수 있게 저장합니다.
-        저장된 오브젝트는 왼쪽 <b>퍼스널 오브젝트</b>와
+        저장된 오브젝트는 왼쪽 <b>내 오브젝트</b>와
         <b>오브젝트 검색(Ctrl+F)</b>에서도 조회할 수 있습니다.</p>
       <label class="modal-field"><span class="modal-label">이름</span>
         <input type="text" id="po-name" class="modal-input" maxlength="40" autocomplete="off" /></label>

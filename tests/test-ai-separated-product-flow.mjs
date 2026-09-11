@@ -20,7 +20,7 @@ test('actual AI panel contains the required visible generation-mode insertion an
   ]);
 
   // Then
-  assert.match(html, /<footer class="ai-workbench-actions">[\s\S]*data-ai-white-png-note[\s\S]*data-ai-send[\s\S]*<\/footer>/);
+  assert.match(html, /<section class="ai-preparation"[\s\S]*data-ai-white-png-note[\s\S]*data-ai-send[\s\S]*<\/section>/);
   assert.match(panel, /generationModeAnchor\.before\(generationModeRow\)/);
   assert.doesNotMatch(panel, /querySelector\('\.ai-output-row'\)\?\.after/);
   assert.match(css, /\.ai-output-actions \.ai-selected-output-note \{ grid-column:1 \/ -1; width:100%/);

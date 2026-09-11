@@ -442,7 +442,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
-    reset() { selected = null; render(); },
+    reset() { selected = null; activateTab('comments'); render(); },
     destroy() {
       destroyed = true;
       if (frame != null) {

@@ -328,10 +328,20 @@ initDataPlot();
 (function initToolSections() {
   const panel = document.getElementById("tool-list");
   if (!panel) return;
+  const key = "5e.toolSections.v1";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (_) {}
+  for (const section of panel.querySelectorAll(".tool-section[id]")) {
+    if (typeof saved[section.id] === "boolean") section.classList.toggle("is-collapsed", saved[section.id]);
+  }
   panel.addEventListener("click", (e) => {
     const header = e.target.closest(".tool-section-header");
     if (!header) return;
-    header.closest(".tool-section").classList.toggle("is-collapsed");
+    const section = header.closest(".tool-section");
+    section.classList.toggle("is-collapsed");
+    if (!section.id) return;
+    saved[section.id] = section.classList.contains("is-collapsed");
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
   });
 })();
 

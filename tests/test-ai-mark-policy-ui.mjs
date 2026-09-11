@@ -17,7 +17,7 @@ const select = (attribute) => {
 assert.match(html, /<section class="ai-mark-policy" data-ai-mark-policy aria-label="표시선 처리">/, 'policy is one labelled group');
 assert.equal(count(html, /data-ai-mark-policy(?=[\s>])/g), 1, 'policy group is unique');
 assert.match(html, /물체 윤곽·관·도선·실제 눈금선은 보존\. 숫자·단위는 제거\./, 'preservation guidance is present');
-assert.match(html, /<section class="ai-mark-policy"[\s\S]*?<\/section>\s*<button type="button" class="modal-btn modal-btn-primary" data-ai-comments-apply/, 'policy is immediately before the primary conversion action');
+assert.match(html, /<details class="ai-conversion-options">[\s\S]*?<section class="ai-mark-policy"[\s\S]*?<\/section>[\s\S]*?<\/details>\s*<button type="button" class="modal-btn modal-btn-primary" data-ai-send/, 'policy stays in the collapsed options before the primary conversion action');
 
 const arrows = select('data-ai-mark-arrows');
 assert.match(html, new RegExp(`<label for="${arrows.id}">화살표`), 'arrow label is connected');
@@ -35,7 +35,7 @@ assert.match(html, new RegExp(`<label for="${leaders.id}">보조선·지시선`)
 assert.match(leaders.options, /<option value="remove" selected>제거<\/option>/, 'leader remove is default');
 assert.match(leaders.options, /<option value="keep">유지<\/option>/);
 
-assert.match(css, /\.ai-mark-policy-fields\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/, 'policy controls use a compact three-column layout');
+assert.match(css, /#ai-image-panel \.ai-mark-policy-fields \{ grid-template-columns:minmax\(0,1fr\); gap:6px; \}/, 'policy controls use the workbench label column');
 assert.match(css, /@media \(max-height: 740px\)[\s\S]*?\.ai-mark-policy select\s*\{\s*height:\s*24px/, 'short-height layout keeps policy controls compact');
 
 console.log('AI mark policy UI checks passed.');

@@ -1,4 +1,5 @@
 import { createTaskPersistence, createTaskWorkspaces } from './ai-task-workspaces.js';
+import { distributeSourcesToTaskTabs } from './ai-source-tasking.js?v=1';
 import { setupAiWorkbench } from './ai-workbench.js';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -328,6 +329,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const status = panel.querySelector("[data-ai-status]");
   const log = panel.querySelector("[data-ai-log]");
   const input = panel.querySelector("[data-ai-input]");
+  const chatInput = panel.querySelector("[data-ai-chat-input]");
   const file = panel.querySelector("input[type=file]");
   const markArrows = panel.querySelector("[data-ai-mark-arrows]");
   const markTrends = panel.querySelector("[data-ai-mark-trends]");
@@ -361,6 +363,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const modeButtons = Array.from(panel.querySelectorAll("[data-ai-mode]"));
   const qualityButtons = Array.from(panel.querySelectorAll("[data-ai-quality]"));
   const outputEngineButtons = Array.from(panel.querySelectorAll("[data-ai-output-engine]"));
+  const conversionSummary = panel.querySelector("[data-ai-conversion-summary]");
   const generationModeRow = document.createElement('label');
   generationModeRow.className = 'ai-separated-mode';
   generationModeRow.innerHTML = '<span>이미지 구성</span><select data-ai-generation-mode aria-label="이미지 구성 방식"><option value="single">한 장</option><option value="separated">물체별 분리 (실험)</option></select><small>실험 기능 · 최대 16개 · 붙거나 겹친 부품은 하나의 묶음으로 나올 수 있습니다. 내부 선을 벡터로 바꾸지는 않습니다.</small>';
@@ -617,6 +620,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     navigationChanged();
     sendButton.disabled = on;
     chatButton.disabled = on;
+    if (chatInput) chatInput.disabled = on;
     if (newButton) newButton.disabled = false;
     for (const control of [modelSelect, effortSelect, speedSelect, generationModeSelect, referenceSearchButton, captureButton, file, reviewModeCheckbox, reviewModelSelect, reviewEffortSelect, ...markControls]) {
       if (control) control.disabled = on;
@@ -636,6 +640,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   const syncWhitePngUi = () => {
     const white = isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine });
+    const fixedFirst = white && generatedImages.length === 0;
+    const requestTitle = panel.querySelector("[data-ai-request-title]");
+    const requestHint = panel.querySelector("[data-ai-request-hint]");
+    const requestNote = panel.querySelector("[data-ai-request-note]");
+    panel.dataset.aiFixedFirst = String(fixedFirst);
+    input.hidden = fixedFirst;
+    input.disabled = busy || fixedFirst;
+    if (requestNote) requestNote.hidden = !fixedFirst;
+    if (requestTitle) requestTitle.textContent = fixedFirst ? "첫 변환" : "요청";
+    if (requestHint) requestHint.textContent = fixedFirst ? "고정된 평가원식 규칙으로 변환합니다." : "바꿀 내용만 간단히 적어 주세요.";
     const policyGroup = panel.querySelector("[data-ai-mark-policy]");
     if (policyGroup) policyGroup.hidden = true;
     if (reviewModeCheckbox) { reviewModeCheckbox.checked = false; reviewModeCheckbox.disabled = white; reviewModeCheckbox.closest("label").hidden = white; }
@@ -654,6 +668,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
     sendButton.textContent = white ? (generatedImages.length ? "선택 결과 수정" : "변환하기") : "이미지 생성";
   };
+  const syncConversionSummary = () => {
+    if (!conversionSummary) return;
+    const output = outputEngineButtons.find((button) => button.dataset.aiOutputEngine === selectedOutputEngine)?.textContent?.trim();
+    const labels = modeButtons.find((button) => button.dataset.aiMode === selectedMode)?.textContent?.trim();
+    const composition = generationModeSelect.selectedOptions[0]?.textContent?.trim();
+    conversionSummary.textContent = [output, labels, composition].filter(Boolean).join(" · ");
+  };
   const syncMode = () => {
     syncWhitePngUi();
     modeButtons.forEach((button) => {
@@ -661,6 +682,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.classList.toggle("is-on", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    syncConversionSummary();
   };
   const syncQualityMode = () => {
     qualityButtons.forEach((button) => {
@@ -668,6 +690,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.classList.toggle("is-on", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    syncConversionSummary();
   };
   const syncOutputEngine = () => {
     syncWhitePngUi();
@@ -676,6 +699,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.classList.toggle("is-on", active);
       button.setAttribute("aria-pressed", String(active));
     });
+    syncConversionSummary();
   };
   const syncReferenceSummary = () => {
     referenceCount.textContent = String(attachments.length);
@@ -940,7 +964,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const name = document.createElement("strong");
     name.textContent = item.name;
     head.append(name);
-    if (item.kind === 'reference') {
+    if (item.kind === 'reference' && (attachments.length > 1 || item.referenceRole === 'STYLE_REFERENCE')) {
       card.dataset.aiReferenceRole = item.referenceRole ?? 'INPUT_SOURCE';
       const roleSelect = document.createElement('select');
       roleSelect.dataset.aiReferenceRole = '';
@@ -1305,6 +1329,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     attachmentList.appendChild(makeImageCard(item));
     syncReferenceSummary();
     const tab = taskTabs.get(activeTaskTabId);
+    if (tab && generatedImages.length === 0) tab.workState = "idle";
     if (tab && /^작업 \d+$/.test(tab.title) && attachments.length === 1) {
       tab.title = String(name || tab.title).replace(/\.[^.]+$/, "").slice(0, 22) || tab.title;
       renderTaskTabs();
@@ -1316,8 +1341,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!src) return;
     setStatus("참고 이미지 불러오는 중…", "busy");
     try {
-      addReferenceData({ data: await sourceToDataUrl(src), name });
-      if (prompt) input.value = prompt;
+      addReferencesAsTasks([{ data: await sourceToDataUrl(src), name, prompt }]);
       setStatus(`참고 이미지 추가됨: ${name}`, "ok");
     } catch (error) {
       setStatus(error.message || String(error), "error");
@@ -1326,7 +1350,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   const referenceSearch = createAiReferenceSearch({
     desktop: desktop,
-    onAdd: (reference) => addReferenceData(reference),
+    onAdd: (reference) => addReferencesAsTasks([reference]),
+    onAddMany: (references) => addReferencesAsTasks(references),
     onStatus: (text, kind) => setStatus(text, kind),
   });
 
@@ -1360,6 +1385,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       structureRecord: currentRunInput?.structureRecord ? JSON.parse(JSON.stringify(currentRunInput.structureRecord)) : null,
       rendererPrompt: typeof rendererPrompt === "string" ? rendererPrompt : "",
       generationMode: currentRunInput?.generationMode === 'separated' ? 'separated' : 'single',
+      sourceReferenceId: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].id : null,
+      sourceReferenceName: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].name : "",
       markPolicy: normalizeMarkPolicy(currentRunInput?.markPolicy),
       comments: [],
       nextCommentNumber: 1,
@@ -1406,6 +1433,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       sceneResult,
       sceneSource: String(sceneSource || ""),
       sceneCompileSource: String(sceneCompileSource || sceneSource || ""),
+      sourceReferenceId: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].id : null,
+      sourceReferenceName: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].name : "",
       comments: [],
       nextCommentNumber: 1,
     };
@@ -1543,8 +1572,26 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.classList.toggle("is-on", tab.id === activeTaskTabId);
       button.setAttribute("role", "tab");
       button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
+      const source = (tab.attachments || [])[0];
+      if (source?.data) {
+        const thumbnail = document.createElement("img");
+        thumbnail.className = "ai-task-tab-thumb";
+        thumbnail.src = source.data;
+        thumbnail.alt = "";
+        button.append(thumbnail);
+      }
+      const copy = document.createElement("span");
+      copy.className = "ai-task-tab-copy";
       const label = document.createElement("span");
+      label.className = "ai-task-tab-title";
       label.textContent = tab.title;
+      label.title = tab.title;
+      copy.append(label);
+      if ((tab.attachments || []).length > 1) {
+        const warning = document.createElement("small");
+        warning.textContent = "연결 확인 필요";
+        copy.append(warning);
+      }
       const closeTab = document.createElement("i");
       closeTab.textContent = "×";
       closeTab.title = "작업 삭제";
@@ -1566,7 +1613,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         else renderTaskTabs();
         persistTasks();
       };
-      button.append(label, closeTab);
+      button.append(copy, closeTab);
       button.onclick = () => {
         if (busy || tab.id === activeTaskTabId) return;
         captureActiveTaskTab();
@@ -1582,7 +1629,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const emptyReference = document.createElement("p");
     emptyReference.className = "ai-reference-empty";
     emptyReference.dataset.aiReferenceEmpty = "";
-    emptyReference.textContent = "여러 이미지를 추가하고 각각 필요한 영역에 요청을 남길 수 있습니다.";
+    emptyReference.textContent = "이미지를 추가하면 이 작업의 원본으로 표시됩니다.";
     attachmentList.appendChild(emptyReference);
     previews.querySelectorAll(".ai-image-card, [data-ai-empty]").forEach((node) => node.remove());
   };
@@ -1636,9 +1683,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     for (const item of generatedImages) previews.prepend(makeImageCard(item));
     if (!generatedImages.length) {
       const empty = document.createElement("p");
-      empty.className = "ai-empty";
+      empty.className = "ai-empty ai-stage-empty";
       empty.dataset.aiEmpty = "";
-      empty.textContent = "생성된 이미지가 여기에 표시됩니다.";
+      empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><button class="ai-stage-add" type="button" data-ai-add-file>이미지 선택</button>';
       previews.appendChild(empty);
     }
     syncMode();
@@ -1664,7 +1711,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       dispatchReviewEvent({ state: "idle", candidateId: null, report: emptyReviewReport(), generationCount: 0, reviewCount: 0, elapsedMs: 0 });
     }
     commentController?.reset();
-    if (!busy) setStatus(selectedCandidate ? (isAcceptedReviewState(selectedCandidate.reviewState) ? selectedReviewStatusText(selectedCandidate.reviewState) : "선택 결과 · 확인 필요") : (attachments.length ? "원본 준비됨" : "이미지를 추가해 주세요."), selectedCandidate && !isAcceptedReviewState(selectedCandidate.reviewState) ? "warn" : "ok");
+    if (!busy) {
+      const legacyMixed = attachments.length > 1;
+      setStatus(legacyMixed
+        ? "이전 다중 원본 작업 · 결과 연결을 확인해 주세요."
+        : selectedCandidate
+          ? (isAcceptedReviewState(selectedCandidate.reviewState) ? selectedReviewStatusText(selectedCandidate.reviewState) : "선택 결과 · 확인 필요")
+          : (attachments.length ? "준비됨" : "이미지를 추가해 주세요."),
+      legacyMixed || (selectedCandidate && !isAcceptedReviewState(selectedCandidate.reviewState)) ? "warn" : "ok");
+    }
   }
 
   const createTaskTab = ({ activate = true } = {}) => {
@@ -1681,6 +1736,25 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (activate) restoreTaskTab(id);
     else renderTaskTabs();
     return id;
+  };
+
+  const addReferencesAsTasks = (references, { prompt = "" } = {}) => {
+    if (busy) {
+      setStatus("현재 변환이 끝난 뒤 이미지를 추가해 주세요.", "warn");
+      return [];
+    }
+    return distributeSourcesToTaskTabs(references, {
+      canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0,
+      createTask: () => createTaskTab(),
+      addSource: (reference) => addReferenceData(reference),
+      applyPrompt: (sourcePrompt) => {
+        const nextPrompt = sourcePrompt || prompt;
+        if (nextPrompt) input.value = nextPrompt;
+      },
+      captureTask: captureActiveTaskTab,
+      activeTaskId: () => activeTaskTabId,
+      activateTask: (taskId) => restoreTaskTab(taskId),
+    });
   };
 
   let batchQueue = [];
@@ -2113,7 +2187,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       canvas.width = Math.max(1, Math.round(w * scaleX));
       canvas.height = Math.max(1, Math.round(h * scaleY));
       canvas.getContext("2d")?.drawImage(image, x * scaleX, y * scaleY, w * scaleX, h * scaleY, 0, 0, canvas.width, canvas.height);
-      addReferenceData({ data: canvas.toDataURL("image/png"), name: `캡처 · ${source.name}`, sourceKind: "capture" });
+      addReferencesAsTasks([{ data: canvas.toDataURL("image/png"), name: `캡처 · ${source.name}`, sourceKind: "capture" }]);
       closeCrop();
       setStatus("선택한 캡처 영역이 참고 이미지로 추가되었습니다.", "ok");
     };
@@ -2362,12 +2436,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       if (!current.login.loggedIn) {
         setStatus("Codex 로그인 필요", "warn");
       } else if (current.server) {
-        setStatus("AI 사용 가능", "ok");
+        setStatus("준비됨", "ok");
         await Promise.all([loadModels(), loadAccountOverview()]);
       } else if (autoConnect) {
         setStatus("AI 자동 연결 중…", "busy");
         const result = await desktop.start();
-        setStatus(result.ok ? "AI 사용 가능" : `연결 실패: ${result.message}`, result.ok ? "ok" : "error");
+        setStatus(result.ok ? "준비됨" : `연결 실패: ${result.message}`, result.ok ? "ok" : "error");
         if (result.ok) await Promise.all([loadModels(), loadAccountOverview()]);
       }
     } catch (error) {
@@ -2398,17 +2472,23 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       })));
       for (const result of loaded) {
         if (result.status === "fulfilled") {
-          addReferenceData({ data: result.value.data, name: result.value.item.name || "참고 이미지" });
+          result.value.source = {
+            data: result.value.data,
+            name: result.value.item.name || "참고 이미지",
+            prompt: result.value.item.prompt || "",
+          };
         } else {
           addLog(result.reason?.message || String(result.reason), "error");
         }
       }
-      const loadedCount = loaded.filter((result) => result.status === "fulfilled").length;
-      setStatus(`참고 이미지 ${loadedCount}개 추가됨`, loadedCount ? "ok" : "error");
+      const readyReferences = loaded
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value.source);
+      addReferencesAsTasks(readyReferences, { prompt });
+      const loadedCount = readyReferences.length;
+      setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
     await refreshPromise;
-    const lastIncoming = incoming.at(-1);
-    if (prompt || lastIncoming?.prompt) input.value = prompt || lastIncoming.prompt;
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
@@ -2422,7 +2502,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (type === "image" && isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && !modelsLoaded) {
       await loadModels();
     }
-    const entered = typeof options.requestOverride === "string" ? options.requestOverride.trim() : input.value.trim();
+    const activeInput = type === "chat" ? chatInput : input;
+    const entered = typeof options.requestOverride === "string" ? options.requestOverride.trim() : activeInput?.value.trim() || "";
     let request = type === "image"
       ? kiceImageRequest(entered, { hasImage: attachments.length > 0 || generatedImages.length > 0 })
       : entered;
@@ -2512,7 +2593,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     previewPending = false;
     tokenFooterNode = null;
     currentTurnStartedAt = Date.now();
-    input.value = "";
+    if (type === "chat" && chatInput) chatInput.value = "";
     if (whiteRun) {
       dispatchReviewEvent({
         state: "generating",
@@ -2899,6 +2980,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }
     selectedAssetGenerationMode = generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED
       ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
+    syncConversionSummary();
     captureActiveTaskTab(); persistTasks();
     setStatus(selectedAssetGenerationMode === AI_ASSET_GENERATION_MODES.SEPARATED
       ? '다음 첫 변환을 최대 16개 물체 분리용 이미지로 생성합니다.' : '다음 변환을 한 장의 이미지로 생성합니다.', 'ok');
@@ -2941,9 +3023,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   input.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
-      if (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine })) sendButton.click();
-      else chatButton.click();
+      sendButton.click();
     }
+  });
+  chatInput?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      chatButton.click();
+    }
+  });
+  panel.addEventListener("click", (event) => {
+    if (event.target.closest("[data-ai-add-file]") && !file.disabled) file.click();
   });
   panel.querySelector("[data-ai-interrupt]").onclick = async () => {
     if (!busy) return;
@@ -2959,9 +3049,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   file.onchange = async () => {
     const selectedFiles = Array.from(file.files || []).filter((selected) => selected.type.startsWith("image/"));
     const dataUrls = await Promise.all(selectedFiles.map(blobToDataUrl));
-    selectedFiles.forEach((selected, index) => addReferenceData({ name: selected.name, data: dataUrls[index] }));
+    addReferencesAsTasks(selectedFiles.map((selected, index) => ({ name: selected.name, data: dataUrls[index] })));
     file.value = "";
-    if (selectedFiles.length) setStatus(`참고 이미지 ${selectedFiles.length}개 추가됨`, "ok");
+    if (selectedFiles.length) setStatus(`이미지 ${selectedFiles.length}개 · 작업 ${selectedFiles.length}개 준비됨`, "ok");
   };
 
   const finishCurrentTurnUi = (eventEpoch = currentRequestEpoch) => {
@@ -3335,7 +3425,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     // the review owner alive until that terminal signal, never for a user stop.
     if (current.state !== "running" && scopedTransport) scopedTransport.fail(new Error("AI 연결이 종료되었습니다."));
     if (current.state === "stopped" && imageReview?.isRecoveringImageTurn()) return;
-    if (current.state === "running" && !busy) setStatus("AI 사용 가능", "ok");
+    if (current.state === "running" && !busy) setStatus("준비됨", "ok");
     else if (current.state !== "running" && busy) {
       structureAnalysis.fail("AI 연결 종료로 구조 분석이 중단되었습니다.");
       if (imageReview?.isActive()) imageReview.cancel();
@@ -3364,8 +3454,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     event.preventDefault();
     event.stopImmediatePropagation();
     void blobToDataUrl(pasted).then((data) => {
-      addReferenceData({ data, name: pasted.name || "클립보드 이미지", sourceKind: "clipboard" });
-      setStatus("붙여넣은 이미지가 AI 참고로 추가되었습니다.", "ok");
+      addReferencesAsTasks([{ data, name: pasted.name || "클립보드 이미지", sourceKind: "clipboard" }]);
+      setStatus("붙여넣은 이미지의 작업이 준비되었습니다.", "ok");
     });
   }, true);
   panel.addEventListener("dragover", (event) => {
@@ -3376,8 +3466,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!dropped.length) return;
     event.preventDefault();
     void Promise.all(dropped.map(blobToDataUrl)).then((dataUrls) => {
-      dropped.forEach((item, index) => addReferenceData({ data: dataUrls[index], name: item.name, sourceKind: "drop" }));
-      setStatus(`끌어놓은 이미지 ${dropped.length}개가 AI 참고로 추가되었습니다.`, "ok");
+      addReferencesAsTasks(dropped.map((item, index) => ({ data: dataUrls[index], name: item.name, sourceKind: "drop" })));
+      setStatus(`이미지 ${dropped.length}개 · 작업 ${dropped.length}개 준비됨`, "ok");
     });
   });
   document.addEventListener("keydown", (event) => {

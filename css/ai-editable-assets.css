@@ -35,10 +35,10 @@
 .aea-row input { width: 100%; box-sizing: border-box; min-width: 0; background: var(--bg-input); border: 1px solid var(--border-strong); color: var(--text-primary); border-radius: 6px; font: inherit; font-size: 12px; padding: 4px 8px; }
 .aea-status { min-height: 20px; }
 .aea-footer { border-top: 1px solid var(--border); padding-top: 12px; }
-.aea-dialog .aea-primary { background: var(--accent); color: white; border-color: var(--accent); }
-.aea-dialog .aea-primary:hover:not(:disabled) { background: var(--accent-hover); }
-.ai-separated-mode { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 5px 8px; align-items: center; margin: 7px 12px; color: var(--text-secondary); font-size: 10px; }
-.ai-separated-mode select { min-width: 0; height: 30px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--bg-input); color: var(--text-primary); font: inherit; }
+.aea-dialog .aea-primary { background: var(--btn-tool-bg); color: var(--text-primary); border-color: var(--border); font-weight: 600; }
+.aea-dialog .aea-primary:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.ai-separated-mode { display: grid; grid-template-columns: var(--ai-option-label-width, 70px) minmax(0, 1fr); gap: 5px var(--ai-option-gap, 8px); align-items: center; margin: 7px 0; color: var(--text-label); font-size: 12px; }
+.ai-separated-mode select { min-width: 0; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 13px; }
 .ai-separated-mode small { grid-column: 2; color: var(--text-label); font-size: 9px; line-height: 1.45; }
 .aea-dialog.is-automatic .aea-row { grid-template-columns: 32px minmax(0, 1fr) 48px; }
 @media (max-width: 760px) { .aea-body { grid-template-columns: minmax(0, 1fr); } .aea-workspace { max-height: 40vh; } .aea-sidebar { max-height: 160px; overflow: auto; } .aea-dialog { padding: 16px; } .aea-footer { flex-wrap: wrap; } .aea-footer > div { flex-wrap: wrap; } }

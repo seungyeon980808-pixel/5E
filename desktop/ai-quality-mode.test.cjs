@@ -43,7 +43,7 @@ test("exam palette removes color and keeps only black, gray and white", async ()
   }
 });
 
-test("AI panel exposes three modes, explicit output engines, tabs and batch conversion", () => {
+test("AI panel exposes three modes, explicit output engines, and one-source task tabs", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
   for (const mode of ["simple", "standard", "complex"]) {
@@ -51,10 +51,10 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   }
   assert.match(html, /data-ai-output-engine="raster"/);
   assert.match(html, /data-ai-output-engine="asset"/);
-  assert.match(html, /data-ai-batch/);
+  assert.doesNotMatch(html, /data-ai-batch/);
   assert.match(html, /data-ai-tab-list/);
-  assert.match(panel, /const BATCH_CONCURRENCY = 1/);
-  assert.match(panel, /1개씩 순차 처리/);
+  assert.match(panel, /distributeSourcesToTaskTabs/);
+  assert.match(panel, /sourceReferenceId/);
   assert.doesNotMatch(panel, /createStructureLockedLineart/);
   assert.match(panel, /복잡 변환 완료 · 원본 구조 확인 필요/);
   assert.match(panel, /normalizeQualityMode\(currentRunInput\?\.qualityMode\) === AI_QUALITY_MODES\.COMPLEX/);

@@ -157,6 +157,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const zoomValue = panel.querySelector("[data-ai-sync-zoom-value]");
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
+  const paneAnimations = new WeakMap();
   const reports = new Map();
   const fittedCards = new WeakSet();
   let generatedSerial = 0;
@@ -165,6 +166,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let activeSourceKey = "";
   let zoom = 1;
   let userChoseLayout = false;
+  let panelLayoutChanging = false;
 
   const cardTitle = (card, fallback) => cleanText(card.querySelector(".ai-image-card-head strong")?.textContent, fallback);
   const generatedCards = () => Array.from(previews?.querySelectorAll(".ai-generated-card") || []);
@@ -209,7 +211,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   const stageResizeObserver = typeof ResizeObserver === "function"
-    ? new ResizeObserver((entries) => entries.forEach(({ target }) => fitCardStage(target)))
+    ? new ResizeObserver((entries) => {
+      if (panelLayoutChanging || zoom !== 1) return;
+      entries.forEach(({ target }) => fitCardStage(target));
+    })
     : null;
   function watchCardFit(card) {
     if (!card || fittedCards.has(card)) return;
@@ -230,6 +235,22 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       button.setAttribute("aria-pressed", String(selected));
     }
     if (fromUser) userChoseLayout = true;
+    if (fromUser && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      const panes = mode === "source"
+        ? [results.querySelector(".ai-original-pane")]
+        : mode === "result"
+          ? [results.querySelector(".ai-result-pane")]
+          : Array.from(results.querySelectorAll(".ai-image-pane"));
+      for (const pane of panes.filter(Boolean)) {
+        paneAnimations.get(pane)?.cancel();
+        const offset = mode === "source" ? -6 : 6;
+        const animation = pane.animate(
+          [{ opacity: .72, transform: `translate3d(${offset}px, 0, 0)` }, { opacity: 1, transform: "translate3d(0, 0, 0)" }],
+          { duration: 140, easing: "cubic-bezier(.2, .8, .2, 1)" },
+        );
+        paneAnimations.set(pane, animation);
+      }
+    }
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(sourceCards().find((item) => sourceKey(item) === activeSourceKey));
@@ -237,8 +258,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   function updateResponsiveLayout() {
+    const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
+    if (processing && !generatedCards().length) {
+      setLayout("result");
+      return;
+    }
     if (userChoseLayout) return;
-    setLayout(generatedCards().length ? "result" : "source");
+    setLayout(generatedCards().length ? "result" : sourceCards().length ? "source" : "result");
   }
 
   function applyZoom() {
@@ -395,6 +421,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     resultState.textContent = labels[state] || labels.idle;
   }
 
+  function syncWorkbenchStage() {
+    const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
+    panel.dataset.aiStage = processing
+      ? "processing"
+      : generatedCards().length
+        ? "result"
+        : sourceCards().length ? "preparation" : "empty";
+  }
+
   function syncCandidates({ preferNewest = false } = {}) {
     const cards = generatedCards();
     const keys = cards.map(candidateKey);
@@ -433,6 +468,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const report = reports.get(activeCandidateKey) || normalizeReviewDetail({ state: stateForCard(activeCandidate()) });
     renderReview(report);
     updateResultState(report);
+    syncWorkbenchStage();
   }
 
   function syncSources() {
@@ -440,6 +476,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const keys = cards.map(sourceKey);
     if (!keys.includes(activeSourceKey)) activeSourceKey = keys[0] || "";
     if (sourceSelect) {
+      const picker = sourceSelect.closest("[data-ai-source-picker]");
+      if (picker) picker.hidden = cards.length <= 1;
       sourceSelect.replaceChildren();
       if (!cards.length) {
         const option = document.createElement("option");
@@ -454,7 +492,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
           option.textContent = `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
           sourceSelect.appendChild(option);
         });
-        sourceSelect.disabled = false;
+        sourceSelect.disabled = cards.length <= 1;
         sourceSelect.value = activeSourceKey;
       }
     }
@@ -511,6 +549,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       renderReview(record);
       updateResultState(record);
     }
+    syncWorkbenchStage();
   });
 
   let knownGeneratedCount = 0;
@@ -520,6 +559,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     knownGeneratedCount = nextCount;
     syncSources();
     updateResponsiveLayout();
+    syncWorkbenchStage();
   });
   const cardObserverOptions = {
     childList: true,
@@ -534,6 +574,19 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   if (modelSelect) settingsObserver.observe(modelSelect, { childList: true, subtree: true });
   if (effortSelect) settingsObserver.observe(effortSelect, { childList: true, subtree: true });
 
+  window.addEventListener("5e:image-panel-layout-will-change", (event) => {
+    if (event.detail?.root === panel) panelLayoutChanging = true;
+  });
+  window.addEventListener("5e:image-panel-layout-did-change", (event) => {
+    if (event.detail?.root !== panel) return;
+    window.requestAnimationFrame(() => {
+      panelLayoutChanging = false;
+      if (zoom !== 1) return;
+      fitCardStage(activeCandidate());
+      fitCardStage(sourceCards().find((item) => sourceKey(item) === activeSourceKey));
+    });
+  });
+
   const narrowQuery = window.matchMedia("(max-width: 1000px)");
   narrowQuery.addEventListener?.("change", updateResponsiveLayout);
   updateResponsiveLayout();
@@ -541,6 +594,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   knownGeneratedCount = generatedCards().length;
   syncSources();
   syncRuntimeSummary();
+  syncWorkbenchStage();
   applyZoom();
 }
 

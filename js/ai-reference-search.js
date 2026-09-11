@@ -25,7 +25,7 @@ async function urlToDataUrl(url) {
   });
 }
 
-export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
+export function createAiReferenceSearch({ desktop, onAdd, onAddMany, onStatus } = {}) {
   let overlay = null;
   let source = SOURCES.PARTS;
   let query = "";
@@ -141,8 +141,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
           : await urlToDataUrl(remoteUrl(recordSource, item)),
         sourceKind: recordSource === SOURCES.LOCAL ? "local-folder" : recordSource,
       })));
-      references.forEach((reference) => onAdd?.(reference));
-      status(`참고 이미지 ${references.length}개가 추가되었습니다.`, "ok");
+      if (onAddMany) onAddMany(references);
+      else references.forEach((reference) => onAdd?.(reference));
+      status(`이미지 ${references.length}개를 각각 작업으로 추가했습니다.`, "ok");
       close();
     } catch (error) {
       status(error.message || String(error), "error");

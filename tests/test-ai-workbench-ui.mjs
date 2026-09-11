@@ -16,10 +16,10 @@ function attributeCount(attribute) {
 
 test("AI panel keeps one compatible instance of each logic-owned control", () => {
   for (const attribute of [
-    "data-ai-close", "data-ai-send", "data-ai-chat-send", "data-ai-batch",
+    "data-ai-close", "data-ai-send", "data-ai-chat-send",
     "data-ai-compare", "data-ai-capture", "data-ai-reference-search", "data-ai-model",
     "data-ai-effort", "data-ai-speed", "data-ai-login", "data-ai-new",
-    "data-ai-previews", "data-ai-attachment-list", "data-ai-batch-panel", "data-ai-batch-grid",
+    "data-ai-previews", "data-ai-attachment-list",
   ]) {
     assert.equal(attributeCount(attribute), 1, `${attribute} must remain unique`);
   }
@@ -32,7 +32,7 @@ test("workbench defaults to large result with comments and keeps comparison and 
   const reviewAt = index.indexOf("ai-review-panel");
   assert.ok(railAt > 0 && resultsAt > railAt && reviewAt > resultsAt, "task, compare, review order");
   assert.match(index, /class="ai-comparison-grid"[\s\S]*class="ai-image-pane ai-original-pane"[\s\S]*class="ai-image-pane ai-result-pane"/);
-  assert.match(index, /<details class="ai-batch-section">[\s\S]*data-ai-batch-panel/);
+  assert.doesNotMatch(index, /data-ai-batch(?:-panel|-grid|-summary)?/);
   assert.match(index, /data-ai-comments-panel/);
   assert.match(index, /data-ai-chat-panel[\s\S]*hidden/);
   assert.match(index, /data-ai-comment-tool="pan"/);
@@ -40,20 +40,22 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.match(index, /data-ai-comment-tool="area"/);
   assert.doesNotMatch(index, /data-ai-comment-tool="(?:keep|arrow)"/);
   assert.match(index, /<details class="ai-advanced-settings">/);
+  assert.match(index, /<details class="ai-conversion-options">/);
+  assert.doesNotMatch(index, /<details class="ai-conversion-options"\s+open/);
   assert.doesNotMatch(index, /<details class="(?:ai-history-section|ai-advanced-settings)"\s+open/);
   assert.match(index, /data-ai-review-mode checked/);
   assert.match(index, /data-ai-pixel-inspection hidden/);
   assert.match(index, /기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존/);
-  assert.match(index, /권장 생성 Sol · 보통 \/ 검수 Sol · 높음/);
+  assert.doesNotMatch(index, /data-ai-runtime-summary/);
 });
 
 test("workbench inherits the existing theme and retains zoom and responsive layouts", () => {
   assert.doesNotMatch(css, /--bg-panel:\s*#f7f9fb/);
   assert.doesNotMatch(css, /--accent:\s*#2468c5/);
   assert.match(css, /background:\s*var\(--bg-panel\)/);
-  assert.match(css, /grid-template-columns:\s*150px minmax\(0,\s*1fr\) 326px/);
+  assert.match(css, /grid-template-columns:\s*clamp\(160px,13vw,190px\) minmax\(0,\s*1fr\) 326px/);
   assert.match(css, /\.ai-comparison-grid/);
-  assert.match(css, /\.ai-batch-card\[data-state="failed"\] img \{ display: none !important; \}/);
+  assert.match(css, /\.ai-task-tab-thumb/);
   assert.match(css, /#ai-image-panel\[hidden\],[\s\S]*#ai-image-panel \[hidden\] \{ display:\s*none !important; \}/);
   assert.match(css, /transform: scale\(var\(--ai-workbench-zoom, 1\)\)/);
   assert.match(css, /@media \(max-width: 1000px\)/);
@@ -80,7 +82,7 @@ test("comparison controls retain versions and apply one synchronized zoom", () =
   assert.match(workbench, /card\.classList\.toggle\("is-ai-active-candidate"/);
   assert.match(workbench, /--ai-workbench-zoom/);
   assert.match(workbench, /for \(const card of \[activeCandidate\(\), sourceCards\(\)/);
-  assert.ok(workbench.includes('generatedCards().length ? "result" : "source"'), 'narrow view shows source until a result exists');
+  assert.ok(workbench.includes('generatedCards().length ? "result" : sourceCards().length ? "source" : "result"'), 'empty view shows guidance and a prepared source remains visible');
   assert.match(workbench, /const requestedKey = panel\.dataset\.aiSelectedCandidateId/);
   assert.match(workbench, /if \(keys\.includes\(requestedKey\)\) activeCandidateKey = requestedKey/);
   assert.match(workbench, /new CustomEvent\("5e:ai-candidate-select"/);
