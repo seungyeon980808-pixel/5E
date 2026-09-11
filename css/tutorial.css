@@ -299,6 +299,10 @@
   font-size: calc(16px * var(--ui-zoom, 1));
   width: calc(360px * var(--ui-zoom, 1));
   max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   box-sizing: border-box;
   padding: 1em 1.13em 0.88em;
   background: var(--bg-panel);
@@ -324,13 +328,21 @@
 .tut-coach.is-panel-safe .tut-coach-text { font-size: 0.94em; }
 .tut-coach.is-canvas-safe { padding: 0.78em 0.82em 0.7em; }
 .tut-coach.is-canvas-safe {
-  left: auto !important;
-  right: 8px !important;
-  width: min(280px, calc(100vw - 16px)) !important;
-  max-width: calc(100vw - 16px) !important;
-  overflow: hidden;
+  left: var(--tut-dock-left) !important;
+  right: auto !important;
+  width: var(--tut-dock-width) !important;
+  max-width: var(--tut-dock-width) !important;
+  max-height: var(--tut-dock-height) !important;
+  overflow-y: auto;
 }
-.tut-coach.is-canvas-safe .tut-coach-head { min-width: 0; }
+.tut-coach.is-canvas-safe .tut-coach-head { min-width: 0; flex-wrap: wrap; }
+.tut-coach.is-canvas-safe .tut-btn,
+.tut-coach.is-canvas-safe .tut-coach-auto {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 .tut-coach.is-canvas-safe .tut-coach-course {
   min-width: 0;
   overflow: hidden;
@@ -464,6 +476,10 @@
 }
 
 .tut-coach-foot {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-panel);
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 6px;

@@ -19,6 +19,7 @@
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
     "package:win": "electron-builder --win nsis --x64 --publish never",
     "test:editor": "node --test desktop/editor-clipboard.test.cjs desktop/image-clipboard.test.cjs desktop/platform-shortcuts.test.cjs desktop/mac-keyboard.test.cjs desktop/page-history.test.cjs desktop/document-history.test.cjs desktop/project-status.test.cjs desktop/project-load-stability.test.cjs desktop/autosave-stability.test.cjs tests/test-project-file-extension.mjs tests/test-ai-image-insertion.mjs",
+    "test:tutorial": "node --test desktop/tutorial-engine.test.cjs desktop/tutorial-courses.test.cjs",
     "test:editor:browser": "node desktop/editor-usability-browser.cjs",
     "setup:pdfjs": "node tools/pdf-library/setup-pdfjs.mjs",
     "setup:ocr": "node tools/pdf-library/setup-ocr.mjs",

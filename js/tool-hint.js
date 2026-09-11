@@ -10,11 +10,11 @@ const HINTS = {
   V: {
     title: "선택",
     action: "오브젝트를 클릭해 선택하고, 선택한 오브젝트를 드래그해 이동하세요.",
-    keys: "Shift+드래그: 스냅 · 빈 곳 클릭: 선택 해제", activeKeys: ["Shift+드래그"],
+    keys: "드래그 중 Shift: 스냅 · 빈 곳 클릭: 선택 해제", activeKeys: ["Shift"],
   },
   rotate: {
     title: "회전",
-    action: "선택한 오브젝트를 마우스로 드래그해 원하는 각도로 회전하세요.",
+    action: "선택한 오브젝트의 모서리 회전 손잡이를 드래그하세요.",
     keys: "마우스를 놓으면 회전 완료",
   },
   CUT: {
@@ -70,7 +70,7 @@ const HINTS = {
   T: {
     title: "텍스트",
     action: "글자를 넣을 위치를 클릭한 뒤 내용을 입력하세요.",
-    keys: "Ctrl+Enter: 입력 완료 · Esc: 취소", activeKeys: ["Ctrl+Enter"],
+    keys: "Enter: 입력 완료 · Esc: 취소", activeKeys: ["Enter"],
   },
 };
 
@@ -127,7 +127,7 @@ function renderHint(hint) {
   _action.textContent = hint.action || "";
   _keys.replaceChildren();
   const activeKeys = new Set(hint.activeKeys || []);
-  const parts = String(hint.keys || "").split(/(Shift\+드래그|Shift\+E|Ctrl\+Enter|Ctrl\+E|Enter\/더블클릭|Shift|Ctrl|Esc|E)/g);
+  const parts = String(hint.keys || "").split(/(Shift\+드래그|Shift\+E|Ctrl\+Enter|Ctrl\+E|Enter\/더블클릭|Shift|Ctrl|Enter|Esc|E)/g);
   for (const part of parts) {
     if (!part) continue;
     const span = document.createElement("span");
