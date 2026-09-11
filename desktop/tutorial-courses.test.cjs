@@ -127,7 +127,7 @@ test('advanced shapes fill tracks only the explicitly prepared rectangle', () =>
  assert.match(fill.text,/선택 도구.*연습 사각형.*준비했습니다/);assert.match(pattern.text,/같은 연습 사각형/);
 });
 test('advanced shapes alignment and spacing use line endpoints and expose Apply', () => {
- const h=load('Win32'),c=h.course('advanced-shapes');
+ const h=load('Win32',{'#bulk-apply':{isConnected:true,offsetParent:{},getBoundingClientRect:()=>({width:70,height:30})}}),c=h.course('advanced-shapes');
  const align=c.steps.find(s=>s.title==='직선의 줄을 맞춰 주세요'),gap=c.steps.find(s=>s.title==='직선 사이의 간격을 맞춰 주세요');
  assert.deepEqual([...align.target()],['#bulk-gap-rows','#bulk-apply']);assert.deepEqual([...gap.target()],['#bulk-gap-rows','#bulk-apply']);
  h.current.objects=[
@@ -193,4 +193,10 @@ test('graph annotation placement keeps preview clear without hiding placement bu
  const c=load('Win32').course('advanced-graph-annot');
  for(const s of c.steps.filter(s=>s.coachAlign==='bottom')){assert.equal(s.coachAvoid(),'#gm-preview');assert.ok(s.target().includes('#gm-preview'));assert.equal(s.target().length,2)}
  assert.equal(c.steps.filter(s=>s.coachAlign==='bottom').length,4);
+});
+
+test('advanced shape bulk flow selects only lines and exposes reopening after Apply closes modal',()=>{
+ const h=load('Win32'),c=h.course('advanced-shapes'),open=c.steps.find(s=>s.title==='전체 통일·수정을 열어 주세요'),gap=c.steps.find(s=>s.title==='직선 사이의 간격을 맞춰 주세요');
+ h.current.objects=[{id:'r',type:'rect'},{id:'a',type:'line'},{id:'b',type:'line'},{id:'c',type:'line'}];open.action();
+ assert.deepEqual([...h.current.selectedIds],['a','b','c']);assert.equal(h.current.activeTool,'V');assert.equal(gap.target(),'#bulk-edit-open');assert.match(gap.text,/다시 열어/);
 });
