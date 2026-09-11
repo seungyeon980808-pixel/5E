@@ -534,14 +534,6 @@ export function initExportDialog(state, svg) {
     copyBtn.disabled = false;
   });
 
-  // Ctrl+S = 프로젝트 저장 (브라우저 기본 저장 대화상자 차단)
-  window.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
-    if ((e.key || "").toLowerCase() !== "s") return;
-    e.preventDefault();
-    document.getElementById("project-save")?.click();
-  });
-
   // 미리보기: 먼저 영역을 지정하게 한 뒤(영역지정과 동일한 드래그), 그 영역을 실제
   // 시험지 위 실제 크기로 얹어 확인한다. 같은 dpi/참고이미지 설정을 넘겨 "미리 본
   // 그대로 내보내지도록" 한다. 취소 시 다이얼로그로 복귀.

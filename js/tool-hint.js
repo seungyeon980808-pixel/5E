@@ -1,3 +1,5 @@
+import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.4.0";
+
 /* ===== TOOL HINT: 캔버스 하단 바의 도구별 조작 안내 =====
  *
  * 캔버스를 가리는 플로팅 안내는 사용하지 않습니다. 현재 도구의 핵심 동작과
@@ -129,7 +131,7 @@ function renderHint(hint) {
   for (const part of parts) {
     if (!part) continue;
     const span = document.createElement("span");
-    span.textContent = part;
+    span.textContent = part === "Ctrl" ? SNAP_LABEL : keyLabel(part);
     if (activeKeys.has(part)) span.className = "tool-hint-key is-active";
     else if (/^(Shift|Ctrl|Esc|Enter|E)/.test(part)) span.className = "tool-hint-key";
     _keys.appendChild(span);

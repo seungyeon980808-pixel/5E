@@ -18,6 +18,9 @@ import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.4.0";
 import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
 import { addPage } from "./pages.js?v=1.4.0";
 
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.4.0";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.4.0";
+
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
 // 0.16 adds coordplane + funcgraph (함수 그래프); older files simply lack both types,
@@ -367,6 +370,7 @@ export function serialize(s) {
  * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
  * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
 async function saveProject(state) {
+  const statusToken = captureProjectStatus(state);
   const json = JSON.stringify(serialize(state.get()), null, 2);
   const blob = new Blob([json], { type: "application/json" });
 
@@ -379,6 +383,7 @@ async function saveProject(state) {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      markProjectStatus(state, statusToken, "file");
       return;
     } catch (e) {
       if (e && e.name === "AbortError") return;   // 사용자가 저장 취소 → 아무것도 안 함
@@ -393,6 +398,7 @@ async function saveProject(state) {
   a.download = DEFAULT_FILENAME;
   document.body.appendChild(a);
   a.click();
+  markProjectStatus(state, statusToken, "download");
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -603,6 +609,7 @@ function openProject(state, file) {
       if (!ok) return;
 
       applyLoaded(state, data);
+      markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.
       alert("프로젝트 파일을 열 수 없습니다.\n" + (err && err.message ? err.message : err));
@@ -706,8 +713,26 @@ function readImageFile(file, dropPos, state) {
   reader.readAsDataURL(file);
 }
 
+function initProjectShortcuts(state, fileInput) {
+  window.addEventListener("keydown", (e) => {
+    if (!modKey(e) || e.shiftKey || e.altKey) return;
+    const key = shortcutKey(e);
+    if (key !== "o" && key !== "s") return;
+    const handled = e.defaultPrevented;
+    e.preventDefault();
+    if (handled || e.repeat || isComposingKey(e) || document.querySelector(".modal-overlay:not([hidden])")) return;
+    // Commit the focused editor field before capturing the project snapshot.
+    if (isEditingTarget(e.target)) e.target.blur?.();
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (key === "o") fileInput.click();
+    else void saveProject(state);
+  });
+}
+
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
 export function initProjectIO(state, svg) {
+  // initPages wraps the initial drawing later in the same boot task.
+  queueMicrotask(() => initProjectStatus(state, serialize));
   const saveBtn = document.getElementById("project-save");
   const openBtn = document.getElementById("project-open");
   const imageImportBtn = document.getElementById("image-import");
@@ -744,6 +769,8 @@ export function initProjectIO(state, svg) {
   if (saveBtn) saveBtn.addEventListener("click", () => saveProject(state));
 
   if (openBtn) openBtn.addEventListener("click", () => fileInput.click());
+
+  initProjectShortcuts(state, fileInput);
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files && fileInput.files[0];

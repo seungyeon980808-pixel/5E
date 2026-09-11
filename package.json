@@ -17,7 +17,9 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "package:win": "electron-builder --win nsis --publish never"
+    "package:win": "electron-builder --win nsis --publish never",
+    "test:editor": "node --test desktop/editor-clipboard.test.cjs desktop/image-clipboard.test.cjs desktop/platform-shortcuts.test.cjs desktop/mac-keyboard.test.cjs desktop/page-history.test.cjs desktop/document-history.test.cjs desktop/project-status.test.cjs desktop/project-load-stability.test.cjs desktop/autosave-stability.test.cjs tests/test-project-file-extension.mjs tests/test-ai-image-insertion.mjs",
+    "test:editor:browser": "node desktop/editor-usability-browser.cjs"
   },
   "devDependencies": {
     "electron": "^37.0.0",

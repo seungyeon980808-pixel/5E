@@ -300,6 +300,15 @@ export function initViewport(svg, state, onChange) {
     }
   });
 
+  window.addEventListener("blur", () => {
+    spaceHeld = false;
+    spaceDragged = false;
+    spaceOnCanvas = false;
+    panning = false;
+    panStart = null;
+    svg.classList.remove("space-held", "is-panning");
+  });
+
   // suppress middle-click autoscroll / context menu on the canvas
   svg.addEventListener("auxclick", (e) => {
     if (e.button === 1) e.preventDefault();

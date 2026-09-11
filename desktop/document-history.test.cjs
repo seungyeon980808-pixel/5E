@@ -46,6 +46,8 @@ function loadTransform() {
     ENDPOINT_HANDLE_TYPES: new Set(), TEXT_MEASURED_TYPES: new Set(), snapKey() {}, modKey() {},
   };
   sandbox.globalThis = sandbox;
+  const pageHistory = fs.readFileSync(path.join(root, "js/page-history.js"), "utf8").replace(/\bexport\s+/g, "");
+  vm.runInNewContext(pageHistory, sandbox);
   vm.runInNewContext(source, sandbox, { filename: "js/transform.js" });
   return sandbox.__testExports;
 }
