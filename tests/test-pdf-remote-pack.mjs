@@ -1,15 +1,24 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
 import { defaultRecentThreePack } from "../js/pdf-library/default-pack-config.js";
 import { sha256Hex } from "../js/pdf-library/pack-store.js";
 import { loadRemotePack } from "../js/pdf-library/remote-pack.js";
+import { PDF_PACK_FIXTURE, writePdfPackFixture } from "./helpers/pdf-pack-fixture.mjs";
 
-test("Given a hosted pack, when its catalog loads, then metadata stays lazy and the selected PDF is verified before opening", async () => {
+async function fixtureDirectory(t) {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "5e-pdf-pack-fixture-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  await writePdfPackFixture(directory);
+  return directory;
+}
+
+test("Given a hosted pack, when its catalog loads, then metadata stays lazy and the selected PDF is verified before opening", async (t) => {
   // Given
-  const directory = path.resolve(".omo/evidence/pdf-library/T5/real-partial-pack");
+  const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
   const requested = [];
   const fetcher = async (url) => {
@@ -25,7 +34,7 @@ test("Given a hosted pack, when its catalog loads, then metadata stays lazy and 
   assert.deepEqual(requested.map((url) => new URL(url).pathname.split("/").at(-1)).sort(), ["catalog.json", "checksums.json", "pack.json", "search-index.json"]);
   assert.equal(remote.documents.length, 1);
   const checksumManifest = JSON.parse(await readFile(path.join(directory, "checksums.json"), "utf8"));
-  assert.equal(remote.documents[0].source.sha256, checksumManifest.files["documents/2026-june-physics2-question.pdf"]);
+  assert.equal(remote.documents[0].source.sha256, checksumManifest.files[PDF_PACK_FIXTURE.documentPath]);
   const runtime = { async openDocument(input) { return input; } };
   const opened = await remote.openDocument(runtime, remote.documents[0]);
   assert.equal(opened.data[0], 0x25);
@@ -33,8 +42,8 @@ test("Given a hosted pack, when its catalog loads, then metadata stays lazy and 
   assert.equal(requested.length, 5);
 });
 
-test("Given a hosted pack whose selected PDF differs from its checksum, when opened, then parsing is rejected", async () => {
-  const directory = path.resolve(".omo/evidence/pdf-library/T5/real-partial-pack");
+test("Given a hosted pack whose selected PDF differs from its checksum, when opened, then parsing is rejected", async (t) => {
+  const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
   const fetcher = async (url) => {
     const relative = new URL(url).pathname.split("/packs/partial/")[1];
@@ -48,8 +57,8 @@ test("Given a hosted pack whose selected PDF differs from its checksum, when ope
   assert.equal(runtimeCalls, 0);
 });
 
-test("Given a hosted pack whose selected PDF exceeds the byte limit, when opened, then streaming stops before parsing", async () => {
-  const directory = path.resolve(".omo/evidence/pdf-library/T5/real-partial-pack");
+test("Given a hosted pack whose selected PDF exceeds the byte limit, when opened, then streaming stops before parsing", async (t) => {
+  const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
   const fetcher = async (url) => {
     const relative = new URL(url).pathname.split("/packs/partial/")[1];
@@ -63,12 +72,12 @@ test("Given a hosted pack whose selected PDF exceeds the byte limit, when opened
   assert.equal(runtimeCalls, 0);
 });
 
-test("Given a hosted pack whose selected asset has a matching hash but is not a PDF, when opened, then parsing is rejected", async () => {
-  const directory = path.resolve(".omo/evidence/pdf-library/T5/real-partial-pack");
+test("Given a hosted pack whose selected asset has a matching hash but is not a PDF, when opened, then parsing is rejected", async (t) => {
+  const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
   const badBytes = new TextEncoder().encode("not a PDF");
   const checksums = JSON.parse(await readFile(path.join(directory, "checksums.json"), "utf8"));
-  checksums.files["documents/2026-june-physics2-question.pdf"] = await sha256Hex(badBytes);
+  checksums.files[PDF_PACK_FIXTURE.documentPath] = await sha256Hex(badBytes);
   const fetcher = async (url) => {
     const relative = new URL(url).pathname.split("/packs/partial/")[1];
     if (relative === "checksums.json") return new Response(JSON.stringify(checksums), { status: 200 });
@@ -197,4 +206,50 @@ test("Given an HTTPS request redirected to public HTTP, when the final response 
   await assert.rejects(loadRemotePack({ baseUrl: "https://example.test/pack/", fetcher }), /HTTPS|loopback/i);
   assert.equal(bodyReads, 0);
   assert.deepEqual(fetchOptions, [{ redirect: "manual" }, { redirect: "manual" }]);
+});
+
+test("Given encoded traversal or URL suffixes in pack paths, when the manifest loads, then assets outside the pack root are never requested", async () => {
+  // Given
+  const unsafePaths = [
+    "%2e%2e/catalog.json",
+    "catalog%2f..%2foutside.json",
+    "catalog%5c..%5coutside.json",
+    "catalog.json?variant=outside",
+    "catalog.json#outside",
+  ];
+
+  // When
+  const outcomes = await Promise.all(unsafePaths.map(async (catalogPath) => {
+    const pack = {
+      schemaVersion: 1,
+      id: "checkout-safe.probe",
+      version: "1.0.0",
+      documentCount: 0,
+      pageCount: 0,
+      paths: { catalog: catalogPath, searchIndex: "search-index.json", documents: [] },
+    };
+    const checksums = {
+      algorithm: "sha256",
+      pack: await sha256Hex(new TextEncoder().encode(JSON.stringify(pack))),
+      files: { [catalogPath]: "a".repeat(64), "search-index.json": "b".repeat(64) },
+    };
+    const requested = [];
+    const fetcher = async (url) => {
+      requested.push(url);
+      if (url.endsWith("/pack.json")) return new Response(JSON.stringify(pack), { status: 200 });
+      if (url.endsWith("/checksums.json")) return new Response(JSON.stringify(checksums), { status: 200 });
+      return new Response("outside", { status: 404 });
+    };
+    const outcome = await loadRemotePack({ baseUrl: "https://example.test/packs/probe/", fetcher }).then(
+      () => ({ error: null, requested }),
+      (error) => ({ error, requested }),
+    );
+    return outcome;
+  }));
+
+  // Then
+  for (const outcome of outcomes) {
+    assert.match(outcome.error?.message || "", /safe relative path/i);
+    assert.deepEqual(outcome.requested.map((url) => new URL(url).pathname.split("/").at(-1)).sort(), ["checksums.json", "pack.json"]);
+  }
 });

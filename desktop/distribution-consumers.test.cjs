@@ -94,30 +94,36 @@ test("Given package allowlist expansion on disk and the sparse-aware tracked tre
   const tracked = packageSelection(trackedFiles());
   const parts = JSON.parse(fs.readFileSync(path.join(root, "assets/parts-library/manifest.json"), "utf8"));
   const examParts = JSON.parse(fs.readFileSync(path.join(root, "assets/exam-parts/manifest.json"), "utf8"));
+  const sampleCatalog = JSON.parse(fs.readFileSync(path.join(root, "assets/exam-library/sample-catalog.json"), "utf8"));
   const webManifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
   const partAsset = `assets/parts-library/svg/${parts.items[0].file}`;
   const retainedTutorialAsset = "assets/exam-library/images/p2_2027_06_13.png";
+  const sampleAssets = sampleCatalog.items.map((item) => item.url).sort();
   const trackedLegacyPngs = trackedFiles().filter((file) => file.startsWith("assets/exam-library/images/") && file.endsWith(".png"));
   const examPartAssets = Object.values(examParts[0].files).map((file) => `assets/exam-parts/${file}`);
   const manifestIcons = webManifest.icons.map((icon) => icon.src);
   const fontAssets = localFontReferences();
-  const desktopRuntime = ["desktop/main.cjs", "desktop/preload.cjs", "desktop/codex-turn-runtime.cjs", "desktop/codex-process-failure.cjs", "desktop/ai-thread-profile.cjs", "desktop/splash.html"];
+  const desktopRuntime = [
+    "desktop/main.cjs", "desktop/preload.cjs", "desktop/codex-turn-runtime.cjs", "desktop/codex-process-failure.cjs",
+    "desktop/ai-thread-profile.cjs", "desktop/batch-output-service.cjs", "desktop/pdf-library-scanner.cjs",
+    "desktop/pdf-library-service.cjs", "desktop/pdf-library-ipc.cjs", "desktop/splash.html",
+  ];
 
-  assertSelected(disk, ["index.html", "manifest.json", "LICENSE", "docs/credits.html", "assets/icon.ico", "assets/svg_object/1.svg", "assets/svg_object/2.svg", "assets/exam-library/manifest.json", "assets/exam-library/synonyms.json", "assets/exam-library/tag-vocab.json", "assets/exam-parts/manifest.json", "assets/parts-library/manifest.json", partAsset, ...examPartAssets, ...desktopRuntime], "disk expansion");
+  assertSelected(disk, ["index.html", "manifest.json", "LICENSE", "docs/credits.html", "assets/icon.ico", "assets/svg_object/1.svg", "assets/svg_object/2.svg", "assets/exam-library/manifest.json", "assets/exam-library/sample-catalog.json", "assets/exam-library/synonyms.json", "assets/exam-library/tag-vocab.json", ...sampleAssets, "assets/exam-parts/manifest.json", "assets/parts-library/manifest.json", partAsset, ...examPartAssets, ...desktopRuntime], "disk expansion");
   assert.deepEqual(fontAssets.sort(), [
     "fonts/lmroman10-italic.otf",
     "fonts/lmroman10-italic.woff2",
     "fonts/lmroman10-regular.otf",
     "fonts/lmroman10-regular.woff2",
   ]);
-  assertSelected(tracked, [retainedTutorialAsset, ...manifestIcons, ...fontAssets], "tracked expansion");
+  assertSelected(tracked, ["assets/exam-library/sample-catalog.json", ...sampleAssets, ...manifestIcons, ...fontAssets], "tracked expansion");
   assertSelected(disk, fontAssets, "stylesheet font consumers");
   assertSelected(disk, localIndexReferences(), "index.html links");
   assert.equal(disk.has(retainedTutorialAsset), true, "the tutorial must retain its explicit local PNG");
   assert.deepEqual(
-    trackedLegacyPngs.filter((file) => tracked.has(file)),
-    [retainedTutorialAsset],
-    "the real package selection must exclude every bulk legacy PNG",
+    trackedLegacyPngs.filter((file) => tracked.has(file)).sort(),
+    sampleAssets,
+    "the package selection must contain exactly the curated offline sample PNGs",
   );
 });
 

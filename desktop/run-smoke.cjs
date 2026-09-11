@@ -4,13 +4,15 @@ const os = require("node:os");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const electron = process.env.FIVE_E_SMOKE_EXE || path.join(root, "node_modules", "electron", "dist", "electron.exe");
+const electron = process.env.FIVE_E_SMOKE_EXE || require("electron");
+const imageSmoke = process.argv.includes("--image");
 const smokeFlags = ["--no-sandbox", "--disable-gpu", "--disable-gpu-compositing"];
 const launchArgs = process.env.FIVE_E_SMOKE_EXE
   ? smokeFlags
   : [root, ...smokeFlags];
 const marker = path.join(os.tmpdir(), `5e-desktop-smoke-${process.pid}.json`);
 const smokeUserData = path.join(os.tmpdir(), `5e-desktop-smoke-profile-${process.pid}`);
+const defaultSmokeTimeout = imageSmoke ? 240_000 : process.platform === "darwin" ? 120_000 : 30_000;
 
 const run = spawnSync(electron, launchArgs, {
   cwd: root,
@@ -20,9 +22,10 @@ const run = spawnSync(electron, launchArgs, {
     FIVE_E_SMOKE_RESULT: marker,
     FIVE_E_SMOKE_USER_DATA: smokeUserData,
     FIVE_E_DISABLE_GPU: "1",
+    ...(imageSmoke ? { FIVE_E_IMAGE_E2E: "1" } : {}),
   },
   encoding: "utf8",
-  timeout: Number(process.env.FIVE_E_SMOKE_TIMEOUT) || 30_000,
+  timeout: Number(process.env.FIVE_E_SMOKE_TIMEOUT) || defaultSmokeTimeout,
 });
 
 let report;

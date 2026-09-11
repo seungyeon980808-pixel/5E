@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const tutorialAsset = "assets/exam-library/images/p2_2027_06_13.png";
+const sampleCatalogPath = "assets/exam-library/sample-catalog.json";
 const fixtureRoot = "docs/qa-fixtures/exam-library";
 const excludedStageSegments = new Set([".omo", "node_modules", ".cache", "cache"]);
 
@@ -102,15 +103,19 @@ async function stage() {
   try { await stat(output); throw new Error(`Stage output already exists: ${output}`); } catch (error) { if (error?.code !== "ENOENT") throw error; }
 
   const packageJson = JSON.parse(await (await import("node:fs/promises")).readFile(path.join(root, "package.json"), "utf8"));
+  const sampleCatalog = JSON.parse(await (await import("node:fs/promises")).readFile(path.join(root, sampleCatalogPath), "utf8"));
+  const sampleAssets = sampleCatalog.items.map((item) => item.url);
   const patterns = packageJson.build.files.map(globPattern);
   const allFiles = await filesBelow(root);
   const packageFiles = allFiles.filter((file) => !isStageExcluded(file) && patterns.some((pattern) => pattern.test(file)));
   const fixtureFiles = allFiles.filter((file) => !isStageExcluded(file) && file.startsWith(`${fixtureRoot}/`) && file.endsWith(".png"));
   const selected = new Set([...packageFiles, ...fixtureFiles]);
-  for (const file of [...selected]) {
-    if (file.startsWith("assets/exam-library/images/") && file !== tutorialAsset) selected.delete(file);
+  if (sampleCatalog.version !== "exam-library-v1" || sampleCatalog.complete !== false || sampleAssets.length === 0) {
+    throw new Error("Offline sample catalog must describe an explicitly partial exam-library-v1 set.");
   }
-  if (!selected.has(tutorialAsset)) selected.add(tutorialAsset);
+  if (!sampleAssets.includes(tutorialAsset) || sampleAssets.some((file) => !selected.has(file))) {
+    throw new Error("Offline sample catalog references an unstaged asset.");
+  }
 
   const stage = `${output}.building-${randomUUID()}`;
   await mkdir(stage, { recursive: true });
@@ -119,13 +124,14 @@ async function stage() {
     for (const file of [...selected].sort()) files.push(await copyWithDigest(file, stage));
     const configuredPdfPackBaseUrl = await configurePdfPack(stage, files, pdfPackBaseUrl);
     const legacyImageCount = allFiles.filter((file) => file.startsWith("assets/exam-library/images/") && file.endsWith(".png")).length;
+    const excludedLegacyPngCount = allFiles.filter((file) => file.startsWith("assets/exam-library/images/") && file.endsWith(".png") && !sampleAssets.includes(file)).length;
     const manifest = {
       schemaVersion: 1,
       sourcePackageVersion: packageJson.version,
       files,
-      retained: { tutorialAsset, fixtureFiles: fixtureFiles.sort() },
+      retained: { tutorialAsset, sampleCatalog: sampleCatalogPath, sampleAssets: sampleAssets.sort(), fixtureFiles: fixtureFiles.sort() },
       excluded: {
-        legacyExamPngCount: Math.max(0, legacyImageCount - 1),
+        legacyExamPngCount: excludedLegacyPngCount,
         sourceLegacyPngCount: legacyImageCount,
         sourcePath: "assets/exam-library/images",
       },
