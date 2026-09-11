@@ -1706,11 +1706,12 @@ function pointAtTutorialButton() {
     });
   };
   positionTip();
-  window.addEventListener("resize", positionTip);
-  setTimeout(() => {
-    window.removeEventListener("resize", positionTip);
+  const dismissTip = () => {
+    window.removeEventListener("resize", dismissTip);
     tip.remove(); ring.remove();
-  }, 4200);
+  };
+  window.addEventListener("resize", dismissTip, { once: true });
+  setTimeout(dismissTip, 4200);
 }
 
 /* ===== 배선 ===== */
