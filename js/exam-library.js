@@ -1,8 +1,5 @@
 /* ===== EXAM IMAGE LIBRARY (기출 문항 검색·삽입) =====
 //
-// 정적 파일 라이브러리: assets/exam-library/manifest.json (build_manifest.py 산출물)
-// + images/*.png (로컬 전용). 서버·API 없음. 스펙: docs/EXAM_LIBRARY_SPEC_20260706.md
-//
 // 성능 규약:
 //  - 앱 시작 시 로드 0 — manifest fetch는 모달 "첫" 오픈 시 1회 (no-store: 재생성 반영)
 //  - 이미지는 결과 그리드에서 loading="lazy"로 화면에 보이는 것만 로드
@@ -16,8 +13,19 @@ import { openObjectifyWithFile } from "./image-objectify.js?v=1.4.0";
 
 import { openReferenceWindow } from "./reference-window.js?v=1.4.0";
 import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
-const LIB_BASE = "assets/exam-library/";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js";
+import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js";
+import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js";
+import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js";
+import { createUnifiedLibraryProvider } from "./library/provider.js";
+import { createUnifiedLibraryUi } from "./unified-library-ui.js";
+import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.4.12";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
+
+export function configuredLegacyDatasetBase(value = globalThis.FIVE_E_LEGACY_EXAM_BASE_URL) {
+  if (typeof value !== "string" || !value.trim()) return "";
+  return `${value.trim().replace(/\/+$/u, "")}/`;
+}
 
 let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
 let synonyms = {};        // { 태그/단원명: [동의어…] } — synonyms.json의 map (없으면 {})
@@ -31,7 +39,7 @@ const MAX_SELECT = 4;
 let _busy = false;
 
 function imageUrl(item) {
-  return LIB_BASE + "images/" + encodeURIComponent(item.file);
+  return configuredLegacyDatasetBase() + "images/" + encodeURIComponent(item.file);
 }
 
 function blobToDataUrl(blob) {
@@ -42,6 +50,13 @@ function blobToDataUrl(blob) {
     reader.readAsDataURL(blob);
   });
 }
+
+async function urlToDataUrl(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return blobToDataUrl(await response.blob());
+}
+
 
 /* ----- 검색: 모든 토큰이 (id+제목+태그) 문자열에 포함되어야 매치 (AND) ----- */
 function prepareItems(items) {
@@ -141,6 +156,11 @@ function buildModal() {
         <h2 class="modal-title" id="examlib-title">기출문제 라이브러리</h2>
         <p id="examlib-status" class="objectify-status examlib-status-inline" role="status"></p>
       </div>
+      <div class="examlib-mode-tabs" role="tablist" aria-label="자료 형식">
+        <button id="examlib-legacy-tab" type="button" role="tab" aria-selected="true" aria-controls="examlib-legacy-panel">기출 이미지</button>
+        <button id="examlib-pdf-tab" type="button" role="tab" aria-selected="false" aria-controls="examlib-pdf-panel">PDF 자료</button>
+      </div>
+      <section id="examlib-legacy-panel" role="tabpanel" aria-labelledby="examlib-legacy-tab">
       <div class="examlib-filter-row">
         <select id="examlib-subject" aria-label="과목 선택">
           <option value="">과목 선택</option>
@@ -177,6 +197,8 @@ function buildModal() {
         </div>
       </div>
       <div id="examlib-grid" class="examlib-grid"></div>
+      </section>
+      <section id="examlib-pdf-panel" class="examlib-pdf-panel" role="tabpanel" aria-labelledby="examlib-pdf-tab" hidden></section>
       <div class="modal-actions">
         <button id="examlib-close" type="button" class="modal-btn">닫기</button>
       </div>
@@ -185,7 +207,7 @@ function buildModal() {
   return overlay;
 }
 
-export function initExamLibrary(state, { openAi } = {}) {
+export function initExamLibrary(state, { openAi, openIndependentReferences } = {}) {
   const openButton = document.getElementById("exam-library-open");
   if (!openButton) return;
 
@@ -203,6 +225,149 @@ export function initExamLibrary(state, { openAi } = {}) {
   const objectifyBtn = overlay.querySelector("#examlib-objectify");
   const aiBtn = overlay.querySelector("#examlib-ai");
   const refwinBtn = overlay.querySelector("#examlib-refwin");
+  const legacyPanel = overlay.querySelector("#examlib-legacy-panel");
+  const pdfPanel = overlay.querySelector("#examlib-pdf-panel");
+  const legacyTab = overlay.querySelector("#examlib-legacy-tab");
+  const pdfTab = overlay.querySelector("#examlib-pdf-tab");
+  const legacyDatasetConfigured = Boolean(configuredLegacyDatasetBase());
+  legacyTab.hidden = !legacyDatasetConfigured;
+  let pdfSearchWorker = null;
+  let pdfSearchRequestId = 0;
+  let pdfSearchWorkerKey = "";
+  const pdfSearchRequests = new Map();
+  let pdfSearchKey = "";
+  const workerSearch = (message) => new Promise((resolve, reject) => {
+    const requestId = ++pdfSearchRequestId;
+    pdfSearchRequests.set(requestId, { resolve, reject });
+    pdfSearchWorker.postMessage({ id: requestId, ...message });
+  });
+  const ensurePdfSearchWorker = () => {
+    if (pdfSearchWorker) return pdfSearchWorker;
+    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js", import.meta.url), { type: "module" });
+    pdfSearchWorker.addEventListener("message", (event) => {
+      const request = pdfSearchRequests.get(event.data?.id);
+      if (!request) return;
+      pdfSearchRequests.delete(event.data.id);
+      if (event.data.ok) request.resolve(event.data.result);
+      else request.reject(new Error(event.data.error?.message || "PDF 검색 작업이 실패했습니다."));
+    });
+    pdfSearchWorker.addEventListener("error", (event) => {
+      for (const request of pdfSearchRequests.values()) request.reject(event.error || new Error("PDF 검색 작업이 중단되었습니다."));
+      pdfSearchRequests.clear();
+    });
+    return pdfSearchWorker;
+  };
+  let unifiedUi = null;
+  const pdfUi = createPdfLibraryUi({
+    state,
+    host: pdfPanel,
+    loadRuntime: async () => {
+      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js");
+      return createPdfRuntime();
+    },
+    searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [] } = {}) => {
+      const prebuiltDocumentIds = new Set(prebuiltIndexes.flatMap((source) => source.documents.map((document) => document.id)));
+      const dynamicDocuments = documents.filter((document) => !prebuiltDocumentIds.has(document.id));
+      const key = [
+        ...dynamicDocuments.map((document) => `${document.id}:${document.status}:${document.pageCount}`),
+        ...prebuiltIndexes.map((source) => `prebuilt:${source.documents.map((document) => `${document.id}:${document.pageCount}`).join(",")}:${source.index.entries.length}`),
+      ].join("|");
+      if (key !== pdfSearchKey) {
+        pdfSearchKey = key;
+        const worker = ensurePdfSearchWorker();
+        if (pdfSearchWorkerKey !== key) {
+          await workerSearch({ type: "replace", documents: dynamicDocuments, prebuilt: prebuiltIndexes });
+          pdfSearchWorkerKey = key;
+        }
+      }
+      return workerSearch({ type: "search", options: { query, filters, limit: MAX_RENDER } });
+    },
+    invalidateSearch: () => {
+      pdfSearchKey = "";
+      pdfSearchWorkerKey = "";
+    },
+    insertImage: insertImageFromSrc,
+    openIndependentReferences,
+    loadDesktopAdapter: async (runtime) => {
+      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js");
+      return hasDesktopPdfLibrary() ? createDesktopPdfLibraryAdapter({ runtime }) : null;
+    },
+    onCatalogChange: () => void unifiedUi?.refresh(),
+  });
+  let packManagement = null;
+  let installedPackDocuments = [];
+  let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
+  let defaultPack = null;
+  const mountPackManagement = async () => {
+    if (packManagement) return packManagement;
+    const [
+      { createIndexedDbPackAdapter, createPackStore },
+      { mountPackManagement: mount },
+      { loadRemotePack },
+    ] = await Promise.all([
+      import("./pdf-library/pack-store.js"),
+      import("./pdf-library/pack-management.js"),
+      import("./pdf-library/remote-pack.js"),
+    ]);
+    const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
+    const syncPackCatalog = () => {
+      const merged = mergePreferredCatalogs(
+        defaultPack,
+        { documents: installedPackDocuments, searchIndex: installedPackSearchIndex },
+      );
+      return pdfUi.syncPackCatalog({
+        documents: merged.documents,
+        searchIndex: merged.searchIndex,
+        openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
+          ? store.openDocument(runtime, document)
+          : defaultPack.openDocument(runtime, document),
+      });
+    };
+    packManagement = mount({
+      host: pdfUi.getPackHost(),
+      store,
+      onUpdateCandidate: async () => {
+        const latest = await loadRemotePack({ baseUrl: defaultRecentThreePack().baseUrl });
+        defaultPack = latest;
+        packManagement.setCandidate(latest);
+        await syncPackCatalog();
+      },
+      onChange: (snapshot) => {
+        if (snapshot.status !== "ready") return;
+        void store.enabledCatalog().then((catalog) => {
+          installedPackDocuments = [...catalog.documents];
+          installedPackSearchIndex = catalog.searchIndex;
+          return syncPackCatalog();
+        });
+      },
+    });
+    const configured = defaultRecentThreePack();
+    if (configured.baseUrl) {
+      void loadRemotePack({ baseUrl: configured.baseUrl }).then((pack) => {
+        defaultPack = pack;
+        packManagement.setCandidate(pack);
+        return syncPackCatalog();
+      }).catch((error) => {
+        pdfUi.setSourceStatus(`기본 PDF 자료팩을 불러오지 못했습니다. 자료팩 폴더를 설치하거나 PDF를 직접 가져오세요. (${error instanceof Error ? error.message : error})`, true);
+      });
+    } else {
+      pdfUi.setSourceStatus(configured.message, true);
+    }
+    return packManagement;
+  };
+
+  const setMode = (mode) => {
+    const pdfMode = mode === "pdf";
+    legacyPanel.hidden = pdfMode;
+    pdfPanel.hidden = !pdfMode;
+    legacyTab.setAttribute("aria-selected", String(!pdfMode));
+    pdfTab.setAttribute("aria-selected", String(pdfMode));
+    if (pdfMode) {
+      void pdfUi.activate();
+      void mountPackManagement();
+    }
+    else pdfUi.deactivate();
+  };
 
   const filterValues = () => ({
     subject: subjectSelect.value,
@@ -219,6 +384,7 @@ export function initExamLibrary(state, { openAi } = {}) {
   const close = () => {
     if (overlay.hidden) return;
     overlay.hidden = true;
+    pdfUi.deactivate();
     window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "exam" } }));
   };
 
@@ -450,7 +616,9 @@ export function initExamLibrary(state, { openAi } = {}) {
   async function loadManifest() {
     setStatus("문항 목록 불러오는 중…");
     try {
-      const res = await fetch(LIB_BASE + "manifest.json", { cache: "no-store" });
+      const baseUrl = configuredLegacyDatasetBase();
+      if (!baseUrl) throw new Error("외부 레거시 자료 위치가 설정되지 않았습니다.");
+      const res = await fetch(baseUrl + "manifest.json", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.version !== "exam-library-v1" || !Array.isArray(data.items)) {
@@ -459,7 +627,7 @@ export function initExamLibrary(state, { openAi } = {}) {
       manifest = data;
       // 동의어 사전(선택): 있으면 검색어 확장에 쓰고, 없거나 깨져도 검색은 정상 동작.
       try {
-        const sres = await fetch(LIB_BASE + "synonyms.json", { cache: "no-store" });
+        const sres = await fetch(baseUrl + "synonyms.json", { cache: "no-store" });
         if (sres.ok) {
           const sdata = await sres.json();
           synonyms = (sdata && sdata.map) || {};
@@ -471,30 +639,136 @@ export function initExamLibrary(state, { openAi } = {}) {
       runSearch();
     } catch (e) {
       manifest = null;
-      setStatus("라이브러리를 찾을 수 없습니다. assets/exam-library/images/에 PNG를 넣고 "
-        + "`python scripts/build_manifest.py`를 실행한 뒤 다시 여세요. "
+      setStatus("외부 레거시 기출 자료를 불러올 수 없습니다. 설정한 자료 위치를 확인하세요. "
         + `(${e && e.message ? e.message : e})`, true);
     }
   }
 
-  /* ----- open/close ----- */
-  const openLibrary = (trigger) => {
-    overlay.hidden = false;
-    // 누른 버튼 자리에서 창이 자라나게 — 기본(가운데)보다 인과가 분명하다.
-    setOpenOrigin(overlay.querySelector(".modal"), trigger || openButton);
-    if (!manifest) loadManifest();
-    else {
-      populateSubjectOptions(); // 과목 모드가 바뀌었을 수 있으니 열 때마다 재구성
-      runSearch();
+  let partsManifest = null;
+  let externalExamManifest = null;
+  let importedImages = [];
+  async function ensureUnifiedManifests() {
+    if (!partsManifest) partsManifest = await loadPartsManifest();
+    const externalBase = configuredLegacyDatasetBase();
+    if (externalBase && !externalExamManifest) {
+      const response = await fetch(`${externalBase}manifest.json`, { cache: "no-store" });
+      if (response.ok) externalExamManifest = await response.json();
     }
-    subjectSelect.focus();
+  }
+
+  async function materializeImportedImage({ result, item }) {
+    if (item?.bytes instanceof Uint8Array) {
+      const type = item.mimeType || "image/png";
+      return { bytes: item.bytes.slice(), dataUrl: await blobToDataUrl(new Blob([item.bytes], { type })), result };
+    }
+    if (item?.imageId && globalThis.fiveEDesktop?.pdfLibrary?.readImage) {
+      const opened = await globalThis.fiveEDesktop.pdfLibrary.readImage(item.imageId);
+      const bytes = opened.data instanceof Uint8Array ? opened.data : Uint8Array.from(opened.data || []);
+      return { bytes, dataUrl: await blobToDataUrl(new Blob([bytes], { type: opened.mimeType || item.mimeType || "image/png" })), result };
+    }
+    return { dataUrl: await urlToDataUrl(result.preview.url), result };
+  }
+
+  async function getUnifiedProvider() {
+    await ensureUnifiedManifests();
+    const catalog = pdfUi.getCatalog();
+    return createUnifiedLibraryProvider({
+      partsManifest,
+      examManifest: configuredLegacyDatasetBase() ? externalExamManifest : null,
+      examBaseUrl: configuredLegacyDatasetBase(),
+      pdfDocuments: catalog.documents,
+      pdfSearchIndex: catalog.searchIndex,
+      importedImages,
+      searchPdf: (options) => pdfUi.searchPdf(options),
+      materializers: {
+        pdf: (input) => pdfUi.materializePdf(input),
+        part: ({ item, options }) => materializePartsAsset(item, options),
+        examImage: ({ result }) => urlToDataUrl(`${configuredLegacyDatasetBase()}images/${encodeURIComponent(result.provenance.fileName)}`).then((dataUrl) => ({ dataUrl, result })),
+        importedImage: materializeImportedImage,
+      },
+    });
+  }
+
+  async function insertUnifiedResult(result, asset, options) {
+    if (result.provenance.provider === "parts") {
+      insertPartsAsset(state, {
+        item: { id: result.provenance.itemId, defaultLevel: result.metadata?.defaultLevel },
+        asset,
+        widthMm: options.targetMm,
+        lineLevel: options.mode === "original" ? "RAW" : options.level,
+        lineFill: options.fill,
+      });
+      return;
+    }
+    const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
+    if (!dataUrl) throw new Error("삽입할 이미지 데이터를 만들지 못했습니다.");
+    await insertImageFromSrc(state, dataUrl, {
+      preserveBytes: true,
+      sourceMetadata: {
+        provider: result.provenance.provider,
+        documentId: asset.source?.documentId || result.provenance.documentId,
+        pageNumber: asset.source?.pageNumber || result.provenance.pageNumber,
+        rect: asset.source?.rect || result.provenance.rect,
+        fullPageFallback: asset.source?.fullPageFallback ?? result.provenance.fullPageFallback,
+        locator: result.provenance.locator,
+        fileName: result.provenance.fileName,
+        license: result.provenance.license,
+        sha256: result.provenance.sha256 || null,
+      },
+    });
+  }
+
+  unifiedUi = createUnifiedLibraryUi({
+    getProvider: getUnifiedProvider,
+    insertMaterialized: insertUnifiedResult,
+    openAi,
+    openIndependentReferences,
+    pdfUi,
+    pdfDetailsElement: pdfPanel,
+    onImportedImages: async (files) => {
+      const records = [];
+      for (const file of files) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        records.push({ id: `browser-image:${crypto.randomUUID()}`, fileName: file.name, name: file.name, mimeType: file.type, bytes, sourceId: "browser-imports", sourceLabel: "가져온 이미지" });
+      }
+      importedImages = [...importedImages, ...records];
+    },
+    onDesktopSnapshot: (snapshot) => {
+      const browserImports = importedImages.filter((item) => !item.imageId);
+      const desktopImages = (snapshot?.images || []).map((item) => ({
+        ...item,
+        id: item.imageId,
+        fileName: item.name,
+        sourceId: item.connectionId || "desktop",
+        sourceLabel: "연결한 폴더",
+      }));
+      importedImages = [...browserImports, ...desktopImages];
+    },
+  });
+  pdfPanel.hidden = false;
+
+  /* ----- open/close ----- */
+  const openLibrary = async (trigger) => {
+    const opening = unifiedUi.open(trigger || openButton);
+    void mountPackManagement().catch((error) => pdfUi.setSourceStatus(`자료팩 관리 열기 실패: ${error instanceof Error ? error.message : error}`, true));
+    await opening;
   };
-  openButton.addEventListener("click", () => openLibrary(openButton));
+  openButton.addEventListener("click", () => void openLibrary(openButton));
+  registerPdfReferencePicker(async ({ onAdd, onStatus } = {}) => {
+    void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
+    await unifiedUi.beginReferenceSelection({ onAdd, onStatus, onComplete: unifiedUi.close }, openButton);
+  });
+  legacyTab.addEventListener("click", () => {
+    setMode("legacy");
+    if (!manifest) void loadManifest();
+    else runSearch();
+  });
+  pdfTab.addEventListener("click", () => setMode("pdf"));
   // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.key.toLowerCase() !== "f") return;
     e.preventDefault();
-    if (overlay.hidden) openLibrary();
+    if (overlay.hidden) void openLibrary();
   }, true);
   overlay.querySelector("#examlib-close").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });

@@ -17,11 +17,20 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "package:win": "electron-builder --win nsis --publish never"
+    "setup:pdfjs": "node tools/pdf-library/setup-pdfjs.mjs",
+    "setup:ocr": "node tools/pdf-library/setup-ocr.mjs",
+    "candidate:build": "node tools/pdf-library/build-deployment-candidate.mjs",
+    "candidate:verify": "node tools/pdf-library/verify-deployment-candidate.mjs",
+    "candidate:serve": "node tools/pdf-library/serve-deployment-candidate.mjs",
+    "package:win": "electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
+    "@napi-rs/canvas": "1.0.9",
+    "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/kor": "1.0.0",
     "electron": "^37.0.0",
-    "electron-builder": "^26.0.0"
+    "electron-builder": "^26.0.0",
+    "tesseract.js": "7.0.0"
   },
   "build": {
     "appId": "com.5e.editor",
@@ -33,11 +42,16 @@
       "LICENSE",
       "css/**/*",
       "js/**/*",
+      "vendor/ocr/**/*",
+      "vendor/pdfjs/**/*",
       "desktop/main.cjs",
       "desktop/preload.cjs",
       "desktop/codex-turn-runtime.cjs",
       "desktop/codex-process-failure.cjs",
       "desktop/ai-thread-profile.cjs",
+      "desktop/pdf-library-scanner.cjs",
+      "desktop/pdf-library-service.cjs",
+      "desktop/pdf-library-ipc.cjs",
       "desktop/splash.html",
       "assets/apple-touch-icon.png",
       "assets/favicon.png",
@@ -50,7 +64,7 @@
       "assets/exam-library/manifest.json",
       "assets/exam-library/synonyms.json",
       "assets/exam-library/tag-vocab.json",
-      "assets/exam-library/images/**/*",
+      "assets/exam-library/images/p2_2027_06_13.png",
       "assets/exam-parts/**/*",
       "assets/parts-library/manifest.json",
       "assets/parts-library/svg/**/*",
@@ -58,9 +72,16 @@
       "fonts/lmroman10-regular.otf",
       "fonts/lmroman10-italic.woff2",
       "fonts/lmroman10-italic.otf",
-      "docs/credits.html"
+      "docs/credits.html",
+      "!node_modules/@napi-rs/canvas-darwin-*/**/*"
     ],
-    "win": { "icon": "assets/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.3.289"
   }
 }

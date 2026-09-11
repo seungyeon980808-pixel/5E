@@ -16,7 +16,7 @@ import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
-import { initProjectIO } from "./project-io.js?v=1.4.0";
+import { initProjectIO, saveProject } from "./project-io.js?v=1.4.0";
 import { initExportDialog } from "./export-dialog.js?v=1.4.11";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
 import { initSettings } from "./settings.js?v=1.4.0";
@@ -24,9 +24,6 @@ import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
 import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
 import { initExamLibrary } from "./exam-library.js?v=1.4.12";
-// 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
-// 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
-import { initPartsLibrary } from "./parts-library.js?v=1.4.12";
 import { initTemplates } from "./templates.js?v=1.4.0";
 import { initObjectSearch } from "./search.js?v=1.4.0";
 import { initCommandPalette } from "./command-palette.js?v=1.4.0";
@@ -243,7 +240,19 @@ initPages(state);
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 initAutosave(state);
 const aiPanel = initAiPanel(state);
-initAiInstallGuide({ openDesktopPanel: () => aiPanel?.open() });
+document.getElementById("ai-image-install-open")?.addEventListener("click", () => void aiPanel?.open());
+const desktopHandoff = initAiInstallGuide({
+  saveProject: () => saveProject(state),
+  openDesktopPanel: () => aiPanel?.open(),
+  openProjectChooser: () => document.getElementById("project-open")?.click(),
+});
+const projectTransferButton = document.querySelector("[data-ai-project-transfer]");
+if (projectTransferButton && window.fiveEDesktop) {
+  projectTransferButton.hidden = false;
+  projectTransferButton.addEventListener("click", () => desktopHandoff.openProjectChooser());
+}
+window.addEventListener("5e:ai-output-success", () => desktopHandoff.reportAiSuccess());
+window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLocalFolderIntent());
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
@@ -262,8 +271,8 @@ initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
 const openAiWithReference = (options) => aiPanel?.open(options);
-initExamLibrary(state, { openAi: openAiWithReference });
-initPartsLibrary(state, { openAi: openAiWithReference });
+const openIndependentAiReferences = (options) => aiPanel?.openIndependentReferences(options);
+initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);

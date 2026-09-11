@@ -1,5 +1,6 @@
 function editorPanelSource(source) {
   const replacements = [
+    ['setStatus(cancelled ? "작업 취소됨" : "요청 실패", cancelled ? "warn" : "error");', 'setStatus(cancelled ? "작업 취소됨" : error.status === 429 ? error.message : "요청 실패", cancelled ? "warn" : "error");'],
     ['if (!panel) return;', 'if (!panel) return;\n  const background = createBackgroundOptions(panel);\n  const taskFeedback = createTaskFeedback(panel);'],
     ['stage.appendChild(img);', 'stage.appendChild(img);\n    background.register(item, img);'],
     ['void insertImageFromSrc(state, item.data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null})',

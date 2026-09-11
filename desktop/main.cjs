@@ -11,6 +11,9 @@ const {
 } = require("./codex-turn-runtime.cjs");
 const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
+const { createPdfLibraryService } = require("./pdf-library-service.cjs");
+const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
+const { createBatchOutputService } = require("./batch-output-service.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", "icon.ico");
@@ -22,8 +25,17 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
+const pdfLibraryService = createPdfLibraryService({
+  storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
+  documentsPath: app.getPath("documents"),
+  onProgress: (progress) => {
+    if (win && !win.isDestroyed()) win.webContents.send("pdf-library:progress", progress);
+  },
+});
 let codexSendInvocationCount = 0;
 const localImageRoots = new Set();
+const batchOutputRoots = new Set();
+const batchOutputService = createBatchOutputService();
 const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
 
 function isPathInside(root, candidate) {
@@ -633,6 +645,86 @@ function createWindow() {
   win.webContents.once("did-fail-load", revealMainWindow);
   win.loadFile(path.join(__dirname, "..", "index.html"));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
+  if (process.env.FIVE_E_PDF_SMOKE_TEST === "1") {
+    win.webContents.once("did-finish-load", async () => {
+      try {
+        const connection = await pdfLibraryService.connect(process.env.FIVE_E_PDF_SMOKE_FOLDER);
+        const result = await win.webContents.executeJavaScript(`(async () => {
+          const api = window.fiveEDesktop.pdfLibrary;
+          const connectionId = ${JSON.stringify(connection.connectionId)};
+          const connected = (await api.connections()).connections.some((item) => item.connectionId === connectionId);
+          const firstSync = await api.sync(connectionId, "electron-surface-smoke");
+          const tree = (await api.folderTree(connectionId)).tree;
+          const initial = await api.list(connectionId);
+          const documents = initial.documents;
+          const bytes = await api.read({ documentId: documents[0].documentId });
+          const image = initial.images[0] ? await api.readImage(initial.images[0].imageId) : null;
+          await api.setFolderSelection(tree.folderId, false);
+          const hidden = await api.list(connectionId);
+          await api.setFolderSelection(tree.folderId, true);
+          await api.sync(connectionId, "electron-surface-restore");
+          const restored = await api.list(connectionId);
+          const capabilities = await api.capabilities();
+          return {
+            connected,
+            documentCount: documents.length,
+            byteLength: bytes.byteLength,
+            imageByteLength: image?.data?.byteLength || 0,
+            hiddenCount: hidden.documents.length + hidden.images.length,
+            restoredCount: restored.documents.length + restored.images.length,
+            treeSelection: tree.selection,
+            warningCount: firstSync.warningCount,
+            warningsSafe: firstSync.warnings.every((warning) => !warning.relativePath.startsWith("/") && !warning.relativePath.includes("..")),
+            ocrIntegrated: capabilities.ocr.integrated,
+          };
+        })()`);
+        const ok = result.connected && result.documentCount > 0 && result.byteLength > 0 && result.imageByteLength > 0 && result.hiddenCount === 0 && result.restoredCount > 1;
+        fs.writeFileSync(process.env.FIVE_E_PDF_SMOKE_RESULT, JSON.stringify({ ok, result }));
+        app.exit(ok ? 0 : 1);
+      } catch (error) {
+        fs.writeFileSync(process.env.FIVE_E_PDF_SMOKE_RESULT, JSON.stringify({ ok: false, error: error.message }));
+        app.exit(1);
+      }
+    });
+  }
+  if (process.env.FIVE_E_HANDOFF_SMOKE_TEST === "1") {
+    win.webContents.once("did-finish-load", async () => {
+      try {
+        const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
+          requestAnimationFrame(() => requestAnimationFrame(async () => {
+            const started = Date.now();
+            while (!document.querySelector('input[type="file"][accept*=".5e"]') && Date.now() - started < 4000) {
+              await new Promise(done => setTimeout(done, 50));
+            }
+            const input = document.querySelector('input[type="file"][accept*=".5e"]');
+            let chooserClicks = 0;
+            input?.addEventListener('click', event => { chooserClicks += 1; event.preventDefault(); }, true);
+            window.dispatchEvent(new CustomEvent('5e:ai-output-success'));
+            window.dispatchEvent(new CustomEvent('5e:local-folder-intent'));
+            await new Promise(done => setTimeout(done, 100));
+            const transfer = document.querySelector('[data-ai-project-transfer]');
+            const beforeAction = chooserClicks;
+            transfer?.click();
+            await new Promise(done => setTimeout(done, 100));
+            resolve({
+              panelOpened: document.getElementById('ai-image-panel')?.hidden === false,
+              transferVisible: !!transfer && !transfer.hidden,
+              transferLabel: transfer?.textContent?.trim() || '',
+              chooserBeforeAction: beforeAction,
+              chooserAfterAction: chooserClicks,
+            });
+          }));
+        })`);
+        const ok = result.panelOpened && result.transferVisible && result.transferLabel === "웹 프로젝트 열기" && result.chooserBeforeAction === 0 && result.chooserAfterAction === 1;
+        if (process.env.FIVE_E_HANDOFF_SMOKE_RESULT) fs.writeFileSync(process.env.FIVE_E_HANDOFF_SMOKE_RESULT, JSON.stringify({ ok, result }), "utf8");
+        if (process.env.FIVE_E_HANDOFF_SMOKE_SCREENSHOT) fs.writeFileSync(process.env.FIVE_E_HANDOFF_SMOKE_SCREENSHOT, (await win.webContents.capturePage()).toPNG());
+        app.exit(ok ? 0 : 1);
+      } catch (error) {
+        if (process.env.FIVE_E_HANDOFF_SMOKE_RESULT) fs.writeFileSync(process.env.FIVE_E_HANDOFF_SMOKE_RESULT, JSON.stringify({ ok: false, error: error.message }), "utf8");
+        app.exit(1);
+      }
+    });
+  }
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {
       try {
@@ -1235,5 +1327,28 @@ ipcMain.handle("local-images:read", async (_, filePath) => {
   if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
   return imageDataUrl(path.resolve(filePath));
 });
+ipcMain.handle("batch-output:pick-folder", async () => {
+  const result = await dialog.showOpenDialog(win, {
+    title: "변환 결과 저장 폴더 선택",
+    properties: ["openDirectory", "createDirectory"],
+  });
+  const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");
+  if (folder) batchOutputRoots.add(folder);
+  return { folder };
+});
+ipcMain.handle("batch-output:save", async (_, payload = {}) => {
+  const outputDirectory = path.resolve(String(payload.outputDirectory || ""));
+  if (!batchOutputRoots.has(outputDirectory)) throw new Error("먼저 결과 저장 폴더를 선택하세요.");
+  const match = /^data:image\/[a-z0-9.+-]+;base64,([a-z0-9+/=]+)$/i.exec(String(payload.dataUrl || ""));
+  if (!match) throw new Error("저장할 이미지 데이터가 올바르지 않습니다.");
+  return batchOutputService.write({
+    outputDirectory,
+    sourceName: payload.sourceName,
+    originalPath: payload.originalPath || null,
+    data: Buffer.from(match[1], "base64"),
+    extension: payload.extension || ".png",
+  });
+});
+registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("before-quit", stopAllServers);

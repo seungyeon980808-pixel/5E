@@ -40,14 +40,14 @@ const svgTextCache = new Map();
 const LEVELS = (Array.isArray(LINEART_LEVELS) && LINEART_LEVELS.length)
   ? LINEART_LEVELS : FALLBACK_LEVELS;
 
-function svgUrl(item) {
-  return LIB_BASE + "svg/" + encodeURIComponent(item.file);
+export function partsAssetUrl(item, baseUrl = LIB_BASE) {
+  return baseUrl + "svg/" + encodeURIComponent(item.file);
 }
 
-async function loadSvgText(item) {
-  const url = svgUrl(item);
+async function loadSvgText(item, { fetchImpl = globalThis.fetch, baseUrl = LIB_BASE } = {}) {
+  const url = partsAssetUrl(item, baseUrl);
   if (svgTextCache.has(url)) return svgTextCache.get(url);
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetchImpl(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const text = await res.text();
   svgTextCache.set(url, text);
@@ -72,7 +72,7 @@ function aspectOf(viewBox) {
 }
 
 /* ----- 검색: 모든 토큰이 (id+이름+검색어+파트+과목명) 문자열에 포함되어야 매치 (AND) ----- */
-function prepareItems(items) {
+export function preparePartsItems(items) {
   for (const it of items) {
     const hay = `${it.id} ${it.name} ${(it.keywords || []).join(" ")} `
       + `${(it.sourceTags || []).join(" ")} `
@@ -82,13 +82,85 @@ function prepareItems(items) {
   }
 }
 
-function searchItems(query, filters) {
+export function searchPartsManifest(manifestData, query = "", filters = {}) {
+  if (!manifestData || !Array.isArray(manifestData.items)) return Object.freeze([]);
+  if (manifestData.items.some((item) => typeof item._hay !== "string")) preparePartsItems(manifestData.items);
   const tokens = query.trim().toLowerCase().split(/[#\s]+/).filter(Boolean);
   const { subject, part } = filters;
-  return manifest.items.filter((it) =>
+  return Object.freeze(manifestData.items.filter((it) =>
     tokens.every((t) => it._hay.includes(t) || it._hayNs.includes(t)) &&
     (!subject || it.subject === subject) &&
-    (!part || it.part === part));
+    (!part || it.part === part)));
+}
+
+export async function loadPartsManifest({ fetchImpl = globalThis.fetch, baseUrl = LIB_BASE } = {}) {
+  const response = await fetchImpl(baseUrl + "manifest.json", { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+  if (!data || !Array.isArray(data.items)) throw new TypeError("manifest.items must be an array");
+  preparePartsItems(data.items);
+  return data;
+}
+
+function rawAsset(svgText) {
+  try {
+    const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+    const svg = doc.documentElement;
+    if (!svg || svg.tagName.toLowerCase() !== "svg") return null;
+    let viewBox = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+    if (viewBox.length !== 4 || viewBox.some((number) => !Number.isFinite(number))) {
+      viewBox = [0, 0, parseFloat(svg.getAttribute("width")) || 100, parseFloat(svg.getAttribute("height")) || 100];
+    }
+    const base64 = btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(svg))));
+    return { dataUri: `data:image/svg+xml;base64,${base64}`, viewBox, raw: true };
+  } catch {
+    return null;
+  }
+}
+
+export async function materializePartsAsset(item, options = {}) {
+  const svgText = options.svgText ?? await loadSvgText(item, options);
+  if (options.mode === "original") {
+    const original = rawAsset(svgText);
+    if (!original) throw new TypeError("The original SVG could not be read");
+    return original;
+  }
+  const result = toLineArt(svgText, {
+    level: options.level ?? item.defaultLevel ?? "L2",
+    fill: options.fill ?? "none",
+    targetMm: options.targetMm ?? DEFAULT_W_MM,
+    lineMm: options.lineMm ?? 0.35,
+    ...(options.dropLine === undefined ? {} : { dropLine: options.dropLine }),
+    ...(options.tiny === undefined ? {} : { tiny: options.tiny }),
+  });
+  if (!result?.dataUri) throw new TypeError("Line-art conversion returned no asset");
+  return result;
+}
+
+export function insertPartsAsset(state, input) {
+  if (!input?.item || !input.asset?.dataUri) throw new TypeError("A parts item and materialized asset are required");
+  const stateBefore = state.get();
+  const artboard = stateBefore.artboard || { w: 90, h: 60 };
+  const width = Number(input.widthMm) || DEFAULT_W_MM;
+  const height = width / aspectOf(input.asset.viewBox);
+  const object = {
+    id: input.id ?? `obj_${Date.now().toString(36)}_part${++_idCounter}`,
+    type: "svgAsset", src: input.asset.dataUri, partId: input.item.id,
+    lineLevel: input.asset.raw ? "RAW" : (input.lineLevel ?? input.item.defaultLevel ?? "L2"),
+    lineFill: input.asset.raw ? null : (input.lineFill ?? "none"),
+    x: artboard.w / 2 - width / 2, y: artboard.h / 2 - height / 2, w: width, h: height,
+    rotation: 0, locked: false, positionLocked: false,
+    layerId: stateBefore.activeLayerId, order: stateBefore.objects.length,
+  };
+  state.update((current) => {
+    current.undoStack.push(JSON.parse(JSON.stringify(current.objects)));
+    current.redoStack = [];
+    current.objects.push(object);
+    current.selectedIds = [object.id];
+    current.targetedId = null;
+    current.activeTool = "V";
+  });
+  return object;
 }
 
 /* ===== modal ===== */
@@ -357,24 +429,6 @@ export function initPartsLibrary(state, { openAi } = {}) {
 
   /* 원본 SVG 를 손대지 않고 그대로 쓸 수 있게 감싼다.
      toLineArt 와 같은 모양({dataUri, viewBox})으로 돌려줘야 삽입부가 갈라지지 않는다. */
-  function rawAsset(svgText) {
-    try {
-      const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
-      const svg = doc.documentElement;
-      if (!svg || svg.tagName.toLowerCase() !== "svg") return null;
-      let vb = (svg.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
-      if (vb.length !== 4 || vb.some((n) => !Number.isFinite(n))) {
-        const w = parseFloat(svg.getAttribute("width")) || 100;
-        const h = parseFloat(svg.getAttribute("height")) || 100;
-        vb = [0, 0, w, h];
-      }
-      const b64 = btoa(unescape(encodeURIComponent(new XMLSerializer().serializeToString(svg))));
-      return { dataUri: `data:image/svg+xml;base64,${b64}`, viewBox: vb, raw: true };
-    } catch {
-      return null;
-    }
-  }
-
   function renderPreviewMeta(item) {
     previewMeta.textContent = "";
     const lic = document.createElement("span");
@@ -447,7 +501,7 @@ export function initPartsLibrary(state, { openAi } = {}) {
           <div class="partslib-sub"></div>
           <div class="partslib-lic"><span class="partslib-badge"></span></div>
         </div>`;
-      card.querySelector("img").src = svgUrl(item);
+      card.querySelector("img").src = partsAssetUrl(item);
       card.querySelector(".partslib-name").textContent = item.name;
       card.querySelector(".partslib-sub").textContent =
         [item.subjectLabel, item.part].filter(Boolean).join(" · ");
@@ -466,7 +520,7 @@ export function initPartsLibrary(state, { openAi } = {}) {
 
   function runSearch() {
     if (!manifest) return;
-    renderResults(searchItems(queryInput.value, filterValues()));
+    renderResults(searchPartsManifest(manifest, queryInput.value, filterValues()));
   }
 
   function resetFilters() {
@@ -482,39 +536,13 @@ export function initPartsLibrary(state, { openAi } = {}) {
   function insertSelected() {
     const item = byId.get(activeId);
     if (!item || !converted || !converted.dataUri) return;
-    const s0 = state.get();
-    const ab = s0.artboard || { w: 90, h: 60 };
-    const w = widthMm();                          // 고급에서 정한 폭 (기본 45mm)
-    const h = w / aspectOf(converted.viewBox);   // 비율은 변환 결과 viewBox를 따른다
-    const x = ab.w / 2 - w / 2;                  // 아트보드 중앙
-    const y = ab.h / 2 - h / 2;
-    const id = `obj_${Date.now().toString(36)}_part${++_idCounter}`;
-
     _busy = true;
     insertBtn.disabled = true;
     aiBtn.disabled = true;
     try {
-      state.update((s) => {
-        // 삽입 직전 상태를 스냅샷 — Ctrl+Z 한 번으로 이 부품만 사라진다.
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
-        s.redoStack = [];
-        s.objects.push({
-          id,
-          type: "svgAsset",
-          src: converted.dataUri,
-          partId: item.id,
-          lineLevel: converted.raw ? "RAW" : (advanced ? "custom" : level),
-          lineFill: converted.raw ? null : fill,
-          x, y, w, h,
-          rotation: 0,
-          locked: false,
-          positionLocked: false,
-          layerId: s.activeLayerId,
-          order: s.objects.length,
-        });
-        s.selectedIds = [id];
-        s.targetedId = null;
-        s.activeTool = "V";
+      insertPartsAsset(state, {
+        item, asset: converted, widthMm: widthMm(),
+        lineLevel: advanced ? "custom" : level, lineFill: fill,
       });
       close();
     } catch (e) {
@@ -530,14 +558,7 @@ export function initPartsLibrary(state, { openAi } = {}) {
   async function loadManifest() {
     setStatus("이미지 목록 불러오는 중…");
     try {
-      const res = await fetch(LIB_BASE + "manifest.json", { cache: "no-store" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!data || !Array.isArray(data.items)) {
-        throw new Error("manifest에 items 배열이 없습니다.");
-      }
-      manifest = data;
-      prepareItems(manifest.items);
+      manifest = await loadPartsManifest();
       byId = new Map(manifest.items.map((it) => [it.id, it]));
       populateSubjectOptions();
       populatePartOptions();
@@ -612,7 +633,7 @@ export function initPartsLibrary(state, { openAi } = {}) {
     close();
     void openAi({
       references: items.map((item) => ({
-        src: item.id === activeId && converted?.dataUri ? converted.dataUri : svgUrl(item),
+        src: item.id === activeId && converted?.dataUri ? converted.dataUri : partsAssetUrl(item),
         name: item.name || `${item.id}.svg`,
       })),
     });

@@ -14,6 +14,12 @@ function harness(fetch) {
 }
 const response = (body, ok = true) => ({ ok, json: async () => body });
 
+test('capacity errors preserve HTTP status and explanation for the existing status UI', async () => {
+  const message = '이미지 생성은 한 번에 최대 10개까지 실행할 수 있습니다.';
+  const { bridge } = harness(async () => ({ ...response({ error: message }, false), status: 429 }));
+  await assert.rejects(bridge.send({ clientScope: 'overflow' }), error => error.status === 429 && error.message === message);
+});
+
 test('poll failures carry the original error and turn ID only to the affected workspace', async () => {
   const { bridge, timers } = harness(async url => url.endsWith('bridge-send')
     ? response({ turnId: 'job-a', renderThreadId: 'job-a' })
@@ -41,4 +47,30 @@ test('a stalled HTTP request aborts and reports uncertain completion without ret
   await assert.rejects(pending, /응답 확인 시간이 초과.*자동.*다시 요청하지/);
   assert.equal(calls, 1);
   assert.equal(timers.size, 0);
+});
+
+test('ten workspace transports poll independently and cancelling one preserves the other nine', async () => {
+  const cancelled = new Set();
+  const { bridge, timers } = harness(async (url, options) => {
+    const { clientScope } = JSON.parse(options.body);
+    if (url.endsWith('bridge-send')) return response({ turnId: `job-${clientScope}` });
+    if (url.endsWith('bridge-interrupt')) { cancelled.add(clientScope); return response({ ok: true }); }
+    return response({ cursor: 1, events: [{ clientScope, method: 'turn/completed',
+      params: { turnId: `job-${clientScope}`, turn: { status: cancelled.has(clientScope) ? 'interrupted' : 'completed' } } }] });
+  });
+  const events = [];
+  bridge.onEvent(event => events.push(event));
+  const scopes = Array.from({ length: 10 }, (_, index) => `workspace-${index}`);
+  const jobs = await Promise.all(scopes.map(clientScope => bridge.send({ clientScope })));
+  assert.equal(new Set(jobs.map(job => job.turnId)).size, 10);
+  await bridge.interrupt({ clientScope: scopes[0] });
+  const polls = [...timers.values()].filter(timer => timer.delay === 0);
+  assert.equal(polls.length, 10);
+  await Promise.all(polls.map(timer => timer.callback()));
+  assert.equal(events.length, 10);
+  for (const clientScope of scopes) {
+    const event = events.find(item => item.clientScope === clientScope);
+    assert.equal(event.params.turnId, `job-${clientScope}`);
+    assert.equal(event.params.turn.status, clientScope === scopes[0] ? 'interrupted' : 'completed');
+  }
 });

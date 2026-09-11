@@ -12,7 +12,7 @@
         signal: controller.signal,
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || '계정 연결을 확인해 주세요.');
+      if (!response.ok) throw Object.assign(new Error(result.error || '계정 연결을 확인해 주세요.'), { status: response.status });
       return result;
     } catch (error) {
       if (controller.signal.aborted) throw new Error('서버 응답 확인 시간이 초과되었습니다. 서버에서 작업이 계속될 수 있어 자동으로 다시 요청하지 않습니다.');
