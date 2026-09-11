@@ -31,6 +31,8 @@ import { TEMPLATES } from "./templates.js?v=1.4.0";
 import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
 
+import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.0.0";
+
 const objects = () => state.get().objects || [];
 
 /* 화면에 실제로 보이는 요소만 돌려준다.
@@ -384,7 +386,7 @@ const READY_STEPS = [
         "화면 맨 위 줄에 있습니다. '파일' 바로 오른쪽이에요.\n\n" +
         "· 커서가 어디를 누르는지 보여 드리고 있습니다",
       demo: () => ({ kind: "clicks", at: ["#settings-menu-btn"] }),
-      wait: { click: "#settings-menu-btn", hint: "설정을 눌러 주세요" },
+      wait: { click: "#settings-menu-btn", until: () => !!vis("#open-screen") || !!vis("#pref-zoom"), hint: "설정을 눌러 주세요" },
     },
     {
       // 드롭다운이 열린 뒤에는 '환경 설정' 항목 하나만 짚는다. 설정 버튼까지 같이
@@ -396,7 +398,7 @@ const READY_STEPS = [
         "펼쳐진 목록에서 두 번째 항목입니다.\n\n" +
         "· 화면 크기·저장·라이브러리 설정이 이 창에 모여 있습니다",
       demo: () => ({ kind: "clicks", at: ["#open-screen"] }),
-      wait: { click: "#open-screen", hint: "환경 설정을 눌러 주세요" },
+      wait: { click: "#open-screen", until: () => !!vis("#pref-zoom"), hint: "환경 설정을 눌러 주세요" },
     },
     {
       chapter: "준비",
@@ -405,7 +407,7 @@ const READY_STEPS = [
       text:
         "끄는 즉시 글씨와 도구가 통째로 커지고 작아집니다. 편한 크기에서 손을 놓으세요.\n\n" +
         "· 따로 저장할 필요 없습니다 — 놓는 순간 저장돼서, 다음에 열어도 이 크기 그대로입니다\n" +
-        "· 브라우저 확대(Ctrl+휠)와는 별개로, 5E 안에서만 적용됩니다",
+        "· 브라우저 자체 확대와는 별개로, 5E 안에서만 적용됩니다",
       demo: () => ({ kind: "drag", onEl: "#pref-zoom", from: [0.30, 0.5], to: [0.72, 0.5] }),
       action: (ctx) => {
         // 얼마나 움직였는지 재려면 시작값이 필요하다. 되돌아왔을 때는 다시 잡지 않는다
@@ -511,7 +513,7 @@ const BASICS = {
   id: "basics",
   title: "기본 설정, 오브젝트 기초 조작",
   desc: "내 눈에 맞는 화면부터 — 고르고·옮기고·다듬기까지",
-  minutes: 10,
+  minutes: 15,
   practice: true,
   next: ["incline-figure"],
   steps: [
@@ -537,27 +539,28 @@ const BASICS = {
         "· 공통 도구 — 선·도형·글자. 과목과 상관없이 늘 씁니다\n" +
         "· 과목별 오브젝트 — 빗면·도르래·회로처럼 과목 전용 부품\n" +
         "· 퍼스널 오브젝트 — 내가 저장해 둔 것\n" +
-        "· 고급 기능 — 이미지 객체화, 전체 통일/수정 등\n\n" +
+        "· 고급 기능 — 전체 통일/수정, 좌표/함수 생성 등\n\n" +
         "맨 위 과목 상자를 바꾸면 목록이 통째로 바뀝니다.",
     },
     {
       chapter: "기초 조작",
-      target: () => "#canvas",
+      target: () => ["#canvas", "#center-view-btn"],
       title: "가운데 — 시험지에 들어갈 딱 그 영역",
+      allowPan: true,
       text:
         "흰 판이 아트보드입니다. 여기 있는 것만 그림으로 나갑니다.\n\n" +
-        "· 휠을 굴리면 확대·축소\n" +
-        "· 스페이스바를 누른 채 끌면 화면 이동\n" +
-        "· 지금 휠을 굴려 보셔도 됩니다 — 다음 단계에서 되돌리는 법을 배웁니다",
+        "· Ctrl+휠로 확대·축소합니다 (Mac 트랙패드 핀치도 됩니다)\n" +
+        "· 휠은 위아래 이동, Shift+휠은 좌우 이동입니다\n· 스페이스바를 누른 채 끌어도 화면이 이동합니다\n" +
+        "· 과녁이 파란색이면 화면 고정 중입니다. 이동하려면 과녁을 다시 눌러 해제하세요",
     },
     {
       chapter: "기초 조작",
       target: () => "#center-view-btn",
       title: "헤맸을 땐 — 화면 고정",
       text:
-        "확대하다 그림을 잃어버려도 이 단추 하나면 돌아옵니다. 눌러 보세요.\n\n" +
+        "과녁 단추는 화면 고정을 켜고 끕니다. 고정을 켜면 그림이 가운데로 돌아옵니다. 눌러 보세요.\n\n" +
         "· 캔버스 아래 막대의 오른쪽 끝, 과녁(⌖) 모양입니다\n" +
-        "· 단축키는 Ctrl+Space 입니다",
+        "· 파란색이면 고정 중이며, 화면 이동은 잠깁니다\n· Ctrl+Space도 됩니다. Mac 시스템 검색과 겹치면 과녁 단추를 사용하세요",
       demo: () => ({ kind: "clicks", at: ["#center-view-btn"] }),
       wait: { click: "#center-view-btn", hint: "과녁 단추를 눌러 주세요" },
     },
@@ -566,10 +569,11 @@ const BASICS = {
       target: () => "#canvas",
       title: "연습감을 놓아 드릴게요",
       text:
-        "그리는 건 다음 코스에서 합니다. 먼저 이미 놓인 것을 다루는 법부터 익히겠습니다.\n\n" +
+        "먼저 이미 놓인 것을 다루는 법부터 익히겠습니다. 뒤에서는 직접 그리기와 편집·저장도 해 봅니다.\n\n" +
         "· 아래 단추를 누르면 사각형 하나와 직선 하나가 놓입니다",
       auto: {
         label: "연습감 놓기",
+        replay: true,
         run: () => placeObjects([
           newRect(B.rect.x, B.rect.y, B.rect.w, B.rect.h),
           newLine(B.line.p1, B.line.p2),
@@ -581,8 +585,8 @@ const BASICS = {
       target: () => "#canvas",
       title: "① 골라서 옮기기",
       text:
-        "지금은 선택 도구(V) 상태입니다. 사각형을 누른 채 점선 자리까지 끌어 보세요.\n\n" +
-        "· 누르면 골라지고, 그대로 끌면 옮겨집니다\n" +
+        "선택 도구(V)를 누르고 사각형을 한 번 클릭해 고르세요. 그런 다음 몸통을 점선 자리까지 끌어 보세요.\n\n" +
+        "· 먼저 클릭해 고르고, 다시 몸통을 끌면 옮겨집니다\n" +
         "· 가까워지면 점선이 진해지고, 들어오면 초록으로 굳습니다",
       guide: () => ({ pts: B.rectTarget, close: true, note: "여기로", noteDy: -10 }),
       demo: () => ({
@@ -677,14 +681,15 @@ const BASICS = {
     },
     {
       chapter: "기초 조작",
-      target: () => "#panel-right",
+      target: () => ["#canvas", "#panel-right"],
       title: "④ 오른쪽에서 다듬기",
       text:
         "고른 것의 속성이 오른쪽에 나옵니다. 선 굵기를 한 단계 바꿔 보세요.\n\n" +
         "· 캔버스에 바로 반영됩니다\n" +
-        "· 사각형이 안 골라져 있으면 먼저 한 번 눌러 고르세요",
+        "· 사각형이 안 골라져 있으면 V를 누르고 한 번 클릭해 고르세요",
+      action: (ctx) => { ctx.rectStroke0 = rectObj()?.strokeWidth; },
       wait: {
-        until: () => { const r = rectObj(); return !!r && Math.abs((r.strokeWidth || 0) - B.rectStroke) > 0.001; },
+        until: (ctx) => { const r = rectObj(); return !!r && ctx.rectStroke0 != null && Math.abs((r.strokeWidth || 0) - ctx.rectStroke0) > 0.001; },
         hint: "선 굵기를 바꿔 주세요",
       },
     },
@@ -735,7 +740,7 @@ const BASICS = {
       text:
         "화살표는 '무엇을 가리키느냐'가 전부입니다. 끝점을 옮겨 방향을 바꿔 보겠습니다.\n" +
         "점선 ◎ 자리로 화살표 끝을 끌어다 놓으세요. 세 곳을 차례로 짚습니다.\n\n" +
-        "· 옮길 때마다 남은 횟수가 줄어듭니다\n" +
+        "· 옮길 때마다 안내선의 목표가 다음 자리로 바뀝니다\n" +
         "· 각도가 자유롭게 바뀌는 걸 손으로 느껴 보세요",
       action: (ctx) => { ctx.aimHit = 0; },
       guide: (ctx) => {
@@ -766,8 +771,67 @@ const BASICS = {
         hint: "화살표 끝을 ◎ 자리로 끌어 주세요 (3회)",
       },
     },
+
+    // 일반 편집 필수 흐름. 시스템 파일 피커의 성공을 버튼 클릭만으로 판정하지 않습니다.
     {
-      chapter: "기초 조작",
+      chapter: "편집과 저장", title: "직접 사각형을 하나 그려 보세요",
+      target: () => ['[data-tool="RECT"]', '#canvas'],
+      text: "왼쪽 사각형 도구(S)를 누르고 흰 판의 빈 곳을 누른 채 끌어 놓으세요.\n\n· 도형이 생기면 선택 도구(V)로 돌아가 몸통을 클릭해 고릅니다\n· 입력칸에 커서가 있으면 먼저 캔버스의 빈 곳을 클릭하세요\n· 실습을 놓쳤다면 [이전]으로 돌아가거나 [건너뛰고 다음]으로 계속할 수 있습니다",
+      action: c => { c.editPage = state.get().activePageId; c.drawIds = objects().map(o => o.id); },
+      wait: { until: c => state.get().activePageId === c.editPage && objects().some(o => o.type === 'rect' && !c.drawIds.includes(o.id)), hint: "사각형 도구를 누르고 빈 곳에 끌어 그려 주세요" },
+    },
+    {
+      chapter: "편집과 저장", title: "선택한 사각형을 삭제해 보세요", target: () => '#canvas',
+      text: "V를 누르고 방금 그린 사각형을 클릭한 뒤 Delete 또는 Backspace를 누르세요.\n\n· Mac 키보드의 delete(⌫)도 사용할 수 있습니다\n· 빈 곳을 클릭하면 선택이 풀립니다. 그럴 때는 다시 도형을 클릭하세요\n· 잠긴 오브젝트는 삭제되지 않습니다",
+      action: c => { c.deleteId = objects().find(o => o.type === 'rect' && !(c.drawIds || []).includes(o.id))?.id; },
+      wait: { until: c => state.get().activePageId === c.editPage && !!c.deleteId && !objects().some(o => o.id === c.deleteId), hint: "도형을 클릭해 고르고 Delete 또는 Backspace를 눌러 주세요" },
+    },
+    {
+      chapter: "편집과 저장", title: "실행 취소로 되살리기", target: () => ['#canvas', '#undo-btn'],
+      text: "Ctrl+Z를 눌러 방금 지운 도형을 되살리세요. 위쪽 왼쪽 굽은 화살표 ‘되돌리기’도 같습니다.\n\n· 입력칸이 아니라 캔버스에 포커스를 두고 누르세요",
+      wait: { until: c => state.get().activePageId === c.editPage && !!c.deleteId && objects().some(o => o.id === c.deleteId), hint: "Ctrl+Z 또는 위쪽 되돌리기를 눌러 주세요" },
+    },
+    {
+      chapter: "편집과 저장", title: "다시 실행한 뒤 다시 복구하기", target: () => ['#canvas', '#undo-btn', '#redo-btn'],
+      text: "Ctrl+Shift+Z 또는 위쪽 오른쪽 굽은 화살표 ‘다시 실행’을 누르면 삭제가 다시 적용됩니다. Windows에서는 Control+Y도 됩니다.\n\n· 다시 Ctrl+Z를 눌러 도형을 복구한 뒤 [다음]을 누르세요\n· 새로 편집하면 기존의 다시 실행 기록은 사라집니다",
+    },
+    {
+      chapter: "편집과 저장", title: "복사해서 붙여넣기", target: () => '#canvas',
+      text: "V를 누르고 도형 하나를 클릭해 고르세요. Ctrl+C로 복사한 뒤 포인터를 빈 곳으로 옮기고 Ctrl+V로 붙여넣으세요.\n\n· 입력칸에 커서가 있으면 글자 편집이 됩니다. 먼저 캔버스를 클릭하세요\n· 원본은 남고 복사본이 새로 선택됩니다\n· 복사본이 생겼는지 확인한 뒤 [다음]을 누르세요",
+      allowPan: true,
+    },
+    {
+      chapter: "편집과 저장", title: "잘라내기", target: () => '#canvas',
+      text: "선택된 복사본에 Ctrl+X를 누르세요. 복사와 달리 원래 자리에서 없어집니다.\n\n· 도구 서랍의 가위는 그림 일부를 자르는 별도 도구입니다\n· 클립보드 쓰기가 실패하면 원본을 지우지 않습니다. 다시 선택해 시도하거나 건너뛰세요\n· 선택한 도형이 없어졌는지 확인한 뒤 [다음]을 누르세요",
+      allowPan: true,
+    },
+    {
+      chapter: "편집과 저장", title: "잘라낸 도형 다시 붙여넣기", target: () => '#canvas',
+      text: "포인터를 다른 빈 곳으로 옮긴 뒤 Ctrl+V를 누르세요. 잘라낸 도형이 새 위치에 들어옵니다.\n\n· 다른 앱에서 새로 복사한 내용이 있으면 그 최신 클립보드를 붙여넣습니다\n· 잘라낸 도형이 다시 나타났는지 확인한 뒤 [다음]을 누르세요",
+      allowPan: true,
+    },
+    {
+      chapter: "편집과 저장", title: "페이지를 바꿔 보세요", target: () => '#page-tab-bar',
+      text: "아래쪽 ‘튜토리얼 연습’이 아닌 다른 페이지 탭을 클릭하세요. 그림마다 페이지를 나눠 작업할 수 있습니다.\n\n· +는 빈 페이지 추가입니다\n· 각 페이지의 실행 취소·다시 실행 기록은 따로 유지됩니다\n· 원래 작업 페이지에서는 도형을 편집하지 말고 확인만 해 주세요",
+      wait: { until: c => state.get().activePageId !== c.editPage, hint: "다른 페이지 탭을 눌러 주세요" },
+    },
+    {
+      chapter: "편집과 저장", title: "연습 페이지로 돌아오기", target: () => '#page-tab-bar',
+      text: "방금 작업하던 ‘튜토리얼 연습’ 탭을 다시 클릭하세요. 만든 도형이 그대로 남아 있는지 확인합니다.\n\n· 연습 페이지를 지웠다면 이 단계는 건너뛴 뒤 튜토리얼을 재시작할 수 있습니다",
+      wait: { until: c => state.get().activePageId === c.editPage, hint: "방금 작업하던 튜토리얼 연습 탭으로 돌아오세요" },
+    },
+    {
+      chapter: "편집과 저장", title: "프로젝트 파일로 저장하기",
+      target: () => ['#file-menu-btn', vis('#project-save'), '#project-save-status'].filter(Boolean),
+      text: "위쪽 파일 → 프로젝트 저장 또는 Ctrl+S를 누르세요. 다시 편집할 원본을 .5e 파일로 보관합니다. 모든 페이지가 함께 저장됩니다.\n\n· 저장 위치를 고르는 창이 나오면 이름과 위치를 확인해 저장하세요\n· ‘다운로드 요청됨’이면 브라우저 다운로드 목록과 실제 파일을 확인하세요\n· ‘복구됨 · 파일 미저장’은 자동 복구용 보관일 뿐, 프로젝트 파일 저장 완료가 아닙니다\n· 파일이 생긴 것을 확인한 뒤 [다음]을 누르세요. 취소해도 다음으로 갈 수 있습니다",
+    },
+    {
+      chapter: "편집과 저장", title: "저장한 프로젝트 다시 열기",
+      target: () => ['#file-menu-btn', vis('#project-open')].filter(Boolean),
+      text: "위쪽 파일 → 프로젝트 불러오기 또는 Ctrl+O를 누르고 방금 저장한 .5e 파일을 고르세요. 현재 작업을 바꿀지 묻는 창에서 내용을 확인한 뒤 ‘열기’를 누릅니다.\n\n· 열기는 현재 프로젝트를 바꿉니다. 저장하지 않은 작업이 있다면 먼저 취소하고 저장하세요\n· 페이지와 도형이 남아 있는지 직접 확인한 뒤 [다음]을 누르세요\n· 저장·열기 취소는 성공으로 판정하지 않습니다. 실습 없이 다음으로 가도 됩니다",
+    },
+    {
+      chapter: "편집과 저장",
       title: "완성되었습니다",
       text:
         "고르고 → 끌고 → 오른쪽에서 다듬는다. 5E에서 하는 일은 결국 이 리듬입니다.\n\n" +
@@ -863,8 +927,8 @@ const INCLINE_FIGURE = {
       text:
         "텍스트 도구가 켜졌습니다. 점선 자리를 누르면 그 자리에 입력칸이 열립니다.\n" +
         "아래 단추를 누르면 입력칸을 열고 글자까지 넣어 드립니다 —\n" +
-        "확정은 직접 Ctrl+Enter 로 하세요.\n\n" +
-        "· 확정이 Enter 가 아니라 Ctrl+Enter 인 점을 손으로 익혀 두세요\n" +
+        "확정은 직접 Enter 로 하세요.\n\n" +
+        "· 입력을 마쳤으면 Enter로 확정합니다. Esc는 취소입니다\n" +
         "· Esc 를 누르면 없던 일이 됩니다",
       guide: () => [
         { pts: FIG.groundTextBox, close: true, note: "여기에 글자", noteDy: -10 },
@@ -897,7 +961,7 @@ const INCLINE_FIGURE = {
       },
       wait: {
         until: () => objects().some((o) => o.type === "text" && String(o.text || "").trim() !== ""),
-        hint: "Ctrl+Enter 로 확정해 주세요",
+        hint: "Enter 로 확정해 주세요",
       },
     },
 
@@ -928,9 +992,9 @@ const INCLINE_FIGURE = {
     },
     {
       target: () => "#canvas",
-      title: "Shift 를 누른 채 끌어 바닥에 붙이세요",
+      title: "잡은 뒤 Shift로 바닥에 붙이세요",
       text:
-        "빗면을 눌러 고른 다음, Shift 를 누른 채 아래로 끄세요.\n" +
+        "빗면을 클릭해 고른 뒤 마우스로 먼저 잡으세요. 잡은 상태에서 Shift를 누르고 아래로 끄세요.\n" +
         "바닥선에 닿을 만큼 가까워지면 자석처럼 딱 달라붙습니다.\n\n" +
         "· 아랫변이 바닥과 마주 보게 반듯이 내려야 아랫변이 붙습니다\n" +
         "· 기울어져 누우면 Ctrl+Z 로 되돌리고 다시 해 보세요",
@@ -942,7 +1006,7 @@ const INCLINE_FIGURE = {
         kind: "drag",
         from: [(FIG.wedgeDraw[0][0] + FIG.wedgeDraw[2][0]) / 2, (FIG.wedgeDraw[0][1] + FIG.wedgeDraw[2][1]) / 2],
         to: [(FIG.wedgeFinal[0][0] + FIG.wedgeFinal[2][0]) / 2, (FIG.wedgeFinal[0][1] + FIG.wedgeFinal[2][1]) / 2],
-        mod: "Shift 누른 채",
+        mod: "Shift (마우스로 잡은 뒤)",
       }),
       wait: {
         // 아랫변이 바닥선에 '반듯하게' 얹혔을 때만 통과. 기울어 누운 것을 성공으로 봐 주면
@@ -956,7 +1020,7 @@ const INCLINE_FIGURE = {
           const groundY = (l.p1.y + l.p2.y) / 2;
           return upright && Math.abs((t.y + t.h) - groundY) <= 2;
         },
-        hint: "Shift 를 누른 채 바닥까지",
+        hint: "빗면을 먼저 잡고 Shift를 누른 채 바닥까지",
       },
     },
 
@@ -1021,9 +1085,9 @@ const INCLINE_FIGURE = {
     },
     {
       target: () => "#canvas",
-      title: "⑥ Shift 를 누른 채 끌어 빗면에 얹으세요",
+      title: "⑥ 잡은 뒤 Shift로 빗면에 얹으세요",
       text:
-        "물체를 고른 상태에서 Shift 를 누른 채 빗면 쪽으로 끄세요.\n" +
+        "물체를 클릭해 고른 뒤 마우스로 먼저 잡으세요. 잡은 상태에서 Shift를 누르고 빗면 쪽으로 끄세요.\n" +
         "빗변에 가까워지면 각도까지 맞춰 나란히 눕습니다.\n\n" +
         "· 점선이 눕어 있는 건 실제로 그렇게 붙기 때문입니다",
       guide: () => [
@@ -1035,7 +1099,7 @@ const INCLINE_FIGURE = {
         kind: "drag",
         from: [(FIG.blockDraw[0][0] + FIG.blockDraw[2][0]) / 2, (FIG.blockDraw[0][1] + FIG.blockDraw[2][1]) / 2],
         to: [(FIG.blockFinal[0][0] + FIG.blockFinal[2][0]) / 2, (FIG.blockFinal[0][1] + FIG.blockFinal[2][1]) / 2],
-        mod: "Shift 누른 채",
+        mod: "Shift (마우스로 잡은 뒤)",
       }),
       wait: {
         until: () => {
@@ -1666,7 +1730,7 @@ const EXAM_SEARCH = {
       title: "⑬ 이름을 '우주선'으로 고칩니다",
       text:
         "만들어진 이름표를 <더블클릭>하면 글자를 고치는 작은 창이 뜹니다.\n" +
-        "'우주선'이라고 넣고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "'우주선'이라고 넣고 Enter 로 확정하세요.\n\n" +
         "· 아래 단추를 누르면 대신 넣어 드립니다\n" +
         "· 글씨체·크기도 그 창에서 함께 정합니다\n" +
         "· 앞 단계를 건너뛰셨으면 이름표가 없습니다 — 이 단계도 건너뛰세요",
@@ -1703,9 +1767,9 @@ const EXAM_SEARCH = {
       title: "⑮ 우주인 옆에 라벨 A 를 적습니다",
       text:
         "우주인 바로 오른쪽 점선 자리를 한 번 누르면 글자 입력창이 열립니다.\n" +
-        "<A> 라고 치고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "<A> 라고 치고 Enter 로 확정하세요.\n\n" +
         "· 기출 원본의 기호를 내 문항 기호로 바꿔 다는 것입니다\n" +
-        "· Enter 는 줄바꿈, 확정은 Ctrl+Enter 입니다\n" +
+        "· Enter로 확정하고, Esc로 취소합니다\n" +
         "· 아래 단추를 누르면 대신 넣어 드립니다",
       action: (ctx) => { ctx.texts0 = countOf("text"); },
       guide: () => {
@@ -1780,7 +1844,7 @@ const EXAM_SEARCH = {
         "'내보내기'를 누르면 PNG 파일이 저장됩니다 — 폴더를 연결해 두었으면 그 폴더로 들어갑니다.\n" +
         "연습이니 '취소'로 닫으셔도 됩니다 — 둘 중 아무거나 누르세요.\n\n" +
         "· 작업은 몇 초마다 자동 저장되니 저장 걱정은 안 하셔도 됩니다\n" +
-        "· 다른 컴퓨터로 옮길 때만 파일 → 프로젝트 저장(Ctrl+S)",
+        "· 다시 편집할 원본은 파일 → 프로젝트 저장(Ctrl+S)으로 따로 보관하세요",
       wait: {
         until: () => !document.getElementById("export-confirm"),
         hint: "내보내기 또는 취소를 눌러 주세요",
@@ -2804,8 +2868,8 @@ const EXAM_TASK_INCLINE = {
       target: () => "#canvas",
       title: "④ '정지'를 직접 적어 봅니다",
       text:
-        "물체 위 점선 자리를 누르면 입력칸이 열립니다. '정지'를 적고 Ctrl+Enter 로 확정하세요.\n\n" +
-        "· 확정이 Enter 가 아니라 Ctrl+Enter 인 점만 손에 익히면 됩니다\n" +
+        "물체 위 점선 자리를 누르면 입력칸이 열립니다. '정지'를 적고 Enter 로 확정하세요.\n\n" +
+        "· 입력을 마쳤으면 Enter로 확정합니다. Esc는 취소입니다\n" +
         "· 나머지 여섯 개는 다음 단계에서 한꺼번에 넣어 드립니다",
       guide: () => [
         { pts: T.box(32.2, -7.9, 8, 3.6), close: true, note: "여기에 '정지'", noteDy: -5 },
@@ -2814,7 +2878,7 @@ const EXAM_TASK_INCLINE = {
       demo: () => ({ kind: "clicks", pts: [[32.2, -7.9]] }),
       allowNext: true,
       auto: { label: "대신 적어 주기", run: () => placeObjects([newLabelText(32.2, -7.9, "정지", NOTE_MM)], { allowDup: true }) },
-      wait: { until: () => countOf("text") >= 1, hint: "'정지'를 적고 Ctrl+Enter" },
+      wait: { until: () => countOf("text") >= 1, hint: "'정지'를 적고 Enter" },
     },
     {
       target: () => "#canvas",
@@ -3161,7 +3225,7 @@ const ADVANCED_LINES = {
     { chapter: "마찰구간", target: () => '[data-tool="RECT"]', title: "마찰구간을 표시할 사각형을 만듭니다", text: "수평면 가운데에 얇고 긴 사각형을 그려 마찰구간의 범위를 표시합니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="RECT"]'] }), wait: { click: '[data-tool="RECT"]', hint: "사각형 도구를 눌러 주세요" } },
     { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간을 놓아 주세요", text: "수평면 위에 얇은 사각형을 드래그하세요. 다음 단계에서 속을 회색으로 채웁니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "마찰구간", noteDy: -4 }), demo: () => ({ kind: "drag", from: [-2, 6.5], to: [10, 9.5] }), action: (c) => { c.friction0 = countOf("rect"); }, wait: { until: (c) => countOf("rect") > (c.friction0 || 0), hint: "수평면 가운데에 얇은 사각형을 그려 주세요" } },
     { chapter: "마찰구간", target: () => ["#canvas", advancedFillToggle() || "#panel-right"], title: "마찰구간의 속을 채워 주세요", text: "방금 만든 얇은 사각형이 선택된 상태입니다. 오른쪽 인스펙터의 ‘채우기 없음’ 체크를 해제하고 회색 계열을 선택합니다. 실제로 클릭할 체크박스만 파란 대상 강조선으로 표시합니다.", guide: () => ({ pts: [[-2, 6.5], [10, 9.5]], close: true, note: "선택된 마찰구간", noteDy: -4 }), wait: { until: () => objects().some((o) => o.type === "rect" && !o.fillNone), hint: "오른쪽 인스펙터의 ‘채우기 없음’을 해제해 주세요" } },
-    { chapter: "마찰구간", target: () => vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged", title: "마찰구간에 설명을 붙입니다", text: "텍스트 도구로 마찰구간 아래를 클릭하고 `마찰구간`을 입력한 뒤 Ctrl+Enter로 확정하세요.", demo: () => ({ kind: "clicks", at: [vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged"] }), auto: { label: "텍스트 도구 켜기", run: () => setActiveTool("T") }, wait: { until: () => state.get().activeTool === "T", hint: "텍스트 도구를 눌러 주세요" } },
+    { chapter: "마찰구간", target: () => vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged", title: "마찰구간에 설명을 붙입니다", text: "텍스트 도구로 마찰구간 아래를 클릭하고 `마찰구간`을 입력한 뒤 Enter로 확정하세요.", demo: () => ({ kind: "clicks", at: [vis('.tool-chooser-opt[data-tool="T"]') || "#tool-text-merged"] }), auto: { label: "텍스트 도구 켜기", run: () => setActiveTool("T") }, wait: { until: () => state.get().activeTool === "T", hint: "텍스트 도구를 눌러 주세요" } },
     { chapter: "마찰구간", target: () => "#canvas", title: "마찰구간 텍스트를 입력해 주세요", text: "회색 구간 아래를 클릭하고 `마찰구간`을 입력하세요.", guide: () => ({ pts: [[-2, 13], [10, 17]], close: true, note: "마찰구간", noteDy: -4 }), wait: { until: () => advancedTextHas("마찰구간"), hint: "회색 구간 아래를 클릭해 마찰구간을 입력해 주세요" } },
     { chapter: "화살표", target: () => '[data-tool="L"]', title: "진행 방향을 표시할 직선을 만듭니다", text: "물체 오른쪽에서 아래쪽을 향하는 짧은 선을 만들고, Ctrl로 15° 단위 방향을 맞춰 봅니다.", demo: () => ({ kind: "clicks", at: ['[data-tool="L"]'] }), wait: { click: '[data-tool="L"]', hint: "직선 도구를 눌러 주세요" } },
     { chapter: "화살표", target: () => "#canvas", title: "Ctrl을 누른 채 진행 방향선을 그려 주세요", text: "물체 오른쪽에서 경사면을 따라 두 점을 클릭하세요. Ctrl을 누르면 경사 방향에 가까운 이산 각도로 맞춰집니다.", guide: () => ({ pts: [[-22, -10], [-16, -6]], close: false, note: "진행 방향", noteDy: -4 }), demo: () => ({ kind: "clicks", at: [[-22, -10], [-16, -6]], mod: "Ctrl 누른 채" }), action: (c) => { c.arrow0 = countOf("line"); }, wait: { until: (c) => countOf("line") > (c.arrow0 || 0) && !!advancedSelectedLine(), hint: "Ctrl을 누른 채 두 번째 점을 눌러 선을 완성해 주세요" } },
@@ -3450,7 +3514,7 @@ export const COURSES = [
   // 실습 과제 — 시범 과제(P0)를 맨 위에 두어 기존 P1~P10 과 나란히 견줄 수 있게 한다.
   EXAM_TASK_INCLINE,
   ...TASKS,
-];
+].map(localizeTutorialCourse);
 
 export function getCourse(id) {
   return COURSES.find((c) => c.id === id) || null;

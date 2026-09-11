@@ -178,7 +178,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
 
   const hint = document.createElement("div");
   hint.className = "unified-editor-hint";
-  hint.textContent = "Enter 확인 · Ctrl+Enter 줄바꿈 · Tab 글꼴 변경";
+  hint.textContent = "Enter 확인 · Esc 취소 · Tab 글꼴 변경";
 
   const ta = document.createElement("textarea");
   ta.className = "unified-text-input labeler-text-input";
@@ -1190,7 +1190,7 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   // Discoverability: state the commit/newline keys (same wording as the labeler).
   const hint = document.createElement("div");
   hint.className = "unified-editor-hint";
-  hint.textContent = "Enter 확인 · Ctrl+Enter 줄바꿈 · Tab 글꼴 변경";
+  hint.textContent = "Enter 확인 · Esc 취소 · Tab 글꼴 변경";
 
   // 라벨은 수식이 될 수 없으므로 수식 패널을 만들지 않는다. 심볼 팔레트(구간/물리량)는
   // 텍스트 도구와 동일하게 항상 포함한다.

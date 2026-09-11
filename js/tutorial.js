@@ -88,6 +88,23 @@ const DEMO_DELAY = 850;
 
 /* ===== 지금 돌고 있는 튜토리얼 (하나만 살아 있어야 한다) ===== */
 let _run = null;
+let _runGeneration = 0;
+
+// 같은 index로 돌아온 경우까지 구별하는 방문 토큰. 이전 실행의 콜백은 무효다.
+function stepGuard(run = _run) {
+  const index = run && run.index, visit = run && run.visit;
+  return () => !!run && _run === run && run.index === index && run.visit === visit;
+}
+function stepTimeout(callback, delay) {
+  const run = _run, current = stepGuard(run);
+  if (!run) return null;
+  const id = setTimeout(() => {
+    run.timers.delete(id);
+    if (current()) callback();
+  }, delay);
+  run.timers.add(id);
+  return id;
+}
 
 /* 마우스를 누르고 있는가 — 끄는 도중에 단계가 넘어가지 않게 하는 잠금.
  *
@@ -340,7 +357,10 @@ function prepareCoachForAvoid(ui, avoid) {
 function placeCoach(ui, hole, avoid = null) {
   const coach = ui.coach;
   const vw = window.innerWidth, vh = window.innerHeight;
-  const cw = coach.offsetWidth, ch = coach.offsetHeight;
+  // 이전 단계/작은 창의 제한을 새 배치에 가져오지 않는다.
+  coach.style.maxHeight = "";
+  const cw = coach.offsetWidth;
+  let ch = coach.offsetHeight;
 
   if (!hole) {
     coach.dataset.side = "center";
@@ -369,6 +389,23 @@ function placeCoach(ui, hole, avoid = null) {
     below:  vh - (hole.y + hole.h) - COACH_GAP - EDGE >= ch,
     above:  hole.y - COACH_GAP - EDGE >= ch,
   };
+  // 큰 UI 배율에서 긴 코치가 슬라이더처럼 넓은 대상을 덮지 않도록,
+  // 좌우에 못 들어가면 위/아래 중 더 넓은 영역에 높이를 제한하고 스크롤한다.
+  // 캔버스 전체 대상은 아래의 기존 패널 도킹 경로를 그대로 사용한다.
+  const canvas = document.getElementById("canvas");
+  const usesCanvas = !!canvas && (_run?.nodes || []).some(
+    (node) => node === canvas || (node.contains && node.contains(canvas))
+  );
+  if (!usesCanvas && !fits.left && !fits.right && !fits.above && !fits.below) {
+    const above = hole.y - COACH_GAP - EDGE;
+    const below = vh - (hole.y + hole.h) - COACH_GAP - EDGE;
+    const room = Math.floor(Math.max(above, below));
+    if (room >= 160) {
+      coach.style.maxHeight = room + "px";
+      ch = coach.offsetHeight;
+      fits[below >= above ? "below" : "above"] = true;
+    }
+  }
   // 단계가 자리를 지정했으면 그쪽을 먼저 쓴다 — 대상 옆에 팝오버가 열리는 자리처럼,
   // 기본 우선순위(오른쪽)로 두면 설명 창이 그 자리를 덮어 버리는 곳이 있다.
   const want = (_run && _run.course.steps[_run.index] || {}).coachSide;
@@ -469,15 +506,21 @@ function dockCanvasCoachInPanel(ui, nodes) {
   if (!usesCanvas || usesInspector) return;
 
   const pr = panel.getBoundingClientRect();
-  if (pr.width < 200 || pr.height < 180) return;
+  if (pr.width < 120 || pr.height < 180) return;
   const edge = 8;
+  // 뷰포트 오른쪽이 아니라 실제 패널 사각형 내부에만 놓는다.
+  // 70% UI의 약 145px 패널도 129px 코치 + 스크롤로 캔버스를 비운다.
+  const left = Math.max(edge, pr.left + edge);
+  const right = Math.min(window.innerWidth - edge, pr.right - edge);
+  const top = Math.max(edge, pr.top + edge);
+  const bottom = Math.min(window.innerHeight - edge, pr.bottom - edge);
+  if (right - left < 100 || bottom - top < 160) return;
+  coach.style.setProperty("--tut-dock-left", Math.ceil(left) + "px");
+  coach.style.setProperty("--tut-dock-width", Math.floor(right - Math.ceil(left)) + "px");
+  coach.style.setProperty("--tut-dock-height", Math.floor(bottom - Math.ceil(top)) + "px");
   coach.classList.add("is-canvas-safe");
   coach.dataset.side = "right";
-  coach.style.width = Math.floor(pr.width - edge * 2) + "px";
-  coach.style.left = Math.round(pr.left + edge) + "px";
-  const cr = coach.getBoundingClientRect();
-  const top = Math.max(edge, Math.min(pr.top + edge, window.innerHeight - cr.height - edge));
-  coach.style.top = Math.round(top) + "px";
+  coach.style.top = Math.ceil(top) + "px";
 }
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -690,11 +733,12 @@ function startDemo(step, { delay = 0 } = {}) {
   if (spec.mod) ui.ghostMod.textContent = spec.mod;
 
   // delay: 위젯 전환이 안정된 뒤에야 커서가 나온다 — 동시에 움직이면 시선이 갈라진다.
+  const current = stepGuard();
   _run.demo = { spec, t0: performance.now() + delay, pausedUntil: 0, raf: 0 };
 
   // 사용자가 직접 조작하는 동안에는 비켜 준다.
-  const onDown = () => { if (_run && _run.demo) _run.demo.pausedUntil = Infinity; };
-  const onUp = () => { if (_run && _run.demo) _run.demo.pausedUntil = performance.now() + DEMO_RESUME_MS; };
+  const onDown = () => { if (current() && _run.demo) _run.demo.pausedUntil = Infinity; };
+  const onUp = () => { if (current() && _run.demo) _run.demo.pausedUntil = performance.now() + DEMO_RESUME_MS; };
   window.addEventListener("pointerdown", onDown, true);
   window.addEventListener("pointerup", onUp, true);
   _run.demo.off = () => {
@@ -703,7 +747,7 @@ function startDemo(step, { delay = 0 } = {}) {
   };
 
   const frame = () => {
-    if (!_run || !_run.demo) return;
+    if (!current() || !_run.demo) return;
     drawDemoFrame();
     _run.demo.raf = requestAnimationFrame(frame);
   };
@@ -900,13 +944,20 @@ export function startCourse(courseId, { from = 0 } = {}) {
   const ui = buildLayer();
   const prevMode = document.documentElement.getAttribute("data-mode") || "pro";
 
+  _runGeneration += 1;
   _run = {
+    visit: 0,
+    timers: new Set(),
+    autoDone: [],
+    autoProgress: [],
+    autoBusy: false,
     course,
     index: Math.max(0, Math.min(from, course.steps.length - 1)),
     /* 단계 상태를 두 갈래로 나눠 둔다 — 예전에는 maxIndex 한 줄로 뭉뚱그렸고,
      * 그 탓에 "못 해서 건너뛴 단계"로 [이전]을 눌러 돌아와도 판정이 죽어 있었다
      * (성공해도 아무 반응이 없다 = 초심자의 가장 흔한 행동이 막힌다).
-     *   seen[i]  — 한 번이라도 들어와 봤다 → 준비 동작(action)·자동 생성을 다시 하지 않는다
+     *   seen[i]  — 한 번이라도 들어와 봤다 → 준비 동작(action)을 다시 하지 않는다
+     *   autoDone[i] — 자동 실행을 완료했다 → replay/stay 외에는 중복 실행하지 않는다
      *   done[i]  — 실제로 통과했다 → 다시 요구하지 않는다. 건너뛴 단계는 false 로 남아
      *              돌아오면 판정이 되살아난다. */
     seen: [],
@@ -933,14 +984,14 @@ export function startCourse(courseId, { from = 0 } = {}) {
 
   // 연습 페이지는 코스 시작이 아니라 '캔버스를 처음 쓰는 단계'에서 만든다(ensurePractice).
 
+  const activeRun = _run;
   // 버튼 배선
   // 방패를 누르면 "여기가 아니라 지금은 읽기만" — 조용히 막기만 하면 고장으로 읽힌다.
-  ui.shield.addEventListener("click", (e) => { e.stopPropagation(); nudge(); });
-  ui.btnQuit.addEventListener("click", () => stopTutorial());
-  ui.btnNext.addEventListener("click", () => goNext());
-  ui.btnPrev.addEventListener("click", () => goPrev());
-
-  _run.onResize = () => reposition();
+  ui.shield.addEventListener("click", (e) => { e.stopPropagation(); if (_run === activeRun) nudge(); });
+  ui.btnQuit.addEventListener("click", () => { if (_run === activeRun) stopTutorial(); });
+  ui.btnNext.addEventListener("click", () => { if (_run === activeRun) goNext(); });
+  ui.btnPrev.addEventListener("click", () => { if (_run === activeRun) goPrev(); });
+  _run.onResize = () => { if (_run === activeRun) reposition(); };
   window.addEventListener("resize", _run.onResize);
   window.addEventListener("scroll", _run.onResize, true);
 
@@ -951,6 +1002,7 @@ export function startCourse(courseId, { from = 0 } = {}) {
   //   바깥 클릭으로 취급돼 팝오버가 닫혀 버려, 영영 고를 수 없는 것처럼 보인다
   //   (빗면 코스에서 '텍스트'를 못 고르던 원인). 80ms 로 촘촘히 따라간다.
   _run.tick = setInterval(() => {
+    if (_run !== activeRun) return;
     if (!_run.transitioning) reposition();   // 전환 연출 중엔 추적을 쉰다(자리 다툼 방지)
     checkUntil();
   }, 80);
@@ -984,6 +1036,7 @@ function stepProgress(step) {
 function showStep(attempt = 0) {
   if (!_run) return;
   const { course, ui } = _run;
+  const current = stepGuard();
   const step = course.steps[_run.index];
   if (!step) { finishCourse(); return; }
 
@@ -994,9 +1047,11 @@ function showStep(attempt = 0) {
     stopDemo();
     ui.coach.classList.remove("is-entering");
     ui.coach.classList.add("is-leaving");
-    setTimeout(() => showStep(0.5), T_EXIT);   // attempt 0.5 = 퇴장 완료 후 재진입 표식
+    stepTimeout(() => showStep(0.5), T_EXIT);   // attempt 0.5 = 퇴장 완료 후 재진입 표식
     return;
   }
+
+  _run.transitioning = true;
 
   /* 한 번 들어와 봤는가 / 실제로 통과했는가 (둘은 다르다 — _run 주석 참고).
    * ⚠ '들어와 봤는가'는 **이 방문이 시작될 때의 값**을 붙들어 둔다. showStep 은 대상을
@@ -1034,10 +1089,11 @@ function showStep(attempt = 0) {
     }
   }
 
+  if (!current()) return;
   const nodes = resolveTargets(step);
   if (step.target && nodes.length === 0) {
     // 모달처럼 조금 늦게 생기는 대상이 있다 — 잠깐 기다렸다 다시 찾는다.
-    if (attempt < 12) { setTimeout(() => showStep(Math.max(1, Math.floor(attempt) + 1)), 120); return; }
+    if (attempt < 12) { stepTimeout(() => showStep(Math.max(1, Math.floor(attempt) + 1)), 120); return; }
     // 끝내 못 찾으면 흐림도 걷는다. 구멍 없는 전체 흐림 + 가운데 설명 창은
     // "먹통이 됐다"로 보이기 때문 — 차라리 화면을 열어 두고 글로만 안내한다.
     console.warn(`[튜토리얼] '${course.title}' ${_run.index + 1}단계의 대상을 찾지 못했습니다. 흐림 없이 설명만 표시합니다.`);
@@ -1072,35 +1128,46 @@ function showStep(attempt = 0) {
     ui.text.appendChild(p);
   }
 
-  // 자동 단계: 타이핑처럼 손이 많이 가는 일은 프로그램이 대신 한다(사용자 요구).
-  // 되돌아온 단계에서는 다시 실행하지 않는다 — 같은 것이 두 번 만들어지면 안 되므로.
-  // auto.repeat 가 있으면 "누를 때마다 한 걸음"이다 — 검색어를 한 조각씩 넣어
-  // 결과가 좁혀지는 것을 눈으로 보여 주는 용도(사용자 요구). repeat 가 false 를
-  // 돌려줄 때까지 버튼이 남아 있고, 그때 비로소 다음 단계로 넘어간다.
-  // 되돌아온 단계에서는 자동 단추를 감춘다(같은 것이 두 번 만들어지면 안 되므로).
-  // 단 auto.stay 는 '열어 보는' 단추라 몇 번 열어도 무해하다 — 비교 창을 닫고
-  // [이전]으로 돌아왔을 때 다시 열 수 없으면 비교 자체를 못 하게 된다.
-  const auto = stepAuto && (!seen || stepAuto.stay) ? stepAuto : null;
+  // 방문이 아니라 실제 자동 실행 완료로 중복 생성을 막는다.
+  // replay는 코스가 명시적으로 허용한 재놓기, stay는 반복 열기다.
+  const run = _run, index = run.index;
+  const auto = stepAuto && (!run.autoDone[index] || stepAuto.stay || stepAuto.replay) ? stepAuto : null;
   ui.autoBtn.hidden = !auto;
+  ui.autoBtn.disabled = false;
   if (auto) {
-    _run.autoStep = 0;
-    const label = () => (auto.repeat ? auto.repeat.label(_run.autoStep, _run.ctx) : (auto.label || "자동으로 하기"));
+    run.autoStep = run.autoProgress[index] || 0;
+    const label = () => (auto.repeat ? auto.repeat.label(run.autoStep, run.ctx) : (auto.label || "자동으로 하기"));
     ui.autoBtn.textContent = label();
-    ui.autoBtn.onclick = () => {
-      if (!_run) return;
+    ui.autoBtn.onclick = async () => {
+      if (!current() || run.transitioning || run.autoBusy) return;
+      if (run.autoDone[index] && !auto.stay && !auto.replay) return;
+      run.autoBusy = true;
+      ui.autoBtn.disabled = true;
       try {
+        const result = auto.repeat
+          ? await auto.repeat.run(run.autoStep, run.ctx)
+          : await auto.run(run.ctx);
+        if (!current()) return;
+        // 일반 auto의 명시적 false는 실패. repeat의 false는 마지막 조각 완료다.
+        if (!auto.repeat && result === false) throw new Error("자동 실행이 완료되지 않았습니다.");
         if (auto.repeat) {
-          const more = auto.repeat.run(_run.autoStep, _run.ctx);
-          _run.autoStep += 1;
-          if (more) { ui.autoBtn.textContent = label(); return; }   // 아직 남았다 — 그대로 대기
-        } else {
-          auto.run(_run.ctx);
+          run.autoStep += 1;
+          run.autoProgress[index] = run.autoStep;
+          if (result) { ui.autoBtn.textContent = label(); return; }
+          run.autoProgress[index] = 0;
         }
-      } catch (err) { console.warn("[튜토리얼] 자동 단계 실패", err); }
-      // wait 이 함께 있으면 자동 단추는 '거들어 주기'일 뿐 — 마무리는 사용자 몫이다
-      // (예: 입력칸을 열고 글자만 채워 주고, 확정은 직접 Ctrl+Enter).
-      // auto.stay 는 창을 열어 보여 주는 용도라 단계를 넘기지 않는다.
-      if (!step.wait && !auto.stay) goNext();
+        run.autoDone[index] = true;
+        ui.autoBtn.hidden = !auto.stay && !auto.replay;
+        run.autoBusy = false;
+        // wait는 사용자 마무리, stay는 비교 창을 위한 반복 실행이다.
+        if (!step.wait && !auto.stay) goNext();
+      } catch (err) {
+        if (!current()) return;
+        console.warn("[튜토리얼] 자동 단계 실패", err);
+        ui.autoBtn.textContent = "다시 시도하기";
+      } finally {
+        if (current()) { run.autoBusy = false; ui.autoBtn.disabled = false; }
+      }
     };
   } else {
     ui.autoBtn.onclick = null;
@@ -1154,19 +1221,19 @@ function showStep(attempt = 0) {
     halo.classList.remove("is-entering");
     void halo.offsetWidth;
     halo.classList.add("is-entering");
-    setTimeout(() => { if (_run) halo.classList.remove("is-entering"); }, T_ENTER + 50);
+    stepTimeout(() => halo.classList.remove("is-entering"), T_ENTER + 50);
   }
 
   // 80ms 뒤 설명 창이 떠오른다 (첫 등장은 스태거 없이 바로).
   const raise = () => {
-    if (!_run) return;
+    if (!current()) return;
     ui.coach.classList.remove("is-leaving");
     ui.coach.classList.add("is-entering");
-    setTimeout(() => { if (_run) ui.coach.classList.remove("is-entering"); }, T_ENTER + 50);
+    stepTimeout(() => ui.coach.classList.remove("is-entering"), T_ENTER + 50);
     _run.transitioning = false;
   };
   if (firstShow) raise();
-  else setTimeout(raise, STAGGER);
+  else stepTimeout(raise, STAGGER);
 
   // 커서 시연은 화면이 안정된 뒤에 시작한다.
   startDemo(step, { delay: DEMO_DELAY });
@@ -1179,10 +1246,12 @@ function bindWait(step) {
   unbindWait();
   if (!step.wait) return;
   const offs = [];
+  const current = stepGuard();
 
   if (step.wait.click) {
     const sel = step.wait.click;
     const handler = (e) => {
+      if (!current()) return;
       const t = e.target;
       if (t && t.closest && t.closest(sel)) { pass(); return; }
       /* 엉뚱한 곳을 눌렀다 — 아무 반응이 없으면 '고장'으로 읽힌다.
@@ -1195,7 +1264,7 @@ function bindWait(step) {
   }
   if (step.wait.key) {
     const handler = (e) => {
-      if (!e || e.key !== step.wait.key) return;
+      if (!current() || !e || e.key !== step.wait.key) return;
       const target = e.target;
       if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
       _run.ctx[step.wait.keyFlag || "lastTutorialKey"] = true;
@@ -1223,14 +1292,14 @@ function nudge() {
     el.classList.remove("is-nudge");
     void el.offsetWidth;
     el.classList.add("is-nudge");
-    setTimeout(() => el.classList.remove("is-nudge"), 520);
+    stepTimeout(() => el.classList.remove("is-nudge"), 520);
   }
 }
 
 /* 통과 — 바로 넘기지 않고 '됐습니다'를 보여 준 뒤 넘어간다.
  * 클릭 실습은 앱 자신의 핸들러(모달 열기 등)가 먼저 돌아야 하므로 이 대기가 그 몫도 겸한다. */
 function pass() {
-  if (!_run || _run.passing) return;
+  if (!_run || _run.passing || _run.transitioning || _run.autoBusy) return;
   _run.passing = true;
   _run.done[_run.index] = true;
   _run.near = "hit";
@@ -1239,7 +1308,7 @@ function pass() {
     doChip.textContent = "✓ 됐습니다";
     doChip.classList.add("is-hit");
   }
-  _run.passTimer = setTimeout(() => {
+  _run.passTimer = stepTimeout(() => {
     if (!_run) return;
     _run.passTimer = null;
     goNext();
@@ -1247,7 +1316,7 @@ function pass() {
 }
 
 function checkUntil() {
-  if (!_run || _run.passing) return;
+  if (!_run || _run.passing || _run.transitioning || _run.autoBusy) return;
   const step = _run.course.steps[_run.index];
   if (!step || !step.wait || !_run.waiting) return;
   // 마우스를 누르고 있는 동안에는 판정하지 않는다. 끄는 도중에도 상태는 계속 바뀌므로,
@@ -1290,7 +1359,7 @@ function reposition(force = false) {
   }).join(",");
   const key = (hole ? `${hole.x}|${hole.y}|${hole.w}|${hole.h}` : "none") +
     "#" + targetKey +
-    "#" + (avoid ? `${avoid.x}|${avoid.y}|${avoid.w}|${avoid.h}` : "no-avoid") + "#" + ctmKey();
+    "#" + (avoid ? `${avoid.x}|${avoid.y}|${avoid.w}|${avoid.h}` : "no-avoid") + "#" + ctmKey() + "#" + window.innerWidth + "x" + window.innerHeight;
   if (!force && key === _run.lastKey) {
     // 인스펙터 행은 단계 진입 직후 비동기로 렌더링될 수 있다. 이 경우
     // targetKey가 같아도 패널이 새로 생겼는지 반드시 다시 확인한다.
@@ -1310,29 +1379,32 @@ function reposition(force = false) {
 }
 
 function goNext() {
-  if (!_run) return;
+  if (!_run || _run.transitioning || _run.autoBusy) return;
   unbindWait();
   if (_run.index >= _run.course.steps.length - 1) { finishCourse(); return; }
+  _run.visit += 1;
   _run.index += 1;
   showStep();
 }
 
 function goPrev() {
-  if (!_run || _run.index === 0) return;
+  if (!_run || _run.index === 0 || _run.transitioning || _run.autoBusy) return;
   unbindWait();
+  _run.visit += 1;
   _run.index -= 1;
   showStep();
 }
 
 async function finishCourse() {
   if (!_run) return;
+  const generation = _runGeneration;
   const course = _run.course;
   const practice = _run.practice;
   markDone(course.id);
   removeKey(K_RESUME_LEGACY);
   teardown();
   await cleanupPracticePage(practice);
-  openPicker({ justFinished: course.id });
+  if (!_run && generation === _runGeneration) openPicker({ justFinished: course.id });
 }
 
 /* ===== 종료 · 정리 ===== */
@@ -1349,6 +1421,8 @@ function teardown() {
   unbindWait();
   stopDemo();
   closeCompare();
+  for (const timer of _run.timers) clearTimeout(timer);
+  _run.timers.clear();
   if (_run.tick) clearInterval(_run.tick);
   if (_run.onResize) {
     window.removeEventListener("resize", _run.onResize);
@@ -1574,13 +1648,13 @@ function maybeShowBanner() {
       <p class="tut-welcome-lead">처음이시라면 <b>튜토리얼</b>을 권합니다. 화면 위에서 하나씩 짚어 드립니다.</p>
       <ul class="tut-welcome-list">
         <li>읽는 설명서가 아니라 <b>직접 해 보는</b> 안내입니다</li>
-        <li><b>30분이면 끝</b>납니다. 코스마다 끊어서 하셔도 됩니다</li>
-        <li>글자 입력은 <b>대신 해 드립니다</b> — 누르고 끄는 것만 하시면 됩니다</li>
+        <li><b>기초 조작부터</b> 시작합니다. 코스마다 끊어서 하셔도 됩니다</li>
+        <li>일부 글자 입력은 <b>자동 입력 단추</b>로 돕습니다. 확정은 직접 해 보세요</li>
         <li>막히면 <b>[이전]</b>으로 돌아가고, <b>[그만]</b>으로 언제든 나갑니다</li>
       </ul>
       <div class="tut-welcome-foot">
         <button type="button" class="tut-btn tut-banner-no">건너뛰기</button>
-        <button type="button" class="tut-btn tut-btn-primary tut-banner-yes">튜토리얼 시작 (30분)</button>
+        <button type="button" class="tut-btn tut-btn-primary tut-banner-yes">기초 튜토리얼 시작</button>
       </div>
     </div>`;
   document.documentElement.appendChild(bar);
@@ -1647,13 +1721,30 @@ export function initTutorial() {
     else openPicker();
   });
 
-  // ESC: 튜토리얼을 끈다. 단 앱 모달이 열려 있으면 그쪽이 먼저 닫혀야 하므로 양보한다.
+  // Escape는 편집기의 취소가 우선이다. 메뉴/모달의 선행 핸들러가 DOM을
+  // 닫은 뒤에도 같은 키로 튜토리얼까지 닫히지 않도록 capture 때 소유권을 기억한다.
+  const appEscapes = new WeakSet();
+  const appOwnsEscape = (e) => {
+    const t = e.target;
+    if (e.defaultPrevented || e.isComposing || e.keyCode === 229) return true;
+    if (t && (["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) || t.isContentEditable)) return true;
+    return !!document.querySelector(
+      '.modal-overlay:not([hidden]), dialog[open], [role="menu"]:not([hidden]), .text-ctx-menu:not([hidden])'
+    );
+  };
   document.addEventListener("keydown", (e) => {
-    if (e.key !== "Escape") return;
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (e.key === "Escape" && appOwnsEscape(e)) appEscapes.add(e);
+  }, true);
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || appEscapes.has(e) || appOwnsEscape(e)) return;
     if (_compare) { closeCompare(); return; }
     if (_picker) { closePicker(); return; }
-    if (_run) stopTutorial();
+    if (!_run) return;
+    const step = _run.course.steps[_run.index];
+    // 완료 후 돌아온 실습도 편집 가능하다. waiting만 검사하면 취소가 다시 종료가 된다.
+    // 실습 종료는 코치의 [그만] 버튼으로만 한다.
+    if (step?.wait || step?.practice || step?.allowPan || _run.transitioning || _run.autoBusy) return;
+    stopTutorial();
   });
 
   /* 스페이스바 = [다음] (사용자 요구: 단추를 매번 누르지 않게).
@@ -1675,6 +1766,8 @@ export function initTutorial() {
     if (document.querySelector(".modal-overlay:not([hidden])")) return;
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    if (_run.course.steps[_run.index]?.allowPan) return;
+    if (e.repeat || e.isComposing) return;
     if (_run.waiting) return;           // 실습 대기 단계 — 앱에 양보한다
     e.preventDefault();
     goNext();
