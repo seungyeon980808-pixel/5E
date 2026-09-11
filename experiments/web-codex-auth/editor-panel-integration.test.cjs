@@ -55,6 +55,7 @@ test('gateway serves a valid separated-image panel with all web adapters applied
   assert.equal(parsed.status, 0, parsed.stderr);
   for (const marker of [
     'data-ai-generation-mode',
+    'error?.code === "AI_TASK_CHECKPOINT_FAILED" ? "임시저장 실패 · AI 요청을 보내지 않았습니다" : error.status === 429 ? error.message',
     'candidateUsesSeparatedAssets(item)',
     'openGroupsForItem(item, true)',
     'separatedRecovery.dataset.aiSeparatedRecovery',
