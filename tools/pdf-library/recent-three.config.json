@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate",
+  "baseUrl": "../pack/recent-three/",
+  "remoteCatalog": "../pack/recent-three/catalog.json",
+  "academicYears": [
+    { "year": 2024, "scope": "complete-verified", "documentCount": 24 },
+    { "year": 2025, "scope": "complete-verified", "documentCount": 24 },
+    { "year": 2026, "scope": "complete-verified", "documentCount": 24 }
+  ],
+  "excluded": [
+    { "year": 2027, "reason": "current academic year is incomplete" }
+  ],
+  "verifiedPartialSources": [
+    {
+      "academicYear": 2026,
+      "administration": "june",
+      "subject": "physics2",
+      "kind": "question",
+      "url": "https://wdown.ebsi.co.kr/W61001/01exam/20250604/go3/g_phy2_mun_1N4Y63GZ.pdf",
+      "sha256": "26df04f36bde6b651c8c19708c543ad49b115d529db90c1c430a783e873f0a61",
+      "includedInDefault": false
+    }
+  ],
+  "verifiedAt": "2026-09-10T09:00:00.000Z",
+  "productionBaseUrl": ""
+}

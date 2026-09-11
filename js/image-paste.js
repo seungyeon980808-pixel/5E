@@ -72,6 +72,20 @@ function targetStateFingerprint(target) {
   return JSON.stringify(state);
 }
 
+function cloneSourceMetadata(value) {
+  if (value == null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value)) throw new Error("이미지 출처 정보를 확인할 수 없습니다.");
+  const metadata = {};
+  for (const key of ["documentId", "documentTitle", "documentHash", "title"]) {
+    if (typeof value[key] === "string" && value[key].trim()) metadata[key] = value[key].trim();
+  }
+  if (Number.isInteger(value.pageNumber) && value.pageNumber > 0) metadata.pageNumber = value.pageNumber;
+  if (Array.isArray(value.rect) && value.rect.length === 4 && value.rect.every((number) => Number.isFinite(number))) {
+    metadata.rect = [...value.rect];
+  }
+  return Object.keys(metadata).length ? metadata : undefined;
+}
+
 function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
@@ -109,6 +123,7 @@ function insertImageObject(state, src, size, place) {
       order: s.objects.length,
       cutouts: [],
       ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
+      ...(place?.sourceMetadata ? {sourceMetadata:place.sourceMetadata} : {}),
     });
     s.selectedIds = [id];
     s.targetedId = null;
@@ -126,6 +141,7 @@ export async function insertImageFromSrc(state, src, opts = {}) {
   const options = { ...opts,
     ...(opts?.at ? { at: { ...opts.at } } : {}),
     ...(opts?.offset ? { offset: { ...opts.offset } } : {}),
+    ...(opts?.sourceMetadata ? { sourceMetadata: cloneSourceMetadata(opts.sourceMetadata) } : {}),
   };
   if (typeof src !== "string" || !src.trim()) throw new Error("삽입할 이미지가 없습니다.");
   const hasAiMetadata = options.aiTaskId != null || options.aiCandidateId != null;

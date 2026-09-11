@@ -178,6 +178,24 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     renderNavigation();
   });
   renderNavigation();
+  const independentReferences = references => {
+    if (!Array.isArray(references) || references.length < 1 || references.length > 10) {
+      throw new Error('독립 AI 작업은 한 번에 최대 10개까지 열 수 있습니다.');
+    }
+    return references.map((reference, index) => {
+      if (!reference || typeof reference !== 'object' || typeof reference.dataUrl !== 'string'
+        || !/^data:image\/[a-z0-9.+-]+;base64,/i.test(reference.dataUrl)) {
+        throw new Error(`${index + 1}번째 참고 이미지의 스냅샷이 올바르지 않습니다.`);
+      }
+      return {
+        dataUrl: reference.dataUrl,
+        src: reference.dataUrl,
+        name: String(reference.name || `PDF 선택 영역 ${index + 1}`),
+        sourceKind: String(reference.sourceKind || 'auto'),
+        source: reference.source === undefined ? null : structuredClone(reference.source),
+      };
+    });
+  };
   return {
     open: async options => {
       await ready;
@@ -189,5 +207,19 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),
+    openIndependentReferences: async ({ references, prompt = '', startGeneration = false } = {}) => {
+      await ready;
+      const snapshots = independentReferences(references);
+      const created = snapshots.map(() => add(crypto.randomUUID(), false));
+      saveRegistry();
+      await Promise.all(created.map(entry => entry.controller.ready));
+      await Promise.all(created.map((entry, index) => entry.controller.open({
+        references: [snapshots[index]],
+        prompt,
+        startGeneration: startGeneration === true,
+      })));
+      activate(created.at(-1));
+      return created.map((entry, index) => ({ scope: entry.scope, name: snapshots[index].name }));
+    },
   };
 }

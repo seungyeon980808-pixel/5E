@@ -27,6 +27,18 @@ Codex CLI가 PATH에 없거나 로그인하지 않은 경우 AI 패널이 각각
 
 웹판에서 `AI 이미지 생성/변환`을 누르면 설치 안내만 표시된다. preload API가 있는 Windows 데스크톱판에서는 같은 버튼이 실제 AI 패널을 연다.
 
+## 웹에서 설치형으로 전환
+
+`js/ai-install-guide.js`의 `createDesktopHandoff()`는 화면을 만들지 않는 전환 계약이다. 통합 코드는 첫 번째 유효한 AI 결과에서 `reportAiSuccess()`를, 사용자가 로컬 폴더 기능을 요구한 시점에서 `reportLocalFolderIntent()`를 한 번 호출한다. 두 경로 모두 웹에서는 `onPrompt(prompt)`에 다음 사용자 동작만 전달한다.
+
+- `prompt.dismiss()`는 다시 자동 제안하지 않도록 저장한다.
+- `prompt.remindLater()`는 7일 동안 자동 제안을 미룬다.
+- `prompt.install()`은 먼저 주입된 `saveProject` 콜백을 완료한 뒤 HTTPS 릴리스 주소만 연다. 저장 콜백이 없으면 `save-unavailable`, 취소·거짓 반환이면 `save-cancelled`, 오류면 `save-failed`를 반환하며 외부 주소를 열지 않는다.
+
+통합할 때 `saveProject`에는 `project-io.js`에서 내보낸 기존 `saveProject(state)`를 바인딩한다. 이 함수는 현재 `serialize()` 형식과 기존 파일 저장기를 그대로 사용하며, 저장 선택을 취소하면 `false`, 저장이 끝나면 `true`를 반환한다. 설치형에서 전환 신호를 받으면 안내를 띄우지 않고 기존 AI 패널을 연다. 설치형 안에서 프로젝트를 가져와야 할 때는 `openProjectChooser`에 현재 `#project-open` 버튼의 기존 선택기를 연결한다.
+
+전환 안내는 웹 편집을 중단시키지 않는다. 로컬 폴더와 로컬 저장소를 편리하게 연결할 수 있다는 범위만 안내하며, 저장 보존이나 처리 시간을 보장한다고 표현하지 않는다. 상태는 `localStorage`의 `5e.desktopHandoff.v1`에 작고 검증 가능한 JSON으로 저장되며, 손상된 값은 새 상태로 처리한다.
+
 ## AI 이미지 생성 속도
 
 - 대화와 이미지 렌더링은 서로 다른 스레드를 사용한다. 대화는 이어 가되, 이미지 생성은 매번 임시 스레드에서 확정된 요구사항과 필요한 참고 이미지만 전달한다.

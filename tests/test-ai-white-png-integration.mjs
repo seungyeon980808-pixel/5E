@@ -18,9 +18,9 @@ test("actual addPreview preserves PNG bytes, legacy failure still falls back",as
  const b=setup("complete");assert.equal((await b.run("legacy-src")).data,"legacy-src");
 });
 test("output error survives late completed terminal state",()=>{
- const fn=source.slice(source.indexOf("  const finishCurrentTurnUi ="),source.indexOf("  const dispatchAiEvent ="));let lastStatus;
- const ctx={currentRequestEpoch:1,serverTurnFinished:true,previewPending:false,currentImageOutputError:"invalid PNG",currentTerminalOutcome:"completed",pendingCacheOutput:{data:"bad"},currentTurnDone:false,currentTurnUsage:null,setTaskState(){},setGenerating(){},setBusy(){},setStatus:(...v)=>lastStatus=v,addTokenFooter(){}};
- const finish=new Function("ctx",`with(ctx){${fn};return finishCurrentTurnUi;}`)(ctx);finish(1);assert.equal(ctx.currentTerminalOutcome,"failed");assert.equal(ctx.pendingCacheOutput,null);assert.equal(lastStatus[1],"error");assert.match(lastStatus[0],/invalid PNG/);
+ const fn=source.slice(source.indexOf("  const finishCurrentTurnUi ="),source.indexOf("  const dispatchAiEvent ="));let lastStatus,taskState;
+ const ctx={currentRequestEpoch:1,serverTurnFinished:true,previewPending:false,currentImageOutputError:"invalid PNG",currentTerminalOutcome:"completed",pendingCacheOutput:{data:"bad"},currentTurnDone:false,currentTurnUsage:null,setTaskState:value=>taskState=value,setGenerating(){},setBusy(){},setStatus:(...v)=>lastStatus=v,addTokenFooter(){}};
+ const finish=new Function("ctx",`with(ctx){${fn};return finishCurrentTurnUi;}`)(ctx);finish(1);assert.equal(ctx.currentTerminalOutcome,"failed");assert.equal(ctx.pendingCacheOutput,null);assert.equal(taskState,"failed");assert.equal(lastStatus[1],"error");assert.match(lastStatus[0],/invalid PNG/);
 });
 test("actual addPreview keeps renderer prompt separately without changing PNG bytes",async()=>{
  const {run}=setup();const png="data:image/png;base64,iVBORw0KGgo=";const item=await run(png,{rendererPrompt:"two medium circles"});assert.equal(item.data,png);assert.equal(item.rendererPrompt,"two medium circles");

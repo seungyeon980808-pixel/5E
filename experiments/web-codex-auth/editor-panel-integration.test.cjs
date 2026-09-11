@@ -28,7 +28,7 @@ test('gateway serves a valid separated-image panel with all web adapters applied
     'separatedRecovery.dataset.aiSeparatedRecovery',
     "separatedCandidateNextAction(item) !== 'manual-regions'",
     'background.register(item, img)',
-    'background.output(item).then(src => insertImageFromSrc',
+    'void resolveOutputVariant(item)\n          .then(data => background.output({...item, data}))\n          .then(src => insertImageFromSrc',
     'preserveBytes:true,at:{x:0,y:0},aiTaskId',
     'taskFeedback(text, kind)',
     'content: simplifyComparison(comparison)',
