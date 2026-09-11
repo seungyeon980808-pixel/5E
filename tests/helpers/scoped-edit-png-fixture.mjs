@@ -38,6 +38,23 @@ function filteredRow(row, prior, bpp, filter) {
   return out;
 }
 
+export function insertTestPngChunkAfterIhdr(input, type, data) {
+  const png = input instanceof Uint8Array ? input : new Uint8Array(input);
+  assert.match(type, /^[A-Za-z]{4}$/, 'PNG chunk type must contain four ASCII letters');
+  assert.ok(data instanceof Uint8Array, 'PNG chunk data must be a Uint8Array');
+  const afterIhdr = 8 + 12 + readU32(png, 8);
+  return join([png.subarray(0, afterIhdr), chunk(type, data), png.subarray(afterIhdr)]);
+}
+
+export function replaceTestPngIhdrByte(input, fieldOffset, value) {
+  assert.ok(Number.isInteger(fieldOffset) && fieldOffset >= 0 && fieldOffset < 13, 'IHDR field offset must be 0 through 12');
+  assert.ok(Number.isInteger(value) && value >= 0 && value <= 255, 'IHDR byte must be 0 through 255');
+  const png = input instanceof Uint8Array ? input.slice() : new Uint8Array(input);
+  png[16 + fieldOffset] = value;
+  png.set(u32(crc32(png.subarray(12, 29))), 29);
+  return png;
+}
+
 export function encodeTestRgbaPng(image, filter = 0) {
   validateRgba(image);
   if (!Number.isInteger(filter) || filter < 0 || filter > 4) throw new RangeError('PNG filter must be 0 through 4.');

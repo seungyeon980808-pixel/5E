@@ -2,18 +2,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { prepareSeparatedAssets } from '../js/ai-separated-assets.js';
-import { insertEditableAssets } from '../js/ai-editable-assets.js';
-import { decodeScopedPng, encodeScopedPng } from '../js/ai-scoped-edit-png.js';
-
-const url = bytes => `data:image/png;base64,${Buffer.from(bytes).toString('base64')}`;
-const pixel = (image, x, y) => [...image.data.slice((y * image.width + x) * 4, (y * image.width + x) * 4 + 4)];
-
-async function png({ width, height, fill, paint }) {
-  const data = new Uint8Array(width * height * 4);
-  for (let p = 0; p < width * height; p++) data.set(fill, p * 4);
-  paint?.(data, (x, y, rgba) => data.set(rgba, (y * width + x) * 4));
-  return { data, src: url(await encodeScopedPng({ width, height, data })) };
-}
+import { insertEditableAssets, prepareEditableAssets } from '../js/ai-editable-assets.js';
+import { decodeScopedPng } from '../js/ai-scoped-edit-png.js';
+import { assertExactPixelAssignments, pixel, png, url } from './helpers/ai-separated-assets-fixture.mjs';
 
 test('Given an opaque white atlas, when separating, then enclosed and translucent foreground RGBA is exact', async () => {
   const source = await png({ width: 49, height: 41, fill: [255, 255, 255, 255], paint: (data, set) => {
@@ -31,7 +22,23 @@ test('Given an opaque white atlas, when separating, then enclosed and translucen
   assert.equal(prepared.assets.length, 1);
   assert.deepEqual(pixel(decoded, 4 - asset.x, 4 - asset.y), [255, 255, 255, 255]);
   assert.deepEqual(pixel(decoded, 5 - asset.x, 5 - asset.y), [71, 82, 93, 117]);
+  assert.deepEqual(asset.sourceBounds, { x: asset.x, y: asset.y, width: asset.width, height: asset.height });
+  assert.equal(asset.assignedForegroundPixelCount, asset.foregroundPixelCount);
+  assert.equal(prepared.foregroundPixelCount, prepared.stats.foregroundPixelCount);
+  assert.equal(prepared.assignedForegroundPixelCount, prepared.foregroundPixelCount);
+  assert.equal(prepared.unassignedForegroundPixelCount, 0);
   assert.equal(prepared.stats.rgbaVerified, true);
+  assert.equal(prepared.stats.assignmentVerified, true);
+  assert.equal(asset.semanticGroupingVerified, false);
+  assert.equal(prepared.semanticGroupingVerified, false);
+  assert.equal(prepared.reviewRequired, true);
+  assert(prepared.reviewReasons.includes('semantic-grouping-unverified'));
+  assert.equal(prepared.manualCorrectionAvailable, true);
+  assert.deepEqual(prepared.manualRegions, [{
+    id: asset.id, x: asset.x, y: asset.y, width: asset.width, height: asset.height,
+    label: asset.label, labelMode: asset.labelMode, anchor: asset.anchor,
+    labelPoint: asset.labelPoint, keepRects: [],
+  }]);
 });
 
 test('Given a truly transparent atlas, when separating, then opaque white object pixels remain exact', async () => {
@@ -79,6 +86,7 @@ test('Given a low-chroma 253 opaque background, when separating, then it is acce
   // Then
   assert.equal(prepared.assets.length, 1);
   assert.equal(prepared.stats.backgroundMode, 'near-white');
+  assert(prepared.reviewReasons.includes('near-white-background'));
 });
 
 test('Given a low-chroma 249 or high-chroma opaque frame, when separating, then it is rejected', async () => {
@@ -99,9 +107,15 @@ test('Given foreground crossing an internal cell boundary, when separating, then
     for (let y = 4; y <= 7; y++) for (let x = 9; x <= 14; x++) set(x, y, [0, 0, 0, 255]);
   } });
 
-  const prepared = await prepareSeparatedAssets(source.src);
-  assert.equal(prepared.assets.length, 1);
-  assert.equal(prepared.stats.layoutMode, 'whitespace');
+  const automatic = await prepareSeparatedAssets(source.src);
+  const gridded = await prepareSeparatedAssets(source.src, { layout: 'grid' });
+  assert.equal(automatic.assets.length, 1);
+  assert.equal(automatic.stats.layoutMode, 'whitespace');
+  assert(automatic.reviewReasons.includes('grid-boundary-foreground'));
+  assert.equal(gridded.assets.length, 1);
+  assert.equal(gridded.stats.layoutMode, 'fixed-grid');
+  assert.equal(gridded.assignedForegroundPixelCount, gridded.foregroundPixelCount);
+  assert(gridded.reviewReasons.includes('grid-boundary-foreground'));
 });
 
 test('Given nonuniform whitespace rows, when separating, then row and column projections infer every asset', async () => {
@@ -136,6 +150,37 @@ test('Given disconnected parts in one visual column, when separating, then the p
   assert.equal(prepared.assets.length, 2);
   assert.equal(prepared.assets[0].y, 4);
   assert.equal(prepared.assets[0].height, 14);
+});
+
+test('Given the scientific assembly fixture, when separating, then nearby body, scale, beaker and stand parts stay grouped without losing pixels', async () => {
+  // Given
+  const bytes = await readFile(new URL('./fixtures/separated-assets/scientific-assemblies-atlas.png', import.meta.url));
+  const source = await decodeScopedPng(new Uint8Array(bytes));
+
+  // When
+  const prepared = await prepareSeparatedAssets(url(bytes));
+  const corrected = await prepareEditableAssets(url(bytes), prepared.manualRegions);
+  const retainedPixelCount = await assertExactPixelAssignments(source, prepared.assets);
+
+  // Then
+  assert.equal(prepared.assets.length, 3);
+  assert.equal(prepared.stats.layoutMode, 'whitespace');
+  assert(prepared.reviewReasons.includes('nearby-parts-merged'));
+  assert.equal(prepared.unassignedForegroundPixelCount, 0);
+  assert.equal(retainedPixelCount, prepared.foregroundPixelCount);
+  assert.equal(corrected.assets.length, prepared.assets.length);
+  assert.deepEqual(corrected.assets.map(asset => asset.label), prepared.assets.map(asset => asset.label));
+});
+
+test('Given the compact lab fixture, when separating, then beaker, thermometer and stand assemblies stay independent', async () => {
+  const bytes = await readFile(new URL('./fixtures/separated-assets/lab-assemblies-atlas.png', import.meta.url));
+  const prepared = await prepareSeparatedAssets(url(bytes));
+
+  assert.equal(prepared.assets.length, 3);
+  assert.deepEqual(prepared.assets.map(asset => asset.assignedForegroundPixelCount), [42, 74, 53]);
+  assert.equal(prepared.assignedForegroundPixelCount, 169);
+  assert.equal(prepared.unassignedForegroundPixelCount, 0);
+  assert(prepared.reviewReasons.includes('grid-boundary-foreground'));
 });
 
 test('Given a valid four-by-four fixture, when separating, then the fixed-grid path stays available', async () => {
@@ -180,6 +225,7 @@ test('Given the actual generated PNG, when separating, then all ten inferred obj
   assert.equal(prepared.stats.layoutMode, 'whitespace');
   assert.equal(prepared.stats.backgroundMode, 'near-white');
   assert.equal(prepared.stats.assignedForegroundPixelCount, prepared.stats.foregroundPixelCount);
+  assert.equal(prepared.stats.unassignedForegroundPixelCount, 0);
   assert.equal(prepared.stats.foregroundPixelCount, 328989);
   assert.equal(retainedPixelCount, prepared.stats.foregroundPixelCount);
   assert.equal(mismatchedChannelCount, 0);
@@ -195,13 +241,39 @@ test('Given more than sixteen whitespace groups, when separating, then none are 
     }
   } });
 
-  // When / Then
-  await assert.rejects(prepareSeparatedAssets(source.src), /16개를 넘습니다/);
+  // When
+  const unlimited = await prepareSeparatedAssets(source.src);
+  const exactLimit = await prepareSeparatedAssets(source.src, { maxAssets: 17 });
+  let limitedError;
+  try { await prepareSeparatedAssets(source.src, { maxAssets: 16 }); } catch (error) { limitedError = error; }
+
+  // Then
+  assert.equal(unlimited.assets.length, 17);
+  assert.equal(exactLimit.assets.length, 17);
+  assert(unlimited.reviewReasons.includes('asset-count-exceeds-grid'));
+  assert(limitedError instanceof RangeError);
+  assert.equal(limitedError.code, 'asset-limit-exceeded');
+  assert.deepEqual(limitedError.reviewReasons, ['asset-limit-exceeded']);
 });
 
-test('Given an empty atlas, when separating, then a user-facing empty-result error is returned', async () => {
+test('Given invalid separation options, when separating, then the public contract rejects them before processing', async () => {
   const source = await png({ width: 48, height: 48, fill: [255, 255, 255, 255] });
-  await assert.rejects(prepareSeparatedAssets(source.src), /분리할 객체가 없습니다/);
+  for (const options of [
+    { layout: 'rows' }, { layout: null }, { maxAssets: 0 }, { maxAssets: 257 },
+    { maxAssets: 1.5 }, { maxAssets: '16' },
+  ]) await assert.rejects(prepareSeparatedAssets(source.src, options), RangeError);
+});
+
+test('Given an empty atlas, when separating, then a user-facing review error preserves the manual-correction handoff', async () => {
+  const source = await png({ width: 48, height: 48, fill: [255, 255, 255, 255] });
+  let resultError;
+  try { await prepareSeparatedAssets(source.src); } catch (error) { resultError = error; }
+  assert(resultError instanceof Error);
+  assert.match(resultError.message, /분리할 객체가 없습니다/);
+  assert.equal(resultError.code, 'empty-foreground');
+  assert.equal(resultError.reviewRequired, true);
+  assert.deepEqual(resultError.reviewReasons, ['empty-foreground']);
+  assert.equal(resultError.manualCorrectionAvailable, true);
 });
 
 test('Given malformed or bounded inputs, when separating through the public API, then strict decode limits propagate', async () => {

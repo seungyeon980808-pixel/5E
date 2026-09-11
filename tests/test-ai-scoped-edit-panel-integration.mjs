@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { runScopedPanelEdit, scopedPngBytes, scopedPngData, scopedPixelRectangles, scopedImageCompletionStatus } from '../js/ai-panel.js';
+import { initAiPanel, runScopedPanelEdit, scopedPngBytes, scopedPngData, scopedPixelRectangles, scopedImageCompletionStatus } from '../js/ai-panel.js';
 import { parseAiEvent } from '../js/ai-events.js';
+import { resolveGeneratedRaster } from '../js/ai-raster-output.js';
+import { transparentizeGeneratedImage } from '../js/image-background.js';
+import { installAiPanelBrowserFixture } from './helpers/ai-panel-browser-fixture.mjs';
 import { encodeTestRgbaPng, decodeTestPng } from './helpers/scoped-edit-png-fixture.mjs';
 function fixture() {
   const pixels = Uint8Array.from([10,20,30,0,40,50,60,100,70,80,90,255,100,110,120,255]);
@@ -59,15 +61,90 @@ test('raw PNG conversion is byte-identical and rejects non-PNG data URLs',()=>{
   const f=fixture();assert.deepEqual(scopedPngBytes(scopedPngData(f.sourcePng)),f.sourcePng);
   assert.throws(()=>scopedPngBytes('data:image/jpeg;base64,AAAA'));
 });
-test('supplementary wiring check: isolated transport bypasses legacy dispatch and HTML dialogs gate review',async()=>{
-  const source=await readFile(new URL('../js/ai-panel.js',import.meta.url),'utf8');
-  assert.match(source,/scoped\.textContent = '선택 영역 수정'/);
-  assert.match(source,/if \(currentRunInput\?\.scopedEdit\) \{ scopedTransport\?\.handle\(event\); return; \}/);
-  const start=source.indexOf('  function scopedDialog('),end=source.indexOf('  const addReferenceData',start);
-  const branch=source.slice(start,end);
-  assert.match(branch,/createElement\('dialog'\)/);assert.match(branch,/accept: '적용'/);
-  assert.doesNotMatch(branch,/window\.confirm|stageCurrentOutput|commitCurrentOutput|buildWhitePngPrompt|transparentizeGeneratedImage/);
-  assert.match(branch,/alreadyEditable: true, isCurrent/);
+test('scoped panel whitePng and alreadyEditable seams bypass whole-image post-processing and preserve protected RGBA',async()=>{
+  const width=5,height=5;
+  const sourcePixels=new Uint8Array(width*height*4);
+  const candidatePixels=new Uint8Array(width*height*4);
+  for(let pixel=0;pixel<width*height;pixel+=1){
+    sourcePixels.set([255,255,255,255],pixel*4);
+    candidatePixels.set([255,255,255,255],pixel*4);
+  }
+  const setPixel=(pixels,x,y,rgba)=>pixels.set(rgba,(y*width+x)*4);
+  setPixel(sourcePixels,1,2,[10,80,150,255]);
+  setPixel(sourcePixels,2,2,[40,40,40,255]);
+  setPixel(sourcePixels,3,2,[77,88,99,0]);
+  setPixel(candidatePixels,2,2,[17,91,203,211]);
+
+  const sourcePng=encodeTestRgbaPng({width,height,data:sourcePixels});
+  const candidatePng=encodeTestRgbaPng({width,height,data:candidatePixels});
+  const sourceData=scopedPngData(sourcePng);
+  const candidateData=scopedPngData(candidatePng);
+  const expectedPixels=sourcePixels.slice();
+  setPixel(expectedPixels,2,2,[17,91,203,211]);
+
+  const workspace={key:'workspace',activeTaskTabId:'task-1',taskTabSerial:1,imageSerial:1,tabs:[{
+    id:'task-1',title:'task',workState:'idle',attachments:[],conversationMessages:[],uiMessages:[],
+    input:'change selected pixel',conversationId:null,mode:'diagram',qualityMode:'simple',outputEngine:'raster',generationMode:'single',
+    selectedCandidateId:'generated-1',generated:[{
+      id:'generated-1',name:'source',data:sourceData,kind:'generated',postprocessOk:true,
+      reviewState:'scoped-applied',reviewReport:{verdict:'',checks:[],issues:[]},generationMode:'single',nextCommentNumber:2,
+      comments:[{number:1,type:'area',imageId:'generated-1',x:40,y:40,w:20,h:20,text:'change selected pixel'}]
+    }]
+  }]};
+  let whitePngTransformCalls=0;
+  assert.equal(await resolveGeneratedRaster(candidateData,{whitePng:true,transform:()=>{whitePngTransformCalls+=1;return 'changed';}}),candidateData);
+  assert.equal(whitePngTransformCalls,0);
+
+  const browser=installAiPanelBrowserFixture({workspace});
+  const stateValue={objects:[],selectedIds:[],activePageId:'page-1',activeLayerId:'layer-1',artboard:{width:100,height:100}};
+  let manager;
+  try{
+    // Prove the browser fixture is sensitive to both legacy operations: the
+    // protected white background is removed and the colored stroke quantized.
+    const legacyData=await transparentizeGeneratedImage(scopedPngData(encodeTestRgbaPng({width,height,data:expectedPixels})),{examPalette:true});
+    const legacyPixels=decodeTestPng(scopedPngBytes(legacyData)).data;
+    assert.notDeepEqual(legacyPixels.slice(0,4),expectedPixels.slice(0,4));
+    assert.notDeepEqual(legacyPixels.slice((2*width+1)*4,(2*width+2)*4),expectedPixels.slice((2*width+1)*4,(2*width+2)*4));
+    assert.equal(browser.document.rasterDrawCount,1);
+    browser.document.rasterDrawCount=0;
+
+    manager=initAiPanel({get:()=>stateValue});
+    await manager.open();
+    const candidateSelect=browser.panel.querySelector('[data-ai-candidate-select]');
+    candidateSelect.value='generated-1';
+
+    const boundsDialogReady=browser.document.waitForAdded(node=>node.localName==='dialog');
+    browser.panel.querySelector('[data-ai-scoped-edit-selected]').click();
+    const boundsDialog=await boundsDialogReady;
+    const sendReady=browser.desktop.waitForSend();
+    boundsDialog.querySelector('.ai-confirm-accept').click();
+    const request=await sendReady;
+    assert.equal(request.payload.purpose,'image');
+    assert.equal(request.payload.ephemeralRender,true);
+    assert.equal(request.payload.attachments[0].data,sourceData);
+
+    const reviewDialogReady=browser.document.waitForAdded(node=>node.localName==='dialog');
+    browser.desktop.emit({method:'item/completed',params:{turnId:request.turnId,item:{type:'imageGeneration',imageDataUrl:candidateData}}});
+    browser.desktop.emit({method:'turn/completed',params:{turn:{id:request.turnId,status:'completed',error:null}}});
+    const reviewDialog=await reviewDialogReady;
+
+    assert.equal(browser.panel.dataset.aiBusy,'true');
+    const resultCardReady=browser.document.waitForAdded(node=>node.matches('.ai-generated-card')&&node.dataset.aiCandidateId!=='generated-1');
+    const settled=browser.document.waitForState(()=>browser.panel.dataset.aiBusy==='false');
+    reviewDialog.querySelector('.ai-confirm-accept').click();
+    const resultCard=await resultCardReady;
+    await settled;
+
+    const result=decodeTestPng(scopedPngBytes(resultCard.querySelector('img').src));
+    assert.deepEqual(result.data,expectedPixels);
+    assert.deepEqual(result.data.slice(0,4),sourcePixels.slice(0,4));
+    assert.deepEqual(result.data.slice((2*width+1)*4,(2*width+2)*4),sourcePixels.slice((2*width+1)*4,(2*width+2)*4));
+    assert.deepEqual(result.data.slice((2*width+3)*4,(2*width+4)*4),sourcePixels.slice((2*width+3)*4,(2*width+4)*4));
+    assert.equal(browser.document.rasterDrawCount,0);
+  }finally{
+    manager?.close();
+    browser.restore();
+  }
 });
 
 test('real native first-image automatic interruption is a successful PNG terminal, not user cancellation',()=>{
@@ -87,13 +164,45 @@ test('confirmed/recovered completion does not require a nonexistent status field
   assert.equal(scopedImageCompletionStatus({kind:'done',status:'completed',error:'failure'},{hasImage:true,userCancelled:false}),'reject');
 });
 
-test('supplementary DOM bridge guard: busy scoped selection changes are not discarded',async()=>{
-  const source=await readFile(new URL('../js/ai-panel.js',import.meta.url),'utf8');
-  const start=source.indexOf('  panel.addEventListener("5e:ai-candidate-select"');
-  const handler=source.slice(start,source.indexOf('  chatButton.onclick',start));
-  assert.match(handler,/if \(busy && !currentRunInput\?\.scopedEdit\) return/);
-  assert.match(handler,/scopedSelectionRevision \+= 1/);
-  assert.match(handler,/selectedCandidateId = item.id/);
-  assert.match(handler,/scopedTransport\?\.fail/);
-  assert.match(source,/visibleId !== live.id \|\| panel.dataset.aiSelectedCandidateId !== live.id/);
+test('candidate selection during scoped generation becomes current and blocks the stale result',async()=>{
+  const f=fixture();
+  const sourceData=scopedPngData(f.sourcePng);
+  const item=(id,comments=[])=>({id,name:id,data:sourceData,kind:'generated',postprocessOk:true,
+    reviewState:'scoped-applied',reviewReport:{verdict:'',checks:[],issues:[]},generationMode:'single',nextCommentNumber:2,comments});
+  const comments=[{number:1,type:'area',imageId:'generated-1',x:25,y:0,w:25,h:100,text:'change selected pixel'}];
+  const workspace={key:'workspace',activeTaskTabId:'task-1',taskTabSerial:1,imageSerial:2,tabs:[{
+    id:'task-1',title:'task',workState:'idle',attachments:[],conversationMessages:[],uiMessages:[],input:'change selected pixel',
+    conversationId:null,mode:'diagram',qualityMode:'simple',outputEngine:'raster',generationMode:'single',selectedCandidateId:'generated-1',
+    generated:[item('generated-1',comments),item('generated-2')]
+  }]};
+  const browser=installAiPanelBrowserFixture({workspace});
+  const stateValue={objects:[],selectedIds:[],activePageId:'page-1',activeLayerId:'layer-1',artboard:{width:100,height:100}};
+  let manager;
+  try{
+    manager=initAiPanel({get:()=>stateValue});
+    await manager.open();
+    const candidateSelect=browser.panel.querySelector('[data-ai-candidate-select]');
+    candidateSelect.value='generated-1';
+    const boundsDialogReady=browser.document.waitForAdded(node=>node.localName==='dialog');
+    browser.panel.querySelector('[data-ai-scoped-edit-selected]').click();
+    const boundsDialog=await boundsDialogReady;
+    const sendReady=browser.desktop.waitForSend();
+    boundsDialog.querySelector('.ai-confirm-accept').click();
+    const request=await sendReady;
+
+    const settled=browser.document.waitForState(()=>browser.panel.dataset.aiBusy==='false');
+    candidateSelect.value='generated-2';
+    browser.panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select',{detail:{candidateId:'generated-2'}}));
+    await settled;
+    assert.equal(browser.panel.dataset.aiSelectedCandidateId,'generated-2');
+    assert.equal(candidateSelect.value,'generated-2');
+    assert.equal(browser.panel.querySelectorAll('.ai-generated-card').length,2);
+
+    browser.desktop.emit({method:'item/completed',params:{turnId:request.turnId,item:{type:'imageGeneration',imageDataUrl:scopedPngData(f.candidate)}}});
+    browser.desktop.emit({method:'turn/completed',params:{turn:{id:request.turnId,status:'completed',error:null}}});
+    assert.equal(browser.panel.querySelectorAll('.ai-generated-card').length,2);
+  }finally{
+    manager?.close();
+    browser.restore();
+  }
 });

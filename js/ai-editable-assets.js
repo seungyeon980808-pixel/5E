@@ -31,7 +31,7 @@ function overlaps(a, b) {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 function normalizeRegions(regions, width, height) {
-  if (!Array.isArray(regions) || !regions.length || regions.length > 20) throw new RangeError('영역을 1~20개 선택해 주세요.');
+  if (!Array.isArray(regions) || !regions.length || regions.length > 256) throw new RangeError('영역을 1~256개 선택해 주세요.');
   const ids = new Set();
   const result = regions.map((r, i) => {
     const bounds = rect(r, width, height), id = r.id ?? `region_${i + 1}`;
@@ -106,7 +106,7 @@ export async function prepareEditableAssets(dataUrl, regions, { threshold = 240 
 
 export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId } = {}) {
   if (typeof isCurrent !== 'function') throw new TypeError('삽입 대상 확인 함수가 필요합니다.');
-  if (!prepared?.assets?.length || prepared.assets.length > 20 || !Number.isFinite(prepared.width) || prepared.width <= 0 || !Number.isFinite(prepared.height) || prepared.height <= 0) throw new TypeError('준비한 이미지 영역이 없습니다.');
+  if (!prepared?.assets?.length || prepared.assets.length > 256 || !Number.isFinite(prepared.width) || prepared.width <= 0 || !Number.isFinite(prepared.height) || prepared.height <= 0) throw new TypeError('준비한 이미지 영역이 없습니다.');
   if ((aiTaskId != null || aiCandidateId != null) && ![aiTaskId, aiCandidateId].every(v => typeof v === 'string' && v.trim())) throw new TypeError('이미지 작업·버전 정보를 확인할 수 없습니다.');
   const current = state.get();
   if (!isCurrent(current)) throw new Error('이미지를 준비하는 동안 페이지 또는 후보가 변경되었습니다.');

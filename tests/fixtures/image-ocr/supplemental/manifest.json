@@ -1,0 +1,42 @@
+{
+  "schema": "5e-image-ocr-fixed-fixtures@1",
+  "normalization": "NFC; CRLF to LF; trim lines; remove blank lines; collapse horizontal whitespace",
+  "provenance": {
+    "createdAt": "2026-09-10",
+    "renderer": "sharp@0.34.4 SVG rasterization",
+    "font": "macOS Apple SD Gothic Neo",
+    "note": "Committed PNG bytes are the authoritative benchmark inputs; these cases are retained to cover the required literal Korean labels and blur degradation without rebuilding the canonical deterministic fixture atlas."
+  },
+  "fixtures": [
+    {
+      "id": "korean-dilute-hydrochloric-acid",
+      "expected": "묽은 염산",
+      "categories": ["korean", "clean", "required-label"],
+      "width": 260,
+      "height": 82,
+      "png": "supplemental/korean-dilute-hydrochloric-acid.png",
+      "pngSha256": "984e9d3641cefe6f79c06a1aace0ba221b87eac485e6ca43ca1592f507cfc5f3",
+      "pngBytes": 2443
+    },
+    {
+      "id": "korean-distilled-water",
+      "expected": "증류수",
+      "categories": ["korean", "clean", "required-label", "short"],
+      "width": 190,
+      "height": 82,
+      "png": "supplemental/korean-distilled-water.png",
+      "pngSha256": "b5cc951f4e9f4993733ef4be9d28a6be6633ae0a5e17e5ae7edf03731f1f51fa",
+      "pngBytes": 1957
+    },
+    {
+      "id": "blurred-korean-label",
+      "expected": "묽은 염산",
+      "categories": ["korean", "blurred", "required-label"],
+      "width": 190,
+      "height": 58,
+      "png": "supplemental/blurred-korean-label.png",
+      "pngSha256": "f3295037ca66275038e0127c0470a13f1ab49bd11dbe39f708178d078b2cf71a",
+      "pngBytes": 4270
+    }
+  ]
+}
