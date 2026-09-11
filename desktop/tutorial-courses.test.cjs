@@ -151,5 +151,5 @@ test('graph continuation keeps the source page and accepts grouped or individual
  assert.match(a.steps[1].text,/F 키/);assert.match(a.steps[1].wait.hint,/F 키/);
 });
 test('pendulum angle demo uses exactly the three taught construction points',()=>{
- const p=load('Win32').course('task-pendulum'),s=p.steps.find(s=>s.text.includes('① 위의 고정점'));assert.equal(s.demo().at.length,3);assert.match(s.text,/①/);
+ const p=load('Win32',{}, {anglearc:{create:{tool:'ARC'}}}).course('task-pendulum'),s=p.steps.find(s=>s.text.includes('① 위의 고정점'));assert.equal(s.demo().pts.length,3);assert.match(s.text,/①/);
 });
