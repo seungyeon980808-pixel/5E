@@ -110,6 +110,9 @@ test('gateway panel keeps preserve pixels and one policy owns transformed previe
     await new Promise(setImmediate);
     assert.deepEqual(decodeTestPng(Buffer.from(image.src.slice(image.src.indexOf(',') + 1), 'base64')).data, pixels,
       'preserve policy changed the gateway preview pixels');
+    const outputProcessing = browser.panel.querySelector('[data-ai-output-processing]');
+    assert.equal(outputProcessing.parentElement?.className, 'ai-output-actions',
+      'the gateway left output processing inside the result-hidden preparation section');
 
     browser.panel.querySelector('[data-ai-background-policy="connected"]').click();
     await browser.document.waitForState(() => image.src !== source);
