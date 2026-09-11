@@ -1,6 +1,6 @@
 # PDF library asset migration
 
-This is a migration inventory and reversible distribution-preparation record. It records the completed current-tree removal, but does not rewrite history, ship a release, or publish a catalog. The source retains only its tutorial PNG; the complete 3,961-PNG corpus is preserved and verified externally.
+This is a migration inventory and reversible distribution-preparation record. It records the completed current-tree removal, but does not rewrite history, ship a release, or publish a catalog. The original migration retained only its tutorial PNG; the complete 3,961-PNG corpus remains preserved externally. The 2026-09-12 integration adds seven checksum-verified original PNG samples through `sample-catalog.json`. Desktop packaging validates the external final-r2 72-PDF/288-page pack and includes it as an application resource; bulk PDFs are not tracked in Git. The inventories below describe the earlier migration snapshot.
 
 ## Decision boundary
 

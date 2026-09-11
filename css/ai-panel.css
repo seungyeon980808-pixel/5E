@@ -2110,3 +2110,19 @@
   #ai-image-panel .ai-preparation { padding-top:9px; padding-bottom:9px; }
   #ai-image-panel .ai-preparation > textarea { min-height:58px; }
 }
+
+#ai-image-panel .ai-task-export-controls select,
+#ai-image-panel .ai-task-export-controls button {
+  min-height: 30px;
+  padding: 5px 4px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+}
+#ai-image-panel .ai-task-export-controls button:not(:disabled):hover { background: var(--btn-tool-hover); }
+#ai-image-panel .ai-task-export-controls button:disabled { opacity: .5; cursor: not-allowed; }
+#ai-image-panel .ai-task-export-controls :focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }

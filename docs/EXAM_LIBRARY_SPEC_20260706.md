@@ -1,6 +1,6 @@
 # 기출 이미지 라이브러리 스펙 (EXAM_LIBRARY_SPEC_20260706)
 
-작성 시점: 2026-07-06. 이 문서는 원래 정적 PNG 검색·삽입 규약을 기록했다. 현재 구현은 PDF 자료를 기본으로 열며, 레거시 PNG manifest 경로는 명시적인 외부 호환 URL을 설정한 경우에만 사용한다. 현재 체크아웃의 `images/`에는 튜토리얼 호환용 PNG 1개만 남아 있고, 이전 3,961-PNG corpus는 검증된 외부 백업에 보존한다. 현재 배포/복구 근거는 `docs/PDF_LIBRARY_MIGRATION.md`다.
+작성 시점: 2026-07-06. 이 문서는 원래 정적 PNG 검색·삽입 규약을 기록했다. 현재 구현은 PDF 자료를 기본으로 열며, 레거시 PNG manifest 경로는 명시적인 외부 호환 URL을 설정한 경우에만 사용한다. 2026-09-12 통합 후보의 `images/`에는 기본 예제 PNG 7개가 있고 `sample-catalog.json`으로 검색한다. 이전 3,961-PNG corpus는 외부 백업에 보존한다. 현재 배포/복구 근거는 `docs/PDF_LIBRARY_MIGRATION.md`다.
 
 ## 검색 방식 3가지 (전부 AND 결합)
 
@@ -15,7 +15,7 @@
 
 ## 확정된 결정
 
-1. **현재 저장소 상태와 역사적 정책을 구분한다** — 2026-07-06 당시의 PNG-corpus 운영 규칙은 기록용이다. 현재 `.gitignore`와 tracked tree는 `p2_2027_06_13.png` 한 장과 `manifest.json`을 커밋한다. bulk PNG는 외부 백업에서만 보존하며, 실제 배포 상태는 tracked tree와 `PDF_LIBRARY_MIGRATION.md`를 함께 권위로 삼는다.
+1. **현재 저장소 상태와 역사적 정책을 구분한다** — 2026-07-06 당시의 PNG-corpus 운영 규칙은 기록용이다. 현재 tracked tree는 예제 PNG 7개와 `sample-catalog.json`, 기존 `manifest.json`을 커밋한다. bulk PNG는 외부 백업에서만 보존하며, 실제 배포 상태는 tracked tree와 `PDF_LIBRARY_MIGRATION.md`를 함께 권위로 삼는다.
 2. **태깅은 표 파일 + 생성 스크립트** — `tags.csv`에서 태깅하고 `build_manifest.py`가 매니페스트를 생성.
 
 > **2026-07-19 갱신 2건**
@@ -31,7 +31,8 @@ assets/exam-library/
 ├── tag-vocab.json    태그 통제 어휘집 (커밋됨 — 새 태그는 여기 먼저 추가)
 ├── tags.csv         문항별 태그 시트 (커밋됨 — id | tags 두 열)
 ├── manifest.json     생성 산출물 (스크립트가 만듦, 현재 커밋됨)
-└── images/           튜토리얼 호환 PNG 1개 (`p2_2027_06_13.png`); bulk corpus는 외부 PDF-migration backup에만 보존
+├── sample-catalog.json  기본 예제 검색 목록
+└── images/           기본 예제 PNG 7개; bulk corpus는 외부 PDF-migration backup에 보존
 scripts/build_manifest.py   매니페스트 생성 스크립트
 docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커밋됨)
 ```
@@ -108,4 +109,4 @@ docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커
 
 ## QA 픽스처
 
-`docs/qa-fixtures/exam-library/`의 자작 도식 6장 (빗면, 용수철, 포물선, 회로, 파동, 자유낙하)은 계속 커밋한다. PDF-library 테스트는 이들을 임시 입력으로 사용하며, 현재 source `assets/exam-library/images/`에 복사해 bulk corpus를 복원하지 않는다.
+`docs/qa-fixtures/exam-library/`의 자작 도식 6장 (빗면, 용수철, 포물선, 회로, 파동, 자유낙하)은 계속 커밋한다. PDF-library 테스트는 이들을 임시 입력으로 사용한다. 제품의 기본 예제 목록은 별도의 `assets/exam-library/sample-catalog.json`이며, QA 픽스처의 파일명만으로 실제 기출 원본이라고 판단하지 않는다.
