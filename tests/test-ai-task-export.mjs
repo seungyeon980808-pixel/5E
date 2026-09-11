@@ -38,6 +38,7 @@ test('selected export keeps one chosen result per task while all mode keeps ever
     '작업 2 - 원본 B - 버전 1',
   ]);
   assert.equal(sanitizeTaskExportName('CON.png'), '_CON.png');
+  assert.equal(sanitizeTaskExportName(`${'a'.repeat(119)}.b`), 'a'.repeat(119));
 });
 
 test('browser directory writes use a numeric suffix and never overwrite an existing task result', async () => {
