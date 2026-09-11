@@ -188,3 +188,9 @@ test('exam text deletion never auto-passes merely because one fragment disappear
  h.current.objects.push({id:'letter1',type:'image'});assert.equal(s.wait.until(c),false);
  h.current.objects=[];assert.equal(s.auto.run(c),false);assert.equal(s.wait.until(c),false);assert.equal(s.auto.replay,true);
 });
+
+test('graph annotation placement keeps preview clear without hiding placement buttons',()=>{
+ const c=load('Win32').course('advanced-graph-annot');
+ for(const s of c.steps.filter(s=>s.coachAlign==='bottom')){assert.equal(s.coachAvoid(),'#gm-preview');assert.ok(s.target().includes('#gm-preview'));assert.equal(s.target().length,2)}
+ assert.equal(c.steps.filter(s=>s.coachAlign==='bottom').length,4);
+});

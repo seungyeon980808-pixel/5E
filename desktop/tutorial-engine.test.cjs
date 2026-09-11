@@ -188,3 +188,10 @@ test('completed linked course preserves its practice; ordinary finish still offe
  }
  const h=harness([{}]);h.run("var cleaned=0;cleanupPracticePage=async()=>{cleaned++};_run.practice={practiceId:'p'};_run.course.keepPracticeOnFinish=true;stopTutorial()");assert.equal(h.run('cleaned'),1);
 });
+
+test('graph coach stays left of preview and below placement controls',()=>{
+ const h=placementHarness({width:390,height:260});h.run('_run.course.steps[0].coachAlign="bottom"');
+ h.c.hole={x:150,y:140,w:1120,h:550};h.c.avoid={x:550,y:140,w:720,h:550};
+ h.run('placeCoach(ui,hole,avoid)');const x=parseFloat(h.ui.coach.style.left),y=parseFloat(h.ui.coach.style.top);
+ assert.ok(x+390<=550);assert.ok(y>=220);assert.ok(y+260<=818-12);assert.equal(h.ui.coach.dataset.side,'left');
+});

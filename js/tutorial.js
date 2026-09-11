@@ -377,7 +377,8 @@ function placeCoach(ui, hole, avoid = null) {
       const useLeft = leftRoom || !rightRoom;
       coach.dataset.side = useLeft ? "left" : "right";
       const x = useLeft ? avoid.x - COACH_GAP - cw : avoid.x + avoid.w + COACH_GAP;
-      const y = clamp(hole ? hole.y : (vh - ch) / 2, EDGE, vh - ch - EDGE);
+      const bottomAligned = (_run?.course.steps[_run.index] || {}).coachAlign === "bottom";
+      const y = clamp(bottomAligned ? vh - ch - EDGE : (hole ? hole.y : (vh - ch) / 2), EDGE, vh - ch - EDGE);
       coach.style.left = Math.round(x) + "px";
       coach.style.top = Math.round(y) + "px";
       return;
