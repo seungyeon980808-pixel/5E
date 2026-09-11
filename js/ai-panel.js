@@ -63,6 +63,11 @@ import {
   createAiImageReviewController,
 } from "./ai-image-review.js?v=1";
 import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
+import {
+  imageOutputOptionsKey,
+  normalizeImageOutputOptions,
+  resolveImageOutput,
+} from "./ai-output-processing.js?v=1";
 import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1";
 import {
   enforceKiceImageRunInput,
@@ -371,6 +376,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const generationModeAnchor = panel.querySelector('[data-ai-white-png-note]');
   if (!generationModeAnchor) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
   generationModeAnchor.before(generationModeRow);
+  const outputProcessing = panel.querySelector('[data-ai-output-processing]');
+  const outputProcessingStatus = panel.querySelector('[data-ai-output-processing-status]');
+  const backgroundPolicyButtons = Array.from(panel.querySelectorAll('[data-ai-background-policy]'));
+  const examPaletteButtons = Array.from(panel.querySelectorAll('[data-ai-exam-palette]'));
   const batchButton = panel.querySelector("[data-ai-batch]");
   const batchPanel = panel.querySelector("[data-ai-batch-panel]");
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
@@ -426,6 +435,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let selectedQualityMode = normalizeQualityMode(localStorage.getItem("5e.aiQualityMode") || AI_QUALITY_MODES.STANDARD);
   let selectedOutputEngine = KICE_IMAGE_OUTPUT_ENGINE;
   let selectedAssetGenerationMode = AI_ASSET_GENERATION_MODES.SINGLE;
+  let selectedImageOutputOptions = normalizeImageOutputOptions({
+    backgroundPolicy: localStorage.getItem('5e.aiOutputBackgroundPolicy') || undefined,
+    examPalette: localStorage.getItem('5e.aiOutputExamPalette') === 'true',
+  });
+  const outputVariantCache = new WeakMap();
+  let outputProcessingRevision = 0;
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -551,6 +566,65 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     status.dataset.kind = kind;
     if (busy && kind === "error") setTaskState("failed");
   };
+  const imageOutputSummary = () => {
+    const background = {
+      preserve: '흰 배경과 투명도를 원본대로 유지',
+      connected: '물체 바깥의 흰색만 투명하게 처리',
+      'all-near-white': '물체 안쪽을 포함한 모든 흰색을 투명하게 처리',
+      checkerboard: '이미지에 그려진 체크무늬를 투명하게 처리',
+    }[selectedImageOutputOptions.backgroundPolicy];
+    return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'}`;
+  };
+  const syncOutputProcessingUi = () => {
+    if (outputProcessing) outputProcessing.hidden = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
+    for (const button of backgroundPolicyButtons) {
+      const active = button.dataset.aiBackgroundPolicy === selectedImageOutputOptions.backgroundPolicy;
+      button.classList.toggle('is-on', active);
+      button.setAttribute('aria-pressed', String(active));
+      button.disabled = busy;
+    }
+    for (const button of examPaletteButtons) {
+      const active = button.dataset.aiExamPalette === String(selectedImageOutputOptions.examPalette);
+      button.classList.toggle('is-on', active);
+      button.setAttribute('aria-pressed', String(active));
+      button.disabled = busy;
+    }
+    if (outputProcessingStatus) outputProcessingStatus.textContent = imageOutputSummary();
+  };
+  const resolveOutputVariant = (item) => {
+    if (!item) return Promise.reject(new Error('선택한 결과가 없습니다.'));
+    const key = imageOutputOptionsKey(selectedImageOutputOptions);
+    let variants = outputVariantCache.get(item);
+    if (!variants) { variants = new Map(); outputVariantCache.set(item, variants); }
+    if (!variants.has(key)) {
+      const pending = resolveImageOutput(item, selectedImageOutputOptions, transparentizeGeneratedImage)
+        .catch((error) => { variants.delete(key); throw error; });
+      variants.set(key, pending);
+    }
+    return variants.get(key);
+  };
+  const renderOutputVariant = async (item, image, revision = outputProcessingRevision) => {
+    if (!item || !image || item.kind !== 'generated' || item.sceneResult) return;
+    const key = imageOutputOptionsKey(selectedImageOutputOptions);
+    try {
+      const source = await resolveOutputVariant(item);
+      if (revision !== outputProcessingRevision || key !== imageOutputOptionsKey(selectedImageOutputOptions) || item.outputImage !== image) return;
+      image.src = source;
+      image.classList.toggle('ai-output-transparent', selectedImageOutputOptions.backgroundPolicy !== 'preserve');
+      if (outputProcessingStatus) outputProcessingStatus.textContent = imageOutputSummary();
+    } catch (error) {
+      if (revision !== outputProcessingRevision) return;
+      image.src = item.data;
+      image.classList.remove('ai-output-transparent');
+      if (outputProcessingStatus) outputProcessingStatus.textContent = `결과 처리 실패: ${error.message}`;
+    }
+  };
+  const refreshOutputPreviews = () => {
+    const revision = ++outputProcessingRevision;
+    if (!generatedImages.some((item) => !item.sceneResult)) { syncOutputProcessingUi(); return; }
+    if (outputProcessingStatus) outputProcessingStatus.textContent = '선택한 방식으로 결과를 처리하는 중…';
+    for (const item of generatedImages) void renderOutputVariant(item, item.outputImage, revision);
+  };
   const emptyReviewReport = () => ({ verdict: "uncertain", checks: [], issues: [] });
   const scopedAppliedReviewReport = () => ({
     verdict: "",
@@ -628,6 +702,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     modeButtons.forEach((button) => { button.disabled = on; });
     qualityButtons.forEach((button) => { button.disabled = on; });
     outputEngineButtons.forEach((button) => { button.disabled = on; });
+    syncOutputProcessingUi();
     if (batchButton) batchButton.disabled = on || attachments.length < 2 || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && reviewModeCheckbox?.checked !== false);
     if (tabNewButton) tabNewButton.disabled = false;
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
@@ -658,9 +733,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const note = panel.querySelector("[data-ai-white-png-note]");
     if (note) {
       note.hidden = !white;
-      note.textContent = "첫 생성 PNG · 자동 검수·교정 없음 · 결과별 분리 상태는 선택 결과 안내에서 확인";
+      note.textContent = "첫 생성 PNG 원본 보관 · 아래 결과 처리는 미리보기·저장·페이지 삽입에만 적용";
       if (attachments.some(item=>item.referenceRole==='STYLE_REFERENCE')) note.textContent += ' · 표현 참고: 새 작업의 첫 변환·자동 교정만 지원';
     }
+    syncOutputProcessingUi();
     chatButton.hidden = white && !panel.querySelector('[data-ai-chat-panel]');
     if (batchButton) {
       batchButton.disabled = busy || attachments.length < 2 || (white && reviewModeCheckbox?.checked !== false);
@@ -1019,6 +1095,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const img = document.createElement("img");
     img.src = item.data;
     img.alt = item.name;
+    if (item.kind === 'generated') {
+      item.outputImage = img;
+      void renderOutputVariant(item, img);
+    }
     stage.appendChild(img);
     if (item.kind === "generated") {
       const output = document.createElement("button");
@@ -1046,9 +1126,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         output.disabled=true;
         const footerInsert = panel.querySelector('[data-ai-insert-selected]');
         if (footerInsert) footerInsert.disabled = true;
-        void insertImageFromSrc(state, item.data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null})
+        void resolveOutputVariant(item)
+          .then(data => insertImageFromSrc(state, data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null}))
           .then(()=>{captureActiveTaskTab();persistTasks();close();})
-          .catch((error)=>addLog(`페이지 삽입 실패: ${error.message}`,"error"))
+          .catch((error)=>{setStatus(`페이지 삽입 실패: ${error.message}`, 'error');addLog(`페이지 삽입 실패: ${error.message}`,"error");})
           .finally(()=>{output.disabled=false;setBusy(false);});
       };
       stage.appendChild(output);
@@ -1091,12 +1172,24 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       savePng.dataset.aiSaveCandidate = '';
       savePng.textContent = "PNG 저장";
       savePng.title = "현재 생성 결과를 PNG 파일로 저장";
-      savePng.onclick = () => {
-        const link = document.createElement("a");
-        const safeName = String(item.name || "평가원식-선화").replace(/[\\/:*?"<>|]+/g, "-");
-        link.href = item.data;
-        link.download = `${safeName}.png`;
-        link.click();
+      savePng.onclick = async () => {
+        if (busy || savePng.disabled) return;
+        const footerSave = panel.querySelector('[data-ai-save-selected]');
+        savePng.disabled = true;
+        if (footerSave) footerSave.disabled = true;
+        try {
+          const link = document.createElement("a");
+          const safeName = String(item.name || "평가원식-선화").replace(/[\\/:*?"<>|]+/g, "-");
+          link.href = await resolveOutputVariant(item);
+          link.download = `${safeName}.png`;
+          link.click();
+          setStatus('선택한 배경·색상 설정으로 PNG를 저장했습니다.', 'ok');
+        } catch (error) {
+          setStatus(`PNG 저장 실패: ${error.message}`, 'error');
+        } finally {
+          savePng.disabled = false;
+          syncSelectedOutputActions();
+        }
       };
       actions.appendChild(savePng);
     }
@@ -2975,6 +3068,28 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     setStatus(selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
       ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
       : "그림형은 흰 배경 PNG를 한 번 생성하며 후처리하지 않습니다.", "ok");
+  }));
+  backgroundPolicyButtons.forEach((button) => button.addEventListener('click', () => {
+    if (busy) return;
+    selectedImageOutputOptions = normalizeImageOutputOptions({
+      ...selectedImageOutputOptions,
+      backgroundPolicy: button.dataset.aiBackgroundPolicy,
+    });
+    localStorage.setItem('5e.aiOutputBackgroundPolicy', selectedImageOutputOptions.backgroundPolicy);
+    syncOutputProcessingUi();
+    refreshOutputPreviews();
+    setStatus('결과의 배경 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
+  }));
+  examPaletteButtons.forEach((button) => button.addEventListener('click', () => {
+    if (busy) return;
+    selectedImageOutputOptions = normalizeImageOutputOptions({
+      ...selectedImageOutputOptions,
+      examPalette: button.dataset.aiExamPalette === 'true',
+    });
+    localStorage.setItem('5e.aiOutputExamPalette', String(selectedImageOutputOptions.examPalette));
+    syncOutputProcessingUi();
+    refreshOutputPreviews();
+    setStatus('결과의 색상 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
   }));
   generationModeSelect.addEventListener('change', () => {
     if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }

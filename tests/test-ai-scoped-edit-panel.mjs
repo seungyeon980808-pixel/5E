@@ -35,6 +35,38 @@ test('explicit confirmation and explicit acceptance are separate; output remains
   assert.deepEqual(f.sourcePng,f.options.sourcePng);
   assert.throws(()=>acceptScopedEditProposal(session,pending,f.getCurrent),/No unconsumed/);
 });
+test('multiple disjoint rectangles are unioned without changing the transparent pixel between them',async()=>{
+  const f=fixture();
+  const rectangles=[
+    {x0:0,y0:0,x1:1,y1:1,coordinateSpace:'selected-result-pixels'},
+    {x0:2,y0:0,x1:3,y1:1,coordinateSpace:'selected-result-pixels'},
+  ];
+  const session=await createScopedEditSession({...f.options,rectangles});
+  assert.equal(session.allowedPixelCount,2);
+  confirmScopedEditSession(session,f.getCurrent);
+  const pending=await prepareScopedEditProposal(session,f.candidatePng,f.getCurrent);
+  const result=decodeTestPng(acceptScopedEditProposal(session,pending,f.getCurrent));
+  assert.deepEqual([...result.data],[199,199,199,199,40,50,60,100,199,199,199,199]);
+});
+test('candidate bytes are snapshotted while live selection and source mutations fail closed during processing',async()=>{
+  {
+    const f=fixture(),session=await createScopedEditSession(f.options);confirmScopedEditSession(session,f.getCurrent);
+    const preparing=prepareScopedEditProposal(session,f.candidatePng,f.getCurrent);
+    f.candidatePng.fill(0);
+    const pending=await preparing, result=decodeTestPng(pending.previewPng);
+    assert.deepEqual([...result.data],[10,20,30,0,199,199,199,199,70,80,90,255]);
+  }
+  for(const mutate of [
+    f=>{f.current.selectionRevision+=1;},
+    f=>{f.current.candidateId='other-image';},
+    f=>{f.current.sourcePng[0]^=1;},
+  ]) {
+    const f=fixture(),session=await createScopedEditSession(f.options);confirmScopedEditSession(session,f.getCurrent);
+    const preparing=prepareScopedEditProposal(session,f.candidatePng,f.getCurrent);
+    mutate(f);
+    await assert.rejects(preparing,/Stale scoped edit/);
+  }
+});
 test('changed task, epoch, version and selection revision all reject stale proposals',async()=>{
   for(const [key,value] of [['taskId','other'],['epoch',2],['candidateId','other'],['selectionRevision',2]]) {
     const f=fixture(),session=await createScopedEditSession(f.options);

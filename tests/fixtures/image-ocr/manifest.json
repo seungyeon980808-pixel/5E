@@ -1,0 +1,163 @@
+{
+  "schema": "5e-image-ocr-fixtures@1",
+  "normalization": "NFC; CRLF to LF; trim lines; remove blank lines; collapse horizontal whitespace",
+  "font": {
+    "file": "NanumGothic-Regular.ttf",
+    "family": "NanumGothic",
+    "bytes": 2054744,
+    "sha256": "76f45ef4a6bcff344c837c95a7dcc26e017e38b5846d5ae0cdcb5b86be2e2d31",
+    "source": "https://raw.githubusercontent.com/google/fonts/16680f8688ffcd467d2eb2146a9ce0343404581d/ofl/nanumgothic/NanumGothic-Regular.ttf",
+    "license": "SIL Open Font License 1.1"
+  },
+  "generator": {
+    "runtime": "Node.js >=20",
+    "renderer": "@resvg/resvg-js@2.6.2",
+    "systemFonts": false
+  },
+  "fixtures": [
+    {
+      "id": "korean-clean",
+      "expected": "광합성 속도",
+      "categories": [
+        "korean",
+        "clean"
+      ],
+      "width": 300,
+      "height": 72,
+      "fontSize": 32,
+      "fill": "#111111",
+      "svg": "korean-clean.svg",
+      "png": "korean-clean.png",
+      "svgSha256": "b0cba978f39164bd12b8b0142d721254d7d24b73be895b4a37b4da56364f7003",
+      "pngSha256": "7b1eca7724b575990f34b817a8e059a8e3a42b5df1c07d217e30c927a2fbb3b0",
+      "pngBytes": 2491
+    },
+    {
+      "id": "korean-numeric",
+      "expected": "온도 25 ℃",
+      "categories": [
+        "korean",
+        "numeric",
+        "unit"
+      ],
+      "width": 280,
+      "height": 68,
+      "fontSize": 30,
+      "fill": "#111111",
+      "svg": "korean-numeric.svg",
+      "png": "korean-numeric.png",
+      "svgSha256": "040210c5f0ba4f64fa9d3744898cebe6d861af24eacff087452aa98a6ae1041c",
+      "pngSha256": "184dcd443f65b2f8a0cd695085a3835a306dc9b9e30a809d2035db73834e6859",
+      "pngBytes": 1445
+    },
+    {
+      "id": "ambiguous-glyphs",
+      "expected": "O0 I1 l1 S5 B8",
+      "categories": [
+        "numeric",
+        "ambiguous-glyph"
+      ],
+      "width": 330,
+      "height": 72,
+      "fontSize": 34,
+      "fill": "#111111",
+      "svg": "ambiguous-glyphs.svg",
+      "png": "ambiguous-glyphs.png",
+      "svgSha256": "c396fa94cfb3b3f20c35388c69271cdb908feb5a16a1ad32ee864859cc42a11a",
+      "pngSha256": "ca2e06d3fd967afcc49fe1aa059779025970eafaae4fd3a2868779a1ad2c3362",
+      "pngBytes": 3065
+    },
+    {
+      "id": "decimal-values",
+      "expected": "0.01 1.00 10.0",
+      "categories": [
+        "numeric",
+        "decimal"
+      ],
+      "width": 330,
+      "height": 72,
+      "fontSize": 34,
+      "fill": "#111111",
+      "svg": "decimal-values.svg",
+      "png": "decimal-values.png",
+      "svgSha256": "b40cc326deeec8ed05ade2542b9ce04b725862760aa457d3275e28ca283a3b05",
+      "pngSha256": "92649f1418fbfdec465363480c6666697ba7e01074aad9e9f47fc3ed1bac3862",
+      "pngBytes": 3046
+    },
+    {
+      "id": "scientific-units",
+      "expected": "속력 12 m/s²",
+      "categories": [
+        "korean",
+        "numeric",
+        "scientific",
+        "unit",
+        "superscript"
+      ],
+      "width": 350,
+      "height": 72,
+      "fontSize": 32,
+      "fill": "#111111",
+      "svg": "scientific-units.svg",
+      "png": "scientific-units.png",
+      "svgSha256": "3436329969b1c1282549d84ac254a97343a065edf3f2b617018ded5c61e18f5b",
+      "pngSha256": "3b9a01c3a4d406deefd49c28fa3e7affa5eb4935404271c6e7970cd89bf65ce1",
+      "pngBytes": 2510
+    },
+    {
+      "id": "chemical-subscripts",
+      "expected": "H₂O + CO₂",
+      "svgMarkup": "H<tspan font-size=\"22\" baseline-shift=\"sub\">2</tspan>O + CO<tspan font-size=\"22\" baseline-shift=\"sub\">2</tspan>",
+      "categories": [
+        "scientific",
+        "chemical",
+        "subscript"
+      ],
+      "width": 290,
+      "height": 72,
+      "fontSize": 36,
+      "fill": "#111111",
+      "svg": "chemical-subscripts.svg",
+      "png": "chemical-subscripts.png",
+      "svgSha256": "02d8a091380af0f40a0763055d1d49480eb578ceba67abdba683407af388b4a7",
+      "pngSha256": "f64d259b95783e16ce0e62f5800bcffa4b307aece9383e6778cf137aeba9a1d9",
+      "pngBytes": 2324
+    },
+    {
+      "id": "small-korean",
+      "expected": "물체의 운동",
+      "categories": [
+        "korean",
+        "small"
+      ],
+      "width": 150,
+      "height": 30,
+      "fontSize": 12,
+      "fill": "#111111",
+      "svg": "small-korean.svg",
+      "png": "small-korean.png",
+      "svgSha256": "a7672ac1c49263a669ca82afc77f959692c20bdfdb9ef18a3d22c0f4ce97b488",
+      "pngSha256": "6fc03e07d000e8bbee2b9f9db6adad055870f6908f6d0e0471435e7aa9baafde",
+      "pngBytes": 958
+    },
+    {
+      "id": "faint-korean-unit",
+      "expected": "전압 3.0 V",
+      "categories": [
+        "korean",
+        "numeric",
+        "unit",
+        "faint"
+      ],
+      "width": 270,
+      "height": 64,
+      "fontSize": 29,
+      "fill": "#b8b8b8",
+      "svg": "faint-korean-unit.svg",
+      "png": "faint-korean-unit.png",
+      "svgSha256": "f818859e834e243a58ae997dcf9e5d821f00213085f97f09d0eda4c98d789c28",
+      "pngSha256": "ae010aaaf5d6d155e173f5b42a10ba01ea3c918eb2c6075205d8f6c7f7e29e49",
+      "pngBytes": 2086
+    }
+  ]
+}
