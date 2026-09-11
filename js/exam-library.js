@@ -15,6 +15,7 @@ import { openReferenceWindow } from "./reference-window.js?v=1.4.0";
 import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
 import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js";
 import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js";
+import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js";
 import { createUnifiedLibraryProvider } from "./library/provider.js";
@@ -339,6 +340,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       import("./pdf-library/remote-pack.js"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
+    const configured = defaultRecentThreePack();
     const syncPackCatalog = () => {
       const merged = mergePreferredCatalogs(
         defaultPack,
@@ -355,12 +357,12 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     packManagement = mount({
       host: pdfUi.getPackHost(),
       store,
-      onUpdateCandidate: async () => {
+      onUpdateCandidate: configured.baseUrl ? async () => {
         const latest = await loadRemotePack({ baseUrl: defaultRecentThreePack().baseUrl });
         defaultPack = latest;
         packManagement.setCandidate(latest);
         await syncPackCatalog();
-      },
+      } : null,
       onChange: (snapshot) => {
         if (snapshot.status !== "ready") return;
         void store.enabledCatalog().then((catalog) => {
@@ -370,8 +372,13 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         });
       },
     });
-    const configured = defaultRecentThreePack();
-    if (configured.baseUrl) {
+    const bundled = await loadBundledDesktopPack();
+    if (bundled) {
+      defaultPack = bundled;
+      packManagement.setCandidate(bundled);
+      await syncPackCatalog();
+    }
+    if (!bundled && configured.baseUrl) {
       void loadRemotePack({ baseUrl: configured.baseUrl }).then((pack) => {
         defaultPack = pack;
         packManagement.setCandidate(pack);
@@ -379,7 +386,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       }).catch((error) => {
         pdfUi.setSourceStatus(`기본 PDF 자료팩을 불러오지 못했습니다. 자료팩 폴더를 설치하거나 PDF를 직접 가져오세요. (${error instanceof Error ? error.message : error})`, true);
       });
-    } else {
+    } else if (!bundled) {
       pdfUi.setSourceStatus(configured.message, true);
     }
     return packManagement;

@@ -17,8 +17,8 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "package:win": "electron-builder --win nsis --x64 --publish never",
-    "package:mac": "electron-builder --mac dmg --x64 --arm64 --publish never",
+    "package:win": "node tools/pdf-library/run-electron-builder.mjs --win --publish never",
+    "package:mac": "node tools/pdf-library/run-electron-builder.mjs --mac --publish never",
     "test:editor": "node --test desktop/editor-clipboard.test.cjs desktop/image-clipboard.test.cjs desktop/platform-shortcuts.test.cjs desktop/mac-keyboard.test.cjs desktop/page-history.test.cjs desktop/document-history.test.cjs desktop/project-status.test.cjs desktop/project-load-stability.test.cjs desktop/autosave-stability.test.cjs tests/test-project-file-extension.mjs tests/test-ai-image-insertion.mjs",
     "test:tutorial": "node --test desktop/tutorial-engine.test.cjs desktop/tutorial-courses.test.cjs",
     "test:editor:browser": "node desktop/editor-usability-browser.cjs",
@@ -57,6 +57,7 @@
       "desktop/pdf-library-scanner.cjs",
       "desktop/pdf-library-service.cjs",
       "desktop/pdf-library-ipc.cjs",
+      "desktop/bundled-pdf-pack.cjs",
       "desktop/splash.html",
       "assets/apple-touch-icon.png",
       "assets/favicon.png",
@@ -70,12 +71,12 @@
       "assets/exam-library/synonyms.json",
       "assets/exam-library/tag-vocab.json",
       "assets/exam-library/sample-catalog.json",
-      "assets/exam-library/images/p1_2025_03_02.png",
       "assets/exam-library/images/p1_2025_11_05.png",
       "assets/exam-library/images/p1_2026_06_12.png",
-      "assets/exam-library/images/p1_2026_09_03.png",
+      "assets/exam-library/images/p1_2026_09_01.png",
       "assets/exam-library/images/p1_2026_11_01.png",
       "assets/exam-library/images/p1_2026_11_08.png",
+      "assets/exam-library/images/p1_2027_06_01.png",
       "assets/exam-library/images/p2_2027_06_13.png",
       "assets/exam-parts/**/*",
       "assets/parts-library/manifest.json",
@@ -87,6 +88,11 @@
       "docs/credits.html",
       "!node_modules/@napi-rs/canvas-darwin-*/**/*"
     ],
+    "extraResources": [{
+      "from": "${env.FIVE_E_PDF_PACK_SOURCE}",
+      "to": "pdf-library/recent-three-pack",
+      "filter": ["**/*"]
+    }],
     "win": {
       "icon": "assets/icon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }]

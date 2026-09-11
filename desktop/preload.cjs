@@ -38,6 +38,8 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     saveCorrection: (payload) => ipcRenderer.invoke("pdf-library:save-correction", payload),
     deleteCorrection: (payload) => ipcRenderer.invoke("pdf-library:delete-correction", payload),
     capabilities: () => ipcRenderer.invoke("pdf-library:capabilities"),
+    bundledPack: () => ipcRenderer.invoke("pdf-library:bundled-pack"),
+    readBundledPack: (path) => ipcRenderer.invoke("pdf-library:read-bundled-pack", { path }),
     onProgress: (callback) => {
       const listener = (_event, value) => callback(value);
       ipcRenderer.on("pdf-library:progress", listener);

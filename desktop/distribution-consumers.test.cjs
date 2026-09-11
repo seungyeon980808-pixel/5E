@@ -105,7 +105,7 @@ test("Given package allowlist expansion on disk and the sparse-aware tracked tre
   const fontAssets = localFontReferences();
   const desktopRuntime = [
     "desktop/main.cjs", "desktop/preload.cjs", "desktop/codex-turn-runtime.cjs", "desktop/codex-process-failure.cjs",
-    "desktop/ai-thread-profile.cjs", "desktop/batch-output-service.cjs", "desktop/pdf-library-scanner.cjs",
+    "desktop/ai-thread-profile.cjs", "desktop/batch-output-service.cjs", "desktop/bundled-pdf-pack.cjs", "desktop/pdf-library-scanner.cjs",
     "desktop/pdf-library-service.cjs", "desktop/pdf-library-ipc.cjs", "desktop/splash.html",
   ];
 

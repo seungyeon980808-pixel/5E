@@ -13,10 +13,11 @@ const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 const { createPdfLibraryService } = require("./pdf-library-service.cjs");
 const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
+const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bundled-pdf-pack.cjs");
 const { createBatchOutputService } = require("./batch-output-service.cjs");
 
 const APP_ID = "com.5e.editor";
-const APP_ICON_PATH = path.join(__dirname, "..", "assets", "icon.ico");
+const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === "darwin" ? "icon-512.png" : "icon.ico");
 app.setAppUserModelId(APP_ID);
 
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
@@ -32,6 +33,12 @@ const pdfLibraryService = createPdfLibraryService({
     if (win && !win.isDestroyed()) win.webContents.send("pdf-library:progress", progress);
   },
 });
+const bundledPdfPackPath = app.isPackaged
+  ? path.join(process.resourcesPath, "pdf-library", "recent-three-pack")
+  : process.env.FIVE_E_BUNDLED_PDF_PACK_SOURCE;
+const bundledPdfPack = bundledPdfPackPath
+  ? createBundledPdfPackReader({ root: bundledPdfPackPath, expectedIdentity: RECENT_THREE_PACK_IDENTITY })
+  : null;
 let codexSendInvocationCount = 0;
 const localImageRoots = new Set();
 const batchOutputRoots = new Set();
@@ -645,6 +652,34 @@ function createWindow() {
   win.webContents.once("did-fail-load", revealMainWindow);
   win.loadFile(path.join(__dirname, "..", "index.html"));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
+  if (process.env.FIVE_E_BUNDLED_PDF_SMOKE_TEST === "1") {
+    win.webContents.once("did-finish-load", async () => {
+      try {
+        const result = await win.webContents.executeJavaScript(`(async () => {
+          const [{ loadBundledDesktopPack }, { createPdfRuntime }] = await Promise.all([
+            import("./js/pdf-library/desktop-pack.js"), import("./js/pdf-library/pdf-runtime.js"),
+          ]);
+          const pack = await loadBundledDesktopPack();
+          const runtime = createPdfRuntime();
+          const first = pack?.documents?.[0];
+          const opened = first ? await pack.openDocument(runtime, first) : null;
+          if (opened) await runtime.closeDocument(opened.id);
+          return {
+            id: pack?.id || null, documentCount: pack?.documentCount || 0,
+            pageCount: pack?.pageCount || 0, openedId: opened?.id || null,
+            openedPageCount: opened?.pageCount || 0,
+          };
+        })()`);
+        const ok = result.id === RECENT_THREE_PACK_IDENTITY.id && result.documentCount === 72
+          && result.pageCount === 288 && result.openedId && result.openedPageCount > 0;
+        fs.writeFileSync(process.env.FIVE_E_BUNDLED_PDF_SMOKE_RESULT, JSON.stringify({ ok, result }), "utf8");
+        app.exit(ok ? 0 : 1);
+      } catch (error) {
+        fs.writeFileSync(process.env.FIVE_E_BUNDLED_PDF_SMOKE_RESULT, JSON.stringify({ ok: false, error: error.message }), "utf8");
+        app.exit(1);
+      }
+    });
+  }
   if (process.env.FIVE_E_PDF_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {
       try {
@@ -729,7 +764,16 @@ function createWindow() {
     win.webContents.once("did-finish-load", async () => {
       try {
         const codexSendsBeforeSmoke = codexSendInvocationCount;
-        const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
+        let smokeBlockedCodexSends = 0;
+        ipcMain.removeHandler("codex:send");
+        ipcMain.handle("codex:send", (_, payload) => {
+          smokeBlockedCodexSends += 1;
+          const suffix = `${smokeBlockedCodexSends}-${String(payload?.clientScope || "legacy")}`;
+          return { turnId: `smoke-blocked-turn-${suffix}`, renderThreadId: `smoke-blocked-thread-${suffix}` };
+        });
+        let result;
+        try {
+          result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(async () => {
             const waitFor = async (test, timeout = 4000) => {
               const started = Date.now();
@@ -749,6 +793,7 @@ function createWindow() {
             dismissStartupDialogs();
             const button = document.getElementById("ai-image-install-open");
             const panel = document.getElementById("ai-image-panel");
+            const activePanel = () => document.getElementById("ai-image-panel");
             button?.click();
             let codexStatusReadable = false;
             let codexStatusError = "";
@@ -789,6 +834,14 @@ function createWindow() {
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
             const aiSourceEntrypointsReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
               !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-capture]");
+            const initialThicknessButtons = Array.from(panel?.querySelectorAll("[data-ai-line-thickness]") || []);
+            const initialThicknessOriginal = panel?.querySelector('[data-ai-line-thickness="0"]');
+            const initialThicknessPlusOne = panel?.querySelector('[data-ai-line-thickness="1"]');
+            initialThicknessPlusOne?.click();
+            const initialThicknessChanged = await waitFor(() => initialThicknessPlusOne?.getAttribute("aria-pressed") === "true");
+            initialThicknessOriginal?.click();
+            const aiInitialThicknessReady = initialThicknessButtons.length === 3 && initialThicknessChanged &&
+              await waitFor(() => initialThicknessOriginal?.getAttribute("aria-pressed") === "true");
             panel?.querySelector("[data-ai-reference-search]")?.click();
             const aiLoadMenuReady = await waitFor(() => {
               const search = document.querySelector(".ai-reference-search-dialog");
@@ -911,7 +964,8 @@ function createWindow() {
               .map((node) => ({ id: node.id, className: node.className, title: node.querySelector(".modal-title")?.textContent?.trim() || "" }));
             window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", shiftKey: true, bubbles: true }));
             const eraseShortcutWorks = stateModule.state.get().activeTool === "ERASE";
-            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ctrlKey: true, bubbles: true }));
+            const commandModifier = /Mac/i.test(navigator.platform) ? { metaKey: true } : { ctrlKey: true };
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ...commandModifier, bubbles: true }));
             const delayedShortcutWorks = stateModule.state.get().activeTool === "DELAYED_CUT";
             document.querySelector('[data-tool="V"]')?.click();
             const chooserClosesOnOtherTool = await waitFor(() => !isActuallyVisible(cutChooser) &&
@@ -984,108 +1038,138 @@ function createWindow() {
             const internalCutRendersBoth = !!remainderNode?.querySelector('mask polygon[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask rect[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask polygon[fill="#ffffff"]');
-            let examLibraryAiReferenceWorks = false;
-            let imageLibraryAiReferenceWorks = false;
-            let aiMultipleReferencesReady = false;
-            let aiComparisonReady = false;
+            let unifiedLibraryReady = false;
+            let aiLibraryIndependentWorkspaces = false;
+            let aiOneImagePerTaskReady = false;
+            let aiSingleImageComparisonGuardReady = false;
             let aiAreaCommentReady = false;
             let aiAreaCommentTracksZoom = false;
+            let aiAreaCommentZoomDiagnostics = null;
             let aiReferencesOpenImmediately = false;
             let aiLocalAssetZeroRoundTripWorks = false;
             let aiLocalApparatusZeroRoundTripWorks = false;
+            let aiLocalOneResultPerWorkspace = false;
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
-            let aiTaskTabsIsolated = false;
-            let aiBatchControlReady = false;
+            let aiTaskWorkspacesIsolated = false;
+            let aiCollectiveExportControlReady = false;
+            const initialWorkbenchPanels = new Set(Array.from(document.querySelectorAll(".modal-overlay"))
+              .filter((candidate) => candidate.querySelector(".modal-ai")));
             document.getElementById("exam-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".examlib-card"))) {
-              const examCards = Array.from(document.querySelectorAll(".examlib-card")).slice(0, 2);
-              examCards.forEach((card) => card.click());
-              const examAiButton = document.getElementById("examlib-ai");
-              if (examAiButton && !examAiButton.disabled) {
-                examAiButton.click();
-                examLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= examCards.length);
-                panel.querySelector("[data-ai-close]")?.click();
+            const libraryOpened = await waitFor(() => {
+              const library = document.querySelector(".unified-library-overlay:not([hidden])");
+              return library?.querySelectorAll("[data-result-id]").length >= 2;
+            }, 10000);
+            const library = document.querySelector(".unified-library-overlay:not([hidden])");
+            library?.querySelector('[data-unilib-tab="image"]')?.click();
+            const imageResultsReady = await waitFor(() =>
+              library?.querySelectorAll("[data-result-id]").length >= 2, 10000);
+            const selectedLibraryChecks = Array.from(library?.querySelectorAll("[data-select-result]") || []).slice(0, 2);
+            selectedLibraryChecks.forEach((check) => check.click());
+            const libraryAiButton = library?.querySelector("[data-unilib-ai]");
+            unifiedLibraryReady = libraryOpened && imageResultsReady && selectedLibraryChecks.length === 2 &&
+              !!libraryAiButton && !libraryAiButton.disabled && /선택 2개/.test(libraryAiButton.textContent || "");
+            libraryAiButton?.click();
+            await waitFor(() => Array.from(document.querySelectorAll(".modal-overlay"))
+              .filter((candidate) => candidate.querySelector(".modal-ai") && !initialWorkbenchPanels.has(candidate))
+              .filter((candidate) => candidate.querySelectorAll(".ai-reference-card").length === 1).length === 2, 12000);
+            const independentPanels = Array.from(document.querySelectorAll(".modal-overlay"))
+              .filter((candidate) => candidate.querySelector(".modal-ai") && !initialWorkbenchPanels.has(candidate))
+              .filter((candidate) => candidate.querySelectorAll(".ai-reference-card").length === 1)
+              .slice(0, 2);
+            aiLibraryIndependentWorkspaces = unifiedLibraryReady && independentPanels.length === 2 &&
+              new Set(independentPanels.map((candidate) => candidate.querySelector(".ai-reference-card img")?.src)).size === 2;
+            aiOneImagePerTaskReady = aiLibraryIndependentWorkspaces && independentPanels.every((candidate) =>
+              candidate.querySelectorAll(".ai-reference-card").length === 1 &&
+              candidate.querySelectorAll(".ai-generated-card").length === 0);
+            aiReferencesOpenImmediately = independentPanels.every((candidate) => candidate.querySelector(".ai-reference-section")?.open);
+            library?.querySelector("[data-unilib-close]")?.click();
+            const activateWorkspace = async (target) => {
+              if (!target || activePanel() === target) return Boolean(target);
+              const scope = target.id.replace(/^ai-workspace-/, "");
+              activePanel()?.querySelector('[data-ai-workspace-link="' + scope + '"]')?.click();
+              return waitFor(() => activePanel() === target, 4000);
+            };
+            for (const independentPanel of independentPanels) {
+              await activateWorkspace(independentPanel);
+              if (independentPanel.dataset.aiBusy === "true") {
+                independentPanel.querySelector("[data-ai-interrupt]")?.click();
+                await waitFor(() => independentPanel.dataset.aiBusy === "false", 5000);
               }
             }
-            document.getElementById("parts-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".partslib-card"))) {
-              const partCards = Array.from(document.querySelectorAll(".partslib-card")).slice(0, 2);
-              partCards.forEach((card) => card.click());
-              const imageAiReady = await waitFor(() => {
-                const candidate = document.getElementById("partslib-ai");
-                return candidate && !candidate.disabled;
-              });
-              if (imageAiReady) {
-                document.getElementById("partslib-ai")?.click();
-                imageLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= 4);
-                aiMultipleReferencesReady = imageLibraryAiReferenceWorks;
-                const referenceDetails = panel.querySelector(".ai-reference-section");
-                aiReferencesOpenImmediately = !!referenceDetails?.open;
-                const commentCard = panel.querySelector(".ai-reference-card");
+            const commentPanel = independentPanels[0];
+            if (await activateWorkspace(commentPanel)) {
+                if (commentPanel.dataset.aiBusy === "true") {
+                  commentPanel.querySelector("[data-ai-interrupt]")?.click();
+                  await waitFor(() => commentPanel.dataset.aiBusy === "false", 5000);
+                }
+                const referenceDetails = commentPanel.querySelector(".ai-reference-section");
+                aiReferencesOpenImmediately = aiReferencesOpenImmediately && !!referenceDetails?.open;
+                const commentCard = commentPanel.querySelector(".ai-reference-card");
                 const commentStage = commentCard?.querySelector(".ai-preview-stage");
                 const commentImage = commentStage?.querySelector("img");
-                const commentButton = commentCard?.querySelector(".ai-preview-actions button:last-child");
+                const commentButton = commentPanel.querySelector('[data-ai-comment-tool="area"]');
                 if (commentStage && commentImage && commentButton) {
                   commentButton.click();
-                  const rect = commentStage.getBoundingClientRect();
-                  commentImage.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .2, clientY: rect.top + rect.height * .2 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  const selection = commentCard.querySelector(".ai-selection-box");
-                  aiAreaCommentReady = !!selection && !!commentCard.querySelector(".ai-comment-row input");
+                  const rect = commentImage.getBoundingClientRect();
+                  commentImage.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 77, isPrimary: true, button: 0, clientX: rect.left + rect.width * .2, clientY: rect.top + rect.height * .2 }));
+                  commentStage.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 77, isPrimary: true, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
+                  commentStage.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 77, isPrimary: true, button: 0, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
+                  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+                  const selection = commentCard.querySelector(".ai-comment-region");
+                  aiAreaCommentReady = !!selection && !!commentPanel.querySelector("[data-ai-comment-editor]");
                   if (selection) {
-                    const beforeStage = commentStage.getBoundingClientRect();
+                    const beforeImage = commentImage.getBoundingClientRect();
                     const beforeSelection = selection.getBoundingClientRect();
                     const before = {
-                      x: (beforeSelection.left - beforeStage.left) / beforeStage.width,
-                      y: (beforeSelection.top - beforeStage.top) / beforeStage.height,
-                      w: beforeSelection.width / beforeStage.width,
-                      h: beforeSelection.height / beforeStage.height,
+                      x: (beforeSelection.left - beforeImage.left) / beforeImage.width,
+                      y: (beforeSelection.top - beforeImage.top) / beforeImage.height,
+                      w: beforeSelection.width / beforeImage.width,
+                      h: beforeSelection.height / beforeImage.height,
                     };
-                    commentCard.querySelector(".ai-preview-actions button:first-child")?.click();
+                    commentCard.querySelector('[aria-label="미리보기 확대"]')?.click();
                     await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                    const afterStage = commentStage.getBoundingClientRect();
                     const afterImage = commentImage.getBoundingClientRect();
-                    const afterSelection = selection.getBoundingClientRect();
+                    const afterSelectionNode = commentCard.querySelector(".ai-comment-region");
+                    const afterSelection = afterSelectionNode?.getBoundingClientRect();
                     const after = {
-                      x: (afterSelection.left - afterStage.left) / afterStage.width,
-                      y: (afterSelection.top - afterStage.top) / afterStage.height,
-                      w: afterSelection.width / afterStage.width,
-                      h: afterSelection.height / afterStage.height,
+                      x: (afterSelection?.left - afterImage.left) / afterImage.width,
+                      y: (afterSelection?.top - afterImage.top) / afterImage.height,
+                      w: afterSelection?.width / afterImage.width,
+                      h: afterSelection?.height / afterImage.height,
                     };
-                    aiAreaCommentTracksZoom = Math.abs(afterStage.height - afterImage.height) < 4 &&
+                    aiAreaCommentZoomDiagnostics = {
+                      before, after, beforeImageHeight: beforeImage.height, afterImageHeight: afterImage.height,
+                      zoomValue: commentCard.querySelector(".ai-zoom-value")?.textContent || "",
+                    };
+                    aiAreaCommentTracksZoom = afterSelectionNode !== selection &&
+                      commentCard.querySelector(".ai-zoom-value")?.textContent === "120%" &&
                       Object.keys(before).every((key) => Math.abs(before[key] - after[key]) < .02);
                   }
                 }
-                panel.querySelector("[data-ai-compare]")?.click();
-                aiComparisonReady = await waitFor(() =>
-                  document.querySelectorAll(".ai-compare-pane").length === 2 &&
-                  document.querySelectorAll(".ai-compare-picker button").length >= 4);
-                document.querySelector(".ai-compare-head button")?.click();
-                panel.querySelector("[data-ai-close]")?.click();
-              }
+                commentPanel.querySelector("[data-ai-compare]")?.click();
+                aiSingleImageComparisonGuardReady = !document.querySelector(".ai-compare-dialog") &&
+                  /두 개 이상/.test(commentPanel.querySelector("[data-ai-status]")?.textContent || "");
             }
-            button?.click();
-            if (await waitFor(() => panel?.hidden === false, 2000)) {
-              aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
-              aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 2;
-              aiBatchControlReady = !!panel.querySelector("[data-ai-batch]") && !!panel.querySelector("[data-ai-batch-panel]");
-              const originalTab = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on");
-              const originalInputValue = panel.querySelector("[data-ai-input]")?.value || "";
-              panel.querySelector("[data-ai-tab-new]")?.click();
-              const isolatedInput = panel.querySelector("[data-ai-input]");
-              if (isolatedInput) isolatedInput.value = "tab isolation smoke";
-              originalTab?.click();
-              const originalRestored = panel.querySelector("[data-ai-input]")?.value === originalInputValue;
-              const createdTab = Array.from(panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab")).at(-1);
-              createdTab?.click();
-              aiTaskTabsIsolated = originalRestored && panel.querySelector("[data-ai-input]")?.value === "tab isolation smoke";
+            let workingPanel = activePanel();
+            if (workingPanel) {
+              aiQualityControlsReady = workingPanel.querySelectorAll("[data-ai-quality]").length === 3;
+              aiOutputControlsReady = workingPanel.querySelectorAll("[data-ai-output-engine]").length === 2;
+              const originalWorkspace = workingPanel;
+              const originalInputValue = originalWorkspace.querySelector("[data-ai-input]")?.value || "";
+              originalWorkspace.querySelector("[data-ai-tab-new]")?.click();
+              await waitFor(() => activePanel() && activePanel() !== originalWorkspace, 5000);
+              const isolatedWorkspace = activePanel();
+              const isolatedInput = isolatedWorkspace?.querySelector("[data-ai-input]");
+              if (isolatedInput) isolatedInput.value = "workspace isolation smoke";
+              await activateWorkspace(originalWorkspace);
+              const originalRestored = originalWorkspace.querySelector("[data-ai-input]")?.value === originalInputValue;
+              await activateWorkspace(isolatedWorkspace);
+              aiTaskWorkspacesIsolated = originalRestored &&
+                isolatedWorkspace?.querySelector("[data-ai-input]")?.value === "workspace isolation smoke";
+              workingPanel = activePanel();
               // Local zero-round-trip diagrams are now an explicit user choice;
               // textbook raster conversion is never auto-routed to 5E assets.
-              panel.querySelector('[data-ai-output-engine="asset"]')?.click();
               const localRequests = [
                 "한반도 물리 해안선 지도를 그려 줘",
                 "one closed rectangular series circuit with exactly one dc source on the left, one open switch on the top, one resistor on the right, and one lamp on the bottom, no labels or arrows",
@@ -1095,19 +1179,27 @@ function createWindow() {
                 "one generic unlabeled logistic S-shaped population curve without labels text numbers",
               ];
               const localResults = [];
+              const localPanels = [];
               for (const localRequest of localRequests) {
-                panel.querySelector("[data-ai-new]")?.click();
-                panel.querySelector('[data-ai-mode="diagram"]')?.click();
-                const aiInput = panel.querySelector("[data-ai-input]");
+                if (localPanels.length) {
+                  const previousPanel = activePanel();
+                  previousPanel?.querySelector("[data-ai-tab-new]")?.click();
+                  await waitFor(() => activePanel() && activePanel() !== previousPanel, 5000);
+                }
+                workingPanel = activePanel();
+                localPanels.push(workingPanel);
+                workingPanel?.querySelector('[data-ai-output-engine="asset"]')?.click();
+                workingPanel?.querySelector('[data-ai-mode="diagram"]')?.click();
+                const aiInput = workingPanel?.querySelector("[data-ai-input]");
                 let historyTail = "";
                 try {
                   const history = JSON.parse(localStorage.getItem("5e.aiPerformance.v1") || "[]");
                   historyTail = JSON.stringify(Array.isArray(history) ? history.at(-1) || null : null);
                 } catch {}
                 if (aiInput) aiInput.value = localRequest;
-                panel.querySelector("[data-ai-send]")?.click();
+                workingPanel?.querySelector("[data-ai-send]")?.click();
                 const localPreviewReady = await waitFor(() =>
-                  !!panel.querySelector("[data-ai-previews] .ai-preview-card img[src^='data:image/svg+xml']"), 4000);
+                  !!workingPanel?.querySelector("[data-ai-previews] .ai-preview-card img[src^='data:image/svg+xml']"), 4000);
                 let localMetric = null;
                 await waitFor(() => {
                   try {
@@ -1124,7 +1216,14 @@ function createWindow() {
               }
               aiLocalAssetZeroRoundTripWorks = localResults.length === localRequests.length && localResults.every(Boolean);
               aiLocalApparatusZeroRoundTripWorks = localResults.slice(1).length === 5 && localResults.slice(1).every(Boolean);
-              panel.querySelector("[data-ai-close]")?.click();
+              aiLocalOneResultPerWorkspace = localPanels.length === localRequests.length && localPanels.every((candidate) =>
+                candidate.querySelectorAll(".ai-reference-card").length === 0 &&
+                candidate.querySelectorAll(".ai-generated-card").length === 1);
+              const exportMode = workingPanel?.querySelector("[data-ai-task-export-mode]");
+              const exportButton = workingPanel?.querySelector("[data-ai-task-export]");
+              aiCollectiveExportControlReady = Array.from(exportMode?.options || []).map((option) => option.value).join(",") === "selected,all" &&
+                exportButton?.textContent?.trim() === "한 폴더에 저장" && !exportButton.disabled;
+              workingPanel?.querySelector("[data-ai-close]")?.click();
             }
             if (${process.env.FIVE_E_SMOKE_CUT_SCREENSHOT === "1" ? "true" : "false"}) {
               dismissStartupDialogs();
@@ -1179,21 +1278,24 @@ function createWindow() {
               internalCutSeparates,
               internalCutSelectsExtracted,
               internalCutRendersBoth,
-              examLibraryAiReferenceWorks,
-              imageLibraryAiReferenceWorks,
-              aiMultipleReferencesReady,
-              aiComparisonReady,
+              aiInitialThicknessReady,
+              unifiedLibraryReady,
+              aiLibraryIndependentWorkspaces,
+              aiOneImagePerTaskReady,
+              aiSingleImageComparisonGuardReady,
               aiAreaCommentReady,
               aiAreaCommentTracksZoom,
+              aiAreaCommentZoomDiagnostics,
               aiReferencesOpenImmediately,
               aiLocalAssetZeroRoundTripWorks,
               aiLocalApparatusZeroRoundTripWorks,
+              aiLocalOneResultPerWorkspace,
               aiQualityControlsReady,
               aiOutputControlsReady,
-              aiTaskTabsIsolated,
-              aiBatchControlReady,
-              aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
-                panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
+              aiTaskWorkspacesIsolated,
+              aiCollectiveExportControlReady,
+              aiComposerDockedRight: !!activePanel()?.querySelector(".ai-conversation [data-ai-input]") &&
+                activePanel()?.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
               buttonText: button?.textContent?.trim() || "",
               panelOpened: panelWasOpened,
               installDialogOpened: Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
@@ -1201,8 +1303,17 @@ function createWindow() {
             });
           }));
         })`);
+        } finally {
+          ipcMain.removeHandler("codex:send");
+          ipcMain.handle("codex:send", (_, payload) => {
+            codexSendInvocationCount += 1;
+            return runtimeFor(payload).sendTurn(payload);
+          });
+        }
+        result.smokeBlockedCodexSends = smokeBlockedCodexSends;
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
+        result.menuBarPolicySatisfied = process.platform === "darwin" || result.menuBarVisible === false;
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
         const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
@@ -1212,15 +1323,18 @@ function createWindow() {
           result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
           result.chooserClosesOnSelectShortcut && result.chooserClosesOnOtherTool && result.eraseToolReachable &&
           result.cutToolReachable && result.delayedCutUiReachable && result.eraseShortcutWorks && result.delayedShortcutWorks &&
-          result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
-          result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
+          result.aiInitialThicknessReady && result.unifiedLibraryReady && result.aiLibraryIndependentWorkspaces &&
+          result.aiOneImagePerTaskReady && result.aiSingleImageComparisonGuardReady &&
+          result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
           result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
-          result.aiLocalApparatusZeroRoundTripWorks && result.aiQualityControlsReady && result.aiOutputControlsReady &&
-          result.aiTaskTabsIsolated && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
+          result.aiLocalApparatusZeroRoundTripWorks && result.aiLocalOneResultPerWorkspace &&
+          result.aiQualityControlsReady && result.aiOutputControlsReady &&
+          result.aiTaskWorkspacesIsolated && result.aiCollectiveExportControlReady &&
+          result.codexSendInvocationsDuringLocalSmoke === 0 &&
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          !result.installDialogOpened && result.menuBarVisible === false && result.appIconReadable;
+          !result.installDialogOpened && result.menuBarPolicySatisfied && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
@@ -1357,8 +1471,9 @@ ipcMain.handle("batch-output:save", async (_, payload = {}) => {
     originalPath: payload.originalPath || null,
     data: Buffer.from(match[1], "base64"),
     extension: payload.extension || ".png",
+    appendConverted: payload.appendConverted !== false,
   });
 });
-registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService });
+registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("before-quit", stopAllServers);

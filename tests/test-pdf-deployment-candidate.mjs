@@ -1,11 +1,16 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import test from "node:test";
 
 import { PDF_PACK_FIXTURE, writePdfPackFixture } from "./helpers/pdf-pack-fixture.mjs";
+import { loadBundledDesktopPack } from "../js/pdf-library/desktop-pack.js";
+
+const require = createRequire(import.meta.url);
+const { createBundledPdfPackReader } = require("../desktop/bundled-pdf-pack.cjs");
 
 test("Given a validated pack, when a deployment candidate is assembled, then app and pack are independent and no staged path contains .omo", async (t) => {
   // Given
@@ -42,6 +47,7 @@ test("Given a validated pack, when a deployment candidate is assembled, then app
   assert.equal(sampleCatalog.items.length, 7);
   assert.deepEqual([...new Set(sampleCatalog.items.map((item) => item.subject))].sort(), ["p1", "p2"]);
   assert.deepEqual([...new Set(sampleCatalog.items.map((item) => item.year))].sort(), [2025, 2026, 2027]);
+  assert.equal(sampleCatalog.items.every((item) => item.license === "이용 조건 미확인"), true);
   await Promise.all(sampleCatalog.items.map((item) => readFile(path.join(output, "app", item.url))));
   const verification = spawnSync(process.execPath, ["tools/pdf-library/verify-deployment-candidate.mjs", output], {
     cwd: path.resolve(import.meta.dirname, ".."), encoding: "utf8",
@@ -70,9 +76,14 @@ test("Given a candidate manifest whose pack path escapes the candidate, when ver
 
 test("Given the Windows candidate path, when inspected, then NSIS is pinned to x64 and CI verifies a nonempty PE installer hash without publishing", async () => {
   const packageJson = JSON.parse(await readFile(path.resolve("package.json"), "utf8"));
+  const packager = await readFile(path.resolve("tools/pdf-library/run-electron-builder.mjs"), "utf8");
   const workflow = await readFile(path.resolve(".github/workflows/windows-candidate.yml"), "utf8");
 
-  assert.match(packageJson.scripts["package:win"], /--x64/);
+  assert.equal(packageJson.scripts["package:win"], "node tools/pdf-library/run-electron-builder.mjs --win --publish never");
+  assert.match(packager, /\["--win", "nsis", "--x64", "--publish", "never"\]/u);
+  assert.match(packager, /FIVE_E_PDF_PACK_SOURCE/);
+  assert.match(packager, /spawnSync\(process\.execPath, \[builderCli, \.\.\.arguments_\]/u);
+  assert.match(packager, /must contain exactly its manifests and declared assets/u);
   assert.equal(packageJson.build.files.includes("!node_modules/@napi-rs/canvas-darwin-*/**/*"), true);
   assert.equal("files" in packageJson.build.win, false);
   assert.match(workflow, /workflow_dispatch/);
@@ -88,6 +99,7 @@ test("Given the desktop package and smoke launcher, when platform support is ins
   const requiredDesktopModules = [
     "desktop/ai-thread-profile.cjs",
     "desktop/batch-output-service.cjs",
+    "desktop/bundled-pdf-pack.cjs",
     "desktop/codex-process-failure.cjs",
     "desktop/codex-turn-runtime.cjs",
     "desktop/main.cjs",
@@ -101,7 +113,11 @@ test("Given the desktop package and smoke launcher, when platform support is ins
   // When / Then
   assert.equal(packageJson.scripts.desktop, "electron .");
   assert.equal(packageJson.scripts["test:image"], "node desktop/run-smoke.cjs --image");
-  assert.match(packageJson.scripts["package:mac"], /^electron-builder --mac dmg --x64 --arm64 --publish never$/);
+  assert.equal(packageJson.scripts["package:win"], "node tools/pdf-library/run-electron-builder.mjs --win --publish never");
+  assert.equal(packageJson.scripts["package:mac"], "node tools/pdf-library/run-electron-builder.mjs --mac --publish never");
+  assert.deepEqual(packageJson.build.extraResources, [{
+    from: "${env.FIVE_E_PDF_PACK_SOURCE}", to: "pdf-library/recent-three-pack", filter: ["**/*"],
+  }]);
   assert.deepEqual(packageJson.build.mac.target, [{ target: "dmg", arch: ["x64", "arm64"] }]);
   assert.equal(packageJson.build.mac.icon, "assets/icon-512.png");
   assert.equal(requiredDesktopModules.every((file) => packageJson.build.files.includes(file)), true);
@@ -111,4 +127,40 @@ test("Given the desktop package and smoke launcher, when platform support is ins
   assert.doesNotMatch(smokeLauncher, /electron\.exe/);
   assert.match(smokeLauncher, /process\.platform === "darwin" \? 120_000 : 30_000/);
   assert.doesNotMatch(`${packageJson.scripts.desktop}\n${packageJson.scripts["package:mac"]}`, /npm (?:i|install|ci)|npx/u);
+});
+
+test("Given a packaged PDF pack reader, when the renderer requests a declared asset, then only checksum-verified bytes are exposed", async (t) => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "5e-bundled-pack-"));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  const fixture = await writePdfPackFixture(temporary);
+  const reader = createBundledPdfPackReader({ root: temporary });
+
+  assert.deepEqual(reader.describe(), {
+    available: true, id: PDF_PACK_FIXTURE.id, version: PDF_PACK_FIXTURE.version,
+    title: fixture.pack.title, documentCount: 1, pageCount: 1,
+  });
+  assert.equal(Buffer.from(await reader.read("documents/fixture.pdf")).subarray(0, 5).toString("ascii"), "%PDF-");
+  await assert.rejects(reader.read("../pack.json"), /safe relative path/i);
+  await assert.rejects(reader.read("undeclared.pdf"), /not declared/i);
+  await writeFile(path.join(temporary, "documents", "fixture.pdf"), "%PDF-tampered");
+  await assert.rejects(reader.read("documents/fixture.pdf"), /checksum does not match/i);
+});
+
+test("Given the desktop bundled-pack bridge, when its catalog loads and one PDF opens, then the existing remote validator drives the local bytes", async (t) => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "5e-bundled-driver-"));
+  t.after(() => rm(temporary, { recursive: true, force: true }));
+  await writePdfPackFixture(temporary);
+  const reader = createBundledPdfPackReader({ root: temporary });
+  const bridge = { bundledPack: async () => reader.describe(), readBundledPack: (assetPath) => reader.read(assetPath) };
+  const pack = await loadBundledDesktopPack(bridge);
+  let opened;
+
+  const document = await pack.openDocument({
+    async openDocument(input) { opened = input; return { id: input.id, pageCount: 1 }; },
+  }, pack.documents[0]);
+
+  assert.equal(pack.documentCount, 1);
+  assert.equal(pack.searchIndex.entries.length, 1);
+  assert.equal(document.id, pack.documents[0].id);
+  assert.equal(new TextDecoder().decode(opened.data.subarray(0, 5)), "%PDF-");
 });
