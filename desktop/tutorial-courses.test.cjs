@@ -181,11 +181,15 @@ test('pendulum angle demo uses exactly the three taught construction points',()=
 });
 
 test('exam text deletion never auto-passes merely because one fragment disappeared',()=>{
- const h=load('Win32'),s=h.course('exam-search').steps.find(s=>s.title.includes('③ 화살표와 글자')),c={tailIds:['arrow']};
- h.current.objects=[{id:'ship',type:'polyline'},{id:'arrow',type:'polyline'},{id:'letter1',type:'image'},{id:'letter2',type:'image'}];
- assert.equal(s.auto.run(c),false);h.current.objects=h.current.objects.filter(o=>o.id!=='arrow'&&o.id!=='letter1');
- assert.equal(s.wait.until(c),false);assert.equal(s.auto.run(c),true);assert.equal(s.wait.until(c),true);
+ const h=load('Win32'),steps=h.course('exam-search').steps,s=steps.find(s=>s.title.includes('③ 화살표와 글자')),previous=steps[steps.indexOf(s)-1],c={};
+ h.current.objects=[{id:'incline',type:'polyline'},{id:'arrow',type:'polyline'},{id:'letter1',type:'image'},{id:'letter2',type:'image'}];
+ previous.action(c);assert.equal(previous.wait.until(c),false);
+ h.current.objects=h.current.objects.filter(o=>o.id!=='arrow');assert.equal(previous.wait.until(c),true);
+ s.action(c);assert.deepEqual([...c.tailIds],[]);assert.equal(s.wait.until(c),false);
+ h.current.objects=h.current.objects.filter(o=>o.id!=='letter1');assert.equal(s.wait.until(c),false);
+ assert.equal(s.auto.run(c),true);assert.equal(s.wait.until(c),true);
  h.current.objects.push({id:'letter1',type:'image'});assert.equal(s.wait.until(c),false);
+ assert.equal(s.auto.run(c),true);h.current.objects=h.current.objects.filter(o=>o.id!=='letter2');assert.equal(s.wait.until(c),false);
  h.current.objects=[];assert.equal(s.auto.run(c),false);assert.equal(s.wait.until(c),false);assert.equal(s.auto.replay,true);
 });
 
