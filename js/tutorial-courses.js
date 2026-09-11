@@ -2331,8 +2331,8 @@ const TASKS = [
         tip: "Ctrl 을 누른 채 찍으면 완전한 수직", at: [[0, -24], [0, 8]], close: false, mod: "Ctrl 누른 채",
         place: "고정점에서 아래로, 두 점을 클릭해 연직선을 그으세요." },
       { symbol: "anglearc", type: "anglearc", name: "각도 호 θ", where: "왼쪽 도구 4번째 줄 오른쪽(각도) 안에 있습니다.",
-        tip: "세 점을 찍어 각을 만듭니다", at: T.dot([3, -10], 5),
-        place: "두 선 사이 점선 자리에 각도 호를 놓으세요." },
+        tip: "고정점 → 연직선 위의 점 → 진자 줄 위의 점 순서로 세 번 클릭합니다", at: [[0, -24], [0, -10], [7, -10]], close: false,
+        place: "① 위의 고정점, ② 연직선 위의 점, ③ 진자 줄 위의 점을 차례로 눌러 각도 호를 만드세요." },
     ],
     outro: "각도 호에 라벨을 달면 θ 가 됩니다. 최저점에는 '점(N)'을 찍어 두면 깔끔합니다.",
   }),
@@ -2435,7 +2435,7 @@ const TASKS = [
     id: "task-remix", title: "P10 · 비교 그림의 틀 만들기", desc: "표시용 상자로 비교할 부분 잡기",
     minutes: 6, next: [],
     intro: "비교할 그림에서 바꿀 부분을 표시용 상자로 먼저 잡아 둡니다.",
-    figure: [{ pts: T.box(-30, -18, 60, 36), close: true, note: "가져온 그림" }],
+    figure: [{ pts: T.box(-30, -18, 60, 36), close: true, note: "비교 영역" }],
     parts: [
       { tool: "RECT", type: "rect", name: "표시용 상자", where: "왼쪽 도구 2번째 줄 맨 오른쪽입니다.",
         tip: "바꿀 부분을 네모로 표시해 두면 나중에 찾기 쉽습니다", at: T.box(-10, -8, 20, 16), drag: true,
@@ -3444,10 +3444,16 @@ function graphExprs(o) { return objects().filter((x) => x.type === "funcgraph" &
 function modalHasExpr(expr) { return [...document.querySelectorAll("#gm-chips > button > span:first-child")].some((el) => el.textContent.replace(/^y\s*=\s*/, "").replace(/\s+/g, "") === expr); }
 function modalAnnotationCount(selector) { const list = vis(selector); return list ? list.children.length : 0; }
 function addModalExpr(expr) { if (modalHasExpr(expr)) return true; document.querySelector("#gm-add-series")?.click(); return advancedType("#gm-expr", expr); }
-function selectedRichGraph() { return advancedSelectedObjects().find((o) => o.type === "coordplane" && o.richLabels) || null; }
+function selectedRichGraph() {
+  for (const o of advancedSelectedObjects()) {
+    const plane = o.type === "coordplane" ? o : (o.type === "funcgraph" ? advancedGraphs().find((p) => p.id === o.planeId) : null);
+    if (plane?.richLabels) return plane;
+  }
+  return null;
+}
 function graphEditButton() { return selectedRichGraph() ? byText("그래프 편집…", document.querySelector("#panel-right")) : null; }
 const ADVANCED_GRAPH = {
-  id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, next:["advanced-graph-annot"],
+  id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, keepPracticeOnFinish:true, next:["advanced-graph-annot"],
   steps:[
     {chapter:"좌표평면",practice:true,title:"좌표·함수 생성을 열어 주세요",text:"왼쪽 고급 기능에서 ‘좌표/함수 생성’을 누릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"좌표/함수 생성을 눌러 주세요"}},
     {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 검토합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 기본값을 그대로 써도 됩니다. 확인한 뒤 [다음]을 누르세요.",target:()=>"#gm-tab-coord",allowNext:true},
@@ -3455,13 +3461,13 @@ const ADVANCED_GRAPH = {
     {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 sin(x)를 입력합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>addModalExpr("sin(x)")},wait:{until:()=>modalHasExpr("sin(x)"),hint:"sin(x) 계열이 칩으로 보이는지 확인해 주세요"}},
     {chapter:"함수",title:"코사인 함수를 추가합니다",text:"이번에는 cos(x)를 추가해 두 함수를 비교합니다.",target:()=>"#gm-add-series",auto:{label:"cos(x) 입력하기",run:()=>addModalExpr("cos(x)")},wait:{until:()=>modalHasExpr("sin(x)")&&modalHasExpr("cos(x)"),hint:"sin(x)와 cos(x) 두 계열을 확인해 주세요"}},
     {chapter:"완성",title:"그래프를 캔버스에 만들어 주세요",text:"오른쪽 아래 ‘만들기’를 눌러 그래프를 캔버스에 넣습니다.",target:()=>"#gm-confirm",wait:{until:()=>advancedGraphs().some((o)=>graphExprs(o).includes("sin(x)")&&graphExprs(o).includes("cos(x)")),hint:"두 함수가 든 그래프 만들기를 눌러 주세요"}},
-    {chapter:"마무리",title:"좌표평면과 함수 그래프가 완성됐습니다",text:"다음 단계에서는 이 그래프에 표시점·가이드라인·라벨·화살표를 추가합니다. 다 보셨으면 [마치기]를 눌러 주세요."},
+    {chapter:"마무리",title:"좌표평면과 함수 그래프가 완성됐습니다",text:"다음 코스에서 이 그래프에 표시점·수선·화살표·라벨을 추가합니다. 다시 쓰기 위해 연습 페이지는 남겨 둡니다. [마치기]를 눌러 주세요."},
   ],
 };
 const ADVANCED_GRAPH_ANNOT = {
  id:"advanced-graph-annot",title:"6 · 그래프 표시 요소와 주석",desc:"표시점·가이드라인·라벨·화살표·격자·눈금 완성하기",minutes:9,practice:false,next:[],steps:[
  {chapter:"표시",title:"그래프를 선택해 주세요",text:"5번 코스에서 만든 그래프를 캔버스에서 선택하세요. 그래프가 없다면 먼저 5번 코스를 완료해야 합니다.",target:()=>"#canvas",allowPan:true,wait:{until:()=>!!selectedRichGraph(),hint:"그래프를 선택해 주세요. 그래프가 없다면 먼저 5번 코스를 완료하세요"}},
- {chapter:"표시",title:"그래프 편집을 열어 주세요",text:"오른쪽 패널의 ‘그래프 편집…’을 눌러 선택한 그래프를 편집합니다.",target:()=>graphEditButton()||"#panel-right",demo:()=>{const b=graphEditButton();return b?{kind:"clicks",at:[b]}:null},wait:{until:(ctx)=>{if(!vis("#gm-tab-annot-btn")||!vis("#gm-confirm")||document.querySelector("#gm-title")?.textContent.trim()!=="그래프 편집")return false;ctx.annotationPlaneId=selectedRichGraph()?.id;return !!ctx.annotationPlaneId;},hint:"선택한 그래프의 ‘그래프 편집…’을 눌러 주세요"}},
+ {chapter:"표시",title:"그래프 편집을 열어 주세요",text:"선택한 그래프에서 F 키를 누르면 기존 그래프 편집 창이 열립니다. 그룹으로 선택되어도 됩니다. 오른쪽에 ‘그래프 편집…’이 보이면 그 버튼도 사용할 수 있습니다.",target:()=>graphEditButton()||"#canvas",demo:()=>{const b=graphEditButton();return b?{kind:"clicks",at:[b]}:null},wait:{until:(ctx)=>{if(!vis("#gm-tab-annot-btn")||!vis("#gm-confirm")||document.querySelector("#gm-title")?.textContent.trim()!=="그래프 편집")return false;ctx.annotationPlaneId=selectedRichGraph()?.id;return !!ctx.annotationPlaneId;},hint:"그래프를 선택한 뒤 F 키 또는 ‘그래프 편집…’을 누르세요"}},
  {chapter:"표시",title:"표시 탭을 열어 주세요",text:"표시점·수선의 발·화살표·가이드라인을 여기서 추가합니다.",target:()=>"#gm-tab-annot-btn",demo:()=>({kind:"clicks",at:["#gm-tab-annot-btn"]}),wait:{until:()=>!!vis("#gm-ann-marker"),hint:"표시 탭을 눌러 주세요"}},
  {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다.",target:()=>["#gm-ann-marker","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-marker-list")>0,hint:"표시점 도구를 선택하고 미리보기를 클릭해 주세요"}},
  {chapter:"표시",title:"수선의 발을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다.",target:()=>["#gm-ann-guide","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-guide-list")>0,hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},

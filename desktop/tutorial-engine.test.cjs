@@ -180,3 +180,11 @@ test('canvas CSS uses measured panel variables rather than fixed 280px or viewpo
  assert.doesNotMatch(css,/width: min\(280px/);
  assert.match(css,/\.tut-coach\.is-canvas-safe \.tut-coach-auto \{[^}]*white-space: normal;[^}]*overflow-wrap: anywhere;/s);
 });
+
+test('completed linked course preserves its practice; ordinary finish still offers cleanup', async()=>{
+ for(const keep of [true,false]){
+  const h=harness([{}]);h.run(`var cleaned=0,picked=0;cleanupPracticePage=async()=>{cleaned++};openPicker=()=>{picked++};_run.practice={practiceId:'p'};_run.course.keepPracticeOnFinish=${keep}`);
+  await h.run('finishCourse()');assert.equal(h.run('cleaned'),keep?0:1);assert.equal(h.run('picked'),1);
+ }
+ const h=harness([{}]);h.run("var cleaned=0;cleanupPracticePage=async()=>{cleaned++};_run.practice={practiceId:'p'};_run.course.keepPracticeOnFinish=true;stopTutorial()");assert.equal(h.run('cleaned'),1);
+});

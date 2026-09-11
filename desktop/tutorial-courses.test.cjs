@@ -143,3 +143,13 @@ test('annotation draft advances before Apply without mistaking saved plane for d
  assert.ok(marker.target().includes('#gm-preview'));
  const finish=c.steps.at(-2);assert.equal(finish.wait.until({annotationPlaneId:'p'}),false);
 });
+
+test('graph continuation keeps the source page and accepts grouped or individual series selection',()=>{
+ const h=load('Win32'),g=h.course('advanced-graph'),a=h.course('advanced-graph-annot');assert.equal(g.keepPracticeOnFinish,true);
+ h.current.objects=[{id:'p',type:'coordplane',richLabels:true},{id:'f',type:'funcgraph',planeId:'p'}];
+ for(const ids of [['p','f'],['f']]){h.current.selectedIds=ids;assert.equal(a.steps[0].wait.until(),true)}
+ assert.match(a.steps[1].text,/F 키/);assert.match(a.steps[1].wait.hint,/F 키/);
+});
+test('pendulum angle demo uses exactly the three taught construction points',()=>{
+ const p=load('Win32').course('task-pendulum'),s=p.steps.find(s=>s.text.includes('① 위의 고정점'));assert.equal(s.demo().at.length,3);assert.match(s.text,/①/);
+});

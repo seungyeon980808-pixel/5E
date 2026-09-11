@@ -1403,7 +1403,7 @@ async function finishCourse() {
   markDone(course.id);
   removeKey(K_RESUME_LEGACY);
   teardown();
-  await cleanupPracticePage(practice);
+  if (!course.keepPracticeOnFinish) await cleanupPracticePage(practice);
   if (!_run && generation === _runGeneration) openPicker({ justFinished: course.id });
 }
 
