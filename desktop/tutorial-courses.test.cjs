@@ -153,3 +153,12 @@ test('graph continuation keeps the source page and accepts grouped or individual
 test('pendulum angle demo uses exactly the three taught construction points',()=>{
  const p=load('Win32',{}, {anglearc:{create:{tool:'ARC'}}}).course('task-pendulum'),s=p.steps.find(s=>s.text.includes('① 위의 고정점'));assert.equal(s.demo().pts.length,3);assert.match(s.text,/①/);
 });
+
+test('exam text deletion never auto-passes merely because one fragment disappeared',()=>{
+ const h=load('Win32'),s=h.course('exam-search').steps.find(s=>s.title.includes('③ 화살표와 글자')),c={tailIds:['arrow']};
+ h.current.objects=[{id:'ship',type:'polyline'},{id:'arrow',type:'polyline'},{id:'letter1',type:'image'},{id:'letter2',type:'image'}];
+ assert.equal(s.auto.run(c),false);h.current.objects=h.current.objects.filter(o=>o.id!=='arrow'&&o.id!=='letter1');
+ assert.equal(s.wait.until(c),false);assert.equal(s.auto.run(c),true);assert.equal(s.wait.until(c),true);
+ h.current.objects.push({id:'letter1',type:'image'});assert.equal(s.wait.until(c),false);
+ h.current.objects=[];assert.equal(s.auto.run(c),false);assert.equal(s.wait.until(c),false);assert.equal(s.auto.replay,true);
+});

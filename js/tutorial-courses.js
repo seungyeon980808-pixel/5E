@@ -1504,7 +1504,8 @@ const EXAM_SEARCH = {
         "· 오른쪽 — 속도 화살표와 0.6c 글씨. 감싸도록 끌어 고르고 Delete\n" +
         "· 우주선 안 — 글자를 <클릭>해서 고르고 Delete. 끌어서 감싸면 사람까지 딸려 옵니다\n" +
         "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각입니다 — 도형과 똑같이 지웁니다\n" +
-        "· 안에 있는 사람·의자는 그대로 두세요. 잘못 지웠으면 Ctrl+Z",
+        "· 안에 있는 사람·의자는 그대로 두세요. 잘못 지웠으면 Ctrl+Z\n" +
+        "· 글자가 겹쳐 남으면 다시 클릭해 지우세요. 모두 지웠는지 눈으로 확인한 뒤 아래 확인 버튼을 누릅니다.",
       coachSide: "right",
       action: (ctx) => {
         ctx.tailIds = tailBits().map((b) => b.id);
@@ -1518,19 +1519,23 @@ const EXAM_SEARCH = {
         if (ctx.inner) out.push({ pts: boxPts(ctx.inner), close: true, note: "이 안의 글자", noteDy: -10 });
         return out.length ? out : null;
       },
-      wait: {
-        /* 둘 다 해야 통과다.
-         *   · 화살표·글씨 — 짚어 둔 조각이 하나도 안 남아야 한다(확정적으로 잴 수 있다)
-         *   · 안쪽 글자   — 무엇이 글자인지 기계가 못 가리므로, 화살표 조각 수 말고도
-         *                   더 줄었는지로 본다. 헐렁하지만 [건너뛰고 다음]이 늘 열려 있다. */
-        until: (ctx) => {
-          const ids = new Set(ctx.tailIds || []);
-          const live = allBoxes();
-          const tailGone = !live.some((b) => ids.has(b.id));
-          const lettersGone = objects().length < (ctx.beforeLetters ?? Infinity) - ids.size;
-          return tailGone && lettersGone;
+      // 글자와 인물 조각은 크기만으로 구분하지 않는다. 개수 감소를 성공으로 오인하지 말고 명시적으로 확인한다.
+      auto: {
+        label: "글자까지 모두 지웠습니다", replay: true,
+        run: (ctx) => {
+          const live = objects();
+          if (!live.length || !Array.isArray(ctx.tailIds) || live.some((o) => ctx.tailIds.includes(o.id))) return false;
+          ctx.lettersConfirmedIds = live.map((o) => o.id).sort().join("|");
+          return true;
         },
-        hint: "점선 두 곳을 지워 주세요",
+      },
+      wait: {
+        until: (ctx) => {
+          const live = objects();
+          return live.length > 0 && Array.isArray(ctx.tailIds) && !live.some((o) => ctx.tailIds.includes(o.id)) &&
+            ctx.lettersConfirmedIds === live.map((o) => o.id).sort().join("|");
+        },
+        hint: "두 곳을 지운 뒤 글자가 남지 않았는지 확인 버튼을 눌러 주세요",
       },
     },
     /* ----- 퍼스널 오브젝트로 저장해 두고, 검색으로 다시 꺼내 쓴다 ----- */
