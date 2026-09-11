@@ -93,11 +93,11 @@ test("Given package allowlist expansion on disk and the sparse-aware tracked tre
   const disk = packageSelection(filesOnDisk(root));
   const tracked = packageSelection(trackedFiles());
   const parts = JSON.parse(fs.readFileSync(path.join(root, "assets/parts-library/manifest.json"), "utf8"));
-  const exam = JSON.parse(fs.readFileSync(path.join(root, "assets/exam-library/manifest.json"), "utf8"));
   const examParts = JSON.parse(fs.readFileSync(path.join(root, "assets/exam-parts/manifest.json"), "utf8"));
   const webManifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
   const partAsset = `assets/parts-library/svg/${parts.items[0].file}`;
-  const examAsset = `assets/exam-library/images/${exam.items[0].file}`;
+  const retainedTutorialAsset = "assets/exam-library/images/p2_2027_06_13.png";
+  const trackedLegacyPngs = trackedFiles().filter((file) => file.startsWith("assets/exam-library/images/") && file.endsWith(".png"));
   const examPartAssets = Object.values(examParts[0].files).map((file) => `assets/exam-parts/${file}`);
   const manifestIcons = webManifest.icons.map((icon) => icon.src);
   const fontAssets = localFontReferences();
@@ -110,11 +110,15 @@ test("Given package allowlist expansion on disk and the sparse-aware tracked tre
     "fonts/lmroman10-regular.otf",
     "fonts/lmroman10-regular.woff2",
   ]);
-  assertSelected(tracked, [examAsset, ...manifestIcons, ...fontAssets], "tracked expansion");
+  assertSelected(tracked, [retainedTutorialAsset, ...manifestIcons, ...fontAssets], "tracked expansion");
   assertSelected(disk, fontAssets, "stylesheet font consumers");
   assertSelected(disk, localIndexReferences(), "index.html links");
-  assert.equal(disk.has(examAsset), fs.existsSync(path.join(root, examAsset)), "disk expansion must describe only materialized sparse files");
-  assert.equal(tracked.has(examAsset), true, "tracked sparse source must remain packaged without downloading its blob");
+  assert.equal(disk.has(retainedTutorialAsset), true, "the tutorial must retain its explicit local PNG");
+  assert.deepEqual(
+    trackedLegacyPngs.filter((file) => tracked.has(file)),
+    [retainedTutorialAsset],
+    "the real package selection must exclude every bulk legacy PNG",
+  );
 });
 
 test("Given a package mutation removes every stylesheet-consumed local font, when the expanded selection is checked, then it is rejected", () => {

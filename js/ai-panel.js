@@ -1,6 +1,7 @@
 import { createTaskPersistence, createTaskWorkspaces } from './ai-task-workspaces.js';
 import { distributeSourcesToTaskTabs } from './ai-source-tasking.js?v=1';
 import { setupAiWorkbench } from './ai-workbench.js';
+import { mountDurableBatchUi } from './ai-batch-ui.js';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
 import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
@@ -261,6 +262,7 @@ export function snapshotImageItem(item) {
     data: item?.data || null,
     kind: item?.kind || "reference",
     sourceKind: item?.sourceKind || "auto",
+    source: item?.source === undefined ? null : structuredClone(item.source),
     referenceRole: item?.referenceRole,
     primary: item?.primary === true,
     active: item?.active !== false,
@@ -447,6 +449,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const batchRuns = new Map();
   const unclaimedBatchEvents = [];
   let batchActive = false;
+  let durableBatchUi = null;
   let conversationMessages = [];
   let outputCache = null;
   try { outputCache = createExactOutputCacheStore(); } catch {}
@@ -1416,8 +1419,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   }
 
-  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto" }) => {
-    const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind, comments: [], nextCommentNumber: 1 };
+  const addReferenceData = ({ data, name = "참고 이미지", sourceKind = "auto", source = null }) => {
+    const item = { id: `reference-${++imageSerial}`, name, data, kind: "reference", sourceKind, source, comments: [], nextCommentNumber: 1 };
     attachments.push(item);
     attachmentList.appendChild(makeImageCard(item));
     syncReferenceSummary();
@@ -1974,6 +1977,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       job.error = error.message || String(error);
       job.elapsedMs = Math.round(performance.now() - job.startedAt);
       updateBatchCard(job, `실패 · ${job.error}`);
+      if (job.queueRecord && durableBatchUi) void durableBatchUi.failed(job.queueRecord, job.error);
       releaseBatchSlot(job);
     }
   };
@@ -2014,6 +2018,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       job.state = "failed";
       job.elapsedMs = Math.round(performance.now() - job.startedAt);
       updateBatchCard(job, `실패 · ${job.error || event.error || job.responseText || "결과 없음"}`);
+      if (job.queueRecord && durableBatchUi) void durableBatchUi.failed(job.queueRecord, job.error || event.error || "결과 없음");
       releaseBatchSlot(job);
       return;
     }
@@ -2028,6 +2033,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       ? `완료 · ${(job.elapsedMs / 1000).toFixed(1)}초 · 2회 · 구조 확인 필요`
       : `완료 · ${(job.elapsedMs / 1000).toFixed(1)}초`);
     addBatchResultToTab(job);
+    if (job.queueRecord && durableBatchUi) void durableBatchUi.completed(job.queueRecord, { dataUrl: job.resultData, name: job.name });
     releaseBatchSlot(job);
   }
 
@@ -2045,7 +2051,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   }
 
-  const runBatch = () => {
+  const runBatch = async () => {
     if (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && reviewModeCheckbox?.checked !== false) {
       setStatus("검수 포함 일괄 변환은 아직 지원하지 않습니다. 새 작업으로 그림별 변환을 실행하세요.", "warn");
       return;
@@ -2054,6 +2060,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (batchActive || busy || attachments.length < 2) return;
     if (selectedOutputEngine !== AI_OUTPUT_ENGINES.RASTER) {
       setStatus("여러 장 변환은 교과서 선화 출력에서 사용해 주세요.", "warn");
+      return;
+    }
+    if (durableBatchUi) {
+      const request = input.value.trim() || "각 참고 이미지에서 주 과학 그림만 남기고 글자·라벨·강조 원·페이지 배경을 제거하고 선택한 표시선 정책을 적용하여 평가원식 무라벨 흑백 선화로 변환해 줘.";
+      await durableBatchUi.enqueue(attachments.map((source) => ({ name: source.name, dataUrl: source.data, originalPath: source.path || null })), {
+        request, mode: selectedMode, whitePng: isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }),
+        markPolicy: readMarkPolicy(), qualityMode: selectedQualityMode, model: modelSelect.value || null,
+        effort: effortSelect.value || null, serviceTier: speedSelect.value || null,
+      });
+      setStatus("대기열을 저장했습니다. 최대 10개 작업을 동시에 시작합니다.", "busy");
       return;
     }
     captureActiveTaskTab();
@@ -2541,7 +2557,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus(`상태 확인 실패: ${error.message}`, "error");
     }
   };
-  const open = async ({ reference, references = [], prompt } = {}) => {
+  const open = async ({ reference, references = [], prompt, startGeneration = false } = {}) => {
     await workspaceReady;
     const selectedObject=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId) : null;
     if (!busy && selectedObject && !reference && !references.length && taskTabs.has(selectedObject.aiTaskId)) {
@@ -2561,7 +2577,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus("참고 이미지 불러오는 중…", "busy");
       const loaded = await Promise.allSettled(incoming.map(async (item) => ({
         item,
-        data: await sourceToDataUrl(item.src),
+        data: await sourceToDataUrl(item.dataUrl || item.src),
       })));
       for (const result of loaded) {
         if (result.status === "fulfilled") {
@@ -2569,6 +2585,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
             data: result.value.data,
             name: result.value.item.name || "참고 이미지",
             prompt: result.value.item.prompt || "",
+            sourceKind: result.value.item.sourceKind || (result.value.item.dataUrl ? "pdf-crop" : "auto"),
+            source: result.value.item.source === undefined ? null : structuredClone(result.value.item.source),
           };
         } else {
           addLog(result.reason?.message || String(result.reason), "error");
@@ -2582,6 +2600,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
     await refreshPromise;
+    if (!incoming.length && prompt) input.value = prompt;
+    if (startGeneration === true && incoming.length === 1) await submit("image");
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
@@ -3114,6 +3134,30 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     persistTasks();
   };
   if (tabNewButton) tabNewButton.onclick = () => newWorkspace();
+  if (batchButton && panel.querySelector("[data-ai-batch-files]")) durableBatchUi = mountDurableBatchUi({
+    panel,
+    scope: { sessionId: "5e", workspaceId: clientScope || "main" },
+    generation: {
+      start(queueRecord) {
+        const options = queueRecord.options || {};
+        const job = {
+          id: queueRecord.id, root: true, taskTabId: activeTaskTabId,
+          name: queueRecord.sourceSnapshot.name, source: { name: queueRecord.sourceSnapshot.name, data: queueRecord.sourceSnapshot.dataUrl, kind: "reference", comments: [] },
+          request: options.request, mode: options.mode, whitePng: options.whitePng, markPolicy: options.markPolicy,
+          qualityMode: options.qualityMode, model: options.model, effort: options.effort, serviceTier: options.serviceTier,
+          state: "running", resultData: null, queueRecord,
+        };
+        batchActive = true;
+        batchRuns.set(job.id, job);
+        void startQueuedBatchJob(job);
+      },
+      interrupt(queueRecord) {
+        const job = batchRuns.get(queueRecord.id);
+        return job?.turnId ? desktop.interrupt({ turnId: job.turnId, clientScope }) : undefined;
+      },
+    },
+  });
+  if (durableBatchUi) void durableBatchUi.resume();
   if (batchButton) batchButton.onclick = runBatch;
   reviewModeCheckbox?.addEventListener("change", syncWhitePngUi);
   for (const control of markControls) control?.addEventListener("change", () => {captureActiveTaskTab();persistTasks();});
@@ -3321,6 +3365,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           stageCurrentOutput({ data: added.data });
         }
         if (!terminalAllowsSuccess || currentCancelRequested) return;
+        window.dispatchEvent(new CustomEvent("5e:ai-output-success", { detail: { candidateId: added.id } }));
         if (isWhitePngWorkflow(currentRunInput || {})) {
           setStatus(currentRunInput?.approvedFirstPng ? "PNG 준비 완료 · 서버 종료 확인 중" : "1차 후보 준비 완료 · 독립 검수 대기", "busy");
           addLog(currentRunInput?.approvedFirstPng ? "첫 PNG 원본을 보존했습니다. 자동 검수·교정 없이 직접 확인할 수 있습니다." : "흰 배경 PNG 후보가 준비되었습니다. 원본 참고와의 독립 구조 검수를 이어서 진행합니다.");
@@ -3493,6 +3538,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
 
   desktop?.onEvent((message) => {
+    if (message?.method === '5e/generation-queued') {
+      setStatus(`AI 실행 대기 중 · 서버 전체 ${message.params?.position || 1}번째`, 'busy');
+      return;
+    }
     const event = parseAiEvent(message);
     // Isolated scoped turns never enter review, correction, cache, or legacy preview paths.
     if (currentRunInput?.scopedEdit) { scopedTransport?.handle(event); return; }

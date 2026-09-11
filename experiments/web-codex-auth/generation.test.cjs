@@ -29,7 +29,10 @@ test('HTTP generation authentication, isolation, malformed request, concurrency,
   const started = await post('/api/generate', { request: 'pendulum' }, cookie); assert.equal(started.status, 202);
   const job = await started.json();
   assert.equal((await (await post('/api/generation', { jobId: null }, cookie)).json()).jobId, job.jobId);
-  assert.equal((await post('/api/generate', { request: 'x' }, cookie)).status, 409);
+  const parallel = await post('/api/generate', { request: 'x' }, cookie);
+  assert.equal(parallel.status, 202);
+  const parallelJob = await parallel.json();
+  assert.equal((await (await post('/api/generation-cancel', { jobId: parallelJob.jobId }, cookie)).json()).state, 'cancelled');
   const b = await post('/api/session'); const other = b.headers.get('set-cookie').split(';')[0];
   assert.equal((await post('/api/generation', { jobId: job.jobId }, other)).status, 404);
   await until(() => runtimes[0].calls.some(call => call.method === 'turn/start'));

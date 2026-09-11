@@ -94,17 +94,31 @@ function esc(s) {
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+function snapshotImageSource(value) {
+  if (typeof value !== "string") return null;
+  if (/^blob:(?:https?:\/\/|file:\/\/|null\/)[^\s]+$/i.test(value)) return value;
+  return /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/i.test(value) ? value : null;
+}
+
+function referenceImageSource(item) {
+  const snapshot = snapshotImageSource(item?.snapshotSrc);
+  if (snapshot) return snapshot;
+  const file = String(item?.file || "");
+  return /^[A-Za-z0-9][A-Za-z0-9._-]*\.png$/i.test(file) ? `${IMG_BASE}${encodeURIComponent(file)}` : "";
+}
+
 /* 창의 겉모습은 5E 본 화면과 같아야 한다(사용자 요구). 색·글꼴 토큰을 손으로 베끼면
    본 화면 테마가 바뀔 때마다 어긋나므로, 앱 스타일시트를 그대로 링크해 토큰을
    물려받고 창 전용 레이아웃만 그 뒤에 덧붙인다. about:blank는 opener와 같은 출처라
    상대경로가 5E 기준으로 풀린다(이미지 경로가 이미 그렇게 동작 중). */
-function windowMarkup(entry) {
+function referenceWindowMarkup(entry) {
   const g = gridTemplate(entry.items.length);
   const cells = entry.items.map((it) => {
     const key = esc(it.id || it.file);
     const cap = esc(it.title || "");
+    const source = esc(referenceImageSource(it));
     return `<figure class="refcell" data-item="${key}">
-      <div class="refshot"><img alt="" src="${IMG_BASE}${esc(it.file)}"></div>
+      <div class="refshot"><img alt="" src="${source}"></div>
       <figcaption class="refcap" title="${cap}">${cap}</figcaption>
       <textarea class="refmemo" data-item="${key}" rows="2"
                 placeholder="이 문항 메모 — 문항별로 저장되어 다음에 다시 열어도 남습니다."></textarea>
@@ -169,7 +183,7 @@ function openWindow(entry) {
   }
   entry.win = w;
   w.document.open();
-  w.document.write(windowMarkup(entry));
+  w.document.write(referenceWindowMarkup(entry));
   w.document.close();
 
   // 본 화면의 테마·과목 속성을 자식 문서에 복사한다 — 링크한 style.css의 색 토큰이
@@ -234,4 +248,4 @@ function initReferenceWindows(state) {
   renderDock();
 }
 
-export { initReferenceWindows, openReferenceWindow };
+export { initReferenceWindows, openReferenceWindow, referenceWindowMarkup };

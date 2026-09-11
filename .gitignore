@@ -55,6 +55,12 @@ __pycache__/
 /docs/training/eval-repro-*.png
 /docs/training/eval-repro-batch-*.png
 /docs/training/codex-mcp-electroscope-test.png
+
+# Rebuildable PDF source/pack payloads stay outside Git. Migration reports and
+# QA evidence under .omo/evidence remain reviewable.
+/.omo/evidence/pdf-library/sources/corpus/
+/.omo/evidence/pdf-library/T5/*-pack/
+/.omo/evidence/pdf-library/staging/
 /docs/training/eval-repro-*.svg
 
 # Engine benchmark run artifacts are retained locally; compact root summaries

@@ -369,7 +369,7 @@ export function serialize(s) {
  * "어디에 어떻게 저장될지 정할 수 있어야"). 그 외 브라우저·취소 외 오류 → 기존처럼
  * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
  * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
-async function saveProject(state) {
+export async function saveProject(state) {
   const statusToken = captureProjectStatus(state);
   const json = JSON.stringify(serialize(state.get()), null, 2);
   const blob = new Blob([json], { type: "application/json" });
@@ -384,9 +384,9 @@ async function saveProject(state) {
       await writable.write(blob);
       await writable.close();
       markProjectStatus(state, statusToken, "file");
-      return;
+      return true;
     } catch (e) {
-      if (e && e.name === "AbortError") return;   // 사용자가 저장 취소 → 아무것도 안 함
+      if (e && e.name === "AbortError") return false;   // 사용자가 저장 취소 → 아무것도 안 함
       // 권한 거부/기타 오류 → 아래 기본 다운로드로 폴백
     }
   }
@@ -401,6 +401,7 @@ async function saveProject(state) {
   markProjectStatus(state, statusToken, "download");
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  return true;
 }
 
 /* ----- defaultLayers: fresh 3-layer set for pages saved without layers ----- */

@@ -6,12 +6,19 @@ const path = require('node:path');
 const { Runtime } = require('./runtime.cjs');
 const { RequestError } = require('./generation.cjs');
 const { Session } = require('./session.cjs');
+const { GlobalGenerationScheduler } = require('./global-generation-scheduler.cjs');
 const bridgeRoutes = new Set(['status', 'models', 'account', 'send', 'events', 'interrupt'].map(action => '/api/bridge-' + action));
-function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions, maxSessions = 8, editorNavigation = true } = {}) {
+function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions, maxSessions = 8, generationConcurrency = 10, editorNavigation = true } = {}) {
   const root = mkdtempSync(path.join(os.tmpdir(), '5e-auth-'));
   chmodSync(root, 0o700);
   const sessions = new Map();
+  const generationScheduler = new GlobalGenerationScheduler({ maxRunning: generationConcurrency });
   const assets = new Map([['/', ['index.html', 'text/html']], ['/client.js', ['client.js', 'text/javascript']], ['/style.css', ['style.css', 'text/css']]]);
+  const dispose = (id, entry) => {
+    sessions.delete(id);
+    entry.session.close();
+    rmSync(entry.directory, { recursive: true, force: true });
+  };
   const server = http.createServer(async (req, res) => {
     const origin = `http://127.0.0.1:${server.address().port}`;
     res.setHeader('Cache-Control', 'no-store');
@@ -34,16 +41,18 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
     let entry = sessions.get(id);
     try {
       if (entry?.session.runtime.dead && req.url === '/api/session') {
-        sessions.delete(id);
-        entry.session.close();
-        rmSync(entry.directory, { recursive: true, force: true });
+        dispose(id, entry);
         entry = undefined;
       }
       if (!entry && req.url === '/api/session') {
-        if (sessions.size >= maxSessions) return json(429, { error: 'Session limit reached' });
+        if (sessions.size >= maxSessions) return json(429, { error: `현재 ${maxSessions}명이 연결되어 있습니다. 잠시 후 다시 시도해 주세요.` });
         const newId = randomBytes(32).toString('hex');
         const directory = mkdtempSync(path.join(root, 'session-'));
-        const session = new Session(runtimeFactory(directory), sessionOptions);
+        const session = new Session(runtimeFactory(directory), {
+          ...sessionOptions,
+          generationScheduler,
+          schedulerOwner: newId,
+        });
         entry = { session, directory, touched: Date.now() };
         sessions.set(newId, entry);
         try { await session.runtime.init(); } catch (error) { sessions.delete(newId); session.close(); rmSync(directory, { recursive: true, force: true }); throw error; }
@@ -69,17 +78,21 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
         try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new RequestError(400, 'Invalid JSON'); }
         if (bridgeRoutes.has(req.url)) return json(200, await entry.session.run(() => entry.session.bridge.call(req.url.slice('/api/bridge-'.length), body)));
         if (req.url !== '/api/generate' && (!body || !(typeof body.jobId === 'string' || (req.url === '/api/generation' && body.jobId === null)) || Object.keys(body).some(key => key !== 'jobId'))) throw new RequestError(400, 'Invalid job request');
-        const result = await entry.session.run(() => req.url === '/api/generate' ? entry.session.generate(body) : req.url === '/api/generation' ? entry.session.generation.snapshot(body.jobId) : entry.session.generation.cancel(body.jobId));
+        const result = await entry.session.run(() => req.url === '/api/generate' ? entry.session.generate(body) : req.url === '/api/generation' ? entry.session.snapshotGeneration(body.jobId) : entry.session.cancelGeneration(body.jobId));
         return json(req.url === '/api/generate' ? 202 : 200, result);
       }
       const action = { '/api/session': 'status', '/api/status': 'status', '/api/login': 'start', '/api/cancel': 'cancel', '/api/logout': 'logout' }[req.url];
       const result = await entry.session.run(() => entry.session[action]());
+      if (req.url === '/api/logout') {
+        dispose(id, entry);
+        res.setHeader('Set-Cookie', `${cookieName}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
+      }
       json(200, result);
     } catch (error) { if (error instanceof RequestError) return json(error.status, { error: error.message }); json(503, { error: '인증 연결에 실패했습니다. 새로고침 후 다시 시도해 주세요.' }); }
   });
   const cleanup = setInterval(() => {
     for (const [id, entry] of sessions) if (Date.now() - entry.touched > 1800000) {
-      sessions.delete(id); entry.session.close(); rmSync(entry.directory, { recursive: true, force: true });
+      dispose(id, entry);
     }
   }, 60000);
   cleanup.unref();

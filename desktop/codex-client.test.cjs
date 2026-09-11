@@ -108,7 +108,8 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(panel, /createAiReferenceSearch/);
   assert.match(panel, /클립보드 이미지/);
   assert.match(markup, /data-ai-speed/);
-  assert.match(markup, /기출문제 라이브러리/);
+  assert.match(markup, /id="exam-library-open"[^>]*>[\s\S]*?라이브러리[\s\S]*?<\/button>/);
+  assert.doesNotMatch(markup, /id="parts-library-open"/);
   assert.match(markup, /data-ai-compare/);
   assert.match(markup, /data-ai-capture/);
   assert.match(markup, /파일 탐색기/);

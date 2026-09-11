@@ -1,0 +1,51 @@
+name: Windows Candidate
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-candidate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run deployment and pack contracts
+        run: node --test tests/test-pdf-deployment-candidate.mjs tests/test-pdf-pack-release-model.mjs tests/test-pdf-pack-store.mjs tests/test-pdf-remote-pack.mjs tests/test-stage-distribution-server.mjs
+
+      - name: Build x64 NSIS candidate
+        run: npm run package:win
+
+      - name: Verify installer and write candidate receipt
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "Windows installer was not created" }
+          if ($installer.Length -lt 1MB) { throw "Windows installer is unexpectedly small" }
+          $bytes = [System.IO.File]::ReadAllBytes($installer.FullName)
+          $signature = [System.Text.Encoding]::ASCII.GetString($bytes, 0, 2)
+          if ($signature -ne "MZ") { throw "Windows installer is missing the MZ PE signature" }
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installer.FullName).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content -Encoding ascii release/SHA256SUMS.txt
+          @{ file = $installer.Name; bytes = $installer.Length; sha256 = $hash; signature = $signature } |
+            ConvertTo-Json | Set-Content -Encoding utf8 release/windows-candidate.json
+
+      - name: Retain private workflow candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5e-windows-x64-candidate
+          path: |
+            release/*.exe
+            release/SHA256SUMS.txt
+            release/windows-candidate.json
+          if-no-files-found: error

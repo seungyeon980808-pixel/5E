@@ -20,30 +20,61 @@ test('switching page while clipboard is pending never deletes new page',async()=
 test('changed objects and repeated shortcuts are guarded',async()=>{const h=harness();const job=h.cut();await h.cut();assert.equal(h.writes,1);h.data.objects[0].x=12;h.finish();await job;assert.equal(h.data.objects.length,2);assert.equal(h.data.undoStack.length,0);});
 test('locked-only selection cannot be cut',async()=>{const h=harness();h.data.selectedIds=['b'];await h.cut();assert.equal(h.writes,0);assert.equal(h.data.objects.length,2);});
 function nativeHarness(mouse = null) {
- const {editorCutSource}=require('./editor-cut-source.cjs');
+ const {editorCutSource,editorImagePasteSource}=require('./editor-cut-source.cjs');
  const source=editorCutSource(readFileSync(require.resolve('../../js/transform.js'),'utf8'));
- const start=source.indexOf('  const handleCanvasShortcut =');
- const end=source.indexOf('  /* -- Arrow keyup:',start);
- const listeners=new Map();const data={objects:[{id:'a',type:'image',x:0,y:0,w:10,h:10}],selectedIds:['a'],viewBox:{x:0,y:0,w:100,h:100},undoStack:[],redoStack:[]};let cuts=0;let modal=false;
- const ctx={window:{addEventListener:(name,fn)=>listeners.set(name,fn)},document:{querySelector:()=>modal?{}:null},state:{get:()=>data,update:fn=>fn(data)},isEditingFieldTarget:t=>t?.tagName==='INPUT',cutSelection:()=>cuts++,_clipboard:null,_lastMouseWorld:mouse,_pasteCounter:0,clipboardBBox:()=>({x:0,y:0,w:10,h:10}),applyDelta:(target,original,dx,dy)=>{target.x=original.x+dx;target.y=original.y+dy;}};
- vm.runInNewContext(source.slice(start,end),ctx);
- const fire=(type,target={tagName:'DIV'})=>{let prevented=false;listeners.get(type)({target,defaultPrevented:false,preventDefault:()=>prevented=true});return prevented;};
- return {data,fire,get cuts(){return cuts;},set modal(value){modal=value;}};
+ const listeners=new Map();const clipboard=new Map();
+ const data={objects:[{id:'a',type:'image',x:0,y:0,w:10,h:10}],selectedIds:['a'],viewBox:{x:0,y:0,w:100,h:100},undoStack:[],redoStack:[]};let modal=false;
+ const state={get:()=>data,update:fn=>fn(data)};
+ const ctx={console,Map,Set,Date,JSON,state,getLastMouseWorld:()=>mouse,
+  OBJECT_TYPE_IDS:['image'],SIZE_TYPES:new Set(['image']),TEXT_MEASURED_TYPES:new Set(),ENDPOINT_HANDLE_TYPES:new Set(),
+  blocksCanvasShortcut:event=>modal || event.target?.tagName==='INPUT',isEditingFieldTarget:target=>target?.tagName==='INPUT',
+  showAlert:()=>{},rebuildGroups:()=>{},clipboardBBox:()=>({x:0,y:0,w:10,h:10}),
+  applyDelta:(target,original,dx,dy)=>{target.x=original.x+dx;target.y=original.y+dy;},
+  document:{addEventListener:(name,fn)=>{if(!listeners.has(name))listeners.set(name,[]);listeners.get(name).push(fn);}}};
+ const moduleBody=value=>value.replace(/^import[^\n]*\n/gm,'').replace(/\bexport /g,'');
+ const clipboardSource=readFileSync(require.resolve('../../js/editor-clipboard.js'),'utf8');
+ vm.runInNewContext(moduleBody(clipboardSource),ctx);
+ const insertStart=source.indexOf('export function instantiateObjectsAt(');
+ const insertEnd=source.indexOf('\nfunction clipboardBBox(',insertStart);
+ vm.runInNewContext(moduleBody(source.slice(insertStart,insertEnd)),ctx);
+ const initStart=source.indexOf('  initObjectClipboard(state, objects => {');
+ const initEnd=source.indexOf('  }, rebuildGroups);',initStart)+'  }, rebuildGroups);'.length;
+ assert.ok(initStart>=0 && initEnd>initStart,'native clipboard setup exists');
+ vm.runInNewContext(source.slice(initStart,initEnd),ctx);
+ vm.runInNewContext(moduleBody(editorImagePasteSource(readFileSync(require.resolve('../../js/image-paste.js'),'utf8')))+'\ninitImagePaste(state, null);',ctx);
+ const fire=(type,target={tagName:'DIV'},write=(_,value)=>value)=>{
+  const event={target,defaultPrevented:false,preventDefault(){this.defaultPrevented=true;},
+   clipboardData:{setData:(key,value)=>clipboard.set(key,write(key,value)),getData:key=>clipboard.get(key)||'',
+    get items(){throw Error('native object paste must not read external image items');}}};
+  for(const listener of listeners.get(type))listener(event);
+  return event.defaultPrevented;
+ };
+ return {data,fire,set modal(value){modal=value;}};
 }
-test('native macOS cut and copy/paste reach the same canvas commands',()=>{const h=nativeHarness();assert.equal(h.fire('cut'),true);assert.equal(h.cuts,1);h.fire('copy');assert.equal(h.fire('paste'),true);assert.equal(h.data.objects.length,2);assert.notEqual(h.data.objects[0].id,h.data.objects[1].id);assert.equal(h.data.undoStack.length,1);});
-test('native clipboard commands leave fields and modal backgrounds untouched',()=>{const h=nativeHarness();h.fire('cut',{tagName:'INPUT'});assert.equal(h.cuts,0);h.modal=true;h.fire('cut');h.fire('copy');h.fire('paste');assert.equal(h.cuts,0);assert.equal(h.data.objects.length,1);});
+test('native macOS cut and copy/paste reach the same canvas commands',()=>{
+ const cut=nativeHarness();assert.equal(cut.fire('cut'),true);assert.equal(cut.data.objects.length,0);assert.equal(cut.data.undoStack.length,1);
+ const h=nativeHarness();assert.equal(h.fire('copy'),true);assert.equal(h.fire('paste'),true);assert.equal(h.data.objects.length,2);assert.notEqual(h.data.objects[0].id,h.data.objects[1].id);assert.equal(h.data.undoStack.length,1);
+});
+test('native clipboard commands leave fields and modal backgrounds untouched',()=>{
+ const h=nativeHarness();for(const type of ['cut','copy','paste'])assert.equal(h.fire(type,{tagName:'INPUT'}),false);
+ h.modal=true;for(const type of ['cut','copy','paste'])assert.equal(h.fire(type),false);
+ assert.equal(h.data.objects.length,1);assert.equal(h.data.undoStack.length,0);
+});
 test('image paste and initialized transform share the same clipboard module URL',()=>{
  const {editorImagePasteSource}=require('./editor-cut-source.cjs');
  const main=readFileSync(require.resolve('../../js/main.js'),'utf8');
  const paste=editorImagePasteSource(readFileSync(require.resolve('../../js/image-paste.js'),'utf8'));
  const moduleUrl=source=>source.match(/from "(\.\/transform\.js\?v=[^"]+)"/)[1];
  assert.equal(moduleUrl(paste),moduleUrl(main));
- assert.match(paste,/if \(hasInternalClipboard\(\)\) return;/);
+ assert.match(paste,/if \(event.defaultPrevented \|\|/);
 });
-
 test('paste outside viewport falls back to center while inside pointer is preserved',()=>{
  for (const [mouse,expected] of [[{x:50,y:120},45],[{x:20,y:20},15]]) {
   const h=nativeHarness(mouse);h.fire('copy');h.fire('paste');
   assert.equal(h.data.objects[1].x,expected);assert.equal(h.data.objects[1].y,expected);
  }
+});
+test('native cut denied by the clipboard leaves originals and undo untouched',()=>{
+ const h=nativeHarness();h.fire('cut',undefined,()=>{throw Error('denied');});
+ assert.equal(h.data.objects.length,1);assert.equal(h.data.undoStack.length,0);
 });

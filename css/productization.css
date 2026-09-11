@@ -1,0 +1,145 @@
+:root {
+  --product-state-success: #3fb950;
+  --product-state-warning: #d29922;
+  --product-state-error: #f85149;
+  --product-space-label: 2px;
+  --product-space-compact: 4px;
+  --product-space-control: 5px;
+  --product-space-small: 6px;
+  --product-space-list: 7px;
+  --product-space-default: 8px;
+  --product-space-rail: 9px;
+  --product-type-caption: 10px;
+  --product-type-helper: 11px;
+  --product-border-width: 1px;
+  --product-state-border-width: 3px;
+  --product-index-max-height: 160px;
+  --product-index-column: minmax(100px, 1fr);
+  --product-correction-column: minmax(110px, .4fr);
+  --product-batch-selected-outline-width: 2px;
+  --product-batch-selected-outline-offset: -2px;
+  --product-cancelled-opacity: .72;
+  --product-focus-outline-width: 3px;
+  --product-focus-outline-offset: 3px;
+  --product-focus-ring-width: 2px;
+  --product-focus-ring-alpha: 28%;
+  --product-desktop-workspace-columns: minmax(232px, 248px) minmax(0, 1fr) minmax(280px, 326px);
+  --product-mobile-rail-max-height: min(330px, 46vh);
+  --product-mobile-action-min-height: 30px;
+  --product-mobile-panel-max-height: 164px;
+  --product-mobile-card-min-height: 48px;
+  --product-line-height-note: 1.5;
+  --product-line-height-preview: 1.45;
+}
+
+.pdflib-pack-card,
+.pdflib-pack-row,
+.pdflib-index-overview {
+  border: var(--product-border-width) solid var(--border);
+  background: var(--bg-input);
+}
+
+.pdflib-pack-card,
+.pdflib-pack-row {
+  display: flex;
+  align-items: center;
+  gap: var(--product-space-default);
+  padding: var(--product-space-default);
+}
+
+.pdflib-pack-card > div,
+.pdflib-pack-row > span { min-width: 0; flex: 1; }
+.pdflib-pack-card span,
+.pdflib-pack-card small { display: block; margin-top: var(--product-space-list); color: var(--text-secondary); }
+.pdflib-pack-safety { margin: var(--product-space-small) 0 0; color: var(--text-secondary); font-size: var(--product-type-helper); }
+
+.pdflib-index-overview { margin: var(--product-space-default) 0; padding: var(--product-space-default); }
+.pdflib-index-overview header { display: flex; justify-content: space-between; gap: var(--product-space-default); }
+.pdflib-index-legend { display: flex; flex-wrap: wrap; gap: var(--product-space-compact); margin-top: var(--product-space-list); }
+.pdflib-index-legend span { padding: var(--product-space-label) var(--product-space-control); border-left: var(--product-state-border-width) solid var(--border); background: var(--bg-panel); color: var(--text-secondary); font-size: var(--product-type-caption); }
+.pdflib-index-legend span[data-state="searchable"] { border-left-color: var(--product-state-success); }
+.pdflib-index-legend span[data-state="needs-ocr"] { border-left-color: var(--product-state-warning); }
+.pdflib-index-legend span[data-state="failed"] { border-left-color: var(--product-state-error); }
+.pdflib-index-overview ul { display: grid; gap: var(--product-space-control); max-height: var(--product-index-max-height); margin: var(--product-space-list) 0 0; padding: 0; overflow: auto; list-style: none; }
+.pdflib-index-overview li { display: grid; grid-template-columns: var(--product-index-column) auto; gap: var(--product-space-list) var(--product-space-default); padding-left: var(--product-space-default); border-left: var(--product-state-border-width) solid var(--border); }
+.pdflib-index-overview li[data-state="searchable"] { border-left-color: var(--product-state-success); }
+.pdflib-index-overview li[data-state="needs-ocr"] { border-left-color: var(--product-state-warning); }
+.pdflib-index-overview li[data-state="failed"] { border-left-color: var(--product-state-error); }
+.pdflib-index-overview li small { grid-column: 1 / -1; color: var(--text-secondary); }
+.pdflib-correction-fields { display: grid; grid-template-columns: var(--product-correction-column) 1fr; gap: var(--product-space-default); margin-top: var(--product-space-default); }
+.pdflib-correction-fields label { display: grid; gap: var(--product-space-compact); }
+
+.ai-batch-imports { display: flex; flex-wrap: wrap; gap: var(--product-space-compact); padding: 0 var(--product-space-rail) var(--product-space-small); }
+.ai-batch-imports label,
+.ai-batch-imports button { border: var(--product-border-width) solid var(--border); background: var(--bg-input); color: var(--text-primary); padding: var(--product-space-control) var(--product-space-list); cursor: pointer; }
+.ai-batch-preview { margin: 0 var(--product-space-rail) var(--product-space-small); color: var(--text-secondary); font-size: var(--product-type-caption); }
+.ai-batch-actions { display: flex; flex-wrap: wrap; gap: var(--product-space-compact); margin: 0 var(--product-space-rail) var(--product-space-default); }
+.ai-batch-actions button { min-width: 0; }
+.ai-batch-card[aria-pressed="true"] { outline: var(--product-batch-selected-outline-width) solid var(--accent); outline-offset: var(--product-batch-selected-outline-offset); }
+.ai-batch-card[data-state="pending"] { border-left-color: var(--text-secondary); }
+.ai-batch-card[data-state="running"] { border-left-color: var(--accent); }
+.ai-batch-card[data-state="completed"] { border-left-color: var(--product-state-success); }
+.ai-batch-card[data-state="cancelled"] { opacity: var(--product-cancelled-opacity); }
+.ai-batch-card small { display: block; margin-top: var(--product-space-label); color: var(--text-secondary); }
+.ai-project-transfer { padding: var(--product-space-control) var(--product-space-default); border: var(--product-border-width) solid var(--border); background: var(--bg-panel); color: var(--text-primary); white-space: nowrap; }
+.modal-overlay .modal-btn:focus-visible,
+.modal-overlay .modal-btn:focus {
+  outline: var(--product-focus-outline-width) solid var(--accent) !important;
+  outline-offset: var(--product-focus-outline-offset);
+  box-shadow: 0 0 0 var(--product-focus-ring-width) color-mix(in srgb, var(--accent) var(--product-focus-ring-alpha), transparent);
+}
+
+@media (min-width: 761px) {
+  #ai-image-panel:has(.ai-batch-section) .ai-workspace {
+    grid-template-columns: var(--product-desktop-workspace-columns);
+  }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-section { word-break: keep-all; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-section > summary { gap: var(--product-space-default); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-section > summary span { flex: 0 0 auto; }
+}
+
+@media (max-width: 768px) {
+  .pdflib-pack-card,
+  .pdflib-pack-row { align-items: stretch; flex-direction: column; }
+  .pdflib-correction-fields { grid-template-columns: 1fr; }
+  .panel-right:not(.is-open) { display: none; }
+  .canvas-bottom-bar { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+}
+
+@media (max-width: 760px) {
+  #ai-image-panel:has(.ai-batch-section) .ai-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "results" "tasks";
+  }
+  #ai-image-panel:has(.ai-batch-section) .ai-results { grid-column: 1; grid-row: 1; }
+  #ai-image-panel:has(.ai-batch-section) .ai-task-rail {
+    grid-column: 1;
+    grid-row: 2;
+    display: block;
+    min-height: 0;
+    max-height: var(--product-mobile-rail-max-height);
+    overflow: auto;
+    border-top: 1px solid var(--border);
+    border-right: 0;
+  }
+  #ai-image-panel:has(.ai-batch-section) .ai-conversation { display: none; }
+  #ai-image-panel:has(.ai-batch-section) .ai-rail-heading,
+  #ai-image-panel:has(.ai-batch-section) .ai-task-tabs { display: none; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-section { border-top: 0; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-section > summary { padding: var(--product-space-default) var(--product-space-rail); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-note { margin: 0 var(--product-space-rail) var(--product-space-list); font-size: var(--product-type-helper); line-height: var(--product-line-height-note); word-break: keep-all; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-imports { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-imports label,
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-imports button { min-width: 0; overflow: hidden; font-size: var(--product-type-caption); text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-preview { font-size: var(--product-type-helper); line-height: var(--product-line-height-preview); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-actions button { min-height: var(--product-mobile-action-min-height); padding: var(--product-space-control); font-size: var(--product-type-caption); white-space: nowrap; }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-panel { max-height: var(--product-mobile-panel-max-height); }
+  #ai-image-panel:has(.ai-batch-section) .ai-batch-card { min-height: var(--product-mobile-card-min-height); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pdflib-pack-card,
+  .ai-batch-card { scroll-behavior: auto; }
+}

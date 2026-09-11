@@ -1117,40 +1117,89 @@ const INCLINE_FIGURE = {
  * '내보내기'를 따로 코스로 두지 않고 여기 붙였다(사용자 요구) — 실제로도 이 흐름의 끝이
  * 내보내기이기 때문에, 떼어 놓으면 맥락이 끊긴다.
  *
- * 검색은 압축 코드 20260611 을 **버튼을 누를 때마다 한 조각씩** 넣어 결과가 좁혀지는 것을
- * 눈으로 보게 한다(실측: 2→60개, 2026→58개, 202606→20개, 20260611→1개).
+ * 번들에 남긴 한 장의 물리 도해를 실제 라이브러리 가져오기 경로로 넣고, 파일명의
+ * 학년도·월·번호를 차례로 검색한다. 외부 기출 자료팩이 설정돼 있지 않은 설치에서도
+ * 같은 연습을 할 수 있어야 한다.
  */
 
-const EXAM_CODE = "20260611";        // 2026학년도 6월 모평 물리1 11번
-/* 버튼을 누를 때마다 여기까지 채운다 — 2026 → 202606 → 20260611 세 걸음.
- * 예전에는 앞 두 자리('20')부터 넣는 네 걸음이었는데, '20'은 사람이 실제로 칠 일이
- * 없는 조각이라(모든 문항이 20으로 시작한다) 결과가 줄지 않아 헛걸음처럼 보였다.
- * 사람이 실제로 나눠 치는 단위 = 학년도 / 월 / 번호, 그래서 세 걸음이다. */
-const CODE_STEPS = [4, 6, 8];
+const TUTORIAL_EXAM_IMAGE = "assets/exam-library/images/p2_2027_06_13.png";
+const TUTORIAL_EXAM_FILE_NAME = "p2_2027_06_13.png";
+const EXAM_QUERY_STEPS = ["2027", "2027 06", "2027 06 13"];
 
 function typeIntoSearch(v) {
-  const q = document.getElementById("examlib-query");
+  const q = document.querySelector(".unified-library-overlay:not([hidden]) [data-unilib-query]");
   if (!q) return;
   q.value = v;
   q.dispatchEvent(new Event("input", { bubbles: true }));
 }
-const examHits = () => {
-  const t = document.getElementById("examlib-status")?.textContent || "";
-  const m = t.match(/(\d+)\s*개/);
-  return m ? Number(m[1]) : null;
-};
+
+function libraryOverlay() {
+  return document.querySelector(".unified-library-overlay:not([hidden])");
+}
+
+function selectedLibraryResult() {
+  return libraryOverlay()?.querySelector('[data-result-id][aria-selected="true"]') || null;
+}
+
+function setFilesOnInput(input, file) {
+  const transfer = new DataTransfer();
+  transfer.items.add(file);
+  input.files = transfer.files;
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+function importedLibrarySource(overlay) {
+  return [...overlay.querySelectorAll("[data-source-id]")].find((input) =>
+    input.closest("label")?.textContent.includes("가져온 이미지"));
+}
+
+function importTutorialExamImage(ctx) {
+  if (ctx.tutorialExamImport) return;
+  const overlay = libraryOverlay();
+  const input = overlay?.querySelector("[data-unilib-files]");
+  if (!overlay || !input) {
+    ctx.tutorialExamImport = { state: "failed" };
+    return;
+  }
+  ctx.tutorialExamImport = { state: "loading" };
+  void fetch(TUTORIAL_EXAM_IMAGE)
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.blob();
+    })
+    .then((blob) => {
+      const file = new File([blob], TUTORIAL_EXAM_FILE_NAME, { type: blob.type || "image/png" });
+      ctx.tutorialExamFile = file;
+      setFilesOnInput(input, file);
+      let attempts = 0;
+      const awaitImportedSource = () => {
+        const source = importedLibrarySource(overlay);
+        if (!source && attempts++ < 100) { setTimeout(awaitImportedSource, 20); return; }
+        if (!source) { ctx.tutorialExamImport = { state: "failed" }; return; }
+        if (!source.checked) {
+          source.click();
+          const restore = () => {
+            const current = importedLibrarySource(overlay);
+            if (current?.checked) current.click();
+          };
+          window.addEventListener("5e:library-closed", restore, { once: true });
+        }
+        ctx.tutorialExamImport = { state: "ready" };
+      };
+      awaitImportedSource();
+    })
+    .catch(() => { ctx.tutorialExamImport = { state: "failed" }; });
+}
+
+function loadTutorialExamIntoObjectify(ctx) {
+  const input = document.getElementById("objectify-file");
+  if (!input || !ctx.tutorialExamFile) return false;
+  setFilesOnInput(input, ctx.tutorialExamFile);
+  return true;
+}
 // 지금 캔버스에 있는 그룹 id 들(객체화 삽입물은 하나의 groupId 로 묶여 온다).
 const groupIds = () => new Set(objects().map((o) => o.groupId).filter(Boolean));
 
-/* ===== 가져온 그림에서 '지울 자리' 짚기 =====
- *
- * 객체화로 들어온 조각은 문항마다 개수도 좌표도 달라, 지울 영역을 코드에 박을 수 없다.
- * 그래서 **화면에 실제로 그려진 것에서 잰다** — 캔버스 SVG 의 user 단위가 곧 world mm 라
- * getBBox 값을 그대로 안내선 좌표로 쓸 수 있다.
- *
- * 왜 필요한가: "나머지를 감싸도록 끌어 고르세요"라는 말만으로는 처음 온 사람이
- * 어디서 어디까지 끌어야 하는지 알 수 없다. 지울 자리를 점선으로 보여 준다.
- */
 function objBox(id) {
   const esc = (window.CSS && CSS.escape) ? CSS.escape(id) : String(id);
   const el = document.querySelector(`#canvas [data-id="${esc}"]`);
@@ -1161,26 +1210,6 @@ function objBox(id) {
   } catch (_) { return null; }
 }
 const allBoxes = () => objects().map((o) => objBox(o.id)).filter(Boolean);
-
-/* 좌우 덩어리를 가르는 x. 가운데 부근에서 가장 넓게 비어 있는 띠를 경계로 삼는다
- * (이 문항이면 우주비행사와 오른쪽 우주선 사이). 후보를 30~80% 구간으로 묶는 이유는,
- * 한 덩어리 안의 우연한 빈틈이 경계로 뽑히지 않게 하기 위해서다. */
-function splitX(boxes) {
-  if (boxes.length < 4) return null;
-  const cs = boxes.map((b) => b.x + b.w / 2).sort((a, b) => a - b);
-  const lo = cs[0], hi = cs[cs.length - 1];
-  if (hi - lo < 10) return null;
-  let best = 0, cut = null;
-  for (let i = 1; i < cs.length; i += 1) {
-    const mid = (cs[i] + cs[i - 1]) / 2;
-    const t = (mid - lo) / (hi - lo);
-    if (t < 0.3 || t > 0.8) continue;
-    if (cs[i] - cs[i - 1] > best) { best = cs[i] - cs[i - 1]; cut = mid; }
-  }
-  return cut;
-}
-
-// 상자 여러 개를 감싸는 하나의 상자(여백 pad mm).
 function hullBox(boxes, pad = 2.5) {
   if (!boxes.length) return null;
   return {
@@ -1192,35 +1221,7 @@ function hullBox(boxes, pad = 2.5) {
 }
 const boxPts = (h) => [[h.x1, h.y1], [h.x2, h.y1], [h.x2, h.y2], [h.x1, h.y2]];
 
-/* 남은 그림에서 '선체'(가장 큰 조각) — 우주선 본체다.
- * 면적 최대 조각이 곧 본체라는 규칙은 실측으로 확인했다(선체 24.1×9.2mm,
- * 나머지는 전부 그보다 훨씬 작다). 화살표·글씨·안쪽 글자를 가르는 기준점이 된다. */
-function bodyBox() {
-  const boxes = allBoxes();
-  if (!boxes.length) return null;
-  return boxes.slice().sort((a, b) => (b.w * b.h) - (a.w * a.h))[0];
-}
-
-/* 선체 오른쪽 바깥에 붙은 것들 = 속도 화살표와 그 글씨(0.6c).
- * 실측: 선체 오른쪽 끝 x=28.7 바깥에 16조각(x 29.1~35.2)이 정확히 화살표+글씨였다. */
-function tailBits() {
-  const body = bodyBox();
-  if (!body) return [];
-  return allBoxes().filter((b) => b.x > body.x + body.w);
-}
-
-/* 선체 '안쪽' 영역 — 선실 안 글자가 있는 자리.
- *
- * ⚠ 글자 조각만 골라내려고 크기·위치로 추리지 않는다. 실제로 재어 보니 객체화는
- *   선실 안 인물·의자까지 0.1mm 짜리 수십 조각으로 쪼개 놓아서, 그 규칙으로 짚으면
- *   지우지 말아야 할 것까지 점선이 쳐진다. 그래서 조각이 아니라 **자리를 짚는다**.
- *   기준은 그림 전체가 아니라 **선체**다 — 전체로 잡으면 화살표까지 들어가 상자가
- *   오른쪽으로 늘어나고, 정작 글자는 상자 가장자리에 걸린다(사용자 지적). */
-/* 라벨러로 가리킬 '우주선 앞부분'과 이름표 자리.
- * 앞부분(진행 방향 쪽 = 오른쪽 끝 근처)을 가리켜야 지시선이 그림을 가로지르지 않는다.
- * 선체가 아니라 남은 그림 전체를 기준으로 잡는다 — 뾰족한 코가 선체와 별개 조각이라
- * 선체 기준으로 잡으면 코 앞에서 조금 모자란 자리를 짚는다. */
-function noseSpots() {
+function diagramLabelSpots() {
   const h = hullBox(allBoxes(), 0);
   if (!h) return null;
   const w = h.x2 - h.x1, ht = h.y2 - h.y1;
@@ -1248,29 +1249,10 @@ function setLabelerText(i, text) {
   });
 }
 
-function innerRegion() {
-  const b = bodyBox();
-  if (!b || b.w <= 0 || b.h <= 0) return null;
-  /* 선실의 오른쪽 위만 짚는다 — 사람은 왼쪽에 앉아 있고 글자는 그 오른쪽에 있다.
-   * 예전에는 선체 폭의 6~72%를 잡아 선실 가로 전체를 감쌌고, 그래서 "어느 글자를
-   * 말하는지" 알 수 없었다(사용자 지적). */
-  return {
-    x1: b.x + b.w * 0.42, y1: b.y + b.h * 0.12,
-    x2: b.x + b.w * 0.68, y2: b.y + b.h * 0.62,
-  };
-}
-
-/* 선실 안에서 '우주인 바로 오른쪽' — 텍스트 A 를 앉힐 자리.
- * 사람 덩어리(선실 왼쪽에 몰린 조각들)의 오른쪽 끝에서 조금 띄운 곳을 잡는다.
- * 비율로 못 박으면 문항이 바뀔 때 글자가 사람 위에 겹친다. */
-function cabinTextSpot() {
-  const b = bodyBox();
-  if (!b || b.w <= 0) return null;
-  const inside = allBoxes().filter((x) =>
-    x.x > b.x && x.x + x.w < b.x + b.w && x.y > b.y && x.y + x.h < b.y + b.h);
-  const left = inside.filter((x) => x.x + x.w / 2 < b.x + b.w * 0.5);
-  const personRight = left.length ? Math.max(...left.map((x) => x.x + x.w)) : b.x + b.w * 0.38;
-  return [Math.min(personRight + 2.5, b.x + b.w * 0.72), b.y + b.h * 0.62];
+function diagramTextSpot() {
+  const h = hullBox(allBoxes(), 0);
+  if (!h) return null;
+  return [h.x1 + (h.x2 - h.x1) * 0.55, h.y1 + (h.y2 - h.y1) * 0.55];
 }
 
 const EXAM_SEARCH = {
@@ -1292,77 +1274,95 @@ const EXAM_SEARCH = {
     {
       target: () => "#exam-library-open",
       chapter: "가져오기",
-      title: "기출 라이브러리 열기",
+      title: "라이브러리 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
         "· 단축키는 Ctrl+Shift+F 입니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출 라이브러리를 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },
     {
-      target: () => ["#examlib-query", "#examlib-status"],
+      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
+      coachSide: "right",
+      chapter: "가져오기",
+      title: "연습용 기출 그림을 가져옵니다",
+      text:
+        "외부 자료팩을 아직 연결하지 않아도 연습할 수 있게 예시 그림을 라이브러리에 넣습니다.\n" +
+        "실제 [파일 가져오기] 흐름을 그대로 쓰므로, 가져온 자료도 다른 이미지처럼 검색됩니다.",
+      auto: {
+        label: "연습 그림 가져오기",
+        run: importTutorialExamImage,
+      },
+      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready" || ctx.tutorialExamImport?.state === "failed", hint: "연습 그림을 가져오는 중입니다" },
+    },
+    {
+      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
       coachSide: "right",
       chapter: "가져오기",
       title: "번호를 한 조각씩 — 결과가 좁혀집니다",
       text:
-        "문항 번호를 압축 코드로 칩니다. 아래 단추를 누를 때마다 한 조각씩 늘어납니다.\n" +
-        "오른쪽 위 '문항 n개' 표시가 어떻게 줄어드는지 보세요.\n\n" +
-        "· 2026 = 학년도 · 202606 = 6월 · 20260611 = 11번\n" +
-        "· 학년도 → 월 → 번호, 사람이 나눠 치는 그대로 세 번에 넣습니다\n" +
-        "· 한 번에 다 치셔도 됩니다 — 나눠 보는 건 어디까지 좁혔는지 눈으로 알기 위해서입니다",
+        "파일명의 학년도·월·번호를 나눠 찾습니다. 아래 단추를 누를 때마다 결과가 좁혀집니다.\n\n" +
+        "· 2027 = 학년도 · 2027 06 = 6월 · 2027 06 13 = 13번\n" +
+        "· 가져온 이미지는 파일명으로 검색합니다",
       auto: {
         repeat: {
-          label: (i) => (i < CODE_STEPS.length
-            ? `'${EXAM_CODE.slice(0, CODE_STEPS[i])}' 까지 넣기  (${i + 1}/${CODE_STEPS.length})`
+          label: (i) => (i < EXAM_QUERY_STEPS.length
+            ? `'${EXAM_QUERY_STEPS[i]}' 찾기  (${i + 1}/${EXAM_QUERY_STEPS.length})`
             : "다음"),
           run: (i) => {
-            if (i >= CODE_STEPS.length) return false;
-            typeIntoSearch(EXAM_CODE.slice(0, CODE_STEPS[i]));
-            return i + 1 < CODE_STEPS.length;   // 아직 남았으면 버튼을 유지
+            if (i >= EXAM_QUERY_STEPS.length) return false;
+            typeIntoSearch(EXAM_QUERY_STEPS[i]);
+            return i + 1 < EXAM_QUERY_STEPS.length;
           },
         },
       },
     },
     {
-      target: () => "#examlib-grid",
+      target: () => "[data-unilib-results]",
       coachSide: "right",
       chapter: "가져오기",
       title: "딱 한 문항이 남았습니다",
       text:
-        "2026학년도 6월 모평 물리1 11번입니다. 카드를 눌러 골라 주세요.\n\n" +
-        "· 숫자를 다 넣으면 문항이 하나로 좁혀집니다",
+        "2027년 6월 13번 그림입니다. 결과 카드를 눌러 미리보기를 열어 주세요.\n\n" +
+        "· 선택한 카드의 테두리가 활성화됩니다",
       wait: {
-        until: () => {
-          const b = document.getElementById("examlib-insert");
-          return !!b && !b.disabled;
-        },
+        until: () => !!selectedLibraryResult(),
         hint: "카드를 눌러 골라 주세요",
       },
     },
     {
-      target: () => ["#examlib-insert", "#examlib-objectify", "#examlib-refwin"],
+      target: () => ["[data-unilib-stage]", "[data-unilib-insert]"],
       chapter: "가져오기",
-      title: "가져오는 법이 셋입니다",
+      title: "미리보기와 삽입을 확인합니다",
       text:
-        "· 이미지 삽입 — 그림째로. 배경에 깔고 위에 덧그릴 때\n" +
-        "· 오브젝트 변환 — 선 하나하나 고칠 수 있는 형태로\n" +
-        "· 참고 창 — 옆에 띄워 두고 보면서 새로 그릴 때\n\n" +
-        "우리는 일부만 남기고 지울 거라 '오브젝트 변환'입니다.\n" +
-        "다음 단계에서 누릅니다 — 지금은 눌리지 않게 막아 두었습니다.",
-      /* 세 버튼을 밝게 뚫어 놓으면 누르고 싶게 생겼고, 실제로 '이미지 삽입'이나
-       * '참고 창'을 누르면 뒤 단계가 기대하는 상태와 어긋나 흐름이 통째로 꼬인다.
-       * 읽는 단계이므로 잠근다(tutorial.js paintShield). */
+        "오른쪽 미리보기에서 그림을 확인합니다. 라이브러리는 모든 자료를 같은 방식으로\n" +
+        "[캔버스에 삽입]합니다. 다음 단계에서 누릅니다.",
       lock: true,
     },
     {
-      target: () => "#examlib-objectify",
+      target: () => "[data-unilib-insert]",
       chapter: "가져오기",
-      title: "오브젝트 변환을 눌러 주세요",
+      title: "캔버스에 삽입을 눌러 주세요",
       text:
-        "누르면 잠깐 불러온 뒤 '객체화' 창이 열립니다.\n\n" +
-        "· 그림을 선으로 바꾸는 데 몇 초 걸립니다",
-      demo: () => ({ kind: "clicks", at: ["#examlib-objectify"] }),
-      wait: { click: "#examlib-objectify", hint: "오브젝트 변환을 눌러 주세요" },
+        "먼저 그림으로 가져온 뒤, 다음 단계에서 이미지 객체화로 선을 분리합니다.",
+      demo: () => ({ kind: "clicks", at: ["[data-unilib-insert]"] }),
+      wait: { until: () => countOf("image") >= 1, hint: "[캔버스에 삽입]을 눌러 주세요" },
+    },
+    {
+      target: () => "#image-objectify-open",
+      chapter: "가져오기",
+      title: "이미지 객체화를 열어 주세요",
+      text: "캔버스 아래 막대의 [이미지 객체화]를 누릅니다. 방금 라이브러리에서 쓴 같은 그림을 여기에도 불러옵니다.",
+      demo: () => ({ kind: "clicks", at: ["#image-objectify-open"] }),
+      wait: { click: "#image-objectify-open", hint: "이미지 객체화를 눌러 주세요" },
+    },
+    {
+      target: () => "#objectify-status",
+      chapter: "가져오기",
+      title: "같은 그림을 선으로 준비합니다",
+      text: "파일을 따로 고르지 않아도 됩니다. 튜토리얼이 방금 라이브러리에 넣은 실제 그림을 이 창에 불러옵니다.",
+      action: loadTutorialExamIntoObjectify,
+      wait: { until: () => { const button = document.getElementById("objectify-insert"); return !!button && !button.disabled; }, hint: "그림을 분석하는 중입니다" },
     },
     {
       target: () => "#objectify-insert",
@@ -1400,82 +1400,26 @@ const EXAM_SEARCH = {
       target: () => "#canvas",
       coachSide: "right",
       chapter: "고치기",
-      title: "② 오른쪽 우주선만 남기고 지웁니다",
+      title: "② 필요 없는 글자나 보조선을 지웁니다",
       text:
-        "이제 낱개로 고를 수 있습니다. 남길 것은 <오른쪽 우주선 하나>뿐입니다.\n" +
-        "점선 상자 안이 지울 자리입니다. 그 바깥에서 시작해 감싸도록 끌어 고른 뒤 Delete.\n\n" +
-        "· 빈 곳에서 시작해야 합니다 — 그림 위에서 끌면 그 조각이 옮겨집니다\n" +
-        "· 여러 번 나눠서 지우셔도 됩니다\n" +
-        "· 잘못 지웠으면 Ctrl+Z 로 되돌립니다",
-      /* 지울 자리는 단계에 들어온 순간의 그림에서 재어 붙들어 둔다.
-       * 지우는 동안 다시 재면 남은 것에 맞춰 상자가 계속 오그라들어, 목표가 손에서
-       * 달아나는 것처럼 보인다. 판정 경계(cutX)도 같은 순간의 값이어야 짝이 맞는다. */
-      action: (ctx) => {
-        const boxes = allBoxes();
-        ctx.cutX = splitX(boxes);
-        const left = ctx.cutX == null ? [] : boxes.filter((b) => b.x + b.w / 2 < ctx.cutX);
-        ctx.eraseBox = hullBox(left);
-      },
-      guide: (ctx) => (ctx.eraseBox
-        ? { pts: boxPts(ctx.eraseBox), close: true, note: "이 안을 다 지웁니다", noteDy: -10 }
-        : null),
+        "객체화된 글자와 선도 보통 도형 조각입니다. 남길 경사면 도해를 보면서\n" +
+        "필요 없는 조각 하나 이상을 고른 뒤 Delete로 지워 보세요.\n\n" +
+        "· 빈 곳에서 시작해 감싸면 여러 조각을 함께 고를 수 있습니다\n" +
+        "· 잘못 지웠으면 Ctrl+Z로 되돌립니다",
+      action: (ctx) => { ctx.beforeCleanup = objects().length; },
       wait: {
-        // 점선 안(경계 왼쪽)에 아무것도 남지 않으면 통과. 조각 개수 비율로 어림하던
-        // 예전 기준은 문항마다 빗나갔다 — 짚어 준 영역과 채점 기준을 같게 맞춘다.
-        until: (ctx) => {
-          if (ctx.cutX == null) return false;
-          const rest = allBoxes();
-          return rest.length > 0 && !rest.some((b) => b.x + b.w / 2 < ctx.cutX);
-        },
-        hint: "점선 안을 감싸도록 끌어 고르고 Delete",
-      },
-    },
-    {
-      target: () => "#canvas",
-      chapter: "고치기",
-      title: "③ 화살표와 글자를 지웁니다",
-      text:
-        "두 군데가 남았습니다. 점선으로 짚은 곳입니다.\n\n" +
-        "· 오른쪽 — 속도 화살표와 0.6c 글씨. 감싸도록 끌어 고르고 Delete\n" +
-        "· 우주선 안 — 글자를 <클릭>해서 고르고 Delete. 끌어서 감싸면 사람까지 딸려 옵니다\n" +
-        "· 객체화된 글자는 '글자'가 아니라 작은 그림 조각입니다 — 도형과 똑같이 지웁니다\n" +
-        "· 안에 있는 사람·의자는 그대로 두세요. 잘못 지웠으면 Ctrl+Z",
-      coachSide: "right",
-      action: (ctx) => {
-        ctx.tailIds = tailBits().map((b) => b.id);
-        ctx.tailBox = hullBox(tailBits(), 0.8);
-        ctx.inner = innerRegion();
-        ctx.beforeLetters = objects().length;
-      },
-      guide: (ctx) => {
-        const out = [];
-        if (ctx.tailBox) out.push({ pts: boxPts(ctx.tailBox), close: true, note: "화살표와 글씨", noteDy: -10 });
-        if (ctx.inner) out.push({ pts: boxPts(ctx.inner), close: true, note: "이 안의 글자", noteDy: -10 });
-        return out.length ? out : null;
-      },
-      wait: {
-        /* 둘 다 해야 통과다.
-         *   · 화살표·글씨 — 짚어 둔 조각이 하나도 안 남아야 한다(확정적으로 잴 수 있다)
-         *   · 안쪽 글자   — 무엇이 글자인지 기계가 못 가리므로, 화살표 조각 수 말고도
-         *                   더 줄었는지로 본다. 헐렁하지만 [건너뛰고 다음]이 늘 열려 있다. */
-        until: (ctx) => {
-          const ids = new Set(ctx.tailIds || []);
-          const live = allBoxes();
-          const tailGone = !live.some((b) => ids.has(b.id));
-          const lettersGone = objects().length < (ctx.beforeLetters ?? Infinity) - ids.size;
-          return tailGone && lettersGone;
-        },
-        hint: "점선 두 곳을 지워 주세요",
+        until: (ctx) => objects().length > 0 && objects().length < (ctx.beforeCleanup ?? Infinity),
+        hint: "필요 없는 조각을 하나 이상 지워 주세요",
       },
     },
     /* ----- 퍼스널 오브젝트로 저장해 두고, 검색으로 다시 꺼내 쓴다 ----- */
     {
       target: () => "#canvas",
       chapter: "저장하고 다시 쓰기",
-      title: "④ 저장할 것을 골라 둡니다",
+      title: "③ 저장할 도해를 골라 둡니다",
       text:
-        "이 우주선을 다음 문항에서도 쓰려면 <퍼스널 오브젝트>로 저장해 둡니다.\n" +
-        "먼저 우주선 전체를 감싸도록 끌어 고르세요.\n\n" +
+        "이 경사면 도해를 다음 문항에서도 쓰려면 <퍼스널 오브젝트>로 저장해 둡니다.\n" +
+        "먼저 남길 도해 전체를 감싸도록 끌어 고르세요.\n\n" +
         "· 저장은 '지금 골라 둔 것'을 담습니다 — 하나만 골라 두면 그 조각 하나만 저장됩니다\n" +
         "· 빈 곳에서 시작해 대각선으로 끄세요. 커서가 어떻게 감싸는지 보여 드립니다\n" +
         "· 전부 고르려면 Ctrl+A 를 눌러도 됩니다",
@@ -1489,19 +1433,18 @@ const EXAM_SEARCH = {
         ? { kind: "drag", from: [ctx.wrapBox.x1, ctx.wrapBox.y1], to: [ctx.wrapBox.x2, ctx.wrapBox.y2] }
         : null),
       wait: {
-        // 한 조각만 골라도 통과시키면, 조각 하나짜리 '우주선'이 저장돼 ⑧에서 이상해진다.
         // 남은 것의 대부분(70%)을 골라야 '전체를 감쌌다'로 본다.
         until: () => {
           const n = (state.get().selectedIds || []).length;
           return n >= Math.max(2, Math.ceil(objects().length * 0.7));
         },
-        hint: "우주선 전체를 감싸도록 끌어 주세요",
+        hint: "남길 도해 전체를 감싸도록 끌어 주세요",
       },
     },
     {
       target: () => "#personal-object-save",
       chapter: "저장하고 다시 쓰기",
-      title: "⑤ 퍼스널 오브젝트로 저장하기 — [오브젝트 저장]",
+      title: "④ 퍼스널 오브젝트로 저장하기 — [오브젝트 저장]",
       text:
         "왼쪽 맨 아래 '고급 기능' 묶음에 [오브젝트 저장]이 있습니다. 눌러 주세요.\n\n" +
         "· 이것이 '퍼스널 오브젝트'를 만드는 유일한 길입니다 — 지금 골라 둔 것이 그대로 담깁니다\n" +
@@ -1516,7 +1459,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#po-name", "#po-ok"],
       chapter: "저장하고 다시 쓰기",
-      title: "⑥ 이름을 넣고 저장",
+      title: "⑤ 이름을 넣고 저장",
       text:
         "이름은 대신 넣어 드릴게요. 그다음 '저장'을 누르시면 됩니다.\n\n" +
         "· 분류는 그대로 두셔도 됩니다\n" +
@@ -1529,11 +1472,11 @@ const EXAM_SEARCH = {
         hint: "'저장'을 눌러 주세요",
       },
       auto: {
-        label: "이름 '우주선' 넣기",
+        label: "이름 '경사면' 넣기",
         run: () => {
           const n = document.getElementById("po-name");
           if (!n) return;
-          n.value = "우주선";
+          n.value = "경사면";
           n.dispatchEvent(new Event("input", { bubbles: true }));
         },
       },
@@ -1541,7 +1484,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "저장하고 다시 쓰기",
-      title: "⑦ 화면을 비웁니다",
+      title: "⑥ 화면을 비웁니다",
       text:
         "저장이 끝났으니 화면에 남은 것은 지워도 됩니다. 저장고에 들어가 있으니까요.\n" +
         "Ctrl+A 로 전부 고른 뒤 Delete 를 누르세요.\n\n" +
@@ -1559,9 +1502,9 @@ const EXAM_SEARCH = {
     {
       target: () => "#object-search-trigger",
       chapter: "저장하고 다시 쓰기",
-      title: "⑧ Ctrl+F 또는 [오브젝트 검색]을 누르세요",
+      title: "⑦ Ctrl+F 또는 [오브젝트 검색]을 누르세요",
       text:
-        "비워진 화면에 저장해 둔 우주선을 다시 꺼냅니다.\n" +
+        "비워진 화면에 저장해 둔 경사면 도해를 다시 꺼냅니다.\n" +
         "캔버스 아래 막대의 [오브젝트 검색]을 누르시거나, 그냥 Ctrl+F 를 누르세요.\n\n" +
         "· 둘 다 같은 창이 열립니다 — 손에 익는 쪽을 쓰시면 됩니다\n" +
         "· 왼쪽 '퍼스널 오브젝트' 칸에서도 꺼낼 수 있지만, 개수가 늘면 검색이 빠릅니다",
@@ -1574,7 +1517,7 @@ const EXAM_SEARCH = {
     {
       target: () => [".object-search-input", ".object-search-results"],
       chapter: "저장하고 다시 쓰기",
-      title: "⑨ '우주선'을 찾아 캔버스에 놓습니다",
+      title: "⑧ '경사면'을 찾아 캔버스에 놓습니다",
       text:
         "이름을 치면 아래에 후보가 나옵니다. 방금 저장한 것은 '퍼스널'로 표시됩니다.\n" +
         "그 줄을 누르면 <화면 정중앙>에 놓입니다.\n\n" +
@@ -1589,12 +1532,12 @@ const EXAM_SEARCH = {
         ctx.beforeInsert = objects().length;
       },
       auto: {
-        label: "'우주선' 이라고 치기",
+        label: "'경사면' 이라고 치기",
         stay: true,   // 창을 닫지 않는다 — 고르는 것은 사용자 몫
         run: () => {
           const inp = document.querySelector(".object-search-input");
           if (!inp) return;
-          inp.value = "우주선";
+          inp.value = "경사면";
           inp.dispatchEvent(new Event("input", { bubbles: true }));
         },
       },
@@ -1606,13 +1549,13 @@ const EXAM_SEARCH = {
 
     /* ----- 이름 붙이기: 라벨러와 텍스트를 하나씩 -----
      * 두 도구는 쓰임이 다르고, 그 차이를 한 그림 안에서 손으로 겪게 한다.
-     *   · 우주선  — 그림 <바깥>에 이름을 두고 대상을 가리켜야 한다 → 라벨러(지시선 + 이름표)
-     *   · 우주인  — 선실 <안>에 글자를 앉히면 그것으로 충분하다   → 텍스트(글자만)
+     *   · 도해 전체 — 그림 <바깥>에 이름을 두고 대상을 가리켜야 한다 → 라벨러(지시선 + 이름표)
+     *   · 도해 안쪽 — 글자를 앉히면 그것으로 충분하다 → 텍스트(글자만)
      * 두 도구는 한 버튼에 묶여 있다(index.html #tool-text-merged → 팝오버). */
     {
       target: () => "#tool-text-merged",
       chapter: "이름 붙이기",
-      title: "⑩ 텍스트/라벨러 버튼을 누르세요",
+      title: "⑨ 텍스트/라벨러 버튼을 누르세요",
       text:
         "왼쪽 도구 넷째 줄, 'T' 모양 버튼입니다. 누르면 둘 중에 고르는 작은 창이 뜹니다.\n\n" +
         "· 텍스트 — 아무 데나 글자만 놓습니다\n" +
@@ -1623,7 +1566,7 @@ const EXAM_SEARCH = {
     {
       target: () => vis('#chooser-text [data-symbol="labeler"]') || "#chooser-text",
       chapter: "이름 붙이기",
-      title: "⑪ '라벨러'를 고르세요",
+      title: "⑩ '라벨러'를 고르세요",
       text:
         "아래쪽 항목입니다. 지시선과 이름표가 함께 들어갑니다.\n\n" +
         "· 단축키는 Shift+T 입니다 (텍스트는 T)",
@@ -1634,25 +1577,25 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑫ 우주선 앞부분을 찍고, 이름표 자리를 찍습니다",
+      title: "⑪ 도해 가장자리를 찍고, 이름표 자리를 찍습니다",
       text:
-        "방금 화면 가운데로 들어온 우주선에 이름을 답니다.\n" +
-        "두 번 누릅니다. ① 가리킬 곳(우주선 <앞부분>) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
-        "· 앞부분(뾰족한 코 쪽)을 가리켜야 지시선이 그림을 가로지르지 않습니다\n" +
+        "방금 화면 가운데로 들어온 도해에 이름을 답니다.\n" +
+        "두 번 누릅니다. ① 가리킬 곳(도해 가장자리) → ② 이름표가 앉을 자리(위쪽 빈 곳).\n\n" +
+        "· 가장자리를 가리키면 지시선이 그림을 가로지르지 않습니다\n" +
         "· 두 번째 클릭에서 바로 만들어집니다\n" +
         "· 이름은 다음 단계에서 바꿉니다 — 지금은 ㉠ 로 들어옵니다",
       action: (ctx) => { ctx.labelers0 = countOf("labeler"); },
       guide: () => {
-        const p = noseSpots();
+        const p = diagramLabelSpots();
         if (!p) return null;
         return [
-          { pts: aimRing(p.anchor, 2.5), close: true, note: "① 앞부분", noteDy: 16 },
+          { pts: aimRing(p.anchor, 2.5), close: true, note: "① 도해 가장자리", noteDy: 16 },
           { pts: aimRing(p.label, 2.5), close: true, note: "② 여기를 찍기", noteDy: -10 },
           { pts: [p.anchor, p.label], close: false },
         ];
       },
       demo: () => {
-        const p = noseSpots();
+        const p = diagramLabelSpots();
         return p ? { kind: "clicks", pts: [p.anchor, p.label] } : null;
       },
       wait: {
@@ -1663,22 +1606,22 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑬ 이름을 '우주선'으로 고칩니다",
+      title: "⑫ 이름을 '경사면'으로 고칩니다",
       text:
         "만들어진 이름표를 <더블클릭>하면 글자를 고치는 작은 창이 뜹니다.\n" +
-        "'우주선'이라고 넣고 Ctrl+Enter 로 확정하세요.\n\n" +
+        "'경사면'이라고 넣고 Ctrl+Enter 로 확정하세요.\n\n" +
         "· 아래 단추를 누르면 대신 넣어 드립니다\n" +
         "· 글씨체·크기도 그 창에서 함께 정합니다\n" +
         "· 앞 단계를 건너뛰셨으면 이름표가 없습니다 — 이 단계도 건너뛰세요",
       // 인덱스는 '앞 단계에 들어올 때 세어 둔 개수' = 방금 만든 그 라벨러다.
       // 0번으로 못 박으면 사용자가 이미 다른 라벨러를 갖고 있을 때 엉뚱한 것을 고친다.
       auto: {
-        label: "이름을 '우주선'으로 넣기",
-        run: (ctx) => setLabelerText(ctx.labelers0 || 0, "우주선"),
+        label: "이름을 '경사면'으로 넣기",
+        run: (ctx) => setLabelerText(ctx.labelers0 || 0, "경사면"),
       },
       wait: {
-        until: (ctx) => labelerTextAt(ctx.labelers0 || 0) === "우주선",
-        hint: "이름표를 더블클릭해 '우주선'이라고 넣어 주세요",
+        until: (ctx) => labelerTextAt(ctx.labelers0 || 0) === "경사면",
+        hint: "이름표를 더블클릭해 '경사면'이라고 넣어 주세요",
       },
     },
     {
@@ -1686,9 +1629,9 @@ const EXAM_SEARCH = {
       // ⑩⑪에서 두 단계로 이미 익혔으므로 여기서는 한 단계로 줄인다.
       target: () => vis('#chooser-text [data-tool="T"]') || "#tool-text-merged",
       chapter: "이름 붙이기",
-      title: "⑭ 이번엔 텍스트입니다 — 같은 버튼에서 '텍스트'",
+      title: "⑬ 이번엔 텍스트입니다 — 같은 버튼에서 '텍스트'",
       text:
-        "선실 안 사람에게는 지시선이 필요 없습니다. 안쪽에 글자만 앉히면 됩니다.\n" +
+        "도해 안쪽의 짧은 기호에는 지시선이 필요 없습니다. 그 자리에 글자만 앉히면 됩니다.\n" +
         "같은 버튼을 눌러 이번엔 위쪽 <텍스트>를 고르세요.\n\n" +
         "· 가리켜야 하면 라벨러, 그 자리에 적으면 되면 텍스트 — 이 차이가 전부입니다\n" +
         "· 단축키는 T 입니다",
@@ -1700,26 +1643,26 @@ const EXAM_SEARCH = {
     {
       target: () => "#canvas",
       chapter: "이름 붙이기",
-      title: "⑮ 우주인 옆에 라벨 A 를 적습니다",
+      title: "⑭ 도해 안에 라벨 A 를 적습니다",
       text:
-        "우주인 바로 오른쪽 점선 자리를 한 번 누르면 글자 입력창이 열립니다.\n" +
+        "점선 자리를 한 번 누르면 글자 입력창이 열립니다.\n" +
         "<A> 라고 치고 Ctrl+Enter 로 확정하세요.\n\n" +
         "· 기출 원본의 기호를 내 문항 기호로 바꿔 다는 것입니다\n" +
         "· Enter 는 줄바꿈, 확정은 Ctrl+Enter 입니다\n" +
         "· 아래 단추를 누르면 대신 넣어 드립니다",
       action: (ctx) => { ctx.texts0 = countOf("text"); },
       guide: () => {
-        const p = cabinTextSpot();
+        const p = diagramTextSpot();
         return p ? { pts: aimRing(p, 2.5), close: true, note: "여기에 A", noteDy: -10 } : null;
       },
       demo: () => {
-        const p = cabinTextSpot();
+        const p = diagramTextSpot();
         return p ? { kind: "clicks", pts: [p] } : null;
       },
       auto: {
         label: "라벨 A 넣기",
         run: () => {
-          const p = cabinTextSpot();
+          const p = diagramTextSpot();
           if (p) placeObjects([newText(p[0], p[1], "A")], { allowDup: true });
         },
       },
@@ -1736,7 +1679,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#file-menu-btn",
       chapter: "내보내기",
-      title: "⑯ 위쪽 '파일'을 누르세요",
+      title: "⑮ 위쪽 '파일'을 누르세요",
       text:
         "다 됐으면 한글에 붙일 그림으로 뽑습니다.\n" +
         "화면 맨 위 줄 왼쪽의 '파일'입니다.\n\n" +
@@ -1747,7 +1690,7 @@ const EXAM_SEARCH = {
     {
       target: () => "#image-export",
       chapter: "내보내기",
-      title: "⑰ '이미지로 내보내기'를 누르세요",
+      title: "⑯ '이미지로 내보내기'를 누르세요",
       text:
         "펼쳐진 목록의 맨 아래 항목입니다.\n\n" +
         "· 단축키는 Alt+P 입니다\n" +
@@ -1762,7 +1705,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-format", "#export-area"],
       chapter: "내보내기",
-      title: "⑱ 저장 폴더를 정하고, 필요한 부분만 — 영역 지정",
+      title: "⑰ 저장 폴더를 정하고, 필요한 부분만 — 영역 지정",
       text:
         "형식은 PNG 로 두세요. 시험지에 넣을 그림은 PNG 가 깔끔합니다.\n" +
         "'저장 폴더'를 한 번 연결해 두면, 다음부터는 어디에 둘지 묻지 않고 그 폴더로 바로 들어갑니다.\n" +
@@ -1775,7 +1718,7 @@ const EXAM_SEARCH = {
     {
       target: () => ["#export-confirm", "#export-cancel"],
       chapter: "내보내기",
-      title: "⑲ 내보내기 — 또는 오늘은 취소",
+      title: "⑱ 내보내기 — 또는 오늘은 취소",
       text:
         "'내보내기'를 누르면 PNG 파일이 저장됩니다 — 폴더를 연결해 두었으면 그 폴더로 들어갑니다.\n" +
         "연습이니 '취소'로 닫으셔도 됩니다 — 둘 중 아무거나 누르세요.\n\n" +
@@ -1792,7 +1735,7 @@ const EXAM_SEARCH = {
       text:
         "찾고 → 풀고 → 지우고 → 고치고 → 저장해 두고 → 꺼내 쓰고 → 내보낸다.\n" +
         "이게 5E로 시험지 그림을 만드는 전부입니다.\n\n" +
-        "· 저장해 둔 우주선은 다음에 열어도 왼쪽에 그대로 있습니다\n" +
+        "· 저장해 둔 경사면은 다음에 열어도 왼쪽에 그대로 있습니다\n" +
         "· 막히면 언제든 위쪽 [튜토리얼]로 돌아오세요. 수고하셨습니다",
     },
   ],
@@ -1827,41 +1770,48 @@ const TRIM_EXAM = {
     },
     {
       target: () => "#exam-library-open",
-      title: "기출 라이브러리 열기",
+      title: "라이브러리 열기",
       text: "캔버스 아래 막대에 있습니다. 눌러 주세요. (Ctrl+Shift+F)",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
-      wait: { click: "#exam-library-open", hint: "기출 라이브러리를 눌러 주세요" },
+      wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },
     {
-      target: () => ["#examlib-query", "#examlib-status"],
-      title: "문항을 찾아 드릴게요",
+      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
+      title: "연습 그림을 가져옵니다",
       text:
-        "이번에는 검색을 대신 해 드립니다. 아래 단추를 누르세요.\n\n" +
-        "· 압축 코드 20260611 = 2026학년도 6월 모평 11번",
+        "외부 자료팩 없이도 쓸 수 있는 예시 그림을 실제 [파일 가져오기] 흐름으로 넣습니다.",
       auto: {
-        label: "'20260611' 검색하기",
-        run: () => typeIntoSearch("20260611"),
+        label: "연습 그림 가져오기",
+        run: importTutorialExamImage,
       },
+      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready" || ctx.tutorialExamImport?.state === "failed", hint: "연습 그림을 가져오는 중입니다" },
     },
     {
-      target: () => "#examlib-grid",
+      target: () => "[data-unilib-query]",
+      title: "그림을 찾아 드릴게요",
+      text: "파일명 2027 06 13으로 검색합니다. 검색 결과의 카드를 누르면 오른쪽에 미리보기가 열립니다.",
+      auto: { label: "'2027 06 13' 검색하기", run: () => typeIntoSearch("2027 06 13") },
+      wait: { until: () => !!libraryOverlay()?.querySelector("[data-result-id]"), hint: "검색 결과를 준비하는 중입니다" },
+    },
+    {
+      target: () => "[data-unilib-results]",
       title: "카드를 눌러 고르세요",
-      text: "한 문항만 남았습니다. 카드를 눌러 주세요.",
+      text: "한 그림만 남았습니다. 카드를 눌러 주세요.",
       wait: {
-        until: () => { const b = document.getElementById("examlib-insert"); return !!b && !b.disabled; },
+        until: () => !!selectedLibraryResult(),
         hint: "카드를 눌러 골라 주세요",
       },
     },
     {
-      target: () => "#examlib-insert",
-      title: "이번엔 '이미지 삽입'입니다",
+      target: () => "[data-unilib-insert]",
+      title: "이번엔 캔버스에 삽입입니다",
       text:
         "선으로 바꾸지 않고 그림째로 가져옵니다. 지우개는 이미지에만 쓸 수 있기 때문입니다.\n\n" +
         "· 오브젝트 변환과의 차이를 손으로 비교해 보세요",
-      demo: () => ({ kind: "clicks", at: ["#examlib-insert"] }),
+      demo: () => ({ kind: "clicks", at: ["[data-unilib-insert]"] }),
       wait: {
         until: () => countOf("image") >= 1,
-        hint: "'이미지 삽입'을 눌러 주세요",
+        hint: "[캔버스에 삽입]을 눌러 주세요",
       },
     },
     {
@@ -3389,9 +3339,9 @@ const ADVANCED_SHAPES = {
 const ADVANCED_ASSETS = {
   id:"advanced-assets", title:"3 · 이미지 요소 추출과 배열하기", desc:"이미지 라이브러리에서 필요한 부분만 골라 도판으로 배열하기", minutes:8, practice:true, next:["advanced-files"],
   steps:[
-    {chapter:"이미지 고르기",practice:true,title:"이미지 라이브러리를 열어 주세요",text:"왼쪽 아래 ‘이미지 라이브러리’를 눌러 복잡한 실험기구 그림을 찾습니다.",target:()=>"#parts-library-open",demo:()=>({kind:"clicks",at:["#parts-library-open"]}),wait:{click:"#parts-library-open",hint:"이미지 라이브러리를 눌러 주세요"}},
-    {chapter:"이미지 고르기",title:"복잡한 그림을 검색합니다",text:"검색창에 ‘실험’ 또는 화면에 보이는 분야 이름을 입력합니다. 검색어 입력은 대신 해 드릴 수 있습니다.",target:()=>"#partslib-query",auto:{label:"실험 그림 검색하기",run:()=>advancedType("#partslib-query","실험")},wait:{until:()=>!!vis("#partslib-grid .partslib-card"),hint:"검색 결과에서 그림을 골라 주세요"}},
-    {chapter:"이미지 고르기",title:"그림을 골라 캔버스에 넣어 주세요",text:"카드를 누른 뒤 미리보기를 확인하고 ‘이미지로 넣기’를 누릅니다.",target:()=>"#partslib-grid",wait:{until:()=>advancedSvgAssets().length>=1,hint:"카드를 고르고 ‘이미지로 넣기’를 눌러 주세요"}},
+    {chapter:"이미지 고르기",practice:true,title:"라이브러리를 열어 주세요",text:"캔버스 아래 ‘라이브러리’를 눌러 내장 과학 부품을 찾습니다.",target:()=>"#exam-library-open",demo:()=>({kind:"clicks",at:["#exam-library-open"]}),wait:{click:"#exam-library-open",hint:"라이브러리를 눌러 주세요"}},
+    {chapter:"이미지 고르기",title:"복잡한 그림을 검색합니다",text:"검색창에 ‘실험’ 또는 화면에 보이는 분야 이름을 입력합니다. 검색어 입력은 대신 해 드릴 수 있습니다.",target:()=>"[data-unilib-query]",auto:{label:"실험 그림 검색하기",run:()=>advancedType("[data-unilib-query]","실험")}},
+    {chapter:"이미지 고르기",title:"그림을 골라 캔버스에 넣어 주세요",text:"카드를 누른 뒤 미리보기를 확인하고 ‘캔버스에 삽입’을 누릅니다.",target:()=>["[data-result-id]","[data-unilib-insert]"],action:c=>{c.assets0=advancedSvgAssets().length},wait:{until:c=>advancedSvgAssets().length>(c.assets0||0),hint:"카드를 고르고 ‘캔버스에 삽입’을 눌러 주세요"}},
     {chapter:"필요한 부분",title:"필요한 부분만 남깁니다",text:"이미지에서 시험지에 쓸 실험기구 하나만 남기도록 영역을 지정합니다. 대상 전체가 영역 안에 들어오게 하세요.",target:()=>"#canvas",demo:()=>({kind:"drag",from:[-32,-20],to:[0,4]}),action:c=>{c.assets0=advancedSvgAssets().length},wait:{until:(c)=>advancedSvgAssets().length>(c.assets0||0),hint:"필요한 부분을 영역으로 지정해 주세요"}},
     {chapter:"배열",title:"여러 개를 나란히 놓습니다",text:"추출한 요소를 여러 개 복제해 일부러 들쭉날쭉하게 배열합니다. 저장·검색 방법은 기본에서 배웠으므로 이번에는 배열에 집중합니다.",target:()=>"#canvas",action:c=>{c.assetCount0=advancedSvgAssets().length},wait:{until:(c)=>advancedSvgAssets().length>=(c.assetCount0||0)+3,hint:"요소를 세 개 이상 배열해 주세요"}},
     {chapter:"배열",title:"가로 정렬과 간격 통일을 적용합니다",text:"요소를 모두 선택하고 전체 통일·수정에서 가로 정렬, 좌우 간격 통일 순서로 적용합니다.",target:()=>"#bulk-edit-open",wait:{until:()=>{const a=advancedSelectedObjects().filter(o=>o.type==="svgAsset");return a.length>=3&&a.every(o=>Number.isFinite(o.x))},hint:"요소를 모두 선택하고 정렬·간격 통일을 적용해 주세요"}},

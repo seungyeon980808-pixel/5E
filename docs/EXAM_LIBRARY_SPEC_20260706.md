@@ -1,6 +1,6 @@
 # 기출 이미지 라이브러리 스펙 (EXAM_LIBRARY_SPEC_20260706)
 
-작성 시점: 2026-07-06. 서버·외부 API 없이 정적 파일로 동작하는 기출 문항 이미지 검색·삽입 기능의 데이터 규약. 현재 구현은 이 문서와 `js/exam-library.js`를 함께 대조한다.
+작성 시점: 2026-07-06. 이 문서는 원래 정적 PNG 검색·삽입 규약을 기록했다. 현재 구현은 PDF 자료를 기본으로 열며, 레거시 PNG manifest 경로는 명시적인 외부 호환 URL을 설정한 경우에만 사용한다. 현재 체크아웃의 `images/`에는 튜토리얼 호환용 PNG 1개만 남아 있고, 이전 3,961-PNG corpus는 검증된 외부 백업에 보존한다. 현재 배포/복구 근거는 `docs/PDF_LIBRARY_MIGRATION.md`다.
 
 ## 검색 방식 3가지 (전부 AND 결합)
 
@@ -15,7 +15,7 @@
 
 ## 확정된 결정
 
-1. **현재 저장소 상태와 역사적 정책을 구분한다** — 2026-07-06 당시에는 평가원·교육청 이미지를 공개하지 않기 위해 로컬 전용으로 두려는 정책을 기록했다. 현재 `.gitignore`와 tracked tree는 PNG 3,961개와 `manifest.json`을 커밋하고 있으므로, 이 저장소의 실제 배포 상태를 설명할 때는 tracked tree를 권위로 삼는다.
+1. **현재 저장소 상태와 역사적 정책을 구분한다** — 2026-07-06 당시의 PNG-corpus 운영 규칙은 기록용이다. 현재 `.gitignore`와 tracked tree는 `p2_2027_06_13.png` 한 장과 `manifest.json`을 커밋한다. bulk PNG는 외부 백업에서만 보존하며, 실제 배포 상태는 tracked tree와 `PDF_LIBRARY_MIGRATION.md`를 함께 권위로 삼는다.
 2. **태깅은 표 파일 + 생성 스크립트** — `tags.csv`에서 태깅하고 `build_manifest.py`가 매니페스트를 생성.
 
 > **2026-07-19 갱신 2건**
@@ -31,12 +31,12 @@ assets/exam-library/
 ├── tag-vocab.json    태그 통제 어휘집 (커밋됨 — 새 태그는 여기 먼저 추가)
 ├── tags.csv         문항별 태그 시트 (커밋됨 — id | tags 두 열)
 ├── manifest.json     생성 산출물 (스크립트가 만듦, 현재 커밋됨)
-└── images/           기출 PNG (현재 tracked tree에 3,961개 포함; sparse-checkout에서는 빠질 수 있음)
+└── images/           튜토리얼 호환 PNG 1개 (`p2_2027_06_13.png`); bulk corpus는 외부 PDF-migration backup에만 보존
 scripts/build_manifest.py   매니페스트 생성 스크립트
 docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커밋됨)
 ```
 
-## 파일명 규칙
+## 역사적 파일명 규칙
 
 `<과목코드>_<학년도 4자리>_<시험월 2자리>_<문항번호>[_<서브번호>].png`
 
@@ -49,7 +49,7 @@ docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커
 - **연도는 학년도 기준**: 수능·모평은 시행 다음 해가 학년도 (2025년 11월 시행 = 2026학년도). 학평은 시행 연도 = 학년도.
 - 프리픽스 뒤 내용은 무시되므로 `p1_2025_03_02 [2025학년도 3월 학평 물리1 2번].png`처럼 사람이 읽을 라벨을 붙여도 된다. 단 같은 문항·서브번호의 파일이 두 개면(완전히 같은 id) id 중복 경고 후 뒤의 것을 건너뜀.
 
-## 파트(단원) 분류
+## 역사적 파트(단원) 분류
 
 파트는 `tag-vocab.json`의 카테고리에서 정해진다. 물리 문항의 기본 파트는 **역학 / 전자기학 / 광학 / 현대물리학**이며, 현재 어휘집에는 화학·생명·지구과학 카테고리도 포함된다.
 현재 매니페스트와 `tag-vocab.json`에는 물리·화학·생명·지구과학 계열의 카테고리가 포함되어 있다. 문항별 파트는 태그와 명시적 C열 값에서 도출되며, 실제 선택지는 매니페스트에 존재하는 값만 앱이 채운다.
@@ -60,7 +60,7 @@ docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커
 
 태그를 다른 파트로 옮기려면 `tag-vocab.json`에서 해당 태그를 옮긴 뒤 스크립트 재실행(문항 데이터는 안 건드림).
 
-## 태깅 워크플로
+## 역사적 태깅 워크플로
 
 1. `images/`에 PNG를 넣는다 (파일명 규칙 준수).
 2. `tags.csv`에 행 추가: **A열 = id** (`p1_2026_11_01`), **B열 = 태그** (쉼표 구분), **C열 = part**(선택).
@@ -72,7 +72,7 @@ docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커
 
 태그가 없어도 문항번호·과목·년도 검색은 동작한다 (제목·과목·년도가 파일명에서 자동 생성되므로). 태깅은 뒤로 미룰 수 있는 작업.
 
-## manifest.json 스키마 (`exam-library-v1`)
+## 역사적 manifest.json 스키마 (`exam-library-v1`)
 
 ```json
 {
@@ -100,12 +100,12 @@ docs/qa-fixtures/exam-library/   QA용 자작 도식 6장 (저작권 무관, 커
 
 `parts`·`years`·`tagVocab`을 매니페스트에 포함하는 이유: 앱이 드롭다운 옵션과 태그 칩을 그릴 때 fetch 1회로 끝내기 위해 (어휘집·파일 목록을 따로 안 읽음). `tagVocab`의 카테고리 `name`이 곧 파트다.
 
-## 성능 규약 (앱 쪽 구현이 지켜야 할 것)
+## 역사적 성능 규약
 
-- 앱 시작 시 라이브러리 관련 로드 **0** — manifest fetch는 검색 모달 첫 오픈 시 1회.
-- 이미지는 결과 그리드에서 `loading="lazy"`로 화면에 보이는 것만 로드.
-- 검색은 클라이언트 선형 스캔이며 별도 서버·검색 인덱스가 필요 없다. 현재 매니페스트 규모와 응답 시간은 실행 환경에 따라 달라지므로 이 문서에서는 고정 성능 수치를 보장하지 않는다.
+- 레거시 manifest fetch는 명시적 외부 호환 URL이 있을 때만 발생한다.
+- PDF 기본 경로의 lazy catalog, pack fetch, and cache policy are specified in `PDF_LIBRARY_MIGRATION.md`.
+- 이 문서의 과거 PNG linear-scan 설명은 현재 기본 배포 경로의 성능 보장이 아니다.
 
 ## QA 픽스처
 
-`docs/qa-fixtures/exam-library/`의 자작 도식 6장 (빗면, 용수철, 포물선, 회로, 파동, 자유낙하). 테스트 시 `assets/exam-library/images/`로 복사해 사용. 라벨 붙은 파일명 1장 포함 (규칙 관대함 검증용).
+`docs/qa-fixtures/exam-library/`의 자작 도식 6장 (빗면, 용수철, 포물선, 회로, 파동, 자유낙하)은 계속 커밋한다. PDF-library 테스트는 이들을 임시 입력으로 사용하며, 현재 source `assets/exam-library/images/`에 복사해 bulk corpus를 복원하지 않는다.

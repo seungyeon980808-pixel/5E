@@ -98,6 +98,10 @@ export function installAiPanelBrowserFixture({ workspace } = {}) {
     cancelAnimationFrame,
     alert() {},
     confirm: () => true,
+    dispatchEvent(event) {
+      for (const listener of windowListeners.get(event.type) || []) listener(event);
+      return !event.defaultPrevented;
+    },
     addEventListener(type, listener) {
       const listeners = windowListeners.get(type) || [];
       listeners.push(listener);

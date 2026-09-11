@@ -97,10 +97,10 @@ test('options are captured before await and incomplete AI metadata is rejected',
 test('replacement caps undo history at 60 and clears redo',async()=>{
   const f=fixture();f.value.undoStack=Array.from({length:60},(_,i)=>[{id:`undo-${i}`}]);const pending=f.insert(f.state,'new',replaceOptions());f.finish();await pending;assert.equal(f.value.undoStack.length,60);assert.equal(f.value.undoStack[0][0].id,'undo-1');assert.equal(f.value.undoStack.at(-1)[0].src,'old-png');assert.deepEqual(plain(f.value.redoStack),[]);
 });
-test('actual serialize/JSON/migrate/load preparation preserves source and AI provenance',async()=>{
-  const f=fixture(),pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,aiTaskId:'task-1',aiCandidateId:'v7'});f.finish();const id=await pending;
+test('actual serialize/JSON/migrate/load preparation preserves source and PDF provenance',async()=>{
+  const f=fixture(),metadata={documentId:'doc-opaque-1',documentTitle:'2026 물리학Ⅰ',pageNumber:3,rect:[.1,.2,.5,.4]},pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,aiTaskId:'task-1',aiCandidateId:'v7',sourceMetadata:metadata});f.finish();const id=await pending;
   const io=evaluate(projectSource,['serialize','prepareLoadedProject'],{screenToWorld(){},applyNewObjectStyleDefaults(){},migrateObjectStyleMode(){},showConfirm(){},downscaleIfNeeded(){},DEFAULT_TEXT_SIZE_MM:3,DEFAULT_TEXT_FONT:'sans-serif',normalizeTextRuns:()=>[],textRunsToText:()=>'',LABEL_CAPABLE_TYPES:new Set(),insertImageFromSrc(){},addPage(){}});
-  const project=plain(io.serialize(f.value));const prepared=io.prepareLoadedProject(project);const object=prepared.active.objects.find(o=>o.id===id);assert.equal(object.src,'data:image/png;base64,EXACT');assert.equal(object.aiTaskId,'task-1');assert.equal(object.aiCandidateId,'v7');assert.equal(object.layerId,7);assert.equal(prepared.activePageId,'page-1');
+  const project=plain(io.serialize(f.value));const prepared=io.prepareLoadedProject(project);const object=prepared.active.objects.find(o=>o.id===id);assert.equal(object.src,'data:image/png;base64,EXACT');assert.equal(object.aiTaskId,'task-1');assert.equal(object.aiCandidateId,'v7');assert.equal(object.layerId,7);assert.equal(prepared.activePageId,'page-1');assert.deepEqual(plain(object.sourceMetadata),metadata);metadata.rect[0]=.9;assert.equal(object.sourceMetadata.rect[0],.1);
 });
 
 test('AI insertion uses the origin-centered artboard center even if viewport or stale pointer is elsewhere',async()=>{

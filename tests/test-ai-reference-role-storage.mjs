@@ -23,6 +23,13 @@ test('legacy missing role stays input; malformed saved role is retained and bloc
  assert.throws(()=>partitionReferenceItems([invalid]));assert.throws(()=>key([invalid]));
 });
 
+test('PDF crop provenance survives an independent persisted snapshot',()=>{
+ const source={documentId:'physics-2026',page:4,crop:{x:10,y:20,width:30,height:40},sha256:'abc'};
+ const snapshot=snapshotImageItem({name:'crop',data:'data:image/png;base64,AA==',sourceKind:'pdf-crop',source});
+ source.page=9;
+ assert.deepEqual(snapshot.source,{documentId:'physics-2026',page:4,crop:{x:10,y:20,width:30,height:40},sha256:'abc'});
+});
+
 test('cache identity distinguishes equal pixels with changed role, style bytes and attachment order',()=>{
  const a=image(),s=image('STYLE_REFERENCE','AQ==');
  assert.notEqual(key([a]),key([{...a,referenceRole:'STYLE_REFERENCE'}]));

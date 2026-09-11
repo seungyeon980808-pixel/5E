@@ -26,7 +26,8 @@ test('native UI transport preserves prompt, isolates workspaces and emits one ra
   assert.deepEqual(await bridge.call('models', payload), { data: [{ model: 'gpt-5.6-sol' }] });
   const sent = await bridge.call('send', payload);
   assert.equal(sent.renderThreadId, sent.turnId);
-  await until(() => session.generation.job.turnId);
+  const generation = session.generations.generation(sent.turnId);
+  await until(() => generation.job.turnId);
   const native = runtime.calls.find(call => call.method === 'turn/start').params;
   assert.equal(native.input[0].text, payload.text);
   assert.equal(native.input[1].url, PNG);
@@ -34,12 +35,13 @@ test('native UI transport preserves prompt, isolates workspaces and emits one ra
   assert.equal(native.effort, payload.effort);
   assert.equal(native.serviceTier, payload.serviceTier);
   assert.deepEqual(await bridge.call('events', { clientScope: 'work-b', cursor: 0 }), { events: [], cursor: 0 });
-  await assert.rejects(bridge.call('send', { ...payload, clientScope: 'work-b' }), error => error.status === 409);
+  const second = await bridge.call('send', { ...payload, clientScope: 'work-b' });
+  assert.notEqual(second.turnId, sent.turnId);
   await bridge.call('interrupt', { clientScope: 'work-b' });
-  assert.equal(session.generation.job.state, 'running');
+  assert.equal(generation.job.state, 'running');
   const started = await bridge.call('events', { clientScope: 'work-a', cursor: 0 });
   assert.equal(started.events[0].method, 'item/started');
-  await session.generation.event({ method: 'item/completed', params: { threadId: 'native-thread', turnId: 'native-turn', item: { type: 'imageGeneration', id: 'img', result: PNG } } });
+  await generation.event({ method: 'item/completed', params: { threadId: 'native-thread', turnId: 'native-turn', item: { type: 'imageGeneration', id: 'img', result: PNG } } });
   const completed = await bridge.call('events', { clientScope: 'work-a', cursor: started.cursor });
   assert.deepEqual(completed.events.map(event => event.method), ['item/completed', 'turn/completed']);
   assert.equal(completed.events[0].params.item.imageDataUrl, PNG);
@@ -73,4 +75,60 @@ test('bridge HTTP endpoints require same-origin session and sign-in', async t =>
   assert.equal((await post('bridge-send', payload, cookie)).status, 401);
   runtimes[0].signedIn = true;
   assert.equal((await post('bridge-send', { ...payload, attachments: [{ data: 'file:///secret' }] }, cookie)).status, 400);
+});
+
+test('queued lifecycle cursor remains valid after all four observable events', async t => {
+  const runtime = new Fake();
+  const session = new Session(runtime, {
+    generationScheduler: new (require('./global-generation-scheduler.cjs').GlobalGenerationScheduler)({ maxRunning: 1 }),
+    schedulerOwner: 'owner',
+  });
+  t.after(() => session.close());
+  const first = await session.bridge.call('send', payload);
+  const queued = await session.bridge.call('send', { ...payload, clientScope: 'work-b' });
+  assert.equal((await session.bridge.call('events', { clientScope: 'work-b', cursor: 0 })).cursor, 1);
+  await session.cancelGeneration(first.turnId);
+  const generation = session.generations.generation(queued.turnId);
+  await until(() => generation.job.turnId);
+  await generation.event({ method: 'item/completed', params: {
+    threadId: generation.job.threadId,
+    turnId: generation.job.turnId,
+    item: { type: 'imageGeneration', id: 'queued-image', result: PNG },
+  } });
+  const terminal = await session.bridge.call('events', { clientScope: 'work-b', cursor: 1 });
+  assert.equal(terminal.cursor, 4);
+  assert.deepEqual(await session.bridge.call('events', { clientScope: 'work-b', cursor: terminal.cursor }), {
+    events: [], cursor: 4,
+  });
+});
+
+test('cancel and failure each emit one terminal event and retry only after an explicit new send', async t => {
+  const runtime = new Fake();
+  const session = new Session(runtime);
+  t.after(() => session.close());
+  const cancelled = await session.bridge.call('send', payload);
+  await until(() => session.generations.generation(cancelled.turnId).job.turnId);
+  await session.bridge.call('interrupt', { clientScope: payload.clientScope });
+  await session.bridge.call('interrupt', { clientScope: payload.clientScope });
+  const cancelEvents = await session.bridge.call('events', { clientScope: payload.clientScope, cursor: 0 });
+  assert.equal(cancelEvents.events.filter(event => event.method === 'turn/completed').length, 1);
+  assert.equal(cancelEvents.events.find(event => event.method === 'turn/completed').params.turn.status, 'interrupted');
+  const cancelledRetry = await session.bridge.call('send', payload);
+  assert.notEqual(cancelledRetry.turnId, cancelled.turnId);
+  assert.equal(session.snapshotGeneration(cancelled.turnId).state, 'cancelled');
+
+  const failedPayload = { ...payload, clientScope: 'failed-work' };
+  const failed = await session.bridge.call('send', failedPayload);
+  const generation = session.generations.generation(failed.turnId);
+  await until(() => generation.job.turnId);
+  runtime.emit('notification', { method: 'turn/completed', params: {
+    threadId: generation.job.threadId, turn: { id: generation.job.turnId },
+  } });
+  await until(() => generation.job.state === 'failed');
+  const startsBeforeRetry = runtime.calls.filter(call => call.method === 'turn/start').length;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(runtime.calls.filter(call => call.method === 'turn/start').length, startsBeforeRetry);
+  const failedRetry = await session.bridge.call('send', failedPayload);
+  assert.notEqual(failedRetry.turnId, failed.turnId);
+  assert.equal(session.snapshotGeneration(failed.turnId).state, 'failed');
 });

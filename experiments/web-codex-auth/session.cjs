@@ -1,12 +1,13 @@
-const { Generation, RequestError } = require('./generation.cjs');
+const { RequestError } = require('./generation.cjs');
+const { GenerationManager } = require('./generation-manager.cjs');
 const { DesktopBridge } = require('./desktop-bridge.cjs');
 class Session {
-  constructor(runtime, { loginTimeout = 600000, generationTimeout, loginMode = 'chatgpt' } = {}) {
+  constructor(runtime, { loginTimeout = 600000, generationTimeout, loginMode = 'chatgpt', generationScheduler, schedulerOwner } = {}) {
     if (!['chatgpt', 'chatgptDeviceCode'].includes(loginMode)) throw new Error('Unsupported login mode');
     this.loginMode = loginMode;
     this.runtime = runtime;
     this.bridge = new DesktopBridge(this);
-    this.generation = new Generation(runtime, { generationTimeout });
+    this.generations = new GenerationManager(runtime, { generationTimeout, scheduler: generationScheduler, schedulerOwner });
     this.loginTimeout = loginTimeout;
     this.state = 'signed-out';
     this.tail = Promise.resolve();
@@ -56,19 +57,28 @@ class Session {
     this.state = 'cancelled';
     return this.status();
   }
-  async generate(input) {
+  async startGeneration(input, prepared) {
     if (!(await this.status()).signedIn) throw new RequestError(401, 'Sign in first');
-    return this.generation.start(input);
+    return this.generations.start(input, prepared);
+  }
+  async generate(input) {
+    return (await this.startGeneration(input)).job;
+  }
+  snapshotGeneration(jobId) {
+    return this.generations.snapshot(jobId);
+  }
+  async cancelGeneration(jobId) {
+    return this.generations.cancel(jobId);
   }
   async logout() {
-    if (this.generation.job) await this.generation.cancel(this.generation.job.jobId);
+    await Promise.all([...this.generations.active.keys()].map(jobId => this.generations.cancel(jobId)));
     await this.cancel();
     await this.runtime.rpc('account/logout');
-    this.generation.job = null;
+    this.generations.close();
     this.bridge.clear();
     this.state = 'signed-out';
     return this.status();
   }
-  close() { this.generation.close(); this.clearLogin(); this.runtime.close(); }
+  close() { this.generations.close(); this.clearLogin(); this.runtime.close(); }
 }
 module.exports = { Session };

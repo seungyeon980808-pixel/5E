@@ -23,18 +23,53 @@ class Generation {
   constructor(runtime, { generationTimeout = 240000 } = {}) {
     this.runtime = runtime;
     this.timeout = generationTimeout;
-    runtime.on('notification', event => { void this.event(event).catch(() => this.finish('failed', '이미지 결과를 읽지 못했습니다.')); });
-    runtime.on('unavailable', () => this.finish('failed', 'AI 연결이 종료되었습니다.'));
+    this.onNotification = event => {
+      void this.event(event).catch(async () => {
+        const job = this.job;
+        this.finish('failed', '이미지 결과를 읽지 못했습니다.');
+        await this.interrupt(job);
+        this.notifyReleasable();
+      });
+    };
+    this.onUnavailable = () => {
+      if (this.job) this.job.stopped = true;
+      this.finish('failed', 'AI 연결이 종료되었습니다.');
+      this.notifyReleasable();
+    };
+    runtime.on('notification', this.onNotification);
+    runtime.on('unavailable', this.onUnavailable);
   }
-  start(value, prepared = null) {
+  prepare(value, prepared = null) {
     validateInput(value);
     if (this.job && (this.job.state === 'running' || this.job.launchPending || (this.job.turnId && !this.job.stopped))) throw new RequestError(409, 'Generation already running');
-    this.job = { jobId: randomUUID(), state: 'running', launchPending: true };
+    this.job = { jobId: randomUUID(), state: 'queued', launchPending: false, queuedAt: Date.now() };
+    this.releaseNotified = false;
+    this.preparedInput = { value, prepared };
+    return this.snapshot(this.job.jobId);
+  }
+  launch() {
     const job = this.job;
-    this.timer = setTimeout(() => { this.finish('failed', '이미지 생성 시간이 초과되었습니다.'); void this.interrupt(job); }, this.timeout);
+    if (!job || job.state !== 'queued' || !this.preparedInput) return;
+    const { value, prepared } = this.preparedInput;
+    this.preparedInput = null;
+    job.state = 'running';
+    job.launchPending = true;
+    job.startedAt = Date.now();
+    this.timer = setTimeout(() => {
+      this.finish('failed', '이미지 생성 시간이 초과되었습니다.');
+      void this.interrupt(job);
+      this.notifyReleasable();
+    }, this.timeout);
     this.timer.unref?.();
-    void this.execute(value, job, prepared).catch(() => { if (this.job === job) this.finish('failed', '이미지를 생성하지 못했습니다.'); }).finally(() => { job.launchPending = false; });
-    return this.snapshot(job.jobId);
+    void this.execute(value, job, prepared).catch(() => { if (this.job === job) this.finish('failed', '이미지를 생성하지 못했습니다.'); }).finally(() => {
+      job.launchPending = false;
+      this.notifyReleasable();
+    });
+  }
+  start(value, prepared = null) {
+    this.prepare(value, prepared);
+    this.launch();
+    return this.snapshot(this.job.jobId);
   }
   snapshot(id) {
     if (id === null && this.job) id = this.job.jobId;
@@ -77,6 +112,7 @@ class Generation {
       } catch { if (this.job === job) this.finish('failed', '유효한 PNG 결과를 받지 못했습니다.'); }
       await this.interrupt(job);
     } else if (method === 'turn/completed' && !job.reading) this.finish('failed', 'PNG 이미지가 생성되지 않았습니다.');
+    this.notifyReleasable();
   }
   async resultBytes(item) {
     let bytes;
@@ -97,12 +133,56 @@ class Generation {
     return bytes;
   }
   finish(state, error) { if (this.job?.state !== 'running') return; clearTimeout(this.timer); this.job.state = state; if (error) this.job.error = error; }
+  isReleasable() {
+    return !!this.job && ['completed', 'failed', 'cancelled'].includes(this.job.state)
+      && (!this.job.turnId || (!this.job.launchPending && this.job.stopped));
+  }
+  setReleaseCallback(callback) { this.releaseCallback = callback; this.notifyReleasable(); }
+  notifyReleasable() {
+    if (!this.releaseNotified && this.isReleasable() && this.releaseCallback) {
+      this.releaseNotified = true;
+      this.releaseCallback();
+    }
+  }
   async interrupt(job) {
     if (!job?.threadId || !job.turnId || job.stopped) return;
-    if (!job.stopPromise) job.stopPromise = this.runtime.rpc('turn/interrupt', { threadId: job.threadId, turnId: job.turnId }).catch(() => { this.runtime.close(); }).finally(() => { job.stopped = true; });
+    if (!job.stopPromise) {
+      let interruptTimer;
+      const timeout = new Promise(resolve => {
+        interruptTimer = setTimeout(() => { this.runtime.close(); resolve(); }, Math.min(this.timeout, 30000));
+        interruptTimer.unref?.();
+      });
+      const request = this.runtime.rpc('turn/interrupt', { threadId: job.threadId, turnId: job.turnId })
+        .catch(() => { this.runtime.close(); });
+      job.stopPromise = Promise.race([request, timeout]).finally(() => {
+        clearTimeout(interruptTimer);
+        job.stopped = true;
+        this.notifyReleasable();
+      });
+    }
     await job.stopPromise;
   }
-  async cancel(id) { this.snapshot(id); const job = this.job; this.finish('cancelled'); await this.interrupt(job); return this.snapshot(id); }
-  close() { clearTimeout(this.timer); this.finish('cancelled'); }
+  async cancel(id) {
+    this.snapshot(id);
+    const job = this.job;
+    if (job.state === 'queued') { job.state = 'cancelled'; job.stopped = true; this.preparedInput = null; }
+    else this.finish('cancelled');
+    await this.interrupt(job);
+    this.notifyReleasable();
+    return this.snapshot(id);
+  }
+  detach() {
+    this.runtime.off?.('notification', this.onNotification);
+    this.runtime.off?.('unavailable', this.onUnavailable);
+  }
+  close() {
+    clearTimeout(this.timer);
+    if (this.job) this.job.stopped = true;
+    if (this.job?.state === 'queued') this.job.state = 'cancelled';
+    else this.finish('cancelled');
+    this.preparedInput = null;
+    this.notifyReleasable();
+    this.detach();
+  }
 }
 module.exports = { Generation, RequestError, validateInput, MAX_IMAGE };
