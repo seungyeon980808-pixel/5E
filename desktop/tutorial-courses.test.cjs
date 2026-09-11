@@ -4,16 +4,17 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const read = f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
-function load(platform, selectors = {}) {
+function load(platform, selectors = {}, templates = {}) {
+  const active = { id: null };
   const current = { objects: [], activePageId: 'practice', pages: [] };
   const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
-    TEMPLATES: {}, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null },
-    applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => null, makeLine: () => ({}), makePolyline: () => ({}) });
+    TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null },
+    applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
   vm.runInContext(read('tutorial-courses.js').replace(/import\s+[\s\S]*?from\s+"[^\"]+";/g, '').replaceAll('export const', 'const').replaceAll('export function', 'function'), ctx);
-  return { current, course: id => vm.runInContext(`getCourse(${JSON.stringify(id)})`, ctx), text: t => vm.runInContext(`tutorialText(${JSON.stringify(t)})`, ctx) };
+  return { current, active, course: id => vm.runInContext(`getCourse(${JSON.stringify(id)})`, ctx), text: t => vm.runInContext(`tutorialText(${JSON.stringify(t)})`, ctx) };
 }
 for (const platform of ['MacIntel', 'Win32']) {
   test(`${platform}: tutorial separates command modifiers from mouse snap`, () => {
@@ -99,4 +100,16 @@ test('task courses require concrete symbols, drag boxes, and leave the canvas us
   for (const c of [p1,p2,p6]) assert.equal(c.steps.at(-1).target(), '#canvas');
   for (const d of [p1.steps[4].demo(), p2.steps[2].demo(), p6.steps[4].demo(), p6.steps[6].demo()]) assert.notDeepEqual(d.from,d.to);
   assert.match(p1.steps.find(s=>s.title.includes('사각형 도구')).title,/사각형 도구/);
+});
+
+test('shared symbol tools require both exact armed symbol and generated descriptor', () => {
+  const templates={convex_lens:{create:{tool:'OPTICS',kind:'convex_lens'}},object_arrow:{create:{tool:'OPTICS',kind:'object_arrow'}},resistor:{create:{tool:'CIRCUIT',element:'resistor'}},lamp:{create:{tool:'CIRCUIT',element:'lamp'}}};
+  const h=load('Win32',{},templates), lens=h.course('task-lens'), circuit=h.course('task-circuit');
+  const lensPick=lens.steps.find(s=>s.title.includes('볼록렌즈 고르기')); h.current.activeTool='OPTICS'; h.active.id='object_arrow'; assert.equal(lensPick.wait.until(),false); h.active.id='convex_lens'; assert.equal(lensPick.wait.until(),true);
+  const lensPlace=lens.steps.find(s=>s.title.includes('② 점선')); h.current.objects=[{type:'optics',kind:'object_arrow'}]; assert.equal(lensPlace.wait.until(),false); h.current.objects=[{type:'optics',kind:'convex_lens'}]; assert.equal(lensPlace.wait.until(),true);
+  const resistor=circuit.steps.find(s=>s.title.includes('저항 고르기')); h.current.activeTool='CIRCUIT';h.active.id='lamp';assert.equal(resistor.wait.until(),false);h.active.id='resistor';assert.equal(resistor.wait.until(),true);
+});
+test('P9 graph modal has valid targets and no canvas guide/demo dependency', () => {
+ const p9=load('Win32').course('task-graph'), [open,confirm]=p9.steps.slice(1,3);
+ assert.equal(open.target(),'#graph-tool-open');assert.equal(confirm.target(),'#gm-confirm');assert.doesNotThrow(()=>confirm.guide());assert.equal(confirm.demo().kind,'clicks');assert.equal(confirm.demo().at[0],'#gm-confirm');
 });

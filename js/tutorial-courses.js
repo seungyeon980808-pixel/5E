@@ -2249,66 +2249,27 @@ function taskCount(p){const d=taskDescriptor(p)||{};return objects().filter(o=>o
  *     at     : 점선으로 짚어 줄 자리 (world mm 다각형)
  */
 function makeTask(spec) {
-  const steps = [
-    {
-      title: spec.title,
-      text: spec.intro + "\n\n· 점선이 오늘 만들 그림입니다\n· 점선에 딱 맞지 않아도 됩니다",
-      guide: () => spec.figure,
-    },
-  ];
-
+  const steps = [{ title: spec.title, text: spec.intro + "\n\n· 점선이 오늘 만들 그림입니다\n· 점선에 딱 맞지 않아도 됩니다", guide: () => spec.figure }];
   spec.parts.forEach((p, i) => {
     const num = ["①", "②", "③", "④", "⑤", "⑥", "⑦"][i] || `${i + 1}.`;
-    // 이 부품 앞에 같은 종류가 몇 개 놓였는가 (회로처럼 같은 type 을 여러 번 쓰는 과제용)
     const sameTypeBefore = spec.parts.slice(0, i).filter((q) => q.type === p.type && JSON.stringify(taskDescriptor(q)) === JSON.stringify(taskDescriptor(p))).length;
-    // 1) 부품(도구) 고르기
+    const toolName = p.symbol ? p.name : (p.selectName || TASK_TOOL_NAMES[p.tool] || p.tool);
     steps.push({
-      target: () => (p.symbol ? (symbolBtn(p.symbol) || "#panel-left") : `[data-tool="${p.tool}"]`),
-      title: `${num} ${p.symbol ? p.name : (TASK_TOOL_NAMES[p.tool] || p.tool)} 고르기`,
-      text: p.where + (p.tip ? `\n\n· ${p.tip}` : ""),
-      demo: () => {
-        const el = p.symbol ? symbolBtn(p.symbol) : vis(`[data-tool="${p.tool}"]`);
-        return el ? { kind: "clicks", at: [el] } : null;
-      },
+      target: () => p.target || (p.symbol ? (symbolBtn(p.symbol) || "#panel-left") : `[data-tool="${p.tool}"]`),
+      title: `${num} ${toolName} 고르기`, text: p.where + (p.tip ? `\n\n· ${p.tip}` : ""),
+      demo: () => p.selectDemo || (() => { const el = p.symbol ? symbolBtn(p.symbol) : vis(`[data-tool="${p.tool}"]`); return el ? { kind: "clicks", at: [el] } : null; })(),
       allowNext: true,
-      wait: {
-        // 심볼을 누르면 5E 가 그 심볼이 쓰는 도구를 armed 상태로 바꾼다(templates.js).
-        // 예전엔 여기서 무조건 true 를 돌려줘 '고르기' 단계가 그냥 지나갔다.
-        until: () => {
-          const want = p.symbol ? (TEMPLATES[p.symbol]?.create?.tool) : p.tool;
-          return want ? (p.symbol ? getActiveSymbolId() === p.symbol : state.get().activeTool === want) : false;
-        },
-        hint: `${p.name}을(를) 눌러 주세요`,
-      },
+      wait: { until: () => p.selectUntil ? p.selectUntil() : (() => { const want = p.symbol ? TEMPLATES[p.symbol]?.create?.tool : p.tool; return want ? (p.symbol ? state.get().activeTool === want && getActiveSymbolId() === p.symbol : state.get().activeTool === want) : false; })(), hint: `${toolName}을(를) 눌러 주세요` },
     });
-    // 2) 캔버스에 놓기
     steps.push({
-      target: () => "#canvas",
-      title: `${num} 점선 자리에 놓기`,
-      text: p.place || "점선 자리에 놓아 주세요.",
-      guide: () => [{ pts: p.at, close: p.close !== false, note: p.name, noteDy: -8 }, ...spec.figure.slice(0, 2)],
-      demo: () => (p.drag
-        ? { kind: "drag", from: p.at[0], to: p.at[2] || p.at[1], mod: p.mod }
-        : { kind: "clicks", pts: [p.at[0]], mod: p.mod }),
-      allowNext: true,
-      wait: {
-        // 절대 개수로 본다 — "들어올 때보다 늘었나"로 재면 [이전]으로 돌아왔을 때
-        // 기준선이 다시 잡혀 영영 통과하지 못한다. 같은 종류를 여러 개 놓는 과제
-        // (회로 부품 3개)를 위해, 앞에 같은 종류가 몇 개 있었는지까지 세어 둔다.
-        until: () => taskCount(p) >= sameTypeBefore + 1,
-        hint: "점선 자리에 놓아 주세요",
-      },
+      target: () => p.placeTarget || "#canvas", title: `${num} 점선 자리에 놓기`, text: p.place || "점선 자리에 놓아 주세요.",
+      guide: () => p.at ? [{ pts: p.at, close: p.close !== false, note: p.name, noteDy: -8 }, ...spec.figure.slice(0, 2)] : spec.figure.slice(0, 2),
+      demo: () => p.placeDemo || (p.drag ? { kind: "drag", from: p.at[0], to: p.at[2] || p.at[1], mod: p.mod } : { kind: "clicks", pts: p.demoPts || p.at, mod: p.mod }),
+      allowNext: true, wait: { until: () => taskCount(p) >= sameTypeBefore + 1, hint: p.placeHint || "점선 자리에 놓아 주세요" },
     });
   });
-
-  steps.push({
-    target: () => "#canvas", allowPan: true,
-    title: "완성되었습니다",
-    text: spec.outro + "\n\n· 완성된 그림을 마음껏 조작해 보세요\n· 다 해 보셨으면 [마치기]를 눌러 주세요",
-  });
-
-  return { id: spec.id, title: spec.title, desc: spec.desc, minutes: spec.minutes,
-           practice: true, next: spec.next || [], task: true, steps };
+  steps.push({ target: () => "#canvas", allowPan: true, title: "완성되었습니다", text: spec.outro + "\n\n· 완성된 그림을 마음껏 조작해 보세요\n· 다 해 보셨으면 [마치기]를 눌러 주세요" });
+  return { id: spec.id, title: spec.title, desc: spec.desc, minutes: spec.minutes, practice: true, next: spec.next || [], task: true, steps };
 }
 
 /* ----- 과제별 도면 (world mm) ----- */
@@ -2330,11 +2291,12 @@ const TASKS = [
         tip: "직선은 두 점을 클릭합니다 (단축키 L)", at: [[-34, 0], [6, 0]], close: false, drag: false,
         place: "두 점을 차례로 클릭해 책상 윗면을 그으세요." },
       { symbol: "pulley", type: "svgAsset", name: "도르래", where: "왼쪽 '과목별 오브젝트 → 역학'에 있습니다.",
-        tip: "심볼은 누른 뒤 비영점 크기로 끌어 놓습니다", at: T.box(4, -7, 10, 10), drag: true,
+        tip: "심볼은 누른 뒤 사각형을 그리듯 대각선으로 끌어 놓습니다", at: T.box(4, -7, 10, 10), drag: true,
         place: "책상 오른쪽 끝 점선 상자를 대각선으로 끌어 도르래 크기를 정하세요." },
       { tool: "RECT", type: "rect", name: "물체 m₁", where: "왼쪽 도구 2번째 줄 맨 오른쪽입니다.",
         tip: "Shift 를 누른 채 끌면 정사각형", at: T.box(-16, -10, 9, 9), drag: true, mod: "Shift 누른 채",
         place: "책상 위 점선 자리에 Shift 를 누른 채 끌어 정사각형으로 만드세요." },
+      { tool: "RECT", type: "rect", name: "물체 m₂", where: "같은 사각형 도구를 다시 사용합니다.", at: T.box(18, 4, 9, 9), drag: true, mod: "Shift 누른 채", place: "도르래 아래 점선 자리에 Shift 를 누른 채 두 번째 물체를 만드세요." },
     ],
     outro: "도르래와 줄, 두 물체까지. 나머지 줄은 직선 도구로 이어 주면 완성입니다.",
   }),
@@ -2345,7 +2307,7 @@ const TASKS = [
     figure: [{ pts: T.ceiling, close: false }, { pts: T.box(-6, 6, 12, 10), close: true, note: "추" }],
     parts: [
       { symbol: "clamp", type: "apparatus", name: "클램프(스탠드)", where: "'과목별 오브젝트 → 역학'에 있습니다.",
-        tip: "비영점 크기의 상자를 끌어 스탠드 크기를 정합니다", at: T.box(-25, -14, 10, 28), drag: true, place: "왼쪽 점선 상자를 대각선으로 끌어 스탠드를 세우세요." },
+        tip: "사각형을 그리듯 대각선으로 끌어 스탠드 크기를 정합니다", at: T.box(-25, -14, 10, 28), drag: true, place: "왼쪽 점선 상자를 대각선으로 끌어 스탠드를 세우세요." },
       { symbol: "spring", type: "spring", name: "용수철", where: "'과목별 오브젝트 → 역학'에 있습니다.",
         tip: "끌어서 길이를 정합니다", at: [[0, -20], [0, -20], [0, 4]], drag: true, close: false,
         place: "위에서 아래로 끌어 용수철을 만드세요." },
@@ -2417,10 +2379,10 @@ const TASKS = [
         place: "가운데를 가로지르는 광축을 두 점으로 그으세요." },
       { symbol: "convex_lens", type: "optics", name: "볼록렌즈", where: "'과목별 오브젝트 → 파동 및 광학'에 있습니다.",
         at: T.box(-2, -16, 4, 32), drag: true,
-        place: "가운데 점선 자리에 렌즈를 세우세요." },
+        place: "가운데 점선 상자를 대각선으로 끌어 렌즈를 세우세요." },
       { symbol: "object_arrow", type: "optics", name: "물체(화살표)", where: "같은 '파동 및 광학' 칸에 있습니다.",
         at: T.box(-26, -12, 4, 12), drag: true,
-        place: "렌즈 왼쪽 점선 자리에 물체를 세우세요." },
+        place: "렌즈 왼쪽 점선 상자를 대각선으로 끌어 물체를 세우세요." },
     ],
     outro: "광선은 직선에 화살표를 달아 긋습니다. 끝점이 물체 머리에 자석처럼 붙습니다.",
   }),
@@ -2434,8 +2396,8 @@ const TASKS = [
         tip: "접혀 있는 항목이라 검색이 빠릅니다", at: [[-32, -10], [-32, -10], [32, 10]], drag: true, close: false,
         place: "점선 자리에 끌어 정상파를 만드세요." },
       { symbol: "labeler", type: "labeler", name: "라벨러(지시선)", where: "왼쪽 도구 4번째 줄 가운데(텍스트) 안, 아래쪽 항목입니다.",
-        tip: "단축키 Shift+T — 지시선이 달린 이름표입니다", at: T.dot([-16, -14], 5),
-        place: "마디를 가리킬 자리에 라벨러를 놓으세요." },
+        tip: "첫 점은 마디, 두 번째 점은 이름표 자리입니다", at: [[-16, 0], [-22, -14]], close: false,
+        demoPts: [[-16, 0], [-22, -14]], place: "마디를 먼저 클릭하고, 왼쪽 위 이름표 자리를 다시 클릭하세요." },
     ],
     outro: "줄 길이는 '자' 도구로 재서 L 로 표시하면 문항 그림이 완성됩니다.",
   }),
@@ -2460,8 +2422,8 @@ const TASKS = [
     intro: "좌표평면을 만들고 그 위에 그래프를 그립니다. 넓이가 이동 거리인 그 그림입니다.",
     figure: [{ pts: T.box(-30, -20, 56, 40), close: true, note: "좌표평면" }],
     parts: [
-      { tool: "GRAPH_MODAL", type: "coordplane", name: "좌표/함수 생성", where: "왼쪽 맨 아래 '고급 기능'의 [좌표/함수 생성] 입니다.", target: "#graph-tool-open",
-        tip: "좌표/함수 생성을 눌러 창을 열고, 창의 만들기로 좌표평면을 추가합니다", place: "그래프 만들기 창에서 [만들기]를 누르세요." },
+      { tool: "GRAPH_MODAL", type: "coordplane", name: "좌표/함수 생성", selectName: "좌표/함수 생성", where: "왼쪽 맨 아래 '고급 기능'의 [좌표/함수 생성] 입니다.", target: "#graph-tool-open", selectDemo: { kind: "clicks", at: ["#graph-tool-open"] }, selectUntil: () => !!vis("#gm-tab-coord-btn"),
+        tip: "그래프 만들기 창에서 축 범위를 확인합니다", placeTarget: "#gm-confirm", placeDemo: { kind: "clicks", at: ["#gm-confirm"] }, place: "그래프 만들기 창에서 [만들기]를 누르세요." },
       { tool: "P", type: "polyline", name: "그래프(꺾은선)", where: "왼쪽 도구 3번째 줄 가운데입니다.",
         at: [[-26, 14], [-8, -8], [10, -8], [24, 14]], close: false,
         place: "점을 차례로 찍어 v–t 그래프를 그리고 더블클릭으로 끝내세요." },
