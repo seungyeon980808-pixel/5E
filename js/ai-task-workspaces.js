@@ -55,8 +55,8 @@ export function createTaskPersistence({
   let dirty = false;
   let outage = false;
   let queue = Promise.resolve();
-  const captureAndQueue = () => {
-    if (!dirty) return queue;
+  const captureAndQueue = ({ force = false, required = false } = {}) => {
+    if (!dirty && !force) return queue;
     dirty = false;
     let value;
     let captureError;
@@ -72,13 +72,20 @@ export function createTaskPersistence({
         if (!store) throw new Error('IndexedDB unavailable');
         await store.put(value);
         outage = false;
+        return { ok: true, error: null };
       } catch (error) {
         if (!outage) warn(error);
         outage = true;
+        return { ok: false, error };
       }
     };
-    queue = queue.then(write, write);
-    return queue;
+    const result = queue.then(write, write);
+    queue = result.then(() => undefined);
+    if (!required) return queue;
+    return result.then(outcome => {
+      if (!outcome.ok) throw outcome.error;
+      return true;
+    });
   };
   const flush = () => {
     if (timer) clearTimer(timer);
@@ -92,6 +99,11 @@ export function createTaskPersistence({
       timer = setTimer(() => { timer = null; void captureAndQueue(); }, delayMs);
     },
     flush,
+    checkpoint() {
+      if (timer) clearTimer(timer);
+      timer = null;
+      return captureAndQueue({ force: true, required: true });
+    },
     settled: () => queue,
   };
 }

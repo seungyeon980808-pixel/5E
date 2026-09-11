@@ -87,6 +87,35 @@ test('slow writes are serialized and keep immutable task, image, version, and co
   assert.deepEqual(writes[1].tabs.map(tab => tab.generated[0].data), ['png-a', 'png-b']);
 });
 
+test('a required checkpoint waits for an older write before committing its exact latest snapshot', async () => {
+  const clock = new FakeClock();
+  const first = deferred();
+  const writes = [];
+  let value = { key: 'workspace', tabs: [{ id: 'task-a', workState: 'idle' }] };
+  const persistence = createTaskPersistence({
+    store: { put: snapshot => { writes.push(snapshot); return writes.length === 1 ? first.promise : Promise.resolve(); } },
+    capture: () => {},
+    snapshot: () => value,
+    warn: () => assert.fail('storage should stay available'),
+    setTimer: clock.setTimeout,
+    clearTimer: clock.clearTimeout,
+  });
+
+  persistence.schedule();
+  clock.fire();
+  await Promise.resolve();
+  value = { key: 'workspace', tabs: [{ id: 'task-a', workState: 'busy', inFlightRequest: { type: 'chat' } }] };
+  const checkpoint = persistence.checkpoint();
+  await Promise.resolve();
+  assert.equal(writes.length, 1, 'the checkpoint must remain behind the earlier store transaction');
+
+  first.resolve();
+  assert.equal(await checkpoint, true);
+  assert.equal(writes.length, 2);
+  assert.equal(writes[1].tabs[0].workState, 'busy');
+  assert.equal(writes[1].tabs[0].inFlightRequest.type, 'chat');
+});
+
 test('a recovered store reports a later independent outage', async () => {
   const clock = new FakeClock();
   const warnings = [];
