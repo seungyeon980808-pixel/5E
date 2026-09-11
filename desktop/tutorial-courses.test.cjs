@@ -7,10 +7,10 @@ const read = f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
 function load(platform, selectors = {}, templates = {}, collections = {}) {
   const active = { id: null };
   const current = { objects: [], activePageId: 'practice', pages: [] };
-  const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current }, DEFAULT_STROKE_WIDTH: .2,
+  const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current, update: fn => fn(current) }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
     TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null, querySelectorAll: sel => collections[sel] || [] },
-    applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
+    applyNewObjectStyleDefaults: x => x, setActiveTool: tool => { current.activeTool = tool; }, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
   vm.runInContext(read('tutorial-courses.js').replace(/import\s+[\s\S]*?from\s+"[^\"]+";/g, '').replaceAll('export const', 'const').replaceAll('export function', 'function'), ctx);
@@ -112,6 +112,32 @@ test('shared symbol tools require both exact armed symbol and generated descript
 test('P9 graph modal has valid targets and no canvas guide/demo dependency', () => {
  const p9=load('Win32').course('task-graph'), [open,confirm]=p9.steps.slice(1,3);
  assert.equal(open.target(),'#graph-tool-open');assert.equal(confirm.target(),'#gm-confirm');assert.doesNotThrow(()=>confirm.guide());assert.equal(confirm.demo().kind,'clicks');assert.equal(confirm.demo().at[0],'#gm-confirm');
+});
+
+test('advanced shapes fill tracks only the explicitly prepared rectangle', () => {
+ const h=load('Win32'),c=h.course('advanced-shapes');
+ const fill=c.steps.find(s=>s.title==='도형의 속을 채워 주세요'),pattern=c.steps.find(s=>s.title==='채우기 종류를 바꿔 보세요'),ctx={};
+ h.current.objects=[{id:'other',type:'triangle',fillNone:false,fillStyle:'cross'},{id:'practice',type:'rect',fillNone:false,fillStyle:'solid'}];
+ fill.action(ctx);
+ assert.equal(ctx.fillShapeId,'practice');assert.equal(h.current.activeTool,'V');assert.deepEqual([...h.current.selectedIds],['practice']);
+ assert.equal(h.current.objects[1].fillNone,true);assert.equal(fill.wait.until(ctx),false);assert.equal(pattern.wait.until(ctx),false);
+ h.current.objects[0].fillStyle='dots';assert.equal(fill.wait.until(ctx),false);assert.equal(pattern.wait.until(ctx),false);
+ h.current.objects[1].fillNone=false;assert.equal(fill.wait.until(ctx),true);assert.equal(pattern.wait.until(ctx),false);
+ h.current.objects[1].fillStyle='hatch';assert.equal(pattern.wait.until(ctx),true);
+ assert.match(fill.text,/선택 도구.*연습 사각형.*준비했습니다/);assert.match(pattern.text,/같은 연습 사각형/);
+});
+test('advanced shapes alignment and spacing use line endpoints and expose Apply', () => {
+ const h=load('Win32'),c=h.course('advanced-shapes');
+ const align=c.steps.find(s=>s.title==='직선의 줄을 맞춰 주세요'),gap=c.steps.find(s=>s.title==='직선 사이의 간격을 맞춰 주세요');
+ assert.deepEqual([...align.target()],['#bulk-gap-rows','#bulk-apply']);assert.deepEqual([...gap.target()],['#bulk-gap-rows','#bulk-apply']);
+ h.current.objects=[
+  {id:'a',type:'line',p1:{x:0,y:0},p2:{x:10,y:0}},
+  {id:'b',type:'line',p1:{x:20,y:4},p2:{x:30,y:4}},
+  {id:'c',type:'line',p1:{x:50,y:8},p2:{x:60,y:8}},
+ ];
+ assert.equal(align.wait.until(),false);assert.equal(gap.wait.until(),false);
+ for(const line of h.current.objects){line.p1.y=3;line.p2.y=3;}assert.equal(align.wait.until(),true);assert.equal(gap.wait.until(),false);
+ h.current.objects[2].p1.x=40;h.current.objects[2].p2.x=50;assert.equal(gap.wait.until(),true);
 });
 
 test('advanced graph saves only a plane containing both requested expressions', () => {
