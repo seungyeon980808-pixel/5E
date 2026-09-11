@@ -51,9 +51,16 @@ The existing public paths remain distinct:
 |---|---|---|---|
 | `backgroundPolicy` | `connected`, `all-near-white`, `checkerboard`, `preserve` | `connected` | reject with `RangeError` |
 | `preserveMask` | binary mask matching source dimensions, or absent | absent | reject malformed mask; protected pixels retain exact RGBA |
+| `examPalette` | boolean | `false` | palette conversion runs only when explicitly enabled; preserve/change masks still apply |
 
 Ambiguous light pixels stay preserved under `connected`. Callers that mean
 "remove every white pixel" must explicitly choose `all-near-white`.
+
+Background processing does not simplify colors by default. `preserve` with
+omitted options keeps all source RGBA unchanged; an explicit `examPalette: true`
+requests color conversion in addition to the selected background policy.
+Callers must not enable palette conversion implicitly when the user requests
+only background removal or original preservation.
 
 ## Separation options and review result
 

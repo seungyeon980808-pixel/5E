@@ -22,7 +22,7 @@ import { makeNearWhiteTransparent, quantizeExamLineart } from "./image-backgroun
  * 그 밖은 exact RGBA로 복구한다. 처리 정책은 prompt의 white|transparent|preserve와 별개다. */
 export function processImageBackgroundPixels(rgba, width, height, {
   backgroundPolicy = "connected",
-  examPalette = true,
+  examPalette = false,
   preserveMask,
   changeMask,
   connectedOptions = {},
