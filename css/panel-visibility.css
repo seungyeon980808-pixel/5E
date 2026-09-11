@@ -191,6 +191,7 @@
   }
   #ai-image-panel .panel-layout-backdrop:not([hidden]) { z-index: 8; }
   #ai-image-panel[data-panel-layout] .ai-head { grid-template-columns: auto minmax(0, 1fr); }
+  #ai-image-panel[data-panel-layout] .ai-head-status { flex-wrap: wrap; gap: 4px; padding-block: 4px; }
   #ai-image-panel[data-panel-layout] .ai-title-line,
   #ai-image-panel[data-panel-layout] .ai-head-status > .ai-status { display: none; }
   #ai-image-panel[data-panel-layout] .ai-head { position: relative; z-index: 10; }

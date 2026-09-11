@@ -6,14 +6,14 @@ This is a migration inventory and reversible distribution-preparation record. It
 
 The default web experience opens the PDF-library tab. When `window.FIVE_E_PDF_PACK_BASE_URL` is configured, it discovers that remote PDF catalog only when the tab opens and fetches document bytes only when a user installs or opens a pack. With no configured URL, the same tab supports explicit local upload, connected desktop folders, and a user-selected pack-directory install. The 72 official PDFs and built packs remain outside tracked application source. `vendor/pdfjs/**` and `vendor/ocr/**` remain in the application package: they are executable runtime dependencies, not exam content.
 
-The finalized 72-document snapshot is externally backed up, but it is not a production remote default. `tools/pdf-library/recent-three.config.json` has an empty `baseUrl` and no `remoteCatalog`; production publication still requires selecting an HTTPS host and setting `window.FIVE_E_PDF_PACK_BASE_URL`.
+The finalized 72-document snapshot is externally backed up, but it is not a production remote default. `tools/pdf-library/recent-three.config.json` uses relative candidate paths in `baseUrl` (`../pack/recent-three/`) and `remoteCatalog` (`../pack/recent-three/catalog.json`); its `productionBaseUrl` is empty. Production publication still requires selecting an HTTPS host and setting `window.FIVE_E_PDF_PACK_BASE_URL`.
 
-## Verified inventory
+## Verified inventory at the 2026-09-10 migration freeze
 
 | Item | Exact inventory | Migration disposition |
 | --- | ---: | --- |
-| Legacy exam PNG payload | Current tree: 1 materialized tutorial PNG, 40,325 bytes. External verified backup: 3,961 PNGs, 299,094,759 bytes (285.24 MiB). | The current-tree removal deleted the other 3,960 files after byte-for-byte backup comparison. |
-| Legacy image tree in Git | Current index: `.gitkeep` plus the tutorial PNG; 3,960 PNG deletions are staged. Historical commits still contain the original payload. | Do not conflate checkout, staged index, Git object database, or a future re-clone. |
+| Legacy exam PNG payload | Migration-freeze tree: 1 materialized tutorial PNG, 40,325 bytes. External verified backup: 3,961 PNGs, 299,094,759 bytes (285.24 MiB). | The current-tree removal deleted the other 3,960 files after byte-for-byte backup comparison. |
+| Legacy image tree in Git | Migration-freeze index: `.gitkeep` plus the tutorial PNG; 3,960 PNG deletions are staged. Historical commits still contain the original payload. | Do not conflate checkout, staged index, Git object database, or a future re-clone. |
 | Selected official PDF set | 72 PDFs, 127,663,864 bytes (121.75 MiB), 288 pages | Keep outside tracked source; source and pack checksums must verify before publication. |
 | Raw corpus directory | 88 PDFs, 151,077,766 bytes (144.08 MiB) | Contains the selected 72 plus 16 excluded PDFs, 23,413,902 bytes (22.33 MiB). Do not publish the raw directory as the default pack. |
 | Built selected pack | `.omo/evidence/pdf-library/T5/recent-three-pack`, finalized at 72 PDFs/288 pages/76 files/140,405,401 logical bytes; `pack.json` SHA-256 `6be959d2ed1159bfa47c56b4fabc1092b1457e8cb996d40bd9179d06603a8c49`; `checksums.json` SHA-256 `e8cfa67c428c7b016b57f26b15cfd14e019e0ed5fc27c16407a2e376c7021c66`. | External distribution candidate after URL and legal/release decisions. |
@@ -27,13 +27,13 @@ The selected source-to-pack relation is checksum based: all 72 `documents/*.pdf`
 
 | Consumer | Current dependency | What the migration must do |
 | --- | --- | --- |
-| Exam library UI | `js/exam-library.js` defaults to PDF and fetches a legacy manifest only when nonempty `window.FIVE_E_LEGACY_EXAM_BASE_URL` explicitly enables that external compatibility branch. | The packaged default neither displays the legacy tab nor requests a legacy manifest/image. |
+| Exam library UI | `js/exam-library.js` uses the unified library with seven bundled original samples. It adds configured remote content on web and the verified bundled 72-PDF pack on desktop. | Keep sample metadata and byte snapshots; the external legacy compatibility branch remains opt-in. |
 | Reference Window | `js/reference-window.js` still resolves explicit legacy items through `IMG_BASE`, while PDF references carry a materialized snapshot source. | The PDF snapshot is a page/crop image blob or data URL, so an opened reference survives later pack disable/remove operations. |
-| Tutorial compare | `js/tutorial.js` directly uses `assets/exam-library/images/${examId}.png`. | Retain its sole static ID until tutorial migration; package only that image. |
+| Tutorial compare | `js/tutorial.js` directly uses `assets/exam-library/images/${examId}.png`. | Retain its static tutorial ID; the package also includes the six other approved original samples. |
 | AI reference search | `js/ai-reference-search.js` routes Exam to the shared PDF picker, which materializes a crop before AI insertion. | The resulting AI input is a saved byte snapshot, not a live path. |
 | Canvas insert | `js/exam-library.js` uses `insertImageFromSrc`; its contract converts the selected image to a data URL before project persistence | Existing saved projects already embed image bytes; do not rewrite their `savedImage`/data-URL payloads. |
 | PDF insert and AI paths | `js/pdf-library/pdf-library-ui.js` turns rendered PNG bytes into a data URL before insert/AI use | These also embed bytes. Do not save only a pack ID, catalog URL, or local path. |
-| Desktop package | `package.json` explicitly packages only `assets/exam-library/images/p2_2027_06_13.png`; it retains `assets/exam-parts/**/*`, PDF.js, and OCR. `desktop/distribution-consumers.test.cjs` asserts the exact selected legacy image list. | The bulk image glob is already absent from the actual package selection. Keep the parts glob. |
+| Desktop package | `package.json` explicitly packages the seven originals listed in `sample-catalog.json`, retains parts/PDF.js/OCR, and includes the verified external 72-PDF pack via `extraResources`. Distribution tests assert the selected image list. | Keep bulk PDFs outside Git and verify the pack before building; preserve the parts glob. |
 | Tests and docs | `desktop/repository-curation.test.cjs`, `docs/EXAM_LIBRARY_SPEC_20260706.md`, and the six QA fixtures describe or exercise the legacy path | Update only in the compatibility implementation change. The fixtures remain local. |
 | Service worker | No service-worker file, registration, or Workbox reference exists in the repository search | There is no cache invalidation migration to perform today. Add remote catalog cache/version policy with the future client, not a nonexistent worker. |
 | PWA metadata | `manifest.json` references only application icons | Retain it unchanged; it does not point at the exam corpus. |
@@ -51,11 +51,11 @@ The adapter must accept the old `manifest.json` item shape (`id`, `file`, title/
 
 The adapter owns the compatibility period. No source PNG may be removed while `reference-window.js`, `tutorial.js`, or `ai-reference-search.js` still build a direct `assets/exam-library/images/` path.
 
-### Exact retained PNG set after adapter adoption
+### Historical retained PNG set after adapter adoption (before 2026-09-12 samples)
 
 The only static tutorial PNG ID found in executable tutorial source is `p2_2027_06_13`, declared as `EX.id` in `js/tutorial-courses.js` and rendered by `js/tutorial.js`. Keep `assets/exam-library/images/p2_2027_06_13.png` until that tutorial is migrated to the adapter. The six committed test fixtures are retained outside the legacy image directory: `p1_2025_03_02 [2025학년도 3월 학평 물리1 2번].png`, `p1_2025_11_05.png`, `p1_2026_06_12.png`, `p1_2026_09_03.png`, `p1_2026_11_01.png`, and `p1_2026_11_08.png` under `docs/qa-fixtures/exam-library/`.
 
-The approved current-tree removal deleted the precise 3,960 materialized files in `assets/exam-library/images/` other than `p2_2027_06_13.png`. Default runtime and package QA do not require them; the only supported legacy runtime branch is explicit external configuration. The externally backed-up 2,965 older/uncovered IDs remain preserved even though they are not mapped to the 72-PDF pack.
+The earlier approved current-tree removal deleted the precise 3,960 materialized files in `assets/exam-library/images/` other than `p2_2027_06_13.png`. Default runtime and package QA do not require them; the only supported legacy runtime branch is explicit external configuration. The externally backed-up 2,965 older/uncovered IDs remain preserved even though they are not mapped to the 72-PDF pack.
 
 ## Completed reversible staging and backup
 

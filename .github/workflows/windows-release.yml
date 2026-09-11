@@ -25,7 +25,17 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Fetch and verify frozen PDF pack
+        shell: pwsh
+        env:
+          PDF_PACK_BASE_URL: ${{ vars.FIVE_E_PDF_PACK_BASE_URL }}
+        run: |
+          if (-not $env:PDF_PACK_BASE_URL) { throw "Repository variable FIVE_E_PDF_PACK_BASE_URL is required" }
+          node tools/pdf-library/fetch-release-pack.mjs --base-url "$env:PDF_PACK_BASE_URL" --output "${{ runner.temp }}/recent-three-pack"
+
       - name: Build Windows installer
+        env:
+          FIVE_E_PDF_PACK_SOURCE: ${{ runner.temp }}/recent-three-pack
         run: npm run package:win
 
       - name: Write SHA-256 checksum

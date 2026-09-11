@@ -2,6 +2,11 @@ name: Windows Candidate
 
 on:
   workflow_dispatch:
+    inputs:
+      pdf_pack_base_url:
+        description: "Credential-free HTTPS directory URL for the frozen recent-three PDF pack"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -23,7 +28,17 @@ jobs:
       - name: Run deployment and pack contracts
         run: node --test tests/test-pdf-deployment-candidate.mjs tests/test-pdf-pack-release-model.mjs tests/test-pdf-pack-store.mjs tests/test-pdf-remote-pack.mjs tests/test-stage-distribution-server.mjs
 
+      - name: Fetch and verify frozen PDF pack
+        shell: pwsh
+        env:
+          PDF_PACK_BASE_URL: ${{ inputs.pdf_pack_base_url }}
+        run: |
+          if (-not $env:PDF_PACK_BASE_URL) { throw "pdf_pack_base_url is required" }
+          node tools/pdf-library/fetch-release-pack.mjs --base-url "$env:PDF_PACK_BASE_URL" --output "${{ runner.temp }}/recent-three-pack"
+
       - name: Build x64 NSIS candidate
+        env:
+          FIVE_E_PDF_PACK_SOURCE: ${{ runner.temp }}/recent-three-pack
         run: npm run package:win
 
       - name: Verify installer and write candidate receipt

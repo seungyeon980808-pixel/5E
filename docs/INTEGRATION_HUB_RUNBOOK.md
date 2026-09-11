@@ -25,6 +25,8 @@ npm run desktop
 
 개발 앱에서 자료팩까지 확인하려면 `FIVE_E_BUNDLED_PDF_PACK_SOURCE`를 자료팩 폴더로 지정하고 `npm run desktop`을 실행합니다. 이번에 검증한 로컬 원본 위치는 통합 보고서에 기록합니다. 배포 파일은 이 개인 경로를 사용하지 않고 앱 내부 리소스를 읽습니다.
 
+Windows Candidate 워크플로를 수동 실행할 때는 `pdf_pack_base_url`에 동일한 자료팩 디렉터리의 HTTPS 주소를 입력합니다. 태그 기반 Windows Release는 저장소 변수 `FIVE_E_PDF_PACK_BASE_URL`을 사용합니다. 두 경로 모두 먼저 고정된 자료팩 해시를 검증해 runner 임시 폴더에 준비합니다. 이 통합 작업에서는 자료팩 호스팅 설정이나 워크플로 실행·공개 배포를 하지 않았습니다.
+
 ## 브라우저 편집기
 
 ```sh
