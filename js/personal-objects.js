@@ -3,7 +3,7 @@
  * · 저장: 캔버스에서 선택 → 고급 기능 [오브젝트 저장] → 이름·분류 입력.
  *   저장 시 현재 과목 모드(p/c/b/e)가 함께 기록되어 그 과목에서만 보인다.
  *   (과목 정보가 없는 예전 항목은 모든 과목에서 보인다)
- * · 사용: 좌측 '퍼스널 오브젝트' 분류 아코디언 또는 [오브젝트 저장소](썸네일
+ * · 사용: 좌측 '내 오브젝트' 분류 아코디언 또는 [오브젝트 저장소](썸네일
  *   미리보기 모달)에서 클릭 → 뷰 중앙에 삽입(id·groupId 재부여, Undo 1스텝).
  * · 검색: 오브젝트 검색(Ctrl+F)에도 노출(현재 과목 것만).
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
@@ -25,28 +25,57 @@ let _partsHost = null;
 const currentSubject = () => document.documentElement.getAttribute("data-subject") || "p";
 
 /* ---------- 저장소 (IndexedDB, localStorage 폴백) ----------
- * 인메모리 캐시(_cache)를 진실로 삼아 동기 읽기(load)를 유지하고, 실제 영속화는 IndexedDB로
- * 백그라운드 처리한다 → 동기 호출부(visibleItems/renderLibrary 등)를 안 건드린다.
- * IDB가 없거나 실패하면 예전처럼 localStorage로 폴백(단, 그러면 ~5MB 상한이 그대로 적용). */
+ * 동기 읽기(load)는 마지막으로 성공한 영속 상태만 돌려준다. 변경은 하나씩 durable commit한
+ * 뒤에만 캐시를 교체한다. 따라서 quota/abort가 나도 이미 보이던 라이브러리는 사라지지 않는다.
+ * IDB가 없을 때만 예전 localStorage 경로를 사용한다. */
 let _cache = [];
 let _useIDB = false;
+let _mutationTail = Promise.resolve();
+let _nextPersonalObjectId = 0;
 
 function load() { return _cache; }   // 동기 — 호출부 그대로
 
-function persist() {
-  if (_useIDB) {
-    // 낙관적: 캐시는 이미 갱신됨. IDB 쓰기는 백그라운드에서 하고 실패만 알린다.
-    idbSet(KEY, _cache).catch(() => showAlert("라이브러리를 저장하지 못했습니다.", { title: "저장 오류" }));
-    return true;
-  }
-  try { localStorage.setItem(KEY, JSON.stringify(_cache)); return true; }
-  catch (_) { return false; }   // localStorage 폴백 용량 초과 → 호출부가 안내
+function copyList(list) {
+  try { return JSON.parse(JSON.stringify(Array.isArray(list) ? list : [])); }
+  catch (_) { return null; }
 }
 
-function save(list) {
-  // 성공 여부 반환(호출부가 용량 초과 등 실패를 감지). IDB 경로는 낙관적으로 true.
-  _cache = Array.isArray(list) ? list : [];
-  return persist();
+function enqueueMutation(change) {
+  const operation = _mutationTail.then(async () => {
+    const snapshot = copyList(change(_cache));
+    if (snapshot === null) return false;
+    if (_useIDB) await idbSet(KEY, snapshot);
+    else localStorage.setItem(KEY, JSON.stringify(snapshot));
+    _cache = snapshot;
+    return true;
+  });
+  // A rejected write must not poison later queued user changes.
+  _mutationTail = operation.catch(() => undefined);
+  return operation.catch(() => false);
+}
+
+async function save(list) {
+  const replacement = copyList(list);
+  if (replacement === null) return false;
+  return enqueueMutation(() => replacement);
+}
+
+async function addItem(item) {
+  const copied = copyList([item]);
+  if (copied === null) return false;
+  return enqueueMutation((list) => {
+    const timestamp = Date.now().toString(36);
+    let id;
+    do {
+      id = `po_${timestamp}_${(_nextPersonalObjectId++).toString(36)}`;
+    } while (list.some((entry) => entry.id === id));
+    copied[0].id = id;
+    return [...list, copied[0]];
+  });
+}
+
+async function removeItem(id) {
+  return enqueueMutation((list) => list.filter((item) => item.id !== id));
 }
 
 // 앱 시작 시 1회: IDB에서 캐시를 채우고, IDB가 비어 있으면 localStorage 레거시를 일회성 이전.
@@ -76,7 +105,9 @@ export function exportLibraryString() { return _cache.length ? JSON.stringify(_c
 export async function importLibraryString(str) {
   let list = [];
   try { const p = JSON.parse(str); list = Array.isArray(p) ? p : []; } catch (_) { return false; }
-  save(list); renderLibrary(); return true;
+  const saved = await save(list);
+  if (saved) renderLibrary();
+  return saved;
 }
 export function hasLibraryItems() { return _cache.length > 0; }
 /* 현재 과목에서 보여줄 항목 (과목 미기록 = 옛 데이터 → 모든 과목에서 표시) */
@@ -87,7 +118,7 @@ function visibleItems() {
 
 /* ---------- 검색(search.js) 연동 ---------- */
 export function listPersonalItems() {
-  return visibleItems().map((it) => ({ id: it.id, name: it.name, category: it.category || DEFAULT_CATEGORY }));
+  return load().map((it) => ({ id: it.id, name: it.name, category: it.category || DEFAULT_CATEGORY }));
 }
 export function insertPersonalItem(id) {
   if (!_state) return;
@@ -100,7 +131,11 @@ export function insertPersonalItem(id) {
 async function deleteItem(it) {
   const yes = await showConfirm(`'${it.name}'\n정말로 삭제하시겠습니까?`, { title: "오브젝트 삭제", okText: "예", cancelText: "아니오" });
   if (!yes) return false;
-  save(load().filter((x) => x.id !== it.id));
+  const saved = await removeItem(it.id);
+  if (!saved) {
+    showAlert("라이브러리를 저장하지 못했습니다. 기존 항목은 그대로 유지됩니다.", { title: "삭제 오류" });
+    return false;
+  }
   renderLibrary();
   return true;
 }
@@ -116,7 +151,7 @@ function askNameCategory(existingCategories, done) {
       <h2 class="modal-title">오브젝트 저장</h2>
       <p class="objectify-description" style="margin:0 0 10px;">
         생성한 오브젝트를 다음 작업에서도 사용할 수 있게 저장합니다.
-        저장된 오브젝트는 왼쪽 <b>퍼스널 오브젝트</b>와
+        저장된 오브젝트는 왼쪽 <b>내 오브젝트</b>와
         <b>오브젝트 검색(Ctrl+F)</b>에서도 조회할 수 있습니다.</p>
       <label class="modal-field"><span class="modal-label">이름</span>
         <input type="text" id="po-name" class="modal-input" maxlength="40" autocomplete="off" /></label>
@@ -175,17 +210,15 @@ function saveCurrentSelection() {
     return;
   }
   const cats = [...new Set(visibleItems().map((it) => it.category || DEFAULT_CATEGORY))];
-  askNameCategory(cats, (name, category) => {
-    const list = load();
-    list.push({
-      id: `po_${Date.now().toString(36)}`,
+  askNameCategory(cats, async (name, category) => {
+    const item = {
       name,
       category,
       subject: currentSubject(),
       savedAt: new Date().toISOString(),
       objects: JSON.parse(JSON.stringify(objs)),
-    });
-    if (!save(list)) {
+    };
+    if (!(await addItem(item))) {
       showAlert("저장 공간이 부족해 오브젝트를 저장하지 못했습니다. 이미지가 큰 오브젝트를 줄이거나 기존 항목을 삭제한 뒤 다시 시도하세요.", { title: "오브젝트 저장 실패" });
       return;
     }

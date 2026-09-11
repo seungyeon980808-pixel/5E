@@ -877,6 +877,13 @@ export function renderSymbolsForCategories(container, categories, sizer) {
   return ids.length;
 }
 
+export function renderSymbolsForIds(container, ids, sizer) {
+  for (const id of ids) {
+    const def = TEMPLATES[id];
+    if (def) container.appendChild(makeSymbolButton(id, def, sizer));
+  }
+}
+
 function renderPanel() {
   const host = document.getElementById("symbol-sections");
   if (!host) return;
@@ -936,6 +943,7 @@ export function activateTemplate(symbolId) {
     const c = def.create || {};
     armSymbol(symbolId, c.tool, c.element ?? c.kind, c.props);
   }
+  window.dispatchEvent(new CustomEvent("5e:template-activated", { detail: { symbolId } }));
 }
 
 /* ===== WIRE THE LEFT-PANEL LIBRARY ===== */

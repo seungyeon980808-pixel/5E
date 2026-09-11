@@ -13,11 +13,12 @@
 
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
 import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
-import { vectorizeImage } from "./image-vectorize.js?v=1.4.0";
+import { MAX_PROCESS_DIMENSION } from "./image-analysis.js";
+import { createImageAnalysisController } from "./image-analysis-controller.js";
 import { measureFormula } from "./formula.js?v=1.4.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
-const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
+const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;
 const ARTBOARD_FIT_RATIO = 0.8;     // 인수인계서 §3: 아트보드 폭 80%에 맞춰 중앙 배치
 let idCounter = 0;
 
@@ -275,6 +276,12 @@ export function initImageObjectify(state) {
   let regionMode = false;    // '영역만 남기기' 도구 활성(드래그로 남길 사각형 지정)
   let regionDrag = null;     // 영역 드래그 중 사각형(이미지 px) {x0,y0,x1,y1}
   let needFit = false;       // 새 이미지 로드 시 1회 전체 보기
+  let loadGeneration = 0;
+  let analysisGeneration = 0;
+  let analysisStartTimer = 0;
+  let analysisSuspended = false;
+  let analysisMode = "worker";
+  const analysisController = createImageAnalysisController();
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
@@ -282,6 +289,11 @@ export function initImageObjectify(state) {
   };
   const close = () => {
     overlay.hidden = true;
+    loadGeneration += 1;
+    analysisGeneration += 1;
+    analysisSuspended = false;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     // 영역 드래그 도중 모달이 닫히는 경로(예: Esc 오라우팅, 바깥 클릭)가 있으면, 정리
     // 안 된 regionDrag가 살아남아 이후 window mouseup이 닫힌 모달 뒤에서 제외 목록을
     // 그리다 만 사각형 기준으로 조용히 교체한다 — 닫을 때 항상 리셋한다.
@@ -419,48 +431,40 @@ export function initImageObjectify(state) {
     const textCount = analysis.components.filter((c) => c.isText).length;
     const parts = [`오브젝트 ${total}개 (글자 추정 ${textCount}개)`];
     if (excluded.size) parts.push(`제외 ${excluded.size}개`);
+    if (analysisMode === "fallback") parts.push("호환 모드");
     setStatus(total ? parts.join(" · ") : "조건에 맞는 오브젝트를 찾지 못했습니다. 설정을 조정해 보세요.", total === 0);
     insertButton.disabled = total - excluded.size === 0;
   }
 
   /* ----- 분석 실행 ----- */
   function analyze() {
-    if (!sourceCanvas) return;
+    if (!sourceCanvas || overlay.hidden) return;
+    analysisSuspended = false;
+    analysisGeneration += 1;
+    const generation = analysisGeneration;
+    const capturedCanvas = sourceCanvas;
+    analysisController.cancel();
+    if (analysisStartTimer) clearTimeout(analysisStartTimer);
     analyzeButton.disabled = true;
     insertButton.disabled = true;
     setStatus("이미지를 분석하는 중입니다...");
     // 상태 메시지가 먼저 그려지도록 파이프라인은 살짝 미뤄 실행.
     // (rAF는 백그라운드 탭에서 멈추므로 setTimeout 사용)
-    setTimeout(() => {
+    analysisStartTimer = setTimeout(async () => {
+      analysisStartTimer = 0;
+      if (generation !== analysisGeneration || capturedCanvas !== sourceCanvas || overlay.hidden) return;
       try {
-        const ctx = sourceCanvas.getContext("2d");
-        const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        // 사전 게이트: 사진·스캔처럼 어두운 잉크 비율이 과도하게 높은 이미지는 대량 잉크로
-        // 오판돼 벡터화가 메인 스레드를 수십 초~분 프리징시킨다. 벡터화 전에 어두운 픽셀
-        // 비율을 재서 상한(55%)을 넘으면 조기 중단하고 안내한다.
-        {
-          const d = imageData.data;
-          let ink = 0, opaque = 0;
-          for (let p = 0; p < d.length; p += 4) {
-            if (d[p + 3] < 16) continue; // 투명 픽셀 제외
-            opaque++;
-            const lum = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-            if (lum < 128) ink++;
-          }
-          const ratio = opaque ? ink / opaque : 0;
-          if (ratio > 0.55) {
-            setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(ratio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
-            analyzeButton.disabled = false;
-            // 조기 return 전에 이전 analysis를 비우고 한 번 다시 그려야 한다 —
-            // 안 그러면 sourceCanvas는 이미 새 이미지로 바뀌었는데 미리보기엔
-            // 이전 이미지의 컴포넌트 오버레이가 그대로 남는다(원본만이라도 표시).
-            analysis = null;
-            previewPaths = [];
-            drawPreview();
-            return;
-          }
-        }
-        analysis = vectorizeImage(imageData, currentOptions());
+        const ctx = capturedCanvas.getContext("2d");
+        const imageData = ctx.getImageData(0, 0, capturedCanvas.width, capturedCanvas.height);
+        const completed = await analysisController.analyze({
+          width: capturedCanvas.width,
+          height: capturedCanvas.height,
+          data: imageData.data,
+          options: currentOptions(),
+        });
+        if (generation !== analysisGeneration || capturedCanvas !== sourceCanvas || overlay.hidden) return;
+        analysis = completed.result;
+        analysisMode = completed.mode;
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
@@ -512,11 +516,17 @@ export function initImageObjectify(state) {
         drawPreview();
         updateResultStatus();
       } catch (error) {
+        if (generation !== analysisGeneration || error?.code === "CANCELLED" || error?.code === "SUPERSEDED") return;
         analysis = null;
         previewPaths = [];
-        setStatus(`분석 중 오류가 발생했습니다: ${error.message || error}`, true);
+        if (error?.code === "DENSE_INK") {
+          setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(error.inkRatio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
+          drawPreview();
+        } else {
+          setStatus(`분석 중 오류가 발생했습니다: ${error.message || error}`, true);
+        }
       } finally {
-        analyzeButton.disabled = !sourceCanvas;
+        if (generation === analysisGeneration && !overlay.hidden) analyzeButton.disabled = !sourceCanvas;
       }
     }, 20);
   }
@@ -524,8 +534,27 @@ export function initImageObjectify(state) {
   let analyzeTimer = 0;
   function scheduleAnalyze() {
     if (!sourceCanvas) return;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     clearTimeout(analyzeTimer);
     analyzeTimer = setTimeout(analyze, 250);
+  }
+
+  function suspendAnalysis() {
+    const suspendedActiveAnalysis = !overlay.hidden && sourceCanvas && analyzeButton.disabled;
+    analysisGeneration += 1;
+    analysisController.suspend();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = 0; }
+    if (suspendedActiveAnalysis) analysisSuspended = true;
+  }
+
+  function resumeAnalysis() {
+    if (!analysisSuspended || overlay.hidden || !sourceCanvas) return;
+    analysisSuspended = false;
+    analyzeButton.disabled = false;
+    setStatus("분석이 중단되었습니다. 다시 분석하세요.");
   }
 
   /* ----- 파일 로드 ----- */
@@ -534,12 +563,26 @@ export function initImageObjectify(state) {
       setStatus("PNG, JPG, JPEG 또는 브라우저가 지원하는 WEBP 파일을 선택해 주세요.", true);
       return;
     }
+    if (file.size > MAX_SOURCE_FILE_BYTES) {
+      setStatus("이미지 파일이 너무 큽니다(64MB 초과). 디코딩 전에 작은 파일로 변환해 주세요.", true);
+      return;
+    }
+    const generation = ++loadGeneration;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     const reader = new FileReader();
-    reader.onerror = () => setStatus("이미지 파일을 읽지 못했습니다.", true);
+    reader.onerror = () => {
+      if (generation === loadGeneration) setStatus("이미지 파일을 읽지 못했습니다.", true);
+    };
     reader.onload = () => {
+      if (generation !== loadGeneration || overlay.hidden) return;
       const image = new Image();
-      image.onerror = () => setStatus("브라우저가 이 이미지 파일을 디코딩하지 못했습니다.", true);
+      image.onerror = () => {
+        if (generation === loadGeneration) setStatus("브라우저가 이 이미지 파일을 디코딩하지 못했습니다.", true);
+      };
       image.onload = () => {
+        if (generation !== loadGeneration || overlay.hidden) return;
         const scale = Math.min(1, MAX_PROCESS_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
         sourceCanvas = document.createElement("canvas");
         sourceCanvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -1022,6 +1065,8 @@ export function initImageObjectify(state) {
   advancedInput.addEventListener("change", scheduleAnalyze);
   analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
+  window.addEventListener("pagehide", suspendAnalysis);
+  window.addEventListener("pageshow", resumeAnalysis);
 
   // 전처리 툴바: 전체보기
   zoomResetButton.addEventListener("click", fitView);

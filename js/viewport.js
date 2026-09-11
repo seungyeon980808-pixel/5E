@@ -131,6 +131,27 @@ export function initViewport(svg, state, onChange) {
   // notify caller (main) that viewBox changed → it writes SVG + re-renders
   const commit = () => onChange();
 
+  let panelView = null;
+  window.addEventListener("5e:panel-layout-will-change", () => {
+    const vb = state.get().viewBox;
+    const scale = svg.getScreenCTM()?.a;
+    panelView = scale > 0 ? { scale, x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 } : null;
+  });
+  window.addEventListener("5e:panel-layout-did-change", () => {
+    const previous = panelView;
+    panelView = null;
+    const rect = svg.getBoundingClientRect();
+    if (!previous || rect.width <= 0 || rect.height <= 0) return;
+    state.update((s) => {
+      const vb = s.viewBox;
+      vb.w = rect.width / previous.scale;
+      vb.h = rect.height / previous.scale;
+      vb.x = previous.x - vb.w / 2;
+      vb.y = previous.y - vb.h / 2;
+    });
+    commit();
+  });
+
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
    * 휠 이벤트의 단위는 브라우저·기기마다 다르다. deltaMode가 0이면 픽셀,
    * 1이면 줄 수(Firefox: deltaY ±3), 2면 페이지 수다. 정규화하지 않으면
@@ -277,6 +298,15 @@ export function initViewport(svg, state, onChange) {
     if (spaceOnCanvas && !spaceDragged && !centerLocked) {
       centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
     }
+  });
+
+  window.addEventListener("blur", () => {
+    spaceHeld = false;
+    spaceDragged = false;
+    spaceOnCanvas = false;
+    panning = false;
+    panStart = null;
+    svg.classList.remove("space-held", "is-panning");
   });
 
   // suppress middle-click autoscroll / context menu on the canvas

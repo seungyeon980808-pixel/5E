@@ -22,7 +22,9 @@ import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
 
-import { snapKey, modKey } from "./platform.js?v=1.4.0";
+import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.4.0";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.4.0";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -101,26 +103,70 @@ function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));
 }
 
+function isDocumentHistoryEntry(entry) {
+  return entry?.kind === "document"
+    && Array.isArray(entry.objects)
+    && Array.isArray(entry.guides)
+    && entry.artboard !== null
+    && typeof entry.artboard === "object"
+    && Array.isArray(entry.layers);
+}
+
+function cloneDocumentHistoryEntry(s) {
+  return {
+    kind: "document",
+    objects: cloneObjects(s.objects),
+    guides: cloneObjects(s.guides || []),
+    artboard: JSON.parse(JSON.stringify(s.artboard)),
+    layers: cloneObjects(s.layers || []),
+  };
+}
+
+function inverseForHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return inversePageHistoryEntry(s, entry);
+  return isDocumentHistoryEntry(entry) ? cloneDocumentHistoryEntry(s) : cloneObjects(s.objects);
+}
+
+function restoreHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return restorePageHistoryEntry(s, entry);
+  if (Array.isArray(entry)) {
+    s.objects = entry;
+    return true;
+  }
+  if (!isDocumentHistoryEntry(entry)) return false;
+  s.objects = entry.objects;
+  s.guides = entry.guides;
+  s.artboard = entry.artboard;
+  s.layers = entry.layers;
+  return true;
+}
+
 export function rebuildGroups(s) {
-  const map = {};
+  const map = new Map();
   s.objects.forEach(o => {
     if (o.groupId) {
-      if (!map[o.groupId]) map[o.groupId] = [];
-      map[o.groupId].push(o.id);
+      const members = map.get(o.groupId);
+      if (members) members.push(o.id);
+      else map.set(o.groupId, [o.id]);
     }
   });
-  s.groups = Object.entries(map).map(([id, memberIds]) => ({ id, memberIds }));
+  s.groups = Array.from(map, ([id, memberIds]) => ({ id, memberIds }));
 }
 
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const prev = s.undoStack.pop();
+    const prev = s.undoStack[s.undoStack.length - 1];
+    if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev) && !isPageHistoryEntry(prev)) return;
+    const current = inverseForHistoryEntry(s, prev);
+    if (!restoreHistoryEntry(s, prev)) return;
+    s.undoStack.pop();
     s.redoStack.push(current);
-    s.objects = prev;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -128,12 +174,17 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const next = s.redoStack.pop();
+    const next = s.redoStack[s.redoStack.length - 1];
+    if (!Array.isArray(next) && !isDocumentHistoryEntry(next) && !isPageHistoryEntry(next)) return;
+    const current = inverseForHistoryEntry(s, next);
+    if (!restoreHistoryEntry(s, next)) return;
+    s.redoStack.pop();
     s.undoStack.push(current);
-    s.objects = next;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -151,11 +202,6 @@ let _pendingSnapshot = null; // full objects clone for undo; committed only if m
 let _didMove = false;        // true once the threshold is crossed
 let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
 let _spaceHeld = false;
-// 연속 Ctrl+V id 중복 방지용 카운터 — Date.now()만 쓰면 같은 ms 안에 빠르게 여러 번
-// 붙여넣을 때 앞선 붙여넣기와 id 구간이 겹칠 수 있다(text-editor.js의 obj_${stamp}_${++counter}
-// 패턴과 동일하게 모듈 스코프 카운터로 유일성을 보장).
-let _pasteCounter = 0;
-
 /* handle-drag state (resize branch A / endpoint branch B) */
 let _handleDragging   = false;
 let _handleId         = null;
@@ -180,18 +226,10 @@ let _rotPendingSnap  = null;
 let _rotDidMove      = false;
 
 /* clipboard, mouse position, and arrow-key hold tracking */
-let _clipboard = null;
 let _propertyClipboard = null;
 let _lastMouseWorld = null; // latest pointer world coord (set on first mousemove); null until then
 const _arrowKeysHeld = new Set();
 
-/* External modules (image-paste.js) share this same clipboard/mouse state so a
- * single Ctrl+V never double-handles: object paste wins when internal objects are
- * copied; only when NOTHING is copied does the system-clipboard image path run.
- * The image paste also reuses the exact paste-target (last mouse world) as objects. */
-export function hasInternalClipboard() {
-  return !!(_clipboard && _clipboard.length);
-}
 export function getLastMouseWorld() {
   return _lastMouseWorld ? { ...(_lastMouseWorld) } : null;
 }
@@ -346,18 +384,10 @@ export function instantiateObjectsAt(state, srcObjs, target) {
   const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
   const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
   const dx = target.x - cx, dy = target.y - cy;
-  const stamp = Date.now().toString(36);
-  const gmap = new Map();
-  let gi = 0;
-  const newObjs = srcObjs.map((src, i) => {
-    const o = JSON.parse(JSON.stringify(src));
-    o.id = `obj_${stamp}_p${i}`;
-    if (o.groupId) {
-      if (!gmap.has(o.groupId)) gmap.set(o.groupId, `grp_${stamp}_${++gi}`);
-      o.groupId = gmap.get(o.groupId);
-    }
-    applyDelta(o, src, dx, dy);
-    return o;
+  const newObjs = cloneClipboardObjects(srcObjs);
+  newObjs.forEach((obj, i) => {
+    applyDelta(obj, srcObjs[i], dx, dy);
+    obj.layerId = state.get().activeLayerId;
   });
   state.update((s2) => {
     s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
@@ -365,6 +395,9 @@ export function instantiateObjectsAt(state, srcObjs, target) {
     newObjs.forEach((o) => s2.objects.push(o));
     s2.selectedIds = newObjs.map((o) => o.id);
     s2.targetedId = null;
+    s2.activeTool = "V";
+    s2.draft = null;
+    rebuildGroups(s2);
   });
 }
 
@@ -941,24 +974,26 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
 
 /* ===== PUBLIC: wire all event listeners ===== */
 export function initTransform(svg, state) {
+  initObjectClipboard(state, objects => {
+    const s = state.get();
+    const target = getLastMouseWorld() || { x: s.viewBox.x + s.viewBox.w / 2, y: s.viewBox.y + s.viewBox.h / 2 };
+    instantiateObjectsAt(state, objects, target);
+  }, rebuildGroups);
 
   /* -- Space tracking (mirror viewport.js/tools.js; keep independent) -- */
   window.addEventListener("keydown", (e) => { if (e.code === "Space") _spaceHeld = true; });
   window.addEventListener("keyup",   (e) => { if (e.code === "Space") _spaceHeld = false; });
 
+  window.addEventListener("blur", () => { _spaceHeld = false; _arrowKeysHeld.clear(); });
+
   /* -- Undo/Redo keyboard: Ctrl+Z / Ctrl+Shift+Z (다시 실행은 이 하나로만) -- */
   window.addEventListener("keydown", (e) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    // 모달이 열린 동안(다중 함수 입력 등, 포커스가 input이 아닌 버튼/배경일 때)
-    // Ctrl+Z가 뒤편 캔버스를 몰래 undo하지 않게 차단(아래 Delete 가드와 동일 패턴).
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
-    const key = e.key.toLowerCase();
+    if (!modKey(e) || e.altKey || blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
     if (key === "z" && !e.shiftKey) {
       e.preventDefault();
       undo(state);
-    } else if (key === "z" && e.shiftKey) {
+    } else if ((key === "z" && e.shiftKey) || (!IS_MAC && key === "y" && !e.shiftKey)) {
       e.preventDefault();
       redo(state);
     }
@@ -967,7 +1002,7 @@ export function initTransform(svg, state) {
   /* -- Keyboard shortcuts: Delete, Arrow nudge, Ctrl+C/V, PageUp/Down, F (flipY) -- */
   window.addEventListener("keydown", (e) => {
     const t = e.target;
-    if (isEditingFieldTarget(t)) return;
+    if (isEditingFieldTarget(t) || blocksCanvasShortcut(e)) return;
     // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
     // 단축키가 새어 들어가지 않게 차단한다.
     if (document.querySelector(".modal-overlay:not([hidden])")) return;
@@ -976,7 +1011,7 @@ export function initTransform(svg, state) {
     const selectedIds = s.selectedIds || [];
 
     // Shift+C — 선택 1개의 스타일 속성 + 각도를 복사 (외부 레이아웃/내용 제외)
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "c") {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "c") {
       if (selectedIds.length !== 1) return;
       const obj = s.objects.find((o) => o.id === selectedIds[0]);
       if (!obj) return;
@@ -996,7 +1031,7 @@ export function initTransform(svg, state) {
 
     // Shift+V — 선택 객체들에 스타일 + 각도를 적용 (존재하는 속성만). 구버전 angle
     // 클립보드와도 호환. undo 스냅샷 push + redo clear 유지.
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "v") {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "v") {
       if (!_propertyClipboard || !selectedIds.length) return;
       const clip = _propertyClipboard;
       // 하위호환: 구 {kind:"angle", value} 형태를 style 형태로 정규화
@@ -1030,58 +1065,16 @@ export function initTransform(svg, state) {
      * 활성 레이어 · 보이는 레이어 · 선택금지가 아닌 것. 다른 기준을 새로 세우면
      * "클릭으로는 안 골라지는데 Ctrl+A로는 골라지는" 물건이 생긴다.
      * 브라우저 기본 동작(문서 전체 선택)은 막는다. */
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !e.shiftKey && !e.altKey) {
+    if (modKey(e) && shortcutKey(e) === "a" && !e.shiftKey && !e.altKey) {
       e.preventDefault();
       const ids = (s.objects || []).filter((o) => isObjectSelectable(s, o)).map((o) => o.id);
       state.update((s2) => { s2.selectedIds = ids; });
       return;
     }
 
-    // Ctrl+C ??copy selected objects into module-level clipboard
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && !e.shiftKey) {
-      if (!selectedIds.length) return;
-      _clipboard = selectedIds
-        .map(id => s.objects.find(o => o.id === id))
-        .filter(Boolean)
-        .map(obj => JSON.parse(JSON.stringify(obj)));
-      return;
-    }
-
-    // Ctrl+V ??paste the copied selection CENTERED at the latest mouse world
-    // position (fallback: current viewport center). Relative positions within a
-    // multi-object paste are preserved; every clone gets a fresh id; one undo entry.
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && !e.shiftKey) {
-      if (!_clipboard || !_clipboard.length) return;
-      e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      // Target = mouse world coord, or viewport center if the mouse is unknown.
-      const target = _lastMouseWorld
-        ? _lastMouseWorld
-        : { x: s.viewBox.x + s.viewBox.w / 2, y: s.viewBox.y + s.viewBox.h / 2 };
-      const bbox = clipboardBBox(_clipboard);
-      const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
-      const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
-      const dx = target.x - cx;
-      const dy = target.y - cy;
-      const newObjs = _clipboard.map((src, i) => {
-        const newObj = JSON.parse(JSON.stringify(src));
-        // Date.now()+i만 쓰면 연속 Ctrl+V가 같은 ms 안에 겹쳐 id 중복이 날 수 있어
-        // 모듈 카운터를 덧붙인다(같은 타임스탬프라도 항상 유일).
-        newObj.id = String(Date.now() + i) + "_" + (++_pasteCounter);
-        applyDelta(newObj, src, dx, dy); // handles every shape type incl. image
-        return newObj;
-      });
-      state.update((s2) => {
-        s2.undoStack.push(snap);
-        s2.redoStack = [];
-        newObjs.forEach(o => s2.objects.push(o));
-        s2.selectedIds = newObjs.map(o => o.id);
-      });
-      return;
-    }
-
     // Delete ??remove all selected objects with undo snapshot
-    if (e.key === "Delete") {
+    if (e.isComposing) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
       if (!selectedIds.length) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1375,7 +1368,7 @@ export function initTransform(svg, state) {
     }
 
     // F ??toggle flipY on selected triangle(s)
-    if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "f") {
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "f") {
       if (!selectedIds.length) return;
       const triangleIds = selectedIds.filter(id => {
         const o = s.objects.find(ob => ob.id === id);
@@ -1396,7 +1389,7 @@ export function initTransform(svg, state) {
     }
 
     // K ??toggle locked on all selected shape-based objects (V tool only)
-    if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "k") {
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "k") {
       if (!selectedIds.length || s.activeTool !== "V") return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1413,7 +1406,7 @@ export function initTransform(svg, state) {
     }
 
     // G ??group selected objects (V tool, ?? selected)
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === "g") {
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || selectedIds.length < 2) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1435,7 +1428,7 @@ export function initTransform(svg, state) {
     }
 
     // Shift+G ??ungroup (V tool, all selected objects share the same groupId)
-    if (!e.ctrlKey && !e.metaKey && e.shiftKey && e.key.toLowerCase() === "g") {
+    if (!e.ctrlKey && !e.metaKey && e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || !selectedIds.length) return;
       const _refId = s.targetedId || selectedIds[0];
       const _refObj = s.objects.find((o) => o.id === _refId);

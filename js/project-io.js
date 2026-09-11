@@ -6,11 +6,9 @@
 // active tool/layer, viewBox) is deliberately NOT saved.
 //
 // Groups are NOT stored: each object already carries `groupId`, and groups are
-// derived from it everywhere (see transform.js rebuildGroups + the undo engine,
-// which snapshots only `objects` and rebuilds groups). groupId is the single
-// source of truth, so we rebuild groups on load via that same helper.
+// derived from it when a page is loaded or switched. groupId is the single
+// source of truth, and the saved file never supplies a separate groups list.
 
-import { rebuildGroups } from "./transform.js?v=1.4.0";
 import { screenToWorld } from "./viewport.js?v=1.4.0";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.4.0";
 import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
@@ -19,6 +17,9 @@ import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToT
 import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.4.0";
 import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
 import { addPage } from "./pages.js?v=1.4.0";
+
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.4.0";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.4.0";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -298,13 +299,14 @@ function makePageId() { return `page_load_${Date.now().toString(36)}_${++_loadSe
 
 /* ----- migratePage: normalize one page record (objects + guides + layers + meta) ----- */
 function migratePage(page, index) {
+  const hasLayers = !!page && hasOwn(page, "layers");
   return {
     id: page && page.id ? page.id : makePageId(),
     name: page && typeof page.name === "string" && page.name ? page.name : `페이지 ${index + 1}`,
     meta: sanitizeMeta(page && page.meta),
     objects: migrateObjectList(page && page.objects),
     guides: sanitizeGuides(page && page.guides),
-    layers: Array.isArray(page && page.layers) && page.layers.length ? page.layers : null,
+    ...(hasLayers ? { layers: page.layers } : {}),
     artboard: sanitizeArtboard(page && page.artboard),
   };
 }
@@ -327,13 +329,14 @@ export function migrate(data) {
 
   // Legacy single-page file: wrap the top-level drawing into page 1.
   if (!Array.isArray(data.objects)) return data;
-  const page = migratePage({
+  const legacyPage = {
     name: "페이지 1",
     objects: data.objects,
     guides: data.guides,
-    layers: data.layers,
     artboard: data.artboard,
-  }, 0);
+  };
+  if (hasOwn(data, "layers")) legacyPage.layers = data.layers;
+  const page = migratePage(legacyPage, 0);
   return { ...data, pages: [page], activePageId: page.id };
 }
 
@@ -367,6 +370,7 @@ export function serialize(s) {
  * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
  * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
 async function saveProject(state) {
+  const statusToken = captureProjectStatus(state);
   const json = JSON.stringify(serialize(state.get()), null, 2);
   const blob = new Blob([json], { type: "application/json" });
 
@@ -379,6 +383,7 @@ async function saveProject(state) {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      markProjectStatus(state, statusToken, "file");
       return;
     } catch (e) {
       if (e && e.name === "AbortError") return;   // 사용자가 저장 취소 → 아무것도 안 함
@@ -393,6 +398,7 @@ async function saveProject(state) {
   a.download = DEFAULT_FILENAME;
   document.body.appendChild(a);
   a.click();
+  markProjectStatus(state, statusToken, "download");
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
@@ -406,11 +412,176 @@ function defaultLayers() {
   ];
 }
 
+function isRecord(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function isStringId(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isLayerId(value) {
+  return isStringId(value) || (typeof value === "number" && Number.isFinite(value));
+}
+
+function assertUniqueIds(items, getId, label) {
+  const ids = new Set();
+  for (const item of items) {
+    const id = getId(item);
+    if (ids.has(id)) throw new Error(`${label} ID가 중복되었습니다.`);
+    ids.add(id);
+  }
+}
+
+function validateObjects(objects) {
+  if (!Array.isArray(objects)) throw new Error("객체 목록 형식이 올바르지 않습니다.");
+  for (const object of objects) {
+    if (!isRecord(object) || !isStringId(object.id)) {
+      throw new Error("객체에는 유효한 ID가 필요합니다.");
+    }
+    if (hasOwn(object, "groupId") && object.groupId != null && !isStringId(object.groupId)) {
+      throw new Error("객체 그룹 ID 형식이 올바르지 않습니다.");
+    }
+    if (hasOwn(object, "layerId") && object.layerId != null && !isLayerId(object.layerId)) {
+      throw new Error("객체 레이어 ID 형식이 올바르지 않습니다.");
+    }
+  }
+  assertUniqueIds(objects, (object) => object.id, "객체");
+}
+
+function validateLayers(layers) {
+  if (!Array.isArray(layers)) throw new Error("레이어 목록 형식이 올바르지 않습니다.");
+  for (const layer of layers) {
+    if (!isRecord(layer) || !isLayerId(layer.id)) {
+      throw new Error("레이어에는 유효한 ID가 필요합니다.");
+    }
+  }
+  assertUniqueIds(layers, (layer) => layer.id, "레이어");
+}
+
+function validateRawPage(page) {
+  if (!isRecord(page)) throw new Error("페이지 형식이 올바르지 않습니다.");
+  if (hasOwn(page, "id") && !isStringId(page.id)) {
+    throw new Error("페이지 ID 형식이 올바르지 않습니다.");
+  }
+  validateObjects(page.objects);
+  if (hasOwn(page, "layers")) validateLayers(page.layers);
+}
+
+function validateRawProject(data) {
+  if (!isRecord(data)) throw new Error("프로젝트 파일 형식이 올바르지 않습니다.");
+  if (hasOwn(data, "pages")) {
+    if (!Array.isArray(data.pages) || data.pages.length === 0) {
+      throw new Error("페이지 목록 형식이 올바르지 않습니다.");
+    }
+    for (const page of data.pages) validateRawPage(page);
+    assertUniqueIds(data.pages.filter((page) => hasOwn(page, "id")), (page) => page.id, "페이지");
+    if (hasOwn(data, "activePageId") && data.activePageId != null && !isStringId(data.activePageId)) {
+      throw new Error("활성 페이지 ID 형식이 올바르지 않습니다.");
+    }
+    return;
+  }
+  validateObjects(data.objects);
+  if (hasOwn(data, "layers")) validateLayers(data.layers);
+}
+
+function buildGroups(objects) {
+  const groups = new Map();
+  for (const object of objects) {
+    if (!object.groupId) continue;
+    const members = groups.get(object.groupId);
+    if (members) members.push(object.id);
+    else groups.set(object.groupId, [object.id]);
+  }
+  return Array.from(groups, ([id, memberIds]) => ({ id, memberIds }));
+}
+
+export function prepareLoadedProject(data) {
+  validateRawProject(data);
+  const migrated = migrate(data);
+  const pages = migrated.pages.map((page) => ({
+    id: page.id,
+    name: page.name,
+    meta: page.meta || { number: "", points: "" },
+    objects: page.objects,
+    guides: page.guides,
+    layers: Array.isArray(page.layers) && page.layers.length ? page.layers : defaultLayers(),
+    artboard: page.artboard || { ...DEFAULT_ARTBOARD },
+  }));
+  assertUniqueIds(pages, (page) => page.id, "페이지");
+  for (const page of pages) {
+    if (!isStringId(page.id)) throw new Error("페이지 ID 형식이 올바르지 않습니다.");
+    validateObjects(page.objects);
+    validateLayers(page.layers);
+  }
+  const active = pages.find((page) => page.id === migrated.activePageId) || pages[0];
+  if (!active) throw new Error("열 수 있는 페이지가 없습니다.");
+  return { pages, activePageId: active.id, active, groups: buildGroups(active.objects) };
+}
+
 /* ----- applyLoaded: replace drawing data through the store (re-renders) ----- */
 // data.pages[] is guaranteed by migrate(). The active page's 4 fields are lifted
 // to the top level (the live drawing), the rest stay in s.pages — the same swap
 // structure pages.js maintains, so render/pick/etc. read the active page as before.
 export function applyLoaded(state, data) {
+  const prepared = prepareLoadedProject(data);
+  const previous = state.get();
+  const rollback = {
+    pages: previous.pages,
+    activePageId: previous.activePageId,
+    objects: previous.objects,
+    guides: previous.guides,
+    layers: previous.layers,
+    artboard: previous.artboard,
+    groups: previous.groups,
+    undoStack: previous.undoStack,
+    redoStack: previous.redoStack,
+    selectedIds: previous.selectedIds,
+    selectedGuideId: previous.selectedGuideId,
+    targetedId: previous.targetedId,
+    draft: previous.draft,
+    draftText: previous.draftText,
+    activeLayerId: previous.activeLayerId,
+  };
+  try {
+    state.update((s) => {
+      s.pages = prepared.pages;
+      s.activePageId = prepared.activePageId;
+
+      // Lift the active page's data to the live top-level fields.
+      s.objects = prepared.active.objects;
+      s.guides = prepared.active.guides;
+      s.layers = prepared.active.layers;
+      s.artboard = prepared.active.artboard;
+
+      s.groups = prepared.groups;
+
+      // Fresh session for the opened file: drop history + selection.
+      s.undoStack = [];
+      s.redoStack = [];
+      s.selectedIds = [];
+      s.selectedGuideId = null;
+      s.targetedId = null;
+      s.draft = null;
+      s.draftText = null;
+
+      // Keep activeLayerId valid against the loaded layers.
+      if (!s.layers.some((l) => l.id === s.activeLayerId)) {
+        s.activeLayerId = s.layers[0] ? s.layers[0].id : 1;
+      }
+      // viewBox is left as-is on purpose (do not restore saved view).
+    });
+  } catch (error) {
+    Object.assign(previous, rollback);
+    try {
+      state.update(() => {});
+    } catch (_) {}
+    throw error;
+  }
   // 이미지 배치 대기 상태(_placement)가 남아있으면 정리한다 — 프로젝트를 새로
   // 불러와 objects가 통째로 교체되는데 대기 중이던 placeholder id를 계속 들고
   // 있으면 이후 클릭/Escape 처리가 존재하지 않는 오브젝트를 참조하게 된다.
@@ -418,44 +589,6 @@ export function applyLoaded(state, data) {
     _placement = null;
     if (_placementHint) _placementHint.hidden = true;
   }
-  state.update((s) => {
-    const pages = data.pages.map((p) => ({
-      id: p.id,
-      name: p.name,
-      meta: p.meta || { number: "", points: "" },
-      objects: Array.isArray(p.objects) ? p.objects : [],
-      guides: Array.isArray(p.guides) ? p.guides : [],
-      layers: Array.isArray(p.layers) && p.layers.length ? p.layers : defaultLayers(),
-      artboard: p.artboard || { ...DEFAULT_ARTBOARD },
-    }));
-    s.pages = pages;
-    const active = pages.find((p) => p.id === data.activePageId) || pages[0];
-    s.activePageId = active.id;
-
-    // Lift the active page's data to the live top-level fields.
-    s.objects = active.objects;
-    s.guides = active.guides;
-    s.layers = active.layers;
-    s.artboard = active.artboard;
-
-    // Groups are derived from groupId — rebuild rather than trust the file.
-    rebuildGroups(s);
-
-    // Fresh session for the opened file: drop history + selection.
-    s.undoStack = [];
-    s.redoStack = [];
-    s.selectedIds = [];
-    s.selectedGuideId = null;
-    s.targetedId = null;
-    s.draft = null;
-    s.draftText = null;
-
-    // Keep activeLayerId valid against the loaded layers.
-    if (!s.layers.some((l) => l.id === s.activeLayerId)) {
-      s.activeLayerId = s.layers[0] ? s.layers[0].id : 1;
-    }
-    // viewBox is left as-is on purpose (do not restore saved view).
-  });
 }
 
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
@@ -463,20 +596,7 @@ function openProject(state, file) {
   const reader = new FileReader();
   reader.onload = async () => {
     try {
-      const raw = JSON.parse(reader.result);
-      const data = migrate(raw);
-
-      // Structural sanity check before touching live state. migrate() guarantees
-      // a pages[] array (legacy single-page files are wrapped into one page).
-      if (
-        !data ||
-        typeof data !== "object" ||
-        !Array.isArray(data.pages) ||
-        data.pages.length === 0 ||
-        !data.pages.every((p) => p && Array.isArray(p.objects))
-      ) {
-        throw new Error("필요한 데이터(pages) 형식이 올바르지 않습니다.");
-      }
+      const data = prepareLoadedProject(JSON.parse(reader.result));
 
       // 파일이 유효하다고 확인된 뒤에만 묻는다(깨진 파일은 확인창 없이 바로 에러).
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
@@ -489,6 +609,7 @@ function openProject(state, file) {
       if (!ok) return;
 
       applyLoaded(state, data);
+      markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.
       alert("프로젝트 파일을 열 수 없습니다.\n" + (err && err.message ? err.message : err));
@@ -592,8 +713,26 @@ function readImageFile(file, dropPos, state) {
   reader.readAsDataURL(file);
 }
 
+function initProjectShortcuts(state, fileInput) {
+  window.addEventListener("keydown", (e) => {
+    if (!modKey(e) || e.shiftKey || e.altKey) return;
+    const key = shortcutKey(e);
+    if (key !== "o" && key !== "s") return;
+    const handled = e.defaultPrevented;
+    e.preventDefault();
+    if (handled || e.repeat || isComposingKey(e) || document.querySelector(".modal-overlay:not([hidden])")) return;
+    // Commit the focused editor field before capturing the project snapshot.
+    if (isEditingTarget(e.target)) e.target.blur?.();
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (key === "o") fileInput.click();
+    else void saveProject(state);
+  });
+}
+
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
 export function initProjectIO(state, svg) {
+  // initPages wraps the initial drawing later in the same boot task.
+  queueMicrotask(() => initProjectStatus(state, serialize));
   const saveBtn = document.getElementById("project-save");
   const openBtn = document.getElementById("project-open");
   const imageImportBtn = document.getElementById("image-import");
@@ -630,6 +769,8 @@ export function initProjectIO(state, svg) {
   if (saveBtn) saveBtn.addEventListener("click", () => saveProject(state));
 
   if (openBtn) openBtn.addEventListener("click", () => fileInput.click());
+
+  initProjectShortcuts(state, fileInput);
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files && fileInput.files[0];

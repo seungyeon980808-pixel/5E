@@ -46,7 +46,9 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.4.0" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.2" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.6" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.5.7" />
+  <link rel="stylesheet" href="css/ai-editable-assets.css?v=1" />
+  <link rel="stylesheet" href="css/panel-visibility.css" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -57,14 +59,17 @@
   <div class="app">
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
     <aside class="panel panel-left" id="panel-left">
+      <div class="panel-utility-bar" role="group" aria-label="도구 패널 조작">
+        <button class="panel-dock-toggle" type="button" data-panel-internal-toggle="left"
+                aria-expanded="true" aria-label="도구 패널 접기">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M7 3.5v13" /></svg>
+        </button>
+        <button id="undo-btn" class="topbar-btn icon-btn" type="button"
+                title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
+        <button id="redo-btn" class="topbar-btn icon-btn" type="button"
+                title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
+      </div>
       <div class="tool-list" id="tool-list">
-        <!-- 과목 선택: 강조색·배경 톤 테마와 '과목별 오브젝트' 파트가 함께 전환된다 -->
-        <select id="subject-select" class="subject-select subject-select-panel" aria-label="과목 선택">
-          <option value="p">물리학</option>
-          <option value="c">화학</option>
-          <option value="b">생명과학</option>
-          <option value="e">지구과학</option>
-        </select>
         <div class="tool-section">
           <div class="tool-section-header">공통 도구 <span class="toggle-icon">▾</span></div>
           <!-- 공통 도구 그리드(3열). 순서는 사용자 지정(선택/회전/자르기 → 도형 → 선 →
@@ -77,11 +82,11 @@
             <button class="tool-btn" type="button" data-tool="V" title="선택 (V)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3 L4 15.5 L7.5 12 L9.8 16.5 L11.7 15.6 L9.4 11.2 L14.5 11 Z"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-tool="rotate" title="회전 (R) · PageUp/Down: 5° · Shift+PageUp/Down: 30°">
+            <button class="tool-btn" type="button" data-tool="rotate" title="회전 (R)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5.5 A6.5 6.5 0 1 0 16.5 10"/><polyline points="14,3 16.5,5.5 14,8"/></svg></kbd>
             </button>
             <button class="tool-btn" type="button" id="tool-cut-merged" aria-haspopup="true"
-                    title="자르기 / 지연 자르기 / 지우개" aria-label="자르기, 지연 자르기, 지우개 선택">
+                    title="자르기 도구" aria-label="자르기, 지연 자르기, 지우개 선택">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></kbd>
             </button>
             <!-- 2줄: 타원 / 삼각형 / 사각형 -->
@@ -112,21 +117,21 @@
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 13 C5 7 7 6 8.5 9.5 S11.5 15.5 13.5 11 C14.5 8.8 16 9 16.5 11"/></svg></kbd>
             </button>
             <button class="tool-btn" type="button" id="tool-text-merged" aria-haspopup="true"
-                    title="텍스트 (T) — 자유 텍스트&#10;라벨러 (Shift+T) — 지시선 + 이름표" aria-label="텍스트 / 라벨러">
+                    title="텍스트 / 라벨러" aria-label="텍스트 / 라벨러">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="5" x2="16" y2="5"/><line x1="10" y1="5" x2="10" y2="16"/></svg></kbd>
             </button>
             <button class="tool-btn" type="button" id="tool-angle-merged" aria-haspopup="true"
-                    title="각도 호 (A)&#10;직각 표시 (Shift+A)" aria-label="각도 / 직각">
+                    title="각도 / 직각" aria-label="각도 / 직각">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text></svg></kbd>
             </button>
             <!-- 5줄: 점 / 자 / 각도기 (통합으로 자리가 나 자·각도기를 점 옆으로 — 요구) -->
             <button class="tool-btn" type="button" data-symbol="node" title="점 (N)" aria-label="점 (N)">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3" fill="currentColor" stroke="none"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-tool="RULER" title="자 (드래그로 생성)" aria-label="자">
+            <button class="tool-btn" type="button" data-tool="RULER" title="자" aria-label="자">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="7" width="15" height="6"/><line x1="5.5" y1="7" x2="5.5" y2="10"/><line x1="8.5" y1="7" x2="8.5" y2="10"/><line x1="11.5" y1="7" x2="11.5" y2="10"/><line x1="14.5" y1="7" x2="14.5" y2="10"/></svg></kbd>
             </button>
-            <button class="tool-btn" type="button" data-tool="PROTRACTOR" title="각도기 (드래그로 생성)" aria-label="각도기">
+            <button class="tool-btn" type="button" data-tool="PROTRACTOR" title="각도기" aria-label="각도기">
               <kbd><svg class="tool-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14 A7 7 0 0 1 17 14 Z"/><line x1="10" y1="14" x2="10" y2="8"/><line x1="6.4" y1="9.1" x2="7.7" y2="10.6"/><line x1="13.6" y1="9.1" x2="12.3" y2="10.6"/></svg></kbd>
             </button>
 
@@ -136,66 +141,64 @@
             <div class="tool-chooser" id="chooser-text" hidden role="menu" aria-label="텍스트 / 라벨러 선택">
               <button class="tool-chooser-opt" type="button" data-tool="T" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="5" x2="16" y2="5"/><line x1="10" y1="5" x2="10" y2="16"/></svg></span>
-                <span class="chooser-txt"><b>텍스트</b><small>자유 텍스트 (T)</small></span>
+                <span class="chooser-txt"><b>텍스트</b></span>
               </button>
               <button class="tool-chooser-opt" type="button" data-symbol="labeler" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 17 L10 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="3" cy="17" r="1.4" fill="currentColor"/><text x="13.5" y="8.5" font-size="9" font-family="serif" text-anchor="middle" dominant-baseline="middle" fill="currentColor">㉠</text></svg></span>
-                <span class="chooser-txt"><b>라벨러</b><small>지시선 + 이름표 (Shift+T)</small></span>
+                <span class="chooser-txt"><b>라벨러</b></span>
               </button>
             </div>
             <div class="tool-chooser" id="chooser-angle" hidden role="menu" aria-label="각도 / 직각 선택">
               <button class="tool-chooser-opt" type="button" data-symbol="anglearc" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16 L4 5 M4 16 L15 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 16 A4 4 0 0 0 4 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><text x="8.8" y="12.8" font-size="6" font-family="serif" fill="currentColor">θ</text></svg></span>
-                <span class="chooser-txt"><b>각도</b><small>각도 호 (A)</small></span>
+                <span class="chooser-txt"><b>각도</b></span>
               </button>
               <button class="tool-chooser-opt" type="button" data-symbol="rightangle" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 4 L5 15 L16 15" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 11 L9 11 L9 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                <span class="chooser-txt"><b>직각</b><small>직각 표시 (Shift+A)</small></span>
+                <span class="chooser-txt"><b>직각</b></span>
               </button>
             </div>
             <div class="tool-chooser" id="chooser-cut" hidden role="menu" aria-label="자르기 / 지연 자르기 / 지우개 선택">
               <button class="tool-chooser-opt" type="button" data-tool="CUT" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/></svg></span>
-                <span class="chooser-txt"><b>자르기</b><small>즉시 자르기 (E)</small></span>
+                <span class="chooser-txt"><b>자르기</b></span>
               </button>
               <button class="tool-chooser-opt" type="button" data-tool="DELAYED_CUT" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="5" cy="14" r="2.2"/><circle cx="5" cy="6" r="2.2"/><line x1="6.9" y1="12.8" x2="17" y2="5"/><line x1="6.9" y1="7.2" x2="17" y2="15"/><circle cx="14.8" cy="14.2" r="3.1" fill="var(--bg-panel, #fff)"/><path d="M14.8 12.7v1.7l1.1.7"/></svg></span>
-                <span class="chooser-txt"><b>지연 자르기</b><small>선을 모은 뒤 확정 (Ctrl+E)</small></span>
+                <span class="chooser-txt"><b>지연 자르기</b></span>
               </button>
               <button class="tool-chooser-opt" type="button" data-tool="ERASE" role="menuitem">
                 <span class="chooser-ico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.2 15.5 L3.5 10.8 L10.8 3.5 L15.5 8.2 Z"/><line x1="7" y1="15.5" x2="16.5" y2="15.5"/><line x1="6.2" y1="8.1" x2="10.9" y2="12.8"/></svg></span>
-                <span class="chooser-txt"><b>지우개</b><small>지우기 (Shift+E)</small></span>
+                <span class="chooser-txt"><b>지우개</b></span>
               </button>
             </div>
           </div>
         </div>
-        <!-- ===== 과목별 오브젝트: 과목 선택 → 파트별 라이브러리(현재는 빈 자리) =====
-             과목 선택에 따라 :root[data-subject]가 바뀌어 강조색 테마가 전환된다.
-             파트 아코디언 본문은 아직 비어 있고(구현 예정), 기본은 접힘. subject-objects.js가 채운다. -->
         <div class="tool-section is-collapsed" id="subject-section">
-          <div class="tool-section-header">과목별 오브젝트 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-header">오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
+            <div class="subject-switch" id="subject-switch" role="tablist" aria-label="오브젝트 과목"></div>
+            <button class="object-panel-search" type="button" id="object-search-trigger"
+                    title="검색 (Ctrl+F)" aria-label="검색 (Ctrl+F)">
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
+              <span>검색</span>
+            </button>
+            <div id="object-quick-access"></div>
             <div id="subject-parts"></div>
           </div>
         </div>
-        <!-- 심볼 라이브러리는 '과목별 오브젝트' 파트 아코디언(#subject-parts)으로 흡수됨
-             (subject-objects.js가 templates.js 카테고리를 새 분류로 렌더). -->
-        <!-- 퍼스널 오브젝트: 사용자가 저장한 오브젝트 묶음 라이브러리 (personal-objects.js) -->
         <div class="tool-section is-collapsed" id="personal-section">
-          <div class="tool-section-header">퍼스널 오브젝트 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-header">내 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <div id="personal-parts"><p class="subject-part-empty">저장된 오브젝트가 없습니다.</p></div>
           </div>
         </div>
-        <div class="tool-section">
+        <div class="tool-section" id="advanced-section">
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
-            <button id="personal-object-save" class="advanced-tool-btn" type="button"
-                    title="선택한 오브젝트를 퍼스널 오브젝트로 저장 (좌측 라이브러리에 추가)">오브젝트 저장</button>
-            <button id="bulk-edit-open" class="advanced-tool-btn" type="button"
-                    title="선택(없으면 전체) 오브젝트의 굵기·색·글씨·각도·잠금을 한 번에 통일하거나 증감">전체 통일/수정</button>
-            <button id="graph-tool-open" class="advanced-tool-btn" type="button"
-                    title="좌표평면 + 함수·직선·꺾은선·곡선을 만드는 그래프 도구 (F 단축키)">좌표/함수 생성</button>
+            <button id="personal-object-save" class="advanced-tool-btn" type="button">오브젝트 저장</button>
+            <button id="bulk-edit-open" class="advanced-tool-btn" type="button">전체 통일/수정</button>
+            <button id="graph-tool-open" class="advanced-tool-btn" type="button">좌표/함수 생성</button>
           </div>
         </div>
       </div>
@@ -204,19 +207,10 @@
     <!-- ----- CENTER: canvas (the only working panel in 1A) ----- -->
     <main class="panel panel-center">
       <div class="canvas-toolbar">
-        <!-- 모바일 드로어 토글 (데스크톱에선 CSS로 숨김) -->
-        <button id="drawer-left-toggle" class="topbar-btn drawer-toggle" type="button"
-                aria-controls="panel-left" aria-expanded="false" title="도구 패널 열기">☰ 도구</button>
-        <button id="drawer-right-toggle" class="topbar-btn drawer-toggle" type="button"
-                aria-controls="panel-right" aria-expanded="false" title="속성 패널 열기">속성</button>
+        <button id="drawer-left-toggle" class="panel-edge-toggle" type="button"
+                aria-controls="panel-left" aria-expanded="true" title="도구 패널 접기">도구</button>
         <a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
            target="_blank" rel="noopener" title="5E (sciEnceEducationalExamEasyEditor) · 기능 안내 페이지">5E</a>
-        <span class="tb-sep" aria-hidden="true"></span>
-        <!-- Undo / Redo (icon-only; sit immediately left of 파일) -->
-        <button id="undo-btn" class="topbar-btn icon-btn" type="button"
-                title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
-        <button id="redo-btn" class="topbar-btn icon-btn" type="button"
-                title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
         <div class="file-menu">
@@ -264,19 +258,8 @@
                 title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
           MCP <span class="mcp-dot" aria-hidden="true"></span>
         </button>
-        <span id="zoom-readout" class="zoom-readout">zoom 1.00×</span>
-        <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
-                title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
-          </svg>
-        </button>
-        <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-            <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
-          </svg>
-        </button>
+        <button id="drawer-right-toggle" class="panel-edge-toggle" type="button"
+                aria-controls="panel-right" aria-expanded="true" title="속성 패널 접기">속성</button>
       </div>
 
       <div class="canvas-wrap">
@@ -325,10 +308,6 @@
             <span class="search-trigger-label">AI 이미지 생성</span>
           </button>
         </div>
-        <button class="object-search-trigger bottom-icon-trigger" type="button" id="object-search-trigger"
-                title="오브젝트 검색 (Ctrl+F)" aria-label="오브젝트 검색 (Ctrl+F)">
-          <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
-        </button>
         <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
         <button id="grid-btn" class="grid-toggle-btn" type="button" aria-pressed="false"
                 title="격자 켜기/끄기" aria-label="격자 켜기/끄기">
@@ -347,12 +326,31 @@
         </span>
         <button id="center-view-btn" type="button" aria-pressed="false"
                 title="중앙 고정 (Ctrl+Space) · 스페이스바 탭 = 중앙으로 복귀">⌖</button>
+        <span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span>
       </div>
     </main>
 
     <!-- ----- RIGHT: inspector ----- -->
     <aside class="panel panel-right" id="panel-right">
       <div id="inspector-resize"></div>
+      <div class="panel-utility-bar panel-utility-bar-right" role="group" aria-label="속성 패널 조작">
+        <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+            <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
+          </svg>
+        </button>
+        <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
+                title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
+          </svg>
+        </button>
+        <button class="panel-dock-toggle" type="button" data-panel-internal-toggle="right"
+                aria-expanded="true" aria-label="속성 패널 접기">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M13 3.5v13" /></svg>
+        </button>
+      </div>
       <div id="inspector">
         <div id="inspector-empty">선택된 오브젝트 없음</div>
         <div id="inspector-content" style="display:none">
@@ -381,117 +379,256 @@
     <span class="app-footer-credit">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
   </footer>
 
-  <div id="ai-image-panel" class="modal-overlay" aria-label="AI 이미지 생성" hidden>
-    <section class="modal modal-ai" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
+  <div id="ai-image-panel" class="modal-overlay" aria-label="AI 과학 도식 작업실" hidden>
+    <section class="modal modal-ai ai-workbench" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
       <header class="ai-head">
+        <button class="ai-close" type="button" data-ai-close aria-label="AI 작업실을 닫고 캔버스로 돌아가기">← 캔버스로</button>
         <div class="ai-title-line">
-          <h2 class="modal-title" id="ai-image-title">AI 이미지 생성</h2>
-          <p class="ai-subtitle">참고 이미지를 바탕으로 과학 도식을 생성하거나 배치와 형태를 수정합니다.</p>
+          <h2 class="modal-title" id="ai-image-title">이미지 변환</h2>
         </div>
         <div class="ai-head-status">
           <span class="ai-status" data-ai-status>상태 확인 중…</span>
-          <button class="ai-close" type="button" data-ai-close aria-label="AI 창 닫기" title="닫기">×</button>
         </div>
       </header>
-      <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
-        <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
-        <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 탭을 만듭니다">＋ 탭</button>
-      </nav>
+
       <div class="ai-media-toolbar">
-        <div class="ai-source-group" role="group" aria-label="참고 이미지 가져오기">
+        <div class="ai-source-group" role="group" aria-label="원본 이미지 추가">
           <label class="ai-file-button ai-source-primary">
-            <input type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
-            이미지 불러오기
+            <input id="ai-image-file-input" type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
+            ＋ 이미지 추가
           </label>
-          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">⌕ 이미지 검색…</button>
+          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">이미지 검색</button>
           <button type="button" data-ai-capture>화면 캡처</button>
-          <button type="button" data-ai-compare title="참고 이미지와 생성 결과를 좌우로 비교합니다">이미지 비교</button>
-          <button type="button" data-ai-batch title="추가한 참고 이미지를 각각 독립적으로 동시에 변환합니다">여러 장 변환</button>
         </div>
-        <div class="ai-actions" aria-label="AI 연결 및 대화 관리">
-          <div class="ai-account-summary" aria-label="로그인 계정과 사용량">
-            <strong data-ai-account>계정 확인 중…</strong>
-            <span data-ai-limit>잔여 한도 확인 중…</span>
-            <span data-ai-account-tokens>누적 토큰 확인 중…</span>
-          </div>
-          <button type="button" data-ai-login>Codex 로그인</button>
-          <label class="ai-setting-label">모델
-            <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
-          </label>
-          <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>Luna 외 모델은 생성 시간이 길어질 수 있습니다.</span>
-          <label class="ai-setting-label">추론
-            <select data-ai-effort aria-label="추론 수준 선택"><option value="medium">보통</option></select>
-          </label>
-          <label class="ai-setting-label">속도
-            <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
-          </label>
-          <button type="button" data-ai-new>새 작업</button>
+        <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
+          <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">원본과 비교</button>
+          <button type="button" data-ai-layout-mode="source" aria-pressed="false">원본</button>
+          <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true">결과 크게</button>
+          <span class="ai-toolbar-divider" aria-hidden="true"></span>
+          <button type="button" data-ai-sync-zoom="out" aria-label="원본과 결과 함께 축소">−</button>
+          <output data-ai-sync-zoom-value aria-label="비교 배율">100%</output>
+          <button type="button" data-ai-sync-zoom="in" aria-label="원본과 결과 함께 확대">＋</button>
+          <button type="button" data-ai-sync-zoom="fit">맞춤</button>
+          <button type="button" data-ai-compare title="별도 창에서 참고 이미지와 생성 결과를 비교합니다">전체 비교</button>
         </div>
       </div>
+
       <div class="ai-workspace">
-        <section class="ai-results" aria-label="생성 결과">
-          <div class="ai-section-label">생성 결과</div>
-          <div class="ai-previews" data-ai-previews>
-            <div class="ai-generating" data-ai-generating hidden>
-              <div class="ai-e-loader" aria-hidden="true">
-                <div class="ai-e-cloud"><i>E</i><i>E</i><i>E</i><i>E</i><i>E</i></div>
-                <div class="ai-e-core">E<span data-ai-e-count>1</span></div>
-              </div>
-              <strong data-ai-progress-title>이미지 생성 준비 중</strong>
-              <span data-ai-progress-detail>요청의 구조와 배치를 분석하고 있습니다.</span>
-              <div class="ai-progress-steps" data-ai-progress-stage="analyze" aria-label="이미지 생성 진행 단계">
-                <span data-stage="analyze">분석</span><span data-stage="compose">구성</span><span data-stage="render">렌더링</span><span data-stage="finish">마무리</span>
-              </div>
-              <div class="ai-progress-track" aria-hidden="true"><i></i></div>
-              <small>복잡한 그림은 몇 분 정도 걸릴 수 있습니다. 창을 닫아도 작업은 계속됩니다.</small>
-            </div>
-            <p class="ai-empty" data-ai-empty>생성된 이미지가 여기에 표시됩니다.</p>
+        <aside class="ai-task-rail" aria-label="작업 목록">
+          <div class="ai-rail-heading">
+            <strong>작업</strong>
+            <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다">＋ 새 작업</button>
           </div>
-          <section class="ai-batch-panel" data-ai-batch-panel hidden aria-label="여러 장 변환 진행 상황">
-            <div class="ai-batch-head"><strong>여러 장 변환</strong><span data-ai-batch-summary></span></div>
-            <div class="ai-batch-grid" data-ai-batch-grid></div>
-          </section>
-          <details class="ai-reference-section">
-            <summary>참고 이미지 <span data-ai-reference-count>0</span><small>영역 요청 확인·수정</small></summary>
-            <div class="ai-reference-list" data-ai-attachment-list>
-              <p class="ai-reference-empty" data-ai-reference-empty>여러 이미지를 추가하고 각각 필요한 영역에 요청을 남길 수 있습니다.</p>
+          <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
+            <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
+          </nav>
+        </aside>
+
+        <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
+          <header class="ai-compare-heading">
+            <div>
+              <span>이미지 작업 영역</span>
+              <strong>그림 위에 수정할 부분을 표시하세요</strong>
             </div>
-          </details>
+            <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
+              <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
+              <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
+              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">영역 코멘트</button>
+            </div>
+          </header>
+          <div class="ai-comparison-grid">
+            <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
+              <header class="ai-pane-head">
+                <div><span>원본</span><strong>변환 기준 이미지</strong></div>
+                <label data-ai-source-picker hidden>원본 선택 <select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
+              </header>
+              <details class="ai-reference-section" open>
+                <summary>원본 이미지 <span data-ai-reference-count>0</span></summary>
+                <div class="ai-reference-list" data-ai-attachment-list>
+                  <p class="ai-reference-empty" data-ai-reference-empty>이미지를 추가하면 원본이 여기에 표시됩니다.</p>
+                </div>
+              </details>
+            </section>
+
+            <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
+              <header class="ai-pane-head">
+                <div><span>결과</span><strong>생성 이미지</strong></div>
+                <label>버전 <select data-ai-candidate-select aria-label="생성 결과 버전 선택"></select></label>
+              </header>
+              <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
+              <div class="ai-previews" data-ai-previews>
+                <div class="ai-generating" data-ai-generating role="status" aria-live="polite" hidden>
+                  <div class="ai-e-loader" aria-hidden="true">
+                    <div class="ai-e-cloud"><i>E</i><i>E</i><i>E</i><i>E</i><i>E</i></div>
+                    <div class="ai-e-core">E<span data-ai-e-count>1</span></div>
+                  </div>
+                  <strong data-ai-progress-title>이미지 생성 준비 중</strong>
+                  <span data-ai-progress-detail>요청의 구조와 배치를 분석하고 있습니다.</span>
+                  <div class="ai-progress-steps" data-ai-progress-stage="analyze" aria-label="이미지 생성 진행 단계">
+                    <span data-stage="analyze">분석</span><span data-stage="compose">구성</span><span data-stage="render">렌더링</span><span data-stage="finish">마무리</span>
+                  </div>
+                  <div class="ai-progress-track" aria-hidden="true"><i></i></div>
+                  <small>복잡한 그림은 몇 분 정도 걸릴 수 있습니다. 창을 닫아도 작업은 계속됩니다.</small>
+                </div>
+                <div class="ai-empty ai-stage-empty" data-ai-empty>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg>
+                  <strong>작업할 이미지를 추가하세요</strong>
+                  <span>이미지를 끌어놓거나 파일을 선택하세요.</span>
+                  <button class="ai-stage-add" type="button" data-ai-add-file>이미지 선택</button>
+                </div>
+              </div>
+            </section>
+          </div>
         </section>
-        <section class="ai-conversation" aria-label="요청 및 진행 기록">
-          <div class="ai-section-label">대화</div>
-          <div class="ai-log" data-ai-log>
-            <p class="ai-log-empty" data-ai-log-empty>대화로 요구사항을 정리한 뒤 이미지를 생성하세요.</p>
+
+        <section class="ai-conversation" aria-label="코멘트와 Codex 대화">
+          <nav class="ai-side-tabs" aria-label="오른쪽 패널">
+            <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">코멘트 <span data-ai-comments-count>0</span></button>
+            <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
+          </nav>
+          <div class="ai-side-content">
+            <section class="ai-comments-panel" data-ai-comments-panel aria-label="위치별 코멘트">
+              <section class="ai-preparation" aria-label="이미지 요청과 기본 설정">
+                <header><strong data-ai-request-title>첫 변환</strong><span data-ai-request-hint>고정된 평가원식 규칙으로 변환합니다.</span></header>
+                <p class="ai-request-note" data-ai-request-note>먼저 평가원식 흑백 선화로 변환합니다.<br>결과에 수정 위치를 표시하세요.</p>
+                <textarea data-ai-input aria-label="이미지 수정 요청" placeholder="예: 숫자와 단위를 지우고 평가원식 흑백 선화로 정리해 주세요."></textarea>
+                <details class="ai-conversion-options">
+                  <summary>변환 옵션 <span data-ai-conversion-summary>교과서 선화 · 그림형</span></summary>
+                  <div class="ai-conversion-options-body">
+                    <div class="ai-mode-row" role="group" aria-label="출력 방식">
+                      <span>출력</span>
+                      <button type="button" class="is-on" data-ai-output-engine="raster" title="그림형 선택 시 흰 배경 PNG를 후처리 없이 생성합니다">교과서 선화</button>
+                      <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+                    </div>
+                    <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
+                      <span>라벨</span>
+                      <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
+                      <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
+                    </div>
+                    <p data-ai-white-png-note>기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존</p>
+                    <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
+                      <div class="ai-output-processing-row">
+                        <span>배경</span>
+                        <div class="ai-output-segments ai-output-background-segments" role="group" aria-label="생성 결과 배경 처리">
+                          <button type="button" class="is-on" data-ai-background-policy="preserve" aria-pressed="true">원본 유지</button>
+                          <button type="button" data-ai-background-policy="connected" aria-pressed="false">외부만 제거</button>
+                          <button type="button" data-ai-background-policy="all-near-white" aria-pressed="false">모든 흰색 제거</button>
+                          <button type="button" data-ai-background-policy="checkerboard" aria-pressed="false">체크무늬 제거</button>
+                        </div>
+                      </div>
+                      <div class="ai-output-processing-row">
+                        <span>색상</span>
+                        <div class="ai-output-segments" role="group" aria-label="생성 결과 색상 처리">
+                          <button type="button" class="is-on" data-ai-exam-palette="false" aria-pressed="true">원본 색상</button>
+                          <button type="button" data-ai-exam-palette="true" aria-pressed="false">무채색 단순화</button>
+                        </div>
+                      </div>
+                      <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
+                    </section>
+                    <section class="ai-mark-policy" data-ai-mark-policy aria-label="표시선 처리">
+                      <p class="ai-mark-policy-note">물체 윤곽·관·도선·실제 눈금선은 보존. 숫자·단위는 제거.</p>
+                      <div class="ai-mark-policy-fields">
+                        <label for="ai-mark-arrows">화살표
+                          <select id="ai-mark-arrows" data-ai-mark-arrows>
+                            <option value="structural" selected>구조 표시만 유지</option>
+                            <option value="keep">모두 유지</option>
+                            <option value="remove">모두 제거</option>
+                          </select>
+                        </label>
+                        <label for="ai-mark-trends">추세선
+                          <select id="ai-mark-trends" data-ai-mark-trends>
+                            <option value="keep" selected>유지</option>
+                            <option value="remove">제거</option>
+                          </select>
+                        </label>
+                        <label for="ai-mark-leaders">보조선·지시선
+                          <select id="ai-mark-leaders" data-ai-mark-leaders>
+                            <option value="remove" selected>제거</option>
+                            <option value="keep">유지</option>
+                          </select>
+                        </label>
+                      </div>
+                    </section>
+                  </div>
+                </details>
+                <button type="button" class="modal-btn modal-btn-primary" data-ai-send>변환하기</button>
+              </section>
+              <div class="ai-review-overview">
+                <div class="ai-review-summary" data-ai-review-summary data-state="idle" aria-live="polite">
+                  <strong>검수 대기</strong><span>생성 후 요청 반영 여부와 원본 구조를 확인합니다.</span>
+                </div>
+                <details class="ai-review-panel" aria-labelledby="ai-review-title">
+                  <summary id="ai-review-title">검수 상세 보기</summary>
+                  <header class="ai-review-head">
+                    <span class="ai-review-model">독립 검수 · Sol 높음</span>
+                    <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 생성 후 검수</label>
+                  </header>
+                  <div class="ai-review-meta" data-ai-review-meta hidden></div>
+                  <div class="ai-review-checks" data-ai-review-checks></div>
+                  <div class="ai-review-issues" data-ai-review-issues></div>
+                  <details class="ai-file-inspection" data-ai-pixel-inspection hidden>
+                    <summary>파일 검사 <span data-ai-pixel-inspection-summary></span></summary>
+                    <dl data-ai-pixel-inspection-list></dl>
+                  </details>
+                </details>
+              </div>
+              <section class="ai-comments-list-section" aria-label="수정 코멘트 목록">
+                <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>지정하지 않은 부분은 유지</span></header>
+                <div class="ai-comments-list" data-ai-comments aria-live="polite"><p class="ai-comments-empty">그림에서 점을 찍거나 영역을 둘러싸고 수정할 내용을 남기세요.</p></div>
+              </section>
+              <section class="ai-comment-compose" aria-label="선택한 코멘트 편집">
+                <header><strong>코멘트 편집</strong><button type="button" data-ai-comment-delete disabled>삭제</button></header>
+                <textarea data-ai-comment-editor aria-label="선택한 코멘트 내용" placeholder="예: 가열판의 검정 면을 흰 면과 윤곽선으로 바꿔 주세요."></textarea>
+                <div class="ai-comment-compose-foot"><span data-ai-comment-status>코멘트는 선택한 이미지 버전에 연결됩니다.</span><button type="button" data-ai-comment-save disabled>저장</button></div>
+              </section>
+            </section>
+            <section class="ai-chat-panel" data-ai-chat-panel aria-label="Codex와 대화" hidden>
+              <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>위치별 수정은 코멘트에, 전체적인 질문은 여기에 남깁니다.</p></header>
+              <div class="ai-log" data-ai-log role="log" aria-label="Codex 대화와 진행 기록"><p class="ai-log-empty" data-ai-log-empty>질문이나 전체 그림에 대한 추가 요구사항을 남길 수 있습니다.</p></div>
+              <section class="ai-input" aria-label="Codex 대화 입력">
+                <div class="ai-chat-composer">
+                  <textarea data-ai-chat-input aria-label="Codex 대화 입력" placeholder="전체 그림에 관해 질문하거나 요구사항을 정리하세요."></textarea>
+                  <button type="button" data-ai-chat-send title="대화 보내기 · 이미지 생성은 별도" aria-label="대화 보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg></button>
+                </div>
+                <p class="ai-chat-send-note">보내기는 대화만 · 그림 변경은 코멘트 반영하기</p>
+              </section>
+            </section>
           </div>
-          <div class="ai-input">
+          <details class="ai-advanced-settings">
+            <summary>계정 및 고급 설정</summary>
             <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
-              <span>그림 복잡도</span>
+              <span>복잡도</span>
               <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
               <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
               <button type="button" data-ai-quality="complex" title="해부도, 혈관, 복합 회로·배관 · 약 2~4분">복잡<small>검수 포함</small></button>
             </div>
-            <div class="ai-mode-row" role="group" aria-label="출력 방식">
-              <span>출력 방식</span>
-              <button type="button" class="is-on" data-ai-output-engine="raster" title="교과서 그림처럼 세부적인 평가원식 선화로 생성합니다">교과서 선화</button>
-              <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+            <div class="ai-actions" aria-label="AI 연결 및 생성 설정">
+              <div class="ai-account-summary" aria-label="로그인 계정과 사용량">
+                <strong data-ai-account>계정 확인 중…</strong>
+                <span data-ai-limit>잔여 한도 확인 중…</span>
+                <span data-ai-account-tokens>누적 토큰 확인 중…</span>
+              </div>
+              <button type="button" data-ai-login>Codex 로그인</button>
+              <label class="ai-setting-label">생성 모델
+                <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
+              </label>
+              <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>권장 기본값은 Sol · 보통입니다. 모델별 품질·시간은 검증 중입니다.</span>
+              <label class="ai-setting-label">추론
+                <select data-ai-effort aria-label="추론 수준 선택"><option value="medium">보통</option></select>
+              </label>
+              <label class="ai-setting-label">속도
+                <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
+              </label>
+              <button type="button" data-ai-new>현재 작업 초기화</button>
             </div>
-            <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
-              <span>라벨</span>
-              <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
-              <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
-            </div>
-            <div class="ai-chat-composer">
-              <textarea data-ai-input placeholder="요구사항을 입력하세요. Enter로 전송하고 Shift+Enter로 줄을 바꿉니다."></textarea>
-              <button type="button" data-ai-chat-send title="메시지 보내기" aria-label="메시지 보내기">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg>
-              </button>
-            </div>
+          </details>
+          <footer class="ai-workbench-actions">
+            <button type="button" class="modal-btn modal-btn-primary" data-ai-comments-apply disabled>코멘트 반영하기</button>
             <div class="ai-conversation-actions">
-              <span>영역 코멘트는 이미지와 함께 자동 전달됩니다.</span>
               <button type="button" data-ai-interrupt title="현재 진행 중인 AI 요청을 취소합니다" hidden>작업 취소</button>
-              <button type="button" class="modal-btn modal-btn-primary" data-ai-send>이미지 생성</button>
             </div>
-          </div>
+            <div class="ai-output-actions"><button type="button" data-ai-save-selected disabled>PNG 저장</button><button type="button" data-ai-insert-selected disabled>페이지에 넣고 닫기</button></div>
+          </footer>
         </section>
       </div>
     </section>
@@ -499,68 +636,10 @@
 
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <!-- ===== MOBILE DRAWER TOGGLES =====
-       좁은 화면(<768px)에서 좌/우 사이드 패널을 오버레이 드로어로 열고 닫는다.
-       순수 DOM 토글이라 ES 모듈 그래프를 건드리지 않고 인라인 IIFE로 처리(브랜치 복사 버튼과 동일 방식). -->
-  <script>
-    (() => {
-      const leftPanel = document.getElementById("panel-left");
-      const rightPanel = document.getElementById("panel-right");
-      const backdrop = document.getElementById("drawer-backdrop");
-      const leftBtn = document.getElementById("drawer-left-toggle");
-      const rightBtn = document.getElementById("drawer-right-toggle");
-      if (!leftPanel || !rightPanel || !backdrop || !leftBtn || !rightBtn) return;
-
-      const mq = window.matchMedia("(max-width: 767px)");
-
-      function closeAll() {
-        leftPanel.classList.remove("is-open");
-        rightPanel.classList.remove("is-open");
-        backdrop.classList.remove("is-open");
-        backdrop.hidden = true;
-        leftBtn.setAttribute("aria-expanded", "false");
-        rightBtn.setAttribute("aria-expanded", "false");
-      }
-
-      function openPanel(panel, btn, otherPanel, otherBtn) {
-        // 한 번에 하나만 열어 두 드로어가 겹치지 않게 한다
-        otherPanel.classList.remove("is-open");
-        otherBtn.setAttribute("aria-expanded", "false");
-        panel.classList.add("is-open");
-        btn.setAttribute("aria-expanded", "true");
-        backdrop.hidden = false;
-        backdrop.classList.add("is-open");
-      }
-
-      function toggle(panel, btn, otherPanel, otherBtn) {
-        if (panel.classList.contains("is-open")) closeAll();
-        else openPanel(panel, btn, otherPanel, otherBtn);
-      }
-
-      leftBtn.addEventListener("click", () => toggle(leftPanel, leftBtn, rightPanel, rightBtn));
-      rightBtn.addEventListener("click", () => toggle(rightPanel, rightBtn, leftPanel, leftBtn));
-      backdrop.addEventListener("click", closeAll);
-
-      // 좌측 드로어에서 도구/심볼을 고르면 바로 캔버스를 보도록 닫아 준다
-      leftPanel.addEventListener("click", (e) => {
-        if (e.target.closest("[data-tool],[data-symbol],#object-search-trigger")) closeAll();
-      });
-
-      // Esc로 열린 드로어 닫기(열려 있을 때만 가로채 앱의 다른 Esc 동작과 충돌 방지)
-      window.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape") return;
-        if (leftPanel.classList.contains("is-open") || rightPanel.classList.contains("is-open")) {
-          closeAll();
-          e.stopPropagation();
-        }
-      }, true);
-
-      // 데스크톱 폭으로 돌아오면 드로어 상태를 초기화해 그리드 레이아웃으로 복귀
-      mq.addEventListener("change", (e) => { if (!e.matches) closeAll(); });
-    })();
-  </script>
+  <script type="module" src="js/panel-visibility.js"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.4.0"></script>
+  <script type="module" src="js/ai-workbench.js?v=1.0.0"></script>
   <script type="module" src="js/main.js?v=1.5.9-delayed-cut-cache"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.4.1-exampool"></script>

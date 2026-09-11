@@ -12,7 +12,9 @@
  */
 
 import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.4.0";
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
+
+import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.4.0";
 
 const DB_NAME = "5e-autosave";
 const DB_VERSION = 1;
@@ -22,6 +24,7 @@ const STORE = "snapshots";
 const MAX_SNAPSHOTS = 8;
 // 마지막 변경 이후 이만큼 조용하면 한 번 저장(연속 편집을 한 번으로 합침).
 const DEBOUNCE_MS = 2500;
+const MAX_DIRTY_WAIT_MS = 10000;
 
 /* ----- IndexedDB open ----- */
 function openDB() {
@@ -73,6 +76,7 @@ function saveSnapshot(db, data) {
     };
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new DOMException("자동 저장 트랜잭션이 중단되었습니다.", "AbortError"));
   });
 }
 
@@ -103,7 +107,9 @@ export async function initAutosave(state) {
   try {
     db = await openDB();
   } catch {
-    // IndexedDB를 못 열면(사생활 모드 등) 자동 저장 기능만 조용히 비활성화.
+    void showAlert("이 환경에서는 자동 저장을 사용할 수 없습니다. 작업이 끝나면 파일로 저장해 주세요.", {
+      title: "자동 저장을 사용할 수 없음",
+    });
     return;
   }
 
@@ -117,32 +123,79 @@ export async function initAutosave(state) {
         `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
         { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
       );
-      if (ok) applyLoaded(state, migrate(latest.data));
+      if (ok) {
+        applyLoaded(state, migrate(latest.data));
+        markProjectStatus(state, captureProjectStatus(state), "recovery");
+      }
     }
   } catch {
-    // 복구 실패는 치명적이지 않다 — 그냥 새 세션으로 진행.
+    void showAlert("이전 자동 저장 작업을 복구하지 못했습니다. 새 작업은 계속할 수 있습니다.", {
+      title: "자동 저장 복구 실패",
+    });
   }
 
   // (2) 디바운스 자동 저장. serialize 결과 JSON이 직전과 같으면(뷰 이동·도구
   //     전환 등 도면 무변화) 저장을 건너뛴다. 빈 도면은 복구 가치가 없으므로
   //     저장하지 않아, 실수로 좋은 스냅샷을 덮어쓰지 않는다.
   let timer = null;
-  let lastJson = "";
-  const schedule = (s) => {
+  let dirtySince = null;
+  let lastSavedJson = "";
+  let lastQueuedJson = "";
+  let failureNotified = false;
+  let writeQueue = Promise.resolve();
+
+  const schedule = () => {
+    const now = Date.now();
+    if (dirtySince === null) dirtySince = now;
+    const due = Math.min(now + DEBOUNCE_MS, dirtySince + MAX_DIRTY_WAIT_MS);
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = null;
-      const snap = serialize(s);
-      if (!snapshotHasObjects(snap)) return;
-      const json = JSON.stringify(snap);
-      if (json === lastJson) return;
-      // JSON.parse로 라이브 참조를 끊은 순수 스냅샷을 저장한다.
-      // lastJson 갱신은 저장 성공 후에만 한다 — 실패 시에도 미리 갱신해버리면
-      // 다음 변경까지 "이미 저장됨"으로 오인해 그 상태가 영구히 유실된다.
-      saveSnapshot(db, JSON.parse(json))
-        .then(() => { lastJson = json; })
-        .catch(() => { /* 실패 시 lastJson 갱신 안 함 → 다음 변경 시 재시도됨 */ });
-    }, DEBOUNCE_MS);
+      dirtySince = null;
+      captureAndQueue();
+    }, Math.max(0, due - now));
   };
+
+  const captureAndQueue = () => {
+    const statusToken = captureProjectStatus(state);
+    const snap = serialize(state.get());
+    if (!snapshotHasObjects(snap)) return;
+    const json = JSON.stringify(snap);
+    if (json === lastSavedJson || json === lastQueuedJson) return;
+    const data = JSON.parse(json);
+    lastQueuedJson = json;
+    const write = async () => {
+      try {
+        await saveSnapshot(db, data);
+        lastSavedJson = json;
+        markProjectStatus(state, statusToken, "recovery");
+        if (lastQueuedJson === json) lastQueuedJson = "";
+        failureNotified = false;
+      } catch {
+        if (lastQueuedJson === json) lastQueuedJson = "";
+        if (!failureNotified) {
+          failureNotified = true;
+          void showAlert("자동 저장에 실패했습니다. 자동으로 다시 시도하며, 작업이 끝나면 파일로도 저장해 주세요.", {
+            title: "자동 저장 실패",
+          });
+        }
+        schedule();
+      }
+    };
+    writeQueue = writeQueue.then(write, write);
+  };
+
+  const flush = () => {
+    if (!timer) return;
+    clearTimeout(timer);
+    timer = null;
+    dirtySince = null;
+    captureAndQueue();
+  };
+
   state.subscribe(schedule);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flush();
+  });
+  window.addEventListener("pagehide", flush);
 }

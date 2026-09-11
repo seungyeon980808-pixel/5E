@@ -1,0 +1,629 @@
+{
+  "schemaVersion": 1,
+  "phase": "baseline",
+  "generatedAt": "2026-09-06T08:35:53.697Z",
+  "runtime": "v26.8.1",
+  "repetitions": 5,
+  "timingLabels": {
+    "pureConversionMs": "vectorizeImage only; excludes decode, preview Path2D/paint, and insertion",
+    "previewMs": "not measured by this DOM-free benchmark; recorded separately through CUA",
+    "insertionMs": "not measured by this DOM-free benchmark; recorded separately through CUA"
+  },
+  "fixtures": [
+    {
+      "name": "thin-black-gray",
+      "width": 256,
+      "height": 72,
+      "rgbaSha256": "7ad242e36acd57d51a37201b11e90444235bcf6e33f08d997858c255f38af971",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 1,
+        "textSizePx": 12,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.024197
+      },
+      "pureConversionMs": {
+        "warmup": 6.731833,
+        "samples": [
+          3.248875,
+          1.784709,
+          1.535125,
+          3.297167,
+          1.860667
+        ],
+        "p50": 1.860667,
+        "p95": 3.297167
+      },
+      "geometry": {
+        "componentCount": 2,
+        "holeCount": 0,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.0625,
+              0.694444,
+              0.933594,
+              0.708333
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.0625,
+                0.694444,
+                0.933594,
+                0.708333
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.0625,
+              0.277778,
+              0.933594,
+              0.291667
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.0625,
+                0.277778,
+                0.933594,
+                0.291667
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "branches",
+      "width": 192,
+      "height": 160,
+      "rgbaSha256": "5d26c6b2ca919ede64ed618bb3bf2e9a2bd74ea8f5c735333665a39ddfc56316",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 3,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.021061
+      },
+      "pureConversionMs": {
+        "warmup": 2.019334,
+        "samples": [
+          1.470875,
+          1.530583,
+          1.235083,
+          1.223458,
+          1.158375
+        ],
+        "p50": 1.235083,
+        "p95": 1.530583
+      },
+      "geometry": {
+        "componentCount": 1,
+        "holeCount": 0,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.166667,
+              0.1125,
+              0.838542,
+              0.90625
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.171875,
+                0.11875,
+                0.833333,
+                0.9
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "crossing",
+      "width": 176,
+      "height": 176,
+      "rgbaSha256": "5786606699ac16bd71aca50ac4670db25fb4e5ed89e2e8b5eb38b83bebd8c558",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 3,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.026375
+      },
+      "pureConversionMs": {
+        "warmup": 1.037,
+        "samples": [
+          1.008167,
+          0.986333,
+          1.052666,
+          1.046666,
+          0.987667
+        ],
+        "p50": 1.008167,
+        "p95": 1.052666
+      },
+      "geometry": {
+        "componentCount": 1,
+        "holeCount": 0,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.102273,
+              0.102273,
+              0.903409,
+              0.903409
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.107955,
+                0.107955,
+                0.897727,
+                0.897727
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "ring-hole",
+      "width": 180,
+      "height": 180,
+      "rgbaSha256": "47f595206915cbcc24ed8ff93c165ace6483c456d05ecf866b31ae90fd9ca4a0",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 25,
+        "dilateRadius": 3,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.155432
+      },
+      "pureConversionMs": {
+        "warmup": 2.430208,
+        "samples": [
+          3.828083,
+          2.514459,
+          2.096417,
+          5.059291,
+          2.846375
+        ],
+        "p50": 2.846375,
+        "p95": 5.059291
+      },
+      "geometry": {
+        "componentCount": 1,
+        "holeCount": 1,
+        "components": [
+          {
+            "kind": "ellipse",
+            "bbox": [
+              0.172222,
+              0.172222,
+              0.833333,
+              0.833333
+            ],
+            "holes": 1,
+            "contourBounds": [],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "text-like",
+      "width": 220,
+      "height": 96,
+      "rgbaSha256": "43fbfdc3df432654ebcd32af65cd12b2dd0232fe06589607f95b640f15ec2ee0",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 2,
+        "textSizePx": 80,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.100616
+      },
+      "pureConversionMs": {
+        "warmup": 1.288917,
+        "samples": [
+          1.945041,
+          1.431417,
+          1.296958,
+          1.952542,
+          1.174667
+        ],
+        "p50": 1.431417,
+        "p95": 1.952542
+      },
+      "geometry": {
+        "componentCount": 3,
+        "holeCount": 1,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.077273,
+              0.177083,
+              0.309091,
+              0.822917
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.081818,
+                0.1875,
+                0.304545,
+                0.8125
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.413636,
+              0.177083,
+              0.445455,
+              0.822917
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.418182,
+                0.1875,
+                0.440909,
+                0.8125
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.577273,
+              0.177083,
+              0.827273,
+              0.822917
+            ],
+            "holes": 1,
+            "contourBounds": [
+              [
+                0.581818,
+                0.1875,
+                0.822727,
+                0.8125
+              ],
+              [
+                0.604545,
+                0.239583,
+                0.8,
+                0.760417
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "transparent",
+      "width": 144,
+      "height": 112,
+      "rgbaSha256": "0a14cad45747b3bf0bc31fa3a0365977d1959e951c31f53523cf5885b7fc67cd",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 2,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.047743
+      },
+      "pureConversionMs": {
+        "warmup": 1.007916,
+        "samples": [
+          0.818,
+          0.708083,
+          0.958042,
+          0.868625,
+          0.750125
+        ],
+        "p50": 0.818,
+        "p95": 0.958042
+      },
+      "geometry": {
+        "componentCount": 1,
+        "holeCount": 0,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.090278,
+              0.133929,
+              0.916667,
+              0.857143
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.096776,
+                0.136545,
+                0.909566,
+                0.855613
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "sparse-2000",
+      "width": 2000,
+      "height": 2000,
+      "rgbaSha256": "bba6f35765bc1e0da93bdc48e8135564cbdd7ea6e48f94e58f83239d27b95765",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 1,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": false,
+        "reason": null,
+        "ratio": 0.003522
+      },
+      "pureConversionMs": {
+        "warmup": 86.696666,
+        "samples": [
+          237.088333,
+          197.541458,
+          74.490958,
+          75.190625,
+          72.3575
+        ],
+        "p50": 75.190625,
+        "p95": 237.088333
+      },
+      "geometry": {
+        "componentCount": 8,
+        "holeCount": 0,
+        "components": [
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.195,
+              0.9405,
+              0.1955
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.195,
+                0.9405,
+                0.1955
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.405,
+              0.9405,
+              0.4055
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.405,
+                0.9405,
+                0.4055
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.615,
+              0.9405,
+              0.6155
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.615,
+                0.9405,
+                0.6155
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.825,
+              0.9405,
+              0.8255
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.825,
+                0.9405,
+                0.8255
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.09,
+              0.9405,
+              0.0905
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.09,
+                0.9405,
+                0.0905
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.3,
+              0.9405,
+              0.3005
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.3,
+                0.9405,
+                0.3005
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.51,
+              0.9405,
+              0.5105
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.51,
+                0.9405,
+                0.5105
+              ]
+            ],
+            "strokeBounds": []
+          },
+          {
+            "kind": "loops",
+            "bbox": [
+              0.06,
+              0.72,
+              0.9405,
+              0.7205
+            ],
+            "holes": 0,
+            "contourBounds": [
+              [
+                0.06,
+                0.72,
+                0.9405,
+                0.7205
+              ]
+            ],
+            "strokeBounds": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "dense-2000",
+      "width": 2000,
+      "height": 2000,
+      "rgbaSha256": "93ab9458dd0bd938bae9b09cd3d1d30402476d78a27d0efa5010a56ab44be4c1",
+      "options": {
+        "preserveGrayLevels": true,
+        "advancedShapes": false,
+        "removeGrid": false,
+        "minArea": 5,
+        "dilateRadius": 1,
+        "textSizePx": 20,
+        "epsilon": 1.2
+      },
+      "gate": {
+        "rejected": true,
+        "reason": "dense-ink",
+        "ratio": 0.6
+      },
+      "pureConversionMs": {
+        "warmup": null,
+        "samples": [],
+        "p50": null,
+        "p95": null
+      },
+      "geometry": null
+    }
+  ]
+}

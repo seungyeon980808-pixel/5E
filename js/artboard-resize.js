@@ -5,11 +5,14 @@
 import { runAreaCapture } from "./export-dialog.js?v=1.4.3";
 import { translateObject } from "./transform.js?v=1.4.0";
 import { artboardChangeFromBounds } from "./artboard-area.js?v=1.4.3";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.5.3";
 
 export function applyArtboardBounds(state, bounds) {
   const change = artboardChangeFromBounds(bounds);
   if (!change) return false;
+  let changed = false;
   state.update((s) => {
+    const snapshot = captureDocumentSnapshot(s);
     for (const obj of s.objects) translateObject(obj, change.dx, change.dy);
     for (const guide of s.guides || []) {
       if (guide.axis === "x") guide.position += change.dx;
@@ -17,8 +20,9 @@ export function applyArtboardBounds(state, bounds) {
     }
     s.artboard = change.artboard;
     s.artboardResizeMode = false;
+    changed = commitDocumentHistory(s, snapshot);
   });
-  return true;
+  return changed;
 }
 
 export function initArtboardResize(svg, state) {

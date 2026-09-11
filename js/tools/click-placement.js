@@ -52,7 +52,7 @@ export function setupClickDrawing(svg, state) {
   _state = state;
 
   // Each click appends a vertex. Line auto-commits at 2 points; polyline keeps going.
-  _svg.addEventListener("click", (e) => {
+  const placePoint = (e) => {
     if (e.button !== 0) return;                  // left button only
     if (isSpaceHeld()) return;                    // Space+click = pan, not draw
     const tool = _state.get().activeTool;
@@ -77,7 +77,17 @@ export function setupClickDrawing(svg, state) {
     if (tool === "L" && draftPoints.length === 2) { commitLine(); return; }
     if (tool === "CIRCUIT" && draftPoints.length === 2) { commitCircuit(); return; } // two-click, like line
     updateDraftPreview();                         // refresh the committed-segments preview
-  });
+  };
+  _svg.addEventListener("click", placePoint);
+
+  const placeControlPrimaryPoint = (e) => {
+    if (!e.ctrlKey || e.button !== 0) return;
+    const tool = _state.get().activeTool;
+    if (!CLICK_TOOLS[tool] && tool !== "ARC" && tool !== "RIGHTANGLE" && tool !== "LABELER") return;
+    e.preventDefault();
+    placePoint(e);
+  };
+  _svg.addEventListener("contextmenu", placeControlPrimaryPoint);
 
   // Rubber-band: redraw preview from the placed points to the live mouse.
   window.addEventListener("mousemove", (e) => {

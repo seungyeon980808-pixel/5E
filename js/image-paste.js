@@ -1,6 +1,8 @@
+import { blocksCanvasShortcut } from "./platform.js?v=1.4.0";
+import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.4.0";
+import { getLastMouseWorld } from "./transform.js?v=1.4.0";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
@@ -45,7 +47,14 @@ function isEditingFieldTarget(target) {
 function loadImageSize(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve({ w: img.naturalWidth || 1, h: img.naturalHeight || 1 });
+    img.onload = () => {
+      const w = Number(img.naturalWidth), h = Number(img.naturalHeight);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+        reject(new Error("이미지 크기를 확인할 수 없습니다."));
+        return;
+      }
+      resolve({ w, h });
+    };
     img.onerror = () => reject(new Error("Unable to decode image"));
     img.src = src;
   });
@@ -58,12 +67,19 @@ function fitToArtboard(natural, artboard) {
   return { w: natural.w * scale, h: natural.h * scale };
 }
 
+function targetStateFingerprint(target) {
+  const { src, ...state } = target;
+  return JSON.stringify(state);
+}
+
 function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
   // place.at 지정 시 그 지점(예: 아트보드 원점)을 기준으로, 아니면 마지막 마우스/뷰포트 중앙.
-  const target = (place && place.at) ? place.at : (getLastMouseWorld() ||
-    { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
+  const target = place?.centerArtboard
+    ? { x: 0, y: 0 }
+    : (place && place.at) ? place.at : (getLastMouseWorld() ||
+      { x: s0.viewBox.x + s0.viewBox.w / 2, y: s0.viewBox.y + s0.viewBox.h / 2 });
   const off = (place && place.offset) || { dx: 0, dy: 0 };
   const x = target.x - fitted.w / 2 + off.dx;
   const y = target.y - fitted.h / 2 + off.dy;
@@ -92,44 +108,125 @@ function insertImageObject(state, src, size, place) {
       layerId: s.activeLayerId,
       order: s.objects.length,
       cutouts: [],
+      ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
     });
     s.selectedIds = [id];
     s.targetedId = null;
     s.activeTool = "V";
   });
+  return id;
 }
 
 /* 외부 모듈용(기출 라이브러리·이미지 불러오기 등): dataURL을 즉시 이미지 객체로 삽입.
  * 내부 붙여넣기 경로와 달리 디코드 실패를 삼키지 않고 throw한다.
  * opts.at={x,y} = 삽입 기준점(예: 아트보드 원점), opts.offset={dx,dy} = 카스케이드용. */
-export async function insertImageFromSrc(state, src, opts) {
-  const natural = await loadImageSize(src);
-  const scaled = await downscaleIfNeeded(src, natural);
-  insertImageObject(state, scaled.src, scaled.size, opts);
+export async function insertImageFromSrc(state, src, opts = {}) {
+  // Capture intent before decoding. UI state (page, selected object, even opts)
+  // can change while Image.onload/downscaling is pending.
+  const options = { ...opts,
+    ...(opts?.at ? { at: { ...opts.at } } : {}),
+    ...(opts?.offset ? { offset: { ...opts.offset } } : {}),
+  };
+  if (typeof src !== "string" || !src.trim()) throw new Error("삽입할 이미지가 없습니다.");
+  const hasAiMetadata = options.aiTaskId != null || options.aiCandidateId != null;
+  if (hasAiMetadata && (![options.aiTaskId, options.aiCandidateId].every(value => typeof value === "string" && value.trim()))) {
+    throw new Error("이미지 작업·버전 정보를 확인할 수 없습니다.");
+  }
+  if (options.replaceId && !hasAiMetadata) throw new Error("교체할 이미지 작업 정보가 없습니다.");
+
+  const initial = state.get();
+  const pageId = initial.activePageId ?? null;
+  const pageRecord = initial.pages?.find(page => page.id === pageId) ?? null;
+  const objectsAtStart = initial.objects;
+  const initialTarget = options.replaceId ? initial.objects.find(obj => obj.id === options.replaceId) : null;
+  const targetSnapshot = initialTarget ? targetStateFingerprint(initialTarget) : null;
+  const targetSource = initialTarget?.src;
+  const targetCandidateId = initialTarget?.aiCandidateId;
+  let invalidationError = null;
+  function assertContext(s) {
+    if (invalidationError) throw invalidationError;
+    if ((s.activePageId ?? null) !== pageId
+      || (s.pages?.find(page => page.id === pageId) ?? null) !== pageRecord
+      || s.objects !== objectsAtStart) {
+      throw new Error("이미지를 준비하는 동안 페이지가 변경되었습니다. 다시 시도해 주세요.");
+    }
+    if (!options.replaceId) return null;
+    const target = s.objects.find(obj => obj.id === options.replaceId);
+    if (!target || target !== initialTarget || targetStateFingerprint(target) !== targetSnapshot || target.type !== "image"
+      || target.aiTaskId !== options.aiTaskId || target.src !== targetSource
+      || target.aiCandidateId !== targetCandidateId
+      || s.selectedIds?.length !== 1 || s.selectedIds[0] !== target.id) {
+      throw new Error("교체 대상 이미지나 선택이 변경되었습니다. 다시 선택해 주세요.");
+    }
+    if (target.locked || target.positionLocked || target.imageSelectionLocked) {
+      throw new Error("잠긴 이미지는 교체할 수 없습니다.");
+    }
+    return target;
+  }
+  assertContext(initial);
+  // Latch temporary page/selection changes too (switch away and back is not
+  // permission to complete an earlier operation). Always release the listener.
+  const unsubscribe = state.subscribe?.((s) => {
+    try { assertContext(s); } catch (error) { invalidationError ??= error; }
+  });
+  try {
+    const natural = await loadImageSize(src);
+    assertContext(state.get());
+    if (options.replaceId) {
+      state.update((s) => {
+        const target = assertContext(s);
+        const undo = JSON.parse(JSON.stringify(s.objects));
+        s.undoStack.push(undo);
+        if (s.undoStack.length > MAX_UNDO) s.undoStack.splice(0, s.undoStack.length - MAX_UNDO);
+        s.redoStack = [];
+        // Geometry, layer, grouping, clipping and other image settings remain.
+        target.src = src;
+        target.aiCandidateId = options.aiCandidateId;
+        s.selectedIds = [target.id];
+        s.targetedId = null;
+        s.activeTool = "V";
+      });
+      return options.replaceId;
+    }
+    const scaled = options.preserveBytes ? { src, size: natural } : await downscaleIfNeeded(src, natural);
+    assertContext(state.get());
+    return insertImageObject(state, scaled.src, scaled.size, options);
+  } finally {
+    if (typeof unsubscribe === "function") unsubscribe();
+  }
 }
 
 export function initImagePaste(state, svg) {
-  async function insertFromSrc(src) {
-    try {
-      const natural = await loadImageSize(src);
-      const scaled = await downscaleIfNeeded(src, natural);
-      insertImageObject(state, scaled.src, scaled.size);
-    } catch (_) {
-      // Decode failure: silently abort.
-    }
-  }
-
-  document.addEventListener("paste", (e) => {
-    if (isEditingFieldTarget(e.target)) return;
-    if (hasInternalClipboard()) return;
-    const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
-    const imageItem = items.find((it) => ACCEPTED_TYPES.has(it.type));
-    if (!imageItem) return;
-    const file = imageItem.getAsFile();
+  document.addEventListener("paste", (event) => {
+    if (isEditingFieldTarget(event.target) || blocksCanvasShortcut(event)) return;
+    const items = Array.from(event.clipboardData?.items || []);
+    const file = items.find(item => ACCEPTED_TYPES.has(item.type))?.getAsFile();
     if (!file) return;
-    e.preventDefault();
+    event.preventDefault();
+    const initial = state.get();
+    const page = initial.pages?.find(record => record.id === initial.activePageId);
+    const pageId = initial.activePageId;
+    const at = getLastMouseWorld() || { x: initial.viewBox.x + initial.viewBox.w / 2, y: initial.viewBox.y + initial.viewBox.h / 2 };
+    let stale = false;
+    const changedPage = current => current.activePageId !== pageId ||
+      current.pages?.find(record => record.id === pageId) !== page;
+    const unsubscribe = state.subscribe(current => { if (changedPage(current)) stale = true; });
     const reader = new FileReader();
-    reader.onload = () => insertFromSrc(String(reader.result || ""));
-    reader.readAsDataURL(file);
+    const failed = message => {
+      unsubscribe();
+      void showAlert(message, { title: "이미지 붙여넣기" });
+    };
+    reader.onerror = () => failed("이미지를 읽지 못했습니다. 다시 복사하거나 이미지 파일을 불러와 주세요.");
+    reader.onload = async () => {
+      try {
+        if (stale || changedPage(state.get())) throw new Error("페이지가 바뀌어 붙여넣기를 취소했습니다. 원하는 페이지에서 다시 붙여넣어 주세요.");
+        await insertImageFromSrc(state, String(reader.result || ""), { at });
+      } catch (error) {
+        void showAlert(error?.message?.includes("페이지") ? error.message :
+          "이미지를 붙여넣지 못했습니다. 다시 복사하거나 이미지 파일을 불러와 주세요.", { title: "이미지 붙여넣기" });
+      } finally { unsubscribe(); }
+    };
+    try { reader.readAsDataURL(file); }
+    catch { failed("이미지를 읽지 못했습니다. 이미지 파일을 불러와 주세요."); }
   });
 }
