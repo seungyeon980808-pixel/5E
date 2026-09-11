@@ -9,7 +9,7 @@ function load(platform, selectors = {}) {
   const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
     TEMPLATES: {}, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null },
-    applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, makeLine: () => ({}), makePolyline: () => ({}) });
+    applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => null, makeLine: () => ({}), makePolyline: () => ({}) });
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
   vm.runInContext(read('tutorial-courses.js').replace(/import\s+[\s\S]*?from\s+"[^\"]+";/g, '').replaceAll('export const', 'const').replaceAll('export function', 'function'), ctx);
@@ -92,4 +92,11 @@ test('ready steps recognize settings opened before the animated transition', () 
   assert.equal(menu.wait.until(),true);assert.equal(prefs.wait.until(),true);
   selectors['#pref-zoom'].offsetParent=null;
   assert.equal(prefs.wait.until(),false);
+});
+
+test('task courses require concrete symbols, drag boxes, and leave the canvas usable', () => {
+  const h=load('Win32'), p1=h.course('task-pulley'), p2=h.course('task-spring'), p6=h.course('task-lens');
+  for (const c of [p1,p2,p6]) assert.equal(c.steps.at(-1).target(), '#canvas');
+  for (const d of [p1.steps[4].demo(), p2.steps[2].demo(), p6.steps[4].demo(), p6.steps[6].demo()]) assert.notDeepEqual(d.from,d.to);
+  assert.match(p1.steps.find(s=>s.title.includes('사각형 도구')).title,/사각형 도구/);
 });
