@@ -78,6 +78,7 @@ test("Given the Windows candidate path, when inspected, then NSIS is pinned to x
   const packageJson = JSON.parse(await readFile(path.resolve("package.json"), "utf8"));
   const packager = await readFile(path.resolve("tools/pdf-library/run-electron-builder.mjs"), "utf8");
   const workflow = await readFile(path.resolve(".github/workflows/windows-candidate.yml"), "utf8");
+  const releaseWorkflow = await readFile(path.resolve(".github/workflows/windows-release.yml"), "utf8");
 
   assert.equal(packageJson.scripts["package:win"], "node tools/pdf-library/run-electron-builder.mjs --win --publish never");
   assert.match(packager, /\["--win", "nsis", "--x64", "--publish", "never"\]/u);
@@ -87,6 +88,13 @@ test("Given the Windows candidate path, when inspected, then NSIS is pinned to x
   assert.equal(packageJson.build.files.includes("!node_modules/@napi-rs/canvas-darwin-*/**/*"), true);
   assert.equal("files" in packageJson.build.win, false);
   assert.match(workflow, /workflow_dispatch/);
+  assert.match(workflow, /pdf_pack_base_url:[\s\S]*required: true/u);
+  assert.match(workflow, /PDF_PACK_BASE_URL: \$\{\{ inputs\.pdf_pack_base_url \}\}/u);
+  assert.match(workflow, /fetch-release-pack\.mjs --base-url "\$env:PDF_PACK_BASE_URL"/u);
+  assert.match(workflow, /FIVE_E_PDF_PACK_SOURCE: \$\{\{ runner\.temp \}\}\/recent-three-pack/u);
+  assert.match(releaseWorkflow, /PDF_PACK_BASE_URL: \$\{\{ vars\.FIVE_E_PDF_PACK_BASE_URL \}\}/u);
+  assert.match(releaseWorkflow, /Repository variable FIVE_E_PDF_PACK_BASE_URL is required/u);
+  assert.match(releaseWorkflow, /FIVE_E_PDF_PACK_SOURCE: \$\{\{ runner\.temp \}\}\/recent-three-pack/u);
   assert.match(workflow, /Get-FileHash -Algorithm SHA256/);
   assert.match(workflow, /MZ/);
   assert.doesNotMatch(workflow, /release create|contents:\s*write/i);
