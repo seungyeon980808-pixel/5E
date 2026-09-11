@@ -139,6 +139,8 @@ function loadAutosave({ clock, indexedDB, document, alerts }) {
     window: { addEventListener: (type, listener) => document.addEventListener(type, listener) },
     setTimeout: clock.setTimeout,
     clearTimeout: clock.clearTimeout,
+    captureProjectStatus() {},
+    markProjectStatus() {},
     serialize: (state) => structuredClone(state.snapshot),
     migrate: (value) => value,
     applyLoaded() {},

@@ -14,6 +14,8 @@
 import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 
+import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.4.0";
+
 const DB_NAME = "5e-autosave";
 const DB_VERSION = 1;
 const STORE = "snapshots";
@@ -121,7 +123,10 @@ export async function initAutosave(state) {
         `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
         { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
       );
-      if (ok) applyLoaded(state, migrate(latest.data));
+      if (ok) {
+        applyLoaded(state, migrate(latest.data));
+        markProjectStatus(state, captureProjectStatus(state), "recovery");
+      }
     }
   } catch {
     void showAlert("이전 자동 저장 작업을 복구하지 못했습니다. 새 작업은 계속할 수 있습니다.", {
@@ -152,6 +157,7 @@ export async function initAutosave(state) {
   };
 
   const captureAndQueue = () => {
+    const statusToken = captureProjectStatus(state);
     const snap = serialize(state.get());
     if (!snapshotHasObjects(snap)) return;
     const json = JSON.stringify(snap);
@@ -162,6 +168,7 @@ export async function initAutosave(state) {
       try {
         await saveSnapshot(db, data);
         lastSavedJson = json;
+        markProjectStatus(state, statusToken, "recovery");
         if (lastQueuedJson === json) lastQueuedJson = "";
         failureNotified = false;
       } catch {

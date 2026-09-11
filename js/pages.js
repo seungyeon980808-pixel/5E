@@ -13,6 +13,7 @@
 
 import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { rebuildGroups } from "./transform.js?v=1.4.0";
+import { savePageRuntime, restorePageRuntime } from "./page-history.js?v=1.4.0";
 
 let _seq = 0;
 function newPageId() {
@@ -93,6 +94,7 @@ export function switchPage(state, targetId) {
     const t = findPage(s, targetId);
     if (!t) return;
     writeBackActive(s);
+    savePageRuntime(s, findPage(s, s.activePageId));
     s.objects = t.objects;
     s.guides = t.guides;
     s.layers = t.layers;
@@ -102,11 +104,7 @@ export function switchPage(state, targetId) {
     // 쓰는 것과 같은 헬퍼)를 안 부르면 이전 페이지 기준 그룹이 그대로 남아 새 페이지의
     // 그룹 객체를 클릭해도 낱개로만 선택된다 — 전환마다 새 페이지 objects 기준으로 재구축.
     rebuildGroups(s);
-    // v1: 전환은 undo 대상이 아니다 → 히스토리/선택/드래프트를 새 페이지 기준으로 초기화.
-    s.undoStack = [];
-    s.redoStack = [];
-    s.selectedIds = [];
-    s.selectedGuideId = null;
+    restorePageRuntime(s, t);
     s.targetedId = null;
     s.draft = null;
     s.draftText = null;
@@ -161,12 +159,12 @@ function duplicatePage(state) {
 }
 
 /* ----- 삭제(최소 1개 유지) ----- */
-async function deletePage(state, id) {
+export async function deletePage(state, id) {
   const s0 = state.get();
   if ((s0.pages || []).length <= 1) return;
   const p0 = findPage(s0, id);
   if (!p0) return;
-  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n되돌릴 수 없습니다.`, {
+  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n실행 취소로 복구할 수 있습니다.`, {
     title: "페이지 삭제", okText: "삭제", cancelText: "취소",
   });
   if (!ok) return;
@@ -185,6 +183,9 @@ async function deletePage(state, id) {
     switchPage(state, neighbor.id);
   }
   state.update((st) => {
+    st.undoStack.push({ kind: "page-presence", page: p, index: idx, present: true });
+    if (st.undoStack.length > 100) st.undoStack.shift();
+    st.redoStack = [];
     st.pages = st.pages.filter((pg) => pg.id !== id);
     if (!findPage(st, st.activePageId)) st.activePageId = st.pages[0] ? st.pages[0].id : null;
   });

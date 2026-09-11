@@ -13,7 +13,7 @@ import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } fro
 import { initTools } from "./tools.js?v=1.5.4";
 import { initCutTool } from "./cut-tool.js?v=1.5.3";
 import { initEraseTool } from "./erase-tool.js?v=1.4.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
+import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
 import { initProjectIO } from "./project-io.js?v=1.4.0";
@@ -70,6 +70,13 @@ import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
 import { initAiPanel } from "./ai-panel.js?v=1.5.7";
 
 const svg = document.getElementById("canvas");
+// Canvas interaction transfers keyboard ownership away from the last toolbar button.
+svg.setAttribute("tabindex", "-1");
+svg.addEventListener("pointerdown", (event) => {
+  if (event.button === 0 && !event.target.closest("input, textarea, [contenteditable]")) {
+    svg.focus({ preventScroll: true });
+  }
+});
 const zoomReadout = document.getElementById("zoom-readout");
 
 /* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */

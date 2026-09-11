@@ -6,7 +6,7 @@ const vm = require("node:vm");
 
 const root = path.resolve(__dirname, "..");
 
-function loadTransform() {
+function loadTransform(platformName = "Win32") {
   let source = fs.readFileSync(path.join(root, "js/transform.js"), "utf8");
   source = source.replace(/^import\s+[\s\S]*?;\r?\n/gm, "").replace(/\bexport\s+/g, "");
   source += "\nglobalThis.__testExports = { initTransform, undo, redo };";
@@ -23,6 +23,17 @@ function loadTransform() {
     ENDPOINT_HANDLE_TYPES: new Set(), TEXT_MEASURED_TYPES: new Set(), snapKey() {}, modKey() {},
   };
   sandbox.globalThis = sandbox;
+  const pageHistory = fs.readFileSync(path.join(root, "js/page-history.js"), "utf8").replace(/\bexport\s+/g, "");
+  vm.runInNewContext(pageHistory, sandbox);
+  sandbox.navigator = { platform: platformName };
+  sandbox.document.addEventListener = () => {};
+  sandbox.OBJECT_TYPE_IDS = ["rect", "image"];
+  sandbox.showAlert = () => {};
+  const platform = fs.readFileSync(path.join(root, "js/platform.js"), "utf8").replace(/export\s*\{[^}]+\};?/g, "");
+  vm.runInNewContext(platform, sandbox);
+  const clipboard = fs.readFileSync(path.join(root, "js/editor-clipboard.js"), "utf8")
+    .replace(/^import\s+[\s\S]*?;\r?\n/gm, "").replace(/\bexport\s+/g, "");
+  vm.runInNewContext(clipboard, sandbox);
   vm.runInNewContext(source, sandbox, { filename: "js/transform.js" });
   return { listeners, initTransform: sandbox.__testExports.initTransform, undo: sandbox.__testExports.undo, redo: sandbox.__testExports.redo, sandbox, svg: { addEventListener() {} } };
 }
@@ -242,4 +253,24 @@ test("initRuler guide deletion notifies synchronous store subscribers with commi
   runtime.windowListeners.get("keydown")[0]({ key: "Backspace", target: { tagName: "BODY" }, preventDefault() {}, stopImmediatePropagation() {} });
 
   assert.deepEqual(observed, [{ guides: [], undoLength: 1, redoLength: 0 }]);
+});
+
+
+test("Mac Command and Windows Control undo/redo respect IME, focus and platform", () => {
+  for (const platform of ["Win32", "MacIntel"]) {
+    const runtime = loadTransform(platform), state = stateWithObjects();
+    state.value.undoStack = [[]];
+    runtime.initTransform(runtime.svg, state);
+    const primary = platform === "MacIntel" ? { metaKey: true } : { ctrlKey: true };
+    const fire = (code, options = {}) => {
+      const event = { key: "ㅈ", code, ...primary, target: null, preventDefault() { this.defaultPrevented = true; }, ...options };
+      runtime.listeners.forEach(fn => fn(event));
+    };
+    fire("KeyZ", { isComposing: true }); assert.equal(state.value.objects.length, 2);
+    fire("KeyZ", { target: { tagName: "SELECT" } }); assert.equal(state.value.objects.length, 2);
+    fire("KeyZ"); assert.equal(state.value.objects.length, 0);
+    if (platform === "Win32") fire("KeyY");
+    else fire("KeyZ", { shiftKey: true });
+    assert.equal(state.value.objects.length, 2);
+  }
 });

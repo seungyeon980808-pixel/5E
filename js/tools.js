@@ -67,7 +67,7 @@ export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor,
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
 import { guideCursorAt } from "./ruler.js?v=1.4.0";
 
-import { snapKey } from "./platform.js?v=1.4.0";
+import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
@@ -351,25 +351,15 @@ function hasFlippableTriangleSelected() {
 /* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / Ctrl+E(지연 자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyE" || e.key.toLowerCase() === "e")) {
+    if (blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
+    if (modKey(e) && !e.altKey && !e.shiftKey && key === "e") {
       e.preventDefault();
       setActiveTool("DELAYED_CUT");
       return;
     }
-    if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
-    if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
-    // 모달(함수 입력·좌표평면 상세 등)이 열린 동안, 포커스가 그 안의 BUTTON에 있을 때도
-    // v/s/t/f 등 도구 단축키가 뒤편 캔버스 도구를 바꾸지 않게 차단(transform.js의 Delete/
-    // Ctrl+Z 가드와 동일 패턴). 특히 F는 그래프 모달을 모달 위에 겹쳐 열어버렸다.
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
-    // IME가 한글 조합 상태면 e.key가 'Process'/자모 문자로 들어와 아래 문자 비교가
-    // 전부 실패한다(한글 라벨 입력 직후 캔버스로 돌아와 단축키를 누르는 경우가 잦음).
-    // e.code는 물리 키를 그대로 보고하므로(IME 상태 무관) 우선 사용하고, 매핑에
-    // 없는 키(Tab 등)만 기존 e.key 판정으로 폴백한다.
-    const CODE_KEY_MAP = { KeyV: "v", KeyS: "s", KeyR: "r", KeyO: "o", KeyY: "y", KeyL: "l", KeyP: "p", KeyD: "d", KeyN: "n", KeyA: "a", KeyC: "c", KeyE: "e", KeyT: "t", KeyF: "f" };
-    const key = CODE_KEY_MAP[e.code] || e.key.toLowerCase();
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.shiftKey && (key === "c" || key === "v")) return;
     if (key === "v") setActiveTool("V");
     else if (key === "s") setActiveTool("RECT");       // 사각형 — shortcut is S, not R (see SHAPE_TYPE note)
     else if (key === "r") setActiveTool("rotate");

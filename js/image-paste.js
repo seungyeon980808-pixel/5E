@@ -1,6 +1,8 @@
+import { blocksCanvasShortcut } from "./platform.js?v=1.4.0";
+import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { hasInternalClipboard, getLastMouseWorld } from "./transform.js?v=1.4.0";
+import { getLastMouseWorld } from "./transform.js?v=1.4.0";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
@@ -195,27 +197,36 @@ export async function insertImageFromSrc(state, src, opts = {}) {
 }
 
 export function initImagePaste(state, svg) {
-  async function insertFromSrc(src) {
-    try {
-      const natural = await loadImageSize(src);
-      const scaled = await downscaleIfNeeded(src, natural);
-      insertImageObject(state, scaled.src, scaled.size);
-    } catch (_) {
-      // Decode failure: silently abort.
-    }
-  }
-
-  document.addEventListener("paste", (e) => {
-    if (isEditingFieldTarget(e.target)) return;
-    if (hasInternalClipboard()) return;
-    const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
-    const imageItem = items.find((it) => ACCEPTED_TYPES.has(it.type));
-    if (!imageItem) return;
-    const file = imageItem.getAsFile();
+  document.addEventListener("paste", (event) => {
+    if (isEditingFieldTarget(event.target) || blocksCanvasShortcut(event)) return;
+    const items = Array.from(event.clipboardData?.items || []);
+    const file = items.find(item => ACCEPTED_TYPES.has(item.type))?.getAsFile();
     if (!file) return;
-    e.preventDefault();
+    event.preventDefault();
+    const initial = state.get();
+    const page = initial.pages?.find(record => record.id === initial.activePageId);
+    const pageId = initial.activePageId;
+    const at = getLastMouseWorld() || { x: initial.viewBox.x + initial.viewBox.w / 2, y: initial.viewBox.y + initial.viewBox.h / 2 };
+    let stale = false;
+    const changedPage = current => current.activePageId !== pageId ||
+      current.pages?.find(record => record.id === pageId) !== page;
+    const unsubscribe = state.subscribe(current => { if (changedPage(current)) stale = true; });
     const reader = new FileReader();
-    reader.onload = () => insertFromSrc(String(reader.result || ""));
-    reader.readAsDataURL(file);
+    const failed = message => {
+      unsubscribe();
+      void showAlert(message, { title: "이미지 붙여넣기" });
+    };
+    reader.onerror = () => failed("이미지를 읽지 못했습니다. 다시 복사하거나 이미지 파일을 불러와 주세요.");
+    reader.onload = async () => {
+      try {
+        if (stale || changedPage(state.get())) throw new Error("페이지가 바뀌어 붙여넣기를 취소했습니다. 원하는 페이지에서 다시 붙여넣어 주세요.");
+        await insertImageFromSrc(state, String(reader.result || ""), { at });
+      } catch (error) {
+        void showAlert(error?.message?.includes("페이지") ? error.message :
+          "이미지를 붙여넣지 못했습니다. 다시 복사하거나 이미지 파일을 불러와 주세요.", { title: "이미지 붙여넣기" });
+      } finally { unsubscribe(); }
+    };
+    try { reader.readAsDataURL(file); }
+    catch { failed("이미지를 읽지 못했습니다. 이미지 파일을 불러와 주세요."); }
   });
 }
