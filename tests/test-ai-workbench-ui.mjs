@@ -54,6 +54,11 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.match(index, /data-ai-background-policy="checkerboard"/);
   assert.match(index, /data-ai-exam-palette="false"/);
   assert.match(index, /data-ai-exam-palette="true"/);
+  assert.match(index, /data-ai-line-thickness="0"/);
+  assert.match(index, /data-ai-line-thickness="1"/);
+  assert.match(index, /data-ai-line-thickness="2"/);
+  assert.ok(index.indexOf('data-ai-output-processing') < index.indexOf('class="ai-side-content"'),
+    'output processing remains visible before the preparation and result stages');
 });
 
 test("workbench inherits the existing theme and retains zoom and responsive layouts", () => {
@@ -67,6 +72,7 @@ test("workbench inherits the existing theme and retains zoom and responsive layo
   assert.match(css, /transform: scale\(var\(--ai-workbench-zoom, 1\)\)/);
   assert.match(css, /@media \(max-width: 1000px\)/);
   assert.match(css, /#ai-image-panel \.ai-compare-heading > \.ai-annotation-toolbar \{ flex-direction:row/);
+  assert.match(css, /\.ai-task-tab-title\s*\{[\s\S]*text-overflow:\s*ellipsis;[\s\S]*white-space:\s*nowrap;/);
 });
 
 test("review rendering is event-driven, candidate-specific, and text-safe", () => {

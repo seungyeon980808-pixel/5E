@@ -1,4 +1,5 @@
-import { createTaskPersistence, createTaskWorkspaces } from './ai-task-workspaces.js';
+import { createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
+import { taskExportSelection } from './ai-task-export.js';
 import { distributeSourcesToTaskTabs } from './ai-source-tasking.js?v=1';
 import { setupAiWorkbench } from './ai-workbench.js';
 import { mountDurableBatchUi } from './ai-batch-ui.js';
@@ -329,7 +330,7 @@ export function initAiPanel(state) {
   return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench);
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection }) {
   if (!panel) return;
 
   const modal = panel.querySelector(".modal-ai");
@@ -356,6 +357,34 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const sendButton = panel.querySelector("[data-ai-send]");
   const chatButton = panel.querySelector("[data-ai-chat-send]");
   const newButton = panel.querySelector("[data-ai-new]");
+  const retryInterruptedButton = document.createElement('button');
+  retryInterruptedButton.type = 'button';
+  retryInterruptedButton.dataset.aiRetryInterrupted = '';
+  retryInterruptedButton.textContent = '중단 작업 다시 시도';
+  retryInterruptedButton.hidden = true;
+  newButton?.after(retryInterruptedButton);
+  const collectiveExportMode = document.createElement('select');
+  collectiveExportMode.dataset.aiTaskExportMode = '';
+  collectiveExportMode.setAttribute('aria-label', '여러 작업 저장 범위');
+  for (const [value, label] of [['selected', '작업별 선택 결과'], ['all', '모든 결과 버전']]) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    collectiveExportMode.append(option);
+  }
+  collectiveExportMode.value = 'selected';
+  const collectiveExportButton = document.createElement('button');
+  collectiveExportButton.type = 'button';
+  collectiveExportButton.dataset.aiTaskExport = '';
+  collectiveExportButton.textContent = '한 폴더에 저장';
+  collectiveExportButton.title = '여러 작업의 결과를 충돌 없는 이름으로 한 폴더에 저장';
+  const collectiveExportControls = document.createElement('div');
+  collectiveExportControls.className = 'ai-task-export-controls';
+  collectiveExportControls.style.cssText = 'display:grid;gap:5px;padding:7px 6px;border-top:1px solid var(--border);';
+  collectiveExportMode.style.cssText = 'width:100%;min-width:0;';
+  collectiveExportButton.style.cssText = 'width:100%;min-width:0;';
+  collectiveExportControls.append(collectiveExportMode, collectiveExportButton);
+  (panel.querySelector('[data-ai-tabs]') || panel.querySelector('[data-ai-tab-list]'))?.after(collectiveExportControls);
   const compareButton = panel.querySelector("[data-ai-compare]");
   const captureButton = panel.querySelector("[data-ai-capture]");
   const referenceSearchButton = panel.querySelector("[data-ai-reference-search]");
@@ -382,6 +411,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const outputProcessingStatus = panel.querySelector('[data-ai-output-processing-status]');
   const backgroundPolicyButtons = Array.from(panel.querySelectorAll('[data-ai-background-policy]'));
   const examPaletteButtons = Array.from(panel.querySelectorAll('[data-ai-exam-palette]'));
+  const lineThicknessButtons = Array.from(panel.querySelectorAll('[data-ai-line-thickness]'));
   const batchButton = panel.querySelector("[data-ai-batch]");
   const batchPanel = panel.querySelector("[data-ai-batch-panel]");
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
@@ -422,6 +452,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let currentTerminalOutcome = null;
   let currentImageOutputError = null;
   let currentRequestSnapshot = null;
+  let providerRequestPersistable = false;
   let scopedSelectionRevision = 0;
   let scopedTransport = null;
   let currentRunInput = null;
@@ -440,9 +471,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let selectedImageOutputOptions = normalizeImageOutputOptions({
     backgroundPolicy: localStorage.getItem('5e.aiOutputBackgroundPolicy') || undefined,
     examPalette: localStorage.getItem('5e.aiOutputExamPalette') === 'true',
+    lineThickness: Number(localStorage.getItem('5e.aiOutputLineThickness')),
   });
   const outputVariantCache = new WeakMap();
   let outputProcessingRevision = 0;
+  let exportInProgress = false;
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -576,7 +609,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       'all-near-white': '물체 안쪽을 포함한 모든 흰색을 투명하게 처리',
       checkerboard: '이미지에 그려진 체크무늬를 투명하게 처리',
     }[selectedImageOutputOptions.backgroundPolicy];
-    return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'}`;
+    const thickness = selectedImageOutputOptions.lineThickness
+      ? `선 굵기 +${selectedImageOutputOptions.lineThickness}px` : '원본 굵기';
+    return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'} · ${thickness}`;
   };
   const syncOutputProcessingUi = () => {
     if (outputProcessing) outputProcessing.hidden = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
@@ -588,6 +623,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
     for (const button of examPaletteButtons) {
       const active = button.dataset.aiExamPalette === String(selectedImageOutputOptions.examPalette);
+      button.classList.toggle('is-on', active);
+      button.setAttribute('aria-pressed', String(active));
+      button.disabled = busy;
+    }
+    for (const button of lineThicknessButtons) {
+      const active = Number(button.dataset.aiLineThickness) === selectedImageOutputOptions.lineThickness;
       button.classList.toggle('is-on', active);
       button.setAttribute('aria-pressed', String(active));
       button.disabled = busy;
@@ -709,6 +750,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (batchButton) batchButton.disabled = on || attachments.length < 2 || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && reviewModeCheckbox?.checked !== false);
     if (tabNewButton) tabNewButton.disabled = false;
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
+    retryInterruptedButton.disabled = on || !taskTabs.get(activeTaskTabId)?.retryRequest?.snapshot;
+    collectiveExportMode.disabled = on || exportInProgress;
+    collectiveExportButton.disabled = on || exportInProgress
+      || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
     panel.querySelectorAll('select[data-ai-reference-role]').forEach(control => { control.disabled = on || generatedImages.length > 0 || conversationMessages.length > 0; });
     const cancelButton = panel.querySelector("[data-ai-interrupt]");
     cancelButton.disabled = !on;
@@ -1614,6 +1659,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.outputEngine = selectedOutputEngine;
     tab.generationMode = selectedAssetGenerationMode;
     tab.markPolicy = readMarkPolicy();
+    tab.outputOptions = normalizeImageOutputOptions(selectedImageOutputOptions);
+    if (busy && providerRequestPersistable && currentRequestSnapshot) {
+      tab.inFlightRequest = {
+        type: currentTurnType,
+        snapshot: structuredClone(currentRequestSnapshot),
+      };
+    }
   };
   const taskPersistence = createTaskPersistence({
     store: taskStore,
@@ -1627,6 +1679,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const tab = taskTabs.get(activeTaskTabId);
     if (!tab || tab.workState === workState) return;
     tab.workState = workState;
+    if (workState !== 'busy') {
+      tab.inFlightRequest = null;
+      providerRequestPersistable = false;
+    }
+    if (!['busy', 'interrupted'].includes(workState)) tab.retryRequest = null;
     renderTaskTabs();
     persistTasks();
   }
@@ -1640,10 +1697,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.className = "ai-task-tab";
       button.dataset.tabId = tab.id;
       button.dataset.workState = tab.workState || "idle";
-      const stateLabel = { busy: "작업 중", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
+      const stateLabel = { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
       button.setAttribute("aria-label", `${tab.title} · ${stateLabel}`);
       button.title = `${tab.title} · ${stateLabel}`;
-      if (["completed", "busy", "failed"].includes(tab.workState)) {
+      if (["completed", "busy", "interrupted", "failed"].includes(tab.workState)) {
         const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         check.setAttribute("viewBox", "0 0 24 24");
         check.setAttribute("width", "14");
@@ -1654,6 +1711,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         const iconPath = {
           completed: "m20 6-11 11-5-5",
           busy: "M12 8v4l3 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
+          interrupted: "M12 7v6 M12 17h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
           failed: "M12 8v4 M12 16h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
         };
         path.setAttribute("d", iconPath[tab.workState]);
@@ -1718,6 +1776,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       tabList.appendChild(button);
     }
     navigationChanged([...tabList.children]);
+    collectiveExportButton.disabled = busy || exportInProgress
+      || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
   };
 
   const resetVisualLists = () => {
@@ -1746,6 +1806,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedMode = tab.mode || KICE_IMAGE_MODE;
     selectedQualityMode = normalizeQualityMode(tab.qualityMode);
     selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
+    selectedImageOutputOptions = normalizeImageOutputOptions(tab.outputOptions || selectedImageOutputOptions);
     selectedAssetGenerationMode = tab.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
       ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     generationModeSelect.value = selectedAssetGenerationMode;
@@ -1789,6 +1850,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncOutputEngine();
     syncReferenceSummary();
     renderTaskTabs();
+    retryInterruptedButton.hidden = tab.workState !== 'interrupted';
+    retryInterruptedButton.disabled = busy || !tab.retryRequest?.snapshot;
     selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
     panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
     const selectedCandidate = generatedImages.find((item) => item.id === selectedCandidateId) || generatedImages.at(-1) || null;
@@ -1809,12 +1872,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     commentController?.reset();
     if (!busy) {
       const legacyMixed = attachments.length > 1;
-      setStatus(legacyMixed
+      setStatus(tab.workState === 'interrupted'
+        ? (tab.retryRequest?.snapshot
+          ? '이전 실행이 중단되었습니다. 자동 재전송하지 않았습니다. 다시 시도할 수 있습니다.'
+          : '이전 실행이 중단되었습니다. 공급자 상태를 알 수 없어 자동 재전송하지 않았습니다.')
+        : legacyMixed
         ? "이전 다중 원본 작업 · 결과 연결을 확인해 주세요."
         : selectedCandidate
           ? (isAcceptedReviewState(selectedCandidate.reviewState) ? selectedReviewStatusText(selectedCandidate.reviewState) : "선택 결과 · 확인 필요")
           : (attachments.length ? "준비됨" : "이미지를 추가해 주세요."),
-      legacyMixed || (selectedCandidate && !isAcceptedReviewState(selectedCandidate.reviewState)) ? "warn" : "ok");
+      tab.workState === 'interrupted' || legacyMixed || (selectedCandidate && !isAcceptedReviewState(selectedCandidate.reviewState)) ? "warn" : "ok");
     }
   }
 
@@ -1827,7 +1894,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       title: `작업 ${taskTabSerial}`,
       attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
       conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
-      generationMode: selectedAssetGenerationMode,
+      generationMode: selectedAssetGenerationMode, outputOptions: normalizeImageOutputOptions(selectedImageOutputOptions),
     });
     if (activate) restoreTaskTab(id);
     else renderTaskTabs();
@@ -2600,6 +2667,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }
     await refreshPromise;
+    const restoredTab = taskTabs.get(activeTaskTabId);
+    if (restoredTab?.workState === 'interrupted') {
+      setStatus(restoredTab.retryRequest?.snapshot
+        ? '이전 실행이 중단되었습니다. 자동 재전송하지 않았습니다. 다시 시도할 수 있습니다.'
+        : '이전 실행이 중단되었습니다. 공급자 상태를 알 수 없어 자동 재전송하지 않았습니다.', 'warn');
+    }
     if (!incoming.length && prompt) input.value = prompt;
     if (startGeneration === true && incoming.length === 1) await submit("image");
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
@@ -2744,7 +2817,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const renderRequest = discussionContext
       ? `지금까지 확정된 대화 내용:\n${discussionContext}\n\n이번 생성 요청:\n${annotatedRequest}`
       : annotatedRequest;
-    currentRequestSnapshot = { request: annotatedRequest, discussionContext, annotatedRequest, renderRequest, runInput };
+    currentRequestSnapshot = { entered, request: annotatedRequest, discussionContext, annotatedRequest, renderRequest, runInput };
+    providerRequestPersistable = true;
+    persistTasks();
     try {
       const clientPrepareStartedAt = performance.now();
       let outgoingItems = [];
@@ -3098,6 +3173,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     localStorage.setItem('5e.aiOutputBackgroundPolicy', selectedImageOutputOptions.backgroundPolicy);
     syncOutputProcessingUi();
     refreshOutputPreviews();
+    captureActiveTaskTab(); persistTasks();
     setStatus('결과의 배경 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
   }));
   examPaletteButtons.forEach((button) => button.addEventListener('click', () => {
@@ -3109,7 +3185,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     localStorage.setItem('5e.aiOutputExamPalette', String(selectedImageOutputOptions.examPalette));
     syncOutputProcessingUi();
     refreshOutputPreviews();
+    captureActiveTaskTab(); persistTasks();
     setStatus('결과의 색상 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
+  }));
+  lineThicknessButtons.forEach((button) => button.addEventListener('click', () => {
+    if (busy) return;
+    selectedImageOutputOptions = normalizeImageOutputOptions({
+      ...selectedImageOutputOptions,
+      lineThickness: Number(button.dataset.aiLineThickness),
+    });
+    localStorage.setItem('5e.aiOutputLineThickness', String(selectedImageOutputOptions.lineThickness));
+    syncOutputProcessingUi();
+    refreshOutputPreviews();
+    captureActiveTaskTab(); persistTasks();
+    setStatus('결과의 선 굵기 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
   }));
   generationModeSelect.addEventListener('change', () => {
     if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }
@@ -3119,6 +3208,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     captureActiveTaskTab(); persistTasks();
     setStatus(selectedAssetGenerationMode === AI_ASSET_GENERATION_MODES.SEPARATED
       ? '다음 첫 변환을 최대 16개 물체 분리용 이미지로 생성합니다.' : '다음 변환을 한 장의 이미지로 생성합니다.', 'ok');
+  });
+  retryInterruptedButton.addEventListener('click', () => {
+    const tab = taskTabs.get(activeTaskTabId);
+    const retry = tab?.retryRequest;
+    if (busy || tab?.workState !== 'interrupted' || !retry?.snapshot) return;
+    retryInterruptedButton.disabled = true;
+    const saved = retry.snapshot;
+    void Promise.resolve(submit(retry.type || 'image', {
+      requestOverride: saved.entered || saved.request || '',
+      discussionContextOverride: saved.discussionContext || '',
+      runInputSnapshot: saved.runInput,
+      bypassCache: true,
+    })).finally(() => {
+      retryInterruptedButton.disabled = busy || !taskTabs.get(activeTaskTabId)?.retryRequest?.snapshot;
+    });
   });
   compareButton.onclick = openComparison;
   referenceSearchButton.onclick = () => { void referenceSearch.open(); };
@@ -3678,6 +3782,42 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('[data-ai-save-candidate]')?.click();
   });
+  const exportCount = mode => {
+    captureActiveTaskTab();
+    return taskExportSelection([...taskTabs.values()], mode).length;
+  };
+  const exportResults = async mode => {
+    captureActiveTaskTab();
+    const selected = taskExportSelection([...taskTabs.values()], mode);
+    return Promise.all(selected.map(async record => ({
+      ...record,
+      dataUrl: await resolveImageOutput(
+        record.item,
+        normalizeImageOutputOptions(record.outputOptions),
+        transparentizeGeneratedImage,
+      ),
+    })));
+  };
+  collectiveExportButton.addEventListener('click', async () => {
+    if (busy || exportInProgress || typeof exportCollection !== 'function') return;
+    exportInProgress = true;
+    collectiveExportButton.disabled = true;
+    collectiveExportMode.disabled = true;
+    setStatus('여러 작업의 결과를 준비하고 있습니다…', 'busy');
+    try {
+      const result = await exportCollection(collectiveExportMode.value);
+      if (result.status === 'stored') setStatus(`결과 ${result.count}개를 선택한 폴더에 저장했습니다.`, 'ok');
+      else if (result.status === 'download-requested') setStatus(`결과 ${result.count}개의 ZIP 다운로드를 요청했습니다. 브라우저의 다운로드 완료를 확인해 주세요.`, 'warn');
+      else setStatus('결과 저장을 취소했습니다. 편집 내용은 유지됩니다.', 'warn');
+    } catch (error) {
+      setStatus(`여러 작업 저장 실패: ${error.message}`, 'error');
+    } finally {
+      exportInProgress = false;
+      collectiveExportMode.disabled = busy;
+      collectiveExportButton.disabled = busy
+        || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
+    }
+  });
   panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('.ai-canvas-output')?.click();
   });
@@ -3686,7 +3826,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')void taskPersistence.flush();});
   window.addEventListener('pagehide',()=>{void taskPersistence.flush();});
   if (!taskTabs.size) createTaskTab();
-  workspaceReady=(async()=>{try{const saved=await taskStore?.get('workspace');if(Array.isArray(saved?.tabs)){taskTabs.clear();for(const tab of saved.tabs){if(tab.workState === "busy")tab.workState = "idle";taskTabs.set(tab.id,tab);}taskTabSerial=Math.max(taskTabSerial,Number(saved.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(saved.imageSerial)||0);if(taskTabs.size)restoreTaskTab(taskTabs.has(saved.activeTaskTabId)?saved.activeTaskTabId:taskTabs.keys().next().value);else{activeTaskTabId=null;renderTaskTabs();}}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
+  workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(Array.isArray(recovered?.tabs)){taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
     reviewModelSelect.replaceChildren(new Option(AI_IMAGE_REVIEW_MODEL, AI_IMAGE_REVIEW_MODEL));
     reviewModelSelect.value = AI_IMAGE_REVIEW_MODEL;
@@ -3708,6 +3848,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   return {
     open, close, attachReference, ready: workspaceReady,
     ownsTask: id => taskTabs.has(id), activeTask: () => activeTaskTabId,
+    exportCount, exportResults,
     selectTask: id => { if (busy || !taskTabs.has(id) || id === activeTaskTabId) return; captureActiveTaskTab(); restoreTaskTab(id); persistTasks(); },
   };
 }

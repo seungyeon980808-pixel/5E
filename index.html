@@ -484,6 +484,33 @@
             <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">코멘트 <span data-ai-comments-count>0</span></button>
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
           </nav>
+          <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
+            <div class="ai-output-processing-row">
+              <span>배경</span>
+              <div class="ai-output-segments ai-output-background-segments" role="group" aria-label="생성 결과 배경 처리">
+                <button type="button" class="is-on" data-ai-background-policy="preserve" aria-pressed="true">원본 유지</button>
+                <button type="button" data-ai-background-policy="connected" aria-pressed="false">외부만 제거</button>
+                <button type="button" data-ai-background-policy="all-near-white" aria-pressed="false">모든 흰색 제거</button>
+                <button type="button" data-ai-background-policy="checkerboard" aria-pressed="false">체크무늬 제거</button>
+              </div>
+            </div>
+            <div class="ai-output-processing-row">
+              <span>색상</span>
+              <div class="ai-output-segments" role="group" aria-label="생성 결과 색상 처리">
+                <button type="button" class="is-on" data-ai-exam-palette="false" aria-pressed="true">원본 색상</button>
+                <button type="button" data-ai-exam-palette="true" aria-pressed="false">무채색 단순화</button>
+              </div>
+            </div>
+            <div class="ai-output-processing-row">
+              <span>선 굵기</span>
+              <div class="ai-output-segments ai-output-thickness-segments" role="group" aria-label="생성 결과 선 굵기">
+                <button type="button" class="is-on" data-ai-line-thickness="0" aria-pressed="true">원본</button>
+                <button type="button" data-ai-line-thickness="1" aria-pressed="false">+1px</button>
+                <button type="button" data-ai-line-thickness="2" aria-pressed="false">+2px</button>
+              </div>
+            </div>
+            <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
+          </section>
           <div class="ai-side-content">
             <section class="ai-comments-panel" data-ai-comments-panel aria-label="위치별 코멘트">
               <section class="ai-preparation" aria-label="이미지 요청과 기본 설정">
@@ -504,25 +531,6 @@
                       <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
                     </div>
                     <p data-ai-white-png-note>기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존</p>
-                    <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
-                      <div class="ai-output-processing-row">
-                        <span>배경</span>
-                        <div class="ai-output-segments ai-output-background-segments" role="group" aria-label="생성 결과 배경 처리">
-                          <button type="button" class="is-on" data-ai-background-policy="preserve" aria-pressed="true">원본 유지</button>
-                          <button type="button" data-ai-background-policy="connected" aria-pressed="false">외부만 제거</button>
-                          <button type="button" data-ai-background-policy="all-near-white" aria-pressed="false">모든 흰색 제거</button>
-                          <button type="button" data-ai-background-policy="checkerboard" aria-pressed="false">체크무늬 제거</button>
-                        </div>
-                      </div>
-                      <div class="ai-output-processing-row">
-                        <span>색상</span>
-                        <div class="ai-output-segments" role="group" aria-label="생성 결과 색상 처리">
-                          <button type="button" class="is-on" data-ai-exam-palette="false" aria-pressed="true">원본 색상</button>
-                          <button type="button" data-ai-exam-palette="true" aria-pressed="false">무채색 단순화</button>
-                        </div>
-                      </div>
-                      <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
-                    </section>
                     <section class="ai-mark-policy" data-ai-mark-policy aria-label="표시선 처리">
                       <p class="ai-mark-policy-note">물체 윤곽·관·도선·실제 눈금선은 보존. 숫자·단위는 제거.</p>
                       <div class="ai-mark-policy-fields">

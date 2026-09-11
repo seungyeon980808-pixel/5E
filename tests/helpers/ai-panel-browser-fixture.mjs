@@ -55,6 +55,10 @@ function createPanel(document) {
     const button = appendControl(document, outputProcessing, 'button', 'data-ai-exam-palette');
     button.dataset.aiExamPalette = value;
   }
+  for (const value of ['0', '1', '2']) {
+    const button = appendControl(document, outputProcessing, 'button', 'data-ai-line-thickness');
+    button.dataset.aiLineThickness = value;
+  }
   appendControl(document, outputProcessing, 'p', 'data-ai-output-processing-status');
   appendControl(document, panel, 'div', 'data-ai-tab-list');
   appendControl(document, panel, 'button', 'data-ai-interrupt');

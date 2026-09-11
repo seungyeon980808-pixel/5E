@@ -43,7 +43,7 @@ function bytesToB64(bytes) {
 
 /* ---------- STORE ZIP writer ---------- */
 // entries: [{ name:string, data:Uint8Array }] → Blob (application/zip)
-function zipStore(entries) {
+export function zipStore(entries) {
   const enc = new TextEncoder();
   const locals = [];
   const centrals = [];

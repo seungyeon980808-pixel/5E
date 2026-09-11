@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createTaskPersistence } from '../js/ai-task-workspaces.js';
+import { createTaskPersistence, recoverTaskWorkspaceSnapshot } from '../js/ai-task-workspaces.js';
 
 class FakeClock {
   constructor() { this.nextId = 1; this.timers = new Map(); }
@@ -132,3 +132,32 @@ test('an uncloneable pending snapshot warns without escaping the lifecycle callb
   await persistence.settled();
   assert.deepEqual(warnings, ['DataCloneError'], 'a cloneable later state should recover normally');
 });
+
+test('restart marks an unknown in-flight provider request interrupted without losing source, results, selection, or output settings', () => {
+  const value = {
+    key: 'workspace', activeTaskTabId: 'task-a', taskTabSerial: 1, imageSerial: 2,
+    tabs: [{
+      id: 'task-a', workState: 'busy', input: 'latest request',
+      attachments: [{id:'source',data:pngFixture('source')}],
+      generated: [{id:'v1',data:pngFixture('one')},{id:'v2',data:pngFixture('two')}],
+      selectedCandidateId: 'v1',
+      outputOptions: {backgroundPolicy:'connected',examPalette:true,lineThickness:2},
+      inFlightRequest: {type:'image',snapshot:{entered:'retry me',runInput:{mode:'diagram'}}},
+    }],
+  };
+
+  const recovered = recoverTaskWorkspaceSnapshot(value);
+  const tab = recovered.tabs[0];
+  assert.equal(tab.workState, 'interrupted');
+  assert.equal(tab.inFlightRequest, null);
+  assert.deepEqual(tab.retryRequest, value.tabs[0].inFlightRequest);
+  assert.equal(tab.attachments[0].id, 'source');
+  assert.deepEqual(tab.generated.map(item => item.id), ['v1', 'v2']);
+  assert.equal(tab.selectedCandidateId, 'v1');
+  assert.deepEqual(tab.outputOptions, value.tabs[0].outputOptions);
+  assert.equal(value.tabs[0].workState, 'busy', 'recovery must not mutate the stored input object');
+});
+
+function pngFixture(value) {
+  return `data:image/png;base64,${Buffer.from(value).toString('base64')}`;
+}

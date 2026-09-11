@@ -54,3 +54,22 @@ test('real panel buttons update preview while retaining the generated PNG source
     browser.restore();
   }
 });
+
+test('line thickness is selectable before an image or generated result exists', async () => {
+  const browser = installAiPanelBrowserFixture();
+  const state = {objects:[],selectedIds:[],activePageId:'page-1',activeLayerId:'layer-1',artboard:{width:100,height:100}};
+  let manager;
+  try {
+    manager = initAiPanel({get:()=>state});
+    await manager.ready;
+    await manager.open();
+    const thicker = browser.panel.querySelector('[data-ai-line-thickness="1"]');
+    assert.equal(thicker.disabled, false);
+    thicker.click();
+    assert.equal(browser.storage.getItem('5e.aiOutputLineThickness'), '1');
+    assert.equal(thicker.getAttribute('aria-pressed'), 'true');
+  } finally {
+    manager?.close();
+    browser.restore();
+  }
+});

@@ -1,3 +1,33 @@
+import {
+  chooseTaskExportDestination,
+  normalizeTaskExportMode,
+  writeTaskExports,
+} from './ai-task-export.js';
+
+export function recoverTaskWorkspaceSnapshot(value) {
+  if (!value || !Array.isArray(value.tabs)) return null;
+  const recovered = structuredClone(value);
+  recovered.tabs = recovered.tabs.filter(tab => tab && typeof tab.id === 'string').map(tab => {
+    const generated = Array.isArray(tab.generated) ? tab.generated : [];
+    const selected = generated.some(item => item?.id === tab.selectedCandidateId)
+      ? tab.selectedCandidateId : generated.at(-1)?.id || null;
+    const wasRunning = tab.workState === 'busy';
+    return {
+      ...tab,
+      attachments: Array.isArray(tab.attachments) ? tab.attachments : [],
+      generated,
+      selectedCandidateId: selected,
+      workState: wasRunning ? 'interrupted' : (tab.workState || 'idle'),
+      retryRequest: wasRunning ? (tab.inFlightRequest || tab.retryRequest || null) : (tab.retryRequest || null),
+      inFlightRequest: wasRunning ? null : (tab.inFlightRequest || null),
+    };
+  });
+  if (!recovered.tabs.some(tab => tab.id === recovered.activeTaskTabId)) {
+    recovered.activeTaskTabId = recovered.tabs[0]?.id || null;
+  }
+  return recovered;
+}
+
 export function createTaskBridge(base, clientScope) {
   if (!base) return undefined;
   const bridge = { ...base };
@@ -76,6 +106,18 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   let active;
   let restored = false;
   const selectionKey = '5e.aiActiveTask.v1';
+  async function exportCollection(mode) {
+    const normalizedMode = normalizeTaskExportMode(mode);
+    const count = entries.reduce((total, entry) => total + (entry.controller?.exportCount?.(normalizedMode) || 0), 0);
+    if (!count) throw new Error('저장할 생성 결과가 없습니다.');
+    const destination = await chooseTaskExportDestination({
+      desktopBatchOutput: window.fiveEDesktop?.batchOutput,
+      confirmDownloads: message => window.confirm(message),
+    });
+    if (!destination) return { status: 'cancelled', count: 0, files: [] };
+    const groups = await Promise.all(entries.map(entry => entry.controller.exportResults(normalizedMode)));
+    return writeTaskExports(destination, groups.flat());
+  }
   function store(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); }
     catch { window.alert('작업 목록 저장에 실패했습니다. 현재 작업을 저장하기 전에는 새로고침하지 마세요.'); }
@@ -142,6 +184,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     entries.push(entry);
     entry.controller = initialize(state, {
       panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop, scope),
+      exportCollection,
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
         const next = entries.find(item => item !== entry && item.tabs.length) || add(crypto.randomUUID());
