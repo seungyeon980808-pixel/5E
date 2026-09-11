@@ -2432,9 +2432,9 @@ const TASKS = [
     outro: "넓이 부분은 사각형을 겹쳐 놓고 '채우기 종류'를 빗금으로 하면 표시됩니다.",
   }),
   makeTask({
-    id: "task-remix", title: "P10 · 기출 변형 문제", desc: "종합 — 실전 흐름 그대로",
+    id: "task-remix", title: "P10 · 비교 그림의 틀 만들기", desc: "표시용 상자로 비교할 부분 잡기",
     minutes: 6, next: [],
-    intro: "지금까지 배운 것을 한 번에 씁니다. 기출을 가져와 고치고, 페이지를 나눠 원본과 변형을 나란히 둡니다.",
+    intro: "비교할 그림에서 바꿀 부분을 표시용 상자로 먼저 잡아 둡니다.",
     figure: [{ pts: T.box(-30, -18, 60, 36), close: true, note: "가져온 그림" }],
     parts: [
       { tool: "RECT", type: "rect", name: "표시용 상자", where: "왼쪽 도구 2번째 줄 맨 오른쪽입니다.",
@@ -3440,31 +3440,35 @@ const ADVANCED_FILES = {
   ],
 };
 
+function graphExprs(o) { return (o?.series || o?.graphSeries || []).map((x) => x.expr).filter(Boolean); }
+function modalHasExpr(expr) { return [...document.querySelectorAll("#gm-chips *")].some((el) => el.textContent.trim() === expr); }
+function addModalExpr(expr) { if (modalHasExpr(expr)) return true; document.querySelector("#gm-add-series")?.click(); return advancedType("#gm-expr", expr); }
+function selectedRichGraph() { return advancedSelectedObjects().find((o) => o.type === "coordplane" && o.richLabels) || null; }
+function graphEditButton() { return selectedRichGraph() ? byText("그래프 편집…", document.querySelector("#panel-right")) : null; }
 const ADVANCED_GRAPH = {
   id:"advanced-graph", title:"5 · 좌표평면과 함수 그래프", desc:"물리 문제에 쓰는 좌표·함수 그래프 만들기", minutes:9, practice:true, next:["advanced-graph-annot"],
   steps:[
     {chapter:"좌표평면",practice:true,title:"좌표·함수 생성을 열어 주세요",text:"왼쪽 고급 기능에서 ‘좌표/함수 생성’을 누릅니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-coord-btn"),hint:"좌표/함수 생성을 눌러 주세요"}},
-    {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 정합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 예시는 시간–속도 그래프입니다.",target:()=>"#gm-tab-coord",wait:{until:()=>!!vis("#gm-xpos")&&!!vis("#gm-ypos"),hint:"좌표 탭에서 범위와 눈금을 확인해 주세요"}},
-    {chapter:"함수",title:"함수식을 하나 추가합니다",text:"함수 탭에서 ‘함수식 추가’를 누르고 `sin(x)`를 입력합니다. 수식 입력은 자동으로 넣을 수 있지만, 추가 버튼과 적용 버튼은 직접 누릅니다.",target:()=>"#gm-tab-func-btn",demo:()=>({kind:"clicks",at:["#gm-tab-func-btn"]}),wait:{until:()=>!!vis("#gm-add-series"),hint:"함수 탭을 눌러 주세요"}},
-    {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 식 칸에 sin(x)를 입력하고 그래프 미리보기를 확인합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>{document.querySelector("#gm-add-series")?.click();advancedType("#gm-expr","sin(x)")}},wait:{until:()=>advancedGraphs().length===0 || !!vis("#gm-series-editor"),hint:"함수식을 확인해 주세요"}},
-    {chapter:"함수",title:"두 번째 함수를 추가합니다",text:"이번에는 `cos(x)`를 추가해 두 함수를 한 좌표평면에 비교합니다.",target:()=>"#gm-add-series",auto:{label:"cos(x) 입력하기",run:()=>{document.querySelector("#gm-add-series")?.click();advancedType("#gm-expr","cos(x)")}},wait:{until:()=>!!vis("#gm-chips"),hint:"두 번째 함수가 추가됐는지 확인해 주세요"}},
-    {chapter:"완성",title:"그래프를 캔버스에 만들어 주세요",text:"오른쪽 아래 ‘만들기’를 눌러 그래프를 캔버스에 넣습니다.",target:()=>"#gm-confirm",wait:{until:()=>advancedGraphs().length>=1,hint:"그래프 만들기를 눌러 주세요"}},
+    {chapter:"좌표평면",title:"물리 그래프의 축과 눈금을 검토합니다",text:"x축과 y축 범위, 격자 간격, 눈금 간격을 확인합니다. 기본값을 그대로 써도 됩니다. 확인한 뒤 [다음]을 누르세요.",target:()=>"#gm-tab-coord",allowNext:true},
+    {chapter:"함수",title:"함수 탭을 열어 주세요",text:"함수 탭에서 두 식을 추가합니다.",target:()=>"#gm-tab-func-btn",demo:()=>({kind:"clicks",at:["#gm-tab-func-btn"]}),wait:{until:()=>!!vis("#gm-add-series"),hint:"함수 탭을 눌러 주세요"}},
+    {chapter:"함수",title:"사인 함수를 입력합니다",text:"‘함수식 추가’를 누른 뒤 sin(x)를 입력합니다.",target:()=>"#gm-add-series",auto:{label:"sin(x) 입력하기",run:()=>addModalExpr("sin(x)")},wait:{until:()=>modalHasExpr("sin(x)"),hint:"sin(x) 계열이 칩으로 보이는지 확인해 주세요"}},
+    {chapter:"함수",title:"코사인 함수를 추가합니다",text:"이번에는 cos(x)를 추가해 두 함수를 비교합니다.",target:()=>"#gm-add-series",auto:{label:"cos(x) 입력하기",run:()=>addModalExpr("cos(x)")},wait:{until:()=>modalHasExpr("sin(x)")&&modalHasExpr("cos(x)"),hint:"sin(x)와 cos(x) 두 계열을 확인해 주세요"}},
+    {chapter:"완성",title:"그래프를 캔버스에 만들어 주세요",text:"오른쪽 아래 ‘만들기’를 눌러 그래프를 캔버스에 넣습니다.",target:()=>"#gm-confirm",wait:{until:()=>advancedGraphs().some((o)=>graphExprs(o).includes("sin(x)")&&graphExprs(o).includes("cos(x)")),hint:"두 함수가 든 그래프 만들기를 눌러 주세요"}},
     {chapter:"마무리",title:"좌표평면과 함수 그래프가 완성됐습니다",text:"다음 단계에서는 이 그래프에 표시점·가이드라인·라벨·화살표를 추가합니다. 다 보셨으면 [마치기]를 눌러 주세요."},
   ],
 };
-
 const ADVANCED_GRAPH_ANNOT = {
-  id:"advanced-graph-annot", title:"6 · 그래프 표시 요소와 주석", desc:"표시점·가이드라인·라벨·화살표·격자·눈금 완성하기", minutes:9, practice:false, next:[],
-  steps:[
-    {chapter:"표시",title:"그래프 만들기 창을 다시 엽니다",text:"방금 만든 그래프를 수정하려면 그래프 객체를 선택한 뒤 좌표/함수 생성을 엽니다.",target:()=>"#graph-tool-open",demo:()=>({kind:"clicks",at:["#graph-tool-open"]}),wait:{until:()=>!!vis("#gm-tab-annot"),hint:"그래프를 선택하고 좌표/함수 생성을 눌러 주세요"}},
-    {chapter:"표시",title:"표시 탭을 열어 주세요",text:"그래프의 표시점·수선의 발·화살표·가이드라인을 여기서 추가합니다.",target:()=>"#gm-tab-annot-btn",demo:()=>({kind:"clicks",at:["#gm-tab-annot-btn"]}),wait:{until:()=>!!vis("#gm-ann-marker"),hint:"표시 탭을 눌러 주세요"}},
-    {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다. 점은 곡선 위에 놓아야 합니다.",target:()=>"#gm-ann-marker",wait:{until:()=>!!vis("#gm-ann-marker-list"),hint:"표시점을 누르고 그래프 미리보기를 클릭해 주세요"}},
-    {chapter:"표시",title:"수선의 발과 가이드라인을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다. 별도의 두 점을 잇는 가이드라인도 하나 추가합니다.",target:()=>"#gm-ann-guide",wait:{until:()=>!!vis("#gm-ann-guide-list"),hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},
-    {chapter:"표시",title:"진행 방향 화살표를 추가합니다",text:"곡선의 진행 방향을 보여 주는 화살표를 지정 위치에 놓습니다.",target:()=>"#gm-ann-arrow",wait:{until:()=>!!vis("#gm-ann-arrow-list"),hint:"화살표 도구를 선택하고 곡선을 클릭해 주세요"}},
-    {chapter:"표시",title:"라벨러 표시점을 붙입니다",text:"중요한 상태점에 A·B 같은 이름을 붙입니다. 라벨 입력은 표시점과 연결된 편집 칸에서 합니다.",target:()=>"#gm-ann-labelpt",wait:{until:()=>!!vis("#gm-ann-labelpt-list"),hint:"라벨러 표시점을 선택하고 그래프를 클릭해 주세요"}},
-    {chapter:"완성",title:"격자와 눈금을 확인하고 적용합니다",text:"격자·눈금·원점은 그래프를 읽는 기준입니다. 필요한 것만 남긴 뒤 ‘적용’을 눌러 캔버스에 반영합니다.",target:()=>"#gm-showgrid",wait:{until:()=>advancedGraphs().some(o=>((o.series||o.graphSeries||[]).length>=1)),hint:"격자와 눈금을 조정하고 적용을 눌러 주세요"}},
-    {chapter:"마무리",title:"심화 튜토리얼을 모두 마쳤습니다",text:"직선과 치수선, 도형 편집, 이미지 배열, 파일 관리, 함수 그래프와 그래프 주석까지 익혔습니다. 결과물을 저장해 두고 [마치기]를 눌러 주세요."},
-  ],
+ id:"advanced-graph-annot",title:"6 · 그래프 표시 요소와 주석",desc:"표시점·가이드라인·라벨·화살표·격자·눈금 완성하기",minutes:9,practice:false,next:[],steps:[
+ {chapter:"표시",title:"그래프를 선택해 주세요",text:"5번 코스에서 만든 그래프를 캔버스에서 선택하세요. 그래프가 없다면 먼저 5번 코스를 완료해야 합니다.",target:()=>"#canvas",allowPan:true,wait:{until:()=>!!selectedRichGraph(),hint:"그래프를 선택해 주세요. 그래프가 없다면 먼저 5번 코스를 완료하세요"}},
+ {chapter:"표시",title:"그래프 편집을 열어 주세요",text:"오른쪽 패널의 ‘그래프 편집…’을 눌러 선택한 그래프를 편집합니다.",target:()=>graphEditButton()||"#panel-right",demo:()=>{const b=graphEditButton();return b?{kind:"clicks",at:[b]}:null},wait:{until:()=>!!vis("#gm-tab-annot-btn")&&!!vis("#gm-confirm"),hint:"선택한 그래프의 ‘그래프 편집…’을 눌러 주세요"}},
+ {chapter:"표시",title:"표시 탭을 열어 주세요",text:"표시점·수선의 발·화살표·가이드라인을 여기서 추가합니다.",target:()=>"#gm-tab-annot-btn",demo:()=>({kind:"clicks",at:["#gm-tab-annot-btn"]}),wait:{until:()=>!!vis("#gm-ann-marker"),hint:"표시 탭을 눌러 주세요"}},
+ {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다.",target:()=>"#gm-ann-marker",wait:{until:()=>!!selectedRichGraph()?.annMarkers?.length,hint:"표시점 도구를 선택하고 미리보기를 클릭해 주세요"}},
+ {chapter:"표시",title:"수선의 발을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다.",target:()=>"#gm-ann-guide",wait:{until:()=>!!selectedRichGraph()?.annGuides?.length,hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},
+ {chapter:"표시",title:"진행 방향 화살표를 추가합니다",text:"곡선의 진행 방향을 보여 주는 화살표를 지정 위치에 놓습니다.",target:()=>"#gm-ann-arrow",wait:{until:()=>!!selectedRichGraph()?.annArrows?.length,hint:"화살표 도구를 선택하고 곡선을 클릭해 주세요"}},
+ {chapter:"표시",title:"라벨러 표시점을 붙입니다",text:"중요한 상태점에 A·B 같은 이름을 붙입니다.",target:()=>"#gm-ann-labelpt",wait:{until:()=>!!selectedRichGraph()?.annLabelPoints?.length,hint:"라벨러 표시점을 선택하고 그래프를 클릭해 주세요"}},
+ {chapter:"완성",title:"적용해 주세요",text:"‘적용’을 눌러 같은 그래프에 표시 요소를 저장합니다.",target:()=>"#gm-confirm",wait:{until:()=>{const o=selectedRichGraph();return !!o&&[o.annMarkers,o.annGuides,o.annArrows,o.annLabelPoints].every((x)=>Array.isArray(x)&&x.length)&&!vis("#gm-confirm")},hint:"적용을 눌러 표시 요소를 저장해 주세요"}},
+ {chapter:"마무리",title:"심화 튜토리얼을 모두 마쳤습니다",text:"그래프에 표시점·수선·화살표·라벨을 추가했습니다. 결과물을 저장해 두고 [마치기]를 눌러 주세요."},
+ ]
 };
 
 export const COURSES = [

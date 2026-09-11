@@ -9,7 +9,7 @@ function load(platform, selectors = {}, templates = {}) {
   const current = { objects: [], activePageId: 'practice', pages: [] };
   const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
-    TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null },
+    TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null, querySelectorAll: () => [] },
     applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
@@ -112,4 +112,18 @@ test('shared symbol tools require both exact armed symbol and generated descript
 test('P9 graph modal has valid targets and no canvas guide/demo dependency', () => {
  const p9=load('Win32').course('task-graph'), [open,confirm]=p9.steps.slice(1,3);
  assert.equal(open.target(),'#graph-tool-open');assert.equal(confirm.target(),'#gm-confirm');assert.doesNotThrow(()=>confirm.guide());assert.equal(confirm.demo().kind,'clicks');assert.equal(confirm.demo().at[0],'#gm-confirm');
+});
+
+test('advanced graph saves only a plane containing both requested expressions', () => {
+ const h=load('Win32'), c=h.course('advanced-graph'), finish=c.steps.find(s=>s.title.includes('그래프를 캔버스'));
+ h.current.objects=[{type:'coordplane',series:[{expr:'cos(x)'}]}];assert.equal(finish.wait.until(),false);
+ h.current.objects=[{type:'coordplane',series:[{expr:'sin(x)'},{expr:'cos(x)'}]}];assert.equal(finish.wait.until(),true);
+});
+test('advanced annotation requires selected rich graph and all saved annotation arrays', () => {
+ const h=load('Win32'), c=h.course('advanced-graph-annot'), select=c.steps[0], finish=c.steps.at(-2);
+ assert.equal(select.wait.until(),false);h.current.objects=[{id:'p',type:'coordplane',richLabels:true}];h.current.selectedIds=['p'];assert.equal(select.wait.until(),true);
+ h.current.objects[0].annMarkers=[{}];h.current.objects[0].annGuides=[{}];h.current.objects[0].annArrows=[{}];h.current.objects[0].annLabelPoints=[];assert.equal(finish.wait.until(),false);h.current.objects[0].annLabelPoints=[{}];assert.equal(finish.wait.until(),true);
+});
+test('tutorial guides and demos do not dereference missing task coordinates', () => {
+ const h=load('Win32');for(const id of ['task-graph','advanced-graph','advanced-graph-annot'])for(const step of h.course(id).steps){if(step.guide)assert.doesNotThrow(()=>step.guide());if(step.demo)assert.doesNotThrow(()=>step.demo());}
 });
