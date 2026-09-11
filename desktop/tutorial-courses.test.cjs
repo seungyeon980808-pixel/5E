@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const read = f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
-function load(platform, selectors = {}, templates = {}) {
+function load(platform, selectors = {}, templates = {}, collections = {}) {
   const active = { id: null };
   const current = { objects: [], activePageId: 'practice', pages: [] };
   const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
-    TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null, querySelectorAll: () => [] },
+    TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null, querySelectorAll: sel => collections[sel] || [] },
     applyNewObjectStyleDefaults: x => x, setActiveTool: () => {}, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
@@ -116,14 +116,30 @@ test('P9 graph modal has valid targets and no canvas guide/demo dependency', () 
 
 test('advanced graph saves only a plane containing both requested expressions', () => {
  const h=load('Win32'), c=h.course('advanced-graph'), finish=c.steps.find(s=>s.title.includes('그래프를 캔버스'));
- h.current.objects=[{type:'coordplane',series:[{expr:'cos(x)'}]}];assert.equal(finish.wait.until(),false);
- h.current.objects=[{type:'coordplane',series:[{expr:'sin(x)'},{expr:'cos(x)'}]}];assert.equal(finish.wait.until(),true);
+ h.current.objects=[{id:'p',type:'coordplane'},{type:'funcgraph',planeId:'p',expr:'cos(x)'}];assert.equal(finish.wait.until(),false);
+ h.current.objects.push({type:'funcgraph',planeId:'other',expr:'sin(x)'});assert.equal(finish.wait.until(),false);
+ h.current.objects.push({type:'funcgraph',planeId:'p',expr:'sin(x)'});assert.equal(finish.wait.until(),true);
 });
 test('advanced annotation requires selected rich graph and all saved annotation arrays', () => {
  const h=load('Win32'), c=h.course('advanced-graph-annot'), select=c.steps[0], finish=c.steps.at(-2);
  assert.equal(select.wait.until(),false);h.current.objects=[{id:'p',type:'coordplane',richLabels:true}];h.current.selectedIds=['p'];assert.equal(select.wait.until(),true);
- h.current.objects[0].annMarkers=[{}];h.current.objects[0].annGuides=[{}];h.current.objects[0].annArrows=[{}];h.current.objects[0].annLabelPoints=[];assert.equal(finish.wait.until(),false);h.current.objects[0].annLabelPoints=[{}];assert.equal(finish.wait.until(),true);
+ h.current.objects[0].annMarkers=[{}];h.current.objects[0].annGuides=[{}];h.current.objects[0].annArrows=[{}];h.current.objects[0].annLabelPoints=[];assert.equal(finish.wait.until({annotationPlaneId:'p'}),false);h.current.objects[0].annLabelPoints=[{}];assert.equal(finish.wait.until({annotationPlaneId:'p'}),true);assert.equal(finish.wait.until({annotationPlaneId:'other'}),false);
 });
 test('tutorial guides and demos do not dereference missing task coordinates', () => {
  const h=load('Win32');for(const id of ['task-graph','advanced-graph','advanced-graph-annot'])for(const step of h.course(id).steps){if(step.guide)assert.doesNotThrow(()=>step.guide());if(step.demo)assert.doesNotThrow(()=>step.demo());}
+});
+
+
+test('graph chips match their real y= label, not empty container or similar expressions', () => {
+ const items=[], h=load('Win32',{}, {}, {'#gm-chips > button > span:first-child':items});
+ const c=h.course('advanced-graph'), sin=c.steps.find(s=>s.title==='사인 함수를 입력합니다'), cos=c.steps.find(s=>s.title==='코사인 함수를 추가합니다');
+ assert.equal(sin.wait.until(),false);items.push({textContent:'y=cos(x)'});assert.equal(sin.wait.until(),false);assert.equal(cos.wait.until(),false);items.push({textContent:'y=sin(x)+1'});assert.equal(sin.wait.until(),false);items.push({textContent:'y=sin( x )'});assert.equal(sin.wait.until(),true);assert.equal(cos.wait.until(),true);
+});
+test('annotation draft advances before Apply without mistaking saved plane for draft', () => {
+ const selectors={}, h=load('Win32',selectors), c=h.course('advanced-graph-annot'), marker=c.steps.find(s=>s.title==='표시점을 그래프 위에 놓습니다');
+ h.current.objects=[{id:'p',type:'coordplane',richLabels:true}];h.current.selectedIds=['p'];assert.equal(marker.wait.until(),false);
+ selectors['#gm-ann-marker-list']={isConnected:true,offsetParent:{},getBoundingClientRect:()=>({width:90,height:20}),children:[{}]};
+ assert.equal(marker.wait.until(),true);assert.equal(h.current.objects[0].annMarkers,undefined);
+ assert.ok(marker.target().includes('#gm-preview'));
+ const finish=c.steps.at(-2);assert.equal(finish.wait.until({annotationPlaneId:'p'}),false);
 });

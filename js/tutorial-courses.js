@@ -1056,8 +1056,8 @@ const INCLINE_FIGURE = {
       title: "⑤ 물리량 라벨 m",
       text:
         "물체에 질량 m 을 붙입니다. 점선으로 표시한 자리 — 물체 한가운데에 들어갑니다.\n\n" +
-        "· 직접 하시려면: 물체를 눌러 고른 뒤 오른쪽 '라벨' 칸에 입력\n" +
-        "· 바로 위 '종류'를 물리량으로 두면 시험지 관례대로 기울인 글씨가 됩니다\n" +
+        "· 직접 하시려면: 물체를 고른 뒤 오른쪽 '안쪽'을 켜고 옆 입력칸에 m을 적습니다\n" +
+        "· '서체'를 물리량으로 두면 시험지 관례대로 기울인 글씨가 됩니다\n" +
         "· 질량 m, 속력 v, 힘 F … 무엇이든 됩니다",
       // 라벨이 어디에 붙는지 보여 준다 — 방금 그린 물체 자리를 짚는다(사용자 지적).
       guide: () => {
@@ -3440,8 +3440,9 @@ const ADVANCED_FILES = {
   ],
 };
 
-function graphExprs(o) { return (o?.series || o?.graphSeries || []).map((x) => x.expr).filter(Boolean); }
-function modalHasExpr(expr) { return [...document.querySelectorAll("#gm-chips *")].some((el) => el.textContent.trim() === expr); }
+function graphExprs(o) { return objects().filter((x) => x.type === "funcgraph" && x.planeId === o?.id).map((x) => String(x.expr || "").replace(/\s+/g, "")).filter(Boolean); }
+function modalHasExpr(expr) { return [...document.querySelectorAll("#gm-chips > button > span:first-child")].some((el) => el.textContent.replace(/^y\s*=\s*/, "").replace(/\s+/g, "") === expr); }
+function modalAnnotationCount(selector) { const list = vis(selector); return list ? list.children.length : 0; }
 function addModalExpr(expr) { if (modalHasExpr(expr)) return true; document.querySelector("#gm-add-series")?.click(); return advancedType("#gm-expr", expr); }
 function selectedRichGraph() { return advancedSelectedObjects().find((o) => o.type === "coordplane" && o.richLabels) || null; }
 function graphEditButton() { return selectedRichGraph() ? byText("그래프 편집…", document.querySelector("#panel-right")) : null; }
@@ -3460,13 +3461,13 @@ const ADVANCED_GRAPH = {
 const ADVANCED_GRAPH_ANNOT = {
  id:"advanced-graph-annot",title:"6 · 그래프 표시 요소와 주석",desc:"표시점·가이드라인·라벨·화살표·격자·눈금 완성하기",minutes:9,practice:false,next:[],steps:[
  {chapter:"표시",title:"그래프를 선택해 주세요",text:"5번 코스에서 만든 그래프를 캔버스에서 선택하세요. 그래프가 없다면 먼저 5번 코스를 완료해야 합니다.",target:()=>"#canvas",allowPan:true,wait:{until:()=>!!selectedRichGraph(),hint:"그래프를 선택해 주세요. 그래프가 없다면 먼저 5번 코스를 완료하세요"}},
- {chapter:"표시",title:"그래프 편집을 열어 주세요",text:"오른쪽 패널의 ‘그래프 편집…’을 눌러 선택한 그래프를 편집합니다.",target:()=>graphEditButton()||"#panel-right",demo:()=>{const b=graphEditButton();return b?{kind:"clicks",at:[b]}:null},wait:{until:()=>!!vis("#gm-tab-annot-btn")&&!!vis("#gm-confirm"),hint:"선택한 그래프의 ‘그래프 편집…’을 눌러 주세요"}},
+ {chapter:"표시",title:"그래프 편집을 열어 주세요",text:"오른쪽 패널의 ‘그래프 편집…’을 눌러 선택한 그래프를 편집합니다.",target:()=>graphEditButton()||"#panel-right",demo:()=>{const b=graphEditButton();return b?{kind:"clicks",at:[b]}:null},wait:{until:(ctx)=>{if(!vis("#gm-tab-annot-btn")||!vis("#gm-confirm")||document.querySelector("#gm-title")?.textContent.trim()!=="그래프 편집")return false;ctx.annotationPlaneId=selectedRichGraph()?.id;return !!ctx.annotationPlaneId;},hint:"선택한 그래프의 ‘그래프 편집…’을 눌러 주세요"}},
  {chapter:"표시",title:"표시 탭을 열어 주세요",text:"표시점·수선의 발·화살표·가이드라인을 여기서 추가합니다.",target:()=>"#gm-tab-annot-btn",demo:()=>({kind:"clicks",at:["#gm-tab-annot-btn"]}),wait:{until:()=>!!vis("#gm-ann-marker"),hint:"표시 탭을 눌러 주세요"}},
- {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다.",target:()=>"#gm-ann-marker",wait:{until:()=>!!selectedRichGraph()?.annMarkers?.length,hint:"표시점 도구를 선택하고 미리보기를 클릭해 주세요"}},
- {chapter:"표시",title:"수선의 발을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다.",target:()=>"#gm-ann-guide",wait:{until:()=>!!selectedRichGraph()?.annGuides?.length,hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},
- {chapter:"표시",title:"진행 방향 화살표를 추가합니다",text:"곡선의 진행 방향을 보여 주는 화살표를 지정 위치에 놓습니다.",target:()=>"#gm-ann-arrow",wait:{until:()=>!!selectedRichGraph()?.annArrows?.length,hint:"화살표 도구를 선택하고 곡선을 클릭해 주세요"}},
- {chapter:"표시",title:"라벨러 표시점을 붙입니다",text:"중요한 상태점에 A·B 같은 이름을 붙입니다.",target:()=>"#gm-ann-labelpt",wait:{until:()=>!!selectedRichGraph()?.annLabelPoints?.length,hint:"라벨러 표시점을 선택하고 그래프를 클릭해 주세요"}},
- {chapter:"완성",title:"적용해 주세요",text:"‘적용’을 눌러 같은 그래프에 표시 요소를 저장합니다.",target:()=>"#gm-confirm",wait:{until:()=>{const o=selectedRichGraph();return !!o&&[o.annMarkers,o.annGuides,o.annArrows,o.annLabelPoints].every((x)=>Array.isArray(x)&&x.length)&&!vis("#gm-confirm")},hint:"적용을 눌러 표시 요소를 저장해 주세요"}},
+ {chapter:"표시",title:"표시점을 그래프 위에 놓습니다",text:"표시점 도구를 켠 뒤 함수 위의 지정 위치를 클릭합니다.",target:()=>["#gm-ann-marker","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-marker-list")>0,hint:"표시점 도구를 선택하고 미리보기를 클릭해 주세요"}},
+ {chapter:"표시",title:"수선의 발을 추가합니다",text:"표시점의 값을 읽기 쉽도록 축까지 수선을 내립니다.",target:()=>["#gm-ann-guide","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-guide-list")>0,hint:"수선의 발 도구를 선택하고 미리보기를 클릭해 주세요"}},
+ {chapter:"표시",title:"진행 방향 화살표를 추가합니다",text:"곡선의 진행 방향을 보여 주는 화살표를 지정 위치에 놓습니다.",target:()=>["#gm-ann-arrow","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-arrow-list")>0,hint:"화살표 도구를 선택하고 곡선을 클릭해 주세요"}},
+ {chapter:"표시",title:"라벨러 표시점을 붙입니다",text:"중요한 상태점에 A·B 같은 이름을 붙입니다.",target:()=>["#gm-ann-labelpt","#gm-preview"],wait:{until:()=>modalAnnotationCount("#gm-ann-labelpt-list")>0,hint:"라벨러 표시점을 선택하고 그래프를 클릭해 주세요"}},
+ {chapter:"완성",title:"적용해 주세요",text:"‘적용’을 눌러 같은 그래프에 표시 요소를 저장합니다.",target:()=>"#gm-confirm",wait:{until:(ctx)=>{const o=advancedGraphs().find((g)=>g.id===ctx.annotationPlaneId);return !!o&&[o.annMarkers,o.annGuides,o.annArrows,o.annLabelPoints].every((x)=>Array.isArray(x)&&x.length)&&!vis("#gm-confirm")},hint:"적용을 눌러 표시 요소를 저장해 주세요"}},
  {chapter:"마무리",title:"심화 튜토리얼을 모두 마쳤습니다",text:"그래프에 표시점·수선·화살표·라벨을 추가했습니다. 결과물을 저장해 두고 [마치기]를 눌러 주세요."},
  ]
 };
