@@ -2,14 +2,14 @@
   "name": "5e-desktop",
   "version": "1.5.3",
   "private": true,
-  "description": "5E science diagram editor for Windows with a local Codex image assistant",
+  "description": "5E science diagram editor for Windows and macOS with a local Codex image assistant",
   "main": "desktop/main.cjs",
   "scripts": {
-    "desktop": "node_modules\\electron\\dist\\electron.exe .",
+    "desktop": "electron .",
     "test": "node desktop/run-unit-tests.cjs",
     "test:diagnostics": "node desktop/run-unit-tests.cjs --diagnostics",
     "test:desktop": "node desktop/run-smoke.cjs",
-    "test:image": "set FIVE_E_IMAGE_E2E=1&& set FIVE_E_SMOKE_TIMEOUT=240000&& node desktop/run-smoke.cjs",
+    "test:image": "node desktop/run-smoke.cjs --image",
     "benchmark:image": "node desktop/benchmark-image-turn.cjs",
     "benchmark:scene": "node desktop/benchmark-scene-turn.cjs",
     "benchmark:scene:repeatability": "node desktop/benchmark-scene-repeatability.cjs",
@@ -18,6 +18,7 @@
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
     "package:win": "electron-builder --win nsis --x64 --publish never",
+    "package:mac": "electron-builder --mac dmg --x64 --arm64 --publish never",
     "test:editor": "node --test desktop/editor-clipboard.test.cjs desktop/image-clipboard.test.cjs desktop/platform-shortcuts.test.cjs desktop/mac-keyboard.test.cjs desktop/page-history.test.cjs desktop/document-history.test.cjs desktop/project-status.test.cjs desktop/project-load-stability.test.cjs desktop/autosave-stability.test.cjs tests/test-project-file-extension.mjs tests/test-ai-image-insertion.mjs",
     "test:tutorial": "node --test desktop/tutorial-engine.test.cjs desktop/tutorial-courses.test.cjs",
     "test:editor:browser": "node desktop/editor-usability-browser.cjs",
@@ -52,6 +53,7 @@
       "desktop/codex-turn-runtime.cjs",
       "desktop/codex-process-failure.cjs",
       "desktop/ai-thread-profile.cjs",
+      "desktop/batch-output-service.cjs",
       "desktop/pdf-library-scanner.cjs",
       "desktop/pdf-library-service.cjs",
       "desktop/pdf-library-ipc.cjs",
@@ -67,6 +69,13 @@
       "assets/exam-library/manifest.json",
       "assets/exam-library/synonyms.json",
       "assets/exam-library/tag-vocab.json",
+      "assets/exam-library/sample-catalog.json",
+      "assets/exam-library/images/p1_2025_03_02.png",
+      "assets/exam-library/images/p1_2025_11_05.png",
+      "assets/exam-library/images/p1_2026_06_12.png",
+      "assets/exam-library/images/p1_2026_09_03.png",
+      "assets/exam-library/images/p1_2026_11_01.png",
+      "assets/exam-library/images/p1_2026_11_08.png",
       "assets/exam-library/images/p2_2027_06_13.png",
       "assets/exam-parts/**/*",
       "assets/parts-library/manifest.json",
@@ -81,6 +90,10 @@
     "win": {
       "icon": "assets/icon.ico",
       "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "mac": {
+      "icon": "assets/icon-512.png",
+      "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
     },
     "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
   },

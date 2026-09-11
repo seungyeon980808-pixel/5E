@@ -7,10 +7,19 @@ const MAX_PDF_BYTES = 256 * 1024 * 1024;
 const HASH_PATTERN = /^[a-f0-9]{64}$/;
 
 function packPath(value, field) {
-  if (typeof value !== "string" || value.startsWith("/") || value.includes("\\") || value.split("/").some((part) => !part || part === "." || part === "..")) {
+  if (typeof value !== "string" || value.startsWith("/") || value.includes("\\") || /[%?#]/u.test(value) || value.split("/").some((part) => !part || part === "." || part === "..")) {
     throw new PackValidationError(field, "expected a safe relative path");
   }
   return value;
+}
+
+function packAssetUrl(root, value, field) {
+  const relativePath = packPath(value, field);
+  const resolved = new URL(relativePath, root);
+  if (resolved.origin !== root.origin || !resolved.pathname.startsWith(root.pathname) || resolved.search || resolved.hash) {
+    throw new PackValidationError(field, "expected a safe relative path");
+  }
+  return resolved;
 }
 
 function safeRemoteUrl(value, label) {
@@ -66,6 +75,7 @@ async function fetchBytes(fetcher, url, maximum, label) {
 export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
   if (typeof baseUrl !== "string" || baseUrl.trim() === "") throw new PackValidationError("baseUrl", "remote pack is unconfigured");
   const root = safeRemoteUrl(new URL(baseUrl, globalThis.location?.href ?? "http://localhost/"), "baseUrl");
+  if (!root.pathname.endsWith("/") || root.search || root.hash) throw new PackValidationError("baseUrl", "expected a directory URL without query or fragment");
   const [packBytes, checksumBytes] = await Promise.all([
     fetchBytes(fetcher, new URL("pack.json", root).href, MAX_MANIFEST_BYTES, "pack.json"),
     fetchBytes(fetcher, new URL("checksums.json", root).href, MAX_MANIFEST_BYTES, "checksums.json"),
@@ -80,8 +90,8 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
   const catalogPath = packPath(pack.paths?.catalog, "paths.catalog");
   const searchPath = packPath(pack.paths?.searchIndex, "paths.searchIndex");
   const [catalogBytes, searchBytes] = await Promise.all([
-    fetchBytes(fetcher, new URL(catalogPath, root).href, MAX_JSON_BYTES, catalogPath),
-    fetchBytes(fetcher, new URL(searchPath, root).href, MAX_JSON_BYTES, searchPath),
+    fetchBytes(fetcher, packAssetUrl(root, catalogPath, "paths.catalog").href, MAX_JSON_BYTES, catalogPath),
+    fetchBytes(fetcher, packAssetUrl(root, searchPath, "paths.searchIndex").href, MAX_JSON_BYTES, searchPath),
   ]);
   if (await sha256Hex(catalogBytes) !== checksums.files[catalogPath]) throw new PackValidationError(catalogPath, "SHA-256 mismatch");
   if (await sha256Hex(searchBytes) !== checksums.files[searchPath]) throw new PackValidationError(searchPath, "SHA-256 mismatch");
@@ -117,7 +127,7 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
       if (!document?.source?.locator?.startsWith(prefix)) throw new PackValidationError("document.source", "does not belong to this pack");
       const relativePath = packPath(document.source.locator.slice(prefix.length), "document.source.locator");
       if (!HASH_PATTERN.test(checksums.files[relativePath] ?? "")) throw new PackValidationError(relativePath, "missing checksum");
-      const bytes = await fetchBytes(fetcher, new URL(relativePath, root).href, MAX_PDF_BYTES, relativePath);
+      const bytes = await fetchBytes(fetcher, packAssetUrl(root, relativePath, "document.source.locator").href, MAX_PDF_BYTES, relativePath);
       if (await sha256Hex(bytes) !== checksums.files[relativePath]) throw new PackValidationError(relativePath, "SHA-256 mismatch");
       if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") throw new PackValidationError(relativePath, "expected PDF bytes");
       return runtime.openDocument({ id: document.id, title: document.title, source: document.source, metadata: document.metadata, data: bytes });
