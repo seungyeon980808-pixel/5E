@@ -21,10 +21,39 @@ import { createUnifiedLibraryProvider } from "./library/provider.js";
 import { createUnifiedLibraryUi } from "./unified-library-ui.js";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.4.12";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
+const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
 
 export function configuredLegacyDatasetBase(value = globalThis.FIVE_E_LEGACY_EXAM_BASE_URL) {
   if (typeof value !== "string" || !value.trim()) return "";
   return `${value.trim().replace(/\/+$/u, "")}/`;
+}
+
+export function unifiedImageInsertionOptions(result, asset) {
+  const provenance = result?.provenance ?? {};
+  const source = asset?.source ?? {};
+  const sourceMetadata = {
+    provider: provenance.provider,
+    documentId: source.documentId ?? provenance.documentId,
+    documentTitle: source.documentTitle ?? provenance.documentTitle,
+    documentHash: source.documentHash ?? provenance.documentHash,
+    title: source.title ?? provenance.title ?? result?.title,
+    pageNumber: source.pageNumber ?? provenance.pageNumber,
+    rect: source.rect ?? provenance.rect,
+    fullPageFallback: source.fullPageFallback ?? provenance.fullPageFallback,
+    locator: source.locator ?? provenance.locator,
+    displayName: source.displayName ?? provenance.displayName,
+    sha256: source.sha256 ?? provenance.sha256,
+    sourceKind: source.kind ?? source.sourceKind ?? provenance.sourceKind,
+    itemId: source.itemId ?? provenance.itemId,
+    fileName: source.fileName ?? provenance.fileName,
+    sourceUrl: source.sourceUrl ?? provenance.sourceUrl,
+    license: source.license ?? provenance.license,
+  };
+  return {
+    preserveBytes: true,
+    centerArtboard: true,
+    sourceMetadata: Object.fromEntries(Object.entries(sourceMetadata).filter(([, value]) => value != null)),
+  };
 }
 
 let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
@@ -645,15 +674,33 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   }
 
   let partsManifest = null;
+  let bundledExamManifest;
   let externalExamManifest = null;
   let importedImages = [];
   async function ensureUnifiedManifests() {
     if (!partsManifest) partsManifest = await loadPartsManifest();
+    if (bundledExamManifest === undefined) {
+      try {
+        const response = await fetch(BUNDLED_EXAM_CATALOG_URL, { cache: "no-store" });
+        const catalog = response.ok ? await response.json() : null;
+        bundledExamManifest = catalog?.version === "exam-library-v1" && Array.isArray(catalog.items) ? catalog : null;
+      } catch (_) {
+        bundledExamManifest = null;
+      }
+    }
     const externalBase = configuredLegacyDatasetBase();
     if (externalBase && !externalExamManifest) {
       const response = await fetch(`${externalBase}manifest.json`, { cache: "no-store" });
       if (response.ok) externalExamManifest = await response.json();
     }
+  }
+
+  function unifiedExamManifest() {
+    const items = new Map();
+    for (const item of [...(bundledExamManifest?.items ?? []), ...(externalExamManifest?.items ?? [])]) {
+      if (item?.id) items.set(item.id, item);
+    }
+    return items.size ? { version: "exam-library-v1", items: [...items.values()] } : null;
   }
 
   async function materializeImportedImage({ result, item }) {
@@ -674,7 +721,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     const catalog = pdfUi.getCatalog();
     return createUnifiedLibraryProvider({
       partsManifest,
-      examManifest: configuredLegacyDatasetBase() ? externalExamManifest : null,
+      examManifest: unifiedExamManifest(),
       examBaseUrl: configuredLegacyDatasetBase(),
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,
@@ -683,7 +730,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       materializers: {
         pdf: (input) => pdfUi.materializePdf(input),
         part: ({ item, options }) => materializePartsAsset(item, options),
-        examImage: ({ result }) => urlToDataUrl(`${configuredLegacyDatasetBase()}images/${encodeURIComponent(result.provenance.fileName)}`).then((dataUrl) => ({ dataUrl, result })),
+        examImage: ({ result }) => urlToDataUrl(result.preview.url).then((dataUrl) => ({ dataUrl, result })),
         importedImage: materializeImportedImage,
       },
     });
@@ -702,20 +749,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     }
     const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
     if (!dataUrl) throw new Error("삽입할 이미지 데이터를 만들지 못했습니다.");
-    await insertImageFromSrc(state, dataUrl, {
-      preserveBytes: true,
-      sourceMetadata: {
-        provider: result.provenance.provider,
-        documentId: asset.source?.documentId || result.provenance.documentId,
-        pageNumber: asset.source?.pageNumber || result.provenance.pageNumber,
-        rect: asset.source?.rect || result.provenance.rect,
-        fullPageFallback: asset.source?.fullPageFallback ?? result.provenance.fullPageFallback,
-        locator: result.provenance.locator,
-        fileName: result.provenance.fileName,
-        license: result.provenance.license,
-        sha256: result.provenance.sha256 || null,
-      },
-    });
+    await insertImageFromSrc(state, dataUrl, unifiedImageInsertionOptions(result, asset));
   }
 
   unifiedUi = createUnifiedLibraryUi({

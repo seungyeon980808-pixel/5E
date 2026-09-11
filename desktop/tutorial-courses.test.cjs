@@ -4,18 +4,74 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const read = f => fs.readFileSync(path.join(__dirname, '..', 'js', f), 'utf8');
-function load(platform, selectors = {}, templates = {}, collections = {}) {
+function load(platform, selectors = {}, templates = {}, collections = {}, runtime = {}) {
   const active = { id: null };
   const current = { objects: [], activePageId: 'practice', pages: [] };
   const ctx = vm.createContext({ navigator: { platform }, state: { get: () => current, update: fn => fn(current) }, DEFAULT_STROKE_WIDTH: .2,
     DEFAULT_TEXT_SIZE_MM: 3, DEFAULT_TEXT_FONT: 'test', EQUATION_FONT_FAMILY: 'test', OBJECT_LABEL_TEXT_FONT_FAMILY: 'test',
     TEMPLATES: templates, NODE_DEFAULT_SIZE: 2, document: { querySelector: sel => selectors[sel] || null, querySelectorAll: sel => collections[sel] || [] },
-    applyNewObjectStyleDefaults: x => x, setActiveTool: tool => { current.activeTool = tool; }, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}) });
+    applyNewObjectStyleDefaults: x => x, setActiveTool: tool => { current.activeTool = tool; }, getActiveSymbolId: () => active.id, makeLine: () => ({}), makePolyline: () => ({}), ...runtime });
+  ctx.window ??= ctx;
+  ctx.window.addEventListener ??= () => {};
   vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), ctx);
   vm.runInContext(read('tutorial-labels.js').replace(/^import .*;$/mg, '').replaceAll('export function', 'function'), ctx);
   vm.runInContext(read('tutorial-courses.js').replace(/import\s+[\s\S]*?from\s+"[^\"]+";/g, '').replaceAll('export const', 'const').replaceAll('export function', 'function'), ctx);
   return { current, active, course: id => vm.runInContext(`getCourse(${JSON.stringify(id)})`, ctx), text: t => vm.runInContext(`tutorialText(${JSON.stringify(t)})`, ctx) };
 }
+
+function tutorialImportHarness({ fetchImpl, sources = [] } = {}) {
+  const input = { files: null, dispatchEvent() {} };
+  const overlay = {
+    querySelector: selector => selector === '[data-unilib-files]' ? input : null,
+    querySelectorAll: selector => selector === '[data-source-id]' ? sources : [],
+  };
+  class Transfer { constructor() { this.files = []; this.items = { add: file => this.files.push(file) }; } }
+  class TutorialFile { constructor(parts, name, options) { this.parts = parts; this.name = name; this.type = options.type; } }
+  const selectors = { '.unified-library-overlay:not([hidden])': overlay };
+  const runtime = {
+    fetch: fetchImpl,
+    DataTransfer: Transfer,
+    File: TutorialFile,
+    Event: class { constructor(type) { this.type = type; } },
+    setTimeout: callback => queueMicrotask(callback),
+  };
+  return { ...load('Win32', selectors, {}, {}, runtime), input, overlay };
+}
+
+function examImportStep(h, courseId = 'exam-search') {
+  return h.course(courseId).steps.find(step => step.auto?.label === '연습 그림 가져오기');
+}
+
+test('missing library import controls stay on the tutorial step with retry available', async () => {
+  const h = load('Win32'), step = examImportStep(h), ctx = {};
+  assert.equal(await step.auto.run(ctx), false);
+  assert.equal(ctx.tutorialExamImport.state, 'failed');
+  assert.equal(step.wait.until(ctx), false);
+});
+
+test('failed tutorial image fetch retries the real import and advances only after success', async () => {
+  let calls = 0;
+  const source = { checked: true, closest: () => ({ textContent: '가져온 이미지' }) };
+  const h = tutorialImportHarness({
+    sources: [source],
+    fetchImpl: async () => (++calls === 1 ? { ok: false, status: 503 } : { ok: true, blob: async () => ({ type: 'image/png' }) }),
+  });
+  const step = examImportStep(h), ctx = {};
+  assert.equal(await step.auto.run(ctx), false);
+  assert.equal(step.wait.until(ctx), false);
+  assert.equal(await step.auto.run(ctx), true);
+  assert.equal(calls, 2);
+  assert.equal(ctx.tutorialExamImport.state, 'ready');
+  assert.equal(step.wait.until(ctx), true);
+});
+
+test('missing imported source is a recoverable tutorial failure instead of search progression', async () => {
+  const h = tutorialImportHarness({ fetchImpl: async () => ({ ok: true, blob: async () => ({ type: 'image/png' }) }) });
+  const step = examImportStep(h, 'trim-exam'), ctx = {};
+  assert.equal(await step.auto.run(ctx), false);
+  assert.equal(ctx.tutorialExamImport.state, 'failed');
+  assert.equal(step.wait.until(ctx), false);
+});
 for (const platform of ['MacIntel', 'Win32']) {
   test(`${platform}: tutorial separates command modifiers from mouse snap`, () => {
     const h = load(platform), mac = platform === 'MacIntel';
