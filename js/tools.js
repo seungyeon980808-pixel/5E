@@ -310,6 +310,10 @@ export function armSymbol(symbolId, tool, variant, props) {
 // tools/node-placement.js can tell when the 점 tool is armed without a copy.
 export function getOpticsKind() { return _opticsKind; }
 
+// The exact library symbol currently armed. Tutorial checks must not mistake a
+// different variant sharing OPTICS/CIRCUIT for the requested symbol.
+export function getActiveSymbolId() { return _activeSymbolId; }
+
 /* 팔레트가 지정한 추가 필드. 드래그로 그리는 도형은 makeShape 안에서 직접 병합하지만,
  * 클릭배치(선 L·꺾은선 P·곡선 C)는 commit이 tools/click-placement.js 에 있어 값을 못 봤다.
  * 지구과학 부품(전선 기호·등치선·산점)이 전부 곡선·꺾은선 위에 얹히는 옵션이라
