@@ -24,7 +24,7 @@ test("image workbench exposes preparation, processing, and result stages", () =>
   assert.match(panel, /panel\.dataset\.aiFixedFirst = String\(fixedFirst\)/);
   assert.match(panel, /input\.hidden = fixedFirst/);
   assert.match(panel, /input\.disabled = busy \|\| fixedFirst/);
-  assert.match(html, /data-ai-request-note[\s\S]*먼저 이미지를 평가원식 흑백 선화로 변환합니다\. 바꿀 부분은 변환 후 그림 위에 표시해 주세요\./);
+  assert.match(html, /data-ai-request-note[\s\S]*먼저 평가원식 흑백 선화로 변환합니다\.<br>결과에 수정 위치를 표시하세요\./);
 
   assert.match(workbench, /sourceCards\(\)\.length \? "preparation" : "empty"/);
   assert.match(workbench, /if \(processing && !generatedCards\(\)\.length\) \{\s*setLayout\("result"\)/);

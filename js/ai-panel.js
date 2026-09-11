@@ -371,7 +371,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const conversionSummary = panel.querySelector("[data-ai-conversion-summary]");
   const generationModeRow = document.createElement('label');
   generationModeRow.className = 'ai-separated-mode';
-  generationModeRow.innerHTML = '<span>이미지 구성</span><select data-ai-generation-mode aria-label="이미지 구성 방식"><option value="single">한 장</option><option value="separated">물체별 분리 (실험)</option></select><small>실험 기능 · 최대 16개 · 붙거나 겹친 부품은 하나의 묶음으로 나올 수 있습니다. 내부 선을 벡터로 바꾸지는 않습니다.</small>';
+  generationModeRow.innerHTML = '<span>이미지 구성</span><select data-ai-generation-mode aria-label="이미지 구성 방식"><option value="single">한 장</option><option value="separated">물체별 분리 (실험)</option></select><small>실험 · 최대 16개 · 겹친 부품은 함께 생성됩니다.<br>내부 선은 벡터화하지 않습니다.</small>';
   const generationModeSelect = generationModeRow.querySelector('select');
   const generationModeAnchor = panel.querySelector('[data-ai-white-png-note]');
   if (!generationModeAnchor) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
@@ -733,7 +733,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const note = panel.querySelector("[data-ai-white-png-note]");
     if (note) {
       note.hidden = !white;
-      note.textContent = "첫 생성 PNG 원본 보관 · 아래 결과 처리는 미리보기·저장·페이지 삽입에만 적용";
+      note.textContent = "원본 보관 · 미리보기·저장·삽입에 처리 결과 적용";
       if (attachments.some(item=>item.referenceRole==='STYLE_REFERENCE')) note.textContent += ' · 표현 참고: 새 작업의 첫 변환·자동 교정만 지원';
     }
     syncOutputProcessingUi();
