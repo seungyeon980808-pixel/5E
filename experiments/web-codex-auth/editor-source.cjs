@@ -1,10 +1,8 @@
 function editorPanelSource(source) {
   const replacements = [
     ['setStatus(cancelled ? "작업 취소됨" : "요청 실패", cancelled ? "warn" : "error");', 'setStatus(cancelled ? "작업 취소됨" : error.status === 429 ? error.message : "요청 실패", cancelled ? "warn" : "error");'],
-    ['if (!panel) return;', 'if (!panel) return;\n  const background = createBackgroundOptions(panel);\n  const taskFeedback = createTaskFeedback(panel);'],
-    ['stage.appendChild(img);', 'stage.appendChild(img);\n    background.register(item, img);'],
-    ['.then(data => insertImageFromSrc(state, data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null}))',
-      '.then(data => background.output({...item, data}))\n          .then(src => insertImageFromSrc(state, src, {preserveBytes:true,at:{x:0,y:0},aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null}))'],
+    ['if (!panel) return;', 'if (!panel) return;\n  const taskFeedback = createTaskFeedback(panel);'],
+    ['preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId', 'preserveBytes:true,at:{x:0,y:0},aiTaskId:activeTaskTabId'],
     ['const setStatus = (text, kind = "") => {', 'const setStatus = (text, kind = "") => {\n    taskFeedback(text, kind);'],
     ["setStatus('선택 영역 수정 생성 중 · 자동 검수·교정 없음', 'busy');", "currentTurnStartedAt = Date.now();\n          setGenerating(true, '선택 영역 수정 중', 'AI가 수정 이미지를 생성하고 있습니다. 원본은 유지됩니다.', 'render');\n          setStatus('선택 영역 수정 중 · AI 응답을 기다리고 있습니다.', 'busy');"],
     ['review: async proposal => {', "review: async proposal => {\n          setGenerating(false);\n          setStatus('수정 후보 준비 완료 · 비교 후 적용해 주세요.', 'ok');"],
@@ -23,6 +21,6 @@ function editorPanelSource(source) {
   const saveEnd = source.indexOf(saveTail, saveStart);
   if (saveStart < 0 || saveEnd < 0) throw new Error('AI PNG action source changed');
   source = source.slice(0, saveStart) + source.slice(saveEnd + saveTail.length);
-  return 'import { simplifyComparison } from "/editor-review.js";\nimport { createTaskFeedback } from "/editor-feedback.js";\nimport { createBackgroundOptions } from "/editor-background.js";\n' + source;
+  return 'import { simplifyComparison } from "/editor-review.js";\nimport { createTaskFeedback } from "/editor-feedback.js";\n' + source;
 }
 module.exports = { editorPanelSource };
