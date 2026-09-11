@@ -1694,12 +1694,23 @@ function pointAtTutorialButton() {
   });
   document.documentElement.appendChild(ring);
 
-  const tw = tip.offsetWidth;
-  const x = Math.max(8, Math.min(r.left + r.width / 2 - tw / 2, window.innerWidth - tw - 8));
-  tip.style.left = Math.round(x) + "px";
-  tip.style.top = Math.round(r.bottom + 10) + "px";
-
-  setTimeout(() => { tip.remove(); ring.remove(); }, 4200);
+  const positionTip = () => {
+    const anchor = btn.getBoundingClientRect();
+    const tw = tip.offsetWidth;
+    const x = Math.max(8, Math.min(anchor.left + anchor.width / 2 - tw / 2, window.innerWidth - tw - 8));
+    tip.style.left = Math.round(x) + "px";
+    tip.style.top = Math.round(Math.max(8, Math.min(anchor.bottom + 10, window.innerHeight - tip.offsetHeight - 8))) + "px";
+    Object.assign(ring.style, {
+      left: (anchor.left - 5) + "px", top: (anchor.top - 5) + "px",
+      width: (anchor.width + 10) + "px", height: (anchor.height + 10) + "px",
+    });
+  };
+  positionTip();
+  window.addEventListener("resize", positionTip);
+  setTimeout(() => {
+    window.removeEventListener("resize", positionTip);
+    tip.remove(); ring.remove();
+  }, 4200);
 }
 
 /* ===== 배선 ===== */

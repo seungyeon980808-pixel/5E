@@ -848,7 +848,10 @@
   color: #fff;
   font-family: "IBM Plex Sans KR", sans-serif;
   font-size: calc(14px * var(--ui-zoom, 1));
-  white-space: nowrap;
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
+  white-space: normal;
+  word-break: keep-all;
   box-shadow: 0 6px 20px rgba(1, 4, 9, 0.5);
   pointer-events: none;
   animation: tut-coach-pop var(--tut-t-enter) var(--tut-ease-pop);
