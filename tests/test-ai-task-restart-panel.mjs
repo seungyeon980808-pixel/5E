@@ -30,6 +30,7 @@ test('restored provider work stays interrupted until the explicit retry control 
     const retry = browser.panel.querySelector('[data-ai-retry-interrupted]');
     assert.equal(browser.desktop.sends.length, 0, 'restart must not resend an unknown provider job');
     assert.equal(browser.panel.querySelector('[data-ai-tab-list] .ai-task-tab').dataset.workState, 'interrupted');
+    assert.equal(retry.parentElement.className, 'ai-task-export-controls', 'retry must stay in the visible task rail');
     assert.equal(retry.hidden, false);
     assert.equal(retry.disabled, false);
     assert.match(browser.panel.querySelector('[data-ai-status]').textContent, /자동 재전송하지 않았습니다/);

@@ -360,9 +360,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const retryInterruptedButton = document.createElement('button');
   retryInterruptedButton.type = 'button';
   retryInterruptedButton.dataset.aiRetryInterrupted = '';
+  retryInterruptedButton.className = 'modal-btn';
   retryInterruptedButton.textContent = '중단 작업 다시 시도';
   retryInterruptedButton.hidden = true;
-  newButton?.after(retryInterruptedButton);
   const collectiveExportMode = document.createElement('select');
   collectiveExportMode.dataset.aiTaskExportMode = '';
   collectiveExportMode.setAttribute('aria-label', '여러 작업 저장 범위');
@@ -383,7 +383,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   collectiveExportControls.style.cssText = 'display:grid;gap:5px;padding:7px 6px;border-top:1px solid var(--border);';
   collectiveExportMode.style.cssText = 'width:100%;min-width:0;';
   collectiveExportButton.style.cssText = 'width:100%;min-width:0;';
-  collectiveExportControls.append(collectiveExportMode, collectiveExportButton);
+  retryInterruptedButton.style.cssText = 'width:100%;min-width:0;';
+  collectiveExportControls.append(retryInterruptedButton, collectiveExportMode, collectiveExportButton);
   (panel.querySelector('[data-ai-tabs]') || panel.querySelector('[data-ai-tab-list]'))?.after(collectiveExportControls);
   const compareButton = panel.querySelector("[data-ai-compare]");
   const captureButton = panel.querySelector("[data-ai-capture]");

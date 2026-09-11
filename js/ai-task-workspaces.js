@@ -105,18 +105,27 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   const registryKey = '5e.aiParallelWorkspaces.v1';
   let active;
   let restored = false;
+  let collectiveExportInProgress = false;
   const selectionKey = '5e.aiActiveTask.v1';
   async function exportCollection(mode) {
-    const normalizedMode = normalizeTaskExportMode(mode);
-    const count = entries.reduce((total, entry) => total + (entry.controller?.exportCount?.(normalizedMode) || 0), 0);
-    if (!count) throw new Error('저장할 생성 결과가 없습니다.');
-    const destination = await chooseTaskExportDestination({
-      desktopBatchOutput: window.fiveEDesktop?.batchOutput,
-      confirmDownloads: message => window.confirm(message),
-    });
-    if (!destination) return { status: 'cancelled', count: 0, files: [] };
-    const groups = await Promise.all(entries.map(entry => entry.controller.exportResults(normalizedMode)));
-    return writeTaskExports(destination, groups.flat());
+    if (collectiveExportInProgress) {
+      throw new Error('다른 작업 결과를 저장 중입니다. 완료 후 다시 시도해 주세요.');
+    }
+    collectiveExportInProgress = true;
+    try {
+      const normalizedMode = normalizeTaskExportMode(mode);
+      const count = entries.reduce((total, entry) => total + (entry.controller?.exportCount?.(normalizedMode) || 0), 0);
+      if (!count) throw new Error('저장할 생성 결과가 없습니다.');
+      const destination = await chooseTaskExportDestination({
+        desktopBatchOutput: window.fiveEDesktop?.batchOutput,
+        confirmDownloads: message => window.confirm(message),
+      });
+      if (!destination) return { status: 'cancelled', count: 0, files: [] };
+      const groups = await Promise.all(entries.map(entry => entry.controller.exportResults(normalizedMode)));
+      return await writeTaskExports(destination, groups.flat());
+    } finally {
+      collectiveExportInProgress = false;
+    }
   }
   function store(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); }
