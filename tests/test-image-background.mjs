@@ -208,6 +208,39 @@ test("preserve policy returns independent byte-exact source and output snapshots
   assert.equal(result.reviewRequired, false);
 });
 
+test("line thickness expands dark neutral pixels in the shared processing pipeline", () => {
+  const data = new Uint8ClampedArray(7 * 7 * 4).fill(255);
+  data.set([20, 20, 20, 255], (3 * 7 + 3) * 4);
+  const result = processImageBackgroundPixels(data, 7, 7, {
+    backgroundPolicy: "preserve",
+    lineThickness: 1,
+  });
+  const darkPixels = Array.from({ length: 49 }, (_, pixel) => result.data[pixel * 4] === 20)
+    .filter(Boolean).length;
+  assert.equal(darkPixels, 5);
+  assert.deepEqual(result.source, data);
+  assert.deepEqual(data.slice(0, 4), Uint8ClampedArray.of(255, 255, 255, 255));
+});
+
+test("line thickness respects preserve and change masks", () => {
+  const data = new Uint8ClampedArray(5 * 5 * 4).fill(255);
+  data.set([0, 0, 0, 255], (2 * 5 + 2) * 4);
+  const preserveMask = new Uint8Array(25);
+  preserveMask[2 * 5 + 1] = 1;
+  const changeMask = new Uint8Array(25);
+  changeMask.fill(1);
+  changeMask[2 * 5 + 3] = 0;
+  const result = processImageBackgroundPixels(data, 5, 5, {
+    backgroundPolicy: "preserve",
+    lineThickness: 1,
+    preserveMask,
+    changeMask,
+  });
+  assert.deepEqual(result.data.slice((2 * 5 + 1) * 4, (2 * 5 + 2) * 4), Uint8ClampedArray.of(255, 255, 255, 255));
+  assert.deepEqual(result.data.slice((2 * 5 + 3) * 4, (2 * 5 + 4) * 4), Uint8ClampedArray.of(255, 255, 255, 255));
+  assert.deepEqual(result.data.slice((1 * 5 + 2) * 4, (1 * 5 + 3) * 4), Uint8ClampedArray.of(0, 0, 0, 255));
+});
+
 test("palette conversion is an explicit opt-in and leaves the source reusable", () => {
   const source = Uint8ClampedArray.of(226, 226, 226, 255);
   const result = processImageBackgroundPixels(source, 1, 1, {

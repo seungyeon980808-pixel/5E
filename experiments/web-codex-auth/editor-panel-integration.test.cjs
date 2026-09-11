@@ -65,7 +65,7 @@ test('gateway serves a valid separated-image panel with all web adapters applied
     'taskFeedback(text, kind)',
     'content: simplifyComparison(comparison)',
     'const selectedCanvasImage =',
-    'selectedCandidateId = generatedImages.at(-1)?.id || null;',
+    'selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;',
   ]) assert.ok(source.includes(marker), `Missing runtime integration: ${marker}`);
   assert.doesNotMatch(source, /savePng\.dataset\.aiSaveCandidate/);
   assert.doesNotMatch(source, /createBackgroundOptions|background\.register|background\.output/);
@@ -86,10 +86,17 @@ test('gateway panel keeps preserve pixels and one policy owns transformed previe
     import('../../tests/helpers/ai-panel-browser-fixture.mjs'),
     import('../../tests/helpers/scoped-edit-png-fixture.mjs'),
   ]);
-  const pixels = new Uint8Array(3 * 3 * 4).fill(255);
-  pixels.set([10, 80, 150, 255], (1 * 3 + 1) * 4);
-  const source = `data:image/png;base64,${Buffer.from(encodeTestRgbaPng({width:3,height:3,data:pixels})).toString('base64')}`;
+  const pixels = new Uint8Array(5 * 5 * 4).fill(255);
+  pixels.set([20, 20, 20, 255], (2 * 5 + 2) * 4);
+  pixels.set([10, 80, 150, 255], (1 * 5 + 1) * 4);
+  const source = `data:image/png;base64,${Buffer.from(encodeTestRgbaPng({width:5,height:5,data:pixels})).toString('base64')}`;
   const browser = installAiPanelBrowserFixture({workspace:workspaceWithResult(source)});
+  const conversation = browser.document.createElement('section');
+  conversation.className = 'ai-conversation';
+  const sideTabs = browser.document.createElement('nav');
+  sideTabs.className = 'ai-side-tabs';
+  conversation.append(sideTabs);
+  browser.panel.append(conversation);
   for (const className of ['ai-conversation-actions', 'ai-output-actions']) {
     const anchor = browser.document.createElement('div');
     anchor.className = className;
@@ -111,13 +118,19 @@ test('gateway panel keeps preserve pixels and one policy owns transformed previe
     assert.deepEqual(decodeTestPng(Buffer.from(image.src.slice(image.src.indexOf(',') + 1), 'base64')).data, pixels,
       'preserve policy changed the gateway preview pixels');
     const outputProcessing = browser.panel.querySelector('[data-ai-output-processing]');
-    assert.equal(outputProcessing.parentElement?.className, 'ai-output-actions',
+    assert.equal(outputProcessing.parentElement?.className, 'ai-conversation',
       'the gateway left output processing inside the result-hidden preparation section');
 
     browser.panel.querySelector('[data-ai-background-policy="connected"]').click();
     await browser.document.waitForState(() => image.src !== source);
     await new Promise(setImmediate);
+    const backgroundOnlySource = image.src;
+    browser.panel.querySelector('[data-ai-line-thickness="1"]').click();
+    await browser.document.waitForState(() => image.src !== backgroundOnlySource);
     const previewSource = image.src;
+    const previewPixels = decodeTestPng(Buffer.from(previewSource.slice(previewSource.indexOf(',') + 1), 'base64')).data;
+    assert.equal(Array.from({length:25}, (_, pixel) => previewPixels[pixel * 4] === 20).filter(Boolean).length, 5,
+      'the gateway preview did not apply the shared line-thickness processor');
     browser.panel.querySelector('.ai-canvas-output').click();
     await browser.document.waitForState(() => value.objects.length === 1);
     assert.equal(value.objects[0].src, previewSource, 'inserted output differed from the selected preview variant');

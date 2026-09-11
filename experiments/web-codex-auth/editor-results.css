@@ -6,12 +6,10 @@
 }
 #ai-image-panel .ai-result-view-control { margin-left: auto; }
 #ai-image-panel [data-ai-choose-result] { display: none; }
-#ai-image-panel .ai-output-actions > .ai-output-processing,
 #ai-image-panel .ai-output-actions > [data-ai-insert-selected] { grid-column: 1 / -1; }
-#ai-image-panel .ai-output-actions > .ai-output-processing .ai-output-segments button {
+#ai-image-panel .ai-conversation > .ai-output-processing .ai-output-segments button {
   min-height: 26px;
   padding: 3px 5px;
-  border-radius: 0;
   font-size: var(--ai-type-caption);
 }
 #ai-image-panel[data-ai-result-view="multiple"] .ai-previews {

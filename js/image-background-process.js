@@ -15,6 +15,7 @@ import {
 } from "./image-background-core.js";
 import { checkerboardAnalysis } from "./image-background-checkerboard.js";
 import { connectedBackgroundAnalysis } from "./image-background-connected.js";
+import { thickenDarkLines } from "./image-line-thickness.js";
 import { makeNearWhiteTransparent, quantizeExamLineart } from "./image-background-pixels.js";
 
 /* 순수 픽셀 API: 입력은 절대 수정하지 않고 source에 원본 바이트를 보관한다. reviewMask의 1은
@@ -23,6 +24,7 @@ import { makeNearWhiteTransparent, quantizeExamLineart } from "./image-backgroun
 export function processImageBackgroundPixels(rgba, width, height, {
   backgroundPolicy = "connected",
   examPalette = false,
+  lineThickness = 0,
   preserveMask,
   changeMask,
   connectedOptions = {},
@@ -37,7 +39,7 @@ export function processImageBackgroundPixels(rgba, width, height, {
   const checkedChangeMask = changeMask === undefined ? undefined : validateChangeMask(changeMask, count);
   validateOnReview(onReview);
   const source = rgba.slice();
-  const data = rgba.slice();
+  let data = rgba.slice();
   let analysis;
 
   if (backgroundPolicy === "connected") {
@@ -64,6 +66,13 @@ export function processImageBackgroundPixels(rgba, width, height, {
     changeMask: checkedChangeMask,
   });
   restorePreservedPixels(data, source, checkedMask, checkedChangeMask);
+  data = thickenDarkLines(data, {
+    width,
+    height,
+    radius: lineThickness,
+    preserveMask: checkedMask,
+    changeMask: checkedChangeMask,
+  });
   const result = { width, height, data, source, backgroundPolicy, ...analysis };
   notifyReview(onReview, result);
   return result;

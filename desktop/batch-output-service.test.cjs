@@ -94,3 +94,20 @@ test('Given ENOSPC after exclusive creation, when output fails, then the created
   await assert.rejects(readFile(partial), error => error.code === 'ENOENT');
   assert.equal(await readFile(collision, 'utf8'), 'existing-output');
 });
+
+test('collective task output keeps its descriptive name and still suffixes collisions', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), '5e-task-output-'));
+  await writeFile(path.join(directory, '작업 1 - figure.png'), 'existing');
+  const service = createBatchOutputService();
+
+  const result = await service.write({
+    outputDirectory: directory,
+    sourceName: '작업 1 - figure',
+    data: Buffer.from('selected-result'),
+    appendConverted: false,
+  });
+
+  assert.equal(path.basename(result.path), '작업 1 - figure (2).png');
+  assert.equal(await readFile(path.join(directory, '작업 1 - figure.png'), 'utf8'), 'existing');
+  assert.equal(await readFile(result.path, 'utf8'), 'selected-result');
+});

@@ -10,10 +10,12 @@ test("output options default to the byte-preserving source and original colors",
   assert.deepEqual(normalizeImageOutputOptions(), {
     backgroundPolicy: "preserve",
     examPalette: false,
+    lineThickness: 0,
   });
   assert.deepEqual(normalizeImageOutputOptions({ backgroundPolicy: "unknown", examPalette: "yes" }), {
     backgroundPolicy: "preserve",
     examPalette: false,
+    lineThickness: 0,
   });
 });
 
@@ -33,7 +35,23 @@ test("explicit background and palette choices are passed to the real converter",
     backgroundPolicy: "connected",
     examPalette: true,
   }, transform), "processed");
-  assert.deepEqual(received, [["source", { backgroundPolicy: "connected", examPalette: true }]]);
+  assert.deepEqual(received, [["source", { backgroundPolicy: "connected", examPalette: true, lineThickness: 0 }]]);
+});
+
+test("explicit line thickness uses the same output transform while preserving the source item", async () => {
+  const item = { data: "source" };
+  let received;
+  const result = await resolveImageOutput(item, { lineThickness: 2 }, async (source, options) => {
+    received = [source, options];
+    return "thickened";
+  });
+  assert.equal(result, "thickened");
+  assert.equal(item.data, "source");
+  assert.deepEqual(received, ["source", {
+    backgroundPolicy: "preserve",
+    examPalette: false,
+    lineThickness: 2,
+  }]);
 });
 
 test("editable vector results bypass raster processing", async () => {

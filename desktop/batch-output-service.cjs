@@ -18,12 +18,12 @@ function sanitizeTargetName(sourceName) {
 
 function createBatchOutputService({ fileSystem = fs, pathApi = path } = {}) {
   return {
-    async write({ outputDirectory, sourceName, originalPath = null, data, extension = '.png' } = {}) {
+    async write({ outputDirectory, sourceName, originalPath = null, data, extension = '.png', appendConverted = true } = {}) {
       if (typeof outputDirectory !== 'string' || !outputDirectory) throw new TypeError('outputDirectory is required.');
       if (!Buffer.isBuffer(data) && !(data instanceof Uint8Array)) throw new TypeError('Output data must be binary.');
       const suffix = String(extension).startsWith('.') ? String(extension).toLowerCase() : `.${String(extension).toLowerCase()}`;
       if (!/^\.[a-z0-9]+$/.test(suffix)) throw new TypeError('Output extension is invalid.');
-      const base = `${sanitizeTargetName(sourceName)}-converted`;
+      const base = `${sanitizeTargetName(sourceName)}${appendConverted === false ? '' : '-converted'}`;
       const sourcePath = originalPath ? pathApi.resolve(originalPath) : null;
       let sequence = 1;
       while (true) {
