@@ -11,8 +11,7 @@
 
 // userAgentData가 있으면 그쪽이 정확하고(platform이 deprecated), 없으면 구형 경로로 떨어진다.
 const _plat =
-  (navigator.userAgentData && navigator.userAgentData.platform) ||
-  navigator.platform ||
+  (typeof navigator !== "undefined" && (navigator.userAgentData?.platform || navigator.platform)) ||
   "";
 const IS_MAC = /mac/i.test(_plat);
 
