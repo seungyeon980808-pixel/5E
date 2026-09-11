@@ -37,6 +37,11 @@ function registerPdfLibraryIpc(options) {
   invoke("save-correction", (payload) => options.service.saveCorrection(payload));
   invoke("delete-correction", (payload) => options.service.deleteCorrection(payload));
   invoke("capabilities", () => options.service.capabilities());
+  invoke("bundled-pack", () => options.bundledPack?.describe() || { available: false });
+  invoke("read-bundled-pack", (payload) => {
+    if (!options.bundledPack) throw new Error("The bundled PDF pack is unavailable.");
+    return options.bundledPack.read(payload?.path);
+  });
 }
 
 module.exports = { registerPdfLibraryIpc };
