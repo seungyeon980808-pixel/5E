@@ -1243,42 +1243,43 @@ function importedLibrarySource(overlay) {
     input.closest("label")?.textContent.includes("가져온 이미지"));
 }
 
-function importTutorialExamImage(ctx) {
-  if (ctx.tutorialExamImport) return;
+async function importTutorialExamImage(ctx) {
+  if (ctx.tutorialExamImport?.state === "ready") return true;
+  if (ctx.tutorialExamImport?.state === "loading") return false;
   const overlay = libraryOverlay();
   const input = overlay?.querySelector("[data-unilib-files]");
   if (!overlay || !input) {
     ctx.tutorialExamImport = { state: "failed" };
-    return;
+    return false;
   }
   ctx.tutorialExamImport = { state: "loading" };
-  void fetch(TUTORIAL_EXAM_IMAGE)
-    .then((response) => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return response.blob();
-    })
-    .then((blob) => {
-      const file = new File([blob], TUTORIAL_EXAM_FILE_NAME, { type: blob.type || "image/png" });
-      ctx.tutorialExamFile = file;
-      setFilesOnInput(input, file);
-      let attempts = 0;
-      const awaitImportedSource = () => {
-        const source = importedLibrarySource(overlay);
-        if (!source && attempts++ < 100) { setTimeout(awaitImportedSource, 20); return; }
-        if (!source) { ctx.tutorialExamImport = { state: "failed" }; return; }
-        if (!source.checked) {
-          source.click();
-          const restore = () => {
-            const current = importedLibrarySource(overlay);
-            if (current?.checked) current.click();
-          };
-          window.addEventListener("5e:library-closed", restore, { once: true });
-        }
-        ctx.tutorialExamImport = { state: "ready" };
+  try {
+    const response = await fetch(TUTORIAL_EXAM_IMAGE);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    const file = new File([blob], TUTORIAL_EXAM_FILE_NAME, { type: blob.type || "image/png" });
+    ctx.tutorialExamFile = file;
+    setFilesOnInput(input, file);
+    let source = importedLibrarySource(overlay);
+    for (let attempts = 0; !source && attempts < 100; attempts += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      source = importedLibrarySource(overlay);
+    }
+    if (!source) throw new Error("Imported tutorial image was not registered");
+    if (!source.checked) {
+      source.click();
+      const restore = () => {
+        const current = importedLibrarySource(overlay);
+        if (current?.checked) current.click();
       };
-      awaitImportedSource();
-    })
-    .catch(() => { ctx.tutorialExamImport = { state: "failed" }; });
+      window.addEventListener("5e:library-closed", restore, { once: true });
+    }
+    ctx.tutorialExamImport = { state: "ready" };
+    return true;
+  } catch (_) {
+    ctx.tutorialExamImport = { state: "failed" };
+    return false;
+  }
 }
 
 function loadTutorialExamIntoObjectify(ctx) {
@@ -1383,7 +1384,7 @@ const EXAM_SEARCH = {
         label: "연습 그림 가져오기",
         run: importTutorialExamImage,
       },
-      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready" || ctx.tutorialExamImport?.state === "failed", hint: "연습 그림을 가져오는 중입니다" },
+      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready", hint: "연습 그림을 가져오지 못했다면 [다시 시도하기]를 눌러 주세요" },
     },
     {
       target: () => ["[data-unilib-query]", "[data-unilib-status]"],
@@ -1903,7 +1904,7 @@ const TRIM_EXAM = {
         label: "연습 그림 가져오기",
         run: importTutorialExamImage,
       },
-      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready" || ctx.tutorialExamImport?.state === "failed", hint: "연습 그림을 가져오는 중입니다" },
+      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready", hint: "연습 그림을 가져오지 못했다면 [다시 시도하기]를 눌러 주세요" },
     },
     {
       target: () => "[data-unilib-query]",

@@ -76,13 +76,25 @@ function cloneSourceMetadata(value) {
   if (value == null) return undefined;
   if (typeof value !== "object" || Array.isArray(value)) throw new Error("이미지 출처 정보를 확인할 수 없습니다.");
   const metadata = {};
-  for (const key of ["documentId", "documentTitle", "documentHash", "title"]) {
-    if (typeof value[key] === "string" && value[key].trim()) metadata[key] = value[key].trim();
+  const ownValue = (key) => {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    return descriptor && Object.hasOwn(descriptor, "value") ? descriptor.value : undefined;
+  };
+  for (const key of [
+    "provider", "documentId", "documentTitle", "documentHash", "title", "locator", "displayName",
+    "sha256", "sourceKind", "itemId", "fileName", "sourceUrl", "license",
+  ]) {
+    const field = ownValue(key);
+    if (typeof field === "string" && field.trim()) metadata[key] = field.trim();
   }
-  if (Number.isInteger(value.pageNumber) && value.pageNumber > 0) metadata.pageNumber = value.pageNumber;
-  if (Array.isArray(value.rect) && value.rect.length === 4 && value.rect.every((number) => Number.isFinite(number))) {
-    metadata.rect = [...value.rect];
+  const pageNumber = ownValue("pageNumber");
+  if (Number.isInteger(pageNumber) && pageNumber > 0) metadata.pageNumber = pageNumber;
+  const rect = ownValue("rect");
+  if (Array.isArray(rect) && rect.length === 4 && rect.every((number) => Number.isFinite(number))) {
+    metadata.rect = [...rect];
   }
+  const fullPageFallback = ownValue("fullPageFallback");
+  if (typeof fullPageFallback === "boolean") metadata.fullPageFallback = fullPageFallback;
   return Object.keys(metadata).length ? metadata : undefined;
 }
 

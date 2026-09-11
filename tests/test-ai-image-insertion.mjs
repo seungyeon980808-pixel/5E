@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
+const { unifiedImageInsertionOptions } = await import('../js/exam-library.js');
+
 const pasteSource = fs.readFileSync(new URL('../js/image-paste.js', import.meta.url), 'utf8');
 const projectSource = fs.readFileSync(new URL('../js/project-io.js', import.meta.url), 'utf8');
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -97,10 +99,24 @@ test('options are captured before await and incomplete AI metadata is rejected',
 test('replacement caps undo history at 60 and clears redo',async()=>{
   const f=fixture();f.value.undoStack=Array.from({length:60},(_,i)=>[{id:`undo-${i}`}]);const pending=f.insert(f.state,'new',replaceOptions());f.finish();await pending;assert.equal(f.value.undoStack.length,60);assert.equal(f.value.undoStack[0][0].id,'undo-1');assert.equal(f.value.undoStack.at(-1)[0].src,'old-png');assert.deepEqual(plain(f.value.redoStack),[]);
 });
-test('actual serialize/JSON/migrate/load preparation preserves source and PDF provenance',async()=>{
-  const f=fixture(),metadata={documentId:'doc-opaque-1',documentTitle:'2026 물리학Ⅰ',pageNumber:3,rect:[.1,.2,.5,.4]},pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,aiTaskId:'task-1',aiCandidateId:'v7',sourceMetadata:metadata});f.finish();const id=await pending;
+test('actual serialize/JSON/migrate/load preparation preserves the approved library provenance schema',async()=>{
+  const f=fixture(),metadata={provider:'pdf',documentId:'doc-opaque-1',documentTitle:'2026 물리학Ⅰ',documentHash:'doc-hash',title:'13번 도판',pageNumber:3,rect:[.1,.2,.5,.4],fullPageFallback:false,locator:'starter/documents/physics.pdf',displayName:'physics.pdf',sha256:'a'.repeat(64),sourceKind:'pack',itemId:'item-13',fileName:'physics.pdf',sourceUrl:'https://example.invalid/source',license:'공공누리 제1유형'},pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,aiTaskId:'task-1',aiCandidateId:'v7',sourceMetadata:metadata});f.finish();const id=await pending;
   const io=evaluate(projectSource,['serialize','prepareLoadedProject'],{screenToWorld(){},applyNewObjectStyleDefaults(){},migrateObjectStyleMode(){},showConfirm(){},downscaleIfNeeded(){},DEFAULT_TEXT_SIZE_MM:3,DEFAULT_TEXT_FONT:'sans-serif',normalizeTextRuns:()=>[],textRunsToText:()=>'',LABEL_CAPABLE_TYPES:new Set(),insertImageFromSrc(){},addPage(){}});
   const project=plain(io.serialize(f.value));const prepared=io.prepareLoadedProject(project);const object=prepared.active.objects.find(o=>o.id===id);assert.equal(object.src,'data:image/png;base64,EXACT');assert.equal(object.aiTaskId,'task-1');assert.equal(object.aiCandidateId,'v7');assert.equal(object.layerId,7);assert.equal(prepared.activePageId,'page-1');assert.deepEqual(plain(object.sourceMetadata),metadata);metadata.rect[0]=.9;assert.equal(object.sourceMetadata.rect[0],.1);
+});
+
+test('source metadata cloning keeps only approved own primitive fields',async()=>{
+  const inherited={license:'inherited-license'}, metadata=Object.create(inherited);
+  Object.assign(metadata,{provider:'imported-image',fileName:'fixture.png',sha256:'b'.repeat(64),fullPageFallback:true,locator:'browser:fixture',arbitraryObject:{secret:true}});
+  Object.defineProperty(metadata,'sourceUrl',{enumerable:true,get(){throw new Error('accessor must not run')}});
+  const f=fixture(),pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,sourceMetadata:metadata});f.finish();const id=await pending;
+  assert.deepEqual(plain(f.value.objects.find(o=>o.id===id).sourceMetadata),{provider:'imported-image',fileName:'fixture.png',sha256:'b'.repeat(64),fullPageFallback:true,locator:'browser:fixture'});
+});
+
+test('unified library image insertion is centered and carries materialized provenance',()=>{
+  const result={title:'13번 도판',provenance:{provider:'pdf',documentId:'doc-1',pageNumber:3,rect:[0,0,1,1],fullPageFallback:true,locator:'starter/doc.pdf',displayName:'doc.pdf',sha256:'c'.repeat(64),sourceKind:'pack',itemId:'item-13',fileName:'doc.pdf',license:'공공누리'}};
+  const asset={source:{documentId:'doc-1',pageNumber:3,rect:[.1,.2,.3,.4],fullPageFallback:false}};
+  assert.deepEqual(unifiedImageInsertionOptions(result,asset),{preserveBytes:true,centerArtboard:true,sourceMetadata:{provider:'pdf',documentId:'doc-1',title:'13번 도판',pageNumber:3,rect:[.1,.2,.3,.4],fullPageFallback:false,locator:'starter/doc.pdf',displayName:'doc.pdf',sha256:'c'.repeat(64),sourceKind:'pack',itemId:'item-13',fileName:'doc.pdf',license:'공공누리'}});
 });
 
 test('AI insertion uses the origin-centered artboard center even if viewport or stale pointer is elsewhere',async()=>{
