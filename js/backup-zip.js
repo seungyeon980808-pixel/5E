@@ -108,24 +108,84 @@ function zipStore(entries) {
   return new Blob([...locals, ...centrals, eocd], { type: "application/zip" });
 }
 
-/* ---------- STORE ZIP reader (우리가 쓴 STORE zip 전용, 로컬헤더 순차 스캔) ---------- */
-function unzipStore(u8) {
-  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
-  const dec = new TextDecoder();
-  const files = new Map();
-  let p = 0;
-  while (p + 4 <= u8.length && dv.getUint32(p, true) === 0x04034b50) {
-    const method = dv.getUint16(p + 8, true);
-    const size = dv.getUint32(p + 22, true);
-    const nameLen = dv.getUint16(p + 26, true);
-    const extraLen = dv.getUint16(p + 28, true);
-    const nameStart = p + 30;
-    const name = dec.decode(u8.subarray(nameStart, nameStart + nameLen));
-    const dataStart = nameStart + nameLen + extraLen;
-    if (method !== 0) throw new Error("지원하지 않는 압축 방식(STORE만)");
-    files.set(name, u8.subarray(dataStart, dataStart + size));
-    p = dataStart + size;
+/* ---------- STORE ZIP reader ---------- */
+const MAX_ZIP_ENTRIES = 10000;
+const MAX_ZIP_ENTRY_BYTES = 64 * 1024 * 1024;
+const MAX_ZIP_TOTAL_BYTES = 256 * 1024 * 1024;
+
+function safeEntryName(name) {
+  return name !== "" && !name.startsWith("/") && !name.includes("\\") &&
+    !name.includes("\0") && !name.split("/").includes("..");
+}
+
+function eocdOffset(u8, dv) {
+  const earliest = Math.max(0, u8.length - 0xFFFF - 22);
+  for (let p = u8.length - 22; p >= earliest; p -= 1) {
+    if (dv.getUint32(p, true) !== 0x06054B50) continue;
+    const commentLength = dv.getUint16(p + 20, true);
+    if (p + 22 + commentLength === u8.length) return p;
   }
+  throw new Error("손상된 ZIP 끝 레코드");
+}
+
+function readName(u8, start, size, dec) {
+  try { return dec.decode(u8.subarray(start, start + size)); }
+  catch (_) { throw new Error("ZIP 항목 이름 인코딩 오류"); }
+}
+
+function unzipStore(u8) {
+  if (u8.length < 22) throw new Error("손상되었거나 잘린 ZIP");
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); const dec = new TextDecoder("utf-8", { fatal: true });
+  const end = eocdOffset(u8, dv);
+  const disk = dv.getUint16(end + 4, true); const centralDisk = dv.getUint16(end + 6, true);
+  const entries = dv.getUint16(end + 10, true); const centralSize = dv.getUint32(end + 12, true); const centralStart = dv.getUint32(end + 16, true);
+  if (disk !== 0 || centralDisk !== 0 || entries !== dv.getUint16(end + 8, true) ||
+      entries > MAX_ZIP_ENTRIES || centralStart > end || centralSize > end - centralStart ||
+      centralStart + centralSize !== end) throw new Error("손상된 ZIP 중앙 목록");
+
+  const files = new Map(); let totalBytes = 0; let p = centralStart;
+  for (let index = 0; index < entries; index += 1) {
+    if (p + 46 > end || dv.getUint32(p, true) !== 0x02014B50) throw new Error("손상된 ZIP 항목");
+    const flags = dv.getUint16(p + 8, true);
+    const method = dv.getUint16(p + 10, true);
+    const crc = dv.getUint32(p + 16, true);
+    const compressedSize = dv.getUint32(p + 20, true);
+    const size = dv.getUint32(p + 24, true);
+    const nameLength = dv.getUint16(p + 28, true);
+    const extraLength = dv.getUint16(p + 30, true);
+    const commentLength = dv.getUint16(p + 32, true);
+    const localOffset = dv.getUint32(p + 42, true);
+    const centralEnd = p + 46 + nameLength + extraLength + commentLength;
+    if (centralEnd > end || flags !== 0 || method !== 0 || compressedSize !== size ||
+        size > MAX_ZIP_ENTRY_BYTES || totalBytes + size > MAX_ZIP_TOTAL_BYTES) {
+      throw new Error("지원하지 않거나 너무 큰 ZIP 항목");
+    }
+    const name = readName(u8, p + 46, nameLength, dec);
+    if (!safeEntryName(name) || files.has(name)) throw new Error("안전하지 않거나 중복된 ZIP 항목");
+    if (localOffset + 30 > centralStart || dv.getUint32(localOffset, true) !== 0x04034B50) {
+      throw new Error("손상된 ZIP 로컬 항목");
+    }
+    const localFlags = dv.getUint16(localOffset + 6, true);
+    const localMethod = dv.getUint16(localOffset + 8, true);
+    const localCrc = dv.getUint32(localOffset + 14, true);
+    const localCompressedSize = dv.getUint32(localOffset + 18, true);
+    const localSize = dv.getUint32(localOffset + 22, true);
+    const localNameLength = dv.getUint16(localOffset + 26, true);
+    const localExtraLength = dv.getUint16(localOffset + 28, true);
+    const dataStart = localOffset + 30 + localNameLength + localExtraLength;
+    const dataEnd = dataStart + size;
+    if (localFlags !== flags || localMethod !== method || localCrc !== crc ||
+        localCompressedSize !== compressedSize || localSize !== size || dataEnd > centralStart ||
+        readName(u8, localOffset + 30, localNameLength, dec) !== name) {
+      throw new Error("ZIP 로컬 항목이 중앙 목록과 다릅니다");
+    }
+    const data = u8.subarray(dataStart, dataEnd);
+    if (crc32(data) !== crc) throw new Error("ZIP CRC 검사 실패");
+    files.set(name, data);
+    totalBytes += size;
+    p = centralEnd;
+  }
+  if (p !== end) throw new Error("손상된 ZIP 중앙 목록");
   return files;
 }
 
@@ -169,18 +229,40 @@ export function buildBackupZip(payload) {
 export function parseBackupZip(arrayBuffer) {
   const u8 = arrayBuffer instanceof Uint8Array ? arrayBuffer : new Uint8Array(arrayBuffer);
   const files = unzipStore(u8);
-  const dec = new TextDecoder();
+  const dec = new TextDecoder("utf-8", { fatal: true });
   const backup = files.get("backup.json");
   if (!backup) throw new Error("backup.json 없음");
-  let text = dec.decode(backup);
+  let text;
+  try { text = dec.decode(backup); }
+  catch (_) { throw new Error("backup.json 형식 오류"); }
+  const backupTokens = new Set(text.match(/\[\[5E-ZIPIMG:\d+\]\]/g) || []);
   const manRaw = files.get("manifest.json");
-  const manifest = manRaw ? JSON.parse(dec.decode(manRaw)) : [];
+  if (!manRaw) throw new Error("manifest.json 없음");
+  let manifest;
+  try { manifest = JSON.parse(dec.decode(manRaw)); }
+  catch (_) { throw new Error("manifest.json 형식 오류"); }
+  if (!Array.isArray(manifest)) throw new Error("manifest.json 형식 오류");
+  const manifestTokens = new Set();
+  const manifestNames = new Set();
   // 토큰 → data URL 재수화(치환은 문자열 리터럴로, 정규식 특수문자 이슈 없이 split/join).
   for (const m of manifest) {
+    if (!m || typeof m !== "object" || typeof m.token !== "string" || typeof m.name !== "string" ||
+        typeof m.mediaType !== "string" || !/^\[\[5E-ZIPIMG:\d+\]\]$/.test(m.token) ||
+        !/^images\/img\d+\.[a-z0-9]+$/i.test(m.name) || !/^image\/[a-z0-9.+-]+$/i.test(m.mediaType) ||
+        manifestTokens.has(m.token) || manifestNames.has(m.name) || !files.has(m.name)) {
+      throw new Error("이미지 manifest 항목 오류");
+    }
+    manifestTokens.add(m.token);
+    manifestNames.add(m.name);
     const bytes = files.get(m.name);
-    if (!bytes) continue;
     const dataUrl = `data:${m.mediaType};base64,${bytesToB64(bytes)}`;
     text = text.split(m.token).join(dataUrl);
   }
-  return JSON.parse(text);
+  const unresolved = text.match(/\[\[5E-ZIPIMG:\d+\]\]/g);
+  if (unresolved || backupTokens.size !== manifestTokens.size ||
+      [...backupTokens].some((token) => !manifestTokens.has(token))) {
+    throw new Error("필수 이미지 payload가 없습니다");
+  }
+  try { return JSON.parse(text); }
+  catch (_) { throw new Error("backup.json 형식 오류"); }
 }

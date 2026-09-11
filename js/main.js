@@ -13,7 +13,7 @@ import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } fro
 import { initTools } from "./tools.js?v=1.5.4";
 import { initCutTool } from "./cut-tool.js?v=1.5.3";
 import { initEraseTool } from "./erase-tool.js?v=1.4.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
+import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
 import { initProjectIO } from "./project-io.js?v=1.4.0";
@@ -67,9 +67,16 @@ import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.5.2";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
-import { initAiPanel } from "./ai-panel.js?v=1.5.7";
+import { initAiPanel } from "./ai-panel.js?v=1.5.8";
 
 const svg = document.getElementById("canvas");
+// Canvas interaction transfers keyboard ownership away from the last toolbar button.
+svg.setAttribute("tabindex", "-1");
+svg.addEventListener("pointerdown", (event) => {
+  if (event.button === 0 && !event.target.closest("input, textarea, [contenteditable]")) {
+    svg.focus({ preventScroll: true });
+  }
+});
 const zoomReadout = document.getElementById("zoom-readout");
 
 /* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
@@ -328,10 +335,20 @@ initDataPlot();
 (function initToolSections() {
   const panel = document.getElementById("tool-list");
   if (!panel) return;
+  const key = "5e.toolSections.v1";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (_) {}
+  for (const section of panel.querySelectorAll(".tool-section[id]")) {
+    if (typeof saved[section.id] === "boolean") section.classList.toggle("is-collapsed", saved[section.id]);
+  }
   panel.addEventListener("click", (e) => {
     const header = e.target.closest(".tool-section-header");
     if (!header) return;
-    header.closest(".tool-section").classList.toggle("is-collapsed");
+    const section = header.closest(".tool-section");
+    section.classList.toggle("is-collapsed");
+    if (!section.id) return;
+    saved[section.id] = section.classList.contains("is-collapsed");
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
   });
 })();
 

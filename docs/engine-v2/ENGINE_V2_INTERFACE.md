@@ -363,6 +363,11 @@ if (!hit.hit) {
 개별 20 MiB다. 브라우저 기본 backend는 IndexedDB이며 테스트에서는
 `MemoryOutputCacheBackend`를 주입할 수 있다.
 
+복잡 품질의 raster 요청은 1차 결과를 최종 cache hit로 취급하지 않는다. 현재 패널은
+`output.complexPass === 2`이고 완료·비취소인 결과만 같은 요청의 완료 cache 후보로 인정한다.
+따라서 이 문서의 `complete`는 단순/보통의 완료 1회 또는 복잡 모드의 2차 교정 완료를 뜻하며,
+1차 preview·부분·실패·취소 결과를 저장하거나 재사용한다는 뜻이 아니다.
+
 `새 변형`, `다시 생성`, `다르게 생성`, `재생성` 같은 의도는 현재 UI 통합층에서 cache를 우회한다.
 
 ## 7. 정확 지도와 삽화 자산의 안전 경계

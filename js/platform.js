@@ -31,6 +31,24 @@ function snapKey(e) {
 /** 화면에 보여줄 수식키 이름. 안내 문구·툴팁에 쓴다. */
 const MOD_LABEL = IS_MAC ? "⌘" : "Ctrl";
 const ALT_LABEL = IS_MAC ? "⌥" : "Alt";
+const SNAP_LABEL = IS_MAC ? "⌥" : "Ctrl";
+
+function shortcutKey(e) {
+  return /^Key[A-Z]$/.test(e.code || "") ? e.code.slice(3).toLowerCase() : String(e.key || "").toLowerCase();
+}
+
+function isEditingTarget(target) {
+  return !!target && (/^(INPUT|TEXTAREA|SELECT|OPTION)$/.test(target.tagName) || target.isContentEditable === true);
+}
+
+function isComposingKey(e) {
+  return !!e.isComposing || e.keyCode === 229;
+}
+
+function blocksCanvasShortcut(e) {
+  return !!e.defaultPrevented || isComposingKey(e) || isEditingTarget(e.target) ||
+    !!document.querySelector(".modal-overlay:not([hidden])");
+}
 
 /** "Ctrl+S" 같은 문자열을 현재 플랫폼 표기로 바꾼다. Windows에선 원문 그대로.
  *  Mac 관례대로 ⌘ 뒤의 '+'는 떼고 붙여 쓴다(⌘S). */
@@ -59,4 +77,4 @@ function localizeShortcutLabels(root = document.body) {
   hits.forEach((n) => { n.nodeValue = keyLabel(n.nodeValue); });
 }
 
-export { IS_MAC, modKey, snapKey, keyLabel, localizeShortcutLabels, MOD_LABEL, ALT_LABEL };
+export { IS_MAC, modKey, snapKey, keyLabel, localizeShortcutLabels, MOD_LABEL, ALT_LABEL, SNAP_LABEL, shortcutKey, isEditingTarget, isComposingKey, blocksCanvasShortcut };

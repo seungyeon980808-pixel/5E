@@ -1,3 +1,5 @@
+import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.4.0";
+
 /* ===== TOOL HINT: 캔버스 하단 바의 도구별 조작 안내 =====
  *
  * 캔버스를 가리는 플로팅 안내는 사용하지 않습니다. 현재 도구의 핵심 동작과
@@ -102,7 +104,7 @@ function injectStyles() {
     }
     #tool-hint .tool-hint-key { color:var(--text-secondary); font-weight:600; }
     #tool-hint .tool-hint-key.is-active {
-      display:inline-flex; align-items:center; min-height:19px; padding:0 5px;
+      display:inline-flex; align-items:center; flex:none; min-height:19px; padding:0 5px;
       border:1px solid color-mix(in srgb, var(--accent) 72%, var(--c-border));
       border-radius:4px; background:color-mix(in srgb, var(--accent) 16%, var(--bg-panel));
       color:var(--accent); font-weight:750;
@@ -112,7 +114,8 @@ function injectStyles() {
       #tool-hint { max-width:58vw; gap:6px; }
       #tool-hint .tool-hint-title { font-size:11.5px; }
       #tool-hint .tool-hint-action { font-size:11px; }
-      #tool-hint .tool-hint-keys { font-size:10px; }
+      #tool-hint .tool-hint-keys { flex:0 0 auto; max-width:none; overflow:visible; font-size:10px; }
+      #tool-hint .tool-hint-keys > span:not(.is-active) { display:none; }
     }
   `;
   document.head.appendChild(st);
@@ -128,7 +131,7 @@ function renderHint(hint) {
   for (const part of parts) {
     if (!part) continue;
     const span = document.createElement("span");
-    span.textContent = part;
+    span.textContent = part === "Ctrl" ? SNAP_LABEL : keyLabel(part);
     if (activeKeys.has(part)) span.className = "tool-hint-key is-active";
     else if (/^(Shift|Ctrl|Esc|Enter|E)/.test(part)) span.className = "tool-hint-key";
     _keys.appendChild(span);

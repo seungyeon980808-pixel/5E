@@ -39,6 +39,29 @@ export function registerTopMenu(name, btn, list, opts = {}) {
     else openMenu(name);
   });
 
+  const items = () => [...list.querySelectorAll('[role="menuitem"]')]
+    .filter((item) => !item.disabled && !item.hidden && item.getAttribute("aria-disabled") !== "true");
+  btn.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    e.stopPropagation();
+    openMenu(name);
+    const rows = items();
+    (e.key === "ArrowDown" ? rows[0] : rows.at(-1))?.focus();
+  });
+  list.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") { closeMenu(name); return; }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rows = items();
+    if (!rows.length) return;
+    const current = rows.indexOf(document.activeElement);
+    const index = e.key === "Home" ? 0 : e.key === "End" ? rows.length - 1 :
+      (current + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length;
+    rows[index].focus();
+  });
+
   // Any item click dismisses the menu.
   list.addEventListener("click", () => closeMenu(name));
 }
@@ -50,5 +73,11 @@ document.addEventListener("click", (e) => {
   if (m && !m.list.contains(e.target) && e.target !== m.btn) closeMenu(activeTopMenu);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && activeTopMenu) closeMenu(activeTopMenu);
+  if (e.key === "Escape" && activeTopMenu) {
+    e.preventDefault();
+    e.stopPropagation();
+    const trigger = menus.get(activeTopMenu).btn;
+    closeMenu(activeTopMenu);
+    trigger.focus();
+  }
 });

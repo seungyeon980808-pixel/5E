@@ -1,0 +1,10 @@
+.ai-background-option {display:grid;gap:6px;margin:6px 0;color:var(--text-label);font-size:12px;line-height:1.5}
+.ai-background-option label {display:grid;grid-template-columns:var(--ai-option-label-width,70px) minmax(0,1fr);align-items:center;gap:var(--ai-option-gap,8px)}
+.ai-background-option select {min-width:0;min-height:32px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);font:inherit;font-size:13px}
+.ai-background-option small {font-size:10px;overflow-wrap:anywhere}
+.ai-background-option select:focus-visible {outline:2px solid var(--accent);outline-offset:2px}
+#ai-image-panel .ai-preview-stage > img.ai-outer-transparent {background-color:#fff;background-image:conic-gradient(#dedede 25%,transparent 0 50%,#dedede 0 75%,transparent 0);background-size:16px 16px}
+
+.ai-task-feedback {padding:9px 10px;margin:6px 0;border-left:3px solid var(--accent);background:var(--bg-panel);color:var(--text-primary);font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.ai-task-feedback[data-kind="error"] {border-color:#f85149}
+.ai-task-feedback[hidden] {display:none}

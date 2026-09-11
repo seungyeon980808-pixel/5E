@@ -19,7 +19,7 @@ import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension,
 import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
 import { buildSafePart, safePartsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
-import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
+import { startBridge, sendToApp, bridgePairingRecord, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
@@ -590,6 +590,13 @@ const TOOLS = [
     },
   },
   {
+    name: "app_pairing",
+    description:
+      "현재 MCP 프로세스의 5E 앱 페어링 기록을 표시한다. 포트와 일회성 capability가 함께 " +
+      "들어 있으며, 사용자가 연결하려는 5E 창의 MCP 배지 입력창에 그대로 붙여 넣는다.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
     name: "app_status",
     description:
       "지금 열려 있는 5E 앱과 연결돼 있는지 확인한다. 앱에 바로 그리기 전에 이걸 먼저 부르고, " +
@@ -980,17 +987,36 @@ const HANDLERS = {
   },
 
   /* ----- 열려 있는 앱 직결 ----- */
+  async app_pairing() {
+    const record = bridgePairingRecord();
+    if (!record) {
+      const status = bridgeStatus();
+      return status.startError === "EPERM" || status.startError === "EACCES"
+        ? `❌ 브리지 시작 실패: ${status.startError}`
+        : "❌ 로컬 통로를 열지 못했습니다 (포트 8579~8583 사용중)";
+    }
+    return [
+      "5E 창의 MCP 배지를 누르고 아래 페어링 기록을 그대로 붙여 넣으세요:",
+      record,
+      "이 기록은 현재 MCP 프로세스가 끝날 때까지만 유효합니다.",
+    ].join("\n");
+  },
+
   async app_status() {
     const b = bridgeStatus();
-    if (!b.port) return "❌ 로컬 통로를 열지 못했습니다 (포트 8579~8583 사용중)";
+    if (!b.port) {
+      return b.startError === "EPERM" || b.startError === "EACCES"
+        ? `❌ 브리지 시작 실패: ${b.startError}`
+        : "❌ 로컬 통로를 열지 못했습니다 (포트 8579~8583 사용중)";
+    }
     if (!b.connected) {
+      const record = bridgePairingRecord();
       return [
-        `통로는 열려 있습니다 (127.0.0.1:${b.port}) — 하지만 5E 앱이 붙어 있지 않습니다.`,
+        `통로는 열려 있습니다 (127.0.0.1:${b.port}) — 하지만 5E 앱이 페어링되지 않았습니다.`,
         "",
-        "확인할 것:",
-        "1. 앱을 http://localhost:… 로 열었는지 (파일 더블클릭(file://)으로는 안 됩니다)",
-        "2. 이미 열었다면 새로고침 — 앱은 켜질 때 한 번만 통로를 찾습니다",
-        "3. 연결되면 화면 왼쪽 아래에 'MCP 연결됨' 배지가 뜹니다",
+        "연결하려는 5E 창의 MCP 배지를 누르고 아래 기록을 그대로 붙여 넣으세요:",
+        record,
+        "포트와 capability를 따로 바꾸거나 다른 서버의 기록과 섞지 마세요.",
       ].join("\n");
     }
     const info = await sendToApp("ping");
@@ -1004,7 +1030,7 @@ const HANDLERS = {
       `   내용: ${info.page}, 객체 ${info.objects}개, 아트보드 ${info.artboard.w}×${info.artboard.h}mm`,
       "",
       "⚠️ 이 창이 내가 의도한 창인지 확인하고 그릴 것. 5E 를 여러 개 열어 두면",
-      "   가장 마지막에 연 창이 통로를 가져간다(이전 창에는 그려지지 않는다).",
+      "   다른 창은 같은 페어링 기록을 알아도 연결된 창을 조용히 빼앗을 수 없습니다.",
     ].join("\n");
   },
 

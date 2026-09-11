@@ -1,21 +1,14 @@
 # -*- coding: utf-8 -*-
-"""부품 라이브러리 manifest 생성기.
+"""Build or verify the curated parts-library manifest.
 
-기출 라이브러리(assets/exam-library/manifest.json + build_manifest.py)와 같은 구조다.
-서버·API 없이 정적 파일만으로 도는 것이 요점.
-
-읽는 것: assets/parts-library/svg/*.svg  +  같은 폴더의 meta.json(사람이 손보는 정보)
-쓰는 것: assets/parts-library/manifest.json
-
-meta.json 한 항목:
-  { "id":"c_distillation", "subject":"c", "part":"실험 기구", "name":"증류 장치",
-    "keywords":["증류","냉각관","플라스크"], "license":"Public domain",
-    "source":"https://commons.wikimedia.org/wiki/File:..." }
-
-manifest 는 여기에 파일 크기·요소 수 같은 **측정값**을 더해 만든다. 손으로 적는 정보와
-기계가 재는 정보를 섞지 않아야 다시 돌려도 사람이 쓴 게 안 날아간다.
+The SVG directory is a retained source collection, not an implicit catalog. A
+rebuild may use a complete local triage result, or it must preserve the IDs in
+the committed manifest. This prevents missing triage input from silently
+publishing every harvested SVG.
 """
 
+import argparse
+import collections
 import io
 import json
 import pathlib
@@ -26,124 +19,204 @@ from datetime import date
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
 HERE = pathlib.Path(__file__).resolve().parent
-LIB = HERE.parent / "assets" / "parts-library"
-SVG_DIR = LIB / "svg"
-
+DEFAULT_LIBRARY = HERE.parent / "assets" / "parts-library"
 SUBJECT_LABEL = {"p": "물리", "c": "화학", "b": "생명", "e": "지구", "x": "공통"}
-
-# 요소 수는 "이 그림이 얼마나 복잡한가"의 대용치 — 위계 기본값을 고를 때 쓴다.
+TRIAGE_FILES = ("marks.json", "clusters.json", "grades.json", "scores.json")
 DRAW_RE = re.compile(r"<(path|circle|ellipse|rect|polygon|polyline|line)\b")
 
 
-def main():
-    meta_path = LIB / "meta.json"
-    if not meta_path.exists():
-        print("meta.json 이 없다 — 먼저 만들어야 한다"); return 1
-    meta = {m["id"]: m for m in json.loads(meta_path.read_text(encoding="utf-8"))}
+class CurationError(RuntimeError):
+    pass
 
-    # harvest.json 은 수집기(harvest_parts.py)가 쓴 것 — 기계가 모은 정보.
-    # meta.json 과 겹치면 **사람이 적은 쪽이 이긴다.** 손으로 고친 게 재생성으로 날아가면 안 된다.
-    harvest_path = LIB / "harvest.json"
-    harvest = {}
-    if harvest_path.exists():
-        harvest = {h["id"]: h for h in json.loads(harvest_path.read_text(encoding="utf-8"))}
 
-    # 골라내기(tools/triage) 결과가 있으면 반영한다 — X 한 것, 자동 분류에서 떨어진 것,
-    # 닮은 그림의 대표가 아닌 것을 빼고 만든다. 결과가 없으면 전부 넣는다(예전 그대로).
-    tri = HERE.parent / "_work" / "triage"
-    drop, reason = set(), {}
-    if (tri / "marks.json").exists():
-        for name, m in json.loads((tri / "marks.json").read_text(encoding="utf-8")).items():
-            if m.get("mark") == "X":
-                drop.add(name); reason[name] = "X"
-    if (tri / "clusters.json").exists():
-        cl = json.loads((tri / "clusters.json").read_text(encoding="utf-8"))
-        for lead, members in cl.items():
-            for name in members:
-                if name != lead and name not in drop:
-                    drop.add(name); reason[name] = "중복"
-    if (tri / "grades.json").exists():
-        # 자동 1차 분류에서 A 를 못 받은 것(구조식·회로도·규격기호·색면·너무 단순)은 뺀다
-        for name, g in json.loads((tri / "grades.json").read_text(encoding="utf-8")).items():
-            if g != "A" and name not in drop:
-                drop.add(name); reason[name] = f"{g}등급"
-    if (tri / "scores.json").exists():
-        sc = json.loads((tri / "scores.json").read_text(encoding="utf-8"))
-        for name, v in sc.items():
-            if v.get("fail") and name not in drop:
-                drop.add(name); reason[name] = "안그려짐"
+def arguments():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="compare effective IDs without writing")
+    parser.add_argument("--library", type=pathlib.Path, default=DEFAULT_LIBRARY,
+                        help="parts-library directory (defaults to the repository library)")
+    return parser.parse_args()
 
-    # 사람이 골라낸 것은 자동 분류를 이긴다 — meta.json 과 같은 원칙이다.
-    # 수집 페이지에서 직접 고른 그림이 "중복"·"F등급" 같은 자동 판정에 걸려 사라지면 안 된다.
-    keep_path = LIB / "keep.json"
+
+def read_json(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise CurationError(f"필수 파일이 없습니다: {path}") from error
+    except json.JSONDecodeError as error:
+        raise CurationError(f"JSON 형식이 잘못되었습니다: {path} ({error.msg})") from error
+
+
+def rows_by_id(path):
+    value = read_json(path)
+    if not isinstance(value, list):
+        raise CurationError(f"목록이어야 합니다: {path}")
+    rows = {}
+    for row in value:
+        if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+            raise CurationError(f"id가 있는 객체 목록이어야 합니다: {path}")
+        if row["id"] in rows:
+            raise CurationError(f"중복 id가 있습니다: {path} ({row['id']})")
+        rows[row["id"]] = row
+    return rows
+
+
+def manifest_ids(path):
+    value = read_json(path)
+    if not isinstance(value, dict) or not isinstance(value.get("items"), list):
+        raise CurationError(f"manifest items가 없습니다: {path}")
+    ids = set()
+    for item in value["items"]:
+        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]:
+            raise CurationError(f"manifest item id가 없습니다: {path}")
+        if item["id"] in ids:
+            raise CurationError(f"manifest id가 중복되었습니다: {path} ({item['id']})")
+        ids.add(item["id"])
+    return ids
+
+
+def triage_drop(triage):
+    present = [name for name in TRIAGE_FILES if (triage / name).exists()]
+    if not present:
+        return None
+    if len(present) != len(TRIAGE_FILES):
+        missing = ", ".join(sorted(set(TRIAGE_FILES) - set(present)))
+        raise CurationError(f"triage 결과가 불완전합니다: {missing}")
+
+    marks = read_json(triage / "marks.json")
+    clusters = read_json(triage / "clusters.json")
+    grades = read_json(triage / "grades.json")
+    scores = read_json(triage / "scores.json")
+    if not all(isinstance(value, dict) for value in (marks, clusters, grades, scores)):
+        raise CurationError("triage 결과는 객체여야 합니다")
+
+    drop, reasons = set(), {}
+    for name, mark in marks.items():
+        if isinstance(mark, dict) and mark.get("mark") == "X":
+            drop.add(name)
+            reasons[name] = "X"
+    for lead, members in clusters.items():
+        if not isinstance(members, list):
+            raise CurationError(f"중복 묶음이 목록이 아닙니다: {lead}")
+        for name in members:
+            if isinstance(name, str) and name != lead and name not in drop:
+                drop.add(name)
+                reasons[name] = "중복"
+    for name, grade in grades.items():
+        if grade != "A" and name not in drop:
+            drop.add(name)
+            reasons[name] = f"{grade}등급"
+    for name, score in scores.items():
+        if isinstance(score, dict) and score.get("fail") and name not in drop:
+            drop.add(name)
+            reasons[name] = "안그려짐"
+    return drop, reasons
+
+
+def curated_ids(library, files):
+    triage = triage_drop(library.parent.parent / "_work" / "triage")
+    if triage is None:
+        manifest = library / "manifest.json"
+        if not manifest.exists():
+            raise CurationError("triage 결과와 보존된 manifest가 모두 없어 catalog를 만들 수 없습니다")
+        return manifest_ids(manifest), {}, "보존된 manifest 선택"
+    drop, reasons = triage
+    keep_path = library / "keep.json"
     if keep_path.exists():
-        keep = set(json.loads(keep_path.read_text(encoding="utf-8")))
-        back = drop & keep
-        drop -= keep
-        if back:
-            print(f"  사람이 고른 것 {len(back)}장은 자동 판정을 무시하고 남긴다")
+        value = read_json(keep_path)
+        if not isinstance(value, list) or not all(isinstance(name, str) for name in value):
+            raise CurationError(f"문자열 목록이어야 합니다: {keep_path}")
+        keep = set(value)
+        for name in drop & keep:
+            drop.remove(name)
+            reasons.pop(name, None)
+    return {name.removesuffix(".svg") for name in files if name not in drop}, reasons, "완전한 triage"
+
+
+def effective_manifest(library):
+    svg_dir = library / "svg"
+    if not svg_dir.is_dir():
+        raise CurationError(f"SVG 폴더가 없습니다: {svg_dir}")
+    meta = rows_by_id(library / "meta.json")
+    harvest_path = library / "harvest.json"
+    harvest = rows_by_id(harvest_path) if harvest_path.exists() else {}
+    files = {file.name: file for file in svg_dir.glob("*.svg")}
+    selected, reasons, source = curated_ids(library, files)
 
     items, missing, orphan = [], [], []
-    for f in sorted(SVG_DIR.glob("*.svg")):
-        pid = f.stem
-        if f.name in drop:
+    for pid in sorted(selected):
+        file = files.get(f"{pid}.svg")
+        if file is None:
+            missing.append(pid)
             continue
-        h = harvest.get(pid, {})
-        m = {**h, **meta.get(pid, {})} if (h or pid in meta) else None
-        if not m:
+        metadata = {**harvest.get(pid, {}), **meta.get(pid, {})}
+        if not metadata:
             orphan.append(pid)
             continue
-        text = f.read_text(encoding="utf-8", errors="replace")
-        subj = m.get("subject", "x")
+        text = file.read_text(encoding="utf-8", errors="replace")
+        subject = metadata.get("subject", "x")
         items.append({
             "id": pid,
-            "file": f.name,
-            "subject": subj,
-            "subjectLabel": SUBJECT_LABEL.get(subj, "공통"),
-            "part": m.get("part", "기타"),
-            "name": m.get("name", pid),
-            "keywords": m.get("keywords", []),
-            # Commons 카테고리 원문. 한글 keywords 와 **함께** 색인해서
-            # 한글로도 영문 카테고리로도 찾히게 한다.
-            "sourceTags": m.get("sourceTags", []),
-            "license": m.get("license", "unknown"),
-            "source": m.get("source", ""),
-            "elements": len(DRAW_RE.findall(text)),   # 복잡도 — 위계 기본값 힌트
-            "bytes": f.stat().st_size,
-            "defaultLevel": m.get("defaultLevel", "L2"),
+            "file": file.name,
+            "subject": subject,
+            "subjectLabel": SUBJECT_LABEL.get(subject, "공통"),
+            "part": metadata.get("part", "기타"),
+            "name": metadata.get("name", pid),
+            "keywords": metadata.get("keywords", []),
+            "sourceTags": metadata.get("sourceTags", []),
+            "license": metadata.get("license", "unknown"),
+            "source": metadata.get("source", ""),
+            "elements": len(DRAW_RE.findall(text)),
+            "bytes": file.stat().st_size,
+            "defaultLevel": metadata.get("defaultLevel", "L2"),
         })
-    for pid in meta:
-        if not (SVG_DIR / f"{pid}.svg").exists():
-            missing.append(pid)
-
-    parts = sorted({it["part"] for it in items})
-    subjects = sorted({it["subject"] for it in items})
-    out = {
+    if missing:
+        raise CurationError("선택된 SVG가 없습니다: " + ", ".join(missing))
+    if orphan:
+        raise CurationError("선택된 SVG에 메타데이터가 없습니다: " + ", ".join(orphan))
+    document = {
         "version": 1,
         "generated": date.today().isoformat(),
         "count": len(items),
-        "subjects": subjects,
-        "parts": parts,
+        "subjects": sorted({item["subject"] for item in items}),
+        "parts": sorted({item["part"] for item in items}),
         "items": items,
     }
-    (LIB / "manifest.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    return document, reasons, source
 
-    print(f"manifest {len(items)}건 생성 → assets/parts-library/manifest.json")
-    if drop:
-        import collections as _c
-        why = _c.Counter(reason.values())
-        print(f"  뺀 것 {len(drop)}장 — " + " · ".join(f"{k} {v}" for k, v in why.most_common()))
-    by = {}
-    for it in items:
-        by.setdefault(it["subjectLabel"], []).append(it)
-    for k, v in sorted(by.items()):
-        print(f"  {k} {len(v)}건 — " + ", ".join(x["name"] for x in v[:6]))
-    if orphan:
-        print(f"  ⚠ meta.json 에 설명이 없는 파일: {', '.join(orphan)}")
-    if missing:
-        print(f"  ⚠ 설명만 있고 파일이 없는 항목: {', '.join(missing)}")
-    return 0
+
+def report(document, reasons, source):
+    print(f"선택 기준: {source}")
+    print(f"manifest {document['count']}건")
+    if reasons:
+        summary = collections.Counter(reasons.values())
+        print("  뺀 것 " + str(len(reasons)) + "장 — " + " · ".join(
+            f"{reason} {count}" for reason, count in summary.most_common()))
+
+
+def main():
+    options = arguments()
+    library = options.library.resolve()
+    try:
+        document, reasons, source = effective_manifest(library)
+        output = library / "manifest.json"
+        if options.check:
+            expected = manifest_ids(output)
+            actual = {item["id"] for item in document["items"]}
+            if actual != expected:
+                print("manifest ID 불일치: "
+                      f"missing={','.join(sorted(expected - actual)) or '-'} "
+                      f"unexpected={','.join(sorted(actual - expected)) or '-'}")
+                return 1
+            report(document, reasons, source)
+            print("검사 통과: manifest 파일을 쓰지 않았습니다")
+            return 0
+        output.write_text(json.dumps(document, ensure_ascii=False, indent=2), encoding="utf-8")
+        report(document, reasons, source)
+        print(f"생성 → {output}")
+        return 0
+    except CurationError as error:
+        print(f"생성 중단: {error}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

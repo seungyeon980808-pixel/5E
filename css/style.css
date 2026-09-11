@@ -90,23 +90,6 @@
   --scrollbar-thumb: #afb8c1;
 }
 
-/* ===== 과목별 테마 (상단 과목 선택이 :root[data-subject]를 설정) =====
-   물리=현행 블루(기본, 별도 override 없음). 화학=고급 버건디, 생명=고급 틸,
-   지구=고급 우디 브라운. accent 계열 + 배경 톤(bg-app/panel/canvas)을 과목
-   컬러 쪽으로 살짝 기울인다(채도 낮은 유사 톤 — 눈에 거슬리지 않는 수준). */
-:root[data-subject="c"] { --accent:#b03a4a; --accent-hover:#c24d5c; --accent-2:#8a2b39; --accent-2-hover:#a03442; --btn-tool-active:#b03a4a;
-  --bg-app:#110f12; --bg-panel:#1a171b; --bg-panel-hover:#252026; --bg-canvas:#08070a; --bg-input:#110f12; --border-strong:#363037; }
-:root[data-subject="c"][data-theme="light"] { --accent:#9a2f3d; --accent-hover:#8a2b39; --accent-2:#8a2b39; --accent-2-hover:#7a2531; --btn-tool-active:#9a2f3d;
-  --bg-app:#eeeaeb; --bg-panel:#ffffff; --bg-panel-hover:#f6f2f3; --bg-canvas:#e2dcde; --border-strong:#d6cdd0; }
-:root[data-subject="b"] { --accent:#0f8a72; --accent-hover:#14a086; --accent-2:#0c6a58; --accent-2-hover:#0f8069; --btn-tool-active:#0f8a72;
-  --bg-app:#0e1512; --bg-panel:#141e1a; --bg-panel-hover:#1d2a25; --bg-canvas:#070a09; --bg-input:#0e1512; --border-strong:#2c3d36; }
-:root[data-subject="b"][data-theme="light"] { --accent:#0c7a64; --accent-hover:#0a6a58; --accent-2:#0c6a58; --accent-2-hover:#0a5a4c; --btn-tool-active:#0c7a64;
-  --bg-app:#e9f0ed; --bg-panel:#ffffff; --bg-panel-hover:#f0f6f3; --bg-canvas:#dbe6e1; --border-strong:#c8d8d1; }
-:root[data-subject="e"] { --accent:#a5794a; --accent-hover:#b98a58; --accent-2:#7a5330; --accent-2-hover:#8e6339; --btn-tool-active:#a5794a;
-  --bg-app:#121009; --bg-panel:#1b1813; --bg-panel-hover:#26221b; --bg-canvas:#090805; --bg-input:#121009; --border-strong:#37322a; }
-:root[data-subject="e"][data-theme="light"] { --accent:#8a6338; --accent-hover:#7a5330; --accent-2:#7a5330; --accent-2-hover:#6a4728; --btn-tool-active:#8a6338;
-  --bg-app:#eeece7; --bg-panel:#ffffff; --bg-panel-hover:#f6f3ed; --bg-canvas:#e3dfd6; --border-strong:#d7d1c6; }
-
 /* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
 input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
 
@@ -341,25 +324,31 @@ body { zoom: var(--ui-zoom, 1); }
 .bottom-icon-trigger svg,
 .grid-toggle-btn svg { width: 17px; height: 17px; }
 
-/* ===== 과목 선택 (상단 툴바, 5E 브랜드 옆) ===== */
-.subject-select {
-  height:28px; padding:0 8px; font-size: 13px; font-weight:600;
-  /* 다른 UI 요소와 같은 본문 글꼴(IBM Plex Sans KR) + 가운데 정렬 */
-  font-family:inherit;
-  text-align:center; text-align-last:center;
-  color:var(--text-primary); background:var(--bg-input);
-  border:1px solid var(--accent); border-radius:9px; cursor:pointer;
-}
-.subject-select-topbar { margin-left:8px; }
-.subject-select-panel { width:100%; margin:0 0 8px; height:30px; }
+.subject-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 6px; }
+.subject-switch button { min-width:0; min-height:30px; padding:4px 2px; color:var(--text-secondary); background:var(--bg-input); border:1px solid var(--border); border-radius:6px; font:500 11px/1.3 inherit; cursor:pointer; }
+.subject-switch button:hover { color:var(--text-primary); background:var(--bg-panel-hover); }
+.subject-switch button[aria-selected="true"] { color:var(--accent); background:color-mix(in srgb,var(--accent) 12%,var(--bg-input)); border-color:var(--accent); }
+.object-panel-search { display:flex; align-items:center; gap:6px; width:100%; min-height:30px; margin:0 0 7px; padding:4px 7px; color:var(--text-label); background:var(--bg-input); border:1px solid var(--border); border-radius:6px; font:500 11px/1.3 inherit; cursor:pointer; }
+.object-panel-search:hover { color:var(--text-primary); background:var(--bg-panel-hover); }
+.object-panel-search svg { width:15px; height:15px; flex:none; }
+.object-quick-group { margin:0 0 7px; }
+.object-quick-title { display:flex; align-items:center; justify-content:space-between; margin:0 2px 4px; color:var(--text-secondary); font-size:10px; font-weight:500; }
+.object-quick-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+.object-quick-empty { margin:0 2px 6px; color:var(--text-secondary); font-size:10px; line-height:1.5; }
+.object-tile { position:relative; min-width:0; }
+.object-tile > .tool-btn { width:100%; }
+.object-favorite-toggle { position:absolute; top:1px; right:1px; z-index:2; width:16px; height:16px; padding:0; color:var(--text-secondary); background:color-mix(in srgb,var(--bg-panel) 88%,transparent); border:0; border-radius:4px; font:12px/1 inherit; cursor:pointer; opacity:0; }
+.object-tile:hover .object-favorite-toggle,.object-favorite-toggle:focus-visible,.object-favorite-toggle[aria-pressed="true"] { opacity:1; }
+.object-favorite-toggle[aria-pressed="true"] { color:var(--accent); }
 .subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
 .subject-part-header {
   width:100%; display:flex; align-items:center; justify-content:space-between;
   padding:7px 10px; font-family:inherit; font-size: 12.5px; font-weight:500;
   color:var(--text-label); background:var(--btn-tool-bg); border:0; cursor:pointer;
-  border-left:3px solid var(--accent);
+  border-left:3px solid transparent;
 }
 .subject-part-header:hover { background:var(--btn-tool-hover); color:var(--text-primary); }
+.subject-part:not(.is-collapsed) > .subject-part-header { background:var(--bg-panel-hover); border-left-color:var(--accent); }
 .subject-part-header .toggle-icon { transition:transform .15s; font-size: 11px; color:var(--text-secondary); }
 .subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
 .subject-part.is-collapsed .subject-part-body { display:none; }
@@ -1648,8 +1637,7 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--c-sub);
 }
 
-/* MCP 연결 상태 — zoom readout 바로 왼쪽. margin-left:auto를 여기로 옮겨서(zoom-readout엔
-   더 이상 없음) 이 버튼부터 툴바 오른쪽 끝으로 붙는다. 점(●)이 상태를 나타낸다:
+/* MCP 연결 상태 — 상단 툴바 오른쪽 끝에 붙는다. 점(●)이 상태를 나타낸다:
    회색 테두리만=연결 안 됨, 파란 채움=연결됨 — 흔한 "연결 상태 표시등" 관례를 그대로 따른다. */
 .mcp-bridge-btn {
   margin-left: auto;
@@ -2220,6 +2208,11 @@ textarea.unified-text-input {
   font-size: 12px;
   color: var(--text-label);
 }
+.canvas-bottom-bar .zoom-readout {
+  flex:0 0 auto;
+  font-size:11px;
+  white-space:nowrap;
+}
 .image-workflow-hub {
   display: inline-flex;
   align-items: center;
@@ -2559,7 +2552,7 @@ textarea.unified-text-input {
 
 /* ===== 버튼 곡률 통일: 기준 = 좌측 도구 버튼(.tool-btn) 6px ===== */
 .btn, .topbar-btn, .modal-btn, .file-menu-item, .seg-btn, .advanced-tool-btn,
-.examlib-reset, .grid-toggle-btn, .object-search-trigger, .subject-select,
+.examlib-reset, .grid-toggle-btn, .object-search-trigger,
 .personal-item-btn, .personal-item-del, .drawer-toggle, .icon-btn,
 .objectify-dropzone, .subject-part-header {
   border-radius: 6px;
@@ -2567,7 +2560,7 @@ textarea.unified-text-input {
 /* 요구: 상단 툴바(과목 선택·되돌리기/다시 실행 등)를 애플 곡률에 맞게 — 6px보다
    더 부드럽고 둥근 인상. 다른 버튼들의 6px 기준은 그대로 두고 우선 이 두 곳만
    먼저 손본다(요청 범위). */
-.subject-select, .topbar-btn { border-radius: 9px; }
+.topbar-btn { border-radius: 9px; }
 
 /* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
 .file-menu-item { display: flex; align-items: center; }

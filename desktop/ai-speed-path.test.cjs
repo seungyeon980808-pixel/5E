@@ -30,7 +30,7 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(panel, /ai-output-cache-store\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=1\.5\.3/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=1\.5\.3/);
-  assert.match(main, /ai-panel\.js\?v=1\.5\.7/);
+  assert.match(main, /ai-panel\.js\?v=1\.5\.8/);
   assert.match(index, /js\/main\.js\?v=1\.5\.9-delayed-cut-cache/);
 });
 
@@ -40,7 +40,8 @@ test("common scientific diagrams use the local editable scene path with exact-ca
   assert.match(panel, /createRemoteImageInputPlan\(/);
   assert.match(panel, /createExactOutputCacheKey\(/);
   assert.match(panel, /outputCache\.get\(key\)/);
-  assert.match(panel, /storeCurrentOutput\(/);
+  assert.match(panel, /stageCurrentOutput\(/);
+  assert.match(panel, /commitCurrentOutput\(/);
   assert.match(panel, /purpose = type === "image"[\s\S]*?"scene"/);
   assert.match(panel, /buildFastScenePrompt\(/);
   assert.match(panel, /compileFastScene\(/);

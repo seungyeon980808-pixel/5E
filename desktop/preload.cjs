@@ -3,14 +3,14 @@ window.addEventListener("DOMContentLoaded", () => {
   document.documentElement.classList.add("desktop-shell");
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
-  status: () => ipcRenderer.invoke("codex:status"),
-  start: () => ipcRenderer.invoke("codex:start"),
-  stop: () => ipcRenderer.invoke("codex:stop"),
-  models: () => ipcRenderer.invoke("codex:models"),
-  account: () => ipcRenderer.invoke("codex:account"),
-  login: () => ipcRenderer.invoke("codex:login"),
+  status: (options) => ipcRenderer.invoke("codex:status", options),
+  start: (options) => ipcRenderer.invoke("codex:start", options),
+  stop: (options) => ipcRenderer.invoke("codex:stop", options),
+  models: (options) => ipcRenderer.invoke("codex:models", options),
+  account: (options) => ipcRenderer.invoke("codex:account", options),
+  login: (options) => ipcRenderer.invoke("codex:login", options),
   send: (payload) => ipcRenderer.invoke("codex:send", payload),
-  interrupt: () => ipcRenderer.invoke("codex:interrupt"),
+  interrupt: (options) => ipcRenderer.invoke("codex:interrupt", options),
   captureSources: () => ipcRenderer.invoke("capture:sources"),
   pickLocalImageFolder: () => ipcRenderer.invoke("local-images:pick-folder"),
   listLocalImages: (folder) => ipcRenderer.invoke("local-images:list", folder),

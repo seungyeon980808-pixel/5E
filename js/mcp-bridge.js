@@ -4,12 +4,10 @@
  * "이 객체들을 지금 화면에 추가해라" 같은 명령을 받아 state에 반영한다. 파일을 저장했다가
  * 다시 여는 왕복 없이, 앱을 켜 둔 채로 그림이 들어온다.
  *
- * 안전장치 — 이 모듈은 아래 조건이 전부 맞을 때만 깨어난다:
- *   1) localhost에서 열렸거나, 주소에 `?mcp=1`을 붙여 **직접 켠** 경우에만.
- *      배포본(GitHub Pages)을 그냥 연 사람에게는 아무 일도 일어나지 않는다 —
- *      켜지 않은 브라우저는 127.0.0.1을 두드려 보지도 않는다.
- *   2) 통로(포트 8579~8583)가 실제로 응답할 때만
- *   3) 서버가 없으면 조용히 포기한다 — 콘솔 에러도 남기지 않는다
+ * 안전장치 — localhost이거나 `?mcp=1`로 직접 켠 브라우저에서만 배지를 활성화한다.
+ * 연결하려면 MCP의 신뢰된 app_pairing 출력에서 포트와 process capability가 결합된 기록을
+ * 복사해 배지 다이얼로그에 붙여 넣어야 한다. capability는 이 모듈 메모리에만 두며, 앱은
+ * 기록에 지정된 한 서버에만 연결한다. 공개 health 응답만 보고 포트를 자동 선택하지 않는다.
  *
  * 켜기: 주소 끝에 `?mcp=1` → 이 브라우저에 기억된다(localStorage). 끄기: `?mcp=0`
  *
@@ -24,16 +22,17 @@ import { state } from "./state.js?v=1.4.0";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
 } from "./project-io.js?v=1.4.1-exampool";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.4.0";
 import { switchPage, addPage } from "./pages.js?v=1.4.0";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
          getContentBounds } from "./svg-export.js?v=1.4.0";
 import { translateObject } from "./transform.js?v=1.4.0";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.5.3";
+import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.5.3";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).
 const CLIENT_ID = Math.random().toString(36).slice(2, 8) + "-" + String(Date.now()).slice(-5);
-const PORTS = [8579, 8580, 8581, 8582, 8583];
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "[::1]"]);
 const STORAGE_KEY = "5e.mcpBridge";
 
@@ -53,6 +52,8 @@ function bridgeEnabled() {
 let source = null;
 let idSeq = 0;
 let lastPort = null;
+let pairedPort = null;
+let pairedCapability = null;
 let connecting = false;   // 버튼을 눌러 재시도하는 중 — 중복 클릭 방지
 
 /* ----- 화면에 그려진 모양의 실제 범위 (fitArtboard 용) -----
@@ -287,10 +288,16 @@ const COMMANDS = {
     w = round1(w); h = round1(h);
 
     state.update((st) => {
-      st.undoStack.push(JSON.parse(JSON.stringify(st.objects)));
-      st.redoStack = [];
-      if (dx || dy) st.objects.forEach((o) => translateObject(o, dx, dy));
+      const snapshot = captureDocumentSnapshot(st);
+      if (dx || dy) {
+        st.objects.forEach((o) => translateObject(o, dx, dy));
+        for (const guide of st.guides || []) {
+          if (guide.axis === "x") guide.position += dx;
+          else if (guide.axis === "y") guide.position += dy;
+        }
+      }
       st.artboard = { w, h };
+      commitDocumentHistory(st, snapshot);
     });
     flash(`아트보드 ${w}×${h}mm`);
     return {
@@ -307,9 +314,9 @@ const COMMANDS = {
       throw new Error("아트보드 크기는 0보다 큰 숫자여야 합니다");
     }
     state.update((s) => {
-      s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
-      s.redoStack = [];
+      const snapshot = captureDocumentSnapshot(s);
       s.artboard = { w: nw, h: nh };
+      commitDocumentHistory(s, snapshot);
     });
     flash(`아트보드 ${nw}×${nh}mm`);
     return { artboard: { w: nw, h: nh } };
@@ -450,19 +457,11 @@ function nextId() {
 }
 
 /* ----- 연결 ----- */
-async function findPort() {
-  for (const p of PORTS) {
-    try {
-      const r = await fetch(`http://127.0.0.1:${p}/health`, { signal: AbortSignal.timeout(600) });
-      if (r.ok && (await r.json()).server === "mcp-5e") return p;
-    } catch { /* 그 포트엔 없음 — 다음 후보 */ }
-  }
-  return null;
-}
-
 async function respond(port, id, ok, payload) {
+  if (port !== pairedPort || !pairedCapability) return;
   try {
-    await fetch(`http://127.0.0.1:${port}/result`, {
+    const query = `cap=${encodeURIComponent(pairedCapability)}&cid=${encodeURIComponent(CLIENT_ID)}`;
+    await fetch(`http://127.0.0.1:${port}/result?${query}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(ok ? { id, ok: true, data: payload } : { id, ok: false, error: String(payload) }),
@@ -471,12 +470,8 @@ async function respond(port, id, ok, payload) {
 }
 
 /* ----- 자동 재연결(워치독) -----
- * 왜 필요한가: 예전엔 페이지가 뜰 때 findPort()를 딱 한 번만 했다. 그때 MCP 서버가 아직
- * 안 떠 있었으면(Claude Code를 나중에 켬) 영영 끊긴 채로 남아, 사용자가 버튼을 눌러야만
- * 붙었다. EventSource 자체 재연결은 '같은 포트'로만 시도하므로 서버가 다른 포트(8580…)로
- * 올라오거나 세션이 바뀌면 그것도 소용이 없다. 그래서 끊겨 있는 동안 주기적으로 포트를
- * 다시 훑는다. 붙으면 멈추고, 끊기면 다시 돈다.
- * 간격은 2초에서 시작해 1.5배씩 늘려 최대 15초 — 서버가 없을 때 fetch 폭풍을 내지 않는다. */
+ * 끊어진 뒤에도 사용자가 페어링한 동일 포트와 capability만 재사용한다. 다른 건강한 포트를
+ * 탐색하면 별도 MCP 프로세스의 창으로 명령 대상이 바뀔 수 있으므로 절대 자동 전환하지 않는다. */
 const RETRY_MIN_MS = 2000;
 const RETRY_MAX_MS = 15000;
 let retryTimer = null;
@@ -489,59 +484,50 @@ function stopWatchdog() {
 }
 
 function scheduleReconnect() {
-  if (retryTimer || connecting) return;          // 이미 예약됐거나 수동 재시도 중
-  retryTimer = setTimeout(async () => {
+  if (retryTimer || connecting || !pairedPort || !pairedCapability) return;
+  retryTimer = setTimeout(() => {
     retryTimer = null;
-    if (badgeState === "connected") return;      // 그 사이에 붙었다
-    const port = await findPort();
-    if (port) { connect(port); return; }         // connect()의 onopen이 워치독을 멈춘다
-    // 하한을 RETRY_MIN_MS로 걸어 둔다 — retryNow()가 0으로 시작시켜도 다음 간격이
-    // 0으로 굳어 fetch 폭풍이 되지 않게.
+    if (badgeState === "connected") return;
+    connectPaired();
     retryDelay = Math.min(Math.max(Math.round(retryDelay * 1.5), RETRY_MIN_MS), RETRY_MAX_MS);
-    scheduleReconnect();
   }, retryDelay);
 }
 
 // 탭을 다시 보거나 창에 포커스가 돌아오면 즉시 한 번 시도한다(백오프 대기 없이).
 // 다른 창에서 Claude Code를 켜고 돌아오는 흐름이 가장 흔하기 때문.
 function retryNow() {
-  if (badgeState === "connected" || connecting) return;
+  if (badgeState === "connected" || connecting || !pairedPort || !pairedCapability) return;
   stopWatchdog();
-  retryDelay = 0;        // 대기 없이 한 번 — 실패하면 위 백오프가 다시 2초부터 잡는다
-  scheduleReconnect();
+  connectPaired();
 }
 
-function connect(port, manual = false) {
-  lastPort = port;
+function connectPaired() {
+  if (!pairedPort || !pairedCapability) return;
+  const connectionPort = pairedPort;
+  const connectionCapability = pairedCapability;
+  lastPort = connectionPort;
   if (source) { try { source.close(); } catch { /* 이미 닫힘 */ } }
   /* 내가 누구인지 밝히면서 붙는다 — 서버가 app_status 로 "지금 붙은 게 어느 창인지"를
    * 돌려줄 수 있어야 한다. 같은 포트의 다른 탭도 구분해야 하므로 창마다 다른 CLIENT_ID 를 쓴다.
    * (2026-07-27: 어느 창에 붙었는지 알 수 없어 교사 문서에 그림이 들어간 사고가 있었다) */
-  // manual=1 은 "사람이 배지를 눌렀다"는 표시 — 서버는 이때만 다른 창의 연결을 넘겨준다.
   const q = `?cid=${encodeURIComponent(CLIENT_ID)}&href=${encodeURIComponent(location.href)}`
-          + (manual ? "&manual=1" : "");
-  source = new EventSource(`http://127.0.0.1:${port}/events${q}`);
-  source.onopen = () => { stopWatchdog(); setBadge("connected", port); };
-  /* 다른 창이 통로를 가져가면 서버가 알려준다. 조용히 끊기면 이 창에 그리고 있다고
-   * 착각한 채 남의 문서를 건드리게 되므로, 화면에 분명히 띄운다. */
-  source.addEventListener("evicted", () => {
-    flash("MCP 연결을 다른 5E 창에 넘겼습니다 — 이 창에는 그려지지 않습니다");
-  });
+          + `&cap=${encodeURIComponent(connectionCapability)}`;
+  source = new EventSource(`http://127.0.0.1:${connectionPort}/events${q}`);
+  source.onopen = () => { stopWatchdog(); setBadge("connected", connectionPort); };
   source.onerror = () => {
-    // EventSource는 같은 포트로만 재시도하므로 여기서 끊고 워치독에 넘긴다(포트가 바뀌어도 찾도록).
     if (source) { try { source.close(); } catch { /* 무시 */ } source = null; }
-    setBadge("disconnected", port);
+    setBadge("disconnected", connectionPort);
     scheduleReconnect();
   };
   source.onmessage = async (ev) => {
     let msg;
     try { msg = JSON.parse(ev.data); } catch { return; }
     const fn = COMMANDS[msg.cmd];
-    if (!fn) return respond(port, msg.id, false, `알 수 없는 명령: ${msg.cmd}`);
+    if (!fn) return respond(connectionPort, msg.id, false, `알 수 없는 명령: ${msg.cmd}`);
     // await 를 반드시 건다 — exportImage 처럼 비동기인 명령이 있다. 안 걸면 Promise
     // 객체가 그대로 직렬화돼 빈 {} 가 나간다(동기 명령은 await 해도 그대로다).
-    try { respond(port, msg.id, true, await fn(msg.args || {})); }
-    catch (e) { respond(port, msg.id, false, e.message); }
+    try { respond(connectionPort, msg.id, true, await fn(msg.args || {})); }
+    catch (e) { respond(connectionPort, msg.id, false, e.message); }
   };
 }
 
@@ -565,7 +551,7 @@ function setBadge(kind, port) {
     b.title = `MCP 연결됨 (:${port}) — 클릭하면 상태 확인`;
   } else if (kind === "disconnected") {
     b.setAttribute("aria-pressed", "false");
-    b.title = "MCP 연결 안 됨 — 클릭해서 다시 시도";
+    b.title = "MCP 연결 안 됨 — 클릭해서 페어링";
   } else {
     b.setAttribute("aria-pressed", "false");
     b.title = "MCP 서버를 찾는 중…";
@@ -583,10 +569,41 @@ function flash(text) {
   flashTimer = setTimeout(() => { b.classList.remove("mcp-flash"); b.title = baseTitle; }, 1500);
 }
 
-/* ----- 버튼 클릭: 연결돼 있으면 상태만 보여주고, 안 돼 있으면 다시 붙어 본다 -----
- * 웹페이지는 보안상 컴퓨터의 프로그램(Claude Code·MCP 서버)을 직접 실행할 수 없다.
- * 그래서 이 버튼이 할 수 있는 최선은 "이미 떠 있는 서버에 다시 붙어보기"까지다.
- * Claude Code를 아예 안 켰다면 이 버튼으로는 켤 수 없고, 사용자가 직접 켜야 한다. */
+async function requestPairing() {
+  if (connecting) return false;
+  connecting = true;
+  stopWatchdog();
+  const value = await showPrompt(
+    "MCP의 app_pairing 또는 app_status가 보여 준 페어링 기록을 붙여 넣으세요.",
+    {
+      title: "MCP 페어링",
+      placeholder: "mcp-5e://127.0.0.1:8579/#…",
+      okText: "연결",
+      cancelText: "취소",
+      maxLength: 256,
+    }
+  );
+  connecting = false;
+  if (value === null) return false;
+  const pairing = parseMcpPairingRecord(value);
+  if (!pairing) {
+    setBadge("disconnected");
+    await showAlert("페어링 기록이 올바르지 않습니다. MCP가 출력한 한 줄 전체를 다시 복사하세요.", {
+      title: "MCP 페어링 실패",
+    });
+    return false;
+  }
+  pairedPort = pairing.port;
+  pairedCapability = pairing.capability;
+  try { localStorage.setItem(STORAGE_KEY, "1"); } catch {}
+  const button = bridgeBtn();
+  button?.removeEventListener("click", handleInstallClick);
+  button?.addEventListener("click", handleBadgeClick);
+  setBadge("connecting");
+  connectPaired();
+  return true;
+}
+
 async function handleBadgeClick() {
   if (badgeState === "connected") {
     let info = null;
@@ -598,62 +615,19 @@ async function handleBadgeClick() {
       { title: "MCP 연결됨" }
     );
   }
-  if (connecting) return;
-  connecting = true;
-  stopWatchdog();                    // 수동 재시도가 워치독과 겹치지 않게
-  setBadge("connecting");
-  const port = await findPort();
-  connecting = false;
-  // 사람이 직접 누른 것이므로 다른 창이 붙어 있어도 넘겨받는다.
-  if (port) { connect(port, true); return; }
-
-  setBadge("disconnected");
-  scheduleReconnect();               // 수동 시도가 실패해도 이후엔 자동으로 계속 노린다
-  const open = await showConfirm(
-    "MCP 서버를 찾지 못했습니다.\n\n" +
-      "확인할 것:\n" +
-      "1. 컴퓨터에서 Claude Code가 실행 중이고, 'mcp-5e' 도구가 등록돼 있는지\n" +
-      "   (터미널에서: claude mcp list 로 확인)\n" +
-      "2. 등록 직후라면 Claude Code를 새 세션으로 다시 시작했는지\n" +
-      "3. 이 화면이 http://localhost 로 열려 있는지 (지금 주소: " + location.origin + ")\n\n" +
-      "웹페이지는 보안상 프로그램을 스스로 실행할 수 없어서, 이 버튼은\n" +
-      "'이미 켜진 서버에 다시 붙어보기'만 할 수 있습니다.",
-    { title: "MCP 연결 안 됨", okText: "설치 안내 열기", cancelText: "닫기" }
-  );
-  if (open) window.open(GUIDE_URL, "_blank", "noopener");
+  await requestPairing();
 }
 
 /* ----- 시작 -----
  * index.html이 이 파일을 <script type="module">로 직접 싣는다. 그래서 스스로 켜지되,
  * 다른 모듈이 import 했을 때 두 번 켜지지 않도록 한 번만 돌게 막아 둔다. */
-/* ----- 미설치 사용자용: 버튼은 보이되, 포트는 두드리지 않는다 -----
- * 발견성(2026-07-31 교사 결정): 게이트를 안 켠 브라우저에도 버튼은 항상 보인다.
- * 눌렀을 때만 한 번 찾아 보고 — 찾으면 그 자리에서 켜지고(다음부터 자동 연결),
- * 못 찾으면 설치 안내를 띄운다. 백그라운드 포트 노크는 여전히 게이트 뒤에 있다. */
 const GUIDE_URL = "https://github.com/seungyeon980808-pixel/5E/blob/main/tools/mcp-5e/GUIDE_FOR_TEACHERS.md";
 
 async function handleInstallClick() {
-  if (connecting) return;
-  connecting = true;
-  setBadge("connecting");
-  const port = await findPort();
-  connecting = false;
-  if (port) {
-    // 서버가 이미 떠 있다 = 설치된 사용자다. 이 브라우저에 켠 것으로 기억하고 정식 배선으로 전환.
-    try { localStorage.setItem(STORAGE_KEY, "1"); } catch {}
-    const b = bridgeBtn();
-    b?.removeEventListener("click", handleInstallClick);
-    b?.addEventListener("click", handleBadgeClick);
-    connect(port, true);
-    return;
-  }
-  setBadge("disconnected");
+  const paired = await requestPairing();
+  if (paired) return;
   const open = await showConfirm(
-    "Claude에게 말로 그림을 시키는 기능입니다.\n" +
-      "예: \"30° 경사면에 물체 두 개 그려줘\"\n\n" +
-      "연결된 서버를 찾지 못했습니다.\n" +
-      "· 처음이라면 — 설치가 한 번 필요합니다 (Claude 유료 구독 + Node.js, 약 10분)\n" +
-      "· 이미 설치했다면 — Claude Code를 켠 뒤 이 버튼을 다시 눌러 보세요.",
+    "MCP가 아직 설치되지 않았다면 설치 안내를 여세요. 설치돼 있다면 app_pairing을 호출한 뒤 다시 누르세요.",
     { title: "AI로 그리기 (MCP)", okText: "설치 안내 열기", cancelText: "닫기" }
   );
   if (open) window.open(GUIDE_URL, "_blank", "noopener");
@@ -675,13 +649,9 @@ export async function initMcpBridge() {
     return;
   }
   bridgeBtn()?.addEventListener("click", handleBadgeClick);
-  setBadge("connecting");            // 버튼을 먼저 보여준다 — 못 찾아도 눌러서 재시도할 수 있게
-  // 탭 복귀·창 포커스에서 즉시 재시도(백오프를 기다리지 않는다).
+  setBadge("disconnected");
   document.addEventListener("visibilitychange", () => { if (!document.hidden) retryNow(); });
   window.addEventListener("focus", retryNow);
-  const port = await findPort();
-  if (port) connect(port);
-  else { setBadge("disconnected"); scheduleReconnect(); }   // 나중에 서버가 떠도 알아서 붙는다
 }
 
 if (document.readyState === "loading") {

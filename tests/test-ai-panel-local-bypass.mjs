@@ -25,7 +25,7 @@ test("the local asset completion branch returns before desktop send", async () =
   const localStatusBranch = source.indexOf("if (localAssetMatch.matched) {", matcher + 1);
   const localBranch = source.indexOf("if (localAssetMatch.matched) {", localStatusBranch + 1);
   const localReturn = source.indexOf("return;", localBranch);
-  const desktopSend = source.indexOf("window.fiveEDesktop.send({", localBranch);
+  const desktopSend = source.indexOf("desktop.send({", localBranch);
 
   assert.ok(matcher >= 0, "panel must invoke the strict local matcher");
   assert.ok(localBranch > localStatusBranch, "panel must handle an exact local match");

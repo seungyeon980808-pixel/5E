@@ -1,0 +1,44 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { createImageCommentController, getImageStageGeometry, normalizeCommentBox, buildCommentRequest } from '../js/ai-image-comments.js';
+
+class Node {
+  constructor(tag, doc) { this.tagName=tag;this.ownerDocument=doc;this.children=[];this.dataset={};this.style={};this.attrs={};this.handlers={};this.value='';this.disabled=false;this.isConnected=true;this.scrollLeft=0;this.scrollTop=0;this.clientLeft=0;this.clientTop=0;this.offsetWidth=200;this.offsetHeight=100;this.rect={left:0,top:0,width:200,height:100};this.classes=new Set();this.classList={toggle:(name,on)=>{if(on)this.classes.add(name);else this.classes.delete(name)}}; }
+  setAttribute(k,v){this.attrs[k]=v;}
+  matches(selector){if(selector.includes(','))return selector.split(',').some(part=>this.matches(part.trim()));if(selector[0]==='.')return this.className?.split(' ').includes(selector.slice(1));if(selector[0]==='['){const attr=selector.slice(1,-1);return attr.startsWith('data-') ? Object.hasOwn(this.dataset,attr.slice(5).replace(/-([a-z])/g,(_,c)=>c.toUpperCase())) : Object.hasOwn(this.attrs,attr);}return this.tagName===selector;}
+  querySelectorAll(s){return this.children.flatMap(c=>[...(c.matches(s)?[c]:[]),...c.querySelectorAll(s)]);}
+  querySelector(s){return this.querySelectorAll(s)[0]||null;}
+  closest(s){return this.matches(s)?this:this.parentElement?.closest(s)||null;}
+  append(...nodes){for(const node of nodes){node.parentElement=this;this.children.push(node);}}
+  after(node){const parent=this.parentElement;node.parentElement=parent;parent.children.splice(parent.children.indexOf(this)+1,0,node);}
+  replaceChildren(...nodes){this.children=[];this.append(...nodes);}
+  remove(){if(this.parentElement)this.parentElement.children=this.parentElement.children.filter(c=>c!==this);}
+  addEventListener(type,fn){(this.handlers[type]||=[]).push(fn);}
+  removeEventListener(type,fn){this.handlers[type]=(this.handlers[type]||[]).filter(f=>f!==fn);}
+  emit(type,more={}){const e={target:this,button:0,pointerId:1,clientX:50,clientY:50,preventDefault(){},stopPropagation(){},...more};for(const fn of this.handlers[type]||[])fn(e);return e;}
+  getBoundingClientRect(){return this.rect;}
+  focus(){this.ownerDocument.activeElement=this;}
+}
+function fixture(){
+  const doc={activeElement:null,defaultView:{addEventListener(){},removeEventListener(){}}};doc.createElement=tag=>new Node(tag,doc);
+  const panel=doc.createElement('section');const refs={};
+  for(const [key,tag] of Object.entries({comments:'div',commentEditor:'textarea',commentSave:'button',commentDelete:'button',commentsApply:'button',commentsCount:'span',commentStatus:'span',commentsPanel:'section',chatPanel:'section'})){const n=doc.createElement(tag);n.dataset['ai'+key[0].toUpperCase()+key.slice(1)]='';panel.append(n);refs[key]=n;}
+  const tools=['pan','point','area'].map(tool=>{const b=doc.createElement('button');b.dataset.aiCommentTool=tool;panel.append(b);return b});
+  const tabs=['comments','chat'].map(tab=>{const b=doc.createElement('button');b.dataset.aiSideTab=tab;panel.append(b);return b});
+  let busy=false,images=[],changes=0;const controller=createImageCommentController({panel,getImages:()=>images,getSelectedId:()=>images.at(-1)?.id,isBusy:()=>busy,changed:()=>changes++});
+  return {doc,panel,refs,tools,tabs,controller,get changes(){return changes},set busy(v){busy=v},set images(v){images=v}};
+}
+test('geometry removes CSS zoom and includes stage content scrolling and border',()=>{const stage={offsetWidth:200,offsetHeight:100,scrollLeft:50,scrollTop:30,clientLeft:2,clientTop:2,getBoundingClientRect:()=>({left:100,top:50,width:400,height:200})};const image={getBoundingClientRect:()=>({left:80,top:30,width:400,height:200})};assert.deepEqual(getImageStageGeometry(stage,image),{left:38,top:18,width:200,height:100,scaleX:2,scaleY:2});});
+test('area geometry must be positive but point zero size remains valid',()=>{assert.equal(normalizeCommentBox({type:'area',x:1,y:1,w:0,h:4}),null);assert.ok(normalizeCommentBox({type:'point',x:1,y:1,w:0,h:0}));assert.equal(buildCommentRequest([{comments:[{type:'area',x:0,y:0,w:0,h:10,text:'invalid'}]}]),'');});
+test('initial no-image controls are disabled and tab/tool aria stays synchronized',()=>{const f=fixture();assert.equal(f.refs.commentsApply.disabled,true);assert.equal(f.refs.commentSave.disabled,true);assert.equal(f.refs.commentDelete.disabled,true);assert.equal(f.refs.commentsCount.textContent,'0');f.panel.emit('click',{target:f.tools[1]});assert.equal(f.tools[1].attrs['aria-pressed'],'true');assert.equal(f.tools[0].attrs['aria-pressed'],'false');f.panel.emit('click',{target:f.tabs[1]});assert.equal(f.refs.commentsPanel.hidden,true);assert.equal(f.refs.chatPanel.hidden,false);assert.equal(f.tabs[1].attrs['aria-pressed'],'true');f.controller.destroy();});
+test('selection enables controls, typing updates count without replacing focused text, busy disables',()=>{const f=fixture();const item={id:'x',kind:'generated',name:'v1',comments:[{number:1,type:'point',x:25,y:50,w:0,h:0,text:''}],nextCommentNumber:2};f.images=[item];const stage=f.doc.createElement('div'),img=f.doc.createElement('img');stage.append(img);f.panel.append(stage);f.controller.bind(item,stage,img);f.controller.render();const pin=stage.querySelector('[data-ai-comment-marker]');pin.onclick({stopPropagation(){}});assert.equal(f.refs.commentSave.disabled,false);assert.equal(f.refs.commentDelete.disabled,false);assert.equal(f.doc.activeElement,f.panel);f.refs.commentEditor.focus();f.refs.commentEditor.value='정확히 수정';f.refs.commentEditor.emit('input');assert.equal(item.comments[0].text,'정확히 수정');assert.equal(f.refs.commentsApply.textContent,'코멘트 1개 반영하기');assert.equal(f.refs.commentEditor.value,'정확히 수정');assert.equal(f.doc.activeElement,f.refs.commentEditor);assert.equal(f.changes,1);f.busy=true;f.controller.render();assert.equal(f.refs.commentSave.disabled,true);assert.equal(f.refs.commentDelete.disabled,true);assert.equal(f.refs.commentsApply.disabled,true);f.controller.destroy();});
+test('pan never adds comments; area shows live noninteractive outline and adds a small pin',()=>{const f=fixture();const item={id:'x',kind:'generated',name:'v1',comments:[],nextCommentNumber:1};f.images=[item];const stage=f.doc.createElement('div'),img=f.doc.createElement('img');stage.append(img);f.panel.append(stage);f.controller.bind(item,stage,img);stage.emit('pointerdown',{target:img,clientX:10,clientY:10});stage.emit('pointermove',{target:img,clientX:30,clientY:30});stage.emit('pointerup',{target:img,clientX:30,clientY:30});assert.equal(item.comments.length,0);f.panel.emit('click',{target:f.tools[2]});stage.emit('pointerdown',{target:img,clientX:20,clientY:20});stage.emit('pointermove',{target:img,clientX:80,clientY:60});assert.equal(stage.querySelector('[data-ai-comment-drag-preview]').tagName,'div');stage.emit('pointerup',{target:img,clientX:80,clientY:60});assert.equal(item.comments.length,1);assert.equal(stage.querySelector('[data-ai-comment-drag-preview]'),null);const markers=stage.querySelectorAll('[data-ai-comment-marker]');assert.equal(markers.filter(m=>m.tagName==='button').length,1);assert.equal(markers.find(m=>m.tagName==='div').style.pointerEvents,'none');assert.equal(markers.find(m=>m.tagName==='button').style.width,undefined);assert.equal(f.refs.commentEditor.value,'');assert.equal(f.refs.commentSave.disabled,false);f.controller.destroy();});
+
+for (const type of ['point', 'area']) test(`Delete removes selected ${type}, protects text editing and busy work`,()=>{
+ const f=fixture();const item={id:'x',kind:'generated',comments:[{number:1,type,x:20,y:20,w:type==='area'?20:0,h:type==='area'?20:0,text:'keep'}]};
+ f.images=[item];const stage=f.doc.createElement('div'),img=f.doc.createElement('img');stage.append(img);f.panel.append(stage);f.controller.bind(item,stage,img);f.controller.render();
+ stage.querySelectorAll('[data-ai-comment-marker]').find(n=>n.tagName==='button').onclick({stopPropagation(){}});
+ f.panel.emit('keydown',{key:'Delete',target:f.refs.commentEditor});assert.equal(item.comments.length,1);
+ f.busy=true;f.panel.emit('keydown',{key:'Delete'});assert.equal(item.comments.length,1);
+ f.busy=false;f.panel.emit('keydown',{key:'Delete'});assert.equal(item.comments.length,0);assert.equal(f.changes,1);f.controller.destroy();
+});

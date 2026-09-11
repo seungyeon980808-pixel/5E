@@ -1,3 +1,4 @@
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "./platform.js?v=1.4.0";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -19,12 +20,6 @@ import { state } from "./state.js?v=1.4.0";
 import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.4.0";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
-
-function isTypingTarget(target) {
-  return target instanceof HTMLElement && (
-    target.matches("input, textarea, select") || target.isContentEditable
-  );
-}
 
 /* 이미 있는 상단바/드롭다운 버튼을 그대로 누른다(핸들러는 요소에 붙어 있어 숨김 상태여도 동작). */
 function clickById(id) {
@@ -83,8 +78,8 @@ const COMMANDS = [
   { id: "lockToggle",  label: "잠금 토글",         keywords: ["lock", "잠금", "고정", "unlock"],   shortcutLabel: "K",            run: () => runIfSelectionOk(
     (s) => s.activeTool === "V" && (s.selectedIds || []).length >= 1,
     "선택 도구(V)에서 오브젝트를 선택해야 잠금을 토글할 수 있어요.", "k") },
-  { id: "projectSave", label: "프로젝트 저장",     keywords: ["save", "저장", "project"],          shortcutLabel: "",             run: () => clickById("project-save") },
-  { id: "projectOpen", label: "프로젝트 불러오기", keywords: ["open", "load", "불러오기", "열기"], shortcutLabel: "",             run: () => clickById("project-open") },
+  { id: "projectSave", label: "프로젝트 저장",     keywords: ["save", "저장", "project"],          shortcutLabel: "Ctrl+S",       run: () => clickById("project-save") },
+  { id: "projectOpen", label: "프로젝트 불러오기", keywords: ["open", "load", "불러오기", "열기"], shortcutLabel: "Ctrl+O",       run: () => clickById("project-open") },
   { id: "imageImport", label: "이미지 가져오기",   keywords: ["image", "import", "가져오기", "삽입"], shortcutLabel: "",           run: () => clickById("image-import") },
   { id: "imageExport", label: "이미지로 내보내기", keywords: ["export", "내보내기", "png", "svg"], shortcutLabel: "",             run: () => clickById("image-export") },
   { id: "gridToggle",  label: "격자 토글",         keywords: ["grid", "격자", "모눈"],             shortcutLabel: "",             run: () => clickById("grid-btn") },
@@ -118,11 +113,13 @@ export function initCommandPalette() {
   document.body.appendChild(overlay);
 
   const input = overlay.querySelector(".object-search-input");
+  input.placeholder = keyLabel(input.placeholder);
   const results = overlay.querySelector(".object-search-results");
   let matches = [];
   let highlighted = 0;
 
   function close() {
+    input.blur();
     overlay.hidden = true;
     input.value = "";
   }
@@ -212,7 +209,7 @@ export function initCommandPalette() {
         label.textContent = match.cmd.label;
         const badge = document.createElement("span");
         badge.className = "object-search-badge";
-        badge.textContent = match.cmd.shortcutLabel || "명령";
+        badge.textContent = keyLabel(match.cmd.shortcutLabel) || "명령";
         row.append(iconBox, label, badge);
         results.appendChild(row);
       }
@@ -273,6 +270,7 @@ export function initCommandPalette() {
 
   input.addEventListener("input", renderResults);
   input.addEventListener("keydown", (event) => {
+    if (isComposingKey(event)) return;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       if (!matches.length) return;
@@ -303,9 +301,10 @@ export function initCommandPalette() {
   });
   // Ctrl+K 전역 토글(캡처 단계 — Ctrl+F 패턴과 동일). Ctrl+F는 search.js가 그대로 유지.
   document.addEventListener("keydown", (event) => {
-    if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return;
-    if (event.key.toLocaleLowerCase() !== "k") return;
-    if (isTypingTarget(event.target) && event.target !== input) return;
+    if (isComposingKey(event) || event.defaultPrevented || !modKey(event) || event.shiftKey || event.altKey) return;
+    if (shortcutKey(event) !== "k") return;
+    if (isEditingTarget(event.target) && event.target !== input) return;
+    if (overlay.hidden && document.querySelector(".modal-overlay:not([hidden])")) return;
     event.preventDefault();
     if (overlay.hidden) open();
     else input.focus();

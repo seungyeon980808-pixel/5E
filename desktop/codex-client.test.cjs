@@ -10,7 +10,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /app-server/);
   assert.match(main, /notify\("initialized"\)/);
   assert.match(main, /thread\/resume/);
-  assert.match(main, /turn\/interrupt", \{ threadId: activeTurnThreadId, turnId \}/);
+  assert.match(main, /turn\/interrupt", \{[\s\S]*?threadId: admission\.threadId,[\s\S]*?turnId: admission\.turnId/);
   assert.match(main, /model\/list/);
   assert.match(main, /account\/rateLimits\/read/);
   assert.match(main, /account\/usage\/read/);
@@ -21,7 +21,7 @@ test("desktop shell is configured with isolation and Codex app-server", () => {
   assert.match(main, /method: "5e\/performance"/);
   assert.match(main, /threadId: plan\.ephemeralRender \? null : requestThreadId/);
   assert.match(main, /Promise\.allSettled\(safeAttachments\.map/);
-  assert.match(main, /fs\.promises\.unlink\(result\.value\.file\)/);
+  assert.match(main, /unlinkAttachmentPaths\(admission\.attachmentPaths\)/);
   assert.equal((main.match(/rpc\("turn\/start"/g) || []).length, 1, "backend must not retry a turn implicitly");
   assert.match(main, /imageGeneration/);
   assert.match(main, /contextIsolation: true/);
@@ -64,8 +64,8 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   const examLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "exam-library.js"), "utf8");
   const imageLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "parts-library.js"), "utf8");
   assert.match(panel, /5e\.aiConversationId/);
-  assert.match(panel, /fiveEDesktop\.start\(\)/);
-  assert.match(panel, /fiveEDesktop\.models\(\)/);
+  assert.match(panel, /desktop\.start\(\)/);
+  assert.match(panel, /desktop\.models\(\)/);
   assert.match(panel, /model: modelSelect\.value/);
   assert.match(panel, /effort: effortSelect\.value/);
   assert.match(panel, /serviceTier: speedSelect\.value/);
@@ -94,9 +94,9 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
   assert.match(markup, /data-ai-reference-search/);
-  assert.match(markup, /이미지 검색…/);
+  assert.match(markup, /이미지 검색/);
   assert.match(markup, /화면 캡처/);
-  assert.match(markup, /이미지 불러오기/);
+  assert.match(markup, /이미지 추가/);
   assert.match(markup, /작업 취소/);
   assert.match(markup, /data-ai-chat-send/);
   assert.match(markup, /data-ai-mode="diagram"/);
@@ -114,9 +114,12 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(markup, /파일 탐색기/);
   assert.match(markup, /multiple/);
   assert.ok(
-    markup.indexOf('data-ai-previews') < markup.indexOf('class="ai-reference-section"'),
-    "generated results must stay above the collapsible reference images",
+    markup.indexOf('ai-image-pane ai-original-pane') > -1
+      && markup.indexOf('ai-image-pane ai-original-pane') < markup.indexOf('ai-image-pane ai-result-pane'),
+    "original remains a dedicated comparison pane rather than a stacked footer",
   );
-  assert.match(styles, /grid-template-areas: "results conversation"/);
+  assert.match(markup, /ai-results mode-result/);
+  assert.match(markup, /data-ai-candidate-select/);
+  assert.match(styles, /\.ai-comparison-grid/);
   assert.match(styles, /\.ai-status\[data-kind="ok"\].*var\(--accent/);
 });
