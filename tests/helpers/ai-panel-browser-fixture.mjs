@@ -46,6 +46,16 @@ function createPanel(document) {
   appendControl(document, panel, 'span', 'data-ai-limit');
   appendControl(document, panel, 'span', 'data-ai-account-tokens');
   appendControl(document, panel, 'p', 'data-ai-white-png-note');
+  const outputProcessing = appendControl(document, panel, 'section', 'data-ai-output-processing');
+  for (const value of ['preserve', 'connected', 'all-near-white', 'checkerboard']) {
+    const button = appendControl(document, outputProcessing, 'button', 'data-ai-background-policy');
+    button.dataset.aiBackgroundPolicy = value;
+  }
+  for (const value of ['false', 'true']) {
+    const button = appendControl(document, outputProcessing, 'button', 'data-ai-exam-palette');
+    button.dataset.aiExamPalette = value;
+  }
+  appendControl(document, outputProcessing, 'p', 'data-ai-output-processing-status');
   appendControl(document, panel, 'div', 'data-ai-tab-list');
   appendControl(document, panel, 'button', 'data-ai-interrupt');
   appendControl(document, panel, 'button', 'data-ai-close');

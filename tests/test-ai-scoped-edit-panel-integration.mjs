@@ -101,7 +101,7 @@ test('scoped panel whitePng and alreadyEditable seams bypass whole-image post-pr
   try{
     // Prove the browser fixture is sensitive to both legacy operations: the
     // protected white background is removed and the colored stroke quantized.
-    const legacyData=await transparentizeGeneratedImage(scopedPngData(encodeTestRgbaPng({width,height,data:expectedPixels})));
+    const legacyData=await transparentizeGeneratedImage(scopedPngData(encodeTestRgbaPng({width,height,data:expectedPixels})),{examPalette:true});
     const legacyPixels=decodeTestPng(scopedPngBytes(legacyData)).data;
     assert.notDeepEqual(legacyPixels.slice(0,4),expectedPixels.slice(0,4));
     assert.notDeepEqual(legacyPixels.slice((2*width+1)*4,(2*width+2)*4),expectedPixels.slice((2*width+1)*4,(2*width+2)*4));

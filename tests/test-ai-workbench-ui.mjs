@@ -20,6 +20,7 @@ test("AI panel keeps one compatible instance of each logic-owned control", () =>
     "data-ai-compare", "data-ai-capture", "data-ai-reference-search", "data-ai-model",
     "data-ai-effort", "data-ai-speed", "data-ai-login", "data-ai-new",
     "data-ai-previews", "data-ai-attachment-list", "data-ai-batch-panel", "data-ai-batch-grid",
+    "data-ai-output-processing", "data-ai-output-processing-status",
   ]) {
     assert.equal(attributeCount(attribute), 1, `${attribute} must remain unique`);
   }
@@ -44,6 +45,12 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.match(index, /data-ai-review-mode checked/);
   assert.match(index, /data-ai-pixel-inspection hidden/);
   assert.match(index, /기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존/);
+  assert.match(index, /data-ai-background-policy="preserve"/);
+  assert.match(index, /data-ai-background-policy="connected"/);
+  assert.match(index, /data-ai-background-policy="all-near-white"/);
+  assert.match(index, /data-ai-background-policy="checkerboard"/);
+  assert.match(index, /data-ai-exam-palette="false"/);
+  assert.match(index, /data-ai-exam-palette="true"/);
   assert.match(index, /권장 생성 Sol · 보통 \/ 검수 Sol · 높음/);
 });
 

@@ -36,7 +36,7 @@
   </main>
   <script type="module">
     import { imageBackgroundFixtures, pixelAt } from "../tests/fixtures/image-background-fixtures.mjs";
-    import { processImageBackgroundPixels } from "../js/image-background.js";
+    import { processImageBackgroundPixels, transparentizeGeneratedImage } from "../js/image-background.js";
     import { prepareSeparatedAssets } from "../js/ai-separated-assets.js";
     import { insertEditableAssets } from "../js/ai-editable-assets.js";
     import { compositeRgbaWithinMask } from "../js/ai-scoped-edit.js";
@@ -111,11 +111,20 @@
     await check("배경 제거와 내부 흰색·회색 보존", async () => {
       const fixture = imageBackgroundFixtures().openBeaker;
       const source = new Uint8ClampedArray(fixture.data);
-      const result = processImageBackgroundPixels(source, fixture.width, fixture.height, { examPalette: false });
+      const result = processImageBackgroundPixels(source, fixture.width, fixture.height);
       equalBytes(source, fixture.data, "source must remain reusable");
       assert(pixelAt(result, fixture.points.exterior)[3] === 0, "exterior stayed opaque");
       equalBytes(pixelAt(result, fixture.points.openInteriorWhite), [255, 255, 255, 255], "open interior");
       equalBytes(pixelAt(result, fixture.points.paleLiquid), [226, 226, 226, 255], "pale liquid");
+      const preserved = processImageBackgroundPixels(source, fixture.width, fixture.height, { backgroundPolicy: "preserve" });
+      equalBytes(preserved.data, source, "default preserve policy");
+      const originalPng = pngDataUrl(await encodeScopedPng({
+        width: fixture.width, height: fixture.height, data: new Uint8Array(source),
+      }));
+      const convertedPng = await transparentizeGeneratedImage(originalPng);
+      const converted = await decodeScopedPng(new Uint8Array(await (await fetch(convertedPng)).arrayBuffer()));
+      equalBytes(pixelAt(converted, fixture.points.paleLiquid), [226, 226, 226, 255], "browser wrapper pale liquid");
+      assert(pixelAt(converted, fixture.points.exterior)[3] === 0, "browser wrapper exterior stayed opaque");
       assert(result.reviewRequired && result.reviewReasons.includes("open-light-region"), "ambiguity was not surfaced");
       preview("원본 열린 비커", pngDataUrl(await encodeScopedPng({
         width: fixture.width, height: fixture.height, data: new Uint8Array(fixture.data),

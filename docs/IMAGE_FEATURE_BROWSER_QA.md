@@ -46,9 +46,26 @@ Retained evidence:
 - `.omo/evidence/st_01a08af8-command-output.txt`
 - `.omo/evidence/st_01a08af8-manual-qa.md`
 
-## Remaining product UI work
+## Product UI integration (2026-09-11)
 
-The UI owner must still connect the documented options, review metadata, and
-OCR suggestion state to the product panel/objectification surfaces. Until that
-separate work changes and verifies those owner files, only the isolated
-processing surface is complete.
+The AI workbench now exposes the background and color processing options in
+the product panel. The selected result is shared by the live preview, PNG
+download, and page insertion, while the first generated PNG remains unchanged.
+The default remains `preserve` with the original colors.
+
+Manual QA used the real `index.html` workbench and production modules with a
+local desktop bridge. It confirmed option switching, processed PNG download,
+page insertion, and undo. The browser console remained free of warnings and
+errors. Responsive captures were checked at 375, 768, and 1280 pixels.
+
+The full automated suite completed with **559 passed, 0 failed**.
+
+## Default-option regression check (2026-09-11)
+
+The Codex in-app browser ran the isolated fixture page: **4 passed**.
+Background checks now omit `examPalette` and also exercise the real PNG
+`transparentizeGeneratedImage` wrapper. Exterior alpha was 0, internal white
+remained `[255,255,255,255]`, pale gray remained `[226,226,226,255]`, and
+`backgroundPolicy: "preserve"` retained the complete source RGBA.
+Explicit palette conversion remains covered by automated tests.
+This run does not claim product-panel integration or repeat the Safari run.

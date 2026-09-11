@@ -78,7 +78,7 @@ test("connected removal protects an open beaker cavity and surfaces it for manua
   const fixture = imageBackgroundFixtures().openBeaker;
   const before = new Uint8ClampedArray(fixture.data);
 
-  const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height, { examPalette: false });
+  const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height);
 
   assert.deepEqual(fixture.data, before, "processing must not consume the caller's source bytes");
   assert.deepEqual(result.source, before, "the result must retain a byte-exact reprocessing source");
@@ -196,7 +196,6 @@ test("preserve policy returns independent byte-exact source and output snapshots
   const fixture = imageBackgroundFixtures().closedBeaker;
   const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height, {
     backgroundPolicy: "preserve",
-    examPalette: false,
   });
 
   assert.equal(result.backgroundPolicy, "preserve");
@@ -209,11 +208,22 @@ test("preserve policy returns independent byte-exact source and output snapshots
   assert.equal(result.reviewRequired, false);
 });
 
+test("palette conversion is an explicit opt-in and leaves the source reusable", () => {
+  const source = Uint8ClampedArray.of(226, 226, 226, 255);
+  const result = processImageBackgroundPixels(source, 1, 1, {
+    backgroundPolicy: "preserve",
+    examPalette: true,
+  });
+  assert.deepEqual([...result.data], [255, 255, 255, 255]);
+  assert.deepEqual([...source], [226, 226, 226, 255]);
+  assert.deepEqual(result.source, source);
+});
+
 test("preserveMask keeps exact RGBA through removal and palette conversion", () => {
   const fixture = imageBackgroundFixtures().closedBeaker;
   const preserveMask = maskFromPoints(fixture.width, fixture.height, [fixture.points.paleLiquid, fixture.points.exterior]);
 
-  const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height, { preserveMask });
+  const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height, { preserveMask, examPalette: true });
 
   assert.deepEqual(pixelAt(result, fixture.points.paleLiquid), pixelAt(fixture, fixture.points.paleLiquid));
   assert.deepEqual(pixelAt(result, fixture.points.exterior), pixelAt(fixture, fixture.points.exterior));
@@ -227,6 +237,7 @@ test("changeMask confines aggressive removal and palette conversion to the selec
   const result = processImageBackgroundPixels(fixture.data, fixture.width, fixture.height, {
     backgroundPolicy: "all-near-white",
     changeMask,
+    examPalette: true,
   });
 
   assert.equal(alphaAt(result, fixture.points.exterior), 0);
@@ -267,12 +278,12 @@ test("transparentizeGeneratedImage defaults to connected removal and reports pro
 
   try {
     const output = await transparentizeGeneratedImage("fixture://open-beaker", {
-      examPalette: false,
       onReview: value => { review = value; },
     });
     assert.equal(output, "data:image/png;base64,fixture");
     assert.equal(alphaByteAt(browser.written, fixture.width, fixture.points.exterior), 0);
     assert.equal(alphaByteAt(browser.written, fixture.width, fixture.points.openInteriorWhite), 255);
+    assert.deepEqual(pixelAt({ data: browser.written, width: fixture.width }, fixture.points.paleLiquid), [226, 226, 226, 255]);
     assert.equal(review.reviewRequired, true);
     assert.ok(review.reviewReasons.includes("open-light-region"));
     await assert.rejects(transparentizeGeneratedImage("fixture://open-beaker", { backgroundPolicy: "unknown" }), RangeError);
