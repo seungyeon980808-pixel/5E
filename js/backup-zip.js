@@ -5,7 +5,7 @@
  * 짧은 토큰만 남긴다. 복원 시 반대로 재수화한다. 이미지가 바이너리라 base64 대비 ~25%↓ +
  * PNG는 이미 압축돼 있어 무압축(STORE) ZIP으로 충분 → 외부 라이브러리 불필요.
  *
- * ★ writer/reader를 우리가 모두 소유하므로 STORE·플래그0·데이터디스크립터 없음으로 고정한다
+ * ★ writer/reader를 우리가 모두 소유하므로 STORE·UTF-8 이름·데이터디스크립터 없음으로 고정한다
  *   (Windows 탐색기에서도 열리는 표준 STORE zip).
  */
 
@@ -42,6 +42,8 @@ function bytesToB64(bytes) {
 }
 
 /* ---------- STORE ZIP writer ---------- */
+const ZIP_UTF8_FLAG = 0x0800;
+
 // entries: [{ name:string, data:Uint8Array }] → Blob (application/zip)
 export function zipStore(entries) {
   const enc = new TextEncoder();
@@ -57,7 +59,7 @@ export function zipStore(entries) {
     const lv = new DataView(lh.buffer);
     lv.setUint32(0, 0x04034b50, true);
     lv.setUint16(4, 20, true);   // version needed
-    lv.setUint16(6, 0, true);    // flags
+    lv.setUint16(6, ZIP_UTF8_FLAG, true);
     lv.setUint16(8, 0, true);    // method = STORE
     lv.setUint16(10, 0, true);   // mod time
     lv.setUint16(12, 0, true);   // mod date
@@ -74,7 +76,7 @@ export function zipStore(entries) {
     cv.setUint32(0, 0x02014b50, true);
     cv.setUint16(4, 20, true);   // version made by
     cv.setUint16(6, 20, true);   // version needed
-    cv.setUint16(8, 0, true);    // flags
+    cv.setUint16(8, ZIP_UTF8_FLAG, true);
     cv.setUint16(10, 0, true);   // method
     cv.setUint16(12, 0, true);   // time
     cv.setUint16(14, 0, true);   // date
@@ -156,7 +158,7 @@ function unzipStore(u8) {
     const commentLength = dv.getUint16(p + 32, true);
     const localOffset = dv.getUint32(p + 42, true);
     const centralEnd = p + 46 + nameLength + extraLength + commentLength;
-    if (centralEnd > end || flags !== 0 || method !== 0 || compressedSize !== size ||
+    if (centralEnd > end || (flags !== 0 && flags !== ZIP_UTF8_FLAG) || method !== 0 || compressedSize !== size ||
         size > MAX_ZIP_ENTRY_BYTES || totalBytes + size > MAX_ZIP_TOTAL_BYTES) {
       throw new Error("지원하지 않거나 너무 큰 ZIP 항목");
     }

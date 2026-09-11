@@ -1,6 +1,8 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const vm = require("node:vm");
 
@@ -9,7 +11,7 @@ const root = path.resolve(__dirname, "..");
 function backupModule() {
   let source = fs.readFileSync(path.join(root, "js/backup-zip.js"), "utf8");
   source = source.replace(/\bexport\s+/g, "");
-  source += "\nglobalThis.__exports = { buildBackupZip, parseBackupZip, isZip };";
+  source += "\nglobalThis.__exports = { buildBackupZip, parseBackupZip, isZip, zipStore };";
   const sandbox = { Blob, TextEncoder, TextDecoder, Uint8Array, DataView, JSON, Map, Error, atob, btoa };
   sandbox.globalThis = sandbox;
   vm.runInNewContext(source, sandbox, { filename: "js/backup-zip.js" });
@@ -38,6 +40,7 @@ function storedZip(entries) {
     const localView = new DataView(local.buffer);
     localView.setUint32(0, 0x04034B50, true);
     localView.setUint16(4, 20, true);
+    localView.setUint16(6, entry.flags || 0, true);
     localView.setUint32(14, crc, true);
     localView.setUint32(18, data.length, true);
     localView.setUint32(22, data.length, true);
@@ -50,6 +53,7 @@ function storedZip(entries) {
     centralView.setUint32(0, 0x02014B50, true);
     centralView.setUint16(4, 20, true);
     centralView.setUint16(6, 20, true);
+    centralView.setUint16(8, entry.flags || 0, true);
     centralView.setUint32(16, crc, true);
     centralView.setUint32(20, data.length, true);
     centralView.setUint32(24, data.length, true);
@@ -128,6 +132,47 @@ test("Given a writer-produced backup, when parsed, then image payloads round-tri
   const encoded = await bytesOf(zip.buildBackupZip(payload));
   assert.equal(zip.isZip(encoded), true);
   assert.deepEqual(JSON.parse(JSON.stringify(zip.parseBackupZip(encoded))), payload);
+});
+
+test("Given a Korean export path, when written, then both ZIP headers mark UTF-8 and Python decodes the name", async () => {
+  const zip = backupModule();
+  const name = "5E-AI-결과/선택 결과.png";
+  const encoded = await bytesOf(zip.zipStore([{ name, data: Uint8Array.of(1, 2, 3) }]));
+  const view = new DataView(encoded.buffer, encoded.byteOffset, encoded.byteLength);
+  assert.equal(view.getUint32(0, true), 0x04034B50);
+  assert.equal(view.getUint16(6, true), 0x0800, "local header must mark its UTF-8 name");
+  const centralOffset = encoded.findIndex((byte, index) =>
+    byte === 0x50 && encoded[index + 1] === 0x4B && encoded[index + 2] === 0x01 && encoded[index + 3] === 0x02);
+  assert.ok(centralOffset > 0);
+  assert.equal(view.getUint16(centralOffset + 8, true), 0x0800, "central header must mark its UTF-8 name");
+
+  const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "5e-zip-utf8-"));
+  const archivePath = path.join(tempDirectory, "result.zip");
+  try {
+    fs.writeFileSync(archivePath, encoded);
+    const independent = spawnSync("python3", [
+      "-c",
+      "import json,sys,zipfile; print(json.dumps(zipfile.ZipFile(sys.argv[1]).namelist(), ensure_ascii=False))",
+      archivePath,
+    ], { encoding: "utf8" });
+    assert.equal(independent.status, 0, independent.stderr);
+    assert.deepEqual(JSON.parse(independent.stdout), [name]);
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true });
+  }
+});
+
+test("Given a legacy flag-zero backup, when parsed, then it remains readable while unrelated flags are rejected", () => {
+  const zip = backupModule();
+  const entries = [
+    { name: "backup.json", data: JSON.stringify({ kind: "legacy" }) },
+    { name: "manifest.json", data: "[]" },
+  ];
+  assert.deepEqual(JSON.parse(JSON.stringify(zip.parseBackupZip(storedZip(entries)))), { kind: "legacy" });
+  assert.throws(
+    () => zip.parseBackupZip(storedZip(entries.map(entry => ({ ...entry, flags: 0x0001 })))),
+    /지원하지 않거나 너무 큰 ZIP 항목/,
+  );
 });
 
 test("Given corrupt, truncated, duplicate, unsafe, or incomplete ZIP data, when parsed, then it rejects", async () => {

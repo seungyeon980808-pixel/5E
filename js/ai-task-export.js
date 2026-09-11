@@ -20,7 +20,8 @@ export function sanitizeTaskExportName(value) {
     .replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-")
     .replace(/\s+/g, " ")
     .replace(/[. -]+$/g, "")
-    .slice(0, 120);
+    .slice(0, 120)
+    .replace(/[. -]+$/g, "");
   const fallback = cleaned || "AI 결과";
   const stem = fallback.split('.')[0];
   return /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(stem) ? `_${fallback}` : fallback;
