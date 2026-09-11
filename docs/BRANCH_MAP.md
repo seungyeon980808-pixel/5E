@@ -1,3 +1,19 @@
+# 현재 통합 작업 지도 (2026-09-12)
+
+이번 통합은 main에서 분기한 별도 허브에서 진행한다. 아래 역사 기록의 2026-07 상태와 정리 규칙은 이번 작업에 적용하지 않는다. 원본 브랜치와 미커밋 작업은 보존하며 자동 삭제하지 않는다.
+
+| 작업 폴더 | 브랜치 | 용도 |
+|---|---|---|
+| 5E | feat/image-improvement | 기존 작업, 미커밋 변경 보존 |
+| 5E-integration-hub | codex/integration-hub | 확정 기능 통합·검증 |
+| 5E-integration-evidence | 비교용 detached worktrees와 검사 자료 | 제품 트리에 포함하지 않음 |
+
+통합 소스: editor-usability8335048a(UI에 포함), integrate-ui-featurescc2d0429, auth-server-stability946305d4, tutorial-improvements213d159c. 기준 origin/main은5b0ba923. 현재 로컬 허브 테스트는19440(일반 편집기),19441(인증),19442(인증 편집기)를 사용한다. 실행 여부는 포트 조회로 확인한다. 이 문서는 릴리스나 푸시를 의미하지 않는다.
+
+정확한 전체 작업 폴더는 `git worktree list`, 현재 브랜치는 `git branch --show-current`, 변경은 `git status --short`로 확인한다. 브랜치 이력과 최신 커밋은 `git log --first-parent --oneline origin/main..codex/integration-hub`에서 확인한다.
+
+## 이전 작업 기록 (역사 자료)
+
 # 폴더 ↔ 브랜치 ↔ 포트 ↔ 역할 지도 (BRANCH_MAP.md)
 
 > 2026-07-03 세션 교훈: "이 폴더 = 이 브랜치 = 이 역할"이 문서에 없으면 오진이 생긴다.
