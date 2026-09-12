@@ -15,6 +15,7 @@ const { createPdfLibraryService } = require("./pdf-library-service.cjs");
 const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
 const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bundled-pdf-pack.cjs");
 const { createBatchOutputService } = require("./batch-output-service.cjs");
+const { createFullscreenCoordinator } = require("./fullscreen-state.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === "darwin" ? "icon-512.png" : "icon.ico");
@@ -32,6 +33,7 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 let win;
 let splash;
 const aiTaskShortcutWebContents = new Set();
+const fullscreenCoordinators = new WeakMap();
 const pdfLibraryService = createPdfLibraryService({
   storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
   documentsPath: app.getPath("documents"),
@@ -640,10 +642,25 @@ function createWindow() {
     backgroundColor: "#0e1512",
     icon: APP_ICON_PATH,
     titleBarStyle: "hidden",
-    titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
+    ...(process.platform === "darwin"
+      ? { trafficLightPosition: { x: 12, y: 8 } }
+      : { titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 } }),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   const shortcutWindow = win;
+  const fullscreenWindow = win;
+  const fullscreenCoordinator = createFullscreenCoordinator(fullscreenWindow, (active) => {
+    if (!fullscreenWindow.webContents.isDestroyed()) {
+      fullscreenWindow.webContents.send("window:fullscreen-changed", active);
+    }
+  });
+  fullscreenCoordinators.set(fullscreenWindow, fullscreenCoordinator);
+  fullscreenWindow.webContents.on("did-finish-load", () => {
+    if (!fullscreenWindow.webContents.isDestroyed()) {
+      fullscreenWindow.webContents.send("window:fullscreen-changed", fullscreenCoordinator.current());
+    }
+  });
+  fullscreenWindow.once("closed", () => fullscreenCoordinator.dispose());
   const shortcutWebContents = win.webContents;
   const shortcutWebContentsId = shortcutWebContents.id;
   shortcutWebContents.on("before-input-event", (event, input) => {
@@ -1417,9 +1434,11 @@ ipcMain.handle("codex:status", (_, payload) => runtimeFor(payload).status());
 ipcMain.handle("window:toggle-fullscreen", (event) => {
   const target = BrowserWindow.fromWebContents(event.sender);
   if (!target) return false;
-  const active = !target.isFullScreen();
-  target.setFullScreen(active);
-  return active;
+  return fullscreenCoordinators.get(target)?.toggle() ?? target.isFullScreen();
+});
+ipcMain.handle("window:get-fullscreen", (event) => {
+  const target = BrowserWindow.fromWebContents(event.sender);
+  return target ? target.isFullScreen() : false;
 });
 ipcMain.on("ai:task-shortcut-active", (event, active) => {
   if (active) aiTaskShortcutWebContents.add(event.sender.id);

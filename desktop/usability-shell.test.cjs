@@ -23,13 +23,57 @@ test('shortcut platform preference changes behavior and labels at runtime', () =
   assert.equal(stored.get('5e.shortcutPlatform'), 'windows');
 });
 
-test('native fullscreen bridge, hidden MCP control, focus modality, and centered credit are wired', () => {
-  assert.match(read('desktop/preload.cjs'), /fullscreen:\s*\{[\s\S]*toggle:/);
-  assert.match(read('desktop/main.cjs'), /ipcMain\.handle\("window:toggle-fullscreen"[\s\S]*isFullScreen\(\)/);
+test('native fullscreen bridge exposes event-backed state', () => {
+  const exposed = {};
+  const listeners = new Map();
+  const ipcRenderer = {
+    invoke: (channel) => channel,
+    send() {},
+    on: (channel, listener) => listeners.set(channel, listener),
+    removeListener: (channel, listener) => {
+      if (listeners.get(channel) === listener) listeners.delete(channel);
+    },
+  };
+  const context = vm.createContext({
+    require: () => ({ contextBridge: { exposeInMainWorld: (name, value) => { exposed[name] = value; } }, ipcRenderer }),
+    window: { addEventListener: (_name, callback) => callback() },
+    document: { documentElement: { classList: { add() {} } } },
+    process: { platform: 'darwin' },
+    Boolean,
+  });
+  vm.runInContext(read('desktop/preload.cjs'), context);
+  assert.equal(exposed.fiveEDesktop.fullscreen.get(), 'window:get-fullscreen');
+  const states = [];
+  const remove = exposed.fiveEDesktop.fullscreen.onChange(active => states.push(active));
+  listeners.get('window:fullscreen-changed')({}, true);
+  assert.deepEqual(states, [true]);
+  remove();
+  assert.equal(listeners.has('window:fullscreen-changed'), false);
+});
+
+test('global controls remain in the canvas toolbar while the inspector is collapsible', () => {
+  const html = read('index.html');
+  const controlsStart = html.indexOf('class="canvas-global-controls"');
+  const controlsEnd = html.indexOf('</div>', controlsStart);
+  const controls = html.slice(controlsStart, controlsEnd);
+  const inspectorStart = html.indexOf('id="panel-right"');
+  const inspectorEnd = html.indexOf('</aside>', inspectorStart);
+  const inspector = html.slice(inspectorStart, inspectorEnd);
+  assert.ok(controlsStart >= 0, 'toolbar owns a stable global controls group');
+  assert.match(controls, /id="theme-toggle"/);
+  assert.match(controls, /id="fullscreen-toggle"/);
+  assert.match(controls, /id="drawer-right-toggle"/);
+  assert.doesNotMatch(inspector, /id="theme-toggle"|id="fullscreen-toggle"/);
+});
+
+test('hidden MCP entrypoints, focus modality, native title inset, and centered credit are wired', () => {
   assert.doesNotMatch(read('js/mcp-bridge.js'), /\.hidden\s*=\s*false/);
-  assert.match(read('index.html'), /id="canvas"[\s\S]*tabindex="0"/);
+  assert.match(read('index.html'), /id="mcp-bridge-btn"[^>]*data-mcp-entrypoint[^>]*hidden/);
   const css = read('css/style.css');
-  assert.match(css, /#canvas:focus-visible\s*\{/);
+  assert.match(css, /#canvas:focus-visible\s*\{[^}]*outline:\s*none/s);
+  assert.match(css, /\.tool-btn:focus-visible,[\s\S]*?outline:\s*2px\s+solid\s+var\(--accent\)/s);
+  assert.match(css, /\[data-mcp-entrypoint\]\s*\{[^}]*display:\s*none\s*!important/s);
+  assert.match(css, /\.desktop-shell\.platform-darwin\s+\.desktop-titlebar\s*\{[^}]*padding-inline-start:\s*78px/s);
   assert.match(css, /\.app-footer-copyright\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s);
 });
 

@@ -1,10 +1,16 @@
 const { contextBridge, ipcRenderer } = require("electron");
 window.addEventListener("DOMContentLoaded", () => {
-  document.documentElement.classList.add("desktop-shell");
+  document.documentElement.classList.add("desktop-shell", `platform-${process.platform}`);
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
   fullscreen: {
     toggle: () => ipcRenderer.invoke("window:toggle-fullscreen"),
+    get: () => ipcRenderer.invoke("window:get-fullscreen"),
+    onChange: (callback) => {
+      const listener = (_event, active) => callback(Boolean(active));
+      ipcRenderer.on("window:fullscreen-changed", listener);
+      return () => ipcRenderer.removeListener("window:fullscreen-changed", listener);
+    },
   },
   setAiTaskShortcutActive: (active) => ipcRenderer.send("ai:task-shortcut-active", Boolean(active)),
   onAiCloseTaskShortcut: (callback) => {

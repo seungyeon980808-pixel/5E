@@ -14,11 +14,23 @@ function harness() {
   class Window extends EventEmitter {
     constructor() {
       super();
+      this.fullscreen = false;
+      this.bounds = { x: 20, y: 30, width: 1280, height: 800 };
       this.webContents = new EventEmitter();
       this.webContents.send = (channel, payload) => events.push({ channel, payload });
       this.webContents.setWindowOpenHandler = () => {};
+      this.webContents.isDestroyed = () => false;
     }
     loadFile() {} setMenu() {} setMenuBarVisibility() {} isDestroyed() { return false; }
+    isFullScreen() { return this.fullscreen; }
+    getBounds() { return { ...this.bounds }; }
+    getNormalBounds() { return { ...this.bounds }; }
+    setBounds(bounds) { this.bounds = { ...bounds }; }
+    setFullScreen(active) {
+      if (this.fullscreen === active) return;
+      this.fullscreen = active;
+      queueMicrotask(() => this.emit(active ? "enter-full-screen" : "leave-full-screen"));
+    }
   }
   const electron = {
     app: {
