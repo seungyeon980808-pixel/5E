@@ -66,6 +66,9 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     pickFolder: () => ipcRenderer.invoke("batch-output:pick-folder"),
     save: (payload) => ipcRenderer.invoke("batch-output:save", payload),
   },
+  imageExport: {
+    save: (payload) => ipcRenderer.invoke("image-export:save", payload),
+  },
   onEvent: (callback) => ipcRenderer.on("codex:event", (_, value) => callback(value)),
   onLog: (callback) => ipcRenderer.on("codex:log", (_, value) => callback(value)),
   onState: (callback) => ipcRenderer.on("codex:state", (_, value) => callback(value))
