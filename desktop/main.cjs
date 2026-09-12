@@ -15,6 +15,7 @@ const { createPdfLibraryService } = require("./pdf-library-service.cjs");
 const { registerPdfLibraryIpc } = require("./pdf-library-ipc.cjs");
 const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bundled-pdf-pack.cjs");
 const { createBatchOutputService } = require("./batch-output-service.cjs");
+const { createImageExportService } = require("./image-export-service.cjs");
 const { createFullscreenCoordinator } = require("./fullscreen-state.cjs");
 
 const APP_ID = "com.5e.editor";
@@ -52,6 +53,10 @@ let codexSendInvocationCount = 0;
 const localImageRoots = new Set();
 const batchOutputRoots = new Set();
 const batchOutputService = createBatchOutputService();
+const imageExportService = createImageExportService({
+  desktopPath: app.getPath("desktop"),
+  showSaveDialog: (options) => dialog.showSaveDialog(win, options),
+});
 const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
 
 function isPathInside(root, candidate) {
@@ -1524,6 +1529,12 @@ ipcMain.handle("batch-output:save", async (_, payload = {}) => {
     extension: payload.extension || ".png",
     appendConverted: payload.appendConverted !== false,
   });
+});
+ipcMain.handle("image-export:save", (event, payload = {}) => {
+  if (!win || win.isDestroyed() || event.sender !== win.webContents) {
+    return { ok: false, canceled: false, error: "unauthorized" };
+  }
+  return imageExportService.save(payload);
 });
 registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });

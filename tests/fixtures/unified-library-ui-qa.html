@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="../../">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/unified-library.css">
+</head>
+<body>
+  <button id="open">라이브러리 열기</button>
+  <script type="module">
+    import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
+    const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
+    const makeQuestion = (id, title, color) => ({
+      id, title, kind: "crop", cropType: "question", sourceId: "pack", sourceLabel: "QA 자료팩",
+      metadata: { academicYear: 2026, subject: "p1", administration: "06", questionNumber: Number(id.slice(1)) },
+      provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] },
+      variants: {
+        full: { label: "전체", source: { documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] } },
+        figures: [
+          { id: `${id}-a`, label: "실험 장치", source: { documentId: "qa.pdf", pageNumber: 1, rect: [0.2, 0.25, 0.3, 0.28] } },
+          { id: `${id}-b`, label: "그래프", source: { documentId: "qa.pdf", pageNumber: 1, rect: [0.57, 0.55, 0.27, 0.23] } },
+        ],
+      },
+      preview: { source: { rect: [0, 0, 1, 1] } },
+      qaColor: color,
+    });
+    const all = [makeQuestion("q1", "2026학년도 6월 1번", "%2399c2ff"), makeQuestion("q2", "2026학년도 6월 2번", "%23ffc28f")];
+    const provider = {
+      getSources: () => [{ id: "pack", kind: "source", label: "QA 자료팩", counts: { pdf: 1, question: 2 } }],
+      getExamFilterOptions: () => ({ academicYears: [2026] }),
+      search: ({ query = "" }) => all.filter((item) => item.title.includes(query)),
+      materialize: async (result, options = {}) => {
+        const representation = options.representation || "full";
+        window.qaMaterialized = representation;
+        return { dataUrl: image(`${result.title} / ${representation}`, result.qaColor), provenance: result.provenance };
+      },
+    };
+    window.qaInserted = [];
+    window.qaAiCalls = [];
+    const ui = createUnifiedLibraryUi({ getProvider: async () => provider, insertMaterialized: async (result, asset) => window.qaInserted.push({ id: result.id, rect: result.provenance.rect, materialized: window.qaMaterialized }), openAi: async (payload) => window.qaAiCalls.push(payload) });
+    document.querySelector("#open").addEventListener("click", (event) => ui.open(event.currentTarget));
+    document.querySelector("#open").click();
+  </script>
+</body>
+</html>

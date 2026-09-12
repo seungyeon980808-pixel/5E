@@ -27,6 +27,14 @@ import {
   withManualCropVariant,
   sourceSelection,
   shouldHandleLibrarySpace,
+  figureChoicesForResult,
+  selectedResultRecords,
+  selectedInsertRepresentation,
+  aiActionRepresentationForResult,
+  cropContentBoundsForResult,
+  cropZoomView,
+  cropActionSnapshotIsCurrent,
+  saveCropPng,
 } from "../js/unified-library-ui.js";
 import { IMAGE_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_BYTES, partitionLibraryImports, safeExternalSourceUrl } from "../js/library-import-policy.js";
 
@@ -97,6 +105,46 @@ test("question canvas insertion requires an explicitly selected figure", () => {
   assert.equal(canInsertLibraryResult({ kind: "image" }, "full"), true);
 });
 
+test("whole-question view keeps a concrete selected figure for insertion", () => {
+  const result = {
+    id: "q1", kind: "crop", cropType: "question",
+    variants: {
+      full: { source: { rect: [0.1, 0.1, 0.8, 0.8] } },
+      figures: [
+        { id: "diagram-a", label: "실험 장치", source: { rect: [0.2, 0.3, 0.2, 0.2] } },
+        { id: "diagram-b", label: "그래프", source: { rect: [0.55, 0.25, 0.25, 0.3] } },
+      ],
+    },
+  };
+  const choices = figureChoicesForResult(result, "figure:1");
+  assert.deepEqual(choices.map(({ id, label, representation, selected }) => ({ id, label, representation, selected })), [
+    { id: "diagram-a", label: "실험 장치", representation: "figure:0", selected: false },
+    { id: "diagram-b", label: "그래프", representation: "figure:1", selected: true },
+  ]);
+  choices[0].rect.forEach((value, index) => assert.ok(Math.abs(value - [0.125, 0.25, 0.25, 0.25][index]) < 1e-9));
+  choices[1].rect.forEach((value, index) => assert.ok(Math.abs(value - [0.5625, 0.1875, 0.3125, 0.375][index]) < 1e-9));
+  assert.equal(selectedInsertRepresentation(result, "full", "figure:1"), "figure:1");
+});
+
+test("selected-question records persist outside the current query and remove one exact id", () => {
+  const selected = new Map([
+    ["q1", { id: "q1", title: "2026학년도 6월 1번" }],
+    ["q11", { id: "q11", title: "2025학년도 9월 11번" }],
+  ]);
+  assert.deepEqual(selectedResultRecords(selected, new Set(["q11"])), [
+    { id: "q11", title: "2025학년도 9월 11번" },
+  ]);
+  assert.deepEqual(selectedResultRecords(selected, new Set(["q1", "q11"])).map(({ id }) => id), ["q1", "q11"]);
+});
+
+test("library shell exposes a persistent selected-item tray and selectable figure overlay seam", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /data-unilib-selected-tray/u);
+  assert.match(source, /data-unilib-selected-remove/u);
+  assert.match(source, /unilibFigureChoice/u);
+  assert.doesNotMatch(source, /for \(const id of selectedIds\) if \(!visibleIds\.has\(id\)\) selectedIds\.delete\(id\)/u);
+});
+
 test("a question without a detected figure offers only whole preview until a direct crop exists", () => {
   const result = { kind: "crop", cropType: "question", variants: { full: { label: "전체", source: { rect: [0.1, 0.1, 0.8, 0.8] } }, figures: [] } };
   assert.deepEqual(representationsForResult(result).map(({ id }) => id), ["full"]);
@@ -154,6 +202,13 @@ test("AI multi-selection prefers each saved crop and skips only unsupported full
   assert.equal(canInsertLibraryResult(generalCrop, aiRepresentationForResult(generalCrop, "other", "full")), true);
 });
 
+test("AI resolves the current whole-view blue-box choice before insertion guards", () => {
+  const result = { id: "q1", kind: "crop", cropType: "question", variants: { figures: [{ source: { rect: [0.1, 0.1, 0.2, 0.2] } }, { source: { rect: [0.5, 0.5, 0.3, 0.3] } }] } };
+  assert.equal(aiActionRepresentationForResult(result, "q1", "full", "figure:1"), "figure:1");
+  assert.equal(aiActionRepresentationForResult(result, "other", "full", "figure:1"), "figure:0");
+  assert.equal(canInsertLibraryResult(result, aiActionRepresentationForResult(result, "q1", "full", "figure:1")), true);
+});
+
 test("page-normalized search rectangles map into a cropped question preview", () => {
   assert.deepEqual(rectInCrop([0.3, 0.4, 0.2, 0.1], [0.2, 0.2, 0.5, 0.5]).map((value) => Math.round(value * 10) / 10), [0.2, 0.4, 0.4, 0.2]);
   assert.equal(rectInCrop([0, 0, 0.1, 0.1], [0.2, 0.2, 0.5, 0.5]), null);
@@ -189,6 +244,91 @@ test("direct crop coordinates remain normalized at 100% and 200% display zoom", 
   assert.deepEqual(normalizedCropPoint({ clientX: 350, clientY: 260 }, { left: 100, top: 60, width: 500, height: 400 }), [0.5, 0.5]);
   assert.deepEqual(normalizedCropPoint({ clientX: 600, clientY: 460 }, { left: 100, top: 60, width: 1000, height: 800 }), [0.5, 0.5]);
   assert.deepEqual(normalizedCropPoint({ clientX: -50, clientY: 900 }, { left: 100, top: 60, width: 500, height: 400 }), [0, 1]);
+});
+
+test("Given page questions, when crop opens, then fit bounds cover meaningful content across both columns", () => {
+  const result = {
+    id: "q1", provenance: { documentId: "exam", pageNumber: 2, rect: [0.08, 0.06, 0.4, 0.84] },
+    variants: { content: { source: { rect: [0.1, 0.08, 0.36, 0.8] } } },
+  };
+  const candidates = [
+    result,
+    { id: "q2", provenance: { documentId: "exam", pageNumber: 2 }, variants: { content: { source: { rect: [0.54, 0.07, 0.38, 0.82] } } } },
+    { id: "other-page", provenance: { documentId: "exam", pageNumber: 3 }, variants: { content: { source: { rect: [0, 0, 1, 1] } } } },
+    { id: "other-document", provenance: { documentId: "other", pageNumber: 2 }, variants: { content: { source: { rect: [0, 0, 1, 1] } } } },
+  ];
+  assert.deepEqual(cropContentBoundsForResult(result, candidates).map((value) => Math.round(value * 100) / 100), [0.1, 0.07, 0.82, 0.82]);
+  assert.deepEqual(cropContentBoundsForResult(result, []), [0.1, 0.08, 0.36, 0.8]);
+});
+
+test("Given local crop zoom, when zoom changes, then the page point under the pointer stays anchored", () => {
+  assert.deepEqual(cropZoomView({
+    zoom: 1, requestedZoom: 2,
+    scrollLeft: 100, scrollTop: 50,
+    pointerX: 350, pointerY: 250,
+    stageLeft: 50, stageTop: 50,
+  }), { zoom: 2, scrollLeft: 500, scrollTop: 300 });
+  assert.deepEqual(cropZoomView({
+    zoom: 2, requestedZoom: 99,
+    scrollLeft: 20, scrollTop: 30,
+    pointerX: 110, pointerY: 90,
+    stageLeft: 10, stageTop: 10,
+  }), { zoom: 6, scrollLeft: 260, scrollTop: 250 });
+  assert.deepEqual(cropZoomView({ zoom: 2, requestedZoom: Number.NaN, scrollLeft: 12, scrollTop: 14 }), { zoom: 2, scrollLeft: 12, scrollTop: 14 });
+});
+
+test("Given a direct crop action, stale selection, page, rect, close, and materialization states are rejected", () => {
+  const snapshot = { resultId: "q1", documentId: "exam", pageNumber: 2, rectKey: "0.1,0.2,0.3,0.4", open: true, exact: true };
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot }), true);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, resultId: "q2" }), false);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, pageNumber: 3 }), false);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, rectKey: "0.1,0.2,0.3,0.5" }), false);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, open: false }), false);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, exact: false }), false);
+});
+
+test("Given an exact crop PNG, native save and web download report distinct truthful outcomes", async () => {
+  const calls = [];
+  const nativeSaved = await saveCropPng({
+    dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "문항-crop.png",
+    nativeSave: async (input) => { calls.push(input); return { ok: true, canceled: false, filePath: "/tmp/crop.png" }; },
+  });
+  assert.deepEqual(calls, [{ dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "문항-crop.png" }]);
+  assert.deepEqual(nativeSaved, { kind: "saved", filePath: "/tmp/crop.png" });
+
+  const nativeCanceled = await saveCropPng({
+    dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "crop.png",
+    nativeSave: async () => ({ ok: false, canceled: true }),
+  });
+  assert.deepEqual(nativeCanceled, { kind: "canceled" });
+
+  const downloads = [];
+  const requested = await saveCropPng({
+    dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "crop.png",
+    requestDownload: (dataUrl, name) => downloads.push({ dataUrl, name }),
+  });
+  assert.deepEqual(downloads, [{ dataUrl: "data:image/png;base64,iVBORw0KGgo=", name: "crop.png" }]);
+  assert.deepEqual(requested, { kind: "requested" });
+
+  const failed = await saveCropPng({
+    dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "crop.png",
+    nativeSave: async () => ({ ok: false, canceled: false, error: "write-failed" }),
+  });
+  assert.deepEqual(failed, { kind: "error", error: "write-failed" });
+  assert.deepEqual(await saveCropPng({
+    dataUrl: "data:image/png;base64,iVBORw0KGgo=", suggestedName: "crop.png",
+    nativeSave: async () => { throw new Error("disk unavailable"); },
+  }), { kind: "error", error: "write-failed" });
+  assert.deepEqual(await saveCropPng({ dataUrl: "", suggestedName: "crop.png", requestDownload: () => assert.fail("must not download") }), { kind: "error", error: "invalid-image" });
+});
+
+test("crop editor exposes exact-preview direct save, canvas, objectify, and AI routes", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /data-unilib-crop-save-png/u);
+  assert.match(source, /data-unilib-crop-insert/u);
+  assert.match(source, /data-unilib-crop-objectify/u);
+  assert.match(source, /data-unilib-crop-ai/u);
+  assert.match(source, /openIndependentReferences\(\{ references: \[reference\], startGeneration: false \}\)/u);
 });
 
 test("crop sessions reject stale result and page identities", () => {
