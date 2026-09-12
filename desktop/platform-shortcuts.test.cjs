@@ -45,3 +45,53 @@ test('menu keyboard opens, wraps, jumps to edges and Escape restores trigger foc
   h.listeners.keydown({ key: 'Escape', preventDefault() {}, stopPropagation() {} });
   assert.equal(h.list.hidden, true); assert.equal(h.doc.activeElement, h.btn);
 });
+
+test('platform changes immediately relabel primary, option, and absorbed tooltip shortcuts', () => {
+  const stored = new Map();
+  const attributes = new Map([
+    ['title', ''],
+    ['aria-label', '전체화면 (Alt+Enter)'],
+    ['data-tip', '프로젝트 저장 (Ctrl+S)'],
+  ]);
+  const element = {
+    closest() { return null; },
+    getAttribute(name) { return attributes.get(name) ?? null; },
+    setAttribute(name, value) { attributes.set(name, value); },
+  };
+  const root = { querySelectorAll: () => [element] };
+  const context = vm.createContext({
+    navigator: { platform: 'MacIntel' },
+    localStorage: { getItem: key => stored.get(key) || null, setItem: (key, value) => stored.set(key, value) },
+    document: {
+      body: root,
+      documentElement: { setAttribute() {} },
+      createTreeWalker: () => ({ nextNode: () => null }),
+      querySelector: () => null,
+    },
+    window: { dispatchEvent() {} },
+    CustomEvent: class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } },
+    NodeFilter: { SHOW_TEXT: 4 },
+  });
+  vm.runInContext(read('platform.js').replace(/export \{[^}]+\};/, ''), context);
+
+  vm.runInContext('setShortcutPlatform("mac"); localizeShortcutLabels()', context);
+  assert.equal(attributes.get('aria-label'), '전체화면 (⌥Enter)');
+  assert.equal(attributes.get('data-tip'), '프로젝트 저장 (⌘S)');
+  assert.equal(vm.runInContext('keyLabel("Alt 설명")', context), 'Alt 설명');
+  assert.equal(vm.runInContext('keyLabel("Mac (⌘)")', context), 'Mac (⌘)');
+  assert.equal(vm.runInContext('modKey({metaKey:true,ctrlKey:false})', context), true);
+
+  vm.runInContext('setShortcutPlatform("windows"); localizeShortcutLabels()', context);
+  assert.equal(attributes.get('aria-label'), '전체화면 (Alt+Enter)');
+  assert.equal(attributes.get('data-tip'), '프로젝트 저장 (Ctrl+S)');
+  assert.equal(vm.runInContext('modKey({metaKey:false,ctrlKey:true})', context), true);
+
+  vm.runInContext('setShortcutPlatform("auto")', context);
+  assert.equal(vm.runInContext('IS_MAC', context), true);
+  assert.equal(stored.get('5e.shortcutPlatform'), 'auto');
+});
+
+test('the live tool hint rerenders when shortcut platform changes', () => {
+  const source = read('tool-hint.js');
+  assert.match(source, /addEventListener\("5e:shortcut-platform-change"[\s\S]*sync\(state\.get\(\)\)/);
+});
