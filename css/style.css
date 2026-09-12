@@ -2482,6 +2482,9 @@ textarea.unified-text-input {
   left: 50%;
   transform: translateX(-50%);
 }
+@media (max-width: 1000px) {
+  .app-footer-main .footer-badge { display: none; }
+}
 @media (max-width: 700px) {
   .app-footer-main { display: none; }
 }
