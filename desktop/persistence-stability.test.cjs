@@ -112,6 +112,7 @@ function settingsModule(importLibraryString) {
     Array, Date, JSON, Object, Promise, Set, Map, TextDecoder,
     TEXT_FONTS: [], TEXT_STYLES: [], DEFAULT_TEXT_FONT: "sans-serif", DEFAULT_TEXT_SIZE_MM: 3,
     PREVIEW_BG_KEY: "5e.previewBackgrounds", loadPreviewBackgrounds() {}, addPreviewBackground() {}, removePreviewBackground() {},
+    SHORTCUT_PLATFORM_KEY: "5e.shortcutPlatform", getShortcutPlatform: () => "auto", setShortcutPlatform() {}, localizeShortcutLabels() {},
     localStorage: { getItem: () => null, setItem() {} },
     document: { documentElement: { setAttribute() {} }, getElementById: () => null },
     showConfirm: async () => true,

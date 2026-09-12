@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage } = require("electron");
+const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage, clipboard } = require("electron");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
@@ -26,6 +26,7 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
+const aiTaskShortcutWebContents = new Set();
 const pdfLibraryService = createPdfLibraryService({
   storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
   documentsPath: app.getPath("documents"),
@@ -637,6 +638,13 @@ function createWindow() {
     titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
+  win.webContents.on("before-input-event", (event, input) => {
+    const command = process.platform === "darwin" ? input.meta : input.control;
+    if (!aiTaskShortcutWebContents.has(win.webContents.id) || input.type !== "keyDown" || !command || input.alt || input.shift || String(input.key).toLowerCase() !== "w") return;
+    event.preventDefault();
+    win.webContents.send("ai:close-task-shortcut");
+  });
+  win.webContents.once("destroyed", () => aiTaskShortcutWebContents.delete(win.webContents.id));
   win.setMenu(null);
   win.setMenuBarVisibility(false);
   const revealMainWindow = () => {
@@ -1398,6 +1406,21 @@ function createWindow() {
   }
 }
 ipcMain.handle("codex:status", (_, payload) => runtimeFor(payload).status());
+ipcMain.handle("window:toggle-fullscreen", (event) => {
+  const target = BrowserWindow.fromWebContents(event.sender);
+  if (!target) return false;
+  const active = !target.isFullScreen();
+  target.setFullScreen(active);
+  return active;
+});
+ipcMain.on("ai:task-shortcut-active", (event, active) => {
+  if (active) aiTaskShortcutWebContents.add(event.sender.id);
+  else aiTaskShortcutWebContents.delete(event.sender.id);
+});
+ipcMain.handle("clipboard:read-image", () => {
+  const image = clipboard.readImage();
+  return image.isEmpty() ? null : image.toDataURL();
+});
 ipcMain.handle("codex:start", (_, payload) => runtimeFor(payload).startServer());
 ipcMain.handle("codex:stop", (_, payload) => runtimeFor(payload).stopServer());
 ipcMain.handle("codex:models", (_, payload) => runtimeFor(payload).listModels());

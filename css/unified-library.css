@@ -48,6 +48,8 @@
   --unilib-search-height: 40px;
   --unilib-clear-size: 32px;
   --unilib-icon-size: 16px;
+  --unilib-logo-size: 28px;
+  --unilib-image-line-height: 0;
   --unilib-checkbox-size: 14px;
   --unilib-thumb-width: 104px;
   --unilib-thumb-height: 92px;
@@ -151,6 +153,7 @@
 }
 
 .unified-library-overlay .unilib-brand { display: flex; align-items: center; min-width: 0; gap: var(--unilib-space-3); font-weight: var(--unilib-font-weight-brand); }
+.unified-library-overlay .unilib-logo { width: var(--unilib-logo-size); height: var(--unilib-logo-size); object-fit: contain; }
 .unified-library-overlay .unilib-brand h2 { margin: 0; font-size: var(--unilib-type-title); line-height: var(--unilib-line-height-title); }
 .unified-library-overlay .unilib-mark {
   display: grid;
@@ -588,3 +591,11 @@
   color: var(--unilib-warning);
   padding: var(--unilib-space-3) var(--unilib-space-4);
 }
+.unified-library-overlay .unilib-exam-filters { display: flex; gap: var(--unilib-space-2); flex-wrap: wrap; }
+.unified-library-overlay .unilib-exam-filters select { min-height: var(--unilib-control-height); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); padding: 0 var(--unilib-space-2); }
+.unified-library-overlay .unilib-result-snippet mark,
+.unified-library-overlay .unilib-match-context mark { color: inherit; background: color-mix(in srgb, var(--unilib-accent) 30%, transparent); border-radius: var(--unilib-space-1); }
+.unified-library-overlay .unilib-preview-image { position: relative; display: inline-block; max-width: 100%; line-height: var(--unilib-image-line-height); }
+.unified-library-overlay .unilib-preview-image > img { display: block; max-width: 100%; height: auto; }
+.unified-library-overlay .unilib-match-rect { position: absolute; pointer-events: none; border: var(--unilib-focus-outline-width) solid var(--unilib-accent); background: color-mix(in srgb, var(--unilib-accent) 18%, transparent); }
+.unified-library-overlay [data-browse-source] { cursor: pointer; }

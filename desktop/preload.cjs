@@ -3,6 +3,16 @@ window.addEventListener("DOMContentLoaded", () => {
   document.documentElement.classList.add("desktop-shell");
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
+  fullscreen: {
+    toggle: () => ipcRenderer.invoke("window:toggle-fullscreen"),
+  },
+  setAiTaskShortcutActive: (active) => ipcRenderer.send("ai:task-shortcut-active", Boolean(active)),
+  onAiCloseTaskShortcut: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on("ai:close-task-shortcut", listener);
+    return () => ipcRenderer.removeListener("ai:close-task-shortcut", listener);
+  },
+  readClipboardImage: () => ipcRenderer.invoke("clipboard:read-image"),
   status: (options) => ipcRenderer.invoke("codex:status", options),
   start: (options) => ipcRenderer.invoke("codex:start", options),
   stop: (options) => ipcRenderer.invoke("codex:stop", options),

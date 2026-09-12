@@ -116,6 +116,60 @@ export function scopedImageCompletionStatus(event, { hasImage, autoFinalizationS
   if (event.status === 'completed' || (event.status === 'interrupted' && autoFinalizationSeen)) return 'complete';
   return 'reject';
 }
+
+export function isCloseActiveTaskShortcut(event) {
+  if (String(event?.key || '').toLowerCase() !== 'w' || event?.shiftKey || event?.isComposing) return false;
+  const altOnly = Boolean(event?.altKey) && !event?.metaKey && !event?.ctrlKey;
+  const nativeModifierOnly = !event?.altKey && Boolean(event?.metaKey) !== Boolean(event?.ctrlKey);
+  return altOnly || nativeModifierOnly;
+}
+
+export async function pastedImageBlob(event, clipboard = globalThis.navigator?.clipboard) {
+  const eventItem = Array.from(event?.clipboardData?.items || [])
+    .find(item => String(item.type || '').startsWith('image/'));
+  const eventFile = eventItem?.getAsFile?.();
+  if (eventFile) return eventFile;
+  if (typeof clipboard?.read !== 'function') return null;
+  const clipboardItems = await clipboard.read();
+  for (const item of clipboardItems || []) {
+    const imageType = Array.from(item.types || []).find(type => String(type).startsWith('image/'));
+    if (imageType) return item.getType(imageType);
+  }
+  return null;
+}
+
+export async function readAiClipboardImage(event, {
+  clipboard = globalThis.navigator?.clipboard,
+  readNative,
+} = {}) {
+  let browserError = null;
+  try {
+    const blob = await pastedImageBlob(event, clipboard);
+    if (blob) return { blob, dataUrl: null };
+  } catch (error) {
+    browserError = error;
+  }
+  try {
+    const dataUrl = await readNative?.();
+    if (dataUrl) return { blob: null, dataUrl };
+  } catch (nativeError) {
+    throw new Error(`웹 클립보드: ${browserError?.message || '이미지 없음'} · 앱 클립보드: ${nativeError.message}`);
+  }
+  if (browserError) throw browserError;
+  return { blob: null, dataUrl: null };
+}
+
+export function shouldHandleAiImagePaste(event, canReadSystemClipboard = false) {
+  const types = Array.from(event?.clipboardData?.types || []);
+  const eventHasImage = Array.from(event?.clipboardData?.items || [])
+    .some(item => String(item.type || '').startsWith('image/'));
+  if (eventHasImage) return true;
+  const editingTarget = Boolean(event?.target?.closest?.('input, textarea, select, [contenteditable=true]'));
+  const hasText = types.some(type => type === 'text/plain' || type === 'text/html')
+    || Boolean(event?.clipboardData?.getData?.('text/plain'));
+  if (editingTarget && hasText) return false;
+  return canReadSystemClipboard;
+}
 export async function runScopedPanelEdit({ getCurrent, comments, confirmBounds, generate, review, register, timingObserver, clock } = {}) {
   // This observer is deliberately best-effort: no timing or UI logging failure may affect an edit.
   const timingNow = typeof clock === 'function' ? clock : () => performance.now();
@@ -608,7 +662,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       preserve: '흰 배경과 투명도를 원본대로 유지',
       connected: '물체 바깥의 흰색만 투명하게 처리',
       'all-near-white': '물체 안쪽을 포함한 모든 흰색을 투명하게 처리',
-      checkerboard: '이미지에 그려진 체크무늬를 투명하게 처리',
+      checkerboard: '파일 픽셀에 그려진 반복 체크무늬를 찾아 투명하게 처리 (미리보기 격자 제외)',
     }[selectedImageOutputOptions.backgroundPolicy];
     const thickness = selectedImageOutputOptions.lineThickness
       ? `선 굵기 +${selectedImageOutputOptions.lineThickness}px` : '원본 굵기';
@@ -621,6 +675,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.classList.toggle('is-on', active);
       button.setAttribute('aria-pressed', String(active));
       button.disabled = busy;
+      if (button.dataset.aiBackgroundPolicy === 'checkerboard') {
+        button.textContent = '그려진 체크무늬';
+        button.title = '파일 픽셀에 실제로 그려진 반복 체크무늬만 감지해 투명하게 만듭니다. 미리보기의 투명 배경 격자는 대상이 아닙니다.';
+        button.setAttribute('aria-label', '이미지에 그려진 체크무늬 제거');
+      }
     }
     for (const button of examPaletteButtons) {
       const active = button.dataset.aiExamPalette === String(selectedImageOutputOptions.examPalette);
@@ -1339,7 +1398,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   }
 
-  function scopedDialog(title, detail, { image, content, accept = '확인' } = {}) {
+  function scopedDialog(title, detail, { image, content, accept = '확인', defaultAccept = false } = {}) {
     return new Promise(resolve => {
       const dialog = document.createElement('dialog');
       dialog.className = image || content ? 'ai-confirm-dialog ai-confirm-dialog-wide' : 'ai-confirm-dialog';
@@ -1359,7 +1418,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const actions = document.createElement('div'); actions.className = 'ai-confirm-actions';
       ok.className = 'ai-confirm-accept'; actions.append(cancel, ok);
       dialog.append(actions); panel.append(dialog); dialog.showModal();
-      cancel.focus();
+      (defaultAccept ? ok : cancel).focus();
     });
   }
   async function startScopedEdit(item) {
@@ -1693,14 +1752,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!tabList) return;
     tabList.replaceChildren();
     for (const tab of taskTabs.values()) {
-      const button = document.createElement("button");
-      button.type = "button";
+      const button = document.createElement("div");
       button.className = "ai-task-tab";
       button.dataset.tabId = tab.id;
       button.dataset.workState = tab.workState || "idle";
       const stateLabel = { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
       button.setAttribute("aria-label", `${tab.title} · ${stateLabel}`);
-      button.title = `${tab.title} · ${stateLabel}`;
+      button.title = `${tab.title} · ${stateLabel} · 앱 삭제: Cmd/Ctrl+W · 웹 삭제: Alt+W`;
       if (["completed", "busy", "interrupted", "failed"].includes(tab.workState)) {
         const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         check.setAttribute("viewBox", "0 0 24 24");
@@ -1726,14 +1784,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }
       button.classList.toggle("is-on", tab.id === activeTaskTabId);
       button.setAttribute("role", "tab");
+      button.setAttribute('tabindex', tab.id === activeTaskTabId ? '0' : '-1');
       button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
+      const selectTab = document.createElement('button');
+      selectTab.type = 'button';
+      selectTab.className = 'ai-task-tab-select';
+      selectTab.setAttribute('aria-hidden', 'true');
+      selectTab.setAttribute('tabindex', '-1');
       const source = (tab.attachments || [])[0];
       if (source?.data) {
         const thumbnail = document.createElement("img");
         thumbnail.className = "ai-task-tab-thumb";
         thumbnail.src = source.data;
         thumbnail.alt = "";
-        button.append(thumbnail);
+        selectTab.append(thumbnail);
       }
       const copy = document.createElement("span");
       copy.className = "ai-task-tab-copy";
@@ -1747,13 +1811,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         warning.textContent = "연결 확인 필요";
         copy.append(warning);
       }
-      const closeTab = document.createElement("i");
+      const closeTab = document.createElement("button");
+      closeTab.type = 'button';
+      closeTab.className = 'ai-task-delete';
       closeTab.textContent = "×";
       closeTab.title = "작업 삭제";
+      closeTab.setAttribute('aria-label', `${tab.title} 작업 삭제`);
       closeTab.onclick = async (event) => {
         event.stopPropagation();
         if (busy) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
-        if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제'})) return;
+        if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제', defaultAccept: true})) return;
         if (busy || !taskTabs.has(tab.id)) return;
         captureActiveTaskTab();
         taskTabs.delete(tab.id);
@@ -1768,11 +1835,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         else renderTaskTabs();
         persistTasks();
       };
-      button.append(copy, closeTab);
+      selectTab.append(copy);
+      button.append(selectTab, closeTab);
       button.onclick = () => {
         if (busy || tab.id === activeTaskTabId) return;
         captureActiveTaskTab();
         restoreTaskTab(tab.id);
+      };
+      button.onkeydown = event => {
+        if (event.target !== button || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        button.click();
       };
       tabList.appendChild(button);
     }
@@ -2636,6 +2709,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
     syncSelectedOutputActions();
     panel.hidden = false;
+    desktop?.setAiTaskShortcutActive?.(true);
     // 참고 이미지는 AI 연결 상태 조회와 무관하므로 즉시 불러온다.
     // 연결 확인을 먼저 기다리면 로컬 라이브러리 이미지도 몇 초 뒤에 나타나
     // 사용자가 버튼이 동작하지 않은 것으로 오해할 수 있다.
@@ -2679,7 +2753,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
-  const close = () => { captureActiveTaskTab();persistTasks();void taskPersistence.flush();panel.hidden = true; };
+  const close = () => {
+    captureActiveTaskTab(); persistTasks(); void taskPersistence.flush(); panel.hidden = true;
+    desktop?.setAiTaskShortcutActive?.(false);
+  };
 
   const submit = async (type, options = {}) => {
     if (busy || !desktop) return refresh();
@@ -3724,16 +3801,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.querySelector("[data-ai-close]").addEventListener("click", close);
   panel.addEventListener("mousedown", (event) => { if (event.target === panel) close(); });
   document.addEventListener("paste", (event) => {
-    if (panel.hidden || event.target.closest("input, textarea, select, [contenteditable=true]")) return;
-    const item = Array.from(event.clipboardData?.items || []).find((entry) => entry.type.startsWith("image/"));
-    const pasted = item?.getAsFile();
-    if (!pasted) return;
+    if (panel.hidden) return;
+    const canReadSystemClipboard = typeof navigator.clipboard?.read === 'function'
+      || typeof desktop?.readClipboardImage === 'function';
+    if (!shouldHandleAiImagePaste(event, canReadSystemClipboard)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    void blobToDataUrl(pasted).then((data) => {
-      addReferencesAsTasks([{ data, name: pasted.name || "클립보드 이미지", sourceKind: "clipboard" }]);
+    void readAiClipboardImage(event, {readNative: desktop?.readClipboardImage}).then(async result => {
+      if (!result.blob && !result.dataUrl) { setStatus('클립보드에서 이미지 형식을 찾지 못했습니다.', 'warn'); return; }
+      const data = result.dataUrl || await blobToDataUrl(result.blob);
+      addReferencesAsTasks([{ data, name: result.blob?.name || "클립보드 이미지", sourceKind: "clipboard" }]);
       setStatus("붙여넣은 이미지의 작업이 준비되었습니다.", "ok");
-    });
+    }).catch(error => setStatus(`클립보드 이미지를 읽지 못했습니다: ${error.message}`, 'error'));
   }, true);
   panel.addEventListener("dragover", (event) => {
     if (Array.from(event.dataTransfer?.items || []).some((item) => item.kind === "file")) event.preventDefault();
@@ -3748,7 +3827,25 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     });
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !panel.hidden && !panel.querySelector("dialog[open]")) close();
+    if (panel.hidden || panel.querySelector("dialog[open]")) return;
+    if (isCloseActiveTaskShortcut(event) && activeTaskTabId) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      tabList?.querySelector(`[data-tab-id="${CSS.escape(activeTaskTabId)}"] > .ai-task-delete`)?.click();
+      return;
+    }
+    if (event.key === 'Delete' && event.target?.closest?.('.ai-task-tab.is-on')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      event.target.closest('.ai-task-tab')?.querySelector('.ai-task-delete')?.click();
+      return;
+    }
+    if (event.key === "Escape") close();
+  });
+  desktop?.onAiCloseTaskShortcut?.(() => {
+    if (!panel.hidden && !panel.querySelector('dialog[open]') && activeTaskTabId) {
+      tabList?.querySelector(`[data-tab-id="${CSS.escape(activeTaskTabId)}"] > .ai-task-delete`)?.click();
+    }
   });
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
   commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();}});

@@ -95,7 +95,7 @@ function createMainHarness({ hold = [] } = {}) {
       exit() {},
     },
     BrowserWindow: FakeBrowserWindow,
-    ipcMain: { handle(name, handler) { handlers.set(name, handler); } },
+    ipcMain: { handle(name, handler) { handlers.set(name, handler); }, on() {} },
     shell: { openExternal() {} },
     Menu: { setApplicationMenu() {} },
     desktopCapturer: { async getSources() { return []; } },

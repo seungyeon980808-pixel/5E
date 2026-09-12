@@ -9,6 +9,9 @@ import {
   displayedSourceCount,
   indexLibrarySources,
   isAiRasterDataUrl,
+  canInsertLibraryResult,
+  highlightTextParts,
+  libraryActionSnapshotIsCurrent,
   includeNewLibrarySources,
   isExampleLibraryResult,
   reconcileUnifiedSelection,
@@ -30,6 +33,7 @@ test("Given a result row, card selection and AI-reference selection are sibling 
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.match(source, /button\.append\(media, copy\);\s*item\.append\(button, check\);/u);
   assert.doesNotMatch(source, /button\.append\([^)]*check/u);
+  assert.match(source, /openIndependentReferences\(\{ references, startGeneration: false \}\)/u);
 });
 
 test("Given arbitrary-depth sources, the folder tree preserves hierarchy and tri-state descendants", () => {
@@ -72,10 +76,32 @@ test("Given one PDF question, representations stay inside one card and select an
     },
   };
   assert.deepEqual(representationsForResult(result).map(({ id, label }) => ({ id, label })), [
-    { id: "full", label: "전체" }, { id: "content", label: "내용" }, { id: "figure:0", label: "이미지 1" },
+    { id: "full", label: "전체" }, { id: "image", label: "이미지" },
   ]);
   assert.deepEqual(resultForRepresentation(result, "figure:0").provenance.rect, [0.65, 0.2, 0.25, 0.3]);
   assert.equal(resultForRepresentation(result, "missing"), result);
+});
+
+test("question canvas insertion requires an explicitly selected figure", () => {
+  const result = { kind: "crop", cropType: "question", variants: { figures: [{ source: { rect: [0, 0, 1, 1] } }] } };
+  assert.equal(canInsertLibraryResult(result, "full"), false);
+  assert.equal(canInsertLibraryResult(result, "image"), true);
+  assert.equal(canInsertLibraryResult({ kind: "image" }, "full"), true);
+});
+
+test("search snippets expose keyword segments without unsafe HTML", () => {
+  assert.deepEqual(highlightTextParts("운동량 보존 법칙", "보존"), [
+    { text: "운동량 ", match: false }, { text: "보존", match: true }, { text: " 법칙", match: false },
+  ]);
+});
+
+test("pending library actions reject selection, representation, and close races", () => {
+  const snapshot = { selectedId: "q1", selectedIdsKey: "q1", representation: "figure:0", open: true };
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot }), true);
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, selectedId: "q2" }), false);
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, representation: "figure:1" }), false);
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, selectedIdsKey: "q2" }), false);
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, open: false }), false);
 });
 
 test("Given crop gestures, drawing, moving, and all resize axes remain normalized", () => {

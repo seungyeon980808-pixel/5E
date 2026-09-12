@@ -16,6 +16,9 @@ import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
 import { MAX_PROCESS_DIMENSION } from "./image-analysis.js";
 import { createImageAnalysisController } from "./image-analysis-controller.js";
 import { measureFormula } from "./formula.js?v=1.4.0";
+import { modKey, shortcutKey, keyLabel, isComposingKey } from "./platform.js?v=1.4.0";
+import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;
@@ -287,7 +290,9 @@ export function initImageObjectify(state) {
     status.textContent = message;
     status.classList.toggle("is-error", isError);
   };
+  let selectionOpenGeneration = 0;
   const close = () => {
+    selectionOpenGeneration += 1;
     overlay.hidden = true;
     loadGeneration += 1;
     analysisGeneration += 1;
@@ -989,20 +994,37 @@ export function initImageObjectify(state) {
   }
 
   /* ===== 이벤트 배선 ===== */
-  openButton.addEventListener("click", () => {
+  const updatePasteHint = () => {
+    dropzone.textContent = keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기");
+  };
+  updatePasteHint();
+  window.addEventListener("5e:shortcut-platform-change", updatePasteHint);
+  const openSelectedImage = async () => {
+    const generation = ++selectionOpenGeneration;
+    const image = selectedObjectifyImage(state.get());
     overlay.hidden = false;
     dropzone.focus();
-  });
+    if (!image) return;
+    setStatus("선택한 이미지를 불러오고 있습니다.");
+    try {
+      const file = await objectifyImageFile(image, { renderCutouts: renderSessionToDataUrl });
+      if (generation === selectionOpenGeneration && !overlay.hidden) loadFile(file);
+    } catch (error) {
+      if (generation === selectionOpenGeneration && !overlay.hidden) setStatus(error.message, true);
+    }
+  };
+  openButton.addEventListener("click", openSelectedImage);
   // Ctrl+T = 이미지 객체화. (일부 브라우저는 Ctrl+T를 새 탭에 예약해 가로챌 수
   // 없다 — 그 경우 버튼으로 연다. 가로챌 수 있는 환경에서는 즉시 열림.)
   document.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "t") return;
+    if (e.defaultPrevented || isComposingKey(e) || !modKey(e) || e.shiftKey || e.altKey || shortcutKey(e) !== "t") return;
     const tgt = e.target;
     if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
     e.preventDefault();
-    if (overlay.hidden) { overlay.hidden = false; dropzone.focus(); }
+    if (overlay.hidden) void openSelectedImage();
   }, true);
   _openWithFile = (file) => {
+    selectionOpenGeneration += 1;
     overlay.hidden = false;
     loadFile(file);
   };
@@ -1021,7 +1043,7 @@ export function initImageObjectify(state) {
     close();
   });
   document.addEventListener("keydown", (event) => {
-    if (!overlay.hidden && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
+    if (!overlay.hidden && modKey(event) && shortcutKey(event) === "v") {
       event.stopPropagation();
     }
   }, true);

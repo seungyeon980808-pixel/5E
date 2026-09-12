@@ -544,7 +544,6 @@ function setBadge(kind, port) {
   badgeState = kind;
   const b = bridgeBtn();
   if (!b) return;
-  b.hidden = false;
   b.classList.toggle("mcp-connecting", kind === "connecting");
   if (kind === "connected") {
     b.setAttribute("aria-pressed", "true");
@@ -641,7 +640,6 @@ export async function initMcpBridge() {
     // 게이트를 안 켠 브라우저: 포트를 두드리지 않되 버튼은 보인다(설치 안내 입구).
     const b = bridgeBtn();
     if (b) {
-      b.hidden = false;
       b.setAttribute("aria-pressed", "false");
       b.title = "AI로 그리기 — 클릭: 연결 시도 / 설치 안내";
       b.addEventListener("click", handleInstallClick);

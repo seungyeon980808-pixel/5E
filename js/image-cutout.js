@@ -372,7 +372,7 @@ async function openSmartCutoutDialog(points, targetId, targetSnapshot) {
   slider.focus();
 }
 
-async function renderSessionToDataUrl(session) {
+export async function renderSessionToDataUrl(session) {
   const img = await loadRaster(session.src);
   const canvas = document.createElement("canvas");
   canvas.width = img.naturalWidth || img.width || 1;

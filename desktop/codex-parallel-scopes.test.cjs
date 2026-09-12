@@ -28,7 +28,7 @@ function harness() {
       on: (name, callback) => appHandlers.set(name, callback),
     },
     BrowserWindow: Window,
-    ipcMain: { handle: (name, callback) => handlers.set(name, callback) },
+    ipcMain: { handle: (name, callback) => handlers.set(name, callback), on() {} },
     Menu: { setApplicationMenu() {} },
   };
   function spawn() {
