@@ -9,11 +9,13 @@ function appState() {
   return { objects: [], selectedIds: [], activePageId: 'page-1', activeLayerId: 'layer-1', artboard: { width: 100, height: 100 } };
 }
 
-function testPng() {
+function testPng(gray = 0) {
   const pixels = new Uint8Array(3 * 3 * 4).fill(255);
-  pixels.set([0, 0, 0, 255], 16);
+  pixels.set([gray, gray, gray, 255], 16);
   return scopedPngData(encodeTestRgbaPng({ width: 3, height: 3, data: pixels }));
 }
+
+const settleEvents = () => new Promise(resolve => setTimeout(resolve, 25));
 
 function makeRuntimeReady(browser) {
   browser.desktop.api.status = async () => ({ login: { loggedIn: true }, server: true });
@@ -60,6 +62,72 @@ test('events racing runtime acknowledgement are replayed only for the accepted i
     assert.equal(browser.panel.querySelector('[data-ai-generating]').hidden, true);
     assert.equal(browser.panel.querySelectorAll('.ai-generated-card').length, 1);
     assert.equal(browser.panel.querySelector('.ai-task-tab-time').textContent, '00:00');
+  } finally {
+    acknowledge?.({ turnId: 'accepted-turn', renderThreadId: 'accepted-render' });
+    manager?.close();
+    browser.restore();
+  }
+});
+
+test('unscoped and stale image events cannot mutate a pending or accepted image turn', async () => {
+  let latestWorkspace = null;
+  const browser = installAiPanelBrowserFixture({ indexedDbOptions: {
+    beforePut: workspace => { latestWorkspace = workspace; },
+  } });
+  makeRuntimeReady(browser);
+  let acknowledge;
+  const accepted = new Promise(resolve => { acknowledge = resolve; });
+  const sendCalled = new Promise(resolve => {
+    browser.desktop.api.send = async () => {
+      resolve();
+      return accepted;
+    };
+  });
+  let manager;
+  try {
+    manager = initAiPanel({ get: appState });
+    await manager.open({ reference: { dataUrl: testPng(), name: '원본.png' } });
+    browser.panel.querySelector('[data-ai-send]').click();
+    await sendCalled;
+    await settleEvents();
+    const pendingWorkspace = JSON.stringify(latestWorkspace);
+
+    browser.desktop.emit({ method: 'item/completed', params: {
+      item: { type: 'imageGeneration', imageDataUrl: testPng(40) },
+    } });
+    await settleEvents();
+    assert.equal(browser.panel.querySelectorAll('.ai-generated-card').length, 0);
+    assert.equal(browser.panel.dataset.aiSelectedCandidateId || '', '');
+    assert.equal(browser.panel.querySelector('[data-ai-elapsed]').textContent, '수락 대기');
+    assert.equal(JSON.stringify(latestWorkspace), pendingWorkspace);
+
+    browser.desktop.emit({ method: 'item/completed', params: {
+      turnId: 'accepted-turn', item: { type: 'imageGeneration', imageDataUrl: testPng() },
+    } });
+    acknowledge({ turnId: 'accepted-turn', renderThreadId: 'accepted-render' });
+    await browser.document.waitForState(() => browser.panel.querySelectorAll('.ai-generated-card').length === 1);
+    await settleEvents();
+    const selectedCandidate = browser.panel.dataset.aiSelectedCandidateId;
+    assert.equal(selectedCandidate, 'generated-2');
+    const acceptedStatus = browser.panel.querySelector('[data-ai-status]').textContent;
+    const acceptedWorkspace = JSON.stringify(latestWorkspace);
+
+    browser.desktop.emit({ method: 'item/completed', params: {
+      item: { type: 'imageGeneration', imageDataUrl: testPng(80) },
+    } });
+    browser.desktop.emit({ method: 'item/completed', params: {
+      turnId: 'stale-turn', item: { type: 'imageGeneration', imageDataUrl: testPng(120) },
+    } });
+    await settleEvents();
+    assert.equal(browser.panel.querySelectorAll('.ai-generated-card').length, 1);
+    assert.equal(browser.panel.dataset.aiSelectedCandidateId, selectedCandidate);
+    assert.equal(browser.panel.querySelector('[data-ai-status]').textContent, acceptedStatus);
+    assert.equal(JSON.stringify(latestWorkspace), acceptedWorkspace);
+
+    browser.desktop.emit({ method: 'turn/completed', params: {
+      turn: { id: 'accepted-turn', status: 'completed' },
+    } });
+    await browser.document.waitForState(() => browser.panel.dataset.aiBusy === 'false');
   } finally {
     acknowledge?.({ turnId: 'accepted-turn', renderThreadId: 'accepted-render' });
     manager?.close();

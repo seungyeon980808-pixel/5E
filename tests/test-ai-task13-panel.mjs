@@ -93,6 +93,9 @@ test('cancel intent immediately rejects a late image from the cancelled turn', a
     const sent = await browser.desktop.waitForSend(0);
     browser.panel.querySelector('[data-ai-interrupt]').click();
     browser.desktop.emit({ method: 'item/completed', params: {
+      item: { type: 'imageGeneration', imageDataUrl: testPng() },
+    } });
+    browser.desktop.emit({ method: 'item/completed', params: {
       turnId: sent.turnId, item: { type: 'imageGeneration', imageDataUrl: testPng() },
     } });
     browser.desktop.emit({ method: 'turn/completed', params: { turn: { id: sent.turnId, status: 'interrupted' } } });
