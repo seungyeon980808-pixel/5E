@@ -12,23 +12,26 @@ class Element {
   append(...items){for(const item of items)item.parentElement=this;this.children.push(...items);}
   setAttribute(k,v){this.attrs[k]=v;}
   getAttribute(k){return this.attrs[k];}
+  contains(node){for(let current=node;current;current=current.parentElement)if(current===this)return true;return false;}
+  closest(selector){for(let current=this;current;current=current.parentElement)if(selector==='.ai-task-tab'&&current.kind==='button')return current;return null;}
+  focus(){globalThis.document.activeElement=this;}
 }
 const scope='11111111-1111-1111-1111-111111111111';
 function fixture({saved,delay=false,failStorage=false}={}) {
   const panel=new Element();panel.append(new Element('list'));panel.parentElement=new Element();
   const storage=new Map([['5e.aiParallelWorkspaces.v1',JSON.stringify([scope])],['5e.aiActiveTask.v1',JSON.stringify(saved||null)]]);
-  const alerts=[];const controllers=[];const release=[];const openings=[];
-  globalThis.document={getElementById:()=>panel,createElement:kind=>new Element(kind)};
+  const alerts=[];const controllers=[];const release=[];const openings=[];const deleted=[];
+  globalThis.document={getElementById:()=>panel,createElement:kind=>new Element(kind),activeElement:null};
   globalThis.localStorage={getItem:k=>storage.get(k),setItem:(k,v)=>{if(failStorage)throw Error('quota');storage.set(k,v);}};
   globalThis.window={alert:s=>alerts.push(s)};
   const manager=createTaskWorkspaces({get:()=>({objects:[],selectedIds:[]})},(_,options)=>{
     let selected=options.clientScope+'a';
     const ids=[options.clientScope+'a',options.clientScope+'b'];
-    function render(){const tabs=ids.map(id=>{const tab=new Element('button',id);tab.append(new Element('span',id));tab.setAttribute('aria-selected',String(id===selected));tab.onclick=()=>{selected=id;render();};return tab;});options.navigationChanged(tabs);}
+    function render(){const tabs=ids.map(id=>{const tab=new Element('button',id);tab.append(new Element('span',id));const close=new Element('.ai-task-delete','×');close.onclick=event=>{event.stopPropagation();deleted.push(id);};tab.append(close);tab.setAttribute('aria-selected',String(id===selected));tab.onclick=()=>{selected=id;render();};return tab;});options.navigationChanged(tabs);}
     const c={ready:delay?new Promise(r=>release.push(r)):Promise.resolve(),ownsTask:id=>ids.includes(id),activeTask:()=>selected,selectTask:id=>{selected=id;render();},open:(openOptions={})=>openings.push({scope:c.options.clientScope,options:openOptions}),close:()=>{},options};
     controllers.push(c);render();return c;
   },()=>{});
-  return {manager,panel,controllers,storage,release,alerts,openings};
+  return {manager,panel,controllers,storage,release,alerts,openings,deleted};
 }
 test('all workspaces expose the same task list and persist selection while another is busy',async()=>{
  const f=fixture();await f.manager.open();
@@ -62,6 +65,29 @@ test('empty workspace disappears from navigation and selection moves to remainin
  await Promise.resolve();
  assert.equal(f.controllers[1].options.panel.hidden,false);
  assert.equal(f.controllers[1].options.panel.children[0].children.length,2);
+});
+
+test('cloned navigation keeps task selection and delete as independently wired controls',async()=>{
+ const f=fixture();await f.manager.open();
+ const clone=f.panel.children[0].children[0];
+ clone.querySelector('.ai-task-delete').onclick({stopPropagation(){}});
+ assert.deepEqual(f.deleted,['a']);
+ assert.equal(f.controllers[0].options.panel.hidden,false);
+});
+
+test('cloned task tabs support roving arrows and keyboard activation across workspaces',async()=>{
+ const f=fixture();await f.manager.open();
+ const list=f.panel.children[0];
+ const first=list.children[0];
+ first.focus();
+ let prevented=0;
+ first.onkeydown({key:'ArrowRight',target:first,preventDefault(){prevented++;}});
+ const second=list.children[1];
+ assert.equal(globalThis.document.activeElement,second);
+ assert.equal(second.getAttribute('tabindex'),'0');
+ second.onkeydown({key:'Enter',target:second,preventDefault(){prevented++;}});
+ assert.equal(f.controllers[0].activeTask(),'b');
+ assert.equal(prevented,2);
 });
 
 test('Given ten materialized PDF crops, when one deliberate batch start is requested, then ten independent workspaces submit one crop each',async()=>{

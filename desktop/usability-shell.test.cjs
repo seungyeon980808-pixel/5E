@@ -32,3 +32,18 @@ test('native fullscreen bridge, hidden MCP control, focus modality, and centered
   assert.match(css, /#canvas:focus-visible\s*\{/);
   assert.match(css, /\.app-footer-copyright\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s);
 });
+
+test('native close shortcut accepts the platform command key without extra modifiers', () => {
+  const source = read('desktop/main.cjs');
+  const start = source.indexOf('function isWindowCloseShortcut');
+  const end = source.indexOf('\n}\n', start) + 3;
+  const context = vm.createContext({ process: { platform: 'darwin' } });
+  vm.runInContext(source.slice(start, end), context);
+  const input = (extra = {}) => ({ type: 'keyDown', key: 'w', meta: false, control: false, alt: false, shift: false, ...extra });
+  context.input = input({ meta: true });
+  assert.equal(vm.runInContext('isWindowCloseShortcut(input, "darwin")', context), true);
+  context.input = input({ control: true });
+  assert.equal(vm.runInContext('isWindowCloseShortcut(input, "win32")', context), true);
+  context.input = input({ meta: true, shift: true });
+  assert.equal(vm.runInContext('isWindowCloseShortcut(input, "darwin")', context), false);
+});

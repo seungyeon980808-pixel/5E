@@ -595,7 +595,7 @@
 .unified-library-overlay .unilib-exam-filters select { min-height: var(--unilib-control-height); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); padding: 0 var(--unilib-space-2); }
 .unified-library-overlay .unilib-result-snippet mark,
 .unified-library-overlay .unilib-match-context mark { color: inherit; background: color-mix(in srgb, var(--unilib-accent) 30%, transparent); border-radius: var(--unilib-space-1); }
-.unified-library-overlay .unilib-preview-image { position: relative; display: inline-block; max-width: 100%; line-height: var(--unilib-image-line-height); }
-.unified-library-overlay .unilib-preview-image > img { display: block; max-width: 100%; height: auto; }
+.unified-library-overlay .unilib-preview-image { position: relative; display: inline-block; max-width: calc(100% - 2 * var(--unilib-space-6)); margin: var(--unilib-space-6); line-height: var(--unilib-image-line-height); }
+.unified-library-overlay .unilib-preview-image > img { display: block; max-width: 100%; height: auto; padding: 0; }
 .unified-library-overlay .unilib-match-rect { position: absolute; pointer-events: none; border: var(--unilib-focus-outline-width) solid var(--unilib-accent); background: color-mix(in srgb, var(--unilib-accent) 18%, transparent); }
 .unified-library-overlay [data-browse-source] { cursor: pointer; }

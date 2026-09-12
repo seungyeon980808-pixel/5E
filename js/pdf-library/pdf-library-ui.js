@@ -526,7 +526,17 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         };
         const openDocument = async (targetRuntime) => targetRuntime.openDocument({ ...input, data: bytes });
         documentOpeners.set(id, openDocument);
-        opened.push(await withRuntimeLock(() => openDocument(activeRuntime)));
+        const openedDocument = await withRuntimeLock(() => openDocument(activeRuntime));
+        const enrichedPages = [];
+        for (const page of openedDocument.pages) {
+          const enrichedItems = [];
+          for (const item of page.items) {
+            const detected = await withRuntimeLock(() => activeRuntime.detectFigureCandidates({ documentId: openedDocument.id, pageNumber: page.pageNumber, item }));
+            enrichedItems.push({ ...item, figureCandidates: detected.candidates });
+          }
+          enrichedPages.push({ ...page, items: enrichedItems });
+        }
+        opened.push({ ...openedDocument, pages: enrichedPages });
         browserPdfBytes += file.size;
         browserPdfCount += 1;
       }
@@ -1027,18 +1037,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const owningDocument = docs.find((document) => document.id === source?.documentId);
       source = assertPdfMaterializationSource(result, source, owningDocument?.pageCount);
       const dpi = options.thumbnail ? THUMBNAIL_DPI : HIGH_RES_DPI;
-      const overrideTarget = {
-        ...result,
-        source: { documentId: source.documentId, pageNumber: source.pageNumber, rect: source.rect },
-        documentSourceHash: source.sha256,
-      };
-      const savedRect = cropOverrides.get(overrideTarget);
       const normalized = normalizedSource({
         ...result,
         source: {
           documentId: source.documentId,
           pageNumber: source.pageNumber,
-          rect: options.original ? [0, 0, 1, 1] : (savedRect || source.rect),
+          rect: options.original ? [0, 0, 1, 1] : source.rect,
           fullPageFallback: options.original || source.fullPageFallback,
         },
       });

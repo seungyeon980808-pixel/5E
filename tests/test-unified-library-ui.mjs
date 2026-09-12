@@ -12,6 +12,8 @@ import {
   canInsertLibraryResult,
   highlightTextParts,
   libraryActionSnapshotIsCurrent,
+  isValidQuestionRepresentation,
+  rectInCrop,
   includeNewLibrarySources,
   isExampleLibraryResult,
   reconcileUnifiedSelection,
@@ -102,6 +104,18 @@ test("pending library actions reject selection, representation, and close races"
   assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, representation: "figure:1" }), false);
   assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, selectedIdsKey: "q2" }), false);
   assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, open: false }), false);
+});
+
+test("multiple figure choices remain valid under the single image representation", () => {
+  const result = { variants: { manual: { source: {} }, figures: [{ source: {} }, { source: {} }] } };
+  assert.equal(isValidQuestionRepresentation(result, "manual"), true);
+  assert.equal(isValidQuestionRepresentation(result, "figure:1"), true);
+  assert.equal(isValidQuestionRepresentation(result, "figure:2"), false);
+});
+
+test("page-normalized search rectangles map into a cropped question preview", () => {
+  assert.deepEqual(rectInCrop([0.3, 0.4, 0.2, 0.1], [0.2, 0.2, 0.5, 0.5]).map((value) => Math.round(value * 10) / 10), [0.2, 0.4, 0.4, 0.2]);
+  assert.equal(rectInCrop([0, 0, 0.1, 0.1], [0.2, 0.2, 0.5, 0.5]), null);
 });
 
 test("Given crop gestures, drawing, moving, and all resize axes remain normalized", () => {

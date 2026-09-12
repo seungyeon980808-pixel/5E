@@ -70,7 +70,7 @@ export function representationsForResult(result) {
   if (!variants || result?.cropType !== "question") return [];
   const options = [];
   if (variants.full) options.push({ id: "full", label: variants.full.label || "전체", source: variants.full.source });
-  const firstFigure = variants.figures?.[0];
+  const firstFigure = variants.manual ?? variants.figures?.[0];
   if (firstFigure) options.push({ id: "image", sourceId: firstFigure.id || null, label: "이미지", source: firstFigure.source });
   return options;
 }
@@ -87,7 +87,9 @@ export function highlightTextParts(text, query) {
 export function canInsertLibraryResult(result, representation) {
   if (!result) return false;
   if (result.kind !== "crop" || result.cropType !== "question") return true;
-  return (representation === "image" || String(representation).startsWith("figure:")) && Boolean(result.variants?.figures?.[Number(String(representation).slice(7)) || 0]);
+  if (representation === "manual") return Boolean(result.variants?.manual);
+  if (representation === "image") return Boolean(result.variants?.manual || result.variants?.figures?.[0]);
+  return String(representation).startsWith("figure:") && Boolean(result.variants?.figures?.[Number(String(representation).slice(7))]);
 }
 
 export function libraryActionSnapshotIsCurrent(snapshot, state) {
@@ -97,12 +99,31 @@ export function libraryActionSnapshotIsCurrent(snapshot, state) {
     && snapshot?.open === true && state?.open === true;
 }
 
+export function isValidQuestionRepresentation(result, representation) {
+  if (representation === "full" || representation === "image") return true;
+  if (representation === "manual") return Boolean(result?.variants?.manual);
+  return String(representation).startsWith("figure:") && Boolean(result?.variants?.figures?.[Number(String(representation).slice(7))]);
+}
+
+export function rectInCrop(rect, crop) {
+  const [cx, cy, cw, ch] = crop ?? [0, 0, 1, 1];
+  const x1 = Math.max(cx, rect[0]);
+  const y1 = Math.max(cy, rect[1]);
+  const x2 = Math.min(cx + cw, rect[0] + rect[2]);
+  const y2 = Math.min(cy + ch, rect[1] + rect[3]);
+  if (x2 <= x1 || y2 <= y1) return null;
+  return [(x1 - cx) / cw, (y1 - cy) / ch, (x2 - x1) / cw, (y2 - y1) / ch];
+}
+
 function materializationRepresentation(result, representation) {
-  if (result?.kind === "crop" && representation === "image") return "figure:0";
+  if (result?.kind === "crop" && representation === "image") return result.variants?.manual ? "manual" : "figure:0";
   return representation;
 }
 
 export function resultForRepresentation(result, representationId) {
+  if ((representationId === "manual" || representationId === "image") && result?.variants?.manual?.source) {
+    return { ...result, preview: { ...(result.preview || {}), source: result.variants.manual.source }, provenance: { ...(result.provenance || {}), ...result.variants.manual.source } };
+  }
   const figureIndex = String(representationId).startsWith("figure:") ? Number(String(representationId).slice(7)) : representationId === "image" ? 0 : -1;
   const figure = figureIndex >= 0 ? result?.variants?.figures?.[figureIndex] : null;
   const option = figure ? { source: figure.source } : representationsForResult(result).find((candidate) => candidate.id === representationId);
@@ -603,7 +624,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const ownEpoch = ++previewEpoch;
     const result = selectedResult();
     const representations = representationsForResult(result);
-    if (representations.length && !representations.some((option) => option.id === activeRepresentation)) activeRepresentation = representations[0].id;
+    if (representations.length && !isValidQuestionRepresentation(result, activeRepresentation)) activeRepresentation = representations[0].id;
     if (!representations.length) activeRepresentation = "full";
     const materializeResult = resultForRepresentation(result, activeRepresentation);
     const representationHost = overlay.querySelector("[data-unilib-representations]");
@@ -613,16 +634,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       button.type = "button";
       button.dataset.representation = option.id;
       button.textContent = option.label;
-      button.setAttribute("aria-pressed", String(option.id === activeRepresentation));
+      button.setAttribute("aria-pressed", String(option.id === activeRepresentation || (option.id === "image" && activeRepresentation !== "full")));
       return button;
     }));
-    if (result?.variants?.figures?.length > 1 && activeRepresentation !== "full") {
+    const imageChoices = [...(result?.variants?.manual ? [{ label: "조정한 범위", value: "manual" }] : []), ...(result?.variants?.figures ?? []).map((figure, index) => ({ label: figure.label || `이미지 ${index + 1}`, value: `figure:${index}` }))];
+    if (imageChoices.length > 1 && activeRepresentation !== "full") {
       const picker = document.createElement("select");
       picker.dataset.figurePicker = "";
       picker.setAttribute("aria-label", "문항 이미지 선택");
-      picker.replaceChildren(...result.variants.figures.map((figure, index) => new Option(figure.label || `이미지 ${index + 1}`, String(index))));
-      const activeIndex = Number(String(activeRepresentation).replace("figure:", ""));
-      picker.value = String(Number.isInteger(activeIndex) ? activeIndex : 0);
+      picker.replaceChildren(...imageChoices.map((choice) => new Option(choice.label, choice.value)));
+      picker.value = activeRepresentation === "image" ? imageChoices[0].value : activeRepresentation;
       representationHost.append(picker);
     }
     const matchContext = overlay.querySelector("[data-unilib-match-context]");
@@ -669,7 +690,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         image.alt = result.title;
         image.src = src;
         frame.append(image);
-        for (const rect of activeRepresentation === "full" ? (result.matchContext?.matchRects ?? []) : []) {
+        const previewCrop = materializeResult.provenance?.rect ?? [0, 0, 1, 1];
+        for (const rect of activeRepresentation === "full" ? (result.matchContext?.matchRects ?? []).map((item) => rectInCrop(item, previewCrop)).filter(Boolean) : []) {
           const highlight = document.createElement("span");
           highlight.className = "unilib-match-rect";
           Object.assign(highlight.style, { left: `${rect[0] * 100}%`, top: `${rect[1] * 100}%`, width: `${rect[2] * 100}%`, height: `${rect[3] * 100}%` });
@@ -884,7 +906,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-representations]").addEventListener("change", (event) => {
     const picker = event.target.closest("[data-figure-picker]");
     if (!picker) return;
-    activeRepresentation = `figure:${picker.value}`;
+    activeRepresentation = picker.value;
     void renderPreview();
   });
   query.addEventListener("input", () => void runSearch());
@@ -1070,7 +1092,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-crop-save]").addEventListener("click", async () => {
     const result = selectedResult();
     if (!result || !draftCrop) return;
-    pdfUi.saveCropOverride(result, draftCrop);
+    const savedRect = pdfUi.saveCropOverride(result, draftCrop);
+    const source = { ...result.provenance, rect: savedRect, fullPageFallback: false };
+    const updated = { ...result, variants: { ...(result.variants || {}), manual: { label: "조정한 범위", source } } };
+    results = results.map((item) => item.id === result.id ? updated : item);
+    activeRepresentation = "manual";
     closeCrop();
     await renderPreview();
   });

@@ -215,7 +215,7 @@ function entriesForDocument(index, document) {
     return {
       documentId: document.id, documentTitle: document.title, pageNumber: page.pageNumber,
       itemId: item.id, itemNumber: item.itemNumber, text, normalized: normalizedText(text), words,
-      source: item.source, metadata: document.metadata,
+      source: item.source, contentSource: item.contentSource, figureCandidates: item.figureCandidates, metadata: document.metadata,
     };
   }));
 }
@@ -407,6 +407,15 @@ export function createUnifiedLibraryProvider(input = {}) {
     return dedupeResults([...images.results, ...pdf.results]);
   }
 
+  function withManualCrop(result) {
+    if (result.kind !== "crop" || result.cropType !== "question" || typeof input.cropForResult !== "function") return result;
+    const rect = input.cropForResult(result);
+    const base = result.variants?.full?.source?.rect ?? result.provenance.rect;
+    if (!Array.isArray(rect) || rect.length !== 4 || rect.every((value, index) => value === base[index])) return result;
+    const source = { ...result.provenance, rect: [...rect], fullPageFallback: false };
+    return freezeResult({ ...result, variants: { ...result.variants, manual: { label: "조정한 범위", source } } });
+  }
+
   function search(options = {}) {
     const compact = parseCompactExamCode(options.query);
     const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
@@ -423,9 +432,11 @@ export function createUnifiedLibraryProvider(input = {}) {
     found.sort((left, right) => {
       const exactLeft = compact && left.metadata.itemCode === compact.itemCode ? 1 : 0;
       const exactRight = compact && right.metadata.itemCode === compact.itemCode ? 1 : 0;
-      return exactRight - exactLeft || left.title.localeCompare(right.title, "ko");
+      return exactRight - exactLeft
+        || ((left.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER) - (right.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER))
+        || left.title.localeCompare(right.title, "ko");
     });
-    return Object.freeze(found.slice(0, boundedLimit(options.limit)).map((result) => contextualized(result, options.query ?? "")));
+    return Object.freeze(found.slice(0, boundedLimit(options.limit)).map((result) => contextualized(withManualCrop(result), options.query ?? "")));
   }
 
   function normalizeWorkerEntries(entries) {
@@ -463,7 +474,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         && (!allowedKinds || allowedKinds.has(result.kind))
         && matchesFilters(result, options.filters)
         && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true));
-      return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(result, options.query ?? "")));
+      return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(withManualCrop(result), options.query ?? "")));
     },
     replacePdfCatalog(next = {}) {
       documents = [...(next.documents ?? [])];
@@ -482,6 +493,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         const representation = options.representation ?? "full";
         let source = result.variants?.[representation]?.source ?? result.provenance;
         let canonicalSource = canonical.variants?.[representation]?.source ?? canonical.provenance;
+        const manual = representation === "manual" && result.variants?.manual?.source;
         if (representation.startsWith("figure:")) {
           const index = Number(representation.slice("figure:".length));
           source = result.variants?.figures?.[index]?.source ?? source;
@@ -493,11 +505,11 @@ export function createUnifiedLibraryProvider(input = {}) {
           source,
         );
         const canonicalRect = canonicalSource?.rect ?? [];
-        if (!securedSource || canonicalSource?.documentId !== securedSource.documentId
+        if (!securedSource || (!manual && (canonicalSource?.documentId !== securedSource.documentId
           || canonicalSource?.pageNumber !== securedSource.pageNumber
           || (canonicalSource?.fullPageFallback === true) !== securedSource.fullPageFallback
           || canonicalRect.length !== securedSource.rect.length
-          || canonicalRect.some((value, index) => value !== securedSource.rect[index])) {
+          || canonicalRect.some((value, index) => value !== securedSource.rect[index])))) {
           throw new TypeError("PDF materialization source does not match result provenance");
         }
         return materializers.pdf({ result, source: securedSource, options });
