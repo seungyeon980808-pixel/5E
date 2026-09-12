@@ -14,6 +14,7 @@ import {
   libraryActionSnapshotIsCurrent,
   isValidQuestionRepresentation,
   rectInCrop,
+  aiRepresentationForResult,
   includeNewLibrarySources,
   isExampleLibraryResult,
   reconcileUnifiedSelection,
@@ -111,6 +112,18 @@ test("multiple figure choices remain valid under the single image representation
   assert.equal(isValidQuestionRepresentation(result, "manual"), true);
   assert.equal(isValidQuestionRepresentation(result, "figure:1"), true);
   assert.equal(isValidQuestionRepresentation(result, "figure:2"), false);
+});
+
+test("AI multi-selection prefers each saved crop and skips only unsupported full questions", () => {
+  const manual = { id: "manual", kind: "crop", cropType: "question", variants: { manual: { source: {} }, figures: [] } };
+  const figure = { id: "figure", kind: "crop", cropType: "question", variants: { figures: [{ source: {} }] } };
+  const unsupported = { id: "none", kind: "crop", cropType: "question", variants: { figures: [] } };
+  const generalCrop = { id: "crop", kind: "crop", cropType: "manual" };
+  assert.equal(aiRepresentationForResult(manual, "other", "full"), "manual");
+  assert.equal(aiRepresentationForResult(figure, "other", "full"), "figure:0");
+  assert.equal(canInsertLibraryResult(manual, aiRepresentationForResult(manual, "other", "full")), true);
+  assert.equal(canInsertLibraryResult(unsupported, aiRepresentationForResult(unsupported, "other", "full")), false);
+  assert.equal(canInsertLibraryResult(generalCrop, aiRepresentationForResult(generalCrop, "other", "full")), true);
 });
 
 test("page-normalized search rectangles map into a cropped question preview", () => {
