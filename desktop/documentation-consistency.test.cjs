@@ -32,19 +32,21 @@ function assertExamLibraryDocs({ spec, ignore, trackedPngs }) {
   assert.doesNotMatch(spec, /images\/\s+기출 PNG \(로컬 전용, 커밋 안 됨\)/);
 }
 
-function assertCurrentPairingDocs({ readme, bridge, server, transport }) {
+function assertCurrentPairingDocs({ readme, bridge, server, transport, index, style }) {
   assert.match(bridge, /app_pairing 또는 app_status/);
   assert.match(bridge, /capability는 이 모듈 메모리에만/);
   assert.match(server, /name: "app_pairing"/);
   assert.match(server, /name: "app_status"/);
   assert.match(transport, /\/health.*비밀을 포함하지 않고/);
-  assert.match(readme, /## AI로 그리기 \(MCP\) 연결/);
-  assert.match(readme, /`app_pairing`.*`app_status`/s);
-  assert.match(readme, /MCP 배지/);
-  assert.match(readme, /메모리에만/);
-  assert.match(readme, /재시작.*새 페어링/);
-  assert.match(readme, /페어링 기록.*(?:공유|스크린샷)/s);
-  assert.match(readme, /`\/health`.*(?:비밀|토큰).*(?:없|포함하지 않)/s);
+  assert.match(index, /<button id="mcp-bridge-btn"[\s\S]*?data-mcp-entrypoint[\s\S]*?hidden>/);
+  assert.match(style, /\[data-mcp-entrypoint\]\s*\{\s*display:\s*none\s*!important;\s*\}/);
+  assert.match(readme, /## MCP 통합 상태/);
+  assert.match(readme, /MCP 연동 코드는.*저장소에 유지/);
+  assert.match(readme, /MCP 진입 버튼을 표시하지 않습니다/);
+  assert.match(readme, /이전 버전의.*MCP 배지.*현재 화면에 적용되지 않습니다/);
+  assert.match(readme, /이미지 변환.*소스 추가/);
+  assert.doesNotMatch(readme, /^## AI로 그리기 \(MCP\) 연결/m);
+  assert.doesNotMatch(readme, /^\s*\d+\.\s.*(?:MCP 배지|`app_pairing`)/m);
 }
 
 function assertCurrentCutoutDocs({ guide, index, tools, erase, cutout, trackedJs }) {
@@ -130,22 +132,24 @@ test("exam-library documentation derives the tracked image inventory instead of 
   assert.throws(() => assertExamLibraryDocs({ spec: staleSpec, ignore, trackedPngs }));
 });
 
-test("current README pairing guidance follows the selected-process capability flow", () => {
+test("current README describes the hidden retained MCP bridge without an impossible badge instruction", () => {
   const readme = read("README.md");
   const inputs = {
     readme,
     bridge: read("js/mcp-bridge.js"),
     server: read("tools/mcp-5e/server.js"),
     transport: read("tools/mcp-5e/lib/bridge.js"),
+    index: read("index.html"),
+    style: read("css/style.css"),
   };
 
   assertCurrentPairingDocs(inputs);
-  const historicalOnly = readme.replace(
-    /^## AI로 그리기 \(MCP\) 연결[\s\S]*?(?=^##\s|\Z)/m,
-    "## AI로 그리기 (MCP) 연결\n\nMCP 기능은 v1.3.0 릴리스 이력입니다.\n\n",
+  const impossibleVisibleInstruction = readme.replace(
+    /^## MCP 통합 상태[\s\S]*?(?=^##\s|\Z)/m,
+    "## AI로 그리기 (MCP) 연결\n\n1. MCP에서 `app_pairing`을 호출합니다.\n2. 5E 상단의 **MCP 배지**를 누릅니다.\n\n",
   );
-  assert.notEqual(historicalOnly, readme, "the negative fixture must replace the real current pairing section");
-  assert.throws(() => assertCurrentPairingDocs({ ...inputs, readme: historicalOnly }));
+  assert.notEqual(impossibleVisibleInstruction, readme, "the negative fixture must replace the real current MCP section");
+  assert.throws(() => assertCurrentPairingDocs({ ...inputs, readme: impossibleVisibleInstruction }));
 });
 
 test("current cutout guidance distinguishes the exposed lasso eraser from the unreachable edit-session controls", () => {

@@ -22,7 +22,7 @@
 | `GRAPH_TOOL_SPEC.md` | 좌표평면·함수그래프 **아키텍처 계약**(새 타입 없이 coordplane+funcgraph로) |
 | `GRAPH_TOOL_REDESIGN.md` | 그래프 모달이 지금 모양인 근거. v1.1.0에 릴리즈된 역사적 설계 기록 |
 | `EXAM_LIBRARY_SPEC_20260706.md` | 기출 라이브러리 데이터 계약(`tags.csv` → `build_manifest.py`) |
-| `PDF_LIBRARY_PRODUCT_PLAN.md` | PDF 원본·자료팩·웹 최근 3년·설치형 폴더 검색·자동 크롭·Space 확대 통합 기획 |
+| `PDF_LIBRARY_PRODUCT_PLAN.md` | PDF 원본·자료팩·웹 최근 3년·설치형 폴더 검색·문항 전체/이미지 미리보기·PDF 직접 드래그 자르기 통합 기획 |
 | `IMAGE_OBJECT_SEAM_CONTRACT.md` | 이미지 → 객체 변환 경계 계약 |
 | `HELP_PLAN.md` | 도움말 4층 계획 — ①② 완료, ③ 절반, ④ 미착수 |
 
