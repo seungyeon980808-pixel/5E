@@ -98,7 +98,7 @@
   #ai-image-panel:has(.ai-batch-section) .ai-batch-section > summary span { flex: 0 0 auto; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .pdflib-pack-card,
   .pdflib-pack-row { align-items: stretch; flex-direction: column; }
   .pdflib-correction-fields { grid-template-columns: 1fr; }

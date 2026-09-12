@@ -171,6 +171,10 @@ body {
   -webkit-app-region: drag;
   user-select: none;
 }
+.desktop-shell.platform-darwin .desktop-titlebar {
+  padding-inline-start: 78px;
+  padding-inline-end: 12px;
+}
 .desktop-titlebar-mark {
   color: var(--accent);
   font-family: Georgia, "Times New Roman", serif;
@@ -503,6 +507,13 @@ body { zoom: var(--ui-zoom, 1); }
   padding: 8px 12px;
   border-bottom: 1px solid var(--border-strong);
   background: var(--bg-panel);
+}
+.canvas-global-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 /* vertical group separator between toolbar clusters (brand | history | menus) */
 .tb-sep {
@@ -2209,9 +2220,25 @@ textarea.unified-text-input {
   color: var(--text-label);
 }
 #canvas:focus { outline: none; }
-#canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+#canvas:focus-visible { outline: none; }
 #canvas.pointer-focused { outline: none; }
-#mcp-bridge-btn { display: none !important; }
+[data-mcp-entrypoint] { display: none !important; }
+.tool-btn:focus:not(:focus-visible),
+.advanced-tool-btn:focus:not(:focus-visible),
+.topbar-btn:focus:not(:focus-visible),
+.object-search-trigger:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+.tool-btn:focus-visible,
+.advanced-tool-btn:focus-visible,
+.topbar-btn:focus-visible,
+.object-search-trigger:focus-visible,
+.grid-toggle-btn:focus-visible,
+#center-view-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 .canvas-bottom-bar .zoom-readout {
   flex:0 0 auto;
   font-size:11px;

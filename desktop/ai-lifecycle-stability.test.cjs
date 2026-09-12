@@ -71,9 +71,12 @@ function createMainHarness({ hold = [] } = {}) {
     constructor() {
       super();
       this.destroyed = false;
+      this.fullscreen = false;
+      this.bounds = { x: 20, y: 30, width: 1280, height: 800 };
       this.webContents = new EventEmitter();
       this.webContents.send = (channel, payload) => rendered.push({ channel, payload });
       this.webContents.setWindowOpenHandler = () => {};
+      this.webContents.isDestroyed = () => this.destroyed;
     }
     loadFile() {}
     setMenu() {}
@@ -81,6 +84,15 @@ function createMainHarness({ hold = [] } = {}) {
     isDestroyed() { return this.destroyed; }
     destroy() { this.destroyed = true; }
     show() {}
+    isFullScreen() { return this.fullscreen; }
+    getBounds() { return { ...this.bounds }; }
+    getNormalBounds() { return { ...this.bounds }; }
+    setBounds(bounds) { this.bounds = { ...bounds }; }
+    setFullScreen(active) {
+      if (this.fullscreen === active) return;
+      this.fullscreen = active;
+      queueMicrotask(() => this.emit(active ? "enter-full-screen" : "leave-full-screen"));
+    }
   }
 
   const electron = {

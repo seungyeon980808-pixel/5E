@@ -68,9 +68,9 @@ test("pack and PDF status surfaces expose product metadata and safe actions", as
   assert.match(pdfUi, /summarizePdfIndexStates/);
 });
 
-test("mobile inspector collapses without widening the document viewport", async () => {
+test("mobile inspector collapses below the desktop breakpoint without widening the document viewport", async () => {
   const css = await source("css/productization.css");
-  assert.match(css, /@media \(max-width: 768px\)[\s\S]*\.panel-right:not\(\.is-open\)\s*\{\s*display:\s*none/);
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*\.panel-right:not\(\.is-open\)\s*\{\s*display:\s*none/);
   assert.match(css, /\.canvas-bottom-bar\s*\{[^}]*overflow-x:\s*auto/);
 });
 

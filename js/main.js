@@ -91,8 +91,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   // 전체화면 안에 포함돼 정상적으로 뜬다.
   const target = document.documentElement;
 
-  const syncButton = () => {
-    const active = document.fullscreenElement === target;
+  const syncButton = (active) => {
     btn.setAttribute("aria-pressed", String(active));
     btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
     btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
@@ -100,10 +99,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   const toggleFullscreen = async () => {
     try {
       if (window.fiveEDesktop?.fullscreen) {
-        const active = await window.fiveEDesktop.fullscreen.toggle();
-        btn.setAttribute("aria-pressed", String(active));
-        btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
-        btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
+        await window.fiveEDesktop.fullscreen.toggle();
         return;
       }
       if (document.fullscreenElement) await document.exitFullscreen();
@@ -114,13 +110,20 @@ const zoomReadout = document.getElementById("zoom-readout");
   };
 
   btn.addEventListener("click", toggleFullscreen);
-  document.addEventListener("fullscreenchange", syncButton);
+  if (window.fiveEDesktop?.fullscreen) {
+    window.fiveEDesktop.fullscreen.onChange(syncButton);
+    window.fiveEDesktop.fullscreen.get().then(syncButton).catch((error) => {
+      console.error("Unable to read fullscreen state", error);
+    });
+  } else {
+    document.addEventListener("fullscreenchange", () => syncButton(document.fullscreenElement === target));
+  }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
-  syncButton();
+  if (!window.fiveEDesktop?.fullscreen) syncButton(document.fullscreenElement === target);
 })();
 
 /* ===== THEME TOGGLE (dark/light; persisted in localStorage 'theme') ===== */
