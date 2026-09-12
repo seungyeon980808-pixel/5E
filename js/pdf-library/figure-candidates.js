@@ -1,4 +1,5 @@
 import { createCropSource, normalizedRect } from "./contract.js";
+import { isAnswerChoiceBoxCandidate } from "./page-geometry.js";
 
 const FIGURE_SCHEMA = "pdf-figure-candidates-v1";
 const IMAGE_OPERATORS = [
@@ -147,7 +148,9 @@ export function detectFigureCandidates(input) {
       return clipped && clipped[2] * clipped[3] >= rect[2] * rect[3] * 0.96 && intersection(rect, attachmentArea);
     });
     const contentRect = attachedWords.length ? union([graphicRect, ...attachedWords]) : graphicRect;
-    return { rect: expandedWithin(contentRect, itemRect, marginX, marginY), imageCount, pathCount };
+    const rect = expandedWithin(contentRect, itemRect, marginX, marginY);
+    const candidate = { rect, source: { rect }, evidence: { imageCount, pathCount } };
+    return isAnswerChoiceBoxCandidate(candidate, input.words) ? null : { rect, imageCount, pathCount };
   }).filter(Boolean).sort((left, right) => left.rect[1] - right.rect[1] || left.rect[0] - right.rect[0]);
   const records = candidates.map((candidate, index) => Object.freeze({
     kind: "figure-candidate-v1", id: `${input.item.id}:figure:${index + 1}`, candidateNumber: index + 1,
