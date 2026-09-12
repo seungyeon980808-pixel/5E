@@ -29,6 +29,8 @@ import {
   shouldHandleLibrarySpace,
   figureChoicesForResult,
   selectedResultRecords,
+  aiActionRecords,
+  hasInsertableAiRecord,
   selectedInsertRepresentation,
   aiActionRepresentationForResult,
   cropContentBoundsForResult,
@@ -135,6 +137,18 @@ test("selected-question records persist outside the current query and remove one
     { id: "q11", title: "2025학년도 9월 11번" },
   ]);
   assert.deepEqual(selectedResultRecords(selected, new Set(["q1", "q11"])).map(({ id }) => id), ["q1", "q11"]);
+});
+
+test("AI candidates use persistent checked records and fall back to the preview only with an empty selection", () => {
+  const valid = { id: "checked", kind: "crop", cropType: "question", variants: { figures: [{ source: { rect: [0.1, 0.1, 0.2, 0.2] } }] } };
+  const invalidCurrent = { id: "page", kind: "page" };
+  const records = new Map([[valid.id, valid]]);
+  const selectedIds = new Set([valid.id]);
+  const chosen = aiActionRecords(records, selectedIds, invalidCurrent);
+  assert.deepEqual(chosen, [valid]);
+  assert.equal(hasInsertableAiRecord(chosen, { selectedId: invalidCurrent.id, representation: "full", selectedFigure: "figure:0" }), true);
+  assert.deepEqual(aiActionRecords(new Map(), new Set(["missing"]), invalidCurrent), []);
+  assert.deepEqual(aiActionRecords(new Map(), new Set(), invalidCurrent), [invalidCurrent]);
 });
 
 test("library shell exposes a persistent selected-item tray and selectable figure overlay seam", async () => {
@@ -356,6 +370,12 @@ test("saving a transient crop does not write the persistent correction override"
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.doesNotMatch(source, /pdfUi\.saveCropOverride\(/u);
   assert.match(source, /result\.variants\?\.manual\?\.source\?\.rect/u);
+});
+
+test("keeping a crop refreshes its checked record before later filtered AI dispatch", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /if \(selectedIds\.has\(result\.id\)\) selectedRecords\.set\(result\.id, updated\)/u);
+  assert.match(source, /const chosen = aiActionRecords\(selectedRecords, selectedIds,/u);
 });
 
 test("Given a selected result from a disabled source, when results refresh, then stale selection is removed", () => {

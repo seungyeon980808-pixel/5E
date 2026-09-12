@@ -162,6 +162,18 @@ export function selectedResultRecords(records, selectedIds) {
   return [...selectedIds].map((id) => records.get(id)).filter(Boolean);
 }
 
+export function aiActionRecords(records, selectedIds, currentResult) {
+  if (selectedIds.size > 0) return selectedResultRecords(records, selectedIds);
+  return currentResult ? [currentResult] : [];
+}
+
+export function hasInsertableAiRecord(records, { selectedId, representation, selectedFigure }) {
+  return records.some((result) => canInsertLibraryResult(
+    result,
+    aiActionRepresentationForResult(result, selectedId, representation, selectedFigure),
+  ));
+}
+
 export function aiRepresentationForResult(result, selectedId, selectedRepresentation) {
   if (result?.kind !== "crop" || result?.cropType !== "question") return "full";
   if (result.id === selectedId && selectedRepresentation !== "full") return selectedRepresentation;
@@ -703,6 +715,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const invalidateAction = () => { actionRevision += 1; };
   const snapshotAction = () => Object.freeze({ selectedId, selectedIdsKey: selectionKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, revision: actionRevision, options: Object.freeze(getPartOptions()), open: !overlay.hidden });
   const actionIsCurrent = (snapshot) => libraryActionSnapshotIsCurrent(snapshot, { selectedId, selectedIdsKey: selectionKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, revision: actionRevision, open: !overlay.hidden });
+  const updateAiActionAvailability = () => {
+    const aiRecords = aiActionRecords(selectedRecords, selectedIds, selectedResult());
+    const aiAllowed = hasInsertableAiRecord(aiRecords, {
+      selectedId,
+      representation: activeRepresentation,
+      selectedFigure: activeFigureRepresentation,
+    });
+    overlay.querySelector("[data-unilib-ai]").disabled = actionBusy || !aiAllowed || (typeof openAi !== "function" && typeof openIndependentReferences !== "function");
+  };
   const runLibraryAction = async (work) => {
     if (actionBusy) return;
     actionBusy = true;
@@ -985,6 +1006,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       return chip;
     }));
     overlay.querySelector("[data-unilib-ai]").textContent = records.length > 1 ? `선택 ${records.length}개 AI 이미지로 보내기` : "AI 이미지로 보내기";
+    updateAiActionAvailability();
   }
 
   async function renderPreview() {
@@ -1056,7 +1078,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     insert.disabled = actionBusy || !actionAllowed;
     insert.title = result?.kind === "crop" && !insert.disabled ? "선택한 이미지만 캔버스에 삽입" : result?.kind === "crop" ? "이미지를 선택해야 삽입할 수 있습니다" : "";
     overlay.querySelector("[data-unilib-objectify]").disabled = actionBusy || !actionAllowed || typeof openObjectify !== "function";
-    overlay.querySelector("[data-unilib-ai]").disabled = actionBusy || !actionAllowed || (typeof openAi !== "function" && typeof openIndependentReferences !== "function");
+    updateAiActionAvailability();
     overlay.querySelector("[data-unilib-adjust]").hidden = result?.provenance?.provider !== "pdf";
     const sourceOpen = overlay.querySelector("[data-unilib-source-open]");
     const isPdf = result?.provenance?.provider === "pdf";
@@ -1429,8 +1451,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   });
   overlay.querySelector("[data-unilib-ai]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {
-      const chosen = selectedResultRecords(selectedRecords, selectedIds);
-      if (!chosen.length) { const selected = results.find((item) => item.id === snapshot.selectedId); if (selected) chosen.push(selected); }
+      const chosen = aiActionRecords(selectedRecords, selectedIds, results.find((item) => item.id === snapshot.selectedId));
       if (!chosen.length) return;
       const activeProvider = await provider();
       if (!isCurrent()) return;
@@ -1684,6 +1705,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const updated = withManualCropVariant(result, source);
     invalidateAction();
     results = results.map((item) => item.id === result.id ? updated : item);
+    if (selectedIds.has(result.id)) selectedRecords.set(result.id, updated);
     activeRepresentation = "manual";
     closeCrop();
     await renderPreview();
