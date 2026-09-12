@@ -9,6 +9,7 @@
   --unilib-muted: var(--text-secondary, #8b949e);
   --unilib-label: var(--text-label, #b1bac4);
   --unilib-accent: var(--accent, #2f81f7);
+  --unilib-focus: var(--unilib-accent);
   --unilib-accent-hover: var(--accent-hover, #4493f8);
   --unilib-success: var(--ai-task-success, #3fb950);
   --unilib-warning: var(--warning, #d29922);
