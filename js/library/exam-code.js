@@ -43,6 +43,15 @@ export function deriveExamMetadata(input = {}) {
     const { itemNumber: _itemNumber, itemCode: _itemCode, ...documentMetadata } = direct;
     return Object.freeze({ ...documentMetadata, sourceFileName });
   }
+  const readable = /(?:^|[-_ ])(20\d{2})[-_ ](june|september|csat|suneung|06|09|11)[-_ ](phy|physics|che|chemistry|bio|biology|ear|earth)([12])(?:\.|[-_ ]|$)/iu.exec(sourceFileName ?? "");
+  if (readable) {
+    const subject = canonicalSubject(`${readable[3]}${readable[4]}`);
+    const administration = canonicalAdministration(readable[2]);
+    if (subject && administration) {
+      const result = codeResult(subject, Number(readable[1]), administration, null);
+      return Object.freeze({ subject: result.subject, academicYear: result.academicYear, administration: result.administration, documentCode: result.documentCode, sourceFileName });
+    }
+  }
   const metadata = input.metadata ?? {};
   const subject = canonicalSubject(metadata.subject ?? input.subject);
   const academicYear = Number(metadata.academicYear ?? input.academicYear ?? input.year);

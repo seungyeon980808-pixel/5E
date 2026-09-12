@@ -57,6 +57,12 @@ test("real pack metadata derives canonical exam codes without renaming its PDF",
   });
 });
 
+test("readable imported exam filenames derive canonical metadata", () => {
+  assert.deepEqual(deriveExamMetadata({ source: { displayName: "2025-june-phy1.pdf" } }), {
+    subject: "p1", academicYear: 2025, administration: "06", documentCode: "p12506", sourceFileName: "2025-june-phy1.pdf",
+  });
+});
+
 test("exact item search returns one question card with full, content, and figure variants", async () => {
   const document = pdfDocument();
   const provider = createUnifiedLibraryProvider({
@@ -323,6 +329,7 @@ test("imported images search filename only while curated image tags remain searc
   assert.equal(provider.search({ query: "pulley", kinds: ["image"] }).length, 1);
   assert.equal(provider.search({ query: "운동량보존", kinds: ["image"] })[0].preview.url,
     "https://legacy.example/data/images/p1_2026_06_01.png");
+  assert.equal(provider.search({ query: "운동량보존", kinds: ["image"] })[0].title, "물리학Ⅰ 2026학년도 6월 모의평가 1번");
 });
 
 test("external exam manifests never fall back to deleted bundled image paths", () => {
@@ -379,4 +386,28 @@ test("parts insertion preserves self-contained original/lineart object behavior"
   assert.deepEqual(stateValue.selectedIds, ["obj-fixed"]);
   assert.equal(stateValue.undoStack.length, 1);
   assert.deepEqual(stateValue.redoStack, []);
+});
+
+test("saved manual question crops reconstruct on every provider search", () => {
+  const rect = [0.12, 0.08, 0.42, 0.35];
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [pdfDocument()],
+    cropForResult: () => rect,
+  });
+  const first = provider.search({ query: "운동량", kinds: ["crop"] })[0];
+  const second = provider.search({ query: "운동량", kinds: ["crop"] })[0];
+  assert.deepEqual(first.variants.manual.source.rect, rect);
+  assert.deepEqual(second.variants.manual.source.rect, rect);
+});
+
+test("question search results sort by numeric question number", () => {
+  const document = pdfDocument();
+  const page = document.pages[0];
+  const items = [10, 2, 1].map((itemNumber, index) => ({
+    id: `q${itemNumber}`, itemNumber, rect: [0, index * 0.3, 1, 0.25],
+    source: { documentId: document.id, pageNumber: 1, rect: [0, index * 0.3, 1, 0.25], fullPageFallback: false },
+  }));
+  const words = items.map((item) => ({ text: "공통어", rect: [0.1, item.rect[1] + 0.05, 0.1, 0.03] }));
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [{ ...document, pages: [{ ...page, items, words }] }] });
+  assert.deepEqual(provider.search({ query: "공통어", kinds: ["crop"] }).map((result) => result.metadata.itemNumber), [1, 2, 10]);
 });

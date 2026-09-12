@@ -35,6 +35,16 @@ test('plain text paste remains native while the prompt textarea is focused', () 
   assert.equal(shouldHandleAiImagePaste({target,clipboardData:{items:[],getData:()=> '문장'}},true),false);
 });
 
+test('plain text outside an input does not trigger image clipboard fallback', () => {
+  const event={target:{},clipboardData:{types:['text/plain'],items:[{type:'text/plain'}]}};
+  assert.equal(shouldHandleAiImagePaste(event,true),false);
+});
+
+test('mixed image and text clipboard data still attaches the image', () => {
+  const event={target:{},clipboardData:{types:['text/plain','Files'],items:[{type:'text/plain'},{type:'image/png'}]}};
+  assert.equal(shouldHandleAiImagePaste(event,true),true);
+});
+
 test('paste decision tolerates a Document target without closest', () => {
   assert.equal(shouldHandleAiImagePaste({target:{},clipboardData:{types:[],items:[]}},false),false);
 });

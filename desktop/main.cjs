@@ -18,6 +18,11 @@ const { createBatchOutputService } = require("./batch-output-service.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === "darwin" ? "icon-512.png" : "icon.ico");
+
+function isWindowCloseShortcut(input, platform = process.platform) {
+  const command = platform === "darwin" ? input.meta : input.control;
+  return input.type === "keyDown" && command && !input.alt && !input.shift && String(input.key).toLowerCase() === "w";
+}
 app.setAppUserModelId(APP_ID);
 
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
@@ -638,13 +643,16 @@ function createWindow() {
     titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
-  win.webContents.on("before-input-event", (event, input) => {
-    const command = process.platform === "darwin" ? input.meta : input.control;
-    if (!aiTaskShortcutWebContents.has(win.webContents.id) || input.type !== "keyDown" || !command || input.alt || input.shift || String(input.key).toLowerCase() !== "w") return;
+  const shortcutWindow = win;
+  const shortcutWebContents = win.webContents;
+  const shortcutWebContentsId = shortcutWebContents.id;
+  shortcutWebContents.on("before-input-event", (event, input) => {
+    if (!isWindowCloseShortcut(input)) return;
     event.preventDefault();
-    win.webContents.send("ai:close-task-shortcut");
+    if (aiTaskShortcutWebContents.has(shortcutWebContentsId)) shortcutWebContents.send("ai:close-task-shortcut");
+    else shortcutWindow.close();
   });
-  win.webContents.once("destroyed", () => aiTaskShortcutWebContents.delete(win.webContents.id));
+  shortcutWebContents.once("destroyed", () => aiTaskShortcutWebContents.delete(shortcutWebContentsId));
   win.setMenu(null);
   win.setMenuBarVisibility(false);
   const revealMainWindow = () => {

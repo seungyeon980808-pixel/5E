@@ -1,5 +1,6 @@
 import { createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
 import { taskExportSelection } from './ai-task-export.js';
+import { modKey } from './platform.js?v=1.4.0';
 import { distributeSourcesToTaskTabs } from './ai-source-tasking.js?v=1';
 import { setupAiWorkbench } from './ai-workbench.js';
 import { mountDurableBatchUi } from './ai-batch-ui.js';
@@ -117,10 +118,12 @@ export function scopedImageCompletionStatus(event, { hasImage, autoFinalizationS
   return 'reject';
 }
 
-export function isCloseActiveTaskShortcut(event) {
+export function isCloseActiveTaskShortcut(event, matchesPlatformModifier = modKey) {
   if (String(event?.key || '').toLowerCase() !== 'w' || event?.shiftKey || event?.isComposing) return false;
   const altOnly = Boolean(event?.altKey) && !event?.metaKey && !event?.ctrlKey;
-  const nativeModifierOnly = !event?.altKey && Boolean(event?.metaKey) !== Boolean(event?.ctrlKey);
+  const nativeModifierOnly = !event?.altKey
+    && Boolean(event?.metaKey) !== Boolean(event?.ctrlKey)
+    && matchesPlatformModifier(event);
   return altOnly || nativeModifierOnly;
 }
 
@@ -164,11 +167,17 @@ export function shouldHandleAiImagePaste(event, canReadSystemClipboard = false) 
   const eventHasImage = Array.from(event?.clipboardData?.items || [])
     .some(item => String(item.type || '').startsWith('image/'));
   if (eventHasImage) return true;
-  const editingTarget = Boolean(event?.target?.closest?.('input, textarea, select, [contenteditable=true]'));
   const hasText = types.some(type => type === 'text/plain' || type === 'text/html')
     || Boolean(event?.clipboardData?.getData?.('text/plain'));
-  if (editingTarget && hasText) return false;
+  if (hasText) return false;
   return canReadSystemClipboard;
+}
+
+export function dialogFocusTarget(activeElement, controls, backwards = false) {
+  if (!controls?.length) return null;
+  const current = controls.indexOf(activeElement);
+  if (current < 0) return backwards ? controls.at(-1) : controls[0];
+  return controls[(current + (backwards ? -1 : 1) + controls.length) % controls.length];
 }
 export async function runScopedPanelEdit({ getCurrent, comments, confirmBounds, generate, review, register, timingObserver, clock } = {}) {
   // This observer is deliberately best-effort: no timing or UI logging failure may affect an edit.
@@ -1417,7 +1426,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       dialog.addEventListener('cancel', event => { event.preventDefault(); finish(false); });
       const actions = document.createElement('div'); actions.className = 'ai-confirm-actions';
       ok.className = 'ai-confirm-accept'; actions.append(cancel, ok);
-      dialog.append(actions); panel.append(dialog); dialog.showModal();
+      dialog.append(actions);
+      dialog.addEventListener('keydown', event => {
+        if (event.key !== 'Tab') return;
+        const target = dialogFocusTarget(document.activeElement, [cancel, ok], event.shiftKey);
+        if (!target) return;
+        event.preventDefault();
+        target.focus();
+      });
+      panel.append(dialog); dialog.showModal();
       (defaultAccept ? ok : cancel).focus();
     });
   }
@@ -2756,6 +2773,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const close = () => {
     captureActiveTaskTab(); persistTasks(); void taskPersistence.flush(); panel.hidden = true;
     desktop?.setAiTaskShortcutActive?.(false);
+    if (!document.querySelector('.modal-overlay:not([hidden])')) document.getElementById('canvas')?.focus();
   };
 
   const submit = async (type, options = {}) => {

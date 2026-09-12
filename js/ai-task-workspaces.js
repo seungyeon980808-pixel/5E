@@ -159,6 +159,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   function renderNavigation() {
     for (const owner of entries) {
       const list = owner.panel.querySelector('[data-ai-tab-list]');
+      const focusedRow = document.activeElement?.closest?.('.ai-task-tab');
+      const focusedKey = list.contains?.(focusedRow)
+        ? `${focusedRow.dataset.aiWorkspaceLink || ''}:${focusedRow.dataset.tabId || ''}` : null;
       list.replaceChildren();
       for (const entry of entries) {
         for (const source of entry.tabs || []) {
@@ -166,7 +169,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
           const selected = entry === active && source.getAttribute('aria-selected') === 'true';
           button.classList.toggle('is-on', selected);
           button.setAttribute('aria-selected', String(selected));
+          button.setAttribute('tabindex', selected ? '0' : '-1');
           button.disabled = !entry.ready;
+          button.setAttribute('aria-disabled', String(!entry.ready));
           button.title = source.textContent.replace('×', '').trim();
           button.dataset.aiWorkspaceLink = entry.scope || 'legacy';
           if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') === 'true') {
@@ -178,14 +183,41 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
             source.onclick?.();
             saveSelection();
           };
-          const close = button.querySelector('i');
+          button.onkeydown = event => {
+            if (event.target !== button) return;
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              button.onclick();
+              return;
+            }
+            const rows = [...list.children].filter(row => !row.disabled);
+            const index = rows.indexOf(button);
+            let next = null;
+            if (event.key === 'Home') next = rows[0];
+            else if (event.key === 'End') next = rows.at(-1);
+            else if (event.key === 'ArrowRight') next = rows[(index + 1) % rows.length];
+            else if (event.key === 'ArrowLeft') next = rows[(index - 1 + rows.length) % rows.length];
+            if (!next) return;
+            event.preventDefault();
+            for (const row of rows) row.setAttribute('tabindex', row === next ? '0' : '-1');
+            next.focus();
+          };
+          const close = button.querySelector('.ai-task-delete');
           if (close) close.onclick = event => {
             event.stopPropagation();
             activate(entry);
-            source.querySelector('i')?.onclick?.(event);
+            source.querySelector('.ai-task-delete')?.onclick?.(event);
             saveSelection();
           };
           list.append(button);
+        }
+      }
+      if (focusedKey) {
+        const restored = [...list.children].find(row =>
+          `${row.dataset.aiWorkspaceLink || ''}:${row.dataset.tabId || ''}` === focusedKey);
+        if (restored) {
+          for (const row of list.children) row.setAttribute('tabindex', row === restored ? '0' : '-1');
+          restored.focus();
         }
       }
     }

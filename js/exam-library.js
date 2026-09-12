@@ -734,6 +734,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       pdfSearchIndex: catalog.searchIndex,
       importedImages,
       searchPdf: (options) => pdfUi.searchPdf(options),
+      cropForResult: (result) => pdfUi.cropForResult(result),
       materializers: {
         pdf: (input) => pdfUi.materializePdf(input),
         part: ({ item, options }) => materializePartsAsset(item, options),

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {isCloseActiveTaskShortcut} from '../js/ai-panel.js';
+import {dialogFocusTarget,isCloseActiveTaskShortcut} from '../js/ai-panel.js';
 const source=readFileSync(new URL('../js/ai-panel.js',import.meta.url),'utf8');
 const handler=source.slice(source.indexOf('      closeTab.onclick ='),source.indexOf('      selectTab.append(copy);'));
 function fixture(confirmed=true) {
@@ -25,12 +25,15 @@ test('running task cannot be deleted',async()=>{
  const f=fixture();f.state.busy=true;await f.run();assert.equal(f.taskTabs.size,1);assert.deepEqual(f.calls,['busy']);
 });
 test('close-task shortcut supports native Cmd/Ctrl+W and browser-safe Alt+W',()=>{
- assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true}),true);
- assert.equal(isCloseActiveTaskShortcut({key:'W',ctrlKey:true}),true);
- assert.equal(isCloseActiveTaskShortcut({key:'w',ctrlKey:true,shiftKey:true}),false);
+ const mac=e=>Boolean(e.metaKey);const windows=e=>Boolean(e.ctrlKey);
+ assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true},mac),true);
+ assert.equal(isCloseActiveTaskShortcut({key:'w',ctrlKey:true},mac),false);
+ assert.equal(isCloseActiveTaskShortcut({key:'W',ctrlKey:true},windows),true);
+ assert.equal(isCloseActiveTaskShortcut({key:'W',metaKey:true},windows),false);
+ assert.equal(isCloseActiveTaskShortcut({key:'w',ctrlKey:true,shiftKey:true},windows),false);
  assert.equal(isCloseActiveTaskShortcut({key:'w',altKey:true}),true);
  assert.equal(isCloseActiveTaskShortcut({key:'w',altKey:true,ctrlKey:true}),false);
- assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true,isComposing:true}),false);
+ assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true,isComposing:true},mac),false);
  assert.equal(isCloseActiveTaskShortcut({key:'w'}),false);
 });
 test('focused active task exposes a Delete-key confirmation path',()=>{
@@ -42,4 +45,14 @@ test('task deletion focuses its accept action for Enter and leaves Escape on the
  assert.match(handler,/defaultAccept: true/);
  assert.match(dialogSource,/defaultAccept \? ok : cancel/);
  assert.match(dialogSource,/addEventListener\('cancel'.*finish\(false\)/s);
+});
+test('confirmation dialog wraps Tab and Shift+Tab between delete and cancel',()=>{
+ const cancel={id:'cancel'};const accept={id:'accept'};const controls=[cancel,accept];
+ assert.equal(dialogFocusTarget(accept,controls,false),cancel);
+ assert.equal(dialogFocusTarget(cancel,controls,true),accept);
+ assert.equal(dialogFocusTarget(cancel,controls,false),accept);
+ assert.equal(dialogFocusTarget({},controls,false),cancel);
+});
+test('closing the AI panel restores canvas focus when no other modal is open',()=>{
+ assert.match(source,/panel\.hidden = true;[\s\S]*modal-overlay:not\(\[hidden\]\)[\s\S]*getElementById\('canvas'\)\?\.focus\(\)/);
 });
