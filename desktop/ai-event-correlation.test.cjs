@@ -11,6 +11,6 @@ test("late token usage and SVG fallbacks cannot contaminate a later AI attempt",
   assert.match(panel, /currentRenderThreadId = result\.renderThreadId \|\| result\.threadId \|\| null/);
   assert.match(panel, /"assistant", "tokens", "performance"/);
   assert.match(panel, /event\.threadId !== currentRenderThreadId/);
-  assert.match(panel, /event\.kind === "tokens" && currentTurnId/);
+  assert.match(panel, /turnScoped && !event\.turnId && !event\.threadId/);
   assert.match(panel, /\^data:image\\\/svg\\\+xml/);
 });

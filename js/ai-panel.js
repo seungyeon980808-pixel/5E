@@ -4185,11 +4185,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       return;
     }
     const event = parseAiEvent(message);
+    const turnScoped = ["progress", "image", "assistant", "tokens", "performance", "error", "done", "finalization"].includes(event.kind);
+    if (turnScoped && !event.turnId && !event.threadId) return;
     // Isolated scoped turns never enter review, correction, cache, or legacy preview paths.
     if (currentRunInput?.scopedEdit) { scopedTransport?.handle(event); return; }
     if (structureAnalysis.handleEvent(event)) return;
     if (imageReview?.handleEvent(event)) return;
-    const turnScoped = ["progress", "image", "assistant", "tokens", "performance", "error", "done", "finalization"].includes(event.kind);
     const latePrimaryDuringReview = currentReviewScheduled
       && isWhitePngWorkflow(currentRunInput || {})
       && turnScoped
@@ -4211,18 +4212,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         return;
       }
     }
-    if (turnScoped && (event.turnId || event.threadId)) {
+    if (turnScoped) {
       if (awaitingTurnId && !currentTurnId) {
         queuedTurnEvents.push({ event });
         return;
       }
       if (event.turnId && (!currentTurnId || event.turnId !== currentTurnId)) return;
       if (event.threadId && currentRenderThreadId && event.threadId !== currentRenderThreadId) return;
-    } else if (event.kind === "tokens" && currentTurnId) {
-      // App Server token notifications are turn-scoped. Ignore malformed or
-      // legacy unscoped updates instead of letting a late attempt overwrite
-      // the active result footer.
-      return;
     }
     dispatchAiEvent(event, currentRequestEpoch);
   });
