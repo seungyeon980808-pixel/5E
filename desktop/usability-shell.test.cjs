@@ -90,4 +90,8 @@ test('native close shortcut accepts the platform command key without extra modif
   assert.equal(vm.runInContext('isWindowCloseShortcut(input, "win32")', context), true);
   context.input = input({ meta: true, shift: true });
   assert.equal(vm.runInContext('isWindowCloseShortcut(input, "darwin")', context), false);
+  context.input = input({ meta: true, isAutoRepeat: true });
+  assert.equal(vm.runInContext('isWindowCloseShortcut(input, "darwin")', context), false);
+  context.input = input({ meta: true, isComposing: true });
+  assert.equal(vm.runInContext('isWindowCloseShortcut(input, "darwin")', context), false);
 });

@@ -21,7 +21,8 @@ function createPanel(document) {
   appendControl(document, panel, 'p', 'data-ai-status');
   appendControl(document, panel, 'div', 'data-ai-log');
   appendControl(document, panel, 'textarea', 'data-ai-input');
-  appendControl(document, panel, 'input', null, { type: 'file', files: [] });
+  const sourceFile = appendControl(document, panel, 'input', null, { id: 'ai-image-file-input', type: 'file', files: [] });
+  sourceFile.dataset.aiSourceFile = '';
   appendControl(document, panel, 'div', 'data-ai-previews');
   appendControl(document, panel, 'div', 'data-ai-attachment-list');
   appendControl(document, panel, 'span', 'data-ai-reference-count');
@@ -30,6 +31,7 @@ function createPanel(document) {
   appendControl(document, panel, 'span', 'data-ai-progress-title');
   appendControl(document, panel, 'span', 'data-ai-progress-detail');
   appendControl(document, panel, 'span', 'data-ai-progress-stage');
+  appendControl(document, panel, 'time', 'data-ai-elapsed');
   appendControl(document, panel, 'span', 'data-ai-e-count');
   appendControl(document, panel, 'button', 'data-ai-send');
   appendControl(document, panel, 'textarea', 'data-ai-chat-input');
@@ -48,18 +50,20 @@ function createPanel(document) {
   appendControl(document, panel, 'span', 'data-ai-account-tokens');
   appendControl(document, panel, 'p', 'data-ai-white-png-note');
   const outputProcessing = appendControl(document, panel, 'section', 'data-ai-output-processing');
-  for (const value of ['preserve', 'connected', 'all-near-white', 'checkerboard']) {
-    const button = appendControl(document, outputProcessing, 'button', 'data-ai-background-policy');
-    button.dataset.aiBackgroundPolicy = value;
-  }
-  for (const value of ['false', 'true']) {
-    const button = appendControl(document, outputProcessing, 'button', 'data-ai-exam-palette');
-    button.dataset.aiExamPalette = value;
-  }
-  for (const value of ['0', '1', '2']) {
-    const button = appendControl(document, outputProcessing, 'button', 'data-ai-line-thickness');
-    button.dataset.aiLineThickness = value;
-  }
+  const appendSelect = (attribute, values) => {
+    const select = appendControl(document, outputProcessing, 'select', attribute);
+    for (const value of values) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      select.append(option);
+    }
+    select.value = values[0];
+    return select;
+  };
+  appendSelect('data-ai-background-policy', ['preserve', 'connected', 'all-near-white']);
+  appendSelect('data-ai-exam-palette', ['false', 'true']);
+  appendSelect('data-ai-line-thickness', ['0', '1', '2']);
   appendControl(document, outputProcessing, 'p', 'data-ai-output-processing-status');
   appendControl(document, panel, 'div', 'data-ai-tab-list');
   appendControl(document, panel, 'button', 'data-ai-interrupt');

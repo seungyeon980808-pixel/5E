@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { approvedFirstRun, APPROVED_FIRST_PROMPT, prepareApprovedFirstAttachment } from '../js/ai-approved-first-png.js';
+import { candidateUsesAutomaticSeparation } from '../js/ai-panel.js';
 const models = [{ model:'gpt-5.6-sol', supportedReasoningEfforts:['medium','high'] }];
 const source = { attachments:[{referenceRole:'INPUT_SOURCE'}], model:'different', effort:'low', serviceTier:'standard' };
 test('approved first conversion pins actual transport settings and rejects unavailable model or effort',()=>{
@@ -31,6 +32,7 @@ test('first PNG display decode cannot register a stale or cancelled candidate',a
     const decoding=new Promise(resolve=>{notifyReady=resolve;});
     const ctx={performance,currentRunInput:{approvedFirstPng:true},generatedImages:[],imageSerial:0,
       currentTurnPerformance:{},selectedCandidateId:null,latestGeneratedSrc:null,
+      candidateUsesAutomaticSeparation,startAutomaticSeparation(){},
       isWhitePngWorkflow:()=>true,emptyReviewReport:()=>({}),normalizeMarkPolicy:()=>({}),
       inspectPngDataUrl:async()=>({}),panel:{dataset:{}},syncWhitePngUi(){},
       previews:{querySelector:()=>null,prepend(){cards++;}},makeImageCard:()=>({}),

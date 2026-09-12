@@ -3,6 +3,7 @@ import {
   normalizeTaskExportMode,
   writeTaskExports,
 } from './ai-task-export.js';
+import { restoreGenerationTiming } from './ai-generation-timing.js';
 
 export function recoverTaskWorkspaceSnapshot(value) {
   if (!value || !Array.isArray(value.tabs)) return null;
@@ -20,6 +21,7 @@ export function recoverTaskWorkspaceSnapshot(value) {
       workState: wasRunning ? 'interrupted' : (tab.workState || 'idle'),
       retryRequest: wasRunning ? (tab.inFlightRequest || tab.retryRequest || null) : (tab.retryRequest || null),
       inFlightRequest: wasRunning ? null : (tab.inFlightRequest || null),
+      generationTiming: restoreGenerationTiming(tab.generationTiming, { interruptRunning: wasRunning }),
     };
   });
   if (!recovered.tabs.some(tab => tab.id === recovered.activeTaskTabId)) {
@@ -172,7 +174,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
           button.setAttribute('tabindex', selected ? '0' : '-1');
           button.disabled = !entry.ready;
           button.setAttribute('aria-disabled', String(!entry.ready));
-          button.title = source.textContent.replace('×', '').trim();
+          button.title = source.title || source.textContent.replace('×', '').trim();
           button.dataset.aiWorkspaceLink = entry.scope || 'legacy';
           if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') === 'true') {
             button.querySelector('span').textContent += ' · 변환 중';

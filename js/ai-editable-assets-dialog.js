@@ -1,9 +1,34 @@
 import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js';
+import { refinePreparedAssets } from './ai-editable-assets-refinement.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
 import { renderLabeler } from './render/annotations.js?v=1.4.0';
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.4.0';
+export { refinePreparedAssets };
 
 const NS = 'http://www.w3.org/2000/svg';
+const REFINEMENT_GUIDANCE = new Set([
+  '분리 결과는 PNG 데이터여야 합니다.',
+  '분리 PNG 데이터가 올바르지 않습니다.',
+  '분리 결과의 원본 크기를 확인할 수 없습니다.',
+  '미세 조정할 물체 수가 허용 범위를 벗어났습니다.',
+  '조정 영역은 양의 크기를 가진 정수 좌표여야 합니다.',
+  '조정 영역이 원본 이미지 안에 있어야 합니다.',
+  '분리된 물체의 위치 또는 식별자가 올바르지 않습니다.',
+  '분리 PNG의 크기와 위치 정보가 다릅니다.',
+  '분리 PNG에 겹친 픽셀 소속이 있어 안전하게 조정할 수 없습니다.',
+  '픽셀이 없는 분리 물체는 조정할 수 없습니다.',
+  '선택한 물체를 분리 결과에서 찾을 수 없습니다.',
+  '새 물체 식별자를 만들지 못했습니다.',
+  '미세 조정 작업을 확인할 수 없습니다.',
+  '서로 다른 두 물체를 선택해 주세요.',
+  '미세 조정 결과는 128개 물체를 넘을 수 없습니다.',
+  '나누기 영역에는 선택한 물체의 일부 픽셀만 포함되어야 합니다.',
+  '선택한 영역에 다른 물체의 픽셀이 없습니다.',
+  '지원하지 않는 미세 조정 작업입니다.',
+  '미세 조정 PNG의 RGBA 검증에 실패했습니다.',
+  '페이지에 넣을 물체가 하나 이상 있어야 합니다.',
+  '분리 결과의 픽셀 합계가 올바르지 않습니다.',
+]);
 function svgNode(tag, attributes, text) {
   const node = document.createElementNS(NS, tag);
   for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
@@ -15,6 +40,12 @@ export function previewViewBoxForLabels(width, height, padding) {
   return `${-padding} ${-padding} ${width + padding * 2} ${height + padding * 2}`;
 }
 
+export function refinementFailureGuidance(error) {
+  if (error?.name === 'AbortError') return null;
+  if (error?.name === 'PreparedAssetRefinementError' || REFINEMENT_GUIDANCE.has(error?.message)) return error.message;
+  return '미세 조정 결과를 만들지 못했습니다. 자동 분리를 다시 실행하거나 원본을 사용해 주세요.';
+}
+
 export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = () => true, onInsert, initialPrepared = null }) {
   const automatic = Boolean(initialPrepared);
   const previousFocus = document.activeElement;
@@ -23,9 +54,9 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   dialog.setAttribute('aria-labelledby', 'aea-title');
   dialog.classList.toggle('is-automatic', automatic);
   dialog.innerHTML = `<header class="aea-header"><div><h2 id="aea-title">${automatic ? '분리 결과 확인' : '편집 가능한 객체로 나누기'}</h2><p>${automatic ? '각 PNG와 편집 가능한 이름을 확인한 뒤 페이지에 넣으세요.' : '그림에서 객체를 하나씩 드래그해 선택하세요.'}</p></div><button type="button" data-action="close" aria-label="닫기">×</button></header>
-    <div class="aea-tools" role="group" aria-label="선택 도구"${automatic ? ' hidden' : ''}>
-      <button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>
-    </div><p class="aea-hint" id="aea-hint"${automatic ? ' hidden' : ''}></p>
+    <div class="aea-tools" role="group" aria-label="선택 도구">
+      ${automatic ? '<button type="button" data-action="refine">미세 조정</button><button type="button" data-mode="inspect" hidden>확인</button><button type="button" data-mode="merge" hidden>두 물체 합치기</button><button type="button" data-mode="split" hidden>영역 나누기</button><button type="button" data-mode="reassign" hidden>선택에 옮기기</button><button type="button" data-mode="anchor" hidden>지시선 끝점</button><button type="button" data-mode="label" hidden>라벨 위치</button>' : '<button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>'}
+    </div><p class="aea-hint" id="aea-hint"></p>
     <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
       <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
@@ -33,14 +64,16 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   const find = selector => dialog.querySelector(selector);
   const source = find('.aea-source'), overlay = find('.aea-overlay'), preview = find('.aea-preview');
   const status = find('.aea-status'), list = find('.aea-list');
-  let regions = [], selected = null, mode = 'region', revision = 0, prepared = automatic ? structuredClone(initialPrepared) : null;
+  let regions = [], selected = null, mode = automatic ? 'inspect' : 'region', revision = 0, prepared = automatic ? structuredClone(initialPrepared) : null;
   let labelsDisabled = false;
-  let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false;
+  let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false, refining = false, mergeSource = null;
+  let refinementController = null;
   let finish;
   const result = new Promise(resolve => { finish = resolve; });
   const close = inserted => {
     if (closed) return;
     closed = true;
+    refinementController?.abort('dialog-closed');
     source.onload = null; source.onerror = null; source.removeAttribute('src');
     dialog.close(); dialog.remove(); previousFocus?.focus(); finish(inserted);
   };
@@ -92,6 +125,41 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     status.textContent = '선택을 바꾼 뒤에는 미리보기를 다시 확인하세요.';
     draw(); controls();
   };
+  const syncPreparedRegions = () => {
+    regions = prepared.assets.map((asset, index) => ({
+      ...asset, label: asset.label?.trim() ? asset.label : `물체 ${index + 1}`, keepRects: [],
+    }));
+    for (const region of regions) prepared.assets.find(asset => asset.id === region.id).label = region.label;
+    if (!regions.some(region => region.id === selected)) selected = regions[0]?.id ?? null;
+  };
+  const applyRefinement = async (operation, preferredSelection = selected) => {
+    if (!automatic || !refining || busy || !prepared || !current()) return;
+    busy = true; mergeSource = null; refinementController = new AbortController(); controls();
+    status.textContent = operation.type === 'exclude' ? '선택한 물체를 결과에서 제외하는 중…' : '픽셀 소속을 다시 계산하는 중…';
+    const version = ++revision;
+    try {
+      const output = await refinePreparedAssets(prepared, operation, { signal: refinementController.signal });
+      if (!current() || version !== revision) return;
+      prepared = output; prepared.labelsDisabled = labelsDisabled; selected = preferredSelection;
+      syncPreparedRegions(); renderList(); draw(); drawPrepared(); controls();
+      status.textContent = `${prepared.assets.length}개 물체 · ${prepared.assignedForegroundPixelCount}개 픽셀 소속을 확인했습니다${prepared.unassignedForegroundPixelCount ? ` · ${prepared.unassignedForegroundPixelCount}개 픽셀 제외됨` : ''}.`;
+    } catch (error) {
+      const guidance = refinementFailureGuidance(error);
+      if (!closed && guidance) status.textContent = guidance;
+    } finally {
+      refinementController = null; busy = false; if (!closed) controls();
+    }
+  };
+  const beginRefinement = () => {
+    if (!automatic || refining || !prepared || !current()) return;
+    refining = true; showingPreview = false;
+    find('[data-action="refine"]').hidden = true;
+    for (const button of dialog.querySelectorAll('[data-mode]')) button.hidden = false;
+    source.hidden = false; preview.toggleAttribute('hidden', true); overlay.toggleAttribute('hidden', false);
+    find('[data-action="preview"]').textContent = '분리 결과 보기';
+    renderList(); draw(); setMode('inspect');
+    status.textContent = '자동 결과는 그대로 보존됩니다. 필요한 부분만 조정하세요.';
+  };
   const renderList = () => {
     list.replaceChildren();
     for (const [index, region] of regions.entries()) {
@@ -99,13 +167,23 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       row.dataset.selected = String(region.id === selected);
       const choose = document.createElement('button'); choose.type = 'button'; choose.textContent = String(index + 1);
       choose.setAttribute('aria-label', `객체 ${index + 1} 선택`); choose.setAttribute('aria-pressed', String(region.id === selected));
-      choose.onclick = () => { selected = region.id; renderList(); draw(); controls(); };
+      choose.onclick = async () => {
+        if (automatic && refining && mode === 'merge') {
+          if (!mergeSource) {
+            mergeSource = region.id; selected = region.id; renderList(); draw(); controls();
+            status.textContent = '합칠 다른 물체를 목록에서 선택하세요.';
+          } else if (mergeSource === region.id) status.textContent = '서로 다른 두 물체를 선택해 주세요.';
+          else await applyRefinement({ type: 'merge', targetId: mergeSource, sourceId: region.id }, mergeSource);
+          return;
+        }
+        mergeSource = null; selected = region.id; renderList(); draw(); controls();
+      };
       const input = document.createElement('input'); input.value = region.label; input.placeholder = '라벨 없음'; input.setAttribute('aria-label', `객체 ${index + 1} 라벨`);
       input.onfocus = () => { selected = region.id; draw(); controls(); };
       input.oninput = () => {
         region.label = input.value;
         if (!automatic) { invalidate(); return; }
-        prepared.assets[index].label = input.value;
+        prepared.assets.find(asset => asset.id === region.id).label = input.value;
         row.querySelector('[data-action="download-asset"]')?.setAttribute('aria-label', `${input.value || `물체 ${index + 1}`} PNG 저장`);
         drawPrepared(); controls();
       };
@@ -117,24 +195,36 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       labelMode.value = region.labelMode || 'leader';
       labelMode.onchange = () => {
         region.labelMode = labelMode.value;
-        if (prepared) { prepared.assets[index].labelMode = labelMode.value; drawPrepared(); }
+        if (prepared) { prepared.assets.find(asset => asset.id === region.id).labelMode = labelMode.value; drawPrepared(); }
         draw(); controls();
       };
       const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제'; remove.setAttribute('aria-label', `객체 ${index + 1} 삭제`);
       remove.onclick = () => { regions = regions.filter(item => item !== region); if (selected === region.id) selected = regions.at(-1)?.id ?? null; renderList(); invalidate(); };
-      if (automatic) {
+      if (automatic && !refining) {
         const download = document.createElement('button'); download.type = 'button'; download.dataset.action = 'download-asset'; download.textContent = 'PNG'; download.setAttribute('aria-label', `${region.label} PNG 저장`);
         download.onclick = () => { const link = document.createElement('a'); link.href = prepared.assets[index].data; link.download = `${region.label.replace(/[\\/:*?"<>|]+/g, '-')}.png`; link.click(); };
         row.append(choose, input, download);
-      } else row.append(choose, input, remove);
+      } else {
+        if (automatic) { remove.textContent = '제외'; remove.setAttribute('aria-label', `물체 ${index + 1} 결과에서 제외`); remove.onclick = () => applyRefinement({ type: 'exclude', assetId: region.id }); }
+        row.append(choose, input, remove);
+      }
       row.append(labelMode);
       list.append(row);
     }
     find('.aea-count').textContent = String(regions.length); find('.aea-empty').hidden = !!regions.length;
   };
   const setMode = next => {
-    mode = next;
-    find('.aea-hint').textContent = { region: '서로 떨어진 객체마다 사각형을 그리세요. 라벨은 오른쪽에서 입력합니다.', keep: '객체를 선택한 뒤, 열린 윤곽 안에서 흰색을 유지할 부분을 드래그하세요.', anchor: '객체를 선택한 뒤, 그림에서 지시선이 닿을 점을 누르세요.', label: '객체를 선택한 뒤, 라벨을 놓을 점을 누르세요.' }[mode];
+    mode = next; mergeSource = null;
+    find('.aea-hint').textContent = {
+      inspect: '목록에서 물체를 선택해 분리 범위를 확인하세요.',
+      merge: '오른쪽 목록에서 합칠 두 물체를 차례로 선택하세요.',
+      split: '목록에서 물체를 선택한 뒤, 떼어낼 픽셀을 사각형으로 감싸세요.',
+      reassign: '목록에서 받을 물체를 선택한 뒤, 그 물체로 옮길 픽셀을 감싸세요.',
+      region: '서로 떨어진 객체마다 사각형을 그리세요. 라벨은 오른쪽에서 입력합니다.',
+      keep: '객체를 선택한 뒤, 열린 윤곽 안에서 흰색을 유지할 부분을 드래그하세요.',
+      anchor: '객체를 선택한 뒤, 그림에서 지시선이 닿을 점을 누르세요.',
+      label: '객체를 선택한 뒤, 라벨을 놓을 점을 누르세요.',
+    }[mode];
     controls();
   };
   const point = event => {
@@ -144,30 +234,38 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   const rectangle = (start, end) => ({ x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y) });
   overlay.onpointerdown = event => {
     if (busy || showingPreview || !width || event.button !== 0 || !current()) return;
+    if (automatic && (mode === 'inspect' || mode === 'merge')) return;
     if (mode !== 'region' && !active()) { status.textContent = '먼저 객체를 선택해 주세요.'; return; }
     const start = point(event);
-    if (mode === 'anchor' || mode === 'label') { active()[mode === 'anchor' ? 'anchor' : 'labelPoint'] = start; invalidate(); return; }
+    if (mode === 'anchor' || mode === 'label') {
+      const key = mode === 'anchor' ? 'anchor' : 'labelPoint'; active()[key] = start;
+      if (automatic) { prepared.assets.find(asset => asset.id === selected)[key] = start; draw(); drawPrepared(); controls(); }
+      else invalidate();
+      return;
+    }
     event.preventDefault(); overlay.setPointerCapture(event.pointerId); drag = { start, id: event.pointerId };
   };
   overlay.onpointermove = event => {
     if (!drag) return;
     draw(); overlay.append(svgNode('rect', { ...rectangle(drag.start, point(event)), class: 'aea-draft' }));
   };
-  overlay.onpointerup = event => {
+  overlay.onpointerup = async event => {
     if (!drag) return;
     const rect = rectangle(drag.start, point(event)); drag = null;
     if (overlay.hasPointerCapture(event.pointerId)) overlay.releasePointerCapture(event.pointerId);
     if (rect.width < 3 || rect.height < 3) { draw(); return; }
-    if (mode === 'region') {
+    if (automatic && mode === 'split') await applyRefinement({ type: 'split', assetId: selected, rect });
+    else if (automatic && mode === 'reassign') await applyRefinement({ type: 'reassign', targetId: selected, rect });
+    else if (mode === 'region') {
       const region = { ...rect, id: crypto.randomUUID(), label: '', anchor: { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }, labelPoint: { x: rect.x, y: Math.max(16, rect.y - 16) }, keepRects: [] };
       regions.push(region); selected = region.id;
     } else active().keepRects.push(rect);
-    renderList(); invalidate();
+    if (!automatic) { renderList(); invalidate(); }
   };
   overlay.onpointercancel = () => { drag = null; draw(); };
   const runPreview = async () => {
     if (busy || !regions.length || !current()) return;
-    if (showingPreview) { showingPreview = false; source.hidden = false; overlay.toggleAttribute("hidden", automatic); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
+    if (showingPreview) { showingPreview = false; source.hidden = false; overlay.toggleAttribute("hidden", automatic && !refining); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
     if (automatic) {
       drawPrepared(); showingPreview = true; source.hidden = true; overlay.toggleAttribute('hidden', true); preview.toggleAttribute('hidden', false);
       find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 라벨 방식과 표시 여부를 선택한 뒤 페이지에 넣으세요.`; return;
@@ -198,6 +296,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     if (button.dataset.mode) { setMode(button.dataset.mode); return; }
     const action = button.dataset.action;
     if (action === 'close' || action === 'cancel') close(false);
+    if (action === 'refine') beginRefinement();
     if (action === 'clear-keep' && active()) { active().keepRects = []; invalidate(); }
     if (action === 'preview') await runPreview();
     if (action === 'insert' && prepared && !busy && current()) {
@@ -217,17 +316,15 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     overlay.setAttribute('viewBox', `0 0 ${width} ${height}`);
     preview.setAttribute('viewBox', previewViewBoxForLabels(width, height, previewLabelPadding()));
     if (automatic) {
-      if (prepared.width !== width || prepared.height !== height || !Array.isArray(prepared.assets) || !prepared.assets.length || prepared.assets.length > 16) {
+      if (prepared.width !== width || prepared.height !== height || !Array.isArray(prepared.assets) || !prepared.assets.length || prepared.assets.length > 128) {
         prepared = null; status.textContent = '분리 결과가 원본 PNG와 맞지 않습니다. 원본 PNG를 유지했습니다.'; controls(); return;
       }
-      regions = prepared.assets.map((asset, index) => ({ ...asset, label: `물체 ${index + 1}`, keepRects: [] }));
-      prepared.assets.forEach((asset, index) => { asset.label = regions[index].label; });
-      selected = regions[0].id; renderList(); void runPreview();
+      syncPreparedRegions(); selected = regions[0].id; renderList(); void runPreview();
     } else status.textContent = '원본은 그대로 유지됩니다. 객체를 선택해 주세요.';
     controls();
   };
   source.onerror = () => { status.textContent = '이미지를 불러오지 못했습니다. 닫고 다시 시도해 주세요.'; };
-  document.body.append(dialog); dialog.showModal(); setMode('region');
+  document.body.append(dialog); dialog.showModal();
   const loadSource = async () => {
     try {
       if (!current()) return;
@@ -241,6 +338,8 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       if (!closed) status.textContent = error instanceof Error ? error.message : '이미지를 확인하지 못했습니다.';
     }
   };
+  if (automatic) find('.aea-hint').textContent = '결과가 만족스럽지 않을 때만 미세 조정을 여세요.';
+  else setMode('region');
   void loadSource();
   return result;
 }

@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {pastedImageBlob,readAiClipboardImage,shouldHandleAiImagePaste} from '../js/ai-panel.js';
+import {
+  captureAiPasteTarget,
+  isAiPasteTargetCurrent,
+  pastedImageBlob,
+  readAiClipboardImage,
+  shouldHandleAiImagePaste,
+} from '../js/ai-panel.js';
 
 test('AI image paste prefers the image exposed by the paste event', async () => {
   const file = {name:'event.png'};
@@ -62,4 +68,16 @@ test('clipboard read reports both failures when web and Electron paths fail', as
     clipboard:{read:async()=>{throw new Error('NotAllowedError');}},
     readNative:async()=>{throw new Error('native unavailable');},
   }),/NotAllowedError.*native unavailable/);
+});
+
+test('a delayed clipboard image remains bound to the exact task and source revision captured before read', () => {
+  const task = {id:'task-1'};
+  const source = {id:'source-1',data:'data:image/png;base64,ONE',referenceRole:'INPUT_SOURCE'};
+  const target = captureAiPasteTarget({taskId:task.id,task,sources:[source]});
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:task.id,task,sources:[source]}),true);
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:'task-2',task:{id:'task-2'},sources:[]}),false,'tab switch must invalidate');
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:task.id,task:{id:'task-1'},sources:[source]}),false,'deleted and recreated task must invalidate');
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:task.id,task,sources:[]}),false,'removed source must invalidate');
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:task.id,task,sources:[{...source,data:'data:image/png;base64,TWO'}]}),false,'changed source must invalidate');
+  assert.equal(isAiPasteTargetCurrent(target,{taskId:task.id,task,sources:[{...source,referenceRole:'STYLE_REFERENCE'}]}),false,'changed source role must invalidate');
 });

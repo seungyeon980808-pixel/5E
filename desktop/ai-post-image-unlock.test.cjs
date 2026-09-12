@@ -19,5 +19,21 @@ test("a completed image ends its render turn and the panel treats that interrupt
   assert.match(panel, /tabNewButton\.onclick = \(\) => newWorkspace\(\)/);
   assert.match(panel, /currentTurnId = result\.turnId \|\| null/);
   assert.match(panel, /if \(event\.turnId && \(!currentTurnId \|\| event\.turnId !== currentTurnId\)\) return/);
-  assert.match(panel, /!serverTurnFinished \|\| previewPending/);
+  assert.match(panel, /if \(eventEpoch !== currentRequestEpoch \|\| !serverTurnFinished\) return/);
+  assert.match(panel, /advanceGenerationClock\("turn-terminal", currentTerminalOutcome\);\s*if \(previewPending\) return/);
+
+  const start = panel.indexOf("  const finishCurrentTurnUi = ");
+  const end = panel.indexOf("\n  const dispatchAiEvent = ", start);
+  const finishSource = panel.slice(start, end);
+  const calls = [];
+  const context = {
+    currentRequestEpoch: 7,
+    serverTurnFinished: true,
+    previewPending: true,
+    currentTerminalOutcome: "completed",
+    advanceGenerationClock: () => calls.push("terminal-recorded"),
+    setBusy: () => calls.push("unlocked"),
+  };
+  new Function(...Object.keys(context), `${finishSource}; finishCurrentTurnUi(7);`)(...Object.values(context));
+  assert.deepEqual(calls, ["terminal-recorded"], "provider terminal must remain locked until local image postprocessing settles");
 });

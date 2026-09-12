@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import { createCanvas } from '@napi-rs/canvas';
 import { decodeScopedPng, encodeScopedPng, applyScopedPngEdit } from '../js/ai-scoped-edit-png.js';
 import { decodeTestPng, encodeTestRgbaPng, insertTestPngChunkAfterIhdr } from './helpers/scoped-edit-png-fixture.mjs';
 
@@ -18,6 +19,23 @@ test('adapter round trips RGBA byte-exactly through independent test-only decode
 test('adapter decodes all PNG filter modes from the independent test-only codec', async () => {
  for (let filter=0;filter<=4;filter+=1) assert.deepEqual((await decodeScopedPng(encodeTestRgbaPng(image(),filter))).data,image().data,`filter ${filter}`);
 });
+test('adapter accepts unmodified napi canvas sBIT metadata without changing stored RGBA', async () => {
+ const canvas=createCanvas(3,2), context=canvas.getContext('2d'), expected=context.createImageData(3,2);
+ expected.data.set([9,8,7,255, 1,2,3,255, 4,5,6,255, 10,11,12,255, 13,14,15,255, 16,17,18,255]);
+ context.putImageData(expected,0,0);
+ const png=canvas.toBuffer('image/png'), decoded=await decodeScopedPng(new Uint8Array(png));
+ assert.deepEqual(decoded.data,new Uint8Array(expected.data));
+ assert.deepEqual(decoded.metadata.find(item=>item.type==='sBIT')?.data,Uint8Array.of(8,8,8,8));
+ const roundTrip=await decodeScopedPng(await encodeScopedPng(decoded,{metadata:decoded.metadata}));
+ assert.deepEqual(roundTrip.data,decoded.data);
+});
+test('adapter accepts an exact 4000 by 4000 RGBA image within real scanline and RGBA byte limits', async () => {
+ const data=new Uint8Array(4000*4000*4); data.set([21,22,23,255],data.length-4);
+ const png=await encodeScopedPng({width:4000,height:4000,data});
+ const decoded=await decodeScopedPng(png);
+ assert.equal(decoded.width,4000); assert.equal(decoded.height,4000); assert.equal(decoded.data.length,64_000_000);
+ assert.deepEqual(decoded.data.subarray(decoded.data.length-4),Uint8Array.of(21,22,23,255));
+});
 test('adapter rejects malformed color metadata on encode and decode', async () => {
  const plain=await encodeScopedPng(image());
  const malformed=[
@@ -25,6 +43,9 @@ test('adapter rejects malformed color metadata on encode and decode', async () =
   {type:'gAMA',data:new Uint8Array(4)},
   {type:'cHRM',data:new Uint8Array(31)},
   {type:'sRGB',data:Uint8Array.of(4)},
+  {type:'sBIT',data:Uint8Array.of(8,8,8)},
+  {type:'sBIT',data:Uint8Array.of(8,8,8,0)},
+  {type:'sBIT',data:Uint8Array.of(8,8,8,9)},
   {type:'iCCP',data:Uint8Array.of(65,0,1,120)},
   {type:'iCCP',data:Uint8Array.of(65,0,0,1,2,3,4)},
  ];
