@@ -68,12 +68,15 @@ import { initAiPanel } from "./ai-panel.js?v=1.5.8";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
-svg.setAttribute("tabindex", "-1");
+svg.setAttribute("tabindex", "0");
 svg.addEventListener("pointerdown", (event) => {
   if (event.button === 0 && !event.target.closest("input, textarea, [contenteditable]")) {
+    svg.classList.add("pointer-focused");
     svg.focus({ preventScroll: true });
   }
 });
+svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
+window.addEventListener("keydown", () => svg.classList.remove("pointer-focused"), { capture: true });
 const zoomReadout = document.getElementById("zoom-readout");
 
 /* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
@@ -96,6 +99,13 @@ const zoomReadout = document.getElementById("zoom-readout");
   };
   const toggleFullscreen = async () => {
     try {
+      if (window.fiveEDesktop?.fullscreen) {
+        const active = await window.fiveEDesktop.fullscreen.toggle();
+        btn.setAttribute("aria-pressed", String(active));
+        btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
+        btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
+        return;
+      }
       if (document.fullscreenElement) await document.exitFullscreen();
       else await target.requestFullscreen();
     } catch (error) {

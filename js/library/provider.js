@@ -3,6 +3,24 @@ import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source
 import { createCropSource } from "../pdf-library/contract.js";
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
+const SUBJECT_LABELS = Object.freeze({ p1: "물리학Ⅰ", p2: "물리학Ⅱ", c1: "화학Ⅰ", c2: "화학Ⅱ", b1: "생명과학Ⅰ", b2: "생명과학Ⅱ", e1: "지구과학Ⅰ", e2: "지구과학Ⅱ" });
+const ADMINISTRATION_LABELS = Object.freeze({ "06": "6월 모의평가", "09": "9월 모의평가", "11": "대학수학능력시험" });
+
+export function humanExamName(metadata = {}, itemNumber = null) {
+  if (!metadata) return "";
+  const subject = SUBJECT_LABELS[metadata.subject] ?? metadata.subjectLabel ?? "과학";
+  const year = Number.isInteger(metadata.academicYear) ? `${metadata.academicYear}학년도` : "";
+  const administration = ADMINISTRATION_LABELS[metadata.administration] ?? "";
+  const question = Number.isInteger(itemNumber) ? `${itemNumber}번` : "";
+  return [subject, year, administration, question].filter(Boolean).join(" ");
+}
+
+function matchesFilters(result, filters = {}) {
+  const metadata = result.metadata ?? {};
+  return (!filters.subject || metadata.subject === filters.subject)
+    && (!filters.academicYear || metadata.academicYear === Number(filters.academicYear))
+    && (!filters.administration || metadata.administration === filters.administration);
+}
 
 function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
@@ -119,13 +137,14 @@ function collectImageResults(input) {
     if (!examsBySource.has(sourceId)) examsBySource.set(sourceId, []);
     examsBySource.get(sourceId).push(item);
     const previewUrl = externalExamImageUrl(input, item);
-    const result = imageResult("exam-image", item, sourceId, item.subjectLabel || "기출 이미지", {
+    const examMetadata = {
+      subject: item.subject ?? null, academicYear: item.year ?? null,
+      administration: String(item.month ?? "").padStart(2, "0"), itemNumber: item.no ?? null, curated: true,
+    };
+    const result = imageResult("exam-image", { ...item, title: humanExamName(examMetadata, item.no) || item.title }, sourceId, item.subjectLabel || "기출 이미지", {
       subtitle: [item.subjectLabel, item.exam, item.no ? `${item.no}번` : null].filter(Boolean).join(" · "),
       searchText: [item.id, item.title, ...(item.tags ?? []), ...(item.parts ?? [])].join(" "),
-      metadata: {
-        subject: item.subject ?? null, academicYear: item.year ?? null,
-        administration: String(item.month ?? "").padStart(2, "0"), itemNumber: item.no ?? null, curated: true,
-      },
+      metadata: examMetadata,
       previewUrl,
     });
     results.push(result); items.set(result.id, item);
@@ -233,7 +252,7 @@ function pdfQuestionResult(document, entry, metadata) {
   return freezeResult({
     id: stableId("crop", pdfSourceId(document), pageNumber, "question", entry.itemId ?? itemNumber),
     kind: "crop", cropType: "question",
-    title: `${itemCode || document.title} 문항`,
+    title: humanExamName(metadata, itemNumber) || `${itemCode || document.title} 문항`,
     subtitle: [document.source?.displayName, `${pageNumber}쪽`, itemNumber ? `${itemNumber}번` : null].filter(Boolean).join(" · "),
     sourceId: pdfSourceId(document), sourceLabel: document.source?.displayName ?? document.title,
     parentId: stableId("page", pdfSourceId(document), pageNumber),
@@ -395,6 +414,7 @@ export function createUnifiedLibraryProvider(input = {}) {
     let found = allResults().filter((result) =>
       (!allowedSources || allowedSources.has(result.sourceId))
       && (!allowedKinds || allowedKinds.has(result.kind))
+      && matchesFilters(result, options.filters)
       && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true)
       && resultMatches(result, options.query ?? "", compact));
     if (!allowedKinds && compact?.itemNumber !== null && found.some((result) => result.kind === "crop")) {
@@ -441,6 +461,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       const merged = dedupeResults([...local, ...normalizeWorkerEntries(workerEntries ?? [])]).filter((result) =>
         (!allowedSources || allowedSources.has(result.sourceId))
         && (!allowedKinds || allowedKinds.has(result.kind))
+        && matchesFilters(result, options.filters)
         && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true));
       return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(result, options.query ?? "")));
     },

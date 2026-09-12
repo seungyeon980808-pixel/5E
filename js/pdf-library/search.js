@@ -1,4 +1,5 @@
 import { createCropSource } from "./contract.js";
+import { deriveExamMetadata } from "../library/exam-code.js";
 export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js";
 
 function normalizedText(value) {
@@ -14,10 +15,14 @@ function wordCenterIsInside(word, rect) {
 function createEntry(document, page, item) {
   const words = item ? page.words.filter((word) => wordCenterIsInside(word, item.rect)) : page.words;
   const text = words.map((word) => word.text).join(" ") || page.text;
+  const metadata = deriveExamMetadata({ metadata: document.metadata, source: document.source });
   return Object.freeze({
     documentId: document.id, documentTitle: document.title, pageNumber: page.pageNumber,
     itemId: item?.id ?? null, itemNumber: item?.itemNumber ?? null, text, normalized: normalizedText(text), words,
     source: item?.source ?? createCropSource({ documentId: document.id, pageNumber: page.pageNumber, rect: [0, 0, 1, 1], fullPageFallback: true }),
+    ...(metadata ? { metadata } : {}),
+    ...(item?.contentSource ? { contentSource: item.contentSource } : {}),
+    ...(item?.figureCandidates?.length ? { figureCandidates: Object.freeze([...item.figureCandidates]) } : {}),
   });
 }
 

@@ -762,6 +762,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   unifiedUi = createUnifiedLibraryUi({
     getProvider: getUnifiedProvider,
     insertMaterialized: insertUnifiedResult,
+    openObjectify: async (result, asset) => {
+      const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
+      if (!dataUrl) throw new Error("객체화할 이미지 데이터를 만들지 못했습니다.");
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      const safeName = `${String(result.title || "library-image").replace(/[\\/:*?"<>|]+/gu, "-")}.png`;
+      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }))) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+    },
     openAi,
     openIndependentReferences,
     pdfUi,

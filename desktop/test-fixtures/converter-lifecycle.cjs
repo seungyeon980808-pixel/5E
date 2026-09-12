@@ -215,6 +215,10 @@ const sandbox = {
 };
 sandbox.globalThis = sandbox;
 
+const platformSource = fs.readFileSync(path.join(repositoryRoot, "js/platform.js"), "utf8")
+  .replace(/^export\s*\{[^}]+\};?\s*$/m, "");
+vm.runInNewContext(platformSource, sandbox, { filename: "js/platform.js" });
+
 let controllerSource = fs.readFileSync(path.join(repositoryRoot, "js/image-analysis-controller.js"), "utf8");
 controllerSource = controllerSource
   .replace(/^import[^\n]+\n/, "")

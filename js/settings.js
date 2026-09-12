@@ -37,6 +37,7 @@ import { serialize as serializeProject, applyLoaded, migrate as migrateProject }
 import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.4.0";
 // 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
 import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.4.0";
+import { getShortcutPlatform, setShortcutPlatform, localizeShortcutLabels, SHORTCUT_PLATFORM_KEY } from "./platform.js?v=1.4.0";
 
 // initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
 let _state = null;
@@ -93,7 +94,7 @@ const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
 const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
 const UI_ZOOM_KEY = "5e.uiZoom";                    // 환경 설정: 자유 UI 배율
 const REF_MEMO_KEY = "5e.refmemo";                  // 참고 창의 문항별 메모
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, UI_ZOOM_KEY, REF_MEMO_KEY];
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, UI_ZOOM_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY];
 
 /* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
  * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
@@ -251,6 +252,7 @@ const EXPORT_CHOICES = [
   { key: SUBJECT_KEY,           label: "과목 선택" },
   { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
   { key: UI_ZOOM_KEY,           label: "환경 설정 (자유 배율)" },
+  { key: SHORTCUT_PLATFORM_KEY, label: "환경 설정 (단축키 운영체제)" },
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
   { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
   { key: REF_MEMO_KEY,          label: "참고 창 문항별 메모" },
@@ -293,7 +295,7 @@ function prefStyles() {
   `;
 }
 
-function openPreferencesDialog() {
+function openPreferencesDialog({ focusShortcut = false } = {}) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   const zoom0 = currentUiZoom();
@@ -317,6 +319,15 @@ function openPreferencesDialog() {
         <div class="pref-actions">
           <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
         </div>
+        <div class="pref-row">
+          <label class="modal-label" for="pref-shortcut-platform">단축키 기준</label>
+          <select id="pref-shortcut-platform" class="modal-select" data-shortcut-label-fixed>
+            <option value="auto">자동 감지</option>
+            <option value="mac">Mac (⌘)</option>
+            <option value="windows">Windows (Ctrl)</option>
+          </select>
+        </div>
+        <p class="pref-note">실제 단축키 판정과 화면의 키 안내가 함께 바뀝니다.</p>
         <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
       </section>
 
@@ -356,6 +367,14 @@ function openPreferencesDialog() {
       </div>
     </div>`;
   document.body.appendChild(overlay);
+
+  const platformSelect = overlay.querySelector("#pref-shortcut-platform");
+  platformSelect.value = getShortcutPlatform();
+  platformSelect.addEventListener("change", () => {
+    setShortcutPlatform(platformSelect.value);
+    localizeShortcutLabels();
+  });
+  if (focusShortcut) platformSelect.focus();
 
   const close = () => overlay.remove();
   overlay.querySelector("#pref-close").addEventListener("click", close);
@@ -815,6 +834,8 @@ export function initSettings(state) {
   applyScreenSize(loadScreenSize());
   const screenBtn = document.getElementById("open-screen");
   if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
+  const shortcutBtn = document.getElementById("open-shortcuts");
+  if (shortcutBtn) shortcutBtn.addEventListener("click", () => openPreferencesDialog({ focusShortcut: true }));
   // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
   const savedZoom = loadUiZoom();
   if (savedZoom != null) applyUiZoom(savedZoom);
