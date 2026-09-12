@@ -1671,7 +1671,6 @@ body { zoom: var(--ui-zoom, 1); }
 .mcp-bridge-btn.mcp-connecting .mcp-dot { opacity: 0.5; }
 .mcp-bridge-btn.mcp-flash { background: var(--btn-tool-hover); }
 
-/* theme / monochrome toggle (sits at the far right of the canvas toolbar) */
 .theme-toggle {
   color: var(--text-secondary);
 }

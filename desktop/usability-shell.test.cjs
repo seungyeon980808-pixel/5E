@@ -51,7 +51,7 @@ test('native fullscreen bridge exposes event-backed state', () => {
   assert.equal(listeners.has('window:fullscreen-changed'), false);
 });
 
-test('global controls remain in the canvas toolbar while the inspector is collapsible', () => {
+test('theme and fullscreen controls live in the collapsible inspector header with a toolbar reopen control', () => {
   const html = read('index.html');
   const controlsStart = html.indexOf('class="canvas-global-controls"');
   const controlsEnd = html.indexOf('</div>', controlsStart);
@@ -59,11 +59,12 @@ test('global controls remain in the canvas toolbar while the inspector is collap
   const inspectorStart = html.indexOf('id="panel-right"');
   const inspectorEnd = html.indexOf('</aside>', inspectorStart);
   const inspector = html.slice(inspectorStart, inspectorEnd);
-  assert.ok(controlsStart >= 0, 'toolbar owns a stable global controls group');
-  assert.match(controls, /id="theme-toggle"/);
-  assert.match(controls, /id="fullscreen-toggle"/);
+  assert.ok(controlsStart >= 0, 'toolbar owns the inspector reopen control');
   assert.match(controls, /id="drawer-right-toggle"/);
-  assert.doesNotMatch(inspector, /id="theme-toggle"|id="fullscreen-toggle"/);
+  assert.doesNotMatch(controls, /id="theme-toggle"|id="fullscreen-toggle"/);
+  assert.match(inspector, /class="panel-utility-bar panel-utility-bar-right"[\s\S]*id="theme-toggle"[\s\S]*id="fullscreen-toggle"[\s\S]*data-panel-internal-toggle="right"/);
+  assert.equal((html.match(/id="theme-toggle"/g) || []).length, 1);
+  assert.equal((html.match(/id="fullscreen-toggle"/g) || []).length, 1);
 });
 
 test('hidden MCP entrypoints, focus modality, native title inset, and centered credit are wired', () => {
