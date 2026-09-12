@@ -69,7 +69,9 @@ only background removal or original preservation.
 | option | allowed values | default | invalid/failure behavior |
 |---|---|---|---|
 | `layout` | `auto`, `grid` | `auto` | reject with `RangeError` |
-| `maxAssets` | integer `1..256`, or `null` | `null` | reject with `RangeError`; never silently truncate |
+| `maxAssets` | integer `1..256`, or `null` | `null` | reject invalid values with `RangeError`; the effective limit is `min(maxAssets ?? 128, 128)` |
+| `maxDurationMs` | finite number `0..8000` | `8000` | reject invalid values with `RangeError`; return the original fallback after the next cooperative deadline checkpoint |
+| `signal` | `AbortSignal`, or absent | absent | reject malformed signals with `TypeError`; an aborted signal rejects with `AbortError` |
 
 Each returned asset keeps exact source RGBA and reports source bounds and
 assigned foreground-pixel count. The top-level result reports total,
@@ -77,6 +79,38 @@ assigned, and unassigned foreground pixels plus `reviewRequired` and
 machine-readable `reviewReasons`. Pixel preservation is a verifiable fact;
 semantic correctness is not. Ambiguous groupings remain available to the
 existing manual-region path for correction.
+
+Automatic layout uses 8-connected foreground components followed by one
+conservative proximity pass over the original component bounds. It does not
+derive object ownership from the 4×4 grid or row/column whitespace. Explicit
+`grid` layout remains available for the legacy atlas workflow. Neither layout
+claims semantic grouping or vectorization.
+
+Successful analysis reports `stats.rgbaVerified: true`,
+`stats.assignmentVerified: true`, and `stats.analysisCompleted: true`. A pixel,
+region, decoder, or deadline limit returns a structured fallback with
+`assets: []`, byte-identical `originalData`, `fallbackToOriginal: true`,
+`manualCorrectionAvailable: true`, one reason in `reviewReasons`, and
+`stats.rgbaVerified: false`, `stats.assignmentVerified: false`, and
+`stats.analysisCompleted: false`. Limit fallback never exposes partial crops.
+Current fallback reasons are `analysis-input-limit-exceeded`,
+`analysis-decoder-limit-exceeded`, `analysis-time-limit-exceeded`, and
+`region-limit-exceeded`.
+
+The input ceiling is 16,000,000 pixels and the returned-region ceiling is 128.
+The PNG codec also bounds both the actual filtered scanline payload and the
+expanded RGBA buffer to 64 MiB before inflation or allocation. Standard `sBIT`
+metadata from `@napi-rs/canvas` is validated, normalized to RGBA when an RGB
+source gains an opaque alpha channel, and preserved without rescaling stored
+pixel values.
+
+The duration is a cooperative budget whose clock includes PNG decode and
+encode time. Full-frame analysis and crop-verification loops yield and check
+the signal/deadline. The browser compression streams and synchronous PNG
+reconstruction do not expose a preemption hook, so cancellation or an 8-second
+deadline can be observed only at the checkpoint immediately after that codec
+operation returns. This may make wall-clock settlement exceed the requested
+budget; no partial result is returned after the budget has expired.
 
 ## Scoped-edit contract
 
@@ -167,11 +201,16 @@ The processing calls and state transitions are:
    const prepared = await prepareSeparatedAssets(candidatePngDataUrl, {
      layout: "auto",
      maxAssets: null,
+     maxDurationMs: 8000,
+     signal: candidateAbortController.signal,
    });
    ```
 
-   Show each `asset`, `manualRegions`, `reviewReasons`, and the assigned versus
-   unassigned foreground counts. `semanticGroupingVerified` remains `false`.
+   If `prepared.fallbackToOriginal` is true, keep `prepared.originalData` as the
+   usable image and offer the manual correction path; do not treat this as an
+   image-generation failure. Otherwise show each `asset`, `manualRegions`,
+   `reviewReasons`, and the assigned versus unassigned foreground counts.
+   `semanticGroupingVerified` remains `false`.
    The manual correction path passes edited `manualRegions` to
    `prepareEditableAssets`; final insertion uses:
 

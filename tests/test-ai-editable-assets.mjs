@@ -90,6 +90,39 @@ test('single atomic insertion gives independent groups, native labels, provenanc
   for (const o of value.objects) if (o.groupId) groups.set(o.groupId, [...(groups.get(o.groupId) ?? []), o.id]);
   assert.equal(groups.size, 0);
 });
+test('automatic insertion keeps separated rasters label-free in one group at source-relative positions', async () => {
+  const { src } = await fixture();
+  const prepared = await prepareEditableAssets(src, [region, {
+    id: 'b', x: 7, y: 0, width: 2, height: 7, label: 'invented label',
+    anchor: { x: 8, y: 3 }, labelPoint: { x: 8, y: 0 },
+  }]);
+  prepared.labelsDisabled = true;
+  const state = stateFixture();
+
+  const result = insertEditableAssets(state, prepared, {
+    isCurrent: current => current.activePageId === 'page1',
+    aiTaskId: 'automatic-task', aiCandidateId: 'automatic-candidate', groupMode: 'single',
+  });
+  const images = state.get().objects.filter(object => object.type === 'image');
+
+  assert.equal(state.updates(), 1);
+  assert.equal(state.get().undoStack.length, 1);
+  assert.equal(result.added, 2);
+  assert.equal(result.groupIds.length, 1);
+  assert.equal(state.get().groups.length, 1);
+  assert.deepEqual(state.get().groups[0].memberIds, images.map(image => image.id));
+  assert(images.every(image => image.groupId === result.groupIds[0]));
+  assert.equal(state.get().objects.some(object => object.type === 'labeler'), false);
+  assert.equal(images[1].x - images[0].x, 7 * result.scale);
+  assert.equal(images[1].y - images[0].y, 0);
+});
+test('unknown insertion group modes reject before state mutation', () => {
+  const prepared = { width: 10, height: 10, assets: [{ id: 'a', x: 0, y: 0, width: 1, height: 1, data: 'data:image/png;base64,AA==', label: '' }] };
+  const state = stateFixture(), before = structuredClone(state.get());
+  assert.throws(() => insertEditableAssets(state, prepared, { isCurrent: () => true, groupMode: 'nested' }), /그룹 방식/);
+  assert.equal(state.updates(), 0);
+  assert.deepEqual(state.get(), before);
+});
 test('stale preparation and stale callback at commit never mutate object/undo state', async () => {
   const { src } = await fixture();
   const prepared = await prepareEditableAssets(src, [region]);

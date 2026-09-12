@@ -94,8 +94,9 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
   assert.match(markup, /data-ai-reference-search/);
-  assert.match(markup, /이미지 검색/);
-  assert.match(markup, /화면 캡처/);
+  assert.match(markup, /자료 라이브러리에서 찾기/);
+  assert.match(markup, /화면에서 캡처/);
+  assert.match(markup, /클립보드에서 붙여넣기/);
   assert.match(markup, /이미지 추가/);
   assert.match(markup, /작업 취소/);
   assert.match(markup, /data-ai-chat-send/);
@@ -112,7 +113,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.doesNotMatch(markup, /id="parts-library-open"/);
   assert.match(markup, /data-ai-compare/);
   assert.match(markup, /data-ai-capture/);
-  assert.match(markup, /파일 탐색기/);
+  assert.match(markup, /파일에서 추가/);
   assert.match(markup, /multiple/);
   assert.ok(
     markup.indexOf('ai-image-pane ai-original-pane') > -1

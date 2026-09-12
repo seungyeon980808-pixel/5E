@@ -14,7 +14,7 @@ function cellMap(length) {
   return cells;
 }
 
-export function gridAssignments(source, background) {
+export async function gridAssignments(source, background, checkpoint = async () => {}) {
   const columns = cellMap(source.width), rows = cellMap(source.height);
   const parents = Array.from({ length: GRID_ASSET_COUNT }, (_, index) => index);
   const occupied = new Uint8Array(GRID_ASSET_COUNT);
@@ -35,6 +35,7 @@ export function gridAssignments(source, background) {
 
   for (let y = 0; y < source.height; y++) for (let x = 0; x < source.width; x++) {
     const pixel = y * source.width + x;
+    if ((pixel & 0xffff) === 0) await checkpoint();
     if (background[pixel]) continue;
     const column = columns[x], row = rows[y], index = row * GRID_SIZE + column;
     const [left, right] = cellBounds(column, source.width), [top, bottom] = cellBounds(row, source.height);
@@ -55,6 +56,7 @@ export function gridAssignments(source, background) {
   }
   for (let y = 0; y < source.height; y++) for (let x = 0; x < source.width; x++) {
     const pixel = y * source.width + x;
+    if ((pixel & 0xffff) === 0) await checkpoint();
     if (!background[pixel]) owners[pixel] = labels[root(cell(x, y))];
   }
   return { owners, groupCount, boundaryForeground };
@@ -96,11 +98,52 @@ export function whitespaceAssignments(source, background) {
   return { owners, groupCount };
 }
 
-function assignmentBounds(source, assignment) {
+export async function connectedAssignments(source, background, { maxComponents, checkpoint }) {
+  const count = source.width * source.height;
+  const owners = new Uint32Array(count);
+  const queue = new Uint32Array(count);
+  let groupCount = 0;
+  const visit = (pixel, owner) => {
+    if (pixel < 0 || pixel >= count || background[pixel] || owners[pixel]) return;
+    owners[pixel] = owner;
+    queue[tail++] = pixel;
+  };
+  let tail = 0;
+
+  for (let seed = 0; seed < count; seed++) {
+    if ((seed & 0xffff) === 0) await checkpoint();
+    if (background[seed] || owners[seed]) continue;
+    if (++groupCount > maxComponents) return { owners, groupCount, componentLimitExceeded: true };
+    let head = 0;
+    tail = 0;
+    visit(seed, groupCount);
+    while (head < tail) {
+      const pixel = queue[head++], x = pixel % source.width;
+      const hasLeft = x > 0, hasRight = x + 1 < source.width;
+      if (hasLeft) visit(pixel - 1, groupCount);
+      if (hasRight) visit(pixel + 1, groupCount);
+      if (pixel >= source.width) {
+        visit(pixel - source.width, groupCount);
+        if (hasLeft) visit(pixel - source.width - 1, groupCount);
+        if (hasRight) visit(pixel - source.width + 1, groupCount);
+      }
+      if (pixel + source.width < count) {
+        visit(pixel + source.width, groupCount);
+        if (hasLeft) visit(pixel + source.width - 1, groupCount);
+        if (hasRight) visit(pixel + source.width + 1, groupCount);
+      }
+      if ((head & 0xffff) === 0) await checkpoint();
+    }
+  }
+  return { owners, groupCount, componentLimitExceeded: false };
+}
+
+async function assignmentBounds(source, assignment, checkpoint) {
   const bounds = Array.from({ length: assignment.groupCount }, (_, index) => ({
     owner: index + 1, left: source.width, top: source.height, right: 0, bottom: 0,
   }));
   for (let pixel = 0; pixel < assignment.owners.length; pixel++) {
+    if ((pixel & 0xffff) === 0) await checkpoint();
     const owner = assignment.owners[pixel];
     if (!owner) continue;
     const item = bounds[owner - 1], x = pixel % source.width, y = Math.floor(pixel / source.width);
@@ -110,9 +153,9 @@ function assignmentBounds(source, assignment) {
   return bounds;
 }
 
-export function mergeAssignments(source, assignment, includeNearby) {
+export async function mergeAssignments(source, assignment, includeNearby, checkpoint = async () => {}) {
   if (assignment.groupCount < 2) return { ...assignment, mergeCount: 0 };
-  const bounds = assignmentBounds(source, assignment);
+  const bounds = await assignmentBounds(source, assignment, checkpoint);
   const parents = Array.from({ length: assignment.groupCount + 1 }, (_, index) => index);
   const root = value => {
     while (parents[value] !== value) {
@@ -130,6 +173,7 @@ export function mergeAssignments(source, assignment, includeNearby) {
   const nearbyX = Math.max(4, Math.round(source.width * 0.01));
   const nearbyY = Math.max(4, Math.round(source.height * 0.01));
 
+  let pairCount = 0;
   for (let index = 0; index < bounds.length; index++) for (let other = 0; other < index; other++) {
     const a = bounds[index], b = bounds[other];
     const overlapX = overlap(a.left, a.right, b.left, b.right), overlapY = overlap(a.top, a.bottom, b.top, b.bottom);
@@ -138,7 +182,10 @@ export function mergeAssignments(source, assignment, includeNearby) {
     const overlappingBounds = overlapX > 0 && overlapY > 0;
     const sideBySideParts = includeNearby && gapX !== null && gapX <= nearbyX && overlapY >= height * 0.6;
     const stackedParts = includeNearby && gapY !== null && gapY <= nearbyY && overlapX >= width * 0.6;
-    if (overlappingBounds || sideBySideParts || stackedParts) join(a.owner, b.owner);
+    const diagonalParts = includeNearby && gapX !== null && gapY !== null
+      && Math.hypot(gapX / nearbyX, gapY / nearbyY) <= 1;
+    if (overlappingBounds || sideBySideParts || stackedParts || diagonalParts) join(a.owner, b.owner);
+    if ((pairCount++ & 0x3ff) === 0) await checkpoint();
   }
 
   const labels = new Map();
@@ -150,14 +197,16 @@ export function mergeAssignments(source, assignment, includeNearby) {
   for (let pixel = 0; pixel < assignment.owners.length; pixel++) {
     const owner = assignment.owners[pixel];
     if (owner) assignment.owners[pixel] = labels.get(root(owner));
+    if ((pixel & 0xffff) === 0) await checkpoint();
   }
   return { owners: assignment.owners, groupCount, mergeCount: assignment.groupCount - groupCount };
 }
 
-export function summarizeAssignments(source, background, assignment) {
-  const items = assignmentBounds(source, assignment);
+export async function summarizeAssignments(source, background, assignment, checkpoint = async () => {}) {
+  const items = await assignmentBounds(source, assignment, checkpoint);
   let foregroundPixelCount = 0, assignedForegroundPixelCount = 0;
   for (let pixel = 0; pixel < background.length; pixel++) {
+    if ((pixel & 0xffff) === 0) await checkpoint();
     if (background[pixel]) continue;
     foregroundPixelCount++;
     const owner = assignment.owners[pixel];

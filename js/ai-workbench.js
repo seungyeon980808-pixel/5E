@@ -154,7 +154,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const modelSelect = panel.querySelector("[data-ai-model]");
   const effortSelect = panel.querySelector("[data-ai-effort]");
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
-  const zoomValue = panel.querySelector("[data-ai-sync-zoom-value]");
+  const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
+  const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
   const paneAnimations = new WeakMap();
@@ -164,7 +165,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let sourceSerial = 0;
   let activeCandidateKey = "";
   let activeSourceKey = "";
-  let zoom = 1;
+  const paneZoom = { source: 1, result: 1 };
   let userChoseLayout = false;
   let panelLayoutChanging = false;
 
@@ -177,6 +178,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     return generatedKeys.get(card);
   };
   const sourceKey = (card) => {
+    if (card.dataset.aiReferenceId) return card.dataset.aiReferenceId;
     if (!sourceKeys.has(card)) sourceKeys.set(card, `ui-source-${++sourceSerial}`);
     return sourceKeys.get(card);
   };
@@ -195,6 +197,16 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     return {stage, ratio, height: panel.dataset.aiResultView !== 'multiple' && card.classList.contains('ai-generated-card') && results?.classList.contains('mode-result') ? availableWidth / ratio : Math.min(availableHeight, availableWidth / ratio)};
   }
 
+  function applyStageSize(stage) {
+    if (!stage) return;
+    const baseWidth = Number(stage.dataset.aiFitWidth);
+    const baseHeight = Number(stage.dataset.aiFitHeight);
+    const zoom = Number(stage.dataset.aiZoom) || 1;
+    if (!baseWidth || !baseHeight) return;
+    stage.style.width = `${Math.round(baseWidth * zoom)}px`;
+    stage.style.height = `${Math.round(baseHeight * zoom)}px`;
+  }
+
   function fitCardStage(card) {
     const fit = cardFit(card);
     if (!fit) return;
@@ -203,16 +215,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       : [fit];
     const height = Math.floor(Math.min(...pair.map(item => item.height)));
     for (const item of pair) {
-      const widthValue = `${Math.floor(height * item.ratio)}px`;
-      const heightValue = `${height}px`;
-      if (item.stage.style.width !== widthValue) item.stage.style.width = widthValue;
-      if (item.stage.style.height !== heightValue) item.stage.style.height = heightValue;
+      item.stage.dataset.aiFitWidth = String(Math.floor(height * item.ratio));
+      item.stage.dataset.aiFitHeight = String(height);
+      applyStageSize(item.stage);
     }
   }
 
   const stageResizeObserver = typeof ResizeObserver === "function"
     ? new ResizeObserver((entries) => {
-      if (panelLayoutChanging || zoom !== 1) return;
+      if (panelLayoutChanging) return;
       entries.forEach(({ target }) => fitCardStage(target));
     })
     : null;
@@ -267,16 +278,35 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     setLayout(generatedCards().length ? "result" : sourceCards().length ? "source" : "result");
   }
 
-  function applyZoom() {
-    zoom = Math.min(2, Math.max(.6, Math.round(zoom * 10) / 10));
-    if (zoomValue) zoomValue.textContent = `${Math.round(zoom * 100)}%`;
-    for (const card of [activeCandidate(), sourceCards().find((item) => sourceKey(item) === activeSourceKey)]) {
-      card?.style.setProperty("--ai-workbench-zoom", String(zoom));
+  const paneCard = (pane) => pane === "source"
+    ? sourceCards().find((item) => sourceKey(item) === activeSourceKey)
+    : activeCandidate();
+
+  function applyPaneZoom(pane) {
+    paneZoom[pane] = Math.min(2, Math.max(.6, Math.round(paneZoom[pane] * 10) / 10));
+    const card = paneCard(pane);
+    const stage = card?.querySelector(".ai-preview-stage");
+    if (stage) {
+      stage.dataset.aiZoom = String(paneZoom[pane]);
+      applyStageSize(stage);
     }
-    for (const button of panel.querySelectorAll("[data-ai-sync-zoom]")) {
-      if (button.dataset.aiSyncZoom === "out") button.disabled = zoom <= .6;
-      if (button.dataset.aiSyncZoom === "in") button.disabled = zoom >= 2;
+    const controls = paneZoomControls.find((item) => item.dataset.aiPaneZoom === pane);
+    const value = controls?.querySelector("[data-ai-zoom-value]");
+    if (value) value.textContent = `${Math.round(paneZoom[pane] * 100)}%`;
+    for (const button of controls?.querySelectorAll("[data-ai-zoom-action]") || []) {
+      if (button.dataset.aiZoomAction === "out") button.disabled = paneZoom[pane] <= .6;
+      if (button.dataset.aiZoomAction === "in") button.disabled = paneZoom[pane] >= 2;
     }
+  }
+
+  function changePaneZoom(pane, action) {
+    const next = action === "in" ? paneZoom[pane] + .2 : action === "out" ? paneZoom[pane] - .2 : 1;
+    const targets = linkedZoom?.checked ? ["source", "result"] : [pane];
+    for (const target of targets) {
+      paneZoom[target] = next;
+      applyPaneZoom(target);
+    }
+    panel.dispatchEvent(new CustomEvent("5e:ai-workbench-geometry-change"));
   }
 
   function clearIssueHighlight() {
@@ -382,8 +412,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         node.type = "button";
         node.title = "결과 이미지에서 문제 위치 표시";
         node.addEventListener("click", () => {
-          zoom = 1;
-          applyZoom();
+          changePaneZoom("result", "fit");
           window.requestAnimationFrame(() => highlightIssue(activeCandidate(), bbox));
         });
       }
@@ -463,7 +492,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       card.classList.toggle("is-ai-active-candidate", candidateKey(card) === activeCandidateKey);
       watchCardFit(card);
     }
-    applyZoom();
+    applyPaneZoom("result");
     window.requestAnimationFrame(() => fitCardStage(activeCandidate()));
     const report = reports.get(activeCandidateKey) || normalizeReviewDetail({ state: stateForCard(activeCandidate()) });
     renderReview(report);
@@ -500,7 +529,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       card.classList.toggle("is-ai-active-source", sourceKey(card) === activeSourceKey);
       watchCardFit(card);
     }
-    applyZoom();
+    applyPaneZoom("source");
     window.requestAnimationFrame(() => fitCardStage(cards.find((card) => sourceKey(card) === activeSourceKey)));
   }
 
@@ -513,11 +542,16 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   layoutButtons.forEach((button) => button.addEventListener("click", () => setLayout(button.dataset.aiLayoutMode, true)));
-  panel.querySelectorAll("[data-ai-sync-zoom]").forEach((button) => button.addEventListener("click", () => {
-    const action = button.dataset.aiSyncZoom;
-    zoom = action === "in" ? zoom + .2 : action === "out" ? zoom - .2 : 1;
-    applyZoom();
+  paneZoomControls.forEach((controls) => controls.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-ai-zoom-action]");
+    if (!button) return;
+    changePaneZoom(controls.dataset.aiPaneZoom, button.dataset.aiZoomAction);
   }));
+  linkedZoom?.addEventListener("change", () => {
+    if (!linkedZoom.checked) return;
+    paneZoom.source = paneZoom.result;
+    applyPaneZoom("source");
+  });
   candidateSelect?.addEventListener("change", () => {
     activeCandidateKey = candidateSelect.value;
     panel.dataset.aiSelectedCandidateId = activeCandidateKey;
@@ -536,8 +570,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   effortSelect?.addEventListener("change", syncRuntimeSummary);
   panel.addEventListener("click", (event) => {
     if (!event.target.closest('[aria-label="수정 요청 영역 지정"]')) return;
-    zoom = 1;
-    applyZoom();
+    changePaneZoom("result", "fit");
   }, true);
 
   panel.addEventListener("5e:ai-review", (event) => {
@@ -581,7 +614,6 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (event.detail?.root !== panel) return;
     window.requestAnimationFrame(() => {
       panelLayoutChanging = false;
-      if (zoom !== 1) return;
       fitCardStage(activeCandidate());
       fitCardStage(sourceCards().find((item) => sourceKey(item) === activeSourceKey));
     });
@@ -595,7 +627,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   syncSources();
   syncRuntimeSummary();
   syncWorkbenchStage();
-  applyZoom();
+  applyPaneZoom("source");
+  applyPaneZoom("result");
 }
 
 if (typeof document !== "undefined") {

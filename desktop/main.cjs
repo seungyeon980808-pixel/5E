@@ -22,7 +22,8 @@ const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === 
 
 function isWindowCloseShortcut(input, platform = process.platform) {
   const command = platform === "darwin" ? input.meta : input.control;
-  return input.type === "keyDown" && command && !input.alt && !input.shift && String(input.key).toLowerCase() === "w";
+  return input.type === "keyDown" && !input.isAutoRepeat && !input.isComposing
+    && command && !input.alt && !input.shift && String(input.key).toLowerCase() === "w";
 }
 app.setAppUserModelId(APP_ID);
 
@@ -32,8 +33,8 @@ if (process.env.FIVE_E_DISABLE_GPU === "1") app.disableHardwareAcceleration();
 
 let win;
 let splash;
-const aiTaskShortcutWebContents = new Set();
 const fullscreenCoordinators = new WeakMap();
+const aiTaskShortcutWebContents = new Set();
 const pdfLibraryService = createPdfLibraryService({
   storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
   documentsPath: app.getPath("documents"),
@@ -647,7 +648,6 @@ function createWindow() {
       : { titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 } }),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
-  const shortcutWindow = win;
   const fullscreenWindow = win;
   const fullscreenCoordinator = createFullscreenCoordinator(fullscreenWindow, (active) => {
     if (!fullscreenWindow.webContents.isDestroyed()) {
@@ -661,6 +661,7 @@ function createWindow() {
     }
   });
   fullscreenWindow.once("closed", () => fullscreenCoordinator.dispose());
+  const shortcutWindow = win;
   const shortcutWebContents = win.webContents;
   const shortcutWebContentsId = shortcutWebContents.id;
   shortcutWebContents.on("before-input-event", (event, input) => {

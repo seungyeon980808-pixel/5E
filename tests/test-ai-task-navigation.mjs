@@ -5,7 +5,7 @@ import {createTaskWorkspaces} from '../js/ai-task-workspaces.js';
 
 class Element {
   constructor(kind='panel', text='') { this.kind=kind;this.textContent=text;this.dataset={};this.children=[];this.attrs={};this.classList={toggle(){}}; }
-  cloneNode() { const e=new Element(this.kind,this.textContent);e.attrs={...this.attrs};e.dataset={...this.dataset};e.children=this.children.map(c=>c.cloneNode());e.parentElement=this.parentElement;return e; }
+  cloneNode() { const e=new Element(this.kind,this.textContent);e.attrs={...this.attrs};e.dataset={...this.dataset};e.title=this.title;e.children=this.children.map(c=>c.cloneNode());e.parentElement=this.parentElement;return e; }
   querySelector(s) { if(this.kind==='panel')return this.children[0];return this.children.find(e=>e.kind===s); }
   querySelectorAll(){return [];}
   replaceChildren(){this.children=[];}
@@ -27,7 +27,7 @@ function fixture({saved,delay=false,failStorage=false}={}) {
   const manager=createTaskWorkspaces({get:()=>({objects:[],selectedIds:[]})},(_,options)=>{
     let selected=options.clientScope+'a';
     const ids=[options.clientScope+'a',options.clientScope+'b'];
-    function render(){const tabs=ids.map(id=>{const tab=new Element('button',id);tab.append(new Element('span',id));const close=new Element('.ai-task-delete','×');close.onclick=event=>{event.stopPropagation();deleted.push(id);};tab.append(close);tab.setAttribute('aria-selected',String(id===selected));tab.onclick=()=>{selected=id;render();};return tab;});options.navigationChanged(tabs);}
+    function render(){const tabs=ids.map(id=>{const tab=new Element('button',id);tab.title=`${id} · 앱 삭제: Cmd/Ctrl+W · 웹 삭제: Alt+W`;tab.append(new Element('span',id));const close=new Element('.ai-task-delete','×');close.onclick=event=>{event.stopPropagation();deleted.push(id);};tab.append(close);tab.setAttribute('aria-selected',String(id===selected));tab.onclick=()=>{selected=id;render();};return tab;});options.navigationChanged(tabs);}
     const c={ready:delay?new Promise(r=>release.push(r)):Promise.resolve(),ownsTask:id=>ids.includes(id),activeTask:()=>selected,selectTask:id=>{selected=id;render();},open:(openOptions={})=>openings.push({scope:c.options.clientScope,options:openOptions}),close:()=>{},options};
     controllers.push(c);render();return c;
   },()=>{});
@@ -70,6 +70,7 @@ test('empty workspace disappears from navigation and selection moves to remainin
 test('cloned navigation keeps task selection and delete as independently wired controls',async()=>{
  const f=fixture();await f.manager.open();
  const clone=f.panel.children[0].children[0];
+ assert.match(clone.title,/앱 삭제: Cmd\/Ctrl\+W · 웹 삭제: Alt\+W/);
  clone.querySelector('.ai-task-delete').onclick({stopPropagation(){}});
  assert.deepEqual(f.deleted,['a']);
  assert.equal(f.controllers[0].options.panel.hidden,false);

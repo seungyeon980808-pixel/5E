@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {dialogFocusTarget,isCloseActiveTaskShortcut} from '../js/ai-panel.js';
+import {dialogFocusTarget,isCloseActiveTaskShortcut,taskDeleteShortcutHint} from '../js/ai-panel.js';
+import {getShortcutPlatform,setShortcutPlatform} from '../js/platform.js?v=1.4.0';
 const source=readFileSync(new URL('../js/ai-panel.js',import.meta.url),'utf8');
 const handler=source.slice(source.indexOf('      closeTab.onclick ='),source.indexOf('      selectTab.append(copy);'));
 function fixture(confirmed=true) {
@@ -34,11 +35,36 @@ test('close-task shortcut supports native Cmd/Ctrl+W and browser-safe Alt+W',()=
  assert.equal(isCloseActiveTaskShortcut({key:'w',altKey:true}),true);
  assert.equal(isCloseActiveTaskShortcut({key:'w',altKey:true,ctrlKey:true}),false);
  assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true,isComposing:true},mac),false);
+ assert.equal(isCloseActiveTaskShortcut({key:'w',metaKey:true,repeat:true},mac),false);
  assert.equal(isCloseActiveTaskShortcut({key:'w'}),false);
 });
 test('focused active task exposes a Delete-key confirmation path',()=>{
  assert.match(source,/event\.key === 'Delete'.*\.ai-task-tab\.is-on/s);
- assert.match(source,/앱 삭제: Cmd\/Ctrl\+W · 웹 삭제: Alt\+W/);
+ assert.match(source,/taskDeleteShortcutHint\(\)/);
+});
+test('task delete hint follows the selected shortcut platform',()=>{
+ const previous=getShortcutPlatform();
+ const previousDocument=globalThis.document;
+ const previousWindow=globalThis.window;
+ const previousCustomEvent=globalThis.CustomEvent;
+ globalThis.document={documentElement:{setAttribute(){}}};
+ globalThis.window={dispatchEvent(){}};
+ globalThis.CustomEvent=class { constructor(type,init){this.type=type;this.detail=init?.detail;} };
+ try {
+  setShortcutPlatform('mac');
+  assert.equal(taskDeleteShortcutHint(),'앱 삭제: ⌘W · 웹 삭제: ⌥W');
+  setShortcutPlatform('windows');
+  assert.equal(taskDeleteShortcutHint(),'앱 삭제: Ctrl+W · 웹 삭제: Alt+W');
+ } finally {
+  setShortcutPlatform(previous);
+  if(previousDocument===undefined)delete globalThis.document;else globalThis.document=previousDocument;
+  if(previousWindow===undefined)delete globalThis.window;else globalThis.window=previousWindow;
+  if(previousCustomEvent===undefined)delete globalThis.CustomEvent;else globalThis.CustomEvent=previousCustomEvent;
+ }
+});
+test('visible and cloned task rails relabel in place when the shortcut platform changes',()=>{
+ assert.match(source,/syncTaskDeleteShortcutHints/);
+ assert.match(source,/addEventListener\(['"]5e:shortcut-platform-change['"],\s*syncTaskDeleteShortcutHints\)/);
 });
 test('task deletion focuses its accept action for Enter and leaves Escape on the native cancel path',()=>{
  const dialogSource=source.slice(source.indexOf('  function scopedDialog'),source.indexOf('  async function startScopedEdit'));

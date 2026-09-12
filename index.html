@@ -380,7 +380,10 @@
   <div id="ai-image-panel" class="modal-overlay" aria-label="AI 과학 도식 작업실" hidden>
     <section class="modal modal-ai ai-workbench" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
       <header class="ai-head">
-        <button class="ai-close" type="button" data-ai-close aria-label="AI 작업실을 닫고 캔버스로 돌아가기">← 캔버스로</button>
+        <button class="ai-close" type="button" data-ai-close aria-label="AI 작업실을 닫고 캔버스로 돌아가기">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11.5 5-5 5 5 5"/><path d="M7 10h7"/></svg>
+          <span>캔버스</span>
+        </button>
         <div class="ai-title-line">
           <h2 class="modal-title" id="ai-image-title">이미지 변환</h2>
         </div>
@@ -392,23 +395,17 @@
 
       <div class="ai-media-toolbar">
         <div class="ai-source-group" role="group" aria-label="원본 이미지 추가">
-          <label class="ai-file-button ai-source-primary">
-            <input id="ai-image-file-input" type="file" accept="image/*" aria-label="파일 탐색기에서 이미지 선택" multiple>
-            ＋ 이미지 추가
-          </label>
-          <button type="button" class="ai-search-trigger" data-ai-reference-search title="온라인 이미지·기출문제·로컬 폴더를 검색합니다">이미지 검색</button>
-          <button type="button" data-ai-capture>화면 캡처</button>
-        </div>
-        <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
-          <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">원본과 비교</button>
-          <button type="button" data-ai-layout-mode="source" aria-pressed="false">원본</button>
-          <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true">결과 크게</button>
-          <span class="ai-toolbar-divider" aria-hidden="true"></span>
-          <button type="button" data-ai-sync-zoom="out" aria-label="원본과 결과 함께 축소">−</button>
-          <output data-ai-sync-zoom-value aria-label="비교 배율">100%</output>
-          <button type="button" data-ai-sync-zoom="in" aria-label="원본과 결과 함께 확대">＋</button>
-          <button type="button" data-ai-sync-zoom="fit">맞춤</button>
-          <button type="button" data-ai-compare title="별도 창에서 참고 이미지와 생성 결과를 비교합니다">전체 비교</button>
+          <div class="ai-source-menu-shell">
+            <button type="button" class="ai-source-menu-trigger ai-source-primary" data-ai-source-menu-trigger
+                    aria-haspopup="menu" aria-controls="ai-source-menu" aria-expanded="false">＋ 소스 추가 <span aria-hidden="true">▾</span></button>
+            <div id="ai-source-menu" class="ai-source-menu" role="menu" data-ai-source-menu hidden>
+              <button type="button" role="menuitem" data-ai-source-action="file">파일에서 추가</button>
+              <button type="button" role="menuitem" data-ai-source-action="clipboard">클립보드에서 붙여넣기 <kbd data-ai-paste-shortcut>Ctrl+V</kbd></button>
+              <button type="button" role="menuitem" class="ai-search-trigger" data-ai-source-action="library" data-ai-reference-search>자료 라이브러리에서 찾기</button>
+              <button type="button" role="menuitem" data-ai-source-action="capture" data-ai-capture>화면에서 캡처</button>
+            </div>
+          </div>
+          <input id="ai-image-file-input" class="ai-source-file-input" type="file" accept="image/*" data-ai-source-file aria-label="파일에서 원본 이미지 추가" multiple>
         </div>
       </div>
 
@@ -425,9 +422,11 @@
 
         <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
           <header class="ai-compare-heading">
-            <div>
-              <span>이미지 작업 영역</span>
-              <strong>그림 위에 수정할 부분을 표시하세요</strong>
+            <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
+              <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
+              <button type="button" data-ai-layout-mode="source" aria-pressed="false">원본</button>
+              <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true">결과</button>
+              <button type="button" data-ai-compare title="별도 창에서 참고 이미지와 생성 결과를 비교합니다">전체 비교</button>
             </div>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
@@ -438,8 +437,16 @@
           <div class="ai-comparison-grid">
             <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
               <header class="ai-pane-head">
-                <div><span>원본</span><strong>변환 기준 이미지</strong></div>
+                <strong>원본</strong>
                 <label data-ai-source-picker hidden>원본 선택 <select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
+                <button type="button" class="ai-replace-source" data-ai-replace-source hidden>원본 교체</button>
+                <input class="ai-source-file-input" type="file" accept="image/*" data-ai-replace-source-input aria-label="선택한 원본을 파일로 교체">
+                <div class="ai-pane-zoom" data-ai-pane-zoom="source" role="group" aria-label="원본 이미지 배율">
+                  <button type="button" data-ai-zoom-action="out" aria-label="원본 축소">−</button>
+                  <output data-ai-zoom-value>100%</output>
+                  <button type="button" data-ai-zoom-action="in" aria-label="원본 확대">＋</button>
+                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
+                </div>
               </header>
               <details class="ai-reference-section" open>
                 <summary>원본 이미지 <span data-ai-reference-count>0</span></summary>
@@ -451,8 +458,15 @@
 
             <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
               <header class="ai-pane-head">
-                <div><span>결과</span><strong>생성 이미지</strong></div>
+                <strong>결과</strong>
                 <label>버전 <select data-ai-candidate-select aria-label="생성 결과 버전 선택"></select></label>
+                <div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
+                  <label class="ai-zoom-link"><input type="checkbox" data-ai-zoom-linked checked> 연결</label>
+                  <button type="button" data-ai-zoom-action="out" aria-label="결과 축소">−</button>
+                  <output data-ai-zoom-value>100%</output>
+                  <button type="button" data-ai-zoom-action="in" aria-label="결과 확대">＋</button>
+                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
+                </div>
               </header>
               <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
               <div class="ai-previews" data-ai-previews>
@@ -462,9 +476,10 @@
                     <div class="ai-e-core">E<span data-ai-e-count>1</span></div>
                   </div>
                   <strong data-ai-progress-title>이미지 생성 준비 중</strong>
-                  <span data-ai-progress-detail>요청의 구조와 배치를 분석하고 있습니다.</span>
-                  <div class="ai-progress-steps" data-ai-progress-stage="analyze" aria-label="이미지 생성 진행 단계">
-                    <span data-stage="analyze">분석</span><span data-stage="compose">구성</span><span data-stage="render">렌더링</span><span data-stage="finish">마무리</span>
+                  <span data-ai-progress-detail>런타임의 요청 수락을 기다리고 있습니다.</span>
+                  <div class="ai-progress-facts" aria-label="이미지 생성 진행 상태">
+                    <span data-ai-progress-stage>요청 수락 대기</span>
+                    <time data-ai-elapsed datetime="PT0S">시간 알 수 없음</time>
                   </div>
                   <div class="ai-progress-track" aria-hidden="true"><i></i></div>
                   <small>복잡한 그림은 몇 분 정도 걸릴 수 있습니다. 창을 닫아도 작업은 계속됩니다.</small>
@@ -486,30 +501,33 @@
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
           </nav>
           <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
-            <div class="ai-output-processing-row">
+            <label class="ai-output-processing-row">
               <span>배경</span>
-              <div class="ai-output-segments ai-output-background-segments" role="group" aria-label="생성 결과 배경 처리">
-                <button type="button" class="is-on" data-ai-background-policy="preserve" aria-pressed="true">원본 유지</button>
-                <button type="button" data-ai-background-policy="connected" aria-pressed="false">외부만 제거</button>
-                <button type="button" data-ai-background-policy="all-near-white" aria-pressed="false">모든 흰색 제거</button>
-                <button type="button" data-ai-background-policy="checkerboard" aria-pressed="false">체크무늬 제거</button>
-              </div>
-            </div>
-            <div class="ai-output-processing-row">
+              <select data-ai-background-policy aria-label="생성 결과 배경 처리">
+                <option value="preserve">원본 유지</option>
+                <option value="connected">외부 배경 제거</option>
+                <option value="all-near-white">모든 흰색 제거</option>
+              </select>
+            </label>
+            <label class="ai-output-processing-row">
               <span>색상</span>
-              <div class="ai-output-segments" role="group" aria-label="생성 결과 색상 처리">
-                <button type="button" class="is-on" data-ai-exam-palette="false" aria-pressed="true">원본 색상</button>
-                <button type="button" data-ai-exam-palette="true" aria-pressed="false">무채색 단순화</button>
-              </div>
-            </div>
-            <div class="ai-output-processing-row">
+              <select data-ai-exam-palette aria-label="생성 결과 색상 처리">
+                <option value="false">원본 색상</option>
+                <option value="true">무채색</option>
+              </select>
+            </label>
+            <label class="ai-output-processing-row">
               <span>선 굵기</span>
-              <div class="ai-output-segments ai-output-thickness-segments" role="group" aria-label="생성 결과 선 굵기">
-                <button type="button" class="is-on" data-ai-line-thickness="0" aria-pressed="true">원본</button>
-                <button type="button" data-ai-line-thickness="1" aria-pressed="false">+1px</button>
-                <button type="button" data-ai-line-thickness="2" aria-pressed="false">+2px</button>
-              </div>
-            </div>
+              <select data-ai-line-thickness aria-label="생성 결과 선 굵기">
+                <option value="0">원본</option>
+                <option value="1">+1px</option>
+                <option value="2">+2px</option>
+              </select>
+            </label>
+            <details class="ai-output-help">
+              <summary>처리 도움말</summary>
+              <p><strong>외부 배경 제거</strong>는 물체와 이어진 바깥 흰색만 투명하게 만듭니다. <strong>모든 흰색 제거</strong>는 물체 안쪽 흰색도 함께 처리합니다. 무채색과 선 굵기는 생성 원본을 바꾸지 않고 미리보기·저장·삽입 결과에 적용됩니다.</p>
+            </details>
             <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
           </section>
           <div class="ai-side-content">
@@ -590,14 +608,14 @@
               </section>
             </section>
             <section class="ai-chat-panel" data-ai-chat-panel aria-label="Codex와 대화" hidden>
-              <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>위치별 수정은 코멘트에, 전체적인 질문은 여기에 남깁니다.</p></header>
+              <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>대화 답변은 그림을 만들지 않습니다. 정리한 내용을 수정 요청으로 가져온 뒤 변환을 실행하세요.</p></header>
               <div class="ai-log" data-ai-log role="log" aria-label="Codex 대화와 진행 기록"><p class="ai-log-empty" data-ai-log-empty>질문이나 전체 그림에 대한 추가 요구사항을 남길 수 있습니다.</p></div>
               <section class="ai-input" aria-label="Codex 대화 입력">
                 <div class="ai-chat-composer">
                   <textarea data-ai-chat-input aria-label="Codex 대화 입력" placeholder="전체 그림에 관해 질문하거나 요구사항을 정리하세요."></textarea>
                   <button type="button" data-ai-chat-send title="대화 보내기 · 이미지 생성은 별도" aria-label="대화 보내기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4 4 17 8-17 8 3-8z"/><path d="M7 12h14"/></svg></button>
                 </div>
-                <p class="ai-chat-send-note">보내기는 대화만 · 그림 변경은 코멘트 반영하기</p>
+                <div class="ai-chat-actions"><p class="ai-chat-send-note">보내기는 대화만</p><button type="button" data-ai-chat-apply>수정 요청으로 가져오기</button></div>
               </section>
             </section>
           </div>

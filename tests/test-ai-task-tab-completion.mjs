@@ -14,6 +14,7 @@ function terminal(overrides = {}) {
     currentRunInput: { approvedFirstPng: true }, currentReviewCandidate: { id: 'image-1' },
     currentTurnStartedAt: 0, currentTurnDone: false, currentTurnPerformance: {}, currentTurnUsage: null,
     pendingCacheOutput: null, imageReceived: true,
+    advanceGenerationClock() {},
     setTaskState: value => states.push(value), setGenerating() {}, setBusy() {}, setStatus() {},
     dispatchReviewEvent() {}, persistPerformance() {}, addTokenFooter() {}, loadAccountOverview() {},
     candidateReviewOnTerminal: () => null, aiTerminalStatusView: () => null,

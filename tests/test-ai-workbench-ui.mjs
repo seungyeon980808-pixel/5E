@@ -8,6 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "ai-panel.css"), "utf8");
 const workbench = fs.readFileSync(path.join(root, "js", "ai-workbench.js"), "utf8");
+const panel = fs.readFileSync(path.join(root, "js", "ai-panel.js"), "utf8");
 const workbenchModule = await import(`data:text/javascript;base64,${Buffer.from(workbench).toString("base64")}`);
 
 function attributeCount(attribute) {
@@ -48,15 +49,11 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.match(index, /data-ai-pixel-inspection hidden/);
   assert.match(index, /기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존/);
   assert.doesNotMatch(index, /data-ai-runtime-summary/);
-  assert.match(index, /data-ai-background-policy="preserve"/);
-  assert.match(index, /data-ai-background-policy="connected"/);
-  assert.match(index, /data-ai-background-policy="all-near-white"/);
-  assert.match(index, /data-ai-background-policy="checkerboard"/);
-  assert.match(index, /data-ai-exam-palette="false"/);
-  assert.match(index, /data-ai-exam-palette="true"/);
-  assert.match(index, /data-ai-line-thickness="0"/);
-  assert.match(index, /data-ai-line-thickness="1"/);
-  assert.match(index, /data-ai-line-thickness="2"/);
+  assert.match(index, /<select data-ai-background-policy[\s\S]*value="preserve"[\s\S]*value="connected"[\s\S]*value="all-near-white"[\s\S]*<\/select>/);
+  assert.doesNotMatch(index, /<option value="checkerboard"/);
+  assert.match(index, /<select data-ai-exam-palette[\s\S]*value="false"[\s\S]*value="true"[\s\S]*<\/select>/);
+  assert.match(index, /<select data-ai-line-thickness[\s\S]*value="0"[\s\S]*value="1"[\s\S]*value="2"[\s\S]*<\/select>/);
+  assert.match(index, /<details class="ai-output-help">/);
   assert.ok(index.indexOf('data-ai-output-processing') < index.indexOf('class="ai-side-content"'),
     'output processing remains visible before the preparation and result stages');
 });
@@ -69,7 +66,8 @@ test("workbench inherits the existing theme and retains zoom and responsive layo
   assert.match(css, /\.ai-comparison-grid/);
   assert.match(css, /\.ai-task-tab-thumb/);
   assert.match(css, /#ai-image-panel\[hidden\],[\s\S]*#ai-image-panel \[hidden\] \{ display:\s*none !important; \}/);
-  assert.match(css, /transform: scale\(var\(--ai-workbench-zoom, 1\)\)/);
+  assert.match(css, /\.ai-pane-zoom/);
+  assert.match(css, /\.ai-compare-heading > \.ai-compare-controls:first-child \{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*row;/);
   assert.match(css, /@media \(max-width: 1000px\)/);
   assert.match(css, /#ai-image-panel \.ai-compare-heading > \.ai-annotation-toolbar \{ flex-direction:row/);
   assert.match(css, /\.ai-task-tab-title\s*\{[\s\S]*text-overflow:\s*ellipsis;[\s\S]*white-space:\s*nowrap;/);
@@ -90,17 +88,37 @@ test("review rendering is event-driven, candidate-specific, and text-safe", () =
   assert.match(workbench, /renderPixelInspection\(normalized\.pixelInspection\)/);
 });
 
-test("comparison controls retain versions and apply one synchronized zoom", () => {
+test("comparison controls keep versions and default to linked pane-local zoom", () => {
   assert.match(workbench, /candidateSelect\.replaceChildren\(\)/);
   assert.match(workbench, /card\.classList\.toggle\("is-ai-active-candidate"/);
-  assert.match(workbench, /--ai-workbench-zoom/);
-  assert.match(workbench, /for \(const card of \[activeCandidate\(\), sourceCards\(\)/);
+  assert.match(index, /data-ai-zoom-linked checked/);
+  assert.match(index, /data-ai-pane-zoom="source"/);
+  assert.match(index, /data-ai-pane-zoom="result"/);
+  assert.match(workbench, /const paneZoom = \{ source: 1, result: 1 \}/);
+  assert.match(workbench, /linkedZoom\.checked/);
+  assert.match(workbench, /item\.stage\.dataset\.aiFitWidth/);
+  assert.match(workbench, /stage\.style\.width = `\$\{Math\.round\(baseWidth \* zoom\)\}px`/);
   assert.ok(workbench.includes('generatedCards().length ? "result" : sourceCards().length ? "source" : "result"'), 'empty view shows guidance and a prepared source remains visible');
   assert.match(workbench, /const requestedKey = panel\.dataset\.aiSelectedCandidateId/);
   assert.match(workbench, /if \(keys\.includes\(requestedKey\)\) activeCandidateKey = requestedKey/);
   assert.match(workbench, /new CustomEvent\("5e:ai-candidate-select"/);
   assert.match(workbench, /detail: \{ candidateId \}/);
   assert.match(workbench, /function fitCardStage\(card\)/);
+  assert.match(workbench, /new CustomEvent\("5e:ai-workbench-geometry-change"\)/);
+  assert.match(panel, /addEventListener\('5e:ai-workbench-geometry-change',\(\)=>commentController\.render\(\)\)/);
+});
+
+test("zoomed stages grow their scrollable coordinate plane instead of clipping a transform", () => {
+  assert.match(css, /\.ai-image-card[^}]*overflow:\s*auto/s);
+  assert.doesNotMatch(css, /\.ai-preview-stage\s*\{[^}]*transform:\s*scale\(var\(--ai-workbench-zoom/s);
+  assert.match(css, /\.ai-preview-stage\s*>\s*img[^}]*width:\s*100%[^}]*height:\s*100%/s);
+});
+
+test("AI details use an interruptible 200ms accordion and become instant for reduced motion", () => {
+  assert.match(css, /--ai-accordion-duration:\s*200ms/);
+  assert.match(css, /interpolate-size:\s*allow-keywords/);
+  assert.match(css, /::details-content[^}]*transition:[^}]*block-size\s+var\(--ai-accordion-duration\)/s);
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*--ai-accordion-duration:\s*0ms/);
 });
 
 

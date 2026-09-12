@@ -104,20 +104,23 @@ export async function prepareEditableAssets(dataUrl, regions, { threshold = 240 
     stats: { removedPixelCount: assets.reduce((n, a) => n + a.stats.removedPixelCount, 0), preservedPixelCount: assets.reduce((n, a) => n + a.stats.preservedPixelCount, 0), rgbaVerified: true } };
 }
 
-export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId } = {}) {
+export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId, groupMode = 'independent' } = {}) {
   if (typeof isCurrent !== 'function') throw new TypeError('삽입 대상 확인 함수가 필요합니다.');
   if (!prepared?.assets?.length || prepared.assets.length > 256 || !Number.isFinite(prepared.width) || prepared.width <= 0 || !Number.isFinite(prepared.height) || prepared.height <= 0) throw new TypeError('준비한 이미지 영역이 없습니다.');
   if ((aiTaskId != null || aiCandidateId != null) && ![aiTaskId, aiCandidateId].every(v => typeof v === 'string' && v.trim())) throw new TypeError('이미지 작업·버전 정보를 확인할 수 없습니다.');
+  if (groupMode !== 'independent' && groupMode !== 'single') throw new TypeError('이미지 그룹 방식을 확인할 수 없습니다.');
   const current = state.get();
   if (!isCurrent(current)) throw new Error('이미지를 준비하는 동안 페이지 또는 후보가 변경되었습니다.');
   const scale = Math.min(current.artboard.w * 0.9 / prepared.width, current.artboard.h * 0.9 / prepared.height);
   if (!Number.isFinite(scale) || scale <= 0) throw new RangeError('아트보드 크기를 확인해 주세요.');
   const map = p => ({ x: (p.x - prepared.width / 2) * scale, y: (p.y - prepared.height / 2) * scale });
   const stamp = `${Date.now().toString(36)}_${++serial}`, objects = [], groups = [];
+  const sharedGroupId = groupMode === 'single' ? `grp_editable_${stamp}` : null;
+  const sharedMemberIds = [];
   for (const [i, asset] of prepared.assets.entries()) {
     const bounds = rect(asset, prepared.width, prepared.height);
     if (Object.keys(bounds).some(k => bounds[k] !== asset[k]) || typeof asset.data !== 'string' || !asset.data.startsWith('data:image/png;base64,') || typeof asset.label !== 'string') throw new TypeError('준비한 이미지 영역이 올바르지 않습니다.');
-    const groupId = `grp_editable_${stamp}_${i}`, imageId = `obj_editable_${stamp}_${i}`;
+    const groupId = sharedGroupId ?? `grp_editable_${stamp}_${i}`, imageId = `obj_editable_${stamp}_${i}`;
     const common = { groupId, locked: false, positionLocked: false, ...(aiTaskId ? { aiTaskId, aiCandidateId } : {}), editableAssetRegionId: asset.id };
     objects.push({ ...common, id: imageId, type: 'image', src: asset.data, ...map(asset), w: asset.width * scale, h: asset.height * scale,
       rotation: 0, mode: 'edit', opacity: 1, aspectLocked: true, exportable: true, imageSelectionLocked: false, cutouts: [] });
@@ -131,8 +134,10 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
         fontFamily: DEFAULT_TEXT_FONT, labelSize: DEFAULT_TEXT_SIZE_MM, strokeLevel: 0, strokeWidth: 0.2 });
       memberIds.push(id);
     }
-    groups.push({ id: groupId, memberIds });
+    if (sharedGroupId) sharedMemberIds.push(...memberIds);
+    else groups.push({ id: groupId, memberIds });
   }
+  if (sharedGroupId) groups.push({ id: sharedGroupId, memberIds: sharedMemberIds });
   state.update(draft => {
     if (!isCurrent(draft) || draft.activePageId !== current.activePageId) throw new Error('삽입 대상이 변경되었습니다.');
     draft.undoStack.push(structuredClone(draft.objects));
