@@ -85,6 +85,11 @@ export function localPdfDocumentId(fileName, sha256) {
   return `local:${sha256}:${encodeURIComponent(fileName)}`;
 }
 
+export function storedCropForResult(cropOverrides, result) {
+  const source = result?.provenance || normalizedSource(result || {});
+  return cropOverrides.get({ ...result, source, documentSourceHash: source.sha256 });
+}
+
 function resultId(result, index) {
   const source = result.source || {};
   const item = result.itemId || result.itemNumber || index;
@@ -129,6 +134,84 @@ export function assertPdfMaterializationSource(result, source, pageCount) {
   return candidate;
 }
 
+const FIGURE_GEOMETRY_VERSION = "caption-guards-v2";
+
+function resolvedResultIdentity(result) {
+  const source = result?.provenance ?? {};
+  return JSON.stringify([
+    result?.id ?? null, source.documentId ?? null, source.pageNumber ?? null,
+    source.itemId ?? result?.metadata?.itemNumber ?? null, source.sha256 ?? null,
+    source.sourceKind ?? null, source.locator ?? null,
+  ]);
+}
+
+function figureInsideQuestion(rect, questionRect) {
+  const [x, y, width, height] = rect;
+  const [qx, qy, qwidth, qheight] = questionRect;
+  return x >= qx && y >= qy && x + width <= qx + qwidth && y + height <= qy + qheight;
+}
+
+export function createPdfResultResolver({ getIdentity, openDocument, detectCandidates, schedule }) {
+  const resolved = new Map();
+  const clear = () => resolved.clear();
+  return Object.freeze({
+    clear,
+    values: () => [...resolved.values()],
+    async resolve(result) {
+      if (result?.provenance?.provider !== "pdf" || result?.cropType !== "question" || result.variants?.manual) return result;
+      const requestIdentity = getIdentity(result);
+      if (!requestIdentity) return result;
+      const resultIdentity = resolvedResultIdentity(result);
+      const key = JSON.stringify([FIGURE_GEOMETRY_VERSION, requestIdentity, resultIdentity]);
+      const cached = resolved.get(key);
+      if (cached) return cached;
+      const detected = await schedule(async () => {
+        if (getIdentity(result) !== requestIdentity) return null;
+        const opened = await openDocument(result.provenance.documentId);
+        if (getIdentity(result) !== requestIdentity) return null;
+        const page = opened.pages.find((value) => value.pageNumber === result.provenance.pageNumber);
+        const itemNumber = result.metadata?.itemNumber;
+        const item = page?.items.find((value) => value.id === result.provenance.itemId || value.itemNumber === itemNumber);
+        if (!item) return null;
+        const candidates = await detectCandidates({
+          documentId: result.provenance.documentId,
+          pageNumber: result.provenance.pageNumber,
+          item,
+        });
+        return getIdentity(result) === requestIdentity ? candidates : null;
+      }, { priority: 2, key: `resolve-result:${key}` });
+      if (!detected || getIdentity(result) !== requestIdentity) return result;
+      const questionSource = createCropSource(result.provenance);
+      const figures = (detected.candidates ?? []).flatMap((candidate, index) => {
+        let source;
+        try {
+          source = createCropSource({
+            documentId: questionSource.documentId,
+            pageNumber: questionSource.pageNumber,
+            rect: candidate?.source?.rect ?? candidate?.rect,
+            fullPageFallback: false,
+          });
+        } catch {
+          return [];
+        }
+        if (!figureInsideQuestion(source.rect, questionSource.rect)) return [];
+        return [{
+          id: candidate.id ?? `${result.id}:figure:${index + 1}`,
+          label: result.variants.figures[index]?.label ?? `이미지 ${index + 1}`,
+          source,
+          evidence: candidate.evidence,
+        }];
+      });
+      const canonical = {
+        ...result,
+        variants: { ...result.variants, figures },
+      };
+      resolved.set(key, canonical);
+      return canonical;
+    },
+  });
+}
+
 function resultTitle(result) {
   if (result.title || result.name) return result.title || result.name;
   const documentTitle = result.documentTitle || result.sourceName || "PDF 자료";
@@ -163,6 +246,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let packDocumentIds = new Set();
   let packSearchIndex = null;
   let packSyncEpoch = 0;
+  let catalogRevision = 0;
   const updatedPackDocumentIds = new Set();
   let browserPdfBytes = 0;
   let browserPdfCount = 0;
@@ -360,6 +444,24 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
 
   function withRuntimeLock(operation, options = {}) {
     return runtimeScheduler.run(operation, options);
+  }
+
+  const resultResolver = createPdfResultResolver({
+    getIdentity(result) {
+      const source = result?.provenance;
+      const document = docs.find((candidate) => candidate.id === source?.documentId);
+      if (!document) return null;
+      return JSON.stringify([catalogRevision, document.id, document.source?.kind ?? null,
+        document.source?.locator ?? null, document.source?.sha256 ?? null]);
+    },
+    openDocument: ensureDocumentOpen,
+    detectCandidates: (input) => runtime.detectFigureCandidates(input),
+    schedule: withRuntimeLock,
+  });
+
+  function catalogChanged() {
+    catalogRevision += 1;
+    resultResolver.clear();
   }
 
   async function ensureDocumentOpen(documentId) {
@@ -560,6 +662,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       }
       const openedIds = new Set(opened.map((document) => document.id));
       docs = [...docs.filter((document) => !openedIds.has(document.id)), ...opened];
+      catalogChanged();
       onCatalogChange?.();
       refreshOcrControls();
       sourceStatus.textContent = `${docs.length}개 PDF를 현재 브라우저에서 읽고 있습니다.`;
@@ -586,6 +689,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       documentOpeners.set(document.id, (activeRuntime, current) => openDocument(activeRuntime, current));
     }
     packSearchIndex = searchIndex;
+    catalogChanged();
     onCatalogChange?.();
     refreshPackFilters();
     invalidateSearch?.();
@@ -623,6 +727,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         if (packDocumentIds.has(document.id)) updatedPackDocumentIds.add(document.id);
       }
       invalidateSearch?.();
+      catalogChanged();
       await runSearch();
       setStatus("스캔 글자 인식과 검색 색인을 갱신했습니다.");
     } catch (error) {
@@ -667,6 +772,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       }
       renderIndexOverview(records, [{ ...connection, excludedCount: tree?.tree?.excludedCount || 0 }]);
       docs = [...docs, ...opened];
+      catalogChanged();
       onCatalogChange?.();
       refreshOcrControls();
       sourceStatus.textContent = `${docs.length}개 연결 자료를 읽고 있습니다.`;
@@ -711,6 +817,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     docs = [...retained.filter((document) => !recordIds.has(document.id)), ...opened];
     desktopRecords = records;
     renderIndexOverview(records, presentedConnections);
+    catalogChanged();
     onCatalogChange?.();
     refreshOcrControls();
     return { connections, documents: records, images, warningCount: warnings.length, warnings };
@@ -1027,6 +1134,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const opened = [];
       for (const document of documents) opened.push(await activeRuntime.openDocument(document));
       docs = [...docs, ...opened];
+      catalogChanged();
       onCatalogChange?.();
       sourceStatus.textContent = `${docs.length}개 연결 자료를 읽고 있습니다.`;
       await runSearch();
@@ -1057,6 +1165,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     },
     getCatalog() {
       return { documents: [...docs], searchIndex: packSearchIndex };
+    },
+    getResolvedResults() {
+      return [...new Map(resultResolver.values().map((value) => [value.id, value])).values()];
+    },
+    async resolveResult(result) {
+      return resultResolver.resolve(result);
     },
     async searchPdf({ query = "", documentIds = [], filters = {}, limit = 60 } = {}) {
       const allowedIds = new Set(documentIds);
@@ -1111,8 +1225,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     recognizeScans,
     syncDesktopConnections,
     cropForResult(result) {
-      const source = result?.provenance || normalizedSource(result || {});
-      return cropOverrides.get({ ...result, source, documentSourceHash: source.sha256 }) || clampCropRect(source.rect);
+      return storedCropForResult(cropOverrides, result);
     },
     saveCropOverride(result, rect) {
       const source = result?.provenance || normalizedSource(result || {});

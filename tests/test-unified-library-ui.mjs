@@ -15,6 +15,8 @@ import {
   canInsertLibraryResult,
   highlightTextParts,
   containedImageBounds,
+  libraryResultIdentity,
+  resolveLibraryPreviewResult,
   libraryActionSnapshotIsCurrent,
   isValidQuestionRepresentation,
   rectInCrop,
@@ -38,6 +40,27 @@ import {
   cropActionSnapshotIsCurrent,
   saveCropPng,
 } from "../js/unified-library-ui.js";
+
+test("Given a rejected lazy resolver, preview resolution returns a recoverable failure instead of rejecting", async () => {
+  const result = { id: "q1", provenance: { documentId: "doc", pageNumber: 1, locator: "old.pdf" } };
+  const outcome = await resolveLibraryPreviewResult(
+    result,
+    async () => { throw new Error("open failed"); },
+    () => true,
+  );
+  assert.equal(outcome.status, "failed");
+  assert.match(outcome.error.message, /open failed/u);
+});
+
+test("Given the same result id after source replacement, preview resolution treats the old completion as stale", async () => {
+  const pending = Promise.withResolvers();
+  const original = { id: "q1", provenance: { documentId: "doc", pageNumber: 1, sha256: null, sourceKind: "pack", locator: "old.pdf" } };
+  let current = original;
+  const resolving = resolveLibraryPreviewResult(original, () => pending.promise, () => libraryResultIdentity(current) === libraryResultIdentity(original));
+  current = { ...original, provenance: { ...original.provenance, locator: "replacement.pdf" } };
+  pending.resolve({ ...original, variants: { figures: [{ source: { rect: [0.2, 0.2, 0.2, 0.2] } }] } });
+  assert.deepEqual(await resolving, { status: "stale" });
+});
 import { IMAGE_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_BYTES, partitionLibraryImports, safeExternalSourceUrl } from "../js/library-import-policy.js";
 
 test("Given a result tab, when search options are built, then WHERE remains independent from WHAT", () => {

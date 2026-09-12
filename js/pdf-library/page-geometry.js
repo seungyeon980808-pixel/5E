@@ -57,6 +57,48 @@ export function isAnswerChoiceBoxCandidate(candidate, words) {
   return compact.includes("<보기>") && choiceCount >= 2 && contained.length >= 6;
 }
 
+export function trimImageCandidateAtExternalCaption(candidate, words) {
+  const rect = normalizedRect(candidate?.source?.rect ?? candidate?.rect);
+  if ((Number(candidate?.evidence?.imageCount) || 0) < 1) return rect;
+  const rawGraphicRect = candidate?.evidence?.graphicRect
+    ? normalizedRect(candidate.evidence.graphicRect)
+    : null;
+  if (!rawGraphicRect) return rect;
+  const [x, y, width, height] = rect;
+  const right = x + width;
+  const bottom = y + height;
+  const lowerBand = y + height * 0.6;
+  const horizontalWords = (words ?? []).map((word) => normalizedRect(word.rect)).filter((wordRect) =>
+    wordRect[0] < right && wordRect[0] + wordRect[2] > x && wordRect[1] + wordRect[3] > lowerBand);
+  const overflow = horizontalWords.filter((wordRect) => wordRect[1] < bottom && wordRect[1] + wordRect[3] > bottom);
+  if (overflow.length === 0) return rect;
+  let captionTop = Math.min(...overflow.map((wordRect) => wordRect[1]));
+  const overflowBottom = Math.max(...overflow.map((wordRect) => wordRect[1] + wordRect[3]));
+  let hasAdjacentLine = horizontalWords.some((wordRect) => {
+    const gap = wordRect[1] - overflowBottom;
+    return gap > 0 && gap <= Math.max(wordRect[3], 0.002) * 0.75;
+  });
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const wordRect of horizontalWords) {
+      const gap = captionTop - (wordRect[1] + wordRect[3]);
+      if (wordRect[1] >= captionTop || gap < 0 || gap > Math.max(wordRect[3], 0.002) * 0.75) continue;
+      captionTop = wordRect[1];
+      hasAdjacentLine = true;
+      changed = true;
+    }
+  }
+  if (!hasAdjacentLine || captionTop <= lowerBand) return rect;
+  const protectedRect = candidate?.evidence?.protectedRect
+    ? normalizedRect(candidate.evidence.protectedRect)
+    : rawGraphicRect;
+  const protectedBottom = protectedRect[1] + protectedRect[3];
+  const repairedBottom = Math.max(protectedBottom, captionTop);
+  if (repairedBottom >= bottom) return rect;
+  return normalizedRect([x, y, width, repairedBottom - y]);
+}
+
 export function textBeforeFooter(text, words) {
   if (footerBoundary(words) === null) return String(text ?? "");
   return String(text ?? "")

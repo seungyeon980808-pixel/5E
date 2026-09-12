@@ -712,6 +712,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       examBaseUrl: configuredLegacyDatasetBase(),
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,
+      resolvedPdfResults: pdfUi.getResolvedResults(),
       importedImages,
       searchPdf: (options) => pdfUi.searchPdf(options),
       cropForResult: (result) => pdfUi.cropForResult(result),

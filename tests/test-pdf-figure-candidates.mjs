@@ -143,3 +143,21 @@ test("Given a vector bordered answer box with dense 보기 choices, when detecte
   assert.equal(result.candidates.length, 0);
   assert.equal(result.reason, "no-confident-graphics");
 });
+
+test("Given image operator geometry followed by external prose, detection keeps overlapping labels and excludes the prose", () => {
+  const marks = [{ kind: "image", rect: [0.16, 0.24, 0.12, 0.08] }];
+  const words = [
+    { text: "A", rect: [0.2, 0.29, 0.01, 0.015] },
+    { text: "외부", rect: [0.16, 0.326, 0.04, 0.015] },
+    { text: "설명", rect: [0.205, 0.326, 0.04, 0.015] },
+    { text: "계속", rect: [0.16, 0.344, 0.04, 0.015] },
+  ];
+
+  const result = detectFigureCandidates({ item, marks, words, pageWidthPoints: 600, pageHeightPoints: 800 });
+  const [candidate] = result.candidates;
+  const candidateBottom = candidate.rect[1] + candidate.rect[3];
+
+  assert.equal(result.candidates.length, 1);
+  assert.ok(candidate.rect[1] <= marks[0].rect[1] && candidateBottom >= marks[0].rect[1] + marks[0].rect[3]);
+  assert.ok(candidateBottom <= words[1].rect[1]);
+});
