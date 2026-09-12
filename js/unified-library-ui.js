@@ -92,6 +92,12 @@ export function canInsertLibraryResult(result, representation) {
   return String(representation).startsWith("figure:") && Boolean(result.variants?.figures?.[Number(String(representation).slice(7))]);
 }
 
+export function aiRepresentationForResult(result, selectedId, selectedRepresentation) {
+  if (result?.kind !== "crop" || result?.cropType !== "question") return "full";
+  if (result.id === selectedId && selectedRepresentation !== "full") return selectedRepresentation;
+  return result.variants?.manual ? "manual" : "figure:0";
+}
+
 export function libraryActionSnapshotIsCurrent(snapshot, state) {
   return snapshot?.selectedId === state?.selectedId
     && snapshot?.representation === state?.representation
@@ -999,10 +1005,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!isCurrent()) return;
       const references = [];
       for (const result of chosen.slice(0, 10)) {
-        const representation = result.kind === "crop"
-          ? (result.id === snapshot.selectedId && snapshot.representation !== "full" ? snapshot.representation : "figure:0")
-          : "full";
-        if (result.kind === "crop" && !result.variants?.figures?.length) continue;
+        const representation = aiRepresentationForResult(result, snapshot.selectedId, snapshot.representation);
+        if (!canInsertLibraryResult(result, representation)) continue;
         const effectiveResult = resultForRepresentation(result, representation);
         const materialized = await activeProvider.materialize(effectiveResult, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
         if (!isCurrent()) return;
