@@ -1,6 +1,7 @@
 import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js";
 import { createCropSource } from "../pdf-library/contract.js";
+import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
 const SUBJECT_LABELS = Object.freeze({ p1: "물리학Ⅰ", p2: "물리학Ⅱ", c1: "화학Ⅰ", c2: "화학Ⅱ", b1: "생명과학Ⅰ", b2: "생명과학Ⅱ", e1: "지구과학Ⅰ", e2: "지구과학Ⅱ" });
@@ -8,9 +9,11 @@ const ADMINISTRATION_LABELS = Object.freeze({ "06": "6월 모의평가", "09": "
 
 export function humanExamName(metadata = {}, itemNumber = null) {
   if (!metadata) return "";
-  const subject = SUBJECT_LABELS[metadata.subject] ?? metadata.subjectLabel ?? "과학";
-  const year = Number.isInteger(metadata.academicYear) ? `${metadata.academicYear}학년도` : "";
-  const administration = ADMINISTRATION_LABELS[metadata.administration] ?? "";
+  const subject = SUBJECT_LABELS[metadata.subject];
+  const validYear = Number.isInteger(metadata.academicYear) && metadata.academicYear >= 2000 && metadata.academicYear <= 2099;
+  const administration = ADMINISTRATION_LABELS[metadata.administration];
+  if (!subject || !validYear || !administration) return "";
+  const year = `${metadata.academicYear}학년도`;
   const question = Number.isInteger(itemNumber) ? `${itemNumber}번` : "";
   return [subject, year, administration, question].filter(Boolean).join(" ");
 }
@@ -27,7 +30,7 @@ function normalizedText(value) {
 }
 
 function tokens(value) {
-  return normalizedText(value).split(/[#\s]+/u).filter(Boolean);
+  return queryHighlightTerms(value).map(({ term }) => term);
 }
 
 function stableId(namespace, ...segments) {
@@ -48,12 +51,18 @@ function boundedLimit(value) {
 }
 
 function freezeResult(value) {
+  const matchContext = value.matchContext ? {
+    ...value.matchContext,
+    terms: Object.freeze((value.matchContext.terms ?? []).map(Object.freeze)),
+    highlights: Object.freeze((value.matchContext.highlights ?? []).map((highlight) => Object.freeze({ ...highlight, rect: Object.freeze([...(highlight.rect ?? [])]) }))),
+    misses: Object.freeze([...(value.matchContext.misses ?? [])]),
+  } : null;
   return Object.freeze({
     ...value,
     provenance: Object.freeze(value.provenance),
     metadata: Object.freeze(value.metadata ?? {}),
     preview: Object.freeze(value.preview ?? {}),
-    ...(value.matchContext ? { matchContext: Object.freeze(value.matchContext) } : {}),
+    ...(matchContext ? { matchContext: Object.freeze(matchContext) } : {}),
     ...(value.variants ? { variants: Object.freeze({
       ...value.variants,
       full: Object.freeze(value.variants.full),
@@ -127,7 +136,7 @@ function collectImageResults(input) {
     results.push(result); items.set(result.id, item);
   }
   for (const [id, values] of partsBySource) sources.push(sourceNode(id, values[0].subjectLabel || "과학 부품", ["image"], values.length, {
-    origin: "provided", category: "other", pathSegments: ["과학 부품"],
+    origin: "provided", category: "other", pathSegments: ["과학 부품"], counts: { pdf: 0, image: values.length, page: 0, question: 0 },
   }));
 
   const examsBySource = new Map();
@@ -137,11 +146,17 @@ function collectImageResults(input) {
     if (!examsBySource.has(sourceId)) examsBySource.set(sourceId, []);
     examsBySource.get(sourceId).push(item);
     const previewUrl = externalExamImageUrl(input, item);
+    const derived = deriveExamMetadata({
+      metadata: { subject: item.subject, academicYear: item.year, administration: item.month },
+      source: { displayName: item.fileName ?? item.file ?? item.name },
+    });
     const examMetadata = {
-      subject: item.subject ?? null, academicYear: item.year ?? null,
-      administration: String(item.month ?? "").padStart(2, "0"), itemNumber: item.no ?? null, curated: true,
+      subject: derived?.subject ?? null, academicYear: derived?.academicYear ?? null,
+      administration: derived?.administration ?? null, documentCode: derived?.documentCode ?? null,
+      itemNumber: Number.isInteger(item.no) ? item.no : null, curated: true,
     };
-    const result = imageResult("exam-image", { ...item, title: humanExamName(examMetadata, item.no) || item.title }, sourceId, item.subjectLabel || "기출 이미지", {
+    const fallbackTitle = item.fileName ?? item.file ?? item.name ?? item.id;
+    const result = imageResult("exam-image", { ...item, title: humanExamName(examMetadata, item.no) || fallbackTitle }, sourceId, item.subjectLabel || "기출 이미지", {
       subtitle: [item.subjectLabel, item.exam, item.no ? `${item.no}번` : null].filter(Boolean).join(" · "),
       searchText: [item.id, item.title, ...(item.tags ?? []), ...(item.parts ?? [])].join(" "),
       metadata: examMetadata,
@@ -150,7 +165,7 @@ function collectImageResults(input) {
     results.push(result); items.set(result.id, item);
   }
   for (const [id, values] of examsBySource) sources.push(sourceNode(id, values[0].subjectLabel || "기출 이미지", ["image"], values.length, {
-    origin: "provided", category: "past-exams", pathSegments: ["이미지"],
+    origin: "provided", category: "past-exams", pathSegments: ["이미지"], counts: { pdf: 0, image: values.length, page: 0, question: 0 },
   }));
 
   const importsBySource = new Map();
@@ -179,7 +194,7 @@ function collectImageResults(input) {
     const categoryLabel = category === "textbooks" ? "교과서" : category === "past-exams" ? "기출문제" : "기타";
     if (folders[0] === categoryLabel) folders.shift();
     sources.push(sourceNode(id, first.sourceLabel || "가져온 이미지", ["image"], values.length, {
-      origin: "local", category, pathSegments: folders,
+      origin: "local", category, pathSegments: folders, counts: { pdf: 0, image: values.length, page: 0, question: 0 },
     }));
   }
   return { results, sources, items };
@@ -187,6 +202,17 @@ function collectImageResults(input) {
 
 function pdfSourceId(document) {
   return stableId("source", "pdf", document.id, document.source?.kind, document.source?.locator);
+}
+
+function uniquePdfDocuments(documents) {
+  const seen = new Set();
+  return (documents ?? []).filter((document) => {
+    const locator = String(document?.source?.locator ?? "").normalize("NFKC").trim();
+    const identity = locator ? `${document?.source?.kind ?? "unknown"}\0${locator}` : `id\0${document?.id ?? ""}`;
+    if (seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  });
 }
 
 function pdfProvenance(document, source) {
@@ -220,7 +246,7 @@ function entriesForDocument(index, document) {
   }));
 }
 
-function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers) {
+function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pageWords = []) {
   const sourceId = pdfSourceId(document);
   const source = { documentId: document.id, pageNumber, rect: [0, 0, 1, 1], fullPageFallback: true };
   const code = metadata?.documentCode ?? null;
@@ -232,6 +258,7 @@ function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers) {
     searchText: [document.title, document.source?.displayName, code, pageText].join(" "),
     metadata: { ...metadata, pageNumber, itemNumbers: Object.freeze([...itemNumbers]) },
     preview: { source }, provenance: pdfProvenance(document, source),
+    matchText: pageText, searchWords: Object.freeze([...pageWords]),
   });
 }
 
@@ -258,13 +285,16 @@ function pdfQuestionResult(document, entry, metadata) {
     parentId: stableId("page", pdfSourceId(document), pageNumber),
     searchText: [document.title, document.source?.displayName, code, itemCode, entry.text].join(" "),
     metadata: { ...metadata, itemNumber, itemCode, pageNumber },
-    preview: { source }, provenance: pdfProvenance(document, source),
+    preview: { source }, provenance: { ...pdfProvenance(document, source), itemId: entry.itemId ?? null },
     variants: {
       full: { label: "전체", source },
       content: { label: "내용", source: contentSource },
       figures,
     },
-    matchContext: { snippet: String(entry.snippet ?? matchText.slice(0, 240)).trim(), matchRects },
+    matchContext: {
+      snippet: String(entry.snippet ?? matchText.slice(0, 240)).trim(), matchRects,
+      terms: entry.terms ?? [], highlights: entry.highlights ?? [], misses: entry.misses ?? [],
+    },
     matchText,
     searchWords: Object.freeze([...(entry.words ?? [])]),
   });
@@ -303,7 +333,9 @@ function securedPdfEntry(document, entry) {
 function pdfResults(documents, index) {
   const results = [];
   const sources = [];
+  const files = [];
   for (const document of documents) {
+    const resultStart = results.length;
     const entries = entriesForDocument(index, document).flatMap((entry) => {
       const secured = securedPdfEntry(document, entry);
       return secured ? [secured] : [];
@@ -313,10 +345,13 @@ function pdfResults(documents, index) {
       source: document.source,
     });
     const pages = new Map();
+    const pageWords = new Map();
+    const indexedPageWords = new Map();
     const itemNumbersByPage = new Map();
     for (let pageNumber = 1; pageNumber <= (document.pageCount ?? 0); pageNumber += 1) pages.set(pageNumber, "");
     for (const page of document.pages ?? []) {
       pages.set(page.pageNumber, page.text ?? "");
+      pageWords.set(page.pageNumber, page.words ?? []);
       itemNumbersByPage.set(page.pageNumber, new Set((page.items ?? []).map((item) => item.itemNumber).filter(Number.isInteger)));
     }
     for (const entry of entries) {
@@ -326,10 +361,13 @@ function pdfResults(documents, index) {
       }
       if (!itemNumbersByPage.has(entry.pageNumber)) itemNumbersByPage.set(entry.pageNumber, new Set());
       if (Number.isInteger(entry.itemNumber)) itemNumbersByPage.get(entry.pageNumber).add(entry.itemNumber);
+      if (!indexedPageWords.has(entry.pageNumber)) indexedPageWords.set(entry.pageNumber, []);
+      indexedPageWords.get(entry.pageNumber).push(...(entry.words ?? []));
     }
     for (const [pageNumber, text] of pages) {
       const itemNumbers = itemNumbersByPage.get(pageNumber) ?? new Set();
-      const pageResult = pdfPageResult(document, pageNumber, text, metadata, itemNumbers);
+      const words = pageWords.get(pageNumber)?.length ? pageWords.get(pageNumber) : indexedPageWords.get(pageNumber) ?? [];
+      const pageResult = pdfPageResult(document, pageNumber, text, metadata, itemNumbers, words);
       results.push(freezeResult({ ...pageResult, metadata: { ...pageResult.metadata, boundaryUncertain: itemNumbers.size === 0 } }));
     }
     const questions = new Map();
@@ -346,6 +384,20 @@ function pdfResults(documents, index) {
       } : entry);
     }
     for (const entry of questions.values()) results.push(pdfQuestionResult(document, entry, metadata));
+    const sourceId = pdfSourceId(document);
+    const firstPage = results.slice(resultStart).find((result) => result.kind === "page");
+    if (firstPage) {
+      files.push(freezeResult({
+        ...firstPage,
+        title: humanExamName(metadata) || document.title || document.source?.displayName,
+        subtitle: [document.source?.displayName, `PDF ${pages.size}쪽`].filter(Boolean).join(" · "),
+        sourceId,
+        sourceLabel: document.source?.displayName ?? document.title,
+        fileSourceId: sourceId,
+        pageCount: pages.size,
+        searchText: [document.title, document.source?.displayName, metadata?.documentCode].join(" "),
+      }));
+    }
     const origin = document.source?.kind === "pack" ? "provided" : "local";
     const relativeFolders = pathSegments(document.source?.relativePath).slice(0, -1);
     const category = normalizeSourceCategory(document.metadata?.category ?? (metadata ? "past-exams" : relativeFolders[0]));
@@ -355,11 +407,12 @@ function pdfResults(documents, index) {
     if (relativeFolders[0] === categoryLabel) relativeFolders.shift();
     const examPath = metadata ? [`${metadata.academicYear}학년도`, administration].filter(Boolean)
       : [document.source?.kind === "file" ? "연결 폴더" : null, ...relativeFolders].filter(Boolean);
-    sources.push(sourceNode(pdfSourceId(document), document.source?.displayName ?? document.title, ["crop", "page"], pages.size, {
+    sources.push(sourceNode(sourceId, document.source?.displayName ?? document.title, ["crop", "page"], 1, {
       origin, category, pathSegments: examPath,
+      counts: { pdf: 1, image: 0, page: pages.size, question: questions.size },
     }));
   }
-  return { results, sources };
+  return { results, sources, files };
 }
 
 function resultMatches(result, query, compact) {
@@ -383,22 +436,36 @@ function normalizedKinds(kinds) {
 }
 
 function contextualized(result, query) {
-  if (result.kind !== "crop" || result.cropType !== "question") return result;
+  if (result.provenance?.provider !== "pdf" || (result.kind !== "page" && (result.kind !== "crop" || result.cropType !== "question"))) return result;
   const terms = tokens(query);
   const text = String(result.matchText ?? result.matchContext?.snippet ?? "");
   const normalized = normalizedText(text);
   const offsets = terms.map((term) => normalized.indexOf(term)).filter((offset) => offset >= 0);
   const start = offsets.length ? Math.max(0, Math.min(...offsets) - 48) : 0;
   const snippet = text.slice(start, start + 180).trim();
-  const derivedMatchRects = (result.searchWords ?? []).filter((word) =>
-    terms.some((term) => normalizedText(word.text).includes(term))).map((word) => Object.freeze([...word.rect]));
-  const matchRects = result.searchWords?.length ? derivedMatchRects : (result.matchContext?.matchRects ?? []);
-  return freezeResult({ ...result, matchContext: { snippet, matchRects: Object.freeze(matchRects) } });
+  const termRecords = queryHighlightTerms(query);
+  const mapped = result.searchWords?.length ? mapQueryHighlights({
+    documentId: result.provenance.documentId, pageNumber: result.provenance.pageNumber,
+    itemId: result.provenance.itemId ?? result.id, words: result.searchWords,
+  }, termRecords) : null;
+  const typed = mapped?.highlights?.length ? mapped.highlights : (result.matchContext?.highlights ?? []);
+  const legacyRects = result.matchContext?.matchRects ?? [];
+  const fallback = typed.length || !termRecords.length ? [] : legacyRects.map((rect) => ({
+    ...termRecords[0], coordinateSpace: "page-normalized", legacy: true,
+    documentId: result.provenance.documentId, pageNumber: result.provenance.pageNumber,
+    cropId: result.provenance.itemId ?? result.id, rect,
+  }));
+  const highlights = [...typed, ...fallback];
+  const matchRects = highlights.map((highlight) => highlight.rect);
+  return freezeResult({ ...result, matchContext: {
+    snippet, terms: termRecords, highlights, matchRects,
+    misses: mapped?.misses ?? (highlights.length ? [] : termRecords.map((term) => term.termId)),
+  } });
 }
 
 export function createUnifiedLibraryProvider(input = {}) {
   const images = collectImageResults(input);
-  let documents = [...(input.pdfDocuments ?? [])];
+  let documents = uniquePdfDocuments(input.pdfDocuments);
   let searchIndex = input.pdfSearchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
   let pdf = pdfResults(documents, searchIndex);
   const materializers = input.materializers ?? {};
@@ -451,13 +518,43 @@ export function createUnifiedLibraryProvider(input = {}) {
       }
       const secured = securedPdfEntry(document, entry);
       if (!secured) return [];
-      const page = pdfPageResult(document, entry.pageNumber, entry.text ?? "", metadata, new Set());
+      const page = pdfPageResult(document, entry.pageNumber, entry.text ?? "", metadata, new Set(), entry.words ?? []);
       return [freezeResult({ ...page, metadata: { ...page.metadata, boundaryUncertain: true } })];
     });
   }
 
   return Object.freeze({
     search,
+    listPdfFiles(options = {}) {
+      const compact = parseCompactExamCode(options.query);
+      const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
+      const queryText = options.query ?? "";
+      const found = pdf.files.filter((file) => {
+        if (allowedSources && !allowedSources.has(file.sourceId)) return false;
+        if (!matchesFilters(file, options.filters)) return false;
+        if (!String(queryText).trim()) return true;
+        return pdf.results.some((result) => result.sourceId === file.sourceId
+          && matchesFilters(result, options.filters)
+          && resultMatches(result, queryText, compact));
+      });
+      return Object.freeze(found.sort((left, right) => left.title.localeCompare(right.title, "ko")));
+    },
+    listPdfPages(options = {}) {
+      const compact = parseCompactExamCode(options.query);
+      return Object.freeze(pdf.results.filter((result) => result.kind === "page"
+        && (!options.sourceId || result.sourceId === options.sourceId)
+        && matchesFilters(result, options.filters)
+        && resultMatches(result, options.query ?? "", compact))
+        .map((result) => contextualized(result, options.query ?? "")));
+    },
+    getExamFilterOptions() {
+      const metadata = allResults().filter((result) => result.kind === "crop").map((result) => result.metadata ?? {});
+      return Object.freeze({
+        subjects: Object.freeze([...new Set(metadata.map((item) => item.subject).filter((value) => SUBJECT_LABELS[value]))].sort()),
+        academicYears: Object.freeze([...new Set(metadata.map((item) => item.academicYear).filter((value) => Number.isInteger(value) && value >= 2000 && value <= 2099))].sort((a, b) => b - a)),
+        administrations: Object.freeze([...new Set(metadata.map((item) => item.administration).filter((value) => ADMINISTRATION_LABELS[value]))].sort()),
+      });
+    },
     async searchAsync(options = {}) {
       const local = search(options);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
@@ -477,7 +574,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       return Object.freeze(merged.slice(0, boundedLimit(options.limit)).map((result) => contextualized(withManualCrop(result), options.query ?? "")));
     },
     replacePdfCatalog(next = {}) {
-      documents = [...(next.documents ?? [])];
+      documents = uniquePdfDocuments(next.documents);
       searchIndex = next.searchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
       pdf = pdfResults(documents, searchIndex);
     },
@@ -512,7 +609,11 @@ export function createUnifiedLibraryProvider(input = {}) {
           || canonicalRect.some((value, index) => value !== securedSource.rect[index])))) {
           throw new TypeError("PDF materialization source does not match result provenance");
         }
-        return materializers.pdf({ result, source: securedSource, options });
+        const materializerResult = manual ? Object.freeze({
+          ...result,
+          provenance: Object.freeze({ ...result.provenance, ...securedSource }),
+        }) : result;
+        return materializers.pdf({ result: materializerResult, source: securedSource, options });
       }
       const item = images.items.get(result.id);
       const materializer = materializers[result.provenance.provider === "parts" ? "part" : result.provenance.provider === "exam-image" ? "examImage" : "importedImage"];

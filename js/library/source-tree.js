@@ -75,6 +75,12 @@ export function createHierarchicalSourceNodes(leaves) {
     add(Object.freeze({
       id: leaf.id, parentId, label: leaf.label, kind: "source", origin, category,
       resultKinds: Object.freeze([...(leaf.resultKinds ?? [])]), count: leaf.count ?? 0,
+      counts: Object.freeze({
+        pdf: Number(leaf.counts?.pdf) || 0,
+        image: Number(leaf.counts?.image) || 0,
+        page: Number(leaf.counts?.page) || 0,
+        question: Number(leaf.counts?.question) || 0,
+      }),
     }));
   }
   return Object.freeze([...nodes.values()]);

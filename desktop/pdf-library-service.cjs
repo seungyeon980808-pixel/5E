@@ -493,6 +493,11 @@ function createPdfLibraryService(options) {
   function folderTree(payload) {
     const connection = connectionFor(payload?.connectionId);
     const folders = state.folders.filter((item) => item.connectionId === connection.connectionId);
+    const available = !unavailableConnections.has(connection.connectionId);
+    const visibleDocuments = available ? state.documents.filter((item) => item.connectionId === connection.connectionId
+      && effectiveSelected(connection, parentPath(item.relativePath))) : [];
+    const visibleImages = available ? state.images.filter((item) => item.connectionId === connection.connectionId
+      && effectiveSelected(connection, parentPath(item.relativePath))) : [];
     const byPath = new Map(folders.map((item) => [item.relativePath, { ...item, children: [] }]));
     if (!byPath.has("")) {
       const rootFolder = { folderId: folderId(connection.connectionId, ""), connectionId: connection.connectionId, relativePath: "", name: connection.name, documentCount: 0, imageCount: 0, children: [] };
@@ -509,8 +514,12 @@ function createPdfLibraryService(options) {
       const subtree = folders.filter((item) => isSameOrDescendant(node.relativePath, item.relativePath));
       const values = (subtree.length ? subtree : [node]).map((item) => effectiveSelected(connection, item.relativePath));
       const selection = values.every(Boolean) ? "selected" : values.every((value) => !value) ? "excluded" : "partial";
-      const documentCount = subtree.reduce((sum, item) => sum + (item.documentCount || 0), 0);
-      const imageCount = subtree.reduce((sum, item) => sum + (item.imageCount || 0), 0);
+      const documentCount = new Set(visibleDocuments
+        .filter((item) => isSameOrDescendant(node.relativePath, parentPath(item.relativePath)))
+        .map((item) => item.relativePath)).size;
+      const imageCount = new Set(visibleImages
+        .filter((item) => isSameOrDescendant(node.relativePath, parentPath(item.relativePath)))
+        .map((item) => item.relativePath)).size;
       const excludedDocumentCount = subtree.reduce((sum, item) => sum + (item.excludedDocumentCount || 0), 0);
       const excludedImageCount = subtree.reduce((sum, item) => sum + (item.excludedImageCount || 0), 0);
       return {

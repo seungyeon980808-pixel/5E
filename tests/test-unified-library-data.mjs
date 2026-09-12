@@ -4,6 +4,8 @@ import test from "node:test";
 import { parseCompactExamCode, deriveExamMetadata } from "../js/library/exam-code.js";
 import { createUnifiedLibraryProvider } from "../js/library/provider.js";
 import { computeSourceSelection } from "../js/library/source-tree.js";
+import { queryHighlightTerms, searchIndex } from "../js/pdf-library/search.js";
+import { assertPdfMaterializationSource } from "../js/pdf-library/pdf-library-ui.js";
 import { insertPartsAsset } from "../js/parts-library.js";
 
 const pdfSource = Object.freeze({
@@ -47,6 +49,92 @@ test("compact exam codes are strict and preserve item/page ambiguity", () => {
   }
 });
 
+test("multi-term PDF search deduplicates # tokens and maps split Korean words to term-owned page coordinates", () => {
+  const entry = {
+    documentId: "space", documentTitle: "우주", pageNumber: 2, itemId: "space:p2:q3", itemNumber: 3,
+    text: "우주 선 질량 보존", normalized: "우주 선 질량 보존",
+    words: [
+      { text: "우주", rect: [0.1, 0.2, 0.08, 0.03] },
+      { text: "선", rect: [0.18, 0.2, 0.03, 0.03] },
+      { text: "질량", rect: [0.3, 0.2, 0.08, 0.03] },
+    ],
+    source: { documentId: "space", pageNumber: 2, rect: [0.05, 0.1, 0.8, 0.7], fullPageFallback: false },
+  };
+  const [result] = searchIndex({ entries: [entry] }, { query: "우주선 #질량 질량" });
+  assert.deepEqual(result.terms.map((term) => term.term), ["우주선", "질량"]);
+  assert.deepEqual(result.highlights.map(({ term, documentId, pageNumber, cropId, rect }) => ({ term, documentId, pageNumber, cropId, rect })), [
+    { term: "우주선", documentId: "space", pageNumber: 2, cropId: "space:p2:q3", rect: [0.1, 0.2, 0.08, 0.03] },
+    { term: "우주선", documentId: "space", pageNumber: 2, cropId: "space:p2:q3", rect: [0.18, 0.2, 0.03, 0.03] },
+    { term: "질량", documentId: "space", pageNumber: 2, cropId: "space:p2:q3", rect: [0.3, 0.2, 0.08, 0.03] },
+  ]);
+  const colors = new Map(queryHighlightTerms("질량 우주선").map((term) => [term.termId, term.color]));
+  assert.deepEqual(new Map(result.terms.map((term) => [term.termId, term.color])), colors);
+});
+
+test("character matches inside one PDF word use only the matching glyph span", () => {
+  const entry = {
+    documentId: "glyphs", documentTitle: "glyphs", pageNumber: 1, itemId: "glyphs:q1",
+    text: "우주선질량", normalized: "우주선질량",
+    words: [{ text: "우주선질량", rect: [0.1, 0.2, 0.3, 0.04] }],
+    source: { documentId: "glyphs", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: false },
+  };
+  const [result] = searchIndex({ entries: [entry] }, { query: "질량" });
+  assert.equal(result.highlights.length, 1);
+  assert.deepEqual(result.highlights[0].rect.map((value) => Math.round(value * 100) / 100), [0.28, 0.2, 0.12, 0.04]);
+  assert.equal(result.highlights[0].coordinateSpace, "page-normalized");
+});
+
+test("visual-line grouping joins adjacent Korean runs but separates distant columns", () => {
+  const base = {
+    documentId: "columns", documentTitle: "columns", pageNumber: 1, itemId: "columns:q1",
+    text: "화산 섬", normalized: "화산 섬",
+    source: { documentId: "columns", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: false },
+  };
+  const adjacent = {
+    ...base,
+    words: [
+      { text: "화산", rect: [0.1, 0.1, 0.08, 0.03] },
+      { text: "섬", rect: [0.185, 0.1, 0.03, 0.03] },
+    ],
+  };
+  const [adjacentResult] = searchIndex({ entries: [adjacent] }, { query: "화산섬" });
+  assert.equal(adjacentResult.highlights.length, 2);
+  assert.deepEqual(adjacentResult.misses, []);
+  const distant = {
+    ...base,
+    words: [
+      { text: "화산", rect: [0.1, 0.1, 0.08, 0.03] },
+      { text: "섬", rect: [0.8, 0.1, 0.03, 0.03] },
+    ],
+  };
+  const [result] = searchIndex({ entries: [distant] }, { query: "화산섬" });
+  assert.equal(result.highlights.length, 0);
+  assert.deepEqual(result.misses, [result.terms[0].termId]);
+});
+
+test("legacy prebuilt rectangles remain readable when word positions are absent", () => {
+  const entry = {
+    documentId: "legacy", documentTitle: "legacy", pageNumber: 1, itemId: "legacy:q1",
+    text: "질량", normalized: "질량", words: [], matchRects: [[0.25, 0.3, 0.1, 0.04]],
+    source: { documentId: "legacy", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: false },
+  };
+  const [result] = searchIndex({ entries: [entry] }, { query: "#질량" });
+  assert.deepEqual(result.matchRects, [[0.25, 0.3, 0.1, 0.04]]);
+  assert.equal(result.highlights[0].coordinateSpace, "page-normalized");
+  assert.equal(result.highlights[0].legacy, true);
+});
+
+test("PDF AND terms must coexist inside one question and generated colors stay distinct beyond the base palette", () => {
+  const base = { documentId: "d", documentTitle: "d", pageNumber: 1, source: { documentId: "d", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: false }, words: [] };
+  const entries = [
+    { ...base, itemId: "q1", text: "우주선", normalized: "우주선" },
+    { ...base, itemId: "q2", text: "질량", normalized: "질량" },
+  ];
+  assert.deepEqual(searchIndex({ entries }, { query: "우주선 질량" }), []);
+  const terms = queryHighlightTerms(Array.from({ length: 18 }, (_, index) => `term${index}`).join(" "));
+  assert.equal(new Set(terms.map((term) => term.color)).size, 18);
+});
+
 test("real pack metadata derives canonical exam codes without renaming its PDF", () => {
   assert.deepEqual(deriveExamMetadata({
     metadata: { academicYear: 2026, administration: "june", subject: "phy1" },
@@ -61,6 +149,54 @@ test("readable imported exam filenames derive canonical metadata", () => {
   assert.deepEqual(deriveExamMetadata({ source: { displayName: "2025-june-phy1.pdf" } }), {
     subject: "p1", academicYear: 2025, administration: "06", documentCode: "p12506", sourceFileName: "2025-june-phy1.pdf",
   });
+});
+
+test("malformed exam metadata falls back to the original filename instead of inventing an exam title", () => {
+  const provider = createUnifiedLibraryProvider({
+    examManifest: { items: [{
+      id: "bad-meta", file: "teacher-original-name.png", title: "internal-code-13",
+      subject: "unknown", year: 1900, month: 13, no: 7,
+    }] },
+  });
+  const [result] = provider.search({ query: "internal-code-13", kinds: ["image"] });
+  assert.equal(result.title, "teacher-original-name.png");
+  assert.equal(result.metadata.academicYear, null);
+  assert.equal(result.metadata.administration, null);
+});
+
+test("PDF inventory stays file-based beyond the page search cap and deduplicates stale catalog entries", () => {
+  const documents = Array.from({ length: 501 }, (_, index) => ({
+    ...pdfDocument(`document-${index}`),
+    source: { ...pdfSource, locator: `verified-pack/documents/document-${index}.pdf`, displayName: `document-${index}.pdf` },
+  }));
+  documents.push({ ...documents[0], id: "stale-duplicate-id", title: "stale duplicate" });
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: documents });
+  assert.equal(typeof provider.listPdfFiles, "function");
+  assert.equal(provider.listPdfFiles({}).length, 501);
+  assert.equal(provider.search({ kinds: ["page"], limit: 500 }).length, 500);
+});
+
+test("PDF source metadata separates one physical file from its pages and questions", () => {
+  const document = { ...pdfDocument(), pageCount: 2, pages: [
+    pdfDocument().pages[0],
+    { ...pdfDocument().pages[0], pageNumber: 2, text: "2. 파동", items: [] },
+  ] };
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [document] });
+  const source = provider.getSources().find((node) => node.kind === "source");
+  assert.equal(provider.listPdfFiles({})[0].title, "물리학Ⅰ 2026학년도 6월 모의평가");
+  assert.match(provider.listPdfFiles({})[0].subtitle, /p12606\.pdf · PDF 2쪽/u);
+  assert.equal(source.count, 1);
+  assert.deepEqual(source.counts, { pdf: 1, image: 0, page: 2, question: 1 });
+});
+
+test("PDF file drilldown keeps term-owned page coordinates for page thumbnails and previews", () => {
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [pdfDocument()] });
+  const file = provider.listPdfFiles({ query: "#운동량" })[0];
+  const [page] = provider.listPdfPages({ sourceId: file.sourceId, query: "#운동량" });
+  assert.equal(page.kind, "page");
+  assert.equal(page.matchContext.highlights.length, 1);
+  assert.equal(page.matchContext.highlights[0].coordinateSpace, "page-normalized");
+  assert.equal(page.matchContext.highlights[0].documentId, pdfDocument().id);
 });
 
 test("exact item search returns one question card with full, content, and figure variants", async () => {
@@ -263,6 +399,74 @@ test("PDF materialization rejects a representation source outside its canonical 
   await assert.rejects(() => provider.materialize(forged, { representation: "full" }), /provenance|document|source/iu);
   await assert.rejects(() => provider.materialize(wrongPage, { representation: "full" }), /provenance|document|source/iu);
   await assert.rejects(() => provider.materialize(wrongRect, { representation: "full" }), /provenance|document|source/iu);
+  assert.equal(materializerCalls, 0);
+});
+
+test("strict PDF materialization accepts the canonical result and source unchanged", async () => {
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [pdfDocument("strict-canonical")],
+    materializers: { pdf: async ({ result, source }) => ({ source: assertPdfMaterializationSource(result, source, 1) }) },
+  });
+  const [result] = provider.search({ query: "운동량", kinds: ["crop"] });
+  const provenance = result.provenance;
+
+  const rendered = await provider.materialize(result, { representation: "full" });
+
+  assert.deepEqual(rendered.source.rect, result.variants.full.source.rect);
+  assert.equal(result.provenance, provenance);
+  assert.equal(Object.isFrozen(result), true);
+});
+
+test("strict PDF materialization receives a transient manual result without mutating the canonical result", async () => {
+  const manualRect = [0.18, 0.2, 0.49, 0.52];
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [pdfDocument("strict-manual")],
+    materializers: { pdf: async ({ result, source }) => ({
+      result,
+      source: assertPdfMaterializationSource(result, source, 1),
+    }) },
+  });
+  const [canonical] = provider.search({ query: "운동량", kinds: ["crop"] });
+  const canonicalSnapshot = JSON.stringify(canonical);
+  const transient = {
+    ...canonical,
+    variants: { ...canonical.variants, manual: { label: "직접 자른 이미지", source: {
+      documentId: canonical.provenance.documentId,
+      pageNumber: canonical.provenance.pageNumber,
+      rect: manualRect,
+      fullPageFallback: false,
+    } } },
+  };
+
+  const rendered = await provider.materialize(transient, { representation: "manual" });
+
+  assert.deepEqual(rendered.source.rect, manualRect);
+  assert.deepEqual(rendered.result.provenance.rect, manualRect);
+  assert.equal(rendered.result.provenance.documentId, canonical.provenance.documentId);
+  assert.equal(rendered.result.provenance.pageNumber, canonical.provenance.pageNumber);
+  assert.equal(JSON.stringify(canonical), canonicalSnapshot);
+  assert.notEqual(rendered.result, canonical);
+});
+
+test("manual PDF materialization validates document, page, and rectangle before creating a transient result", async () => {
+  const owner = pdfDocument("manual-owner");
+  const other = pdfDocument("manual-other");
+  let materializerCalls = 0;
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [owner, other],
+    materializers: { pdf: async () => { materializerCalls += 1; return { ok: true }; } },
+  });
+  const sourceId = provider.getSources().find((node) => node.kind === "source" && node.label === owner.source.displayName).id;
+  const [canonical] = provider.search({ query: "운동량", kinds: ["crop"], sourceIds: [sourceId] });
+  const withManual = (source) => ({
+    ...canonical,
+    variants: { ...canonical.variants, manual: { label: "직접 자른 이미지", source } },
+  });
+  const valid = canonical.variants.full.source;
+
+  await assert.rejects(() => provider.materialize(withManual({ ...valid, documentId: other.id }), { representation: "manual" }), /provenance|document|source/iu);
+  await assert.rejects(() => provider.materialize(withManual({ ...valid, pageNumber: 2 }), { representation: "manual" }), /provenance|document|source/iu);
+  await assert.rejects(() => provider.materialize(withManual({ ...valid, rect: [0.8, 0.8, 0.4, 0.4] }), { representation: "manual" }), /provenance|document|source/iu);
   assert.equal(materializerCalls, 0);
 });
 

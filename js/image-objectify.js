@@ -28,6 +28,9 @@ let idCounter = 0;
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
+export function objectifySourceTaggedObject(object, sourceMetadata) {
+  return sourceMetadata ? { ...object, sourceMetadata: clone(sourceMetadata) } : object;
+}
 function round3(value) {
   return Math.round(value * 1000) / 1000;
 }
@@ -232,9 +235,9 @@ function buildModal() {
 /* 외부 모듈용 진입점(기출 라이브러리 등): 모달을 열고 파일을 바로 로드.
  * initImageObjectify()가 실행된 뒤에만 동작 — 준비 전이면 false 반환. */
 let _openWithFile = null;
-export function openObjectifyWithFile(file) {
+export function openObjectifyWithFile(file, options = {}) {
   if (!_openWithFile) return false;
-  _openWithFile(file);
+  _openWithFile(file, options);
   return true;
 }
 
@@ -270,6 +273,7 @@ export function initImageObjectify(state) {
 
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
   let sourceDataUrl = null;  // 참고 이미지 삽입용 원본 dataURL
+  let sourceMetadata = null;
   let analysis = null;       // vectorizeImage 결과
   let previewPaths = [];     // 컴포넌트별 Path2D 캐시
   let excluded = new Set();  // 미리보기에서 제외한 컴포넌트 index
@@ -563,7 +567,7 @@ export function initImageObjectify(state) {
   }
 
   /* ----- 파일 로드 ----- */
-  function loadFile(file) {
+  function loadFile(file, options = {}) {
     if (!file || !ACCEPTED_TYPES.has(file.type)) {
       setStatus("PNG, JPG, JPEG 또는 브라우저가 지원하는 WEBP 파일을 선택해 주세요.", true);
       return;
@@ -572,6 +576,7 @@ export function initImageObjectify(state) {
       setStatus("이미지 파일이 너무 큽니다(64MB 초과). 디코딩 전에 작은 파일로 변환해 주세요.", true);
       return;
     }
+    const nextSourceMetadata = options.sourceMetadata ? clone(options.sourceMetadata) : null;
     const generation = ++loadGeneration;
     analysisGeneration += 1;
     analysisController.cancel();
@@ -597,6 +602,7 @@ export function initImageObjectify(state) {
         ctx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
         ctx.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
         sourceDataUrl = reader.result;
+        sourceMetadata = nextSourceMetadata;
         analysis = null;
         excluded = new Set();
         // 새 이미지 → 팬 상태 초기화 + 전체 보기
@@ -775,12 +781,13 @@ export function initImageObjectify(state) {
       const layerId = s.activeLayerId;
       const addedIds = [];
       const pushObj = (obj) => {
-        s.objects.push(obj);
-        addedIds.push(obj.id);
+        const tagged = objectifySourceTaggedObject(obj, sourceMetadata);
+        s.objects.push(tagged);
+        addedIds.push(tagged.id);
       };
 
       if (referenceInput.checked && sourceDataUrl) {
-        s.objects.push(applyNewObjectStyleDefaults({
+        s.objects.push(objectifySourceTaggedObject(applyNewObjectStyleDefaults({
           id: `obj_${stamp}_ref${++idCounter}`,
           type: "image", src: sourceDataUrl,
           x: ox, y: oy, w: round3(analysis.width * scale), h: round3(analysis.height * scale),
@@ -788,7 +795,7 @@ export function initImageObjectify(state) {
           aspectLocked: true, exportable: false, imageSelectionLocked: true,
           mode: "edit", cutouts: [], recognized: true,
           layerId, order: s.objects.length,
-        }));
+        }), sourceMetadata));
       }
 
       for (const comp of comps) {
@@ -1008,7 +1015,7 @@ export function initImageObjectify(state) {
     setStatus("선택한 이미지를 불러오고 있습니다.");
     try {
       const file = await objectifyImageFile(image, { renderCutouts: renderSessionToDataUrl });
-      if (generation === selectionOpenGeneration && !overlay.hidden) loadFile(file);
+      if (generation === selectionOpenGeneration && !overlay.hidden) loadFile(file, { sourceMetadata: image.sourceMetadata });
     } catch (error) {
       if (generation === selectionOpenGeneration && !overlay.hidden) setStatus(error.message, true);
     }
@@ -1023,10 +1030,10 @@ export function initImageObjectify(state) {
     e.preventDefault();
     if (overlay.hidden) void openSelectedImage();
   }, true);
-  _openWithFile = (file) => {
+  _openWithFile = (file, options = {}) => {
     selectionOpenGeneration += 1;
     overlay.hidden = false;
-    loadFile(file);
+    loadFile(file, options);
   };
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
