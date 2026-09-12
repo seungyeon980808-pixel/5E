@@ -169,6 +169,7 @@ export function initToolHint(state) {
     };
     sync(state.get());
   });
+  window.addEventListener("5e:shortcut-platform-change", () => sync(state.get()));
   state.subscribe((s) => {
     if (s.activeTool !== "CUT" && s.activeTool !== "DELAYED_CUT") _modeHint = null;
     sync(s);

@@ -70,32 +70,46 @@ function blocksCanvasShortcut(e) {
     !!document.querySelector(".modal-overlay:not([hidden])");
 }
 
-/** "Ctrl+S" 같은 문자열을 현재 플랫폼 표기로 바꾼다. Windows에선 원문 그대로.
- *  Mac 관례대로 ⌘ 뒤의 '+'는 떼고 붙여 쓴다(⌘S). */
+/** "Ctrl+S"·"Alt+P" 같은 구조화된 단축키 문자열을 현재 플랫폼 표기로 바꾼다.
+ *  Mac 관례대로 ⌘·⌥ 뒤의 '+'는 떼고 붙여 쓴다(⌘S, ⌥P). */
 function keyLabel(text) {
   if (!text) return text;
-  const neutral = String(text).replace(/⌘\s*/g, "Ctrl+");
-  return IS_MAC ? neutral.replace(/Ctrl\s*\+\s*/g, "⌘").replace(/\bCtrl\b/g, "⌘") : neutral;
+  const source = String(text);
+  let neutral = source
+    .replace(/⌘\s*(?:\+\s*)?(?=[\p{L}\p{N}])/gu, "Ctrl+")
+    .replace(/⌥\s*(?:\+\s*)?(?=[\p{L}\p{N}])/gu, "Alt+")
+    .replace(/⌘(?=\s*:)/g, "Ctrl")
+    .replace(/⌥(?=\s*:)/g, "Alt");
+  if (source.trim() === "⌘") neutral = source.replace("⌘", "Ctrl");
+  if (source.trim() === "⌥") neutral = source.replace("⌥", "Alt");
+  if (!IS_MAC) return neutral;
+  let localized = neutral
+    .replace(/\bCtrl\s*\+\s*(?=[\p{L}\p{N}])/gu, "⌘")
+    .replace(/\bAlt\s*\+\s*(?=[\p{L}\p{N}])/gu, "⌥")
+    .replace(/\bCtrl(?=\s*:)/g, "⌘")
+    .replace(/\bAlt(?=\s*:)/g, "⌥");
+  if (neutral.trim() === "Ctrl") localized = neutral.replace("Ctrl", "⌘");
+  if (neutral.trim() === "Alt") localized = neutral.replace("Alt", "⌥");
+  return localized;
 }
 
-/** 문서 전체를 훑어 눈에 보이는 "Ctrl" 표기를 현재 플랫폼 표기로 바꾼다.
- *  텍스트 노드와 title/aria-label/placeholder 속성만 건드리고, 코드는 손대지 않는다.
- *  Windows에선 아무 일도 하지 않으므로 호출 비용이 사실상 없다. */
+/** 문서 전체를 훑어 눈에 보이는 Ctrl/Alt/⌘/⌥ 단축키 표기를 현재 플랫폼으로 바꾼다.
+ *  텍스트 노드와 툴팁용 속성만 건드리고, 코드는 손대지 않는다. */
 function localizeShortcutLabels(root = document.body) {
   if (!root) return;
-  const ATTRS = ["title", "aria-label", "placeholder"];
+  const ATTRS = ["title", "aria-label", "placeholder", "data-tip"];
   root.querySelectorAll("*").forEach((el) => {
     if (el.closest?.("[data-shortcut-label-fixed]")) return;
     ATTRS.forEach((a) => {
       const v = el.getAttribute && el.getAttribute(a);
-      const localized = v && (v.includes("Ctrl") || v.includes("⌘")) ? keyLabel(v) : v;
+      const localized = v && /(Ctrl|⌘|Alt|⌥)/.test(v) ? keyLabel(v) : v;
       if (localized && localized !== v) el.setAttribute(a, localized);
     });
   });
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const hits = [];
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-    if (n.nodeValue && (n.nodeValue.includes("Ctrl") || n.nodeValue.includes("⌘")) && !n.parentElement?.closest?.("[data-shortcut-label-fixed]")) hits.push(n);
+    if (n.nodeValue && /(Ctrl|⌘|Alt|⌥)/.test(n.nodeValue) && !n.parentElement?.closest?.("[data-shortcut-label-fixed]")) hits.push(n);
   }
   hits.forEach((n) => {
     const localized = keyLabel(n.nodeValue);
