@@ -6,6 +6,7 @@ import {
   createRenderResult,
 } from "./contract.js";
 import { collectPageGraphicMarks, detectFigureCandidates as detectGraphics } from "./figure-candidates.js";
+import { trimQuestionRectAtFooter } from "./page-geometry.js";
 
 const PDFJS_MODULE_URL = new URL("../../vendor/pdfjs/pdf.mjs", import.meta.url); const PDFJS_WORKER_URL = new URL("../../vendor/pdfjs/pdf.worker.mjs", import.meta.url);
 const DEFAULT_RENDER_PIXELS = 48_000_000; const DEFAULT_RENDER_DIMENSION = 16_384;
@@ -88,7 +89,10 @@ export function detectPageItems(page) {
       const nextY = columnMarks[index + 1]?.y;
       const itemBottom = Math.min(1, nextY === undefined ? bottom : nextY - marginY);
       if (itemBottom - y < minHeight) continue;
-      const rect = [Math.max(0, starts[column] - marginX), y, right - Math.max(0, starts[column] - marginX), itemBottom - y];
+      const rect = trimQuestionRectAtFooter(
+        [Math.max(0, starts[column] - marginX), y, right - Math.max(0, starts[column] - marginX), itemBottom - y],
+        page.words,
+      );
       const source = createCropSource({ documentId: page.documentId, pageNumber: page.pageNumber, rect, fullPageFallback: false });
       items.push(createItemRecord({
         id: `${page.documentId}:p${page.pageNumber}:q${mark.number}`, itemNumber: mark.number,

@@ -72,6 +72,29 @@ test("Given aligned numbered words in two columns, when items are detected, then
   assert.equal(items[2].rect[0] > 0.5, true);
 });
 
+test("Given the last question above a numbered copyright footer, when items are detected, then the footer is outside the question", () => {
+  // Given
+  const words = [
+    { text: "11.", rect: [0.52, 0.6, 0.02, 0.012] },
+    { text: "⑤", rect: [0.82, 0.882, 0.01, 0.01] },
+    { text: "ㄷ", rect: [0.89, 0.882, 0.01, 0.01] },
+    { text: "32", rect: [0.507, 0.914, 0.018, 0.01] },
+    { text: "이", rect: [0.594, 0.928, 0.01, 0.008] },
+    { text: "문제지에", rect: [0.615, 0.928, 0.04, 0.008] },
+    { text: "관한", rect: [0.666, 0.928, 0.02, 0.008] },
+    { text: "저작권은", rect: [0.697, 0.928, 0.04, 0.008] },
+    { text: "한국교육과정평가원에", rect: [0.749, 0.928, 0.1, 0.008] },
+  ];
+
+  // When
+  const [question] = detectPageItems({ documentId: "doc", pageNumber: 2, widthPoints: 842, heightPoints: 1191, words });
+
+  // Then
+  const bottom = question.rect[1] + question.rect[3];
+  assert.ok(bottom > 0.892, "the final answer remains inside the crop");
+  assert.ok(bottom < 0.914, "the page number and copyright footer stay outside the crop");
+});
+
 test("Given indexed page words, when searched, then the result includes a snippet and original word rectangles", () => {
   // Given
   const page = {

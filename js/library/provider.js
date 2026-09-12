@@ -1,6 +1,7 @@
 import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js";
 import { createCropSource } from "../pdf-library/contract.js";
+import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
@@ -318,16 +319,30 @@ function ownedCropSource(document, pageNumber, source) {
 }
 
 function securedPdfEntry(document, entry) {
-  const source = ownedCropSource(document, entry.pageNumber, entry.source);
-  if (!source) return null;
-  const contentSource = ownedCropSource(document, entry.pageNumber, entry.contentSource) ?? source;
+  const originalSource = ownedCropSource(document, entry.pageNumber, entry.source);
+  if (!originalSource) return null;
+  const repairedRect = trimQuestionRectAtFooter(originalSource.rect, entry.words ?? []);
+  const source = createCropSource({ ...originalSource, rect: repairedRect });
+  const originalContent = ownedCropSource(document, entry.pageNumber, entry.contentSource);
+  const contentRect = originalContent
+    ? trimQuestionRectAtFooter(originalContent.rect, entry.words ?? [])
+    : repairedRect;
+  const contentSource = originalContent ? createCropSource({ ...originalContent, rect: contentRect }) : source;
   const figureCandidates = (entry.figureCandidates ?? []).flatMap((candidate) => {
     if ((candidate.documentId !== undefined && candidate.documentId !== document.id)
       || (candidate.pageNumber !== undefined && candidate.pageNumber !== entry.pageNumber)) return [];
     const candidateSource = ownedCropSource(document, entry.pageNumber, candidate.source);
-    return candidateSource ? [{ ...candidate, documentId: document.id, pageNumber: entry.pageNumber, source: candidateSource }] : [];
+    const securedCandidate = candidateSource
+      ? { ...candidate, documentId: document.id, pageNumber: entry.pageNumber, source: candidateSource }
+      : null;
+    return securedCandidate && !isAnswerChoiceBoxCandidate(securedCandidate, entry.words ?? []) ? [securedCandidate] : [];
   });
-  return { ...entry, documentId: document.id, source, contentSource, figureCandidates };
+  const words = (entry.words ?? []).filter((word) => {
+    const centerY = word.rect[1] + word.rect[3] / 2;
+    return centerY >= source.rect[1] && centerY <= source.rect[1] + source.rect[3];
+  });
+  const text = textBeforeFooter(entry.text ?? entry.snippet, entry.words ?? []);
+  return { ...entry, documentId: document.id, text, normalized: normalizedText(text), words, source, contentSource, figureCandidates };
 }
 
 function pdfResults(documents, index) {

@@ -108,3 +108,38 @@ test("Given a table title touching its vector border, when detected, then the ca
   assert.equal(result.candidates.length, 1);
   assert.ok(result.candidates[0].rect[1] < words[0].rect[1]);
 });
+
+test("Given a vector bordered answer box with dense 보기 choices, when detected, then it is not exposed as a scientific figure", () => {
+  // Given
+  const marks = [
+    { kind: "path", rect: [0.12, 0.4, 0.36, 0.001] },
+    { kind: "path", rect: [0.12, 0.4, 0.001, 0.18] },
+    { kind: "path", rect: [0.48, 0.4, 0.001, 0.18] },
+    { kind: "path", rect: [0.12, 0.58, 0.36, 0.001] },
+    { kind: "path", rect: [0.12, 0.43, 0.36, 0.001] },
+    { kind: "path", rect: [0.2, 0.43, 0.001, 0.15] },
+    { kind: "path", rect: [0.3, 0.43, 0.001, 0.15] },
+    { kind: "path", rect: [0.4, 0.43, 0.001, 0.15] },
+    { kind: "path", rect: [0.12, 0.49, 0.36, 0.001] },
+    { kind: "path", rect: [0.12, 0.54, 0.36, 0.001] },
+  ];
+  const words = [
+    { text: "<", rect: [0.26, 0.405, 0.01, 0.02] },
+    { text: "보", rect: [0.28, 0.405, 0.02, 0.02] },
+    { text: "기", rect: [0.31, 0.405, 0.02, 0.02] },
+    { text: ">", rect: [0.34, 0.405, 0.01, 0.02] },
+    { text: "ㄱ.", rect: [0.14, 0.45, 0.03, 0.02] },
+    { text: "첫째", rect: [0.18, 0.45, 0.06, 0.02] },
+    { text: "ㄴ.", rect: [0.14, 0.5, 0.03, 0.02] },
+    { text: "둘째", rect: [0.18, 0.5, 0.06, 0.02] },
+    { text: "ㄷ.", rect: [0.14, 0.55, 0.03, 0.02] },
+    { text: "셋째", rect: [0.18, 0.55, 0.06, 0.02] },
+  ];
+
+  // When
+  const result = detectFigureCandidates({ item, marks, words, pageWidthPoints: 600, pageHeightPoints: 800 });
+
+  // Then
+  assert.equal(result.candidates.length, 0);
+  assert.equal(result.reason, "no-confident-graphics");
+});

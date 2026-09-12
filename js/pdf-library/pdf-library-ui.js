@@ -1,9 +1,11 @@
 import { createCropOverrideStore } from "./crop-overrides.js";
+import { createRenderScheduler } from "./render-scheduler.js";
 import { partitionLibraryImports } from "../library-import-policy.js";
 import { createCropSource } from "./contract.js";
 
 const MAX_SELECTIONS = 10;
 const THUMBNAIL_DPI = 96;
+const PREVIEW_DPI = 144;
 const HIGH_RES_DPI = 300;
 export const PDF_INDEX_LABELS = Object.freeze({
   reading: "읽는 중", searchable: "검색 가능", "needs-ocr": "문자 인식 필요", failed: "실패", excluded: "검색 제외",
@@ -52,14 +54,26 @@ export function lazyOpenIsCurrent(request, current) {
   return request.epoch === current.epoch && current.inPack && request.opener === current.opener;
 }
 
-function pngDataUrl(bytes) {
+function pngDataUrl(bytes, signal) {
   const blob = new Blob([bytes], { type: "image/png" });
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("PNG 결과를 읽지 못했습니다."));
+    reader.onabort = () => reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
     reader.onload = () => resolve(String(reader.result || ""));
+    if (signal?.aborted) {
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    signal?.addEventListener("abort", () => reader.abort(), { once: true });
     reader.readAsDataURL(blob);
   });
+}
+
+export function pdfRenderDpi(options = {}) {
+  if (options.thumbnail) return THUMBNAIL_DPI;
+  if (options.preview || options.original) return PREVIEW_DPI;
+  return HIGH_RES_DPI;
 }
 
 async function sha256Hex(bytes) {
@@ -155,7 +169,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   const documentOpeners = new Map();
   const documentPersistors = new Map();
   const pendingDocumentOpens = new Map();
-  let runtimeTail = Promise.resolve();
+  const runtimeScheduler = createRenderScheduler();
   let results = [];
   let selectedIds = new Set();
   let activeResultIndex = -1;
@@ -166,6 +180,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let thumbnailActive = 0;
   let thumbnailJobs = [];
   let previewAbort = null;
+  let materializePreviewAbort = null;
   let returnFocus = null;
   let ocrController = null;
   let referenceConsumer = null;
@@ -343,16 +358,8 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     return runtime;
   }
 
-  async function withRuntimeLock(operation) {
-    const previous = runtimeTail;
-    let release;
-    runtimeTail = new Promise((resolve) => { release = resolve; });
-    await previous;
-    try {
-      return await operation();
-    } finally {
-      release();
-    }
+  function withRuntimeLock(operation, options = {}) {
+    return runtimeScheduler.run(operation, options);
   }
 
   async function ensureDocumentOpen(documentId) {
@@ -390,11 +397,11 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     const image = card.querySelector("img");
     try {
       const source = normalizedSource(result);
-      const render = await withRuntimeLock(async () => {
-        if (controller.signal.aborted) throw controller.signal.reason;
+      const render = await withRuntimeLock(async (signal) => {
+        if (signal.aborted) throw signal.reason;
         await ensureDocumentOpen(source.documentId);
-        return runtime.renderCrop({ source, dpi: THUMBNAIL_DPI, signal: controller.signal });
-      });
+        return runtime.renderCrop({ source, dpi: THUMBNAIL_DPI, signal });
+      }, { priority: 0, signal: controller.signal });
       if (controller.signal.aborted || card._pdfAbort !== controller) return;
       image.src = await pngDataUrl(render.bytes);
       image.dataset.ready = "true";
@@ -725,13 +732,13 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     returnFocus = document.activeElement;
     try {
       const source = normalizedSource(result);
-      const rendered = await withRuntimeLock(async () => {
+      const rendered = await withRuntimeLock(async (signal) => {
         const document = await ensureDocumentOpen(source.documentId);
         const image = original
-          ? await runtime.renderPage({ documentId: source.documentId, pageNumber: source.pageNumber, dpi: HIGH_RES_DPI, signal: controller.signal })
-          : await runtime.renderCrop({ source, dpi: HIGH_RES_DPI, signal: controller.signal });
+          ? await runtime.renderPage({ documentId: source.documentId, pageNumber: source.pageNumber, dpi: PREVIEW_DPI, signal })
+          : await runtime.renderCrop({ source, dpi: PREVIEW_DPI, signal });
         return { document, image };
-      });
+      }, { priority: 2, key: "legacy-preview", signal: controller.signal });
       const openedDocument = rendered.document;
       const render = rendered.image;
       if (controller.signal.aborted || previewAbort !== controller) return;
@@ -1068,7 +1075,10 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     async materializePdf({ result, source, options = {} }) {
       const owningDocument = docs.find((document) => document.id === source?.documentId);
       source = assertPdfMaterializationSource(result, source, owningDocument?.pageCount);
-      const dpi = options.thumbnail ? THUMBNAIL_DPI : HIGH_RES_DPI;
+      const dpi = pdfRenderDpi(options);
+      if (options.preview) materializePreviewAbort?.abort(new DOMException("Preview was superseded", "AbortError"));
+      const previewController = options.preview ? new AbortController() : null;
+      if (previewController) materializePreviewAbort = previewController;
       const normalized = normalizedSource({
         ...result,
         source: {
@@ -1078,13 +1088,21 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
           fullPageFallback: options.original || source.fullPageFallback,
         },
       });
-      const rendered = await withRuntimeLock(async () => {
+      const rendered = await withRuntimeLock(async (signal) => {
         await ensureDocumentOpen(normalized.documentId);
         return options.original
-          ? runtime.renderPage({ documentId: normalized.documentId, pageNumber: normalized.pageNumber, dpi })
-          : runtime.renderCrop({ source: normalized, dpi });
+          ? runtime.renderPage({ documentId: normalized.documentId, pageNumber: normalized.pageNumber, dpi, signal })
+          : runtime.renderCrop({ source: normalized, dpi, signal });
+      }, {
+        priority: options.preview ? 2 : options.thumbnail ? 0 : 1,
+        key: options.preview ? "materialize-preview" : null,
+        signal: previewController?.signal,
       });
-      return { bytes: rendered.bytes, dataUrl: await pngDataUrl(rendered.bytes), source: normalized, result };
+      const dataUrl = await pngDataUrl(rendered.bytes, previewController?.signal);
+      if (previewController && materializePreviewAbort !== previewController) {
+        throw new DOMException("Preview was superseded", "AbortError");
+      }
+      return { bytes: rendered.bytes, dataUrl, source: normalized, result };
     },
     async clearPreviewCache() {
       clearGrid();
