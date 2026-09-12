@@ -5,12 +5,16 @@ import test from "node:test";
 import {
   kindsForResultTab,
   cropRectFromGesture,
+  cropRectFromKeyboard,
+  normalizedCropPoint,
+  cropSessionIsCurrent,
   descendantLeafIds,
   displayedSourceCount,
   indexLibrarySources,
   isAiRasterDataUrl,
   canInsertLibraryResult,
   highlightTextParts,
+  containedImageBounds,
   libraryActionSnapshotIsCurrent,
   isValidQuestionRepresentation,
   rectInCrop,
@@ -20,6 +24,7 @@ import {
   reconcileUnifiedSelection,
   representationsForResult,
   resultForRepresentation,
+  withManualCropVariant,
   sourceSelection,
   shouldHandleLibrarySpace,
 } from "../js/unified-library-ui.js";
@@ -54,19 +59,19 @@ test("Given arbitrary-depth sources, the folder tree preserves hierarchy and tri
   assert.deepEqual(sourceSelection("year", sources, new Set(["a", "b"])), { checked: true, indeterminate: false });
 });
 
-test("Given nested descendant counts, a parent folder cannot display zero", () => {
+test("Given nested PDF pages and images, folder badges count distinct PDF files only", () => {
   const sources = [
     { id: "root", kind: "group", label: "제공 자료", count: 0 },
     { id: "category", parentId: "root", kind: "category", label: "기출문제", count: 0 },
     { id: "year", parentId: "category", kind: "folder", label: "2026학년도", count: 0 },
-    { id: "june", parentId: "year", kind: "source", label: "6월.pdf", count: 32 },
-    { id: "september", parentId: "year", kind: "source", label: "9월.pdf", count: 28 },
+    { id: "june", parentId: "year", kind: "source", label: "6월.pdf", count: 32, counts: { pdf: 1, image: 0, page: 32 } },
+    { id: "september", parentId: "year", kind: "source", label: "9월.pdf", count: 28, counts: { pdf: 1, image: 3, page: 28 } },
   ];
   const { nodes } = indexLibrarySources(sources);
-  assert.equal(displayedSourceCount(nodes.get("june")), 32);
-  assert.equal(displayedSourceCount(nodes.get("year")), 60);
-  assert.equal(displayedSourceCount(nodes.get("category")), 60);
-  assert.equal(displayedSourceCount(nodes.get("root")), 60);
+  assert.equal(displayedSourceCount(nodes.get("june")), 1);
+  assert.equal(displayedSourceCount(nodes.get("year")), 2);
+  assert.equal(displayedSourceCount(nodes.get("category")), 2);
+  assert.equal(displayedSourceCount(nodes.get("root")), 2);
 });
 
 test("Given one PDF question, representations stay inside one card and select an exact crop source", () => {
@@ -92,10 +97,33 @@ test("question canvas insertion requires an explicitly selected figure", () => {
   assert.equal(canInsertLibraryResult({ kind: "image" }, "full"), true);
 });
 
+test("a question without a detected figure offers only whole preview until a direct crop exists", () => {
+  const result = { kind: "crop", cropType: "question", variants: { full: { label: "전체", source: { rect: [0.1, 0.1, 0.8, 0.8] } }, figures: [] } };
+  assert.deepEqual(representationsForResult(result).map(({ id }) => id), ["full"]);
+  assert.equal(canInsertLibraryResult(result, "full"), false);
+  assert.equal(canInsertLibraryResult(result, "image"), false);
+  const cropped = withManualCropVariant(result, { documentId: "doc", pageNumber: 1, rect: [0.2, 0.2, 0.3, 0.3], fullPageFallback: false });
+  assert.deepEqual(representationsForResult(cropped).map(({ id }) => id), ["full", "image"]);
+  assert.equal(canInsertLibraryResult(cropped, "image"), true);
+});
+
 test("search snippets expose keyword segments without unsafe HTML", () => {
   assert.deepEqual(highlightTextParts("운동량 보존 법칙", "보존"), [
     { text: "운동량 ", match: false }, { text: "보존", match: true }, { text: " 법칙", match: false },
   ]);
+});
+
+test("snippet highlighting tokenizes hashes the same way as PDF AND search", () => {
+  assert.deepEqual(highlightTextParts("우주선 질량", "#우주선 #질량 질량"), [
+    { text: "우주선", match: true }, { text: " ", match: false }, { text: "질량", match: true },
+  ]);
+});
+
+test("contained thumbnail bounds exclude object-fit letterboxing", () => {
+  assert.deepEqual(containedImageBounds(
+    { left: 10, top: 20, width: 200, height: 100 },
+    { naturalWidth: 100, naturalHeight: 100 },
+  ), { left: 60, top: 20, width: 100, height: 100 });
 });
 
 test("pending library actions reject selection, representation, and close races", () => {
@@ -133,9 +161,61 @@ test("page-normalized search rectangles map into a cropped question preview", ()
 
 test("Given crop gestures, drawing, moving, and all resize axes remain normalized", () => {
   assert.deepEqual(cropRectFromGesture([0, 0, 1, 1], [0.8, 0.9], [0.2, 0.3], "draw"), [0.2, 0.3, 0.6000000000000001, 0.6000000000000001]);
+  assert.deepEqual(cropRectFromGesture([0, 0, 1, 1], [-0.2, 1.2], [1.4, 0.25], "draw"), [0, 0.25, 1, 0.75]);
+  assert.equal(cropRectFromGesture([0, 0, 1, 1], [0.4, 0.4], [0.4, 0.4], "draw"), null);
   assert.deepEqual(cropRectFromGesture([0.7, 0.7, 0.2, 0.2], [0, 0], [0.5, 0.5], "move"), [0.8, 0.8, 0.2, 0.2]);
   assert.deepEqual(cropRectFromGesture([0.2, 0.2, 0.5, 0.5], [0, 0], [-0.1, -0.1], "resize", "nw"), [0.1, 0.1, 0.6, 0.6]);
   assert.deepEqual(cropRectFromGesture([0.2, 0.2, 0.5, 0.5], [0, 0], [0.1, 0.1], "resize", "se"), [0.2, 0.2, 0.6, 0.6]);
+});
+
+test("crop keyboard arrows move and Shift plus arrows resize without result navigation", async () => {
+  const rect = [0.2, 0.2, 0.4, 0.4];
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowLeft"), [0.195, 0.2, 0.4, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowRight"), [0.20500000000000002, 0.2, 0.4, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowUp"), [0.2, 0.195, 0.4, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowDown"), [0.2, 0.20500000000000002, 0.4, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowLeft", true), [0.2, 0.2, 0.38, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowRight", true), [0.2, 0.2, 0.42000000000000004, 0.4]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowUp", true), [0.2, 0.2, 0.4, 0.38]);
+  assert.deepEqual(cropRectFromKeyboard(rect, "ArrowDown", true), [0.2, 0.2, 0.4, 0.42000000000000004]);
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  const documentHandler = source.indexOf('document.addEventListener("keydown"');
+  const cropGuard = source.indexOf("if (!cropDialog.hidden) return;", documentHandler);
+  const resultNavigation = source.indexOf('if (["ArrowDown", "ArrowUp"].includes(event.key)', documentHandler);
+  assert.ok(documentHandler >= 0 && cropGuard > documentHandler && cropGuard < resultNavigation);
+});
+
+test("direct crop coordinates remain normalized at 100% and 200% display zoom", () => {
+  assert.deepEqual(normalizedCropPoint({ clientX: 350, clientY: 260 }, { left: 100, top: 60, width: 500, height: 400 }), [0.5, 0.5]);
+  assert.deepEqual(normalizedCropPoint({ clientX: 600, clientY: 460 }, { left: 100, top: 60, width: 1000, height: 800 }), [0.5, 0.5]);
+  assert.deepEqual(normalizedCropPoint({ clientX: -50, clientY: 900 }, { left: 100, top: 60, width: 500, height: 400 }), [0, 1]);
+});
+
+test("crop sessions reject stale result and page identities", () => {
+  const session = { resultId: "q1", documentId: "doc", pageNumber: 2 };
+  assert.equal(cropSessionIsCurrent(session, { id: "q1", provenance: { documentId: "doc", pageNumber: 2 } }), true);
+  assert.equal(cropSessionIsCurrent(session, { id: "q2", provenance: { documentId: "doc", pageNumber: 2 } }), false);
+  assert.equal(cropSessionIsCurrent(session, { id: "q1", provenance: { documentId: "doc", pageNumber: 3 } }), false);
+});
+
+test("a transient manual crop preserves canonical question metadata and source", () => {
+  const result = {
+    id: "q1", kind: "crop", cropType: "question",
+    metadata: { itemNumber: 7 }, provenance: { provider: "pdf", documentId: "doc", pageNumber: 2, rect: [0.1, 0.1, 0.8, 0.8] },
+    variants: { full: { source: { documentId: "doc", pageNumber: 2, rect: [0.1, 0.1, 0.8, 0.8], fullPageFallback: false } } },
+  };
+  const source = { documentId: "doc", pageNumber: 2, rect: [0.25, 0.3, 0.2, 0.15], fullPageFallback: false };
+  const updated = withManualCropVariant(result, source);
+  assert.equal(updated.metadata, result.metadata);
+  assert.equal(updated.provenance, result.provenance);
+  assert.deepEqual(updated.variants.manual.source, source);
+  assert.equal(result.variants.manual, undefined);
+});
+
+test("saving a transient crop does not write the persistent correction override", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /pdfUi\.saveCropOverride\(/u);
+  assert.match(source, /result\.variants\?\.manual\?\.source\?\.rect/u);
 });
 
 test("Given a selected result from a disabled source, when results refresh, then stale selection is removed", () => {
@@ -221,4 +301,17 @@ test("Given asynchronous catalog arrival, new roots default on while an explicit
   const offEnabled = new Set(["parts:b"]);
   includeNewLibrarySources(offEnabled, known, sources, excluded);
   assert.equal(offEnabled.has("pdf:1"), false);
+});
+
+test("Given a nested source arriving below an excluded root, it stays off through category and folder descendants", () => {
+  const enabled = new Set(["parts:b"]);
+  const sources = [
+    { id: "pdf-root", kind: "group", parentId: null },
+    { id: "past-exams", kind: "category", parentId: "pdf-root" },
+    { id: "2026", kind: "folder", parentId: "past-exams" },
+    { id: "september", kind: "folder", parentId: "2026" },
+    { id: "pdf:new", kind: "source", parentId: "september" },
+  ];
+  includeNewLibrarySources(enabled, new Set(["parts:b"]), sources, new Set(["pdf-root"]));
+  assert.deepEqual([...enabled], ["parts:b"]);
 });

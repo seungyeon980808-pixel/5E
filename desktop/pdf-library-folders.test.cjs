@@ -73,9 +73,29 @@ test("Given nested PDFs, images, and non-library files, when a subtree is exclud
   assert.deepEqual(Buffer.from(imageRead.data), Buffer.from([137, 80, 78, 71]));
   assert.equal(imageRead.mimeType, "image/png");
   assert.equal(restarted.folderTree({ connectionId: connection.connectionId }).tree.selection, "partial");
-  assert.equal(restarted.folderTree({ connectionId: connection.connectionId }).tree.children.find((item) => item.name === "excluded").selection, "excluded");
+  const restartedTree = restarted.folderTree({ connectionId: connection.connectionId }).tree;
+  const restartedExcluded = restartedTree.children.find((item) => item.name === "excluded");
+  assert.equal(restartedExcluded.selection, "excluded");
+  assert.deepEqual({ documentCount: restartedTree.documentCount, imageCount: restartedTree.imageCount }, { documentCount: 1, imageCount: 0 });
+  assert.deepEqual({ documentCount: restartedExcluded.documentCount, imageCount: restartedExcluded.imageCount }, { documentCount: 0, imageCount: 0 });
   await assert.rejects(restarted.read({ documentId: excludedDocument.documentId }), (error) => error.code === "PDF_LIBRARY_UNAUTHORIZED");
   assert.equal(fs.existsSync(path.join(source, "excluded", "nested", "b.pdf")), true);
+});
+
+test("Given a connected folder that disappears, a failed refresh exposes no ghost file counts", async (t) => {
+  const f = fixture(t);
+  const source = path.join(f.root, "source");
+  writePdf(path.join(source, "nested", "live.pdf"), "live");
+  const service = createPdfLibraryService({ storagePath: f.storagePath, documentsPath: f.documentsPath });
+  const connection = await service.connect(source);
+  await service.sync({ connectionId: connection.connectionId, operationId: "before-removal" });
+  assert.equal(service.folderTree({ connectionId: connection.connectionId }).tree.documentCount, 1);
+
+  fs.rmSync(source, { recursive: true, force: true });
+  await assert.rejects(service.sync({ connectionId: connection.connectionId, operationId: "after-removal" }));
+
+  assert.deepEqual(service.list({ connectionId: connection.connectionId }).documents, []);
+  assert.equal(service.folderTree({ connectionId: connection.connectionId }).tree.documentCount, 0);
 });
 
 test("Given an excluded directory, when the real scanner refreshes it, then entries are counted without reading PDF or image bytes", async (t) => {

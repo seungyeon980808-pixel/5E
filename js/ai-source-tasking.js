@@ -1,5 +1,5 @@
 export function distributeSourcesToTaskTabs(sources, actions = {}) {
-  const items = Array.from(sources || []).filter(Boolean);
+  const items = Array.from(sources || []).filter(Boolean).map((source) => structuredClone(source));
   if (!items.length) return [];
 
   const taskIds = [];

@@ -1,11 +1,20 @@
-const { app, BrowserWindow } = require("electron");
+const electron = require("electron");
+const { spawnSync } = require("node:child_process");
 const { readFile, writeFile } = require("node:fs/promises");
 const path = require("node:path");
 
 const repositoryRoot = path.join(__dirname, "..");
 const evidenceDirectory = path.join(repositoryRoot, ".omo", "evidence", "pdf-library", "OCR");
 
-app.whenReady().then(async () => {
+if (typeof electron === "string") {
+  const environment = { ...process.env };
+  delete environment.ELECTRON_RUN_AS_NODE;
+  const result = spawnSync(electron, [__filename], { env: environment, stdio: "inherit" });
+  if (result.error) throw result.error;
+  process.exitCode = result.status ?? 1;
+} else {
+  const { app, BrowserWindow } = electron;
+  app.whenReady().then(async () => {
   const window = new BrowserWindow({
     show: false,
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, partition: `ocr-smoke-${process.pid}` },
@@ -45,7 +54,8 @@ app.whenReady().then(async () => {
     window.destroy();
     app.quit();
   }
-}).catch((error) => {
-  process.stderr.write(`${error.stack || error}\n`);
-  app.exit(1);
-});
+  }).catch((error) => {
+    process.stderr.write(`${error.stack || error}\n`);
+    app.exit(1);
+  });
+}

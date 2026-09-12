@@ -88,6 +88,15 @@ function normalizedSource(result) {
   };
 }
 
+export function highlightInCrop(highlight, crop) {
+  const [cx, cy, cw, ch] = crop;
+  const [x, y, width, height] = highlight.rect;
+  const x1 = Math.max(cx, x); const y1 = Math.max(cy, y);
+  const x2 = Math.min(cx + cw, x + width); const y2 = Math.min(cy + ch, y + height);
+  if (x2 <= x1 || y2 <= y1) return null;
+  return { ...highlight, coordinateSpace: "crop-normalized", rect: [(x1 - cx) / cw, (y1 - cy) / ch, (x2 - x1) / cw, (y2 - y1) / ch] };
+}
+
 export function assertPdfMaterializationSource(result, source, pageCount) {
   let expected;
   let candidate;
@@ -209,6 +218,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         </div>
       </div>
       <div class="pdflib-preview-stage"><img data-pdflib-preview-image alt="선택한 PDF 영역 고해상도 미리보기"><div class="pdflib-query-highlights" data-pdflib-highlights aria-hidden="true"></div></div>
+      <details class="pdflib-highlight-legend" data-pdflib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details>
       <p class="pdflib-preview-help">Space 또는 Esc로 닫기 · ← →로 결과 이동</p>
     </div>
     <div class="pdflib-crop-editor" data-pdflib-crop-editor hidden role="dialog" aria-modal="true" aria-label="PDF 범위 조정">
@@ -240,6 +250,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   const previewImage = host.querySelector("[data-pdflib-preview-image]");
   const previewTitle = host.querySelector("[data-pdflib-preview-title]");
   const previewHighlights = host.querySelector("[data-pdflib-highlights]");
+  const previewLegend = host.querySelector("[data-pdflib-highlight-legend]");
   const cropEditor = host.querySelector("[data-pdflib-crop-editor]");
   const cropStage = host.querySelector("[data-pdflib-crop-stage]");
   const cropImage = host.querySelector("[data-pdflib-crop-image]");
@@ -709,6 +720,8 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     previewTitle.textContent = resultTitle(result);
     previewImage.removeAttribute("src");
     previewHighlights.replaceChildren();
+    previewLegend.hidden = true;
+    previewLegend.querySelector("ul").replaceChildren();
     returnFocus = document.activeElement;
     try {
       const source = normalizedSource(result);
@@ -723,27 +736,43 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const render = rendered.image;
       if (controller.signal.aborted || previewAbort !== controller) return;
       const imageUrl = await pngDataUrl(render.bytes);
-      if (original) {
-        const terms = queryInput.value.normalize("NFKC").toLocaleLowerCase().split(/\s+/u).filter(Boolean);
-        const page = openedDocument.pages.find((candidate) => candidate.pageNumber === source.pageNumber);
-        const rects = result.matchRects?.length ? result.matchRects : (page?.words ?? [])
-          .filter((word) => terms.some((term) => word.text.normalize("NFKC").toLocaleLowerCase().includes(term)))
-          .map((word) => word.rect);
-        previewImage.addEventListener("load", () => {
+      {
+        const crop = original ? [0, 0, 1, 1] : source.rect;
+        const legacy = (result.matchRects ?? []).map((rect) => ({ rect, color: null, termId: "legacy" }));
+        const highlights = (result.highlights?.length ? result.highlights : legacy).map((highlight) => highlightInCrop(highlight, crop)).filter(Boolean);
+        const terms = result.terms ?? [];
+        const misses = new Set(result.misses ?? []);
+        previewLegend.hidden = terms.length === 0;
+        previewLegend.querySelector("ul").replaceChildren(...terms.map((term) => {
+          const item = document.createElement("li");
+          const swatch = document.createElement("span");
+          swatch.style.setProperty("--pdflib-highlight-color", term.color);
+          item.append(swatch, document.createTextNode(`${term.label}${misses.has(term.termId) ? " · 좌표 없음" : ""}`));
+          return item;
+        }));
+        const paint = () => {
           if (controller.signal.aborted || previewAbort !== controller) return;
           const stageBounds = previewImage.parentElement.getBoundingClientRect();
           const imageBounds = previewImage.getBoundingClientRect();
-          previewHighlights.replaceChildren(...rects.map((rect) => {
-            const highlight = document.createElement("span");
-            Object.assign(highlight.style, {
-              left: `${imageBounds.left - stageBounds.left + rect[0] * imageBounds.width}px`,
-              top: `${imageBounds.top - stageBounds.top + rect[1] * imageBounds.height}px`,
-              width: `${rect[2] * imageBounds.width}px`,
-              height: `${rect[3] * imageBounds.height}px`,
+          previewHighlights.replaceChildren(...highlights.map((highlightRecord) => {
+            const marker = document.createElement("span");
+            marker.setAttribute("aria-hidden", "true");
+            marker.dataset.termId = highlightRecord.termId;
+            if (highlightRecord.color) marker.style.setProperty("--pdflib-highlight-color", highlightRecord.color);
+            Object.assign(marker.style, {
+              left: `${imageBounds.left - stageBounds.left + highlightRecord.rect[0] * imageBounds.width}px`,
+              top: `${imageBounds.top - stageBounds.top + highlightRecord.rect[1] * imageBounds.height}px`,
+              width: `${highlightRecord.rect[2] * imageBounds.width}px`,
+              height: `${highlightRecord.rect[3] * imageBounds.height}px`,
             });
-            return highlight;
+            return marker;
           }));
-        }, { once: true });
+        };
+        previewImage.addEventListener("load", paint, { once: true });
+        if ("ResizeObserver" in globalThis) {
+          const observer = new ResizeObserver(() => { if (!preview.hidden) paint(); else observer.disconnect(); });
+          observer.observe(previewImage.parentElement);
+        }
       }
       previewImage.src = imageUrl;
       host.querySelector("[data-pdflib-preview-close]").focus();
@@ -755,6 +784,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   function closePreview() {
     previewAbort?.abort();
     preview.hidden = true;
+    previewHighlights.replaceChildren();
+    previewLegend.hidden = true;
+    previewLegend.querySelector("ul").replaceChildren();
     if (returnFocus instanceof HTMLElement) returnFocus.focus();
   }
 

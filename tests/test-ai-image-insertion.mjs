@@ -4,6 +4,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const { unifiedImageInsertionOptions } = await import('../js/exam-library.js');
+const { unifiedLibraryTransfer } = await import('../js/unified-library-ui.js');
+const { objectifySourceTaggedObject } = await import('../js/image-objectify.js');
 
 const pasteSource = fs.readFileSync(new URL('../js/image-paste.js', import.meta.url), 'utf8');
 const projectSource = fs.readFileSync(new URL('../js/project-io.js', import.meta.url), 'utf8');
@@ -62,6 +64,10 @@ test('page switch while decoding rejects both insert and replace even with same 
     f.state.update(s=>{s.activePageId='page-2';s.objects=[plain(f.target)];s.pages[1].objects=s.objects;});const switched=plain(f.value);f.finish();await assert.rejects(pending,/페이지/);assert.deepEqual(plain(f.value),switched);assert.equal(f.subscriptions.size,0);
   }
 });
+test('library selection invalidation aborts a delayed canvas decode without inserting',async()=>{
+  const f=fixture();let current=true;const pending=f.insert(f.state,'data:image/png;base64,EXACT',{preserveBytes:true,isCurrent:()=>current});
+  current=false;const before=plain(f.value);f.finish();await assert.rejects(pending,/라이브러리 자료/);assert.deepEqual(plain(f.value),before);
+});
 test('switch away then back is latched and cannot revive an obsolete insert',async()=>{
   const f=fixture(),pending=f.insert(f.state,'new',{preserveBytes:true});f.state.update(s=>s.activePageId='page-2');f.state.update(s=>s.activePageId='page-1');const before=plain(f.value);f.finish();await assert.rejects(pending,/페이지/);assert.deepEqual(plain(f.value),before);
 });
@@ -117,6 +123,22 @@ test('unified library image insertion is centered and carries materialized prove
   const result={title:'13번 도판',provenance:{provider:'pdf',documentId:'doc-1',pageNumber:3,rect:[0,0,1,1],fullPageFallback:true,locator:'starter/doc.pdf',displayName:'doc.pdf',sha256:'c'.repeat(64),sourceKind:'pack',itemId:'item-13',fileName:'doc.pdf',license:'공공누리'}};
   const asset={source:{documentId:'doc-1',pageNumber:3,rect:[.1,.2,.3,.4],fullPageFallback:false}};
   assert.deepEqual(unifiedImageInsertionOptions(result,asset),{preserveBytes:true,centerArtboard:true,sourceMetadata:{provider:'pdf',documentId:'doc-1',title:'13번 도판',pageNumber:3,rect:[.1,.2,.3,.4],fullPageFallback:false,locator:'starter/doc.pdf',displayName:'doc.pdf',sha256:'c'.repeat(64),sourceKind:'pack',itemId:'item-13',fileName:'doc.pdf',license:'공공누리'}});
+});
+
+test('one materialized crop keeps exact pixels and cloned provenance for canvas, objectify, and AI',()=>{
+  const dataUrl='data:image/png;base64,EXACT_CROP_BYTES';
+  const result={title:'13번 도판',provenance:{provider:'pdf',documentId:'doc-1',documentTitle:'2026 물리학Ⅰ',pageNumber:3,rect:[0,0,1,1],fullPageFallback:true,itemId:'item-13'}};
+  const asset={dataUrl,source:{documentId:'doc-1',pageNumber:3,rect:[.1,.2,.3,.4],fullPageFallback:false}};
+  const transfer=unifiedLibraryTransfer(result,asset);
+  const canvas=unifiedImageInsertionOptions(result,asset);
+  const objectified=objectifySourceTaggedObject({id:'shape-1',type:'polyline'},transfer.source);
+  assert.equal(transfer.dataUrl,dataUrl);
+  assert.equal(transfer.src,dataUrl);
+  assert.deepEqual(canvas.sourceMetadata,transfer.source);
+  assert.deepEqual(objectified.sourceMetadata,transfer.source);
+  asset.source.rect[0]=.9;result.provenance.rect[0]=.8;
+  assert.deepEqual(transfer.source.rect,[.1,.2,.3,.4]);
+  assert.deepEqual(objectified.sourceMetadata.rect,[.1,.2,.3,.4]);
 });
 
 test('AI insertion uses the origin-centered artboard center even if viewport or stale pointer is elsewhere',async()=>{

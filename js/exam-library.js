@@ -19,7 +19,7 @@ import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js";
 import { createUnifiedLibraryProvider } from "./library/provider.js";
-import { createUnifiedLibraryUi } from "./unified-library-ui.js";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.4.12";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -30,30 +30,10 @@ export function configuredLegacyDatasetBase(value = globalThis.FIVE_E_LEGACY_EXA
 }
 
 export function unifiedImageInsertionOptions(result, asset) {
-  const provenance = result?.provenance ?? {};
-  const source = asset?.source ?? {};
-  const sourceMetadata = {
-    provider: provenance.provider,
-    documentId: source.documentId ?? provenance.documentId,
-    documentTitle: source.documentTitle ?? provenance.documentTitle,
-    documentHash: source.documentHash ?? provenance.documentHash,
-    title: source.title ?? provenance.title ?? result?.title,
-    pageNumber: source.pageNumber ?? provenance.pageNumber,
-    rect: source.rect ?? provenance.rect,
-    fullPageFallback: source.fullPageFallback ?? provenance.fullPageFallback,
-    locator: source.locator ?? provenance.locator,
-    displayName: source.displayName ?? provenance.displayName,
-    sha256: source.sha256 ?? provenance.sha256,
-    sourceKind: source.kind ?? source.sourceKind ?? provenance.sourceKind,
-    itemId: source.itemId ?? provenance.itemId,
-    fileName: source.fileName ?? provenance.fileName,
-    sourceUrl: source.sourceUrl ?? provenance.sourceUrl,
-    license: source.license ?? provenance.license,
-  };
   return {
     preserveBytes: true,
     centerArtboard: true,
-    sourceMetadata: Object.fromEntries(Object.entries(sourceMetadata).filter(([, value]) => value != null)),
+    sourceMetadata: unifiedLibrarySourceMetadata(result, asset),
   };
 }
 
@@ -744,7 +724,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     });
   }
 
-  async function insertUnifiedResult(result, asset, options) {
+  async function insertUnifiedResult(result, asset, options, context = {}) {
     if (result.provenance.provider === "parts") {
       insertPartsAsset(state, {
         item: { id: result.provenance.itemId, defaultLevel: result.metadata?.defaultLevel },
@@ -757,19 +737,22 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     }
     const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
     if (!dataUrl) throw new Error("삽입할 이미지 데이터를 만들지 못했습니다.");
-    await insertImageFromSrc(state, dataUrl, unifiedImageInsertionOptions(result, asset));
+    await insertImageFromSrc(state, dataUrl, { ...unifiedImageInsertionOptions(result, asset), isCurrent: context.isCurrent });
   }
 
   unifiedUi = createUnifiedLibraryUi({
     getProvider: getUnifiedProvider,
     insertMaterialized: insertUnifiedResult,
-    openObjectify: async (result, asset) => {
-      const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
+    openObjectify: async (result, asset, context = {}) => {
+      const transfer = unifiedLibraryTransfer(result, asset);
+      const dataUrl = transfer.dataUrl;
       if (!dataUrl) throw new Error("객체화할 이미지 데이터를 만들지 못했습니다.");
       const response = await fetch(dataUrl);
+      if (context.isCurrent && !context.isCurrent()) return;
       const blob = await response.blob();
+      if (context.isCurrent && !context.isCurrent()) return;
       const safeName = `${String(result.title || "library-image").replace(/[\\/:*?"<>|]+/gu, "-")}.png`;
-      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }))) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }), { sourceMetadata: transfer.source })) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
     },
     openAi,
     openIndependentReferences,

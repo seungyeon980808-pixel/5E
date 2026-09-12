@@ -85,7 +85,9 @@ function prebuiltEntries(input, pageCounts) {
     if (textSize > MAX_PREBUILT_TEXT) throw new TypeError("Prebuilt PDF search index text budget exceeded");
     const compactWords = entry.compactWords ?? [];
     if (!Array.isArray(compactWords) || compactWords.length > 20_000) throw new TypeError(`${prefix}.compactWords is invalid`);
-    const words = entry.words ?? compactWords.map((word, wordIndex) => {
+    const directWords = entry.words ?? [];
+    if (!Array.isArray(directWords)) throw new TypeError(`${prefix}.words is invalid`);
+    const words = directWords.length ? directWords : compactWords.map((word, wordIndex) => {
       if (!Array.isArray(word) || word.length !== 5 || typeof word[0] !== "string" || word[0].length > 1000 || !word.slice(1).every(Number.isFinite)) {
         throw new TypeError(`${prefix}.compactWords[${wordIndex}] is invalid`);
       }

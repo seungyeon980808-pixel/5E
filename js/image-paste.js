@@ -150,11 +150,13 @@ function insertImageObject(state, src, size, place) {
 export async function insertImageFromSrc(state, src, opts = {}) {
   // Capture intent before decoding. UI state (page, selected object, even opts)
   // can change while Image.onload/downscaling is pending.
+  const routeIsCurrent = typeof opts?.isCurrent === "function" ? opts.isCurrent : null;
   const options = { ...opts,
     ...(opts?.at ? { at: { ...opts.at } } : {}),
     ...(opts?.offset ? { offset: { ...opts.offset } } : {}),
     ...(opts?.sourceMetadata ? { sourceMetadata: cloneSourceMetadata(opts.sourceMetadata) } : {}),
   };
+  delete options.isCurrent;
   if (typeof src !== "string" || !src.trim()) throw new Error("삽입할 이미지가 없습니다.");
   const hasAiMetadata = options.aiTaskId != null || options.aiCandidateId != null;
   if (hasAiMetadata && (![options.aiTaskId, options.aiCandidateId].every(value => typeof value === "string" && value.trim()))) {
@@ -173,6 +175,9 @@ export async function insertImageFromSrc(state, src, opts = {}) {
   let invalidationError = null;
   function assertContext(s) {
     if (invalidationError) throw invalidationError;
+    if (routeIsCurrent && !routeIsCurrent()) {
+      throw new Error("이미지를 준비하는 동안 선택한 라이브러리 자료가 변경되었습니다. 다시 시도해 주세요.");
+    }
     if ((s.activePageId ?? null) !== pageId
       || (s.pages?.find(page => page.id === pageId) ?? null) !== pageRecord
       || s.objects !== objectsAtStart) {

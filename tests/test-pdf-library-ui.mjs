@@ -2,11 +2,21 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createCropOverrideStore } from "../js/pdf-library/crop-overrides.js";
-import { assertPdfMaterializationSource, clampCropRect, documentNeedsOcr, expandFigureResults, lazyOpenIsCurrent, localPdfDocumentId, shouldHandlePdfArrow, shouldHandlePdfSpace, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
+import { assertPdfMaterializationSource, clampCropRect, documentNeedsOcr, expandFigureResults, highlightInCrop, lazyOpenIsCurrent, localPdfDocumentId, shouldHandlePdfArrow, shouldHandlePdfSpace, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
 
 test("Given a crop dragged beyond its PDF page, when normalized, then it remains inside the page", () => {
   const crop = clampCropRect([-0.1, 0.85, 0.4, 0.4]);
   assert.deepEqual(crop, [0, 0.85, 0.4, 0.15]);
+});
+
+test("PDF preview preserves typed term provenance while mapping page coordinates into a crop", () => {
+  const mapped = highlightInCrop({
+    termId: "term-mass", term: "질량", color: "#ffcf4a", coordinateSpace: "page-normalized",
+    documentId: "doc", pageNumber: 2, cropId: "doc:q3", rect: [0.3, 0.4, 0.2, 0.1],
+  }, [0.2, 0.2, 0.5, 0.5]);
+  assert.deepEqual(mapped.rect.map((value) => Math.round(value * 10) / 10), [0.2, 0.4, 0.4, 0.2]);
+  assert.equal(mapped.termId, "term-mass");
+  assert.equal(mapped.coordinateSpace, "crop-normalized");
 });
 
 test("Given an editable Korean input, when Space is pressed, then the PDF preview shortcut is ignored", () => {

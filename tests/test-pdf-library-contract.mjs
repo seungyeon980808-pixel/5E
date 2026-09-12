@@ -133,6 +133,46 @@ test("Given a compact prebuilt pack index, when structured filters search it, th
   assert.deepEqual(excluded, []);
 });
 
+test("Given populated words and compact words, the worker preserves the populated word coordinates", () => {
+  const controller = createSearchWorkerController();
+  const directRect = [0.12, 0.22, 0.18, 0.04];
+  controller.handle({
+    type: "replace", documents: [],
+    prebuilt: [{ documents: [{ id: "pack-doc", pageCount: 1 }], index: { schemaVersion: "pdf-search-index-v1", entries: [{
+      documentId: "pack-doc", documentTitle: "Physics", pageNumber: 1, itemId: "q1", itemNumber: 1,
+      text: "자기장 센서", normalized: "자기장 센서",
+      words: [{ text: "자기장", rect: directRect }, { text: "센서", rect: [0.31, 0.22, 0.12, 0.04] }],
+      compactWords: [["자기장", 0.6, 0.7, 0.2, 0.04]],
+      source: { documentId: "pack-doc", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: true },
+    }] } }],
+  });
+
+  const [found] = controller.handle({ type: "search", options: { query: "자기장" } });
+  assert.deepEqual(found.matchRects[0].map((value) => Math.round(value * 100) / 100), directRect);
+});
+
+test("Given an empty words array and populated compact words, the worker restores term coordinates", () => {
+  const controller = createSearchWorkerController();
+  controller.handle({
+    type: "replace", documents: [],
+    prebuilt: [{ documents: [{ id: "2024-june-phy2", pageCount: 4 }], index: { schemaVersion: "pdf-search-index-v1", entries: [{
+      documentId: "2024-june-phy2", documentTitle: "2024 Physics II", pageNumber: 1,
+      itemId: "2024-june-phy2:p1:q5", itemNumber: 5,
+      text: "자기장 센서를 솔레노이드 내부에 둔다", normalized: "자기장 센서를 솔레노이드 내부에 둔다",
+      words: [],
+      compactWords: [["자기장", 0.56758, 0.2988, 0.03749, 0.00966], ["센서를", 0.61468, 0.2988, 0.03749, 0.00966]],
+      source: { documentId: "2024-june-phy2", pageNumber: 1, rect: [0.50898, 0.20816, 0.48152, 0.49929], fullPageFallback: false },
+    }] } }],
+  });
+
+  const [found] = controller.handle({ type: "search", options: { query: "자기장 센서를" } });
+  assert.equal(found.itemId, "2024-june-phy2:p1:q5");
+  assert.deepEqual(found.highlights.map(({ term, documentId, pageNumber, cropId, rect }) => ({ term, documentId, pageNumber, cropId, rect })), [
+    { term: "자기장", documentId: "2024-june-phy2", pageNumber: 1, cropId: "2024-june-phy2:p1:q5", rect: [0.56758, 0.2988, 0.03749, 0.00966] },
+    { term: "센서를", documentId: "2024-june-phy2", pageNumber: 1, cropId: "2024-june-phy2:p1:q5", rect: [0.61468, 0.2988, 0.03749, 0.00966] },
+  ]);
+});
+
 test("Given a prebuilt index that references another catalog, when installed, then the worker rejects it", () => {
   const controller = createSearchWorkerController();
   assert.throws(() => controller.handle({

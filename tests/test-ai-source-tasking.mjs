@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { distributeSourcesToTaskTabs } from "../js/ai-source-tasking.js";
+import { libraryActionSnapshotIsCurrent } from "../js/unified-library-ui.js";
 
 function harness({ activeHasSource = false } = {}) {
   let active = "task-1";
@@ -38,4 +39,28 @@ test("adding a source never appends it to an occupied task", () => {
   assert.deepEqual(ids, ["task-2"]);
   assert.deepEqual([...state.tasks.values()], [["existing"], ["new.png"]]);
   assert.equal(state.active(), "task-2");
+});
+
+test("task sources snapshot pixels and nested provenance before caller mutation", () => {
+  const assigned = [];
+  const source = {
+    name: "crop.png",
+    data: "data:image/png;base64,EXACT",
+    source: { documentId: "physics", pageNumber: 2, rect: [0.1, 0.2, 0.3, 0.4] },
+  };
+  distributeSourcesToTaskTabs([source], {
+    canUseActiveTask: () => true,
+    addSource: (item) => assigned.push(item),
+    activeTaskId: () => "task-1",
+  });
+  source.data = "data:image/png;base64,CHANGED";
+  source.source.rect[0] = 0.9;
+  assert.equal(assigned[0].data, "data:image/png;base64,EXACT");
+  assert.deepEqual(assigned[0].source.rect, [0.1, 0.2, 0.3, 0.4]);
+});
+
+test("switching away and back still invalidates a delayed library route", () => {
+  const snapshot = { selectedId: "crop-1", representation: "manual", selectedIdsKey: "", open: true, revision: 4 };
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, revision: 4 }), true);
+  assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, revision: 6 }), false);
 });

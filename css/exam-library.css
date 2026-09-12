@@ -112,7 +112,12 @@
   margin: auto; object-fit: contain;
 }
 .pdflib-query-highlights { position: absolute; inset: 0; pointer-events: none; }
-.pdflib-query-highlights span { position: absolute; background: color-mix(in srgb, var(--accent) 28%, transparent); outline: 1px solid var(--accent); }
+.pdflib-query-highlights span { position: absolute; background: color-mix(in srgb, var(--pdflib-highlight-color, var(--accent)) 28%, transparent); outline: 1px solid var(--pdflib-highlight-color, var(--accent)); }
+.pdflib-highlight-legend { color: var(--text-secondary); font-size: 12px; }
+.pdflib-highlight-legend summary { cursor: pointer; }
+.pdflib-highlight-legend ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.pdflib-highlight-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.pdflib-highlight-legend li > span { width: 14px; height: 8px; border: 1px solid var(--pdflib-highlight-color, var(--accent)); border-radius: 2px; background: color-mix(in srgb, var(--pdflib-highlight-color, var(--accent)) 30%, transparent); }
 .pdflib-preview-help, .pdflib-crop-editor p { margin: 0; color: var(--text-secondary); font-size: 12px; }
 .pdflib-crop-stage { position: relative; min-height: 260px; overflow: hidden; background: #fff; cursor: grab; touch-action: none; }
 .pdflib-crop-stage:active { cursor: grabbing; }
