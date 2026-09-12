@@ -432,6 +432,24 @@ export function reconcileUnifiedSelection(selectedId, results) {
   return results[0]?.id ?? null;
 }
 
+export function libraryResultIdentity(result) {
+  const source = result?.provenance ?? {};
+  return JSON.stringify([
+    result?.id ?? null, source.documentId ?? null, source.pageNumber ?? null,
+    source.itemId ?? result?.metadata?.itemNumber ?? null, source.sha256 ?? null,
+    source.sourceKind ?? null, source.locator ?? null,
+  ]);
+}
+
+export async function resolveLibraryPreviewResult(result, resolveResult, isCurrent) {
+  try {
+    const resolved = await resolveResult(result);
+    return isCurrent() ? { status: "resolved", result: resolved } : { status: "stale" };
+  } catch (error) {
+    return isCurrent() ? { status: "failed", error } : { status: "stale" };
+  }
+}
+
 function loadSourceState(storage) {
   try {
     const parsed = JSON.parse(storage.getItem(SOURCE_STORAGE_KEY) || "null");
@@ -1011,7 +1029,27 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   async function renderPreview() {
     const ownEpoch = ++previewEpoch;
-    const result = selectedResult();
+    let result = selectedResult();
+    if (result?.provenance?.provider === "pdf" && pdfUi?.resolveResult) {
+      const requestIdentity = libraryResultIdentity(result);
+      const resolution = await resolveLibraryPreviewResult(
+        result,
+        (value) => pdfUi.resolveResult(value),
+        () => ownEpoch === previewEpoch && requestIdentity === libraryResultIdentity(selectedResult()),
+      );
+      if (resolution.status === "stale") return;
+      if (resolution.status === "failed") {
+        stage.replaceChildren();
+        stage.textContent = `미리보기 실패: ${resolution.error instanceof Error ? resolution.error.message : resolution.error}`;
+        return;
+      }
+      invalidateAction();
+      results = results.map((value) => libraryResultIdentity(value) === requestIdentity ? resolution.result : value);
+      if (selectedRecords.has(result.id) && libraryResultIdentity(selectedRecords.get(result.id)) === requestIdentity) {
+        selectedRecords.set(result.id, resolution.result);
+      }
+      result = resolution.result;
+    }
     if (cropSession && !cropSessionIsCurrent(cropSession, result)) closeCrop(false);
     const representations = representationsForResult(result);
     if (!isValidQuestionRepresentation(result, activeFigureRepresentation) || activeFigureRepresentation === "full" || activeFigureRepresentation === "image") activeFigureRepresentation = result?.variants?.manual ? "manual" : "figure:0";

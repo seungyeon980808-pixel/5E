@@ -1,5 +1,5 @@
 import { createCropSource, normalizedRect } from "./contract.js";
-import { isAnswerChoiceBoxCandidate } from "./page-geometry.js";
+import { isAnswerChoiceBoxCandidate, trimImageCandidateAtExternalCaption } from "./page-geometry.js";
 
 const FIGURE_SCHEMA = "pdf-figure-candidates-v1";
 const IMAGE_OPERATORS = [
@@ -145,18 +145,24 @@ export function detectFigureCandidates(input) {
     const attachmentArea = expandedWithin(graphicRect, itemRect, marginX, marginY);
     const attachedWords = (input.words ?? []).map((word) => normalizedRect(word.rect)).filter((rect) => {
       const clipped = intersection(rect, itemRect);
-      return clipped && clipped[2] * clipped[3] >= rect[2] * rect[3] * 0.96 && intersection(rect, attachmentArea);
+      const wordAttachmentArea = imageCount > 0 ? graphicRect : attachmentArea;
+      return clipped && clipped[2] * clipped[3] >= rect[2] * rect[3] * 0.96 && intersection(rect, wordAttachmentArea);
     });
     const contentRect = attachedWords.length ? union([graphicRect, ...attachedWords]) : graphicRect;
     const rect = expandedWithin(contentRect, itemRect, marginX, marginY);
-    const candidate = { rect, source: { rect }, evidence: { imageCount, pathCount } };
-    return isAnswerChoiceBoxCandidate(candidate, input.words) ? null : { rect, imageCount, pathCount };
+    const candidate = { rect, source: { rect }, evidence: { imageCount, pathCount, graphicRect, protectedRect: contentRect } };
+    const repairedRect = trimImageCandidateAtExternalCaption(candidate, input.words);
+    return isAnswerChoiceBoxCandidate(candidate, input.words) ? null : { rect: repairedRect, imageCount, pathCount, graphicRect, protectedRect: contentRect };
   }).filter(Boolean).sort((left, right) => left.rect[1] - right.rect[1] || left.rect[0] - right.rect[0]);
   const records = candidates.map((candidate, index) => Object.freeze({
     kind: "figure-candidate-v1", id: `${input.item.id}:figure:${index + 1}`, candidateNumber: index + 1,
     documentId, pageNumber, itemId: input.item.id, itemNumber: input.item.itemNumber,
     rect: normalizedRect(candidate.rect), source: createCropSource({ documentId, pageNumber, rect: candidate.rect, fullPageFallback: false }),
-    evidence: Object.freeze({ imageCount: candidate.imageCount, pathCount: candidate.pathCount }),
+    evidence: Object.freeze({
+      imageCount: candidate.imageCount, pathCount: candidate.pathCount,
+      graphicRect: Object.freeze(normalizedRect(candidate.graphicRect)),
+      protectedRect: Object.freeze(normalizedRect(candidate.protectedRect)),
+    }),
   }));
   return Object.freeze({
     schemaVersion: FIGURE_SCHEMA, candidates: Object.freeze(records), fallback: safeFallback,

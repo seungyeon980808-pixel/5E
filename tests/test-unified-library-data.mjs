@@ -49,6 +49,49 @@ test("compact exam codes are strict and preserve item/page ambiguity", () => {
   }
 });
 
+test("lazy runtime figures become canonical for subsequently created action providers", async () => {
+  const document = pdfDocument();
+  const initial = createUnifiedLibraryProvider({ pdfDocuments: [document] }).search({ query: "p1260601" })[0];
+  const figureSource = { ...initial.provenance, rect: [0.2, 0.2, 0.3, 0.25], fullPageFallback: false };
+  const resolved = {
+    ...initial,
+    variants: { ...initial.variants, figures: [{ id: `${initial.id}:figure:1`, label: "이미지 1", source: figureSource }] },
+  };
+  let received = null;
+  const actionProvider = createUnifiedLibraryProvider({
+    pdfDocuments: [document], resolvedPdfResults: [resolved],
+    materializers: { pdf: (input) => { received = input; return input; } },
+  });
+  await actionProvider.materialize(resolved, { representation: "figure:0" });
+  assert.deepEqual(received.source.rect, figureSource.rect);
+});
+
+test("Given a resolved runtime figure outside its question, when an action provider materializes it, then the forged geometry is rejected", async () => {
+  const document = pdfDocument();
+  const initial = createUnifiedLibraryProvider({ pdfDocuments: [document] }).search({ query: "p1260601" })[0];
+  const forged = {
+    ...initial,
+    variants: {
+      ...initial.variants,
+      figures: [{
+        id: `${initial.id}:figure:forged`, label: "이미지 1",
+        source: { documentId: document.id, pageNumber: 1, rect: [0.91, 0.91, 0.08, 0.08], fullPageFallback: false },
+      }],
+    },
+  };
+  let materializerCalls = 0;
+  const actionProvider = createUnifiedLibraryProvider({
+    pdfDocuments: [document], resolvedPdfResults: [forged],
+    materializers: { pdf: () => { materializerCalls += 1; } },
+  });
+
+  await assert.rejects(
+    actionProvider.materialize(forged, { representation: "figure:0" }),
+    /provenance|unavailable/iu,
+  );
+  assert.equal(materializerCalls, 0);
+});
+
 test("multi-term PDF search deduplicates # tokens and maps split Korean words to term-owned page coordinates", () => {
   const entry = {
     documentId: "space", documentTitle: "우주", pageNumber: 2, itemId: "space:p2:q3", itemNumber: 3,

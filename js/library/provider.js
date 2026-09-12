@@ -1,7 +1,7 @@
 import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js";
 import { createCropSource } from "../pdf-library/contract.js";
-import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
+import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
@@ -332,10 +332,23 @@ function securedPdfEntry(document, entry) {
     if ((candidate.documentId !== undefined && candidate.documentId !== document.id)
       || (candidate.pageNumber !== undefined && candidate.pageNumber !== entry.pageNumber)) return [];
     const candidateSource = ownedCropSource(document, entry.pageNumber, candidate.source);
-    const securedCandidate = candidateSource
-      ? { ...candidate, documentId: document.id, pageNumber: entry.pageNumber, source: candidateSource }
+    const repairedCandidateRect = candidateSource
+      ? trimImageCandidateAtExternalCaption(candidate, entry.words ?? [])
       : null;
-    return securedCandidate && !isAnswerChoiceBoxCandidate(securedCandidate, entry.words ?? []) ? [securedCandidate] : [];
+    const repairedCandidateSource = candidateSource && repairedCandidateRect
+      ? createCropSource({ ...candidateSource, rect: repairedCandidateRect })
+      : null;
+    const questionBottom = source.rect[1] + source.rect[3];
+    const candidateBottom = repairedCandidateSource ? repairedCandidateSource.rect[1] + repairedCandidateSource.rect[3] : 0;
+    const insideQuestion = repairedCandidateSource
+      && repairedCandidateSource.rect[0] >= source.rect[0]
+      && repairedCandidateSource.rect[1] >= source.rect[1]
+      && repairedCandidateSource.rect[0] + repairedCandidateSource.rect[2] <= source.rect[0] + source.rect[2]
+      && candidateBottom <= questionBottom;
+    const securedCandidate = repairedCandidateSource
+      ? { ...candidate, documentId: document.id, pageNumber: entry.pageNumber, rect: repairedCandidateRect, source: repairedCandidateSource }
+      : null;
+    return insideQuestion && securedCandidate && !isAnswerChoiceBoxCandidate(securedCandidate, entry.words ?? []) ? [securedCandidate] : [];
   });
   const words = (entry.words ?? []).filter((word) => {
     const centerY = word.rect[1] + word.rect[3] / 2;
@@ -483,10 +496,44 @@ export function createUnifiedLibraryProvider(input = {}) {
   let documents = uniquePdfDocuments(input.pdfDocuments);
   let searchIndex = input.pdfSearchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
   let pdf = pdfResults(documents, searchIndex);
+  const resolvedPdfResults = (Array.isArray(input.resolvedPdfResults) ? input.resolvedPdfResults : []).flatMap((resolved) => {
+    const canonical = pdf.results.find((result) => result.id === resolved?.id && result.kind === "crop" && result.cropType === "question");
+    const document = documents.find((value) => value.id === canonical?.provenance?.documentId);
+    if (!canonical || !document) return [];
+    const candidates = (resolved.variants?.figures ?? []).map((figure) => ({
+      id: figure.id,
+      label: figure.label,
+      evidence: figure.evidence,
+      source: {
+        documentId: document.id,
+        pageNumber: canonical.provenance.pageNumber,
+        rect: figure.source?.rect,
+        fullPageFallback: false,
+      },
+    }));
+    const secured = securedPdfEntry(document, {
+      pageNumber: canonical.provenance.pageNumber,
+      source: canonical.provenance,
+      words: canonical.searchWords,
+      figureCandidates: candidates,
+    });
+    if (!secured) return [];
+    return [freezeResult({
+      ...canonical,
+      variants: {
+        ...canonical.variants,
+        figures: secured.figureCandidates.map((candidate, index) => ({
+          id: candidate.id ?? `${canonical.id}:figure:${index + 1}`,
+          label: candidate.label ?? `이미지 ${index + 1}`,
+          source: candidate.source,
+        })),
+      },
+    })];
+  });
   const materializers = input.materializers ?? {};
 
   function allResults() {
-    return dedupeResults([...images.results, ...pdf.results]);
+    return dedupeResults([...images.results, ...pdf.results, ...resolvedPdfResults]);
   }
 
   function withManualCrop(result) {

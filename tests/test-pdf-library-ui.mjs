@@ -2,7 +2,93 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createCropOverrideStore } from "../js/pdf-library/crop-overrides.js";
-import { assertPdfMaterializationSource, clampCropRect, documentNeedsOcr, expandFigureResults, highlightInCrop, lazyOpenIsCurrent, localPdfDocumentId, shouldHandlePdfArrow, shouldHandlePdfSpace, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
+import { assertPdfMaterializationSource, clampCropRect, createPdfResultResolver, documentNeedsOcr, expandFigureResults, highlightInCrop, lazyOpenIsCurrent, localPdfDocumentId, shouldHandlePdfArrow, shouldHandlePdfSpace, storedCropForResult, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
+
+function lazyQuestion() {
+  return {
+    id: "crop:source:q1", kind: "crop", cropType: "question",
+    metadata: { itemNumber: 1 },
+    provenance: {
+      provider: "pdf", documentId: "doc", pageNumber: 1, itemId: "q1",
+      rect: [0.1, 0.1, 0.8, 0.7], fullPageFallback: false,
+      sha256: null, sourceKind: "pack", locator: "pack/doc.pdf",
+    },
+    variants: { full: { source: { documentId: "doc", pageNumber: 1, rect: [0.1, 0.1, 0.8, 0.7], fullPageFallback: false } }, figures: [] },
+  };
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((onResolve, onReject) => { resolve = onResolve; reject = onReject; });
+  return { promise, resolve, reject };
+}
+
+test("Given real resolver output, detector metadata cannot replace canonical document ownership or escape the question", async () => {
+  const result = lazyQuestion();
+  const resolver = createPdfResultResolver({
+    getIdentity: () => "catalog-v1",
+    openDocument: async () => ({ pages: [{ pageNumber: 1, items: [{ id: "q1", itemNumber: 1 }] }] }),
+    detectCandidates: async () => ({ candidates: [
+      { id: "valid", source: { documentId: "evil", pageNumber: 99, rect: [0.2, 0.2, 0.3, 0.2], fullPageFallback: true } },
+      { id: "outside", source: { documentId: "doc", pageNumber: 1, rect: [0.91, 0.91, 0.08, 0.08], fullPageFallback: false } },
+    ] }),
+    schedule: (operation, options) => {
+      assert.equal(options.priority, 2);
+      return operation();
+    },
+  });
+
+  const resolved = await resolver.resolve(result);
+  assert.deepEqual(resolved.variants.figures.map(({ id, source }) => ({ id, source })), [{
+    id: "valid",
+    source: { documentId: "doc", pageNumber: 1, rect: [0.2, 0.2, 0.3, 0.2], fullPageFallback: false },
+  }]);
+});
+
+test("Given deferred detection, a same-id catalog replacement discards the old geometry and does not cache it", async () => {
+  const result = lazyQuestion();
+  const pending = deferred();
+  let identity = "catalog-v1";
+  let calls = 0;
+  const resolver = createPdfResultResolver({
+    getIdentity: () => identity,
+    openDocument: async () => ({ pages: [{ pageNumber: 1, items: [{ id: "q1", itemNumber: 1 }] }] }),
+    detectCandidates: async () => { calls += 1; return calls === 1 ? pending.promise : { candidates: [] }; },
+    schedule: (operation) => operation(),
+  });
+
+  const resolving = resolver.resolve(result);
+  await Promise.resolve();
+  identity = "catalog-v2";
+  pending.resolve({ candidates: [{ id: "old", rect: [0.2, 0.2, 0.2, 0.2] }] });
+  assert.equal(await resolving, result);
+  assert.deepEqual(resolver.values(), []);
+
+  const replacement = await resolver.resolve(result);
+  assert.equal(calls, 2);
+  assert.deepEqual(replacement.variants.figures, []);
+});
+
+test("Given a failed or missing-item resolution, a later corrected open retries instead of reusing failure", async () => {
+  const result = lazyQuestion();
+  let attempt = 0;
+  const resolver = createPdfResultResolver({
+    getIdentity: () => "catalog-v1",
+    openDocument: async () => {
+      attempt += 1;
+      if (attempt === 1) throw new Error("open failed");
+      return { pages: [{ pageNumber: 1, items: attempt === 2 ? [] : [{ id: "q1", itemNumber: 1 }] }] };
+    },
+    detectCandidates: async () => ({ candidates: [{ id: "valid", rect: [0.2, 0.2, 0.2, 0.2] }] }),
+    schedule: (operation) => operation(),
+  });
+
+  await assert.rejects(resolver.resolve(result), /open failed/u);
+  assert.equal(await resolver.resolve(result), result);
+  assert.equal((await resolver.resolve(result)).variants.figures[0].id, "valid");
+  assert.equal(attempt, 3);
+});
 
 test("Given a crop dragged beyond its PDF page, when normalized, then it remains inside the page", () => {
   const crop = clampCropRect([-0.1, 0.85, 0.4, 0.4]);
@@ -53,6 +139,19 @@ test("Given a manual crop, when the image cache is recreated, then the normalize
   const result = { itemId: "q5", source: { documentId: "doc", pageNumber: 2 } };
   createCropOverrideStore(storage).set(result, [0.1, 0.2, 0.4, 0.5]);
   assert.deepEqual(createCropOverrideStore(storage).get(result), [0.1, 0.2, 0.4, 0.5]);
+});
+
+test("Given an untouched question with non-six-decimal geometry, crop lookup does not fabricate a manual override", () => {
+  const memory = new Map();
+  const storage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value) };
+  const store = createCropOverrideStore(storage);
+  const result = {
+    id: "p1260901", metadata: { itemNumber: 1 },
+    provenance: { provider: "pdf", documentId: "p12609", pageNumber: 1, sha256: null, rect: [0.1, 0.1, 0.4, 0.22272040302267002] },
+  };
+  assert.equal(storedCropForResult(store, result), null);
+  store.set({ ...result, source: result.provenance, documentSourceHash: null }, [0.2, 0.2, 0.3, 0.3]);
+  assert.deepEqual(storedCropForResult(store, result), [0.2, 0.2, 0.3, 0.3]);
 });
 
 test("Given two figures from one question, each manual crop is stored independently", () => {
