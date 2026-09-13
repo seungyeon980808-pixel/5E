@@ -5,6 +5,38 @@ import {
 } from './ai-task-export.js';
 import { restoreGenerationTiming } from './ai-generation-timing.js';
 
+const CANCELLABLE_TASK_STATES = new Set(['busy', 'running', 'queued']);
+
+export async function clearTaskWorkspaces({ tasks, confirm, cancel, remove }) {
+  const targets = Array.isArray(tasks) ? [...tasks] : [];
+  if (!targets.length || !await confirm(targets.length)) {
+    return { confirmed: false, removedIds: [], retainedIds: targets.map(task => task.id) };
+  }
+  const removedIds = [];
+  const retainedIds = [];
+  for (const task of targets) {
+    if (task.workState === 'failed') {
+      retainedIds.push(task.id);
+      continue;
+    }
+    if (CANCELLABLE_TASK_STATES.has(task.workState)) {
+      try {
+        const outcome = await cancel(task);
+        if (outcome?.acknowledged !== true) {
+          retainedIds.push(task.id);
+          continue;
+        }
+      } catch {
+        retainedIds.push(task.id);
+        continue;
+      }
+    }
+    await remove(task);
+    removedIds.push(task.id);
+  }
+  return { confirmed: true, removedIds, retainedIds };
+}
+
 export function recoverTaskWorkspaceSnapshot(value) {
   if (!value || !Array.isArray(value.tabs)) return null;
   const recovered = structuredClone(value);
@@ -242,10 +274,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
       exportCollection,
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
-        const next = entries.find(item => item !== entry && item.tabs.length) || add(crypto.randomUUID());
-        activate(next);
+        const next = entries.find(item => item !== entry && item.tabs.length);
+        activate(next || entry);
         saveRegistry();
-
       },
       navigationChanged: tabs => {
         if (tabs) entry.tabs = tabs;

@@ -104,6 +104,19 @@ export async function prepareEditableAssets(dataUrl, regions, { threshold = 240 
     stats: { removedPixelCount: assets.reduce((n, a) => n + a.stats.removedPixelCount, 0), preservedPixelCount: assets.reduce((n, a) => n + a.stats.preservedPixelCount, 0), rgbaVerified: true } };
 }
 
+export function createUngroupedSplitOutputs(prepared, { idFactory = () => crypto.randomUUID() } = {}) {
+  if (!Array.isArray(prepared?.assets) || !prepared.assets.length) throw new TypeError('분리 결과가 없습니다.');
+  const identifiers = new Set();
+  return prepared.assets.map(asset => {
+    const objectId = idFactory();
+    if (typeof objectId !== 'string' || !objectId || identifiers.has(objectId)) {
+      throw new TypeError('분리 객체마다 고유한 식별자가 필요합니다.');
+    }
+    identifiers.add(objectId);
+    return { ...structuredClone(asset), objectId, groupId: null };
+  });
+}
+
 export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId, groupMode = 'independent' } = {}) {
   if (typeof isCurrent !== 'function') throw new TypeError('삽입 대상 확인 함수가 필요합니다.');
   if (!prepared?.assets?.length || prepared.assets.length > 256 || !Number.isFinite(prepared.width) || prepared.width <= 0 || !Number.isFinite(prepared.height) || prepared.height <= 0) throw new TypeError('준비한 이미지 영역이 없습니다.');
@@ -117,10 +130,15 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
   const stamp = `${Date.now().toString(36)}_${++serial}`, objects = [], groups = [];
   const sharedGroupId = groupMode === 'single' ? `grp_editable_${stamp}` : null;
   const sharedMemberIds = [];
-  for (const [i, asset] of prepared.assets.entries()) {
+  let splitSerial = 0;
+  const splitOutputs = groupMode === 'single' ? prepared.assets : createUngroupedSplitOutputs(prepared, {
+    idFactory: () => `obj_editable_${stamp}_${splitSerial++}`,
+  });
+  for (const [i, asset] of splitOutputs.entries()) {
     const bounds = rect(asset, prepared.width, prepared.height);
     if (Object.keys(bounds).some(k => bounds[k] !== asset[k]) || typeof asset.data !== 'string' || !asset.data.startsWith('data:image/png;base64,') || typeof asset.label !== 'string') throw new TypeError('준비한 이미지 영역이 올바르지 않습니다.');
-    const groupId = sharedGroupId ?? `grp_editable_${stamp}_${i}`, imageId = `obj_editable_${stamp}_${i}`;
+    const groupId = sharedGroupId;
+    const imageId = asset.objectId || `obj_editable_${stamp}_${i}`;
     const common = { groupId, locked: false, positionLocked: false, ...(aiTaskId ? { aiTaskId, aiCandidateId } : {}), editableAssetRegionId: asset.id };
     objects.push({ ...common, id: imageId, type: 'image', src: asset.data, ...map(asset), w: asset.width * scale, h: asset.height * scale,
       rotation: 0, mode: 'edit', opacity: 1, aspectLocked: true, exportable: true, imageSelectionLocked: false, cutouts: [] });
@@ -135,7 +153,6 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
       memberIds.push(id);
     }
     if (sharedGroupId) sharedMemberIds.push(...memberIds);
-    else groups.push({ id: groupId, memberIds });
   }
   if (sharedGroupId) groups.push({ id: sharedGroupId, memberIds: sharedMemberIds });
   state.update(draft => {

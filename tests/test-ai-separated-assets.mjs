@@ -486,7 +486,7 @@ test('Given an exact 4000 by 4000 RGBA input, public separation accepts the decl
   assert.equal(prepared.fallbackToOriginal, undefined);
 });
 
-test('Given separated assets, when passed to the core inserter, then each asset becomes an independent group', async () => {
+test('Given separated assets, when passed to the core inserter, then each asset is independently selectable without a group', async () => {
   const source = await png({ width: 48, height: 48, fill: [255, 255, 255, 255], paint: (data, set) => {
     for (const [left, top] of [[3, 3], [27, 15]]) for (let y = top; y < top + 5; y++) for (let x = left; x < left + 5; x++) set(x, y, [20, 30, 40, 255]);
   } });
@@ -497,7 +497,8 @@ test('Given separated assets, when passed to the core inserter, then each asset 
 
   assert.equal(prepared.assets.length, 2);
   assert.deepEqual(prepared.assets.map(asset => asset.label), ['객체 1', '객체 2']);
-  assert.equal(value.groups.length, 2);
-  assert.equal(result.groupIds.length, 2);
-  assert.notEqual(value.groups[0].id, value.groups[1].id);
+  assert.equal(value.groups.length, 0);
+  assert.equal(result.groupIds.length, 0);
+  assert.equal(new Set(result.ids).size, result.ids.length);
+  assert(value.objects.every(object => object.groupId == null));
 });

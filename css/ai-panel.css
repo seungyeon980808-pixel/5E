@@ -2342,3 +2342,18 @@
 @media (prefers-reduced-motion: reduce) {
   #ai-image-panel { --ai-accordion-duration: 0ms; }
 }
+
+#ai-image-panel .ai-rail-actions { display:flex; align-items:center; gap:3px; }
+#ai-image-panel .ai-rail-actions button { min-height:25px; padding:3px 5px; font-size:9px; }
+#ai-image-panel[data-ai-stage="processing"] .ai-compare-controls { display:flex !important; }
+#ai-image-panel .ai-output-processing > .ai-separated-mode {
+  display:grid; grid-template-columns:36px minmax(0,1fr); align-items:center; gap:4px; margin:0;
+}
+#ai-image-panel .ai-output-processing > .ai-separated-mode > span { color:var(--text-secondary); font-size:var(--ai-type-caption); }
+#ai-image-panel .ai-output-processing > .ai-separated-mode > select { min-height:28px; }
+#ai-image-panel .ai-output-processing > .ai-separated-mode > small { display:none; }
+#ai-image-panel .ai-comment-list-status { margin:0; padding:6px 13px; color:var(--text-secondary); font-size:9px; border-top:1px solid var(--border-muted); }
+#ai-image-panel .ai-workbench-comment { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; }
+#ai-image-panel .ai-workbench-comment > button:first-child { grid-column:1 / -1; text-align:left; }
+#ai-image-panel .ai-workbench-comment textarea { min-height:54px; resize:vertical; }
+#ai-image-panel .ai-workbench-comment [data-ai-inline-delete] { align-self:start; }

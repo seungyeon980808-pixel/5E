@@ -53,7 +53,10 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.doesNotMatch(index, /<option value="checkerboard"/);
   assert.match(index, /<select data-ai-exam-palette[\s\S]*value="false"[\s\S]*value="true"[\s\S]*<\/select>/);
   assert.match(index, /<select data-ai-line-thickness[\s\S]*value="0"[\s\S]*value="1"[\s\S]*value="2"[\s\S]*<\/select>/);
-  assert.match(index, /<details class="ai-output-help">/);
+  assert.doesNotMatch(index, /<details class="ai-output-help">/);
+  assert.match(index, /data-ai-output-engine="asset"[^>]*hidden/);
+  assert.match(index, /data-ai-mode="complete"[^>]*hidden/);
+  assert.doesNotMatch(index, /data-ai-comment-editor|data-ai-comment-save|data-ai-comment-delete/);
   assert.ok(index.indexOf('data-ai-output-processing') < index.indexOf('class="ai-side-content"'),
     'output processing remains visible before the preparation and result stages');
 });

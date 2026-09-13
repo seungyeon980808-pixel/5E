@@ -60,7 +60,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
       <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
-    <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 그룹으로 넣기'}</button></div></footer>`;
+    <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 각각 넣기'}</button></div></footer>`;
   const find = selector => dialog.querySelector(selector);
   const source = find('.aea-source'), overlay = find('.aea-overlay'), preview = find('.aea-preview');
   const status = find('.aea-status'), list = find('.aea-list');
