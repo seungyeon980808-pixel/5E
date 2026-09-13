@@ -372,6 +372,33 @@ async function openSmartCutoutDialog(points, targetId, targetSnapshot) {
   slider.focus();
 }
 
+export function applyImageCutouts(ctx, cutouts, width, height) {
+  ctx.save();
+  for (const cut of cutouts || []) {
+    if (cut.type === "rect") {
+      ctx.globalCompositeOperation = "destination-out";
+      ctx.fillRect(cut.x * width, cut.y * height, cut.w * width, cut.h * height);
+      continue;
+    }
+    if (!["poly", "outside-poly", "lasso", "path"].includes(cut.type)) continue;
+    const pts = Array.isArray(cut.points) ? cut.points : [];
+    if (pts.length < 3) continue;
+    ctx.globalCompositeOperation = cut.type === "outside-poly" ? "destination-in" : "destination-out";
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x * width, pts[0].y * height);
+    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * width, pts[i].y * height);
+    ctx.closePath();
+    ctx.fill();
+    if ((cut.type === "lasso" || cut.type === "path") && Number(cut.brushWidth) > 0) {
+      ctx.lineWidth = Number(cut.brushWidth) * Math.sqrt((width * width + height * height) / 2);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
 export async function renderSessionToDataUrl(session) {
   const img = await loadRaster(session.src);
   const canvas = document.createElement("canvas");
@@ -379,22 +406,7 @@ export async function renderSessionToDataUrl(session) {
   canvas.height = img.naturalHeight || img.height || 1;
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.globalCompositeOperation = "destination-out";
-  for (const cut of session.cutouts || []) {
-    if (cut.type === "rect") {
-      ctx.fillRect(cut.x * canvas.width, cut.y * canvas.height, cut.w * canvas.width, cut.h * canvas.height);
-    } else if (cut.type === "lasso" || cut.type === "path") {
-      const pts = Array.isArray(cut.points) ? cut.points : [];
-      if (pts.length < 3) continue;
-      ctx.beginPath();
-      ctx.moveTo(pts[0].x * canvas.width, pts[0].y * canvas.height);
-      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * canvas.width, pts[i].y * canvas.height);
-      ctx.closePath();
-      ctx.fill();
-    }
-  }
-  ctx.restore();
+  applyImageCutouts(ctx, session.cutouts, canvas.width, canvas.height);
   return canvas.toDataURL("image/png");
 }
 
