@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { clearTaskWorkspaces } from '../js/ai-task-workspaces.js';
 import { createUngroupedSplitOutputs } from '../js/ai-editable-assets.js';
+import { acknowledgeActiveTaskClearCancellation } from '../js/ai-panel.js';
 
 test('Given mixed tasks, when clearing all, then count confirmation precedes cancellation and deletion', async () => {
   const calls = [];
@@ -19,9 +20,36 @@ test('Given mixed tasks, when clearing all, then count confirmation precedes can
   });
 
   assert.deepEqual(calls, [
-    'confirm:3', 'cancel:running', 'remove:running', 'cancel:queued', 'remove:queued', 'remove:done',
+    'confirm:3', 'cancel:running', 'remove:running', 'remove:queued', 'remove:done',
   ]);
   assert.deepEqual(result, { confirmed: true, removedIds: ['running', 'queued', 'done'], retainedIds: [] });
+});
+
+test('Given the production cancellation boundary, queued work clears locally while rejected running work remains', async () => {
+  const interrupted = [];
+  const removed = [];
+  const tasks = [
+    { id: 'queued', workState: 'queued', source: new Uint8Array([1, 2]) },
+    { id: 'running', workState: 'busy', source: new Uint8Array([3, 4]) },
+    { id: 'failed', workState: 'failed', source: new Uint8Array([5, 6]) },
+  ];
+  const before = tasks.map(task => task.source.slice());
+
+  const result = await clearTaskWorkspaces({
+    tasks,
+    confirm: async () => true,
+    cancel: tab => acknowledgeActiveTaskClearCancellation({
+      tab,
+      activeTaskTabId: 'running',
+      interrupt: async () => { interrupted.push(tab.id); return { ok: false }; },
+    }),
+    remove: async tab => { removed.push(tab.id); },
+  });
+
+  assert.deepEqual(interrupted, ['running']);
+  assert.deepEqual(removed, ['queued']);
+  assert.deepEqual(result, { confirmed: true, removedIds: ['queued'], retainedIds: ['running', 'failed'] });
+  assert.deepEqual(tasks.map(task => task.source), before);
 });
 
 test('Given a cancellation rejection, when clearing all, then that task and its source bytes are retained', async () => {
