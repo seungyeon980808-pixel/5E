@@ -52,6 +52,7 @@
       "desktop/preload.cjs",
       "desktop/codex-turn-runtime.cjs",
       "desktop/codex-process-failure.cjs",
+      "desktop/fullscreen-state.cjs",
       "desktop/ai-thread-profile.cjs",
       "desktop/batch-output-service.cjs",
       "desktop/image-export-service.cjs",

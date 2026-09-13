@@ -71,6 +71,21 @@ function localFontReferences() {
     .map((match) => path.posix.normalize(path.posix.join("css", match[1])));
 }
 
+function relativeCommonJsClosure(entries) {
+  const files = new Set();
+  const visit = (file) => {
+    if (files.has(file)) return;
+    files.add(file);
+    const source = fs.readFileSync(path.join(root, file), "utf8");
+    for (const match of source.matchAll(/require\(["'](\.[^"']+)["']\)/g)) {
+      const resolved = path.posix.normalize(path.posix.join(path.posix.dirname(file), match[1]));
+      visit(path.posix.extname(resolved) ? resolved : `${resolved}.cjs`);
+    }
+  };
+  entries.forEach(visit);
+  return [...files].sort();
+}
+
 test("Given a required runtime fixture is absent, when package selection is checked, then it fails and passes only after restoration", () => {
   const required = "assets/svg_object/1.svg";
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "5e-distribution-fixture-"));
@@ -125,6 +140,13 @@ test("Given package allowlist expansion on disk and the sparse-aware tracked tre
     sampleAssets,
     "the package selection must contain exactly the curated offline sample PNGs",
   );
+});
+
+test("Given packaged desktop entrypoints, when relative CommonJS dependencies are traversed, then every reachable module is selected", () => {
+  const selected = packageSelection(trackedFiles());
+  const runtimeClosure = relativeCommonJsClosure(["desktop/main.cjs", "desktop/preload.cjs"]);
+
+  assertSelected(selected, runtimeClosure, "desktop CommonJS closure");
 });
 
 test("Given a package mutation removes every stylesheet-consumed local font, when the expanded selection is checked, then it is rejected", () => {
