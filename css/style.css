@@ -409,7 +409,8 @@ body { zoom: var(--ui-zoom, 1); }
 }
 .advanced-tool-btn:hover { background: var(--btn-tool-hover); }
 /* active = signature blue (mirrors state.activeTool, e.g. the 각도 호 ARC tool) */
-.advanced-tool-btn.is-active {
+.advanced-tool-btn.is-active,
+.advanced-tool-btn.is-open {
   color: #fff;
   background: var(--btn-tool-active);
   border-color: var(--btn-tool-active);
@@ -465,8 +466,9 @@ body { zoom: var(--ui-zoom, 1); }
   line-height: 1;
 }
 
-/* active tool = signature blue (mirrors state.activeTool) */
-.tool-btn.is-active, .tool-btn.is-open {
+.tool-btn.is-active,
+.tool-btn.is-open,
+#fullscreen-toggle[aria-pressed="true"] {
   color: #fff;
   background: var(--btn-tool-active);
   border-color: var(--btn-tool-active);
@@ -726,12 +728,6 @@ body { zoom: var(--ui-zoom, 1); }
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.fullscreen-toggle[aria-pressed="true"] {
-  color: #fff;
-  background: var(--c-main);
-  border-color: var(--c-main);
-}
-
 /* ===== FILE MENU (파일 ▾ dropdown in the canvas toolbar) ===== */
 .file-menu {
   position: relative;
@@ -2295,8 +2291,9 @@ textarea.unified-text-input {
 .object-search-trigger:focus-visible,
 .grid-toggle-btn:focus-visible,
 #center-view-btn:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--text-primary);
   outline-offset: 2px;
+  box-shadow: none;
 }
 .canvas-bottom-bar .zoom-readout {
   flex:0 0 auto;

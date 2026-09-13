@@ -129,6 +129,35 @@ const zoomReadout = document.getElementById("zoom-readout");
   if (!window.fiveEDesktop?.fullscreen) syncButton(document.fullscreenElement === target);
 })();
 
+(function initGraphLauncherState() {
+  const btn = document.getElementById("graph-tool-open");
+  if (!btn) return;
+
+  const syncButton = () => {
+    const active = Boolean(document.querySelector("#graph-modal-overlay:not([hidden])"));
+    btn.classList.toggle("is-open", active);
+    btn.setAttribute("aria-expanded", String(active));
+  };
+
+  const observeOverlay = () => {
+    const overlay = document.getElementById("graph-modal-overlay");
+    if (!overlay) return false;
+    new MutationObserver(syncButton).observe(overlay, { attributes: true, attributeFilter: ["hidden"] });
+    syncButton();
+    return true;
+  };
+  if (!observeOverlay()) {
+    const bodyObserver = new MutationObserver((records) => {
+      if (!records.some((record) => Array.from(record.addedNodes).some((node) => node.id === "graph-modal-overlay"))) return;
+      bodyObserver.disconnect();
+      observeOverlay();
+    });
+    bodyObserver.observe(document.body, { childList: true });
+  }
+  btn.addEventListener("click", () => requestAnimationFrame(syncButton));
+  syncButton();
+})();
+
 /* ===== THEME TOGGLE (dark/light; persisted in localStorage 'theme') ===== */
 (function initTheme() {
   const root = document.documentElement;
