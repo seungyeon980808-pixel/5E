@@ -59,6 +59,67 @@ test('native fullscreen removes the custom title strip while retaining the windo
   assert.match(css, /\.desktop-shell\s+\.desktop-titlebar\s*\{[^}]*-webkit-app-region:\s*drag/s);
 });
 
+test('fullscreen and graph launcher derive their active state from real dialog or fullscreen events', async () => {
+  const source = read('js/main.js');
+  const fullscreen = source.slice(source.indexOf('/* ===== APP FULLSCREEN'), source.indexOf('(function initGraphLauncherState()'));
+  const graphLauncher = source.slice(source.indexOf('(function initGraphLauncherState()'), source.indexOf('/* ===== THEME TOGGLE'));
+  const listeners = new Map();
+  const buttonListeners = new Map();
+  const classes = new Set();
+  const attrs = new Map();
+  const fullscreenButton = {
+    addEventListener: (name, listener) => buttonListeners.set(name, listener),
+    setAttribute: (name, value) => attrs.set(name, value),
+    getAttribute: (name) => attrs.get(name),
+    title: '',
+  };
+  const root = {
+    classList: { toggle: (name, active) => active ? classes.add(name) : classes.delete(name) },
+    requestFullscreen: async () => { document.fullscreenElement = root; },
+  };
+  const document = {
+    documentElement: root,
+    fullscreenElement: null,
+    getElementById: (id) => id === 'fullscreen-toggle' ? fullscreenButton : null,
+    addEventListener: (name, listener) => listeners.set(name, listener),
+    exitFullscreen: async () => { document.fullscreenElement = null; },
+  };
+  const context = vm.createContext({ document, window: { addEventListener: () => {} }, console, Boolean });
+  vm.runInContext(fullscreen, context);
+  await buttonListeners.get('click')();
+  listeners.get('fullscreenchange')();
+  assert.equal(attrs.get('aria-pressed'), 'true');
+  assert.equal(classes.has('is-native-fullscreen'), true);
+  await buttonListeners.get('click')();
+  listeners.get('fullscreenchange')();
+  assert.equal(attrs.get('aria-pressed'), 'false');
+  assert.equal(classes.has('is-native-fullscreen'), false);
+
+  const graphAttrs = new Map();
+  const graphClasses = new Set();
+  const graphButton = {
+    classList: { toggle: (name, active) => active ? graphClasses.add(name) : graphClasses.delete(name) },
+    setAttribute: (name, value) => graphAttrs.set(name, value),
+    addEventListener() {},
+  };
+  const graphContext = vm.createContext({
+    document: { documentElement: {}, getElementById: () => graphButton, querySelector: () => ({}) },
+    MutationObserver: class MutationObserver { observe() {} disconnect() {} },
+    requestAnimationFrame: (callback) => callback(),
+  });
+  vm.runInContext(graphLauncher, graphContext);
+  assert.equal(graphClasses.has('is-open'), true);
+  assert.equal(graphAttrs.get('aria-expanded'), 'true');
+});
+
+test('selected controls have one blue fill and keyboard-only focus has one unclipped outer cue', () => {
+  const css = read('css/style.css');
+  assert.match(css, /\.advanced-tool-btn\.is-active,[\s\S]*?\.advanced-tool-btn\.is-open\s*\{[\s\S]*?color:\s*#fff;[\s\S]*?background:\s*var\(--btn-tool-active\);/s);
+  assert.match(css, /\.tool-btn\.is-active,[\s\S]*?#fullscreen-toggle\[aria-pressed="true"\]\s*\{[\s\S]*?background:\s*var\(--btn-tool-active\);/s);
+  assert.match(css, /\.tool-btn:focus-visible,[\s\S]*?outline:\s*2px solid var\(--text-primary\);[\s\S]*?outline-offset:\s*2px;[\s\S]*?box-shadow:\s*none;/s);
+  assert.match(css, /\.tool-btn:focus:not\(:focus-visible\)[\s\S]*?box-shadow:\s*none;/s);
+});
+
 test('theme and fullscreen controls live in the collapsible inspector header with a toolbar reopen control', () => {
   const html = read('index.html');
   const controlsStart = html.indexOf('class="canvas-global-controls"');
@@ -104,7 +165,7 @@ test('hidden MCP entrypoints, focus modality, native title inset, and centered c
   assert.match(read('index.html'), /id="mcp-bridge-btn"[^>]*data-mcp-entrypoint[^>]*hidden/);
   const css = read('css/style.css');
   assert.match(css, /#canvas:focus-visible\s*\{[^}]*outline:\s*none/s);
-  assert.match(css, /\.tool-btn:focus-visible,[\s\S]*?outline:\s*2px\s+solid\s+var\(--accent\)/s);
+  assert.match(css, /\.tool-btn:focus-visible,[\s\S]*?outline:\s*2px\s+solid\s+var\(--text-primary\);[\s\S]*?outline-offset:\s*2px/s);
   assert.match(css, /\[data-mcp-entrypoint\]\s*\{[^}]*display:\s*none\s*!important/s);
   assert.match(css, /\.desktop-shell\.platform-darwin\s+\.desktop-titlebar\s*\{[^}]*padding-inline-start:\s*78px/s);
   assert.match(css, /\.app-footer-copyright\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s);
