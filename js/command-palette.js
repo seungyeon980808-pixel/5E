@@ -1,3 +1,5 @@
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
+
 import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "./platform.js?v=1.4.0";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
@@ -123,6 +125,8 @@ export function initCommandPalette() {
     overlay.hidden = true;
     input.value = "";
   }
+
+  registerEscapeLayer(overlay.querySelector('[role="dialog"]'), close);
 
   function pick(index) {
     const match = matches[index];

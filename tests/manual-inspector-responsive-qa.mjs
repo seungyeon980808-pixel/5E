@@ -57,12 +57,15 @@ try {
   await xInput.fill("-1234.56");
   await page.locator(".panel-right").evaluate((element) => { element.style.width = "205px"; });
   assert.equal(await page.locator(".insp-geometry-pair").first().evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length), 1);
+  await page.waitForTimeout(400);
   await page.screenshot({ path: `${out}/inspector-narrow.png` });
   await xInput.press("Tab");
   assert.equal(await xInput.inputValue(), "-1234.56");
   await assertContained(page.locator(".insp-geometry-pair input, .insp-geometry-pair .insp-unit"), page.locator(".panel-right"));
   results.push({ scenario: "narrow inspector long signed decimal and resize-mid-edit", pass: true });
   await page.locator(".panel-right").evaluate((element) => { element.style.width = "360px"; });
+  await page.waitForTimeout(400);
+  await assertContained(page.locator(".panel-right input, .panel-right select, .panel-right .insp-unit"), page.locator(".panel-right"));
   await page.screenshot({ path: `${out}/inspector-wide.png` });
   await page.locator(".panel-right").evaluate((element) => { element.style.width = "205px"; });
 
@@ -78,6 +81,7 @@ try {
   await trigger.tap();
   await page.getByRole("menuitemradio", { name: "벽돌(석회암)" }).tap();
   assert.match(await trigger.getAttribute("aria-label"), /벽돌/);
+  await page.waitForTimeout(400);
   await page.screenshot({ path: `${out}/fill-current-pattern.png` });
   results.push({ scenario: "fill swatches keyboard and touch with current visual", pass: true });
 
@@ -97,7 +101,8 @@ try {
   results.push({ scenario: "Cancel byte-identical mixed selection", pass: true });
 
   await page.locator("#bulk-edit-open").click();
-  await page.locator('[data-bulk-group="dimensions"] .bulk-control-row').filter({ hasText: "너비" }).locator('input[type="number"]').fill("33.25");
+  await page.locator('[data-bulk-group="dimensions"] .bulk-property-row').filter({ hasText: "너비" }).locator('input[type="number"]').first().fill("33.25");
+  await page.getByRole("spinbutton", { name: "높이 기존 값에서 변경 값", exact: true }).fill("5");
   const beforeApply = await stateSnapshot(page);
   stateEvidence.applyBefore = beforeApply;
   await page.locator("#bulk-apply").click();
@@ -105,6 +110,7 @@ try {
   stateEvidence.applyAfter = afterApply;
   assert.equal(afterApply.undo, beforeApply.undo + 1);
   assert.ok(afterApply.objects.every((object) => object.w === 33.25));
+  afterApply.objects.forEach((object, index) => assert.ok(Math.abs(object.h - beforeApply.objects[index].h - 5) < 0.01));
   await page.keyboard.press("Meta+z");
   const afterUndo = await stateSnapshot(page);
   stateEvidence.undoAfter = afterUndo;
@@ -119,6 +125,7 @@ try {
   const modalBox = await modal.boundingBox();
   const footerBox = await footer.boundingBox();
   assert.ok(footerBox.y >= modalBox.y && footerBox.y + footerBox.height <= modalBox.y + modalBox.height + 1);
+  await page.waitForTimeout(400);
   await page.screenshot({ path: `${out}/bulk-dialog-narrow.png` });
   await page.setViewportSize({ width: 1280, height: 820 });
   for (const label of await page.locator('#bulk-gap-rows .modal-label').all()) {
@@ -126,8 +133,13 @@ try {
     assert.ok(metrics.scrollWidth <= metrics.clientWidth + 1, JSON.stringify(metrics));
     assert.ok(metrics.text.length >= 7, JSON.stringify(metrics));
   }
+  await page.waitForTimeout(400);
   await page.screenshot({ path: `${out}/bulk-dialog-wide.png` });
   results.push({ scenario: "bulk dialog 2-column to 1-column with visible footer", pass: true });
+  await page.keyboard.press("Escape");
+  assert.equal(await modal.isVisible(), false);
+  assert.equal(await page.locator("#bulk-edit-open").evaluate(element => element === document.activeElement), true);
+  results.push({ scenario: "Escape closes bulk and restores trigger focus", pass: true });
   assert.deepEqual(errors, []);
 } finally {
   await writeFile(`${out}/manual-results.json`, JSON.stringify({ url, results, errors, stateEvidence }, null, 2));

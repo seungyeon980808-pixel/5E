@@ -586,3 +586,24 @@ details[open] > .insp-summary::before {
 }
 .insp-2col .insp-field-label { width: auto; min-width: 0; text-align: left; }
 .insp-2col .insp-input, .insp-2col select, .insp-2col input { min-width: 0; width: 100%; box-sizing: border-box; }
+
+/* Both operations stay visible; each property chooses one before Apply. */
+.bulk-modal { width: min(940px, calc(100vw - 32px)); }
+.bulk-property-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.bulk-property-groups .bulk-fields-grid { grid-template-columns: 1fr; }
+.bulk-column-head { display: grid; grid-template-columns: minmax(105px, 1fr) repeat(2, minmax(100px, 1fr)); gap: 8px; margin: 0 0 6px; color: var(--text-secondary); font-size: 11px; }
+.bulk-property-row { display: grid; grid-template-columns: 16px minmax(80px, 1fr) repeat(2, minmax(100px, 1fr)); align-items: center; gap: 6px; margin: 0; min-width: 0; }
+.bulk-property-row .modal-label { margin: 0; min-width: 0; white-space: normal; word-break: keep-all; }
+.bulk-value-cell { display: flex; gap: 4px; align-items: center; min-width: 0; }
+.bulk-value-cell .modal-input { width: 100%; min-width: 0; padding: 6px; }
+.bulk-wide-input { grid-column: 3 / -1; width: 100%; min-width: 0; }
+.bulk-control-row .modal-label { overflow: visible; white-space: normal; word-break: keep-all; }
+#bulk-gap-rows [data-bulk-kind="align"] { grid-column: auto; grid-template-columns: 16px minmax(140px, 1fr) minmax(90px, 120px) 34px; }
+@media (max-width: 800px) {
+  .bulk-property-groups { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 520px) {
+  .bulk-property-row { grid-template-columns: 16px minmax(65px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-column-head { grid-template-columns: minmax(85px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-value-cell { gap: 2px; }
+}
