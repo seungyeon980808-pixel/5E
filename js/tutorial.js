@@ -1717,13 +1717,6 @@ function pointAtTutorialButton() {
 /* ===== 배선 ===== */
 
 export function initTutorial() {
-  const tutorialButton = document.getElementById("tutorial-btn");
-  if (tutorialButton && !tutorialButton.querySelector(".tutorial-beta-tag")) {
-    const beta = document.createElement("span");
-    beta.className = "beta-tag tutorial-beta-tag";
-    beta.textContent = "베타";
-    tutorialButton.appendChild(beta);
-  }
   removeKey(K_RESUME_LEGACY);   // 예전 버전이 남긴 이어하기 기록을 치운다
   removeKey(K_LEVEL_LEGACY);    // 폐지한 난이도 선택의 잔재
 

@@ -16,13 +16,9 @@ function createFullscreenCoordinator(target, publish) {
     if (active && !restoreBounds) restoreBounds = target.getNormalBounds();
     if (!active && restoreBounds) {
       const current = target.getBounds();
-      if (current.width !== restoreBounds.width || current.height !== restoreBounds.height) {
-        target.setBounds({
-          x: current.x,
-          y: current.y,
-          width: restoreBounds.width,
-          height: restoreBounds.height,
-        });
+      if (current.x !== restoreBounds.x || current.y !== restoreBounds.y
+        || current.width !== restoreBounds.width || current.height !== restoreBounds.height) {
+        target.setBounds(restoreBounds);
       }
       restoreBounds = null;
     }

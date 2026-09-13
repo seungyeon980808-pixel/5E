@@ -216,8 +216,13 @@
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
         <div class="file-menu">
-          <button id="file-menu-btn" class="topbar-btn" type="button"
-                  aria-haspopup="true" aria-expanded="false" title="파일">파일 ▾</button>
+          <button id="file-menu-btn" class="topbar-btn shell-icon-button shell-icon-button-menu" type="button"
+                  aria-haspopup="true" aria-expanded="false" aria-label="파일" data-shell-tip="파일">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.75 5.75h5.1l1.55 1.7h7.85v7.8H2.75z"/><path d="M2.75 5.75V4.1h4.2l1.55 1.65"/>
+            </svg>
+            <span class="shell-menu-chevron" aria-hidden="true">⌄</span>
+          </button>
           <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="project-save" class="file-menu-item" type="button" role="menuitem"
                     data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장 <span class="menu-kbd">Ctrl+S</span></button>
@@ -233,7 +238,13 @@
         </div>
         <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
         <div class="file-menu">
-          <button id="settings-menu-btn" class="topbar-btn" type="button" aria-haspopup="true" aria-expanded="false" title="설정">설정 ▾</button>
+          <button id="settings-menu-btn" class="topbar-btn shell-icon-button shell-icon-button-menu" type="button"
+                  aria-haspopup="true" aria-expanded="false" aria-label="설정" data-shell-tip="설정">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true">
+              <path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.7" fill="var(--bg-panel)"/><circle cx="13" cy="10" r="1.7" fill="var(--bg-panel)"/><circle cx="8.5" cy="15" r="1.7" fill="var(--bg-panel)"/>
+            </svg>
+            <span class="shell-menu-chevron" aria-hidden="true">⌄</span>
+          </button>
           <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
                     data-desc="선 굵기·글꼴 크기 같은 새 오브젝트의 기본값을 정합니다.">오브젝트 설정</button>
@@ -250,8 +261,12 @@
         </div>
         <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
              처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
-        <button id="tutorial-btn" class="topbar-btn" type="button"
-                title="튜토리얼 — 화면 위에서 하나씩 짚어 드립니다">튜토리얼</button>
+        <button id="tutorial-btn" class="topbar-btn shell-icon-button" type="button"
+                aria-label="튜토리얼" data-shell-tip="튜토리얼">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.75 4.25c2.75-.8 5-.35 7.25 1.35v10.15c-2.25-1.7-4.5-2.15-7.25-1.35zM17.25 4.25c-2.75-.8-5-.35-7.25 1.35v10.15c2.25-1.7 4.5-2.15 7.25-1.35z"/><path d="m11.95 8.2 2.55 1.8-2.55 1.8z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
         <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
                 data-mcp-entrypoint
                 title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
@@ -301,9 +316,9 @@
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3z"/><path stroke-dasharray="2 2" d="M11 11h6v6h-6z"/></svg>
             <span class="search-trigger-label">이미지 객체화</span>
           </button>
-          <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지 생성" aria-label="AI 이미지 생성">
+          <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지 변환" aria-label="AI 이미지 변환">
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m10 2 1.4 4.2L16 8l-4.6 1.8L10 14l-1.4-4.2L4 8l4.6-1.8z"/><path d="m16 13 .7 2.1L19 16l-2.3.9L16 19l-.7-2.1L13 16l2.3-.9z"/></svg>
-            <span class="search-trigger-label">AI 이미지 생성</span>
+            <span class="search-trigger-label">AI 이미지 변환</span>
           </button>
         </div>
         <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
@@ -385,7 +400,7 @@
           <span>캔버스</span>
         </button>
         <div class="ai-title-line">
-          <h2 class="modal-title" id="ai-image-title">이미지 변환</h2>
+          <h2 class="modal-title" id="ai-image-title">AI 이미지 변환</h2>
         </div>
         <div class="ai-head-status">
           <button type="button" class="ai-project-transfer" data-ai-project-transfer hidden>웹 프로젝트 열기</button>
@@ -413,7 +428,7 @@
         <aside class="ai-task-rail" aria-label="작업 목록">
           <div class="ai-rail-heading">
             <strong>작업</strong>
-            <button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다">＋ 새 작업</button>
+            <div class="ai-rail-actions"><button type="button" data-ai-tab-clear title="실패한 작업은 남기고 나머지 작업을 정리합니다">모두 지우기</button><button type="button" data-ai-tab-new title="독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다">＋ 새 작업</button></div>
           </div>
           <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
             <div class="ai-task-tab-list" data-ai-tab-list role="tablist"></div>
@@ -524,10 +539,6 @@
                 <option value="2">+2px</option>
               </select>
             </label>
-            <details class="ai-output-help">
-              <summary>처리 도움말</summary>
-              <p><strong>외부 배경 제거</strong>는 물체와 이어진 바깥 흰색만 투명하게 만듭니다. <strong>모든 흰색 제거</strong>는 물체 안쪽 흰색도 함께 처리합니다. 무채색과 선 굵기는 생성 원본을 바꾸지 않고 미리보기·저장·삽입 결과에 적용됩니다.</p>
-            </details>
             <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
           </section>
           <div class="ai-side-content">
@@ -542,12 +553,12 @@
                     <div class="ai-mode-row" role="group" aria-label="출력 방식">
                       <span>출력</span>
                       <button type="button" class="is-on" data-ai-output-engine="raster" title="그림형 선택 시 흰 배경 PNG를 후처리 없이 생성합니다">교과서 선화</button>
-                      <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다">5E 에셋</button>
+                      <button type="button" data-ai-output-engine="asset" title="지원되는 장치를 편집 가능한 5E 오브젝트로 생성합니다" hidden>5E 에셋</button>
                     </div>
                     <div class="ai-mode-row" role="group" aria-label="라벨 포함 여부">
                       <span>라벨</span>
                       <button type="button" class="is-on" data-ai-mode="diagram" title="문자 없이 구조만 생성합니다">그림형</button>
-                      <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다">완성형</button>
+                      <button type="button" data-ai-mode="complete" title="요청한 라벨과 부가 표시까지 포함합니다" hidden>완성형</button>
                     </div>
                     <p data-ai-white-png-note>기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존</p>
                     <section class="ai-mark-policy" data-ai-mark-policy aria-label="표시선 처리">
@@ -601,11 +612,7 @@
                 <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>지정하지 않은 부분은 유지</span></header>
                 <div class="ai-comments-list" data-ai-comments aria-live="polite"><p class="ai-comments-empty">그림에서 점을 찍거나 영역을 둘러싸고 수정할 내용을 남기세요.</p></div>
               </section>
-              <section class="ai-comment-compose" aria-label="선택한 코멘트 편집">
-                <header><strong>코멘트 편집</strong><button type="button" data-ai-comment-delete disabled>삭제</button></header>
-                <textarea data-ai-comment-editor aria-label="선택한 코멘트 내용" placeholder="예: 가열판의 검정 면을 흰 면과 윤곽선으로 바꿔 주세요."></textarea>
-                <div class="ai-comment-compose-foot"><span data-ai-comment-status>코멘트는 선택한 이미지 버전에 연결됩니다.</span><button type="button" data-ai-comment-save disabled>저장</button></div>
-              </section>
+              <p class="ai-comment-list-status" data-ai-comment-status aria-live="polite">코멘트는 선택한 이미지 버전에 연결됩니다.</p>
             </section>
             <section class="ai-chat-panel" data-ai-chat-panel aria-label="Codex와 대화" hidden>
               <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>대화 답변은 그림을 만들지 않습니다. 정리한 내용을 수정 요청으로 가져온 뒤 변환을 실행하세요.</p></header>
