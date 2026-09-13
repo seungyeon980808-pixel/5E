@@ -49,8 +49,17 @@ export function buildFillSection(ctx) {
   const fsLbl = document.createElement("label");
   fsLbl.className = "insp-field-label";
   fsLbl.textContent = "채우기 종류";
+  const fsPicker = document.createElement("div");
+  fsPicker.className = "fill-style-picker";
+  const fillStyleTrigger = document.createElement("button");
+  fillStyleTrigger.type = "button";
+  fillStyleTrigger.className = "fill-style-trigger";
+  fillStyleTrigger.setAttribute("aria-haspopup", "menu");
+  fillStyleTrigger.setAttribute("aria-expanded", "false");
   const fsBtns = document.createElement("div");
-  fsBtns.style.cssText = "display:flex;gap:4px;flex-wrap:wrap;";
+  fsBtns.className = "fill-style-menu";
+  fsBtns.setAttribute("role", "menu");
+  fsBtns.hidden = true;
   // 18×18 inline-SVG glyphs (drawn inside a 28×28 button).
   const FILL_STYLE_ICONS = {
     solid: '<rect width="18" height="18" fill="#888" rx="1"/>',
@@ -99,12 +108,29 @@ export function buildFillSection(ctx) {
     { label: "+ (심성암)",   value: "plus"   },
     { label: "가로줄(셰일)", value: "hlines" },
   ];
+  const fillStyleIcon = (value) => `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">${FILL_STYLE_ICONS[value]}</svg>`;
+  function setMenuOpen(open, focusFirst = false) {
+    fsBtns.hidden = !open;
+    fillStyleTrigger.setAttribute("aria-expanded", String(open));
+    if (focusFirst && open) fsBtns.querySelector("button")?.focus();
+  }
+  fillStyleTrigger.addEventListener("click", () => setMenuOpen(fsBtns.hidden, true));
+  fillStyleTrigger.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setMenuOpen(true, true); }
+  });
+  fsPicker.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { e.preventDefault(); setMenuOpen(false); fillStyleTrigger.focus(); }
+  });
   const _fillStyleBtnEls = {};
   FILL_STYLE_OPTIONS.forEach(({ label, value }) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.title = label;
-    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 18 18">${FILL_STYLE_ICONS[value]}</svg>`;
-    btn.style.cssText = "width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+    btn.setAttribute("aria-label", label);
+    btn.setAttribute("role", "menuitemradio");
+    btn.dataset.fillStyle = value;
+    btn.innerHTML = fillStyleIcon(value);
+    btn.className = "fill-style-option";
     btn.addEventListener("click", () => {
       const s = state.get();
       const ids = s.selectedIds || [];
@@ -118,12 +144,16 @@ export function buildFillSection(ctx) {
           if (o) o.fillStyle = value;
         });
       });
+      setMenuOpen(false);
+      fillStyleTrigger.focus();
     });
     _fillStyleBtnEls[value] = btn;
     fsBtns.appendChild(btn);
   });
+  fsPicker.appendChild(fillStyleTrigger);
+  fsPicker.appendChild(fsBtns);
   fsRow.appendChild(fsLbl);
-  fsRow.appendChild(fsBtns);
+  fsRow.appendChild(fsPicker);
   sec2Body.appendChild(fsRow);
 
   // Highlight the active fill-style button for the (first) selected object.
@@ -131,10 +161,13 @@ export function buildFillSection(ctx) {
     const fs = obj.fillStyle ?? "solid";
     Object.entries(_fillStyleBtnEls).forEach(([val, btn]) => {
       const active = val === fs;
-      btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
-      btn.style.color      = active ? "#ffffff" : "var(--text-primary)";
-      btn.style.border     = active ? "1px solid var(--accent)" : "1px solid var(--border)";
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-checked", String(active));
     });
+    const current = FILL_STYLE_OPTIONS.find((option) => option.value === fs) || FILL_STYLE_OPTIONS[0];
+    fillStyleTrigger.innerHTML = fillStyleIcon(current.value);
+    fillStyleTrigger.title = current.label;
+    fillStyleTrigger.setAttribute("aria-label", `채우기 종류: ${current.label}`);
   }
 
   fnCb.addEventListener("change", () => {

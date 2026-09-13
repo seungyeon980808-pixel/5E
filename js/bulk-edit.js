@@ -94,25 +94,25 @@ function setLineLen(o, len) {
  * uniformOnly: 통일 모드에서만 노출 */
 const FIELDS = [
   {
-    key: "strokeWidth", type: "number", label: "선 굵기", unit: "mm", step: 0.1, uniDefault: 0.2,
+    key: "strokeWidth", group: "style", type: "number", label: "선 굵기", unit: "mm", step: 0.1, uniDefault: 0.2,
     has: (o) => typeof o.strokeWidth === "number",
     setUni: (o, v) => { o.strokeWidth = Math.max(0, v); },
     setDelta: (o, d) => { o.strokeWidth = Math.max(0, round2(o.strokeWidth + d)); },
   },
   {
-    key: "strokeLevel", type: "number", label: "선 색(어둡기)", unit: "0~255", step: 5, uniDefault: 255,
+    key: "strokeLevel", group: "style", type: "number", label: "선 색(어둡기)", unit: "0~255", step: 5, uniDefault: 255,
     has: (o) => typeof o.strokeLevel === "number",
     setUni: (o, v) => { o.strokeLevel = clamp255(255 - v); },   // UI 어둡기 → 내부 level(반전)
     setDelta: (o, d) => { o.strokeLevel = clamp255(o.strokeLevel - d); },
   },
   {
-    key: "fillLevel", type: "number", label: "면 색(어둡기)", unit: "0~255", step: 5, uniDefault: 0,
+    key: "fillLevel", group: "style", type: "number", label: "면 색(어둡기)", unit: "0~255", step: 5, uniDefault: 0,
     has: (o) => typeof o.fillLevel === "number",
     setUni: (o, v) => { o.fillLevel = clamp255(255 - v); },
     setDelta: (o, d) => { o.fillLevel = clamp255(o.fillLevel - d); },
   },
   {
-    key: "textSize", type: "number", label: "글씨 크기", unit: "pt", step: 1, uniDefault: 10,
+    key: "textSize", group: "style", type: "number", label: "글씨 크기", unit: "pt", step: 1, uniDefault: 10,
     // formula도 fontSize로 글자 크기를 가지므로 함께 포함(기존엔 text만 반영됐음).
     has: (o) => o.type === "text" || o.type === "formula" || typeof o.labelSize === "number",
     setUni: (o, v) => {
@@ -128,41 +128,41 @@ const FIELDS = [
     },
   },
   {
-    key: "boxW", type: "number", label: "너비", unit: "mm", step: 1, uniDefault: 20,
+    key: "boxW", group: "dimensions", type: "number", label: "너비", unit: "mm", step: 1, uniDefault: 20,
     has: (o) => typeof o.w === "number" && typeof o.h === "number",
     setUni: (o, v) => setBoxW(o, v),
     setDelta: (o, d) => setBoxW(o, o.w + d),
   },
   {
-    key: "boxH", type: "number", label: "높이", unit: "mm", step: 1, uniDefault: 20,
+    key: "boxH", group: "dimensions", type: "number", label: "높이", unit: "mm", step: 1, uniDefault: 20,
     has: (o) => typeof o.w === "number" && typeof o.h === "number",
     setUni: (o, v) => setBoxH(o, v),
     setDelta: (o, d) => setBoxH(o, o.h + d),
   },
   {
-    key: "lineLen", type: "number", label: "길이", unit: "mm", step: 1, uniDefault: 20,
+    key: "lineLen", group: "dimensions", type: "number", label: "길이", unit: "mm", step: 1, uniDefault: 20,
     has: (o) => !!(o.p1 && o.p2),
     setUni: (o, v) => setLineLen(o, v),
     setDelta: (o, d) => setLineLen(o, lineLen(o) + d),
   },
   {
-    key: "rotation", type: "number", label: "각도", unit: "°", step: 5, uniDefault: 0,
+    key: "rotation", group: "dimensions", type: "number", label: "각도", unit: "°", step: 5, uniDefault: 0,
     has: hasAngle,
     setUni: setAngleUni,
     setDelta: setAngleDelta,
   },
   {
-    key: "fontFamily", type: "font", label: "글씨체", uniformOnly: true,
+    key: "fontFamily", group: "style", type: "font", label: "글씨체", uniformOnly: true,
     has: (o) => o.type === "text" || o.type === "formula",
     setUni: (o, css) => { o.fontFamily = css; },
   },
   {
-    key: "positionLocked", type: "bool", label: "위치 고정", uniformOnly: true,
+    key: "positionLocked", group: "dimensions", type: "bool", label: "위치 고정", uniformOnly: true,
     has: () => true,
     setUni: (o, on) => { o.positionLocked = on; },
   },
   {
-    key: "locked", type: "bool", label: "오브젝트 잠금", uniformOnly: true,
+    key: "locked", group: "dimensions", type: "bool", label: "오브젝트 잠금", uniformOnly: true,
     has: () => true,
     setUni: (o, on) => { o.locked = on; },
   },
@@ -190,22 +190,31 @@ function buildModal() {
   overlay.className = "modal-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bulk-title"
-         style="width:min(400px, calc(100vw - 32px))">
+    <div class="modal bulk-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-title">
       <h2 class="modal-title" id="bulk-title">전체 통일/수정</h2>
-      <div class="modal-field">
-        <span class="modal-label">모드</span>
-        <div class="seg" id="bulk-mode">
-          <button type="button" class="seg-btn is-active" data-mode="uniform">전체 통일</button>
-          <button type="button" class="seg-btn" data-mode="delta">전체 수정</button>
+      <div class="bulk-scroll">
+        <div class="modal-field bulk-mode-row">
+          <span class="modal-label">모드</span>
+          <div class="seg" id="bulk-mode">
+            <button type="button" class="seg-btn is-active" data-mode="uniform">전체 통일</button>
+            <button type="button" class="seg-btn" data-mode="delta">전체 수정</button>
+          </div>
         </div>
-      </div>
-      <p class="objectify-description" id="bulk-mode-desc" style="margin:2px 0 8px;"></p>
-      <p class="objectify-description" id="bulk-target" style="margin:0 0 8px;"></p>
-      <div id="bulk-fields"></div>
-      <div id="bulk-spacing" style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">
-        <div id="bulk-gap-rows"></div>
-        <p class="objectify-description" id="bulk-gap-desc" style="margin:2px 0 0;"></p>
+        <p class="objectify-description" id="bulk-mode-desc"></p>
+        <p class="objectify-description" id="bulk-target"></p>
+        <section class="bulk-group" data-bulk-group="style" aria-labelledby="bulk-style-title">
+          <h3 id="bulk-style-title">스타일</h3>
+          <div class="bulk-fields-grid" id="bulk-style-fields"></div>
+        </section>
+        <section class="bulk-group" data-bulk-group="dimensions" aria-labelledby="bulk-dimensions-title">
+          <h3 id="bulk-dimensions-title">크기</h3>
+          <div class="bulk-fields-grid" id="bulk-dimension-fields"></div>
+        </section>
+        <section class="bulk-group" id="bulk-spacing" data-bulk-group="alignment" aria-labelledby="bulk-alignment-title">
+          <h3 id="bulk-alignment-title">정렬</h3>
+          <div class="bulk-fields-grid" id="bulk-gap-rows"></div>
+          <p class="objectify-description" id="bulk-gap-desc"></p>
+        </section>
       </div>
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="bulk-cancel">취소</button>
@@ -220,8 +229,11 @@ let _mode = "uniform";
 const _rows = new Map(); // key -> { cb, read(), field }
 
 function renderFields() {
-  const host = _overlay.querySelector("#bulk-fields");
-  host.innerHTML = "";
+  const hosts = {
+    style: _overlay.querySelector("#bulk-style-fields"),
+    dimensions: _overlay.querySelector("#bulk-dimension-fields"),
+  };
+  Object.values(hosts).forEach((host) => { host.innerHTML = ""; });
   _rows.clear();
   const fontOptions = TEXT_FONTS.map((f) =>
     `<option value="${f.css.replace(/"/g, "&quot;")}"${f.css === DEFAULT_TEXT_FONT ? " selected" : ""}>${f.label}</option>`
@@ -231,13 +243,11 @@ function renderFields() {
     if (f.uniformOnly && _mode !== "uniform") continue; // 통일 전용 항목은 수정 모드에서 숨김
 
     const row = document.createElement("label");
-    row.className = "modal-field modal-field-row";
-    row.style.cssText = "display:flex;align-items:center;gap:8px;";
+    row.className = "modal-field modal-field-row bulk-control-row";
     const cb = document.createElement("input");
     cb.type = "checkbox";
     const lbl = document.createElement("span");
     lbl.className = "modal-label";
-    lbl.style.cssText = "flex:1 1 auto;margin:0;";
     lbl.textContent = f.label;
     row.appendChild(cb); row.appendChild(lbl);
 
@@ -245,7 +255,6 @@ function renderFields() {
     if (f.type === "font") {
       const sel = document.createElement("select");
       sel.className = "modal-input";
-      sel.style.cssText = "width:150px;flex:none;";
       sel.innerHTML = fontOptions;
       sel.addEventListener("change", () => { cb.checked = true; });
       row.appendChild(sel);
@@ -253,7 +262,6 @@ function renderFields() {
     } else if (f.type === "bool") {
       const sel = document.createElement("select");
       sel.className = "modal-input";
-      sel.style.cssText = "width:90px;flex:none;";
       sel.innerHTML = `<option value="on">켜기</option><option value="off">끄기</option>`;
       sel.addEventListener("change", () => { cb.checked = true; });
       row.appendChild(sel);
@@ -263,16 +271,15 @@ function renderFields() {
       input.type = "number";
       input.step = String(f.step);
       input.className = "modal-input";
-      input.style.cssText = "width:90px;flex:none;";
       input.value = _mode === "uniform" ? String(f.uniDefault) : "0";
       input.addEventListener("input", () => { cb.checked = true; });
       const unit = document.createElement("span");
-      unit.style.cssText = "flex:none;font-size: 11px;color:var(--text-secondary);width:38px;";
+      unit.className = "bulk-unit";
       unit.textContent = _mode === "delta" ? `±${f.unit}` : f.unit;
       row.appendChild(input); row.appendChild(unit);
       read = () => Number(input.value);
     }
-    host.appendChild(row);
+    hosts[f.group].appendChild(row);
     _rows.set(f.key, { cb, read, field: f });
   }
 }
@@ -383,13 +390,12 @@ function renderGapRows() {
   _gapRows.clear();
   for (const g of ARRANGE_ROWS) {
     const row = document.createElement("label");
-    row.className = "modal-field modal-field-row";
-    row.style.cssText = "display:flex;align-items:center;gap:8px;";
+    row.className = "modal-field modal-field-row bulk-control-row";
+    row.dataset.bulkKind = g.kind;
     const cb = document.createElement("input");
     cb.type = "checkbox";
     const lbl = document.createElement("span");
     lbl.className = "modal-label";
-    lbl.style.cssText = "flex:1 1 auto;margin:0;";
     lbl.textContent = g.label;
     row.appendChild(cb); row.appendChild(lbl);
 
@@ -397,11 +403,10 @@ function renderGapRows() {
     if (g.kind === "align") {
       const sel = document.createElement("select");
       sel.className = "modal-input";
-      sel.style.cssText = "width:90px;flex:none;";
       sel.innerHTML = g.opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
       sel.addEventListener("change", () => { cb.checked = true; });
       const pad = document.createElement("span");
-      pad.style.cssText = "flex:none;width:38px;";
+      pad.className = "bulk-unit";
       row.appendChild(sel); row.appendChild(pad);
       read = () => sel.value;
     } else {
@@ -410,10 +415,9 @@ function renderGapRows() {
       input.step = "1";
       input.value = "4";
       input.className = "modal-input";
-      input.style.cssText = "width:90px;flex:none;";
       input.addEventListener("input", () => { cb.checked = true; });
       const unit = document.createElement("span");
-      unit.style.cssText = "flex:none;font-size:11px;color:var(--text-secondary);width:38px;";
+      unit.className = "bulk-unit";
       unit.textContent = "mm";
       row.appendChild(input); row.appendChild(unit);
       read = () => Number(input.value);
