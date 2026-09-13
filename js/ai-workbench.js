@@ -270,11 +270,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   function updateResponsiveLayout() {
     const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
+    if (userChoseLayout) return;
     if (processing && !generatedCards().length) {
       setLayout("result");
       return;
     }
-    if (userChoseLayout) return;
     setLayout(generatedCards().length ? "result" : sourceCards().length ? "source" : "result");
   }
 

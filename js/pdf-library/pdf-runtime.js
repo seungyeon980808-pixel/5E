@@ -57,6 +57,12 @@ export function detectPageItems(page) {
     .map((word) => ({ match: /^(\d{1,2})\.$/u.exec(word.text), x: word.rect[0], y: word.rect[1] }))
     .filter((mark) => mark.match)
     .map((mark) => ({ number: Number(mark.match[1]), x: mark.x, y: mark.y }));
+  const pageText = String(page.text ?? "").normalize("NFKC");
+  const hasQuestionPrompt = /[?？]|옳은|고른|것은|구하(?:시오|라)|계산하(?:시오|라)|쓰시오|말하시오|서술하시오|다음\s*중/u.test(pageText);
+  const hasAnswerKeyEvidence = /답안|(?:^|\s)답(?=\s|$)/u.test(pageText);
+  const hasQuestionEvidence = !pageText.trim() || hasQuestionPrompt || numbered.length >= 3
+    || page.words.some((word) => /^[①②③④⑤]$/u.test(word.text));
+  if ((hasAnswerKeyEvidence && !hasQuestionPrompt) || !hasQuestionEvidence) return Object.freeze([]);
   const uniqueNumbers = new Map();
   for (const mark of numbered.sort((left, right) => left.x - right.x)) {
     if (!uniqueNumbers.has(mark.number)) uniqueNumbers.set(mark.number, mark);

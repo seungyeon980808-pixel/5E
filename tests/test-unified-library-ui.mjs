@@ -43,6 +43,8 @@ import {
   toggleLibraryType,
   normalizeYearRange,
   createSearchScheduler,
+  activePdfPageResult,
+  materializeOriginalLibraryPage,
 } from "../js/unified-library-ui.js";
 
 test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
@@ -87,6 +89,55 @@ test("unified shell has multiselect type controls, neutral tray actions, and no 
   assert.match(source, /data-unilib-help/u);
   assert.doesNotMatch(source, /data-unilib-pdf-back/u);
   assert.doesNotMatch(source, /pdfBrowseSource/u);
+});
+
+test("library shell keeps one dismissal and omits import, folder management, and a second preview close", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /data-unilib-import|data-unilib-files|data-unilib-manage|data-unilib-folder-dialog/u);
+  assert.doesNotMatch(source, /data-unilib-preview-close/u);
+  assert.equal((source.match(/data-unilib-close/g) || []).length, 2);
+});
+
+test("folder counts are tooltip-only and never reserve label width", async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
+  assert.doesNotMatch(source, /className = "unilib-tree-count"/u);
+  assert.doesNotMatch(css, /unilib-tree-count/u);
+  assert.match(source, /row\.title = counts \?/u);
+});
+
+test("an aggregate PDF resolves the active match and uses its own full-page loader", async () => {
+  const calls = [];
+  const aggregate = {
+    id: "pdf:doc", kind: "pdf", firstMatchingPage: 1,
+    provenance: { provider: "pdf", documentId: "doc", pageNumber: 1 },
+    matches: [{ pageNumber: 1 }, { pageNumber: 272 }],
+    loadPreview: async (pageNumber, options) => {
+      calls.push({ pageNumber, options });
+      return { dataUrl: "data:image/png;base64,AA==", provenance: { documentId: "doc", pageNumber } };
+    },
+  };
+  const active = activePdfPageResult(aggregate, 1);
+  assert.equal(active.provenance.pageNumber, 272);
+  const materialized = await materializeOriginalLibraryPage(active, { materialize: () => assert.fail("aggregate PDF must not enter generic materialize") });
+  assert.deepEqual(calls, [{ pageNumber: 272, options: { original: true } }]);
+  assert.equal(materialized.provenance.pageNumber, 272);
+});
+
+test("page and crop originals retain the generic materializer contract", async () => {
+  const result = { id: "page:doc:4", kind: "page", provenance: { provider: "pdf", documentId: "doc", pageNumber: 4 } };
+  const calls = [];
+  await materializeOriginalLibraryPage(result, { materialize: async (value, options) => { calls.push({ value, options }); return { dataUrl: "data:image/png;base64,AA==" }; } });
+  assert.deepEqual(calls, [{ value: result, options: { original: true } }]);
+});
+
+test("Space routes the selected PDF into the direct crop surface without a second lightbox", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /data-unilib-lightbox/u);
+  assert.match(source, /shouldHandleLibrarySpace\(event\)[\s\S]*openExpandedPreview/u);
+  assert.match(source, /data-unilib-crop-ai/u);
 });
 
 test("AI consumer mode retains library tools while exposing only AI destinations", async () => {
@@ -438,7 +489,7 @@ test("crop editor exposes exact-preview direct save, canvas, objectify, and AI r
   assert.match(source, /data-unilib-crop-insert/u);
   assert.match(source, /data-unilib-crop-objectify/u);
   assert.match(source, /data-unilib-crop-ai/u);
-  assert.match(source, /openIndependentReferences\(\{ references: \[reference\], startGeneration: false \}\)/u);
+  assert.match(source, /openAiDestination\(\[reference\], \{ closeCropSurface: true \}\)/u);
 });
 
 test("crop sessions reject stale result and page identities", () => {
@@ -484,6 +535,7 @@ test("Given a selected result from a disabled source, when results refresh, then
 test("Given editable or button focus, when Space is pressed, then the library preview shortcut is guarded", () => {
   assert.equal(shouldHandleLibrarySpace({ key: " ", target: { tagName: "INPUT" } }), false);
   assert.equal(shouldHandleLibrarySpace({ key: " ", target: { tagName: "BUTTON" } }), false);
+  assert.equal(shouldHandleLibrarySpace({ key: " ", target: { tagName: "BUTTON", closest: (selector) => selector === "[data-result-id]" ? {} : null } }), true);
   assert.equal(shouldHandleLibrarySpace({ key: " ", target: { tagName: "DIV", isContentEditable: true } }), false);
   assert.equal(shouldHandleLibrarySpace({ key: " ", target: { tagName: "LI" } }), true);
 });

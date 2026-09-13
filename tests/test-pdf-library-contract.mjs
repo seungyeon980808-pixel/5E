@@ -72,6 +72,27 @@ test("Given aligned numbered words in two columns, when items are detected, then
   assert.equal(items[2].rect[0] > 0.5, true);
 });
 
+test("Given a textbook answer page, numbered answers are not classified as questions without question evidence", () => {
+  const answerPage = {
+    documentId: "textbook", pageNumber: 280, widthPoints: 612, heightPoints: 792,
+    text: "부록 답안 1. 별 2. 온도",
+    words: [
+      { text: "1.", rect: [0.1, 0.7, 0.03, 0.02] },
+      { text: "별", rect: [0.15, 0.7, 0.05, 0.02] },
+      { text: "2.", rect: [0.1, 0.8, 0.03, 0.02] },
+      { text: "온도", rect: [0.15, 0.8, 0.06, 0.02] },
+      { text: "①", rect: [0.3, 0.75, 0.02, 0.02] },
+    ],
+  };
+  const questionPage = {
+    ...answerPage, pageNumber: 281, text: "다음 중 옳은 것은? 1. 별 2. 온도",
+    words: answerPage.words,
+  };
+
+  assert.deepEqual(detectPageItems(answerPage), []);
+  assert.deepEqual(detectPageItems(questionPage).map((item) => item.itemNumber), [1, 2]);
+});
+
 test("Given the last question above a numbered copyright footer, when items are detected, then the footer is outside the question", () => {
   // Given
   const words = [
