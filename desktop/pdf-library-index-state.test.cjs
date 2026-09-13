@@ -20,7 +20,7 @@ test("Given a personal PDF, when state and a correction are saved, then both sur
   const connection = await service.connect(fixture.source);
   await service.sync({ connectionId: connection.connectionId, operationId: "initial" });
   const document = service.list().documents[0];
-  assert.equal(document.indexState.state, "reading");
+  assert.equal(document.indexState.state, "unindexed");
   await service.saveIndex({
     documentId: document.documentId, version: document.version,
     index: { schemaVersion: "pdf-search-index-v1", entries: [{
@@ -61,12 +61,30 @@ test("Given durable state, when source bytes change, then stale state and correc
   const changed = service.list().documents[0];
 
   assert.notEqual(changed.version, original.version);
-  assert.equal(changed.indexState.state, "reading");
+  assert.equal(changed.indexState.state, "unindexed");
   assert.deepEqual(service.listCorrections({ documentId: changed.documentId }), []);
   await assert.rejects(service.saveCorrection({
     documentId: changed.documentId, version: original.version, pageNumber: 1, itemNumber: 3,
     label: "3번", rect: [0.1, 0.1, 0.8, 0.4],
   }), (error) => error.code === "PDF_LIBRARY_STALE");
+});
+
+test("Given a discovered PDF, required lifecycle states and explicit retry are exposed", async (t) => {
+  // Given
+  const fixture = setup(t);
+  const service = createPdfLibraryService({ storagePath: fixture.storagePath });
+  const connection = await service.connect(fixture.source);
+  await service.sync({ connectionId: connection.connectionId, operationId: "states" });
+  const document = service.list().documents[0];
+
+  // When
+  const retry = await service.retryIndex({ documentId: document.documentId });
+
+  // Then
+  assert.equal(document.indexState.state, "unindexed");
+  assert.equal(retry.state, "indexing");
+  assert.equal(service.capabilities().indexState.states.includes("scan-only"), true);
+  assert.equal(service.capabilities().indexState.states.includes("cancelled"), true);
 });
 
 test("Given invalid or unauthorized correction payloads, when saved concurrently, then validation and commit serialization hold", async (t) => {

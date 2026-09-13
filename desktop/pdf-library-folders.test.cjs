@@ -124,6 +124,25 @@ test("Given an excluded directory, when the real scanner refreshes it, then entr
   assert.deepEqual({ documentCount: excluded.documentCount, imageCount: excluded.imageCount }, { documentCount: 1, imageCount: 1 });
 });
 
+test("Given an unchanged authorized fingerprint, when rescanned, then bytes are not read while later reads retain hash authority", async (t) => {
+  // Given
+  const f = fixture(t);
+  const source = path.join(f.root, "source");
+  const target = path.join(source, "stable.pdf");
+  writePdf(target, "stable");
+  let reads = 0;
+  const first = await scanPdfFolder({ root: source, async readFile(file) { reads += 1; return fs.promises.readFile(file); } });
+  const previousRecords = new Map(first.documents.map((item) => [item.relativePath, item]));
+  reads = 0;
+
+  // When
+  const second = await scanPdfFolder({ root: source, previousRecords, async readFile(file) { reads += 1; return fs.promises.readFile(file); } });
+
+  // Then
+  assert.equal(reads, 0);
+  assert.equal(second.documents[0].version, first.documents[0].version);
+});
+
 test("Given files at and beyond library limits, when scanned, then oversized sparse bytes are skipped with safe warnings while boundary files remain eligible", async (t) => {
   // Given
   const f = fixture(t);

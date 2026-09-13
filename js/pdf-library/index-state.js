@@ -1,5 +1,5 @@
 export const PDF_INDEX_STATE_SCHEMA = "pdf-index-state-v1";
-export const PDF_INDEX_STATES = Object.freeze(["reading", "searchable", "needs-ocr", "failed", "excluded"]);
+export const PDF_INDEX_STATES = Object.freeze(["reading", "unindexed", "indexing", "searchable", "scan-only", "needs-ocr", "cancelled", "failed", "excluded"]);
 
 function requiredText(value, field) {
   if (typeof value !== "string" || value.trim() === "") throw new TypeError(`${field} must be a non-empty string`);
@@ -46,7 +46,7 @@ export function projectPdfIndexState(document, savedState) {
   return createPdfIndexState({
     documentId: document.documentId,
     version: document.version,
-    state: "reading",
+    state: "unindexed",
     diagnostic: null,
   });
 }
@@ -54,9 +54,13 @@ export function projectPdfIndexState(document, savedState) {
 export function indexStateLabel(state) {
   return Object.freeze({
     reading: "읽는 중",
+    unindexed: "색인 대기",
+    indexing: "색인 중",
     searchable: "검색 가능",
+    "scan-only": "스캔 문서",
     "needs-ocr": "문자 인식 필요",
     failed: "실패",
+    cancelled: "취소됨",
     excluded: "검색 제외",
   })[state] ?? "";
 }

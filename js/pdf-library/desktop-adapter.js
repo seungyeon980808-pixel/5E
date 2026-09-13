@@ -19,37 +19,62 @@ function byteView(result) {
   throw new TypeError("The desktop bridge returned invalid PDF bytes.");
 }
 
+function fileSource(document) {
+  return {
+    kind: "file", locator: document.documentId, displayName: document.name, sha256: document.version,
+    connectionId: document.connectionId,
+    ...(document.folderId === undefined ? {} : { folderId: document.folderId }),
+    relativePath: document.relativePath,
+  };
+}
+
 export function createDesktopPdfLibraryAdapter(options = {}) {
   const bridge = options.bridge || desktopBridge();
   const runtime = options.runtime || createPdfRuntime(options.runtimeOptions);
 
-  async function openDocument(document) {
-    await bridge.saveIndexState?.({ documentId: document.documentId, version: document.version, state: "reading" });
+  async function openDocument(document, openOptions = {}) {
+    const persisted = await bridge.loadIndex?.({ documentId: document.documentId });
+    const signal = openOptions.signal;
+    const validPersisted = persisted?.version === document.version
+      && persisted.index?.id === document.documentId && Array.isArray(persisted.index.pages);
+    if (validPersisted && !openOptions.requireRuntime) return persisted.index;
+    if (signal?.aborted) throw new DOMException("PDF open was cancelled", "AbortError");
+    if (validPersisted && typeof runtime.openDocumentResource === "function") {
+      if (runtime.getDocument?.(document.documentId)) return persisted.index;
+      const result = await bridge.read({ documentId: document.documentId });
+      return runtime.openDocumentResource({
+        id: document.documentId, title: document.name, signal,
+        source: fileSource(document),
+        data: byteView(result),
+      }, persisted.index);
+    }
+    await bridge.saveIndexState?.({ documentId: document.documentId, version: document.version, state: "indexing" });
     try {
       const result = await bridge.read({ documentId: document.documentId });
       const record = await runtime.openDocument({
         id: document.documentId,
         title: document.name,
-        source: {
-          kind: "file",
-          locator: document.documentId,
-          displayName: document.name,
-          sha256: document.version,
-          connectionId: document.connectionId,
-          relativePath: document.relativePath,
-        },
+        source: fileSource(document),
         data: byteView(result),
       });
+      if (signal?.aborted) throw new DOMException("PDF open was cancelled", "AbortError");
       await bridge.saveIndex({ documentId: document.documentId, version: document.version, index: record });
       if (record.status === "image-only") {
         await bridge.saveIndexState?.({
-          documentId: document.documentId, version: document.version, state: "needs-ocr", diagnostic: {
+          documentId: document.documentId, version: document.version, state: "scan-only", diagnostic: {
           code: "PDF_TEXT_LAYER_MISSING", message: "텍스트 층이 없어 문자 인식이 필요합니다.", stage: "extract", recoverable: true,
           },
         });
       }
       return record;
     } catch (error) {
+      if (error?.name === "AbortError") {
+        await bridge.saveIndexState?.({
+          documentId: document.documentId, version: document.version, state: "cancelled",
+          diagnostic: { code: "PDF_INDEX_CANCELLED", message: "PDF 색인이 취소되었습니다.", stage: "extract", recoverable: true },
+        }).catch(() => {});
+        throw error;
+      }
       await bridge.saveIndexState?.({
         documentId: document.documentId, version: document.version, state: "failed", diagnostic: pdfOpenDiagnostic(error),
       }).catch(() => {});
@@ -75,6 +100,10 @@ export function createDesktopPdfLibraryAdapter(options = {}) {
     readIndex: (documentId) => bridge.loadIndex({ documentId }),
     readIndexState: (documentId) => bridge.indexState?.({ documentId }),
     saveIndexState: (documentId, version, state, diagnostic = null) => bridge.saveIndexState?.({ documentId, version, state, diagnostic }),
+    retryIndex: async (document, retryOptions = {}) => {
+      await bridge.retryIndex?.({ documentId: document.documentId });
+      return openDocument(document, { ...retryOptions, requireRuntime: true });
+    },
     listCorrections: (documentId) => bridge.listCorrections?.({ documentId }),
     saveCorrection: (correction) => bridge.saveCorrection?.(correction),
     deleteCorrection: (documentId, version, correctionId) => bridge.deleteCorrection?.({ documentId, version, correctionId }),
