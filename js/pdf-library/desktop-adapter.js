@@ -1,4 +1,5 @@
 import { createPdfRuntime } from "./pdf-runtime.js";
+import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js";
 
 function pdfOpenDiagnostic(error) {
   const message = error instanceof Error && error.message ? error.message : "PDF 문서를 열 수 없습니다.";
@@ -28,6 +29,34 @@ function fileSource(document) {
   };
 }
 
+function persistedDocument(index, document) {
+  try {
+    if (index?.schemaVersion !== PDF_LIBRARY_SCHEMA || index.id !== document.documentId) return null;
+    if (!["indexed", "image-only"].includes(index.status)) return null;
+    if (Number.isInteger(document.pageCount) && document.pageCount > 0 && index.pageCount !== document.pageCount) return null;
+    if (!Array.isArray(index.pages)) return null;
+    for (const page of index.pages) {
+      if (!Array.isArray(page?.items)) return null;
+      for (const item of page.items) {
+        if (item?.documentId !== page.documentId || item.pageNumber !== page.pageNumber) return null;
+        if (item.source?.documentId !== page.documentId || item.source.pageNumber !== page.pageNumber) return null;
+        if (JSON.stringify(item.rect) !== JSON.stringify(item.source.rect)) return null;
+      }
+    }
+    const source = createSourceRecord(index.source);
+    const expectedSource = createSourceRecord(fileSource(document));
+    if (JSON.stringify(source) !== JSON.stringify(expectedSource)) return null;
+    const record = createDocumentRecord({ ...index, title: document.name, source: expectedSource });
+    if (record.pages.length !== record.pageCount) return null;
+    const pageNumbers = new Set(record.pages.map((page) => page.pageNumber));
+    if (pageNumbers.size !== record.pageCount) return null;
+    if (record.pages.some((page) => page.pageNumber > record.pageCount)) return null;
+    return record;
+  } catch (_) {
+    return null;
+  }
+}
+
 export function createDesktopPdfLibraryAdapter(options = {}) {
   const bridge = options.bridge || desktopBridge();
   const runtime = options.runtime || createPdfRuntime(options.runtimeOptions);
@@ -35,18 +64,17 @@ export function createDesktopPdfLibraryAdapter(options = {}) {
   async function openDocument(document, openOptions = {}) {
     const persisted = await bridge.loadIndex?.({ documentId: document.documentId });
     const signal = openOptions.signal;
-    const validPersisted = persisted?.version === document.version
-      && persisted.index?.id === document.documentId && Array.isArray(persisted.index.pages);
-    if (validPersisted && !openOptions.requireRuntime) return persisted.index;
+    const hydrated = persisted?.version === document.version ? persistedDocument(persisted.index, document) : null;
+    if (hydrated && !openOptions.requireRuntime) return hydrated;
     if (signal?.aborted) throw new DOMException("PDF open was cancelled", "AbortError");
-    if (validPersisted && typeof runtime.openDocumentResource === "function") {
-      if (runtime.getDocument?.(document.documentId)) return persisted.index;
+    if (hydrated && typeof runtime.openDocumentResource === "function") {
+      if (runtime.getDocument?.(document.documentId)) return hydrated;
       const result = await bridge.read({ documentId: document.documentId });
       return runtime.openDocumentResource({
         id: document.documentId, title: document.name, signal,
         source: fileSource(document),
         data: byteView(result),
-      }, persisted.index);
+      }, hydrated);
     }
     await bridge.saveIndexState?.({ documentId: document.documentId, version: document.version, state: "indexing" });
     try {

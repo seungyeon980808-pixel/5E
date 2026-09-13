@@ -1,12 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 
 async function loadAdapter() {
-  const source = fs.readFileSync(path.join(__dirname, "..", "js", "pdf-library", "desktop-adapter.js"), "utf8")
-    .replace('import { createPdfRuntime } from "./pdf-runtime.js";', "const createPdfRuntime = () => { throw new Error('runtime must be injected'); };");
-  return import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}`);
+  const file = path.join(__dirname, "..", "js", "pdf-library", "desktop-adapter.js");
+  return import(`${pathToFileURL(file).href}?test=${crypto.randomUUID()}`);
 }
 
 test("Given desktop IPC bytes, when a folder document opens, then the adapter sends a typed copy to the shared PDF runtime and persists its normalized record", async () => {
