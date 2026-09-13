@@ -235,7 +235,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const completeCount = allEntries.filter(({ comment }) => commentText(comment).trim() && normalizeCommentBox(comment)).length;
     const apply = q('[data-ai-comments-apply]');
     if (apply) {
-      apply.textContent = completeCount ? `코멘트 ${completeCount}개 반영하기` : '평가원식으로 만들기';
+      apply.textContent = '변환하기';
       apply.disabled = busy || !allowed().length;
     }
     panel.querySelectorAll('[data-ai-comment-tool]').forEach(button => {

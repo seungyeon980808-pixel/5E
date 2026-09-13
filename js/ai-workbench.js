@@ -219,6 +219,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       item.stage.dataset.aiFitHeight = String(height);
       applyStageSize(item.stage);
     }
+    const source = cardFit(sourceCards().find(item => sourceKey(item) === activeSourceKey));
+    if (source) {
+      panel.style.setProperty('--ai-pending-width', source.stage.style.width);
+      panel.style.setProperty('--ai-pending-height', source.stage.style.height);
+    }
   }
 
   const stageResizeObserver = typeof ResizeObserver === "function"
@@ -272,10 +277,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
     if (userChoseLayout) return;
     if (processing && !generatedCards().length) {
-      setLayout("result");
+      setLayout(sourceCards().length ? "side-by-side" : "result");
       return;
     }
-    setLayout(generatedCards().length ? "result" : sourceCards().length ? "source" : "result");
+    setLayout(sourceCards().length ? "side-by-side" : "result");
   }
 
   const paneCard = (pane) => pane === "source"
@@ -289,6 +294,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (stage) {
       stage.dataset.aiZoom = String(paneZoom[pane]);
       applyStageSize(stage);
+      if (pane === 'source') {
+        panel.style.setProperty('--ai-pending-width', stage.style.width);
+        panel.style.setProperty('--ai-pending-height', stage.style.height);
+      }
     }
     const controls = paneZoomControls.find((item) => item.dataset.aiPaneZoom === pane);
     const value = controls?.querySelector("[data-ai-zoom-value]");
@@ -452,6 +461,18 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   function syncWorkbenchStage() {
     const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
+    const empty = panel.querySelector('[data-ai-empty]');
+    if (empty) {
+      const prepared = sourceCards().length > 0;
+      const title = empty.querySelector('strong');
+      const detail = empty.querySelector('span');
+      const add = empty.querySelector('[data-ai-add-file]');
+      const titleText = prepared ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
+      const detailText = prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
+      if (title && title.textContent !== titleText) title.textContent = titleText;
+      if (detail && detail.textContent !== detailText) detail.textContent = detailText;
+      if (add && add.hidden !== prepared) add.hidden = prepared;
+    }
     panel.dataset.aiStage = processing
       ? "processing"
       : generatedCards().length
