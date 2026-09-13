@@ -728,21 +728,7 @@ export function createUnifiedLibraryProvider(input = {}) {
           requestId: options.requestId ?? null,
           firstMatchingPage: first.pageNumber,
           matches: Object.freeze(matches),
-          loadPreview: async (pageNumber = matches[0].pageNumber, previewOptions = {}) => {
-            const match = matches.find((candidate) => candidate.pageNumber === pageNumber);
-            if (!match) throw new RangeError("PDF preview page is outside the qualifying matches");
-            if (typeof materializers.pdf !== "function") return Promise.resolve({ file, match });
-            const document = documents.find((candidate) => candidate.id === documentId);
-            const previewResult = freezeResult({
-              ...file,
-              id: stableId("page", file.sourceId, pageNumber),
-              metadata: { ...file.metadata, pageNumber },
-              preview: { source: match.source },
-              provenance: pdfProvenance(document, match.source),
-            });
-            const materialized = await materializers.pdf({ result: previewResult, source: match.source, options: { ...previewOptions, preview: previewOptions.thumbnail !== true } });
-            return Object.freeze({ ...materialized, result: previewResult });
-          },
+          loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
       }));
     },

@@ -432,6 +432,33 @@ test("a PDF file match materializes its active page through a canonical full-pag
   assert.equal(received.options.original, true);
 });
 
+test("a searched PDF file can preview any page while browsing the whole document", async () => {
+  const document = {
+    ...pdfDocument("searched-whole-file"),
+    pageCount: 3,
+    pages: [1, 2, 3].map((pageNumber) => ({
+      documentId: "searched-whole-file", pageNumber,
+      text: pageNumber === 1 ? "검색 일치" : `${pageNumber}쪽`, words: [], items: [],
+    })),
+  };
+  let received;
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    searchPdf: async () => [{
+      documentId: document.id, pageNumber: 1, snippet: "검색 일치",
+      terms: [], highlights: [], misses: [],
+    }],
+    materializers: { pdf: async (input) => { received = input; return { dataUrl: "data:image/png;base64,AA==" }; } },
+  });
+
+  const [file] = await provider.searchPdfFiles({ query: "검색" });
+  const rendered = await file.loadPreview(2, { original: true, continuous: true });
+
+  assert.equal(rendered.result.provenance.pageNumber, 2);
+  assert.equal(received.source.pageNumber, 2);
+  assert.equal(received.options.continuous, true);
+});
+
 test("an empty PDF query exposes the same canonical page preview contract", async () => {
   const document = { ...pdfDocument("inventory-pdf"), pageCount: 2 };
   let received;
