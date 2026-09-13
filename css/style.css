@@ -175,6 +175,9 @@ body {
   padding-inline-start: 78px;
   padding-inline-end: 12px;
 }
+.desktop-shell.is-native-fullscreen .desktop-titlebar {
+  display: none;
+}
 .desktop-titlebar-mark {
   color: var(--accent);
   font-family: Georgia, "Times New Roman", serif;
@@ -632,6 +635,63 @@ body { zoom: var(--ui-zoom, 1); }
   cursor: pointer;
 }
 .topbar-btn:hover { background: var(--btn-tool-hover); }
+
+.shell-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 4px;
+}
+.shell-icon-button-menu {
+  width: 39px;
+  gap: 2px;
+  padding-inline: 5px 3px;
+}
+.shell-icon-button svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.shell-menu-chevron {
+  width: 8px;
+  margin-top: -2px;
+  font-size: 12px;
+  line-height: 1;
+}
+.shell-icon-button::after {
+  content: attr(data-shell-tip);
+  position: absolute;
+  z-index: 100001;
+  top: calc(100% + 8px);
+  left: 50%;
+  padding: 5px 9px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .16);
+  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.shell-icon-button:hover::after,
+.shell-icon-button:focus::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.shell-icon-button[aria-expanded="true"]::after {
+  visibility: hidden;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-icon-button::after { transition: none; }
+}
 
 /* icon-only top-bar buttons (undo/redo): square, centered glyph */
 .topbar-btn.icon-btn {

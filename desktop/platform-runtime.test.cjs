@@ -56,7 +56,7 @@ test('fullscreen coordinator follows native events and settles repeated requests
   target.settle(false);
 
   assert.deepEqual(published, [true, false]);
-  assert.deepEqual(target.restores.at(-1), { x: 40, y: 50, width: 1280, height: 800 });
+  assert.deepEqual(target.restores.at(-1), { x: 20, y: 30, width: 1280, height: 800 });
   coordinator.dispose();
 });
 

@@ -23,6 +23,8 @@ import { initSettings } from "./settings.js?v=1.4.0";
 import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
 import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
+import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1";
 import { initExamLibrary } from "./exam-library.js?v=1.4.12";
 import { initTemplates } from "./templates.js?v=1.4.0";
 import { initObjectSearch } from "./search.js?v=1.4.0";
@@ -92,6 +94,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   const target = document.documentElement;
 
   const syncButton = (active) => {
+    document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
     btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
     btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
@@ -260,7 +263,18 @@ initPages(state);
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 initAutosave(state);
 const aiPanel = initAiPanel(state);
-document.getElementById("ai-image-install-open")?.addEventListener("click", () => void aiPanel?.open());
+const aiEntryButton = document.getElementById("ai-image-install-open");
+if (aiEntryButton) {
+  aiEntryButton.title = "AI 이미지 변환";
+  aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
+  const label = aiEntryButton.querySelector(".search-trigger-label");
+  if (label) label.textContent = "AI 이미지 변환";
+  aiEntryButton.addEventListener("click", () => void handSelectedCanvasImageToAi(state, {
+    renderImage: renderSessionToDataUrl,
+    openPanel: options => aiPanel?.open(options),
+    reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+  }));
+}
 const desktopHandoff = initAiInstallGuide({
   saveProject: () => saveProject(state),
   openDesktopPanel: () => aiPanel?.open(),

@@ -51,6 +51,14 @@ test('native fullscreen bridge exposes event-backed state', () => {
   assert.equal(listeners.has('window:fullscreen-changed'), false);
 });
 
+test('native fullscreen removes the custom title strip while retaining the windowed drag region', () => {
+  const main = read('js/main.js');
+  const css = read('css/style.css');
+  assert.match(main, /document\.documentElement\.classList\.toggle\(\s*["']is-native-fullscreen["'],\s*Boolean\(active\)\s*\)/s);
+  assert.match(css, /\.desktop-shell\.is-native-fullscreen\s+\.desktop-titlebar\s*\{[^}]*display:\s*none/s);
+  assert.match(css, /\.desktop-shell\s+\.desktop-titlebar\s*\{[^}]*-webkit-app-region:\s*drag/s);
+});
+
 test('theme and fullscreen controls live in the collapsible inspector header with a toolbar reopen control', () => {
   const html = read('index.html');
   const controlsStart = html.indexOf('class="canvas-global-controls"');
@@ -65,6 +73,30 @@ test('theme and fullscreen controls live in the collapsible inspector header wit
   assert.match(inspector, /class="panel-utility-bar panel-utility-bar-right"[\s\S]*id="theme-toggle"[\s\S]*id="fullscreen-toggle"[\s\S]*data-panel-internal-toggle="right"/);
   assert.equal((html.match(/id="theme-toggle"/g) || []).length, 1);
   assert.equal((html.match(/id="fullscreen-toggle"/g) || []).length, 1);
+});
+
+test('file, settings, and tutorial controls are accessible icon-only SVG buttons', () => {
+  const html = read('index.html');
+  const button = (id) => html.match(new RegExp(`<button[^>]*id="${id}"[\\s\\S]*?</button>`))?.[0] || '';
+  const file = button('file-menu-btn');
+  const settings = button('settings-menu-btn');
+  const tutorial = button('tutorial-btn');
+  for (const [markup, name] of [[file, '파일'], [settings, '설정'], [tutorial, '튜토리얼']]) {
+    assert.match(markup, new RegExp(`aria-label="${name}"`));
+    assert.match(markup, new RegExp(`data-shell-tip="${name}"`));
+    assert.match(markup, /<svg[^>]*aria-hidden="true"/);
+    assert.doesNotMatch(markup.replace(/<svg[\s\S]*?<\/svg>/, '').replace(/<span[^>]*aria-hidden="true"[\s\S]*?<\/span>/, ''), new RegExp(`>${name}[^<]*<`));
+  }
+  assert.match(file, /class="shell-menu-chevron"[^>]*>⌄<\/span>/);
+  assert.match(settings, /class="shell-menu-chevron"[^>]*>⌄<\/span>/);
+  assert.doesNotMatch(tutorial, /shell-menu-chevron/);
+
+  const css = read('css/style.css');
+  assert.match(css, /\.shell-icon-button:(?:hover|focus)[^{]*::after/s);
+  assert.match(css, /\.shell-icon-button\[aria-expanded="true"\]::after\s*\{[^}]*(?:opacity:\s*0|visibility:\s*hidden)/s,
+    'an expanded icon menu must suppress its trigger tooltip so menu items remain clear');
+  assert.doesNotMatch(read('js/tutorial.js'), /tutorialButton\.appendChild\(beta\)/,
+    'tutorial initialization must not append a visible beta badge into the icon-only control');
 });
 
 test('hidden MCP entrypoints, focus modality, native title inset, and centered credit are wired', () => {
