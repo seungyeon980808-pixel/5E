@@ -13,6 +13,7 @@ function inventoryDocument(overrides = {}) {
     documentId: "doc-1",
     title: "교과서",
     name: "교과서.pdf",
+    relativePath: "교과서/교과서.pdf",
     pageCount: 0,
     pages: [],
     version: "revision-1",
@@ -22,11 +23,29 @@ function inventoryDocument(overrides = {}) {
   };
 }
 
+function persistedDocument(pageCount = 1) {
+  return {
+    schemaVersion: "pdf-library-v1",
+    id: "doc-1",
+    title: "교과서.pdf",
+    pageCount,
+    status: "indexed",
+    source: {
+      kind: "file", locator: "doc-1", displayName: "교과서.pdf", sha256: "revision-1",
+      relativePath: "교과서/교과서.pdf",
+    },
+    pages: Array.from({ length: pageCount }, (_, index) => ({
+      documentId: "doc-1", pageNumber: index + 1, widthPoints: 100, heightPoints: 100,
+      rotation: 0, text: index === 0 ? "cached" : "", words: [], items: [],
+    })),
+  };
+}
+
 test("Given a valid persisted revision, when the desktop adapter opens it, then it hydrates without reading or parsing bytes", async () => {
   // Given
   let reads = 0;
   let parses = 0;
-  const persisted = inventoryDocument({ pageCount: 1, pages: [{ pageNumber: 1, text: "cached", words: [], items: [] }], status: "indexed" });
+  const persisted = persistedDocument();
   const bridge = {
     loadIndex: () => ({ version: "revision-1", index: persisted }),
     read: async () => { reads += 1; return new Uint8Array(); },
@@ -49,7 +68,7 @@ test("Given a persisted revision needs preview, when opened for runtime, then on
   let fullParses = 0;
   let resourceLoads = 0;
   let saves = 0;
-  const persisted = inventoryDocument({ pageCount: 327, pages: [{ pageNumber: 1 }], status: "indexed" });
+  const persisted = persistedDocument(327);
   const adapter = createDesktopPdfLibraryAdapter({
     bridge: {
       loadIndex: () => ({ version: "revision-1", index: persisted }), read: async () => new Uint8Array([1]),
@@ -209,6 +228,45 @@ test("Given a malformed persisted index, when opened, then the adapter reparses 
   assert.equal(record.pages[0].text, "fresh");
   assert.equal(parses, 1);
   assert.equal(saves, 1);
+});
+
+test("Given structurally forged persisted indexes, when opened, then each falls back to one full parse and save", async () => {
+  const valid = persistedDocument(2);
+  const validItem = {
+    id: "doc-1:p1:q1", documentId: "doc-1", pageNumber: 1, itemNumber: 1, label: "1", confidence: 1,
+    rect: [0, 0, 1, 1], source: { documentId: "doc-1", pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: false },
+  };
+  const threePages = persistedDocument(3);
+  const forgedIndexes = [
+    { ...valid, pages: [{ ...valid.pages[0], words: [{ text: "x", rect: [0, 0, -1, 1] }] }, valid.pages[1]] },
+    { ...valid, pages: [{ ...valid.pages[0], pageNumber: 0 }, valid.pages[1]] },
+    { ...valid, pages: [{ ...valid.pages[0], pageNumber: 999 }, valid.pages[1]] },
+    { ...valid, pages: [valid.pages[0], { ...valid.pages[1], pageNumber: 1 }] },
+    { ...valid, source: { ...valid.source, locator: "other-document" } },
+    { ...valid, pages: [{ ...valid.pages[0], items: [{ ...validItem, documentId: "other-document", source: { ...validItem.source, documentId: "other-document" } }] }, valid.pages[1]] },
+    { ...valid, pages: [{ ...valid.pages[0], items: [{ ...validItem, pageNumber: 999, source: { ...validItem.source, pageNumber: 999 } }] }, valid.pages[1]] },
+    { ...valid, status: "error" },
+    threePages,
+  ];
+
+  for (const forged of forgedIndexes) {
+    let reads = 0;
+    let parses = 0;
+    let saves = 0;
+    const adapter = createDesktopPdfLibraryAdapter({
+      bridge: {
+        loadIndex: () => ({ version: "revision-1", index: forged }),
+        read: async () => { reads += 1; return new Uint8Array([1]); },
+        saveIndexState: async () => {},
+        saveIndex: async () => { saves += 1; },
+      },
+      runtime: { openDocument: async () => { parses += 1; return valid; } },
+    });
+
+    const record = await adapter.openDocument(inventoryDocument({ pageCount: 2 }));
+    assert.equal(record, valid);
+    assert.deepEqual({ reads, parses, saves }, { reads: 1, parses: 1, saves: 1 });
+  }
 });
 
 test("Given indexing is cancelled after parsing, when completion resumes, then no partial index is saved", async () => {
