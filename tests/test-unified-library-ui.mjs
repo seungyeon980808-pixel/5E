@@ -39,7 +39,80 @@ import {
   cropZoomView,
   cropActionSnapshotIsCurrent,
   saveCropPng,
+  normalizeLibraryTypes,
+  toggleLibraryType,
+  normalizeYearRange,
+  createSearchScheduler,
 } from "../js/unified-library-ui.js";
+
+test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
+  assert.deepEqual(normalizeLibraryTypes([]), ["question", "image", "pdf"]);
+  assert.deepEqual(normalizeLibraryTypes(["all", "pdf"]), ["question", "image", "pdf"]);
+  assert.deepEqual(toggleLibraryType(["question", "image", "pdf"], "pdf"), ["pdf"]);
+  assert.deepEqual(toggleLibraryType(["question", "image"], "all"), ["question", "image", "pdf"]);
+  assert.deepEqual(toggleLibraryType(["question"], "question"), ["question", "image", "pdf"]);
+});
+
+test("compact year range orders and clamps its endpoints", () => {
+  assert.deepEqual(normalizeYearRange(2026, 2022, [2021, 2023, 2026]), { start: 2022, end: 2026 });
+  assert.deepEqual(normalizeYearRange(1990, 2099, [2021, 2023, 2026]), { start: 2021, end: 2026 });
+  assert.deepEqual(normalizeYearRange("", "", [2021, 2023, 2026]), { start: null, end: null });
+});
+
+test("search scheduling defers composition, coalesces input, and Enter runs immediately", async () => {
+  const calls = [];
+  const timers = [];
+  const scheduler = createSearchScheduler((reason) => calls.push(reason), {
+    delay: 140,
+    setTimer: (callback) => { timers.push(callback); return timers.length; },
+    clearTimer: () => {},
+  });
+  scheduler.compositionStart();
+  scheduler.input();
+  assert.deepEqual(calls, []);
+  scheduler.compositionEnd();
+  assert.deepEqual(calls, []);
+  timers.at(-1)();
+  assert.deepEqual(calls, ["input"]);
+  scheduler.input();
+  scheduler.enter();
+  assert.deepEqual(calls, ["input", "enter"]);
+});
+
+test("unified shell has multiselect type controls, neutral tray actions, and no PDF page-list controls", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /data-unilib-type="all"/u);
+  assert.match(source, /data-unilib-selected-clear/u);
+  assert.match(source, /data-unilib-year-start/u);
+  assert.match(source, /data-unilib-help/u);
+  assert.doesNotMatch(source, /data-unilib-pdf-back/u);
+  assert.doesNotMatch(source, /pdfBrowseSource/u);
+});
+
+test("AI consumer mode retains library tools while exposing only AI destinations", async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(source, /root\.classList\.add\("consumer-mode"\)/u);
+  for (const selector of ["data-unilib-insert", "data-unilib-objectify", "data-unilib-crop-insert", "data-unilib-crop-objectify", "data-unilib-crop-save-png"]) {
+    assert.match(css, new RegExp(`consumer-mode \\[${selector}\\]`, "u"));
+  }
+  assert.doesNotMatch(css, /consumer-mode[^}]*data-unilib-ai/u);
+  assert.doesNotMatch(css, /consumer-mode[^}]*data-unilib-crop-ai/u);
+});
+
+test("published inventory stays interactive while background indexing refreshes later", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /snapshot\?\.backgroundIndexing/u);
+  assert.match(source, /snapshot\.backgroundIndexing\.then/u);
+  assert.doesNotMatch(source, /await snapshot\.backgroundIndexing/u);
+});
+
+test("file cards do not compete with the selected PDF preview for the single renderer", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /result\.provenance\?\.provider === "pdf" && result\.kind !== "pdf"/u);
+});
 
 test("Given a rejected lazy resolver, preview resolution returns a recoverable failure instead of rejecting", async () => {
   const result = { id: "q1", provenance: { documentId: "doc", pageNumber: 1, locator: "old.pdf" } };
@@ -64,7 +137,7 @@ test("Given the same result id after source replacement, preview resolution trea
 import { IMAGE_IMPORT_MAX_BYTES, PDF_IMPORT_MAX_BYTES, partitionLibraryImports, safeExternalSourceUrl } from "../js/library-import-policy.js";
 
 test("Given a result tab, when search options are built, then WHERE remains independent from WHAT", () => {
-  assert.deepEqual(kindsForResultTab("all"), ["crop", "image"]);
+  assert.deepEqual(kindsForResultTab("all"), ["crop", "image", "page"]);
   assert.deepEqual(kindsForResultTab("question"), ["crop"]);
   assert.deepEqual(kindsForResultTab("image"), ["image"]);
   assert.deepEqual(kindsForResultTab("pdf"), ["page"]);
