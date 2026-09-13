@@ -94,8 +94,13 @@ try {
       makePng(172, 116, '#554477'),
     ];
     const { initAiPanel } = await import('/js/ai-panel.js');
-    const state = { objects: [], selectedIds: [], activePageId: 'page-1', activeLayerId: 'layer-1', artboard: { width: 800, height: 600 } };
-    window.__qaManager = initAiPanel({ get: () => state });
+    const state = {
+      objects: [], selectedIds: [], undoStack: [], redoStack: [], pages: [],
+      activePageId: 'page-1', activeLayerId: 'layer-1', activeTool: 'V', targetedId: null,
+      artboard: { width: 800, height: 600 }, viewBox: { x: -400, y: -300, w: 800, h: 600 },
+    };
+    window.__qaState = state;
+    window.__qaManager = initAiPanel({ get: () => state, update: mutate => mutate(state) });
     await window.__qaManager.ready;
     await window.__qaManager.open({
       references: [
@@ -110,6 +115,25 @@ try {
 
   const panel = page.locator('#ai-image-panel');
   await panel.waitFor({ state: 'visible' });
+  const sourceMenuTrigger = panel.locator('[data-ai-source-menu-trigger]');
+  const closedSourceStyle = await sourceMenuTrigger.evaluate(node => {
+    const style = getComputedStyle(node);
+    return { backgroundColor: style.backgroundColor, color: style.color, expanded: node.getAttribute('aria-expanded') };
+  });
+  assert.equal(closedSourceStyle.expanded, 'false');
+  assert.notEqual(closedSourceStyle.color, 'rgb(255, 255, 255)', 'closed source button is neutral');
+  await page.screenshot({ path: path.join(outputDir, 'source-menu-closed-neutral.png'), fullPage: true });
+  await sourceMenuTrigger.click();
+  const openSourceStyle = await sourceMenuTrigger.evaluate(node => {
+    const style = getComputedStyle(node);
+    return { backgroundColor: style.backgroundColor, color: style.color, expanded: node.getAttribute('aria-expanded') };
+  });
+  assert.equal(openSourceStyle.expanded, 'true');
+  assert.equal(openSourceStyle.color, 'rgb(255, 255, 255)', 'open source button uses the active accent');
+  assert.notEqual(openSourceStyle.backgroundColor, closedSourceStyle.backgroundColor);
+  await page.screenshot({ path: path.join(outputDir, 'source-menu-open-active.png'), fullPage: true });
+  await panel.locator('[data-ai-source-menu] [role="menuitem"]').first().focus();
+  await panel.locator('[data-ai-source-menu] [role="menuitem"]').first().press('Escape');
   assert.equal(await page.locator('.ai-task-tab').count(), 1, 'together creates one task');
   assert.equal(await page.locator('.ai-reference-card').count(), 2, 'both original sources remain visible');
   assert.equal(await page.evaluate(() => window.__qaSends.length), 0, 'adding sources does not generate');
@@ -141,6 +165,10 @@ try {
   assert(compositePreview.cssWidth > 100, 'preview uses rendered width rather than collapsed HTML attributes');
   await page.evaluate(index => window.__qaCompleteImage(index, window.__qaOutput[0]), firstImageIndex);
   await page.waitForFunction(() => document.querySelectorAll('.ai-generated-card').length === 1 && document.querySelector('#ai-image-panel')?.dataset.aiBusy === 'false');
+  await page.locator('[data-ai-insert-selected]').click();
+  await page.waitForFunction(() => window.__qaState.objects.some(object => object.type === 'image'));
+  await page.evaluate(() => window.__qaManager.open());
+  await panel.waitFor({ state: 'visible' });
 
   await page.locator('[data-ai-layout-mode="side-by-side"]').click();
   const activeResultImage = () => page.locator('.ai-generated-card.is-ai-active-candidate img').first();
@@ -204,6 +232,8 @@ try {
   await versionButton.press('ArrowDown');
   assert.equal(await versionButton.getAttribute('aria-expanded'), 'true');
   const options = page.locator('[data-ai-candidate-option]');
+  assert.equal(await options.count(), 3, 'open version list shows every completed revision');
+  await page.screenshot({ path: path.join(outputDir, 'version-list-open.png'), fullPage: true });
   await options.first().press('End');
   assert.equal(await options.last().evaluate(node => node === document.activeElement), true);
   await options.last().press('Home');
@@ -279,11 +309,14 @@ try {
     compositeDimensions: [152, 64],
     autoGenerationOnAdd: false,
     providerCompositeAttachmentCount: firstRequest.count,
+    footerInsertSelectedAddsCanvasImage: true,
     revisionsCompleted: 4,
     secondAndThirdGeometryStable: true,
     overlayInsideResultPane: true,
     versionKeyboardAndFocusReturn: true,
     versionCommentIsolation: true,
+    sourceMenuClosedNeutralOpenActive: true,
+    versionListOpenScreenshot: true,
     failedStateByteEqual: true,
     retrySentExactlyOnce: true,
     commentDeleteAfterRetry: true,

@@ -180,16 +180,6 @@ async function pixelHash(width, height, pixels) {
   return `sha256:${[...digest].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export function moveReferenceOrder(order, sourceId, direction) {
-  const next = Array.isArray(order) ? [...order] : [];
-  const index = next.indexOf(sourceId);
-  const delta = direction === "earlier" ? -1 : direction === "later" ? 1 : 0;
-  const destination = index + delta;
-  if (index < 0 || delta === 0 || destination < 0 || destination >= next.length) return next;
-  [next[index], next[destination]] = [next[destination], next[index]];
-  return next;
-}
-
 export async function composeReferenceImages({
   sources = [],
   orientation = "horizontal",
