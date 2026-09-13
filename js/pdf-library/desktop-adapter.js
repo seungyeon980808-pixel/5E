@@ -85,6 +85,7 @@ export function createDesktopPdfLibraryAdapter(options = {}) {
         title: document.name,
         source: fileSource(document),
         data: byteView(result),
+        onMetadata: openOptions.onMetadata,
       });
       if (signal?.aborted) throw new DOMException("PDF open was cancelled", "AbortError");
       await bridge.saveIndex({ documentId: document.documentId, version: document.version, index: record });

@@ -3,10 +3,38 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import test from "node:test";
 
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+import { createCanvas, loadImage, PDFDocument } from "@napi-rs/canvas";
 import { createPdfRuntime } from "../js/pdf-library/pdf-runtime.js";
 import { buildSearchIndex, searchIndex } from "../js/pdf-library/search.js";
 import { createKoreanPdfLibraryFixture, createPdfLibraryFixture } from "./helpers/pdf-library-fixture.mjs";
+
+test("Given an unindexed PDF, page metadata and full-page rendering are available before text extraction completes", async (context) => {
+  const fixture = new PDFDocument({ title: "Metadata first" });
+  for (let pageNumber = 1; pageNumber <= 24; pageNumber += 1) {
+    const canvas = fixture.beginPage(300, 420);
+    canvas.fillText(`Page ${pageNumber}`, 24, 36);
+    fixture.endPage();
+  }
+  const bytes = new Uint8Array(fixture.close());
+  const runtime = createPdfRuntime({ canvasFactory: { create: createCanvas } });
+  context.after(() => runtime.clearCache());
+  let resolveMetadata;
+  const metadataReady = new Promise((resolve) => { resolveMetadata = resolve; });
+  const indexing = runtime.openDocument({
+    id: "metadata-first", title: "Metadata first", data: bytes,
+    source: { kind: "file", locator: "metadata-first", displayName: "metadata-first.pdf" },
+    onMetadata: resolveMetadata,
+  });
+  const metadata = await metadataReady;
+  assert.equal(metadata.pageCount, 24);
+  assert.equal(metadata.status, "unindexed");
+  assert.equal(metadata.pages.length, 0);
+  assert.equal(runtime.getDocument("metadata-first").pageCount, 24);
+  const lastPage = await runtime.renderPage({ documentId: "metadata-first", pageNumber: 24, dpi: 72 });
+  assert.ok(lastPage.bytes.byteLength > 0);
+  const indexed = await indexing;
+  assert.equal(indexed.pages.length, 24);
+});
 
 test("Given a real vector and text PDF, when opened and cropped at 300 dpi, then text and source pixels are preserved", async (context) => {
   // Given
