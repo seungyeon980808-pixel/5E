@@ -53,7 +53,7 @@ test("Given preview post-processing finishes after terminal, when outcome is res
   assert.equal(resolveAiTerminalOutcome({ status: "interrupted", imageReceived: true, cancelRequested: true }), "cancelled");
   assert.equal(resolveAiTerminalOutcome({ status: "interrupted", imageReceived: true, cancelRequested: false }), "completed");
   assert.equal(resolveAiTerminalOutcome({ status: "completed", imageReceived: true }), "completed");
-  assert.deepEqual(aiTerminalStatusView("failed"), { text: "작업 실패", kind: "error" });
+  assert.deepEqual(aiTerminalStatusView("failed"), { text: "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.", kind: "error" });
   assert.deepEqual(aiTerminalStatusView("cancelled"), { text: "작업 취소됨", kind: "warn" });
   assert.deepEqual(aiTerminalStatusView("completed", { imageReceived: true }), { text: "생성 완료", kind: "ok" });
 });

@@ -465,6 +465,11 @@
               </header>
               <details class="ai-reference-section" open>
                 <summary>원본 이미지 <span data-ai-reference-count>0</span></summary>
+                <div class="ai-composition-toolbar" role="group" aria-label="원본 연결 방향">
+                  <button type="button" class="is-on" data-ai-composition-orientation="horizontal" aria-pressed="true">가로 연결</button>
+                  <button type="button" data-ai-composition-orientation="vertical" aria-pressed="false">세로 연결</button>
+                </div>
+                <div class="ai-composite-preview" data-ai-composite-preview data-orientation="horizontal" aria-label="연결된 원본 미리보기"></div>
                 <div class="ai-reference-list" data-ai-attachment-list>
                   <p class="ai-reference-empty" data-ai-reference-empty>이미지를 추가하면 원본이 여기에 표시됩니다.</p>
                 </div>
@@ -474,7 +479,11 @@
             <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
               <header class="ai-pane-head">
                 <strong>결과</strong>
-                <label>버전 <select data-ai-candidate-select aria-label="생성 결과 버전 선택"></select></label>
+                <div class="ai-version-picker">
+                  <span>버전</span>
+                  <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
+                  <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
+                </div>
                 <div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
                   <label class="ai-zoom-link"><input type="checkbox" data-ai-zoom-linked checked> 연결</label>
                   <button type="button" data-ai-zoom-action="out" aria-label="결과 축소">−</button>
@@ -590,23 +599,8 @@
                 <button type="button" class="modal-btn modal-btn-primary" data-ai-send>변환하기</button>
               </section>
               <div class="ai-review-overview">
-                <div class="ai-review-summary" data-ai-review-summary data-state="idle" aria-live="polite">
-                  <strong>검수 대기</strong><span>생성 후 요청 반영 여부와 원본 구조를 확인합니다.</span>
-                </div>
-                <details class="ai-review-panel" aria-labelledby="ai-review-title">
-                  <summary id="ai-review-title">검수 상세 보기</summary>
-                  <header class="ai-review-head">
-                    <span class="ai-review-model">독립 검수 · Sol 높음</span>
-                    <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 생성 후 검수</label>
-                  </header>
-                  <div class="ai-review-meta" data-ai-review-meta hidden></div>
-                  <div class="ai-review-checks" data-ai-review-checks></div>
-                  <div class="ai-review-issues" data-ai-review-issues></div>
-                  <details class="ai-file-inspection" data-ai-pixel-inspection hidden>
-                    <summary>파일 검사 <span data-ai-pixel-inspection-summary></span></summary>
-                    <dl data-ai-pixel-inspection-list></dl>
-                  </details>
-                </details>
+                <div class="ai-review-summary" data-ai-review-summary data-state="idle" role="status" aria-live="polite">준비됨</div>
+                <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 결과 확인</label>
               </div>
               <section class="ai-comments-list-section" aria-label="수정 코멘트 목록">
                 <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>지정하지 않은 부분은 유지</span></header>

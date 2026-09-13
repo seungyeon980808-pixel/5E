@@ -7,6 +7,7 @@ const commentKey = (item, comment) => `${item.id}:${comment.number}`;
 const commentText = comment => String(comment?.text || '');
 
 export function normalizeCommentBox(value) {
+  if (!value || value.x == null || value.y == null) return null;
   const box = Object.fromEntries(BOX_KEYS.map(key => [key, Number(value?.[key] ?? 0)]));
   if (!Object.values(box).every(Number.isFinite)) return null;
   if (box.x < 0 || box.y < 0 || box.w < 0 || box.h < 0
@@ -15,12 +16,57 @@ export function normalizeCommentBox(value) {
   return box;
 }
 
-export function buildCommentRequest(images = []) {
+function normalizeCompositeRect(value) {
+  if (!value || typeof value !== 'object') return null;
+  if ('width' in value || 'height' in value || 'canvasWidth' in value || 'canvasHeight' in value) {
+    const x = Number(value.x);
+    const y = Number(value.y);
+    const width = Number(value.width);
+    const height = Number(value.height);
+    const canvasWidth = Number(value.canvasWidth);
+    const canvasHeight = Number(value.canvasHeight);
+    if (![x, y, width, height, canvasWidth, canvasHeight].every(Number.isFinite)
+        || canvasWidth <= 0 || canvasHeight <= 0) return null;
+    return normalizeCommentBox({
+      type: 'area',
+      x: x / canvasWidth * 100,
+      y: y / canvasHeight * 100,
+      w: width / canvasWidth * 100,
+      h: height / canvasHeight * 100,
+    });
+  }
+  return normalizeCommentBox({ ...value, type: 'area' });
+}
+
+export function mapImageCommentToComposite(comment, sourceRect) {
+  const box = normalizeCommentBox(comment);
+  const rect = normalizeCompositeRect(sourceRect);
+  if (!box || !rect) return null;
+  const mapped = normalizeCommentBox({
+    ...comment,
+    x: rect.x + box.x / 100 * rect.w,
+    y: rect.y + box.y / 100 * rect.h,
+    w: box.w / 100 * rect.w,
+    h: box.h / 100 * rect.h,
+  });
+  return mapped ? { ...comment, ...mapped } : null;
+}
+
+export function buildCommentRequest(images = [], { sourceRectsById } = {}) {
   const lines = [];
   for (const item of images) {
     for (const comment of item.comments || []) {
-      if (!commentText(comment).trim() || !normalizeCommentBox(comment)) continue;
-      lines.push(`[${item.kind === 'reference' ? '원본' : '선택 버전'} ${item.name}; 이미지ID ${item.id}] ${comment.type === 'point' ? '점' : '영역'} ${comment.number} (x=${comment.x}%, y=${comment.y}%, w=${comment.w}%, h=${comment.h}%): ${commentText(comment).trim()}`);
+      const hasSourceRect = item.kind === 'reference' && sourceRectsById != null
+        && (sourceRectsById instanceof Map
+          ? sourceRectsById.has(item.id)
+          : Object.hasOwn(sourceRectsById, item.id));
+      const sourceRect = hasSourceRect
+        ? (sourceRectsById instanceof Map ? sourceRectsById.get(item.id) : sourceRectsById[item.id])
+        : null;
+      const projected = hasSourceRect ? mapImageCommentToComposite(comment, sourceRect) : comment;
+      const box = projected ? normalizeCommentBox(projected) : null;
+      if (!commentText(comment).trim() || !box) continue;
+      lines.push(`[${item.kind === 'reference' ? '원본' : '선택 버전'} ${item.name}; 이미지ID ${item.id}] ${comment.type === 'point' ? '점' : '영역'} ${comment.number} (x=${box.x}%, y=${box.y}%, w=${box.w}%, h=${box.h}%): ${commentText(comment).trim()}`);
     }
   }
   return lines.length ? `\n\n위치별 코멘트:\n${lines.join('\n')}` : '';

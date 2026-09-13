@@ -12,7 +12,9 @@ test('approved first conversion pins actual transport settings and rejects unava
   for(const available of [[],[{...models[0],model:'other'}],[{...models[0],supportedReasoningEfforts:['high']}]]) assert.throws(()=>approvedFirstRun(source,available));
 });
 test('first conversion accepts exactly one source and rejects STYLE attachments',()=>{
-  for(const attachments of [[],[{},{}],[{referenceRole:'STYLE_REFERENCE'}]]) assert.throws(()=>approvedFirstRun({...source,attachments},models));
+  for(const attachments of [[],[{referenceRole:'STYLE_REFERENCE'}]]) assert.throws(()=>approvedFirstRun({...source,attachments},models));
+  assert.equal(approvedFirstRun({...source,attachments:[{},{}]},models).approvedFirstPng,true);
+  assert.equal(approvedFirstRun({...source,attachments:[{}, {referenceRole:'STYLE_REFERENCE'}]},models).approvedFirstPng,true);
 });
 test('approved protocol artifact remains byte-identical to the user-approved request',()=>{
   assert.equal(createHash('sha256').update(APPROVED_FIRST_PROMPT).digest('hex'),'8d6180f311791d497469d93cbc0eff98919b0d376d84a958f2b391c475e14067');

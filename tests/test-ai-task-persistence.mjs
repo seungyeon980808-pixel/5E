@@ -167,9 +167,14 @@ test('restart marks an unknown in-flight provider request interrupted without lo
     key: 'workspace', activeTaskTabId: 'task-a', taskTabSerial: 1, imageSerial: 2,
     tabs: [{
       id: 'task-a', workState: 'busy', input: 'latest request',
-      attachments: [{id:'source',data:pngFixture('source')}],
-      generated: [{id:'v1',data:pngFixture('one')},{id:'v2',data:pngFixture('two')}],
+      attachments: [
+        {id:'source',data:pngFixture('source'),comments:[{number:1,type:'area',x:10,y:20,w:30,h:40,text:'보존'}]},
+        {id:'source-2',data:pngFixture('source-2'),source:{pageNumber:7}},
+      ],
+      generated: [{id:'v1',data:pngFixture('one'),comments:[{number:1,type:'point',x:25,y:35,w:0,h:0,text:'첫 결과'}]},{id:'v2',data:pngFixture('two')}],
       selectedCandidateId: 'v1',
+      referenceComposition: {orientation:'vertical',sourceOrder:['source-2','source']},
+      workbenchViewState: {selectedCandidateId:'v1',zoom:{source:1.5,result:2},scroll:{source:{left:14,top:21},result:{left:34,top:55}}},
       outputOptions: {backgroundPolicy:'connected',examPalette:true,lineThickness:2},
       inFlightRequest: {type:'image',snapshot:{entered:'retry me',runInput:{mode:'diagram'}}},
     }],
@@ -183,6 +188,10 @@ test('restart marks an unknown in-flight provider request interrupted without lo
   assert.equal(tab.attachments[0].id, 'source');
   assert.deepEqual(tab.generated.map(item => item.id), ['v1', 'v2']);
   assert.equal(tab.selectedCandidateId, 'v1');
+  assert.deepEqual(tab.referenceComposition, value.tabs[0].referenceComposition);
+  assert.deepEqual(tab.workbenchViewState, value.tabs[0].workbenchViewState);
+  assert.deepEqual(tab.attachments[0].comments, value.tabs[0].attachments[0].comments);
+  assert.deepEqual(tab.generated[0].comments, value.tabs[0].generated[0].comments);
   assert.deepEqual(tab.outputOptions, value.tabs[0].outputOptions);
   assert.equal(value.tabs[0].workState, 'busy', 'recovery must not mutate the stored input object');
 });

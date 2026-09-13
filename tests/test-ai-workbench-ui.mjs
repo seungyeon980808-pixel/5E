@@ -31,7 +31,7 @@ test("AI panel keeps one compatible instance of each logic-owned control", () =>
 test("workbench defaults to large result with comments and keeps comparison and chat accessible", () => {
   const railAt = index.indexOf("ai-task-rail");
   const resultsAt = index.indexOf("ai-results mode-result");
-  const reviewAt = index.indexOf("ai-review-panel");
+  const reviewAt = index.indexOf("ai-review-summary");
   assert.ok(railAt > 0 && resultsAt > railAt && reviewAt > resultsAt, "task, compare, review order");
   assert.match(index, /class="ai-comparison-grid"[\s\S]*class="ai-image-pane ai-original-pane"[\s\S]*class="ai-image-pane ai-result-pane"/);
   assert.doesNotMatch(index, /data-ai-batch(?:-panel|-grid|-summary)?/);
@@ -46,7 +46,6 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.doesNotMatch(index, /<details class="ai-conversion-options"\s+open/);
   assert.doesNotMatch(index, /<details class="(?:ai-history-section|ai-advanced-settings)"\s+open/);
   assert.match(index, /data-ai-review-mode checked/);
-  assert.match(index, /data-ai-pixel-inspection hidden/);
   assert.match(index, /기본: 평가원식 · 흰 배경 · 무채색 · 과학적 구조 보존/);
   assert.doesNotMatch(index, /data-ai-runtime-summary/);
   assert.match(index, /<select data-ai-background-policy[\s\S]*value="preserve"[\s\S]*value="connected"[\s\S]*value="all-near-white"[\s\S]*<\/select>/);
@@ -78,23 +77,31 @@ test("workbench inherits the existing theme and retains zoom and responsive layo
   assert.match(css, /\.ai-task-tab-title\s*\{[\s\S]*text-overflow:\s*ellipsis;[\s\S]*white-space:\s*nowrap;/);
 });
 
-test("review rendering is event-driven, candidate-specific, and text-safe", () => {
+test("review events expose only concise user status", () => {
   assert.match(workbench, /panel\.addEventListener\("5e:ai-review"/);
   assert.match(workbench, /reports\.set\(record\.candidateId, record\)/);
   assert.match(workbench, /card\.dataset\.aiCandidateId/);
   assert.match(workbench, /card\.dataset\.aiReviewState/);
-  assert.match(workbench, /textContent = check\.label/);
-  assert.match(workbench, /textContent = `\$\{prefix\}\$\{issue\.message\}`/);
   assert.doesNotMatch(workbench, /\.innerHTML\s*=/);
-  assert.match(workbench, /Review bbox contract: x\/y\/width\/height are normalized/);
-  assert.match(workbench, /bbox\.x \+ bbox\.width > 1\.001/);
-  assert.match(workbench, /uncertain: "확인 필요"/);
-  assert.match(workbench, /major: "주요 문제"/);
-  assert.match(workbench, /renderPixelInspection\(normalized\.pixelInspection\)/);
+  assert.match(workbench, /renderUserStatus\(record\)/);
+  assert.doesNotMatch(index, /data-ai-review-meta|data-ai-review-checks|data-ai-review-issues|data-ai-pixel-inspection/);
+  assert.doesNotMatch(workbench, /reviewMeta\.textContent|renderPixelInspection\(/);
+  assert.doesNotMatch(workbench, /formatRuntimeSummary|syncRuntimeSummary/);
+  assert.match(index, /<details class="ai-advanced-settings">[\s\S]*?<label class="ai-setting-label">생성 모델/);
+  assert.match(index, /<details class="ai-advanced-settings">[\s\S]*?<label class="ai-setting-label">추론/);
 });
 
-test("comparison controls keep versions and default to linked pane-local zoom", () => {
-  assert.match(workbench, /candidateSelect\.replaceChildren\(\)/);
+test("comparison controls use an app-owned version listbox and linked pane-local zoom", () => {
+  assert.doesNotMatch(index, /<select data-ai-candidate-select/);
+  assert.match(index, /data-ai-version-button[^>]*aria-haspopup="listbox"/);
+  assert.match(index, /data-ai-version-list[^>]*role="listbox"/);
+  assert.match(workbench, /case "ArrowDown"/);
+  assert.match(workbench, /case "ArrowUp"/);
+  assert.match(workbench, /case "Home"/);
+  assert.match(workbench, /case "End"/);
+  assert.match(workbench, /case "Enter"/);
+  assert.match(workbench, /case "Escape"/);
+  assert.match(workbench, /versionButton\.focus\(\)/);
   assert.match(workbench, /card\.classList\.toggle\("is-ai-active-candidate"/);
   assert.match(index, /data-ai-zoom-linked checked/);
   assert.match(index, /data-ai-pane-zoom="source"/);
@@ -111,6 +118,21 @@ test("comparison controls keep versions and default to linked pane-local zoom", 
   assert.match(workbench, /function fitCardStage\(card\)/);
   assert.match(workbench, /new CustomEvent\("5e:ai-workbench-geometry-change"\)/);
   assert.match(panel, /addEventListener\('5e:ai-workbench-geometry-change',\(\)=>commentController\.render\(\)\)/);
+  assert.match(workbench, /versionButton\?\.addEventListener\("keydown"/);
+  assert.match(workbench, /case "Escape":[\s\S]*?event\.stopPropagation\(\)/);
+  assert.match(workbench, /document\.addEventListener\('pointerdown'/);
+});
+
+test("source composition controls expose orientation, ordering, and live preview hooks", () => {
+  assert.match(index, /data-ai-composition-orientation="horizontal"[^>]*aria-pressed="true"/);
+  assert.match(index, /data-ai-composition-orientation="vertical"[^>]*aria-pressed="false"/);
+  assert.match(index, /data-ai-composite-preview/);
+  assert.match(workbench, /5e:ai-composition-orientation-change/);
+  assert.match(workbench, /5e:ai-reference-order-change/);
+  assert.match(workbench, /5e:ai-composite-ready/);
+  assert.match(workbench, /image\.src = event\.detail\.dataUrl/);
+  assert.match(workbench, /setAttribute\("data-ai-reference-move", direction\)/);
+  assert.match(workbench, /\[\["earlier", "앞으로"\], \["later", "뒤로"\]\]/);
 });
 
 test("zoomed stages grow their scrollable coordinate plane instead of clipping a transform", () => {
