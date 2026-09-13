@@ -58,10 +58,29 @@ import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYP
 import { resolveObjectStyle } from "../style-mode.js?v=1.4.0";
 import { renderFormula } from "../formula.js?v=1.4.0";
 import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.4.0";
+import {
+  SELECTION_COLOR,
+  SELECTION_DASH_PX,
+  SELECTION_HANDLE_COUNT,
+  SELECTION_STROKE_PX,
+  selectionScaleForSvg,
+  selectionVisualMetrics,
+} from "../selection-visuals.js?v=1.0.0";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
   return state.objects.find((o) => o.id === id) || null;
+}
+
+function styleSelectionFrame(el, kind, color = SELECTION_COLOR) {
+  el.setAttribute("data-selection-frame", kind);
+  el.setAttribute("fill", "none");
+  el.setAttribute("stroke", color);
+  el.setAttribute("stroke-width", String(SELECTION_STROKE_PX));
+  el.setAttribute("vector-effect", "non-scaling-stroke");
+  if (kind === "multi-member") el.setAttribute("stroke-dasharray", SELECTION_DASH_PX.join(" "));
+  else el.removeAttribute("stroke-dasharray");
+  el.setAttribute("pointer-events", "none");
 }
 
 /* ===== SNAP PREVIEW STATE: transient render data, never persisted ===== */
@@ -149,6 +168,7 @@ function renderSnapPreview(scene, zoom) {
 export function render(state) {
   const scene = document.getElementById("scene");
   if (!scene) return;
+  const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
 
   // Simplest correct projection: wipe and rebuild. Fine at this scale; a
   // keyed/diffing pass can replace this once object counts grow.
@@ -298,15 +318,10 @@ export function render(state) {
     scene.appendChild(group);
   }
 
-  // ----- selection outline (blue dashed bbox; world space so it tracks zoom/pan) -----
   const _selIds = state.selectedIds || [];
 
-  // For a grouped multi-selection, draw ONE combined green rect instead of per-member outlines.
   const _groupMembers = _selIds.map((id) => renderObjectById(state, id)).filter(Boolean);
-  const _firstMember = _groupMembers[0];
-  const _allSameGroup = _selIds.length > 1 && _firstMember && _firstMember.groupId &&
-    _groupMembers.every((o) => o.groupId === _firstMember.groupId);
-  if (_allSameGroup) {
+  if (_selIds.length > 1) {
     const _gbox = combinedGroupBBox(_groupMembers, scene);
     if (_gbox) {
       const _grect = document.createElementNS(SVG_NS, "rect");
@@ -314,10 +329,7 @@ export function render(state) {
       _grect.setAttribute("y", _gbox.y);
       _grect.setAttribute("width", _gbox.w);
       _grect.setAttribute("height", _gbox.h);
-      _grect.setAttribute("fill", "none");
-      _grect.setAttribute("stroke-width", "0.4");
-      _grect.setAttribute("stroke-dasharray", "0.6 0.6");
-      _grect.style.stroke = "#2f9e44";
+      styleSelectionFrame(_grect, "multi-outer");
       scene.appendChild(_grect);
     }
   }
@@ -328,12 +340,8 @@ export function render(state) {
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
     if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
-    if (_allSameGroup) continue; // combined rect already drawn above
-    const _selColor = (state.targetedId === _sid) ? "#e67700"
-                    : sel.groupId  ? "#2f9e44"
-                    : sel.locked   ? "#e53e3e"
-                    : sel.positionLocked ? "#8b5cf6"
-                    : "var(--c-main, #0969da)";
+    const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
+    const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
     if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
         || sel.type === "parabola" || sel.type === "groundarc"
@@ -350,6 +358,7 @@ export function render(state) {
       ln.setAttribute("stroke-dasharray", "0.6 0.6");
       ln.style.stroke = _selColor;
       ln.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(ln, _frameKind, _selColor);
       scene.appendChild(ln);
     } else if (sel.type === "polyline" && sel.closed === true) {
       // Closed polyline takes branch-A (face) treatment: a dashed bbox rect guide,
@@ -365,6 +374,7 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4"); // world units
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else if (sel.type === "polyline") {
@@ -376,6 +386,7 @@ export function render(state) {
       pl.setAttribute("stroke-dasharray", "0.6 0.6");
       pl.style.stroke = _selColor;
       pl.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(pl, _frameKind, _selColor);
       scene.appendChild(pl);
     } else if (sel.type === "curve" && sel.closed === true) {
       // Closed curve: bbox rect guide (same as closed polyline).
@@ -390,6 +401,7 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4");
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else if (sel.type === "curve") {
@@ -401,6 +413,7 @@ export function render(state) {
       cv.setAttribute("stroke-dasharray", "0.6 0.6");
       cv.style.stroke = _selColor;
       cv.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(cv, _frameKind, _selColor);
       scene.appendChild(cv);
     } else if (sel.type === "text" || sel.type === "formula") {
       // getBBox() on the already-rendered element gives the exact visual bounds.
@@ -419,6 +432,7 @@ export function render(state) {
           box.setAttribute("stroke-width", "0.4");
           box.setAttribute("stroke-dasharray", "0.6 0.6");
           box.style.stroke = _selColor;
+          styleSelectionFrame(box, _frameKind, _selColor);
           // getBBox()는 요소 자신의 rotate 변환을 반영하지 않으므로 회전된 텍스트/수식은
           // 선택 외곽선이 회전 전 위치에 남는다 → 렌더와 동일한 rotate를 박스에도 적용.
           // (text는 앵커 obj.x/obj.y, formula는 박스 중심이 피벗)
@@ -449,6 +463,7 @@ export function render(state) {
         ray.setAttribute("stroke-dasharray", "0.6 0.6");
         ray.style.stroke = _selColor;
         ray.setAttribute("pointer-events", "none");
+        styleSelectionFrame(ray, _frameKind, _selColor);
         scene.appendChild(ray);
       }
       // Dashed bbox guide (vertex-centered square of radius r), matching the
@@ -464,6 +479,7 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4");
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else {
@@ -476,6 +492,7 @@ export function render(state) {
       box.setAttribute("stroke-width", "0.4"); // world units
       box.setAttribute("stroke-dasharray", "0.6 0.6");
       box.style.stroke = _selColor;
+      styleSelectionFrame(box, _frameKind, _selColor);
       if (sel.rotation) {
         const cx = sel.x + sel.w / 2, cy = sel.y + sel.h / 2;
         box.setAttribute("transform", `rotate(${sel.rotation} ${cx} ${cy})`);
@@ -484,41 +501,22 @@ export function render(state) {
     }
   }
 
-  // ----- selection handles (DESIGN 5-2: fixed 10 CSS px = 10/zoom world units) -----
   if (_selIds.length === 1) {
     const handleSel = renderObjectById(state, _selIds[0]);
     // 숨긴 레이어의 객체에는 핸들을 그리지 않는다(보이지 않는 객체가 변형되는 것 방지).
     const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
     const _hVisible = !(_hLayer && _hLayer.visible === false);
     if (handleSel && _hVisible && !state.targetedId) {
-      renderHandles(handleSel, scene, getZoom(), state.activeTool);
+      renderHandles(handleSel, scene, selectionScale, state.activeTool);
     }
   } else if (_selIds.length > 1 && !state.targetedId) {
-    // Whole-group selection (green): every selected object shares one groupId.
-    // Draw 8 resize handles on the COMBINED bbox so the group scales as a unit
-    // (DESIGN 6-2). Targeted (orange) is excluded above, so it never gets handles.
     const _members = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
-    const _first = _members[0];
-    const _sharedGid = _first && _first.groupId &&
-      _members.every((o) => o.groupId === _first.groupId) ? _first.groupId : null;
-    if (_sharedGid) {
-      const _box = combinedGroupBBox(_members, scene);
-      if (_box) {
-        // Reuse renderHandles via a synthetic axis-aligned rect (id "__group__"):
-        // it emits the same 8 white squares the resize logic listens for.
-        renderHandles(
-          { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
-          scene, getZoom(), state.activeTool
-        );
-      }
-    } else {
-      // Plain multi-selection (no shared groupId): still draw the 8 handles on the
-      // combined bbox so an ad-hoc selection scales/rotates as a unit.
+    if (_members.length === _selIds.length && !_members.some((o) => o.locked)) {
       const _box = combinedGroupBBox(_members, scene);
       if (_box) {
         renderHandles(
           { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
-          scene, getZoom(), state.activeTool
+          scene, selectionScale, state.activeTool
         );
       }
     }
@@ -898,7 +896,6 @@ export function renderObject(obj) {
   }
 }
 
-/* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
@@ -992,33 +989,33 @@ function combinedGroupBBox(members, scene) {
 }
 
 function renderHandles(sel, scene, zoom, activeTool) {
-  const half = 5 / zoom;   // resize square is half*2 = 10 CSS px (DESIGN 5-2 base size)
-  const sw   = 0.5 / zoom;
+  const metrics = selectionVisualMetrics(zoom);
+  const half = metrics.handleWorld / 2;
 
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("id", "handles");
+  g.dataset.handleCount = String(SELECTION_HANDLE_COUNT);
 
-  const makeHandle = (wx, wy, label, easierPointerTarget = false) => {
-    if (easierPointerTarget) {
-      const hit = document.createElementNS(SVG_NS, "rect");
-      const hitHalf = 12 / zoom;
-      hit.setAttribute("x", wx - hitHalf);
-      hit.setAttribute("y", wy - hitHalf);
-      hit.setAttribute("width", hitHalf * 2);
-      hit.setAttribute("height", hitHalf * 2);
-      hit.setAttribute("fill", "transparent");
-      hit.dataset.handle = label;
-      hit.dataset.id = sel.id;
-      g.appendChild(hit);
-    }
+  const makeHandle = (wx, wy, label) => {
+    const hit = document.createElementNS(SVG_NS, "rect");
+    const hitHalf = metrics.hitWorld / 2;
+    hit.setAttribute("x", wx - hitHalf);
+    hit.setAttribute("y", wy - hitHalf);
+    hit.setAttribute("width", hitHalf * 2);
+    hit.setAttribute("height", hitHalf * 2);
+    hit.setAttribute("fill", "transparent");
+    hit.dataset.handle = label;
+    hit.dataset.id = sel.id;
+    g.appendChild(hit);
     const r = document.createElementNS(SVG_NS, "rect");
     r.setAttribute("x", wx - half);
     r.setAttribute("y", wy - half);
     r.setAttribute("width",  half * 2);
     r.setAttribute("height", half * 2);
     r.setAttribute("fill", "#ffffff");
-    r.setAttribute("stroke", "#0969da");
-    r.setAttribute("stroke-width", sw);
+    r.setAttribute("stroke", SELECTION_COLOR);
+    r.setAttribute("stroke-width", SELECTION_STROKE_PX);
+    r.setAttribute("vector-effect", "non-scaling-stroke");
     r.dataset.handle = label;
     r.dataset.id = sel.id;
     g.appendChild(r);

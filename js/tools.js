@@ -66,6 +66,7 @@ export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor,
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
 import { guideCursorAt } from "./ruler.js?v=1.4.0";
+import { SELECTION_COLOR, SELECTION_MARQUEE_FILL, selectionVisualMetrics } from "./selection-visuals.js?v=1.0.0";
 
 import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
@@ -621,10 +622,12 @@ function setupDrawing() {
     if (hitId === null && _at === "V") {
       _marqueeStart = { x: p.x, y: p.y };
       _marqueeEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      _marqueeEl.setAttribute("fill", "rgba(9,105,218,0.08)");
-      _marqueeEl.setAttribute("stroke", "#0969da");
-      _marqueeEl.setAttribute("stroke-width", "0.3");
-      _marqueeEl.setAttribute("stroke-dasharray", "0.7 0.5");
+      const marqueeMetrics = selectionVisualMetrics(getRenderScale());
+      _marqueeEl.setAttribute("fill", SELECTION_MARQUEE_FILL);
+      _marqueeEl.setAttribute("stroke", SELECTION_COLOR);
+      _marqueeEl.setAttribute("stroke-width", marqueeMetrics.strokeWorld);
+      _marqueeEl.setAttribute("stroke-dasharray", marqueeMetrics.dashWorld.join(" "));
+      _marqueeEl.setAttribute("vector-effect", "non-scaling-stroke");
       _marqueeEl.setAttribute("pointer-events", "none");
       _marqueeEl.setAttribute("x", p.x);
       _marqueeEl.setAttribute("y", p.y);
