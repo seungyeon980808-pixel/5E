@@ -13,10 +13,10 @@
   <script type="module">
     import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
     const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
-    const makeQuestion = (id, title, color) => ({
+    const makeQuestion = (id, title, color, provider = "pdf") => ({
       id, title, kind: "crop", cropType: "question", sourceId: "pack", sourceLabel: "QA 자료팩",
       metadata: { academicYear: 2026, subject: "p1", administration: "06", questionNumber: Number(id.slice(1)) },
-      provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] },
+      provenance: { provider, documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] },
       variants: {
         full: { label: "전체", source: { documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] } },
         figures: [
@@ -27,7 +27,7 @@
       preview: { source: { rect: [0, 0, 1, 1] } },
       qaColor: color,
     });
-    const all = [makeQuestion("q1", "2026학년도 6월 1번", "%2399c2ff"), makeQuestion("q2", "2023학년도 6월 2번", "%23ffc28f")];
+    const all = [makeQuestion("q1", "2026학년도 6월 1번", "%2399c2ff"), makeQuestion("q2", "2023학년도 6월 2번", "%23ffc28f", "parts")];
     const matches = [
       { pageNumber: 2, snippet: "A B 같은 쪽", terms: [{ termId: "a", label: "A", color: "#ff4773" }, { termId: "b", label: "B", color: "#3478f6" }], highlights: [{ rect: [0.2, 0.2, 0.2, 0.1], color: "#ff4773" }, { rect: [0.55, 0.55, 0.2, 0.1], color: "#3478f6" }], misses: [] },
       { pageNumber: 4, snippet: "A B 다음 일치", terms: [{ termId: "a", label: "A", color: "#ff4773" }, { termId: "b", label: "B", color: "#3478f6" }], highlights: [], misses: ["a", "b"] },
@@ -63,6 +63,9 @@
       },
       materialize: async (result, options = {}) => {
         const representation = options.representation || "full";
+        if (window.qaQuestionDelay && result.kind === "crop") {
+          await new Promise((resolve) => setTimeout(resolve, window.qaQuestionDelay));
+        }
         window.qaMaterialized = representation;
         return { dataUrl: image(`${result.title} / ${representation}`, result.qaColor), provenance: result.provenance };
       },

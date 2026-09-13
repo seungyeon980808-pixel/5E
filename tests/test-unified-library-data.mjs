@@ -374,6 +374,33 @@ test("worker search is async, groups matching question once, and catalog replace
   assert.deepEqual(provider.search({ query: "굴절" }), []);
 });
 
+test("worker question search reuses canonical secured geometry when its compact result omits words", async () => {
+  const document = pdfDocument("worker-canonical");
+  const canonicalSource = document.pages[0].items[0].source;
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    materializers: { pdf: async ({ result, source }) => ({ source: assertPdfMaterializationSource(result, source, 1) }) },
+    searchPdf: async () => [{
+      documentId: document.id,
+      pageNumber: 1,
+      itemId: document.pages[0].items[0].id,
+      itemNumber: 1,
+      text: "worker snippet 운동량",
+      snippet: "worker snippet 운동량",
+      terms: [{ term: "운동량", termId: "worker-term", label: "운동량", color: "#123456" }],
+      source: { ...canonicalSource, rect: [0.1, 0.1, 0.8, 0.85] },
+    }],
+  });
+
+  const [result] = await provider.searchAsync({ query: "운동량", kinds: ["crop"] });
+
+  assert.deepEqual(result.provenance.rect, canonicalSource.rect);
+  assert.deepEqual(result.variants.full.source.rect, canonicalSource.rect);
+  assert.match(result.matchContext.snippet, /worker snippet/u);
+  assert.deepEqual((await provider.materialize(result, { representation: "full" })).source.rect, canonicalSource.rect);
+  assert.deepEqual((await provider.materialize(result, { thumbnail: true })).source.rect, canonicalSource.rect);
+});
+
 test("a PDF file match materializes its active page through a canonical full-page result", async () => {
   const document = {
     ...pdfDocument("textbook-327"),
@@ -403,6 +430,80 @@ test("a PDF file match materializes its active page through a canonical full-pag
     documentId: document.id, pageNumber: 272, rect: [0, 0, 1, 1], fullPageFallback: true,
   });
   assert.equal(received.options.original, true);
+});
+
+test("an empty PDF query exposes the same canonical page preview contract", async () => {
+  const document = { ...pdfDocument("inventory-pdf"), pageCount: 2 };
+  let received;
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    materializers: { pdf: async (input) => { received = input; return { dataUrl: "data:image/png;base64,AA==" }; } },
+  });
+
+  const [file] = await provider.searchPdfFiles({ query: "" });
+  assert.equal(file.kind, "page");
+  assert.equal(file.firstMatchingPage, 1);
+  assert.equal(typeof file.loadPreview, "function");
+  const rendered = await file.loadPreview(2, { original: true });
+
+  assert.equal(rendered.result.kind, "page");
+  assert.equal(rendered.result.provenance.pageNumber, 2);
+  assert.equal(received.source.pageNumber, 2);
+  assert.equal(received.options.original, true);
+  await assert.rejects(file.loadPreview(3), /outside the document/u);
+
+  await file.loadPreview(1, { thumbnail: true });
+  assert.equal(received.options.thumbnail, true);
+  assert.equal(received.options.preview, false);
+});
+
+test("PDF page inventory preserves selected sources and applies an explicit bounded limit", () => {
+  const withSecondPage = (document) => ({
+    ...document,
+    source: { ...document.source, locator: `verified-pack/documents/${document.id}.pdf`, displayName: `${document.id}.pdf` },
+    pageCount: 2,
+    pages: [...document.pages, {
+      documentId: document.id, pageNumber: 2, text: "2쪽", words: [], items: [],
+    }],
+  });
+  const first = withSecondPage(pdfDocument("page-source-a"));
+  const second = withSecondPage(pdfDocument("page-source-b"));
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [first, second] });
+  const sources = provider.getSources().filter(({ kind }) => kind === "source");
+  const firstSource = sources.find(({ id }) => id.includes("page-source-a"));
+  const secondSource = sources.find(({ id }) => id.includes("page-source-b"));
+
+  assert.equal(provider.listPdfPages({ query: "" }).length, 4);
+  assert.deepEqual(provider.listPdfPages({ query: "", sourceIds: [secondSource.id] }).map(({ sourceId }) => sourceId), [
+    secondSource.id,
+    secondSource.id,
+  ]);
+  assert.deepEqual(provider.listPdfPages({ query: "", sourceIds: [] }), []);
+  assert.equal(provider.listPdfPages({ query: "", sourceIds: [firstSource.id, secondSource.id], limit: 3 }).length, 3);
+});
+
+test("PDF file search includes a term elsewhere on a page with detected question items", async () => {
+  const document = pdfDocument("full-page-occurrence");
+  document.pages[0] = {
+    ...document.pages[0],
+    text: "1. 운동량 보존 실험 도판 부록에는 말굽자석 해설이 있다",
+    words: [
+      ...document.pages[0].words,
+      { text: "말굽자석", rect: [0.1, 0.92, 0.1, 0.03] },
+    ],
+  };
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    searchPdf: async () => [],
+  });
+
+  const [file] = await provider.searchPdfFiles({ query: "자석 해설" });
+  assert.equal(file.matches.length, 1);
+  assert.equal(file.matches[0].pageNumber, 1);
+  assert.match(file.matches[0].snippet, /말굽자석/u);
+  assert.deepEqual(await provider.searchPdfFiles({ query: "자석 없는말" }), []);
+  assert.deepEqual(await provider.searchPdfFiles({ query: "자석", sourceIds: [] }), []);
+  assert.deepEqual(await provider.searchPdfFiles({ query: "자석", filters: { subject: "bio1" } }), []);
 });
 
 test("prebuilt and worker question results reject cross-document crop provenance", async () => {
@@ -489,6 +590,29 @@ test("strict PDF materialization accepts the canonical result and source unchang
   assert.deepEqual(rendered.source.rect, result.variants.full.source.rect);
   assert.equal(result.provenance, provenance);
   assert.equal(Object.isFrozen(result), true);
+});
+
+test("strict PDF materialization receives selected figure provenance without mutating its question", async () => {
+  const document = pdfDocument("strict-figure");
+  document.pages[0].items[0].figureCandidates = [{
+    id: "strict-figure:p1:q1:figure:1",
+    source: { documentId: document.id, pageNumber: 1, rect: [0.2, 0.2, 0.3, 0.2], fullPageFallback: false },
+  }];
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    materializers: { pdf: async ({ result, source }) => ({
+      result,
+      source: assertPdfMaterializationSource(result, source, 1),
+    }) },
+  });
+  const [canonical] = provider.search({ query: "운동량", kinds: ["crop"] });
+  const canonicalSnapshot = JSON.stringify(canonical);
+
+  const rendered = await provider.materialize(canonical, { representation: "figure:0" });
+
+  assert.deepEqual(rendered.source.rect, canonical.variants.figures[0].source.rect);
+  assert.deepEqual(rendered.result.provenance.rect, canonical.variants.figures[0].source.rect);
+  assert.equal(JSON.stringify(canonical), canonicalSnapshot);
 });
 
 test("strict PDF materialization receives a transient manual result without mutating the canonical result", async () => {

@@ -382,7 +382,7 @@ test("Given more than 500 worker entries across files, grouped search preserves 
   assert.deepEqual(files.map((file) => [file.documentId, file.matches.length]), [["a", 300], ["b", 3]]);
 });
 
-test("Given two ranked entries on one page, grouped search merges the page and aligns file metadata with the first match", async () => {
+test("Given ranked entries on multiple pages, grouped search merges duplicates and orders page navigation", async () => {
   // Given
   const provider = createUnifiedLibraryProvider({
     pdfDocuments: [inventoryDocument({ pageCount: 9 })],
@@ -397,10 +397,10 @@ test("Given two ranked entries on one page, grouped search merges the page and a
   const [file] = await provider.searchPdfFiles({ query: "x" });
 
   // Then
-  assert.deepEqual(file.matches.map((match) => [match.pageNumber, match.highlights.length]), [[9, 2], [2, 1]]);
-  assert.equal(file.firstMatchingPage, 9);
-  assert.equal(file.metadata.pageNumber, 9);
-  assert.equal(file.provenance.pageNumber, 9);
+  assert.deepEqual(file.matches.map((match) => [match.pageNumber, match.highlights.length]), [[2, 1], [9, 2]]);
+  assert.equal(file.firstMatchingPage, 2);
+  assert.equal(file.metadata.pageNumber, 2);
+  assert.equal(file.provenance.pageNumber, 2);
 });
 
 test("Given an unchanged reopened desktop record, inventory projection reuses it without a background target or revision change", () => {
