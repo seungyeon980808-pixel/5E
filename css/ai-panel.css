@@ -931,15 +931,8 @@
   font-size: 12px;
   cursor: pointer;
 }
-#ai-image-panel .ai-source-menu-trigger.ai-source-primary {
-  color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
-  font-weight: 700;
-}
 #ai-image-panel .ai-source-menu-trigger:hover,
 #ai-image-panel .ai-compare-controls button:hover { background: var(--bg-panel-hover); }
-#ai-image-panel .ai-source-menu-trigger.ai-source-primary:hover { background: var(--accent-hover); }
 #ai-image-panel .ai-source-menu-shell { position: relative; }
 #ai-image-panel .ai-source-menu {
   position: absolute;

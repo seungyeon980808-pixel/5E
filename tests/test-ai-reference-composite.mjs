@@ -5,7 +5,6 @@ import {
   REFERENCE_COMPOSITE_FAILURE_MESSAGE,
   composeReferenceImages,
   mapReferenceCommentsToComposite,
-  moveReferenceOrder,
 } from "../js/ai-reference-composite.js";
 
 const rgba = (...pixels) => new Uint8ClampedArray(pixels.flat());
@@ -104,20 +103,6 @@ test("one completed-composite ratio scales canvas and every source rectangle to 
     { sourceId: "large", order: 0, x: 0, y: 0, width: 150, height: 50 },
     { sourceId: "small", order: 1, x: 150, y: 0, width: 50, height: 100 },
   ]);
-});
-
-test("earlier and later moves produce an exact stable source order", () => {
-  // Given three source ids.
-  const order = ["a", "b", "c"];
-
-  // When a source moves earlier and then later.
-  const earlier = moveReferenceOrder(order, "c", "earlier");
-  const later = moveReferenceOrder(earlier, "a", "later");
-
-  // Then only adjacent positions change and the input is untouched.
-  assert.deepEqual(earlier, ["a", "c", "b"]);
-  assert.deepEqual(later, ["c", "a", "b"]);
-  assert.deepEqual(order, ["a", "b", "c"]);
 });
 
 test("point and area comments map from original percentages into their composite sub-rectangle", async () => {

@@ -871,24 +871,42 @@ function createWindow() {
             const resultRect = panel?.querySelector(".ai-results")?.getBoundingClientRect();
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
-            const aiSourceEntrypointsReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
-              !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-capture]");
-            const initialThicknessButtons = Array.from(panel?.querySelectorAll("[data-ai-line-thickness]") || []);
-            const initialThicknessOriginal = panel?.querySelector('[data-ai-line-thickness="0"]');
-            const initialThicknessPlusOne = panel?.querySelector('[data-ai-line-thickness="1"]');
-            initialThicknessPlusOne?.click();
-            const initialThicknessChanged = await waitFor(() => initialThicknessPlusOne?.getAttribute("aria-pressed") === "true");
-            initialThicknessOriginal?.click();
-            const aiInitialThicknessReady = initialThicknessButtons.length === 3 && initialThicknessChanged &&
-              await waitFor(() => initialThicknessOriginal?.getAttribute("aria-pressed") === "true");
-            panel?.querySelector("[data-ai-reference-search]")?.click();
+            const sourceTrigger = panel?.querySelector("[data-ai-source-menu-trigger]");
+            const sourceMenu = panel?.querySelector("[data-ai-source-menu]");
+            const sourceFile = panel?.querySelector("[data-ai-source-file]");
+            const closedSourceStyle = sourceTrigger ? getComputedStyle(sourceTrigger) : null;
+            const neutralSourceBackground = closedSourceStyle?.backgroundColor;
+            const aiSourceEntrypointsReady = sourceFile?.multiple === true &&
+              sourceMenu?.querySelectorAll("[data-ai-source-action]").length === 4 &&
+              !!sourceMenu.querySelector('[data-ai-source-action="library"]') &&
+              !!sourceMenu.querySelector('[data-ai-source-action="capture"]');
+            sourceTrigger?.click();
+            const sourceMenuOpened = await waitFor(() => sourceTrigger?.getAttribute("aria-expanded") === "true" && sourceMenu?.hidden === false);
+            const openSourceStyle = sourceTrigger ? getComputedStyle(sourceTrigger) : null;
+            const aiSourceMenuVisualStatesReady = sourceMenuOpened && neutralSourceBackground !== openSourceStyle?.backgroundColor &&
+              openSourceStyle?.color === "rgb(255, 255, 255)";
+            const thicknessSelect = panel?.querySelector('select[data-ai-line-thickness]');
+            const initialThicknessValues = Array.from(thicknessSelect?.options || []).map((option) => option.value);
+            if (thicknessSelect) {
+              thicknessSelect.value = "1";
+              thicknessSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            const initialThicknessChanged = await waitFor(() => thicknessSelect?.value === "1");
+            if (thicknessSelect) {
+              thicknessSelect.value = "0";
+              thicknessSelect.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+            const aiInitialThicknessReady = initialThicknessValues.join(",") === "0,1,2" && initialThicknessChanged &&
+              await waitFor(() => thicknessSelect?.value === "0");
+            sourceMenu?.querySelector('[data-ai-source-action="library"]')?.click();
             const aiLoadMenuReady = await waitFor(() => {
-              const search = document.querySelector(".ai-reference-search-dialog");
-              return search?.querySelectorAll("[data-ai-search-source]").length === 3 &&
-                search.querySelector("input[type=search]") === document.activeElement;
+              const libraryPicker = document.querySelector(".unified-library-overlay:not([hidden])");
+              return !!libraryPicker?.querySelector('[data-unilib-type="image"]') &&
+                !!libraryPicker.querySelector("[data-unilib-query]");
             }, 4000);
-            document.querySelector("[data-ai-search-close]")?.click();
-            panel?.querySelector("[data-ai-capture]")?.click();
+            document.querySelector(".unified-library-overlay:not([hidden]) [data-unilib-close]")?.click();
+            sourceTrigger?.click();
+            sourceMenu?.querySelector('[data-ai-source-action="capture"]')?.click();
             await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
             document.querySelector(".ai-capture-source")?.click();
             await waitFor(() => document.querySelector(".ai-crop-dialog"), 3000);
@@ -900,7 +918,7 @@ function createWindow() {
             cropDialog?.querySelector(".ai-crop-foot button")?.click();
             const cancelButton = panel?.querySelector("[data-ai-interrupt]");
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
-            const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
+            const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".unified-library-overlay:not([hidden])");
             panel.hidden = true;
             dismissStartupDialogs();
             await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
@@ -1092,8 +1110,6 @@ function createWindow() {
             let aiOutputControlsReady = false;
             let aiTaskWorkspacesIsolated = false;
             let aiCollectiveExportControlReady = false;
-            const initialWorkbenchPanels = new Set(Array.from(document.querySelectorAll(".modal-overlay"))
-              .filter((candidate) => candidate.querySelector(".modal-ai")));
             document.getElementById("exam-library-open")?.click();
             const libraryOpened = await waitFor(() => {
               const library = document.querySelector(".unified-library-overlay:not([hidden])");
@@ -1109,11 +1125,14 @@ function createWindow() {
             unifiedLibraryReady = libraryOpened && imageResultsReady && selectedLibraryChecks.length === 2 &&
               !!libraryAiButton && !libraryAiButton.disabled && /선택 2개/.test(libraryAiButton.textContent || "");
             libraryAiButton?.click();
+            await waitFor(() => !!library?.querySelector(".unilib-ai-placement"), 2000);
+            Array.from(library?.querySelectorAll(".unilib-ai-placement button") || [])
+              .find((candidate) => candidate.textContent?.trim() === "이미지마다 별도 작업")?.click();
             await waitFor(() => Array.from(document.querySelectorAll(".modal-overlay"))
-              .filter((candidate) => candidate.querySelector(".modal-ai") && !initialWorkbenchPanels.has(candidate))
+              .filter((candidate) => candidate.querySelector(".modal-ai"))
               .filter((candidate) => candidate.querySelectorAll(".ai-reference-card").length === 1).length === 2, 12000);
             const independentPanels = Array.from(document.querySelectorAll(".modal-overlay"))
-              .filter((candidate) => candidate.querySelector(".modal-ai") && !initialWorkbenchPanels.has(candidate))
+              .filter((candidate) => candidate.querySelector(".modal-ai"))
               .filter((candidate) => candidate.querySelectorAll(".ai-reference-card").length === 1)
               .slice(0, 2);
             aiLibraryIndependentWorkspaces = unifiedLibraryReady && independentPanels.length === 2 &&
@@ -1156,7 +1175,7 @@ function createWindow() {
                   commentStage.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 77, isPrimary: true, button: 0, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
                   await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
                   const selection = commentCard.querySelector(".ai-comment-region");
-                  aiAreaCommentReady = !!selection && !!commentPanel.querySelector("[data-ai-comment-editor]");
+                  aiAreaCommentReady = !!selection && !!commentPanel.querySelector("[data-ai-inline-editor]");
                   if (selection) {
                     const beforeImage = commentImage.getBoundingClientRect();
                     const beforeSelection = selection.getBoundingClientRect();
@@ -1166,7 +1185,7 @@ function createWindow() {
                       w: beforeSelection.width / beforeImage.width,
                       h: beforeSelection.height / beforeImage.height,
                     };
-                    commentCard.querySelector('[aria-label="미리보기 확대"]')?.click();
+                    commentPanel.querySelector('[data-ai-pane-zoom="source"] [data-ai-zoom-action="in"]')?.click();
                     await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
                     const afterImage = commentImage.getBoundingClientRect();
                     const afterSelectionNode = commentCard.querySelector(".ai-comment-region");
@@ -1179,16 +1198,15 @@ function createWindow() {
                     };
                     aiAreaCommentZoomDiagnostics = {
                       before, after, beforeImageHeight: beforeImage.height, afterImageHeight: afterImage.height,
-                      zoomValue: commentCard.querySelector(".ai-zoom-value")?.textContent || "",
+                      zoomValue: commentPanel.querySelector('[data-ai-pane-zoom="source"] [data-ai-zoom-value]')?.textContent || "",
                     };
-                    aiAreaCommentTracksZoom = afterSelectionNode !== selection &&
-                      commentCard.querySelector(".ai-zoom-value")?.textContent === "120%" &&
+                    aiAreaCommentTracksZoom = !!afterSelectionNode && afterImage.height > beforeImage.height &&
+                      commentPanel.querySelector('[data-ai-pane-zoom="source"] [data-ai-zoom-value]')?.textContent === "120%" &&
                       Object.keys(before).every((key) => Math.abs(before[key] - after[key]) < .02);
                   }
                 }
-                commentPanel.querySelector("[data-ai-compare]")?.click();
-                aiSingleImageComparisonGuardReady = !document.querySelector(".ai-compare-dialog") &&
-                  /두 개 이상/.test(commentPanel.querySelector("[data-ai-status]")?.textContent || "");
+                const compareButton = commentPanel.querySelector("[data-ai-compare]");
+                aiSingleImageComparisonGuardReady = compareButton?.disabled === true && /첫 결과/.test(compareButton.title || "");
             }
             let workingPanel = activePanel();
             if (workingPanel) {
@@ -1285,6 +1303,7 @@ function createWindow() {
               aiProgressUiReady,
               aiResultsPlacedLeft,
               aiSourceEntrypointsReady,
+              aiSourceMenuVisualStatesReady,
               aiLoadMenuReady,
               aiCaptureCropReady,
               aiCancelIsContextual,
@@ -1354,10 +1373,10 @@ function createWindow() {
         result.menuBarVisible = win.isMenuBarVisible();
         result.menuBarPolicySatisfied = process.platform === "darwin" || result.menuBarVisible === false;
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
-        const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
+        const ok = result.buttonText === "AI 이미지 변환" && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
           result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
-          result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
+          result.aiSourceEntrypointsReady && result.aiSourceMenuVisualStatesReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
           result.cutChooserVisible && result.cutChooserInToolPanel && result.textChooserBehavior && result.angleChooserBehavior &&
           result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
           result.chooserClosesOnSelectShortcut && result.chooserClosesOnOtherTool && result.eraseToolReachable &&
@@ -1378,16 +1397,24 @@ function createWindow() {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
             let imageItemSeen = false;
+            let imageItemStarted = false;
+            let analysisTurnsCompleted = 0;
             const imagesBefore = document.querySelectorAll("#scene image[data-id]").length;
             const finish = (value) => { if (settled) return; settled = true; clearTimeout(timer); resolve(value); };
             const timer = setTimeout(() => finish({ generated: false, error: "timeout" }), 210000);
             window.fiveEDesktop.onEvent(async (msg) => {
               const item = msg?.params?.item;
+              if (msg?.method === "item/started" && item?.type === "imageGeneration") imageItemStarted = true;
               if (msg?.method === "item/completed" && item?.type === "imageGeneration") {
                 imageItemSeen = true;
                 const previewReady = /^data:image\\//.test(item.imageDataUrl || "");
-                await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                const insertButton = document.querySelector(".ai-preview-card button");
+                const previewDeadline = Date.now() + 10000;
+                let insertButton = null;
+                while (Date.now() < previewDeadline) {
+                  insertButton = document.querySelector("#ai-image-panel [data-ai-insert-selected]:not(:disabled)");
+                  if (insertButton && document.querySelector("#ai-image-panel .ai-generated-card.is-ai-active-candidate")) break;
+                  await new Promise((done) => setTimeout(done, 100));
+                }
                 insertButton?.click();
                 const deadline = Date.now() + 5000;
                 while (Date.now() < deadline && document.querySelectorAll("#scene image[data-id]").length <= imagesBefore) {
@@ -1398,19 +1425,41 @@ function createWindow() {
                   previewReady,
                   inserted: document.querySelectorAll("#scene image[data-id]").length > imagesBefore,
                   status: item.status || "",
+                  analysisTurnsCompleted,
+                  imageItemStarted,
                 });
-              } else if (msg?.method === "turn/completed" && !imageItemSeen) {
-                setTimeout(() => finish({ generated: false, error: "turn completed without image" }), 250);
+              } else if (msg?.method === "turn/completed" && imageItemStarted && !imageItemSeen) {
+                finish({ generated: false, error: "image turn completed without an image", analysisTurnsCompleted, imageItemStarted });
+              } else if (msg?.method === "turn/completed" && !imageItemStarted) {
+                analysisTurnsCompleted += 1;
               }
             });
             try {
-              await window.fiveEDesktop.send({
-                text: "5E 통합 종단 테스트입니다. 이미지 생성 도구를 사용해 흰 배경에 검은 선으로만 된 단순한 빈 비커 1개를 생성하세요. 문자, 숫자, 기호, 라벨, 지시선, 화살표는 생성하지 마세요.",
-                attachments: [],
-                conversationId: null,
-                purpose: "image",
-                ephemeralRender: true,
-              });
+              document.getElementById("ai-image-install-open")?.click();
+              const uiDeadline = Date.now() + 10000;
+              while (Date.now() < uiDeadline && document.getElementById("ai-image-panel")?.hidden) {
+                await new Promise((done) => setTimeout(done, 100));
+              }
+              const panel = document.getElementById("ai-image-panel");
+              const canvas = document.createElement("canvas");
+              canvas.width = 64; canvas.height = 64;
+              const context = canvas.getContext("2d");
+              context.fillStyle = "#fff"; context.fillRect(0, 0, 64, 64);
+              context.strokeStyle = "#000"; context.lineWidth = 3; context.strokeRect(18, 12, 28, 42);
+              const blob = await new Promise((done) => canvas.toBlob(done, "image/png"));
+              const transfer = new DataTransfer();
+              transfer.items.add(new File([blob], "desktop-smoke-source.png", { type: "image/png" }));
+              const fileInput = panel?.querySelector("[data-ai-source-file]");
+              fileInput.files = transfer.files;
+              fileInput.dispatchEvent(new Event("change", { bubbles: true }));
+              while (Date.now() < uiDeadline && !panel?.querySelector(".ai-reference-card")) {
+                await new Promise((done) => setTimeout(done, 100));
+              }
+              const requestInput = panel?.querySelector("[data-ai-input]");
+              requestInput.value = "5E 통합 종단 테스트입니다. 흰 배경에 검은 선으로만 된 단순한 빈 비커 1개를 생성하세요. 문자, 숫자, 기호, 라벨, 지시선, 화살표는 생성하지 마세요.";
+              requestInput.dispatchEvent(new Event("input", { bubbles: true }));
+              panel?.querySelector('[data-ai-output-engine="raster"]')?.click();
+              panel?.querySelector("[data-ai-send]")?.click();
             } catch (error) { finish({ generated: false, error: error?.message || String(error) }); }
           })`);
         }
