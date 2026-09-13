@@ -45,6 +45,7 @@ import {
   createSearchScheduler,
   activePdfPageResult,
   materializeOriginalLibraryPage,
+  materializeLibraryAction,
   pdfResultsForDisplay,
 } from "../js/unified-library-ui.js";
 
@@ -53,7 +54,12 @@ test("All is the exclusive no-filter state and includes questions, images, and P
   assert.deepEqual(normalizeLibraryTypes(["all", "pdf"]), ["question", "image", "pdf"]);
   assert.deepEqual(toggleLibraryType(["question", "image", "pdf"], "pdf"), ["pdf"]);
   assert.deepEqual(toggleLibraryType(["question", "image"], "all"), ["question", "image", "pdf"]);
-  assert.deepEqual(toggleLibraryType(["question"], "question"), ["question", "image", "pdf"]);
+  assert.deepEqual(toggleLibraryType(["question"], "question"), ["question"]);
+});
+
+test("result types select exclusively", () => {
+  assert.deepEqual(toggleLibraryType(["question"], "pdf"), ["pdf"]);
+  assert.deepEqual(toggleLibraryType(["pdf"], "image"), ["image"]);
 });
 
 test("compact year range orders and clamps its endpoints", () => {
@@ -138,7 +144,7 @@ test("folder counts are tooltip-only and never reserve label width", async () =>
   ]);
   assert.doesNotMatch(source, /className = "unilib-tree-count"/u);
   assert.doesNotMatch(css, /unilib-tree-count/u);
-  assert.match(source, /row\.title = counts \?/u);
+  assert.match(source, /text\.title = tooltip;\s*label\.title = tooltip;\s*row\.title = tooltip;/u);
 });
 
 test("an aggregate PDF resolves the active match and uses its own full-page loader", async () => {
@@ -237,7 +243,7 @@ test("Given a result row, card selection and AI-reference selection are sibling 
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.match(source, /button\.append\(media, copy\);\s*item\.append\(button, check\);/u);
   assert.doesNotMatch(source, /button\.append\([^)]*check/u);
-  assert.match(source, /openIndependentReferences\(\{ references, startGeneration: false \}\)/u);
+  assert.match(source, /openIndependentReferences\(\{ references, startGeneration: false, placement \}\)/u);
 });
 
 test("Given arbitrary-depth sources, the folder tree preserves hierarchy and tri-state descendants", () => {
@@ -435,7 +441,7 @@ test("crop keyboard arrows move and Shift plus arrows resize without result navi
   assert.deepEqual(cropRectFromKeyboard(rect, "ArrowDown", true), [0.2, 0.2, 0.4, 0.42000000000000004]);
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   const documentHandler = source.indexOf('document.addEventListener("keydown"');
-  const cropGuard = source.indexOf("if (!cropDialog.hidden) return;", documentHandler);
+  const cropGuard = source.indexOf("if (!cropDialog.hidden) {", documentHandler);
   const resultNavigation = source.indexOf('if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(event.key)', documentHandler);
   assert.ok(documentHandler >= 0 && cropGuard > documentHandler && cropGuard < resultNavigation);
 });
@@ -661,4 +667,15 @@ test("Given a nested source arriving below an excluded root, it stays off throug
   ];
   includeNewLibrarySources(enabled, new Set(["parts:b"]), sources, new Set(["pdf-root"]));
   assert.deepEqual([...enabled], ["parts:b"]);
+});
+
+
+test("PDF keyword page actions use their loader rather than generic aggregate materialization", async () => {
+  const calls = [];
+  const file = { id: "pdf:d", kind: "pdf", provenance: { provider: "pdf", documentId: "d", pageNumber: 1 }, matches: [{ pageNumber: 265 }, { pageNumber: 266 }], loadPreview: async (pageNumber) => { calls.push(pageNumber); return { dataUrl: `page-${pageNumber}`, source: { pageNumber } }; } };
+  const provider = { materialize() { throw new Error("Unknown library result"); } };
+  const selected = pdfResultsForDisplay([file], "page");
+  const materialized = await Promise.all(selected.map(result => materializeLibraryAction(result, provider)));
+  assert.deepEqual(calls, [265, 266]);
+  assert.deepEqual(materialized.map(result => result.dataUrl), ["page-265", "page-266"]);
 });

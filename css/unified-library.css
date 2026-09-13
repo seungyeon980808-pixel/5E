@@ -1,4 +1,5 @@
 .unified-library-overlay {
+  z-index: 10050;
   --unilib-bg: var(--bg-app, #0d1117);
   --unilib-panel: var(--bg-panel, #161b22);
   --unilib-input: var(--bg-input, #0d1117);
@@ -89,6 +90,7 @@
   --unilib-crop-preview-width: 280px;
   --unilib-crop-preview-height: 300px;
   --unilib-location-summary-width: 168px;
+  --unilib-selected-item-width: 20rem;
   --unilib-badge-radius: 999px;
   --unilib-tab-indicator-size: 2px;
   --unilib-press-distance: 1px;
@@ -325,7 +327,7 @@
 .unified-library-overlay .unilib-pdf-display { display: flex; width: max-content; gap: var(--unilib-space-1); padding: var(--unilib-space-1); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); }
 .unified-library-overlay .unilib-pdf-display[hidden] { display: none; }
 .unified-library-overlay .unilib-pdf-display button { min-height: var(--unilib-control-height); padding: 0 var(--unilib-space-4); border: 0; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; }
-.unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: var(--unilib-panel); color: var(--unilib-text); box-shadow: var(--unilib-selection-edge); }
+.unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: var(--unilib-panel); color: var(--unilib-text); }
 .unified-library-overlay .unilib-help { margin: 0; padding-bottom: var(--unilib-space-3); color: var(--unilib-muted); font-size: var(--unilib-type-caption); word-break: keep-all; }
 .unified-library-overlay .unilib-help summary { cursor: pointer; }
 .unified-library-overlay .unilib-help p { margin: var(--unilib-space-2) 0 0; max-width: var(--unilib-dialog-width); }
@@ -636,3 +638,23 @@
 .unified-library-overlay .unilib-figure-choice:focus-visible { outline: var(--unilib-focus-outline-width) solid var(--unilib-focus); outline-offset: var(--unilib-space-1); }
 .unified-library-overlay .unilib-match-rect { position: absolute; pointer-events: none; border: var(--unilib-focus-outline-width) solid var(--unilib-highlight-color, var(--unilib-accent)); background: color-mix(in srgb, var(--unilib-highlight-color, var(--unilib-accent)) 26%, transparent); }
 .unified-library-overlay [data-browse-source] { cursor: pointer; }
+
+/* Library controls share the existing tab treatment. */
+.unified-library-overlay .unilib-pdf-display { border: 0; border-radius: 0; background: transparent; padding: 0; }
+.unified-library-overlay .unilib-pdf-display button { border-radius: 0; border-bottom: var(--unilib-space-1) solid transparent; }
+.unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: transparent; border-bottom-color: var(--unilib-accent); }
+.unified-library-overlay .unilib-summary { height: auto; min-height: var(--unilib-search-height); flex-wrap: wrap; overflow: visible; padding-block: var(--unilib-space-3); }
+.unified-library-overlay .unilib-summary > span:first-child { white-space: nowrap; }
+.unified-library-overlay .unilib-selection-summary { flex: 1 1 100%; order: 1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
+.unified-library-overlay .unilib-selection-summary[hidden] { display: none; }
+.unified-library-overlay [data-unilib-selected-items] { overflow-x: auto; }
+.unified-library-overlay .unilib-selected-item { flex-shrink: 0; max-width: min(var(--unilib-selected-item-width), 60vw); }
+
+.unified-library-overlay [data-unilib-stage] { position: relative; }
+.unified-library-overlay .unilib-preview-loading { position: absolute; z-index: 2; inset: var(--unilib-space-3) var(--unilib-space-3) auto auto; padding: var(--unilib-space-2) var(--unilib-space-3); border-radius: var(--unilib-control-radius); background: var(--unilib-panel); color: var(--unilib-text); }
+.unified-library-overlay .unilib-preview-image { animation: unilib-fade-in var(--unilib-motion); }
+.unified-library-overlay .unilib-ai-placement { position: absolute; z-index: 20; inset: 0; display: grid; place-items: center; background: var(--unilib-backdrop); }
+.unified-library-overlay .unilib-ai-placement .unilib-dialog { padding: var(--unilib-space-5); display: grid; gap: var(--unilib-space-3); }
+.unified-library-overlay .unilib-ai-placement button { min-height: var(--unilib-control-height); padding: var(--unilib-space-2) var(--unilib-space-4); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); }
+
+.unified-library-overlay [data-figure-picker] { min-height: var(--unilib-control-height); max-width: 100%; padding: var(--unilib-space-2) var(--unilib-space-3); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); }
