@@ -1,3 +1,5 @@
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
+
 /* ===== 공용 다이얼로그: 프로그램 양식의 알림/확인 창 =====
  * 브라우저 기본 alert()/confirm() 대신 앱 모달과 같은 모양을 쓴다.
  *   showAlert(message, { title })            → Promise<void>
@@ -27,6 +29,7 @@ function buildDialog({ title, message, buttons }) {
       </div>`;
     document.body.appendChild(overlay);
     const done = (value) => { overlay.remove(); resolve(value); };
+    registerEscapeLayer(overlay.querySelector('[role="dialog"], [role="alertdialog"]'), () => done(buttons[0].value));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
@@ -78,6 +81,7 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
     if (placeholder) input.placeholder = placeholder;
     if (maxLength) input.maxLength = maxLength;
     const done = (val) => { overlay.remove(); resolve(val); };
+    registerEscapeLayer(overlay.querySelector('[role="dialog"]'), () => done(null));
     overlay.querySelector('[data-act="ok"]').addEventListener("click", () => done(input.value));
     overlay.querySelector('[data-act="cancel"]').addEventListener("click", () => done(null));
     overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(null); });

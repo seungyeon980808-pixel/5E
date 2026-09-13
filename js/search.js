@@ -1,3 +1,5 @@
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
+
 /* ===== OBJECT SEARCH (registry filtering + modal interaction only) ===== */
 
 import {
@@ -38,6 +40,8 @@ export function initObjectSearch() {
     overlay.hidden = true;
     input.value = "";
   }
+
+  registerEscapeLayer(overlay.querySelector('[role="dialog"]'), close);
 
   function pick(index) {
     const match = matches[index];

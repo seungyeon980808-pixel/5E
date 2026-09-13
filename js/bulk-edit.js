@@ -3,9 +3,7 @@
  * 고급 기능 [전체 통일/수정] 버튼 → 모달.
  *   · 대상: 오브젝트를 선택해 두었으면 '선택한 N개', 아니면 '캔버스 전체'.
  *     (잠긴 오브젝트는 건드리지 않는다)
- *   · 모드 2가지
- *     - 전체 통일: 모든 오브젝트를 같은 수치로 통일합니다.
- *     - 전체 수정: 모든 오브젝트의 수치를 일정하게 변화시킵니다(± 증감).
+ *   · 각 숫자 항목에서 같은 값 지정 또는 기존 값 증감을 선택합니다.
  *   · 항목(공통): 선 굵기 · 선 색(어둡기) · 면 색(어둡기) · 글씨 크기 · 각도
  *   · 항목(통일 전용): 글씨체 · 위치 고정 · 오브젝트 잠금
  *   · 각도: 도형/자·각도기 등은 rotation, 직선(line/circuit)은 양 끝점을
@@ -180,11 +178,6 @@ function targets() {
   return { objs: pool, locked: pool.filter((o) => o.locked).length, scoped: ids.length > 0 };
 }
 
-const MODE_DESC = {
-  uniform: "모든 오브젝트를 같은 수치로 통일합니다.",
-  delta: "모든 오브젝트의 수치를 일정하게 변화시킵니다.",
-};
-
 function buildModal() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -193,24 +186,16 @@ function buildModal() {
     <div class="modal bulk-modal" role="dialog" aria-modal="true" aria-labelledby="bulk-title">
       <h2 class="modal-title" id="bulk-title">전체 통일/수정</h2>
       <div class="bulk-scroll">
-        <div class="modal-field bulk-mode-row">
-          <span class="modal-label">모드</span>
-          <div class="seg" id="bulk-mode">
-            <button type="button" class="seg-btn is-active" data-mode="uniform">전체 통일</button>
-            <button type="button" class="seg-btn" data-mode="delta">전체 수정</button>
-          </div>
-        </div>
-        <p class="objectify-description" id="bulk-mode-desc"></p>
         <p class="objectify-description" id="bulk-target"></p>
-        <section class="bulk-group" data-bulk-group="style" aria-labelledby="bulk-style-title">
-          <h3 id="bulk-style-title">스타일</h3>
+        <div class="bulk-property-groups"><section class="bulk-group" data-bulk-group="style" aria-labelledby="bulk-style-title">
+          <h3 id="bulk-style-title">스타일</h3><div class="bulk-column-head"><span>항목</span><span>같은 값으로</span><span>기존 값에서 ±</span></div>
           <div class="bulk-fields-grid" id="bulk-style-fields"></div>
         </section>
         <section class="bulk-group" data-bulk-group="dimensions" aria-labelledby="bulk-dimensions-title">
-          <h3 id="bulk-dimensions-title">크기</h3>
+          <h3 id="bulk-dimensions-title">크기</h3><div class="bulk-column-head"><span>항목</span><span>같은 값으로</span><span>기존 값에서 ±</span></div>
           <div class="bulk-fields-grid" id="bulk-dimension-fields"></div>
         </section>
-        <section class="bulk-group" id="bulk-spacing" data-bulk-group="alignment" aria-labelledby="bulk-alignment-title">
+        </div><section class="bulk-group" id="bulk-spacing" data-bulk-group="alignment" aria-labelledby="bulk-alignment-title">
           <h3 id="bulk-alignment-title">정렬</h3>
           <div class="bulk-fields-grid" id="bulk-gap-rows"></div>
           <p class="objectify-description" id="bulk-gap-desc"></p>
@@ -225,7 +210,7 @@ function buildModal() {
   return overlay;
 }
 
-let _mode = "uniform";
+let _returnFocus = null;
 const _rows = new Map(); // key -> { cb, read(), field }
 
 function renderFields() {
@@ -240,47 +225,52 @@ function renderFields() {
   ).join("");
 
   for (const f of FIELDS) {
-    if (f.uniformOnly && _mode !== "uniform") continue; // 통일 전용 항목은 수정 모드에서 숨김
-
-    const row = document.createElement("label");
-    row.className = "modal-field modal-field-row bulk-control-row";
+    const row = document.createElement("div");
+    row.className = "modal-field bulk-property-row";
     const cb = document.createElement("input");
     cb.type = "checkbox";
+    cb.setAttribute("aria-label", `${f.label} 적용`);
     const lbl = document.createElement("span");
     lbl.className = "modal-label";
-    lbl.textContent = f.label;
-    row.appendChild(cb); row.appendChild(lbl);
-
+    lbl.textContent = f.label + (f.unit ? ` (${f.unit})` : "");
+    row.append(cb, lbl);
+    let mode = "uniform";
     let read;
-    if (f.type === "font") {
+    if (f.type !== "number") {
       const sel = document.createElement("select");
-      sel.className = "modal-input";
-      sel.innerHTML = fontOptions;
+      sel.className = "modal-input bulk-wide-input";
+      sel.setAttribute("aria-label", f.label);
+      sel.innerHTML = f.type === "font" ? fontOptions : `<option value="on">켜기</option><option value="off">끄기</option>`;
       sel.addEventListener("change", () => { cb.checked = true; });
-      row.appendChild(sel);
-      read = () => sel.value;
-    } else if (f.type === "bool") {
-      const sel = document.createElement("select");
-      sel.className = "modal-input";
-      sel.innerHTML = `<option value="on">켜기</option><option value="off">끄기</option>`;
-      sel.addEventListener("change", () => { cb.checked = true; });
-      row.appendChild(sel);
-      read = () => sel.value === "on";
+      row.append(sel);
+      read = () => f.type === "bool" ? sel.value === "on" : sel.value;
     } else {
-      const input = document.createElement("input");
-      input.type = "number";
-      input.step = String(f.step);
-      input.className = "modal-input";
-      input.value = _mode === "uniform" ? String(f.uniDefault) : "0";
-      input.addEventListener("input", () => { cb.checked = true; });
-      const unit = document.createElement("span");
-      unit.className = "bulk-unit";
-      unit.textContent = _mode === "delta" ? `±${f.unit}` : f.unit;
-      row.appendChild(input); row.appendChild(unit);
-      read = () => Number(input.value);
+      const inputs = {};
+      for (const operation of ["uniform", "delta"]) {
+        const cell = document.createElement("label");
+        cell.className = "bulk-value-cell";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = `bulk-${f.key}-operation`;
+        radio.checked = operation === "uniform";
+        radio.setAttribute("aria-label", `${f.label} ${operation === "uniform" ? "같은 값으로" : "기존 값에서 변경"}`);
+        const input = document.createElement("input");
+        input.type = "number";
+        input.step = String(f.step);
+        input.className = "modal-input";
+        input.value = operation === "uniform" ? String(f.uniDefault) : "0";
+        input.setAttribute("aria-label", radio.getAttribute("aria-label") + " 값");
+        const activate = () => { mode = operation; radio.checked = true; cb.checked = true; };
+        radio.addEventListener("change", activate);
+        input.addEventListener("input", activate);
+        inputs[operation] = input;
+        cell.append(radio, input);
+        row.append(cell);
+      }
+      read = () => Number(inputs[mode].value);
     }
     hosts[f.group].appendChild(row);
-    _rows.set(f.key, { cb, read, field: f });
+    _rows.set(f.key, { cb, read, field: f, mode: () => mode });
   }
 }
 
@@ -432,10 +422,6 @@ function syncTargetText() {
   const where = scoped ? `선택한 오브젝트 ${objs.length}개` : `캔버스 전체 ${objs.length}개`;
   const note = locked ? ` (잠긴 ${locked}개는 잠금 항목만 변경)` : "";
   _overlay.querySelector("#bulk-target").textContent = `대상: ${where}${note}`;
-  _overlay.querySelector("#bulk-mode-desc").textContent = MODE_DESC[_mode];
-  // 간격은 '통일' 개념 자체라 증감(전체 수정) 모드에서는 숨긴다.
-  const gapBox = _overlay.querySelector("#bulk-spacing");
-  gapBox.style.display = _mode === "uniform" ? "" : "none";
   _overlay.querySelector("#bulk-gap-desc").textContent =
     "정렬 = 한 줄로 세웁니다(선택 전체 테두리 기준). 간격 = 오브젝트 사이 빈 거리를 "
     + `그 값으로 맞춥니다(깊이는 투영 ${depthAxisAngle(objs)}° 방향, 맨 앞 하나는 그대로). `
@@ -449,13 +435,13 @@ function apply() {
     if (r.field.type === "number") {
       const v = r.read();
       if (!isFinite(v)) continue;
-      if (_mode === "delta" && v === 0) continue; // 변화 없음
+      if (r.mode() === "delta" && v === 0) continue; // 변화 없음
     }
-    picked.push({ field: r.field, value: r.read() });
+    picked.push({ field: r.field, value: r.read(), mode: r.mode() });
   }
-  // 간격은 FIELDS가 아니라 별도 집합 연산이라 따로 읽는다(통일 모드 전용).
+  // 정렬·간격은 선택 전체에 대한 집합 연산으로 속성 변경 뒤에 적용한다.
   const gaps = [];
-  if (_mode === "uniform") {
+  {
     for (const [, r] of _gapRows) {
       if (!r.cb.checked) continue;
       const v = r.read();
@@ -479,11 +465,11 @@ function apply() {
     s2.redoStack = [];
     for (const o of s2.objects) {
       if (!idSet.has(o.id)) continue;
-      for (const { field, value } of picked) {
+      for (const { field, value, mode } of picked) {
         // 잠긴 오브젝트는 잠금 계열 필드만 변경 허용(→ 전체 잠금 해제 가능)
         if (o.locked && !LOCK_KEYS.has(field.key)) continue;
         if (!field.has(o)) continue;
-        if (_mode === "uniform") field.setUni(o, value);
+        if (mode === "uniform") field.setUni(o, value);
         else if (field.setDelta) field.setDelta(o, value);
       }
     }
@@ -495,32 +481,25 @@ function apply() {
       else applySpacing(pool, g.axis, g.value);
     }
   });
+  closeBulk();
+}
+
+function closeBulk() {
   _overlay.hidden = true;
+  _returnFocus?.focus();
 }
 
 export function initBulkEdit(state) {
   _state = state;
   _overlay = buildModal();
-  const modeSeg = _overlay.querySelector("#bulk-mode");
-  modeSeg.addEventListener("click", (e) => {
-    const btn = e.target.closest(".seg-btn");
-    if (!btn) return;
-    modeSeg.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    _mode = btn.dataset.mode;
-    renderFields();
-    renderGapRows();
-    syncTargetText();
-  });
-  _overlay.querySelector("#bulk-cancel").addEventListener("click", () => { _overlay.hidden = true; });
-  _overlay.addEventListener("mousedown", (e) => { if (e.target === _overlay) _overlay.hidden = true; });
+  _overlay.querySelector("#bulk-cancel").addEventListener("click", closeBulk);
+  _overlay.addEventListener("mousedown", (e) => { if (e.target === _overlay) closeBulk(); });
   _overlay.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { e.stopPropagation(); _overlay.hidden = true; }
+    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); closeBulk(); }
   });
   _overlay.querySelector("#bulk-apply").addEventListener("click", apply);
   document.getElementById("bulk-edit-open")?.addEventListener("click", () => {
-    _mode = "uniform";
-    modeSeg.querySelectorAll(".seg-btn").forEach((b, i) => b.classList.toggle("is-active", i === 0));
+    _returnFocus = document.activeElement;
     renderFields();
     renderGapRows();   // 열 때마다 새로 그린다 = 간격은 항상 꺼진 상태로 시작(실수로 배치가 밀리지 않게)
     syncTargetText();

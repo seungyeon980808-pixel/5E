@@ -45,6 +45,6 @@ test("Given bulk edit, when the dialog is resized, then grouped controls reflow 
 test("Given mixed selected objects, Apply remains one undo step while Cancel performs no state write", async () => {
   const bulk = await source("js/bulk-edit.js");
   assert.equal((bulk.match(/s2\.undoStack\.push\(JSON\.parse\(JSON\.stringify\(s2\.objects\)\)\)/g) || []).length, 1);
-  assert.match(bulk, /#bulk-cancel"\)\.addEventListener\("click", \(\) => \{ _overlay\.hidden = true; \}\)/);
+  assert.match(bulk, /#bulk-cancel"\)\.addEventListener\("click", closeBulk\)/);
   assert.doesNotMatch(bulk, /#bulk-cancel[\s\S]{0,180}_state\.update/);
 });
