@@ -322,6 +322,10 @@
 .unified-library-overlay .unilib-tabs button:hover { color: var(--unilib-text); }
 .unified-library-overlay .unilib-tabs button[aria-pressed="true"] { color: var(--unilib-text); font-weight: var(--unilib-font-weight-strong); }
 .unified-library-overlay .unilib-tabs button[aria-pressed="true"]::after { background: var(--unilib-accent); }
+.unified-library-overlay .unilib-pdf-display { display: flex; width: max-content; gap: var(--unilib-space-1); padding: var(--unilib-space-1); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); }
+.unified-library-overlay .unilib-pdf-display[hidden] { display: none; }
+.unified-library-overlay .unilib-pdf-display button { min-height: var(--unilib-control-height); padding: 0 var(--unilib-space-4); border: 0; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; }
+.unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: var(--unilib-panel); color: var(--unilib-text); box-shadow: var(--unilib-selection-edge); }
 .unified-library-overlay .unilib-help { margin: 0; padding-bottom: var(--unilib-space-3); color: var(--unilib-muted); font-size: var(--unilib-type-caption); word-break: keep-all; }
 .unified-library-overlay .unilib-help summary { cursor: pointer; }
 .unified-library-overlay .unilib-help p { margin: var(--unilib-space-2) 0 0; max-width: var(--unilib-dialog-width); }
@@ -376,6 +380,12 @@
 .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-card { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 0; height: 100%; }
 .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb { width: 100%; height: var(--unilib-question-thumb-height); }
 .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-check { position: absolute; top: var(--unilib-space-2); right: var(--unilib-space-2); margin: 0; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--unilib-space-3); }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-row { position: relative; display: block; min-width: 0; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card { grid-template-columns: minmax(0, 1fr); align-content: start; min-height: 0; height: 100%; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb { width: 100%; height: var(--unilib-question-thumb-height); }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-copy { align-content: start; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-check { position: absolute; top: var(--unilib-space-2); right: var(--unilib-space-2); margin: 0; }
 .unified-library-overlay .unilib-badge { display: inline-flex; justify-self: start; align-items: center; min-height: var(--unilib-space-6); padding: 0 var(--unilib-space-2); border: var(--unilib-border-width) solid currentColor; border-radius: var(--unilib-badge-radius); font-size: var(--unilib-type-caption); font-weight: var(--unilib-font-weight-strong); }
 .unified-library-overlay .unilib-badge.is-crop { background: color-mix(in srgb, var(--unilib-badge-crop) 12%, var(--unilib-panel)); color: var(--unilib-badge-crop); }
 .unified-library-overlay .unilib-badge.is-image { background: color-mix(in srgb, var(--unilib-badge-image) 12%, var(--unilib-panel)); color: var(--unilib-badge-image); }
@@ -590,6 +600,7 @@
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-list { grid-template-columns: minmax(0, 1fr); }
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-card { grid-template-columns: minmax(0, 1fr); min-height: 0; }
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb { width: 100%; height: var(--unilib-question-thumb-height); }
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -45,6 +45,7 @@ import {
   createSearchScheduler,
   activePdfPageResult,
   materializeOriginalLibraryPage,
+  pdfResultsForDisplay,
 } from "../js/unified-library-ui.js";
 
 test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
@@ -81,14 +82,46 @@ test("search scheduling defers composition, coalesces input, and Enter runs imme
   assert.deepEqual(calls, ["input", "enter"]);
 });
 
-test("unified shell has multiselect type controls, neutral tray actions, and no PDF page-list controls", async () => {
+test("unified shell has multiselect type controls and a PDF file-page display toggle", async () => {
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.match(source, /data-unilib-type="all"/u);
   assert.match(source, /data-unilib-selected-clear/u);
   assert.match(source, /data-unilib-year-start/u);
   assert.match(source, /data-unilib-help/u);
+  assert.match(source, /data-unilib-pdf-mode="file"/u);
+  assert.match(source, /data-unilib-pdf-mode="page"/u);
   assert.doesNotMatch(source, /data-unilib-pdf-back/u);
   assert.doesNotMatch(source, /pdfBrowseSource/u);
+});
+
+test("PDF page display expands matches without losing document and page provenance", () => {
+  const file = { id: "file", title: "교과서.pdf", provenance: { documentId: "doc", pageNumber: 2 }, matches: [
+    { pageNumber: 2, source: { documentId: "doc", pageNumber: 2, rect: [0, 0, 1, 1] } },
+    { pageNumber: 7, source: { documentId: "doc", pageNumber: 7, rect: [0, 0, 1, 1] } },
+  ] };
+  const pages = pdfResultsForDisplay([file], "page");
+  assert.deepEqual(pages.map((page) => page.provenance.pageNumber), [2, 7]);
+  assert.equal(pages[1].provenance.documentId, "doc");
+  assert.equal(pages[1].matches.length, 1);
+  assert.deepEqual(pdfResultsForDisplay([file], "file"), [file]);
+});
+
+test("empty-query page mode preserves canonical pages and does not cap the inventory", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /pageDisplayActive && !queryText && file\.kind === "page" \? file/u);
+  assert.match(source, /listPdfPages\?\.\(pageInventoryOptions\)/u);
+  assert.doesNotMatch(source, /pageInventoryOptions[^;]*limit: 500/u);
+});
+
+test("Space hold stays bound to one result while every preview kind can outlast its threshold", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /selectedId !== id \|\| libraryResultIdentity\(selectedActiveResult\(\)\) !== identity/u);
+  assert.match(source, /const columns =[\s\S]*cancelSpacePress\(\);\s*if \(!\["ArrowDown", "ArrowUp"\][\s\S]*event\.preventDefault\(\);\s*invalidateAction\(\)/u);
+  assert.match(source, /currentMaterializedIdentity = libraryResultIdentity\(result\)/u);
+  assert.match(source, /const continueSpacePreview = async \(press\)[\s\S]*currentMaterializedIdentity !== press\.identity[\s\S]*setTimeout\(\(\) => void continueSpacePreview\(press\), 24\)/u);
+  assert.match(source, /press\.long = true;\s*void continueSpacePreview\(press\)/u);
+  assert.match(source, /if \(press\.long\) \{\s*press\.released = true;\s*return;/u);
+  assert.match(source, /document\.addEventListener\("focusin"[\s\S]*cancelSpacePress/u);
 });
 
 test("library shell keeps one dismissal and omits import, folder management, and a second preview close", async () => {
@@ -126,6 +159,11 @@ test("an aggregate PDF resolves the active match and uses its own full-page load
   assert.equal(materialized.provenance.pageNumber, 272);
 });
 
+test("next PDF match validates preview freshness against the active page", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /requestIdentity === libraryResultIdentity\(activePdfPageResult\(selectedResult\(\), pdfMatchIndex\)\)/u);
+});
+
 test("page and crop originals retain the generic materializer contract", async () => {
   const result = { id: "page:doc:4", kind: "page", provenance: { provider: "pdf", documentId: "doc", pageNumber: 4 } };
   const calls = [];
@@ -160,9 +198,10 @@ test("published inventory stays interactive while background indexing refreshes 
   assert.doesNotMatch(source, /await snapshot\.backgroundIndexing/u);
 });
 
-test("file cards do not compete with the selected PDF preview for the single renderer", async () => {
+test("empty-query PDF aggregates render a page thumbnail instead of the 5E placeholder", async () => {
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
-  assert.match(source, /result\.provenance\?\.provider === "pdf" && result\.kind !== "pdf"/u);
+  assert.match(source, /if \(result\.provenance\?\.provider === "pdf"\) pendingThumbnails\.push/u);
+  assert.doesNotMatch(source, /result\.provenance\?\.provider === "pdf" && result\.kind !== "pdf"/u);
 });
 
 test("Given a rejected lazy resolver, preview resolution returns a recoverable failure instead of rejecting", async () => {
@@ -397,7 +436,7 @@ test("crop keyboard arrows move and Shift plus arrows resize without result navi
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   const documentHandler = source.indexOf('document.addEventListener("keydown"');
   const cropGuard = source.indexOf("if (!cropDialog.hidden) return;", documentHandler);
-  const resultNavigation = source.indexOf('if (["ArrowDown", "ArrowUp"].includes(event.key)', documentHandler);
+  const resultNavigation = source.indexOf('if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(event.key)', documentHandler);
   assert.ok(documentHandler >= 0 && cropGuard > documentHandler && cropGuard < resultNavigation);
 });
 

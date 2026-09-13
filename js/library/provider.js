@@ -540,6 +540,22 @@ export function createUnifiedLibraryProvider(input = {}) {
   });
   const materializers = input.materializers ?? {};
 
+  async function loadPdfPage(file, pageNumber = 1, options = {}) {
+    const document = documents.find((candidate) => candidate.id === file.documentId);
+    const page = Number(pageNumber);
+    if (!document || !Number.isInteger(page) || page < 1 || page > file.pageCount) {
+      throw new RangeError("PDF preview page is outside the document");
+    }
+    const result = pdf.results.find((candidate) => candidate.kind === "page"
+      && candidate.provenance.documentId === document.id
+      && candidate.provenance.pageNumber === page);
+    if (!result) throw new RangeError("PDF preview page is outside the document");
+    if (typeof materializers.pdf !== "function") return Object.freeze({ file, result });
+    const source = Object.freeze({ documentId: document.id, pageNumber: page, rect: Object.freeze([0, 0, 1, 1]), fullPageFallback: true });
+    const materialized = await materializers.pdf({ result, source, options: { ...options, preview: options.thumbnail !== true } });
+    return Object.freeze({ ...materialized, result });
+  }
+
   function allResults() {
     return dedupeResults([...images.results, ...pdf.results, ...resolvedPdfResults]);
   }
@@ -583,6 +599,21 @@ export function createUnifiedLibraryProvider(input = {}) {
       if (!document) return [];
       const metadata = deriveExamMetadata({ metadata: entry.metadata ?? document.metadata, source: document.source });
       if ((entry.itemId || Number.isInteger(entry.itemNumber)) && entry.source?.fullPageFallback !== true) {
+        const canonical = pdf.results.find((result) => result.kind === "crop"
+          && result.provenance.documentId === document.id
+          && result.provenance.pageNumber === entry.pageNumber
+          && (entry.itemId ? result.provenance.itemId === entry.itemId : result.metadata.itemNumber === entry.itemNumber));
+        if (canonical) return [freezeResult({
+          ...canonical,
+          matchText: String(entry.text ?? canonical.matchText ?? ""),
+          matchContext: {
+            snippet: String(entry.snippet ?? entry.text ?? canonical.matchContext?.snippet ?? "").trim(),
+            matchRects: entry.matchRects ?? canonical.matchContext?.matchRects ?? [],
+            terms: entry.terms ?? canonical.matchContext?.terms ?? [],
+            highlights: entry.highlights ?? canonical.matchContext?.highlights ?? [],
+            misses: entry.misses ?? canonical.matchContext?.misses ?? [],
+          },
+        })];
         const secured = securedPdfEntry(document, entry);
         return secured ? [pdfQuestionResult(document, secured, metadata)] : [];
       }
@@ -608,7 +639,11 @@ export function createUnifiedLibraryProvider(input = {}) {
           && matchesFilters(result, options.filters)
           && resultMatches(result, queryText, compact));
       });
-      return Object.freeze(found.sort((left, right) => left.title.localeCompare(right.title, "ko")));
+      return Object.freeze(found.sort((left, right) => left.title.localeCompare(right.title, "ko")).map((file) => Object.freeze({
+        ...file,
+        firstMatchingPage: 1,
+        loadPreview: (pageNumber = 1, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
+      })));
     },
     async searchPdfFiles(options = {}) {
       if (options.signal?.aborted) throw new DOMException("PDF search was cancelled", "AbortError");
@@ -617,14 +652,38 @@ export function createUnifiedLibraryProvider(input = {}) {
       if (typeof input.searchPdf !== "function") return Object.freeze([]);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const allowedDocuments = documents.filter((document) => !allowedSources || allowedSources.has(pdfSourceId(document)));
-      const entries = await input.searchPdf({
+      const entries = [...(await input.searchPdf({
         query,
         documentIds: allowedDocuments.map((document) => document.id),
         filters: options.filters ?? {},
         limit: null,
         requestId: options.requestId,
         signal: options.signal,
-      });
+      }))];
+      const queryTokens = tokens(query);
+      const matchedPages = new Set(entries.map((entry) => `${entry.documentId}\0${entry.pageNumber}`));
+      for (const document of allowedDocuments) {
+        for (const page of document.pages ?? []) {
+          const key = `${document.id}\0${page.pageNumber}`;
+          if (matchedPages.has(key) || !matchesText(page.text, queryTokens)) continue;
+          const mapped = mapQueryHighlights({ ...page, documentId: document.id }, query);
+          const pageText = String(page.text ?? "");
+          const firstMatch = queryTokens.reduce((offset, token) => {
+            const found = normalizedText(pageText).indexOf(token);
+            return found < 0 ? offset : Math.min(offset, found);
+          }, Number.POSITIVE_INFINITY);
+          const snippetStart = Number.isFinite(firstMatch) ? Math.max(0, firstMatch - 48) : 0;
+          entries.push(Object.freeze({
+            documentId: document.id,
+            pageNumber: page.pageNumber,
+            snippet: pageText.slice(snippetStart, snippetStart + 160).trim(),
+            terms: mapped.terms,
+            highlights: mapped.highlights,
+            misses: mapped.misses,
+          }));
+          matchedPages.add(key);
+        }
+      }
       if (options.signal?.aborted) throw new DOMException("PDF search was cancelled", "AbortError");
       const filesByDocument = new Map(this.listPdfFiles({ ...options, query: "" }).map((file) => [file.documentId, file]));
       const matchesByDocument = new Map();
@@ -654,7 +713,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         for (const miss of entry.misses ?? []) if (!current.misses.includes(miss)) current.misses.push(miss);
       }
       return Object.freeze([...matchesByDocument].slice(0, boundedLimit(options.limit)).map(([documentId, pages]) => {
-        const matches = [...pages.values()].map((match) => Object.freeze({
+        const matches = [...pages.values()].sort((left, right) => left.pageNumber - right.pageNumber).map((match) => Object.freeze({
           ...match,
           terms: Object.freeze(match.terms), highlights: Object.freeze(match.highlights), misses: Object.freeze(match.misses),
         }));
@@ -681,7 +740,7 @@ export function createUnifiedLibraryProvider(input = {}) {
               preview: { source: match.source },
               provenance: pdfProvenance(document, match.source),
             });
-            const materialized = await materializers.pdf({ result: previewResult, source: match.source, options: { ...previewOptions, preview: true } });
+            const materialized = await materializers.pdf({ result: previewResult, source: match.source, options: { ...previewOptions, preview: previewOptions.thumbnail !== true } });
             return Object.freeze({ ...materialized, result: previewResult });
           },
         });
@@ -689,11 +748,15 @@ export function createUnifiedLibraryProvider(input = {}) {
     },
     listPdfPages(options = {}) {
       const compact = parseCompactExamCode(options.query);
-      return Object.freeze(pdf.results.filter((result) => result.kind === "page"
+      const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
+      const found = pdf.results.filter((result) => result.kind === "page"
+        && (!allowedSources || allowedSources.has(result.sourceId))
         && (!options.sourceId || result.sourceId === options.sourceId)
         && matchesFilters(result, options.filters)
         && resultMatches(result, options.query ?? "", compact))
-        .map((result) => contextualized(result, options.query ?? "")));
+        .map((result) => contextualized(result, options.query ?? ""));
+      const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
+      return Object.freeze(found.slice(0, limit));
     },
     getExamFilterOptions() {
       const metadata = allResults().filter((result) => result.kind === "crop").map((result) => result.metadata ?? {});
@@ -759,10 +822,10 @@ export function createUnifiedLibraryProvider(input = {}) {
           || canonicalRect.some((value, index) => value !== securedSource.rect[index])))) {
           throw new TypeError("PDF materialization source does not match result provenance");
         }
-        const materializerResult = manual ? Object.freeze({
+        const materializerResult = source === result.provenance ? result : Object.freeze({
           ...result,
           provenance: Object.freeze({ ...result.provenance, ...securedSource }),
-        }) : result;
+        });
         return materializers.pdf({ result: materializerResult, source: securedSource, options });
       }
       const item = images.items.get(result.id);
