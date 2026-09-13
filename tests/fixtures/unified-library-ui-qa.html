@@ -26,11 +26,35 @@
       preview: { source: { rect: [0, 0, 1, 1] } },
       qaColor: color,
     });
-    const all = [makeQuestion("q1", "2026학년도 6월 1번", "%2399c2ff"), makeQuestion("q2", "2026학년도 6월 2번", "%23ffc28f")];
+    const all = [makeQuestion("q1", "2026학년도 6월 1번", "%2399c2ff"), makeQuestion("q2", "2023학년도 6월 2번", "%23ffc28f")];
+    const matches = [
+      { pageNumber: 2, snippet: "A B 같은 쪽", terms: [{ termId: "a", label: "A", color: "#ff4773" }, { termId: "b", label: "B", color: "#3478f6" }], highlights: [{ rect: [0.2, 0.2, 0.2, 0.1], color: "#ff4773" }, { rect: [0.55, 0.55, 0.2, 0.1], color: "#3478f6" }], misses: [] },
+      { pageNumber: 4, snippet: "A B 다음 일치", terms: [{ termId: "a", label: "A", color: "#ff4773" }, { termId: "b", label: "B", color: "#3478f6" }], highlights: [], misses: ["a", "b"] },
+    ];
+    const pdfFile = {
+      id: "pdf:qa", documentId: "qa.pdf", sourceId: "pack", title: "아주 긴 한국어 제목의 자석 물리 자료.pdf", subtitle: "QA 자료팩", pageCount: 4,
+      indexState: "indexed", diagnostic: null, revision: "qa-r1", requestId: "fixture", firstMatchingPage: 2, matches,
+      loadPreview: async (pageNumber) => {
+        window.qaPreviewStarted = performance.now();
+        await new Promise((resolve) => setTimeout(resolve, 180));
+        window.qaPreviewFinished = performance.now();
+        return { dataUrl: image(`PDF ${pageNumber}쪽`, "%23b8dbb4") };
+      },
+    };
+    window.qaRequests = [];
     const provider = {
       getSources: () => [{ id: "pack", kind: "source", label: "QA 자료팩", counts: { pdf: 1, question: 2 } }],
       getExamFilterOptions: () => ({ academicYears: [2026] }),
-      search: ({ query = "" }) => all.filter((item) => item.title.includes(query)),
+      revision: "qa-r1",
+      search: ({ query = "", kinds = [] }) => all.filter((item) => kinds.includes(item.kind) && item.title.includes(query)),
+      listPdfFiles: () => [{ ...pdfFile, matches: [], firstMatchingPage: 1 }],
+      searchPdfFiles: async ({ query = "", requestId, signal }) => {
+        window.qaRequests.push({ query, requestId, aborted: signal.aborted, at: performance.now() });
+        if (query === "A B") return [pdfFile];
+        if (query === "cross page") return [];
+        if (query.includes("자석")) return [pdfFile];
+        return [];
+      },
       materialize: async (result, options = {}) => {
         const representation = options.representation || "full";
         window.qaMaterialized = representation;
