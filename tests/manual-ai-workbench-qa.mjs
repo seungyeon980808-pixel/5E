@@ -176,7 +176,14 @@ try {
   await page.locator('[data-ai-comment-tool="point"]').click();
   await activeResultImage().click({ position: { x: 18, y: 18 } });
   await page.locator('[data-ai-inline-editor]').fill('결과 1 점 코멘트');
-  assert.equal(await page.locator('[data-ai-comment-geometry] input').count(), 2);
+  await page.locator('[data-ai-comment-tool="area"]').click();
+  const firstResultBounds = await activeResultImage().boundingBox();
+  await page.mouse.move(firstResultBounds.x + firstResultBounds.width * 0.45, firstResultBounds.y + firstResultBounds.height * 0.35);
+  await page.mouse.down();
+  await page.mouse.move(firstResultBounds.x + firstResultBounds.width * 0.8, firstResultBounds.y + firstResultBounds.height * 0.78);
+  await page.mouse.up();
+  await page.locator('[data-ai-inline-editor]').nth(1).fill('결과 1 영역 코멘트');
+  assert.equal(await page.locator('[data-ai-comment-geometry] input').count(), 4);
 
   const geometry = async () => page.evaluate(() => {
     const rect = selector => {
@@ -191,12 +198,17 @@ try {
     }
   };
   const assertOverlayInside = async () => {
-    const inside = await page.evaluate(() => {
+    const geometry = await page.evaluate(() => {
       const overlay = document.querySelector('[data-ai-generating]').getBoundingClientRect();
       const pane = document.querySelector('.ai-result-pane').getBoundingClientRect();
-      return overlay.left >= pane.left - 1 && overlay.top >= pane.top - 1 && overlay.right <= pane.right + 1 && overlay.bottom <= pane.bottom + 1;
+      return {
+        inside: overlay.left >= pane.left - 1 && overlay.top >= pane.top - 1 && overlay.right <= pane.right + 1 && overlay.bottom <= pane.bottom + 1,
+        overlayWidth: overlay.width,
+        previewWidth: document.querySelector('.ai-previews').getBoundingClientRect().width,
+      };
     });
-    assert.equal(inside, true, 'processing overlay remains inside result pane');
+    assert.equal(geometry.inside, true, 'processing overlay remains inside result pane');
+    assert(geometry.overlayWidth >= geometry.previewWidth - 14, `processing overlay fills the result preview width: ${JSON.stringify(geometry)}`);
   };
 
   const beforeSecond = await geometry();
@@ -242,8 +254,8 @@ try {
   await options.first().press('End');
   await page.locator('[data-ai-candidate-option]:focus').press('Enter');
   assert.equal(await versionButton.evaluate(node => node === document.activeElement), true);
-  assert.equal(await page.locator('[data-ai-inline-editor]').inputValue(), '결과 1 점 코멘트');
-  assert.deepEqual(await page.locator('[data-ai-inline-editor]').evaluateAll(editors => editors.map(editor => editor.value)), ['결과 1 점 코멘트']);
+  assert.equal(await page.locator('[data-ai-inline-editor]').first().inputValue(), '결과 1 점 코멘트');
+  assert.deepEqual(await page.locator('[data-ai-inline-editor]').evaluateAll(editors => editors.map(editor => editor.value)), ['결과 1 점 코멘트', '결과 1 영역 코멘트']);
   await page.screenshot({ path: path.join(outputDir, 'task-3-result1-comment.png'), fullPage: true });
   await versionButton.click();
   await page.locator('[data-ai-candidate-option]:focus').press('Escape');
@@ -296,8 +308,8 @@ try {
   await versionButton.focus();
   await versionButton.press('ArrowUp');
   await page.locator('[data-ai-candidate-option]:focus').press('Enter');
-  assert.equal(await page.locator('[data-ai-inline-editor]').inputValue(), '결과 1 점 코멘트', 'retry retains historical comments');
-  await page.locator('[data-ai-inline-delete]').click();
+  assert.equal(await page.locator('[data-ai-inline-editor]').first().inputValue(), '결과 1 점 코멘트', 'retry retains historical comments');
+  while (await page.locator('[data-ai-inline-delete]').count()) await page.locator('[data-ai-inline-delete]').first().click();
   assert.equal(await page.locator('[data-ai-inline-editor]').count(), 0, 'comment deletion works after retry and version restore');
 
   const ordinaryUi = await panel.innerText();

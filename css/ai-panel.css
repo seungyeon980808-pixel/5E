@@ -1649,7 +1649,10 @@
 
 /* ===== Comment-first workbench: same theme, result-first / optional compare ===== */
 #ai-image-panel .modal-ai.ai-workbench { font-size:12px; --ai-type-caption:10px; --ai-type-control:11px; --ai-type-body:12px; --ai-type-section:12px; }
-#ai-image-panel .ai-workspace { grid-template-columns:clamp(160px,13vw,190px) minmax(0,1fr) 326px; }
+#ai-image-panel .ai-workspace {
+  grid-template-columns:clamp(160px,13vw,190px) minmax(0,1fr) 326px;
+  grid-template-rows:minmax(0,1fr);
+}
 #ai-image-panel .ai-head { min-height:49px; background:var(--bg-panel); }
 #ai-image-panel .ai-title-line { min-width:0; }
 #ai-image-panel .ai-head-status { min-width:0; }
@@ -2348,8 +2351,8 @@
   height: auto;
   max-width: 100%;
   margin: 0;
-  align-self: start;
-  justify-self: start;
+  align-self: stretch;
+  justify-self: stretch;
   justify-content: center;
   border: 0;
 }
