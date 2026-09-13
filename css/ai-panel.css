@@ -2180,21 +2180,7 @@
 #ai-image-panel[data-ai-stage="processing"] .ai-workbench-actions { padding:10px 13px; }
 #ai-image-panel[data-ai-stage="processing"] .ai-conversation-actions { display:block; }
 #ai-image-panel[data-ai-stage="processing"] [data-ai-interrupt] { width:100%; min-height:32px; }
-#ai-image-panel[data-ai-stage="processing"] .ai-generating {
-  position:absolute;
-  top:12px;
-  left:50%;
-  z-index:9;
-  width:min(430px,calc(100% - 24px));
-  height:auto;
-  min-height:0;
-  box-sizing:border-box;
-  padding:10px 12px;
-  gap:3px;
-  border:1px solid var(--accent);
-  box-shadow:0 8px 24px rgba(0,0,0,.18);
-  transform:translateX(-50%);
-}
+
 #ai-image-panel[data-ai-stage="processing"] .ai-generating strong,
 #ai-image-panel[data-ai-stage="processing"] .ai-generating span,
 #ai-image-panel[data-ai-stage="processing"] .ai-generating small { text-align:left; }
@@ -2358,3 +2344,47 @@
 #ai-image-panel .ai-workbench-comment textarea { grid-column:1 / -1; width:100%; min-width:0; min-height:54px; resize:vertical; }
 #ai-image-panel .ai-workbench-comment [data-ai-comment-geometry] { grid-column:1 / -1; margin-top:0; }
 #ai-image-panel .ai-workbench-comment [data-ai-inline-delete] { grid-column:2; align-self:start; }
+
+/* Keep source and pending output in the same visual frame. */
+#ai-image-panel .ai-head { padding-left: 84px; min-height: 48px; }
+#ai-image-panel .ai-generating {
+  box-sizing: border-box;
+  width: var(--ai-pending-width, 100%);
+  height: var(--ai-pending-height, 100%);
+  max-width: 100%;
+  margin: 46px 0 0;
+  align-self: start;
+  justify-self: start;
+  justify-content: center;
+  border: 0;
+}
+#ai-image-panel .ai-generating > small,
+#ai-image-panel [data-ai-progress-detail],
+#ai-image-panel .ai-chat-intro p,
+#ai-image-panel [data-ai-selected-output-note],
+#ai-image-panel [data-ai-comment-status],
+#ai-image-panel .ai-separated-mode small { display: none; }
+#ai-image-panel .ai-advanced-settings { align-self: flex-end; max-width: 100%; border: 0; }
+#ai-image-panel .ai-advanced-settings > summary { min-height: 24px; padding: 4px 10px; }
+#ai-image-panel .ai-advanced-settings[open] { align-self: stretch; }
+
+#ai-image-panel .ai-chat-heading p,
+#ai-image-panel .ai-chat-actions,
+#ai-image-panel [data-ai-output-processing-status],
+#ai-image-panel .ai-review-summary > span,
+#ai-image-panel .ai-comments-empty { display: none; }
+
+#ai-image-panel .ai-task-tab-copy { min-width: 0; overflow: hidden; }
+#ai-image-panel .ai-task-tab-copy > * { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#ai-image-panel .ai-generating { position: relative; }
+#ai-image-panel .ai-generating::before {
+  content: '변환 중'; position: absolute; left: 3px; top: -32px;
+  color: var(--text-primary); font-size: 11px; font-weight: 600;
+}
+#ai-image-panel .ai-task-tab { position: relative; }
+#ai-image-panel .ai-task-tab > .ai-task-tab-status {
+  position: absolute; left: 27px; top: 25px; z-index: 1;
+  width: 12px; height: 12px; padding: 1px;
+  background: var(--bg-panel); border-radius: 50%;
+}
+#ai-image-panel .ai-task-tab > .ai-task-delete { width: 18px; flex-basis: 18px; }

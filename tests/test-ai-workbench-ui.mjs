@@ -103,7 +103,7 @@ test("comparison controls keep versions and default to linked pane-local zoom", 
   assert.match(workbench, /linkedZoom\.checked/);
   assert.match(workbench, /item\.stage\.dataset\.aiFitWidth/);
   assert.match(workbench, /stage\.style\.width = `\$\{Math\.round\(baseWidth \* zoom\)\}px`/);
-  assert.ok(workbench.includes('generatedCards().length ? "result" : sourceCards().length ? "source" : "result"'), 'empty view shows guidance and a prepared source remains visible');
+  assert.ok(workbench.includes('sourceCards().length ? "side-by-side" : "result"'), 'empty view shows guidance and a prepared source remains visible');
   assert.match(workbench, /const requestedKey = panel\.dataset\.aiSelectedCandidateId/);
   assert.match(workbench, /if \(keys\.includes\(requestedKey\)\) activeCandidateKey = requestedKey/);
   assert.match(workbench, /new CustomEvent\("5e:ai-candidate-select"/);

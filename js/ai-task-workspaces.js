@@ -209,7 +209,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
           button.title = source.title || source.textContent.replace('×', '').trim();
           button.dataset.aiWorkspaceLink = entry.scope || 'legacy';
           if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') === 'true') {
-            button.querySelector('span').textContent += ' · 변환 중';
+            const timing = button.querySelector('.ai-task-tab-time');
+            if (timing) timing.textContent = '변환 중';
           }
           button.onclick = () => {
             if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') !== 'true') return;
@@ -336,14 +337,17 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),
-    openIndependentReferences: async ({ references, prompt = '', startGeneration = false } = {}) => {
+    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate' } = {}) => {
       await ready;
       const snapshots = independentReferences(references);
-      const created = snapshots.map(() => add(crypto.randomUUID(), false));
+      const groups = placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
+      const created = groups.map(() => add(crypto.randomUUID(), false));
       saveRegistry();
       await Promise.all(created.map(entry => entry.controller.ready));
       await Promise.all(created.map((entry, index) => entry.controller.open({
-        references: [snapshots[index]],
+        references: groups[index],
+        placement,
+        reveal: false,
         prompt,
         startGeneration: startGeneration === true,
       })));

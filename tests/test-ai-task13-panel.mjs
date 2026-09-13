@@ -18,7 +18,7 @@ function testPng() {
 function makeRuntimeReady(browser) {
   browser.desktop.api.status = async () => ({ login: { loggedIn: true }, server: true });
   browser.desktop.api.models = async () => ({ data: [{
-    model: 'gpt-5.6-sol', displayName: 'Sol', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'],
+    model: 'gpt-5.6-sol', displayName: 'Sol', supportedReasoningEfforts: ['medium', 'high'], serviceTiers: ['priority'],
   }] });
   browser.desktop.api.account = async () => ({});
 }
@@ -132,4 +132,33 @@ test('cancel intent prevents an already-started local image decode from register
     manager?.close();
     browser.restore();
   }
+});
+
+test('primary conversion of an existing result starts directly and snapshots conversation', async () => {
+  const workspace = { key: 'workspace', activeTaskTabId: 'task-1', taskTabSerial: 1, imageSerial: 1, tabs: [{
+    id: 'task-1', title: '수정', workState: 'completed', attachments: [],
+    generated: [{ id: 'generated-1', name: '결과 1', data: testPng(), kind: 'generated', generationMode: 'single' }],
+    selectedCandidateId: 'generated-1', conversationMessages: [{ role: 'user', text: '화살표는 보존' }], uiMessages: [], input: '우주인만 삭제',
+    mode: 'diagram', qualityMode: 'standard', outputEngine: 'raster', generationMode: 'single',
+    outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
+  }] };
+  const browser = installAiPanelBrowserFixture({ workspace });
+  makeRuntimeReady(browser);
+  let manager;
+  try {
+    manager = initAiPanel({ get: appState });
+    await manager.open();
+    browser.panel.querySelector('[data-ai-send]').click();
+    const sent = await browser.desktop.waitForSend(0);
+    assert.equal(sent.payload.purpose, 'image');
+    assert.equal(sent.payload.text.split('화살표는 보존').length - 1, 1);
+    assert.match(sent.payload.text, /우주인만 삭제/);
+    assert.equal(browser.panel.querySelectorAll('dialog[open]').length, 0);
+    assert.equal(browser.desktop.sends.length, 1);
+    assert.equal(browser.panel.dataset.aiBusy, 'true');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    browser.panel.querySelector('[data-ai-interrupt]').click();
+    browser.desktop.emit({ method: 'turn/completed', params: { turn: { id: sent.turnId, status: 'cancelled' } } });
+    await browser.document.waitForState(() => browser.panel.dataset.aiBusy === 'false');
+  } finally { manager?.close(); browser.restore(); }
 });

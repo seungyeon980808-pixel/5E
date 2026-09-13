@@ -19,12 +19,13 @@ test('source entry points live in one accessible menu while the selected origina
   assert.match(panel, /event\.key === 'Escape'/);
 });
 
-test('conversation application is an explicit step before image generation', () => {
+test('conversion snapshots conversation while sending chat remains a separate action', () => {
   assert.match(html, /data-ai-chat-apply[^>]*>수정 요청으로 가져오기</);
   assert.match(html, /대화 답변은 그림을 만들지 않습니다/);
   const discussionBlock = panel.slice(panel.indexOf('    const discussionContext = '), panel.indexOf('    let runInput = '));
-  assert.match(discussionBlock, /discussionContextOverride[\s\S]*:\s*""\)/);
-  assert.doesNotMatch(discussionBlock, /compactConversation/);
+  assert.match(discussionBlock, /discussionContextOverride/);
+  assert.match(discussionBlock, /compactConversation\(conversationMessages\)/);
+  assert.match(panel, /chatButton.onclick = \(\) => submit\("chat"\)/);
   assert.match(panel, /chatApplyButton\?\.addEventListener\('click'/);
   assert.match(panel, /sendButton\.focus\(\)/);
 });

@@ -741,3 +741,25 @@ PDF 결과는 기본 `파일` 표시에서 PDF 하나를 카드 하나로 유지
 일치한 페이지를 이미지 중심 3열 카드로 펼치며 파일명과 쪽 번호만 간결하게 보인다. 페이지
 그리드는 좌우 1칸, 상하 실제 열 수만큼 이동한다. 결과 카드의 Space는 짧게 놓으면 AI 참고
 선택을 토글하고 400ms 이상 누르면 한 번만 확대 미리보기를 연다.
+
+### 13-17. 전체 통일/수정 동시 표시 (2026-09-13)
+
+전체 통일/수정은 모드 탭 없이 스타일·크기 두 열과 정렬 영역을 동시에 표시한다.
+숫자 속성마다 `같은 값으로`와 `기존 값에서 ±` 입력을 나란히 두고 라디오로 하나를
+선택한다. 값을 편집하면 해당 연산과 적용 체크가 선택된다. 다른 속성에는 다른 연산을
+동시에 적용할 수 있지만 한 속성에 두 연산을 중복 적용하지 않는다. 글씨체·잠금은
+기존처럼 지정값만 제공한다. 적용은 한 Undo 단계, 취소는 무변경이다.
+940px 상한의 기존 modal 프리미티브를 사용하고 800px 이하에서는 속성 그룹을 세로로
+배치한다. 520px 이하에서도 두 연산 입력은 함께 보이며 스크롤은 본문만 소유한다.
+하단 적용·취소는 항상 보인다. Esc와 취소는 열었던 버튼으로 포커스를 복원한다.
+
+### Library interaction follow-up (2026-09-13)
+
+- Library header is plain `라이브러리`; no logo prefix. Result types are exclusive (`전체` shows every type). PDF file/page controls use the same accent underline as type tabs, not a boxed segment or left stripe.
+- Folder names retain hierarchy and show descendant PDF/image counts on hover, including the label itself so nested title attributes do not mask the count.
+- Selected-item tray occupies its own wrapping row: count, horizontally scrollable chips, and clear action never compete with result count/keyboard help.
+- Keyboard selection updates card state without replacing the list DOM. Preview uses a bounded 24-entry cache keyed by source identity, crop rectangle, revision, representation and options. Keep the previous frame with explicit `불러오는 중…` until the next image decodes; latest request wins.
+- Preview replacement reuses existing `--unilib-motion: 140ms ease-out` opacity transition. Reduced motion uses the existing near-zero duration. No layout-size animation, no mandatory wait before input responds.
+- Enter confirms a crop; Space tap checks and Space hold previews. Multi-image AI transfer asks together/separate, supports Escape cancellation and trapped keyboard focus. Library overlays sit above the AI workbench (10050 vs10000) so source selection is reachable.
+
+- Selected library chip maximum uses `--unilib-selected-item-width: 20rem` capped at60vw. Multi-image chooser backdrop consumes existing `--unilib-backdrop`; tab selection has no shadow.
