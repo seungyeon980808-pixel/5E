@@ -56,8 +56,8 @@ test("workbench defaults to large result with comments and keeps comparison and 
   assert.match(index, /data-ai-output-engine="asset"[^>]*hidden/);
   assert.match(index, /data-ai-mode="complete"[^>]*hidden/);
   assert.doesNotMatch(index, /data-ai-comment-editor|data-ai-comment-save|data-ai-comment-delete/);
-  assert.match(css, /\.ai-workbench-comment textarea \{ grid-column:1 \/ -1; width:100%; min-width:0;/);
-  assert.match(css, /\.ai-workbench-comment \[data-ai-comment-geometry\] \{ grid-column:1 \/ -1;/);
+  assert.match(css, /\.ai-workbench-comment\s+textarea\s*\{\s*grid-column\s*:\s*1\s*\/\s*-1\s*;\s*width\s*:\s*100%\s*;\s*min-width\s*:\s*0\s*;/);
+  assert.match(css, /\.ai-workbench-comment\s+\[data-ai-comment-geometry\]\s*\{\s*grid-column\s*:\s*1\s*\/\s*-1\s*;/);
   assert.ok(index.indexOf('data-ai-output-processing') < index.indexOf('class="ai-side-content"'),
     'output processing remains visible before the preparation and result stages');
 });
