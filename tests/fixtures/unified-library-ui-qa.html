@@ -9,6 +9,7 @@
 </head>
 <body>
   <button id="open">라이브러리 열기</button>
+  <div id="ai-image-panel" hidden></div>
   <script type="module">
     import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
     const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
@@ -32,13 +33,18 @@
       { pageNumber: 4, snippet: "A B 다음 일치", terms: [{ termId: "a", label: "A", color: "#ff4773" }, { termId: "b", label: "B", color: "#3478f6" }], highlights: [], misses: ["a", "b"] },
     ];
     const pdfFile = {
-      id: "pdf:qa", documentId: "qa.pdf", sourceId: "pack", title: "아주 긴 한국어 제목의 자석 물리 자료.pdf", subtitle: "QA 자료팩", pageCount: 4,
+      id: "file:qa", kind: "pdf", documentId: "qa.pdf", sourceId: "pack", title: "아주 긴 한국어 제목의 자석 물리 자료.pdf", subtitle: "QA 자료팩", pageCount: 4,
+      provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber: 2 },
       indexState: "indexed", diagnostic: null, revision: "qa-r1", requestId: "fixture", firstMatchingPage: 2, matches,
       loadPreview: async (pageNumber) => {
         window.qaPreviewStarted = performance.now();
         await new Promise((resolve) => setTimeout(resolve, 180));
         window.qaPreviewFinished = performance.now();
-        return { dataUrl: image(`PDF ${pageNumber}쪽`, "%23b8dbb4") };
+        return {
+          dataUrl: image(`PDF ${pageNumber}쪽`, "%23b8dbb4"),
+          source: { documentId: "qa.pdf", pageNumber },
+          result: { id: `page:qa:${pageNumber}`, kind: "page", title: `PDF ${pageNumber}쪽`, sourceId: "pack", sourceLabel: "QA 자료팩", provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber } },
+        };
       },
     };
     window.qaRequests = [];
@@ -63,7 +69,34 @@
     };
     window.qaInserted = [];
     window.qaAiCalls = [];
-    const ui = createUnifiedLibraryUi({ getProvider: async () => provider, insertMaterialized: async (result, asset) => window.qaInserted.push({ id: result.id, rect: result.provenance.rect, materialized: window.qaMaterialized }), openAi: async (payload) => window.qaAiCalls.push(payload) });
+    const desktopLibrary = {
+      connections: async () => ({ connections: [{ connectionId: "local", displayName: "내 자료", kind: "folder" }] }),
+      folderTree: async () => ({ tree: {
+        connectionId: "local", folderId: "root", name: "내 자료", files: [],
+        children: [{ connectionId: "local", folderId: "empty", name: "빈 폴더", files: [], children: [] }],
+      } }),
+      setFolderSelection: async () => {},
+    };
+    const pdfUi = {
+      activate: async () => {},
+      deactivate: () => {},
+      syncDesktopConnections: async () => ({
+        connections: (await desktopLibrary.connections()).connections,
+        documents: [{ documentId: "waiting.pdf", indexState: { state: "indexing" } }],
+      }),
+    };
+    const ui = createUnifiedLibraryUi({
+      getProvider: async () => provider,
+      desktopLibrary,
+      pdfUi,
+      insertMaterialized: async (result, asset) => window.qaInserted.push({ id: result.id, rect: result.provenance.rect, materialized: window.qaMaterialized }),
+      openAi: async (payload) => {
+        window.qaAiCalls.push(payload);
+        document.querySelector("#ai-image-panel").hidden = false;
+        await new Promise((resolve) => setTimeout(resolve, 60));
+        if (window.qaRejectAi) throw new Error("qa handoff rejected");
+      },
+    });
     document.querySelector("#open").addEventListener("click", (event) => ui.open(event.currentTarget));
     document.querySelector("#open").click();
   </script>

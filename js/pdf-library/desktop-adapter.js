@@ -1,4 +1,4 @@
-import { createPdfRuntime } from "./pdf-runtime.js";
+import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js";
 import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js";
 
 function pdfOpenDiagnostic(error) {
@@ -46,7 +46,8 @@ function persistedDocument(index, document) {
     const source = createSourceRecord(index.source);
     const expectedSource = createSourceRecord(fileSource(document));
     if (JSON.stringify(source) !== JSON.stringify(expectedSource)) return null;
-    const record = createDocumentRecord({ ...index, title: document.name, source: expectedSource });
+    const pages = index.pages.map((page) => ({ ...page, items: detectPageItems(page) }));
+    const record = createDocumentRecord({ ...index, title: document.name, source: expectedSource, pages });
     if (record.pages.length !== record.pageCount) return null;
     const pageNumbers = new Set(record.pages.map((page) => page.pageNumber));
     if (pageNumbers.size !== record.pageCount) return null;

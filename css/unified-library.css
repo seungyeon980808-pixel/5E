@@ -56,7 +56,6 @@
   --unilib-thumb-width: 104px;
   --unilib-thumb-height: 92px;
   --unilib-question-thumb-height: 112px;
-  --unilib-tree-count-width: 112px;
   --unilib-result-card-height: 111px;
   --unilib-stage-height: 390px;
   --unilib-stage-image-height: 560px;
@@ -213,7 +212,7 @@
   background: var(--unilib-panel);
 }
 
-.unified-library-overlay .unilib-folders { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.unified-library-overlay .unilib-folders { display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .unified-library-overlay .unilib-results { display: grid; grid-template-rows: auto minmax(0, 1fr); }
 .unified-library-overlay .unilib-preview { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; border-inline-end: 0; }
 
@@ -262,7 +261,7 @@
 .unified-library-overlay .unilib-tree-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
 .unified-library-overlay .unilib-tree-item label {
   display: grid;
-  grid-template-columns: var(--unilib-icon-size) var(--unilib-icon-size) minmax(0, 1fr) auto;
+  grid-template-columns: var(--unilib-icon-size) var(--unilib-icon-size) minmax(0, 1fr);
   align-items: center;
   min-height: var(--unilib-control-height);
   gap: var(--unilib-space-2);
@@ -273,13 +272,7 @@
 .unified-library-overlay .unilib-tree-item label:hover { background: var(--unilib-raised); }
 .unified-library-overlay .unilib-tree-item input { width: var(--unilib-icon-size); height: var(--unilib-icon-size); margin: 0; accent-color: var(--unilib-accent); }
 .unified-library-overlay .unilib-tree-item svg { width: var(--unilib-icon-size); height: var(--unilib-icon-size); color: var(--unilib-muted); fill: none; stroke: currentColor; stroke-width: var(--unilib-icon-stroke-width); }
-.unified-library-overlay .unilib-tree-item label > span:last-of-type { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; word-break: keep-all; }
-.unified-library-overlay .unilib-tree-item small { color: var(--unilib-muted); font-size: var(--unilib-type-caption); font-variant-numeric: tabular-nums; }
-.unified-library-overlay .unilib-tree-count { overflow: hidden; max-width: var(--unilib-tree-count-width); opacity: 0; text-overflow: ellipsis; white-space: nowrap; }
-.unified-library-overlay .unilib-tree-row:hover .unilib-tree-count,
-.unified-library-overlay .unilib-tree-row:focus-within .unilib-tree-count { opacity: 1; }
-.unified-library-overlay .unilib-pane-foot { display: grid; gap: var(--unilib-space-2); padding: var(--unilib-space-4); border-top: var(--unilib-border-width) solid var(--unilib-border-muted); }
-.unified-library-overlay .unilib-pane-foot .unilib-button { width: 100%; }
+.unified-library-overlay .unilib-tree-item label > span:last-of-type { min-width: 0; overflow-wrap: anywhere; white-space: normal; word-break: keep-all; }
 
 .unified-library-overlay .unilib-search-tools { display: grid; gap: var(--unilib-space-3); padding: var(--unilib-space-4) var(--unilib-space-5) 0; border-bottom: var(--unilib-border-width) solid var(--unilib-border); }
 .unified-library-overlay .unilib-search-row { gap: var(--unilib-space-3); min-width: 0; }
@@ -503,6 +496,9 @@
 .unified-library-overlay .unilib-crop-stage img { display: block; width: 100%; height: 100%; user-select: none; }
 .unified-library-overlay [data-unilib-crop-box] { position: absolute; border: var(--unilib-focus-outline-width) solid var(--unilib-accent); background: color-mix(in srgb, var(--unilib-accent) 12%, transparent); pointer-events: none; }
 .unified-library-overlay .unilib-crop-preview { display: grid; align-content: start; gap: var(--unilib-space-3); min-width: 0; padding: var(--unilib-space-4); border: var(--unilib-border-width) solid var(--unilib-border-muted); border-radius: var(--unilib-panel-radius); }
+.unified-library-overlay .unilib-crop.is-view-only .unilib-crop-workspace { grid-template-columns: minmax(0, 1fr); }
+.unified-library-overlay .unilib-crop.is-view-only .unilib-crop-preview,
+.unified-library-overlay .unilib-crop.is-view-only [data-unilib-crop-save] { display: none; }
 .unified-library-overlay .unilib-crop-preview canvas { display: block; width: 100%; max-height: var(--unilib-crop-preview-height); border: var(--unilib-border-width) solid var(--unilib-border); background: var(--unilib-paper); object-fit: contain; }
 .unified-library-overlay .unilib-crop-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-crop-actions > button { min-height: var(--unilib-control-height); }

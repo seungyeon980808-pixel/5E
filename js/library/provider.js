@@ -420,6 +420,7 @@ function pdfResults(documents, index) {
           id: stableId("file", sourceId), kind: "page", sourceId,
           metadata, preview: {}, provenance: pdfProvenance(document, inventorySource),
         }),
+        id: stableId("file", sourceId),
         title: humanExamName(metadata) || document.title || document.source?.displayName,
         subtitle: [document.source?.displayName, `PDF ${pages.size}쪽`].filter(Boolean).join(" · "),
         documentId: document.id,
@@ -668,7 +669,7 @@ export function createUnifiedLibraryProvider(input = {}) {
           requestId: options.requestId ?? null,
           firstMatchingPage: first.pageNumber,
           matches: Object.freeze(matches),
-          loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => {
+          loadPreview: async (pageNumber = matches[0].pageNumber, previewOptions = {}) => {
             const match = matches.find((candidate) => candidate.pageNumber === pageNumber);
             if (!match) throw new RangeError("PDF preview page is outside the qualifying matches");
             if (typeof materializers.pdf !== "function") return Promise.resolve({ file, match });
@@ -680,7 +681,8 @@ export function createUnifiedLibraryProvider(input = {}) {
               preview: { source: match.source },
               provenance: pdfProvenance(document, match.source),
             });
-            return materializers.pdf({ result: previewResult, source: match.source, options: { ...previewOptions, preview: true } });
+            const materialized = await materializers.pdf({ result: previewResult, source: match.source, options: { ...previewOptions, preview: true } });
+            return Object.freeze({ ...materialized, result: previewResult });
           },
         });
       }));

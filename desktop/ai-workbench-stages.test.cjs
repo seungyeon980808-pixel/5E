@@ -30,7 +30,7 @@ test("image workbench exposes preparation, processing, and result stages", () =>
   assert.match(html, /data-ai-elapsed[^>]*>시간 알 수 없음</);
 
   assert.match(workbench, /sourceCards\(\)\.length \? "preparation" : "empty"/);
-  assert.match(workbench, /if \(processing && !generatedCards\(\)\.length\) \{\s*setLayout\("result"\)/);
+  assert.match(workbench, /if \(userChoseLayout\) return;\s*if \(processing && !generatedCards\(\)\.length\)/);
   assert.match(workbench, /fromUser && !window\.matchMedia\("\(prefers-reduced-motion: reduce\)"\)\.matches/);
   assert.match(workbench, /paneAnimations\.get\(pane\)\?\.cancel\(\)/);
   assert.match(workbench, /translate3d\(\$\{offset\}px, 0, 0\)/);

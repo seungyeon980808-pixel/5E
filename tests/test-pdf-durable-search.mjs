@@ -63,6 +63,30 @@ test("Given a valid persisted revision, when the desktop adapter opens it, then 
   assert.equal(parses, 0);
 });
 
+test("Given a persisted textbook answer page, hydration removes stale question guesses using current page evidence", async () => {
+  const persisted = persistedDocument();
+  persisted.pages[0] = {
+    ...persisted.pages[0], text: "부록 답안 1. 별 2. 온도",
+    words: [
+      { text: "1.", rect: [0.1, 0.2, 0.03, 0.02] },
+      { text: "①", rect: [0.2, 0.3, 0.02, 0.02] },
+      { text: "2.", rect: [0.1, 0.6, 0.03, 0.02] },
+    ],
+    items: [
+      { id: "doc-1:p1:q1", itemNumber: 1, label: "1", rect: [0.08, 0.18, 0.84, 0.4], confidence: 1,
+        documentId: "doc-1", pageNumber: 1, source: { documentId: "doc-1", pageNumber: 1, rect: [0.08, 0.18, 0.84, 0.4], fullPageFallback: false } },
+    ],
+  };
+  const adapter = createDesktopPdfLibraryAdapter({
+    bridge: { loadIndex: () => ({ version: "revision-1", index: persisted }) },
+    runtime: {},
+  });
+
+  const record = await adapter.openDocument(inventoryDocument({ pageCount: 1 }));
+
+  assert.deepEqual(record.pages[0].items, []);
+});
+
 test("Given a persisted revision needs preview, when opened for runtime, then only the PDF resource loads and the index is not rebuilt", async () => {
   // Given
   let fullParses = 0;

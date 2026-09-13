@@ -374,6 +374,37 @@ test("worker search is async, groups matching question once, and catalog replace
   assert.deepEqual(provider.search({ query: "굴절" }), []);
 });
 
+test("a PDF file match materializes its active page through a canonical full-page result", async () => {
+  const document = {
+    ...pdfDocument("textbook-327"),
+    pageCount: 327,
+    pages: [{
+      documentId: "textbook-327", pageNumber: 272, text: "active page term", words: [], items: [],
+    }],
+  };
+  let received;
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [document],
+    searchPdf: async () => [{
+      documentId: document.id, pageNumber: 272, snippet: "active page term",
+      terms: [], highlights: [], misses: [],
+    }],
+    materializers: { pdf: async (input) => { received = input; return { dataUrl: "data:image/png;base64,AA==" }; } },
+  });
+
+  const [file] = await provider.searchPdfFiles({ query: "active page term" });
+  assert.match(file.id, /^file\|/u);
+  const rendered = await file.loadPreview(272, { original: true });
+
+  assert.equal(rendered.result.kind, "page");
+  assert.notEqual(rendered.result.id, file.id);
+  assert.equal(received.result.provenance.pageNumber, 272);
+  assert.deepEqual(received.source, {
+    documentId: document.id, pageNumber: 272, rect: [0, 0, 1, 1], fullPageFallback: true,
+  });
+  assert.equal(received.options.original, true);
+});
+
 test("prebuilt and worker question results reject cross-document crop provenance", async () => {
   const owner = pdfDocument("owner-doc");
   const other = pdfDocument("other-doc");

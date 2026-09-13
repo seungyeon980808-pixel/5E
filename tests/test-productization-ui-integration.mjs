@@ -13,14 +13,16 @@ test("preload exposes the five durable PDF index and correction methods", async 
   }
 });
 
-test("production binds install handoff to canonical save, chooser, AI success, and folder intent", async () => {
+test("production keeps folder intent in desktop setup while the unified library stays search-only", async () => {
   const main = await source("js/main.js");
   const panel = await source("js/ai-panel.js");
   const library = await source("js/unified-library-ui.js");
+  const desktop = await source("desktop/main.cjs");
   assert.match(main, /saveProject\(state\)/);
   assert.match(main, /project-open/);
   assert.match(panel, /5e:ai-output-success/);
-  assert.match(library, /5e:local-folder-intent/);
+  assert.doesNotMatch(library, /5e:local-folder-intent/);
+  assert.match(desktop, /5e:local-folder-intent/);
 });
 
 test("production uses independent image task tabs while retaining the durable queue module", async () => {
