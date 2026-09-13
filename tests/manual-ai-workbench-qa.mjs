@@ -165,6 +165,7 @@ try {
   assert(compositePreview.cssWidth > 100, 'preview uses rendered width rather than collapsed HTML attributes');
   await page.evaluate(index => window.__qaCompleteImage(index, window.__qaOutput[0]), firstImageIndex);
   await page.waitForFunction(() => document.querySelectorAll('.ai-generated-card').length === 1 && document.querySelector('#ai-image-panel')?.dataset.aiBusy === 'false');
+  assert.equal(await page.locator('[data-ai-input]').isEnabled(), true, 'revision input is enabled after the first conversion settles');
   await page.locator('[data-ai-insert-selected]').click();
   await page.waitForFunction(() => window.__qaState.objects.some(object => object.type === 'image'));
   await page.evaluate(() => window.__qaManager.open());

@@ -967,6 +967,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     panel.dataset.aiBusy = String(on);
     navigationChanged();
     sendButton.disabled = on;
+    input.disabled = on || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && generatedImages.length === 0);
     chatButton.disabled = on;
     if (chatInput) chatInput.disabled = on;
     if (newButton) newButton.disabled = false;
