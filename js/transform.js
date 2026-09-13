@@ -1493,18 +1493,10 @@ export function initTransform(svg, state) {
     const s0 = state.get();
     const selectedIds0 = s0.selectedIds || [];
 
-    // Whole-group handle drag (green state): every selected object shares one
-    // groupId and handles are drawn on the combined bbox (render id "__group__").
-    //  - V tool       ??uniform resize, aspect FORCED (DESIGN 6-2).
-    //  - rotate tool  ??rotate ALL members about the combined-bbox center.
-    // targeted (orange) already returned above so it can never reach here.
     if (hLabel && (activeTool === "V" || activeTool === "rotate") && selectedIds0.length > 1) {
-      const gFirst = s0.objects.find((o) => o.id === selectedIds0[0]);
-      const gGid = gFirst && gFirst.groupId &&
-        selectedIds0.every((id) => s0.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
-        ? gFirst.groupId : null;
-      if (gGid) {
-        const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+      const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+      _groupMemberIds = selectedIds0.filter((id) => members.some((o) => o.id === id));
+      if (members.length === selectedIds0.length) {
         if (members.some((o) => !isMutable(o))) return;
         const box0 = groupBBox(members, svg);
         if (box0) {

@@ -97,5 +97,26 @@ test('visiting a restored page without editing retains deletion redo', async () 
   vm.runInNewContext('globalThis.inverse = inversePageHistoryEntry(stateValue, entry); restorePageHistoryEntry(stateValue, entry)', api.sandbox);
   s.redoStack.push(api.sandbox.inverse);
   api.switchPage(state, 'a'); api.switchPage(state, 'b');
+  api.switchPage(state, 'a');
   assert.equal(s.redoStack.length, 1);
+});
+
+test('undoing current middle-page deletion restores order, content and selection exactly', async () => {
+  const api = load(), state = makeState(), s = state.get();
+  const c = { id: 'c', name: 'c', objects: [{ id: 'c-object' }], guides: [], layers: [{ id: 1 }], artboard: { w: 120, h: 90 } };
+  s.pages.push(c);
+  api.switchPage(state, 'b');
+  s.selectedIds = ['b-object']; s.selectedGuideId = 'b-guide'; s.activeLayerId = 2;
+  const before = JSON.stringify({ pages: s.pages, activePageId: s.activePageId, selectedIds: s.selectedIds,
+    selectedGuideId: s.selectedGuideId, activeLayerId: s.activeLayerId });
+  await api.deletePage(state, 'b');
+  const entry = s.undoStack.at(-1);
+  api.sandbox.entry = entry; api.sandbox.stateValue = s;
+  vm.runInNewContext('globalThis.inverse = inversePageHistoryEntry(stateValue, entry); restorePageHistoryEntry(stateValue, entry)', api.sandbox);
+  const afterUndo = JSON.stringify({ pages: s.pages, activePageId: s.activePageId, selectedIds: s.selectedIds,
+    selectedGuideId: s.selectedGuideId, activeLayerId: s.activeLayerId });
+  assert.equal(afterUndo, before);
+  vm.runInNewContext('restorePageHistoryEntry(stateValue, inverse)', api.sandbox);
+  assert.deepEqual(Array.from(s.pages, page => page.id), ['a', 'c']);
+  assert.equal(s.activePageId, 'c');
 });

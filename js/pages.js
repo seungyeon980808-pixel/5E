@@ -175,6 +175,7 @@ export async function deletePage(state, id) {
   const p = findPage(s, id);
   if (!p) return;
   const wasActive = s.activePageId === id;
+  const activePageIdBefore = s.activePageId;
   const idx = s.pages.indexOf(p);
   const neighbor = s.pages[idx + 1] || s.pages[idx - 1];
 
@@ -183,7 +184,9 @@ export async function deletePage(state, id) {
     switchPage(state, neighbor.id);
   }
   state.update((st) => {
-    st.undoStack.push({ kind: "page-presence", page: p, index: idx, present: true });
+    st.undoStack.push({
+      kind: "page-presence", page: p, index: idx, present: true, activePageIdBefore,
+    });
     if (st.undoStack.length > 100) st.undoStack.shift();
     st.redoStack = [];
     st.pages = st.pages.filter((pg) => pg.id !== id);
