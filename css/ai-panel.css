@@ -2355,5 +2355,6 @@
 #ai-image-panel .ai-comment-list-status { margin:0; padding:6px 13px; color:var(--text-secondary); font-size:9px; border-top:1px solid var(--border-muted); }
 #ai-image-panel .ai-workbench-comment { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; }
 #ai-image-panel .ai-workbench-comment > button:first-child { grid-column:1 / -1; text-align:left; }
-#ai-image-panel .ai-workbench-comment textarea { min-height:54px; resize:vertical; }
-#ai-image-panel .ai-workbench-comment [data-ai-inline-delete] { align-self:start; }
+#ai-image-panel .ai-workbench-comment textarea { grid-column:1 / -1; width:100%; min-width:0; min-height:54px; resize:vertical; }
+#ai-image-panel .ai-workbench-comment [data-ai-comment-geometry] { grid-column:1 / -1; margin-top:0; }
+#ai-image-panel .ai-workbench-comment [data-ai-inline-delete] { grid-column:2; align-self:start; }

@@ -63,19 +63,51 @@ await page.locator('[data-ai-layout-mode="source"]').click();
 const sourceImage = page.locator('.ai-original-pane img').first();
 await sourceImage.click({ position: { x: 5, y: 5 } });
 const inlineEditor = page.locator('[data-ai-inline-editor]');
-await inlineEditor.fill('매우 긴 코멘트도 목록 안에서 직접 고치고 삭제할 수 있어야 합니다.');
-assert.equal(await inlineEditor.inputValue(), '매우 긴 코멘트도 목록 안에서 직접 고치고 삭제할 수 있어야 합니다.');
+const pointComment = '관찰 지점을 더 선명하게 표시하고 주변 요소와의 관계도 유지해 주세요.';
+await inlineEditor.fill(pointComment);
+assert.equal(await inlineEditor.inputValue(), pointComment);
+assert.equal(await page.locator('[data-ai-comment-geometry] input').count(), 2);
+assert((await inlineEditor.boundingBox()).width >= 200);
+await page.locator('[data-ai-comment-row]').screenshot({ path: new URL('followup-wide-inline.png', evidence).pathname });
 assert.equal(await page.locator('[data-ai-comment-editor]').count(), 0);
 await page.locator('[data-ai-inline-delete]').click();
 assert.equal(await page.locator('[data-ai-inline-editor]').count(), 0);
 
+await page.locator('[data-ai-comment-tool="area"]').click();
+const sourceBounds = await sourceImage.boundingBox();
+await page.mouse.move(sourceBounds.x + sourceBounds.width * 0.2, sourceBounds.y + sourceBounds.height * 0.2);
+await page.mouse.down();
+await page.mouse.move(sourceBounds.x + sourceBounds.width * 0.65, sourceBounds.y + sourceBounds.height * 0.65);
+await page.mouse.up();
+const areaEditor = page.locator('[data-ai-inline-editor]');
+const areaComment = '선택한 영역의 긴 한국어 설명이 좁게 접히지 않고 한 줄에 여러 글자씩 읽혀야 합니다.';
+await areaEditor.fill(areaComment);
+assert.equal(await page.locator('[data-ai-comment-geometry] input').count(), 4);
+const xGeometry = page.locator('[data-ai-geometry-key="x"]');
+await xGeometry.fill('12');
+await xGeometry.press('Tab');
+assert.equal(await xGeometry.inputValue(), '12');
+
+await page.setViewportSize({ width: 375, height: 812 });
+await page.locator('#ai-image-panel [data-panel-toggle="right"]').click();
+await page.waitForFunction(() => {
+  const panel = document.querySelector('#ai-image-panel .ai-conversation');
+  const rect = panel?.getBoundingClientRect();
+  return rect && rect.left >= 0 && rect.right <= innerWidth;
+});
+await areaEditor.waitFor({ state: 'visible' });
+assert(await areaEditor.evaluate(element => element.getBoundingClientRect().width >= 160));
+await page.screenshot({ path: new URL('followup-narrow-inline.png', evidence).pathname, fullPage: true });
+await page.locator('[data-ai-inline-delete]').click();
+assert.equal(await page.locator('[data-ai-inline-editor]').count(), 0);
+
+await page.setViewportSize({ width: 1280, height: 820 });
 await page.locator('[data-ai-tab-clear]').click();
 const dialogText = await page.locator('dialog[open]').innerText();
 assert.match(dialogText, /3개 작업/);
 await page.locator('dialog[open] .ai-confirm-accept').click();
 await page.waitForFunction(() => document.querySelectorAll('.ai-task-tab').length === 0);
 
-await page.setViewportSize({ width: 375, height: 812 });
 await page.screenshot({ path: new URL('narrow.png', evidence).pathname, fullPage: true });
 await context.close();
 
@@ -93,6 +125,7 @@ await browser.close();
 await writeFile(new URL('manual-qa.json', evidence), JSON.stringify({
   transport: 'deterministic-local', paidGenerationCalls: 0, deterministicGenerationCalls: 1, taskCountConfirmed: 3,
   inlineCommentEdited: true, inlineCommentDeleted: true, compareDisabledBeforeFirstResult: true,
+  pointGeometryInputs: 2, regionGeometryInputs: 4, longKoreanCommentReadable: true,
   originalAndCompareVisibleWhileGenerating: true, compareEnabledAfterFirstResult: true,
   deferredControlsHidden: true, viewports: ['1280x820', '375x812', '768x900 reduced-motion'],
 }, null, 2));

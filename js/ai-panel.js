@@ -447,6 +447,14 @@ export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus 
   });
 }
 
+export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTabId, interrupt }) {
+  if (tab?.id !== activeTaskTabId || !['busy', 'running'].includes(tab?.workState)) {
+    return { acknowledged: false };
+  }
+  const outcome = await interrupt();
+  return { acknowledged: outcome?.ok === true };
+}
+
 function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection }) {
   if (!panel) return;
 
@@ -3811,14 +3819,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       tasks: [...taskTabs.values()],
       confirm: count => scopedDialog('작업 모두 지우기', `${count}개 작업을 정리할까요? 실패한 작업과 원본 파일은 유지됩니다.`, { accept: `${count}개 지우기`, defaultAccept: true }),
       cancel: async tab => {
-        if (tab.id !== activeTaskTabId || tab.workState !== 'busy') return { acknowledged: false };
-        const outcome = await interruptCurrentTask();
-        if (outcome?.ok === true) {
+        const result = await acknowledgeActiveTaskClearCancellation({ tab, activeTaskTabId, interrupt: interruptCurrentTask });
+        if (result.acknowledged) {
           currentRequestEpoch += 1;
           setBusy(false);
-          return { acknowledged: true };
         }
-        return { acknowledged: false };
+        return result;
       },
       remove: async tab => { taskTabs.delete(tab.id); },
     });

@@ -5,7 +5,7 @@ import {
 } from './ai-task-export.js';
 import { restoreGenerationTiming } from './ai-generation-timing.js';
 
-const CANCELLABLE_TASK_STATES = new Set(['busy', 'running', 'queued']);
+const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 
 export async function clearTaskWorkspaces({ tasks, confirm, cancel, remove }) {
   const targets = Array.isArray(tasks) ? [...tasks] : [];
