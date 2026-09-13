@@ -33,6 +33,7 @@ function registerPdfLibraryIpc(options) {
   invoke("load-index", (payload) => options.service.loadIndex(payload));
   invoke("index-state", (payload) => options.service.indexState(payload));
   invoke("save-index-state", (payload) => options.service.saveIndexState(payload));
+  invoke("retry-index", (payload) => options.service.retryIndex(payload));
   invoke("list-corrections", (payload) => options.service.listCorrections(payload));
   invoke("save-correction", (payload) => options.service.saveCorrection(payload));
   invoke("delete-correction", (payload) => options.service.deleteCorrection(payload));

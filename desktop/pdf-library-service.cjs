@@ -3,7 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { MAX_IMAGE_BYTES, MAX_PDF_BYTES, hasPdfSignature, isPathInside, readFileBounded, scanPdfFolder } = require("./pdf-library-scanner.cjs");
 
-const INDEX_STATES = Object.freeze(["reading", "searchable", "needs-ocr", "failed"]);
+const INDEX_STATES = Object.freeze(["reading", "unindexed", "indexing", "searchable", "scan-only", "needs-ocr", "cancelled", "failed"]);
 const EMPTY_STATE = Object.freeze({
   schemaVersion: 1, connections: [], folders: [], documents: [], images: [], indexes: {}, indexStates: {}, corrections: {},
 });
@@ -154,7 +154,7 @@ function parseIndexState(payload, document) {
       diagnostic.recoverable = payload.diagnostic.recoverable;
     }
   }
-  if ((name === "failed" || name === "needs-ocr") && diagnostic === null) {
+  if (["failed", "scan-only", "needs-ocr", "cancelled"].includes(name) && diagnostic === null) {
     throw new PdfLibraryError("PDF_LIBRARY_PAYLOAD", `The ${name} state requires a diagnostic.`);
   }
   return {
@@ -170,7 +170,7 @@ function parseIndexState(payload, document) {
 function readingIndexState(document) {
   return {
     schemaVersion: "pdf-index-state-v1", documentId: document.documentId, version: document.version,
-    state: "reading", diagnostic: null, updatedAt: new Date().toISOString(),
+    state: "unindexed", diagnostic: null, updatedAt: new Date().toISOString(),
   };
 }
 
@@ -410,6 +410,10 @@ function createPdfLibraryService(options) {
       const scanned = await scanFolder({
         root: connection.root,
         signal: controller.signal,
+        previousRecords: new Map([
+          ...state.documents.filter((item) => item.connectionId === connection.connectionId),
+          ...state.images.filter((item) => item.connectionId === connection.connectionId),
+        ].map((item) => [item.relativePath, item])),
         shouldInclude: (relativePath) => effectiveSelected(connection, relativePath),
         onWarning(warning) {
           options.onProgress?.({ operationId, connectionId: connection.connectionId, phase: "warning", warning });
@@ -421,7 +425,12 @@ function createPdfLibraryService(options) {
       if (controller.signal.aborted || connectionGenerations.get(connection.connectionId) !== generation) {
         throw new PdfLibraryError("PDF_LIBRARY_CANCELLED", "PDF folder scan was cancelled.");
       }
-      const documents = scanned.documents.map((item) => ({ ...item, documentId: documentId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }));
+      const documents = scanned.documents.map((item) => ({
+        ...item,
+        documentId: documentId(connection.connectionId, item.relativePath),
+        folderId: folderId(connection.connectionId, parentPath(item.relativePath)),
+        connectionId: connection.connectionId,
+      }));
       const images = (scanned.images || []).map((item) => ({ ...item, imageId: imageId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }));
       const folders = (scanned.folders || [{ relativePath: "", name: connection.name, documentCount: 0, imageCount: 0 }]).map((item) => ({ ...item, folderId: folderId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }));
       const summary = await commitMutation((currentState) => {
@@ -736,6 +745,13 @@ function createPdfLibraryService(options) {
     });
   }
 
+  async function retryIndex(payload) {
+    const id = requireId(payload?.documentId, "document ID");
+    const document = state.documents.find((item) => item.documentId === id);
+    if (!document) throw new PdfLibraryError("PDF_LIBRARY_UNAUTHORIZED", "The PDF document is not authorized.");
+    return saveIndexState({ documentId: id, version: document.version, state: "indexing", diagnostic: null });
+  }
+
   function listCorrections(payload) {
     const id = requireId(payload?.documentId, "document ID");
     const document = state.documents.find((item) => item.documentId === id);
@@ -792,7 +808,7 @@ function createPdfLibraryService(options) {
   return {
     connect, ensureDefaultFolder, connections, disconnect, sync, cancel, folderTree, setFolderSelection,
     list, read, readImage, folderPathForOpen, itemPathForReveal, saveIndex, loadIndex,
-    indexState, saveIndexState, listCorrections, saveCorrection, deleteCorrection,
+    indexState, saveIndexState, retryIndex, listCorrections, saveCorrection, deleteCorrection,
     capabilities: () => ({
       folders: { managed: true, persistentSelection: true },
       images: { filenameOnly: true, ocr: false },

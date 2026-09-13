@@ -8,13 +8,14 @@ const THUMBNAIL_DPI = 96;
 const PREVIEW_DPI = 144;
 const HIGH_RES_DPI = 300;
 export const PDF_INDEX_LABELS = Object.freeze({
-  reading: "읽는 중", searchable: "검색 가능", "needs-ocr": "문자 인식 필요", failed: "실패", excluded: "검색 제외",
+  reading: "읽는 중", unindexed: "색인 대기", indexing: "색인 중", searchable: "검색 가능",
+  "scan-only": "스캔 문서", "needs-ocr": "문자 인식 필요", cancelled: "취소됨", failed: "실패", excluded: "검색 제외",
 });
 
 export function summarizePdfIndexStates(records, connections = []) {
   const counts = new Map(Object.keys(PDF_INDEX_LABELS).map((state) => [state, 0]));
   for (const record of records) {
-    const state = record.indexState?.state || "reading";
+    const state = record.indexState?.state || "unindexed";
     counts.set(state, (counts.get(state) || 0) + 1);
   }
   const excluded = connections.reduce((sum, connection) => sum + (Number(connection.excludedCount) || 0), 0);
@@ -83,6 +84,50 @@ async function sha256Hex(bytes) {
 
 export function localPdfDocumentId(fileName, sha256) {
   return `local:${sha256}:${encodeURIComponent(fileName)}`;
+}
+
+function inventoryDocument(record) {
+  return {
+    id: record.documentId,
+    title: record.name,
+    pageCount: Number.isInteger(record.pageCount) ? record.pageCount : 0,
+    pages: [],
+    status: record.indexState?.state === "needs-ocr" ? "image-only" : "unindexed",
+    indexState: record.indexState ?? null,
+    source: {
+      kind: "file", locator: record.documentId, displayName: record.name,
+      sha256: record.version, connectionId: record.connectionId, folderId: record.folderId, relativePath: record.relativePath,
+    },
+  };
+}
+
+export function pdfCatalogRevisionKey(documents) {
+  return JSON.stringify([...documents].map((document) => [
+    document.id, document.source?.sha256 ?? null, document.pageCount ?? 0,
+    document.indexState?.state ?? document.status ?? null,
+  ]).sort((left, right) => String(left[0]).localeCompare(String(right[0]), "en")));
+}
+
+export function projectDesktopInventory(records, currentDocuments) {
+  const currentById = new Map(currentDocuments.map((document) => [document.id, document]));
+  const targets = [];
+  const documents = records.map((record) => {
+    const current = currentById.get(record.documentId);
+    if (current?.source?.sha256 === record.version && Array.isArray(current.pages)) return current;
+    targets.push(record);
+    return inventoryDocument(record);
+  });
+  return Object.freeze({ documents: Object.freeze(documents), targets: Object.freeze(targets) });
+}
+
+export function beginDesktopIndexing(records, openRecord) {
+  const documents = Object.freeze(records.map(inventoryDocument));
+  const backgroundIndexing = (async () => {
+    const opened = [];
+    for (const record of records) opened.push(await openRecord(record));
+    return Object.freeze(opened);
+  })();
+  return Object.freeze({ documents, backgroundIndexing });
 }
 
 export function storedCropForResult(cropOverrides, result) {
@@ -464,6 +509,16 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     resultResolver.clear();
   }
 
+  function publishDocuments(nextDocuments) {
+    const changed = pdfCatalogRevisionKey(nextDocuments) !== pdfCatalogRevisionKey(docs);
+    docs = nextDocuments;
+    if (changed) {
+      catalogChanged();
+      onCatalogChange?.();
+    }
+    return changed;
+  }
+
   async function ensureDocumentOpen(documentId) {
     const activeRuntime = await ensureRuntime();
     const opened = activeRuntime.getDocument?.(documentId);
@@ -759,24 +814,31 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       desktopAdapter = library;
       desktopRecords = records;
       renderIndexOverview(records, [{ ...connection, excludedCount: tree?.tree?.excludedCount || 0 }]);
-      const opened = [];
-      for (const record of records) {
+      const batch = beginDesktopIndexing(records, async (record) => {
         try {
           const document = await withRuntimeLock(() => library.openDocument(record));
-          documentOpeners.set(document.id, () => library.openDocument(record));
+          documentOpeners.set(document.id, () => library.openDocument(record, { requireRuntime: true }));
           documentPersistors.set(document.id, (index) => library.saveDocumentIndex(record.documentId, record.version, index));
-          opened.push(document);
+          return document;
         } catch (_) {
           record.indexState = await library.readIndexState(record.documentId).catch(() => record.indexState);
+          return inventoryDocument(record);
         }
-      }
-      renderIndexOverview(records, [{ ...connection, excludedCount: tree?.tree?.excludedCount || 0 }]);
-      docs = [...docs, ...opened];
-      catalogChanged();
-      onCatalogChange?.();
+      });
+      const discoveredIds = new Set(batch.documents.map((document) => document.id));
+      const retainedDocuments = docs.filter((document) => !discoveredIds.has(document.id));
+      publishDocuments([...retainedDocuments, ...batch.documents]);
       refreshOcrControls();
       sourceStatus.textContent = `${docs.length}개 연결 자료를 읽고 있습니다.`;
-      await runSearch();
+      void runSearch();
+      const backgroundIndexing = batch.backgroundIndexing.then((opened) => {
+        const openedById = new Map(opened.map((document) => [document.id, document]));
+        publishDocuments(docs.map((document) => openedById.get(document.id) ?? document));
+        renderIndexOverview(records, [{ ...connection, excludedCount: tree?.tree?.excludedCount || 0 }]);
+        refreshOcrControls();
+        return runSearch().then(() => opened);
+      });
+      return { connection, documents: records, backgroundIndexing };
     } catch (error) {
       setStatus(`연결 폴더 열기 실패: ${error instanceof Error ? error.message : error}`, true);
     }
@@ -803,24 +865,37 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     }
     const recordIds = new Set(records.map((record) => record.documentId));
     const retained = docs.filter((document) => packDocumentIds.has(document.id) || !document.source?.locator || !recordIds.has(document.id));
-    const opened = [];
-    for (const record of records) {
-      try {
-        const document = await withRuntimeLock(() => library.openDocument(record));
-        documentOpeners.set(document.id, () => library.openDocument(record));
-        documentPersistors.set(document.id, (index) => library.saveDocumentIndex(record.documentId, record.version, index));
-        opened.push(document);
-      } catch (_) {
-        record.indexState = await library.readIndexState(record.documentId).catch(() => record.indexState);
-      }
-    }
-    docs = [...retained.filter((document) => !recordIds.has(document.id)), ...opened];
+    const retainedDocuments = retained.filter((document) => !recordIds.has(document.id));
+    const projected = projectDesktopInventory(records, docs);
+    publishDocuments([...retainedDocuments, ...projected.documents]);
     desktopRecords = records;
     renderIndexOverview(records, presentedConnections);
-    catalogChanged();
-    onCatalogChange?.();
     refreshOcrControls();
-    return { connections, documents: records, images, warningCount: warnings.length, warnings };
+    const backgroundIndexing = (async () => {
+      const opened = new Map();
+      for (const record of projected.targets) {
+        record.indexState = { ...record.indexState, state: "indexing", diagnostic: null };
+        try {
+          const document = await withRuntimeLock(() => library.openDocument(record));
+          documentOpeners.set(document.id, () => library.openDocument(record, { requireRuntime: true }));
+          documentPersistors.set(document.id, (index) => library.saveDocumentIndex(record.documentId, record.version, index));
+          opened.set(document.id, document);
+        } catch (_) {
+          record.indexState = await library.readIndexState(record.documentId).catch(() => record.indexState);
+          opened.set(record.documentId, inventoryDocument(record));
+        }
+      }
+      const currentVersions = new Map(records.map((record) => [record.documentId, record.version]));
+      const next = docs.map((document) => {
+        const replacement = opened.get(document.id);
+        return replacement && replacement.source?.sha256 === currentVersions.get(document.id) ? replacement : document;
+      });
+      publishDocuments(next);
+      renderIndexOverview(records, presentedConnections);
+      refreshOcrControls();
+      return [...opened.values()];
+    })();
+    return { connections, documents: records, images, warningCount: warnings.length, warnings, backgroundIndexing };
   }
 
   async function showPreview(index, original = false) {
@@ -1163,8 +1238,18 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     async syncPackCatalog(catalog) {
       await replacePackCatalog(catalog);
     },
+    async retryDesktopDocument(documentId) {
+      const record = desktopRecords.find((item) => item.documentId === documentId);
+      if (!record || !desktopAdapter) throw new Error("다시 시도할 PDF를 찾을 수 없습니다.");
+      record.indexState = { ...record.indexState, state: "indexing", diagnostic: null };
+      publishDocuments(docs.map((document) => document.id === documentId ? inventoryDocument(record) : document));
+      const opened = await withRuntimeLock(() => desktopAdapter.retryIndex(record));
+      documentOpeners.set(opened.id, () => desktopAdapter.openDocument(record, { requireRuntime: true }));
+      publishDocuments(docs.map((document) => document.id === documentId ? opened : document));
+      return opened;
+    },
     getCatalog() {
-      return { documents: [...docs], searchIndex: packSearchIndex };
+      return { documents: [...docs], searchIndex: packSearchIndex, revision: `pdf-catalog:${pdfCatalogRevisionKey(docs)}` };
     },
     getResolvedResults() {
       return [...new Map(resultResolver.values().map((value) => [value.id, value])).values()];

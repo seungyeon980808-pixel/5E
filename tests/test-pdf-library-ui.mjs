@@ -121,16 +121,23 @@ test("Given a mixed PDF, when one page has no text, then the explicit OCR action
   assert.equal(documentNeedsOcr({ pages: [{ text: "digital" }] }), false);
 });
 
-test("Given every persisted PDF state, the visible summary exposes all five Korean labels with live counts", () => {
+test("Given every persisted PDF state, the visible summary exposes lifecycle labels with live counts", () => {
   const records = [
     { indexState: { state: "reading" } },
     { indexState: { state: "searchable" } },
     { indexState: { state: "needs-ocr" } },
     { indexState: { state: "failed" } },
   ];
-  assert.deepEqual(summarizePdfIndexStates(records, [{ excludedCount: 2 }]).map(({ label, count }) => [label, count]), [
-    ["읽는 중", 1], ["검색 가능", 1], ["문자 인식 필요", 1], ["실패", 1], ["검색 제외", 2],
-  ]);
+  const summary = new Map(summarizePdfIndexStates(records, [{ excludedCount: 2 }]).map(({ state, count }) => [state, count]));
+  assert.equal(summary.get("reading"), 1);
+  assert.equal(summary.get("searchable"), 1);
+  assert.equal(summary.get("needs-ocr"), 1);
+  assert.equal(summary.get("failed"), 1);
+  assert.equal(summary.get("excluded"), 2);
+  assert.equal(summary.has("unindexed"), true);
+  assert.equal(summary.has("indexing"), true);
+  assert.equal(summary.has("scan-only"), true);
+  assert.equal(summary.has("cancelled"), true);
 });
 
 test("Given a manual crop, when the image cache is recreated, then the normalized override remains independent", () => {

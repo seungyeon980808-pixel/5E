@@ -218,6 +218,40 @@ export function createPdfRuntime(options = {}) {
     }
   }
 
+  async function openDocumentResource(input, record) {
+    if (!input || (input.data === undefined) === (input.url === undefined)) throw new TypeError("Provide exactly one PDF data or url source");
+    if (!record || record.id !== input.id || !Array.isArray(record.pages)) throw new TypeError("A matching persisted PDF record is required");
+    if (input.signal?.aborted) throw input.signal.reason ?? new DOMException("Aborted", "AbortError");
+    const generation = (generations.get(input.id) ?? 0) + 1;
+    generations.set(input.id, generation);
+    const module = await pdfjs();
+    const task = module.getDocument({
+      ...(input.data === undefined ? { url: input.url } : { data: inputBytes(input.data) }),
+      cMapUrl: options.cMapUrl ?? resourceDirectory("../../vendor/pdfjs/cmaps/"), cMapPacked: true,
+      standardFontDataUrl: options.standardFontDataUrl ?? resourceDirectory("../../vendor/pdfjs/standard_fonts/"),
+      wasmUrl: options.wasmUrl ?? resourceDirectory("../../vendor/pdfjs/wasm/"),
+      isEvalSupported: false, useWorkerFetch: false,
+    });
+    const abort = () => task.destroy();
+    input.signal?.addEventListener("abort", abort, { once: true });
+    try {
+      const pdf = await task.promise;
+      if (pdf.numPages !== record.pageCount) throw new Error("Persisted PDF page count does not match the source resource");
+      if (generations.get(record.id) !== generation) throw new DOMException("PDF open was superseded", "AbortError");
+      const previous = opened.get(record.id);
+      opened.set(record.id, { pdf, record, task });
+      removeCachedDocument(record.id);
+      if (previous) await previous.task.destroy();
+      while (opened.size > maxOpenDocuments) await closeDocument(opened.keys().next().value);
+      return record;
+    } catch (error) {
+      await task.destroy();
+      throw error;
+    } finally {
+      input.signal?.removeEventListener("abort", abort);
+    }
+  }
+
   async function render(source, dpi, signal) {
     const parsedSource = createCropSource(source);
     const key = `${parsedSource.documentId}:${parsedSource.pageNumber}:${parsedSource.rect.join(",")}:${dpi}`;
@@ -256,7 +290,7 @@ export function createPdfRuntime(options = {}) {
   }
 
   return Object.freeze({
-    openDocument, closeDocument,
+    openDocument, openDocumentResource, closeDocument,
     getDocument(documentId) { return opened.get(documentId)?.record ?? null; },
     async detectFigureCandidates(input) {
       const value = getOpened(input.documentId); const pageRecord = value.record.pages.find((page) => page.pageNumber === input.pageNumber);

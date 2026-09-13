@@ -120,8 +120,9 @@ export function searchIndex(index, options) {
   if (terms.length === 0) return Object.freeze([]);
   const allowed = options.documentIds ? new Set(options.documentIds) : null;
   const filters = options?.filters ?? {};
-  const limit = Number.isInteger(options.limit) && options.limit > 0 ? options.limit : 50;
-  const results = [];
+  const limit = options?.limit === null ? Number.POSITIVE_INFINITY
+    : Number.isInteger(options.limit) && options.limit > 0 ? options.limit : 50;
+  const candidates = [];
   for (const entry of index.entries) {
     if (allowed && !allowed.has(entry.documentId)) continue;
     if (filters.academicYear && String(entry.metadata?.academicYear) !== String(filters.academicYear)) continue;
@@ -129,6 +130,13 @@ export function searchIndex(index, options) {
     if (filters.subject && entry.metadata?.subject !== filters.subject) continue;
     const searchable = normalizedText(entry.normalized ?? entry.text).replace(/\s+/gu, "");
     if (!terms.every(({ term }) => searchable.includes(term))) continue;
+    const firstOffset = Math.min(...terms.map(({ term }) => searchable.indexOf(term)).filter((offset) => offset >= 0));
+    const start = Math.max(0, firstOffset - 48);
+    const occurrences = terms.reduce((sum, { term }) => sum + searchable.split(term).length - 1, 0);
+    candidates.push({ entry, score: occurrences / terms.length, snippet: entry.text.slice(start, start + 160).trim() });
+  }
+  candidates.sort((left, right) => right.score - left.score || left.entry.pageNumber - right.entry.pageNumber);
+  const results = candidates.slice(0, limit).map(({ entry, score, snippet }) => {
     const mapped = mapQueryHighlights(entry, terms);
     const legacyHighlights = mapped.highlights.length || !entry.matchRects?.length ? [] : entry.matchRects.map((rect) => Object.freeze({
       ...terms[0], coordinateSpace: "page-normalized", legacy: true,
@@ -137,20 +145,15 @@ export function searchIndex(index, options) {
     }));
     const highlights = mapped.highlights.length ? mapped.highlights : Object.freeze(legacyHighlights);
     const misses = legacyHighlights.length ? Object.freeze(terms.slice(1).map((term) => term.termId)) : mapped.misses;
-    const firstOffset = Math.min(...terms.map(({ term }) => searchable.indexOf(term)).filter((offset) => offset >= 0));
-    const start = Math.max(0, firstOffset - 48);
-    const snippet = entry.text.slice(start, start + 160).trim();
-    const occurrences = terms.reduce((sum, { term }) => sum + searchable.split(term).length - 1, 0);
-    results.push(Object.freeze({
+    return Object.freeze({
       documentId: entry.documentId, documentTitle: entry.documentTitle, pageNumber: entry.pageNumber,
-      itemId: entry.itemId, itemNumber: entry.itemNumber, score: occurrences / terms.length,
+      itemId: entry.itemId, itemNumber: entry.itemNumber, score,
       snippet, terms, highlights, misses,
       matchRects: Object.freeze(highlights.map((highlight) => highlight.rect)), source: entry.source,
       ...(entry.metadata ? { metadata: entry.metadata } : {}),
       ...(entry.contentSource ? { contentSource: entry.contentSource } : {}),
       ...(entry.figureCandidates?.length ? { figureCandidates: entry.figureCandidates } : {}),
-    }));
-  }
-  results.sort((left, right) => right.score - left.score || left.pageNumber - right.pageNumber);
-  return Object.freeze(results.slice(0, limit));
+    });
+  });
+  return Object.freeze(results);
 }

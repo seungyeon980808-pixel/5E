@@ -148,7 +148,11 @@ async function scanPdfFolder(options) {
       }
       let version;
       try {
-        version = await fileDigest(realFile, options.signal, maxBytes, options.readFile, kind === "pdf");
+        const previous = options.previousRecords?.get(relativePath);
+        const unchanged = previous && previous.size === stat.size && previous.modifiedAt === stat.mtimeMs
+          && typeof previous.version === "string" && /^[a-f0-9]{64}$/u.test(previous.version);
+        version = unchanged ? previous.version
+          : await fileDigest(realFile, options.signal, maxBytes, options.readFile, kind === "pdf");
       } catch (error) {
         if (error?.code !== "PDF_LIBRARY_TOO_LARGE" && error?.code !== "PDF_LIBRARY_INVALID_PDF") throw error;
         const warning = error.code === "PDF_LIBRARY_TOO_LARGE"

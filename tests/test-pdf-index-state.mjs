@@ -15,7 +15,7 @@ test("Given personal PDF metadata, when index states are projected, then the ver
     diagnostic: { code: "PDF_OPEN_FAILED", message: "xref is corrupt", stage: "open", recoverable: true },
   });
 
-  assert.equal(projectPdfIndexState(document, stale).state, "reading");
+  assert.equal(projectPdfIndexState(document, stale).state, "unindexed");
   assert.equal(projectPdfIndexState(document, failed).diagnostic.code, "PDF_OPEN_FAILED");
   assert.equal(document.status, "indexed");
   assert.equal(indexStateLabel("needs-ocr"), "문자 인식 필요");

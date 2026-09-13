@@ -37,6 +37,22 @@ export function unifiedImageInsertionOptions(result, asset) {
   };
 }
 
+export function createUnifiedLibraryConsumerRegistry(beginSelection) {
+  let consumer = null;
+  return Object.freeze({
+    register(nextConsumer) {
+      if (!nextConsumer || typeof nextConsumer.onAdd !== "function") throw new TypeError("A unified library onAdd consumer is required.");
+      if (consumer) throw new Error("A unified library consumer is already registered.");
+      consumer = nextConsumer;
+      return () => { if (consumer === nextConsumer) consumer = null; };
+    },
+    begin(trigger) {
+      if (!consumer) throw new Error("No unified library consumer is registered.");
+      return beginSelection(consumer, trigger);
+    },
+  });
+}
+
 let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
 let synonyms = {};        // { 태그/단원명: [동의어…] } — synonyms.json의 map (없으면 {})
 let byId = new Map();
@@ -664,6 +680,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let bundledExamManifest;
   let externalExamManifest = null;
   let importedImages = [];
+  let unifiedProviderCache = null;
+  let unifiedProviderCacheKey = "";
   async function ensureUnifiedManifests() {
     if (!partsManifest) partsManifest = await loadPartsManifest();
     if (bundledExamManifest === undefined) {
@@ -706,13 +724,22 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   async function getUnifiedProvider() {
     await ensureUnifiedManifests();
     const catalog = pdfUi.getCatalog();
-    return createUnifiedLibraryProvider({
+    const resolvedPdfResults = pdfUi.getResolvedResults();
+    const cacheKey = JSON.stringify([
+      catalog.revision,
+      importedImages.map((item) => [item.id, item.version ?? item.bytes?.byteLength ?? null]),
+      resolvedPdfResults.map((item) => item.id),
+    ]);
+    if (unifiedProviderCache && unifiedProviderCacheKey === cacheKey) return unifiedProviderCache;
+    unifiedProviderCacheKey = cacheKey;
+    unifiedProviderCache = createUnifiedLibraryProvider({
       partsManifest,
       examManifest: unifiedExamManifest(),
       examBaseUrl: configuredLegacyDatasetBase(),
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,
-      resolvedPdfResults: pdfUi.getResolvedResults(),
+      revision: catalog.revision,
+      resolvedPdfResults,
       importedImages,
       searchPdf: (options) => pdfUi.searchPdf(options),
       cropForResult: (result) => pdfUi.cropForResult(result),
@@ -723,6 +750,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         importedImage: materializeImportedImage,
       },
     });
+    return unifiedProviderCache;
   }
 
   async function insertUnifiedResult(result, asset, options, context = {}) {
@@ -779,6 +807,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       importedImages = [...browserImports, ...desktopImages];
     },
   });
+  const unifiedConsumerRegistry = createUnifiedLibraryConsumerRegistry((consumer, trigger) =>
+    unifiedUi.beginReferenceSelection({ ...consumer, onComplete: consumer.onComplete ?? unifiedUi.close }, trigger || openButton));
   pdfPanel.hidden = false;
 
   /* ----- open/close ----- */
@@ -820,4 +850,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     sel.addEventListener("change", runSearch);
   }
   resetButton.addEventListener("click", resetFilters);
+  return Object.freeze({
+    openLibrary,
+    registerUnifiedLibraryConsumer: (consumer) => unifiedConsumerRegistry.register(consumer),
+    beginUnifiedLibrarySelection: (trigger) => unifiedConsumerRegistry.begin(trigger),
+  });
 }
