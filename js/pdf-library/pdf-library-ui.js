@@ -120,6 +120,12 @@ export function projectDesktopInventory(records, currentDocuments) {
   return Object.freeze({ documents: Object.freeze(documents), targets: Object.freeze(targets) });
 }
 
+export function retainNonDesktopDocuments(documents, records, packDocumentIds) {
+  const recordIds = new Set(records.map((record) => record.documentId));
+  return documents.filter((document) => !recordIds.has(document.id)
+    && (packDocumentIds.has(document.id) || !document.source?.connectionId));
+}
+
 export function beginDesktopIndexing(records, openRecord) {
   const documents = Object.freeze(records.map(inventoryDocument));
   const backgroundIndexing = (async () => {
@@ -863,9 +869,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const tree = await library.folderTree(connection.connectionId);
       presentedConnections.push({ ...connection, excludedCount: tree?.tree?.excludedCount || 0 });
     }
-    const recordIds = new Set(records.map((record) => record.documentId));
-    const retained = docs.filter((document) => packDocumentIds.has(document.id) || !document.source?.locator || !recordIds.has(document.id));
-    const retainedDocuments = retained.filter((document) => !recordIds.has(document.id));
+    const retainedDocuments = retainNonDesktopDocuments(docs, records, packDocumentIds);
     const projected = projectDesktopInventory(records, docs);
     publishDocuments([...retainedDocuments, ...projected.documents]);
     desktopRecords = records;

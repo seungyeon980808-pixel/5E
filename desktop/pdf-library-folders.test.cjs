@@ -62,7 +62,7 @@ test("Given nested PDFs, images, and non-library files, when a subtree is exclud
   await service.setFolderSelection({ folderId: excludedFolder.folderId, selected: false });
   assert.deepEqual(service.list({ connectionId: connection.connectionId }).documents.map((item) => item.name), ["a.pdf"]);
   assert.deepEqual(service.list({ connectionId: connection.connectionId }).images, []);
-  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(f.storagePath, "utf8")).indexes, excludedDocument.documentId), false);
+  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(f.storagePath, "utf8")).indexes, excludedDocument.documentId), true);
   writePdf(path.join(source, "excluded", "new-child", "new.pdf"), "inherits-exclusion");
   await service.sync({ connectionId: connection.connectionId, operationId: "after-change" });
   const restarted = createPdfLibraryService({ storagePath: f.storagePath, documentsPath: f.documentsPath });
@@ -76,10 +76,13 @@ test("Given nested PDFs, images, and non-library files, when a subtree is exclud
   const restartedTree = restarted.folderTree({ connectionId: connection.connectionId }).tree;
   const restartedExcluded = restartedTree.children.find((item) => item.name === "excluded");
   assert.equal(restartedExcluded.selection, "excluded");
-  assert.deepEqual({ documentCount: restartedTree.documentCount, imageCount: restartedTree.imageCount }, { documentCount: 1, imageCount: 0 });
-  assert.deepEqual({ documentCount: restartedExcluded.documentCount, imageCount: restartedExcluded.imageCount }, { documentCount: 0, imageCount: 0 });
+  assert.deepEqual({ documentCount: restartedTree.documentCount, imageCount: restartedTree.imageCount }, { documentCount: 3, imageCount: 1 });
+  assert.deepEqual({ documentCount: restartedExcluded.documentCount, imageCount: restartedExcluded.imageCount }, { documentCount: 2, imageCount: 1 });
   await assert.rejects(restarted.read({ documentId: excludedDocument.documentId }), (error) => error.code === "PDF_LIBRARY_UNAUTHORIZED");
   assert.equal(fs.existsSync(path.join(source, "excluded", "nested", "b.pdf")), true);
+  await restarted.setFolderSelection({ folderId: restartedExcluded.folderId, selected: true });
+  await restarted.sync({ connectionId: connection.connectionId, operationId: "reselect" });
+  assert.deepEqual(restarted.loadIndex({ documentId: excludedDocument.documentId }).index, { pages: [{ text: "must disappear" }] });
 });
 
 test("Given a connected folder that disappears, a failed refresh exposes no ghost file counts", async (t) => {

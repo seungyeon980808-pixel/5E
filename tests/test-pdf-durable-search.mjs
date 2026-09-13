@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { createDesktopPdfLibraryAdapter } from "../js/pdf-library/desktop-adapter.js";
 import { createUnifiedLibraryConsumerRegistry } from "../js/exam-library.js";
-import { beginDesktopIndexing, pdfCatalogRevisionKey, projectDesktopInventory } from "../js/pdf-library/pdf-library-ui.js";
+import { beginDesktopIndexing, pdfCatalogRevisionKey, projectDesktopInventory, retainNonDesktopDocuments } from "../js/pdf-library/pdf-library-ui.js";
 import { createUnifiedLibraryProvider } from "../js/library/provider.js";
 import { buildSearchIndex, searchIndex } from "../js/pdf-library/search.js";
 
@@ -434,4 +434,25 @@ test("Given a first-time connected folder with deferred parsing, inventory is re
   assert.equal(batch.documents[0].indexState.state, "unindexed");
   deferred.resolve({ id: "new-doc", pages: [], source: { sha256: "v1" } });
   assert.equal((await batch.backgroundIndexing)[0].id, "new-doc");
+});
+
+
+test("desktop scope refresh removes excluded and disconnected documents while preserving browser imports and pack PDFs", () => {
+  const documents = [
+    { id: "excluded", source: { kind: "file", locator: "excluded", connectionId: "connected" } },
+    { id: "disconnected", source: { kind: "file", locator: "disconnected", connectionId: "removed" } },
+    { id: "browser", source: { kind: "file", locator: "browser-upload" } },
+    { id: "pack", source: { kind: "pack", locator: "pack.pdf" } },
+  ];
+  assert.deepEqual(retainNonDesktopDocuments(documents, [], new Set(["pack"])).map(item => item.id), ["browser", "pack"]);
+});
+
+test("a previously enabled source cannot return its PDF after desktop scope refresh excludes it", () => {
+  const document = { ...persistedDocument(), source: { ...persistedDocument().source, connectionId: "connected" } };
+  const before = createUnifiedLibraryProvider({ pdfDocuments: [document] });
+  const sourceIds = before.getSources().map(source => source.id);
+  assert.equal(before.search({ query: "cached", kinds: ["page"], sourceIds }).length, 1);
+  const visible = retainNonDesktopDocuments([document], [], new Set());
+  const after = createUnifiedLibraryProvider({ pdfDocuments: visible });
+  assert.equal(after.search({ query: "cached", kinds: ["page"], sourceIds }).length, 0);
 });

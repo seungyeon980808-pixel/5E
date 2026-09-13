@@ -425,13 +425,13 @@ function createPdfLibraryService(options) {
       if (controller.signal.aborted || connectionGenerations.get(connection.connectionId) !== generation) {
         throw new PdfLibraryError("PDF_LIBRARY_CANCELLED", "PDF folder scan was cancelled.");
       }
-      const documents = scanned.documents.map((item) => ({
+      const documents = [...state.documents.filter((item) => item.connectionId === connection.connectionId && !effectiveSelected(connection, parentPath(item.relativePath))), ...scanned.documents.map((item) => ({
         ...item,
         documentId: documentId(connection.connectionId, item.relativePath),
         folderId: folderId(connection.connectionId, parentPath(item.relativePath)),
         connectionId: connection.connectionId,
-      }));
-      const images = (scanned.images || []).map((item) => ({ ...item, imageId: imageId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }));
+      }))];
+      const images = [...state.images.filter((item) => item.connectionId === connection.connectionId && !effectiveSelected(connection, parentPath(item.relativePath))), ...(scanned.images || []).map((item) => ({ ...item, imageId: imageId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }))];
       const folders = (scanned.folders || [{ relativePath: "", name: connection.name, documentCount: 0, imageCount: 0 }]).map((item) => ({ ...item, folderId: folderId(connection.connectionId, item.relativePath), connectionId: connection.connectionId }));
       const summary = await commitMutation((currentState) => {
         if (connectionGenerations.get(connection.connectionId) !== generation) {
@@ -503,10 +503,6 @@ function createPdfLibraryService(options) {
     const connection = connectionFor(payload?.connectionId);
     const folders = state.folders.filter((item) => item.connectionId === connection.connectionId);
     const available = !unavailableConnections.has(connection.connectionId);
-    const visibleDocuments = available ? state.documents.filter((item) => item.connectionId === connection.connectionId
-      && effectiveSelected(connection, parentPath(item.relativePath))) : [];
-    const visibleImages = available ? state.images.filter((item) => item.connectionId === connection.connectionId
-      && effectiveSelected(connection, parentPath(item.relativePath))) : [];
     const byPath = new Map(folders.map((item) => [item.relativePath, { ...item, children: [] }]));
     if (!byPath.has("")) {
       const rootFolder = { folderId: folderId(connection.connectionId, ""), connectionId: connection.connectionId, relativePath: "", name: connection.name, documentCount: 0, imageCount: 0, children: [] };
@@ -523,14 +519,13 @@ function createPdfLibraryService(options) {
       const subtree = folders.filter((item) => isSameOrDescendant(node.relativePath, item.relativePath));
       const values = (subtree.length ? subtree : [node]).map((item) => effectiveSelected(connection, item.relativePath));
       const selection = values.every(Boolean) ? "selected" : values.every((value) => !value) ? "excluded" : "partial";
-      const documentCount = new Set(visibleDocuments
-        .filter((item) => isSameOrDescendant(node.relativePath, parentPath(item.relativePath)))
-        .map((item) => item.relativePath)).size;
-      const imageCount = new Set(visibleImages
-        .filter((item) => isSameOrDescendant(node.relativePath, parentPath(item.relativePath)))
-        .map((item) => item.relativePath)).size;
       const excludedDocumentCount = subtree.reduce((sum, item) => sum + (item.excludedDocumentCount || 0), 0);
       const excludedImageCount = subtree.reduce((sum, item) => sum + (item.excludedImageCount || 0), 0);
+      const selectedWithin = (item) => item.connectionId === connection.connectionId
+        && isSameOrDescendant(node.relativePath, parentPath(item.relativePath))
+        && effectiveSelected(connection, parentPath(item.relativePath));
+      const documentCount = available ? state.documents.filter(selectedWithin).length + excludedDocumentCount : 0;
+      const imageCount = available ? state.images.filter(selectedWithin).length + excludedImageCount : 0;
       return {
         folderId: node.folderId, name: node.name, selection, selected: selection === "selected",
         documentCount, imageCount, excludedCount: excludedDocumentCount + excludedImageCount, children,
@@ -552,17 +547,9 @@ function createPdfLibraryService(options) {
       const selectionRules = Object.fromEntries(Object.entries(currentConnection.selectionRules || {}).filter(([relativePath]) => !isSameOrDescendant(folder.relativePath, relativePath)));
       selectionRules[folder.relativePath] = payload.selected;
       const updatedConnection = { ...currentConnection, selectionRules };
-      const removedIds = new Set(current.documents
-        .filter((item) => item.connectionId === connection.connectionId && !effectiveSelected(updatedConnection, parentPath(item.relativePath)))
-        .map((item) => item.documentId));
       const next = {
         ...current,
         connections: current.connections.map((item) => item.connectionId === connection.connectionId ? updatedConnection : item),
-        documents: current.documents.filter((item) => !removedIds.has(item.documentId)),
-        images: current.images.filter((item) => item.connectionId !== connection.connectionId || effectiveSelected(updatedConnection, parentPath(item.relativePath))),
-        indexes: Object.fromEntries(Object.entries(current.indexes).filter(([id]) => !removedIds.has(id))),
-        indexStates: Object.fromEntries(Object.entries(current.indexStates).filter(([id]) => !removedIds.has(id))),
-        corrections: Object.fromEntries(Object.entries(current.corrections).filter(([id]) => !removedIds.has(id))),
       };
       return { next, result: null };
     });

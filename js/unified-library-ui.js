@@ -1,3 +1,4 @@
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
 import { queryHighlightTerms } from "./pdf-library/search.js";
 
@@ -68,6 +69,15 @@ export async function materializeOriginalLibraryPage(result, activeProvider) {
   return materialized;
 }
 
+export async function materializeLibraryAction(result, activeProvider, options = {}) {
+  if (result?.kind !== "pdf") return activeProvider.materialize(result, options);
+  const original = await materializeOriginalLibraryPage(result, activeProvider);
+  if (options.representation !== "manual" || !result.variants?.manual?.source) return original;
+  const page = activeProvider.search({ kinds: ["page"], limit: Number.MAX_SAFE_INTEGER }).find(candidate => candidate.provenance?.documentId === result.provenance?.documentId && candidate.provenance?.pageNumber === result.provenance?.pageNumber);
+  if (!page) throw new Error("원문 페이지 정보를 확인할 수 없습니다.");
+  return activeProvider.materialize(withManualCropVariant(page, result.variants.manual.source), options);
+}
+
 export function kindsForResultTab(tab) {
   if (tab === "question") return ["crop"];
   if (tab === "image") return ["image"];
@@ -84,10 +94,7 @@ export function normalizeLibraryTypes(types) {
 
 export function toggleLibraryType(types, toggled) {
   if (toggled === "all") return [...LIBRARY_TYPES];
-  const current = new Set(normalizeLibraryTypes(types));
-  if (current.size === LIBRARY_TYPES.length) return [toggled];
-  if (current.has(toggled)) current.delete(toggled); else current.add(toggled);
-  return current.size ? LIBRARY_TYPES.filter((type) => current.has(type)) : [...LIBRARY_TYPES];
+  return LIBRARY_TYPES.includes(toggled) ? [toggled] : normalizeLibraryTypes(types);
 }
 
 export function normalizeYearRange(start, end, availableYears) {
@@ -673,7 +680,7 @@ function buildShell() {
   overlay.innerHTML = `
     <section class="unilib" role="dialog" aria-modal="true" aria-labelledby="unilib-title">
       <header class="unilib-header">
-        <div class="unilib-brand"><img class="unilib-logo" src="assets/logo.svg" alt="5E"><span>/</span><h2 id="unilib-title">라이브러리</h2></div>
+        <div class="unilib-brand"><h2 id="unilib-title">라이브러리</h2></div>
         <div class="unilib-header-actions">
           <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
         </div>
@@ -702,7 +709,7 @@ function buildShell() {
               <span class="unilib-year-range" aria-label="학년도 범위"><select data-unilib-year-start aria-label="시작 학년도"><option value="">시작</option></select><span>–</span><select data-unilib-year-end aria-label="끝 학년도"><option value="">끝</option></select></span>
               <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="06">6월 모의평가</option><option value="09">9월 모의평가</option><option value="11">수능</option></select>
             </div>
-            <details class="unilib-help" data-unilib-help><summary>검색 도움말</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 함께 선택할 수 있고, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
+            <details class="unilib-help" data-unilib-help><summary>검색 도움말</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
           </div>
           <div class="unilib-result-scroll"><div class="unilib-summary"><span><strong data-unilib-count>0개</strong> <span data-unilib-count-label>결과</span></span><span class="unilib-selection-summary" data-unilib-selected-tray hidden><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear>모두 해제</button></span><span>방향키 선택 · Space 체크 · 길게 눌러 크게 보기</span></div><ul class="unilib-result-list" data-unilib-results role="listbox"></ul></div>
         </section>
@@ -752,6 +759,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const stage = overlay.querySelector("[data-unilib-stage]");
   const partOptionsHost = overlay.querySelector("[data-unilib-part-options]");
   const getPartOptions = createPartOptions(partOptionsHost, () => void renderPreview());
+  const previewCache = new Map();
   let results = [];
   let selectedId = null;
   const selectedIds = new Set();
@@ -902,8 +910,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const text = document.createElement("span");
       text.className = "unilib-tree-label";
       text.textContent = name;
-      text.title = name;
-      row.title = counts ? `하위 폴더 포함 PDF ${counts.pdf}개 · 이미지 ${counts.image}개` : name;
+      const tooltip = counts ? `${name} · 하위 폴더 포함 PDF ${counts.pdf}개 · 이미지 ${counts.image}개` : name;
+      text.title = tooltip;
+      label.title = tooltip;
+      row.title = tooltip;
       label.append(check, icon, text);
       if (!desktop && children.length === 0 && /\.pdf$/iu.test(name)) {
         label.dataset.browseSource = id;
@@ -1006,6 +1016,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     } catch (error) {
       if (error?.name !== "AbortError" && ownEpoch === searchEpoch) setStatus(`검색 실패: ${error instanceof Error ? error.message : error}`, true);
     }
+  }
+
+  function updateResultSelection() {
+    list.querySelectorAll("[data-result-id]").forEach((card) => card.setAttribute("aria-selected", String(card.dataset.resultId === selectedId)));
+    list.querySelectorAll("[data-select-result]").forEach((check) => { check.checked = selectedIds.has(check.dataset.selectResult); });
+    renderSelectedTray();
   }
 
   function renderResults() {
@@ -1136,6 +1152,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   async function renderPreview(retry = 0) {
     const ownEpoch = ++previewEpoch;
     let result = selectedResult();
+    stage.querySelector(".unilib-preview-loading")?.remove();
+    if (result) {
+      const loading = document.createElement("div");
+      loading.className = "unilib-preview-loading";
+      loading.setAttribute("role", "status");
+      loading.textContent = "불러오는 중…";
+      stage.append(loading);
+      stage.setAttribute("aria-busy", "true");
+    }
     const pdfMatches = result?.kind === "pdf" && Array.isArray(result.matches) ? result.matches : [];
     if (pdfMatchIndex >= pdfMatches.length) pdfMatchIndex = 0;
     const activePdfMatch = pdfMatches[pdfMatchIndex] || null;
@@ -1153,6 +1178,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       );
       if (resolution.status === "stale") return;
       if (resolution.status === "failed") {
+        stage.removeAttribute("aria-busy");
         stage.replaceChildren();
         stage.textContent = `미리보기 실패: ${resolution.error instanceof Error ? resolution.error.message : resolution.error}`;
         return;
@@ -1239,25 +1265,32 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const sourceUrl = safeExternalSourceUrl(result?.provenance?.sourceUrl);
     sourceOpen.textContent = isPdf ? "원문 페이지" : "출처 열기";
     sourceOpen.hidden = !result || (!isPdf && !revealable && !sourceUrl);
-    stage.replaceChildren();
-    if (!result) { stage.textContent = "검색 결과를 선택하세요."; return; }
-    stage.textContent = "미리보기를 준비하는 중…";
+    if (!result) { stage.textContent = "검색 결과를 선택하세요."; stage.removeAttribute("aria-busy"); return; }
     try {
       const activeProvider = await provider();
-      const materialized = result.kind === "pdf" && typeof result.loadPreview === "function"
-        ? await result.loadPreview(activePdfMatch?.pageNumber || result.firstMatchingPage || 1, { signal: searchController?.signal })
-        : await activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, representation: materializationRepresentation(result, activeRepresentation) });
+      const cacheKey = JSON.stringify([libraryResultIdentity(materializeResult), materializeResult.provenance?.rect, result.revision ?? activeProvider.revision, activeRepresentation, getPartOptions()]);
+      let pending = previewCache.get(cacheKey);
+      if (!pending) {
+        pending = result.kind === "pdf" && typeof result.loadPreview === "function"
+          ? result.loadPreview(activePdfMatch?.pageNumber || result.firstMatchingPage || 1)
+          : activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, representation: materializationRepresentation(result, activeRepresentation) });
+        previewCache.set(cacheKey, pending);
+        pending.catch(() => { if (previewCache.get(cacheKey) === pending) previewCache.delete(cacheKey); });
+        if (previewCache.size > 24) previewCache.delete(previewCache.keys().next().value);
+      }
+      const materialized = await pending;
       if (ownEpoch !== previewEpoch || result.id !== selectedId) return;
       currentMaterialized = materialized;
       currentMaterializedIdentity = libraryResultIdentity(result);
       const src = resultImage(result, materialized);
-      stage.replaceChildren();
       if (src) {
         const frame = document.createElement("div");
         frame.className = "unilib-preview-image";
         const image = new Image();
         image.alt = result.title;
         image.src = src;
+        await image.decode();
+        if (ownEpoch !== previewEpoch || result.id !== selectedId) return;
         frame.append(image);
         const previewCrop = materializeResult.provenance?.rect ?? [0, 0, 1, 1];
         paintHighlightLayer(frame, image, result, previewCrop);
@@ -1266,14 +1299,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
           activeFigureRepresentation = representation;
           void renderPreview();
         });
-        stage.append(frame);
-      } else stage.textContent = "미리보기를 표시할 수 없습니다.";
+        stage.replaceChildren(frame);
+        stage.removeAttribute("aria-busy");
+      } else { stage.removeAttribute("aria-busy"); stage.textContent = "미리보기를 표시할 수 없습니다."; }
     } catch (error) {
       if (ownEpoch !== previewEpoch) return;
       if (retry < 1 && /superseded/iu.test(String(error?.message || error))) {
         await renderPreview(retry + 1);
         return;
       }
+      stage.removeAttribute("aria-busy");
       stage.textContent = `미리보기 실패: ${error instanceof Error ? error.message : error}`;
     }
   }
@@ -1300,6 +1335,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   function close({ restoreFocus = true } = {}) {
     if (overlay.hidden) return;
     invalidateAction();
+    cancelPlacementChoice?.();
     cancelSpacePress?.();
     searchEpoch += 1;
     searchController?.abort();
@@ -1401,7 +1437,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const record = results.find((result) => result.id === id);
       if (record) selectedRecords.set(id, record);
     }
-    renderResults();
+    updateResultSelection();
     focusResultCard(id);
   };
   list.addEventListener("click", (event) => {
@@ -1434,7 +1470,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     pdfMatchIndex = 0;
     activeRepresentation = "full";
     activeFigureRepresentation = "figure:0";
-    renderResults();
+    updateResultSelection();
     focusResultCard(selectedId);
     void renderPreview();
   });
@@ -1535,9 +1571,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-  const openAiDestination = async (references, { closeCropSurface = false } = {}) => {
+  const openAiDestination = async (references, { closeCropSurface = false, placement = "separate" } = {}) => {
     const openDestination = typeof openIndependentReferences === "function"
-      ? () => openIndependentReferences({ references, startGeneration: false })
+      ? () => openIndependentReferences({ references, startGeneration: false, placement })
       : () => openAi?.({ references });
     setStatus("AI 작업실을 여는 중…");
     const opening = Promise.resolve().then(openDestination);
@@ -1571,7 +1607,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const effectiveResult = resultForRepresentation(result, representation);
       const activeProvider = await provider();
       if (!isCurrent()) return;
-      const materialized = await activeProvider.materialize(effectiveResult, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
       if (!isCurrent()) return;
       await insertMaterialized(effectiveResult, materialized, snapshot.options, { isCurrent });
       if (isCurrent()) close();
@@ -1585,16 +1621,54 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const effectiveResult = resultForRepresentation(result, representation);
       const activeProvider = await provider();
       if (!isCurrent()) return;
-      const materialized = await activeProvider.materialize(effectiveResult, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
       if (!isCurrent()) return;
       await openObjectify(effectiveResult, materialized, { isCurrent });
       if (isCurrent()) close();
     });
   });
+  let cancelPlacementChoice = null;
+  function chooseAiPlacement() {
+    return new Promise((resolve) => {
+      const dialog = document.createElement("div");
+      dialog.className = "unilib-ai-placement";
+      dialog.setAttribute("role", "dialog");
+      dialog.setAttribute("aria-modal", "true");
+      dialog.setAttribute("aria-label", "AI 작업 배치");
+      const content = document.createElement("div");
+      content.className = "unilib-dialog";
+      const title = document.createElement("h3");
+      title.textContent = "선택한 이미지를 어떻게 추가할까요?";
+      content.append(title);
+      const finish = (placement) => { dialog.remove(); cancelPlacementChoice = null; overlay.querySelector("[data-unilib-ai]").focus(); resolve(placement); };
+      cancelPlacementChoice = () => finish(null);
+      registerEscapeLayer(dialog, cancelPlacementChoice);
+      for (const [placement, text] of [["together", "한 작업에 함께 추가"], ["separate", "이미지마다 별도 작업"], [null, "취소"]]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = text;
+        button.addEventListener("click", () => finish(placement));
+        content.append(button);
+      }
+      dialog.addEventListener("keydown", (event) => {
+        if (event.key !== "Tab") return;
+        const buttons = [...content.querySelectorAll("button")];
+        const first = buttons[0];
+        const last = buttons.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+      });
+      dialog.append(content);
+      overlay.append(dialog);
+      content.querySelector("button").focus();
+    });
+  }
   overlay.querySelector("[data-unilib-ai]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {
       const chosen = aiActionRecords(selectedRecords, selectedIds, results.find((item) => item.id === snapshot.selectedId));
       if (!chosen.length) return;
+      const placement = chosen.length > 1 ? await chooseAiPlacement() : "separate";
+      if (!placement || !isCurrent()) return;
       const activeProvider = await provider();
       if (!isCurrent()) return;
       setStatus("AI 작업용 이미지를 준비하는 중…");
@@ -1603,21 +1677,23 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         const representation = aiActionRepresentationForResult(result, snapshot.selectedId, snapshot.representation, snapshot.selectedFigure);
         if (!canInsertLibraryResult(result, representation)) continue;
         const effectiveResult = resultForRepresentation(result, representation);
-        const materialized = await activeProvider.materialize(effectiveResult, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+        const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
         if (!isCurrent()) return;
         references.push(await rasterizeReference(materializedReference(effectiveResult, materialized)));
         if (!isCurrent()) return;
       }
       if (!isCurrent() || !references.length) return;
     if (referenceConsumer) {
-      references.forEach((reference) => referenceConsumer.onAdd?.({ name: reference.name, data: reference.dataUrl, sourceKind: reference.sourceKind, source: reference.source }));
+      const additions = references.map((reference) => ({ name: reference.name, data: reference.dataUrl, sourceKind: reference.sourceKind, source: reference.source }));
+      if (referenceConsumer.onAddMany) await referenceConsumer.onAddMany(additions, { placement });
+      else additions.forEach((reference) => referenceConsumer.onAdd?.(reference));
       referenceConsumer.onStatus?.(`라이브러리 참고 이미지 ${references.length}개가 추가되었습니다.`, "ok");
       referenceConsumer.onComplete?.();
       referenceConsumer = null;
     } else if (typeof openIndependentReferences === "function") {
-      await openAiDestination(references);
+      await openAiDestination(references, { placement });
     } else {
-      await openAiDestination(references);
+      await openAiDestination(references, { placement });
     }
       if (isCurrent()) close({ restoreFocus: false });
     });
@@ -2095,13 +2171,23 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   document.addEventListener("keydown", (event) => {
     if (overlay.hidden) return;
     if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
       cancelSpacePress();
-      if (!cropDialog.hidden) closeCrop();
+      if (cancelPlacementChoice) cancelPlacementChoice();
+      else if (!cropDialog.hidden) closeCrop();
       else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
       else close();
       return;
     }
-    if (!cropDialog.hidden) return;
+    if (cancelPlacementChoice) return;
+    if (!cropDialog.hidden) {
+      if (event.key === "Enter" && !editableTarget(event.target)) {
+        event.preventDefault();
+        cropSave.click();
+      }
+      return;
+    }
     if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(event.key) && (!editableTarget(event.target) || resultCardTarget(event.target)) && results.length) {
       const columns = Math.max(1, getComputedStyle(list).gridTemplateColumns.split(" ").filter(Boolean).length);
       cancelSpacePress();
@@ -2112,7 +2198,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const shift = ({ ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns })[event.key];
       const next = Math.max(0, Math.min(results.length - 1, current + shift));
       selectedId = results[next].id;
-      renderResults();
+      updateResultSelection();
       void renderPreview();
       focusResultCard(selectedId);
     }
@@ -2161,6 +2247,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }), 240);
   };
   window.addEventListener("focus", syncOnFocus);
+  registerEscapeLayer(root, () => {
+    cancelSpacePress();
+    if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+    else close();
+  });
+  registerEscapeLayer(cropDialog, () => { cancelSpacePress(); closeCrop(); });
   return Object.freeze({
     open, close, refresh: async () => { await renderSources(); await runSearch(); }, element: overlay,
     async beginReferenceSelection(consumer, trigger) {
