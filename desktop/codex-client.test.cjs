@@ -106,7 +106,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);
-  assert.match(panel, /createAiReferenceSearch/);
+  assert.match(panel, /openPdfReferencePicker\(createUnifiedAiSourceConsumer/);
   assert.match(panel, /클립보드 이미지/);
   assert.match(markup, /data-ai-speed/);
   assert.match(markup, /id="exam-library-open"[^>]*>[\s\S]*?라이브러리[\s\S]*?<\/button>/);
