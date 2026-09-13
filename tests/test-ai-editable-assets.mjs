@@ -59,12 +59,12 @@ test('manual correction accepts every region allowed by the separation contract 
   const inserted = insertEditableAssets(state, prepared, { isCurrent: () => true });
 
   assert.equal(prepared.assets.length, 21);
-  assert.equal(inserted.groupIds.length, 21);
+  assert.equal(inserted.groupIds.length, 0);
   assert.equal(inserted.added, 21);
   assert.equal(state.get().undoStack.length, 1);
 });
 
-test('single atomic insertion gives independent groups, native labels, provenance and one undo snapshot', async () => {
+test('single atomic insertion gives independent objects, native labels, provenance and one undo snapshot', async () => {
   const { src } = await fixture();
   const prepared = await prepareEditableAssets(src, [region, { id: 'b', x: 7, y: 0, width: 2, height: 7, label: 'B', anchor: { x: 8, y: 3 }, labelPoint: { x: 8, y: 0 } }]);
   const state = stateFixture();
@@ -72,16 +72,17 @@ test('single atomic insertion gives independent groups, native labels, provenanc
   const value = state.get();
   assert.equal(state.updates(), 1);
   assert.equal(result.added, 4);
-  assert.equal(value.groups.length, 2);
+  assert.equal(value.groups.length, 0);
   assert.equal(value.undoStack.length, 1);
   assert.deepEqual(value.undoStack[0], [{ id: 'existing' }]);
   assert.equal(value.objects[2].text, '<script>㉠</script>');
   assert.equal(value.objects[2].type, 'labeler');
   for (const object of value.objects.slice(1)) {
     assert.equal(object.aiTaskId, 'task'); assert.equal(object.aiCandidateId, 'candidate'); assert.equal(object.layerId, 8);
-    assert(value.groups.find(g => g.id === object.groupId).memberIds.includes(object.id));
+    assert.equal(Object.hasOwn(object, 'groupId'), true);
+    assert.equal(object.groupId, null);
   }
-  assert.notEqual(value.objects[1].groupId, value.objects[3].groupId);
+  assert.notEqual(value.objects[1].id, value.objects[3].id);
   assert.equal(value.objects[1].w / value.objects[1].h, 1);
   assert.equal(value.objects[1].src, prepared.assets[0].data);
   // Existing editor undo restores objects and derives its group index from groupId.

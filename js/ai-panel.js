@@ -1,4 +1,4 @@
-import { createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -57,7 +57,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { createAiReferenceSearch } from "./ai-reference-search.js?v=1.5.6";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
 import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
 import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1";
@@ -440,6 +440,13 @@ export function initAiPanel(state) {
   return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench);
 }
 
+export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }) {
+  return Object.freeze({
+    onAdd(reference) { addReferencesAsTasks([reference]); },
+    onStatus(message, kind) { setStatus(message, kind); },
+  });
+}
+
 function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection }) {
   if (!panel) return;
 
@@ -527,10 +534,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   generationModeRow.className = 'ai-separated-mode';
   generationModeRow.innerHTML = '<span>이미지 구성</span><select data-ai-generation-mode aria-label="이미지 구성 방식"><option value="single">한 장</option><option value="separated">물체별 분리 (실험)</option></select><small>실험 · 최대 16개 · 겹친 부품은 함께 생성됩니다.<br>내부 선은 벡터화하지 않습니다.</small>';
   const generationModeSelect = generationModeRow.querySelector('select');
-  const generationModeAnchor = panel.querySelector('[data-ai-white-png-note]');
-  if (!generationModeAnchor) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
-  generationModeAnchor.before(generationModeRow);
   const outputProcessing = panel.querySelector('[data-ai-output-processing]');
+  if (!outputProcessing) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
+  outputProcessing.prepend(generationModeRow);
   const outputProcessingStatus = panel.querySelector('[data-ai-output-processing-status]');
   const backgroundPolicySelect = panel.querySelector('select[data-ai-background-policy]');
   const examPaletteSelect = panel.querySelector('select[data-ai-exam-palette]');
@@ -541,6 +547,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const batchSummary = panel.querySelector("[data-ai-batch-summary]");
   const tabList = panel.querySelector("[data-ai-tab-list]");
   const tabNewButton = panel.querySelector("[data-ai-tab-new]");
+  const tabClearButton = panel.querySelector("[data-ai-tab-clear]");
   const reviewModeCheckbox = panel.querySelector("[data-ai-review-mode]");
   const reviewModelSelect = panel.querySelector("[data-ai-review-model]");
   const reviewEffortSelect = panel.querySelector("[data-ai-review-effort]");
@@ -1627,6 +1634,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   }
   function syncSelectedOutputActions() {
     const item = selectedOutputItem();
+    const comparisonCount = allImages().length;
+    compareButton.disabled = comparisonCount < 2;
+    compareButton.title = comparisonCount < 2
+      ? '첫 결과가 준비되면 원본과 비교할 수 있습니다.'
+      : '별도 창에서 원본과 생성 결과를 비교합니다.';
     const save = panel.querySelector('[data-ai-save-selected]');
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
@@ -1831,13 +1843,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       addLog(error.message || String(error), "error");
     }
   };
-  const referenceSearch = createAiReferenceSearch({
-    desktop: desktop,
-    onAdd: (reference) => addReferencesAsTasks([reference]),
-    onAddMany: (references) => addReferencesAsTasks(references),
-    onStatus: (text, kind) => setStatus(text, kind),
-  });
-
   const imgReady = async (image) => {
     await image.decode();
   };
@@ -3691,7 +3696,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!sourceMenu?.hidden && !event.target.closest('.ai-source-menu-shell')) closeSourceMenu();
   });
   compareButton.onclick = openComparison;
-  referenceSearchButton.onclick = () => { void referenceSearch.open(); };
+  referenceSearchButton.onclick = () => {
+    void openPdfReferencePicker(createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }))
+      .catch(error => setStatus(error instanceof Error ? error.message : String(error), "error"));
+  };
   captureButton.onclick = () => { void openCaptureChooser(); };
   newButton.onclick = async () => {
     if (busy) { setStatus('작업 취소가 완료된 뒤 초기화해 주세요.', 'warn'); return; }
@@ -3784,7 +3792,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.addEventListener("click", (event) => {
     if (event.target.closest("[data-ai-add-file]") && !file.disabled) file.click();
   });
-  panel.querySelector("[data-ai-interrupt]").onclick = async () => {
+  const interruptCurrentTask = async () => {
     if (!busy) return;
     currentCancelRequested = true;
     abortAutomaticSeparation('generation-cancelled');
@@ -3794,8 +3802,42 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     structureAnalysis.cancel();
     if (reviewWasActive) imageReview.cancel();
     else setStatus("작업 취소 중…", "busy");
-    await desktop?.interrupt();
+    return await desktop?.interrupt();
   };
+  panel.querySelector("[data-ai-interrupt]").onclick = interruptCurrentTask;
+  tabClearButton?.addEventListener('click', async () => {
+    captureActiveTaskTab();
+    const result = await clearTaskWorkspaces({
+      tasks: [...taskTabs.values()],
+      confirm: count => scopedDialog('작업 모두 지우기', `${count}개 작업을 정리할까요? 실패한 작업과 원본 파일은 유지됩니다.`, { accept: `${count}개 지우기`, defaultAccept: true }),
+      cancel: async tab => {
+        if (tab.id !== activeTaskTabId || tab.workState !== 'busy') return { acknowledged: false };
+        const outcome = await interruptCurrentTask();
+        if (outcome?.ok === true) {
+          currentRequestEpoch += 1;
+          setBusy(false);
+          return { acknowledged: true };
+        }
+        return { acknowledged: false };
+      },
+      remove: async tab => { taskTabs.delete(tab.id); },
+    });
+    if (!result.confirmed) return;
+    if (!taskTabs.size) {
+      activeTaskTabId = null;
+      renderTaskTabs();
+      persistTasks();
+      workspaceEmpty();
+    } else if (!taskTabs.has(activeTaskTabId)) {
+      restoreTaskTab(taskTabs.keys().next().value);
+    } else {
+      renderTaskTabs();
+      persistTasks();
+    }
+    setStatus(result.retainedIds.length
+      ? `${result.removedIds.length}개 정리 · ${result.retainedIds.length}개 실패 또는 취소 확인 필요`
+      : `${result.removedIds.length}개 작업을 정리했습니다.`, result.retainedIds.length ? 'warn' : 'ok');
+  });
   file.onchange = async () => {
     const selectedFiles = Array.from(file.files || []).filter((selected) => selected.type.startsWith("image/"));
     const dataUrls = await Promise.all(selectedFiles.map(blobToDataUrl));

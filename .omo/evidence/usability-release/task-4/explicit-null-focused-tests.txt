@@ -1,0 +1,76 @@
+(node:33043) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/js/ai-editable-assets.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ boundary flood removes only exterior alpha and preserves enclosed RGBA exactly (8.439ms)
+✔ manual keep rectangle preserves white interior reached through open contour (2.176625ms)
+✔ invalid regions reject; clipped regions retain original coordinates (1.956875ms)
+✔ manual correction accepts every region allowed by the separation contract without truncation (6.467958ms)
+✔ single atomic insertion gives independent objects, native labels, provenance and one undo snapshot (1.018834ms)
+✔ automatic insertion keeps separated rasters label-free in one group at source-relative positions (1.542ms)
+✔ unknown insertion group modes reject before state mutation (0.200666ms)
+✔ stale preparation and stale callback at commit never mutate object/undo state (0.624917ms)
+✔ per-object label modes and global suppression agree with native inserted labels (1.209959ms)
+(node:33044) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/js/ai-separated-assets.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Given an opaque white atlas, when separating, then enclosed and translucent foreground RGBA is exact (9.361584ms)
+✔ Given a truly transparent atlas, when separating, then opaque white object pixels remain exact (2.000583ms)
+✔ Given an unmodified napi canvas PNG with sBIT, automatic separation accepts the valid runtime output (2.442875ms)
+✔ Given three physically disconnected objects on transparency, automatic separation returns three original-coordinate PNGs (4.983583ms)
+✔ Given disconnected objects inside one former atlas cell, automatic separation does not merge them by grid position (2.053042ms)
+✔ Given an L-shaped nearby pair and a distant object inside their combined bounds, grouping does not invent a connection (2.908ms)
+✔ Given two bodies joined by a one-pixel line, automatic separation preserves the connected assembly (1.432542ms)
+✔ Given a one-pixel diagonal, eight-connected analysis keeps it as one assembly (0.95375ms)
+✔ Given nearby fragmented glyph strokes and a distant object, conservative grouping keeps the fragments without combining the object (2.660958ms)
+✔ Given an internal opaque-white hole, separated output preserves the hole and every assigned source pixel (2.35525ms)
+✔ Given a cancelled analysis, public preparation rejects with AbortError before producing stale assets (0.48325ms)
+✔ Given cancellation while a real figure is being analyzed, preparation cooperatively rejects with AbortError (78.906667ms)
+✔ Given analysis limits, preparation returns the untouched original and a manual path instead of a failed image (0.502125ms)
+✔ Given a baked RGB checkerboard, when separating, then unsupported background is rejected (0.83625ms)
+✔ Given near-white or translucent-white gutters, when separating, then strict background validation rejects them (0.903291ms)
+✔ Given a low-chroma 253 opaque background, when separating, then it is accepted as near-white (0.989292ms)
+✔ Given a low-chroma 249 or high-chroma opaque frame, when separating, then it is rejected (0.874583ms)
+✔ Given the supplied failed RGB atlas, when separating through the public API, then it is rejected (158.54275ms)
+✔ Given foreground crossing an internal cell boundary, when separating, then it remains one reviewable assembly (2.114042ms)
+✔ Given nonuniform rows, when separating, then connected components infer every asset (2.514417ms)
+✔ Given disconnected parts in one visual column, when separating, then the parts remain one assembly (1.364875ms)
+✔ Given the scientific assembly fixture, when separating, then nearby body, scale, beaker and stand parts stay grouped without losing pixels (8.446ms)
+✔ Given the compact lab fixture, when separating, then beaker, thermometer and stand assemblies stay independent (1.79675ms)
+✔ Given a valid four-by-four fixture, when separating, then the fixed-grid path stays available (1.81925ms)
+✔ Given explicit grid crops whose bounds overlap, owner masks keep every source pixel in exactly one asset (1.243125ms)
+✔ Given the actual generated PNG, when separating, then all ten inferred objects retain every foreground pixel and the source bytes (316.765125ms)
+✔ Given more than sixteen connected groups, when separating, then none are silently omitted and configured limits fall back (12.851792ms)
+✔ Given 129 disconnected regions, default analysis preserves the original through the 128-region fallback (2.873583ms)
+✔ Given invalid separation options, when separating, then the public contract rejects them before processing (0.317ms)
+✔ Given an empty atlas, when separating, then a user-facing review error preserves the manual-correction handoff (0.485166ms)
+✔ Given malformed or bounded inputs, when separating through the public API, then malformed data rejects and limits preserve the original (0.463042ms)
+✔ Given an exact 4000 by 4000 RGBA input, public separation accepts the declared 16MP boundary (651.754333ms)
+✔ Given separated assets, when passed to the core inserter, then each asset is independently selectable without a group (1.685167ms)
+(node:33045) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/js/ai-panel.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:33045) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+✔ actual AI panel contains the required visible generation-mode insertion anchor (1.3015ms)
+✔ separated mode is captured on each candidate and survives task persistence snapshots (0.161333ms)
+✔ only a first separated generation routes to the atlas prompt (0.064ms)
+✔ a selected separated candidate offers manual regions only after its own automatic preparation failed (1.190208ms)
+(node:33046) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/js/ai-task-workspaces.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E-usability-release/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ Given mixed tasks, when clearing all, then count confirmation precedes cancellation and deletion (0.614ms)
+✔ Given a cancellation rejection, when clearing all, then that task and its source bytes are retained (0.119375ms)
+✔ Given failed work, when clearing all, then failure remains visible for recovery (0.073666ms)
+✔ Given separated assets, when creating outputs, then identities are unique and ungrouped without input mutation (0.14825ms)
+✔ Given a misleading ID factory, when creating split outputs, then duplicate identity is rejected (0.159291ms)
+ℹ tests 51
+ℹ suites 0
+ℹ pass 51
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1402.028333

@@ -58,7 +58,6 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   const cleanup = [];
   let tool = 'pan';
   let selected = null;
-  let editorSelection = null;
   let geometrySelection = null;
   let geometry = null;
   let frame = null;
@@ -189,13 +188,37 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       list.append(text);
     }
     for (const { item, comment } of allEntries) {
-      const row = doc.createElement('button');
-      row.type = 'button';
+      const row = doc.createElement('article');
       row.className = `ai-workbench-comment${commentKey(item, comment) === selected ? ' is-active' : ''}`;
-      row.setAttribute('aria-pressed', String(commentKey(item, comment) === selected));
-      row.disabled = isBusy();
-      row.textContent = `${comment.number}. ${commentText(comment) || '코멘트 작성 중'} · ${item.kind === 'reference' ? '원본' : '선택 버전'}`;
-      row.onclick = () => select(item, comment);
+      row.dataset.aiCommentRow = '';
+      row.dataset.active = String(commentKey(item, comment) === selected);
+      const choose = doc.createElement('button');
+      choose.type = 'button';
+      choose.setAttribute('aria-pressed', String(commentKey(item, comment) === selected));
+      choose.disabled = isBusy();
+      choose.textContent = `${comment.number}. ${item.kind === 'reference' ? '원본' : '선택 버전'} · ${comment.type === 'point' ? '점' : '영역'}`;
+      choose.onclick = () => select(item, comment);
+      const editor = doc.createElement('textarea');
+      editor.dataset.aiInlineEditor = '';
+      editor.value = commentText(comment);
+      editor.placeholder = '이 위치에서 바꿀 내용을 입력하세요.';
+      editor.setAttribute('aria-label', `코멘트 ${comment.number} 내용`);
+      editor.disabled = isBusy();
+      editor.oninput = () => {
+        if (isBusy()) return;
+        comment.text = editor.value;
+        selected = commentKey(item, comment);
+        changed();
+        updateControls(entries());
+      };
+      const remove = doc.createElement('button');
+      remove.type = 'button';
+      remove.dataset.aiInlineDelete = '';
+      remove.textContent = '삭제';
+      remove.setAttribute('aria-label', `코멘트 ${comment.number} 삭제`);
+      remove.disabled = isBusy();
+      remove.onclick = () => { selected = commentKey(item, comment); deleteSelectedComment(); };
+      row.append(choose, editor, remove);
       list.append(row);
     }
   }
@@ -203,20 +226,6 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   function updateControls(allEntries) {
     const active = current();
     const busy = isBusy();
-    const editor = q('[data-ai-comment-editor]');
-    if (editor) {
-      // Changing selections must replace the text even if the old textarea
-      // still owns focus. Re-rendering the same selection must retain its caret.
-      if (editorSelection !== selected || doc.activeElement !== editor) {
-        editor.value = active ? commentText(active.comment) : '';
-      }
-      editorSelection = selected;
-      editor.disabled = !active || busy;
-    }
-    for (const selector of ['[data-ai-comment-save]', '[data-ai-comment-delete]']) {
-      const button = q(selector);
-      if (button) button.disabled = !active || busy;
-    }
     const count = q('[data-ai-comments-count]');
     if (count) count.textContent = String(allEntries.length);
     const status = q('[data-ai-comment-status]');
@@ -238,12 +247,13 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   }
 
   function renderGeometry(active, busy) {
-    const editor = q('[data-ai-comment-editor]');
-    if (!geometry && editor) {
+    const editor = q('[data-ai-comment-row][data-active="true"] [data-ai-inline-editor]')
+      || q('[data-ai-comment-row] [data-ai-inline-editor]');
+    if (!geometry) {
       geometry = doc.createElement('div');
       geometry.dataset.aiCommentGeometry = '';
-      editor.after(geometry);
     }
+    if (editor && geometry.parentElement !== editor.parentElement) editor.after(geometry);
     if (!geometry) return;
     if (geometrySelection !== selected || (!active && geometry.children.length)) {
       geometry.replaceChildren();
@@ -365,7 +375,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       changed();
       activateTab('comments');
       render();
-      q('[data-ai-comment-editor]')?.focus();
+      q('[data-ai-comment-row][data-active="true"] [data-ai-inline-editor]')?.focus();
     });
     on(stage, 'pointercancel', () => clearDrag(entry));
     on(stage, 'lostpointercapture', () => clearDrag(entry));
@@ -397,21 +407,6 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const tab = event.target.closest?.('[data-ai-side-tab]');
     if (tab) activateTab(tab.dataset.aiSideTab);
   });
-  listen(q('[data-ai-comment-editor]'), 'input', event => {
-    const active = current();
-    if (!active || isBusy()) return;
-    active.comment.text = event.target.value;
-    changed();
-    // Update count and list while retaining textarea selection/caret and geometry focus.
-    const allEntries = entries();
-    renderList(allEntries);
-    updateControls(allEntries);
-  });
-  listen(q('[data-ai-comment-save]'), 'click', () => {
-    if (!current() || isBusy()) return;
-    changed();
-    render();
-  });
   function deleteSelectedComment() {
     const active = current();
     if (!active || isBusy()) return;
@@ -420,7 +415,6 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     changed();
     render();
   }
-  listen(q('[data-ai-comment-delete]'), 'click', deleteSelectedComment);
   listen(panel, 'keydown', event => {
     if (!['Delete', 'Backspace'].includes(event.key) || event.isComposing || event.defaultPrevented) return;
     if (event.target.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])') || panel.querySelector('dialog[open]')) return;
