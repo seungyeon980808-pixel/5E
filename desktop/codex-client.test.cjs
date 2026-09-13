@@ -121,7 +121,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
     "original remains a dedicated comparison pane rather than a stacked footer",
   );
   assert.match(markup, /ai-results mode-result/);
-  assert.match(markup, /data-ai-candidate-select/);
+  assert.match(markup, /data-ai-version-list[^>]*role="listbox"/);
   assert.match(styles, /\.ai-comparison-grid/);
   assert.match(styles, /\.ai-status\[data-kind="ok"\].*var\(--accent/);
 });

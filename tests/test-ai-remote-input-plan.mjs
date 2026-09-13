@@ -94,6 +94,28 @@ const noDirectCropPlan = createRemoteImageInputPlan({
 assert.equal(noDirectCropPlan.visuals.some((visual) => visual.kind === "crop"), false);
 assert.equal(noDirectCropPlan.visuals.some((visual) => visual.kind === "contact-sheet"), true);
 
+const styleReference = image("style", "STYLE", { referenceRole: "STYLE_REFERENCE" });
+const composite = image("composite", "COMPOSITE", {
+  referenceRole: "INPUT_SOURCE",
+  compositeHash: "sha256:composite-a",
+  orientation: "horizontal",
+  sourceOrder: ["primary", "secondary-a"],
+  sourceRects: [
+    { sourceId: "primary", order: 0, x: 0, y: 0, width: 200, height: 100 },
+    { sourceId: "secondary-a", order: 1, x: 200, y: 0, width: 100, height: 100 },
+  ],
+});
+const compositePlan = createRemoteImageInputPlan({
+  references: [primary, secondaryA, styleReference],
+  referenceComposite: composite,
+});
+assert.deepEqual(
+  compositePlan.visuals.map((visual) => [visual.role, visual.source.referenceRole]),
+  [["structural-composite", "INPUT_SOURCE"], ["style-reference", "STYLE_REFERENCE"]],
+  "the provider receives one structural INPUT_SOURCE while STYLE_REFERENCE stays separate",
+);
+assert.equal(compositePlan.visuals.filter((visual) => visual.role === "structural-composite").length, 1);
+
 const baseRequest = {
   styleVersion: "kice-v2.3",
   mode: "diagram",
@@ -163,6 +185,36 @@ assert.equal(
   key,
   createExactOutputCacheKey({ ...baseRequest, inputPlanOptions: { maxOutgoingImages: 4 } }),
   "explicit defaults must not create a different exact-cache identity",
+);
+const compositeCacheRequest = {
+  ...baseRequest,
+  references: [primary, secondaryA, styleReference],
+  referenceComposite: composite,
+};
+const compositeKey = createExactOutputCacheKey(compositeCacheRequest);
+assert.notEqual(
+  compositeKey,
+  createExactOutputCacheKey({
+    ...compositeCacheRequest,
+    referenceComposite: { ...composite, orientation: "vertical" },
+  }),
+  "orientation must invalidate the exact cache",
+);
+assert.notEqual(
+  compositeKey,
+  createExactOutputCacheKey({
+    ...compositeCacheRequest,
+    referenceComposite: { ...composite, sourceOrder: ["secondary-a", "primary"] },
+  }),
+  "selected source order must invalidate the exact cache",
+);
+assert.notEqual(
+  compositeKey,
+  createExactOutputCacheKey({
+    ...compositeCacheRequest,
+    referenceComposite: { ...composite, compositeHash: "sha256:composite-b" },
+  }),
+  "composite pixels must invalidate the exact cache",
 );
 
 const output = { data: "data:image/png;base64,QUJD" };

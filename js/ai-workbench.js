@@ -119,19 +119,6 @@ export function normalizeReviewBBox(value) {
   return bbox;
 }
 
-export function formatRuntimeSummary(model, effort) {
-  const modelLabel = cleanText(model, "모델 확인 중");
-  const effortKey = cleanText(effort, "medium").toLowerCase();
-  const effortLabel = ({ low: "낮음", medium: "보통", high: "높음", xhigh: "매우 높음" })[effortKey]
-    || cleanText(effort, "보통");
-  return `생성 ${modelLabel} · ${effortLabel} / 검수 Sol · 높음`;
-}
-
-function selectedLabel(select) {
-  const option = select?.selectedOptions?.[0];
-  return cleanText(option?.textContent, cleanText(select?.value));
-}
-
 export function setupAiWorkbench(panel = document.getElementById("ai-image-panel")) {
   if (!panel || panel.dataset.aiWorkbenchReady === "true") return;
   panel.dataset.aiWorkbenchReady = "true";
@@ -139,20 +126,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const results = panel.querySelector(".ai-results");
   const previews = panel.querySelector("[data-ai-previews]");
   const references = panel.querySelector("[data-ai-attachment-list]");
-  const candidateSelect = panel.querySelector("[data-ai-candidate-select]");
+  const versionButton = panel.querySelector("[data-ai-version-button]");
+  const versionList = panel.querySelector("[data-ai-version-list]");
   const sourceSelect = panel.querySelector("[data-ai-source-select]");
   const resultState = panel.querySelector("[data-ai-result-state]");
   const reviewSummary = panel.querySelector("[data-ai-review-summary]");
-  const reviewMeta = panel.querySelector("[data-ai-review-meta]");
-  const reviewChecks = panel.querySelector("[data-ai-review-checks]");
-  const reviewIssues = panel.querySelector("[data-ai-review-issues]");
-  const pixelInspection = panel.querySelector("[data-ai-pixel-inspection]");
-  const pixelInspectionSummary = panel.querySelector("[data-ai-pixel-inspection-summary]");
-  const pixelInspectionList = panel.querySelector("[data-ai-pixel-inspection-list]");
-  const runtimeSummary = panel.querySelector("[data-ai-runtime-summary]");
-  const advancedSummary = panel.querySelector("[data-ai-advanced-summary]");
-  const modelSelect = panel.querySelector("[data-ai-model]");
-  const effortSelect = panel.querySelector("[data-ai-effort]");
+  const compositePreview = panel.querySelector("[data-ai-composite-preview]");
+  const orientationButtons = Array.from(panel.querySelectorAll("[data-ai-composition-orientation]"));
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
   const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
@@ -210,11 +190,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   function fitCardStage(card) {
     const fit = cardFit(card);
     if (!fit) return;
-    const pair = results?.classList.contains('mode-side-by-side')
+    const fits = results?.classList.contains('mode-side-by-side')
       ? [cardFit(activeCandidate()), cardFit(sourceCards().find(item => sourceKey(item) === activeSourceKey))].filter(Boolean)
       : [fit];
-    const height = Math.floor(Math.min(...pair.map(item => item.height)));
-    for (const item of pair) {
+    for (const item of fits) {
+      const height = Math.floor(item.height);
       item.stage.dataset.aiFitWidth = String(Math.floor(height * item.ratio));
       item.stage.dataset.aiFitHeight = String(height);
       applyStageSize(item.stage);
@@ -345,91 +325,23 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     window.setTimeout(() => marker.remove(), 5000);
   }
 
-  function renderPixelInspection(values) {
-    pixelInspectionList?.replaceChildren();
-    const entries = Object.entries(values || {});
-    if (pixelInspection) pixelInspection.hidden = entries.length === 0;
-    if (pixelInspectionSummary) pixelInspectionSummary.textContent = entries.length ? `${entries.length}개 측정값` : "";
-    for (const [key, value] of entries) {
-      const term = document.createElement("dt");
-      const description = document.createElement("dd");
-      term.textContent = INSPECTION_LABELS[key] || key;
-      if (typeof value === "boolean") description.textContent = value ? "예" : "아니오";
-      else if (/Share$/.test(key) && Number.isFinite(Number(value))) description.textContent = `${(Number(value) * 100).toFixed(2)}%`;
-      else description.textContent = cleanText(value, "측정값 없음");
-      pixelInspectionList?.append(term, description);
-    }
-  }
-
-  function renderReview(record) {
-    const normalized = record || normalizeReviewDetail({ state: activeCandidate() ? "idle" : "idle" });
-    const state = normalizeReviewState(normalized.state);
-    const [defaultTitle, defaultDetail] = STATE_COPY[state];
-    const hasCandidate = Boolean(activeCandidate());
-    const title = !hasCandidate && state === "idle" ? "검수 대기" : defaultTitle;
-    const detail = normalized.report?.verdict
-      ? localizedToken(normalized.report.verdict, VERDICT_COPY)
-      : (hasCandidate && state === "idle" ? "생성됨 · 검수 대기" : defaultDetail);
-
-    if (reviewSummary) {
-      reviewSummary.dataset.state = state;
-      reviewSummary.replaceChildren();
-      const strong = document.createElement("strong");
-      const span = document.createElement("span");
-      strong.textContent = title;
-      span.textContent = detail;
-      reviewSummary.append(strong, span);
-    }
-
-    if (reviewMeta) {
-      const parts = [];
-      if (normalized.generationCount != null) parts.push(`생성 ${normalized.generationCount}회`);
-      if (normalized.reviewCount != null) parts.push(`검수 ${normalized.reviewCount}회`);
-      if (normalized.model) parts.push(`모델 ${normalized.model}`);
-      if (normalized.effort) parts.push(`추론 ${localizedToken(normalized.effort, EFFORT_COPY)}`);
-      if (normalized.elapsedMs != null) parts.push(`${(normalized.elapsedMs / 1000).toFixed(1)}초`);
-      reviewMeta.textContent = parts.join(" · ");
-      reviewMeta.hidden = parts.length === 0;
-    }
-
-    reviewChecks?.replaceChildren();
-    for (const check of normalized.report?.checks || []) {
-      const row = document.createElement("div");
-      row.className = "ai-review-check";
-      row.dataset.status = check.status;
-      const label = document.createElement("strong");
-      const status = document.createElement("span");
-      label.textContent = check.label;
-      status.textContent = CHECK_COPY[check.status] || cleanText(check.status, CHECK_COPY.unknown);
-      row.append(label, status);
-      if (check.detail) {
-        const detailNode = document.createElement("p");
-        detailNode.textContent = check.detail;
-        row.appendChild(detailNode);
-      }
-      reviewChecks?.appendChild(row);
-    }
-
-    renderPixelInspection(normalized.pixelInspection);
-
-    reviewIssues?.replaceChildren();
-    for (const issue of normalized.report?.issues || []) {
-      const bbox = normalizeReviewBBox(issue.bbox);
-      const node = document.createElement(bbox ? "button" : "div");
-      node.className = "ai-review-issue";
-      if (bbox) {
-        node.type = "button";
-        node.title = "결과 이미지에서 문제 위치 표시";
-        node.addEventListener("click", () => {
-          changePaneZoom("result", "fit");
-          window.requestAnimationFrame(() => highlightIssue(activeCandidate(), bbox));
-        });
-      }
-      const severity = localizedToken(issue.severity, SEVERITY_COPY);
-      const prefix = severity ? `[${severity}] ` : "";
-      node.textContent = `${prefix}${issue.message}`;
-      reviewIssues?.appendChild(node);
-    }
+  function renderUserStatus(record) {
+    if (!reviewSummary) return;
+    const state = normalizeReviewState(record?.state);
+    const labels = {
+      idle: activeCandidate() ? "완료됨" : "준비됨",
+      generating: "변환 중",
+      reviewing: "결과 확인 중",
+      correcting: "변환 중",
+      passed: "완료됨",
+      "first-generated": "완료됨",
+      "scoped-applied": "완료됨",
+      "needs-attention": "확인이 필요합니다",
+      failed: "변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.",
+      cancelled: "중단됨",
+    };
+    reviewSummary.dataset.state = state;
+    reviewSummary.textContent = labels[state] || labels.idle;
   }
 
   function stateForCard(card) {
@@ -488,25 +400,23 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     else if (!keys.includes(activeCandidateKey)) activeCandidateKey = keys[0] || "";
     else if (preferNewest && keys[0]) activeCandidateKey = keys[0];
 
-    if (candidateSelect) {
-      const previous = activeCandidateKey;
-      candidateSelect.replaceChildren();
-      if (!cards.length) {
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "생성 결과 없음";
-        candidateSelect.appendChild(option);
-        candidateSelect.disabled = true;
-      } else {
-        cards.forEach((card, index) => {
-          const option = document.createElement("option");
-          option.value = candidateKey(card);
-          option.textContent = cardTitle(card, `생성 결과 ${cards.length - index}`);
-          candidateSelect.appendChild(option);
-        });
-        candidateSelect.disabled = false;
-        candidateSelect.value = previous;
-      }
+    if (versionButton && versionList) {
+      versionList.replaceChildren();
+      versionButton.disabled = cards.length === 0;
+      versionButton.textContent = cards.length
+        ? cardTitle(activeCandidate(), `생성 결과 ${cards.length}`)
+        : "생성 결과 없음";
+      cards.forEach((card, index) => {
+        const option = document.createElement("button");
+        const selected = candidateKey(card) === activeCandidateKey;
+        option.type = "button";
+        option.role = "option";
+        option.dataset.aiCandidateOption = candidateKey(card);
+        option.setAttribute("aria-selected", String(selected));
+        option.tabIndex = selected ? 0 : -1;
+        option.textContent = cardTitle(card, `생성 결과 ${cards.length - index}`);
+        versionList.appendChild(option);
+      });
     }
 
     for (const card of cards) {
@@ -516,7 +426,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     applyPaneZoom("result");
     window.requestAnimationFrame(() => fitCardStage(activeCandidate()));
     const report = reports.get(activeCandidateKey) || normalizeReviewDetail({ state: stateForCard(activeCandidate()) });
-    renderReview(report);
+    renderUserStatus(report);
     updateResultState(report);
     syncWorkbenchStage();
   }
@@ -548,18 +458,49 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     }
     for (const card of cards) {
       card.classList.toggle("is-ai-active-source", sourceKey(card) === activeSourceKey);
+      if (card.dataset.aiReferenceRole !== "STYLE_REFERENCE" && !card.querySelector("[data-ai-reference-order-controls]")) {
+        const controls = document.createElement("div");
+        controls.dataset.aiReferenceOrderControls = "";
+        controls.className = "ai-reference-order-controls";
+        for (const [direction, label] of [["earlier", "앞으로"], ["later", "뒤로"]]) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.setAttribute("data-ai-reference-move", direction);
+          button.textContent = label;
+          button.addEventListener("click", () => panel.dispatchEvent(new CustomEvent("5e:ai-reference-order-change", {
+            bubbles: true,
+            detail: { referenceId: sourceKey(card), direction },
+          })));
+          controls.appendChild(button);
+        }
+        card.appendChild(controls);
+      }
       watchCardFit(card);
+    }
+    if (compositePreview) {
+      const structuralCards = cards.filter((item) => item.dataset.aiReferenceRole !== "STYLE_REFERENCE");
+      const structuralOrder = structuralCards.map(sourceKey).join(',');
+      const exactCompositeIsCurrent = compositePreview.dataset.compositeSourceOrder === structuralOrder
+        && compositePreview.dataset.orientation === panel.dataset.aiCompositionOrientation
+        && Boolean(compositePreview.querySelector('img[alt="연결된 원본"]'));
+      if (!exactCompositeIsCurrent) {
+        delete compositePreview.dataset.compositeWidth;
+        delete compositePreview.dataset.compositeHeight;
+        delete compositePreview.dataset.compositeSourceOrder;
+        compositePreview.replaceChildren();
+        for (const card of structuralCards) {
+          const image = card.querySelector(".ai-preview-stage > img");
+          if (!image) continue;
+          const previewImage = document.createElement("img");
+          previewImage.src = image.currentSrc || image.src;
+          previewImage.alt = "";
+          compositePreview.appendChild(previewImage);
+        }
+      }
+      compositePreview.hidden = exactCompositeIsCurrent ? false : compositePreview.children.length < 2;
     }
     applyPaneZoom("source");
     window.requestAnimationFrame(() => fitCardStage(cards.find((card) => sourceKey(card) === activeSourceKey)));
-  }
-
-  function syncRuntimeSummary() {
-    const model = selectedLabel(modelSelect);
-    const effort = effortSelect?.value || selectedLabel(effortSelect);
-    const text = generatedCards().length ? formatRuntimeSummary(model, effort).replace(" / 검수 Sol · 높음", " · 자동 검수 없음") : "첫 변환 gpt-5.6-sol · 보통 · priority · 자동 검수 없음";
-    if (runtimeSummary) runtimeSummary.textContent = text;
-    if (advancedSummary) advancedSummary.textContent = text.replace(" / 검수 Sol · 높음", "");
   }
 
   layoutButtons.forEach((button) => button.addEventListener("click", () => setLayout(button.dataset.aiLayoutMode, true)));
@@ -573,8 +514,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     paneZoom.source = paneZoom.result;
     applyPaneZoom("source");
   });
-  candidateSelect?.addEventListener("change", () => {
-    activeCandidateKey = candidateSelect.value;
+  function selectCandidate(candidateKeyValue) {
+    activeCandidateKey = candidateKeyValue;
     panel.dataset.aiSelectedCandidateId = activeCandidateKey;
     clearIssueHighlight();
     syncCandidates();
@@ -582,13 +523,89 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (candidateId) panel.dispatchEvent(new CustomEvent("5e:ai-candidate-select", {
       detail: { candidateId },
     }));
+  }
+
+  function closeVersionList({ returnFocus = false } = {}) {
+    if (!versionButton || !versionList) return;
+    versionList.hidden = true;
+    versionButton.setAttribute("aria-expanded", "false");
+    if (returnFocus) versionButton.focus();
+  }
+
+  function moveVersionFocus(target) {
+    const options = Array.from(versionList?.querySelectorAll("[data-ai-candidate-option]") || []);
+    if (!options.length) return;
+    const activeIndex = Math.max(0, options.indexOf(document.activeElement));
+    const nextIndex = target === "first" ? 0 : target === "last" ? options.length - 1 : (activeIndex + target + options.length) % options.length;
+    options.forEach((option, index) => { option.tabIndex = index === nextIndex ? 0 : -1; });
+    options[nextIndex].focus();
+  }
+
+  versionButton?.addEventListener("click", () => {
+    const opening = versionList.hidden;
+    versionList.hidden = !opening;
+    versionButton.setAttribute("aria-expanded", String(opening));
+    if (opening) moveVersionFocus("first");
+  });
+  versionButton?.addEventListener("keydown", (event) => {
+    if (!['ArrowDown', 'ArrowUp'].includes(event.key) || !versionList.hidden) return;
+    versionList.hidden = false;
+    versionButton.setAttribute("aria-expanded", "true");
+    moveVersionFocus(event.key === 'ArrowUp' ? 'last' : 'first');
+    event.preventDefault();
+  });
+  versionList?.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-ai-candidate-option]");
+    if (!option) return;
+    selectCandidate(option.dataset.aiCandidateOption);
+    closeVersionList({ returnFocus: true });
+  });
+  versionList?.addEventListener("keydown", (event) => {
+    switch (event.key) {
+      case "ArrowDown": moveVersionFocus(1); break;
+      case "ArrowUp": moveVersionFocus(-1); break;
+      case "Home": moveVersionFocus("first"); break;
+      case "End": moveVersionFocus("last"); break;
+      case "Enter": document.activeElement?.click(); break;
+      case "Escape":
+        closeVersionList({ returnFocus: true });
+        event.stopPropagation();
+        break;
+      default: return;
+    }
+    event.preventDefault();
+  });
+  document.addEventListener('pointerdown', (event) => {
+    if (versionList?.hidden || versionButton?.contains(event.target) || versionList?.contains(event.target)) return;
+    closeVersionList();
+  });
+  orientationButtons.forEach((button) => button.addEventListener("click", () => {
+    const orientation = button.dataset.aiCompositionOrientation;
+    panel.dataset.aiCompositionOrientation = orientation;
+    if (compositePreview) compositePreview.dataset.orientation = orientation;
+    orientationButtons.forEach((item) => {
+      const selected = item === button;
+      item.classList.toggle("is-on", selected);
+      item.setAttribute("aria-pressed", String(selected));
+    });
+    panel.dispatchEvent(new CustomEvent("5e:ai-composition-orientation-change", { bubbles: true, detail: { orientation } }));
+  }));
+  panel.addEventListener("5e:ai-composite-ready", (event) => {
+    if (!compositePreview || !event.detail?.dataUrl) return;
+    const image = document.createElement("img");
+    image.src = event.detail.dataUrl;
+    image.alt = "연결된 원본";
+    compositePreview.replaceChildren(image);
+    compositePreview.dataset.orientation = event.detail.orientation || "horizontal";
+    compositePreview.dataset.compositeWidth = String(event.detail.width || "");
+    compositePreview.dataset.compositeHeight = String(event.detail.height || "");
+    compositePreview.dataset.compositeSourceOrder = (event.detail.sourceOrder || []).join(',');
+    compositePreview.hidden = false;
   });
   sourceSelect?.addEventListener("change", () => {
     activeSourceKey = sourceSelect.value;
     syncSources();
   });
-  modelSelect?.addEventListener("change", syncRuntimeSummary);
-  effortSelect?.addEventListener("change", syncRuntimeSummary);
   panel.addEventListener("click", (event) => {
     if (!event.target.closest('[aria-label="수정 요청 영역 지정"]')) return;
     changePaneZoom("result", "fit");
@@ -600,7 +617,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const matchesActive = !record.candidateId || record.candidateId === activeCandidateKey
       || activeCandidate()?.dataset.aiCandidateId === record.candidateId;
     if (matchesActive) {
-      renderReview(record);
+      renderUserStatus(record);
       updateResultState(record);
     }
     syncWorkbenchStage();
@@ -624,10 +641,6 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   if (previews) cardObserver.observe(previews, cardObserverOptions);
   if (references) cardObserver.observe(references, cardObserverOptions);
 
-  const settingsObserver = new MutationObserver(syncRuntimeSummary);
-  if (modelSelect) settingsObserver.observe(modelSelect, { childList: true, subtree: true });
-  if (effortSelect) settingsObserver.observe(effortSelect, { childList: true, subtree: true });
-
   window.addEventListener("5e:image-panel-layout-will-change", (event) => {
     if (event.detail?.root === panel) panelLayoutChanging = true;
   });
@@ -646,10 +659,44 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   syncCandidates();
   knownGeneratedCount = generatedCards().length;
   syncSources();
-  syncRuntimeSummary();
   syncWorkbenchStage();
   applyPaneZoom("source");
   applyPaneZoom("result");
+  panel.aiWorkbench = {
+    getViewState() {
+      const sourceCard = panel.querySelector(".ai-original-pane .ai-image-card");
+      const resultCard = panel.querySelector(".ai-result-pane .ai-image-card");
+      return {
+        selectedCandidateId: activeCandidateKey,
+        zoom: { ...paneZoom },
+        scroll: {
+          source: { left: sourceCard?.scrollLeft || 0, top: sourceCard?.scrollTop || 0 },
+          result: { left: resultCard?.scrollLeft || 0, top: resultCard?.scrollTop || 0 },
+        },
+      };
+    },
+    restoreViewState(state = {}) {
+      state = state && typeof state === "object" ? state : {};
+      if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
+      if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
+      if (Number.isFinite(state.zoom?.result)) paneZoom.result = state.zoom.result;
+      syncCandidates();
+      applyPaneZoom("source");
+      applyPaneZoom("result");
+      window.requestAnimationFrame(() => {
+        const sourceCard = panel.querySelector(".ai-original-pane .ai-image-card");
+        const resultCard = panel.querySelector(".ai-result-pane .ai-image-card");
+        if (sourceCard) {
+          sourceCard.scrollLeft = Number(state.scroll?.source?.left) || 0;
+          sourceCard.scrollTop = Number(state.scroll?.source?.top ?? state.scroll?.source) || 0;
+        }
+        if (resultCard) {
+          resultCard.scrollLeft = Number(state.scroll?.result?.left) || 0;
+          resultCard.scrollTop = Number(state.scroll?.result?.top ?? state.scroll?.result) || 0;
+        }
+      });
+    },
+  };
 }
 
 if (typeof document !== "undefined") {

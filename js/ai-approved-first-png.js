@@ -4,8 +4,8 @@ export const APPROVED_FIRST_PROMPT = "5E 흰 배경 과학 도식 PNG 제작 규
 export const APPROVED_FIRST_REQUEST = "첨부한 교과서 그림을 글자 없는 평가원식 흑백 과학 도식 PNG 한 장으로 변환해 주세요. 실제 물체와 부품의 개수, 연결·접촉·안팎 관계, 물질의 분포와 상태, 의미 있는 상대 비율·위치·방향을 보존하세요. 서로 다른 물질이나 입자 종류를 구분하는 색은 무채색에서도 구별되도록 표현하세요. 선명한 검정 윤곽과 필요한 회색 채움·음영을 사용하되 불필요한 질감·반사·장식은 정리하세요. 음영을 무조건 없애지는 마세요. 피스톤은 내부 유체보다 어둡게 구분하고, 도르래에는 형태 구분을 돕는 절제된 회색 음영을 사용하세요. System 같은 글자와 함께 단순히 분석 대상 영역을 강조하는 색·테두리는 실제 물체·벽·물질로 재현하지 마세요. 실제 부품·물질 경계와 설명용 강조 표시는 구분하세요. 글자·숫자·단위·수식·라벨과 문자만 가리키는 지시선은 제거하세요. 운동·빛의 진행·물질 이동·힘·상태 변화 등 과학적 의미를 전달하는 화살표와 실제 눈금선·축·자료 곡선은 보존하세요. 없는 부품이나 관계를 추가하지 마세요. 사용자가 평가할 첫 결과만 생성하므로 자체 검수·자동 교정·추가 생성은 하지 마세요.";
 
 export function approvedFirstRun(input, models) {
-  if (input.attachments.length !== 1 || input.attachments[0].referenceRole === 'STYLE_REFERENCE') {
-    throw new Error('첫 변환에는 원본 그림 한 장만 첨부해 주세요. 표현 참고는 사용하지 않습니다.');
+  if (!input.attachments.some(item => item.referenceRole !== 'STYLE_REFERENCE')) {
+    throw new Error('첫 변환에는 변환 원본을 한 장 이상 첨부해 주세요.');
   }
   const model = models.find(item => (item.model || item.id) === APPROVED_FIRST_PNG.model);
   const efforts = model?.supportedReasoningEfforts || [];

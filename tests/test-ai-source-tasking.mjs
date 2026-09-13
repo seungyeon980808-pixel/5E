@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { distributeSourcesToTaskTabs } from "../js/ai-source-tasking.js";
+import {
+  distributeSourcesToTaskTabs,
+  groupSourcesInTaskTab,
+  moveReferenceInComposition,
+  normalizeReferenceComposition,
+} from "../js/ai-source-tasking.js";
 import { libraryActionSnapshotIsCurrent } from "../js/unified-library-ui.js";
 
 function harness({ activeHasSource = false } = {}) {
@@ -63,4 +68,39 @@ test("switching away and back still invalidates a delayed library route", () => 
   const snapshot = { selectedId: "crop-1", representation: "manual", selectedIdsKey: "", open: true, revision: 4 };
   assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, revision: 4 }), true);
   assert.equal(libraryActionSnapshotIsCurrent(snapshot, { ...snapshot, revision: 6 }), false);
+});
+
+test("an explicit together handoff snapshots every source into one ordered task", () => {
+  const state = harness({ activeHasSource: true });
+  const original = [
+    { id: "source-a", name: "a.png", source: { pageNumber: 1 } },
+    { id: "source-b", name: "b.png", source: { pageNumber: 2 } },
+    { id: "style-c", name: "style.png", referenceRole: "STYLE_REFERENCE" },
+  ];
+  const ids = groupSourcesInTaskTab(original, state.actions, { prompt: "연결해서 변환" });
+
+  original[0].source.pageNumber = 99;
+  assert.deepEqual(ids, ["task-2"]);
+  assert.deepEqual([...state.tasks.values()], [["existing"], ["a.png", "b.png", "style.png"]]);
+  assert.equal(state.active(), "task-2");
+});
+
+test("composition defaults horizontal, retains source order, and moves only structural references", () => {
+  const sources = [
+    { id: "a", referenceRole: "INPUT_SOURCE" },
+    { id: "style", referenceRole: "STYLE_REFERENCE" },
+    { id: "b", referenceRole: "INPUT_SOURCE" },
+    { id: "c" },
+  ];
+  const initial = normalizeReferenceComposition(null, sources);
+  assert.deepEqual(initial, { orientation: "horizontal", sourceOrder: ["a", "b", "c"] });
+  assert.deepEqual(moveReferenceInComposition(initial, "b", "earlier", sources), {
+    orientation: "horizontal", sourceOrder: ["b", "a", "c"],
+  });
+  assert.deepEqual(moveReferenceInComposition(initial, "b", "later", sources), {
+    orientation: "horizontal", sourceOrder: ["a", "c", "b"],
+  });
+  assert.deepEqual(normalizeReferenceComposition({ orientation: "vertical", sourceOrder: ["c", "missing", "a"] }, sources), {
+    orientation: "vertical", sourceOrder: ["c", "a", "b"],
+  });
 });

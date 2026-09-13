@@ -13,7 +13,8 @@ test('comment module itself excludes style and corrupt roles even without caller
  assert.match(comments,/!allowed\(\)\.includes\(item\)/);
 });
 test('panel separates source comments and observation from style-aware generation/cache/review',()=>{
- assert.match(panel,/commentPrompt\(\[\.\.\.roleGroups\.inputs/);
+ assert.match(panel,/!needsReferenceComposite \? roleGroups\.inputs : \[\]/);
+ assert.match(panel,/requestWithVisualPlan \+= commentPrompt\(\[referenceComposite\]\)/);
  assert.match(panel,/const analysisAttachments = observationAttachments \|\| outgoingAttachments/);
  assert.match(panel,/structureAnalysis\.analyze\(\{request:renderRequest, attachments:analysisAttachments/);
  assert.match(panel,/references: \[\.\.\.planningReferences, \.\.\.roleGroups\.styleReferences\]/);

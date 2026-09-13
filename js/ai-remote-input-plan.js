@@ -9,7 +9,7 @@
 
 import { getReferenceRole } from "./ai-reference-roles.js";
 
-export const REMOTE_INPUT_PLAN_VERSION = "remote-input-v3";
+export const REMOTE_INPUT_PLAN_VERSION = "remote-input-v4";
 export const EXACT_OUTPUT_CACHE_SCHEMA = "5e-ai-output-v3";
 
 export const DEFAULT_REMOTE_INPUT_OPTIONS = Object.freeze({
@@ -404,6 +404,7 @@ function cropDescriptor(comment) {
  */
 export function createRemoteImageInputPlan({
   references = [],
+  referenceComposite = null,
   latestResult = null,
   prompt = "",
   primaryReferenceId = null,
@@ -420,13 +421,69 @@ export function createRemoteImageInputPlan({
   settings.maxContactSheetTiles = positiveInteger(settings.maxContactSheetTiles, DEFAULT_REMOTE_INPUT_OPTIONS.maxContactSheetTiles);
 
   const cleaned = pruneOutgoingAttachments(references, { latestResult, includeGenerated: false });
-  if (cleaned.items.some(item => getReferenceRole(item) === 'STYLE_REFERENCE')) {
+  const inputReferences = cleaned.items.filter((item) => getReferenceRole(item) === "INPUT_SOURCE");
+  const styleReferences = cleaned.items.filter((item) => getReferenceRole(item) === "STYLE_REFERENCE");
+  if (styleReferences.length && !referenceComposite) {
     throw new TypeError('Style references require the separate-role white PNG path, not a contact sheet');
   }
   const dedupedAt = now();
   const latestCleaned = latestResult
     ? pruneOutgoingAttachments([latestResult], { latestResult, includeGenerated: true }).items[0] || null
     : null;
+  if (referenceComposite) {
+    if (getReferenceRole(referenceComposite) !== "INPUT_SOURCE" || !exactImageHash(referenceComposite)) {
+      throw new TypeError("A structural reference composite must be one valid INPUT_SOURCE image.");
+    }
+    const compositeComments = collectRelatedComments([referenceComposite], prompt, settings.cropPaddingRatio);
+    const latestComments = latestCleaned
+      ? collectRelatedComments([latestCleaned], prompt, settings.cropPaddingRatio)
+        .map((comment) => ({ ...comment, score: comment.score + 2_000, latestResult: true }))
+      : [];
+    const relatedComments = [...latestComments, ...compositeComments]
+      .sort((left, right) => right.score - left.score || left.sourceIndex - right.sourceIndex);
+    const rankedAt = now();
+    const visuals = [];
+    if (latestCleaned) visuals.push(overviewDescriptor(latestCleaned, "latest-result"));
+    if (visuals.length < settings.maxOutgoingImages) {
+      visuals.push(overviewDescriptor(referenceComposite, "structural-composite"));
+    }
+    for (const styleReference of styleReferences) {
+      if (visuals.length >= settings.maxOutgoingImages) break;
+      visuals.push(overviewDescriptor(styleReference, "style-reference"));
+    }
+    const plannedAt = now();
+    const representedStyleCount = visuals.filter((visual) => visual.role === "style-reference").length;
+    const representedInputCount = Math.min(
+      inputReferences.length,
+      Array.isArray(referenceComposite.sourceOrder) ? referenceComposite.sourceOrder.length : inputReferences.length,
+    );
+    const representedSourceCount = representedInputCount + representedStyleCount + (latestCleaned ? 1 : 0);
+    return {
+      version: REMOTE_INPUT_PLAN_VERSION,
+      primaryReference: referenceComposite,
+      latestResult: latestCleaned,
+      references: cleaned.items,
+      referenceComposite,
+      relatedComments,
+      visuals,
+      removed: cleaned.removed,
+      metrics: {
+        ...cleaned.metrics,
+        latestResultBytes: estimateDataUrlBytes(outgoingImageData(latestCleaned)),
+        totalSourceBytes: cleaned.metrics.sourceBytes + estimateDataUrlBytes(outgoingImageData(latestCleaned)),
+        totalSourceCount: cleaned.items.length + (latestCleaned ? 1 : 0),
+        dedupeMs: Math.max(0, dedupedAt - startedAt),
+        rankingMs: Math.max(0, rankedAt - dedupedAt),
+        planningMs: Math.max(0, plannedAt - rankedAt),
+        totalMs: Math.max(0, plannedAt - startedAt),
+        plannedImageCount: visuals.length,
+        directCropCount: 0,
+        contactSheetTileCount: 0,
+        representedSourceCount,
+        droppedSourceCount: Math.max(0, inputReferences.length + styleReferences.length + (latestCleaned ? 1 : 0) - representedSourceCount),
+      },
+    };
+  }
   const referenceComments = collectRelatedComments(cleaned.items, prompt, settings.cropPaddingRatio);
   const primary = selectPrimaryReference(cleaned.items, referenceComments, primaryReferenceId);
   const latestComments = latestCleaned
@@ -524,6 +581,7 @@ export function buildExactOutputCacheDescriptor({
   mode,
   prompt,
   references = [],
+  referenceComposite = null,
   comments = [],
   latestResult = null,
   latestResultHash = null,
@@ -552,8 +610,14 @@ export function buildExactOutputCacheDescriptor({
   const latestComments = (latestResult?.comments || [])
     .filter((comment) => normalizeCommentText(comment?.text))
     .map((comment) => canonicalComment(comment, latestHash || "latest-result"));
+  const compositeHash = referenceComposite
+    ? String(referenceComposite.compositeHash || referenceComposite.exactImageHash || exactImageHash(referenceComposite) || "")
+    : null;
+  const compositeComments = (referenceComposite?.comments || [])
+    .filter((comment) => normalizeCommentText(comment?.text))
+    .map((comment) => canonicalComment(comment, compositeHash || "reference-composite"));
   const uniqueComments = new Map();
-  for (const comment of [...itemComments, ...latestComments, ...externalComments]) {
+  for (const comment of [...itemComments, ...compositeComments, ...latestComments, ...externalComments]) {
     uniqueComments.set(stableStringify(comment), comment);
   }
   const canonicalComments = [...uniqueComments.values()]
@@ -566,6 +630,12 @@ export function buildExactOutputCacheDescriptor({
     mode: String(mode || "diagram"),
     prompt: normalizePrompt(prompt),
     referenceSignatures,
+    referenceComposite: referenceComposite ? {
+      orientation: String(referenceComposite.orientation || "horizontal"),
+      sourceOrder: (referenceComposite.sourceOrder || []).map(String),
+      compositeHash,
+      transportHash: exactImageHash(referenceComposite),
+    } : null,
     comments: canonicalComments,
     latestResultHash: latestHash,
     generation: {

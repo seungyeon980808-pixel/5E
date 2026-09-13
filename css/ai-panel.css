@@ -2346,13 +2346,15 @@
 #ai-image-panel .ai-workbench-comment [data-ai-inline-delete] { grid-column:2; align-self:start; }
 
 /* Keep source and pending output in the same visual frame. */
-#ai-image-panel .ai-head { padding-left: 84px; min-height: 48px; }
+#ai-image-panel .ai-head { padding-left: max(84px, env(titlebar-area-x, 0px)); min-height: 44px; }
 #ai-image-panel .ai-generating {
+  position: absolute;
+  inset: 4px;
   box-sizing: border-box;
-  width: var(--ai-pending-width, 100%);
-  height: var(--ai-pending-height, 100%);
+  width: auto;
+  height: auto;
   max-width: 100%;
-  margin: 46px 0 0;
+  margin: 0;
   align-self: start;
   justify-self: start;
   justify-content: center;
@@ -2376,9 +2378,9 @@
 
 #ai-image-panel .ai-task-tab-copy { min-width: 0; overflow: hidden; }
 #ai-image-panel .ai-task-tab-copy > * { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-#ai-image-panel .ai-generating { position: relative; }
+#ai-image-panel .ai-previews { position: relative; }
 #ai-image-panel .ai-generating::before {
-  content: '변환 중'; position: absolute; left: 3px; top: -32px;
+  content: '변환 중'; position: absolute; left: 10px; top: 9px;
   color: var(--text-primary); font-size: 11px; font-weight: 600;
 }
 #ai-image-panel .ai-task-tab { position: relative; }
@@ -2388,3 +2390,87 @@
   background: var(--bg-panel); border-radius: 50%;
 }
 #ai-image-panel .ai-task-tab > .ai-task-delete { width: 18px; flex-basis: 18px; }
+
+#ai-image-panel .ai-source-menu-trigger {
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+#ai-image-panel .ai-source-menu-trigger[aria-expanded="true"] {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+#ai-image-panel .ai-composition-toolbar {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-bottom: 1px solid var(--border-muted);
+}
+#ai-image-panel .ai-composition-toolbar button,
+#ai-image-panel .ai-reference-order-controls button {
+  min-height: 25px;
+  padding: 3px 7px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font: inherit;
+  font-size: 10px;
+}
+#ai-image-panel .ai-composition-toolbar button.is-on {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+#ai-image-panel .ai-composite-preview {
+  display: flex;
+  align-items: flex-start;
+  max-height: 150px;
+  margin: 4px;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+#ai-image-panel .ai-composite-preview[data-orientation="vertical"] { flex-direction: column; align-items: flex-start; }
+#ai-image-panel .ai-composite-preview img { display: block; width: auto; height: 96px; flex: 0 0 auto; object-fit: contain; }
+#ai-image-panel .ai-composite-preview[data-orientation="vertical"] img { width: 100%; height: auto; }
+#ai-image-panel .ai-reference-order-controls { display: flex; gap: 3px; padding: 2px 0; }
+#ai-image-panel .ai-version-picker { position: relative; display: flex; align-items: center; gap: 4px; margin-left: auto; }
+#ai-image-panel .ai-version-picker > span { color: var(--text-secondary); font-size: 10px; }
+#ai-image-panel [data-ai-version-button] {
+  min-width: 104px;
+  min-height: 26px;
+  padding: 3px 24px 3px 7px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+}
+#ai-image-panel .ai-version-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 3px);
+  right: 0;
+  min-width: 150px;
+  padding: 3px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgb(0 0 0 / .28);
+}
+#ai-image-panel .ai-version-list [role="option"] {
+  display: block;
+  width: 100%;
+  min-height: 27px;
+  padding: 4px 24px 4px 7px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+}
+#ai-image-panel .ai-version-list [aria-selected="true"] { background: var(--bg-input); }
+#ai-image-panel .ai-version-list [aria-selected="true"]::after { content: '✓'; float: right; color: var(--accent); }
+#ai-image-panel .ai-version-list [role="option"]:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }

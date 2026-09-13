@@ -54,9 +54,10 @@ test('timeout and missing ids cannot silently continue',async()=>{
  const {c}=setup(undefined,5);await assert.rejects(c.analyze(args()),/시간 초과/);
  const b=setup(async()=>({}));await assert.rejects(b.c.analyze(args()),/식별자/);
 });
-test('panel wires separate originals, persists observation, and guards cancellation after analysis',async()=>{
+test('panel analyzes the completed composite, persists observation, and guards cancellation after analysis',async()=>{
  const p=await readFile(new URL('../js/ai-panel.js',import.meta.url),'utf8');
- assert.match(p,/if \(whiteRun\) \{\s*\/\/ Keep originals separate/);
+ assert.match(p,/const structuralItems = referenceComposite \? \[referenceComposite\] : planningReferences/);
+ assert.match(p,/observationAttachments \|\| outgoingAttachments/);
  assert.match(p,/const spec = await structureAnalysis.analyze[\s\S]*?currentCancelRequested\) throw/);
  assert.match(p,/structureContract: formatStructureContract\(runInput.structureSpec\)/);
  assert.match(p,/structureAnalysis.handleEvent\(event\)[\s\S]*?imageReview\?\.handleEvent/);
