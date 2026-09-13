@@ -822,7 +822,10 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       renderIndexOverview(records, [{ ...connection, excludedCount: tree?.tree?.excludedCount || 0 }]);
       const batch = beginDesktopIndexing(records, async (record) => {
         try {
-          const document = await withRuntimeLock(() => library.openDocument(record));
+          const document = await library.openDocument(record, { onMetadata(metadata) {
+            if (record.version !== metadata.source?.sha256) return;
+            publishDocuments(docs.map((value) => value.id === metadata.id ? metadata : value));
+          } });
           documentOpeners.set(document.id, () => library.openDocument(record, { requireRuntime: true }));
           documentPersistors.set(document.id, (index) => library.saveDocumentIndex(record.documentId, record.version, index));
           return document;
@@ -880,7 +883,11 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       for (const record of projected.targets) {
         record.indexState = { ...record.indexState, state: "indexing", diagnostic: null };
         try {
-          const document = await withRuntimeLock(() => library.openDocument(record));
+          const document = await library.openDocument(record, { onMetadata(metadata) {
+            if (record.version !== metadata.source?.sha256) return;
+            opened.set(metadata.id, metadata);
+            publishDocuments(docs.map((value) => value.id === metadata.id ? metadata : value));
+          } });
           documentOpeners.set(document.id, () => library.openDocument(record, { requireRuntime: true }));
           documentPersistors.set(document.id, (index) => library.saveDocumentIndex(record.documentId, record.version, index));
           opened.set(document.id, document);
@@ -1279,8 +1286,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const owningDocument = docs.find((document) => document.id === source?.documentId);
       source = assertPdfMaterializationSource(result, source, owningDocument?.pageCount);
       const dpi = pdfRenderDpi(options);
-      if (options.preview) materializePreviewAbort?.abort(new DOMException("Preview was superseded", "AbortError"));
-      const previewController = options.preview ? new AbortController() : null;
+      const replaceablePreview = options.preview && !options.continuous;
+      if (replaceablePreview) materializePreviewAbort?.abort(new DOMException("Preview was superseded", "AbortError"));
+      const previewController = replaceablePreview ? new AbortController() : null;
       if (previewController) materializePreviewAbort = previewController;
       const normalized = normalizedSource({
         ...result,
@@ -1298,7 +1306,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
           : runtime.renderCrop({ source: normalized, dpi, signal });
       }, {
         priority: options.preview ? 2 : options.thumbnail ? 0 : 1,
-        key: options.preview ? "materialize-preview" : null,
+        key: replaceablePreview ? "materialize-preview" : null,
         signal: previewController?.signal,
       });
       const dataUrl = await pngDataUrl(rendered.bytes, previewController?.signal);

@@ -191,9 +191,18 @@ export function createPdfRuntime(options = {}) {
       isEvalSupported: false, useWorkerFetch: false,
     });
     const abort = () => task.destroy();
+    let previous;
     input.signal?.addEventListener("abort", abort, { once: true });
     try {
       const pdf = await task.promise;
+      if (generations.get(input.id) !== generation) throw new DOMException("PDF open was superseded", "AbortError");
+      previous = opened.get(input.id) ?? null;
+      const metadataRecord = Object.freeze({
+        id: input.id, title: input.title, source: input.source, pageCount: pdf.numPages,
+        status: "unindexed", pages: Object.freeze([]),
+      });
+      opened.set(input.id, { pdf, record: metadataRecord, task });
+      await input.onMetadata?.(metadataRecord);
       const pages = [];
       for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
         if (input.signal?.aborted) throw input.signal.reason ?? new DOMException("Aborted", "AbortError");
@@ -210,13 +219,17 @@ export function createPdfRuntime(options = {}) {
         status: pages.some((page) => page.text.trim()) ? "indexed" : "image-only", pages,
       });
       if (generations.get(record.id) !== generation) throw new DOMException("PDF open was superseded", "AbortError");
-      const previous = opened.get(record.id);
       opened.set(record.id, { pdf, record, task });
       removeCachedDocument(record.id);
-      if (previous) await previous.task.destroy();
+      if (previous && previous.task !== task) await previous.task.destroy();
       while (opened.size > maxOpenDocuments) await closeDocument(opened.keys().next().value);
       return record;
     } catch (error) {
+      const current = opened.get(input.id);
+      if (current?.task === task) {
+        opened.delete(input.id);
+        if (previous) opened.set(input.id, previous);
+      }
       await task.destroy();
       throw error;
     } finally {

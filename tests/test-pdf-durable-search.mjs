@@ -254,6 +254,31 @@ test("Given a malformed persisted index, when opened, then the adapter reparses 
   assert.equal(saves, 1);
 });
 
+test("desktop adapter forwards pre-index page metadata without persisting it as a search index", async () => {
+  const metadata = inventoryDocument({ pageCount: 327, pages: [], status: "unindexed" });
+  const indexed = inventoryDocument({ pageCount: 327, pages: [], status: "indexed" });
+  let observed;
+  let saves = 0;
+  const adapter = createDesktopPdfLibraryAdapter({
+    bridge: {
+      loadIndex: async () => null,
+      read: async () => new Uint8Array([1]),
+      saveIndexState: async () => {},
+      saveIndex: async () => { saves += 1; },
+    },
+    runtime: {
+      openDocument: async (input) => {
+        await input.onMetadata(metadata);
+        return indexed;
+      },
+    },
+  });
+  const result = await adapter.openDocument(inventoryDocument(), { onMetadata: (value) => { observed = value; } });
+  assert.equal(observed.pageCount, 327);
+  assert.equal(result, indexed);
+  assert.equal(saves, 1);
+});
+
 test("Given structurally forged persisted indexes, when opened, then each falls back to one full parse and save", async () => {
   const valid = persistedDocument(2);
   const validItem = {

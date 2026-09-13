@@ -47,6 +47,8 @@ import {
   materializeOriginalLibraryPage,
   materializeLibraryAction,
   pdfResultsForDisplay,
+  continuousPdfWindow,
+  createBoundedPageCache,
 } from "../js/unified-library-ui.js";
 
 test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
@@ -110,6 +112,31 @@ test("PDF page display expands matches without losing document and page provenan
   assert.equal(pages[1].provenance.documentId, "doc");
   assert.equal(pages[1].matches.length, 1);
   assert.deepEqual(pdfResultsForDisplay([file], "file"), [file]);
+});
+
+test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
+  assert.deepEqual(continuousPdfWindow(327, 1), { start: 1, end: 4, pages: [1, 2, 3, 4] });
+  assert.deepEqual(continuousPdfWindow(327, 164), { start: 161, end: 167, pages: [161, 162, 163, 164, 165, 166, 167] });
+  assert.deepEqual(continuousPdfWindow(327, 327), { start: 324, end: 327, pages: [324, 325, 326, 327] });
+  assert.ok(continuousPdfWindow(327, 164).pages.length <= 7);
+});
+
+test("continuous PDF cache evicts old rendered pages at its documented bound", () => {
+  const cache = createBoundedPageCache(7);
+  for (let page = 1; page <= 20; page += 1) cache.set(page, `page-${page}`);
+  assert.equal(cache.size, 7);
+  assert.equal(cache.has(13), false);
+  assert.equal(cache.get(14), "page-14");
+  assert.equal(cache.get(20), "page-20");
+});
+
+test("library shell keeps the selected tray outside the result scroller", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  const tray = source.indexOf('data-unilib-selected-tray');
+  const scroller = source.indexOf('class="unilib-result-scroll"');
+  const list = source.indexOf('data-unilib-results', scroller);
+  assert.ok(tray > 0 && scroller > tray && list > scroller);
+  assert.match(source, /result\.loadPreview\(pageNumber, \{ original: true \}\)/u);
 });
 
 test("empty-query page mode preserves canonical pages and does not cap the inventory", async () => {
