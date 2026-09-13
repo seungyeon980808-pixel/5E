@@ -294,7 +294,7 @@ export function initInspector(state) {
       angleRow.style.display = "none";
       // A group always uses the box rows (W/H + rotation); never the arc rows,
       // even if the prior single selection was an anglearc.
-      whPair.style.display  = "flex";
+      whPair.style.display  = "grid";
       rotF.el.style.display = "";
       radF.el.style.display = "none";
       arcPair.style.display = "none";
@@ -638,14 +638,14 @@ export function initInspector(state) {
     sec3.style.display = (isShape || isImage || isArc || isRightAngle || isCircuit || isLabeler) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
     // radius + start/sweep angle; circuit (two terminals) hides the box rows.
-    xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "flex";
-    whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "flex";
+    xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "grid";
+    whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "grid";
     lockAspectRow.style.display = isSvgAsset ? "flex" : "none";
     // 여백 정리는 상자 + 그림을 함께 갖는 타입(이미지·SVG 자산)에만 뜻이 있다.
     trimRow.style.display = (isSvgAsset || isImage) ? "flex" : "none";
     rotF.el.style.display = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
-    arcPair.style.display = isArc ? "flex" : "none";
+    arcPair.style.display = isArc ? "grid" : "none";
     raSizeF.el.style.display = isRightAngle ? "" : "none";
     raAngleF.el.style.display = isRightAngle ? "" : "none";
     raDirRow.style.display = isRightAngle ? "" : "none";

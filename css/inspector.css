@@ -21,6 +21,8 @@
   overflow-y: auto;
   background: var(--insp-bg);
   position: relative;
+  container-type: inline-size;
+  container-name: inspector-panel;
 }
 
 .panel-right .panel-title {
@@ -153,6 +155,27 @@ details[open] > .insp-summary::before {
   padding: 4px 6px;
   font-family: "IBM Plex Mono", monospace;
   min-width: 0;
+}
+
+.insp-geometry-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.insp-geometry-pair .insp-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+.insp-geometry-pair .insp-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.insp-geometry-pair .insp-unit { margin-left: -2px; }
+
+@container inspector-panel (max-width: 239px) {
+  .insp-geometry-pair { grid-template-columns: 1fr; }
+  .insp-geometry-pair .insp-field-label { min-width: 28px; }
 }
 
 .insp-input:focus {
@@ -325,6 +348,96 @@ details[open] > .insp-summary::before {
   height: 14px;
   border-radius: var(--insp-radius);
   border: 1px solid var(--insp-border);
+}
+
+.fill-style-picker { position: relative; margin-left: auto; }
+.fill-style-trigger,
+.fill-style-option {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 6px;
+}
+.fill-style-trigger::after {
+  content: "";
+  width: 0;
+  height: 0;
+  margin-left: 1px;
+  border: 3px solid transparent;
+  border-top-color: currentColor;
+  transform: translateY(2px);
+}
+.fill-style-trigger { width: 42px; grid-template-columns: 18px 8px; }
+.fill-style-trigger:hover,
+.fill-style-trigger:focus-visible,
+.fill-style-option:hover,
+.fill-style-option:focus-visible { border-color: var(--insp-accent); outline: 2px solid var(--insp-accent); outline-offset: 1px; }
+.fill-style-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  gap: 4px;
+  padding: 5px;
+  background: var(--insp-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+}
+.fill-style-menu[hidden] { display: none; }
+.fill-style-option.is-active { border-color: var(--insp-accent); background: color-mix(in srgb, var(--insp-accent) 15%, var(--insp-field-bg)); }
+
+.bulk-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bulk-modal > .modal-title { flex: 0 0 auto; margin: 0; padding: 14px 16px 8px; }
+.bulk-scroll { min-height: 0; overflow-y: auto; padding: 0 16px 10px; }
+.bulk-mode-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.bulk-mode-row .seg { flex: 1; }
+.bulk-scroll > .objectify-description { margin: 2px 0 5px; }
+.bulk-group { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
+.bulk-group h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.bulk-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.bulk-control-row { display: grid; grid-template-columns: 16px minmax(76px, 1fr) minmax(72px, 96px) 34px; align-items: center; gap: 5px; margin: 0; min-width: 0; }
+.bulk-control-row .modal-label { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bulk-gap-rows .modal-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.25;
+}
+#bulk-gap-rows [data-bulk-kind="align"] {
+  grid-column: 1 / -1;
+  grid-template-columns: 16px minmax(150px, 1fr) minmax(90px, 120px) 34px;
+}
+.bulk-control-row .modal-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.bulk-unit { width: 34px; flex: none; font-size: 11px; color: var(--text-secondary); }
+.bulk-group .objectify-description { margin: 5px 0 0; line-height: 1.35; }
+.bulk-modal > .modal-actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px 14px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-muted);
+}
+@media (max-width: 520px) {
+  .bulk-modal { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .bulk-fields-grid { grid-template-columns: 1fr; }
+  #bulk-gap-rows [data-bulk-kind="align"] { grid-template-columns: 16px minmax(120px, 1fr) minmax(90px, 120px) 34px; }
 }
 
 /* ===== 배경 이미지 섹션 (always-on list of background-mode images) ===== */

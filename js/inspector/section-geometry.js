@@ -28,6 +28,9 @@ export function buildGeometrySection(ctx) {
     inp.type = "number";
     inp.step = step;
     inp.className = "insp-input";
+    const unit = document.createElement("span");
+    unit.className = "insp-unit";
+    unit.textContent = ["rotation", "startAngle", "sweepAngle", "angle", "needleAngle"].includes(prop) ? "°" : "mm";
 
     function commit() {
       const val = parseFloat(inp.value);
@@ -61,6 +64,7 @@ export function buildGeometrySection(ctx) {
     inp.addEventListener("blur", commit);
     row.appendChild(lbl);
     row.appendChild(inp);
+    row.appendChild(unit);
     return { el: row, inp };
   }
 
@@ -68,19 +72,19 @@ export function buildGeometrySection(ctx) {
   const yF   = makePosRow("Y",     "y",        "0.1", true); // math Y (up = positive)
   const wF   = makePosRow("W",     "w",        "0.1");
   const hF   = makePosRow("H",     "h",        "0.1");
-  const rotF = makePosRow("회전 °", "rotation", "1");
+  const rotF = makePosRow("회전", "rotation", "1");
 
   sec3Body.appendChild(rotF.el);
 
   // X/Y on one row, W/H on the next — compact pairs, left-aligned (not stretched).
   const xyPair = document.createElement("div");
-  xyPair.style.cssText = "display:flex;gap:10px;";
+  xyPair.className = "insp-geometry-pair";
   xyPair.appendChild(xF.el);
   xyPair.appendChild(yF.el);
   sec3Body.appendChild(xyPair);
 
   const whPair = document.createElement("div");
-  whPair.style.cssText = "display:flex;gap:10px;";
+  whPair.className = "insp-geometry-pair";
   whPair.appendChild(wF.el);
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
@@ -135,11 +139,11 @@ export function buildGeometrySection(ctx) {
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
-  const saF  = makePosRow("시작각 °", "startAngle", "1");
-  const swF  = makePosRow("사잇각 °", "sweepAngle", "1");
+  const saF  = makePosRow("시작각", "startAngle", "1");
+  const swF  = makePosRow("사잇각", "sweepAngle", "1");
   sec3Body.appendChild(radF.el);
   const arcPair = document.createElement("div");
-  arcPair.style.cssText = "display:flex;gap:10px;";
+  arcPair.className = "insp-geometry-pair";
   arcPair.appendChild(saF.el);
   arcPair.appendChild(swF.el);
   sec3Body.appendChild(arcPair);
