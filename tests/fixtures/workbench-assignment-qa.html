@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="../../">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <button id="open" type="button">배정 열기</button>
+  <main id="host"></main>
+  <script type="module">
+    import { chooseWorkbenchAssignment } from "./js/library/workbench-assignment.js";
+
+    const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="220"><rect width="320" height="220" fill="white"/><rect x="48" y="45" width="224" height="120" rx="8" fill="${color}"/><text x="160" y="198" text-anchor="middle" font-size="22">${label}</text></svg>`)}`;
+    const references = [
+      { name: "첫 번째 실험 장치", dataUrl: image("자료 1", "#b8dbb4"), source: { documentId: "qa.pdf", pageNumber: 1 } },
+      { name: "두 번째 그래프", dataUrl: image("자료 2", "#99c2ff"), source: { documentId: "qa.pdf", pageNumber: 2 } },
+      { name: "세 번째 표", dataUrl: image("자료 3", "#ffc28f"), source: { documentId: "qa.pdf", pageNumber: 3 } },
+    ];
+    window.qaResults = [];
+    document.querySelector("#open").addEventListener("click", async (event) => {
+      const result = await chooseWorkbenchAssignment({ references, host: document.querySelector("#host"), returnFocus: event.currentTarget });
+      window.qaResults.push(result);
+    });
+  </script>
+</body>
+</html>
