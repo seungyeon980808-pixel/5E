@@ -83,6 +83,7 @@
     };
     window.qaInserted = [];
     window.qaAiCalls = [];
+    window.qaIndependentCalls = [];
     const desktopLibrary = {
       connections: async () => ({ connections: [{ connectionId: "local", displayName: "내 자료", kind: "folder" }] }),
       folderTree: async () => ({ tree: {
@@ -110,6 +111,10 @@
         await new Promise((resolve) => setTimeout(resolve, 60));
         if (window.qaRejectAi) throw new Error("qa handoff rejected");
       },
+      openIndependentReferences: new URLSearchParams(location.search).has("independent") ? async (payload) => {
+        window.qaIndependentCalls.push(payload);
+        document.querySelector("#ai-image-panel").hidden = false;
+      } : undefined,
     });
     document.querySelector("#open").addEventListener("click", (event) => ui.open(event.currentTarget));
     document.querySelector("#open").click();

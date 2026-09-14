@@ -769,3 +769,13 @@ PDF 결과는 기본 `파일` 표시에서 PDF 하나를 카드 하나로 유지
 - Enter confirms a crop; Space tap checks and Space hold previews. Multi-image AI transfer asks together/separate, supports Escape cancellation and trapped keyboard focus. Library overlays sit above the AI workbench (10050 vs10000) so source selection is reachable.
 
 - Selected library chip maximum uses `--unilib-selected-item-width: 20rem` capped at60vw. Multi-image chooser backdrop consumes existing `--unilib-backdrop`; tab selection has no shadow.
+
+### 13-18. 라이브러리 그리드·열람·다중 크롭 후속 계약 (2026-09-14)
+
+- 카드 선택은 채움 없이 `--unilib-accent`의 균일한 2px 테두리만 쓴다. 포인터로 닫기 버튼을 누른 뒤에는 장식적 포커스 고리가 남지 않으며, 키보드 `:focus-visible` 표시는 유지한다.
+- 데스크톱의 이미지·문항·PDF 페이지 결과는 모두 3열 이미지 카드다. 이전보다 약 30% 높은 `--unilib-grid-thumb-height` 썸네일을 쓰고, 카드 정보는 종류·말줄임 파일명·쪽 번호를 한 줄에 둔다. 본문 조각은 카드에서 반복하지 않고, 전체 이름과 쪽 정보는 hover/포커스 경로에서 확인한다.
+- 검색 입력·결과 수·도움말은 첫 줄의 압축된 검색 문맥이다. 결과 종류와 PDF 파일/페이지 선택은 둘째 줄에서 서로 붙어 있는 압축 토글이며, 활성 항목은 공통 파란 채움으로 구분한다.
+- 선택 트레이는 선택이 있을 때만 표시한다. 비어 있을 때 높이나 경계선을 예약하지 않으며, 표시될 때는 결과 영역 상단에 고정되어 개수·가로 스크롤 칩·전체 해제 조작을 유지한다.
+- 미리보기는 머리글과 하단 작업 버튼 사이의 남는 높이를 미리보기 무대에 준다. Space 확대 열람은 창 전체를 쓰는 읽기 상태이며 자동으로 자르기 패널·사이드바를 열지 않는다. 파일 모드는 첫 쪽부터 연속 전체 쪽을, 페이지 모드는 선택한 쪽만 연다.
+- 크롭은 비모달 확인 흐름으로 독립 초안들을 컬렉션에 보존한다. 첫 Enter는 현재 영역을 초안으로 더하고, 다음 Enter는 세션을 마친다. 새 드래그는 앞선 초안을 지우지 않으며 각 초안은 제거 조작과 함께 식별할 수 있다.
+- 375/768/1280px에서 검색·탭·트레이·그리드·열람·크롭이 가로 넘침 없이 동작해야 한다. 모바일에서는 컨트롤의 최소 44px 터치 높이를 유지하고, 크롭 초안은 한 열로 쌓는다.
