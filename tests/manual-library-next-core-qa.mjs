@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { chromium } from "playwright";
 
@@ -7,6 +8,7 @@ await mkdir(output, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 const evidence = {};
+const decodedDataUrlHash = (dataUrl) => createHash("sha256").update(Buffer.from(dataUrl.split(",", 2)[1], "base64")).digest("hex");
 
 try {
   await page.goto("http://127.0.0.1:24891/tests/fixtures/unified-library-ui-qa.html?independent=1");
@@ -26,6 +28,21 @@ try {
   assert.equal(evidence.search.countBesideInput, true);
   assert.equal(evidence.search.snippets, 0);
   assert.ok(evidence.search.metadataRows > 0);
+
+  await page.evaluate(() => { window.qaOriginalGate = Promise.withResolvers(); });
+  await page.getByRole("button", { name: "PDF에서 자르기" }).click();
+  await page.waitForFunction(() => window.qaOriginalStarted === true);
+  await page.evaluate(() => window.qaReplaceFirstSource());
+  await query.press("Enter");
+  await page.waitForFunction(() => document.querySelector("[data-unilib-crop]").hidden);
+  await page.evaluate(() => window.qaOriginalGate.resolve());
+  await page.waitForFunction(() => window.qaOriginalFinished === true);
+  evidence.staleCropSource = await page.evaluate(() => ({
+    cropHidden: document.querySelector("[data-unilib-crop]").hidden,
+    acceptedCount: document.querySelectorAll("[data-unilib-crop-remove]").length,
+    selectedCount: document.querySelectorAll("[data-unilib-selected-remove]").length,
+  }));
+  assert.deepEqual(evidence.staleCropSource, { cropHidden: true, acceptedCount: 0, selectedCount: 0 });
 
   await query.fill("");
   await query.press("Enter");
@@ -86,7 +103,7 @@ try {
   await drawCrop([0.12, 0.16, 0.36, 0.42]);
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.querySelectorAll("[data-unilib-crop-remove]").length === 1);
-  await drawCrop([0.12, 0.52, 0.36, 0.78]);
+  await drawCrop([0.56, 0.52, 0.84, 0.78]);
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.querySelectorAll("[data-unilib-crop-remove]").length === 2);
   const cropProvenance = await page.locator("[data-unilib-crop-collection]").innerText();
@@ -96,15 +113,43 @@ try {
     naturalWidth: image.naturalWidth,
     naturalHeight: image.naturalHeight,
     sourceLength: image.src.length,
+    dataUrl: image.src,
   })));
   assert.ok(cropThumbnails.every(({ naturalWidth, naturalHeight, sourceLength }) => naturalWidth > 0 && naturalHeight > 0 && sourceLength > 100));
+  const cropRegions = await page.locator(".unilib-crop-collection-item span").evaluateAll((labels) => labels.map((label) => label.title));
+  const cropPixelHashes = cropThumbnails.map(({ dataUrl }) => decodedDataUrlHash(dataUrl));
+  const cropCenterPixels = await page.locator(".unilib-crop-collection-thumb").evaluateAll((images) => images.map((image) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(image, 0, 0);
+    return [...context.getImageData(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data];
+  }));
+  assert.equal(new Set(cropRegions).size, 2);
+  assert.equal(new Set(cropPixelHashes).size, 2);
+  assert.notDeepEqual(cropCenterPixels[0], cropCenterPixels[1]);
+  const finishedCropState = await page.evaluate(() => ({
+    currentPreviewHidden: document.querySelector("[data-unilib-crop-preview]").style.display === "none",
+    finishText: document.querySelector("[data-unilib-crop-save]").textContent,
+    finishDisabled: document.querySelector("[data-unilib-crop-save]").disabled,
+  }));
+  assert.deepEqual(finishedCropState, { currentPreviewHidden: true, finishText: "자르기 완료", finishDisabled: false });
   await page.screenshot({ path: `${output}/multi-crop-two-accepted.png` });
   await page.locator("[data-unilib-crop-remove]").first().click();
   assert.equal(await page.locator("[data-unilib-crop-remove]").count(), 1);
   await page.screenshot({ path: `${output}/multi-crop-after-remove.png` });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.querySelector("[data-unilib-crop]").hidden);
-  evidence.crops = { cropProvenance, cropThumbnails, selected: await page.locator("[data-unilib-selected-remove]").count() };
+  evidence.crops = {
+    cropProvenance,
+    cropRegions,
+    cropPixelHashes,
+    cropCenterPixels,
+    finishedCropState,
+    cropThumbnails: cropThumbnails.map(({ dataUrl, ...thumbnail }) => thumbnail),
+    selected: await page.locator("[data-unilib-selected-remove]").count(),
+  };
   assert.equal(evidence.crops.selected, 1);
 
   await page.locator('[data-select-result="file:qa"]').check();
