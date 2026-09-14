@@ -1044,19 +1044,25 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     referenceAddButton.disabled = true;
     setStatus("AI 참고용 고해상도 PNG를 준비하는 중…");
     try {
+      const additions = [];
       for (const result of selected) {
         const source = normalizedSource(result);
         const render = await withRuntimeLock(async () => {
           await ensureDocumentOpen(source.documentId);
           return runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
         });
-        consumer.onAdd?.({
+        additions.push({
           name: resultTitle(result),
           data: await pngDataUrl(render.bytes),
           sourceKind: "pdf-library",
           source: sourceMetadata(result),
         });
       }
+      if (consumer.onAddMany) await consumer.onAddMany(additions, {
+        placement: "separate",
+        groups: additions.map((_, index) => [index]),
+      });
+      else additions.forEach((reference) => consumer.onAdd?.(reference));
       consumer.onStatus?.(`PDF 참고 이미지 ${selected.length}개가 추가되었습니다.`, "ok");
       referenceConsumer = null;
       referenceAddButton.hidden = true;
