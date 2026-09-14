@@ -177,7 +177,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onAddMany, onStatus } 
         if (nextSource === SOURCES.EXAM) {
           close();
           try {
-            await openPdfReferencePicker({ onAdd, onStatus: status });
+            await openPdfReferencePicker({ onAdd, onAddMany, onStatus: status });
           } catch (error) {
             status(error.message || String(error), "error");
           }

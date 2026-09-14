@@ -455,6 +455,19 @@ export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus 
   });
 }
 
+function groupedReferences(references, groups) {
+  if (!Array.isArray(groups) || !groups.length) throw new Error("AI 작업대 그룹이 필요합니다.");
+  return groups.map((indices, groupIndex) => {
+    if (!Array.isArray(indices) || !indices.length) throw new Error(`${groupIndex + 1}번째 AI 작업대 그룹이 비어 있습니다.`);
+    if (indices.length > 10) throw new Error(`${groupIndex + 1}번째 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.`);
+    if (new Set(indices).size !== indices.length) throw new Error(`${groupIndex + 1}번째 AI 작업대에 같은 참고 이미지가 중복되었습니다.`);
+    return indices.map((index) => {
+      if (!Number.isInteger(index) || index < 0 || index >= references.length) throw new Error(`${groupIndex + 1}번째 AI 작업대의 자료 번호가 올바르지 않습니다.`);
+      return references[index];
+    });
+  });
+}
+
 export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTabId, interrupt }) {
   if (tab?.id !== activeTaskTabId || !['busy', 'running'].includes(tab?.workState)) {
     return { acknowledged: false };
@@ -2340,35 +2353,34 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     return id;
   };
 
-  const addReferencesAsTasks = (references, { prompt = "", placement = "separate" } = {}) => {
+  const addReferencesAsTasks = (references, { prompt = "", placement = "separate", groups = null } = {}) => {
     if (busy) {
       setStatus("현재 변환이 끝난 뒤 이미지를 추가해 주세요.", "warn");
       return [];
     }
+    const taskActions = {
+      canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0,
+      createTask: () => createTaskTab(),
+      addSource: reference => addReferenceData(reference),
+      applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
+      captureTask: captureActiveTaskTab,
+      activeTaskId: () => activeTaskTabId,
+      activateTask: taskId => restoreTaskTab(taskId),
+    };
+    if (placement === "advanced") {
+      const taskIds = groupedReferences(references, groups)
+        .flatMap((items) => groupSourcesInTaskTab(items, taskActions, { prompt }));
+      persistTasks();
+      return taskIds;
+    }
     if (placement === "together" && references.length) {
-      groupSourcesInTaskTab(references, {
-        canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0,
-        createTask: () => createTaskTab(),
-        addSource: reference => addReferenceData(reference),
-        applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
-        captureTask: captureActiveTaskTab,
-        activeTaskId: () => activeTaskTabId,
-        activateTask: taskId => restoreTaskTab(taskId),
-      }, { prompt });
+      groupSourcesInTaskTab(references, taskActions, { prompt });
       persistTasks();
       return [activeTaskTabId];
     }
     return distributeSourcesToTaskTabs(references, {
-      canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0,
-      createTask: () => createTaskTab(),
-      addSource: (reference) => addReferenceData(reference),
-      applyPrompt: (sourcePrompt) => {
-        const nextPrompt = sourcePrompt || prompt;
-        if (nextPrompt) input.value = nextPrompt;
-      },
-      captureTask: captureActiveTaskTab,
-      activeTaskId: () => activeTaskTabId,
-      activateTask: (taskId) => restoreTaskTab(taskId),
+      ...taskActions,
+      applyPrompt: sourcePrompt => { if (sourcePrompt || prompt) input.value = sourcePrompt || prompt; },
     });
   };
 
