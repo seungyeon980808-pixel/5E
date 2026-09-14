@@ -45,6 +45,7 @@ import {
   createSearchScheduler,
   activePdfPageResult,
   materializeOriginalLibraryPage,
+  materializeLibraryThumbnail,
   materializeLibraryAction,
   pdfResultsForDisplay,
   continuousPdfWindow,
@@ -151,6 +152,28 @@ test("PDF page display expands matches without losing document and page provenan
   assert.equal(pages[1].provenance.documentId, "doc");
   assert.equal(pages[1].matches.length, 1);
   assert.deepEqual(pdfResultsForDisplay([file], "file"), [file]);
+});
+
+test("PDF thumbnail materialization uses page one in file mode and each matched page in page mode", async () => {
+  const calls = [];
+  const file = {
+    id: "file:doc", kind: "pdf", title: "doc.pdf",
+    provenance: { documentId: "doc", pageNumber: 2 },
+    firstMatchingPage: 2,
+    matches: [{ pageNumber: 2 }, { pageNumber: 3 }],
+    loadPreview: async (pageNumber, options) => { calls.push({ pageNumber, options }); return { pageNumber }; },
+  };
+
+  await materializeLibraryThumbnail(file, null, "file");
+  for (const page of pdfResultsForDisplay([file], "page")) {
+    await materializeLibraryThumbnail(page, null, "page");
+  }
+
+  assert.deepEqual(calls, [
+    { pageNumber: 1, options: { thumbnail: true } },
+    { pageNumber: 2, options: { thumbnail: true } },
+    { pageNumber: 3, options: { thumbnail: true } },
+  ]);
 });
 
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
