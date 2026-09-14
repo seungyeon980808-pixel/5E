@@ -13,10 +13,29 @@
   <script type="module">
     import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
     const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
+    const rasterizedCrop = async (result, representation) => {
+      const rect = representation === "manual" ? result.variants?.manual?.source?.rect : null;
+      const source = image(`${result.title} / ${representation}`, result.qaColor);
+      if (!rect) return source;
+      const sourceImage = new Image();
+      sourceImage.src = source;
+      await sourceImage.decode();
+      const [x, y, width, height] = rect;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(sourceImage.naturalWidth * width));
+      canvas.height = Math.max(1, Math.round(sourceImage.naturalHeight * height));
+      canvas.getContext("2d", { alpha: false }).drawImage(
+        sourceImage,
+        sourceImage.naturalWidth * x, sourceImage.naturalHeight * y,
+        sourceImage.naturalWidth * width, sourceImage.naturalHeight * height,
+        0, 0, canvas.width, canvas.height,
+      );
+      return canvas.toDataURL("image/png");
+    };
     const makeQuestion = (id, title, color, provider = "pdf") => ({
       id, title, kind: "crop", cropType: "question", sourceId: "pack", sourceLabel: "QA 자료팩",
       metadata: { academicYear: 2026, subject: "p1", administration: "06", questionNumber: Number(id.slice(1)) },
-      provenance: { provider, documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] },
+      provenance: { provider, documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1], sha256: "qa-hash-a", sourceKind: "pack", locator: "old.pdf" },
       variants: {
         full: { label: "전체", source: { documentId: "qa.pdf", pageNumber: 1, rect: [0, 0, 1, 1] } },
         figures: [
@@ -30,7 +49,7 @@
     const all = Array.from({ length: 28 }, (_, index) => makeQuestion(
       `q${index + 1}`,
       `2026학년도 6월 ${index + 1}번`,
-      index % 2 ? "%2399c2ff" : "%23ffc28f",
+      index % 2 ? "#99c2ff" : "#ffc28f",
       index === 1 ? "parts" : "pdf",
     ));
     const matches = [
@@ -51,14 +70,21 @@
         }
         window.qaPreviewFinished = performance.now();
         return {
-          dataUrl: image(`PDF ${pageNumber}쪽`, "%23b8dbb4"),
+          dataUrl: image(`PDF ${pageNumber}쪽`, "#b8dbb4"),
           source: { documentId: "qa.pdf", pageNumber, rect: [0, 0, 1, 1] },
-          result: { id: `page:qa:${pageNumber}`, kind: "page", title: `PDF ${pageNumber}쪽`, sourceId: "pack", sourceLabel: "QA 자료팩", provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber } },
+          result: { id: `page:qa:${pageNumber}`, kind: "page", title: `PDF ${pageNumber}쪽`, sourceId: "pack", sourceLabel: "QA 자료팩", qaColor: "#b8dbb4", provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber } },
         };
       },
     };
     window.qaPreviewCalls = [];
     window.qaRequests = [];
+    window.qaOriginalGate = null;
+    window.qaOriginalStarted = false;
+    window.qaOriginalFinished = false;
+    window.qaReplaceFirstSource = () => {
+      const original = all[0];
+      all[0] = { ...original, provenance: { ...original.provenance, sha256: "qa-hash-b", locator: "replacement.pdf" } };
+    };
     const provider = {
       getSources: () => [{ id: "pack", kind: "source", label: "QA 자료팩", counts: { pdf: 1, question: 2 } }],
       getExamFilterOptions: () => ({ academicYears: [2026] }),
@@ -74,11 +100,20 @@
       },
       materialize: async (result, options = {}) => {
         const representation = options.representation || "full";
+        if (options.original && window.qaOriginalGate) {
+          window.qaOriginalStarted = true;
+          await window.qaOriginalGate.promise;
+          window.qaOriginalFinished = true;
+        }
         if (window.qaQuestionDelay && result.kind === "crop") {
           await new Promise((resolve) => setTimeout(resolve, window.qaQuestionDelay));
         }
         window.qaMaterialized = representation;
-        return { dataUrl: image(`${result.title} / ${representation}`, result.qaColor), provenance: result.provenance };
+        const manualSource = representation === "manual" ? result.variants?.manual?.source : null;
+        return {
+          dataUrl: await rasterizedCrop(result, representation),
+          provenance: { ...result.provenance, ...(manualSource || {}) },
+        };
       },
     };
     window.qaInserted = [];

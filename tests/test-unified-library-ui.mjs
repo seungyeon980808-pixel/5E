@@ -550,10 +550,15 @@ test("Given local crop zoom, when zoom changes, then the page point under the po
 });
 
 test("Given a direct crop action, stale selection, page, rect, close, and materialization states are rejected", () => {
-  const snapshot = { resultId: "q1", documentId: "exam", pageNumber: 2, rectKey: "0.1,0.2,0.3,0.4", open: true, exact: true };
+  const snapshot = {
+    resultId: "q1", documentId: "exam", pageNumber: 2,
+    resultIdentity: "source-a", currentResultIdentity: "source-a",
+    rectKey: "0.1,0.2,0.3,0.4", open: true, exact: true,
+  };
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot }), true);
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, resultId: "q2" }), false);
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, pageNumber: 3 }), false);
+  assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, currentResultIdentity: "source-b" }), false);
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, rectKey: "0.1,0.2,0.3,0.5" }), false);
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, open: false }), false);
   assert.equal(cropActionSnapshotIsCurrent(snapshot, { ...snapshot, exact: false }), false);
@@ -604,10 +609,32 @@ test("crop editor exposes exact-preview direct save, canvas, objectify, and AI r
 });
 
 test("crop sessions reject stale result and page identities", () => {
-  const session = { resultId: "q1", documentId: "doc", pageNumber: 2 };
-  assert.equal(cropSessionIsCurrent(session, { id: "q1", provenance: { documentId: "doc", pageNumber: 2 } }), true);
+  const current = { id: "q1", provenance: { documentId: "doc", pageNumber: 2, sha256: "hash-a", sourceKind: "pack", locator: "old.pdf" } };
+  const session = { resultId: "q1", documentId: "doc", pageNumber: 2, resultIdentity: libraryResultIdentity(current) };
+  assert.equal(cropSessionIsCurrent(session, current), true);
   assert.equal(cropSessionIsCurrent(session, { id: "q2", provenance: { documentId: "doc", pageNumber: 2 } }), false);
   assert.equal(cropSessionIsCurrent(session, { id: "q1", provenance: { documentId: "doc", pageNumber: 3 } }), false);
+});
+
+test("Given pending crop materialization, replacing the source behind the same result and page rejects the old completion", async () => {
+  const pending = Promise.withResolvers();
+  const original = { id: "q1", provenance: { documentId: "doc", pageNumber: 2, sha256: "hash-a", sourceKind: "pack", locator: "old.pdf" } };
+  const session = { resultId: "q1", documentId: "doc", pageNumber: 2, resultIdentity: libraryResultIdentity(original) };
+  let current = original;
+  const accepted = [];
+  const completion = resolveLibraryPreviewResult(
+    original,
+    () => pending.promise,
+    () => cropSessionIsCurrent(session, current),
+  );
+
+  current = { ...original, provenance: { ...original.provenance, sha256: "hash-b", locator: "replacement.pdf" } };
+  pending.resolve({ dataUrl: "data:image/png;base64,b2xkLXNvdXJjZQ==" });
+  const outcome = await completion;
+  if (outcome.status === "resolved") accepted.push(outcome.result);
+
+  assert.deepEqual(outcome, { status: "stale" });
+  assert.deepEqual(accepted, []);
 });
 
 test("a transient manual crop preserves canonical question metadata and source", () => {

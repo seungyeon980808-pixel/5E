@@ -517,6 +517,8 @@ export function cropActionSnapshotIsCurrent(snapshot, state) {
   return snapshot?.resultId === state?.resultId
     && snapshot?.documentId === state?.documentId
     && snapshot?.pageNumber === state?.pageNumber
+    && snapshot?.resultIdentity === state?.resultIdentity
+    && snapshot?.currentResultIdentity === state?.currentResultIdentity
     && snapshot?.rectKey === state?.rectKey
     && snapshot?.open === true && state?.open === true
     && snapshot?.exact === true && state?.exact === true;
@@ -552,7 +554,8 @@ export function cropSessionIsCurrent(session, result) {
   return Boolean(session && result
     && session.resultId === result.id
     && session.documentId === source.documentId
-    && session.pageNumber === source.pageNumber);
+    && session.pageNumber === source.pageNumber
+    && session.resultIdentity === libraryResultIdentity(result));
 }
 
 export function cropRectFromGesture(initial, start, current, mode = "draw", handle = "") {
@@ -1962,9 +1965,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     resultId: cropSession?.resultId,
     documentId: cropSession?.documentId,
     pageNumber: cropSession?.pageNumber,
+    resultIdentity: cropSession?.resultIdentity,
+    currentResultIdentity: libraryResultIdentity(selectedActiveResult()),
     rectKey: cropRectKey(),
     open: !cropDialog.hidden,
-    exact: Boolean(cropPreviewExact && cropExact?.rectKey === cropRectKey()),
+    exact: Boolean(cropPreviewExact && cropExact?.rectKey === cropRectKey()
+      && cropSessionIsCurrent(cropSession, selectedActiveResult())),
   });
   const renderAcceptedCrops = () => {
     cropCollection.replaceChildren(...acceptedCrops.map(({ result, materialized }, index) => {
@@ -2034,6 +2040,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropStage.scrollTop = next.scrollTop;
   };
   const paintCropPreview = () => {
+    cropPreview.style.display = draftCrop ? "block" : "none";
     if (!draftCrop || !cropImage.complete || !cropImage.naturalWidth) {
       cropPreview.width = 1;
       cropPreview.height = 1;
@@ -2134,6 +2141,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       resultId: result.id,
       documentId: result.provenance.documentId,
       pageNumber: result.provenance.pageNumber,
+      resultIdentity: libraryResultIdentity(result),
       canonicalPage: null,
     };
     cropSession = session;
@@ -2196,7 +2204,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         return true;
       }
       cropReturnFocus = document.activeElement;
-      cropSession = { resultId: selectedId, documentId: result.provenance.documentId, pageNumber: result.provenance.pageNumber, viewOnly: true };
+      const session = {
+        resultId: result.id,
+        documentId: result.provenance.documentId,
+        pageNumber: result.provenance.pageNumber,
+        resultIdentity: identity,
+        viewOnly: true,
+      };
+      cropSession = session;
       cropDialog.dataset.pdfPage = String(result.provenance.pageNumber);
       draftCrop = null;
       acceptedCrops = [];
@@ -2207,19 +2222,21 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       cropStage.setAttribute("aria-busy", "true");
       try {
         const original = await materializeOriginalLibraryPage(result, await provider());
-        if (!cropSession?.viewOnly || cropSession.resultId !== selectedId) return false;
+        if (cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return false;
         const src = resultImage(result, original);
         if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
         cropImage.src = src;
         await cropImage.decode();
-        if (!cropSession?.viewOnly || cropSession.resultId !== selectedId) return false;
+        if (cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return false;
         cropFitBounds = [0, 0, 1, 1];
         cropStage.setAttribute("aria-busy", "false");
         fitCropContent();
         cropStage.focus();
         return true;
       } catch (error) {
-        if (cropSession?.viewOnly) setStatus(`확대 미리보기 실패: ${error instanceof Error ? error.message : error}`, true);
+        if (cropSession === session && cropSessionIsCurrent(session, selectedActiveResult())) {
+          setStatus(`확대 미리보기 실패: ${error instanceof Error ? error.message : error}`, true);
+        }
         return false;
       }
     }
@@ -2227,7 +2244,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const src = resultImage(result, currentMaterialized);
     if (!src) return false;
     cropReturnFocus = document.activeElement;
-    cropSession = { resultId: result.id, documentId: result.provenance?.documentId, pageNumber: result.provenance?.pageNumber, viewOnly: true };
+    const session = {
+      resultId: result.id,
+      documentId: result.provenance?.documentId,
+      pageNumber: result.provenance?.pageNumber,
+      resultIdentity: identity,
+      viewOnly: true,
+    };
+    cropSession = session;
     draftCrop = null;
     cropDialog.classList.add("is-view-only");
     cropTitle.textContent = "확대 미리보기";
@@ -2236,14 +2260,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropImage.src = src;
     try {
       await cropImage.decode();
-      if (!cropSession?.viewOnly || cropSession.resultId !== selectedId) return false;
+      if (cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return false;
       cropFitBounds = [0, 0, 1, 1];
       cropStage.setAttribute("aria-busy", "false");
       fitCropContent();
       cropStage.focus();
       return true;
     } catch {
-      if (cropSession?.viewOnly) {
+      if (cropSession === session && cropSessionIsCurrent(session, selectedActiveResult())) {
         cropStage.setAttribute("aria-busy", "false");
         setStatus("확대 미리보기 이미지를 읽지 못했습니다.", true);
       }
