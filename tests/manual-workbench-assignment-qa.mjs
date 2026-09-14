@@ -5,7 +5,7 @@ import { extname, join, normalize } from "node:path";
 import { chromium } from "playwright";
 
 const root = new URL("../", import.meta.url).pathname;
-const evidence = join(root, ".omo/evidence/library-next/assignment");
+const evidence = join(root, process.argv[2] || ".omo/evidence/library-next/assignment");
 const mime = { ".css": "text/css", ".html": "text/html", ".js": "text/javascript", ".svg": "image/svg+xml" };
 await mkdir(evidence, { recursive: true });
 const server = createServer(async (request, response) => {
@@ -47,6 +47,7 @@ try {
 
   await open();
   await page.click('[data-placement="together"]');
+  await page.screenshot({ path: join(evidence, "together-preview.png") });
   await page.click('[data-action="continue"]');
   assert.deepEqual(await page.evaluate(() => window.qaResults.at(-1)), { placement: "together", groups: [[0, 1, 2]] });
   observations.push("together result verified");
@@ -54,7 +55,11 @@ try {
   await open();
   await page.click('[data-placement="advanced"]');
   await page.click('[data-reference="0"]');
+  await page.screenshot({ path: join(evidence, "advanced-before-bench-thumbnail-assertion.png") });
+  assert.ok(await page.locator(".workbench-assignment-bench-thumbnail").count() > 0,
+    "advanced workbench must render the actual assigned image thumbnail");
   await page.click('[data-action="add-bench"]');
+  await page.click('[data-reference="1"]');
   await page.click('[data-reference="0"]');
   await page.waitForSelector('[role="alertdialog"]');
   await page.screenshot({ path: join(evidence, "duplicate-confirmation.png") });
@@ -65,9 +70,14 @@ try {
   assert.equal(await page.locator('.workbench-assignment[role="dialog"]').count(), 1);
   await page.click('[data-reference="0"]');
   await page.click('[data-confirm="ok"]');
-  assert.match(await page.textContent('[data-reference="0"] small'), /작업대 1 · 작업대 2/u);
-  await page.click('[data-reference="0"]');
-  assert.equal(await page.textContent('[data-reference="0"] small'), "작업대 1");
+  assert.match(await page.textContent('[data-reference="0"] .workbench-assignment-reference-status'), /작업대 1 · 작업대 2/u);
+  assert.equal(await page.locator(".workbench-assignment-bench-thumbnail").count(), 3);
+  assert.equal(await page.locator("button button").count(), 0);
+  await page.screenshot({ path: join(evidence, "advanced-two-benches-duplicate.png") });
+  await page.click('[data-action="remove-reference"][data-group="1"][data-reference="0"]');
+  assert.equal(await page.textContent('[data-reference="0"] .workbench-assignment-reference-status'), "작업대 1");
+  assert.equal(await page.locator('[data-bench="1"]').evaluate((button) => button.closest(".workbench-assignment-bench").querySelectorAll(".workbench-assignment-bench-thumbnail").length), 1);
+  await page.screenshot({ path: join(evidence, "advanced-remove-control.png") });
   await page.click('[data-reference="0"]');
   await page.click('[data-confirm="ok"]');
   observations.push("duplicate confirmation, top Escape priority, and selected-workbench removal verified");
@@ -83,7 +93,7 @@ try {
   assert.equal(await page.locator('.workbench-assignment[role="dialog"]').count(), 1);
   await page.click('[data-action="continue"]');
   await page.click('[data-confirm="ok"]');
-  assert.deepEqual(await page.evaluate(() => window.qaResults.at(-1)), { placement: "advanced", groups: [[0], [0]] });
+  assert.deepEqual(await page.evaluate(() => window.qaResults.at(-1)), { placement: "advanced", groups: [[0], [1, 0]] });
   observations.push("main focus trap and explicit unassigned exclusion verified");
 
   await open();
