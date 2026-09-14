@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -13,9 +13,12 @@
   <script type="module">
     import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
     const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
+    const pdfImage = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="180" width="180" height="190" fill="${color}"/><rect x="340" y="470" width="160" height="180" fill="#ddd"/></svg>`)}`;
     const rasterizedCrop = async (result, representation) => {
       const rect = representation === "manual" ? result.variants?.manual?.source?.rect : null;
-      const source = image(`${result.title} / ${representation}`, result.qaColor);
+      const source = ["page", "pdf"].includes(result.kind)
+        ? pdfImage(`${result.title} / ${representation}`, result.qaColor)
+        : image(`${result.title} / ${representation}`, result.qaColor);
       if (!rect) return source;
       const sourceImage = new Image();
       sourceImage.src = source;
@@ -70,7 +73,7 @@
         }
         window.qaPreviewFinished = performance.now();
         return {
-          dataUrl: image(`PDF ${pageNumber}쪽`, "#b8dbb4"),
+          dataUrl: pdfImage(`PDF ${pageNumber}쪽`, "#b8dbb4"),
           source: { documentId: "qa.pdf", pageNumber, rect: [0, 0, 1, 1] },
           result: { id: `page:qa:${pageNumber}`, kind: "page", title: `PDF ${pageNumber}쪽`, sourceId: "pack", sourceLabel: "QA 자료팩", qaColor: "#b8dbb4", provenance: { provider: "pdf", documentId: "qa.pdf", pageNumber } },
         };
@@ -117,6 +120,7 @@
       },
     };
     window.qaInserted = [];
+    window.qaObjectified = [];
     window.qaAiCalls = [];
     window.qaIndependentCalls = [];
     const desktopLibrary = {
@@ -140,6 +144,7 @@
       desktopLibrary,
       pdfUi,
       insertMaterialized: async (result, asset) => window.qaInserted.push({ id: result.id, rect: result.provenance.rect, materialized: window.qaMaterialized }),
+      openObjectify: async (result) => window.qaObjectified.push({ id: result.id, rect: result.provenance.rect }),
       openAi: async (payload) => {
         window.qaAiCalls.push(payload);
         document.querySelector("#ai-image-panel").hidden = false;
