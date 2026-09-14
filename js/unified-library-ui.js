@@ -1143,7 +1143,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       thumbnailQueue = thumbnailQueue.then(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const materialized = result.kind === "pdf" && typeof result.loadPreview === "function"
-          ? await result.loadPreview(result.firstMatchingPage || result.matches?.[0]?.pageNumber || 1, { thumbnail: true })
+          ? await result.loadPreview(1, { thumbnail: true })
           : await (await provider()).materialize(result, { thumbnail: true });
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const src = resultImage(result, materialized);
@@ -1192,7 +1192,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const title = document.createElement("strong");
       title.className = "library-card-name";
       title.textContent = result.title;
-      title.title = result.title;
+      const sourceText = resultSourceText(result);
+      const pageText = result.provenance?.pageNumber ? `${result.provenance.pageNumber}쪽` : "";
+      title.title = sourceText.includes(result.title) ? sourceText : `${result.title} · ${sourceText}`;
+      if (pageText && !title.title.includes(pageText)) title.title += ` · ${pageText}`;
       const meta = document.createElement("small");
       meta.className = "library-card-page";
       const compactPdfPage = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf" && result.provenance?.provider === "pdf";

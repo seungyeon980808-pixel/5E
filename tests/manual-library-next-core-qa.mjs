@@ -23,11 +23,13 @@ try {
     countBesideInput: document.querySelector("[data-unilib-count]").parentElement.classList.contains("unilib-search-row"),
     snippets: document.querySelectorAll(".unilib-result-snippet").length,
     metadataRows: document.querySelectorAll(".unilib-card-meta").length,
+    firstCardTooltip: document.querySelector(".library-card-name")?.title,
   }));
   assert.ok(evidence.search.focused);
   assert.equal(evidence.search.countBesideInput, true);
   assert.equal(evidence.search.snippets, 0);
   assert.ok(evidence.search.metadataRows > 0);
+  assert.match(evidence.search.firstCardTooltip, /QA 자료팩.*1쪽/u);
 
   await page.evaluate(() => { window.qaOriginalGate = Promise.withResolvers(); });
   await page.getByRole("button", { name: "PDF에서 자르기" }).click();
@@ -48,6 +50,13 @@ try {
   await query.press("Enter");
   await page.getByRole("button", { name: "PDF", exact: true }).click();
   await page.waitForSelector(".unilib-stage.is-continuous-pdf");
+  await page.waitForFunction(() => window.qaPreviewCalls.some((call) => call.options.thumbnail));
+  evidence.fileThumbnail = await page.evaluate(() => ({
+    page: window.qaPreviewCalls.find((call) => call.options.thumbnail)?.pageNumber,
+    tooltip: document.querySelector(".library-card-name")?.title,
+  }));
+  assert.equal(evidence.fileThumbnail.page, 1);
+  assert.match(evidence.fileThumbnail.tooltip, /아주 긴 한국어 제목의 자석 물리 자료\.pdf.*1쪽/u);
   await page.locator(".unilib-result-card").first().click();
   await page.keyboard.down("Space");
   await page.waitForSelector(".unilib-preview.library-reader--expanded");
