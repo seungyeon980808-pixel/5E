@@ -84,6 +84,8 @@
     window.qaOriginalGate = null;
     window.qaOriginalStarted = false;
     window.qaOriginalFinished = false;
+    window.qaProviderGate = null;
+    window.qaProviderStarted = false;
     window.qaReplaceFirstSource = () => {
       const original = all[0];
       all[0] = { ...original, provenance: { ...original.provenance, sha256: "qa-hash-b", locator: "replacement.pdf" } };
@@ -140,7 +142,13 @@
       }),
     };
     const ui = createUnifiedLibraryUi({
-      getProvider: async () => provider,
+      getProvider: async () => {
+        if (window.qaProviderGate) {
+          window.qaProviderStarted = true;
+          await window.qaProviderGate.promise;
+        }
+        return provider;
+      },
       desktopLibrary,
       pdfUi,
       insertMaterialized: async (result, asset) => window.qaInserted.push({ id: result.id, rect: result.provenance.rect, materialized: window.qaMaterialized }),
