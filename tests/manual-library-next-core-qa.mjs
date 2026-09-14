@@ -80,15 +80,19 @@ try {
   await page.waitForFunction(() => document.querySelectorAll(".unilib-result-card").length === 2);
   await page.locator(".unilib-result-card").first().click();
   await page.keyboard.down("Space");
-  await page.waitForSelector("[data-unilib-crop]:not([hidden]).is-view-only");
+  await page.waitForSelector("[data-unilib-crop]:not([hidden])");
   await page.keyboard.up("Space");
   await page.waitForFunction(() => document.querySelector("[data-unilib-crop-image]").naturalWidth > 0);
   evidence.pageReader = await page.evaluate(() => ({
     page: Number(document.querySelector("[data-unilib-crop]").dataset.pdfPage || 0),
+    editable: !document.querySelector("[data-unilib-crop]").classList.contains("is-view-only"),
+    sidebarVisible: document.querySelector(".unilib-crop-preview").getBoundingClientRect().width > 0,
     draftHidden: document.querySelector("[data-unilib-crop-box]").hidden,
     imageVisible: document.querySelector("[data-unilib-crop-image]").getBoundingClientRect().height > 0,
   }));
   assert.equal(evidence.pageReader.draftHidden, true);
+  assert.equal(evidence.pageReader.editable, true);
+  assert.equal(evidence.pageReader.sidebarVisible, true);
   assert.equal(evidence.pageReader.imageVisible, true);
   await page.screenshot({ path: `${output}/page-single-reader.png` });
   await page.keyboard.press("Escape");
@@ -107,7 +111,7 @@ try {
     await page.mouse.up();
     await page.waitForFunction(() => !document.querySelector("[data-unilib-crop-box]").hidden
       && !document.querySelector("[data-unilib-crop-save]").disabled
-      && document.querySelector("[data-unilib-crop-save]").textContent === "선택 추가");
+      && document.querySelector("[data-unilib-crop-save]").textContent === "Enter 추가");
   };
   await drawCrop([0.12, 0.16, 0.36, 0.42]);
   await page.keyboard.press("Enter");
@@ -140,16 +144,18 @@ try {
   assert.notDeepEqual(cropCenterPixels[0], cropCenterPixels[1]);
   const finishedCropState = await page.evaluate(() => ({
     currentPreviewHidden: document.querySelector("[data-unilib-crop-preview]").style.display === "none",
-    finishText: document.querySelector("[data-unilib-crop-save]").textContent,
-    finishDisabled: document.querySelector("[data-unilib-crop-save]").disabled,
+    finishText: document.querySelector("[data-unilib-crop-finish]").textContent,
+    finishDisabled: document.querySelector("[data-unilib-crop-finish]").disabled,
   }));
-  assert.deepEqual(finishedCropState, { currentPreviewHidden: true, finishText: "자르기 완료", finishDisabled: false });
+  assert.deepEqual(finishedCropState, { currentPreviewHidden: true, finishText: "선택 완료", finishDisabled: false });
   await page.screenshot({ path: `${output}/multi-crop-two-accepted.png` });
   await page.locator("[data-unilib-crop-remove]").first().click();
   assert.equal(await page.locator("[data-unilib-crop-remove]").count(), 1);
   await page.screenshot({ path: `${output}/multi-crop-after-remove.png` });
   await page.keyboard.press("Enter");
-  await page.waitForFunction(() => document.querySelector("[data-unilib-crop]").hidden);
+  await page.waitForFunction(() => document.querySelector("[data-unilib-status]").textContent.includes("선택을 완료했습니다"));
+  assert.equal(await page.locator("[data-unilib-crop]").isVisible(), true);
+  await page.locator("[data-unilib-crop-cancel]").click();
   evidence.crops = {
     cropProvenance,
     cropRegions,

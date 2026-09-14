@@ -270,6 +270,7 @@ test("Space routes the selected PDF into the direct crop surface without a secon
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.doesNotMatch(source, /data-unilib-lightbox/u);
   assert.match(source, /shouldHandleLibrarySpace\(event\)[\s\S]*openExpandedPreview/u);
+  assert.match(source, /openCropEditor\(\{ emptyDraft: true, wholePage: true,/u);
   assert.match(source, /data-unilib-crop-ai/u);
 });
 
@@ -628,7 +629,7 @@ test("crop editor exposes exact-preview direct save, canvas, objectify, and AI r
   assert.match(source, /data-unilib-crop-insert/u);
   assert.match(source, /data-unilib-crop-objectify/u);
   assert.match(source, /data-unilib-crop-ai/u);
-  assert.match(source, /openAiDestination\(\[reference\], \{ closeCropSurface: true \}\)/u);
+  assert.match(source, /chooseWorkbenchAssignment\(\{ references, host: overlay,[\s\S]*openAiDestination\(references, \{ closeCropSurface: true, assignment \}\)/u);
 });
 
 test("crop sessions reject stale result and page identities", () => {
