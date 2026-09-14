@@ -106,6 +106,16 @@ export function pdfResultsForDisplay(files, mode = "file") {
   })) : [file]);
 }
 
+export async function materializeLibraryThumbnail(result, activeProvider, pdfMode = "file") {
+  if (result?.kind === "pdf" && typeof result.loadPreview === "function") {
+    const pageNumber = pdfMode === "page"
+      ? result.firstMatchingPage ?? result.matches?.[0]?.pageNumber ?? result.provenance?.pageNumber ?? 1
+      : 1;
+    return result.loadPreview(pageNumber, { thumbnail: true });
+  }
+  return activeProvider.materialize(result, { thumbnail: true });
+}
+
 export async function materializeOriginalLibraryPage(result, activeProvider) {
   const pageNumber = result?.provenance?.pageNumber;
   const materialized = result?.kind === "pdf" && typeof result.loadPreview === "function"
@@ -1139,12 +1149,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     overlay.querySelector("[data-unilib-count]").textContent = `${visibleResults.length}개`;
     renderSelectedTray();
     const pendingThumbnails = [];
+    const thumbnailPdfMode = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
     const loadThumbnail = (result, media) => {
       thumbnailQueue = thumbnailQueue.then(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
-        const materialized = result.kind === "pdf" && typeof result.loadPreview === "function"
-          ? await result.loadPreview(1, { thumbnail: true })
-          : await (await provider()).materialize(result, { thumbnail: true });
+        const materialized = await materializeLibraryThumbnail(result, await provider(), thumbnailPdfMode);
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const src = resultImage(result, materialized);
         if (!src) return;
