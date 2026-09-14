@@ -59,12 +59,12 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
     const overlay = document.createElement("div");
     overlay.className = "workbench-assignment-overlay";
     overlay.innerHTML = `<section class="workbench-assignment" role="dialog" aria-modal="true" aria-labelledby="workbench-assignment-title">
-      <header><div><h2 id="workbench-assignment-title">AI 작업대 배정</h2><p>어떤 이미지를 같은 작업에서 참고할지 정하세요.</p></div><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
+      <header><h2 id="workbench-assignment-title">AI 작업대 배정</h2><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
       <div class="workbench-assignment-modes" role="group" aria-label="배정 방법">
         <button type="button" data-placement="separate">이미지마다 따로</button><button type="button" data-placement="together">한 작업대에 함께</button><button type="button" data-placement="advanced">고급 배정</button>
       </div>
       <div class="workbench-assignment-summary" data-summary></div>
-      <div class="workbench-assignment-advanced" data-advanced hidden><section><h3>이미지</h3><p>선택한 작업대에 넣거나 빼려면 이미지를 누르세요.</p><div class="workbench-assignment-references" data-references></div></section><section><div class="workbench-assignment-bench-heading"><div><h3>작업대</h3><p>한 작업대의 이미지는 함께 전달됩니다.</p></div><button type="button" data-action="add-bench">+ 작업대 추가</button></div><div class="workbench-assignment-benches" data-benches></div></section></div>
+      <div class="workbench-assignment-advanced" data-advanced hidden><section class="workbench-assignment-reference-panel"><h3>크롭 이미지 <span data-reference-count></span>개</h3><div class="workbench-assignment-references" data-references></div></section><section class="workbench-assignment-bench-panel"><div class="workbench-assignment-bench-heading"><h3>작업대</h3><button type="button" data-action="add-bench">+ 작업대 추가</button></div><div class="workbench-assignment-benches" data-benches></div></section></div>
       <p class="workbench-assignment-error" data-error role="status" aria-live="polite"></p>
       <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary" data-action="continue">계속</button></footer>
     </section>`;
@@ -72,7 +72,9 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
     const advanced = overlay.querySelector("[data-advanced]");
     const summary = overlay.querySelector("[data-summary]");
     const referenceList = overlay.querySelector("[data-references]");
+    const referenceCount = overlay.querySelector("[data-reference-count]");
     const benchList = overlay.querySelector("[data-benches]");
+    const addBench = overlay.querySelector('[data-action="add-bench"]');
     const error = overlay.querySelector("[data-error]");
     let placement = "separate";
     let groups = [[]];
@@ -121,36 +123,67 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
         const active = button.dataset.placement === placement;
         button.setAttribute("aria-pressed", String(active));
       }
-      advanced.hidden = placement !== "advanced";
-      summary.hidden = placement === "advanced";
+      const editable = placement === "advanced";
+      const displayGroups = editable ? groups : assignmentForPlacement(items.length, placement);
+      advanced.hidden = false;
+      advanced.classList.toggle("is-editable", editable);
+      summary.hidden = true;
       summary.textContent = placement === "together"
         ? `${items.length}개 이미지를 작업대 1개에 함께 넣습니다.`
         : `${items.length}개 이미지를 각각 별도 작업대에 넣습니다.`;
-      if (placement !== "advanced") return;
+      addBench.hidden = !editable;
+      referenceCount.textContent = String(items.length);
       referenceList.replaceChildren();
       items.forEach((reference, referenceIndex) => {
-        const assigned = groups.flatMap((group, groupIndex) => group.includes(referenceIndex) ? [groupIndex] : []);
+        const assigned = displayGroups.flatMap((group, groupIndex) => group.includes(referenceIndex) ? [groupIndex] : []);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "workbench-assignment-reference";
         button.dataset.reference = String(referenceIndex);
         button.classList.toggle("is-assigned", assigned.length > 0);
-        button.setAttribute("aria-pressed", String(groups[selectedGroup]?.includes(referenceIndex) ?? false));
+        button.disabled = !editable;
+        button.setAttribute("aria-pressed", String(editable && (groups[selectedGroup]?.includes(referenceIndex) ?? false)));
         const image = document.createElement("img");
-        image.src = String(reference?.dataUrl || ""); image.alt = ""; image.width = 160; image.height = 104;
-        const label = document.createElement("span"); label.textContent = String(reference?.name || `이미지 ${referenceIndex + 1}`);
-        const benches = document.createElement("small");
+        image.src = String(reference?.dataUrl || ""); image.alt = ""; image.width = 104; image.height = 84;
+        const copy = document.createElement("span"); copy.className = "workbench-assignment-reference-copy";
+        const label = document.createElement("strong"); label.textContent = `이미지 ${referenceIndex + 1}`;
+        const benches = document.createElement("span"); benches.className = "workbench-assignment-reference-status";
         benches.textContent = assigned.length ? assigned.map((index) => `작업대 ${index + 1}`).join(" · ") : "미배정";
-        button.append(image, label, benches); referenceList.append(button);
+        copy.append(label, benches);
+        button.setAttribute("aria-label", `${label.textContent}, ${benches.textContent}`);
+        button.append(image, copy); referenceList.append(button);
       });
       benchList.replaceChildren();
-      groups.forEach((group, groupIndex) => {
-        const button = document.createElement("button");
-        button.type = "button"; button.className = "workbench-assignment-bench"; button.dataset.bench = String(groupIndex);
-        button.setAttribute("aria-pressed", String(groupIndex === selectedGroup));
+      displayGroups.forEach((group, groupIndex) => {
+        const bench = document.createElement("section");
+        bench.className = "workbench-assignment-bench";
+        bench.classList.toggle("is-selected", editable && groupIndex === selectedGroup);
+        const heading = document.createElement("div"); heading.className = "workbench-assignment-bench-title";
+        const select = document.createElement("button");
+        select.type = "button"; select.className = "workbench-assignment-bench-select"; select.dataset.bench = String(groupIndex);
+        select.disabled = !editable;
+        select.setAttribute("aria-pressed", String(editable && groupIndex === selectedGroup));
         const title = document.createElement("strong"); title.textContent = `작업대 ${groupIndex + 1}`;
-        const count = document.createElement("span"); count.textContent = group.length ? `${group.length}개 이미지` : "비어 있음";
-        button.append(title, count); benchList.append(button);
+        const count = document.createElement("span"); count.textContent = `${group.length}개`;
+        select.append(title, count); heading.append(select); bench.append(heading);
+        const assignedReferences = document.createElement("div"); assignedReferences.className = "workbench-assignment-bench-references";
+        group.forEach((referenceIndex) => {
+          const reference = items[referenceIndex];
+          const thumbnail = document.createElement("div"); thumbnail.className = "workbench-assignment-bench-thumbnail";
+          const image = document.createElement("img");
+          image.src = String(reference?.dataUrl || ""); image.alt = ""; image.width = 116; image.height = 86;
+          const label = document.createElement("span"); label.textContent = `이미지 ${referenceIndex + 1}`;
+          thumbnail.append(image, label);
+          if (editable) {
+            const remove = document.createElement("button");
+            remove.type = "button"; remove.dataset.action = "remove-reference";
+            remove.dataset.group = String(groupIndex); remove.dataset.reference = String(referenceIndex);
+            remove.setAttribute("aria-label", `작업대 ${groupIndex + 1}에서 이미지 ${referenceIndex + 1} 제거`); remove.textContent = "×";
+            thumbnail.append(remove);
+          }
+          assignedReferences.append(thumbnail);
+        });
+        bench.append(assignedReferences); benchList.append(bench);
       });
     };
 
@@ -161,6 +194,10 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
       if (button.dataset.action === "cancel") { finish(null); return; }
       if (button.dataset.placement && PLACEMENTS.has(button.dataset.placement)) { placement = button.dataset.placement; render(); return; }
       if (button.dataset.action === "add-bench") { groups = [...groups, []]; selectedGroup = groups.length - 1; render(); return; }
+      if (button.dataset.action === "remove-reference") {
+        groups = removeReferenceAssignment(groups, Number(button.dataset.group), Number(button.dataset.reference));
+        render(); return;
+      }
       if (button.dataset.bench) { selectedGroup = Number(button.dataset.bench); render(); return; }
       if (button.dataset.reference) {
         const referenceIndex = Number(button.dataset.reference);
