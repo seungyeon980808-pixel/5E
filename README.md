@@ -71,7 +71,7 @@
 
 ## ① 있는 그림에서 시작하기
 
-### 기출 문항 검색 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>
+### 기출 문항 검색 — Windows <kbd>Ctrl</kbd>+<kbd>L</kbd> / macOS <kbd>⌘</kbd><kbd>L</kbd>
 
 <img src="docs/images/release-v1.0.0/02-exam-library.png" alt="5E v1.0.0 당시 기출 문항 검색 화면" width="820" />
 
@@ -375,7 +375,7 @@ _위 이미지는 v1.0.0 당시 화면입니다. 현재 문항 목록은 넓은 
 | <kbd>Ctrl</kbd>+<kbd>K</kbd> | 커맨드 팔레트 |
 | <kbd>Ctrl</kbd>+<kbd>S</kbd> | 프로젝트 저장 |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | 오브젝트 검색 |
-| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> | 기출문항 검색 |
+| Windows <kbd>Ctrl</kbd>+<kbd>L</kbd> / macOS <kbd>⌘</kbd><kbd>L</kbd> | 기출문항 검색 |
 | <kbd>Ctrl</kbd>+<kbd>T</kbd> | 이미지 객체화 |
 | <kbd>Alt</kbd>+<kbd>P</kbd> | 이미지로 내보내기 |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd> | 실행취소 / 다시실행 |
