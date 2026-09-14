@@ -2220,6 +2220,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropPreviewExact = false;
     cropExact = null;
     const activeProvider = await provider();
+    if (overlay.hidden || cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return;
     const pageResults = typeof activeProvider.search === "function"
       ? activeProvider.search({ query: "", kinds: ["crop"], limit: 500 })
       : results;

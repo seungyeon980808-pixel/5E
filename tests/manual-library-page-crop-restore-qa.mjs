@@ -67,6 +67,32 @@ const openExpandedPage = async () => {
   assert.deepEqual(initial, { page: 2, viewOnly: false, sidebarVisible: true, draftHidden: true, acceptedCount: 0 });
 };
 
+const rejectStaleProviderOpen = async () => {
+  await page.goto(`http://127.0.0.1:${server.address().port}/tests/fixtures/unified-library-ui-qa.html?independent=1`);
+  await page.waitForSelector(".unilib-result-card");
+  await page.locator("[data-unilib-query]").fill("A B");
+  await page.locator("[data-unilib-query]").press("Enter");
+  await page.getByRole("button", { name: "PDF", exact: true }).click();
+  await page.getByRole("button", { name: "페이지", exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll(".unilib-result-card").length === 2);
+  await page.locator(".unilib-result-card").first().click();
+  await page.evaluate(() => { window.qaProviderGate = Promise.withResolvers(); });
+  await page.keyboard.down("Space");
+  await page.waitForFunction(() => window.qaProviderStarted === true);
+  await page.waitForFunction(() => document.querySelector("[data-unilib-crop]").dataset.pdfPage === "2");
+  await page.keyboard.up("Space");
+  await page.keyboard.press("Escape");
+  await page.evaluate(() => window.qaProviderGate.resolve());
+  await page.waitForTimeout(50);
+  const state = await page.evaluate(() => ({
+    libraryHidden: document.querySelector(".unified-library-overlay").hidden,
+    cropHidden: document.querySelector("[data-unilib-crop]").hidden,
+    cropBusy: document.querySelector("[data-unilib-crop-stage]").getAttribute("aria-busy"),
+  }));
+  assert.deepEqual(state, { libraryHidden: true, cropHidden: true, cropBusy: null });
+  report.scenarios.push({ name: "stale-provider-open-rejected", state });
+};
+
 const captureExpandedFile = async () => {
   await page.goto(`http://127.0.0.1:${server.address().port}/tests/fixtures/unified-library-ui-qa.html?independent=1`);
   await page.waitForSelector(".unilib-result-card");
@@ -117,6 +143,7 @@ const acceptTwo = async () => {
 };
 
 try {
+  await rejectStaleProviderOpen();
   await page.setViewportSize({ width: 1920, height: 1080 });
   await captureExpandedFile();
   await page.setViewportSize({ width: 1000, height: 760 });
