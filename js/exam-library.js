@@ -236,6 +236,9 @@ function buildModal() {
 export function initExamLibrary(state, { openAi, openIndependentReferences } = {}) {
   const openButton = document.getElementById("exam-library-open");
   if (!openButton) return;
+  const libraryShortcut = /Mac|iPhone|iPad/u.test(navigator.platform) ? "⌘L" : "Ctrl+L";
+  openButton.title = `라이브러리 (${libraryShortcut})`;
+  openButton.setAttribute("aria-label", `라이브러리 (${libraryShortcut})`);
 
   const overlay = buildModal();
   const queryInput = overlay.querySelector("#examlib-query");
@@ -828,9 +831,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     else runSearch();
   });
   pdfTab.addEventListener("click", () => setMode("pdf"));
-  // Ctrl+Shift+F = 기출문항 검색 (Ctrl+F 오브젝트 검색과 짝)
   document.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.key.toLowerCase() !== "f") return;
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "l") return;
+    if (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(e.target.tagName))) return;
     e.preventDefault();
     if (overlay.hidden) void openLibrary();
   }, true);

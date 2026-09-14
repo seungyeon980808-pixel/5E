@@ -309,8 +309,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   });
   renderNavigation();
   const independentReferences = references => {
-    if (!Array.isArray(references) || references.length < 1 || references.length > 10) {
-      throw new Error('독립 AI 작업은 한 번에 최대 10개까지 열 수 있습니다.');
+    if (!Array.isArray(references) || references.length < 1) {
+      throw new Error('독립 AI 작업에 참고 이미지가 필요합니다.');
     }
     return references.map((reference, index) => {
       if (!reference || typeof reference !== 'object' || typeof reference.dataUrl !== 'string'
@@ -337,22 +337,34 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),
-    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate' } = {}) => {
+    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate', groups = null } = {}) => {
       await ready;
       const snapshots = independentReferences(references);
-      const groups = placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
-      const created = groups.map(() => add(crypto.randomUUID(), false));
+      const groupedSnapshots = Array.isArray(groups)
+        ? groups.map((indices, groupIndex) => {
+          if (!Array.isArray(indices) || indices.length < 1) throw new Error(`${groupIndex + 1}번째 AI 작업대가 비어 있습니다.`);
+          if (indices.length > 10) throw new Error(`${groupIndex + 1}번째 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.`);
+          if (new Set(indices).size !== indices.length) throw new Error(`${groupIndex + 1}번째 AI 작업대에 같은 참고 이미지가 중복되었습니다.`);
+          return indices.map((index) => {
+            if (!Number.isInteger(index) || index < 0 || index >= snapshots.length) throw new Error(`${groupIndex + 1}번째 AI 작업대의 자료 번호가 올바르지 않습니다.`);
+            return snapshots[index];
+          });
+        })
+        : placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
+      if (!groupedSnapshots.length) throw new Error('열 AI 작업대가 없습니다.');
+      if (placement === 'together' && snapshots.length > 10) throw new Error('한 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.');
+      const created = groupedSnapshots.map(() => add(crypto.randomUUID(), false));
       saveRegistry();
       await Promise.all(created.map(entry => entry.controller.ready));
       await Promise.all(created.map((entry, index) => entry.controller.open({
-        references: groups[index],
-        placement,
+        references: groupedSnapshots[index],
+        placement: groupedSnapshots[index].length > 1 ? 'together' : 'separate',
         reveal: false,
         prompt,
         startGeneration: startGeneration === true,
       })));
       activate(created.at(-1));
-      return created.map((entry, index) => ({ scope: entry.scope, name: snapshots[index].name }));
+      return created.map((entry, index) => ({ scope: entry.scope, name: groupedSnapshots[index][0].name }));
     },
   };
 }

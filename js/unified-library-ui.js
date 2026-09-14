@@ -1,6 +1,7 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
 import { queryHighlightTerms } from "./pdf-library/search.js";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
@@ -164,7 +165,7 @@ export function createSearchScheduler(run, { delay = 140, setTimer = setTimeout,
     cancel();
     timer = setTimer(() => { timer = null; run("input"); }, delay);
   };
-  return Object.freeze({ input: schedule, compositionStart() { composing = true; cancel(); }, compositionEnd() { composing = false; schedule(); }, enter() { composing = false; cancel(); run("enter"); }, cancel });
+  return Object.freeze({ input: schedule, compositionStart() { composing = true; cancel(); }, compositionEnd() { composing = false; schedule(); }, enter() { composing = false; cancel(); return run("enter"); }, cancel });
 }
 
 export function indexLibrarySources(sources) {
@@ -442,6 +443,36 @@ export function withManualCropVariant(result, source) {
     ...result,
     variants: { ...(result?.variants || {}), manual: { label: "직접 자른 이미지", source: { ...source } } },
   };
+}
+
+export function acceptedCropResult(result, rect, ordinal) {
+  const source = {
+    documentId: result?.provenance?.documentId,
+    pageNumber: result?.provenance?.pageNumber,
+    rect: [...rect],
+    fullPageFallback: false,
+  };
+  return {
+    ...withManualCropVariant(result, source),
+    id: `${result.id}:manual:${ordinal}`,
+    title: `${result.title || "PDF"} · 자른 영역 ${ordinal}`,
+    kind: "crop",
+    cropType: "manual",
+    provenance: { ...(result.provenance || {}), ...source },
+  };
+}
+
+export function workbenchReferenceGroups(references, assignment) {
+  if (!Array.isArray(references) || !assignment || !Array.isArray(assignment.groups)) return [];
+  return assignment.groups.map((indices) => {
+    if (!Array.isArray(indices) || indices.length === 0) throw new Error("AI 작업대 그룹이 비어 있습니다.");
+    if (new Set(indices).size !== indices.length) throw new Error("같은 AI 작업대에 동일한 자료가 중복되었습니다.");
+    const grouped = indices.map((index) => {
+      if (!Number.isInteger(index) || index < 0 || index >= references.length) throw new Error("AI 작업대 그룹에 올바르지 않은 자료 번호가 있습니다.");
+      return references[index];
+    });
+    return { references: grouped, placement: grouped.length > 1 ? "together" : "separate" };
+  });
 }
 
 export function cropContentBoundsForResult(result, candidates = []) {
@@ -740,38 +771,40 @@ function buildShell() {
           <div class="unilib-folder-scroll"><p><strong>제공 자료</strong>는 앱이 정리한 가상 분류입니다. <strong>내 자료</strong>에는 가져온 파일과 설치형 앱에서 직접 연결한 폴더가 표시됩니다.</p><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
-          <div class="unilib-search-tools">
-            <div class="unilib-search-row">
+          <div class="unilib-search-tools library-toolbar">
+            <div class="unilib-search-row library-search-row">
               <button type="button" class="unilib-location-summary" data-unilib-folders-open aria-label="검색 위치 열기">${ICONS.folder}<span data-unilib-location-summary>검색 위치</span></button>
-              <label class="unilib-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
+              <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
+              <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
+              <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
               <button type="button" class="unilib-icon-button" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.file}</button>
             </div>
-            <div class="unilib-tabs" role="group" aria-label="결과 종류">
-              <button type="button" data-unilib-type="all" aria-pressed="true">전체</button>
-              <button type="button" data-unilib-type="question" aria-pressed="false">문항</button>
-              <button type="button" data-unilib-type="image" aria-pressed="false">이미지</button>
-              <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
+            <div class="unilib-filter-row library-filter-row">
+              <div class="unilib-tabs library-kind-toggle" role="group" aria-label="결과 종류">
+                <button type="button" data-unilib-type="all" aria-pressed="true">전체</button>
+                <button type="button" data-unilib-type="question" aria-pressed="false">문항</button>
+                <button type="button" data-unilib-type="image" aria-pressed="false">이미지</button>
+                <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
+              </div>
+              <div class="unilib-pdf-display library-scope-toggle" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="true">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="false">페이지</button></div>
             </div>
-            <div class="unilib-pdf-display" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="true">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="false">페이지</button></div>
             <div class="unilib-exam-filters" data-unilib-exam-filters hidden>
               <select data-unilib-filter="subject" aria-label="과목"><option value="">모든 과목</option><option value="p1">물리학Ⅰ</option><option value="p2">물리학Ⅱ</option><option value="c1">화학Ⅰ</option><option value="c2">화학Ⅱ</option><option value="b1">생명과학Ⅰ</option><option value="b2">생명과학Ⅱ</option><option value="e1">지구과학Ⅰ</option><option value="e2">지구과학Ⅱ</option></select>
               <span class="unilib-year-range" aria-label="학년도 범위"><select data-unilib-year-start aria-label="시작 학년도"><option value="">시작</option></select><span>–</span><select data-unilib-year-end aria-label="끝 학년도"><option value="">끝</option></select></span>
               <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="06">6월 모의평가</option><option value="09">9월 모의평가</option><option value="11">수능</option></select>
             </div>
-            <details class="unilib-help" data-unilib-help><summary>검색 도움말</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
           </div>
-          <div class="unilib-summary"><span><strong data-unilib-count>0개</strong> <span data-unilib-count-label>결과</span></span><span>방향키 선택 · Space 체크 · 길게 눌러 크게 보기</span></div>
-          <div class="unilib-selection-summary is-empty" data-unilib-selected-tray aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
-          <div class="unilib-result-scroll"><ul class="unilib-result-list" data-unilib-results role="listbox"></ul></div>
+          <div class="unilib-selection-summary library-selected-tray is-empty" data-unilib-selected-tray aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
+          <div class="unilib-result-scroll"><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
         </section>
-        <aside class="unilib-pane unilib-preview" data-unilib-preview aria-label="선택 자료 미리보기">
+        <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head"><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
-          <div class="unilib-preview-scroll"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot"><div class="unilib-source">${ICONS.file}<div><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions"><button type="button" data-unilib-source-open>원문 페이지</button><button type="button" data-unilib-adjust hidden>PDF에서 자르기</button></div></div><div class="unilib-actions"><button type="button" class="unilib-primary" data-unilib-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-ai disabled>AI 작업에 추가</button></div></div>
+          <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source">${ICONS.file}<div><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions"><button type="button" data-unilib-source-open>원문 페이지</button><button type="button" data-unilib-adjust hidden>PDF에서 자르기</button></div></div><div class="unilib-actions"><button type="button" class="unilib-primary" data-unilib-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-ai disabled>AI 작업에 추가</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
-      <div class="unilib-crop" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">확대 미리보기 · 영역 선택</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary" data-unilib-crop-save disabled>선택 유지</button></header><div class="unilib-crop-workspace"><div class="unilib-crop-stage" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div data-unilib-crop-box aria-hidden="true"></div></div></div><aside class="unilib-crop-preview"><strong>선택한 이미지</strong><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-primary" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-ai disabled>AI 작업에 추가</button><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button></div><details class="unilib-crop-help"><summary>조작 도움말</summary><p>드래그해 다시 선택합니다. Ctrl/Shift+휠 또는 두 손가락으로 확대하고, 화살표로 이동하거나 Shift+화살표로 크기를 조절합니다.</p></details></aside></div></div>
+      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">확대 미리보기 · 영역 선택</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary unilib-crop-confirmation" data-unilib-crop-save disabled>선택 추가</button></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><aside class="unilib-crop-preview library-reader-sidebar"><strong>현재 선택</strong><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><div class="unilib-crop-actions library-reader-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-primary" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-ai disabled>AI 작업에 추가</button><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button></div><details class="unilib-crop-help"><summary>조작 도움말</summary><p>드래그한 뒤 Enter로 영역을 추가합니다. 계속 드래그해 여러 영역을 모으고, 선택 대기 영역이 없을 때 Enter를 누르면 끝냅니다.</p></details></aside></div></div>
       <p class="unilib-status" data-unilib-status role="status" aria-live="polite"></p>
     </section>`;
   document.body.append(overlay);
@@ -841,6 +874,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let currentMaterialized = null;
   let currentMaterializedIdentity = null;
   let returnFocus = null;
+  let lastInteractionWasKeyboard = false;
   let desktopConnections = [];
   let desktopWarnings = [];
   let pendingIndexCount = 0;
@@ -853,12 +887,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cropPreviewExact = false;
   let cropExact = null;
   let cropActionBusy = false;
+  let acceptedCrops = [];
+  let cropSequence = 0;
   let cropZoom = 1;
   let cropBaseScale = 1;
   let cropFitBounds = [0, 0, 1, 1];
   let cropReturnFocus = null;
   const cropPointers = new Map();
   let cropPinch = null;
+
+  overlay.addEventListener("pointerdown", () => { lastInteractionWasKeyboard = false; }, true);
+  overlay.addEventListener("keydown", () => { lastInteractionWasKeyboard = true; }, true);
 
   const selectedResult = () => results.find((result) => result.id === selectedId) || null;
   const selectedActiveResult = () => {
@@ -1095,7 +1134,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
     overlay.querySelector("[data-unilib-count]").textContent = `${visibleResults.length}개`;
-    overlay.querySelector("[data-unilib-count-label]").textContent = "결과";
     renderSelectedTray();
     const pendingThumbnails = [];
     const loadThumbnail = (result, media) => {
@@ -1120,14 +1158,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       item.className = "unilib-result-row";
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "unilib-result-card";
+      button.className = "unilib-result-card library-card";
       button.dataset.resultId = result.id;
       button.dataset.resultKind = result.kind;
       button.setAttribute("role", "option");
       button.setAttribute("aria-selected", String(result.id === selectedId));
       const preview = resultImage(result, null);
       const media = document.createElement("span");
-      media.className = "unilib-thumb";
+      media.className = "unilib-thumb library-card-thumb";
       if (typeof preview === "string" && preview) {
         const image = new Image();
         image.loading = "lazy";
@@ -1140,32 +1178,24 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         if (result.provenance?.provider === "pdf") pendingThumbnails.push({ result, media });
       }
       const copy = document.createElement("span");
-      copy.className = "unilib-result-copy";
+      copy.className = "unilib-result-copy unilib-card-meta library-card-meta";
       const badge = document.createElement("span");
-      badge.className = `unilib-badge is-${result.kind}`;
+      badge.className = `unilib-badge unilib-card-type library-card-type is-${result.kind}`;
       badge.textContent = labelForKind(result.kind);
       const disclosure = document.createElement("span");
       disclosure.className = "unilib-example-note";
       disclosure.textContent = "목업 · 예시 자료";
       disclosure.hidden = !isExampleLibraryResult(result);
       const title = document.createElement("strong");
+      title.className = "library-card-name";
       title.textContent = result.title;
       title.title = result.title;
       const meta = document.createElement("small");
+      meta.className = "library-card-page";
       const compactPdfPage = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf" && result.provenance?.provider === "pdf";
       meta.textContent = compactPdfPage ? `${result.provenance.pageNumber}쪽` : resultSourceText(result);
       meta.title = meta.textContent;
-      const snippet = document.createElement("span");
-      snippet.className = "unilib-result-snippet";
-      const snippetText = result.matchContext?.snippet || "";
-      snippet.hidden = !snippetText || compactPdfPage;
-      snippet.replaceChildren(...highlightTextParts(snippetText, query.value).map((part) => {
-        const node = document.createElement(part.match ? "mark" : "span");
-        node.textContent = part.text;
-        return node;
-      }));
       copy.append(badge, disclosure, title, meta);
-      copy.append(snippet);
       const check = document.createElement("input");
       check.type = "checkbox";
       check.className = "unilib-result-check";
@@ -1519,7 +1549,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
 
   function closeDrawers() { root.classList.remove("folders-open", "preview-open"); }
-  function close({ restoreFocus = true } = {}) {
+  function closeExpandedReader() {
+    root.classList.remove("is-reader-expanded");
+    overlay.querySelector("[data-unilib-preview]").classList.remove("library-reader--expanded");
+  }
+  function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard } = {}) {
     if (overlay.hidden) return;
     invalidateAction();
     cancelPlacementChoice?.();
@@ -1536,7 +1570,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     root.classList.remove("consumer-mode");
     referenceConsumer = null;
     closeDrawers();
-    if (restoreFocus) returnFocus?.focus?.();
+    closeExpandedReader();
+    const activeElement = document.activeElement;
+    if (activeElement && overlay.contains(activeElement)) activeElement.blur?.();
+    if (restoreFocus && keyboard) {
+      const focusTarget = returnFocus;
+      focusTarget?.focus?.({ preventScroll: true });
+      queueMicrotask(() => focusTarget?.focus?.({ preventScroll: true }));
+    }
     window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "unified" } }));
   }
   async function open(trigger) {
@@ -1555,7 +1596,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     await renderSources();
     await runSearch();
-    query.focus();
+    if (!overlay.hidden) query.focus();
   }
 
   tree.addEventListener("change", async (event) => {
@@ -1618,10 +1659,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const scrollTop = scroller.scrollTop;
     const cardTop = card?.getBoundingClientRect().top;
     invalidateAction();
-    if (!selectedIds.has(id) && selectedIds.size >= 10) {
-      setStatus("AI 참고 이미지는 한 번에 최대 10개까지 선택할 수 있습니다.", true);
-      return;
-    }
     if (selectedIds.has(id)) { selectedIds.delete(id); selectedRecords.delete(id); }
     else {
       selectedIds.add(id);
@@ -1648,11 +1685,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       event.stopPropagation();
       invalidateAction();
       const id = check.dataset.selectResult;
-      if (check.checked && selectedIds.size >= 10) {
-        check.checked = false;
-        setStatus("AI 참고 이미지는 한 번에 최대 10개까지 선택할 수 있습니다.", true);
-        return;
-      }
       if (check.checked) {
         selectedIds.add(id);
         const record = results.find((result) => result.id === id);
@@ -1702,11 +1734,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     activeFigureRepresentation = picker.value;
     void renderPreview();
   });
-  const searchScheduler = createSearchScheduler(() => void runSearch());
+  const searchScheduler = createSearchScheduler(() => runSearch());
   query.addEventListener("compositionstart", searchScheduler.compositionStart);
   query.addEventListener("compositionend", searchScheduler.compositionEnd);
   query.addEventListener("input", (event) => { cancelSpacePress(); searchScheduler.input(event); });
-  query.addEventListener("keydown", (event) => { if (event.key === "Enter") searchScheduler.enter(); });
+  query.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    void Promise.resolve(searchScheduler.enter()).then(() => {
+      if (!overlay.hidden && results.length) focusResultCard(results[0].id);
+    });
+  });
   overlay.querySelector("[data-unilib-clear]").addEventListener("click", () => { query.value = ""; searchScheduler.enter(); query.focus(); });
   const updateTypeControls = () => {
     const all = activeTypes.length === LIBRARY_TYPES.length;
@@ -1787,9 +1825,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-  const openAiDestination = async (references, { closeCropSurface = false, placement = "separate" } = {}) => {
+  const openAiDestination = async (references, { closeCropSurface = false, assignment = null } = {}) => {
+    const placement = assignment?.placement || "separate";
     const openDestination = typeof openIndependentReferences === "function"
-      ? () => openIndependentReferences({ references, startGeneration: false, placement })
+      ? () => openIndependentReferences({ references, startGeneration: false, placement, groups: assignment?.groups })
       : () => openAi?.({ references });
     setStatus("AI 작업실을 여는 중…");
     const opening = Promise.resolve().then(openDestination);
@@ -1844,54 +1883,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     });
   });
   let cancelPlacementChoice = null;
-  function chooseAiPlacement() {
-    return new Promise((resolve) => {
-      const dialog = document.createElement("div");
-      dialog.className = "unilib-ai-placement";
-      dialog.setAttribute("role", "dialog");
-      dialog.setAttribute("aria-modal", "true");
-      dialog.setAttribute("aria-label", "AI 작업 배치");
-      const content = document.createElement("div");
-      content.className = "unilib-dialog";
-      const title = document.createElement("h3");
-      title.textContent = "선택한 이미지를 어떻게 추가할까요?";
-      content.append(title);
-      const finish = (placement) => { dialog.remove(); cancelPlacementChoice = null; overlay.querySelector("[data-unilib-ai]").focus(); resolve(placement); };
-      cancelPlacementChoice = () => finish(null);
-      registerEscapeLayer(dialog, cancelPlacementChoice);
-      for (const [placement, text] of [["together", "한 작업에 함께 추가"], ["separate", "이미지마다 별도 작업"], [null, "취소"]]) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = text;
-        button.addEventListener("click", () => finish(placement));
-        content.append(button);
-      }
-      dialog.addEventListener("keydown", (event) => {
-        if (event.key !== "Tab") return;
-        const buttons = [...content.querySelectorAll("button")];
-        const first = buttons[0];
-        const last = buttons.at(-1);
-        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-      });
-      dialog.append(content);
-      overlay.append(dialog);
-      content.querySelector("button").focus();
-    });
-  }
   overlay.querySelector("[data-unilib-ai]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {
       const actionResult = resultForActionSnapshot(snapshot);
       const chosen = aiActionRecords(selectedRecords, selectedIds, actionResult)
         .map((result) => result.id === snapshot.selectedId ? actionResult : result);
       if (!chosen.length) return;
-      const placement = chosen.length > 1 ? await chooseAiPlacement() : "separate";
-      if (!placement || !isCurrent()) return;
       const activeProvider = await provider();
       if (!isCurrent()) return;
       setStatus("AI 작업용 이미지를 준비하는 중…");
       const references = [];
-      for (const result of chosen.slice(0, 10)) {
+      for (const result of chosen) {
         const representation = aiActionRepresentationForResult(result, snapshot.selectedId, snapshot.representation, snapshot.selectedFigure);
         if (!canInsertLibraryResult(result, representation)) continue;
         const effectiveResult = resultForRepresentation(result, representation);
@@ -1901,17 +1903,22 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         if (!isCurrent()) return;
       }
       if (!isCurrent() || !references.length) return;
+      const assignment = references.length > 1
+        ? await chooseWorkbenchAssignment({ references, host: overlay, returnFocus: overlay.querySelector("[data-unilib-ai]") })
+        : { placement: "separate", groups: [[0]] };
+      if (!assignment || !isCurrent()) return;
+      workbenchReferenceGroups(references, assignment);
     if (referenceConsumer) {
       const additions = references.map((reference) => ({ name: reference.name, data: reference.dataUrl, sourceKind: reference.sourceKind, source: reference.source }));
-      if (referenceConsumer.onAddMany) await referenceConsumer.onAddMany(additions, { placement });
+      if (referenceConsumer.onAddMany) await referenceConsumer.onAddMany(additions, assignment);
       else additions.forEach((reference) => referenceConsumer.onAdd?.(reference));
       referenceConsumer.onStatus?.(`라이브러리 참고 이미지 ${references.length}개가 추가되었습니다.`, "ok");
       referenceConsumer.onComplete?.();
       referenceConsumer = null;
     } else if (typeof openIndependentReferences === "function") {
-      await openAiDestination(references, { placement });
+      await openAiDestination(references, { assignment });
     } else {
-      await openAiDestination(references, { placement });
+      await openAiDestination(references, { assignment });
     }
       if (isCurrent()) close({ restoreFocus: false });
     });
@@ -1946,6 +1953,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const cropBox = overlay.querySelector("[data-unilib-crop-box]");
   const cropImage = overlay.querySelector("[data-unilib-crop-image]");
   const cropPreview = overlay.querySelector("[data-unilib-crop-preview]");
+  const cropCollection = overlay.querySelector("[data-unilib-crop-collection]");
   const cropSave = overlay.querySelector("[data-unilib-crop-save]");
   const cropTitle = overlay.querySelector("#unilib-crop-title");
   const cropZoomOutput = overlay.querySelector("[data-unilib-crop-zoom]");
@@ -1958,9 +1966,33 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     open: !cropDialog.hidden,
     exact: Boolean(cropPreviewExact && cropExact?.rectKey === cropRectKey()),
   });
+  const renderAcceptedCrops = () => {
+    cropCollection.replaceChildren(...acceptedCrops.map(({ result, materialized }, index) => {
+      const item = document.createElement("div");
+      item.className = "unilib-crop-collection-item";
+      const thumbnail = document.createElement("img");
+      thumbnail.className = "unilib-crop-collection-thumb";
+      thumbnail.src = resultImage(result, materialized);
+      thumbnail.alt = `자른 이미지 ${index + 1}`;
+      const label = document.createElement("span");
+      const rect = result.provenance.rect.map((value) => `${Math.round(value * 100)}%`).join(" · ");
+      label.textContent = `이미지 ${index + 1}`;
+      label.title = `${result.provenance.pageNumber}쪽 · ${rect}`;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "unilib-crop-collection-delete";
+      remove.dataset.unilibCropRemove = result.id;
+      remove.setAttribute("aria-label", `${index + 1}번째 자르기 영역 삭제`);
+      remove.textContent = "삭제";
+      item.append(thumbnail, label, remove);
+      return item;
+    }));
+    cropCollection.hidden = acceptedCrops.length === 0;
+  };
   const setCropActionAvailability = () => {
     const available = cropActionState().exact && !cropActionBusy;
-    cropSave.disabled = !available;
+    cropSave.disabled = !available && acceptedCrops.length === 0;
+    cropSave.textContent = available ? "선택 추가" : acceptedCrops.length ? "자르기 완료" : "선택 추가";
     overlay.querySelector("[data-unilib-crop-insert]").disabled = !available || typeof insertMaterialized !== "function";
     overlay.querySelector("[data-unilib-crop-objectify]").disabled = !available || typeof openObjectify !== "function";
     overlay.querySelector("[data-unilib-crop-ai]").disabled = !available || (typeof openAi !== "function" && typeof openIndependentReferences !== "function" && !referenceConsumer);
@@ -2089,6 +2121,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropDialog.classList.remove("is-view-only");
     cropTitle.textContent = "확대 미리보기 · 영역 선택";
     paintCrop();
+    acceptedCrops = [];
+    renderAcceptedCrops();
     if (restoreFocus && !overlay.hidden) cropReturnFocus?.focus?.({ preventScroll: true });
     cropReturnFocus = null;
   };
@@ -2103,6 +2137,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       canonicalPage: null,
     };
     cropSession = session;
+    acceptedCrops = [];
+    cropSequence = 0;
+    renderAcceptedCrops();
     cropDialog.dataset.pdfPage = String(session.pageNumber);
     cropGesture = null;
     draftCrop = clampRect(result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result) || result.variants?.content?.source?.rect || result.provenance.rect);
@@ -2148,8 +2185,43 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const identity = libraryResultIdentity(result);
     if (!result || (expectedIdentity && identity !== expectedIdentity)) return false;
     if (result.provenance?.provider === "pdf") {
-      await openCropEditor();
-      return !cropDialog.hidden;
+      if (selectedResult()?.kind === "pdf" && continuousView?.resultId === selectedId) {
+        root.classList.add("is-reader-expanded");
+        overlay.querySelector("[data-unilib-preview]").classList.add("library-reader--expanded");
+        paintContinuousWindow(continuousView, selectedResult(), 1);
+        stage.scrollTop = 0;
+        stage.dispatchEvent(new Event("scroll"));
+        stage.tabIndex = -1;
+        stage.focus({ preventScroll: true });
+        return true;
+      }
+      cropReturnFocus = document.activeElement;
+      cropSession = { resultId: selectedId, documentId: result.provenance.documentId, pageNumber: result.provenance.pageNumber, viewOnly: true };
+      cropDialog.dataset.pdfPage = String(result.provenance.pageNumber);
+      draftCrop = null;
+      acceptedCrops = [];
+      renderAcceptedCrops();
+      cropDialog.classList.add("is-view-only");
+      cropTitle.textContent = `${result.title || "PDF"} · ${result.provenance.pageNumber}쪽`;
+      cropDialog.hidden = false;
+      cropStage.setAttribute("aria-busy", "true");
+      try {
+        const original = await materializeOriginalLibraryPage(result, await provider());
+        if (!cropSession?.viewOnly || cropSession.resultId !== selectedId) return false;
+        const src = resultImage(result, original);
+        if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
+        cropImage.src = src;
+        await cropImage.decode();
+        if (!cropSession?.viewOnly || cropSession.resultId !== selectedId) return false;
+        cropFitBounds = [0, 0, 1, 1];
+        cropStage.setAttribute("aria-busy", "false");
+        fitCropContent();
+        cropStage.focus();
+        return true;
+      } catch (error) {
+        if (cropSession?.viewOnly) setStatus(`확대 미리보기 실패: ${error instanceof Error ? error.message : error}`, true);
+        return false;
+      }
     }
     if (!currentMaterialized || currentMaterializedIdentity !== identity) return false;
     const src = resultImage(result, currentMaterialized);
@@ -2193,21 +2265,41 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-crop-cancel]").addEventListener("click", closeCrop);
   cropSave.addEventListener("click", async () => {
     const result = selectedActiveResult();
-    if (!result || !draftCrop || !cropSessionIsCurrent(cropSession, result)) return;
+    if (!result || !cropSessionIsCurrent(cropSession, result)) return;
+    if (!draftCrop) {
+      if (acceptedCrops.length) {
+        closeCrop();
+        await renderPreview();
+      }
+      return;
+    }
+    if (!cropExact || !cropPreviewExact || cropExact.rectKey !== cropRectKey()) return;
     const savedRect = clampRect(draftCrop);
-    const source = {
-      documentId: result.provenance.documentId,
-      pageNumber: result.provenance.pageNumber,
-      rect: savedRect,
-      fullPageFallback: false,
-    };
-    const updated = withManualCropVariant(result, source);
+    cropSequence += 1;
+    const accepted = acceptedCropResult(cropSession.canonicalPage || result, savedRect, cropSequence);
+    acceptedCrops.push({ result: accepted, materialized: cropExact.materialized });
     invalidateAction();
-    results = results.map((item) => item.id === result.id ? updated : item);
-    if (selectedIds.has(result.id)) selectedRecords.set(result.id, updated);
-    activeRepresentation = "manual";
-    closeCrop();
-    await renderPreview();
+    selectedIds.add(accepted.id);
+    selectedRecords.set(accepted.id, accepted);
+    draftCrop = null;
+    cropPreviewEpoch += 1;
+    cropPreviewExact = false;
+    cropExact = null;
+    paintCrop();
+    renderAcceptedCrops();
+    updateResultSelection();
+    setStatus(`${acceptedCrops.length}개 영역을 추가했습니다. 계속 드래그하거나 Enter로 끝내세요.`);
+  });
+  cropCollection.addEventListener("click", (event) => {
+    const remove = event.target.closest("[data-unilib-crop-remove]");
+    if (!remove) return;
+    acceptedCrops = acceptedCrops.filter(({ result }) => result.id !== remove.dataset.unilibCropRemove);
+    selectedIds.delete(remove.dataset.unilibCropRemove);
+    selectedRecords.delete(remove.dataset.unilibCropRemove);
+    invalidateAction();
+    renderAcceptedCrops();
+    updateResultSelection();
+    setCropActionAvailability();
   });
   const runCropAction = async (work) => {
     const exact = cropExact;
@@ -2390,14 +2482,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   window.addEventListener("blur", cancelSpacePress);
   document.addEventListener("keydown", (event) => {
     if (overlay.hidden) return;
+    if (event.target?.closest?.(".workbench-assignment-overlay")) return;
     if (event.key === "Escape") {
       event.preventDefault();
       event.stopImmediatePropagation();
       cancelSpacePress();
-      if (cancelPlacementChoice) cancelPlacementChoice();
+      if (root.classList.contains("is-reader-expanded")) closeExpandedReader();
+      else if (cancelPlacementChoice) cancelPlacementChoice();
       else if (!cropDialog.hidden) closeCrop();
       else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
-      else close();
+      else close({ keyboard: true });
       return;
     }
     if (cancelPlacementChoice) return;
@@ -2467,12 +2561,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }), 240);
   };
   window.addEventListener("focus", syncOnFocus);
-  registerEscapeLayer(root, () => {
+  const closeLibraryLayer = () => {
+    lastInteractionWasKeyboard = true;
     cancelSpacePress();
     if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
-    else close();
-  });
-  registerEscapeLayer(cropDialog, () => { cancelSpacePress(); closeCrop(); });
+    else close({ keyboard: true });
+  };
+  registerEscapeLayer(overlay, closeLibraryLayer);
+  registerEscapeLayer(root, closeLibraryLayer);
+  registerEscapeLayer(cropDialog, () => { lastInteractionWasKeyboard = true; cancelSpacePress(); closeCrop(); });
   return Object.freeze({
     open, close, refresh: async () => { await renderSources(); await runSearch(); }, element: overlay,
     async beginReferenceSelection(consumer, trigger) {
@@ -2480,7 +2577,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       root.classList.add("consumer-mode");
       selectedIds.clear();
       await open(trigger);
-      setStatus("추가할 자료를 체크하세요. 최대 10개까지 고를 수 있습니다.");
+      setStatus("추가할 자료를 체크하세요.");
     },
   });
 }

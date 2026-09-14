@@ -107,11 +107,39 @@ test('ten mixed library snapshots dispatch concurrently as isolated one-referenc
   assert.equal(result.length, 10);
 });
 
-test('invalid independent handoffs fail atomically before creating workspaces', async () => {
+test('more than ten references stay intact when assigned across separate workspaces', async () => {
+  const { manager, dispatches } = createHarness();
+  const references = Array.from({ length: 11 }, (_, index) => ({ dataUrl: dataUrls[1], name: `source-${index}` }));
+  const result = await manager.openIndependentReferences({ references });
+  assert.equal(dispatches.length, 11);
+  assert.equal(result.length, 11);
+});
+
+test('advanced groups preserve ordered indices and confirmed cross-workspace reuse', async () => {
+  const { manager, dispatches } = createHarness();
+  const references = Array.from({ length: 4 }, (_, index) => ({ dataUrl: dataUrls[index], name: `source-${index}` }));
+  await manager.openIndependentReferences({ references, placement: 'advanced', groups: [[3, 0], [2], [3]] });
+  assert.deepEqual(dispatches.map(({ openOptions }) => ({ placement: openOptions.placement, names: openOptions.references.map(({ name }) => name) })), [
+    { placement: 'together', names: ['source-3', 'source-0'] },
+    { placement: 'separate', names: ['source-2'] },
+    { placement: 'separate', names: ['source-3'] },
+  ]);
+  assert.ok(dispatches.every(({ openOptions }) => openOptions.startGeneration === false));
+});
+
+test('invalid grouped handoffs fail atomically before creating workspaces', async () => {
   const { manager, dispatches } = createHarness();
   await assert.rejects(
-    manager.openIndependentReferences({ references: Array.from({ length: 11 }, () => ({ dataUrl: dataUrls[1] })) }),
+    manager.openIndependentReferences({ references: Array.from({ length: 11 }, () => ({ dataUrl: dataUrls[1] })), placement: 'together' }),
     /최대 10개/,
+  );
+  await assert.rejects(
+    manager.openIndependentReferences({ references: [{ dataUrl: dataUrls[1] }], placement: 'advanced', groups: [[0, 0]] }),
+    /중복/,
+  );
+  await assert.rejects(
+    manager.openIndependentReferences({ references: [{ dataUrl: dataUrls[1] }], placement: 'advanced', groups: [] }),
+    /작업대가 없습니다/,
   );
   assert.equal(dispatches.length, 0);
 });

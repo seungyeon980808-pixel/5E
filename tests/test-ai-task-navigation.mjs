@@ -113,9 +113,9 @@ test('Given ten materialized PDF crops, when one deliberate batch start is reque
  },null,2));
 });
 
-test('Given an oversized PDF crop handoff, when workspaces are prepared, then it rejects before opening a partial batch',async()=>{
+test('Given more than ten PDF crops assigned together, when workspaces are prepared, then it rejects before opening a partial batch',async()=>{
  const f=fixture();
  const references=Array.from({length:11},(_,index)=>({dataUrl:'data:image/png;base64,AAAA',name:`crop-${index}`}));
- await assert.rejects(f.manager.openIndependentReferences({references}),/최대 10개/);
+ await assert.rejects(f.manager.openIndependentReferences({references,placement:'together'}),/최대 10개/);
  assert.equal(f.openings.length,0);
 });

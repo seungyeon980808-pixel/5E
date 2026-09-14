@@ -49,6 +49,8 @@ import {
   pdfResultsForDisplay,
   continuousPdfWindow,
   createBoundedPageCache,
+  acceptedCropResult,
+  workbenchReferenceGroups,
 } from "../js/unified-library-ui.js";
 
 test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
@@ -100,6 +102,43 @@ test("unified shell has multiselect type controls and a PDF file-page display to
   assert.match(source, /data-unilib-pdf-mode="page"/u);
   assert.doesNotMatch(source, /data-unilib-pdf-back/u);
   assert.doesNotMatch(source, /pdfBrowseSource/u);
+});
+
+test("Given the library shell, count and help stay beside search while PDF file-page stays beside PDF", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /class="[^"]*library-toolbar[^"]*"/u);
+  assert.match(source, /class="[^"]*library-search-row[^"]*"[\s\S]*data-unilib-query[\s\S]*data-unilib-count[\s\S]*data-unilib-help/u);
+  assert.match(source, /class="[^"]*library-filter-row[^"]*"[\s\S]*data-unilib-type="pdf"[\s\S]*data-unilib-pdf-display/u);
+});
+
+test("Given result cards, metadata is one semantic row and body snippets are omitted", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /copy\.className = "[^"]*library-card-meta/u);
+  assert.match(source, /badge\.className = `[^`]*library-card-type/u);
+  assert.match(source, /title\.className = "library-card-name"/u);
+  assert.match(source, /meta\.className = "library-card-page"/u);
+  assert.doesNotMatch(source, /unilib-result-snippet/u);
+});
+
+test("Given a crop is accepted, it becomes an independent reference with exact provenance", () => {
+  const original = { id: "page:doc:4", title: "문서", kind: "page", provenance: { provider: "pdf", documentId: "doc", pageNumber: 4 } };
+  const accepted = acceptedCropResult(original, [0.1, 0.2, 0.3, 0.4], 2);
+  assert.equal(accepted.id, "page:doc:4:manual:2");
+  assert.equal(accepted.kind, "crop");
+  assert.equal(accepted.cropType, "manual");
+  assert.deepEqual(accepted.provenance, { provider: "pdf", documentId: "doc", pageNumber: 4, rect: [0.1, 0.2, 0.3, 0.4], fullPageFallback: false });
+  assert.deepEqual(accepted.variants.manual.source.rect, [0.1, 0.2, 0.3, 0.4]);
+});
+
+test("Given advanced assignment, ordered groups map exact reference indices without truncation", () => {
+  const references = Array.from({ length: 12 }, (_, index) => ({ name: `r${index}` }));
+  const groups = workbenchReferenceGroups(references, { placement: "advanced", groups: [[11, 0], [4], [3]] });
+  assert.deepEqual(groups.map(({ placement, references: group }) => ({ placement, names: group.map(({ name }) => name) })), [
+    { placement: "together", names: ["r11", "r0"] },
+    { placement: "separate", names: ["r4"] },
+    { placement: "separate", names: ["r3"] },
+  ]);
+  assert.throws(() => workbenchReferenceGroups(references, { placement: "advanced", groups: [[3, 3]] }), /중복/u);
 });
 
 test("PDF page display expands matches without losing document and page provenance", () => {
@@ -270,7 +309,7 @@ test("Given a result row, card selection and AI-reference selection are sibling 
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
   assert.match(source, /button\.append\(media, copy\);\s*item\.append\(button, check\);/u);
   assert.doesNotMatch(source, /button\.append\([^)]*check/u);
-  assert.match(source, /openIndependentReferences\(\{ references, startGeneration: false, placement \}\)/u);
+  assert.match(source, /openIndependentReferences\(\{ references, startGeneration: false, placement, groups: assignment\?\.groups \}\)/u);
 });
 
 test("Given arbitrary-depth sources, the folder tree preserves hierarchy and tri-state descendants", () => {
@@ -591,9 +630,9 @@ test("saving a transient crop does not write the persistent correction override"
   assert.match(source, /result\.variants\?\.manual\?\.source\?\.rect/u);
 });
 
-test("keeping a crop refreshes its checked record before later filtered AI dispatch", async () => {
+test("accepting crops keeps independent checked records for later filtered AI dispatch", async () => {
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
-  assert.match(source, /if \(selectedIds\.has\(result\.id\)\) selectedRecords\.set\(result\.id, updated\)/u);
+  assert.match(source, /selectedIds\.add\(accepted\.id\);\s*selectedRecords\.set\(accepted\.id, accepted\)/u);
   assert.match(source, /const chosen = aiActionRecords\(selectedRecords, selectedIds,/u);
 });
 
