@@ -4,6 +4,7 @@ import test from "node:test";
 
 const tutorialSource = await readFile(new URL("../js/tutorial-courses.js", import.meta.url), "utf8");
 const paletteSource = await readFile(new URL("../js/command-palette.js", import.meta.url), "utf8");
+const guideSource = await readFile(new URL("../docs/USER_GUIDE.md", import.meta.url), "utf8");
 
 function section(start, end) {
   return tutorialSource.slice(tutorialSource.indexOf(start), tutorialSource.indexOf(end));
@@ -39,4 +40,14 @@ test("Given the curated-parts tutorial, when it searches and inserts an asset, t
 test("Given the command palette, when the Library command is shown, then it uses the unified name", () => {
   assert.match(paletteSource, /label: "라이브러리 열기"/u);
   assert.doesNotMatch(paletteSource, /label: "기출 라이브러리 열기"/u);
+});
+
+test("Given the Library shortcut is shown, when help surfaces are localized, then they agree on Ctrl/Cmd+L", () => {
+  assert.match(tutorialSource, /localizeTutorialCourse/u);
+  assert.match(tutorialSource, /단축키는 Ctrl\+L 입니다/u);
+  assert.doesNotMatch(tutorialSource, /Ctrl\+Shift\+F/u);
+  assert.match(paletteSource, /shortcutLabel: "Ctrl\+L"/u);
+  assert.doesNotMatch(paletteSource, /shortcutLabel: "Ctrl\+Shift\+F"/u);
+  assert.match(guideSource, /Windows: `Ctrl\+L` \/ macOS: `⌘L`/u);
+  assert.doesNotMatch(guideSource, /Ctrl\+Shift\+F/u);
 });
