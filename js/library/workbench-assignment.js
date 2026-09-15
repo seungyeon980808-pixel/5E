@@ -61,7 +61,7 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
     overlay.innerHTML = `<section class="workbench-assignment" role="dialog" aria-modal="true" aria-labelledby="workbench-assignment-title">
       <header><h2 id="workbench-assignment-title">AI 작업대 배정</h2><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
       <div class="workbench-assignment-modes" role="group" aria-label="배정 방법">
-        <button type="button" data-placement="separate">이미지마다 따로</button><button type="button" data-placement="together">한 작업대에 함께</button><button type="button" data-placement="advanced">고급 배정</button>
+        <button type="button" data-placement="separate">이미지마다 따로</button><button type="button" data-placement="together">한 작업대에 함께</button><button type="button" data-placement="advanced">직접 나누기</button>
       </div>
       <div class="workbench-assignment-summary" data-summary></div>
       <div class="workbench-assignment-advanced" data-advanced hidden><section class="workbench-assignment-reference-panel"><h3>크롭 이미지 <span data-reference-count></span>개</h3><div class="workbench-assignment-references" data-references></div></section><section class="workbench-assignment-bench-panel"><div class="workbench-assignment-bench-heading"><h3>작업대</h3><button type="button" data-action="add-bench">+ 작업대 추가</button></div><div class="workbench-assignment-benches" data-benches></div></section></div>
