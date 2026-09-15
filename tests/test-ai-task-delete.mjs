@@ -17,7 +17,7 @@ function fixture(confirmed=true) {
 }
 test('deleting the final task leaves its workspace empty without recreating a tab or offering undo',async()=>{
  const f=fixture();await f.run();assert.equal(f.taskTabs.size,0);
- assert.ok(f.calls.includes('empty'));assert.doesNotMatch(handler,/되돌리기|restoreDeleted/);
+ assert.ok(f.calls.includes('empty'));assert.ok(f.calls.includes(null), 'reset the active view after final deletion');assert.doesNotMatch(handler,/되돌리기|restoreDeleted/);
 });
 test('cancelled deletion preserves the task',async()=>{
  const f=fixture(false);await f.run();assert.equal(f.taskTabs.size,1);assert.deepEqual(f.calls,[]);

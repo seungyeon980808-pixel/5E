@@ -15,10 +15,6 @@ export async function clearTaskWorkspaces({ tasks, confirm, cancel, remove }) {
   const removedIds = [];
   const retainedIds = [];
   for (const task of targets) {
-    if (task.workState === 'failed') {
-      retainedIds.push(task.id);
-      continue;
-    }
     if (CANCELLABLE_TASK_STATES.has(task.workState)) {
       try {
         const outcome = await cancel(task);
@@ -152,6 +148,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
   let active;
   let restored = false;
   let collectiveExportInProgress = false;
+  let clearing = false;
   const selectionKey = '5e.aiActiveTask.v1';
   async function exportCollection(mode) {
     if (collectiveExportInProgress) {
@@ -171,6 +168,27 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
       return await writeTaskExports(destination, groups.flat());
     } finally {
       collectiveExportInProgress = false;
+    }
+  }
+  async function clearCollection(confirm) {
+    if (clearing) return;
+    clearing = true;
+    try {
+      await Promise.all(entries.map(entry => entry.controller.ready));
+      const targets = entries.filter(entry => entry.tabs.length);
+      const count = targets.reduce((sum, entry) => sum + entry.tabs.length, 0);
+      if (!count || !await confirm(count)) return { confirmed: false, removedIds: [], retainedIds: [] };
+      const result = { confirmed: true, removedIds: [], retainedIds: [] };
+      for (const entry of targets) {
+        const cleared = await entry.controller.clearTasks(async () => true);
+        result.removedIds.push(...cleared.removedIds);
+        result.retainedIds.push(...cleared.retainedIds);
+      }
+      activate(entries.find(entry => entry.tabs.length) || active);
+      saveRegistry();
+      return result;
+    } finally {
+      clearing = false;
     }
   }
   function store(key, value) {
@@ -272,11 +290,11 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     entries.push(entry);
     entry.controller = initialize(state, {
       panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop, scope),
-      exportCollection,
+      exportCollection, clearCollection,
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
         const next = entries.find(item => item !== entry && item.tabs.length);
-        activate(next || entry);
+        if (!clearing) activate(next || entry);
         saveRegistry();
       },
       navigationChanged: tabs => {
@@ -302,7 +320,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
       active = target;
       target.controller.selectTask(saved.taskId);
     }
-    if (!active.tabs.length) active = entries.find(e => e.tabs.length) || add(crypto.randomUUID(), false);
+    if (!active.tabs.length) active = entries.find(e => e.tabs.length) || active;
     restored = true;
     saveRegistry();
     renderNavigation();
