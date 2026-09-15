@@ -1,3 +1,4 @@
+import { composeReferenceImages } from './ai-reference-composite.js';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",
@@ -138,7 +139,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
-  const paneAnimations = new WeakMap();
+
   const reports = new Map();
   const fittedCards = new WeakSet();
   let generatedSerial = 0;
@@ -162,6 +163,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (!sourceKeys.has(card)) sourceKeys.set(card, `ui-source-${++sourceSerial}`);
     return sourceKeys.get(card);
   };
+  let combinedCard = null;
+  let combinedSignature = '';
+  let composition = { orientation: 'horizontal' };
+  const activeSource = () => activeSourceKey === '__combined__' ? combinedCard
+    : sourceCards().find(item => sourceKey(item) === activeSourceKey);
   const activeCandidate = () => generatedCards().find((card) => candidateKey(card) === activeCandidateKey) || null;
 
   function cardFit(card) {
@@ -169,12 +175,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const image = stage?.querySelector(':scope > img');
     if (!stage || !image?.naturalWidth || !image?.naturalHeight || !card.clientWidth || !card.clientHeight) return null;
     const style = getComputedStyle(card);
-    const gap = parseFloat(style.rowGap || style.gap) || 0;
-    const fixedHeight = Array.from(card.children).filter(child => child !== stage).reduce((sum, child) => sum + child.offsetHeight, 0);
+    const pane = card.closest('.ai-image-pane');
+    const headHeight = pane.querySelector('.ai-pane-head').offsetHeight;
     const availableWidth = Math.max(40, card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
-    const availableHeight = Math.max(40, card.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - fixedHeight - gap * Math.max(0, card.children.length - 1));
-    const ratio = image.naturalWidth / image.naturalHeight;
-    return {stage, ratio, height: panel.dataset.aiResultView !== 'multiple' && card.classList.contains('ai-generated-card') && results?.classList.contains('mode-result') ? availableWidth / ratio : Math.min(availableHeight, availableWidth / ratio)};
+    const availableHeight = Math.max(40, pane.clientHeight - headHeight - 100);
+    const original = activeSource()?.querySelector('.ai-preview-stage > img');
+    const ratio = original?.naturalWidth && original?.naturalHeight ? original.naturalWidth / original.naturalHeight : image.naturalWidth / image.naturalHeight;
+    return {stage, ratio, height: Math.min(availableHeight, availableWidth / ratio)};
   }
 
   function applyStageSize(stage) {
@@ -191,15 +198,16 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const fit = cardFit(card);
     if (!fit) return;
     const fits = results?.classList.contains('mode-side-by-side')
-      ? [cardFit(activeCandidate()), cardFit(sourceCards().find(item => sourceKey(item) === activeSourceKey))].filter(Boolean)
+      ? [cardFit(activeCandidate()), cardFit(activeSource())].filter(Boolean)
       : [fit];
+    const sharedHeight = Math.floor(Math.min(...fits.map(item => item.height)));
     for (const item of fits) {
-      const height = Math.floor(item.height);
+      const height = sharedHeight;
       item.stage.dataset.aiFitWidth = String(Math.floor(height * item.ratio));
       item.stage.dataset.aiFitHeight = String(height);
       applyStageSize(item.stage);
     }
-    const source = cardFit(sourceCards().find(item => sourceKey(item) === activeSourceKey));
+    const source = cardFit(activeSource());
     if (source) {
       panel.style.setProperty('--ai-pending-width', source.stage.style.width);
       panel.style.setProperty('--ai-pending-height', source.stage.style.height);
@@ -223,6 +231,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   function setLayout(mode, fromUser = false) {
     if (!results || !["side-by-side", "source", "result"].includes(mode)) return;
+    const previous = results.classList.contains("mode-source") ? "source" : results.classList.contains("mode-result") ? "result" : null;
+    const position = previous ? readPosition(previous) : null;
+    if (previous && mode !== "side-by-side") paneZoom[mode] = paneZoom[previous];
     results.classList.remove("mode-side-by-side", "mode-source", "mode-result");
     results.classList.add(`mode-${mode}`);
     for (const button of layoutButtons) {
@@ -231,25 +242,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       button.setAttribute("aria-pressed", String(selected));
     }
     if (fromUser) userChoseLayout = true;
-    if (fromUser && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const panes = mode === "source"
-        ? [results.querySelector(".ai-original-pane")]
-        : mode === "result"
-          ? [results.querySelector(".ai-result-pane")]
-          : Array.from(results.querySelectorAll(".ai-image-pane"));
-      for (const pane of panes.filter(Boolean)) {
-        paneAnimations.get(pane)?.cancel();
-        const offset = mode === "source" ? -6 : 6;
-        const animation = pane.animate(
-          [{ opacity: .72, transform: `translate3d(${offset}px, 0, 0)` }, { opacity: 1, transform: "translate3d(0, 0, 0)" }],
-          { duration: 140, easing: "cubic-bezier(.2, .8, .2, 1)" },
-        );
-        paneAnimations.set(pane, animation);
-      }
-    }
+    const trackingControl = panel.querySelector('[data-ai-tracking-control]');
+    if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
+    panel.dataset.aiLayout = mode;
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
-      fitCardStage(sourceCards().find((item) => sourceKey(item) === activeSourceKey));
+      fitCardStage(activeSource());
+      applyPaneZoom("source");
+      applyPaneZoom("result");
+      if (position && mode !== "side-by-side") writePosition(mode, position);
     });
   }
 
@@ -264,11 +265,49 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   const paneCard = (pane) => pane === "source"
-    ? sourceCards().find((item) => sourceKey(item) === activeSourceKey)
+    ? activeSource()
     : activeCandidate();
 
+  const syncedScroll = new WeakMap();
+  function readPosition(pane) {
+    const card = paneCard(pane);
+    const stage = card?.querySelector('.ai-preview-stage');
+    if (!stage?.offsetWidth || !stage.offsetHeight || !card.clientWidth) return null;
+    return {
+      x: (card.scrollLeft + card.clientWidth / 2 - stage.offsetLeft) / stage.offsetWidth,
+      y: (card.scrollTop + (card.closest(".ai-image-pane").getBoundingClientRect().bottom - card.getBoundingClientRect().top) / 2 - stage.offsetTop) / stage.offsetHeight,
+    };
+  }
+  function writePosition(pane, position) {
+    const card = paneCard(pane);
+    const stage = card?.querySelector('.ai-preview-stage');
+    if (!card || !stage || !position) return;
+    card.scrollLeft = stage.offsetLeft + position.x * stage.offsetWidth - card.clientWidth / 2;
+    card.scrollTop = stage.offsetTop + position.y * stage.offsetHeight - (card.closest(".ai-image-pane").getBoundingClientRect().bottom - card.getBoundingClientRect().top) / 2;
+    syncedScroll.set(card, { left: card.scrollLeft, top: card.scrollTop });
+  }
+  function copyPosition(from, to) { writePosition(to, readPosition(from)); }
+  panel.addEventListener('scroll', event => {
+    if (!linkedZoom?.checked || !results.classList.contains('mode-side-by-side')) return;
+    const card = event.target;
+    const expected = syncedScroll.get(card);
+    if (expected && Math.abs(card.scrollLeft - expected.left) < 1 && Math.abs(card.scrollTop - expected.top) < 1) return;
+    syncedScroll.delete(card);
+    if (card === paneCard('source')) copyPosition('source', 'result');
+    else if (card === paneCard('result')) copyPosition('result', 'source');
+  }, true);
+  document.addEventListener('keydown', event => {
+    if (panel.hidden || !['source', 'result'].includes(panel.dataset.aiLayout) || event.key !== ' ') return;
+    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
+    if (event.target.closest?.('input,textarea,select,[contenteditable]:not([contenteditable="false"]),button:not([data-ai-layout-mode]),[role="button"],summary')) return;
+    if (document.querySelector('dialog[open], .modal-overlay:not([hidden]):not(#ai-image-panel)')) return;
+    if (!activeCandidate() || !sourceCards().length) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (!event.repeat) setLayout(panel.dataset.aiLayout === 'source' ? 'result' : 'source', true);
+  }, true);
   function applyPaneZoom(pane) {
-    paneZoom[pane] = Math.min(2, Math.max(.6, Math.round(paneZoom[pane] * 10) / 10));
+    paneZoom[pane] = Math.min(4, Math.max(.25, Math.round(paneZoom[pane] * 10) / 10));
     const card = paneCard(pane);
     const stage = card?.querySelector(".ai-preview-stage");
     if (stage) {
@@ -283,17 +322,19 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const value = controls?.querySelector("[data-ai-zoom-value]");
     if (value) value.textContent = `${Math.round(paneZoom[pane] * 100)}%`;
     for (const button of controls?.querySelectorAll("[data-ai-zoom-action]") || []) {
-      if (button.dataset.aiZoomAction === "out") button.disabled = paneZoom[pane] <= .6;
-      if (button.dataset.aiZoomAction === "in") button.disabled = paneZoom[pane] >= 2;
+      if (button.dataset.aiZoomAction === "out") button.disabled = paneZoom[pane] <= .25;
+      if (button.dataset.aiZoomAction === "in") button.disabled = paneZoom[pane] >= 4;
     }
   }
 
   function changePaneZoom(pane, action) {
+    const position = readPosition(pane);
     const next = action === "in" ? paneZoom[pane] + .2 : action === "out" ? paneZoom[pane] - .2 : 1;
-    const targets = linkedZoom?.checked ? ["source", "result"] : [pane];
+    const targets = linkedZoom?.checked && results.classList.contains("mode-side-by-side") ? ["source", "result"] : [pane];
     for (const target of targets) {
       paneZoom[target] = next;
       applyPaneZoom(target);
+      writePosition(target, action === "fit" ? { x: .5, y: .5 } : position);
     }
     panel.dispatchEvent(new CustomEvent("5e:ai-workbench-geometry-change"));
   }
@@ -431,14 +472,72 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     syncWorkbenchStage();
   }
 
+  function prepareCombined(cards) {
+    if (combinedCard && !combinedCard.isConnected) { combinedCard = null; combinedSignature = ''; }
+    const inputs = cards.filter(card => card.dataset.aiReferenceRole !== 'STYLE_REFERENCE');
+    if (inputs.length < 2) {
+      combinedSignature = '';
+      combinedCard?.remove(); combinedCard = null;
+      return;
+    }
+    const sources = inputs.map(card => ({ id: sourceKey(card), dataUrl: card.querySelector('.ai-preview-stage > img')?.src }));
+    const signature = JSON.stringify({ sources, composition });
+    if (signature === combinedSignature) return;
+    combinedSignature = signature;
+    if (!combinedCard) {
+      combinedCard = document.createElement('article');
+      combinedCard.className = 'ai-image-card ai-combined-card';
+      const head = document.createElement('header'); head.className = 'ai-image-card-head';
+      const title = document.createElement('strong'); title.textContent = '연결된 전체 원본'; title.title = '위치별 코멘트는 위 목록에서 개별 원본을 선택해 작성하세요.'; head.append(title);
+      const stage = document.createElement('div'); stage.className = 'ai-preview-stage';
+      const image = document.createElement('img'); image.alt = '연결된 전체 원본'; stage.append(image);
+      combinedCard.append(head, stage);
+      references.append(combinedCard);
+      let pan = null;
+      stage.addEventListener('pointerdown', event => {
+        if (event.button !== 0 || panel.querySelector('[data-ai-comment-tool="pan"]')?.getAttribute('aria-pressed') !== 'true') return;
+        pan = { x: event.clientX, y: event.clientY, left: combinedCard.scrollLeft, top: combinedCard.scrollTop };
+        stage.setPointerCapture(event.pointerId); event.preventDefault();
+      });
+      stage.addEventListener('pointermove', event => {
+        if (!pan) return;
+        combinedCard.scrollLeft = pan.left - event.clientX + pan.x;
+        combinedCard.scrollTop = pan.top - event.clientY + pan.y;
+      });
+      stage.addEventListener('pointerup', () => { pan = null; });
+      stage.addEventListener('pointercancel', () => { pan = null; });
+    }
+    const target = combinedCard;
+    target.setAttribute('aria-busy', 'true');
+    composeReferenceImages({ sources, orientation: composition.orientation, layout: composition.layout, maxLongEdge: 1536 }).then(result => {
+      if (signature !== combinedSignature || target !== combinedCard) return;
+      const image = target.querySelector('img');
+      image.onload = () => { fitCardStage(target); applyPaneZoom('source'); };
+      image.src = result.dataUrl;
+      target.setAttribute('aria-busy', 'false');
+      watchCardFit(target);
+    }).catch(() => {
+      if (signature !== combinedSignature) return;
+      target.setAttribute('aria-busy', 'false');
+      target.querySelector('strong').textContent = '연결 미리보기를 불러오지 못했습니다. 개별 원본을 선택해 주세요.';
+    });
+  }
+
   function syncSources() {
     const cards = sourceCards();
-    const keys = cards.map(sourceKey);
-    if (!keys.includes(activeSourceKey)) activeSourceKey = keys[0] || "";
+    const wasCombined = Boolean(combinedCard);
+    prepareCombined(cards);
+    const keys = [...(combinedCard ? ['__combined__'] : []), ...cards.map(sourceKey)];
+    if (!keys.includes(activeSourceKey) || (!wasCombined && combinedCard)) activeSourceKey = keys[0] || '';
+    combinedCard?.classList.toggle('is-ai-active-source', activeSourceKey === '__combined__');
     if (sourceSelect) {
       const picker = sourceSelect.closest("[data-ai-source-picker]");
       if (picker) picker.hidden = cards.length <= 1;
       sourceSelect.replaceChildren();
+      if (combinedCard) {
+        const option = document.createElement('option');
+        option.value = '__combined__'; option.textContent = '연결된 전체 원본'; sourceSelect.append(option);
+      }
       if (!cards.length) {
         const option = document.createElement("option");
         option.value = "";
@@ -477,30 +576,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       }
       watchCardFit(card);
     }
-    if (compositePreview) {
-      const structuralCards = cards.filter((item) => item.dataset.aiReferenceRole !== "STYLE_REFERENCE");
-      const structuralOrder = structuralCards.map(sourceKey).join(',');
-      const exactCompositeIsCurrent = compositePreview.dataset.compositeSourceOrder === structuralOrder
-        && compositePreview.dataset.orientation === panel.dataset.aiCompositionOrientation
-        && Boolean(compositePreview.querySelector('img[alt="연결된 원본"]'));
-      if (!exactCompositeIsCurrent) {
-        delete compositePreview.dataset.compositeWidth;
-        delete compositePreview.dataset.compositeHeight;
-        delete compositePreview.dataset.compositeSourceOrder;
-        compositePreview.replaceChildren();
-        for (const card of structuralCards) {
-          const image = card.querySelector(".ai-preview-stage > img");
-          if (!image) continue;
-          const previewImage = document.createElement("img");
-          previewImage.src = image.currentSrc || image.src;
-          previewImage.alt = "";
-          compositePreview.appendChild(previewImage);
-        }
-      }
-      compositePreview.hidden = exactCompositeIsCurrent ? false : compositePreview.children.length < 2;
-    }
+    if (compositePreview) compositePreview.hidden = true;
     applyPaneZoom("source");
-    window.requestAnimationFrame(() => fitCardStage(cards.find((card) => sourceKey(card) === activeSourceKey)));
+    window.requestAnimationFrame(() => fitCardStage(activeSource()));
   }
 
   layoutButtons.forEach((button) => button.addEventListener("click", () => setLayout(button.dataset.aiLayoutMode, true)));
@@ -511,8 +589,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }));
   linkedZoom?.addEventListener("change", () => {
     if (!linkedZoom.checked) return;
-    paneZoom.source = paneZoom.result;
-    applyPaneZoom("source");
+    paneZoom.result = paneZoom.source;
+    applyPaneZoom("result");
+    copyPosition("source", "result");
   });
   function selectCandidate(candidateKeyValue) {
     activeCandidateKey = candidateKeyValue;
@@ -580,6 +659,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     closeVersionList();
   });
   orientationButtons.forEach((button) => button.addEventListener("click", () => {
+    if (panel.dataset.aiBusy === "true") return;
     const orientation = button.dataset.aiCompositionOrientation;
     panel.dataset.aiCompositionOrientation = orientation;
     if (compositePreview) compositePreview.dataset.orientation = orientation;
@@ -590,17 +670,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     });
     panel.dispatchEvent(new CustomEvent("5e:ai-composition-orientation-change", { bubbles: true, detail: { orientation } }));
   }));
-  panel.addEventListener("5e:ai-composite-ready", (event) => {
-    if (!compositePreview || !event.detail?.dataUrl) return;
-    const image = document.createElement("img");
-    image.src = event.detail.dataUrl;
-    image.alt = "연결된 원본";
-    compositePreview.replaceChildren(image);
-    compositePreview.dataset.orientation = event.detail.orientation || "horizontal";
-    compositePreview.dataset.compositeWidth = String(event.detail.width || "");
-    compositePreview.dataset.compositeHeight = String(event.detail.height || "");
-    compositePreview.dataset.compositeSourceOrder = (event.detail.sourceOrder || []).join(',');
-    compositePreview.hidden = false;
+  panel.addEventListener('5e:ai-composition-change', event => {
+    composition = event.detail || { orientation: 'horizontal' };
+    orientationButtons.forEach(button => {
+      const selected = button.dataset.aiCompositionOrientation === composition.orientation;
+      button.classList.toggle('is-on', selected); button.setAttribute('aria-pressed', String(selected));
+    });
+    syncSources();
   });
   sourceSelect?.addEventListener("change", () => {
     activeSourceKey = sourceSelect.value;
@@ -649,7 +725,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     window.requestAnimationFrame(() => {
       panelLayoutChanging = false;
       fitCardStage(activeCandidate());
-      fitCardStage(sourceCards().find((item) => sourceKey(item) === activeSourceKey));
+      fitCardStage(activeSource());
     });
   });
 
@@ -664,11 +740,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   applyPaneZoom("result");
   panel.aiWorkbench = {
     getViewState() {
-      const sourceCard = panel.querySelector(".ai-original-pane .ai-image-card");
-      const resultCard = panel.querySelector(".ai-result-pane .ai-image-card");
+      const sourceCard = activeSource();
+      const resultCard = activeCandidate();
       return {
         selectedCandidateId: activeCandidateKey,
         zoom: { ...paneZoom },
+        layout: panel.dataset.aiLayout,
+        tracking: linkedZoom?.checked === true,
         scroll: {
           source: { left: sourceCard?.scrollLeft || 0, top: sourceCard?.scrollTop || 0 },
           result: { left: resultCard?.scrollLeft || 0, top: resultCard?.scrollTop || 0 },
@@ -677,6 +755,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     },
     restoreViewState(state = {}) {
       state = state && typeof state === "object" ? state : {};
+      if (linkedZoom && typeof state.tracking === "boolean") linkedZoom.checked = state.tracking;
+      if (state.layout) setLayout(state.layout, true);
       if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
       if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
       if (Number.isFinite(state.zoom?.result)) paneZoom.result = state.zoom.result;
@@ -684,8 +764,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       applyPaneZoom("source");
       applyPaneZoom("result");
       window.requestAnimationFrame(() => {
-        const sourceCard = panel.querySelector(".ai-original-pane .ai-image-card");
-        const resultCard = panel.querySelector(".ai-result-pane .ai-image-card");
+        const sourceCard = activeSource();
+        const resultCard = activeCandidate();
         if (sourceCard) {
           sourceCard.scrollLeft = Number(state.scroll?.source?.left) || 0;
           sourceCard.scrollTop = Number(state.scroll?.source?.top ?? state.scroll?.source) || 0;

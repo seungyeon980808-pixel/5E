@@ -9,7 +9,7 @@ const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(root, "css", "ai-panel.css"), "utf8");
 const workbench = fs.readFileSync(path.join(root, "js", "ai-workbench.js"), "utf8");
 const panel = fs.readFileSync(path.join(root, "js", "ai-panel.js"), "utf8");
-const workbenchModule = await import(`data:text/javascript;base64,${Buffer.from(workbench).toString("base64")}`);
+const workbenchModule = await import(new URL("../js/ai-workbench.js", import.meta.url));
 
 function attributeCount(attribute) {
   return (index.match(new RegExp(`\\s${attribute}(?=[\\s=>])`, "g")) || []).length;
@@ -129,8 +129,9 @@ test("source composition controls expose orientation, ordering, and live preview
   assert.match(index, /data-ai-composite-preview/);
   assert.match(workbench, /5e:ai-composition-orientation-change/);
   assert.match(workbench, /5e:ai-reference-order-change/);
-  assert.match(workbench, /5e:ai-composite-ready/);
-  assert.match(workbench, /image\.src = event\.detail\.dataUrl/);
+  assert.match(workbench, /composeReferenceImages/);
+  assert.match(workbench, /ai-combined-card/);
+  assert.match(workbench, /image\.src = result\.dataUrl/);
   assert.match(workbench, /setAttribute\("data-ai-reference-move", direction\)/);
   assert.match(workbench, /\[\["earlier", "앞으로"\], \["later", "뒤로"\]\]/);
 });

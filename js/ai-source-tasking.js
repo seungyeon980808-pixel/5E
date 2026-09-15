@@ -27,7 +27,11 @@ export function normalizeReferenceComposition(value, sources = []) {
   ));
   const sourceOrder = [...requested, ...available.filter(id => !requested.includes(id))];
   return {
-    orientation: value?.orientation === "vertical" ? "vertical" : "horizontal",
+    orientation: ["horizontal", "vertical", "auto", "free"].includes(value?.orientation) ? value.orientation : "horizontal",
+    ...(value?.layout && Number(value.layout.width) > 0 && Number(value.layout.height) > 0 ? { layout: {
+      width: Math.min(20000, Number(value.layout.width)), height: Math.min(20000, Number(value.layout.height)),
+      placements: Array.from(value.layout.placements || []).filter(item => availableSet.has(item?.sourceId) && [item.x, item.y, item.width, item.height].every(Number.isFinite) && item.x >= 0 && item.y >= 0 && item.width > 0 && item.height > 0).map(item => ({sourceId: item.sourceId, x: item.x, y: item.y, width: item.width, height: item.height})),
+    } } : {}),
     sourceOrder,
   };
 }

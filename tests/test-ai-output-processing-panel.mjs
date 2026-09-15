@@ -16,6 +16,54 @@ function workspaceWithResult(data) {
   }]};
 }
 
+test('generated line and exterior background controls use no provider or network calls and reset exactly', async () => {
+  const pixels = new Uint8Array(9 * 9 * 4).fill(255);
+  pixels.set([0, 0, 0, 255], (4 * 9 + 4) * 4);
+  const source = scopedPngData(encodeTestRgbaPng({width:9,height:9,data:pixels}));
+  const browser = installAiPanelBrowserFixture({workspace:workspaceWithResult(source)});
+  const originalFetch = globalThis.fetch;
+  let networkCalls = 0;
+  globalThis.fetch = async () => { networkCalls += 1; throw new Error('Local output processing must not use the network'); };
+  const state = {objects:[],selectedIds:[],activePageId:'page-1',activeLayerId:'layer-1',artboard:{width:100,height:100}};
+  let manager;
+  try {
+    manager = initAiPanel({get:()=>state});
+    await manager.ready;
+    await manager.open();
+    const image = browser.panel.querySelector('.ai-generated-card img');
+    const thickness = browser.panel.querySelector('[data-ai-line-thickness]');
+    const background = browser.panel.querySelector('[data-ai-background-policy]');
+    for (const radius of [1, 2, 1]) {
+      const previous = image.src;
+      thickness.value = String(radius);
+      thickness.dispatchEvent({type:'change'});
+      await browser.document.waitForState(() => image.src !== previous);
+      const output = decodeTestPng(scopedPngBytes(image.src));
+      const blackPixels = Array.from({length:81}, (_, index) => output.data[index * 4] === 0).filter(Boolean).length;
+      assert.equal(blackPixels, radius === 1 ? 5 : 13);
+    }
+    const thickened = image.src;
+    background.value = 'connected';
+    background.dispatchEvent({type:'change'});
+    await browser.document.waitForState(() => image.src !== thickened);
+    const transparent = decodeTestPng(scopedPngBytes(image.src));
+    assert.equal(transparent.data[3], 0);
+    assert.deepEqual(transparent.data.slice((4 * 9 + 4) * 4, (4 * 9 + 4) * 4 + 4), new Uint8Array([0, 0, 0, 255]));
+    thickness.value = '0';
+    thickness.dispatchEvent({type:'change'});
+    background.value = 'preserve';
+    background.dispatchEvent({type:'change'});
+    await browser.document.waitForState(() => image.src === source);
+    assert.deepEqual(decodeTestPng(scopedPngBytes(source)).data, pixels);
+    assert.equal(browser.desktop.sends.length, 0);
+    assert.equal(networkCalls, 0);
+  } finally {
+    manager?.close();
+    globalThis.fetch = originalFetch;
+    browser.restore();
+  }
+});
+
 test('real panel selects update preview while retaining the generated PNG source', async () => {
   const pixels = new Uint8Array(3 * 3 * 4).fill(255);
   pixels.set([10, 80, 150, 255], (1 * 3 + 1) * 4);

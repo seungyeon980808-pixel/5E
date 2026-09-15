@@ -103,6 +103,46 @@ function layout(decoded, orientation) {
   return { width, height, rects };
 }
 
+export function planReferenceLayout(decoded, orientation = "auto", freeLayout = null) {
+  if (orientation === "free" && freeLayout) {
+    const width = positiveInteger(Math.round(Number(freeLayout.width)), "Canvas width");
+    const height = positiveInteger(Math.round(Number(freeLayout.height)), "Canvas height");
+    const fallback = layout(decoded, "horizontal");
+    const rects = decoded.map((item, order) => {
+      const placement = freeLayout.placements?.find(entry => entry.sourceId === item.sourceId);
+      const raw = placement || {...fallback.rects[order], x: fallback.rects[order].x / fallback.width * width, y: 0, width: item.width / fallback.width * width, height};
+      if (![raw.x, raw.y, raw.width, raw.height].every(Number.isFinite) || raw.width <= 0 || raw.height <= 0) throw new TypeError("Invalid placement.");
+      const x = Math.max(0, Math.min(width - 1, raw.x));
+      const y = Math.max(0, Math.min(height - 1, raw.y));
+      const scale = Math.min(Math.min(raw.width, width - x) / item.width, Math.min(raw.height, height - y) / item.height);
+      return {sourceId: item.sourceId, order, x, y, width: item.width * scale, height: item.height * scale};
+    });
+    return {width, height, rects};
+  }
+  if (orientation !== "auto" && orientation !== "free") return layout(decoded, orientation);
+  // Choose the row count whose packed canvas is closest to square.
+  const candidates = decoded.map((_, index) => {
+    const columns = index + 1;
+    const commonHeight = Math.min(...decoded.map(item => item.height));
+    let y = 0;
+    let width = 0;
+    const rects = [];
+    for (let start = 0; start < decoded.length; start += columns) {
+      let x = 0;
+      for (let order = start; order < Math.min(start + columns, decoded.length); order += 1) {
+        const item = decoded[order];
+        const itemWidth = item.width / item.height * commonHeight;
+        rects.push({sourceId: item.sourceId, order, x, y, width: itemWidth, height: commonHeight});
+        x += itemWidth;
+      }
+      width = Math.max(width, x);
+      y += commonHeight;
+    }
+    return {width, height: y, rects};
+  });
+  return candidates.sort((a, b) => Math.abs(Math.log(a.width / a.height)) - Math.abs(Math.log(b.width / b.height)))[0];
+}
+
 function scaledLayout(initial, maxLongEdge) {
   const bound = Number(maxLongEdge);
   const scale = Number.isFinite(bound) && bound > 0 ? Math.min(1, bound / Math.max(initial.width, initial.height)) : 1;
@@ -141,9 +181,9 @@ async function stitchBoundedPixels(decoded, completed, yieldControl) {
         const sourceOffset = (sourceY * source.width + sourceX) * 4;
         const targetOffset = ((rect.y + y) * completed.width + rect.x + x) * 4;
         const alpha = source.data[sourceOffset + 3] / 255;
-        pixels[targetOffset] = Math.round(source.data[sourceOffset] * alpha + 255 * (1 - alpha));
-        pixels[targetOffset + 1] = Math.round(source.data[sourceOffset + 1] * alpha + 255 * (1 - alpha));
-        pixels[targetOffset + 2] = Math.round(source.data[sourceOffset + 2] * alpha + 255 * (1 - alpha));
+        pixels[targetOffset] = Math.round(source.data[sourceOffset] * alpha + pixels[targetOffset] * (1 - alpha));
+        pixels[targetOffset + 1] = Math.round(source.data[sourceOffset + 1] * alpha + pixels[targetOffset + 1] * (1 - alpha));
+        pixels[targetOffset + 2] = Math.round(source.data[sourceOffset + 2] * alpha + pixels[targetOffset + 2] * (1 - alpha));
         pixels[targetOffset + 3] = 255;
       }
       completedRows += 1;
@@ -184,13 +224,14 @@ export async function composeReferenceImages({
   sources = [],
   orientation = "horizontal",
   maxLongEdge = Infinity,
+  layout: freeLayout = null,
   decodeImage = defaultDecodeImage,
   encodeImage = null,
   yieldControl = defaultYieldControl,
 } = {}) {
   try {
     if (!Array.isArray(sources) || sources.length === 0) throw new TypeError("At least one input source is required.");
-    if (orientation !== "horizontal" && orientation !== "vertical") throw new TypeError("Invalid composite orientation.");
+    if (!["horizontal", "vertical", "auto", "free"].includes(orientation)) throw new TypeError("Invalid composite orientation.");
     const sourceIds = sources.map((source, index) => String(source?.id ?? `source-${index + 1}`));
     if (new Set(sourceIds).size !== sourceIds.length) throw new TypeError("Composite source ids must be unique.");
     if (sources.some((source) => source?.referenceRole === "STYLE_REFERENCE")) throw new TypeError("Style references cannot enter the structural composite.");
@@ -206,7 +247,7 @@ export async function composeReferenceImages({
         };
       return { ...normalized, sourceId: sourceIds[index] };
     }));
-    const initial = layout(decoded, orientation);
+    const initial = planReferenceLayout(decoded, orientation, freeLayout);
     const target = scaledLayout(initial, maxLongEdge);
     const completed = decoded.every((source) => source.drawable)
       ? await stitchBrowserCanvas(decoded, target, yieldControl)

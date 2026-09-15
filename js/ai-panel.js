@@ -1,3 +1,4 @@
+import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
 import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
 import {
@@ -3319,6 +3320,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         referenceComposite = await composeReferenceImages({
           sources: roleGroups.inputs,
           orientation: runInput.referenceComposition.orientation,
+          layout: runInput.referenceComposition.layout,
           maxLongEdge: 1536,
         });
         panel.dispatchEvent(new CustomEvent('5e:ai-composite-ready', { detail: {
@@ -3684,7 +3686,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncOutputEngine();
     setStatus(selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET
       ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
-      : "그림형은 흰 배경 PNG를 한 번 생성하며 후처리하지 않습니다.", "ok");
+      : "그림형은 PNG를 한 번 생성합니다. 이후 배경·선 굵기는 기기에서 처리합니다.", "ok");
   }));
   for (const select of [backgroundPolicySelect, examPaletteSelect, lineThicknessSelect].filter(Boolean)) {
     select.addEventListener('keydown', (event) => {
@@ -3710,7 +3712,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     refreshOutputPreviews();
     restartSelectedAutomaticSeparation();
     captureActiveTaskTab(); persistTasks();
-    setStatus('결과의 배경 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
+    setStatus('추가 AI 요청 없이 기기에서 배경을 처리합니다. 생성 원본은 유지됩니다.', 'ok');
   });
   examPaletteSelect?.addEventListener('change', () => {
     if (busy) { syncOutputProcessingUi(); return; }
@@ -3736,7 +3738,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     refreshOutputPreviews();
     restartSelectedAutomaticSeparation();
     captureActiveTaskTab(); persistTasks();
-    setStatus('결과의 선 굵기 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
+    setStatus('추가 AI 요청 없이 기기에서 선 굵기를 처리합니다. 생성 원본은 유지됩니다.', 'ok');
   });
   generationModeSelect.addEventListener('change', () => {
     if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }
@@ -4422,7 +4424,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   };
   document.addEventListener("paste", (event) => {
-    if (panel.hidden) return;
+    if (panel.hidden || document.querySelector(".modal-overlay:not([hidden]) .modal-objectify")) return;
     const canReadSystemClipboard = typeof navigator.clipboard?.read === 'function'
       || typeof desktop?.readClipboardImage === 'function';
     if (!shouldHandleAiImagePaste(event, canReadSystemClipboard)) return;
@@ -4546,6 +4548,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.addEventListener('input',()=>persistTasks());
   panel.addEventListener('5e:ai-review',()=>{commentController.render();syncSelectedOutputActions();persistTasks();});
   panel.addEventListener('5e:ai-workbench-geometry-change',()=>commentController.render());
+  panel.querySelector('[data-ai-free-composition]')?.addEventListener('click', async () => {
+    if (busy) return;
+    const inputs = orderedInputReferences(attachments);
+    if (!inputs.length) { setStatus('먼저 원본 이미지를 추가해 주세요.', 'ok'); return; }
+    const taskId = activeTaskTabId;
+    let next;
+    try { next = await openAiCompositionEditor({ sources: inputs, composition: referenceComposition }); }
+    catch (error) { setStatus(error.message || '배치할 이미지를 불러오지 못했습니다.', 'error'); return; }
+    if (!next || busy || activeTaskTabId !== taskId) return;
+    referenceComposition = normalizeReferenceComposition(next, attachments);
+    syncReferenceSummary(); captureActiveTaskTab(); persistTasks();
+  });
   panel.addEventListener('5e:ai-composition-orientation-change', event => {
     if (busy) return;
     referenceComposition = normalizeReferenceComposition({

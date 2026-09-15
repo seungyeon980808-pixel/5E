@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="css/parts-library.css?v=1.4.4" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.4.2" />
   <link rel="stylesheet" href="css/ai-panel.css?v=1.5.7" />
+  <link rel="stylesheet" href="css/ai-composition-editor.css" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1" />
   <link rel="stylesheet" href="css/panel-visibility.css" />
   <link rel="stylesheet" href="css/productization.css?v=1.0.0" />
@@ -438,10 +439,17 @@
         <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
           <header class="ai-compare-heading">
             <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
+              <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
+              <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
               <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
-              <button type="button" data-ai-layout-mode="source" aria-pressed="false">원본</button>
-              <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true">결과</button>
-              <button type="button" data-ai-compare title="별도 창에서 참고 이미지와 생성 결과를 비교합니다">전체 비교</button>
+                <div class="ai-composition-toolbar" role="group" aria-label="원본 연결 방향">
+                  <button type="button" class="is-on" data-ai-composition-orientation="horizontal" aria-pressed="true">가로 연결</button>
+                  <button type="button" data-ai-composition-orientation="vertical" aria-pressed="false">세로 연결</button>
+                  <button type="button" data-ai-composition-orientation="auto" aria-pressed="false">자동 배치</button>
+                  <button type="button" data-ai-free-composition>자유 배치</button>
+                </div>
+              <label class="ai-zoom-link" data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 트래킹</label>
+              <button type="button" data-ai-compare hidden>전체 비교</button>
             </div>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
@@ -456,6 +464,7 @@
                 <label data-ai-source-picker hidden>원본 선택 <select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
                 <button type="button" class="ai-replace-source" data-ai-replace-source hidden>원본 교체</button>
                 <input class="ai-source-file-input" type="file" accept="image/*" data-ai-replace-source-input aria-label="선택한 원본을 파일로 교체">
+
                 <div class="ai-pane-zoom" data-ai-pane-zoom="source" role="group" aria-label="원본 이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="원본 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
@@ -465,10 +474,7 @@
               </header>
               <details class="ai-reference-section" open>
                 <summary>원본 이미지 <span data-ai-reference-count>0</span></summary>
-                <div class="ai-composition-toolbar" role="group" aria-label="원본 연결 방향">
-                  <button type="button" class="is-on" data-ai-composition-orientation="horizontal" aria-pressed="true">가로 연결</button>
-                  <button type="button" data-ai-composition-orientation="vertical" aria-pressed="false">세로 연결</button>
-                </div>
+
                 <div class="ai-composite-preview" data-ai-composite-preview data-orientation="horizontal" aria-label="연결된 원본 미리보기"></div>
                 <div class="ai-reference-list" data-ai-attachment-list>
                   <p class="ai-reference-empty" data-ai-reference-empty>이미지를 추가하면 원본이 여기에 표시됩니다.</p>
@@ -478,14 +484,13 @@
 
             <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
               <header class="ai-pane-head">
-                <strong>결과</strong>
+                <strong>수정본</strong>
                 <div class="ai-version-picker">
                   <span>버전</span>
                   <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
                   <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
                 </div>
                 <div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
-                  <label class="ai-zoom-link"><input type="checkbox" data-ai-zoom-linked checked> 연결</label>
                   <button type="button" data-ai-zoom-action="out" aria-label="결과 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="결과 확대">＋</button>
@@ -548,6 +553,7 @@
                 <option value="2">+2px</option>
               </select>
             </label>
+            <p class="ai-output-processing-note">배경·색상·선 굵기는 추가 AI 요청 없이 처리합니다.</p>
             <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
           </section>
           <div class="ai-side-content">

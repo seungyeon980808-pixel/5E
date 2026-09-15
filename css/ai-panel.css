@@ -2156,14 +2156,11 @@
 #ai-image-panel[data-ai-stage="preparation"] .ai-conversation-actions,
 #ai-image-panel[data-ai-stage="preparation"] .ai-review-overview,
 #ai-image-panel[data-ai-stage="preparation"] .ai-workbench-actions > [data-ai-comments-apply] { display:none !important; }
-#ai-image-panel[data-ai-stage="preparation"] [data-ai-layout-mode],
 #ai-image-panel[data-ai-stage="preparation"] [data-ai-compare],
 #ai-image-panel[data-ai-stage="preparation"] .ai-toolbar-divider { display:none !important; }
-#ai-image-panel[data-ai-stage="preparation"][data-ai-fixed-first="true"] .ai-compare-heading,
 #ai-image-panel[data-ai-stage="preparation"][data-ai-fixed-first="true"] .ai-comments-list-section,
 #ai-image-panel[data-ai-stage="preparation"][data-ai-fixed-first="true"] .ai-comment-compose { display:none !important; }
 
-#ai-image-panel[data-ai-stage="processing"] .ai-compare-controls,
 #ai-image-panel[data-ai-stage="processing"] .ai-preparation,
 #ai-image-panel[data-ai-stage="processing"] .ai-review-overview,
 #ai-image-panel[data-ai-stage="processing"] .ai-comments-list-section,
@@ -2527,3 +2524,39 @@
 #ai-image-panel .ai-version-list [aria-selected="true"] { background: var(--bg-input); }
 #ai-image-panel .ai-version-list [aria-selected="true"]::after { content: '✓'; float: right; color: var(--accent); }
 #ai-image-panel .ai-version-list [role="option"]:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+
+/* Shared comparison controls and an undistorted image frame. */
+#ai-image-panel .ai-compare-controls [data-ai-compare] { display: none; }
+#ai-image-panel .ai-compare-controls [hidden] { display: none !important; }
+#ai-image-panel .ai-compare-controls { flex-wrap: wrap; }
+#ai-image-panel .ai-preview-stage > img { object-fit: contain; }
+#ai-image-panel .ai-image-card { position: relative; }
+#ai-image-panel .ai-image-pane { animation: none; }
+#ai-image-panel:not([data-ai-stage="empty"]) .ai-compare-heading { display: flex !important; }
+#ai-image-panel .ai-zoom-link { white-space: nowrap; }
+
+#ai-image-panel .ai-compare-controls .ai-composition-toolbar { display:flex; flex-direction:row; padding:0 6px; border:0; gap:3px; }
+#ai-image-panel [data-ai-source-picker] { min-width: 0; flex: 1 1 0; overflow: hidden; white-space: nowrap; }
+#ai-image-panel [data-ai-source-select] { min-width: 0; width: 100%; text-overflow: ellipsis; }
+#ai-image-panel .ai-reference-section { display: flex; flex-direction: column; }
+#ai-image-panel .ai-composite-preview { order: 2; flex: 0 0 64px; max-height: 64px; }
+#ai-image-panel .ai-composite-preview img { height: 62px; }
+#ai-image-panel .ai-image-card-head { height: 40px; min-height: 40px; flex: 0 0 40px; }
+
+
+/* A shared, centered viewport for single and combined sources. */
+#ai-image-panel .ai-preview-stage { margin: auto; align-self: auto; }
+#ai-image-panel .ai-composite-preview { display: none !important; }
+#ai-image-panel .ai-combined-card { flex-direction: column; }
+#ai-image-panel .ai-combined-card .ai-preview-stage { cursor: grab; }
+#ai-image-panel .ai-combined-card .ai-preview-stage:active { cursor: grabbing; }
+#ai-image-panel .ai-output-processing-note { margin: 4px 0; color: var(--text-secondary); font-size: 10px; }
+#ai-image-panel[data-ai-busy="true"] [data-ai-send]::before {
+  content: ''; display: inline-block; width: 12px; height: 12px; margin-right: 7px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  vertical-align: -2px; animation: ai-button-working .8s linear infinite;
+}
+@keyframes ai-button-working { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  #ai-image-panel[data-ai-busy="true"] [data-ai-send]::before { animation: none; }
+}
