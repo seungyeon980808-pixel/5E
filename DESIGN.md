@@ -790,3 +790,16 @@ PDF 결과는 기본 `파일` 표시에서 PDF 하나를 카드 하나로 유지
 
 ## Approved crop and assignment layout, 2026-09-15
 Wide crop dialog uses the available viewport with 55:45 source/sidebar columns, a contained portrait source, a two-column accepted-crop grid, compact caption/check/remove controls, and a single horizontal footer for PNG, objectification, canvas and AI actions. Repeated drag adds another crop; Enter confirms the pending crop and a subsequent Enter completes selection. The help button sits immediately beside 내용 맞춤 in the header. Assignment sources use a compact two-column grid; workbenches use two columns beside it. The custom mode is named 직접 나누기. Both modal backdrops dim and blur underlying content. Existing color, spacing and control tokens remain authoritative. Layout tokens: crop width 1440px, height 920px, sidebar ratio .45fr, source .55fr; assignment width 1440px with source/bench ratios .32fr/.68fr, source image height 96px and bench image height 120px. Below 768px crop panes stack and scroll; below 680px assignment panes stack; action bars wrap without clipping. Existing keyboard crop acceptance, selected/all targeting and disabled-action conditions are retained. Accepted crops can be moved and resized without changing identity. During dragging, previews update at most once per frame using a 640px raster; exact PDF output is produced after release. Handle visuals are 6px with a 14px hit area. Placement-mode buttons use content width.
+
+### AI 비교 조작 (2026-09-15)
+- 표시 모드는 원본·수정본·비교 3개. 트래킹은 비교에서만 표시하며 양쪽 확대와 이동을 동기화한다.
+- 원본/수정본에서 Space는 위치와 배율을 유지한 즉시 전환이다. 입력 중, 조합 입력, 보조키, 키 반복 및 다른 모달에서는 실행하지 않는다.
+- 원본 비율의 공통 표시 프레임 안에서 이미지를 contain으로 표시해 왜곡하지 않는다. 가로/세로 연결은 원본 상단 도구 줄로 이동한다.
+- 라이브러리 크롭 확정은 Enter/Space 모두 지원하며 기본 버튼 문구는 추가로 유지한다.
+
+### AI 작업실 마무리 (2026-09-15)
+- 단일 원본과 수정본은 같은 가용 영역의 중앙에 비율 유지해 표시한다. 여러 원본은 기본적으로 연결 전체를 주 화면에 표시하고 개별 원본 선택을 유지한다. 하단 중복 연결 띠는 없앤다.
+- 배치 도구는 가로·세로·자동·자유 배치이며 버튼은 내용 너비를 쓴다. 자유 배치는 기존 모달 색상·간격과 배경 블러를 사용한다.
+- 선 굵기 및 외부 배경은 추가 AI 호출 없는 로컬 처리임을 안내한다. 생성 중에는 변환 버튼 옆에 회전 표시를 제공한다.
+- 객체 분리 창은 확대/축소/맞춤/이동을 제공하고 원본 좌표를 유지한다.
+- 종료 확인은 최대 440px의 앱 색상 모달과 블러 배경, 저장 후 종료/저장하지 않고 종료/취소로 구성한다.
