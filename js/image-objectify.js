@@ -576,6 +576,7 @@ export function initImageObjectify(state) {
       setStatus("이미지 파일이 너무 큽니다(64MB 초과). 디코딩 전에 작은 파일로 변환해 주세요.", true);
       return;
     }
+    selectionOpenGeneration += 1;
     const nextSourceMetadata = options.sourceMetadata ? clone(options.sourceMetadata) : null;
     const generation = ++loadGeneration;
     analysisGeneration += 1;
@@ -1049,13 +1050,18 @@ export function initImageObjectify(state) {
     }
     close();
   });
-  document.addEventListener("keydown", (event) => {
+  window.addEventListener("keydown", (event) => {
     if (!overlay.hidden && modKey(event) && shortcutKey(event) === "v") {
       event.stopPropagation();
     }
   }, true);
-  document.addEventListener("paste", (event) => {
+  window.addEventListener("paste", (event) => {
     if (overlay.hidden) return;
+    const target = event.target;
+    if (target?.isContentEditable || target?.closest?.("textarea, input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]), [contenteditable=true]")) {
+      event.stopPropagation();
+      return;
+    }
     const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
     if (!imageItem) return;
     const imageFile = imageItem.getAsFile();

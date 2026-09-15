@@ -56,14 +56,28 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   dialog.innerHTML = `<header class="aea-header"><div><h2 id="aea-title">${automatic ? '분리 결과 확인' : '편집 가능한 객체로 나누기'}</h2><p>${automatic ? '각 PNG와 편집 가능한 이름을 확인한 뒤 페이지에 넣으세요.' : '그림에서 객체를 하나씩 드래그해 선택하세요.'}</p></div><button type="button" data-action="close" aria-label="닫기">×</button></header>
     <div class="aea-tools" role="group" aria-label="선택 도구">
       ${automatic ? '<button type="button" data-action="refine">미세 조정</button><button type="button" data-mode="inspect" hidden>확인</button><button type="button" data-mode="merge" hidden>두 물체 합치기</button><button type="button" data-mode="split" hidden>영역 나누기</button><button type="button" data-mode="reassign" hidden>선택에 옮기기</button><button type="button" data-mode="anchor" hidden>지시선 끝점</button><button type="button" data-mode="label" hidden>라벨 위치</button>' : '<button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>'}
-    </div><p class="aea-hint" id="aea-hint"></p>
-    <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
+    <span class="aea-view-tools" role="group" aria-label="그림 보기"><button type="button" data-action="zoom-out" aria-label="축소">−</button><output class="aea-zoom" aria-label="확대 비율">100%</output><button type="button" data-action="zoom-in" aria-label="확대">+</button><button type="button" data-action="fit">전체 보기</button><button type="button" data-mode="pan">이동</button></span></div><p class="aea-hint" id="aea-hint"></p>
+    <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-original" aria-hidden="true"></svg><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
       <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
     <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 각각 넣기'}</button></div></footer>`;
   const find = selector => dialog.querySelector(selector);
   const source = find('.aea-source'), overlay = find('.aea-overlay'), preview = find('.aea-preview');
-  const status = find('.aea-status'), list = find('.aea-list');
+  const status = find('.aea-status'), list = find('.aea-list'), original = find('.aea-original'), stage = find('.aea-stage');
+  let zoom = 1, center = { x: 0, y: 0 }, pan = null;
+  const showSource = visible => { source.hidden = !visible; original.toggleAttribute('hidden', !visible); };
+  const updateViewport = () => {
+    if (!width) return;
+    const w = width / zoom, h = height / zoom;
+    const viewBox = `${center.x - w / 2} ${center.y - h / 2} ${w} ${h}`;
+    original.setAttribute('viewBox', viewBox); overlay.setAttribute('viewBox', viewBox);
+    const padding = previewLabelPadding() / zoom;
+    preview.setAttribute('viewBox', `${center.x - w / 2 - padding} ${center.y - h / 2 - padding} ${w + padding * 2} ${h + padding * 2}`);
+    find('.aea-zoom').textContent = `${Math.round(zoom * 100)}%`;
+    find('[data-action="zoom-out"]').disabled = zoom <= 0.25;
+    find('[data-action="zoom-in"]').disabled = zoom >= 8;
+  };
+  const changeZoom = factor => { if (!width || drag || pan) return; zoom = Math.max(0.25, Math.min(8, zoom * factor)); updateViewport(); };
   let regions = [], selected = null, mode = automatic ? 'inspect' : 'region', revision = 0, prepared = automatic ? structuredClone(initialPrepared) : null;
   let labelsDisabled = false;
   let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false, refining = false, mergeSource = null;
@@ -120,7 +134,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   };
   const invalidate = () => {
     revision++; prepared = null; showingPreview = false;
-    source.hidden = false; preview.toggleAttribute("hidden", true); overlay.toggleAttribute("hidden", false);
+    showSource(true); preview.toggleAttribute("hidden", true); overlay.toggleAttribute("hidden", false);
     find('[data-action="preview"]').textContent = '미리보기';
     status.textContent = '선택을 바꾼 뒤에는 미리보기를 다시 확인하세요.';
     draw(); controls();
@@ -155,7 +169,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     refining = true; showingPreview = false;
     find('[data-action="refine"]').hidden = true;
     for (const button of dialog.querySelectorAll('[data-mode]')) button.hidden = false;
-    source.hidden = false; preview.toggleAttribute('hidden', true); overlay.toggleAttribute('hidden', false);
+    showSource(true); preview.toggleAttribute('hidden', true); overlay.toggleAttribute('hidden', false);
     find('[data-action="preview"]').textContent = '분리 결과 보기';
     renderList(); draw(); setMode('inspect');
     status.textContent = '자동 결과는 그대로 보존됩니다. 필요한 부분만 조정하세요.';
@@ -214,8 +228,9 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     find('.aea-count').textContent = String(regions.length); find('.aea-empty').hidden = !!regions.length;
   };
   const setMode = next => {
-    mode = next; mergeSource = null;
+    mode = next; mergeSource = null; stage.classList.toggle('is-pan', mode === 'pan');
     find('.aea-hint').textContent = {
+      pan: '그림을 드래그해 이동하세요. 전체 보기로 원래 위치에 돌아갑니다.',
       inspect: '목록에서 물체를 선택해 분리 범위를 확인하세요.',
       merge: '오른쪽 목록에서 합칠 두 물체를 차례로 선택하세요.',
       split: '목록에서 물체를 선택한 뒤, 떼어낼 픽셀을 사각형으로 감싸세요.',
@@ -228,12 +243,13 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     controls();
   };
   const point = event => {
-    const box = overlay.getBoundingClientRect();
-    return { x: Math.round(Math.max(0, Math.min(width, (event.clientX - box.left) * width / box.width))), y: Math.round(Math.max(0, Math.min(height, (event.clientY - box.top) * height / box.height))) };
+    const mapped = new DOMPoint(event.clientX, event.clientY).matrixTransform(overlay.getScreenCTM().inverse());
+    return { x: Math.round(Math.max(0, Math.min(width, mapped.x))), y: Math.round(Math.max(0, Math.min(height, mapped.y))) };
   };
   const rectangle = (start, end) => ({ x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y) });
   overlay.onpointerdown = event => {
     if (busy || showingPreview || !width || event.button !== 0 || !current()) return;
+    if (mode === 'pan') return;
     if (automatic && (mode === 'inspect' || mode === 'merge')) return;
     if (mode !== 'region' && !active()) { status.textContent = '먼저 객체를 선택해 주세요.'; return; }
     const start = point(event);
@@ -263,11 +279,32 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     if (!automatic) { renderList(); invalidate(); }
   };
   overlay.onpointercancel = () => { drag = null; draw(); };
+  stage.addEventListener('pointerdown', event => {
+    if (!width || busy || (mode !== 'pan' && event.button !== 1)) return;
+    if (event.button !== 0 && event.button !== 1) return;
+    event.preventDefault(); stage.setPointerCapture(event.pointerId);
+    const surface = showingPreview ? preview : original;
+    pan = { id: event.pointerId, x: event.clientX, y: event.clientY, center: { ...center }, matrix: surface.getScreenCTM().inverse() };
+    stage.classList.add('is-panning');
+  });
+  stage.addEventListener('pointermove', event => {
+    if (!pan || pan.id !== event.pointerId) return;
+    const start = new DOMPoint(pan.x, pan.y).matrixTransform(pan.matrix);
+    const end = new DOMPoint(event.clientX, event.clientY).matrixTransform(pan.matrix);
+    center = { x: pan.center.x + start.x - end.x, y: pan.center.y + start.y - end.y }; updateViewport();
+  });
+  const endPan = event => {
+    if (!pan || pan.id !== event.pointerId) return;
+    pan = null; stage.classList.remove('is-panning');
+    if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+  };
+  stage.addEventListener('pointerup', endPan); stage.addEventListener('pointercancel', endPan);
+  stage.addEventListener('wheel', event => { event.preventDefault(); changeZoom(event.deltaY < 0 ? 1.1 : 1 / 1.1); }, { passive: false });
   const runPreview = async () => {
     if (busy || !regions.length || !current()) return;
-    if (showingPreview) { showingPreview = false; source.hidden = false; overlay.toggleAttribute("hidden", automatic && !refining); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
+    if (showingPreview) { showingPreview = false; showSource(true); overlay.toggleAttribute("hidden", automatic && !refining); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
     if (automatic) {
-      drawPrepared(); showingPreview = true; source.hidden = true; overlay.toggleAttribute('hidden', true); preview.toggleAttribute('hidden', false);
+      drawPrepared(); showingPreview = true; showSource(false); overlay.toggleAttribute('hidden', true); preview.toggleAttribute('hidden', false);
       find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 라벨 방식과 표시 여부를 선택한 뒤 페이지에 넣으세요.`; return;
     }
     busy = true; status.textContent = '객체 바깥 배경을 투명하게 만드는 중…'; controls();
@@ -280,7 +317,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
         preview.append(svgNode('image', { href: asset.data, x: asset.x, y: asset.y, width: asset.width, height: asset.height }));
         if (effectiveAssetLabelMode(asset, labelsDisabled) !== 'none') preview.append(labelNode(asset));
       }
-      showingPreview = true; source.hidden = true; overlay.toggleAttribute("hidden", true); preview.toggleAttribute("hidden", false);
+      showingPreview = true; showSource(false); overlay.toggleAttribute("hidden", true); preview.toggleAttribute("hidden", false);
       find('[data-action="preview"]').textContent = '선택으로 돌아가기';
       status.textContent = `${output.assets.length}개 객체 · 체크무늬는 투명 영역입니다. 흰색 내부와 라벨을 확인한 뒤 넣으세요.`;
     } catch (error) { if (!closed) status.textContent = error instanceof Error ? error.message : '미리보기를 만들지 못했습니다.'; }
@@ -296,6 +333,9 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     if (button.dataset.mode) { setMode(button.dataset.mode); return; }
     const action = button.dataset.action;
     if (action === 'close' || action === 'cancel') close(false);
+    if (action === 'zoom-in') changeZoom(1.25);
+    if (action === 'zoom-out') changeZoom(0.8);
+    if (action === 'fit') { zoom = 1; center = { x: width / 2, y: height / 2 }; updateViewport(); }
     if (action === 'refine') beginRefinement();
     if (action === 'clear-keep' && active()) { active().keepRects = []; invalidate(); }
     if (action === 'preview') await runPreview();
@@ -313,7 +353,8 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     width = source.naturalWidth; height = source.naturalHeight;
     source.width = width; source.height = height;
     find('.aea-stage').style.aspectRatio = `${width} / ${height}`;
-    overlay.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    original.append(svgNode('image', { href: dataUrl, width, height }));
+    center = { x: width / 2, y: height / 2 }; updateViewport();
     preview.setAttribute('viewBox', previewViewBoxForLabels(width, height, previewLabelPadding()));
     if (automatic) {
       if (prepared.width !== width || prepared.height !== height || !Array.isArray(prepared.assets) || !prepared.assets.length || prepared.assets.length > 128) {
