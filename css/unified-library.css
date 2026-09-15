@@ -237,7 +237,7 @@
 }
 
 .unified-library-overlay .unilib-folders { display: grid; grid-template-rows: auto minmax(0, 1fr); }
-.unified-library-overlay .unilib-results { display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); }
+.unified-library-overlay .unilib-results { display: grid; grid-template-rows: auto var(--unilib-selection-tray-height) minmax(0, 1fr); }
 .unified-library-overlay .unilib-preview { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; border-inline-end: 0; }
 
 .unified-library-overlay .unilib-pane-head {
@@ -362,7 +362,8 @@
 .unified-library-overlay .unilib-summary-back:hover { border-color: var(--unilib-accent); background: var(--unilib-raised); color: var(--unilib-text); }
 .unified-library-overlay .unilib-result-list { display: grid; gap: var(--unilib-space-2); margin: 0; padding: 0 var(--unilib-space-3) var(--unilib-space-6); list-style: none; }
 .unified-library-overlay .unilib-selection-summary { display: flex; min-width: 0; height: var(--unilib-selection-tray-height); box-sizing: border-box; align-items: center; gap: var(--unilib-space-2); overflow: hidden; padding: var(--unilib-space-1) var(--unilib-space-5); border-block: var(--unilib-border-width) solid var(--unilib-border-muted); }
-.unified-library-overlay .unilib-selection-summary.is-empty { display: none; }
+.unified-library-overlay .unilib-selection-summary.is-empty { color: var(--unilib-muted); }
+.unified-library-overlay .unilib-selection-summary.is-empty > button { visibility: hidden; }
 .unified-library-overlay .unilib-selection-summary > strong { flex: none; font-size: var(--unilib-type-caption); }
 .unified-library-overlay .unilib-selection-summary > button { flex: none; padding: 0; border: 0; background: transparent; color: var(--unilib-accent); cursor: pointer; }
 .unified-library-overlay [data-unilib-selected-items] { display: flex; min-width: 0; overflow-x: auto; overflow-y: hidden; gap: var(--unilib-space-2); scrollbar-width: thin; }
@@ -745,7 +746,7 @@
   top: 0;
   z-index: 2;
   min-height: var(--unilib-selection-tray-height);
-  height: auto;
+  height: var(--unilib-selection-tray-height);
   background: var(--unilib-panel);
 }
 

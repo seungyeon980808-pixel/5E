@@ -1673,10 +1673,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     else if (cardBounds.bottom > scrollBounds.bottom) scroller.scrollTop += cardBounds.bottom - scrollBounds.bottom;
   };
   const toggleResultSelection = (id) => {
-    const scroller = overlay.querySelector(".unilib-result-scroll");
     const card = list.querySelector(`[data-result-id="${CSS.escape(id)}"]`);
-    const scrollTop = scroller.scrollTop;
-    const cardTop = card?.getBoundingClientRect().top;
     invalidateAction();
     if (selectedIds.has(id)) { selectedIds.delete(id); selectedRecords.delete(id); }
     else {
@@ -1685,17 +1682,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (record) selectedRecords.set(id, record);
     }
     updateResultSelection();
-    scroller.scrollTop = scrollTop;
     card?.focus({ preventScroll: true });
-    if (card && Number.isFinite(cardTop)) {
-      const delta = card.getBoundingClientRect().top - cardTop;
-      if (delta) scroller.scrollTop += delta;
-    }
-    requestAnimationFrame(() => {
-      if (!card?.isConnected) return;
-      scroller.scrollTop = scrollTop;
-      card.focus({ preventScroll: true });
-    });
   };
   list.addEventListener("click", (event) => {
     cancelSpacePress();
