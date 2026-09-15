@@ -1,3 +1,30 @@
+const fs = require("node:fs/promises");
+const path = require("node:path");
+
+const MAX_DOWNLOAD_BYTES = 256 * 1024 * 1024;
+
+function safePdfFileName(value) {
+  const cleaned = String(value || "PDF 자료.pdf").replace(/[\\/:*?"<>|\u0000-\u001f]+/gu, "-").trim();
+  const name = cleaned || "PDF 자료.pdf";
+  return /\.pdf$/iu.test(name) ? name.slice(0, 240) : `${name.slice(0, 236)}.pdf`;
+}
+
+async function savePdfDownload(options, payload = {}) {
+  const bytes = Buffer.from(payload.data || []);
+  if (bytes.length < 5 || bytes.length > MAX_DOWNLOAD_BYTES || bytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw new TypeError("저장할 PDF 데이터가 올바르지 않습니다.");
+  }
+  const fileName = safePdfFileName(payload.fileName);
+  const result = await options.dialog.showSaveDialog(options.getWindow(), {
+    title: "PDF 저장",
+    defaultPath: path.join(options.downloadsPath, fileName),
+    filters: [{ name: "PDF 문서", extensions: ["pdf"] }],
+  });
+  if (result.canceled || !result.filePath) return { saved: false, canceled: true };
+  await (options.writeFile || fs.writeFile)(result.filePath, bytes);
+  return { saved: true, canceled: false, filePath: result.filePath };
+}
+
 function registerPdfLibraryIpc(options) {
   const invoke = (channel, handler) => options.ipcMain.handle(`pdf-library:${channel}`, (_event, payload) => handler(payload));
   invoke("pick-folder", async () => {
@@ -43,6 +70,7 @@ function registerPdfLibraryIpc(options) {
     if (!options.bundledPack) throw new Error("The bundled PDF pack is unavailable.");
     return options.bundledPack.read(payload?.path);
   });
+  invoke("save-download", (payload) => savePdfDownload(options, payload));
 }
 
-module.exports = { registerPdfLibraryIpc };
+module.exports = { registerPdfLibraryIpc, safePdfFileName, savePdfDownload };

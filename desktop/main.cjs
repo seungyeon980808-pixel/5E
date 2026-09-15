@@ -1585,6 +1585,14 @@ ipcMain.handle("image-export:save", (event, payload = {}) => {
   }
   return imageExportService.save(payload);
 });
-registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack });
+registerPdfLibraryIpc({
+  ipcMain,
+  dialog,
+  shell,
+  getWindow: () => win,
+  service: pdfLibraryService,
+  bundledPack: bundledPdfPack,
+  downloadsPath: app.getPath("downloads"),
+});
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("before-quit", stopAllServers);

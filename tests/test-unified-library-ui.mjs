@@ -219,9 +219,18 @@ test("Space hold stays bound to one result while every preview kind can outlast 
   assert.match(source, /document\.addEventListener\("focusin"[\s\S]*cancelSpacePress/u);
 });
 
-test("library shell keeps one dismissal and omits import, folder management, and a second preview close", async () => {
-  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+test("library shell keeps one dismissal, exposes Drive settings, and omits import and a second preview close", async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
   assert.doesNotMatch(source, /data-unilib-import|data-unilib-files|data-unilib-manage|data-unilib-folder-dialog/u);
+  assert.match(source, /data-unilib-drive-settings-open/u);
+  assert.match(source, /data-unilib-drive-settings-body/u);
+  assert.match(source, /getDriveHost/u);
+  assert.match(source, /child\.inert = open/u);
+  assert.match(source, /event\.key !== "Tab"/u);
+  assert.match(css, /\[data-unilib-drive-settings\][^}]*min-height: var\(--unilib-mobile-control-height\)/su);
   assert.doesNotMatch(source, /data-unilib-preview-close/u);
   assert.equal((source.match(/data-unilib-close/g) || []).length, 2);
 });

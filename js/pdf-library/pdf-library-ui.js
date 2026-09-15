@@ -86,6 +86,36 @@ export function localPdfDocumentId(fileName, sha256) {
   return `local:${sha256}:${encodeURIComponent(fileName)}`;
 }
 
+export function pdfDownloadFileName(value) {
+  const cleaned = String(value || "PDF 자료.pdf").replace(/[\\/:*?"<>|\u0000-\u001f]+/gu, "-").trim();
+  const name = cleaned || "PDF 자료.pdf";
+  return /\.pdf$/iu.test(name) ? name.slice(0, 240) : `${name.slice(0, 236)}.pdf`;
+}
+
+export async function savePdfDownload(payload, {
+  desktop = globalThis.fiveEDesktop?.pdfLibrary,
+  documentHost = globalThis.document,
+  urlApi = globalThis.URL,
+} = {}) {
+  const bytes = payload?.bytes instanceof Uint8Array ? payload.bytes : Uint8Array.from(payload?.bytes || []);
+  if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") throw new TypeError("저장할 PDF 데이터가 올바르지 않습니다.");
+  const fileName = pdfDownloadFileName(payload.fileName);
+  if (typeof desktop?.saveDownload === "function") return desktop.saveDownload({ fileName, data: bytes });
+  const blobUrl = urlApi.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  try {
+    const anchor = documentHost.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = fileName;
+    anchor.rel = "noopener";
+    documentHost.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    return { saved: true, canceled: false, fileName };
+  } finally {
+    urlApi.revokeObjectURL(blobUrl);
+  }
+}
+
 function inventoryDocument(record) {
   return {
     id: record.documentId,
@@ -302,6 +332,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let browserPdfBytes = 0;
   let browserPdfCount = 0;
   const documentOpeners = new Map();
+  const documentDownloaders = new Map();
   const documentPersistors = new Map();
   const pendingDocumentOpens = new Map();
   const runtimeScheduler = createRenderScheduler();
@@ -333,6 +364,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       <button type="button" class="modal-btn" data-pdflib-ocr hidden>스캔 글자 인식</button>
       <button type="button" class="modal-btn" data-pdflib-ocr-cancel hidden>인식 취소</button>
     </div>
+    <div class="pdflib-drive" data-pdflib-drive aria-live="polite"></div>
     <div class="pdflib-packs" data-pdflib-packs aria-live="polite"></div>
     <section class="pdflib-index-overview" data-pdflib-index-overview hidden aria-label="개인 PDF 색인 상태">
       <header><strong>개인 PDF 상태</strong><span data-pdflib-index-counts></span></header>
@@ -361,6 +393,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         <strong data-pdflib-preview-title></strong>
         <div class="pdflib-preview-actions">
           <button type="button" class="modal-btn" data-pdflib-original>원문 보기</button>
+          <button type="button" class="modal-btn" data-pdflib-download hidden>컴퓨터에 저장</button>
           <button type="button" class="modal-btn" data-pdflib-adjust>범위 조정</button>
           <button type="button" class="modal-btn modal-btn-primary" data-pdflib-preview-insert>캔버스에 넣기</button>
           <button type="button" class="modal-btn" data-pdflib-preview-ai>AI로 변환</button>
@@ -384,6 +417,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   const fileInput = host.querySelector("#examlib-pdf-files");
   const ocrButton = host.querySelector("[data-pdflib-ocr]");
   const ocrCancelButton = host.querySelector("[data-pdflib-ocr-cancel]");
+  const driveHost = host.querySelector("[data-pdflib-drive]");
   const packHost = host.querySelector("[data-pdflib-packs]");
   const connectedButton = host.querySelector("[data-pdflib-connected]");
   const queryInput = host.querySelector("#examlib-pdf-query");
@@ -733,7 +767,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     }
   }
 
-  async function replacePackCatalog({ documents: nextDocuments, openDocument, searchIndex = null }) {
+  async function replacePackCatalog({ documents: nextDocuments, openDocument, downloadDocument = null, canDownloadDocument = () => true, searchIndex = null }) {
     const ownEpoch = ++packSyncEpoch;
     const nextIds = new Set(nextDocuments.map((document) => document.id));
     const removedIds = [...packDocumentIds].filter((id) => !nextIds.has(id));
@@ -741,6 +775,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     if (ownEpoch !== packSyncEpoch) return;
     for (const id of packDocumentIds) {
       documentOpeners.delete(id);
+      documentDownloaders.delete(id);
       documentPersistors.delete(id);
     }
     docs = [...docs.filter((document) => !packDocumentIds.has(document.id)), ...nextDocuments];
@@ -748,6 +783,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     for (const id of updatedPackDocumentIds) if (!nextIds.has(id)) updatedPackDocumentIds.delete(id);
     for (const document of nextDocuments) {
       documentOpeners.set(document.id, (activeRuntime, current) => openDocument(activeRuntime, current));
+      if (typeof downloadDocument === "function" && canDownloadDocument(document)) {
+        documentDownloaders.set(document.id, () => downloadDocument(document));
+      }
     }
     packSearchIndex = searchIndex;
     catalogChanged();
@@ -918,6 +956,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     activeResultIndex = index;
     preview.hidden = false;
     previewTitle.textContent = resultTitle(result);
+    host.querySelector("[data-pdflib-download]").hidden = !documentDownloaders.has(normalizedSource(result).documentId);
     previewImage.removeAttribute("src");
     previewHighlights.replaceChildren();
     previewLegend.hidden = true;
@@ -979,6 +1018,16 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     } catch (error) {
       if (!controller.signal.aborted && previewAbort === controller) setStatus(`미리보기 실패: ${error instanceof Error ? error.message : error}`, true);
     }
+  }
+
+  async function downloadPdf(result) {
+    const documentId = normalizedSource(result || {}).documentId;
+    const downloader = documentDownloaders.get(documentId);
+    if (!downloader) throw new Error("이 자료는 원본 PDF 다운로드를 제공하지 않습니다.");
+    setStatus("원본 PDF를 준비하는 중…");
+    const saved = await savePdfDownload(await downloader());
+    setStatus(saved?.canceled ? "PDF 저장을 취소했습니다." : "PDF를 컴퓨터에 저장했습니다.");
+    return saved;
   }
 
   function closePreview() {
@@ -1149,6 +1198,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   referenceAddButton.addEventListener("click", () => void addSelectedReferences());
   aiRunButton.addEventListener("click", () => void sendToAi(selectedResults(), true));
   host.querySelector("[data-pdflib-preview-close]").addEventListener("click", closePreview);
+  host.querySelector("[data-pdflib-download]").addEventListener("click", () => void downloadPdf(activeResult()).catch((error) => {
+    setStatus(`PDF 저장 실패: ${error instanceof Error ? error.message : error}`, true);
+  }));
   host.querySelector("[data-pdflib-preview-insert]").addEventListener("click", () => {
     const result = activeResult();
     if (result) void insertResults([result]);
@@ -1247,7 +1299,10 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       updateActions();
       queryInput.focus();
     },
+    getDriveHost() { return driveHost; },
     getPackHost() { return packHost; },
+    canDownloadPdf(result) { return documentDownloaders.has(normalizedSource(result || {}).documentId); },
+    downloadPdf,
     setSourceStatus(message, error = false) {
       sourceStatus.textContent = message;
       sourceStatus.classList.toggle("is-error", error);
