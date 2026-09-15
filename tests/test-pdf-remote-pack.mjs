@@ -42,6 +42,31 @@ test("Given a hosted pack, when its catalog loads, then metadata stays lazy and 
   assert.equal(requested.length, 5);
 });
 
+test("Given a cached remote PDF, when it is downloaded and opened again, then the verified bytes are fetched once", async (t) => {
+  const directory = await fixtureDirectory(t);
+  const baseUrl = "https://example.test/packs/cached/";
+  let pdfRequests = 0;
+  const cache = new Map();
+  const assetCache = {
+    async get(url, checksum) { return cache.get(`${url}:${checksum}`)?.slice() || null; },
+    async put(url, checksum, bytes) { cache.set(`${url}:${checksum}`, bytes.slice()); },
+    async delete(url, checksum) { cache.delete(`${url}:${checksum}`); },
+  };
+  const fetcher = async (url) => {
+    const relative = new URL(url).pathname.split("/packs/cached/")[1];
+    if (relative.endsWith(".pdf")) pdfRequests += 1;
+    return new Response(await readFile(path.join(directory, relative)), { status: 200 });
+  };
+  const first = await loadRemotePack({ baseUrl, fetcher, assetCache });
+  const downloaded = await first.downloadDocument(first.documents[0]);
+  const second = await loadRemotePack({ baseUrl, fetcher, assetCache });
+  const opened = await second.openDocument({ async openDocument(value) { return value; } }, second.documents[0]);
+
+  assert.equal(downloaded.fileName, "fixture.pdf");
+  assert.equal(opened.data[0], 0x25);
+  assert.equal(pdfRequests, 1);
+});
+
 test("Given a hosted pack whose selected PDF differs from its checksum, when opened, then parsing is rejected", async (t) => {
   const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
@@ -76,6 +101,7 @@ test("Given a hosted pack whose selected asset has a matching hash but is not a 
   const directory = await fixtureDirectory(t);
   const baseUrl = "https://example.test/packs/partial/";
   const badBytes = new TextEncoder().encode("not a PDF");
+  let cacheWrites = 0;
   const checksums = JSON.parse(await readFile(path.join(directory, "checksums.json"), "utf8"));
   checksums.files[PDF_PACK_FIXTURE.documentPath] = await sha256Hex(badBytes);
   const fetcher = async (url) => {
@@ -84,11 +110,16 @@ test("Given a hosted pack whose selected asset has a matching hash but is not a 
     if (relative.endsWith(".pdf")) return new Response(badBytes, { status: 200 });
     return new Response(await readFile(path.join(directory, relative)), { status: 200 });
   };
-  const remote = await loadRemotePack({ baseUrl, fetcher });
+  const remote = await loadRemotePack({
+    baseUrl,
+    fetcher,
+    assetCache: { async get() { return null; }, async put() { cacheWrites += 1; }, async delete() {} },
+  });
   let runtimeCalls = 0;
 
   await assert.rejects(remote.openDocument({ async openDocument() { runtimeCalls += 1; } }, remote.documents[0]), /expected PDF bytes/);
   assert.equal(runtimeCalls, 0);
+  assert.equal(cacheWrites, 0);
 });
 
 test("Given no deployed pack URL, when production config resolves, then it reports the unavailable state instead of inventing data", () => {

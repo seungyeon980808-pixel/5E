@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { createCropOverrideStore } from "../js/pdf-library/crop-overrides.js";
-import { assertPdfMaterializationSource, clampCropRect, createPdfResultResolver, documentNeedsOcr, expandFigureResults, highlightInCrop, lazyOpenIsCurrent, localPdfDocumentId, shouldHandlePdfArrow, shouldHandlePdfSpace, storedCropForResult, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
+import { assertPdfMaterializationSource, clampCropRect, createPdfResultResolver, documentNeedsOcr, expandFigureResults, highlightInCrop, lazyOpenIsCurrent, localPdfDocumentId, pdfDownloadFileName, savePdfDownload, shouldHandlePdfArrow, shouldHandlePdfSpace, storedCropForResult, summarizePdfIndexStates } from "../js/pdf-library/pdf-library-ui.js";
 
 function lazyQuestion() {
   return {
@@ -211,6 +211,33 @@ test("Given a one-page legacy PDF, direct page 999 materialization is rejected",
 test("Given the same local PDF filename and bytes, its source identity remains stable across imports", () => {
   assert.equal(localPdfDocumentId("fixture.pdf", "abc123"), "local:abc123:fixture.pdf");
   assert.notEqual(localPdfDocumentId("other.pdf", "abc123"), localPdfDocumentId("fixture.pdf", "abc123"));
+});
+
+test("Given a verified remote PDF, when saved in a browser, then a sanitized one-shot download is requested", async () => {
+  const events = [];
+  const anchor = {
+    click() { events.push("click"); },
+    remove() { events.push("remove"); },
+  };
+  const documentHost = {
+    body: { append(value) { assert.equal(value, anchor); events.push("append"); } },
+    createElement(name) { assert.equal(name, "a"); return anchor; },
+  };
+  const urlApi = {
+    createObjectURL(blob) { assert.equal(blob.type, "application/pdf"); events.push("create"); return "blob:fixture"; },
+    revokeObjectURL(url) { assert.equal(url, "blob:fixture"); events.push("revoke"); },
+  };
+
+  const result = await savePdfDownload(
+    { bytes: new TextEncoder().encode("%PDF-1.4\nfixture"), fileName: "unsafe/name" },
+    { desktop: null, documentHost, urlApi },
+  );
+
+  assert.deepEqual(result, { saved: true, canceled: false, fileName: "unsafe-name.pdf" });
+  assert.equal(anchor.download, "unsafe-name.pdf");
+  assert.deepEqual(events, ["create", "append", "click", "remove", "revoke"]);
+  assert.equal(pdfDownloadFileName(""), "PDF 자료.pdf");
+  await assert.rejects(savePdfDownload({ bytes: [1, 2, 3] }, { desktop: null, documentHost, urlApi }), /PDF 데이터/);
 });
 
 test("Given a delayed pack open, when that pack is removed or replaced, then the stale result cannot survive", () => {

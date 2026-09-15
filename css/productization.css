@@ -52,6 +52,14 @@
 .pdflib-pack-card span,
 .pdflib-pack-card small { display: block; margin-top: var(--product-space-list); color: var(--text-secondary); }
 .pdflib-pack-safety { margin: var(--product-space-small) 0 0; color: var(--text-secondary); font-size: var(--product-type-helper); }
+.pdflib-drive-connect { display: grid; gap: var(--product-space-compact); margin: var(--product-space-default) 0; padding: var(--product-space-default); border: var(--product-border-width) solid var(--border); background: var(--bg-input); }
+.pdflib-drive-connect > label { color: var(--text-primary); font-size: var(--product-type-helper); font-weight: 600; }
+.pdflib-drive-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--product-space-small); }
+.pdflib-drive-controls input { min-width: 0; padding: var(--product-space-control) var(--product-space-default); border: var(--product-border-width) solid var(--border); border-radius: var(--product-space-small); background: var(--bg-panel); color: var(--text-primary); font: inherit; }
+.pdflib-drive-controls input:focus { outline: none; border-color: var(--accent); }
+.pdflib-drive-controls input:disabled { color: var(--text-secondary); }
+.pdflib-drive-status { min-height: 1em; color: var(--text-secondary); font-size: var(--product-type-helper); line-height: var(--product-line-height-note); word-break: keep-all; }
+.pdflib-drive-status.is-error { color: var(--danger, var(--product-state-error)); }
 
 .pdflib-index-overview { margin: var(--product-space-default) 0; padding: var(--product-space-default); }
 .pdflib-index-overview header { display: flex; justify-content: space-between; gap: var(--product-space-default); }
@@ -102,6 +110,7 @@
   .pdflib-pack-card,
   .pdflib-pack-row { align-items: stretch; flex-direction: column; }
   .pdflib-correction-fields { grid-template-columns: 1fr; }
+  .pdflib-drive-controls { grid-template-columns: 1fr; }
   .panel-right:not(.is-open) { display: none; }
   .canvas-bottom-bar { min-width: 0; overflow-x: auto; overflow-y: hidden; }
 }
