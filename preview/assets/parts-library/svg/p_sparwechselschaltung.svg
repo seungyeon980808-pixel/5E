@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="260">
+<path fill="#FFF" d="m0,0v260h360V0"/>
+<g stroke="#000" stroke-width=".2">
+<path fill="#fff6d5" d="m146,105v42h102V105z"/>
+<path fill="#ACF" d="m4,180v60h51V180zm301,0v60h51V180z"/>
+<g fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="m19,188v9h6m13,0h4V188m-18,3 7,23h-9v16m298-42v9h6m13,0h4V188m-18,3 7,23h-9v16M160,120h64m10,0v14m6,0h-12m2,2h8m-6,2h4"/>
+<path fill="#FFF" d="m192,110a10,10 0 1,0 .1,0zm7,3 -14,14m0-14 14,14"/>
+<path stroke="#960" d="m19,185V30h324V185M140,16v14"/>
+<path stroke="#C6F" d="m42,185V62h278V185M224,62v58M22,232v19h301v-19"/>
+<path stroke="#36F" d="m160,16v104"/>
+<path stroke="#FC0" d="m234,16v104"/>
+<path stroke="#0A5" d="m234,16v104" stroke-dasharray="2,3"/>
+<path stroke-width="4"
+d="m140,30h0m20,90h0m64,0h0m10,0h0M224,62h0M19,186h0m23,0h0m278,0h0m23,0h0M22,230h0m301,0h0"/>
+<path stroke="#FFF"
+d="m140,30h0m20,90h0m64,0h0m10,0h0M224,62h0M19,186h0m23,0h0m278,0h0m23,0h0M22,230h0m301,0h0"/>
+</g></g>
+<text fill="#000" font-family="Calibri" font-size="12">
+<tspan x="137" y="9">L</tspan><tspan x="157">N</tspan><tspan x="229">PE</tspan>
+<tspan x="171" y="160">Leuchte</tspan>
+<tspan x="62" y="215">Wechselschalter 1</tspan><tspan x="192">Wechselschalter 2</tspan>
+</text>
+</svg> 

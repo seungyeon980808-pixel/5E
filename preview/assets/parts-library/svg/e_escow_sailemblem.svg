@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="600"
+   height="600"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docbase="C:\JONIN\ufo\wiki"
+   sodipodi:docname="EScow_sailemblem.svg"
+   viewBox="&quot;0 0 600 600&quot;">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="549.73291"
+     inkscape:cy="277.63555"
+     inkscape:document-units="px"
+     inkscape:current-layer="svg2"
+     width="600px"
+     height="600px"
+     inkscape:window-width="1600"
+     inkscape:window-height="1170"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-56.98398,-191.8468)">
+    <path
+       style="fill:#2b0000;fill-opacity:1;stroke:none;stroke-width:0.01977945;stroke-miterlimit:4;stroke-opacity:1"
+       d="M 87.983983,214.96856 L 624.6237,214.84679 L 624.5019,491.38799 L 490.9968,491.3496 L 491.0015,459.49025 L 317.27345,459.47153 L 317.19731,380.41763 L 490.8917,380.54444 L 490.975,301.47583 L 214.21262,301.50949 L 214.3195,491.3496 L 87.983983,491.36455 L 87.983983,214.96856 z "
+       id="rect1933"
+       sodipodi:nodetypes="ccccccccccccc" />
+    <path
+       style="fill:maroon;fill-opacity:1;stroke:none;stroke-width:0.01977945;stroke-miterlimit:4;stroke-opacity:1"
+       d="M 87.987503,767.72791 L 624.6272,767.84968 L 624.5054,491.38661 L 491.0003,491.34687 L 491.005,523.20622 L 317.27696,523.22494 L 317.20082,602.27884 L 490.8953,602.15203 L 490.9785,681.22064 L 214.21613,681.18698 L 214.32301,491.34687 L 87.987503,491.35927 L 87.987503,767.72791 z "
+       id="path1936"
+       sodipodi:nodetypes="ccccccccccccc" />
+  </g>
+</svg>

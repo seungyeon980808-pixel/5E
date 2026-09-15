@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="330"
+   height="244.61673"
+   version="1.1"
+   id="svg966"
+   sodipodi:docname="Abbe-prism.svg"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+  <metadata
+     id="metadata972">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs970" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1032"
+     id="namedview968"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.4142136"
+     inkscape:cx="140.47426"
+     inkscape:cy="48.242572"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg966" />
+  <marker
+     id="Triangle"
+     viewBox="0 0 30 20"
+     refX="30"
+     refY="10"
+     markerUnits="userSpaceOnUse"
+     markerWidth="12"
+     markerHeight="6"
+     orient="auto"
+     transform="translate(-10,-2.7939453)">
+    <path
+       d="M 0,0 30,10 0,20 Z"
+       style="fill:#ff0000;stroke:#ff0000;stroke-width:1"
+       id="path925"
+       inkscape:connector-curvature="0" />
+  </marker>
+  <marker
+     id="Triangle1"
+     viewBox="0 0 30 20"
+     refX="30"
+     refY="10"
+     markerUnits="userSpaceOnUse"
+     markerWidth="12"
+     markerHeight="6"
+     orient="150"
+     transform="translate(-10,-2.7939453)">
+    <path
+       d="M 0,0 30,10 0,20 Z"
+       style="fill:#000000;stroke:#000000;stroke-width:1"
+       id="path928"
+       inkscape:connector-curvature="0" />
+  </marker>
+  <marker
+     id="Triangle2"
+     viewBox="0 0 30 20"
+     refX="0"
+     refY="10"
+     markerUnits="userSpaceOnUse"
+     markerWidth="12"
+     markerHeight="6"
+     orient="90"
+     transform="translate(-10,-2.7939453)">
+    <path
+       d="M 30,0 0,10 30,20 Z"
+       style="fill:#000000;stroke:#000000;stroke-width:1"
+       id="path931"
+       inkscape:connector-curvature="0" />
+  </marker>
+  <polygon
+     points="240,170 25,85 113,15 "
+     style="fill:#e5e4f9;stroke:#000000;stroke-width:0.5"
+     id="polygon936"
+     transform="translate(-10,-2.7939453)" />
+  <line
+     x1="80"
+     y1="32.206055"
+     x2="330"
+     y2="32.206055"
+     style="fill:none;stroke:#000000;stroke-width:0.5;stroke-dasharray:5, 2"
+     id="line938" />
+  <line
+     x1="0"
+     y1="32.206055"
+     x2="78"
+     y2="32.206055"
+     style="fill:none;stroke:#ff0000;stroke-width:1;marker-mid:url(#Triangle);marker-end:url(#Triangle)"
+     id="line940" />
+  <line
+     x1="78"
+     y1="32.206055"
+     x2="134"
+     y2="51.206055"
+     style="fill:none;stroke:#ff0000;stroke-width:1;marker-mid:url(#Triangle);marker-end:url(#Triangle)"
+     id="line942" />
+  <line
+     x1="134"
+     y1="51.206055"
+     x2="147"
+     y2="135.20605"
+     style="fill:none;stroke:#ff0000;stroke-width:1;marker-mid:url(#Triangle);marker-end:url(#Triangle)"
+     id="line944" />
+  <line
+     x1="147"
+     y1="135.20605"
+     x2="210"
+     y2="244.20605"
+     style="fill:none;stroke:#ff0000;stroke-width:1;marker-mid:url(#Triangle);marker-end:url(#Triangle)"
+     id="line946" />
+  <path
+     d="M 306,32.206055 A 200,200 0 0 1 196,219.20605"
+     style="fill:none;stroke:#000000;stroke-width:0.5;marker-start:url(#Triangle2);marker-end:url(#Triangle1)"
+     id="path948"
+     inkscape:connector-curvature="0" />
+  <text
+     x="3"
+     y="87.206055"
+     font-size="14"
+     id="text950"
+     style="font-size:14px;font-family:Serif;fill:#000000">A</text>
+  <text
+     x="100"
+     y="10.206055"
+     font-size="14"
+     id="text952"
+     style="font-size:14px;font-family:Serif;fill:#000000">B</text>
+  <text
+     x="233"
+     y="177.20605"
+     font-size="14"
+     id="text954"
+     style="font-size:14px;font-family:Serif;fill:#000000">C</text>
+  <text
+     x="76"
+     y="45.206055"
+     font-size="14"
+     id="text956"
+     style="font-size:14px;font-family:Serif;fill:#000000">O</text>
+  <text
+     x="262"
+     y="135.20605"
+     font-size="12"
+     id="text958"
+     style="font-size:12px;font-family:Verdana;fill:#000000">60°</text>
+  <text
+     x="30"
+     y="83.206055"
+     font-size="9"
+     id="text960"
+     style="font-size:9px;font-family:Verdana;fill:#000000">60°</text>
+  <text
+     x="94"
+     y="29.206055"
+     font-size="9"
+     id="text962"
+     style="font-size:9px;font-family:Verdana;fill:#000000">90°</text>
+  <text
+     x="188"
+     y="147.20605"
+     font-size="9"
+     id="text964"
+     style="font-size:9px;font-family:Verdana;fill:#000000">30°</text>
+</svg>

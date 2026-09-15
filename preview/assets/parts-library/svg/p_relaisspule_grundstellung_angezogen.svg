@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="56.692913"
+   height="56.692913"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow1Lend">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         style="fill-rule:evenodd;stroke:black;stroke-width:1pt;marker-start:none"
+         id="path5609" />
+    </marker>
+  </defs>
+  <g
+     id="layer1">
+    <path
+       d="M 28.346457,-3.3040686e-07 L 28.346457,56.692913"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:black;stroke-width:0.70866144;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path1872" />
+    <path
+       d="M 23.436296 25.246063 A 10.591807 10.557636 0 1 1  2.2526808,25.246063 A 10.591807 10.557636 0 1 1  23.436296 25.246063 z"
+       transform="matrix(0.987062,0,0,0.990257,15.66816,3.346374)"
+       style="opacity:1;fill:white;fill-opacity:1;stroke:black;stroke-width:0.35433072;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path3665" />
+    <path
+       d="M 28.346457,37.204724 L 28.346457,19.488189"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:black;stroke-width:0.35433072;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path4552" />
+  </g>
+</svg>

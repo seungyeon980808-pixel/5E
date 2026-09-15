@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="550" height="350" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<filter id="g" x="-.3" y="-.3" width="1.6" height="1.6" color-interpolation-filters="sRGB">
+			<feGaussianBlur stdDeviation="5"/>
+		</filter>
+		<marker id="i" overflow="visible" orient="auto">
+			<path transform="scale(-.6)" d="m8.72 4.03-10.9-4.02 10.9-4.02c-1.75 2.37-1.74 5.62 0 8.04z" stroke="#000"/>
+		</marker>
+		<radialGradient id="d" cx="-228" cy="236" r="25" gradientTransform="matrix(1.76,0,0,1.76,1594,-457)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#e00000" offset="1"/>
+		</radialGradient>
+		<radialGradient id="c" cx="-228" cy="236" r="25" gradientTransform="matrix(1.76,0,0,1.76,1637,-463)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop offset="1"/>
+		</radialGradient>
+	</defs>
+	<use transform="translate(375,-84)" xlink:href="#f"/>
+	<use transform="translate(-754,203)" xlink:href="#a"/>
+	<use transform="translate(-710,223)" xlink:href="#a"/>
+	<use transform="translate(-785,238)" xlink:href="#b"/>
+	<use transform="translate(-762,205)" xlink:href="#b"/>
+	<g id="f" transform="translate(-1144,255)">
+		<use transform="translate(78,20)" xlink:href="#a"/>
+		<use transform="translate(-60,48)" xlink:href="#b"/>
+		<use transform="translate(34,69)" xlink:href="#b"/>
+		<use transform="translate(-2,78)" xlink:href="#a"/>
+		<use transform="translate(43,85)" xlink:href="#a"/>
+		<circle id="b" cx="1244" cy="-40.9" r="25" fill="url(#c)"/>
+		<circle id="a" cx="1201" cy="-34.9" r="25" fill="url(#d)"/>
+		<use transform="translate(-38,21)" xlink:href="#b"/>
+	</g>
+	<use transform="translate(-1115,296)" xlink:href="#b"/>
+	<use transform="translate(-1145,299)" xlink:href="#a"/>
+	<use transform="translate(-1111,259)" xlink:href="#a"/>
+	<use transform="translate(-1151,280)" xlink:href="#b"/>
+	<use transform="translate(-1157,334)" xlink:href="#b"/>
+	<use transform="translate(-1093,304)" xlink:href="#a"/>
+	<use transform="translate(-1165,305)" xlink:href="#b"/>
+	<circle transform="rotate(-30 146 -682)" cx="-190" cy="138" r="17" fill="#f99" filter="url(#g)"/>
+	<path d="m284 211-16.3-10.2 0.706 19.2-4.3-19.5-13.5 14.7 10.2-16.3-19.2 0.706 19.5-4.3-14.7-13.5 16.3 10.2-0.706-19.2 4.3 19.5 13.5-14.7-10.2 16.3 19.2-0.706-19.5 4.3z" fill="#f2f200" stroke="#c7c700" stroke-width=".5"/>
+	<g transform="translate(-537,548)" stroke="#000" stroke-linecap="round">
+		<path d="m712-313 65.5-28.3" marker-end="url(#i)" stroke-width="3"/>
+		<path d="m826-355 75.2-10.1" marker-end="url(#i)" stroke-width="3"/>
+		<path d="m718-400 61.7 35.7" marker-end="url(#i)" stroke-width="2"/>
+		<path d="m814-373 35.8-62.3" marker-end="url(#i)" stroke-width="2"/>
+	</g>
+	<use transform="translate(-1049 163)" xlink:href="#a"/>
+	<g id="e" transform="translate(-466 345)">
+		<use transform="translate(-417,-241)" xlink:href="#b"/>
+		<use transform="translate(-406,-264)" xlink:href="#a"/>
+	</g>
+	<use transform="translate(-11.9,23.8)" xlink:href="#e"/>
+</svg>

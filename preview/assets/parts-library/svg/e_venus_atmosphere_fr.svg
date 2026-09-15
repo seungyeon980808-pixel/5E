@@ -1,0 +1,693 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744"
+   height="496"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="Venus_atmosphere-fr.svg">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2824"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3620"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3646"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3667"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3686"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3702"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3718"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3734"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3750"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3766"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3785"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3807"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3829"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3848"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2874"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2891"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2911"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2927"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2943"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2959"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2975"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3019"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3035"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3051"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3067"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3083"
+       inkscape:persp3d-origin="283.5 : 10.606298 : 1"
+       inkscape:vp_z="567 : 15.909448 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 15.909448 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2929"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2960"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.8730671"
+     inkscape:cx="457.14194"
+     inkscape:cy="240.76753"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1222"
+     inkscape:window-height="756"
+     inkscape:window-x="58"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-45.107937,-244.24579)">
+    <rect
+       style="opacity:0.78294576;fill:#c3a76b;stroke:#bdcc96;stroke-width:1.01284015;stroke-opacity:1"
+       id="rect2832"
+       width="534.77917"
+       height="41.261715"
+       x="160.89091"
+       y="513.54395" />
+    <rect
+       style="opacity:0.78294576;fill:#ff4800;stroke:#bdcc96;stroke-width:1.00681305;stroke-opacity:1"
+       id="rect2834"
+       width="533.29547"
+       height="38.506485"
+       x="161.63274"
+       y="555.56024" />
+    <rect
+       style="opacity:0.78294576;fill:#71abd8;stroke:#bdcc96;stroke-width:0.99538237;stroke-opacity:1"
+       id="rect2836"
+       width="534.05176"
+       height="56.085445"
+       x="161.62703"
+       y="594.81262" />
+    <rect
+       style="opacity:0.99224806;fill:none;stroke:#000000;stroke-width:2.81243634;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect2838"
+       width="532.69983"
+       height="365.94702"
+       x="162.28427"
+       y="284.69272" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 369.2073,305.00566 c 0,0 -27.21086,40.4481 -61.05048,84.47702 -13.94037,18.1379 -23.94813,36.29554 -35.94883,55.84503 -12.18054,19.84247 -17.81372,39.66296 -14.12981,54.02225 8.02089,31.26412 59.92032,53.6409 107.2536,69.72226 50.1575,17.04088 110.00478,33.02582 160.41878,46.73501 70.97922,19.30154 122.59624,32.59269 122.59624,32.59269"
+       id="path2830"
+       sodipodi:nodetypes="csssssc" />
+    <g
+       id="1"
+       transform="matrix(1.5682987,0,0,1.7468778,172.23679,656.92911)"
+       style="font-size:13.29159276999999939;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.29159276999999939;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2">-</text>
+      <text
+         style="font-size:13.29159276999999939;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="4.1999998"
+         xml:space="preserve"
+         id="3"> </text>
+      <text
+         style="font-size:13.29159276999999939;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="7.3499999"
+         xml:space="preserve"
+         id="4">200</text>
+      <text
+         style="font-size:13.29159276999999939;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="28.200001"
+         xml:space="preserve"
+         id="5"> </text>
+    </g>
+    <g
+       id="1-1"
+       transform="matrix(1.4028307,0,0,1.8298643,244.68302,656.5797)"
+       style="font-size:13.73126687000000068;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.73126687000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-7">-</text>
+      <text
+         style="font-size:13.73126687000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="4.1999998"
+         xml:space="preserve"
+         id="3-4"> </text>
+      <text
+         style="font-size:13.73126687000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="7.3499999"
+         xml:space="preserve"
+         id="4-0">1</text>
+      <text
+         style="font-size:13.73126687000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="14.4"
+         xml:space="preserve"
+         id="5-9">00</text>
+      <text
+         style="font-size:13.73126687000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="28.200001"
+         xml:space="preserve"
+         id="6"> </text>
+    </g>
+    <g
+       id="1-4"
+       transform="matrix(1.5805563,0,0,1.7468778,325.98794,656.18427)"
+       style="font-size:13.23995268000000003;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.23995268000000003;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-8">0</text>
+      <text
+         style="font-size:13.23995268000000003;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="6.9000001"
+         xml:space="preserve"
+         id="3-8"> </text>
+    </g>
+    <g
+       id="1-2"
+       transform="matrix(1.6056331,0,0,1.6638914,378.57255,657.2785)"
+       style="font-size:13.45975132000000052;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.45975132000000052;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-4">100</text>
+      <text
+         style="font-size:13.45975132000000052;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="20.85"
+         xml:space="preserve"
+         id="3-5"> </text>
+    </g>
+    <g
+       id="1-5"
+       transform="matrix(1.5563502,0,0,1.6638914,441.6236,657.27851)"
+       style="font-size:13.67119662000000169;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.67119662000000169;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-1">200</text>
+      <text
+         style="font-size:13.67119662000000169;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="20.85"
+         xml:space="preserve"
+         id="3-7"> </text>
+    </g>
+    <g
+       id="1-11"
+       transform="matrix(1.4434435,0,0,1.6638914,509.56031,657.27851)"
+       style="font-size:14.19581391000000004;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:14.19581391000000004;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-5">300</text>
+      <text
+         style="font-size:14.19581391000000004;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="20.85"
+         xml:space="preserve"
+         id="3-2"> </text>
+    </g>
+    <g
+       id="1-7"
+       transform="matrix(1.5442964,0,0,1.6638914,573.18835,656.53368)"
+       style="font-size:13.72444725999999982;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.72444725999999982;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-6">400</text>
+      <text
+         style="font-size:13.72444725999999982;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="20.85"
+         xml:space="preserve"
+         id="3-1"> </text>
+    </g>
+    <g
+       id="1-42"
+       transform="matrix(1.517005,0,0,1.6638914,633.16566,656.53368)"
+       style="font-size:13.84735054000000076;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.84735054000000076;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-3">500</text>
+      <text
+         style="font-size:13.84735054000000076;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="20.85"
+         xml:space="preserve"
+         id="3-22"> </text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:22.00000010999999844;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="333.3873"
+       y="601.26398"
+       id="text2897"
+       transform="scale(0.8386401,1.1924066)"><tspan
+         sodipodi:role="line"
+         id="tspan2899"
+         x="333.3873"
+         y="601.26398">Température (en degré Celsius)</tspan></text>
+    <g
+       id="1-24"
+       transform="matrix(2.0650304,0,0,1.6926779,76.254075,625.41951)"
+       style="font-size:11.76717722000000066;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:11.76717722000000066;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-55">0 km</text>
+      <text
+         style="font-size:11.76717722000000066;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="27.299999"
+         xml:space="preserve"
+         id="3-17"> </text>
+    </g>
+    <g
+       id="1-115"
+       transform="matrix(2.0113228,0,0,1.6924777,63.287837,542.19005)"
+       style="font-size:11.92395463000000078;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:11.92395463000000078;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-2">50 km</text>
+      <text
+         style="font-size:11.92395463000000078;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="34.349998"
+         xml:space="preserve"
+         id="3-76"> </text>
+    </g>
+    <g
+       id="1-14"
+       transform="matrix(1.9866551,0,0,1.7974759,67.701456,460.04906)"
+       style="font-size:11.64206191000000068;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:11.64206191000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="14.332193"
+         x="-8.6481094"
+         xml:space="preserve"
+         id="2-23">100 km</text>
+      <text
+         style="font-size:11.64206191000000068;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="41.25"
+         xml:space="preserve"
+         id="3-221"> </text>
+    </g>
+    <g
+       id="1-6"
+       transform="matrix(2.0414693,0,0,1.6923726,65.440372,387.84158)"
+       style="font-size:11.83595380999999946;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:11.83595380999999946;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.734548"
+         x="-7.8548441"
+         xml:space="preserve"
+         id="2-85">150 km</text>
+      <text
+         style="font-size:11.83595380999999946;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="41.25"
+         xml:space="preserve"
+         id="3-761"> </text>
+    </g>
+    <g
+       id="1-8"
+       transform="matrix(1.9768013,0,0,1.9235705,51.795921,302.41235)"
+       style="font-size:11.28202656000000026;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:11.28202656000000026;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-9">200 km</text>
+      <text
+         style="font-size:11.28202656000000026;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="41.25"
+         xml:space="preserve"
+         id="3-27"> </text>
+    </g>
+    <g
+       id="1-9"
+       transform="matrix(1.5739043,0,0,1.7342802,714.08606,631.96451)"
+       style="font-size:13.31600307999999977;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.31600307999999977;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-54">90</text>
+      <text
+         style="font-size:13.31600307999999977;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="13.95"
+         xml:space="preserve"
+         id="3-3"> </text>
+    </g>
+    <g
+       id="1-12"
+       transform="matrix(1.6877121,0,0,1.6119002,713.28687,580.85458)"
+       style="font-size:13.33842109999999970;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.33842109999999970;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-33">10</text>
+      <text
+         style="font-size:13.33842109999999970;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="13.95"
+         xml:space="preserve"
+         id="3-41"> </text>
+    </g>
+    <g
+       id="1-13"
+       transform="matrix(1.7589045,0,0,1.500415,717.82682,541.77786)"
+       style="font-size:13.54240670000000080;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.54240670000000080;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-87">1</text>
+      <text
+         style="font-size:13.54240670000000080;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="6.9000001"
+         xml:space="preserve"
+         id="3-42"> </text>
+    </g>
+    <g
+       id="1-77"
+       transform="matrix(1.584438,0,0,1.5084535,709.13308,505.6853)"
+       style="font-size:14.23046502999999952;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:14.23046502999999952;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-93">0,1</text>
+      <text
+         style="font-size:14.23046502999999952;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="17.4"
+         xml:space="preserve"
+         id="3-19"> </text>
+    </g>
+    <g
+       id="1-86"
+       transform="matrix(1.64572,0,0,1.7118349,705.65335,476.27037)"
+       style="font-size:13.10731597999999920;-inkscape-font-specification:DejaVu Sans;font-family:DejaVu Sans">
+      <text
+         style="font-size:13.10731597999999920;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="0"
+         xml:space="preserve"
+         id="2-50">0,01</text>
+      <text
+         style="font-size:13.10731597999999920;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+         y="13.057754"
+         x="24.299999"
+         xml:space="preserve"
+         id="3-28"> </text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:21.99999981999999932;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="539.36859"
+       y="-709.44592"
+       id="text3089"
+       transform="matrix(-0.00665184,0.92778133,-1.0777848,-0.0077273,0,0)"
+       inkscape:transform-center-y="6.6534692"
+       inkscape:transform-center-x="-0.041552861"><tspan
+         sodipodi:role="line"
+         id="tspan3091"
+         x="539.36859"
+         y="-709.44592">Bar</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="486.08206"
+       y="499.71445"
+       id="text2910"><tspan
+         sodipodi:role="line"
+         id="tspan2912"
+         x="486.08206"
+         y="499.71445"
+         style="font-size:22px">Couche nuageuse d'acide sulfurique</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="900.27448"
+       y="235.99707"
+       id="text2914"
+       transform="translate(45.107937,244.24579)"><tspan
+         sodipodi:role="line"
+         id="tspan2916"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="550.22375"
+       y="579.89154"
+       id="text2918"><tspan
+         sodipodi:role="line"
+         id="tspan2920"
+         x="550.22375"
+         y="579.89154">Brume d'acide sulfurique</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"
+       x="250.13226"
+       y="630.28857"
+       id="text2922"><tspan
+         sodipodi:role="line"
+         id="tspan2924"
+         x="250.13226"
+         y="630.28857">Troposphère</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="400"
+   height="400"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         id="path3208"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+  </defs>
+  <g
+     id="layer1">
+    <rect
+       width="417.19299"
+       height="419.21332"
+       x="-9.0913725"
+       y="-9.1117811"
+       id="rect5036"
+       style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:5;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <path
+       d="M 203.04066,298.47967 L 193.44421,298.47967 L 193.44421,175.4936 L 187.13076,175.4936 L 185.61553,131.17315 C 186.62692,130.61407 187.75308,130.03131 188.77226,128.64777 L 188.77226,100.99485 C 185.80701,88.963289 188.10241,75.664102 158.46768,70.058924 C 156.39556,69.087592 154.81928,69.355862 153.41692,70.058924 C 149.81009,71.456662 146.12959,70.727812 143.82047,67.281005 L 102.27795,57.810825 C 100.29049,59.052213 99.004242,58.715894 98.363604,56.926941 L 105.81348,28.516401 C 107.85581,27.04641 109.7233,27.392866 110.73797,30.284168 L 150.89153,43.289882 C 152.6067,42.164059 157.56999,42.061192 161.87695,48.214376 C 179.63225,54.250472 199.48333,52.514706 209.60665,86.85271 L 209.60665,114.12683 L 226.52671,114.12683 L 226.52671,112.48533 L 235.23927,112.48533 L 235.23927,114.2531 L 237.38585,114.2531 L 237.38585,120.94536 L 235.04987,120.94536 L 235.03522,122.54003 L 226.40044,122.54003 L 226.40044,120.56655 L 209.48038,120.56655 L 208.21769,128.90031 C 208.79761,130.17233 210.00818,130.81371 211.24815,131.42569 L 209.73292,175.4936 L 203.04066,175.55674 L 203.04066,298.47967 z"
+       id="path2416"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 110.80111,30.284168 L 102.71989,57.74769"
+       id="path3188"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 150.89154,43.479285 C 150.8284,43.731823 143.75733,67.21787 143.75733,67.21787"
+       id="path3190"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 185.5524,131.36256 L 210.99561,131.36256"
+       id="path3192"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 193.82302,131.23629 C 193.75989,130.85748 193.82302,110.08622 193.82302,110.08622 L 188.77226,105.72994"
+       id="path3194"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 203.1038,131.23629 L 203.1038,110.08622 L 209.48038,101.94186"
+       id="path3196"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 203.16693,175.55673 L 193.19167,175.55673"
+       id="path3198"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 244.45692,116.90475 L 297.74246,116.90475"
+       id="path3984"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-end:url(#Arrow1Lend);stroke-opacity:1" />
+    <path
+       d="M 44.572985,41.648384 L 97.858525,41.648384"
+       id="path5016"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-end:url(#Arrow1Lend);stroke-opacity:1" />
+    <path
+       d="M 197.48483,307.19224 L 197.48483,360.47778"
+       id="path5018"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-end:url(#Arrow1Lend);stroke-opacity:1" />
+    <text
+       x="205.06097"
+       y="331.30963"
+       id="text5020"
+       xml:space="preserve"
+       style="font-size:13px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="205.06097"
+         y="331.30963"
+         id="tspan5022"
+         style="font-size:16px">Wylot cieczy</tspan></text>
+    <text
+       x="265.37961"
+       y="107.05841"
+       id="text5024"
+       xml:space="preserve"
+       style="font-size:13px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="265.37961"
+         y="107.05841"
+         id="tspan5026"
+         style="font-size:14px">Odpowietrzenie lub</tspan></text>
+    <text
+       x="265.37961"
+       y="137.86807"
+       id="text5028"
+       xml:space="preserve"
+       style="font-size:13px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="265.37961"
+         y="137.86807"
+         id="tspan5030"
+         style="font-size:14px">próżnia</tspan></text>
+    <text
+       x="6.2754769"
+       y="31.044436"
+       id="text5032"
+       xml:space="preserve"
+       style="font-size:13px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"><tspan
+         x="6.2754769"
+         y="31.044436"
+         id="tspan5034"
+         style="font-size:16px">Wlot cieczy</tspan></text>
+    <path
+       d="M 228.19853,112.70629 L 228.19853,120.47184"
+       id="path5038"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 229.93557,112.70629 L 229.93557,120.47184"
+       id="path5046"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 231.67262,112.70629 L 231.67262,120.47184"
+       id="path5048"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="M 233.40966,112.70629 L 233.40966,120.47184"
+       id="path5050"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  </g>
+</svg>

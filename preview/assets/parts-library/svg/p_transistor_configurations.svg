@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="800"
+   height="420"
+   id="svg2">
+<style type="text/css">
+  .nline { fill: none; stroke: black; stroke-width: 1.8 }
+  .wline { fill: none; stroke: black; stroke-width: 3.5 }
+  .hollow { fill: none; stroke: black; stroke-width: 1.5 }
+  .filled { fill: black; stroke: black; stroke-width: 1 }
+  .text16 { font-size: 16px; font-weight: normal; text-anchor: start; font-family: Arial; baseline-shift: sub }
+  .text25 { font-size: 25px; font-weight: normal; text-anchor: start; font-family: Arial }
+</style>
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend"
+       style="overflow:visible">
+      <path
+         d="M 8.72,4.03 -2.21,0.02 8.72,-4 c -1.75,2.37 -1.73,5.62 0,8.04 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path85114"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+  <g id="transistor">
+    <circle cx="0" cy="0" r="16" class="hollow"/>
+    <path d="m -16,0 l 10,0 m 0,8 l 0,-16 m 0,8 l 15,-13 m -15,13 l 14,12 l -2,-6 m 2,6 l -6.3,-1.2" class="nline" />
+  </g>
+  <g id="resistor">
+    <switch>
+    <g systemLanguage="en" xml:lang="en">
+    <path d="M 0,-11 L 0,-10.88 L 4,-9.52 L -4,-6.8 L 4,-4.08 L -4,-1.36 L 4,1.36 L -4,4.08 L 4,6.8 L -4,9.52 L 0,10.88 L 0,11" style="fill:#ffffff;stroke:black;stroke-width:1.8px"/>
+    </g>
+    <g>
+    <rect x="-3.5" y="-11" height="22" width="7" style="fill:#ffffff;stroke:black;stroke-width:1.8px"/>
+    </g>
+    </switch>
+  </g>
+  <g id="battery">
+    <path d="M -15,-3 L 15,-3" class="nline" />
+    <path d="M -7,3 L 7,3" class="wline" />
+  </g>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0,-632)"
+     id="layer1">
+    <use xlink:href="#transistor" transform="translate(100,747)"/>
+    <path d="M 109,761 L 109,792" class="nline" />
+    <path d="M 109,733 L 109,695" class="nline" />
+    <use xlink:href="#resistor" transform="translate(109,684)"/>
+    <path d="m 109,673 L 109,651 L 168,651 L 168,733" class="nline" />
+    <circle cx="51" cy="747" r="2.6" class="hollow"/>
+    <path d="M 53,747 L 84,747" class="nline" />
+    <use xlink:href="#battery" transform="translate(168,736)"/>
+    <circle cx="214" cy="711" r="2.6" class="hollow"/>
+    <circle cx="109" cy="711" r="2.6" class="filled"/>
+    <path d="M 109,711 L 212,711" class="nline" />
+    <circle cx="51" cy="792" r="2.6" class="hollow"/>
+    <path d="M 53,792 L 212,792" class="nline" />
+    <circle cx="214" cy="792" r="2.6" class="hollow"/>
+    <circle cx="109" cy="792" r="2.6" class="filled"/>
+    <path d="M 109,777 L 109,792" class="nline" />
+    <circle cx="168" cy="792" r="2.6" class="filled"/>
+    <path d="M 168,792 L 168,739" class="nline" />
+
+    <use xlink:href="#transistor" transform="translate(354,747) scale(1,-1)"/>
+    <path d="M 363,761 L 363,792" class="nline" />
+    <path d="M 363,733 L 363,695" class="nline" />
+    <use xlink:href="#resistor" transform="translate(363,684)"/>
+    <path d="m 363,673 L 363,651 L 422,651 L 422,733" class="nline" />
+    <circle cx="305" cy="747" r="2.6" class="hollow"/>
+    <path d="M 307,747 L 338,747" class="nline" />
+    <use xlink:href="#battery" transform="translate(422,736) scale(1,-1)"/>
+    <circle cx="468" cy="711" r="2.6" class="hollow"/>
+    <circle cx="363" cy="711" r="2.6" class="filled"/>
+    <path d="M 363,711 L 466,711" class="nline" />
+    <circle cx="305" cy="792" r="2.6" class="hollow"/>
+    <path d="M 307,792 L 466,792" class="nline" />
+    <circle cx="468" cy="792" r="2.6" class="hollow"/>
+    <circle cx="363" cy="792" r="2.6" class="filled"/>
+    <path d="M 363,777 L 363,792" class="nline" />
+    <circle cx="422" cy="792" r="2.6" class="filled"/>
+    <path d="M 422,792 L 422,739" class="nline" />
+
+    <use xlink:href="#transistor" transform="translate(604,742) rotate(270) scale(1,-1)"/>
+    <path d="m 618,733 L 634,733 L 634,695" class="nline" />
+    <use xlink:href="#resistor" transform="translate(634,684)"/>
+    <path d="m 634,673 L 634,651 L 693,651 L 693,733" class="nline" />
+    <use xlink:href="#battery" transform="translate(693,736)"/>
+    <circle cx="537" cy="733" r="2.6" class="hollow"/>
+    <path d="m 539,733 L 592,733" class="nline" />
+    <path d="m 693,739 L 693,792" class="nline" />
+    <circle cx="737" cy="710" r="2.6" class="hollow"/>
+    <circle cx="537" cy="792" r="2.6" class="hollow"/>
+    <path d="M 539,792 L 735,792" class="nline" />
+    <circle cx="737" cy="792" r="2.6" class="hollow"/>
+    <circle cx="693" cy="792" r="2.6" class="filled"/>
+    <circle cx="604" cy="792" r="2.6" class="filled"/>
+    <path d="M 604,792 L 604,758" class="nline" />
+    <path d="M 634,710 L 735,710" class="nline" />
+    <circle cx="634" cy="710" r="2.6" class="filled"/>
+
+    <use xlink:href="#transistor" transform="translate(354,940)"/>
+    <circle cx="308" cy="940" r="2.6" class="hollow"/>
+    <path d="M 310,940 L 338,940" class="nline" />
+    <path d="M 363,927 L 363,902 L 423,902 L 423,947" class="nline" />
+    <use xlink:href="#battery" transform="translate(423,950)"/>
+    <path d="M 423,953 L 423,1030" class="nline" />
+    <path d="M 363,953 L 363,992" class="nline" />
+    <use xlink:href="#resistor" transform="translate(363,1002)"/>
+    <path d="M 363,1013 L 363,1030" class="nline" />
+    <path d="M 363,977 L 466,977" class="nline" />
+    <circle cx="468" cy="977" r="2.6" class="hollow"/>
+    <circle cx="306" cy="1030" r="2.6" class="hollow"/>
+    <path d="M 308,1030 L 466,1030" class="nline" />
+    <circle cx="468" cy="1030" r="2.6" class="hollow"/>
+    <circle cx="423" cy="1030" r="2.6" class="filled"/>
+    <circle cx="363" cy="1030" r="2.6" class="filled"/>
+    <circle cx="363" cy="977" r="2.6" class="filled"/>
+
+    <use xlink:href="#transistor" transform="translate(605,960) scale(-1,1)"/>
+    <path d="M 621,960 L 626,960 L 626,1030" class="nline" />
+    <circle cx="538" cy="982" r="2.6" class="hollow"/>
+    <circle cx="702" cy="925" r="2.6" class="hollow"/>
+    <circle cx="596" cy="925" r="2.6" class="filled"/>
+    <path d="M 596,925 L 700,925" class="nline" />
+    <circle cx="538" cy="1030" r="2.6" class="hollow"/>
+    <path d="M 540,1030 L 700,1030" class="nline" />
+    <circle cx="656" cy="1030" r="2.6" class="filled"/>
+    <circle cx="626" cy="1030" r="2.6" class="filled"/>
+    <circle cx="702" cy="1030" r="2.6" class="hollow"/>
+    <path d="M 596,972 L 596,982 L 540,982" class="nline" />
+    <path d="M 596,948 596,910" class="nline" />
+    <use xlink:href="#resistor" transform="translate(596,900)"/>
+    <path d="M 596,889 L 596,880 L 656,880 L 656,947" class="nline" />
+    <use xlink:href="#battery" transform="translate(656,950)"/>
+    <path d="M 656,953 L 656,1030" class="nline" />
+
+    <!-- transistor with r_CE, r_BE -->
+    <use xlink:href="#transistor" transform="translate(105,935) scale(2,2)"/>
+    <path d="m 132,905 39,0"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path d="m 132,964 39,0"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path d="m 70,940 0,60"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path d="m 124,968 0,31"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path d="m 145,909 0,52"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
+    <path d="m 72,994 49,0"
+       style="fill:none;stroke:#000000;stroke-width:0.88px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend)" />
+   <switch>
+    <g systemLanguage="cs" xml:lang="cs">
+    <text x="26" y="772" id="Ue_1"><tspan class="text25">U<tspan class="text16">i</tspan></tspan></text>
+    <text x="201" y="760" id="Ua_1"><tspan class="text25">U<tspan class="text16">o</tspan></tspan></text>
+    <text x="283" y="772" id="Ue_2"><tspan class="text25">U<tspan class="text16">i</tspan></tspan></text>
+    <text x="454" y="761" id="Ua_2"><tspan class="text25">U<tspan class="text16">o</tspan></tspan></text>
+    <text x="517" y="769" id="Ue_3"><tspan class="text25">U<tspan class="text16">i</tspan></tspan></text>
+    <text x="727" y="760" id="Ua_3"><tspan class="text25">U<tspan class="text16">o</tspan></tspan></text>
+    <text x="155" y="939" id="rCE"><tspan class="text25">r<tspan class="text16">CE</tspan></tspan></text>
+    <text x="89" y="1013" id="rBE"><tspan class="text25">r<tspan class="text16">BE</tspan></tspan></text>
+    <text x="289" y="992" id="Ue_4"><tspan class="text25">U<tspan class="text16">i</tspan></tspan></text>
+    <text x="456" y="1011" id="Ua_4"><tspan class="text25">U<tspan class="text16">o</tspan></tspan></text>
+    <text x="518" y="1012" id="Ue_5"><tspan class="text25">U<tspan class="text16">i</tspan></tspan></text>
+    <text x="690" y="985" id="Ua_5"><tspan class="text25">U<tspan class="text16">o</tspan></tspan></text>
+    <text x="38" y ="838" class="text25" id="CE">společný emitor</text>
+    <text x="282" y ="838" class="text25" id="CC">společný kolektor</text>
+    <text x="533" y ="838" class="text25" id="CB">společná báze</text>
+    </g>
+    <g systemLanguage="de" xml:lang="de">
+    <text x="26" y="772" id="Ue_1"><tspan class="text25">U<tspan class="text16">e</tspan></tspan></text>
+    <text x="201" y="760" id="Ua_1"><tspan class="text25">U<tspan class="text16">a</tspan></tspan></text>
+    <text x="283" y="772" id="Ue_2"><tspan class="text25">U<tspan class="text16">e</tspan></tspan></text>
+    <text x="454" y="761" id="Ua_2"><tspan class="text25">U<tspan class="text16">a</tspan></tspan></text>
+    <text x="517" y="769" id="Ue_3"><tspan class="text25">U<tspan class="text16">e</tspan></tspan></text>
+    <text x="727" y="760" id="Ua_3"><tspan class="text25">U<tspan class="text16">a</tspan></tspan></text>
+    <text x="155" y="939" id="rCE"><tspan class="text25">r<tspan class="text16">CE</tspan></tspan></text>
+    <text x="89" y="1013" id="rBE"><tspan class="text25">r<tspan class="text16">BE</tspan></tspan></text>
+    <text x="289" y="992" id="Ue_4"><tspan class="text25">U<tspan class="text16">e</tspan></tspan></text>
+    <text x="456" y="1011" id="Ua_4"><tspan class="text25">U<tspan class="text16">a</tspan></tspan></text>
+    <text x="518" y="1012" id="Ue_5"><tspan class="text25">U<tspan class="text16">e</tspan></tspan></text>
+    <text x="690" y="985" id="Ua_5"><tspan class="text25">U<tspan class="text16">a</tspan></tspan></text>
+    <text x="38" y ="838" class="text25" id="CE">Emitterschaltung</text>
+    <text x="282" y ="838" class="text25" id="CC">Kollektorschaltung</text>
+    <text x="533" y ="838" class="text25" id="CB">Basisschaltung</text>
+    </g>
+    <g systemLanguage="en" xml:lang="en">
+    <text x="26" y="772" id="Ue_1"><tspan class="text25">V<tspan class="text16">i</tspan></tspan></text>
+    <text x="201" y="760" id="Ua_1"><tspan class="text25">V<tspan class="text16">o</tspan></tspan></text>
+    <text x="283" y="772" id="Ue_2"><tspan class="text25">V<tspan class="text16">i</tspan></tspan></text>
+    <text x="454" y="761" id="Ua_2"><tspan class="text25">V<tspan class="text16">o</tspan></tspan></text>
+    <text x="517" y="769" id="Ue_3"><tspan class="text25">V<tspan class="text16">i</tspan></tspan></text>
+    <text x="727" y="760" id="Ua_3"><tspan class="text25">V<tspan class="text16">o</tspan></tspan></text>
+    <text x="155" y="939" id="rCE"><tspan class="text25">r<tspan class="text16">CE</tspan></tspan></text>
+    <text x="89" y="1013" id="rBE"><tspan class="text25">r<tspan class="text16">BE</tspan></tspan></text>
+    <text x="289" y="992" id="Ue_4"><tspan class="text25">V<tspan class="text16">i</tspan></tspan></text>
+    <text x="456" y="1011" id="Ua_4"><tspan class="text25">V<tspan class="text16">o</tspan></tspan></text>
+    <text x="518" y="1012" id="Ue_5"><tspan class="text25">V<tspan class="text16">i</tspan></tspan></text>
+    <text x="690" y="985" id="Ua_5"><tspan class="text25">V<tspan class="text16">o</tspan></tspan></text>
+    <text x="38" y ="838" class="text25" id="CE">Common Emitter</text>
+    <text x="282" y ="838" class="text25" id="CC">Common Collector</text>
+    <text x="533" y ="838" class="text25" id="CB">Common Base</text>
+    </g>
+   </switch>
+  </g>
+</svg>

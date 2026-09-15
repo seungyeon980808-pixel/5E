@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   id="svg1"
+   sodipodi:version="0.32"
+   inkscape:version="0.39cvs"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   width="600.00000pt"
+   height="400.00000pt"
+   sodipodi:docbase="d:"
+   sodipodi:docname="lenteconv_1.svg">
+  <defs
+     id="defs3">
+    <marker
+       style="overflow:visible;"
+       id="TriangleInL"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="TriangleInL">
+      <path
+         transform="scale(-0.8)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z "
+         id="path6628"
+         sodipodi:nodetypes="cccc" />
+    </marker>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2171"
+       id="radialGradient2175"
+       cx="0.44067797"
+       cy="0.80468750"
+       r="0.33898306"
+       fx="0.45762712"
+       fy="0.80468750" />
+    <marker
+       style="overflow:visible;"
+       id="Arrow2L"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow2L">
+      <path
+         transform="scale(1.1) translate(-5,0)"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         id="path6668"
+         sodipodi:nodetypes="cccc" />
+    </marker>
+    <linearGradient
+       id="linearGradient2171">
+      <stop
+         style="stop-color:#a05b2c;stop-opacity:0.39215687;"
+         offset="0.00000000"
+         id="stop2172" />
+      <stop
+         style="stop-color:#fff75c;stop-opacity:0.39215687;"
+         offset="1.0000000"
+         id="stop2173" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.1278769"
+     inkscape:cx="304.98793"
+     inkscape:cy="163.83648"
+     inkscape:window-width="640"
+     inkscape:window-height="524"
+     showgrid="true"
+     inkscape:grid-bbox="true"
+     inkscape:window-x="66"
+     inkscape:window-y="49" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF
+       id="RDF5">
+      <cc:Work
+         rdf:about=""
+         id="Work6">
+        <dc:format
+           id="format7">image/svg+xml</dc:format>
+        <dc:type
+           id="type9"
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 110.83141,184.74550 L 684.02779,409.11685"
+     id="path3424"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:#c2c2e7;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0105084pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 103.47510,295.52510 L 103.47510,208.64473 L 114.79644,208.64473 L 114.79644,295.34870 L 103.47510,295.52510 z "
+     id="path1532"
+     sodipodi:nodetypes="ccccc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-start:none;marker-mid:url(#Arrow2L);"
+     d="M 109.57450,183.91351 L 392.41254,183.91351"
+     id="path5955"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:url(#radialGradient2175);fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.2880323;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 109.90404,207.69120 C 97.426480,207.69120 107.57074,191.76467 109.32908,185.81890 C 110.55565,179.59745 110.07123,191.26354 112.34760,195.53992 C 114.39710,200.16014 114.39053,206.00553 109.90404,207.69120 z "
+     id="path1547"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 206.32521,229.58043 L 210.98218,217.20432 L 230.76283,231.63005 L 206.32521,229.58043 z "
+     id="path2982"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:4.5634052pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;marker-start:none;"
+     d="M 392.91436,420.36818 L 392.91436,168.68885"
+     id="path1036" />
+  <path
+     style="fill:#000000;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:0.82341747pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 383.94294,170.13018 L 401.88579,170.13018 L 392.91436,135.35593 L 383.94294,170.13018 z "
+     id="path1671" />
+  <path
+     style="fill:#000000;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:0.82341747pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 383.94294,420.27862 L 401.88579,420.27862 L 392.91436,455.05287 L 383.94294,420.27862 z "
+     id="path2305" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 239.58431,190.38235 L 239.58431,177.15908 L 263.17812,183.69426 L 239.58431,190.38235 z "
+     id="path7315"
+     sodipodi:nodetypes="cccc" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="209.24664"
+     y="115.00533"
+     id="text2423"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan2424">F</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 519.61558,302.09492 L 519.61558,288.43217"
+     id="path2426"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="303.82703"
+     y="163.70024"
+     id="text2427"
+     transform="scale(1.739130,1.739130)"><tspan
+       id="tspan2428">i</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="106.89803"
+     y="115.00533"
+     id="text2430"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan2431">F</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 269.61558,302.09492 L 269.61558,288.43217"
+     id="path2433"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="160.07703"
+     y="163.70024"
+     id="text2434"
+     transform="scale(1.739130,1.739130)"><tspan
+       id="tspan2435">o</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 393.33141,184.74550 L 650.22945,409.11685"
+     id="path2437"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 467.74178,257.90793 L 476.39027,247.90497 L 489.96392,268.27975 L 467.74178,257.90793 z "
+     id="path2438"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 110.83141,184.74550 L 392.55095,382.51821"
+     id="path2439"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-start:none;marker-mid:url(#Arrow2L);"
+     d="M 393.38970,383.91351 L 647.41254,383.91351"
+     id="path2440"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 200.26786,255.96686 L 208.05919,245.28273 L 223.27185,264.46477 L 200.26786,255.96686 z "
+     id="path2441"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 454.75265,391.20079 L 454.75265,377.97752 L 478.34646,384.51270 L 454.75265,391.20079 z "
+     id="path2442"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:#c2c2e7;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#979797;stroke-width:0.78290668pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 615.58397,296.60275 L 615.58397,363.91462 L 624.35533,363.91462 L 624.35533,296.73941 L 615.58397,296.60275 z "
+     id="path2443"
+     sodipodi:nodetypes="ccccc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:url(#radialGradient2175);fill-opacity:1.0000000;fill-rule:evenodd;stroke:#979797;stroke-width:0.99792254;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 620.56489,364.65338 C 610.89770,364.65338 618.75712,376.99271 620.11942,381.59930 C 621.06973,386.41945 620.69442,377.38096 622.45806,374.06778 C 624.04594,370.48820 624.04086,365.95938 620.56489,364.65338 z "
+     id="path2444"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:3.9188509;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 79.526459,295.31438 L 668.62906,295.31438"
+     id="path908"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="54.700268"
+     y="115.00533"
+     id="text3081"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan3082">A</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 144.61558,302.09492 L 144.61558,288.43217"
+     id="path3084"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="88.202026"
+     y="163.70024"
+     id="text3085"
+     transform="scale(1.739130,1.739130)"><tspan
+       id="tspan3086">o</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="258.37396"
+     y="115.00533"
+     id="text3088"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan3089">A</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 644.61558,302.09492 L 644.61558,288.43217"
+     id="path3091"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="375.70203"
+     y="163.70024"
+     id="text3092"
+     transform="scale(1.739130,1.739130)"><tspan
+       id="tspan3093">i</tspan></text>
+</svg>

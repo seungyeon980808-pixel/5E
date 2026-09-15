@@ -1,0 +1,592 @@
+/* ===== CUT GEOMETRY — 삽입 후 자르기(가위/칼) 분할 수학 =====
+//
+// 순수 함수 모듈 (DOM/스토어 접근 없음) — Node 단위 테스트 가능. cut-tool.js가
+// 이 함수들을 써서 캔버스 객체를 나눈다. 자르기 대상은 획 계열(line/polyline/
+// curve)뿐 — 이들은 점 배열로 다뤄 분할 후 같은 타입의 새 객체들로 방출한다.
+//
+//   · 가위(scissors): 클릭 지점에서 경로를 둘로 (닫힌 경로는 그 지점에서 열림)
+//   · 칼(knife):      직선 a→b와의 교차점마다 경로 분할 (닫힌 도형은 2교차서 두 호로)
+// 획·윤곽선 조각은 열린 경로로 방출한다(합성 변이 안 생기게). 단, 색을 채운
+// 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
+// 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
+
+import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.4.0";
+
+// curve 객체의 렌더된 스플라인을 폴리라인으로 샘플링(제어점 직선이 아니라 실제 곡선
+// 기준으로 잘리게). render/core.js의 curveSamplePoints와 동일한 Catmull-Rom 제어점 사용.
+function curveSample(o, samplesPerSeg = 12) {
+  const pts = o.points || [];
+  const n = pts.length;
+  if (n < 2) return pts.map((p) => ({ x: p.x, y: p.y }));
+  if (n === 2) return [{ x: pts[0].x, y: pts[0].y }, { x: pts[1].x, y: pts[1].y }];
+  const closed = o.closed === true && n >= 3;
+  const out = [{ x: pts[0].x, y: pts[0].y }];
+  const segCount = closed ? n : n - 1;
+  for (let i = 0; i < segCount; i++) {
+    const seg = closed ? curveBezierSegClosed(pts, i) : curveBezierSeg(pts, i);
+    for (let s = 1; s <= samplesPerSeg; s++) out.push(evalBezier(seg, s / samplesPerSeg));
+  }
+  return out;
+}
+
+function round3(v) { return Math.round(v * 1000) / 1000; }
+function dist2(ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; return dx * dx + dy * dy; }
+
+// 선분 (ax,ay)-(bx,by) 위에서 점 (px,py)에 가장 가까운 점 + 매개변수 t.
+function segClosest(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay; const L2 = dx * dx + dy * dy || 1e-9;
+  let t = ((px - ax) * dx + (py - ay) * dy) / L2;
+  t = Math.max(0, Math.min(1, t));
+  return { x: ax + dx * t, y: ay + dy * t, t };
+}
+// 선분 ab와 cd의 교차점 {x,y,t(ab 위),u(cd 위)} 또는 null.
+function segSegIntersect(a, b, c, d) {
+  const rx = b.x - a.x, ry = b.y - a.y, sx = d.x - c.x, sy = d.y - c.y;
+  const denom = rx * sy - ry * sx;
+  if (Math.abs(denom) < 1e-12) return null;
+  const t = ((c.x - a.x) * sy - (c.y - a.y) * sx) / denom;
+  const u = ((c.x - a.x) * ry - (c.y - a.y) * rx) / denom;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return { x: a.x + rx * t, y: a.y + ry * t, t, u };
+}
+export function isCuttable(o) {
+  return o && (o.type === "line" || o.type === "polyline" || o.type === "curve"
+    || o.type === "ellipse" || o.type === "rect" || o.type === "triangle");
+}
+// 네이티브 도형(원/상자/삼각형)은 항상 닫힘; polyline/curve는 o.closed.
+function objClosed(o) {
+  return o.type === "ellipse" || o.type === "rect" || o.type === "triangle" || !!o.closed;
+}
+// 색을 채운 닫힌 영역인가(=렌더러가 fill을 그리는 도형). fillNone이면 윤곽선만 있는
+// 도형/열린 획이므로 false. 이 판정으로 잘린 조각을 닫힌-채움으로 유지할지 정한다.
+// (render/fill.js: obj.fillNone → "transparent" 규칙과 일치)
+export function isFilledRegion(o) {
+  return isCuttable(o) && objClosed(o) && !o.fillNone;
+}
+function rotatePt(px, py, cx, cy, deg) {
+  if (!deg) return { x: px, y: py };
+  const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = px - cx, dy = py - cy;
+  return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c };
+}
+// 원/상자/삼각형 → 닫힌 다각형 점 배열(회전 반영). 직선 칼이 볼록 도형을 항상 2점서
+// 지나므로 깔끔히 두 조각으로 갈린다. 자른 조각은 닫힌 polyline로 방출된다.
+function ellipsePolygon(o, n = 48) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, rx = o.w / 2, ry = o.h / 2;
+  const pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2;
+    pts.push(rotatePt(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cx, cy, o.rotation || 0));
+  }
+  return pts;
+}
+function rectPolygon(o) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, d = o.rotation || 0;
+  return [[o.x, o.y], [o.x + o.w, o.y], [o.x + o.w, o.y + o.h], [o.x, o.y + o.h]]
+    .map(([x, y]) => rotatePt(x, y, cx, cy, d));
+}
+function trianglePolygon(o) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2, d = o.rotation || 0;
+  const fx = !!o.flipX, fy = !!o.flipY;
+  let v;
+  if (!fx && !fy) v = [[o.x, o.y + o.h], [o.x + o.w, o.y + o.h], [o.x, o.y]];
+  else if (fx && !fy) v = [[o.x + o.w, o.y + o.h], [o.x, o.y + o.h], [o.x + o.w, o.y]];
+  else if (!fx && fy) v = [[o.x, o.y], [o.x + o.w, o.y], [o.x, o.y + o.h]];
+  else v = [[o.x + o.w, o.y], [o.x, o.y], [o.x + o.w, o.y + o.h]];
+  return v.map(([x, y]) => rotatePt(x, y, cx, cy, d));
+}
+// 객체 → 점 배열(월드). line은 [p1,p2], polyline/curve는 points, 도형은 다각형화.
+function objPoints(o) {
+  if (o.type === "line") return [{ x: o.p1.x, y: o.p1.y }, { x: o.p2.x, y: o.p2.y }];
+  if (o.type === "curve") return curveSample(o);
+  if (o.type === "polyline") return (o.points || []).map((p) => ({ x: p.x, y: p.y }));
+  if (o.type === "ellipse") return ellipsePolygon(o);
+  if (o.type === "rect") return rectPolygon(o);
+  if (o.type === "triangle") return trianglePolygon(o);
+  return null;
+}
+// 분할 조각(점 배열) → 원본 스타일을 물려받은 새 객체. line도 3점 이상이면 polyline로.
+function makePiece(o, pts, closed) {
+  const nativeShape = o.type === "ellipse" || o.type === "rect" || o.type === "triangle";
+  const base = JSON.parse(JSON.stringify(o));
+  delete base.id; delete base.groupId;
+  const P = pts.map((p) => ({ x: round3(p.x), y: round3(p.y) }));
+  if (o.type === "line" && P.length === 2 && !closed) {
+    base.p1 = P[0]; base.p2 = P[1];
+    return base;
+  }
+  // line·네이티브 도형 조각은 polyline로(반쪽 타원은 타원이 아니므로). 도형의
+  // 위치/크기/회전 필드는 버리고 절대 점 좌표만 사용. fill/stroke는 원본 상속.
+  if (o.type === "line" || nativeShape) {
+    base.type = "polyline";
+    base.arrowHead = base.arrowHead ?? "none";
+    base.rounded = base.rounded ?? false;
+    base.cornerRadius = base.cornerRadius ?? 10;
+    base.dashLength = base.dashLength ?? 0;
+    base.dashGap = base.dashGap ?? 0;
+    delete base.x; delete base.y; delete base.w; delete base.h;
+    delete base.flipX; delete base.flipY;
+    base.rotation = 0;
+  }
+  base.points = P;
+  base.closed = !!closed;
+  if ((base.type === "polyline" || base.type === "curve") && !closed) base.fillNone = true;
+  return base;
+}
+// 연속 중복점 제거(0길이 세그먼트 방지).
+function dedupe(pts) {
+  const out = [];
+  for (const p of pts) if (!out.length || dist2(out[out.length - 1].x, out[out.length - 1].y, p.x, p.y) > 1e-6) out.push(p);
+  return out;
+}
+
+/* ----- 가위: 클릭 지점에서 분할 ----- */
+export function cutScissors(o, point) {
+  if (!isCuttable(o)) return null;
+  // 색을 채운 영역은 점 클릭 한 번으로 2D를 나눌 수 없다 → 가위로는 건드리지 않고
+  // 원본 유지(예전엔 닫힌 경로가 열리며 채움이 사라졌음). 영역 분할은 칼로 가로지른다.
+  if (isFilledRegion(o)) return null;
+  const pts = objPoints(o);
+  if (pts.length < 2) return null;
+  const closed = objClosed(o);
+  const segCount = closed ? pts.length : pts.length - 1;
+  let best = { d: Infinity, seg: -1, pt: null };
+  for (let i = 0; i < segCount; i++) {
+    const s0 = pts[i], s1 = pts[(i + 1) % pts.length];
+    const c = segClosest(point.x, point.y, s0.x, s0.y, s1.x, s1.y);
+    const d = dist2(point.x, point.y, c.x, c.y);
+    if (d < best.d) best = { d, seg: i, pt: { x: c.x, y: c.y } };
+  }
+  if (best.seg < 0) return null;
+  if (closed) {
+    // 닫힌 경로를 한 점에서 자르면 그 점에서 열린 경로가 된다(한 객체).
+    const rot = [best.pt];
+    for (let k = best.seg + 1; k < pts.length; k++) rot.push(pts[k]);
+    for (let k = 0; k <= best.seg; k++) rot.push(pts[k]);
+    rot.push(best.pt);
+    const d = dedupe(rot);
+    return d.length >= 2 ? [makePiece(o, d, false)] : null;
+  }
+  const left = dedupe([...pts.slice(0, best.seg + 1), best.pt]);
+  const right = dedupe([best.pt, ...pts.slice(best.seg + 1)]);
+  const out = [];
+  if (left.length >= 2) out.push(makePiece(o, left, false));
+  if (right.length >= 2) out.push(makePiece(o, right, false));
+  return out.length >= 2 ? out : null;
+}
+
+// 경로를 (경로 순서로 정렬된) 교차점들에서 조각내기 — 칼·올가미 공용.
+// crossings: [{seg, t, pt}] (열린 경로 기준). 닫힌 경로는 별도 처리.
+function splitOpenAtCrossings(o, pts, crossings) {
+  crossings.sort((a, b) => a.seg - b.seg || a.t - b.t);
+  const pieces = [];
+  let cur = [pts[0]];
+  let ci = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    while (ci < crossings.length && crossings[ci].seg === i) {
+      cur.push(crossings[ci].pt);
+      pieces.push(cur);
+      cur = [{ x: crossings[ci].pt.x, y: crossings[ci].pt.y }];
+      ci++;
+    }
+    cur.push(pts[i + 1]);
+  }
+  pieces.push(cur);
+  return pieces.map((p) => dedupe(p)).filter((p) => p.length >= 2).map((p) => makePiece(o, p, false));
+}
+
+// 같은 점의 중복 교차 제거 — 칼이 다각형 꼭짓점을 정확히 지날 때(축정렬 절단 등)
+// 인접 두 세그먼트가 같은 점을 각각 교차로 잡아 개수가 부풀려지는 것 방지.
+function dedupeCrossings(crossings) {
+  const out = [];
+  for (const c of crossings) {
+    if (!out.some((d) => dist2(d.pt.x, d.pt.y, c.pt.x, c.pt.y) < 1e-4)) out.push(c);
+  }
+  return out;
+}
+// 경로 세그먼트들과 절단 기하(칼=선분, 올가미=폴리곤)의 교차점 목록.
+function pathCrossings(pts, closed, hitSeg) {
+  const crossings = [];
+  const N = closed ? pts.length : pts.length - 1;
+  for (let i = 0; i < N; i++) {
+    const s0 = pts[i], s1 = pts[(i + 1) % pts.length];
+    for (const X of hitSeg(s0, s1)) crossings.push({ seg: i, t: X.t, pt: { x: X.x, y: X.y } });
+  }
+  return crossings;
+}
+
+/* ----- 칼: 직선 a→b 와의 교차점마다 분할 ----- */
+export function cutKnife(o, a, b) {
+  if (!isCuttable(o)) return null;
+  const pts = objPoints(o);
+  if (pts.length < 2) return null;
+  const closed = objClosed(o);
+  const hitSeg = (s0, s1) => { const X = segSegIntersect(s0, s1, a, b); return X ? [X] : []; };
+  const crossings = dedupeCrossings(pathCrossings(pts, closed, hitSeg));
+  if (!crossings.length) return null;
+  if (closed) {
+    if (crossings.length !== 2) return null; // 2교차만 두 조각으로 분할(그 외는 원본 유지)
+    crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
+    const [c0, c1] = crossings;
+    // 두 교차점에서 두 "호(arc)"가 나온다. 채운 영역이면 잘린 현(弦)을 따라 각각 닫아
+    // 두 개의 채워진 조각으로 방출(색 유지). 윤곽선만 있는 도형이면 닫지 않고 열린
+    // 호로 방출(합성 현이 안 그어지게) — 기존 동작 유지.
+    const fillHalves = isFilledRegion(o);
+    const arcA = [c0.pt];
+    for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
+    arcA.push(c1.pt);
+    const arcB = [c1.pt];
+    // 두 교차점이 같은 세그먼트(c0.seg===c1.seg)에 있으면 start===end라 while 루프가
+    // 0회 실행돼 도형 대부분이 소실됐다. 순회 횟수를 미리 계산해(같은 세그먼트면 N,
+    // 즉 나머지 전체를 한 바퀴) 그만큼 정점을 도는 카운트 루프로 교체.
+    const stepsB = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+    let kB = (c1.seg + 1) % pts.length;
+    for (let s = 0; s < stepsB; s++) { arcB.push(pts[kB]); kB = (kB + 1) % pts.length; }
+    arcB.push(c0.pt);
+    const A = dedupe(arcA), B = dedupe(arcB);
+    // 채운 조각은 면적을 가지려면 3점 이상 필요(현으로 닫히므로). 획 조각은 2점이면 충분.
+    const minPts = fillHalves ? 3 : 2;
+    const out = [];
+    if (A.length >= minPts) out.push(makePiece(o, A, fillHalves));
+    if (B.length >= minPts) out.push(makePiece(o, B, fillHalves));
+    return out.length >= 2 ? out : null;
+  }
+  return splitOpenAtCrossings(o, pts, crossings);
+}
+
+// 점에서 객체 획까지의 최소 거리(가위 대상 선택용).
+export function distanceToObject(o, point) {
+  if (!isCuttable(o)) return Infinity;
+  const pts = objPoints(o);
+  if (!pts || pts.length < 2) return Infinity;
+  const closed = objClosed(o);
+  const N = closed ? pts.length : pts.length - 1;
+  let best = Infinity;
+  for (let i = 0; i < N; i++) {
+    const s0 = pts[i], s1 = pts[(i + 1) % pts.length];
+    const c = segClosest(point.x, point.y, s0.x, s0.y, s1.x, s1.y);
+    const d = dist2(point.x, point.y, c.x, c.y);
+    if (d < best) best = d;
+  }
+  return Math.sqrt(best);
+}
+
+/* ----- 자유경로(가위): 그려진 폴리라인이 지나가는 곳마다 분할 ----- */
+// 절단 경로에서 두 교차점 ca,cb '사이'의 그려진 정점들을 ca→cb 순서로 반환(끝점 제외).
+// 직선(2점 경로)이면 항상 빈 배열 → 채운 조각이 곧은 현으로 닫힘(=칼과 동일).
+function pathInterior(cutPts, ca, cb) {
+  let a = ca, b = cb, rev = false;
+  if (a.pseg > b.pseg || (a.pseg === b.pseg && a.u > b.u)) { a = cb; b = ca; rev = true; }
+  const mids = [];
+  for (let k = a.pseg + 1; k <= b.pseg; k++) mids.push({ x: cutPts[k].x, y: cutPts[k].y });
+  if (rev) mids.reverse();
+  return mids;
+}
+// 점 배열(경계) × 절단 경로 교차점 raw 목록. 대상 위치(seg,t)·경로 위치(pseg,u) 기록.
+function crossingsForPts(pts, closed, cut) {
+  const raw = [];
+  const N = closed ? pts.length : pts.length - 1;
+  for (let i = 0; i < N; i++) {
+    const s0 = pts[i], s1 = pts[(i + 1) % pts.length];
+    for (let j = 0; j < cut.length - 1; j++) {
+      const X = segSegIntersect(s0, s1, cut[j], cut[j + 1]);
+      if (X) raw.push({ seg: i, t: X.t, pseg: j, u: X.u, pt: { x: X.x, y: X.y } });
+    }
+  }
+  return raw;
+}
+// 대상 경계 × 절단 경로 교차점. 각 교차에 대상 위치(seg,t)와 경로 위치(pseg,u) 기록.
+function freehandCrossings(o, cut) {
+  const pts = objPoints(o);
+  if (!pts || pts.length < 2 || cut.length < 2) return null;
+  const closed = objClosed(o);
+  return { pts, closed, crossings: dedupeCrossings(crossingsForPts(pts, closed, cut)) };
+}
+// 절단 경로가 대상을 자르는 지점들(빨간 점 미리보기용). 못 자르면 [].
+export function cutCrossingPoints(o, path) {
+  if (isBoxCuttable(o)) return boxCrossingPoints(o, path);   // 상자형(이미지·svgAsset)
+  if (!isCuttable(o)) return [];
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  const r = freehandCrossings(o, cut);
+  return r ? r.crossings.map((c) => c.pt) : [];
+}
+export function cutFreehand(o, path) {
+  if (!isCuttable(o)) return null;
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return null;
+  const r = freehandCrossings(o, cut);
+  if (!r) return null;
+  const { pts, closed, crossings } = r;
+  if (!crossings.length) return null;
+  if (!closed) return splitOpenAtCrossings(o, pts, crossings);
+  if (crossings.length !== 2) return null; // 닫힌 도형은 2교차(관통)만 분할 — 그 외 원본 유지
+  crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
+  const [c0, c1] = crossings;
+  const arcAInterior = [];
+  for (let k = c0.seg + 1; k <= c1.seg; k++) arcAInterior.push(pts[k]);
+  const arcBInterior = [];
+  // 같은 세그먼트(c0.seg===c1.seg)일 때 0회 실행되던 버그를 카운트 루프로 교체
+  // (같은 세그먼트면 N = 나머지 전체를 한 바퀴).
+  const stepsBI = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+  let kBI = (c1.seg + 1) % pts.length;
+  for (let s = 0; s < stepsBI; s++) { arcBInterior.push(pts[kBI]); kBI = (kBI + 1) % pts.length; }
+  const fillHalves = isFilledRegion(o);
+  if (!fillHalves) {
+    // 윤곽선: 두 열린 호(절단 경로는 버림) — 기존 칼 동작과 동일.
+    const A = dedupe([c0.pt, ...arcAInterior, c1.pt]);
+    const B = dedupe([c1.pt, ...arcBInterior, c0.pt]);
+    const out = [];
+    if (A.length >= 2) out.push(makePiece(o, A, false));
+    if (B.length >= 2) out.push(makePiece(o, B, false));
+    return out.length >= 2 ? out : null;
+  }
+  // 채운 영역: 그려진 절단 경로를 공유 경계로 삼아 채운 두 조각으로.
+  const A = dedupe([c0.pt, ...arcAInterior, c1.pt, ...pathInterior(cut, c1, c0)]);
+  const B = dedupe([c1.pt, ...arcBInterior, c0.pt, ...pathInterior(cut, c0, c1)]);
+  const out = [];
+  if (A.length >= 3) out.push(makePiece(o, A, true));
+  if (B.length >= 3) out.push(makePiece(o, B, true));
+  return out.length >= 2 ? out : null;
+}
+
+/* ----- 상자형(이미지·svgAsset) 자르기 =====================================
+// 래스터/SVG는 점 배열로 나눌 수 없다. 대신 **같은 상자·같은 그림**을 가진 조각 둘을
+// 만들고, 각자 반대쪽을 `cutouts`(객체 상자의 0~1 분수 다각형 마스크)로 지운다.
+// 마스크는 objectBoundingBox 단위라 이동·크기변경·회전에 자동으로 따라붙는다.
+// 경계를 두 번 통과하면 두 조각으로 분할하고, 경계 안의 닫힌 경로는 내부 구멍으로 만든다. */
+let _cutoutSeq = 0;
+
+export function isBoxCuttable(o) {
+  return !!o && (o.type === "image" || o.type === "svgAsset");
+}
+// 월드 점 → 객체 로컬 분수 좌표(회전 풀고 상자로 정규화). 0~1 밖은 마스크가 알아서 자름.
+function worldToFrac(o, p) {
+  const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+  const q = rotatePt(p.x, p.y, cx, cy, -(o.rotation || 0));
+  return { x: round3((q.x - o.x) / o.w), y: round3((q.y - o.y) / o.h) };
+}
+// 원본을 복사하고 지울 다각형(분수 좌표)을 cutouts에 **이어붙인** 조각.
+function makeBoxPiece(o, erasePoly) {
+  const base = JSON.parse(JSON.stringify(o));
+  delete base.id; delete base.groupId;
+  const prev = Array.isArray(base.cutouts) ? base.cutouts : [];
+  base.cutouts = [...prev, { id: `cut_${Date.now().toString(36)}_${++_cutoutSeq}`, type: "poly", points: erasePoly }];
+  return base;
+}
+// 내부에서 도려낸 조각: 바깥 전체를 지우고 선택한 다각형 안쪽만 남긴 복제.
+// outside-poly를 기존 cutout보다 먼저 두어, 원본에 이미 지운 영역이 있었다면 그 영역은
+// 안쪽 조각에서도 다시 살아나지 않고 그대로 지워진 상태를 유지한다.
+function makeBoxKeepPiece(o, keepPoly) {
+  const base = JSON.parse(JSON.stringify(o));
+  delete base.id; delete base.groupId;
+  const prev = Array.isArray(base.cutouts) ? base.cutouts : [];
+  base.cutouts = [{ id: `cut_${Date.now().toString(36)}_${++_cutoutSeq}`, type: "outside-poly", points: keepPoly }, ...prev];
+  return base;
+}
+// 상자형의 교차점(빨간 점 미리보기용). 못 구하면 [].
+function boxCrossingPoints(o, path) {
+  if (!(o.w > 0) || !(o.h > 0)) return [];
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return [];
+  return dedupeCrossings(crossingsForPts(rectPolygon(o), true, cut)).map((c) => c.pt);
+}
+export function cutBoxObject(o, path) {
+  if (!isBoxCuttable(o)) return null;
+  if (!(o.w > 0) || !(o.h > 0)) return null;
+  const cut = dedupe((path || []).map((p) => ({ x: p.x, y: p.y })));
+  if (cut.length < 2) return null;
+  const pts = rectPolygon(o);                     // 회전 반영한 닫힌 사각형 4점(월드)
+  const crossings = dedupeCrossings(crossingsForPts(pts, true, cut));
+  if (crossings.length === 0 && cut.length >= 3) {
+    // 이미지 내부에서 닫힌 자유 경로를 그린 경우에는 상자 양 끝을 관통시키지 않아도
+    // 그 내부를 투명하게 도려낸다. 경로의 모든 점이 상자 안에 있을 때만 적용해,
+    // 상자를 빙 둘러 그은 경로나 우연히 스친 경로가 이미지 전체를 지우는 일을 막는다.
+    const hole = cut.map((p) => worldToFrac(o, p));
+    const inside = hole.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1);
+    if (!inside) return null;
+    let twiceArea = 0;
+    for (let i = 0; i < hole.length; i++) {
+      const a = hole[i], b = hole[(i + 1) % hole.length];
+      twiceArea += a.x * b.y - b.x * a.y;
+    }
+    if (Math.abs(twiceArea) <= 0.0002) return null;
+    // 첫 조각은 구멍이 난 나머지, 둘째 조각은 도려낸 내부다. 두 마스크를 합치면
+    // 원본 픽셀이 빠짐없이 보존되며, cut-tool.js는 둘째 조각만 선택한다.
+    const remainder = makeBoxPiece(o, hole);
+    const extractedBase = makeBoxKeepPiece(o, hole);
+    const extracted = tightenBoxObject(extractedBase) || extractedBase;
+    return [remainder, extracted];
+  }
+  if (crossings.length !== 2) return null;
+  crossings.sort((u, v) => u.seg - v.seg || u.t - v.t);
+  const [c0, c1] = crossings;
+  const arcA = [];
+  for (let k = c0.seg + 1; k <= c1.seg; k++) arcA.push(pts[k]);
+  const stepsB = ((c0.seg - c1.seg + pts.length) % pts.length) || pts.length;
+  let kB = (c1.seg + 1) % pts.length;
+  const arcB = [];
+  for (let s = 0; s < stepsB; s++) { arcB.push(pts[kB]); kB = (kB + 1) % pts.length; }
+  const A = dedupe([c0.pt, ...arcA, c1.pt, ...pathInterior(cut, c1, c0)]);
+  const B = dedupe([c1.pt, ...arcB, c0.pt, ...pathInterior(cut, c0, c1)]);
+  if (A.length < 3 || B.length < 3) return null;
+  const fA = A.map((p) => worldToFrac(o, p));
+  const fB = B.map((p) => worldToFrac(o, p));
+  // 서로 반대쪽을 지운 뒤, 각 조각의 상자를 **실제로 보이는 범위**로 좁힌다.
+  // (좁히지 못하는 경우엔 tightenBoxObject가 null을 주므로 조각을 그대로 쓴다.)
+  return [makeBoxPiece(o, fB), makeBoxPiece(o, fA)].map((p) => tightenBoxObject(p) || p);
+}
+
+/* ----- 상자 좁히기(여백 정리) ==============================================
+// 잘리거나 지워진 조각은 원본 상자를 그대로 물려받아 상자 대부분이 빈 공간이다
+// (실측: 작은 조각은 76%가 빈 공간). 그러면 빈 곳을 눌러도 잡히고, 마퀴 선택·정렬·
+// 내보내기 여백이 전부 어긋난다.
+//
+// 그래서 상자를 **보이는 범위**로 좁히고, 대신 객체가 "원본의 어느 부분을 보여줄지"를
+// `srcRect`(원본 그림 기준 0~1 분수 사각형)로 들고 다닌다. 렌더러는 중첩 <svg viewBox>
+// 로 그 부분만 새 상자에 그린다(render/shapes.js). 클릭·이동·회전·크기조절은 여전히
+// 상자만 쓰므로 손댈 곳이 없다.
+//
+// 좁히면 cutouts(상자 기준 0~1 분수)의 기준 상자가 바뀌므로 **분수 좌표를 새 상자
+// 기준으로 다시 계산**해야 한다 — 안 하면 구멍이 어긋난다. */
+
+const TRIM_GRID = 256;      // 보이는 범위 탐색 격자(한 칸 ≈ 상자의 0.4%)
+const TRIM_MIN_GAIN = 0.01; // 가로·세로 어느 쪽도 1% 넘게 못 줄이면 그대로 둔다
+
+function round4(v) { return Math.round(v * 10000) / 10000; }
+function clamp01(v) { return v < 0 ? 0 : (v > 1 ? 1 : v); }
+
+// cutouts 하나의 분수 bbox(브러시 두께 포함). 격자 판정을 건너뛰기 위한 사전 필터.
+function cutoutFracBBox(cut) {
+  if (!cut) return null;
+  if (cut.type === "rect") {
+    const x = +cut.x, y = +cut.y, w = +cut.w, h = +cut.h;
+    if (![x, y, w, h].every(Number.isFinite)) return null;
+    return { x0: Math.min(x, x + w), y0: Math.min(y, y + h), x1: Math.max(x, x + w), y1: Math.max(y, y + h) };
+  }
+  if (cut.type === "outside-poly") return { x0: 0, y0: 0, x1: 1, y1: 1 };
+  const pts = Array.isArray(cut.points) ? cut.points : [];
+  if (!pts.length) return null;
+  const pad = (cut.type === "path" || cut.type === "lasso") ? (cut.brushWidth || 0.03) / 2 : 0;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of pts) {
+    if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x;
+    if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y;
+  }
+  return { x0: x0 - pad, y0: y0 - pad, x1: x1 + pad, y1: y1 + pad };
+}
+// 분수 좌표 (u,v)가 이 cutout에 지워졌는가 — render/shapes.js의 마스크 모양과 일치시킨다.
+function fracErasedBy(cut, bb, u, v) {
+  if (!bb || u < bb.x0 || u > bb.x1 || v < bb.y0 || v > bb.y1) return false;
+  if (cut.type === "rect") return true;                       // bbox == 사각형 자체
+  const pts = cut.points;
+  if (cut.type === "poly") return pts.length >= 3 && pointInPolygon(u, v, pts);
+  if (cut.type === "outside-poly") return pts.length < 3 || !pointInPolygon(u, v, pts);
+  // path/lasso: 채운 다각형 + 브러시 두께만큼의 테두리 획
+  if (pts.length < 3) return false;
+  if (pointInPolygon(u, v, pts)) return true;
+  const r = (cut.brushWidth || 0.03) / 2;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    if (segDist(u, v, pts[j].x, pts[j].y, pts[i].x, pts[i].y) <= r) return true;
+  }
+  return false;
+}
+// 상자([0,1]²)에서 **지워지지 않고 남은** 부분의 분수 bbox. 전부 지워졌으면 null.
+function visibleFracBBox(cutouts) {
+  const cuts = [];
+  for (const c of cutouts) {
+    if (!c || (c.type !== "poly" && c.type !== "outside-poly" && c.type !== "rect" && c.type !== "path" && c.type !== "lasso")) continue;
+    const bb = cutoutFracBBox(c);
+    if (bb) cuts.push({ c, bb });
+  }
+  if (!cuts.length) return null;
+  const N = TRIM_GRID, step = 1 / N;
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (let j = 0; j < N; j++) {
+    const v = (j + 0.5) * step;
+    for (let i = 0; i < N; i++) {
+      const u = (i + 0.5) * step;
+      let erased = false;
+      for (const k of cuts) { if (fracErasedBy(k.c, k.bb, u, v)) { erased = true; break; } }
+      if (erased) continue;
+      if (u < x0) x0 = u; if (u > x1) x1 = u;
+      if (v < y0) y0 = v; if (v > y1) y1 = v;
+    }
+  }
+  if (!isFinite(x0)) return null;                      // 남은 곳이 없다(전부 지워짐)
+  // 격자 한 칸만큼 넉넉히 — 경계 칸은 "지워졌다"고 잡히므로 그만큼 되돌려야 잘린
+  // 가장자리가 깎이지 않는다. 더 담긴 쪽은 어차피 마스크가 지우므로 손해가 없다.
+  const h = step;
+  return { x0: clamp01(x0 - h), y0: clamp01(y0 - h), x1: clamp01(x1 + h), y1: clamp01(y1 + h) };
+}
+
+// 분수 좌표계를 [f0,f1] → [0,1]로 다시 잡은 cutout 사본.
+function remapCutout(cut, x0, y0, fw, fh) {
+  const out = JSON.parse(JSON.stringify(cut));
+  const mx = (x) => round3((x - x0) / fw);
+  const my = (y) => round3((y - y0) / fh);
+  if (out.type === "rect") {
+    out.x = mx(+out.x); out.y = my(+out.y);
+    out.w = round3((+cut.w) / fw); out.h = round3((+cut.h) / fh);
+  } else if (Array.isArray(out.points)) {
+    out.points = out.points.map((p) => ({ x: mx(p.x), y: my(p.y) }));
+    if (out.brushWidth) out.brushWidth = round3(out.brushWidth * (1 / fw + 1 / fh) / 2);
+  }
+  return out;
+}
+
+// 이미 srcRect를 들고 있으면 새 좁힘을 그 위에 합성한다(자르고 또 자를 수 있어야 한다).
+export function normalizeSrcRect(sr) {
+  if (!sr) return null;
+  const x = +sr.x, y = +sr.y, w = +sr.w, h = +sr.h;
+  if (![x, y, w, h].every(Number.isFinite) || !(w > 0) || !(h > 0)) return null;
+  if (x <= 0 && y <= 0 && w >= 1 && h >= 1) return null;   // 원본 전체 → 없는 것과 같다
+  return { x, y, w, h };
+}
+
+/* 상자형(이미지·svgAsset) 객체의 상자를 보이는 범위로 좁힌 **새 객체**를 반환.
+ * 좁힐 게 없거나 대상이 아니면 null(호출자는 원본을 그대로 쓴다). id·layerId 등 다른
+ * 필드는 전부 보존한다 — 자르기 조각뿐 아니라 [여백 정리] 명령도 이 함수를 쓴다. */
+export function tightenBoxObject(o) {
+  if (!isBoxCuttable(o)) return null;
+  if (!(o.w > 0) || !(o.h > 0)) return null;
+  const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];
+  if (!cutouts.length) return null;
+  const b = visibleFracBBox(cutouts);
+  if (!b) return null;
+  const fw = b.x1 - b.x0, fh = b.y1 - b.y0;
+  if (!(fw > 0) || !(fh > 0)) return null;
+  if (fw > 1 - TRIM_MIN_GAIN && fh > 1 - TRIM_MIN_GAIN) return null;   // 이미 딱 맞음
+
+  return cropBoxToBounds(o, b);
+}
+
+export function cropBoxToBounds(o, b) {
+  const fw = b.x1 - b.x0, fh = b.y1 - b.y0;
+  const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];
+  const next = JSON.parse(JSON.stringify(o));
+  const nw = fw * o.w, nh = fh * o.h;
+  // 회전은 상자 중심을 기준으로 걸린다. 상자를 좁히면 중심이 옮겨지므로, 새 중심을
+  // **원래 중심·원래 각도로 회전**시킨 자리에 놓아야 그림이 화면에서 안 움직인다.
+  const oldCx = o.x + o.w / 2, oldCy = o.y + o.h / 2;
+  const wc = rotatePt(o.x + b.x0 * o.w + nw / 2, o.y + b.y0 * o.h + nh / 2, oldCx, oldCy, o.rotation || 0);
+  next.x = round3(wc.x - nw / 2);
+  next.y = round3(wc.y - nh / 2);
+  next.w = round3(nw);
+  next.h = round3(nh);
+
+  const s0 = normalizeSrcRect(o.srcRect) || { x: 0, y: 0, w: 1, h: 1 };
+  next.srcRect = {
+    x: round4(s0.x + b.x0 * s0.w), y: round4(s0.y + b.y0 * s0.h),
+    w: round4(fw * s0.w), h: round4(fh * s0.h),
+  };
+  next.cutouts = cutouts.map((c) => remapCutout(c, b.x0, b.y0, fw, fh));
+  return next;
+}
+
+// 디스패처: mode·geom으로 객체를 잘라 조각 반환. 못 자르면 null.
+export function cutObject(o, mode, geom) {
+  if (mode === "scissors") return cutScissors(o, geom.point);
+  if (mode === "knife") return cutKnife(o, geom.a, geom.b);
+  if (mode === "freehand" || mode === "path") return cutFreehand(o, geom.path);
+  return null;
+}

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 10.0, SVG Export Plug-In . SVG Version: 3.0.0 Build 76)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"    "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" [
+	<!ENTITY ns_flows "http://ns.adobe.com/Flows/1.0/">
+	<!ENTITY ns_extend "http://ns.adobe.com/Extensibility/1.0/">
+	<!ENTITY ns_ai "http://ns.adobe.com/AdobeIllustrator/10.0/">
+	<!ENTITY ns_graphs "http://ns.adobe.com/Graphs/1.0/">
+	<!ENTITY ns_vars "http://ns.adobe.com/Variables/1.0/">
+	<!ENTITY ns_imrep "http://ns.adobe.com/ImageReplacement/1.0/">
+	<!ENTITY ns_sfw "http://ns.adobe.com/SaveForWeb/1.0/">
+	<!ENTITY ns_custom "http://ns.adobe.com/GenericCustomNamespace/1.0/">
+	<!ENTITY ns_adobe_xpath "http://ns.adobe.com/XPath/1.0/">
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg 
+	 xmlns:x="&ns_extend;" xmlns:i="&ns_ai;" xmlns:graph="&ns_graphs;" i:viewOrigin="246.1279 692.7559" i:rulerOrigin="0 0" i:pageBounds="0 850.3936 850.3936 0"
+	 xmlns="&ns_svg;" xmlns:xlink="&ns_xlink;" xmlns:a="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/"
+	 width="357.75" height="535.5" viewBox="0 0 357.75 535.5" overflow="visible" enable-background="new 0 0 357.75 535.5"
+	 xml:space="preserve">
+	<metadata>
+		<variableSets  xmlns="&ns_vars;">
+			<variableSet  varSetName="binding1" locked="none">
+				<variables></variables>
+				<v:sampleDataSets  xmlns="&ns_custom;" xmlns:v="&ns_vars;"></v:sampleDataSets>
+			</variableSet>
+		</variableSets>
+		<sfw  xmlns="&ns_sfw;">
+			<slices></slices>
+			<sliceSourceBounds  y="157.256" x="246.128" width="357.75" height="535.5" bottomLeftOrigin="true"></sliceSourceBounds>
+		</sfw>
+	</metadata>
+	<g id="Ebene_1" i:layer="yes" i:dimmedPercent="50" i:rgbTrio="#4F008000FFFF">
+		<g>
+			<g>
+				<defs>
+					<path id="XMLID_1_" d="M0,0h357.75v535.5H0V0z"/>
+				</defs>
+				<clipPath id="XMLID_2_">
+					<use xlink:href="#XMLID_1_" />
+				</clipPath>
+				<path i:knockout="Off" clip-path="url(#XMLID_2_)" fill-rule="evenodd" clip-rule="evenodd" fill="#FFFFFF" d="M1.5,533.25V1.5
+					h354v531.75H1.5z"/>
+				<path i:knockout="Off" clip-path="url(#XMLID_2_)" fill-rule="evenodd" clip-rule="evenodd" d="M141,442.5v7.5v8.25l0.75,5.25
+					l0.75,6l0.75,2.25L144,474l1.5,2.25l0.75,1.5l1.5,2.25l2.25,1.5l2.25,1.5l1.5,1.5h0.75l7.5,0.75l7.5-2.25l6.75-4.5l3.75-6.75
+					l1.5-7.5l-2.25-7.5l-4.5-6.75l-2.25-3.75l-2.25-4.5l0.75-7.5l3-6L186,411h0.75l3,0.75l2.25,1.5l2.25,1.5l2.25,0.75l2.25,1.5
+					l3,0.75l3.75-0.75l3-1.5l1.5-3v-2.25v-3l-1.5-2.25l-1.5-1.5l-1.5-0.75l-2.25-0.75l-3-1.5l-3.75-2.25l-4.5-1.5l1.5-2.25l3-6
+					l10.5-21.75l6-13.5l5.25-15l4.5-18l3.75-19.5l1.5-20.25V261l-1.5-20.25l-2.25-19.5L220.5,204l-2.25-8.25l-4.5-17.25l-6-16.5
+					l-8.25-18l-5.25-11.25l-5.25-10.5l-6-10.5l-6.75-9.75l-6.75-9.75L162,82.5l-8.25-9L145.5,66l-12.75-12l-4.5-3l-0.75-1.5v75.75
+					l3,3.75l8.25,10.5l11.25,15l5.25,9l6,9l6.75,15l6,15l4.5,15.75l3.75,15.75l3.75,24.75l1.5,24.75l-1.5,24.75l-3.75,24l-2.25,10.5
+					l-3,9L171.75,369l-4.5,11.25l-1.5,4.5h-1.5l-4.5-1.5l-6-1.5l-3-1.5l-2.25-0.75l-1.5-0.75l-2.25-0.75h-2.25l-3,1.5l-3,2.25
+					l-0.75,3.75l0.75,3.75l1.5,1.5l2.25,1.5l2.25,0.75l2.25,0.75l2.25,0.75l2.25,0.75l5.25,2.25l3.75,2.25l1.5,0.75L147,422.25
+					l-4.5,9.75L141,442.5z"/>
+			</g>
+		</g>
+	</g>
+</svg>

@@ -1,0 +1,1123 @@
+import { previewStorage as localStorage } from './preview-storage.js';
+/* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
+//
+// Step 1 of the defaults feature. Owns the "설정 ▾" top-bar dropdown and the
+// "기본값 설정" modal, mirroring export-dialog.js (initFileMenu + buildModal):
+//
+//   1. "설정 ▾" dropdown — opens on click, closes on outside-click / Escape.
+//      Items: 기본값 설정 (opens the modal) + 단축키 설정 (disabled, 준비 중).
+//
+//   2. 기본값 설정 modal — stroke/fill/text/grid defaults, persisted to
+//      localStorage under DEFAULTS_KEY. 취소 / 저장; only 저장 persists.
+//
+// NOTE: This step only *stores* the values. Wiring them into shape creation is
+// step 2 — nothing here reads back into the drawing pipeline yet.
+
+import {
+  TEXT_FONTS,
+  TEXT_STYLES,
+  DEFAULT_TEXT_FONT,
+  DEFAULT_TEXT_SIZE_MM,
+} from "./state.js?v=1.4.0";
+import { registerTopMenu } from "./top-menu.js?v=1.4.0";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import {
+  PREVIEW_BG_KEY,
+  loadPreviewBackgrounds,
+  addPreviewBackground,
+  removePreviewBackground,
+} from "./preview-backgrounds.js?v=1.4.0";
+// 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
+// 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
+// 순환 없음).
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.4.0";
+// 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
+// hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
+// localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.
+// importLibraryString은 내부에서 renderLibrary까지 처리하므로 별도 재렌더 호출이 필요 없다(finding 2).
+import { exportLibraryString, importLibraryString, hasLibraryItems } from "./personal-objects.js?v=1.4.0";
+// 전체 백업은 ZIP으로(이미지를 base64→바이너리 분리). 복원은 옛 단일 JSON도 자동 감지.
+import { buildBackupZip, parseBackupZip, isZip } from "./backup-zip.js?v=1.4.0";
+import { getShortcutPlatform, setShortcutPlatform, localizeShortcutLabels, SHORTCUT_PLATFORM_KEY } from "./platform.js?v=1.4.0";
+
+// initSettings(state)에서 주입 — 전체 백업 저장/복원이 현재 프로젝트를 직렬화·적용할 때 쓴다.
+let _state = null;
+
+/* ----- defaults schema + localStorage load/save ----- */
+const DEFAULTS_KEY = "phyDraw.defaults";
+const FACTORY_DEFAULTS = {
+  strokeWidth: 0.2,      // mm
+  strokeLevel: 0,        // 0 = black
+  fillLevel: 255,        // opaque white default for new shapes
+  textSizeMm: DEFAULT_TEXT_SIZE_MM,  // matches DEFAULT_TEXT_SIZE_MM
+  textFont: DEFAULT_TEXT_FONT,       // css font-family string
+  textWeight: "normal",
+  textStyle: "normal",
+  gridVisible: false,
+  gridOpacity: 3,
+  gridInterval: 10,
+  rulerTickMm: 10,        // 자 눈금 간격(mm) — 새 자 생성 시 초깃값
+  protractorTickDeg: 10,  // 각도기 눈금 간격(°)
+};
+
+export function loadDefaults() {
+  try {
+    return { ...FACTORY_DEFAULTS, ...JSON.parse(localStorage.getItem(DEFAULTS_KEY) || "{}") };
+  } catch {
+    return { ...FACTORY_DEFAULTS };
+  }
+}
+// 저장공간 부족(QuotaExceededError) 등으로 setItem이 실패할 수 있다 — 예외가
+// 그대로 전파되면 호출자(저장 버튼 클릭 핸들러)의 나머지 코드(hideModal 등)까지
+// 멈춰 버튼이 무반응·무안내로 죽는다. boolean을 반환해 호출자가 안내할 수 있게 한다.
+function saveDefaults(d) {
+  try {
+    localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+/* ----- settings file I/O (백업/복원) ----- */
+//
+// 비설치형 웹앱이라 브라우저 캐시(localStorage)를 지우면 개인 설정이 사라진다.
+// 여기서 개인 설정 키들을 JSON 파일로 내보내고(다운로드) 다시 불러온다(복원).
+// 다운로드/파일입력 관습은 project-io.js와 동일(Blob + <a download>, <input type=file>).
+//
+// PERSONAL_KEYS: settings.js와 앱이 관리하는 "개인 설정" localStorage 키 목록.
+//   - DEFAULTS_KEY("phyDraw.defaults") : 기본값 설정 모달이 관리
+//   - "theme"                          : 흑백/라이트 모드(main.js가 관리)
+// 존재하는 키만 내보낸다(값이 없는 키는 파일에 포함하지 않는다).
+const THEME_KEY = "theme";
+const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
+const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
+const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
+const UI_ZOOM_KEY = "5e.uiZoom";                    // 환경 설정: 자유 UI 배율
+const REF_MEMO_KEY = "5e.refmemo";                  // 참고 창의 문항별 메모
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, UI_ZOOM_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY];
+
+/* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
+ * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
+const SCREEN_SIZES = new Set(["small", "medium", "large", "wide"]);
+const DEFAULT_SCREEN = "large";
+export function loadScreenSize() {
+  let v = DEFAULT_SCREEN;
+  try { v = localStorage.getItem(SCREEN_KEY) || DEFAULT_SCREEN; } catch (_) { /* ignore */ }
+  return SCREEN_SIZES.has(v) ? v : DEFAULT_SCREEN;
+}
+export function applyScreenSize(value) {
+  const v = SCREEN_SIZES.has(value) ? value : DEFAULT_SCREEN;
+  document.documentElement.setAttribute("data-screen", v);
+  try { localStorage.setItem(SCREEN_KEY, v); } catch (_) { /* ignore */ }
+  return v;
+}
+
+/* ----- 환경 설정: UI 배율 자유 조절 -----
+ * 프리셋(:root[data-screen] → --ui-zoom)이 4단계뿐이라 원하는 크기를 못 맞춘다는
+ * 요구에 따라 자유값을 얹는다. :root의 인라인 스타일은 선택자 규칙보다 우선하므로
+ * 프리셋 CSS를 그대로 둔 채 덮어쓸 수 있다. 값을 지우면 다시 프리셋으로 돌아간다. */
+const ZOOM_KEY = "5e.uiZoom";
+// 요구: 60~140%는 너무 좁아 원하는 크기를 못 맞춘다 — 자유롭게 조절 가능하도록 범위 확장.
+// --ui-zoom은 CSS zoom(배율 전체를 통째로 키움, 폰트만 커지는 게 아님)이라 범위를 넓혀도
+// 텍스트만 줄바꿈되는 일 없이 레이아웃째 같이 커진다(실측 검증: 250%에서도 내보내기
+// 다이얼로그 버튼 줄바꿈 없음).
+const ZOOM_MIN = 0.50;
+const ZOOM_MAX = 3.00;
+const clampZoom = (n) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(n)));
+
+export function loadUiZoom() {
+  try {
+    const raw = localStorage.getItem(ZOOM_KEY);
+    if (raw == null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? clampZoom(n) : null;
+  } catch (_) { return null; }
+}
+export function applyUiZoom(n) {
+  const v = clampZoom(Number.isFinite(Number(n)) ? n : 1);
+  document.documentElement.style.setProperty("--ui-zoom", String(v));
+  try { localStorage.setItem(ZOOM_KEY, String(v)); } catch (_) { /* ignore */ }
+  return v;
+}
+export function clearUiZoom() {
+  document.documentElement.style.removeProperty("--ui-zoom");
+  try { localStorage.removeItem(ZOOM_KEY); } catch (_) { /* ignore */ }
+}
+/** 지금 실제로 먹고 있는 배율(자유값이 없으면 프리셋 값)을 읽는다. */
+function currentUiZoom() {
+  const free = loadUiZoom();
+  if (free != null) return free;
+  const css = getComputedStyle(document.documentElement).getPropertyValue("--ui-zoom");
+  const n = Number(String(css).trim());
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+// 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
+// 스키마 검증에 쓴다. 앱 UI 버전과는 별개다.
+const SETTINGS_FILE_KIND = "5E-settings";
+const SETTINGS_FILE_VERSION = "1";
+
+// 파일명: 5E-settings-YYYYMMDD.json
+function settingsFilename() {
+  const now = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
+  return `5E-settings-${stamp}.json`;
+}
+// 프로젝트까지 포함한 '전체 백업' 파일명: 5E-backup-YYYYMMDD.json
+function backupFilename() {
+  const now = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}`;
+  return `5E-backup-${stamp}.zip`;
+}
+
+// 현재 개인 설정을 모아 파일 페이로드로 만든다(존재하는 키만 포함).
+// keys를 넘기면 그 키만 포함(설정 저장 위젯의 항목 선택).
+function collectSettings(keys = PERSONAL_KEYS) {
+  const data = {};
+  for (const key of keys) {
+    // 퍼스널 라이브러리는 IDB에 있으므로 localStorage 대신 전용 게터로 읽는다.
+    const raw = key === PERSONAL_OBJECTS_KEY ? exportLibraryString() : localStorage.getItem(key);
+    if (raw === null || raw === undefined) continue;
+    data[key] = raw;   // 원본 문자열 그대로 보존(정확한 왕복 보장)
+  }
+  return {
+    app: "5E",
+    kind: SETTINGS_FILE_KIND,
+    version: SETTINGS_FILE_VERSION,
+    savedAt: new Date().toISOString(),
+    data,
+  };
+}
+
+/* 저장 위치 지정: 브라우저가 지원하면(크롬/엣지) 폴더·파일명을 고르는 저장
+ * 대화상자를 띄우고, 아니면 기존처럼 다운로드 폴더로 내려받는다. */
+// Blob을 저장 위치 지정(또는 다운로드 폴백)으로 내려받는다. ZIP 백업/JSON 설정 공용.
+async function saveBlobWithPicker(blob, filename, { desc = "5E 파일", mime = "application/octet-stream", ext = ".bin" } = {}) {
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: desc, accept: { [mime]: [ext] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false;
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
+async function saveJsonWithPicker(json, filename) {
+  const blob = new Blob([json], { type: "application/json" });
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: "5E 설정 파일", accept: { "application/json": [".json"] } }],
+      });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return true;
+    } catch (err) {
+      if (err && err.name === "AbortError") return false; // 사용자가 취소
+      // 실패 시 다운로드 폴백
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
+/* 설정 저장 위젯: 무엇을 저장할지 고르고 → 저장 위치 지정 */
+const EXPORT_CHOICES = [
+  { key: DEFAULTS_KEY,          label: "오브젝트 설정 (선 굵기·글꼴 등)" },
+  { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
+  { key: SUBJECT_KEY,           label: "과목 선택" },
+  { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
+  { key: UI_ZOOM_KEY,           label: "환경 설정 (자유 배율)" },
+  { key: SHORTCUT_PLATFORM_KEY, label: "환경 설정 (단축키 운영체제)" },
+  { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
+  { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
+  { key: REF_MEMO_KEY,          label: "참고 창 문항별 메모" },
+];
+
+/* ===== 환경 설정 대화상자 (탭) =====
+ * 설정이 늘어나 한 판에 담기 어려워져 탭으로 나눴다. 각 탭은 "이미 있는 기능"을
+ * 제자리에 모으는 것이 원칙 — 여기서 새 설정을 발명하지 않는다. 아직 채울 것이
+ * 없는 탭은 비워 두지 말고 무엇이 들어올지 적어 둔다(빈 탭이 제일 나쁘다).
+ *
+ * 기존 대화상자(오브젝트 설정·백업·복원)는 복제하지 않고 드롭다운의 원래 버튼을
+ * 눌러 재사용한다 — 배선이 한 곳에만 있어야 어긋나지 않는다. */
+const PREF_TABS = [
+  { id: "screen",  label: "화면" },
+  { id: "tools",   label: "편집 도구" },
+  { id: "storage", label: "저장" },
+  { id: "library", label: "라이브러리" },
+];
+
+function prefStyles() {
+  return `
+    .pref-modal { width:min(560px, calc(100vw - 32px)); }
+    .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
+    .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
+                padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
+                font: 600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+    .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
+    .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
+    .pref-panel { display:none; min-height:180px; }
+    .pref-panel.is-on { display:block; }
+    .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .pref-row .modal-label { margin:0; flex:0 0 auto; }
+    .pref-zoom { flex:1 1 auto; }
+    .pref-zoom-val { flex:0 0 52px; text-align:right; font: 600 12px/1 "IBM Plex Mono",monospace;
+                     color:var(--text-primary); }
+    .pref-note { margin:0 0 12px; font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+    .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
+                 font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+  `;
+}
+
+function openPreferencesDialog({ focusShortcut = false } = {}) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const zoom0 = currentUiZoom();
+  overlay.innerHTML = `
+    <div class="modal pref-modal" role="dialog" aria-modal="true" aria-labelledby="pref-title">
+      <style>${prefStyles()}</style>
+      <h2 class="modal-title" id="pref-title">환경 설정</h2>
+      <div class="pref-tabs" role="tablist">
+        ${PREF_TABS.map((t, i) => `<button type="button" class="pref-tab${i === 0 ? " is-on" : ""}"
+           role="tab" data-tab="${t.id}" aria-selected="${i === 0}">${t.label}</button>`).join("")}
+      </div>
+
+      <section class="pref-panel is-on" data-panel="screen" role="tabpanel">
+        <p class="pref-note">글씨와 도구 패널의 크기를 한꺼번에 키우거나 줄입니다. 움직이는 즉시 적용됩니다.</p>
+        <div class="pref-row">
+          <span class="modal-label">화면 크기</span>
+          <input id="pref-zoom" class="pref-zoom" type="range" min="50" max="300" step="1"
+                 value="${Math.round(zoom0 * 100)}" />
+          <output class="pref-zoom-val" id="pref-zoom-val">${Math.round(zoom0 * 100)}%</output>
+        </div>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
+        </div>
+        <div class="pref-row">
+          <label class="modal-label" for="pref-shortcut-platform">단축키 기준</label>
+          <select id="pref-shortcut-platform" class="modal-select" data-shortcut-label-fixed>
+            <option value="auto">자동 감지</option>
+            <option value="mac">Mac (⌘)</option>
+            <option value="windows">Windows (Ctrl)</option>
+          </select>
+        </div>
+        <p class="pref-note">실제 단축키 판정과 화면의 키 안내가 함께 바뀝니다.</p>
+        <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
+      </section>
+
+      <section class="pref-panel" data-panel="tools" role="tabpanel">
+        <p class="pref-note">새로 만드는 오브젝트에 적용될 기본값입니다 — 선 굵기, 글꼴과 글씨 크기,
+          격자·자·각도기 눈금 간격 등을 정합니다.</p>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn modal-btn-primary" id="pref-open-defaults">오브젝트 설정 열기</button>
+        </div>
+        <p class="pref-note">여기서 정한 값은 이미 만들어 둔 오브젝트에는 영향을 주지 않습니다.</p>
+      </section>
+
+      <section class="pref-panel" data-panel="storage" role="tabpanel">
+        <p class="pref-note">개인 설정·퍼스널 라이브러리·현재 작업을 한 파일로 묶어 백업하고,
+          다른 PC에서 그 파일로 복원합니다.</p>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn modal-btn-primary" id="pref-export">전체 저장 (백업)</button>
+          <button type="button" class="modal-btn" id="pref-import">불러오기 (복원)</button>
+        </div>
+      </section>
+
+      <section class="pref-panel" data-panel="library" role="tabpanel">
+        <p class="pref-note">기출 문항 참고 창에 적어 둔 <b>문항별 메모</b>는 이 브라우저에 보관됩니다.
+          같은 문항을 다시 열면 메모가 그대로 나옵니다.</p>
+        <div class="pref-row">
+          <span class="modal-label">저장된 메모</span>
+          <span id="pref-memo-count" class="pref-zoom-val" style="flex:0 0 auto;">0개</span>
+        </div>
+        <div class="pref-actions">
+          <button type="button" class="modal-btn" id="pref-memo-clear">문항별 메모 전체 지우기</button>
+        </div>
+        <p class="pref-note">메모는 백업 파일에도 함께 저장됩니다.</p>
+      </section>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn modal-btn-primary" id="pref-close">닫기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const platformSelect = overlay.querySelector("#pref-shortcut-platform");
+  platformSelect.value = getShortcutPlatform();
+  platformSelect.addEventListener("change", () => {
+    setShortcutPlatform(platformSelect.value);
+    localizeShortcutLabels();
+  });
+  if (focusShortcut) platformSelect.focus();
+
+  const close = () => overlay.remove();
+  overlay.querySelector("#pref-close").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+
+  // --- 탭 전환 ---
+  const tabs = [...overlay.querySelectorAll(".pref-tab")];
+  const panels = [...overlay.querySelectorAll(".pref-panel")];
+  tabs.forEach((tab) => tab.addEventListener("click", () => {
+    tabs.forEach((t) => { const on = t === tab; t.classList.toggle("is-on", on); t.setAttribute("aria-selected", String(on)); });
+    panels.forEach((p) => p.classList.toggle("is-on", p.dataset.panel === tab.dataset.tab));
+  }));
+
+  // --- 화면: 자유 배율 ---
+  const zoomInput = overlay.querySelector("#pref-zoom");
+  const zoomOut = overlay.querySelector("#pref-zoom-val");
+  zoomInput.addEventListener("input", () => {
+    const pct = Number(zoomInput.value);
+    zoomOut.textContent = `${pct}%`;
+    applyUiZoom(pct / 100);
+  });
+  overlay.querySelector("#pref-zoom-reset").addEventListener("click", () => {
+    clearUiZoom();
+    const back = Math.round(currentUiZoom() * 100);
+    zoomInput.value = String(back);
+    zoomOut.textContent = `${back}%`;
+  });
+
+  // --- 다른 대화상자는 드롭다운의 원래 버튼을 눌러 재사용한다(배선 중복 방지) ---
+  const relay = (btnId, targetId) => {
+    const btn = overlay.querySelector(btnId);
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      const target = document.getElementById(targetId);
+      close();
+      if (target) target.click();
+    });
+  };
+  relay("#pref-open-defaults", "open-defaults");
+  relay("#pref-export", "settings-export");
+  relay("#pref-import", "settings-import");
+
+  // --- 라이브러리: 문항별 메모 개수 + 전체 삭제 ---
+  const countEl = overlay.querySelector("#pref-memo-count");
+  const readMemoCount = () => {
+    try { return Object.keys(JSON.parse(localStorage.getItem(REF_MEMO_KEY)) || {}).length; }
+    catch (_) { return 0; }
+  };
+  countEl.textContent = `${readMemoCount()}개`;
+  overlay.querySelector("#pref-memo-clear").addEventListener("click", async () => {
+    if (readMemoCount() === 0) return;
+    const ok = await showConfirm("문항별 메모를 모두 지울까요? 되돌릴 수 없습니다.",
+      { title: "메모 전체 삭제", okText: "지우기", cancelText: "취소" });
+    if (!ok) return;
+    try { localStorage.removeItem(REF_MEMO_KEY); } catch (_) { /* ignore */ }
+    countEl.textContent = "0개";
+  });
+}
+function openExportDialog() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
+      <h2 class="modal-title">전체 저장 (백업)</h2>
+      <p class="objectify-description" style="margin:0 0 8px;">
+        저장할 항목을 고르고 [저장]을 누르면 위치를 지정해 <b>한 파일</b>로 내려받습니다.
+        '설정 불러오기'로 언제든 복원할 수 있습니다.</p>
+      ${EXPORT_CHOICES.map((c, i) => {
+        // 퍼스널 라이브러리는 IDB에 있으므로 localStorage가 아니라 실제 보유 여부로 판단.
+        const has = c.key === PERSONAL_OBJECTS_KEY ? hasLibraryItems() : localStorage.getItem(c.key) !== null;
+        return `
+        <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" data-i="${i}" ${has ? "checked" : "disabled title=\"저장할 내용이 없습니다\""} />
+          <span class="modal-label" style="margin:0;">${c.label}</span>
+        </label>`;
+      }).join("")}
+      <label class="modal-field modal-field-row" style="display:flex;align-items:center;gap:8px;border-top:1px solid var(--border);margin-top:6px;padding-top:8px;">
+        <input type="checkbox" id="sx-project" checked />
+        <span class="modal-label" style="margin:0;">현재 프로젝트 (그림·모든 페이지)</span>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="sx-cancel">취소</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="sx-ok">저장</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.querySelector("#sx-cancel").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  overlay.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } });
+  overlay.querySelector("#sx-ok").addEventListener("click", async () => {
+    // 설정 항목은 data-i가 붙은 체크박스만(프로젝트 체크박스는 data-i가 없어 제외됨).
+    const keys = [...overlay.querySelectorAll("input[data-i]")]
+      .filter((cb) => cb.checked)
+      .map((cb) => EXPORT_CHOICES[Number(cb.dataset.i)].key);
+    const includeProject = !!overlay.querySelector("#sx-project")?.checked;
+    if (!keys.length && !includeProject) { showAlert("저장할 항목을 하나 이상 선택하세요.", { title: "전체 저장 (백업)" }); return; }
+    const payload = collectSettings(keys);
+    if (includeProject && _state) {
+      // 현재 프로젝트(그림·모든 페이지)를 같은 파일에 첨부. 직렬화 실패 시 나머지만 저장.
+      try { payload.project = serializeProject(_state.get()); } catch (_) { /* 프로젝트만 누락 */ }
+    }
+    close();
+    // 전체 백업 = ZIP(이미지를 바이너리로 분리해 가볍게). 복원은 옛 JSON도 자동 감지.
+    const blob = buildBackupZip(payload);
+    await saveBlobWithPicker(blob, backupFilename(), { desc: "5E 백업(zip)", mime: "application/zip", ext: ".zip" });
+  });
+}
+
+// 불러온 페이로드가 우리 설정 파일 스키마인지 검증한다(깨진/다른 파일 방어).
+// 통과하면 { data } 를, 아니면 null 을 돌려준다.
+function validateSettingsPayload(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  if (raw.kind !== SETTINGS_FILE_KIND) return null;
+  if (!raw.data || typeof raw.data !== "object") return null;
+  // data 안의 값은 localStorage에 넣을 문자열이어야 한다.
+  for (const key of Object.keys(raw.data)) {
+    if (typeof raw.data[key] !== "string") return null;
+  }
+  return { data: raw.data };
+}
+
+// 대체 전 확인이 필요한 키: 통째로 덮어써 기존 데이터가 영구 소실될 수 있는 항목
+// (감사 finding 1). 라벨은 확인 대화상자 문구에 쓰인다.
+const CONFIRM_REPLACE_KEYS = {
+  [PERSONAL_OBJECTS_KEY]: "퍼스널 오브젝트 라이브러리",
+  [PREVIEW_BG_KEY]: "인쇄 비교 배경 이미지",
+};
+// 값이 "실질적으로 비어있음"인지 — 비어있으면 대체해도 잃을 게 없어 확인을 생략한다.
+function isEmptyListValue(raw) {
+  if (raw === null || raw === undefined) return true;
+  const t = raw.trim();
+  return t === "" || t === "[]" || t === "{}";
+}
+
+// 파일에서 읽어들인 설정을 localStorage에 반영하고, 가능한 것은 즉시 적용한다.
+// 우리가 아는 개인 설정 키(PERSONAL_KEYS)만 반영한다(임의 키 주입 방지).
+// 라이브러리·배경(PERSONAL_OBJECTS_KEY/PREVIEW_BG_KEY)은 기존에 실제 데이터가 있으면
+// showConfirm으로 먼저 확인받는다(감사 finding 1: 확인 없이 통째로 덮어써 데이터 소실).
+// async로 바뀌었으므로 호출부(importSettingsFile)도 await해야 한다.
+// 반환: { applied, failed, skipped } — skipped는 사용자가 교체를 취소한 키.
+async function applyImportedSettings(data) {
+  const applied = [];
+  const failed = [];
+  const skipped = [];
+  for (const key of PERSONAL_KEYS) {
+    if (!(key in data)) continue;
+    const value = data[key];
+
+    if (key === DEFAULTS_KEY) {
+      // 값이 유효한 JSON 객체일 때만 반영(깨진 값이 defaults를 오염시키지 않게).
+      try {
+        const parsed = JSON.parse(value);
+        if (!parsed || typeof parsed !== "object") continue;
+      } catch {
+        continue;
+      }
+    }
+    if (key === THEME_KEY && value !== "light" && value !== "dark") continue;
+
+    // ① 통째로 덮어써 기존 데이터가 사라질 수 있는 키는 먼저 확인받는다(감사 finding 1).
+    //    라이브러리는 이제 IDB에 살기 때문에 "기존 항목이 있는지"를 localStorage로 판단하면
+    //    안 된다 — 마이그레이션 뒤 localStorage에 남은 잔재를 보고 오판하거나, 반대로 IDB에
+    //    든 항목을 못 보고 확인 없이 덮어쓸 수 있다. hasLibraryItems()가 캐시(=IDB)를 본다.
+    if (CONFIRM_REPLACE_KEYS[key]) {
+      const hasExisting = key === PERSONAL_OBJECTS_KEY
+        ? hasLibraryItems()
+        : !isEmptyListValue(localStorage.getItem(key));
+      if (hasExisting) {
+        const ok = await showConfirm(
+          `이 파일의 ${CONFIRM_REPLACE_KEYS[key]}로 기존 항목을 대체할까요?\n(기존 항목은 사라집니다.)`,
+          { title: "설정 불러오기", okText: "교체", cancelText: "건너뛰기" }
+        );
+        if (!ok) { skipped.push(key); continue; }
+      }
+    }
+
+    // ② 확인을 통과한 라이브러리는 localStorage가 아니라 IDB로 복원한다.
+    //    importLibraryString이 저장과 재렌더(finding 2)를 함께 처리하므로 여기서 끝낸다.
+    //    await 해야 실패 시 applied에 잘못 기록하지 않는다.
+    if (key === PERSONAL_OBJECTS_KEY) {
+      const ok = await importLibraryString(value);
+      if (ok) applied.push(key); else failed.push(key);
+      continue;
+    }
+
+    // 키별 try/catch — 한 항목이 용량 초과 등으로 실패해도 나머지 항목은 계속 반영하고,
+    // 실패한 키는 모아 호출부가 사용자에게 안내할 수 있게 한다(예전엔 예외가 던져져 이후
+    // 항목이 침묵 중단됐음).
+    try {
+      localStorage.setItem(key, value);
+      applied.push(key);
+      // (라이브러리 재렌더는 위 ②에서 importLibraryString이 처리한다 — 여기까지 오지 않는다.
+      //  SUBJECT_KEY/SCREEN_KEY의 실시간 반영은 범위를 넘어 후속 과제로 남김.)
+    } catch (_) {
+      failed.push(key);
+    }
+  }
+
+  // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
+  if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
+
+  return { applied, failed, skipped };
+}
+
+// theme를 리로드 없이 즉시 반영(main.js initTheme의 동작을 그대로 재현).
+function applyThemeLive(theme) {
+  const root = document.documentElement;
+  root.setAttribute("data-theme", theme);
+  const btn = document.getElementById("theme-toggle");
+  if (btn) {
+    const dark = theme === "dark";
+    btn.setAttribute("aria-pressed", String(dark));
+    btn.setAttribute("aria-label", dark ? "흑백 모드 끄기" : "흑백 모드 켜기");
+    btn.title = dark ? "흑백 모드 끄기" : "흑백 모드 켜기";
+  }
+}
+
+// 설정 불러오기: 파일 파싱 → 검증 → 반영. 실패 시 한국어로 알리고 아무것도 바꾸지 않는다.
+function importSettingsFile(file) {
+  const reader = new FileReader();
+  reader.onload = async () => {
+    let raw;
+    try {
+      const u8 = new Uint8Array(reader.result);
+      // ZIP 백업이면 압축 해제 + 이미지 재수화, 아니면 옛 단일 JSON.
+      raw = isZip(u8) ? parseBackupZip(u8) : JSON.parse(new TextDecoder().decode(u8));
+    } catch {
+      alert("설정 파일을 읽을 수 없습니다. 올바른 5E 설정/백업 파일인지 확인해 주세요.");
+      return;
+    }
+    const valid = validateSettingsPayload(raw);
+    if (!valid) {
+      alert("올바른 5E 설정 파일이 아닙니다. 설정은 변경되지 않았습니다.");
+      return;
+    }
+    const { applied, failed, skipped } = await applyImportedSettings(valid.data);
+
+    // 전체 백업 파일이면 현재 프로젝트(그림)도 함께 복원(요구 3). 되돌리기 어려운 '대체'라
+    // 먼저 확인받는다. '설정만'을 고르면 그림은 건드리지 않는다.
+    let projectLoaded = false;
+    const proj = raw.project;
+    const looksProject = proj && typeof proj === "object" &&
+      (Array.isArray(proj.pages) || Array.isArray(proj.objects));
+    if (looksProject && _state) {
+      const ok = await showConfirm(
+        "이 파일에는 프로젝트(그림)도 들어 있습니다.\n현재 작업을 이 프로젝트로 대체할까요?\n(저장하지 않은 현재 작업은 사라집니다.)",
+        { title: "전체 백업 복원", okText: "프로젝트도 복원", cancelText: "설정만" }
+      );
+      if (ok) {
+        try {
+          const data = migrateProject(proj);
+          if (data && Array.isArray(data.pages) && data.pages.length &&
+              data.pages.every((p) => p && Array.isArray(p.objects))) {
+            applyLoaded(_state, data);
+            projectLoaded = true;
+          } else {
+            alert("파일의 프로젝트 형식이 올바르지 않아 그림은 복원하지 못했습니다.");
+          }
+        } catch (_) {
+          alert("프로젝트를 복원하는 중 오류가 발생했습니다.");
+        }
+      }
+    }
+
+    if (applied.length === 0 && !projectLoaded) {
+      alert(
+        failed.length
+          ? "저장 공간이 부족해 설정을 반영하지 못했습니다. 설정은 변경되지 않았습니다."
+          : (skipped.length ? "교체를 건너뛰었습니다. 설정은 변경되지 않았습니다."
+             : (looksProject ? "복원을 취소했습니다. 아무것도 변경되지 않았습니다."
+                              : "불러올 수 있는 항목이 없습니다. 설정은 변경되지 않았습니다."))
+      );
+      return;
+    }
+    // 기본값 설정(phyDraw.defaults)은 새 도형 생성 시 참조되므로 즉시 반영되지만,
+    // 이미 그려 둔 도형이나 열려 있는 모달에는 재열기 전까지 보이지 않을 수 있다.
+    const needsReopenNote = applied.includes(DEFAULTS_KEY);
+    alert(
+      (projectLoaded ? "전체 백업을 불러왔습니다 (설정 + 프로젝트)." : "설정을 불러왔습니다.") +
+      (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "") +
+      (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "") +
+      (skipped.length ? `\n일부 항목(${skipped.length}개)은 교체를 건너뛰어 기존 값이 유지되었습니다.` : "")
+    );
+  };
+  reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
+  reader.readAsArrayBuffer(file);   // ZIP(바이너리)·JSF 공용 — onload에서 형식 감지
+}
+
+/* ----- dropdown: registered with the shared top-menu (exclusive with 파일) -----
+ * 하단 설명 영역(#settings-menu-desc): 파일 메뉴와 동일 패턴 — hover/focus한
+ * 항목의 data-desc를 보여주고, 벗어나면 기본 안내로 되돌린다. */
+const DEFAULT_SETTINGS_DESC = "설정 작업을 선택하세요.";
+function initSettingsMenu() {
+  const btn = document.getElementById("settings-menu-btn");
+  const list = document.getElementById("settings-menu-list");
+  const desc = document.getElementById("settings-menu-desc");
+  const reset = () => { if (desc) desc.textContent = DEFAULT_SETTINGS_DESC; };
+  if (desc && list) {
+    list.querySelectorAll(".file-menu-item").forEach((item) => {
+      const text = item.getAttribute("data-desc");
+      const show = () => { if (text) desc.textContent = text; };
+      item.addEventListener("mouseenter", show);
+      item.addEventListener("focus", show);
+      item.addEventListener("mouseleave", reset);
+      item.addEventListener("blur", reset);
+    });
+  }
+  registerTopMenu("settings", btn, list, { onOpen: reset });
+}
+
+/* ----- modal markup, built once and appended to <body> ----- */
+function buildModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "defaults-overlay";
+  overlay.hidden = true;
+  // f.css can contain double quotes (e.g. '"신명중명조", ...'); escaping keeps the
+  // value attribute intact so the option value matches the stored default exactly
+  // (otherwise the default font option breaks and the preview can't resolve it).
+  const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  const fontOptions = TEXT_FONTS
+    .map((f) => `<option value="${escAttr(f.css)}">${f.label}</option>`)
+    .join("");
+  const styleOptions = TEXT_STYLES
+    .map((s, i) => `<option value="${i}">${s.label}</option>`)
+    .join("");
+
+  overlay.innerHTML = `
+    <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
+      <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
+
+      <div class="defaults-body">
+        <div class="defaults-fields">
+          <!-- 반복되던 "기본 …" 접두어는 묶음 제목으로 올렸다(DESIGN 13-1).
+               라벨을 입력칸 위가 아니라 왼쪽 고정 열에 두어 행 높이를 절반으로 줄인다 —
+               종전엔 11개가 한 열에 세로로 쌓여 모달이 화면보다 460px 길었다. -->
+          <div class="gm-group">
+            <p class="gm-group-h">선 · 채움</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 굵기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-width" step="0.1" min="0.1" max="0.5" autocomplete="off" aria-label="기본 선 굵기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">선 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 선 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">채우기 명도</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-fill-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 채우기 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
+            </div>
+          </div>
+
+          <div class="gm-group">
+            <p class="gm-group-h">글자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글자 크기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-text-size" step="0.1" min="0" autocomplete="off" aria-label="기본 글자 크기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">글씨체</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">굵기</span>
+              <div class="gm-row-body">
+                <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
+              </div>
+            </div>
+          </div>
+
+          <div class="gm-group">
+            <p class="gm-group-h">격자</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">시작 시 표시</span>
+              <div class="gm-row-body">
+                <label class="gm-check" for="defaults-grid-visible">
+                  <input type="checkbox" id="defaults-grid-visible" /> 켜기
+                </label>
+              </div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">진하기</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-opacity" min="1" max="10" step="1" autocomplete="off" aria-label="격자 진하기"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">1–10</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">간격</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-interval" min="5" max="50" step="5" autocomplete="off" aria-label="격자 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+          </div>
+
+          <div class="gm-group">
+            <p class="gm-group-h">자 · 각도기</p>
+            <div class="gm-row">
+              <span class="gm-row-lbl">자 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-ruler-tick" min="1" max="50" step="1" autocomplete="off" aria-label="자 눈금 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
+            </div>
+            <div class="gm-row">
+              <span class="gm-row-lbl">각도기 눈금</span>
+              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-protractor-tick" min="1" max="45" step="1" autocomplete="off" aria-label="각도기 눈금 간격 (도)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">°</span></div>
+            </div>
+            <!-- 안내는 해당하는 자리에만 둔다(DESIGN 13-3). 종전엔 모달 맨 위에
+                 모든 항목에 대한 주의문이 늘 떠 있어 읽히지 않았다. -->
+            <p class="gm-ax-note">이 두 값만 지금 놓인 자·각도기에 바로 반영됩니다.
+              나머지는 저장되지만 새 도형·격자에는 아직 적용되지 않습니다.</p>
+          </div>
+
+          <div class="gm-group">
+            <p class="gm-group-h">인쇄 비교 이미지</p>
+            <div class="defaults-pbg">
+              <p class="defaults-pbg-desc">실제 인쇄한 시험지를 등록하면 '이미지로 내보내기 →
+                미리보기'에서 배경으로 골라 크기를 견줘 볼 수 있습니다.</p>
+              <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
+              <div class="defaults-pbg-form">
+                <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
+                <div class="defaults-pbg-row">
+                  <input type="text" id="defaults-pbg-name" class="modal-input"
+                         placeholder="이름(선택)" maxlength="40" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-w" class="modal-input"
+                         placeholder="가로 mm" min="1" step="1" autocomplete="off" />
+                  <input type="number" id="defaults-pbg-h" class="modal-input"
+                         placeholder="세로 mm" min="1" step="1" autocomplete="off" />
+                  <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="defaults-preview">
+          <span class="modal-label">미리보기</span>
+          <svg id="defaults-preview-svg" class="defaults-preview-svg"
+               viewBox="0 0 320 240"
+               xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="defaults-cancel">취소</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="defaults-save">저장</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+/* ----- initSettings: wire dropdown + 기본값 설정 modal ----- */
+export function initSettings(state) {
+  _state = state;   // 전체 백업(프로젝트 포함 저장/복원)에서 사용
+  initSettingsMenu();
+
+  // 환경 설정(화면 크기): 저장값을 즉시 적용 + 드롭다운 항목 배선
+  applyScreenSize(loadScreenSize());
+  const screenBtn = document.getElementById("open-screen");
+  if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
+  const shortcutBtn = document.getElementById("open-shortcuts");
+  if (shortcutBtn) shortcutBtn.addEventListener("click", () => openPreferencesDialog({ focusShortcut: true }));
+  // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
+  const savedZoom = loadUiZoom();
+  if (savedZoom != null) applyUiZoom(savedZoom);
+
+  const overlay = buildModal();
+  const fields = {
+    strokeWidth:  overlay.querySelector("#defaults-stroke-width"),
+    strokeLevel:  overlay.querySelector("#defaults-stroke-level"),
+    fillLevel:    overlay.querySelector("#defaults-fill-level"),
+    textSizeMm:   overlay.querySelector("#defaults-text-size"),
+    textFont:     overlay.querySelector("#defaults-text-font"),
+    textStyle:    overlay.querySelector("#defaults-text-style"),
+    gridVisible:  overlay.querySelector("#defaults-grid-visible"),
+    gridOpacity:  overlay.querySelector("#defaults-grid-opacity"),
+    gridInterval: overlay.querySelector("#defaults-grid-interval"),
+    rulerTickMm:      overlay.querySelector("#defaults-ruler-tick"),
+    protractorTickDeg: overlay.querySelector("#defaults-protractor-tick"),
+  };
+  const previewSvg = overlay.querySelector("#defaults-preview-svg");
+
+  function populate() {
+    const d = loadDefaults();
+    fields.strokeWidth.value  = d.strokeWidth;
+    fields.strokeLevel.value  = d.strokeLevel;
+    fields.fillLevel.value    = d.fillLevel;
+    fields.textSizeMm.value   = d.textSizeMm;
+    fields.textFont.value     = d.textFont;
+    // Find the style preset matching the stored weight/style (fallback: 0 = Regular).
+    const styleIdx = TEXT_STYLES.findIndex(
+      (s) => s.fontWeight === d.textWeight && s.fontStyle === d.textStyle
+    );
+    fields.textStyle.value    = String(styleIdx < 0 ? 0 : styleIdx);
+    fields.gridVisible.checked = !!d.gridVisible;
+    fields.gridOpacity.value  = d.gridOpacity;
+    fields.gridInterval.value = d.gridInterval;
+    fields.rulerTickMm.value       = d.rulerTickMm;
+    fields.protractorTickDeg.value = d.protractorTickDeg;
+  }
+
+  // Read the chosen TEXT_STYLES preset (weight + font-style) from the select.
+  function currentStyle() {
+    return TEXT_STYLES[Number(fields.textStyle.value)] || TEXT_STYLES[0];
+  }
+
+  // Live integrated preview: a simple MECHANICS exam diagram (grid + incline +
+  // a box resting on the slope + a small force arrow + sample label). mm → px
+  // via a fixed scale, treating the preview as ~48mm wide so the scene fits the
+  // larger 320×240 viewBox without clipping.
+  function renderPreview() {
+    const PREVIEW_W = 320, PREVIEW_H = 240;
+    const scale = PREVIEW_W / 48;  // px per mm
+
+    const gray = (g) => `rgb(${g},${g},${g})`;
+    const strokeColor = gray(Number(fields.strokeLevel.value) || 0);
+    const fillColor   = gray(Number(fields.fillLevel.value) || 0);
+    const strokePx    = Math.max(0.4, Number(fields.strokeWidth.value) * scale);
+
+    // grid: interval (mm) → px spacing; opacity 1-10 → 0.05-1.0.
+    const interval = Math.max(1, Number(fields.gridInterval.value) || 10);
+    const stepPx   = interval * scale;
+    const opLevel  = Math.min(10, Math.max(1, Number(fields.gridOpacity.value) || 1));
+    const gridOpacity = 0.05 + ((opLevel - 1) / 9) * 0.95;
+
+    let gridLines = "";
+    for (let x = stepPx; x < PREVIEW_W; x += stepPx) {
+      gridLines += `<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${PREVIEW_H}" />`;
+    }
+    for (let y = stepPx; y < PREVIEW_H; y += stepPx) {
+      gridLines += `<line x1="0" y1="${y.toFixed(1)}" x2="${PREVIEW_W}" y2="${y.toFixed(1)}" />`;
+    }
+
+    // --- incline (right-triangle ramp): bottom edge + hypotenuse rising L→R ---
+    const BL = { x: 40,  y: 200 };  // bottom-left
+    const BR = { x: 290, y: 200 };  // bottom-right (ground end)
+    const AP = { x: 290, y: 90  };  // apex (top-right)
+    const ramp =
+      `<polygon points="${BL.x},${BL.y} ${BR.x},${BR.y} ${AP.x},${AP.y}"
+                fill="none" stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
+                stroke-linejoin="round" />`;
+
+    // --- box seated on the hypotenuse (BL → AP), rotated to match the slope ---
+    const dx = AP.x - BL.x, dy = AP.y - BL.y;        // slope vector (dy < 0: rises)
+    const angDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+    const t = 0.45;                                  // fraction up the slope
+    const seat = { x: BL.x + dx * t, y: BL.y + dy * t };
+    const BW = 26, BH = 20;
+    const box =
+      `<g transform="translate(${seat.x.toFixed(1)},${seat.y.toFixed(1)}) rotate(${angDeg.toFixed(2)})">
+         <rect x="${(-BW / 2).toFixed(1)}" y="${(-BH).toFixed(1)}" width="${BW}" height="${BH}"
+               fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
+               stroke-linejoin="round" />
+       </g>`;
+
+    // --- small force arrow from the box, pointing down-slope (살짝) ---
+    const len = Math.hypot(dx, dy);
+    const ds = { x: -dx / len, y: -dy / len };       // down-slope unit (toward BL)
+    // start a touch above the slope at the box, then go a short way down-slope
+    const aStart = { x: seat.x + ds.y * 10, y: seat.y - ds.x * 10 };
+    const aEnd   = { x: aStart.x + ds.x * 30, y: aStart.y + ds.y * 30 };
+    const aAng   = Math.atan2(aEnd.y - aStart.y, aEnd.x - aStart.x);
+    const HEAD = 8;
+    const h1 = { x: aEnd.x - HEAD * Math.cos(aAng - Math.PI / 7),
+                 y: aEnd.y - HEAD * Math.sin(aAng - Math.PI / 7) };
+    const h2 = { x: aEnd.x - HEAD * Math.cos(aAng + Math.PI / 7),
+                 y: aEnd.y - HEAD * Math.sin(aAng + Math.PI / 7) };
+    const arrow =
+      `<g stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
+          stroke-linecap="round" stroke-linejoin="round" fill="none">
+         <line x1="${aStart.x.toFixed(1)}" y1="${aStart.y.toFixed(1)}"
+               x2="${aEnd.x.toFixed(1)}" y2="${aEnd.y.toFixed(1)}" />
+         <polyline points="${h1.x.toFixed(1)},${h1.y.toFixed(1)} ${aEnd.x.toFixed(1)},${aEnd.y.toFixed(1)} ${h2.x.toFixed(1)},${h2.y.toFixed(1)}" />
+       </g>`;
+
+    // --- sample label (upper-left, clear of the ramp) ---
+    const style = currentStyle();
+    const fontPx = Math.max(6, Number(fields.textSizeMm.value) * scale);
+    const fontFamily = fields.textFont.value;
+    const label =
+      `<text x="12" y="${(fontPx + 8).toFixed(1)}" fill="${strokeColor}"
+             font-size="${fontPx.toFixed(1)}"
+             font-family="${fontFamily.replace(/"/g, "&quot;")}"
+             font-weight="${style.fontWeight}" font-style="${style.fontStyle}"
+             text-anchor="start"
+             dominant-baseline="alphabetic">ABC 가나다</text>`;
+
+    previewSvg.innerHTML = `
+      <rect x="0" y="0" width="${PREVIEW_W}" height="${PREVIEW_H}" fill="#ffffff" />
+      <g stroke="#000000" stroke-width="1" opacity="${gridOpacity.toFixed(3)}"
+         vector-effect="non-scaling-stroke">${gridLines}</g>
+      ${ramp}
+      ${box}
+      ${arrow}
+      ${label}
+    `;
+  }
+
+  // Re-render the preview on any control change (no 저장 needed to see it).
+  fields.gridVisible.parentElement.parentElement
+    .querySelectorAll("input, select").forEach((el) => {
+      el.addEventListener("input", renderPreview);
+      el.addEventListener("change", renderPreview);
+    });
+
+  function showModal() {
+    populate();
+    renderPreview();
+    renderPbgList();
+    overlay.hidden = false;
+    fields.strokeWidth.focus();
+    fields.strokeWidth.select();
+  }
+  function hideModal() {
+    overlay.hidden = true;
+  }
+
+  // Open from the dropdown item.
+  const openBtn = document.getElementById("open-defaults");
+  if (openBtn) openBtn.addEventListener("click", showModal);
+
+  // Cancel / overlay-click / Escape close without saving.
+  overlay.querySelector("#defaults-cancel").addEventListener("click", hideModal);
+  // click이 아닌 mousedown: 다른 모달(openPreferencesDialog 등)과 동일 패턴 —
+  // 입력칸 안에서 드래그 선택 후 오버레이 위에서 mouseup되면 click이 오버레이
+  // 타겟으로 잡혀 실수로 닫히는 것을 막는다.
+  overlay.addEventListener("mousedown", (e) => {
+    if (e.target === overlay) hideModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.hidden) hideModal();
+  });
+
+  // Save: read fields → persist → close. (Step 2 wires these into drawing.)
+  overlay.querySelector("#defaults-save").addEventListener("click", () => {
+    const style = currentStyle();
+    const ok = saveDefaults({
+      strokeWidth:  Number(fields.strokeWidth.value),
+      strokeLevel:  Number(fields.strokeLevel.value),
+      fillLevel:    Number(fields.fillLevel.value),
+      textSizeMm:   Number(fields.textSizeMm.value),
+      textFont:     fields.textFont.value,
+      textWeight:   style.fontWeight,
+      textStyle:    style.fontStyle,
+      gridVisible:  fields.gridVisible.checked,
+      gridOpacity:  Number(fields.gridOpacity.value),
+      gridInterval: Number(fields.gridInterval.value),
+      rulerTickMm:       Number(fields.rulerTickMm.value),
+      protractorTickDeg: Number(fields.protractorTickDeg.value),
+    });
+    // 저장 실패(용량 부족) 시 사용자에게 알리고 모달은 열어둔다 — 값을 다시
+    // 입력하지 않아도 재시도할 수 있게.
+    if (!ok) {
+      alert("저장 공간이 부족해 저장하지 못했습니다.");
+      return;
+    }
+    hideModal();
+  });
+
+  /* ----- 인쇄 비교 이미지: 업로드 / 목록 / 삭제 ----- */
+  const pbgFile = overlay.querySelector("#defaults-pbg-file");
+  const pbgName = overlay.querySelector("#defaults-pbg-name");
+  const pbgW = overlay.querySelector("#defaults-pbg-w");
+  const pbgH = overlay.querySelector("#defaults-pbg-h");
+  const pbgAdd = overlay.querySelector("#defaults-pbg-add");
+  const pbgListEl = overlay.querySelector("#defaults-pbg-list");
+
+  function renderPbgList() {
+    const list = loadPreviewBackgrounds();
+    pbgListEl.innerHTML = "";
+    if (!list.length) {
+      const empty = document.createElement("p");
+      empty.className = "defaults-pbg-empty";
+      empty.textContent = "등록된 이미지가 없습니다.";
+      pbgListEl.appendChild(empty);
+      return;
+    }
+    for (const bg of list) {
+      const row = document.createElement("div");
+      row.className = "defaults-pbg-item";
+      const thumb = document.createElement("img");
+      thumb.src = bg.dataUrl;
+      thumb.alt = "";
+      thumb.className = "defaults-pbg-thumb";
+      const meta = document.createElement("span");
+      meta.className = "defaults-pbg-meta";
+      meta.textContent = `${bg.name} · ${bg.widthMm}×${bg.heightMm}mm`;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "defaults-pbg-del";
+      del.textContent = "✕";
+      del.title = "삭제";
+      del.addEventListener("click", async () => {
+        const yes = await showConfirm(`'${bg.name}'\n정말로 삭제하시겠습니까?`,
+          { title: "이미지 삭제", okText: "예", cancelText: "아니오" });
+        if (!yes) return;
+        removePreviewBackground(bg.id);
+        renderPbgList();
+      });
+      row.appendChild(thumb);
+      row.appendChild(meta);
+      row.appendChild(del);
+      pbgListEl.appendChild(row);
+    }
+  }
+
+  pbgAdd.addEventListener("click", async () => {
+    const file = pbgFile.files && pbgFile.files[0];
+    if (!file) { showAlert("추가할 이미지 파일을 먼저 선택하세요.", { title: "인쇄 비교 이미지" }); return; }
+    pbgAdd.disabled = true;
+    try {
+      await addPreviewBackground({
+        name: pbgName.value,
+        widthMm: pbgW.value,
+        heightMm: pbgH.value,
+        file,
+      });
+      pbgFile.value = ""; pbgName.value = ""; pbgW.value = ""; pbgH.value = "";
+      renderPbgList();
+    } catch (err) {
+      showAlert(err && err.message ? err.message : "이미지를 추가하지 못했습니다.", { title: "인쇄 비교 이미지" });
+    }
+    pbgAdd.disabled = false;
+  });
+
+  /* ----- 설정 파일 저장/불러오기 dropdown 항목 wiring ----- */
+  // 숨김 파일 입력은 여기서 만들어 index.html은 마크업만 유지(project-io.js 관습).
+  const settingsFileInput = document.createElement("input");
+  settingsFileInput.type = "file";
+  settingsFileInput.accept = ".zip,application/zip,.json,application/json";
+  settingsFileInput.style.display = "none";
+  document.body.appendChild(settingsFileInput);
+
+  const exportBtn = document.getElementById("settings-export");
+  if (exportBtn) exportBtn.addEventListener("click", openExportDialog);
+
+  const importBtn = document.getElementById("settings-import");
+  if (importBtn) importBtn.addEventListener("click", () => settingsFileInput.click());
+
+  settingsFileInput.addEventListener("change", () => {
+    const file = settingsFileInput.files && settingsFileInput.files[0];
+    if (file) importSettingsFile(file);
+    // 같은 파일을 다시 선택해도 change가 발생하도록 초기화.
+    settingsFileInput.value = "";
+  });
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <marker id="arr" overflow="visible" orient="auto">
+    <path stroke="#000" stroke-width=".4" stroke-linejoin="round" d="m2.6,0 -6.3-1.9 0,3.8z"/>
+  </marker>
+  <g fill="none" stroke="#000" stroke-width="5" marker-end="url(#arr)">
+    <path d="M20,180 L50,150 Q100,100 50,50 L30,30"/>
+    <path d="M180,180 L150,150 Q100,100 150,50 L170,30"/>
+  </g>
+</svg>

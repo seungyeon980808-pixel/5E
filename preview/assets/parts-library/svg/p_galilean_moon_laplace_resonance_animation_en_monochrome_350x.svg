@@ -1,0 +1,31 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="350px" height="217px" viewBox="0 0 1050 650">
+	<desc>Animation of the Laplace resonance of the three galilean moon Io, Europe and Ganymede</desc>
+
+	<!-- Jupiter -->
+	<circle cx="325" cy="325" r="40" fill="black"/>
+	<line x1="325" x2="700" y1="325" y2="325" stroke="gray" stroke-width="1" fill="none"/>
+	<switch style="font-family:sans-serif;font-size:40px;font-weight:bold;"><text x="710" y="340" style="font-family:sans-serif;font-size:40px;font-weight:bold;" id="trsvg5-ca" systemLanguage="ca"><tspan id="trsvg1-ca">J&#xFA;piter</tspan></text><text x="710" y="340" style="font-family:sans-serif;font-size:40px;font-weight:bold;" id="trsvg5-da" systemLanguage="da"><tspan id="trsvg1-da">Jupiter</tspan></text><text x="710" y="340" style="font-family:sans-serif;font-size:40px;font-weight:bold;" id="trsvg5"><tspan id="trsvg1">Jupiter</tspan></text></switch>
+	<!-- Lo -->
+	<circle cx="325" cy="325" r="100" stroke="gray" stroke-width="2" fill="none"/>
+	<line x1="325" x2="700" y1="225" y2="225" stroke="gray" stroke-width="1" fill="none"/>
+	<switch style="font-family:sans-serif;font-size:40px;"><text x="710" y="240" style="font-family:sans-serif;font-size:40px;" id="trsvg6-ca" systemLanguage="ca"><tspan id="trsvg2-ca">Io (1:1)</tspan></text><text x="710" y="240" style="font-family:sans-serif;font-size:40px;" id="trsvg6-da" systemLanguage="da"><tspan id="trsvg2-da">Io (1:1)</tspan></text><text x="710" y="240" style="font-family:sans-serif;font-size:40px;" id="trsvg6"><tspan id="trsvg2">Io (1:1)</tspan></text></switch>
+	<circle cx="325" cy="225" r="10" fill="black">
+    	<animateMotion dur="2s" repeatCount="indefinite" path="M0,0 a100 100 0 0 0 0,200 a100 100 0 0 0 0,-200"/>
+	</circle>
+	<!-- Europa -->
+	<circle cx="325" cy="325" r="200" stroke="gray" stroke-width="2" fill="none"/>
+	<line x1="325" x2="700" y1="125" y2="125" stroke="gray" stroke-width="1" fill="none"/>
+	<switch style="font-family:sans-serif;font-size:40px;"><text x="710" y="140" style="font-family:sans-serif;font-size:40px;" id="trsvg7-ca" systemLanguage="ca"><tspan id="trsvg3-ca">Europa (2:1)</tspan></text><text x="710" y="140" style="font-family:sans-serif;font-size:40px;" id="trsvg7-da" systemLanguage="da"><tspan id="trsvg3-da">Europa (2:1)</tspan></text><text x="710" y="140" style="font-family:sans-serif;font-size:40px;" id="trsvg7"><tspan id="trsvg3">Europa (2:1)</tspan></text></switch>
+	<circle cx="325" cy="525" r="10" fill="black">
+    	<animateMotion dur="4s" repeatCount="indefinite" path="M0,0 a200 200 0 0 0 0,-400 a200 200 0 0 0 0,400"/>
+	</circle>
+	<!-- Ganymede -->
+	<circle cx="325" cy="325" r="300" stroke="gray" stroke-width="2" fill="none"/>
+	<line x1="325" x2="700" y1="25" y2="25" stroke="gray" stroke-width="1" fill="none"/>
+	<switch style="font-family:sans-serif;font-size:40px;"><text x="710" y="40" style="font-family:sans-serif;font-size:40px;" id="trsvg8-ca" systemLanguage="ca"><tspan id="trsvg4-ca">Ganimedes</tspan></text><text x="710" y="40" style="font-family:sans-serif;font-size:40px;" id="trsvg8-da" systemLanguage="da"><tspan id="trsvg4-da">Ganymedes (4:1)</tspan></text><text x="710" y="40" style="font-family:sans-serif;font-size:40px;" id="trsvg8"><tspan id="trsvg4">Ganymede (4:1)</tspan></text></switch>
+	<circle cx="325" cy="25" r="10" fill="black">
+    	<animateMotion dur="8s" repeatCount="indefinite" path="M0,0 a300 300 0 0 0 0,600 a300 300 0 0 0 0,-600"/>
+	</circle>
+</svg>

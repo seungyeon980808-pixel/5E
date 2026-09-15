@@ -1,0 +1,795 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2.7b WinFIG version 1 (2020-01-08) -->
+<!-- CreationDate: 2022-03-30 01:38:08 -->
+<!-- Magnification: 2 -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="1165pt" height="345pt"
+	viewBox="438 5545 9704 2867">
+<g fill="none">
+<!-- Arc -->
+<path d="M 5108,6411 A 33 33 0 0 1 5105 6471"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 4745,6411 A 33 33 0 0 0 4748 6471"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="4775" cy="6441" r="26"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="5084" cy="6441" r="26"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<defs>
+<clipPath id="cp0">
+	<path clip-rule="evenodd" d="M 438,5545 H 10142 V 8412 H 438 z
+		M 5808,6230 5838,6260 5808,6290 6005,6267 6005,6253z"/>
+</clipPath>
+</defs>
+<polyline points=" 5548,6260 5998,6260" clip-path="url(#cp0)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Forward arrow to point 5998,6260 -->
+<polygon points=" 5808,6290 5958,6260 5808,6230 5838,6260 5808,6290"
+	stroke="#000000" stroke-width="15px" stroke-miterlimit="8" fill="#000000"/>
+<!-- Line -->
+<rect x="5343" y="6227" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5343,6220 5396,6197"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5421,6222 5474,6199"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5425,6308 5478,6285"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5388,6205 5478,6201 5478,6284"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6059,6307 6123,6217 6160,6310 6063,6303"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6130,6213 6213,6277 6160,6310"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 5429,6239 5426,6306 5478,6284 5478,6205"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="5147" y="6044" width="1245" height="435"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6389,6041 6828,5786"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6393,6476 6832,6221"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5148,6040 5587,5785"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5580,5788 6821,5788"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6824,5792 6824,6227"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6393,6478 6419,6504 6847,6249 6824,6227"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6423,6508 6423,6598 7064,6598"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6427,6512 7061,6512"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7063,6597 7478,6348"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7053,6509 7481,6254"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7477,6253 6847,6253"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7477,6261 7477,6347"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="5268" y="6482" width="221" height="112"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="5985" y="6482" width="221" height="112"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5492,6597 5613,6521 5613,6483 5497,6483 5497,6600" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6207,6597 6327,6520 6327,6482 6211,6482 6211,6599" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6557,6516 6855,6340"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7343,6339 6853,6339"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6848,6252 6848,6339"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4745,6408 5111,6408"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4745,6474 5111,6474"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4742,6404 5147,6168"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6569,6377 6569,6216 6719,6130 6719,6280" fill="#595959"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 4358,7236 A 33 33 0 0 1 4355 7296"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 3995,7236 A 33 33 0 0 0 3998 7296"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="4025" cy="7266" r="26"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="4334" cy="7266" r="26"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<defs>
+<clipPath id="cp1">
+	<path clip-rule="evenodd" d="M 438,5545 H 10142 V 8412 H 438 z
+		M 5058,7055 5088,7085 5058,7115 5255,7092 5255,7078z"/>
+</clipPath>
+</defs>
+<polyline points=" 4798,7085 5248,7085" clip-path="url(#cp1)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Forward arrow to point 5248,7085 -->
+<polygon points=" 5058,7115 5208,7085 5058,7055 5088,7085 5058,7115"
+	stroke="#000000" stroke-width="15px" stroke-miterlimit="8" fill="#000000"/>
+<!-- Line -->
+<rect x="4593" y="7052" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4593,7045 4646,7022"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4671,7047 4724,7024"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4675,7133 4728,7110"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4638,7030 4728,7026 4728,7109"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5309,7132 5373,7042 5410,7135 5313,7128"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5380,7038 5463,7102 5410,7135"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 4679,7064 4676,7131 4728,7109 4728,7030"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="4397" y="6869" width="1245" height="435"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5639,6866 6078,6611"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5643,7301 6082,7046"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4398,6865 4837,6610"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4830,6613 6071,6613"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6074,6617 6074,7052"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5643,7303 5669,7329 6097,7074 6074,7052"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5673,7333 5673,7423 6314,7423"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5677,7337 6311,7337"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6313,7422 6728,7173"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6303,7334 6731,7079"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6727,7078 6097,7078"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6727,7086 6727,7172"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="4518" y="7307" width="221" height="112"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="5235" y="7307" width="221" height="112"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 4742,7422 4863,7346 4863,7308 4747,7308 4747,7425" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5457,7422 5577,7345 5577,7307 5461,7307 5461,7424" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5807,7341 6105,7165"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6593,7164 6103,7164"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6098,7077 6098,7164"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3995,7233 4361,7233"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3995,7299 4361,7299"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3992,7229 4397,6993"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5819,7202 5819,7041 5969,6955 5969,7105" fill="#595959"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="1205" y="8129" width="695" height="70"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1899,8128 2237,7857"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1202,8129 1536,7857"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2237,7928 2237,7857"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1532,7865 1532,7932"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1289,8127 1529,7936"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2241,7857 1532,7857"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2144,7932 1529,7932"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1900,8201 2241,7925"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="6084" y="8149" width="695" height="70"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6778,8148 7116,7877"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6081,8149 6415,7877"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7116,7948 7116,7877"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6411,7885 6411,7952"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6168,8147 6408,7956"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7120,7877 6411,7877"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7023,7952 6408,7952"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6779,8221 7120,7945"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="1480" y="8023" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1480,8016 1533,7993"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1558,8018 1611,7995"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1562,8104 1615,8081"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1525,8001 1615,7997 1615,8080"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 1566,8035 1563,8102 1615,8080 1615,8001" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="1630" y="7978" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1630,7971 1683,7948"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1708,7973 1761,7950"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1712,8059 1765,8036"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1675,7956 1765,7952 1765,8035"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 1716,7990 1713,8057 1765,8035 1765,7956" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="1845" y="7973" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1845,7966 1898,7943"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1923,7968 1976,7945"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1927,8054 1980,8031"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 1890,7951 1980,7947 1980,8030"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 1931,7985 1928,8052 1980,8030 1980,7951" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6401,8093 6465,8003 6502,8096 6405,8089"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6472,7999 6555,8063 6502,8096" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5981,7313 6045,7223 6082,7316 5985,7309"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6052,7219 6135,7283 6082,7316" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6171,7253 6235,7163 6272,7256 6175,7249"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6242,7159 6325,7223 6272,7256" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6871,6473 6935,6383 6972,6476 6875,6469"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6942,6379 7025,6443 6972,6476" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8533,6359 8597,6269 8634,6362 8537,6355"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8604,6265 8687,6329 8634,6362" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8703,6434 8767,6344 8804,6437 8707,6430"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8774,6340 8857,6404 8804,6437" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 8655,6097 A 220 220 0 0 0 8780 6099"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<ellipse cx="8715" cy="6075" rx="61" ry="7"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8655,6103 8655,6077"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8780,6105 8780,6079"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3155" y="7091" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3155,7084 3208,7061"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3233,7086 3286,7063"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3237,7172 3290,7149"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3200,7069 3290,7065 3290,7148"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3241,7103 3238,7170 3290,7148 3290,7069" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3370" y="7061" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3370,7054 3423,7031"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3448,7056 3501,7033"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3452,7142 3505,7119"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3415,7039 3505,7035 3505,7118"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3456,7073 3453,7140 3505,7118 3505,7039" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="3669" y="6373" width="83" height="83"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3669,6366 3722,6343"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3747,6368 3800,6345"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3751,6454 3804,6431"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3714,6351 3804,6347 3804,6430"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3755,6385 3752,6452 3804,6430 3804,6351" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="3620" cy="6321" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3590,6339 3560,6418 3740,6433 3624,6381 3646,6339" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3612,6291 3684,6257 3755,6343 3717,6343 3687,6306 3646,6339" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="2956" cy="6852" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="3059" cy="6238" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3031,6273 3080,6281 2994,6825 2941,6813" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3102,6225 3091,6262 3586,6337 3586,6311 3601,6288" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3203,6767 2942,6767 2877,6831"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2989,6853 3091,6258"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2925,6844 3025,6249"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3068,6208 3605,6288"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3057,6269 3590,6348"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 2825,6921 A 213 213 0 0 0 3059 6921"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 3510,6940 A 179 179 0 0 0 3235 6936" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<ellipse cx="2943" cy="6872" rx="117" ry="46"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="3130" cy="7425" r="237" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<defs>
+<ellipse cx="3700" cy="7230" rx="60" ry="255" id="p0"/>
+<pattern id="tile0" patternUnits="userSpaceOnUse"
+	x="0" y="0" width="402" height="402">
+<g stroke-width="7.5" stroke="#000000" fill="none">
+<path d="M-1,30 H403 M-1,164 H403 M-1,298 H403 M164,30 l67,134 M30,164 l67,134 M298,298 l60,120 M365,30 l-20,-40"/>
+</g>
+</pattern>
+</defs>
+<use xlink:href="#p0" fill="#000000"/>
+<use xlink:href="#p0" fill="url(#tile0)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<defs>
+<ellipse cx="3726" cy="7229" rx="60" ry="255" id="p1"/>
+<pattern id="tile1" patternUnits="userSpaceOnUse"
+	x="0" y="0" width="402" height="402">
+<g stroke-width="7.5" stroke="#000000" fill="none">
+<path d="M-1,30 H403 M-1,164 H403 M-1,298 H403 M164,30 l67,134 M30,164 l67,134 M298,298 l60,120 M365,30 l-20,-40"/>
+</g>
+</pattern>
+</defs>
+<use xlink:href="#p1" fill="#000000"/>
+<use xlink:href="#p1" fill="url(#tile1)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3060,6877 3060,6926"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2667,7290 2667,7440 2890,7440"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3574,7290 3777,7020 3777,6945 3567,7215"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3567,7380 3777,7095 3777,7020"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2967,7215 3197,6934"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2967,7215 2967,7065 3201,6776 3201,6936"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3780,6936 3199,6936"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2967,7065 2667,7065 2667,7215"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="2667" y="7215" width="900" height="75"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2826,6876 2826,6923"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 2667,7065 2823,6894"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3365,7440 3567,7440 3567,7290"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 2980,7050 2980,7200 3190,6922 3190,6806 3010,7024" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3575,7217 3635,7140 3635,7210 3572,7292" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 3577,7302 3635,7225 3635,7282 3575,7365" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7364,7380 7428,7290 7465,7383 7368,7376"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7435,7286 7518,7350 7465,7383" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7599,7335 7663,7245 7700,7338 7603,7331"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7670,7241 7753,7305 7700,7338" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6412,7594 6476,7504 6513,7597 6416,7590"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6483,7500 6566,7564 6513,7597" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="7103" cy="7082" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="6620" cy="6949" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="6515" cy="7432" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7112,7051 6632,6922"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7100,7114 6608,6985"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6584,6943 6482,7429"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6656,6958 6554,7453"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6554,7426 6620,7459 6509,7564 6548,7480 6509,7471" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6503,7402 6410,7387 6440,7546 6458,7510 6458,7450 6503,7468" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 6995,7158 A 213 213 0 0 0 7229 7158"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Arc -->
+<path d="M 7689,7175 A 179 179 0 0 0 7414 7171" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<ellipse cx="7113" cy="7109" rx="117" ry="46"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="7290" cy="7620" r="237" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<defs>
+<ellipse cx="7869" cy="7445" rx="60" ry="255" id="p2"/>
+<pattern id="tile2" patternUnits="userSpaceOnUse"
+	x="0" y="0" width="402" height="402">
+<g stroke-width="7.5" stroke="#000000" fill="none">
+<path d="M-1,30 H403 M-1,164 H403 M-1,298 H403 M164,30 l67,134 M30,164 l67,134 M298,298 l60,120 M365,30 l-20,-40"/>
+</g>
+</pattern>
+</defs>
+<use xlink:href="#p2" fill="#000000"/>
+<use xlink:href="#p2" fill="url(#tile2)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Ellipse -->
+<defs>
+<ellipse cx="7888" cy="7446" rx="60" ry="255" id="p3"/>
+<pattern id="tile3" patternUnits="userSpaceOnUse"
+	x="0" y="0" width="402" height="402">
+<g stroke-width="7.5" stroke="#000000" fill="none">
+<path d="M-1,30 H403 M-1,164 H403 M-1,298 H403 M164,30 l67,134 M30,164 l67,134 M298,298 l60,120 M365,30 l-20,-40"/>
+</g>
+</pattern>
+</defs>
+<use xlink:href="#p3" fill="#000000"/>
+<use xlink:href="#p3" fill="url(#tile3)"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 6665,6938 6662,6968 6639,6983 7085,7103 7059,7069 7067,7054" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 6590,6972 6613,6990 6639,6990 6553,7410 6527,7388 6493,7388 6545,7144" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 7145,7313 7145,7418 7359,7156 7359,7039" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7230,7114 7230,7163"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6837,7527 6837,7677 7055,7675"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7530,7675 7737,7677 7737,7527"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7744,7527 7947,7257 7947,7182 7737,7452"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7737,7617 7947,7332 7947,7257"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7137,7452 7367,7171"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7137,7452 7137,7302 7371,7013 7371,7173"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7950,7173 7369,7173"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7137,7302 6837,7302 6837,7452"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="6837" y="7452" width="900" height="75"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6996,7113 6996,7160"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 6837,7302 6993,7131"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7373,7004 7112,7004 7047,7068"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 7743,7456 7743,7525 7803,7447 7803,7363 7743,7447" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 7746,7531 7800,7465 7800,7531 7743,7606" fill="#a5a5a5"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 7949,7402 7949,7450 7908,7450"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="8741" cy="6028" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="8946" cy="5597" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="8608" cy="5670" r="34"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Circle -->
+<circle cx="8592" cy="6576" r="174" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 3450,6150 450,8400 7125,8400 10125,6150"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 10130,6156 8910,6156"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8490,6151 6825,6151"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 5150,6151 3450,6151"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 8646,5642 8653,5672 8642,5691 8886,5642 8908,5578 8901,5586" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 8912,5619 8724,5991 8762,5991 8773,6009 8961,5627 8931,5627" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8704,6016 8911,5587"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8769,6048 8981,5612"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8891,5642 8609,5702"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8956,5564 8606,5639"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8631,5637 8631,5557 8476,5632 8576,5607 8576,5657" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8633,5710 8633,5790 8478,5715 8578,5740 8578,5690" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="8285" y="6470" width="620" height="50"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<rect x="8285" y="6525" width="620" height="60"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8284,6467 8490,6216 8917,6216 8906,6467"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8494,6224 8494,6126 8916,6127 8916,6217"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8492,6122 8548,6092 8649,6092"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8782,6094 8901,6094 8916,6122"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polygon points=" 8917,6404 8913,6547 8951,6547 8962,6547 8977,6269 8917,6262" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8444,6270 8439,6245 8429,6220 8399,6225 8359,6270 8339,6330 8339,6390" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+<!-- Line -->
+<polyline points=" 8429,6220 8364,6220 8314,6270 8299,6335 8299,6400 8319,6430" fill="#000000"
+	stroke="#000000" stroke-width="8px"/>
+</g>
+</svg>

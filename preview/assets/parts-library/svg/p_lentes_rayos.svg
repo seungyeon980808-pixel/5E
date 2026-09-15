@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2 Patchlevel 5-alpha7 -->
+<!-- CreationDate: Sat Apr 12 09:19:28 2008 -->
+<!-- Magnification: 1.050 -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="9.3in"
+   height="3.8in"
+   viewBox="-12 2894 11167 4616"
+   id="svg2025"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docname="lentes_rayos.svg"
+   sodipodi:docbase="/home/linux/documentos/lyx/fis-2-bach/resumenes"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata2140">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2138" />
+  <sodipodi:namedview
+     inkscape:window-height="705"
+     inkscape:window-width="1233"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="1.1075269"
+     inkscape:cx="418.5"
+     inkscape:cy="173.24058"
+     inkscape:window-x="45"
+     inkscape:window-y="0"
+     inkscape:current-layer="svg2025" />
+  <polyline
+     id="polyline2029"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:black;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:107.97660819,26.99415205,13.49707602,26.99415205;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     points="6417,5196 11142,5196 " />
+  <polyline
+     id="polyline2031"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="6890,7086 7813,6163 " />
+  <polyline
+     id="polyline2033"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="7657 6451 7814 6162 7524 6318 " />
+  <polyline
+     id="polyline2035"
+     style="fill:none;stroke:#008700;stroke-width:24.95630657;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="7835,6141 10411,3565 "
+     transform="matrix(1.014053,0,0,1.014053,-146.4223,-49.98792)" />
+  <polyline
+     id="polyline2037"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="10256 3853 10412 3564 10122 3719 " />
+  <polyline
+     id="polyline2039"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:black;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     points="7823,4978 7829,5409 7829,5395 " />
+  <polyline
+     id="polyline2041"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:black;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     points="9711,4961 9711,5422 " />
+  <polyline
+     id="polyline2043"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="7604,7311 8041,6873 " />
+  <polyline
+     id="polyline2045"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701822;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="7886 7161 8043 6872 7753 7027 " />
+  <polyline
+     id="polyline2047"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="7826,7088 8780,6141 10165,6141 " />
+  <polyline
+     id="polyline2049"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="9853 6236 10167 6141 9853 6047 " />
+  <polyline
+     id="polyline2051"
+     style="fill:none;stroke:#ff0000;stroke-width:25.73963121;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:77.21889364,25.73963121;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="7826,5185 8801,4227 8790,4005 "
+     transform="matrix(0.981596,0,0,0.984792,149.9694,85.05393)" />
+  <polyline
+     id="polyline2053"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701849;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="6927,4240 8092,4240 " />
+  <polyline
+     id="polyline2055"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701849;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="7779 4334 8094 4240 7779 4145 " />
+  <polyline
+     id="polyline2057"
+     style="fill:none;stroke:#00009c;stroke-width:24.90433815;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:74.71301445,24.90433815;stroke-miterlimit:4;stroke-opacity:1;stroke-dashoffset:0"
+     points="9711,5213 8797,6141 "
+     transform="matrix(1.013001,0,0,1.019347,-126.3874,-112.8713)" />
+  <polyline
+     id="polyline2059"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122618;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="8591,7464 8780,7086 8969,7464 "
+     transform="translate(0,-36.560041)" />
+  <polyline
+     id="polyline2061"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122618;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="8780,3307 8780,7086 " />
+  <polyline
+     id="polyline2063"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122618;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="8591,2929 8780,3307 8969,2929 " />
+  <polyline
+     id="polyline2065"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701849;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="7825,4241 8789,4251 9977,3013 " />
+  <polyline
+     id="polyline2067"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701849;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="9829 3302 9980 3011 9693 3172 " />
+  <polyline
+     id="polyline2085"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;fill-opacity:1;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:107.97660819,26.99415205,13.49707602,26.99415205;stroke-dashoffset:0"
+     points="0,5196 4724,5196 " />
+  <polyline
+     id="polyline2087"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="472,7086 1395,6163 " />
+  <polyline
+     id="polyline2089"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="1239 6451 1396 6162 1106 6318 " />
+  <polyline
+     id="polyline2091"
+     style="fill:none;stroke:#008700;stroke-width:24.94189737;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="1417,6141 3993,3565 "
+     transform="matrix(1.015228,0,0,1.01405,-60.9231,-49.97028)" />
+  <polyline
+     id="polyline2093"
+     style="fill:none;stroke:#008700;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="3838 3853 3994 3564 3704 3719 " />
+  <polyline
+     id="polyline2095"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;fill-opacity:1"
+     points="1405,4978 1412,5409 1412,5395 " />
+  <polyline
+     id="polyline2097"
+     style="fill:none;stroke:black;stroke-width:16;stroke-linecap:butt;stroke-linejoin:miter"
+     points="1068,4775 1212,4951 " />
+  <polyline
+     id="polyline2099"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701822;opacity:1;color:#000000;fill-opacity:1;fill-rule:nonzero;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+     points="940 4768 1213 4952 1086 4648 " />
+  <polyline
+     id="polyline2101"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="641,4241 2365,6393 3759,6386 " />
+  <polyline
+     id="polyline2103"
+     style="fill:none;stroke:#00009c;stroke-width:25.30701754;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="3446 6481 3761 6386 3445 6292 " />
+  <polyline
+     id="polyline2105"
+     style="fill:#424444;stroke:#4b4a75;stroke-width:13.49707602;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;color:black;fill-opacity:1;fill-rule:nonzero;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     points="3307,4975 3313,5420 " />
+  <polyline
+     id="polyline2107"
+     style="fill:none;stroke:#ff0000;stroke-width:25.51792243;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     points="1436,4010 2356,4010 3897,5899 "
+     transform="matrix(0.980319,0,0,1.003284,58.55191,-13.23461)" />
+  <polyline
+     id="polyline2109"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701754;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     points="3625 5715 3898 5900 3772 5595 "
+     transform="translate(-6.071066,18.2132)" />
+  <polyline
+     id="polyline2111"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701754;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     points="471,4010 1620,4010 " />
+  <polyline
+     id="polyline2113"
+     style="fill:none;stroke:#ff0000;stroke-width:25.30701754;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     points="1308 4104 1623 4010 1308 3916 " />
+  <polyline
+     id="polyline2115"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122807;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="2360,3029 2360,7246 " />
+  <polyline
+     id="polyline2117"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122807;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="2265 6964 2360 7279 2454 6964 " />
+  <polyline
+     id="polyline2119"
+     style="fill:none;stroke:#68626c;stroke-width:40.49122807;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     points="2454 3311 2360 2996 2265 3311 " />
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="3054.9504"
+     y="5755.1177"
+     id="text20077"><tspan
+       sodipodi:role="line"
+       id="tspan20079"
+       x="3054.9504"
+       y="5755.1177">F</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="1310.9172"
+     y="5923.0562"
+     id="text20081"><tspan
+       sodipodi:role="line"
+       id="tspan20083"
+       x="1310.9172"
+       y="5923.0562">o</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="3236.4128"
+     y="6008.3633"
+     id="text20089"><tspan
+       sodipodi:role="line"
+       id="tspan20091"
+       x="3236.4128"
+       y="6008.3633">i</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="4639.2192"
+     y="6315.7051"
+     id="text20093"><tspan
+       sodipodi:role="line"
+       id="tspan20095"
+       x="4639.2192"
+       y="6315.7051">f</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="1171.6277"
+     y="5771.0034"
+     id="text20101"><tspan
+       sodipodi:role="line"
+       id="tspan20103"
+       x="1171.6277"
+       y="5771.0034">F</tspan></text>
+  <g
+     transform="translate(6418.4669,-24.78934)"
+     id="g20119">
+    <text
+       xml:space="preserve"
+       style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1202.5752"
+       y="5767.3042"
+       id="text20121"><tspan
+         sodipodi:role="line"
+         id="tspan20123"
+         x="1202.5752"
+         y="5767.3042">F</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1384.0374"
+       y="6020.5498"
+       id="text20125"><tspan
+         sodipodi:role="line"
+         id="tspan20127"
+         x="1384.0374"
+         y="6020.5498">i</tspan></text>
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="9666.8887"
+     y="5893.1006"
+     id="text20129"><tspan
+       sodipodi:role="line"
+       id="tspan20131"
+       x="9666.8887"
+       y="5893.1006">o</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:377.91812134px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="9503.2266"
+     y="5765.4209"
+     id="text20133"><tspan
+       sodipodi:role="line"
+       id="tspan20135"
+       x="9503.2266"
+       y="5765.4209">F</tspan></text>
+</svg>

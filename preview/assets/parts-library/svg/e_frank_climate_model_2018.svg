@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   sodipodi:docname="Brin climate model.svg"
+   inkscape:version="1.0 (4035a4f, 2020-05-01)"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 215.90001 228.60001"
+   height="9in"
+   width="8.5in">
+  <defs
+     id="defs2">
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="Arrow2Mstart"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Mstart">
+      <path
+         transform="scale(0.6)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path861" />
+    </marker>
+    <marker
+       inkscape:isstock="true"
+       style="overflow:visible"
+       id="Arrow2Mend"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Arrow2Mend">
+      <path
+         transform="scale(-0.6)"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         id="path864" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mstart-3"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path861-0"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend-4"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path864-1"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mstart-8"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path861-4"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend-6"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path864-0"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mstart-5"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path861-8"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend-8"
+       style="overflow:visible"
+       inkscape:isstock="true">
+      <path
+         id="path864-7"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.625;stroke-linejoin:round;stroke-opacity:1"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-maximized="0"
+     inkscape:window-y="23"
+     inkscape:window-x="0"
+     inkscape:window-height="1172"
+     inkscape:window-width="1493"
+     units="in"
+     showgrid="true"
+     inkscape:document-rotation="0"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="mm"
+     inkscape:cy="450.00501"
+     inkscape:cx="408"
+     inkscape:zoom="1"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base">
+    <inkscape:grid
+       empspacing="4"
+       spacingy="3.1750001"
+       spacingx="3.1750001"
+       units="in"
+       id="grid833"
+       type="xygrid" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <text
+       id="text1156"
+       y="106.62708"
+       x="50.932289"
+       style="font-size:4.93889px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       xml:space="preserve"><tspan
+         style="font-size:4.93889px;stroke-width:0.264583"
+         y="106.62708"
+         x="50.932289"
+         id="tspan1154"
+         sodipodi:role="line">Time</tspan></text>
+    <text
+       transform="rotate(-90)"
+       id="text1196"
+       y="4.5294447"
+       x="-54.184631"
+       style="font-size:4.93889px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       xml:space="preserve"><tspan
+         style="font-size:4.93889px;stroke-width:0.264583"
+         y="4.5294447"
+         x="-54.184631"
+         id="tspan1194"
+         sodipodi:role="line">Population and avg. temperature</tspan></text>
+    <text
+       id="text1200"
+       y="6.3500004"
+       x="53.965515"
+       style="font-size:4.93888889px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583;"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583;font-size:4.93888889px;"
+         y="6.3500004"
+         x="53.965515"
+         id="tspan1198"
+         sodipodi:role="line">Die-off</tspan></text>
+    <path
+       sodipodi:nodetypes="cc"
+       id="path1204"
+       d="M 101.6,12.7 C 38.100001,12.7 38.100001,88.900003 6.3500002,88.900002"
+       style="fill:none;stroke:#ff8000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       sodipodi:nodetypes="ccc"
+       id="path1202"
+       d="M 6.3500002,88.900002 C 19.050001,88.900003 25.400002,12.700001 38.100001,12.7 50.800003,12.700001 63.500002,69.850002 101.6,69.850002"
+       style="fill:none;stroke:#0080ff;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path835"
+       d="M 6.3500002,6.3500002 V 101.6 H 101.6"
+       style="fill:none;stroke:#000000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart);marker-end:url(#Arrow2Mend)" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="158.88229"
+       y="106.62708"
+       id="text1156-5"><tspan
+         sodipodi:role="line"
+         id="tspan1154-3"
+         x="158.88229"
+         y="106.62708"
+         style="font-size:4.9389px;stroke-width:0.264583">Time</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="-54.184631"
+       y="112.47945"
+       id="text1196-2"
+       transform="rotate(-90)"><tspan
+         sodipodi:role="line"
+         id="tspan1194-9"
+         x="-54.184628"
+         y="112.47945"
+         style="font-size:4.9389px;stroke-width:0.264583">Population and avg. temperature</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.93888889px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583;"
+       x="161.91837"
+       y="6.3500004"
+       id="text1200-9"><tspan
+         sodipodi:role="line"
+         id="tspan1198-8"
+         x="161.91837"
+         y="6.3500004"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583;font-size:4.93888889px;">Sustainability</tspan></text>
+    <path
+       style="fill:none;stroke:#ff8000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 209.55001,31.750001 h -38.1 c -25.40001,0 -25.40001,57.150002 -57.15,57.150002"
+       id="path1204-8"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#0080ff;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 114.30001,88.900003 C 139.7,88.900003 146.05,12.7 171.45001,12.7 h 38.1"
+       id="path1202-0"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart-3);marker-end:url(#Arrow2Mend-4)"
+       d="M 114.30001,6.3500004 V 101.6 h 95.25"
+       id="path835-9" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="50.932297"
+       y="214.57709"
+       id="text1156-8"><tspan
+         sodipodi:role="line"
+         id="tspan1154-1"
+         x="50.932297"
+         y="214.57709"
+         style="font-size:4.9389px;stroke-width:0.264583">Time</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="-162.13463"
+       y="4.5294437"
+       id="text1196-9"
+       transform="rotate(-90)"><tspan
+         sodipodi:role="line"
+         id="tspan1194-1"
+         x="-162.13463"
+         y="4.5294437"
+         style="font-size:4.9389px;stroke-width:0.264583">Population and avg. temperature</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="53.976326"
+       y="114.3"
+       id="text1200-91"><tspan
+         sodipodi:role="line"
+         id="tspan1198-6"
+         x="53.976326"
+         y="114.3"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:5.29167px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583">Collapse w/o resource change</tspan></text>
+    <path
+       style="fill:none;stroke:#ff8000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 101.6,120.65 H 76.200002 c 0,31.75 -38.100001,76.20001 -69.8500029,76.20001"
+       id="path1204-2"
+       sodipodi:nodetypes="ccc" />
+    <path
+       style="fill:none;stroke:#0080ff;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 6.3499991,196.85001 c 31.7500019,0 44.4500019,-57.15 57.1500029,-57.15001 12.7,1e-5 12.7,25.40001 12.7,63.50001 H 101.6"
+       id="path1202-03"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart-8);marker-end:url(#Arrow2Mend-6)"
+       d="m 6.3499991,114.3 v 95.25 H 101.6"
+       id="path835-5" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="158.87968"
+       y="214.57709"
+       id="text1156-7"><tspan
+         sodipodi:role="line"
+         id="tspan1154-7"
+         x="158.87968"
+         y="214.57709"
+         style="font-size:4.9389px;stroke-width:0.264583">Time</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583"
+       x="-162.13463"
+       y="112.48125"
+       id="text1196-4"
+       transform="rotate(-90)"><tspan
+         sodipodi:role="line"
+         id="tspan1194-5"
+         x="-162.13463"
+         y="112.48125"
+         style="font-size:4.9389px;stroke-width:0.264583">Population and avg. temperature</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:4.93888889px;line-height:1.25;font-family:sans-serif;text-align:center;text-anchor:middle;stroke-width:0.264583;"
+       x="161.91074"
+       y="114.3"
+       id="text1200-0"><tspan
+         sodipodi:role="line"
+         id="tspan1198-7"
+         x="161.91074"
+         y="114.3"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';stroke-width:0.264583;font-size:4.93888889px;">Collapse w/ resource change</tspan></text>
+    <path
+       style="fill:none;stroke:#ff8000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 209.55,120.64999 -25.39999,1e-5 c 0,6.35 0,15.875 -6.35,15.875 -6.35,0 -6.35,9.525 -6.35,15.875 0,19.05001 -19.05001,44.45001 -57.15001,44.45"
+       id="path1204-5"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;stroke:#0080ff;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 114.3,196.85 c 38.1,1e-5 38.10001,-57.15 50.80001,-57.15 6.35,1e-5 6.35,9.525 12.7,12.7 6.35,3.175 6.35,25.40001 6.35,50.80001 h 25.4"
+       id="path1202-6"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:url(#Arrow2Mstart-5);marker-end:url(#Arrow2Mend-8)"
+       d="m 114.3,114.29999 v 95.25 h 95.25"
+       id="path835-1" />
+    <path
+       id="path1766"
+       d="M 50.800002,222.25001 H 25.4"
+       style="fill:none;stroke:#0080ff;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none" />
+    <text
+       id="text1770"
+       y="224.10208"
+       x="53.710419"
+       style="font-size:4.93889px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       xml:space="preserve"><tspan
+         style="font-size:4.93889px;stroke-width:0.264583"
+         y="224.10208"
+         x="53.710419"
+         id="tspan1768"
+         sodipodi:role="line">Population</tspan></text>
+    <path
+       style="fill:none;stroke:#ff8000;stroke-width:0.79375;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m 146.05,222.25001 h -25.4"
+       id="path1766-1" />
+    <text
+       xml:space="preserve"
+       style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
+       x="148.96043"
+       y="224.10208"
+       id="text1770-9"><tspan
+         sodipodi:role="line"
+         id="tspan1768-3"
+         x="148.96043"
+         y="224.10208"
+         style="font-size:4.9389px;stroke-width:0.264583">Average temperature</tspan></text>
+  </g>
+</svg>

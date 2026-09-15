@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="648" height="648" viewBox="0 0 648 648">
+<title>Elaborated form of Endless Knot (49 crossings, 47 structurally significant).</title>
+<defs>
+<path id="Meander" stroke-linejoin="round" d="M36,540 h576 v72 h-72 v-576
+h-72 v576 h-72 v-576 h-72 v576 h-72 v-576 h-72 v576 h-72 v-576 h-72 v72
+h576 v72 h-576 v72 h576 v72 h-576 v72 h576 v72 h-576 v72Z"/>
+</defs>
+<g stroke-width="36" stroke="#000000" fill="none">
+<use xlink:href="#Meander"/>
+<use xlink:href="#Meander" stroke-width="18" stroke="#ffffff"/>
+<path d="M72,108 h72 M216,108 h72 M360,108 h72 M504,108 h72 M72,252 h72
+M216,252 h72 M360,252 h72 M504,252 h72 M72,396 h72 M216,396 h72 M360,396 h72
+M504,396 h72 M72,540 h72 M216,540 h72 M360,540 h72 M504,540 h72 M144,180 h72
+M288,180 h72 M432,180 h72 M144,324 h72 M288,324 h72 M432,324 h72 M144,468 h72
+M288,468 h72 M432,468 h72 M108,144 v72 M252,144 v72 M396,144 v72 M540,144 v72
+M108,288 v72 M252,288 v72 M396,288 v72 M540,288 v72 M108,432 v72 M252,432 v72
+M396,432 v72 M540,432 v72 M180,72 v72 M324,72 v72 M468,72 v72 M180,216 v72
+M324,216 v72 M468,216 v72 M180,360 v72 M324,360 v72 M468,360 v72 M180,504 v72
+M324,504 v72 M468,504 v72"/>
+<g stroke-width="18" stroke="#ffffff">
+<path d="M71,108 h74 M215,108 h74 M359,108 h74 M503,108 h74 M71,252 h74
+M215,252 h74 M359,252 h74 M503,252 h74 M71,396 h74 M215,396 h74 M359,396 h74
+M503,396 h74 M71,540 h74 M215,540 h74 M359,540 h74 M503,540 h74 M143,180 h74
+M287,180 h74 M431,180 h74 M143,324 h74 M287,324 h74 M431,324 h74 M143,468 h74
+M287,468 h74 M431,468 h74 M108,143 v74 M252,143 v74 M396,143 v74 M540,143 v74
+M108,287 v74 M252,287 v74 M396,287 v74 M540,287 v74 M108,431 v74 M252,431 v74
+M396,431 v74 M540,431 v74 M180,71 v74 M324,71 v74 M468,71 v74 M180,215 v74
+M324,215 v74 M468,215 v74 M180,359 v74 M324,359 v74 M468,359 v74 M180,503 v74
+M324,503 v74 M468,503 v74"/>
+</g></g></svg>

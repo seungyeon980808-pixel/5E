@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="47.09 37.91 119.14 74.05"
+   preserveAspectRatio="xMidYMid"
+   width="100%"
+   height="100%"
+   version="1.1"
+   id="svg28"
+   sodipodi:docname="Hexasonium.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs28" />
+  <sodipodi:namedview
+     id="namedview28"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="7.1764311"
+     inkscape:cx="59.57"
+     inkscape:cy="36.996105"
+     inkscape:window-width="1280"
+     inkscape:window-height="953"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="drawing" />
+  <clipPath
+     id="389">
+    <rect
+       x="0.3"
+       y="0.3"
+       width="539.4"
+       height="719.15"
+       id="rect1" />
+  </clipPath>
+  <g
+     id="drawing">
+    <g
+       id="page"
+       clip-path="url(#389)">
+      <g
+         id="g3">
+        <text
+           xml:space="preserve"
+           text-anchor="start"
+           text-rendering="geometricPrecision"
+           id="text3"><tspan
+             x="149.36"
+             y="93.61"
+             font-family="Arial"
+             font-size="10"
+             fill="rgb(0, 0, 0)"
+             id="tspan2">S</tspan><tspan
+             font-family="Arial"
+             dy="-4.07"
+             font-size="7.5"
+             fill="rgb(0, 0, 0)"
+             id="tspan3">+</tspan></text>
+      </g>
+      <g
+         id="g4">
+        <text
+           xml:space="preserve"
+           text-anchor="start"
+           text-rendering="geometricPrecision"
+           id="text4"><tspan
+             x="108.32"
+             y="86.18"
+             font-family="Arial"
+             font-size="10"
+             fill="rgb(0, 0, 0)"
+             id="tspan4">O</tspan></text>
+      </g>
+      <g
+         id="g5">
+        <text
+           xml:space="preserve"
+           text-anchor="start"
+           text-rendering="geometricPrecision"
+           id="text5"><tspan
+             x="95.05"
+             y="109.61"
+             font-family="Arial"
+             font-size="10"
+             fill="rgb(0, 0, 0)"
+             id="tspan5">O</tspan></text>
+      </g>
+      <g
+         id="Solid">
+        <path
+           d="M153.11 105.26 L153.11 105.26 L152.81 105.26 L152.51 105.26 L152.43 95.4 L152.73 95.4 L153.03 95.4 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path5" />
+      </g>
+      <g
+         id="g6">
+        <path
+           d="M160.51 85.45 L160.51 85.45 L160.36 85.19 L160.21 84.93 L165.93 81.56 L166.08 81.82 L166.23 82.08 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path6" />
+      </g>
+      <g
+         id="g7">
+        <path
+           d="M148.86 87.2 L148.86 87.2 L148.71 87.46 L148.56 87.72 L139.15 82.4 L139.15 82.05 L139.15 81.7 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path7" />
+      </g>
+      <g
+         id="g8">
+        <path
+           d="M139.15 81.7 L139.15 81.7 L139.15 82.05 L139.15 82.4 L125.75 90.29 L125.75 89.94 L125.75 89.59 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path8" />
+      </g>
+      <g
+         id="g9">
+        <path
+           d="M125.75 89.59 L125.75 89.59 L125.75 89.94 L125.75 90.29 L116.74 85.19 L116.89 84.93 L117.04 84.66 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path9" />
+      </g>
+      <g
+         id="g10">
+        <path
+           d="M107.47 84.73 L107.47 84.73 L107.62 84.99 L107.77 85.25 L98.82 90.52 L98.82 90.17 L98.82 89.82 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path10" />
+      </g>
+      <g
+         id="g12">
+        <line
+           x1="100.22"
+           y1="90.16"
+           x2="100.31"
+           y2="100.79"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0.6"
+           shape-rendering="auto"
+           id="line10" />
+        <path
+           d="M97.72 89.89 L97.72 89.89 L97.12 89.55 L97.21 100.81 L97.81 100.81 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path11" />
+        <path
+           d="M100.51 89.52 L100.51 89.52 L99.92 89.87 L100.01 100.79 L100.61 100.79 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path12" />
+      </g>
+      <g
+         id="g13">
+        <path
+           d="M98.82 89.82 L98.82 89.82 L98.82 90.17 L98.82 90.52 L85.29 82.86 L85.29 82.51 L85.59 82.33 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path13" />
+      </g>
+      <g
+         id="g14">
+        <path
+           d="M84.99 82.34 L84.99 82.34 L85.29 82.51 L85.29 82.86 L72.19 90.56 L71.89 90.39 L71.89 90.04 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path14" />
+      </g>
+      <g
+         id="g15">
+        <path
+           d="M71.59 90.57 L71.59 90.57 L71.89 90.39 L72.19 90.56 L72.31 104.91 L72.01 104.74 L71.71 104.57 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path15" />
+      </g>
+      <g
+         id="g16">
+        <path
+           d="M71.71 104.57 L71.71 104.57 L72.01 104.74 L72.31 104.91 L59.88 111.96 L59.88 111.62 L59.88 111.28 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path16" />
+      </g>
+      <g
+         id="g17">
+        <path
+           d="M59.88 111.28 L59.88 111.28 L59.88 111.62 L59.88 111.96 L47.1 104.72 L47.4 104.55 L47.7 104.38 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path17" />
+      </g>
+      <g
+         id="g18">
+        <path
+           d="M47.7 104.38 L47.7 104.38 L47.4 104.55 L47.1 104.72 L47.16 90.68 L47.46 90.85 L47.76 91.02 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path18" />
+      </g>
+      <g
+         id="g19">
+        <path
+           d="M47.76 91.02 L47.76 91.02 L47.46 90.85 L47.16 90.68 L59.39 82.98 L59.4 83.33 L59.41 83.68 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path19" />
+      </g>
+      <g
+         id="g20">
+        <path
+           d="M71.89 90.04 L71.89 90.04 L71.89 90.39 L71.59 90.57 L59.41 83.68 L59.4 83.33 L59.39 82.98 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path20" />
+      </g>
+      <g
+         id="g21">
+        <path
+           d="M85.59 82.33 L85.59 82.33 L85.29 82.51 L84.99 82.34 L84.86 67.14 L85.16 66.96 L85.46 67.13 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path21" />
+      </g>
+      <g
+         id="g22">
+        <path
+           d="M85.16 66.61 L85.16 66.61 L85.16 66.96 L84.86 67.14 L72.37 60.06 L72.67 59.89 L72.97 59.72 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path22" />
+        <line
+           x1="85.13"
+           y1="63.98"
+           x2="75.29"
+           y2="58.4"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0.6"
+           shape-rendering="auto"
+           id="line22" />
+      </g>
+      <g
+         id="g23">
+        <path
+           d="M72.97 59.72 L72.97 59.72 L72.67 59.89 L72.37 60.06 L72.68 45.6 L72.98 45.77 L73.28 45.94 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path23" />
+      </g>
+      <g
+         id="g24">
+        <path
+           d="M73.28 45.94 L73.28 45.94 L72.98 45.77 L72.68 45.6 L84.92 37.91 L84.93 38.26 L84.94 38.61 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path24" />
+        <line
+           x1="75.49"
+           y1="47.19"
+           x2="85"
+           y2="41.22"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0.6"
+           shape-rendering="auto"
+           id="line24" />
+      </g>
+      <g
+         id="g25">
+        <path
+           d="M84.94 38.61 L84.94 38.61 L84.93 38.26 L84.92 37.91 L97.71 45.15 L97.41 45.33 L97.11 45.51 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path25" />
+      </g>
+      <g
+         id="g26">
+        <path
+           d="M97.11 45.51 L97.11 45.51 L97.41 45.33 L97.71 45.15 L97.82 59.85 L97.52 59.68 L97.22 59.51 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path26" />
+        <line
+           x1="94.84"
+           y1="46.84"
+           x2="94.93"
+           y2="58.21"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0.6"
+           shape-rendering="auto"
+           id="line26" />
+      </g>
+      <g
+         id="g27">
+        <path
+           d="M85.46 67.13 L85.46 67.13 L85.16 66.96 L85.16 66.61 L97.22 59.51 L97.52 59.68 L97.82 59.85 Z"
+           stroke="rgb(0, 0, 0)"
+           stroke-width="0"
+           fill-rule="evenodd"
+           stroke-linejoin="miter"
+           fill="rgb(0, 0, 0)"
+           shape-rendering="geometricPrecision"
+           id="path27" />
+      </g>
+      <g
+         id="g28">
+        <text
+           xml:space="preserve"
+           text-anchor="start"
+           text-rendering="geometricPrecision"
+           id="text28"><tspan
+             x="113.56"
+             y="65.13"
+             font-family="Arial"
+             font-size="10"
+             fill="rgb(0, 0, 0)"
+             id="tspan27">I</tspan><tspan
+             font-family="Arial"
+             dy="-4.07"
+             font-size="7.5"
+             fill="rgb(0, 0, 0)"
+             id="tspan28">–</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

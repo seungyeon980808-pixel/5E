@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="417.14584"
+   height="207.85452"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="Sichtwinkel.svg">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="7.6428609 : 945.11374 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="660.30877 : 874.39946 : 1"
+       inkscape:persp3d-origin="327.54724 : 397.57719 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2826"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2854"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective2889"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3683"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="201.14399"
+     inkscape:cy="-31.769802"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1600"
+     inkscape:window-height="1146"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-45.928568,-12.504087)">
+    <path
+       sodipodi:type="arc"
+       style="fill:#ffb380;stroke-width:0.84500003;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       id="path2868-2"
+       sodipodi:cx="198.57143"
+       sodipodi:cy="111.6479"
+       sodipodi:rx="133.81636"
+       sodipodi:ry="57.142857"
+       d="m 321.97488,89.547968 c 13.97169,14.226262 13.87986,30.260432 -0.25461,44.457352 L 198.57143,111.6479 z"
+       sodipodi:start="5.8860818"
+       sodipodi:end="6.6851799"
+       transform="matrix(2.2474466,0,0,2.2474466,-321.2988,-134.78069)" />
+    <g
+       id="g2874"
+       transform="translate(0,-1.4540563)">
+      <path
+         id="path2816"
+         d="M 46.170048,117.37875 C 119.99391,98.060356 119.99391,98.060356 119.99391,98.060356"
+         style="fill:none;stroke:#000000;stroke-width:0.48295984px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         id="path2816-8"
+         d="m 46.170048,117.37875 c 73.823862,19.31839 73.823862,19.31839 73.823862,19.31839"
+         style="fill:none;stroke:#000000;stroke-width:0.48295984px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="matrix(0.48295984,0,0,0.48295984,11.396941,-13.314718)"
+         sodipodi:open="true"
+         sodipodi:end="7.1831984"
+         sodipodi:start="5.3390046"
+         d="m 223.55337,230.12559 c 14.69897,16.88717 17.98842,49.48689 7.34719,72.81351 -1.75865,3.85513 -3.84161,7.31002 -6.19085,10.26841"
+         sodipodi:ry="52.142857"
+         sodipodi:rx="32.857143"
+         sodipodi:cy="272.36218"
+         sodipodi:cx="204.28572"
+         id="path2840"
+         style="fill:#800000;stroke-width:0.84500003;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+         sodipodi:type="arc" />
+    </g>
+    <path
+       sodipodi:type="arc"
+       style="opacity:0.7;fill:#ffdd55;stroke-width:0.84500003;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       id="path2868"
+       sodipodi:cx="198.57143"
+       sodipodi:cy="111.6479"
+       sodipodi:rx="57.857143"
+       sodipodi:ry="57.142857"
+       d="m 232.49924,65.361231 c 25.88297,18.506485 31.67526,54.232209 12.93744,79.795629 -3.56896,4.86902 -7.89342,9.15138 -12.81386,12.68911 L 198.57143,111.6479 z"
+       sodipodi:start="5.3390046"
+       sodipodi:end="7.2247267"
+       transform="matrix(2.2474466,0,0,2.2474466,-319.13583,-134.39179)" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="295.57144"
+       y="111.89278"
+       id="text2870"><tspan
+         sodipodi:role="line"
+         id="tspan2872"
+         x="295.57144"
+         y="111.89278"
+         style="font-size:13px">Sichtwinkel</tspan><tspan
+         sodipodi:role="line"
+         x="295.57144"
+         y="128.14278"
+         style="font-size:13px"
+         id="tspan2879">(Objekt)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="162.8459"
+       y="72.387894"
+       id="text2870-6"><tspan
+         sodipodi:role="line"
+         id="tspan2872-6"
+         x="162.8459"
+         y="72.387894"
+         style="font-size:13px">Sichtwinkel</tspan><tspan
+         sodipodi:role="line"
+         x="162.8459"
+         y="88.637894"
+         style="font-size:13px"
+         id="tspan2879-0">(Gesichtsfeld)</tspan></text>
+    <path
+       sodipodi:type="star"
+       style="opacity:0.7;fill:#000000;stroke-width:0.84500003;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
+       id="path3750"
+       sodipodi:sides="5"
+       sodipodi:cx="440.71429"
+       sodipodi:cy="83.790756"
+       sodipodi:r1="26.668793"
+       sodipodi:r2="13.334396"
+       sodipodi:arg1="1.2151604"
+       sodipodi:arg2="1.843479"
+       inkscape:flatsided="false"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 450.00001,108.79076 -12.87688,-12.158288 -17.3158,3.714948 7.58404,-16.003757 -8.88401,-15.320325 17.56408,2.267418 11.82518,-13.183431 3.27116,17.405099 16.19237,7.172517 -15.54239,8.489525 -1.81775,17.616294 z"
+       transform="matrix(-1.9796194,0,0,1.9796194,1291.5597,-49.208155)" />
+  </g>
+</svg>

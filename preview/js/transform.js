@@ -1,0 +1,2011 @@
+/* ===== TRANSFORM (DESIGN 吏? select-tool MOVE + snapshot-based Undo/Redo) ===== */
+//
+// Owns two concerns:
+//   1. Body-drag MOVE of the selected object (V tool only).
+//   2. Snapshot-based Undo/Redo engine (Ctrl+Z / Ctrl+Shift+Z).
+//
+// Undo strategy: whole-objects-array snapshot (fine at this scale, DESIGN 吏?).
+// Snapshot is captured at drag start; committed only if the pointer crossed a
+// distance threshold ??so a plain click never creates a useless undo entry.
+//
+// Coordination with tools.js: tools.js updates selectedIds on mousedown (bubble
+// phase). We use a capture-phase listener to read the PRE-click selectedIds, so
+// we can distinguish "click on already-selected ??move allowed" from "click
+// selects a new object ??just select, no move this press."
+
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.4.0";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.4";
+import { isObjectSelectable } from "./pick.js?v=1.4.0";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
+import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
+         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
+
+import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.4.0";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.4.0";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
+/* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
+function isMutable(o) { return o && !o.locked; }
+function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
+function objectById(s, id) {
+  if (id === IMAGE_EDIT_SESSION_ID) return s.imageEditSession || null;
+  return s.objects.find((o) => o.id === id) || null;
+}
+function isTempImageId(id) {
+  return id === IMAGE_EDIT_SESSION_ID;
+}
+
+/* ----- closed polyline: branch-B storage (points) + branch-A (face) interaction -----
+ * Transforms are BAKED into the point coordinates (no rotation field), so the
+ * points stay world-true. These helpers derive its branch-A bbox and bake ops. */
+function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === true; }
+function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true; }
+
+function polyBBox(points) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of points) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+function polyCenter(points) {
+  const b = polyBBox(points);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+}
+
+/* rotate every point about its bbox center by deg (baked into coords) */
+function rotatePolyPoints(o, deg) {
+  const c = polyCenter(o.points);
+  const r = (deg * Math.PI) / 180, cos = Math.cos(r), sin = Math.sin(r);
+  o.points = o.points.map((p) => ({
+    x: c.x + (p.x - c.x) * cos - (p.y - c.y) * sin,
+    y: c.y + (p.x - c.x) * sin + (p.y - c.y) * cos,
+  }));
+}
+
+/* mirror every point about its bbox center along one axis (baked into coords) */
+function flipPolyPoints(o, axis) {
+  const c = polyCenter(o.points);
+  o.points = o.points.map((p) => ({
+    x: axis === "flipX" ? 2 * c.x - p.x : p.x,
+    y: axis === "flipY" ? 2 * c.y - p.y : p.y,
+  }));
+}
+
+/* ----- rotate point (px,py) about center (cx,cy) by deg degrees ----- */
+function rotPt(px, py, cx, cy, deg) {
+  const r = (deg * Math.PI) / 180;
+  const cos = Math.cos(r), sin = Math.sin(r);
+  return { x: cx + (px - cx) * cos - (py - cy) * sin,
+           y: cy + (px - cx) * sin + (py - cy) * cos };
+}
+
+/* ----- world position of the corner diagonally opposite to `corner` ----- */
+function getRotPivot(obj, corner) {
+  const { x, y, w, h, rotation } = obj;
+  const cx = x + w / 2, cy = y + h / 2;
+  const deg = rotation || 0;
+  switch (corner) {
+    case "nw": return rotPt(x + w, y + h, cx, cy, deg); // opposite = se
+    case "ne": return rotPt(x,     y + h, cx, cy, deg); // opposite = sw
+    case "se": return rotPt(x,     y,     cx, cy, deg); // opposite = nw
+    case "sw": return rotPt(x + w, y,     cx, cy, deg); // opposite = ne
+    default:   return { x: cx, y: cy };
+  }
+}
+
+/* ===== UNDO / REDO ENGINE ===== */
+
+function cloneObjects(objects) {
+  return JSON.parse(JSON.stringify(objects));
+}
+
+function isDocumentHistoryEntry(entry) {
+  return entry?.kind === "document"
+    && Array.isArray(entry.objects)
+    && Array.isArray(entry.guides)
+    && entry.artboard !== null
+    && typeof entry.artboard === "object"
+    && Array.isArray(entry.layers);
+}
+
+function cloneDocumentHistoryEntry(s) {
+  return {
+    kind: "document",
+    objects: cloneObjects(s.objects),
+    guides: cloneObjects(s.guides || []),
+    artboard: JSON.parse(JSON.stringify(s.artboard)),
+    layers: cloneObjects(s.layers || []),
+  };
+}
+
+function inverseForHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return inversePageHistoryEntry(s, entry);
+  return isDocumentHistoryEntry(entry) ? cloneDocumentHistoryEntry(s) : cloneObjects(s.objects);
+}
+
+function restoreHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return restorePageHistoryEntry(s, entry);
+  if (Array.isArray(entry)) {
+    s.objects = entry;
+    return true;
+  }
+  if (!isDocumentHistoryEntry(entry)) return false;
+  s.objects = entry.objects;
+  s.guides = entry.guides;
+  s.artboard = entry.artboard;
+  s.layers = entry.layers;
+  return true;
+}
+
+export function rebuildGroups(s) {
+  const map = new Map();
+  s.objects.forEach(o => {
+    if (o.groupId) {
+      const members = map.get(o.groupId);
+      if (members) members.push(o.id);
+      else map.set(o.groupId, [o.id]);
+    }
+  });
+  s.groups = Array.from(map, ([id, memberIds]) => ({ id, memberIds }));
+}
+
+export function undo(state) {
+  if (state.get().undoStack.length === 0) return;
+  state.update((s) => {
+    const prev = s.undoStack[s.undoStack.length - 1];
+    if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev) && !isPageHistoryEntry(prev)) return;
+    const current = inverseForHistoryEntry(s, prev);
+    if (!restoreHistoryEntry(s, prev)) return;
+    s.undoStack.pop();
+    s.redoStack.push(current);
+    s.targetedId = null;
+    s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
+    rebuildGroups(s);
+  });
+}
+
+export function redo(state) {
+  if (state.get().redoStack.length === 0) return;
+  state.update((s) => {
+    const next = s.redoStack[s.redoStack.length - 1];
+    if (!Array.isArray(next) && !isDocumentHistoryEntry(next) && !isPageHistoryEntry(next)) return;
+    const current = inverseForHistoryEntry(s, next);
+    if (!restoreHistoryEntry(s, next)) return;
+    s.redoStack.pop();
+    s.undoStack.push(current);
+    s.targetedId = null;
+    s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
+    rebuildGroups(s);
+  });
+}
+
+/* ===== MOVE GESTURE ===== */
+
+const MOVE_THRESHOLD = 0.01; // world units; below this = plain click, not a drag
+// SHAPE_TYPES (rect/ellipse/triangle) from object-types.js registry.
+
+let _moving = false;
+let _moveObjIds = [];
+let _moveStartWorld = null; // world coords of the mousedown that started the drag
+let _moveOrigObjs = {};     // map from id ??deep clone of the object's geometry at drag start
+let _pendingSnapshot = null; // full objects clone for undo; committed only if moved
+let _didMove = false;        // true once the threshold is crossed
+let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
+let _spaceHeld = false;
+/* handle-drag state (resize branch A / endpoint branch B) */
+let _handleDragging   = false;
+let _handleId         = null;
+let _handleOrigObj    = null;
+let _handleStartWorld = null;
+
+/* whole-group resize state (DESIGN 6-2: uniform scale, aspect FORCED) */
+let _groupResizing  = false;
+let _groupHandle    = null;
+let _groupBox0      = null;  // combined bbox at drag start
+let _groupMemberIds = [];
+let _groupOrigObjs  = {};    // id ??deep clone at drag start
+let _groupRotating  = false; // whole-group rotation about combined-bbox center
+
+/* rotation-drag state (also reused for whole-group rotation: _rotPivot, _rotStartAngle) */
+let _rotating        = false;
+let _rotObjId        = null;
+let _rotOrigObj      = null;
+let _rotPivot        = null;
+let _rotStartAngle   = 0;
+let _rotPendingSnap  = null;
+let _rotDidMove      = false;
+
+/* clipboard, mouse position, and arrow-key hold tracking */
+let _propertyClipboard = null;
+let _lastMouseWorld = null; // latest pointer world coord (set on first mousemove); null until then
+const _arrowKeysHeld = new Set();
+
+export function getLastMouseWorld() {
+  return _lastMouseWorld ? { ...(_lastMouseWorld) } : null;
+}
+
+function isEditingFieldTarget(target) {
+  if (!target) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" ||
+    target.isContentEditable ||
+    target.closest?.("#inspector, .text-editor-overlay, .font-modal-overlay, .text-ctx-menu");
+}
+
+function lineAngleDeg(obj) {
+  return Math.atan2(obj.p2.y - obj.p1.y, obj.p2.x - obj.p1.x) * 180 / Math.PI;
+}
+
+/* p1/p2 두 점 계열 목록 — 정본은 object-types.js의 endpointHandles 다.
+ * 예전엔 이 목록이 이 파일에만 네 벌 손으로 복사돼 있었고, 포물선을 추가할 때 한 벌을
+ * 빠뜨려 "만들고 나면 끝점을 못 고치는" 사고가 났다(object-types.js:113 주석). 생명과학
+ * 부품 4종을 더하며 같은 사고가 재발하지 않도록 파생 Set으로 바꾼다.
+ *
+ * 각도 계열만 labeler 를 뺀다: labeler 는 지시선이라 "객체의 각도"라는 개념을 쓰지
+ * 않았고(기존 동작), 여기에 넣으면 회전 UI가 새로 생겨 동작이 바뀐다. */
+const P1P2_ANGLE_TYPES = new Set([...ENDPOINT_HANDLE_TYPES].filter((t) => t !== "labeler"));
+
+function objectAngleDeg(obj) {
+  if (!obj) return null;
+  if (P1P2_ANGLE_TYPES.has(obj.type) && obj.p1 && obj.p2) return lineAngleDeg(obj);
+  if (typeof obj.rotation === "number") return obj.rotation;
+  return null;
+}
+
+function unitForAngle(deg) {
+  const rad = (deg * Math.PI) / 180;
+  let x = Math.cos(rad), y = Math.sin(rad);
+  const n = ((deg % 360) + 360) % 360;
+  if (Math.abs(n - 0) < 1e-9 || Math.abs(n - 180) < 1e-9) y = 0;
+  if (Math.abs(n - 90) < 1e-9 || Math.abs(n - 270) < 1e-9) x = 0;
+  return { x, y };
+}
+
+function applyAngleDeg(obj, deg) {
+  if (!obj || obj.locked || obj.positionLocked) return false;
+  if (P1P2_ANGLE_TYPES.has(obj.type) && obj.p1 && obj.p2) {
+    const mx = (obj.p1.x + obj.p2.x) / 2;
+    const my = (obj.p1.y + obj.p2.y) / 2;
+    const len = Math.hypot(obj.p2.x - obj.p1.x, obj.p2.y - obj.p1.y);
+    const u = unitForAngle(deg);
+    const hx = (u.x * len) / 2;
+    const hy = (u.y * len) / 2;
+    const nextP1 = { x: mx - hx, y: my - hy };
+    const nextP2 = { x: mx + hx, y: my + hy };
+    const changed = Math.abs(nextP1.x - obj.p1.x) > 1e-9 || Math.abs(nextP1.y - obj.p1.y) > 1e-9 ||
+      Math.abs(nextP2.x - obj.p2.x) > 1e-9 || Math.abs(nextP2.y - obj.p2.y) > 1e-9;
+    if (!changed) return false;
+    obj.p1 = nextP1;
+    obj.p2 = nextP2;
+    return true;
+  }
+  if (typeof obj.rotation === "number") {
+    if (Math.abs((obj.rotation ?? 0) - deg) <= 1e-9) return false;
+    obj.rotation = deg;
+    return true;
+  }
+  return false;
+}
+
+/* ----- STYLE PROPERTY COPY (Shift+C / Shift+V) -----
+ * 각도(objectAngleDeg)에 더해 "스타일" 속성만 복사한다. 외부 레이아웃(x/y/w/h,
+ * points, p1/p2, 크기·회전 외 지오메트리)과 정체성(id/groupId/layerId/order),
+ * 그리고 내용 텍스트(label/text/source/dimensionLabel/lengthLabel)는 제외.
+ *
+ * 원칙: 붙여넣기 대상 객체에 이미 존재하는 키만 덮어쓴다 (타입이 달라 없는 속성은
+ * 건너뜀) → 사각형→직선처럼 타입이 달라도 공통 스타일만 안전하게 옮겨진다.
+ * 필드명은 docs/OBJECT_SCHEMA.md §2~3 및 실제 렌더/인스펙터 코드로 확정한 실명. */
+const STYLE_PROP_KEYS = [
+  // 선(stroke)
+  "strokeLevel", "strokeWidth",
+  // 면(fill)
+  "fillLevel", "fillNone", "fillStyle", "opacity",
+  // 선 스타일 / 점선(dash) / 화살표
+  "dashLength", "dashGap", "dashPattern", "partialDash", "dashRatio", "dashFlip",
+  "lineMode", "lineStyle", "arrowVariant", "arrowHead", "dimensionVariant",
+  // 라벨 스타일(내용 텍스트 제외 — 종류/위치/크기/표시 여부)
+  "labelType", "labelPos", "labelSize", "labelShow", "labelFlip", "showLabel",
+  // 상자 라벨 두 슬롯의 '서체·위치'만 스타일이다 — 글자 내용(labelInner/labelOuter)은 제외.
+  "labelInnerType", "labelOuterType", "labelOuterPos",
+  // 텍스트/글꼴 스타일
+  "fontFamily", "fontSize", "fontWeight", "fontStyle", "italic", "underline",
+  "strikeout", "letterSpacing",
+];
+
+/* 선택 1개에서 스타일 속성을 추출 (객체에 실제로 존재하는 키만 담는다). */
+function extractStyleProps(obj) {
+  const props = {};
+  if (!obj) return props;
+  for (const k of STYLE_PROP_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      const v = obj[k];
+      props[k] = (v && typeof v === "object") ? JSON.parse(JSON.stringify(v)) : v;
+    }
+  }
+  return props;
+}
+
+/* 대상 객체에 '존재하는 속성만' 안전 적용. 없는 키는 건너뛰어 타입이 달라도
+ * 죽지 않는다. 값이 실제로 바뀌면 true. (angle은 여기서 다루지 않음 — 호출부에서
+ * applyAngleDeg로 별도 적용) */
+function applyStyleProps(obj, props) {
+  if (!obj || obj.locked || !props) return false;
+  let changed = false;
+  for (const k of STYLE_PROP_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(props, k)) continue;
+    // dashPattern(일점쇄선 등)은 나중에 생긴 필드라 대상에 키가 아예 없는 게 정상이다.
+    // 점선을 지원하는 객체(=dashLength를 가진 객체)면 새로 만들어 준다.
+    if (k === "dashPattern" && !Object.prototype.hasOwnProperty.call(obj, k)) {
+      if (!Object.prototype.hasOwnProperty.call(obj, "dashLength")) continue;
+      obj.dashPattern = Array.isArray(props[k]) ? props[k].slice() : props[k];
+      changed = true;
+      continue;
+    }
+    if (!Object.prototype.hasOwnProperty.call(obj, k)) continue; // 없는 속성은 건너뜀
+    const next = props[k];
+    if (next && typeof next === "object") {
+      if (JSON.stringify(obj[k]) === JSON.stringify(next)) continue;
+      obj[k] = JSON.parse(JSON.stringify(next));
+      changed = true;
+    } else if (obj[k] !== next) {
+      obj[k] = next;
+      changed = true;
+    }
+  }
+  // 원본이 2값 점선(패턴 없음)인데 대상에 옛 dashPattern이 남아 있으면 지운다 —
+  // 안 그러면 실선/점선 스타일을 붙여도 일점쇄선이 그대로 살아남는다(상호배타).
+  if (Object.prototype.hasOwnProperty.call(props, "dashLength")
+      && !Object.prototype.hasOwnProperty.call(props, "dashPattern")
+      && Object.prototype.hasOwnProperty.call(obj, "dashPattern")) {
+    delete obj.dashPattern;
+    changed = true;
+  }
+  return changed;
+}
+
+/* ----- axis-aligned bbox of a set of (clipboard) objects, in world units -----
+ * Text uses its anchor point as a zero-size box (the clone isn't rendered, so
+ * getBBox is unavailable). Used to center a paste on the mouse. */
+/* 퍼스널 오브젝트 삽입: 저장된 오브젝트 묶음을 뷰 중앙에 복제 삽입(붙여넣기와 동일 계보).
+ * id·groupId를 새로 부여하고 Undo 1스텝을 push한다. personal-objects.js가 사용. */
+export function instantiateObjectsAt(state, srcObjs, target) {
+  if (!Array.isArray(srcObjs) || !srcObjs.length) return;
+  const bbox = clipboardBBox(srcObjs);
+  const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
+  const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
+  const dx = target.x - cx, dy = target.y - cy;
+  const newObjs = cloneClipboardObjects(srcObjs);
+  newObjs.forEach((obj, i) => {
+    applyDelta(obj, srcObjs[i], dx, dy);
+    obj.layerId = state.get().activeLayerId;
+  });
+  state.update((s2) => {
+    s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
+    s2.redoStack = [];
+    newObjs.forEach((o) => s2.objects.push(o));
+    s2.selectedIds = newObjs.map((o) => o.id);
+    s2.targetedId = null;
+    s2.activeTool = "V";
+    s2.draft = null;
+    rebuildGroups(s2);
+  });
+}
+
+function clipboardBBox(objs) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  const acc = (x, y) => { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; };
+  for (const o of objs) {
+    if (SIZE_TYPES.has(o.type)) { // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+      acc(o.x, o.y); acc(o.x + (o.w || 0), o.y + (o.h || 0));
+    } else if (o.type === "anglearc") {
+      const r = o.radius || 0;
+      acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
+    } else if (o.type === "rightangle") {
+      const r = (o.size || 0) * 1.6;
+      acc(o.x - r, o.y - r); acc(o.x + r, o.y + r);
+    } else if (o.type === "text" || o.type === "formula") {
+      acc(o.x, o.y);
+    } else if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
+      acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
+    } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
+      (o.points || []).forEach((p) => acc(p.x, p.y));
+    }
+  }
+  if (!isFinite(minX)) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/* ----- funcgraph에 얹힌 그래프 요소(표시점/수선/화살표)를 본체 곡선과 같은 변환으로 옮긴다 -----
+ * guideSegs/markers/arrowPolys는 세계좌표 배열이라 points와 함께 옮기지 않으면 이동/회전/
+ * 리사이즈 때 좌표에서 떨어져 나온다(요구: 함께 묶여 이동). fn(pt{x,y}) → pt{x,y}. */
+function mapFgElements(obj, orig, fn) {
+  if (obj.type !== "funcgraph") return;
+  if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
+  if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
+  if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));
+  // 베지어 핸들(자유곡선 변환)도 세계좌표 절대 제어점이라 앵커(points)와 같은 변환으로 옮겨야
+  // 한다 — 안 그러면 앵커만 이동/회전/리사이즈되고 제어점은 제자리에 남아 곡선이 뒤틀린다.
+  if (orig.handles) {
+    obj.handles = orig.handles.map((h) => {
+      const ip = fn({ x: h.inX, y: h.inY }), op = fn({ x: h.outX, y: h.outY });
+      return { inX: ip.x, inY: ip.y, outX: op.x, outY: op.y };
+    });
+  }
+  // arrowMarks는 위치뿐 아니라 화살촉이 향하는 방향(dx,dy)도 같이 변환해야 한다.
+  // 방향은 그대로 넣을 수 없으므로(fn에 이동 성분이 섞여 있음) 시작점과 끝점을 각각 옮긴 뒤
+  // 그 차이를 다시 단위벡터로 만든다 — 이동·회전·리사이즈 어디에도 그대로 통한다.
+  if (orig.arrowMarks) obj.arrowMarks = orig.arrowMarks.map((am) => {
+    const p = fn({ x: am.x, y: am.y });
+    const q = fn({ x: am.x + am.dx, y: am.y + am.dy });
+    const vx = q.x - p.x, vy = q.y - p.y;
+    const len = Math.hypot(vx, vy);
+    return len < 1e-9
+      ? { ...am, x: p.x, y: p.y }
+      : { ...am, x: p.x, y: p.y, dx: vx / len, dy: vy / len };
+  });
+}
+
+/* ----- set object position from original + delta (avoids float drift) ----- */
+function applyDelta(obj, orig, dx, dy) {
+  // x/y 하나로 움직이는 계열 = 크기박스(SIZE_TYPES) + 실측 텍스트(text·formula) + 각도호·직각.
+  //
+  // 예전엔 이 조건이 타입 이름 15개를 손으로 나열한 목록이었다. object-types.js가 만들어진
+  // 이유가 바로 이 패턴인데(그 파일 머리말: "목록 하나를 빠뜨리면 **조용한** 버그가 난다")
+  // 여기만 리터럴로 남아 있었다. 그 결과 크기박스로 새로 추가한 타입들이 이 분기에
+  // 걸리지 못하고 **아무 분기에도 해당되지 않아 그냥 안 움직였다** — 오류도 안 났다.
+  // 실제로 생명과학 legend·pedigree(2026-07-31)가 이미 이 버그를 갖고 있었고,
+  // 화학 부품 10종을 넣으면서 드러났다. 이제 파생 Set을 쓰므로 새 크기박스 타입은
+  // object-types.js에 행을 추가하는 것만으로 자동으로 움직인다.
+  if (SIZE_TYPES.has(obj.type) || TEXT_MEASURED_TYPES.has(obj.type) ||
+      obj.type === "anglearc" || obj.type === "rightangle") {
+    // (groundarc·parabola는 아래 p1/p2 분기에서 처리된다)
+    // anglearc moves by its vertex (x,y); radius/angles are unaffected.
+    // coordplane moves by its box (x,y); dependent funcgraphs are re-offset by the
+    // caller (step 5 재샘플 결합) — the plane itself just translates here.
+    obj.x = orig.x + dx;
+    obj.y = orig.y + dy;
+  } else if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
+    // Circuit/labeler/pendulum move by translating BOTH endpoints (pendulum:
+    // pivot + bob; ghosts follow because they're derived from these at render).
+    obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
+    obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
+  } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
+    const tr = (p) => ({ x: p.x + dx, y: p.y + dy });
+    obj.points = orig.points.map(tr);
+    mapFgElements(obj, orig, tr);   // 그래프 요소도 함께 이동(요구: 수선/표시점 분리 방지)
+  }
+}
+
+/* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
+function handleEndpointPoint(obj, handle) {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
+    return handle === "p0" ? obj.p1 : obj.p2;
+  }
+  if ((obj.type === "polyline" || obj.type === "curve")
+      && typeof handle === "string" && handle[0] === "p") {
+    const i = parseInt(handle.slice(1), 10);
+    return Number.isInteger(i) ? obj.points?.[i] : null;
+  }
+  return null;
+}
+
+function setHandleEndpointPoint(obj, handle, pt) {
+  const next = { x: pt.x, y: pt.y };
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
+    if (handle === "p0") obj.p1 = next; else obj.p2 = next;
+    return;
+  }
+  if (obj.type === "polyline" || obj.type === "curve") {
+    const i = parseInt(handle.slice(1), 10);
+    if (Number.isInteger(i) && obj.points?.[i]) obj.points[i] = next;
+  }
+}
+
+/* The FIXED (non-dragged) endpoint of a line/circuit, for the 6c radial-center
+ * test. Only defined for the two-endpoint line family. */
+function otherEndpointPoint(obj, handle) {
+  if (obj.type === "line" || obj.type === "circuit" || obj.type === "pendulum") {
+    return handle === "p0" ? obj.p2 : obj.p1;
+  }
+  return null;
+}
+
+/* Consolidate the endpoint-snap candidates (6b edge/vertex + 6c radial center)
+ * into ONE choice. 6c radial is angularly gated — it only fires when the line is
+ * deliberately aimed at an object's center — so it WINS over the plain edge foot
+ * whenever it attaches (otherwise the perpendicular edge point would beat the
+ * radial point and the line would never go radial). Falls back to the edge/vertex
+ * snap, then to whichever preview is available. */
+function pickEndpointSnap(edgeSnap, radialSnap) {
+  if (radialSnap && radialSnap.attach) return { ...radialSnap, kind: "radial" };
+  if (edgeSnap && edgeSnap.attach) return { ...edgeSnap, kind: "edge" };
+  if (radialSnap) return { ...radialSnap, kind: "radial" };
+  if (edgeSnap) return { ...edgeSnap, kind: "edge" };
+  return null;
+}
+
+const MIN_SIZE = 0.3; // world units; minimum w or h after resize
+
+/* ----- apply one handle drag delta to an object ----- */
+function objectCenter(obj) {
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
+    return { x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 };
+  }
+  if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") return polyCenter(obj.points);
+  return { x: obj.x + (obj.w || 0) / 2, y: obj.y + (obj.h || 0) / 2 };
+}
+
+/* 오브젝트를 (dx,dy)만큼 그 자리에서 옮긴다. 타입별 좌표 표현(x/y · p1/p2 · points[])을
+ * 아는 곳이 applyDelta 하나뿐이도록 이걸 공유한다 — 드래그 밖에서 이동이 필요한 곳
+ * (bulk-edit의 간격 통일 등)도 이걸 쓴다. 분기를 복사하면 새 타입이 생겼을 때 한쪽만
+ * 고쳐져 "그 타입만 조용히 안 움직이는" 버그가 난다. */
+export function translateObject(obj, dx, dy) {
+  const orig = JSON.parse(JSON.stringify(obj));
+  applyDelta(obj, orig, dx, dy);
+}
+
+function snapLineEndpoint(anchor, point) {
+  const dx = point.x - anchor.x, dy = point.y - anchor.y;
+  const distance = Math.hypot(dx, dy);
+  const degrees = Math.round((Math.atan2(dy, dx) * 180 / Math.PI) / 15) * 15;
+  const radians = degrees * Math.PI / 180;
+  let ux = Math.cos(radians), uy = Math.sin(radians);
+  const normalized = ((degrees % 360) + 360) % 360;
+  if (normalized === 0 || normalized === 180) uy = 0;
+  if (normalized === 90 || normalized === 270) ux = 0;
+  return { x: anchor.x + ux * distance, y: anchor.y + uy * distance };
+}
+
+function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
+  // Rotated box objects (SHAPE_TYPES carry a `rotation` field; lines/polylines
+  // bake rotation into their points and have none): the handle math below runs in
+  // the object's UNROTATED local frame, so the world-space drag delta must be
+  // rotated by -rotation first, otherwise the resize goes the wrong direction.
+  if (orig.rotation) {
+    const a = -orig.rotation * Math.PI / 180;
+    const c = Math.cos(a), s = Math.sin(a);
+    const rx = dx * c - dy * s, ry = dx * s + dy * c;
+    dx = rx; dy = ry;
+  }
+  // anglearc: a single-DOF symbol ??resizing scales the RADIUS, vertex anchored.
+  // Reuse the SAME per-handle box math on the arc's vertex-centered square bbox,
+  // then map the resulting box size back to a radius (avg half-extent so every
+  // handle, edge or corner, responds monotonically). Aspect lock is irrelevant.
+  if (obj.type === "anglearc") {
+    const r0 = orig.radius || 0;
+    let w = 2 * r0, h = 2 * r0;
+    switch (handle) {
+      case "n":  h -= dy; break;
+      case "s":  h += dy; break;
+      case "w":  w -= dx; break;
+      case "e":  w += dx; break;
+      case "nw": h -= dy; w -= dx; break;
+      case "ne": h -= dy; w += dx; break;
+      case "se": h += dy; w += dx; break;
+      case "sw": h += dy; w -= dx; break;
+    }
+    obj.radius = Math.max(MIN_SIZE, (w + h) / 4);
+    obj.x = orig.x; // vertex stays put ??the circle grows/shrinks about it
+    obj.y = orig.y;
+    return;
+  }
+  if (obj.type === "rightangle") {
+    const s0 = orig.size || 0;
+    let w = 2 * s0, h = 2 * s0;
+    switch (handle) {
+      case "n":  h -= dy; break;
+      case "s":  h += dy; break;
+      case "w":  w -= dx; break;
+      case "e":  w += dx; break;
+      case "nw": h -= dy; w -= dx; break;
+      case "ne": h -= dy; w += dx; break;
+      case "se": h += dy; w += dx; break;
+      case "sw": h += dy; w -= dx; break;
+    }
+    obj.size = Math.max(MIN_SIZE, (w + h) / 4);
+    obj.x = orig.x;
+    obj.y = orig.y;
+    return;
+  }
+  // Branch B: endpoint handles (line / circuit / labeler / polyline / curve).
+  // Circuit reuses the line's p0/p1 terminal drag (body re-centers at render);
+  // labeler treats p0 = leader anchor, p1 = label position (drag to reshape).
+  // 목록은 object-types.js의 endpointHandles가 정본이다(용수철·장 그림·정상파·포물선·
+  // 원호까지 전부 그 표에서 온다). 예전엔 이 리터럴 목록이 네 벌 복사돼 있었다.
+  if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
+    // 라벨러의 두 번째 지시선 끝점(p3)은 별도 핸들.
+    if (handle === "p2" && obj.type === "labeler") {
+      const base = orig.p3 || orig.p1;
+      const dragged = { x: base.x + dx, y: base.y + dy };
+      obj.p3 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      return;
+    }
+    if (handle === "p0") {
+      const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
+      obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+    } else {
+      const dragged = { x: orig.p2.x + dx, y: orig.p2.y + dy };
+      obj.p2 = ctrlKey ? snapLineEndpoint(orig.p1, dragged) : dragged;
+    }
+    return;
+  }
+  // Polyline & curve: per-vertex handles (branch B). 열린 것은 꼭짓점 핸들만 갖고,
+  // 닫힌 것은 크기조절 상자 핸들(n/s/e/w/모서리)과 꼭짓점 핸들을 함께 갖는다
+  // (scene.js renderHandles 참고). 그래서 여기서는 '핸들 이름이 p<번호>인가'로
+  // 가른다 — 상자 핸들이면 이 가지를 그냥 지나쳐 아래 branch-A 로 간다.
+  // 닫힘 여부로 가르던 옛 조건은 닫힌 도형의 모양을 영영 못 고치게 만들었다
+  // (등치선 폐곡선·지질 단면의 닫힌 영역).
+  if ((obj.type === "curve" || obj.type === "polyline") && /^p\d+$/.test(handle)) {
+    const i = parseInt(handle.slice(1), 10);
+    // 점 배열이 빈 옛 파일·객체화 산출물에서 핸들 번호가 범위를 벗어날 수 있다.
+    // 방어 없이 구조분해하면 드래그 중 예외가 나고, render가 state 구독이라
+    // 이후 화면이 갱신되지 않는 정지 상태에 빠진다(scene.js 같은 사고 참고).
+    if (!orig.points || !orig.points[i]) return;
+    let dragged = { x: orig.points[i].x + dx, y: orig.points[i].y + dy };
+    // Ctrl angle-constraint (Feature B): snap the dragged vertex so its segment to
+    // the PREVIOUS neighbor (i-1) — or the NEXT neighbor (i+1) for vertex 0 — falls
+    // on a 15° increment. Reuses the SAME helper/key/increment as the line handle.
+    if (ctrlKey && orig.points.length > 1) {
+      const anchor = orig.points[i === 0 ? 1 : i - 1];
+      if (anchor) dragged = snapLineEndpoint(anchor, dragged);
+    }
+    obj.points = orig.points.map((p, j) =>
+      j === i ? dragged : { x: p.x, y: p.y }
+    );
+    return;
+  }
+
+  // Branch A: bounding box resize (rect / ellipse / triangle / closed polyline / closed curve).
+  // Closed polyline and closed curve have no x/y/w/h ??derive the box from the point cloud,
+  // run the SAME per-handle math, then scale ALL points about the anchored corner.
+  const isPoly  = isClosedPoly(obj);
+  // 지연 자르기 자유곡선도 전체 경계 상자로 크기 조절합니다.
+  const isCurve = isClosedCurve(obj) || (obj.type === "curve" && obj.delayedCut === true && obj.closed !== true);
+  const box0 = (isPoly || isCurve) ? polyBBox(orig.points) : orig;
+  const ratio = box0.w / box0.h;
+  let { x, y, w, h } = box0;
+
+  switch (handle) {
+    case "n":  y += dy; h -= dy; break;
+    case "s":  h += dy;          break;
+    case "w":  x += dx; w -= dx; break;
+    case "e":  w += dx;          break;
+    case "nw": y += dy; h -= dy; x += dx; w -= dx; break;
+    case "ne": y += dy; h -= dy;           w += dx; break;
+    case "se": h += dy;           w += dx;          break;
+    case "sw": h += dy; x += dx; w -= dx;           break;
+  }
+
+  // Shift = keep original aspect ratio (DESIGN 4-1). Grouped objects ALWAYS keep
+  // ratio, Shift-independent and forced (DESIGN 6-2) ??breaking a group's ratio
+  // would distort the relative layout the grouping is meant to preserve.
+  // Reference axis is fixed by HANDLE TYPE (not by live dx-vs-dy), so it never
+  // flips mid-drag on a diagonal where dx ??dy ??which used to cause size jumps.
+  //   vertical edges (n/s) ??height drives:  w = h * ratio
+  //   everything else (e/w + all corners)   ??width drives:  h = w / ratio
+  // Image objects carry their own `aspectLocked` flag (비율 고정, ON by default):
+  // when true they keep ratio like a grouped object; when false they resize freely
+  // unless Shift (which still forces ratio for every object type).
+  const imageAspectLock = obj.type === "image" && obj.aspectLocked !== false;
+  if ((shiftKey || obj.groupId || obj.lockAspect || imageAspectLock) && ratio > 0 && isFinite(ratio)) {
+    if (handle === "n" || handle === "s") {
+      // height is the driver ??snap w to follow h
+      w = h * ratio;
+      if (handle === "w" || handle === "nw" || handle === "sw") {
+        x = box0.x + box0.w - w;
+      }
+    } else {
+      // width is the driver ??snap h to follow w
+      h = w / ratio;
+      if (handle === "n" || handle === "nw" || handle === "ne") {
+        y = box0.y + box0.h - h;
+      }
+    }
+  }
+
+  // Clamp to minimum size; keep the anchored edge fixed
+  if (w < MIN_SIZE) {
+    if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - MIN_SIZE;
+    w = MIN_SIZE;
+  }
+  if (h < MIN_SIZE) {
+    if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - MIN_SIZE;
+    h = MIN_SIZE;
+  }
+
+  // Closed polyline / closed curve: scale ALL points about the anchor.
+  // p' = anchor + (p - anchor) * (sx, sy) ??the box0 ??new-box affine.
+  if (isPoly || isCurve) {
+    const sx = box0.w ? w / box0.w : 1;
+    const sy = box0.h ? h / box0.h : 1;
+    obj.points = orig.points.map((p) => ({
+      x: x + (p.x - box0.x) * sx,
+      y: y + (p.y - box0.y) * sy,
+    }));
+    return;
+  }
+
+  // 회전된 박스의 코너 핸들 보정: 위 계산은 로컬(비회전) 좌표에서 반대 코너를 고정하지만,
+  // 렌더는 박스 '자신의' 새 중심을 축으로 다시 회전한다 — 리사이즈로 중심이 이동하면 재회전
+  // 후 반대 코너의 세계좌표가 함께 밀린다. 회전 전(orig)/후(x,y,w,h) 세계좌표를 getRotPivot로
+  // 비교해 그 차이만큼 박스를 평행이동시켜 반대 코너를 세계좌표에서도 고정한다.
+  // (n/s/e/w 엣지 핸들은 비율고정 시 '반대편' 의미 자체가 달라 이 보정 대상에서 제외 — 별개 사안.)
+  if (orig.rotation && (handle === "nw" || handle === "ne" || handle === "se" || handle === "sw")) {
+    const worldBefore = getRotPivot(orig, handle);
+    const worldAfter = getRotPivot({ x, y, w, h, rotation: orig.rotation }, handle);
+    x += worldBefore.x - worldAfter.x;
+    y += worldBefore.y - worldAfter.y;
+  }
+
+  obj.x = x;
+  obj.y = y;
+  obj.w = w;
+  obj.h = h;
+  if (obj.type === "apparatus" && (obj.kind || "wire") === "wire") {
+    obj.length = Math.max(MIN_SIZE, w);
+    obj.h = Math.max(obj.h, (obj.gap || 1.2) + swSafe(obj));
+  }
+}
+
+function swSafe(obj) {
+  return Math.max(Number(obj.strokeWidth) || 0.2, 0.2);
+}
+
+/* positionLocked resize uses the original center as its fixed anchor. */
+function applyHandleDelta(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
+  applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey);
+  if (!orig.positionLocked) return;
+  const before = objectCenter(orig);
+  const after = objectCenter(obj);
+  translateObject(obj, before.x - after.x, before.y - after.y);
+}
+
+/* ----- world bbox of one object (text uses its rendered <text> box) ----- */
+function objWorldBBox(o, svg) {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+  if (SIZE_TYPES.has(o.type)) {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  // formula는 text와 달리 실측 w/h를 직접 갖는다(text-editor.js measureFormula) — SIZE_TYPES와
+  // 같은 모양의 박스를 그대로 쓸 수 있다. 이 분기가 없으면 groupBBox에서 통째로 빠져(null)
+  // 그룹 리사이즈 시 수식만 지오메트리가 갱신되지 않는다.
+  if (o.type === "formula") {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  if (o.type === "anglearc") {
+    const r = o.radius || 0;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "rightangle") {
+    const r = (o.size || 0) * 1.6;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "text") {
+    const el = svg.querySelector(`[data-id="${o.id}"]`);
+    if (el) {
+      try { const bb = el.getBBox(); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+      catch (_) { /* not laid out */ }
+    }
+    return null;
+  }
+  if (o.type === "line") {
+    return {
+      x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
+      w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
+    };
+  }
+  if (o.type === "pendulum") {
+    return pendulumBBox(o);
+  }
+  if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
+    const pts = o.points || [];
+    if (!pts.length) return null;
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const p of pts) { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; }
+    return { x: a, y: b, w: c - a, h: d - b };
+  }
+  return null;
+}
+
+/* ----- union bbox of several objects (matches render's combinedGroupBBox) ----- */
+function groupBBox(objs, svg) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const o of objs) {
+    const b = objWorldBBox(o, svg);
+    if (!b) continue;
+    if (b.x < minX) minX = b.x;
+    if (b.y < minY) minY = b.y;
+    if (b.x + b.w > maxX) maxX = b.x + b.w;
+    if (b.y + b.h > maxY) maxY = b.y + b.h;
+  }
+  if (!isFinite(minX)) return null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/* ----- Smart alignment guides: edge/center matching while dragging ----- */
+function resolveSmartAlignment(moveObjIds, origObjs, raw, scale, state, svg) {
+  const moving = moveObjIds.map((id) => origObjs[id]).filter(Boolean);
+  const base = groupBBox(moving, svg);
+  if (!base) return { dx: raw.dx, dy: raw.dy, guides: [] };
+  const moved = { x: base.x + raw.dx, y: base.y + raw.dy, w: base.w, h: base.h };
+  const anchorValues = (box, axis) => axis === "x"
+    ? [box.x, box.x + box.w / 2, box.x + box.w]
+    : [box.y, box.y + box.h / 2, box.y + box.h];
+  // Keep the detection window comfortable at every zoom level.  The previous
+  // range was only a few screen pixels, so the guide was almost impossible to
+  // encounter during an ordinary drag.
+  const safeScale = Math.max(Number(scale) || 1, 1e-6);
+  const previewDistance = 32 / safeScale;
+  const attachDistance = 12 / safeScale;
+  const excluded = new Set(moveObjIds);
+  let bestX = null, bestY = null;
+  const consider = (axis, movedValue, targetValue, targetBox) => {
+    const distance = Math.abs(targetValue - movedValue);
+    if (distance > previewDistance) return;
+    const candidate = { delta: targetValue - movedValue, distance, targetValue, targetBox };
+    if (axis === "x") {
+      if (!bestX || candidate.distance < bestX.distance) bestX = candidate;
+    } else if (!bestY || candidate.distance < bestY.distance) bestY = candidate;
+  };
+  const snapshot = state.get();
+  for (const target of snapshot.objects) {
+    if (!target?.id || excluded.has(target.id)) continue;
+    const layer = (snapshot.layers || []).find((item) => item.id === (target.layerId ?? 1));
+    if (layer?.visible === false) continue;
+    const targetBox = objWorldBBox(target, svg);
+    if (!targetBox) continue;
+    for (const movedValue of anchorValues(moved, "x")) {
+      for (const targetValue of anchorValues(targetBox, "x")) consider("x", movedValue, targetValue, targetBox);
+    }
+    for (const movedValue of anchorValues(moved, "y")) {
+      for (const targetValue of anchorValues(targetBox, "y")) consider("y", movedValue, targetValue, targetBox);
+    }
+  }
+  const dx = bestX && bestX.distance <= attachDistance ? raw.dx + bestX.delta : raw.dx;
+  const dy = bestY && bestY.distance <= attachDistance ? raw.dy + bestY.delta : raw.dy;
+  const guides = [];
+  if (bestX) {
+    const from = Math.min(moved.y, bestX.targetBox.y) - 6 / safeScale;
+    const to = Math.max(moved.y + moved.h, bestX.targetBox.y + bestX.targetBox.h) + 6 / safeScale;
+    guides.push({ axis: "x", position: bestX.targetValue, from, to });
+  }
+  if (bestY) {
+    const from = Math.min(moved.x, bestY.targetBox.x) - 6 / safeScale;
+    const to = Math.max(moved.x + moved.w, bestY.targetBox.x + bestY.targetBox.w) + 6 / safeScale;
+    guides.push({ axis: "y", position: bestY.targetValue, from, to });
+  }
+  return { dx, dy, guides };
+}
+
+/* ----- whole-group resize: uniform scale about the opposite corner -----
+ * Recomputes the new combined box with the SAME per-handle math as the single
+ * object path, but aspect ratio is FORCED unconditionally (DESIGN 6-2, Shift-
+ * independent). Every member is then remapped by the box0 ??newBox affine, so
+ * the relative layout the grouping preserves is kept intact. */
+function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
+  const ratio = box0.w / box0.h;
+  let { x, y, w, h } = box0;
+
+  switch (handle) {
+    case "n":  y += dy; h -= dy; break;
+    case "s":  h += dy;          break;
+    case "w":  x += dx; w -= dx; break;
+    case "e":  w += dx;          break;
+    case "nw": y += dy; h -= dy; x += dx; w -= dx; break;
+    case "ne": y += dy; h -= dy;           w += dx; break;
+    case "se": h += dy;           w += dx;          break;
+    case "sw": h += dy; x += dx; w -= dx;           break;
+  }
+
+  // Forced aspect lock. Reference axis fixed by handle type (never flips mid-drag).
+  if (ratio > 0 && isFinite(ratio)) {
+    if (handle === "n" || handle === "s") {
+      w = h * ratio;
+      if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - w;
+    } else {
+      h = w / ratio;
+      if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - h;
+    }
+  }
+
+  // Clamp to a minimum group size, keeping the anchored edge fixed and ratio intact.
+  if (w < MIN_SIZE) {
+    if (handle === "w" || handle === "nw" || handle === "sw") x = box0.x + box0.w - MIN_SIZE;
+    w = MIN_SIZE; if (ratio > 0 && isFinite(ratio)) h = w / ratio;
+  }
+  if (h < MIN_SIZE) {
+    if (handle === "n" || handle === "nw" || handle === "ne") y = box0.y + box0.h - MIN_SIZE;
+    h = MIN_SIZE; if (ratio > 0 && isFinite(ratio)) w = h * ratio;
+  }
+
+  const sx = box0.w ? w / box0.w : 1, sy = box0.h ? h / box0.h : 1;
+  const mapPt = (px, py) => ({ x: x + (px - box0.x) * sx, y: y + (py - box0.y) * sy });
+
+  for (const obj of objs) {
+    const orig = origObjs[obj.id];
+    if (!orig) continue;
+    if (SIZE_TYPES.has(orig.type)) { // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
+    } else if (orig.type === "anglearc") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.radius = orig.radius * sx; // forced ratio: sx == sy
+    } else if (orig.type === "rightangle") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.size = orig.size * sx;
+    } else if (orig.type === "text") {
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y;
+      obj.fontSize = orig.fontSize * sx; // sx == sy under forced ratio
+    } else if (orig.type === "formula") {
+      // formula는 text와 달리 w/h를 직접 가지므로 SIZE_TYPES처럼 박스도 함께 스케일하고,
+      // 렌더 크기가 실제로 커지도록 fontSize도 같이 조절한다(강제 비율이라 sx==sy).
+      const p = mapPt(orig.x, orig.y);
+      obj.x = p.x; obj.y = p.y; obj.w = orig.w * sx; obj.h = orig.h * sy;
+      obj.fontSize = orig.fontSize * sx;
+    } else if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
+      obj.p1 = mapPt(orig.p1.x, orig.p1.y);
+      obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+    } else if (orig.type === "pendulum") {
+      obj.p1 = mapPt(orig.p1.x, orig.p1.y);
+      obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+      if (typeof orig.bobRadius === "number") obj.bobRadius = orig.bobRadius * sx; // sx == sy (forced ratio)
+    } else if (orig.type === "polyline" || orig.type === "curve" || orig.type === "funcgraph") {
+      obj.points = orig.points.map((p) => mapPt(p.x, p.y));
+      mapFgElements(obj, orig, (p) => mapPt(p.x, p.y)); // 그래프 요소도 함께 리사이즈(분리 방지)
+    }
+    if (orig.positionLocked) {
+      const before = objectCenter(orig);
+      const after = objectCenter(obj);
+      translateObject(obj, before.x - after.x, before.y - after.y);
+    }
+  }
+}
+
+/* ===== PUBLIC: wire all event listeners ===== */
+export function initTransform(svg, state) {
+  initObjectClipboard(state, objects => {
+    const s = state.get();
+    const target = getLastMouseWorld() || { x: s.viewBox.x + s.viewBox.w / 2, y: s.viewBox.y + s.viewBox.h / 2 };
+    instantiateObjectsAt(state, objects, target);
+  }, rebuildGroups);
+
+  /* -- Space tracking (mirror viewport.js/tools.js; keep independent) -- */
+  window.addEventListener("keydown", (e) => { if (e.code === "Space") _spaceHeld = true; });
+  window.addEventListener("keyup",   (e) => { if (e.code === "Space") _spaceHeld = false; });
+
+  window.addEventListener("blur", () => { _spaceHeld = false; _arrowKeysHeld.clear(); });
+
+  /* -- Undo/Redo keyboard: Ctrl+Z / Ctrl+Shift+Z (다시 실행은 이 하나로만) -- */
+  window.addEventListener("keydown", (e) => {
+    if (!modKey(e) || e.altKey || blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
+    if (key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      undo(state);
+    } else if ((key === "z" && e.shiftKey) || (!IS_MAC && key === "y" && !e.shiftKey)) {
+      e.preventDefault();
+      redo(state);
+    }
+  });
+
+  /* -- Keyboard shortcuts: Delete, Arrow nudge, Ctrl+C/V, PageUp/Down, F (flipY) -- */
+  window.addEventListener("keydown", (e) => {
+    const t = e.target;
+    if (isEditingFieldTarget(t) || blocksCanvasShortcut(e)) return;
+    // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
+    // 단축키가 새어 들어가지 않게 차단한다.
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+
+    const s = state.get();
+    const selectedIds = s.selectedIds || [];
+
+    // Shift+C — 선택 1개의 스타일 속성 + 각도를 복사 (외부 레이아웃/내용 제외)
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "c") {
+      if (selectedIds.length !== 1) return;
+      const obj = s.objects.find((o) => o.id === selectedIds[0]);
+      if (!obj) return;
+      const props = extractStyleProps(obj);
+      const angle = objectAngleDeg(obj);
+      const hasAngle = angle != null && isFinite(angle);
+      // 스타일도 각도도 없으면 복사할 것이 없음
+      if (!hasAngle && Object.keys(props).length === 0) return;
+      e.preventDefault();
+      _propertyClipboard = {
+        kind: "style",
+        props,
+        angle: hasAngle ? angle : null,
+      };
+      return;
+    }
+
+    // Shift+V — 선택 객체들에 스타일 + 각도를 적용 (존재하는 속성만). 구버전 angle
+    // 클립보드와도 호환. undo 스냅샷 push + redo clear 유지.
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "v") {
+      if (!_propertyClipboard || !selectedIds.length) return;
+      const clip = _propertyClipboard;
+      // 하위호환: 구 {kind:"angle", value} 형태를 style 형태로 정규화
+      const angle = (clip.kind === "angle")
+        ? clip.value
+        : (clip.angle != null ? clip.angle : null);
+      const props = (clip.kind === "style") ? clip.props : null;
+      const hasApplicableAngle = angle != null && isFinite(angle);
+      if (!hasApplicableAngle && (!props || Object.keys(props).length === 0)) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        let changed = false;
+        (s2.selectedIds || []).forEach((id) => {
+          const obj = s2.objects.find((o) => o.id === id);
+          if (!obj) return;
+          if (props && applyStyleProps(obj, props)) changed = true;
+          if (hasApplicableAngle && applyAngleDeg(obj, angle)) changed = true;
+        });
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
+      });
+      return;
+    }
+
+    /* Ctrl+A — 지금 화면에서 고를 수 있는 것을 전부 고른다.
+     *
+     * '고를 수 있는 것'의 기준은 마우스로 찍을 때와 같아야 한다(pick.js isObjectSelectable):
+     * 활성 레이어 · 보이는 레이어 · 선택금지가 아닌 것. 다른 기준을 새로 세우면
+     * "클릭으로는 안 골라지는데 Ctrl+A로는 골라지는" 물건이 생긴다.
+     * 브라우저 기본 동작(문서 전체 선택)은 막는다. */
+    if (modKey(e) && shortcutKey(e) === "a" && !e.shiftKey && !e.altKey) {
+      e.preventDefault();
+      const ids = (s.objects || []).filter((o) => isObjectSelectable(s, o)).map((o) => o.id);
+      state.update((s2) => { s2.selectedIds = ids; });
+      return;
+    }
+
+    // Delete ??remove all selected objects with undo snapshot
+    if (e.isComposing) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
+      if (!selectedIds.length) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        // locked objects are never deleted; remove only selected + mutable ones
+        const before = s2.objects.length;
+        s2.objects = s2.objects.filter((o) => !(selectedIds.includes(o.id) && isMutable(o)));
+        const changed = s2.objects.length !== before;
+        // 잠긴 객체만 선택돼 실제로 지워진 게 없으면 undo 스냅샷을 남기지 않는다
+        // (PageUp z-order의 if(moved), Shift+V의 if(changed) 패턴과 동일).
+        if (changed) {
+          s2.undoStack.push(snap);
+          s2.redoStack = [];
+        }
+        s2.selectedIds = [];
+      });
+      return;
+    }
+
+    // Shift+ArrowUp/Down ??nudge strokeWidth of selected object(s) by ??.1mm
+    // (min 0). Held-key tracking mirrors the plain arrow-nudge below so a single
+    // press pushes exactly one undo snapshot even under key-repeat.
+    if (e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey &&
+        (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+      if (!selectedIds.length) return;
+      const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+      const targets = selected.filter((o) => isMutable(o) && typeof o.strokeWidth === "number");
+      if (!targets.length) return;
+      e.preventDefault();
+      const delta = e.key === "ArrowUp" ? 0.1 : -0.1;
+      const shiftArrowKey = "Shift+" + e.key;
+      const isFirst = !_arrowKeysHeld.has(shiftArrowKey);
+      if (isFirst) _arrowKeysHeld.add(shiftArrowKey);
+      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      state.update((s2) => {
+        if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
+        (s2.selectedIds || []).forEach((id) => {
+          const obj = s2.objects.find((o) => o.id === id);
+          if (!isMutable(obj) || typeof obj.strokeWidth !== "number") return;
+          obj.strokeWidth = Math.max(0, Math.round((obj.strokeWidth + delta) * 10) / 10);
+        });
+      });
+      return;
+    }
+
+    // Arrow nudge (0.5 world units; Ctrl = 5 units; snapshot pushed on first keydown only)
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      if (!selectedIds.length) return;
+      e.preventDefault();
+      if (s.activeTool === "rotate") {
+        const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+        if (selected.some((o) => !isMutable(o))) return;
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        const flipAxis = (e.key === "ArrowLeft" || e.key === "ArrowRight") ? "flipX" : "flipY";
+        state.update((s2) => {
+          const ids = s2.selectedIds || [];
+          let changed = false;
+          ids.forEach(id => {
+            const o = s2.objects.find((o) => o.id === id);
+            if (!isMutable(o)) return;
+            if (isClosedPoly(o) || isClosedCurve(o)) { flipPolyPoints(o, flipAxis); changed = true; return; }
+            if (!SHAPE_TYPES.has(o.type)) return;
+            o[flipAxis] = !(o[flipAxis] ?? false);
+            changed = true;
+          });
+          if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
+        });
+        return;
+      }
+      const nudge = modKey(e) ? 5 : 0.5;
+      const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+      if (selected.some((o) => !isPositionMovable(o))) return;
+      const dx = e.key === "ArrowLeft" ? -nudge : e.key === "ArrowRight" ? nudge : 0;
+      const dy = e.key === "ArrowUp"   ? -nudge : e.key === "ArrowDown"  ? nudge : 0;
+      const isFirst = !_arrowKeysHeld.has(e.key);
+      if (isFirst) _arrowKeysHeld.add(e.key);
+      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      state.update((s2) => {
+        const ids = s2.selectedIds || [];
+        if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
+        ids.forEach(id => {
+          const obj = s2.objects.find((o) => o.id === id);
+          if (!isPositionMovable(obj)) return;
+          const orig = JSON.parse(JSON.stringify(obj));
+          applyDelta(obj, orig, dx, dy);
+        });
+      });
+      return;
+    }
+
+    // PageUp ??bring selected objects forward one step in z-order
+    if (e.key === "PageUp" || e.code === "PageUp") {
+      if (!selectedIds.length) return;
+      e.preventDefault();
+      if (s.activeTool === "rotate") {
+        // Chrome reserves Ctrl+PageUp/Down for tab switching. Shift is delivered
+        // to the canvas reliably, so it is the 30° rotation modifier.
+        const rotationStep = e.shiftKey ? 30 : 5;
+        const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+        if (selected.some((o) => !isMutable(o))) return;
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        // Whole-group rotation: when every selected object shares one groupId,
+        // rotate all members about the COMBINED bbox center (group pivot) instead
+        // of each object spinning about its own center.
+        const gFirst = s.objects.find((o) => o.id === selectedIds[0]);
+        const gGid = selectedIds.length > 1 && gFirst && gFirst.groupId &&
+          selectedIds.every((id) => s.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
+          ? gFirst.groupId : null;
+        if (gGid) {
+          const members = selectedIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+          if (members.some((o) => !isMutable(o))) return;
+          const box0 = groupBBox(members, svg);
+          if (box0) {
+            const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
+            const r = (rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const rot = (x, y) => ({
+              x: px + cosT * (x - px) - sinT * (y - py),
+              y: py + sinT * (x - px) + cosT * (y - py),
+            });
+            state.update((s2) => {
+              members.forEach((m) => {
+                const obj = s2.objects.find((o) => o.id === m.id);
+                if (!obj) return;
+                if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
+                  obj.p1 = rot(obj.p1.x, obj.p1.y);
+                  obj.p2 = rot(obj.p2.x, obj.p2.y);
+                } else if (POINT_ARRAY_TYPES.has(obj.type)) {
+                  // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
+                  // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
+                  // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
+                  // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
+                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                } else if (obj.type === "anglearc") {
+                  const c = rot(obj.x, obj.y);          // vertex about group pivot
+                  obj.x = c.x; obj.y = c.y;
+                  obj.startAngle = (obj.startAngle || 0) - rotationStep;
+                } else if (obj.type === "rightangle") {
+                  const c = rot(obj.x, obj.y);
+                  obj.x = c.x; obj.y = c.y;
+                  obj.angle = (obj.angle || 0) + rotationStep;
+                } else if (obj.type === "text") {
+                  const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
+                  obj.x = c.x; obj.y = c.y;
+                  obj.rotation = (obj.rotation || 0) + rotationStep;
+                } else {
+                  const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
+                  obj.x = c.x - obj.w / 2;
+                  obj.y = c.y - obj.h / 2;
+                  obj.rotation = (obj.rotation || 0) + rotationStep;
+                }
+              });
+              s2.undoStack.push(snap); s2.redoStack = [];
+            });
+          }
+          return;
+        }
+        state.update((s2) => {
+          const ids = s2.selectedIds || [];
+          let changed = false;
+          ids.forEach(id => {
+            const o = s2.objects.find((o) => o.id === id);
+            if (!isMutable(o)) return;
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) + rotationStep; changed = true; return; }
+            if (!FLIP_TYPES.has(o.type)) return;
+            o.rotation = (o.rotation ?? 0) + rotationStep;
+            changed = true;
+          });
+          if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
+        });
+        return;
+      }
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const ids = s2.selectedIds || [];
+        // Process from highest index downward to avoid index collision
+        const indices = ids
+          .map(id => s2.objects.findIndex(o => o.id === id))
+          .filter(idx => idx >= 0 && isMutable(s2.objects[idx])) // skip locked
+          .sort((a, b) => b - a);
+        let moved = false;
+        indices.forEach(idx => {
+          if (idx === s2.objects.length - 1) return;
+          [s2.objects[idx], s2.objects[idx + 1]] = [s2.objects[idx + 1], s2.objects[idx]];
+          moved = true;
+        });
+        if (moved) { s2.undoStack.push(snap); s2.redoStack = []; }
+      });
+      return;
+    }
+
+    // PageDown ??send selected objects backward one step in z-order
+    if (e.key === "PageDown" || e.code === "PageDown") {
+      if (!selectedIds.length) return;
+      e.preventDefault();
+      if (s.activeTool === "rotate") {
+        // See the matching PageUp handler: Shift is the browser-safe 30° modifier.
+        const rotationStep = e.shiftKey ? 30 : 5;
+        const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
+        if (selected.some((o) => !isMutable(o))) return;
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        // Whole-group rotation: when every selected object shares one groupId,
+        // rotate all members about the COMBINED bbox center (group pivot) instead
+        // of each object spinning about its own center.
+        const gFirst = s.objects.find((o) => o.id === selectedIds[0]);
+        const gGid = selectedIds.length > 1 && gFirst && gFirst.groupId &&
+          selectedIds.every((id) => s.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
+          ? gFirst.groupId : null;
+        if (gGid) {
+          const members = selectedIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+          if (members.some((o) => !isMutable(o))) return;
+          const box0 = groupBBox(members, svg);
+          if (box0) {
+            const px = box0.x + box0.w / 2, py = box0.y + box0.h / 2;
+            const r = (-rotationStep * Math.PI) / 180, cosT = Math.cos(r), sinT = Math.sin(r);
+            const rot = (x, y) => ({
+              x: px + cosT * (x - px) - sinT * (y - py),
+              y: py + sinT * (x - px) + cosT * (y - py),
+            });
+            state.update((s2) => {
+              members.forEach((m) => {
+                const obj = s2.objects.find((o) => o.id === m.id);
+                if (!obj) return;
+                if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
+                  obj.p1 = rot(obj.p1.x, obj.p1.y);
+                  obj.p2 = rot(obj.p2.x, obj.p2.y);
+                } else if (POINT_ARRAY_TYPES.has(obj.type)) {
+                  // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
+                  // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
+                  // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
+                  // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
+                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                } else if (obj.type === "anglearc") {
+                  const c = rot(obj.x, obj.y);          // vertex about group pivot
+                  obj.x = c.x; obj.y = c.y;
+                  obj.startAngle = (obj.startAngle || 0) + rotationStep; // screen-CCW = math +
+                } else if (obj.type === "rightangle") {
+                  const c = rot(obj.x, obj.y);
+                  obj.x = c.x; obj.y = c.y;
+                  obj.angle = (obj.angle || 0) - rotationStep;
+                } else if (obj.type === "text") {
+                  const c = rot(obj.x, obj.y); // anchor-rotating type, no w/h (renderText)
+                  obj.x = c.x; obj.y = c.y;
+                  obj.rotation = (obj.rotation || 0) - rotationStep;
+                } else {
+                  const c = rot(obj.x + obj.w / 2, obj.y + obj.h / 2);
+                  obj.x = c.x - obj.w / 2;
+                  obj.y = c.y - obj.h / 2;
+                  obj.rotation = (obj.rotation || 0) - rotationStep;
+                }
+              });
+              s2.undoStack.push(snap); s2.redoStack = [];
+            });
+          }
+          return;
+        }
+        state.update((s2) => {
+          const ids = s2.selectedIds || [];
+          let changed = false;
+          ids.forEach(id => {
+            const o = s2.objects.find((o) => o.id === id);
+            if (!isMutable(o)) return;
+            if (o.type === "polyline" || o.type === "curve") { rotatePolyPoints(o, -rotationStep); changed = true; return; } // 열림/닫힘 모두 점 좌표에 회전 굽기
+            if (o.type === "rightangle") { o.angle = (o.angle || 0) - rotationStep; changed = true; return; }
+            if (!FLIP_TYPES.has(o.type)) return;
+            o.rotation = (o.rotation ?? 0) - rotationStep;
+            changed = true;
+          });
+          if (changed) { s2.undoStack.push(snap); s2.redoStack = []; }
+        });
+        return;
+      }
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const ids = s2.selectedIds || [];
+        // Process from lowest index upward to avoid index collision
+        const indices = ids
+          .map(id => s2.objects.findIndex(o => o.id === id))
+          .filter(idx => idx >= 0 && isMutable(s2.objects[idx])) // skip locked
+          .sort((a, b) => a - b);
+        let moved = false;
+        indices.forEach(idx => {
+          if (idx <= 0) return;
+          [s2.objects[idx], s2.objects[idx - 1]] = [s2.objects[idx - 1], s2.objects[idx]];
+          moved = true;
+        });
+        if (moved) { s2.undoStack.push(snap); s2.redoStack = []; }
+      });
+      return;
+    }
+
+    // F ??toggle flipY on selected triangle(s)
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "f") {
+      if (!selectedIds.length) return;
+      const triangleIds = selectedIds.filter(id => {
+        const o = s.objects.find(ob => ob.id === id);
+        return isMutable(o) && o.type === "triangle";
+      });
+      if (!triangleIds.length) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        triangleIds.forEach(id => {
+          const o = s2.objects.find((o) => o.id === id);
+          if (!isMutable(o) || o.type !== "triangle") return;
+          o.flipY = !(o.flipY ?? false);
+        });
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+    }
+
+    // K ??toggle locked on all selected shape-based objects (V tool only)
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "k") {
+      if (!selectedIds.length || s.activeTool !== "V") return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const ids = s2.selectedIds || [];
+        ids.forEach(id => {
+          const o = s2.objects.find((o) => o.id === id);
+          if (!o) return; // all types lockable; lock toggle still runs on locked (to unlock)
+          o.locked = !(o.locked ?? false);
+        });
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+    }
+
+    // G ??group selected objects (V tool, ?? selected)
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && shortcutKey(e) === "g") {
+      if (s.activeTool !== "V" || selectedIds.length < 2) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const groupId = Date.now().toString();
+        // locked objects are excluded from the group; need ?? mutable members left
+        const memberIds = (s2.selectedIds || []).filter(id =>
+          isMutable(s2.objects.find((o) => o.id === id)));
+        if (memberIds.length < 2) return;
+        memberIds.forEach(id => {
+          const o = s2.objects.find((o) => o.id === id);
+          if (o) o.groupId = groupId;
+        });
+        s2.groups.push({ id: groupId, memberIds });
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+      return;
+    }
+
+    // Shift+G ??ungroup (V tool, all selected objects share the same groupId)
+    if (!e.ctrlKey && !e.metaKey && e.shiftKey && shortcutKey(e) === "g") {
+      if (s.activeTool !== "V" || !selectedIds.length) return;
+      const _refId = s.targetedId || selectedIds[0];
+      const _refObj = s.objects.find((o) => o.id === _refId);
+      if (!_refObj || !_refObj.groupId) return;
+      const _gid = _refObj.groupId;
+      if (!s.targetedId && !selectedIds.every(id => {
+        const o = s.objects.find((o) => o.id === id);
+        return o && o.groupId === _gid;
+      })) return;
+      e.preventDefault();
+      const snap = JSON.parse(JSON.stringify(s.objects));
+      state.update((s2) => {
+        const grp = s2.groups.find((g) => g.id === _gid);
+        if (grp) grp.memberIds.forEach(id => {
+          const o = s2.objects.find((o) => o.id === id);
+          if (o) delete o.groupId;
+        });
+        s2.groups = s2.groups.filter((g) => g.id !== _gid);
+        s2.targetedId = null;
+        s2.undoStack.push(snap);
+        s2.redoStack = [];
+      });
+      return;
+    }
+  });
+
+  /* -- Arrow keyup: clear held set so next keydown is treated as first press -- */
+  window.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" ||
+        e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      _arrowKeysHeld.delete(e.key);
+      _arrowKeysHeld.delete("Shift+" + e.key);
+    }
+  });
+
+  /* -- Capture phase: save selectedIds BEFORE tools.js's bubble handler fires --
+   * tools.js registers its mousedown on the bubble phase. The capture phase fires
+   * first, giving us the pre-click selectedIds. We use it below to decide whether
+   * the click is on an already-selected object (move allowed) or a new one (just
+   * select this press; move can start on the NEXT press). */
+  svg.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    _prevSelectedIds = state.get().selectedIds || [];
+  }, true); // capture = true
+
+  /* -- Bubble phase: start move if click landed on an ALREADY-selected object -- */
+  svg.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;
+    if (_spaceHeld) return;
+    // Second press of a double-click targets a group member (handled in tools.js).
+    // Don't arm a move gesture on it.
+    if (e.detail >= 2) return;
+    const activeTool = state.get().activeTool;
+    if (activeTool !== "V" && activeTool !== "rotate") return;
+
+    // Targeted state: block all transforms; only Shift+G / inspector "揶쏆뮇猿???疫? allowed
+    if (state.get().targetedId) return;
+
+    // Handle drag: only active when exactly one object is selected
+    const hLabel = e.target.dataset && e.target.dataset.handle;
+    const hObjId = e.target.dataset && e.target.dataset.id;
+    const s0 = state.get();
+    const selectedIds0 = s0.selectedIds || [];
+
+    if (hLabel && (activeTool === "V" || activeTool === "rotate") && selectedIds0.length > 1) {
+      const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+      _groupMemberIds = selectedIds0.filter((id) => members.some((o) => o.id === id));
+      if (members.length === selectedIds0.length) {
+        if (members.some((o) => !isMutable(o))) return;
+        const box0 = groupBBox(members, svg);
+        if (box0) {
+          if (activeTool === "rotate") {
+            // Group rotation only on corner handles (matches single-object rotate).
+            const isCorner = ["nw", "ne", "se", "sw"].includes(hLabel);
+            if (!isCorner) return;
+            _groupRotating  = true;
+            _groupMemberIds = members.map((o) => o.id);
+            _groupOrigObjs  = {};
+            members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
+            _rotPivot       = { x: box0.x + box0.w / 2, y: box0.y + box0.h / 2 };
+            const mouse     = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
+            _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+            _pendingSnapshot = JSON.parse(JSON.stringify(s0.objects));
+            _didMove        = false;
+            e.preventDefault();
+          } else {
+            _groupResizing    = true;
+            _groupHandle      = hLabel;
+            _groupBox0        = box0;
+            _groupMemberIds   = members.map((o) => o.id);
+            _groupOrigObjs    = {};
+            members.forEach((o) => { _groupOrigObjs[o.id] = JSON.parse(JSON.stringify(o)); });
+            _handleStartWorld = screenToWorld(svg, s0.viewBox, e.clientX, e.clientY);
+            _pendingSnapshot  = JSON.parse(JSON.stringify(s0.objects));
+            _didMove          = false;
+            e.preventDefault();
+          }
+        }
+        return; // never falls through to move-start
+      }
+    }
+
+    if (hLabel && hObjId && selectedIds0.length === 1 && selectedIds0.includes(hObjId)) {
+      const s = s0;
+      const obj = objectById(s, selectedIds0[0]);
+      if (obj) {
+        if (!isMutable(obj)) return;
+        const isCorner = ["nw", "ne", "se", "sw"].includes(hLabel);
+        if (activeTool === "rotate" && isCorner) {
+          _rotating       = true;
+          _rotObjId       = obj.id;
+          _rotOrigObj     = JSON.parse(JSON.stringify(obj));
+          // Polyline/curve (open OR closed) rotates about its bbox CENTER (points are
+          // baked, there is no rotation field / opposite-corner pivot to track).
+          // anglearc rotates about its VERTEX (= objectCenter), spinning startAngle.
+          _rotPivot       = (obj.positionLocked || obj.type === "polyline" || obj.type === "curve" || obj.type === "anglearc" || obj.type === "labeler")
+            ? objectCenter(obj) : getRotPivot(obj, hLabel);
+          const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
+          _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+          _rotPendingSnap = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _rotDidMove     = false;
+        } else {
+          _handleDragging   = true;
+          _handleId         = hLabel;
+          _handleOrigObj    = JSON.parse(JSON.stringify(obj));
+          _handleStartWorld = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
+          _pendingSnapshot  = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _didMove = false;
+        }
+        e.preventDefault();
+      }
+      return; // never falls through to move-start
+    }
+
+    if (activeTool !== "V") return; // rotate tool has no body-move behavior
+
+    const s = state.get();
+
+    const pickedObj = pickSelectableObjectFromEvent(svg, s, e);
+    const clickedId = pickedObj?.id || null;
+
+    // "새 객체 클릭은 선택만" 가드: tools.js의 bubble mousedown이 이미 이번 클릭으로
+    // selectedIds를 갱신했으므로(캡처가 먼저 저장한 _prevSelectedIds 이후) 여기서
+    // state.get().selectedIds를 다시 읽으면 방금 새로 선택된 객체도 항상 포함돼
+    // 판정이 무력화된다. 클릭 "이전" 선택 상태(_prevSelectedIds)와 비교해야
+    // "원래부터 선택돼 있던 객체를 눌렀는가"를 정확히 가릴 수 있다.
+    if (!clickedId || !_prevSelectedIds.includes(clickedId)) return;
+
+    const selectedIds = s.selectedIds || []; // move는 클릭 이후(현재) 선택 집합을 대상으로 함
+    const obj = pickedObj || s.objects.find((o) => o.id === clickedId);
+    if (!obj) return;
+    const vb = s.viewBox;
+    _moveStartWorld = screenToWorld(svg, vb, e.clientX, e.clientY);
+    // Expand to all group members when selected objects share a group
+    const _firstMoveObj = objectById(s, selectedIds[0]);
+    const _sharedGid = _firstMoveObj?.groupId &&
+      selectedIds.every(id => objectById(s, id)?.groupId === _firstMoveObj.groupId)
+      ? _firstMoveObj.groupId : null;
+    let _moveIds = [...selectedIds];
+    if (_sharedGid) {
+      const _mgrp = s.groups.find((g) => g.id === _sharedGid);
+      if (_mgrp) _moveIds = [..._mgrp.memberIds];
+    }
+    const _moveObjs = _moveIds.map(id => objectById(s, id)).filter(Boolean);
+    if (_moveObjs.some((o) => !isPositionMovable(o))) {
+      _moving = false;
+      _moveObjIds = [];
+      _moveOrigObjs = {};
+      _moveStartWorld = null;
+      _pendingSnapshot = null;
+      _didMove = false;
+      return;
+    }
+    _moving = true;
+    _moveObjIds = _moveIds;
+    _moveOrigObjs = {};
+    _moveIds.forEach(id => {
+      const o = objectById(s, id);
+      if (o) _moveOrigObjs[id] = JSON.parse(JSON.stringify(o));
+    });
+    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
+    _didMove = false;
+
+    svg.style.cursor = "grabbing";
+    e.preventDefault(); // suppress text-selection highlight during drag
+  });
+
+  /* -- mousemove: handle drag OR body move (live update via store) -- */
+  window.addEventListener("mousemove", (e) => {
+    _lastMouseWorld = screenToWorld(svg, state.get().viewBox, e.clientX, e.clientY);
+    // --- rotation drag ---
+    if (_rotating) {
+      const vb = state.get().viewBox;
+      const mouse = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const curAngle = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+      let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
+      // Ctrl = snap to 15-degree increments (applied to the accumulated delta)
+      if (snapKey(e)) deltaDeg = Math.round(deltaDeg / 15) * 15;
+
+      // Polyline / curve (open OR closed): bake the rotation into every point about the
+      // bbox center. Open cut pieces are open polylines and must rotate like closed ones.
+      if (_rotOrigObj.type === "polyline" || _rotOrigObj.type === "curve") {
+        const rad = deltaDeg * (Math.PI / 180);
+        const cosP = Math.cos(rad), sinP = Math.sin(rad);
+        const px = _rotPivot.x, py = _rotPivot.y;
+        state.update((s) => {
+          const obj = objectById(s, _rotObjId);
+          if (!obj) return;
+          obj.points = _rotOrigObj.points.map((p) => ({
+            x: px + cosP * (p.x - px) - sinP * (p.y - py),
+            y: py + sinP * (p.x - px) + cosP * (p.y - py),
+          }));
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
+
+      // labeler: a line-like object (p1 = leader anchor, p2 = label position).
+      // Rotate BOTH points about the pivot so the leader + label turn together as
+      // one object. The label text stays screen-upright (render's makeUprightLabel
+      // draws it horizontally regardless of geometry), so it remains readable.
+      if (_rotOrigObj.type === "labeler") {
+        const rad = deltaDeg * (Math.PI / 180);
+        const cosP = Math.cos(rad), sinP = Math.sin(rad);
+        const px = _rotPivot.x, py = _rotPivot.y;
+        const rp = (p) => ({
+          x: px + cosP * (p.x - px) - sinP * (p.y - py),
+          y: py + sinP * (p.x - px) + cosP * (p.y - py),
+        });
+        state.update((s) => {
+          const obj = objectById(s, _rotObjId);
+          if (!obj) return;
+          obj.p1 = rp(_rotOrigObj.p1);
+          obj.p2 = rp(_rotOrigObj.p2);
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
+
+      // anglearc: rotation is stored in startAngle (vertex is the pivot, so the
+      // vertex x/y never move). Screen-CW drag = positive deltaDeg = math angle
+      // DECREASE, so subtract to make the arc follow the mouse.
+      if (_rotOrigObj.type === "anglearc") {
+        state.update((s) => {
+          const obj = objectById(s, _rotObjId);
+          if (!obj) return;
+          obj.startAngle = (_rotOrigObj.startAngle || 0) - deltaDeg;
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
+
+      if (_rotOrigObj.type === "rightangle") {
+        state.update((s) => {
+          const obj = objectById(s, _rotObjId);
+          if (!obj) return;
+          obj.angle = (_rotOrigObj.angle || 0) + deltaDeg;
+        });
+        if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+        return;
+      }
+
+      // Normalize: rotating by ??about pivot P ??rotating by ??about center C + translation.
+      // new_center = rotate(orig_center, pivot, ??; stored (x,y) = new_center ??(w/2, h/2).
+      const { x: x0, y: y0, w, h, rotation: a0 } = _rotOrigObj;
+      const cx0 = x0 + w / 2, cy0 = y0 + h / 2;
+      const deltaRad = deltaDeg * (Math.PI / 180);
+      const cosT = Math.cos(deltaRad), sinT = Math.sin(deltaRad);
+      const newCx = _rotPivot.x + cosT * (cx0 - _rotPivot.x) - sinT * (cy0 - _rotPivot.y);
+      const newCy = _rotPivot.y + sinT * (cx0 - _rotPivot.x) + cosT * (cy0 - _rotPivot.y);
+
+      state.update((s) => {
+        const obj = objectById(s, _rotObjId);
+        if (!obj) return;
+        obj.x = newCx - w / 2;
+        obj.y = newCy - h / 2;
+        obj.rotation = (a0 || 0) + deltaDeg;
+      });
+      if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
+      return;
+    }
+
+    // --- whole-group rotation: rotate every member about the group bbox center ---
+    if (_groupRotating) {
+      const vb = state.get().viewBox;
+      const mouse = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const curAngle = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
+      let deltaDeg = (curAngle - _rotStartAngle) * (180 / Math.PI);
+      // Ctrl = snap to 15-degree increments (same rule as single-object rotation).
+      // Aspect lock does NOT apply: rotation never distorts a shape.
+      if (snapKey(e)) deltaDeg = Math.round(deltaDeg / 15) * 15;
+
+      const rad = deltaDeg * (Math.PI / 180);
+      const cosT = Math.cos(rad), sinT = Math.sin(rad);
+      const px = _rotPivot.x, py = _rotPivot.y;
+      const rot = (x, y) => ({
+        x: px + cosT * (x - px) - sinT * (y - py),
+        y: py + sinT * (x - px) + cosT * (y - py),
+      });
+
+      state.update((s) => {
+        _groupMemberIds.forEach((id) => {
+          const obj = s.objects.find((o) => o.id === id);
+          const orig = _groupOrigObjs[id];
+          if (!obj || !orig) return;
+          const memberCenter = objectCenter(orig);
+          const memberRot = orig.positionLocked
+            ? (x, y) => rotPt(x, y, memberCenter.x, memberCenter.y, deltaDeg)
+            : rot;
+          if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler" || orig.type === "pendulum") {
+            obj.p1 = memberRot(orig.p1.x, orig.p1.y);
+            obj.p2 = memberRot(orig.p2.x, orig.p2.y);
+          } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
+            obj.points = orig.points.map((p) => memberRot(p.x, p.y));
+            mapFgElements(obj, orig, (p) => memberRot(p.x, p.y)); // 그래프 요소도 함께 회전(분리 방지)
+          } else if (orig.type === "anglearc") {
+            // vertex rotates about the pivot; spin lives in startAngle (screen-CW
+            // = +deltaDeg = math decrease).
+            const c = orig.positionLocked ? memberCenter : rot(memberCenter.x, memberCenter.y);
+            obj.x = c.x; obj.y = c.y;
+            obj.startAngle = (orig.startAngle || 0) - deltaDeg;
+          } else if (orig.type === "rightangle") {
+            // vertex rotates about the pivot; spin lives in angle (no w/h on this type,
+            // so the box branch below would NaN it).
+            const c = orig.positionLocked ? memberCenter : rot(orig.x, orig.y);
+            obj.x = c.x; obj.y = c.y;
+            obj.angle = (orig.angle || 0) + deltaDeg;
+          } else if (orig.type === "text") {
+            // text rotates about its top-left anchor (renderText), not a center box,
+            // and has no w/h — orbit the anchor and put the spin into rotation.
+            const c = orig.positionLocked ? { x: orig.x, y: orig.y } : rot(orig.x, orig.y);
+            obj.x = c.x; obj.y = c.y;
+            obj.rotation = (orig.rotation || 0) + deltaDeg;
+          } else {
+            // box-type (rect/ellipse/triangle/formula/image/svgAsset/optics/apparatus/
+            // axes — all carry w/h): rotate center about pivot, and bump the member's
+            // own rotation field by the same delta.
+            const c = orig.positionLocked ? memberCenter : rot(memberCenter.x, memberCenter.y);
+            obj.x = c.x - orig.w / 2;
+            obj.y = c.y - orig.h / 2;
+            obj.rotation = (orig.rotation || 0) + deltaDeg;
+          }
+        });
+      });
+      if (!_didMove && Math.abs(deltaDeg) > 0.1) _didMove = true;
+      return;
+    }
+
+    if (_groupResizing) {
+      const vb = state.get().viewBox;
+      const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const dx = cur.x - _handleStartWorld.x;
+      const dy = cur.y - _handleStartWorld.y;
+      state.update((s) => {
+        const live = _groupMemberIds.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+        applyGroupResize(live, _groupOrigObjs, _groupBox0, _groupHandle, dx, dy);
+      });
+      if (!_didMove && Math.hypot(dx, dy) > MOVE_THRESHOLD) _didMove = true;
+      return;
+    }
+
+    if (_handleDragging) {
+      const vb = state.get().viewBox;
+      const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
+      const dx = cur.x - _handleStartWorld.x;
+      const dy = cur.y - _handleStartWorld.y;
+      /* ===== ENDPOINT SNAP HOOK: Shift snaps a dragged line endpoint to a
+       * high-priority target (other line endpoint / optical object head). Only the
+       * dragged endpoint moves; the opposite endpoint stays fixed. ===== */
+      if (!e.shiftKey) setSnapPreview(null);
+      state.update((s) => {
+        const obj = objectById(s, _handleOrigObj.id);
+        if (!obj) return;
+        applyHandleDelta(obj, _handleOrigObj, _handleId, dx, dy, e.shiftKey, snapKey(e));
+        let preview = null;
+        if (e.shiftKey) {
+          // CONSOLIDATED endpoint snap: ONE path resolves both 6b (edge/vertex/
+          // curved-surface) and 6c (radial center) and emits a single red dot.
+          const scale = getRenderScale();
+          const dragged = handleEndpointPoint(obj, _handleId);
+          const edgeSnap = dragged
+            ? resolveEndpointSnap(dragged, [obj.id], scale, state)
+            : null;
+          const other = otherEndpointPoint(obj, _handleId);
+          const radialSnap = (dragged && other)
+            ? resolveRadialCenterSnap(other, dragged, [obj.id], scale, state)
+            : null;
+          const chosen = dragged ? pickEndpointSnap(edgeSnap, radialSnap) : null;
+          if (chosen) {
+            preview = chosen.preview;
+            if (chosen.attach) setHandleEndpointPoint(obj, _handleId, chosen.target);
+          }
+        }
+        setSnapPreview(preview);
+      });
+      if (!_didMove && Math.hypot(dx, dy) > MOVE_THRESHOLD) _didMove = true;
+      return;
+    }
+
+    if (!_moving) return;
+    const vb = state.get().viewBox;
+    const cur = screenToWorld(svg, vb, e.clientX, e.clientY);
+    const rawDx = cur.x - _moveStartWorld.x;
+    const rawDy = cur.y - _moveStartWorld.y;
+
+    /* ===== SNAP RESOLVE HOOK: Shift-only preview/attach before applyDelta ===== */
+    if (!e.shiftKey) setSnapPreview(null);
+    const snapped = resolveSnap(
+      _moveObjIds,
+      _moveOrigObjs,
+      { dx: rawDx, dy: rawDy },
+      { shift: e.shiftKey },
+      getRenderScale(),
+      state,
+      svg,
+    );
+    // Smart guides are the default for box/center alignment. Shift keeps the
+    // existing endpoint/shape magnet behavior without competing corrections.
+    const aligned = e.shiftKey
+      ? { dx: snapped.dx, dy: snapped.dy, guides: [] }
+      : resolveSmartAlignment(_moveObjIds, _moveOrigObjs, { dx: snapped.dx, dy: snapped.dy }, getRenderScale(), state, svg);
+    const dx = aligned.dx, dy = aligned.dy;
+
+    /* ===== SNAP PREVIEW HOOK: publish transient pair before the repaint ===== */
+    setSmartGuides(aligned.guides);
+    setSnapPreview(snapped.preview);
+    state.update((s) => {
+      _moveObjIds.forEach(id => {
+        const obj = objectById(s, id);
+        const orig = _moveOrigObjs[id];
+        if (!obj || !orig) return;
+        applyDelta(obj, orig, dx, dy);
+        if (SHAPE_TYPES.has(obj.type)) {
+          obj.rotation = snapped.rotation === null ? (orig.rotation || 0) : snapped.rotation;
+        }
+      });
+    });
+
+    if (!_didMove && Math.hypot(dx, dy) > MOVE_THRESHOLD) {
+      _didMove = true;
+    }
+  });
+
+  /* -- pointer/mouse release: commit or discard the pending undo snapshot -- */
+  const finishGesture = () => {
+    setSmartGuides([]);
+    if (_rotating) {
+      _rotating = false;
+      if (_rotDidMove && _rotPendingSnap) {
+        const snap = _rotPendingSnap;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _rotObjId = _rotOrigObj = _rotPivot = _rotPendingSnap = null;
+      _rotStartAngle = 0;
+      _rotDidMove = false;
+      return;
+    }
+
+    if (_groupRotating) {
+      _groupRotating = false;
+      if (_didMove && _pendingSnapshot) {
+        const snap = _pendingSnapshot;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _groupMemberIds  = [];
+      _groupOrigObjs   = {};
+      _rotPivot        = null;
+      _rotStartAngle   = 0;
+      _pendingSnapshot = null;
+      _didMove         = false;
+      return;
+    }
+
+    if (_groupResizing) {
+      _groupResizing = false;
+      if (_didMove && _pendingSnapshot) {
+        const snap = _pendingSnapshot;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _groupHandle      = null;
+      _groupBox0        = null;
+      _groupMemberIds   = [];
+      _groupOrigObjs    = {};
+      _handleStartWorld = null;
+      _pendingSnapshot  = null;
+      _didMove = false;
+      return;
+    }
+
+    if (_handleDragging) {
+      _handleDragging = false;
+      /* ===== SNAP CLEAR HOOK: endpoint-handle release removes the overlay ===== */
+      setSnapPreview(null);
+      if (_didMove && _pendingSnapshot) {
+        const snap = _pendingSnapshot;
+        state.update((s) => {
+          s.undoStack.push(snap);
+          s.redoStack = [];
+        });
+      }
+      _handleId         = null;
+      _handleOrigObj    = null;
+      _handleStartWorld = null;
+      _pendingSnapshot  = null;
+      _didMove = false;
+      return;
+    }
+
+    if (!_moving) return;
+    _moving = false;
+
+    /* ===== SNAP CLEAR HOOK: drag completion removes the transient overlay ===== */
+    setSnapPreview(null);
+
+    if (_didMove && _pendingSnapshot) {
+      const snap = _pendingSnapshot;
+      state.update((s) => {
+        s.undoStack.push(snap);
+        s.redoStack = [];
+      });
+    } else {
+      state.update(() => {});
+    }
+
+    _moveStartWorld = null;
+    _moveObjIds = [];
+    _moveOrigObjs = {};
+    _pendingSnapshot = null;
+    _didMove = false;
+    svg.style.cursor = "";
+  };
+  window.addEventListener("pointerup", finishGesture);
+  window.addEventListener("mouseup", finishGesture);
+
+  /* ===== SNAP CLEAR HOOK: releasing Shift clears preview without pointer motion ===== */
+  window.addEventListener("keyup", (e) => {
+    if (!_moving || e.key !== "Shift") return;
+    setSnapPreview(null);
+    const rawDx = _lastMouseWorld && _moveStartWorld ? _lastMouseWorld.x - _moveStartWorld.x : 0;
+    const rawDy = _lastMouseWorld && _moveStartWorld ? _lastMouseWorld.y - _moveStartWorld.y : 0;
+    state.update((s) => {
+      _moveObjIds.forEach((id) => {
+        const obj = objectById(s, id);
+        const orig = _moveOrigObjs[id];
+        if (!obj || !orig) return;
+        applyDelta(obj, orig, rawDx, rawDy);
+        if (SHAPE_TYPES.has(obj.type)) obj.rotation = orig.rotation || 0;
+      });
+    });
+  });
+
+  /* Pointer cancellation must not leave a live gesture or preview state behind. */
+  window.addEventListener("pointercancel", () => {
+    /* ===== SNAP CLEAR HOOK: cancelled drags discard the transient overlay ===== */
+    setSnapPreview(null);
+    const snap = _rotPendingSnap || _pendingSnapshot;
+    if (snap) state.update((s) => { s.objects = cloneObjects(snap); });
+    _moving = _handleDragging = _groupResizing = _rotating = _groupRotating = false;
+    _moveObjIds = [];
+    _moveOrigObjs = {};
+    _moveStartWorld = null;
+    _handleId = _handleOrigObj = _handleStartWorld = null;
+    _groupHandle = _groupBox0 = null;
+    _groupMemberIds = [];
+    _groupOrigObjs = {};
+    _rotObjId = _rotOrigObj = _rotPivot = _rotPendingSnap = null;
+    _pendingSnapshot = null;
+    _didMove = _rotDidMove = false;
+    svg.style.cursor = "";
+  });
+}

@@ -1,0 +1,579 @@
+/* ===== EXPORT DIALOG (파일 dropdown + image-export modal) ===== */
+//
+// Owns two pieces of top-bar UI, both kept out of index.html so markup stays
+// minimal (mirrors project-io.js's dynamically-created file input):
+//
+//   1. "파일 ▾" dropdown — opens on click, closes on outside-click / Escape.
+//      Its items are: 프로젝트 저장 / 프로젝트 불러오기 (both wired in
+//      project-io.js by id), a divider, and 이미지로 내보내기 (opens the modal).
+//
+//   2. Export modal — filename + format (PNG/SVG) + resolution (DPI, PNG only),
+//      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
+//      exportPng() or exportSvg(); the extension is appended from the format.
+
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.4.0";
+import { openBatchExport } from "./export-batch.js?v=1.4.0";
+import {
+  FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
+} from "./export-dir.js?v=1.4.0";
+import { showAlert } from "./ui-dialogs.js?v=1.4.0";
+import { registerTopMenu } from "./top-menu.js?v=1.4.0";
+import { screenToWorld } from "./viewport.js?v=1.4.0";
+import { openExamPreview } from "./exam-preview.js?v=1.4.0";
+
+// Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
+// recomputed each time the modal opens so it reflects the actual export time.
+const defaultNameBase = () => formatExportTimestamp();
+
+// 파일시스템에서 쓸 수 없는 문자(경로 구분자 등)를 걸러낸다. 이런 문자가 섞인 이름으로
+// showSaveFilePicker를 부르면 브라우저가 조용히 실패해(취소와 구분 안 됨) 안내 없이
+// 기본 다운로드 폴더로 대체 저장되므로, 저장 직전에 여기서 미리 치환해 둔다.
+const INVALID_FILENAME_CHARS = /[\\/:*?"<>|]/g;
+function sanitizeFilename(name) {
+  return String(name || "").replace(INVALID_FILENAME_CHARS, "_").trim();
+}
+
+/* ----- dropdown: exclusive with 설정 (shared top-menu) + hover descriptions ----- */
+const DEFAULT_FILE_DESC = "파일 작업을 선택하세요.";
+function initFileMenu() {
+  const btn = document.getElementById("file-menu-btn");
+  const list = document.getElementById("file-menu-list");
+  const desc = document.getElementById("file-menu-desc");
+  if (!btn || !list) return;
+
+  // Bottom description area: reflect the hovered / keyboard-focused item; fall
+  // back to the default prompt when nothing is hovered or focused.
+  const reset = () => { if (desc) desc.textContent = DEFAULT_FILE_DESC; };
+  if (desc) {
+    list.querySelectorAll(".file-menu-item").forEach((item) => {
+      const text = item.getAttribute("data-desc");
+      const show = () => { if (text) desc.textContent = text; };
+      item.addEventListener("mouseenter", show);
+      item.addEventListener("focus", show);
+      item.addEventListener("mouseleave", reset);
+      item.addEventListener("blur", reset);
+    });
+  }
+
+  // Reset the description each time the menu opens (nothing hovered yet).
+  registerTopMenu("file", btn, list, { onOpen: reset });
+}
+
+/* ----- modal markup, built once and appended to <body> ----- */
+function buildModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "export-overlay";
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="export-title" style="width:min(400px, calc(100vw - 32px))">
+      <h2 class="modal-title" id="export-title">이미지로 내보내기
+        <button type="button" class="export-help-btn" aria-label="이미지로 내보내기 도움말"
+                title="아트보드를 이미지 파일로 저장합니다.&#10;· PNG — 한글(HWP)·PPT 등에 바로 붙여 넣는 그림 파일&#10;· SVG — 확대해도 깨지지 않는 벡터 파일(일러스트 편집용)&#10;여백·배율은 아래 옵션으로 조정합니다.">?</button>
+      </h2>
+
+      <label class="modal-field" for="export-filename">
+        <span class="modal-label">파일 이름</span>
+        <input type="text" id="export-filename" class="modal-input"
+               value="${defaultNameBase()}" autocomplete="off" spellcheck="false" />
+      </label>
+
+      <div class="modal-field">
+        <span class="modal-label">형식</span>
+        <div class="seg" id="export-format">
+          <button type="button" class="seg-btn is-active" data-format="png">PNG</button>
+          <button type="button" class="seg-btn" data-format="svg">SVG</button>
+        </div>
+      </div>
+
+      <div class="modal-field" id="export-dpi-field">
+        <span class="modal-label">해상도</span>
+        <div class="seg" id="export-dpi">
+          <button type="button" class="seg-btn" data-dpi="200">200 dpi</button>
+          <button type="button" class="seg-btn is-active" data-dpi="300">300 dpi</button>
+          <button type="button" class="seg-btn" data-dpi="400">400 dpi</button>
+        </div>
+      </div>
+
+      <label class="modal-field modal-field-row" for="export-include-reference-images">
+        <input type="checkbox" id="export-include-reference-images" checked />
+        <span class="modal-label">배경/참고 이미지 포함</span>
+      </label>
+
+      <label class="modal-field modal-field-row" for="export-fit-content"
+             title="아트보드 전체가 아니라 그려진 것에 딱 맞춰 내보냅니다.&#10;[영역 지정]으로 손수 잡지 않아도 여백이 사라집니다.">
+        <input type="checkbox" id="export-fit-content" />
+        <span class="modal-label">내용에 맞춤 (여백 없이)</span>
+        <input type="number" id="export-fit-padding" class="modal-input" value="0" min="0" max="50" step="0.5"
+               style="width:64px;margin-left:auto;text-align:right" disabled />
+        <span class="modal-label" style="flex:none">mm</span>
+      </label>
+
+      <!-- 저장 폴더: 한 번 연결해 두면 내보낼 때마다 위치를 묻지 않는다.
+           지원하지 않는 브라우저(Firefox/Safari)에서는 이 줄이 통째로 감춰지고
+           기존 다운로드 동작이 그대로 남는다. -->
+      <div class="modal-field" id="export-dir-field">
+        <span class="modal-label">저장 폴더</span>
+        <div class="batch-dir">
+          <span class="batch-dir-path is-empty" id="export-dir-path">지정하지 않음 — 내보낼 때마다 묻습니다</span>
+          <button type="button" class="modal-btn" id="export-dir-pick">폴더 연결</button>
+          <button type="button" class="modal-btn" id="export-dir-clear" hidden>해제</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn" id="export-cancel">취소</button>
+        <button type="button" class="modal-btn" id="export-preview">미리보기</button>
+        <button type="button" class="modal-btn" id="export-area">영역 지정</button>
+        <button type="button" class="modal-btn" id="export-all-pages"
+                title="저장 폴더를 지정하고 내보낼 페이지를 골라 PNG로 저장합니다.">페이지 선택…</button>
+        <button type="button" class="modal-btn" id="export-copy"
+                title="PNG를 클립보드에 복사 — 한글(HWP)·PPT에 바로 붙여넣기(Ctrl+V)">복사</button>
+        <button type="button" class="modal-btn modal-btn-primary" id="export-confirm">내보내기</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+/* ----- segmented control: single active button, returns chosen value ----- */
+function wireSegment(group, attr, onChange) {
+  group.addEventListener("click", (e) => {
+    const target = e.target.closest(".seg-btn");
+    if (!target) return;
+    group.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("is-active"));
+    target.classList.add("is-active");
+    if (onChange) onChange(target.getAttribute(attr));
+  });
+}
+function segValue(group, attr) {
+  const active = group.querySelector(".seg-btn.is-active");
+  return active ? active.getAttribute(attr) : null;
+}
+
+/* ----- selected-area capture: 그리기 → 크기 조절 → Enter 확정 -----
+ * 화면을 어둡게 덮고 사용자가 사각형을 그린다. 마우스업 후에도 바로 끝나지 않고,
+ * 8개 핸들로 크기를 조절하거나 본체를 끌어 이동할 수 있으며 드래그·조절 내내 실제
+ * 크기(mm)가 실시간 표시된다. Enter로 확정(화면 사각형 → world 좌표 → onDone(bounds)),
+ * Esc/우클릭으로 취소(onDone(null)). world 1단위=1mm이므로 라벨은 mm.
+ * 미리보기·영역지정(export) 둘 다 이 한 함수를 쓴다. */
+export function runAreaCapture(svg, state, onDone, hintText) {
+  const overlay = document.createElement("div");
+  overlay.className = "capture-overlay";
+  /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
+   *   9000 이던 시절엔 튜토리얼이 도는 동안 흐림 4장이 마우스를 먼저 먹어
+   *   '영역 지정'을 눌러도 **캔버스에서 드래그가 되지 않았다**(사용자 지적).
+   *   설명 창(100012)보다는 아래에 둬서 안내는 계속 읽히게 한다. */
+  overlay.style.cssText =
+    "position:fixed;inset:0;z-index:100011;cursor:crosshair;" +
+    "background:rgba(0,0,0,0.35);user-select:none;";
+
+  const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
+  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · [내보내기] 또는 Enter 로 확정 · Esc 취소";
+  const hint = document.createElement("div");
+  hint.textContent = HINT_DRAW;
+  hint.style.cssText =
+    "position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:2;" +
+    "padding:6px 14px;border-radius:4px;background:rgba(20,20,22,0.92);white-space:nowrap;" +
+    "color:#fff;font-size: 13px;font-weight:500;pointer-events:none;" +
+    "box-shadow:0 1px 6px rgba(0,0,0,0.4);";
+  overlay.appendChild(hint);
+
+  const rect = document.createElement("div");
+  rect.style.cssText =
+    "position:absolute;border:1.5px solid #4aa3ff;background:rgba(74,163,255,0.18);" +
+    "display:none;box-sizing:border-box;";
+  overlay.appendChild(rect);
+
+  // 실제 크기(mm) 라벨 — 클릭해 숫자를 직접 입력할 수 있다: 가로 입력 → Tab → 세로,
+  // Enter로 확정. 입력을 위해 pointer-events를 켠다(overlay onDown은 이 영역 클릭을 통과시킴).
+  const dim = document.createElement("div");
+  dim.dataset.dim = "1";
+  dim.style.cssText =
+    "position:absolute;display:none;z-index:3;padding:2px 6px;border-radius:3px;cursor:text;" +
+    "background:var(--accent);color:#fff;font-size: 12px;font-weight:600;" +
+    "white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,0.4);";
+  const INP =
+    "width:46px;text-align:right;font:inherit;color:#fff;border:0;border-radius:3px;" +
+    "background:rgba(255,255,255,0.18);padding:1px 4px;outline:none;";
+  const wInput = document.createElement("input");
+  wInput.type = "text"; wInput.inputMode = "decimal"; wInput.style.cssText = INP;
+  const hInput = document.createElement("input");
+  hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
+  const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
+  const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
+  /* 확정 단추 — 크기 표시 바로 옆.
+   * Enter 로만 확정하게 두면 "다 골라 놓고 어떻게 끝내는지 몰라" 멈춘다(사용자 지적).
+   * 눌러서 끝내는 길을 눈에 보이게 둔다. Enter 는 그대로 살려 둔다(빠른 길). */
+  const okBtn = document.createElement("button");
+  okBtn.type = "button";
+  okBtn.id = "capture-confirm";
+  okBtn.textContent = "내보내기";
+  okBtn.style.cssText =
+    "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
+    "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
+  okBtn.textContent = "지정";
+  okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
+  okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
+  dim.append(wInput, sepX, hInput, sepU, okBtn);
+  overlay.appendChild(dim);
+  [wInput, hInput].forEach((inp) => {
+    inp.addEventListener("focus", () => { inp.select(); inp.style.background = "rgba(255,255,255,0.40)"; });
+    inp.addEventListener("blur", () => { inp.style.background = "rgba(255,255,255,0.18)"; });
+  });
+  wInput.addEventListener("input", () => applyTypedSize("w"));
+  hInput.addEventListener("input", () => applyTypedSize("h"));
+  // 라벨의 숫자 아닌 부분(× / mm / 여백)을 눌러도 가로 입력으로 포커스.
+  dim.addEventListener("mousedown", (e) => {
+    if (e.target === dim || e.target === sepX || e.target === sepU) { e.preventDefault(); wInput.focus(); }
+  });
+
+  // 8개 리사이즈 핸들: [id, x비율, y비율] (0=좌/상, .5=중앙, 1=우/하).
+  const HANDLES = [
+    ["nw", 0, 0], ["n", 0.5, 0], ["ne", 1, 0],
+    ["w", 0, 0.5],               ["e", 1, 0.5],
+    ["sw", 0, 1], ["s", 0.5, 1], ["se", 1, 1],
+  ];
+  const CURSORS = { nw: "nwse-resize", ne: "nesw-resize", se: "nwse-resize", sw: "nesw-resize", n: "ns-resize", s: "ns-resize", e: "ew-resize", w: "ew-resize" };
+  const handleEls = {};
+  for (const [id] of HANDLES) {
+    const h = document.createElement("div");
+    h.dataset.h = id;
+    h.style.cssText =
+      "position:absolute;width:11px;height:11px;margin:-6px 0 0 -6px;display:none;z-index:4;" +
+      "background:#fff;border:1.5px solid var(--accent);border-radius:2px;box-sizing:border-box;cursor:" + CURSORS[id] + ";";
+    overlay.appendChild(h);
+    handleEls[id] = h;
+  }
+
+  /* ⚠ body 가 아니라 documentElement 에 붙인다.
+   *   css/style.css 가 body{zoom:var(--ui-zoom)} 를 걸어 두어(화면 배율), body 밑에
+   *   붙이면 이 오버레이만 배율이 곱해진 좌표계에서 그려진다. 반면 아래 계산은 전부
+   *   clientX/clientY(뷰포트 실측 px)라서, 배율이 1이 아닌 화면에서는 **끄는 자리와
+   *   그려지는 사각형이 어긋났다**(사용자 지적: 배율 1.12에서 12% 어긋남).
+   *   js/tutorial.js 가 레이어를 documentElement 에 붙이는 것과 같은 이유다. */
+  document.documentElement.appendChild(overlay);
+
+  let box = null;      // { l, t, r, b } client px (그리는 중엔 비정규화 가능)
+  let phase = "draw";  // "draw" | "adjust"
+  let mode = null;     // null | "draw" | "move" | "resize"
+  let dragH = null;    // 리사이즈 중 핸들 id
+  let anchor = null;   // move 시작 스냅샷
+
+  function normBox() {
+    if (!box) return;
+    if (box.l > box.r) { const t = box.l; box.l = box.r; box.r = t; }
+    if (box.t > box.b) { const t = box.t; box.t = box.b; box.b = t; }
+  }
+  function worldSize() {
+    const vb = state.get().viewBox;
+    const w1 = screenToWorld(svg, vb, box.l, box.t);
+    const w2 = screenToWorld(svg, vb, box.r, box.b);
+    return { w: Math.abs(w2.x - w1.x), h: Math.abs(w2.y - w1.y) };
+  }
+  // 화면 px ↔ world(mm) 배율(현재 줌). 타이핑한 mm를 박스 화면 크기로 되돌릴 때 쓴다.
+  function screenPerMm() {
+    const vb = state.get().viewBox;
+    const a = screenToWorld(svg, vb, 0, 0);
+    const b = screenToWorld(svg, vb, 200, 200);
+    const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y);
+    return { x: dx > 1e-6 ? 200 / dx : 1, y: dy > 1e-6 ? 200 / dy : 1 };
+  }
+  // 입력한 mm로 박스 크기를 맞춘다(좌상단 고정). 입력 중인 필드는 render가 덮어쓰지 않음.
+  function applyTypedSize(which) {
+    if (!box) return;
+    const val = parseFloat((which === "w" ? wInput.value : hInput.value).trim());
+    if (!isFinite(val) || val <= 0) return;
+    normBox();
+    const s = screenPerMm();
+    if (which === "w") box.r = box.l + val * s.x;
+    else box.b = box.t + val * s.y;
+    render();
+  }
+  function render() {
+    if (!box) {
+      rect.style.display = "none"; dim.style.display = "none";
+      for (const id in handleEls) handleEls[id].style.display = "none";
+      return;
+    }
+    const l = Math.min(box.l, box.r), t = Math.min(box.t, box.b);
+    const w = Math.abs(box.r - box.l), h = Math.abs(box.b - box.t);
+    rect.style.display = "block";
+    rect.style.left = l + "px"; rect.style.top = t + "px";
+    rect.style.width = w + "px"; rect.style.height = h + "px";
+    rect.style.cursor = phase === "adjust" ? "move" : "crosshair";
+    rect.style.pointerEvents = phase === "adjust" ? "auto" : "none";
+    const showH = phase === "adjust";
+    for (const [id, ex, ey] of HANDLES) {
+      const el = handleEls[id];
+      el.style.display = showH ? "block" : "none";
+      if (showH) { el.style.left = (l + ex * w) + "px"; el.style.top = (t + ey * h) + "px"; }
+    }
+    const ws = worldSize();
+    if (document.activeElement !== wInput) wInput.value = ws.w.toFixed(1);
+    if (document.activeElement !== hInput) hInput.value = ws.h.toFixed(1);
+    dim.style.display = "block";
+    let dy = t - 26; if (dy < 4) dy = t + 4;
+    dim.style.left = l + "px"; dim.style.top = dy + "px";
+  }
+
+  function cleanup() {
+    overlay.removeEventListener("mousedown", onDown);
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+    window.removeEventListener("keydown", onKey, true);
+    overlay.removeEventListener("contextmenu", onCtx);
+    overlay.remove();
+  }
+  function finish(bounds) { cleanup(); onDone(bounds); }
+  function cancel() { finish(null); }
+  function confirm() {
+    if (!box) return;
+    normBox();
+    if ((box.r - box.l) < 4 || (box.b - box.t) < 4) return; // 너무 작으면 무시
+    const vb = state.get().viewBox;
+    const w1 = screenToWorld(svg, vb, box.l, box.t);
+    const w2 = screenToWorld(svg, vb, box.r, box.b);
+    finish({
+      x: Math.min(w1.x, w2.x), y: Math.min(w1.y, w2.y),
+      w: Math.abs(w2.x - w1.x), h: Math.abs(w2.y - w1.y),
+    });
+  }
+
+  function onDown(e) {
+    if (e.button !== 0) return; // 좌클릭만; 우클릭은 onCtx로 취소
+    if (e.target && e.target.closest && e.target.closest("[data-dim]")) return; // 숫자 입력 클릭 → 포커스만
+    e.preventDefault();
+    const hEl = e.target && e.target.closest ? e.target.closest("[data-h]") : null;
+    if (phase === "adjust" && hEl) {                 // 핸들 → 리사이즈
+      mode = "resize"; dragH = hEl.dataset.h;
+    } else if (phase === "adjust" && e.target === rect) { // 본체 → 이동
+      mode = "move";
+      anchor = { x: e.clientX, y: e.clientY, l: box.l, t: box.t, r: box.r, b: box.b };
+    } else {                                          // 빈 곳 → 새로 그리기
+      mode = "draw"; phase = "draw"; hint.textContent = HINT_DRAW;
+      box = { l: e.clientX, t: e.clientY, r: e.clientX, b: e.clientY };
+    }
+    render();
+  }
+  function onMove(e) {
+    if (!mode) return;
+    if (mode === "draw") {
+      box.r = e.clientX; box.b = e.clientY;
+    } else if (mode === "move") {
+      const dx = e.clientX - anchor.x, dy = e.clientY - anchor.y;
+      box.l = anchor.l + dx; box.r = anchor.r + dx;
+      box.t = anchor.t + dy; box.b = anchor.b + dy;
+    } else if (mode === "resize") {
+      const id = dragH;
+      if (id.includes("w")) box.l = e.clientX;
+      if (id.includes("e")) box.r = e.clientX;
+      if (id.includes("n")) box.t = e.clientY;
+      if (id.includes("s")) box.b = e.clientY;
+    }
+    render();
+  }
+  function onUp() {
+    if (!mode) return;
+    if (mode === "draw") {
+      normBox();
+      if ((box.r - box.l) < 4 || (box.b - box.t) < 4) { box = null; phase = "draw"; }
+      else { phase = "adjust"; hint.textContent = HINT_ADJUST; }
+    } else {
+      normBox();
+    }
+    mode = null; dragH = null; anchor = null;
+    render();
+  }
+  function onKey(e) {
+    // 캡처 단계 + stopPropagation: 뒤의 다이얼로그/앱 단축키가 함께 발동하지 않게.
+    if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancel(); }
+    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); confirm(); }
+  }
+  function onCtx(e) { e.preventDefault(); cancel(); }
+
+  overlay.addEventListener("mousedown", onDown);
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+  window.addEventListener("keydown", onKey, true);
+  overlay.addEventListener("contextmenu", onCtx);
+}
+
+/* ----- initExportDialog: wire dropdown + modal to the export functions ----- */
+export function initExportDialog(state, svg) {
+  initFileMenu();
+
+  const overlay = buildModal();
+  const formatGroup = overlay.querySelector("#export-format");
+  const dpiGroup = overlay.querySelector("#export-dpi");
+  const dpiField = overlay.querySelector("#export-dpi-field");
+  const filenameInput = overlay.querySelector("#export-filename");
+  const includeReferenceImagesInput = overlay.querySelector("#export-include-reference-images");
+  const fitContentInput = overlay.querySelector("#export-fit-content");
+  const fitPaddingInput = overlay.querySelector("#export-fit-padding");
+  fitContentInput.addEventListener("change", () => {
+    fitPaddingInput.disabled = !fitContentInput.checked;
+  });
+
+  // "내용에 맞춤"이 켜져 있으면 보이는 객체 bbox 합집합(+여백)을 쓰고, 담을 게 없으면
+  // null을 돌려 기존 아트보드 기준으로 되돌아간다.
+  function fitBounds(options) {
+    if (!fitContentInput.checked) return null;
+    const pad = Math.max(0, parseFloat(fitPaddingInput.value) || 0);
+    return getContentBounds(state.get(), options, pad);
+  }
+
+  // isReopen: 미리보기/영역지정에서 Esc로 취소하고 이 다이얼로그로 되돌아오는 경우
+  // true로 넘긴다. 이때는 사용자가 이미 입력해 둔 파일명(input이 DOM에 그대로 남아
+  // 있음)을 타임스탬프로 덮어쓰지 않는다 — 새로 여는 경우(openBtn)만 리셋한다.
+  /* ----- 저장 폴더 줄 ----- */
+  const dirField = overlay.querySelector("#export-dir-field");
+  const dirPath = overlay.querySelector("#export-dir-path");
+  const dirPick = overlay.querySelector("#export-dir-pick");
+  const dirClear = overlay.querySelector("#export-dir-clear");
+  async function syncDirRow() {
+    if (!FS_DIR_SUPPORTED) { dirField.hidden = true; return; }
+    dirField.hidden = false;
+    await loadSavedDir();
+    const name = currentDirName();
+    dirPath.textContent = name || "지정하지 않음 — 내보낼 때마다 묻습니다";
+    dirPath.classList.toggle("is-empty", !name);
+    dirPick.textContent = name ? "폴더 변경" : "폴더 연결";
+    dirClear.hidden = !name;
+  }
+  dirPick.addEventListener("click", async () => { await pickDir(); syncDirRow(); });
+  dirClear.addEventListener("click", async () => { await clearDir(); syncDirRow(); });
+
+  function showModal(isReopen = false) {
+    overlay.hidden = false;
+    syncDirRow();
+    if (!isReopen) {
+      // Refresh the default name to the current minute each time the dialog opens
+      // fresh (unless the user has typed a custom name this session is fine to
+      // overwrite — the field is always reset to the live timestamp on open).
+      filenameInput.value = defaultNameBase();
+    }
+    filenameInput.focus();
+    filenameInput.select();
+  }
+  function hideModal() {
+    overlay.hidden = true;
+  }
+
+  // 해상도 row is meaningful for PNG only.
+  wireSegment(formatGroup, "data-format", (fmt) => {
+    dpiField.style.display = fmt === "svg" ? "none" : "";
+  });
+  wireSegment(dpiGroup, "data-dpi", null);
+
+  // Open from the dropdown item.
+  const openBtn = document.getElementById("image-export");
+  if (openBtn) openBtn.addEventListener("click", showModal);
+
+  // Cancel / overlay-click / Escape close without exporting.
+  overlay.querySelector("#export-cancel").addEventListener("click", hideModal);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) hideModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !overlay.hidden) hideModal();
+  });
+
+  // Alt+P → open the image export dialog (P = print/picture; mirrors the text
+  // tool's single-key feel). preventDefault only inside the app so it never
+  // collides with a browser/system shortcut. Skip while typing in a field.
+  window.addEventListener("keydown", (e) => {
+    if (!e.altKey || e.ctrlKey || e.metaKey) return;
+    if ((e.key || "").toLowerCase() !== "p") return;
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    e.preventDefault();
+    if (overlay.hidden) showModal();
+  });
+
+  // Export the current settings, optionally cropped to a world-coord rectangle.
+  function doExport(bounds) {
+    const name = sanitizeFilename(filenameInput.value) || defaultNameBase();
+    const format = segValue(formatGroup, "data-format");
+    const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+    // 영역을 손수 지정했으면 그것이 우선. 아니면 "내용에 맞춤" 설정을 따른다.
+    const region = bounds || fitBounds(options);
+    if (format === "svg") {
+      exportSvg(state, `${name}.svg`, region, options);
+    } else {
+      const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
+      exportPng(state, `${name}.png`, dpi, region, options);
+    }
+  }
+
+  // Full-artboard export (unchanged behavior: bounds = null).
+  overlay.querySelector("#export-confirm").addEventListener("click", () => {
+    doExport(null);
+    hideModal();
+  });
+
+  // [복사]: 현재 설정(dpi·참고이미지)으로 PNG를 클립보드에 — 한글/PPT에 바로 Ctrl+V.
+  const copyBtn = overlay.querySelector("#export-copy");
+  copyBtn.addEventListener("click", async () => {
+    const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+    const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
+    copyBtn.disabled = true;
+    try {
+      const ok = await copyPngToClipboard(state, dpi, fitBounds(options), options);
+      if (ok) {
+        const orig = copyBtn.textContent;
+        copyBtn.textContent = "복사됨!";
+        setTimeout(() => { copyBtn.textContent = orig; copyBtn.disabled = false; }, 1200);
+        return;
+      }
+      showAlert("이 브라우저 환경에서는 클립보드 복사를 지원하지 않습니다.\n(내보내기로 파일 저장을 이용하세요)", { title: "복사" });
+    } catch (_) {
+      showAlert("클립보드 복사에 실패했습니다. 다시 시도해 주세요.", { title: "복사" });
+    }
+    copyBtn.disabled = false;
+  });
+
+  // 미리보기: 먼저 영역을 지정하게 한 뒤(영역지정과 동일한 드래그), 그 영역을 실제
+  // 시험지 위 실제 크기로 얹어 확인한다. 같은 dpi/참고이미지 설정을 넘겨 "미리 본
+  // 그대로 내보내지도록" 한다. 취소 시 다이얼로그로 복귀.
+  const previewBtn = overlay.querySelector("#export-preview");
+  if (previewBtn && svg) {
+    previewBtn.addEventListener("click", () => {
+      hideModal();
+      runAreaCapture(svg, state, (bounds) => {
+        if (!bounds) { showModal(true); return; }
+        const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
+        const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+        openExamPreview({ state, dpi, options, bounds });
+      }, "미리볼 영역을 드래그하십시오");
+    });
+  }
+
+  // 전체 페이지 일괄 내보내기: 예전에는 이 버튼을 누르는 즉시 모든 페이지가 다운로드
+  // 폴더로 쏟아졌다. 지금은 중간 단계(export-batch.js)를 연다 — 저장 폴더를 연결하고,
+  // 탭에 열린 페이지 중 내보낼 것을 고르고, 페이지에 지정한 이름을 그대로 파일명으로
+  // 쓴다. SVG는 페이지당 파일이 여러 개라 애매하므로 PNG만 지원하는 것은 그대로다.
+  const allBtn = overlay.querySelector("#export-all-pages");
+  if (allBtn) {
+    allBtn.addEventListener("click", () => {
+      const base = sanitizeFilename(filenameInput.value) || defaultNameBase();
+      const dpi = parseInt(segValue(dpiGroup, "data-dpi"), 10) || 300;
+      const options = { includeReferenceImages: includeReferenceImagesInput?.checked !== false };
+      hideModal();
+      openBatchExport({ state, dpi, options, baseName: base });
+    });
+  }
+
+  // Selected-area export: hide the modal, drag a rectangle, export just that.
+  const areaBtn = overlay.querySelector("#export-area");
+  if (areaBtn && svg) {
+    areaBtn.addEventListener("click", () => {
+      hideModal();
+      runAreaCapture(svg, state, (bounds) => {
+        if (bounds) doExport(bounds);
+        else showModal(true); // cancelled → reopen the dialog where we left off(입력값 유지)
+      });
+    });
+  }
+}

@@ -1,0 +1,768 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="247.13mm"
+   height="115.29mm"
+   id="0"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="N-glycan precursor biosynthesis, EC 2.4.1.256.wmf">
+  <metadata
+     id="metadata3116">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3114" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1590"
+     inkscape:window-height="1075"
+     id="namedview3112"
+     showgrid="false"
+     inkscape:zoom="0.54815954"
+     inkscape:cx="437.82874"
+     inkscape:cy="204.25394"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="0" />
+  <g
+     id="1"
+     transform="matrix(1.0287778,0,0,1.0771791,49.03846,21.669866)">
+    <text
+       id="2"
+       xml:space="preserve"
+       x="231.2"
+       y="13.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="3"
+       xml:space="preserve"
+       x="99.199997"
+       y="334.23999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="4"
+       xml:space="preserve"
+       x="32.799999"
+       y="334.23999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="5"
+       xml:space="preserve"
+       x="159.2"
+       y="104.64"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="6"
+       xml:space="preserve"
+       x="93.599998"
+       y="104.64"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="7"
+       xml:space="preserve"
+       x="375.20001"
+       y="39.84"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="8"
+       xml:space="preserve"
+       x="120"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="9"
+       xml:space="preserve"
+       x="53.599998"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="10"
+       xml:space="preserve"
+       x="180"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="11"
+       xml:space="preserve"
+       x="114.4"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="12"
+       xml:space="preserve"
+       x="308"
+       y="13.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="13"
+       xml:space="preserve"
+       x="156.8"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="14"
+       xml:space="preserve"
+       x="90.400002"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="15"
+       xml:space="preserve"
+       x="96"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial" />
+    <text
+       id="16"
+       xml:space="preserve"
+       x="96"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial" />
+    <text
+       id="17"
+       xml:space="preserve"
+       x="216.8"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="18"
+       xml:space="preserve"
+       x="151.2"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <path
+       id="19"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 329.3,191.15 c 16.35,0.2 29.7,-6.3 29.8,-14.5 0.05,-8.2 -13.15,-14.95 -29.5,-15.15 0,0 0,0 0,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="20"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 329.3,191.15 2.3,2 -7.9,-1.95 8.05,-2.05 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="21"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 329.3,191.15 2.3,2 -7.9,-1.95 8.05,-2.05 z"
+       inkscape:connector-curvature="0" />
+    <text
+       id="22"
+       xml:space="preserve"
+       x="260"
+       y="12.32"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="23"
+       xml:space="preserve"
+       x="0.80000001"
+       y="213.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:Arial" />
+    <text
+       id="24"
+       xml:space="preserve"
+       x="0.80000001"
+       y="213.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:Arial" />
+    <text
+       id="25"
+       xml:space="preserve"
+       x="368"
+       y="31.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">6</text>
+    <text
+       id="26"
+       xml:space="preserve"
+       x="368"
+       y="46.720001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="27"
+       xml:space="preserve"
+       x="334.39999"
+       y="60.32"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="28"
+       xml:space="preserve"
+       x="509.60001"
+       y="79.040001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">GlcNAc</text>
+    <text
+       id="29"
+       xml:space="preserve"
+       x="464.79999"
+       y="77.919998"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">b1</text>
+    <text
+       id="30"
+       xml:space="preserve"
+       x="334.39999"
+       y="13.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="31"
+       xml:space="preserve"
+       x="430.39999"
+       y="69.919998"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">6</text>
+    <text
+       id="32"
+       xml:space="preserve"
+       x="214.39999"
+       y="166.24001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="33"
+       xml:space="preserve"
+       x="274.39999"
+       y="193.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">P-Dol</text>
+    <text
+       id="34"
+       xml:space="preserve"
+       x="556.79999"
+       y="78.720001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">b1</text>
+    <text
+       id="35"
+       xml:space="preserve"
+       x="251.2"
+       y="104.32"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="36"
+       xml:space="preserve"
+       x="396"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="37"
+       xml:space="preserve"
+       x="237.60001"
+       y="243.84"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="38"
+       xml:space="preserve"
+       x="299.20001"
+       y="12.32"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="39"
+       xml:space="preserve"
+       x="439.20001"
+       y="78.239998"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="40"
+       xml:space="preserve"
+       x="297.60001"
+       y="105.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="41"
+       xml:space="preserve"
+       x="230.39999"
+       y="61.439999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="42"
+       xml:space="preserve"
+       x="288"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="43"
+       xml:space="preserve"
+       x="398.39999"
+       y="46.720001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="44"
+       xml:space="preserve"
+       x="429.60001"
+       y="85.120003"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="45"
+       xml:space="preserve"
+       x="308"
+       y="61.439999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="46"
+       xml:space="preserve"
+       x="235.2"
+       y="165.92"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">b1</text>
+    <text
+       id="47"
+       xml:space="preserve"
+       x="381.60001"
+       y="270.23999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="48"
+       xml:space="preserve"
+       x="503.20001"
+       y="77.919998"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">4</text>
+    <text
+       id="49"
+       xml:space="preserve"
+       x="370.39999"
+       y="104.64"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="50"
+       xml:space="preserve"
+       x="600.79999"
+       y="79.839996"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">GlcNAc</text>
+    <text
+       id="51"
+       xml:space="preserve"
+       x="683.20001"
+       y="79.839996"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">PP-Dol</text>
+    <text
+       id="52"
+       xml:space="preserve"
+       x="224.8"
+       y="105.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="53"
+       xml:space="preserve"
+       x="259.20001"
+       y="60.32"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="54"
+       xml:space="preserve"
+       x="645.59998"
+       y="77.919998"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="55"
+       xml:space="preserve"
+       x="324"
+       y="103.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="56"
+       xml:space="preserve"
+       x="314.39999"
+       y="243.84"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="57"
+       xml:space="preserve"
+       x="593.59998"
+       y="78.720001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">4</text>
+    <text
+       id="58"
+       xml:space="preserve"
+       x="266.39999"
+       y="242.72"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="59"
+       xml:space="preserve"
+       x="361.60001"
+       y="102.72"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="60"
+       xml:space="preserve"
+       x="273.60001"
+       y="167.03999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">P-Dol</text>
+    <text
+       id="61"
+       xml:space="preserve"
+       x="298.39999"
+       y="59.52"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="62"
+       xml:space="preserve"
+       x="373.60001"
+       y="276.32001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="63"
+       xml:space="preserve"
+       x="373.60001"
+       y="261.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">6</text>
+    <text
+       id="64"
+       xml:space="preserve"
+       x="340"
+       y="242.72"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="65"
+       xml:space="preserve"
+       x="340.79999"
+       y="289.92001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="66"
+       xml:space="preserve"
+       x="401.60001"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="67"
+       xml:space="preserve"
+       x="257.60001"
+       y="333.92001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="68"
+       xml:space="preserve"
+       x="436"
+       y="299.51999"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">6</text>
+    <text
+       id="69"
+       xml:space="preserve"
+       x="444.79999"
+       y="307.84"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="70"
+       xml:space="preserve"
+       x="236.8"
+       y="291.04001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="71"
+       xml:space="preserve"
+       x="305.60001"
+       y="241.92"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="72"
+       xml:space="preserve"
+       x="164.8"
+       y="335.04001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Glc</text>
+    <text
+       id="73"
+       xml:space="preserve"
+       x="470.39999"
+       y="307.51999"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">b1</text>
+    <text
+       id="74"
+       xml:space="preserve"
+       x="514.40002"
+       y="308.64001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">GlcNAc</text>
+    <text
+       id="75"
+       xml:space="preserve"
+       x="304"
+       y="335.04001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="76"
+       xml:space="preserve"
+       x="404"
+       y="276.32001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="77"
+       xml:space="preserve"
+       x="507.20001"
+       y="307.51999"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">4</text>
+    <text
+       id="78"
+       xml:space="preserve"
+       x="436"
+       y="314.72"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <text
+       id="79"
+       xml:space="preserve"
+       x="294.39999"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="80"
+       xml:space="preserve"
+       x="689.59998"
+       y="309.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">PP-Dol</text>
+    <text
+       id="81"
+       xml:space="preserve"
+       x="231.2"
+       y="335.04001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="82"
+       xml:space="preserve"
+       x="314.39999"
+       y="291.04001"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="83"
+       xml:space="preserve"
+       x="607.20001"
+       y="309.44"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">GlcNAc</text>
+    <text
+       id="84"
+       xml:space="preserve"
+       x="376.79999"
+       y="334.23999"
+       style="font-size:12.80000019px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#000000;font-family:Arial">Man</text>
+    <text
+       id="85"
+       xml:space="preserve"
+       x="561.59998"
+       y="308.32001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">b1</text>
+    <text
+       id="86"
+       xml:space="preserve"
+       x="653.59998"
+       y="307.51999"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="87"
+       xml:space="preserve"
+       x="330.39999"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="88"
+       xml:space="preserve"
+       x="265.60001"
+       y="289.92001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="89"
+       xml:space="preserve"
+       x="185.60001"
+       y="333.92001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">a1</text>
+    <text
+       id="90"
+       xml:space="preserve"
+       x="368"
+       y="332.32001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="91"
+       xml:space="preserve"
+       x="600"
+       y="308.32001"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">4</text>
+    <text
+       id="92"
+       xml:space="preserve"
+       x="304.79999"
+       y="289.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">2</text>
+    <text
+       id="93"
+       xml:space="preserve"
+       x="222.39999"
+       y="333.12"
+       style="font-size:10.39999962px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#0000ff;font-family:Arial">3</text>
+    <path
+       id="94"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 365.55,220.7 2.1,-8 -2,0 -2,0 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="95"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 365.55,220.7 2.1,-8 -2,0 -2,0 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="96"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 127.2,102.1 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="97"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 192.8,102.1 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="98"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 66.4,331.7 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="99"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 132.8,331.7 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="100"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 248.2,164 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="101"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 279.25,240.55 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="102"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 278.5,288.05 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="103"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 353.35,239.75 17.45,15.2"
+       inkscape:connector-curvature="0" />
+    <path
+       id="104"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 353.75,287.35 372,276.95"
+       inkscape:connector-curvature="0" />
+    <path
+       id="105"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 198.5,332.05 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="106"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 343.3,331.25 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="107"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 575.3,305.65 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="108"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 685.7,306.45 -20.95,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="109"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 485.05,305.6 20.6,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="110"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 417.05,278.7 17.45,15.2"
+       inkscape:connector-curvature="0" />
+    <path
+       id="111"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 270.65,331.95 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="112"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 415.65,325.9 433.9,315.5"
+       inkscape:connector-curvature="0" />
+    <path
+       id="113"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="M 409.6,96.1 427.85,85.7"
+       inkscape:connector-curvature="0" />
+    <path
+       id="114"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 264.6,102.2 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="115"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 411.05,48.9 17.4,15.2"
+       inkscape:connector-curvature="0" />
+    <path
+       id="116"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 479,75.8 20.65,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="117"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 679.65,76.65 -20.95,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="118"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 569.25,75.85 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="119"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 337.25,101.45 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="120"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 347.7,57.55 18.25,-10.4"
+       inkscape:connector-curvature="0" />
+    <path
+       id="121"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 347.3,9.95 17.45,15.2"
+       inkscape:connector-curvature="0" />
+    <path
+       id="122"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 272.45,58.25 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="123"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 273.2,10.75 21.45,0"
+       inkscape:connector-curvature="0" />
+    <path
+       id="124"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 365.8,127.7 -0.55,84.6"
+       inkscape:connector-curvature="0" />
+    <path
+       id="125"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none"
+       d="m 365.15,220.3 2.1,-8 -2,0 -2,0 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="126"
+       style="fill:none;stroke:#000000;stroke-width:0.44999999px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 365.15,220.3 2.1,-8 -2,0 -2,0 z"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="129" height="118" xmlns="http://www.w3.org/2000/svg">
+<g stroke="black" stroke-width="1">
+<circle cx="59" cy="59" r="58.5" fill="#007CC3" />
+<circle cx="113" cy="27" r="15.3" fill="#0093DD" /></g>
+<g fill="white" font-family="DejaVu Sans, Arial" font-size="14" letter-spacing="0.3">
+<text x="60" y="63" text-anchor="middle">Neptunus</text>
+<text x="98" y="28" text-anchor="middle">Aarde</text></g>
+</svg>

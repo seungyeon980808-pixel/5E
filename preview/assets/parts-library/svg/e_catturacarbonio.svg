@@ -1,0 +1,629 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.2"
+   width="750"
+   height="560"
+   id="svg2"
+   style="display:inline"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="CatturaCarbonio.svg">
+  <metadata
+     id="metadata3661">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1152"
+     inkscape:window-height="817"
+     id="namedview3659"
+     showgrid="false"
+     inkscape:zoom="0.59599"
+     inkscape:cx="374.69577"
+     inkscape:cy="229.96199"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3718">
+      <stop
+         id="stop3720"
+         style="stop-color:#e5e5e5;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3722"
+         style="stop-color:#808080;stop-opacity:0"
+         offset="1" />
+    </linearGradient>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Mend"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6,-0.6)"
+         id="path3792"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter3631-4">
+      <feGaussianBlur
+         stdDeviation="1.1048544"
+         id="feGaussianBlur3633-0" />
+    </filter>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="marker4648"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6,-0.6)"
+         id="path4650"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <linearGradient
+       x1="3.1531036"
+       y1="279.37378"
+       x2="453.19223"
+       y2="279.37378"
+       id="linearGradient3724"
+       xlink:href="#linearGradient3718"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.0778098,0,0,0.79285714,-620.60463,-133.25508)" />
+    <linearGradient
+       x1="3.1531036"
+       y1="279.37378"
+       x2="453.2587"
+       y2="279.37378"
+       id="linearGradient3728"
+       xlink:href="#linearGradient3718"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.0692842,0,0,0.76785714,-615.91373,261.19928)" />
+    <linearGradient
+       x1="3.1531036"
+       y1="279.37378"
+       x2="437.62271"
+       y2="279.37378"
+       id="linearGradient3732"
+       xlink:href="#linearGradient3718"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.97678571,24.422698,10.345442)" />
+  </defs>
+  <g
+     transform="translate(-26.846159,-1.2139586)"
+     id="layer2"
+     style="display:inline">
+    <rect
+       width="584.96637"
+       height="169.47932"
+       ry="84.739662"
+       x="-612.54218"
+       y="390.97879"
+       transform="scale(-1,1)"
+       id="rect3726"
+       style="color:#000000;fill:url(#linearGradient3728);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    <rect
+       width="547.06348"
+       height="215.59346"
+       x="27.575806"
+       y="175.43704"
+       id="rect3730"
+       style="color:#000000;fill:url(#linearGradient3732);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    <rect
+       width="589.63037"
+       height="174.99725"
+       ry="87.498627"
+       x="-617.20618"
+       y="0.74980044"
+       transform="scale(-1,1)"
+       id="rect3708"
+       style="color:#000000;fill:url(#linearGradient3724);fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    <g
+       transform="translate(13.717848,-12.813826)"
+       id="g3635"
+       style="display:inline">
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="286.84271"
+         y="140.15382"
+         id="rect2841"
+         style="opacity:0.3;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;filter:url(#filter3631-4)" />
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="282.84271"
+         y="136.15382"
+         id="rect2831"
+         style="fill:#f7b73c;fill-opacity:1;fill-rule:evenodd;stroke:none" />
+      <text
+         x="333.33005"
+         y="152.31627"
+         id="text2835"
+         xml:space="preserve"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+           x="333.33005"
+           y="152.31627"
+           id="tspan2837">Energia</tspan><tspan
+           x="333.33005"
+           y="169.81627"
+           id="tspan2839">e calore</tspan></text>
+    </g>
+    <use
+       transform="translate(164.55508,105.83809)"
+       id="use3642"
+       style="display:inline"
+       x="0"
+       y="0"
+       width="744.09448"
+       height="1052.3622"
+       xlink:href="#g3635" />
+    <use
+       transform="translate(2.0203081,291.93409)"
+       id="use3644"
+       style="display:inline"
+       x="0"
+       y="0"
+       width="744.09448"
+       height="1052.3622"
+       xlink:href="#g3635" />
+    <rect
+       width="104.04572"
+       height="42.426407"
+       x="286.84271"
+       y="140.15382"
+       transform="matrix(1.1611298,0,0,1.8644679,-38.662732,-49.702236)"
+       id="rect3648"
+       style="opacity:0.23815792;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;display:inline;filter:url(#filter3631-4)" />
+    <rect
+       width="120.81059"
+       height="79.102676"
+       x="289.75436"
+       y="204.15219"
+       id="rect3650"
+       style="fill:#b7c8c4;fill-rule:evenodd;stroke:none;display:inline" />
+    <text
+       x="350.6037"
+       y="220.81973"
+       id="text3671"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;opacity:0.79385968;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="350.6037"
+         y="220.81973"
+         id="tspan2859">Gassificazione o</tspan><tspan
+         x="350.6037"
+         y="234.81973"
+         id="tspan2861">parziale</tspan><tspan
+         x="350.6037"
+         y="248.81973"
+         id="tspan2863">ossidazione</tspan><tspan
+         x="350.6037"
+         y="262.81973"
+         id="tspan2865">+</tspan><tspan
+         x="350.6037"
+         y="276.81973"
+         id="tspan2867">separazione CO2</tspan></text>
+    <g
+       transform="translate(13.717848,191.34963)"
+       id="g2869"
+       style="display:inline">
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="286.84271"
+         y="140.15382"
+         id="rect2871"
+         style="opacity:0.3;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;filter:url(#filter3631-4)" />
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="282.84271"
+         y="136.15382"
+         id="rect2873"
+         style="fill:#afe9dd;fill-rule:evenodd;stroke:none" />
+      <text
+         x="333.33005"
+         y="152.31627"
+         id="text2875"
+         xml:space="preserve"
+         style="font-size:14px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial" />
+      <text
+         x="333.33005"
+         y="152.31627"
+         id="text2883"
+         xml:space="preserve"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+           x="333.33005"
+           y="152.31627"
+           id="tspan2885">Separazione</tspan><tspan
+           x="333.33005"
+           y="169.81627"
+           id="tspan2887">aria</tspan></text>
+    </g>
+    <use
+       transform="translate(2.3648281,172.63242)"
+       id="use2889"
+       style="display:inline"
+       x="0"
+       y="0"
+       width="744.09448"
+       height="1052.3622"
+       xlink:href="#g2869" />
+    <g
+       transform="translate(49.048967,10.860001)"
+       id="g6022">
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="286.84271"
+         y="140.15382"
+         transform="matrix(1.1611298,0,0,1.8644679,265.83004,-16.02465)"
+         id="rect2944"
+         style="opacity:0.23815792;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;display:inline;filter:url(#filter3631-4)" />
+      <rect
+         width="120.81059"
+         height="79.102676"
+         x="594.24713"
+         y="237.82977"
+         id="rect2946"
+         style="fill:#afe9af;fill-rule:evenodd;stroke:none;display:inline" />
+      <text
+         x="654.53906"
+         y="260.07126"
+         id="text2948"
+         xml:space="preserve"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;opacity:0.79385968;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+           x="654.53906"
+           y="260.07126"
+           id="tspan4919">Essicazione,</tspan><tspan
+           x="654.53906"
+           y="274.07126"
+           id="tspan4921">compressione,</tspan><tspan
+           x="654.53906"
+           y="288.07126"
+           id="tspan4923">trasporto e</tspan><tspan
+           x="654.53906"
+           y="302.07126"
+           id="tspan4925">deposito CO2</tspan></text>
+    </g>
+    <text
+       x="229.70546"
+       y="134.72488"
+       id="text2960"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.70546"
+         y="134.72488"
+         id="tspan2962">Combustibile</tspan></text>
+    <text
+       x="229.71913"
+       y="155.9366"
+       id="text2964"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.71913"
+         y="155.9366"
+         id="tspan2966">Aria</tspan></text>
+    <text
+       x="229.70546"
+       y="255.33112"
+       id="text2968"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.70546"
+         y="255.33112"
+         id="tspan2970">Combustibile</tspan></text>
+    <text
+       x="229.71913"
+       y="356.15869"
+       id="text2972"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.71913"
+         y="356.15869"
+         id="tspan2974">Aria</tspan></text>
+    <text
+       x="229.70546"
+       y="440.57596"
+       id="text2976"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.70546"
+         y="440.57596"
+         id="tspan2978">Combustibile</tspan></text>
+    <text
+       x="229.71913"
+       y="524.06146"
+       id="text2980"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="229.71913"
+         y="524.06146"
+         id="tspan2982">Aria</tspan></text>
+    <path
+       d="m 39.846161,175.58576 496.081749,0"
+       id="path2984"
+       style="fill:#000000;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:6, 6;stroke-dashoffset:0;display:inline" />
+    <path
+       d="m 39.846161,390.74032 492.737379,0"
+       id="path3758"
+       style="fill:#000000;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:6, 6;stroke-dashoffset:0;display:inline" />
+    <path
+       d="m 235.00375,130.99415 57.41171,0"
+       id="path3760"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 235.00375,154.64243 57.41171,0"
+       id="path4588"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <g
+       transform="translate(178.52292,-75.666776)"
+       id="use4590"
+       style="display:inline">
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="286.84271"
+         y="140.15382"
+         id="rect4594"
+         style="opacity:0.3;fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;filter:url(#filter3631-4)" />
+      <rect
+         width="104.04572"
+         height="42.426407"
+         x="282.84271"
+         y="136.15382"
+         id="rect4596"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#0000ff;stroke-opacity:1" />
+      <text
+         x="333.33005"
+         y="152.31627"
+         id="text4598"
+         xml:space="preserve"
+         style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+           x="333.33005"
+           y="152.31627"
+           id="tspan4604">Separazione</tspan><tspan
+           x="333.33005"
+           y="169.81627"
+           id="tspan4606">CO2</tspan></text>
+    </g>
+    <path
+       d="m 235.00375,251.0718 57.41171,0"
+       id="path4608"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 235.00375,353.07513 57.41171,0"
+       id="path4610"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 235.00375,437.7992 57.41171,0"
+       id="path4612"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 235.00375,520.56817 57.41171,0"
+       id="path4614"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <text
+       x="341.32202"
+       y="314.48087"
+       id="text4927"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="341.32202"
+         y="314.48087"
+         id="tspan4935">O2</tspan></text>
+    <text
+       x="342.4368"
+       y="488.38818"
+       id="text4931"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="342.4368"
+         y="488.38818"
+         id="tspan4937">O2</tspan></text>
+    <text
+       x="516.24213"
+       y="25.929604"
+       id="text4939"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="516.24213"
+         y="25.929604"
+         id="tspan4943">N2, O2, H2O</tspan></text>
+    <text
+       x="516.24213"
+       y="311.12729"
+       id="text4945"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="516.24213"
+         y="311.12729"
+         id="tspan4947">N2, O2, H2O</tspan></text>
+    <text
+       x="498.85187"
+       y="473.7348"
+       id="text4949"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="498.85187"
+         y="473.7348"
+         id="tspan4953">riciclo [CO2, H2O]</tspan></text>
+    <path
+       d="m 404.40624,438.37534 297.93314,0 0,-102.84082"
+       id="path4955"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#marker4648)" />
+    <path
+       d="m 571.31048,80.296725 154.24823,0 0,165.553175"
+       id="path4957"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#marker4648)" />
+    <path
+       d="m 349.78151,203.15456 0,-14.49228 335.66794,0 1.57655,56.63022"
+       id="path4959"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#marker4648)" />
+    <path
+       d="m 519.84674,438.51354 0,43.35518 -154.10794,0 0,-22.86"
+       id="path4961"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#marker4648)" />
+    <path
+       d="m 402.77971,353.07513 57.41171,0"
+       id="path4963"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 402.77971,521.40849 57.41171,0"
+       id="path4965"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <text
+       x="469.52289"
+       y="526.29108"
+       id="text4967"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="469.52289"
+         y="526.29108"
+         id="tspan4971">N2</tspan></text>
+    <text
+       x="469.52289"
+       y="357.40033"
+       id="text4973"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="469.52289"
+         y="357.40033"
+         id="tspan4975">N2</tspan></text>
+    <path
+       d="m 348.38867,498.54849 -0.13243,-37.64017"
+       id="path4977"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 347.01725,119.65595 0,-40.990349 108.78207,0"
+       id="path5806"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#marker4648)" />
+    <path
+       d="m 348.38867,326.54849 -0.13243,-37.64017"
+       id="path6008"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <text
+       x="689.66333"
+       y="426.73743"
+       id="text6010"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:125%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="689.66333"
+         y="426.73743"
+         id="tspan6014">CO2 [H2O]</tspan></text>
+    <text
+       x="705.4519"
+       y="220.66377"
+       id="text6016"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="705.4519"
+         y="220.66377"
+         id="tspan6018">CO2</tspan></text>
+    <path
+       d="m 415.91307,263.03036 41.64619,0"
+       id="path6020"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="m 415.91307,237.03036 41.64619,0"
+       id="path6031"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <text
+       x="436.64984"
+       y="230.91136"
+       id="text6033"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="436.64984"
+         y="230.91136"
+         id="tspan6037">H2</tspan></text>
+    <text
+       x="431.1319"
+       y="277.41965"
+       id="text6039"
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="431.1319"
+         y="277.41965"
+         id="tspan6043">aria</tspan></text>
+    <path
+       d="m 516.3661,270.81381 0.13243,25.93487"
+       id="path6045"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <path
+       d="M 516.56255,59.183157 516.43012,33.248292"
+       id="path6047"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Mend);display:inline" />
+    <text
+       x="38.088348"
+       y="35.935989"
+       id="text6053"
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="38.088348"
+         y="35.935989"
+         id="tspan6055"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial Bold">Cattura post-combustione</tspan></text>
+    <text
+       x="38.088348"
+       y="195.95599"
+       id="text6057"
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="38.088348"
+         y="195.95599"
+         id="tspan6059"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial Bold">Cattura pre-combustione</tspan></text>
+    <text
+       x="38.088348"
+       y="409.57877"
+       id="text6061"
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-weight:normal;text-align:start;line-height:125%;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="38.088348"
+         y="409.57877"
+         id="tspan6063"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial Bold">Cattura per ossi-combustione</tspan></text>
+    <text
+       x="-558.42029"
+       y="775.74036"
+       transform="matrix(0,-1,1,0,0,0)"
+       id="text3163"
+       xml:space="preserve"
+       style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+         x="-558.42029"
+         y="775.74036"
+         id="tspan3165">Sources: IEA, 2008b based on IPCC, 2005.</tspan></text>
+  </g>
+</svg>

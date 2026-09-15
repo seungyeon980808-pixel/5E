@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created by Michael W. Toews in VIM -->
+<svg
+	xmlns:svg="http://www.w3.org/2000/svg"
+	xmlns="http://www.w3.org/2000/svg"
+	version="1.1"
+	width="210"
+	height="330">
+	<g id="slashbackground" transform="translate(5,25)" 
+		stroke="#555" opacity="0.5" stroke-width="1">
+		<line x1="175" y1="0"   x2="200" y2="25"  />
+		<line x1="150" y1="0"   x2="200" y2="50"  />
+		<line x1="125" y1="0"   x2="200" y2="75"  />
+		<line x1="100" y1="0"   x2="200" y2="100" />
+		<line x1="75"  y1="0"   x2="200" y2="125" />
+		<line x1="50"  y1="0"   x2="200" y2="150" />
+		<line x1="25"  y1="0"   x2="200" y2="175" />
+		<line x1="0"   y1="0"   x2="200" y2="200" />
+		<line x1="0"   y1="25"  x2="200" y2="225" />
+		<line x1="0"   y1="50"  x2="200" y2="250" />
+		<line x1="0"   y1="75"  x2="200" y2="275" />
+		<line x1="0"   y1="100" x2="200" y2="300" />
+		<line x1="0"   y1="125" x2="175" y2="300" />
+		<line x1="0"   y1="150" x2="150" y2="300" />
+		<line x1="0"   y1="175" x2="125" y2="300" />
+    <line x1="0"   y1="200" x2="100" y2="300" />
+	  <line x1="0"   y1="225" x2="75"  y2="300" />
+	  <line x1="0"   y1="250" x2="50"  y2="300" />
+	  <line x1="0"   y1="275" x2="25"  y2="300" />
+  </g>
+  <g id="pixels" transform="translate(5,25) scale(50,50)">
+	  <rect x="0"  y="0"  width="1" height="1" fill="none" />
+  	<rect x="1"  y="0"  width="1" height="1" fill="none" />
+	  <rect x="2"  y="0"  width="1" height="1" fill="#FFF3F3" />
+  	<rect x="3"  y="0"  width="1" height="1" fill="#FFFBFB" />
+    <rect x="0"  y="1"  width="1" height="1" fill="none" />
+  	<rect x="1"  y="1"  width="1" height="1" fill="#FFCBCB" />
+	  <rect x="2"  y="1"  width="1" height="1" fill="#FF0000" />
+  	<rect x="3"  y="1"  width="1" height="1" fill="#FFA3A3" />
+    <rect x="0"  y="2"  width="1" height="1" fill="#FFF8F8" />
+  	<rect x="1"  y="2"  width="1" height="1" fill="#FFEAEA" />
+	  <rect x="2"  y="2"  width="1" height="1" fill="#FFA7A7" />
+  	<rect x="3"  y="2"  width="1" height="1" fill="#FFE6E6" />
+    <rect x="0"  y="3"  width="1" height="1" fill="#FFAEAE" />
+  	<rect x="1"  y="3"  width="1" height="1" fill="#FF9393" />
+	  <rect x="2"  y="3"  width="1" height="1" fill="#FF7F7F" />
+  	<rect x="3"  y="3"  width="1" height="1" fill="#FFF0F0" />
+    <rect x="0"  y="4"  width="1" height="1" fill="#FF1D1D" />
+  	<rect x="1"  y="4"  width="1" height="1" fill="#FF3F3F" />
+	  <rect x="2"  y="4"  width="1" height="1" fill="#FFBABA" />
+  	<rect x="3"  y="4"  width="1" height="1" fill="#FFE8E8" />
+    <rect x="0"  y="5"  width="1" height="1" fill="#FFDDDD" />
+  	<rect x="1"  y="5"  width="1" height="1" fill="#FFF2F2" />
+  	<rect x="2"  y="5"  width="1" height="1" fill="#FFFCFC" />
+	  <rect x="3"  y="5"  width="1" height="1" fill="none" />
+  </g>
+  <g id="coord" transform="translate(5,25)">
+    <circle cx="0" cy="300" r="2" fill="#600" />
+    <text x="2" y="298" font-size="14">(0,0)</text>
+  </g>
+  <g id="scale-bar" transform="translate(5,15)"
+      stroke="#000" stroke-width="1">
+    <line x1="0"   y1="0" x2="0"   y2="8" />
+    <line x1="200" y1="0" x2="200" y2="8" />
+    <line x1="0"   y1="4" x2="200" y2="4" />
+  </g>
+  <text x="105" y="16" font-size="14" text-anchor="middle">200</text> 
+</svg>

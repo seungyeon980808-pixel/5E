@@ -1,0 +1,1362 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="480"
+   width="380"
+   version="1.1"
+   id="SvgjsSvg1000"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="Gleichstrommaschine Schnittbild Position 45 Grad.svg">
+  <metadata
+     id="metadata3746">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="975"
+     inkscape:window-height="576"
+     id="namedview3744"
+     showgrid="false"
+     inkscape:zoom="3.9333333"
+     inkscape:cx="231.23984"
+     inkscape:cy="316.43623"
+     inkscape:window-x="49"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="SvgjsSvg1000" />
+  <rect
+     style="fill:#aaffaa;stroke:#000000;stroke-width:3"
+     id="SvgjsRect1811"
+     width="108"
+     height="240"
+     x="244"
+     y="53.25" />
+  <rect
+     style="fill:#ffaaaa;stroke:#000000;stroke-width:3"
+     id="SvgjsRect1812"
+     width="108"
+     height="240"
+     x="28"
+     y="53.25" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.75"
+     sodipodi:ry="18"
+     sodipodi:rx="18"
+     sodipodi:cy="178.875"
+     sodipodi:cx="215"
+     d="m 233,178.875 c 0,9.94113 -8.05887,18 -18,18 -9.94113,0 -18,-8.05887 -18,-18 0,-9.94113 8.05887,-18 18,-18 9.94113,0 18,8.05887 18,18 z"
+     id="SvgjsEllipse1813"
+     rx="18"
+     ry="18"
+     cx="215"
+     cy="178.875"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <rect
+     style="fill:#ffffff"
+     id="SvgjsRect1814"
+     width="105"
+     height="240"
+     x="137.5"
+     y="53.25" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1815"
+     x1="223.94116"
+     y1="156.27942"
+     x2="206.97058"
+     y2="139.30884" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1816"
+     x1="223.94116"
+     y1="156.27942"
+     x2="206.97058"
+     y2="139.30884" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1817"
+     x1="236.66901"
+     y1="143.55148"
+     x2="219.69852"
+     y2="126.58099" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1818"
+     x1="236.66901"
+     y1="143.55148"
+     x2="219.69852"
+     y2="126.58099" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1819"
+     x1="249.39694"
+     y1="130.82355"
+     x2="232.42645"
+     y2="113.85306" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1820"
+     x1="249.39694"
+     y1="130.82355"
+     x2="232.42645"
+     y2="113.85306" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1821"
+     x1="156.05884"
+     y1="190.22058"
+     x2="173.02942"
+     y2="207.19116" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1822"
+     x1="156.05884"
+     y1="190.22058"
+     x2="173.02942"
+     y2="207.19116" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1823"
+     x1="143.33099"
+     y1="202.94852"
+     x2="160.30148"
+     y2="219.91901" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1824"
+     x1="143.33099"
+     y1="202.94852"
+     x2="160.30148"
+     y2="219.91901" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1825"
+     x1="130.60306"
+     y1="215.67645"
+     x2="147.57355"
+     y2="232.64694" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1826"
+     x1="130.60306"
+     y1="215.67645"
+     x2="147.57355"
+     y2="232.64694" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1827"
+     x1="236.66901"
+     y1="169.00735"
+     x2="194.24265"
+     y2="126.58099" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1828"
+     x1="236.66901"
+     y1="169.00735"
+     x2="194.24265"
+     y2="126.58099" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1829"
+     x1="249.39694"
+     y1="156.27942"
+     x2="206.97058"
+     y2="113.85306" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1830"
+     x1="249.39694"
+     y1="156.27942"
+     x2="206.97058"
+     y2="113.85306" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1831"
+     x1="262.12488"
+     y1="143.55148"
+     x2="219.69852"
+     y2="101.12512" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1832"
+     x1="262.12488"
+     y1="143.55148"
+     x2="219.69852"
+     y2="101.12512" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1833"
+     x1="143.33099"
+     y1="177.49265"
+     x2="185.75735"
+     y2="219.91901" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1834"
+     x1="143.33099"
+     y1="177.49265"
+     x2="185.75735"
+     y2="219.91901" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1835"
+     x1="130.60306"
+     y1="190.22058"
+     x2="173.02942"
+     y2="232.64694" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1836"
+     x1="130.60306"
+     y1="190.22058"
+     x2="173.02942"
+     y2="232.64694" />
+  <line
+     style="stroke:#000000;stroke-width:18"
+     id="SvgjsLine1837"
+     x1="117.87512"
+     y1="202.94852"
+     x2="160.30148"
+     y2="245.37488" />
+  <line
+     style="stroke:#ffaa00;stroke-width:15.59999943"
+     id="SvgjsLine1838"
+     x1="117.87512"
+     y1="202.94852"
+     x2="160.30148"
+     y2="245.37488" />
+  <polyline
+     style="fill:#aaaaaa;stroke:#000000;stroke-width:0.5"
+     id="SvgjsPolyline1839"
+     points="224.89949493661166,167.56129150101523 226.31370849898477,168.97550506338834 205.10050506338834,190.18870849898477 203.68629150101523,188.77449493661166 224.89949493661166,167.56129150101523 226.31370849898477,168.97550506338834"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <polyline
+     style="fill:#ffaaaa;stroke:#000000;stroke-width:0.5"
+     id="SvgjsPolyline1840"
+     points="224.89949493661163,167.5612915010152 226.31370849898474,168.9755050633883 215.70710678118655,179.58210678118655 214.29289321881345,178.16789321881345 224.89949493661163,167.5612915010152 226.31370849898474,168.9755050633883"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <polyline
+     style="fill:#aaffaa;stroke:#000000;stroke-width:0.5"
+     id="SvgjsPolyline1841"
+     points="214.29289321881345,178.16789321881345 215.70710678118655,179.58210678118655 205.10050506338837,190.1887084989848 203.68629150101526,188.7744949366117 214.29289321881345,178.16789321881345 215.70710678118655,179.58210678118655"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="176.04657"
+     sodipodi:cx="220.65686"
+     d="m 222.15686,176.04657 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1842"
+     rx="1.5"
+     ry="1.5"
+     cx="220.65686"
+     cy="176.04657"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="173.21814"
+     sodipodi:cx="217.82843"
+     d="m 219.32843,173.21814 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1843"
+     rx="1.5"
+     ry="1.5"
+     cx="217.82843"
+     cy="173.21814"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1844"
+     x1="230.30508"
+     y1="162.64343"
+     x2="217.57715"
+     y2="149.9155" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1845"
+     x1="230.30508"
+     y1="149.9155"
+     x2="217.57715"
+     y2="162.64343" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="173.21814"
+     sodipodi:cx="217.82843"
+     d="m 218.02843,173.21814 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1846"
+     rx="0.2"
+     ry="0.2"
+     cx="217.82843"
+     cy="173.21814"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="173.92525"
+     sodipodi:cx="222.77817"
+     d="m 224.27817,173.92525 c 0,0.82842 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1847"
+     rx="1.5"
+     ry="1.5"
+     cx="222.77817"
+     cy="173.92525"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="171.09683"
+     sodipodi:cx="219.94975"
+     d="m 221.44975,171.09683 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1848"
+     rx="1.5"
+     ry="1.5"
+     cx="219.94975"
+     cy="171.09683"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1849"
+     x1="243.03302"
+     y1="149.9155"
+     x2="230.30508"
+     y2="137.18756" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1850"
+     x1="243.03302"
+     y1="137.18756"
+     x2="230.30508"
+     y2="149.9155" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="171.09683"
+     sodipodi:cx="219.94975"
+     d="m 220.14975,171.09683 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11045,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11045 0.0896,-0.2 0.2,-0.2 0.11046,0 0.2,0.0896 0.2,0.2 z"
+     id="SvgjsEllipse1851"
+     rx="0.2"
+     ry="0.2"
+     cx="219.94975"
+     cy="171.09683"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="171.80392"
+     sodipodi:cx="224.89949"
+     d="m 226.39949,171.80392 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1852"
+     rx="1.5"
+     ry="1.5"
+     cx="224.89949"
+     cy="171.80392"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="168.97551"
+     sodipodi:cx="222.07108"
+     d="m 223.57108,168.97551 c 0,0.82843 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1853"
+     rx="1.5"
+     ry="1.5"
+     cx="222.07108"
+     cy="168.97551"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1854"
+     x1="255.76096"
+     y1="137.18756"
+     x2="243.03302"
+     y2="124.45963" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1855"
+     x1="255.76096"
+     y1="124.45963"
+     x2="243.03302"
+     y2="137.18756" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="168.97551"
+     sodipodi:cx="222.07108"
+     d="m 222.27108,168.97551 c 0,0.11046 -0.0896,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11045,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1856"
+     rx="0.2"
+     ry="0.2"
+     cx="222.07108"
+     cy="168.97551"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="181.70343"
+     sodipodi:cx="209.34314"
+     d="m 210.84314,181.70343 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1857"
+     rx="1.5"
+     ry="1.5"
+     cx="209.34314"
+     cy="181.70343"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="184.53186"
+     sodipodi:cx="212.17157"
+     d="m 213.67157,184.53186 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1858"
+     rx="1.5"
+     ry="1.5"
+     cx="212.17157"
+     cy="184.53186"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1859"
+     x1="179.39343"
+     y1="213.55508"
+     x2="166.6655"
+     y2="200.82715" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1860"
+     x1="179.39343"
+     y1="200.82715"
+     x2="166.6655"
+     y2="213.55508" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="181.70343"
+     sodipodi:cx="209.34314"
+     d="m 209.54314,181.70343 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1861"
+     rx="0.2"
+     ry="0.2"
+     cx="209.34314"
+     cy="181.70343"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="183.82475"
+     sodipodi:cx="207.22183"
+     d="m 208.72183,183.82475 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1862"
+     rx="1.5"
+     ry="1.5"
+     cx="207.22183"
+     cy="183.82475"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="186.65317"
+     sodipodi:cx="210.05025"
+     d="m 211.55025,186.65317 c 0,0.82842 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1863"
+     rx="1.5"
+     ry="1.5"
+     cx="210.05025"
+     cy="186.65317"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1864"
+     x1="166.6655"
+     y1="226.28302"
+     x2="153.93756"
+     y2="213.55508" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1865"
+     x1="166.6655"
+     y1="213.55508"
+     x2="153.93756"
+     y2="226.28302" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="183.82475"
+     sodipodi:cx="207.22183"
+     d="m 207.42183,183.82475 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11045,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11045 0.0896,-0.2 0.2,-0.2 0.11046,0 0.2,0.0896 0.2,0.2 z"
+     id="SvgjsEllipse1866"
+     rx="0.2"
+     ry="0.2"
+     cx="207.22183"
+     cy="183.82475"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="185.94608"
+     sodipodi:cx="205.10051"
+     d="m 206.60051,185.94608 c 0,0.82842 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1867"
+     rx="1.5"
+     ry="1.5"
+     cx="205.10051"
+     cy="185.94608"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="188.77449"
+     sodipodi:cx="207.92892"
+     d="m 209.42892,188.77449 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1868"
+     rx="1.5"
+     ry="1.5"
+     cx="207.92892"
+     cy="188.77449"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1869"
+     x1="153.93756"
+     y1="239.01096"
+     x2="141.20963"
+     y2="226.28302" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1870"
+     x1="153.93756"
+     y1="226.28302"
+     x2="141.20963"
+     y2="239.01096" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="185.94608"
+     sodipodi:cx="205.10051"
+     d="m 205.30051,185.94608 c 0,0.11045 -0.0895,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0896 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1871"
+     rx="0.2"
+     ry="0.2"
+     cx="205.10051"
+     cy="185.94608"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="178.16789"
+     sodipodi:cx="222.77817"
+     d="m 224.27817,178.16789 c 0,0.82843 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1872"
+     rx="1.5"
+     ry="1.5"
+     cx="222.77817"
+     cy="178.16789"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="171.09683"
+     sodipodi:cx="215.70711"
+     d="m 217.20711,171.09683 c 0,0.82843 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1873"
+     rx="1.5"
+     ry="1.5"
+     cx="215.70711"
+     cy="171.09683"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1874"
+     x1="243.03302"
+     y1="175.37128"
+     x2="230.30508"
+     y2="162.64343" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1875"
+     x1="243.03302"
+     y1="162.64343"
+     x2="230.30508"
+     y2="175.37128" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="171.09683"
+     sodipodi:cx="215.70711"
+     d="m 215.90711,171.09683 c 0,0.11046 -0.0896,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11045 0.0895,-0.2 0.2,-0.2 0.11045,0 0.2,0.0896 0.2,0.2 z"
+     id="SvgjsEllipse1876"
+     rx="0.2"
+     ry="0.2"
+     cx="215.70711"
+     cy="171.09683"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="176.04657"
+     sodipodi:cx="224.89949"
+     d="m 226.39949,176.04657 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1877"
+     rx="1.5"
+     ry="1.5"
+     cx="224.89949"
+     cy="176.04657"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="168.97551"
+     sodipodi:cx="217.82843"
+     d="m 219.32843,168.97551 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1878"
+     rx="1.5"
+     ry="1.5"
+     cx="217.82843"
+     cy="168.97551"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1879"
+     x1="255.76096"
+     y1="162.64343"
+     x2="243.03302"
+     y2="149.9155" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1880"
+     x1="255.76096"
+     y1="149.9155"
+     x2="243.03302"
+     y2="162.64343" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="168.97551"
+     sodipodi:cx="217.82843"
+     d="m 218.02843,168.97551 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1881"
+     rx="0.2"
+     ry="0.2"
+     cx="217.82843"
+     cy="168.97551"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="173.92525"
+     sodipodi:cx="227.02081"
+     d="m 228.52081,173.92525 c 0,0.82842 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1882"
+     rx="1.5"
+     ry="1.5"
+     cx="227.02081"
+     cy="173.92525"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="166.85419"
+     sodipodi:cx="219.94975"
+     d="m 221.44975,166.85419 c 0,0.82842 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1883"
+     rx="1.5"
+     ry="1.5"
+     cx="219.94975"
+     cy="166.85419"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1884"
+     x1="268.48889"
+     y1="149.9155"
+     x2="255.76096"
+     y2="137.18756" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1885"
+     x1="268.48889"
+     y1="137.18756"
+     x2="255.76096"
+     y2="149.9155" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="166.85419"
+     sodipodi:cx="219.94975"
+     d="m 220.14975,166.85419 c 0,0.11045 -0.0895,0.2 -0.2,0.2 -0.11045,0 -0.2,-0.0896 -0.2,-0.2 0,-0.11046 0.0896,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1886"
+     rx="0.2"
+     ry="0.2"
+     cx="219.94975"
+     cy="166.85419"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="179.58211"
+     sodipodi:cx="207.22183"
+     d="m 208.72183,179.58211 c 0,0.82842 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1887"
+     rx="1.5"
+     ry="1.5"
+     cx="207.22183"
+     cy="179.58211"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="186.65317"
+     sodipodi:cx="214.29289"
+     d="m 215.79289,186.65317 c 0,0.82842 -0.67157,1.5 -1.5,1.5 -0.82842,0 -1.5,-0.67158 -1.5,-1.5 0,-0.82843 0.67158,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1888"
+     rx="1.5"
+     ry="1.5"
+     cx="214.29289"
+     cy="186.65317"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1889"
+     x1="192.12128"
+     y1="226.28302"
+     x2="179.39343"
+     y2="213.55508" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1890"
+     x1="192.12128"
+     y1="213.55508"
+     x2="179.39343"
+     y2="226.28302" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="179.58211"
+     sodipodi:cx="207.22183"
+     d="m 207.42183,179.58211 c 0,0.11045 -0.0895,0.2 -0.2,0.2 -0.11045,0 -0.2,-0.0896 -0.2,-0.2 0,-0.11046 0.0896,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1891"
+     rx="0.2"
+     ry="0.2"
+     cx="207.22183"
+     cy="179.58211"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="181.70343"
+     sodipodi:cx="205.10051"
+     d="m 206.60051,181.70343 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1892"
+     rx="1.5"
+     ry="1.5"
+     cx="205.10051"
+     cy="181.70343"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="188.77449"
+     sodipodi:cx="212.17157"
+     d="m 213.67157,188.77449 c 0,0.82843 -0.67157,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82843 0.67157,-1.5 1.5,-1.5 0.82843,0 1.5,0.67157 1.5,1.5 z"
+     id="SvgjsEllipse1893"
+     rx="1.5"
+     ry="1.5"
+     cx="212.17157"
+     cy="188.77449"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1894"
+     x1="179.39343"
+     y1="239.01096"
+     x2="166.6655"
+     y2="226.28302" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1895"
+     x1="179.39343"
+     y1="226.28302"
+     x2="166.6655"
+     y2="239.01096" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="181.70343"
+     sodipodi:cx="205.10051"
+     d="m 205.30051,181.70343 c 0,0.11046 -0.0895,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11046 0.0895,-0.2 0.2,-0.2 0.11046,0 0.2,0.0895 0.2,0.2 z"
+     id="SvgjsEllipse1896"
+     rx="0.2"
+     ry="0.2"
+     cx="205.10051"
+     cy="181.70343"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="183.82475"
+     sodipodi:cx="202.97919"
+     d="m 204.47919,183.82475 c 0,0.82843 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1897"
+     rx="1.5"
+     ry="1.5"
+     cx="202.97919"
+     cy="183.82475"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#ffffff;stroke:#000000;stroke-width:0.30000001"
+     sodipodi:ry="1.5"
+     sodipodi:rx="1.5"
+     sodipodi:cy="190.89581"
+     sodipodi:cx="210.05025"
+     d="m 211.55025,190.89581 c 0,0.82843 -0.67158,1.5 -1.5,1.5 -0.82843,0 -1.5,-0.67157 -1.5,-1.5 0,-0.82842 0.67157,-1.5 1.5,-1.5 0.82842,0 1.5,0.67158 1.5,1.5 z"
+     id="SvgjsEllipse1898"
+     rx="1.5"
+     ry="1.5"
+     cx="210.05025"
+     cy="190.89581"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1899"
+     x1="166.6655"
+     y1="251.73889"
+     x2="153.93756"
+     y2="239.01096" />
+  <line
+     style="stroke:#000000;stroke-width:1.20000005"
+     id="SvgjsLine1900"
+     x1="166.6655"
+     y1="239.01096"
+     x2="153.93756"
+     y2="251.73889" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="0.2"
+     sodipodi:rx="0.2"
+     sodipodi:cy="183.82475"
+     sodipodi:cx="202.97919"
+     d="m 203.17919,183.82475 c 0,0.11046 -0.0896,0.2 -0.2,0.2 -0.11046,0 -0.2,-0.0895 -0.2,-0.2 0,-0.11045 0.0895,-0.2 0.2,-0.2 0.11045,0 0.2,0.0896 0.2,0.2 z"
+     id="SvgjsEllipse1901"
+     rx="0.2"
+     ry="0.2"
+     cx="202.97919"
+     cy="183.82475"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:14.40000057"
+     inkscape:connector-curvature="0"
+     id="SvgjsPath1914"
+     d="m 190,188.17308 c 0,18 0,108 0,120 0,19.79904 -18,30 -42,42 -36,12 -66,30 -114,42" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:14.40000057"
+     inkscape:connector-curvature="0"
+     id="SvgjsPath1915"
+     d="m 190,116.17308 c -3.41364,1.35168 6.19608,-60.2418 -6,-60 -10.48386,0.2076 -54.20598,0.381 -78,24 -23.79402,23.61906 -42,60 -42,102 0,50.17038 44.44518,89.13816 78.74274,117.18972 5.64222,4.61472 11.35524,11.75922 11.28516,19.17546 -0.06,6.14244 -5.3355,11.54022 -9.64512,15.70254 C 109.78966,349.6842 54.523,379.30902 22,386.17308" />
+  <path
+     style="fill:none;stroke:#ff0000;stroke-width:12"
+     inkscape:connector-curvature="0"
+     id="SvgjsPath1916"
+     d="m 190,188.17308 c 0,18 0,108 0,120 0,19.79904 -18,30 -42,42 -36,12 -66,30 -114,42" />
+  <path
+     style="fill:none;stroke:#0000ff;stroke-width:12"
+     inkscape:connector-curvature="0"
+     id="SvgjsPath1917"
+     d="m 190,116.17308 c -3.41364,1.35168 6.19608,-60.2418 -6,-60 -10.48386,0.2076 -54.20598,0.381 -78,24 -23.79402,23.61906 -42,60 -42,102 0,50.17038 44.44518,89.13816 78.74274,117.18972 5.64222,4.61472 11.35524,11.75922 11.28516,19.17546 -0.06,6.14244 -5.3355,11.54022 -9.64512,15.70254 C 109.78966,349.6842 54.523,379.30902 22,386.17308" />
+  <rect
+     style="fill:#000000"
+     id="SvgjsRect1918"
+     width="15"
+     height="120"
+     x="182.5"
+     y="113.25" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="5"
+     sodipodi:rx="5"
+     sodipodi:cy="178.875"
+     sodipodi:cx="215"
+     d="m 220,178.875 c 0,2.76142 -2.23858,5 -5,5 -2.76142,0 -5,-2.23858 -5,-5 0,-2.76142 2.23858,-5 5,-5 2.76142,0 5,2.23858 5,5 z"
+     id="SvgjsEllipse1919"
+     rx="5"
+     ry="5"
+     cx="215"
+     cy="178.875"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <path
+     style="fill:#ffaa00"
+     clip-path="none"
+     d="M 157.6875 166.40625 C 157.22276 168.61214 157 170.90585 157 173.25 C 157 191.4754 171.7746 206.25 190 206.25 C 192.34415 206.25 194.63786 206.02724 196.84375 205.5625 L 157.6875 166.40625 z "
+     id="SvgjsEllipse1920" />
+  <path
+     style="fill:#ffaa00"
+     clip-path="none"
+     d="M 190 140.25 C 187.65585 140.25 185.36214 140.47276 183.15625 140.9375 L 222.3125 180.09375 C 222.77724 177.88786 223 175.59415 223 173.25 C 223 155.0246 208.2254 140.25 190 140.25 z "
+     id="SvgjsEllipse1923" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="4.5999999"
+     sodipodi:rx="4.5999999"
+     sodipodi:cy="178.875"
+     sodipodi:cx="215"
+     d="m 219.6,178.875 c 0,2.54051 -2.05949,4.6 -4.6,4.6 -2.54051,0 -4.6,-2.05949 -4.6,-4.6 0,-2.54051 2.05949,-4.6 4.6,-4.6 2.54051,0 4.6,2.05949 4.6,4.6 z"
+     id="SvgjsEllipse1926"
+     rx="4.5999999"
+     ry="4.5999999"
+     cx="215"
+     cy="178.875"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#aaaaff"
+     sodipodi:ry="4.4000001"
+     sodipodi:rx="4.4000001"
+     sodipodi:cy="178.875"
+     sodipodi:cx="215"
+     d="m 219.4,178.875 c 0,2.43005 -1.96995,4.4 -4.4,4.4 -2.43005,0 -4.4,-1.96995 -4.4,-4.4 0,-2.43005 1.96995,-4.4 4.4,-4.4 2.43005,0 4.4,1.96995 4.4,4.4 z"
+     id="SvgjsEllipse1927"
+     rx="4.4000001"
+     ry="4.4000001"
+     cx="215"
+     cy="178.875"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <ellipse
+     style="fill:#000000"
+     sodipodi:ry="2"
+     sodipodi:rx="2"
+     sodipodi:cy="178.875"
+     sodipodi:cx="215"
+     d="m 217,178.875 c 0,1.10457 -0.89543,2 -2,2 -1.10457,0 -2,-0.89543 -2,-2 0,-1.10457 0.89543,-2 2,-2 1.10457,0 2,0.89543 2,2 z"
+     id="SvgjsEllipse1928"
+     rx="2"
+     ry="2"
+     cx="215"
+     cy="178.875"
+     transform="matrix(6,0,0,6,-1100,-900)" />
+  <text
+     style="font-size:36px;text-anchor:middle;font-family:Source Sans Pro"
+     id="SvgjsText1931"
+     x="70"
+     y="57.200043"
+     font-size="6">
+    <tspan
+       id="SvgjsTspan1932"
+       dy="36"
+       x="70">N</tspan>
+  </text>
+  <text
+     style="font-size:36px;text-anchor:middle;font-family:Source Sans Pro"
+     id="SvgjsText1933"
+     x="310"
+     y="57.200043"
+     font-size="6">
+    <tspan
+       id="SvgjsTspan1934"
+       dy="36"
+       x="310">S</tspan>
+  </text>
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1935"
+     x1="217.99362"
+     y1="226.31937"
+     x2="232.42645"
+     y2="215.67645" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1936"
+     x1="232.42645"
+     y1="215.67645"
+     x2="243.06937"
+     y2="201.24362" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1937"
+     x1="217.99362"
+     y1="226.31937"
+     x2="230.40607"
+     y2="213.65607" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1938"
+     x1="217.99362"
+     y1="226.31937"
+     x2="234.54773"
+     y2="217.79773" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1939"
+     x1="217.99362"
+     y1="226.31937"
+     x2="232.42645"
+     y2="215.67645" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1940"
+     x1="232.42645"
+     y1="215.67645"
+     x2="243.06937"
+     y2="201.24362" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1941"
+     x1="217.99362"
+     y1="226.31937"
+     x2="230.40607"
+     y2="213.65607" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1942"
+     x1="217.99362"
+     y1="226.31937"
+     x2="234.54773"
+     y2="217.79773" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1943"
+     x1="162.00638"
+     y1="120.18063"
+     x2="147.57355"
+     y2="130.82355" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1944"
+     x1="147.57355"
+     y1="130.82355"
+     x2="136.93063"
+     y2="145.25638" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1945"
+     x1="162.00638"
+     y1="120.18063"
+     x2="149.59393"
+     y2="132.84393" />
+  <line
+     style="stroke:#ffffff;stroke-width:6"
+     id="SvgjsLine1946"
+     x1="162.00638"
+     y1="120.18063"
+     x2="145.45227"
+     y2="128.70227" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1947"
+     x1="162.00638"
+     y1="120.18063"
+     x2="147.57355"
+     y2="130.82355" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1948"
+     x1="147.57355"
+     y1="130.82355"
+     x2="136.93063"
+     y2="145.25638" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1949"
+     x1="162.00638"
+     y1="120.18063"
+     x2="149.59393"
+     y2="132.84393" />
+  <line
+     style="stroke:#000000;stroke-width:3"
+     id="SvgjsLine1950"
+     x1="162.00638"
+     y1="120.18063"
+     x2="145.45227"
+     y2="128.70227" />
+  <defs
+     id="SvgjsDefs1001">
+    <clipPath
+       id="SvgjsClipPath1100">
+      <polyline
+         points="234.97576656851996,187.8906114601285 224.0156114601285,198.85076656851996 219.06586399182268,193.90101910021414 230.02601910021414,182.94086399182268 234.97576656851996,187.8906114601285 224.0156114601285,198.85076656851996"
+         id="SvgjsPolyline1099" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1103">
+      <polyline
+         points="234.62221317792668,187.89061146012847 224.0156114601285,198.4972131779267 219.41941738241596,193.90101910021417 230.02601910021414,183.29441738241593 234.62221317792668,187.89061146012847 224.0156114601285,198.4972131779267"
+         id="SvgjsPolyline1102" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1106">
+      <polyline
+         points="210.93413600817732,163.84898089978586 199.97398089978586,174.80913600817732 195.02423343148004,169.8593885398715 205.9843885398715,158.89923343148004 210.93413600817732,163.84898089978586 199.97398089978586,174.80913600817732"
+         id="SvgjsPolyline1105" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1109">
+      <polyline
+         points="210.58058261758404,163.84898089978583 199.97398089978586,174.45558261758407 195.37778682207332,169.85938853987153 205.9843885398715,159.2527868220733 210.58058261758404,163.84898089978583 199.97398089978586,174.45558261758407"
+         id="SvgjsPolyline1108" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1118">
+      <polyline
+         points="207.57537879754128,182.0569805153395 204.74695167279506,179.22855339059328 215.35355339059325,168.62195167279503 218.18198051533946,171.45037879754125 207.57537879754128,182.0569805153395 204.74695167279506,179.22855339059328"
+         id="SvgjsPolyline1117" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1121">
+      <polyline
+         points="214.64644660940675,189.12804832720497 211.81801948466054,186.29962120245875 222.42462120245872,175.6930194846605 225.25304832720494,178.52144660940672 214.64644660940675,189.12804832720497 211.81801948466054,186.29962120245875"
+         id="SvgjsPolyline1120" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1240">
+      <polyline
+         points="222.75,199.375 207.25,199.375 207.25,192.375 222.75,192.375 222.75,199.375 207.25,199.375"
+         id="SvgjsPolyline1239" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1243">
+      <polyline
+         points="222.5,199.125 207.5,199.125 207.5,192.625 222.5,192.625 222.5,199.125 207.5,199.125"
+         id="SvgjsPolyline1242" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1246">
+      <polyline
+         points="222.75,165.375 207.25,165.375 207.25,158.375 222.75,158.375 222.75,165.375 207.25,165.375"
+         id="SvgjsPolyline1245" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1249">
+      <polyline
+         points="222.5,165.125 207.5,165.125 207.5,158.625 222.5,158.625 222.5,165.125 207.5,165.125"
+         id="SvgjsPolyline1248" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1258">
+      <polyline
+         points="207.5,175.875 207.5,171.875 222.5,171.875 222.5,175.875 207.5,175.875 207.5,171.875"
+         id="SvgjsPolyline1257" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1261">
+      <polyline
+         points="207.5,185.875 207.5,181.875 222.5,181.875 222.5,185.875 207.5,185.875 207.5,181.875"
+         id="SvgjsPolyline1260" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1380">
+      <polyline
+         points="205.98438853987153,198.85076656851996 195.02423343148,187.8906114601285 199.97398089978583,182.94086399182268 210.93413600817735,193.90101910021414 205.98438853987153,198.85076656851996 195.02423343148,187.8906114601285"
+         id="SvgjsPolyline1379" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1383">
+      <polyline
+         points="205.98438853987153,198.49721317792668 195.3777868220733,187.8906114601285 199.97398089978583,183.29441738241596 210.58058261758407,193.90101910021414 205.98438853987153,198.49721317792668 195.3777868220733,187.8906114601285"
+         id="SvgjsPolyline1382" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1386">
+      <polyline
+         points="230.02601910021417,174.80913600817732 219.06586399182265,163.84898089978586 224.01561146012847,158.89923343148004 234.97576656852,169.8593885398715 230.02601910021417,174.80913600817732 219.06586399182265,163.84898089978586"
+         id="SvgjsPolyline1385" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1389">
+      <polyline
+         points="230.02601910021417,174.45558261758404 219.41941738241593,163.84898089978586 224.01561146012847,159.25278682207332 234.6222131779267,169.8593885398715 230.02601910021417,174.45558261758404 219.41941738241593,163.84898089978586"
+         id="SvgjsPolyline1388" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1398">
+      <polyline
+         points="211.8180194846605,171.45037879754128 214.64644660940672,168.62195167279506 225.25304832720497,179.22855339059325 222.42462120245875,182.05698051533946 211.8180194846605,171.45037879754128 214.64644660940672,168.62195167279506"
+         id="SvgjsPolyline1397" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1401">
+      <polyline
+         points="204.74695167279503,178.52144660940675 207.57537879754125,175.69301948466054 218.1819805153395,186.29962120245872 215.35355339059328,189.12804832720494 204.74695167279503,178.52144660940675 207.57537879754125,175.69301948466054"
+         id="SvgjsPolyline1400" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1484">
+      <polyline
+         points="194.5,186.625 194.5,171.125 201.5,171.125 201.5,186.625 194.5,186.625 194.5,171.125"
+         id="SvgjsPolyline1483" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1487">
+      <polyline
+         points="194.75,186.375 194.75,171.375 201.25,171.375 201.25,186.375 194.75,186.375 194.75,171.375"
+         id="SvgjsPolyline1486" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1490">
+      <polyline
+         points="228.5,186.625 228.5,171.125 235.5,171.125 235.5,186.625 228.5,186.625 228.5,171.125"
+         id="SvgjsPolyline1489" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1493">
+      <polyline
+         points="228.75,186.375 228.75,171.375 235.25,171.375 235.25,186.375 228.75,186.375 228.75,171.375"
+         id="SvgjsPolyline1492" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1502">
+      <polyline
+         points="218,171.375 222,171.375 222,186.375 218,186.375 218,171.375 222,171.375"
+         id="SvgjsPolyline1501" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1505">
+      <polyline
+         points="208,171.375 212,171.375 212,186.375 208,186.375 208,171.375 212,171.375"
+         id="SvgjsPolyline1504" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1624">
+      <polyline
+         points="195.02423343148004,169.85938853987153 205.9843885398715,158.89923343148 210.93413600817732,163.84898089978583 199.97398089978586,174.80913600817735 195.02423343148004,169.85938853987153 205.9843885398715,158.89923343148"
+         id="SvgjsPolyline1623" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1627">
+      <polyline
+         points="195.37778682207332,169.85938853987153 205.9843885398715,159.2527868220733 210.58058261758404,163.84898089978583 199.97398089978586,174.45558261758407 195.37778682207332,169.85938853987153 205.9843885398715,159.2527868220733"
+         id="SvgjsPolyline1626" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1630">
+      <polyline
+         points="219.06586399182268,193.90101910021417 230.02601910021414,182.94086399182265 234.97576656851996,187.89061146012847 224.0156114601285,198.85076656852 219.06586399182268,193.90101910021417 230.02601910021414,182.94086399182265"
+         id="SvgjsPolyline1629" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1633">
+      <polyline
+         points="219.41941738241596,193.90101910021417 230.02601910021414,183.29441738241593 234.62221317792668,187.89061146012847 224.0156114601285,198.4972131779267 219.41941738241596,193.90101910021417 230.02601910021414,183.29441738241593"
+         id="SvgjsPolyline1632" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1642">
+      <polyline
+         points="222.42462120245872,175.6930194846605 225.25304832720494,178.52144660940672 214.64644660940675,189.12804832720497 211.81801948466054,186.29962120245875 222.42462120245872,175.6930194846605 225.25304832720494,178.52144660940672"
+         id="SvgjsPolyline1641" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1645">
+      <polyline
+         points="215.35355339059325,168.62195167279503 218.18198051533946,171.45037879754125 207.57537879754128,182.0569805153395 204.74695167279506,179.22855339059328 215.35355339059325,168.62195167279503 218.18198051533946,171.45037879754125"
+         id="SvgjsPolyline1644" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1764">
+      <polyline
+         points="207.25,158.375 222.75,158.375 222.75,165.375 207.25,165.375 207.25,158.375 222.75,158.375"
+         id="SvgjsPolyline1763" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1767">
+      <polyline
+         points="207.5,158.625 222.5,158.625 222.5,165.125 207.5,165.125 207.5,158.625 222.5,158.625"
+         id="SvgjsPolyline1766" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1770">
+      <polyline
+         points="207.25,192.375 222.75,192.375 222.75,199.375 207.25,199.375 207.25,192.375 222.75,192.375"
+         id="SvgjsPolyline1769" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1773">
+      <polyline
+         points="207.5,192.625 222.5,192.625 222.5,199.125 207.5,199.125 207.5,192.625 222.5,192.625"
+         id="SvgjsPolyline1772" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1782">
+      <polyline
+         points="222.5,181.875 222.5,185.875 207.5,185.875 207.5,181.875 222.5,181.875 222.5,185.875"
+         id="SvgjsPolyline1781" />
+    </clipPath>
+    <clipPath
+       id="SvgjsClipPath1785">
+      <polyline
+         points="222.5,171.875 222.5,175.875 207.5,175.875 207.5,171.875 222.5,171.875 222.5,175.875"
+         id="SvgjsPolyline1784" />
+    </clipPath>
+  </defs>
+  <path
+     style="fill:#000000"
+     clip-path="none"
+     d="M 222.53125 74.96875 L 214.40625 83.09375 L 280.15625 148.84375 L 288.28125 140.71875 C 278.02736 109.72904 253.52096 85.222643 222.53125 74.96875 z "
+     id="SvgjsEllipse1902" />
+  <path
+     style="fill:#000000"
+     clip-path="none"
+     d="M 99.84375 197.65625 L 91.71875 205.78125 C 101.97264 236.77096 126.47904 261.27736 157.46875 271.53125 L 165.59375 263.40625 L 99.84375 197.65625 z "
+     id="SvgjsEllipse1908" />
+  <path
+     style="fill:#aaffaa"
+     clip-path="none"
+     d="M 99.84375 199.78125 L 93.4375 206.1875 C 103.61227 236.023 127.227 259.63773 157.0625 269.8125 L 163.46875 263.40625 L 99.84375 199.78125 z "
+     id="SvgjsEllipse1911" />
+  <path
+     style="fill:#ffaaaa"
+     clip-path="none"
+     d="M 222.9375 76.6875 L 216.53125 83.09375 L 280.15625 146.71875 L 286.5625 140.3125 C 276.38773 110.477 252.773 86.862273 222.9375 76.6875 z "
+     id="SvgjsEllipse1905" />
+</svg>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg5768"
+   sodipodi:version="0.32"
+   inkscape:version="0.47 r22583"
+   width="515"
+   height="335"
+   version="1.0"
+   sodipodi:docname="Stress-strain1-es.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata5773">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5771">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective5775" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="746"
+     inkscape:window-width="1024"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.94386887"
+     inkscape:cx="334.01713"
+     inkscape:cy="175.7739"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:current-layer="svg5768"
+     inkscape:window-maximized="0" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     d="m 49.367192,14.657733 4.537458,-8.153946 4.559921,8.109021"
+     id="path6290" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     d="m 475.70977,299.79391 8.15395,4.53746 -8.10902,4.55992"
+     id="path6292" />
+  <path
+     style="fill:none;stroke:#396bff;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     d="M 53.606524,304.61962 257.68593,101.02668"
+     id="path6294"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     d="m 53.93419,7.239983 -0.03177,297.086737 428.40981,0"
+     id="path5779"
+     sodipodi:nodetypes="ccc" />
+  <path
+     style="fill:none;stroke:#399c6b;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+     d="M 257.29749,101.4015 C 292.3135,67.929899 307.84937,53.418276 327.96976,44.137082 357.79238,30.380412 387.4643,32.23681 443.07782,32.411607"
+     id="path6296"
+     sodipodi:nodetypes="csc" />
+  <g
+     id="g6302"
+     style="stroke:#ff0000;stroke-width:3;stroke-miterlimit:4;stroke-dasharray:none"
+     transform="translate(-18.155575,-7.8973115)">
+    <path
+       id="path6298"
+       d="m 455.45297,33.22481 11.32118,16.083268"
+       style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <path
+       id="path6300"
+       d="M 466.68023,33.224732 455.35905,49.308"
+       style="fill:none;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+     x="-71.909195"
+     y="37.391129"
+     id="text6306"
+     sodipodi:linespacing="125%"
+     transform="matrix(0,-1,1,0,0,0)"><tspan
+       sodipodi:role="line"
+       id="tspan2829"
+       x="-71.909195"
+       y="37.391129">Tensión</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+     x="383.72046"
+     y="328.76508"
+     id="text6310"
+     sodipodi:linespacing="100%"><tspan
+       sodipodi:role="line"
+       id="tspan2831"
+       x="383.72046"
+       y="328.76508">Deformación</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#396bff;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial Italic"
+     x="123.06694"
+     y="252.01601"
+     id="text6314"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan6316"
+       x="123.06694"
+       y="252.01601">Región elástica</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#399c6b;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial Italic"
+     x="291.13348"
+     y="90.042648"
+     id="text6322"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan6324"
+       x="291.13348"
+       y="90.042648">Región plástica</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial Italic"
+     x="430.90826"
+     y="64.120773"
+     id="text6326"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan6328"
+       x="430.90826"
+       y="64.120773">Rotura</tspan></text>
+</svg>

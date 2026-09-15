@@ -1,0 +1,609 @@
+@charset "UTF-8";
+/* ===== INSPECTOR PANEL ===== */
+
+:root {
+  --insp-bg: var(--bg-panel);
+  --insp-field-bg: var(--bg-input);
+  --insp-border: var(--border);
+  --insp-text: var(--text-primary);
+  --insp-label: var(--text-secondary);
+  --insp-header: var(--text-primary);
+  --insp-accent: var(--accent);
+  --insp-radius: 3px;
+}
+
+.panel-right {
+  width: var(--panel-right-w);
+  min-width: 150px;
+  max-width: 480px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border-strong);
+  overflow-y: auto;
+  background: var(--insp-bg);
+  position: relative;
+  container-type: inline-size;
+  container-name: inspector-panel;
+}
+
+.panel-right .panel-title {
+  background: var(--insp-bg);
+  color: var(--insp-header);
+  border-bottom: 1px solid var(--border-muted);
+  font-size: 12px;
+}
+
+#inspector {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 12px;
+  font-family: "IBM Plex Sans KR", sans-serif;
+  color: var(--insp-text);
+}
+
+/* Resize handle — positioned relative to .panel-right (nearest positioned ancestor) */
+#inspector-resize {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+#inspector-resize:hover {
+  background: rgba(9, 105, 218, 0.18);
+}
+
+#inspector-empty {
+  padding: 10px 8px;
+  color: var(--insp-label);
+  font-size: 12px;
+}
+
+#inspector-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ----- Collapsible section ----- */
+.insp-section {
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.insp-summary {
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--insp-header);
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.insp-summary:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.insp-summary::-webkit-details-marker { display: none; }
+
+.insp-summary::before {
+  /* ASCII-only escape (U+203A) so the disclosure chevron can't turn into
+     mojibake if the sheet is ever read with the wrong charset. */
+  content: "\203A";
+  color: var(--accent-2);
+  display: inline-block;
+  font-size: 13px;
+  line-height: 1;
+  transition: transform 0.12s;
+}
+
+details[open] > .insp-summary::before {
+  transform: rotate(90deg);
+}
+
+.insp-body {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.insp-help {
+  color: var(--insp-label);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.insp-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.insp-field-label {
+  font-size: 12px;
+  color: var(--insp-label);
+  min-width: 28px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+/* 선 섹션: 라벨 컬럼을 가장 긴 라벨("화살표 종류") 기준 고정폭으로 통일해
+   모든 컨트롤이 같은 x에서 시작하도록 정렬한다 (Illustrator Stroke 패널 방식). */
+.insp-line-grid .insp-field-label {
+  width: 58px;
+  min-width: 58px;
+  text-align: left;
+}
+
+/* 크기·위치 number fields: fixed 64px, sit tight next to the label (left-aligned) */
+.insp-input {
+  flex: 0 0 auto;
+  width: 64px;
+  font-size: 12px;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  padding: 4px 6px;
+  font-family: "IBM Plex Mono", monospace;
+  min-width: 0;
+}
+
+.insp-geometry-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.insp-geometry-pair .insp-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+.insp-geometry-pair .insp-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.insp-geometry-pair .insp-unit { margin-left: -2px; }
+
+@container inspector-panel (max-width: 239px) {
+  .insp-geometry-pair { grid-template-columns: 1fr; }
+  .insp-geometry-pair .insp-field-label { min-width: 28px; }
+}
+
+.insp-input:focus {
+  outline: none;
+  border-color: var(--insp-accent);
+}
+
+.insp-range {
+  flex: 1;
+  cursor: pointer;
+  accent-color: var(--insp-accent);
+  min-width: 0;
+}
+
+.insp-num {
+  font-size: 12px;
+  color: var(--insp-text);
+  min-width: 28px;
+  text-align: right;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.insp-cb {
+  cursor: pointer;
+  accent-color: var(--insp-accent);
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.insp-unit {
+  font-size: 11px;
+  color: var(--insp-label);
+  flex-shrink: 0;
+}
+
+/* ----- 아트보드 preset buttons (2×2 grid, full labels) ----- */
+.insp-ab-presets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.insp-ab-preset {
+  min-width: 0;
+  padding: 5px 6px;
+  font-size: 12px;
+  font-family: "IBM Plex Mono", monospace;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+}
+
+.insp-ab-preset:hover {
+  border-color: var(--insp-accent);
+}
+
+/* 아트보드 "드래그로 영역 지정" 버튼 — 캡처 중에는 강조색으로 채움 */
+.insp-ab-drag-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+}
+.insp-ab-drag-btn:hover { border-color: var(--insp-accent); }
+.insp-ab-drag-btn.is-active {
+  color: #fff;
+  background: var(--insp-accent);
+  border-color: var(--insp-accent);
+}
+
+/* ----- Color picker ----- */
+.cp-root {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cp-palette {
+  display: flex;
+  gap: 3px;
+}
+
+.cp-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--insp-radius);
+  border: 1px solid var(--insp-border);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cp-swatch:hover {
+  outline: 2px solid var(--insp-accent);
+  outline-offset: 1px;
+}
+
+/* Slider + numeric level box share one row */
+.cp-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cp-bar-wrap {
+  position: relative;
+  height: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cp-bar {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--insp-radius);
+  /* LEFT = white (level 0 / lightest) → RIGHT = black (level 255 / darkest) */
+  background: linear-gradient(to right, #ffffff, #000000);
+  border: 1px solid var(--insp-border);
+  cursor: crosshair;
+}
+
+/* Numeric level box (0 = white, 255 = black), 48px, right-aligned next to slider */
+.cp-num-input {
+  width: 48px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  padding: 2px 4px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.cp-num-input:focus {
+  outline: none;
+  border-color: var(--insp-accent);
+}
+
+.cp-handle {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* 모던 바 형태: 그라디언트 바보다 살짝 길게 튀어나온 세로 바 */
+  width: 5px;
+  height: 20px;
+  border-radius: 2.5px;
+  background: var(--insp-accent);
+  border: 1px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  cursor: grab;
+  z-index: 1;
+  pointer-events: all;
+}
+
+.cp-handle:active { cursor: grabbing; }
+
+.cp-preview {
+  width: 100%;
+  height: 14px;
+  border-radius: var(--insp-radius);
+  border: 1px solid var(--insp-border);
+}
+
+.fill-style-picker { position: relative; margin-left: auto; }
+.fill-style-trigger,
+.fill-style-option {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 6px;
+}
+.fill-style-trigger::after {
+  content: "";
+  width: 0;
+  height: 0;
+  margin-left: 1px;
+  border: 3px solid transparent;
+  border-top-color: currentColor;
+  transform: translateY(2px);
+}
+.fill-style-trigger { width: 42px; grid-template-columns: 18px 8px; }
+.fill-style-trigger:hover,
+.fill-style-trigger:focus-visible,
+.fill-style-option:hover,
+.fill-style-option:focus-visible { border-color: var(--insp-accent); outline: 2px solid var(--insp-accent); outline-offset: 1px; }
+.fill-style-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  gap: 4px;
+  padding: 5px;
+  background: var(--insp-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+}
+.fill-style-menu[hidden] { display: none; }
+.fill-style-option.is-active { border-color: var(--insp-accent); background: color-mix(in srgb, var(--insp-accent) 15%, var(--insp-field-bg)); }
+
+.bulk-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bulk-modal > .modal-title { flex: 0 0 auto; margin: 0; padding: 14px 16px 8px; }
+.bulk-scroll { min-height: 0; overflow-y: auto; padding: 0 16px 10px; }
+.bulk-mode-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.bulk-mode-row .seg { flex: 1; }
+.bulk-scroll > .objectify-description { margin: 2px 0 5px; }
+.bulk-group { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
+.bulk-group h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.bulk-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.bulk-control-row { display: grid; grid-template-columns: 16px minmax(76px, 1fr) minmax(72px, 96px) 34px; align-items: center; gap: 5px; margin: 0; min-width: 0; }
+.bulk-control-row .modal-label { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bulk-gap-rows .modal-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.25;
+}
+#bulk-gap-rows [data-bulk-kind="align"] {
+  grid-column: 1 / -1;
+  grid-template-columns: 16px minmax(150px, 1fr) minmax(90px, 120px) 34px;
+}
+.bulk-control-row .modal-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.bulk-unit { width: 34px; flex: none; font-size: 11px; color: var(--text-secondary); }
+.bulk-group .objectify-description { margin: 5px 0 0; line-height: 1.35; }
+.bulk-modal > .modal-actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px 14px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-muted);
+}
+@media (max-width: 520px) {
+  .bulk-modal { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .bulk-fields-grid { grid-template-columns: 1fr; }
+  #bulk-gap-rows [data-bulk-kind="align"] { grid-template-columns: 16px minmax(120px, 1fr) minmax(90px, 120px) 34px; }
+}
+
+/* ===== 배경 이미지 섹션 (always-on list of background-mode images) ===== */
+/* One row per background image: thumbnail + a controls column (투명도 slider,
+   객체로 인식/배경으로 되돌리기 toggle, 배경 이미지 제거). Pinned at the top of
+   the inspector via insertBefore in inspector.js. */
+.insp-bg-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 4px 0;
+}
+.insp-bg-row + .insp-bg-row {
+  border-top: 1px solid var(--border-muted);
+}
+.insp-bg-thumb {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  background: var(--insp-field-bg);
+}
+.insp-bg-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.insp-bg-btns {
+  display: flex;
+  gap: 4px;
+}
+.insp-bg-btns .modal-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ===== 레이어 패널 (layer list — eye toggle + active row) ===== */
+.insp-layers {
+  border: 1px solid var(--insp-border);
+  border-radius: var(--insp-radius);
+  overflow: hidden;
+}
+.insp-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px 5px 5px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.insp-layer-row + .insp-layer-row {
+  border-top: 1px solid var(--insp-border);
+}
+.insp-layer-row:hover {
+  background: var(--bg-panel-hover);
+}
+.insp-layer-row.is-active {
+  border-left-color: var(--insp-accent);
+  background: color-mix(in srgb, var(--insp-accent) 14%, transparent);
+}
+.insp-layer-eye {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  color: var(--insp-label);
+  background: transparent;
+  border: 0;
+  border-radius: var(--insp-radius);
+  cursor: pointer;
+}
+.insp-layer-eye svg { width: 15px; height: 15px; }
+.insp-layer-eye:hover { color: var(--insp-text); background: rgba(128, 128, 128, 0.15); }
+.insp-layer-row.is-hidden .insp-layer-name { opacity: 0.45; }
+.insp-layer-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--insp-text);
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.insp-layer-name-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-accent);
+  border-radius: var(--insp-radius);
+  padding: 1px 4px;
+}
+
+/* ===== RESPONSIVE: 인스펙터 우측 드로어 (폰 ≤767px) =====
+   .panel-right는 여기(나중 로드)에서 position:relative로 잡혀 있어, style.css의
+   미디어쿼리로는 못 덮는다. 그래서 드로어 규칙을 이 파일에 둔다.
+   또 inspector.js의 리사이즈 핸들이 인라인 style.width를 쓰므로 폭은 !important로 고정. */
+@media (max-width: 767px) {
+  .panel-right {
+    position: fixed;
+    top: 0;
+    bottom: var(--footer-h);
+    right: 0;
+    left: auto;
+    width: 300px !important;
+    max-width: 86vw;
+    z-index: 1200;
+    transform: translateX(100%);
+    transition: transform 200ms ease;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .panel-right.is-open { transform: translateX(0); }
+
+  /* 드로어는 폭이 고정이라 드래그 리사이즈 핸들을 숨긴다 */
+  #inspector-resize { display: none; }
+}
+
+
+/* 라벨 4요소 2×2 배열: [종류][위치] / [라벨][크기]
+ * 좁은 패널에서 찌그러지지 않게 셀 내부는 '라벨 위·컨트롤 아래' 세로 스택. */
+.insp-2col {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 6px;
+  align-items: start;
+  margin-bottom: 6px;
+}
+.insp-2col .insp-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  min-width: 0;
+  margin: 0;
+}
+.insp-2col .insp-field-label { width: auto; min-width: 0; text-align: left; }
+.insp-2col .insp-input, .insp-2col select, .insp-2col input { min-width: 0; width: 100%; box-sizing: border-box; }
+
+/* Both operations stay visible; each property chooses one before Apply. */
+.bulk-modal { width: min(940px, calc(100vw - 32px)); }
+.bulk-property-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.bulk-property-groups .bulk-fields-grid { grid-template-columns: 1fr; }
+.bulk-column-head { display: grid; grid-template-columns: minmax(105px, 1fr) repeat(2, minmax(100px, 1fr)); gap: 8px; margin: 0 0 6px; color: var(--text-secondary); font-size: 11px; }
+.bulk-property-row { display: grid; grid-template-columns: 16px minmax(80px, 1fr) repeat(2, minmax(100px, 1fr)); align-items: center; gap: 6px; margin: 0; min-width: 0; }
+.bulk-property-row .modal-label { margin: 0; min-width: 0; white-space: normal; word-break: keep-all; }
+.bulk-value-cell { display: flex; gap: 4px; align-items: center; min-width: 0; }
+.bulk-value-cell .modal-input { width: 100%; min-width: 0; padding: 6px; }
+.bulk-wide-input { grid-column: 3 / -1; width: 100%; min-width: 0; }
+.bulk-control-row .modal-label { overflow: visible; white-space: normal; word-break: keep-all; }
+#bulk-gap-rows [data-bulk-kind="align"] { grid-column: auto; grid-template-columns: 16px minmax(140px, 1fr) minmax(90px, 120px) 34px; }
+@media (max-width: 800px) {
+  .bulk-property-groups { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 520px) {
+  .bulk-property-row { grid-template-columns: 16px minmax(65px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-column-head { grid-template-columns: minmax(85px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-value-cell { gap: 2px; }
+}

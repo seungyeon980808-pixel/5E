@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.1"
+     width="950px"  height="1100px"
+     viewBox="0 0 95 110" xml:space="preserve">
+	<defs>
+		<marker refX="-3" refY="0" orient="auto" style="overflow :visible;" id="ArrowGreen">
+			<path d="M -6,-1.5 0,0 -6,1.5 z" style="fill :#009900; fill-opacity :1; fill-rule :evenodd; stroke :none;" />
+		</marker>
+		<marker refX="-3" refY="0" orient="auto" style="overflow :visible;" id="ArrowRed">
+			<path d="M -6,-1.5 0,0 -6,1.5 z" style="fill :#ff0000; fill-opacity :1; fill-rule :evenodd; stroke :none;" />
+		</marker>
+	</defs>
+	<rect x="0" y="0" width="100" height="110" style="fill :#FFFFFF;stroke :none;" />
+	<g transform="translate(2,-3)" style="fill :none;stroke :#000000; stroke-miterlimit :10;stroke-width :1;">
+		<g transform="translate(10,80)" id="GlasUnten">
+			<path d="M 0,15 L 0,25 A 5,5 0 0 0 5,30 L 45,30 A 5,5 0 0 0 50,25 L 50,15 z" style="fill :#CCCCFF;stroke :none;" />
+			<path d="M 0,0  L 0,25 A 5,5 0 0 0 5,30 L 45,30 A 5,5 0 0 0 50,25 L 50,0"    style="fill :none;" />
+			<polyline points="0,15 50,15" style="stroke-width :0.5;" />
+		</g> 
+		<g transform="translate(35,35)" id="GlasOben">
+			<path d="M 0,10 L 0,25 A 5,5 0 0 0 5,30 L 45,30 A 5,5 0 0 0 50,25 L 50,10 z" style="fill :#CCCCFF;stroke :none;" />
+			<path d="M 0,0  L 0,25 A 5,5 0 0 0 5,30 L 45,30 A 5,5 0 0 0 50,25 L 50,0"    style="fill :none;" />
+			<polyline points="0,10 50,10" style="stroke-width :0.5;" />
+		</g>
+		<g transform="translate(18,15)" id="RohrLinks">
+			<polygon  points="0,90 0,0 20,0 20,5 5,5 5,90" style="fill :#CCCCFF;stroke :none;" />
+			<polyline points="0,90 0,0 20,0" />
+			<polyline points="5,90 5,5 20,5" />
+		</g>
+		<g transform="translate(52,15)" id="RohrRechts">
+			<polygon  points="20,45 20,5 0,5 0,0 25,0 25,45" style="fill :#CCCCFF;stroke :none;" />
+			<polyline points="20,45 20,5 0,5" />
+			<polyline points="25,45 25,0 0,0" />
+		</g>
+		<polygon id="Ventil" transform="translate(45.0,17.5)" points="-7,-4 7,4 7,-4 -7,4"  style="fill :#ffffff;stroke :#000000;stroke-width :1;" />
+		<line id="ArrowH20" transform="translate(26,95 )" x1="0" y1="-80" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowH21" transform="translate(15,105)" x1="0" y1="-90" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowH22" transform="translate(26,105)" x1="0" y1="-10" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowH10" transform="translate(69,45)" x1="0" y1="-30" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowH11" transform="translate(80,60)" x1="0" y1="-45" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowH12" transform="translate(69,60)" x1="0" y1="-15" x2="0" y2="-3" style="fill :none;stroke :#009900;stroke-width :1;" marker-end="url(#ArrowGreen)" />
+		<line id="ArrowEff" transform="translate(50,95)" x1="0" y1="-50" x2="0" y2="-3" style="fill :none;stroke :#ff0000;stroke-width :1;" marker-end="url(#ArrowRed)" />
+		<polyline id="p1" transform="translate(55,17.5)" points=" 5,-5 0,0" style="fill :none;stroke :#CC00CC;stroke-width :0.7;" />
+		<polyline id="p2" transform="translate(33,17.5)" points="-5,-5 0,0" style="fill :none;stroke :#CC00CC;stroke-width :0.7;" />
+		<g style="fill :#000000; stroke :none; font-family :'Quivira', serif; font-size :9px; font-weight :bold;">
+			<text id="tx_p1" transform="translate(65,9)" style="fill :#CC00CC;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">p</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="0" y="4">1</tspan></text>
+			<text id="tx_p0_1" transform="translate(57,40)"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">p</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="0" y="4">0</tspan></text>
+			<text id="tx_p2" transform="translate(30,9)" style="fill :#CC00CC;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">p</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="0" y="4">2</tspan></text>
+			<text id="tx_p0_2" transform="translate(40,90)"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">p</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="0" y="4">0</tspan></text>
+
+			<text id="tx_h1" transform="translate(61,30)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">h1</tspan></text>
+			<text id="tx_s1" transform="translate(87,30)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">s1</tspan></text>
+			<text id="tx_t1" transform="translate(61,55)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">t1</tspan></text>
+
+			<text id="tx_h2" transform="translate(35,75)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">h2</tspan></text>
+			<text id="tx_s2" transform="translate( 8,65)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">s2</tspan></text>
+			<text id="tx_t2" transform="translate(35,103)" style="fill :#009900;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">t2</tspan></text>
+
+			<text id="tx_hd" transform="translate(60,75)" style="fill :#ff0000;"><!--
+			--><tspan style="text-anchor :end;" x="0" y="0">F</tspan><!--
+			--><tspan style="text-anchor :start; font-size :6px;" x="-1" y="2">diff</tspan></text>
+		</g>
+	</g>
+</svg>

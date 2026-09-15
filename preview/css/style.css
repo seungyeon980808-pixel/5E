@@ -1,0 +1,2777 @@
+@charset "UTF-8";
+/* ===== 본문 글꼴 방침 (2026-07-23 확정) =====
+ * 그림에 들어가는 텍스트의 기본 글꼴은 **돋움**이다 — js/state.js의
+ * TEXT_FONT_FAMILY('"돋움","Dotum","Apple SD Gothic Neo","맑은 고딕",
+ * "Malgun Gothic", sans-serif') 하나로 관리하며, @font-face 없이 **이름으로만**
+ * 해석한다(자가호스팅·임베딩 없음). Windows는 돋움, macOS는 Apple SD Gothic Neo로 풀린다.
+ *
+ * 왜 돋움인가: 수능/평가원 시험지는 SM(신명) 계열 유료 글꼴로 조판된다
+ * (SM중고딕·SM태고딕·신명중명조 등). SM 계열은 라이선스상 웹 임베딩이 안 되고
+ * 이 PC에도 없다. 실측 결과 한양(HY)·신명(SM)·돋움은 같은 한국 인쇄 고딕 계보라
+ * 골격이 거의 같고, 특히 돋움과 HY견고딕은 메트릭이 0.2px 차이로 사실상 동일했다
+ * (64px "아크릴 관 저울 수평면": 돋움 640.1×74 / HY견고딕 639.9×74).
+ * 참고로 HY중고딕은 레지스트리에 등록돼 있어도 브라우저가 접근하지 못한다(폴백).
+ * → 실제로 쓸 수 있는 것 중 수능 지면에 가장 가까운 선택이 돋움이다.
+ *
+ * 함초롬바탕은 2026-07-23에 제거했다. 글꼴 목록·@font-face·자가호스팅 woff2·
+ * 내보내기 임베딩(EMBED_FONTS)에서 모두 뺐다. 다시 넣는다면 @font-face의 src에
+ * local()을 반드시 **맨 앞에** 둘 것 — @font-face를 선언하는 순간 그 이름이 선언에
+ * 예약되어, url이 404여도 PC에 설치된 동명 폰트로 되돌아가지 않고 serif로 넘어간다.
+ * 이것 때문에 함초롬바탕이 설치된 PC에서도 화면·내보내기 모두 명조로 나갔었다. */
+
+/* ===== SELF-HOSTED FONT: Latin Modern (수식 전용) =====
+ * 수식/formula 글꼴. LaTeX 기본 수식체 Computer Modern의 오픈타입판. 정자 + 이탤릭
+ * 2종을 같은 family 이름으로 등록 → "물리량 이탤릭" 로직(resolveTextFontStyle)이
+ * font-style:italic을 줄 때 진짜 이탤릭 페이스가 쓰인다. 파일(fonts/lmroman10-*)이
+ * 없으면 EQUATION_FONT_FAMILY 뒤쪽 fallback(Times/serif)으로 그려진다.
+ * woff2를 먼저 받고(≈98KB, otf 대비 -57%) otf는 구형 브라우저용 폴백으로만 남긴다.
+ * 라이선스: GUST Font License (상업·웹임베딩 허용). */
+@font-face {
+  font-family: "Latin Modern Roman";
+  src: url("../fonts/lmroman10-regular.woff2") format("woff2"),
+       url("../fonts/lmroman10-regular.otf") format("opentype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Latin Modern Roman";
+  src: url("../fonts/lmroman10-italic.woff2") format("woff2"),
+       url("../fonts/lmroman10-italic.otf") format("opentype");
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ===== THEME TOKENS (dark = default, light = opt-in via data-theme) ===== */
+/* Dark = "Cool Slate" (GitHub-dark lineage). Cool-tinted slate with clear
+   elevation steps (app/canvas darkest → panel → hover) and the signature blue
+   #0969da brightened to #2f81f7 for dark legibility. */
+:root[data-theme="dark"] {
+  --bg-app: #0d1117;
+  --bg-panel: #161b22;
+  --bg-panel-hover: #21262d;
+  --bg-canvas: #010409;
+  --bg-input: #0d1117;
+  --border-strong: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #7d8590;
+  --text-label: #b1bac4;
+  --accent: #2f81f7;
+  --accent-hover: #4493f8;
+  --accent-2: #5ea1f7;
+  --accent-2-hover: #79b3f9;
+  --btn-tool-active: #2f81f7;
+  --btn-tool-bg: transparent;
+  --btn-tool-hover: #21262d;
+  --scrollbar-thumb: #484f58;
+}
+
+/* Light = same "Cool Slate" language on paper: signature GitHub-light neutrals
+   (bg #f6f8fa / border #d0d7de / ink #0d1117) with the signature blue #0969da.
+   Canvas surround stays a cool light gray so the white artboard still frames. */
+:root[data-theme="light"] {
+  --bg-app: #eaeef2;
+  --bg-panel: #ffffff;
+  --bg-panel-hover: #f3f5f8;
+  --bg-canvas: #dde3ea;
+  --bg-input: #ffffff;
+  --border-strong: #d0d7de;
+  --text-primary: #0d1117;
+  --text-secondary: #656d76;
+  --text-label: #424a53;
+  --accent: #0969da;
+  --accent-hover: #0860ca;
+  --accent-2: #0a5aa8;
+  --accent-2-hover: #084b8d;
+  --btn-tool-active: #0969da;
+  --btn-tool-bg: transparent;
+  --btn-tool-hover: #eaeef2;
+  --scrollbar-thumb: #afb8c1;
+}
+
+/* 체크박스·라디오(격자/눈금자 등)가 과목 포인트 컬러를 따라가게 */
+input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color: var(--accent); }
+
+/* ===== TOKENS (legacy aliases → resolve against the active theme) ===== */
+:root {
+  --font-normal-text: "돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
+  --font-tool-label: "Latin Modern Roman", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif;
+
+  --c-main: var(--accent);
+  --c-sub: var(--text-label);
+  --c-text: var(--text-primary);
+  --c-border: var(--border);
+
+  /* ===== 테두리 3단 (2026-07-23) =====
+     예전엔 앱 전체 86곳이 전부 같은 1px·같은 색이라 화면이 "격자 상자"로 읽혔다.
+     역할별로 세기를 나눈다 — 구조(패널 외곽·모달)만 원래 세기를 쓰고, 컨트롤은 한 단,
+     섹션 내부 구분선은 두 단 낮춘다.
+       --border-strong  패널 외곽·모달 경계   (테마 블록이 직접 정의)
+       --border         컨트롤 (기본값)        ← 기존 var(--border) 사용처가 여기로 온다
+       --border-muted   섹션 내부 구분선
+     아래 둘은 --border-strong에서 파생되므로 과목 테마 8종이 자동으로 따라온다.
+     새 색을 만들지 않는다는 DESIGN.md 13-4 원칙에 맞춰, 패널 배경 쪽으로 섞기만 한다. */
+  --border: color-mix(in srgb, var(--border-strong, #30363d) 65%, var(--bg-panel));
+  --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
+
+  --panel-left-w: 130px;
+  --panel-right-w: 215px;
+  --footer-h: 28px;
+}
+
+/* ===== RESET / BASE ===== */
+* { box-sizing: border-box; }
+
+/* themed scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: "IBM Plex Sans KR", system-ui, sans-serif;
+  color: var(--c-text);
+  background: var(--bg-app);
+  /* 한국어 줄바꿈: 어절(단어) 중간에서 끊지 않는다.
+     기본값은 한글을 글자 단위로 끊어서 "고르 / 세요"처럼 잘린다(사용자 지적).
+     keep-all 로 어절을 묶고, 줄보다 긴 토큰(URL·긴 영문)만 break-word 로 푼다.
+     body 에 두어 앱의 모든 안내창·모달·툴팁이 함께 따라오게 한다. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  display: flex;
+  flex-direction: column;
+  /* zoom은 100vh 계산에 관여하지 않고 그려진 결과만 확대한다 — height를 그대로
+     100vh로 두면 배율(ui-zoom)만큼 실제 렌더 높이가 뷰포트를 넘어서 하단(푸터·
+     기출문항검색 등)이 화면 밖으로 잘린다. 배율의 역수로 미리 줄여 두면 zoom이
+     걸린 뒤 정확히 뷰포트 높이(100vh)로 돌아온다. */
+  height: calc(100vh / var(--ui-zoom, 1));
+  overflow: hidden;
+}
+
+/* Electron에서는 Windows 기본 회색 제목 표시줄 대신 5E의 중립 패널색을 사용한다.
+   웹판에는 나타나지 않으며, 우측 140px은 운영체제 창 버튼 영역으로 비워 둔다. */
+.desktop-titlebar { display: none; }
+.desktop-shell .desktop-titlebar {
+  flex: 0 0 30px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 150px 0 11px;
+  color: color-mix(in srgb, var(--text-primary) 72%, var(--text-secondary));
+  background: #0e1512;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-strong) 72%, #0e1512);
+  font-size: 11px;
+  letter-spacing: .01em;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.desktop-shell.platform-darwin .desktop-titlebar {
+  padding-inline-start: 78px;
+  padding-inline-end: 12px;
+}
+.desktop-shell.is-native-fullscreen .desktop-titlebar {
+  display: none;
+}
+.desktop-titlebar-mark {
+  color: var(--accent);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+/* ===== APP LAYOUT (3-panel, DESIGN §7) ===== */
+.app {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: var(--panel-left-w) 1fr auto;
+  min-height: 0; /* allow children to shrink */
+}
+
+/* 전체화면 대상은 문서 루트(main.js 참고). 전체화면 배경만 보장하면 body가
+   이미 100vh flex 레이아웃으로 채우므로 .app/footer/위젯이 정상 배치된다. */
+:root:fullscreen {
+  background: var(--bg-app);
+}
+:root:fullscreen body {
+  height: calc(100vh / var(--ui-zoom, 1));
+  overflow: hidden;
+}
+
+.panel {
+  min-height: 0;
+  min-width: 0;
+}
+
+.panel-left,
+.panel-right {
+  background: var(--bg-panel);
+  padding: 12px;
+  overflow: auto;
+}
+
+.panel-left { border-right: 1px solid var(--border-strong); padding: 8px 6px; } /* 최상단 = 과목 선택(툴바 5E와 나란) → 그 아래 공통 도구 */
+/* 스크롤바가 자리를 차지하지 않게 한다(2026-07-27 교사 확정 "스크롤바 겹치기").
+   overflow:auto 이면 세로 스크롤바가 오른쪽 10px 을 상시 먹어, 도구 그리드가 쓸 수 있는
+   폭이 117 → 107px 로 줄고 오른쪽만 비어 보였다. 감춰서 폭을 100% 쓴다 —
+   휠·트랙패드 스크롤은 그대로 동작한다. */
+.panel-left { scrollbar-width: none; }
+.panel-left::-webkit-scrollbar { width: 0; height: 0; }
+.panel-right { border-left: 1px solid var(--border-strong); }
+
+/* ===== 환경 설정: 화면 크기 프리셋 → 앱 UI 스케일(zoom) =====
+   .app 전체에 zoom을 걸어 글씨·도구 패널·간격을 한 번에 확대/축소한다.
+   캔버스 좌표 변환(getScreenCTM)은 zoom을 반영하므로 그리기·클릭은 그대로 동작한다.
+   기본(미설정/대형)=1.0. 세부 비율·패널폭은 추후 조정 가능. */
+/* body 전체에 zoom → 글씨·패널·모달·툴팁까지 한 번에 스케일(브라우저 확대와 동일).
+   body(뷰포트를 채우는 요소)에 걸어야 빈 공간 없이 반영되고, 모달/위젯도 함께
+   줄어 화면 밖으로 벗어나지 않는다. (.app 에 걸면 100vh 기준이라 하단 여백 발생) */
+body { zoom: var(--ui-zoom, 1); }
+:root[data-screen="small"]  { --ui-zoom: 0.68; }
+:root[data-screen="medium"] { --ui-zoom: 0.84; }
+:root[data-screen="large"]  { --ui-zoom: 1.00; }
+:root[data-screen="wide"]   { --ui-zoom: 1.12; }
+
+.panel-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--c-sub);
+  margin-bottom: 8px;
+}
+
+.placeholder {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ===== LEFT PANEL: tool buttons (DESIGN §3) ===== */
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ===== COLLAPSIBLE TOOL SECTIONS ===== */
+.tool-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-sub);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-muted);
+  margin-bottom: 6px;
+  user-select: none;
+}
+.tool-section-header:hover { color: var(--c-text); background: var(--btn-tool-hover); border-radius: 4px 4px 0 0; }
+
+.toggle-icon {
+  display: inline-block;
+  color: var(--accent-2);
+  transition: transform 0.2s ease;
+  font-style: normal;
+}
+
+.tool-section.is-collapsed .toggle-icon {
+  transform: rotate(-180deg);
+}
+
+.tool-section-body {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.tool-section.is-collapsed .tool-section-body {
+  display: none;
+}
+
+/* ===== OBJECT SEARCH TRIGGER (좌측 패널 상단 검색 진입 버튼) ===== */
+/* 캔버스 하단 바(격자 옆) 인라인 버튼 — 종전 좌측 패널 전폭 버튼에서 이동 */
+.object-search-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--c-sub);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.object-search-trigger:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+.bottom-icon-trigger,
+.grid-toggle-btn {
+  display: inline-grid;
+  width: 29px;
+  height: 29px;
+  padding: 0;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.bottom-icon-trigger svg,
+.grid-toggle-btn svg { width: 17px; height: 17px; }
+
+.subject-switch { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; margin:0 0 6px; }
+.subject-switch button { min-width:0; min-height:30px; padding:4px 2px; color:var(--text-secondary); background:var(--bg-input); border:1px solid var(--border); border-radius:6px; font:500 11px/1.3 inherit; cursor:pointer; }
+.subject-switch button:hover { color:var(--text-primary); background:var(--bg-panel-hover); }
+.subject-switch button[aria-selected="true"] { color:var(--accent); background:color-mix(in srgb,var(--accent) 12%,var(--bg-input)); border-color:var(--accent); }
+.object-panel-search { display:flex; align-items:center; gap:6px; width:100%; min-height:30px; margin:0 0 7px; padding:4px 7px; color:var(--text-label); background:var(--bg-input); border:1px solid var(--border); border-radius:6px; font:500 11px/1.3 inherit; cursor:pointer; }
+.object-panel-search:hover { color:var(--text-primary); background:var(--bg-panel-hover); }
+.object-panel-search svg { width:15px; height:15px; flex:none; }
+.object-quick-group { margin:0 0 7px; }
+.object-quick-title { display:flex; align-items:center; justify-content:space-between; margin:0 2px 4px; color:var(--text-secondary); font-size:10px; font-weight:500; }
+.object-quick-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; }
+.object-quick-empty { margin:0 2px 6px; color:var(--text-secondary); font-size:10px; line-height:1.5; }
+.object-tile { position:relative; min-width:0; }
+.object-tile > .tool-btn { width:100%; }
+.object-favorite-toggle { position:absolute; top:1px; right:1px; z-index:2; width:16px; height:16px; padding:0; color:var(--text-secondary); background:color-mix(in srgb,var(--bg-panel) 88%,transparent); border:0; border-radius:4px; font:12px/1 inherit; cursor:pointer; opacity:0; }
+.object-tile:hover .object-favorite-toggle,.object-favorite-toggle:focus-visible,.object-favorite-toggle[aria-pressed="true"] { opacity:1; }
+.object-favorite-toggle[aria-pressed="true"] { color:var(--accent); }
+.subject-part { border:1px solid var(--border); border-radius:6px; margin-bottom:6px; overflow:hidden; }
+.subject-part-header {
+  width:100%; display:flex; align-items:center; justify-content:space-between;
+  padding:7px 10px; font-family:inherit; font-size: 12.5px; font-weight:500;
+  color:var(--text-label); background:var(--btn-tool-bg); border:0; cursor:pointer;
+  border-left:3px solid transparent;
+}
+.subject-part-header:hover { background:var(--btn-tool-hover); color:var(--text-primary); }
+.subject-part:not(.is-collapsed) > .subject-part-header { background:var(--bg-panel-hover); border-left-color:var(--accent); }
+.subject-part-header .toggle-icon { transition:transform .15s; font-size: 11px; color:var(--text-secondary); }
+.subject-part.is-collapsed .toggle-icon { transform:rotate(-90deg); }
+.subject-part.is-collapsed .subject-part-body { display:none; }
+/* 좌우 여백을 없앤다 — 과목 오브젝트 버튼이 공통 도구와 같은 폭을 쓰게 한다.
+   10px 씩 들어가 있어서 같은 3열인데도 버튼이 29px 대 36px 로 작았다. */
+.subject-part-body { padding:8px 0; }
+.subject-part-empty { margin:0; font-size: 12px; color:var(--text-secondary); }
+@media (prefers-reduced-motion: reduce) { .subject-part-header .toggle-icon { transition:none; } }
+.search-trigger-ico { width: 15px; height: 15px; flex: none; }
+/* 라벨은 한 줄 유지; 힌트는 공간이 좁으면 다음 줄 우측으로 내려간다(패널 폭이 좁음). */
+.search-trigger-label { flex: 1 1 auto; text-align: left; white-space: nowrap; }
+
+/* '베타' 꼬리표 — 아직 다듬는 중인 기능임을 이름 옆에 조용히 알린다.
+   눈에 띄되 이름을 밀어내지 않게 작고 옅게. */
+.beta-tag {
+  flex: none;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.search-trigger-hint {
+  flex: none;
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--c-sub);
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: inherit;
+}
+
+.tool-section-body-wide { grid-template-columns: 1fr; }
+.advanced-tool-btn {
+  width: 100%;
+  padding: 9px 10px;
+  font: 500 13px/1.3 inherit;
+  text-align: left;
+  color: var(--c-text);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.advanced-tool-btn:hover { background: var(--btn-tool-hover); }
+/* active = signature blue (mirrors state.activeTool, e.g. the 각도 호 ARC tool) */
+.advanced-tool-btn.is-active,
+.advanced-tool-btn.is-open {
+  color: #fff;
+  background: var(--btn-tool-active);
+  border-color: var(--btn-tool-active);
+}
+
+.tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--c-text);
+  background: var(--btn-tool-bg);
+  /* 상시 테두리를 걷는다 — 15개 버튼이 저마다 상자를 두르면 도구 영역이 격자가 된다.
+     자리는 남겨야(1px transparent) hover·활성 시 레이아웃이 흔들리지 않는다. */
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px;
+  cursor: pointer;
+}
+.tool-btn:hover { background: var(--btn-tool-hover); border-color: var(--border); }
+
+/* icon/letter sits DIRECTLY in the button — no inner keycap box (de-boxed) */
+.tool-btn kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "IBM Plex Mono", monospace;
+  color: var(--text-label);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.tool-btn:hover kbd { color: var(--text-primary); }
+/* shape icons inherit the kbd text color so they highlight with active state */
+/* 버튼이 33 → 36px 로 커진 만큼 아이콘도 같이 올린다(버튼의 약 52% — 확정 시안 기준).
+   공통 도구와 과목 오브젝트가 같은 값을 쓰므로 둘의 크기는 계속 같다. */
+.tool-btn kbd .tool-ico {
+  display: block;
+  width: 19px;
+  height: 19px;
+}
+.tool-btn kbd .tool-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tool-btn.is-active,
+.tool-btn.is-open,
+#fullscreen-toggle[aria-pressed="true"] {
+  color: #fff;
+  background: var(--btn-tool-active);
+  border-color: var(--btn-tool-active);
+}
+.tool-btn.is-active kbd, .tool-btn.is-open kbd {
+  color: #fff;
+}
+
+/* ===== 통합 도구 선택 팝오버(텍스트·라벨러 / 각도·직각) ===== */
+/* 그리드 밖에 fixed로 띄운다 — 그리드 흐름을 건드리지 않게 hidden일 땐 확실히 숨김. */
+.tool-chooser { position: fixed; z-index: 100000; display: flex; flex-direction: column; gap: 3px;
+  /* 배경은 반드시 --bg-panel. 예전엔 var(--btn-tool-bg, #1b1f24)였는데 --btn-tool-bg가
+     transparent로 정의돼 있어 폴백이 영영 안 먹고 팝오버가 통째로 비쳤다. */
+  padding: 5px; min-width: 168px; background: var(--bg-panel);
+  border: 1px solid var(--c-border); border-radius: 8px; box-shadow: 0 6px 22px rgba(0,0,0,0.32); }
+.tool-chooser[hidden] { display: none; }   /* display:flex보다 우선하도록 명시 */
+.tool-chooser-opt { display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 7px 9px; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  background: transparent; color: var(--c-text); text-align: left; font-family: inherit; }
+.tool-chooser-opt:hover { background: var(--btn-tool-hover); border-color: var(--c-border); }
+.tool-chooser-opt.is-active { background: var(--btn-tool-active); border-color: var(--btn-tool-active); color: #fff; }
+.tool-chooser-opt .chooser-ico { flex: 0 0 auto; display: inline-flex; }
+.tool-chooser-opt .chooser-ico svg { width: 22px; height: 22px; color: currentColor; }
+.tool-chooser-opt .chooser-txt { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.tool-chooser-opt .chooser-txt b { font-size: 13px; font-weight: 600; }
+.tool-chooser-opt .chooser-txt small { font-size: 11px; color: var(--c-sub); }
+.tool-chooser-opt.is-active .chooser-txt small { color: rgba(255,255,255,0.75); }
+
+/* ===== CENTER CANVAS ===== */
+.panel-center {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-canvas);
+  min-height: 0;
+}
+
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+}
+.canvas-global-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+/* vertical group separator between toolbar clusters (brand | history | menus) */
+.tb-sep {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  margin: 0 3px;
+  background: var(--c-border);
+}
+
+.app-brand {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0; /* 오른쪽 Pro/Lite 버튼과 바짝 붙도록 우측 여백 제거 */
+  color: var(--accent-2);
+  /* 워터마크(sciEnce Educational Exam Easy Editor)와 같은 글씨체 + 20% 확대 */
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  /* 툴바 한 줄(28px) 안에 머무는 최대치. 더 키우면 위아래 칸을 침범한다. */
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: none;
+  cursor: pointer;
+}
+.app-brand:visited { color: var(--accent-2); }
+.app-brand:hover { color: var(--accent); }
+
+/* ===== Pro/Lite 모드 전환 버튼 (5E 브랜드 오른쪽) =====
+   글씨 색·크기는 5E 브랜드(과목별 accent-2, serif italic)를 따라간다. */
+.mode-toggle-btn {
+  display: inline-flex; align-items: center;
+  /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
+     컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
+  height: 23px; margin-left: 8px; margin-right: 6px; padding: 0 6px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
+  color: var(--accent-2);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 6px;
+  cursor: pointer; transition: background .12s, border-color .12s, color .12s;
+}
+.mode-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
+/* Lite = 켜짐(채워진 알약)으로 토글 상태를 분명히 표시.
+   조상 선택자(:root[data-mode]) 대신 버튼 자신의 상태 클래스로 걸어(view-mode.js가
+   토글) 어떤 환경에서도 확실히 적용되게 한다. */
+.mode-toggle-btn.is-on {
+  color: #fff; background: var(--accent); border-color: var(--accent);
+}
+.mode-toggle-btn.is-on:hover { color: #fff; }
+
+/* ===== LITE 모드 =====
+   구조는 그대로 두고 CSS로만 숨기거나 키운다(display:none / 크기 조정). */
+/* 좌측 패널을 조금 넓혀 큰 도구 버튼이 들어갈 공간 확보 */
+:root[data-mode="lite"] { --panel-left-w: 176px; }
+/* Lite 숨김 항목: 과목별/퍼스널 오브젝트(+저장) · 전체 통일/수정 · 오브젝트 검색 */
+:root[data-mode="lite"] #subject-section,
+:root[data-mode="lite"] #personal-section,
+:root[data-mode="lite"] #personal-object-save,
+:root[data-mode="lite"] #bulk-edit-open,
+:root[data-mode="lite"] #object-search-trigger { display: none !important; }
+/* 레이어: 1만 표시(활성 레이어 고정은 view-mode.js가 처리) */
+:root[data-mode="lite"] .insp-layer-row:not([data-layer-id="1"]) { display: none; }
+/* 도구 버튼: 크게 + 아이콘 아래 단축키 표시 */
+:root[data-mode="lite"] #tool-list .tool-btn {
+  flex-direction: column; aspect-ratio: auto; min-height: 54px;
+  padding: 8px 4px 6px; gap: 4px;
+}
+:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-ico { width: 23px; height: 23px; }
+:root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: 19px; }
+:root[data-mode="lite"] #tool-list .tool-btn[data-sc]::after {
+  content: attr(data-sc);
+  font: 600 10px/1 "IBM Plex Mono", monospace;
+  color: var(--text-secondary); letter-spacing: .02em;
+}
+:root[data-mode="lite"] #tool-list .tool-btn.is-active[data-sc]::after { color: rgba(255, 255, 255, .85); }
+
+/* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
+.beta-label {
+  color: #d1242f;
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 13px;
+  color: #fff;
+  background: var(--c-main);
+  border: 1px solid var(--c-main);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:active { background: #0757b0; }
+
+.hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* project I/O buttons (left of the canvas toolbar; theme-driven, subtle) */
+.topbar-btn {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.topbar-btn:hover { background: var(--btn-tool-hover); }
+
+.shell-icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 4px;
+}
+.shell-icon-button-menu {
+  width: 39px;
+  gap: 2px;
+  padding-inline: 5px 3px;
+}
+.shell-icon-button svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.shell-menu-chevron {
+  width: 8px;
+  margin-top: -2px;
+  font-size: 12px;
+  line-height: 1;
+}
+.shell-icon-button::after {
+  content: attr(data-shell-tip);
+  position: absolute;
+  z-index: 100001;
+  top: calc(100% + 8px);
+  left: 50%;
+  padding: 5px 9px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .16);
+  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.shell-icon-button:hover::after,
+.shell-icon-button:focus::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.shell-icon-button[aria-expanded="true"]::after {
+  visibility: hidden;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-icon-button::after { transition: none; }
+}
+
+/* icon-only top-bar buttons (undo/redo): square, centered glyph */
+.topbar-btn.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 4px;
+  font-size: 16px;
+}
+.topbar-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.topbar-btn:disabled:hover { background: var(--btn-tool-bg); }
+
+.fullscreen-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 4px;
+}
+.fullscreen-toggle svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* ===== FILE MENU (파일 ▾ dropdown in the canvas toolbar) ===== */
+.file-menu {
+  position: relative;
+}
+
+.file-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  min-width: 230px;
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
+}
+.file-menu-list[hidden] { display: none; }
+/* 모달과 같은 등장 연출(짧게 튀었다 자리잡기)을 드롭다운에도 맞춘다 — 지금까지는
+   대화상자만 이 느낌이 있고 파일/설정 메뉴는 즉시 나타나 뚝뚝 끊겨 보였다. */
+.file-menu-list:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@keyframes menu-pop {
+  0%   { opacity: 0; transform: scale(0.96) translateY(-3px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .file-menu-list:not([hidden]) { animation: none; }
+}
+
+.file-menu-item {
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  padding: 7px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.file-menu-item:hover { background: var(--btn-tool-hover); }
+
+/* 서브메뉴가 있는 항목(이미지 불러오기)의 우측 화살표 */
+.menu-caret { margin-left: auto; padding-left: 14px; color: var(--text-secondary); font-size: 12px; }
+/* 우측 플라이아웃 서브메뉴 (파일 메뉴 리스트 기준 오른쪽으로 펼침) */
+.file-submenu {
+  position: absolute; left: calc(100% + 4px); top: 0; z-index: 210;
+  min-width: 236px;
+  display: flex; flex-direction: column;
+  padding: 4px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform-origin: top left;
+}
+.file-submenu[hidden] { display: none; }
+.file-submenu:not([hidden]) { animation: menu-pop 160ms cubic-bezier(.2, .9, .25, 1.06); }
+@media (prefers-reduced-motion: reduce) {
+  .file-submenu:not([hidden]) { animation: none; }
+}
+/* 옵션 = 제목 + 설명 2줄 */
+.file-submenu-item { flex-direction: column; align-items: flex-start; gap: 3px; padding: 8px 10px; }
+.file-submenu-item .fsi-title { font-size: 14px; color: var(--text-primary); }
+.file-submenu-item .fsi-desc {
+  font-size: 11.5px; line-height: 1.4; color: var(--text-secondary);
+  white-space: normal; text-align: left;
+}
+
+/* Bottom description area: compact, muted, themed via vars (dark/light safe). */
+.file-menu-desc {
+  margin-top: 4px;
+  padding: 7px 10px 6px;
+  border-top: 1px solid var(--border-muted);
+  max-width: 220px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  white-space: normal;
+  word-break: keep-all;
+}
+
+/* ===== EXPORT MODAL (이미지로 내보내기) ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal {
+  position: relative; /* 좌상단 드래그 손잡이(.modal-drag-handle)의 기준 */
+  width: 320px;
+  /* 내용이 길거나(기출 문항 검색 등) 화면 크기(ui-zoom)가 커진 상태에서도 모달
+     자체는 절대 뷰포트를 넘지 않게 상한을 둔다. 주의: 이 .modal은 body{zoom}이
+     걸린 트리 안에 있어서, vh 기반 계산값도 이 안에서는 다시 zoom배만큼 곱해져
+     그려진다(= body 높이에 썼던 것과 같은 함정). 그래서 그냥 100vh가 아니라
+     zoom의 역수로 한 번 더 나눠야 화면에는 정확히 실제 뷰포트 크기로 보인다. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  max-height: calc((100vh - 40px) / var(--ui-zoom, 1));
+  overflow-y: auto;
+  /* body{zoom} 안의 스크롤 컨테이너에서 Chromium이 이전 프레임을 못 지우고 겹쳐
+     그리는 버그 대비 — 자체 컴포지팅 레이어로 승격. (기출 문항 검색 카드가 층층이
+     겹쳐 보이던 버그와 같은 계열, 안전하게 모든 모달에 선반영) */
+  transform: translateZ(0);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+/* 창 이동 손잡이: 좌상단 모서리에 점 여섯 개(⠿). 모달 안쪽 드래그 조작과 겹치지
+   않도록 전용 영역으로 두고, flex 흐름에서는 빼서(absolute) 기존 레이아웃을 안 건드린다. */
+/* 제목 줄에 손잡이가 들어간 경우 — 제목 글자와 중심선을 맞춘다. */
+.modal-title.has-drag-handle { display: flex; align-items: center; gap: 8px; }
+
+.modal-drag-handle {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  cursor: grab;
+  opacity: 0.45;
+  /* 점 격자 — 제목 글자보다 작아야 손잡이로 읽히고 제목을 밀어내지 않는다. */
+  background-image: radial-gradient(currentColor 0.9px, transparent 1.1px);
+  background-size: 4.5px 4.5px;
+  background-position: 1px 1px;
+  background-repeat: repeat;
+  color: var(--text-secondary);
+}
+.modal-drag-handle:hover { opacity: 0.9; background-color: var(--btn-tool-hover); }
+.modal-drag-handle.is-dragging { cursor: grabbing; opacity: 1; }
+
+/* ----- 창이 뜰 때 -----
+   목표치를 1.2%만 지나쳤다가 되돌아와 멈춘다 — "확 떴다가 자리를 잡는" 느낌만 남기고
+   구경거리가 되지 않을 만큼 짧게(260ms). 연출이 아니라 어디에 무엇이 생겼는지 알리는 장치다.
+   transform이 아니라 scale 속성을 쓰는 이유: 창을 끌어 옮기면 .modal에 인라인
+   transform:translate()가 남는데, transform으로 애니메이션하면 그 위치가 초기화된다. */
+@keyframes modal-pop {
+  0%   { opacity: 0; scale: 0.94; }
+  62%  { opacity: 1; scale: 1.012; }
+  100% { opacity: 1; scale: 1; }
+}
+@keyframes modal-overlay-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.modal-overlay:not([hidden]) { animation: modal-overlay-fade 180ms ease-out; }
+.modal-overlay:not([hidden]) > .modal {
+  animation: modal-pop 260ms cubic-bezier(.2, .9, .25, 1.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay:not([hidden]),
+  .modal-overlay:not([hidden]) > .modal { animation: none; }
+}
+
+/* ----- 참고 문항 창: 최소화된 창이 쌓이는 칩 막대(우하단) -----
+   별도 브라우저 창을 접어 두면 여기 남아, 눌러서 다시 열 수 있다. */
+.refwin-dock {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1200;         /* 모달(1000)보다 위, 툴팁(100001)보다 아래 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  /* 애플 독처럼 캡슐형 배경을 둬서 "떠 있는 여러 칩"이 아니라 하나의 창처럼 읽히게,
+     동시에 칩 사이/둘레 여백이 생겨 손잡이가 아니어도 잡아서 끌 수 있게 한다. */
+  padding: 8px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(6px);
+  cursor: grab;
+}
+.refwin-dock:active { cursor: grabbing; }
+.refwin-dock[hidden] { display: none; }
+/* 도크의 손잡이는 모달과 달리 절대배치가 아니라 칩들 위에 흐름대로 놓인다
+   (도크는 크기가 내용에 따라 변해서 모서리 고정이 어긋난다). 여백 전체가 이미
+   드래그를 받으므로(dragWholeElement) 손잡이는 "여기를 잡으면 된다"는 표식만
+   하면 되지만, 눈에 덜 띄면 여전히 못 찾으므로 크게·진하게 둔다. */
+.refwin-dock .modal-drag-handle {
+  position: static;
+  width: 18px;
+  height: 18px;
+  opacity: 0.75;
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border);
+  align-self: center;
+}
+.refwin-chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+.refwin-chip:hover { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ----- 기본값 설정 modal: two-column (fields | live preview) ----- */
+.modal-defaults {
+  width: auto;
+  max-width: calc(100vw - 32px);
+}
+.defaults-body {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  align-items: flex-start;
+}
+/* 설정 항목 열. 라벨을 왼쪽 고정 열로 옮기면서 240px로는 좁아 폭을 늘렸다.
+   그래도 모달이 화면을 넘지 않도록 이 열 안에서만 스크롤한다 — 종전엔 모달 자체가
+   1180px까지 자라 화면(720px) 밖으로 잘려 나갔다. */
+.defaults-fields {
+  width: 330px;
+  flex: none;
+  max-height: min(560px, 70vh);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+/* 이 모달 안에서는 라벨 열을 조금 넓게 — "채우기 명도"·"각도기 눈금"이 들어가야 한다. */
+.defaults-fields .gm-row { grid-template-columns: 104px 1fr; }
+.defaults-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+  min-width: 320px;
+}
+.defaults-preview-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 12;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.modal-label {
+  font-size: 12px;
+  color: var(--text-label);
+}
+
+/* checkbox field: checkbox + label on one row (overrides column flow) */
+.modal-field-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.modal-input {
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  outline: none;
+}
+.modal-input:focus { border-color: var(--accent); }
+
+/* ===== OBJECT SEARCH ===== */
+.object-search-modal {
+  width: 440px;
+  max-height: min(620px, calc(100vh - 48px));
+  gap: 12px;
+  padding: 16px;
+}
+.object-search-input { width: 100%; box-sizing: border-box; }
+.object-search-results {
+  min-height: 72px;
+  max-height: 440px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-input);
+}
+.object-search-category {
+  padding: 8px 10px 4px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+}
+.object-search-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  color: var(--text-primary);
+  background: transparent;
+  border: 0;
+  font: 12px/1.3 inherit;
+  text-align: left;
+  cursor: default;
+}
+.object-search-row:hover,
+.object-search-row.is-highlighted { background: var(--btn-tool-hover); }
+.object-search-icon {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.object-search-icon .tool-ico { width: 18px; height: 18px; }
+.object-search-badge {
+  padding: 2px 6px;
+  color: var(--text-secondary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+}
+.object-search-empty {
+  margin: 0;
+  padding: 24px 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* segmented control: format (PNG/SVG) + resolution (DPI) */
+.seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+.seg-btn {
+  flex: 1;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+.seg-btn:hover { color: var(--text-primary); }
+.seg-btn.is-active {
+  color: #fff;
+  background: var(--accent);
+}
+
+/* ===== BATCH EXPORT (페이지 일괄 내보내기 모달) ===== */
+.batch-modal { width: min(480px, calc(100vw - 32px)); }
+
+/* 저장 폴더 줄: 경로 + [폴더 연결] 버튼 */
+.batch-dir {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-dir-path {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 미지정 상태는 회색으로 — "아직 할 일이 남았다"를 색이 아니라 명도로 표시한다. */
+.batch-dir-path.is-empty { color: var(--text-secondary); }
+
+/* 전체 선택/해제: 라벨 줄 오른쪽 끝에 붙는 작은 텍스트 버튼 */
+.modal-label:has(.batch-select-all) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.batch-select-all {
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.batch-select-all:hover { color: var(--text-primary); }
+
+.batch-list {
+  max-height: min(300px, 40vh);
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-input);
+}
+.batch-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.batch-row:hover { background: var(--btn-tool-hover); }
+.batch-row-name {
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 실제로 떨어질 파일 이름 — 확인용이므로 본문보다 한 단계 약하게. */
+.batch-row-file {
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.batch-row-tag {
+  margin-left: 5px;
+  padding: 1px 5px;
+  color: var(--text-secondary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+}
+.batch-note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.modal-btn {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+.modal-btn:hover { background: var(--btn-tool-hover); }
+/* 주요 동작 버튼: 평상시엔 일반 버튼과 같은 회색, 마우스를 올렸을 때만 강조색.
+   상시 파란 버튼은 "커서가 올라가 있지 않은데 색이 켜져 있다"는 오해를 부른다.
+   위계는 색이 아니라 굵기로만 표시한다. */
+.modal-btn-primary { font-weight: 600; }
+.modal-btn-primary:not(:disabled):hover {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
+/* 폭은 여기서만 정한다 — 종전엔 마크업에 인라인 width가 박혀 있어 이 값이 무시됐다.
+   실제 적용값은 960px였고, 요구대로 20% 키워 1152px. */
+.gm-modal { width: min(1152px, 96vw); }
+.gm-modal .modal-title { font-size: 18px; }
+/* 드래그로 글자가 파랗게 잡히지 않게. 이 모달은 '조작'이 전부라(미리보기에 자유곡선을
+   그리고, 칩·스테퍼를 끌고) 드래그마다 라벨·버튼 글자가 선택되면 화면이 지저분해진다.
+   진짜로 선택이 필요한 입력칸만 예외로 되돌린다. */
+.gm-modal { user-select: none; -webkit-user-select: none; }
+.gm-modal input, .gm-modal textarea {
+  user-select: text; -webkit-user-select: text;
+}
+.gm-desc { color: var(--text-secondary); font-size: 13px; line-height: 1.7; margin: 0 0 12px; }
+.gm-body { display: flex; gap: 18px; align-items: stretch; flex-wrap: wrap; }
+.gm-left, .gm-right { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; }
+.gm-preview-label { margin: 0 0 5px; font-size: 13px; font-weight: 600; color: var(--text-label); }
+.gm-preview {
+  flex: 1 1 auto; display: flex; align-items: center; justify-content: center;
+  min-height: 280px; background: #fff; border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+.gm-preview-svg { width: 100%; height: 100%; }
+.gm-field { margin-bottom: 12px; }
+.gm-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-label); margin-bottom: 5px; }
+.gm-variant { display: flex; gap: 14px; font-size: 14px; color: var(--text-primary); }
+.gm-variant label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.gm-row2 { display: flex; gap: 12px; }
+.gm-sub { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-label); }
+.gm-num, .gm-origin {
+  box-sizing: border-box; font-family: inherit; font-size: 14px; color: var(--text-primary);
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; outline: none;
+}
+.gm-num { width: 100%; }
+.gm-num:focus, .gm-origin:focus, .gm-ta:focus { border-color: var(--accent); }
+.gm-labrow { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text-label); margin-bottom: 5px; cursor: pointer; }
+.gm-ta {
+  width: 100%; box-sizing: border-box; resize: vertical; font-family: inherit; font-size: 14px;
+  color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 9px; outline: none; line-height: 1.4;
+}
+.gm-check { display: flex; align-items: center; gap: 7px; margin-top: 10px; font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+.gm-check input[type="checkbox"] { width: 15px; height: 15px; }
+.gm-origin { width: 46px; margin-left: 6px; text-align: center; }
+/* 라벨+입력을 한 줄에 붙이는 인라인 필드(모양·칸 수·라벨 크기·축 이름) */
+.gm-inl {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; color: var(--text-label); white-space: nowrap;
+}
+/* 위아래 ▲▼ 스핀 버튼으로 증감하는 좁은 숫자칸(칸 수·라벨 크기 — 양옆 버튼 대체).
+   네이티브 스핀 버튼은 색을 직접 못 바꾸므로 opacity로 입력창 톤에 녹인다(요구: 톤 조절)
+   — 평소엔 은은하게, 마우스를 올리거나 포커스일 때만 또렷하게. */
+.gm-num.gm-spinnum { width: 58px; text-align: center; padding: 5px 2px 5px 8px; }
+.gm-spinnum::-webkit-inner-spin-button { opacity: 0.7; }         /* 활성 = 또렷하게(요구) */
+.gm-spinnum:hover::-webkit-inner-spin-button,
+.gm-spinnum:focus::-webkit-inner-spin-button { opacity: 1; }
+.gm-spinnum:disabled::-webkit-inner-spin-button { opacity: 0.15; } /* 비활성과 확실히 구분 */
+
+/* ===== 좌표 탭 레이아웃 (UI 개선) =====
+   라벨 열을 92px로 고정해 입력칸이 한 줄로 정렬되게 하고(인스펙터 .insp-line-grid와 같은
+   사고), 관련 항목을 그룹으로 묶어 위계를 만든다. 핵심은 '축 표'(.gm-axis-grid) —
+   x·y를 열로 세워 칸 개수·한 칸 값·축 이름이 같은 세로줄에 계열로 쌓인다. */
+.gm-group { margin-bottom: 16px; }
+.gm-group + .gm-group { border-top: 1px solid var(--border); padding-top: 14px; }
+.gm-group-h {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+  color: var(--text-secondary); margin-bottom: 11px; text-transform: uppercase;
+}
+.gm-row {
+  display: grid; grid-template-columns: 92px 1fr;
+  align-items: center; gap: 10px; margin-bottom: 9px;
+}
+.gm-row-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+/* display:grid가 브라우저 기본 [hidden]{display:none}을 이겨서, hidden을 걸어도
+   행이 그대로 보였다(빈 칩 행 3개가 남던 원인). 명시적으로 눌러 준다. */
+.gm-row[hidden] { display: none; }
+
+/* 끝 라벨: v_0 정도만 들어가므로 남는 폭을 다 먹지 않게 고정한다(의견 5). */
+.gm-endlabel-in { width: 128px; flex: none; font-family: monospace; }
+
+/* 그래프 요소 스위치 — 좌표 탭의 .gm-variant-seg와 같은 규약(켜진 쪽에 .on). */
+/* 그래프 요소: 제목과 같은 줄에 두고(요구 1) 서로 띄운다(요구 7).
+   붙여 놓으면 세 개가 한 덩어리로 보여 개별 스위치라는 게 안 읽힌다. */
+.gm-elem-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.gm-elem-head .gm-group-h { margin: 0; }
+.gm-elem-btns { display: inline-flex; gap: 10px; }
+.gm-elem-btns button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.gm-elem-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-btns button.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+/* 칸 범위/간격: 한 셀에 [범위]/[간격] 두 스테퍼를 나란히(요구). */
+.gm-range-step { display: flex; align-items: center; gap: 4px; }
+.gm-range-step .gm-step { flex: 1 1 0; min-width: 0; }
+.gm-rs-sep { color: var(--text-secondary); font-size: 12px; flex: 0 0 auto; }
+
+/* 고급 옵션: 좌표 탭 맨 아래 인라인 패널(모달 아님 → 미리보기가 계속 보인다). */
+.gm-adv-toggle {
+  width: 100%; text-align: left; font: inherit; font-size: 13px; font-weight: 600;
+  padding: 7px 12px; cursor: pointer; color: inherit;
+  background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.gm-adv-toggle:hover { background: var(--btn-tool-hover); }
+.gm-adv-panel {
+  margin-top: 10px; padding: 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 45%, transparent);
+}
+.gm-adv-panel[hidden] { display: none; }
+.gm-adv-sect { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+.gm-adv-h { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.gm-adv-h small { font-weight: 400; color: var(--text-secondary); margin-left: 6px; white-space: nowrap; }
+/* 네 끝(x+ x− y+ y−) 여백 입력: 한 줄에 나란히, 라벨은 짧게 잘리지 않게. */
+.gm-end-row { display: flex; gap: 8px; }
+.gm-end-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.gm-end-item label { font-size: 12px; color: var(--text-secondary); flex: 0 0 auto; }
+.gm-end-item .gm-step { flex: 1 1 0; min-width: 0; }
+
+/* ③ 표시 탭 배치 도구 버튼 — 위 요소 스위치와 같은 규약(.on=켜짐). */
+.gm-ann-tool {
+  font: inherit; font-size: 12px; padding: 5px 12px; cursor: pointer;
+  color: var(--text-label); background: transparent;
+  border: 1px solid var(--border); border-radius: 6px;
+}
+.gm-ann-tool:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-ann-tool.on { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+.gm-elem-seg { display: inline-flex; }
+.gm-elem-seg button {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 11px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-left-width: 0;
+}
+.gm-elem-seg button:first-child { border-left-width: 1px; border-radius: 6px 0 0 6px; }
+.gm-elem-seg button:last-child { border-radius: 0 6px 6px 0; }
+.gm-elem-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-elem-seg button.on {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.gm-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* −/값/＋ 묶음(곡률·앵커 수). 이 둘은 값을 직접 넣는 게 아니라 "한 단계씩 조정"하는
+   조작이라 숫자 입력칸(.gm-step)으로 바꾸지 않았다 — 앵커 ＋는 가장 성긴 구간을
+   나누고 −는 영향이 가장 적은 점을 지우는, 임의의 수를 넣을 수 없는 동작이다.
+   대신 세 조각을 한 덩어리로 붙여 다른 컨트롤과 높이·모서리를 맞춘다. */
+.gm-pm { display: inline-flex; align-items: stretch; height: 30px; }
+.gm-pm button {
+  font: inherit;
+  font-size: 13px;
+  width: 30px;
+  cursor: pointer;
+  color: var(--text-label);
+  background: var(--bg-panel-hover);
+  border: 1px solid var(--border);
+}
+.gm-pm button:first-child { border-radius: 6px 0 0 6px; }
+.gm-pm button:last-child { border-radius: 0 6px 6px 0; }
+.gm-pm button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-pm > span {
+  min-width: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.gm-row-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gm-checks { flex-wrap: wrap; gap: 8px 18px; }
+.gm-row-body .gm-check { margin-top: 0; font-size: 13px; color: var(--text-label); white-space: nowrap; }
+.gm-unit { font-size: 12px; color: var(--text-secondary); }
+
+/* 좌표 크기 · 성분 크기: 단위도 범위도 같은 한 쌍이라 한 행에 나란히 놓는다.
+   왼쪽 칸이 좌표, 오른쪽 칸이 성분 — 행 라벨의 "좌표 / 성분" 순서와 같다. */
+.gm-scale-pair { gap: 14px; flex-wrap: wrap; }
+.gm-scale-item { display: inline-flex; align-items: center; gap: 5px; }
+.gm-sep { color: var(--text-secondary); font-size: 12px; }
+
+/* 축 표: [라벨 92px][x열][y열] */
+.gm-axis-grid {
+  display: grid; grid-template-columns: 92px 1fr 1fr;
+  align-items: center; gap: 9px 14px;
+}
+.gm-ax-head {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding-bottom: 2px; border-bottom: 1px solid var(--border);
+}
+.gm-ax-head i { font: italic 700 13px "Times New Roman", serif; }
+.gm-ax-lbl { font-size: 12.5px; color: var(--text-label); white-space: nowrap; }
+.gm-ax-cell { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.gm-ax-note {
+  grid-column: 2 / -1;
+  font-size: 11.5px; color: var(--text-secondary); margin-top: -2px;
+}
+
+/* 스테퍼: ▲▼를 입력칸 오른쪽에 세로로 몰아 가로 폭을 아끼고(양옆에 두면 칸이 넓어져
+   축 표가 넘친다), 대신 칸 높이를 키워 버튼 타겟을 확보한다. 24×18px로 네이티브
+   스핀(13×9)보다 3배 넓어 0.1씩 반복해 누르기 쉽다. */
+.gm-step {
+  display: inline-flex; align-items: stretch; flex: none;
+  height: 36px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg-input); overflow: hidden;
+}
+.gm-step input {
+  width: 48px; padding: 0 4px; border: 0; border-radius: 0;
+  background: transparent; color: var(--text-primary);
+  font: inherit; font-size: 13.5px; text-align: center; outline: none;
+  font-variant-numeric: tabular-nums;
+}
+.gm-step input:focus { background: var(--bg-panel-hover); }
+.gm-step-btns {
+  display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+}
+.gm-step-btns button {
+  flex: 1; width: 24px; padding: 0; border: 0;
+  display: grid; place-items: center;
+  background: transparent; color: var(--text-secondary);
+  font: inherit; font-size: 9px; line-height: 1; cursor: pointer;
+}
+.gm-step-btns button + button { border-top: 1px solid var(--border); }
+.gm-step-btns button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+/* 스테퍼 안에서는 네이티브 스핀이 중복이라 감춘다 */
+.gm-step input::-webkit-inner-spin-button,
+.gm-step input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.gm-step input[type="number"] { -moz-appearance: textfield; }
+/* 잠긴 칸은 칸 전체를 흐리게 — 왜 못 쓰는지 .gm-ax-note가 설명한다 */
+.gm-step:has(input:disabled) { opacity: 0.45; }
+.gm-step:has(input:disabled) button { cursor: not-allowed; }
+
+/* 모양 세그먼트: 드롭다운(클릭 2번, 폭도 늘어짐) 대신 세 모양을 한 줄에 펼친다.
+   미니 축 아이콘이 글자보다 먼저 읽힌다. */
+.gm-variant-seg {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px; flex: 1;
+}
+.gm-variant-seg button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  height: 36px; padding: 0 4px;
+  font: inherit; font-size: 12.5px;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-input); color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap;
+}
+.gm-variant-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-variant-seg button.on {
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-input));
+  border-color: var(--accent); color: var(--accent);
+}
+.gm-variant-seg svg {
+  width: 15px; height: 15px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* 원점 표기 0 / O 세그먼트 */
+.gm-origin-seg {
+  display: inline-flex; flex: none;
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+.gm-origin-seg button {
+  font: 600 13px "Times New Roman", serif; padding: 0;
+  width: 30px; height: 26px; border: 0;
+  background: var(--bg-input); color: var(--text-secondary); cursor: pointer;
+}
+.gm-origin-seg button:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.gm-origin-seg button.on { background: var(--accent); color: #fff; }
+.gm-origin-seg button:last-child { font-style: italic; }
+
+/* 눈금 라벨 종류: 글자 수와 무관하게 균등폭 */
+/* minmax(0,1fr) — 그냥 1fr이면 가장 긴 라벨의 최소너비에 밀려 한 칸만 넓어진다 */
+#gm-tickmode { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; flex: 1; }
+#gm-tickmode button { white-space: nowrap; text-align: center; }
+/* 물음표 도움말 배지 — 설명은 커서를 올리면 뜨는 title 툴팁으로 */
+.gm-help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-left: 5px; flex: 0 0 auto;
+  border: 1px solid var(--border); border-radius: 50%;
+  font-size: 10px; font-weight: 700; line-height: 1;
+  color: var(--text-secondary); background: var(--bg-input);
+  cursor: pointer; user-select: none;
+}
+.gm-help:hover { border-color: var(--accent); color: var(--accent); }
+/* 물음표 클릭 시 뜨는 설명 팝오버 */
+.gm-help-pop {
+  position: fixed; z-index: 100000; box-sizing: border-box;
+  background: var(--bg-input); color: var(--text-primary);
+  border: 1px solid var(--accent); border-radius: 6px;
+  padding: 8px 11px; font-size: 12px; line-height: 1.55;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+}
+
+.modal-image-paste {
+  width: min(640px, calc(100vw - 40px));
+  padding: 24px 28px;
+}
+.modal-image-paste,
+.modal-image-paste * {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  letter-spacing: 0;
+}
+.image-paste-guide {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.image-paste-guide strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.image-paste-guide p {
+  margin: 0;
+}
+.image-paste-actions {
+  gap: 10px;
+}
+.image-paste-actions .modal-btn {
+  min-width: 92px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border-color: var(--border);
+  white-space: nowrap;
+}
+/* (예전엔 여기서 primary의 상시 파랑을 국소적으로 눌러줬으나,
+   이제 공용 .modal-btn-primary 자체가 평상시 회색이라 불필요) */
+.image-paste-actions .modal-btn:hover,
+.image-paste-actions .modal-btn:focus-visible {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ===== SMART CUTOUT ===== */
+.smart-cutout-start { font-weight: 600; }
+.smart-cutout-modal {
+  width: min(720px, calc(100vw - 32px));
+  max-height: min(820px, calc(100vh - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.smart-cutout-help,
+.smart-cutout-status {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.smart-cutout-preview {
+  min-height: 260px;
+  max-height: 58vh;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #d9dde2 25%, transparent 25%),
+    linear-gradient(-45deg, #d9dde2 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #d9dde2 75%),
+    linear-gradient(-45deg, transparent 75%, #d9dde2 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+.smart-cutout-preview canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 56vh;
+  image-rendering: auto;
+}
+.smart-cutout-range {
+  display: grid;
+  grid-template-columns: 42px 1fr 38px;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+.smart-cutout-range input { width: 100%; }
+.smart-cutout-range output {
+  text-align: right;
+  font: 12px "IBM Plex Mono", monospace;
+  color: var(--text-secondary);
+}
+.image-edit-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.image-edit-tool-icon {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+.image-edit-tool-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== IMAGE OBJECTIFY ===== */
+.modal-objectify { width: 620px; }
+.objectify-description,
+.objectify-status,
+.defaults-notice {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+.objectify-status.is-error { color: #e35d6a; }
+.objectify-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+  padding: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+.objectify-dropzone.is-dragover { border-color: var(--accent); background: var(--btn-tool-hover); }
+.objectify-preview {
+  display: block;
+  width: 100%;
+  max-height: 310px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.objectify-controls { display: grid; grid-template-columns: 1fr 160px; gap: 12px; }
+.objectify-range-row { display: flex; align-items: center; gap: 8px; }
+.objectify-range-row input[type="range"] { flex: 1; }
+.objectify-range-value { min-width: 32px; text-align: right; font: 12px "IBM Plex Mono", monospace; }
+@media (max-width: 680px) {
+  .objectify-controls { grid-template-columns: 1fr; }
+}
+
+.zoom-readout {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: var(--c-sub);
+}
+
+/* MCP 연결 상태 — 상단 툴바 오른쪽 끝에 붙는다. 점(●)이 상태를 나타낸다:
+   회색 테두리만=연결 안 됨, 파란 채움=연결됨 — 흔한 "연결 상태 표시등" 관례를 그대로 따른다. */
+.mcp-bridge-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mcp-bridge-btn .mcp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid var(--text-secondary);
+  flex: 0 0 auto;
+}
+.mcp-bridge-btn[aria-pressed="true"] .mcp-dot {
+  background: var(--c-main);
+  border-color: var(--c-main);
+}
+.mcp-bridge-btn.mcp-connecting .mcp-dot { opacity: 0.5; }
+.mcp-bridge-btn.mcp-flash { background: var(--btn-tool-hover); }
+
+.theme-toggle {
+  color: var(--text-secondary);
+}
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.theme-toggle[aria-pressed="true"] {
+  color: #fff;
+  background: var(--c-main);
+  border-color: var(--c-main);
+}
+.theme-toggle:hover { background: var(--btn-tool-hover); }
+.theme-toggle[aria-pressed="true"]:hover { background: var(--accent-hover); }
+
+.canvas-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.image-placement-hint {
+  position: absolute;
+  top: 36px;
+  left: 50%;
+  z-index: 150;
+  transform: translateX(-50%);
+  padding: 7px 12px;
+  color: #fff;
+  background: rgba(13, 17, 23, 0.82);
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.image-placement-hint[hidden] { display: none; }
+
+/* ===== RULER CONTAINER (CSS grid: corner | h-ruler / v-ruler | canvas) ===== */
+.ruler-container {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-rows: 20px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+/* Rulers hidden: collapse the 20px tracks so canvas fills the full area */
+.ruler-container.rulers-hidden {
+  grid-template-columns: 0 minmax(0, 1fr);
+  grid-template-rows: 0 minmax(0, 1fr);
+}
+
+.ruler-corner {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border-muted);
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.ruler {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-panel);
+}
+
+.ruler-h {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  height: 100%;
+  border-bottom: 1px solid var(--border-muted);
+}
+
+.ruler-v {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+  height: 100%;
+  border-right: 1px solid var(--border-muted);
+}
+
+.guide-coordinate-editor {
+  position: absolute;
+  z-index: 120;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
+  padding: 0 3px;
+  color: #fff;
+  background: #0550ae;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 1px;
+  font: 9px/1 "IBM Plex Mono", monospace;
+  white-space: nowrap;
+  transform-origin: center;
+}
+.guide-coordinate-editor.is-vertical { transform: rotate(-90deg); }
+.guide-coordinate-editor input {
+  width: 42px;
+  min-width: 0;
+  margin: 0 2px;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  font: inherit;
+  text-align: center;
+}
+
+#canvas {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  background: var(--bg-canvas);
+  /* cursor hints for pan are set from viewport.js */
+}
+#canvas.is-panning { cursor: grabbing; }
+#canvas.space-held { cursor: grab; }
+/* 캔버스 이미지의 브라우저 기본 드래그(첨부파일 고스트) 차단 — 이게 뜨면 포인터를 브라우저가
+   가져가 선택·마퀴가 끊긴다. 실제 차단은 tools.js의 dragstart preventDefault가 담당하고,
+   이건 webkit 계열 보강(고스트가 잠깐 뜨는 것까지 막음). */
+#canvas image { -webkit-user-drag: none; user-drag: none; }
+
+/* Subtle brand watermark on the dark workspace surround. It's a CSS background
+   of the SVG box, so it sits BEHIND the scene: the white artboard rect covers it
+   (never on the paper) and export (which re-renders scene objects) never sees it.
+   Screen-fixed texture only. Tune density via fill-opacity, scale via font-size. */
+:root[data-theme="dark"] #canvas {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.08' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* ===== TEXT EDITOR OVERLAY (T tool) ===== */
+/* Native editor overlay: while editing, this textarea owns both the visible
+   glyphs and caret so browser selectionStart/selectionEnd are authoritative.
+   Committed text returns to the SVG renderer. Font styles are synced inline. */
+.text-editor-overlay {
+  position: absolute;
+  z-index: 100;
+  background: transparent;
+  color: #0d1117;
+  caret-color: var(--accent, #0969da);
+  border: 0;
+  /* Left padding MUST stay 0 so the text origin lines up with getBoundingClientRect().left
+     (the caret-from-click measurement in tools.js depends on it). The right padding adds a
+     clickable zone PAST the last character so the caret can reach text.length; the box is
+     also grown to fit content in JS (_syncEditorWidth). content-box keeps the width math exact. */
+  padding: 0 0.75em 0 0;
+  box-sizing: content-box;
+  margin: 0;
+  font-family: var(--font-normal-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  min-width: 60px;
+  white-space: pre;
+  resize: none;
+  outline: none;
+  overflow: hidden;
+}
+
+/* ===== FORMULA EDITOR (inline: source <input> + insertion palette) ===== */
+.unified-text-editor {
+  position: absolute;
+  z-index: 220;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 650px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  padding: 8px;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+}
+.unified-editor-title,
+.unified-preview-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-label);
+}
+.unified-editor-title {
+  margin: -8px -8px 0;
+  padding: 8px;
+  cursor: move;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+}
+.unified-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.unified-text-input,
+.unified-style-controls select {
+  min-width: 0;
+  color: var(--text-primary);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  outline: none;
+}
+.unified-text-input {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 40px;
+  padding: 8px 10px;
+  font: 14px/20px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif;
+  box-sizing: border-box;
+}
+/* Text-tool capture is now a <textarea>: let it grow with rows (Enter = newline),
+ * keep the single-line look at rest, and never soft-wrap (only real \n break). */
+textarea.unified-text-input {
+  height: auto;
+  min-height: 40px;
+  resize: vertical;
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 20px;
+}
+.unified-editor-hint {
+  margin-top: -2px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.unified-text-editor .text-formula-source-input {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "IBM Plex Sans KR", "IBM Plex Mono", monospace, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  text-decoration: none !important;
+}
+.unified-text-input:focus,
+.unified-style-controls select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.22);
+}
+.unified-editor-btn,
+.unified-style-toggle,
+.formula-palette-btn {
+  height: 30px;
+  padding: 0 10px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: 12px/1 "IBM Plex Sans KR", sans-serif;
+  cursor: pointer;
+}
+.unified-editor-btn:hover,
+.unified-style-toggle:hover,
+.formula-palette-btn:hover {
+  background: var(--btn-tool-hover);
+}
+.unified-preview {
+  min-height: 40px;
+  max-height: 120px;
+  overflow: auto;
+  padding: 6px 8px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.plain-preview {
+  white-space: pre-wrap;
+  color: #0d1117;
+  font-size: 15px;
+  line-height: 1.4;
+}
+.formula-preview-svg {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 56px;
+  overflow: visible;
+}
+.formula-preview-error {
+  color: #b42318;
+  font: 12px/1.35 "IBM Plex Sans KR", sans-serif;
+}
+.unified-style-controls {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 72px auto auto;
+  align-items: end;
+  gap: 6px;
+}
+.unified-style-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.unified-style-controls select {
+  height: 28px;
+  padding: 0 6px;
+  font: 12px/1 "IBM Plex Sans KR", sans-serif;
+}
+.unified-style-toggle {
+  height: 28px;
+  align-self: end;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+.unified-style-toggle[aria-pressed="true"] {
+  color: #fff;
+  background: var(--c-main);
+  border-color: var(--c-main);
+}
+.unified-style-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.unified-formula-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* 기호 팔레트: 구간 번호(정체 Times) / 물리량(이탤릭 Times) 스타일 런을 삽입 */
+.unified-symbol-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--c-line, #d0d7de);
+}
+.symbol-palette-row { align-items: center; }
+.symbol-palette-tag {
+  min-width: 40px;
+  font-size: 11px;
+  color: var(--text-secondary, #57606a);
+}
+.symbol-palette-btn { min-width: 30px; font-weight: 600; }
+.unified-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.unified-editor-btn.primary {
+  color: #fff;
+  background: var(--c-main);
+  border-color: var(--c-main);
+}
+
+/* 라벨러 텍스트 입력기: 텍스트 도구 입력기와 같은 외형, 본문만 여러 줄(멀티라인) */
+.labeler-text-editor { width: 360px; }
+.labeler-text-input {
+  height: auto;
+  min-height: 84px;
+  resize: vertical;
+  white-space: pre;
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", "IBM Plex Sans KR", sans-serif;
+}
+
+.formula-editor {
+  position: absolute;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--bg-panel, #2b2d31);
+  border: 1px solid var(--accent, #0969da);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.formula-input {
+  min-width: 220px;
+  padding: 5px 7px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  color: #dcddde;
+  background: #1e1f22;
+  border: 1px solid #3a3c41;
+  border-radius: 4px;
+  outline: none;
+}
+.formula-input:focus { border-color: var(--accent, #0969da); }
+.formula-palette { display: flex; flex-direction: column; gap: 3px; }
+.formula-palette-row { display: flex; flex-wrap: wrap; gap: 3px; }
+.formula-palette-btn {
+  min-width: 26px;
+  height: 24px;
+  padding: 0 6px;
+  font-size: 13px;
+  line-height: 1;
+  color: #dcddde;
+  background: #1e1f22;
+  border: 1px solid #3a3c41;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.formula-palette-btn:hover { background: #34363c; border-color: var(--accent, #0969da); }
+
+/* ===== TEXT CONTEXT MENU (right-click on text / draft) ===== */
+.text-ctx-menu {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+  padding: 4px;
+  background: var(--bg-panel, #2b2d31);
+  border: 1px solid var(--c-border, #3a3c41);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+  color: var(--text-label, #dcddde);
+}
+.text-ctx-menu[hidden] { display: none; }
+.text-ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.text-ctx-item:hover { background: var(--accent, #0969da); color: #fff; }
+
+/* ===== FONT SETTINGS MODAL (글꼴 설정) ===== */
+.font-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+}
+.font-modal-overlay[hidden] { display: none; }
+.font-modal {
+  width: 460px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-panel, #2b2d31);
+  border: 1px solid var(--c-border, #3a3c41);
+  border-radius: 8px;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  color: var(--text-label, #dcddde);
+  font-size: 12px;
+}
+.font-modal-header {
+  font-size: 14px;
+  font-weight: 600;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--c-border, #3a3c41);
+}
+.font-modal-body {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 0.9fr;
+  gap: 12px;
+}
+.fm-col { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.fm-label { font-size: 11px; color: var(--text-secondary, #9aa0a6); }
+.fm-list {
+  width: 100%;
+  border: 1px solid var(--c-border, #3a3c41);
+  border-radius: 4px;
+  background: #1e1f22;
+  color: #dcddde;
+  font-size: 12px;
+  padding: 2px;
+}
+.fm-list option { padding: 2px 4px; }
+.fm-size-input {
+  width: 100%;
+  border: 1px solid var(--c-border, #3a3c41);
+  border-radius: 4px;
+  background: #1e1f22;
+  color: #dcddde;
+  font-size: 12px;
+  padding: 3px 5px;
+  text-align: center;
+}
+.fm-effects { display: flex; align-items: center; gap: 16px; }
+.fm-effects label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.fm-preview-wrap { display: flex; flex-direction: column; gap: 5px; }
+.fm-preview {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border: 1px solid var(--c-border, #3a3c41);
+  border-radius: 4px;
+  background: #ffffff;
+  color: #0d1117;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.font-modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
+.fm-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  border: 1px solid var(--c-border, #3a3c41);
+  background: #1e1f22;
+  color: #dcddde;
+  font-size: 12px;
+  cursor: pointer;
+}
+.fm-ok { background: var(--accent, #0969da); border-color: var(--accent, #0969da); color: #fff; }
+.fm-btn:hover { filter: brightness(1.1); }
+
+/* ===== CANVAS BOTTOM BAR (grid controls below the SVG canvas) ===== */
+.canvas-bottom-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 12px;
+  border-top: 1px solid var(--border-strong);
+  background: var(--bg-panel);
+  font-size: 12px;
+  color: var(--text-label);
+}
+#canvas:focus { outline: none; }
+#canvas:focus-visible { outline: none; }
+#canvas.pointer-focused { outline: none; }
+[data-mcp-entrypoint] { display: none !important; }
+.tool-btn:focus:not(:focus-visible),
+.advanced-tool-btn:focus:not(:focus-visible),
+.topbar-btn:focus:not(:focus-visible),
+.object-search-trigger:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+.tool-btn:focus-visible,
+.advanced-tool-btn:focus-visible,
+.topbar-btn:focus-visible,
+.object-search-trigger:focus-visible,
+.grid-toggle-btn:focus-visible,
+#center-view-btn:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.canvas-bottom-bar .zoom-readout {
+  flex:0 0 auto;
+  font-size:11px;
+  white-space:nowrap;
+}
+.image-workflow-hub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 58%, var(--bg-panel));
+}
+.image-workflow-hub .object-search-trigger {
+  min-height: 27px;
+  padding: 3px 7px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 10.5px;
+}
+.image-workflow-hub .object-search-trigger:hover { border-color: var(--border); }
+.image-workflow-hub .image-workflow-ai {
+  color: color-mix(in srgb, var(--accent) 82%, var(--text-primary));
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.image-workflow-divider { width: 1px; height: 19px; margin: 0 2px; background: var(--border); }
+.canvas-bottom-bar label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+.canvas-bottom-bar input[type="range"] {
+  width: 72px;
+  accent-color: var(--accent);
+}
+.canvas-bottom-bar input[type="number"] {
+  width: 4.6em;
+  height: 24px;
+  padding: 0 6px;
+  color: var(--text-primary);
+  background: var(--btn-tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font: 12px/1 "IBM Plex Mono", monospace;
+  outline: none;
+}
+.canvas-bottom-bar input[type="number"]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(9, 105, 218, 0.22);
+}
+:root[data-theme="dark"] .canvas-bottom-bar input[type="number"] {
+  color: var(--text-primary);
+  background: #1e1f22;
+  border-color: #3a3c41;
+}
+
+/* ===== FOOTER (product/version left · developer credit right) ===== */
+.app-footer {
+  position: relative;
+  flex: 0 0 auto;
+  height: var(--footer-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-strong);
+}
+/* 요구: 은색으로 살짝 빛나는 느낌 — 상단 경계선을 은은한 은색 그라데이션 실선으로,
+   그 위에 아주 옅은 광선을 얹는다. 과하지 않게(디자인 원칙: 큰 그림자·과한 효과 금지)
+   가장자리로 갈수록 사라지는 얇은 선 하나로만 표현한다. */
+.app-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200, 208, 218, 0.55) 20%,
+    rgba(230, 236, 242, 0.9) 50%,
+    rgba(200, 208, 218, 0.55) 80%,
+    transparent 100%);
+  box-shadow: 0 0 6px 0 rgba(200, 210, 224, 0.45);
+  pointer-events: none;
+}
+/* main text ellipsizes instead of overflowing when the window gets narrow */
+.app-footer-main {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.footer-brand { font-style: italic; }
+/* 라이선스·소스 뱃지 (양쪽 테마 자동 대응 — var 사용) */
+.footer-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  line-height: 1;
+  color: var(--c-sub);
+  background: var(--bg-panel);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 7px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  transition: border-color .12s, color .12s;
+}
+.footer-badge:hover { border-color: var(--accent); color: var(--accent); }
+.footer-code { font-family: ui-monospace, "Consolas", monospace; }
+.app-footer-credit {
+  flex: 0 0 auto;
+  color: var(--text-label);
+  font-size: 12px;
+  word-break: keep-all;   /* 좁아져 줄바꿈돼도 한글이 단어 단위로(글자 안 잘림) */
+}
+/* 이름(박승연)을 "Copyright"·"SMOE"와 같은 글씨체·색으로(강조 없이 동일하게) */
+.app-footer-credit strong {
+  color: inherit;
+  font-weight: inherit;
+}
+
+/* ===== STARTUP GUIDANCE MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.modal-overlay[hidden] { display: none; }
+
+.modal-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 32px;
+  max-width: 420px;
+  width: 90%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+}
+
+.modal-list {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.7;
+  margin: 0 0 24px 0;
+  padding-left: 20px;
+}
+
+.modal-confirm-btn {
+  display: block;
+  width: 100%;
+  padding: 9px 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.modal-confirm-btn:hover { background: var(--accent-hover); }
+.app-footer-main strong { color: var(--c-sub); font-weight: 500; }
+
+/* ===== IMAGE CUTOUT: erase-mode instruction banner (edit-mode image 오려내기) ===== */
+/* Fixed top-center hint shown while dragging a rect/freeform erase region. It is a
+   transient editing aid only — never part of state.objects and never exported. */
+.cutout-instruction {
+  position: fixed;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  padding: 8px 16px;
+  background: rgba(9, 105, 218, 0.95);
+  color: #fff;
+  font: 13px/1.4 "IBM Plex Sans KR", sans-serif;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ===== RESPONSIVE LAYOUT (mobile-first drawers) =====
+   데스크톱(≥1025px): 기존 3열 그리드 그대로.
+   태블릿(≤1024px): 좌 도구 패널을 살짝 줄여 캔버스 폭 확보.
+   폰(≤767px): 사이드 패널을 오버레이 드로어로 전환해 캔버스가 항상 전체 폭.
+   ※ .panel-right 드로어 규칙은 cascade 때문에 inspector.css(나중 로드)에 있음. */
+
+/* 드로어 토글 버튼 / 배경: 기본(데스크톱)은 숨김 */
+.drawer-toggle { display: none; }
+.drawer-backdrop { display: none; }
+
+/* ----- 태블릿 ----- */
+@media (max-width: 1024px) {
+  :root { --panel-left-w: 104px; }
+  .panel-left { padding: 8px 4px; }
+}
+
+/* ----- 폰: 오버레이 드로어 ----- */
+@media (max-width: 767px) {
+  /* 캔버스가 전체 폭을 차지하도록 단일 열 그리드로 */
+  .app { grid-template-columns: 1fr; }
+
+  /* 툴바가 좁은 폭에서 넘치지 않고 줄바꿈되도록 */
+  .canvas-toolbar { flex-wrap: wrap; }
+
+  /* 토글 버튼 노출 */
+  .drawer-toggle { display: inline-flex; }
+
+  /* 좌측 도구 패널을 왼쪽에서 슬라이드하는 드로어로 (우측은 inspector.css) */
+  .panel-left {
+    position: fixed;
+    top: 0;
+    bottom: var(--footer-h);
+    left: 0;
+    width: 240px;
+    max-width: 82vw;
+    z-index: 1200;
+    transform: translateX(-100%);
+    transition: transform 200ms ease;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .panel-left.is-open { transform: translateX(0); }
+
+  /* 드로어 뒤 반투명 배경 (탭하면 닫힘) */
+  .drawer-backdrop.is-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.45);
+  }
+}
+
+/* 하단 바: 격자 토글 버튼(누름 상태 = 과목 accent) + 세부(진하기/간격) */
+.grid-toggle-btn {
+  display: inline-grid; width: 29px; height: 29px; padding: 0; place-items: center; flex: 0 0 auto;
+  font-family: inherit; font-size: 12px; font-weight: 500; line-height: 1;
+  color: var(--c-sub); background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
+}
+.app-footer-copyright {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+@media (max-width: 1000px) {
+  .app-footer-main .footer-badge { display: none; }
+}
+@media (max-width: 700px) {
+  .app-footer-main { display: none; }
+}
+.grid-toggle-btn svg { display: block; width: 17px; height: 17px; margin: 0; }
+.grid-toggle-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+.grid-toggle-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+/* 중앙 고정 토글(⌖): 비활성=어두운 버튼, 활성=과목 강조색 (grid-toggle-btn과 동일 톤) */
+#center-view-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 26px; padding: 0;
+  font-size: 15px; line-height: 1;
+  color: var(--c-sub); background: var(--btn-tool-bg);
+  border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
+}
+#center-view-btn:hover { color: var(--c-text); background: var(--btn-tool-hover); }
+#center-view-btn.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+.grid-detail { display: inline-flex; align-items: center; gap: 10px; }
+.grid-detail[hidden] { display: none; }
+
+/* ===== CUSTOM TOOLTIP (js/tooltip.js) — 네이티브 title 대체, 앱 톤 =====
+   fixed 위치. 색은 패널/보더/텍스트 토큰을 그대로 써 라이트·다크·과목 테마에
+   모두 자연스럽게 얹힌다. 그림자는 과하지 않게 얕게. */
+.app-tooltip {
+  /* 모달(.modal-overlay z-index:10000)·도움말 팝오버(100000)보다 위에 떠야 가려지지 않는다
+     (그래프 모달의 물음표 툴팁이 모달 뒤로 깔리던 버그 수정). */
+  position: fixed; z-index: 100001; pointer-events: none;
+  max-width: 264px; padding: 5px 9px;
+  font: 500 12px/1.45 "IBM Plex Sans KR", system-ui, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+  white-space: pre-line; word-break: keep-all;
+  opacity: 0; transform: translateY(2px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.app-tooltip.is-visible { opacity: 1; transform: none; }
+.app-tooltip[data-place="below"] { transform: translateY(-2px); }
+.app-tooltip[data-place="below"].is-visible { transform: none; }
+/* 좌측 도구 팔레트 안 버튼은 패널 오른쪽 바깥에 붙는다(옆 아이콘을 덮지 않게). */
+.app-tooltip[data-place="right"] { transform: translateX(-2px); }
+.app-tooltip[data-place="right"].is-visible { transform: none; }
+@media (prefers-reduced-motion: reduce) { .app-tooltip { transition: none; } }
+
+/* 모달 제목 옆 ? 도움말 버튼 (이미지로 내보내기 등) — hover/focus 시 title 툴팁 */
+.export-help-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; margin-left: 6px; padding: 0;
+  font-size: 12px; font-weight: 700; line-height: 1;
+  color: var(--text-secondary); background: transparent;
+  border: 1px solid var(--border); border-radius: 50%; cursor: help;
+  vertical-align: 2px;
+}
+.export-help-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+/* 퍼스널 오브젝트 목록 행 */
+.personal-item { display: flex; align-items: stretch; gap: 4px; margin-bottom: 4px; }
+.personal-item-btn {
+  flex: 1 1 auto; min-width: 0; text-align: left; padding: 5px 8px;
+  font-family: inherit; font-size: 12px; color: var(--text-primary);
+  background: var(--btn-tool-bg); border: 1px solid var(--c-border); border-radius: 5px;
+  cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.personal-item-btn:hover { background: var(--btn-tool-hover); border-color: var(--accent); }
+.personal-item-del {
+  /* 해당 줄의 ▾ 토글과 같은 급의 아주 작은 버튼 */
+  flex: none; width: 14px; padding: 0; font-size: 9px; line-height: 1;
+  color: var(--text-secondary); background: transparent; border: none; cursor: pointer;
+  align-self: center;
+}
+.personal-item-del:hover { color: #e5534b; }
+.personal-store-btn {
+  display: block; width: 100%; margin: 0 0 6px; padding: 6px 8px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  color: var(--accent); background: transparent;
+  border: 1px dashed var(--accent); border-radius: 6px; cursor: pointer;
+}
+.personal-store-btn:hover { color: #fff; background: var(--accent); border-style: solid; }
+
+/* ===== 버튼 곡률 통일: 기준 = 좌측 도구 버튼(.tool-btn) 6px ===== */
+.btn, .topbar-btn, .modal-btn, .file-menu-item, .seg-btn, .advanced-tool-btn,
+.examlib-reset, .grid-toggle-btn, .object-search-trigger,
+.personal-item-btn, .personal-item-del, .drawer-toggle, .icon-btn,
+.objectify-dropzone, .subject-part-header {
+  border-radius: 6px;
+}
+/* 요구: 상단 툴바(과목 선택·되돌리기/다시 실행 등)를 애플 곡률에 맞게 — 6px보다
+   더 부드럽고 둥근 인상. 다른 버튼들의 6px 기준은 그대로 두고 우선 이 두 곳만
+   먼저 손본다(요청 범위). */
+.topbar-btn { border-radius: 9px; }
+
+/* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
+.file-menu-item { display: flex; align-items: center; }
+.menu-kbd { margin-left: auto; padding-left: 12px; font-size: 11px; color: var(--text-secondary); }
+
+/* 이미지로 내보내기: [내보내기] 버튼은 평소 무색, hover 시에만 강조색 */
+#export-confirm { background: transparent; color: var(--c-text); border-color: var(--c-border); }
+#export-confirm:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* 전체 통일/수정: [적용] 버튼도 평소 무색, hover 시에만 강조색 */
+#bulk-apply { background: transparent; color: var(--c-text); border-color: var(--c-border); }
+#bulk-apply:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* 기본값 설정 모달: 인쇄 비교 이미지 섹션 */
+.defaults-pbg { grid-column: 1 / -1; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
+.defaults-pbg-desc { margin: 4px 0 8px; font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+.defaults-pbg-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.defaults-pbg-empty { margin: 0; font-size: 12px; color: var(--text-secondary); }
+.defaults-pbg-item { display: flex; align-items: center; gap: 8px; }
+.defaults-pbg-thumb { width: 32px; height: 32px; object-fit: cover; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; flex: none; }
+.defaults-pbg-meta { flex: 1 1 auto; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defaults-pbg-del { flex: none; width: 20px; font-size: 11px; color: var(--text-secondary); background: transparent; border: none; cursor: pointer; }
+.defaults-pbg-del:hover { color: #e5534b; }
+.defaults-pbg-row { display: flex; gap: 6px; margin-top: 6px; }
+.defaults-pbg-row .modal-input { min-width: 0; }
+.defaults-pbg-row #defaults-pbg-name { flex: 2 1 0; }
+.defaults-pbg-row #defaults-pbg-w, .defaults-pbg-row #defaults-pbg-h { flex: 1 1 0; }
+
+/* ===== PAGE TAB BAR (다중 아트보드 페이지 탭) ===== */
+/* ===== PAGE TAB BAR (엑셀 시트 탭 방식) ===== */
+.page-tab-bar {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-end; gap: 2px;
+  padding: 0 8px; min-height: 32px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+.page-tabs {
+  display: flex; align-items: flex-end; gap: 2px;
+  flex: 0 1 auto; min-width: 0;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.page-tab {
+  display: flex; align-items: center;
+  max-width: 180px; padding: 6px 12px; margin-top: 4px;
+  border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent; color: var(--text-secondary);
+  font-size: 12px; line-height: 1.4;
+  cursor: pointer; white-space: nowrap; user-select: none;
+}
+.page-tab:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+.page-tab.is-active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.page-tab-name { overflow: hidden; text-overflow: ellipsis; }
+.page-add-btn {
+  flex: none; width: 26px; height: 26px; margin-bottom: 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 6px;
+  background: var(--btn-tool-bg); color: var(--text-secondary);
+  font-size: 15px; line-height: 1; cursor: pointer;
+}
+.page-add-btn:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+
+/* page context menu: text-ctx-menu 스타일을 재사용하되 토큰·구분선·삭제색만 보강 */
+.page-ctx-menu { min-width: 150px; border-color: var(--border); }
+.page-ctx-sep { height: 1px; margin: 4px 6px; background: var(--border); }
+.text-ctx-item:disabled { opacity: 0.4; cursor: default; }
+.text-ctx-item:disabled:hover { background: transparent; color: inherit; }
+.text-ctx-item.is-danger:hover:not(:disabled) { background: #b03a4a; color: #fff; }
+
+/* delayed cut action stays inside the right inspector so the final commit is
+ * visible where object properties are edited. */
+#delayed-cut-action {
+  position: sticky; top: 8px; z-index: 8;
+  margin: 8px 10px 12px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-panel));
+  box-shadow: 0 4px 14px rgba(0,0,0,.16);
+}
+.tutorial-beta-tag { margin-left: 6px; vertical-align: middle; }
+
+/* 자르기/지연 자르기의 입력 모드는 키 충돌 없이 탭으로 선택한다. */
+#cut-mode-tabs {
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:3px;
+  margin:8px 10px 10px; padding:4px; border:1px solid var(--border); border-radius:7px;
+  background:var(--btn-tool-bg);
+}
+#cut-mode-tabs[hidden] { display:none; }
+#cut-mode-tabs .cut-mode-tabs-title {
+  grid-column:1 / -1; padding:3px 5px 4px;
+  color:var(--text-secondary); font-size:11px; font-weight:700;
+}
+#cut-mode-tabs button {
+  appearance:none; width:100%; min-width:0; border:0; border-radius:4px; padding:6px 4px;
+  background:transparent; color:var(--text-secondary); cursor:pointer;
+  font:600 11px/1 "IBM Plex Sans KR",system-ui,sans-serif; white-space:nowrap;
+}
+#cut-mode-tabs button:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
+#cut-mode-tabs button.is-active {
+  color:#fff; background:var(--accent); box-shadow:0 1px 2px rgba(0,0,0,.18);
+}
+#delayed-cut-action[hidden] { display: none; }
+.delayed-cut-action-title { font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.delayed-cut-action-mode { color: var(--accent); font-size: 12px; font-weight: 600; line-height: 1.4; margin-bottom: 4px; }
+.delayed-cut-action-status { color: var(--text-secondary); font-size: 12px; line-height: 1.4; margin-bottom: 9px; }
+.delayed-cut-confirm, .delayed-cut-cancel {
+  width: 100%; min-height: 34px; border-radius: 7px; cursor: pointer; font-weight: 700;
+}
+.delayed-cut-confirm { border: 1px solid var(--accent); background: var(--accent); color: #fff; }
+.delayed-cut-confirm:disabled { opacity: .45; cursor: not-allowed; }
+.delayed-cut-cancel { margin-top: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.0"
+   width="241.0015"
+   height="135.15929"
+   id="svg2">
+  <metadata
+     id="metadata3073">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(0.8,0,0,0.8,10,0)"
+         id="path3856"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+    <filter
+       color-interpolation-filters="sRGB"
+       id="filter4673">
+      <feGaussianBlur
+         id="feGaussianBlur4675"
+         stdDeviation="0.54129791" />
+    </filter>
+  </defs>
+  <path
+     d="m 139.27558,23.384833 0,40.49612"
+     id="path3252"
+     style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path
+     d="m 139.27558,72.364243 0,42.117587"
+     id="path3254"
+     style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path
+     d="m 140.86033,23.384833 53.22033,0 0,91.096967 -146.440675,3e-5 0.169492,-91.096997 24.030101,0"
+     id="path3226"
+     style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+  <path
+     d="m 69.392108,23.384833 c 16.5,0 -7,3.7e-4 9.5,3.7e-4 0,3.45 2.8,6.25 6.25,6.25 3.45,0 6.25,-2.8 6.25,-6.25 m 25.000002,0 c 0,3.45 2.8,6.25 6.25,6.25 3.45,0 6.25,-2.8 6.25,-6.25 16.5,0 -7,0 9.5,0 m -34.5,0 c 0,3.45 -2.8,6.25 -6.250002,6.25 -3.45,0 -6.25,-2.8 -6.25,-6.25 m 25.000002,0 c 0,3.45 -2.8,6.25 -6.25,6.25 -3.45,0 -6.25,-2.8 -6.25,-6.25"
+     id="path2384"
+     style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:5;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible" />
+  <path
+     d="m 142.57658,114.55952 c 0,1.74 -1.41,3.15 -3.151,3.15 -1.74,0 -3.15,-1.41 -3.15,-3.15 0,-1.74 1.41,-3.15 3.15,-3.15 1.741,0 3.151,1.41 3.151,3.15 z"
+     id="path3160"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:5;stroke-opacity:1;stroke-dasharray:none" />
+  <path
+     d="m 142.57658,23.522633 c 0,1.74 -1.41,3.151 -3.151,3.151 -1.74,0 -3.15,-1.411 -3.15,-3.151 0,-1.74 1.41,-3.151 3.15,-3.151 1.741,0 3.151,1.411 3.151,3.151 z"
+     id="path3168"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:5;stroke-opacity:1;stroke-dasharray:none" />
+  <rect
+     width="15"
+     height="43"
+     x="40.371449"
+     y="46.136841"
+     id="rect3178"
+     style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000" />
+  <rect
+     width="22.02729"
+     height="2.9239767"
+     x="128.29019"
+     y="63.433411"
+     id="rect3324"
+     style="fill:#000000" />
+  <image
+     xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAADCAYAAAB4bZQtAAAABHNCSVQICAgIfAhkiAAAACRJREFU GJVjZGBg+M9AA9DQ0MDPRAuDYYBFUFCQJi5nYGD4BwCpXATGiuBiZgAAAABJRU5ErkJggg== "
+     x="128.29057"
+     y="69.340881"
+     width="23"
+     height="3"
+     id="image3345" />
+  <image
+     xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAsCAIAAADjKa/gAAAAA3NCSVQICAjb4U/gAAAALElEQVRI ie3NsREAIADCwOD+O+MK0lkkNX/AWIC2r+vkrA8CgUAgEAj+BXMXDPsDVKkZiokAAAAASUVORK5C YII= "
+     x="185.82867"
+     y="45.137207"
+     width="16"
+     height="44"
+     id="image3367" />
+  <rect
+     width="102.35988"
+     height="114.15929"
+     x="69.049911"
+     y="10.5"
+     id="rect3370"
+     style="fill:none;stroke:#d40000;stroke-width:3.0999999;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;filter:url(#filter4673)" />
+  <text
+     x="97.958466"
+     y="48.553101"
+     id="text3372"
+     xml:space="preserve"
+     style="font-size:20px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Italic"><tspan
+       x="97.958466"
+       y="48.553101"
+       id="tspan3374">L</tspan></text>
+  <text
+     x="109.16789"
+     y="74.216858"
+     id="text3376"
+     xml:space="preserve"
+     style="font-size:20px;font-style:italic;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans;-inkscape-font-specification:Sans Italic"><tspan
+       x="109.16789"
+       y="74.216858"
+       id="tspan3378">C</tspan></text>
+  <text
+     x="207.39798"
+     y="74.803833"
+     id="text3380"
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+       x="207.39798"
+       y="74.803833"
+       id="tspan3382"
+       style="font-size:20px;font-style:italic;-inkscape-font-specification:Sans Italic">R<tspan
+   id="tspan3384"
+   style="font-size:20px;font-style:italic;baseline-shift:sub;-inkscape-font-specification:Sans Italic">1</tspan></tspan></text>
+  <text
+     x="9.4628906"
+     y="74.803833"
+     id="text3386"
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+       x="9.4628906"
+       y="74.803833"
+       id="tspan3388"
+       style="font-size:20px;font-style:italic;-inkscape-font-specification:Sans Italic">R<tspan
+   id="tspan3390"
+   style="font-size:20px;font-style:italic;baseline-shift:sub;-inkscape-font-specification:Sans Italic">2</tspan></tspan></text>
+</svg>

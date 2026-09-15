@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   x="0.0000000"
+   y="0.0000000"
+   width="350.00000"
+   height="110.00000"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0.0000000"
+       refY="0.0000000"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow2Lend">
+      <path
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="matrix(-1.100000,0.000000,0.000000,-1.100000,5.500000,0.000000)"
+         style="font-size:12.000000px;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round"
+         id="path2255" />
+    </marker>
+    <marker
+       refX="0.0000000"
+       refY="0.0000000"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow2Mend">
+      <path
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="matrix(-0.600000,0.000000,0.000000,-0.600000,3.000000,0.000000)"
+         style="font-size:12.000000px;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round"
+         id="path2252" />
+    </marker>
+  </defs>
+  <g
+     id="layer1" />
+  <g
+     id="layer2">
+    <g
+       transform="matrix(1.003856,0.000000,0.000000,0.991529,-107.4307,-396.7143)"
+       id="g2316">
+      <g
+         id="g2091">
+        <path
+           d="M 240.75939,473.15117 L 240.75939,485.67138 L 177.88301,485.67138 L 177.88301,505.63006 L 450.11699,505.63006 L 450.11699,485.67138 L 387.24061,485.67138 L 387.24061,473.15117 L 368.68029,473.15117 L 368.68029,485.67138 L 343.35343,485.67138 L 343.35343,478.77299 L 284.64657,478.77299 L 284.64657,485.67138 L 259.31971,485.67138 L 259.31971,473.15117 L 240.75939,473.15117 z "
+           style="opacity:1.0000000;fill:none;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.55862063;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="rect2066" />
+        <rect
+           width="170.00000"
+           height="1.6666666"
+           x="229.00000"
+           y="471.07025"
+           style="opacity:1.0000000;fill:none;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.57735026;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:0.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="rect2089" />
+      </g>
+      <text
+         x="163.17871"
+         y="416.17273"
+         style="font-size:12.000000px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans"
+         id="text2128"
+         xml:space="preserve"><tspan
+           x="163.17871"
+           y="416.17273"
+           id="tspan2130">Cover glass</tspan></text>
+      <text
+         x="111.02832"
+         y="445.17273"
+         style="font-size:12.000000px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans"
+         id="text2132"
+         xml:space="preserve"><tspan
+           x="111.02832"
+           y="445.17273"
+           id="tspan2134">Cover glass support</tspan></text>
+      <text
+         x="339.02832"
+         y="414.17273"
+         style="font-size:12.000000px;font-style:normal;font-weight:normal;line-height:125.00000%;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans"
+         id="text2136"
+         xml:space="preserve"><tspan
+           x="339.02832"
+           y="414.17273"
+           style="font-size:12.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans"
+           id="tspan2138">Counting chamber</tspan><tspan
+           x="339.02832"
+           y="429.17273"
+           style="font-size:12.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;font-family:Bitstream Vera Sans"
+           id="tspan2301">0.1mm depth</tspan></text>
+      <path
+         d="M 237.00000,415.36218 L 266.00000,468.36218"
+         style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow2Mend);stroke-opacity:1.0000000"
+         id="path2289" />
+      <path
+         d="M 170.00000,450.36218 L 236.00000,482.36218"
+         style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow2Mend);stroke-opacity:1.0000000"
+         id="path2295" />
+      <path
+         d="M 350.00000,432.36218 L 328.00000,473.36218"
+         style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow2Mend);stroke-opacity:1.0000000"
+         id="path2303" />
+    </g>
+  </g>
+</svg>

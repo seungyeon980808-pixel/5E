@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1492" height="244">
+<text fill="#222" font-size="62" font-family="Sans" x="126" y="62">A<tspan
+x="420">B</tspan><tspan x="720">C</tspan><tspan x="1020">D</tspan><tspan x="1326">E</tspan></text>
+<path fill="#CC6" d="m115,117v23h66v-25m216,30a60,60 0 0,1 99,0m207,4a60,60 0 0,1 97,0m222-36a30,30 0 0,1
+44,0m15,45 15,45h32a70,70 0 0,1-47-45m-70,0-15,45h-32a70,70 0 0,0 47-45m404,75-58-84h-22l-58,84h9l58-84h4l58,84"/>
+<path fill="none" stroke="#111" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"
+d="m16,114h99v26h66v-26h99m30,30h280m30,30h86v-26h92v26h86m30,30h80l30-90h40l30,90h80m30,30h80l62-90 62,90h80"/>
+</svg>

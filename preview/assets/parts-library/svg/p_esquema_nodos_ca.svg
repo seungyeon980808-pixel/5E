@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1052.36"
+   height="600.09003"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   version="1.0"
+   sodipodi:docbase="C:\Users\Fábio"
+   sodipodi:docname="esquema nodos.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient13877">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop13879" />
+      <stop
+         id="stop13885"
+         offset="1"
+         style="stop-color:#0000ff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#0000ff;stop-opacity:0;"
+         offset="1"
+         id="stop13881" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5100">
+      <stop
+         id="stop5102"
+         offset="1"
+         style="stop-color:#0000ff;stop-opacity:1;" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0.49803922;"
+         offset="1"
+         id="stop5108" />
+      <stop
+         id="stop5104"
+         offset="1"
+         style="stop-color:#000000;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4113">
+      <stop
+         id="stop4115"
+         offset="0"
+         style="stop-color:#ffad00;stop-opacity:1;" />
+      <stop
+         style="stop-color:#ffff00;stop-opacity:1;"
+         offset="1"
+         id="stop4119" />
+      <stop
+         id="stop4117"
+         offset="1"
+         style="stop-color:#000000;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4113"
+       id="linearGradient4111"
+       x1="486.50562"
+       y1="333.37943"
+       x2="654.7179"
+       y2="333.37943"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient13877"
+       id="linearGradient13883"
+       x1="825.11047"
+       y1="271.19736"
+       x2="885.67981"
+       y2="271.19736"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4113"
+       id="linearGradient13975"
+       gradientUnits="userSpaceOnUse"
+       x1="486.50562"
+       y1="333.37943"
+       x2="654.7179"
+       y2="333.37943" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient13877"
+       id="linearGradient13977"
+       gradientUnits="userSpaceOnUse"
+       x1="825.11047"
+       y1="271.19736"
+       x2="885.67981"
+       y2="271.19736" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.95686773"
+     inkscape:cx="526.18109"
+     inkscape:cy="372.04724"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="1052.36px"
+     height="600.09px"
+     inkscape:window-width="1280"
+     inkscape:window-height="910"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Camada 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g13936"
+       transform="translate(7.9992348,-73.255692)">
+      <path
+         id="path5120"
+         d="M 90.921657,537.16933 L 976.10147,210.06038"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:1, 2;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         transform="translate(0.5076294,3.1352234)"
+         d="M 1019.9947 368.91202 A 494.3212 120.1838 0 1 1  31.352264,368.91202 A 494.3212 120.1838 0 1 1  1019.9947 368.91202 z"
+         sodipodi:ry="120.1838"
+         sodipodi:rx="494.3212"
+         sodipodi:cy="368.91202"
+         sodipodi:cx="525.67346"
+         id="path2160"
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="translate(-47.028443,2.0901533)"
+         d="M 885.17982 271.19736 A 29.784681 29.784681 0 1 1  825.61046,271.19736 A 29.784681 29.784681 0 1 1  885.17982 271.19736 z"
+         sodipodi:ry="29.784681"
+         sodipodi:rx="29.784681"
+         sodipodi:cy="271.19736"
+         sodipodi:cx="855.39514"
+         id="path4121"
+         style="fill:#0000ff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         id="path5114"
+         d="M 965.6507,210.06038 C 965.99906,210.06038 966.34742,210.06038 965.6507,210.06038 z "
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="matrix(0.768153,0.6402663,-0.6402663,0.768153,444.82769,-143.81873)"
+         d="M 407.57985 590.99078 A 152.58118 66.362358 0 1 1  102.4175,590.99078 A 152.58118 66.362358 0 1 1  407.57985 590.99078 z"
+         sodipodi:ry="66.362358"
+         sodipodi:rx="152.58118"
+         sodipodi:cy="590.99078"
+         sodipodi:cx="254.99867"
+         id="path6095"
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="matrix(0.768153,0.6402663,-0.6402663,0.768153,990.88019,-343.95089)"
+         d="M 407.57985 590.99078 A 152.58118 66.362358 0 1 1  102.4175,590.99078 A 152.58118 66.362358 0 1 1  407.57985 590.99078 z"
+         sodipodi:ry="66.362358"
+         sodipodi:rx="152.58118"
+         sodipodi:cy="590.99078"
+         sodipodi:cx="254.99867"
+         id="path6097"
+         style="fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="translate(-310.91027,331.8118)"
+         d="M 518.35796 168.77986 A 17.243763 17.243763 0 1 1  483.87043,168.77986 A 17.243763 17.243763 0 1 1  518.35796 168.77986 z"
+         sodipodi:ry="17.243763"
+         sodipodi:rx="17.243763"
+         sodipodi:cy="168.77986"
+         sodipodi:cx="501.1142"
+         id="path7070"
+         style="fill:#9d9d9d;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="translate(-32.397372,29.262143)"
+         d="M 654.21788 333.37943 A 83.606125 83.606125 0 1 1  487.00563,333.37943 A 83.606125 83.606125 0 1 1  654.21788 333.37943 z"
+         sodipodi:ry="83.606125"
+         sodipodi:rx="83.606125"
+         sodipodi:cy="333.37943"
+         sodipodi:cx="570.61176"
+         id="path3134"
+         style="fill:url(#linearGradient13975);fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         id="path9020"
+         d="M 736.05471,280.44532 L 804.46706,268.31767 L 810.3754,279.20146 L 746.62753,313.09667 L 736.05471,280.44532 z "
+         style="fill:#000000;fill-opacity:0.65517243;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="translate(236.18729,129.58949)"
+         d="M 518.35796 168.77986 A 17.243763 17.243763 0 1 1  483.87043,168.77986 A 17.243763 17.243763 0 1 1  518.35796 168.77986 z"
+         sodipodi:ry="17.243763"
+         sodipodi:rx="17.243763"
+         sodipodi:cy="168.77986"
+         sodipodi:cx="501.1142"
+         id="path6099"
+         style="fill:#9d9d9d;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         transform="matrix(0.3953762,0,0,0.3953762,608.04872,207.96092)"
+         d="M 518.35796 168.77986 A 17.243763 17.243763 0 1 1  483.87043,168.77986 A 17.243763 17.243763 0 1 1  518.35796 168.77986 z"
+         sodipodi:ry="17.243763"
+         sodipodi:rx="17.243763"
+         sodipodi:cy="168.77986"
+         sodipodi:cx="501.1142"
+         id="path9991"
+         style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <path
+         id="path11937"
+         d="M 254.68053,444.324 L 15.859227,564.35658 L 268.98493,502.4745 L 254.68053,444.324 z "
+         style="fill:#000000;fill-opacity:0.48768472;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         transform="translate(-593.08094,202.22231)"
+         d="M 885.17982 271.19736 A 29.784681 29.784681 0 1 1  825.61046,271.19736 A 29.784681 29.784681 0 1 1  885.17982 271.19736 z"
+         sodipodi:ry="29.784681"
+         sodipodi:rx="29.784681"
+         sodipodi:cy="271.19736"
+         sodipodi:cx="855.39514"
+         id="path5110"
+         style="fill:url(#linearGradient13977);fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         sodipodi:type="arc" />
+      <text
+         id="text13887"
+         y="376.95798"
+         x="509.78665"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:40px"
+           y="376.95798"
+           x="509.78665"
+           id="tspan13889"
+           sodipodi:role="line">Sol</tspan></text>
+      <text
+         id="text13891"
+         y="530.89886"
+         x="258.13391"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:32px"
+           y="530.89886"
+           x="258.13391"
+           id="tspan13893"
+           sodipodi:role="line">Terra</tspan></text>
+      <text
+         id="text13895"
+         y="328.96887"
+         x="794.95721"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:32px"
+           y="328.96887"
+           x="794.95721"
+           id="tspan13897"
+           sodipodi:role="line">Terra</tspan></text>
+      <text
+         id="text13899"
+         y="554.70538"
+         x="167.91135"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:32px"
+           y="554.70538"
+           x="167.91135"
+           id="tspan13901"
+           sodipodi:role="line">Lluna</tspan></text>
+      <text
+         id="text13903"
+         y="345.69009"
+         x="705.39551"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:32px"
+           y="345.69009"
+           x="705.39551"
+           id="tspan13905"
+           sodipodi:role="line">Lluna</tspan></text>
+      <text
+         id="text13907"
+         y="612.41486"
+         x="72.110275"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:24px"
+           y="612.41486"
+           x="72.110275"
+           id="tspan13909"
+           sodipodi:role="line">Lluna plena passant pel</tspan><tspan
+           id="tspan13913"
+           style="font-size:24px"
+           y="642.41486"
+           x="72.110275"
+           sodipodi:role="line">node orbital:<tspan
+   id="tspan13911"
+   style="font-size:24px;font-weight:bold"> eclipsi lunar</tspan></tspan></text>
+      <text
+         id="text13916"
+         y="116.63187"
+         x="650.50421"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:24px"
+           y="116.63187"
+           x="650.50421"
+           id="tspan13918"
+           sodipodi:role="line">Lluna nova passant pel</tspan><tspan
+           id="tspan13920"
+           style="font-size:24px"
+           y="146.63187"
+           x="650.50421"
+           sodipodi:role="line">node orbital:<tspan
+   id="tspan13922"
+   style="font-size:24px;font-weight:bold"> eclipsi solar</tspan></tspan></text>
+      <text
+         id="text13924"
+         y="248.72821"
+         x="472.3746"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:18px"
+           y="248.72821"
+           x="472.3746"
+           id="tspan13926"
+           sodipodi:role="line">òrbita de la Terra</tspan></text>
+      <text
+         id="text13928"
+         y="356.47272"
+         x="132.25681"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:18px"
+           y="356.47272"
+           x="132.25681"
+           id="tspan13930"
+           sodipodi:role="line">òrbita de la Lluna</tspan></text>
+      <text
+         id="text13932"
+         y="400.36594"
+         x="844.99902"
+         style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           style="font-size:18px"
+           y="400.36594"
+           x="844.99902"
+           id="tspan13934"
+           sodipodi:role="line">òrbita de la Lluna</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="219.89058"
+       y="462.75888"
+       id="text13979"
+       transform="matrix(0.9418626,-0.3359982,0.3359982,0.9418626,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan13981"
+         x="219.89058"
+         y="462.75888"
+         style="font-size:20px">línia dels nodes</tspan></text>
+  </g>
+</svg>
+<!-- Translated to Català by SVGTranslate 1.05 -->

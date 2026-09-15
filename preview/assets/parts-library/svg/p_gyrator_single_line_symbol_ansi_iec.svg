@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg x="0" y="0" width="80" height="50" version="1.1" viewBox="0 0 80 50"
+ xmlns="http://www.w3.org/2000/svg"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g transform="scale(1,1) translate(40,25)" fill="none" stroke="#000000" stroke-width="2">
+    <defs>
+      <polygon id="arrow_head" fill="#000000" stroke="none" points="-8,-3 -8,3 0,0" />
+    </defs>
+    <!-- box -->
+    <rect x="-16" y="-16" width="32" height="32"/>
+    <!-- ports -->
+    <line x1="-38" x2="-16"/>
+    <line x1="38"  x2="16" />
+    <!-- forward arrow - long -->
+    <g transform="translate(0,-9)">
+      <line x1="-12"  x2="6" stroke-width="1" />
+      <use xlink:href="#arrow_head" transform="translate(12,0)" />
+    </g>
+    <!-- backward arrow - short -->
+    <g transform="translate(0,9)">
+      <line x1="0"  x2="6" stroke-width="1" />
+      <use xlink:href="#arrow_head" transform="translate(-7,0) rotate(180)" />
+    </g>
+    <g stroke="none" fill="#000000" font-size="12" text-anchor="middle" font-style="italic">
+      <text x="-2" y="3">π</text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0"
+   y="0"
+   width="800"
+   height="634"
+   viewBox="0 0 800 634"
+   id="svg5629"
+   sodipodi:docname="P-trap-mr.svg"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
+  <metadata
+     id="metadata5635">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5633" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1366"
+     inkscape:window-height="705"
+     id="namedview5631"
+     showgrid="false"
+     inkscape:zoom="0.84542587"
+     inkscape:cx="400"
+     inkscape:cy="317"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg5629" />
+  <style
+     type="text/css"
+     id="style5527">
+	.st0{fill:#00FFFF;fill-opacity:0.4;}
+	.st1{fill:none;stroke:#0071BC;stroke-width:2;}
+	.st2{fill:none;stroke:#000;stroke-width:4;}
+	.st3{fill:none;stroke:#000;stroke-width:2;}
+	.st4{fill:none;stroke:#000;stroke-width:3;}
+	.st5{fill:#FF0000;fill-opacity:0.2;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st6{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st7{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st8{font-family:Liberation Sans,Arial;}
+	.st9{font-size:33px;}
+</style>
+  <g
+     id="trap">
+    <path
+       class="st0"
+       d="M207,259v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V244.2H31V444c0,76.4,69.5,138.3,155.5,138.3   S342,520.4,342,444V259c0-8.2,5.3-14.8,11.8-14.8H207.7C207.2,249.1,207,254,207,259z"
+       id="path5529" />
+    <line
+       class="st1"
+       x1="31"
+       y1="244.2"
+       x2="166"
+       y2="244.2"
+       id="line5531" />
+    <line
+       class="st1"
+       x1="207"
+       y1="244.2"
+       x2="352.2"
+       y2="244.2"
+       id="line5533" />
+    <path
+       class="st2"
+       d="M800,109.2H353.8c-81.1,0-146.8,67-146.8,149.8v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V128.8   c0-5.2,2-10.1,5.6-13.8l1.3-1.3H24.1l0.8,0.8c3.9,3.8,6,8.9,6,14.3V444c0,76.4,69.5,138.3,155.5,138.3S342,520.4,342,444V259   c0-8.2,5.3-14.8,11.8-14.8h399.9"
+       id="path5535" />
+    <path
+       class="st3"
+       d="M186.5,582.3c-9.1,0-18.1-0.7-26.8-2v18.7c0,2.5,2.1,4.6,4.6,4.6h44.3c2.5,0,4.6-2.1,4.6-4.6v-18.7   C204.6,581.6,195.6,582.3,186.5,582.3z"
+       id="path5537" />
+    <path
+       class="st3"
+       d="M201.5,624.1h-30.1c-1.9,0-3.5-1.6-3.5-3.5v-17h37v17C205,622.5,203.5,624.1,201.5,624.1z"
+       id="path5539" />
+    <line
+       class="st4"
+       x1="186.5"
+       y1="458.1"
+       x2="405.5"
+       y2="458.1"
+       id="line5541" />
+    <g
+       id="g5555">
+      <g
+         id="g5553">
+        <line
+           class="st3"
+           x1="367"
+           y1="253.4"
+           x2="367"
+           y2="448.9"
+           id="line5543" />
+        <g
+           id="g5547">
+          <polygon
+             points="367,244.2 361.7,257.2 367,254.1 372.3,257.2     "
+             id="polygon5545" />
+        </g>
+        <g
+           id="g5551">
+          <polygon
+             points="367,458.1 361.7,445.1 367,448.2 372.3,445.1     "
+             id="polygon5549" />
+        </g>
+      </g>
+    </g>
+    <polygon
+       class="st5"
+       points="292,211.4 273,244.2 254,211.4  "
+       id="polygon5557" />
+    <polygon
+       class="st5"
+       points="117.5,211.4 98.5,244.2 79.5,211.4  "
+       id="polygon5559" />
+    <g
+       id="g5569">
+      <g
+         id="g5567">
+        <line
+           class="st6"
+           x1="321.8"
+           y1="236.2"
+           x2="371"
+           y2="196.2"
+           id="line5561" />
+        <g
+           id="g5565">
+          <polygon
+             points="312,244.2 330.5,238.6 322.6,235.6 321.2,227.3     "
+             id="polygon5563" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g5579">
+      <g
+         id="g5577">
+        <line
+           class="st6"
+           x1="98.5"
+           y1="70.1"
+           x2="98.5"
+           y2="43.1"
+           id="line5571" />
+        <g
+           id="g5575">
+          <polygon
+             points="98.5,83.9 106.4,64.5 98.5,69.1 90.6,64.5     "
+             id="polygon5573" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g5589">
+      <g
+         id="g5587">
+        <line
+           class="st6"
+           x1="286.2"
+           y1="108.9"
+           x2="268.5"
+           y2="74"
+           id="line5581" />
+        <g
+           id="g5585">
+          <polygon
+             points="292,120.3 290.4,101 285.8,108.1 277.3,107.6     "
+             id="polygon5583" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g5599">
+      <g
+         id="g5597">
+        <line
+           class="st6"
+           x1="198.1"
+           y1="594.2"
+           x2="371"
+           y2="594.2"
+           id="line5591" />
+        <g
+           id="g5595">
+          <polygon
+             points="185.4,594.2 203.3,601.5 199,594.2 203.3,586.9     "
+             id="polygon5593" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g5609">
+      <g
+         id="g5607">
+        <polyline
+           class="st6"
+           points="194.1,468.3 218.5,500.8 371,500.8    "
+           id="polyline5601" />
+        <g
+           id="g5605">
+          <polygon
+             points="186.5,458.1 191.4,476.8 194.7,469 203.1,468     "
+             id="polygon5603" />
+        </g>
+      </g>
+    </g>
+    <path
+       class="st7"
+       d="M172.9,113.6H24.1c-2.5,0-4.6-2.1-4.6-4.6V89.6c0-2.5,2.1-4.6,4.6-4.6h148.7c2.5,0,4.6,2.1,4.6,4.6V109   C177.5,111.5,175.4,113.6,172.9,113.6z"
+       id="path5611" />
+  </g>
+  <g
+     id="text">
+    <text
+       transform="translate(67,36)"
+       class="st8 st9"
+       id="text5614"
+       style="font-size:33px;font-family:'Liberation Sans', Arial" />
+    <text
+       transform="translate(215,65)"
+       class="st8 st9"
+       id="text5616"
+       style="font-size:33px;font-family:'Liberation Sans', Arial" />
+    <text
+       transform="translate(379,187)"
+       class="st8 st9"
+       id="text5618"
+       style="font-size:33px;font-family:'Liberation Sans', Arial">परिवाह</text>
+    <text
+       transform="translate(662,187)"
+       class="st8 st9"
+       id="text5620"
+       style="font-size:33px;font-family:'Liberation Sans', Arial" />
+    <text
+       transform="translate(382,360)"
+       class="st8 st9"
+       id="text5622"
+       style="font-size:33px;font-family:'Liberation Sans', Arial">बंद करणे</text>
+    <text
+       transform="translate(382,510)"
+       class="st8 st9"
+       id="text5624"
+       style="font-size:33px;font-family:'Liberation Sans', Arial">चाप</text>
+    <text
+       transform="translate(377,603)"
+       class="st8 st9"
+       id="text5626"
+       style="font-size:33px;font-family:'Liberation Sans', Arial" />
+  </g>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+     x="73.335823"
+     y="34.302238"
+     id="text5639"><tspan
+       sodipodi:role="line"
+       id="tspan5637"
+       x="73.335823"
+       y="34.302238">प्रवेशद्वार</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+     x="243.66417"
+     y="56.776119"
+     id="text5643"><tspan
+       sodipodi:role="line"
+       id="tspan5641"
+       x="243.66417"
+       y="56.776119">क्राऊन </tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+     x="657.65674"
+     y="188.07091"
+     id="text5647"><tspan
+       sodipodi:role="line"
+       id="tspan5645"
+       x="657.65674"
+       y="188.07091">निर्गम मार्ग</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+     x="396.25"
+     y="593.78357"
+     id="text5655"><tspan
+       sodipodi:role="line"
+       id="tspan5653"
+       x="396.25"
+       y="615.6795" /></text>
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
+     x="380.87314"
+     y="602.06342"
+     id="text5659"><tspan
+       sodipodi:role="line"
+       id="tspan5657"
+       x="380.87314"
+       y="602.06342">निस्सारण</tspan></text>
+</svg>

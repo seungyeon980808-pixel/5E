@@ -1,0 +1,380 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- נוצר באמצעות Microsoft Visio, ‏SVG Export Transformer-Heb.svg עמוד-1 -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events"
+		xmlns:v="http://schemas.microsoft.com/visio/2003/SVGExtensions/" width="13.7481in" height="7.4968in"
+		viewBox="0 0 989.865 539.77" xml:space="preserve" color-interpolation-filters="sRGB" class="st17">
+	<v:documentProperties v:langID="1037" v:metric="true" v:viewMarkup="false"/>
+
+	<style type="text/css">
+	<![CDATA[
+		.st1 {fill:#ffffff;stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st2 {fill:#ffffff;stroke:#ff0000;stroke-dasharray:6,6;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st3 {stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st4 {fill:none;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st5 {fill:#000000;font-family:Calibri;font-size:3em}
+		.st6 {font-family:Arial;font-size:36}
+		.st7 {marker-start:url(#mrkr1-43);stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st8 {fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;stroke-width:0.52631578947368}
+		.st9 {font-family:Arial;font-size:1em}
+		.st10 {fill:#00b050;font-family:Calibri;font-size:3em}
+		.st11 {marker-start:url(#mrkr1-65);stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st12 {fill:#000000;fill-opacity:1;stroke:#000000;stroke-opacity:1;stroke-width:0.18181818181818}
+		.st13 {marker-end:url(#mrkr7-71);stroke:#00b050;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st14 {fill:#00b050;fill-opacity:1;stroke:#00b050;stroke-opacity:1;stroke-width:0.18181818181818}
+		.st15 {marker-end:url(#mrkr1-233);stroke:#000000;stroke-linecap:round;stroke-linejoin:round;stroke-width:2}
+		.st16 {fill:#ffffff;stroke:none;stroke-linecap:round;stroke-linejoin:round;stroke-width:0.75}
+		.st17 {fill:none;fill-rule:evenodd;font-size:12px;overflow:visible;stroke-linecap:square;stroke-miterlimit:3}
+	]]>
+	</style>
+
+	<defs id="Markers">
+		<g id="lend1">
+			<path d="M 1 -1 L 0 0 L 1 1 " style="stroke-linecap:round;stroke-linejoin:round;fill:none"/>
+		</g>
+		<marker id="mrkr1-43" class="st8" v:arrowType="1" v:arrowSize="1" orient="auto" markerUnits="strokeWidth"
+				overflow="visible">
+			<use xlink:href="#lend1" transform="scale(1.9) "/>
+		</marker>
+		<marker id="mrkr1-65" class="st12" v:arrowType="1" v:arrowSize="5" orient="auto" markerUnits="strokeWidth"
+				overflow="visible">
+			<use xlink:href="#lend1" transform="scale(5.5) "/>
+		</marker>
+		<g id="lend7">
+			<path
+					d="M 1.84309 -0.959455 C 1.43792 -0.3808 0.784502 -0.0260248 0.0785258 -0.00137083 L 0.0785228 0.00137063 C 0.784499 0.0260235 1.43791 0.380798 1.84309 0.959452 "
+					style="stroke-linecap:round;stroke-linejoin:round;fill:none"/>
+		</g>
+		<marker id="mrkr7-71" class="st14" v:arrowType="7" v:arrowSize="5" orient="auto" markerUnits="strokeWidth"
+				overflow="visible">
+			<use xlink:href="#lend7" transform="scale(-5.5,-5.5) "/>
+		</marker>
+		<marker id="mrkr1-233" class="st12" v:arrowType="1" v:arrowSize="5" orient="auto" markerUnits="strokeWidth"
+				overflow="visible">
+			<use xlink:href="#lend1" transform="scale(-5.5,-5.5) "/>
+		</marker>
+	</defs>
+	<g v:mID="0" v:index="1" v:groupContext="foregroundPage">
+		<title>עמוד-1</title>
+		<v:pageProperties v:drawingScale="0.0393701" v:pageScale="0.0393701" v:drawingUnits="24" v:shadowOffsetX="8.50394"
+				v:shadowOffsetY="-8.50394"/>
+		<g id="shape1-1" v:mID="1" v:groupContext="shape" transform="translate(330.916,-39.5624)">
+			<title>גיליון.1</title>
+			<rect x="0" y="166.134" width="373.635" height="373.635" class="st1"/>
+		</g>
+		<g id="shape11-3" v:mID="11" v:groupContext="shape" transform="translate(366.446,-75.6652)">
+			<title>גיליון.11</title>
+			<rect x="0" y="239.486" width="301.43" height="300.284" rx="5.66929" ry="5.66929" class="st2"/>
+		</g>
+		<g id="shape3-5" v:mID="3" v:groupContext="shape" transform="translate(1159.75,433.749) rotate(135)">
+			<title>גיליון.3</title>
+			<path d="M0 539.77 L105.36 539.77" class="st3"/>
+		</g>
+		<g id="shape4-8" v:mID="4" v:groupContext="shape" transform="translate(322.876,118.533) rotate(-45)">
+			<title>גיליון.4</title>
+			<path d="M0 539.77 L102.5 539.77" class="st3"/>
+		</g>
+		<g id="shape5-11" v:mID="5" v:groupContext="shape" transform="translate(-50.0147,-255.626) rotate(-45)">
+			<title>גיליון.5</title>
+			<path d="M0 539.77 L106.53 539.77" class="st3"/>
+		</g>
+		<g id="shape6-14" v:mID="6" v:groupContext="shape" transform="translate(1316.7,51.5513) rotate(90)">
+			<title>גיליון.6</title>
+			<path d="M0 539.77 L376.28 539.77" class="st3"/>
+		</g>
+		<g id="shape8-17" v:mID="8" v:groupContext="shape" transform="translate(408.125,-489.048) rotate(0.120695)">
+			<title>גיליון.8</title>
+			<path d="M0 539.77 L370.28 539.77" class="st3"/>
+		</g>
+		<g id="shape9-20" v:mID="9" v:groupContext="shape" transform="translate(395.099,-100.83)">
+			<title>גיליון.9</title>
+			<rect x="0" y="299.084" width="240.685" height="240.685" class="st1"/>
+		</g>
+		<g id="shape12-22" v:mID="12" v:groupContext="shape" transform="translate(18.375,-36.6971)">
+			<title>גיליון.12</title>
+			<desc>N1 - סליל ראשוני</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="228.32" y="541.66" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>N1<tspan
+						x="218.31" class="st6" v:langID="1037"> </tspan><tspan x="206.33" class="st6" v:langID="1037">-</tspan><tspan
+						x="196.32" class="st6" v:langID="1037"> </tspan><tspan x="29.4" class="st6" v:langID="1037">סליל ראשוני</tspan></text>		</g>
+		<g id="shape14-29" v:mID="14" v:groupContext="shape" transform="translate(730.805,-30.9665)">
+			<title>גיליון.14</title>
+			<desc>N2- סליל שניוני</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="120.343" cy="523.597" width="240.69" height="32.3461"/>
+			<rect x="0" y="507.424" width="240.685" height="32.3461" class="st4"/>
+			<text x="185.54" y="541.66" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>N2<tspan
+						x="173.55" class="st6" v:langID="1037">-</tspan><tspan x="163.55" class="st6" v:langID="1037"> </tspan><tspan
+						x="3.66" class="st6" v:langID="1037">סליל שניוני </tspan> </text>		</g>
+		<g id="shape16-35" v:mID="16" v:groupContext="shape" transform="translate(200.258,-307.182)">
+			<title>גיליון.16</title>
+			<path d="M0 539.77 L206.3 539.77" class="st3"/>
+		</g>
+		<g id="shape17-38" v:mID="17" v:groupContext="shape" transform="translate(695.113,-333.899) rotate(45)">
+			<title>גיליון.17</title>
+			<path d="M0 539.77 A116.866 54.9507 176.36 0 1 164.11 539.77" class="st7"/>
+		</g>
+		<g id="shape18-44" v:mID="18" v:groupContext="shape" transform="translate(119.425,-489.049)">
+			<title>גיליון.18</title>
+			<desc>Cos φ</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="107.73" y="541.66" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>Cos <tspan
+						class="st9" v:langID="1037">φ</tspan></text>		</g>
+		<g id="shape19-48" v:mID="19" v:groupContext="shape" transform="translate(200.258,-135.263)">
+			<title>גיליון.19</title>
+			<path d="M0 539.77 L206.3 539.77" class="st3"/>
+		</g>
+		<g id="shape20-51" v:mID="20" v:groupContext="shape" transform="translate(71.8926,-206.068)">
+			<title>גיליון.20</title>
+			<desc>U1</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="128.93" y="540.82" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>U1</text>		</g>
+		<g id="shape21-54" v:mID="21" v:groupContext="shape" transform="translate(309.14,-205.05)">
+			<title>גיליון.21</title>
+			<desc>E1</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="131.69" y="540.82" class="st10" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>E1</text>		</g>
+		<g id="shape22-57" v:mID="22" v:groupContext="shape" transform="translate(434.608,-205.05)">
+			<title>גיליון.22</title>
+			<desc>E2</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="131.69" y="540.82" class="st10" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>E2</text>		</g>
+		<g id="shape23-60" v:mID="23" v:groupContext="shape" transform="translate(-169.955,91.5987) rotate(-45)">
+			<title>גיליון.23</title>
+			<path d="M-0 539.77 A62.2264 53.9367 156.48 0 1 85.77 539.77" class="st11"/>
+		</g>
+		<g id="shape25-66" v:mID="25" v:groupContext="shape" transform="translate(-81.6344,301.355) rotate(-90)">
+			<title>גיליון.25</title>
+			<path d="M0 539.77 L91.69 539.77" class="st13"/>
+		</g>
+		<g id="shape26-72" v:mID="26" v:groupContext="shape" transform="translate(44.4389,301.355) rotate(-90)">
+			<title>גיליון.26</title>
+			<path d="M0 539.77 L91.69 539.77" class="st13"/>
+		</g>
+		<g id="shape27-77" v:mID="27" v:groupContext="shape" transform="translate(1123.98,341.138) rotate(90)">
+			<title>גיליון.27</title>
+			<path d="M0 539.77 L80.56 539.77" class="st13"/>
+		</g>
+		<g id="shape28-82" v:mID="28" v:groupContext="shape" transform="translate(997.905,340.374) rotate(90)">
+			<title>גיליון.28</title>
+			<path d="M0 539.77 L81.32 539.77" class="st13"/>
+		</g>
+		<g id="shape31-87" v:mID="31" v:groupContext="shape" transform="translate(33.5802,777.486) rotate(-135)">
+			<title>גיליון.31</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape34-90" v:mID="34" v:groupContext="shape" transform="translate(-208.854,393.045) rotate(-90)">
+			<title>גיליון.34</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape37-93" v:mID="37" v:groupContext="shape" transform="translate(330.916,-158.186)">
+			<title>גיליון.37</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape38-96" v:mID="38" v:groupContext="shape" transform="translate(34.7264,754.564) rotate(-135)">
+			<title>גיליון.38</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape39-99" v:mID="39" v:groupContext="shape" transform="translate(-207.708,370.123) rotate(-90)">
+			<title>גיליון.39</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape40-102" v:mID="40" v:groupContext="shape" transform="translate(332.062,-181.108)">
+			<title>גיליון.40</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape41-105" v:mID="41" v:groupContext="shape" transform="translate(33.5802,731.641) rotate(-135)">
+			<title>גיליון.41</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape42-108" v:mID="42" v:groupContext="shape" transform="translate(-208.854,347.2) rotate(-90)">
+			<title>גיליון.42</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape43-111" v:mID="43" v:groupContext="shape" transform="translate(330.916,-204.031)">
+			<title>גיליון.43</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape44-114" v:mID="44" v:groupContext="shape" transform="translate(34.7264,708.719) rotate(-135)">
+			<title>גיליון.44</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape45-117" v:mID="45" v:groupContext="shape" transform="translate(-207.708,324.278) rotate(-90)">
+			<title>גיליון.45</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape46-120" v:mID="46" v:groupContext="shape" transform="translate(332.062,-226.953)">
+			<title>גיליון.46</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape47-123" v:mID="47" v:groupContext="shape" transform="translate(36.4455,685.796) rotate(-135)">
+			<title>גיליון.47</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape48-126" v:mID="48" v:groupContext="shape" transform="translate(-205.989,301.355) rotate(-90)">
+			<title>גיליון.48</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape49-129" v:mID="49" v:groupContext="shape" transform="translate(333.781,-249.876)">
+			<title>גיליון.49</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape50-132" v:mID="50" v:groupContext="shape" transform="translate(37.5917,662.874) rotate(-135)">
+			<title>גיליון.50</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape51-135" v:mID="51" v:groupContext="shape" transform="translate(-204.842,278.433) rotate(-90)">
+			<title>גיליון.51</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape52-138" v:mID="52" v:groupContext="shape" transform="translate(334.927,-272.798)">
+			<title>גיליון.52</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape53-141" v:mID="53" v:groupContext="shape" transform="translate(36.4455,639.952) rotate(-135)">
+			<title>גיליון.53</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape54-144" v:mID="54" v:groupContext="shape" transform="translate(-205.989,255.511) rotate(-90)">
+			<title>גיליון.54</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape55-147" v:mID="55" v:groupContext="shape" transform="translate(333.781,-295.72)">
+			<title>גיליון.55</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape56-150" v:mID="56" v:groupContext="shape" transform="translate(37.5917,617.029) rotate(-135)">
+			<title>גיליון.56</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape59-153" v:mID="59" v:groupContext="shape" transform="translate(834.923,944.276) rotate(180)">
+			<title>גיליון.59</title>
+			<path d="M0 539.77 L206.3 539.77" class="st3"/>
+		</g>
+		<g id="shape60-156" v:mID="60" v:groupContext="shape" transform="translate(834.923,772.358) rotate(180)">
+			<title>גיליון.60</title>
+			<path d="M0 539.77 L206.3 539.77" class="st3"/>
+		</g>
+		<g id="shape61-159" v:mID="61" v:groupContext="shape" transform="translate(1001.6,-140.392) rotate(45)">
+			<title>גיליון.61</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape62-162" v:mID="62" v:groupContext="shape" transform="translate(1244.03,244.049) rotate(90)">
+			<title>גיליון.62</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape63-165" v:mID="63" v:groupContext="shape" transform="translate(704.265,795.28) rotate(180)">
+			<title>גיליון.63</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape64-168" v:mID="64" v:groupContext="shape" transform="translate(1000.45,-117.469) rotate(45)">
+			<title>גיליון.64</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape65-171" v:mID="65" v:groupContext="shape" transform="translate(1242.89,266.972) rotate(90)">
+			<title>גיליון.65</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape66-174" v:mID="66" v:groupContext="shape" transform="translate(703.119,818.203) rotate(180)">
+			<title>גיליון.66</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape67-177" v:mID="67" v:groupContext="shape" transform="translate(1001.6,-94.5467) rotate(45)">
+			<title>גיליון.67</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape68-180" v:mID="68" v:groupContext="shape" transform="translate(1244.03,289.894) rotate(90)">
+			<title>גיליון.68</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape69-183" v:mID="69" v:groupContext="shape" transform="translate(704.265,841.125) rotate(180)">
+			<title>גיליון.69</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape70-186" v:mID="70" v:groupContext="shape" transform="translate(1000.45,-71.6243) rotate(45)">
+			<title>גיליון.70</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape71-189" v:mID="71" v:groupContext="shape" transform="translate(1242.89,312.817) rotate(90)">
+			<title>גיליון.71</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape72-192" v:mID="72" v:groupContext="shape" transform="translate(703.119,864.048) rotate(180)">
+			<title>גיליון.72</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape73-195" v:mID="73" v:groupContext="shape" transform="translate(998.735,-48.7019) rotate(45)">
+			<title>גיליון.73</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape74-198" v:mID="74" v:groupContext="shape" transform="translate(1241.17,335.739) rotate(90)">
+			<title>גיליון.74</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape75-201" v:mID="75" v:groupContext="shape" transform="translate(701.4,886.97) rotate(180)">
+			<title>גיליון.75</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape76-204" v:mID="76" v:groupContext="shape" transform="translate(997.589,-25.7794) rotate(45)">
+			<title>גיליון.76</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape77-207" v:mID="77" v:groupContext="shape" transform="translate(1240.02,358.661) rotate(90)">
+			<title>גיליון.77</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape78-210" v:mID="78" v:groupContext="shape" transform="translate(700.253,909.892) rotate(180)">
+			<title>גיליון.78</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape79-213" v:mID="79" v:groupContext="shape" transform="translate(998.735,-2.85703) rotate(45)">
+			<title>גיליון.79</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape80-216" v:mID="80" v:groupContext="shape" transform="translate(1241.17,381.584) rotate(90)">
+			<title>גיליון.80</title>
+			<path d="M0 539.77 C-0.91 536.8 -0.17 523.06 3.44 521.43 C7.62 519.54 15.67 533.98 11.46 539.77" class="st3"/>
+		</g>
+		<g id="shape81-219" v:mID="81" v:groupContext="shape" transform="translate(701.4,932.815) rotate(180)">
+			<title>גיליון.81</title>
+			<path d="M0 539.77 L75.64 539.77" class="st3"/>
+		</g>
+		<g id="shape82-222" v:mID="82" v:groupContext="shape" transform="translate(997.589,20.0654) rotate(45)">
+			<title>גיליון.82</title>
+			<path d="M0 527.47 C-12.93 552.65 12.98 532.21 16.21 527.47" class="st3"/>
+		</g>
+		<g id="shape83-225" v:mID="83" v:groupContext="shape" transform="translate(670.168,-214.346)">
+			<title>גיליון.83</title>
+			<desc>U2</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="128.93" y="540.82" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>U2</text>		</g>
+		<g id="shape85-228" v:mID="85" v:groupContext="shape" transform="translate(1077.57,-59.5014) rotate(29.5115)">
+			<title>גיליון.85</title>
+			<path d="M-0 539.77 A125.354 73.8576 145.2 0 1 139.6 539.77" class="st15"/>
+		</g>
+		<g id="shape97-234" v:mID="97" v:groupContext="shape" transform="translate(395.287,-350.331)">
+			<title>גיליון.97</title>
+			<desc>coreליבה</desc>
+			<v:textBlock v:margins="rect(1,1,1,1)" v:tabSpace="42.5197" v:verticalAlign="0"/>
+			<v:textRect cx="149.601" cy="523.597" width="299.21" height="32.3461"/>
+			<rect x="0" y="507.424" width="299.201" height="32.3461" class="st4"/>
+			<text x="150.63" y="541.66" class="st5" v:langID="1033"><v:paragraph v:horizAlign="1" v:flags="1"/><v:tabList/>core<tspan
+						x="83.9" class="st6" v:langID="1037">ליבה</tspan></text>		</g>
+		<g id="shape98-238" v:mID="98" v:groupContext="shape" transform="translate(543.47,-347.244)">
+			<title>גיליון.98</title>
+			<rect x="0" y="518.51" width="80.7874" height="21.2598" class="st16"/>
+		</g>
+	</g>
+</svg>

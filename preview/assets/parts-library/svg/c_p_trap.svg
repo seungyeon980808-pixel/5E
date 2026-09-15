@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0" y="0" width="800" height="634" viewBox="0 0 800 634">
+<style type="text/css">
+	.st0{fill:#00FFFF;fill-opacity:0.4;}
+	.st1{fill:none;stroke:#0071BC;stroke-width:2;}
+	.st2{fill:none;stroke:#000;stroke-width:4;}
+	.st3{fill:none;stroke:#000;stroke-width:2;}
+	.st4{fill:none;stroke:#000;stroke-width:3;}
+	.st5{fill:#FF0000;fill-opacity:0.2;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st6{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st7{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st8{font-family:Liberation Sans,Arial;}
+	.st9{font-size:33px;}
+</style>
+<g id="trap">
+	<path class="st0" d="M207,259v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V244.2H31V444c0,76.4,69.5,138.3,155.5,138.3
+		S342,520.4,342,444V259c0-8.2,5.3-14.8,11.8-14.8H207.7C207.2,249.1,207,254,207,259z"/>
+	<line class="st1" x1="31" y1="244.2" x2="166" y2="244.2"/>
+	<line class="st1" x1="207" y1="244.2" x2="352.2" y2="244.2"/>
+	<path class="st2" d="M800,109.2H353.8c-81.1,0-146.8,67-146.8,149.8v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V128.8
+		c0-5.2,2-10.1,5.6-13.8l1.3-1.3H24.1l0.8,0.8c3.9,3.8,6,8.9,6,14.3V444c0,76.4,69.5,138.3,155.5,138.3S342,520.4,342,444V259
+		c0-8.2,5.3-14.8,11.8-14.8h399.9"/>
+	<path class="st3" d="M186.5,582.3c-9.1,0-18.1-0.7-26.8-2v18.7c0,2.5,2.1,4.6,4.6,4.6h44.3c2.5,0,4.6-2.1,4.6-4.6v-18.7
+		C204.6,581.6,195.6,582.3,186.5,582.3z"/>
+	<path class="st3" d="M201.5,624.1h-30.1c-1.9,0-3.5-1.6-3.5-3.5v-17h37v17C205,622.5,203.5,624.1,201.5,624.1z"/>
+	<line class="st4" x1="186.5" y1="458.1" x2="405.5" y2="458.1"/>
+	<g>
+		<g>
+			<line class="st3" x1="367" y1="253.4" x2="367" y2="448.9"/>
+			<g>
+				<polygon points="367,244.2 361.7,257.2 367,254.1 372.3,257.2 				"/>
+			</g>
+			<g>
+				<polygon points="367,458.1 361.7,445.1 367,448.2 372.3,445.1 				"/>
+			</g>
+		</g>
+	</g>
+	<polygon class="st5" points="292,211.4 273,244.2 254,211.4 	"/>
+	<polygon class="st5" points="117.5,211.4 98.5,244.2 79.5,211.4 	"/>
+	<g>
+		<g>
+			<line class="st6" x1="321.8" y1="236.2" x2="371" y2="196.2"/>
+			<g>
+				<polygon points="312,244.2 330.5,238.6 322.6,235.6 321.2,227.3 				"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<line class="st6" x1="98.5" y1="70.1" x2="98.5" y2="43.1"/>
+			<g>
+				<polygon points="98.5,83.9 106.4,64.5 98.5,69.1 90.6,64.5 				"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<line class="st6" x1="286.2" y1="108.9" x2="268.5" y2="74"/>
+			<g>
+				<polygon points="292,120.3 290.4,101 285.8,108.1 277.3,107.6 				"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<line class="st6" x1="198.1" y1="594.2" x2="371" y2="594.2"/>
+			<g>
+				<polygon points="185.4,594.2 203.3,601.5 199,594.2 203.3,586.9 				"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<polyline class="st6" points="194.1,468.3 218.5,500.8 371,500.8 			"/>
+			<g>
+				<polygon points="186.5,458.1 191.4,476.8 194.7,469 203.1,468 				"/>
+			</g>
+		</g>
+	</g>
+	<path class="st7" d="M172.9,113.6H24.1c-2.5,0-4.6-2.1-4.6-4.6V89.6c0-2.5,2.1-4.6,4.6-4.6h148.7c2.5,0,4.6,2.1,4.6,4.6V109
+		C177.5,111.5,175.4,113.6,172.9,113.6z"/>
+</g>
+<g id="text">
+	<text transform="matrix(1 0 0 1 67 36)" class="st8 st9">Inlet</text>
+	<text transform="matrix(1 0 0 1 215 65)" class="st8 st9">Crown</text>
+	<text transform="matrix(1 0 0 1 379 187)" class="st8 st9">Overflow</text>
+	<text transform="matrix(1 0 0 1 662 187)" class="st8 st9">Outlet</text>
+	<text transform="matrix(1 0 0 1 382 360)" class="st8 st9">Seal</text>
+	<text transform="matrix(1 0 0 1 382 510)" class="st8 st9">Clip</text>
+	<text transform="matrix(1 0 0 1 377 603)" class="st8 st9">Cleanout</text>
+</g>
+</svg>

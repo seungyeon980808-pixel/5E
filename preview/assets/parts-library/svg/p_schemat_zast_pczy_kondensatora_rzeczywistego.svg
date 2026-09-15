@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="220"
+   height="180"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Dot_l">
+      <path
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         transform="matrix(0.8,0,0,0.8,5.92,0.8)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         id="path3209" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Dot_m">
+      <path
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         id="path5151" />
+    </marker>
+  </defs>
+  <g
+     id="layer1">
+    <path
+       d="M 20,60 L 100,60"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path3129" />
+    <path
+       d="M 120,60 L 200,60"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path3131" />
+    <path
+       d="M 100,20 L 100,100"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path3133" />
+    <path
+       d="M 120,20 L 120,100"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path3135" />
+    <path
+       d="M 60,120 L 60,160 L 160,160 L 160,120 L 60,120 z "
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path4108" />
+    <g
+       id="g3350">
+      <path
+         d="M 39.5,59.625 L 39.5,139.9375 L 39.5,140.40625 L 39.96875,140.40625 L 60.0625,140.40625 L 60.0625,139.5 L 40.40625,139.5 L 40.40625,59.625 L 39.5,59.625 z "
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.89841616px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         id="path4110" />
+      <path
+         d="M 39.957381,56.09123 C 41.941084,56.09123 43.551046,57.701191 43.551046,59.684894 C 43.551046,61.668597 41.941084,63.278559 39.957381,63.278559 C 37.973678,63.278559 36.363716,61.668597 36.363716,59.684894 C 36.363716,57.701191 37.973678,56.09123 39.957381,56.09123 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:0.71873293pt;marker-start:none;marker-end:none"
+         id="path3356" />
+    </g>
+    <g
+       id="g3342">
+      <path
+         d="M 179.59375,59.625 L 179.59375,139.5 L 159.9375,139.5 L 159.9375,140.40625 L 180.03125,140.40625 L 180.5,140.40625 L 180.5,139.9375 L 180.5,59.625 L 179.59375,59.625 z "
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.89841616px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         id="path4112" />
+      <path
+         d="M 180.04262,56.09123 C 182.02632,56.09123 183.63628,57.701191 183.63628,59.684894 C 183.63628,61.668597 182.02632,63.278559 180.04262,63.278559 C 178.05892,63.278559 176.44896,61.668597 176.44896,59.684894 C 176.44896,57.701191 178.05892,56.09123 180.04262,56.09123 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:0.71873293pt;marker-start:none;marker-end:none"
+         id="path3348" />
+    </g>
+  </g>
+</svg>

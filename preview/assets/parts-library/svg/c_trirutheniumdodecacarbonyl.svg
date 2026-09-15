@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.0//EN'
+          'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="286.8" stroke-dashoffset="0" stroke-opacity="1" fill-opacity="1" stroke-dasharray="none" image-rendering="auto" color-rendering="auto" stroke-width="1" stroke-linecap="square" stroke-miterlimit="10" color-interpolation="auto" fill="#000000" stroke-linejoin="miter" stroke="#000000" shape-rendering="auto">
+ <defs>
+  <clipPath id="0">
+   <path d="m204.7 171.68v40h68.861v-31.2h6v31.2h68.861v-40z"/>
+  </clipPath>
+ </defs>
+ <g transform="matrix(1.83026 0 0 1.83026.193.169)">
+  <g color-rendering="optimizeQuality" image-rendering="optimizeQuality" color-interpolation="linearRGB" transform="translate(-151-126)">
+   <g stroke-linecap="butt" stroke-width="1.2">
+    <g stroke="none">
+     <path d="m217.96 195.85l.418-1.125 49.34 16.316-1.743 4.686z"/>
+     <path d="m334.74 194.73l.418 1.125-48.761 20.16-1.743-4.687z"/>
+    </g>
+    <g fill="none">
+     <path d="m208.45 185.07v-19.07"/>
+     <path d="m198.87 186.15l-12.824-7.404"/>
+     <path d="m198.87 197.21l-13.07 7.546"/>
+     <path d="m208.45 198.63v18.553"/>
+    </g>
+    <path d="m266.68 222.01l.6 1.039-12.12 9.191-2.5-4.33z" stroke="none"/>
+    <path fill="none" d="m276.56 223.96v18.553"/>
+    <path d="m285.84 223.05l.6-1.039 13.916 5.841-2.5 4.33z" stroke="none"/>
+    <g fill="none">
+     <path d="m344.67 198.63v18.553"/>
+     <path d="m354.25 197.21l12.967 7.486"/>
+     <path d="m344.67 185.07v-19.07"/>
+     <path clip-path="url(#0)" d="m218.29 191.68h116.54"/>
+     <path d="m208.45 151.64v-10.633"/>
+     <path d="m212.2 151.64v-10.633"/>
+     <path d="m204.7 151.64v-10.633"/>
+     <path d="m174.23 171.92l-9.802-5.659"/>
+     <path d="m176.11 168.68l-9.802-5.659"/>
+     <path d="m172.36 175.17l-9.802-5.659"/>
+     <path d="m174.34 211.37l-9.856 5.69"/>
+     <path d="m172.47 208.12l-9.856 5.69"/>
+     <path d="m176.22 214.62l-9.856 5.69"/>
+     <path d="m208.45 231.54v10.633"/>
+     <path d="m204.7 231.54v10.633"/>
+     <path d="m212.2 231.54v10.633"/>
+     <path d="m242.45 236.69l-9.856 5.69"/>
+     <path d="m240.58 233.45l-9.856 5.69"/>
+     <path d="m244.33 239.94l-9.856 5.69"/>
+     <path d="m276.56 256.87v10.633"/>
+     <path d="m272.81 256.87v10.633"/>
+     <path d="m280.31 256.87v10.633"/>
+     <path d="m310.92 236.84l9.341 5.393"/>
+     <path d="m309.04 240.09l9.341 5.393"/>
+     <path d="m312.79 233.59l9.341 5.393"/>
+     <path d="m344.67 231.54v10.633"/>
+     <path d="m340.92 231.54v10.633"/>
+     <path d="m348.42 231.54v10.633"/>
+     <path d="m379.03 211.52l9.341 5.393"/>
+     <path d="m377.16 214.76l9.341 5.393"/>
+     <path d="m380.91 208.27l9.341 5.393"/>
+     <path d="m344.67 151.64v-10.633"/>
+     <path d="m348.42 151.64v-10.633"/>
+     <path d="m340.92 151.64v-10.633"/>
+     <path d="m351.79 187.57l15.531-8.967"/>
+     <path d="m276.56 210.39v-19.07"/>
+     <path d="m276.56 176.97v-10.633"/>
+     <path d="m280.31 176.97v-10.633"/>
+     <path d="m272.81 176.97v-10.633"/>
+     <path d="m378.78 171.98l9.924-5.729"/>
+     <path d="m380.66 175.23l9.924-5.729"/>
+     <path d="m376.91 168.74l9.924-5.729"/>
+    </g>
+   </g>
+   <g font-family="Arial" text-rendering="geometricPrecision" font-size="14" stroke="none">
+    <text x="199.51" y="196.51">Ru</text>
+    <text x="267.62" y="221.84">Ru</text>
+    <text x="203.32" y="229.37">C</text>
+    <text x="174.94" y="212.99">C</text>
+    <text x="203.32" y="163.83">C</text>
+    <text x="335.73" y="196.51">Ru</text>
+    <text x="174.94" y="180.22">C</text>
+    <text x="271.43" y="189.16">C</text>
+    <text x="299.81" y="238.31">C</text>
+    <text x="243.05" y="238.31">C</text>
+    <text x="271.43" y="254.7">C</text>
+    <text x="202.98" y="254.38">O</text>
+    <text x="152.95" y="225.49">O</text>
+    <text x="202.98" y="138.84">O</text>
+    <text x="367.92" y="212.99">C</text>
+    <text x="367.92" y="180.22">C</text>
+    <text x="339.54" y="229.37">C</text>
+    <text x="339.54" y="163.83">C</text>
+    <text x="152.95" y="167.72">O</text>
+    <text x="271.09" y="164.16">O</text>
+    <text x="321.12" y="250.82">O</text>
+    <text x="221.06" y="250.82">O</text>
+    <text x="271.09" y="279.7">O</text>
+    <text x="389.23" y="225.49">O</text>
+    <text x="389.23" y="167.72">O</text>
+    <text x="339.2" y="254.38">O</text>
+    <text x="339.2" y="138.84">O</text>
+   </g>
+  </g>
+ </g>
+</svg>

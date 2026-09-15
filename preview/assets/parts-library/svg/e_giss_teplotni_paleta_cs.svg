@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="340.27661"
+   height="42.883919"
+   id="svg4295"
+   version="1.1"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="GISS temperature palette.svg">
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="3.959798"
+     inkscape:cx="171.50608"
+     inkscape:cy="36.240648"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     fit-margin-left="30"
+     fit-margin-top="5"
+     fit-margin-right="30"
+     fit-margin-bottom="3"
+     inkscape:window-width="1920"
+     inkscape:window-height="1138"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <defs
+     id="defs4297">
+    <linearGradient
+       id="linearGradient5200">
+      <stop
+         style="stop-color:#1e7bbb;stop-opacity:1;"
+         offset="0"
+         id="stop5202" />
+      <stop
+         id="stop5276"
+         offset="0.125"
+         style="stop-color:#4ea6d0;stop-opacity:1" />
+      <stop
+         id="stop5268"
+         offset="0.25"
+         style="stop-color:#a2d0e6;stop-opacity:1" />
+      <stop
+         style="stop-color:#d9ebf3;stop-opacity:1"
+         offset="0.375"
+         id="stop5274" />
+      <stop
+         id="stop5208"
+         offset="0.5"
+         style="stop-color:#f9f8f8;stop-opacity:1" />
+      <stop
+         style="stop-color:#ffe0cf;stop-opacity:1"
+         offset="0.625"
+         id="stop5272" />
+      <stop
+         style="stop-color:#f9b391;stop-opacity:1;"
+         offset="0.75"
+         id="stop5230" />
+      <stop
+         id="stop5250"
+         offset="0.875"
+         style="stop-color:#e1745c;stop-opacity:1;" />
+      <stop
+         style="stop-color:#c42b36;stop-opacity:1;"
+         offset="1"
+         id="stop5204" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5200"
+       id="linearGradient5266"
+       x1="280.57895"
+       y1="519.25922"
+       x2="536.82898"
+       y2="519.25922"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(0,-6.2301942)" />
+  </defs>
+  <metadata
+     id="metadata4300">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-237.46926,-489.63681)"
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none"
+       id="rect5300"
+       width="340.42142"
+       height="43.184021"
+       x="0"
+       y="-0.047564462"
+       transform="translate(237.46926,489.63681)" />
+    <text
+       sodipodi:linespacing="125%"
+       id="text4314"
+       y="503.33212"
+       x="333.02505"
+       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+       xml:space="preserve"><tspan
+         style="font-size:12px;font-weight:bold"
+         y="503.33212"
+         x="333.02505"
+         id="tspan4316"
+         sodipodi:role="line">Odchylka teploty<tspan
+   id="tspan4318"
+   style="font-size:12px;font-weight:normal">(°C)</tspan></tspan></text>
+    <g
+       transform="translate(7.0710678,-10.101525)"
+       id="g4461">
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="271.65405"
+         y="539.50507"
+         id="text4331"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333"
+           x="271.65405"
+           y="539.50507"
+           style="font-size:12px;text-align:center;text-anchor:middle">-2,5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="314.60071"
+         y="539.44354"
+         id="text4331-6"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5"
+           x="314.60071"
+           y="539.44354"
+           style="font-size:12px;text-align:center;text-anchor:middle">-1,5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="357.54736"
+         y="539.50507"
+         id="text4331-6-0"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5-2"
+           x="357.54736"
+           y="539.50507"
+           style="font-size:12px;text-align:center;text-anchor:middle">-0,5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="400.53796"
+         y="539.50507"
+         id="text4331-6-0-8"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5-2-6"
+           x="400.53796"
+           y="539.50507"
+           style="font-size:12px;text-align:center;text-anchor:middle">0</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="443.4436"
+         y="539.50507"
+         id="text4331-6-0-0"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5-2-2"
+           x="443.4436"
+           y="539.50507"
+           style="font-size:12px;text-align:center;text-anchor:middle">+0,5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="486.39026"
+         y="539.44354"
+         id="text4331-6-0-0-4"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5-2-2-8"
+           x="486.39026"
+           y="539.44354"
+           style="font-size:12px;text-align:center;text-anchor:middle">+1,5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:40px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Liberation Sans;-inkscape-font-specification:Liberation Sans"
+         x="529.33691"
+         y="539.50507"
+         id="text4331-6-0-0-4-6"
+         sodipodi:linespacing="125%"><tspan
+           sodipodi:role="line"
+           id="tspan4333-5-2-2-8-5"
+           x="529.33691"
+           y="539.50507"
+           style="font-size:12px;text-align:center;text-anchor:middle">+2,5</tspan></text>
+    </g>
+    <rect
+       style="fill:url(#linearGradient5266);fill-opacity:1;stroke:none"
+       id="rect4690"
+       width="256.25"
+       height="11.25"
+       x="280.57895"
+       y="507.40402" />
+  </g>
+</svg>
+<!-- Translated to Čeština by SVGTranslate 1.05 -->

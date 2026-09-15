@@ -1,0 +1,9 @@
+<svg width="204mm" height="110mm" version="1.1" viewBox="0 0 204 110" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs><linearGradient id="b" x1="125" x2="125" y1="62" y2="12" gradientUnits="userSpaceOnUse"><stop stop-color="#47b" offset="0"/><stop stop-color="#cee" offset="1"/></linearGradient></defs>
+ <rect width="204" height="110" fill="#fff"/>
+ <g id="c"><rect x="64" y="14" width="92" height="45" fill="url(#b)"/>
+ <g fill="none" stroke="#f00"><path d="m56 22c34 0 72-5 138 47"/><path d="m56 41c22 1 73-5 140 24"/><path d="m13 13c10 14 26 28 26 46" stroke="#080"/></g>
+<path id="a" d="m192 70 2-1v-2l5 5" fill="#f00"/><use transform="rotate(-15 180 59)" xlink:href="#a"/></g>
+ <use transform="matrix(1 0 0-1 0 118)" xlink:href="#c"/>
+ <g fill="none" stroke="#000" stroke-width=".5"><path d="m36 106h-31v-98"/><path d="m4 59h194" stroke-dasharray="3"/></g>
+<path d="m3 12 2-7 2 7-2-2m29 94 7 2-7 2 2-2"/><text x="42" y="108" font-family="Times" font-size="13px" font-style="italic">n<tspan x="9" y="9">x</tspan></text></svg>

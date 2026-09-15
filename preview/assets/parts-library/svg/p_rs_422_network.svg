@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" width="1492" height="644" viewBox="0 0 1492 644" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xml:lang="en">
+<title>RS-422 network with multiple receivers</title>
+<defs>
+	<style type="text/css">
+		line, path, polyline, polygon{
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 4;
+		}
+		/* Dashed boxes */
+		rect{
+			fill: none;
+			stroke: currentColor;
+			stroke-width: 5;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+			stroke-dasharray: 8;
+		}
+		text{
+			fill: currentColor;
+			font-family: "Times New Roman", Times, serif;
+			font-size: 34px;
+			text-anchor: middle;
+		}
+		
+		/* Connector-thingie */
+		.branch{
+			marker-end: url(#joint);
+		}
+		
+		/* Resistor */
+		#rterm-1 { font-size: 27px; text-anchor: start; }
+		#rterm-2 { font-size: 27px; text-anchor: end; }
+		.thin{
+			stroke-width: 3;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+		
+		/* Receiver or generator */
+		.receiver{
+			fill: #fff;
+			stroke: currentColor;
+			stroke-width: 4;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+	</style>
+	<marker id="joint" viewBox="0 0 12 12" refX="6" refY="6" markerWidth="12" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><circle cx="6" cy="6" r="6"/></marker>
+</defs>
+
+<rect width="302" height="416" x="6.5" y="130.5"/><text x="109" y="161">T</text>
+<rect width="302" height="416" x="1177" y="131"/><text x="1375" y="161">T</text>
+<line x1="120.7" y1="206" x2="1291" y2="206"/>
+<line x1="118.7" y1="283" x2="1291" y2="283"/>
+<line x1="196.7" y1="396" x2="1367" y2="396"/>
+<line x1="194.7" y1="471" x2="1367" y2="471"/>
+<polygon class="receiver" points="196.5,243.6 44,168 44,320.2"/><text x="96" y="256">G</text>
+<polygon class="receiver" points="1443,243.6 1290.5,168 1290.5,320.2"/><text x="1341" y="256">R</text>
+<polygon class="receiver" points="1290.9,433.3 1441,357.8 1441,508.4"/><text x="1392" y="445">G</text>
+<polygon class="receiver" points="45.4,433.3 195.5,357.8 195.5,508.4"/><text x="147" y="445">R</text>
+<polygon class="receiver" points="1103.4,92.2 950.9,16.6 950.9,168.8"/><text x="1001" y="104">R</text>
+<polyline class="branch" points="950.9,55.7 874.8,55.7 874.8,206"/>
+<polyline class="branch" points="950.9,130.7 912.8,130.7 912.8,283"/>
+
+<!-- Resistors -->
+<g>
+	<line class="thin branch" x2="346.5" y2="396" x1="346.5" y1="410.7"/>
+	<line class="thin branch" x1="346.5" y1="456.1" x2="346.5" y2="471"/>
+	<polyline class="thin" points="347,410.7 354.2,413.9 339.9,421.7 354.3,429.3 338.9,437.5 353.6,444.7 339.6,452 346,456.1"/>
+	<text id="rterm-1" x="365" y="443">R<tspan dy="0.5ex">term</tspan></text>
+</g>
+<g>
+	<line class="thin branch" x2="1139.5" y2="206" x1="1139.5" y1="221.8"/>
+	<line class="thin branch" x1="1139.5" y1="267.2" x2="1139.5" y2="283"/>
+	<polyline class="thin" points="1140,221.8 1146,225.2 1131.9,232.8 1147,240.6 1132,247.8 1145.9,255.2 1131.9,262.9 1139,267.2"/>
+	<text id="rterm-2" x="1120" y="253">R<tspan dy="0.5ex">term</tspan></text>
+</g>
+
+<!-- Diagram title -->
+<text x="0"><!--
+	--><tspan x="652.5" y="538">RS-422 network</tspan><!--
+	--><tspan x="652.5" y="579">Only one driver</tspan><!--
+--></text>
+</svg>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg id="svg2" height="800" viewBox="0 0 535 800" width="535" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg">
+ <clipPath id="clipPath34">
+  <path id="path32" d="m0 0h402v601h-402z"/>
+ </clipPath>
+ <clipPath id="clipPath38">
+  <path id="path36" d="m0 0h535v535h-535z"/>
+ </clipPath>
+ <pattern id="pattern58" height="535" patternTransform="scale(.0075)" patternUnits="userSpaceOnUse" width="535">
+  <g id="g56">
+   <g id="g54" clip-path="url(#clipPath38)">
+    <g id="g52">
+     <g id="g42">
+      <path id="path40" d="m-377.953 377.953 755.906-755.906" stroke="#000" stroke-width="94.488"/>
+     </g>
+     <g id="g46">
+      <path id="path44" d="m-377.953 912.457 1290.41-1290.41" stroke="#000" stroke-width="94.488"/>
+     </g>
+     <g id="g50">
+      <path id="path48" d="m156.555 912.457 755.902-755.902" stroke="#000" stroke-width="94.488"/>
+     </g>
+    </g>
+   </g>
+  </g>
+ </pattern>
+ <clipPath id="clipPath76">
+  <path id="path74" d="m0 0h402v601h-402z"/>
+ </clipPath>
+ <clipPath id="clipPath94">
+  <path id="path92" d="m0 0h402v601h-402z"/>
+ </clipPath>
+ <clipPath id="clipPath112">
+  <path id="path110" d="m0 0h402v601h-402z"/>
+ </clipPath>
+ <clipPath id="clipPath130">
+  <path id="path128" d="m0 0h402v601h-402z"/>
+ </clipPath>
+ <g id="g8" transform="scale(1.3333333)">
+  <g id="g10">
+   <g id="g12">
+    <path id="path14" d="m67.625 28.453v486.422h15.797c6.289-6.852 12.25-14.004 18-21.328h-19.43c7-8.914 13.539-18.211 19.688-27.774h-19.336c7.461-11.605 14.23-23.699 20.344-36.164l-19.407-1.5c7.938-16.191 14.614-31.593 20.086-49.031l-19.359-3c10.629-33.941 16.453-67.004 16.453-104.437 0-37.418-5.809-70.465-16.43-104.391l19.336-3c-5.472-17.43-12.125-32.844-20.062-49.031l19.429-1.5c-6.117-12.469-12.902-24.551-20.367-36.164h19.336c-6.152-9.567-12.703-18.848-19.711-27.774h19.43c-5.75-7.32-11.711-14.472-18-21.328z" fill="#cde9f4" fill-rule="evenodd" stroke="#000" stroke-width="2.25"/>
+   </g>
+   <g id="g16">
+    <path id="path18" d="m238.07 28.453v486.422h15.797c58.797-64.086 94.758-149.477 94.758-243.234 0-93.762-35.961-179.11-94.758-243.188z" fill="#cde9f4" fill-rule="evenodd" stroke="#000" stroke-width="2.25"/>
+   </g>
+   <path id="path20" d="m84.277 572.672h-8.507v-1.781h3.164v-11.696h-3.164v-1.593c1.195 0 2.074-.168 2.636-.504.571-.344.891-.989.961-1.934h1.817v15.727h3.093z"/>
+   <path id="path22" d="m260.023 572.672h-10.769v-2.449c.773-.735 1.504-1.438 2.191-2.11.688-.672 1.36-1.371 2.016-2.097 1.328-1.461 2.234-2.629 2.719-3.504.484-.883.726-1.793.726-2.731 0-.484-.078-.91-.234-1.277-.149-.367-.356-.672-.621-.914-.274-.235-.59-.41-.949-.527-.36-.118-.754-.176-1.184-.176-.414 0-.836.054-1.266.164-.422.101-.828.23-1.218.387-.329.132-.645.292-.95.48-.304.187-.55.348-.738.48h-.129v-2.484c.485-.242 1.156-.476 2.016-.703.867-.234 1.687-.352 2.461-.352 1.625 0 2.898.434 3.82 1.301.922.86 1.383 2.028 1.383 3.504 0 .68-.082 1.309-.246 1.887-.156.578-.375 1.113-.656 1.605-.29.508-.637 1.012-1.043 1.512-.407.5-.836.992-1.289 1.477-.735.796-1.555 1.625-2.461 2.484-.899.859-1.618 1.539-2.157 2.039h8.578z"/>
+   <g id="g24">
+    <path id="path26" d="m25.5 271.289h344.852" fill="none" stroke="#000" stroke-dasharray="6,3" stroke-width=".75"/>
+   </g>
+   <g id="g28">
+    <g id="g30"/>
+    <g id="g68">
+     <g id="g66" clip-path="url(#clipPath34)" opacity=".5">
+      <g id="g64">
+       <g id="g62">
+        <path id="path60" d="m238.07 49.723 19.594.058v27.832l19.289-.058v36.164h19.613v50.531h19.219v214.793h-19.219v50.543l-19.613.133v37.144l-19.289-.133v26.809h-19.594z" fill="url(#pattern58)"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="g70">
+    <g id="g72"/>
+    <g id="g86">
+     <g id="g84" clip-path="url(#clipPath76)" opacity=".5">
+      <g id="g82">
+       <g id="g80">
+        <path id="path78" d="m101.422 49.781h170.933m0 443.758-170.933.008" fill="none" stroke="#000" stroke-dasharray="4.5,4.5" stroke-width="2.25"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="g88">
+    <g id="g90"/>
+    <g id="g104">
+     <g id="g102" clip-path="url(#clipPath94)" opacity=".5">
+      <g id="g100">
+       <g id="g98">
+        <path id="path96" d="m101.703 77.555h190.25m0 389.308h-190.531" fill="none" stroke="#000" stroke-dasharray="4.5,4.5" stroke-width="2.25"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="g106">
+    <g id="g108"/>
+    <g id="g122">
+     <g id="g120" clip-path="url(#clipPath112)" opacity=".5">
+      <g id="g118">
+       <g id="g116">
+        <path id="path114" d="m102.734 113.719h209.536m0 315.867h-209.899" fill="none" stroke="#000" stroke-dasharray="4.5,4.5" stroke-width="2.25"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+   <g id="g124">
+    <g id="g126"/>
+    <g id="g140">
+     <g id="g138" clip-path="url(#clipPath130)" opacity=".5">
+      <g id="g136">
+       <g id="g134">
+        <path id="path132" d="m103.367 164.25h229.008m0 214.793h-229.254" fill="none" stroke="#000" stroke-dasharray="4.5,4.5" stroke-width="2.25"/>
+       </g>
+      </g>
+     </g>
+    </g>
+   </g>
+  </g>
+ </g>
+</svg>

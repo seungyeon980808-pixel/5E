@@ -1,0 +1,88 @@
+﻿<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-502 -108 1024 640">
+ <title>Принцип действия фермы Суррурье для телескопа</title>
+ <desc>Принцип действия фермы для телскопа Суррурье в сравнении с обычной фермой, нарисован CMG Lee. Показаны только верхний и нижний элементы конструкции. Красные и зелёные линии отображают элементы соответственно под напряжением и сжатием.</desc>
+ <defs>
+  <radialGradient id="grad_rad" cx="50%" cy="50%" r="67%" fx="33%" fy="25%">
+   <stop offset="25%" stop-color="#ffffff"/>
+   <stop offset="100%" stop-color="#666666"/>
+  </radialGradient>
+  <linearGradient id="grad_lin" x1="0%" y1="0%" x2="100%" y2="0%">
+   <stop offset="0%" stop-color="#000000" stop-opacity="0.75"/>
+   <stop offset="50%" stop-color="#000000" stop-opacity="0"/>
+   <stop offset="100%" stop-color="#000000" stop-opacity="0.75"/>
+  </linearGradient>
+  <g id="pivot" stroke="#000000" fill="#cc00cc">
+   <ellipse cx="0" cy="0" rx="10" ry="10"/>
+   <text x="-15" y="10" text-anchor="end" stroke="none" fill="#990099">Опора</text>
+   <!-- <path d="M -10 20 L 0 10 L 10 20 M -20 20 H 20 M -20 30 L -10 20 M -10 30 L 0 20 M 0 30 L 10 20 M 10 30 L 20 20"/> -->
+  </g>
+  <g id="primary" stroke="#0099cc" fill="#66ccff">
+   <path d="M 5 -100 H -20 C 0 -50 0 50 -20 100 H 5 Z"/>
+  </g>
+  <g id="secondary" stroke="#0099cc" fill="#66ccff">
+   <path d="M 0 -100 V 100 M 0 -10 H 20 L 0 10"/>
+  </g>
+  <g id="eye" stroke="#000000" fill="#cc6600">
+   <ellipse cx="0" cy="0" rx="40" ry="40" fill="url(#grad_rad)"/>
+   <ellipse cx="0" cy="-30" rx="20" ry="10"/>
+   <ellipse cx="0" cy="-32" rx="10" ry="4" fill="#000000"/>
+  </g>
+  <g id="main" font-family="sans-serif" font-size="32" text-anchor="middle"  stroke="#0000ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+   <g transform="translate(-10,0)">
+    <path d="M -490 -70 H -10 L -430 -10 L -440 130 L -450 10 L -10 70 H -490" stroke-dasharray="8,6"/>
+    <use xlink:href="#primary"/>
+    <use xlink:href="#secondary" transform="translate(-450,0)"/>
+    <path d="M 0 -100 H -450 M -450 100 H 0" stroke="#666666" stroke-width="8"/>
+    <use xlink:href="#pivot"/>
+    <use xlink:href="#eye" transform="translate(-440,150)"/>
+    <text x="-200" y="160" stroke="none" fill="#000000">
+     <tspan>Простая ферма</tspan>
+     <tspan x="-200" y="190">без гравитации</tspan>
+    </text>
+   </g>
+   <g transform="translate(-10,320)">
+    <path d="M -490 -70 H -10 L -490 0 L -10 70 H -490" stroke-dasharray="8,6"/>
+    <use xlink:href="#primary"/>
+    <use xlink:href="#secondary" transform="translate(-450,20)"/>
+    <path d="M 0 -100 L -450 -80" stroke="#ff0000" stroke-width="8"/>
+    <path d="M 0 100 L -450 120" stroke="#009900" stroke-width="8"/>
+    <use xlink:href="#pivot"/>
+    <use xlink:href="#eye" transform="translate(-440,170)"/>
+    <text x="-200" y="160" stroke="none" fill="#000000">
+     <tspan>Простая ферма</tspan>
+     <tspan x="-200" y="190">с гравитацией</tspan>
+    </text>
+   </g>
+   <g transform="translate(512,0)">
+    <path d="M -490 -70 H -10 L -430 -10 L -440 130 L -450 10 L -10 70 H -490" stroke-dasharray="8,6"/>
+    <use xlink:href="#primary"/>
+    <use xlink:href="#secondary" transform="translate(-450,0)"/>
+    <path d="M -150 -100 V 100" stroke="#666666" stroke-width="16"/>
+    <path d="M 0 -100 H -450 M -450 100 H 0" stroke="#666666" stroke-width="8"/>
+    <use xlink:href="#pivot" transform="translate(-150,0)"/>
+    <use xlink:href="#eye" transform="translate(-440,150)"/>
+    <text x="-200" y="160" stroke="none" fill="#000000">
+     <tspan>Ферма Серрурье</tspan>
+     <tspan x="-200" y="190">без гравитации</tspan>
+    </text>
+   </g>
+   <g transform="translate(512,320)">
+    <path d="M -490 -50 H -10 L -430 10 L -440 150 L -450 30 L -10 90 H -490" stroke-dasharray="8,6"/>
+    <use xlink:href="#primary" transform="translate(0,20)"/>
+    <use xlink:href="#secondary" transform="translate(-450,20)"/>
+    <path d="M -150 -100 V 100" stroke="#666666" stroke-width="16"/>
+    <path d="M 0 -80 L -150 -100 L -450 -80" stroke="#ff0000" stroke-width="8"/>
+    <path d="M 0 120 L -150 100 L -450 120" stroke="#009900" stroke-width="8"/>
+    <use xlink:href="#pivot" transform="translate(-150,0)"/>
+    <use xlink:href="#eye" transform="translate(-440,170)"/>
+    <text x="-200" y="160" stroke="none" fill="#000000">
+     <tspan>Ферма Серрурье</tspan>
+     <tspan x="-200" y="190">с гравитацией</tspan>
+    </text>
+   </g>
+   <text x="0" y="960">02:00</text>
+  </g>
+ </defs>
+ <use xlink:href="#main"/>
+</svg>

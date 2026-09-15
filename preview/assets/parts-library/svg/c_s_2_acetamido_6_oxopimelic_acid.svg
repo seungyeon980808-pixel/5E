@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg preserveAspectRatio="xMidYMid" version="1.0" viewBox="0 0 181.4 100.5" xmlns="http://www.w3.org/2000/svg">
+ <g font-family="Arial" font-size="13.62px" font-weight="400" letter-spacing="0px" word-spacing="0px">
+  <text transform="translate(138.1,16.74)" font-stretch="Normal" style="line-height:125%" xml:space="preserve"><tspan x="0" y="0"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+  <text x="111.3561" y="65.908913" style="line-height:125%" xml:space="preserve"><tspan x="111.3561" y="65.908913"><tspan dx="0 0" dy="0 0" fill="#000000" font-family="Arial" font-size="13.62px" font-weight="400">HN</tspan></tspan></text>
+  <g font-stretch="Normal">
+   <text transform="translate(138.1,16.74)" y="79.509163" style="line-height:125%" xml:space="preserve"><tspan x="0" y="79.509163"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+   <text transform="translate(138.1,16.74)" x="17.784945" y="29.29285" style="line-height:125%" xml:space="preserve"><tspan x="17.784945" y="29.29285" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400"><tspan dx="0" dy="0">O</tspan><tspan dx="0" dy="0">H</tspan></tspan></text>
+   <text transform="translate(138.1,16.74)" x="-86.832375" y="49.170143" style="line-height:125%" xml:space="preserve"><tspan x="-86.832375" y="49.170143"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+   <text transform="translate(138.1,16.74)" x="-121.35609" y="29.29285" style="line-height:125%" xml:space="preserve"><tspan x="-121.35609" y="29.29285"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+   <text transform="translate(138.1,16.74)" x="-131.81783" y="29.29285" style="line-height:125%" xml:space="preserve"><tspan x="-131.81783" y="29.29285"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">H</tspan></tspan></text>
+   <text transform="translate(138.1,16.74)" x="-103.57115" style="line-height:125%" xml:space="preserve"><tspan x="-103.57115" y="0"><tspan dx="0" dy="0" fill="#000000" font-family="Arial" font-size="13.62px" font-stretch="Normal" font-weight="400">O</tspan></tspan></text>
+  </g>
+ </g>
+ <g fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width=".85px">
+  <path d="m126.5 42.37 17.33-10"/>
+  <path d="m145.5 32.37v-13.93"/>
+  <path d="m142 32.37v-13.93"/>
+  <path d="m126.5 42.37-17.33-10"/>
+  <path d="m109.1 32.37-17.33 10"/>
+  <path d="m91.8 42.37-17.33-10"/>
+  <path d="m74.47 32.37-17.33 10"/>
+  <path d="m132.7 65.91 11.12 6.408"/>
+  <path d="m142 72.32v10.72"/>
+  <path d="m145.6 72.32v10.72"/>
+  <path d="m143.8 72.32 17.33-10"/>
+  <path d="m143.8 32.37 9.808 5.623"/>
+  <path d="m57.15 42.37-17.33-10"/>
+  <path d="m55.38 42.37v10.66"/>
+  <path d="m58.98 42.37v10.66"/>
+  <path d="m39.82 32.37-10.46 6.015"/>
+  <path d="m41.65 32.37v-13.93"/>
+  <path d="m38.05 32.37v-13.93"/>
+ </g>
+ <path d="m126.1 42.37h0.7846l1.438 10.66h-3.662z" fill-rule="evenodd"/>
+</svg>

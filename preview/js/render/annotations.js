@@ -1,0 +1,363 @@
+/* ===== RENDER/ANNOTATIONS: axes, angle arc, right-angle mark, labeler ===== */
+
+import {
+  SVG_NS,
+  grayHex,
+  makeArrowHead,
+  fillTextWithRomanRuns,
+  applyObjectLabelFont,
+} from "./core.js?v=1.4.0";
+import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=1.4.0";
+// Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
+// (contentMode:"formula") renders through the SAME projection formula objects use,
+// so the label, the editor preview, and SVG/PNG export can never diverge.
+import { measureFormula, renderFormula } from "../formula.js?v=1.4.0";
+import {
+  DEFAULT_TEXT_FONT,
+  DEFAULT_TEXT_SIZE_MM,
+  OBJECT_LABEL_QUANTITY_FONT_FAMILY,
+  EQUATION_FONT_STYLE,
+  normalizeTextRuns,
+  hasStyledTextRuns,
+} from "../state.js?v=1.4.0";
+
+/* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
+ * drawn in a SINGLE pass into one <g>. Ticks/labels are PROJECTIONS computed
+ * here from the data (x/y/w/h/showTicks/tickSpacing/label*), never stored as
+ * separate objects — mirroring how text is one box, not per-glyph. Mathematical
+ * convention: +X points right, +Y points UP (screen-up = smaller SVG y). ----- */
+function renderAxes(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+
+  // Transparent body rect over the whole bbox: makes the symbol behave as ONE
+  // solid object — the entire box is a click/drag target (mirrors a rect's fill,
+  // DESIGN 5-3) so body-drag move works from anywhere inside, not only on a line.
+  const body = document.createElementNS(SVG_NS, "rect");
+  body.setAttribute("x", obj.x);
+  body.setAttribute("y", obj.y);
+  body.setAttribute("width", obj.w);
+  body.setAttribute("height", obj.h);
+  body.setAttribute("fill", "transparent");
+  g.appendChild(body);
+
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+  const cx = obj.x + obj.w / 2; // origin = bbox center
+  const cy = obj.y + obj.h / 2;
+  const left = obj.x, right = obj.x + obj.w;
+  const top = obj.y, bottom = obj.y + obj.h; // SVG: top has the smaller y
+
+  const addLine = (x1, y1, x2, y2) => {
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", x1); l.setAttribute("y1", y1);
+    l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+    l.setAttribute("stroke", color);
+    l.setAttribute("stroke-width", sw);
+    g.appendChild(l);
+  };
+
+  // ----- axis variant: which arms exist + which sides get ticks -----
+  // cross    → H+V through origin, all four arms; arrows on +X & +Y.
+  // quadrant → origin → right and origin → up only (L-shape); arrows on +X & +Y.
+  // single   → one horizontal line; arrow on +X only (labelY/Y-arm ignored).
+  const variant = obj.axisVariant || "cross";
+  const hasYArm   = variant !== "single";          // vertical arm present?
+  const negXArm   = variant === "cross";           // arm to the left of origin?
+  const negYArm   = variant === "cross";           // arm below origin?
+  const bothSides = variant === "cross";           // ticks on the − side too?
+
+  // ----- arrowheads scaled 1.5× for the axis only (shared makeArrowHead untouched) -----
+  const headSw = sw * 1.5;       // inflated stroke-width → head grows 1.5×
+  const head = headSw * 4.5;     // arrowhead length at this scale (matches makeArrowHead)
+
+  // ----- axis lines (shortened slightly so the arrowheads cap the ends) -----
+  addLine(negXArm ? left : cx, cy, right - head * 0.6, cy);              // X axis (→ +X)
+  if (hasYArm) addLine(cx, negYArm ? bottom : cy, cx, top + head * 0.6); // Y axis (→ +Y, up)
+
+  // ----- arrowheads at the +X (right) and +Y (top) ends -----
+  g.appendChild(makeArrowHead(right, cy, 1, 0, headSw, color));            // +X → pointing right
+  if (hasYArm) g.appendChild(makeArrowHead(cx, top, 0, -1, headSw, color)); // +Y → pointing up
+
+  // ----- tick marks: stepped out from the origin; − side only when bothSides -----
+  if (obj.showTicks) {
+    const step = Math.max(obj.tickSpacing || 5, 0.5);
+    const tHalf = sw * 4; // tick half-length (perpendicular to its axis)
+    // X-axis ticks (skip the origin); stop short of the arrowhead.
+    for (let d = step; d <= obj.w / 2 - head * 0.6; d += step) {
+      addLine(cx + d, cy - tHalf, cx + d, cy + tHalf);
+      if (bothSides) addLine(cx - d, cy - tHalf, cx - d, cy + tHalf);
+    }
+    // Y-axis ticks (skip the origin); stop short of the arrowhead.
+    if (hasYArm) {
+      for (let d = step; d <= obj.h / 2 - head * 0.6; d += step) {
+        addLine(cx - tHalf, cy - d, cx + tHalf, cy - d);                   // +Y (up) side
+        if (bothSides) addLine(cx - tHalf, cy + d, cx + tHalf, cy + d);    // −Y (down) side
+      }
+    }
+  }
+
+  // ----- axis labels (equation font, near each arrow tip) -----
+  const labelSize = Math.max(sw * 14, 3);
+  const addLabel = (text, lx, ly, anchor, baseline) => {
+    if (!text) return;
+    const t = document.createElementNS(SVG_NS, "text");
+    t.setAttribute("x", lx);
+    t.setAttribute("y", ly);
+    t.setAttribute("font-size", labelSize);
+    applyObjectLabelFont(t, obj.labelType);
+    t.setAttribute("fill", color);
+    t.setAttribute("text-anchor", anchor);
+    t.setAttribute("dominant-baseline", baseline);
+    fillTextWithRomanRuns(t, text);
+    g.appendChild(t);
+  };
+  addLabel(obj.labelX, right, cy + labelSize * 0.9, "end", "hanging");  // below +X tip
+  if (hasYArm) addLabel(obj.labelY, cx - labelSize * 0.5, top, "end", "hanging"); // left of +Y tip
+
+  // ----- rotation: whole symbol turns about its origin (bbox center) -----
+  const rot = obj.rotation ?? 0;
+  if (rot) g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
+
+  return g;
+}
+
+/* ----- anglearc: one atomic symbol — the angle θ drawn in a SINGLE pass.
+ * Geometry lives in data (vertex x/y, radius, startAngle, sweepAngle in MATH
+ * convention: CCW positive, +Y up). The drawn arc + label are pure PROJECTIONS;
+ * the two rays are intentionally NOT drawn (the user adds those with the line
+ * tool). A transparent pie-sector body makes the whole wedge ONE solid
+ * click/drag target — mirroring how renderAxes lays a transparent body so the
+ * symbol behaves as one indivisible object. Rotation is encoded in startAngle
+ * (no group transform), keeping the arc data-as-truth. ----- */
+function renderAngleArc(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+
+  const vx = obj.x, vy = obj.y;                 // vertex (world/SVG coords)
+  const r = Math.max(obj.radius || 0, 0.0001);
+  const a0 = obj.startAngle || 0;
+  const sweep = obj.sweepAngle ?? 0;
+  const a1 = a0 + sweep;
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+
+  // math angle (deg, CCW, +Y up) → SVG point (y down): up = smaller SVG y.
+  const pt = (deg) => {
+    const rad = (deg * Math.PI) / 180;
+    return { x: vx + r * Math.cos(rad), y: vy - r * Math.sin(rad) };
+  };
+  const p0 = pt(a0), p1 = pt(a1);
+  const largeArc = Math.abs(sweep) > 180 ? 1 : 0;
+  // math CCW (screen counterclockwise) = SVG sweep-flag 0; CW (negative) = 1.
+  const sweepFlag = sweep >= 0 ? 0 : 1;
+
+  // Transparent pie-sector body (vertex → start → arc → close): one solid target.
+  const body = document.createElementNS(SVG_NS, "path");
+  body.setAttribute("d",
+    `M ${vx} ${vy} L ${p0.x} ${p0.y} ` +
+    `A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${p1.x} ${p1.y} Z`);
+  body.setAttribute("fill", "transparent");
+  body.setAttribute("stroke", "none");
+  g.appendChild(body);
+
+  // The visible arc (no fill).
+  const arc = document.createElementNS(SVG_NS, "path");
+  arc.setAttribute("d",
+    `M ${p0.x} ${p0.y} A ${r} ${r} 0 ${largeArc} ${sweepFlag} ${p1.x} ${p1.y}`);
+  arc.setAttribute("fill", "none");
+  arc.setAttribute("stroke", color);
+  arc.setAttribute("stroke-width", sw);
+  g.appendChild(arc);
+
+  // Label (default θ) at the arc midpoint, just OUTSIDE the radius.
+  if (obj.showLabel !== false && obj.label) {
+    const labelSize = Math.max(sw * 14, 3);
+    const mid = a0 + sweep / 2;
+    const rad = (mid * Math.PI) / 180;
+    const lr = r + labelSize * 0.9;
+    const lx = vx + lr * Math.cos(rad);
+    const ly = vy - lr * Math.sin(rad);
+    if (obj.labelType !== "label") {
+      // 물리량(기본): 수식 엔진으로 렌더 — 입력은 theta_2 그대로 두고 화면만 θ₂로.
+      // 그리스 이름·아래첨자(_)·위첨자(^)가 수식 객체와 동일하게 변환된다.
+      // 글꼴은 물리량 라벨 정책 그대로 수식 글꼴(EQUATION = Latin Modern 이탤릭) —
+      // 여기서 일반 텍스트 글꼴을 넘기면 θ가 정체 Θ로 나와 평가원 표기와 어긋난다.
+      // renderFormula의 앵커는 top-left이므로 실측 폭/높이 절반만큼 되끌어 중앙 정렬.
+      const fmFamily = obj.fontFamily || OBJECT_LABEL_QUANTITY_FONT_FAMILY;
+      const fm = measureFormula(obj.label, labelSize, {
+        family: fmFamily,
+        weight: "normal",
+        style: EQUATION_FONT_STYLE,
+      });
+      const fmEl = renderFormula({
+        x: lx - fm.w / 2,
+        y: ly - fm.h / 2,
+        source: obj.label,
+        fontSize: labelSize,
+        fontFamily: fmFamily,
+      });
+      if (fmEl) g.appendChild(fmEl);
+    } else {
+      // "라벨"(정체) 종류: 일반 텍스트 경로 유지({romanN}·구간 세리프 처리 포함).
+      const t = document.createElementNS(SVG_NS, "text");
+      t.setAttribute("x", lx);
+      t.setAttribute("y", ly);
+      t.setAttribute("font-size", labelSize);
+      applyObjectLabelFont(t, obj.labelType);
+      t.setAttribute("fill", color);
+      t.setAttribute("text-anchor", "middle");
+      t.setAttribute("dominant-baseline", "middle");
+      // 흰 테두리 — renderText와 동일 정책(기본 켜짐)
+      if (obj.halo !== false) {
+        t.setAttribute("paint-order", "stroke");
+        t.setAttribute("stroke", "white");
+        t.setAttribute("stroke-width", labelSize * 0.16);
+        t.setAttribute("stroke-linejoin", "round");
+      }
+      fillTextWithRomanRuns(t, obj.label);
+      g.appendChild(t);
+    }
+  }
+
+  return g;
+}
+
+function renderRightAngle(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+  const size = Math.max(obj.size || 4, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const side = (obj.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy * side, vy = ux * side;
+  const p0 = { x: obj.x, y: obj.y };
+  const p1 = { x: p0.x + ux * size, y: p0.y + uy * size };
+  const p2 = { x: p1.x + vx * size, y: p1.y + vy * size };
+  const p3 = { x: p0.x + vx * size, y: p0.y + vy * size };
+
+  const body = document.createElementNS(SVG_NS, "polygon");
+  body.setAttribute("points", `${p0.x},${p0.y} ${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`);
+  body.setAttribute("fill", "transparent");
+  body.setAttribute("stroke", "none");
+  g.appendChild(body);
+
+  const path = document.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", color);
+  path.setAttribute("stroke-width", sw);
+  g.appendChild(path);
+  return g;
+}
+
+/* ----- labeler: a short leader line (지시선) from a graph anchor to an upright
+ * NAME label (이름). Data: p1 = anchor (on/near the graph), p2 = label position,
+ * text = label content (circled-letter preset by default), labelSize = mm. The
+ * leader runs from p1 toward p2 but stops a SMALL gap short of p2, then the upright
+ * (non-rotating) label sits at p2 in the tool label font, upright/normal
+ * (makeUprightLabel, Group 6 / v0.31.0). Pure projection — both points are the
+ * truth and round-trip on save/load. ----- */
+function renderLabeler(obj) {
+  const g = document.createElementNS(SVG_NS, "g");
+  if (obj.id) g.dataset.id = obj.id;
+  const color = grayHex(obj.strokeLevel);
+  const sw = obj.strokeWidth || 0.2;
+  const a = obj.p1 || { x: 0, y: 0 };
+  const b = obj.p2 || a;
+  const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+
+  // Leader from the anchor toward the label, stopping at the edge of the label's
+  // (multiline-aware) text block so the line never crosses the glyphs. The block
+  // is upright and centered on b (matching makeUprightLabel), so its axis-aligned
+  // bounds are valid under any labeler rotation (which rotates a/b in world space).
+  // Small visual gap (~2-4px equivalent) between the leader tip and the text edge.
+  const pad = size * 0.25;
+  // Formula label: EXACT measured box (measureFormula); plain text: the same
+  // over-estimating multiline block the plain renderer has always used.
+  const fmSource = obj.contentMode === "formula" ? (obj.source || obj.rawSource || "") : "";
+  const fmFont = fmSource ? {
+    family: obj.fontFamily || DEFAULT_TEXT_FONT,
+    weight: obj.fontWeight || "normal",
+    style: obj.italic === true ? "italic" : "normal",
+  } : null;
+  const fm = fmSource ? measureFormula(fmSource, size, fmFont) : null;
+  const { hw, hh } = fm
+    ? { hw: fm.w / 2 + pad, hh: fm.h / 2 + pad }
+    : estimateLabelBlock(obj.text, size, pad);
+  // Distance from b back along the leader to where it crosses the padded block:
+  // the nearer of the vertical/horizontal faces (ray-vs-centered-box).
+  /* 꺾인 지시선(elbow) — 기출 12장. 라벨에서 나온 선이 한 번 꺾여 그림 속 부위를
+   * 가리킨다(가방 삽화의 ㉠㉡㉢, 대역 그림에서 갈라져 나가는 선). 지금까지는 직선뿐이라
+   * line 두 개를 손으로 맞춰야 했다. elbow 를 주면 [앵커 → 꺾임점] 은 그대로 긋고,
+   * [꺾임점 → 라벨] 구간만 글자 상자에 닿기 전에 잘라 낸다(직선일 때와 같은 규칙). */
+  const drawSeg = (from, to) => {
+    const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute("x1", from.x); l.setAttribute("y1", from.y);
+    l.setAttribute("x2", to.x); l.setAttribute("y2", to.y);
+    l.setAttribute("stroke", color);
+    l.setAttribute("stroke-width", sw);
+    l.setAttribute("stroke-linecap", "round");
+    g.appendChild(l);
+  };
+  const drawLeader = (from) => {
+    if (!from) return;
+    const elbow = obj.elbow;
+    if (elbow && Number.isFinite(elbow.x) && Number.isFinite(elbow.y)) {
+      drawSeg(from, elbow);
+      from = elbow;                          // 꺾임점부터는 아래의 직선 규칙 그대로
+    }
+    const dx = b.x - from.x, dy = b.y - from.y;
+    const dist = Math.hypot(dx, dy);
+    const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
+    const tx = Math.abs(ux) > 1e-6 ? hw / Math.abs(ux) : Infinity;
+    const ty = Math.abs(uy) > 1e-6 ? hh / Math.abs(uy) : Infinity;
+    const lead = dist - Math.min(tx, ty);   // leader length, trimmed to the block edge
+    // Fall back safely when the anchor sits inside (or within the gap of) the text
+    // block: skip the leader entirely rather than draw a line over the glyphs.
+    if (!(lead > 0.05)) return;
+    drawSeg(from, { x: from.x + ux * lead, y: from.y + uy * lead });
+  };
+  drawLeader(a);
+  // 라벨선 추가(p3): 지시선을 하나 더 뽑아 <b>두 영역을 하나의 라벨</b>로 가리킨다
+  // (2026-07-26 교사 요청). 라벨 글자는 그대로 하나다.
+  drawLeader(obj.p3);
+
+  // Upright (non-rotating) callout at p2.
+  // ① 수식 라벨: renderFormula(수식 객체와 동일 투영)를 p2 중심에 배치. renderFormula의
+  //    앵커는 top-left이므로 측정 폭/높이의 절반만큼 되끌어 중앙 정렬한다. id는 넘기지
+  //    않는다(중첩 data-id가 픽/QA의 hit-twin 혼동을 다시 만들지 않도록).
+  if (fm) {
+    const fmEl = renderFormula({
+      x: b.x - fm.w / 2,
+      y: b.y - fm.h / 2,
+      source: fmSource,
+      fontSize: size,
+      fontFamily: fmFont.family,
+      fontWeight: fmFont.weight,
+      italic: obj.italic === true,
+    });
+    if (fmEl) g.appendChild(fmEl);
+    return g;
+  }
+  // ② 일반 텍스트 라벨(기존 경로 그대로): default style is Dotum-first NORMAL text.
+  // A per-object fontFamily (dialog 글씨체 control) overrides the default.
+  // 팔레트로 삽입한 구간(Times 정체) styled run이 있으면 런 단위로 렌더한다(편집기
+  // 미리보기와 일치). 없으면 일반 텍스트(구간 I/II/III 세리프 자동) 경로 그대로.
+  const styled = hasStyledTextRuns(obj);
+  const lbl = makeUprightLabel(obj.text, b.x, b.y, color, size, {
+    labelBg: obj.labelBg, haloRatio: obj.haloRatio,
+    fontFamily: obj.fontFamily || DEFAULT_TEXT_FONT,
+    fontStyle: obj.italic === true ? "italic" : "normal",
+    fontWeight: obj.fontWeight || "normal",
+    styled,
+    runs: styled ? normalizeTextRuns(obj) : null,
+  });
+  if (lbl) g.appendChild(lbl);
+
+  return g;
+}
+
+export { renderAxes, renderAngleArc, renderRightAngle, renderLabeler };

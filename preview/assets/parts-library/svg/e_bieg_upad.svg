@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" version="1.0" width="660.07001" height="555.82898" viewBox="0 -17.838 660.07 555.829" id="svg3795" xml:space="preserve"><defs id="defs83"/>
+<g id="g3">
+	<polyline fill="none" stroke="#A30000" stroke-width="2" points="260.289,131.306 237.909,104.451 156.553,172.241 260,296.389    260.289,296.147  " id="polyline5" style="fill:none;stroke:#a30000;stroke-width:2"/>
+	<polyline fill="#F2C8D3" fill-opacity="0.502" points="260.289,131.306 237.909,104.451 156.553,172.241 260,296.389    260.289,296.147  " id="polyline7" style="fill:#f2c8d3;fill-opacity:0.50199998"/>
+</g>
+<g id="g9">
+	<polyline fill="#5C9700" fill-opacity="0.502" points="260.289,131.306 260.289,296.147 260.778,295.739 307.305,187.724  " id="polyline11" style="fill:#5c9700;fill-opacity:0.50199998"/>
+	<polyline fill="none" stroke="#007900" stroke-width="2" points="260.289,296.147 260.778,295.739 307.305,187.724  " id="polyline13" style="fill:none;stroke:#007900;stroke-width:2"/>
+</g>
+<path d="m 307.317,367.788 c -9.583,1.545 -27.929,3.551 -47.028,3.611 v 129.562 l 47.028,-70.943 v -62.23 z" id="path3786" style="fill:#5c9700;fill-opacity:0.50199998;stroke:#007900;stroke-width:2"/>
+<text transform="translate(352.038, 137.455)" id="text34" style="font-size:24px;font-family:Arial-BoldMT">N</text>
+
+<text transform="translate(159.108, 456.397)" id="text42" style="font-size:24px;font-family:Arial-BoldMT">S</text>
+
+<text transform="translate(9.2034, 303.864)" id="text44" style="font-size:24px;font-family:Arial-BoldMT">W</text>
+
+<text transform="translate(487.373, 305.452)" id="text46" style="font-size:24px;font-family:Arial-BoldMT">O</text>
+
+<path d="M 408.022,172.439 259.194,297.047" id="line25" style="fill:none;stroke:#000000;stroke-width:2"/>
+<path d="m 330.571,225.868 c -21.561,-4.974 -45.766,-7.781 -71.376,-7.781 -1.403,0 -2.823,-0.017 -4.219,0 -19.812,0.237 -38.709,2.178 -56.156,5.469" id="path3688" style="fill:none;stroke:#322eea;stroke-width:2;stroke-dasharray:12, 2"/>
+<path d="m 307.305,187.792 v 180.17" id="path3741" style="fill:none;stroke:#007900;stroke-width:2;stroke-dasharray:12, 2"/>
+<path d="M 260.289,131.219 V 369.971" id="path3739" style="fill:none;stroke:#007900;stroke-width:2;stroke-dasharray:12, 2"/>
+<path d="M 475.785,297.012 H 42.567" id="path31" style="fill:none;stroke:#000000;stroke-width:2"/>
+<path d="M 260.155,296.522 177.468,430.95" id="path3723" style="fill:none;stroke:#000000;stroke-width:2"/>
+<path d="m 260.155,296.522 91.023,-144.58" id="path3729" style="fill:none;stroke:#000000;stroke-width:2"/>
+<text transform="translate(435.767, 159.227)" id="text27" style="font-size:24px;font-family:ArialMT">bieg warstwy</text>
+
+<text transform="translate(350, 370)" id="text31" style="font-size:24px;font-family:ArialMT">upad warstwy</text>
+
+<polygon points="316.42,296.618 392.827,232.618 392.827,232.618 " id="polygon33" style="fill:none"/>
+<path d="m 341.033,228.514 -81.307,68.104 -60.906,-73.062 c -59.938,11.307 -102.344,38.922 -102.344,71.188 0,42.318 72.906,76.656 162.719,76.656 89.813,0 162.688,-34.338 162.688,-76.656 0.001,-28.257 -32.514,-52.936 -80.85,-66.23 z" id="path35" style="fill:#93b7eb;fill-opacity:0.50199998"/>
+<line fill="none" stroke="#A30000" stroke-width="2" stroke-dasharray="12,2" x1="414.95099" y1="316.922" x2="341.36301" y2="228.608" id="line37" style="fill:none;stroke:#a30000;stroke-width:2;stroke-dasharray:12, 2"/>
+<line fill="none" stroke="#A30000" stroke-width="2" stroke-dasharray="12,2" x1="260" y1="296.38901" x2="318.16901" y2="366.20001" id="line39" style="fill:none;stroke:#a30000;stroke-width:2;stroke-dasharray:12, 2"/>
+<path d="m 454.064,363.862 -39.113,-46.939 c -14.48,22.588 -50.492,40.783 -96.782,49.277 l 54.537,65.451 81.358,-67.789 z" id="path41" style="fill:#f2c8d3;fill-opacity:0.50199998;stroke:#a30000;stroke-width:2"/>
+<g transform="translate(-103.653, -593.065)" id="g3779">
+	<polyline id="polyline3538" fill="none" stroke="#000000" stroke-width="1.6" points="497.377,755.792 474.098,747.057    497.719,738.195  " style="fill:none;stroke:#000000;stroke-width:1.60000002"/>
+	<path d="m 487.354,752.05 c 0.6,-1.571 0.931,-3.275 0.931,-5.058 0,-1.727 -0.309,-3.381 -0.874,-4.911" id="path3540" style="fill:none;stroke:#000000;stroke-width:1.60000002"/>
+</g>
+<g transform="translate(-103.653, -593.065)" id="g3779_1_">
+	<polyline id="polyline3538_1_" fill="none" stroke="#000000" stroke-width="1.6" points="471.657,928.832 448.377,920.097    471.999,911.234  " style="fill:none;stroke:#000000;stroke-width:1.60000002"/>
+	<path d="m 461.633,925.089 c 0.6,-1.57 0.931,-3.275 0.931,-5.057 0,-1.727 -0.309,-3.381 -0.874,-4.912" id="path3540_1_" style="fill:none;stroke:#000000;stroke-width:1.60000002"/>
+</g>
+<g id="g49">
+	<polygon points="312.219,357.487 318.392,343.456 326.343,351.532 " id="polygon3548_1_"/>
+	<polygon points="340.109,298.602 343.805,313.481 332.575,311.952 " id="polygon3548_2_"/>
+	<path d="m 339.118,306.999 c -1.972,15.936 -8.67,30.406 -18.648,41.965" id="path53" style="fill:none;stroke:#000000;stroke-width:2"/>
+</g>
+<g id="g55">
+	<g transform="matrix(0.865306, 0, 0, 0.950256, -5.7778, -590.719)" id="g3746">
+		<path d="m 411.237,794.72 c 13.916,4.135 27.319,9.939 39.883,17.293" id="path3552" style="fill:none;stroke:#000000;stroke-width:2.20560002"/>
+	</g>
+	<polygon points="391.217,185.026 376.124,182.346 382.091,172.71 " id="polygon3548_4_"/>
+	<polygon points="345.74,162.738 361.07,162.673 356.922,173.221 " id="polygon3548_3_"/>
+</g>
+<g id="g61">
+	<g id="g63">
+		<polyline fill="#5C9700" fill-opacity="0.502" points="307.305,187.724 307.317,187.697 307.317,-2.888 260.289,78.461     260.289,131.306   " id="polyline65" style="fill:#5c9700;fill-opacity:0.50199998"/>
+	</g>
+	<polyline fill="none" stroke="#007900" stroke-width="2" points="307.305,187.724 307.317,187.697 307.317,-2.888 260.289,78.461    260.289,131.306  " id="polyline67" style="fill:none;stroke:#007900;stroke-width:2"/>
+</g>
+<line fill="none" stroke="#A30000" stroke-width="2" stroke-dasharray="12,2" x1="307.30499" y1="187.724" x2="260.289" y2="131.306" id="line69" style="fill:none;stroke:#a30000;stroke-width:2;stroke-dasharray:12, 2"/>
+<g id="g71">
+	<line fill="none" stroke="#A30000" stroke-width="2" x1="341.19" y1="228.384" x2="307.30499" y2="187.724" id="line73" style="fill:none;stroke:#a30000;stroke-width:2"/>
+	<polygon points="307.305,187.724 260.778,295.739 341.19,228.384 " id="polygon75" style="fill:#f2c8d3;fill-opacity:0.50199998"/>
+</g>
+<path d="m 198.82,223.555 c -59.938,11.307 -102.344,38.922 -102.344,71.188 0,42.318 72.906,76.656 162.719,76.656 89.813,0 162.688,-34.338 162.688,-76.656 0,-28.256 -32.515,-52.935 -80.851,-66.229" id="path77" style="fill:none;stroke:#322eea;stroke-width:2"/>
+<rect width="660.07001" height="555.82898" x="0" y="-17.837999" id="rect79" style="fill:none"/>
+</svg>

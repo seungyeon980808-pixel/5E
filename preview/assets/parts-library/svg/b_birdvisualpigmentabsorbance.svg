@@ -1,0 +1,570 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="534.8017"
+   height="383.97293"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="BirdVisualPigmentSensitivity.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <style type="text/css">
+    path{opacity:0.98000004;fill:none;fill-opacity:1;fill-rule:nonzero;}
+    .mypath{stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1}
+    text{
+        font:12px/100% Arial;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1
+    }
+    .width4path{stroke-width:4}
+  </style>
+  <metadata
+     id="metadata59">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="723"
+     inkscape:window-width="919"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.77571429"
+     inkscape:cx="350"
+     inkscape:cy="200"
+     inkscape:window-x="20"
+     inkscape:window-y="20"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 200 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 200 : 1"
+       inkscape:persp3d-origin="350 : 133.33333 : 1"
+       id="perspective61" />
+    <inkscape:perspective
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2395" />
+    <linearGradient
+       id="spectrumGradient">
+      <stop
+         id="stop380nm"
+         offset="0.000000"
+         style="stop-color:#020005;" />
+      <stop
+         id="stop385nm"
+         offset="0.013514"
+         style="stop-color:#020006;" />
+      <stop
+         id="stop390nm"
+         offset="0.027027"
+         style="stop-color:#030008;" />
+      <stop
+         id="stop395nm"
+         offset="0.040541"
+         style="stop-color:#04000A;" />
+      <stop
+         id="stop400nm"
+         offset="0.054054"
+         style="stop-color:#06000D;" />
+      <stop
+         id="stop405nm"
+         offset="0.067568"
+         style="stop-color:#080110;" />
+      <stop
+         id="stop410nm"
+         offset="0.081081"
+         style="stop-color:#0C0117;" />
+      <stop
+         id="stop415nm"
+         offset="0.094595"
+         style="stop-color:#11021F;" />
+      <stop
+         id="stop420nm"
+         offset="0.108108"
+         style="stop-color:#17032A;" />
+      <stop
+         id="stop425nm"
+         offset="0.121622"
+         style="stop-color:#1F053A;" />
+      <stop
+         id="stop430nm"
+         offset="0.135135"
+         style="stop-color:#25084B;" />
+      <stop
+         id="stop435nm"
+         offset="0.148649"
+         style="stop-color:#290A5C;" />
+      <stop
+         id="stop440nm"
+         offset="0.162162"
+         style="stop-color:#2B0E6F;" />
+      <stop
+         id="stop445nm"
+         offset="0.175676"
+         style="stop-color:#291380;" />
+      <stop
+         id="stop450nm"
+         offset="0.189189"
+         style="stop-color:#1F237B;" />
+      <stop
+         id="stop455nm"
+         offset="0.202703"
+         style="stop-color:#132E74;" />
+      <stop
+         id="stop460nm"
+         offset="0.216216"
+         style="stop-color:#09376C;" />
+      <stop
+         id="stop465nm"
+         offset="0.229730"
+         style="stop-color:#0A3E66;" />
+      <stop
+         id="stop470nm"
+         offset="0.243243"
+         style="stop-color:#0C4667;" />
+      <stop
+         id="stop475nm"
+         offset="0.256757"
+         style="stop-color:#0E4F6A;" />
+      <stop
+         id="stop480nm"
+         offset="0.270270"
+         style="stop-color:#10596C;" />
+      <stop
+         id="stop485nm"
+         offset="0.283784"
+         style="stop-color:#11636D;" />
+      <stop
+         id="stop490nm"
+         offset="0.297297"
+         style="stop-color:#146E6F;" />
+      <stop
+         id="stop495nm"
+         offset="0.310811"
+         style="stop-color:#177970;" />
+      <stop
+         id="stop500nm"
+         offset="0.324324"
+         style="stop-color:#178672;" />
+      <stop
+         id="stop505nm"
+         offset="0.337838"
+         style="stop-color:#1A9574;" />
+      <stop
+         id="stop510nm"
+         offset="0.351351"
+         style="stop-color:#1DA375;" />
+      <stop
+         id="stop515nm"
+         offset="0.364865"
+         style="stop-color:#1DB273;" />
+      <stop
+         id="stop520nm"
+         offset="0.378378"
+         style="stop-color:#20C070;" />
+      <stop
+         id="stop525nm"
+         offset="0.391892"
+         style="stop-color:#22CB6B;" />
+      <stop
+         id="stop530nm"
+         offset="0.405405"
+         style="stop-color:#21D662;" />
+      <stop
+         id="stop535nm"
+         offset="0.418919"
+         style="stop-color:#23E054;" />
+      <stop
+         id="stop540nm"
+         offset="0.432432"
+         style="stop-color:#36E842;" />
+      <stop
+         id="stop545nm"
+         offset="0.445946"
+         style="stop-color:#50ED28;" />
+      <stop
+         id="stop550nm"
+         offset="0.459459"
+         style="stop-color:#73EB22;" />
+      <stop
+         id="stop555nm"
+         offset="0.472973"
+         style="stop-color:#8FE722;" />
+      <stop
+         id="stop560nm"
+         offset="0.486486"
+         style="stop-color:#A5E221;" />
+      <stop
+         id="stop565nm"
+         offset="0.500000"
+         style="stop-color:#B9DC22;" />
+      <stop
+         id="stop570nm"
+         offset="0.513514"
+         style="stop-color:#CBD621;" />
+      <stop
+         id="stop575nm"
+         offset="0.527027"
+         style="stop-color:#DCCE20;" />
+      <stop
+         id="stop580nm"
+         offset="0.540541"
+         style="stop-color:#ECC420;" />
+      <stop
+         id="stop585nm"
+         offset="0.554054"
+         style="stop-color:#F2B735;" />
+      <stop
+         id="stop590nm"
+         offset="0.567568"
+         style="stop-color:#F5AB42;" />
+      <stop
+         id="stop595nm"
+         offset="0.581081"
+         style="stop-color:#F69F49;" />
+      <stop
+         id="stop600nm"
+         offset="0.594595"
+         style="stop-color:#F7944B;" />
+      <stop
+         id="stop605nm"
+         offset="0.608108"
+         style="stop-color:#F98848;" />
+      <stop
+         id="stop610nm"
+         offset="0.621622"
+         style="stop-color:#FA7B42;" />
+      <stop
+         id="stop615nm"
+         offset="0.635135"
+         style="stop-color:#FB6C39;" />
+      <stop
+         id="stop620nm"
+         offset="0.648649"
+         style="stop-color:#FD5B2E;" />
+      <stop
+         id="stop625nm"
+         offset="0.662162"
+         style="stop-color:#FC471F;" />
+      <stop
+         id="stop630nm"
+         offset="0.675676"
+         style="stop-color:#F7300F;" />
+      <stop
+         id="stop635nm"
+         offset="0.689189"
+         style="stop-color:#EA220D;" />
+      <stop
+         id="stop640nm"
+         offset="0.702703"
+         style="stop-color:#D42215;" />
+      <stop
+         id="stop645nm"
+         offset="0.716216"
+         style="stop-color:#BF2318;" />
+      <stop
+         id="stop650nm"
+         offset="0.729730"
+         style="stop-color:#A92309;" />
+      <stop
+         id="stop655nm"
+         offset="0.743243"
+         style="stop-color:#981F07;" />
+      <stop
+         id="stop660nm"
+         offset="0.756757"
+         style="stop-color:#871B06;" />
+      <stop
+         id="stop665nm"
+         offset="0.770270"
+         style="stop-color:#771805;" />
+      <stop
+         id="stop670nm"
+         offset="0.783784"
+         style="stop-color:#671504;" />
+      <stop
+         id="stop675nm"
+         offset="0.797297"
+         style="stop-color:#591303;" />
+      <stop
+         id="stop680nm"
+         offset="0.810811"
+         style="stop-color:#4D1103;" />
+      <stop
+         id="stop685nm"
+         offset="0.824324"
+         style="stop-color:#420E02;" />
+      <stop
+         id="stop690nm"
+         offset="0.837838"
+         style="stop-color:#370C01;" />
+      <stop
+         id="stop695nm"
+         offset="0.851351"
+         style="stop-color:#2E0A01;" />
+      <stop
+         id="stop700nm"
+         offset="0.864865"
+         style="stop-color:#270801;" />
+      <stop
+         id="stop705nm"
+         offset="0.878378"
+         style="stop-color:#210600;" />
+      <stop
+         id="stop710nm"
+         offset="0.891892"
+         style="stop-color:#1E0400;" />
+      <stop
+         id="stop715nm"
+         offset="0.905405"
+         style="stop-color:#1A0300;" />
+      <stop
+         id="stop720nm"
+         offset="0.918919"
+         style="stop-color:#170200;" />
+      <stop
+         id="stop725nm"
+         offset="0.932432"
+         style="stop-color:#130100;" />
+      <stop
+         id="stop730nm"
+         offset="0.945946"
+         style="stop-color:#100100;" />
+      <stop
+         id="stop735nm"
+         offset="0.959459"
+         style="stop-color:#0C0100;" />
+      <stop
+         id="stop740nm"
+         offset="0.972973"
+         style="stop-color:#080100;" />
+      <stop
+         id="stop745nm"
+         offset="0.986486"
+         style="stop-color:#060100;" />
+      <stop
+         id="stop750nm"
+         offset="1.000000"
+         style="stop-color:#040100;" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#spectrumGradient"
+       id="linearGradient4069"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.85515019,0,0,0.11121282,608.35002,770.29088)"
+       x1="192.78572"
+       y1="378.07645"
+       x2="652.92859"
+       y2="378.07645" />
+  </defs>
+  <g
+     transform="translate(-728.52802,-474.92995)"
+     id="layer1">
+    <g
+       transform="translate(91.373474,19.177149)"
+       id="g3279">
+      <path
+         d="m 707.51525,488.41357 14.6416,-9.2e-4 0,274.77069 445.62355,3e-5 m -445.62355,-130.79141 -14.6416,-2.3e-4 m 406.81005,130.79164 0,13.47549 m -108.887,-13.47549 0,13.47549 m -101.28005,-13.47549 0,13.47549 m -110.48233,-13.47549 0,13.47549 m -71.51907,-13.47549 0,13.47549 m 0,-13.47549 -14.6416,0"
+         id="path2421"
+         style="stroke:#000000;stroke-linecap:square;" class="mypath" />
+      <path
+         d="M 723.09132,630.46491 C 723.09132,630.46491 741.02303,552.26288 753.54915,507.50554 C 775.66178,428.49446 794.80363,669.44636 804.50573,714.44238 C 814.85189,762.42533 943.0645,761.32075 943.0645,761.32075"
+         id="path2423"
+         style="stroke:#c0c0c0;" class="mypath width4path" />
+      <path
+         d="M 724.21939,676.71568 C 724.21939,676.71568 744.18773,690.07664 751.29302,685.74022 C 804.07765,653.52527 810.49497,446.81223 847.17875,498.481 C 868.98131,529.18969 878.7723,625.07777 890.04532,669.94727 C 900.55477,711.7776 901.326,775.04367 1070.5361,761.32075"
+         id="path2425"
+         style="stroke:#3936ef;" class="mypath width4path" />
+      <path
+         d="M 724.21939,703.7893 C 724.21939,703.7893 746.32983,679.32203 759.18948,678.97181 C 785.18761,678.26378 807.84212,735.16544 832.51388,725.22258 C 900.13193,697.97213 918.5036,570.37365 954.34518,504.12134 C 994.02525,430.77368 1022.6911,671.70251 1060.3836,734.24713 C 1077.7242,763.02106 1119.0431,759.06461 1119.0431,759.06461"
+         id="path3197"
+         style="stroke:#da2525;" class="mypath width4path" />
+      <path
+         d="M 724.21939,678.97181 C 736.62813,680.09988 749.40273,679.5191 763.70175,692.89572 C 777.42532,705.73402 789.47363,708.90775 796.41571,708.30156 C 812.47492,706.89926 831.88267,685.4013 842.66649,653.02626 C 853.33235,621.00538 900.13795,343.62401 949.47902,602.45676 C 982.9456,778.0153 1098.775,758.54066 1098.775,758.54066"
+         id="path3199"
+         style="stroke:#50ef36;" class="mypath width4path" />
+      <text
+         x="744.17902"
+         y="477.29095"
+         id="text3219"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="744.17902"
+           y="477.29095"
+           id="tspan3221">370 nm</tspan></text>
+      <text
+         x="814.95831"
+         y="477.2558"
+         id="text3223"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="814.95831"
+           y="477.2558"
+           id="tspan3225">445 nm</tspan></text>
+      <text
+         x="884.53998"
+         y="477.29095"
+         id="text3227"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="884.53998"
+           y="477.29095"
+           id="tspan3229">508 nm</tspan></text>
+      <text
+         x="952.81293"
+         y="477.29095"
+         id="text3231"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="952.81293"
+           y="477.29095"
+           id="tspan3233">565 nm</tspan></text>
+      <text
+         x="1097.2145"
+         y="791.73779"
+         id="text3239"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="1097.2145"
+           y="791.73779"
+           id="tspan3241">700 nm</tspan></text>
+      <text
+         x="705.58459"
+         y="791.73779"
+         id="text3243"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="705.58459"
+           y="791.73779"
+           id="tspan3245">330 nm</tspan></text>
+      <text
+         x="776.11047"
+         y="791.73779"
+         id="text3247"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="776.11047"
+           y="791.73779"
+           id="tspan3249">400 nm</tspan></text>
+      <text
+         x="887.78918"
+         y="791.73779"
+         id="text3251"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="887.78918"
+           y="791.73779"
+           id="tspan3253">500 nm</tspan></text>
+      <text
+         x="991.57141"
+         y="791.73779"
+         id="text3255"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="991.57141"
+           y="791.73779"
+           id="tspan3257">600 nm</tspan></text>
+      <text
+         x="-572.19104"
+         y="673.99469"
+         id="text3263"
+         xml:space="preserve"
+         style="font-size:20.58420181px;text-align:center;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+         transform="matrix(0,-1,1,0,0,0)"><tspan
+           x="-632.41089"
+           y="673.99469"
+           id="tspan3265"
+           style="text-align:center;text-anchor:middle">Absorbance</tspan></text>
+      <text
+         x="682.48083"
+         y="492.84064"
+         id="text3267"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="682.48083"
+           y="492.84064"
+           id="tspan3269">1.0</tspan></text>
+      <text
+         x="681.35278"
+         y="636.10522"
+         id="text3271"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="681.35278"
+           y="636.10522"
+           id="tspan3273">0.5</tspan></text>
+      <text
+         x="682.48083"
+         y="766.96112"
+         id="text3275"
+         xml:space="preserve"
+         style=""
+         sodipodi:linespacing="100%"><tspan
+           x="682.48083"
+           y="766.96112"
+           id="tspan3277">0.0</tspan></text>
+      <rect
+         style="color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.25;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+         id="rect4841"
+         width="84.432892"
+         height="20.972"
+         x="706.01312"
+         y="801.8515" />
+      <rect
+         style="fill:url(#linearGradient4069);fill-opacity:1;stroke:none;stroke-width:0.46244438999999998;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+         id="rect2383"
+         width="390.92651"
+         height="20.971556"
+         x="774.49384"
+         y="801.85193" />
+      <text
+         x="765.1037"
+         y="758.44916"
+         transform="scale(0.9254174,1.0805934)"
+         id="text3259"
+         xml:space="preserve"
+         style="font-size:18.27461243000000124px;fill:#ffffff;fill-opacity:1"
+         sodipodi:linespacing="100%"><tspan
+           x="765.1037"
+           y="758.44916"
+           id="tspan3261"
+           style="fill:#ffffff;fill-opacity:1">Ultraviolet</tspan></text>
+    </g>
+  </g>
+</svg>

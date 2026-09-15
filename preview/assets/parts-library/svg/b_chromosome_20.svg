@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="175" height="207">
+  <defs>
+    <clipPath id="clip1">
+      <path d="M5 184.52c0 22.7 34 22.7 34 0v-75c0 -22.7 -34 -22.7 -34 0z m0 -109c0 22.7 34 22.7 34 0v-47c0 -22.7 -34 -22.7 -34 0z"/>
+    </clipPath>
+    <style type="text/css">
+      .locus { fill:url(#lograd); }
+      .dark1 { fill:url(#d1grad); }
+      .dark2 { fill:url(#d2grad); }
+      .line  { stroke:#f00; stroke-width:1; }
+      .text  { font-size: 12px; fill: #000; font-family: DejaVu Sans Condensed; }
+    </style>
+    <linearGradient id="lograd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#BBA"/>
+      <stop offset="50%"  style="stop-color:#FFE"/>
+      <stop offset="100%" style="stop-color:#BBA"/>
+    </linearGradient>
+    <linearGradient id="d1grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#877"/>
+      <stop offset="50%"  style="stop-color:#CBB"/>
+      <stop offset="100%" style="stop-color:#877"/>
+    </linearGradient>
+    <linearGradient id="d2grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#433"/>
+      <stop offset="50%"  style="stop-color:#988"/>
+      <stop offset="100%" style="stop-color:#433"/>
+    </linearGradient>
+    <linearGradient id="bgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#000"/>
+      <stop offset="50%"  style="stop-color:#666"/>
+      <stop offset="100%" style="stop-color:#000"/>
+    </linearGradient>
+  </defs>
+ <g id="Layer 1">
+
+     <g id="locii" clip-path="url(#clip1)">
+	 <rect x="0" y="0" width="40" height="773" fill="url(#bgrad)"/>
+	 <path class="locus" d="M0 186.4h40v-5.03h-40z"/>
+	 <path class="locus" d="M0 177.58h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 151.12h40v-10.08h-40z"/>
+	 <path class="locus" d="M0 133.48h40v-10.07h-40z"/>
+	 <path class="locus" d="M0 114.58h40v-6.29h-40z"/>
+	 <path class="dark2" d="M0 100.72h40v-17.64h-40z"/>
+	 <path class="locus" d="M0 74.26h40v-6.29h-40z"/>
+	 <path class="locus" d="M0 55.36h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 35.2h40v-8.82h-40z"/>
+</g>
+
+<path class="line" d="M30 183.88h68"/>
+<text class="text" x="102" y="188.88">20q13.32</text>
+<path class="line" d="M30 171.91h15"/>
+<text class="text" x="49" y="176.91">20q13.2</text>
+<path class="line" d="M30 146.08h68"/>
+<text class="text" x="102" y="151.08">20q13.12</text>
+<path class="line" d="M30 128.44h15"/>
+<text class="text" x="49" y="133.44">20q12</text>
+<path class="line" d="M30 111.43h68"/>
+<text class="text" x="102" y="116.43">20q11.22</text>
+<path class="line" d="M30 71.11h15"/>
+<text class="text" x="49" y="76.11">20p11.22</text>
+<path class="line" d="M30 47.8h68"/>
+<text class="text" x="102" y="52.8">20p12.1</text>
+<path class="line" d="M30 30.79h15"/>
+<text class="text" x="49" y="35.79">20p12.3</text>
+ </g>
+</svg>

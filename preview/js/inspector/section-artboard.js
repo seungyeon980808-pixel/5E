@@ -1,0 +1,138 @@
+/* ===== INSPECTOR SECTION — 아트보드 (page size, empty state) =====
+ * Extracted verbatim from initInspector() in js/inspector.js (v0.44.0
+ * split). Builds the section DOM and wires its events; mounting into the
+ * inspector panel happens in js/inspector.js (the orchestrator). */
+
+import { makeSection } from "./widgets.js?v=1.4.0";
+
+export function buildArtboardSection(ctx) {
+  const { state } = ctx;
+
+  /* ---- Section: 아트보드 (shown in the no-selection / empty state) ---- *
+   * Lets the user set the page size. Changing it ONLY moves the artboard
+   * boundary — objects keep their exact world coordinates. The artboard stays
+   * centered on origin: render.js derives x=-w/2, y=-h/2 from state.artboard,
+   * so it re-centers automatically. Max 200×200, min 10×10 (clamped here). */
+  const AB_MIN = 10, AB_MAX = 200;
+
+  const abBody = document.createElement("div");
+  abBody.className = "insp-body";
+
+  // Click-to-select-all for the artboard number inputs (mirrors contentEl above;
+  // emptyEl/abSection live outside contentEl so they need their own handler).
+  abBody.addEventListener("focusin", (e) => {
+    const t = e.target;
+    if (t && t.tagName === "INPUT" && t.type === "number") t.select();
+  });
+
+  function makeArtboardRow(labelText) {
+    const row = document.createElement("div");
+    row.className = "insp-row";
+    const lbl = document.createElement("label");
+    lbl.className = "insp-field-label";
+    lbl.style.minWidth = "44px";
+    lbl.textContent = labelText;
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = String(AB_MIN);
+    inp.max = String(AB_MAX);
+    inp.step = "1";
+    inp.className = "insp-input";
+    const unit = document.createElement("span");
+    unit.className = "insp-unit";
+    unit.textContent = "mm";
+    row.appendChild(lbl);
+    row.appendChild(inp);
+    row.appendChild(unit);
+    return { el: row, inp };
+  }
+
+  const abW = makeArtboardRow("너비(W)");
+  const abH = makeArtboardRow("높이(H)");
+  abBody.appendChild(abW.el);
+  abBody.appendChild(abH.el);
+
+  // Apply new size through the store so render() re-runs. Objects untouched.
+  function applyArtboard(w, h) {
+    const cw = Math.max(AB_MIN, Math.min(AB_MAX, Math.round(w)));
+    const ch = Math.max(AB_MIN, Math.min(AB_MAX, Math.round(h)));
+    state.update((s2) => { s2.artboard = { w: cw, h: ch }; });
+  }
+
+  function commitArtboard() {
+    const s = state.get();
+    const w = parseFloat(abW.inp.value);
+    const h = parseFloat(abH.inp.value);
+    applyArtboard(isFinite(w) ? w : s.artboard.w, isFinite(h) ? h : s.artboard.h);
+  }
+
+  [abW.inp, abH.inp].forEach((inp) => {
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") inp.blur(); });
+    inp.addEventListener("blur", commitArtboard);
+  });
+
+  // Preset buttons: just set w,h and apply the same way.
+  const abPresets = document.createElement("div");
+  abPresets.className = "insp-ab-presets";
+  [[60, 40], [95, 50], [80, 35], [160, 80]].forEach(([w, h]) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "insp-ab-preset";
+    btn.textContent = `${w}×${h}`;
+    btn.addEventListener("click", () => applyArtboard(w, h));
+    abPresets.appendChild(btn);
+  });
+  abBody.appendChild(abPresets);
+
+  // 내보내기 영역 지정처럼 사각형을 그리면 그 위치·크기가 새 아트보드가 된다.
+  // 실제 캡처와 객체 재중앙 배치는 js/artboard-resize.js가 처리한다.
+  const abDragBtn = document.createElement("button");
+  abDragBtn.type = "button";
+  abDragBtn.className = "insp-ab-drag-btn";
+  abDragBtn.textContent = "드래그로 영역 지정";
+  abDragBtn.title = "캔버스에서 드래그한 사각형을 새 아트보드로 지정합니다";
+  abDragBtn.addEventListener("click", () => {
+    if (state.get().artboardResizeMode) return;
+    state.update((s) => { s.artboardResizeMode = true; });
+    abDragBtn.setAttribute("aria-pressed", String(state.get().artboardResizeMode));
+    abDragBtn.classList.toggle("is-active", state.get().artboardResizeMode);
+  });
+  abBody.appendChild(abDragBtn);
+
+  const displayRow = document.createElement("label");
+  displayRow.className = "insp-row";
+  displayRow.textContent = "배경 표시";
+  const display = document.createElement("select");
+  display.className = "insp-input";
+  display.setAttribute("aria-label", "아트보드 배경 표시");
+  for (const [value, name] of [["white", "흰색"], ["checkerboard", "체크무늬"]]) {
+    const option = document.createElement("option"); option.value = value; option.textContent = name; display.append(option);
+  }
+  display.title = "화면 표시만 바뀌며 이미지와 내보내기는 그대로 유지됩니다.";
+  display.addEventListener("change", () => state.update(s => { s.artboardDisplay = display.value; }));
+  displayRow.append(display);
+  const boundsRow = document.createElement("label");
+  boundsRow.className = "insp-row";
+  const bounds = document.createElement("input"); bounds.type = "checkbox"; bounds.className = "insp-cb";
+  bounds.addEventListener("change", () => state.update(s => { s.constrainImagesToArtboard = bounds.checked; }));
+  boundsRow.append(bounds, document.createTextNode("이미지를 캔버스 안으로 제한"));
+  boundsRow.title = "이후 이미지 이동·크기 조절 시 적용합니다. 기존 배치는 유지합니다.";
+  abBody.append(displayRow, boundsRow);
+
+  const abSection = makeSection("아트보드", abBody);
+
+  // Refresh inputs from state (skip while the user is typing in one).
+  function refreshArtboard(s) {
+    // 영역 캡처 오버레이가 열려 있는 동안 버튼 상태를 표시한다.
+    display.value = s.artboardDisplay || "white";
+    bounds.checked = s.constrainImagesToArtboard === true;
+    const on = s.artboardResizeMode === true;
+    abDragBtn.classList.toggle("is-active", on);
+    abDragBtn.setAttribute("aria-pressed", String(on));
+    if (document.activeElement === abW.inp || document.activeElement === abH.inp) return;
+    abW.inp.value = s.artboard.w;
+    abH.inp.value = s.artboard.h;
+  }
+
+  return { abSection, refreshArtboard };
+}

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#000" stroke-width="5"><circle cx="99.996" cy="99.998" r="65.029"/><path d="m99.996 1.4122v22.771"/><path d="m153.61 46.389 16.102-16.102"/><path d="m175.82 99.998h22.771"/><path d="m153.61 153.61 16.106 16.097"/><path d="m99.996 198.59v-22.771"/><path d="m30.284 169.71 16.106-16.097"/><path d="m1.413 99.998h22.771"/><path d="m30.285 30.291 16.106 16.097"/></g><path d="m100 34.969v130.06a65.029 65.029 0 0 0 65.025-65.029 65.029 65.029 0 0 0-65.025-65.029z"/> 
+<g fill="none" stroke="#999" stroke-width="3">
+  <path d="m0 16v-16h16"/>
+  <path d="m200 16v-16h-16"/>
+  <path d="m0 184v16h16"/>
+  <path d="m200 184v16h-16"/>
+ </g></svg>

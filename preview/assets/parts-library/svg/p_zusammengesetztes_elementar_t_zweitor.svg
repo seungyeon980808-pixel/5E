@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Notepad  -->
+<svg xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlns:ev="http://www.w3.org/2001/xml-events"
+      version="1.1" baseProfile="full"
+      width="563px" height="300px" viewBox="0 0 1126 600">
+<title>Zusammengesetztes Elementar-T-Zweitor</title>
+
+<g fill="white" stroke="black" stroke-width="10px" font-style="italic" font-family="sans-serif" font-size="60px">
+<!-- Linker Teil -->
+ <!-- Leitungen -->
+ <polyline points="100 150, 500 150, 500 450, 100 450" fill="none"/>
+ <!-- Klemmen -->
+ <circle cx="100" cy="150" r="15"/>
+ <circle cx="100" cy="450" r="15"/>
+ <!-- Linke Laengsimpedanz -->
+ <rect x="225" y="125" width="150" height="50"/>
+
+<!-- Rechter Teil -->
+ <!-- Leitungen -->
+ <polyline points="1025 150, 500 150, 500 450, 1025 450" fill="none"/>
+ <!-- Klemmen -->
+ <circle cx="1025" cy="150" r="15"/>
+ <circle cx="1025" cy="450" r="15"/>
+ <!-- Rechte Laengsimpedanz -->
+ <rect x="750" y="125" width="150" height="50"/>
+
+<!-- Trennung -->
+ <line x1="625" y1="50" x2="625" y2="550" stroke="blue" stroke-linecap="round" stroke-dasharray="10, 20"/>
+
+<!-- Mittlerer Teil -->
+ <!-- Verbindungen -->
+ <g fill="black">
+  <circle cx="500" cy="150" r="15"/>
+  <circle cx="500" cy="450" r="15"/>
+ </g>
+ <!-- Klemmen -->
+ <circle cx="625" cy="150" r="15"/>
+ <circle cx="625" cy="450" r="15"/>
+ <!-- Queradmittanz -->
+ <rect x="475" y="225" width="50" height="150"/>
+
+<!-- Beschriftungen -->
+ <g fill="black" stroke-width="1px">
+  <text x="275" y="250">Z<tspan dy="8px" style="font-size:30px">l1</tspan></text>
+  <text x="400" y="320">Y<tspan dy="8px" style="font-size:30px">q</tspan></text>
+  <text x="800" y="250">Z<tspan dy="8px" style="font-size:30px">l2</tspan></text>
+ </g>
+</g>
+</svg>

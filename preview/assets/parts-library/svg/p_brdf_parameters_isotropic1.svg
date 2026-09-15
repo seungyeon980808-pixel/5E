@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg
+   width="116mm"
+   height="80mm"
+   viewBox="0 0 116 80"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+<style type="text/css">
+    .text1 { font: bold 7px Liberation Sans,Arial,Helvetica,sans-serif; }
+    .text2 { font: italic 8px Liberation Sans,Arial,Helvetica,sans-serif; }
+    .text3 { font: italic 5px Liberation Sans,Arial,Helvetica,sans-serif; }
+
+    .lineEye { fill:none; stroke:#000000; stroke-width:0.75; }
+    .fillEye { fill:#000000;stroke:none; }
+    
+    .lineBulb { fill:none; stroke:#000000; stroke-width:0.75; stroke-linecap: round; }
+    .fillBulb { fill:#ffffc0;stroke:none; }
+    .lineBulbRay { fill:none; stroke:#000000; stroke-width:0.85; stroke-linecap: round; }
+    .lineBulbDet { fill:none; stroke:#000000; stroke-width:0.5; stroke-linecap: round; }
+
+    .lineFloor { fill:none; stroke:#a0a0c0; stroke-width:0.75; stroke-linecap: round; }
+    .lineVector { fill:none; stroke:#000000; stroke-width:0.65; stroke-linecap: round; marker-end: url(#arrow); }
+    .lineAngle { fill:none; stroke:#000000; stroke-width:0.75; }
+    .lineAngleFloor { fill:none; stroke:#a0a0c0; stroke-width:0.75; }
+</style>
+<marker id="arrow" viewBox="0 0 16 10" markerWidth="16" markerHeight="6"
+        refX="12" refY="5" orient="auto-start-reverse">
+    <path style="fill:#000000;stroke:none" d="M 0 0 L 16 5 L 0 10 L 3 5 z" />
+</marker>
+<rect width="100.5%" height="100.5%" fill="white" />
+<path class="lineFloor" d="M2.83,76.97 113.17,76.97"/>
+<path class="lineFloor" d="M18.98,56.78 97.02,56.78"/>
+<path class="lineFloor" d="M2.83,76.97 18.98,56.78"/>
+<path class="lineFloor" d="M113.17,76.97 97.02,56.78"/>
+<path class="lineEye" d="M 3.21,10.85 C 7.04,14.97 13.54,16.22 18.37,11.27 15.56,6.81 9.2,7.08 3.21,10.85 Z"/>
+<circle class="fillEye" cx="11.88" cy="11.12" r="3" />
+<path class="fillBulb" d="m 93.94,15.29 c -0.157,-0.704 -0.68,-1.004 -1.377,-2.012 -0.682,-0.987 -0.713,-3.25 0.475,-4.5 1.473,-1.55 3.848,-1.55 5.32,0 1.188,1.25 1.157,3.513 0.475,4.5 -0.7,1.014 -1.225,1.311 -1.379,2.023 z" />
+<path class="lineBulb" d="m 93.99,15.78 c 0,-1.1 -0.587,-1.287 -1.425,-2.5 -0.682,-0.987 -0.713,-3.25 0.475,-4.5 1.472,-1.55 3.847,-1.55 5.32,0 1.188,1.25 1.157,3.513 0.475,4.5 -0.838,1.213 -1.425,1.4 -1.425,2.5 0,2.7 -3.42,2.7 -3.42,0 z"/>
+<path class="lineBulbDet" d="M94.2 15.28 97.2 15.28"/>
+<path class="lineBulbDet" d="M94.9 16.38 96.5 16.28"/>
+<path class="lineBulbRay" d="M90.85,14.81 88.42,16.57"/>
+<path class="lineBulbRay" d="M89.7,11.28 86.7,11.28"/>
+<path class="lineBulbRay" d="M90.85,7.75 88.42,5.99"/>
+<path class="lineBulbRay" d="M93.85,5.57 92.92,2.72"/>
+<path class="lineBulbRay" d="M97.56,5.57 98.48,2.72"/>
+<path class="lineBulbRay" d="M100.56,7.75 102.98,5.99"/>
+<path class="lineBulbRay" d="M101.7,11.28 104.7,11.28"/>
+<path class="lineBulbRay" d="M100.56,14.81 102.98,16.57"/>
+<path class="lineFloor" d="M58,65.14 21.81,63.42"/>
+<path class="lineFloor" d="M58,65.14 82.61,71"/>
+<path class="lineVector" d="M58,65.14 58,8"/>
+<path class="lineVector" d="M58,65.14 21.81,23.21"/>
+<path class="lineVector" d="M58,65.14 82.61,29.99"/>
+<path class="lineAngle" d="M58,48 A 8.74,17.33,-4.76,0,1,64.89,55.3" />
+<path class="lineAngle" d="M58,45.14 A 18.81,20.18,-20.12,0,0,45.08,50.17" />
+<path class="lineAngleFloor" d="M44.6,64.5 A 14.3,2.04,0,0,0,65.58,66.95" />
+<text x="60" y="20" class="text1">N</text>
+<text x="18.81" y="35.21" class="text2">ω</text>
+<text x="24.81" y="36.71" class="text3">o</text>
+<text x="79.61" y="41.99" class="text2">ω</text>
+<text x="85.81" y="43.49" class="text3">i</text>
+<text x="45.81" y="43.21" class="text2">θ</text>
+<text x="49.81" y="44.71" class="text3">o</text>
+<text x="60.81" y="47.21" class="text2">θ</text>
+<text x="64.81" y="49.21" class="text3">i</text>
+<text x="43" y="72.64" class="text2" fill="#a0a0c0">φ</text>
+</svg>

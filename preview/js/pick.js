@@ -1,0 +1,664 @@
+/* ===== PICK (selection / hit-testing) ===== */
+//
+// MOVE-ONLY extraction from tools.js (v0.44.0): which object a world-space
+// point selects. hitTest/getObjectBBox measure text/formula objects via the
+// LIVE rendered SVG element (getBBox), so this module keeps its own _svg
+// reference, assigned by initPick(svg) from initTools.
+
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.4.0";
+// Single-source circuit body geometry: hit-testing reuses the SAME polygon the
+// renderer draws, so the clickable box and the visible box can never diverge.
+import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
+         chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
+         parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
+         bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
+         legendBBox, pedigreeBBox } from "./render.js?v=1.4.0";
+// Labeler hit-test reuses the SAME label block the renderer trims the leader to
+// (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
+// measureFormula for formula labels (확정 항목 ①) — so the clickable label area
+// always matches the visible glyphs instead of a fixed one-glyph box.
+import { estimateLabelBlock } from "./render/labels.js?v=1.4.0";
+import { measureFormula } from "./formula.js?v=1.4.0";
+import {
+  segDist, pointInPolygon, pointInTriangle, triangleVertices,
+  localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
+  bboxIntersects,
+} from "./geometry.js?v=1.4.0";
+import {
+  OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
+  POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES, zOrderObjects,
+} from "./object-types.js?v=1.4.0";
+
+const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
+const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
+const BASIC_LINE_MIN_HIT_WIDTH_PX = 24;
+
+// A closed polyline keeps branch-B storage (point array) but takes branch-A
+// (face) interaction ??selectable by interior, ratio-resizable, rotatable.
+function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === true; }
+// A closed curve follows the SAME pattern: branch-B storage (anchor array) +
+// branch-A (face) interaction. The gap is closed with a smooth curved span.
+function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true; }
+
+// Labeler label-block half extents (world mm), mirroring renderLabeler EXACTLY:
+// formula labels use the measured formula box, plain labels the multiline estimate.
+// Shared by hitTest and getObjectBBox so click and marquee can never disagree.
+function labelerBlockHalf(o) {
+  const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
+  const pad = sz * 0.25;
+  const src = o.contentMode === "formula" ? (o.source || o.rawSource || "") : "";
+  if (src) {
+    const m = measureFormula(src, sz, {
+      family: o.fontFamily || DEFAULT_TEXT_FONT,
+      weight: o.fontWeight || "normal",
+      style: o.italic === true ? "italic" : "normal",
+    });
+    return { hw: m.w / 2 + pad, hh: m.h / 2 + pad };
+  }
+  return estimateLabelBlock(o.text, sz, pad);
+}
+
+let _svg = null;
+export function initPick(svg) { _svg = svg; }
+
+// A background-mode image that has NOT been recognized as an object is entirely
+// unreachable via canvas interaction (click AND marquee) — it acts as if absent
+// for selection purposes, while still rendering normally. This is deliberately
+// INDEPENDENT of `locked` (DESIGN 6-3): once recognized it becomes a normal
+// object and `locked` resumes its usual "protected but selectable" meaning.
+function isBackgroundUnrecognized(obj) {
+  return !!obj && obj.type === "image" && obj.mode === "background" && obj.locked === true;
+}
+
+// 가위로 잘린 이미지/svgAsset은 두 조각이 **같은 상자**를 공유한다. 마스크로 지워진
+// 자리(cutouts의 poly)는 눈에 안 보이므로 클릭에도 잡히면 안 된다 — 그러지 않으면
+// 위쪽 조각이 항상 먼저 잡혀 아래 조각을 고를 수 없다. 좌표는 상자의 0~1 분수.
+function isInsideCutoutPoly(obj, p) {
+  const cuts = Array.isArray(obj.cutouts) ? obj.cutouts : [];
+  if (!cuts.length || !(obj.w > 0) || !(obj.h > 0)) return false;
+  const q = localPointForSizeObject(obj, p);          // 회전을 푼 월드 좌표
+  const fx = (q.x - obj.x) / obj.w, fy = (q.y - obj.y) / obj.h;
+  for (const c of cuts) {
+    if (!c || (c.type !== "poly" && c.type !== "outside-poly")) continue;
+    const pts = Array.isArray(c.points) ? c.points : [];
+    if (pts.length < 3) continue;
+    const inside = pointInPolygon(fx, fy, pts);
+    if ((c.type === "poly" && inside) || (c.type === "outside-poly" && !inside)) return true;
+  }
+  return false;
+}
+
+function isLockedTracingImage(obj) {
+  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
+}
+
+function isObjectSelectable(state, obj) {
+  if (!obj) return false;
+  if (obj.id === "image-edit-session") return !!state.imageEditSession;
+  if (isLockedTracingImage(obj)) return false;
+  if (isBackgroundUnrecognized(obj)) return false;
+  const layerId = obj.layerId ?? 1;
+  const layer = (state.layers || []).find((item) => item.id === layerId);
+  return !!layer && layer.visible !== false && layerId === state.activeLayerId;
+}
+
+function isPositionMovableForCursor(obj) {
+  return obj && !obj.locked && !obj.positionLocked;
+}
+
+function isBasicLine(obj) {
+  if (!obj || obj.type !== "line") return false;
+  const arrowHead = obj.arrowHead ?? "none";
+  const mode = obj.lineMode ?? obj.lineStyle ?? (arrowHead === "none" ? "solid" : "arrow");
+  const dashed = (obj.dashLength ?? 0) > 0 && (obj.dashGap ?? 0) > 0;
+  return mode === "solid" && arrowHead === "none" && !dashed;
+}
+
+function basicLineHitThreshold(line, renderScale) {
+  const visibleStrokePx = (line.strokeWidth ?? 0) * renderScale;
+  const hitWidthPx = Math.max(visibleStrokePx * 3, BASIC_LINE_MIN_HIT_WIDTH_PX);
+  return hitWidthPx / 2 / renderScale;
+}
+
+function nearestBasicLine(objects, p, renderScale, isSelectable = () => true) {
+  let nearestId = null;
+  let nearestDistance = Infinity;
+  for (let i = objects.length - 1; i >= 0; i--) {
+    const line = objects[i];
+    if (!isBasicLine(line) || !isSelectable(line)) continue;
+    const distance = segDist(p.x, p.y, line.p1.x, line.p1.y, line.p2.x, line.p2.y);
+    if (distance <= basicLineHitThreshold(line, renderScale) && distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestId = line.id;
+    }
+  }
+  return nearestId;
+}
+
+function pickSelectableObject(state, p, tol, lineTol) {
+  const objects = state.imageEditSession
+    ? [...state.objects, { ...state.imageEditSession, id: "image-edit-session" }]
+    : state.objects;
+  const selectableNonBasic = objects.filter((o) =>
+    !isBasicLine(o) && isObjectSelectable(state, o)
+  );
+  const hitId = hitTest(selectableNonBasic, p, tol, lineTol);
+  if (hitId !== null) return hitId;
+  return nearestBasicLine(
+    objects,
+    p,
+    getRenderScale(),
+    (o) => isObjectSelectable(state, o)
+  );
+}
+
+export function pickTolerances() {
+  const scale = getRenderScale() || 1;
+  return {
+    tol: HIT_TOL_PX / scale,
+    lineTol: LINE_HIT_TOL_PX / scale,
+  };
+}
+
+export function pickSelectableObjectAtPoint(state, p) {
+  const { tol, lineTol } = pickTolerances();
+  return pickSelectableObject(state, p, tol, lineTol);
+}
+
+export function pickSelectableObjectFromEvent(svg, state, event) {
+  if (!svg || !state || !event) return null;
+  const p = screenToWorld(svg, state.viewBox, event.clientX, event.clientY);
+  const id = pickSelectableObjectAtPoint(state, p);
+  if (id === "image-edit-session") return state.imageEditSession ? { ...state.imageEditSession, id } : null;
+  return id ? state.objects.find((o) => o.id === id) || null : null;
+}
+
+/* ----- hit-test: topmost shape whose ACTUAL outline/interior (grown outward) contains p ----- */
+// Array order = z-order (last = top), so scan from the end. Each shape is tested
+// against its REAL geometry (not just its bbox), expanded OUTWARD by margin =
+// strokeWidth/2 (to reach the stroke's outer edge) + tol (a few screen px of
+// click slack). Rect's bbox == its shape, so it keeps the bbox test; the ellipse
+// and triangle use shape-specific tests so the empty bbox corners do NOT select.
+function hitTest(objects, p, tol = 0, lineTol = tol) {
+  // text/formula 최상단 정책: 렌더(scene.js)와 같은 zOrderObjects view로 스캔해야
+  // "보이는 순서 = 클릭 순서"가 유지된다.
+  const zObjects = zOrderObjects(objects);
+  for (let i = zObjects.length - 1; i >= 0; i--) {
+    const o = zObjects[i];
+    if (!OBJECT_TYPES[o.type]) continue; // was: explicit whitelist of all 20 hittable types
+
+    if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
+      // Use the rendered SVG element's getBBox for an accurate hit area.
+      const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
+      if (!svgEl) continue;
+      try {
+        // getBBox()는 요소 자신의 transform을 반영하지 않으므로 장평(가로 배율)을 먼저 보정한다.
+        const bb = scaleBBoxForWidth(o, svgEl.getBBox());
+        // getBBox()는 요소 자신의 rotate 변환을 반영하지 않는다 → 회전된 텍스트/수식은
+        // 클릭점을 앵커(피벗) 기준 -rotation으로 역회전해 회전 전 로컬 좌표로 비교해야
+        // 실제 보이는 위치에서 선택된다. (text 피벗=x/y, formula 피벗=박스 중심)
+        let hx = p.x, hy = p.y;
+        if (o.rotation) {
+          const px = o.type === "formula" ? o.x + (o.w || 0) / 2 : o.x;
+          const py = o.type === "formula" ? o.y + (o.h || 0) / 2 : o.y;
+          const r = -o.rotation * Math.PI / 180, c = Math.cos(r), s = Math.sin(r);
+          const ddx = p.x - px, ddy = p.y - py;
+          hx = px + ddx * c - ddy * s;
+          hy = py + ddx * s + ddy * c;
+        }
+        if (hx >= bb.x - tol && hx <= bb.x + bb.width + tol &&
+            hy >= bb.y - tol && hy <= bb.y + bb.height + tol) return o.id;
+      } catch (_) { /* element not in layout yet */ }
+      continue;
+    }
+    // A line has no area: clickable band = stroke half-width + the screen-px
+    // slack already converted to world units (tol = tolerancePx / currentZoom),
+    // so the band stays visually constant at any zoom (DESIGN-style tolerance).
+    const margin = (o.strokeWidth || 0) / 2 +
+      // was: line|polyline|curve|funcgraph|circuit|pendulum
+      (LINE_TOL_TYPES.has(o.type) ? lineTol : tol);
+
+    if (o.type === "line") {
+      if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "circuit") {
+      // Reuse the line hit-test along the p1→p2 axis (covers both leads and the
+      // body's center line), plus the body box polygon for clicks on its off-axis
+      // area. circuitBodyPolygon() is the SAME geometry the renderer draws.
+      if (segDist(p.x, p.y, o.p1.x, o.p1.y, o.p2.x, o.p2.y) <= margin) return o.id;
+      if (pointInPolygon(p.x, p.y, circuitBodyPolygon(o))) return o.id;
+      continue;
+    }
+
+    if (o.type === "spring") {
+      // 코일이 축 좌우로 진폭만큼 벌어져 있으므로, 축 선분에 진폭만큼 여유를 준다.
+      const geo = springGeometry(o);
+      if (segDist(p.x, p.y, geo.p1.x, geo.p1.y, geo.p2.x, geo.p2.y) <= margin + geo.amp) return o.id;
+      continue;
+    }
+
+    if (o.type === "groundarc") {
+      const pts = groundArcPoints(o, 24);
+      for (let i = 1; i < pts.length; i += 1) {
+        if (segDist(p.x, p.y, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y) <= margin) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "brace") {
+      // 중괄호 경로(표본 폴리라인)에 클릭 띠. groundarc와 같은 방식이다.
+      const pts = bracePathPoints(o);
+      for (let i = 1; i < pts.length; i += 1) {
+        if (segDist(p.x, p.y, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y) <= margin) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "chromosome" || o.type === "bilayer" || o.type === "neuron") {
+      // 여러 조각으로 된 그림이라 선분 판정으로는 빈틈이 생긴다(가지돌기 사이, 인지질
+      // 사이). 전기력선·자기력선과 같이 **그림 틀 안쪽이면 잡는** 방식을 쓴다.
+      const b = o.type === "chromosome" ? chromosomeBBox(o)
+        : o.type === "bilayer" ? bilayerBBox(o) : neuronBBox(o);
+      if (b && p.x >= b.x - margin && p.x <= b.x + b.w + margin
+           && p.y >= b.y - margin && p.y <= b.y + b.h + margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "parabola") {
+      // 궤적 곡선(표본 폴리라인)에 굵은 클릭 띠. 바닥 점선은 궤적과 붙어 있어 따로 안 잡는다.
+      const pts = parabolaPoints(o, 24);
+      for (let i = 1; i < pts.length; i += 1) {
+        if (segDist(p.x, p.y, pts[i - 1].x, pts[i - 1].y, pts[i].x, pts[i].y) <= margin) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "standingwave") {
+      // 관·줄의 축 선분에 배 높이만큼 여유를 준다(포락선 어디를 눌러도 잡힌다).
+      const geo = standingWaveGeometry(o);
+      if (segDist(p.x, p.y, geo.p1.x, geo.p1.y, geo.p2.x, geo.p2.y) <= margin + geo.wall) return o.id;
+      continue;
+    }
+
+    if (o.type === "chargefield" || o.type === "fieldlines") {
+      // 선이 성겨서 선분 판정으로는 잡기 어렵다 → 그림 틀 안쪽이면 잡는다.
+      const b = o.type === "chargefield" ? chargeFieldBBox(o) : fieldLinesBBox(o);
+      if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) return o.id;
+      continue;
+    }
+
+    if (o.type === "pendulum") {
+      // Clickable = the real string segment, the real bob disk, and (when shown)
+      // each ghost string/bob — the SAME geometry the renderer draws.
+      const geo = pendulumGeometry(o);
+      const onString = (a, b) => segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin;
+      const inBob = (c) => Math.hypot(p.x - c.x, p.y - c.y) <= geo.radius + margin;
+      if (onString(geo.pivot, geo.bob) || inBob(geo.bob)) return o.id;
+      if (o.showCenterGhost !== false && (onString(geo.pivot, geo.centerBob) || inBob(geo.centerBob))) return o.id;
+      if (o.showSymmetricGhost !== false && (onString(geo.pivot, geo.symBob) || inBob(geo.symBob))) return o.id;
+      continue;
+    }
+
+    if (o.type === "polyline") {
+      // Hit if within margin of ANY segment between consecutive vertices.
+      const pts = o.points || [];
+      // 산점(점만 표시)은 이을 선이 없다 — 점 자체를 눌러야 잡힌다. 선 기준으로
+      // 판정하면 점이 없는 허공을 눌러도 선택돼 다른 객체를 고를 수 없다.
+      if (o.markerOnly === true) {
+        const r = ((Number.isFinite(o.markerSize) && o.markerSize > 0
+          ? o.markerSize : (o.strokeWidth ?? 0.2) * 4) / 2) + margin;
+        for (const q of pts) {
+          if (Math.hypot(p.x - q.x, p.y - q.y) <= r) return o.id;
+        }
+        continue;
+      }
+      for (let k = 0; k < pts.length - 1; k++) {
+        if (segDist(p.x, p.y, pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y) <= margin) return o.id;
+      }
+      // A CLOSED polyline behaves like a face: also test the closing edge AND
+      // the interior (ray casting), so an inside click selects it too ??the
+      // outline still selects via the segment loop above. Open polyline: edges only.
+      if (isClosedPoly(o) && pts.length >= 3) {
+        const last = pts[pts.length - 1], first = pts[0];
+        if (segDist(p.x, p.y, last.x, last.y, first.x, first.y) <= margin) return o.id;
+        if (pointInPolygon(p.x, p.y, pts)) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "curve" || o.type === "funcgraph") {
+      const pts = o.points || [];
+      if (pts.length < 2) continue;
+      if (pts.length === 2) {
+        if (segDist(p.x, p.y, pts[0].x, pts[0].y, pts[1].x, pts[1].y) <= margin) return o.id;
+        continue;
+      }
+      const SAMPLES = 12;
+      // A CLOSED curve behaves like a face: sample EVERY span (incl. the closing
+      // last?뭚irst span) finely into a polygon approximation, then accept an
+      // interior click via point-in-polygon. The on-curve outline still hits too.
+      if (isClosedCurve(o) && pts.length >= 3) {
+        const poly = [];
+        let hit = false;
+        for (let k = 0; k < pts.length; k++) {
+          const seg = curveBezierSegClosed(pts, k);
+          let prev = { x: seg.sx, y: seg.sy };
+          poly.push(prev);
+          for (let s = 1; s <= SAMPLES; s++) {
+            const cur = evalBezier(seg, s / SAMPLES);
+            if (segDist(p.x, p.y, prev.x, prev.y, cur.x, cur.y) <= margin) hit = true;
+            poly.push(cur);
+            prev = cur;
+          }
+        }
+        if (hit) return o.id;
+        if (pointInPolygon(p.x, p.y, poly)) return o.id;
+        continue;
+      }
+      // OPEN curve: sample each Catmull-Rom Bezier segment for fine outline hits.
+      let hit = false;
+      for (let k = 0; k < pts.length - 1 && !hit; k++) {
+        const seg = curveBezierSeg(pts, k);
+        let prev = { x: seg.sx, y: seg.sy };
+        for (let s = 1; s <= SAMPLES; s++) {
+          const cur = evalBezier(seg, s / SAMPLES);
+          if (segDist(p.x, p.y, prev.x, prev.y, cur.x, cur.y) <= margin) { hit = true; break; }
+          prev = cur;
+        }
+      }
+      if (hit) return o.id;
+      continue;
+    }
+
+    if (BOX_FACE_TYPES.has(o.type)) { // was: rect|image|svgAsset|axes|coordplane|optics|apparatus
+      // box == actual shape: outward-grown bbox containment (axes/coordplane/optics
+      // select as one indivisible object via the bounding box; same as rect)
+      const q = localPointForSizeObject(o, p);
+      if (q.x >= o.x - margin && q.x <= o.x + o.w + margin &&
+          q.y >= o.y - margin && q.y <= o.y + o.h + margin) {
+        // 잘려 나간(마스크로 지워진) 자리면 이 객체는 거기 없는 것으로 본다
+        if ((o.type === "image" || o.type === "svgAsset") && isInsideCutoutPoly(o, p)) continue;
+        return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "anglearc") {
+      // Selects as ONE indivisible object via its vertex-centered square bbox
+      // (the transparent pie-sector body also makes the wedge a drag target).
+      const r = o.radius || 0;
+      if (p.x >= o.x - r - margin && p.x <= o.x + r + margin &&
+          p.y >= o.y - r - margin && p.y <= o.y + r + margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "rightangle") {
+      const r = (o.size || 0) * 1.6;
+      if (p.x >= o.x - r - margin && p.x <= o.x + r + margin &&
+          p.y >= o.y - r - margin && p.y <= o.y + r + margin) return o.id;
+      continue;
+    }
+
+    if (o.type === "labeler") {
+      // Hit on the leader segment (p1→p2) OR inside the label block centered at p2.
+      const a = o.p1, b = o.p2;
+      if (a && b) {
+        if (segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin) return o.id;
+        // Label area = the SAME block the renderer measures (labelerBlockHalf:
+        // formula box or multiline text estimate), centered on p2, grown by the
+        // click margin. The old fixed sz*0.7 box only covered ~one glyph, so
+        // clicking a longer label anywhere but near the leader tip missed it.
+        const { hw, hh } = labelerBlockHalf(o);
+        if (p.x >= b.x - hw - margin && p.x <= b.x + hw + margin &&
+            p.y >= b.y - hh - margin && p.y <= b.y + hh + margin) return o.id;
+      }
+      continue;
+    }
+
+    if (o.type === "ellipse") {
+      // inside the ellipse curve, grown outward by margin on each radius
+      const rx = o.w / 2 + margin, ry = o.h / 2 + margin;
+      if (rx <= 0 || ry <= 0) continue;
+      const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+      const q = localPointForSizeObject(o, p);
+      const nx = (q.x - cx) / rx, ny = (q.y - cy) / ry;
+      if (nx * nx + ny * ny <= 1) return o.id;
+      continue;
+    }
+
+    if (o.type === "triangle") {
+      const q = localPointForSizeObject(o, p);
+      const [a, b, c] = triangleVertices(o);
+      if (pointInTriangle(q.x, q.y, a.x, a.y, b.x, b.y, c.x, c.y)) return o.id;
+      // hollow shapes also accept a click within margin of any edge
+      if (o.fillNone && (
+          segDist(q.x, q.y, a.x, a.y, b.x, b.y) <= margin ||
+          segDist(q.x, q.y, b.x, b.y, c.x, c.y) <= margin ||
+          segDist(q.x, q.y, c.x, c.y, a.x, a.y) <= margin)) return o.id;
+      continue;
+    }
+  }
+  return null;
+}
+
+/* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
+function getObjectBBox(o) {
+  // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
+  if (SIZE_TYPES.has(o.type)) {
+    return { x: o.x, y: o.y, w: o.w, h: o.h };
+  }
+  if (o.type === "anglearc") {
+    const r = o.radius || 0;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "rightangle") {
+    const r = (o.size || 0) * 1.6;
+    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+  }
+  if (o.type === "line" || o.type === "circuit") {
+    return {
+      x: Math.min(o.p1.x, o.p2.x), y: Math.min(o.p1.y, o.p2.y),
+      w: Math.abs(o.p2.x - o.p1.x), h: Math.abs(o.p2.y - o.p1.y),
+    };
+  }
+  if (o.type === "spring") {
+    return springBBox(o);
+  }
+  if (o.type === "chargefield") return chargeFieldBBox(o);
+  if (o.type === "fieldlines") return fieldLinesBBox(o);
+  if (o.type === "standingwave") return standingWaveBBox(o);
+  if (o.type === "parabola") return parabolaBBox(o);
+  if (o.type === "groundarc") return groundArcBBox(o);
+  if (o.type === "brace") return braceBBox(o);
+  if (o.type === "chromosome") return chromosomeBBox(o);
+  if (o.type === "bilayer") return bilayerBBox(o);
+  if (o.type === "neuron") return neuronBBox(o);
+  if (o.type === "legend") return legendBBox(o);
+  if (o.type === "pedigree") return pedigreeBBox(o);
+  if (o.type === "pendulum") {
+    return pendulumBBox(o);
+  }
+  if (o.type === "labeler") {
+    // Same label block as the hit-test (labelerBlockHalf) so marquee selection
+    // covers the full label (text or formula), not just a one-glyph pad around p2.
+    const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
+    const { hw, hh } = labelerBlockHalf(o);
+    const minX = Math.min(a.x, b.x - hw), minY = Math.min(a.y, b.y - hh);
+    const maxX = Math.max(a.x, b.x + hw), maxY = Math.max(a.y, b.y + hh);
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+  if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph
+    const pts = o.points || [];
+    if (!pts.length) return null;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const pt of pts) {
+      if (pt.x < minX) minX = pt.x; if (pt.x > maxX) maxX = pt.x;
+      if (pt.y < minY) minY = pt.y; if (pt.y > maxY) maxY = pt.y;
+    }
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+  if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
+    const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
+    if (!svgEl) return null;
+    try { const bb = scaleBBoxForWidth(o, svgEl.getBBox()); return { x: bb.x, y: bb.y, w: bb.width, h: bb.height }; }
+    catch (_) { return null; }
+  }
+  return null;
+}
+
+/* ----- marquee (drag) selection: geometry-aware, consistent with hitTest -----
+ * BUG FIX: marquee used to select any object whose BBOX intersected the drag rect.
+ * A thin line/curve (예: 경사면) has a bbox covering the whole figure, so a small
+ * drag over empty space near it wrongly selected it — mismatching click, which
+ * hit-tests the actual stroke. Now an OPEN line/polyline/curve is selected only
+ * when its actual stroke segments intersect the rect; filled/box objects (and
+ * closed poly/curve, whose interior click also selects) keep bbox-intersect. */
+function pointInRect(x, y, r) {
+  return x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+}
+function segSegCross(ax, ay, bx, by, cx, cy, dx, dy) {
+  const d = (bx - ax) * (dy - cy) - (by - ay) * (dx - cx);
+  if (Math.abs(d) < 1e-12) return false;
+  const t = ((cx - ax) * (dy - cy) - (cy - ay) * (dx - cx)) / d;
+  const u = ((cx - ax) * (by - ay) - (cy - ay) * (bx - ax)) / d;
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+}
+function segIntersectsRect(x1, y1, x2, y2, r) {
+  if (pointInRect(x1, y1, r) || pointInRect(x2, y2, r)) return true;
+  const rx2 = r.x + r.w, ry2 = r.y + r.h;
+  return segSegCross(x1, y1, x2, y2, r.x, r.y, rx2, r.y) ||
+         segSegCross(x1, y1, x2, y2, rx2, r.y, rx2, ry2) ||
+         segSegCross(x1, y1, x2, y2, rx2, ry2, r.x, ry2) ||
+         segSegCross(x1, y1, x2, y2, r.x, ry2, r.x, r.y);
+}
+// 열린 선형 객체의 실제 획 선분 목록(곡선은 베지어 샘플). 히트테스트와 동일 기하.
+function objectStrokeSegments(o) {
+  const segs = [];
+  if (o.type === "line") { if (o.p1 && o.p2) segs.push([o.p1.x, o.p1.y, o.p2.x, o.p2.y]); return segs; }
+  if (o.type === "polyline") {
+    const pts = o.points || [];
+    for (let k = 0; k < pts.length - 1; k++) segs.push([pts[k].x, pts[k].y, pts[k + 1].x, pts[k + 1].y]);
+    return segs;
+  }
+  if (o.type === "curve" || o.type === "funcgraph") {
+    const pts = o.points || [];
+    if (pts.length < 2) return segs;
+    if (pts.length === 2) { segs.push([pts[0].x, pts[0].y, pts[1].x, pts[1].y]); return segs; }
+    const SAMPLES = 10;
+    for (let k = 0; k < pts.length - 1; k++) {
+      const seg = curveBezierSeg(pts, k);
+      let prev = { x: seg.sx, y: seg.sy };
+      for (let s = 1; s <= SAMPLES; s++) { const cur = evalBezier(seg, s / SAMPLES); segs.push([prev.x, prev.y, cur.x, cur.y]); prev = cur; }
+    }
+    return segs;
+  }
+  return segs;
+}
+// 로컬 점을 오브젝트 중심 기준 deg만큼 월드로 회전(=localPointForSizeObject의 역방향).
+function rotWorldPoint(x, y, cx, cy, deg) {
+  if (!deg) return { x, y };
+  const r = (deg * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r);
+  const dx = x - cx, dy = y - cy;
+  return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c };
+}
+function pointsBBox(poly) {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of poly) {
+    if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y;
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+// 축정렬 bbox가 곧 도형인 박스 계열(회전 없을 때만) — 회전되면 다각형으로 처리.
+// BOX_FACE_TYPES는 object-types.js 레지스트리에서 import.
+// 면(face) 도형의 월드 경계 다각형(회전 반영) — 마퀴가 클릭과 같은 기하를 보게 한다.
+// bbox 근사가 틀리는 경우(원·삼각형의 빈 모서리, 오목 닫힌도형, 회전 박스)만 대상.
+// bbox가 곧 도형인 축정렬 박스, 그 외 비-면 타입(anglearc·circuit 등)은 null → 호출자가 bbox 유지.
+function faceBoundaryPolygon(o) {
+  const deg = o.rotation || 0;
+  if (o.type === "ellipse") {
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2, rx = o.w / 2, ry = o.h / 2;
+    if (rx <= 0 || ry <= 0) return null;
+    const N = 40, out = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      out.push(rotWorldPoint(cx + rx * Math.cos(a), cy + ry * Math.sin(a), cx, cy, deg));
+    }
+    return out;
+  }
+  if (o.type === "triangle") {
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+    return triangleVertices(o).map((v) => rotWorldPoint(v.x, v.y, cx, cy, deg));
+  }
+  if (BOX_FACE_TYPES.has(o.type)) {
+    if (!deg) return null;                       // 축정렬 박스는 bbox가 정확 → 다각형화 불필요
+    const cx = o.x + o.w / 2, cy = o.y + o.h / 2;
+    return [[o.x, o.y], [o.x + o.w, o.y], [o.x + o.w, o.y + o.h], [o.x, o.y + o.h]]
+      .map(([x, y]) => rotWorldPoint(x, y, cx, cy, deg));
+  }
+  if (o.type === "polyline" && o.closed) {        // 점이 이미 월드(회전 굽힘) — 그대로
+    const pts = o.points || [];
+    return pts.length >= 3 ? pts.map((p) => ({ x: p.x, y: p.y })) : null;
+  }
+  if (o.type === "curve" && o.closed) {           // 닫힌 커브: hitTest와 동일 샘플링
+    const pts = o.points || [];
+    if (pts.length < 3) return null;
+    const SAMPLES = 12, out = [];
+    for (let k = 0; k < pts.length; k++) {
+      const seg = curveBezierSegClosed(pts, k);
+      out.push({ x: seg.sx, y: seg.sy });
+      for (let s = 1; s <= SAMPLES; s++) out.push(evalBezier(seg, s / SAMPLES));
+    }
+    return out;
+  }
+  // 회전된 텍스트/수식: getBBox()는 rotate 변환을 반영하지 않으므로(마퀴가 hitTest와
+  // 다른 기하를 보게 됨), hitTest(172-183행)와 동일한 피벗(텍스트=x/y, 수식=박스 중심)
+  // 기준으로 bbox 네 모서리를 회전시킨 사각형을 반환한다. 회전 없으면 기존 bbox 판정 유지.
+  if (TEXT_MEASURED_TYPES.has(o.type)) {
+    if (!deg) return null;
+    const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
+    if (!svgEl) return null;
+    try {
+      const bb = scaleBBoxForWidth(o, svgEl.getBBox());
+      const cx = o.type === "formula" ? o.x + (o.w || 0) / 2 : o.x;
+      const cy = o.type === "formula" ? o.y + (o.h || 0) / 2 : o.y;
+      return [[bb.x, bb.y], [bb.x + bb.width, bb.y], [bb.x + bb.width, bb.y + bb.height], [bb.x, bb.y + bb.height]]
+        .map(([x, y]) => rotWorldPoint(x, y, cx, cy, deg));
+    } catch (_) { return null; }
+  }
+  return null;
+}
+function marqueeHitsObject(o, selRect) {
+  const isStroke = o.type === "line"
+    || (o.type === "polyline" && !o.closed)
+    || (o.type === "curve" && !o.closed)
+    || o.type === "funcgraph"; // formula-driven open stroke — same as an open curve
+  if (isStroke) {
+    const bb = getObjectBBox(o);
+    if (!bb || !bboxIntersects(bb, selRect)) return false;        // 빠른 배제
+    return objectStrokeSegments(o).some((s) => segIntersectsRect(s[0], s[1], s[2], s[3], selRect));
+  }
+  // 면(face) 도형: 클릭과 동일하게 경계 다각형 기준으로 판정(회전·오목·빈 모서리까지 정확).
+  const poly = faceBoundaryPolygon(o);
+  if (!poly) {                                                    // 다각형화 불가 → 기존 bbox 판정 유지
+    const bb = getObjectBBox(o);
+    return !!bb && bboxIntersects(bb, selRect);
+  }
+  if (!bboxIntersects(pointsBBox(poly), selRect)) return false;   // 빠른 배제(회전 반영 bbox)
+  for (let i = 0; i < poly.length; i++) {                         // ① 경계가 사각형과 만남(끝점 포함)
+    const a = poly[i], b = poly[(i + 1) % poly.length];
+    if (segIntersectsRect(a.x, a.y, b.x, b.y, selRect)) return true;
+  }
+  return pointInPolygon(selRect.x, selRect.y, poly);              // ② 드래그 사각형이 도형 내부에 통째로
+}
+
+export {
+  isClosedPoly, isClosedCurve,
+  isBackgroundUnrecognized, isLockedTracingImage, isObjectSelectable,
+  isPositionMovableForCursor, isBasicLine, basicLineHitThreshold,
+  nearestBasicLine, pickSelectableObject,
+  hitTest, getObjectBBox, marqueeHitsObject,
+};

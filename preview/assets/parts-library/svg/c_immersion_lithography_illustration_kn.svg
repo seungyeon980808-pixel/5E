@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 155.14845 76.631584"
+   height="76.631584mm"
+   width="155.14845mm">
+  <defs
+     id="defs2">
+    <marker
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lstart"
+       style="overflow:visible">
+      <path
+         id="path6379"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(1.1,0,0,1.1,1.1,0)" />
+    </marker>
+    <marker
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutL"
+       style="overflow:visible">
+      <path
+         id="path6299"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.00000003pt;marker-start:none"
+         transform="scale(0.8)" />
+    </marker>
+  </defs>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-32.282916,-148.07111)"
+     id="layer1">
+    <path
+       id="rect3159"
+       d="m 94.341502,208.69548 -0.0084,-2.6e-4 c 3.313412,3.17073 3.315902,7.25871 0,10.42699 l -0.0084,0.008 h 37.041668 l -0.008,-0.008 c -3.31922,-3.17107 -3.31376,-7.23804 0.008,-10.4102 z"
+       style="fill:#469aac;fill-opacity:0.61081082;stroke:#000000;stroke-width:0.02645833;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1" />
+    <rect
+       y="150.41486"
+       x="83.61692"
+       height="42.333332"
+       width="58.208332"
+       id="rect2166"
+       style="fill:#d5d3d6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.33072916;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path2168"
+       d="m 83.664168,192.78733 10.583333,15.875 h 37.041669 l 10.58333,-15.875 z"
+       style="fill:#d5d3d6;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.33072916;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path2170"
+       d="m 73.080835,224.53733 h 79.374995 v -5.29167 H 73.080835 Z"
+       style="fill:#8d8e8e;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.33072916;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path5235"
+       d="m 130.06432,214.42671 38.13109,-29.63775"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.39687499;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:none;marker-end:none" />
+    <path
+       id="path6408"
+       d="m 143.00276,178.01636 25.65788,-19.24341"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.39687499;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:none;marker-end:none" />
+    <path
+       id="path6410"
+       d="m 150.48631,218.10679 17.53138,-14.32972"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.39687499;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-start:none;marker-end:none" />
+    <text
+       id="text6412"
+       y="157.69026"
+       x="157.28665"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.17499995px;line-height:0%;font-family:'Bitstream Vera Sans';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         style="font-size:8.46666622px;line-height:1.25;stroke-width:0.26458332px"
+         y="157.69026"
+         x="157.28665"
+         id="tspan6414">ಮಸೂರ</tspan></text>
+    <text
+       id="text6416"
+       y="182.74236"
+       x="163.31474"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.17499995px;line-height:0%;font-family:'Bitstream Vera Sans';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         style="font-size:8.46666622px;line-height:1.25;stroke-width:0.26458332px"
+         y="182.74236"
+         x="163.31474"
+         id="tspan6420">ನೀರು</tspan></text>
+    <text
+       id="text6422"
+       y="201.63144"
+       x="164.8419"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:3.17499995px;line-height:0%;font-family:'Bitstream Vera Sans';text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       xml:space="preserve"><tspan
+         style="font-size:8.46666622px;line-height:1.25;stroke-width:0.26458332px"
+         y="201.63144"
+         x="164.8419"
+         id="tspan6424">ರೇಕು</tspan></text>
+    <path
+       d="m 147.47896,176.91121 -4.86825,1.45871 2.76347,-4.26509 c 0.0117,1.28566 0.86532,2.41648 2.10478,2.80638 z"
+       style="font-size:12px;fill-rule:evenodd;stroke-width:0.16536458;stroke-linejoin:round"
+       id="path2183" />
+    <path
+       d="m 134.48298,213.25987 -4.86826,1.4587 2.76347,-4.26508 c 0.0117,1.28565 0.86532,2.41647 2.10479,2.80638 z"
+       style="font-size:12px;fill-rule:evenodd;stroke-width:0.16536458;stroke-linejoin:round"
+       id="path2186" />
+    <path
+       d="m 154.89335,216.77699 -4.78793,1.70394 2.5434,-4.39986 c 0.077,1.2834 0.98687,2.36943 2.24453,2.69592 z"
+       style="font-size:12px;fill-rule:evenodd;stroke-width:0.16536458;stroke-linejoin:round"
+       id="path2188" />
+    <text
+       id="text133"
+       y="209.93513"
+       x="166.1221"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.93888903px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:justify;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       xml:space="preserve"><tspan
+         style="stroke-width:0.26458332"
+         y="209.93513"
+         x="166.1221"
+         id="tspan131">(Wafer)</tspan></text>
+  </g>
+</svg>

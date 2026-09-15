@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.0"
+   height="550"
+   width="630"
+   id="qapf_pl_all"
+   sodipodi:version="0.32"
+   inkscape:version="1.4.2 (2aeb623e1d, 2025-05-12)"
+   sodipodi:docname="QAPF_diagram_charnockites jotunite field.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <metadata
+     id="metadata262">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs260">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 111.67111 : 1"
+       inkscape:vp_y="0 : 1066.6667 : 0"
+       inkscape:vp_z="1013.3333 : 111.67111 : 1"
+       inkscape:persp3d-origin="506.66667 : -66.10667 : 1"
+       id="perspective264" />
+    <inkscape:perspective
+       id="perspective2718"
+       inkscape:persp3d-origin="396.85039 : -47.48901 : 1"
+       inkscape:vp_z="793.70078 : 139.59761 : 1"
+       inkscape:vp_y="0 : 1066.6667 : 0"
+       inkscape:vp_x="0 : 139.59761 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="1016"
+     inkscape:window-width="1848"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.924"
+     inkscape:cx="390.69264"
+     inkscape:cy="496.21212"
+     inkscape:window-x="72"
+     inkscape:window-y="27"
+     inkscape:current-layer="g3498"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:window-maximized="1"
+     showguides="false" />
+  <desc
+     id="desc3">QAPF diagram plutonic field</desc>
+  <!-- This file was created by -xfi-. -->
+  <g
+     transform="translate(1180.8,533.33333)"
+     id="g3496"
+     style="fill-rule:nonzero">
+    <g
+       transform="scale(0.5)"
+       id="g3498"
+       style="fill-rule:nonzero">
+      <path
+         style="display:inline;fill:#a0cd64;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m -1576.8789,-81.11088 8.163,46.045429 266.991,-0.210488 -20.4721,-45.62626 z"
+         id="path1-3"
+         sodipodi:nodetypes="ccccc" />
+      <path
+         style="fill:#a0cd64;fill-opacity:0.5;stroke:none;stroke-width:2px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         d="m -1576.3431,-81.021942 -23.8354,-138.335628 212.5208,-2.1453 65.0268,139.338612 z"
+         id="path2"
+         sodipodi:nodetypes="ccccc" />
+      <path
+         style="fill:none;stroke:#888888;stroke-width:4.266;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="m -1301.5741,-36.78794 -256.6791,-552.58201"
+         id="path1"
+         sodipodi:nodetypes="cc" />
+      <path
+         sodipodi:nodetypes="cccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3502"
+         d="m -2235.4343,-81.893649 -26.6667,46.188021 m 106.6667,0 21.3333,-46.188021" />
+      <path
+         sodipodi:nodetypes="ccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3504"
+         d="m -1888.7677,-35.705628 8,-46.188021" />
+      <path
+         sodipodi:nodetypes="cccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3506"
+         d="m -1880.7677,-81.893649 -8,46.188021 m 320,0 -8,-46.188021" />
+      <path
+         sodipodi:nodetypes="cccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3512"
+         d="m -2134.101,-81.893649 64,-138.564061 h -85.3333 l -80,138.564061" />
+      <path
+         sodipodi:nodetypes="cccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3514"
+         d="m -1880.7677,-81.893649 24,-138.564061 h -213.3333 l -64,138.564061" />
+      <path
+         sodipodi:nodetypes="cccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3516"
+         d="m -1576.7677,-81.893649 -24,-138.564061 h -256 l -24,138.564061" />
+      <path
+         sodipodi:nodetypes="ccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3518"
+         d="m -1303.4344,-220.45771 h -297.3333 z" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3522"
+         d="m -2155.4343,-220.45771 h 85.3333 l 170.6667,-369.50417 h -42.6667 z" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:none;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3526"
+         d="m -2070.101,-220.45772 h 213.3333 l 64,-369.50417 h -106.6666 z" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:none;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3528"
+         d="m -1856.7677,-220.45772 h 256 l -64,-369.50417 h -128 z" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.266;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none"
+         d="m -2070.101,-220.45771 h 469.3333 l -64,-369.50417 h -234.6666 z"
+         id="path3532" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         d="m -2233.5394,-81.89266 h 1014.668 z"
+         id="path3532-1-7"
+         sodipodi:nodetypes="ccc" />
+      <path
+         sodipodi:nodetypes="ccc"
+         style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3538"
+         d="m -1942.101,-589.96188 h 426.6666 z" />
+      <path
+         sodipodi:nodetypes="ccc"
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:4.26667;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path3540"
+         d="m -1675.4343,-867.09001 -53.3334,-92.37604 -53.3333,92.37604" />
+      <path
+         style="fill:none;fill-rule:nonzero;stroke:#888888;stroke-width:5.33333;stroke-linecap:butt;stroke-linejoin:miter"
+         d="m -2262.101,-35.705628 h 1066.6666 l -533.3333,-923.760422 z"
+         id="path3564"
+         sodipodi:nodetypes="cccc" />
+      <switch>
+       <text systemLanguage="de" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-Charnockit</text>
+       <text systemLanguage="en" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-charnockite</text>
+       <text systemLanguage="fr" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-charnockite</text>
+       <text systemLanguage="it" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-charnockito</text>
+       <text systemLanguage="nl" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-charnockiet</text>
+       <text systemLanguage="no" x="-2333.3342" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Kfs-charnockitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1828.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Mangerit</text>
+       <text systemLanguage="en" x="-1828.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">mangerite</text>
+       <text systemLanguage="fr" x="-1828.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">mangerite</text>
+       <text systemLanguage="it" x="-1828.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">mangerito</text>
+       <text systemLanguage="nl" x="-1828.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">mangeriet</text>
+       <text systemLanguage="no" x="-1828.7677" y="-576.87964" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">mangeritt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Jotunit</text>
+       <text systemLanguage="en" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">jotunite</text>
+       <text systemLanguage="fr" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">jotunite</text>
+       <text systemLanguage="it" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">jotunito</text>
+       <text systemLanguage="nl" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">jotuniet</text>
+       <text systemLanguage="no" x="-1496.7677" y="-48.493416" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">jotunitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Charnockit</text>
+       <text systemLanguage="en" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">charnockite</text>
+       <text systemLanguage="fr" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">charnockite</text>
+       <text systemLanguage="it" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">charnockito</text>
+       <text systemLanguage="nl" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">charnockiet</text>
+       <text systemLanguage="no" x="-1894.8428" y="-379.71454" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">charnockitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">Opdalit</text>
+       <text systemLanguage="en" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">opdalite</text>
+       <text systemLanguage="fr" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">opdalite</text>
+       <text systemLanguage="it" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">opdalito</text>
+       <text systemLanguage="nl" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">opdaliet</text>
+       <text systemLanguage="no" x="-1599.8395" y="-331.36081" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">opdalitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">Enderbit</text>
+       <text systemLanguage="en" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">enderbite</text>
+       <text systemLanguage="fr" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">enderbite</text>
+       <text systemLanguage="it" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">enderbito</text>
+       <text systemLanguage="nl" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">enderbiet</text>
+       <text systemLanguage="no" x="-1058.9277" y="1111.603" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667" transform="rotate(63.027794)">enderbitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-Jotunit</text>
+       <text systemLanguage="en" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-jotunite</text>
+       <text systemLanguage="fr" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-jotunite</text>
+       <text systemLanguage="it" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-jotunito</text>
+       <text systemLanguage="nl" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-jotuniet</text>
+       <text systemLanguage="no" x="-1541.7915" y="-135.5204" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-jotunitt</text>
+      </switch>
+      <switch>
+       <text systemLanguage="de" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-Mangerit</text>
+       <text systemLanguage="en" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-mangerite</text>
+       <text systemLanguage="fr" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-mangerite</text>
+       <text systemLanguage="it" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-mangerito</text>
+       <text systemLanguage="nl" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-mangeriet</text>
+       <text systemLanguage="no" x="-1826.7261" y="-134.89139" style="font-size:38.4px;line-height:0%;font-family:Arial;text-anchor:start;fill-rule:nonzero;stroke-width:1.06667">q-mangeritt</text>
+      </switch>
+      <text
+         x="-1728.7677"
+         y="-995.70563"
+         id="text3668"
+         style="font-size:72.5333px;line-height:0%;font-family:Arial;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">Q</text>
+      <text
+         x="-2326.1011"
+         y="-14.372293"
+         id="text3670"
+         style="font-size:72.5333px;line-height:0%;font-family:Arial;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">A</text>
+      <text
+         x="-1131.4343"
+         y="-14.372293"
+         id="text3672"
+         style="font-size:72.5333px;line-height:0%;font-family:Arial;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">P</text>
+      <text
+         y="-67.705627"
+         x="-2267.4343"
+         id="text3680"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">5</text>
+      <text
+         y="-67.705627"
+         x="-1190.101"
+         id="text3682"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">5</text>
+      <text
+         y="-206.3723"
+         x="-2198.1011"
+         id="text3684"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">20</text>
+      <text
+         y="-206.3723"
+         x="-1259.4343"
+         id="text3686"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">20</text>
+      <text
+         y="-580.77228"
+         x="-1984.7677"
+         id="text3688"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">60</text>
+      <text
+         y="-580.77228"
+         x="-1472.7677"
+         id="text3690"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;text-anchor:middle;fill-rule:nonzero;stroke-width:1.06667">60</text>
+      <text
+         y="12.416647"
+         x="-2196.6589"
+         id="text3708"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;fill-rule:nonzero;stroke-width:1.06667">10</text>
+      <text
+         y="12.416647"
+         x="-1918.8013"
+         id="text3710"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;fill-rule:nonzero;stroke-width:1.06667">35</text>
+      <text
+         y="12.416647"
+         x="-1588.7053"
+         id="text3712"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;fill-rule:nonzero;stroke-width:1.06667">65</text>
+      <text
+         y="12.416647"
+         x="-1312.7053"
+         id="text3712-5"
+         style="font-size:40.5333px;line-height:0%;font-family:sans-serif;fill-rule:nonzero;stroke-width:1.06667">90</text>
+      <path
+         d="m -2131.9677,-556.239 c 0,68.2667 68.2667,117.3334 134.4,117.3334"
+         id="path3726"
+         style="fill:none;fill-rule:nonzero;stroke:#000000;stroke-width:4.26667;stroke-linecap:butt;stroke-miterlimit:4" />
+    </g>
+  </g>
+</svg>
