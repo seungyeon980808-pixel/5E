@@ -476,7 +476,7 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   return { acknowledged: outcome?.ok === true };
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection, clearCollection }) {
   if (!panel) return;
 
   const modal = panel.querySelector(".modal-ai");
@@ -2181,8 +2181,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         captureActiveTaskTab();
         taskTabs.delete(tab.id);
         if (!taskTabs.size) {
-          activeTaskTabId = null;
-          renderTaskTabs();
+          restoreTaskTab(null);
           persistTasks();
           workspaceEmpty();
           return;
@@ -2221,7 +2220,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
 
   function restoreTaskTab(tabId) {
-    const tab = taskTabs.get(tabId);
+    const tab = tabId === null ? { id: null } : taskTabs.get(tabId);
     if (!tab) return;
     abortAutomaticSeparation('task-changed');
     scopedSelectionRevision += 1;
@@ -3901,11 +3900,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     return await desktop?.interrupt();
   };
   panel.querySelector("[data-ai-interrupt]").onclick = interruptCurrentTask;
-  tabClearButton?.addEventListener('click', async () => {
+  async function clearTasks(confirm) {
+    await workspaceReady;
     captureActiveTaskTab();
     const result = await clearTaskWorkspaces({
       tasks: [...taskTabs.values()],
-      confirm: count => scopedDialog('작업 모두 지우기', `${count}개 작업을 정리할까요? 실패한 작업과 원본 파일은 유지됩니다.`, { accept: `${count}개 지우기`, defaultAccept: true }),
+      confirm,
       cancel: async tab => {
         const result = await acknowledgeActiveTaskClearCancellation({ tab, activeTaskTabId, interrupt: interruptCurrentTask });
         if (result.acknowledged) {
@@ -3916,20 +3916,27 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       },
       remove: async tab => { taskTabs.delete(tab.id); },
     });
-    if (!result.confirmed) return;
+    if (!result.confirmed) return result;
     if (!taskTabs.size) {
-      activeTaskTabId = null;
-      renderTaskTabs();
+      restoreTaskTab(null);
       persistTasks();
       workspaceEmpty();
     } else if (!taskTabs.has(activeTaskTabId)) {
       restoreTaskTab(taskTabs.keys().next().value);
+      persistTasks();
     } else {
       renderTaskTabs();
       persistTasks();
     }
+    await taskPersistence.flush();
+    return result;
+  }
+  tabClearButton?.addEventListener('click', async () => {
+    const confirm = count => scopedDialog('작업 모두 지우기', `${count}개 작업을 모두 지울까요? 원본 파일은 삭제하지 않습니다.`, { accept: `${count}개 지우기`, defaultAccept: true });
+    const result = await (clearCollection ? clearCollection(confirm) : clearTasks(confirm));
+    if (!result?.confirmed) return;
     setStatus(result.retainedIds.length
-      ? `${result.removedIds.length}개 정리 · ${result.retainedIds.length}개 실패 또는 취소 확인 필요`
+      ? `${result.removedIds.length}개 정리 · ${result.retainedIds.length}개 취소 확인 필요`
       : `${result.removedIds.length}개 작업을 정리했습니다.`, result.retainedIds.length ? 'warn' : 'ok');
   });
   file.onchange = async () => {
@@ -4588,7 +4595,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   refresh();
 
   return {
-    open, close, attachReference, ready: workspaceReady,
+    open, close, attachReference, clearTasks, ready: workspaceReady,
     ownsTask: id => taskTabs.has(id), activeTask: () => activeTaskTabId,
     exportCount, exportResults,
     checkpointForClose: async () => {

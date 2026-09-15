@@ -47,8 +47,8 @@ test('Given the production cancellation boundary, queued work clears locally whi
   });
 
   assert.deepEqual(interrupted, ['running']);
-  assert.deepEqual(removed, ['queued']);
-  assert.deepEqual(result, { confirmed: true, removedIds: ['queued'], retainedIds: ['running', 'failed'] });
+  assert.deepEqual(removed, ['queued', 'failed']);
+  assert.deepEqual(result, { confirmed: true, removedIds: ['queued', 'failed'], retainedIds: ['running'] });
   assert.deepEqual(tasks.map(task => task.source), before);
 });
 
@@ -73,7 +73,7 @@ test('Given a cancellation rejection, when clearing all, then that task and its 
   assert.deepEqual(source, before);
 });
 
-test('Given failed work, when clearing all, then failure remains visible for recovery', async () => {
+test('Given failed work, when clearing all, then failed work is removed too', async () => {
   const removed = [];
   const result = await clearTaskWorkspaces({
     tasks: [{ id: 'failed', workState: 'failed', error: 'network unavailable' }],
@@ -82,8 +82,8 @@ test('Given failed work, when clearing all, then failure remains visible for rec
     remove: async task => { removed.push(task.id); },
   });
 
-  assert.deepEqual(result, { confirmed: true, removedIds: [], retainedIds: ['failed'] });
-  assert.deepEqual(removed, []);
+  assert.deepEqual(result, { confirmed: true, removedIds: ['failed'], retainedIds: [] });
+  assert.deepEqual(removed, ['failed']);
 });
 
 test('Given separated assets, when creating outputs, then identities are unique and ungrouped without input mutation', () => {
