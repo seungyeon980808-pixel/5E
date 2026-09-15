@@ -50,6 +50,7 @@
       "vendor/pdfjs/**/*",
       "desktop/main.cjs",
       "desktop/preload.cjs",
+      "desktop/project-close-guard.cjs",
       "desktop/codex-turn-runtime.cjs",
       "desktop/codex-process-failure.cjs",
       "desktop/fullscreen-state.cjs",

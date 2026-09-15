@@ -78,9 +78,23 @@ function harness() {
     children, events,
     invoke: (method, payload) => handlers.get(`codex:${method}`)(null, payload),
     emit: (index, message) => children[index].stdout.emit("line", JSON.stringify(message)),
-    quit: () => appHandlers.get("before-quit")(),
+    beforeQuit: () => appHandlers.get("before-quit")?.(),
+    quit: () => appHandlers.get("will-quit")(),
   };
 }
+
+test("Given an active AI runtime, when a quit attempt is cancelled before final exit, then its runtime remains available", async () => {
+  const h = harness();
+  try {
+    await h.invoke("start", { clientScope: "close-cancelled" });
+    assert.equal(h.children.length, 1);
+    h.beforeQuit();
+    assert.equal(h.children[0].killed, false);
+  } finally {
+    h.quit();
+  }
+  assert.equal(h.children[0].killed, true);
+});
 
 test("independent client scopes start simultaneous turns, preserve same-scope admission, and isolate cancellation", async () => {
   const h = harness();

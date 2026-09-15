@@ -17,6 +17,7 @@ const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bu
 const { createBatchOutputService } = require("./batch-output-service.cjs");
 const { createImageExportService } = require("./image-export-service.cjs");
 const { createFullscreenCoordinator } = require("./fullscreen-state.cjs");
+const { createProjectCloseGuard } = require("./project-close-guard.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === "darwin" ? "icon-512.png" : "icon.ico");
@@ -36,6 +37,8 @@ let win;
 let splash;
 const fullscreenCoordinators = new WeakMap();
 const aiTaskShortcutWebContents = new Set();
+const pendingProjectCloseSnapshots = new Map();
+let projectCloseRequestSerial = 0;
 const pdfLibraryService = createPdfLibraryService({
   storagePath: path.join(app.getPath("userData"), "pdf-library", "catalog.json"),
   documentsPath: app.getPath("documents"),
@@ -625,6 +628,39 @@ function stopAllServers() {
   for (const runtime of codexRuntimes.values()) runtime.stopServer();
 }
 
+function requestProjectCloseSnapshot(target) {
+  if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return Promise.resolve(null);
+  const requestId = `project-close-${++projectCloseRequestSerial}`;
+  return new Promise((resolve) => {
+    const timeout = setTimeout(() => {
+      pendingProjectCloseSnapshots.delete(requestId);
+      resolve(null);
+    }, 15_000);
+    pendingProjectCloseSnapshots.set(requestId, { sender: target.webContents, resolve: (value) => {
+      clearTimeout(timeout);
+      resolve(value);
+    } });
+    target.webContents.send("project:close-request", requestId);
+  });
+}
+
+async function saveProjectFile(sender, payload = {}) {
+  if (!win || win.isDestroyed() || sender !== win.webContents) return { kind: "failed", error: "unauthorized" };
+  if (typeof payload.json !== "string") return { kind: "failed", error: "invalid-project" };
+  const result = await dialog.showSaveDialog(win, {
+    title: "프로젝트 저장",
+    defaultPath: "physics_drawing.5e",
+    filters: [{ name: "5E 프로젝트 파일", extensions: ["5e"] }],
+  });
+  if (result.canceled || !result.filePath) return { kind: "cancelled" };
+  try {
+    await fs.promises.writeFile(result.filePath, payload.json, "utf8");
+    return { kind: "saved" };
+  } catch {
+    return { kind: "failed", error: "write-failed" };
+  }
+}
+
 function createWindow() {
   const splashStartedAt = Date.now();
   splash = new BrowserWindow({
@@ -676,6 +712,45 @@ function createWindow() {
     else shortcutWindow.close();
   });
   shortcutWebContents.once("destroyed", () => aiTaskShortcutWebContents.delete(shortcutWebContentsId));
+  let bypassProjectCloseGuard = false;
+  const projectCloseGuard = createProjectCloseGuard({
+    requestSnapshot: () => requestProjectCloseSnapshot(fullscreenWindow),
+    prompt: (snapshot) => dialog.showMessageBox(fullscreenWindow, {
+      type: "warning",
+      buttons: ["저장 후 종료", "저장하지 않고 종료", "취소"],
+      defaultId: 0,
+      cancelId: 2,
+      noLink: true,
+      message: "저장하지 않은 캔버스 작업이 있습니다.",
+      detail: snapshot.aiHasWork
+        ? "AI 작업은 프로젝트 파일에 포함되지 않습니다. 이 기기의 별도 복구 저장소에 저장한 뒤 종료합니다."
+        : "저장 후 종료를 선택하면 프로젝트 파일을 저장한 뒤 종료합니다.",
+    }).then((result) => result.response),
+    saveProject: (json) => saveProjectFile(fullscreenWindow.webContents, { json }),
+    notifyUnrecoverableAi: () => dialog.showMessageBox(fullscreenWindow, {
+      type: "error",
+      buttons: ["확인"],
+      defaultId: 0,
+      message: "AI 작업 복구 저장에 실패했습니다.",
+      detail: "AI 작업은 프로젝트 파일에 포함되지 않습니다. 작업을 보존하기 위해 종료하지 않았습니다.",
+    }),
+    notifySaveFailure: () => dialog.showMessageBox(fullscreenWindow, {
+      type: "error",
+      buttons: ["확인"],
+      defaultId: 0,
+      message: "프로젝트 파일을 저장하지 못했습니다.",
+      detail: "작업을 보존하기 위해 종료하지 않았습니다. 저장 위치와 권한을 확인한 뒤 다시 시도해 주세요.",
+    }),
+    close: () => {
+      bypassProjectCloseGuard = true;
+      fullscreenWindow.close();
+    },
+  });
+  fullscreenWindow.on("close", (event) => {
+    if (bypassProjectCloseGuard) return;
+    event.preventDefault();
+    void projectCloseGuard();
+  });
   win.setMenu(null);
   win.setMenuBarVisibility(false);
   const revealMainWindow = () => {
@@ -1495,6 +1570,13 @@ ipcMain.handle("window:get-fullscreen", (event) => {
   const target = BrowserWindow.fromWebContents(event.sender);
   return target ? target.isFullScreen() : false;
 });
+ipcMain.on("project:close-snapshot", (event, payload = {}) => {
+  const pending = pendingProjectCloseSnapshots.get(payload.requestId);
+  if (!pending || pending.sender !== event.sender) return;
+  pendingProjectCloseSnapshots.delete(payload.requestId);
+  pending.resolve(payload.snapshot || null);
+});
+ipcMain.handle("project:save", (event, payload = {}) => saveProjectFile(event.sender, payload));
 ipcMain.on("ai:task-shortcut-active", (event, active) => {
   if (active) aiTaskShortcutWebContents.add(event.sender.id);
   else aiTaskShortcutWebContents.delete(event.sender.id);
@@ -1587,4 +1669,4 @@ ipcMain.handle("image-export:save", (event, payload = {}) => {
 });
 registerPdfLibraryIpc({ ipcMain, dialog, shell, getWindow: () => win, service: pdfLibraryService, bundledPack: bundledPdfPack });
 app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
-app.on("before-quit", stopAllServers);
+app.on("will-quit", stopAllServers);

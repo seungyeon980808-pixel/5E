@@ -16,7 +16,7 @@ import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
-import { initProjectIO, saveProject } from "./project-io.js?v=1.4.0";
+import { initDesktopProjectCloseGuard, initProjectIO, saveProject } from "./project-io.js?v=1.4.0";
 import { initExportDialog } from "./export-dialog.js?v=1.4.11";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
 import { initSettings } from "./settings.js?v=1.4.0";
@@ -292,6 +292,7 @@ initPages(state);
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 initAutosave(state);
 const aiPanel = initAiPanel(state);
+initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 if (aiEntryButton) {
   aiEntryButton.title = "AI 이미지 변환";

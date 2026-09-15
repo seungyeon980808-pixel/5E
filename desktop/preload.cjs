@@ -12,6 +12,17 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
       return () => ipcRenderer.removeListener("window:fullscreen-changed", listener);
     },
   },
+  project: {
+    save: (payload) => ipcRenderer.invoke("project:save", payload),
+  },
+  projectClose: {
+    onRequest: (callback) => {
+      const listener = (_event, requestId) => callback(String(requestId || ""));
+      ipcRenderer.on("project:close-request", listener);
+      return () => ipcRenderer.removeListener("project:close-request", listener);
+    },
+    respond: (requestId, snapshot) => ipcRenderer.send("project:close-snapshot", { requestId, snapshot }),
+  },
   setAiTaskShortcutActive: (active) => ipcRenderer.send("ai:task-shortcut-active", Boolean(active)),
   onAiCloseTaskShortcut: (callback) => {
     const listener = () => callback();

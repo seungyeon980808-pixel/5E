@@ -4591,6 +4591,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     open, close, attachReference, ready: workspaceReady,
     ownsTask: id => taskTabs.has(id), activeTask: () => activeTaskTabId,
     exportCount, exportResults,
+    checkpointForClose: async () => {
+      await workspaceReady;
+      captureActiveTaskTab();
+      await taskPersistence.checkpoint();
+      return {
+        recovered: true,
+        hasWork: [...taskTabs.values()].some((tab) => tab.attachments?.length || tab.generated?.length || tab.conversationMessages?.length || tab.uiMessages?.length || tab.input || tab.workState === "busy"),
+      };
+    },
     selectTask: id => { if (busy || !taskTabs.has(id) || id === activeTaskTabId) return; captureActiveTaskTab(); restoreTaskTab(id); persistTasks(); },
   };
 }
