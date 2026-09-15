@@ -438,17 +438,11 @@
 
         <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
           <header class="ai-compare-heading">
-            <div class="ai-compare-controls" role="group" aria-label="비교 화면 배치">
+            <div class="ai-compare-controls" role="group" aria-label="보기 모드">
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
               <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
               <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
-                <div class="ai-composition-toolbar" role="group" aria-label="원본 연결 방향">
-                  <button type="button" class="is-on" data-ai-composition-orientation="horizontal" aria-pressed="true">가로 연결</button>
-                  <button type="button" data-ai-composition-orientation="vertical" aria-pressed="false">세로 연결</button>
-                  <button type="button" data-ai-composition-orientation="auto" aria-pressed="false">자동 배치</button>
-                  <button type="button" data-ai-free-composition>자유 배치</button>
-                </div>
-              <label class="ai-zoom-link" data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 트래킹</label>
+              <label class="ai-zoom-link" data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 확대·이동 동기화</label>
               <button type="button" data-ai-compare hidden>전체 비교</button>
             </div>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
@@ -459,9 +453,15 @@
           </header>
           <div class="ai-comparison-grid">
             <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
-              <header class="ai-pane-head">
+              <header class="ai-pane-head"><div class="ai-pane-head-controls">
                 <strong>원본</strong>
-                <label data-ai-source-picker hidden>원본 선택 <select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
+                <label data-ai-source-picker hidden><select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
+                <div class="ai-composition-toolbar" data-ai-composition-controls hidden>
+                  <label>배치 <select data-ai-composition-select aria-label="원본 배치">
+                    <option value="horizontal">가로</option><option value="vertical">세로</option><option value="auto">자동</option><option value="free">자유</option>
+                  </select></label>
+                  <button type="button" data-ai-free-composition hidden>편집</button>
+                </div>
                 <button type="button" class="ai-replace-source" data-ai-replace-source hidden>원본 교체</button>
                 <input class="ai-source-file-input" type="file" accept="image/*" data-ai-replace-source-input aria-label="선택한 원본을 파일로 교체">
 
@@ -470,8 +470,9 @@
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="원본 확대">＋</button>
                   <button type="button" data-ai-zoom-action="fit">맞춤</button>
+                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
                 </div>
-              </header>
+              </div></header>
               <details class="ai-reference-section" open>
                 <summary>원본 이미지 <span data-ai-reference-count>0</span></summary>
 
@@ -483,7 +484,7 @@
             </section>
 
             <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
-              <header class="ai-pane-head">
+              <header class="ai-pane-head"><div class="ai-pane-head-controls">
                 <strong>수정본</strong>
                 <div class="ai-version-picker">
                   <span>버전</span>
@@ -495,8 +496,9 @@
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="결과 확대">＋</button>
                   <button type="button" data-ai-zoom-action="fit">맞춤</button>
+                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
                 </div>
-              </header>
+              </div></header>
               <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
               <div class="ai-previews" data-ai-previews>
                 <div class="ai-generating" data-ai-generating role="status" aria-live="polite" hidden>

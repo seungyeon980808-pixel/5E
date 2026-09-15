@@ -99,11 +99,33 @@ export function buildArtboardSection(ctx) {
   });
   abBody.appendChild(abDragBtn);
 
+  const displayRow = document.createElement("label");
+  displayRow.className = "insp-row";
+  displayRow.textContent = "배경 표시";
+  const display = document.createElement("select");
+  display.className = "insp-input";
+  display.setAttribute("aria-label", "아트보드 배경 표시");
+  for (const [value, name] of [["white", "흰색"], ["checkerboard", "체크무늬"]]) {
+    const option = document.createElement("option"); option.value = value; option.textContent = name; display.append(option);
+  }
+  display.title = "화면 표시만 바뀌며 이미지와 내보내기는 그대로 유지됩니다.";
+  display.addEventListener("change", () => state.update(s => { s.artboardDisplay = display.value; }));
+  displayRow.append(display);
+  const boundsRow = document.createElement("label");
+  boundsRow.className = "insp-row";
+  const bounds = document.createElement("input"); bounds.type = "checkbox"; bounds.className = "insp-cb";
+  bounds.addEventListener("change", () => state.update(s => { s.constrainImagesToArtboard = bounds.checked; }));
+  boundsRow.append(bounds, document.createTextNode("이미지를 캔버스 안으로 제한"));
+  boundsRow.title = "이후 이미지 이동·크기 조절 시 적용합니다. 기존 배치는 유지합니다.";
+  abBody.append(displayRow, boundsRow);
+
   const abSection = makeSection("아트보드", abBody);
 
   // Refresh inputs from state (skip while the user is typing in one).
   function refreshArtboard(s) {
     // 영역 캡처 오버레이가 열려 있는 동안 버튼 상태를 표시한다.
+    display.value = s.artboardDisplay || "white";
+    bounds.checked = s.constrainImagesToArtboard === true;
     const on = s.artboardResizeMode === true;
     abDragBtn.classList.toggle("is-active", on);
     abDragBtn.setAttribute("aria-pressed", String(on));

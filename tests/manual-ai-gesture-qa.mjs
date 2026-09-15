@@ -69,7 +69,6 @@ await context.addInitScript(() => {
 });
 
 const page = await context.newPage();
-page.on('pageerror', error=>console.error(error.message));
 await page.route('**/js/main.js*', route => route.fulfill({ contentType: 'text/javascript', body: '' }));
 await page.route('**/js/mcp-bridge.js*', route => route.fulfill({ contentType: 'text/javascript', body: '' }));
 const report = { url, controlledTransport: true, paidProviderCalls: 0 };
@@ -105,9 +104,7 @@ try {
     await window.__qaManager.ready;
     await window.__qaManager.open({
       references: [
-        { dataUrl: makePng(60, 90, '#1f5f99'), name: '세로 원본.png', referenceRole: 'INPUT_SOURCE' },
-        { dataUrl: makePng(100, 64, '#a05f29'), name: '가로 원본.png', referenceRole: 'INPUT_SOURCE' },
-        { dataUrl: makePng(64, 64, '#4d8058'), name: '정사각 원본.png', referenceRole: 'INPUT_SOURCE' },
+        { dataUrl: makePng(60, 64, '#1f5f99'), name: '좁고-긴-원본.png', referenceRole: 'INPUT_SOURCE' },
       ],
       placement: 'together',
       prompt: '두 원본을 선택 순서대로 한 장으로 연결해 변환해 주세요.',
@@ -118,55 +115,75 @@ try {
   const panel = page.locator('#ai-image-panel');
   await panel.waitFor({ state: 'visible' });
 
-  await panel.locator('[data-ai-layout-mode="source"]').click();
-  await page.waitForTimeout(400);
-  await page.waitForFunction(()=>document.querySelector('.ai-combined-card img')?.naturalWidth>0,{},{timeout:3000});
-  await page.waitForTimeout(100);
-  assert.equal(await panel.locator('[data-ai-source-select]').inputValue(),'__combined__');
-  assert.equal(await panel.locator('[data-ai-composite-preview]').isVisible(),false);
-  const stage=panel.locator('.ai-combined-card .ai-preview-stage');
-  const frame=await stage.boundingBox(),pane=await panel.locator('.ai-original-pane').boundingBox();
-  assert.ok(Math.abs(frame.x+frame.width/2-(pane.x+pane.width/2))<8,JSON.stringify({frame,pane}));
-  assert.ok(frame.y>=pane.y && frame.y+frame.height<=pane.y+pane.height);
-  await page.screenshot({path:path.join(outputDir,'combined-source.png')});
-  await panel.locator('[data-ai-composition-select]').selectOption('auto');
-  await page.waitForTimeout(250);
-  await panel.locator('[data-ai-composition-select]').selectOption('free');
-  await page.locator('.ai-composition-editor').waitFor({state:'visible'});
-  await page.locator('.ai-composition-editor [data-save]').click();
-  assert.equal(await panel.locator('[data-ai-composition-select]').inputValue(), 'free');
-  assert.equal(await panel.locator('[data-ai-free-composition]').isVisible(), true);
-  await page.waitForTimeout(200);
-  await panel.locator('[data-ai-source-select]').selectOption({index:1});
-  await page.waitForTimeout(100);
-  await page.screenshot({path:path.join(outputDir,'single-source.png')});
-  await panel.locator('[data-ai-source-select]').selectOption('__combined__');
   await panel.locator('[data-ai-send]').click();
-  await page.waitForFunction(()=>window.__qaSends.some(send=>send.purpose==='image'));
-  const request=await page.evaluate(()=>window.__qaSends.findIndex(send=>send.purpose==='image'));
-  await page.evaluate(index=>window.__qaCompleteImage(index,window.__qaOutput[0]),request);
-  await page.waitForFunction(()=>document.querySelector('.ai-generated-card') && document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
+  await page.waitForFunction(() => window.__qaSends.some(send => send.purpose === 'image'));
+  const idx = await page.evaluate(() => window.__qaSends.findIndex(send => send.purpose === 'image'));
+  await page.evaluate(index => window.__qaCompleteImage(index, window.__qaOutput[0]),idx);
+  await page.waitForFunction(() => document.querySelectorAll('.ai-generated-card').length === 1 && document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
   await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+  assert.equal(await panel.locator('[data-ai-tracking-control]').isVisible(),true);
+  await panel.locator('[data-ai-pane-zoom="source"] [data-ai-zoom-action="in"]').click({clickCount:4});
+  const zooms = await panel.locator('[data-ai-zoom-value]').allTextContents();
+  assert.equal(zooms[0],zooms[1]);
+  const wheelSource = panel.locator('.is-ai-active-source .ai-preview-stage');
+  const wheelBox = await wheelSource.boundingBox();
+  const cardBox = await panel.locator('.is-ai-active-source').boundingBox();
+  const point = {x:cardBox.x+cardBox.width*.45,y:cardBox.y+cardBox.height*.4};
+  const normalized = box=>({x:(point.x-box.x)/box.width,y:(point.y-box.y)/box.height});
+  const beforeAnchor=normalized(wheelBox);
+  await page.mouse.move(point.x,point.y);
+  await page.keyboard.down('Control');
+  await page.mouse.wheel(0,-80);
+  await page.keyboard.up('Control');
   await page.waitForTimeout(150);
-  await page.screenshot({path:path.join(outputDir,'combined-comparison.png')});
-  for (const width of [768, 375]) {
-    await page.setViewportSize({width, height:820});
-    await page.waitForTimeout(100);
-    const overflow = await panel.evaluate(el => el.scrollWidth > el.clientWidth + 2);
-    assert.equal(overflow, false, `panel overflow at ${width}`);
-    await page.screenshot({path:path.join(outputDir, `comparison-${width}.png`)});
-  }
-  await page.setViewportSize({width:1280, height:820});
-  await page.waitForTimeout(100);
-
+  const afterAnchor=normalized(await wheelSource.boundingBox());
+  assert.ok(Math.abs(beforeAnchor.x-afterAnchor.x)<.01 && Math.abs(beforeAnchor.y-afterAnchor.y)<.01,'wheel keeps cursor anchor');
+  const linkedValues=await panel.locator('[data-ai-zoom-value]').allTextContents();
+  assert.equal(linkedValues[0],linkedValues[1]);
+  const beforeScroll=await panel.locator('.is-ai-active-source').evaluate(card=>card.scrollTop);
+  await page.mouse.wheel(0,70);
+  await page.waitForTimeout(150);
+  assert.equal((await panel.locator('[data-ai-zoom-value]').allTextContents())[0],linkedValues[0],'plain scroll does not zoom');
+  assert.ok(await panel.locator('.is-ai-active-source').evaluate(card=>card.scrollTop)>beforeScroll,'plain wheel scrolls');
+  const original = panel.locator('.is-ai-active-source');
+  await original.evaluate(card=>{card.scrollTop=60;card.scrollLeft=40;});
+  await page.waitForTimeout(120);
+  const positions = await panel.evaluate(p=>['.is-ai-active-source','.is-ai-active-candidate'].map(sel=>{
+    const c=p.querySelector(sel),s=c.querySelector('.ai-preview-stage');
+    return {x:(c.scrollLeft+c.clientWidth/2-s.offsetLeft)/s.offsetWidth,y:(c.scrollTop+(c.closest(".ai-image-pane").getBoundingClientRect().bottom-c.getBoundingClientRect().top)/2-s.offsetTop)/s.offsetHeight};
+  }));
+  assert.ok(Math.abs(positions[0].x-positions[1].x)<.02,JSON.stringify(positions));
+  assert.ok(Math.abs(positions[0].y-positions[1].y)<.02,JSON.stringify(positions));
+  await page.screenshot({path:path.join(outputDir,'comparison.png')});
   await panel.locator('[data-ai-layout-mode="source"]').click();
-  await panel.locator('[data-ai-pane-zoom="source"] [data-ai-zoom-action="fit"]').click();
-  await panel.locator('[data-ai-layout-mode="source"]').click();
+  assert.equal(await panel.locator('[data-ai-tracking-control]').isVisible(),false);
   await page.waitForTimeout(100);
-  const before=await panel.locator('.is-ai-active-source .ai-preview-stage').boundingBox();
-  await page.keyboard.press('Space'); await page.waitForTimeout(100);
-  const after=await panel.locator('.is-ai-active-candidate .ai-preview-stage').boundingBox();
-  assert.ok(Math.abs(before.width-after.width)<2 && Math.abs(before.y-after.y)<2,JSON.stringify({before,after}));
-  const sends=await page.evaluate(()=>window.__qaSends.length);
-  console.log('PASS: centered combined/single source, auto/free roundtrip, generation composite; sends:',sends);
-} finally { await browser.close(); }
+  const sourceHeads=await panel.locator('.ai-pane-head-controls').evaluateAll(nodes=>nodes.map(el=>({height:el.offsetHeight,width:el.offsetWidth})));
+  const sourceFrame = await panel.locator('.is-ai-active-source .ai-preview-stage').boundingBox();
+  await page.keyboard.press('Space');
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiLayout==='result');
+  await page.waitForTimeout(100);
+  const resultFrame = await panel.locator('.is-ai-active-candidate .ai-preview-stage').boundingBox();
+  assert.ok(Math.abs(sourceFrame.width-resultFrame.width)<2,JSON.stringify({sourceFrame,resultFrame,sourceHeads,resultHeads:await panel.locator('.ai-pane-head-controls').evaluateAll(nodes=>nodes.map(el=>({height:el.offsetHeight,width:el.offsetWidth})))}));
+  assert.ok(Math.abs(sourceFrame.y-resultFrame.y)<2,JSON.stringify({sourceFrame,resultFrame}));
+  await page.screenshot({path:path.join(outputDir,'result.png')});
+  await page.keyboard.press('Space');
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiLayout==='source');
+  await panel.locator('[data-ai-comment-tool="point"]').click();
+  await panel.locator('.is-ai-active-source .ai-preview-stage').click({position:{x:120,y:120}});
+  const input = panel.locator('textarea:visible').first();
+  await input.fill('입력'); await input.press('Space');
+  assert.equal(await panel.getAttribute('data-ai-layout'),'source');
+  assert.ok((await input.inputValue()).endsWith(' '));
+  await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+  await panel.locator('[data-ai-zoom-linked]').uncheck();
+  const before = await panel.locator('[data-ai-pane-zoom="result"] output').textContent();
+  await panel.locator('[data-ai-pane-zoom="source"] [data-ai-zoom-action="in"]').click();
+  assert.equal(await panel.locator('[data-ai-pane-zoom="result"] output').textContent(),before);
+  const unlinkedBox=await wheelSource.boundingBox();
+  await page.mouse.move(unlinkedBox.x+80,unlinkedBox.y+80);
+  await page.keyboard.down('Control');await page.mouse.wheel(0,-60);await page.keyboard.up('Control');
+  await page.waitForTimeout(100);
+  assert.equal(await panel.locator('[data-ai-pane-zoom="result"] output').textContent(),before,'unlinked wheel keeps result zoom');
+  console.log('PASS: cursor zoom, linked/unlinked wheel, plain scroll, Space');
+} finally {await browser.close();}

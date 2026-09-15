@@ -7,7 +7,7 @@
 // `viewBox` mirrors the SVG viewBox and is the ONLY coordinate authority
 // (DESIGN 1-2). Zoom/pan mutate this, never a CSS transform.
 
-import { createStore } from "./store.js?v=1.4.0";
+import { createCanvasStore } from "./canvas-image-bounds.js";
 
 export const TEXT_FONT_FAMILY = '"돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif';
 // 수식 글꼴: "수식" 글꼴 옵션(EDITOR_FONT_OPTIONS)과 formula 렌더가 쓴다. Latin Modern
@@ -304,7 +304,7 @@ export const ptToMm = (pt) => pt * MM_PER_PT;
 export const mmToPt = (mm) => mm / MM_PER_PT;
 
 /* ----- initial state ----- */
-export const state = createStore({
+export const state = createCanvasStore({
   // objects: array of { id, type, ...props } — the real drawing data.
   objects: [],
 
@@ -317,6 +317,8 @@ export const state = createStore({
   // x ∈ [-w/2, +w/2], y ∈ [-h/2, +h/2] (origin derived as -w/2, -h/2).
   // Default 90×60. Max size is 200×200 (clamped in inspector/section-artboard.js).
   artboard: { w: 90, h: 60 },
+  artboardDisplay: "white",
+  constrainImagesToArtboard: false,
 
   // artboardResizeMode: 켜지면 내보내기 영역 지정과 같은 드래그 오버레이에서
   // 새 아트보드 영역을 고른다(js/artboard-resize.js). 완료·취소 후 자동으로 꺼진다.
