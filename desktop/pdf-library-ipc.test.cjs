@@ -16,7 +16,7 @@ test("Given the desktop bridge, when PDF library APIs are inspected, then folder
   const channels = [
     "pick-folder", "ensure-default-folder", "connections", "folder-tree", "set-folder-selection",
     "disconnect", "sync", "cancel", "list", "read", "read-image", "open-folder", "reveal-item",
-    "save-index", "load-index", "capabilities",
+    "save-index", "load-index", "capabilities", "save-download",
   ];
 
   // Then
@@ -26,6 +26,35 @@ test("Given the desktop bridge, when PDF library APIs are inspected, then folder
   }
   assert.match(main, /registerPdfLibraryIpc/);
   assert.match(preload, /pdf-library:progress/);
+});
+
+test("Given verified PDF bytes, when desktop save is requested, then the system-selected path receives the unchanged document", async (t) => {
+  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "5e-pdf-download-"));
+  const destination = path.join(temporaryRoot, "saved.pdf");
+  t.after(() => fs.rmSync(temporaryRoot, { recursive: true, force: true }));
+  const handlers = new Map();
+  registerPdfLibraryIpc({
+    ipcMain: { handle(channel, handler) { handlers.set(channel, handler); } },
+    dialog: {
+      async showSaveDialog(_window, options) {
+        assert.equal(path.basename(options.defaultPath), "unsafe-name.pdf");
+        return { canceled: false, filePath: destination };
+      },
+    },
+    getWindow: () => null,
+    downloadsPath: temporaryRoot,
+    service: {},
+  });
+  const bytes = Buffer.from("%PDF-1.4\ndownload fixture\n%%EOF");
+
+  const result = await handlers.get("pdf-library:save-download")(null, { fileName: "unsafe/name.pdf", data: [...bytes] });
+
+  assert.deepEqual(result, { saved: true, canceled: false, filePath: destination });
+  assert.deepEqual(fs.readFileSync(destination), bytes);
+  await assert.rejects(
+    handlers.get("pdf-library:save-download")(null, { fileName: "bad.pdf", data: [...Buffer.from("not a pdf")] }),
+    /PDF 데이터/,
+  );
 });
 
 test("Given real PDF folder services behind IPC, when renderer calls connect, sync, read, index, and disconnect, then handlers enforce the complete lifecycle", async (t) => {

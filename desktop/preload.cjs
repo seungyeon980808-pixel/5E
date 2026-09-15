@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     capabilities: () => ipcRenderer.invoke("pdf-library:capabilities"),
     bundledPack: () => ipcRenderer.invoke("pdf-library:bundled-pack"),
     readBundledPack: (path) => ipcRenderer.invoke("pdf-library:read-bundled-pack", { path }),
+    saveDownload: (payload) => ipcRenderer.invoke("pdf-library:save-download", payload),
     onProgress: (callback) => {
       const listener = (_event, value) => callback(value);
       ipcRenderer.on("pdf-library:progress", listener);
