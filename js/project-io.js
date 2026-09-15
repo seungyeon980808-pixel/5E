@@ -11,6 +11,7 @@
 
 import { screenToWorld } from "./viewport.js?v=1.4.0";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.4.0";
+import { showProjectCloseDialog } from "./project-close-dialog.js?v=1";
 import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { downscaleIfNeeded } from "./image-paste.js?v=1.4.0";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.4.0";
@@ -911,7 +912,12 @@ export function initProjectIO(state, svg) {
 export function initDesktopProjectCloseGuard(state, getAiCloseStatus) {
   const desktopClose = window.fiveEDesktop?.projectClose;
   if (!desktopClose) return;
-  desktopClose.onRequest(async (requestId) => {
+  desktopClose.onRequest(async (requestId, promptSnapshot) => {
+    if (promptSnapshot) {
+      const choice = await showProjectCloseDialog(promptSnapshot);
+      desktopClose.respond(requestId, { choice });
+      return;
+    }
     let ai = { recovered: true, hasWork: false };
     try {
       ai = await getAiCloseStatus?.() || ai;

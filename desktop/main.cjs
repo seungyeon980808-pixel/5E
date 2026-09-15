@@ -628,19 +628,24 @@ function stopAllServers() {
   for (const runtime of codexRuntimes.values()) runtime.stopServer();
 }
 
-function requestProjectCloseSnapshot(target) {
+function requestProjectCloseSnapshot(target, promptSnapshot = null) {
   if (!target || target.isDestroyed() || target.webContents.isDestroyed()) return Promise.resolve(null);
   const requestId = `project-close-${++projectCloseRequestSerial}`;
   return new Promise((resolve) => {
-    const timeout = setTimeout(() => {
+    const abort = () => {
       pendingProjectCloseSnapshots.delete(requestId);
+      clearTimeout(timeout);
+      target.webContents.removeListener("destroyed", abort);
       resolve(null);
-    }, 15_000);
+    };
+    const timeout = promptSnapshot ? null : setTimeout(abort, 15_000);
+    target.webContents.once("destroyed", abort);
     pendingProjectCloseSnapshots.set(requestId, { sender: target.webContents, resolve: (value) => {
       clearTimeout(timeout);
+      target.webContents.removeListener("destroyed", abort);
       resolve(value);
     } });
-    target.webContents.send("project:close-request", requestId);
+    target.webContents.send("project:close-request", requestId, promptSnapshot);
   });
 }
 
@@ -715,17 +720,10 @@ function createWindow() {
   let bypassProjectCloseGuard = false;
   const projectCloseGuard = createProjectCloseGuard({
     requestSnapshot: () => requestProjectCloseSnapshot(fullscreenWindow),
-    prompt: (snapshot) => dialog.showMessageBox(fullscreenWindow, {
-      type: "warning",
-      buttons: ["저장 후 종료", "저장하지 않고 종료", "취소"],
-      defaultId: 0,
-      cancelId: 2,
-      noLink: true,
-      message: "저장하지 않은 캔버스 작업이 있습니다.",
-      detail: snapshot.aiHasWork
-        ? "AI 작업은 프로젝트 파일에 포함되지 않습니다. 이 기기의 별도 복구 저장소에 저장한 뒤 종료합니다."
-        : "저장 후 종료를 선택하면 프로젝트 파일을 저장한 뒤 종료합니다.",
-    }).then((result) => result.response),
+    prompt: async (snapshot) => {
+      const result = await requestProjectCloseSnapshot(fullscreenWindow, { aiHasWork: snapshot.aiHasWork });
+      return result?.choice === 0 || result?.choice === 1 ? result.choice : 2;
+    },
     saveProject: (json) => saveProjectFile(fullscreenWindow.webContents, { json }),
     notifyUnrecoverableAi: () => dialog.showMessageBox(fullscreenWindow, {
       type: "error",

@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   },
   projectClose: {
     onRequest: (callback) => {
-      const listener = (_event, requestId) => callback(String(requestId || ""));
+      const listener = (_event, requestId, promptSnapshot) => callback(String(requestId || ""), promptSnapshot);
       ipcRenderer.on("project:close-request", listener);
       return () => ipcRenderer.removeListener("project:close-request", listener);
     },
