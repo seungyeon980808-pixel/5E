@@ -99,6 +99,8 @@ function injectObjectifyStyles() {
        지금: 적정 크기(1120×720)를 기본으로 두되 화면이 좁으면 min()으로 줄어들고,
             배율 보정은 .modal의 max-width/max-height가 그대로 담당하게 !important를 뺀다.
             vh/vw를 --ui-zoom으로 나누는 이유는 .modal 규칙 주석 참고. */
+    .objectify-overlay { backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    .objectify-zoom-value { min-width:4ch; text-align:center; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
     .modal-objectify {
       width: min(1120px, calc((100vw - 48px) / var(--ui-zoom, 1)));
       height: min(720px, calc((100vh - 48px) / var(--ui-zoom, 1)));
@@ -139,7 +141,7 @@ function injectObjectifyStyles() {
 function buildModal() {
   injectObjectifyStyles();
   const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  overlay.className = "modal-overlay objectify-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
     <div class="modal modal-objectify" role="dialog" aria-modal="true" aria-labelledby="objectify-title">
@@ -152,9 +154,12 @@ function buildModal() {
             <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기</div>
           </div>
           <div id="objectify-tools" class="objectify-tools" hidden>
+            <button id="objectify-zoom-out" type="button" class="modal-btn" aria-label="축소">−</button>
+            <output id="objectify-zoom-value" class="objectify-zoom-value" aria-label="확대 비율">100%</output>
+            <button id="objectify-zoom-in" type="button" class="modal-btn" aria-label="확대">＋</button>
             <button id="objectify-zoom-reset" type="button" class="modal-btn">전체 보기</button>
             <button id="objectify-region" type="button" class="modal-btn" title="드래그로 남길 영역을 지정합니다. 영역 안쪽 조각만 남고 나머지는 제외됩니다.">영역만 남기기</button>
-            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">휠=확대/축소 · 드래그=이동 · 클릭=제외</span>
+            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">Control 키+휠·핀치=확대/축소 · 스크롤·드래그=이동 · 클릭=제외</span>
           </div>
           <p class="objectify-description" id="objectify-legend" hidden style="margin:0;">
             <span id="objectify-legend-body">
@@ -268,6 +273,9 @@ export function initImageObjectify(state) {
   const stage = overlay.querySelector("#objectify-stage");
   const tools = overlay.querySelector("#objectify-tools");
   const zoomResetButton = overlay.querySelector("#objectify-zoom-reset");
+  const zoomValue = overlay.querySelector("#objectify-zoom-value");
+  const zoomOut = overlay.querySelector("#objectify-zoom-out");
+  const zoomIn = overlay.querySelector("#objectify-zoom-in");
   const regionButton = overlay.querySelector("#objectify-region");
   const toolHint = overlay.querySelector("#objectify-tool-hint");
 
@@ -354,6 +362,9 @@ export function initImageObjectify(state) {
   /* ----- 줌/팬 (미리보기 캔버스 CSS transform) ----- */
   function applyView() {
     preview.style.transform = `translate(${view.ox}px, ${view.oy}px) scale(${view.zoom})`;
+    zoomValue.textContent = `${Math.round(view.zoom * 100)}%`;
+    zoomOut.disabled = view.zoom <= .05;
+    zoomIn.disabled = view.zoom >= 20;
   }
   function fitView() {
     if (!sourceCanvas) return;
@@ -636,7 +647,7 @@ export function initImageObjectify(state) {
     if (toolHint) {
       toolHint.textContent = on
         ? "드래그로 남길 영역을 그리세요 — 그 안쪽만 남습니다 (Esc 취소)"
-        : "휠=확대/축소 · 드래그=이동 · 클릭=제외";
+        : "Control 키+휠·핀치=확대/축소 · 스크롤·드래그=이동 · 클릭=제외";
     }
     stage.style.cursor = on ? "crosshair" : "";
   }
@@ -665,23 +676,31 @@ export function initImageObjectify(state) {
   // 리스너는 캔버스 클릭 후 포커스가 body로 이동하면(캔버스는 포커스 불가 요소) 이벤트
   // 전파 경로에 overlay가 없어 아예 호출되지 않는 문제가 있었다(모달 닫기 핸들러만 반응).
 
-  /* ----- 휠 줌 (커서 기준) ----- */
-  stage.addEventListener("wheel", (event) => {
+  function zoomAt(factor, mx = stage.clientWidth / 2, my = stage.clientHeight / 2) {
     if (!sourceCanvas) return;
-    event.preventDefault();
-    const rect = stage.getBoundingClientRect();
-    const mx = event.clientX - rect.left, my = event.clientY - rect.top;
-    // 부호만 보고 한 번에 1.15배씩 움직이면, 한 제스처에 이벤트를 훨씬 많이 보내는
-    // Mac 트랙패드에서 줌이 걷잡을 수 없이 빨라진다. 실제 이동량에 비례시키고
-    // deltaMode(줄/페이지 단위)도 픽셀로 환산한다.
-    const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? rect.height : 1);
-    const dy = Math.max(-120, Math.min(120, event.deltaY * unit));
-    const factor = Math.pow(1.0015, -dy);
-    const nz = Math.max(0.05, Math.min(20, view.zoom * factor));
+    const nz = Math.max(.05, Math.min(20, view.zoom * factor));
     view.ox = mx - (mx - view.ox) * (nz / view.zoom);
     view.oy = my - (my - view.oy) * (nz / view.zoom);
     view.zoom = nz;
     applyView();
+  }
+  zoomOut.addEventListener("click", () => zoomAt(1 / 1.2));
+  zoomIn.addEventListener("click", () => zoomAt(1.2));
+  stage.addEventListener("wheel", event => {
+    if (!sourceCanvas) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = stage.getBoundingClientRect();
+    const scale = rect.width / stage.offsetWidth;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1;
+    if (event.ctrlKey) {
+      const dy = Math.max(-120, Math.min(120, event.deltaY * unit));
+      zoomAt(Math.exp(-dy * .003), (event.clientX - rect.left) / scale, (event.clientY - rect.top) / scale);
+    } else {
+      view.ox -= event.deltaX * unit / scale;
+      view.oy -= event.deltaY * unit / scale;
+      applyView();
+    }
   }, { passive: false });
 
   /* ----- 포인터: 빈 곳 드래그=이동 · 클릭=제외 ----- */

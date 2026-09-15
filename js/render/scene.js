@@ -192,7 +192,20 @@ export function render(state) {
   artboard.setAttribute("y", -_abH / 2);
   artboard.setAttribute("width", _abW);
   artboard.setAttribute("height", _abH);
-  artboard.setAttribute("fill", "#ffffff");
+  if (state.artboardDisplay === "checkerboard") {
+    const pattern = document.createElementNS(SVG_NS, "pattern");
+    pattern.id = "artboard-display-checker";
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    const size = state.viewBox.w / Math.max(1, scene.ownerSVGElement?.clientWidth || 1000) * 16;
+    pattern.setAttribute("width", size); pattern.setAttribute("height", size);
+    for (const [x, y, w, h, fill] of [[0, 0, size, size, "#e5e7eb"], [0, 0, size / 2, size / 2, "#b9bec6"], [size / 2, size / 2, size / 2, size / 2, "#b9bec6"]]) {
+      const tile = document.createElementNS(SVG_NS, "rect");
+      for (const [key, value] of Object.entries({ x, y, width: w, height: h, fill })) tile.setAttribute(key, value);
+      pattern.append(tile);
+    }
+    defs.append(pattern);
+  }
+  artboard.setAttribute("fill", state.artboardDisplay === "checkerboard" ? "url(#artboard-display-checker)" : "#ffffff");
   artboard.setAttribute("stroke", "#d0d7de");
   artboard.setAttribute("stroke-width", "1");
   artboard.setAttribute("vector-effect", "non-scaling-stroke");

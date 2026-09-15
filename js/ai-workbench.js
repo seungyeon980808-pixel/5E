@@ -137,6 +137,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
   const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
+  const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
+  const syncPaneHeadHeight = () => {
+    const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
+    panel.style.setProperty('--ai-pane-head-height', `${height + 16}px`);
+  };
+  const headResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncPaneHeadHeight) : null;
+  paneHeadControls.forEach(control => headResizeObserver?.observe(control));
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
 
@@ -245,6 +252,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const trackingControl = panel.querySelector('[data-ai-tracking-control]');
     if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
     panel.dataset.aiLayout = mode;
+    syncPaneHeadHeight();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
@@ -307,7 +315,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (!event.repeat) setLayout(panel.dataset.aiLayout === 'source' ? 'result' : 'source', true);
   }, true);
   function applyPaneZoom(pane) {
-    paneZoom[pane] = Math.min(4, Math.max(.25, Math.round(paneZoom[pane] * 10) / 10));
+    paneZoom[pane] = Math.min(4, Math.max(.25, Math.round(paneZoom[pane] * 10000) / 10000));
     const card = paneCard(pane);
     const stage = card?.querySelector(".ai-preview-stage");
     if (stage) {
@@ -338,6 +346,33 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     }
     panel.dispatchEvent(new CustomEvent("5e:ai-workbench-geometry-change"));
   }
+
+  // Chromium exposes trackpad pinch as a Ctrl-modified wheel event.
+  panel.addEventListener("wheel", event => {
+    if (panel.hidden || !event.ctrlKey || event.altKey || event.metaKey) return;
+    const card = event.target.closest?.(".ai-image-card");
+    const pane = card === paneCard("source") ? "source" : card === paneCard("result") ? "result" : null;
+    const stage = card?.querySelector(".ai-preview-stage");
+    if (!pane || !stage?.offsetWidth) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const before = stage.getBoundingClientRect();
+    const anchor = { x: (event.clientX - before.left) / before.width, y: (event.clientY - before.top) / before.height };
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? card.clientHeight : 1;
+    paneZoom[pane] *= Math.exp(-Math.max(-120, Math.min(120, event.deltaY * unit)) * .003);
+    applyPaneZoom(pane);
+    const after = stage.getBoundingClientRect();
+    const scale = after.width / stage.offsetWidth;
+    card.scrollLeft += (after.left + anchor.x * after.width - event.clientX) / scale;
+    card.scrollTop += (after.top + anchor.y * after.height - event.clientY) / scale;
+    if (linkedZoom?.checked && results.classList.contains("mode-side-by-side")) {
+      const other = pane === "source" ? "result" : "source";
+      paneZoom[other] = paneZoom[pane];
+      applyPaneZoom(other);
+      copyPosition(pane, other);
+    }
+    panel.dispatchEvent(new CustomEvent("5e:ai-workbench-geometry-change"));
+  }, { passive: false });
 
   function clearIssueHighlight() {
     panel.querySelectorAll(".ai-review-bbox").forEach((node) => node.remove());

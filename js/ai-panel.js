@@ -1085,6 +1085,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     referenceComposition = normalizeReferenceComposition(referenceComposition, attachments);
     panel.dataset.aiCompositionOrientation = referenceComposition.orientation;
     panel.dataset.aiCompositionOrder = referenceComposition.sourceOrder.join(',');
+    const compositionControls = panel.querySelector('[data-ai-composition-controls]');
+    const compositionSelect = panel.querySelector('[data-ai-composition-select]');
+    const compositionEdit = panel.querySelector('[data-ai-free-composition]');
+    if (compositionControls) compositionControls.hidden = referenceComposition.sourceOrder.length < 2;
+    if (compositionSelect) { compositionSelect.value = referenceComposition.orientation; compositionSelect.disabled = busy; }
+    if (compositionEdit) { compositionEdit.hidden = referenceComposition.orientation !== 'free'; compositionEdit.disabled = busy; }
+
     panel.dispatchEvent(new CustomEvent('5e:ai-composition-change', { detail: structuredClone(referenceComposition) }));
   };
   const orderedInputReferences = (items, composition = referenceComposition) => {
@@ -4548,6 +4555,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   panel.addEventListener('input',()=>persistTasks());
   panel.addEventListener('5e:ai-review',()=>{commentController.render();syncSelectedOutputActions();persistTasks();});
   panel.addEventListener('5e:ai-workbench-geometry-change',()=>commentController.render());
+  panel.querySelector('[data-ai-composition-select]')?.addEventListener('change', event => {
+    const orientation = event.target.value;
+    if (busy) { event.target.value = referenceComposition.orientation; return; }
+    if (orientation === 'free') {
+      event.target.value = referenceComposition.orientation;
+      panel.querySelector('[data-ai-free-composition]')?.click();
+    } else {
+      panel.dispatchEvent(new CustomEvent('5e:ai-composition-orientation-change', { detail: { orientation } }));
+    }
+  });
   panel.querySelector('[data-ai-free-composition]')?.addEventListener('click', async () => {
     if (busy) return;
     const inputs = orderedInputReferences(attachments);

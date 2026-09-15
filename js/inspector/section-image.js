@@ -5,6 +5,7 @@
 
 import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.4.0";
 import { makeSection } from "./widgets.js?v=1.4.0";
+import { trimImageMargins } from "../image-margin-trim.js";
 import { startImageCompare } from "../image-compare.js?v=1.4.0";
 
 export function buildImageSection(ctx) {
@@ -84,6 +85,33 @@ export function buildImageSection(ctx) {
   imgClearCutBtn.style.width = "100%";
   imgClearCutBtn.textContent = "지운 영역 초기화";
 
+  const trimMargins = document.createElement("button");
+  trimMargins.type = "button";
+  trimMargins.className = "modal-btn";
+  trimMargins.textContent = "외부 여백 제거";
+  trimMargins.title = "바깥 흰색·투명 여백만 좁힙니다. 내부 흰색과 원본은 유지합니다.";
+  trimMargins.addEventListener("click", async () => {
+    const current = selectedImage(state.get());
+    if (!current || current.locked || (state.get().selectedIds || [])[0] === "image-edit-session") return;
+    const snapshot = JSON.stringify(current);
+    trimMargins.disabled = true;
+    try {
+      const trimmed = await trimImageMargins(current);
+      if (trimmed) state.update(s => {
+        const index = s.objects.findIndex(o => o.id === current.id);
+        if (index < 0 || JSON.stringify(s.objects[index]) !== snapshot) return;
+        s.undoStack.push(JSON.parse(JSON.stringify(s.objects))); s.redoStack = [];
+        s.objects[index] = trimmed;
+      });
+      trimMargins.textContent = trimmed ? "여백 제거 완료" : "제거할 여백 없음";
+    } catch {
+      trimMargins.textContent = "이미지를 읽지 못했습니다";
+    } finally {
+      trimMargins.disabled = false;
+      setTimeout(() => { trimMargins.textContent = "외부 여백 제거"; }, 1600);
+    }
+  });
+  imgCutoutBlock.appendChild(trimMargins);
   imgCutoutBlock.appendChild(imgSmartCutoutBtn);
   imgCutoutBlock.appendChild(imgRectEraseBtn);
   imgCutoutBlock.appendChild(imgPathEraseBtn);

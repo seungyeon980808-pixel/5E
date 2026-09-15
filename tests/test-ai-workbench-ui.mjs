@@ -124,8 +124,8 @@ test("comparison controls use an app-owned version listbox and linked pane-local
 });
 
 test("source composition controls expose orientation, ordering, and live preview hooks", () => {
-  assert.match(index, /data-ai-composition-orientation="horizontal"[^>]*aria-pressed="true"/);
-  assert.match(index, /data-ai-composition-orientation="vertical"[^>]*aria-pressed="false"/);
+  assert.match(index, /data-ai-composition-select[\s\S]*value="horizontal"[\s\S]*value="vertical"[\s\S]*value="auto"[\s\S]*value="free"/);
+  assert.match(index, /data-ai-tracking-control[\s\S]*확대·이동 동기화/);
   assert.match(index, /data-ai-composite-preview/);
   assert.match(workbench, /5e:ai-composition-orientation-change/);
   assert.match(workbench, /5e:ai-reference-order-change/);

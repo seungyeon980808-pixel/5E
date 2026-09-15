@@ -557,6 +557,12 @@ export function tightenBoxObject(o) {
   if (!(fw > 0) || !(fh > 0)) return null;
   if (fw > 1 - TRIM_MIN_GAIN && fh > 1 - TRIM_MIN_GAIN) return null;   // 이미 딱 맞음
 
+  return cropBoxToBounds(o, b);
+}
+
+export function cropBoxToBounds(o, b) {
+  const fw = b.x1 - b.x0, fh = b.y1 - b.y0;
+  const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];
   const next = JSON.parse(JSON.stringify(o));
   const nw = fw * o.w, nh = fh * o.h;
   // 회전은 상자 중심을 기준으로 걸린다. 상자를 좁히면 중심이 옮겨지므로, 새 중심을
