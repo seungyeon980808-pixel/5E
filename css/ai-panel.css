@@ -2394,7 +2394,12 @@
 #ai-image-panel .ai-workbench-comment textarea:disabled { opacity:.55; cursor:not-allowed; }
 
 /* Keep source and pending output in the same visual frame. */
-#ai-image-panel .ai-head { padding-left: max(84px, env(titlebar-area-x, 0px)); min-height: 44px; }
+#ai-image-panel .ai-head { min-height: 44px; }
+.desktop-shell:not(.is-native-fullscreen) #ai-image-panel { top: 30px; }
+.desktop-shell:not(.is-native-fullscreen) #ai-image-panel .modal-ai.ai-workbench {
+  height: calc((100vh - 12px) / var(--ui-zoom, 1) - 30px);
+}
+#ai-image-panel .ai-close { color: var(--text-primary); border-color: var(--border); }
 #ai-image-panel .ai-generating {
   position: absolute;
   inset: 4px;

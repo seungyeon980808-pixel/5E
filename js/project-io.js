@@ -374,6 +374,15 @@ export async function saveProject(state) {
   const json = JSON.stringify(serialize(state.get()), null, 2);
   const blob = new Blob([json], { type: "application/json" });
 
+  if (window.fiveEDesktop?.project?.save) {
+    const outcome = await window.fiveEDesktop.project.save({ json });
+    if (outcome?.kind === "saved") markProjectStatus(state, statusToken, "file");
+    else if (outcome?.kind === "failed") {
+      alert("프로젝트 파일을 저장하지 못했습니다. 작업은 그대로 유지됩니다.");
+    }
+    return outcome;
+  }
+
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -897,4 +906,25 @@ export function initProjectIO(state, svg) {
       readImageFile(file, pos, state);
     });
   }
+}
+
+export function initDesktopProjectCloseGuard(state, getAiCloseStatus) {
+  const desktopClose = window.fiveEDesktop?.projectClose;
+  if (!desktopClose) return;
+  desktopClose.onRequest(async (requestId) => {
+    let ai = { recovered: true, hasWork: false };
+    try {
+      ai = await getAiCloseStatus?.() || ai;
+    } catch {
+      ai = { recovered: false, hasWork: true };
+    }
+    const controller = initProjectStatus(state, serialize);
+    const projectDirty = controller.isFileDirty();
+    desktopClose.respond(requestId, {
+      projectDirty,
+      projectJson: projectDirty ? JSON.stringify(serialize(state.get()), null, 2) : "",
+      aiRecovered: ai.recovered === true,
+      aiHasWork: ai.hasWork === true,
+    });
+  });
 }

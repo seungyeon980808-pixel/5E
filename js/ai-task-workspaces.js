@@ -366,5 +366,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
       activate(created.at(-1));
       return created.map((entry, index) => ({ scope: entry.scope, name: groupedSnapshots[index][0].name }));
     },
+    checkpointForClose: async () => {
+      const snapshots = await Promise.all(entries.map((entry) => entry.controller.checkpointForClose()));
+      return {
+        recovered: snapshots.every((snapshot) => snapshot.recovered),
+        hasWork: snapshots.some((snapshot) => snapshot.hasWork),
+      };
+    },
   };
 }

@@ -43,6 +43,7 @@ export function initProjectStatus(state, serialize) {
   const controller = {
     text,
     capture: () => ({ pages: state.get().pages, fingerprint: fingerprint() }),
+    isFileDirty: () => file !== fingerprint(),
     mark(token, kind) {
       if (!token || token.pages !== state.get().pages) return;
       if (kind === 'file') file = token.fingerprint;
