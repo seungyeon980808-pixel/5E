@@ -72,7 +72,31 @@ async function fetchBytes(fetcher, url, maximum, label) {
   return boundedBytes(response, maximum, label);
 }
 
-export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
+export function createBrowserRemoteAssetCache({ storage = globalThis.caches, cacheName = "5e-pdf-library-v1" } = {}) {
+  if (!storage || typeof storage.open !== "function") return null;
+  const cacheKey = (url, checksum) => {
+    const key = new URL(url);
+    key.searchParams.set("__5e_sha256", checksum);
+    return key.href;
+  };
+  return Object.freeze({
+    async get(url, checksum) {
+      const response = await (await storage.open(cacheName)).match(cacheKey(url, checksum));
+      return response?.ok ? new Uint8Array(await response.arrayBuffer()) : null;
+    },
+    async put(url, checksum, bytes) {
+      await (await storage.open(cacheName)).put(cacheKey(url, checksum), new Response(bytes, {
+        status: 200,
+        headers: { "content-type": "application/pdf", "content-length": String(bytes.byteLength) },
+      }));
+    },
+    async delete(url, checksum) {
+      await (await storage.open(cacheName)).delete(cacheKey(url, checksum));
+    },
+  });
+}
+
+export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, assetCache = createBrowserRemoteAssetCache() }) {
   if (typeof baseUrl !== "string" || baseUrl.trim() === "") throw new PackValidationError("baseUrl", "remote pack is unconfigured");
   const root = safeRemoteUrl(new URL(baseUrl, globalThis.location?.href ?? "http://localhost/"), "baseUrl");
   if (!root.pathname.endsWith("/") || root.search || root.hash) throw new PackValidationError("baseUrl", "expected a directory URL without query or fragment");
@@ -108,6 +132,36 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
     return materializePackDocument(pack.id, catalog, document, sourceSha256);
   }));
   if (documents.reduce((sum, document) => sum + document.pageCount, 0) !== pack.pageCount) throw new PackValidationError(catalogPath, "page count mismatch");
+  const pendingDocuments = new Map();
+  const readDocument = async (document) => {
+    const prefix = `${pack.id}/`;
+    if (!document?.source?.locator?.startsWith(prefix)) throw new PackValidationError("document.source", "does not belong to this pack");
+    const relativePath = packPath(document.source.locator.slice(prefix.length), "document.source.locator");
+    const checksum = checksums.files[relativePath];
+    if (!HASH_PATTERN.test(checksum ?? "")) throw new PackValidationError(relativePath, "missing checksum");
+    if (!pendingDocuments.has(relativePath)) {
+      pendingDocuments.set(relativePath, (async () => {
+        const assetUrl = packAssetUrl(root, relativePath, "document.source.locator").href;
+        let bytes = null;
+        try { bytes = await assetCache?.get(assetUrl, checksum); } catch {}
+        const isPdf = bytes && bytes.byteLength >= 5 && new TextDecoder().decode(bytes.subarray(0, 5)) === "%PDF-";
+        if (bytes && (bytes.byteLength > MAX_PDF_BYTES || !isPdf || await sha256Hex(bytes) !== checksum)) {
+          try { await assetCache?.delete(assetUrl, checksum); } catch {}
+          bytes = null;
+        }
+        if (!bytes) {
+          bytes = await fetchBytes(fetcher, assetUrl, MAX_PDF_BYTES, relativePath);
+          if (await sha256Hex(bytes) !== checksum) throw new PackValidationError(relativePath, "SHA-256 mismatch");
+          if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") throw new PackValidationError(relativePath, "expected PDF bytes");
+          try { await assetCache?.put(assetUrl, checksum, bytes); } catch {}
+        }
+        return bytes;
+      })());
+    }
+    const pending = pendingDocuments.get(relativePath);
+    try { return (await pending).slice(); }
+    finally { if (pendingDocuments.get(relativePath) === pending) pendingDocuments.delete(relativePath); }
+  };
   return Object.freeze({
     id: pack.id,
     version: pack.version,
@@ -122,15 +176,15 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch }) {
       ...searchIndex,
       entries: Object.freeze(searchIndex.entries.map((entry) => materializePackSearchEntry(pack.id, entry))),
     }),
+    async downloadDocument(document) {
+      return Object.freeze({
+        bytes: await readDocument(document),
+        fileName: document.source.displayName || `${document.title}.pdf`,
+        mimeType: "application/pdf",
+      });
+    },
     async openDocument(runtime, document) {
-      const prefix = `${pack.id}/`;
-      if (!document?.source?.locator?.startsWith(prefix)) throw new PackValidationError("document.source", "does not belong to this pack");
-      const relativePath = packPath(document.source.locator.slice(prefix.length), "document.source.locator");
-      if (!HASH_PATTERN.test(checksums.files[relativePath] ?? "")) throw new PackValidationError(relativePath, "missing checksum");
-      const bytes = await fetchBytes(fetcher, packAssetUrl(root, relativePath, "document.source.locator").href, MAX_PDF_BYTES, relativePath);
-      if (await sha256Hex(bytes) !== checksums.files[relativePath]) throw new PackValidationError(relativePath, "SHA-256 mismatch");
-      if (bytes.byteLength < 5 || new TextDecoder().decode(bytes.subarray(0, 5)) !== "%PDF-") throw new PackValidationError(relativePath, "expected PDF bytes");
-      return runtime.openDocument({ id: document.id, title: document.title, source: document.source, metadata: document.metadata, data: bytes });
+      return runtime.openDocument({ id: document.id, title: document.title, source: document.source, metadata: document.metadata, data: await readDocument(document) });
     },
   });
 }

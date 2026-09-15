@@ -86,10 +86,28 @@ const VERIFIED_PACK_BYTES = Object.freeze({ "ebsi.recent-three.science@1.0.0": 1
 const formatBytes = (bytes) => Number.isFinite(bytes) && bytes > 0 ? `${(bytes / 1024 / 1024).toFixed(1)}MB` : "용량 정보 없음";
 const packBytes = (pack) => Number(pack?.bytes) || VERIFIED_PACK_BYTES[`${pack?.id}@${pack?.version}`] || null;
 
-export function mountPackManagement({ host, store, onChange = () => {}, onUpdateCandidate = null }) {
+export function mountPackManagement({
+  host,
+  driveHost = host,
+  store,
+  onChange = () => {},
+  onUpdateCandidate = null,
+  googleDrive = null,
+}) {
   let candidate = null;
+  let driveConnection = null;
   const controller = createPackManagement({ store, onChange: (snapshot) => { render(snapshot); onChange(snapshot); } });
-  host.innerHTML = `
+  const driveMarkup = `
+    <form class="pdflib-drive-connect" data-drive-form>
+      <label for="pdflib-drive-url">Google Drive 공개 폴더</label>
+      <div class="pdflib-drive-controls">
+        <input id="pdflib-drive-url" type="url" inputmode="url" autocomplete="url" placeholder="https://drive.google.com/drive/folders/…" data-drive-url>
+        <button type="submit" class="modal-btn modal-btn-primary" data-drive-connect>연결</button>
+        <button type="button" class="modal-btn" data-drive-disconnect hidden>연결 해제</button>
+      </div>
+      <span class="pdflib-drive-status" data-drive-status role="status"></span>
+    </form>`;
+  const packMarkup = `
     <div class="pdflib-pack-toolbar">
       <button type="button" class="modal-btn" data-pack-install>자료팩 폴더 설치</button>
       <input type="file" data-pack-files webkitdirectory multiple hidden>
@@ -98,10 +116,26 @@ export function mountPackManagement({ host, store, onChange = () => {}, onUpdate
     <div data-pack-candidate></div>
     <div data-pack-list></div>
     <p class="pdflib-pack-safety">자료팩을 삭제해도 프로젝트와 사용자 폴더의 파일은 삭제되지 않습니다.</p>`;
+  host.innerHTML = driveHost === host ? `${driveMarkup}${packMarkup}` : packMarkup;
+  if (driveHost !== host) driveHost.innerHTML = driveMarkup;
   const input = host.querySelector("[data-pack-files]");
   const status = host.querySelector("[data-pack-status]");
   const list = host.querySelector("[data-pack-list]");
   const candidateHost = host.querySelector("[data-pack-candidate]");
+  const driveForm = driveHost.querySelector("[data-drive-form]");
+  const driveUrl = driveHost.querySelector("[data-drive-url]");
+  const driveConnect = driveHost.querySelector("[data-drive-connect]");
+  const driveDisconnect = driveHost.querySelector("[data-drive-disconnect]");
+  const driveStatus = driveHost.querySelector("[data-drive-status]");
+  const renderDrive = (message = "", error = false) => {
+    driveUrl.disabled = Boolean(driveConnection);
+    driveConnect.hidden = Boolean(driveConnection);
+    driveDisconnect.hidden = !driveConnection;
+    driveStatus.classList.toggle("is-error", error);
+    driveStatus.textContent = message || (driveConnection
+      ? `${driveConnection.pack.title} · ${driveConnection.pack.documentCount}개 PDF 연결됨`
+      : googleDrive?.gatewayConfigured ? "링크가 있는 모든 사용자에게 공개된 읽기 전용 폴더를 연결합니다." : "운영자용 Drive 연결 서비스 설정이 필요합니다.");
+  };
   function render(snapshot) {
     if (!status || !list) return;
     status.textContent = snapshot.error || (snapshot.status === "working" ? "처리 중…" : `${snapshot.packs.length}개 설치됨`);
@@ -151,9 +185,40 @@ export function mountPackManagement({ host, store, onChange = () => {}, onUpdate
     catch (error) { if (!(error instanceof Error)) throw error; }
     finally { input.value = ""; }
   });
+  driveForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!googleDrive?.connect || driveConnection) return;
+    driveConnect.disabled = true;
+    renderDrive("파일 목록과 검색 색인을 읽는 중…");
+    try {
+      driveConnection = await googleDrive.connect(driveUrl.value);
+      driveUrl.value = driveConnection.folder.folderUrl;
+      renderDrive();
+    } catch (error) {
+      renderDrive(error instanceof Error ? error.message : String(error), true);
+    } finally {
+      driveConnect.disabled = false;
+    }
+  });
+  driveDisconnect?.addEventListener("click", async () => {
+    driveDisconnect.disabled = true;
+    try {
+      await googleDrive?.disconnect?.();
+      driveConnection = null;
+      renderDrive("Google Drive 폴더 연결을 해제했습니다.");
+    } catch (error) {
+      renderDrive(error instanceof Error ? error.message : String(error), true);
+    } finally {
+      driveDisconnect.disabled = false;
+    }
+  });
+  driveUrl.value = googleDrive?.savedFolderUrl?.() || "";
+  renderDrive();
+  if (driveUrl.value && googleDrive?.gatewayConfigured) queueMicrotask(() => driveForm.requestSubmit());
   void controller.refresh();
   return Object.freeze({
     ...controller,
     setCandidate(value) { candidate = value; render(controller.getSnapshot()); },
+    setDriveConnection(value) { driveConnection = value; renderDrive(); },
   });
 }

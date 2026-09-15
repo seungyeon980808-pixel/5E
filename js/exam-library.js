@@ -327,22 +327,28 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let installedPackDocuments = [];
   let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
   let defaultPack = null;
+  let drivePack = null;
+  let drivePackDocumentIds = new Set();
   const mountPackManagement = async () => {
     if (packManagement) return packManagement;
     const [
       { createIndexedDbPackAdapter, createPackStore },
       { mountPackManagement: mount },
       { loadRemotePack },
+      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js"),
       import("./pdf-library/pack-management.js"),
       import("./pdf-library/remote-pack.js"),
+      import("./pdf-library/google-drive.js"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
+    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl: await configuredGoogleDriveGatewayUrl() });
     const syncPackCatalog = () => {
+      const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
       const merged = mergePreferredCatalogs(
-        defaultPack,
+        preferredRemote,
         { documents: installedPackDocuments, searchIndex: installedPackSearchIndex },
       );
       return pdfUi.syncPackCatalog({
@@ -350,12 +356,39 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         searchIndex: merged.searchIndex,
         openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
           ? store.openDocument(runtime, document)
-          : defaultPack.openDocument(runtime, document),
+          : drivePackDocumentIds.has(document.id)
+            ? drivePack.openDocument(runtime, document)
+            : defaultPack.openDocument(runtime, document),
+        downloadDocument: (document) => drivePackDocumentIds.has(document.id)
+          ? drivePack.downloadDocument(document)
+          : defaultPack?.downloadDocument?.(document),
+        canDownloadDocument: (document) => !merged.installedDocumentIds.has(document.id)
+          && (drivePackDocumentIds.has(document.id) || typeof defaultPack?.downloadDocument === "function"),
       });
     };
     packManagement = mount({
       host: pdfUi.getPackHost(),
+      driveHost: pdfUi.getDriveHost(),
       store,
+      googleDrive: {
+        gatewayConfigured: driveConnection.gatewayConfigured,
+        savedFolderUrl: driveConnection.savedFolderUrl,
+        async connect(folderUrl) {
+          const connection = await driveConnection.connect(folderUrl);
+          drivePack = connection.pack;
+          drivePackDocumentIds = new Set(drivePack.documents.map((document) => document.id));
+          await syncPackCatalog();
+          pdfUi.setSourceStatus(`${drivePack.title}에서 ${drivePack.documentCount}개 PDF와 사전 색인을 읽었습니다.`);
+          return connection;
+        },
+        async disconnect() {
+          driveConnection.disconnect();
+          drivePack = null;
+          drivePackDocumentIds = new Set();
+          await syncPackCatalog();
+          pdfUi.setSourceStatus("Google Drive 폴더 연결을 해제했습니다.");
+        },
+      },
       onUpdateCandidate: configured.baseUrl ? async () => {
         const latest = await loadRemotePack({ baseUrl: defaultRecentThreePack().baseUrl });
         defaultPack = latest;

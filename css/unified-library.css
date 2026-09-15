@@ -257,6 +257,7 @@
 
 .unified-library-overlay .unilib-folder-scroll { padding: var(--unilib-space-4) var(--unilib-space-3) var(--unilib-space-5); }
 .unified-library-overlay .unilib-folder-scroll > p { margin: var(--unilib-space-1) var(--unilib-space-2) var(--unilib-space-4); color: var(--unilib-muted); font-size: var(--unilib-type-caption); }
+.unified-library-overlay .unilib-drive-settings-open { width: calc(100% - 2 * var(--unilib-space-2)); min-height: var(--unilib-control-height); margin: 0 var(--unilib-space-2) var(--unilib-space-4); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; }
 .unified-library-overlay .unilib-tree,
 .unified-library-overlay .unilib-tree ul { margin: 0; padding: 0; list-style: none; }
 .unified-library-overlay .unilib-tree-item { min-width: 0; }
@@ -507,6 +508,8 @@
 .unified-library-overlay .unilib-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: var(--unilib-space-4); padding: var(--unilib-space-4) var(--unilib-space-5); border-bottom: var(--unilib-border-width) solid var(--unilib-border); }
 .unified-library-overlay .unilib-dialog h3 { margin: 0; font-size: var(--unilib-type-title); }
 .unified-library-overlay .unilib-dialog [data-unilib-folder-manager] { display: grid; gap: var(--unilib-space-4); padding: var(--unilib-space-5); }
+.unified-library-overlay [data-unilib-drive-settings-body] { min-width: 0; }
+.unified-library-overlay [data-unilib-drive-settings-body] > .pdflib-drive { display: grid; gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-folder-guidance { margin: 0; color: var(--unilib-muted); font-size: var(--unilib-type-helper); line-height: var(--unilib-line-height-body); word-break: keep-all; }
 .unified-library-overlay .unilib-manager-actions { display: flex; flex-wrap: wrap; gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-dialog section { display: grid; gap: var(--unilib-space-3); }
@@ -646,6 +649,10 @@
   .unified-library-overlay .unilib-source-actions { grid-column: 2; min-width: 0; flex-wrap: wrap; }
   .unified-library-overlay .unilib-source-actions button { max-width: 100%; white-space: normal; text-align: start; }
   .unified-library-overlay .unilib-folder-open { min-height: var(--unilib-mobile-control-height); }
+  .unified-library-overlay .unilib-drive-settings-open { min-height: var(--unilib-mobile-control-height); }
+  .unified-library-overlay [data-unilib-drive-settings] .unilib-icon-button { width: var(--unilib-mobile-control-height); height: var(--unilib-mobile-control-height); }
+  .unified-library-overlay [data-unilib-drive-settings] .modal-btn,
+  .unified-library-overlay [data-unilib-drive-settings] input { min-height: var(--unilib-mobile-control-height); }
   .unified-library-overlay .unilib-status { right: var(--unilib-space-4); bottom: var(--unilib-space-4); max-width: calc(100vw - var(--unilib-space-7)); }
   .unified-library-overlay .unilib-crop { inset: 0; width: auto; height: auto; border: 0; border-radius: 0; transform: none; }
   .unified-library-overlay .unilib-crop-workspace { grid-template-columns: minmax(0, 1fr); }
