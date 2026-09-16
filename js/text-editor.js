@@ -1418,6 +1418,7 @@ function _syncEditorWidth() {
 }
 
 function _removeTextEditor() {
+  _closeCtxMenu();
   // 정밀감사 MINOR: 드래그 리스너 정리(등록 쪽 주석 참고) — 편집기가 열릴 때마다
   // 쌓이던 window mousemove/mouseup 리스너 누수 수정.
   if (_dragMoveHandler) { window.removeEventListener("mousemove", _dragMoveHandler); _dragMoveHandler = null; }
@@ -1957,8 +1958,9 @@ function setupTextContextMenu() {
     let target = null;
 
     if (s.draftText) {
-      // Editing a draft (new or in-place) → tune the draft; "텍스트 수정" hidden.
-      target = { kind: "draft", id: s.draftText.editingId || null };
+      e.preventDefault();
+      _closeCtxMenu();
+      return;
     } else {
       const p = screenToWorld(_svg, s.viewBox, e.clientX, e.clientY);
       const hitId = pickSelectableObjectAtPoint(s, p);
