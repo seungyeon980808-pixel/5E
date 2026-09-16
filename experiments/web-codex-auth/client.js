@@ -15,10 +15,26 @@ async function request(action, popup) {
   try {
     const response = await fetch('/api/' + action, { method: 'POST', headers: { 'X-5E-Request': '1' } });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error);
+    if (location.pathname === "/web-connect" && window.opener) {
+      const editor = new URL(location.href).searchParams.get("editor");
+      if (editor === "https://www.5e.ai.kr") window.opener.postMessage({ type: "5e:runtime-status", signedIn: response.ok && result.signedIn === true }, editor);
+    }
+    if (!response.ok) throw Object.assign(new Error(result.error), { status: response.status });
     if (result.signedIn && document.body.dataset.editorUrl) {
       location.replace(document.body.dataset.editorUrl);
-      return;
+      return true;
+    }
+    if (action === 'logout') {
+      byId('status').textContent = '로그아웃했습니다. 다시 연결하려면 ChatGPT로 로그인하세요.';
+      byId('browser-login').hidden = true;
+      byId('code').textContent = '';
+      byId('copy-status').textContent = '';
+      byId('device-login').hidden = true;
+      byId('login').hidden = false;
+      byId('cancel').hidden = true;
+      byId('logout').hidden = true;
+      byId('reload').hidden = true;
+      return true;
     }
     byId('status').textContent = labels[result.state] || '연결 상태를 확인하고 있습니다.';
     byId('browser-login').hidden = !result.authUrl;
@@ -37,24 +53,28 @@ async function request(action, popup) {
     byId('logout').hidden = !result.signedIn;
     byId('reload').hidden = true;
     timer = setTimeout(() => request('status'), 3000);
+    return true;
   } catch (error) {
-    byId('status').textContent = '연결이 끊겼습니다.';
+    byId('status').textContent = error.status === 429 ? error.message : '연결이 끊겼습니다.';
     if (popup) popup.close();
     byId('browser-login').hidden = true;
     byId('code').textContent = '';
     byId('copy-status').textContent = '';
     byId('device-login').hidden = true;
-    for (const id of ['login', 'cancel', 'logout']) byId(id).hidden = true;
-    byId('reload').hidden = false;
+    byId('login').hidden = error.status !== 429;
+    for (const id of ['cancel', 'logout']) byId(id).hidden = true;
+    byId('reload').hidden = error.status === 429;
+    return false;
   } finally {
     busy = false;
     for (const button of document.querySelectorAll('button')) button.disabled = false;
   }
 }
-byId('login').addEventListener('click', () => {
+byId('login').addEventListener('click', async () => {
   if (busy) return;
   const popup = window.open('about:blank', '_blank');
   if (popup) popup.opener = null;
+  if (!(await request('session'))) { if (popup) popup.close(); return; }
   request('login', popup);
 });
 for (const id of ['cancel', 'logout']) byId(id).addEventListener('click', () => request(id));

@@ -7,9 +7,12 @@ const { editorPanelSource } = require('./editor-source.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const projectRoot = path.resolve(__dirname, '../..');
-const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.otf': 'font/otf', '.ico': 'image/x-icon' };
+const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.otf': 'font/otf', '.ttf': 'font/ttf', '.wasm': 'application/wasm', '.bcmap': 'application/octet-stream', '.pfb': 'application/octet-stream', '.gz': 'application/gzip', '.ico': 'image/x-icon' };
 const authActions = new Set(['session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
-function createGateway({ authPort = 19383, allowAnonymousEditor = false } = {}) {
+function scriptJson(value) {
+  return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
+}
+function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPackBaseUrl = process.env.FIVE_E_PDF_PACK_BASE_URL ?? '' } = {}) {
   const upstream = `http://127.0.0.1:${authPort}`;
   async function auth(req, action) {
     const cookieName = `fivee_auth_${authPort}=`;
@@ -32,7 +35,10 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false } = {}) 
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Frame-Options', 'DENY');
-    const reply = (status, body, type = 'application/json') => { res.writeHead(status, { 'Content-Type': `${type}; charset=utf-8` }); res.end(body); };
+    const reply = (status, body, type = 'application/json') => {
+      const charset = type.startsWith('text/') || type === 'application/json' || type === 'image/svg+xml' ? '; charset=utf-8' : '';
+      res.writeHead(status, { 'Content-Type': `${type}${charset}` }); res.end(body);
+    };
     const redirect = target => { res.writeHead(302, { Location: target }); res.end(); };
     if (req.headers.host !== new URL(origin).host || (req.headers.origin && req.headers.origin !== origin) || req.headers['sec-fetch-site'] === 'cross-site') return reply(403, '{"error":"Origin rejected"}');
     try {
@@ -56,22 +62,27 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false } = {}) 
         if (!response.ok && !(allowAnonymousEditor && response.status === 401)) return reply(503, '인증 서버에 연결할 수 없습니다. 잠시 후 새로고침해 주세요.', 'text/plain');
         if (url.pathname !== '/editor/') return redirect('/editor/');
         let html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
-        html = html.replace('</head>', '<link rel="stylesheet" href="/editor-session.css"><link rel="stylesheet" href="/editor-background.css"><link rel="stylesheet" href="/editor-results.css"><script src="/editor-bridge.js"></script><script src="/editor-session.js" type="module"></script></head>');
+        const packBase = typeof pdfPackBaseUrl === 'string' ? pdfPackBaseUrl : '';
+        html = html.replace('</head>', `<script>window.FIVE_E_PDF_PACK_BASE_URL=${scriptJson(packBase)};</script><link rel="stylesheet" href="/editor-session.css"><link rel="stylesheet" href="/editor-background.css"><link rel="stylesheet" href="/editor-results.css"><script src="/editor-bridge.js"></script><script src="/editor-session.js" type="module"></script></head>`);
         html = html.replace('<body>', '<body><nav class="web-session" aria-label="계정 연결"><span id="web-session-status" role="status">계정 확인 중</span><span>AI 이미지 생성</span><a href="/account" target="_blank" rel="noopener">계정</a></nav>');
         html = html.replace(/<script type="module" src="js\/mcp-bridge[^>]*><\/script>/, '');
         return reply(200, html, 'text/html');
       }
-      if (url.pathname === '/login' || url.pathname === '/account') {
+      if (url.pathname === '/login' || url.pathname === '/account' || url.pathname === '/web-connect') {
         let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
         html = html.replace(/ data-editor-url="[^"]*"/, url.pathname === '/login' ? ' data-editor-url="/editor/"' : '');
         html = html.replace('로컬 인증 실험입니다.<br>이미지 변환 기능은 꺼져 있습니다.<br>원격 무설치 사용은 검증 전입니다.', url.pathname === '/account' ? '로그인을 완료한 뒤 편집기로 돌아가세요.<br>AI 이미지 생성과 수정을 시험할 수 있습니다.' : '로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.');
         if (url.pathname === '/account') html = html.replace('</section>', '<a href="/editor/">5E 편집기 열기</a></section>');
+        if (url.pathname === '/web-connect') {
+          html = html.replace('5E / 로그인 실험', '5E / ChatGPT 연결').replace('이 브라우저의 실험 세션에 계정을 연결합니다.', '이 브라우저에 ChatGPT 계정을 연결합니다.').replace('로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.', '로그인 후 이 탭을 열어 둔 채 원래 편집기로 돌아가세요.');
+          html = html.replace('</body>', '<script src="/web-connect.js"></script></body>');
+        }
         return reply(200, html, 'text/html');
       }
-      const own = { '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
+      const own = { '/web-connect.js': 'web-connect.js', '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
       if (own) return reply(200, fs.readFileSync(path.join(__dirname, own)), mime[path.extname(own)]);
       const relative = decodeURIComponent(url.pathname.replace(/^\/editor\//, '/')).slice(1);
-      if (relative.includes('..') || relative.includes('\\') || !/^(?:css\/|js\/|assets\/|fonts\/|docs\/credits\.html$|manifest\.json$)/.test(relative)) return reply(404, '{"error":"Not found"}');
+      if (relative.includes('..') || relative.includes('\\') || !/^(?:css\/|js\/|assets\/|fonts\/|vendor\/(?:pdfjs|ocr)\/|docs\/credits\.html$|manifest\.json$)/.test(relative)) return reply(404, '{"error":"Not found"}');
       const file = path.join(projectRoot, relative);
       const real = fs.realpathSync(file);
       if (!real.startsWith(projectRoot + path.sep) || !fs.statSync(real).isFile() || !mime[path.extname(real)]) return reply(404, '{"error":"Not found"}');
