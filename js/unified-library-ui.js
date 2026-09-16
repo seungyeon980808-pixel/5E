@@ -129,6 +129,9 @@ export async function materializeOriginalLibraryPage(result, activeProvider) {
 }
 
 export async function materializeLibraryAction(result, activeProvider, options = {}) {
+  const accepted = options.acceptedAssets?.get(result?.id);
+  if (accepted && libraryResultIdentity(accepted.result) === libraryResultIdentity(result)
+    && JSON.stringify(accepted.result.provenance?.rect) === JSON.stringify(result.provenance?.rect)) return accepted.materialized;
   if (result?.kind !== "pdf") return activeProvider.materialize(result, options);
   const original = await materializeOriginalLibraryPage(result, activeProvider);
   if (options.representation !== "manual" || !result.variants?.manual?.source) return original;
@@ -817,7 +820,7 @@ function buildShell() {
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
-      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><button type="button" class="unilib-button unilib-crop-help" aria-label="크롭 조작 도움말" title="빈 곳을 드래그해 추가 · 영역 안을 드래그해 이동 · 핸들로 크기 조절 · Enter 또는 Space로 확정">?</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button></div></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong><button type="button" class="unilib-button" data-unilib-crop-select-all>전체 선택</button></div><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><p class="unilib-crop-selection" data-unilib-crop-selection>추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><div class="unilib-crop-actions library-reader-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-primary" data-unilib-crop-ai disabled>AI 작업에 추가</button></div></footer></div>
+      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><button type="button" class="unilib-button unilib-crop-help" aria-label="크롭 조작 도움말" title="빈 곳을 드래그해 추가 · 영역 안을 드래그해 이동 · 핸들로 크기 조절 · Enter 또는 Space로 확정">?</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button></div></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong><button type="button" class="unilib-button" data-unilib-crop-select-all>전체 선택</button></div><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><p class="unilib-crop-selection" data-unilib-crop-selection>추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><div class="unilib-crop-actions library-reader-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-primary" data-unilib-crop-ai disabled>AI 작업에 추가</button></div></footer></div>
       <div class="unilib-dialog-backdrop" data-unilib-drive-settings hidden><section class="unilib-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-drive-settings-title"><header><h3 id="unilib-drive-settings-title">Drive 자료 연결</h3><button type="button" class="unilib-icon-button" data-unilib-drive-settings-close aria-label="Drive 자료 연결 닫기">${ICONS.close}</button></header><div data-unilib-folder-manager><p class="unilib-folder-guidance">공개 읽기 전용 폴더를 연결하면 파일 목록과 검색 색인을 먼저 읽고, PDF 원문은 필요할 때만 가져옵니다.</p><div data-unilib-drive-settings-body></div></div></section></div>
       <p class="unilib-status" data-unilib-status role="status" aria-live="polite"></p>
     </section>`;
@@ -871,6 +874,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let selectedId = null;
   const selectedIds = new Set();
   const selectedRecords = new Map();
+  const acceptedAssets = new Map();
   let activeTypes = [...LIBRARY_TYPES];
   let pdfDisplayMode = "file";
   const examFilters = { subject: "", startYear: null, endYear: null, administration: "" };
@@ -1618,6 +1622,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     referenceConsumer = null;
     closeDrawers();
     closeExpandedReader();
+    closeCrop(false);
     const activeElement = document.activeElement;
     if (activeElement && overlay.contains(activeElement)) activeElement.blur?.();
     if (restoreFocus && keyboard) {
@@ -1703,7 +1708,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const toggleResultSelection = (id) => {
     const card = list.querySelector(`[data-result-id="${CSS.escape(id)}"]`);
     invalidateAction();
-    if (selectedIds.has(id)) { selectedIds.delete(id); selectedRecords.delete(id); }
+    if (selectedIds.has(id)) { selectedIds.delete(id); selectedRecords.delete(id); acceptedAssets.delete(id); }
     else {
       selectedIds.add(id);
       const record = results.find((result) => result.id === id);
@@ -1726,6 +1731,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       } else {
         selectedIds.delete(id);
         selectedRecords.delete(id);
+        acceptedAssets.delete(id);
       }
       renderSelectedTray();
       return;
@@ -1747,6 +1753,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     selectedIds.delete(remove.dataset.unilibSelectedRemove);
     selectedRecords.delete(remove.dataset.unilibSelectedRemove);
+    acceptedAssets.delete(remove.dataset.unilibSelectedRemove);
     updateResultSelection();
   });
   overlay.querySelector("[data-unilib-representations]").addEventListener("click", (event) => {
@@ -1813,6 +1820,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     selectedIds.clear();
     selectedRecords.clear();
+    acceptedAssets.clear();
     updateResultSelection();
   });
   const stepPdfMatch = (delta) => {
@@ -1928,7 +1936,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const effectiveResult = resultForRepresentation(result, representation);
       const activeProvider = await provider();
       if (!isCurrent()) return;
-      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
       if (!isCurrent()) return;
       await insertMaterialized(effectiveResult, materialized, snapshot.options, { isCurrent });
       if (isCurrent()) close();
@@ -1942,7 +1950,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const effectiveResult = resultForRepresentation(result, representation);
       const activeProvider = await provider();
       if (!isCurrent()) return;
-      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+      const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
       if (!isCurrent()) return;
       await openObjectify(effectiveResult, materialized, { isCurrent });
       if (isCurrent()) close();
@@ -1963,7 +1971,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         const representation = aiActionRepresentationForResult(result, snapshot.selectedId, snapshot.representation, snapshot.selectedFigure);
         if (!canInsertLibraryResult(result, representation)) continue;
         const effectiveResult = resultForRepresentation(result, representation);
-        const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, representation: materializationRepresentation(result, representation) });
+        const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
         if (!isCurrent()) return;
         references.push(await rasterizeReference(materializedReference(effectiveResult, materialized)));
         if (!isCurrent()) return;
@@ -2040,6 +2048,24 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const cropTitle = overlay.querySelector("#unilib-crop-title");
   const cropZoomOutput = overlay.querySelector("[data-unilib-crop-zoom]");
   let editingAcceptedId = null;
+  let cropReady = false;
+  let cropOpenOptions = {};
+  const cropLoadState = overlay.querySelector("[data-unilib-crop-load-state]");
+  const cropRetry = overlay.querySelector("[data-unilib-crop-retry]");
+  const setCropLoadState = (state, message = "PDF 페이지를 불러오는 중입니다…") => {
+    cropReady = state === "ready";
+    cropStage.setAttribute("aria-busy", String(state === "loading"));
+    cropLoadState.hidden = cropReady;
+    cropLoadState.dataset.state = state;
+    cropLoadState.querySelector("[data-unilib-crop-load-message]").textContent = message;
+    cropRetry.hidden = state !== "error";
+    cropCanvas.style.visibility = cropReady ? "" : "hidden";
+    cropImage.hidden = !cropReady;
+    overlay.querySelector("[data-unilib-crop-fit]").disabled = !cropReady;
+    overlay.querySelector("[data-unilib-crop-select-all]").disabled = !cropReady;
+    if (!cropReady) pendingCard.remove();
+    setCropActionAvailability();
+  };
   const addCropHandles = (box) => {
     for (const edge of ["nw", "n", "ne", "e", "se", "s", "sw", "w"]) {
       const handle = document.createElement("i");
@@ -2114,8 +2140,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       marker.append(number);
       return marker;
     }));
-    if (draftCrop && !editingAcceptedId) cropCollection.append(pendingCard);
-    cropCollection.hidden = acceptedCrops.length === 0 && !draftCrop;
+    if (cropReady && draftCrop && !editingAcceptedId) cropCollection.append(pendingCard);
+    cropCollection.hidden = acceptedCrops.length === 0 && (!cropReady || !draftCrop);
     overlay.querySelector("[data-unilib-crop-count]").textContent = `크롭 이미지 ${acceptedCrops.length}개`;
     overlay.querySelector("[data-unilib-crop-selection]").textContent = activeAcceptedCropId
       ? `${acceptedCrops.findIndex(({ result }) => result.id === activeAcceptedCropId) + 1}번 영역만 선택됨`
@@ -2123,8 +2149,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   const setCropActionAvailability = () => {
     const targets = cropActionTargets();
-    const available = targets.length > 0 && !cropActionBusy;
-    const draftReady = Boolean(draftCrop && cropPreviewExact && cropExact?.rectKey === cropRectKey() && !cropActionBusy);
+    const available = cropReady && targets.length > 0 && !cropActionBusy;
+    const draftReady = Boolean(cropReady && draftCrop && cropPreviewExact && cropExact?.rectKey === cropRectKey() && !cropActionBusy);
     cropConfirm.hidden = !draftCrop || Boolean(editingAcceptedId);
     cropSave.disabled = !draftReady;
     overlay.querySelector("[data-unilib-crop-insert]").disabled = !available || typeof insertMaterialized !== "function";
@@ -2179,8 +2205,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cropPreviewFrame = 0;
   const paintCropPreview = () => {
     cropPreviewFrame = 0;
-    cropPreview.style.display = draftCrop ? "block" : "none";
-    if (!draftCrop || !cropImage.complete || !cropImage.naturalWidth) {
+    cropPreview.style.display = cropReady && draftCrop ? "block" : "none";
+    if (!cropReady || !draftCrop || !cropImage.complete || !cropImage.naturalWidth) {
       cropPreview.width = 1;
       cropPreview.height = 1;
       return;
@@ -2201,7 +2227,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropBox.classList.toggle("is-editing", Boolean(editingAcceptedId));
     cropAcceptedLayer.querySelectorAll("[data-accepted-crop-id]").forEach((marker) => { marker.style.visibility = marker.dataset.acceptedCropId === editingAcceptedId && draftCrop ? "hidden" : ""; });
     setCropActionAvailability();
-    if (!draftCrop) {
+    if (!cropReady || !draftCrop) {
       if (cropPreviewFrame) cancelAnimationFrame(cropPreviewFrame);
       cropPreviewFrame = 0;
       cropCollection.querySelectorAll(".unilib-crop-collection-thumb").forEach((image) => { image.style.display = ""; });
@@ -2273,6 +2299,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   const closeCrop = (restoreFocus = true) => {
     cropPreviewEpoch += 1;
+    cropReady = false;
     cropPreviewExact = false;
     cropExact = null;
     cropActionBusy = false;
@@ -2288,6 +2315,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropBaseScale = 1;
     cropCanvas.removeAttribute("style");
     cropImage.removeAttribute("src");
+    cropStage.removeAttribute("aria-busy");
     cropDialog.removeAttribute("data-pdf-page");
     cropDialog.classList.remove("is-view-only");
     cropTitle.textContent = "여러 영역 크롭";
@@ -2300,7 +2328,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭" } = {}) => {
     const result = selectedActiveResult();
     if (!result || result.provenance?.provider !== "pdf") return;
-    cropReturnFocus = document.activeElement;
+    if (cropDialog.hidden) cropReturnFocus = document.activeElement;
+    cropOpenOptions = { emptyDraft, wholePage, title };
     const session = {
       resultId: result.id,
       documentId: result.provenance.documentId,
@@ -2309,9 +2338,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       canonicalPage: null,
     };
     cropSession = session;
-    acceptedCrops = [];
+    acceptedCrops = [...acceptedAssets.values()].filter(({ result: accepted }) => accepted.provenance.documentId === session.documentId && accepted.provenance.pageNumber === session.pageNumber);
     activeAcceptedCropId = null;
-    cropSequence = 0;
+
     renderAcceptedCrops();
     cropDialog.classList.remove("is-view-only");
     cropTitle.textContent = title;
@@ -2320,18 +2349,21 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     draftCrop = emptyDraft ? null : clampRect(result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result) || result.variants?.content?.source?.rect || result.provenance.rect);
     cropPreviewExact = false;
     cropExact = null;
-    const activeProvider = await provider();
-    if (overlay.hidden || cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return;
-    const pageResults = typeof activeProvider.search === "function"
-      ? activeProvider.search({ query: "", kinds: ["crop"], limit: 500 })
-      : results;
-    cropFitBounds = wholePage ? [0, 0, 1, 1] : cropContentBoundsForResult(result, pageResults);
     cropDialog.hidden = false;
-    cropStage.setAttribute("aria-busy", "true");
-    paintCrop();
+    setCropLoadState("loading");
+    cropImage.removeAttribute("src");
     cropStage.focus();
-    setStatus("원문 페이지를 준비하는 중…");
     try {
+      const activeProvider = await provider();
+      if (overlay.hidden || cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return;
+      const pageResults = typeof activeProvider.search === "function"
+        ? activeProvider.search({ query: "", kinds: ["crop"], limit: 500 })
+        : results;
+      cropFitBounds = wholePage ? [0, 0, 1, 1] : cropContentBoundsForResult(result, pageResults);
+      cropDialog.hidden = false;
+      paintCrop();
+      cropStage.focus();
+      setStatus("원문 페이지를 준비하는 중…");
       const original = await materializeOriginalLibraryPage(result, activeProvider);
       if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
       const canonicalPage = original?.result ?? (["page", "crop"].includes(result.kind) ? result : null);
@@ -2347,12 +2379,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       cropImage.src = src;
       await cropImage.decode();
       if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
-      cropStage.setAttribute("aria-busy", "false");
+      setCropLoadState("ready");
+      fitCropContent();
+      paintCrop();
       void paintExactCropPreview();
       return true;
     } catch (error) {
       if (cropSession === session) {
-        cropStage.setAttribute("aria-busy", "false");
+        setCropLoadState("error", "PDF 페이지를 불러오지 못했습니다.");
         setStatus(`원문 페이지 실패: ${error instanceof Error ? error.message : error}`, true);
       }
       return false;
@@ -2379,7 +2413,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!currentMaterialized || currentMaterializedIdentity !== identity) return false;
     const src = resultImage(result, currentMaterialized);
     if (!src) return false;
-    cropReturnFocus = document.activeElement;
+    if (cropDialog.hidden) cropReturnFocus = document.activeElement;
     const session = {
       resultId: result.id,
       documentId: result.provenance?.documentId,
@@ -2392,28 +2426,27 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropDialog.classList.add("is-view-only");
     cropTitle.textContent = "확대 미리보기";
     cropDialog.hidden = false;
-    cropStage.setAttribute("aria-busy", "true");
+    setCropLoadState("loading", "이미지를 불러오는 중입니다…");
     cropImage.src = src;
     try {
       await cropImage.decode();
       if (cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return false;
       cropFitBounds = [0, 0, 1, 1];
-      cropStage.setAttribute("aria-busy", "false");
+      setCropLoadState("ready");
       fitCropContent();
       cropStage.focus();
       return true;
     } catch {
       if (cropSession === session && cropSessionIsCurrent(session, selectedActiveResult())) {
-        cropStage.setAttribute("aria-busy", "false");
+        setCropLoadState("error", "이미지를 불러오지 못했습니다.");
         setStatus("확대 미리보기 이미지를 읽지 못했습니다.", true);
       }
       return false;
     }
   };
-  cropImage.addEventListener("load", () => {
-    cropStage.setAttribute("aria-busy", "false");
-    fitCropContent();
-    paintCrop();
+  cropRetry.addEventListener("click", () => {
+    if (cropSession?.viewOnly) void openExpandedPreview();
+    else void openCropEditor(cropOpenOptions);
   });
   overlay.querySelector("[data-unilib-crop-fit]").addEventListener("click", fitCropContent);
   cropStage.addEventListener("wheel", (event) => {
@@ -2441,6 +2474,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     selectedIds.add(accepted.id);
     selectedRecords.set(accepted.id, accepted);
+    acceptedAssets.set(accepted.id, entry);
     draftCrop = null;
     cropPreviewEpoch += 1;
     cropPreviewExact = false;
@@ -2464,6 +2498,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (activeAcceptedCropId === remove.dataset.unilibCropRemove) activeAcceptedCropId = null;
     selectedIds.delete(remove.dataset.unilibCropRemove);
     selectedRecords.delete(remove.dataset.unilibCropRemove);
+    acceptedAssets.delete(remove.dataset.unilibCropRemove);
     invalidateAction();
     renderAcceptedCrops();
     updateResultSelection();
@@ -2578,7 +2613,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     return normalizedCropPoint(event, cropCanvas.getBoundingClientRect());
   };
   cropStage.addEventListener("pointerdown", (event) => {
-    if (cropSession?.viewOnly) return;
+    if (!cropReady || cropSession?.viewOnly) return;
     if (!cropSessionIsCurrent(cropSession, selectedActiveResult())) return;
     if (event.target.closest("button")) return;
     event.preventDefault();
@@ -2660,7 +2695,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (draftCrop) void paintExactCropPreview();
   });
   cropStage.addEventListener("keydown", (event) => {
-    if (!draftCrop || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+    if (!cropReady || !draftCrop || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
     event.preventDefault();
     draftCrop = cropRectFromKeyboard(draftCrop, event.key, event.shiftKey);
     cropPreviewExact = false;
