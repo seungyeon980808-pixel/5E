@@ -1,9 +1,13 @@
 # 5E Windows 데스크톱판
 
+## 현재 발행판과 이 소스의 차이
+
+이미 발행된 최신 Windows 설치판은 [v1.5.8](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)입니다. 현재 main 루트는 웹 배포 복원 이후의 1.5.3 소스이며, 여기서 빌드하는 파일을 v1.5.8 설치판과 동일하다고 간주하면 안 됩니다. [배포 채널 정책](RELEASE_CHANNELS.md)을 먼저 확인하세요.
+
 ## 개발 실행
 
 1. Node.js 20 이상과 Codex CLI를 설치한다.
-2. `5E_main`에서 `npm install`을 실행한다.
+2. 저장소 루트에서 `npm ci`을 실행한다.
 3. `npm run desktop`으로 실행한다.
 
 개발 중에는 설치·삭제를 반복하지 않는다. 소스를 수정한 뒤 `npm.cmd run desktop`으로 바로 실행하고, 자동 검증은 `npm.cmd test`와 `npm.cmd run test:desktop`을 사용한다. `test:desktop`은 실제 Electron 화면을 열어 고급 기능 버튼, AI 패널 열기, Codex 로그인 상태 IPC, App Server 시작·종료를 확인하고 자동 종료한다.
@@ -12,7 +16,7 @@ Codex CLI가 PATH에 없거나 로그인하지 않은 경우 AI 패널이 각각
 
 ## 설치 패키지
 
-`npm run package:win`은 정식 `release/5E Setup 1.5.3.exe` NSIS 설치 파일을 만든다. 설치 후 5E는 기존 `index.html`과 ES 모듈을 그대로 사용하고, AI 기능만 안전한 preload IPC로 추가된다.
+`npm run package:win`은 현재 소스 버전의 `release/5E Setup 1.5.3.exe` NSIS 설치 파일을 만든다. 설치 후 5E는 기존 `index.html`과 ES 모듈을 그대로 사용하고, AI 기능만 안전한 preload IPC로 추가된다.
 
 ## 보안과 제한
 
@@ -23,7 +27,7 @@ Codex CLI가 PATH에 없거나 로그인하지 않은 경우 AI 패널이 각각
 - 현재 설치된 Codex가 생성한 공식 App Server 스키마에 맞춰 `initialize`, `thread/start`, `thread/resume`, `turn/start`, `turn/interrupt`를 사용한다.
 - `item/completed`의 `imageGeneration` 결과는 허용된 이미지 형식과 20MB 제한을 확인한 뒤 data URL로 변환하여 미리보기로 전달한다.
 - 이미지 생성 자체는 ChatGPT/Codex 계정과 해당 모델 기능이 필요하다. 로그인하지 않은 상태에서 로컬 편집·저장·내보내기는 계속 사용할 수 있다.
-- 현재 설치 파일에는 배포용 코드 서명 인증서와 전용 앱 아이콘이 설정되지 않았다. 외부 배포 전 인증서 서명과 `.ico` 자산 설정이 필요하다.
+- 소스에는 `assets/icon.ico` 아이콘이 설정되어 있습니다. 발행된 설치 파일의 실제 코드 서명 상태는 별도로 확인해야 하며, 소스의 아이콘 설정이나 체크섬만으로 서명 완료라고 판단하지 않습니다.
 
 웹판에서 `AI 이미지 생성/변환`을 누르면 설치 안내만 표시된다. preload API가 있는 Windows 데스크톱판에서는 같은 버튼이 실제 AI 패널을 연다.
 

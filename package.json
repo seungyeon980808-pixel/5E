@@ -16,7 +16,9 @@
     "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
     "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
-    "package:win": "electron-builder --win nsis --publish never"
+    "package:win": "electron-builder --win nsis --publish never",
+    "check:release": "node scripts/check-release-identity.cjs",
+    "test:release": "node --test tests/release-metadata.test.cjs"
   },
   "devDependencies": {
     "electron": "^37.0.0",
@@ -25,9 +27,36 @@
   "build": {
     "appId": "com.5e.editor",
     "productName": "5E",
-    "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
-    "win": { "icon": "assets/icon.ico", "target": [{ "target": "nsis", "arch": ["x64"] }] },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "fonts/**/*",
+      "desktop/**/*",
+      "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
+      "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
+      "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   }
 }

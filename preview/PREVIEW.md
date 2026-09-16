@@ -1,7 +1,27 @@
 # 5E 1.6.0 Preview
 
-Published snapshot of codex/library-repair, including the approved editing controls work, on 2026-09-15.
-Only this directory belongs to the preview. Stable files outside it are unchanged.
-Browser local settings, IndexedDB databases and AI session choices use a `5e.preview:` prefix.
-The manifest uses relative start URL and scope. No service worker is registered.
-Desktop-only local integrations still require the desktop application.
+**시험판입니다. 정식 1.6.0 설치판이나 기존 웹판의 자동 업데이트가 아닙니다.**
+
+- 공개 주소: https://www.5e.ai.kr/preview/
+- 최초 공개: 2026-09-15
+- 출처 설명: `codex/library-repair`의 편집 컨트롤 작업을 포함한 스냅샷
+- 최초 추가 커밋: `b31378e9073486ec1457b98ced4ae78771445fb9`
+- 최초 Preview tree: `38885e4e2448b36ec3b1651acfb29e7d64f35e20`
+- 원본 개발 브랜치의 정확한 SHA는 당시 스냅샷에 별도 기록되지 않았습니다.
+
+## 기존 웹판과의 차이
+
+이 디렉터리에만 Preview 실행 파일이 있습니다. 기존 웹판은 루트 `/`의 1.5.3이며, 발행된 Windows 설치판 1.5.8도 별도입니다. [전체 배포 안내](../docs/RELEASE_CHANNELS.md)를 참고하세요.
+
+Preview에는 통합 라이브러리, 편집 컨트롤 변경, PDF.js 기반 PDF 읽기·검색·페이지 렌더링 코드가 포함됩니다. 현재 Pro/Lite는 화면 표시 모드이고 기본은 Pro입니다. 계획 중인 `PDF → 변환 → 라벨 → 저장` 단일 흐름의 기본 화면이 완성됐다는 의미는 아닙니다.
+
+## 데이터와 연동 경계
+
+- 브라우저 설정, IndexedDB, AI 세션 선택은 `5e.preview:` 접두어를 사용합니다.
+- 기존 웹판 작업을 자동으로 이전하지 않습니다. 중요한 작업은 프로젝트 파일로 백업하세요.
+- manifest의 시작 주소와 scope는 상대 경로입니다. service worker는 등록하지 않습니다.
+- 로컬 폴더·화면 캡처·AI 등 데스크톱 전용 연동은 해당 데스크톱 환경이 필요합니다. Preview 웹 주소만으로 모든 연동이 작동하지 않습니다.
+
+## 검증 수준
+
+브라우저 초기 화면과 라이브러리 열기는 확인됐습니다. 모든 PDF 형식, 실제 계정 AI 변환, 설치판 동작, 저장 후 출력 품질을 보증하는 전체 E2E 검증은 별도입니다. 숫자 변경만으로 안정판으로 승격하지 않습니다.

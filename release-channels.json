@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "channels": {
+    "web": {
+      "version": "1.5.3",
+      "url": "https://www.5e.ai.kr/",
+      "status": "stable"
+    },
+    "windows": {
+      "version": "1.5.8",
+      "url": "https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8",
+      "status": "published"
+    },
+    "preview": {
+      "version": "1.6.0-preview",
+      "url": "https://www.5e.ai.kr/preview/",
+      "status": "preview"
+    }
+  }
+}

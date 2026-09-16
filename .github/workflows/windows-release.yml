@@ -19,6 +19,12 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Verify release identity before installing dependencies
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/check-release-identity.cjs --tag "$env:RELEASE_TAG"
+
       - name: Install dependencies
         run: npm ci
 
@@ -40,8 +46,11 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = $env:RELEASE_TAG
+          $releaseFlags = @()
+          if ($tag -match '-') { $releaseFlags += "--prerelease" }
           $assets = @(
             (Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1).FullName
             (Resolve-Path -LiteralPath release/SHA256SUMS.txt).Path
@@ -50,7 +59,7 @@ jobs:
           if (Test-Path -LiteralPath $notesPath) {
             $firstLine = Get-Content -LiteralPath $notesPath -Encoding utf8 -TotalCount 1
             $releaseTitle = if ($firstLine -match '^<!-- release-title: (.+) -->$') { $Matches[1] } else { "5E $tag" }
-            & gh release create $tag @assets --notes-file $notesPath --title $releaseTitle
+            & gh release create $tag @assets @releaseFlags --notes-file $notesPath --title $releaseTitle
           } else {
-            & gh release create $tag @assets --generate-notes --title "5E $tag"
+            & gh release create $tag @assets @releaseFlags --generate-notes --title "5E $tag"
           }

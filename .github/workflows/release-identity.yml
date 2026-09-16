@@ -1,0 +1,21 @@
+name: Release Identity
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check channel metadata
+        run: node scripts/check-release-identity.cjs
+      - name: Test release identity guard
+        run: node --test tests/release-metadata.test.cjs
