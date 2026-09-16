@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const projectRoot = path.resolve(__dirname, '../..');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.otf': 'font/otf', '.ttf': 'font/ttf', '.wasm': 'application/wasm', '.bcmap': 'application/octet-stream', '.pfb': 'application/octet-stream', '.gz': 'application/gzip', '.ico': 'image/x-icon' };
-const authActions = new Set(['session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
+const authActions = new Set(['web-session', 'session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
 function scriptJson(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
@@ -27,7 +27,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
       }
       body = Buffer.concat(chunks);
     }
-    return fetch(`${upstream}/api/${action}`, { method: 'POST', headers: { Origin: upstream, 'X-5E-Request': '1', Cookie: cookie, 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(35000) });
+    return fetch(`${upstream}/api/${action}`, { method: 'POST', headers: { Origin: upstream, 'X-5E-Request': '1', Cookie: cookie, ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}), 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(35000) });
   }
   return http.createServer(async (req, res) => {
     const origin = `http://127.0.0.1:${req.socket.localPort}`;
@@ -74,7 +74,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
         html = html.replace('로컬 인증 실험입니다.<br>이미지 변환 기능은 꺼져 있습니다.<br>원격 무설치 사용은 검증 전입니다.', url.pathname === '/account' ? '로그인을 완료한 뒤 편집기로 돌아가세요.<br>AI 이미지 생성과 수정을 시험할 수 있습니다.' : '로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.');
         if (url.pathname === '/account') html = html.replace('</section>', '<a href="/editor/">5E 편집기 열기</a></section>');
         if (url.pathname === '/web-connect') {
-          html = html.replace('5E / 로그인 실험', '5E / ChatGPT 연결').replace('이 브라우저의 실험 세션에 계정을 연결합니다.', '이 브라우저에 ChatGPT 계정을 연결합니다.').replace('로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.', '로그인 후 이 탭을 열어 둔 채 원래 편집기로 돌아가세요.');
+          html = html.replace('5E / 로그인 실험', '5E / ChatGPT 연결').replace('이 브라우저의 실험 세션에 계정을 연결합니다.', '이 브라우저에 ChatGPT 계정을 연결합니다.').replace('로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.', '계정 연결이 완료되면 이 창을 닫고 편집기로 돌아가세요.');
           html = html.replace('</body>', '<script src="/web-connect.js"></script></body>');
         }
         return reply(200, html, 'text/html');

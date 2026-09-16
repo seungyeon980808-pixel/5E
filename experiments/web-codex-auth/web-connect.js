@@ -1,22 +1,23 @@
 (() => {
   const editor = new URL(location.href).searchParams.get('editor');
   if (editor !== 'https://www.5e.ai.kr' || !window.opener) return;
-  const allowed = new Set(['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
-  window.addEventListener('message', async event => {
-    if (event.origin !== editor || event.source !== window.opener) return;
-    const message = event.data;
-    if (message?.type !== '5e:runtime-request' || !Number.isSafeInteger(message.id) || !allowed.has(message.action)) return;
+  let transferring = false, connected = false;
+  window.addEventListener('5e:account-status', async event => {
+    if (!event.detail?.signedIn) { connected = false; return; }
+    if (transferring || connected) return;
+    transferring = true;
     try {
-      const response = await fetch(`/api/${message.action}`, {
-        method: 'POST', headers: { 'X-5E-Request': '1', 'Content-Type': 'application/json' },
-        body: JSON.stringify(message.payload), signal: AbortSignal.timeout(35000),
-      });
+      const response = await fetch('/api/web-session', { method: 'POST', headers: { 'X-5E-Request': '1' } });
       const result = await response.json();
-      window.opener.postMessage({ type: '5e:runtime-response', id: message.id,
-        ...(response.ok ? { result } : { error: result.error || '서버 요청 실패', status: response.status }) }, editor);
+      if (!response.ok || !/^[a-f0-9]{64}$/.test(result.token)) throw new Error('Session transfer failed');
+      window.opener.postMessage({ type: '5e:runtime-session', token: result.token }, editor);
     } catch {
-      window.opener.postMessage({ type: '5e:runtime-response', id: message.id, error: '서버 연결이 끊겼습니다.' }, editor);
-    }
+      document.getElementById('status').textContent = '계정 연결을 편집기에 전달하지 못했습니다. 잠시 후 다시 시도합니다.';
+    } finally { transferring = false; }
   });
-  window.opener.postMessage({ type: '5e:runtime-ready' }, editor);
+  window.addEventListener('message', event => {
+    if (event.origin !== editor || event.source !== window.opener || event.data?.type !== '5e:session-received') return;
+    connected = true;
+    document.getElementById('status').textContent = '편집기에 연결되었습니다. 이제 이 창을 닫아도 됩니다.';
+  });
 })();

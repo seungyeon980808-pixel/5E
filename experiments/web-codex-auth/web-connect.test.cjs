@@ -3,27 +3,35 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const vm = require('node:vm');
 
-test('web transport ignores foreign origins and windows, preserves workspace and never supplies desktop capabilities', async () => {
-  let receive;
-  const messages = [];
-  const popup = { closed: false, focus() {}, postMessage: (...args) => messages.push(args) };
-  const window = { addEventListener: (_, fn) => { receive = fn; }, open: () => popup, dispatchEvent() {} };
-  const context = { window, location: { origin: 'https://www.5e.ai.kr' }, setTimeout, clearTimeout, Event };
-  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), context);
-  vm.runInNewContext(readFileSync(require.resolve('./editor-bridge.js'), 'utf8'), context);
-  assert.equal(window.fiveEDesktop, undefined);
-  assert.equal(window.fiveEWebAI.web, true);
-  await window.fiveEWebAI.login();
-  receive({ origin: 'https://evil.example', source: popup, data: { type: '5e:runtime-ready' } });
-  assert.equal((await window.fiveEWebAI.status()).login.loggedIn, false);
+test('direct web session survives popup close and refresh and rejects foreign messages', async () => {
   const origin = 'https://five-e-ai-runtime-probe.onrender.com';
-  receive({ origin, source: {}, data: { type: '5e:runtime-ready' } });
-  assert.equal((await window.fiveEWebAI.status()).login.loggedIn, false);
-  receive({ origin, source: popup, data: { type: '5e:runtime-ready' } });
-  const result = window.fiveEWebAI.status({ clientScope: 'workspace-2' });
-  assert.equal(messages[0][0].payload.clientScope, 'workspace-2');
-  receive({ origin, source: popup, data: { type: '5e:runtime-response', id: messages[0][0].id, result: { login: { loggedIn: true }, server: true } } });
-  assert.equal((await result).login.loggedIn, true);
+  const store = new Map();
+  const sessionStorage = { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) };
+  const popup = { closed: false, focus() {}, postMessage() {} };
+  const calls = [];
+  let receive, opened = 0;
+  const boot = () => {
+    const window = { addEventListener: (_, fn) => { receive = fn; }, open: () => { opened++; return popup; }, dispatchEvent() {} };
+    const context = { window, location: { origin: 'https://www.5e.ai.kr' }, sessionStorage, Event, AbortSignal,
+      fetch: async (...args) => { calls.push(args); return { ok: true, status: 200, json: async () => ({ login: { loggedIn: true }, server: true }) }; } };
+    vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), context);
+    return window;
+  };
+  let window = boot();
+  window.fiveEWebLogin();
+  receive({ origin: 'https://evil.example', source: popup, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
+  assert.equal((await window.fiveEWebRequest('bridge-status')).login.loggedIn, false);
+  receive({ origin, source: {}, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
+  assert.equal(store.size, 0);
+  receive({ origin, source: popup, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
+  popup.closed = true;
+  assert.equal((await window.fiveEWebRequest('bridge-status', { clientScope: 'workspace-2' })).login.loggedIn, true);
+  assert.equal(calls[0][1].credentials, 'omit');
+  assert.equal(calls[0][1].headers.Authorization, 'Bearer ' + 'a'.repeat(64));
+  window = boot();
+  assert.equal((await window.fiveEWebRequest('bridge-status')).login.loggedIn, true);
+  window.fiveEWebLogin();
+  assert.equal(opened, 1);
 });
 
 test('public web connection is opt-in and leaves the private editor gate intact', async () => {

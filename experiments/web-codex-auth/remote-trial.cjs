@@ -19,12 +19,26 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     const reject = (status, message) => { res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(message); };
-    if (req.headers.host !== external.host || (req.headers.origin && req.headers.origin !== publicOrigin)) return reject(403, 'Origin rejected');
+    if (req.headers.host !== external.host) return reject(403, 'Origin rejected');
+    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/bridge-(status|models|account|send|events|interrupt)$/.test(req.url);
+    if (direct) {
+      res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
+      res.setHeader('Vary', 'Origin');
+      if (req.method === 'OPTIONS') {
+        const requested = (req.headers['access-control-request-headers'] || '').toLowerCase().split(',').map(value => value.trim()).filter(Boolean);
+        if (req.headers['access-control-request-method'] !== 'POST' || requested.some(value => !['authorization', 'content-type', 'x-5e-request'].includes(value))) return reject(403, 'Request rejected');
+        res.setHeader('Access-Control-Allow-Methods', 'POST');
+        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-5E-Request');
+        res.writeHead(204); return res.end();
+      }
+      if (req.method !== 'POST' || !/^Bearer [a-f0-9]{64}$/.test(req.headers.authorization || '') || req.headers['x-5e-request'] !== '1') return reject(401, 'Web session required');
+    }
+    if (req.headers.host !== external.host || (req.headers.origin && req.headers.origin !== publicOrigin && !direct)) return reject(403, 'Origin rejected');
     if (req.method === 'GET' && req.url === '/healthz') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ status: 'ready', mode: 'private-device-code-trial', modelCallsFromHealthCheck: 0 }));
     }
-    if (req.headers['sec-fetch-site'] === 'cross-site' && req.method !== 'GET') return reject(403, 'Origin rejected');
+    if (req.headers['sec-fetch-site'] === 'cross-site' && req.method !== 'GET' && !direct) return reject(403, 'Origin rejected');
     const invitation = /^\/trial\/([a-f0-9]{64})$/.exec(req.url);
     if (req.method === 'GET' && invitation && sameSecret(invitation[1], accessKey)) {
       res.setHeader('Set-Cookie', `__Host-fivee_trial=${accessKey}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=21600`);
@@ -36,15 +50,16 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     if (!webConnection && !sameSecret(key, accessKey)) return reject(401, '비공개 실사용 시험입니다. 전달받은 시험 초대 링크로 접속해 주세요.');
     if (Number(req.headers['content-length']) > 12000000) return reject(413, '이미지가 너무 큽니다.');
     const headers = { ...req.headers, host: `127.0.0.1:${gatewayPort}` };
-    delete headers.authorization;
+    if (!direct) delete headers.authorization;
     delete headers['x-forwarded-host'];
     delete headers['x-forwarded-proto'];
     if (req.headers.origin) headers.origin = internal;
     headers['sec-fetch-site'] = 'same-origin';
-    headers.cookie = (req.headers.cookie || '').split(';').filter(part => part.trim().startsWith('fivee_auth_')).join(';');
+    headers.cookie = (direct ? '' : req.headers.cookie || '').split(';').filter(part => part.trim().startsWith('fivee_auth_')).join(';');
     const started = performance.now();
     const upstream = http.request({ hostname: '127.0.0.1', port: gatewayPort, path: req.url, method: req.method, headers }, response => {
       const outgoing = { ...response.headers };
+      if (direct) delete outgoing['set-cookie'];
       if (outgoing['set-cookie']) outgoing['set-cookie'] = outgoing['set-cookie'].map(cookie => cookie + '; Secure');
       outgoing['server-timing'] = `gateway;dur=${(performance.now() - started).toFixed(1)}`;
       res.writeHead(response.statusCode, outgoing);
