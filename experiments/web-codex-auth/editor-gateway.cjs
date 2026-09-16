@@ -8,7 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const projectRoot = path.resolve(__dirname, '../..');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.woff2': 'font/woff2', '.otf': 'font/otf', '.ttf': 'font/ttf', '.wasm': 'application/wasm', '.bcmap': 'application/octet-stream', '.pfb': 'application/octet-stream', '.gz': 'application/gzip', '.ico': 'image/x-icon' };
-const authActions = new Set(['web-session', 'session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
+const authActions = new Set(['web-login-start', 'web-login-status', 'web-login-cancel', 'web-session', 'session', 'status', 'login', 'cancel', 'logout', 'generate', 'generation', 'generation-cancel', 'bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt']);
 function scriptJson(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
@@ -76,10 +76,11 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
         if (url.pathname === '/web-connect') {
           html = html.replace('5E / 로그인 실험', '5E / ChatGPT 연결').replace('이 브라우저의 실험 세션에 계정을 연결합니다.', '이 브라우저에 ChatGPT 계정을 연결합니다.').replace('로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.', '계정 연결이 완료되면 이 창을 닫고 편집기로 돌아가세요.');
           html = html.replace('</body>', '<script src="/web-connect.js"></script></body>');
+          if (url.searchParams.get('flow') === 'popup') html = html.replace('/client.js', '/popup-login.js');
         }
         return reply(200, html, 'text/html');
       }
-      const own = { '/web-connect.js': 'web-connect.js', '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
+      const own = { '/popup-login.js': 'popup-login.js', '/web-connect.js': 'web-connect.js', '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
       if (own) return reply(200, fs.readFileSync(path.join(__dirname, own)), mime[path.extname(own)]);
       const relative = decodeURIComponent(url.pathname.replace(/^\/editor\//, '/')).slice(1);
       if (relative.includes('..') || relative.includes('\\') || !/^(?:css\/|js\/|assets\/|fonts\/|vendor\/(?:pdfjs|ocr)\/|docs\/credits\.html$|manifest\.json$)/.test(relative)) return reply(404, '{"error":"Not found"}');
