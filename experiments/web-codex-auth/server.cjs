@@ -13,11 +13,13 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
   chmodSync(root, 0o700);
   const sessions = new Map();
   const webSessions = new Map();
+  const loginTickets = new Map();
   const digest = token => createHash("sha256").update(token).digest("hex");
   const generationScheduler = new GlobalGenerationScheduler({ maxRunning: generationConcurrency });
   const assets = new Map([['/', ['index.html', 'text/html']], ['/client.js', ['client.js', 'text/javascript']], ['/style.css', ['style.css', 'text/css']]]);
   const dispose = (id, entry) => {
     sessions.delete(id);
+    for (const [ticket, item] of loginTickets) if (item.id === id) loginTickets.delete(ticket);
     if (entry.webToken) webSessions.delete(digest(entry.webToken));
     entry.session.close();
     rmSync(entry.directory, { recursive: true, force: true });
@@ -37,12 +39,20 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
       return res.end(file === 'index.html' && !editorNavigation ? body.toString('utf8').replace(/ data-editor-url="[^"]*"/, '') : body);
     }
     if (req.method !== 'POST' || req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return json(403, { error: 'Request rejected' });
-    const routes = new Set(['/api/web-session', '/api/session', '/api/status', '/api/login', '/api/cancel', '/api/logout', '/api/generate', '/api/generation', '/api/generation-cancel']);
+    const routes = new Set(['/api/web-login-start', '/api/web-login-status', '/api/web-login-cancel', '/api/web-session', '/api/session', '/api/status', '/api/login', '/api/cancel', '/api/logout', '/api/generate', '/api/generation', '/api/generation-cancel']);
     if (!routes.has(req.url) && !bridgeRoutes.has(req.url)) return json(404, { error: 'Unknown endpoint' });
     const cookieName = `fivee_auth_${server.address().port}`;
     let id = new RegExp(`(?:^|;\\s*)${cookieName}=([a-f0-9]{64})(?:;|$)`).exec(req.headers.cookie || '')?.[1];
     const bearer = /^Bearer ([a-f0-9]{64})$/.exec(req.headers.authorization || '')?.[1];
-    if (req.headers.authorization) {
+    const loginRoute = ['/api/web-login-status', '/api/web-login-cancel'].includes(req.url);
+    const ticket = bearer && loginTickets.get(digest(bearer));
+    if (loginRoute) {
+      if (!ticket || ticket.expires < Date.now()) {
+        if (bearer) loginTickets.delete(digest(bearer));
+        return json(401, { error: 'Login expired. Please try again.' });
+      }
+      id = ticket.id;
+    } else if (req.headers.authorization) {
       if (!bearer || !bridgeRoutes.has(req.url)) return json(401, { error: 'Invalid web session' });
       id = webSessions.get(digest(bearer));
     }
@@ -71,6 +81,28 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
       if (!entry) return json(401, { error: 'Session expired. Reload the page.' });
       entry.touched = Date.now();
       res.setHeader('Set-Cookie', `${cookieName}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800`);
+      if (req.url === '/api/web-login-start') {
+        req.resume();
+        const result = await entry.session.run(() => entry.session.start());
+        for (const [key, item] of loginTickets) if (item.id === id) loginTickets.delete(key);
+        const ticket = randomBytes(32).toString('hex');
+        loginTickets.set(digest(ticket), { id, expires: Date.now() + 600000 });
+        return json(200, { ...result, ticket });
+      }
+      if (loginRoute) {
+        req.resume();
+        if (req.url === '/api/web-login-cancel') {
+          loginTickets.delete(digest(bearer));
+          return json(200, await entry.session.run(() => entry.session.cancel()));
+        }
+        const result = await entry.session.run(() => entry.session.status());
+        if (!result.signedIn) return json(200, { state: result.state, signedIn: false });
+        if (!entry.webToken) {
+          entry.webToken = randomBytes(32).toString('hex');
+          webSessions.set(digest(entry.webToken), id);
+        }
+        return json(200, { signedIn: true, token: entry.webToken });
+      }
       if (req.url === '/api/web-session') {
         req.resume();
         if (!(await entry.session.run(() => entry.session.status())).signedIn) throw new RequestError(401, 'Sign in first');
