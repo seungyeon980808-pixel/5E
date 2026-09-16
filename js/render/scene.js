@@ -587,6 +587,18 @@ export function render(state) {
     if (el) {
       scene.appendChild(el);
     }
+    if (d.type === "labeler") {
+      for (const point of [d.p1, d.elbow].filter(Boolean)) {
+        const dot = document.createElementNS(SVG_NS, "circle");
+        dot.setAttribute("cx", point.x);
+        dot.setAttribute("cy", point.y);
+        dot.setAttribute("r", 4 / selectionScale);
+        dot.style.fill = "var(--c-main, #0969da)";
+        dot.setAttribute("pointer-events", "none");
+        dot.dataset.ui = "labeler-draft-point";
+        scene.appendChild(dot);
+      }
+    }
   }
 
   // Optional non-native preview. Normal editing uses the textarea overlay so
@@ -787,13 +799,13 @@ function makeHitTwin(obj) {
     twin.setAttribute("width", r * 2);
     twin.setAttribute("height", r * 2);
   } else if (obj.type === "labeler") {
-    // Hover band along the leader (p1→p2); the label glyph grabs via its own fill.
     const a = obj.p1 || { x: 0, y: 0 }, b = obj.p2 || a;
-    twin = document.createElementNS(SVG_NS, "line");
-    twin.setAttribute("x1", a.x);
-    twin.setAttribute("y1", a.y);
-    twin.setAttribute("x2", b.x);
-    twin.setAttribute("y2", b.y);
+    const joint = obj.elbow || b;
+    twin = document.createElementNS(SVG_NS, "path");
+    let d = `M ${a.x} ${a.y} L ${joint.x} ${joint.y}`;
+    if (obj.elbow) d += ` L ${b.x} ${b.y}`;
+    if (obj.p3) d += ` M ${obj.p3.x} ${obj.p3.y} L ${joint.x} ${joint.y}`;
+    twin.setAttribute("d", d);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
   }
@@ -955,8 +967,9 @@ export function singleObjBBox(o, scene) {
   if (o.type === "labeler") {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const minX = Math.min(a.x, b.x - sz), minY = Math.min(a.y, b.y - sz);
-    const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
+    const points = [a, o.elbow, o.p3].filter(Boolean);
+    const minX = Math.min(...points.map(p => p.x), b.x - sz), minY = Math.min(...points.map(p => p.y), b.y - sz);
+    const maxX = Math.max(...points.map(p => p.x), b.x + sz), maxY = Math.max(...points.map(p => p.y), b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (o.type === "pendulum") {
@@ -1183,6 +1196,7 @@ function renderHandles(sel, scene, zoom, activeTool) {
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
     // 라벨러의 두 번째 지시선: 세 번째 핸들.
     if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
+    if (sel.type === "labeler" && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
   }

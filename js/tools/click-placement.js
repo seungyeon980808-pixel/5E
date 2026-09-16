@@ -25,7 +25,7 @@ import { resolveEndpointSnap } from "../snap.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.4.0";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 import { nextObjectId } from "./id.js?v=1.4.0";
-import { openLabelerTextEditor } from "../text-editor.js?v=1.4.0";
+import { openLabelerTextEditor } from "../text-editor.js?v=1.5.1";
 import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.4.0";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.4.0";
 import { snapKey } from "../platform.js?v=1.4.0";
@@ -125,12 +125,17 @@ export function setupClickDrawing(svg, state) {
     // 그리다 만 꺾은선을 의도치 않게 커밋시킨다.
     const t = e.target;
     if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    if (e.key === "Escape") { e.preventDefault(); resetClickDraft(); }
+    if (clickTool === "LABELER" && (e.key === "Enter" || e.code === "Space")) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      commitLabeler();
+    }
+    else if (e.key === "Escape") { e.preventDefault(); resetClickDraft(); }
     else if (e.key === "Enter" && (clickTool === "P" || clickTool === "C" || clickTool === "SERIES")) {
       e.preventDefault();
       if (clickTool === "SERIES") commitSeries(); else finishPolyline();
     }
-  });
+  }, true);
 }
 
 // Live preview = the placed segments PLUS a rubber-band from the last vertex to
@@ -298,24 +303,13 @@ function commitRightAngle() {
   commitClickShape(marker);
 }
 
-/* ===== LABELER (지시선 + 이름): two-click placement, mirroring the line tool =====
- *
- * Reuses the SAME click-to-click locals + commit path as line/arc — no new
- * interaction machinery. Stores two world points like a line (p1 = leader anchor
- * on the graph, p2 = label position); render.js draws a short leader from p1 toward
- * p2 with a small end-gap, then the upright label at p2 (renderLabeler).
- *   * Click 1 → leader-line start (anchor on/near the graph).
- *   * Move    → live preview of leader + label.
- *   * Click 2 → label position → commit (auto-selects, returns to V).
- * Ctrl = 15° angle-snap of the label point relative to the anchor (shared with the
- * other click tools via snapAngle). No keyboard shortcut (tool button only). */
 function makeLabelerDraft(anchor, labelPt) {
   return applyNewObjectStyleDefaults({
     id: null,                          // assigned on commit
     type: "labeler",
     p1: { x: anchor.x, y: anchor.y },  // leader anchor (graph side)
     p2: { x: labelPt.x, y: labelPt.y },// label position
-    text: "㉠",                        // circled-letter preset (changeable in inspector)
+    text: "",
     labelType: "label",
     fontFamily: DEFAULT_TEXT_FONT,     // Dotum-first normal text (callout default)
     labelSize: DEFAULT_TEXT_SIZE_MM,   // mm; settable in inspector
@@ -331,30 +325,34 @@ function makeLabelerDraft(anchor, labelPt) {
 function handleLabelerClick(e) {
   const vb = _state.get().viewBox;
   let cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
-  if (snapKey(e) && draftPoints.length > 0) cur = snapAngle(draftPoints[0], cur);
+  if (snapKey(e) && draftPoints.length > 0) cur = snapAngle(draftPoints[draftPoints.length - 1], cur);
   draftPoints.push(cur);
   clickTool = "LABELER";
   mouseWorld = cur;
-  if (draftPoints.length >= 2) { commitLabeler(); return; }
+  if (draftPoints.length >= 3) { commitLabeler(); return; }
   updateLabelerPreview();
 }
 
 function updateLabelerPreview() {
   if (draftPoints.length === 0) return;
   const a = draftPoints[0];
-  const b = draftPoints[1] || mouseWorld || a;
-  _state.update((s) => { s.draft = makeLabelerDraft(a, b); });
+  const b = mouseWorld || a;
+  const lab = makeLabelerDraft(a, b);
+  if (draftPoints.length >= 2) lab.elbow = { ...draftPoints[1] };
+  _state.update((s) => { s.draft = lab; });
 }
 
 function commitLabeler() {
-  const lab = makeLabelerDraft(draftPoints[0], draftPoints[1]);
+  const lab = makeLabelerDraft(draftPoints[0], mouseWorld || draftPoints[0]);
+  if (draftPoints.length >= 2) lab.elbow = { ...draftPoints[1] };
   const d = Math.hypot(lab.p2.x - lab.p1.x, lab.p2.y - lab.p1.y);
   if (d < MIN_SIZE) { resetClickDraft(); return; } // zero-length placement: discard
-  commitClickShape(lab);                 // assigns lab.id and pushes it into state
-  // Two-click placement is preserved; right after committing, open the multiline
-  // text editor (like the text tool) so the user types the label content directly.
-  _state.update((s) => { s.selectedIds = lab.id ? [lab.id] : []; s.targetedId = null; });
-  if (lab.id) openLabelerTextEditor(lab.id);
+  lab.id = nextObjectId();
+  lab.layerId = _state.get().activeLayerId;
+  lab.order = _state.get().objects.length;
+  resetClickDraft();
+  _state.update((s) => { s.activeTool = "V"; s.selectedIds = []; s.targetedId = null; });
+  openLabelerTextEditor(lab.id, lab);
 }
 
 // POLYLINE / CURVE: needs ≥2 vertices; otherwise the draft is discarded.

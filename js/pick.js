@@ -403,10 +403,11 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     }
 
     if (o.type === "labeler") {
-      // Hit on the leader segment (p1→p2) OR inside the label block centered at p2.
       const a = o.p1, b = o.p2;
       if (a && b) {
-        if (segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin) return o.id;
+        const joint = o.elbow || b;
+        const segments = [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...(o.p3 ? [[o.p3, joint]] : [])];
+        if (segments.some(([from, to]) => segDist(p.x, p.y, from.x, from.y, to.x, to.y) <= margin)) return o.id;
         // Label area = the SAME block the renderer measures (labelerBlockHalf:
         // formula box or multiline text estimate), centered on p2, grown by the
         // click margin. The old fixed sz*0.7 box only covered ~one glyph, so
@@ -486,8 +487,9 @@ function getObjectBBox(o) {
     // covers the full label (text or formula), not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const { hw, hh } = labelerBlockHalf(o);
-    const minX = Math.min(a.x, b.x - hw), minY = Math.min(a.y, b.y - hh);
-    const maxX = Math.max(a.x, b.x + hw), maxY = Math.max(a.y, b.y + hh);
+    const points = [a, o.elbow, o.p3].filter(Boolean);
+    const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
+    const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph

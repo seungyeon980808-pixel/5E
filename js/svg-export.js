@@ -22,7 +22,7 @@ import { renderObject, makeFillPattern } from "./render.js?v=1.4.0";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
 } from "./export-dir.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { getObjectBBox } from "./pick.js?v=1.4.2";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;

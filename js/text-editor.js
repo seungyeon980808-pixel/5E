@@ -20,7 +20,7 @@ import {
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
 import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.4.0";
 import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.4.0";
-import { pickSelectableObjectAtPoint } from "./pick.js?v=1.4.0";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=1.4.2";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
@@ -84,10 +84,10 @@ function _closeSmallEditor() {
 // 사용한다(수식 패널·LaTeX 도움말 포함 — 확정 항목 ① 재확인, 2026-07-06). 커밋
 // 대상만 다르다: 수식이면 라벨러 객체의 contentMode/source/rawSource, 일반 텍스트면
 // text/textRuns — 어느 쪽이든 fontFamily/labelSize는 함께 갱신된다.
-export function openLabelerTextEditor(objId) {
+export function openLabelerTextEditor(objId, pendingLabeler = null) {
   if (_textEditor) _commitText();
   const s = _state.get();
-  const o = s.objects.find((x) => x.id === objId);
+  const o = pendingLabeler || s.objects.find((x) => x.id === objId);
   if (!o || o.type !== "labeler") return;
   const size = o.labelSize || DEFAULT_TEXT_SIZE_MM;
   const anchor = o.p2 || o.p1 || { x: o.x || 0, y: o.y || 0 };
@@ -108,6 +108,7 @@ export function openLabelerTextEditor(objId) {
     rotation: o.rotation ?? 0,
     editingId: o.id,
     editingType: "labeler",
+    pendingLabeler,
   }, 0, 0, prefill, { title: "라벨 텍스트 입력" });
 }
 export function openAngleArcLabelEditor(objId) {
@@ -1211,6 +1212,8 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
   if (_textFormulaPanel) _textBox.append(_textFormulaPanel);
   _textBox.append(actions);
   _textBox.addEventListener("keydown", (ke) => {
+    ke.stopPropagation();
+    if (ke.isComposing || ke.keyCode === 229) return;
     if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) {
       ke.preventDefault();
       _commitText();
@@ -1244,8 +1247,22 @@ function _openUnifiedTextEditor(draft, clientX, clientY, prefill, opts = {}) {
     _cacheTextSelection();
     _syncDraftFromUnifiedEditor();
   });
+  const editor = _textEditor;
+  let composing = false;
+  let commitAfterComposition = false;
+  editor.addEventListener("compositionstart", () => { composing = true; });
+  editor.addEventListener("compositionend", () => {
+    composing = false;
+    if (!commitAfterComposition) return;
+    commitAfterComposition = false;
+    setTimeout(() => { if (_textEditor === editor) _commitText(); }, 0);
+  });
   _textEditor.addEventListener("keydown", (ke) => {
     ke.stopPropagation();
+    if (composing || ke.isComposing || ke.keyCode === 229) {
+      if ((ke.key === "Enter" || ke.code === "Enter" || ke.code === "NumpadEnter") && !ke.ctrlKey && !ke.metaKey) commitAfterComposition = true;
+      return;
+    }
     if (ke.key === "Escape") { ke.preventDefault(); _textCancelled = true; _cancelText(); }
     else if (ke.key === "Tab") { ke.preventDefault(); _cycleUnifiedFont(); }
     else if (ke.key === "Enter" && !ke.ctrlKey && !ke.metaKey) {
@@ -1437,8 +1454,9 @@ function _cancelText() {
 
 function _commitText() {
   if (!_textEditor) return;
+  _syncDraftFromUnifiedEditor();
   const dt = _state.get().draftText;
-  const val = dt ? (dt.text ?? _textEditor.value) : _textEditor.value;
+  const val = _textEditor.value;
   const rawSource = String(val || "").trim();
   const isLabeler = dt && dt.editingType === "labeler";
   // 라벨러도 텍스트 도구와 동일하게 수식으로 승격될 수 있다(확정 항목 ①):
@@ -1451,12 +1469,13 @@ function _commitText() {
   if (!dt) return;
 
   _state.update((s) => {
+    s.draftText = null;
+    if (fromTool) s.activeTool = "V";
     if (isLabeler) {
-      // 라벨러 커밋 대상: 기존 라벨러 객체(항상 editingId 존재, 새로 만들지 않음).
       // 수식 → contentMode/source/rawSource (+ text에 원문 보관: 구버전 로더 호환),
       // 일반 → text + textRuns(styled 심볼 보존). fontFamily/labelSize(mm) 공통 갱신.
       // 빈 문자열이면 원본 유지(삭제보다 복원 선호). 한 번의 undo 엔트리.
-      const o = s.objects.find((x) => x.id === dt.editingId);
+      const o = dt.pendingLabeler || s.objects.find((x) => x.id === dt.editingId);
       if (o && o.type === "labeler" && rawSource) {
         // 정밀감사 MINOR: 라벨러 소형 편집기 commit(약 273~300행)의 변경-여부 비교
         // 패턴을 재편집에도 적용 — 아무 것도 안 바꾸고 확인만 눌러도 undo 스냅샷이
@@ -1476,6 +1495,11 @@ function _commitText() {
         const snap = JSON.parse(JSON.stringify(s.objects));
         s.undoStack.push(snap);
         s.redoStack = [];
+        if (dt.pendingLabeler) {
+          s.objects.push(o);
+          s.selectedIds = [o.id];
+          s.targetedId = null;
+        }
         if (formulaMode) {
           o.contentMode = "formula";
           o.source = normalizedSource;
@@ -1597,8 +1621,6 @@ function _commitText() {
       s.selectedIds = [id];
       s.targetedId = null;
     }
-    s.draftText = null;
-    if (fromTool) s.activeTool = "V"; // auto-return to select after new text
   });
 }
 
