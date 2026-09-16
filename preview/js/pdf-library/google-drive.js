@@ -1,5 +1,5 @@
 import { previewStorage } from '../preview-storage.js';
-import { loadRemotePack } from "./remote-pack.js";
+import { loadRemotePack } from "./remote-pack.js?v=1.6.0-preview-0916";
 
 const DRIVE_HOST = "drive.google.com";
 const FOLDER_ID_PATTERN = /^[A-Za-z0-9_-]{10,200}$/u;
