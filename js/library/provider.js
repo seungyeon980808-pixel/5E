@@ -443,7 +443,8 @@ function pdfResults(documents, index) {
     const examPath = metadata ? [`${metadata.academicYear}학년도`, administration].filter(Boolean)
       : [document.source?.kind === "file" ? "연결 폴더" : null, ...relativeFolders].filter(Boolean);
     sources.push(sourceNode(sourceId, document.source?.displayName ?? document.title, ["crop", "page"], 1, {
-      origin, category, pathSegments: examPath,
+      origin, category, pathSegments: document.driveFolder ? pathSegments(document.source.relativePath).slice(0, -1) : examPath,
+      ...(document.driveFolder ? { driveFolder: document.driveFolder } : {}),
       counts: { pdf: 1, image: 0, page: pages.size, question: questions.size },
     }));
   }

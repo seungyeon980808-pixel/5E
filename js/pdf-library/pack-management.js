@@ -93,13 +93,16 @@ export function mountPackManagement({
   onChange = () => {},
   onUpdateCandidate = null,
   googleDrive = null,
+  onProvidedStatus = () => {},
 }) {
   let candidate = null;
   let driveConnection = null;
   const controller = createPackManagement({ store, onChange: (snapshot) => { render(snapshot); onChange(snapshot); } });
+  let retryProvided = null;
   const driveMarkup = `
+    <div class="pdflib-drive-connect" ${googleDrive?.provided ? "" : "hidden"}><strong>기본 제공 Google Drive</strong><p data-provided-drive-status role="status">제공 자료를 연결하는 중…</p><button type="button" class="modal-btn" data-provided-drive-retry hidden>다시 연결</button></div>
     <form class="pdflib-drive-connect" data-drive-form>
-      <label for="pdflib-drive-url">Google Drive 공개 폴더</label>
+      <label for="pdflib-drive-url">개인 Google Drive 공개 폴더 추가</label><p>사전 검색 색인이 준비된 공개 폴더를 연결할 수 있습니다.</p>
       <div class="pdflib-drive-controls">
         <input id="pdflib-drive-url" type="url" inputmode="url" autocomplete="url" placeholder="https://drive.google.com/drive/folders/…" data-drive-url>
         <button type="submit" class="modal-btn modal-btn-primary" data-drive-connect>연결</button>
@@ -122,6 +125,9 @@ export function mountPackManagement({
   const status = host.querySelector("[data-pack-status]");
   const list = host.querySelector("[data-pack-list]");
   const candidateHost = host.querySelector("[data-pack-candidate]");
+  const providedStatus = driveHost.querySelector("[data-provided-drive-status]");
+  const providedRetry = driveHost.querySelector("[data-provided-drive-retry]");
+  providedRetry.addEventListener("click", () => retryProvided?.());
   const driveForm = driveHost.querySelector("[data-drive-form]");
   const driveUrl = driveHost.querySelector("[data-drive-url]");
   const driveConnect = driveHost.querySelector("[data-drive-connect]");
@@ -188,6 +194,7 @@ export function mountPackManagement({
   driveForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!googleDrive?.connect || driveConnection) return;
+    if (!driveUrl.value.trim()) { renderDrive("Google Drive 폴더 링크를 입력하세요.", true); return; }
     driveConnect.disabled = true;
     renderDrive("파일 목록과 검색 색인을 읽는 중…");
     try {
@@ -218,6 +225,8 @@ export function mountPackManagement({
   void controller.refresh();
   return Object.freeze({
     ...controller,
+    setProvidedRetry(callback) { retryProvided = callback; },
+    setProvidedStatus(message, error = false) { onProvidedStatus(message); providedStatus.textContent = message; providedStatus.classList.toggle("is-error", error); providedRetry.hidden = !error; },
     setCandidate(value) { candidate = value; render(controller.getSnapshot()); },
     setDriveConnection(value) { driveConnection = value; renderDrive(); },
   });
