@@ -53,11 +53,11 @@ test('public web connection is opt-in and leaves the private editor gate intact'
   await new Promise(resolve => upstream.close(resolve));
 });
 
-test('one named popup uses a scoped pending ticket and closes only after authentication', async () => {
+test('code popup stays available while a scoped ticket waits for authentication', async () => {
   const origin = 'https://five-e-ai-runtime-probe.onrender.com';
   const store = new Map(), events = [], timers = [];
   let receive, opened, signedIn = false;
-  const popup = { closed: false, focus() {}, postMessage() {}, close() { this.closed = true; } };
+  const popup = { closed: false, focused: false, messages: [], focus() { this.focused = true; }, postMessage(...args) { this.messages.push(args); }, close() { this.closed = true; } };
   const window = {
     addEventListener: (_, fn) => { receive = fn; },
     open: (...args) => { opened = args; return popup; },
@@ -83,12 +83,15 @@ test('one named popup uses a scoped pending ticket and closes only after authent
   assert.equal(popup.closed, false);
   assert.equal(requests[0].options.headers.Authorization, 'Bearer ' + 'b'.repeat(64));
   assert.ok(events.some(event => event.detail?.state === 'ready'));
-  assert.throws(() => window.fiveEWebContinueLogin('https://evil.example/login'));
-  window.fiveEWebContinueLogin('https://auth.openai.com/codex/device');
-  assert.equal(popup.location, 'https://auth.openai.com/codex/device');
+  window.fiveEWebContinueLogin();
+  assert.equal(popup.focused, true);
+  assert.equal(popup.location, undefined, 'code popup must not navigate away');
   signedIn = true;
   timers.at(-1)();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(store.get('5e:web-ai-session'), 'a'.repeat(64));
+  assert.equal(popup.messages.at(-1)[0].type, '5e:session-received');
+  assert.equal(popup.messages.at(-1)[1], origin);
+  timers.at(-1)();
   assert.equal(popup.closed, true);
 });
