@@ -804,7 +804,9 @@ function makeHitTwin(obj) {
     twin = document.createElementNS(SVG_NS, "path");
     let d = `M ${a.x} ${a.y} L ${joint.x} ${joint.y}`;
     if (obj.elbow) d += ` L ${b.x} ${b.y}`;
-    if (obj.p3) d += ` M ${obj.p3.x} ${obj.p3.y} L ${joint.x} ${joint.y}`;
+    for (const point of [obj.p3, ...(obj.extraAnchors || [])].filter(Boolean)) {
+      d += ` M ${point.x} ${point.y} L ${joint.x} ${joint.y}`;
+    }
     twin.setAttribute("d", d);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
@@ -967,7 +969,7 @@ export function singleObjBBox(o, scene) {
   if (o.type === "labeler") {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const points = [a, o.elbow, o.p3].filter(Boolean);
+    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
     const minX = Math.min(...points.map(p => p.x), b.x - sz), minY = Math.min(...points.map(p => p.y), b.y - sz);
     const maxX = Math.max(...points.map(p => p.x), b.x + sz), maxY = Math.max(...points.map(p => p.y), b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
@@ -1197,6 +1199,9 @@ function renderHandles(sel, scene, zoom, activeTool) {
     // 라벨러의 두 번째 지시선: 세 번째 핸들.
     if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
     if (sel.type === "labeler" && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
+    if (sel.type === "labeler") {
+      (sel.extraAnchors || []).forEach((point, index) => makeHandle(point.x, point.y, `anchor-${index}`, true));
+    }
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
   }

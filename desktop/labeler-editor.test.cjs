@@ -19,6 +19,8 @@ function placement() {
   const sandbox = {
     window: target, screenToWorld: (_svg, _vb, x, y) => ({ x, y }),
     isSpaceHeld: () => false, snapKey: () => false, setSnapPreview() {},
+    initLabelerMagnifier() {},
+    initLabelerBranches() {},
     applyNewObjectStyleDefaults: (shape) => shape,
     DEFAULT_TEXT_FONT: "Dotum", DEFAULT_TEXT_SIZE_MM: 4, DEFAULT_STROKE_WIDTH: 0.3,
     MIN_SIZE: 0.1, nextObjectId: () => "new-label",

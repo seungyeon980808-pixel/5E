@@ -25,6 +25,8 @@ import { resolveEndpointSnap } from "../snap.js?v=1.4.0";
 import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.4.0";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
 import { nextObjectId } from "./id.js?v=1.4.0";
+import { initLabelerMagnifier } from "./labeler-magnifier.js?v=1.0.0";
+import { initLabelerBranches } from "./labeler-branches.js?v=1.0.0";
 import { openLabelerTextEditor } from "../text-editor.js?v=1.5.1";
 import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.4.0";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.4.0";
@@ -50,6 +52,8 @@ let mouseWorld = null;    // last mouse world pos, for the rubber-band segment
 export function setupClickDrawing(svg, state) {
   _svg = svg;
   _state = state;
+  initLabelerMagnifier(svg, state);
+  initLabelerBranches(svg, state);
 
   // Each click appends a vertex. Line auto-commits at 2 points; polyline keeps going.
   const placePoint = (e) => {
