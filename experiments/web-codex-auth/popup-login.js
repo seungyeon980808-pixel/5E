@@ -1,9 +1,24 @@
 (() => {
   const editor = new URL(location.href).searchParams.get('editor');
   if (editor !== 'https://www.5e.ai.kr' || !window.opener) return;
+  document.querySelector('main').innerHTML = `<p class="eyebrow">5E / ChatGPT 연결</p>
+    <h1>코드를 보면서 인증하세요</h1>
+    <p>옆에 열리는 OpenAI 화면에 아래 코드를 입력해 주세요. 이 창은 그대로 남아 있습니다.</p>
+    <section aria-label="계정 연결"><p id="status" role="status">연결을 준비하고 있습니다…</p>
+      <div id="login-steps" hidden><h2>1. 인증 코드 복사</h2>
+      <div class="login-code-row"><strong id="code"></strong><button id="copy-code" class="secondary">복사</button></div>
+      <p id="copy-status" role="status">복사하지 않고 코드를 직접 입력해도 됩니다.</p>
+      <h2>2. 옆 창에서 계정 인증</h2>
+      <button id="open-auth">OpenAI 인증 화면 열기 →</button></div></section>
+    <p class="note">인증이 완료되면 두 창이 자동으로 닫히고, 편집 화면의 AI 버튼이 사용 가능한 상태로 바뀝니다.</p>`;
   const status = document.getElementById('status');
-  for (const element of document.querySelectorAll('button, #browser-login')) element.hidden = true;
-  status.textContent = '연결을 준비하고 있습니다…';
+  let authWindow;
+  const close = () => { authWindow?.close(); window.close(); };
+  window.addEventListener('pagehide', () => authWindow?.close());
+  const watch = setInterval(() => { if (window.opener.closed) { clearInterval(watch); close(); } }, 1000);
+  window.addEventListener('message', event => {
+    if (event.origin === editor && event.source === window.opener && event.data?.type === '5e:session-received') close();
+  });
   const request = async action => {
     const response = await fetch(`/api/${action}`, { method: 'POST', headers: { 'X-5E-Request': '1' } });
     const result = await response.json();
@@ -14,41 +29,33 @@
     try {
       await request('session');
       const result = await request('web-login-start');
+      const target = new URL(result.authUrl);
+      if (target.protocol !== 'https:' || !['auth.openai.com', 'chatgpt.com'].includes(target.hostname) || target.username || target.password || target.port) throw new Error('인증 주소를 확인할 수 없습니다.');
+      document.getElementById('code').textContent = result.userCode || '';
+      document.getElementById('login-steps').hidden = false;
+      status.textContent = '코드를 복사한 뒤 인증 화면을 열어 주세요.';
       window.opener.postMessage({ type: '5e:login-ready', ...result }, editor);
-      status.textContent = '이 창에서 인증을 마치면 자동으로 닫힙니다.';
-      if (result.authUrl) {
-        const target = new URL(result.authUrl);
-        if (target.protocol !== 'https:' || !['auth.openai.com', 'chatgpt.com'].includes(target.hostname) || target.username || target.password || target.port) throw new Error('인증 주소를 확인할 수 없습니다.');
-        document.getElementById('browser-login').hidden = false;
-        document.getElementById('device-login').hidden = !result.userCode;
-        document.getElementById('browser-instructions').hidden = true;
-        document.getElementById('code').textContent = result.userCode || '';
-        document.querySelector('#device-login p').textContent = '다음 OpenAI 화면에서 이 코드를 한 번 입력해 주세요.';
-        const link = document.getElementById('auth-link');
-        link.href = target.href; link.removeAttribute('target');
-        link.textContent = result.userCode ? '코드 복사 후 로그인' : 'ChatGPT로 로그인';
-        let manualCopy = false;
-        link.addEventListener('click', async event => {
-          event.preventDefault();
-          if (result.userCode && !manualCopy) {
-            try { await navigator.clipboard.writeText(result.userCode); }
-            catch {
-              manualCopy = true;
-              status.textContent = '위 코드를 직접 복사한 뒤 아래 버튼으로 계속해 주세요.';
-              link.textContent = '복사 완료, 로그인 계속';
-              return;
-            }
-          }
-          window.opener.postMessage({ type: '5e:login-opening' }, editor);
-          location.replace(target.href);
-        });
-      }
+      document.getElementById('copy-code').addEventListener('click', async event => {
+        try {
+          await navigator.clipboard.writeText(result.userCode);
+          event.target.textContent = '✓ 복사됨';
+          document.getElementById('copy-status').textContent = '이제 아래 버튼으로 인증 화면을 열고 코드를 붙여넣어 주세요.';
+        } catch { document.getElementById('copy-status').textContent = '코드를 직접 선택해 복사하거나, 옆 인증 창에 그대로 입력해 주세요.'; }
+      });
+      const open = document.getElementById('open-auth');
+      open.addEventListener('click', () => {
+        if (authWindow && !authWindow.closed) { authWindow.focus(); return; }
+        const width = Math.min(560, screen.availWidth || screen.width), height = Math.min(700, screen.availHeight || screen.height);
+        const left = Math.min(window.screenX + window.outerWidth + 16, (screen.availLeft || 0) + (screen.availWidth || screen.width) - width);
+        authWindow = window.open(target.href, 'fivee-openai-auth', `popup=yes,width=${width},height=${height},left=${Math.max(screen.availLeft || 0, left)},top=${Math.max(0, window.screenY)}`);
+        if (!authWindow) { status.textContent = '인증 창이 차단되었습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러 주세요.'; return; }
+        open.textContent = '인증 창 다시 보기 →';
+        status.textContent = '옆 인증 창에 코드를 입력해 주세요. 완료 여부를 자동으로 확인합니다.';
+        window.opener.postMessage({ type: '5e:login-opening' }, editor);
+      });
     } catch (error) {
       status.textContent = error.message;
       window.opener.postMessage({ type: '5e:login-error', message: error.message }, editor);
     }
   })();
-  window.addEventListener('message', event => {
-    if (event.origin === editor && event.source === window.opener && event.data?.type === '5e:session-received') window.close();
-  });
 })();
