@@ -12,7 +12,22 @@
       <button id="open-auth">OpenAI 인증 화면 열기 →</button></div></section>
     <p class="note">인증이 완료되면 두 창이 자동으로 닫히고, 편집 화면의 AI 버튼이 사용 가능한 상태로 바뀝니다.</p>`;
   const status = document.getElementById('status');
-  let authWindow;
+  let authWindow, authAttempt = 0;
+  const geometry = (width, height, left, top) => {
+    const displayLeft = screen.availLeft || 0, displayTop = screen.availTop || 0;
+    const availableWidth = screen.availWidth || screen.width || 1280;
+    const availableHeight = screen.availHeight || screen.height || 800;
+    width = Math.min(width, availableWidth); height = Math.min(height, availableHeight);
+    return { width, height,
+      left: Math.max(displayLeft, Math.min(left, displayLeft + availableWidth - width)),
+      top: Math.max(displayTop, Math.min(top, displayTop + availableHeight - height)) };
+  };
+  const place = (popup, box) => {
+    // Browser preferences can override these best-effort window requests.
+    try { popup.resizeTo(box.width, box.height); } catch {}
+    try { popup.moveTo(box.left, box.top); } catch {}
+  };
+  place(window, geometry(420, 700, window.screenX, window.screenY));
   const close = () => { authWindow?.close(); window.close(); };
   window.addEventListener('pagehide', () => authWindow?.close());
   const watch = setInterval(() => { if (window.opener.closed) { clearInterval(watch); close(); } }, 1000);
@@ -45,10 +60,12 @@
       const open = document.getElementById('open-auth');
       open.addEventListener('click', () => {
         if (authWindow && !authWindow.closed) { authWindow.focus(); return; }
-        const width = Math.min(560, screen.availWidth || screen.width), height = Math.min(700, screen.availHeight || screen.height);
-        const left = Math.min(window.screenX + window.outerWidth + 16, (screen.availLeft || 0) + (screen.availWidth || screen.width) - width);
-        authWindow = window.open(target.href, 'fivee-openai-auth', `popup=yes,width=${width},height=${height},left=${Math.max(screen.availLeft || 0, left)},top=${Math.max(0, window.screenY)}`);
+        const box = geometry(560, 700, window.screenX + window.outerWidth + 16, window.screenY);
+        const name = `fivee-openai-auth-${window.crypto?.randomUUID?.() || `${Date.now()}-${++authAttempt}-${Math.random().toString(36).slice(2)}`}`;
+        authWindow = window.open('about:blank', name, `popup=yes,width=${box.width},height=${box.height},left=${box.left},top=${box.top}`);
         if (!authWindow) { status.textContent = '인증 창이 차단되었습니다. 이 사이트의 팝업을 허용한 뒤 다시 눌러 주세요.'; return; }
+        place(authWindow, box);
+        authWindow.location.replace(target.href);
         open.textContent = '인증 창 다시 보기 →';
         status.textContent = '옆 인증 창에 코드를 입력해 주세요. 완료 여부를 자동으로 확인합니다.';
         window.opener.postMessage({ type: '5e:login-opening' }, editor);
