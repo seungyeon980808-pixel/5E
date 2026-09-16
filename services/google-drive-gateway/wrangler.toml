@@ -1,0 +1,5 @@
+name = "5e-google-drive-gateway"
+main = "worker.mjs"
+compatibility_date = "2026-09-15"
+
+# Set GOOGLE_DRIVE_API_KEY with `wrangler secret put GOOGLE_DRIVE_API_KEY`.
