@@ -1,4 +1,4 @@
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-login-0916-1654';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-fixes-0917-0842';
 import { previewStorage as localStorage } from './preview-storage.js';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
@@ -27,7 +27,7 @@ import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-fast-login-0916";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-fixes-0917-0842";
 import { initTemplates } from "./templates.js?v=1.4.0";
 import { initObjectSearch } from "./search.js?v=1.4.0";
 import { initCommandPalette } from "./command-palette.js?v=1.4.0";

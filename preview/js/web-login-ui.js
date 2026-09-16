@@ -10,13 +10,13 @@ export function initWebLoginUi({ openAi }) {
   const dialog = document.createElement('dialog');
   dialog.className = 'web-login-dialog'; dialog.setAttribute('aria-labelledby', 'web-login-title');
   dialog.innerHTML = `<button type="button" class="web-login-close" aria-label="연결 안내 닫기">×</button>
-    <h2 id="web-login-title">AI 기능을 시작하세요</h2>
+    <h2 id="web-login-title" tabindex="-1">AI 기능을 시작하세요</h2>
     <div data-install-guide><p>설치형에서는 라이브러리에 내 컴퓨터의 폴더를 연결하고 AI 기능을 편리하게 사용할 수 있습니다.</p>
       <a class="web-login-download" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></div>
     <p data-login-message role="status">웹에서도 기존 ChatGPT 계정으로 연결할 수 있습니다.</p>
     <p class="web-login-account-note">별도 API 키 없이 연결하며, ChatGPT 계정의 이용 한도와 제한이 적용됩니다.</p>
     <div data-login-code hidden><span>1. 인증 코드 복사</span><div class="web-login-code-row"><strong></strong><button type="button" data-copy-code>복사</button></div><p>옆 인증 창에 붙여넣거나, 이 코드를 직접 입력해 주세요.</p></div>
-    <div class="web-login-actions"><button type="button" data-login-later>나중에</button><button type="button" data-login-start>지금은 웹에서 로그인</button></div>`;
+    <div class="web-login-actions"><button type="button" data-login-later>나중에</button><button type="button" data-login-start><img data-login-logo src="${new URL('../assets/chatgpt-login.svg', import.meta.url).href}" width="20" height="20" alt="" aria-hidden="true"><span data-login-start-label>ChatGPT로 로그인</span></button></div>`;
   document.body.append(dialog);
   const toast = document.createElement('div');
   toast.className = 'web-login-toast'; toast.hidden = true;
@@ -39,7 +39,8 @@ export function initWebLoginUi({ openAi }) {
     if (text) message.textContent = text;
     dialog.querySelector('[data-install-guide]').hidden = next !== 'idle';
     start.disabled = next === 'starting';
-    start.textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? '2. 인증 창 보기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : '지금은 웹에서 로그인';
+    start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? '2. 인증 창 보기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
+    start.querySelector('[data-login-logo]').hidden = !['idle', 'error'].includes(next);
     title.textContent = next === 'connected' ? 'AI 기능을 사용할 수 있습니다' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
     codeBox.hidden = !userCode || next !== 'waiting';
     codeBox.querySelector('strong').textContent = userCode;
@@ -58,7 +59,7 @@ export function initWebLoginUi({ openAi }) {
   function show(forAi = false) {
     if (connected && forAi) { openAi(); return; }
     if (!dialog.open) { wasFullscreen = Boolean(document.fullscreenElement); dialog.showModal(); }
-    start.focus();
+    title.focus({ preventScroll: true });
   }
   badge.addEventListener('click', () => show());
   function dismiss() {
