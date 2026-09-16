@@ -4,6 +4,12 @@
   const origin = 'https://five-e-ai-runtime-probe.onrender.com';
   const key = '5e:web-ai-session';
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
+  const closeLoginWindows = () => {
+    const currentPopup = popup;
+    if (!currentPopup || currentPopup.closed) return;
+    currentPopup.postMessage({ type: '5e:session-received' }, origin);
+    setTimeout(() => { if (!currentPopup.closed) currentPopup.close(); }, 500);
+  };
   const progress = detail => window.dispatchEvent(new CustomEvent('5e:web-login-progress', { detail }));
   try { token = sessionStorage.getItem(key) || ''; } catch {}
   if (!/^[a-f0-9]{64}$/.test(token)) token = '';
@@ -21,7 +27,7 @@
       void pollLogin(attempt);
     }
     if (message?.type === '5e:login-opening' && loginTicket) progress({ state: 'authenticating' });
-    if (message?.type === '5e:login-error') { clearTimeout(loginTimer); popup.close(); progress({ state: 'error', message: message.message }); }
+    if (message?.type === '5e:login-error') { clearTimeout(loginTimer); closeLoginWindows(); progress({ state: 'error', message: message.message }); }
     if (message?.type === '5e:runtime-session' && /^[a-f0-9]{64}$/.test(message.token)) {
       clearTimeout(loginTimer); save(message.token);
       popup.postMessage({ type: '5e:session-received' }, origin);
@@ -63,7 +69,7 @@
       const result = await loginRequest('status', ticket);
       if (current !== attempt) return;
       if (result.signedIn && /^[a-f0-9]{64}$/.test(result.token)) {
-        loginTicket = ''; popup?.close(); save(result.token); return;
+        loginTicket = ''; closeLoginWindows(); save(result.token); return;
       }
       if (popup?.closed || ['cancelled', 'login-failed', 'local-timeout'].includes(result.state)) {
         window.fiveEWebCancelLogin(); return;
@@ -71,22 +77,17 @@
       loginTimer = setTimeout(() => void pollLogin(current), 1500);
     } catch (error) {
       if (current !== attempt) return;
-      loginTicket = ''; popup?.close(); progress({ state: 'error', message: error.message });
+      loginTicket = ''; closeLoginWindows(); progress({ state: 'error', message: error.message });
     }
   }
   window.fiveEWebCancelLogin = () => {
-    attempt++; clearTimeout(loginTimer); popup?.close();
+    attempt++; clearTimeout(loginTimer); closeLoginWindows();
     const ticket = loginTicket; loginTicket = '';
     if (ticket) void loginRequest('cancel', ticket).catch(() => {});
     progress({ state: 'cancelled' });
   };
-  window.fiveEWebContinueLogin = url => {
+  window.fiveEWebContinueLogin = () => {
     if (!popup || popup.closed) { progress({ state: 'cancelled' }); return false; }
-    if (url) {
-      const target = new URL(url);
-      if (target.protocol !== 'https:' || !['auth.openai.com', 'chatgpt.com'].includes(target.hostname) || target.username || target.password || target.port) throw new Error('인증 주소를 확인할 수 없습니다.');
-      popup.location = target.href;
-    }
     popup.focus();
     return true;
   };
@@ -94,11 +95,11 @@
     if (token) { window.dispatchEvent(new Event('5e:web-ai-status')); return; }
     if (popup && !popup.closed) { popup.focus(); return; }
     attempt++;
-    const width = 520, height = 700;
-    const left = Math.max(0, Math.round((screen.width - width) / 2));
+    const width = 420, height = Math.min(700, screen.availHeight || screen.height);
+    const left = Math.max(0, Math.round(((screen.availWidth || screen.width) - 996) / 2));
     const top = Math.max(0, Math.round((screen.height - height) / 2));
     popup = window.open(`${origin}/web-connect?editor=${encodeURIComponent(location.origin)}&flow=popup`, 'fivee-chatgpt-login', `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
     if (!popup) throw new Error('로그인 창이 차단되었습니다. 이 사이트의 팝업을 허용해 주세요.');
-    loginTimer = setTimeout(() => { if (!loginTicket) { popup?.close(); progress({ state: 'error', message: '연결 준비 시간이 초과되었습니다. 다시 시도해 주세요.' }); } }, 45000);
+    loginTimer = setTimeout(() => { if (!loginTicket) { closeLoginWindows(); progress({ state: 'error', message: '연결 준비 시간이 초과되었습니다. 다시 시도해 주세요.' }); } }, 45000);
   };
 })();
