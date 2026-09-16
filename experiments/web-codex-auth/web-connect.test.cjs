@@ -12,7 +12,7 @@ test('direct web session survives popup close and refresh and rejects foreign me
   let receive, opened = 0;
   const boot = () => {
     const window = { addEventListener: (_, fn) => { receive = fn; }, open: () => { opened++; return popup; }, dispatchEvent() {} };
-    const context = { window, location: { origin: 'https://www.5e.ai.kr' }, sessionStorage, Event, AbortSignal,
+    const context = { window, location: { origin: 'https://www.5e.ai.kr' }, sessionStorage, Event, AbortSignal, screen: { width: 1280, height: 900 }, clearTimeout, setTimeout,
       fetch: async (...args) => { calls.push(args); return { ok: true, status: 200, json: async () => ({ login: { loggedIn: true }, server: true }) }; } };
     vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), context);
     return window;
@@ -51,4 +51,44 @@ test('public web connection is opt-in and leaves the private editor gate intact'
     } finally { proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve)); }
   }
   await new Promise(resolve => upstream.close(resolve));
+});
+
+test('one named popup uses a scoped pending ticket and closes only after authentication', async () => {
+  const origin = 'https://five-e-ai-runtime-probe.onrender.com';
+  const store = new Map(), events = [], timers = [];
+  let receive, opened, signedIn = false;
+  const popup = { closed: false, focus() {}, postMessage() {}, close() { this.closed = true; } };
+  const window = {
+    addEventListener: (_, fn) => { receive = fn; },
+    open: (...args) => { opened = args; return popup; },
+    dispatchEvent: event => events.push(event),
+  };
+  const requests = [];
+  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
+    window, location: { origin: 'https://www.5e.ai.kr' }, screen: { width: 1280, height: 900 },
+    sessionStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
+    Event, CustomEvent, AbortSignal, URL,
+    setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {},
+    fetch: async (url, options) => {
+      requests.push({url, options});
+      return { ok: true, json: async () => signedIn ? { signedIn: true, token: 'a'.repeat(64) } : { state: 'waiting', signedIn: false } };
+    },
+  });
+  window.fiveEWebLogin();
+  assert.equal(opened[1], 'fivee-chatgpt-login');
+  assert.match(opened[2], /popup=yes/);
+  receive({ origin, source: popup, data: { type: '5e:login-ready', ticket: 'b'.repeat(64), userCode: 'TEST-CODE', authUrl: 'https://auth.openai.com/codex/device' } });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(store.size, 0);
+  assert.equal(popup.closed, false);
+  assert.equal(requests[0].options.headers.Authorization, 'Bearer ' + 'b'.repeat(64));
+  assert.ok(events.some(event => event.detail?.state === 'ready'));
+  assert.throws(() => window.fiveEWebContinueLogin('https://evil.example/login'));
+  window.fiveEWebContinueLogin('https://auth.openai.com/codex/device');
+  assert.equal(popup.location, 'https://auth.openai.com/codex/device');
+  signedIn = true;
+  timers.at(-1)();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(store.get('5e:web-ai-session'), 'a'.repeat(64));
+  assert.equal(popup.closed, true);
 });

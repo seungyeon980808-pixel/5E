@@ -20,7 +20,7 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     res.setHeader('X-Content-Type-Options', 'nosniff');
     const reject = (status, message) => { res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(message); };
     if (req.headers.host !== external.host) return reject(403, 'Origin rejected');
-    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/bridge-(status|models|account|send|events|interrupt)$/.test(req.url);
+    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(status|cancel))$/.test(req.url);
     if (direct) {
       res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
       res.setHeader('Vary', 'Origin');
@@ -46,7 +46,7 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     }
     const key = /(?:^|;\s*)__Host-fivee_trial=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
     const pathname = new URL(req.url, publicOrigin).pathname;
-    const webConnection = webEditorOrigin === 'https://www.5e.ai.kr' && (['/web-connect', '/web-connect.js', '/client.js', '/style.css'].includes(pathname) || pathname.startsWith('/api/'));
+    const webConnection = webEditorOrigin === 'https://www.5e.ai.kr' && (['/web-connect', '/web-connect.js', '/popup-login.js', '/client.js', '/style.css'].includes(pathname) || pathname.startsWith('/api/'));
     if (!webConnection && !sameSecret(key, accessKey)) return reject(401, '비공개 실사용 시험입니다. 전달받은 시험 초대 링크로 접속해 주세요.');
     if (Number(req.headers['content-length']) > 12000000) return reject(413, '이미지가 너무 큽니다.');
     const headers = { ...req.headers, host: `127.0.0.1:${gatewayPort}` };
