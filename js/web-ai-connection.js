@@ -11,7 +11,7 @@
       if (signedIn !== message.signedIn) { signedIn = message.signedIn; window.dispatchEvent(new Event('5e:web-ai-status')); }
       return;
     }
-    if (message?.type === '5e:runtime-ready') { ready = true; return; }
+    if (message?.type === '5e:runtime-ready') { ready = true; window.dispatchEvent(new Event('5e:web-ai-status')); return; }
     if (message?.type !== '5e:runtime-response') return;
     const entry = pending.get(message.id);
     if (!entry) return;
