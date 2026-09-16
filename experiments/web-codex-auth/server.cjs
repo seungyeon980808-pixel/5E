@@ -1,5 +1,5 @@
 const http = require('node:http');
-const { randomBytes } = require('node:crypto');
+const { randomBytes, createHash } = require('node:crypto');
 const { mkdtempSync, chmodSync, readFileSync, rmSync } = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -12,10 +12,13 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
   const root = mkdtempSync(path.join(os.tmpdir(), '5e-auth-'));
   chmodSync(root, 0o700);
   const sessions = new Map();
+  const webSessions = new Map();
+  const digest = token => createHash("sha256").update(token).digest("hex");
   const generationScheduler = new GlobalGenerationScheduler({ maxRunning: generationConcurrency });
   const assets = new Map([['/', ['index.html', 'text/html']], ['/client.js', ['client.js', 'text/javascript']], ['/style.css', ['style.css', 'text/css']]]);
   const dispose = (id, entry) => {
     sessions.delete(id);
+    if (entry.webToken) webSessions.delete(digest(entry.webToken));
     entry.session.close();
     rmSync(entry.directory, { recursive: true, force: true });
   };
@@ -34,11 +37,17 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
       return res.end(file === 'index.html' && !editorNavigation ? body.toString('utf8').replace(/ data-editor-url="[^"]*"/, '') : body);
     }
     if (req.method !== 'POST' || req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return json(403, { error: 'Request rejected' });
-    const routes = new Set(['/api/session', '/api/status', '/api/login', '/api/cancel', '/api/logout', '/api/generate', '/api/generation', '/api/generation-cancel']);
+    const routes = new Set(['/api/web-session', '/api/session', '/api/status', '/api/login', '/api/cancel', '/api/logout', '/api/generate', '/api/generation', '/api/generation-cancel']);
     if (!routes.has(req.url) && !bridgeRoutes.has(req.url)) return json(404, { error: 'Unknown endpoint' });
     const cookieName = `fivee_auth_${server.address().port}`;
     let id = new RegExp(`(?:^|;\\s*)${cookieName}=([a-f0-9]{64})(?:;|$)`).exec(req.headers.cookie || '')?.[1];
+    const bearer = /^Bearer ([a-f0-9]{64})$/.exec(req.headers.authorization || '')?.[1];
+    if (req.headers.authorization) {
+      if (!bearer || !bridgeRoutes.has(req.url)) return json(401, { error: 'Invalid web session' });
+      id = webSessions.get(digest(bearer));
+    }
     let entry = sessions.get(id);
+    if (req.headers.authorization && (!entry || Date.now() - entry.touched > 1800000)) return json(401, { error: 'Web session expired. Sign in again.' });
     try {
       if (entry?.session.runtime.dead && req.url === '/api/session') {
         dispose(id, entry);
@@ -62,6 +71,15 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
       if (!entry) return json(401, { error: 'Session expired. Reload the page.' });
       entry.touched = Date.now();
       res.setHeader('Set-Cookie', `${cookieName}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=1800`);
+      if (req.url === '/api/web-session') {
+        req.resume();
+        if (!(await entry.session.run(() => entry.session.status())).signedIn) throw new RequestError(401, 'Sign in first');
+        if (!entry.webToken) {
+          entry.webToken = randomBytes(32).toString('hex');
+          webSessions.set(digest(entry.webToken), id);
+        }
+        return json(200, { token: entry.webToken });
+      }
       if (bridgeRoutes.has(req.url) || ['/api/generate', '/api/generation', '/api/generation-cancel'].includes(req.url)) {
         if (req.url !== '/api/bridge-status' && !(await entry.session.run(() => entry.session.status())).signedIn) throw new RequestError(401, 'Sign in first');
         if (!req.headers['content-type']?.startsWith('application/json')) throw new RequestError(400, 'JSON required');
