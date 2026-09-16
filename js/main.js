@@ -299,6 +299,11 @@ if (aiEntryButton) {
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
+  aiEntryButton.addEventListener("click", () => {
+    if (window.fiveEWebAI) {
+      void window.fiveEWebAI.login().catch(error => window.alert(error.message));
+    }
+  });
   aiEntryButton.addEventListener("click", () => void handSelectedCanvasImageToAi(state, {
     renderImage: renderSessionToDataUrl,
     openPanel: options => aiPanel?.open(options),

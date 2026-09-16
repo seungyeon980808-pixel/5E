@@ -15,6 +15,10 @@ async function request(action, popup) {
   try {
     const response = await fetch('/api/' + action, { method: 'POST', headers: { 'X-5E-Request': '1' } });
     const result = await response.json();
+    if (location.pathname === "/web-connect" && window.opener) {
+      const editor = new URL(location.href).searchParams.get("editor");
+      if (editor === "https://www.5e.ai.kr") window.opener.postMessage({ type: "5e:runtime-status", signedIn: response.ok && result.signedIn === true }, editor);
+    }
     if (!response.ok) throw Object.assign(new Error(result.error), { status: response.status });
     if (result.signedIn && document.body.dataset.editorUrl) {
       location.replace(document.body.dataset.editorUrl);

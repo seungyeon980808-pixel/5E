@@ -68,14 +68,18 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
         html = html.replace(/<script type="module" src="js\/mcp-bridge[^>]*><\/script>/, '');
         return reply(200, html, 'text/html');
       }
-      if (url.pathname === '/login' || url.pathname === '/account') {
+      if (url.pathname === '/login' || url.pathname === '/account' || url.pathname === '/web-connect') {
         let html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
         html = html.replace(/ data-editor-url="[^"]*"/, url.pathname === '/login' ? ' data-editor-url="/editor/"' : '');
         html = html.replace('로컬 인증 실험입니다.<br>이미지 변환 기능은 꺼져 있습니다.<br>원격 무설치 사용은 검증 전입니다.', url.pathname === '/account' ? '로그인을 완료한 뒤 편집기로 돌아가세요.<br>AI 이미지 생성과 수정을 시험할 수 있습니다.' : '로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.');
         if (url.pathname === '/account') html = html.replace('</section>', '<a href="/editor/">5E 편집기 열기</a></section>');
+        if (url.pathname === '/web-connect') {
+          html = html.replace('5E / 로그인 실험', '5E / ChatGPT 연결').replace('이 브라우저의 실험 세션에 계정을 연결합니다.', '이 브라우저에 ChatGPT 계정을 연결합니다.').replace('로그인하면 5E 편집기로 이동합니다.<br>편집기에서 AI 이미지를 생성할 수 있습니다.', '로그인 후 이 탭을 열어 둔 채 원래 편집기로 돌아가세요.');
+          html = html.replace('</body>', '<script src="/web-connect.js"></script></body>');
+        }
         return reply(200, html, 'text/html');
       }
-      const own = { '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
+      const own = { '/web-connect.js': 'web-connect.js', '/editor-cut.mjs': 'editor-cut.mjs', '/editor-results.css': 'editor-results.css', '/editor-review.js': 'editor-review.js', '/editor-feedback.js': 'editor-feedback.js', '/outer-background.mjs': 'outer-background.mjs', '/editor-background.js': 'editor-background.js', '/editor-background.css': 'editor-background.css', '/editor-bridge.js': 'editor-bridge.js', '/client.js': 'client.js', '/style.css': 'style.css', '/editor-session.js': 'editor-session.js', '/editor-session.css': 'editor-session.css', '/editor-generation.js': 'editor-generation.js', '/editor-generation.css': 'editor-generation.css' }[url.pathname];
       if (own) return reply(200, fs.readFileSync(path.join(__dirname, own)), mime[path.extname(own)]);
       const relative = decodeURIComponent(url.pathname.replace(/^\/editor\//, '/')).slice(1);
       if (relative.includes('..') || relative.includes('\\') || !/^(?:css\/|js\/|assets\/|fonts\/|vendor\/(?:pdfjs|ocr)\/|docs\/credits\.html$|manifest\.json$)/.test(relative)) return reply(404, '{"error":"Not found"}');
