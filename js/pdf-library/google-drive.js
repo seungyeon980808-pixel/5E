@@ -1,5 +1,20 @@
 import { loadRemotePack } from "./remote-pack.js";
 
+export const PROVIDED_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1N46Woe4wIXs-PoUpVf0Uu4hPkSIUBqgX";
+
+export function driveFolderPack(pack, folderUrl) {
+  const folder = parseGoogleDriveFolderUrl(folderUrl);
+  const documents = pack.documents.map((document) => Object.freeze({
+    ...document,
+    driveFolder: Object.freeze({ id: folder.folderId, title: pack.title }),
+    source: Object.freeze({
+      ...document.source,
+      relativePath: document.source.locator.slice(`${pack.id}/`.length),
+    }),
+  }));
+  return Object.freeze({ ...pack, documents: Object.freeze(documents) });
+}
+
 const DRIVE_HOST = "drive.google.com";
 const FOLDER_ID_PATTERN = /^[A-Za-z0-9_-]{10,200}$/u;
 const RESOURCE_KEY_PATTERN = /^[A-Za-z0-9_-]{8,256}$/u;

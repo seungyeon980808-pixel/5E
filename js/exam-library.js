@@ -323,6 +323,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     },
     onCatalogChange: () => void unifiedUi?.refresh(),
   });
+  const isDesktopLibrary = Boolean(globalThis.fiveEDesktop?.pdfLibrary);
   let packManagement = null;
   let installedPackDocuments = [];
   let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
@@ -335,7 +336,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { createIndexedDbPackAdapter, createPackStore },
       { mountPackManagement: mount },
       { loadRemotePack },
-      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection },
+      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js"),
       import("./pdf-library/pack-management.js"),
@@ -344,12 +345,15 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
-    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl: await configuredGoogleDriveGatewayUrl() });
+    const gatewayBaseUrl = await configuredGoogleDriveGatewayUrl();
+    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl });
+    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null });
+    const isProvidedFolder = (url) => Boolean(url) && parseGoogleDriveFolderUrl(url).folderId === parseGoogleDriveFolderUrl(PROVIDED_DRIVE_FOLDER_URL).folderId;
     const syncPackCatalog = () => {
       const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
       const merged = mergePreferredCatalogs(
         preferredRemote,
-        { documents: installedPackDocuments, searchIndex: installedPackSearchIndex },
+        isDesktopLibrary ? { documents: installedPackDocuments, searchIndex: installedPackSearchIndex } : null,
       );
       return pdfUi.syncPackCatalog({
         documents: merged.documents,
@@ -369,13 +373,19 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     packManagement = mount({
       host: pdfUi.getPackHost(),
       driveHost: pdfUi.getDriveHost(),
+      onProvidedStatus: (message) => unifiedUi?.setProvidedStatus(message),
       store,
       googleDrive: {
+        provided: !isDesktopLibrary,
         gatewayConfigured: driveConnection.gatewayConfigured,
-        savedFolderUrl: driveConnection.savedFolderUrl,
+        savedFolderUrl: () => {
+          const saved = driveConnection.savedFolderUrl();
+          return !isDesktopLibrary && isProvidedFolder(saved) ? "" : saved;
+        },
         async connect(folderUrl) {
+          if (!isDesktopLibrary && isProvidedFolder(folderUrl)) throw new Error("이 폴더는 기본 제공 자료로 이미 연결되어 있습니다.");
           const connection = await driveConnection.connect(folderUrl);
-          drivePack = connection.pack;
+          drivePack = driveFolderPack(connection.pack, folderUrl);
           drivePackDocumentIds = new Set(drivePack.documents.map((document) => document.id));
           await syncPackCatalog();
           pdfUi.setSourceStatus(`${drivePack.title}에서 ${drivePack.documentCount}개 PDF와 사전 색인을 읽었습니다.`);
@@ -389,7 +399,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
           pdfUi.setSourceStatus("Google Drive 폴더 연결을 해제했습니다.");
         },
       },
-      onUpdateCandidate: configured.baseUrl ? async () => {
+      onUpdateCandidate: isDesktopLibrary && configured.baseUrl ? async () => {
         const latest = await loadRemotePack({ baseUrl: defaultRecentThreePack().baseUrl });
         defaultPack = latest;
         packManagement.setCandidate(latest);
@@ -404,22 +414,41 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         });
       },
     });
-    const bundled = await loadBundledDesktopPack();
-    if (bundled) {
-      defaultPack = bundled;
-      packManagement.setCandidate(bundled);
-      await syncPackCatalog();
-    }
-    if (!bundled && configured.baseUrl) {
-      void loadRemotePack({ baseUrl: configured.baseUrl }).then((pack) => {
-        defaultPack = pack;
-        packManagement.setCandidate(pack);
-        return syncPackCatalog();
-      }).catch((error) => {
-        pdfUi.setSourceStatus(`기본 PDF 자료팩을 불러오지 못했습니다. 자료팩 폴더를 설치하거나 PDF를 직접 가져오세요. (${error instanceof Error ? error.message : error})`, true);
-      });
-    } else if (!bundled) {
-      pdfUi.setSourceStatus(configured.message, true);
+    const connectProvided = async () => {
+      packManagement.setProvidedStatus("제공 자료를 연결하는 중…");
+      try {
+        const connection = await providedConnection.connect(PROVIDED_DRIVE_FOLDER_URL);
+        defaultPack = driveFolderPack(connection.pack, PROVIDED_DRIVE_FOLDER_URL);
+        await syncPackCatalog();
+        packManagement.setProvidedStatus(`${defaultPack.title} · ${defaultPack.documentCount}개 PDF 연결됨`);
+        pdfUi.setSourceStatus(`제공 자료 ${defaultPack.documentCount}개 PDF 연결됨`);
+      } catch (error) {
+        const message = `제공 자료 연결 실패: ${error instanceof Error ? error.message : error}`;
+        packManagement.setProvidedStatus(message, true);
+        pdfUi.setSourceStatus(message, true);
+      }
+    };
+    packManagement.setProvidedRetry(connectProvided);
+    if (isDesktopLibrary) {
+      const bundled = await loadBundledDesktopPack();
+      if (bundled) {
+        defaultPack = bundled;
+        packManagement.setCandidate(bundled);
+        await syncPackCatalog();
+      }
+      if (!bundled && configured.baseUrl) {
+        void loadRemotePack({ baseUrl: configured.baseUrl }).then((pack) => {
+          defaultPack = pack;
+          packManagement.setCandidate(pack);
+          return syncPackCatalog();
+        }).catch((error) => {
+          pdfUi.setSourceStatus(`기본 PDF 자료팩을 불러오지 못했습니다. 자료팩 폴더를 설치하거나 PDF를 직접 가져오세요. (${error instanceof Error ? error.message : error})`, true);
+        });
+      } else if (!bundled) {
+        pdfUi.setSourceStatus(configured.message, true);
+      }
+    } else {
+      void connectProvided();
     }
     return packManagement;
   };
@@ -769,8 +798,8 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     if (unifiedProviderCache && unifiedProviderCacheKey === cacheKey) return unifiedProviderCache;
     unifiedProviderCacheKey = cacheKey;
     unifiedProviderCache = createUnifiedLibraryProvider({
-      partsManifest,
-      examManifest: unifiedExamManifest(),
+      partsManifest: isDesktopLibrary ? partsManifest : null,
+      examManifest: isDesktopLibrary ? unifiedExamManifest() : null,
       examBaseUrl: configuredLegacyDatasetBase(),
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,

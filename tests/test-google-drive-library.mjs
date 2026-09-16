@@ -71,3 +71,23 @@ test("Given deployment configuration, when resolved, then HTTPS and exact loopba
     fetcher: async () => new Response(JSON.stringify({ schemaVersion: 1, gatewayBaseUrl: "https://gateway.example/" })),
   }), "https://gateway.example/");
 });
+
+
+test("Provided and personal Drive connections keep independent state and preserve physical folder paths", async () => {
+  const { driveFolderPack, PROVIDED_DRIVE_FOLDER_URL } = await import("../js/pdf-library/google-drive.js");
+  const { createHierarchicalSourceNodes } = await import("../js/library/source-tree.js");
+  const pack = { id: "provided", title: "공유 자료", documents: [{ id: "pdf", source: { locator: "provided/기출문제/물리1/test.pdf" } }] };
+  const shared = createGoogleDriveConnection({ gatewayBaseUrl: "https://gateway.example/", storage: null, loadPack: async () => pack });
+  const personal = createGoogleDriveConnection({ gatewayBaseUrl: "https://gateway.example/", storage: memoryStorage(), loadPack: async () => pack });
+  await shared.connect(PROVIDED_DRIVE_FOLDER_URL);
+  await personal.connect("https://drive.google.com/drive/folders/Personal123456");
+  personal.disconnect();
+  assert.equal(shared.current().pack, pack);
+  assert.equal(shared.savedFolderUrl(), "");
+  const wrapped = driveFolderPack(pack, PROVIDED_DRIVE_FOLDER_URL);
+  assert.equal(wrapped.documents[0].source.relativePath, "기출문제/물리1/test.pdf");
+  assert.equal(pack.documents[0].source.relativePath, undefined);
+  const nodes = createHierarchicalSourceNodes([{ id: "pdf", label: "test.pdf", driveFolder: wrapped.documents[0].driveFolder, pathSegments: ["기출문제", "물리1"], resultKinds: ["page"] }]);
+  assert.deepEqual(nodes.map(node => node.label), ["공유 자료", "기출문제", "물리1", "test.pdf"]);
+  assert.equal(nodes.filter(node => node.kind === "category").length, 0);
+});

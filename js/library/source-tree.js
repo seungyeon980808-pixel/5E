@@ -60,11 +60,11 @@ export function createHierarchicalSourceNodes(leaves) {
   for (const leaf of leaves ?? []) {
     const origin = leaf.origin === "local" ? "local" : "provided";
     const category = normalizeSourceCategory(leaf.category);
-    const rootId = stableNodeId("group", origin);
-    add({ id: rootId, parentId: null, label: origin === "local" ? "내 자료" : "제공 자료", kind: "group", origin, resultKinds: Object.freeze([]), count: 0 });
+    const rootId = leaf.driveFolder ? stableNodeId("drive", leaf.driveFolder.id) : stableNodeId("group", origin);
+    add({ id: rootId, parentId: null, label: leaf.driveFolder?.title || (origin === "local" ? "내 자료" : "제공 자료"), kind: "group", origin, resultKinds: Object.freeze([]), count: 0 });
     const categoryId = stableNodeId("category", origin, category);
-    add({ id: categoryId, parentId: rootId, label: CATEGORY_LABELS[category], kind: "category", origin, category, resultKinds: Object.freeze([]), count: 0 });
-    let parentId = categoryId;
+    if (!leaf.driveFolder) add({ id: categoryId, parentId: rootId, label: CATEGORY_LABELS[category], kind: "category", origin, category, resultKinds: Object.freeze([]), count: 0 });
+    let parentId = leaf.driveFolder ? rootId : categoryId;
     for (const rawSegment of leaf.pathSegments ?? []) {
       const segment = String(rawSegment ?? "").trim();
       if (!segment) continue;

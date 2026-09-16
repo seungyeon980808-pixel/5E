@@ -781,7 +781,7 @@ function buildShell() {
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
           <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button" data-unilib-pane-collapse aria-label="검색 위치 접기">${ICONS.chevron}</button><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><p><strong>제공 자료</strong>는 앱이 정리한 가상 분류입니다. <strong>내 자료</strong>에는 가져온 파일과 설치형 앱에서 직접 연결한 폴더가 표시됩니다.</p><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><p data-unilib-provided-status role="status" hidden></p><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>로컬 폴더 추가</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
@@ -852,6 +852,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
   const tree = overlay.querySelector("[data-unilib-tree]");
+  const localFolderAdd = overlay.querySelector("[data-unilib-local-folder-add]");
+  localFolderAdd.hidden = Boolean(desktopLibrary);
+  localFolderAdd.addEventListener("click", () => { overlay.querySelector("[data-unilib-local-folder-guide]").hidden = false; });
   const list = overlay.querySelector("[data-unilib-results]");
   const query = overlay.querySelector("[data-unilib-query]");
   const stage = overlay.querySelector("[data-unilib-stage]");
@@ -2775,6 +2778,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   registerEscapeLayer(driveSettings, closeDriveSettings);
   registerEscapeLayer(cropDialog, () => { lastInteractionWasKeyboard = true; cancelSpacePress(); closeCrop(); });
   return Object.freeze({
+    setProvidedStatus(message) { const status = overlay.querySelector("[data-unilib-provided-status]"); status.hidden = false; status.textContent = message; },
     open, close, refresh: async () => { await renderSources(); await runSearch(); }, element: overlay,
     async beginReferenceSelection(consumer, trigger) {
       referenceConsumer = consumer;
