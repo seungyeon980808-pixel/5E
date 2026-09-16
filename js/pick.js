@@ -406,7 +406,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       const a = o.p1, b = o.p2;
       if (a && b) {
         const joint = o.elbow || b;
-        const segments = [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...(o.p3 ? [[o.p3, joint]] : [])];
+        const segments = [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...[o.p3, ...(o.extraAnchors || [])].filter(Boolean).map(point => [point, joint])];
         if (segments.some(([from, to]) => segDist(p.x, p.y, from.x, from.y, to.x, to.y) <= margin)) return o.id;
         // Label area = the SAME block the renderer measures (labelerBlockHalf:
         // formula box or multiline text estimate), centered on p2, grown by the
@@ -487,7 +487,7 @@ function getObjectBBox(o) {
     // covers the full label (text or formula), not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const { hw, hh } = labelerBlockHalf(o);
-    const points = [a, o.elbow, o.p3].filter(Boolean);
+    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
     const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
     const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
