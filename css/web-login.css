@@ -22,3 +22,8 @@
 @media(prefers-reduced-motion:reduce) { .web-account-status .web-account-dot { animation:none!important; } }
 @media(max-width:600px) { .web-account-status { font-size:11px; padding:4px 8px; } }
 .web-login-code-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.web-login-code-row button{min-height:44px;padding:8px 16px}.web-login-download{display:block;text-align:center;padding:12px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none}.web-login-dialog .web-login-account-note{font-size:12px}.web-login-toast button{margin-left:12px;padding:8px 12px;background:var(--accent);color:#fff;border:0;border-radius:8px;cursor:pointer}#ai-image-install-open[data-login-state="connected"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--bg-panel));color:var(--accent)}#ai-image-install-open[data-login-state="connected"]::after{content:'●';font-size:8px;margin-left:6px;flex:none}#ai-image-install-open[data-login-state="waiting"]::after{content:'…';font-size:11px;margin-left:6px;flex:none}
+
+.web-login-actions [data-login-start] { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+.web-login-actions [data-login-logo] { width:20px; height:20px; flex:none; }
+.web-login-dialog #web-login-title:focus { outline:none; }
+.web-login-dialog button:focus:not(:focus-visible) { outline:none; }

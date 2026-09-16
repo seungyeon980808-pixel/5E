@@ -94,12 +94,22 @@
   window.fiveEWebLogin = () => {
     if (token) { window.dispatchEvent(new Event('5e:web-ai-status')); return; }
     if (popup && !popup.closed) { popup.focus(); return; }
-    attempt++;
-    const width = 420, height = Math.min(700, screen.availHeight || screen.height);
-    const left = Math.max(0, Math.round(((screen.availWidth || screen.width) - 996) / 2));
-    const top = Math.max(0, Math.round((screen.height - height) / 2));
-    popup = window.open(`${origin}/web-connect?editor=${encodeURIComponent(location.origin)}&flow=popup`, 'fivee-chatgpt-login', `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
+    attempt++; clearTimeout(loginTimer);
+    const previousTicket = loginTicket; loginTicket = '';
+    if (previousTicket) void loginRequest('cancel', previousTicket).catch(() => {});
+    const availableWidth = screen.availWidth || screen.width || 1280;
+    const availableHeight = screen.availHeight || screen.height || 800;
+    const displayLeft = screen.availLeft || 0, displayTop = screen.availTop || 0;
+    const width = Math.min(420, availableWidth), height = Math.min(700, availableHeight);
+    const left = displayLeft + Math.max(0, Math.round((availableWidth - 996) / 2));
+    const top = displayTop + Math.max(0, Math.round((availableHeight - height) / 2));
+    const name = `fivee-chatgpt-login-${window.crypto?.randomUUID?.() || `${Date.now()}-${attempt}-${Math.random().toString(36).slice(2)}`}`;
+    popup = window.open('about:blank', name, `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
     if (!popup) throw new Error('로그인 창이 차단되었습니다. 이 사이트의 팝업을 허용해 주세요.');
+    // Safari may ignore geometry; request it while the new window is still same-origin.
+    try { popup.resizeTo(width, height); } catch {}
+    try { popup.moveTo(left, top); } catch {}
+    popup.location.replace(`${origin}/web-connect?editor=${encodeURIComponent(location.origin)}&flow=popup`);
     loginTimer = setTimeout(() => { if (!loginTicket) { closeLoginWindows(); progress({ state: 'error', message: '연결 준비 시간이 초과되었습니다. 다시 시도해 주세요.' }); } }, 45000);
   };
 })();
