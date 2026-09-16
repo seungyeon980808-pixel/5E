@@ -59,7 +59,7 @@
     models: payload => request('bridge-models', payload),
     account: payload => request('bridge-account', payload),
     login: async () => {
-      if (window.fiveEWebLogin) return window.fiveEWebLogin();
+      if (window.fiveEWebLogin) { window.dispatchEvent(new Event('5e:web-login-request')); return; }
       window.open('/account', '_blank', 'noopener');
     },
     send: async (payload = {}) => {

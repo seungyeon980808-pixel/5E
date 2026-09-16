@@ -1,3 +1,4 @@
+import { initWebLoginUi } from './web-login-ui.js';
 import { previewStorage as localStorage } from './preview-storage.js';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
@@ -300,16 +301,13 @@ if (aiEntryButton) {
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
-  aiEntryButton.addEventListener("click", () => {
-    if (window.fiveEWebAI) {
-      void window.fiveEWebAI.login().catch(error => window.alert(error.message));
-    }
-  });
-  aiEntryButton.addEventListener("click", () => void handSelectedCanvasImageToAi(state, {
+  const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
     renderImage: renderSessionToDataUrl,
     openPanel: options => aiPanel?.open(options),
     reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
-  }));
+  });
+  const webLogin = initWebLoginUi({ openAi: openSelectedAi });
+  aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
 }
 const desktopHandoff = initAiInstallGuide({
   saveProject: () => saveProject(state),
