@@ -289,7 +289,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     const entry = { scope, panel, controller: null, tabs: [], ready: false };
     entries.push(entry);
     entry.controller = initialize(state, {
-      panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop, scope),
+      panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop || window.fiveEWebAI, scope),
       exportCollection, clearCollection,
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {

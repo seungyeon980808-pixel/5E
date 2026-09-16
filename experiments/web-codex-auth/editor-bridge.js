@@ -1,8 +1,10 @@
 /* Browser transport for the existing 5E AI workspaces. */
 (() => {
+  if (window.fiveEDesktop) return;
   const listeners = { event: new Set(), state: new Set(), log: new Set() };
   const scopes = new Map();
   async function request(action, payload = {}) {
+    if (window.fiveEWebRequest) return window.fiveEWebRequest(action, { clientScope: "", ...payload });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
@@ -46,7 +48,8 @@
     if (scope.active) setTimeout(() => poll(scope), 750);
   }
   const unavailable = async () => { throw new Error('이 기능은 데스크톱 앱에서 사용할 수 있습니다. 브라우저에서는 이미지 파일을 직접 추가해 주세요.'); };
-  window.fiveEDesktop = {
+  const bridge = {
+    web: Boolean(window.fiveEWebRequest),
     status: payload => request('bridge-status', payload),
     start: async (payload = {}) => {
       const status = await request('bridge-status', payload);
@@ -55,7 +58,10 @@
     stop: payload => request('bridge-interrupt', payload),
     models: payload => request('bridge-models', payload),
     account: payload => request('bridge-account', payload),
-    login: async () => { window.open('/account', '_blank', 'noopener'); },
+    login: async () => {
+      if (window.fiveEWebLogin) return window.fiveEWebLogin();
+      window.open('/account', '_blank', 'noopener');
+    },
     send: async (payload = {}) => {
       const scope = scopeFor(payload);
       const result = await request('bridge-send', payload);
@@ -77,4 +83,6 @@
     localImageThumbnail: unavailable,
     readLocalImage: unavailable,
   };
+  if (window.fiveEWebRequest) window.fiveEWebAI = bridge;
+  else window.fiveEDesktop = bridge;
 })();
