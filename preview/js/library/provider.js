@@ -1,5 +1,5 @@
 import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
-import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js";
+import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.0-preview-login-drive-0916b";
 import { createCropSource } from "../pdf-library/contract.js";
 import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";

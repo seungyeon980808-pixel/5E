@@ -18,8 +18,8 @@ import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js";
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-login-drive-0916";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-login-drive-0916";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-login-drive-0916b";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-login-drive-0916b";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.4.12";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -339,9 +339,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js"),
-      import("./pdf-library/pack-management.js?v=1.6.0-preview-login-drive-0916"),
+      import("./pdf-library/pack-management.js?v=1.6.0-preview-login-drive-0916b"),
       import("./pdf-library/remote-pack.js?v=1.6.0-preview-0916"),
-      import("./pdf-library/google-drive.js?v=1.6.0-preview-login-drive-0916"),
+      import("./pdf-library/google-drive.js?v=1.6.0-preview-login-drive-0916b"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
