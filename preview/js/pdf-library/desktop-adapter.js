@@ -1,4 +1,4 @@
-import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js";
+import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-fast-login-0916";
 import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js";
 
 function pdfOpenDiagnostic(error) {

@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js';
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-login-drive-0916b';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-fast-login-0916';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,

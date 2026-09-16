@@ -1,3 +1,4 @@
+import { readPageTextContent } from "./pdf-text-content.js?v=1.6.0-preview-fast-login-0916";
 import {
   createCropSource,
   createDocumentRecord,
@@ -208,7 +209,7 @@ export function createPdfRuntime(options = {}) {
         if (input.signal?.aborted) throw input.signal.reason ?? new DOMException("Aborted", "AbortError");
         const page = await pdf.getPage(pageNumber);
         const viewport = page.getViewport({ scale: 1 });
-        const content = await page.getTextContent({ disableNormalization: false });
+        const content = await readPageTextContent(page, { disableNormalization: false });
         const words = pageWordRecords(module, content, viewport);
         const base = { documentId: input.id, pageNumber, widthPoints: viewport.width, heightPoints: viewport.height, rotation: viewport.rotation, text: content.items.map((item) => item.str ?? "").join(" "), words };
         pages.push(createPageRecord({ ...base, items: detectPageItems(base) }));
@@ -271,6 +272,23 @@ export function createPdfRuntime(options = {}) {
     }
   }
 
+  async function ensurePageRecord(documentId, pageNumber) {
+    const value = getOpened(documentId);
+    const existing = value.record.pages.find(page => page.pageNumber === pageNumber);
+    if (existing) return existing;
+    const page = await value.pdf.getPage(pageNumber);
+    try {
+      const viewport = page.getViewport({ scale: 1 });
+      const content = await readPageTextContent(page, { disableNormalization: false });
+      const base = { documentId, pageNumber, widthPoints: viewport.width, heightPoints: viewport.height,
+        rotation: viewport.rotation, text: content.items.map(item => item.str ?? "").join(" "),
+        words: pageWordRecords(await pdfjs(), content, viewport) };
+      const record = createPageRecord({ ...base, items: detectPageItems(base) });
+      value.record = Object.freeze({ ...value.record, pages: Object.freeze([...value.record.pages, record]) });
+      return record;
+    } finally { page.cleanup(); }
+  }
+
   async function render(source, dpi, signal) {
     const parsedSource = createCropSource(source);
     const key = `${parsedSource.documentId}:${parsedSource.pageNumber}:${parsedSource.rect.join(",")}:${dpi}`;
@@ -309,10 +327,10 @@ export function createPdfRuntime(options = {}) {
   }
 
   return Object.freeze({
-    openDocument, openDocumentResource, closeDocument,
+    openDocument, openDocumentResource, ensurePageRecord, closeDocument,
     getDocument(documentId) { return opened.get(documentId)?.record ?? null; },
     async detectFigureCandidates(input) {
-      const value = getOpened(input.documentId); const pageRecord = value.record.pages.find((page) => page.pageNumber === input.pageNumber);
+      const value = getOpened(input.documentId); const pageRecord = await ensurePageRecord(input.documentId, input.pageNumber);
       if (!pageRecord) throw new RangeError(`PDF page is unavailable: ${input.pageNumber}`);
       const page = await value.pdf.getPage(input.pageNumber);
       try { return detectGraphics({ item: input.item, marks: await collectPageGraphicMarks({ pdfjs: await pdfjs(), page }), words: pageRecord.words, pageWidthPoints: pageRecord.widthPoints, pageHeightPoints: pageRecord.heightPoints }); } finally { page.cleanup(); }

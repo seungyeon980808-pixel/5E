@@ -1,5 +1,5 @@
 import { createDocumentRecord, createPageRecord } from "./contract.js";
-import { detectPageItems } from "./pdf-runtime.js";
+import { detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-fast-login-0916";
 
 const TESSERACT_MODULE_URL = new URL("../../vendor/ocr/tesseract.esm.min.js", import.meta.url);
 const TESSERACT_WORKER_URL = new URL("../../vendor/ocr/worker.min.js", import.meta.url);
