@@ -1,8 +1,23 @@
+import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js";
+import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js";
 import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js";
 import { createCropSource } from "../pdf-library/contract.js";
 import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";
+
+async function providedPagePreview(document, source, result, options = {}) {
+  if ((options.original && !options.continuous) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
+  const hash = document.source.sha256;
+  if (!providedPagePreviews[hash] || source.pageNumber > providedPagePreviews[hash]) return null;
+  const fullPage = source.rect.every((value, index) => value === [0, 0, 1, 1][index]);
+  const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true ? "-thumb" : ""}.webp`, import.meta.url).href;
+  const image = fullPage ? { url } : await cropPrebuiltPreview(url, source.rect, options.thumbnail === true);
+  return Object.freeze({
+    ...image,
+    source, provenance: result.provenance, result, previewOnly: true,
+  });
+}
 
 const RESULT_KINDS = new Set(["image", "crop", "page"]);
 const SUBJECT_LABELS = Object.freeze({ p1: "물리학Ⅰ", p2: "물리학Ⅱ", c1: "화학Ⅰ", c2: "화학Ⅱ", b1: "생명과학Ⅰ", b2: "생명과학Ⅱ", e1: "지구과학Ⅰ", e2: "지구과학Ⅱ" });
@@ -551,8 +566,10 @@ export function createUnifiedLibraryProvider(input = {}) {
       && candidate.provenance.documentId === document.id
       && candidate.provenance.pageNumber === page);
     if (!result) throw new RangeError("PDF preview page is outside the document");
-    if (typeof materializers.pdf !== "function") return Object.freeze({ file, result });
     const source = Object.freeze({ documentId: document.id, pageNumber: page, rect: Object.freeze([0, 0, 1, 1]), fullPageFallback: true });
+    const prebuilt = await providedPagePreview(document, source, result, options);
+    if (prebuilt) return prebuilt;
+    if (typeof materializers.pdf !== "function") return Object.freeze({ file, result });
     const materialized = await materializers.pdf({ result, source, options: { ...options, preview: options.thumbnail !== true } });
     return Object.freeze({ ...materialized, result });
   }
@@ -813,6 +830,10 @@ export function createUnifiedLibraryProvider(input = {}) {
           ...result,
           provenance: Object.freeze({ ...result.provenance, ...securedSource }),
         });
+        if (options.thumbnail === true || options.preview === true) {
+          const prebuilt = await providedPagePreview(documents.find(document => document.id === securedSource.documentId), securedSource, materializerResult, options);
+          if (prebuilt) return prebuilt;
+        }
         return materializers.pdf({ result: materializerResult, source: securedSource, options });
       }
       const item = images.items.get(result.id);

@@ -35,7 +35,7 @@ test("Given a hosted pack, when its catalog loads, then metadata stays lazy and 
   assert.equal(remote.documents.length, 1);
   const checksumManifest = JSON.parse(await readFile(path.join(directory, "checksums.json"), "utf8"));
   assert.equal(remote.documents[0].source.sha256, checksumManifest.files[PDF_PACK_FIXTURE.documentPath]);
-  const runtime = { async openDocument(input) { return input; } };
+  const runtime = { async openDocumentResource(input) { return input; } };
   const opened = await remote.openDocument(runtime, remote.documents[0]);
   assert.equal(opened.data[0], 0x25);
   assert.equal(opened.url, undefined);
@@ -60,7 +60,7 @@ test("Given a cached remote PDF, when it is downloaded and opened again, then th
   const first = await loadRemotePack({ baseUrl, fetcher, assetCache });
   const downloaded = await first.downloadDocument(first.documents[0]);
   const second = await loadRemotePack({ baseUrl, fetcher, assetCache });
-  const opened = await second.openDocument({ async openDocument(value) { return value; } }, second.documents[0]);
+  const opened = await second.openDocument({ async openDocumentResource(value) { return value; } }, second.documents[0]);
 
   assert.equal(downloaded.fileName, "fixture.pdf");
   assert.equal(opened.data[0], 0x25);
@@ -78,7 +78,7 @@ test("Given a hosted pack whose selected PDF differs from its checksum, when ope
   const remote = await loadRemotePack({ baseUrl, fetcher });
   let runtimeCalls = 0;
 
-  await assert.rejects(remote.openDocument({ async openDocument() { runtimeCalls += 1; } }, remote.documents[0]), /SHA-256 mismatch/);
+  await assert.rejects(remote.openDocument({ async openDocumentResource() { runtimeCalls += 1; } }, remote.documents[0]), /SHA-256 mismatch/);
   assert.equal(runtimeCalls, 0);
 });
 
@@ -93,7 +93,7 @@ test("Given a hosted pack whose selected PDF exceeds the byte limit, when opened
   const remote = await loadRemotePack({ baseUrl, fetcher });
   let runtimeCalls = 0;
 
-  await assert.rejects(remote.openDocument({ async openDocument() { runtimeCalls += 1; } }, remote.documents[0]), /exceeds 268435456 bytes/);
+  await assert.rejects(remote.openDocument({ async openDocumentResource() { runtimeCalls += 1; } }, remote.documents[0]), /exceeds 268435456 bytes/);
   assert.equal(runtimeCalls, 0);
 });
 
@@ -113,11 +113,11 @@ test("Given a hosted pack whose selected asset has a matching hash but is not a 
   const remote = await loadRemotePack({
     baseUrl,
     fetcher,
-    assetCache: { async get() { return null; }, async put() { cacheWrites += 1; }, async delete() {} },
+    assetCache: { async get() { return null; }, async put(url) { if (url.endsWith(".pdf")) cacheWrites += 1; }, async delete() {} },
   });
   let runtimeCalls = 0;
 
-  await assert.rejects(remote.openDocument({ async openDocument() { runtimeCalls += 1; } }, remote.documents[0]), /expected PDF bytes/);
+  await assert.rejects(remote.openDocument({ async openDocumentResource() { runtimeCalls += 1; } }, remote.documents[0]), /expected PDF bytes/);
   assert.equal(runtimeCalls, 0);
   assert.equal(cacheWrites, 0);
 });
@@ -283,4 +283,19 @@ test("Given encoded traversal or URL suffixes in pack paths, when the manifest l
     assert.match(outcome.error?.message || "", /safe relative path/i);
     assert.deepEqual(outcome.requested.map((url) => new URL(url).pathname.split("/").at(-1)).sort(), ["checksums.json", "pack.json"]);
   }
+});
+
+ test("indexed remote PDF opens its resource without scanning pages again", async (t) => {
+  const directory = await fixtureDirectory(t);
+  const remote = await loadRemotePack({baseUrl:"https://example.test/",fetcher: async url => new Response(await readFile(path.join(directory,new URL(url).pathname)))});
+  let resourceRecord;
+  await remote.openDocument({openDocument() { assert.fail("must not reindex"); },async openDocumentResource(input,record) {resourceRecord=record;return record;}},remote.documents[0]);
+  assert.equal(resourceRecord,remote.documents[0]);
+});
+
+test("unchanged search index is reused from the verified browser cache", async (t) => {
+  const directory = await fixtureDirectory(t); const cache = new Map(); let indexRequests = 0;
+  const options = {baseUrl:"https://example.test/", assetCache:{async get(u,h){return cache.get(u+h);},async put(u,h,b){cache.set(u+h,b);}},fetcher:async url=>{if(url.endsWith('search-index.json'))indexRequests++;return new Response(await readFile(path.join(directory,new URL(url).pathname)));}};
+  await loadRemotePack(options); await loadRemotePack(options);
+  assert.equal(indexRequests,1);
 });

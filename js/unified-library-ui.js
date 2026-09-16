@@ -865,6 +865,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   if (driveHost) driveSettingsBody.append(driveHost);
   const getPartOptions = createPartOptions(partOptionsHost, () => void renderPreview());
   const previewCache = new Map();
+  const thumbnailCache = createBoundedPageCache(64);
   const continuousPageCache = createBoundedPageCache();
   let results = [];
   let selectedId = null;
@@ -1104,14 +1105,19 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const ownEpoch = ++searchEpoch;
     searchController?.abort();
     searchController = new AbortController();
+    const signal = searchController.signal;
+    thumbnailEpoch += 1;
+    thumbnailQueue = Promise.resolve();
+    thumbnailObserver?.disconnect();
     const requestId = `unilib-${++requestSequence}`;
     const activeProvider = await provider();
     if (!enabledSources) await renderSources();
+    if (ownEpoch !== searchEpoch || signal.aborted || overlay.hidden) return;
     const queryText = query.value.trim();
     const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
     const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
-    const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: 500, requestId, signal: searchController.signal };
-    const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal: searchController.signal };
+    const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: 500, requestId, signal };
+    const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal };
     setStatus("라이브러리를 검색하는 중…");
     try {
       const kinds = [...(activeTypes.includes("question") ? ["crop"] : []), ...(activeTypes.includes("image") ? ["image"] : [])];
@@ -1151,6 +1157,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   function renderResults() {
     const ownThumbnailEpoch = ++thumbnailEpoch;
+    thumbnailQueue = Promise.resolve();
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
     const visibleResults = results;
@@ -1163,7 +1170,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const loadThumbnail = (result, media) => {
       thumbnailQueue = thumbnailQueue.then(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
-        const materialized = await materializeLibraryThumbnail(result, await provider(), thumbnailPdfMode);
+        const activeProvider = await provider();
+        if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
+        const cacheKey = JSON.stringify([libraryResultIdentity(result), result.revision ?? activeProvider.revision, thumbnailPdfMode]);
+        let pending = thumbnailCache.get(cacheKey);
+        if (!pending) {
+          pending = materializeLibraryThumbnail(result, activeProvider, thumbnailPdfMode);
+          thumbnailCache.set(cacheKey, pending);
+          pending.catch(() => { if (thumbnailCache.get(cacheKey) === pending) thumbnailCache.delete(cacheKey); });
+        }
+        const materialized = await pending;
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const src = resultImage(result, materialized);
         if (!src) return;
