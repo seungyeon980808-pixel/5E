@@ -46,6 +46,7 @@
       "LICENSE",
       "css/**/*",
       "js/**/*",
+      "experiments/web-codex-auth/editor-bridge.js",
       "vendor/ocr/**/*",
       "vendor/pdfjs/**/*",
       "desktop/main.cjs",
