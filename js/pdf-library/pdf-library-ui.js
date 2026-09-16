@@ -232,7 +232,7 @@ function figureInsideQuestion(rect, questionRect) {
   return x >= qx && y >= qy && x + width <= qx + qwidth && y + height <= qy + qheight;
 }
 
-export function createPdfResultResolver({ getIdentity, openDocument, detectCandidates, schedule }) {
+export function createPdfResultResolver({ getIdentity, openDocument, ensurePageRecord, detectCandidates, schedule }) {
   const resolved = new Map();
   const clear = () => resolved.clear();
   return Object.freeze({
@@ -250,7 +250,8 @@ export function createPdfResultResolver({ getIdentity, openDocument, detectCandi
         if (getIdentity(result) !== requestIdentity) return null;
         const opened = await openDocument(result.provenance.documentId);
         if (getIdentity(result) !== requestIdentity) return null;
-        const page = opened.pages.find((value) => value.pageNumber === result.provenance.pageNumber);
+        const page = opened.pages.find((value) => value.pageNumber === result.provenance.pageNumber)
+          ?? await ensurePageRecord?.(result.provenance.documentId, result.provenance.pageNumber);
         const itemNumber = result.metadata?.itemNumber;
         const item = page?.items.find((value) => value.id === result.provenance.itemId || value.itemNumber === itemNumber);
         if (!item) return null;
@@ -540,6 +541,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         document.source?.locator ?? null, document.source?.sha256 ?? null]);
     },
     openDocument: ensureDocumentOpen,
+    ensurePageRecord: (documentId, pageNumber) => runtime.ensurePageRecord(documentId, pageNumber),
     detectCandidates: (input) => runtime.detectFigureCandidates(input),
     schedule: withRuntimeLock,
   });

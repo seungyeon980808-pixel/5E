@@ -87,7 +87,7 @@ export function createBrowserRemoteAssetCache({ storage = globalThis.caches, cac
     async put(url, checksum, bytes) {
       await (await storage.open(cacheName)).put(cacheKey(url, checksum), new Response(bytes, {
         status: 200,
-        headers: { "content-type": "application/pdf", "content-length": String(bytes.byteLength) },
+        headers: { "content-type": new URL(url).pathname.endsWith(".json") ? "application/json" : "application/pdf", "content-length": String(bytes.byteLength) },
       }));
     },
     async delete(url, checksum) {
@@ -113,10 +113,19 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
   if (await sha256Hex(new TextEncoder().encode(JSON.stringify(pack))) !== checksums.pack) throw new PackValidationError("pack.json", "metadata checksum mismatch");
   const catalogPath = packPath(pack.paths?.catalog, "paths.catalog");
   const searchPath = packPath(pack.paths?.searchIndex, "paths.searchIndex");
-  const [catalogBytes, searchBytes] = await Promise.all([
-    fetchBytes(fetcher, packAssetUrl(root, catalogPath, "paths.catalog").href, MAX_JSON_BYTES, catalogPath),
-    fetchBytes(fetcher, packAssetUrl(root, searchPath, "paths.searchIndex").href, MAX_JSON_BYTES, searchPath),
-  ]);
+  const readIndex = async (relativePath) => {
+    const url = packAssetUrl(root, relativePath, "index").href;
+    const checksum = checksums.files[relativePath];
+    if (!HASH_PATTERN.test(checksum ?? "")) throw new PackValidationError(relativePath, "missing checksum");
+    let bytes;
+    try { bytes = await assetCache?.get(url, checksum); } catch {}
+    if (bytes && bytes.byteLength <= MAX_JSON_BYTES && await sha256Hex(bytes) === checksum) return bytes;
+    bytes = await fetchBytes(fetcher, url, MAX_JSON_BYTES, relativePath);
+    if (await sha256Hex(bytes) !== checksum) throw new PackValidationError(relativePath, "SHA-256 mismatch");
+    try { await assetCache?.put(url, checksum, bytes); } catch {}
+    return bytes;
+  };
+  const [catalogBytes, searchBytes] = await Promise.all([readIndex(catalogPath), readIndex(searchPath)]);
   if (await sha256Hex(catalogBytes) !== checksums.files[catalogPath]) throw new PackValidationError(catalogPath, "SHA-256 mismatch");
   if (await sha256Hex(searchBytes) !== checksums.files[searchPath]) throw new PackValidationError(searchPath, "SHA-256 mismatch");
   const catalog = json(catalogBytes, catalogPath);
@@ -184,7 +193,7 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
       });
     },
     async openDocument(runtime, document) {
-      return runtime.openDocument({ id: document.id, title: document.title, source: document.source, metadata: document.metadata, data: await readDocument(document) });
+      return runtime.openDocumentResource({ id: document.id, title: document.title, source: document.source, metadata: document.metadata, data: await readDocument(document) }, document);
     },
   });
 }

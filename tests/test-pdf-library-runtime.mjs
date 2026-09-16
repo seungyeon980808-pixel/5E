@@ -166,3 +166,14 @@ test("Given competing opens for one ID, when the older parse finishes last, then
   await assert.rejects(older, (error) => error.name === "AbortError");
   assert.equal(runtime.getDocument("race").title, "Newer");
 });
+
+test("preindexed resource renders without scanning and analyzes only a requested crop page", async (t) => {
+  const runtime = createPdfRuntime({canvasFactory:{create:createCanvas}}); t.after(()=>runtime.clearCache());
+  const record = {id:'lazy',title:'lazy',pageCount:1,pages:[],source:{kind:'file',locator:'lazy',displayName:'lazy.pdf'}};
+  await runtime.openDocumentResource({id:'lazy',data:createPdfLibraryFixture()},record);
+  const rendered = await runtime.renderPage({documentId:'lazy',pageNumber:1,dpi:72});
+  assert.ok(rendered.bytes.byteLength>0); assert.equal(runtime.getDocument('lazy').pages.length,0);
+  const page = await runtime.ensurePageRecord('lazy',1);
+  assert.ok(page.text.length>0); assert.equal(runtime.getDocument('lazy').pages.length,1);
+  assert.equal(await runtime.ensurePageRecord('lazy',1),page);
+});
