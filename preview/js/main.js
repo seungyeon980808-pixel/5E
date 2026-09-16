@@ -26,7 +26,7 @@ import { initImagePaste } from "./image-paste.js?v=1.4.0";
 import { initImageCutout } from "./image-cutout.js?v=1.4.0";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-0916";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-login-drive-0916";
 import { initTemplates } from "./templates.js?v=1.4.0";
 import { initObjectSearch } from "./search.js?v=1.4.0";
 import { initCommandPalette } from "./command-palette.js?v=1.4.0";
@@ -67,7 +67,7 @@ import { initSteppers } from "./stepper.js?v=1.4.0";
 import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
 import { initTutorial } from "./tutorial.js?v=1.5.2";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
-import { initAiPanel } from "./ai-panel.js?v=1.5.8";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-login-drive-0916";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -300,6 +300,11 @@ if (aiEntryButton) {
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
+  aiEntryButton.addEventListener("click", () => {
+    if (window.fiveEWebAI) {
+      void window.fiveEWebAI.login().catch(error => window.alert(error.message));
+    }
+  });
   aiEntryButton.addEventListener("click", () => void handSelectedCanvasImageToAi(state, {
     renderImage: renderSessionToDataUrl,
     openPanel: options => aiPanel?.open(options),

@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js';
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-login-drive-0916';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -3086,7 +3086,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const current = await desktop.status();
       loginButton.hidden = current.login.loggedIn;
       if (!current.login.loggedIn) {
-        setStatus("Codex 로그인 필요", "warn");
+        setStatus("ChatGPT 로그인 필요", "warn");
+        if (desktop.web) {
+          loginButton.textContent = "ChatGPT 로그인";
+          accountText.textContent = "ChatGPT 계정을 연결해 주세요";
+          limitText.textContent = "로그인 후 한도를 확인할 수 있습니다";
+          if (!modelSelect.value) modelSelect.replaceChildren(new Option("로그인 후 불러옵니다", ""));
+          accountTokensText.textContent = "로그인 후 확인할 수 있습니다";
+        }
       } else if (current.server) {
         setStatus("준비됨", "ok");
         await Promise.all([loadModels(), loadAccountOverview()]);
@@ -3100,6 +3107,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus(`상태 확인 실패: ${error.message}`, "error");
     }
   };
+  if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); });
   const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", reveal = true } = {}) => {
     await workspaceReady;
     const selectedObject=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId) : null;
@@ -3657,7 +3665,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   loginButton.onclick = async () => {
     if (!desktop) return refresh();
-    await desktop.login();
+    try { await desktop.login(); } catch (error) { setStatus(error.message, "error"); return; }
     setStatus("브라우저에서 로그인을 완료해 주세요…", "busy");
     for (let attempt = 0; attempt < 120; attempt += 1) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
