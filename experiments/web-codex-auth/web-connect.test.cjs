@@ -3,37 +3,140 @@ const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const vm = require('node:vm');
 
-test('direct web session survives popup close and refresh and rejects foreign messages', async () => {
-  const origin = 'https://five-e-ai-runtime-probe.onrender.com';
-  const store = new Map();
-  const sessionStorage = { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) };
-  const popup = { location: { replace() {} }, closed: false, focus() {}, postMessage() {} };
-  const calls = [];
-  let receive, opened = 0;
-  const boot = () => {
-    const window = { addEventListener: (_, fn) => { receive = fn; }, open: () => { opened++; return popup; }, dispatchEvent() {} };
-    const context = { window, location: { origin: 'https://www.5e.ai.kr' }, sessionStorage, Event, AbortSignal, screen: { width: 1280, height: 900 }, clearTimeout, setTimeout,
-      fetch: async (...args) => { calls.push(args); return { ok: true, status: 200, json: async () => ({ login: { loggedIn: true }, server: true }) }; } };
-    vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), context);
-    return window;
+const ticket = 'b'.repeat(64), token = 'a'.repeat(64);
+const authUrl = 'https://auth.openai.com/codex/device';
+const flush = () => new Promise(resolve => setImmediate(resolve));
+function boot({ start, status, store = new Map(), blocked = false } = {}) {
+  const requests = [], openings = [], children = [], events = [], geometry = [], timers = new Map(), listeners = {};
+  let timerId = 0;
+  const window = {
+    addEventListener(type, listener) { listeners[type] = listener; },
+    dispatchEvent(event) { events.push(event); },
+    open(...args) {
+      openings.push(args);
+      if (blocked) return null;
+      const child = { closed: false, focused: 0, close() { this.closed = true; }, focus() { this.focused++; },
+        resizeTo: (...args) => geometry.push(['resize', ...args]), moveTo: (...args) => geometry.push(['move', ...args]),
+        location: { replace: url => geometry.push(['navigate', url]) } };
+      children.push(child); return child;
+    },
   };
-  let window = boot();
-  window.fiveEWebLogin();
-  receive({ origin: 'https://evil.example', source: popup, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
-  assert.equal((await window.fiveEWebRequest('bridge-status')).login.loggedIn, false);
-  receive({ origin, source: {}, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
-  assert.equal(store.size, 0);
-  receive({ origin, source: popup, data: { type: '5e:runtime-session', token: 'a'.repeat(64) } });
-  popup.closed = true;
-  assert.equal((await window.fiveEWebRequest('bridge-status', { clientScope: 'workspace-2' })).login.loggedIn, true);
-  assert.equal(calls[0][1].credentials, 'omit');
-  assert.equal(calls[0][1].headers.Authorization, 'Bearer ' + 'a'.repeat(64));
-  window = boot();
-  assert.equal((await window.fiveEWebRequest('bridge-status')).login.loggedIn, true);
-  window.fiveEWebLogin();
-  assert.equal(opened, 1);
+  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
+    window, location: { origin: 'https://www.5e.ai.kr' }, screen: { availWidth: 1440, availHeight: 900 },
+    sessionStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
+    URL, Event, CustomEvent, AbortSignal,
+    setTimeout(fn) { timers.set(++timerId, fn); return timerId; }, clearTimeout(id) { timers.delete(id); },
+    fetch: async (url, options) => {
+      requests.push({ url, options });
+      const result = url.endsWith('/web-login-start') ? await (start?.() ?? { ticket, userCode: 'TEST-CODE', authUrl })
+        : url.endsWith('/web-login-status') ? await (status?.() ?? { signedIn: false, state: 'waiting' })
+        : url.endsWith('/bridge-status') ? { login: { loggedIn: true }, server: true } : {};
+      return { ok: true, status: 200, json: async () => result };
+    },
+  });
+  return { window, requests, openings, children, events, geometry, timers, listeners, store };
+}
+
+test('login prepares a scoped code without opening any window; authentication opens one official popup synchronously', async () => {
+  const f = boot();
+  const preparation = f.window.fiveEWebLogin();
+  assert.equal(f.openings.length, 0);
+  await preparation;
+  await flush();
+  assert.equal(f.openings.length, 0);
+  const request = f.requests[0];
+  assert.ok(request.url.endsWith('/web-login-start'));
+  assert.equal(request.options.method, 'POST');
+  assert.equal(request.options.credentials, 'omit');
+  assert.equal(request.options.headers['X-5E-Request'], '1');
+  assert.equal(request.options.headers.Authorization, undefined);
+  assert.ok(f.events.some(event => event.detail?.state === 'ready' && event.detail.userCode === 'TEST-CODE'));
+  assert.equal(f.window.fiveEWebContinueLogin(), true);
+  assert.equal(f.openings.length, 1);
+  assert.equal(f.openings[0][0], 'about:blank');
+  assert.match(f.openings[0][2], /width=560,height=700/);
+  assert.deepEqual(f.geometry.map(call => call[0]), ['resize', 'move', 'navigate']);
+  assert.equal(f.geometry.at(-1)[1], authUrl);
+  assert.equal(f.window.fiveEWebContinueLogin(), true);
+  assert.equal(f.openings.length, 1);
+  assert.equal(f.children[0].focused, 1);
 });
 
+test('ticket polling closes authentication and stores only a session capability that survives reload', async () => {
+  let signedIn = false;
+  const f = boot({ status: () => signedIn ? { signedIn, token } : { signedIn, state: 'waiting' } });
+  await f.window.fiveEWebLogin(); await flush();
+  f.window.fiveEWebContinueLogin();
+  assert.equal(f.store.size, 0);
+  assert.equal(f.requests.find(request => request.url.endsWith('/web-login-status')).options.headers.Authorization, `Bearer ${ticket}`);
+  signedIn = true;
+  f.timers.values().next().value(); await flush();
+  assert.equal(f.children[0].closed, true);
+  assert.deepEqual([...f.store], [['5e:web-ai-session', token]]);
+  const reloaded = boot({ store: f.store });
+  assert.equal((await reloaded.window.fiveEWebRequest('bridge-status')).login.loggedIn, true);
+  assert.equal(reloaded.requests[0].options.headers.Authorization, `Bearer ${token}`);
+  await reloaded.window.fiveEWebLogin();
+  assert.equal(reloaded.openings.length, 0);
+  assert.equal(reloaded.requests.length, 1);
+});
+
+test('postMessage cannot supply a session capability', async () => {
+  const f = boot();
+  for (const origin of ['https://five-e-ai-runtime-probe.onrender.com', 'https://evil.example']) {
+    f.listeners.message?.({ origin, source: f.children[0], data: { type: '5e:runtime-session', token } });
+  }
+  assert.equal(f.store.size, 0);
+  assert.equal((await f.window.fiveEWebRequest('bridge-status')).login.loggedIn, false);
+});
+
+test('untrusted authentication URLs cancel the ticket and never open a popup', async () => {
+  for (const url of ['https://evil.example/login', 'http://auth.openai.com/login', 'https://user@auth.openai.com/login', 'https://auth.openai.com:8443/login']) {
+    const f = boot({ start: () => ({ ticket, userCode: 'TEST-CODE', authUrl: url }) });
+    await f.window.fiveEWebLogin(); await flush();
+    assert.equal(f.window.fiveEWebContinueLogin(), false);
+    assert.equal(f.openings.length, 0);
+    assert.ok(f.events.some(event => event.detail?.state === 'error'));
+    assert.equal(f.requests.find(request => request.url.endsWith('/web-login-cancel')).options.headers.Authorization, `Bearer ${ticket}`);
+  }
+});
+
+test('cancel during preparation isolates a retry and cancels the late old ticket', async () => {
+  let finishOld, calls = 0;
+  const old = new Promise(resolve => { finishOld = resolve; });
+  const newerTicket = 'c'.repeat(64);
+  const f = boot({ start: () => ++calls === 1 ? old : { ticket: newerTicket, userCode: 'NEW-CODE', authUrl } });
+  const first = f.window.fiveEWebLogin();
+  f.window.fiveEWebCancelLogin();
+  await f.window.fiveEWebLogin(); await flush();
+  finishOld({ ticket, userCode: 'OLD-CODE', authUrl });
+  await first; await flush();
+  assert.deepEqual(f.events.filter(event => event.detail?.state === 'ready').map(event => event.detail.userCode), ['NEW-CODE']);
+  assert.equal(f.requests.find(request => request.url.endsWith('/web-login-cancel')).options.headers.Authorization, `Bearer ${ticket}`);
+  assert.equal(f.requests.find(request => request.url.endsWith('/web-login-status')).options.headers.Authorization, `Bearer ${newerTicket}`);
+  assert.equal(f.openings.length, 0);
+  assert.equal(f.window.fiveEWebContinueLogin(), true);
+});
+
+test('cancelling a pending status response closes the popup and rejects late completion', async () => {
+  let finishStatus;
+  const f = boot({ status: () => new Promise(resolve => { finishStatus = resolve; }) });
+  await f.window.fiveEWebLogin();
+  f.window.fiveEWebContinueLogin();
+  f.window.fiveEWebCancelLogin();
+  assert.equal(f.children[0].closed, true);
+  finishStatus({ signedIn: true, token }); await flush();
+  assert.equal(f.store.size, 0);
+  assert.equal(f.timers.size, 0);
+  assert.equal(f.window.fiveEWebContinueLogin(), false);
+});
+
+test('blocked authentication popup reports a recoverable blocked state', async () => {
+  const f = boot({ blocked: true });
+  await f.window.fiveEWebLogin();
+  assert.equal(f.window.fiveEWebContinueLogin(), false);
+  assert.ok(f.events.some(event => event.detail?.state === 'blocked'));
+});
 test('public web connection is opt-in and leaves the private editor gate intact', async () => {
   const http = require('node:http');
   const { createTrialProxy } = require('./remote-trial.cjs');
@@ -51,109 +154,4 @@ test('public web connection is opt-in and leaves the private editor gate intact'
     } finally { proxy.closeAllConnections(); await new Promise(resolve => proxy.close(resolve)); }
   }
   await new Promise(resolve => upstream.close(resolve));
-});
-
-test('code popup stays available while a scoped ticket waits for authentication', async () => {
-  const origin = 'https://five-e-ai-runtime-probe.onrender.com';
-  const store = new Map(), events = [], timers = [];
-  let receive, opened, signedIn = false;
-  const popup = { location: { replace(url) { this.href = url; } }, closed: false, focused: false, messages: [], focus() { this.focused = true; }, postMessage(...args) { this.messages.push(args); }, close() { this.closed = true; } };
-  const window = {
-    addEventListener: (_, fn) => { receive = fn; },
-    open: (...args) => { opened = args; return popup; },
-    dispatchEvent: event => events.push(event),
-  };
-  const requests = [];
-  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
-    window, location: { origin: 'https://www.5e.ai.kr' }, screen: { width: 1280, height: 900 },
-    sessionStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
-    Event, CustomEvent, AbortSignal, URL,
-    setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout() {},
-    fetch: async (url, options) => {
-      requests.push({url, options});
-      return { ok: true, json: async () => signedIn ? { signedIn: true, token: 'a'.repeat(64) } : { state: 'waiting', signedIn: false } };
-    },
-  });
-  window.fiveEWebLogin();
-  assert.equal(opened[0], 'about:blank');
-  assert.match(opened[1], /^fivee-chatgpt-login-/);
-  assert.match(opened[2], /popup=yes/);
-  receive({ origin, source: popup, data: { type: '5e:login-ready', ticket: 'b'.repeat(64), userCode: 'TEST-CODE', authUrl: 'https://auth.openai.com/codex/device' } });
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(store.size, 0);
-  assert.equal(popup.closed, false);
-  assert.equal(requests[0].options.headers.Authorization, 'Bearer ' + 'b'.repeat(64));
-  assert.ok(events.some(event => event.detail?.state === 'ready'));
-  window.fiveEWebContinueLogin();
-  assert.equal(popup.focused, true);
-  assert.match(popup.location.href, /web-connect.*flow=popup/, 'code popup must stay on the code page');
-  signedIn = true;
-  timers.at(-1)();
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(store.get('5e:web-ai-session'), 'a'.repeat(64));
-  assert.equal(popup.messages.at(-1)[0].type, '5e:session-received');
-  assert.equal(popup.messages.at(-1)[1], origin);
-  timers.at(-1)();
-  assert.equal(popup.closed, true);
-});
-
-test('each closed code popup gets a new name and geometry before runtime navigation', () => {
-  const openings = [], placements = [], children = [];
-  const window = {
-    addEventListener() {}, dispatchEvent() {},
-    open(...args) {
-      openings.push(args);
-      const child = { closed: false, location: { replace: url => placements.push(['navigate', url]) },
-        resizeTo: (...size) => placements.push(['resize', ...size]),
-        moveTo: (...position) => placements.push(['move', ...position]), focus() {} };
-      children.push(child); return child;
-    },
-  };
-  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
-    window, location: { origin: 'https://www.5e.ai.kr' },
-    screen: { availWidth: 380, availHeight: 600, availLeft: -380, availTop: -600 },
-    sessionStorage: { getItem() {} }, setTimeout() {}, clearTimeout() {},
-  });
-  window.fiveEWebLogin();
-  children[0].closed = true;
-  window.fiveEWebLogin();
-  assert.notEqual(openings[0][1], openings[1][1]);
-  assert.equal(openings[0][0], 'about:blank');
-  assert.deepEqual(placements.slice(0, 2), [['resize', 380, 600], ['move', -380, -600]]);
-  assert.equal(placements[2][0], 'navigate');
-  assert.match(placements[2][1], /web-connect.*flow=popup/);
-});
-
-test('retry after manually closing code popup cancels the old ticket and timer', async () => {
-  const origin = 'https://five-e-ai-runtime-probe.onrender.com';
-  const requests = [], cleared = [], timers = [], children = [];
-  let receive;
-  const window = {
-    addEventListener: (_, listener) => { receive = listener; }, dispatchEvent() {},
-    open() {
-      const child = { closed: false, location: { replace() {} }, focus() {}, postMessage() {} };
-      children.push(child); return child;
-    },
-  };
-  vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
-    window, location: { origin: 'https://www.5e.ai.kr' }, screen: { width: 1280, height: 900 },
-    sessionStorage: { getItem() {} }, CustomEvent, AbortSignal,
-    setTimeout: fn => { timers.push(fn); return timers.length; }, clearTimeout: id => cleared.push(id),
-    fetch: async (url, options) => {
-      requests.push({ url, options });
-      return { ok: true, json: async () => ({ signedIn: false, state: 'waiting' }) };
-    },
-  });
-  window.fiveEWebLogin();
-  receive({ origin, source: children[0], data: { type: '5e:login-ready', ticket: 'b'.repeat(64) } });
-  await new Promise(resolve => setImmediate(resolve));
-  const priorTimer = timers.length;
-  children[0].closed = true;
-  window.fiveEWebLogin();
-  assert.ok(cleared.includes(priorTimer), 'the previous attempt must not retain a timeout');
-  const cancellation = requests.find(request => request.url.endsWith('/web-login-cancel'));
-  assert.ok(cancellation, 'the previous scoped ticket is cancelled on retry');
-  assert.equal(cancellation.options.headers.Authorization, 'Bearer ' + 'b'.repeat(64));
-  receive({ origin, source: children[0], data: { type: '5e:login-ready', ticket: 'c'.repeat(64) } });
-  assert.equal(requests.filter(request => request.url.endsWith('/web-login-status')).length, 1, 'the old popup cannot restart polling');
 });
