@@ -17,7 +17,7 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1.6.0-preview-labeler-0917-1111';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-labeler-0917-1111';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-shared-zoom-0917-1415';
 import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-preview-labeler-0917-1111';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.0-preview-labeler-0917-1111';
 import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
@@ -2375,7 +2375,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           && ["unified-library", "pdf-library", "pdf-crop"].includes(reference.sourceKind);
         if (freshLibraryTask) referenceComposition = normalizeReferenceComposition({ orientation: "free" }, []);
         addReferenceData(reference);
-        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side" });
+        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side", tracking: true });
       },
       applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
       captureTask: captureActiveTaskTab,

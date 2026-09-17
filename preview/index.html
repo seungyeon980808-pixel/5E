@@ -44,10 +44,10 @@
   <link rel="stylesheet" href="css/style.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/inspector.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-preview-labeler-0917-1111" />
+  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-preview-shared-zoom-0917-1415" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-preview-ai-compact-0917-1207" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-preview-shared-zoom-0917-1415" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-labeler-0917-1111" />
@@ -381,7 +381,7 @@
        "네트워크로 제공 시 소스 받는 법 제공" 의무를 충족한다. -->
   <footer class="app-footer">
     <span class="app-footer-main">
-      <strong class="footer-brand">5E</strong> <strong>v1.6.0 Preview [1207 AI 상단 정리] · 2026.09.17</strong>
+      <strong class="footer-brand">5E</strong> <strong>v1.6.0 Preview [1415 공통 확대·라이브러리] · 2026.09.17</strong>
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E/blob/main/LICENSE"
          target="_blank" rel="noopener" title="GNU AGPL v3 라이선스">AGPL-3.0</a>
       <a class="footer-badge" href="docs/credits.html"
@@ -440,9 +440,16 @@
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
               <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
               <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
-              <label class="ai-zoom-link" data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 확대·이동 동기화</label>
               <button type="button" data-ai-compare hidden>전체 비교</button>
             </div>
+<div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
+                  <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
+                  <output data-ai-zoom-value>100%</output>
+                  <button type="button" data-ai-zoom-action="in" aria-label="이미지 확대">＋</button>
+                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
+                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
+                </div>
+            <details class="ai-view-options"><summary aria-label="보기 설정" title="보기 설정">···</summary><div class="ai-view-options-menu"><label data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 확대·이동 동기화</label><label data-ai-zoom-target-control hidden>확대 대상 <select data-ai-zoom-target aria-label="확대 대상"><option value="source">원본</option><option value="result">수정본</option></select></label></div></details>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
               <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
@@ -463,12 +470,6 @@
                 <button type="button" class="ai-replace-source" data-ai-replace-source hidden>원본 교체</button>
                 <input class="ai-source-file-input" type="file" accept="image/*" data-ai-replace-source-input aria-label="선택한 원본을 파일로 교체">
 
-                </div><div class="ai-pane-zoom" data-ai-pane-zoom="source" role="group" aria-label="원본 이미지 배율">
-                  <button type="button" data-ai-zoom-action="out" aria-label="원본 축소">−</button>
-                  <output data-ai-zoom-value>100%</output>
-                  <button type="button" data-ai-zoom-action="in" aria-label="원본 확대">＋</button>
-                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
-                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
                 </div>
               </div></header>
               <details class="ai-reference-section" open>
@@ -489,12 +490,6 @@
                   <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
                   <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
                 </div>
-                </div><div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
-                  <button type="button" data-ai-zoom-action="out" aria-label="결과 축소">−</button>
-                  <output data-ai-zoom-value>100%</output>
-                  <button type="button" data-ai-zoom-action="in" aria-label="결과 확대">＋</button>
-                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
-                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
                 </div>
               </div></header>
               <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
@@ -673,8 +668,8 @@
   <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-ai-compact-0917-1207"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
-  <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-labeler-0917-1111"></script>
-  <script type="module" src="js/main.js?v=1.6.0-preview-ai-layout-0917-1131"></script>
+  <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-shared-zoom-0917-1415"></script>
+  <script type="module" src="js/main.js?v=1.6.0-preview-shared-zoom-0917-1415"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.6.0-preview-labeler-0917-1111"></script>
 </body>
