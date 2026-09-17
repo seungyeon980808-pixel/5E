@@ -1,4 +1,4 @@
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-single-login-0917-1011';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-paired-login-0917-1027';
 import { previewStorage as localStorage } from './preview-storage.js';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
