@@ -4,6 +4,11 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
   fullscreen: {
+    onEscape: (callback) => {
+      const listener = () => callback();
+      ipcRenderer.on("window:escape", listener);
+      return () => ipcRenderer.removeListener("window:escape", listener);
+    },
     toggle: () => ipcRenderer.invoke("window:toggle-fullscreen"),
     get: () => ipcRenderer.invoke("window:get-fullscreen"),
     onChange: (callback) => {

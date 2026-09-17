@@ -15,7 +15,7 @@ import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
 import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.4.0";
 import { snapAngle } from "./geometry.js?v=1.4.0";
 import { simplifyRDP } from "./geometry.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { getObjectBBox } from "./pick.js?v=1.4.2";
 import { resolveEndpointSnap } from "./snap.js?v=1.4.0";
 import { setSnapPreview } from "./render.js?v=1.4.0";
 

@@ -274,7 +274,7 @@ function renderLabeler(obj) {
   // is upright and centered on b (matching makeUprightLabel), so its axis-aligned
   // bounds are valid under any labeler rotation (which rotates a/b in world space).
   // Small visual gap (~2-4px equivalent) between the leader tip and the text edge.
-  const pad = size * 0.25;
+  const pad = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : 0;
   // Formula label: EXACT measured box (measureFormula); plain text: the same
   // over-estimating multiline block the plain renderer has always used.
   const fmSource = obj.contentMode === "formula" ? (obj.source || obj.rawSource || "") : "";
@@ -304,11 +304,6 @@ function renderLabeler(obj) {
   };
   const drawLeader = (from) => {
     if (!from) return;
-    const elbow = obj.elbow;
-    if (elbow && Number.isFinite(elbow.x) && Number.isFinite(elbow.y)) {
-      drawSeg(from, elbow);
-      from = elbow;                          // 꺾임점부터는 아래의 직선 규칙 그대로
-    }
     const dx = b.x - from.x, dy = b.y - from.y;
     const dist = Math.hypot(dx, dy);
     const ux = dist ? dx / dist : 0, uy = dist ? dy / dist : 0;
@@ -320,10 +315,14 @@ function renderLabeler(obj) {
     if (!(lead > 0.05)) return;
     drawSeg(from, { x: from.x + ux * lead, y: from.y + uy * lead });
   };
-  drawLeader(a);
-  // 라벨선 추가(p3): 지시선을 하나 더 뽑아 <b>두 영역을 하나의 라벨</b>로 가리킨다
-  // (2026-07-26 교사 요청). 라벨 글자는 그대로 하나다.
-  drawLeader(obj.p3);
+  const anchors = [a, obj.p3, ...(obj.extraAnchors || [])].filter(Boolean);
+  const elbow = obj.elbow;
+  if (elbow && Number.isFinite(elbow.x) && Number.isFinite(elbow.y)) {
+    anchors.forEach(anchor => drawSeg(anchor, elbow));
+    drawLeader(elbow);
+  } else {
+    anchors.forEach(drawLeader);
+  }
 
   // Upright (non-rotating) callout at p2.
   // ① 수식 라벨: renderFormula(수식 객체와 동일 투영)를 p2 중심에 배치. renderFormula의

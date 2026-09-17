@@ -12,6 +12,7 @@
 // survive zoom/pan unchanged (DESIGN 1-2).
 
 import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.4.0";
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -205,6 +206,7 @@ function setupToolChoosers() {
   TOOL_CHOOSER_GROUPS.forEach(({ btn, chooser, persistent }) => {
     const b = document.getElementById(btn), c = document.getElementById(chooser);
     if (!b || !c) return;
+    registerEscapeLayer(c, () => { closeAll(); b.focus(); });
     anyBound = true;
     let closeTimer = 0;
     const open = () => {
