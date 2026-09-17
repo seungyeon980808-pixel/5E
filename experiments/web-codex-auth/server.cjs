@@ -63,7 +63,7 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
         dispose(id, entry);
         entry = undefined;
       }
-      if (!entry && req.url === '/api/session') {
+      if (!entry && ['/api/session', '/api/web-login-start'].includes(req.url)) {
         if (sessions.size >= maxSessions) return json(429, { error: `현재 ${maxSessions}명이 연결되어 있습니다. 잠시 후 다시 시도해 주세요.` });
         const newId = randomBytes(32).toString('hex');
         const directory = mkdtempSync(path.join(root, 'session-'));
@@ -72,9 +72,9 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
           generationScheduler,
           schedulerOwner: newId,
         });
-        entry = { session, directory, touched: Date.now() };
+        entry = { session, directory, touched: Date.now(), ...(req.url === '/api/web-login-start' ? { loginExpires: Date.now() + 600000 } : {}) };
         sessions.set(newId, entry);
-        try { await session.runtime.init(); } catch (error) { sessions.delete(newId); session.close(); rmSync(directory, { recursive: true, force: true }); throw error; }
+        try { await session.runtime.init(); } catch (error) { sessions.delete(newId); session.close(); rmSync(directory, { recursive: true, force: true }); entry = undefined; throw error; }
         id = newId;
       }
       if (!entry && req.url === '/api/bridge-status') { req.resume(); return json(200, { login: { loggedIn: false }, server: false }); }
@@ -93,7 +93,9 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
         req.resume();
         if (req.url === '/api/web-login-cancel') {
           loginTickets.delete(digest(bearer));
-          return json(200, await entry.session.run(() => entry.session.cancel()));
+          const result = await entry.session.run(() => entry.session.cancel());
+          if (entry.loginExpires && !entry.webToken) dispose(id, entry);
+          return json(200, result);
         }
         const result = await entry.session.run(() => entry.session.status());
         if (!result.signedIn) return json(200, { state: result.state, signedIn: false });
@@ -138,10 +140,10 @@ function createServer({ runtimeFactory = dir => new Runtime(dir), sessionOptions
         res.setHeader('Set-Cookie', `${cookieName}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
       }
       json(200, result);
-    } catch (error) { if (error instanceof RequestError) return json(error.status, { error: error.message }); json(503, { error: '인증 연결에 실패했습니다. 새로고침 후 다시 시도해 주세요.' }); }
+    } catch (error) { if (req.url === '/api/web-login-start' && entry?.loginExpires && !entry.webToken) dispose(id, entry); if (error instanceof RequestError) return json(error.status, { error: error.message }); json(503, { error: '인증 연결에 실패했습니다. 새로고침 후 다시 시도해 주세요.' }); }
   });
   const cleanup = setInterval(() => {
-    for (const [id, entry] of sessions) if (Date.now() - entry.touched > 1800000) {
+    for (const [id, entry] of sessions) if (Date.now() - entry.touched > 1800000 || (entry.loginExpires && !entry.webToken && Date.now() > entry.loginExpires)) {
       dispose(id, entry);
     }
   }, 60000);

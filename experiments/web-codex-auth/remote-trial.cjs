@@ -20,7 +20,7 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     res.setHeader('X-Content-Type-Options', 'nosniff');
     const reject = (status, message) => { res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(message); };
     if (req.headers.host !== external.host) return reject(403, 'Origin rejected');
-    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(status|cancel))$/.test(req.url);
+    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(start|status|cancel))$/.test(req.url);
     if (direct) {
       res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
       res.setHeader('Vary', 'Origin');
@@ -31,7 +31,7 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
         res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-5E-Request');
         res.writeHead(204); return res.end();
       }
-      if (req.method !== 'POST' || !/^Bearer [a-f0-9]{64}$/.test(req.headers.authorization || '') || req.headers['x-5e-request'] !== '1') return reject(401, 'Web session required');
+      if (req.method !== 'POST' || (req.url !== '/api/web-login-start' && !/^Bearer [a-f0-9]{64}$/.test(req.headers.authorization || '')) || req.headers['x-5e-request'] !== '1') return reject(401, 'Web session required');
     }
     if (req.headers.host !== external.host || (req.headers.origin && req.headers.origin !== publicOrigin && !direct)) return reject(403, 'Origin rejected');
     if (req.method === 'GET' && req.url === '/healthz') {
