@@ -39,7 +39,7 @@ export function initWebLoginUi({ openAi }) {
     if (text) message.textContent = text;
     dialog.querySelector('[data-install-guide]').hidden = next !== 'idle';
     start.disabled = next === 'starting';
-    start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? '2. 인증 창 보기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
+    start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? '2. OpenAI 인증하기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
     start.querySelector('[data-login-logo]').hidden = !['idle', 'error'].includes(next);
     title.textContent = next === 'connected' ? 'AI 기능을 사용할 수 있습니다' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
     codeBox.hidden = !userCode || next !== 'waiting';
@@ -81,15 +81,16 @@ export function initWebLoginUi({ openAi }) {
     if (connected) { dialog.close(); openAi(); return; }
     if (phase === 'waiting') { window.fiveEWebContinueLogin?.(); return; }
     userCode = ''; copy.textContent = '복사';
-    render('starting', '코드 안내 창을 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
+    render('starting', '이 화면에서 인증 코드를 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
     try { window.fiveEWebLogin(); } catch (error) { render('error', error.message); }
   });
   window.addEventListener('5e:web-login-progress', event => {
     const data = event.detail;
     if (data.state === 'ready') {
       userCode = data.userCode || '';
-      render('waiting', '코드 안내 창에서 인증 화면 열기를 누르면 두 창을 나란히 볼 수 있습니다.');
-    } else if (data.state === 'authenticating') render('waiting', '인증 완료 후 두 창이 닫히고 메인 화면의 AI 버튼이 활성화됩니다.');
+      render('waiting', '코드를 복사한 뒤 아래 OpenAI 인증하기를 누르세요. 인증 팝업 하나가 열립니다.');
+    } else if (data.state === 'authenticating') render('waiting', '인증이 완료되면 팝업이 닫히고 이 화면의 AI 버튼이 활성화됩니다.');
+    else if (data.state === 'blocked') render('waiting', data.message);
     else if (['error', 'cancelled'].includes(data.state)) {
       userCode = ''; render(data.state === 'error' ? 'error' : 'idle', data.message || '로그인이 취소되었습니다. 다시 시작할 수 있습니다.');
     }
