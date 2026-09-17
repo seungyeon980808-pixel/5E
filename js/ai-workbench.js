@@ -254,6 +254,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     if (fromUser) userChoseLayout = true;
     const trackingControl = panel.querySelector('[data-ai-tracking-control]');
     if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
+    const viewOptions = panel.querySelector('.ai-view-options');
+    if (viewOptions) viewOptions.hidden = mode !== 'side-by-side';
     panel.dataset.aiLayout = mode;
     const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
     if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
