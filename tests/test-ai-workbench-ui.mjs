@@ -91,7 +91,7 @@ test("review events expose only concise user status", () => {
   assert.match(index, /<details class="ai-advanced-settings">[\s\S]*?<label class="ai-setting-label">추론/);
 });
 
-test("comparison controls use an app-owned version listbox and linked pane-local zoom", () => {
+test("comparison controls use an app-owned version listbox and one shared zoom control", () => {
   assert.doesNotMatch(index, /<select data-ai-candidate-select/);
   assert.match(index, /data-ai-version-button[^>]*aria-haspopup="listbox"/);
   assert.match(index, /data-ai-version-list[^>]*role="listbox"/);
@@ -104,8 +104,9 @@ test("comparison controls use an app-owned version listbox and linked pane-local
   assert.match(workbench, /versionButton\.focus\(\)/);
   assert.match(workbench, /card\.classList\.toggle\("is-ai-active-candidate"/);
   assert.match(index, /data-ai-zoom-linked checked/);
-  assert.match(index, /data-ai-pane-zoom="source"/);
-  assert.match(index, /data-ai-pane-zoom="result"/);
+  assert.equal(attributeCount("data-ai-pane-zoom"), 1);
+  assert.match(index, /data-ai-pane-zoom="shared"/);
+  assert.match(index, /data-ai-zoom-target aria-label="확대 대상"/);
   assert.match(workbench, /const paneZoom = \{ source: 1, result: 1 \}/);
   assert.match(workbench, /linkedZoom\.checked/);
   assert.match(workbench, /item\.stage\.dataset\.aiFitWidth/);

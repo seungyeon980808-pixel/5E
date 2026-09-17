@@ -16,7 +16,7 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1';
-import { setupAiWorkbench } from './ai-workbench.js';
+import { setupAiWorkbench } from './ai-workbench.js?v=shared-zoom-0917';
 import { mountDurableBatchUi } from './ai-batch-ui.js';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -2374,7 +2374,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           && ["unified-library", "pdf-library", "pdf-crop"].includes(reference.sourceKind);
         if (freshLibraryTask) referenceComposition = normalizeReferenceComposition({ orientation: "free" }, []);
         addReferenceData(reference);
-        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side" });
+        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side", tracking: true });
       },
       applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
       captureTask: captureActiveTaskTab,

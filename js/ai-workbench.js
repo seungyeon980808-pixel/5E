@@ -137,6 +137,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
   const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
+  const zoomTarget = panel.querySelector('[data-ai-zoom-target]');
+  const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result'
+    : panel.dataset.aiLayout === 'source' || linkedZoom?.checked ? 'source' : zoomTarget?.value || 'source';
   const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
   const syncPaneHeadHeight = () => {
     const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
@@ -252,6 +255,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const trackingControl = panel.querySelector('[data-ai-tracking-control]');
     if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
     panel.dataset.aiLayout = mode;
+    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
+    if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
+    if (mode === 'side-by-side' && linkedZoom?.checked) paneZoom.result = paneZoom.source;
     syncPaneHeadHeight();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
@@ -326,7 +332,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         panel.style.setProperty('--ai-pending-height', stage.style.height);
       }
     }
-    const controls = paneZoomControls.find((item) => item.dataset.aiPaneZoom === pane);
+    const controls = paneZoomControls.find((item) => item.dataset.aiPaneZoom === pane
+      || item.dataset.aiPaneZoom === 'shared' && zoomPane() === pane);
     const value = controls?.querySelector("[data-ai-zoom-value]");
     if (value) value.textContent = `${Math.round(paneZoom[pane] * 100)}%`;
     for (const button of controls?.querySelectorAll("[data-ai-zoom-action]") || []) {
@@ -567,7 +574,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     combinedCard?.classList.toggle('is-ai-active-source', activeSourceKey === '__combined__');
     if (sourceSelect) {
       const picker = sourceSelect.closest("[data-ai-source-picker]");
-      if (picker) picker.hidden = cards.length <= 1;
+      if (picker) picker.hidden = !cards.length;
       sourceSelect.replaceChildren();
       if (combinedCard) {
         const option = document.createElement('option');
@@ -586,7 +593,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
           option.textContent = `${card.dataset.aiReferenceRole === 'STYLE_REFERENCE' ? '표현 참고' : '원본'} · ${cardTitle(card, `참고 이미지 ${index + 1}`)}`;
           sourceSelect.appendChild(option);
         });
-        sourceSelect.disabled = cards.length <= 1;
+        sourceSelect.disabled = false;
+        if (activeSourceKey !== '__combined__') {
+          const replace = document.createElement('option');
+          replace.value = '__replace__'; replace.textContent = '원본 교체…'; sourceSelect.append(replace);
+        }
         sourceSelect.value = activeSourceKey;
       }
     }
@@ -620,14 +631,18 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   paneZoomControls.forEach((controls) => controls.addEventListener("click", (event) => {
     const button = event.target.closest("[data-ai-zoom-action]");
     if (!button) return;
-    changePaneZoom(controls.dataset.aiPaneZoom, button.dataset.aiZoomAction);
+    changePaneZoom(controls.dataset.aiPaneZoom === "shared" ? zoomPane() : controls.dataset.aiPaneZoom, button.dataset.aiZoomAction);
   }));
   linkedZoom?.addEventListener("change", () => {
+    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
+    if (targetControl) targetControl.hidden = linkedZoom.checked || panel.dataset.aiLayout !== 'side-by-side';
+    applyPaneZoom(zoomPane());
     if (!linkedZoom.checked) return;
     paneZoom.result = paneZoom.source;
     applyPaneZoom("result");
     copyPosition("source", "result");
   });
+  zoomTarget?.addEventListener('change', () => applyPaneZoom(zoomPane()));
   function selectCandidate(candidateKeyValue) {
     activeCandidateKey = candidateKeyValue;
     panel.dataset.aiSelectedCandidateId = activeCandidateKey;
@@ -714,6 +729,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     syncSources();
   });
   sourceSelect?.addEventListener("change", () => {
+    if (sourceSelect.value === '__replace__') {
+      sourceSelect.value = activeSourceKey;
+      panel.querySelector('[data-ai-replace-source]')?.click();
+      return;
+    }
     activeSourceKey = sourceSelect.value;
     syncSources();
   });

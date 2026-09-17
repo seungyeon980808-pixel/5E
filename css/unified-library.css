@@ -188,6 +188,7 @@
 }
 
 .unified-library-overlay .unilib {
+  animation: unilib-fade-in var(--unilib-motion);
   display: grid;
   grid-template-rows: var(--unilib-header-height) minmax(0, 1fr);
   width: min(var(--unilib-app-width), calc(100vw - var(--unilib-app-viewport-inset)));
@@ -745,7 +746,16 @@
 
 .unified-library-overlay [data-unilib-stage] { position: relative; }
 .unified-library-overlay .unilib-preview-loading { position: absolute; z-index: 2; inset: var(--unilib-space-3) var(--unilib-space-3) auto auto; padding: var(--unilib-space-2) var(--unilib-space-3); border-radius: var(--unilib-control-radius); background: var(--unilib-panel); color: var(--unilib-text); }
-.unified-library-overlay .unilib-preview-image { animation: unilib-fade-in var(--unilib-motion); }
+.unified-library-overlay .unilib-preview-image { animation: none; }
+.unified-library-overlay .unilib-stage[aria-busy="true"] > .unilib-preview-image { filter: blur(3px); opacity: .45; pointer-events: none; }
+.unified-library-overlay .unilib-preview-loading { inset: 50% auto auto 50%; transform: translate(-50%, -50%); display: flex; align-items: center; gap: var(--unilib-space-2); white-space: nowrap; }
+.unified-library-overlay .unilib-preview-loading::before { content: ""; width: var(--unilib-icon-size); height: var(--unilib-icon-size); border: 2px solid var(--unilib-border); border-top-color: var(--unilib-accent); border-radius: 50%; animation: unilib-crop-spin var(--unilib-loading-motion); }
+.unified-library-overlay .unilib-preview-error { padding: var(--unilib-space-4); }
+.unified-library-overlay .unilib-preview-scroll { scrollbar-gutter: stable; }
+.unified-library-overlay .unilib-pdf-display { padding: var(--unilib-space-1); margin-left: auto; background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border-muted); border-radius: var(--unilib-control-radius); }
+.unified-library-overlay .unilib-pdf-display button { min-height: 28px; font-size: var(--unilib-type-caption); }
+.unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: var(--unilib-border); color: var(--unilib-text); }
+@media (prefers-reduced-motion: reduce) { .unified-library-overlay .unilib-preview-loading::before { animation: none; } }
 .unified-library-overlay .unilib-ai-placement { position: absolute; z-index: 20; inset: 0; display: grid; place-items: center; background: var(--unilib-backdrop); }
 .unified-library-overlay .unilib-ai-placement .unilib-dialog { padding: var(--unilib-space-5); display: grid; gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-ai-placement button { min-height: var(--unilib-control-height); padding: var(--unilib-space-2) var(--unilib-space-4); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); }
